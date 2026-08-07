@@ -367,6 +367,14 @@
       </div>
       <div class="row"><button class="ghost" id="bShot">📷 حفظ صورة</button>
         <button class="ghost" id="bReal">✨ واقعي أكثر</button></div>
+      <h2>التصدير</h2>
+      <div class="row">
+        <button class="ghost" id="bGlb" style="flex:1">⬇ GLB للأنريل / 3D</button>
+        <button class="ghost" id="bJson" style="flex:1">⬇ بيانات المبنى JSON</button>
+      </div>
+      <div class="note">ملف <b>GLB</b> يُستورد مباشرة في Unreal Engine أو Blender أو Twinmotion —
+        بأسماء العقد كاملة (الطبقة · الدور · الغرفة) فتُميَّز الخامات تلقائياً.
+        وملف <b>JSON</b> هو النموذج نفسه لإعادة البناء أو المعالجة برمجياً.</div>
       <h2>دليل الألوان</h2>
       <div class="legend">
         <span><i class="dot" style="background:#e01a1a"></i>فيش</span>
@@ -506,6 +514,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { VRButton } from 'three/addons/webxr/VRButton.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 import { Sky } from 'three/addons/objects/Sky.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
@@ -2048,6 +2057,29 @@ document.getElementById('bReal').onclick=()=>{real=!real;renderer.toneMappingExp
   statusEl.textContent=real?'وضع واقعي: إضاءة ذهبية + ظلال أطول.':'وضع قياسي.';};
 document.getElementById('bShot').onclick=()=>{renderer.render(scene,camera);
   const a=document.createElement('a');a.download='ACS-view.png';a.href=renderer.domElement.toDataURL('image/png');a.click();};
+
+/* تصدير GLB — الجسر إلى Unreal Engine وبقية برامج الـ3D */
+function dl(blob,name){ const u=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=u; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(u),4000); }
+document.getElementById('bGlb').onclick=()=>{
+  if(!model){statusEl.textContent='ولّد نموذجاً أولاً.';return;}
+  statusEl.textContent='جارٍ تجهيز ملف GLB…';
+  const nm=((lastBuilding&&lastBuilding.meta&&lastBuilding.meta.name)||'ACS-model')
+            .replace(/[\\/:*?"<>|]/g,'-').slice(0,60);
+  new GLTFExporter().parse(model, res=>{
+      dl(new Blob([res],{type:'model/gltf-binary'}), nm+'.glb');
+      let n=0; model.traverse(o=>{if(o.isMesh)n++;});
+      statusEl.textContent='✓ صُدِّر '+nm+'.glb — '+n+' عنصراً · جاهز للاستيراد في Unreal.';
+    }, err=>{ statusEl.textContent='تعذّر التصدير: '+err; console.error(err); },
+    {binary:true, onlyVisible:false, truncateDrawRange:false});
+};
+document.getElementById('bJson').onclick=()=>{
+  if(!lastBuilding){statusEl.textContent='ولّد نموذجاً أولاً.';return;}
+  const nm=((lastBuilding.meta&&lastBuilding.meta.name)||'ACS-building')
+            .replace(/[\\/:*?"<>|]/g,'-').slice(0,60);
+  dl(new Blob([JSON.stringify(lastBuilding,null,1)],{type:'application/json'}), nm+'.json');
+  statusEl.textContent='✓ صُدِّرت بيانات المبنى JSON.';
+};
 
 /* مشي */
 const keys={};addEventListener('keydown',e=>keys[e.code]=true);addEventListener('keyup',e=>keys[e.code]=false);
