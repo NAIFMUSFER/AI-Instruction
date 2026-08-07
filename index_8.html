@@ -1,0 +1,3017 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Construction Studio — استوديو العميل</title>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     إعداد واحد فقط: رابط خادم محرّك الفهم.
+     ضعه هنا مرّة واحدة، فيعمل الذكاء تلقائياً لكل زائر بلا أن يكتب شيئاً.
+     مثال: "https://acs-engine.onrender.com"   (بلا / في النهاية)
+     ══════════════════════════════════════════════════════════════════════ -->
+<script>
+  window.ACS_SERVER = "https://acs-engine.onrender.com";   // خادم محرّك الفهم (مباشر لكل زائر)
+</script>
+
+<style>
+  :root{--bg:#0b1220;--panel:#111c31f5;--txt:#e9eefc;--acc:#38bdf8;--acc2:#22c55e;--line:#ffffff1c;--muted:#9fb0cc}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--txt);
+    font-family:system-ui,"Segoe UI",Tahoma,sans-serif}
+  #app{position:fixed;inset:0}
+  /* ---- شاشة الدخول ---- */
+  #login{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(1200px 600px at 70% 10%,#12325a55,transparent),linear-gradient(160deg,#0b1220,#0e1a30)}
+  #login .card{width:min(420px,92vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:26px 24px;box-shadow:0 30px 80px #000a}
+  #login h1{font-size:21px;margin-bottom:4px}
+  #login .tag{color:var(--muted);font-size:12.5px;margin-bottom:18px}
+  #login label{display:block;font-size:12px;color:var(--muted);margin:12px 0 5px}
+  #login input{width:100%;background:#0e1830;border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:11px 12px;font-size:14px}
+  #login button{width:100%;margin-top:18px;background:var(--acc);color:#04283b;border:none;
+    border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer}
+  #login .hint{font-size:11px;color:var(--muted);margin-top:12px;text-align:center}
+  /* ---- الواجهة ---- */
+  #left{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);
+    backdrop-filter:blur(10px);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:10}
+  #left header{padding:14px 16px 8px;border-bottom:1px solid var(--line)}
+  #left header h1{font-size:15px}#left header .sub{font-size:11px;color:var(--muted)}
+  .tabs{display:flex;gap:6px;padding:10px 12px 0}
+  .tabs button{flex:1;padding:8px;border:1px solid var(--line);background:#152241;color:var(--txt);
+    border-radius:9px 9px 0 0;font-size:12px;cursor:pointer}
+  .tabs button.active{background:var(--acc);color:#04283b;font-weight:800;border-color:var(--acc)}
+  .body{flex:1;overflow-y:auto;padding:12px 14px}
+  textarea{width:100%;height:230px;background:#0e1830;border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:10px;font-size:12.5px;line-height:1.7;resize:vertical;font-family:inherit}
+  .fld{display:flex;gap:8px;margin:8px 0}.fld>div{flex:1}
+  .fld label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
+  .fld input{width:100%;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px;font-size:13px}
+  .btn{width:100%;margin-top:10px;background:linear-gradient(90deg,var(--acc),#0ea5e9);color:#04283b;border:none;
+    border-radius:10px;padding:12px;font-size:14px;font-weight:800;cursor:pointer}
+  .btn.g{background:linear-gradient(90deg,#22c55e,#16a34a);color:#052e13}
+  .ghost{background:#152241;color:var(--txt);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12px;cursor:pointer}
+  .row{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  h2{font-size:12px;color:var(--muted);margin:14px 0 6px;border-top:1px solid var(--line);padding-top:10px}
+  .lay{display:flex;align-items:center;gap:8px;padding:3px 2px;font-size:12px}
+  .lay input[type=checkbox]{width:15px;height:15px;accent-color:var(--acc)}
+  .lay input[type=color]{width:22px;height:22px;border:none;background:none;padding:0;cursor:pointer;border-radius:5px}
+  .lay .nm{flex:1}.lay .ct{color:var(--muted);font-size:10.5px}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:3px 8px;font-size:10.5px;margin-top:6px}
+  .legend span{display:flex;align-items:center;gap:5px}.dot{width:10px;height:10px;border-radius:3px}
+  .doorbox{border:1px dashed var(--line);border-radius:10px;padding:9px;margin-top:6px;text-align:center;font-size:11.5px;color:var(--muted)}
+  .doorbox.hot{border-color:var(--acc2);background:#22c55e14;color:var(--txt)}
+  label.file{color:var(--acc);text-decoration:underline;cursor:pointer}
+  #status{padding:8px 14px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
+  #info{position:fixed;bottom:12px;right:376px;background:var(--panel);border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;font-size:12px;display:none;z-index:9;max-width:260px}
+  #info .qc{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;border-top:1px solid var(--line);padding-top:7px}
+  #info .qc i{width:20px;height:20px;border-radius:5px;cursor:pointer;display:block;border:1px solid #ffffff33}
+  #info .qc i:hover{transform:scale(1.15)}
+  #info .qcl{font-size:10px;color:var(--muted);margin-top:6px}
+  #tip{position:fixed;bottom:12px;left:12px;font-size:11px;color:var(--muted)}
+  #drop{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;
+    background:#0b1220e6;font-size:20px;border:3px dashed var(--acc)}
+  .pill{display:inline-block;font-size:10px;background:#152241;border:1px solid var(--line);border-radius:20px;padding:2px 8px;color:var(--muted)}
+  .note{font-size:10.5px;color:var(--muted);margin-top:6px;line-height:1.6}
+  #tracer{position:fixed;inset:0;z-index:40;background:#0b1220;display:none;flex-direction:column}
+  #tracer .tbar{display:flex;align-items:center;gap:10px;padding:10px 14px;background:#111c31;border-bottom:1px solid var(--line);font-size:12.5px;flex-wrap:wrap}
+  #tracer .tbar .thint{color:var(--muted)}
+  #tracer .tbar input{width:70px;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:4px 6px}
+  #tracer .tbar .btn{width:auto;margin:0;padding:7px 14px}
+  #trWrap{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;background:#0a0f1a}
+  #trCanvas{cursor:crosshair;box-shadow:0 10px 40px #000a;max-width:100%;max-height:100%}
+  #engineWarn{display:none;position:fixed;top:0;left:0;right:0;z-index:60;background:#7f1d1d;color:#fff;
+    padding:9px 12px;font-size:12.5px;text-align:center}
+  /* ===== لوحة المشي ===== */
+  #walkHUD{display:none;position:fixed;inset:0;z-index:25;pointer-events:none}
+  #walkHUD.on{display:block}
+  #joy{position:absolute;left:22px;bottom:26px;width:132px;height:132px;border-radius:50%;
+    background:#0c162b99;border:2px solid #ffffff33;pointer-events:auto;touch-action:none}
+  #joyKnob{position:absolute;left:41px;top:41px;width:50px;height:50px;border-radius:50%;
+    background:var(--acc);opacity:.9;box-shadow:0 3px 12px #0008}
+  #walkBtns{position:absolute;right:18px;bottom:26px;display:grid;grid-template-columns:52px 52px;gap:9px;pointer-events:auto}
+  .wbtn{width:52px;height:52px;border-radius:14px;background:#0c162bcc;border:1px solid #ffffff33;
+    color:var(--txt);font-size:17px;cursor:pointer}
+  .wbtn.active{background:var(--acc);color:#04283b}
+  #walkOpts{position:absolute;top:12px;left:12px;background:#0c162bd9;border:1px solid var(--line);
+    border-radius:12px;padding:9px 11px;pointer-events:auto;display:flex;flex-direction:column;gap:5px;
+    font-size:11.5px;max-width:240px}
+  #walkOpts label{display:flex;align-items:center;gap:7px;justify-content:space-between}
+  #walkOpts input[type=range]{width:110px;accent-color:var(--acc)}
+  #walkHint{opacity:.6;font-size:10px;line-height:1.5}
+  /* ===== نافذة الملاحظة ===== */
+  #noteModal{display:none;position:fixed;inset:0;z-index:45;background:#040a14cc;
+    align-items:center;justify-content:center;padding:14px}
+  #noteModal.on{display:flex}
+  .nm-card{width:min(440px,96vw);background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;padding:18px;box-shadow:0 20px 60px #000a}
+  .nm-card h3{font-size:15px;margin-bottom:8px}
+  .nm-target{font-size:11.5px;color:var(--acc);background:#38bdf815;border:1px solid #38bdf833;
+    border-radius:9px;padding:7px 9px;margin-bottom:10px}
+  .nm-card label{display:block;font-size:11px;color:var(--muted);margin:8px 0 4px}
+  .nm-card select,.nm-card textarea{width:100%;background:#0e1830;border:1px solid var(--line);
+    color:var(--txt);border-radius:9px;padding:9px;font-size:13px;font-family:inherit}
+  .nm-card textarea{height:96px;resize:vertical}
+  .nm-card{max-height:92vh;overflow:auto}
+  .nm-color{border:1px solid #22c55e44;background:#22c55e10;border-radius:12px;padding:10px;margin-bottom:6px}
+  .nm-color .sw{display:flex;flex-wrap:wrap;gap:6px}
+  .nm-color .sw i{width:26px;height:26px;border-radius:7px;cursor:pointer;display:block;
+    border:2px solid #ffffff22;transition:transform .12s}
+  .nm-color .sw i:hover{transform:scale(1.14);border-color:#fff8}
+  .nm-color .sw i.on{border-color:#fff;box-shadow:0 0 0 2px #22c55e}
+  .nm-color .cbtn{font-size:11px;padding:6px 8px}
+  .nm-color input[type=color]{width:38px;height:32px;padding:0;border:1px solid var(--line);
+    border-radius:8px;background:#0e1830;cursor:pointer}
+  .srv{font-size:11px;margin-top:7px;padding:6px 9px;border-radius:8px;border:1px solid var(--line);
+    color:var(--muted);background:#ffffff08}
+  .srv.ok{color:#22c55e;border-color:#22c55e44;background:#22c55e12}
+  .srv.bad{color:#f59e0b;border-color:#f59e0b44;background:#f59e0b12}
+  .adv{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}
+  .adv summary{font-size:11.5px;color:var(--muted);cursor:pointer;list-style:none}
+  .adv summary::-webkit-details-marker{display:none}
+  .adv summary::before{content:"⚙ "}
+  .report{margin-top:10px;display:none}
+  .report.on{display:block}
+  .report h3{font-size:12.5px;color:var(--acc2);margin:0 0 6px}
+  .rq{border:1px solid #22c55e33;background:#22c55e0d;border-radius:9px;padding:7px 9px;
+    margin-top:5px;font-size:11.5px;line-height:1.55}
+  .rq b{color:var(--acc2)}
+  .rq .w{color:var(--muted);font-size:10.5px}
+  .rq.x{border-color:#f59e0b44;background:#f59e0b0f}
+  .rq.x b{color:#f59e0b}
+  .rq.warn{border-color:#f59e0b55;background:#f59e0b14;color:#fbbf24}
+  .vrbox{border:1px solid #38bdf844;background:#38bdf80f;border-radius:12px;padding:10px;position:relative}
+  /* VRButton يضبط أنماطه بنفسه — نُجبره على الاندماج داخل اللوحة */
+  #vrbox button{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;
+    transform:none!important;width:100%!important;margin:0!important;opacity:1!important;
+    border-radius:10px!important;padding:11px!important;font-family:inherit!important;
+    font-size:13px!important;font-weight:700!important;letter-spacing:0!important;
+    background:#38bdf81a!important;border:1px solid #38bdf855!important;color:#38bdf8!important}
+  .nm-msg{font-size:11px;color:#22c55e;margin-top:7px;min-height:14px}
+  .nm-hint{font-size:10.5px;color:var(--muted);margin-top:5px}
+  .noteItem.done{border-color:#22c55e66;background:#22c55e12}
+  .noteItem .ok{color:#22c55e;font-weight:700}
+  .noteItem{border:1px solid var(--line);border-radius:9px;padding:7px 9px;margin-top:6px;font-size:11.5px}
+  .noteItem b{color:var(--acc)}
+  .noteItem .del{float:left;cursor:pointer;opacity:.6}
+  /* زر إظهار/إخفاء اللوحة (الجوال) */
+  #panelToggle{display:none;position:fixed;z-index:30;bottom:14px;right:14px;width:52px;height:52px;
+    border-radius:50%;background:var(--acc);color:#04283b;border:none;font-size:22px;font-weight:800;
+    box-shadow:0 6px 20px #0007;cursor:pointer}
+  /* ===== الجوال ===== */
+  @media (max-width:820px){
+    #left{width:100%;height:62vh;top:auto;bottom:0;border-left:none;border-top:1px solid var(--line);
+      border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .25s ease}
+    #left.open{transform:translateY(0)}
+    #panelToggle{display:block}
+    #info{right:12px;bottom:76px;max-width:70vw}
+    #tip{display:none}
+    .tabs button{font-size:11px;padding:9px 4px}
+    button,.ghost{min-height:38px}
+    #left input,#left select,#left textarea{font-size:16px}   /* يمنع تكبير iOS التلقائي */
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<div id="engineWarn">تعذّر تحميل محرّك العرض ثلاثي الأبعاد — تحقّق من الإنترنت ثم أعد تحميل الصفحة.
+  (المتصفحات القديمة جداً قد لا تدعم العرض ثلاثي الأبعاد.)</div>
+<button id="panelToggle" title="اللوحة">☰</button>
+
+<!-- شاشة الدخول -->
+<div id="login">
+  <div class="card">
+    <h1>AI Construction Studio</h1>
+    <div class="tag">استوديو توليد المباني ثلاثية الأبعاد — بوابة العميل</div>
+    <label>الاسم</label><input id="lgName" placeholder="اسمك أو اسم المنشأة" />
+    <label>البريد الإلكتروني</label><input id="lgEmail" type="email" placeholder="you@example.com" />
+    <label>اسم المشروع</label><input id="lgProject" placeholder="مثال: عمارة سكنية بالرياض" />
+    <button id="lgGo">دخول ▸</button>
+    <div class="hint">نموذج تجريبي — الدخول محلي (يُربط لاحقاً بمصادقة حقيقية).</div>
+  </div>
+</div>
+
+<!-- اللوحة -->
+<div id="left" style="display:none">
+  <header>
+    <h1>ACS — استوديو المشروع <span class="pill" id="who"></span></h1>
+    <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
+  </header>
+
+  <div class="tabs">
+    <button data-tab="text" class="active">وصف نصّي</button>
+    <button data-tab="import">ملفات ومخططات</button>
+    <button data-tab="quick">سريع</button>
+    <button data-tab="view">العرض</button>
+  </div>
+
+  <div class="body">
+    <!-- تبويب: وصف نصّي -->
+    <div data-panel="text">
+      <div class="note">اكتب وصف المبنى بلغتك الطبيعية (غرف بأبعادها، أبواب، نوافذ، أفياش، شاشات، كاميرات، إنارة…). المحرّك يستخرج الغرف وعناصرها ويخطّطها تلقائياً.</div>
+      <textarea id="descText" placeholder="مثال:
+مجلس رجال 6×5 متر، باب خشب بلوط، نافذة 4 متر، شاشة 85 بوصة، أربع أفياش، مفتاح إنارة، كاميرا.
+صالة معيشة 8×6 متر، شاشة 98 بوصة، ثمانية أفياش، نقطة شبكة.
+مطبخ 5×4 متر، ستة أفياش، شفاط.
+غرفة نوم رئيسية 6×5 متر، شاشة 75 بوصة، فيشين، منفذ شبكة."></textarea>
+      <div class="fld">
+        <div><label>عرض الأرض (م)</label><input id="siteW" type="number" value="30"></div>
+        <div><label>عمق الأرض (م)</label><input id="siteD" type="number" value="25"></div>
+        <div><label>عدد الأدوار</label><input id="nFloors" type="number" value="5"></div>
+      </div>
+      <div class="fld"><div>
+        <label>نوع المبنى</label>
+        <select id="bType">
+          <option value="auto" selected>كشف تلقائي من الوصف</option>
+          <option value="residential">سكني / فلل وعمائر</option>
+          <option value="warehouse">مستودع · مركز توزيع · مصنع</option>
+        </select>
+      </div></div>
+      <div class="lay"><input type="checkbox" id="strictMode">
+        <span class="nm">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره</span></div>
+      <button class="btn" id="genLLM">🤖 توليد من وصفك</button>
+      <div id="srvPill" class="srv">جارٍ الاتصال بمحرّك الفهم…</div>
+      <div class="row" style="margin-top:8px">
+        <button class="ghost" id="loadExample" style="flex:1">مثال: عمارة الرياض</button>
+        <button class="ghost" id="loadWarehouse" style="flex:1">مثال: مستودع 120×80</button>
+      </div>
+      <div id="reportBox" class="report"></div>
+      <details class="adv">
+        <summary>إعدادات متقدّمة</summary>
+        <button class="ghost" id="genText" style="width:100%;margin-top:8px">⚙️ توليد محلي فوري (بلا ذكاء)</button>
+        <div class="fld" style="margin-top:8px"><div>
+          <label>خادم محرّك الفهم — تجاوز يدوي</label>
+          <input id="llmURL" placeholder="يُستخدم الخادم المدمج تلقائياً">
+        </div></div>
+        <div class="note" style="margin-top:6px">التوليد بالذكاء يبني المبنى من <b>وصفك أنت</b> بنداً بنداً.
+          التوليد المحلي قالب تقريبي فوري — يُستعمل فقط إن تعذّر الوصول للخادم.</div>
+      </details>
+    </div>
+
+    <!-- تبويب: إعدادات سريعة -->
+    <div data-panel="quick" style="display:none">
+      <div class="note">توليد نموذج قياسي سريع بعدد الغرف والأدوار.</div>
+      <div class="fld"><div><label>عرض الأرض</label><input id="qW" type="number" value="30"></div>
+        <div><label>عمق الأرض</label><input id="qD" type="number" value="25"></div></div>
+      <div class="fld"><div><label>عدد الأدوار</label><input id="qFloors" type="number" value="4"></div>
+        <div><label>غرف/شقة</label><input id="qRooms" type="number" value="6"></div></div>
+      <div class="fld"><div><label>نوع المبنى</label>
+        <select id="qType">
+          <option value="residential" selected>سكني — شقق وغرف</option>
+          <option value="warehouse">مستودع تجارة إلكترونية كامل</option>
+        </select></div></div>
+      <button class="btn" id="genQuick">توليد نموذج قياسي</button>
+      <div class="note">«مستودع» يبني كامل المنشأة بأي مقاس: أرصفة · تخزين · التقاط · تغليف ·
+        فرز · شحن · إدارة · سلامة — بلا حاجة لخادم.</div>
+    </div>
+
+    <!-- تبويب: ملفات ومخططات -->
+    <div data-panel="import" style="display:none">
+      <div class="note">ارفع بيانات مبناك بأي صيغة: ملف وصف <b>JSON</b>، مخطط <b>CAD (DXF)</b>، أو <b>صورة/PDF</b> لمخطط ترسم فوقه الغرف.</div>
+      <label class="file" style="display:block;margin-top:10px;padding:16px 10px;border:1.5px dashed var(--line);border-radius:12px;text-align:center;cursor:pointer;color:var(--acc)">
+        📎 اختر ملفاً (JSON · DXF · صورة · PDF)
+        <input id="impFile" type="file" accept=".json,.dxf,.png,.jpg,.jpeg,.webp,.pdf,image/*" hidden>
+      </label>
+      <div class="fld">
+        <div><label>عرض الأرض (م)</label><input id="impW" type="number" value="30"></div>
+        <div><label>عمق الأرض (م)</label><input id="impD" type="number" value="25"></div>
+        <div><label>عدد الأدوار</label><input id="impFloors" type="number" value="5"></div>
+      </div>
+      <div id="impInfo" class="note" style="min-height:16px"></div>
+      <div class="note" style="border-top:1px solid var(--line);padding-top:8px">
+        <b>PDF وصفي</b>: إن كان خادم محرّك الفهم مشغّلاً (الرابط في تبويب «وصف نصّي»)
+        يُرسَل الملف إليه ويُفهم بدقّة — <b>وهذا الأدق</b>؛ وإلا يُقرأ محلياً.<br>
+        <b>JSON</b>: بيانات مبنى مطابقة للـschema → يُبنى مباشرة.<br>
+        <b>DXF</b>: نقرأ المضلّعات المغلقة (Polylines) كغرف ونبنيها جدراناً.<br>
+        <b>صورة / PDF مخطط مرسوم</b>: يفتح محرّر — ارسم مستطيلات فوق المخطط ثم «توليد 3D».
+      </div>
+    </div>
+
+    <!-- تبويب: العرض -->
+    <div data-panel="view" style="display:none">
+      <h2 style="border:none;margin-top:2px">الأدوار</h2>
+      <div class="row" id="floors"></div>
+      <h2>الطبقات (إظهار + لون)</h2>
+      <div id="layers"></div>
+      <h2>🥽 نظّارة الواقع الافتراضي</h2>
+      <div id="vrbox" class="vrbox">
+        <div id="vrState" class="note" style="margin:0 0 8px">جارٍ فحص دعم النظارة…</div>
+      </div>
+      <div class="fld" style="margin-top:8px">
+        <div><label>سرعة المشي في VR</label>
+          <input id="vrSpeed" type="range" min="10" max="80" value="26"></div>
+      </div>
+      <div class="lay"><input type="checkbox" id="vrSnap" checked>
+        <span class="nm">التفاف مُقطَّع 30° (أريح للمعدة من الالتفاف السلس)</span></div>
+      <div class="note">
+        <b>داخل المبنى (VR):</b> العصا اليسرى مشي · اليمنى يميناً/يساراً التفاف ·
+        اليمنى للأمام/الخلف صعود ونزول · الزناد انتقال فوري لمكان التصويب · القبضة جري ·
+        <b>A</b> دور فوق · <b>B</b> دور تحت.<br>
+        <b>الماكيت (Passthrough):</b> المبنى مصغّر على طاولتك في غرفتك — العصا اليمنى تدوّره
+        وتكبّره، اليسرى تحرّكه، الزناد يعيده أمامك.<br>
+        تُطفأ الظلال ويُخفَّض التفصيل تلقائياً داخل النظارة لثبات الإطار عند 90 هرتز.
+      </div>
+
+      <h2>الخامات والتفصيل</h2>
+      <div class="lay"><input type="checkbox" id="texOn" checked>
+        <span class="nm">تفعيل خامات واقعية (خرسانة · بورسلين · خشب · رخام · معدن)</span></div>
+      <div class="fld" style="margin-top:6px"><div>
+        <label>مستوى التفصيل (رفوف · بضاعة · قوائم)</label>
+        <select id="detailSel" style="width:100%;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px;font-size:12px">
+          <option value="0.5">خفيف — أسرع حركة على الجوال</option>
+          <option value="1" selected>متوازن</option>
+          <option value="1.8">عالٍ — أقصى واقعية</option>
+        </select>
+      </div></div>
+      <div id="statCount" class="note" style="min-height:14px"></div>
+
+      <h2>صور حقيقية — لأي سطح</h2>
+      <div id="doorbox" class="doorbox">
+        <label class="file">اختر صورة<input id="doorfile" type="file" accept="image/*" hidden></label>
+        أو أفلِتها في الشاشة
+        <div class="row" style="margin-top:6px">
+          <select id="texTarget" style="flex:1;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:6px;font-size:11.5px">
+            <option value="DOOR">أبواب</option>
+            <option value="WALL">جدران</option>
+            <option value="FLOOR">أرضيات</option>
+            <option value="FURN">أثاث</option>
+            <option value="WINDOW">نوافذ</option>
+          </select>
+          <input id="texRepeat" type="number" value="1" min="0.1" step="0.5" title="تكرار الصورة"
+            style="width:62px;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:6px;font-size:11.5px">
+        </div>
+        <div class="row" style="justify-content:center"><button class="ghost" id="applyAll" disabled>تطبيق على الطبقة المختارة</button>
+        <button class="ghost" id="clearDoor">إلغاء</button></div>
+        <div style="font-size:10px;opacity:.6;margin-top:4px">أو انقر عنصراً بعد اختيار الصورة لتطبيقها عليه وحده</div>
+      </div>
+      <h2>ملاحظات المهندس <span class="pill" id="noteCount">0</span></h2>
+      <div class="row">
+        <button class="ghost" id="bNoteMode">✏️ وضع التحديد والتعليق</button>
+      </div>
+      <div id="notesList"></div>
+      <div class="row">
+        <button class="ghost" id="bNotesExport">⬇ تصدير الملاحظات</button>
+        <button class="ghost" id="bNotesApply">🤖 تنفيذ التعديلات</button>
+      </div>
+      <div class="note">فعّل الوضع ثم انقر أي عنصر (جدار/باب/غرفة) واكتب طلبك. «تنفيذ التعديلات» يرسلها لمحرّك الفهم ليعيد بناء النموذج.</div>
+
+      <h2>المشهد</h2>
+      <div class="row">
+        <button class="ghost" id="bOrbit">تدوير</button>
+        <button class="ghost" id="bTour">جولة</button>
+        <button class="ghost" id="bTop">علوي</button>
+        <button class="ghost" id="bWalk">مشي</button>
+      </div>
+      <div class="row"><button class="ghost" id="bShot">📷 حفظ صورة</button>
+        <button class="ghost" id="bReal">✨ واقعي أكثر</button></div>
+      <h2>دليل الألوان</h2>
+      <div class="legend">
+        <span><i class="dot" style="background:#e01a1a"></i>فيش</span>
+        <span><i class="dot" style="background:#1ab83d"></i>مفتاح</span>
+        <span><i class="dot" style="background:#1a5af2"></i>شبكة</span>
+        <span><i class="dot" style="background:#ffdb59"></i>إنارة</span>
+        <span><i class="dot" style="background:#080808"></i>كاميرا</span>
+        <span><i class="dot" style="background:#40d2eb"></i>تكييف</span>
+        <span><i class="dot" style="background:#ff7300"></i>سلامة</span>
+        <span><i class="dot" style="background:#0d0d0f"></i>شاشة</span>
+      </div>
+    </div>
+  </div>
+  <div id="status">جاهز — اكتب وصفاً واضغط «توليد».</div>
+</div>
+
+<!-- لوحة تحكّم المشي -->
+<div id="walkHUD">
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="walkBtns">
+    <button class="wbtn" id="wUp" title="أعلى">▲</button>
+    <button class="wbtn" id="wDown" title="أسفل">▼</button>
+    <button class="wbtn" id="wRun" title="سرعة">🏃</button>
+    <button class="wbtn" id="wExit" title="خروج">✕</button>
+  </div>
+  <div id="walkOpts">
+    <label>مجال الرؤية <input id="optFov" type="range" min="45" max="100" value="70"></label>
+    <label>ارتفاع النظر <input id="optEye" type="range" min="80" max="220" value="160"></label>
+    <label>السرعة <input id="optSpd" type="range" min="1" max="12" value="4"></label>
+    <span id="walkHint">اسحب على الشاشة للنظر · الجويستيك للحركة · WASD على الحاسب</span>
+  </div>
+</div>
+
+<!-- نافذة ملاحظة المهندس -->
+<div id="noteModal">
+  <div class="nm-card">
+    <h3>طلب تعديل على عنصر</h3>
+    <div id="nmTarget" class="nm-target"></div>
+    <!-- تغيير اللون فوراً بلا خادم -->
+    <div class="nm-color">
+      <label style="margin:0 0 6px">🎨 تغيير اللون فوراً (بلا خادم · نتيجة لحظية)</label>
+      <div class="sw" id="nmSwatches"></div>
+      <div class="row" style="align-items:center;gap:8px;margin-top:8px">
+        <input id="nmColor" type="color" value="#22c55e" title="لون مخصّص">
+        <button class="ghost cbtn" data-surface="wall">جدران الغرفة</button>
+        <button class="ghost cbtn" data-surface="floor">الأرضية</button>
+        <button class="ghost cbtn" data-surface="ceiling">السقف</button>
+        <button class="ghost cbtn" data-surface="self">هذا العنصر</button>
+      </div>
+      <div id="nmColorMsg" class="nm-msg"></div>
+    </div>
+    <label>نوع الطلب</label>
+    <select id="nmKind">
+      <option value="تعديل">تعديل</option>
+      <option value="لون">لون / تشطيب</option>
+      <option value="نقل">نقل / تغيير موضع</option>
+      <option value="أبعاد">تغيير أبعاد</option>
+      <option value="حذف">حذف</option>
+      <option value="إضافة">إضافة عنصر</option>
+      <option value="ملاحظة">ملاحظة عامة</option>
+    </select>
+    <label>الوصف</label>
+    <textarea id="nmText" placeholder="مثال: غيّر لون جدار هذه الغرفة إلى أخضر · وسّع المجلس إلى 6×5 م · انقل الباب لمنتصف الجدار الشرقي."></textarea>
+    <div class="nm-hint">إن كتبت طلب لون (مثل «الجدار أخضر») سيُنفَّذ فوراً عند الحفظ بلا انتظار الخادم.</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn g" id="nmSave" style="flex:1">حفظ الملاحظة</button>
+      <button class="ghost" id="nmCancel">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div id="info"></div>
+<div id="tip">انقر عنصراً لتفاصيله ولتلوينه فوراً 🎨 · اسحب للتدوير · عجلة للتقريب</div>
+<div id="drop">أفلِت صورة باب</div>
+
+<!-- محرّر رسم الغرف فوق المخطط -->
+<div id="tracer">
+  <div class="tbar">
+    <b style="color:#38bdf8">رسم الغرف على المخطط</b>
+    <span class="thint">اسحب لرسم مستطيل = غرفة</span>
+    <label>عرض المخطط (م): <input id="trW" type="number" value="30"></label>
+    <span id="trCount" class="pill">0 غرفة</span>
+    <span style="flex:1"></span>
+    <button class="ghost" id="trUndo">تراجع</button>
+    <button class="ghost" id="trClear">مسح الكل</button>
+    <button class="btn g" id="trGen">توليد 3D ▸</button>
+    <button class="ghost" id="trClose">إغلاق ✕</button>
+  </div>
+  <div id="trWrap"><canvas id="trCanvas"></canvas></div>
+</div>
+
+<!-- شيم لدعم importmap على المتصفحات الأقدم (iOS Safari < 16.4) -->
+<script async src="https://cdn.jsdelivr.net/npm/es-module-shims@1.8.2/dist/es-module-shims.js"></script>
+<script type="importmap">
+{ "imports":{
+  "three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<!-- الدخول والواجهة الأساسية: سكربت عادي يعمل دائماً حتى لو فشل تحميل محرّك 3D -->
+<script>
+  window.ACS = { ready:false, pending:null };
+  (function(){
+    function byId(i){return document.getElementById(i);}
+    function enter(){
+      var nm = (byId('lgName').value||'عميل').trim();
+      try{ localStorage.setItem('acs_user', nm); }catch(e){}
+      byId('login').style.display='none';
+      byId('left').style.display='flex';
+      byId('who').textContent=nm;
+      if(window.ACS.ready && window.ACS.showExample) window.ACS.showExample();
+      else window.ACS.pending='example';
+    }
+    function init(){
+      var b=byId('lgGo'); if(!b) return;
+      b.addEventListener('click', enter);
+      b.addEventListener('touchend', function(e){ e.preventDefault(); enter(); });
+      ['lgName','lgEmail','lgProject'].forEach(function(id){
+        var el=byId(id); if(el) el.addEventListener('keydown',function(e){ if(e.key==='Enter') enter(); });
+      });
+      try{ var u=localStorage.getItem('acs_user'); if(u) byId('lgName').value=u; }catch(e){}
+      // تحذير إن لم يُحمَّل محرّك العرض خلال 12 ثانية
+      setTimeout(function(){
+        if(!window.ACS.ready){
+          var w=byId('engineWarn'); if(w) w.style.display='block';
+        }
+      }, 12000);
+    }
+    if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+    else init();
+  })();
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { VRButton } from 'three/addons/webxr/VRButton.js';
+import { ARButton } from 'three/addons/webxr/ARButton.js';
+import { Sky } from 'three/addons/objects/Sky.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* ========================= المواد (palette) ========================= */
+const MAT = {
+  wall:{c:0xd0ccc4,m:0.0,r:0.9}, floor:{c:0x9a9a9e,m:0.0,r:0.85}, ceiling:{c:0xe6e6ea,m:0,r:0.9},
+  door:{c:0x734620,m:0.0,r:0.55}, door_glass:{c:0x8cb8d8,m:0,r:0.1,o:0.35},
+  window:{c:0x8cb8e0,m:0.0,r:0.08,o:0.30},
+  outlet:{c:0xe01a1a,m:0.2,r:0.5}, switch:{c:0x1ab83d,m:0.2,r:0.5}, network:{c:0x1a5af2,m:0.2,r:0.5},
+  tv:{c:0x0d0d0f,m:0.3,r:0.35}, usb:{c:0x9a4de6,m:0.2,r:0.5}, ev:{c:0xf2bf1a,m:0.3,r:0.4},
+  light:{c:0xffdb59,m:0,r:0.4,e:0.6}, camera:{c:0x080808,m:0.4,r:0.3},
+  ac:{c:0x40d2eb,m:0.1,r:0.4}, safety:{c:0xff7300,m:0.1,r:0.5},
+  furn:{c:0x8c8072,m:0,r:0.7}, furn_soft:{c:0x5a6b8c,m:0,r:0.85}, counter:{c:0x34383f,m:0.1,r:0.35},
+  /* ---- صناعي / لوجستي ---- */
+  steel:{c:0x2f6fd0,m:0.55,r:0.42},        // قوائم الرفوف (أزرق صناعي)
+  beam:{c:0xf59e0b,m:0.5,r:0.45},          // عوارض الرفوف (برتقالي)
+  deck:{c:0x8f9298,m:0.3,r:0.6},           // ألواح الأرفف
+  goods:{c:0xb08a52,m:0,r:0.85},           // كراتين/بضاعة
+  pallet:{c:0x9c7b4d,m:0,r:0.9},
+  belt:{c:0x2a2d33,m:0.2,r:0.55},          // سير ناقل
+  frame:{c:0x9aa0a8,m:0.6,r:0.35},         // هياكل معدنية
+  guard:{c:0xfacc15,m:0.3,r:0.5},          // حواجز أمان صفراء
+  paint_lane:{c:0xf59e0b,m:0,r:0.95},      // دهان ممر رافعات
+  paint_ped:{c:0xfacc15,m:0,r:0.95},       // ممر مشاة
+  paint_amr:{c:0x8b5cf6,m:0,r:0.95},       // مسار روبوت
+  paint_zone:{c:0x2563eb,m:0,r:0.95},      // ترقيم مناطق
+  paint_fire:{c:0xef4444,m:0,r:0.95},      // سلامة
+  dockdoor:{c:0x51565e,m:0.5,r:0.45},      // باب رصيف منزلق
+  bumper:{c:0x1b1d21,m:0.1,r:0.85},
+  screen:{c:0x0b3d2e,m:0.2,r:0.3,e:0.25},  // شاشات محطات
+  robot:{c:0x111318,m:0.5,r:0.35}
+};
+/* ترميز لوني صناعي حسب وظيفة المنطقة */
+const ROLE_COLOR={
+  receiving:'#14b8a6', inbound:'#14b8a6', crossdock:'#0ea5e9', qc:'#f97316', inspection:'#f97316',
+  storage:'#2563eb', bulk:'#1d4ed8', bin:'#3b82f6', shelf:'#3b82f6',
+  picking:'#22c55e', batch:'#22c55e', wave:'#16a34a', zone_pick:'#4ade80',
+  packing:'#f59e0b', labeling:'#fbbf24', consolidation:'#eab308',
+  sorting:'#a855f7', conveyor:'#7c3aed', robot:'#8b5cf6',
+  outbound:'#8b5cf6', shipping:'#8b5cf6', dispatch:'#a78bfa',
+  safety:'#ef4444', fire:'#ef4444', office:'#94a3b8', admin:'#94a3b8',
+  it:'#64748b', maintenance:'#78716c', staff:'#a8a29e', circulation:'#facc15', aisle:'#facc15'
+};
+const POINT_KINDS = {
+  outlet:['ELEC','outlet',0.40,[0.09,0.09,0.03]], switch:['ELEC','switch',1.20,[0.09,0.12,0.03]],
+  network:['ELEC','network',0.40,[0.08,0.08,0.03]], usb:['ELEC','usb',0.55,[0.06,0.06,0.03]],
+  tv:['ELEC','tv',1.40,[0.9,0.55,0.05]], ev:['ELEC','ev',0.90,[0.15,0.25,0.10]],
+  light:['LIGHT','light',null,[0.30,0.30,0.06]], spot:['LIGHT','light',null,[0.12,0.12,0.05]],
+  camera:['CAMERA','camera',null,[0.12,0.12,0.12]], ac:['HVAC','ac',null,[0.8,0.2,0.2]],
+  vent:['HVAC','ac',null,[0.3,0.3,0.06]], smoke:['SAFETY','safety',null,[0.14,0.14,0.05]],
+  sprinkler:['SAFETY','safety',null,[0.1,0.1,0.08]], exit:['SAFETY','safety',2.10,[0.30,0.14,0.05]],
+  /* ---- معدات صناعية/لوجستية ---- */
+  scanner:['ELEC','frame',1.10,[0.14,0.22,0.10]],       // ماسح باركود
+  printer:['ELEC','frame',0.95,[0.32,0.20,0.30]],       // طابعة ملصقات
+  scale:['ELEC','frame',0.15,[0.60,0.10,0.60]],         // ميزان
+  monitor:['ELEC','screen',1.45,[0.55,0.35,0.05]],      // شاشة تحقّق
+  ptl:['LIGHT','light',1.35,[0.10,0.06,0.04]],          // pick-to-light
+  charger:['ELEC','ev',0.35,[0.50,0.45,0.40]],          // شاحن روبوت
+  robot:['FURN','robot',0.15,[0.75,0.28,0.55]],         // AMR
+  forklift:['FURN','guard',0.55,[1.15,1.10,2.10]],
+  palletjack:['FURN','frame',0.10,[0.60,0.20,1.50]],
+  cage:['FURN','frame',0.55,[1.20,1.10,0.85]],          // قفص طرود
+  pallet:['FURN','pallet',0.07,[1.20,0.14,1.00]],
+  diverter:['FURN','frame',0.95,[0.80,0.20,0.80]],      // محوّل فرز
+  chute:['FURN','frame',0.60,[0.70,1.20,0.70]],         // منزلق فرز
+  bin:['FURN','goods',0.30,[0.60,0.60,0.80]],           // صندوق رفض/فرز
+  extinguisher:['SAFETY','safety',1.00,[0.16,0.50,0.16]],
+  hydrant:['SAFETY','safety',0.60,[0.24,0.80,0.24]],
+  eyewash:['SAFETY','safety',1.10,[0.30,0.35,0.30]],
+  assembly:['SAFETY','safety',0.02,[2.50,0.03,2.50]],   // نقطة تجمّع
+  gate:['SAFETY','frame',1.10,[0.15,2.20,1.20]],        // بوابة أمنية
+  estop:['SAFETY','safety',1.05,[0.16,0.16,0.08]],
+  server:['ELEC','frame',1.00,[0.60,2.00,0.90]],        // رف سيرفرات
+  locker:['FURN','frame',0.95,[0.90,1.90,0.50]],
+  sign:['SAFETY','paint_zone',2.60,[1.40,0.45,0.06]]    // لوحة تعريف منطقة
+};
+const LAYER_NAMES={WALL:'جدران',FLOOR:'أرضيات',DOOR:'أبواب',WINDOW:'نوافذ',ELEC:'كهرباء',
+  LIGHT:'إنارة',CAMERA:'كاميرات',HVAC:'تكييف',SAFETY:'سلامة',FURN:'أثاث'};
+const LAYER_ORDER=['WALL','FLOOR','DOOR','WINDOW','ELEC','LIGHT','CAMERA','HVAC','SAFETY','FURN'];
+const FLOOR_NAMES={F0:'الأرضي',F1:'الأول',F2:'الثاني',F3:'الثالث',F4:'الرابع',F5:'الخامس',F6:'السطح'};
+
+/* ---------- مولّد خامات إجرائية واقعية (بلا إنترنت، بلا حقوق) ---------- */
+const texCache={};
+function noiseCanvas(size, fn){
+  const c=document.createElement('canvas'); c.width=c.height=size;
+  const x=c.getContext('2d'); fn(x,size,c); return c;
+}
+function rnd(seed){let s=seed;return()=>{s=(s*16807)%2147483647;return s/2147483647;};}
+function grain(ctx,size,amount,base){
+  const img=ctx.getImageData(0,0,size,size), d=img.data, r=rnd(7);
+  for(let i=0;i<d.length;i+=4){ const n=(r()-0.5)*amount;
+    d[i]=Math.max(0,Math.min(255,d[i]+n)); d[i+1]=Math.max(0,Math.min(255,d[i+1]+n));
+    d[i+2]=Math.max(0,Math.min(255,d[i+2]+n)); }
+  ctx.putImageData(img,0,0);
+}
+const TEX_GEN={
+  plaster:(x,s)=>{x.fillStyle='#e9e6e0';x.fillRect(0,0,s,s);
+    const r=rnd(3); for(let i=0;i<900;i++){x.fillStyle='rgba(0,0,0,'+(r()*0.03)+')';
+      x.beginPath();x.arc(r()*s,r()*s,r()*6+1,0,7);x.fill();} grain(x,s,14);},
+  concrete:(x,s)=>{x.fillStyle='#b9b7b2';x.fillRect(0,0,s,s);
+    const r=rnd(11); for(let i=0;i<400;i++){x.fillStyle='rgba(0,0,0,'+(r()*0.07)+')';
+      x.beginPath();x.arc(r()*s,r()*s,r()*22+3,0,7);x.fill();} grain(x,s,22);},
+  tile:(x,s)=>{const n=4,t=s/n; x.fillStyle='#d8d5cf';x.fillRect(0,0,s,s);
+    const r=rnd(5);
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      const g=228+r()*18; x.fillStyle='rgb('+g+','+(g-3)+','+(g-8)+')';
+      x.fillRect(i*t+2,j*t+2,t-4,t-4);
+      for(let k=0;k<10;k++){x.strokeStyle='rgba(150,145,138,'+(r()*0.10)+')';x.lineWidth=1;
+        x.beginPath();x.moveTo(i*t+r()*t,j*t+r()*t);x.lineTo(i*t+r()*t,j*t+r()*t);x.stroke();}}
+    x.strokeStyle='#a9a49c'; x.lineWidth=3;
+    for(let i=0;i<=n;i++){x.beginPath();x.moveTo(i*t,0);x.lineTo(i*t,s);x.stroke();
+      x.beginPath();x.moveTo(0,i*t);x.lineTo(s,i*t);x.stroke();} grain(x,s,8);},
+  wood:(x,s)=>{const g=x.createLinearGradient(0,0,0,s);
+    g.addColorStop(0,'#7a4a22');g.addColorStop(1,'#5f381a');x.fillStyle=g;x.fillRect(0,0,s,s);
+    const r=rnd(13);
+    for(let i=0;i<70;i++){x.strokeStyle='rgba(40,22,8,'+(0.05+r()*0.22)+')';x.lineWidth=r()*3+0.6;
+      const y=r()*s; x.beginPath(); x.moveTo(0,y);
+      for(let px=0;px<=s;px+=16) x.lineTo(px, y+Math.sin(px/48+i)*4+ (r()-0.5)*2);
+      x.stroke();} grain(x,s,12);},
+  marble:(x,s)=>{x.fillStyle='#efece6';x.fillRect(0,0,s,s); const r=rnd(23);
+    for(let i=0;i<26;i++){x.strokeStyle='rgba(120,120,130,'+(0.05+r()*0.16)+')';x.lineWidth=r()*3+0.5;
+      let px=r()*s, py=0; x.beginPath(); x.moveTo(px,py);
+      while(py<s){px+=(r()-0.5)*36; py+=14; x.lineTo(px,py);} x.stroke();} grain(x,s,7);},
+  asphalt:(x,s)=>{x.fillStyle='#3a3a3d';x.fillRect(0,0,s,s); const r=rnd(31);
+    for(let i=0;i<2600;i++){const g=30+r()*70; x.fillStyle='rgba('+g+','+g+','+(g+4)+',0.8)';
+      x.fillRect(r()*s,r()*s,r()*3+1,r()*3+1);} grain(x,s,16);},
+  metal:(x,s)=>{x.fillStyle='#9aa0a8';x.fillRect(0,0,s,s); const r=rnd(41);
+    for(let i=0;i<700;i++){x.strokeStyle='rgba(255,255,255,'+(r()*0.08)+')';x.lineWidth=1;
+      const y=r()*s; x.beginPath();x.moveTo(0,y);x.lineTo(s,y+(r()-0.5)*3);x.stroke();} grain(x,s,6);},
+  fabric:(x,s)=>{x.fillStyle='#5b6a86';x.fillRect(0,0,s,s); const r=rnd(53);
+    for(let i=0;i<s;i+=3){x.strokeStyle='rgba(0,0,0,0.06)';x.beginPath();x.moveTo(i,0);x.lineTo(i,s);x.stroke();
+      x.strokeStyle='rgba(255,255,255,0.05)';x.beginPath();x.moveTo(0,i);x.lineTo(s,i);x.stroke();}
+    grain(x,s,14);},
+};
+function getTex(kind){
+  if(texCache[kind]) return texCache[kind];
+  const gen=TEX_GEN[kind]; if(!gen) return null;
+  const t=new THREE.CanvasTexture(noiseCanvas(512,gen));
+  t.wrapS=t.wrapT=THREE.RepeatWrapping; t.colorSpace=THREE.SRGBColorSpace;
+  t.anisotropy=8; texCache[kind]=t; return t;
+}
+// خامة + مقياس بالمتر لكل نوع مادة
+const TEXMAP={ wall:['plaster',2.2], ceiling:['plaster',2.5], floor:['tile',1.6],
+  door:['wood',1.2], counter:['marble',1.4], furn:['wood',1.4], furn_soft:['fabric',1.0],
+  ac:['metal',0.8], camera:['metal',0.4], tv:['metal',1.0] };
+
+let USE_TEX=true;
+const matCache={};
+/* getMat(name, tint) — tint لون سداسي اختياري ('#22c55e') لصبغ الخامة نفسها.
+   كل لون يحصل على مادة مستقلة في الذاكرة، فلا يتلوّن باقي المبنى معه. */
+function getMat(name, tint){
+  tint = normHex(tint);
+  const key=name+(USE_TEX?'#t':'#p')+(tint?('@'+tint):'');
+  if(matCache[key]) return matCache[key];
+  const d=MAT[name]||{c:0x999999,m:0,r:0.7};
+  const p={color:d.c,metalness:d.m||0,roughness:d.r==null?0.7:d.r};
+  if(d.o!=null){p.transparent=true;p.opacity=d.o;}
+  if(d.e){p.emissive=d.c;p.emissiveIntensity=d.e;}
+  const m=new THREE.MeshStandardMaterial(p);
+  if(USE_TEX&&TEXMAP[name]){
+    const [kind,scale]=TEXMAP[name];
+    const t=getTex(kind);
+    if(t){ m.map=t; m.bumpMap=t; m.bumpScale=0.06; m.color.setHex(0xffffff);
+      if(name==='wall'||name==='ceiling') m.color.setHex(d.c);   // صبغة خفيفة للجدران
+      m.userData.texScale=scale; }
+  }
+  if(tint){ m.color.set(tint); if(d.e) m.emissive.set(tint); }
+  m.userData.matName=name; m.userData.tint=tint||null;
+  matCache[key]=m; return m;
+}
+function normHex(h){
+  if(!h) return null;
+  h=String(h).trim();
+  if(/^[0-9a-fA-F]{6}$/.test(h)) h='#'+h;
+  if(/^#[0-9a-fA-F]{3}$/.test(h)) h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];
+  return /^#[0-9a-fA-F]{6}$/.test(h)? h.toLowerCase() : null;
+}
+/* تحجيم UV حسب أبعاد الصندوق ليظهر مقياس الخامة صحيحاً على كل الأوجه */
+function scaleBoxUV(geo,w,h,d,scale){
+  const uv=geo.attributes.uv; const S=scale||2;
+  const dims=[[d,h],[d,h],[w,d],[w,d],[w,h],[w,h]];   // +X,-X,+Y,-Y,+Z,-Z
+  for(let f=0;f<6;f++){ const [su,sv]=dims[f];
+    for(let k=0;k<4;k++){ const i=f*4+k;
+      uv.setXY(i, uv.getX(i)*(su/S), uv.getY(i)*(sv/S)); } }
+  uv.needsUpdate=true;
+}
+
+/* ========================= المترجم الهندسي (JS) ========================= */
+function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
+  if(ex<=0||ey<=0||ez<=0) return;
+  const g=new THREE.BoxGeometry(ex,ey,ez);
+  const m=getMat(mat,tint);
+  if(m.map&&m.userData.texScale) scaleBoxUV(g,ex,ey,ez,m.userData.texScale);
+  const mesh=new THREE.Mesh(g,m);
+  mesh.position.set(cx,cy,cz); mesh.name=name;
+  if(rotY) mesh.rotation.y=rotY;
+  if(shadow){mesh.castShadow=true;mesh.receiveShadow=true;}
+  group.add(mesh);
+  return mesh;
+}
+function edgeGeom(edge, rect){const[x,z,w,d]=rect;
+  if(edge==='N')return['x',z,x,x+w]; if(edge==='S')return['x',z+d,x,x+w];
+  if(edge==='W')return['z',x,z,z+d]; if(edge==='E')return['z',x+w,z,z+d];}
+function openU(edge,rect,off){const[x,z]=rect; return (edge==='N'||edge==='S')?x+off:z+off;}
+
+function wallOpenings(group,axis,fixed,u0,u1,y0,H,t,openings,fkey,room,tag,tint){
+  const segs=openings.filter(o=>o[1]>0).sort((a,b)=>a[0]-b[0]);
+  const solids=[]; let cur=u0;
+  for(const[uc,w,bottom,top]of segs){
+    const a=Math.max(u0,uc-w/2), b=Math.min(u1,uc+w/2);
+    if(a>cur) solids.push([cur,a,y0,y0+H]);
+    if(bottom>0) solids.push([a,b,y0,y0+bottom]);
+    if(y0+top<y0+H) solids.push([a,b,y0+top,y0+H]);
+    cur=Math.max(cur,b);
+  }
+  if(cur<u1) solids.push([cur,u1,y0,y0+H]);
+  solids.forEach(([a,b,yb,yt],k)=>{
+    const w=b-a,h=yt-yb; if(w<=0.002||h<=0.002)return;
+    const cu=(a+b)/2,cy=(yb+yt)/2;
+    if(axis==='x') addBox(group,cu,cy,fixed,w,h,t,'wall',`WALL|${fkey}|${room}|${tag}s${k}`,true,tint);
+    else addBox(group,fixed,cy,cu,t,h,w,'wall',`WALL|${fkey}|${room}|${tag}s${k}`,true,tint);
+  });
+}
+function buildRoom(group,room,fkey,baseY,def){
+  const rect=room.rect,[x,z,w,d]=rect;
+  const H=room.wall_h||def.wall_h, t=def.wall_t, name=room.id||'room';
+  /* تشطيبات الغرفة: لون خاص بهذه الغرفة وحدها */
+  const wcol=normHex(room.wall_color), fcol=normHex(room.floor_color), ccol=normHex(room.ceiling_color);
+  const per={N:[],S:[],E:[],W:[]};
+  (room.doors||[]).forEach(dr=>{per[dr.edge].push([openU(dr.edge,rect,dr.offset),dr.width||0.9,0,dr.height||2.1]);});
+  (room.windows||[]).forEach(wn=>{const s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+    per[wn.edge].push([openU(wn.edge,rect,wn.offset),wn.width||1.2,s,s+h]);});
+  const dk=dockOpenings(room);
+  for(const e of['N','S','E','W']) per[e]=per[e].concat(dk[e]);
+
+  /* نمط الجدار: مناطق المستودع وحدها مفتوحة (دهان أرضي).
+     الغرف السكنية/المكتبية تبقى بجدران كاملة حتى لو حملت role. */
+  const wallsMode=room.walls||((def.industrial&&room.role&&!ADMIN_ROLES[room.role])?'none':'full');
+  const WH={none:0, line:0, low:1.10, half:1.80, rail:1.10, glass:H, full:H};
+  const hW=(WH[wallsMode]==null?H:WH[wallsMode]);
+  if(wallsMode==='none'||wallsMode==='line'){
+    /* حدّ المنطقة: شريط دهان أرضي بلون الوظيفة + لوحة اسم المنطقة */
+    const zc=wcol||ROLE_COLOR[room.role]||'#2563eb';
+    for(const e of['N','S','E','W']){
+      const[axis,fixed,u0,u1]=edgeGeom(e,rect);
+      if(axis==='x') addBox(group,(u0+u1)/2,baseY+0.006,fixed,u1-u0,0.012,0.15,'paint_zone',
+            `FLOOR|${fkey}|${name}|zone${e}`,false,zc);
+      else addBox(group,fixed,baseY+0.006,(u0+u1)/2,0.15,0.012,u1-u0,'paint_zone',
+            `FLOOR|${fkey}|${name}|zone${e}`,false,zc);
+    }
+    addBox(group,x+w/2,baseY+0.01,z+d/2,Math.min(w*0.5,6),0.014,Math.min(d*0.22,2.2),'paint_zone',
+      `FLOOR|${fkey}|${name}|label`,false,zc);
+  }else{
+    for(const e of['N','S','E','W']){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
+      wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
+        wcol||(room.role?ROLE_COLOR[room.role]:null));}
+  }
+  /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
+  if(fcol) addBox(group,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
+                  'floor',`FLOOR|${fkey}|${name}|plate`,false,fcol);
+  if(ccol) addBox(group,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
+                  'ceiling',`FLOOR|${fkey}|${name}|ceil`,false,ccol);
+  (room.doors||[]).forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
+    const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
+    const dcol=normHex(dr.color);
+    if(axis==='x')addBox(group,uc,cy,fixed,wd,dh,0.06,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);
+    else addBox(group,fixed,cy,uc,0.06,dh,wd,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);});
+  (room.windows||[]).forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+    const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
+    if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
+    else addBox(group,fixed,cy,uc,0.05,h,wd,'window',`WINDOW|${fkey}|${name}|${i}`,false);});
+  (room.points||[]).forEach((pt,j)=>{const kind=pt.type||'outlet';const K=POINT_KINDS[kind]||POINT_KINDS.outlet;
+    const[layer,mat,defH,size]=K;const px=x+(pt.x==null?w/2:pt.x),pz=z+(pt.z==null?d/2:pt.z);let py;
+    if(defH==null){ if(kind==='camera')py=baseY+H-0.15; else if(kind==='ac')py=baseY+H-0.35; else py=baseY+H-size[1]/2-0.02; }
+    else py=baseY+(pt.height==null?defH:pt.height);
+    addBox(group,px,py,pz,size[0],size[1],size[2],mat,`${layer}|${fkey}|${name}|${kind}${j}`,false);});
+  (room.furniture||[]).forEach((fu,k)=>{const fx=x+fu.x,fz=z+fu.z,fw=fu.w||0.8,fd=fu.d||0.8,fh=fu.h||0.8;
+    addBox(group,fx,baseY+fh/2,fz,fw,fh,fd,fu.mat||'furn',`FURN|${fkey}|${name}|${fu.name||'obj'}${k}`,true);});
+  /* العناصر الصناعية المضغوطة */
+  if(room.racks)    buildRacks(group,room,fkey,baseY,def);
+  if(room.lanes)    buildLanes(group,room,fkey,baseY,def);
+  if(room.stations) buildStations(group,room,fkey,baseY,def);
+  if(room.docks)    buildDocks(group,room,fkey,baseY,def);
+}
+/* ==================================================================
+   عناصر صناعية/لوجستية مضغوطة — سطر JSON واحد يولّد مئات القطع.
+   هذا ما يسمح بتنفيذ طلب ضخم كاملاً بلا انقطاع مخرج النموذج.
+   ================================================================== */
+/* مستوى التفصيل: يوازن بين واقعية المشهد وسلاسة الحركة على الجهاز */
+let DETAIL=1.0;
+const DQ=(v,min,max)=>Math.max(min,Math.min(Math.round(v*DETAIL),max));
+const RACK_DEF={
+  pallet:{depth:1.10, bay:2.70, h:8.0, levels:4, aisle:3.40},
+  shelf: {depth:0.60, bay:1.20, h:2.40, levels:5, aisle:1.40},
+  bin:   {depth:0.45, bay:0.90, h:2.10, levels:6, aisle:1.10},
+  mezz:  {depth:1.20, bay:3.00, h:5.00, levels:2, aisle:2.50},
+  flow:  {depth:1.20, bay:1.50, h:2.20, levels:4, aisle:1.60},
+  cage:  {depth:1.00, bay:1.20, h:1.80, levels:1, aisle:1.20}
+};
+/* رفوف: صفوف متكرّرة بممرّات بينها */
+function buildRacks(group, room, fkey, baseY, def){
+  const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
+  (room.racks||[]).forEach((R,ri)=>{
+    const K=RACK_DEF[R.kind]||RACK_DEF.pallet;
+    const depth=+R.depth||K.depth, bay=+R.bay||K.bay, H=+R.h||K.h;
+    const lv=Math.max(1,Math.min(+R.levels||K.levels,10)), aisle=+R.aisle||K.aisle;
+    const dir=(R.dir==='z')?'z':'x';                 // اتجاه امتداد صف الرفّ
+    const bx=rx+(+R.x||0), bz=rz+(+R.z||0);
+    const bw=Math.min(+R.w||rw,rw), bd=Math.min(+R.d||rd,rd);
+    const runLen = dir==='x'? bw : bd;               // طول الصف
+    const across = dir==='x'? bd : bw;               // العمق المتاح للصفوف
+    const pitch  = depth+aisle;
+    let rows=+R.rows||Math.max(1,Math.floor((across+aisle)/pitch));
+    rows=Math.max(1,Math.min(rows,40));
+    const bays=Math.max(1,Math.min(Math.floor(runLen/bay),60));
+    const segs=Math.min(bays,DQ(8,2,20));            // تقسيم البضاعة (حدّ للأداء)
+    const posts=Math.min(bays+1,DQ(6,2,14));
+    const tint=normHex(R.color);
+    for(let r=0;r<rows;r++){
+      const off=r*pitch+depth/2;
+      if(off-depth/2>across-0.05) break;
+      const cA = dir==='x' ? (bz+off) : (bx+off);    // مركز الصف عبر الاتجاه
+      const c0 = dir==='x' ? bx : bz;                // بداية الصف
+      // ألواح كل مستوى
+      for(let L=0;L<lv;L++){
+        const y=baseY+0.12+(H-0.2)*(L/(lv));
+        if(dir==='x') addBox(group,c0+runLen/2,y,cA,runLen,0.07,depth,'deck',
+              `FURN|${fkey}|${nm}|rack${ri}r${r}L${L}`,false,tint);
+        else addBox(group,cA,y,c0+runLen/2,depth,0.07,runLen,'deck',
+              `FURN|${fkey}|${nm}|rack${ri}r${r}L${L}`,false,tint);
+        // بضاعة/بالتات على المستوى
+        const segL=runLen/segs;
+        for(let s=0;s<segs;s++){
+          if((s+r+L)%4===3) continue;                // فراغات واقعية
+          const cu=c0+segL*(s+0.5), gh=Math.min((H-0.2)/lv-0.25,1.15);
+          if(gh<0.2) continue;
+          if(dir==='x') addBox(group,cu,y+0.05+gh/2,cA,segL*0.86,gh,depth*0.86,'goods',
+                `FURN|${fkey}|${nm}|goods${ri}r${r}L${L}s${s}`,false);
+          else addBox(group,cA,y+0.05+gh/2,cu,depth*0.86,gh,segL*0.86,'goods',
+                `FURN|${fkey}|${nm}|goods${ri}r${r}L${L}s${s}`,false);
+        }
+      }
+      // قوائم رأسية
+      for(let p=0;p<posts;p++){
+        const cu=c0+runLen*(p/(posts-1||1));
+        for(const sgn of [-1,1]){
+          const ca=cA+sgn*(depth/2-0.05);
+          if(dir==='x') addBox(group,cu,baseY+H/2,ca,0.10,H,0.10,'steel',
+                `FURN|${fkey}|${nm}|post${ri}r${r}p${p}`,true);
+          else addBox(group,ca,baseY+H/2,cu,0.10,H,0.10,'steel',
+                `FURN|${fkey}|${nm}|post${ri}r${r}p${p}`,true);
+        }
+      }
+      // عارضة سفلية برتقالية (تمييز صناعي)
+      if(dir==='x') addBox(group,c0+runLen/2,baseY+0.32,cA,runLen,0.10,depth*1.02,'beam',
+            `FURN|${fkey}|${nm}|beam${ri}r${r}`,false);
+      else addBox(group,cA,baseY+0.32,c0+runLen/2,depth*1.02,0.10,runLen,'beam',
+            `FURN|${fkey}|${nm}|beam${ri}r${r}`,false);
+    }
+  });
+}
+/* ممرّات ودهانات أرضية + أسهم اتجاه + سيور ناقلة */
+const LANE_MAT={forklift:'paint_lane',pedestrian:'paint_ped',amr:'paint_amr',robot:'paint_amr',
+  one_way:'paint_lane',zone:'paint_zone',fire:'paint_fire',safety:'paint_fire'};
+function buildLanes(group, room, fkey, baseY, def){
+  const [rx,rz]=room.rect, nm=room.id||'room';
+  (room.lanes||[]).forEach((L,li)=>{
+    const kind=L.kind||'forklift';
+    const x=rx+(+L.x||0), z=rz+(+L.z||0), w=+L.w||2.5, d=+L.d||2.5;
+    const dir=(L.dir==='z')?'z':'x';
+    const len=dir==='x'?w:d, wid=dir==='x'?d:w;
+    if(kind==='conveyor'){ buildConveyor(group,x,z,w,d,dir,baseY,fkey,nm,li,L); return; }
+    const tint=normHex(L.color);
+    // بساط الدهان
+    addBox(group,x+w/2,baseY+0.008,z+d/2,w,0.016,d,LANE_MAT[kind]||'paint_lane',
+      `SAFETY|${fkey}|${nm}|lane${li}`,false,tint);
+    // خطّان جانبيان (حدود الممر)
+    if(kind==='pedestrian'||kind==='forklift'||kind==='one_way'){
+      for(const sgn of [-1,1]){
+        if(dir==='x') addBox(group,x+w/2,baseY+0.018,z+d/2+sgn*(d/2-0.06),w,0.012,0.12,'paint_ped',
+              `SAFETY|${fkey}|${nm}|lane${li}edge`,false);
+        else addBox(group,x+w/2+sgn*(w/2-0.06),baseY+0.018,z+d/2,0.12,0.012,d,'paint_ped',
+              `SAFETY|${fkey}|${nm}|lane${li}edge`,false);
+      }
+    }
+    // أسهم اتجاه الحركة
+    if(L.arrow!==false&&kind!=='zone'){
+      const n=Math.max(1,Math.min(Math.floor(len/6),20));
+      const sign=(L.reverse?-1:1);
+      for(let i=0;i<n;i++){
+        const u=len*((i+0.5)/n);
+        const cx=dir==='x'? x+u : x+w/2, cz=dir==='x'? z+d/2 : z+u;
+        const a=Math.min(wid*0.28,0.55);
+        for(const s of [-1,1]){
+          const rot=(dir==='x'? (s*sign*Math.PI/4) : (Math.PI/2 + s*sign*Math.PI/4));
+          addBox(group,cx,baseY+0.024,cz,a*1.6,0.012,0.13,'paint_ped',
+            `SAFETY|${fkey}|${nm}|arrow${li}_${i}`,false,null,rot);
+        }
+      }
+    }
+  });
+}
+function buildConveyor(group,x,z,w,d,dir,baseY,fkey,nm,li,L){
+  const h=+L.h||0.85, len=dir==='x'?w:d, wid=dir==='x'?d:w;
+  const cx=x+w/2, cz=z+d/2;
+  addBox(group,cx,baseY+h,cz,w,0.10,d,'belt',`FURN|${fkey}|${nm}|conv${li}`,true);
+  for(const sgn of [-1,1]){                     // حواجز أمان جانبية
+    if(dir==='x') addBox(group,cx,baseY+h+0.16,cz+sgn*(d/2-0.03),w,0.22,0.06,'guard',
+          `SAFETY|${fkey}|${nm}|convrail${li}`,false);
+    else addBox(group,cx+sgn*(w/2-0.03),baseY+h+0.16,cz,0.06,0.22,d,'guard',
+          `SAFETY|${fkey}|${nm}|convrail${li}`,false);
+  }
+  const legs=Math.max(2,Math.min(Math.floor(len/2.5),24));
+  for(let i=0;i<legs;i++){
+    const u=len*(i/(legs-1||1));
+    const lx=dir==='x'? x+u : cx, lz=dir==='x'? cz : z+u;
+    addBox(group,lx,baseY+h/2,lz,0.09,h,0.09,'frame',`FURN|${fkey}|${nm}|convleg${li}_${i}`,false);
+  }
+  // نقاط إيقاف الطوارئ كل ~12م
+  const es=Math.max(1,Math.floor(len/12));
+  for(let i=0;i<es;i++){
+    const u=len*((i+0.5)/es);
+    const ex2=dir==='x'? x+u : cx+wid/2, ez2=dir==='x'? cz+wid/2 : z+u;
+    addBox(group,ex2,baseY+1.05,ez2,0.16,0.16,0.08,'safety',`SAFETY|${fkey}|${nm}|estop${li}_${i}`,false);
+  }
+}
+/* محطات عمل متكرّرة (تغليف/فحص/ملصقات/فرز) */
+const STA_DEF={pack:{w:1.8,d:0.9,h:0.9,pitch:2.6,screen:true,printer:true},
+  inspect:{w:1.6,d:0.9,h:0.9,pitch:2.4,screen:true,printer:false},
+  label:{w:1.2,d:0.8,h:0.9,pitch:1.8,screen:true,printer:true},
+  qa:{w:1.4,d:0.9,h:0.9,pitch:2.2,screen:true,printer:false},
+  sort:{w:2.2,d:1.0,h:0.85,pitch:3.0,screen:false,printer:false},
+  void:{w:1.2,d:1.0,h:1.3,pitch:2.0,screen:false,printer:false},
+  desk:{w:1.5,d:0.75,h:0.75,pitch:2.0,screen:true,printer:false},
+  charger:{w:0.7,d:0.5,h:0.5,pitch:1.2,screen:false,printer:false},
+  locker:{w:0.9,d:0.5,h:1.9,pitch:0.95,screen:false,printer:false},
+  wrap:{w:1.6,d:1.6,h:2.0,pitch:3.0,screen:false,printer:false}};
+function buildStations(group, room, fkey, baseY, def){
+  const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
+  (room.stations||[]).forEach((S,si)=>{
+    const K=STA_DEF[S.kind]||STA_DEF.pack;
+    const w=+S.w||K.w, d=+S.d||K.d, h=+S.h||K.h, pitch=+S.pitch||K.pitch;
+    const dir=(S.dir==='z')?'z':'x';
+    const n=Math.max(1,Math.min(+S.count||1,60));
+    const x0=rx+(+S.x||0.6), z0=rz+(+S.z||0.6);
+    const tint=normHex(S.color);
+    for(let i=0;i<n;i++){
+      const cx=dir==='x'? x0+pitch*i+w/2 : x0+w/2;
+      const cz=dir==='x'? z0+d/2 : z0+pitch*i+d/2;
+      if(cx>rx+rw+0.2||cz>rz+rd+0.2) break;
+      addBox(group,cx,baseY+h-0.04,cz,w,0.08,d,'counter',`FURN|${fkey}|${nm}|st${si}_${i}`,true,tint);
+      for(const sx of [-1,1]) for(const sz of [-1,1])
+        addBox(group,cx+sx*(w/2-0.08),baseY+h/2,cz+sz*(d/2-0.08),0.07,h,0.07,'frame',
+          `FURN|${fkey}|${nm}|stleg${si}_${i}`,false);
+      if(K.screen) addBox(group,cx,baseY+h+0.28,cz-d/2+0.1,0.52,0.34,0.04,'screen',
+          `ELEC|${fkey}|${nm}|stscr${si}_${i}`,false);
+      if(K.printer) addBox(group,cx+w/2-0.22,baseY+h+0.11,cz,0.3,0.18,0.28,'frame',
+          `ELEC|${fkey}|${nm}|stprn${si}_${i}`,false);
+      if(S.kind==='void') addBox(group,cx,baseY+h+0.3,cz,w*0.8,0.55,d*0.8,'goods',
+          `FURN|${fkey}|${nm}|stvoid${si}_${i}`,false);
+      if(S.kind==='charger') addBox(group,cx,baseY+0.1,cz+d/2+0.35,0.55,0.2,0.55,'robot',
+          `FURN|${fkey}|${nm}|strobot${si}_${i}`,false);
+    }
+  });
+}
+/* أرصفة التحميل: باب منزلق + لوح تسوية + مصدّات */
+function buildDocks(group, room, fkey, baseY, def){
+  const rect=room.rect, nm=room.id||'room';
+  (room.docks||[]).forEach((D,di)=>{
+    const n=Math.max(1,Math.min(+D.count||1,24));
+    const pitch=+D.pitch||(( +D.width||3.0)+1.8);
+    for(let i=0;i<n;i++){
+      const off=(+D.offset||3)+pitch*i, wd=+D.width||3.0, dh=+D.height||4.0;
+      const e=D.edge||'N';
+      const [axis,fixed]=edgeGeom(e,rect);
+      const uc=openU(e,rect,off);
+      const outw=(e==='N'||e==='W')?-1:1;
+      if(axis==='x'){
+        addBox(group,uc,baseY+dh/2,fixed,wd,dh,0.10,'dockdoor',`DOOR|${fkey}|${nm}|dock${di}_${i}`,true);
+        addBox(group,uc,baseY+0.06,fixed+outw*0.9,wd,0.12,1.7,'frame',`FLOOR|${fkey}|${nm}|leveler${di}_${i}`,false);
+        for(const s of [-1,1]) addBox(group,uc+s*(wd/2+0.12),baseY+0.55,fixed+outw*0.12,0.22,0.5,0.3,'bumper',
+              `SAFETY|${fkey}|${nm}|bump${di}_${i}`,false);
+      }else{
+        addBox(group,fixed,baseY+dh/2,uc,0.10,dh,wd,'dockdoor',`DOOR|${fkey}|${nm}|dock${di}_${i}`,true);
+        addBox(group,fixed+outw*0.9,baseY+0.06,uc,1.7,0.12,wd,'frame',`FLOOR|${fkey}|${nm}|leveler${di}_${i}`,false);
+        for(const s of [-1,1]) addBox(group,fixed+outw*0.12,baseY+0.55,uc+s*(wd/2+0.12),0.3,0.5,0.22,'bumper',
+              `SAFETY|${fkey}|${nm}|bump${di}_${i}`,false);
+      }
+    }
+  });
+}
+/* فتحات الأرصفة تُحسَب ضمن فتحات الجدار حتى لا يُبنى جدار مصمت مكانها */
+function dockOpenings(room){
+  const out={N:[],S:[],E:[],W:[]};
+  (room.docks||[]).forEach(D=>{
+    const n=Math.max(1,Math.min(+D.count||1,24));
+    const wd=+D.width||3.0, dh=+D.height||4.0, pitch=+D.pitch||(wd+1.8), e=D.edge||'N';
+    for(let i=0;i<n;i++) out[e].push([openU(e,room.rect,(+D.offset||3)+pitch*i),wd,0,dh]);
+  });
+  return out;
+}
+
+const ADMIN_ROLES={office:1,admin:1,it:1,staff:1,maintenance:1,meeting:1};
+function compile(data){
+  const grp=new THREE.Group(); grp.name='BUILDING';
+  const site=data.site||{w:30,d:25};
+  const bt=String(((data.meta||{}).type)||'residential').toLowerCase();
+  const industrial=/warehouse|industrial|factory|logistic/.test(bt);
+  const def={site,wall_h:data.wall_h||3.0,wall_t:data.wall_t||0.15,industrial:industrial};
+  const fh=data.floor_height||(def.wall_h+0.2);
+  (data.levels||[]).forEach(lvl=>{
+    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=lvl.index*fh; const fkey='F'+lvl.index;
+    addBox(grp,site.w/2,baseY-0.075,site.d/2,site.w,0.15,site.d,'floor',`FLOOR|${fkey}|slab|0`,true);
+    (fdef.rooms||[]).forEach(r=>buildRoom(grp,r,fkey,baseY,def));
+  });
+  return grp;
+}
+
+/* ========================= محلّل الوصف العربي (best-effort) ========================= */
+const AR_NUM={'صفر':0,'واحد':1,'واحدة':1,'اثنين':2,'اثنان':2,'اثنتين':2,'ثلاث':3,'ثلاثة':3,'اربع':4,'أربع':4,'اربعة':4,'أربعة':4,
+  'خمس':5,'خمسة':5,'ست':6,'ستة':6,'سبع':7,'سبعة':7,'ثمان':8,'ثمانية':8,'ثماني':8,'تسع':9,'تسعة':9,'عشر':10,'عشرة':10};
+function normDigits(s){return s
+  .replace(/[٠-٩]/g,d=>String(d.charCodeAt(0)-0x0660))
+  .replace(/[۰-۹]/g,d=>String(d.charCodeAt(0)-0x06F0))
+  .replace(/٫/g,'.').replace(/٬/g,'');}
+const ROOM_KW=['مجلس','صالة','صاله','صالون','مطبخ','نوم','حمام','دورة','مدخل','فوييه','فوية','مالبس','ملابس',
+  'خادمة','غسيل','بلكونة','بلكونه','مكتب','مكتبة','غرفة','مخزن','لوبي','استقبال','استوديو','مصلى','حارس','ممر'];
+function stripBidi(s){return s.replace(/[‎‏‪-‮⁦-⁩ـ]/g,'');}
+function hasRoomKW(s){return ROOM_KW.some(k=>s.includes(k));}
+function cleanName(s){return stripBidi(s).replace(/\d+(\.\d+)?\s*م²?/g,' ')
+  .replace(/[()\[\]:،؛\/\-–—|]/g,' ').replace(/\s+/g,' ').trim();}
+function detectMeta(text){const t=stripBidi(normDigits(text)); let W=null,D=null,nF=null,m;
+  if((m=t.match(/واجهة\s*(\d+(?:\.\d+)?)/)))W=parseFloat(m[1]);
+  if((m=t.match(/عمق\s*(\d+(?:\.\d+)?)/)))D=parseFloat(m[1]);
+  if((m=t.match(/(\d+)[\s+]*أدوار?\s*متكرر/)))nF=parseInt(m[1]);
+  return {W,D,nF};}
+function countNear(block,kw){
+  // يبحث عن رقم (رقم أو كلمة عربية) قبل/بعد الكلمة المفتاحية، وإلا 1
+  const re=new RegExp('([\\u0600-\\u06ff]+|\\d+)\\s+'+kw+'|'+kw+'\\s*(\\d+)?','g');
+  let m,total=0,found=false;
+  while((m=re.exec(block))){found=true;
+    let n=1; const pre=m[1],post=m[2];
+    if(post&&/\d+/.test(post))n=parseInt(post);
+    else if(pre){ if(/\d+/.test(pre))n=parseInt(pre); else if(AR_NUM[pre]!=null)n=AR_NUM[pre]; }
+    total+=n;
+  }
+  return found?Math.max(total,1):0;
+}
+function parseDescription(text, siteW, siteD, nFloors){
+  text=normDigits(text);
+  const lines=text.split(/\n|،/).map(s=>s.trim()).filter(Boolean);
+  const dim=/(\d+(?:\.\d+)?)\s*[×xX*]\s*(\d+(?:\.\d+)?)/;
+  const rooms=[];
+  for(const ln of lines){
+    const dm=ln.match(dim); if(!dm) continue;
+    const w=parseFloat(dm[1]), d=parseFloat(dm[2]);
+    if(!(w>=0.8&&w<=15&&d>=0.8&&d<=15)) continue;   // مقاسات غرف بالأمتار فقط (تستبعد سم والأرض)
+    const before=cleanName(ln.slice(0,dm.index));
+    const after=cleanName(ln.slice(dm.index+dm[0].length));
+    let name = hasRoomKW(after)?after : hasRoomKW(before)?before : '';
+    if(!name) continue;                             // لازم اسم غرفة معروف (يستبعد الأعمدة/الأبواب/المواقف)
+    name=name.split(/\s+/).slice(0,5).join(' ');
+    let id=name.replace(/\s+/g,'_').slice(0,22)||('r'+(rooms.length+1));
+    if(rooms.some(r=>r.id===id)) continue;          // تفادي التكرار من جدول المساحات
+    rooms.push({id,name,w,d,block:stripBidi(ln)});
+  }
+  const clean=rooms;
+  // تخطيط تلقائي (shelf packing) داخل الأرض
+  const margin=1, gap=0.4; let cx=margin, rowZ=margin, rowMaxD=0;
+  clean.forEach(r=>{
+    if(cx+r.w>siteW-margin){ cx=margin; rowZ+=rowMaxD+gap; rowMaxD=0; }
+    r.rect=[cx,rowZ,r.w,r.d]; cx+=r.w+gap; rowMaxD=Math.max(rowMaxD,r.d);
+    // أبواب/نوافذ/نقاط من النص
+    r.doors=[{edge:'N',offset:r.w/2,width:/بلوط|خشب|مصفح/.test(r.block)?1.0:0.9,height:2.1,
+              material:/زجاج/.test(r.block)?'glass':'wood'}];
+    r.windows=[]; if(/نافذة|نوافذ|شباك/.test(r.block)){const wm=r.block.match(dim);
+      r.windows.push({edge:'S',offset:r.d/2>0?r.w/2:1,width:Math.min(r.w-1,/(\d+(?:\.\d+)?)\s*متر/.test(r.block)?parseFloat(RegExp.$1):2),sill:0.9,height:1.6});}
+    r.points=[]; r.furniture=[];
+    const put=(type,n,spread)=>{for(let i=0;i<n;i++){const fx=0.5+((i+1)/(n+1))*(r.w-1);
+      r.points.push({type, x:fx, z:spread});}};
+    const nOut=countNear(r.block,'(?:أفياش|افياش|فيش|فيشين|مخارج|مخرج)'); if(nOut)put('outlet',Math.min(nOut,10),0.3);
+    if(/مفتاح/.test(r.block))r.points.push({type:'switch',x:r.w-0.5,z:0.5});
+    if(/شبكة|RJ45|إنترنت|انترنت/.test(r.block))r.points.push({type:'network',x:0.3,z:r.d/2});
+    if(/شاشة|تلفزيون|تلفاز/.test(r.block))r.points.push({type:'tv',x:r.w-0.3,z:r.d/2});
+    const nCam=countNear(r.block,'(?:كاميرات|كاميرا)'); for(let i=0;i<nCam;i++)r.points.push({type:'camera',x:0.3+i,z:0.3});
+    if(/ثريا|إنارة|انارة|سبوت|لمبة|إضاءة/.test(r.block))r.points.push({type:'light',x:r.w/2,z:r.d/2});
+    else r.points.push({type:'light',x:r.w/2,z:r.d/2});
+    if(/تكييف|مكيف|VRF|سبليت/.test(r.block))r.points.push({type:'ac',x:r.w/2,z:0.2});
+    if(/دخان/.test(r.block))r.points.push({type:'smoke',x:r.w/2,z:r.d/2});
+    if(/رشاش/.test(r.block))r.points.push({type:'sprinkler',x:r.w/2,z:r.d*0.7});
+    delete r.block; delete r._pending; delete r.w; delete r.d; delete r.name;
+  });
+  // مبنى: أرضي بسيط + أدوار نموذجية مكرّرة + سطح
+  const levels=[{index:0,name:'الأرضي',template:'ground'}];
+  for(let i=1;i<=nFloors;i++)levels.push({index:i,name:FLOOR_NAMES['F'+i]||('الدور '+i),template:'typical'});
+  levels.push({index:nFloors+1,name:'السطح',template:'roof'});
+  const ground={rooms:[{id:'lobby',rect:[siteW/2-4,1,8,7],
+    doors:[{edge:'N',offset:4,width:2.5,height:2.5,material:'glass'}],
+    windows:[{edge:'N',offset:1.5,width:2,sill:1,height:1.6}],
+    points:[{type:'light',x:4,z:3.5},{type:'camera',x:0.3,z:0.3},{type:'tv',x:7.7,z:3.5}],
+    furniture:[{name:'reception',x:4,z:3.5,w:2.4,d:0.8,h:1.1,mat:'counter'}]}]};
+  const roof={rooms:[{id:'parapet',rect:[0.2,0.2,siteW-0.4,siteD-0.4],wall_h:1.4},
+    {id:'tanks',rect:[1,1,4,3],furniture:[{name:'tank',x:2,z:1.5,w:1.6,d:1.6,h:2,mat:'furn'}]},
+    {id:'solar',rect:[siteW-12,siteD-8,10,6],furniture:[{name:'panel',x:5,z:3,w:8,d:4,h:0.15,mat:'tv'}]}]};
+  return {site:{w:siteW,d:siteD},floor_height:3.2,wall_h:3.0,wall_t:0.15,
+    levels, floors:{ground, typical:{rooms:clean}, roof}};
+}
+
+/* توليد قياسي سريع */
+/* ==================================================================
+   مولّد مستودع تجارة إلكترونية كامل — محلي، بلا خادم، بأي مقاس أرض.
+   يغطّي البنود التسعة: استلام · تخزين · التقاط · تغليف · فرز · شحن ·
+   حركة وسلامة · إدارة وخدمات · ترميز لوني وقياسات واقعية.
+   ================================================================== */
+function warehouseModel(W,D,opt){
+  opt=opt||{}; W=Math.max(30,+W||120); D=Math.max(25,+D||80);
+  const H=Math.max(6,Math.min(+opt.clear||12,16));      // ارتفاع صافٍ
+  const OPT_DOCK=+opt.docks||0, OPT_PACK=+opt.pack||0, OPT_AISLE=+opt.aisle||0;
+  const R=[], P=(t,x,z,h)=>{const o={type:t,x:+x.toFixed(2),z:+z.toFixed(2)};if(h!=null)o.height=h;return o;};
+  const Z=(id,rect,role,extra)=>{const r=Object.assign({id,rect:rect.map(v=>+v.toFixed(2)),
+    role:role||undefined,walls:'none'},extra||{}); R.push(r); return r;};
+  const fx=f=>W*f, fz=f=>D*f;
+  // حزم أفقية (نِسَب مأخوذة من تخطيط 120×80 المرجعي)
+  const b={in0:0, in1:fz(0.1125), un1:fz(0.1875), st1:fz(0.275),
+           sto1:fz(0.675), pick1:fz(0.80), pack1:fz(0.9125), out1:D};
+
+  /* غلاف المبنى + سلامة محيطية */
+  const shell=[];
+  for(let i=0;i<Math.max(5,Math.round(W/25));i++){const x=W*(i+0.5)/Math.max(5,Math.round(W/25));
+    shell.push(P('camera',x,1),P('camera',x,D-1));}
+  for(let i=0;i<Math.max(8,Math.round(W/12));i++){const x=W*(i+0.5)/Math.max(8,Math.round(W/12));
+    shell.push(P('extinguisher',x,0.6),P('extinguisher',x,D-0.6));}
+  shell.push(P('exit',2,0.4,2.4),P('exit',W-2,0.4,2.4),P('exit',2,D-0.4,2.4),P('exit',W-2,D-0.4,2.4),
+    P('exit',0.4,D/2,2.4),P('exit',W-0.4,D/2,2.4),P('gate',1,D*0.5),P('gate',W-1,D*0.5),
+    P('camera',1,D*0.25),P('camera',1,D*0.75),P('camera',W-1,D*0.25),P('camera',W-1,D*0.75),
+    P('hydrant',0.6,D*0.15),P('hydrant',0.6,D*0.5),P('hydrant',0.6,D*0.85),
+    P('hydrant',W-0.6,D*0.15),P('hydrant',W-0.6,D*0.5),P('hydrant',W-0.6,D*0.85));
+  Z('envelope',[0,0,W,D],null,{walls:'full',wall_h:H,points:shell});
+
+  /* ١ — الاستلام والوارد */
+  const nDock=OPT_DOCK||Math.max(3,Math.floor(fx(0.43)/6.2));
+  Z('inbound_docks',[0,0,fx(0.433),b.in1],'receiving',{
+    docks:[{edge:'N',offset:4.5,width:3.6,height:4.2,count:nDock,pitch:6.2}],
+    lanes:[{kind:'forklift',x:0.5,z:b.in1-3.8,w:fx(0.433)-1,d:3.4,dir:'x'}],
+    points:[...Array(nDock)].map((_,i)=>P('scanner',3+6.2*i,1.2))
+      .concat([...Array(nDock)].map((_,i)=>P('sign',4.5+6.2*i,0.6,3.2)))
+      .concat([P('camera',fx(0.21),1),P('extinguisher',fx(0.42),b.in1-0.6),P('estop',fx(0.1),b.in1-0.6)])});
+  Z('fast_unload',[0,b.in1,fx(0.433),b.un1-b.in1],'receiving',{
+    lanes:[{kind:'conveyor',x:2,z:1.4,w:fx(0.38),d:0.9,dir:'x',h:0.85},
+           {kind:'pedestrian',x:0.5,z:(b.un1-b.in1)-1.9,w:fx(0.42),d:1.4,dir:'x'}],
+    points:[P('palletjack',fx(0.05),2.6),P('palletjack',fx(0.15),2.6),P('palletjack',fx(0.25),2.6),
+            P('forklift',fx(0.1),1),P('forklift',fx(0.3),1),P('smoke',fx(0.21),2)]});
+  const nLane=Math.max(6,Math.floor(fx(0.65)/6.4));
+  Z('inbound_staging',[0,b.un1,fx(0.65),b.st1-b.un1],'receiving',{
+    lanes:[...Array(nLane)].map((_,i)=>({kind:'zone',x:6.4*i+0.3,z:0.3,w:6,d:(b.st1-b.un1)-0.6,dir:'z',arrow:false})),
+    points:[...Array(nLane)].map((_,i)=>P('sign',6.4*i+3.3,0.5,2.6))
+      .concat([P('camera',fx(0.32),0.8),P('smoke',fx(0.32),(b.st1-b.un1)/2)])});
+  Z('qc_inspection',[fx(0.433),0,fx(0.217),b.un1],'qc',{
+    stations:[{kind:'inspect',x:1.5,z:1.5,count:Math.max(3,Math.floor(fx(0.2)/4)),pitch:4,dir:'x'},
+              {kind:'qa',x:1.5,z:b.un1*0.6,count:Math.max(3,Math.floor(fx(0.2)/4.6)),pitch:4.6,dir:'x'}],
+    points:[P('scale',fx(0.19),3),P('printer',fx(0.19),7),P('monitor',fx(0.1),0.6),
+            P('bin',3,b.un1-1.2),P('bin',9,b.un1-1.2),P('bin',15,b.un1-1.2),
+            P('camera',fx(0.1),1),P('smoke',fx(0.1),b.un1/2),P('extinguisher',fx(0.2),b.un1-0.8)]});
+  Z('crossdock',[fx(0.65),0,W-fx(0.65),b.un1],'crossdock',{
+    docks:[{edge:'N',offset:4,width:3.6,height:4.2,count:Math.max(2,Math.floor((W-fx(0.65))/7.5)),pitch:7.5}],
+    lanes:[{kind:'conveyor',x:2,z:b.un1*0.5,w:(W-fx(0.65))-4,d:0.9,dir:'x',h:0.9},
+           {kind:'forklift',x:1,z:b.un1-4.2,w:(W-fx(0.65))-2,d:3.6,dir:'x'}],
+    points:[P('diverter',10,b.un1*0.55),P('diverter',20,b.un1*0.55),P('diverter',30,b.un1*0.55),
+            P('camera',(W-fx(0.65))/2,1),P('smoke',(W-fx(0.65))/2,b.un1/2)]});
+  Z('replenishment',[fx(0.65),b.un1,W-fx(0.65)-fx(0.133),b.st1-b.un1],'circulation',{
+    lanes:[{kind:'one_way',x:0.4,z:0.6,w:W-fx(0.65)-fx(0.133)-0.8,d:Math.max(3.2,(b.st1-b.un1)-1.2),dir:'x'}],
+    points:[P('sign',(W-fx(0.65)-fx(0.133))/2,0.5,2.8)]});
+  Z('maintenance',[W-fx(0.133),b.un1,fx(0.133),b.st1-b.un1],'maintenance',{
+    walls:'full',wall_h:4,doors:[{edge:'W',offset:(b.st1-b.un1)/2,width:1.2,height:2.4,material:'wood'}],
+    stations:[{kind:'desk',x:1,z:1,count:3,pitch:2.4,dir:'x'}],
+    points:[P('light',fx(0.066),(b.st1-b.un1)/2),P('smoke',fx(0.066),(b.st1-b.un1)/2),
+            P('outlet',2,(b.st1-b.un1)-0.4,0.40),P('switch',fx(0.12),(b.st1-b.un1)-1,1.20),
+            P('extinguisher',fx(0.12),1),P('eyewash',1,(b.st1-b.un1)-1)]});
+
+  /* ٢ — التخزين + العمود الإداري */
+  const sd=b.sto1-b.st1, adm=fx(0.133), sx=W-adm;
+  const cols=[['bulk_pallet_A','storage',0.283,{kind:'pallet',aisle:Math.max(OPT_AISLE||3.4,3.4),levels:4,h:Math.min(H-3,9)}],
+              ['medium_shelf_B','shelf',0.217,{kind:'shelf',aisle:1.6,levels:5,h:2.6}],
+              ['bin_storage_C','bin',0.167,{kind:'bin',aisle:1.2,levels:6,h:2.2}],
+              ['flow_racks_fast','storage',0.15,{kind:'flow',aisle:1.8,levels:4,h:2.4}]];
+  let cx=0;
+  cols.forEach(([id,role,frac,rk])=>{
+    const cw=sx*frac/0.817*0.94;
+    Z(id,[cx,b.st1,cw,sd],role,{
+      racks:[Object.assign({x:0.6,z:0.6,w:cw-1.2,d:sd-1.2,dir:'x'},rk)],
+      points:[P('sign',cw/2,0.8,3.6),P('camera',cw/2,0.8),P('extinguisher',1,sd-1),
+              P('extinguisher',cw-1,sd-1)]});
+    cx+=cw;
+  });
+  Z('replen_aisle_main',[cx,b.st1,Math.max(4,sx-cx),sd],'circulation',{
+    lanes:[{kind:'one_way',x:0.6,z:0.5,w:Math.max(3.2,sx-cx-1.2),d:sd-1,dir:'z'}],
+    points:[P('sign',Math.max(2,(sx-cx)/2),1,3)]});
+  const off=[['inventory_office','office',0.25,'glass'],['it_server_room','it',0.1875,'full'],
+             ['meeting_room','admin',0.1875,'full'],['rest_area','staff',0.21875,'full'],
+             ['lockers','staff',0.15625,'full']];
+  let oz=b.st1;
+  off.forEach(([id,role,frac,wl])=>{
+    const oh=sd*frac;
+    const ex={walls:wl,wall_h:3.2,
+      doors:[{edge:'W',offset:oh/2,width:1.0,height:2.1,material:wl==='glass'?'glass':'wood'}],
+      points:[P('light',adm/2,oh/2),P('smoke',adm/2,oh/2),P('ac',adm/2,0.4),
+              P('outlet',2,oh-0.4,0.40),P('outlet',adm-2,oh-0.4,0.40),P('switch',adm*0.28,oh-0.5,1.20)]};
+    if(id==='inventory_office'){ ex.windows=[{edge:'W',offset:oh*0.8,width:Math.min(4,oh*0.4),sill:0.9,height:1.8}];
+      ex.stations=[{kind:'desk',x:1,z:1,count:4,pitch:2.6,dir:'x'}]; ex.points.push(P('monitor',adm/2,0.6)); }
+    if(id==='it_server_room') ex.points.push(P('server',3,1),P('server',6,1),P('server',9,1),P('network',1,oh/2,0.40));
+    if(id==='meeting_room') ex.furniture=[{name:'table',x:adm/2,z:oh/2,w:Math.min(4,adm*0.5),d:1.4,h:0.75,mat:'furn'}];
+    if(id==='rest_area') ex.furniture=[{name:'counter',x:adm/2,z:0.7,w:adm*0.5,d:0.7,h:0.9,mat:'counter'},
+      {name:'sofa',x:adm*0.7,z:oh-1,w:2.4,d:0.8,h:0.8,mat:'furn_soft'}];
+    if(id==='lockers') ex.stations=[{kind:'locker',x:0.6,z:0.4,count:Math.floor(adm/0.98),pitch:0.98,dir:'x'}];
+    Z(id,[sx,oz,adm,oh],role,ex); oz+=oh;
+  });
+
+  /* ٣ — الالتقاط */
+  const pd=b.pick1-b.sto1;
+  const pk=[['batch_picking','picking',0.20,{kind:'shelf',aisle:1.5,levels:4,h:2.2}],
+            ['wave_picking','wave',0.20,{kind:'flow',aisle:1.6,levels:4,h:2.2}],
+            ['zone_picking','zone_pick',0.217,{kind:'shelf',aisle:1.5,levels:5,h:2.4}],
+            ['amr_field','robot',0.183,null],
+            ['human_picking','picking',0.20,{kind:'bin',aisle:1.3,levels:5,h:2.0}]];
+  let px=0;
+  pk.forEach(([id,role,frac,rk])=>{
+    const cw=W*frac, ex={points:[P('sign',cw/2,0.6,3),P('camera',cw/2,0.8),P('smoke',cw/2,pd/2),
+      P('extinguisher',cw-1,pd-0.8)]};
+    if(rk){ ex.racks=[Object.assign({x:0.6,z:0.6,w:cw-1.2,d:pd*0.55,dir:'x'},rk)];
+      ex.lanes=[{kind:'pedestrian',x:0.4,z:pd*0.66,w:cw-0.8,d:Math.max(1.2,pd*0.16),dir:'x'}];
+      ex.stations=[{kind:'desk',x:1,z:pd*0.85,count:Math.max(3,Math.floor(cw/3.6)),pitch:3.6,dir:'x'}]; }
+    else { ex.lanes=[{kind:'amr',x:0.5,z:pd*0.1,w:cw-1,d:1.4,dir:'x'},
+                     {kind:'amr',x:0.5,z:pd*0.4,w:cw-1,d:1.4,dir:'x',reverse:true},
+                     {kind:'amr',x:0.5,z:pd*0.7,w:cw-1,d:1.4,dir:'x'}];
+           ex.stations=[{kind:'charger',x:1,z:pd*0.88,count:Math.max(4,Math.floor(cw/2)),pitch:2,dir:'x'}];
+           ex.points.push(P('robot',cw*0.2,pd*0.17),P('robot',cw*0.5,pd*0.17),P('robot',cw*0.8,pd*0.47),
+                          P('estop',cw-0.6,pd/2)); }
+    if(id==='wave_picking') for(let i=0;i<Math.floor(cw/1.6);i++) ex.points.push(P('ptl',1.6*i+1,1.2));
+    Z(id,[px,b.sto1,cw,pd],role,ex); px+=cw;
+  });
+
+  /* ٤+٥ — التغليف والفرز */
+  const kd=b.pack1-b.pick1;
+  const nPack=OPT_PACK||Math.max(4,Math.floor(W*0.266/2.7));
+  Z('packing',[0,b.pick1,W*0.266,kd],'packing',{
+    stations:[{kind:'pack',x:1,z:1,count:nPack,pitch:2.7,dir:'x'},
+              {kind:'pack',x:1,z:kd*0.6,count:nPack,pitch:2.7,dir:'x'}],
+    points:[...Array(nPack)].map((_,i)=>P('scale',2.4+2.7*i,kd*0.3))
+      .concat([...Array(nPack)].map((_,i)=>P('printer',2.4+2.7*i,kd*0.85)))
+      .concat([P('sign',W*0.133,0.5,3),P('camera',W*0.133,0.8),P('smoke',W*0.133,kd/2),
+               P('extinguisher',W*0.26,kd-0.6)])});
+  Z('labeling_qa',[W*0.266,b.pick1,W*0.133,kd],'labeling',{
+    stations:[{kind:'label',x:1,z:1,count:Math.max(3,Math.floor(W*0.133/2)),pitch:2,dir:'x'}],
+    points:[P('scanner',3,kd*0.3),P('scanner',7,kd*0.3),P('monitor',W*0.066,kd*0.75),
+            P('printer',W*0.11,kd*0.75),P('sign',W*0.066,0.5,3),P('smoke',W*0.066,kd/2)]});
+  Z('void_fill',[W*0.4,b.pick1,W*0.1,kd],'packing',{
+    stations:[{kind:'void',x:1,z:1,count:Math.max(2,Math.floor(W*0.1/2.2)),pitch:2.2,dir:'x'}],
+    points:[P('sign',W*0.05,0.5,3),P('smoke',W*0.05,kd/2),P('light',W*0.05,kd/2)]});
+  Z('consolidation',[W*0.5,b.pick1,W*0.15,kd],'consolidation',{
+    racks:[{kind:'cage',x:0.6,z:0.6,w:W*0.15-1.2,d:kd-1.2,dir:'x',aisle:1.2,levels:2,h:2}],
+    points:[P('sign',W*0.075,0.5,2.6),P('camera',W*0.075,0.8),P('smoke',W*0.075,kd/2)]});
+  Z('auto_sorter',[W*0.65,b.pick1,W*0.233,kd],'sorting',{
+    lanes:[{kind:'conveyor',x:1,z:kd*0.14,w:W*0.233-2,d:1,dir:'x',h:0.95},
+           {kind:'conveyor',x:1,z:kd*0.5,w:W*0.233-2,d:1,dir:'x',h:0.85},
+           {kind:'pedestrian',x:0.5,z:kd*0.8,w:W*0.233-1,d:1.4,dir:'x'}],
+    points:[...Array(Math.max(4,Math.floor(W*0.233/3)))].map((_,i)=>P('diverter',3.5+3*i,kd*0.3))
+      .concat([...Array(Math.max(4,Math.floor(W*0.233/3)))].map((_,i)=>P('chute',3.5+3*i,kd*0.68)))
+      .concat([P('estop',5,kd*0.12),P('estop',W*0.12,kd*0.12),P('sign',W*0.116,0.4,3.2),
+               P('camera',W*0.116,0.8),P('smoke',W*0.116,kd/2),P('extinguisher',W*0.22,kd-0.6)])});
+  Z('manual_sort',[W*0.883,b.pick1,W*0.117,kd],'sorting',{
+    stations:[{kind:'sort',x:1,z:1,count:Math.max(2,Math.floor(W*0.117/3.1)),pitch:3.1,dir:'x'}],
+    points:[P('bin',3,kd*0.7),P('bin',7,kd*0.7),P('sign',W*0.058,0.5,3),P('light',W*0.058,kd/2),
+            P('smoke',W*0.058,kd/2)]});
+
+  /* ٦ — الشحن والصادر */
+  const od=D-b.pack1;
+  [['dispatch_dhl',0,0.167],['dispatch_aramex',0.167,0.167],['dispatch_smsa',0.334,0.15]].forEach(([id,x0,fw])=>{
+    const cw=W*fw, n=Math.max(2,Math.floor(cw/4.6));
+    Z(id,[W*x0,b.pack1,cw,od],'dispatch',{
+      lanes:[...Array(n)].map((_,j)=>({kind:'zone',x:4.6*j+0.3,z:0.3,w:4.2,d:od-0.6,dir:'z',arrow:false})),
+      points:[P('sign',cw/2,0.5,2.8),P('camera',cw/2,0.8),P('smoke',cw/2,od/2)]});
+  });
+  Z('lastmile_lanes',[W*0.484,b.pack1,W*0.183,od],'shipping',{
+    racks:[{kind:'cage',x:0.6,z:0.6,w:W*0.183-1.2,d:od-1.2,dir:'x',aisle:1.2,levels:1,h:1.8}],
+    points:[P('sign',W*0.09,0.5,2.8),P('camera',W*0.09,0.8),P('smoke',W*0.09,od/2)]});
+  Z('pallet_wrapping',[W*0.667,b.pack1,W*0.1,od],'shipping',{
+    stations:[{kind:'wrap',x:1,z:Math.max(1,od*0.2),count:Math.max(2,Math.floor(W*0.1/3.4)),pitch:3.4,dir:'x'}],
+    points:[P('sign',W*0.05,0.5,2.8),P('smoke',W*0.05,od/2),P('light',W*0.05,od/2)]});
+  const nOut=Math.max(3,Math.floor(W*0.233/4.2));
+  Z('outbound_docks',[W*0.767,b.pack1,W*0.233,od],'shipping',{
+    docks:[{edge:'S',offset:3.5,width:3.6,height:4.2,count:nOut,pitch:4.2}],
+    lanes:[{kind:'forklift',x:0.5,z:0.6,w:W*0.233-1,d:3.4,dir:'x'}],
+    points:[...Array(nOut)].map((_,i)=>P('scanner',3+4.2*i,od-1))
+      .concat([P('camera',W*0.116,od-0.8),P('smoke',W*0.116,od/2),P('assembly',W*0.116,od*0.7),
+               P('extinguisher',W*0.22,1)])});
+
+  return {meta:{name:`مستودع تجارة إلكترونية ${Math.round(W)}×${Math.round(D)}`,
+                city:'الرياض',north:'-Z',type:'warehouse'},
+          site:{w:W,d:D}, floor_height:H+1, wall_h:H, wall_t:0.25,
+          levels:[{index:0,name:'صالة التشغيل',template:'ops'}],
+          floors:{ops:{rooms:R}}};
+}
+/* ==================================================================
+   مولّد صناعي **مقاد بالوصف** — لا قالب محفوظ.
+   يبني فقط المناطق التي ذكرها العميل، بأعداده ومقاساته، ولا يُقحم غيرها.
+   يعيد {building, coverage} حيث coverage تُظهر لكل بند أين نُفّذ.
+   ================================================================== */
+const ZONE_LIB=[
+  // band = ترتيب تدفّق العمل من الشمال (0) للجنوب (5)
+  {id:'inbound_docks',   ar:'أرصفة الاستلام',      role:'receiving',   band:0,
+   re:/رصيف|أرصفة|ارصفة|dock|تحميل|تفريغ|استلام|وارد|inbound|receiv/i, kind:'dock'},
+  {id:'unloading',       ar:'التفريغ السريع',       role:'receiving',   band:0,
+   re:/تفريغ سريع|unload|رافعة يدوية|pallet ?jack/i, kind:'unload'},
+  {id:'inbound_staging', ar:'تجهيز الوارد',         role:'receiving',   band:1,
+   re:/تجهيز|staging|انتظار الوارد|فرز أولي|مرقّم|مرقم/i, kind:'staging'},
+  {id:'qc_inspection',   ar:'فحص الجودة',           role:'qc',          band:1,
+   re:/فحص|جودة|تفتيش|inspect|quality|qc\b|رفض/i, kind:'inspect'},
+  {id:'crossdock',       ar:'كروس دوك',             role:'crossdock',   band:1,
+   re:/كروس|cross ?dock|عبور مباشر/i, kind:'cross'},
+  {id:'pallet_storage',  ar:'تخزين بالتات',         role:'storage',     band:2,
+   re:/بالت|pallet|رفوف ثقيلة|تخزين ضخم|bulk|رفوف عالية/i, kind:'rack', rack:'pallet'},
+  {id:'shelf_storage',   ar:'أرفف متوسطة',          role:'shelf',       band:2,
+   re:/أرفف|ارفف|shelf|shelving|متوسط/i, kind:'rack', rack:'shelf'},
+  {id:'bin_storage',     ar:'صناديق صغيرة',         role:'bin',         band:2,
+   re:/صناديق|بن\b|bin |قطع صغيرة|كثافة عالية|high ?density/i, kind:'rack', rack:'bin'},
+  {id:'flow_racks',      ar:'رفوف انسيابية',        role:'storage',     band:2,
+   re:/انسياب|flow ?rack|جاذبية|carton ?flow/i, kind:'rack', rack:'flow'},
+  {id:'cold_storage',    ar:'تخزين مبرّد',          role:'storage',     band:2,
+   re:/مبرد|مبرّد|تبريد|مجمد|cold|freez|chill/i, kind:'rack', rack:'pallet', color:'#38bdf8'},
+  {id:'replenishment',   ar:'ممر التعبئة',          role:'circulation', band:2,
+   re:/تعبئة|replenish|إعادة تزويد|اتجاه واحد|one ?way/i, kind:'aisle'},
+  {id:'batch_picking',   ar:'التقاط بالدفعات',      role:'picking',     band:3,
+   re:/دفعات|batch/i, kind:'pick', rack:'shelf'},
+  {id:'wave_picking',    ar:'التقاط بالموجات',      role:'wave',        band:3,
+   re:/موجات|wave|pick ?to ?light|بيك تو لايت/i, kind:'pick', rack:'flow', ptl:true},
+  {id:'zone_picking',    ar:'التقاط بالمناطق',      role:'zone_pick',   band:3,
+   re:/التقاط بالمناطق|zone ?pick|حسب الفئة/i, kind:'pick', rack:'shelf'},
+  {id:'amr_field',       ar:'مسارات الروبوت',       role:'robot',       band:3,
+   re:/روبوت|robot|amr|agv|آلي ذاتي|شحن روبوت/i, kind:'amr'},
+  {id:'picking',         ar:'الالتقاط',             role:'picking',     band:3,
+   re:/التقاط|pick|تجميع الطلب|order pick/i, kind:'pick', rack:'bin'},
+  {id:'packing',         ar:'التغليف',              role:'packing',     band:4,
+   re:/تغليف|تعبئة الطلب|pack(?!et)|كرتون|تغليق/i, kind:'station', sta:'pack'},
+  {id:'labeling_qa',     ar:'الملصقات والتحقّق',    role:'labeling',    band:4,
+   re:/ملصق|باركود|label|barcode|طباعة/i, kind:'station', sta:'label'},
+  {id:'void_fill',       ar:'حشو الفراغ',           role:'packing',     band:4,
+   re:/حشو|void|وسائد هواء|ورق حشو/i, kind:'station', sta:'void'},
+  {id:'consolidation',   ar:'تجميع الطلبات',        role:'consolidation',band:4,
+   re:/تجميع|consolidat|دمج الطلبات/i, kind:'rack', rack:'cage'},
+  {id:'auto_sorter',     ar:'الفرز الآلي',          role:'sorting',     band:4,
+   re:/فرز|sort|سير|ناقل|conveyor|منزلق|chute|محوّل|diverter/i, kind:'conveyor'},
+  {id:'manual_sort',     ar:'الفرز اليدوي',         role:'sorting',     band:4,
+   re:/فرز يدوي|manual sort|طرود كبيرة|oversize/i, kind:'station', sta:'sort'},
+  {id:'dispatch',        ar:'تجهيز الشحن',          role:'dispatch',    band:5,
+   re:/شحن|ناقل|dispatch|dhl|aramex|أرامكس|سمسا|smsa|fedex|ups\b/i, kind:'staging'},
+  {id:'lastmile',        ar:'الميل الأخير',         role:'shipping',    band:5,
+   re:/ميل أخير|last ?mile|أقفاص|cage|طرود صغيرة/i, kind:'rack', rack:'cage'},
+  {id:'wrapping',        ar:'لفّ البالتات',         role:'shipping',    band:5,
+   re:/لف|لفّ|stretch|wrap|تغليف بالتات/i, kind:'station', sta:'wrap'},
+  {id:'outbound_docks',  ar:'أرصفة الصادر',         role:'shipping',    band:5,
+   re:/صادر|outbound|أرصفة الشحن|shipping dock/i, kind:'dock', edge:'S'},
+  {id:'inventory_office',ar:'مكتب المخزون',         role:'office',      band:2, adm:true,
+   re:/مكتب|office|مراقبة المخزون|إدارة/i, walls:'glass'},
+  {id:'it_server_room',  ar:'غرفة السيرفرات',       role:'it',          band:2, adm:true,
+   re:/سيرفر|server|wms|شبكة|it\b|داتا/i, walls:'full'},
+  {id:'meeting_room',    ar:'غرفة اجتماعات',        role:'admin',       band:2, adm:true,
+   re:/اجتماع|meeting|قاعة/i, walls:'glass'},
+  {id:'rest_area',       ar:'استراحة الموظفين',     role:'staff',       band:2, adm:true,
+   re:/استراحة|رست|break ?room|مطعم|كافي|canteen|صلاة|مصلى/i, walls:'full'},
+  {id:'lockers',         ar:'خزائن الملابس',        role:'staff',       band:2, adm:true,
+   re:/خزائن|locker|ملابس|تبديل/i, walls:'full'},
+  {id:'maintenance',     ar:'ورشة الصيانة',         role:'maintenance', band:2, adm:true,
+   re:/صيانة|ورشة|maintenance|workshop|إصلاح/i, walls:'full'},
+  {id:'returns',         ar:'المرتجعات',            role:'qc',          band:1,
+   re:/مرتجع|return|استرجاع|rma/i, kind:'station', sta:'inspect'},
+  {id:'hazmat',          ar:'المواد الخطرة',        role:'safety',      band:2,
+   re:/خطرة|hazmat|كيماوي|قابل للاشتعال/i, kind:'rack', rack:'shelf', color:'#ef4444'},
+  {id:'value_added',     ar:'خدمات مضافة',          role:'packing',     band:4,
+   re:/خدمات مضافة|value ?added|vas\b|تجميع منتجات|kitting/i, kind:'station', sta:'desk'}
+];
+
+/* يستخرج عدداً مذكوراً قرب كلمة (٨ أرصفة / 12 محطة تغليف / أرصفة 8) */
+function numNear(txt, re){
+  const m=re.exec(txt); if(!m) return null;
+  const i=m.index, win=txt.slice(Math.max(0,i-28), Math.min(txt.length,i+m[0].length+28));
+  const d=win.match(/(\d{1,3})/);
+  if(d){ const v=+d[1]; if(v>0&&v<=400) return v; }
+  for(const k in AR_NUM){ if(win.indexOf(k)>=0) return AR_NUM[k]; }
+  return null;
+}
+/* النفي جزء من احترام الوصف: «بدون فرز» أو «لا أريد روبوت» يعني ألّا نبنيه.
+   يسري النفي من موضعه حتى نهاية الجملة، فـ«أريد فرز بدون روبوت» تبني الفرز وتستبعد الروبوت. */
+const NEG_RE=/بدون|بلا\s|من\s+غير|لا\s*(?:أريد|اريد|أبغى|ابغى|أبي|ابي|نريد|نحتاج|حاجة|يوجد|تضع|تضف|تحتاج)|ما\s*(?:أريد|اريد|أبغى|ابغى|أبي|ابي|نحتاج|في)|غير\s+مطلوب|ليس\s+هناك|مستثن|ألغِ|احذف|no\s|without|exclude|not\s+needed/i;
+const CLAUSE_SEP=/[.\n؟?!؛;،,]/g;
+function clauseMap(t){
+  /* يقسّم النص لجُمَل قصيرة ويحسب بداية النفي في كل جملة،
+     مع استمرار النفي إلى الجملة التالية إن بدأت بـ«ولا» (لا أريد س ولا ص). */
+  const cl=[]; let s=0, m; CLAUSE_SEP.lastIndex=0;
+  while((m=CLAUSE_SEP.exec(t))!==null){ cl.push([s,m.index]); s=m.index+1; }
+  cl.push([s,t.length]);
+  let prevNeg=false;
+  return cl.map(([a,b])=>{
+    const seg=t.slice(a,b);
+    let n=seg.search(NEG_RE);
+    if(n<0 && prevNeg && /^\s*(?:و\s*)?لا\b/.test(seg)) n=0;   // استمرار النفي
+    prevNeg = n>=0;
+    return {a:a, b:b, neg: n<0 ? Infinity : a+n};
+  });
+}
+function negatedAt(cmap, idx){
+  for(const c of cmap) if(idx>=c.a && idx<=c.b) return idx>=c.neg;
+  return false;
+}
+function warehouseFromText(txt, W, D, opt){
+  opt=opt||{}; const t=normDigits(stripBidi(txt||''));
+  W=Math.max(20,+W||100); D=Math.max(15,+D||60);
+  const found=[], excluded=[], cmap=clauseMap(t);
+  for(const Zd of ZONE_LIB){
+    const re=new RegExp(Zd.re.source,'ig');
+    let m, positive=null, sawNeg=false;
+    while((m=re.exec(t))!==null){
+      if(negatedAt(cmap,m.index)) sawNeg=true; else { positive=m.index; break; }
+    }
+    if(positive===null){ if(sawNeg) excluded.push(Zd.ar); continue; }
+    found.push(Object.assign({}, Zd, {count:numNear(t, new RegExp(Zd.re.source,'i'))}));
+  }
+  if(!found.length) return null;              // لا شيء معروف في الوصف → لا نفرض قالباً
+
+  const H=Math.max(4,Math.min(+opt.clear|| (function(){
+    const m=t.match(/ارتفاع\s*(?:صاف[يٍ]?|clear)?\s*(\d{1,2})/); return m?+m[1]:12; })(),18));
+  const R=[], cov=[];
+  const P=(k,x,z,h)=>{const o={type:k,x:+x.toFixed(2),z:+z.toFixed(2)};if(h!=null)o.height=h;return o;};
+  const auto=p=>Object.assign({},p,{auto:true});
+
+  // وزّع المناطق على الحزم التي ظهرت فقط (لا حزم فارغة)
+  const adm=found.filter(f=>f.adm), ops=found.filter(f=>!f.adm);
+  const bands=[...new Set(ops.map(f=>f.band))].sort((a,b)=>a-b);
+  const admW=adm.length? Math.min(W*0.16, 18) : 0;
+  const opsW=W-admW;
+  const bandH=D/(bands.length||1);
+
+  bands.forEach((b,bi)=>{
+    const list=ops.filter(f=>f.band===b);
+    const z0=bi*bandH, hz=bandH;
+    let x=0;
+    list.forEach((f,fi)=>{
+      const w=opsW/list.length, rect=[x,z0,w,hz]; x+=w;
+      const ex={points:[]}, half=[w/2,hz/2];
+      if(f.color) ex.wall_color=f.color;
+      if(f.kind==='dock'){
+        const n=f.count||Math.max(2,Math.floor(w/6.2));
+        ex.docks=[{edge:f.edge||'N',offset:Math.min(4.5,w/4),width:3.6,height:4.2,
+                   count:Math.min(n,Math.max(1,Math.floor(w/4.2))),pitch:Math.max(4.2,w/(n+0.5))}];
+        ex.lanes=[{kind:'forklift',x:0.5,z:hz-4,w:Math.max(3,w-1),d:3.4,dir:'x'}];
+        for(let i=0;i<Math.min(n,10);i++) ex.points.push(P('scanner',Math.min(3+6.2*i,w-1),1.2));
+        cov.push({req:f.ar+(f.count?(' ('+f.count+')'):''),where:f.id,how:'أرصفة بمسويات ومصدّات وممر رافعات'});
+      }else if(f.kind==='rack'){
+        const RD={pallet:[3.4,4,Math.min(H-3,9)],shelf:[1.6,5,2.6],bin:[1.2,6,2.2],
+                  flow:[1.8,4,2.4],cage:[1.2,2,2.0]}[f.rack]||[1.6,4,2.4];
+        ex.racks=[{kind:f.rack,x:0.6,z:0.6,w:Math.max(1,w-1.2),d:Math.max(1,hz-1.2),
+                   dir:'x',aisle:RD[0],levels:f.count&&f.count<=10?f.count:RD[1],h:RD[2]}];
+        ex.points.push(P('sign',half[0],0.8,3.2));
+        cov.push({req:f.ar+(f.count?(' — '+f.count+' مستويات'):''),where:f.id,
+                  how:'صفوف رفوف '+f.rack+' بممر '+RD[0]+' م'});
+      }else if(f.kind==='pick'){
+        ex.racks=[{kind:f.rack||'shelf',x:0.6,z:0.6,w:Math.max(1,w-1.2),d:Math.max(1,hz*0.55),
+                   dir:'x',aisle:1.5,levels:4,h:2.3}];
+        ex.lanes=[{kind:'pedestrian',x:0.4,z:hz*0.68,w:Math.max(2,w-0.8),d:Math.max(1.2,hz*0.16),dir:'x'}];
+        if(f.ptl) for(let i=0;i<Math.min(Math.floor(w/1.6),24);i++) ex.points.push(P('ptl',1.6*i+1,1.2));
+        ex.points.push(P('sign',half[0],0.6,3));
+        cov.push({req:f.ar,where:f.id,how:'رفوف التقاط + ممر مشاة'+(f.ptl?' + pick-to-light':'')});
+      }else if(f.kind==='amr'){
+        const n=Math.max(2,Math.min(f.count||3,6));
+        ex.lanes=[]; for(let i=0;i<n;i++) ex.lanes.push({kind:'amr',x:0.5,z:hz*(i+0.5)/(n+0.6),
+          w:Math.max(2,w-1),d:1.4,dir:'x',reverse:i%2===1});
+        ex.stations=[{kind:'charger',x:1,z:hz-1.2,count:Math.max(2,Math.floor(w/2)),pitch:2,dir:'x'}];
+        ex.points.push(P('robot',w*0.3,hz*0.3),P('estop',Math.max(0.6,w-0.6),hz/2));
+        cov.push({req:f.ar+(f.count?(' — '+f.count+' مسارات'):''),where:f.id,how:n+' مسارات AMR + محطات شحن'});
+      }else if(f.kind==='conveyor'){
+        ex.lanes=[{kind:'conveyor',x:1,z:hz*0.2,w:Math.max(2,w-2),d:1,dir:'x',h:0.95},
+                  {kind:'conveyor',x:1,z:hz*0.55,w:Math.max(2,w-2),d:1,dir:'x',h:0.85},
+                  {kind:'pedestrian',x:0.5,z:hz*0.85,w:Math.max(2,w-1),d:1.4,dir:'x'}];
+        const nd=Math.max(2,Math.min(f.count||Math.floor(w/3),16));
+        for(let i=0;i<nd;i++){ ex.points.push(P('diverter',Math.min(3+3*i,w-1),hz*0.35));
+                               ex.points.push(P('chute',Math.min(3+3*i,w-1),hz*0.72)); }
+        cov.push({req:f.ar+(f.count?(' — '+f.count+' مخارج'):''),where:f.id,
+                  how:'سيور بحواجز وإيقاف طوارئ + محوّلات ومنزلقات'});
+      }else if(f.kind==='station'){
+        const n=f.count||Math.max(2,Math.floor(w/2.7));
+        ex.stations=[{kind:f.sta,x:1,z:1,count:Math.min(n,Math.max(1,Math.floor(w/2))),
+                      pitch:Math.max(1.8,Math.min(2.7,(w-2)/Math.max(n,1))),dir:'x'}];
+        if(f.sta==='pack'){ for(let i=0;i<Math.min(n,14);i++) ex.points.push(P('scale',Math.min(2.4+2.7*i,w-1),hz*0.4)); }
+        if(f.sta==='label'){ for(let i=0;i<Math.min(n,14);i++) ex.points.push(P('scanner',Math.min(2+2*i,w-1),hz*0.4)); }
+        ex.points.push(P('sign',half[0],0.5,3));
+        cov.push({req:f.ar+(f.count?(' — '+f.count+' محطة'):''),where:f.id,how:n+' محطة '+f.sta});
+      }else if(f.kind==='aisle'){
+        ex.lanes=[{kind:'one_way',x:0.4,z:Math.max(0.4,hz*0.25),w:Math.max(3,w-0.8),
+                   d:Math.max(3.2,hz*0.5),dir:'x'}];
+        cov.push({req:f.ar,where:f.id,how:'ممر باتجاه واحد بأسهم أرضية'});
+      }else if(f.kind==='staging'){
+        const n=f.count||Math.max(3,Math.floor(w/5));
+        ex.lanes=[]; for(let i=0;i<Math.min(n,20);i++)
+          ex.lanes.push({kind:'zone',x:(w/Math.min(n,20))*i+0.3,z:0.3,
+                         w:Math.max(1,w/Math.min(n,20)-0.6),d:Math.max(1,hz-0.6),dir:'z',arrow:false});
+        ex.points.push(P('sign',half[0],0.5,2.8));
+        cov.push({req:f.ar+(f.count?(' — '+f.count+' مسار'):''),where:f.id,how:'مسارات مرقّمة بدهان أرضي'});
+      }else if(f.kind==='inspect'||f.kind==='unload'){
+        ex.stations=[{kind:'inspect',x:1,z:1,count:Math.max(2,Math.floor(w/4)),pitch:4,dir:'x'}];
+        ex.points.push(P('scale',half[0],hz*0.5),P('sign',half[0],0.5,3));
+        cov.push({req:f.ar,where:f.id,how:'محطات فحص بموازين وماسحات'});
+      }else if(f.kind==='cross'){
+        ex.lanes=[{kind:'conveyor',x:1,z:hz*0.45,w:Math.max(2,w-2),d:0.9,dir:'x',h:0.9},
+                  {kind:'forklift',x:0.5,z:hz-4,w:Math.max(3,w-1),d:3.4,dir:'x'}];
+        cov.push({req:f.ar,where:f.id,how:'سير عبور مباشر + ممر رافعات'});
+      }
+      R.push(Object.assign({id:f.id,rect:rect.map(v=>+v.toFixed(2)),role:f.role,walls:'none'},ex));
+    });
+  });
+
+  // العمود الإداري: فقط إن ذُكر
+  if(adm.length){
+    const hz=D/adm.length;
+    adm.forEach((f,i)=>{
+      const rect=[W-admW,i*hz,admW,hz];
+      const ex={walls:f.walls||'full',wall_h:Math.min(3.2,H),
+        doors:[{edge:'W',offset:hz/2,width:1.0,height:2.1,material:f.walls==='glass'?'glass':'wood'}],
+        points:[P('light',admW/2,hz/2),P('smoke',admW/2,hz/2),P('ac',admW/2,0.4),
+                P('outlet',1.5,hz-0.4,0.40),P('switch',admW*0.3,hz-0.6,1.20)]};
+      if(f.id==='it_server_room') ex.points.push(P('server',2,1),P('server',4,1),P('network',1,hz/2,0.40));
+      if(f.id==='lockers') ex.stations=[{kind:'locker',x:0.6,z:0.4,count:Math.max(3,Math.floor(admW/0.98)),pitch:0.98,dir:'x'}];
+      if(f.id==='meeting_room') ex.furniture=[{name:'table',x:admW/2,z:hz/2,w:Math.min(3.4,admW*0.6),d:1.3,h:0.75,mat:'furn'}];
+      if(f.id==='inventory_office'){ ex.stations=[{kind:'desk',x:1,z:1,count:Math.max(2,Math.floor(admW/2.6)),pitch:2.6,dir:'x'}];
+        ex.windows=[{edge:'W',offset:hz*0.8,width:Math.min(3,hz*0.35),sill:0.9,height:1.6}]; }
+      R.push(Object.assign({id:f.id,rect:rect.map(v=>+v.toFixed(2)),role:f.role},ex));
+      cov.push({req:f.ar,where:f.id,how:'غرفة مغلقة'+(f.walls==='glass'?' بزجاج مطلّ':'')+' بإنارة وتكييف وأفياش'});
+    });
+  }
+
+  // الغلاف + السلامة: إضافات كود موسومة auto (لا تُنقص من طلب العميل)
+  const added=[];
+  if(!opt.strict){
+    const shell=[];
+    const nc=Math.max(4,Math.round(W/28));
+    for(let i=0;i<nc;i++){const x=W*(i+0.5)/nc; shell.push(auto(P('camera',x,1)),auto(P('camera',x,D-1)));}
+    const ne=Math.max(6,Math.round(W/14));
+    for(let i=0;i<ne;i++){const x=W*(i+0.5)/ne; shell.push(auto(P('extinguisher',x,0.6)),auto(P('extinguisher',x,D-0.6)));}
+    shell.push(auto(P('exit',2,0.4,2.4)),auto(P('exit',W-2,0.4,2.4)),auto(P('exit',2,D-0.4,2.4)),
+      auto(P('exit',W-2,D-0.4,2.4)),auto(P('assembly',W*0.5,D-2)),
+      auto(P('hydrant',0.6,D*0.5)),auto(P('hydrant',W-0.6,D*0.5)));
+    R.unshift({id:'envelope',rect:[0,0,W,D],walls:'full',wall_h:H,points:shell});
+    added.push('غلاف المبنى وجدرانه الخارجية','مخارج طوارئ وطفايات وحنفيات ونقطة تجمّع (متطلّب كود)',
+               'كاميرات محيطية');
+  }
+
+  return {building:{
+    meta:{name:'منشأة حسب وصف العميل', city:'الرياض', north:'-Z', type:'warehouse',
+          requirements:cov, added:added, excluded:excluded,
+          strict:!!opt.strict, source:'local-from-text'},
+    site:{w:W,d:D}, floor_height:H+1, wall_h:H, wall_t:0.25,
+    levels:[{index:0,name:'صالة التشغيل',template:'ops'}],
+    floors:{ops:{rooms:R}}}, coverage:cov, added:added, excluded:excluded};
+}
+
+/* كشف نوع المبنى من نص المستخدم (نفس منطق الخادم) */
+function detectTypeJS(t){
+  t=(t||'').toLowerCase();
+  const ind=['warehouse','مستودع','مخزن','لوجست','logistic','fulfil','distribution cent','dock',
+    'رصيف تحميل','racking','رفوف','بالت','pallet','conveyor','سير ناقل','picking','التقاط',
+    'packing','sku','wms','amr','crossdock','cross-dock','مصنع','factory','خط إنتاج'];
+  const n=ind.reduce((a,k)=>a+(t.indexOf(k)>=0?1:0),0);
+  return n>=1?'warehouse':'residential';
+}
+function quickModel(W,D,nF,nRooms){
+  const rooms=[]; const cols=Math.ceil(Math.sqrt(nRooms)); const rw=(W-2)/cols-0.4;
+  for(let i=0;i<nRooms;i++){const cxi=i%cols, rzi=Math.floor(i/cols);
+    const x=1+cxi*(rw+0.4), z=1+rzi*(rw+0.4);
+    rooms.push({id:'room'+(i+1),rect:[x,z,rw,rw],
+      doors:[{edge:'N',offset:rw/2,width:0.9,height:2.1}],
+      windows:[{edge:'S',offset:rw/2,width:Math.min(rw-1,2),sill:0.9,height:1.5}],
+      points:[{type:'light',x:rw/2,z:rw/2},{type:'outlet',x:1,z:0.3},{type:'outlet',x:rw-1,z:0.3},
+              {type:'ac',x:rw/2,z:0.2},{type:'smoke',x:rw/2,z:rw/2}]});}
+  const levels=[]; for(let i=1;i<=nF;i++)levels.push({index:i,name:'الدور '+i,template:'typical'});
+  return {site:{w:W,d:D},floor_height:3.2,wall_h:3.0,wall_t:0.15,levels,floors:{typical:{rooms}}};
+}
+
+/* ========================= المشهد والعرض ========================= */
+const app=document.getElementById('app'), statusEl=document.getElementById('status');
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.xr.enabled=true;                       // دعم نظارات VR (Meta Quest عبر WebXR)
+app.appendChild(renderer.domElement);
+
+const scene=new THREE.Scene();
+const pmrem=new THREE.PMREMGenerator(renderer);
+scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
+
+// سماء واقعية + شمس
+const sky=new Sky(); sky.scale.setScalar(45000); scene.add(sky);
+const su=sky.material.uniforms; su.turbidity.value=6; su.rayleigh.value=2.2;
+su.mieCoefficient.value=0.005; su.mieDirectionalG.value=0.8;
+const sun=new THREE.DirectionalLight(0xffffff,2.6); sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048); sun.shadow.bias=-0.0004;
+scene.add(sun); scene.add(new THREE.HemisphereLight(0xdfeaff,0x30343d,0.6));
+function setSun(elev,azi){const phi=THREE.MathUtils.degToRad(90-elev),th=THREE.MathUtils.degToRad(azi);
+  const v=new THREE.Vector3().setFromSphericalCoords(1,phi,th); su.sunPosition.value.copy(v);
+  sun.position.copy(v).multiplyScalar(120);}
+setSun(52,135);
+
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.05,6000);
+/* حامل اللاعب (dolly): في VR تتحكّم النظارة بالكاميرا، ونحن نحرّك الحامل */
+const player=new THREE.Group(); player.name='PLAYER'; scene.add(player); player.add(camera);
+const orbit=new OrbitControls(camera,renderer.domElement); orbit.enableDamping=true;
+/* ---- متحكّم مشي يعمل على الحاسب والجوال (بلا Pointer Lock) ---- */
+const walkState={active:false, yaw:0, pitch:0, eye:1.6, speed:4, run:1, vx:0, vz:0, vy:0};
+function walkLook(dx,dy){
+  walkState.yaw   -= dx*0.0032;
+  walkState.pitch  = Math.max(-1.3, Math.min(1.3, walkState.pitch - dy*0.0032));
+}
+function applyWalkCamera(){
+  const e=new THREE.Euler(walkState.pitch, walkState.yaw, 0, 'YXZ');
+  camera.quaternion.setFromEuler(e);
+}
+function walkMove(dt){
+  const sp=walkState.speed*walkState.run*dt;
+  const fwd=new THREE.Vector3(-Math.sin(walkState.yaw),0,-Math.cos(walkState.yaw));
+  const rgt=new THREE.Vector3(Math.cos(walkState.yaw),0,-Math.sin(walkState.yaw));
+  camera.position.addScaledVector(fwd, walkState.vz*sp);
+  camera.position.addScaledVector(rgt, walkState.vx*sp);
+  if(walkState.vy) camera.position.y += walkState.vy*sp;
+}
+
+let ground=null;
+function ensureGround(cx,cz,size){ if(ground)scene.remove(ground);
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(size,size),
+    new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.95,metalness:0}));
+  g.rotation.x=-Math.PI/2; g.position.set(cx,-0.1,cz); g.receiveShadow=true; ground=g; scene.add(g);}
+
+let model=null,registry={},floorsFound=new Set(),floorSel='all',doorMeshes=[],doorTexture=null,bounds={c:new THREE.Vector3(),r:60};
+function tagOf(o){let p=o;while(p){if(p.name&&p.name.indexOf('|')>=0)return p.name;p=p.parent;}return null;}
+
+let lastBuilding=null;
+function setModel(data){
+  if(data) lastBuilding=data; else data=lastBuilding;
+  if(!data) return;
+  if(model)scene.remove(model);
+  for(const k in matCache) delete matCache[k];      // ألوان/خامات نظيفة لكل توليد
+  model=compile(data); scene.add(model);
+  registry={};floorsFound=new Set();doorMeshes=[];
+  model.traverse(o=>{ if(!o.isMesh)return;
+    const tag=o.name||'MISC|F0|?|0'; const[layer,floor]=tag.split('|');
+    o.userData={layer,floor,tag}; floorsFound.add(floor);
+    if(!registry[layer])registry[layer]={meshes:[],visible:true,color:'#'+o.material.color.getHexString()};
+    registry[layer].meshes.push(o); if(layer==='DOOR')doorMeshes.push(o);
+  });
+  const box=new THREE.Box3().setFromObject(model); const s=box.getBoundingSphere(new THREE.Sphere());
+  bounds.c.copy(s.center); bounds.r=s.radius||60;
+  // ظل الشمس يغطي المبنى
+  const sc=sun.shadow.camera; const R=bounds.r*1.3;
+  sc.left=-R;sc.right=R;sc.top=R;sc.bottom=-R;sc.near=1;sc.far=bounds.r*6; sc.updateProjectionMatrix();
+  sun.target.position.copy(bounds.c); scene.add(sun.target);
+  ensureGround(bounds.c.x,bounds.c.z,bounds.r*10);
+  orbit.target.copy(bounds.c);
+  camera.position.set(bounds.c.x+bounds.r*1.4,bounds.c.y+bounds.r*0.85,bounds.c.z+bounds.r*1.4);
+  orbit.update();
+  buildFloors(); buildLayers(); updateVis();
+  let n=0; model.traverse(o=>{if(o.isMesh)n++});
+  const nz=Object.values(data.floors||{}).reduce((a,f)=>a+((f.rooms||[]).length),0);
+  statusEl.textContent=`تم التوليد ✓  ${n} عنصر · ${nz} منطقة/غرفة · ${Object.keys(registry).length} طبقة · ${floorsFound.size} دور`;
+  const statEl=document.getElementById('statCount');
+  if(statEl) statEl.innerHTML=`<b>${n}</b> عنصر ثلاثي الأبعاد مبنيّ من <b>${nz}</b> منطقة في الوصف.`
+    +(n>6000?' <span style="color:#f59e0b">— خفّض «مستوى التفصيل» إن تباطأت الحركة.</span>':'');
+  if(window.ACS&&window.ACS.closePanel) window.ACS.closePanel();
+  showTab('view'); document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='view'));
+}
+
+/* الأدوار */
+function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHTML='';
+  const mk=(k,l)=>{const b=document.createElement('button');b.className='ghost';b.textContent=l;
+    if(k==='all')b.classList.add('active');
+    b.onclick=()=>{floorSel=k;[...wrap.children].forEach(c=>c.classList.remove('active'));b.classList.add('active');updateVis();};
+    wrap.appendChild(b);};
+  mk('all','الكل');
+  [...floorsFound].sort().forEach(f=>mk(f,FLOOR_NAMES[f]||f));}
+/* الطبقات */
+function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHTML='';
+  LAYER_ORDER.filter(l=>registry[l]).forEach(l=>{const r=registry[l];
+    const row=document.createElement('div');row.className='lay';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=r.visible;
+    cb.onchange=()=>{r.visible=cb.checked;updateVis();};
+    const col=document.createElement('input');col.type='color';col.value=r.color;
+    col.oninput=()=>{r.color=col.value;r.meshes.forEach(m=>{m.material.color.set(col.value);if(l==='DOOR')m.material.map=null;m.material.needsUpdate=true;});};
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=LAYER_NAMES[l]||l;
+    const ct=document.createElement('span');ct.className='ct';ct.textContent=r.meshes.length;
+    row.append(cb,col,nm,ct);wrap.appendChild(row);});}
+function updateVis(){for(const l in registry){const r=registry[l];
+  r.meshes.forEach(m=>{m.visible=r.visible&&(floorSel==='all'||m.userData.floor===floorSel);});}}
+
+/* صورة الباب */
+const applyAllBtn=document.getElementById('applyAll');
+const texTargetEl=document.getElementById('texTarget');
+const texRepeatEl=document.getElementById('texRepeat');
+const photoApplied=[];                       // لتراجع التطبيق
+function useDoorImage(file){const url=URL.createObjectURL(file);
+  new THREE.TextureLoader().load(url,tex=>{
+    tex.colorSpace=THREE.SRGBColorSpace; tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.anisotropy=8;
+    doorTexture=tex; applyAllBtn.disabled=false;
+    document.getElementById('doorbox').classList.add('hot');
+    statusEl.textContent='الصورة جاهزة — اختر الطبقة واضغط «تطبيق»، أو انقر عنصراً بعينه.';});}
+function applyDoorTex(m){
+  if(!doorTexture)return;
+  const t=doorTexture.clone(); t.needsUpdate=true;
+  const rep=Math.max(0.1,+texRepeatEl.value||1); t.repeat.set(rep,rep);
+  if(!m.userData._origMat) m.userData._origMat=m.material;
+  m.material=m.material.clone(); m.material.map=t; m.material.bumpMap=null;
+  m.material.color.set(0xffffff); m.material.needsUpdate=true;
+  if(photoApplied.indexOf(m)<0) photoApplied.push(m);
+}
+applyAllBtn.onclick=()=>{
+  const layer=texTargetEl.value;
+  const list=(registry[layer]&&registry[layer].meshes)||[];
+  list.forEach(applyDoorTex);
+  statusEl.textContent='طُبّقت الصورة على '+list.length+' عنصراً في طبقة «'+(LAYER_NAMES[layer]||layer)+'».';
+};
+document.getElementById('clearDoor').onclick=()=>{
+  doorTexture=null; applyAllBtn.disabled=true;
+  document.getElementById('doorbox').classList.remove('hot');
+  photoApplied.forEach(m=>{ if(m.userData._origMat){m.material=m.userData._origMat; delete m.userData._origMat;} });
+  photoApplied.length=0; statusEl.textContent='أُلغيت الصور المطبّقة.';
+};
+document.getElementById('doorfile').onchange=e=>{if(e.target.files[0])useDoorImage(e.target.files[0]);};
+document.getElementById('texOn').onchange=e=>{
+  USE_TEX=e.target.checked;
+  statusEl.textContent=USE_TEX?'إعادة البناء بالخامات الواقعية…':'إعادة البناء بألوان مسطّحة…';
+  setTimeout(()=>setModel(null),20);
+};
+document.getElementById('detailSel').onchange=e=>{
+  DETAIL=parseFloat(e.target.value)||1;
+  statusEl.textContent='إعادة البناء بمستوى تفصيل جديد…';
+  setTimeout(()=>setModel(null),20);
+};
+/* على الأجهزة الضعيفة (جوال) نبدأ بتفصيل خفيف تلقائياً */
+if(navigator.hardwareConcurrency&&navigator.hardwareConcurrency<=4||innerWidth<720){
+  DETAIL=0.5; const ds=document.getElementById('detailSel'); if(ds) ds.value='0.5';
+}
+
+/* نقر عنصر */
+const ray=new THREE.Raycaster(),mouse=new THREE.Vector2(),infoEl=document.getElementById('info');
+renderer.domElement.addEventListener('click',ev=>{ if(walkState.active||!model)return;
+  mouse.x=(ev.clientX/innerWidth)*2-1;mouse.y=-(ev.clientY/innerHeight)*2+1;
+  ray.setFromCamera(mouse,camera);
+  const hits=ray.intersectObjects([model],true).filter(h=>h.object.visible);
+  if(!hits.length){infoEl.style.display='none';return;}
+  const hit=hits[0], o=hit.object, t=(o.userData.tag||'').split('|');
+  if(noteMode){ openNote(o, hit.point); return; }
+  infoEl.style.display='block';
+  infoEl.innerHTML=`<b>${LAYER_NAMES[t[0]]||t[0]}</b><br>الدور: ${FLOOR_NAMES[t[1]]||t[1]} · الغرفة: ${t[2]||'-'}<br><span style="opacity:.6">${t[3]||''}</span>`;
+  if(doorTexture){applyDoorTex(o);infoEl.innerHTML+='<br><span style="color:#22c55e">✓ طُبّقت الصورة على هذا العنصر</span>';}
+  else infoQuickColors(o);});
+
+/* لوحة ألوان سريعة داخل بطاقة العنصر: نقرة واحدة تلوّن جدران هذه الغرفة فقط */
+function infoQuickColors(o){
+  const tag=o.userData.tag||'', t=tag.split('|');
+  const surf = t[0]==='FLOOR' ? 'floor' : (t[0]==='WALL' ? 'wall' : 'self');
+  const lbl = surf==='wall'?'لوّن جدران هذه الغرفة':(surf==='floor'?'لوّن الأرضية':'لوّن هذا العنصر');
+  const wrap=document.createElement('div'); wrap.className='qcl'; wrap.textContent='🎨 '+lbl+':';
+  const bar=document.createElement('div'); bar.className='qc';
+  COLOR_SWATCH.forEach(([nm,hx])=>{
+    const i=document.createElement('i'); i.style.background=hx; i.title=nm;
+    i.onclick=ev=>{ ev.stopPropagation();
+      const msg=applyFinish(tag,surf,hx,o); statusEl.textContent=msg; };
+    bar.appendChild(i);
+  });
+  const cst=document.createElement('input'); cst.type='color'; cst.value='#22c55e';
+  cst.style.cssText='width:22px;height:22px;padding:0;border:none;background:none;cursor:pointer';
+  cst.oninput=()=>{ statusEl.textContent=applyFinish(tag,surf,cst.value,o); };
+  bar.appendChild(cst);
+  infoEl.appendChild(wrap); infoEl.appendChild(bar);
+}
+
+/* ========================= محرّك الألوان والتشطيبات (فوري · بلا خادم) ========================= */
+const AR_COLORS={
+  'اخضر':'#22c55e','أخضر':'#22c55e','خضراء':'#22c55e','خضر':'#22c55e','green':'#22c55e',
+  'زيتوني':'#6b8e23','زيتي':'#6b8e23','فستقي':'#a7d129','نعناعي':'#7fd1ae','زمردي':'#0f9d58',
+  'احمر':'#e11d48','أحمر':'#e11d48','حمراء':'#e11d48','red':'#e11d48','عنابي':'#7b1f2b','خمري':'#7b1f2b',
+  'وردي':'#f472b6','زهري':'#f472b6','pink':'#f472b6','برتقالي':'#f97316','orange':'#f97316',
+  'ازرق':'#2563eb','أزرق':'#2563eb','زرقاء':'#2563eb','blue':'#2563eb','سماوي':'#38bdf8','لبني':'#8ecae6',
+  'كحلي':'#1e293b','نيلي':'#3730a3','تركوازي':'#14b8a6','فيروزي':'#14b8a6',
+  'اصفر':'#facc15','أصفر':'#facc15','صفراء':'#facc15','yellow':'#facc15','ذهبي':'#d4af37','gold':'#d4af37',
+  'بني':'#6b4423','brown':'#6b4423','خشبي':'#7a4a22','بيج':'#e3d5b8','beige':'#e3d5b8','كريمي':'#f2e8d5',
+  'رمادي':'#8b8f96','رصاصي':'#6b7280','gray':'#8b8f96','grey':'#8b8f96','فضي':'#c0c4cc',
+  'ابيض':'#f5f5f2','أبيض':'#f5f5f2','بيضاء':'#f5f5f2','white':'#f5f5f2',
+  'اسود':'#17181b','أسود':'#17181b','سوداء':'#17181b','black':'#17181b',
+  'بنفسجي':'#8b5cf6','موف':'#a78bfa','purple':'#8b5cf6','ليلكي':'#c4b5fd',
+  'ترابي':'#a89078','رملي':'#dcc9a6','شمبانيا':'#e8d9bd'
+};
+const COLOR_SWATCH=[['أخضر','#22c55e'],['أزرق','#2563eb'],['رمادي','#8b8f96'],['بيج','#e3d5b8'],
+  ['أبيض','#f5f5f2'],['أصفر','#facc15'],['أحمر','#e11d48'],['بني','#6b4423'],['بنفسجي','#8b5cf6'],['كحلي','#1e293b']];
+
+function detectColor(txt){
+  const s=stripBidi(String(txt||''));
+  const hx=s.match(/#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/);
+  if(hx) return normHex(hx[0]);
+  // أطول اسم لون مطابق أولاً، مع احترام حدود الكلمة والسوابق العربية (ال/بال/و…)
+  const keys=Object.keys(AR_COLORS).sort((a,b)=>b.length-a.length);
+  const AL='\\u0621-\\u064a';
+  for(const k of keys){
+    const esc=k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    const re=new RegExp('(^|[^'+AL+'\\w])(?:ال|بال|لل|كال|وال|و|ب|ل)?'+esc+'(?:ة|ه|ا|ين|ات)?([^'+AL+'\\w]|$)');
+    if(re.test(' '+s+' ')) return shadeBy(AR_COLORS[k], s);
+  }
+  return null;
+}
+function shadeBy(hex,s){
+  let f=0;
+  if(/فاتح|لايت|light/.test(s)) f=0.35;
+  if(/غامق|داكن|غامقة|dark/.test(s)) f=-0.3;
+  if(!f) return hex;
+  const n=parseInt(hex.slice(1),16); let r=(n>>16)&255,g=(n>>8)&255,b=n&255;
+  const mix=v=>Math.round(f>0? v+(255-v)*f : v*(1+f));
+  r=mix(r);g=mix(g);b=mix(b);
+  return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+}
+function detectSurface(txt){
+  const s=stripBidi(String(txt||''));
+  if(/سقف|السقف|ceiling/.test(s)) return 'ceiling';
+  if(/ارضي|أرضي|الارض|الأرض|بلاط|سيراميك|باركيه|floor/.test(s)) return 'floor';
+  if(/جدار|الجدار|جدران|حائط|حيطان|الحيطان|wall/.test(s)) return 'wall';
+  if(/باب|الباب|door/.test(s)) return 'self';
+  return null;
+}
+
+/* يفصل قالب الدور إذا كان مشتركاً بين عدّة أدوار، حتى لا يتلوّن باقي الأدوار */
+function isolateTemplate(fkey){
+  if(!lastBuilding) return null;
+  const idx=parseInt(String(fkey).replace(/[^0-9]/g,''),10);
+  const lvl=(lastBuilding.levels||[]).find(l=>+l.index===idx);
+  if(!lvl) return null;
+  const shared=(lastBuilding.levels||[]).filter(l=>l.template===lvl.template).length>1;
+  if(shared){
+    const nt=lvl.template+'__'+fkey;
+    if(!lastBuilding.floors[nt])
+      lastBuilding.floors[nt]=JSON.parse(JSON.stringify(lastBuilding.floors[lvl.template]||{rooms:[]}));
+    lvl.template=nt;
+  }
+  return lastBuilding.floors[lvl.template]||null;
+}
+function roomOfTag(tag){
+  const t=String(tag||'').split('|'); if(t.length<3) return null;
+  const fdef=isolateTemplate(t[1]); if(!fdef) return null;
+  const room=(fdef.rooms||[]).find(r=>String(r.id)===t[2]);
+  return room? {room:room, fkey:t[1], rid:t[2]} : null;
+}
+function meshesOfRoom(fkey,rid,layers){
+  const out=[]; if(!model) return out;
+  model.traverse(o=>{ if(!o.isMesh) return;
+    const t=(o.userData.tag||'').split('|');
+    if(t[1]===fkey && t[2]===rid && layers.indexOf(t[0])>=0) out.push(o);
+  });
+  return out;
+}
+/* التطبيق الفوري: يغيّر المشهد الآن ويحفظ اللون في النموذج ليبقى بعد إعادة البناء */
+function applyFinish(tag, surface, hex, mesh){
+  hex=normHex(hex); if(!hex) return 'لون غير صالح.';
+  if(surface==='self'){
+    if(!mesh) return 'لم يُحدَّد عنصر.';
+    const base=(mesh.material&&mesh.material.userData&&mesh.material.userData.matName)||'wall';
+    mesh.material=getMat(base,hex); mesh.material.needsUpdate=true;
+    const rr=roomOfTag(tag), t=String(tag||'').split('|');
+    if(rr && t[0]==='DOOR'){ const i=parseInt(t[3],10);
+      if(rr.room.doors&&rr.room.doors[i]) rr.room.doors[i].color=hex; }
+    return 'طُبّق اللون على العنصر المحدّد ✓';
+  }
+  const rr=roomOfTag(tag);
+  if(!rr) return 'هذا العنصر ليس ضمن غرفة معرّفة — استخدم «هذا العنصر».';
+  const KEY={wall:'wall_color',floor:'floor_color',ceiling:'ceiling_color'}[surface];
+  rr.room[KEY]=hex;
+  if(surface==='wall'){
+    const ms=meshesOfRoom(rr.fkey,rr.rid,['WALL']);
+    const m=getMat('wall',hex);
+    ms.forEach(o=>{o.material=m;});
+    return 'طُبّق اللون على '+ms.length+' جزء جدار في غرفة «'+rr.rid+'» (الدور '+(FLOOR_NAMES[rr.fkey]||rr.fkey)+') ✓';
+  }
+  // أرضية/سقف: قد لا يكون اللوح موجوداً بعد → أنشئه في مكانه
+  const det=surface==='floor'?'plate':'ceil';
+  let found=meshesOfRoom(rr.fkey,rr.rid,['FLOOR']).filter(o=>(o.userData.tag||'').endsWith('|'+det));
+  if(found.length){ const m=getMat(surface==='floor'?'floor':'ceiling',hex); found.forEach(o=>{o.material=m;}); }
+  else {
+    const def={wall_h:lastBuilding.wall_h||3.0, wall_t:lastBuilding.wall_t||0.15};
+    const fh=lastBuilding.floor_height||(def.wall_h+0.2);
+    const idx=parseInt(rr.fkey.replace(/[^0-9]/g,''),10);
+    const [x,z,w,d]=rr.room.rect; const H=rr.room.wall_h||def.wall_h, baseY=idx*fh, t=def.wall_t;
+    const g=new THREE.Group();
+    if(surface==='floor') addBox(g,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
+        'floor',`FLOOR|${rr.fkey}|${rr.rid}|plate`,false,hex);
+    else addBox(g,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
+        'ceiling',`FLOOR|${rr.fkey}|${rr.rid}|ceil`,false,hex);
+    while(g.children.length){ const o=g.children[0]; g.remove(o);
+      o.userData={layer:'FLOOR',floor:rr.fkey,tag:o.name}; model.add(o);
+      if(!registry.FLOOR) registry.FLOOR={meshes:[],visible:true,color:'#ffffff'};
+      registry.FLOOR.meshes.push(o); }
+    updateVis();
+  }
+  return 'طُبّق لون ال'+(surface==='floor'?'أرضية':'سقف')+' في غرفة «'+rr.rid+'» ✓';
+}
+
+/* ========================= ملاحظات المهندس (تحديد + طلب تعديل) ========================= */
+let noteMode=false, notes=[], noteTarget=null, notePoint=null, noteMarkers=new THREE.Group();
+scene.add(noteMarkers);
+const noteModal=document.getElementById('noteModal');
+
+function openNote(obj, point){
+  noteTarget=obj; notePoint=point.clone();
+  const t=(obj.userData.tag||'').split('|');
+  document.getElementById('nmTarget').textContent=
+    (LAYER_NAMES[t[0]]||t[0])+' · الدور: '+(FLOOR_NAMES[t[1]]||t[1])+' · الغرفة: '+(t[2]||'-')+' · '+(t[3]||'');
+  document.getElementById('nmText').value='';
+  document.getElementById('nmColorMsg').textContent='';
+  noteModal.classList.add('on');
+  setTimeout(()=>document.getElementById('nmText').focus(),50);
+}
+/* لوحة الألوان السريعة داخل النافذة */
+(function initSwatches(){
+  const box=document.getElementById('nmSwatches'), inp=document.getElementById('nmColor');
+  COLOR_SWATCH.forEach(([nm,hx])=>{
+    const i=document.createElement('i'); i.style.background=hx; i.title=nm; i.dataset.hex=hx;
+    i.onclick=()=>{ inp.value=hx;
+      [...box.children].forEach(c=>c.classList.remove('on')); i.classList.add('on'); };
+    box.appendChild(i);
+  });
+})();
+document.querySelectorAll('.nm-color .cbtn').forEach(b=>{
+  b.onclick=()=>{
+    if(!noteTarget){document.getElementById('nmColorMsg').textContent='حدّد عنصراً أولاً.';return;}
+    const hex=document.getElementById('nmColor').value;
+    const msg=applyFinish(noteTarget.userData.tag||'', b.dataset.surface, hex, noteTarget);
+    document.getElementById('nmColorMsg').textContent=msg;
+    statusEl.textContent=msg;
+  };
+});
+function addMarker(p,idx){
+  const g=new THREE.SphereGeometry(0.22,14,12);
+  const m=new THREE.Mesh(g,new THREE.MeshBasicMaterial({color:0xffb020}));
+  m.position.copy(p); m.name='NOTE|'+idx; noteMarkers.add(m);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(0.3,0.42,20),
+    new THREE.MeshBasicMaterial({color:0xffb020,side:THREE.DoubleSide,transparent:true,opacity:0.7}));
+  ring.position.copy(p); ring.lookAt(camera.position); noteMarkers.add(ring);
+}
+function renderNotes(){
+  const box=document.getElementById('notesList'); box.innerHTML='';
+  document.getElementById('noteCount').textContent=notes.length;
+  notes.forEach((n,i)=>{
+    const d=document.createElement('div'); d.className='noteItem'+(n.done?' done':'');
+    d.innerHTML='<span class="del" data-i="'+i+'">✕</span><b>'+n.kind+'</b> — '+
+      n.room+' ('+n.layer+')<br><span style="opacity:.8">'+n.text+'</span>'+
+      (n.done?'<br><span class="ok">✓ نُفّذ فوراً محلياً</span>':'');
+    d.querySelector('.del').onclick=()=>{notes.splice(i,1);rebuildMarkers();renderNotes();};
+    box.appendChild(d);
+  });
+}
+function rebuildMarkers(){
+  while(noteMarkers.children.length) noteMarkers.remove(noteMarkers.children[0]);
+  notes.forEach((n,i)=>addMarker(new THREE.Vector3(n.p[0],n.p[1],n.p[2]),i));
+}
+document.getElementById('nmSave').onclick=()=>{
+  const txt=document.getElementById('nmText').value.trim();
+  if(!txt){document.getElementById('nmText').focus();return;}
+  const tag=noteTarget.userData.tag||'';
+  const t=tag.split('|');
+  const note={kind:document.getElementById('nmKind').value, text:txt,
+    layer:LAYER_NAMES[t[0]]||t[0], floor:FLOOR_NAMES[t[1]]||t[1], room:t[2]||'-',
+    tag:tag, p:[notePoint.x,notePoint.y,notePoint.z]};
+
+  /* تنفيذ فوري لطلبات اللون — بلا انتظار الخادم */
+  let done='';
+  const hex=detectColor(txt);
+  if(hex){
+    let surf=detectSurface(txt);
+    if(!surf) surf = (t[0]==='WALL')?'wall' : (t[0]==='FLOOR')?'floor' : 'self';
+    done=applyFinish(tag, surf, hex, noteTarget);
+    note.done=true; note.applied=surf+' '+hex;
+  }
+  notes.push(note);
+  addMarker(notePoint, notes.length-1);
+  noteModal.classList.remove('on'); renderNotes();
+  statusEl.textContent = done ? ('✓ '+done+' — نُفّذ محلياً بلا خادم.')
+    : ('أُضيفت ملاحظة ('+notes.filter(n=>!n.done).length+' بانتظار المحرّك). اضغط «تنفيذ التعديلات».');
+};
+document.getElementById('nmCancel').onclick=()=>noteModal.classList.remove('on');
+
+document.getElementById('bNoteMode').onclick=function(){
+  noteMode=!noteMode; this.classList.toggle('active',noteMode);
+  statusEl.textContent=noteMode?'وضع التعليق مفعّل — انقر أي عنصر لكتابة طلب تعديل.':'أُوقف وضع التعليق.';
+};
+document.getElementById('bNotesExport').onclick=()=>{
+  if(!notes.length){statusEl.textContent='لا توجد ملاحظات.';return;}
+  const lines=notes.map((n,i)=>(i+1)+'. ['+n.kind+'] '+n.layer+' · '+n.floor+' · '+n.room+' → '+n.text);
+  const blob=new Blob([lines.join('\n')+'\n\n---\nJSON:\n'+JSON.stringify(notes,null,1)],
+    {type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='ACS-notes.txt'; a.click();
+};
+document.getElementById('bNotesApply').onclick=async()=>{
+  if(!notes.length){statusEl.textContent='أضِف ملاحظة واحدة على الأقل.';return;}
+  const pend=notes.filter(n=>!n.done);
+  if(!pend.length){statusEl.textContent='✓ كل الملاحظات نُفّذت فوراً محلياً — لا حاجة للخادم.';return;}
+  const llm=srvURL();
+  if(!llm){statusEl.textContent='محرّك الفهم غير مضبوط — الألوان والتعديلات المباشرة تعمل بلا خادم.';return;}
+  if(!lastBuilding){statusEl.textContent='ولّد نموذجاً أولاً.';return;}
+  statusEl.textContent='🤖 تنفيذ '+pend.length+' تعديلاً على النموذج… قد يأخذ دقائق.';
+  try{
+    const r=await fetch(llm+'/v1/edit',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({building:lastBuilding, notes:pend})});
+    if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,200));
+    const data=await r.json();
+    setModel(data.building);
+    notes=[]; rebuildMarkers(); renderNotes();
+    statusEl.textContent='✓ نُفّذت التعديلات — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى';
+  }catch(e){ statusEl.textContent='تعذّر التنفيذ: '+e.message; console.error(e); }
+};
+
+/* أوضاع */
+let mode='orbit',tourT=0,real=false;
+function setMode(m){
+  if(m==='walk'){ mode=m; startWalk(); return; }
+  if(walkState.active) stopWalk();
+  mode=m;
+  if(m==='top'){camera.position.set(bounds.c.x,bounds.c.y+bounds.r*2.4,bounds.c.z+0.01);orbit.target.copy(bounds.c);orbit.update();}
+  if(m==='orbit'){camera.position.set(bounds.c.x+bounds.r*1.4,bounds.c.y+bounds.r*0.85,bounds.c.z+bounds.r*1.4);orbit.update();}
+  if(m==='tour')tourT=performance.now();}
+document.getElementById('bOrbit').onclick=()=>setMode('orbit');
+document.getElementById('bTour').onclick=()=>setMode('tour');
+document.getElementById('bTop').onclick=()=>setMode('top');
+document.getElementById('bWalk').onclick=()=>setMode('walk');
+document.getElementById('bReal').onclick=()=>{real=!real;renderer.toneMappingExposure=real?1.25:1.05;
+  su.rayleigh.value=real?1.4:2.2; setSun(real?38:52,135);
+  statusEl.textContent=real?'وضع واقعي: إضاءة ذهبية + ظلال أطول.':'وضع قياسي.';};
+document.getElementById('bShot').onclick=()=>{renderer.render(scene,camera);
+  const a=document.createElement('a');a.download='ACS-view.png';a.href=renderer.domElement.toDataURL('image/png');a.click();};
+
+/* مشي */
+const keys={};addEventListener('keydown',e=>keys[e.code]=true);addEventListener('keyup',e=>keys[e.code]=false);
+// ضوء داخلي يتبع الكاميرا حتى لا تكون الغرف مظلمة أثناء المشي
+const headLamp=new THREE.PointLight(0xfff2d8,0,26,2); scene.add(headLamp);
+
+const walkHUD=document.getElementById('walkHUD');
+function startWalk(){
+  walkState.active=true; walkHUD.classList.add('on');
+  orbit.enabled=false;
+  const c=bounds.c;
+  camera.position.set(c.x, (model? new THREE.Box3().setFromObject(model).min.y : 0) + walkState.eye, c.z);
+  walkState.yaw=0; walkState.pitch=0; applyWalkCamera();
+  camera.fov=+document.getElementById('optFov').value; camera.updateProjectionMatrix();
+}
+function stopWalk(){ walkState.active=false; walkHUD.classList.remove('on'); orbit.enabled=true;
+  camera.fov=52; camera.updateProjectionMatrix(); }
+
+/* النظر بالسحب (فأرة/لمس) داخل وضع المشي */
+(function(){
+  let last=null;
+  const el=renderer.domElement;
+  const start=e=>{ if(!walkState.active)return; const t=e.touches?e.touches[0]:e;
+    if(e.touches&&e.touches.length>1)return; last=[t.clientX,t.clientY]; };
+  const move=e=>{ if(!walkState.active||!last)return; const t=e.touches?e.touches[0]:e;
+    walkLook(t.clientX-last[0], t.clientY-last[1]); last=[t.clientX,t.clientY];
+    if(e.cancelable)e.preventDefault(); };
+  const end=()=>{ last=null; };
+  el.addEventListener('mousedown',start); addEventListener('mousemove',move); addEventListener('mouseup',end);
+  el.addEventListener('touchstart',start,{passive:true});
+  el.addEventListener('touchmove',move,{passive:false});
+  addEventListener('touchend',end);
+})();
+
+/* الجويستيك */
+(function(){
+  const joy=document.getElementById('joy'), knob=document.getElementById('joyKnob');
+  let id=null, cx=0, cy=0;
+  const R=41;
+  function set(dx,dy){
+    const len=Math.hypot(dx,dy), k=len>R?R/len:1;
+    dx*=k; dy*=k; knob.style.left=(41+dx)+'px'; knob.style.top=(41+dy)+'px';
+    walkState.vx = dx/R; walkState.vz = -dy/R;
+  }
+  function reset(){ knob.style.left='41px'; knob.style.top='41px'; walkState.vx=walkState.vz=0; }
+  function down(e){ const r=joy.getBoundingClientRect(); cx=r.left+r.width/2; cy=r.top+r.height/2;
+    const t=e.touches?e.touches[0]:e; id=1; set(t.clientX-cx,t.clientY-cy); if(e.cancelable)e.preventDefault(); }
+  function mv(e){ if(!id)return; const t=e.touches?e.touches[0]:e; set(t.clientX-cx,t.clientY-cy);
+    if(e.cancelable)e.preventDefault(); }
+  function up(){ id=null; reset(); }
+  joy.addEventListener('mousedown',down); addEventListener('mousemove',mv); addEventListener('mouseup',up);
+  joy.addEventListener('touchstart',down,{passive:false});
+  joy.addEventListener('touchmove',mv,{passive:false});
+  addEventListener('touchend',up);
+})();
+
+/* أزرار المشي وخيارات الرؤية */
+(function(){
+  const hold=(id,on,off)=>{const b=document.getElementById(id);
+    const s=e=>{on(); b.classList.add('active'); if(e.cancelable)e.preventDefault();};
+    const t=()=>{off(); b.classList.remove('active');};
+    b.addEventListener('mousedown',s); b.addEventListener('mouseup',t); b.addEventListener('mouseleave',t);
+    b.addEventListener('touchstart',s,{passive:false}); b.addEventListener('touchend',t);};
+  hold('wUp',  ()=>walkState.vy= 1, ()=>walkState.vy=0);
+  hold('wDown',()=>walkState.vy=-1, ()=>walkState.vy=0);
+  const run=document.getElementById('wRun');
+  run.onclick=()=>{ walkState.run = walkState.run>1?1:2.2; run.classList.toggle('active', walkState.run>1); };
+  document.getElementById('wExit').onclick=()=>setMode('orbit');
+  document.getElementById('optFov').oninput=e=>{ camera.fov=+e.target.value; camera.updateProjectionMatrix(); };
+  document.getElementById('optEye').oninput=e=>{ walkState.eye=(+e.target.value)/100; };
+  document.getElementById('optSpd').oninput=e=>{ walkState.speed=+e.target.value; };
+})();
+
+function walkStep(dt){
+  const f=(keys.KeyW?1:0)-(keys.KeyS?1:0), s=(keys.KeyD?1:0)-(keys.KeyA?1:0);
+  const q=(keys.KeyQ||keys.Space?1:0)-(keys.KeyE||keys.ShiftLeft?1:0);
+  if(f||s){ walkState.vz=f; walkState.vx=s; }
+  if(q) walkState.vy=q;
+  walkState.run = keys.ShiftRight?2.2:walkState.run;
+  applyWalkCamera(); walkMove(dt);
+  if(!f&&!s&&!document.getElementById('joy').matches(':active')){ /* الجويستيك يضبط vx/vz */ }
+  if(!q&&!document.getElementById('wUp').classList.contains('active')
+     &&!document.getElementById('wDown').classList.contains('active')) walkState.vy=0;
+  if(!f&&!s&&walkState.vx===0&&walkState.vz===0){ /* ساكن */ }
+}
+function tourStep(){const t=(performance.now()-tourT)/1000,a=(t%45)/45*Math.PI*2,R=bounds.r*1.5;
+  camera.position.set(bounds.c.x+Math.cos(a)*R,bounds.c.y+bounds.r*0.55,bounds.c.z+Math.sin(a)*R);orbit.target.copy(bounds.c);}
+
+/* إفلات صورة */
+const drop=document.getElementById('drop');
+addEventListener('dragover',e=>{e.preventDefault();drop.style.display='flex';});
+drop.addEventListener('dragleave',()=>drop.style.display='none');
+addEventListener('drop',e=>{e.preventDefault();drop.style.display='none';
+  const f=e.dataTransfer.files[0];if(f&&/^image\//.test(f.type))useDoorImage(f);});
+
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+let last=performance.now();
+/* ==================================================================
+   الواقع الافتراضي — Meta Quest 3 وغيرها عبر WebXR
+   تمشي داخل المبنى بمقياس 1:1 حقيقي: ارتفاعك الفعلي، وأبعاد الغرف بالمتر.
+   ================================================================== */
+const vr={on:false, mode:'vr', turnCool:0, floorCool:0, snap:true, speed:2.6,
+          savedDetail:1, savedShadow:true, rays:[], maq:null, arSaved:null};
+
+function vrSetup(){
+  for(let i=0;i<2;i++){
+    const c=renderer.xr.getController(i);
+    const g=new THREE.BufferGeometry().setFromPoints(
+      [new THREE.Vector3(0,0,0), new THREE.Vector3(0,0,-1)]);
+    const line=new THREE.Line(g,new THREE.LineBasicMaterial({color:0x38bdf8}));
+    line.scale.z=3; c.add(line);
+    const grip=new THREE.Mesh(new THREE.BoxGeometry(0.04,0.04,0.12),
+      new THREE.MeshStandardMaterial({color:0x1b1d21,roughness:0.5}));
+    grip.position.z=0.03; c.add(grip);
+    c.addEventListener('selectstart',()=>vrTeleport(c));
+    player.add(c); vr.rays.push(c);
+  }
+}
+function camWorld(){
+  const v=new THREE.Vector3();
+  (renderer.xr.isPresenting?renderer.xr.getCamera():camera).getWorldPosition(v);
+  return v;
+}
+function vrRotate(a){
+  const c=camWorld();
+  player.position.sub(c);
+  player.position.applyAxisAngle(new THREE.Vector3(0,1,0),a);
+  player.position.add(c);
+  player.rotation.y+=a;
+}
+/* الانتقال الفوري: صوّب بالذراع نحو الأرض واضغط الزناد */
+const vrRay=new THREE.Raycaster();
+function vrTeleport(ctrl){
+  if(!model) return;
+  if(vr.mode==='ar'){                       // في الماكيت: الزناد يعيد وضعه أمامك
+    if(vr.maq){ const c=camWorld();
+      const q=new THREE.Quaternion(); (renderer.xr.getCamera()).getWorldQuaternion(q);
+      const e=new THREE.Euler().setFromQuaternion(q,'YXZ');
+      vr.maq.position.set(c.x-Math.sin(e.y)*0.9, Math.max(c.y-0.85,0.2), c.z-Math.cos(e.y)*0.9); }
+    return;
+  }
+  const m=new THREE.Matrix4().identity().extractRotation(ctrl.matrixWorld);
+  vrRay.ray.origin.setFromMatrixPosition(ctrl.matrixWorld);
+  vrRay.ray.direction.set(0,0,-1).applyMatrix4(m);
+  const hits=vrRay.intersectObjects([model,...(ground?[ground]:[])],true)
+                  .filter(h=>h.object.visible);
+  if(!hits.length) return;
+  const p=hits[0].point, c=camWorld();
+  player.position.x += p.x-c.x;
+  player.position.z += p.z-c.z;
+  player.position.y  = Math.round(p.y*100)/100;      // ارتفاع أرضية نقطة الوصول
+}
+/* عصا التحكّم: يسار = مشي · يمين = التفاف/طيران · A صعود دور · B نزول دور */
+function vrStep(dt){
+  const s=renderer.xr.getSession(); if(!s) return;
+  const fh=(lastBuilding&&lastBuilding.floor_height)||3.2;
+  vr.turnCool=Math.max(0,vr.turnCool-dt); vr.floorCool=Math.max(0,vr.floorCool-dt);
+  const xc=renderer.xr.getCamera();
+  /* وضع الماكيت: العصي تدير المجسّم وتكبّره بدل أن تحرّكك */
+  if(vr.mode==='ar'){
+    for(const src of s.inputSources){
+      const gp=src.gamepad; if(!gp||!vr.maq) continue;
+      const a=gp.axes, ax=(a.length>2?a[2]:a[0])||0, ay=(a.length>3?a[3]:a[1])||0;
+      const dz=v=>Math.abs(v)<0.18?0:v;
+      if(src.handedness==='right'){
+        if(dz(ax)) vr.maq.rotation.y -= dz(ax)*1.4*dt;
+        if(dz(ay)) vr.maq.scale.multiplyScalar(1 - dz(ay)*0.9*dt);
+      }else{
+        if(dz(ay)) vr.maq.position.y -= dz(ay)*0.5*dt;   // ارفع/اخفض الماكيت
+        if(dz(ax)) vr.maq.position.x += dz(ax)*0.5*dt;
+      }
+    }
+    return;
+  }
+  for(const src of s.inputSources){
+    const gp=src.gamepad; if(!gp) continue;
+    const a=gp.axes, ax=(a.length>2?a[2]:a[0])||0, ay=(a.length>3?a[3]:a[1])||0;
+    const dz=v=>Math.abs(v)<0.18?0:v;
+    const sprint=(gp.buttons[1]&&gp.buttons[1].pressed)?2.6:1;
+    if(src.handedness==='left'){
+      const mx=dz(ax), my=dz(ay);
+      if(mx||my){
+        const q=new THREE.Quaternion(); xc.getWorldQuaternion(q);
+        const e=new THREE.Euler().setFromQuaternion(q,'YXZ');
+        const f=new THREE.Vector3(-Math.sin(e.y),0,-Math.cos(e.y));
+        const r=new THREE.Vector3(Math.cos(e.y),0,-Math.sin(e.y));
+        const sp=vr.speed*sprint*dt;
+        player.position.addScaledVector(f,-my*sp);
+        player.position.addScaledVector(r, mx*sp);
+      }
+    }else{
+      const tx=dz(ax), ty=dz(ay);
+      if(vr.snap){ if(Math.abs(tx)>0.7&&vr.turnCool<=0){ vrRotate(-Math.sign(tx)*Math.PI/6); vr.turnCool=0.28; } }
+      else if(tx) vrRotate(-tx*1.6*dt);
+      if(Math.abs(ty)>0.6) player.position.y -= ty*2.2*dt*sprint;   // طيران رأسي
+    }
+    const b=gp.buttons;
+    if(b[4]&&b[4].pressed&&vr.floorCool<=0){ player.position.y+=fh; vr.floorCool=0.35; }
+    if(b[5]&&b[5].pressed&&vr.floorCool<=0){ player.position.y-=fh; vr.floorCool=0.35; }
+  }
+}
+/* وضع الماكيت (Passthrough): المبنى مصغَّر على طاولتك في غرفتك الحقيقية */
+function arScale(){
+  if(!model) return;
+  const s=Math.min(1.2/Math.max(bounds.r*2,0.001),1);
+  vr.arSaved={pos:model.position.clone(),scale:model.scale.clone()};
+  model.scale.setScalar(s);
+  model.position.set(-bounds.c.x*s, 0, -bounds.c.z*s);
+  const g=new THREE.Group(); g.name='MAQUETTE';
+  scene.remove(model); g.add(model); scene.add(g); vr.maq=g;
+  g.position.set(0,0.75,-0.9);              // أمامك بارتفاع طاولة
+  if(ground) ground.visible=false;
+  sky.visible=false; scene.background=null;
+}
+function arRestore(){
+  if(vr.maq&&model){ vr.maq.remove(model); scene.add(model); scene.remove(vr.maq); }
+  vr.maq=null;
+  if(vr.arSaved&&model){ model.position.copy(vr.arSaved.pos); model.scale.copy(vr.arSaved.scale); }
+  vr.arSaved=null;
+  if(ground) ground.visible=true;
+  sky.visible=true;
+}
+function vrEnter(){
+  vr.on=true;
+  const ses=renderer.xr.getSession();
+  vr.mode=((ses&&ses.environmentBlendMode)||'opaque')==='opaque'?'vr':'ar';   // شفاف = تمرير كاميرا Quest
+  vr.savedShadow=renderer.shadowMap.enabled;
+  vr.savedDetail=DETAIL;
+  if(walkState.active) stopWalk();
+  try{ renderer.xr.setFoveation(1); }catch(e){}
+  let n=0; if(model) model.traverse(o=>{if(o.isMesh)n++;});
+  // ثبات الإطار أهم من الظلال داخل النظارة، والمشاهد الثقيلة تُبنى بتفصيل أخفّ
+  renderer.shadowMap.enabled=false; sun.castShadow=false;
+  if(n>2200&&DETAIL>0.5){ DETAIL=0.5; const ds=document.getElementById('detailSel');
+    if(ds) ds.value='0.5'; setModel(null); }
+  player.rotation.y=0;
+  if(vr.mode==='ar'){
+    player.position.set(0,0,0); arScale(); headLamp.intensity=0;
+    statusEl.textContent='وضع الماكيت (Passthrough) — المبنى مصغّر أمامك في غرفتك · '
+      +'العصا اليمنى تدوّره · الزناد يعيد وضعه أمامك.';
+  }else{
+    player.position.set(bounds.c.x, 0, bounds.c.z+Math.min(bounds.r*0.55,14));
+    headLamp.intensity=28;
+    statusEl.textContent='وضع VR فعّال — العصا اليسرى للمشي · اليمنى للالتفاف · '
+      +'الزناد للانتقال · A/B لتغيير الدور.';
+  }
+}
+function vrExit(){
+  vr.on=false;
+  if(vr.mode==='ar') arRestore();
+  vr.mode='vr';
+  renderer.shadowMap.enabled=vr.savedShadow; sun.castShadow=true;
+  headLamp.intensity=0;
+  player.position.set(0,0,0); player.rotation.y=0;
+  if(DETAIL!==vr.savedDetail){ DETAIL=vr.savedDetail;
+    const ds=document.getElementById('detailSel'); if(ds) ds.value=String(DETAIL); setModel(null); }
+  statusEl.textContent='خرجت من وضع النظارة.';
+}
+renderer.xr.addEventListener('sessionstart',vrEnter);
+renderer.xr.addEventListener('sessionend',vrExit);
+vrSetup();
+
+/* زر الدخول للنظارة داخل لوحة العرض + كشف التوفّر */
+(function initVR(){
+  const box=document.getElementById('vrbox'); if(!box) return;
+  const st=document.getElementById('vrState');
+  if(!navigator.xr){
+    st.innerHTML='هذا المتصفّح لا يدعم WebXR. افتح الموقع من <b>متصفّح Meta Quest</b> داخل النظارة '
+      +'(الرابط نفسه)، ولا بدّ أن يكون <b>https</b>.';
+    return;
+  }
+  const secure=(location.protocol==='https:'||location.hostname==='localhost'||location.protocol==='file:');
+  if(!secure){
+    st.innerHTML='⚠️ WebXR يتطلّب <b>https</b>. انشر الموقع (Netlify) ثم افتح الرابط '
+      +'من متصفّح Meta Quest داخل النظارة.';
+    return;
+  }
+  navigator.xr.isSessionSupported('immersive-vr').then(ok=>{
+    if(!ok){ st.innerHTML='لم تُكتشف نظارة على هذا الجهاز. افتح الرابط نفسه من '
+      +'<b>متصفّح Meta Quest</b> داخل النظارة، وسيظهر الزر.'; return; }
+    const b=VRButton.createButton(renderer);
+    box.appendChild(b);
+    st.innerHTML='✓ النظارة جاهزة — «ENTER VR» يدخلك المبنى بمقياس 1:1 حقيقي.';
+    // Quest 3: وضع الماكيت بتمرير الكاميرا (Passthrough)
+    navigator.xr.isSessionSupported('immersive-ar').then(ar=>{
+      if(!ar) return;
+      const a=ARButton.createButton(renderer,{optionalFeatures:['local-floor','bounded-floor']});
+      a.textContent='🏠 ماكيت في غرفتك (Passthrough)';
+      box.appendChild(a);
+    }).catch(()=>{});
+  }).catch(()=>{ st.textContent='تعذّر فحص دعم النظارة.'; });
+  document.getElementById('vrSnap').onchange=e=>{ vr.snap=e.target.checked; };
+  document.getElementById('vrSpeed').oninput=e=>{ vr.speed=+e.target.value/10; };
+})();
+
+let last2=performance.now();
+renderer.setAnimationLoop(()=>{
+  const now=performance.now(),dt=Math.min((now-last2)/1000,0.1); last2=now;
+  if(renderer.xr.isPresenting){
+    vrStep(dt);
+    headLamp.position.copy(camWorld());
+  }else{
+    if(walkState.active)walkStep(dt); else{if(mode==='tour')tourStep();orbit.update();}
+    headLamp.intensity = walkState.active ? 55 : 0;
+    if(walkState.active) headLamp.position.copy(camera.position);
+  }
+  renderer.render(scene,camera);
+});
+
+/* ========================= الواجهة / التبويبات / الدخول ========================= */
+function showTab(t){document.querySelectorAll('[data-panel]').forEach(p=>p.style.display=p.dataset.panel===t?'':'none');}
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');showTab(b.dataset.tab);});
+
+/* يعرض للعميل تقرير تغطية المسار المحلي بنفس صيغة تقرير الخادم */
+function showCoverage(cov, added, msg, excluded){
+  const box=document.getElementById('reportBox'); if(!box) return;
+  if(cov===null){ box.className='report'; box.innerHTML=''; return; }
+  if(msg){ box.innerHTML='<div class="rq warn">'+esc(msg)+'</div>'; box.className='report on'; return; }
+  showReport({requirements:cov, extras:(excluded||[]).map(x=>'استُبعد بناءً على نفيك: '+x),
+              added:added||[]});
+}
+
+/* نوع المبنى المختار (يُشارَك بين كل التبويبات) — auto يكشفه من النص */
+function pickedType(txt){
+  const sel=(document.getElementById('bType')||{}).value||'auto';
+  return sel==='auto' ? detectTypeJS(txt||'') : sel;
+}
+/* المولّد المحلي الموحّد: يخدم «وصف نصّي» و«سريع» و«ملفات» بنفس القدرات */
+function buildLocal(txt,W,D,nF){
+  const t=pickedType(txt);
+  if(t==='warehouse'){
+    const T=normDigits(txt||'');
+    const m=T.match(/(\d{2,4})\s*[×xX*]\s*(\d{2,4})/);            // «120x80» في النص يغلب الحقول
+    const num=(re)=>{const g=T.match(re); const v=g?parseInt(g[1]||g[2]):NaN; return isNaN(v)?null:v;};
+    const w=m?+m[1]:W, d=m?+m[2]:D;
+    const clear=num(/ارتفاع\s*(?:صاف[يٍ]?)?\s*(\d{1,2})|clear\s*height\s*(\d{1,2})/);
+    const strict=!!(document.getElementById('strictMode')||{}).checked;
+    /* الأولوية المطلقة لوصف العميل: نبني ما ذكره هو فقط، بأعداده ومقاساته */
+    const ft=warehouseFromText(txt,w,d,{clear:clear,strict:strict});
+    if(ft){ showCoverage(ft.coverage, ft.added, null, ft.excluded); return ft.building; }
+    /* لم يذكر أي منطقة صناعية معروفة → نُخبره ولا نفرض عليه قالباً صامتاً */
+    showCoverage([], [], 'لم أتعرّف على مناطق في وصفك لأبنيها. اذكر ما تريده '
+      +'(أرصفة، تخزين بالتات، أرفف، التقاط، تغليف، فرز، شحن، مكاتب، صيانة…) '
+      +'بأعداده ومقاساته، وسأبني ما ذكرتَه وحده. أو جرّب «مثال: مستودع 120×80» للاطّلاع.');
+    return warehouseModel(w,d,{clear:clear||12});
+  }
+  showCoverage(null);
+  return parseDescription(txt,W,D,nF);
+}
+document.getElementById('genText').onclick=()=>{
+  const txt=document.getElementById('descText').value.trim();
+  if(!txt){statusEl.textContent='اكتب وصفاً أولاً.';return;}
+  const W=+document.getElementById('siteW').value||30,D=+document.getElementById('siteD').value||25,
+    nF=+document.getElementById('nFloors').value||3;
+  statusEl.textContent='جارٍ التحليل والتوليد…';
+  setTimeout(()=>{try{setModel(buildLocal(txt,W,D,nF));}catch(e){statusEl.textContent='خطأ: '+e.message;console.error(e);}},30);
+};
+/* ===== الخادم المدمج: يعمل لكل زائر بلا كتابة أي رابط ===== */
+let SRV_OK=false;
+function srvURL(){
+  const manual=((document.getElementById('llmURL')||{}).value||'').trim();
+  return (manual||window.ACS_SERVER||'').trim().replace(/\/+$/,'');
+}
+function srvPill(cls,txt){
+  const p=document.getElementById('srvPill'); if(!p) return;
+  p.className='srv'+(cls?' '+cls:''); p.innerHTML=txt;
+}
+async function checkServer(quiet){
+  const u=srvURL();
+  if(!u){ SRV_OK=false;
+    srvPill('bad','محرّك الفهم غير مضبوط — التوليد سيكون محلياً تقريبياً. '
+      +'<span style="opacity:.75">(ضع رابط الخادم في الإعدادات المتقدّمة أو في أعلى ملف الموقع)</span>');
+    return false; }
+  try{
+    const c=new AbortController(); const t=setTimeout(()=>c.abort(),12000);
+    const r=await fetch(u+'/health',{signal:c.signal}); clearTimeout(t);
+    const j=await r.json();
+    SRV_OK=!!(j&&j.ok&&j.key);
+    if(SRV_OK){ const L=j.limits||{};
+      srvPill('ok','✓ محرّك الفهم متصل — التوليد يقرأ وصفك ويبني عليه'
+        +(L.gen_hour?(' <span style="opacity:.7">(حتى '+L.gen_hour+' عمليات/ساعة)</span>'):'')); }
+    else srvPill('bad','الخادم يعمل لكن بلا مفتاح API — التوليد سيكون محلياً.');
+  }catch(e){
+    SRV_OK=false;
+    srvPill('bad','تعذّر الوصول لمحرّك الفهم — سنولّد محلياً. '
+      +'<span style="opacity:.75">(قد يكون الخادم نائماً؛ أعِد المحاولة بعد دقيقة)</span>');
+  }
+  return SRV_OK;
+}
+/* تقرير التغطية: يعرض كل بند من طلب العميل وأين نُفِّذ */
+function showReport(rep){
+  const box=document.getElementById('reportBox'); if(!box) return;
+  const reqs=(rep&&rep.requirements)||[], ex=(rep&&rep.extras)||[], ad=(rep&&rep.added)||[];
+  if(!reqs.length&&!ex.length&&!ad.length){ box.className='report'; box.innerHTML=''; return; }
+  let h='<h3>✓ تقرير التغطية — '+reqs.length+' بند من طلبك</h3>';
+  reqs.forEach(r=>{ h+='<div class="rq"><b>'+esc(r.req||'')+'</b>'
+    +(r.where?'<br><span class="w">↳ في: '+esc(r.where)+'</span>':'')
+    +(r.how?'<br><span class="w">'+esc(r.how)+'</span>':'')+'</div>'; });
+  ex.forEach(t=>{ h+='<div class="rq x"><b>مُثِّل بطريقة بديلة</b><br><span class="w">'+esc(String(t))+'</span></div>'; });
+  ad.forEach(t=>{ h+='<div class="rq x"><b>أُضيف للكود/التشغيل</b><br><span class="w">'+esc(String(t))+'</span></div>'; });
+  box.innerHTML=h; box.className='report on';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+document.getElementById('genLLM').onclick=async()=>{
+  const txt=document.getElementById('descText').value.trim();
+  if(!txt){statusEl.textContent='اكتب وصفاً أولاً.';return;}
+  const W=+document.getElementById('siteW').value||30,D=+document.getElementById('siteD').value||25,
+        nF=+document.getElementById('nFloors').value||3;
+  const u=srvURL();
+  const fallback=(why)=>{
+    statusEl.textContent=why+' — ولّدنا نموذجاً محلياً تقريبياً. عدّله بملاحظات المهندس أو أعِد المحاولة.';
+    try{ setModel(buildLocal(txt,W,D,nF)); }catch(e){ statusEl.textContent='خطأ: '+e.message; }
+  };
+  if(!u){ fallback('محرّك الفهم غير مضبوط'); return; }
+  const big=txt.length>2200||(txt.match(/(?:^|\n)\s*(?:[-*•]|\d+[.)])\s+/g)||[]).length>=12;
+  statusEl.textContent='🤖 محرّك الفهم يقرأ وصفك بنداً بنداً ويبني المبنى'
+    +(big?' — طلبك كبير، يُبنى على مرحلتين وقد يأخذ عدّة دقائق…':'… لحظات.');
+  document.getElementById('reportBox').className='report';
+  try{
+    const c=new AbortController(); const t=setTimeout(()=>c.abort(),900000);   // 15 دقيقة
+    const r=await fetch(u+'/v1/understand',{method:'POST',signal:c.signal,
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text:txt,
+        btype:((document.getElementById('bType')||{}).value||'auto'),
+        strict:!!(document.getElementById('strictMode')||{}).checked,
+        site_w:(+document.getElementById('siteW').value||null),
+        site_d:(+document.getElementById('siteD').value||null),
+        floors:(+document.getElementById('nFloors').value||null)})});
+    clearTimeout(t);
+    if(!r.ok){
+      let msg=''; try{ msg=(await r.json()).detail||''; }catch(e){ msg=(await r.text()).slice(0,160); }
+      if(r.status===429){ statusEl.textContent='⏳ '+msg; return; }
+      throw new Error(msg||('HTTP '+r.status));
+    }
+    const data=await r.json();
+    setModel(data.building);
+    SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
+    showReport(data.report);
+    const n=((data.report||{}).requirements||[]).length;
+    statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
+      +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
+      +((data.mode==='deep')?' · (توليد على مرحلتين)':'');
+  }catch(e){
+    console.error(e);
+    if(e.name==='AbortError') fallback('طال الانتظار على الخادم');
+    else fallback('تعذّر الاتصال بالخادم ('+String(e.message).slice(0,90)+')');
+  }
+};
+document.getElementById('genQuick').onclick=()=>{
+  const W=+document.getElementById('qW').value||30,D=+document.getElementById('qD').value||25,
+    nF=+document.getElementById('qFloors').value||4,nR=+document.getElementById('qRooms').value||6;
+  const t=(document.getElementById('qType')||{}).value||'residential';
+  setModel(t==='warehouse' ? warehouseModel(W,D,{}) : quickModel(W,D,nF,nR));
+};
+document.getElementById('loadExample').onclick=()=>{setModel(EXAMPLE);};
+document.getElementById('loadWarehouse').onclick=()=>{
+  statusEl.textContent='بناء مستودع تجارة إلكترونية 120×80 م…';
+  setTimeout(()=>setModel(warehouseModel(120,80,{clear:12})),20);
+};
+
+/* لوحة الجوال: زر إظهار/إخفاء */
+(function(){
+  const t=document.getElementById('panelToggle'), p=document.getElementById('left');
+  t.onclick=()=>{ p.classList.toggle('open'); t.textContent=p.classList.contains('open')?'✕':'☰'; };
+  // أغلق اللوحة تلقائياً بعد التوليد على الجوال
+  window.ACS=window.ACS||{}; window.ACS.closePanel=()=>{ if(innerWidth<=820){p.classList.remove('open');t.textContent='☰';} };
+})();
+
+/* حفظ رابط الخادم بين الجلسات */
+(function(){
+  const el=document.getElementById('llmURL');
+  try{ const s=localStorage.getItem('acs_llm'); if(s) el.value=s; }catch(e){}
+  el.addEventListener('change',()=>{ try{ localStorage.setItem('acs_llm', el.value.trim()); }catch(e){}
+    checkServer(); });
+  checkServer();                       // فحص تلقائي عند الفتح — بلا تدخّل من الزائر
+  setTimeout(()=>{ if(!SRV_OK) checkServer(true); }, 45000);   // الخوادم المجانية تنام؛ نعيد المحاولة
+})();
+
+/* جسر مع سكربت الدخول العادي: المحرّك جاهز الآن */
+window.ACS = window.ACS || {};
+window.ACS.showExample = ()=>setModel(EXAMPLE);
+window.ACS.setModel = setModel;
+window.ACS.ready = true;
+if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(EXAMPLE); }
+
+/* ========================= استيراد: JSON / DXF / صورة / PDF ========================= */
+function decorateRoom(r){const [x,z,w,d]=r.rect;
+  if(!r.doors)r.doors=[{edge:'N',offset:Math.max(0.6,Math.min(w/2,w-0.6)),width:0.9,height:2.1}];
+  if(!r.points)r.points=[{type:'light',x:w/2,z:d/2},{type:'outlet',x:0.8,z:0.3},
+    {type:'outlet',x:Math.max(1,w-0.8),z:0.3},{type:'ac',x:w/2,z:0.2},{type:'smoke',x:w/2,z:d/2}];
+  return r;}
+function wrapBuilding(rooms, W, D, nF){
+  const levels=[{index:0,name:'الأرضي',template:'ground'}];
+  for(let i=1;i<=nF;i++)levels.push({index:i,name:FLOOR_NAMES['F'+i]||('الدور '+i),template:'typical'});
+  levels.push({index:nF+1,name:'السطح',template:'roof'});
+  const ground={rooms:[{id:'lobby',rect:[W/2-4,1,8,7],
+    doors:[{edge:'N',offset:4,width:2.5,height:2.5,material:'glass'}],
+    points:[{type:'light',x:4,z:3.5},{type:'camera',x:0.3,z:0.3},{type:'tv',x:7.7,z:3.5}],
+    furniture:[{name:'reception',x:4,z:3.5,w:2.4,d:0.8,h:1.1,mat:'counter'}]}]};
+  const roof={rooms:[{id:'parapet',rect:[0.2,0.2,W-0.4,D-0.4],wall_h:1.4},
+    {id:'tanks',rect:[1,1,4,3],furniture:[{name:'tank',x:2,z:1.5,w:1.6,d:1.6,h:2,mat:'furn'}]},
+    {id:'solar',rect:[Math.max(1,W-12),Math.max(1,D-8),10,6],furniture:[{name:'panel',x:5,z:3,w:8,d:4,h:0.15,mat:'tv'}]}]};
+  return {site:{w:W,d:D},floor_height:3.2,wall_h:3.0,wall_t:0.15,levels,floors:{ground,typical:{rooms},roof}};
+}
+/* ---- DXF parser: يقرأ LWPOLYLINE/POLYLINE المغلقة كغرف ---- */
+function parseDXF(text){
+  const L=text.split(/\r?\n/); const pairs=[];
+  for(let k=0;k+1<L.length;k+=2)pairs.push([L[k].trim(),L[k+1]]);
+  let cur=null; const polys=[];
+  for(const [code,val] of pairs){
+    if(code==='0'){ if(cur&&cur.pts.length>=3)polys.push(cur);
+      const v=(val||'').trim(); cur=(v==='LWPOLYLINE'||v==='POLYLINE')?{pts:[],_x:null}:null; }
+    else if(cur){
+      if(code==='10')cur._x=parseFloat(val);
+      else if(code==='20'){ if(cur._x!=null){cur.pts.push([cur._x,parseFloat(val)]);cur._x=null;} }
+    }
+  }
+  if(cur&&cur.pts.length>=3)polys.push(cur);
+  return polys;
+}
+function dxfToBuilding(text,W,D,nF){
+  const polys=parseDXF(text);
+  if(!polys.length) throw new Error('لم نجد مضلّعات مغلقة (Polylines) في الملف.');
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  polys.forEach(p=>p.pts.forEach(([x,y])=>{minX=Math.min(minX,x);minY=Math.min(minY,y);maxX=Math.max(maxX,x);maxY=Math.max(maxY,y);}));
+  const dw=Math.max(maxX-minX,1e-3), dh=Math.max(maxY-minY,1e-3);
+  const scale=Math.min((W-2)/dw,(D-2)/dh);
+  const rooms=polys.map((p,idx)=>{
+    let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+    p.pts.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
+    const rw=(x1-x0)*scale, rd=(y1-y0)*scale;
+    return decorateRoom({id:'poly'+(idx+1),rect:[(x0-minX)*scale+1,(y0-minY)*scale+1,rw,rd]});
+  }).filter(r=>r.rect[2]>0.8 && r.rect[3]>0.8);
+  if(!rooms.length) throw new Error('المضلّعات صغيرة جداً بعد التحجيم.');
+  return wrapBuilding(rooms,W,D,nF);
+}
+/* ---- استقبال الملف ---- */
+function fileToImage(f){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(f);});}
+async function loadPdfJs(){
+  const pdfjs=await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+  pdfjs.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+  return pdfjs;
+}
+async function pdfFirstPage(f){
+  const pdfjs=await loadPdfJs();
+  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf}).promise; const page=await pdf.getPage(1);
+  const vp=page.getViewport({scale:2}); const c=document.createElement('canvas'); c.width=vp.width;c.height=vp.height;
+  await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+  const img=new Image(); await new Promise(r=>{img.onload=r;img.src=c.toDataURL('image/png');}); return img;
+}
+/* استخراج نص الـPDF مع إعادة بناء الأسطر حسب الإحداثي الرأسي */
+async function pdfText(f){
+  const pdfjs=await loadPdfJs();
+  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf}).promise; let out='';
+  for(let p=1;p<=pdf.numPages;p++){ const page=await pdf.getPage(p); const tc=await page.getTextContent();
+    const lines={};
+    tc.items.forEach(it=>{ if(!it.str) return; const y=Math.round(it.transform[5]);
+      (lines[y]=lines[y]||[]).push([it.transform[4], it.str]); });
+    Object.keys(lines).map(Number).sort((a,b)=>b-a).forEach(y=>{
+      out += lines[y].sort((a,b)=>a[0]-b[0]).map(o=>o[1]).join(' ') + '\n'; });
+    out+='\n';
+  }
+  return out;
+}
+/* يرسل صور المخطط لمحرّك الرؤية */
+async function planToLLM(blobs, llm, W, D, nF, info){
+  const fd=new FormData();
+  blobs.forEach((b,i)=>fd.append('files', b, 'plan'+i+'.png'));
+  fd.append('site_w', W); fd.append('site_d', D); fd.append('floors', nF);
+  const bt=pickedType(document.getElementById('descText').value||'');
+  if(bt&&bt!=='auto') fd.append('btype', bt);
+  if((document.getElementById('strictMode')||{}).checked) fd.append('strict','1');
+  const r=await fetch(llm+'/v1/understand/image',{method:'POST',body:fd});
+  if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,200));
+  const data=await r.json();
+  setModel(data.building);
+  info.textContent='✓ قُرئ المخطط بالرؤية — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى'
+                   +(data.issues?(' · '+data.issues+' ملاحظة'):'');
+}
+function canvasToBlob(c){return new Promise(res=>c.toBlob(res,'image/png'));}
+async function pdfPagesToBlobs(f, maxPages){
+  const pdfjs=await loadPdfJs(); const buf=await f.arrayBuffer();
+  const pdf=await pdfjs.getDocument({data:buf}).promise; const out=[];
+  const n=Math.min(pdf.numPages, maxPages||3);
+  for(let p=1;p<=n;p++){ const page=await pdf.getPage(p);
+    let sc=2; const vp0=page.getViewport({scale:1});
+    sc=Math.min(2.2, 1600/Math.max(vp0.width,vp0.height));      // دقّة كافية للقراءة
+    const vp=page.getViewport({scale:Math.max(sc,1)});
+    const c=document.createElement('canvas'); c.width=vp.width; c.height=vp.height;
+    await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
+    out.push(await canvasToBlob(c));
+  }
+  return out;
+}
+
+async function handleImport(f){
+  const info=document.getElementById('impInfo'), name=f.name.toLowerCase();
+  const W=+document.getElementById('impW').value||30,D=+document.getElementById('impD').value||25,nF=+document.getElementById('impFloors').value||5;
+  info.textContent='جارٍ القراءة…';
+  try{
+    if(name.endsWith('.json')){ const data=JSON.parse(await f.text());
+      const b=(data.levels&&data.floors)?data:wrapBuilding((data.rooms||[]).map(decorateRoom),W,D,nF);
+      setModel(b); info.textContent='تم استيراد JSON ✓'; }
+    else if(name.endsWith('.dxf')){ const b=dxfToBuilding(await f.text(),W,D,nF);
+      setModel(b); info.textContent='تم استيراد DXF ✓ ('+b.floors.typical.rooms.length+' غرفة)'; }
+    else if(name.endsWith('.pdf')){
+      // (أ) الأفضل: أرسل الـPDF نفسه لمحرّك الفهم — استخراج نصّ سليم + مواضع دقيقة
+      const llm=srvURL();
+      if(llm){
+        info.textContent='🤖 إرسال الـPDF لمحرّك الفهم (LLM)… قد يأخذ دقيقة.';
+        try{
+          const fd=new FormData(); fd.append('file', f);
+          const bt0=(document.getElementById('bType')||{}).value||'auto';
+          if(bt0!=='auto') fd.append('btype', bt0);
+          const r=await fetch(llm+'/v1/understand/pdf',{method:'POST',body:fd});
+          if(r.status===422){                       // PDF بلا نص = مخطط مرسوم → الرؤية
+            info.textContent='📐 المخطط مرسوم بلا نص — أقرأه بالرؤية… قد يأخذ دقيقة.';
+            const blobs=await pdfPagesToBlobs(f,3);
+            await planToLLM(blobs, llm, W, D, nF, info);
+            return;
+          }
+          if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,200));
+          const data=await r.json();
+          setModel(data.building);
+          info.textContent='✓ تولّد بالذكاء من الـPDF — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى';
+          return;
+        }catch(e){ info.textContent='تعذّر عبر LLM ('+e.message+') — نجرّب القراءة المحلية…'; }
+      }
+      // (ب) احتياطي: قراءة محلية بلا خادم
+      info.textContent='جارٍ قراءة نص الـPDF محلياً…';
+      let txt=''; try{ txt=await pdfText(f); }catch(e){ txt=''; }
+      const meta=detectMeta(txt);
+      const b=parseDescription(txt, meta.W||W, meta.D||D, meta.nF||nF);
+      const nR=b.floors.typical.rooms.length;
+      if(nR>=3){ setModel(b);
+        info.textContent='✓ تولّد من نص الـPDF — '+nR+' غرفة · أرض '+(meta.W||W)+'×'+(meta.D||D)+' · '+(meta.nF||nF)+' أدوار'; }
+      else { const img=await pdfFirstPage(f); openTracer(img);
+        info.textContent='لا يوجد وصف نصّي كافٍ (مخطط مصوّر) — ارسم الغرف على المخطط.'; }
+    }
+    else if(f.type.startsWith('image/')||/\.(png|jpe?g|webp)$/.test(name)){
+      const llm=srvURL();
+      if(llm){
+        info.textContent='📐 قراءة المخطط بالرؤية… قد يأخذ دقيقة.';
+        try{ await planToLLM([f], llm, W, D, nF, info); return; }
+        catch(e){ info.textContent='تعذّرت القراءة بالرؤية ('+e.message+') — افتح محرّر الرسم.'; }
+      }
+      const img=await fileToImage(f); openTracer(img);
+      if(!llm) info.textContent='ارسم الغرف على المخطط ثم «توليد 3D» (أو شغّل خادم الفهم لقراءته تلقائياً).';
+    }
+    else info.textContent='صيغة غير مدعومة (JSON / DXF / صورة / PDF).';
+  }catch(err){ info.textContent='خطأ: '+err.message; console.error(err); }
+}
+document.getElementById('impFile').onchange=e=>{ if(e.target.files[0]) handleImport(e.target.files[0]); };
+
+/* ---- محرّر رسم الغرف فوق المخطط ---- */
+let trImg=null, trRooms=[], trStart=null, trView=1;
+const trCanvas=document.getElementById('trCanvas'), trCtx=trCanvas.getContext('2d');
+function openTracer(img){ trImg=img; trRooms=[];
+  const maxW=Math.min(innerWidth-30,1500), maxH=innerHeight-100;
+  trView=Math.min(maxW/img.naturalWidth, maxH/img.naturalHeight, 1);
+  trCanvas.width=Math.round(img.naturalWidth*trView); trCanvas.height=Math.round(img.naturalHeight*trView);
+  document.getElementById('tracer').style.display='flex'; drawTracer(); updTrCount(); }
+function drawTracer(){ trCtx.clearRect(0,0,trCanvas.width,trCanvas.height);
+  trCtx.drawImage(trImg,0,0,trCanvas.width,trCanvas.height);
+  trCtx.lineWidth=2; trCtx.font='13px sans-serif';
+  trRooms.forEach((r,i)=>{ trCtx.fillStyle='rgba(56,189,248,0.16)'; trCtx.strokeStyle='#38bdf8';
+    trCtx.fillRect(r.x*trView,r.y*trView,r.w*trView,r.h*trView);
+    trCtx.strokeRect(r.x*trView,r.y*trView,r.w*trView,r.h*trView);
+    trCtx.fillStyle='#eaf4ff'; trCtx.fillText('غرفة '+(i+1), r.x*trView+5, r.y*trView+16); }); }
+function trPos(e){const rc=trCanvas.getBoundingClientRect(); return [(e.clientX-rc.left)/trView,(e.clientY-rc.top)/trView];}
+trCanvas.addEventListener('mousedown',e=>{trStart=trPos(e);});
+trCanvas.addEventListener('mousemove',e=>{ if(!trStart)return; const [x,y]=trPos(e); drawTracer();
+  trCtx.strokeStyle='#22c55e'; trCtx.setLineDash([6,4]);
+  trCtx.strokeRect(trStart[0]*trView,trStart[1]*trView,(x-trStart[0])*trView,(y-trStart[1])*trView); trCtx.setLineDash([]); });
+addEventListener('mouseup',e=>{ if(!trStart)return; const [x,y]=trPos(e);
+  const rx=Math.min(trStart[0],x),ry=Math.min(trStart[1],y),rw=Math.abs(x-trStart[0]),rh=Math.abs(y-trStart[1]);
+  trStart=null; if(rw>8&&rh>8){trRooms.push({x:rx,y:ry,w:rw,h:rh}); drawTracer(); updTrCount();} });
+function updTrCount(){document.getElementById('trCount').textContent=trRooms.length+' غرفة';}
+document.getElementById('trUndo').onclick=()=>{trRooms.pop();drawTracer();updTrCount();};
+document.getElementById('trClear').onclick=()=>{trRooms=[];drawTracer();updTrCount();};
+document.getElementById('trClose').onclick=()=>{document.getElementById('tracer').style.display='none';};
+document.getElementById('trGen').onclick=()=>{
+  if(!trRooms.length){document.getElementById('trCount').textContent='ارسم غرفة أولاً';return;}
+  const Wm=+document.getElementById('trW').value||30, mpp=Wm/trImg.naturalWidth, Dm=trImg.naturalHeight*mpp;
+  const nF=+document.getElementById('impFloors').value||5;
+  const rooms=trRooms.map((r,i)=>decorateRoom({id:'room'+(i+1),
+    rect:[+(r.x*mpp).toFixed(2),+(r.y*mpp).toFixed(2),+(r.w*mpp).toFixed(2),+(r.h*mpp).toFixed(2)]}));
+  document.getElementById('tracer').style.display='none';
+  setModel(wrapBuilding(rooms, Wm, +Dm.toFixed(1), nF));
+};
+
+/* ========================= مثال عمارة الرياض (مضمّن) ========================= */
+const EXAMPLE = {
+  "meta": { "name": "Riyadh Residential 30x25", "city": "Riyadh", "north": "-Z" },
+  "site": { "w": 30.0, "d": 25.0 },
+  "floor_height": 3.2,
+  "wall_h": 3.0,
+  "wall_t": 0.15,
+
+  "levels": [
+    { "index": 0, "name": "الأرضي",  "template": "ground" },
+    { "index": 1, "name": "الأول",   "template": "typical" },
+    { "index": 2, "name": "الثاني",  "template": "typical" },
+    { "index": 3, "name": "الثالث",  "template": "typical" },
+    { "index": 4, "name": "الرابع",  "template": "typical" },
+    { "index": 5, "name": "السطح",   "template": "roof" }
+  ],
+
+  "floors": {
+    "ground": {
+      "rooms": [
+        {
+          "id": "lobby", "rect": [10, 1, 10, 8], "wall_h": 3.0,
+          "doors": [
+            { "edge": "N", "offset": 5, "width": 2.5, "height": 2.5, "material": "glass" },
+            { "edge": "S", "offset": 5, "width": 2.0, "height": 2.1 }
+          ],
+          "windows": [ { "edge": "N", "offset": 1.5, "width": 2.0, "sill": 1.0, "height": 1.6 } ],
+          "points": [
+            { "type": "light", "x": 3, "z": 4 }, { "type": "light", "x": 7, "z": 4 },
+            { "type": "camera", "x": 0.5, "z": 0.5 }, { "type": "camera", "x": 9.5, "z": 0.5 },
+            { "type": "tv", "x": 9.8, "z": 4 }, { "type": "smoke", "x": 5, "z": 4 },
+            { "type": "sprinkler", "x": 2.5, "z": 2 }, { "type": "sprinkler", "x": 7.5, "z": 6 },
+            { "type": "outlet", "x": 5, "z": 0.2 }, { "type": "ac", "x": 5, "z": 0.2 }
+          ],
+          "furniture": [
+            { "name": "reception", "x": 5, "z": 4, "w": 2.4, "d": 0.8, "h": 1.1, "mat": "counter" },
+            { "name": "sofa", "x": 8, "z": 2, "w": 1.8, "d": 0.9, "h": 0.8, "mat": "furn_soft" },
+            { "name": "sofa", "x": 8, "z": 6, "w": 1.8, "d": 0.9, "h": 0.8, "mat": "furn_soft" },
+            { "name": "coffee", "x": 8, "z": 4, "w": 1.0, "d": 0.6, "h": 0.45, "mat": "furn" }
+          ]
+        },
+        { "id": "elevator1", "rect": [12.5, 9.2, 1.8, 2.0],
+          "doors": [ { "edge": "N", "offset": 0.9, "width": 0.9, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 0.9, "z": 1.0 }, { "type": "camera", "x": 0.3, "z": 0.3 } ] },
+        { "id": "elevator2", "rect": [15.0, 9.2, 1.8, 2.0],
+          "doors": [ { "edge": "N", "offset": 0.9, "width": 0.9, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 0.9, "z": 1.0 }, { "type": "camera", "x": 0.3, "z": 0.3 } ] },
+        { "id": "stair1", "rect": [10.0, 9.2, 2.0, 3.0],
+          "doors": [ { "edge": "N", "offset": 1.0, "width": 0.95, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.0, "z": 1.5 }, { "type": "exit", "x": 1.0, "z": 0.2 } ] },
+        { "id": "stair2", "rect": [18.0, 9.2, 2.0, 3.0],
+          "doors": [ { "edge": "N", "offset": 1.0, "width": 0.95, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.0, "z": 1.5 }, { "type": "exit", "x": 1.0, "z": 0.2 } ] },
+        { "id": "guard", "rect": [1, 1, 3, 3],
+          "doors": [ { "edge": "E", "offset": 1.5, "width": 0.9, "height": 2.1 } ],
+          "windows": [ { "edge": "N", "offset": 1.5, "width": 1.2, "sill": 1.0, "height": 1.2 } ],
+          "points": [ { "type": "light", "x": 1.5, "z": 1.5 }, { "type": "outlet", "x": 0.3, "z": 1.5 },
+                      { "type": "camera", "x": 2.7, "z": 0.3 } ] },
+        { "id": "electrical", "rect": [4.2, 1, 3, 3],
+          "doors": [ { "edge": "E", "offset": 1.5, "width": 0.9, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.5, "z": 1.5 }, { "type": "smoke", "x": 1.5, "z": 1.5 } ] },
+        { "id": "generator", "rect": [1, 21, 4, 3],
+          "doors": [ { "edge": "N", "offset": 2.0, "width": 1.1, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 2, "z": 1.5 }, { "type": "smoke", "x": 2, "z": 1.5 } ] },
+        { "id": "parking", "rect": [21, 12, 8, 12], "wall_h": 3.0,
+          "points": [
+            { "type": "light", "x": 2, "z": 3 }, { "type": "light", "x": 6, "z": 3 },
+            { "type": "light", "x": 2, "z": 9 }, { "type": "light", "x": 6, "z": 9 },
+            { "type": "ev", "x": 7, "z": 11 }, { "type": "camera", "x": 0.3, "z": 0.3 },
+            { "type": "camera", "x": 7.7, "z": 11.7 } ],
+          "furniture": [
+            { "name": "car", "x": 2, "z": 2, "w": 2.0, "d": 4.5, "h": 1.4, "mat": "furn" },
+            { "name": "car", "x": 5, "z": 2, "w": 2.0, "d": 4.5, "h": 1.4, "mat": "furn" },
+            { "name": "car", "x": 2, "z": 8, "w": 2.0, "d": 4.5, "h": 1.4, "mat": "furn" }
+          ] }
+      ]
+    },
+
+    "typical": {
+      "rooms": [
+        {
+          "id": "corridor", "rect": [13, 2, 2, 21], "wall_h": 3.0,
+          "doors": [
+            { "edge": "W", "offset": 8, "width": 1.1, "height": 2.1 },
+            { "edge": "E", "offset": 8, "width": 1.1, "height": 2.1 }
+          ],
+          "points": [
+            { "type": "spot", "x": 1, "z": 3 }, { "type": "spot", "x": 1, "z": 7 },
+            { "type": "spot", "x": 1, "z": 11 }, { "type": "spot", "x": 1, "z": 15 },
+            { "type": "spot", "x": 1, "z": 19 },
+            { "type": "camera", "x": 0.3, "z": 0.3 }, { "type": "camera", "x": 1.7, "z": 20 },
+            { "type": "smoke", "x": 1, "z": 6 }, { "type": "smoke", "x": 1, "z": 15 },
+            { "type": "sprinkler", "x": 1, "z": 10 }, { "type": "vent", "x": 1, "z": 4 }
+          ]
+        },
+
+        {
+          "id": "majlis", "rect": [0.5, 0.5, 6, 5], "wall_h": 3.0,
+          "doors": [ { "edge": "E", "offset": 2.5, "width": 0.9, "height": 2.1, "material": "oak" } ],
+          "windows": [ { "edge": "N", "offset": 3.0, "width": 4.0, "sill": 0.9, "height": 2.0 } ],
+          "points": [
+            { "type": "light", "x": 3, "z": 2.5 },
+            { "type": "tv", "x": 5.8, "z": 2.5 },
+            { "type": "outlet", "x": 5.8, "z": 1.9 }, { "type": "outlet", "x": 5.8, "z": 2.3 },
+            { "type": "outlet", "x": 5.8, "z": 2.7 }, { "type": "outlet", "x": 5.8, "z": 3.1 },
+            { "type": "network", "x": 5.8, "z": 1.5 },
+            { "type": "switch", "x": 5.7, "z": 0.6 },
+            { "type": "ac", "x": 3, "z": 0.2 },
+            { "type": "smoke", "x": 3, "z": 2.5 }, { "type": "sprinkler", "x": 1.5, "z": 3.5 }
+          ],
+          "furniture": [
+            { "name": "sofa", "x": 3, "z": 0.6, "w": 4.0, "d": 0.8, "h": 0.8, "mat": "furn_soft" },
+            { "name": "sofa", "x": 0.7, "z": 2.5, "w": 0.8, "d": 3.0, "h": 0.8, "mat": "furn_soft" },
+            { "name": "sofa", "x": 3, "z": 4.4, "w": 4.0, "d": 0.8, "h": 0.8, "mat": "furn_soft" },
+            { "name": "table", "x": 3, "z": 2.5, "w": 1.4, "d": 0.8, "h": 0.4, "mat": "furn" }
+          ]
+        },
+
+        {
+          "id": "living", "rect": [0.5, 6, 8, 6], "wall_h": 3.0,
+          "doors": [ { "edge": "E", "offset": 3.0, "width": 1.0, "height": 2.1 } ],
+          "windows": [ { "edge": "S", "offset": 4.0, "width": 3.0, "sill": 0.3, "height": 2.4 } ],
+          "points": [
+            { "type": "light", "x": 2.5, "z": 3 }, { "type": "light", "x": 5.5, "z": 3 },
+            { "type": "tv", "x": 4, "z": 5.8 },
+            { "type": "outlet", "x": 1, "z": 0.2 }, { "type": "outlet", "x": 3, "z": 0.2 },
+            { "type": "outlet", "x": 5, "z": 0.2 }, { "type": "outlet", "x": 7, "z": 0.2 },
+            { "type": "outlet", "x": 0.2, "z": 2 }, { "type": "outlet", "x": 0.2, "z": 4 },
+            { "type": "outlet", "x": 7.8, "z": 2 }, { "type": "outlet", "x": 7.8, "z": 4 },
+            { "type": "usb", "x": 1.5, "z": 1 }, { "type": "usb", "x": 2.0, "z": 1 },
+            { "type": "network", "x": 7.8, "z": 3 },
+            { "type": "camera", "x": 0.3, "z": 0.3 },
+            { "type": "ac", "x": 4, "z": 5.8 }, { "type": "smoke", "x": 4, "z": 3 }
+          ],
+          "furniture": [
+            { "name": "Lsofa", "x": 2, "z": 1.2, "w": 3.5, "d": 0.9, "h": 0.8, "mat": "furn_soft" },
+            { "name": "Lsofa", "x": 0.9, "z": 2.5, "w": 0.9, "d": 2.5, "h": 0.8, "mat": "furn_soft" },
+            { "name": "dining", "x": 5.5, "z": 3, "w": 2.2, "d": 1.0, "h": 0.75, "mat": "furn" }
+          ]
+        },
+
+        {
+          "id": "kitchen", "rect": [0.5, 12.5, 5, 4], "wall_h": 3.0,
+          "doors": [ { "edge": "N", "offset": 2.5, "width": 1.0, "height": 2.1 } ],
+          "windows": [ { "edge": "W", "offset": 2.0, "width": 1.2, "sill": 1.1, "height": 1.2 } ],
+          "points": [
+            { "type": "light", "x": 2.5, "z": 2 },
+            { "type": "outlet", "x": 1, "z": 0.2 }, { "type": "outlet", "x": 2, "z": 0.2 },
+            { "type": "outlet", "x": 3, "z": 0.2 }, { "type": "outlet", "x": 4, "z": 0.2 },
+            { "type": "network", "x": 0.2, "z": 2 }, { "type": "smoke", "x": 2.5, "z": 2 },
+            { "type": "ac", "x": 2.5, "z": 3.8 }
+          ],
+          "furniture": [
+            { "name": "counter", "x": 2.5, "z": 0.4, "w": 4.6, "d": 0.6, "h": 0.9, "mat": "counter" },
+            { "name": "island", "x": 2.5, "z": 2.2, "w": 3.0, "d": 0.9, "h": 0.9, "mat": "counter" },
+            { "name": "fridge", "x": 0.5, "z": 3.4, "w": 0.8, "d": 0.8, "h": 1.9, "mat": "furn" }
+          ]
+        },
+
+        {
+          "id": "master_bed", "rect": [0.5, 17, 6, 5], "wall_h": 3.0,
+          "doors": [ { "edge": "N", "offset": 3.0, "width": 1.0, "height": 2.1 } ],
+          "windows": [ { "edge": "S", "offset": 3.0, "width": 3.5, "sill": 0.4, "height": 2.2 } ],
+          "points": [
+            { "type": "light", "x": 3, "z": 2.5 },
+            { "type": "tv", "x": 3, "z": 0.2 },
+            { "type": "outlet", "x": 1.5, "z": 4.5 }, { "type": "outlet", "x": 4.5, "z": 4.5 },
+            { "type": "usb", "x": 1.7, "z": 4.5 }, { "type": "usb", "x": 4.3, "z": 4.5 },
+            { "type": "network", "x": 0.2, "z": 3 },
+            { "type": "switch", "x": 3.5, "z": 0.4 }, { "type": "switch", "x": 1.5, "z": 4.3 },
+            { "type": "camera", "x": 0.3, "z": 0.3 },
+            { "type": "ac", "x": 3, "z": 4.8 }, { "type": "smoke", "x": 3, "z": 2.5 }
+          ],
+          "furniture": [
+            { "name": "kingbed", "x": 3, "z": 3.6, "w": 2.0, "d": 2.1, "h": 0.6, "mat": "furn_soft" },
+            { "name": "wardrobe", "x": 0.7, "z": 2, "w": 0.7, "d": 3.5, "h": 2.4, "mat": "furn" },
+            { "name": "desk", "x": 5, "z": 4.2, "w": 1.4, "d": 0.7, "h": 0.75, "mat": "furn" }
+          ]
+        },
+        { "id": "closet", "rect": [6.7, 17, 3, 3.5],
+          "doors": [ { "edge": "W", "offset": 1.5, "width": 0.8, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.5, "z": 1.7 }, { "type": "switch", "x": 0.4, "z": 1.5 } ],
+          "furniture": [ { "name": "island", "x": 1.5, "z": 1.7, "w": 1.5, "d": 0.7, "h": 0.9, "mat": "furn" } ] },
+        { "id": "master_bath", "rect": [9.9, 17, 3, 3.5],
+          "doors": [ { "edge": "W", "offset": 1.5, "width": 0.8, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.5, "z": 1.7 }, { "type": "outlet", "x": 0.4, "z": 1 },
+                      { "type": "vent", "x": 1.5, "z": 1.7 } ] },
+
+        { "id": "bed2", "rect": [7, 0.5, 4.5, 4.5], "wall_h": 3.0,
+          "doors": [ { "edge": "S", "offset": 2.2, "width": 0.9, "height": 2.1 } ],
+          "windows": [ { "edge": "N", "offset": 2.2, "width": 1.5, "sill": 1.0, "height": 1.5 } ],
+          "points": [ { "type": "light", "x": 2.2, "z": 2.2 }, { "type": "tv", "x": 2.2, "z": 0.2 },
+                      { "type": "outlet", "x": 1, "z": 4.3 }, { "type": "outlet", "x": 3.5, "z": 4.3 },
+                      { "type": "usb", "x": 1.2, "z": 4.3 }, { "type": "network", "x": 0.2, "z": 2 },
+                      { "type": "ac", "x": 2.2, "z": 0.2 }, { "type": "smoke", "x": 2.2, "z": 2.2 } ],
+          "furniture": [ { "name": "bed", "x": 2.2, "z": 3.2, "w": 1.6, "d": 2.0, "h": 0.6, "mat": "furn_soft" },
+                         { "name": "desk", "x": 4, "z": 1, "w": 1.2, "d": 0.6, "h": 0.75, "mat": "furn" } ] },
+
+        { "id": "kids", "rect": [7, 5.2, 4.5, 4], "wall_h": 3.0,
+          "doors": [ { "edge": "S", "offset": 2.2, "width": 0.9, "height": 2.1 } ],
+          "windows": [ { "edge": "E", "offset": 2.0, "width": 1.4, "sill": 1.0, "height": 1.4 } ],
+          "points": [ { "type": "light", "x": 2.2, "z": 2 }, { "type": "outlet", "x": 1, "z": 0.2 },
+                      { "type": "outlet", "x": 3.5, "z": 0.2 }, { "type": "smoke", "x": 2.2, "z": 2 },
+                      { "type": "ac", "x": 2.2, "z": 0.2 } ],
+          "furniture": [ { "name": "bed", "x": 1.2, "z": 3, "w": 1.0, "d": 2.0, "h": 0.6, "mat": "furn_soft" },
+                         { "name": "bed", "x": 3.2, "z": 3, "w": 1.0, "d": 2.0, "h": 0.6, "mat": "furn_soft" } ] },
+
+        { "id": "maid", "rect": [7, 10, 3, 3],
+          "doors": [ { "edge": "S", "offset": 1.5, "width": 0.8, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.5, "z": 1.5 }, { "type": "outlet", "x": 0.3, "z": 1.5 } ],
+          "furniture": [ { "name": "bed", "x": 1, "z": 1.8, "w": 0.9, "d": 1.9, "h": 0.5, "mat": "furn_soft" } ] },
+        { "id": "laundry", "rect": [10.2, 10, 2.8, 3],
+          "doors": [ { "edge": "S", "offset": 1.4, "width": 0.8, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 1.4, "z": 1.5 }, { "type": "outlet", "x": 0.5, "z": 0.2 } ],
+          "furniture": [ { "name": "washer", "x": 0.8, "z": 0.6, "w": 0.7, "d": 0.7, "h": 0.9, "mat": "furn" },
+                         { "name": "dryer", "x": 1.7, "z": 0.6, "w": 0.7, "d": 0.7, "h": 0.9, "mat": "furn" } ] },
+
+        { "id": "apt2_living", "rect": [16, 0.5, 6, 6], "wall_h": 3.0,
+          "doors": [ { "edge": "W", "offset": 3.0, "width": 1.0, "height": 2.1 } ],
+          "windows": [ { "edge": "N", "offset": 3.0, "width": 3.0, "sill": 0.9, "height": 2.0 } ],
+          "points": [ { "type": "light", "x": 3, "z": 3 }, { "type": "tv", "x": 5.8, "z": 3 },
+                      { "type": "outlet", "x": 2, "z": 0.2 }, { "type": "outlet", "x": 4, "z": 0.2 },
+                      { "type": "camera", "x": 0.3, "z": 0.3 }, { "type": "ac", "x": 3, "z": 0.2 } ],
+          "furniture": [ { "name": "sofa", "x": 3, "z": 5, "w": 3.0, "d": 0.9, "h": 0.8, "mat": "furn_soft" } ] },
+        { "id": "apt2_bed", "rect": [16, 7, 6, 5], "wall_h": 3.0,
+          "doors": [ { "edge": "W", "offset": 2.5, "width": 0.9, "height": 2.1 } ],
+          "windows": [ { "edge": "E", "offset": 2.5, "width": 2.0, "sill": 0.9, "height": 1.6 } ],
+          "points": [ { "type": "light", "x": 3, "z": 2.5 }, { "type": "outlet", "x": 1, "z": 4.5 },
+                      { "type": "outlet", "x": 5, "z": 4.5 }, { "type": "ac", "x": 3, "z": 0.2 } ],
+          "furniture": [ { "name": "bed", "x": 3, "z": 3.5, "w": 1.8, "d": 2.0, "h": 0.6, "mat": "furn_soft" } ] },
+        { "id": "apt2_kitchen", "rect": [16, 12.5, 5, 4],
+          "doors": [ { "edge": "N", "offset": 2.5, "width": 1.0, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 2.5, "z": 2 }, { "type": "outlet", "x": 2, "z": 0.2 },
+                      { "type": "smoke", "x": 2.5, "z": 2 } ],
+          "furniture": [ { "name": "counter", "x": 2.5, "z": 0.4, "w": 4.5, "d": 0.6, "h": 0.9, "mat": "counter" } ] },
+        { "id": "apt2_master", "rect": [16, 17, 6, 5],
+          "doors": [ { "edge": "N", "offset": 3.0, "width": 1.0, "height": 2.1 } ],
+          "windows": [ { "edge": "S", "offset": 3.0, "width": 3.5, "sill": 0.4, "height": 2.2 } ],
+          "points": [ { "type": "light", "x": 3, "z": 2.5 }, { "type": "tv", "x": 3, "z": 0.2 },
+                      { "type": "outlet", "x": 1.5, "z": 4.5 }, { "type": "outlet", "x": 4.5, "z": 4.5 },
+                      { "type": "camera", "x": 5.7, "z": 0.3 }, { "type": "ac", "x": 3, "z": 4.8 } ],
+          "furniture": [ { "name": "kingbed", "x": 3, "z": 3.5, "w": 2.0, "d": 2.1, "h": 0.6, "mat": "furn_soft" } ] }
+      ]
+    },
+
+    "roof": {
+      "rooms": [
+        { "id": "parapet", "rect": [0.2, 0.2, 29.6, 24.6], "wall_h": 1.5 },
+        { "id": "elevator_room", "rect": [12.5, 9, 4.3, 3],
+          "doors": [ { "edge": "S", "offset": 2, "width": 0.9, "height": 2.1 } ],
+          "points": [ { "type": "light", "x": 2, "z": 1.5 } ] },
+        { "id": "ac_equipment", "rect": [1, 1, 5, 4],
+          "points": [ { "type": "ac", "x": 2.5, "z": 2, "height": 1.0 } ],
+          "furniture": [ { "name": "chiller", "x": 2.5, "z": 2, "w": 3.0, "d": 2.0, "h": 1.4, "mat": "counter" } ] },
+        { "id": "water_tanks", "rect": [24, 1, 5, 4],
+          "furniture": [ { "name": "tank", "x": 1.5, "z": 2, "w": 1.6, "d": 1.6, "h": 2.0, "mat": "furn" },
+                         { "name": "tank", "x": 3.5, "z": 2, "w": 1.6, "d": 1.6, "h": 2.0, "mat": "furn" } ] },
+        { "id": "solar", "rect": [8, 16, 14, 7],
+          "furniture": [
+            { "name": "panel", "x": 3, "z": 2, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" },
+            { "name": "panel", "x": 9, "z": 2, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" },
+            { "name": "panel", "x": 3, "z": 5, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" },
+            { "name": "panel", "x": 9, "z": 5, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" }
+          ] },
+        { "id": "seating", "rect": [1, 18, 5, 5],
+          "points": [ { "type": "camera", "x": 0.3, "z": 0.3 } ],
+          "furniture": [ { "name": "bench", "x": 2.5, "z": 1, "w": 2.5, "d": 0.6, "h": 0.45, "mat": "furn" } ] }
+      ]
+    }
+  }
+};
+</script>
+</body>
+</html>
