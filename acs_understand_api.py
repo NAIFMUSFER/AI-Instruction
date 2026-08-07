@@ -106,6 +106,9 @@ class UnderstandReq(BaseModel):
     model: str | None = None
     btype: str | None = None      # auto | residential | warehouse | office | retail
     strict: bool | None = None    # التزام حرفي بوصف العميل: لا إضافات قياسية
+    site_w: float | None = None   # أبعاد الأرض من الواجهة (اختيارية)
+    site_d: float | None = None
+    floors: int | None = None
     deep: bool | None = None      # فرض/تعطيل التوليد على مرحلتين
 
 
@@ -136,12 +139,17 @@ def understand(req: UnderstandReq, request: Request):
     guard(request, "gen")
     try:
         text = req.text
-        if req.btype and req.btype != "auto":
-            # تلميح صريح لنوع المبنى يغلب الكشف التلقائي
-            text = "[نوع المبنى: %s]\n" % req.btype + text
-            if req.btype in ("warehouse", "industrial", "factory", "logistics"):
-                text = ("[warehouse مستودع racking pallet conveyor picking docks]\n") + text
-        building = U.understand(text, model=req.model, deep=req.deep, strict=bool(req.strict))
+        hints = []
+        if req.site_w and req.site_d:
+            hints.append("أبعاد الأرض/مسطح البناء: العرض %.1f م (محور X) × العمق %.1f م (محور Z)."
+                         % (float(req.site_w), float(req.site_d)))
+        if req.floors:
+            hints.append("عدد الأدوار: %d." % int(req.floors))
+        if hints:
+            text = "[معطيات الموقع من العميل] " + " ".join(hints) + "\n" + text
+        bt = req.btype if (req.btype and req.btype != "auto") else None
+        building = U.understand(text, model=req.model, deep=req.deep,
+                                strict=bool(req.strict), btype=bt)
     except Exception as e:
         import traceback
         print("\n===== ACS ERROR (full) =====")
@@ -208,14 +216,11 @@ async def understand_image(
         raise HTTPException(400, "لم تُرفع صور.")
     print("[ACS] plan images: %d" % len(imgs))
     try:
-        n2 = notes
-        if btype and btype != "auto":
-            n2 = ("نوع المبنى: %s. " % btype) + (notes or "")
-            if btype in ("warehouse", "industrial", "factory", "logistics"):
-                n2 = "warehouse مستودع racking pallet conveyor docks picking. " + n2
+        bt = btype if (btype and btype != "auto") else None
         building = U.understand_images(imgs, site_w=site_w, site_d=site_d,
-                                       floors=floors, model=model, notes=n2,
-                                       strict=str(strict) in ("1", "true", "True"))
+                                       floors=floors, model=model, notes=notes,
+                                       strict=str(strict) in ("1", "true", "True"),
+                                       btype=bt)
     except Exception as e:
         print("\n===== ACS VISION ERROR ====="); traceback.print_exc(); print("===========================\n")
         raise HTTPException(500, "فشل قراءة المخطط: %s" % str(e)[:900])
@@ -242,11 +247,8 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
             raise HTTPException(
                 422, "PDF بلا نص — يبدو مخططاً مرسوماً/مصوّراً. أرسله كصورة إلى "
                      "/v1/understand/image ليُقرأ بالرؤية (الموقع يفعل ذلك تلقائياً).")
-        if btype and btype != "auto":
-            text = "[نوع المبنى: %s]\n" % btype + text
-            if btype in ("warehouse", "industrial", "factory", "logistics"):
-                text = "[warehouse مستودع racking pallet conveyor picking docks]\n" + text
-        building = U.understand(text, model=model)
+        building = U.understand(text, model=model,
+                                btype=(btype if (btype and btype != "auto") else None))
     except HTTPException:
         raise
     except Exception as e:
