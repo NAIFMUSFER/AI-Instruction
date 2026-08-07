@@ -105,7 +105,19 @@ class UnderstandReq(BaseModel):
     text: str
     model: str | None = None
     btype: str | None = None      # auto | residential | warehouse | office | retail
+    strict: bool | None = None    # التزام حرفي بوصف العميل: لا إضافات قياسية
     deep: bool | None = None      # فرض/تعطيل التوليد على مرحلتين
+
+
+@app.get("/")
+def root():
+    """صفحة حالة بسيطة — حتى لا يظهر Not Found لمن يفتح الجذر."""
+    return {"service": "ACS Understanding Engine",
+            "status": "running",
+            "health": "/health",
+            "endpoints": ["/v1/understand", "/v1/edit",
+                          "/v1/understand/image", "/v1/understand/pdf"],
+            "docs": "/docs"}
 
 
 @app.get("/health")
@@ -129,7 +141,7 @@ def understand(req: UnderstandReq, request: Request):
             text = "[نوع المبنى: %s]\n" % req.btype + text
             if req.btype in ("warehouse", "industrial", "factory", "logistics"):
                 text = ("[warehouse مستودع racking pallet conveyor picking docks]\n") + text
-        building = U.understand(text, model=req.model, deep=req.deep)
+        building = U.understand(text, model=req.model, deep=req.deep, strict=bool(req.strict))
     except Exception as e:
         import traceback
         print("\n===== ACS ERROR (full) =====")
@@ -176,6 +188,7 @@ async def understand_image(
     floors: int | None = Form(None),
     notes: str = Form(""),
     btype: str | None = Form(None),
+    strict: str | None = Form(None),
     model: str | None = Form(None),
 ):
     """يقرأ مخططاً معمارياً مرسوماً (صورة/صور) بالرؤية ويبني النموذج."""
@@ -201,7 +214,8 @@ async def understand_image(
             if btype in ("warehouse", "industrial", "factory", "logistics"):
                 n2 = "warehouse مستودع racking pallet conveyor docks picking. " + n2
         building = U.understand_images(imgs, site_w=site_w, site_d=site_d,
-                                       floors=floors, model=model, notes=n2)
+                                       floors=floors, model=model, notes=n2,
+                                       strict=str(strict) in ("1", "true", "True"))
     except Exception as e:
         print("\n===== ACS VISION ERROR ====="); traceback.print_exc(); print("===========================\n")
         raise HTTPException(500, "فشل قراءة المخطط: %s" % str(e)[:900])
