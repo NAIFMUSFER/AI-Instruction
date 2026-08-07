@@ -82,6 +82,8 @@ PointType إضافية (معدات): scanner · printer · scale · monitor · p
 المستودع الصافي — هي جدران المبنى الخارجية، ولا تُحسب متداخلة مع المناطق داخلها.
 """
 
+
+
 # ---------------------------------------------------------------------------
 # 2) قواعد المعرفة (جداول الأبواب/النوافذ الافتراضية — كود سعودي شائع)
 # ---------------------------------------------------------------------------
@@ -197,6 +199,11 @@ KNOWLEDGE_WAREHOUSE = r"""
 # ---------------------------------------------------------------------------
 # قاعدة الأولوية: وصف العميل يعلو على كل قالب أو افتراض
 # ---------------------------------------------------------------------------
+STRICT_RULE = (
+    "\n\n**وضع الالتزام الحرفي مفعّل**: لا تُضِف أي عنصر أو منطقة أو نقطة لم يذكرها العميل "
+    "صراحةً — ولا حتى لضرورة كود. اترك meta.added فارغة. نفّذ وصفه كما هو بالضبط، لا أكثر ولا أقل."
+)
+
 PRIORITY_RULE = r"""
 ════════ قاعدة الأولوية (تعلو على كل ما يليها) ════════
 ١. وصف العميل هو المرجع. نفّذ **كل** ما ذكره حرفياً: الأسماء، الأعداد، المقاسات،
@@ -226,23 +233,40 @@ REQUIREMENTS_RULE = r"""
 """
 
 
-def detect_type(text):
-    """يكشف نوع المبنى من الوصف ليُبدّل قواعد المعرفة والتحقّق."""
+def detect_type(text, explicit=None):
+    """يكشف نوع المبنى من الوصف. الاختيار الصريح من الواجهة يغلب الكشف دائماً.
+
+    الكشف موزون: كلمة صناعية قاطعة (مستودع/رصيف تحميل/سير ناقل) تزن ٣،
+    وكلمة محتملة (رفوف/تخزين/تغليف) تزن ١ — لأنها ترد كثيراً في وصف سكني
+    ("رفوف تخزين" في غرفة الغسيل مثلاً). ثم نوازنها بمؤشّرات السكن.
+    """
+    if explicit and str(explicit).lower() not in ("", "auto", "none"):
+        return str(explicit).lower()
     t = (text or "").lower()
-    ind = ("warehouse", "مستودع", "مخزن", "لوجست", "logistic", "fulfil", "distribution cent",
-           "dock", "رصيف تحميل", "racking", "رفوف", "بالت", "pallet", "conveyor", "سير ناقل",
-           "picking", "التقاط", "packing station", "sku", "wms", "amr", "cross-dock", "crossdock",
-           "مصنع", "factory", "production line", "خط إنتاج")
-    off = ("office building", "مبنى مكاتب", "مكاتب إدارية", "open plan", "coworking", "برج مكاتب")
-    ret = ("mall", "مركز تجاري", "متجر", "retail", "showroom", "معرض", "سوبرماركت", "supermarket")
-    score = sum(1 for k in ind if k in t)
-    if score >= 2:
-        return "warehouse"
-    if any(k in t for k in off):
+
+    STRONG = ("warehouse", "مستودع", "مخزن ", "لوجست", "logistic", "fulfil",
+              "distribution cent", "مركز توزيع", "رصيف تحميل", "أرصفة تحميل", "ارصفة تحميل",
+              "dock leveler", "loading dock", "cross-dock", "crossdock", "كروس دوك",
+              "conveyor", "سير ناقل", "سيور", "wms", "amr", "agv", "pallet rack",
+              "رفوف بالتات", "بالتات", "pallet", "forklift", "رافعة شوكية", "sku",
+              "مصنع", "factory", "خط إنتاج", "production line", "picking zone", "منطقة التقاط")
+    WEAK = ("رفوف", "تخزين", "picking", "التقاط", "packing", "تغليف", "dock", "أرصفة",
+            "فرز", "sorting", "racking", "شحن")
+    RESI = ("شقة", "شقق", "مجلس", "غرفة نوم", "غرف نوم", "نوم رئيسية", "مطبخ", "حمام",
+            "دورة مياه", "صالة", "بلكونة", "بلكونات", "عمارة", "فيلا", "غرفة معيشة",
+            "غرفة الطعام", "خادمة", "مصعد", "درج رئيسي", "حارس", "دور متكرر", "غرفة الغسيل",
+            "apartment", "bedroom", "kitchen", "living room", "villa", "balcony")
+    OFF = ("مبنى مكاتب", "office building", "برج مكاتب", "open plan", "coworking")
+    RET = ("مركز تجاري", "mall", "متجر", "retail", "showroom", "معرض", "سوبرماركت", "supermarket")
+
+    ind = 3 * sum(1 for k in STRONG if k in t) + sum(1 for k in WEAK if k in t)
+    res = sum(1 for k in RESI if k in t)
+    if any(k in t for k in OFF) and ind < 6:
         return "office"
-    if any(k in t for k in ret):
+    if any(k in t for k in RET) and ind < 6:
         return "retail"
-    if score == 1:
+    # نطلب دليلاً صناعياً قاطعاً، وأن يتفوّق بوضوح على مؤشّرات السكن
+    if ind >= 3 and ind > res:
         return "warehouse"
     return "residential"
 
@@ -316,7 +340,7 @@ def vision_prompt(btype="residential"):
         "(فيش 40سم، مفتاح 120سم، إنارة سقفية، كاشف دخان، مخرج تكييف).\n"
         "- أضِف أثاثاً مبسّطاً مطابقاً لما يظهر في المخطط (كنب، سرير، طاولة طعام، مطبخ).\n"
         "- لا تدع الغرف تتداخل، وابقِ الجميع داخل حدود site.\n\n"
-        "التزم حرفياً بهذا المخطّط:\n"
+        + PRIORITY_RULE + "\nالتزم حرفياً بهذا المخطّط:\n"
         + SCHEMA_BRIEF + (SCHEMA_INDUSTRIAL if btype in ("warehouse", "industrial") else "")
         + "\n" + (KNOWLEDGE_WAREHOUSE if btype in ("warehouse", "industrial") else KNOWLEDGE) + "\n"
         "أعِد كائن Building JSON واحداً كاملاً وصالحاً فقط."
@@ -324,7 +348,7 @@ def vision_prompt(btype="residential"):
 
 
 def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
-                      repair_rounds=None, notes=""):
+                      repair_rounds=None, notes="", strict=False, btype=None):
     """images: قائمة (media_type, base64). يقرأ المخطط بالرؤية ويعيد Building JSON مُتحقَّقاً."""
     import acs_validate as V
     hint = []
@@ -335,6 +359,8 @@ def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
         hint.append("عدد الأدوار المطلوبة: %d (كرّر قالب الدور مع levels)." % int(floors))
     if notes:
         hint.append("ملاحظات المستخدم: " + notes)
+    if strict:
+        hint.append(STRICT_RULE)
 
     content = [{"type": "image",
                 "source": {"type": "base64", "media_type": mt, "data": b64}}
@@ -342,9 +368,11 @@ def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
     content.append({"type": "text", "text":
                     "اقرأ هذا المخطط وحوّله إلى Building JSON كامل.\n" + "\n".join(hint)})
 
-    vt = detect_type((notes or "") + " " + " ".join(hint))
+    vt = detect_type((notes or "") + " " + " ".join(hint), btype)
     building = validate(extract_json(call_llm(None, model=model, content=content, btype=vt)))
     building.setdefault("meta", {}).setdefault("type", vt)
+    if strict:
+        building["meta"]["strict"] = True
     issues, stats = V.validate_building(building)
     print("[ACS-VISION] قراءة المخطط: %d مخالفة · %s" % (len(issues), stats))
 
@@ -624,13 +652,14 @@ def _detail_group(description, plan_ctx, rooms, model, btype):
     return data.get("rooms") or (data if isinstance(data, list) else [])
 
 
-def understand_deep(description, model=None, group_size=None, workers=None):
+def understand_deep(description, model=None, group_size=None, workers=None, strict=False, btype=None):
     """توليد على مرحلتين مع تفصيل متوازٍ — للطلبات الضخمة."""
     import acs_validate as V
-    btype = detect_type(description)
+    btype = detect_type(description, btype)
     print("[ACS-DEEP] نوع المبنى: %s" % btype)
 
-    building = _plan(description, model=model, btype=btype)
+    desc = description + (STRICT_RULE if strict else "")
+    building = _plan(desc, model=model, btype=btype)
     plan_rooms = []
     for tmpl, fdef in (building.get("floors") or {}).items():
         for r in (fdef.get("rooms") or []):
@@ -658,7 +687,7 @@ def understand_deep(description, model=None, group_size=None, workers=None):
     def work(k):
         tmpl, rs = groups[k]
         try:
-            det = _detail_group(description, ctx, rs, model, btype)
+            det = _detail_group(desc, ctx, rs, model, btype)
             print("[ACS-DEEP] مجموعة %d/%d ✓ (%d منطقة)" % (k + 1, len(groups), len(det)))
             return tmpl, det
         except Exception as e:
@@ -686,6 +715,9 @@ def understand_deep(description, model=None, group_size=None, workers=None):
 
     building.setdefault("meta", {})["type"] = building["meta"].get("type", btype)
     building["meta"]["acs_mode"] = "deep"
+    if strict:
+        building["meta"]["strict"] = True
+        building["meta"]["added"] = []
     reqs = building["meta"].get("requirements") or []
     print("[ACS-DEEP] تقرير التغطية: %d بند من طلب العميل" % len(reqs))
     issues, stats = V.validate_building(building)
@@ -710,25 +742,29 @@ def _should_go_deep(description):
     d = description or ""
     # طلب طويل، أو مرقّم ببنود كثيرة، أو مبنى صناعي = مخرج أكبر من نداء واحد
     bullets = len(re.findall(r"(?m)^\s*(?:[-*•]|\d+[.)])\s+", d))
-    return len(d) > 2200 or bullets >= 12 or detect_type(d) == "warehouse"
+    return len(d) > 2200 or bullets >= 12
 
 
-def understand(description, model=None, repair_rounds=None, deep=None):
+def understand(description, model=None, repair_rounds=None, deep=None, strict=False, btype=None):
     """وصف → Building JSON، مع حلقة تحقّق وإصلاح ذاتي.
     الطلبات الكبيرة تُوجَّه تلقائياً إلى التوليد على مرحلتين حتى لا يُقطع أي بند."""
     import acs_validate as V
     if deep if deep is not None else _should_go_deep(description):
         try:
-            return understand_deep(description, model=model)
+            return understand_deep(description, model=model, strict=strict, btype=btype)
         except Exception as e:
             print("[ACS-DEEP] فشل المسار العميق (%s) — نعود للنداء الواحد." % str(e)[:200])
 
-    btype = detect_type(description)
+    btype = detect_type(description, btype)
     rounds = int(repair_rounds if repair_rounds is not None
                  else os.environ.get("ACS_REPAIR_ROUNDS", "1"))
 
-    building = validate(extract_json(call_llm(description, model=model, btype=btype)))
+    building = validate(extract_json(call_llm(
+        description + (STRICT_RULE if strict else ""), model=model, btype=btype)))
     building.setdefault("meta", {}).setdefault("type", btype)
+    if strict:
+        building["meta"]["strict"] = True
+        building["meta"]["added"] = []
     issues, stats = V.validate_building(building)
     print("[ACS-CHECK] جولة 0 (%s): %d مخالفة · %s" % (btype, len(issues), stats))
 
