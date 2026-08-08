@@ -15,6 +15,7 @@
 # =============================================================================
 
 import os
+import json
 import time
 import threading
 from collections import defaultdict, deque
@@ -41,34 +42,63 @@ RL_GEN_DAY   = int(os.environ.get("ACS_RL_GEN_DAY", "25"))     # توليد/زا
 RL_EDIT_HOUR = int(os.environ.get("ACS_RL_EDIT_HOUR", "30"))   # تعديلات/زائر/ساعة
 RL_GLOBAL_DAY = int(os.environ.get("ACS_RL_GLOBAL_DAY", "400"))  # سقف يومي للخادم كله
 MAX_TEXT = int(os.environ.get("ACS_MAX_TEXT", "60000"))        # حرفاً لكل طلب
+MAX_UPLOAD = int(os.environ.get("ACS_MAX_UPLOAD_MB", "12")) * 1024 * 1024
+MAX_BUILDING = int(os.environ.get("ACS_MAX_BUILDING", "900000"))   # حجم النموذج في /v1/edit
+ALLOWED_MODELS = {m.strip() for m in os.environ.get(
+    "ACS_ALLOWED_MODELS", "claude-sonnet-5,claude-haiku-4-5").split(",") if m.strip()}
+
+
+def _safe_model(m):
+    """لا يختار الزائر النموذج — إلا من قائمة مسموحة صراحةً."""
+    m = (m or "").strip()
+    return m if m in ALLOWED_MODELS else None
 
 _hits = defaultdict(deque)
 _lock = threading.Lock()
 
 
+TRUSTED_HOPS = int(os.environ.get("ACS_TRUSTED_PROXIES", "1"))
+
+
 def _client_ip(request: Request) -> str:
-    fwd = request.headers.get("x-forwarded-for") or request.headers.get("x-real-ip")
+    """آخر قيمة في X-Forwarded-For هي التي يكتبها البروكسي الموثوق؛
+    أوّلها يكتبها العميل ويستطيع تزويرها كل طلب لتجاوز حدّ المعدّل."""
+    fwd = request.headers.get("x-forwarded-for")
     if fwd:
-        return fwd.split(",")[0].strip()
+        parts = [p.strip() for p in fwd.split(",") if p.strip()]
+        if parts:
+            return parts[-min(TRUSTED_HOPS, len(parts))]
+    real = request.headers.get("x-real-ip")
+    if real:
+        return real.strip()
     return request.client.host if request.client else "?"
 
 
-def _rate(key: str, limit: int, window: int):
-    """نافذة منزلقة بسيطة داخل العملية — تكفي لخادم واحد وتمنع الاستنزاف."""
+def _rate(key: str, limit: int, window: int, consume: bool = True):
+    """نافذة منزلقة داخل العملية. consume=False يفحص بلا تسجيل."""
     now = time.time()
     with _lock:
         q = _hits[key]
         while q and now - q[0] > window:
             q.popleft()
         if len(q) >= limit:
+            if not q:
+                return True, 0
             return False, int(window - (now - q[0])) + 1
-        q.append(now)
+        if consume:
+            q.append(now)
+        # تنظيف دوري لمفاتيح الـIP الفارغة (تسرّب ذاكرة في خادم طويل العمر)
+        if len(_hits) > 4000:
+            for k in [k for k, v in list(_hits.items()) if not v]:
+                _hits.pop(k, None)
         return True, 0
 
 
 def guard(request: Request, kind: str = "gen"):
     ip = _client_ip(request)
-    ok, wait = _rate("ALL:day", RL_GLOBAL_DAY, 86400)
+    # افحص العام بلا استهلاك أولاً، ثم حدّ الزائر، ولا تُسجّل في العام إلا بعد نجاحهما —
+    # وإلا استطاع زائر واحد مرفوض أن يستنفد السقف العام ويُطفئ الخدمة للجميع.
+    ok, _ = _rate("ALL:day", RL_GLOBAL_DAY, 86400, consume=False)
     if not ok:
         raise HTTPException(429, "بلغ الخادم سقفه اليومي. حاول غداً أو شغّل نسخة خاصة بك.")
     if kind == "gen":
@@ -84,6 +114,7 @@ def guard(request: Request, kind: str = "gen"):
         if not ok:
             raise HTTPException(429, "تجاوزت حدّ التعديلات في الساعة. أعِد المحاولة بعد %d دقيقة."
                                 % max(1, wait // 60))
+    _rate("ALL:day", RL_GLOBAL_DAY, 86400)      # يُستهلك العام بعد اجتياز كل الفحوص
 
 
 def _cap(text: str) -> str:
@@ -148,7 +179,7 @@ def understand(req: UnderstandReq, request: Request):
         if hints:
             text = "[معطيات الموقع من العميل] " + " ".join(hints) + "\n" + text
         bt = req.btype if (req.btype and req.btype != "auto") else None
-        building = U.understand(text, model=req.model, deep=req.deep,
+        building = U.understand(text, model=_safe_model(req.model), deep=req.deep,
                                 strict=bool(req.strict), btype=bt)
     except Exception as e:
         import traceback
@@ -178,7 +209,11 @@ def edit(req: EditReq, request: Request):
     guard(request, "edit")
     print("[ACS] edit: %d ملاحظة" % len(req.notes))
     try:
-        out = U.apply_notes(req.building, req.notes, model=req.model)
+        if len(json.dumps(req.building, ensure_ascii=False)) > MAX_BUILDING:
+            raise HTTPException(413, "النموذج كبير جداً للتعديل — قلّل التفاصيل أو عدّل دوراً واحداً.")
+        if len(req.notes) > 40:
+            raise HTTPException(413, "عدد الملاحظات كبير (%d) — أرسلها على دفعات." % len(req.notes))
+        out = U.apply_notes(req.building, req.notes, model=_safe_model(req.model))
     except Exception as e:
         print("\n===== ACS EDIT ERROR ====="); traceback.print_exc(); print("=========================\n")
         raise HTTPException(500, "فشل تنفيذ التعديلات: %s" % str(e)[:900])
@@ -218,7 +253,7 @@ async def understand_image(
     try:
         bt = btype if (btype and btype != "auto") else None
         building = U.understand_images(imgs, site_w=site_w, site_d=site_d,
-                                       floors=floors, model=model, notes=notes,
+                                       floors=floors, model=_safe_model(model), notes=notes,
                                        strict=str(strict) in ("1", "true", "True"),
                                        btype=bt)
     except Exception as e:
@@ -236,6 +271,9 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
     import tempfile, os as _os, traceback
     guard(request, "gen")
     data = await file.read()
+    if len(data) > MAX_UPLOAD:
+        raise HTTPException(413, "حجم الملف %.1f م.ب — الحدّ %d م.ب."
+                            % (len(data) / 1048576, MAX_UPLOAD // 1048576))
     # ملف مؤقت متوافق مع ويندوز/لينكس (لا تستخدم /tmp مباشرة)
     fd, tmp = tempfile.mkstemp(suffix=".pdf", prefix="acs_")
     try:
@@ -247,7 +285,8 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
             raise HTTPException(
                 422, "PDF بلا نص — يبدو مخططاً مرسوماً/مصوّراً. أرسله كصورة إلى "
                      "/v1/understand/image ليُقرأ بالرؤية (الموقع يفعل ذلك تلقائياً).")
-        building = U.understand(text, model=model,
+        text = _cap(text)
+        building = U.understand(text, model=_safe_model(model),
                                 btype=(btype if (btype and btype != "auto") else None))
     except HTTPException:
         raise

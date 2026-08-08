@@ -58,6 +58,9 @@ def validate_building(b):
 
     btype = building_type(b)
     industrial = btype in ("warehouse", "industrial", "factory", "logistics", "مستودع")
+    # الوضع الصارم: نلتزم بوصف العميل حرفياً — لا نطالبه بإضافات قياسية،
+    # ونكتفي بفحص الهندسة (الحدود، التداخل، الفتحات) دون فرض محتوى.
+    strict = bool((b.get("meta") or {}).get("strict"))
     stats = {"levels": len(b.get("levels", [])), "rooms": 0, "points": 0}
     if industrial:
         stats["racks"] = stats["lanes"] = stats["stations"] = stats["docks"] = 0
@@ -95,7 +98,8 @@ def validate_building(b):
                 stats["docks"] += sum(int(dk.get("count", 1) or 1) for dk in (r.get("docks") or []))
 
             # تفتيت الأحياز الكبيرة العامة (apt_a ...) — سكني فقط
-            if (not industrial) and area > SPLIT_AREA and any(g in low for g in GENERIC_IDS):
+            if (not industrial) and not strict and area > SPLIT_AREA \
+                    and any(g in low for g in GENERIC_IDS):
                 issues.append(
                     "[%s/%s] حيّز عام مساحته %.0f م² — قسّمه إلى غرف مسمّاة منفصلة "
                     "(مجلس، صالة، مطبخ، غرف نوم، حمامات، ممر) كلٌّ برُكنها وأبعادها."
@@ -104,16 +108,17 @@ def validate_building(b):
             outdoor = _is_outdoor(rid)
 
             # باب لكل غرفة داخلية (عدا الأسوار والمواقف والمناطق المفتوحة)
-            if not r.get("doors") and not outdoor and not openz and "parking" not in low \
-                    and not r.get("docks"):
+            if not strict and not r.get("doors") and not outdoor and not openz \
+                    and "parking" not in low and not r.get("docks"):
                 issues.append("[%s/%s] بلا باب — أضِف باباً على حافة مناسبة." % (tmpl, rid))
 
             pts = r.get("points", []) or []
             stats["points"] += len(pts)
             kinds = [p.get("type") for p in pts]
-            if area >= 3.0 and not outdoor and not any(k in ("light", "spot") for k in kinds):
+            if not strict and area >= 3.0 and not outdoor \
+                    and not any(k in ("light", "spot") for k in kinds):
                 issues.append("[%s/%s] بلا إنارة — أضِف light أو spot." % (tmpl, rid))
-            if area >= 6.0 and not outdoor and "parking" not in low \
+            if not strict and area >= 6.0 and not outdoor and "parking" not in low \
                     and "smoke" not in kinds and "sprinkler" not in kinds:
                 issues.append("[%s/%s] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات)."
                               % (tmpl, rid))
@@ -183,8 +188,9 @@ def validate_building(b):
             if seen >= 12:
                 break
 
-    # ---- فحوص على مستوى المبنى الصناعي (سلامة وتشغيل) ----
-    if industrial:
+    # ---- فحوص السلامة على مستوى المبنى الصناعي ----
+    # (تُتخطّى كلياً في الوضع الصارم: العميل طلب التزاماً حرفياً بوصفه)
+    if industrial and not strict:
         allpts, allrooms = [], []
         for fdef in (b.get("floors") or {}).values():
             for r in (fdef.get("rooms") or []):
@@ -206,14 +212,9 @@ def validate_building(b):
         if stats.get("docks", 0) < 2:
             issues.append("تشغيل: عدد أرصفة التحميل %d — المطلوب أرصفة استقبال وأخرى للشحن."
                           % stats.get("docks", 0))
-        if stats.get("racks", 0) == 0:
-            issues.append("تشغيل: لا توجد أنظمة تخزين (racks) — أضِف رفوف بالتات/أرفف/صناديق.")
-        roles = set(str(r.get("role", "")).lower() for r in allrooms)
-        for need, label in (("receiving", "الاستقبال"), ("storage", "التخزين"), ("picking", "الالتقاط"),
-                            ("packing", "التغليف"), ("shipping", "الشحن")):
-            if not any(need in x for x in roles):
-                issues.append("تدفّق العمل: لا توجد منطقة بدور '%s' (%s) — أضِفها لإكمال المسار "
-                              "من الاستلام إلى الشحن." % (need, label))
+        # ملاحظة مهمّة: لا نفرض أدواراً وظيفية (استلام/التقاط/تغليف…) على المبنى.
+        # ما يطلبه العميل هو المرجع؛ فمن أراد مخزناً بلا منطقة التقاط فله ذلك.
+        # نُبقي فقط ما هو متطلّب سلامة/حياة حقيقي، وهو يُضاف ولا يُنقص من طلبه.
 
     return issues, stats
 

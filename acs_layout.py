@@ -135,8 +135,14 @@ def area_fits(rooms, W, D, factor=0.92):
     return total <= W * D * factor, round(total, 1), round(W * D, 1)
 
 
-def ensure_essentials(room, W=None, D=None, industrial=False):
-    """يُكمل النواقص الإلزامية: باب، إنارة، كاشف دخان، أفياش — بلا LLM."""
+def ensure_essentials(room, W=None, D=None, industrial=False, strict=False):
+    """يُكمل النواقص الإلزامية: باب، إنارة، كاشف دخان، أفياش — بلا LLM.
+
+    كل ما يُضاف هنا يُوسَم "auto": true ليعرف العميل أنه ليس من وصفه ويستطيع حذفه.
+    وفي الوضع الصارم (strict) لا نُضيف شيئاً إطلاقاً — وصف العميل هو المرجع الوحيد.
+    """
+    if strict:
+        return room
     from acs_validate import _is_outdoor, _is_open_zone, _is_envelope
     rid = str(room.get("id", ""))
     low = rid.lower()
@@ -157,13 +163,13 @@ def ensure_essentials(room, W=None, D=None, industrial=False):
                 rows = max(1, int(round(n / cols)))
                 for i in range(cols):
                     for j in range(rows):
-                        pts.append({"type": "light",
+                        pts.append({"type": "light", "auto": True,
                                     "x": round(w * (i + 0.5) / cols, 2),
                                     "z": round(d * (j + 0.5) / rows, 2)})
             if area >= 6.0 and "smoke" not in kinds and "sprinkler" not in kinds:
                 n = max(1, min(int(area / 140) + 1, 20))
                 for i in range(n):
-                    pts.append({"type": "sprinkler",
+                    pts.append({"type": "sprinkler", "auto": True,
                                 "x": round(w * (i + 0.5) / n, 2), "z": round(d / 2, 2)})
             return room
         # غرف إدارية داخل المستودع تُعامل معاملة الغرف العادية (تكمل بالأسفل)
@@ -176,7 +182,7 @@ def ensure_essentials(room, W=None, D=None, industrial=False):
         span = w if edge in ("N", "S") else d
         wid = 0.8 if any(k in low for k in ("bath", "wc", "toilet", "حمام", "دورة")) else 0.9
         wid = min(wid, max(span - 0.3, 0.6))
-        room["doors"] = [{"edge": edge, "offset": round(span / 2, 2),
+        room["doors"] = [{"edge": edge, "offset": round(span / 2, 2), "auto": True,
                           "width": round(wid, 2), "height": 2.1, "material": "wood"}]
         added.append("door")
 
@@ -184,17 +190,17 @@ def ensure_essentials(room, W=None, D=None, industrial=False):
     kinds = [p.get("type") for p in pts]
 
     if area >= 3.0 and not any(k in ("light", "spot") for k in kinds):
-        pts.append({"type": "light", "x": round(w / 2, 2), "z": round(d / 2, 2)})
+        pts.append({"type": "light", "auto": True, "x": round(w / 2, 2), "z": round(d / 2, 2)})
         added.append("light")
 
     if area >= 6.0 and "smoke" not in kinds:
-        pts.append({"type": "smoke", "x": round(w / 2, 2), "z": round(d / 2, 2)})
+        pts.append({"type": "smoke", "auto": True, "x": round(w / 2, 2), "z": round(d / 2, 2)})
         added.append("smoke")
 
     # أفياش أساسية إن لم توجد (غرف معيشة/نوم)
     if area >= 6.0 and "outlet" not in kinds:
         for fx in (round(w * 0.25, 2), round(w * 0.75, 2)):
-            pts.append({"type": "outlet", "x": fx, "z": round(max(d - 0.25, 0.2), 2)})
+            pts.append({"type": "outlet", "auto": True, "x": fx, "z": round(max(d - 0.25, 0.2), 2)})
         added.append("outlets")
 
     # مفتاح إنارة عند الباب
@@ -202,10 +208,12 @@ def ensure_essentials(room, W=None, D=None, industrial=False):
         dr = room["doors"][0]
         e = dr.get("edge", "N"); off = float(dr.get("offset", w / 2))
         if e in ("N", "S"):
-            pts.append({"type": "switch", "x": round(min(max(off + 0.6, 0.2), w - 0.2), 2),
+            pts.append({"type": "switch", "auto": True,
+                        "x": round(min(max(off + 0.6, 0.2), w - 0.2), 2),
                         "z": round(0.3 if e == "N" else d - 0.3, 2)})
         else:
-            pts.append({"type": "switch", "x": round(0.3 if e == "W" else w - 0.3, 2),
+            pts.append({"type": "switch", "auto": True,
+                        "x": round(0.3 if e == "W" else w - 0.3, 2),
                         "z": round(min(max(off + 0.6, 0.2), d - 0.2), 2)})
         added.append("switch")
 
@@ -221,6 +229,7 @@ def autofix(building):
     """
     from acs_validate import _is_envelope, building_type
     industrial = building_type(building) in ("warehouse", "industrial", "factory", "logistics")
+    strict = bool((building.get("meta") or {}).get("strict"))
     site = building.get("site", {})
     W = float(site.get("w", 30)); D = float(site.get("d", 25))
     report = {"moved": 0, "remaining": 0, "templates": 0, "packed": [], "tight": [],
@@ -237,8 +246,15 @@ def autofix(building):
             rem, mv = resolve_overlaps(rooms, W, D)
             report["moved"] += mv; report["remaining"] += rem
             for r in allr:
-                ensure_essentials(r, W, D, industrial=True)
+                ensure_essentials(r, W, D, industrial=True, strict=strict)
                 fix_openings(r); fix_points(r)
+            continue
+
+        if strict:            # لا نُعيد رصّ ما رسمه العميل، نكتفي بفضّ التداخل الحقيقي
+            rem, mv = resolve_overlaps(rooms, W, D)
+            report["moved"] += mv; report["remaining"] += rem
+            for r in allr:
+                ensure_essentials(r, W, D, strict=True); fix_openings(r); fix_points(r)
             continue
 
         fits, total, cap = area_fits(rooms, W, D)
@@ -266,6 +282,6 @@ def autofix(building):
                                        % (tmpl, (1 - shrink) * 100))
         report["moved"] += mv; report["remaining"] += rem
         for r in allr:
-            ensure_essentials(r, W, D)
+            ensure_essentials(r, W, D, strict=strict)
             fix_openings(r); fix_points(r)
     return report

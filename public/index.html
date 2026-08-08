@@ -64,6 +64,16 @@
   .doorbox.hot{border-color:var(--acc2);background:#22c55e14;color:var(--txt)}
   label.file{color:var(--acc);text-decoration:underline;cursor:pointer}
   #status{padding:8px 14px;font-size:11.5px;color:var(--muted);border-top:1px solid var(--line)}
+  #camBar{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:12;display:flex;
+    gap:4px;align-items:center;background:#0d1626e6;border:1px solid var(--line);
+    border-radius:14px;padding:5px;backdrop-filter:blur(10px);box-shadow:0 8px 30px #0007}
+  #camBar button{background:transparent;border:1px solid transparent;color:var(--txt);
+    font-size:17px;width:40px;height:36px;border-radius:10px;cursor:pointer;line-height:1;
+    transition:background .15s,border-color .15s}
+  #camBar button:hover{background:#ffffff14}
+  #camBar button.on{background:#38bdf826;border-color:#38bdf877}
+  #camBar .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
+  @media(max-width:820px){ #camBar{top:auto;bottom:10px;transform:translateX(-50%) scale(.92)} }
   #info{position:fixed;bottom:12px;right:376px;background:var(--panel);border:1px solid var(--line);
     border-radius:10px;padding:9px 12px;font-size:12px;display:none;z-index:9;max-width:260px}
   #info .qc{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;border-top:1px solid var(--line);padding-top:7px}
@@ -446,6 +456,17 @@
   </div>
 </div>
 
+<div id="camBar">
+  <button data-view="orbit" class="on" title="مداري">🔄</button>
+  <button data-view="arch"  title="لقطة معمارية">🏛️</button>
+  <button data-view="bird"  title="عين الطائر">🦅</button>
+  <button data-view="top"   title="مسقط علوي">⬛</button>
+  <button data-view="tour"  title="جولة تلقائية">🎬</button>
+  <button data-view="walk"  title="منظور شخصي — مشي">🚶</button>
+  <span class="sep"></span>
+  <button id="cbNote" title="تحديد وتعليق">✏️</button>
+  <button id="cbShot" title="حفظ صورة">📷</button>
+</div>
 <div id="info"></div>
 <div id="tip">انقر عنصراً لتفاصيله ولتلوينه فوراً 🎨 · اسحب للتدوير · عجلة للتقريب</div>
 <div id="drop">أفلِت صورة باب</div>
@@ -545,7 +566,10 @@ const MAT = {
   dockdoor:{c:0x51565e,m:0.5,r:0.45},      // باب رصيف منزلق
   bumper:{c:0x1b1d21,m:0.1,r:0.85},
   screen:{c:0x0b3d2e,m:0.2,r:0.3,e:0.25},  // شاشات محطات
-  robot:{c:0x111318,m:0.5,r:0.35}
+  robot:{c:0x111318,m:0.5,r:0.35},
+  /* ---- عناصر عامة (بشر · مركبات · نباتات · خرسانة) ---- */
+  skin:{c:0xc8a07a,m:0,r:0.75}, leaf:{c:0x3f7d3a,m:0,r:0.85},
+  paint_car:{c:0x2f4f7a,m:0.55,r:0.28}, concrete_m:{c:0x9a9a97,m:0,r:0.9}
 };
 /* ترميز لوني صناعي حسب وظيفة المنطقة */
 const ROLE_COLOR={
@@ -592,8 +616,8 @@ const POINT_KINDS = {
   sign:['SAFETY','paint_zone',2.60,[1.40,0.45,0.06]]    // لوحة تعريف منطقة
 };
 const LAYER_NAMES={WALL:'جدران',FLOOR:'أرضيات',DOOR:'أبواب',WINDOW:'نوافذ',ELEC:'كهرباء',
-  LIGHT:'إنارة',CAMERA:'كاميرات',HVAC:'تكييف',SAFETY:'سلامة',FURN:'أثاث'};
-const LAYER_ORDER=['WALL','FLOOR','DOOR','WINDOW','ELEC','LIGHT','CAMERA','HVAC','SAFETY','FURN'];
+  LIGHT:'إنارة',CAMERA:'كاميرات',HVAC:'تكييف',SAFETY:'سلامة',FURN:'أثاث',OBJ:'عناصر ومجسّمات'};
+const LAYER_ORDER=['WALL','FLOOR','DOOR','WINDOW','ELEC','LIGHT','CAMERA','HVAC','SAFETY','FURN','OBJ'];
 const FLOOR_NAMES={F0:'الأرضي',F1:'الأول',F2:'الثاني',F3:'الثالث',F4:'الرابع',F5:'الخامس',F6:'السطح'};
 
 /* ---------- مولّد خامات إجرائية واقعية (بلا إنترنت، بلا حقوق) ---------- */
@@ -715,12 +739,15 @@ function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
   group.add(mesh);
   return mesh;
 }
-function edgeGeom(edge, rect){const[x,z,w,d]=rect;
+function normEdge(e){ const c=String(e==null?'N':e).trim().toUpperCase()[0];
+  return (c==='N'||c==='S'||c==='E'||c==='W')?c:'N'; }
+function edgeGeom(edge, rect){const[x,z,w,d]=rect; edge=normEdge(edge);
   if(edge==='N')return['x',z,x,x+w]; if(edge==='S')return['x',z+d,x,x+w];
   if(edge==='W')return['z',x,z,z+d]; if(edge==='E')return['z',x+w,z,z+d];}
-function openU(edge,rect,off){const[x,z]=rect; return (edge==='N'||edge==='S')?x+off:z+off;}
+function openU(edge,rect,off){const[x,z]=rect; edge=normEdge(edge);
+  return (edge==='N'||edge==='S')?x+off:z+off;}
 
-function wallOpenings(group,axis,fixed,u0,u1,y0,H,t,openings,fkey,room,tag,tint){
+function wallOpenings(group,axis,fixed,u0,u1,y0,H,t,openings,fkey,room,tag,tint,glass){
   const segs=openings.filter(o=>o[1]>0).sort((a,b)=>a[0]-b[0]);
   const solids=[]; let cur=u0;
   for(const[uc,w,bottom,top]of segs){
@@ -734,8 +761,9 @@ function wallOpenings(group,axis,fixed,u0,u1,y0,H,t,openings,fkey,room,tag,tint)
   solids.forEach(([a,b,yb,yt],k)=>{
     const w=b-a,h=yt-yb; if(w<=0.002||h<=0.002)return;
     const cu=(a+b)/2,cy=(yb+yt)/2;
-    if(axis==='x') addBox(group,cu,cy,fixed,w,h,t,'wall',`WALL|${fkey}|${room}|${tag}s${k}`,true,tint);
-    else addBox(group,fixed,cy,cu,t,h,w,'wall',`WALL|${fkey}|${room}|${tag}s${k}`,true,tint);
+    const wm=glass?'window':'wall';
+    if(axis==='x') addBox(group,cu,cy,fixed,w,h,t,wm,`WALL|${fkey}|${room}|${tag}s${k}`,!glass,tint);
+    else addBox(group,fixed,cy,cu,t,h,w,wm,`WALL|${fkey}|${room}|${tag}s${k}`,!glass,tint);
   });
 }
 function buildRoom(group,room,fkey,baseY,def){
@@ -744,8 +772,10 @@ function buildRoom(group,room,fkey,baseY,def){
   /* تشطيبات الغرفة: لون خاص بهذه الغرفة وحدها */
   const wcol=normHex(room.wall_color), fcol=normHex(room.floor_color), ccol=normHex(room.ceiling_color);
   const per={N:[],S:[],E:[],W:[]};
-  (room.doors||[]).forEach(dr=>{per[dr.edge].push([openU(dr.edge,rect,dr.offset),dr.width||0.9,0,dr.height||2.1]);});
+  (room.doors||[]).forEach(dr=>{dr.edge=normEdge(dr.edge);
+    per[dr.edge].push([openU(dr.edge,rect,dr.offset),dr.width||0.9,0,dr.height||2.1]);});
   (room.windows||[]).forEach(wn=>{const s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+    wn.edge=normEdge(wn.edge);
     per[wn.edge].push([openU(wn.edge,rect,wn.offset),wn.width||1.2,s,s+h]);});
   const dk=dockOpenings(room);
   for(const e of['N','S','E','W']) per[e]=per[e].concat(dk[e]);
@@ -770,7 +800,7 @@ function buildRoom(group,room,fkey,baseY,def){
   }else{
     for(const e of['N','S','E','W']){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
       wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
-        wcol||(room.role?ROLE_COLOR[room.role]:null));}
+        wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
   }
   /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
   if(fcol) addBox(group,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
@@ -798,7 +828,177 @@ function buildRoom(group,room,fkey,baseY,def){
   if(room.lanes)    buildLanes(group,room,fkey,baseY,def);
   if(room.stations) buildStations(group,room,fkey,baseY,def);
   if(room.docks)    buildDocks(group,room,fkey,baseY,def);
+  if(room.objects)  buildObjects(group,room,fkey,baseY);
 }
+/* ==================================================================
+   نظام العناصر العام — أي شيء يذكره العميل يُبنى، ولا يُسقَط أبداً.
+   بشر · روبوتات · مركبات · أثاث · درج · مصعد · أعمدة · نباتات ·
+   وأي كائن مجهول يُبنى بصندوق بأبعاده واسمه بدل أن يُهمَل.
+   ================================================================== */
+const OBJ_LIB = {
+  /* kind: [w,d,h, builder] — الأبعاد افتراضية يغلبها ما يذكره العميل */
+  person:   [0.50,0.35,1.72,'person'],  worker:[0.52,0.36,1.74,'person'],
+  visitor:  [0.50,0.35,1.70,'person'],  engineer:[0.52,0.36,1.75,'person'],
+  child:    [0.36,0.26,1.20,'person'],
+  robot:    [0.75,0.55,0.35,'robot'],   amr:[0.80,0.60,0.32,'robot'],
+  cobot:    [0.40,0.40,1.30,'robot'],
+  forklift: [1.20,2.20,2.30,'forklift'],reachtruck:[1.10,2.40,2.60,'forklift'],
+  car:      [1.85,4.55,1.45,'car'],     van:[2.00,5.40,2.20,'car'],
+  truck:    [2.55,12.0,4.00,'truck'],   trailer:[2.55,13.6,4.10,'truck'],
+  stairs:   [1.20,4.20,3.20,'stairs'],  elevator:[2.10,2.30,3.20,'elevator'],
+  column:   [0.45,0.45,3.20,'column'],  railing:[3.00,0.06,1.10,'railing'],
+  tree:     [2.40,2.40,4.50,'tree'],    palm:[2.60,2.60,6.00,'palm'],
+  plant:    [0.60,0.60,1.20,'plant'],   planter:[1.60,0.60,0.55,'box'],
+  sofa:     [2.20,0.90,0.80,'sofa'],    armchair:[0.90,0.85,0.80,'sofa'],
+  bed:      [1.90,2.10,0.55,'bed'],     bed_single:[1.05,2.05,0.50,'bed'],
+  table:    [1.60,0.90,0.75,'table'],   dining:[2.20,1.10,0.76,'table'],
+  desk:     [1.50,0.75,0.75,'table'],   chair:[0.48,0.50,0.90,'chair'],
+  wardrobe: [2.00,0.60,2.30,'box'],     cabinet:[1.20,0.55,0.90,'box'],
+  fridge:   [0.75,0.70,1.85,'box'],     oven:[0.60,0.60,0.90,'box'],
+  washer:   [0.60,0.60,0.85,'box'],     sink:[0.60,0.50,0.90,'box'],
+  toilet:   [0.40,0.70,0.80,'box'],     bath:[1.70,0.75,0.55,'box'],
+  counter:  [2.40,0.65,0.90,'box'],     tv:[1.30,0.08,0.75,'panel'],
+  rug:      [2.40,1.60,0.02,'panel'],   curtain:[2.00,0.10,2.40,'panel'],
+  shelf:    [1.00,0.40,2.00,'shelfobj'],pallet:[1.20,1.00,0.15,'pallet'],
+  box:      [0.60,0.40,0.40,'box'],     crate:[1.10,1.10,1.00,'box'],
+  sign:     [1.40,0.06,0.45,'panel'],   barrier:[1.50,0.30,1.05,'box']
+};
+const OBJ_AR = {  // مرادفات عربية → kind
+  'شخص':'person','رجل':'person','امرأة':'person','عامل':'worker','موظف':'worker',
+  'زائر':'visitor','مهندس':'engineer','طفل':'child','أشخاص':'person','بشر':'person',
+  'روبوت':'robot','ربوت':'robot','آلي':'robot','رافعة':'forklift','رافعة شوكية':'forklift',
+  'سيارة':'car','سيارات':'car','مركبة':'car','فان':'van','شاحنة':'truck','مقطورة':'trailer',
+  'درج':'stairs','سلم':'stairs','مصعد':'elevator','عمود':'column','أعمدة':'column',
+  'درابزين':'railing','حاجز':'barrier','شجرة':'tree','أشجار':'tree','نخلة':'palm',
+  'نبات':'plant','نباتات':'plant','حوض نباتات':'planter','كنبة':'sofa','أريكة':'sofa',
+  'كرسي':'chair','سرير':'bed','طاولة':'table','مكتب':'desk','طاولة طعام':'dining',
+  'خزانة':'wardrobe','دولاب':'wardrobe','ثلاجة':'fridge','فرن':'oven','غسالة':'washer',
+  'مغسلة':'sink','مرحاض':'toilet','بانيو':'bath','مغطس':'bath','شاشة':'tv','تلفزيون':'tv',
+  'سجادة':'rug','ستارة':'curtain','رف':'shelf','رفوف':'shelf','بالتة':'pallet',
+  'صندوق':'box','كرتون':'crate','لوحة':'sign','كاونتر':'counter'
+};
+const OBJ_MAT = {person:'skin', robot:'robot', car:'paint_car', truck:'paint_car',
+  forklift:'guard', tree:'leaf', palm:'leaf', plant:'leaf', column:'concrete_m',
+  stairs:'concrete_m', elevator:'frame', railing:'frame', shelfobj:'deck',
+  pallet:'pallet', panel:'tv', sofa:'furn_soft', bed:'furn_soft', chair:'furn',
+  table:'furn', box:'furn'};
+
+let OBJ_UNKNOWN=[];
+/* مطابقة بحدود الكلمة — «أعرفه» يجب ألّا تطابق «رف»، و«المبنى» ألّا تطابق «بني» */
+const _AL='\u0621-\u064a';
+function _wordIn(hay, key){
+  const esc=key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  return new RegExp('(^|[^'+_AL+'\\w])(?:ال|بال|لل|وال|و|ب|ل)?'+esc+
+                    '(?:ة|ه|ات|ين|ان|ي)?([^'+_AL+'\\w]|$)').test(' '+hay+' ');
+}
+const _AR_KEYS=Object.keys(OBJ_AR).sort((a,b)=>b.length-a.length);
+const _EN_KEYS=Object.keys(OBJ_LIB).sort((a,b)=>b.length-a.length);
+function objKind(o){
+  const raw=String(o.kind||o.name||'').trim().toLowerCase();
+  if(OBJ_LIB[raw]) return raw;
+  for(const k of _AR_KEYS){ if(_wordIn(raw,k)) return OBJ_AR[k]; }
+  for(const k of _EN_KEYS){ if(_wordIn(raw,k)) return k; }
+  return null;                       // مجهول → صندوق بأبعاده واسمه (لا يُسقَط أبداً)
+}
+/* يبني كائناً واحداً في موضعه (إحداثيات عالمية) */
+function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
+  const def=OBJ_LIB[kind]||[0.6,0.6,0.9,'box'];
+  const w=+o.w||def[0], d=+o.d||def[1], h=+o.h||def[2], shape=def[3];
+  const rot=(+o.rot||0)*Math.PI/180;
+  const col=normHex(o.color)||null;
+  const tag=`OBJ|${fkey}|${room}|${(o.name||kind)}${idx}`;
+  const B=(dx,dy,dz,ex,ey,ez,mat,c)=>{
+    const s=Math.sin(rot), co=Math.cos(rot);
+    addBox(g, cx+dx*co-dz*s, baseY+dy, cz+dx*s+dz*co, ex,ey,ez, mat, tag, true, c||col, rot);
+  };
+  const M=OBJ_MAT[shape]||'furn';
+  if(shape==='person'){
+    const sk=col||'#c8a07a';
+    B(0,h*0.22,0, w*0.28,h*0.44,d*0.7,'skin',sk);            // ساقان ككتلة
+    B(0,h*0.62,0, w,h*0.34,d,'fabric',col||'#3b5b8c');        // جذع
+    B(0,h*0.90,0, w*0.42,h*0.15,d*0.62,'skin',sk);            // رأس
+  }else if(shape==='robot'){
+    B(0,h*0.5,0, w,h,d,'robot');
+    B(0,h+0.16,0, w*0.5,0.30,d*0.5,'frame');
+    B(0,h+0.34,0, 0.10,0.14,0.10,'safety','#22c55e');
+  }else if(shape==='forklift'){
+    B(0,0.55,-d*0.15, w,1.05,d*0.6,'guard');
+    B(0,1.55,-d*0.15, w*0.8,0.9,d*0.45,'frame');
+    B(0,h*0.5,d*0.42, w*0.75,h,0.12,'frame');
+    B(0,0.12,d*0.5, w*0.7,0.10,0.9,'frame');
+  }else if(shape==='car'||shape==='truck'){
+    const body=col||(shape==='truck'?'#e8e8ea':'#2f4f7a');
+    B(0,h*0.33,0, w,h*0.46,d,'paint_car',body);
+    B(0,h*0.70,shape==='truck'?-d*0.34:0, w*0.9,h*0.36,shape==='truck'?d*0.24:d*0.55,'window');
+    for(const sx of[-1,1]) for(const sz of[-1,1])
+      B(sx*w*0.46,0.33,sz*d*0.34, 0.22,0.62,0.62,'bumper');
+  }else if(shape==='stairs'){
+    const n=Math.max(4,Math.round(h/0.17)), rise=h/n, run=d/n;
+    for(let i=0;i<n;i++) B(0,rise*(i+0.5),-d/2+run*(i+0.5), w,rise,run,'concrete_m');
+    for(const sx of[-1,1]) B(sx*(w/2+0.03),h*0.55,0, 0.06,0.06,d,'frame');
+  }else if(shape==='elevator'){
+    B(0,h*0.5,0, w,h,d,'frame');
+    B(0,h*0.45,-d/2, w*0.62,h*0.85,0.06,'window');
+  }else if(shape==='column'){
+    B(0,h*0.5,0, w,h,d,'concrete_m');
+  }else if(shape==='railing'){
+    B(0,h,0, w,0.06,0.06,'frame');
+    const n=Math.max(2,Math.round(w/1.1));
+    for(let i=0;i<=n;i++) B(-w/2+w*i/n,h*0.5,0, 0.05,h,0.05,'frame');
+  }else if(shape==='tree'||shape==='palm'){
+    const th=shape==='palm'?h*0.72:h*0.42;
+    B(0,th*0.5,0, w*0.16,th,d*0.16,'pallet','#6b4a2a');
+    if(shape==='palm'){ for(let i=0;i<6;i++){ const a=i*Math.PI/3;
+        B(Math.cos(a)*w*0.32,th+0.18,Math.sin(a)*d*0.32, w*0.7,0.10,d*0.2,'leaf'); } }
+    else { B(0,th+(h-th)*0.45,0, w,(h-th)*0.9,d,'leaf'); }
+  }else if(shape==='plant'){
+    B(0,0.18,0, w*0.55,0.36,d*0.55,'furn','#8a5a3a');
+    B(0,h*0.62,0, w,h*0.7,d,'leaf');
+  }else if(shape==='sofa'){
+    B(0,0.22,0, w,0.44,d,'fabric',col||'#5a6b8c');
+    B(0,0.55,-d*0.36, w,0.62,d*0.28,'fabric',col||'#5a6b8c');
+    for(const sx of[-1,1]) B(sx*(w/2-0.09),0.52,0, 0.18,0.5,d,'fabric',col||'#5a6b8c');
+  }else if(shape==='bed'){
+    B(0,0.18,0, w,0.36,d,'furn','#7a6a54');
+    B(0,0.44,0, w*0.98,0.20,d*0.94,'fabric',col||'#e8e4dc');
+    B(0,0.72,-d*0.44, w,0.85,0.10,'furn','#6a5a44');
+  }else if(shape==='table'){
+    B(0,h-0.04,0, w,0.08,d,'furn');
+    for(const sx of[-1,1]) for(const sz of[-1,1])
+      B(sx*(w/2-0.08),h*0.5,sz*(d/2-0.08), 0.07,h,0.07,'frame');
+  }else if(shape==='chair'){
+    B(0,0.44,0, w,0.07,d,'furn');
+    B(0,0.68,-d*0.42, w,0.46,0.06,'furn');
+    for(const sx of[-1,1]) for(const sz of[-1,1])
+      B(sx*(w/2-0.05),0.22,sz*(d/2-0.05), 0.05,0.44,0.05,'frame');
+  }else if(shape==='shelfobj'){
+    for(let i=0;i<4;i++) B(0,0.15+i*(h-0.2)/4,0, w,0.05,d,'deck');
+    for(const sx of[-1,1]) B(sx*(w/2-0.03),h*0.5,0, 0.05,h,d,'frame');
+  }else if(shape==='pallet'){
+    B(0,h*0.5,0, w,h,d,'pallet');
+  }else if(shape==='panel'){
+    B(0,(+o.height!=null?+o.height:(kind==='rug'?0.01:1.35)),0, w,h,Math.max(d,0.04),M,col);
+  }else{
+    B(0,h*0.5,0, w,h,d, o.mat||M, col);          // مجهول → صندوق بأبعاده
+  }
+}
+/* يبني كل عناصر الغرفة، مع التكرار (count/pitch) */
+function buildObjects(group, room, fkey, baseY){
+  const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
+  (room.objects||[]).forEach((o,i)=>{
+    const kind=objKind(o);
+    const n=Math.max(1,Math.min(+o.count||1,200));
+    const pitch=+o.pitch||1.2, dir=(o.dir==='z')?'z':'x';
+    for(let k=0;k<n;k++){
+      const ox=(+o.x||rw/2)+(dir==='x'?pitch*k:0);
+      const oz=(+o.z||rd/2)+(dir==='z'?pitch*k:0);
+      if(ox>rw+2||oz>rd+2) break;
+      buildObject(group,o,kind||'box',rx+ox,rz+oz,baseY+(+o.y||0),fkey,nm,i*1000+k);
+    }
+    if(!kind) OBJ_UNKNOWN.push(o.name||o.kind||'?');
+  });
+}
+
 /* ==================================================================
    عناصر صناعية/لوجستية مضغوطة — سطر JSON واحد يولّد مئات القطع.
    هذا ما يسمح بتنفيذ طلب ضخم كاملاً بلا انقطاع مخرج النموذج.
@@ -988,7 +1188,7 @@ function buildDocks(group, room, fkey, baseY, def){
     const pitch=+D.pitch||(( +D.width||3.0)+1.8);
     for(let i=0;i<n;i++){
       const off=(+D.offset||3)+pitch*i, wd=+D.width||3.0, dh=+D.height||4.0;
-      const e=D.edge||'N';
+      const e=normEdge(D.edge);
       const [axis,fixed]=edgeGeom(e,rect);
       const uc=openU(e,rect,off);
       const outw=(e==='N'||e==='W')?-1:1;
@@ -1011,7 +1211,7 @@ function dockOpenings(room){
   const out={N:[],S:[],E:[],W:[]};
   (room.docks||[]).forEach(D=>{
     const n=Math.max(1,Math.min(+D.count||1,24));
-    const wd=+D.width||3.0, dh=+D.height||4.0, pitch=+D.pitch||(wd+1.8), e=D.edge||'N';
+    const wd=+D.width||3.0, dh=+D.height||4.0, pitch=+D.pitch||(wd+1.8), e=normEdge(D.edge);
     for(let i=0;i<n;i++) out[e].push([openU(e,room.rect,(+D.offset||3)+pitch*i),wd,0,dh]);
   });
   return out;
@@ -1019,6 +1219,7 @@ function dockOpenings(room){
 
 const ADMIN_ROLES={office:1,admin:1,it:1,staff:1,maintenance:1,meeting:1};
 function compile(data){
+  OBJ_UNKNOWN=[];
   const grp=new THREE.Group(); grp.name='BUILDING';
   const site=data.site||{w:30,d:25};
   const bt=String(((data.meta||{}).type)||'residential').toLowerCase();
@@ -1596,7 +1797,8 @@ function quickModel(W,D,nF,nRooms){
       windows:[{edge:'S',offset:rw/2,width:Math.min(rw-1,2),sill:0.9,height:1.5}],
       points:[{type:'light',x:rw/2,z:rw/2},{type:'outlet',x:1,z:0.3},{type:'outlet',x:rw-1,z:0.3},
               {type:'ac',x:rw/2,z:0.2},{type:'smoke',x:rw/2,z:rw/2}]});}
-  const levels=[]; for(let i=1;i<=nF;i++)levels.push({index:i,name:'الدور '+i,template:'typical'});
+  const levels=[]; for(let i=0;i<nF;i++)levels.push(
+    {index:i,name:FLOOR_NAMES['F'+i]||('الدور '+i),template:'typical'});
   return {site:{w:W,d:D},floor_height:3.2,wall_h:3.0,wall_t:0.15,levels,floors:{typical:{rooms}}};
 }
 
@@ -1663,8 +1865,12 @@ let lastBuilding=null;
 function setModel(data){
   if(data) lastBuilding=data; else data=lastBuilding;
   if(!data) return;
-  if(model)scene.remove(model);
-  for(const k in matCache) delete matCache[k];      // ألوان/خامات نظيفة لكل توليد
+  if(model){                                        // حرّر ذاكرة الرسوميات قبل الاستبدال
+    model.traverse(o=>{ if(o.isMesh&&o.geometry) o.geometry.dispose(); });
+    scene.remove(model);
+  }
+  for(const k in matCache){ const m=matCache[k];
+    if(m&&m.dispose){ try{ m.dispose(); }catch(e){} } delete matCache[k]; }
   model=compile(data); scene.add(model);
   registry={};floorsFound=new Set();doorMeshes=[];
   model.traverse(o=>{ if(!o.isMesh)return;
@@ -2041,17 +2247,60 @@ document.getElementById('bNotesApply').onclick=async()=>{
 
 /* أوضاع */
 let mode='orbit',tourT=0,real=false;
+/* ── انتقال ناعم بين المناظير (يُلغى فور لمس المستخدم للمشهد) ── */
+const fly={on:false,t0:0,ms:1100,p0:new THREE.Vector3(),p1:new THREE.Vector3(),
+           t0v:new THREE.Vector3(),t1v:new THREE.Vector3()};
+function flyTo(pos,target,ms){
+  if(renderer.xr.isPresenting||walkState.active){ camera.position.copy(pos);
+    orbit.target.copy(target); orbit.update(); return; }
+  fly.p0.copy(camera.position); fly.p1.copy(pos);
+  fly.t0v.copy(orbit.target);   fly.t1v.copy(target);
+  fly.ms=ms||1100; fly.t0=performance.now(); fly.on=true;
+}
+function flyStep(){
+  if(!fly.on) return false;
+  const k=Math.min((performance.now()-fly.t0)/fly.ms,1);
+  const e=k<0.5 ? 4*k*k*k : 1-Math.pow(-2*k+2,3)/2;      // easeInOutCubic
+  camera.position.lerpVectors(fly.p0,fly.p1,e);
+  orbit.target.lerpVectors(fly.t0v,fly.t1v,e);
+  orbit.update();
+  if(k>=1) fly.on=false;
+  return true;
+}
+renderer.domElement.addEventListener('pointerdown',()=>{fly.on=false;});
+renderer.domElement.addEventListener('wheel',()=>{fly.on=false;},{passive:true});
+
+/* ── المناظير ── */
+const VIEWS={
+  orbit:   {ar:'مداري',      icon:'🔄'},
+  arch:    {ar:'لقطة معمارية',icon:'🏛️'},
+  bird:    {ar:'عين الطائر',  icon:'🦅'},
+  top:     {ar:'مسقط علوي',   icon:'⬛'},
+  tour:    {ar:'جولة تلقائية',icon:'🎬'},
+  walk:    {ar:'منظور شخصي', icon:'🚶'}
+};
+function viewPose(m){
+  const c=bounds.c, r=bounds.r;
+  if(m==='top')   return [new THREE.Vector3(c.x, c.y+r*2.6, c.z+0.01), c.clone()];
+  if(m==='bird')  return [new THREE.Vector3(c.x-r*1.15, c.y+r*1.55, c.z+r*1.15), c.clone()];
+  if(m==='arch')  // كاميرا معمارية: أفقية بارتفاع النظر، بلا ميل رأسي (خطوط رأسية مستقيمة)
+    return [new THREE.Vector3(c.x, c.y-r*0.30, c.z+r*2.5),
+            new THREE.Vector3(c.x, c.y-r*0.30, c.z)];
+  return [new THREE.Vector3(c.x+r*1.45, c.y+r*0.80, c.z+r*1.45), c.clone()];
+}
 function setMode(m){
-  if(m==='walk'){ mode=m; startWalk(); return; }
+  if(m==='walk'){ mode=m; startWalk(); markView(m); return; }
   if(walkState.active) stopWalk();
-  mode=m;
-  if(m==='top'){camera.position.set(bounds.c.x,bounds.c.y+bounds.r*2.4,bounds.c.z+0.01);orbit.target.copy(bounds.c);orbit.update();}
-  if(m==='orbit'){camera.position.set(bounds.c.x+bounds.r*1.4,bounds.c.y+bounds.r*0.85,bounds.c.z+bounds.r*1.4);orbit.update();}
-  if(m==='tour')tourT=performance.now();}
-document.getElementById('bOrbit').onclick=()=>setMode('orbit');
-document.getElementById('bTour').onclick=()=>setMode('tour');
-document.getElementById('bTop').onclick=()=>setMode('top');
-document.getElementById('bWalk').onclick=()=>setMode('walk');
+  mode=m; markView(m);
+  if(m==='tour'){ tourT=performance.now(); return; }
+  const [p,t]=viewPose(m);
+  flyTo(p,t,1100);
+  statusEl.textContent='المنظور: '+(VIEWS[m]?VIEWS[m].ar:m);
+}
+function markView(m){
+  document.querySelectorAll('#camBar button[data-view]').forEach(b=>
+    b.classList.toggle('on', b.dataset.view===m));
+}
 document.getElementById('bReal').onclick=()=>{real=!real;renderer.toneMappingExposure=real?1.25:1.05;
   su.rayleigh.value=real?1.4:2.2; setSun(real?38:52,135);
   statusEl.textContent=real?'وضع واقعي: إضاءة ذهبية + ظلال أطول.':'وضع قياسي.';};
@@ -2122,9 +2371,10 @@ function stopWalk(){ walkState.active=false; walkHUD.classList.remove('on'); orb
   function set(dx,dy){
     const len=Math.hypot(dx,dy), k=len>R?R/len:1;
     dx*=k; dy*=k; knob.style.left=(41+dx)+'px'; knob.style.top=(41+dy)+'px';
-    walkState.vx = dx/R; walkState.vz = -dy/R;
+    walkState.tx = dx/R; walkState.tz = -dy/R; walkState.joy = true;
   }
-  function reset(){ knob.style.left='41px'; knob.style.top='41px'; walkState.vx=walkState.vz=0; }
+  function reset(){ knob.style.left='41px'; knob.style.top='41px';
+    walkState.tx=walkState.tz=0; walkState.joy=false; }
   function down(e){ const r=joy.getBoundingClientRect(); cx=r.left+r.width/2; cy=r.top+r.height/2;
     const t=e.touches?e.touches[0]:e; id=1; set(t.clientX-cx,t.clientY-cy); if(e.cancelable)e.preventDefault(); }
   function mv(e){ if(!id)return; const t=e.touches?e.touches[0]:e; set(t.clientX-cx,t.clientY-cy);
@@ -2156,14 +2406,19 @@ function stopWalk(){ walkState.active=false; walkHUD.classList.remove('on'); orb
 function walkStep(dt){
   const f=(keys.KeyW?1:0)-(keys.KeyS?1:0), s=(keys.KeyD?1:0)-(keys.KeyA?1:0);
   const q=(keys.KeyQ||keys.Space?1:0)-(keys.KeyE||keys.ShiftLeft?1:0);
-  if(f||s){ walkState.vz=f; walkState.vx=s; }
+  /* تنعيم: نقترب من السرعة المطلوبة تدريجياً فتبدو الحركة سلسة لا مفاجئة */
+  if(walkState.tx===undefined){walkState.tx=0;walkState.tz=0;}
+  if(f||s){ walkState.tz=f; walkState.tx=s; }
+  else if(!walkState.joy){ walkState.tz*=0.82; walkState.tx*=0.82;
+    if(Math.abs(walkState.tz)<0.02)walkState.tz=0; if(Math.abs(walkState.tx)<0.02)walkState.tx=0; }
+  const k=Math.min(dt*9,1);
+  walkState.vz += (walkState.tz-walkState.vz)*k;
+  walkState.vx += (walkState.tx-walkState.vx)*k;
   if(q) walkState.vy=q;
   walkState.run = keys.ShiftRight?2.2:walkState.run;
   applyWalkCamera(); walkMove(dt);
-  if(!f&&!s&&!document.getElementById('joy').matches(':active')){ /* الجويستيك يضبط vx/vz */ }
   if(!q&&!document.getElementById('wUp').classList.contains('active')
      &&!document.getElementById('wDown').classList.contains('active')) walkState.vy=0;
-  if(!f&&!s&&walkState.vx===0&&walkState.vz===0){ /* ساكن */ }
 }
 function tourStep(){const t=(performance.now()-tourT)/1000,a=(t%45)/45*Math.PI*2,R=bounds.r*1.5;
   camera.position.set(bounds.c.x+Math.cos(a)*R,bounds.c.y+bounds.r*0.55,bounds.c.z+Math.sin(a)*R);orbit.target.copy(bounds.c);}
@@ -2382,7 +2637,9 @@ renderer.setAnimationLoop(()=>{
     vrStep(dt);
     headLamp.position.copy(camWorld());
   }else{
-    if(walkState.active)walkStep(dt); else{if(mode==='tour')tourStep();orbit.update();}
+    if(walkState.active)walkStep(dt);
+    else if(flyStep()){ /* انتقال ناعم جارٍ */ }
+    else{ if(mode==='tour')tourStep(); orbit.update(); }
     headLamp.intensity = walkState.active ? 55 : 0;
     if(walkState.active) headLamp.position.copy(camera.position);
   }
@@ -2718,8 +2975,16 @@ async function handleImport(f){
       const nR=b.floors.typical.rooms.length;
       if(nR>=3){ setModel(b);
         info.textContent='✓ تولّد من نص الـPDF — '+nR+' غرفة · أرض '+(meta.W||W)+'×'+(meta.D||D)+' · '+(meta.nF||nF)+' أدوار'; }
-      else { const img=await pdfFirstPage(f); openTracer(img);
-        info.textContent='لا يوجد وصف نصّي كافٍ (مخطط مصوّر) — ارسم الغرف على المخطط.'; }
+      else {
+        // مخطط مصوّر بلا نص: اقرأه بالرؤية دائماً — لا نطلب من العميل رسمه يدوياً
+        if(llm){
+          try{ info.textContent='📐 مخطط مرسوم — أقرأه بالرؤية…';
+               const blobs=await pdfPagesToBlobs(f,3);
+               await planToLLM(blobs, llm, W, D, nF, info); return; }
+          catch(e){}
+        }
+        offerTracer(await pdfFirstPage(f), info, 'تعذّرت القراءة الآلية للمخطط.');
+      }
     }
     else if(f.type.startsWith('image/')||/\.(png|jpe?g|webp)$/.test(name)){
       const llm=srvURL();
@@ -2728,11 +2993,20 @@ async function handleImport(f){
         try{ await planToLLM([f], llm, W, D, nF, info); return; }
         catch(e){ info.textContent='تعذّرت القراءة بالرؤية ('+e.message+') — افتح محرّر الرسم.'; }
       }
-      const img=await fileToImage(f); openTracer(img);
-      if(!llm) info.textContent='ارسم الغرف على المخطط ثم «توليد 3D» (أو شغّل خادم الفهم لقراءته تلقائياً).';
+      offerTracer(f, info, !llm ? 'محرّك القراءة غير متاح الآن.' : 'تعذّرت القراءة الآلية.');
     }
     else info.textContent='صيغة غير مدعومة (JSON / DXF / صورة / PDF).';
   }catch(err){ info.textContent='خطأ: '+err.message; console.error(err); }
+}
+/* محرّر الرسم اليدوي لم يعد يُفتح تلقائياً — يبقى مخرجاً أخيراً باختيار المستخدم */
+async function offerTracer(fileOrImg, info, why){
+  info.innerHTML = why + ' يمكنك إعادة المحاولة، أو رسم الغرف يدوياً كحلّ أخير.'
+    + ' <button class="ghost" id="trFallback" style="margin-top:6px">✏️ رسم يدوي</button>';
+  const b=document.getElementById('trFallback');
+  if(b) b.onclick=async()=>{
+    const img=(fileOrImg instanceof Blob) ? await fileToImage(fileOrImg) : fileOrImg;
+    openTracer(img);
+  };
 }
 document.getElementById('impFile').onchange=e=>{ if(e.target.files[0]) handleImport(e.target.files[0]); };
 

@@ -42,8 +42,24 @@ Room = {
   "doors":   [ {"edge":"N|S|E|W","offset":float,"width":float,"height":float,"material":"wood|oak|glass"?,"color":"#RRGGBB"?} ],
   "windows": [ {"edge":"N|S|E|W","offset":float,"width":float,"sill":float,"height":float} ],
   "points":  [ {"type": PointType, "x":float, "z":float, "height":float?} ],  // x,z داخل الغرفة من ركنها
-  "furniture":[ {"name":str,"x":float,"z":float,"w":float,"d":float,"h":float,"mat":"furn|furn_soft|counter|tv"} ]
+  "furniture":[ {"name":str,"x":float,"z":float,"w":float,"d":float,"h":float,"mat":"furn|furn_soft|counter|tv"} ],
+  "objects": [ {"kind":str,"name":str?,"x":float,"z":float,"y":float?,
+                "w":float?,"d":float?,"h":float?,"rot":deg?,"color":"#RRGGBB"?,
+                "count":int?,"pitch":float?,"dir":"x|z"?} ]
 }
+
+**"objects" — أي شيء يذكره العميل يُبنى هنا، ولا يُسقَط بند أبداً.**
+kind معروف (يُبنى بمجسّم مناسب): person · worker · visitor · engineer · child ·
+  robot · amr · cobot · forklift · reachtruck · car · van · truck · trailer ·
+  stairs(درج) · elevator(مصعد) · column(عمود) · railing · barrier ·
+  tree · palm · plant · planter · sofa · armchair · bed · bed_single · table ·
+  dining · desk · chair · wardrobe · cabinet · fridge · oven · washer · sink ·
+  toilet · bath · counter · tv · rug · curtain · shelf · pallet · box · crate · sign
+ويقبل الأسماء العربية مباشرةً (عامل، روبوت، رافعة شوكية، سيارة، درج، مصعد، عمود،
+شجرة، نخلة، كنبة، سرير، طاولة، ثلاثة كراسي…).
+**أي كائن غير موجود في القائمة**: اكتبه بـkind باسمه كما ذكره العميل مع w/d/h تقديرية —
+يُبنى بمجسّم بأبعاده ويُسجَّل في التقرير. لا تتجاهل أي عنصر طلبه العميل بحجّة عدم وجود نوع له.
+التكرار: "count" مع "pitch" و"dir" يكرّر العنصر (٦ عمال بتباعد ٢م، ١٢ سيارة في الموقف…).
 PointType ∈ outlet(فيش 40سم) · switch(مفتاح 120سم) · network(RJ45) · usb · tv(شاشة) · ev ·
             light(نجفة/سقف) · spot(سبوت) · camera(كاميرا) · ac(تكييف) · vent · smoke(دخان) · sprinkler(رشاش) · exit
 """
@@ -212,9 +228,11 @@ PRIORITY_RULE = r"""
 ٢. ما لم يذكره العميل فقط تملأه بالقواعد المرجعية أدناه. القواعد **افتراضات**، لا أوامر.
 ٣. إذا خالف وصف العميل أي قاعدة مرجعية (مقاس، ترتيب، توزيع، تسمية) — **اتّبع العميل**،
    ولو بدا غير معتاد. لا تفرض تخطيطاً جاهزاً ولا ترتيباً نموذجياً على وصفٍ يخالفه.
-٤. إن طلب عنصراً لا يوجد له حقل في المخطّط، فمثّله بأقرب تركيب متاح
-   (منطقة/rack/lane/station/point/furniture) وسمِّه باسمه الذي ذكره العميل،
-   وسجّله في meta.extras مع شرح كيف مُثِّل.
+٤. إن طلب عنصراً لا يوجد له حقل في المخطّط، فمثّله بأقرب تركيب متاح — وأوّلها
+   "objects" التي تقبل **أي** كائن باسمه وأبعاده (بشر، روبوتات، مركبات، أثاث،
+   درج، مصعد، أعمدة، نباتات، معدات، أي شيء) — أو منطقة/rack/lane/station/point،
+   وسمِّه باسمه الذي ذكره العميل، وسجّله في meta.extras مع شرح كيف مُثِّل.
+   العناصر الحيّة (أشخاص/عمال/زوّار) تُضاف حين يطلب العميل مشهداً مأهولاً أو مقياساً بشرياً.
 ٥. لا تضف من عندك مناطق كبيرة لم تُطلب. الإضافات المسموحة فقط: ما يستلزمه الكود
    (سلامة، مخارج، إنارة) أو ما يجعل ما طلبه العميل قابلاً للتشغيل — واذكرها في meta.added.
 ٦. قبل الإخراج: راجع الوصف بنداً بنداً وتأكد أن لكل بند ما يقابله في النموذج.
@@ -305,7 +323,7 @@ def pdf_to_text(path):
         r = pypdf.PdfReader(path)
         return "\n".join((p.extract_text() or "") for p in r.pages)
     except Exception as e:
-        raise SystemExit("تعذّر قراءة PDF (ثبّت pypdf): %s" % e)
+        raise RuntimeError("تعذّر قراءة PDF (ثبّت pypdf): %s" % e)
 
 # ---------------------------------------------------------------------------
 # 5) نداء Claude
@@ -397,12 +415,12 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
     try:
         import anthropic
     except Exception:
-        raise SystemExit("ثبّت مكتبة anthropic:  pip install anthropic")
+        raise RuntimeError("مكتبة anthropic غير مثبّتة على الخادم.")
     model = (model or os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5")).strip()
     max_tokens = int(max_tokens or os.environ.get("ACS_MAX_TOKENS", "32000"))
     api_key = clean_key(os.environ.get("ANTHROPIC_API_KEY"))
     if not api_key:
-        raise SystemExit("ANTHROPIC_API_KEY غير مضبوط أو غير صالح.")
+        raise RuntimeError("مفتاح المحرّك غير مضبوط على الخادم.")
 
     client = anthropic.Anthropic(api_key=api_key)
     if content is not None:
@@ -679,6 +697,11 @@ def understand_deep(description, model=None, group_size=None, workers=None, stri
         rs = [r for t, r in plan_rooms if t == tmpl]
         for i in range(0, len(rs), gs):
             groups.append((tmpl, rs[i:i + gs]))
+    cap = int(os.environ.get("ACS_MAX_GROUPS", "14"))
+    if len(groups) > cap:
+        print("[ACS-DEEP] ⚠ %d مجموعة > السقف %d — تُفصَّل الأولى ويبقى الباقي بالخطة."
+              % (len(groups), cap))
+        groups = groups[:cap]
     print("[ACS-DEEP] تفصيل %d مجموعة بالتوازي (%d عامل)…" % (len(groups), wk))
 
     import concurrent.futures as cf
