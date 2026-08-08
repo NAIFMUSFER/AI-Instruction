@@ -74,6 +74,11 @@
   #camBar button.on{background:#38bdf826;border-color:#38bdf877}
   #camBar .sep{width:1px;height:22px;background:var(--line);margin:0 3px}
   @media(max-width:820px){ #camBar{top:auto;bottom:10px;transform:translateX(-50%) scale(.92)} }
+  #measHUD{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:12;display:none;
+    background:#0d1626ee;border:1px solid #38bdf855;border-radius:12px;padding:8px 14px;
+    font-size:13px;text-align:center;box-shadow:0 8px 24px #0007}
+  #measHUD b{color:var(--acc);font-size:17px;display:block}
+  #measHUD span{font-size:11px;color:var(--muted)}
   #info{position:fixed;bottom:12px;right:376px;background:var(--panel);border:1px solid var(--line);
     border-radius:10px;padding:9px 12px;font-size:12px;display:none;z-index:9;max-width:260px}
   #info .qc{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;border-top:1px solid var(--line);padding-top:7px}
@@ -152,6 +157,22 @@
   .rq.x{border-color:#f59e0b44;background:#f59e0b0f}
   .rq.x b{color:#f59e0b}
   .rq.warn{border-color:#f59e0b55;background:#f59e0b14;color:#fbbf24}
+  .filebtn{display:block;margin-top:8px;padding:14px 10px;border:1.5px dashed var(--line);
+    border-radius:12px;text-align:center;cursor:pointer;color:var(--acc);font-size:12.5px}
+  .filebtn:hover{border-color:var(--acc);background:#38bdf80d}
+  .cards{display:flex;gap:8px;margin-top:10px}
+  .card{flex:1;background:#ffffff08;border:1px solid var(--line);border-radius:12px;
+    padding:10px;text-align:right;cursor:pointer;color:var(--txt);font-family:inherit}
+  .card:hover{border-color:var(--acc);background:#38bdf80d}
+  .card b{display:block;font-size:12.5px;color:var(--acc)}
+  .card span{font-size:10.5px;color:var(--muted)}
+  .clipRow{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:11.5px}
+  .clipRow span{width:16px;color:var(--acc);font-weight:700}
+  .clipRow input{flex:1}
+  .clipRow i{width:56px;text-align:left;color:var(--muted);font-style:normal;font-size:10.5px}
+  .mini{background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:8px;
+    padding:6px;font-size:11.5px;flex:1}
+  .hintline{font-size:10px;opacity:.6;margin-top:6px;line-height:1.6}
   .vrbox{border:1px solid #38bdf844;background:#38bdf80f;border-radius:12px;padding:10px;position:relative}
   /* VRButton يضبط أنماطه بنفسه — نُجبره على الاندماج داخل اللوحة */
   #vrbox button{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;
@@ -211,180 +232,145 @@
     <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
   </header>
 
-  <div class="tabs">
-    <button data-tab="text" class="active">وصف نصّي</button>
-    <button data-tab="import">ملفات ومخططات</button>
-    <button data-tab="quick">سريع</button>
-    <button data-tab="view">العرض</button>
+    <div class="tabs">
+    <button data-tab="make" class="active">١ · المشروع</button>
+    <button data-tab="model">٢ · النموذج</button>
+    <button data-tab="show">٣ · العرض</button>
   </div>
 
   <div class="body">
-    <!-- تبويب: وصف نصّي -->
-    <div data-panel="text">
-      <div class="note">اكتب وصف المبنى بلغتك الطبيعية (غرف بأبعادها، أبواب، نوافذ، أفياش، شاشات، كاميرات، إنارة…). المحرّك يستخرج الغرف وعناصرها ويخطّطها تلقائياً.</div>
+    <!-- ═════ ١ · المشروع: مدخل واحد موحّد ═════ -->
+    <div data-panel="make">
+      <div class="note">اكتب وصف مبناك بلغتك، أو ارفع مخططاً — المحرّك يقرأ ويبني بنداً بنداً.</div>
+
       <textarea id="descText" placeholder="مثال:
-مجلس رجال 6×5 متر، باب خشب بلوط، نافذة 4 متر، شاشة 85 بوصة، أربع أفياش، مفتاح إنارة، كاميرا.
-صالة معيشة 8×6 متر، شاشة 98 بوصة، ثمانية أفياش، نقطة شبكة.
-مطبخ 5×4 متر، ستة أفياش، شفاط.
-غرفة نوم رئيسية 6×5 متر، شاشة 75 بوصة، فيشين، منفذ شبكة."></textarea>
+عمارة سكنية 22×16 م، ٣ أدوار، شقتان بكل دور.
+غرفة معيشة 5×4، مطبخ 4×3، غرفة نوم رئيسية 4.5×4 بحمام خاص، غرفة نوم ثانية 4×3.5.
+مصعد ودرج رئيسي، مواقف أمامية، كاميرات في المداخل، رشاشات حريق.
+ضع في الصالة كنبة وطاولة وشاشة، وأربعة أشخاص لبيان المقياس."></textarea>
+
+      <label class="filebtn" for="impFile">📎 أو ارفع ملفاً — مخطط · صورة · PDF · DXF · JSON
+        <input id="impFile" type="file" hidden
+               accept=".json,.dxf,.png,.jpg,.jpeg,.webp,.pdf,image/*"></label>
+      <div id="impInfo" class="note" style="min-height:0"></div>
+
       <div class="fld">
-        <div><label>عرض الأرض (م)</label><input id="siteW" type="number" value="30"></div>
-        <div><label>عمق الأرض (م)</label><input id="siteD" type="number" value="25"></div>
-        <div><label>عدد الأدوار</label><input id="nFloors" type="number" value="5"></div>
+        <div><label>عرض الأرض (م)</label><input id="siteW" type="number" value="22"></div>
+        <div><label>عمق الأرض (م)</label><input id="siteD" type="number" value="16"></div>
+        <div><label>عدد الأدوار</label><input id="nFloors" type="number" value="3"></div>
       </div>
-      <div class="fld"><div>
-        <label>نوع المبنى</label>
+      <div class="fld"><div><label>نوع المبنى</label>
         <select id="bType">
           <option value="auto" selected>كشف تلقائي من الوصف</option>
-          <option value="residential">سكني / فلل وعمائر</option>
+          <option value="residential">سكني — فلل وعمائر</option>
           <option value="warehouse">مستودع · مركز توزيع · مصنع</option>
-        </select>
-      </div></div>
-      <div class="lay"><input type="checkbox" id="strictMode">
-        <span class="nm">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره</span></div>
-      <button class="btn" id="genLLM">🤖 توليد من وصفك</button>
-      <div id="srvPill" class="srv">جارٍ الاتصال بمحرّك الفهم…</div>
-      <div class="row" style="margin-top:8px">
-        <button class="ghost" id="loadExample" style="flex:1">مثال: عمارة الرياض</button>
-        <button class="ghost" id="loadWarehouse" style="flex:1">مثال: مستودع 120×80</button>
-      </div>
+        </select></div></div>
+
+      <button class="btn" id="genLLM">🤖 توليد المبنى</button>
+      <div id="srvPill" class="srv">…</div>
       <div id="reportBox" class="report"></div>
-      <details class="adv">
-        <summary>إعدادات متقدّمة</summary>
-        <button class="ghost" id="genText" style="width:100%;margin-top:8px">⚙️ توليد محلي فوري (بلا ذكاء)</button>
-        <div class="fld" style="margin-top:8px"><div>
-          <label>خادم محرّك الفهم — تجاوز يدوي</label>
-          <input id="llmURL" placeholder="يُستخدم الخادم المدمج تلقائياً">
-        </div></div>
-        <div class="note" style="margin-top:6px">التوليد بالذكاء يبني المبنى من <b>وصفك أنت</b> بنداً بنداً.
-          التوليد المحلي قالب تقريبي فوري — يُستعمل فقط إن تعذّر الوصول للخادم.</div>
+
+      <div class="cards">
+        <button class="card" id="loadExample"><b>عمارة سكنية</b><span>مثال جاهز — الرياض</span></button>
+        <button class="card" id="loadWarehouse"><b>مستودع 120×80</b><span>مثال جاهز — لوجستي</span></button>
+      </div>
+
+      <details class="adv"><summary>خيارات متقدّمة</summary>
+        <div class="lay"><input type="checkbox" id="strictMode">
+          <span class="nm">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره</span></div>
+        <button class="ghost" id="genText" style="width:100%;margin-top:8px">توليد محلي فوري (بلا ذكاء)</button>
+        <div class="fld" style="margin-top:8px"><div><label>خادم المحرّك — تجاوز يدوي</label>
+          <input id="llmURL" placeholder="يُستخدم الخادم المدمج تلقائياً"></div></div>
       </details>
     </div>
 
-    <!-- تبويب: إعدادات سريعة -->
-    <div data-panel="quick" style="display:none">
-      <div class="note">توليد نموذج قياسي سريع بعدد الغرف والأدوار.</div>
-      <div class="fld"><div><label>عرض الأرض</label><input id="qW" type="number" value="30"></div>
-        <div><label>عمق الأرض</label><input id="qD" type="number" value="25"></div></div>
-      <div class="fld"><div><label>عدد الأدوار</label><input id="qFloors" type="number" value="4"></div>
-        <div><label>غرف/شقة</label><input id="qRooms" type="number" value="6"></div></div>
-      <div class="fld"><div><label>نوع المبنى</label>
-        <select id="qType">
-          <option value="residential" selected>سكني — شقق وغرف</option>
-          <option value="warehouse">مستودع تجارة إلكترونية كامل</option>
-        </select></div></div>
-      <button class="btn" id="genQuick">توليد نموذج قياسي</button>
-      <div class="note">«مستودع» يبني كامل المنشأة بأي مقاس: أرصفة · تخزين · التقاط · تغليف ·
-        فرز · شحن · إدارة · سلامة — بلا حاجة لخادم.</div>
-    </div>
-
-    <!-- تبويب: ملفات ومخططات -->
-    <div data-panel="import" style="display:none">
-      <div class="note">ارفع بيانات مبناك بأي صيغة: ملف وصف <b>JSON</b>، مخطط <b>CAD (DXF)</b>، أو <b>صورة/PDF</b> لمخطط ترسم فوقه الغرف.</div>
-      <label class="file" style="display:block;margin-top:10px;padding:16px 10px;border:1.5px dashed var(--line);border-radius:12px;text-align:center;cursor:pointer;color:var(--acc)">
-        📎 اختر ملفاً (JSON · DXF · صورة · PDF)
-        <input id="impFile" type="file" accept=".json,.dxf,.png,.jpg,.jpeg,.webp,.pdf,image/*" hidden>
-      </label>
-      <div class="fld">
-        <div><label>عرض الأرض (م)</label><input id="impW" type="number" value="30"></div>
-        <div><label>عمق الأرض (م)</label><input id="impD" type="number" value="25"></div>
-        <div><label>عدد الأدوار</label><input id="impFloors" type="number" value="5"></div>
-      </div>
-      <div id="impInfo" class="note" style="min-height:16px"></div>
-      <div class="note" style="border-top:1px solid var(--line);padding-top:8px">
-        <b>PDF وصفي</b>: إن كان خادم محرّك الفهم مشغّلاً (الرابط في تبويب «وصف نصّي»)
-        يُرسَل الملف إليه ويُفهم بدقّة — <b>وهذا الأدق</b>؛ وإلا يُقرأ محلياً.<br>
-        <b>JSON</b>: بيانات مبنى مطابقة للـschema → يُبنى مباشرة.<br>
-        <b>DXF</b>: نقرأ المضلّعات المغلقة (Polylines) كغرف ونبنيها جدراناً.<br>
-        <b>صورة / PDF مخطط مرسوم</b>: يفتح محرّر — ارسم مستطيلات فوق المخطط ثم «توليد 3D».
-      </div>
-    </div>
-
-    <!-- تبويب: العرض -->
-    <div data-panel="view" style="display:none">
-      <h2 style="border:none;margin-top:2px">الأدوار</h2>
+    <!-- ═════ ٢ · النموذج: أدوار · طبقات · تشطيبات · ملاحظات ═════ -->
+    <div data-panel="model" style="display:none">
+      <h2>الأدوار</h2>
       <div class="row" id="floors"></div>
-      <h2>الطبقات (إظهار + لون)</h2>
+
+      <h2>المقطع <span class="pill">قصّ المبنى</span></h2>
+      <div id="clipBox" style="display:none">
+        <div class="clipRow"><span>س</span><input id="clip_x" type="range" min="0" max="100" value="100"><i id="clipVal_x">—</i></div>
+        <div class="clipRow"><span>ع</span><input id="clip_y" type="range" min="0" max="100" value="100"><i id="clipVal_y">—</i></div>
+        <div class="clipRow"><span>ص</span><input id="clip_z" type="range" min="0" max="100" value="100"><i id="clipVal_z">—</i></div>
+        <button class="ghost" id="clipReset" style="width:100%;margin-top:6px">إلغاء المقطع</button>
+      </div>
+      <div class="note" id="clipHint">اضغط ✂️ في الشريط العلوي لفتح أدوات المقطع.</div>
+
+      <h2>الطبقات</h2>
       <div id="layers"></div>
-      <h2>🥽 نظّارة الواقع الافتراضي</h2>
-      <div id="vrbox" class="vrbox">
-        <div id="vrState" class="note" style="margin:0 0 8px">جارٍ فحص دعم النظارة…</div>
-      </div>
-      <div class="fld" style="margin-top:8px">
-        <div><label>سرعة المشي في VR</label>
-          <input id="vrSpeed" type="range" min="10" max="80" value="26"></div>
-      </div>
-      <div class="lay"><input type="checkbox" id="vrSnap" checked>
-        <span class="nm">التفاف مُقطَّع 30° (أريح للمعدة من الالتفاف السلس)</span></div>
-      <div class="note">
-        <b>داخل المبنى (VR):</b> العصا اليسرى مشي · اليمنى يميناً/يساراً التفاف ·
-        اليمنى للأمام/الخلف صعود ونزول · الزناد انتقال فوري لمكان التصويب · القبضة جري ·
-        <b>A</b> دور فوق · <b>B</b> دور تحت.<br>
-        <b>الماكيت (Passthrough):</b> المبنى مصغّر على طاولتك في غرفتك — العصا اليمنى تدوّره
-        وتكبّره، اليسرى تحرّكه، الزناد يعيده أمامك.<br>
-        تُطفأ الظلال ويُخفَّض التفصيل تلقائياً داخل النظارة لثبات الإطار عند 90 هرتز.
-      </div>
 
-      <h2>الخامات والتفصيل</h2>
-      <div class="lay"><input type="checkbox" id="texOn" checked>
-        <span class="nm">تفعيل خامات واقعية (خرسانة · بورسلين · خشب · رخام · معدن)</span></div>
-      <div class="fld" style="margin-top:6px"><div>
-        <label>مستوى التفصيل (رفوف · بضاعة · قوائم)</label>
-        <select id="detailSel" style="width:100%;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:8px;font-size:12px">
-          <option value="0.5">خفيف — أسرع حركة على الجوال</option>
-          <option value="1" selected>متوازن</option>
-          <option value="1.8">عالٍ — أقصى واقعية</option>
-        </select>
-      </div></div>
-      <div id="statCount" class="note" style="min-height:14px"></div>
-
-      <h2>صور حقيقية — لأي سطح</h2>
+      <h2>التشطيبات — لون أو صورة حقيقية</h2>
       <div id="doorbox" class="doorbox">
-        <label class="file">اختر صورة<input id="doorfile" type="file" accept="image/*" hidden></label>
-        أو أفلِتها في الشاشة
-        <div class="row" style="margin-top:6px">
-          <select id="texTarget" style="flex:1;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:6px;font-size:11.5px">
-            <option value="DOOR">أبواب</option>
-            <option value="WALL">جدران</option>
-            <option value="FLOOR">أرضيات</option>
-            <option value="FURN">أثاث</option>
-            <option value="WINDOW">نوافذ</option>
+        <div class="row" style="gap:6px;align-items:center">
+          <select id="texTarget" class="mini">
+            <option value="DOOR">أبواب</option><option value="WALL">جدران</option>
+            <option value="FLOOR">أرضيات</option><option value="FURN">أثاث</option>
+            <option value="OBJ">عناصر</option><option value="WINDOW">نوافذ</option>
           </select>
-          <input id="texRepeat" type="number" value="1" min="0.1" step="0.5" title="تكرار الصورة"
-            style="width:62px;background:#0e1830;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:6px;font-size:11.5px">
+          <input id="texRepeat" type="number" value="1" min="0.1" step="0.5" class="mini" style="width:58px" title="تكرار الصورة">
         </div>
-        <div class="row" style="justify-content:center"><button class="ghost" id="applyAll" disabled>تطبيق على الطبقة المختارة</button>
-        <button class="ghost" id="clearDoor">إلغاء</button></div>
-        <div style="font-size:10px;opacity:.6;margin-top:4px">أو انقر عنصراً بعد اختيار الصورة لتطبيقها عليه وحده</div>
+        <div class="row" style="margin-top:6px">
+          <label class="file" style="flex:1">📷 اختر صورة<input id="doorfile" type="file" accept="image/*" hidden></label>
+          <button class="ghost" id="applyAll" disabled>تطبيق</button>
+          <button class="ghost" id="clearDoor">إلغاء</button>
+        </div>
+        <div class="hintline">أو أفلِت صورة على الشاشة · أو انقر عنصراً بعينه بعد اختيارها.
+          ولتغيير لون غرفة: انقر جدارها واختر لوناً من البطاقة.</div>
       </div>
+
       <h2>ملاحظات المهندس <span class="pill" id="noteCount">0</span></h2>
-      <div class="row">
-        <button class="ghost" id="bNoteMode">✏️ وضع التحديد والتعليق</button>
-      </div>
+      <div class="row"><button class="ghost" id="bNoteMode" style="flex:1">✏️ وضع التحديد والتعليق</button></div>
       <div id="notesList"></div>
       <div class="row">
-        <button class="ghost" id="bNotesExport">⬇ تصدير الملاحظات</button>
-        <button class="ghost" id="bNotesApply">🤖 تنفيذ التعديلات</button>
+        <button class="ghost" id="bNotesExport" style="flex:1">⬇ تصدير</button>
+        <button class="ghost" id="bNotesApply" style="flex:1">🤖 تنفيذ التعديلات</button>
       </div>
-      <div class="note">فعّل الوضع ثم انقر أي عنصر (جدار/باب/غرفة) واكتب طلبك. «تنفيذ التعديلات» يرسلها لمحرّك الفهم ليعيد بناء النموذج.</div>
+    </div>
 
-      <h2>المشهد</h2>
-      <div class="row">
-        <button class="ghost" id="bOrbit">تدوير</button>
-        <button class="ghost" id="bTour">جولة</button>
-        <button class="ghost" id="bTop">علوي</button>
-        <button class="ghost" id="bWalk">مشي</button>
+    <!-- ═════ ٣ · العرض: شمس · نظارة · تصدير ═════ -->
+    <div data-panel="show" style="display:none">
+      <h2>دراسة الشمس والظل</h2>
+      <div id="sunOut" class="note"></div>
+      <div class="fld">
+        <div><label>الساعة</label><input id="sunHour" type="range" min="5" max="19" step="0.25" value="12"></div>
+        <div><label>اليوم من السنة</label><input id="sunDay" type="range" min="1" max="365" value="172"></div>
       </div>
-      <div class="row"><button class="ghost" id="bShot">📷 حفظ صورة</button>
-        <button class="ghost" id="bReal">✨ واقعي أكثر</button></div>
+      <div class="fld"><div><label>خط العرض</label>
+        <select id="sunCity">
+          <option value="24.71">الرياض</option><option value="21.49">جدة</option>
+          <option value="26.42">الدمام</option><option value="21.39">مكة</option>
+          <option value="24.47">المدينة</option><option value="28.38">حائل</option>
+        </select></div></div>
+
+      <h2>🥽 نظّارة الواقع الافتراضي</h2>
+      <div id="vrbox" class="vrbox"><div id="vrState" class="note" style="margin:0 0 8px">…</div></div>
+      <div class="lay"><input type="checkbox" id="vrSnap" checked>
+        <span class="nm">التفاف مُقطَّع 30° (أريح للمعدة)</span></div>
+      <div class="fld"><div><label>سرعة المشي في VR</label>
+        <input id="vrSpeed" type="range" min="10" max="80" value="26"></div></div>
+      <div class="note"><b>VR:</b> العصا اليسرى مشي · اليمنى التفاف · الزناد انتقال · A/B تغيير الدور.<br>
+        <b>الماكيت:</b> المبنى مصغّر على طاولتك — اليمنى تدوّره، الزناد يعيده أمامك.</div>
+
       <h2>التصدير</h2>
       <div class="row">
-        <button class="ghost" id="bGlb" style="flex:1">⬇ GLB للأنريل / 3D</button>
-        <button class="ghost" id="bJson" style="flex:1">⬇ بيانات المبنى JSON</button>
+        <button class="ghost" id="bGlb" style="flex:1">⬇ GLB للأنريل</button>
+        <button class="ghost" id="bJson" style="flex:1">⬇ بيانات JSON</button>
       </div>
-      <div class="note">ملف <b>GLB</b> يُستورد مباشرة في Unreal Engine أو Blender أو Twinmotion —
-        بأسماء العقد كاملة (الطبقة · الدور · الغرفة) فتُميَّز الخامات تلقائياً.
-        وملف <b>JSON</b> هو النموذج نفسه لإعادة البناء أو المعالجة برمجياً.</div>
+      <div class="row"><button class="ghost" id="bShot" style="flex:1">📷 حفظ صورة</button></div>
+
+      <h2>الجودة والأداء</h2>
+      <div class="lay"><input type="checkbox" id="texOn" checked>
+        <span class="nm">خامات واقعية</span></div>
+      <div class="fld"><div><label>مستوى التفصيل</label>
+        <select id="detailSel">
+          <option value="0.5">خفيف — أسرع على الجوال</option>
+          <option value="1" selected>متوازن</option>
+          <option value="1.8">عالٍ — أقصى واقعية</option>
+        </select></div></div>
+      <div id="statCount" class="note" style="min-height:14px"></div>
+
       <h2>دليل الألوان</h2>
       <div class="legend">
         <span><i class="dot" style="background:#e01a1a"></i>فيش</span>
@@ -398,6 +384,7 @@
       </div>
     </div>
   </div>
+
   <div id="status">جاهز — اكتب وصفاً واضغط «توليد».</div>
 </div>
 
@@ -414,7 +401,7 @@
     <label>مجال الرؤية <input id="optFov" type="range" min="45" max="100" value="70"></label>
     <label>ارتفاع النظر <input id="optEye" type="range" min="80" max="220" value="160"></label>
     <label>السرعة <input id="optSpd" type="range" min="1" max="12" value="4"></label>
-    <span id="walkHint">اسحب على الشاشة للنظر · الجويستيك للحركة · WASD على الحاسب</span>
+    <span id="walkHint">اسحب للنظر · الجويستيك للحركة · WASD على الحاسب</span>
   </div>
 </div>
 
@@ -464,9 +451,14 @@
   <button data-view="tour"  title="جولة تلقائية">🎬</button>
   <button data-view="walk"  title="منظور شخصي — مشي">🚶</button>
   <span class="sep"></span>
+  <button data-tool="measure" title="قياس مسافة">📏</button>
+  <button data-tool="area" title="قياس مساحة">▱</button>
+  <button id="cbClip" title="مقطع">✂️</button>
+  <span class="sep"></span>
   <button id="cbNote" title="تحديد وتعليق">✏️</button>
   <button id="cbShot" title="حفظ صورة">📷</button>
 </div>
+<div id="measHUD"></div>
 <div id="info"></div>
 <div id="tip">انقر عنصراً لتفاصيله ولتلوينه فوراً 🎨 · اسحب للتدوير · عجلة للتقريب</div>
 <div id="drop">أفلِت صورة باب</div>
@@ -1897,7 +1889,7 @@ function setModel(data){
   if(statEl) statEl.innerHTML=`<b>${n}</b> عنصر ثلاثي الأبعاد مبنيّ من <b>${nz}</b> منطقة في الوصف.`
     +(n>6000?' <span style="color:#f59e0b">— خفّض «مستوى التفصيل» إن تباطأت الحركة.</span>':'');
   if(window.ACS&&window.ACS.closePanel) window.ACS.closePanel();
-  showTab('view'); document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='view'));
+  showTab('model'); document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='model'));
 }
 
 /* الأدوار */
@@ -1978,6 +1970,7 @@ renderer.domElement.addEventListener('click',ev=>{ if(walkState.active||!model)r
   const hits=ray.intersectObjects([model],true).filter(h=>h.object.visible);
   if(!hits.length){infoEl.style.display='none';return;}
   const hit=hits[0], o=hit.object, t=(o.userData.tag||'').split('|');
+  if(TOOL!=='none'){ addMeasurePoint(hit.point); return; }
   if(noteMode){ openNote(o, hit.point); return; }
   infoEl.style.display='block';
   infoEl.innerHTML=`<b>${LAYER_NAMES[t[0]]||t[0]}</b><br>الدور: ${FLOOR_NAMES[t[1]]||t[1]} · الغرفة: ${t[2]||'-'}<br><span style="opacity:.6">${t[3]||''}</span>`;
@@ -2128,6 +2121,129 @@ function applyFinish(tag, surface, hex, mesh){
     updateVis();
   }
   return 'طُبّق لون ال'+(surface==='floor'?'أرضية':'سقف')+' في غرفة «'+rr.rid+'» ✓';
+}
+
+
+/* ==================================================================
+   أدوات المهندس: قياس · مقاطع · دراسة الشمس والظل
+   ================================================================== */
+let TOOL='none';                    // none | measure | area
+const measure={pts:[], marks:new THREE.Group(), line:null};
+scene.add(measure.marks);
+const MEAS_MAT=new THREE.LineBasicMaterial({color:0x38bdf8});
+
+function fmt(m){ return m>=1 ? m.toFixed(2)+' م' : Math.round(m*100)+' سم'; }
+function clearMeasure(){
+  while(measure.marks.children.length){ const o=measure.marks.children[0];
+    measure.marks.remove(o); if(o.geometry)o.geometry.dispose(); }
+  measure.pts=[]; setMeasureHUD('');
+}
+function setMeasureHUD(html){
+  const el=document.getElementById('measHUD'); if(!el) return;
+  el.innerHTML=html; el.style.display=html?'block':'none';
+}
+function addMeasurePoint(p){
+  measure.pts.push(p.clone());
+  const s=new THREE.Mesh(new THREE.SphereGeometry(0.09,12,10),
+    new THREE.MeshBasicMaterial({color:0x38bdf8}));
+  s.position.copy(p); measure.marks.add(s);
+
+  if(TOOL==='measure'){
+    if(measure.pts.length===2){
+      const [a,b]=measure.pts;
+      const g=new THREE.BufferGeometry().setFromPoints([a,b]);
+      measure.marks.add(new THREE.Line(g,MEAS_MAT));
+      const d=a.distanceTo(b);
+      const dx=Math.abs(a.x-b.x), dy=Math.abs(a.y-b.y), dz=Math.abs(a.z-b.z);
+      setMeasureHUD('<b>'+fmt(d)+'</b><span>أفقي '+fmt(Math.hypot(dx,dz))+
+                    ' · رأسي '+fmt(dy)+'</span>');
+      measure.pts=[];      // ابدأ قياساً جديداً بالنقرة التالية
+      setTimeout(()=>{ if(TOOL==='measure'&&measure.marks.children.length>60) clearMeasure(); },50);
+    }
+  }else if(TOOL==='area'){
+    const n=measure.pts.length;
+    if(n>=2){
+      const g=new THREE.BufferGeometry().setFromPoints(measure.pts.slice(-2));
+      measure.marks.add(new THREE.Line(g,MEAS_MAT));
+    }
+    if(n>=3){
+      let A=0; const P=measure.pts;                    // مساحة المضلّع في المستوي الأفقي
+      for(let i=0;i<P.length;i++){ const q=P[(i+1)%P.length];
+        A += P[i].x*q.z - q.x*P[i].z; }
+      A=Math.abs(A)/2;
+      let per=0; for(let i=0;i<P.length;i++){ const q=P[(i+1)%P.length];
+        per+=Math.hypot(P[i].x-q.x, P[i].z-q.z); }
+      setMeasureHUD('<b>'+A.toFixed(2)+' م²</b><span>'+n+' نقاط · محيط '+fmt(per)+
+                    ' — انقر «مسح» للبدء من جديد</span>');
+    }else setMeasureHUD('<b>—</b><span>انقر ٣ نقاط على الأقل لحساب المساحة</span>');
+  }
+}
+function setTool(t){
+  TOOL=(TOOL===t)?'none':t;
+  clearMeasure();
+  document.querySelectorAll('#camBar button[data-tool]').forEach(b=>
+    b.classList.toggle('on', b.dataset.tool===TOOL));
+  if(TOOL==='measure') setMeasureHUD('<b>القياس</b><span>انقر نقطتين لقياس المسافة بينهما</span>');
+  if(TOOL==='area')    setMeasureHUD('<b>المساحة</b><span>انقر أركان المساحة ثم اقرأ الناتج</span>');
+  statusEl.textContent = TOOL==='none' ? 'أُوقفت أداة القياس.' :
+    (TOOL==='measure' ? 'أداة القياس: انقر نقطتين.' : 'أداة المساحة: انقر الأركان.');
+}
+
+/* ── المقاطع: قصّ المبنى بمستويات لرؤية الداخل بلا دخول وضع المشي ── */
+renderer.localClippingEnabled=true;
+const clip={x:new THREE.Plane(new THREE.Vector3(-1,0,0),1e6),
+            y:new THREE.Plane(new THREE.Vector3(0,-1,0),1e6),
+            z:new THREE.Plane(new THREE.Vector3(0,0,-1),1e6), on:false};
+function applyClip(){
+  const planes = clip.on ? [clip.x,clip.y,clip.z] : [];
+  for(const k in matCache){ const m=matCache[k];
+    if(m){ m.clippingPlanes=planes; m.clipShadows=true; m.needsUpdate=true; } }
+  if(model) model.traverse(o=>{ if(o.isMesh&&o.material&&!o.material.clippingPlanes)
+    { o.material.clippingPlanes=planes; o.material.needsUpdate=true; } });
+}
+function setClip(axis,pct){
+  const b=bounds, r=b.r;
+  const lo={x:b.c.x-r, y:b.c.y-r, z:b.c.z-r}[axis];
+  const v=lo + 2*r*(pct/100);
+  clip[axis].constant = v;                       // normal سالب ⇒ يبقى ما قبل المستوي
+  clip.on=true; applyClip();
+  const lbl=document.getElementById('clipVal_'+axis);
+  if(lbl) lbl.textContent=v.toFixed(1)+' م';
+}
+function resetClip(){
+  clip.on=false; clip.x.constant=clip.y.constant=clip.z.constant=1e6; applyClip();
+  ['x','y','z'].forEach(a=>{ const s=document.getElementById('clip_'+a); if(s)s.value=100;
+    const l=document.getElementById('clipVal_'+a); if(l)l.textContent='—'; });
+  statusEl.textContent='أُلغي المقطع.';
+}
+
+/* ── دراسة الشمس والظل: موضع الشمس الحقيقي بالتاريخ والوقت وخط العرض ── */
+const sunStudy={lat:24.71, lon:46.68, day:172, hour:12};   // الرياض
+function sunAngles(lat, dayOfYear, hour){
+  const rad=Math.PI/180;
+  const dec = 23.45*Math.sin(2*Math.PI*(284+dayOfYear)/365)*rad;   // الميل
+  const H   = (hour-12)*15*rad;                                    // الزاوية الساعية
+  const la  = lat*rad;
+  const alt = Math.asin(Math.sin(la)*Math.sin(dec)+Math.cos(la)*Math.cos(dec)*Math.cos(H));
+  let az = Math.atan2(-Math.sin(H)*Math.cos(dec),
+                      Math.cos(la)*Math.sin(dec)-Math.sin(la)*Math.cos(dec)*Math.cos(H));
+  az = (az/rad+360)%360;
+  return {elev: alt/rad, azim: az};
+}
+function applySunStudy(){
+  const a=sunAngles(sunStudy.lat, sunStudy.day, sunStudy.hour);
+  const el=Math.max(a.elev, -3);
+  setSun(el, a.azim);
+  sun.intensity = el<=0 ? 0.05 : 1.4+2.0*Math.min(el/60,1);
+  su.turbidity.value = el<12 ? 9 : 6;
+  su.rayleigh.value  = el<12 ? 3.2 : 2.2;
+  const d=new Date(2026,0,1); d.setDate(sunStudy.day);
+  const hh=Math.floor(sunStudy.hour), mm=Math.round((sunStudy.hour-hh)*60);
+  const out=document.getElementById('sunOut');
+  if(out) out.innerHTML='<b>'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+'</b> · '
+    + d.toLocaleDateString('ar-SA',{month:'long',day:'numeric'})
+    + ' · ارتفاع الشمس <b>'+a.elev.toFixed(0)+'°</b>'
+    + (a.elev<=0?' — <span style="color:#f59e0b">بعد الغروب</span>':'');
 }
 
 /* ========================= ملاحظات المهندس (تحديد + طلب تعديل) ========================= */
@@ -2301,9 +2417,6 @@ function markView(m){
   document.querySelectorAll('#camBar button[data-view]').forEach(b=>
     b.classList.toggle('on', b.dataset.view===m));
 }
-document.getElementById('bReal').onclick=()=>{real=!real;renderer.toneMappingExposure=real?1.25:1.05;
-  su.rayleigh.value=real?1.4:2.2; setSun(real?38:52,135);
-  statusEl.textContent=real?'وضع واقعي: إضاءة ذهبية + ظلال أطول.':'وضع قياسي.';};
 document.getElementById('bShot').onclick=()=>{renderer.render(scene,camera);
   const a=document.createElement('a');a.download='ACS-view.png';a.href=renderer.domElement.toDataURL('image/png');a.click();};
 
@@ -2647,7 +2760,10 @@ renderer.setAnimationLoop(()=>{
 });
 
 /* ========================= الواجهة / التبويبات / الدخول ========================= */
-function showTab(t){document.querySelectorAll('[data-panel]').forEach(p=>p.style.display=p.dataset.panel===t?'':'none');}
+function showTab(t){
+  document.querySelectorAll('[data-panel]').forEach(p=>p.style.display=p.dataset.panel===t?'':'none');
+  const bd=document.querySelector('.body'); if(bd) bd.scrollTop=0;
+}
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');showTab(b.dataset.tab);});
 
@@ -2786,12 +2902,6 @@ document.getElementById('genLLM').onclick=async()=>{
     if(e.name==='AbortError') fallback('طال الانتظار على الخادم');
     else fallback('تعذّر الاتصال بالخادم ('+String(e.message).slice(0,90)+')');
   }
-};
-document.getElementById('genQuick').onclick=()=>{
-  const W=+document.getElementById('qW').value||30,D=+document.getElementById('qD').value||25,
-    nF=+document.getElementById('qFloors').value||4,nR=+document.getElementById('qRooms').value||6;
-  const t=(document.getElementById('qType')||{}).value||'residential';
-  setModel(t==='warehouse' ? warehouseModel(W,D,{}) : quickModel(W,D,nF,nR));
 };
 document.getElementById('loadExample').onclick=()=>{setModel(EXAMPLE);};
 document.getElementById('loadWarehouse').onclick=()=>{
@@ -2936,7 +3046,9 @@ async function pdfPagesToBlobs(f, maxPages){
 
 async function handleImport(f){
   const info=document.getElementById('impInfo'), name=f.name.toLowerCase();
-  const W=+document.getElementById('impW').value||30,D=+document.getElementById('impD').value||25,nF=+document.getElementById('impFloors').value||5;
+  const W=+document.getElementById('siteW').value||30,
+        D=+document.getElementById('siteD').value||25,
+        nF=+document.getElementById('nFloors').value||3;
   info.textContent='جارٍ القراءة…';
   try{
     if(name.endsWith('.json')){ const data=JSON.parse(await f.text());
@@ -3040,7 +3152,7 @@ document.getElementById('trClose').onclick=()=>{document.getElementById('tracer'
 document.getElementById('trGen').onclick=()=>{
   if(!trRooms.length){document.getElementById('trCount').textContent='ارسم غرفة أولاً';return;}
   const Wm=+document.getElementById('trW').value||30, mpp=Wm/trImg.naturalWidth, Dm=trImg.naturalHeight*mpp;
-  const nF=+document.getElementById('impFloors').value||5;
+  const nF=+document.getElementById('nFloors').value||3;
   const rooms=trRooms.map((r,i)=>decorateRoom({id:'room'+(i+1),
     rect:[+(r.x*mpp).toFixed(2),+(r.y*mpp).toFixed(2),+(r.w*mpp).toFixed(2),+(r.h*mpp).toFixed(2)]}));
   document.getElementById('tracer').style.display='none';
