@@ -1,0 +1,31 @@
+# ينشر Netlify محتوى مجلد public فقط — فلا تُنشر ملفات الخادم Python
+[build]
+  publish = "public"
+  # يجلب three@0.160.0 + الإضافات + es-module-shims + pdf.js إلى public/vendor أثناء البناء
+  # (بيئة بناء Netlify متصلة بالإنترنت). set -e يجعل أي فشل يُفشل البناء فيبقى آخر نشر ناجح.
+  command = "bash tools/netlify-build.sh"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    # حماية من التأطير (clickjacking)
+    X-Frame-Options = "DENY"
+    # صلاحيات المتصفح: يُسمح بالكاميرا وتتبّع WebXR للواجهة نفسها فقط، والبقية معطّلة
+    Permissions-Policy = "camera=(self), xr-spatial-tracking=(self), fullscreen=(self), microphone=(), geolocation=(), payment=(), usb=()"
+    # سياسة محتوى دفاعية. ملاحظات الاستثناءات:
+    #  • كل مكتبات التشغيل محلية الآن (three + الإضافات + es-module-shims + pdf.js في /vendor)،
+    #    لذا script-src = 'self' فقط (+ 'unsafe-inline'/'unsafe-eval' للوحدة inline والـshim) — بلا CDN.
+    #  • blob: في script-src: يحتاجه es-module-shims وحده لتنفيذ الوحدات المُعاد كتابتها،
+    #    وهو الآن لا يُحمَّل إلا على متصفح لا يدعم importmap أصلاً (iOS Safari < 16.4).
+    #    المتصفحات الحديثة لا تُنشئ blob إطلاقاً. الإضافة ضيّقة (blob من نفس الأصل) ولا تمنح
+    #    قدرة جديدة إذ إن 'unsafe-eval' موجود أصلاً. لإسقاط دعم iOS<16.4: احذف كتلة الشيم
+    #    من index.html ثم احذف blob: من هنا ⇒ سياسة أضيق.
+    #  • worker-src 'self' blob: لعامل pdf.js المحلي.  • img-src data:/blob: لخامات WebGL واللقطات.
+    #  • connect-src مثبّت على 'self' + نطاق خادم الفهم (acs-engine.onrender.com).
+    #    عند تجاوز الخادم يدوياً لنطاق آخر، أضِف نطاقه هنا.
+    #  • frame-ancestors 'none' + object-src 'none' + base-uri 'self' لتقليل السطح.
+    #  ملاحظة: لم تُضَف COEP عمداً (تكسر خامات الكانفس عبر الأصول).
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com"
