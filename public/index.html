@@ -3430,6 +3430,46 @@ const EXAMPLE = {
     }
   }
 };
+
+/* ═══════════ ربط شريط الأدوات العائم وأدوات المهندس ═══════════
+   (يُنفَّذ في نهاية الوحدة بعد تعريف كل الدوال) */
+document.querySelectorAll('#camBar button[data-view]').forEach(b=>{
+  b.onclick=()=>setMode(b.dataset.view);
+});
+document.querySelectorAll('#camBar button[data-tool]').forEach(b=>{
+  b.onclick=()=>setTool(b.dataset.tool);
+});
+document.getElementById('cbShot').onclick=()=>document.getElementById('bShot').click();
+document.getElementById('cbNote').onclick=()=>{
+  document.getElementById('bNoteMode').click();
+  document.getElementById('cbNote').classList.toggle('on', noteMode);
+};
+document.getElementById('cbClip').onclick=()=>{
+  const el=document.getElementById('clipBox');
+  const show=!(el.style.display&&el.style.display!=='none');
+  el.style.display=show?'block':'none';
+  const hint=document.getElementById('clipHint'); if(hint) hint.style.display=show?'none':'';
+  document.getElementById('cbClip').classList.toggle('on',show);
+  if(show){ showTab('model');
+    document.querySelectorAll('.tabs button').forEach(b=>
+      b.classList.toggle('active', b.dataset.tab==='model'));
+  } else resetClip();
+};
+['x','y','z'].forEach(ax=>{
+  const sl=document.getElementById('clip_'+ax);
+  if(sl) sl.oninput=()=>setClip(ax, +sl.value);
+});
+document.getElementById('clipReset').onclick=resetClip;
+(function initSun(){
+  const h=document.getElementById('sunHour'), d=document.getElementById('sunDay'),
+        c=document.getElementById('sunCity');
+  if(!h||!d||!c) return;
+  const upd=()=>{ sunStudy.hour=+h.value; sunStudy.day=+d.value; sunStudy.lat=+c.value;
+                  applySunStudy(); };
+  h.oninput=upd; d.oninput=upd; c.onchange=upd; upd();
+})();
+markView('orbit');
+
 </script>
 </body>
 </html>
