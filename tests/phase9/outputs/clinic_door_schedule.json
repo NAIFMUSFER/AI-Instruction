@@ -1,0 +1,292 @@
+{
+ "columns": [
+  "door_id",
+  "level",
+  "from_space",
+  "to_space",
+  "nominal_width_m",
+  "clear_width_m",
+  "height_m",
+  "swing",
+  "fire_rating",
+  "material",
+  "host_status",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 4,
+ "rows": [
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.exam_1.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.exam_1"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.exam_1.door_0@0",
+    "source_model_hash": "bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D7F75AE"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.reception.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.reception"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 1.0
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.reception.door_0@0",
+    "source_model_hash": "bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D12CE82"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.reception.door_1@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.reception"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 1.2
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.reception.door_1@0",
+    "source_model_hash": "bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D059DAD"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.waiting.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.waiting"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 1.0
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.waiting.door_0@0",
+    "source_model_hash": "bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D85A4CF"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  }
+ ],
+ "schedule_id": "sched_044961e1335fa11b",
+ "schedule_type": "DOOR_SCHEDULE",
+ "source_model_hash": "bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044",
+ "source_revision": "rev:2a3c4e087543af77",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 24,
+ "writes_to_model": false
+}

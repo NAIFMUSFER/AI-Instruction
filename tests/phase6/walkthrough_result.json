@@ -1,0 +1,107 @@
+{
+ "steps": [
+  {
+   "n": 1,
+   "title": "CREATE PROJECT",
+   "verdict": "PASS",
+   "evidence": "a create-project flow exists and returned a result"
+  },
+  {
+   "n": 2,
+   "title": "ENTER REQUIREMENTS",
+   "verdict": "PASS",
+   "evidence": "requirements are classified; unsupported ones stay counted, not silently satisfied"
+  },
+  {
+   "n": 3,
+   "title": "GENERATE MODEL",
+   "verdict": "PASS",
+   "evidence": "a real model with 6 spaces at revision rev:98df9f13d724ff1d"
+  },
+  {
+   "n": 4,
+   "title": "EXPLORE 3D",
+   "verdict": "NOT_VERIFIED",
+   "evidence": "the viewport host is present and sized 836x814, but the 3D library is not vendored in this sandbox — EXTERNAL ENVIRONMENT REQUIRED"
+  },
+  {
+   "n": 5,
+   "title": "SELECT ELEMENT",
+   "verdict": "PASS",
+   "evidence": "the element is selected and selecting wrote nothing to the model"
+  },
+  {
+   "n": 6,
+   "title": "INSPECT PROPERTIES",
+   "verdict": "PASS",
+   "evidence": "6 sections, 4 values shown as unknown, 3 read-only derived, 8 provenance labels"
+  },
+  {
+   "n": 7,
+   "title": "ENTER EDIT MODE",
+   "verdict": "PASS",
+   "evidence": "8 operations offered and the status bar states EDIT"
+  },
+  {
+   "n": 8,
+   "title": "PREVIEW CHANGE",
+   "verdict": "PASS",
+   "evidence": "a candidate model was produced while the committed model stayed byte-identical"
+  },
+  {
+   "n": 9,
+   "title": "CANCEL A CHANGE",
+   "verdict": "PASS",
+   "evidence": "cancelling left neither a revision nor a hash change"
+  },
+  {
+   "n": 10,
+   "title": "COMMIT A CHANGE",
+   "verdict": "PASS",
+   "evidence": "pressing the commit button recorded a new revision; history now holds 2 entries"
+  },
+  {
+   "n": 11,
+   "title": "UNDO AND REDO",
+   "verdict": "PASS",
+   "evidence": "undo produced a different model and redo restored the original hash exactly"
+  },
+  {
+   "n": 12,
+   "title": "VIEW WARNINGS",
+   "verdict": "PASS",
+   "evidence": "10 issue categories and 4 issues shown, with no compliance claim in the text"
+  },
+  {
+   "n": 13,
+   "title": "NAVIGATE FROM AN ISSUE TO THE MODEL",
+   "verdict": "PASS",
+   "evidence": "the issue declares itself not focusable rather than inventing a target"
+  },
+  {
+   "n": 14,
+   "title": "VIEW REVISION HISTORY",
+   "verdict": "PASS",
+   "evidence": "4 revisions listed"
+  },
+  {
+   "n": 15,
+   "title": "ASSISTANT PROPOSES WITHOUT COMMITTING",
+   "verdict": "PASS",
+   "evidence": "a resolvable phrase produced a proposal, an unresolvable one was refused, and neither changed the model or its revision"
+  },
+  {
+   "n": 16,
+   "title": "EXPORT",
+   "verdict": "PASS",
+   "evidence": "5 export kinds offered; every descriptor names the committed revision and model hash and certifies nothing"
+  },
+  {
+   "n": 17,
+   "title": "SWITCH LANGUAGE WITHOUT LOSING STATE",
+   "verdict": "PASS",
+   "evidence": "Arabic renders right-to-left and English left-to-right; selection, mode and model hash all survive the switch"
+  }
+ ],
+ "page_errors": []
+}

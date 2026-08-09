@@ -1,0 +1,1183 @@
+{
+  "schema": "acs.render/1",
+  "version": "1.0.0",
+  "compiler_version": "acs-render/1.0.0",
+  "extends": "acs.visual/1",
+  "note": "presentation output derived from the canonical engineering model. A render is never engineering truth, never a certification and never a source of geometry.",
+  "authority_note": "the deterministic base render is the geometry authority. An AI image is downstream of it and is always optional.",
+  "pipeline": [
+    "CANONICAL_ENGINEERING_MODEL",
+    "DETERMINISTIC_VISUAL_SCENE",
+    "CAMERA_MATERIAL_LIGHTING",
+    "BASE_RENDER",
+    "CONTROL_BUFFERS",
+    "OPTIONAL_AI_ENHANCEMENT",
+    "PRESENTATION_IMAGE"
+  ],
+  "reverse_write_allowed": false,
+  "reverse_write_note": "there is no path from a presentation image back to the engineering model. An AI image can never become model truth.",
+  "writes_to_model": false,
+  "model_hash_inputs": [
+    "model"
+  ],
+  "view_types": [
+    "EXTERIOR",
+    "INTERIOR",
+    "DOLLHOUSE",
+    "CUTAWAY",
+    "ISOMETRIC",
+    "TOP",
+    "FLOOR_PLAN",
+    "SECTION",
+    "ELEVATION",
+    "PANORAMA",
+    "VR_PREVIEW"
+  ],
+  "raster_view_types": [
+    "EXTERIOR",
+    "INTERIOR",
+    "DOLLHOUSE",
+    "CUTAWAY",
+    "ISOMETRIC",
+    "TOP",
+    "PANORAMA",
+    "VR_PREVIEW"
+  ],
+  "vector_view_types": [
+    "FLOOR_PLAN",
+    "SECTION",
+    "ELEVATION"
+  ],
+  "request_fields": [
+    "request_id",
+    "model_hash",
+    "revision_id",
+    "building_id",
+    "level_id",
+    "space_id",
+    "view_type",
+    "camera",
+    "quality",
+    "theme",
+    "lighting",
+    "ai_enhancement",
+    "reference_ids"
+  ],
+  "request_note": "a render request is presentation state. It is validated, pinned to a model hash and a revision, and never mutates the model.",
+  "qualities": [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "ULTRA"
+  ],
+  "default_quality": "HIGH",
+  "quality_profile": {
+    "LOW": {
+      "shadow_mode": "LOW",
+      "ambient_occlusion": false,
+      "post": [
+        "TONE_MAPPING"
+      ],
+      "pixel_ratio": 1.0,
+      "env_quality": "PROCEDURAL",
+      "max_px": 2073600
+    },
+    "MEDIUM": {
+      "shadow_mode": "MEDIUM",
+      "ambient_occlusion": false,
+      "post": [
+        "TONE_MAPPING",
+        "ANTI_ALIASING"
+      ],
+      "pixel_ratio": 1.0,
+      "env_quality": "PROCEDURAL",
+      "max_px": 3686400
+    },
+    "HIGH": {
+      "shadow_mode": "HIGH",
+      "ambient_occlusion": true,
+      "post": [
+        "TONE_MAPPING",
+        "ANTI_ALIASING",
+        "EXPOSURE",
+        "COLOR_CORRECTION"
+      ],
+      "pixel_ratio": 1.5,
+      "env_quality": "ENVIRONMENT_MAP",
+      "max_px": 8294400
+    },
+    "ULTRA": {
+      "shadow_mode": "ULTRA",
+      "ambient_occlusion": true,
+      "post": [
+        "TONE_MAPPING",
+        "ANTI_ALIASING",
+        "EXPOSURE",
+        "COLOR_CORRECTION",
+        "BLOOM"
+      ],
+      "pixel_ratio": 2.0,
+      "env_quality": "ENVIRONMENT_MAP",
+      "max_px": 33177600
+    }
+  },
+  "visual_material_classes": [
+    "PAINT",
+    "PLASTER",
+    "WOOD",
+    "STONE",
+    "MARBLE",
+    "CERAMIC",
+    "GLASS",
+    "METAL",
+    "CONCRETE",
+    "FABRIC",
+    "CARPET",
+    "ASPHALT",
+    "GRASS",
+    "WATER",
+    "SOIL",
+    "OTHER"
+  ],
+  "material_class_note": "a visual material describes appearance only. It never implies structural strength, fire rating, thermal performance or code compliance.",
+  "material_required_fields": [
+    "id",
+    "name",
+    "visual_class",
+    "base_color",
+    "roughness",
+    "metalness",
+    "opacity",
+    "texture_scale_m",
+    "source",
+    "license",
+    "visual_only"
+  ],
+  "material_library": [
+    {
+      "id": "r_paint_white",
+      "name": "White paint",
+      "visual_class": "PAINT",
+      "base_color": "#f2f1ee",
+      "roughness": 0.92,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_paint_warm",
+      "name": "Warm paint",
+      "visual_class": "PAINT",
+      "base_color": "#e9e2d6",
+      "roughness": 0.92,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_paint_grey",
+      "name": "Grey paint",
+      "visual_class": "PAINT",
+      "base_color": "#cfd2d4",
+      "roughness": 0.9,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_plaster",
+      "name": "Plaster",
+      "visual_class": "PLASTER",
+      "base_color": "#e6e1d8",
+      "roughness": 0.95,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": "procedural_noise",
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_wood_oak",
+      "name": "Oak flooring",
+      "visual_class": "WOOD",
+      "base_color": "#a9763f",
+      "roughness": 0.55,
+      "metalness": 0.0,
+      "opacity": 1.2,
+      "texture_scale_m": 1.2,
+      "normal_map": "procedural_grain",
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_wood_walnut",
+      "name": "Walnut",
+      "visual_class": "WOOD",
+      "base_color": "#5c3a21",
+      "roughness": 0.5,
+      "metalness": 0.0,
+      "opacity": 1.2,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_stone_lime",
+      "name": "Limestone",
+      "visual_class": "STONE",
+      "base_color": "#cdc4b2",
+      "roughness": 0.8,
+      "metalness": 0.0,
+      "opacity": 0.8,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_marble_white",
+      "name": "White marble",
+      "visual_class": "MARBLE",
+      "base_color": "#eeece8",
+      "roughness": 0.22,
+      "metalness": 0.0,
+      "opacity": 2.0,
+      "texture_scale_m": 2.0,
+      "normal_map": "procedural_vein",
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_ceramic_tile",
+      "name": "Ceramic tile",
+      "visual_class": "CERAMIC",
+      "base_color": "#dedbd4",
+      "roughness": 0.35,
+      "metalness": 0.0,
+      "opacity": 0.6,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_glass_clear",
+      "name": "Clear glazing",
+      "visual_class": "GLASS",
+      "base_color": "#cfe2ea",
+      "roughness": 0.05,
+      "metalness": 0.0,
+      "opacity": 0.28,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_glass_tinted",
+      "name": "Tinted glazing",
+      "visual_class": "GLASS",
+      "base_color": "#8fa7b3",
+      "roughness": 0.08,
+      "metalness": 0.0,
+      "opacity": 0.42,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_metal_alu",
+      "name": "Anodised aluminium",
+      "visual_class": "METAL",
+      "base_color": "#b8bcc0",
+      "roughness": 0.35,
+      "metalness": 1.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_metal_steel",
+      "name": "Painted steel",
+      "visual_class": "METAL",
+      "base_color": "#6f757a",
+      "roughness": 0.45,
+      "metalness": 1.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_concrete",
+      "name": "Fair-faced concrete",
+      "visual_class": "CONCRETE",
+      "base_color": "#b6b4b0",
+      "roughness": 0.85,
+      "metalness": 0.0,
+      "opacity": 1.5,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_fabric_linen",
+      "name": "Linen",
+      "visual_class": "FABRIC",
+      "base_color": "#d8d2c6",
+      "roughness": 0.95,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_carpet_wool",
+      "name": "Wool carpet",
+      "visual_class": "CARPET",
+      "base_color": "#9a8f82",
+      "roughness": 0.98,
+      "metalness": 0.0,
+      "opacity": 0.5,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_asphalt",
+      "name": "Asphalt",
+      "visual_class": "ASPHALT",
+      "base_color": "#4a4a4c",
+      "roughness": 0.95,
+      "metalness": 0.0,
+      "opacity": 2.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_grass",
+      "name": "Grass",
+      "visual_class": "GRASS",
+      "base_color": "#6f8f52",
+      "roughness": 0.95,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_water",
+      "name": "Water",
+      "visual_class": "WATER",
+      "base_color": "#4a7d94",
+      "roughness": 0.08,
+      "metalness": 0.0,
+      "opacity": 0.55,
+      "texture_scale_m": 3.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_soil",
+      "name": "Soil",
+      "visual_class": "SOIL",
+      "base_color": "#6b5844",
+      "roughness": 0.95,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    },
+    {
+      "id": "r_default",
+      "name": "Neutral default",
+      "visual_class": "OTHER",
+      "base_color": "#d8d8d6",
+      "roughness": 0.85,
+      "metalness": 0.0,
+      "opacity": 1.0,
+      "texture_scale_m": 1.0,
+      "normal_map": null,
+      "texture_refs": [],
+      "source": "procedural",
+      "license": "PROCEDURAL",
+      "visual_only": true
+    }
+  ],
+  "asset_licenses": [
+    "PROCEDURAL",
+    "CC0",
+    "CC-BY",
+    "PROPRIETARY_LICENSED",
+    "UNKNOWN"
+  ],
+  "asset_note": "no bundled asset carries an unknown licence. Remote assets are never a runtime dependency; the procedural fallback always exists.",
+  "texture_sources": [
+    "LOCAL_VENDOR",
+    "BUNDLED",
+    "APPROVED_UPLOAD",
+    "PROCEDURAL"
+  ],
+  "texture_note": "textures resolve from local or bundled assets, or fall back to a procedural material. No render depends on an uncontrolled remote host.",
+  "uv_mode": "WORLD_SCALE",
+  "uv_note": "texture scale is mapped in world metres so a large wall does not stretch a texture. UV mapping never modifies geometry.",
+  "themes": [
+    "MODERN",
+    "LUXURY",
+    "MINIMAL",
+    "WARM",
+    "INDUSTRIAL",
+    "CONTEMPORARY"
+  ],
+  "default_theme": "MODERN",
+  "theme_slots": [
+    "exterior_wall",
+    "interior_wall",
+    "floor",
+    "ceiling",
+    "roof",
+    "glazing",
+    "frame",
+    "ground",
+    "paving"
+  ],
+  "theme_material": {
+    "MODERN": {
+      "exterior_wall": "r_plaster",
+      "interior_wall": "r_paint_white",
+      "floor": "r_ceramic_tile",
+      "ceiling": "r_paint_white",
+      "roof": "r_concrete",
+      "glazing": "r_glass_clear",
+      "frame": "r_metal_alu",
+      "ground": "r_grass",
+      "paving": "r_concrete"
+    },
+    "LUXURY": {
+      "exterior_wall": "r_stone_lime",
+      "interior_wall": "r_paint_warm",
+      "floor": "r_marble_white",
+      "ceiling": "r_paint_white",
+      "roof": "r_stone_lime",
+      "glazing": "r_glass_clear",
+      "frame": "r_metal_alu",
+      "ground": "r_grass",
+      "paving": "r_stone_lime"
+    },
+    "MINIMAL": {
+      "exterior_wall": "r_paint_white",
+      "interior_wall": "r_paint_white",
+      "floor": "r_concrete",
+      "ceiling": "r_paint_white",
+      "roof": "r_concrete",
+      "glazing": "r_glass_clear",
+      "frame": "r_metal_alu",
+      "ground": "r_grass",
+      "paving": "r_concrete"
+    },
+    "WARM": {
+      "exterior_wall": "r_paint_warm",
+      "interior_wall": "r_paint_warm",
+      "floor": "r_wood_oak",
+      "ceiling": "r_paint_white",
+      "roof": "r_stone_lime",
+      "glazing": "r_glass_clear",
+      "frame": "r_wood_walnut",
+      "ground": "r_grass",
+      "paving": "r_stone_lime"
+    },
+    "INDUSTRIAL": {
+      "exterior_wall": "r_concrete",
+      "interior_wall": "r_concrete",
+      "floor": "r_concrete",
+      "ceiling": "r_metal_steel",
+      "roof": "r_metal_steel",
+      "glazing": "r_glass_tinted",
+      "frame": "r_metal_steel",
+      "ground": "r_asphalt",
+      "paving": "r_asphalt"
+    },
+    "CONTEMPORARY": {
+      "exterior_wall": "r_plaster",
+      "interior_wall": "r_paint_grey",
+      "floor": "r_wood_oak",
+      "ceiling": "r_paint_white",
+      "roof": "r_concrete",
+      "glazing": "r_glass_tinted",
+      "frame": "r_metal_alu",
+      "ground": "r_grass",
+      "paving": "r_concrete"
+    }
+  },
+  "kind_slot": {
+    "WALL": "interior_wall",
+    "EXTERIOR_WALL": "exterior_wall",
+    "SLAB": "floor",
+    "FLOOR": "floor",
+    "CEILING": "ceiling",
+    "ROOF_CAP": "roof",
+    "ROOF": "roof",
+    "WINDOW": "glazing",
+    "GLAZING": "glazing",
+    "DOOR": "frame",
+    "STAIR": "floor",
+    "GROUND": "ground",
+    "PAVING": "paving",
+    "PARKING": "paving"
+  },
+  "material_override_scopes": [
+    "PROJECT",
+    "BUILDING",
+    "LEVEL",
+    "SPACE",
+    "OBJECT"
+  ],
+  "override_kinds": [
+    "VISUAL_OVERRIDE",
+    "PROJECT_SPECIFICATION"
+  ],
+  "override_note": "a VISUAL_OVERRIDE changes appearance only. Changing the actual project specification is an authoring command and must go through Phase 5; the two operations are never merged.",
+  "visual_default_note": "when a finish is unknown the renderer may show a neutral default. The semantic model still reports the finish as unknown and the render metadata records visual_default_applied.",
+  "lighting_presets": [
+    "DAY",
+    "OVERCAST",
+    "GOLDEN_HOUR",
+    "SUNSET",
+    "NIGHT",
+    "INTERIOR_DAY",
+    "INTERIOR_NIGHT",
+    "STUDIO"
+  ],
+  "default_lighting": "DAY",
+  "lighting_params": {
+    "DAY": {
+      "elevation_deg": 58.0,
+      "azimuth_deg": 145.0,
+      "sun_intensity": 3.0,
+      "ambient_intensity": 0.55,
+      "sky_color": "#bcd7ef",
+      "ground_color": "#8a8578",
+      "exposure": 1.0,
+      "interior_fixtures": false,
+      "is_solar_analysis": false
+    },
+    "OVERCAST": {
+      "elevation_deg": 45.0,
+      "azimuth_deg": 180.0,
+      "sun_intensity": 0.9,
+      "ambient_intensity": 1.05,
+      "sky_color": "#c9cfd4",
+      "ground_color": "#8f8d87",
+      "exposure": 1.0,
+      "interior_fixtures": false,
+      "is_solar_analysis": false
+    },
+    "GOLDEN_HOUR": {
+      "elevation_deg": 12.0,
+      "azimuth_deg": 250.0,
+      "sun_intensity": 2.4,
+      "ambient_intensity": 0.45,
+      "sky_color": "#e8c39a",
+      "ground_color": "#7a6a54",
+      "exposure": 1.05,
+      "interior_fixtures": false,
+      "is_solar_analysis": false
+    },
+    "SUNSET": {
+      "elevation_deg": 4.0,
+      "azimuth_deg": 268.0,
+      "sun_intensity": 1.8,
+      "ambient_intensity": 0.35,
+      "sky_color": "#e79b6a",
+      "ground_color": "#5f5347",
+      "exposure": 1.1,
+      "interior_fixtures": false,
+      "is_solar_analysis": false
+    },
+    "NIGHT": {
+      "elevation_deg": -15.0,
+      "azimuth_deg": 20.0,
+      "sun_intensity": 0.05,
+      "ambient_intensity": 0.12,
+      "sky_color": "#12203a",
+      "ground_color": "#161821",
+      "exposure": 1.35,
+      "interior_fixtures": true,
+      "is_solar_analysis": false
+    },
+    "INTERIOR_DAY": {
+      "elevation_deg": 52.0,
+      "azimuth_deg": 160.0,
+      "sun_intensity": 1.6,
+      "ambient_intensity": 0.75,
+      "sky_color": "#cfe0f2",
+      "ground_color": "#8a8578",
+      "exposure": 1.05,
+      "interior_fixtures": false,
+      "is_solar_analysis": false
+    },
+    "INTERIOR_NIGHT": {
+      "elevation_deg": -12.0,
+      "azimuth_deg": 20.0,
+      "sun_intensity": 0.02,
+      "ambient_intensity": 0.2,
+      "sky_color": "#141c2c",
+      "ground_color": "#14161c",
+      "exposure": 1.3,
+      "interior_fixtures": true,
+      "is_solar_analysis": false
+    },
+    "STUDIO": {
+      "elevation_deg": 50.0,
+      "azimuth_deg": 210.0,
+      "sun_intensity": 1.4,
+      "ambient_intensity": 1.2,
+      "sky_color": "#f0f0f0",
+      "ground_color": "#d8d8d8",
+      "exposure": 1.0,
+      "interior_fixtures": false,
+      "is_solar_analysis": false
+    }
+  },
+  "sun_modes": [
+    "PROJECT_ORIENTATION",
+    "VISUAL_PRESET"
+  ],
+  "sun_note": "a sun direction taken from a lighting preset is a presentation choice. It is labelled VISUAL_PRESET and is never presented as solar analysis.",
+  "solar_analysis_claimed": false,
+  "environment_kinds": [
+    "PROCEDURAL_SKY",
+    "ENVIRONMENT_MAP",
+    "FLAT_BACKGROUND"
+  ],
+  "environment_fallback": "PROCEDURAL_SKY",
+  "environment_note": "an environment map is used only when a local licensed asset exists. The procedural sky is always available so a render never fails for want of a downloadable asset.",
+  "shadow_modes": [
+    "LOW",
+    "MEDIUM",
+    "HIGH",
+    "ULTRA"
+  ],
+  "shadow_params": {
+    "LOW": {
+      "map_px": 512,
+      "soft": false,
+      "cascades": 1
+    },
+    "MEDIUM": {
+      "map_px": 1024,
+      "soft": true,
+      "cascades": 1
+    },
+    "HIGH": {
+      "map_px": 2048,
+      "soft": true,
+      "cascades": 2
+    },
+    "ULTRA": {
+      "map_px": 4096,
+      "soft": true,
+      "cascades": 4
+    }
+  },
+  "ambient_occlusion_modes": [
+    "OFF",
+    "SSAO"
+  ],
+  "post_effects": [
+    "TONE_MAPPING",
+    "EXPOSURE",
+    "BLOOM",
+    "ANTI_ALIASING",
+    "COLOR_CORRECTION"
+  ],
+  "post_note": "post processing changes tone and colour only. No effect moves, scales or deforms geometry.",
+  "camera_presets": [
+    "FRONT_EXTERIOR",
+    "REAR_EXTERIOR",
+    "FRONT_CORNER",
+    "REAR_CORNER",
+    "BIRDS_EYE",
+    "DOLLHOUSE",
+    "TOP",
+    "STREET_VIEW",
+    "INTERIOR_WIDE",
+    "INTERIOR_EYE_LEVEL"
+  ],
+  "lens_presets": {
+    "ARCHITECTURAL_EXTERIOR": {
+      "fov_deg": 40.0,
+      "projection": "perspective"
+    },
+    "INTERIOR_WIDE": {
+      "fov_deg": 70.0,
+      "projection": "perspective"
+    },
+    "STREET": {
+      "fov_deg": 55.0,
+      "projection": "perspective"
+    },
+    "ORTHOGRAPHIC": {
+      "fov_deg": 0.0,
+      "projection": "orthographic"
+    }
+  },
+  "fov_limits": {
+    "min_deg": 18.0,
+    "max_deg": 90.0
+  },
+  "fov_note": "field of view is clamped to a architecturally sane range so a default render never shows extreme distortion.",
+  "camera_margin": 1.22,
+  "eye_level_m": 1.6,
+  "interior_camera_clearance_m": 0.45,
+  "interior_camera_note": "an automatic interior camera is placed inside the real space boundary, clear of walls, and is rejected rather than guessed if the space is too small.",
+  "visual_transforms": [
+    "ROOF_HIDE",
+    "WALL_CLIP",
+    "LEVEL_ISOLATION",
+    "CLIP_PLANE",
+    "LEVEL_EXPLODE"
+  ],
+  "transform_note": "every visual transform is a reversible presentation operation on the scene. It never edits geometry and never changes a level elevation in the engineering model.",
+  "cut_axes": [
+    "x",
+    "y",
+    "z"
+  ],
+  "explode_gap_m": 4.0,
+  "plan_styles": [
+    "TECHNICAL",
+    "CLEAN",
+    "MONOCHROME",
+    "PRESENTATION"
+  ],
+  "plan_layers": [
+    "WALLS",
+    "OPENINGS",
+    "DOORS",
+    "WINDOWS",
+    "STAIRS",
+    "SPACE_NAMES",
+    "DIMENSIONS",
+    "FURNITURE",
+    "NORTH",
+    "GRID"
+  ],
+  "plan_note": "a plan is derived from the compiled architecture. It is a presentation drawing and is not called a construction drawing.",
+  "construction_drawing_claimed": false,
+  "drawing_formats": [
+    "SCREEN",
+    "SVG",
+    "PNG"
+  ],
+  "section_axes": [
+    "x",
+    "z"
+  ],
+  "elevation_faces": [
+    "NORTH",
+    "SOUTH",
+    "EAST",
+    "WEST"
+  ],
+  "elevation_note": "an elevation shows only openings that exist in the model. No façade feature is invented.",
+  "north_note": "a north indicator is drawn only when the project declares an orientation.",
+  "control_buffer_kinds": [
+    "DEPTH",
+    "EDGE",
+    "NORMAL",
+    "OBJECT_ID",
+    "ROOM_ID",
+    "SEMANTIC_MASK"
+  ],
+  "control_buffer_note": "control buffers are rasterised deterministically on the CPU from the compiled visual scene, so they are identical in every implementation and independent of any GPU. They exist to constrain an AI pass and to make drift measurable.",
+  "buffer_alignment_fields": [
+    "width",
+    "height",
+    "camera_id",
+    "projection",
+    "model_hash"
+  ],
+  "buffer_default_px": {
+    "width": 192,
+    "height": 128
+  },
+  "buffer_max_px": 1048576,
+  "semantic_classes": [
+    "BACKGROUND",
+    "GROUND",
+    "WALL",
+    "OPENING",
+    "SLAB",
+    "ROOF",
+    "STAIR",
+    "OBJECT",
+    "VISUAL_ONLY"
+  ],
+  "ai_preserve": [
+    "building_massing",
+    "floor_count",
+    "wall_positions",
+    "openings",
+    "doors",
+    "windows",
+    "stairs",
+    "roof_outline",
+    "camera_viewpoint",
+    "building_footprint"
+  ],
+  "ai_may_enhance": [
+    "materials",
+    "surface_detail",
+    "lighting",
+    "furniture_styling",
+    "landscape_appearance",
+    "atmosphere"
+  ],
+  "ai_output_type": "AI_ENHANCED_VISUALIZATION",
+  "ai_output_fields": [
+    "type",
+    "engineering_authority",
+    "model_hash",
+    "revision_id",
+    "base_render_id",
+    "camera_id",
+    "reference_ids",
+    "provider",
+    "provider_model",
+    "generated_at",
+    "geometry_fidelity"
+  ],
+  "ai_engineering_authority": false,
+  "ai_prompt_note": "an AI request always carries the control buffers when they exist. A text-only prompt is never sent when geometry control data is available.",
+  "provider_adapter_fields": [
+    "provider_id",
+    "accepts",
+    "returns",
+    "timeout_s",
+    "requires_secret",
+    "secret_location"
+  ],
+  "provider_secret_location": "SERVER_ENVIRONMENT",
+  "provider_secret_note": "a provider key lives in the server environment only. It never appears in client source, in render metadata or in a log.",
+  "drift_types": [
+    "WINDOW_ADDED",
+    "WINDOW_REMOVED",
+    "DOOR_MOVED",
+    "FLOOR_COUNT_DRIFT",
+    "WALL_LAYOUT_DRIFT",
+    "FOOTPRINT_DRIFT",
+    "ROOF_GEOMETRY_DRIFT",
+    "SEMANTIC_OBJECT_MISSING"
+  ],
+  "drift_severity": {
+    "WINDOW_ADDED": "MAJOR",
+    "WINDOW_REMOVED": "MAJOR",
+    "DOOR_MOVED": "MAJOR",
+    "FLOOR_COUNT_DRIFT": "MAJOR",
+    "WALL_LAYOUT_DRIFT": "MAJOR",
+    "FOOTPRINT_DRIFT": "MAJOR",
+    "ROOF_GEOMETRY_DRIFT": "MAJOR",
+    "SEMANTIC_OBJECT_MISSING": "MINOR"
+  },
+  "fidelity_statuses": [
+    "PASS",
+    "WARNING",
+    "REJECTED"
+  ],
+  "drift_thresholds": {
+    "footprint_iou_min": 0.9,
+    "floor_band_tolerance_px": 6,
+    "opening_center_tolerance_px": 5,
+    "wall_layout_iou_min": 0.82,
+    "roof_line_tolerance_px": 6,
+    "major_drift_reject_at": 1,
+    "minor_drift_warn_at": 1
+  },
+  "drift_note": "drift analysis compares an AI image against the deterministic control buffers of the same camera. Material and detail differences are expected and are not drift. A rejected image is never presented as model faithful, and no drift result ever edits the model.",
+  "drift_rejected_code": "VISUAL_GEOMETRY_DRIFT",
+  "variant_fields": [
+    "variant_id",
+    "theme",
+    "lighting",
+    "quality",
+    "material_overrides",
+    "decor_enabled",
+    "landscape_enabled",
+    "entourage_enabled"
+  ],
+  "variant_note": "a variant is a presentation configuration over the same model hash. Switching variants creates no engineering revision.",
+  "decoration_tag": "VISUAL_ONLY_DECORATION",
+  "landscape_tag": "VISUAL_ONLY_LANDSCAPE",
+  "entourage_tag": "VISUAL_ONLY_ENTOURAGE",
+  "visual_only_note": "visual furniture, plants, people and vehicles are presentation objects. They never enter semantic object counts and never become site engineering data.",
+  "context_flags": [
+    "site_context",
+    "vegetation",
+    "entourage",
+    "vehicles",
+    "industrial_equipment"
+  ],
+  "context_default_enabled": [
+    "site_context"
+  ],
+  "context_note": "presentation context is opt-in per render. Industrial equipment context is never enabled by building type; nothing about a warehouse fixture leaks into a villa, hotel or clinic render.",
+  "resolutions": {
+    "HD": [
+      1920,
+      1080
+    ],
+    "QHD": [
+      2560,
+      1440
+    ],
+    "UHD": [
+      3840,
+      2160
+    ]
+  },
+  "max_render_px": 33177600,
+  "resolution_note": "a resolution is reported as rendered only when the runtime actually produced an image of that size.",
+  "transparent_background_supported_views": [
+    "EXTERIOR",
+    "ISOMETRIC",
+    "DOLLHOUSE",
+    "TOP"
+  ],
+  "metadata_fields": [
+    "render_id",
+    "model_hash",
+    "revision_id",
+    "building_id",
+    "level_id",
+    "space_id",
+    "camera",
+    "view_type",
+    "quality",
+    "theme",
+    "lighting",
+    "ai_used",
+    "ai_provider",
+    "ai_provider_model",
+    "reference_ids",
+    "generated_at",
+    "geometry_fidelity",
+    "visual_default_applied",
+    "resolution",
+    "engineering_authority"
+  ],
+  "staleness_codes": [
+    "CURRENT",
+    "STALE_SOURCE_MODEL"
+  ],
+  "staleness_note": "a render stays associated with the revision it was produced from. When the model moves on the render is marked stale; it is never deleted automatically and never silently re-pointed.",
+  "gallery_card_fields": [
+    "render_id",
+    "thumbnail",
+    "view_type",
+    "revision_id",
+    "theme",
+    "kind",
+    "geometry_fidelity",
+    "staleness"
+  ],
+  "gallery_persistence": "LOCAL_SESSION",
+  "gallery_cloud": false,
+  "panel_controls": [
+    "VIEW",
+    "CAMERA",
+    "STYLE",
+    "MATERIALS",
+    "LIGHTING",
+    "LANDSCAPE",
+    "DECOR",
+    "QUALITY",
+    "AI_ENHANCEMENT"
+  ],
+  "panel_forbidden_controls": [
+    "MOVE_WALL",
+    "MOVE_DOOR",
+    "RESIZE_SPACE",
+    "DELETE_SPACE",
+    "ADD_SPACE",
+    "MOVE_OBJECT",
+    "RENAME_SPACE"
+  ],
+  "panel_note": "the visualisation panel exposes presentation controls only. No engineering mutation control appears here; editing geometry stays in the authoring path.",
+  "verification_classes": [
+    "CODE_VERIFIED",
+    "RUNTIME_VERIFIED",
+    "AI_VERIFIED",
+    "NOT_VERIFIED"
+  ],
+  "verification_note": "a rendering claim is only RUNTIME_VERIFIED when real pixels were produced by a real engine, and only AI_VERIFIED when a real provider returned an image. Stub geometry output is never reported as a rendering pass.",
+  "photorealistic_engine_shipped": false,
+  "photorealistic_note": "no photorealistic generator is bundled. The AI enhancement stage is an adapter boundary; without a provider the deterministic render remains the output.",
+  "unsafe_patterns": [
+    "javascript:",
+    "data:text/html",
+    "<script",
+    "</script",
+    "<img",
+    "<iframe",
+    "<svg",
+    "<object",
+    "<embed",
+    "onerror=",
+    "onload=",
+    "onclick=",
+    "eval(",
+    "new Function",
+    "vbscript:",
+    "<!ENTITY",
+    "<!DOCTYPE"
+  ],
+  "allowed_uri_schemes": [
+    "https",
+    "http",
+    "data:image",
+    "blob",
+    "relative"
+  ],
+  "uri_scheme_note": "a reference source is accepted only on an allowed scheme. An allow-list is used rather than a deny-list so an unforeseen executable scheme is refused by default.",
+  "safe_id_pattern": "^[A-Za-z0-9._:@\\-]{1,128}$",
+  "visual_intent_max_chars": 80,
+  "forbidden_prose_chars": [
+    "<",
+    ">",
+    "{",
+    "}",
+    "`",
+    "\\",
+    "$",
+    "|",
+    ";",
+    "'",
+    "\"",
+    "(",
+    ")",
+    "="
+  ],
+  "prose_note": "a visual intent value is a short style description, not a template and not code. It is matched against an allow-list pattern of letters, digits, spaces, commas and hyphens in Arabic and English — a value that is not a plausible style description is refused whether or not it matches any known attack string.",
+  "id_note": "an identifier is matched against an allow-list pattern. A value that is not a plausible identifier is refused whether or not it matches any known attack string.",
+  "allowed_image_mime": [
+    "image/png",
+    "image/jpeg",
+    "image/webp"
+  ],
+  "max_reference_bytes": 16777216,
+  "max_reference_pixels": 50000000,
+  "security_note": "reference metadata, prompts and uploaded assets are untrusted input. They are validated, never executed, and never reach the model.",
+  "forbidden_claims": [
+    "photorealistic_verified",
+    "render_is_as_built",
+    "ai_generated_geometry_is_truth",
+    "visually_verified_compliance",
+    "material_fire_rated",
+    "material_structural_grade",
+    "thermally_compliant",
+    "lighting_adequate",
+    "solar_analysis_performed",
+    "construction_drawing"
+  ],
+  "performance_metrics": [
+    "scene_build_ms",
+    "material_assignment_ms",
+    "camera_solve_ms",
+    "control_buffer_ms",
+    "drawing_build_ms",
+    "ai_request_prepare_ms"
+  ],
+  "performance_note": "these are measured. Frames per second, GPU behaviour and shader compilation are not measured here and are not reported.",
+  "id_patterns": {
+    "request": "rreq_<sha256_16>",
+    "render": "rnd_<sha256_16>",
+    "variant": "rvar_<sha256_16>",
+    "buffer": "rbuf_<kind>_<sha256_16>",
+    "drawing": "rdrw_<sha256_16>"
+  },
+  "validation_codes": [
+    "INVALID_VIEW_TYPE",
+    "INVALID_QUALITY",
+    "INVALID_THEME",
+    "INVALID_LIGHTING",
+    "INVALID_CAMERA",
+    "INVALID_TARGET",
+    "INVALID_RESOLUTION",
+    "MODEL_HASH_MISMATCH",
+    "BUFFER_MISALIGNED",
+    "BUFFER_MISSING",
+    "PAYLOAD_REJECTED",
+    "PROVIDER_UNAVAILABLE",
+    "SPACE_TOO_SMALL",
+    "ORIENTATION_UNKNOWN",
+    "NOT_IMPLEMENTED"
+  ],
+  "visual_intent_pattern": "^[A-Za-z0-9\\u0600-\\u06FF ,\\-]{1,80}$"
+}

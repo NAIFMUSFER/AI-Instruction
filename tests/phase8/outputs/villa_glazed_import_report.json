@@ -1,0 +1,539 @@
+{
+ "diff": {
+  "blocking_conflicts": [],
+  "by_type": {
+   "HOST_CHANGED": 0,
+   "LEVEL_CHANGED": 0,
+   "OBJECT_ADDED": 0,
+   "OBJECT_MOVED": 0,
+   "OBJECT_REMOVED": 0,
+   "OBJECT_RESIZED": 1,
+   "PROPERTY_CHANGED": 5,
+   "RELATIONSHIP_CHANGED": 0,
+   "TYPE_CHANGED": 0,
+   "UNSUPPORTED_EXTERNAL_OBJECT": 0
+  },
+  "conflicts": [],
+  "count": 6,
+  "entries": [
+   {
+    "authoring_id": null,
+    "canonical_id": "bld_0.flr_1.f.bath2",
+    "field": "area_m2",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": 9.0,
+    "proposed_value": 30.0,
+    "severity": "WARNING",
+    "source_entity_id": "#62",
+    "type": "OBJECT_RESIZED"
+   },
+   {
+    "authoring_id": "f.bath2",
+    "canonical_id": "bld_0.flr_1.f.bath2",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "bath2",
+    "proposed_value": "guest",
+    "severity": "INFO",
+    "source_entity_id": "#62",
+    "type": "PROPERTY_CHANGED"
+   },
+   {
+    "authoring_id": "f.bed1",
+    "canonical_id": "bld_0.flr_1.f.bed1",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "bed1",
+    "proposed_value": "majlis_renamed",
+    "severity": "INFO",
+    "source_entity_id": "#84",
+    "type": "PROPERTY_CHANGED"
+   },
+   {
+    "authoring_id": "f.bed2",
+    "canonical_id": "bld_0.flr_1.f.bed2",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "bed2",
+    "proposed_value": "living",
+    "severity": "INFO",
+    "source_entity_id": "#78",
+    "type": "PROPERTY_CHANGED"
+   },
+   {
+    "authoring_id": "f.corridor_f",
+    "canonical_id": "bld_0.flr_1.f.corridor_f",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "corridor_f",
+    "proposed_value": "corridor",
+    "severity": "INFO",
+    "source_entity_id": "#52",
+    "type": "PROPERTY_CHANGED"
+   },
+   {
+    "authoring_id": "f.family",
+    "canonical_id": "bld_0.flr_1.f.family",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "family",
+    "proposed_value": "kitchen",
+    "severity": "INFO",
+    "source_entity_id": "#70",
+    "type": "PROPERTY_CHANGED"
+   }
+  ],
+  "import_id": "bimimp_ecc83c25a4d2e5a5",
+  "schema": "acs.bim/1",
+  "source_file_hash": "128ba9b0dc824805f68bd48a094e16194d674590115b1b2f22a50adf9c05a401",
+  "target_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+  "target_revision_id": "rev:bb1a88279421a87b",
+  "writes_to_model": false
+ },
+ "proposals": {
+  "by_state": {
+   "ACCEPTED": 0,
+   "BLOCKED": 0,
+   "PENDING": 6,
+   "REJECTED": 0
+  },
+  "count": 6,
+  "import_id": "bimimp_ecc83c25a4d2e5a5",
+  "note": "no pending proposal writes to the model; acceptance only prepares an authoring command.",
+  "proposals": [
+   {
+    "authoring_id": "f.bed1",
+    "blocked_reason": null,
+    "canonical_id": "bld_0.flr_1.f.bed1",
+    "change_type": "PROPERTY_CHANGED",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "bed1",
+    "proposal_id": "bimprop_07e04384ba853b57",
+    "proposed_value": "majlis_renamed",
+    "severity": "INFO",
+    "source_entity_id": "#84",
+    "state": "PENDING",
+    "writes_to_model": false
+   },
+   {
+    "authoring_id": "f.corridor_f",
+    "blocked_reason": null,
+    "canonical_id": "bld_0.flr_1.f.corridor_f",
+    "change_type": "PROPERTY_CHANGED",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "corridor_f",
+    "proposal_id": "bimprop_56f57977f91e3089",
+    "proposed_value": "corridor",
+    "severity": "INFO",
+    "source_entity_id": "#52",
+    "state": "PENDING",
+    "writes_to_model": false
+   },
+   {
+    "authoring_id": "f.bath2",
+    "blocked_reason": null,
+    "canonical_id": "bld_0.flr_1.f.bath2",
+    "change_type": "PROPERTY_CHANGED",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "bath2",
+    "proposal_id": "bimprop_69b5d3742d66d992",
+    "proposed_value": "guest",
+    "severity": "INFO",
+    "source_entity_id": "#62",
+    "state": "PENDING",
+    "writes_to_model": false
+   },
+   {
+    "authoring_id": null,
+    "blocked_reason": null,
+    "canonical_id": "bld_0.flr_1.f.bath2",
+    "change_type": "OBJECT_RESIZED",
+    "field": "area_m2",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": 9.0,
+    "proposal_id": "bimprop_d03006bfc8500798",
+    "proposed_value": 30.0,
+    "severity": "WARNING",
+    "source_entity_id": "#62",
+    "state": "PENDING",
+    "writes_to_model": false
+   },
+   {
+    "authoring_id": "f.bed2",
+    "blocked_reason": null,
+    "canonical_id": "bld_0.flr_1.f.bed2",
+    "change_type": "PROPERTY_CHANGED",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "bed2",
+    "proposal_id": "bimprop_d6aedf51fd97f23a",
+    "proposed_value": "living",
+    "severity": "INFO",
+    "source_entity_id": "#78",
+    "state": "PENDING",
+    "writes_to_model": false
+   },
+   {
+    "authoring_id": "f.family",
+    "blocked_reason": null,
+    "canonical_id": "bld_0.flr_1.f.family",
+    "change_type": "PROPERTY_CHANGED",
+    "field": "name",
+    "loss": null,
+    "mapping_basis": "SOURCE_GLOBAL_ID",
+    "old_value": "family",
+    "proposal_id": "bimprop_e2a4793057094a00",
+    "proposed_value": "kitchen",
+    "severity": "INFO",
+    "source_entity_id": "#70",
+    "state": "PENDING",
+    "writes_to_model": false
+   }
+  ],
+  "schema": "acs.bim/1",
+  "target_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+  "target_revision_id": "rev:bb1a88279421a87b",
+  "writes_to_model": false
+ },
+ "staging_summary": {
+  "counts": {
+   "entities": 128,
+   "levels": 2,
+   "opaque": 0,
+   "parsed_entities": 904,
+   "partial": 0,
+   "refused": 0,
+   "spaces": 11,
+   "supported": 128,
+   "unsupported": 0
+  },
+  "file": "villa_glazed_edited.ifc",
+  "file_hash": "128ba9b0dc824805f68bd48a094e16194d674590115b1b2f22a50adf9c05a401",
+  "issues": [
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#126",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#136",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#146",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#156",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#167",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#177",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#189",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#198",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#209",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#217",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#229",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#239",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#247",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#257",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#266",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#276",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#284",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#292",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#300",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#310",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#318",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#326",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#335",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#343",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#351",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#361",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#369",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#379",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#387",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#395",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#403",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#411",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#419",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#427",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#435",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#443",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#451",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#459",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#467",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#475",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#483",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#491",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#499",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   },
+   {
+    "blocking": false,
+    "code": "BIM_WALL_THICKNESS_UNRESOLVED",
+    "entity_id": "#507",
+    "message": "the file states the thickness is not model stated; the placeholder is not adopted",
+    "severity": "INFO"
+   }
+  ],
+  "schema": "IFC4",
+  "writes_to_model": false
+ }
+}

@@ -1,0 +1,106 @@
+{
+ "columns": [
+  "device_id",
+  "level",
+  "type",
+  "category",
+  "space",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 3,
+ "rows": [
+  {
+   "category": {
+    "status": "STATED",
+    "value": "DETECTION"
+   },
+   "device_id": {
+    "status": "STATED",
+    "value": "bld_0.fls.d_mcp1"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "provenance": {
+    "discipline": "FIRE_PROTECTION",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.fls.d_mcp1",
+    "source_model_hash": "bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed"
+   },
+   "space": {
+    "status": "STATED",
+    "value": "bld_0.g.corridor@0"
+   },
+   "type": {
+    "status": "STATED",
+    "value": "MANUAL_CALL_POINT"
+   }
+  },
+  {
+   "category": {
+    "status": "STATED",
+    "value": "DETECTION"
+   },
+   "device_id": {
+    "status": "STATED",
+    "value": "bld_0.fls.d_sd1"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "provenance": {
+    "discipline": "FIRE_PROTECTION",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.fls.d_sd1",
+    "source_model_hash": "bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed"
+   },
+   "space": {
+    "status": "STATED",
+    "value": "bld_0.g.majlis@0"
+   },
+   "type": {
+    "status": "STATED",
+    "value": "SMOKE_DETECTOR"
+   }
+  },
+  {
+   "category": {
+    "status": "STATED",
+    "value": "ALARM"
+   },
+   "device_id": {
+    "status": "STATED",
+    "value": "bld_0.fls.d_snd1"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "provenance": {
+    "discipline": "FIRE_PROTECTION",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.fls.d_snd1",
+    "source_model_hash": "bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed"
+   },
+   "space": {
+    "status": "STATED",
+    "value": "bld_0.g.corridor@0"
+   },
+   "type": {
+    "status": "STATED",
+    "value": "SOUNDER_STROBE"
+   }
+  }
+ ],
+ "schedule_id": "sched_ab871b127864d4ef",
+ "schedule_type": "FLS_DEVICE_SCHEDULE",
+ "source_model_hash": "bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed",
+ "source_revision": "rev:d5cd5c4637776a32",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 0,
+ "writes_to_model": false
+}

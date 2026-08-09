@@ -1,0 +1,176 @@
+{
+ "columns": [
+  "room_id",
+  "name",
+  "level",
+  "area_m2",
+  "area_basis",
+  "program",
+  "occupancy_status",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 4,
+ "rows": [
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 6000.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "envelope"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.o.envelope@0",
+    "source_model_hash": "66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.o.envelope"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 200.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "office"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.o.office@0",
+    "source_model_hash": "66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.o.office"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 900.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "receiving"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.o.receiving@0",
+    "source_model_hash": "66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.o.receiving"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 1200.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "storage"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.o.storage@0",
+    "source_model_hash": "66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.o.storage"
+   }
+  }
+ ],
+ "schedule_id": "sched_2e1474df109231be",
+ "schedule_type": "ROOM_SCHEDULE",
+ "source_model_hash": "66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0",
+ "source_revision": "rev:a4a64eeb185fe67a",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 8,
+ "writes_to_model": false
+}

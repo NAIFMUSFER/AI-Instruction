@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="5022" height="405" viewBox="0 0 5022 405" font-family="system-ui,Segoe UI,Tahoma,sans-serif">
+<rect width="5022" height="405" fill="#ffffff"/>
+<rect x="2936" y="46.2" width="680" height="1.7" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.ceiling_office"/>
+<rect x="556" y="47.9" width="1020" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_0"/>
+<rect x="1576" y="47.9" width="1360" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_1"/>
+<rect x="1066" y="47.9" width="1020" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_10"/>
+<rect x="2766" y="47.9" width="340" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_11"/>
+<rect x="2596" y="47.9" width="680" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_12"/>
+<rect x="3446" y="47.9" width="340" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_13"/>
+<rect x="2936" y="47.9" width="680" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_2"/>
+<rect x="3616" y="47.9" width="340" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_3"/>
+<rect x="2936" y="47.9" width="680" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_4"/>
+<rect x="556" y="47.9" width="3400" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_7"/>
+<rect x="46" y="47.9" width="1020" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_8"/>
+<rect x="46" y="47.9" width="1020" height="306" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_9"/>
+<rect x="2232.2" y="275.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.o.envelope.window_0@0"/>
+<rect x="2933.96" y="282.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.o.office.door_0@0"/>
+<rect x="3252.2" y="275.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.o.office.window_0@0"/>
+<rect x="553.96" y="282.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.o.receiving.door_0@0"/>
+<rect x="1042.2" y="275.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.o.receiving.window_0@0"/>
+<rect x="2232.2" y="275.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.o.storage.window_0@0"/>
+<rect x="556" y="46.2" width="3400" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.ceiling_envelope" data-kind="CEILING"/>
+<rect x="556" y="46.2" width="1020" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.ceiling_receiving" data-kind="CEILING"/>
+<rect x="1576" y="46.2" width="1360" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.ceiling_storage" data-kind="CEILING"/>
+<rect x="556" y="353.9" width="3400" height="5.1" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.slab" data-kind="SLAB"/>
+<rect x="2936" y="47.9" width="2040" height="306" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.wall_14" data-kind="WALL"/>
+<rect x="556" y="47.9" width="1020" height="306" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.wall_5" data-kind="WALL"/>
+<rect x="1576" y="47.9" width="1360" height="306" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.wall_6" data-kind="WALL"/>
+<text x="46" y="391" fill="#333" font-size="10">section on z at 30 m — 7 cut elements</text>
+</svg>

@@ -1,0 +1,603 @@
+{
+ "manifest": {
+  "artifact_ids": [
+   "sched_a46552d332c1f83e",
+   "sched_b76642490854c1d1",
+   "sched_c8592b8e2b668b4b",
+   "sheet_37dea0ac62115a49",
+   "sheet_8f47f6060b08271b",
+   "sheet_9896aac42baad7a6",
+   "sheet_ca8034ecb8088ec1",
+   "view_0db8ed2743fd734d",
+   "view_1978bf68712350bd",
+   "view_1d63eaa28247e63c",
+   "view_1ed78e34b81d69cf",
+   "view_1fe5577d7c589b43",
+   "view_af33ff5ff7d65912",
+   "view_def438f3832d41b4",
+   "view_ea975061f680757e"
+  ],
+  "documentation_id": "doc_6847567d56f0c49b",
+  "documentation_revision": "A",
+  "files": [
+   {
+    "artifact_id": "sched_b76642490854c1d1",
+    "byte_length": 15624,
+    "file_hash": "ae5e833743561bf2029ec265d8c2b8d991e916cc0e738e65a20f22b84da2e3b7",
+    "file_name": "villa_glazed_door_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_af33ff5ff7d65912",
+    "byte_length": 3016,
+    "file_hash": "5b0792845e5ba2ce6f8dccad11cfd24b8ba252ea7ea86b3045cad668e4f0da33",
+    "file_name": "villa_glazed_elevation_east.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_ea975061f680757e",
+    "byte_length": 2916,
+    "file_hash": "d3d4ae7286bd956af2a922d94ce80cc8e4110d78324d6276a16c064032097deb",
+    "file_name": "villa_glazed_elevation_north.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_0db8ed2743fd734d",
+    "byte_length": 2919,
+    "file_hash": "25796f749409109d2a2a7b582f20fd8e1e36e52061ecd322f4ce56a217b5620e",
+    "file_name": "villa_glazed_elevation_south.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_1fe5577d7c589b43",
+    "byte_length": 3029,
+    "file_hash": "fdc78186f88440ad83ff00de3c771d94f221819086a35a72d95bb421defec913",
+    "file_name": "villa_glazed_elevation_west.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_1978bf68712350bd",
+    "byte_length": 8753,
+    "file_hash": "cd1310c2dc0f05bae5c2431cb124060c37b9616e026399790bb632a2e7d265d1",
+    "file_name": "villa_glazed_floor_plan_flr_0.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_1ed78e34b81d69cf",
+    "byte_length": 7437,
+    "file_hash": "4367a599f76efdc7c78fd0ac8d40049a18e21340352c8e5e7f72041c4b6fbb3f",
+    "file_name": "villa_glazed_floor_plan_flr_1.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "qty_a18fa8a8f5ddac50",
+    "byte_length": 7740,
+    "file_hash": "1a104eb05176d0ee145808a650b9fe6d1a07eae94a4affecd0342761f5f609a2",
+    "file_name": "villa_glazed_quantities.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "sched_c8592b8e2b668b4b",
+    "byte_length": 9339,
+    "file_hash": "07b8e65fa3da8d65aebb373596208a49bdbdea1d4f0dde3f02b3af5c13002f37",
+    "file_name": "villa_glazed_room_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_def438f3832d41b4",
+    "byte_length": 9427,
+    "file_hash": "9561b77264ddc398499b6aa4e85dd2d3bf1ba8ca67621d01b981ee6b51c91f1c",
+    "file_name": "villa_glazed_section_x3p0.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_1d63eaa28247e63c",
+    "byte_length": 9600,
+    "file_hash": "210e53619e55185bd687875f947ca59e8e0ab53225ede5a3e38efbaf7cf59115",
+    "file_name": "villa_glazed_section_z2p0.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": null,
+    "byte_length": 13761,
+    "file_hash": "995155ff685fc73b3054fb77a83dc7a6bba84f104b31afda5e00a2851105de0c",
+    "file_name": "villa_glazed_sheets.pdf",
+    "format": "PDF",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": "sheet_9896aac42baad7a6,sheet_8f47f6060b08271b,sheet_37dea0ac62115a49,sheet_ca8034ecb8088ec1"
+   },
+   {
+    "artifact_id": "sched_a46552d332c1f83e",
+    "byte_length": 20237,
+    "file_hash": "f4e3346574976f0929544e75a46ae9bee84d2986dc69f569987d1bf26bbfc9d4",
+    "file_name": "villa_glazed_window_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   }
+  ],
+  "generated_at": "2026-01-01T00:00:00Z",
+  "manifest_id": "docman_8df8101d56b613a9",
+  "model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+  "sheet_ids": [
+   "sheet_9896aac42baad7a6",
+   "sheet_8f47f6060b08271b",
+   "sheet_37dea0ac62115a49",
+   "sheet_ca8034ecb8088ec1"
+  ],
+  "source_revision": "rev:bb1a88279421a87b",
+  "spec_version": "acs.docs/1.0.0"
+ },
+ "package": {
+  "artifact_ids": [
+   "sched_a46552d332c1f83e",
+   "sched_b76642490854c1d1",
+   "sched_c8592b8e2b668b4b",
+   "sheet_37dea0ac62115a49",
+   "sheet_8f47f6060b08271b",
+   "sheet_9896aac42baad7a6",
+   "sheet_ca8034ecb8088ec1",
+   "view_0db8ed2743fd734d",
+   "view_1978bf68712350bd",
+   "view_1d63eaa28247e63c",
+   "view_1ed78e34b81d69cf",
+   "view_1fe5577d7c589b43",
+   "view_af33ff5ff7d65912",
+   "view_def438f3832d41b4",
+   "view_ea975061f680757e"
+  ],
+  "construction_drawing_claimed": false,
+  "documentation_id": "doc_6847567d56f0c49b",
+  "documentation_revision": "A",
+  "is_bill_of_quantities": false,
+  "model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+  "provenance": {
+   "compiler_version": "acs-docs/1.0.0",
+   "derived_from": "CANONICAL_MODEL",
+   "derived_from_ifc": false,
+   "writes_to_model": false
+  },
+  "quantities": [
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented beams",
+    "quantity": null,
+    "quantity_id": "qty_0c443a9ebb195113",
+    "quantity_type": "BEAM_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "sum of represented beam lengths",
+    "quantity": null,
+    "quantity_id": "qty_bc12d47cac98beac",
+    "quantity_type": "BEAM_LENGTH",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "m"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented columns",
+    "quantity": null,
+    "quantity_id": "qty_d7b1847c8b49519b",
+    "quantity_type": "COLUMN_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented door openings",
+    "quantity": 11.0,
+    "quantity_id": "qty_f4ee1c153463c30c",
+    "quantity_type": "DOOR_COUNT",
+    "source_element_count": 11,
+    "source_element_ids": [
+     "bld_0.f.bath2.door_0@1",
+     "bld_0.f.bed1.door_0@1",
+     "bld_0.f.bed2.door_0@1",
+     "bld_0.f.family.door_0@1",
+     "bld_0.g.bath1.door_0@0",
+     "bld_0.g.corridor.door_0@0",
+     "bld_0.g.guest.door_0@0",
+     "bld_0.g.kitchen.door_0@0",
+     "bld_0.g.living.door_0@0",
+     "bld_0.g.majlis.door_0@0",
+     "bld_0.g.majlis.door_1@0"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of architectural slab outlines",
+    "quantity": 322.0,
+    "quantity_id": "qty_64a41b3ac304f9ac",
+    "quantity_type": "FLOOR_AREA",
+    "source_element_count": 2,
+    "source_element_ids": [
+     "bld_0.flr_0.slab",
+     "bld_0.flr_1.slab"
+    ],
+    "unit": "m2"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented fire and life-safety devices",
+    "quantity": null,
+    "quantity_id": "qty_eb50ce184e61fedf",
+    "quantity_type": "FLS_DEVICE_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented signage",
+    "quantity": null,
+    "quantity_id": "qty_fba70cfda037905d",
+    "quantity_type": "FLS_SIGN_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented foundations",
+    "quantity": null,
+    "quantity_id": "qty_6eb85fcbff606f36",
+    "quantity_type": "FOUNDATION_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "architectural levels",
+    "quantity": 2.0,
+    "quantity_id": "qty_5a367da082c8a227",
+    "quantity_type": "LEVEL_COUNT",
+    "source_element_count": 2,
+    "source_element_ids": [
+     "bld_0.flr_0",
+     "bld_0.flr_1"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented MEP equipment",
+    "quantity": null,
+    "quantity_id": "qty_75466d4f973b2535",
+    "quantity_type": "MEP_EQUIPMENT_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "sum of represented routed segment lengths",
+    "quantity": null,
+    "quantity_id": "qty_bd552fd0aba60087",
+    "quantity_type": "MEP_SEGMENT_LENGTH",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "m"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented MEP terminals",
+    "quantity": null,
+    "quantity_id": "qty_87fd9db6bf343c70",
+    "quantity_type": "MEP_TERMINAL_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "architectural spaces",
+    "quantity": 11.0,
+    "quantity_id": "qty_403da4942734ee19",
+    "quantity_type": "ROOM_COUNT",
+    "source_element_count": 11,
+    "source_element_ids": [
+     "bld_0.f.bath2@1",
+     "bld_0.f.bed1@1",
+     "bld_0.f.bed2@1",
+     "bld_0.f.corridor_f@1",
+     "bld_0.f.family@1",
+     "bld_0.g.bath1@0",
+     "bld_0.g.corridor@0",
+     "bld_0.g.guest@0",
+     "bld_0.g.kitchen@0",
+     "bld_0.g.living@0",
+     "bld_0.g.majlis@0"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of canonical space areas",
+    "quantity": 268.0,
+    "quantity_id": "qty_dd7825f631431689",
+    "quantity_type": "SPACE_AREA",
+    "source_element_count": 11,
+    "source_element_ids": [
+     "bld_0.f.bath2@1",
+     "bld_0.f.bed1@1",
+     "bld_0.f.bed2@1",
+     "bld_0.f.corridor_f@1",
+     "bld_0.f.family@1",
+     "bld_0.g.bath1@0",
+     "bld_0.g.corridor@0",
+     "bld_0.g.guest@0",
+     "bld_0.g.kitchen@0",
+     "bld_0.g.living@0",
+     "bld_0.g.majlis@0"
+    ],
+    "unit": "m2"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of compiled wall segment lengths",
+    "quantity": 167.0,
+    "quantity_id": "qty_01914a36943af31f",
+    "quantity_type": "WALL_LENGTH",
+    "source_element_count": 38,
+    "source_element_ids": [
+     "bld_0.flr_0.wall_0",
+     "bld_0.flr_0.wall_1",
+     "bld_0.flr_0.wall_10",
+     "bld_0.flr_0.wall_11",
+     "bld_0.flr_0.wall_12",
+     "bld_0.flr_0.wall_13",
+     "bld_0.flr_0.wall_14",
+     "bld_0.flr_0.wall_15",
+     "bld_0.flr_0.wall_16",
+     "bld_0.flr_0.wall_17",
+     "bld_0.flr_0.wall_18",
+     "bld_0.flr_0.wall_19",
+     "bld_0.flr_0.wall_2",
+     "bld_0.flr_0.wall_3",
+     "bld_0.flr_0.wall_4",
+     "bld_0.flr_0.wall_5",
+     "bld_0.flr_0.wall_6",
+     "bld_0.flr_0.wall_7",
+     "bld_0.flr_0.wall_8",
+     "bld_0.flr_0.wall_9",
+     "bld_0.flr_1.wall_0",
+     "bld_0.flr_1.wall_1",
+     "bld_0.flr_1.wall_10",
+     "bld_0.flr_1.wall_11",
+     "bld_0.flr_1.wall_12",
+     "bld_0.flr_1.wall_13",
+     "bld_0.flr_1.wall_14",
+     "bld_0.flr_1.wall_15",
+     "bld_0.flr_1.wall_16",
+     "bld_0.flr_1.wall_17",
+     "bld_0.flr_1.wall_2",
+     "bld_0.flr_1.wall_3",
+     "bld_0.flr_1.wall_4",
+     "bld_0.flr_1.wall_5",
+     "bld_0.flr_1.wall_6",
+     "bld_0.flr_1.wall_7",
+     "bld_0.flr_1.wall_8",
+     "bld_0.flr_1.wall_9"
+    ],
+    "unit": "m"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented window openings",
+    "quantity": 21.0,
+    "quantity_id": "qty_cbb08f81e319e815",
+    "quantity_type": "WINDOW_COUNT",
+    "source_element_count": 21,
+    "source_element_ids": [
+     "bld_0.f.bath2.window_0@1",
+     "bld_0.f.bath2.window_1@1",
+     "bld_0.f.bed1.window_0@1",
+     "bld_0.f.bed1.window_1@1",
+     "bld_0.f.bed2.window_0@1",
+     "bld_0.f.bed2.window_1@1",
+     "bld_0.f.corridor_f.window_0@1",
+     "bld_0.f.corridor_f.window_1@1",
+     "bld_0.f.family.window_0@1",
+     "bld_0.f.family.window_1@1",
+     "bld_0.g.bath1.window_0@0",
+     "bld_0.g.bath1.window_1@0",
+     "bld_0.g.corridor.window_0@0",
+     "bld_0.g.corridor.window_1@0",
+     "bld_0.g.guest.window_0@0",
+     "bld_0.g.kitchen.window_0@0",
+     "bld_0.g.kitchen.window_1@0",
+     "bld_0.g.living.window_0@0",
+     "bld_0.g.living.window_1@0",
+     "bld_0.g.majlis.window_0@0",
+     "bld_0.g.majlis.window_1@0"
+    ],
+    "unit": "count"
+   }
+  ],
+  "schedules": [
+   {
+    "row_count": 11,
+    "schedule_id": "sched_c8592b8e2b668b4b",
+    "schedule_type": "ROOM_SCHEDULE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "unknown_cell_count": 22
+   },
+   {
+    "row_count": 11,
+    "schedule_id": "sched_b76642490854c1d1",
+    "schedule_type": "DOOR_SCHEDULE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "unknown_cell_count": 66
+   },
+   {
+    "row_count": 21,
+    "schedule_id": "sched_a46552d332c1f83e",
+    "schedule_type": "WINDOW_SCHEDULE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "unknown_cell_count": 42
+   }
+  ],
+  "schema": "acs.docs/1",
+  "sheets": [
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_9896aac42baad7a6",
+    "sheet_number": "A-001",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "views": [
+     "view_1978bf68712350bd",
+     "view_1ed78e34b81d69cf"
+    ]
+   },
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_8f47f6060b08271b",
+    "sheet_number": "A-002",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "views": [
+     "view_ea975061f680757e",
+     "view_0db8ed2743fd734d"
+    ]
+   },
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_37dea0ac62115a49",
+    "sheet_number": "A-003",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "views": [
+     "view_af33ff5ff7d65912",
+     "view_1fe5577d7c589b43"
+    ]
+   },
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_ca8034ecb8088ec1",
+    "sheet_number": "A-004",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "views": [
+     "view_def438f3832d41b4",
+     "view_1d63eaa28247e63c"
+    ]
+   }
+  ],
+  "source_revision": "rev:bb1a88279421a87b",
+  "spec_version": "acs.docs/1.0.0",
+  "staleness_state": "CURRENT",
+  "views": [
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": "bld_0.flr_0",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_1978bf68712350bd",
+    "view_type": "FLOOR_PLAN"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": "bld_0.flr_1",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_1ed78e34b81d69cf",
+    "view_type": "FLOOR_PLAN"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": null,
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_ea975061f680757e",
+    "view_type": "ELEVATION"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": null,
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_0db8ed2743fd734d",
+    "view_type": "ELEVATION"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": null,
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_af33ff5ff7d65912",
+    "view_type": "ELEVATION"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": null,
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_1fe5577d7c589b43",
+    "view_type": "ELEVATION"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": null,
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_def438f3832d41b4",
+    "view_type": "SECTION"
+   },
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": null,
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+    "status": "CURRENT",
+    "view_id": "view_1d63eaa28247e63c",
+    "view_type": "SECTION"
+   }
+  ]
+ }
+}

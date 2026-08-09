@@ -1,0 +1,1272 @@
+{
+ "villa_glazed": {
+  "floor_height": 3.2,
+  "floors": {
+   "f": {
+    "rooms": [
+     {
+      "id": "corridor_f",
+      "objects": [
+       {
+        "count": 1,
+        "kind": "stairs",
+        "x": 1,
+        "z": 8
+       }
+      ],
+      "rect": [
+       6,
+       0,
+       2,
+       10
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "S",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "bed1",
+      "rect": [
+       0,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "bed2",
+      "rect": [
+       8,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "family",
+      "rect": [
+       8,
+       5,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "bath2",
+      "rect": [
+       0,
+       5,
+       3,
+       3
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   },
+   "g": {
+    "rooms": [
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.2
+       }
+      ],
+      "id": "majlis",
+      "rect": [
+       0,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "corridor",
+      "objects": [
+       {
+        "count": 1,
+        "kind": "stairs",
+        "x": 1,
+        "z": 8
+       }
+      ],
+      "rect": [
+       6,
+       0,
+       2,
+       10
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "S",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "living",
+      "rect": [
+       8,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "kitchen",
+      "rect": [
+       8,
+       5,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "guest",
+      "rect": [
+       0,
+       5,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "bath1",
+      "rect": [
+       0,
+       10,
+       3,
+       3
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 0,
+    "name": "ground",
+    "template": "g"
+   },
+   {
+    "index": 1,
+    "name": "first",
+    "template": "f"
+   }
+  ],
+  "meta": {
+   "name": "villa_glazed",
+   "type": "villa"
+  },
+  "site": {
+   "d": 24,
+   "w": 30
+  },
+  "wall_h": 3
+ },
+ "hotel_glazed": {
+  "floor_height": 3.3,
+  "floors": {
+   "g": {
+    "rooms": [
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 1,
+        "width": 2
+       }
+      ],
+      "id": "lobby",
+      "rect": [
+       0,
+       5,
+       20,
+       2
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 10,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 2,
+        "width": 1.2
+       }
+      ],
+      "id": "core_g",
+      "objects": [
+       {
+        "count": 2,
+        "kind": "elevator",
+        "x": 1,
+        "z": 2
+       },
+       {
+        "count": 1,
+        "kind": "stairs",
+        "x": 3,
+        "z": 2
+       }
+      ],
+      "rect": [
+       10,
+       0,
+       4,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   },
+   "t": {
+    "rooms": [
+     {
+      "id": "corridor",
+      "rect": [
+       0,
+       5,
+       20,
+       2
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 10,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "guest_1",
+      "rect": [
+       0,
+       0,
+       5,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "guest_2",
+      "rect": [
+       5,
+       0,
+       5,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 2,
+        "width": 1.2
+       }
+      ],
+      "id": "core",
+      "objects": [
+       {
+        "count": 2,
+        "kind": "elevator",
+        "x": 1,
+        "z": 2
+       },
+       {
+        "count": 1,
+        "kind": "stairs",
+        "x": 3,
+        "z": 2
+       }
+      ],
+      "rect": [
+       10,
+       0,
+       4,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 0,
+    "template": "g"
+   },
+   {
+    "index": 1,
+    "template": "t"
+   },
+   {
+    "index": 2,
+    "template": "t"
+   }
+  ],
+  "meta": {
+   "name": "hotel_glazed",
+   "type": "hotel"
+  },
+  "site": {
+   "d": 30,
+   "w": 40
+  },
+  "wall_h": 3
+ },
+ "clinic_glazed": {
+  "floor_height": 3.2,
+  "floors": {
+   "g": {
+    "rooms": [
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 3,
+        "width": 1
+       },
+       {
+        "edge": "W",
+        "offset": 2,
+        "width": 1.2
+       }
+      ],
+      "id": "reception",
+      "rect": [
+       0,
+       0,
+       6,
+       4
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1
+       }
+      ],
+      "id": "waiting",
+      "rect": [
+       0,
+       4,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2,
+        "width": 0.9
+       }
+      ],
+      "id": "exam_1",
+      "rect": [
+       6,
+       0,
+       4,
+       4
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "id": "lab",
+      "rect": [
+       10,
+       0,
+       4,
+       4
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "S",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "id": "pharmacy",
+      "rect": [
+       6,
+       4,
+       4,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 2,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 0,
+    "template": "g"
+   }
+  ],
+  "meta": {
+   "name": "clinic_glazed",
+   "type": "clinic"
+  },
+  "site": {
+   "d": 18,
+   "w": 24
+  },
+  "wall_h": 3
+ },
+ "warehouse_glazed": {
+  "floor_height": 10,
+  "floors": {
+   "o": {
+    "rooms": [
+     {
+      "id": "envelope",
+      "rect": [
+       0,
+       0,
+       100,
+       60
+      ],
+      "walls": "full",
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 50,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 15,
+        "width": 3
+       }
+      ],
+      "id": "receiving",
+      "rect": [
+       0,
+       0,
+       30,
+       30
+      ],
+      "role": "receiving",
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 15,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "id": "storage",
+      "rect": [
+       30,
+       0,
+       40,
+       30
+      ],
+      "role": "storage",
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 20,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 5,
+        "width": 0.9
+       }
+      ],
+      "id": "office",
+      "rect": [
+       70,
+       0,
+       20,
+       10
+      ],
+      "role": "office",
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 10,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 0,
+    "template": "o"
+   }
+  ],
+  "meta": {
+   "name": "wh_glazed",
+   "type": "warehouse"
+  },
+  "site": {
+   "d": 60,
+   "w": 100
+  },
+  "wall_h": 9
+ },
+ "villa_single_level": {
+  "floor_height": 3.2,
+  "floors": {
+   "f": {
+    "rooms": [
+     {
+      "id": "corridor_f",
+      "objects": [
+       {
+        "count": 1,
+        "kind": "stairs",
+        "x": 1,
+        "z": 8
+       }
+      ],
+      "rect": [
+       6,
+       0,
+       2,
+       10
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "S",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "bed1",
+      "rect": [
+       0,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "bed2",
+      "rect": [
+       8,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "family",
+      "rect": [
+       8,
+       5,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "S",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "bath2",
+      "rect": [
+       0,
+       5,
+       3,
+       3
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   },
+   "g": {
+    "rooms": [
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.2
+       }
+      ],
+      "id": "majlis",
+      "rect": [
+       0,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "corridor",
+      "objects": [
+       {
+        "count": 1,
+        "kind": "stairs",
+        "x": 1,
+        "z": 8
+       }
+      ],
+      "rect": [
+       6,
+       0,
+       2,
+       10
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "S",
+        "offset": 1,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "living",
+      "rect": [
+       8,
+       0,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "N",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "kitchen",
+      "rect": [
+       8,
+       5,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 3,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "E",
+        "offset": 2.5,
+        "width": 0.9
+       }
+      ],
+      "id": "guest",
+      "rect": [
+       0,
+       5,
+       6,
+       5
+      ],
+      "windows": [
+       {
+        "edge": "W",
+        "offset": 2.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     },
+     {
+      "doors": [
+       {
+        "edge": "N",
+        "offset": 1.5,
+        "width": 0.8
+       }
+      ],
+      "id": "bath1",
+      "rect": [
+       0,
+       10,
+       3,
+       3
+      ],
+      "windows": [
+       {
+        "edge": "S",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       },
+       {
+        "edge": "W",
+        "offset": 1.5,
+        "width": 1.4,
+        "height": 1.4,
+        "sill": 0.9
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "levels": [
+   {
+    "index": 0,
+    "name": "ground",
+    "template": "g"
+   }
+  ],
+  "meta": {
+   "name": "villa_glazed_single_level",
+   "type": "villa"
+  },
+  "site": {
+   "d": 24,
+   "w": 30
+  },
+  "wall_h": 3
+ }
+}

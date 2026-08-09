@@ -1,0 +1,299 @@
+{
+ "count": 16,
+ "is_bill_of_quantities": false,
+ "is_cost_estimate": false,
+ "note": "a factual model quantity report. Coverage is stated against the represented model only; no cost, rate or price exists here",
+ "quantities": [
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented beams",
+   "quantity": 7.0,
+   "quantity_id": "qty_2b504c7cf4ee2396",
+   "quantity_type": "BEAM_COUNT",
+   "source_element_count": 7,
+   "source_element_ids": [
+    "bld_0.B_A1_A2",
+    "bld_0.B_A1_B1",
+    "bld_0.B_A2_B2",
+    "bld_0.B_B1_B2",
+    "bld_0.B_B1_C1",
+    "bld_0.B_B2_C2",
+    "bld_0.B_C1_C2"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of represented beam lengths",
+   "quantity": 43.0,
+   "quantity_id": "qty_852329f145846aed",
+   "quantity_type": "BEAM_LENGTH",
+   "source_element_count": 7,
+   "source_element_ids": [
+    "bld_0.B_A1_A2",
+    "bld_0.B_A1_B1",
+    "bld_0.B_A2_B2",
+    "bld_0.B_B1_B2",
+    "bld_0.B_B1_C1",
+    "bld_0.B_B2_C2",
+    "bld_0.B_C1_C2"
+   ],
+   "unit": "m"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented columns",
+   "quantity": 9.0,
+   "quantity_id": "qty_8608b09b6732033d",
+   "quantity_type": "COLUMN_COUNT",
+   "source_element_count": 9,
+   "source_element_ids": [
+    "bld_0.C_A1",
+    "bld_0.C_A2",
+    "bld_0.C_A3",
+    "bld_0.C_B1",
+    "bld_0.C_B2",
+    "bld_0.C_B3",
+    "bld_0.C_C1",
+    "bld_0.C_C2",
+    "bld_0.C_C3"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented door openings",
+   "quantity": 11.0,
+   "quantity_id": "qty_29d2cac3734b7d43",
+   "quantity_type": "DOOR_COUNT",
+   "source_element_count": 11,
+   "source_element_ids": [
+    "bld_0.f.bath2.door_0@1",
+    "bld_0.f.bed1.door_0@1",
+    "bld_0.f.bed2.door_0@1",
+    "bld_0.f.family.door_0@1",
+    "bld_0.g.bath1.door_0@0",
+    "bld_0.g.corridor.door_0@0",
+    "bld_0.g.guest.door_0@0",
+    "bld_0.g.kitchen.door_0@0",
+    "bld_0.g.living.door_0@0",
+    "bld_0.g.majlis.door_0@0",
+    "bld_0.g.majlis.door_1@0"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of architectural slab outlines",
+   "quantity": 322.0,
+   "quantity_id": "qty_e1481cc3374e75e1",
+   "quantity_type": "FLOOR_AREA",
+   "source_element_count": 2,
+   "source_element_ids": [
+    "bld_0.flr_0.slab",
+    "bld_0.flr_1.slab"
+   ],
+   "unit": "m2"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented fire and life-safety devices",
+   "quantity": null,
+   "quantity_id": "qty_51df98e38da7b8b3",
+   "quantity_type": "FLS_DEVICE_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented signage",
+   "quantity": null,
+   "quantity_id": "qty_f1f3ae94e8af8b94",
+   "quantity_type": "FLS_SIGN_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented foundations",
+   "quantity": 9.0,
+   "quantity_id": "qty_f3e14cdde99affe9",
+   "quantity_type": "FOUNDATION_COUNT",
+   "source_element_count": 9,
+   "source_element_ids": [
+    "bld_0.F_A1",
+    "bld_0.F_A2",
+    "bld_0.F_A3",
+    "bld_0.F_B1",
+    "bld_0.F_B2",
+    "bld_0.F_B3",
+    "bld_0.F_C1",
+    "bld_0.F_C2",
+    "bld_0.F_C3"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "architectural levels",
+   "quantity": 2.0,
+   "quantity_id": "qty_bffb5a7b37ce6125",
+   "quantity_type": "LEVEL_COUNT",
+   "source_element_count": 2,
+   "source_element_ids": [
+    "bld_0.flr_0",
+    "bld_0.flr_1"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented MEP equipment",
+   "quantity": 1.0,
+   "quantity_id": "qty_b0d915d3a06795e7",
+   "quantity_type": "MEP_EQUIPMENT_COUNT",
+   "source_element_count": 1,
+   "source_element_ids": [
+    "bld_0.mep.eq_far"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of represented routed segment lengths",
+   "quantity": 27.3,
+   "quantity_id": "qty_bb1bb362de513c8d",
+   "quantity_type": "MEP_SEGMENT_LENGTH",
+   "source_element_count": 4,
+   "source_element_ids": [
+    "bld_0.mep.seg_beam",
+    "bld_0.mep.seg_duct",
+    "bld_0.mep.seg_out",
+    "bld_0.mep.seg_pipe"
+   ],
+   "unit": "m"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented MEP terminals",
+   "quantity": 1.0,
+   "quantity_id": "qty_0c71f1da92728e4b",
+   "quantity_type": "MEP_TERMINAL_COUNT",
+   "source_element_count": 1,
+   "source_element_ids": [
+    "bld_0.mep.t_far"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "architectural spaces",
+   "quantity": 11.0,
+   "quantity_id": "qty_47ed8cf842d5cc99",
+   "quantity_type": "ROOM_COUNT",
+   "source_element_count": 11,
+   "source_element_ids": [
+    "bld_0.f.bath2@1",
+    "bld_0.f.bed1@1",
+    "bld_0.f.bed2@1",
+    "bld_0.f.corridor_f@1",
+    "bld_0.f.family@1",
+    "bld_0.g.bath1@0",
+    "bld_0.g.corridor@0",
+    "bld_0.g.guest@0",
+    "bld_0.g.kitchen@0",
+    "bld_0.g.living@0",
+    "bld_0.g.majlis@0"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of canonical space areas",
+   "quantity": 268.0,
+   "quantity_id": "qty_17074de84b1faccb",
+   "quantity_type": "SPACE_AREA",
+   "source_element_count": 11,
+   "source_element_ids": [
+    "bld_0.f.bath2@1",
+    "bld_0.f.bed1@1",
+    "bld_0.f.bed2@1",
+    "bld_0.f.corridor_f@1",
+    "bld_0.f.family@1",
+    "bld_0.g.bath1@0",
+    "bld_0.g.corridor@0",
+    "bld_0.g.guest@0",
+    "bld_0.g.kitchen@0",
+    "bld_0.g.living@0",
+    "bld_0.g.majlis@0"
+   ],
+   "unit": "m2"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of compiled wall segment lengths",
+   "quantity": 167.0,
+   "quantity_id": "qty_5df5315c8f8a984a",
+   "quantity_type": "WALL_LENGTH",
+   "source_element_count": 38,
+   "source_element_ids": [
+    "bld_0.flr_0.wall_0",
+    "bld_0.flr_0.wall_1",
+    "bld_0.flr_0.wall_10",
+    "bld_0.flr_0.wall_11",
+    "bld_0.flr_0.wall_12",
+    "bld_0.flr_0.wall_13",
+    "bld_0.flr_0.wall_14",
+    "bld_0.flr_0.wall_15",
+    "bld_0.flr_0.wall_16",
+    "bld_0.flr_0.wall_17",
+    "bld_0.flr_0.wall_18",
+    "bld_0.flr_0.wall_19",
+    "bld_0.flr_0.wall_2",
+    "bld_0.flr_0.wall_3",
+    "bld_0.flr_0.wall_4",
+    "bld_0.flr_0.wall_5",
+    "bld_0.flr_0.wall_6",
+    "bld_0.flr_0.wall_7",
+    "bld_0.flr_0.wall_8",
+    "bld_0.flr_0.wall_9",
+    "bld_0.flr_1.wall_0",
+    "bld_0.flr_1.wall_1",
+    "bld_0.flr_1.wall_10",
+    "bld_0.flr_1.wall_11",
+    "bld_0.flr_1.wall_12",
+    "bld_0.flr_1.wall_13",
+    "bld_0.flr_1.wall_14",
+    "bld_0.flr_1.wall_15",
+    "bld_0.flr_1.wall_16",
+    "bld_0.flr_1.wall_17",
+    "bld_0.flr_1.wall_2",
+    "bld_0.flr_1.wall_3",
+    "bld_0.flr_1.wall_4",
+    "bld_0.flr_1.wall_5",
+    "bld_0.flr_1.wall_6",
+    "bld_0.flr_1.wall_7",
+    "bld_0.flr_1.wall_8",
+    "bld_0.flr_1.wall_9"
+   ],
+   "unit": "m"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented window openings",
+   "quantity": 0.0,
+   "quantity_id": "qty_1ba3c7a3bceed081",
+   "quantity_type": "WINDOW_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  }
+ ],
+ "report_id": "qty_4e064d492b8226c5",
+ "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+ "source_revision": "rev:9c6b92aac9c47570",
+ "spec_version": "acs.docs/1.0.0",
+ "writes_to_model": false
+}

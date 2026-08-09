@@ -1,0 +1,50 @@
+{
+ "columns": [
+  "sign_id",
+  "level",
+  "kind",
+  "indicates_exit",
+  "illuminated",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 1,
+ "rows": [
+  {
+   "illuminated": {
+    "status": "STATED",
+    "value": "True"
+   },
+   "indicates_exit": {
+    "status": "STATED",
+    "value": "bld_0.exit_1"
+   },
+   "kind": {
+    "status": "STATED",
+    "value": "exit_sign"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "provenance": {
+    "discipline": "FIRE_PROTECTION",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.fls.s_ex1",
+    "source_model_hash": "bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed"
+   },
+   "sign_id": {
+    "status": "STATED",
+    "value": "bld_0.fls.s_ex1"
+   }
+  }
+ ],
+ "schedule_id": "sched_07f5854593fe6382",
+ "schedule_type": "FLS_SIGN_SCHEDULE",
+ "source_model_hash": "bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed",
+ "source_revision": "rev:d5cd5c4637776a32",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 0,
+ "writes_to_model": false
+}

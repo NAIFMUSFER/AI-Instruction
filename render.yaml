@@ -1,0 +1,39 @@
+# نشر خادم محرّك الفهم على Render.com  —  New ▸ Blueprint ▸ اختر المستودع
+services:
+  - type: web
+    name: acs-engine
+    runtime: docker
+    plan: starter              # starter لا ينام. free ينام بعد 15 دقيقة (بدء بارد ~50 ثانية)
+    healthCheckPath: /health
+    envVars:
+      # ── سرّي: أدخله يدوياً في لوحة Render، ولا يوضع في أي ملف ──
+      - key: ANTHROPIC_API_KEY
+        sync: false
+
+      - key: ACS_LLM_MODEL
+        value: claude-sonnet-5
+
+      # ── الأمان: نطاق الواجهة المسموح فقط (لا تستخدم * في الإنتاج) ──
+      # أضِف نطاقات أخرى مفصولة بفواصل عند الحاجة.
+      - key: ACS_ALLOWED_ORIGINS
+        value: "https://sprightly-selkie-d906c3.netlify.app"
+
+      # ── حماية الرصيد: حدود الطلبات لكل زائر وللخادم كله ──
+      - key: ACS_RL_GEN_HOUR      # عمليات توليد لكل زائر في الساعة
+        value: "8"
+      - key: ACS_RL_GEN_DAY       # عمليات توليد لكل زائر في اليوم
+        value: "25"
+      - key: ACS_RL_EDIT_HOUR     # تعديلات المهندس لكل زائر في الساعة
+        value: "30"
+      - key: ACS_RL_GLOBAL_DAY    # سقف يومي للخادم كله — أهم صمّام أمان
+        value: "400"
+      - key: ACS_MAX_TEXT         # أقصى طول وصف بالحروف
+        value: "60000"
+
+      # ── التوليد على مرحلتين للطلبات الكبيرة ──
+      - key: ACS_DEEP
+        value: "auto"
+      - key: ACS_GROUP_SIZE
+        value: "5"
+      - key: ACS_WORKERS
+        value: "4"

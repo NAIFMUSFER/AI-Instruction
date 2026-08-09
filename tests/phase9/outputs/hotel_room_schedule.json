@@ -1,0 +1,404 @@
+{
+ "columns": [
+  "room_id",
+  "name",
+  "level",
+  "area_m2",
+  "area_basis",
+  "program",
+  "occupancy_status",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 10,
+ "rows": [
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 20.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "core_g"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.core_g@0",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.g.core_g"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 40.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "lobby"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.lobby@0",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.g.lobby"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 20.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "core"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.core@1",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.core"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 20.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_2"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "core"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.core@2",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.core"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 40.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "corridor"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.corridor@1",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.corridor"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 40.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_2"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "corridor"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.corridor@2",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.corridor"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 25.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "guest_1"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.guest_1@1",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.guest_1"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 25.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_2"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "guest_1"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.guest_1@2",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.guest_1"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 25.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "guest_2"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.guest_2@1",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.guest_2"
+   }
+  },
+  {
+   "area_basis": {
+    "status": "STATED",
+    "value": "rectangle_edges"
+   },
+   "area_m2": {
+    "status": "STATED",
+    "value": 25.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_2"
+   },
+   "name": {
+    "status": "STATED",
+    "value": "guest_2"
+   },
+   "occupancy_status": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "program": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.t.guest_2@2",
+    "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a"
+   },
+   "room_id": {
+    "status": "STATED",
+    "value": "bld_0.t.guest_2"
+   }
+  }
+ ],
+ "schedule_id": "sched_598fd6f49b32c0e3",
+ "schedule_type": "ROOM_SCHEDULE",
+ "source_model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a",
+ "source_revision": "rev:de8f57198d9e6b21",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 20,
+ "writes_to_model": false
+}

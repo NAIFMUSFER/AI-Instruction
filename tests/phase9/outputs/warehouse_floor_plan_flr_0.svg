@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" data-acs-doc="1" data-view-type="FLOOR_PLAN" data-view-id="view_f2cde190d4c8d3f0" data-model-hash="66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0" data-scale-mode="FIT_TO_SHEET" data-construction-drawing="false">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<line x1="12" y1="231.54" x2="12" y2="219.66" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="289.2" y1="266.982" x2="289.2" y2="263.418" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="12" y1="47.4" x2="408" y2="47.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="166.2" x2="130.8" y2="166.2" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="166.2" x2="12" y2="47.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="130.8" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="12" y2="166.2" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="130.8" y1="166.2" x2="289.2" y2="166.2" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="130.8" y1="285" x2="289.2" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="130.8" y1="285" x2="130.8" y2="166.2" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="289.2" y1="245.4" x2="289.2" y2="166.2" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="289.2" y1="245.4" x2="368.4" y2="245.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="289.2" y1="285" x2="289.2" y2="245.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="289.2" y1="285" x2="368.4" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="368.4" y1="285" x2="368.4" y2="245.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="368.4" y1="285" x2="408" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="408" y1="285" x2="408" y2="47.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="12" y="47.4" width="396" height="237.6" fill="none" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="47.4" width="396" height="237.6" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="166.2" width="118.8" height="118.8" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="130.8" y="166.2" width="158.4" height="118.8" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="289.2" y="245.4" width="79.2" height="39.6" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<text x="12" y="225.6" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D7F80D6</text>
+<text x="71.4" y="225.6" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">receiving</text>
+<text x="210" y="166.2" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">envelope</text>
+<text x="210" y="225.6" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">storage</text>
+<text x="289.2" y="265.2" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D0B208E</text>
+<text x="328.8" y="265.2" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">office</text>
+<text x="12" y="292" font-family="monospace" font-size="2.4" fill="#000000">model-derived documentation — not a construction drawing</text>
+</svg>

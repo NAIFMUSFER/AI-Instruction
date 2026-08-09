@@ -1,0 +1,622 @@
+{
+ "manifest": {
+  "artifact_ids": [
+   "sched_84a1134e56ac31fa",
+   "sched_cd84efacd9785be3",
+   "sched_d83dc6f9804cc5c2",
+   "sched_f555141e465b43a0",
+   "sheet_6c872c660e241378",
+   "sheet_7d6b5071540df61d",
+   "sheet_b42f7ae710ef5131",
+   "sheet_d6f08243a75feb20",
+   "view_1d975e325e05fad4",
+   "view_211a08f42f886384",
+   "view_351c21dce8628c20",
+   "view_36a46b1b6552753a",
+   "view_4e9d72d9b3c89d39",
+   "view_74a111e1f2a15202",
+   "view_ded51408dc7578d0"
+  ],
+  "documentation_id": "doc_d3a198a1db72a556",
+  "documentation_revision": "A",
+  "files": [
+   {
+    "artifact_id": "sched_cd84efacd9785be3",
+    "byte_length": 4630,
+    "file_hash": "4979e2db52d1677c0053cb2120948ac040a163e448f4ed05e1813f532ad88ae5",
+    "file_name": "clash_mep_beam_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "sched_84a1134e56ac31fa",
+    "byte_length": 6514,
+    "file_hash": "d5bbc73655f2172f8571fafcbfddcd1323dd41a49843da9948ee8b14b6922ae5",
+    "file_name": "clash_mep_column_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_351c21dce8628c20",
+    "byte_length": 5821,
+    "file_hash": "72b13bba2a375c71e23617096b6b6d43fd82f00295dfa06d88db36a48e3d8f98",
+    "file_name": "clash_mep_coordination_plan_flr_0_coordination.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_1d975e325e05fad4",
+    "byte_length": 5558,
+    "file_hash": "a85faef974898cc798aee7f984eff390a593e5ab73676f5952e050fbea6972d0",
+    "file_name": "clash_mep_coordination_plan_flr_1_coordination.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_4e9d72d9b3c89d39",
+    "byte_length": 6153,
+    "file_hash": "e6ec83a8f3eb4203f445f36e49e0c75d4019a99374a69d0117d620b3ab0730b6",
+    "file_name": "clash_mep_floor_plan_flr_0.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "sched_f555141e465b43a0",
+    "byte_length": 5789,
+    "file_hash": "19110bd6be975f918f046420ebf8e51ec164998b893e4ecfca9bbaa24723dfe8",
+    "file_name": "clash_mep_foundation_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "sched_d83dc6f9804cc5c2",
+    "byte_length": 1188,
+    "file_hash": "c186a397949a8b345a9e9287b51aa506a465b8a1d9a1576396c6b343ccd80dde",
+    "file_name": "clash_mep_mep_equipment_schedule.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_74a111e1f2a15202",
+    "byte_length": 4959,
+    "file_hash": "b38d27b8b129d1b4d7a746f7692af2954f0fa3ae5d64e54c677bd7ed28d6e0f6",
+    "file_name": "clash_mep_mep_plan_flr_0_mechanical.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_ded51408dc7578d0",
+    "byte_length": 3954,
+    "file_hash": "770c7a4de15aaf30a1e695c0d389b292f71299964b2078f3265b862d1cd54abf",
+    "file_name": "clash_mep_mep_plan_flr_1_mechanical.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "qty_4e064d492b8226c5",
+    "byte_length": 7944,
+    "file_hash": "c5db49ca1e342ce1b3b45e73ddb43a4a90bf5bf95da7e9743065a99eac11978e",
+    "file_name": "clash_mep_quantities.json",
+    "format": "JSON",
+    "generation_mode": "DETERMINISTIC_TABLE",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": null,
+    "byte_length": 12976,
+    "file_hash": "345b42b28f3fc9596a86ba56e070f6f866ab71da4b799636b38acbb982e0bb02",
+    "file_name": "clash_mep_sheets.pdf",
+    "format": "PDF",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": "sheet_6c872c660e241378,sheet_b42f7ae710ef5131,sheet_d6f08243a75feb20,sheet_7d6b5071540df61d"
+   },
+   {
+    "artifact_id": "view_36a46b1b6552753a",
+    "byte_length": 7041,
+    "file_hash": "9e0126ce7c93038cfcdf62fdd4f9572479488ad40eb8e0cab2529b3069c907bf",
+    "file_name": "clash_mep_structural_plan_flr_0_structure.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   },
+   {
+    "artifact_id": "view_211a08f42f886384",
+    "byte_length": 7403,
+    "file_hash": "e1a6af9c705446bd65ce625c581de2445abf0a82374f223da5286d9567448433",
+    "file_name": "clash_mep_structural_plan_flr_1_structure.svg",
+    "format": "SVG",
+    "generation_mode": "DETERMINISTIC_VECTOR",
+    "sheet_id": null
+   }
+  ],
+  "generated_at": "2026-01-01T00:00:00Z",
+  "manifest_id": "docman_26b4d737eacb4e84",
+  "model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+  "sheet_ids": [
+   "sheet_6c872c660e241378",
+   "sheet_b42f7ae710ef5131",
+   "sheet_d6f08243a75feb20",
+   "sheet_7d6b5071540df61d"
+  ],
+  "source_revision": "rev:9c6b92aac9c47570",
+  "spec_version": "acs.docs/1.0.0"
+ },
+ "package": {
+  "artifact_ids": [
+   "sched_84a1134e56ac31fa",
+   "sched_cd84efacd9785be3",
+   "sched_d83dc6f9804cc5c2",
+   "sched_f555141e465b43a0",
+   "sheet_6c872c660e241378",
+   "sheet_7d6b5071540df61d",
+   "sheet_b42f7ae710ef5131",
+   "sheet_d6f08243a75feb20",
+   "view_1d975e325e05fad4",
+   "view_211a08f42f886384",
+   "view_351c21dce8628c20",
+   "view_36a46b1b6552753a",
+   "view_4e9d72d9b3c89d39",
+   "view_74a111e1f2a15202",
+   "view_ded51408dc7578d0"
+  ],
+  "construction_drawing_claimed": false,
+  "documentation_id": "doc_d3a198a1db72a556",
+  "documentation_revision": "A",
+  "is_bill_of_quantities": false,
+  "model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+  "provenance": {
+   "compiler_version": "acs-docs/1.0.0",
+   "derived_from": "CANONICAL_MODEL",
+   "derived_from_ifc": false,
+   "writes_to_model": false
+  },
+  "quantities": [
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented beams",
+    "quantity": 7.0,
+    "quantity_id": "qty_2b504c7cf4ee2396",
+    "quantity_type": "BEAM_COUNT",
+    "source_element_count": 7,
+    "source_element_ids": [
+     "bld_0.B_A1_A2",
+     "bld_0.B_A1_B1",
+     "bld_0.B_A2_B2",
+     "bld_0.B_B1_B2",
+     "bld_0.B_B1_C1",
+     "bld_0.B_B2_C2",
+     "bld_0.B_C1_C2"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of represented beam lengths",
+    "quantity": 43.0,
+    "quantity_id": "qty_852329f145846aed",
+    "quantity_type": "BEAM_LENGTH",
+    "source_element_count": 7,
+    "source_element_ids": [
+     "bld_0.B_A1_A2",
+     "bld_0.B_A1_B1",
+     "bld_0.B_A2_B2",
+     "bld_0.B_B1_B2",
+     "bld_0.B_B1_C1",
+     "bld_0.B_B2_C2",
+     "bld_0.B_C1_C2"
+    ],
+    "unit": "m"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented columns",
+    "quantity": 9.0,
+    "quantity_id": "qty_8608b09b6732033d",
+    "quantity_type": "COLUMN_COUNT",
+    "source_element_count": 9,
+    "source_element_ids": [
+     "bld_0.C_A1",
+     "bld_0.C_A2",
+     "bld_0.C_A3",
+     "bld_0.C_B1",
+     "bld_0.C_B2",
+     "bld_0.C_B3",
+     "bld_0.C_C1",
+     "bld_0.C_C2",
+     "bld_0.C_C3"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented door openings",
+    "quantity": 11.0,
+    "quantity_id": "qty_29d2cac3734b7d43",
+    "quantity_type": "DOOR_COUNT",
+    "source_element_count": 11,
+    "source_element_ids": [
+     "bld_0.f.bath2.door_0@1",
+     "bld_0.f.bed1.door_0@1",
+     "bld_0.f.bed2.door_0@1",
+     "bld_0.f.family.door_0@1",
+     "bld_0.g.bath1.door_0@0",
+     "bld_0.g.corridor.door_0@0",
+     "bld_0.g.guest.door_0@0",
+     "bld_0.g.kitchen.door_0@0",
+     "bld_0.g.living.door_0@0",
+     "bld_0.g.majlis.door_0@0",
+     "bld_0.g.majlis.door_1@0"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of architectural slab outlines",
+    "quantity": 322.0,
+    "quantity_id": "qty_e1481cc3374e75e1",
+    "quantity_type": "FLOOR_AREA",
+    "source_element_count": 2,
+    "source_element_ids": [
+     "bld_0.flr_0.slab",
+     "bld_0.flr_1.slab"
+    ],
+    "unit": "m2"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented fire and life-safety devices",
+    "quantity": null,
+    "quantity_id": "qty_51df98e38da7b8b3",
+    "quantity_type": "FLS_DEVICE_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "NOT_AVAILABLE",
+    "measurement_basis": "represented signage",
+    "quantity": null,
+    "quantity_id": "qty_f1f3ae94e8af8b94",
+    "quantity_type": "FLS_SIGN_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented foundations",
+    "quantity": 9.0,
+    "quantity_id": "qty_f3e14cdde99affe9",
+    "quantity_type": "FOUNDATION_COUNT",
+    "source_element_count": 9,
+    "source_element_ids": [
+     "bld_0.F_A1",
+     "bld_0.F_A2",
+     "bld_0.F_A3",
+     "bld_0.F_B1",
+     "bld_0.F_B2",
+     "bld_0.F_B3",
+     "bld_0.F_C1",
+     "bld_0.F_C2",
+     "bld_0.F_C3"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "architectural levels",
+    "quantity": 2.0,
+    "quantity_id": "qty_bffb5a7b37ce6125",
+    "quantity_type": "LEVEL_COUNT",
+    "source_element_count": 2,
+    "source_element_ids": [
+     "bld_0.flr_0",
+     "bld_0.flr_1"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented MEP equipment",
+    "quantity": 1.0,
+    "quantity_id": "qty_b0d915d3a06795e7",
+    "quantity_type": "MEP_EQUIPMENT_COUNT",
+    "source_element_count": 1,
+    "source_element_ids": [
+     "bld_0.mep.eq_far"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of represented routed segment lengths",
+    "quantity": 27.3,
+    "quantity_id": "qty_bb1bb362de513c8d",
+    "quantity_type": "MEP_SEGMENT_LENGTH",
+    "source_element_count": 4,
+    "source_element_ids": [
+     "bld_0.mep.seg_beam",
+     "bld_0.mep.seg_duct",
+     "bld_0.mep.seg_out",
+     "bld_0.mep.seg_pipe"
+    ],
+    "unit": "m"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented MEP terminals",
+    "quantity": 1.0,
+    "quantity_id": "qty_0c71f1da92728e4b",
+    "quantity_type": "MEP_TERMINAL_COUNT",
+    "source_element_count": 1,
+    "source_element_ids": [
+     "bld_0.mep.t_far"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "architectural spaces",
+    "quantity": 11.0,
+    "quantity_id": "qty_47ed8cf842d5cc99",
+    "quantity_type": "ROOM_COUNT",
+    "source_element_count": 11,
+    "source_element_ids": [
+     "bld_0.f.bath2@1",
+     "bld_0.f.bed1@1",
+     "bld_0.f.bed2@1",
+     "bld_0.f.corridor_f@1",
+     "bld_0.f.family@1",
+     "bld_0.g.bath1@0",
+     "bld_0.g.corridor@0",
+     "bld_0.g.guest@0",
+     "bld_0.g.kitchen@0",
+     "bld_0.g.living@0",
+     "bld_0.g.majlis@0"
+    ],
+    "unit": "count"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of canonical space areas",
+    "quantity": 268.0,
+    "quantity_id": "qty_17074de84b1faccb",
+    "quantity_type": "SPACE_AREA",
+    "source_element_count": 11,
+    "source_element_ids": [
+     "bld_0.f.bath2@1",
+     "bld_0.f.bed1@1",
+     "bld_0.f.bed2@1",
+     "bld_0.f.corridor_f@1",
+     "bld_0.f.family@1",
+     "bld_0.g.bath1@0",
+     "bld_0.g.corridor@0",
+     "bld_0.g.guest@0",
+     "bld_0.g.kitchen@0",
+     "bld_0.g.living@0",
+     "bld_0.g.majlis@0"
+    ],
+    "unit": "m2"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "sum of compiled wall segment lengths",
+    "quantity": 167.0,
+    "quantity_id": "qty_5df5315c8f8a984a",
+    "quantity_type": "WALL_LENGTH",
+    "source_element_count": 38,
+    "source_element_ids": [
+     "bld_0.flr_0.wall_0",
+     "bld_0.flr_0.wall_1",
+     "bld_0.flr_0.wall_10",
+     "bld_0.flr_0.wall_11",
+     "bld_0.flr_0.wall_12",
+     "bld_0.flr_0.wall_13",
+     "bld_0.flr_0.wall_14",
+     "bld_0.flr_0.wall_15",
+     "bld_0.flr_0.wall_16",
+     "bld_0.flr_0.wall_17",
+     "bld_0.flr_0.wall_18",
+     "bld_0.flr_0.wall_19",
+     "bld_0.flr_0.wall_2",
+     "bld_0.flr_0.wall_3",
+     "bld_0.flr_0.wall_4",
+     "bld_0.flr_0.wall_5",
+     "bld_0.flr_0.wall_6",
+     "bld_0.flr_0.wall_7",
+     "bld_0.flr_0.wall_8",
+     "bld_0.flr_0.wall_9",
+     "bld_0.flr_1.wall_0",
+     "bld_0.flr_1.wall_1",
+     "bld_0.flr_1.wall_10",
+     "bld_0.flr_1.wall_11",
+     "bld_0.flr_1.wall_12",
+     "bld_0.flr_1.wall_13",
+     "bld_0.flr_1.wall_14",
+     "bld_0.flr_1.wall_15",
+     "bld_0.flr_1.wall_16",
+     "bld_0.flr_1.wall_17",
+     "bld_0.flr_1.wall_2",
+     "bld_0.flr_1.wall_3",
+     "bld_0.flr_1.wall_4",
+     "bld_0.flr_1.wall_5",
+     "bld_0.flr_1.wall_6",
+     "bld_0.flr_1.wall_7",
+     "bld_0.flr_1.wall_8",
+     "bld_0.flr_1.wall_9"
+    ],
+    "unit": "m"
+   },
+   {
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+    "measurement_basis": "represented window openings",
+    "quantity": 0.0,
+    "quantity_id": "qty_1ba3c7a3bceed081",
+    "quantity_type": "WINDOW_COUNT",
+    "source_element_count": 0,
+    "source_element_ids": [],
+    "unit": "count"
+   }
+  ],
+  "schedules": [
+   {
+    "row_count": 9,
+    "schedule_id": "sched_84a1134e56ac31fa",
+    "schedule_type": "COLUMN_SCHEDULE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "unknown_cell_count": 0
+   },
+   {
+    "row_count": 7,
+    "schedule_id": "sched_cd84efacd9785be3",
+    "schedule_type": "BEAM_SCHEDULE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "unknown_cell_count": 0
+   },
+   {
+    "row_count": 9,
+    "schedule_id": "sched_f555141e465b43a0",
+    "schedule_type": "FOUNDATION_SCHEDULE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "unknown_cell_count": 0
+   },
+   {
+    "row_count": 1,
+    "schedule_id": "sched_d83dc6f9804cc5c2",
+    "schedule_type": "MEP_EQUIPMENT_SCHEDULE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "unknown_cell_count": 2
+   }
+  ],
+  "schema": "acs.docs/1",
+  "sheets": [
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_6c872c660e241378",
+    "sheet_number": "A-001",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "views": [
+     "view_4e9d72d9b3c89d39",
+     "view_36a46b1b6552753a"
+    ]
+   },
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_b42f7ae710ef5131",
+    "sheet_number": "A-002",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "views": [
+     "view_211a08f42f886384",
+     "view_74a111e1f2a15202"
+    ]
+   },
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_d6f08243a75feb20",
+    "sheet_number": "A-003",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "views": [
+     "view_ded51408dc7578d0",
+     "view_351c21dce8628c20"
+    ]
+   },
+   {
+    "paper_size": "A3",
+    "revision": "A",
+    "sheet_id": "sheet_7d6b5071540df61d",
+    "sheet_number": "A-004",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "views": [
+     "view_1d975e325e05fad4"
+    ]
+   }
+  ],
+  "source_revision": "rev:9c6b92aac9c47570",
+  "spec_version": "acs.docs/1.0.0",
+  "staleness_state": "CURRENT",
+  "views": [
+   {
+    "discipline": "ARCHITECTURE",
+    "level_id": "bld_0.flr_0",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_4e9d72d9b3c89d39",
+    "view_type": "FLOOR_PLAN"
+   },
+   {
+    "discipline": "STRUCTURE",
+    "level_id": "bld_0.flr_0",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_36a46b1b6552753a",
+    "view_type": "STRUCTURAL_PLAN"
+   },
+   {
+    "discipline": "STRUCTURE",
+    "level_id": "bld_0.flr_1",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_211a08f42f886384",
+    "view_type": "STRUCTURAL_PLAN"
+   },
+   {
+    "discipline": "MECHANICAL",
+    "level_id": "bld_0.flr_0",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_74a111e1f2a15202",
+    "view_type": "MEP_PLAN"
+   },
+   {
+    "discipline": "MECHANICAL",
+    "level_id": "bld_0.flr_1",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_ded51408dc7578d0",
+    "view_type": "MEP_PLAN"
+   },
+   {
+    "discipline": "COORDINATION",
+    "level_id": "bld_0.flr_0",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_351c21dce8628c20",
+    "view_type": "COORDINATION_PLAN"
+   },
+   {
+    "discipline": "COORDINATION",
+    "level_id": "bld_0.flr_1",
+    "scale": "1:100",
+    "scale_mode": "TRUE_SCALE",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+    "status": "CURRENT",
+    "view_id": "view_1d975e325e05fad4",
+    "view_type": "COORDINATION_PLAN"
+   }
+  ]
+ }
+}

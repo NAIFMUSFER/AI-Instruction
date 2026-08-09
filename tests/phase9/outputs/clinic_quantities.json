@@ -1,0 +1,210 @@
+{
+ "count": 16,
+ "is_bill_of_quantities": false,
+ "is_cost_estimate": false,
+ "note": "a factual model quantity report. Coverage is stated against the represented model only; no cost, rate or price exists here",
+ "quantities": [
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented beams",
+   "quantity": null,
+   "quantity_id": "qty_8b6ec2e847f63051",
+   "quantity_type": "BEAM_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "sum of represented beam lengths",
+   "quantity": null,
+   "quantity_id": "qty_f5df7611b8720fcc",
+   "quantity_type": "BEAM_LENGTH",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "m"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented columns",
+   "quantity": null,
+   "quantity_id": "qty_d99c58d97d7a5652",
+   "quantity_type": "COLUMN_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented door openings",
+   "quantity": 4.0,
+   "quantity_id": "qty_d0b6e7995d03d0eb",
+   "quantity_type": "DOOR_COUNT",
+   "source_element_count": 4,
+   "source_element_ids": [
+    "bld_0.g.exam_1.door_0@0",
+    "bld_0.g.reception.door_0@0",
+    "bld_0.g.reception.door_1@0",
+    "bld_0.g.waiting.door_0@0"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of architectural slab outlines",
+   "quantity": 126.0,
+   "quantity_id": "qty_8b6ef6c2ddc5ce26",
+   "quantity_type": "FLOOR_AREA",
+   "source_element_count": 1,
+   "source_element_ids": [
+    "bld_0.flr_0.slab"
+   ],
+   "unit": "m2"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented fire and life-safety devices",
+   "quantity": null,
+   "quantity_id": "qty_7b3c5ef44719a9eb",
+   "quantity_type": "FLS_DEVICE_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented signage",
+   "quantity": null,
+   "quantity_id": "qty_50e6cf3ecfc989d2",
+   "quantity_type": "FLS_SIGN_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented foundations",
+   "quantity": null,
+   "quantity_id": "qty_1750c756b9d58495",
+   "quantity_type": "FOUNDATION_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "architectural levels",
+   "quantity": 1.0,
+   "quantity_id": "qty_ac15402bd5336551",
+   "quantity_type": "LEVEL_COUNT",
+   "source_element_count": 1,
+   "source_element_ids": [
+    "bld_0.flr_0"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented MEP equipment",
+   "quantity": null,
+   "quantity_id": "qty_9ca81d26c03fef9e",
+   "quantity_type": "MEP_EQUIPMENT_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "sum of represented routed segment lengths",
+   "quantity": null,
+   "quantity_id": "qty_e0a91f75f84f283a",
+   "quantity_type": "MEP_SEGMENT_LENGTH",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "m"
+  },
+  {
+   "coverage_status": "NOT_AVAILABLE",
+   "measurement_basis": "represented MEP terminals",
+   "quantity": null,
+   "quantity_id": "qty_726bae1586dd8ea1",
+   "quantity_type": "MEP_TERMINAL_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "architectural spaces",
+   "quantity": 5.0,
+   "quantity_id": "qty_df7f6bb2f175447d",
+   "quantity_type": "ROOM_COUNT",
+   "source_element_count": 5,
+   "source_element_ids": [
+    "bld_0.g.exam_1@0",
+    "bld_0.g.lab@0",
+    "bld_0.g.pharmacy@0",
+    "bld_0.g.reception@0",
+    "bld_0.g.waiting@0"
+   ],
+   "unit": "count"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of canonical space areas",
+   "quantity": 106.0,
+   "quantity_id": "qty_b770e05e7ed7fbdc",
+   "quantity_type": "SPACE_AREA",
+   "source_element_count": 5,
+   "source_element_ids": [
+    "bld_0.g.exam_1@0",
+    "bld_0.g.lab@0",
+    "bld_0.g.pharmacy@0",
+    "bld_0.g.reception@0",
+    "bld_0.g.waiting@0"
+   ],
+   "unit": "m2"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "sum of compiled wall segment lengths",
+   "quantity": 69.0,
+   "quantity_id": "qty_aee97183b3539b80",
+   "quantity_type": "WALL_LENGTH",
+   "source_element_count": 15,
+   "source_element_ids": [
+    "bld_0.flr_0.wall_0",
+    "bld_0.flr_0.wall_1",
+    "bld_0.flr_0.wall_10",
+    "bld_0.flr_0.wall_11",
+    "bld_0.flr_0.wall_12",
+    "bld_0.flr_0.wall_13",
+    "bld_0.flr_0.wall_14",
+    "bld_0.flr_0.wall_2",
+    "bld_0.flr_0.wall_3",
+    "bld_0.flr_0.wall_4",
+    "bld_0.flr_0.wall_5",
+    "bld_0.flr_0.wall_6",
+    "bld_0.flr_0.wall_7",
+    "bld_0.flr_0.wall_8",
+    "bld_0.flr_0.wall_9"
+   ],
+   "unit": "m"
+  },
+  {
+   "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL",
+   "measurement_basis": "represented window openings",
+   "quantity": 0.0,
+   "quantity_id": "qty_1bbf68a18701c91f",
+   "quantity_type": "WINDOW_COUNT",
+   "source_element_count": 0,
+   "source_element_ids": [],
+   "unit": "count"
+  }
+ ],
+ "report_id": "qty_ceed0b03b709e9b3",
+ "source_model_hash": "bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044",
+ "source_revision": "rev:2a3c4e087543af77",
+ "spec_version": "acs.docs/1.0.0",
+ "writes_to_model": false
+}

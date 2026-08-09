@@ -1,0 +1,135 @@
+{
+ "issues": [],
+ "report": {
+  "compared": {
+   "building_count": {
+    "equal": true,
+    "roundtrip": 1,
+    "source": 1
+   },
+   "containment": {
+    "equal": true,
+    "resolved": 64
+   },
+   "door_count": {
+    "equal": true,
+    "roundtrip": 8,
+    "source": 8
+   },
+   "door_positions": {
+    "equal": true,
+    "matched": 8,
+    "unmatched": 0
+   },
+   "host_relationships": {
+    "equal": true,
+    "expected": 8,
+    "resolved": 8
+   },
+   "level_count": {
+    "equal": true,
+    "roundtrip": 3,
+    "source": 3
+   },
+   "level_elevations": {
+    "equal": true,
+    "roundtrip": [
+     0.0,
+     3.3,
+     6.6
+    ],
+    "source": [
+     0.0,
+     3.3,
+     6.6
+    ]
+   },
+   "slab_count": {
+    "equal": true,
+    "roundtrip": 3,
+    "source": 3
+   },
+   "space_count": {
+    "equal": true,
+    "roundtrip": 10,
+    "source": 10
+   },
+   "space_names": {
+    "equal": true,
+    "roundtrip": 10,
+    "source": 10
+   },
+   "stair_count": {
+    "equal": true,
+    "roundtrip": 3,
+    "source": 3
+   },
+   "wall_count": {
+    "equal": true,
+    "roundtrip": 40,
+    "source": 40
+   },
+   "wall_dimensions": {
+    "equal": true,
+    "mismatched": 0
+   },
+   "wall_positions": {
+    "equal": true,
+    "matched": 40,
+    "unmatched": 0
+   },
+   "window_count": {
+    "equal": true,
+    "roundtrip": 0,
+    "source": 0
+   },
+   "window_positions": {
+    "equal": true,
+    "matched": 0,
+    "unmatched": 0
+   }
+  },
+  "critical_loss_count": 0,
+  "geometry_fidelity": 1.0,
+  "losses": [
+   {
+    "entity_id": "bld_0.flr_0.g.obj_0",
+    "message": "the object kind elevator has no declared IFC mapping",
+    "severity": "WARNING",
+    "type": "UNSUPPORTED_ENTITY"
+   },
+   {
+    "entity_id": "bld_0.flr_1.t.obj_0",
+    "message": "the object kind elevator has no declared IFC mapping",
+    "severity": "WARNING",
+    "type": "UNSUPPORTED_ENTITY"
+   },
+   {
+    "entity_id": "bld_0.flr_2.t.obj_0",
+    "message": "the object kind elevator has no declared IFC mapping",
+    "severity": "WARNING",
+    "type": "UNSUPPORTED_ENTITY"
+   }
+  ],
+  "model_hash": "65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a",
+  "note": "a critical geometry loss can never report PASS.",
+  "property_fidelity": 1.0,
+  "relationship_fidelity": 1.0,
+  "report_id": "bimrt_f6a48b06f1049935",
+  "revision_id": "rev:de8f57198d9e6b21",
+  "schema": "acs.bim/1",
+  "semantic_fidelity": 1.0,
+  "source_file_hash": "3a4c5a1de0684a430bdb149c3b2fef49d0f88c5912b960bd9f8b4bb0dbd8d6c3",
+  "status": "WARNING",
+  "tolerances": {
+   "angle_tolerance_deg": 0.01,
+   "area_tolerance_m2": 0.01,
+   "dimension_tolerance_m": 0.001,
+   "elevation_tolerance_m": 0.001,
+   "position_tolerance_m": 0.001
+  },
+  "warnings": [],
+  "writes_to_model": false
+ },
+ "valid": true
+}

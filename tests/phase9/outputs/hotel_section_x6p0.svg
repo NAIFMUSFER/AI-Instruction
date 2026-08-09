@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" data-acs-doc="1" data-view-type="SECTION" data-view-id="view_be7ad05bd6b9eb43" data-model-hash="65b4fa352631202cbf1a9f37e3ebda81322c3528295884b2f22b2ab6362cce9a" data-scale-mode="TRUE_SCALE" data-construction-drawing="false">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<line x1="62.25" y1="219" x2="63.25" y2="219" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="62.25" y1="219" x2="63.25" y2="219" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="62.25" y1="219" x2="63.25" y2="219" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="62.25" y1="252" x2="63.25" y2="252" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="62.25" y1="252" x2="63.25" y2="252" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="62.25" y1="252" x2="63.25" y2="252" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="62.25" y1="285" x2="63.25" y2="285" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="122.25" y1="285" x2="123.25" y2="285" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<line x1="12" y1="219" x2="123.25" y2="219" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<line x1="12" y1="252" x2="123.25" y2="252" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<line x1="12" y1="285" x2="123.25" y2="285" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<line x1="12.75" y1="219" x2="82.75" y2="219" stroke="#000000" stroke-width="0.25" data-cls="UNRESOLVED"/>
+<line x1="12.75" y1="252" x2="82.75" y2="252" stroke="#000000" stroke-width="0.25" data-cls="UNRESOLVED"/>
+<line x1="12.75" y1="285" x2="82.75" y2="285" stroke="#000000" stroke-width="0.25" data-cls="UNRESOLVED"/>
+<rect x="12" y="189" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="12" y="222" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="62" y="189" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="62" y="222" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="62" y="255" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="82" y="189" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="82" y="222" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="82" y="255" width="1.5" height="30" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="12.75" y="189" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="189" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="189" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="189" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="189" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="189" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="222" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="222" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="222" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="222" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="222" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="222" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="255" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="255" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12.75" y="255" width="50" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="189" width="20" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="189" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="189" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="189" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="189" width="20" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="222" width="20" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="222" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="222" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="222" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="222" width="20" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="255" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="255" width="0" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="255" width="20" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="62.75" y="255" width="20" height="30" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<text x="12" y="292" font-family="monospace" font-size="2.4" fill="#000000">model-derived documentation — not a construction drawing</text>
+</svg>

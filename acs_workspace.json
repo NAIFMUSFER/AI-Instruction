@@ -1,0 +1,981 @@
+{
+  "schema": "acs.workspace/1",
+  "version": "1.0.0",
+  "compiler_version": "acs-workspace-ui/1.0.0",
+  "note": "The professional product workspace. This layer builds NO engineering engine of its own: it derives view models from existing engine outputs and invokes existing APIs. Every engineering edit still travels the Phase 5 authoring path — command, preview, explicit commit, new revision.",
+  "boundary_note": "The user interface never mutates engineering JSON. It never bypasses preview, never bypasses the revision guard, and never contains a second authoring implementation. A DOM event handler performs no engineering calculation; it reads a derived view model and calls a canonical API.",
+  "runtime_note": "RUNTIME IS EPHEMERAL. ENGINEERING MODEL IS IMMUTABLE. Selection, camera, visibility, panel state, language, theme and tree expansion are UI or runtime state and can never enter a model hash, a revision or an audit entry.",
+  "state_classes": [
+    "UI_STATE",
+    "RUNTIME_STATE",
+    "AUTHORING_STATE",
+    "ENGINEERING_MODEL",
+    "DERIVED_ANALYSIS",
+    "PRESENTATION_OUTPUT"
+  ],
+  "state_class_note": "UI_STATE is what the workspace remembers about the screen. RUNTIME_STATE is the Phase 4 ephemeral session. AUTHORING_STATE is the Phase 5 transaction in flight. ENGINEERING_MODEL is the only thing a commit changes. DERIVED_ANALYSIS is computed from the model and is read-only. PRESENTATION_OUTPUT is a render, a snapshot or an export.",
+  "state_ownership": {
+    "selected_id": "UI_STATE",
+    "hovered_id": "UI_STATE",
+    "tree_expanded": "UI_STATE",
+    "active_panel": "UI_STATE",
+    "language": "UI_STATE",
+    "theme": "UI_STATE",
+    "ui_mode": "UI_STATE",
+    "level_filter": "UI_STATE",
+    "discipline_filter": "UI_STATE",
+    "issue_filter": "UI_STATE",
+    "reference_panel_open": "UI_STATE",
+    "camera": "RUNTIME_STATE",
+    "navigation_mode": "RUNTIME_STATE",
+    "visibility": "RUNTIME_STATE",
+    "portal_states": "RUNTIME_STATE",
+    "measurements": "RUNTIME_STATE",
+    "simulation_time": "RUNTIME_STATE",
+    "pending_commands": "AUTHORING_STATE",
+    "preview": "AUTHORING_STATE",
+    "transaction_status": "AUTHORING_STATE",
+    "model": "ENGINEERING_MODEL",
+    "model_hash": "ENGINEERING_MODEL",
+    "current_revision": "ENGINEERING_MODEL",
+    "history": "ENGINEERING_MODEL",
+    "coordination": "DERIVED_ANALYSIS",
+    "navigation": "DERIVED_ANALYSIS",
+    "egress": "DERIVED_ANALYSIS",
+    "distance": "DERIVED_ANALYSIS",
+    "rule_results": "DERIVED_ANALYSIS",
+    "visual_scene": "DERIVED_ANALYSIS",
+    "runtime_scene": "DERIVED_ANALYSIS",
+    "snapshot": "PRESENTATION_OUTPUT",
+    "glb": "PRESENTATION_OUTPUT",
+    "visual_reference": "PRESENTATION_OUTPUT",
+    "visual_intent": "PRESENTATION_OUTPUT"
+  },
+  "model_hash_inputs": [
+    "model"
+  ],
+  "model_hash_note": "Only the canonical model enters the model hash. Every key owned by UI_STATE, RUNTIME_STATE or PRESENTATION_OUTPUT is proven by test to be excluded.",
+  "panels": [
+    "TOP_BAR",
+    "PROJECT_TREE",
+    "VIEWPORT",
+    "INSPECTOR",
+    "STATUS_BAR",
+    "ISSUE_CENTER",
+    "HISTORY",
+    "COORDINATION",
+    "REQUIREMENTS",
+    "EXPORT",
+    "ASSISTANT",
+    "REFERENCES",
+    "PREVIEW"
+  ],
+  "default_panel": "INSPECTOR",
+  "primary_panel": "VIEWPORT",
+  "primary_panel_note": "The 3D model is the workspace, not a widget inside a dashboard. Every other panel is arranged around it.",
+  "breakpoints": [
+    {
+      "name": "mobile_s",
+      "min_px": 0,
+      "layout": "STACKED",
+      "tree": "DRAWER",
+      "inspector": "BOTTOM_SHEET"
+    },
+    {
+      "name": "mobile",
+      "min_px": 380,
+      "layout": "STACKED",
+      "tree": "DRAWER",
+      "inspector": "BOTTOM_SHEET"
+    },
+    {
+      "name": "mobile_l",
+      "min_px": 430,
+      "layout": "STACKED",
+      "tree": "DRAWER",
+      "inspector": "BOTTOM_SHEET"
+    },
+    {
+      "name": "tablet",
+      "min_px": 768,
+      "layout": "TWO_PANEL",
+      "tree": "COLLAPSIBLE",
+      "inspector": "DRAWER"
+    },
+    {
+      "name": "laptop",
+      "min_px": 1024,
+      "layout": "THREE_PANEL",
+      "tree": "DOCKED",
+      "inspector": "DOCKED"
+    },
+    {
+      "name": "desktop",
+      "min_px": 1440,
+      "layout": "THREE_PANEL",
+      "tree": "DOCKED",
+      "inspector": "DOCKED"
+    },
+    {
+      "name": "wide",
+      "min_px": 1920,
+      "layout": "THREE_PANEL",
+      "tree": "DOCKED",
+      "inspector": "DOCKED"
+    }
+  ],
+  "min_touch_target_px": 44,
+  "tested_widths_px": [
+    360,
+    390,
+    430,
+    768,
+    1024,
+    1440,
+    1920
+  ],
+  "tree_node_kinds": [
+    "PROJECT",
+    "SITE",
+    "BUILDING",
+    "LEVEL",
+    "GROUP",
+    "SPACE",
+    "DOOR",
+    "WINDOW",
+    "OBJECT",
+    "STRUCTURE_GROUP",
+    "MEP_GROUP",
+    "FLS_GROUP",
+    "COORDINATION_GROUP",
+    "VISUAL_GROUP"
+  ],
+  "tree_groups": [
+    "Spaces",
+    "Doors",
+    "Windows",
+    "Objects"
+  ],
+  "tree_note": "Every node carries a real identifier taken from the canonical model or a derived compiler output. There is no placeholder node and no invented child.",
+  "tree_disciplines": [
+    "ARCHITECTURE",
+    "STRUCTURE",
+    "MEP",
+    "FLS",
+    "VISUAL",
+    "COORDINATION"
+  ],
+  "tree_virtualisation_threshold": 400,
+  "inspector_sections": [
+    "IDENTITY",
+    "GEOMETRY",
+    "PROPERTIES",
+    "RELATIONSHIPS",
+    "ISSUES",
+    "PROVENANCE"
+  ],
+  "editability_classes": [
+    "EDITABLE",
+    "READ_ONLY",
+    "DERIVED",
+    "UNKNOWN",
+    "DISPLAY_ONLY"
+  ],
+  "unknown_label": {
+    "en": "Not specified",
+    "ar": "غير محدد"
+  },
+  "ui_labels": {
+    "project": {
+      "ar": "المشروع",
+      "en": "Project"
+    },
+    "inspector": {
+      "ar": "الفاحص",
+      "en": "Inspector"
+    },
+    "view": {
+      "ar": "عرض",
+      "en": "View"
+    },
+    "edit": {
+      "ar": "تحرير",
+      "en": "Edit"
+    },
+    "commit": {
+      "ar": "إيداع",
+      "en": "Commit"
+    },
+    "cancel": {
+      "ar": "إلغاء",
+      "en": "Cancel"
+    },
+    "preview": {
+      "ar": "معاينة",
+      "en": "Preview"
+    },
+    "issues": {
+      "ar": "الملاحظات",
+      "en": "Issues"
+    },
+    "history": {
+      "ar": "المراجعات",
+      "en": "History"
+    },
+    "exportc": {
+      "ar": "التصدير",
+      "en": "Export"
+    },
+    "assistant": {
+      "ar": "المساعد",
+      "en": "Assistant"
+    },
+    "empty": {
+      "ar": "لا يوجد عنصر محدَّد",
+      "en": "No element selected"
+    },
+    "noproject": {
+      "ar": "لا مشروع مفتوح",
+      "en": "No project open"
+    },
+    "create": {
+      "ar": "مشروع جديد",
+      "en": "New project"
+    },
+    "open": {
+      "ar": "فتح مشروع",
+      "en": "Open project"
+    },
+    "importp": {
+      "ar": "استيراد",
+      "en": "Import"
+    },
+    "unknown": {
+      "ar": "غير محدد",
+      "en": "Not specified"
+    },
+    "derived": {
+      "ar": "مشتق",
+      "en": "Derived"
+    },
+    "display": {
+      "ar": "عرض فقط",
+      "en": "Display only"
+    },
+    "readonly": {
+      "ar": "للقراءة فقط",
+      "en": "Read only"
+    },
+    "editable": {
+      "ar": "قابل للتحرير",
+      "en": "Editable"
+    },
+    "affected": {
+      "ar": "العناصر المتأثّرة",
+      "en": "Affected elements"
+    },
+    "deps": {
+      "ar": "الاعتماديات",
+      "en": "Dependencies"
+    },
+    "warn": {
+      "ar": "تحذيرات جديدة",
+      "en": "New warnings"
+    },
+    "resolved": {
+      "ar": "تحذيرات زالت",
+      "en": "Resolved warnings"
+    },
+    "integrity": {
+      "ar": "تماسك النموذج",
+      "en": "Model integrity"
+    },
+    "ack": {
+      "ar": "أُقرّ بالتحذيرات",
+      "en": "Warnings acknowledged"
+    },
+    "confirm": {
+      "ar": "تأكيد صريح مطلوب",
+      "en": "Explicit confirmation required"
+    },
+    "strategy": {
+      "ar": "اختر معالجة الفتحات",
+      "en": "Choose hosted element strategy"
+    },
+    "keeprel": {
+      "ar": "إبقاء الموضع النسبي",
+      "en": "Keep relative position"
+    },
+    "keepworld": {
+      "ar": "إبقاء الموضع المطلق",
+      "en": "Keep world position"
+    },
+    "cancelif": {
+      "ar": "إلغاء إن وُجدت فتحات",
+      "en": "Cancel if hosted"
+    },
+    "level": {
+      "ar": "الدور",
+      "en": "Level"
+    },
+    "all": {
+      "ar": "الكل",
+      "en": "All"
+    },
+    "refs": {
+      "ar": "المراجع البصرية",
+      "en": "Visual references"
+    },
+    "intent": {
+      "ar": "النيّة البصرية",
+      "en": "Visual intent"
+    },
+    "reqs": {
+      "ar": "المتطلّبات",
+      "en": "Requirements"
+    },
+    "coverage": {
+      "ar": "التغطية",
+      "en": "Coverage"
+    },
+    "unresolved": {
+      "ar": "غير محلول",
+      "en": "Unresolved"
+    },
+    "save": {
+      "ar": "حفظ",
+      "en": "Save"
+    },
+    "degraded": {
+      "ar": "محرّك العرض غير متاح",
+      "en": "3D engine unavailable"
+    },
+    "degraded_body": {
+      "ar": "بيانات المشروع والشجرة والفاحص والملاحظات والمراجعات تبقى صالحة للاستعمال.",
+      "en": "The project data, tree, inspector, issues and history stay usable."
+    },
+    "rev": {
+      "ar": "مراجعة",
+      "en": "rev"
+    },
+    "mode": {
+      "ar": "الوضع",
+      "en": "mode"
+    },
+    "nav": {
+      "ar": "التنقّل",
+      "en": "nav"
+    },
+    "errors": {
+      "ar": "أخطاء",
+      "en": "errors"
+    },
+    "warnings": {
+      "ar": "تحذيرات",
+      "en": "warnings"
+    },
+    "info": {
+      "ar": "معلومات",
+      "en": "info"
+    },
+    "no_preview": {
+      "ar": "لا معاينة",
+      "en": "no preview"
+    },
+    "preview_active": {
+      "ar": "معاينة نشطة",
+      "en": "preview active"
+    },
+    "unsaved": {
+      "ar": "غير مُصدَّر",
+      "en": "unsaved"
+    },
+    "exported": {
+      "ar": "مُصدَّر",
+      "en": "exported"
+    },
+    "compliance": {
+      "ar": "المطابقة",
+      "en": "compliance"
+    },
+    "tree_toggle": {
+      "ar": "إظهار/إخفاء الشجرة",
+      "en": "Toggle project tree"
+    },
+    "insp_toggle": {
+      "ar": "إظهار/إخفاء الفاحص",
+      "en": "Toggle inspector"
+    },
+    "undo": {
+      "ar": "تراجع",
+      "en": "Undo"
+    },
+    "redo": {
+      "ar": "إعادة",
+      "en": "Redo"
+    },
+    "language": {
+      "ar": "اللغة",
+      "en": "Language"
+    },
+    "loading": {
+      "ar": "جارٍ التحميل…",
+      "en": "Loading…"
+    },
+    "t_site": {
+      "ar": "الموقع",
+      "en": "Site"
+    },
+    "t_spaces": {
+      "ar": "الفراغات",
+      "en": "Spaces"
+    },
+    "t_doors": {
+      "ar": "الأبواب",
+      "en": "Doors"
+    },
+    "t_windows": {
+      "ar": "النوافذ",
+      "en": "Windows"
+    },
+    "t_objects": {
+      "ar": "العناصر",
+      "en": "Objects"
+    },
+    "t_door": {
+      "ar": "باب",
+      "en": "door"
+    },
+    "t_window": {
+      "ar": "نافذة",
+      "en": "window"
+    },
+    "t_walls_derived": {
+      "ar": "الجدران (مشتقّة)",
+      "en": "Walls (derived)"
+    },
+    "t_structure": {
+      "ar": "الإنشاء",
+      "en": "Structure"
+    },
+    "t_mep": {
+      "ar": "الميكانيكا والكهرباء والسباكة",
+      "en": "MEP"
+    },
+    "t_fls": {
+      "ar": "الحريق وسلامة الأرواح",
+      "en": "Fire & Life Safety"
+    },
+    "t_coordination": {
+      "ar": "التنسيق",
+      "en": "Coordination"
+    },
+    "t_level": {
+      "ar": "دور",
+      "en": "Level"
+    },
+    "t_project": {
+      "ar": "مشروع",
+      "en": "Project"
+    }
+  },
+  "derived_label": {
+    "en": "Derived",
+    "ar": "مشتق"
+  },
+  "display_only_label": {
+    "en": "Display only",
+    "ar": "عرض فقط"
+  },
+  "read_only_label": {
+    "en": "Read only",
+    "ar": "للقراءة فقط"
+  },
+  "unknown_note": "An unknown engineering value is shown as Not specified / غير محدد. It is never shown as 0, as a default, or as an estimate, unless the model itself states that value.",
+  "provenance_labels": {
+    "user": {
+      "en": "User provided",
+      "ar": "من المستخدم"
+    },
+    "imported": {
+      "en": "Imported",
+      "ar": "مستورد"
+    },
+    "ai_inference": {
+      "en": "AI inference",
+      "ar": "استنتاج ذكاء اصطناعي"
+    },
+    "system_default": {
+      "en": "System default",
+      "ar": "افتراضي النظام"
+    },
+    "geometry_inference": {
+      "en": "Geometry inference",
+      "ar": "استنتاج هندسي"
+    },
+    "derived": {
+      "en": "Derived",
+      "ar": "مشتق"
+    },
+    "unknown": {
+      "en": "Unknown",
+      "ar": "غير معروف"
+    }
+  },
+  "forbidden_provenance_labels": [
+    "Code required",
+    "Required by SBC",
+    "Compliant",
+    "Approved",
+    "Certified",
+    "Safe",
+    "Meets code",
+    "مطابق للكود",
+    "معتمد",
+    "آمن"
+  ],
+  "provenance_note": "A provenance label states where a value came from. It never states that a value satisfies a regulation. The forbidden labels are refused by the label resolver, not merely avoided by convention.",
+  "ui_modes": [
+    "VIEW",
+    "EDIT"
+  ],
+  "default_ui_mode": "VIEW",
+  "view_mode_capabilities": [
+    "ORBIT",
+    "PAN",
+    "ZOOM",
+    "WALK",
+    "FLY",
+    "SELECT",
+    "INSPECT",
+    "MEASURE"
+  ],
+  "edit_mode_note": "Entering EDIT mode creates nothing. Only an explicit editing action builds an AuthoringCommand, and that command still goes through preview and an explicit commit.",
+  "element_operations": {
+    "SPACE": [
+      "INSPECT",
+      "RESIZE_SPACE",
+      "RENAME_SPACE",
+      "ADD_DOOR",
+      "ADD_WINDOW",
+      "ADD_OBJECT",
+      "ADD_STAIR",
+      "DELETE_SPACE",
+      "LOCK_ELEMENT"
+    ],
+    "DOOR": [
+      "INSPECT",
+      "MOVE_DOOR",
+      "CHANGE_DOOR_PROPERTIES",
+      "DELETE_DOOR"
+    ],
+    "WINDOW": [
+      "INSPECT",
+      "MOVE_WINDOW",
+      "CHANGE_WINDOW_PROPERTIES",
+      "DELETE_WINDOW"
+    ],
+    "OBJECT": [
+      "INSPECT",
+      "MOVE_OBJECT",
+      "DELETE_OBJECT"
+    ],
+    "STAIR": [
+      "INSPECT",
+      "MOVE_STAIR",
+      "DELETE_STAIR"
+    ],
+    "LEVEL": [
+      "INSPECT",
+      "CHANGE_LEVEL_HEIGHT",
+      "DELETE_LEVEL"
+    ],
+    "SITE": [
+      "INSPECT",
+      "CHANGE_SITE_DIMENSIONS"
+    ],
+    "BUILDING": [
+      "INSPECT",
+      "CHANGE_BUILDING_POSITION",
+      "CHANGE_BUILDING_ROTATION"
+    ],
+    "WALL": [
+      "INSPECT",
+      "MOVE_WALL"
+    ],
+    "COORDINATION_FINDING": [
+      "INSPECT"
+    ],
+    "RUNTIME_OBSTACLE": [
+      "INSPECT"
+    ],
+    "VISUAL_OBJECT": [
+      "INSPECT",
+      "PROMOTE_VISUAL_OBJECT"
+    ]
+  },
+  "operation_note": "The operation list for a selected element is derived from the Phase 5 command vocabulary and the element kind. An operation that cannot succeed is never offered.",
+  "gizmo_operations": [
+    "TRANSLATE"
+  ],
+  "gizmo_note": "A drag produces a UI transform intent, which becomes a normalised AuthoringCommand and then a preview candidate. It never assigns a mesh position as an engineering change.",
+  "preview_visual_treatments": [
+    "GHOST",
+    "OUTLINE",
+    "BADGE"
+  ],
+  "preview_note": "Candidate geometry is drawn beside the committed model, never over it. The canonical meshes are not rewritten before a commit.",
+  "preview_panel_fields": [
+    "change_summary",
+    "affected_elements",
+    "dependencies",
+    "dependency_breaking",
+    "new_warnings",
+    "resolved_warnings",
+    "model_integrity",
+    "requires_confirmation",
+    "requires_warning_acknowledgement"
+  ],
+  "issue_categories": [
+    "MODEL_INTEGRITY",
+    "COORDINATION",
+    "UNRESOLVED_RELATIONSHIP",
+    "NAVIGATION",
+    "EGRESS",
+    "DISTANCE",
+    "STRUCTURAL_DATA",
+    "MEP_DATA",
+    "FLS_DATA",
+    "RULE_EVALUATION"
+  ],
+  "issue_severities": [
+    "INFO",
+    "WARNING",
+    "ERROR"
+  ],
+  "rule_statuses": [
+    "PASS",
+    "FAIL",
+    "NOT_EVALUATED",
+    "INSUFFICIENT_DATA",
+    "NOT_APPLICABLE"
+  ],
+  "issue_note": "Categories are kept apart on purpose. A coordination clash, an unresolved relationship and a rule evaluation mean different things and are never flattened into one error count. Regulatory evaluation status is a separate axis from severity.",
+  "forbidden_status_words": [
+    "SAFE",
+    "COMPLIANT",
+    "APPROVED",
+    "CERTIFIED",
+    "PASSED INSPECTION",
+    "CODE COMPLIANT",
+    "مطابق",
+    "معتمد",
+    "آمن"
+  ],
+  "status_bar_fields": [
+    "current_revision",
+    "selected_level",
+    "ui_mode",
+    "navigation_mode",
+    "unsaved_changes",
+    "issue_counts",
+    "preview_status"
+  ],
+  "camera_presets": [
+    "TOP",
+    "FRONT",
+    "BACK",
+    "LEFT",
+    "RIGHT",
+    "PERSPECTIVE",
+    "FIT_BUILDING",
+    "FIT_SELECTION",
+    "HOME"
+  ],
+  "camera_note": "A camera preset is display state. It changes no project data.",
+  "visibility_actions": [
+    "ISOLATE_SELECTED",
+    "HIDE_SELECTED",
+    "SHOW_ALL"
+  ],
+  "section_tool": {
+    "implemented": true,
+    "kind": "VIEWPORT_ONLY",
+    "note": "A section plane clips what is drawn. Cut geometry is never interpreted as an engineering modification."
+  },
+  "measurement_kinds": [
+    "VIEWPORT_MEASUREMENT",
+    "CANONICAL_GEOMETRY_MEASUREMENT",
+    "WALKING_DISTANCE"
+  ],
+  "measurement_labels": {
+    "VIEWPORT_MEASUREMENT": {
+      "en": "Viewport measurement",
+      "ar": "قياس في العرض"
+    },
+    "CANONICAL_GEOMETRY_MEASUREMENT": {
+      "en": "Model geometry measurement",
+      "ar": "قياس من هندسة النموذج"
+    },
+    "WALKING_DISTANCE": {
+      "en": "Walking distance",
+      "ar": "مسافة سير"
+    }
+  },
+  "measurement_note": "A viewport measurement is a straight line between two picked points. It is never presented as a verified walking distance, and a PARTIAL distance result is never shown as a complete one.",
+  "path_overlay_note": "A navigation or egress path is a temporary overlay of derived facts: door transitions, vertical transitions and the elements involved. It is never labelled a safe, approved or code-compliant route.",
+  "requirement_classes": [
+    "USER_REQUESTED",
+    "AI_INFERENCE",
+    "SYSTEM_DEFAULT",
+    "REPRESENTED_ALTERNATIVELY",
+    "EXCLUDED",
+    "UNRESOLVED"
+  ],
+  "coverage_note": "Coverage is reported per requirement class. The workspace never states that everything requested was implemented; unresolved requirements are listed separately and counted.",
+  "forbidden_coverage_words": [
+    "fully implemented",
+    "all requirements met",
+    "complete coverage",
+    "100% covered",
+    "كل المتطلبات مُنفّذة",
+    "تغطية كاملة"
+  ],
+  "create_project_steps": [
+    "NAME",
+    "PROGRAM",
+    "REQUIREMENTS",
+    "CONTEXT",
+    "GENERATE"
+  ],
+  "generation_stages": [
+    "UNDERSTANDING_REQUIREMENTS",
+    "BUILDING_SEMANTIC_MODEL",
+    "VALIDATING_MODEL",
+    "PREPARING_SCENE"
+  ],
+  "generation_note": "Stages are named truthfully and reported as they complete. No percentage is displayed unless the progress behind it is actually measurable.",
+  "empty_state_actions": [
+    "CREATE_PROJECT",
+    "OPEN_PROJECT",
+    "IMPORT_PROJECT"
+  ],
+  "empty_state_note": "No demo project is inserted automatically.",
+  "export_kinds": [
+    "PROJECT_JSON",
+    "GLB",
+    "SNAPSHOT_PNG",
+    "REVISION_HISTORY_JSON",
+    "ISSUE_REPORT_JSON"
+  ],
+  "export_labels": {
+    "PROJECT_JSON": {
+      "en": "Project JSON",
+      "ar": "بيانات المشروع JSON"
+    },
+    "GLB": {
+      "en": "3D model (GLB)",
+      "ar": "نموذج ثلاثي الأبعاد GLB"
+    },
+    "SNAPSHOT_PNG": {
+      "en": "Viewport snapshot",
+      "ar": "لقطة من العرض"
+    },
+    "REVISION_HISTORY_JSON": {
+      "en": "Revision history",
+      "ar": "سجل المراجعات"
+    },
+    "ISSUE_REPORT_JSON": {
+      "en": "Issue report",
+      "ar": "تقرير الملاحظات"
+    }
+  },
+  "export_default_source": "COMMITTED",
+  "export_sources": [
+    "COMMITTED",
+    "PREVIEW"
+  ],
+  "export_note": "An export is taken from the committed revision by default. A preview export is permitted only when it is labelled PREVIEW in both the filename and the embedded metadata. No export implies certification.",
+  "snapshot_metadata_fields": [
+    "project_name",
+    "revision_id",
+    "model_hash",
+    "view",
+    "source",
+    "created_at"
+  ],
+  "assistant_capabilities": [
+    "EXPLAIN_ELEMENT",
+    "EXPLAIN_ISSUE",
+    "FIND_ELEMENT",
+    "PROPOSE_EDIT",
+    "SUMMARISE_PROJECT"
+  ],
+  "assistant_note": "The assistant reads derived facts and may propose an authoring command. It has no write authority: a proposal is not a commit, and applying one still passes the full Phase 5 validation, revision guard and explicit confirmation.",
+  "assistant_claim_classes": [
+    "MODEL_FACT",
+    "DERIVED_FACT",
+    "INFERENCE",
+    "UNKNOWN",
+    "RULE_RESULT"
+  ],
+  "assistant_claim_note": "Every statement the assistant makes is tagged with what kind of claim it is. An inference is never presented as a model fact, and a rule result is never invented.",
+  "reference_kinds": [
+    "STYLE",
+    "MATERIAL",
+    "FURNITURE",
+    "LIGHTING",
+    "LANDSCAPE"
+  ],
+  "reference_scopes": [
+    "PROJECT",
+    "BUILDING",
+    "LEVEL",
+    "SPACE"
+  ],
+  "reference_unsafe_patterns": [
+    "javascript:",
+    "data:text/html",
+    "<script",
+    "</script",
+    "<img",
+    "<iframe",
+    "<svg",
+    "<object",
+    "<embed",
+    "onerror=",
+    "onload=",
+    "onclick=",
+    "eval(",
+    "new Function"
+  ],
+  "allowed_reference_schemes": [
+    "https",
+    "http",
+    "data:image",
+    "blob",
+    "relative"
+  ],
+  "reference_scheme_note": "a reference source is accepted only on an allowed scheme and, when relative, only on path characters. An allow-list refuses an unforeseen executable value by default rather than waiting for its pattern to be added to a deny-list.",
+  "reference_unsafe_note": "A reference source or caption has no legitimate need for markup or script. These patterns are refused outright, in addition to the escaping the workspace applies to every rendered string.",
+  "reference_note": "A visual reference is visual context. It is stored in the presentation context beside the project, never inside the canonical model, and it never becomes engineering geometry or an engineering property. No dimension is inferred from an image in this phase.",
+  "visual_intent_fields": [
+    "style",
+    "mood",
+    "materials_preference",
+    "lighting_preference",
+    "landscape_preference"
+  ],
+  "visual_intent_note": "Visual intent is presentation context. It has no engineering meaning and never enters the model hash.",
+  "photorealistic_pipeline": [
+    "ENGINEERING_MODEL",
+    "VISUAL_SCENE",
+    "CAMERA",
+    "CONTROL_BUFFERS",
+    "VISUAL_ENHANCEMENT",
+    "PHOTOREALISTIC_IMAGE"
+  ],
+  "photorealistic_implemented": false,
+  "photorealistic_note": "The path is declared so the later phase has a clean place to attach. It is not implemented here. A future image remains a derived presentation output: no image-generation result may alter engineering geometry, and the control buffers exist precisely so geometry can be held fixed.",
+  "shortcuts": {
+    "UNDO": "Mod+Z",
+    "REDO": "Mod+Shift+Z",
+    "CANCEL": "Escape",
+    "FIT_SELECTION": "f",
+    "REQUEST_DELETE": "Delete",
+    "TOGGLE_EDIT": "e",
+    "TOGGLE_TREE": "b",
+    "TOGGLE_INSPECTOR": "i"
+  },
+  "shortcut_note": "Delete requests a delete action; it never deletes directly. Where the transaction requires a dependency confirmation, the dialog still appears.",
+  "context_menu_actions": [
+    "INSPECT",
+    "EDIT",
+    "ISOLATE",
+    "HIDE",
+    "FIT_SELECTION",
+    "SHOW_DEPENDENCIES"
+  ],
+  "toast_kinds": [
+    "REVISION_COMMITTED",
+    "PREVIEW_CANCELLED",
+    "PROJECT_EXPORTED",
+    "COMMAND_REJECTED",
+    "PROJECT_SAVED",
+    "PROJECT_LOADED"
+  ],
+  "toast_note": "A toast reports that something transient happened. Engineering detail belongs in a panel that stays on screen, never in text that disappears.",
+  "error_detail_fields": [
+    "code",
+    "explanation",
+    "target",
+    "constraint"
+  ],
+  "error_note": "A rejected command is explained with its declared code, a human sentence, the target and the relevant constraint. No stack trace is shown to a user.",
+  "languages": [
+    "ar",
+    "en"
+  ],
+  "default_language": "ar",
+  "direction": {
+    "ar": "rtl",
+    "en": "ltr"
+  },
+  "language_note": "Switching language preserves the selection, the camera, the current project and a safe preview. The project is never reloaded merely to change language.",
+  "display_units": [
+    "METRIC_M",
+    "METRIC_CM",
+    "IMPERIAL_FT"
+  ],
+  "canonical_unit": "METRIC_M",
+  "unit_note": "The canonical engineering unit is the metre and does not change. A display unit converts what is shown; it never writes a converted or display-rounded value back into the model. Only an explicit user edit changes a stored value.",
+  "display_decimals": 2,
+  "degraded_mode_note": "If WebGL or the 3D engine fails, the workspace shows a clear degraded-mode message and keeps the project data, tree, inspector, issues and history usable. It does not blank the screen and does not crash.",
+  "loading_stages": [
+    "ENGINE",
+    "MODEL_COMPILATION",
+    "SCENE",
+    "ASSETS"
+  ],
+  "accessibility": {
+    "keyboard_navigable_panels": [
+      "PROJECT_TREE",
+      "INSPECTOR",
+      "TOP_BAR",
+      "ISSUE_CENTER",
+      "HISTORY"
+    ],
+    "requires_visible_focus": true,
+    "requires_aria_labels_on_icon_buttons": true,
+    "min_touch_target_px": 44,
+    "claims_formal_compliance": false,
+    "note": "Keyboard navigation, visible focus, ARIA labels on icon-only controls and adequate hit targets are implemented and tested. No formal accessibility conformance is claimed."
+  },
+  "persistence": {
+    "kind": "LOCAL_DOWNLOAD",
+    "session_recovery": "LOCAL_BROWSER",
+    "cloud": false,
+    "note": "Saving writes a downloadable canonical project file. Optional recovery uses browser-local storage and is labelled local browser recovery. Nothing here is a cloud backup and it is never described as one."
+  },
+  "unload_warning_note": "If a commit has happened and the project has not been exported, the workspace asks the browser to confirm before unloading. It never claims the work was saved somewhere it was not.",
+  "performance_metrics": [
+    "workspace_load_ms",
+    "tree_build_ms",
+    "selection_latency_ms",
+    "inspector_open_ms",
+    "issue_panel_ms",
+    "preview_ms",
+    "commit_ms"
+  ],
+  "performance_note": "These are measured. Frames per second and GPU behaviour are not measured here and are not reported.",
+  "screenshot_states": [
+    "EMPTY",
+    "PROJECT_GENERATED",
+    "ROOM_SELECTED",
+    "EDIT_PREVIEW",
+    "ISSUE_SELECTED",
+    "MOBILE",
+    "RTL"
+  ],
+  "screenshot_note": "Screenshots are captured as product regression evidence for these states. No claim of pixel identity across GPU environments is made."
+}

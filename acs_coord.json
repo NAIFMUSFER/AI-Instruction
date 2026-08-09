@@ -1,0 +1,163 @@
+{
+ "schema": "acs.coord/1",
+ "detector_version": "acs-coord-detector/1.0.0",
+ "note": "MULTIDISCIPLINARY COORDINATION — DETECTION AND TRACEABILITY ONLY. This layer reads the compiled architectural, structural, MEP and fire/life-safety models and reports where they conflict. It performs NO auto-fix and NO design: it never moves an MEP route, resizes a beam, moves a door, creates a penetration or an opening, sizes a sleeve, reroutes a pipe or duct, or repositions equipment. It draws NO code, safety or adequacy conclusion. A clash is a coordination finding about modelled geometry and references — nothing more.",
+ "derivation_note": "the coordination model is DERIVED. It is never written back into the architectural, structural, MEP or FLS models, and compiling it leaves every one of them byte-identical.",
+ "disciplines": [
+  "ARCHITECTURE",
+  "STRUCTURE",
+  "MEP",
+  "FLS"
+ ],
+ "clash_types": [
+  "HARD_CLASH",
+  "CLEARANCE_CLASH",
+  "OPENING_REQUIRED",
+  "PENETRATION_UNRESOLVED",
+  "SEMANTIC_CONFLICT",
+  "OUTSIDE_HOST",
+  "DUPLICATE_OCCUPANCY",
+  "INVALID_REFERENCE"
+ ],
+ "clash_type_note": "a deliberately small vocabulary. HARD_CLASH is a real volume intersection in resolved world coordinates. CLEARANCE_CLASH exists only where the model states a clearance. OPENING_REQUIRED is a coordination finding, never an instruction and never an opening. PENETRATION_UNRESOLVED means a declared penetration does not resolve or does not actually cover the crossing it claims.",
+ "clash_statuses": [
+  "OPEN",
+  "ACKNOWLEDGED",
+  "RESOLVED_EXTERNALLY",
+  "FALSE_POSITIVE",
+  "OBSOLETE"
+ ],
+ "status_note": "RESOLVED is deliberately absent as an automatic outcome. A clash that no longer appears in a newer snapshot is classified RESOLVED_BY_MODEL_CHANGE or OBSOLETE — never 'engineered correctly'. Only a human decision produces ACKNOWLEDGED, RESOLVED_EXTERNALLY or FALSE_POSITIVE.",
+ "reconciliation_states": [
+  "NEW",
+  "PERSISTING",
+  "RESOLVED_BY_MODEL_CHANGE",
+  "OBSOLETE"
+ ],
+ "reconciliation_note": "RESOLVED_BY_MODEL_CHANGE states only that the geometry that produced the finding is no longer present. It asserts nothing about whether the change was correct, adequate or engineered.",
+ "severities": [
+  "INFO",
+  "WARNING",
+  "ERROR"
+ ],
+ "severity_note": "coordination severities reflect data and model integrity only. UNSAFE / FATAL / CODE VIOLATION are deliberately absent and are never justified by this layer.",
+ "clash_severity": {
+  "HARD_CLASH": "WARNING",
+  "CLEARANCE_CLASH": "INFO",
+  "OPENING_REQUIRED": "WARNING",
+  "PENETRATION_UNRESOLVED": "WARNING",
+  "SEMANTIC_CONFLICT": "ERROR",
+  "OUTSIDE_HOST": "WARNING",
+  "DUPLICATE_OCCUPANCY": "INFO",
+  "INVALID_REFERENCE": "ERROR"
+ },
+ "snapshot_statuses": [
+  "CURRENT",
+  "STALE_MODEL_CHANGED",
+  "UNVERIFIABLE"
+ ],
+ "discipline_pairs": [
+  [
+   "ARCHITECTURE",
+   "STRUCTURE"
+  ],
+  [
+   "ARCHITECTURE",
+   "MEP"
+  ],
+  [
+   "ARCHITECTURE",
+   "FLS"
+  ],
+  [
+   "STRUCTURE",
+   "MEP"
+  ],
+  [
+   "STRUCTURE",
+   "FLS"
+  ],
+  [
+   "MEP",
+   "FLS"
+  ]
+ ],
+ "pair_note": "only cross-discipline pairs are tested. Two elements of the same discipline meeting each other is that discipline's own business and is already validated inside its own layer; testing it here would manufacture noise rather than coordination findings.",
+ "element_kinds": [
+  "ARCH_WALL",
+  "ARCH_OPENING",
+  "ARCH_SLAB",
+  "ARCH_VOID",
+  "ARCH_CORE",
+  "STRUCT_COLUMN",
+  "STRUCT_BEAM",
+  "STRUCT_SLAB",
+  "STRUCT_WALL",
+  "STRUCT_FOUNDATION",
+  "STRUCT_CORE",
+  "MEP_SEGMENT",
+  "MEP_EQUIPMENT",
+  "MEP_TERMINAL",
+  "MEP_RISER",
+  "FLS_DEVICE",
+  "FLS_SIGN",
+  "FLS_ASSEMBLY_POINT"
+ ],
+ "geometry_note": "every element is resolved into one world-space axis-aligned bounding box plus, where the element is a rotated box, its centre, half-extents and rotation about Y. The building position and rotation, the grid or element rotation and the level elevation are all applied before any test. There is no world-axis shortcut anywhere. Elements that represent negative space carry solid=false and are indexed but never act as clash bodies.",
+ "broad_phase": "uniform spatial hash. Every element's world AABB is inserted into every grid cell it overlaps; candidate pairs are the cross-discipline pairs sharing at least one cell, deduplicated. Cell size is fixed at 2 m. Complexity is O(n·k) to build, where k is the number of cells an element spans, and O(sum over cells of m^2) to enumerate, which is near-linear for the sparse, mostly-small elements this platform produces. It degenerates toward O(n^2) only if many large elements overlap the same cells; the benchmark records the actual candidate-pair count so the behaviour is visible rather than assumed.",
+ "narrow_phase": "world AABB overlap with a strictly positive overlap volume, then, when both elements carry an oriented box, a separating-axis test on the two Y-rotated boxes. No mesh boolean operation is performed and none is needed for the box and swept-segment geometry this platform emits. Proximity alone never produces a HARD_CLASH.",
+ "exemption_kinds": [
+  "OPENING_IN_ITS_HOST_WALL",
+  "SEGMENT_THROUGH_EXISTING_OPENING",
+  "SEGMENT_IN_DECLARED_PENETRATION",
+  "COLUMN_THROUGH_ITS_OWN_LEVEL_SLAB",
+  "BEAM_MEETS_COLUMN_AT_NODE",
+  "SAME_SOURCE_ELEMENT",
+  "FLS_REFERENCES_MEP_ELEMENT",
+  "ELEMENT_INSIDE_DECLARED_VOID_OR_CORE"
+ ],
+ "exemption_note": "exemptions are semantic, never type-blind. Each one is justified by an explicit relationship or an explicit declaration in the models — an opening declares its host wall, a penetration declares its host and service, a beam endpoint coincides with a column axis, an FLS device references the MEP element it was adapted from, and a core or floor void is declared negative space rather than matter. No clash is dropped merely because of the kinds of the two elements involved, and every applied exemption is recorded on the pair it suppressed, with both element ids, so nothing is silently hidden.",
+ "penetration_note": "a represented penetration is not a structurally approved opening, is not firestopped and is not code compliant. It only records that the model states an opening exists where a service crosses a host, and this layer additionally checks that the stated penetration geometrically covers the crossing it claims.",
+ "clearance_note": "a clearance clash is reported only where an element explicitly states clearance_m. No service, maintenance or code clearance is ever invented, and with no stated clearance there is no clearance clash.",
+ "identity_note": "a clash id is deterministic: sha256 over the canonical tuple (type, discipline_a, element_a, discipline_b, element_b), truncated to 16 hex characters and prefixed clash_. The same conflict in the same two elements always produces the same id, in both languages, which is what makes reconciliation between revisions possible.",
+ "evidence_note": "every clash carries its geometric evidence — the two world AABBs, the intersection box and its volume — plus the source element ids, the two discipline models, the model revision hash and the detector version. No clash is ever produced without geometric or reference evidence, and nothing here is AI-generated.",
+ "navigation_note": "coordination findings do NOT affect navigation, egress, pathfinding or walking distance in this phase. A column that geometrically blocks a route is reported as a clash and nothing is silently rerouted. Obstacle-aware navigation is a future explicit phase.",
+ "forbidden_claims": [
+  "unsafe",
+  "fatal",
+  "code_violation",
+  "non_compliant",
+  "compliant",
+  "auto_fixed",
+  "rerouted",
+  "resized",
+  "resolved_automatically",
+  "firestopped",
+  "structurally_adequate",
+  "opening_created",
+  "sleeve_size",
+  "optimised",
+  "optimized"
+ ],
+ "grid_cell_m": 2.0,
+ "id_patterns": {
+  "clash": "clash_<sha256_16>",
+  "penetration": "<bid>.coord.pen_<n>",
+  "snapshot": "coord_<model_hash_16>"
+ },
+ "rule_inputs": [
+  "coordination.clash.count",
+  "coordination.clash.count_by_type",
+  "coordination.issue.exists",
+  "coordination.penetration.exists",
+  "coordination.penetration.count"
+ ],
+ "rule_note": "factual inputs only. No regulatory rule exists here, a clash count is never compared to a threshold, and missing data stays missing.",
+ "no_generator_note": "this phase ships NO clash resolution, NO routing, NO optimisation, NO opening or sleeve creation and NO auto-fix of any kind. It answers what conflicts exist, never how they should be redesigned.",
+ "void_note": "ARCH_VOID and ARCH_CORE are declared negative space, not matter: the architectural layer itself punches a floor void through every slab a core passes. An element lying inside one of them therefore has nothing to intersect, and the pair is recorded as ELEMENT_INSIDE_DECLARED_VOID_OR_CORE in the suppressed list instead of being reported as a hard clash or being dropped in silence. This layer draws no conclusion about whether that element belongs there.",
+ "geometry_confidence": [
+  "stated",
+  "display_fallback"
+ ],
+ "geometry_confidence_note": "every clash declares whether both sides were sized from stated model dimensions or whether at least one side fell back to a render dimension. A display fallback is never promoted to an engineering dimension, and a clash resting on one is reported as found and labelled, never silently dropped and never presented as a measured conflict."
+}

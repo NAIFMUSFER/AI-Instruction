@@ -1,0 +1,681 @@
+{
+  "schema": "acs.bim/1",
+  "version": "1.0.0",
+  "compiler_version": "acs-bim/1.0.0",
+  "note": "a controlled BIM exchange subset. The canonical engineering model remains the sole internal engineering authority; external BIM data is EXTERNAL_INPUT until explicitly committed through the authoring path.",
+  "external_bim_is_model_truth": false,
+  "direct_import_write_allowed": false,
+  "requires_explicit_commit": true,
+  "writes_via_authoring_path": true,
+  "writes_to_model": false,
+  "remote_dependency": false,
+  "remote_reference_policy": "NEVER_FETCH",
+  "import_pipeline": [
+    "EXTERNAL_BIM_FILE",
+    "BIM_PARSER",
+    "IMPORT_STAGING_MODEL",
+    "SCHEMA_AND_SECURITY_VALIDATION",
+    "SEMANTIC_MAPPING",
+    "DIFF_CONFLICT_LOSS_ANALYSIS",
+    "IMPORT_PROPOSAL",
+    "EXPLICIT_USER_ACCEPTANCE",
+    "AUTHORING_REVISION_PATH",
+    "CANONICAL_ENGINEERING_MODEL"
+  ],
+  "export_pipeline": [
+    "CANONICAL_ENGINEERING_MODEL",
+    "BIM_MAPPING",
+    "EXCHANGE_MODEL",
+    "VALIDATION",
+    "SERIALISATION",
+    "BIM_EXPORT_FILE"
+  ],
+  "exchange_formats": [
+    "IFC_SPF"
+  ],
+  "format_note": "IFC_SPF is an ISO-10303-21 STEP physical file. Nothing else in this system is called IFC; the internal normalised form is named IFC_NORMALIZED_EXCHANGE and is never presented as an IFC file.",
+  "intermediate_form": "IFC_NORMALIZED_EXCHANGE",
+  "supported_schemas": [
+    "IFC4"
+  ],
+  "readable_schemas": [
+    "IFC4",
+    "IFC2X3"
+  ],
+  "writable_schemas": [
+    "IFC4"
+  ],
+  "schema_note": "IFC4 is written and read. IFC2X3 is accepted by the reader for the supported entity subset and reported as PARTIALLY_SUPPORTED; it is never written. An unknown schema is refused, never reinterpreted.",
+  "support_levels": [
+    "SUPPORTED",
+    "PARTIALLY_SUPPORTED",
+    "PRESERVED_OPAQUE",
+    "UNSUPPORTED",
+    "REFUSED"
+  ],
+  "entity_support": [
+    {
+      "entity": "IfcProject",
+      "support": "SUPPORTED",
+      "maps_to": "project",
+      "note": "project root, units and context"
+    },
+    {
+      "entity": "IfcSite",
+      "support": "SUPPORTED",
+      "maps_to": "site",
+      "note": "site container and placement"
+    },
+    {
+      "entity": "IfcBuilding",
+      "support": "SUPPORTED",
+      "maps_to": "building",
+      "note": "building container and placement"
+    },
+    {
+      "entity": "IfcBuildingStorey",
+      "support": "SUPPORTED",
+      "maps_to": "level",
+      "note": "storey container and elevation"
+    },
+    {
+      "entity": "IfcSpace",
+      "support": "SUPPORTED",
+      "maps_to": "space",
+      "note": "space name, footprint, elevation, height"
+    },
+    {
+      "entity": "IfcWallStandardCase",
+      "support": "SUPPORTED",
+      "maps_to": "wall",
+      "note": "axis line, height, thickness"
+    },
+    {
+      "entity": "IfcWall",
+      "support": "PARTIALLY_SUPPORTED",
+      "maps_to": "wall",
+      "note": "mapped when an axis and height are recoverable; otherwise lossy"
+    },
+    {
+      "entity": "IfcSlab",
+      "support": "SUPPORTED",
+      "maps_to": "slab",
+      "note": "outline, elevation, thickness, predefined type"
+    },
+    {
+      "entity": "IfcRoof",
+      "support": "PARTIALLY_SUPPORTED",
+      "maps_to": "slab",
+      "note": "mapped as a roof slab when a flat outline is recoverable"
+    },
+    {
+      "entity": "IfcDoor",
+      "support": "SUPPORTED",
+      "maps_to": "door",
+      "note": "host wall, offset along wall, width, height"
+    },
+    {
+      "entity": "IfcWindow",
+      "support": "SUPPORTED",
+      "maps_to": "window",
+      "note": "host wall, offset along wall, width, height, sill"
+    },
+    {
+      "entity": "IfcStair",
+      "support": "SUPPORTED",
+      "maps_to": "object",
+      "note": "bounding placement and footprint only"
+    },
+    {
+      "entity": "IfcStairFlight",
+      "support": "PARTIALLY_SUPPORTED",
+      "maps_to": "object",
+      "note": "aggregated into its parent stair; no tread or riser geometry"
+    },
+    {
+      "entity": "IfcOpeningElement",
+      "support": "SUPPORTED",
+      "maps_to": "opening",
+      "note": "void in a wall, resolved to its filling"
+    },
+    {
+      "entity": "IfcColumn",
+      "support": "PRESERVED_OPAQUE",
+      "maps_to": null,
+      "note": "placement and identity kept; not mapped"
+    },
+    {
+      "entity": "IfcBeam",
+      "support": "PRESERVED_OPAQUE",
+      "maps_to": null,
+      "note": "placement and identity kept; not mapped"
+    },
+    {
+      "entity": "IfcFurnishingElement",
+      "support": "PRESERVED_OPAQUE",
+      "maps_to": null,
+      "note": "kept as external metadata"
+    },
+    {
+      "entity": "IfcFlowTerminal",
+      "support": "PRESERVED_OPAQUE",
+      "maps_to": null,
+      "note": "kept as external metadata; MEP is not mapped"
+    },
+    {
+      "entity": "IfcProxy",
+      "support": "UNSUPPORTED",
+      "maps_to": null,
+      "note": "no canonical meaning can be established"
+    },
+    {
+      "entity": "IfcBuildingElementProxy",
+      "support": "UNSUPPORTED",
+      "maps_to": null,
+      "note": "no canonical meaning can be established"
+    }
+  ],
+  "relationship_support": [
+    {
+      "relationship": "IfcRelAggregates",
+      "support": "SUPPORTED",
+      "note": "spatial decomposition: project to site to building to storey"
+    },
+    {
+      "relationship": "IfcRelContainedInSpatialStructure",
+      "support": "SUPPORTED",
+      "note": "element containment in a storey or space"
+    },
+    {
+      "relationship": "IfcRelVoidsElement",
+      "support": "SUPPORTED",
+      "note": "opening cut into a wall"
+    },
+    {
+      "relationship": "IfcRelFillsElement",
+      "support": "SUPPORTED",
+      "note": "door or window filling an opening"
+    },
+    {
+      "relationship": "IfcRelDefinesByProperties",
+      "support": "PARTIALLY_SUPPORTED",
+      "note": "declared property mappings only; everything else stays external"
+    },
+    {
+      "relationship": "IfcRelAssociatesMaterial",
+      "support": "PRESERVED_OPAQUE",
+      "note": "external BIM material only; never an engineering material"
+    }
+  ],
+  "import_states": [
+    "STAGED",
+    "VALIDATED",
+    "MAPPED",
+    "DIFFED",
+    "PROPOSED",
+    "COMMITTED",
+    "REJECTED",
+    "BLOCKED",
+    "STALE_TARGET_MODEL"
+  ],
+  "export_states": [
+    "BUILT",
+    "VALIDATED",
+    "SERIALISED",
+    "CURRENT",
+    "STALE_SOURCE_MODEL"
+  ],
+  "proposal_states": [
+    "PENDING",
+    "ACCEPTED",
+    "REJECTED",
+    "BLOCKED"
+  ],
+  "import_command_source": "IMPORT",
+  "import_command_map": {
+    "PROPERTY_CHANGED.name": "RENAME_SPACE"
+  },
+  "import_command_note": "an accepted proposal is committed only as a command already declared by the phase 5 authoring vocabulary, carrying the phase 5 command source IMPORT. Phase 8 invents no command type and no command source. A proposal with no declared command stays unsupported and is never committed.",
+  "mapping_classes": [
+    "PARAMETRIC_MAPPED",
+    "BOUNDING_GEOMETRY_ONLY",
+    "TESSELLATED_PRESERVED",
+    "OPAQUE_GEOMETRY",
+    "UNSUPPORTED_GEOMETRY"
+  ],
+  "mapping_basis": [
+    "RECORDED_MAPPING",
+    "SOURCE_GLOBAL_ID",
+    "EXPORTED_IDENTIFIER",
+    "SEMANTIC_AND_GEOMETRY",
+    "INFERRED_FALLBACK",
+    "UNMATCHED"
+  ],
+  "matching_precedence": [
+    "RECORDED_MAPPING",
+    "SOURCE_GLOBAL_ID",
+    "EXPORTED_IDENTIFIER",
+    "SEMANTIC_AND_GEOMETRY",
+    "UNMATCHED"
+  ],
+  "matching_note": "matching never falls back to nearest coordinate alone. A geometric match must also agree on semantic type and storey, and its basis is always reported. An ambiguous match stays unresolved.",
+  "loss_classes": [
+    "NO_LOSS",
+    "NON_CANONICAL_METADATA_LOSS",
+    "PROPERTY_LOSS",
+    "RELATIONSHIP_LOSS",
+    "GEOMETRY_APPROXIMATION",
+    "SEMANTIC_DEGRADATION",
+    "UNSUPPORTED_ENTITY",
+    "CRITICAL_GEOMETRY_LOSS"
+  ],
+  "critical_loss_classes": [
+    "CRITICAL_GEOMETRY_LOSS"
+  ],
+  "loss_note": "a critical geometry loss can never report PASS.",
+  "conflict_classes": [
+    "DUPLICATE_EXTERNAL_ID",
+    "AMBIGUOUS_TARGET_MATCH",
+    "UNSUPPORTED_ENTITY",
+    "UNSUPPORTED_GEOMETRY",
+    "UNIT_CONFLICT",
+    "PLACEMENT_CONFLICT",
+    "HOST_CONFLICT",
+    "RELATIONSHIP_CONFLICT",
+    "PROPERTY_CONFLICT",
+    "SCHEMA_CONFLICT",
+    "REVISION_CONFLICT"
+  ],
+  "blocking_conflicts": [
+    "DUPLICATE_EXTERNAL_ID",
+    "UNIT_CONFLICT",
+    "SCHEMA_CONFLICT",
+    "REVISION_CONFLICT",
+    "PLACEMENT_CONFLICT"
+  ],
+  "diff_types": [
+    "OBJECT_ADDED",
+    "OBJECT_REMOVED",
+    "OBJECT_MOVED",
+    "OBJECT_RESIZED",
+    "PROPERTY_CHANGED",
+    "LEVEL_CHANGED",
+    "HOST_CHANGED",
+    "RELATIONSHIP_CHANGED",
+    "TYPE_CHANGED",
+    "UNSUPPORTED_EXTERNAL_OBJECT"
+  ],
+  "length_units": {
+    "MILLI_METRE": 0.001,
+    "CENTI_METRE": 0.01,
+    "DECI_METRE": 0.1,
+    "METRE": 1.0,
+    "KILO_METRE": 1000.0,
+    "INCH": 0.0254,
+    "FOOT": 0.3048,
+    "YARD": 0.9144,
+    "MILE": 1609.344
+  },
+  "angle_units": {
+    "RADIAN": 1.0,
+    "DEGREE": 0.017453292519943295
+  },
+  "canonical_length_unit": "METRE",
+  "canonical_angle_unit": "DEGREE",
+  "unit_policy": "DECLARED_ONLY",
+  "unit_note": "a length or angle unit must be declared by the file. A missing or ambiguous unit produces BIM_UNIT_UNRESOLVED and is never guessed, and conversion is applied exactly once.",
+  "unstated_dimension_policy": "DECLARE_IN_FILE",
+  "unstated_thickness_m": 0.2,
+  "unstated_property_set": "ACS_SourceCompleteness",
+  "unstated_properties": [
+    "ThicknessIsModelStated",
+    "HeightIsModelStated"
+  ],
+  "unstated_note": "IFC geometry cannot be written without a thickness. Where the canonical model states none, a declared placeholder is written AND the file records ThicknessIsModelStated = FALSE in a property set, so the reader restores the unknown rather than adopting the placeholder. Nothing is guessed into canonical semantics.",
+  "coordinate_policy": "RESOLVE_TO_PROJECT_WORLD",
+  "placement_chain": [
+    "object",
+    "space",
+    "storey",
+    "building",
+    "site",
+    "project"
+  ],
+  "coordinate_note": "every placement is resolved through its parent chain into one deterministic project world system. A non-finite or cyclic placement is refused.",
+  "georeference_states": [
+    "LOCAL_ONLY",
+    "SOURCE_GEOREFERENCE_PRESENT",
+    "GEOREFERENCE_PARTIAL",
+    "GEOREFERENCE_UNRESOLVED"
+  ],
+  "georeference_note": "georeferencing is preserved separately and is never treated as equivalent to local model coordinates. No geospatial accuracy is claimed.",
+  "geospatial_accuracy_claimed": false,
+  "property_classes": [
+    "CANONICAL_MAPPABLE_PROPERTY",
+    "EXTERNAL_METADATA",
+    "UNSUPPORTED_PROPERTY",
+    "SECURITY_REFUSED_PROPERTY"
+  ],
+  "canonical_property_map": {
+    "Pset_WallCommon.LoadBearing": {
+      "target": "wall.load_bearing",
+      "type": "boolean"
+    },
+    "Pset_WallCommon.IsExternal": {
+      "target": "wall.is_external",
+      "type": "boolean"
+    },
+    "Pset_SpaceCommon.GrossPlannedArea": {
+      "target": "space.gross_area_m2",
+      "type": "length2"
+    },
+    "Pset_DoorCommon.IsExternal": {
+      "target": "door.is_external",
+      "type": "boolean"
+    }
+  },
+  "text_only_fields": [
+    "name",
+    "long_name",
+    "description",
+    "object_type",
+    "tag"
+  ],
+  "inert_text_note": "a text field is never an object key, never a canonical field name and never markup. A label that merely resembles a prototype key or a template expression — __proto__, constructor, prototype, {{7*7}} — is therefore carried through as inert text rather than refused, because a real external file may legitimately name a room that way and refusing it would reject a valid file for the content of a label. Refusal by unsafe_patterns is reserved for strings that are executable, fetchable or path-traversing. The guarantee for inert text is positive and tested: it appears only as a value in a text_only_field, it never becomes a key at any depth of the staging record, it never creates a canonical field, and it is written to the document as text, never as markup.",
+  "property_note": "only a declared mapping may enter canonical semantics. Every other property stays external metadata under a fixed key; no property name can create a canonical field, and no property name may be a prototype key.",
+  "forbidden_property_keys": [
+    "__proto__",
+    "constructor",
+    "prototype",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__"
+  ],
+  "material_classes": [
+    "EXTERNAL_BIM_MATERIAL",
+    "CANONICAL_ENGINEERING_MATERIAL",
+    "VISUAL_MATERIAL"
+  ],
+  "material_promotion_allowed": false,
+  "material_note": "an external BIM material name is never evidence of fire resistance, structural grade, thermal performance or code compliance. No certification claim is generated from a material name.",
+  "classification_authority": false,
+  "classification_note": "external classifications and predefined types are preserved as metadata. They gain engineering authority only through a declared mapping rule.",
+  "space_purpose_inference": false,
+  "space_purpose_note": "a space name is never used to infer purpose or to authorise the creation of equipment. Phase 7's non-invention principle stands.",
+  "identifier_fields": [
+    "canonical_id",
+    "external_id",
+    "external_global_id",
+    "source_entity_id"
+  ],
+  "global_id_length": 22,
+  "global_id_alphabet": "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_$abcdefghijklmnopqrstuvwxyz",
+  "identifier_note": "an external GlobalId never becomes the canonical identifier implicitly. Exported GlobalIds are derived deterministically from the model hash, the canonical object identifier and the exchange schema, so the same model always exports the same identifiers.",
+  "safe_id_pattern": "^[A-Za-z0-9._:@$\\-]{1,128}$",
+  "provenance_fields": [
+    "format",
+    "schema",
+    "global_id",
+    "entity_type",
+    "source_entity_id",
+    "source_file_hash",
+    "source_file_name",
+    "import_id",
+    "imported_at",
+    "parser_version",
+    "mapper_version"
+  ],
+  "export_manifest_fields": [
+    "export_id",
+    "model_hash",
+    "revision_id",
+    "schema",
+    "object_count",
+    "level_count",
+    "space_count",
+    "unsupported_count",
+    "losses",
+    "warnings",
+    "file_hash",
+    "generator_version",
+    "config_hash",
+    "generated_at",
+    "deterministic_fields",
+    "non_deterministic_fields"
+  ],
+  "export_deterministic_fields": [
+    "global_ids",
+    "entity_order",
+    "hierarchy",
+    "relationships",
+    "geometry",
+    "properties",
+    "file_body"
+  ],
+  "export_non_deterministic_fields": [
+    "generated_at"
+  ],
+  "determinism_note": "the exported body is byte-identical for the same model, revision and configuration. The only non-deterministic field is the generated-at stamp in the header, which is declared and is excluded from the body hash.",
+  "tolerances": {
+    "position_tolerance_m": 0.001,
+    "dimension_tolerance_m": 0.001,
+    "angle_tolerance_deg": 0.01,
+    "area_tolerance_m2": 0.01,
+    "elevation_tolerance_m": 0.001
+  },
+  "tolerance_note": "every numeric comparison uses one of these declared tolerances. No test carries its own epsilon, and none is loose enough to hide real model drift.",
+  "fidelity_classes": [
+    "PASS",
+    "WARNING",
+    "FAIL"
+  ],
+  "fidelity_dimensions": [
+    "semantic_fidelity",
+    "geometry_fidelity",
+    "relationship_fidelity",
+    "property_fidelity"
+  ],
+  "roundtrip_compared": [
+    "building_count",
+    "level_count",
+    "level_elevations",
+    "wall_count",
+    "wall_positions",
+    "wall_dimensions",
+    "door_count",
+    "door_positions",
+    "window_count",
+    "window_positions",
+    "slab_count",
+    "space_count",
+    "space_names",
+    "stair_count",
+    "containment",
+    "host_relationships"
+  ],
+  "limits": {
+    "max_file_bytes": 67108864,
+    "max_entity_count": 200000,
+    "max_relationship_count": 200000,
+    "max_string_length": 4096,
+    "max_property_count_per_entity": 256,
+    "max_placement_depth": 32,
+    "max_geometry_vertices": 200000,
+    "max_faces": 200000,
+    "max_spaces": 20000,
+    "max_levels": 512,
+    "max_objects": 200000,
+    "max_line_length": 1048576,
+    "max_list_length": 65536
+  },
+  "unsafe_patterns": [
+    "javascript:",
+    "data:text/html",
+    "<script",
+    "</script",
+    "<img",
+    "<iframe",
+    "<svg",
+    "<object",
+    "<embed",
+    "onerror=",
+    "onload=",
+    "onclick=",
+    "eval(",
+    "new Function",
+    "vbscript:",
+    "<!ENTITY",
+    "<!DOCTYPE",
+    "file://",
+    "\\u0000",
+    "../",
+    "..\\"
+  ],
+  "allowed_external_reference_schemes": [],
+  "security_note": "a BIM file is untrusted input. Strings are refused rather than sanitised, no parser path executes code, no external reference is fetched, and every traversal detects cycles.",
+  "audit_events": [
+    "IMPORT_STARTED",
+    "IMPORT_VALIDATED",
+    "IMPORT_MAPPED",
+    "IMPORT_DIFF_CREATED",
+    "IMPORT_PROPOSAL_ACCEPTED",
+    "IMPORT_PROPOSAL_REJECTED",
+    "IMPORT_COMMITTED",
+    "EXPORT_CREATED",
+    "EXPORT_VALIDATED"
+  ],
+  "audit_note": "audit records carry hashes, never raw payloads and never secrets.",
+  "severities": [
+    "INFO",
+    "WARNING",
+    "ERROR"
+  ],
+  "issue_codes": [
+    "BIM_INVALID_FILE",
+    "BIM_UNKNOWN_SCHEMA",
+    "BIM_UNSUPPORTED_ENTITY",
+    "BIM_UNSUPPORTED_GEOMETRY",
+    "BIM_INVALID_REFERENCE",
+    "BIM_DUPLICATE_ID",
+    "BIM_UNIT_UNRESOLVED",
+    "BIM_UNIT_INVALID",
+    "BIM_PLACEMENT_INVALID",
+    "BIM_PLACEMENT_CYCLE",
+    "BIM_CONTAINMENT_CYCLE",
+    "BIM_RELATIONSHIP_INVALID",
+    "BIM_AMBIGUOUS_MAPPING",
+    "BIM_HOST_UNRESOLVED",
+    "BIM_PROPERTY_UNSUPPORTED",
+    "BIM_PROPERTY_REFUSED",
+    "BIM_GEOMETRY_LOSS",
+    "BIM_RESOURCE_LIMIT_EXCEEDED",
+    "BIM_STALE_TARGET_MODEL",
+    "BIM_EXPORT_VALIDATION_FAILED",
+    "BIM_ROUNDTRIP_DRIFT",
+    "BIM_WALL_THICKNESS_UNRESOLVED",
+    "BIM_UNSAFE_STRING",
+    "BIM_EXTERNAL_REFERENCE_REFUSED",
+    "BIM_INVALID_IDENTIFIER",
+    "BIM_INVALID_NUMBER"
+  ],
+  "blocking_issue_codes": [
+    "BIM_INVALID_FILE",
+    "BIM_UNKNOWN_SCHEMA",
+    "BIM_DUPLICATE_ID",
+    "BIM_UNIT_UNRESOLVED",
+    "BIM_UNIT_INVALID",
+    "BIM_PLACEMENT_INVALID",
+    "BIM_PLACEMENT_CYCLE",
+    "BIM_CONTAINMENT_CYCLE",
+    "BIM_RESOURCE_LIMIT_EXCEEDED",
+    "BIM_STALE_TARGET_MODEL",
+    "BIM_EXPORT_VALIDATION_FAILED",
+    "BIM_UNSAFE_STRING",
+    "BIM_INVALID_IDENTIFIER"
+  ],
+  "verification_classes": [
+    "CODE_VERIFIED",
+    "RUNTIME_VERIFIED",
+    "INTEROP_VERIFIED",
+    "NOT_VERIFIED"
+  ],
+  "interop_note": "INTEROP_VERIFIED requires an independent external BIM implementation or authoritative validator. An internal export followed by an internal import is round-trip verification, not interoperability verification.",
+  "panel_controls": [
+    "IMPORT_BIM",
+    "EXPORT_BIM",
+    "VALIDATE",
+    "COMPARE",
+    "PROPOSALS",
+    "ROUNDTRIP_REPORT"
+  ],
+  "panel_forbidden_controls": [
+    "IMPORT_AND_REPLACE_MODEL",
+    "APPLY_ALL_WITHOUT_REVIEW",
+    "AUTO_COMMIT_IMPORT",
+    "OVERWRITE_MODEL"
+  ],
+  "staging_preview_label": "STAGED EXTERNAL BIM",
+  "staging_preview_note": "a staging preview is labelled external and never described as the current model, and it changes no presentation or coordination state.",
+  "export_scope_options": [
+    "ALL",
+    "LEVELS",
+    "SPACES_ONLY",
+    "ENVELOPE_ONLY"
+  ],
+  "export_options": [
+    "schema",
+    "scope",
+    "levels",
+    "include_spaces",
+    "include_external_metadata",
+    "coordinate_policy"
+  ],
+  "side_effect_free_subsystems": [
+    "presentation",
+    "coordination",
+    "references",
+    "runtime"
+  ],
+  "side_effect_note": "importing or exporting BIM changes no material theme, camera, lighting, render gallery, decoration, AI state, clash state or reference authority.",
+  "performance_metrics": [
+    "file_read_ms",
+    "parse_ms",
+    "graph_build_ms",
+    "placement_resolve_ms",
+    "semantic_map_ms",
+    "validate_ms",
+    "diff_ms",
+    "export_build_ms",
+    "serialise_ms",
+    "roundtrip_compare_ms"
+  ],
+  "performance_note": "these are measured with entity counts beside them. Frames per second, GPU speed and enterprise-scale BIM performance are not measured and are not claimed.",
+  "id_patterns": {
+    "import": "bimimp_<sha256_16>",
+    "export": "bimexp_<sha256_16>",
+    "proposal": "bimprop_<sha256_16>",
+    "staging": "bimstg_<sha256_16>",
+    "report": "bimrt_<sha256_16>"
+  },
+  "hard_stop_boundaries": [
+    "cloud BIM collaboration",
+    "BIM 360",
+    "Autodesk Construction Cloud",
+    "Revit live sync",
+    "Archicad live sync",
+    "Trimble Connect",
+    "Bentley ProjectWise",
+    "automatic structural engineering",
+    "automatic MEP engineering",
+    "automatic HVAC design",
+    "automatic electrical design",
+    "automatic plumbing design",
+    "automatic fire protection design",
+    "code compliance certification",
+    "clash auto-resolution",
+    "autonomous design",
+    "AI-generated BIM engineering changes",
+    "automatic approval of imported BIM data"
+  ]
+}

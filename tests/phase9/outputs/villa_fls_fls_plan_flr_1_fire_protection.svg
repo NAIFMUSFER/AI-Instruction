@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" data-acs-doc="1" data-view-type="FLS_PLAN" data-view-id="view_a8108322bcedb52e" data-model-hash="bd10fb61e83f4a755631d605c8fabff5ea9b3010f24a507922bfb617640962ed" data-scale-mode="TRUE_SCALE" data-construction-drawing="false">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<line x1="23" y1="205" x2="31" y2="205" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="72" y1="264.5" x2="72" y2="255.5" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="92" y1="164.5" x2="92" y2="155.5" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="92" y1="264.5" x2="92" y2="255.5" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="12" y1="205" x2="42" y2="205" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="235" x2="12" y2="205" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="235" x2="42" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="72" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="12" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="42" y1="235" x2="42" y2="205" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="42" y1="235" x2="72" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="185" x2="92" y2="185" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="235" x2="72" y2="185" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="285" x2="92" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="285" x2="72" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="92" y1="185" x2="152" y2="185" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="92" y1="235" x2="92" y2="185" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="92" y1="235" x2="152" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="92" y1="285" x2="92" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="92" y1="285" x2="152" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="152" y1="235" x2="152" y2="185" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="152" y1="285" x2="152" y2="235" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="12" y="205" width="30" height="30" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="235" width="60" height="50" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="72" y="185" width="20" height="100" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="92" y="185" width="60" height="50" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="92" y="235" width="60" height="50" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<text x="27" y="205" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">DA2BA81</text>
+<text x="27" y="220" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">bath2</text>
+<text x="42" y="260" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">bed1</text>
+<text x="72" y="260" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D16D7D9</text>
+<text x="82" y="235" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">corridor_f</text>
+<text x="92" y="160" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D3AED57</text>
+<text x="92" y="260" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D6CC03C</text>
+<text x="122" y="210" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">family</text>
+<text x="122" y="260" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">bed2</text>
+<text x="12" y="292" font-family="monospace" font-size="2.4" fill="#000000">model-derived documentation — not a construction drawing</text>
+</svg>

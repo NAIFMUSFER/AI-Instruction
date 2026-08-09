@@ -1,0 +1,218 @@
+{
+ "columns": [
+  "beam_id",
+  "level",
+  "section",
+  "material",
+  "length_m",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 7,
+ "rows": [
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_A1_A2"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 5.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_A1_A2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_A1_B1"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 7.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_A1_B1",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_A2_B2"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 7.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_A2_B2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_B1_B2"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 5.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_B1_B2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_B1_C1"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 7.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_B1_C1",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_B2_C2"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 7.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_B2_C2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "beam_id": {
+    "status": "STATED",
+    "value": "bld_0.B_C1_C2"
+   },
+   "length_m": {
+    "status": "STATED",
+    "value": 5.0
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.B_C1_C2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  }
+ ],
+ "schedule_id": "sched_cd84efacd9785be3",
+ "schedule_type": "BEAM_SCHEDULE",
+ "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+ "source_revision": "rev:9c6b92aac9c47570",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 0,
+ "writes_to_model": false
+}

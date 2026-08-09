@@ -1,0 +1,754 @@
+{
+ "columns": [
+  "door_id",
+  "level",
+  "from_space",
+  "to_space",
+  "nominal_width_m",
+  "clear_width_m",
+  "height_m",
+  "swing",
+  "fire_rating",
+  "material",
+  "host_status",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 11,
+ "rows": [
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.f.bath2.door_0@1"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.f.bath2"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.8
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.f.bath2.door_0@1",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "DA2BA81"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.f.bed1.door_0@1"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.f.bed1"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.f.bed1.door_0@1",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D16D7D9"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.f.bed2.door_0@1"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.f.bed2"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.f.bed2.door_0@1",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D6CC03C"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.f.family.door_0@1"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.f.family"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_1"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.f.family.door_0@1",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D3AED57"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.bath1.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.bath1"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.8
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.bath1.door_0@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D2B6B27"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.corridor.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.corridor"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.corridor.door_0@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D07BD28"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.guest.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.guest"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.guest.door_0@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D421A97"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.kitchen.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.kitchen"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.kitchen.door_0@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D78E6A4"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.living.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.living"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.living.door_0@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D134E18"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.majlis.door_0@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.majlis"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 0.9
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.majlis.door_0@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "DA8B079"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  },
+  {
+   "clear_width_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "door_id": {
+    "status": "STATED",
+    "value": "bld_0.g.majlis.door_1@0"
+   },
+   "fire_rating": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "from_space": {
+    "status": "STATED",
+    "value": "bld_0.g.majlis"
+   },
+   "height_m": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "host_status": {
+    "status": "STATED",
+    "value": "resolved"
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "nominal_width_m": {
+    "status": "STATED",
+    "value": 1.2
+   },
+   "provenance": {
+    "discipline": "ARCHITECTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.g.majlis.door_1@0",
+    "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48"
+   },
+   "swing": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   },
+   "swing_status": {
+    "status": "STATED",
+    "value": "not_specified"
+   },
+   "tag": {
+    "status": "STATED",
+    "value": "D2F0F17"
+   },
+   "to_space": {
+    "display": "NOT_SPECIFIED",
+    "status": "UNKNOWN",
+    "value": null
+   }
+  }
+ ],
+ "schedule_id": "sched_b76642490854c1d1",
+ "schedule_type": "DOOR_SCHEDULE",
+ "source_model_hash": "7d8be224b39752ec0d17af28554300d5549f3ab4e80901b33cce79ca5a4ace48",
+ "source_revision": "rev:bb1a88279421a87b",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 66,
+ "writes_to_model": false
+}

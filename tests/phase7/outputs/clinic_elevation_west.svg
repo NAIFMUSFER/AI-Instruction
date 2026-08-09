@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="403" height="201" viewBox="0 0 403 201" font-family="system-ui,Segoe UI,Tahoma,sans-serif">
+<rect width="403" height="201" fill="#ffffff"/>
+<rect x="114" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_8" data-kind="WALL"/>
+<rect x="267" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_9" data-kind="WALL"/>
+<rect x="96.15" y="78.5" width="40.8" height="71.4" fill="#8a6a44" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.reception.door_1@0" data-kind="DOOR"/>
+<rect x="92.75" y="71.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.reception.window_1@0" data-kind="WINDOW"/>
+<rect x="245.75" y="71.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.waiting.window_1@0" data-kind="WINDOW"/>
+<rect x="48.55" y="46.2" width="136" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_reception" data-kind="CEILING"/>
+<rect x="184.55" y="46.2" width="170" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_waiting" data-kind="CEILING"/>
+<rect x="46" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_0" data-kind="WALL"/>
+<rect x="182" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_3" data-kind="WALL"/>
+<rect x="352" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_6" data-kind="WALL"/>
+<rect x="182.51" y="78.5" width="4.08" height="71.4" fill="#8a6a44" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.reception.door_0@0" data-kind="DOOR"/>
+<rect x="46.51" y="71.7" width="4.08" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.reception.window_0@0" data-kind="WINDOW"/>
+<rect x="182.51" y="78.5" width="4.08" height="71.4" fill="#8a6a44" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.waiting.door_0@0" data-kind="DOOR"/>
+<rect x="352.51" y="71.7" width="4.08" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.waiting.window_0@0" data-kind="WINDOW"/>
+<rect x="114" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_10" data-kind="WALL"/>
+<rect x="267" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_11" data-kind="WALL"/>
+<rect x="101.25" y="78.5" width="30.6" height="71.4" fill="#8a6a44" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.exam_1.door_0@0" data-kind="DOOR"/>
+<rect x="48.55" y="149.9" width="306" height="5.1" fill="#c6c2ba" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.slab" data-kind="SLAB"/>
+<rect x="48.55" y="46.2" width="136" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_exam_1" data-kind="CEILING"/>
+<rect x="184.55" y="46.2" width="170" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_pharmacy" data-kind="CEILING"/>
+<rect x="46" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_1" data-kind="WALL"/>
+<rect x="182" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_4" data-kind="WALL"/>
+<rect x="352" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_7" data-kind="WALL"/>
+<rect x="46.51" y="71.7" width="4.08" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.exam_1.window_0@0" data-kind="WINDOW"/>
+<rect x="352.51" y="71.7" width="4.08" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.pharmacy.window_0@0" data-kind="WINDOW"/>
+<rect x="114" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_12" data-kind="WALL"/>
+<rect x="267" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_13" data-kind="WALL"/>
+<rect x="245.75" y="71.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.pharmacy.window_1@0" data-kind="WINDOW"/>
+<rect x="48.55" y="46.2" width="136" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_lab" data-kind="CEILING"/>
+<rect x="46" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_2" data-kind="WALL"/>
+<rect x="182" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_5" data-kind="WALL"/>
+<rect x="46.51" y="71.7" width="4.08" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.lab.window_0@0" data-kind="WINDOW"/>
+<rect x="182.51" y="71.7" width="4.08" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.g.lab.window_1@0" data-kind="WINDOW"/>
+<rect x="114" y="47.9" width="5.1" height="102" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_14" data-kind="WALL"/>
+<line x1="18.4" y1="149.9" x2="384.6" y2="149.9" stroke="#111" stroke-width="1.4"/>
+<text x="46" y="187" fill="#333" font-size="10">WEST elevation — 13 modelled openings, 0 invented</text>
+</svg>

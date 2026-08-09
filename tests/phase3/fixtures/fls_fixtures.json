@@ -1,0 +1,547 @@
+{
+ "models": {
+  "villa_fls": {
+   "fire_life_safety": {
+    "devices": [
+     {
+      "id": "d_sd1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "type": "SMOKE_DETECTOR",
+      "x": 3,
+      "z": 2.5
+     },
+     {
+      "id": "d_mcp1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.corridor@0",
+      "type": "MANUAL_CALL_POINT",
+      "x": 6.5,
+      "z": 0.6
+     },
+     {
+      "id": "d_snd1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.corridor@0",
+      "type": "SOUNDER_STROBE",
+      "x": 6.5,
+      "z": 1.2
+     }
+    ],
+    "meta": {
+     "note": "synthetic fixture — not a designed fire system",
+     "regulatory": false
+    },
+    "signs": [
+     {
+      "id": "s_ex1",
+      "illuminated": true,
+      "indicates_exit": "bld_0.exit_1",
+      "kind": "exit_sign",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "x": 0.5,
+      "z": 2.5
+     }
+    ],
+    "status": "REPRESENTED",
+    "synthetic": true
+   },
+   "floor_height": 3.2,
+   "floors": {
+    "f": {
+     "rooms": [
+      {
+       "id": "corridor_f",
+       "objects": [
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 1,
+         "z": 8
+        }
+       ],
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "bed1",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "bed2",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "family",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ],
+       "id": "bath2",
+       "rect": [
+        0,
+        5,
+        3,
+        3
+       ]
+      }
+     ]
+    },
+    "g": {
+     "rooms": [
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        },
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 1.2
+        }
+       ],
+       "id": "majlis",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "corridor",
+       "objects": [
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 1,
+         "z": 8
+        }
+       ],
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "living",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "kitchen",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "guest",
+       "rect": [
+        0,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "N",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ],
+       "id": "bath1",
+       "rect": [
+        0,
+        10,
+        3,
+        3
+       ]
+      }
+     ]
+    }
+   },
+   "levels": [
+    {
+     "index": 0,
+     "name": "ground",
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "name": "first",
+     "template": "f"
+    }
+   ],
+   "mep": {
+    "equipment": [
+     {
+      "connections": [
+       "n_db"
+      ],
+      "dimensions": {
+       "d": 0.15,
+       "h": 0.6,
+       "w": 0.4
+      },
+      "id": "eq_db",
+      "level": 0,
+      "ports": [
+       {
+        "type": "electrical"
+       }
+      ],
+      "source": "test_fixture",
+      "space": "bld_0.g.corridor@0",
+      "system_id": "sys_pow",
+      "type": "distribution_board",
+      "x": 6.5,
+      "z": 0.4
+     },
+     {
+      "connections": [
+       "n_ahu"
+      ],
+      "id": "eq_split",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "type": "split_unit",
+      "x": 6.8,
+      "z": 9.5
+     }
+    ],
+    "meta": {
+     "note": "synthetic fixture — not a designed MEP system",
+     "regulatory": false
+    },
+    "nodes": [
+     {
+      "id": "n_db",
+      "kind": "distribution_point",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.corridor@0",
+      "system_id": "sys_pow",
+      "x": 6.5,
+      "z": 0.4
+     },
+     {
+      "id": "n_cw_in",
+      "kind": "source",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 0.2,
+      "z": 0.2
+     },
+     {
+      "id": "n_cw_bath",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 1.5,
+      "z": 11
+     },
+     {
+      "id": "n_san_bath",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_san",
+      "x": 1.6,
+      "z": 11
+     },
+     {
+      "id": "n_san_out",
+      "kind": "source",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_san",
+      "x": 1.6,
+      "z": 13.5
+     },
+     {
+      "id": "n_ahu",
+      "kind": "equipment_connection",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "x": 6.8,
+      "z": 9.5
+     },
+     {
+      "id": "n_diff",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "x": 3,
+      "z": 2.5
+     }
+    ],
+    "segments": [
+     {
+      "from_node": "n_cw_in",
+      "id": "seg_cw_1",
+      "kind": "pipe",
+      "level": 0,
+      "material": "ppr",
+      "polyline": [
+       [
+        0.2,
+        0.35,
+        0.2
+       ],
+       [
+        0.2,
+        0.35,
+        11
+       ],
+       [
+        1.5,
+        0.35,
+        11
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.025
+      },
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "to_node": "n_cw_bath"
+     },
+     {
+      "from_node": "n_san_bath",
+      "id": "seg_san_1",
+      "kind": "pipe",
+      "level": 0,
+      "material": "upvc",
+      "polyline": [
+       [
+        1.6,
+        -0.3,
+        11
+       ],
+       [
+        1.6,
+        -0.3,
+        13.5
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.11
+      },
+      "source": "test_fixture",
+      "system_id": "sys_san",
+      "to_node": "n_san_out"
+     },
+     {
+      "from_node": "n_ahu",
+      "id": "seg_sup_1",
+      "kind": "duct",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "to_node": "n_diff"
+     }
+    ],
+    "status": "REPRESENTED",
+    "synthetic": true,
+    "systems": [
+     {
+      "id": "sys_light",
+      "medium": "electricity",
+      "name": "Lighting",
+      "source": "test_fixture",
+      "type": "LIGHTING"
+     },
+     {
+      "id": "sys_pow",
+      "medium": "electricity",
+      "name": "Normal Power",
+      "source": "test_fixture",
+      "type": "ELECTRICAL_POWER"
+     },
+     {
+      "id": "sys_cw",
+      "medium": "water",
+      "name": "Cold Water",
+      "source": "test_fixture",
+      "type": "DOMESTIC_COLD_WATER"
+     },
+     {
+      "id": "sys_san",
+      "medium": "wastewater",
+      "name": "Sanitary",
+      "source": "test_fixture",
+      "type": "SANITARY_DRAINAGE"
+     },
+     {
+      "id": "sys_sup",
+      "medium": "air",
+      "name": "Supply Air",
+      "source": "test_fixture",
+      "type": "HVAC_SUPPLY"
+     }
+    ],
+    "terminals": [
+     {
+      "id": "t_l1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_light",
+      "type": "light_fixture",
+      "x": 3,
+      "z": 2.5
+     },
+     {
+      "id": "t_s1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_pow",
+      "type": "socket",
+      "x": 0.8,
+      "z": 0.3
+     },
+     {
+      "id": "t_wc",
+      "level": 0,
+      "node": "n_san_bath",
+      "source": "test_fixture",
+      "space": "bld_0.g.bath1@0",
+      "system_id": "sys_san",
+      "type": "wc",
+      "x": 1.4,
+      "z": 11.4
+     },
+     {
+      "id": "t_lav",
+      "level": 0,
+      "node": "n_cw_bath",
+      "source": "test_fixture",
+      "space": "bld_0.g.bath1@0",
+      "system_id": "sys_cw",
+      "type": "lavatory",
+      "x": 1.5,
+      "z": 11
+     },
+     {
+      "id": "t_diff",
+      "level": 0,
+      "node": "n_diff",
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_sup",
+      "type": "diffuser",
+      "x": 3,
+      "z": 2.5
+     }
+    ]
+   },
+   "meta": {
+    "name": "villa",
+    "type": "villa"
+   },
+   "site": {
+    "d": 24,
+    "w": 30
+   },
+   "wall_h": 3
+  }
+ }
+}
