@@ -905,7 +905,14 @@
   "PQ_BOUNDS_UNAVAILABLE",
   "PQ_CAMERA_CLAMPED",
   "PQ_MODEL_OUT_OF_FRUSTUM",
-  "PQ_MATERIAL_FAIL_OPEN"
+  "PQ_MATERIAL_FAIL_OPEN",
+  "ALIGN_TRANSFORM_UNRESOLVED",
+  "ALIGN_HOST_NOT_FOUND",
+  "ALIGN_OBJECT_OUTSIDE_HOST",
+  "ALIGN_LEVEL_MISMATCH",
+  "ALIGN_ROOF_DETACHED",
+  "ALIGN_DOUBLE_TRANSFORM",
+  "ALIGN_AXIS_MISMATCH"
  ],
  "blocking_issue_codes": [
   "PQ_INVALID_PROFILE",
@@ -1047,7 +1054,77 @@
   "bounds_from_descriptors",
   "camera_clip",
   "frustum_contains",
-  "material_safe"
+  "material_safe",
+  "resolve_transform",
+  "level_base_y",
+  "plate_rect",
+  "rack_block",
+  "containment",
+  "roof_alignment"
  ],
- "viewport_contract_note": "one authoritative camera-safety contract shared by the Python layer, the generated browser mirror and the module bridge. Every layer declares this exact version string; tools/check_integration.py refuses any tree where they disagree, so a partial merge fails loudly at build time instead of surfacing as a missing attribute inside a test or as a black viewport in production."
+ "viewport_contract_note": "one authoritative camera-safety contract shared by the Python layer, the generated browser mirror and the module bridge. Every layer declares this exact version string; tools/check_integration.py refuses any tree where they disagree, so a partial merge fails loudly at build time instead of surfacing as a missing attribute inside a test or as a black viewport in production.",
+ "transform_contract": {
+  "version": "transform-alignment/1.0.0",
+  "axis": {
+   "x": "HORIZONTAL_WIDTH",
+   "y": "VERTICAL_ELEVATION",
+   "z": "HORIZONTAL_DEPTH",
+   "handedness": "THREE_JS_RIGHT_HANDED_Y_UP",
+   "note": "the application convention, unchanged: rect=[x,z,w,d] is a horizontal footprint in SITE space and elevation is always y."
+  },
+  "spaces": [
+   "PROJECT",
+   "SITE",
+   "BUILDING",
+   "LEVEL",
+   "HOST_LOCAL",
+   "OBJECT_LOCAL",
+   "WORLD"
+  ],
+  "space_parents": {
+   "PROJECT": null,
+   "SITE": "PROJECT",
+   "BUILDING": "SITE",
+   "LEVEL": "BUILDING",
+   "HOST_LOCAL": "LEVEL",
+   "OBJECT_LOCAL": "HOST_LOCAL",
+   "WORLD": "PROJECT"
+  },
+  "declared_spaces": {
+   "site_rect": "SITE",
+   "room_rect": "SITE",
+   "room_object_offset": "HOST_LOCAL",
+   "rack_offset": "HOST_LOCAL",
+   "furniture_offset": "HOST_LOCAL",
+   "point_offset": "HOST_LOCAL",
+   "level_elevation": "BUILDING",
+   "building_group": "WORLD",
+   "presentation_context": "PRESENTATION"
+  },
+  "elevation_rule": "level_base_y = level_index * floor_height. It is applied EXACTLY ONCE, by the level loop, and never again by any host, object, rack, presentation layer or bridge.",
+  "host_rule": "a hosted offset is expressed in HOST_LOCAL and is converted to world exactly once as world = host_origin + local_offset. Room rects are already SITE-absolute, so a room origin is never added twice.",
+  "plate_rule": "a level floor plate is derived from the union of that level's own room footprints; the site rectangle is used only when the level declares no rooms. A plate never spans the whole site above a smaller building — that is what makes an upper slab read as a floating plate.",
+  "rack_rule": "a rack block starts at the room origin plus its declared offset and may never extend past the room: the available extent is the room extent MINUS the offset.",
+  "roof_tolerance_m": 0.05,
+  "containment_tolerance_m": 0.05,
+  "roundtrip_tolerance_m": 1e-09,
+  "tolerance_note": "0.05 m is half the 0.10 m structural post thickness and below the 0.15 m slab thickness: any real double-elevation error is at least one floor height (>=2.4 m), so this tolerance separates rounding from a genuine transform defect without hiding one.",
+  "forbidden": [
+   "DOUBLE_LEVEL_ELEVATION",
+   "DOUBLE_HOST_OFFSET",
+   "AXIS_SWAP_XZ",
+   "AXIS_SWAP_ZY",
+   "DOUBLE_PARENT_SCALE",
+   "SILENT_ORIGIN_PLACEMENT",
+   "AUTOMATIC_SNAP_TO_NEAREST_HOST",
+   "PRESENTATION_OFFSET_TO_HIDE_MISALIGNMENT",
+   "CANONICAL_GEOMETRY_MOVED_FOR_APPEARANCE"
+  ],
+  "containment_classes": [
+   "INSIDE",
+   "INTERSECTING_BOUNDARY",
+   "OUTSIDE",
+   "UNRESOLVED"
+  ]
+ }
 }

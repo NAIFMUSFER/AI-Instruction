@@ -37,3 +37,37 @@ vendored Three.js (npm registry blocked) and no network egress to the deployment
 
 It prints BOOT and VISUAL MODEL as two separate verdicts and, on failure, names the
 responsible layer through the mode matrix and `window.ACS.renderDiagnostics()`.
+
+## KI-3 · The Phase-1 site-wide floor plate overhangs smaller buildings (OPEN, needs approval)
+
+**Status:** identified, measured and reported — deliberately NOT changed.
+
+Since Phase 1 the rendered floor plate of every level spans the whole **site**
+rectangle, not the level's own rooms. Above a building smaller than its plot the
+upper plates project past the walls with nothing beneath their edges, which is what
+reads as a *floating roof/slab*. For a villa on a 30×24 m plot with a 14×13 m
+footprint the plate is ≈4.7× the building area.
+
+This is a **declared display convention**, not a transform bug, and it is pinned by
+the Phase-4 golden baseline (`MODEL REGRESSION`, exact mesh positions and sizes for
+23 fixtures). Changing it alters rendered geometry for every model and every stored
+baseline, so it is escalated rather than slipped in.
+
+**Already in place:** the correct extent is computed by the shared contract
+(`plate_rect` / `pqPlateRect`), and `window.ACS.alignmentDiagnostics().plate_overhang`
+reports, per level, the site plate, the room-union plate, the overhang in metres, the
+area ratio, `convention: PHASE1_SITE_WIDE_PLATE` and `change_requires_approval: true`.
+Levels above ground that overhang by more than 1 m raise `ALIGN_ROOF_DETACHED`.
+
+**To apply, with approval:** in `public/index.html` replace
+
+    slabStrips(0,0,site.w,site.d,holes)
+
+with
+
+    (function(){const _p=pqPlateRect((fdef.rooms||[]).map(r=>r.rect),
+      [0,0,site.w,site.d]).rect;
+      return slabStrips(_p[0],_p[1],_p[2],_p[3],holes);})()
+
+then regenerate the Phase-4 baseline and re-run the full chain. Restricting the change
+to levels above 0 (keeping the ground plot slab) is the narrower option.

@@ -73,6 +73,9 @@ sh "$ROOT/tests/deploy/verify_deploy.sh"; guard $?
 step "7a · the black-viewport regression (bounds, clip, frustum, fail-open)"
 python3 "$HERE/test_black_viewport.py"; guard $?
 
+step "7a2 · the transform and alignment regression (roof, racks, levels, axis)"
+python3 "$HERE/test_alignment.py"; guard $?
+
 step "7b · the viewport pixel analyser (positive and negative fixtures)"
 node "$ROOT/tests/deploy/test_viewport_pixels.js"; guard $?
 

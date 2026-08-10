@@ -94,6 +94,39 @@ out.material_safe=Object.keys(PQ_MATERIALS).sort(_scmp)
     {id:'b',base_color:'red'},{id:'c',base_color:'#ffffff',metalness:9},
     {id:'d',base_color:'#ffffff',roughness:null},{},null]
     .map(pqMaterialSafe));
+const ROOMS_A=[[2,2,8,6],[12,2,6,6]];
+const SITE_A=[0,0,40,30];
+const ROOM_A=[10.0,6.0,20.0,12.0];
+out.level_base_y=[];
+[0,1,2,5,-1].forEach(i=>{ [3.2,0,null,NaN].forEach(fh=>{
+  out.level_base_y.push(pqLevelBaseY(i,fh)); }); });
+out.plate_rect=[];
+[ROOMS_A,[],[[0,0,0,0]],null].forEach(r=>{ [SITE_A,null].forEach(s2=>{
+  out.plate_rect.push(pqPlateRect(r,s2)); }); });
+out.rack_block=[];
+[ROOM_A,null].forEach(rr=>{
+  [{x:5,z:0},{x:0,z:4},{x:15,w:99},{x:25},{},null].forEach(rk=>{
+    out.rack_block.push(pqRackBlock(rr,rk)); }); });
+out.containment=[];
+[{min:[12,0,8],max:[14,2,10]},{min:[29,0,17],max:[33,2,20]},
+ {min:[40,0,8],max:[42,2,10]},null].forEach(c=>{
+  [{min:[10,0,6],max:[30,3,18]},null].forEach(h=>{
+    [null,0.5].forEach(t=>{ out.containment.push(pqContainment(c,h,t)); }); }); });
+out.roof_alignment=[];
+[0,1,2,5].forEach(t=>{ [3.2,6.4,9.6,12.8,null].forEach(y=>{
+  out.roof_alignment.push(pqRoofAlignment(t,3.2,y)); }); });
+out.resolve_transform=[
+  {coordinate_space:'HOST_LOCAL',local:[1,0,2],host_origin:[10,0,6],
+   level_index:2,floor_height:3.2,host_id:'r1',level_id:'F2',
+   source_element_id:'FURN|F2|r1|0'},
+  {coordinate_space:'HOST_LOCAL',local:[1,0,2],host_origin:[10,6.4,6],
+   host_origin_includes_level:true,level_index:2,floor_height:3.2},
+  {coordinate_space:'SITE',local:[1,0,2]},
+  {coordinate_space:'HOST_LOCAL',local:[1,0,1]},
+  {coordinate_space:'NOWHERE',local:[1,0,1]},
+  {coordinate_space:'SITE'},
+  {coordinate_space:'SITE',local:[1,Infinity,1]},
+  {},null].map(pqResolveTransform);
 out.spec_view={schema:ACS_PBR_SPEC.schema,
   chain:ACS_PBR_SPEC.quality_fallback_chain,
   auto_max:ACS_PBR_SPEC.auto_max_profile,

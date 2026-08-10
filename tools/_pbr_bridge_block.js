@@ -432,3 +432,166 @@ window.ACS.renderDiagnostics=function(){
     return {renderer_ready:false,webgl_context_ok:false,
       error:String(e&&e.message||e).slice(0,160),
       writes_to_model:false,exposes_canonical_state:false}; } };
+
+
+/* ============ §6 — تشخيص المحاذاة (حقائق عرضية فقط، بلا تحريك) ==========
+   يقيس المشهد الحقيقي بعد تحديث مصفوفات العالم، ويصنّف احتواء كل كائن
+   مستضاف داخل غرفته، ويحسب خطأ ارتفاع السطح وأدوار المبنى. لا يحرّك جسماً
+   ولا يلمس النموذج القانوني: يبلّغ فقط (§7/§17). */
+function _pqTagParts(o){
+  const n=o.name||'';
+  const i=n.indexOf('|');
+  if(i<0) return null;
+  const p=n.split('|');
+  return {layer:p[0],floor:p[1]||null,room:p[2]||null,rest:p[3]||null}; }
+
+function _pqWorldBox(o){
+  /* §8 — لا قياس قبل تحديث مصفوفة العالم */
+  o.updateMatrixWorld(true);
+  const b=new THREE.Box3().setFromObject(o);
+  if(!isFinite(b.min.x)||!isFinite(b.max.x)) return null;
+  return {min:[b.min.x,b.min.y,b.min.z],max:[b.max.x,b.max.y,b.max.z]}; }
+
+window.ACS.alignmentDiagnostics=function(){
+  try{
+    if(typeof model==='undefined'||!model)
+      return {objects_checked:0,canonical_hosts_checked:0,
+        unresolved_transforms:0,detached_objects:0,outside_host_objects:0,
+        roof_alignment:null,level_alignment:[],max_position_error_m:null,
+        issues:[{code:'ALIGN_TRANSFORM_UNRESOLVED',severity:'WARNING',
+          blocking:false,message:'no canonical model is loaded'}],
+        writes_to_model:false};
+    scene.updateMatrixWorld(true);
+    const fh=(lastBuilding&&Number(lastBuilding.floor_height))||3.2;
+    /* أصول الغرف من البيانات القانونية نفسها لا من المشهد */
+    const hosts={};
+    const levelsSeen={};
+    ((lastBuilding||{}).levels||[]).forEach(lv=>{
+      const tmpl=(((lastBuilding||{}).floors)||{})[lv.template]||{};
+      levelsSeen['F'+lv.index]={index:lv.index,rects:[]};
+      (tmpl.rooms||[]).forEach(r=>{
+        if(!Array.isArray(r.rect)||r.rect.length!==4) return;
+        const key='F'+lv.index+'|'+(r.id||'room');
+        const y=pqLevelBaseY(lv.index,fh).base_y;
+        const H=Number(r.wall_h)||Number((lastBuilding||{}).wall_h)||3.0;
+        hosts[key]={rect:r.rect,level_index:lv.index,base_y:y,
+          box:{min:[r.rect[0],y,r.rect[1]],
+               max:[r.rect[0]+r.rect[2],y+H,r.rect[1]+r.rect[3]]}};
+        levelsSeen['F'+lv.index].rects.push(r.rect); }); });
+    const issues=[];
+    let checked=0,unresolved=0,outside=0,detached=0,maxErr=0;
+    const hosted={INSIDE:0,INTERSECTING_BOUNDARY:0,OUTSIDE:0,UNRESOLVED:0};
+    const sample=[];
+    model.traverse(o=>{
+      if(!o.isMesh) return;
+      const t=_pqTagParts(o);
+      if(!t) return;
+      if(['FURN','OBJ'].indexOf(t.layer)<0) return;   /* الكائنات المستضافة */
+      checked++;
+      const key=t.floor+'|'+t.room;
+      const h=hosts[key];
+      if(!h){ unresolved++; hosted.UNRESOLVED++;
+        if(issues.length<40) issues.push({code:'ALIGN_HOST_NOT_FOUND',
+          severity:'WARNING',blocking:false,element_id:o.name,
+          message:'no canonical host rectangle for '+key});
+        return; }
+      const wb=_pqWorldBox(o);
+      if(!wb){ unresolved++; hosted.UNRESOLVED++;
+        if(issues.length<40) issues.push({code:'ALIGN_TRANSFORM_UNRESOLVED',
+          severity:'WARNING',blocking:false,element_id:o.name,
+          message:'world bounds could not be measured'});
+        return; }
+      const c=pqContainment(wb,h.box);
+      hosted[c.classification]++;
+      if(c.classification==='OUTSIDE'){
+        outside++;
+        const dx=Math.max(h.box.min[0]-wb.max[0],wb.min[0]-h.box.max[0],0);
+        const dz=Math.max(h.box.min[2]-wb.max[2],wb.min[2]-h.box.max[2],0);
+        const err=Math.max(dx,dz);
+        if(err>maxErr) maxErr=err;
+        if(sample.length<12) sample.push({element_id:o.name,host:key,
+          error_m:Math.round(err*1000)/1000,
+          classification:c.classification});
+        if(issues.length<40) issues.push({code:'ALIGN_OBJECT_OUTSIDE_HOST',
+          severity:'WARNING',blocking:false,element_id:o.name,
+          message:'outside its host by '+err.toFixed(3)+' m'}); } });
+    /* محاذاة الأدوار والسطح من الشبكات الفعلية */
+    const levelAlign=[];
+    Object.keys(levelsSeen).sort().forEach(k=>{
+      const L=levelsSeen[k];
+      const expect=pqLevelBaseY(L.index,fh).base_y;
+      let minY=Infinity;
+      model.traverse(o=>{
+        if(!o.isMesh) return;
+        const t=_pqTagParts(o);
+        if(!t||t.floor!==k||t.layer!=='FLOOR') return;
+        const wb=_pqWorldBox(o);
+        if(wb) minY=Math.min(minY,wb.max[1]); });
+      const actual=isFinite(minY)?minY:null;
+      const err=(actual===null)?null:Math.abs(actual-expect);
+      if(err!==null&&err>maxErr) maxErr=err;
+      if(err!==null&&err>Number(PQ_TC.roof_tolerance_m)){
+        detached++;
+        issues.push({code:'ALIGN_LEVEL_MISMATCH',severity:'WARNING',
+          blocking:false,element_id:k,
+          message:'level plate top is '+err.toFixed(3)+' m from '
+            +expect.toFixed(3)+' m'}); }
+      levelAlign.push({level:k,index:L.index,expected_base_y:expect,
+        actual_plate_top_y:actual,
+        error_m:(err===null)?null:Math.round(err*1000)/1000,
+        aligned:(err!==null&&err<=Number(PQ_TC.roof_tolerance_m))}); });
+    /* اصطلاح لوح الموقع المعلَن منذ المرحلة 1: اللوح يمتدّ على الموقع كلّه.
+       فوق مبنى أصغر من الموقع يبرز اللوح خارج الغلاف فيبدو صفيحة طائرة.
+       يُقاس البروز ويُبلَّغ هنا بدل إخفائه بإزاحة عرضية (§7). */
+    const plateOverhang=[];
+    Object.keys(levelsSeen).sort().forEach(k=>{
+      const L=levelsSeen[k];
+      if(!L.rects.length) return;
+      const site=((lastBuilding||{}).site)||{};
+      const sw=Number(site.w)||0, sd=Number(site.d)||0;
+      const pr=pqPlateRect(L.rects,[0,0,sw,sd]).rect;
+      if(!pr||!(sw>0&&sd>0)) return;
+      const ratio=(sw*sd)/Math.max(pr[2]*pr[3],1e-9);
+      const over=Math.max(sw-pr[2],sd-pr[3]);
+      plateOverhang.push({level:k,index:L.index,
+        site_plate:[0,0,sw,sd],room_union_plate:pr,
+        overhang_m:Math.round(over*1000)/1000,
+        area_ratio:Math.round(ratio*100)/100,
+        convention:'PHASE1_SITE_WIDE_PLATE',
+        pinned_by:'PHASE4_GOLDEN_BASELINE',
+        change_requires_approval:true});
+      if(L.index>0&&over>1.0)
+        issues.push({code:'ALIGN_ROOF_DETACHED',severity:'WARNING',
+          blocking:false,element_id:k,
+          message:'the level plate overhangs the building by '
+            +over.toFixed(2)+' m ('+ratio.toFixed(1)+'x its footprint) '
+            +'under the declared site-wide plate convention'}); });
+    const idx=((lastBuilding||{}).levels||[]).map(l=>Number(l.index));
+    const top=idx.length?Math.max.apply(null,idx):null;
+    let roof=null;
+    if(top!==null){
+      let roofY=null;
+      model.traverse(o=>{
+        if(!o.isMesh) return;
+        const t=_pqTagParts(o);
+        if(!t||t.layer!=='FLOOR'||t.floor!=='F'+top) return;
+        const wb=_pqWorldBox(o);
+        if(wb) roofY=(roofY===null)?wb.max[1]:Math.max(roofY,wb.max[1]); });
+      roof=pqRoofAlignment(top-1,fh,roofY);
+      (roof.issues||[]).forEach(i=>issues.push(i)); }
+    return {objects_checked:checked,
+      canonical_hosts_checked:Object.keys(hosts).length,
+      unresolved_transforms:unresolved,detached_objects:detached,
+      outside_host_objects:outside,containment:hosted,
+      roof_alignment:roof,level_alignment:levelAlign,
+      plate_overhang:plateOverhang,
+      max_position_error_m:Math.round(maxErr*1000)/1000,
+      samples:sample,
+      axis_convention:PQ_TC.axis,
+      transform_contract:PQ_TC.version,
+      objects_moved_to_fit:0,writes_to_model:false,
+      exposes_canonical_state:false,issues:issues};
+  }catch(e){
+    return {objects_checked:0,writes_to_model:false,
+      issues:[{code:'ALIGN_TRANSFORM_UNRESOLVED',severity:'ERROR',
+        blocking:false,message:String(e&&e.message||e).slice(0,160)}]}; } };

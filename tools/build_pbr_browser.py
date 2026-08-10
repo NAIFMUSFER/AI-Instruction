@@ -536,6 +536,164 @@ function pqMaterialSafe(mat){
       (m.id===undefined)?null:m.id,
       'presentation material refused ('+reasons.join(',')
       +'); keeping the engineering material')]}; }
+
+/* ------------------ عقد التحويلات والمحاذاة (المرحلة 9.2) --------------- */
+const PQ_TC = ACS_PBR_SPEC.transform_contract;
+const PQ_SPACES = PQ_TC.spaces;
+
+function pqLevelBaseY(levelIndex,floorHeight){
+  const i=_pqNum(levelIndex), fh=_pqNum(floorHeight);
+  if(i===null||fh===null||fh<=0)
+    return {valid:false,base_y:null,issues:[pqIssue('ALIGN_LEVEL_MISMATCH',
+      'WARNING',String(levelIndex),
+      'level index or floor height is not a finite positive number')]};
+  return {valid:true,issues:[],base_y:_pqQ(i*fh),space:'BUILDING',
+    applied_times:1}; }
+
+function pqResolveTransform(desc){
+  const d=(desc&&typeof desc==='object')?desc:{};
+  const issues=[];
+  const space=d.coordinate_space;
+  const sid=(d.source_element_id===undefined)?null:d.source_element_id;
+  if(PQ_SPACES.indexOf(space)<0)
+    return {resolved:false,world:null,coordinate_space:(space===undefined)
+      ?null:space,provenance:'UNRESOLVED',
+      issues:[pqIssue('ALIGN_TRANSFORM_UNRESOLVED','WARNING',sid,
+        'undeclared coordinate space')]};
+  const local=d.local;
+  const fin=v=>Array.isArray(v)&&v.length===3
+    &&v.every(x=>_pqNum(x)!==null);
+  if(!fin(local))
+    return {resolved:false,world:null,coordinate_space:space,
+      provenance:'UNRESOLVED',
+      issues:[pqIssue('ALIGN_TRANSFORM_UNRESOLVED','WARNING',sid,
+        'local transform is missing or not finite')]};
+  const lx=_pqNum(local[0]), ly=_pqNum(local[1]), lz=_pqNum(local[2]);
+  const host=d.host_origin;
+  const needsHost=(space==='HOST_LOCAL'||space==='OBJECT_LOCAL');
+  let hx=0.0,hy=0.0,hz=0.0;
+  if(needsHost){
+    if(!fin(host))
+      return {resolved:false,world:null,coordinate_space:space,
+        provenance:'UNRESOLVED',
+        issues:[pqIssue('ALIGN_HOST_NOT_FOUND','WARNING',sid,
+          'a HOST_LOCAL transform without a resolvable host origin is '
+          +'never placed at the origin')]};
+    hx=_pqNum(host[0]); hy=_pqNum(host[1]); hz=_pqNum(host[2]); }
+  const lev=(d.level_index===undefined)?null:d.level_index;
+  let base=0.0;
+  if(lev!==null&&lev!==undefined){
+    const r=pqLevelBaseY(lev,d.floor_height);
+    if(!r.valid) return {resolved:false,world:null,coordinate_space:space,
+      provenance:'UNRESOLVED',issues:r.issues};
+    base=r.base_y; }
+  if(d.host_origin_includes_level&&lev!==null&&lev!==undefined){
+    base=0.0;
+    issues.push(pqIssue('ALIGN_DOUBLE_TRANSFORM','INFO',sid,
+      'the host origin already carries the level elevation; it was not '
+      +'added a second time')); }
+  return {resolved:true,world:[_pqQ(hx+lx),_pqQ(hy+ly+base),_pqQ(hz+lz)],
+    issues:issues,source_element_id:sid,coordinate_space:space,
+    parent_space:(PQ_TC.space_parents[space]===undefined)?null
+      :PQ_TC.space_parents[space],
+    local:[_pqQ(lx),_pqQ(ly),_pqQ(lz)],
+    host_id:(d.host_id===undefined)?null:d.host_id,
+    level_id:(d.level_id===undefined)?null:d.level_id,
+    level_elevation:_pqQ(base),
+    provenance:d.presentation?'PRESENTATION_DERIVED':'CANONICAL',
+    level_applied_times:(lev===null||lev===undefined)?0:1,
+    host_applied_times:needsHost?1:0}; }
+
+function pqPlateRect(roomRects,siteRect){
+  const rects=(roomRects||[]).filter(r=>Array.isArray(r)&&r.length===4
+    &&r.every(v=>_pqNum(v)!==null)&&_pqNum(r[2])>0&&_pqNum(r[3])>0);
+  if(!rects.length){
+    const s=(Array.isArray(siteRect)&&siteRect.length===4)?siteRect:null;
+    if(s===null||s.some(v=>_pqNum(v)===null))
+      return {valid:false,rect:null,source:'UNRESOLVED',
+        issues:[pqIssue('ALIGN_TRANSFORM_UNRESOLVED','WARNING','plate',
+          'neither rooms nor a site rectangle are available')]};
+    return {valid:true,rect:s.map(v=>_pqQ(_pqNum(v))),
+      source:'SITE_FALLBACK',issues:[]}; }
+  let x0=Infinity,z0=Infinity,x1=-Infinity,z1=-Infinity;
+  rects.forEach(r=>{
+    x0=Math.min(x0,_pqNum(r[0])); z0=Math.min(z0,_pqNum(r[1]));
+    x1=Math.max(x1,_pqNum(r[0])+_pqNum(r[2]));
+    z1=Math.max(z1,_pqNum(r[1])+_pqNum(r[3])); });
+  return {valid:true,issues:[],source:'LEVEL_ROOM_UNION',
+    rect:[_pqQ(x0),_pqQ(z0),_pqQ(x1-x0),_pqQ(z1-z0)],
+    room_count:rects.length}; }
+
+function pqRackBlock(roomRect,rack){
+  const rr=(Array.isArray(roomRect)&&roomRect.length===4)?roomRect:null;
+  if(rr===null||rr.some(v=>_pqNum(v)===null))
+    return {valid:false,block:null,
+      issues:[pqIssue('ALIGN_HOST_NOT_FOUND','WARNING','rack',
+        'the hosting room rectangle is missing')]};
+  const R=(rack&&typeof rack==='object')?rack:{};
+  const rx=_pqNum(rr[0]), rz=_pqNum(rr[1]), rw=_pqNum(rr[2]), rd=_pqNum(rr[3]);
+  let ox=_pqNum(R.x); ox=(ox===null)?0.0:ox;
+  let oz=_pqNum(R.z); oz=(oz===null)?0.0:oz;
+  ox=Math.min(Math.max(ox,0.0),rw);
+  oz=Math.min(Math.max(oz,0.0),rd);
+  const availW=Math.max(rw-ox,0.0), availD=Math.max(rd-oz,0.0);
+  let w=_pqNum(R.w), d=_pqNum(R.d);
+  w=(w===null||w<=0)?availW:Math.min(w,availW);
+  d=(d===null||d<=0)?availD:Math.min(d,availD);
+  const issues=[];
+  if(availW<=0||availD<=0)
+    issues.push(pqIssue('ALIGN_OBJECT_OUTSIDE_HOST','WARNING','rack',
+      'the declared rack offset leaves no room extent'));
+  return {valid:true,issues:issues,block:{
+    x:_pqQ(rx+ox),z:_pqQ(rz+oz),w:_pqQ(w),d:_pqQ(d),
+    room_far_x:_pqQ(rx+rw),room_far_z:_pqQ(rz+rd),
+    within_room:!!(rx+ox+w<=rx+rw+1e-9&&rz+oz+d<=rz+rd+1e-9),
+    offset_applied_times:1}}; }
+
+function pqContainment(childBox,hostBox,tolerance){
+  let tol=_pqNum(tolerance);
+  if(tol===null) tol=Number(PQ_TC.containment_tolerance_m);
+  const ok=b=>(b&&typeof b==='object'
+    &&['min','max'].every(k=>Array.isArray(b[k])&&b[k].length===3
+      &&b[k].every(v=>_pqNum(v)!==null)));
+  if(!(ok(childBox)&&ok(hostBox)))
+    return {classification:'UNRESOLVED',overlap:null,
+      issues:[pqIssue('ALIGN_TRANSFORM_UNRESOLVED','WARNING',null,
+        'a world-space box is missing')]};
+  const cmin=childBox.min.map(_pqNum), cmax=childBox.max.map(_pqNum);
+  const hmin=hostBox.min.map(_pqNum), hmax=hostBox.max.map(_pqNum);
+  let inside=true, disjoint=false;
+  for(let i=0;i<3;i++){
+    if(!(cmin[i]>=hmin[i]-tol&&cmax[i]<=hmax[i]+tol)) inside=false;
+    if(cmin[i]>hmax[i]+tol||cmax[i]<hmin[i]-tol) disjoint=true; }
+  const cls=inside?'INSIDE':(disjoint?'OUTSIDE':'INTERSECTING_BOUNDARY');
+  const out=[0,1,2].map(i=>_pqQ(Math.max(0.0,
+    Math.min(cmax[i],hmax[i])-Math.max(cmin[i],hmin[i]))));
+  return {classification:cls,overlap:out,tolerance:_pqQ(tol),
+    moved_to_fit:false,
+    issues:(cls==='INSIDE'||cls==='INTERSECTING_BOUNDARY')?[]
+      :[pqIssue('ALIGN_OBJECT_OUTSIDE_HOST','WARNING',null,
+        'the object lies outside its host; it is reported, never '
+        +'snapped')]}; }
+
+function pqRoofAlignment(topLevelIndex,floorHeight,roofBaseY,tolerance){
+  let tol=_pqNum(tolerance);
+  if(tol===null) tol=Number(PQ_TC.roof_tolerance_m);
+  const ti=_pqNum(topLevelIndex);
+  const exp=pqLevelBaseY((ti===null?0:ti)+1,floorHeight);
+  if(!exp.valid) return {aligned:false,expected_y:null,error_m:null,
+    issues:exp.issues};
+  const got=_pqNum(roofBaseY);
+  if(got===null) return {aligned:false,expected_y:exp.base_y,error_m:null,
+    issues:[pqIssue('ALIGN_TRANSFORM_UNRESOLVED','WARNING','roof',
+      'the roof base elevation is not a finite number')]};
+  const err=Math.abs(got-exp.base_y);
+  const aligned=err<=tol;
+  return {aligned:!!aligned,expected_y:exp.base_y,actual_y:_pqQ(got),
+    error_m:_pqQ(err),tolerance:_pqQ(tol),presentation_offset_used:false,
+    issues:aligned?[]:[pqIssue('ALIGN_ROOF_DETACHED','WARNING','roof',
+      'the roof sits '+err.toFixed(3)+' m from its canonical elevation; it '
+      +'is reported, never lowered by a presentation offset')]}; }
 """
 
 PANEL = r"""
@@ -668,7 +826,10 @@ if(typeof window!=='undefined'){
     boundsFromDescriptors:pqBoundsFromDescriptors,
     cameraClip:pqCameraClip, frustumContains:pqFrustumContains,
     materialSafe:pqMaterialSafe,
-    viewportContract:()=>PQ_VIEWPORT_CONTRACT, panel:PQ};
+    viewportContract:()=>PQ_VIEWPORT_CONTRACT,
+    levelBaseY:pqLevelBaseY, resolveTransform:pqResolveTransform,
+    plateRect:pqPlateRect, rackBlock:pqRackBlock,
+    containment:pqContainment, roofAlignment:pqRoofAlignment, panel:PQ};
 }
 """
 

@@ -618,3 +618,221 @@ def material_safe(mat):
             [issue("PQ_MATERIAL_FAIL_OPEN", "WARNING", m.get("id"),
                    "presentation material refused (%s); keeping the "
                    "engineering material" % ",".join(reasons))]}
+
+
+# ------------------------------ عقد التحويلات والمحاذاة (المرحلة 9.2) ------
+TC = SPEC["transform_contract"]
+SPACES = tuple(TC["spaces"])
+
+
+def level_base_y(level_index, floor_height):
+    """ارتفاع أرضية الدور — يُطبَّق مرّة واحدة فقط في حياة العنصر."""
+    i = _num(level_index)
+    fh = _num(floor_height)
+    if i is None or fh is None or fh <= 0:
+        return {"valid": False, "base_y": None,
+                "issues": [issue("ALIGN_LEVEL_MISMATCH", "WARNING",
+                                 str(level_index),
+                                 "level index or floor height is not a "
+                                 "finite positive number")]}
+    return {"valid": True, "issues": [], "base_y": _q(i * fh),
+            "space": "BUILDING", "applied_times": 1}
+
+
+def resolve_transform(desc):
+    """يحلّ موضع عنصر واحد إلى فضاء العالم بمصدر صريح لكل خطوة.
+
+    لا تخمين: إذا نقص مضيف أو دور أو إزاحة، يُعاد UNRESOLVED_TRANSFORM
+    ولا يُوضَع الجسم في نقطة الأصل صامتاً (§3/§17).
+    """
+    d = desc if isinstance(desc, dict) else {}
+    issues = []
+    space = d.get("coordinate_space")
+    if space not in SPACES:
+        return {"resolved": False, "world": None,
+                "coordinate_space": space, "provenance": "UNRESOLVED",
+                "issues": [issue("ALIGN_TRANSFORM_UNRESOLVED", "WARNING",
+                                 d.get("source_element_id"),
+                                 "undeclared coordinate space")]}
+    local = d.get("local")
+    if not (isinstance(local, (list, tuple)) and len(local) == 3
+            and all(_num(v) is not None for v in local)):
+        return {"resolved": False, "world": None,
+                "coordinate_space": space, "provenance": "UNRESOLVED",
+                "issues": [issue("ALIGN_TRANSFORM_UNRESOLVED", "WARNING",
+                                 d.get("source_element_id"),
+                                 "local transform is missing or not finite")]}
+    lx, ly, lz = [_num(v) for v in local]
+    host = d.get("host_origin")
+    needs_host = space in ("HOST_LOCAL", "OBJECT_LOCAL")
+    if needs_host:
+        if not (isinstance(host, (list, tuple)) and len(host) == 3
+                and all(_num(v) is not None for v in host)):
+            return {"resolved": False, "world": None,
+                    "coordinate_space": space, "provenance": "UNRESOLVED",
+                    "issues": [issue("ALIGN_HOST_NOT_FOUND", "WARNING",
+                                     d.get("source_element_id"),
+                                     "a HOST_LOCAL transform without a "
+                                     "resolvable host origin is never "
+                                     "placed at the origin")]}
+        hx, hy, hz = [_num(v) for v in host]
+    else:
+        hx = hy = hz = 0.0
+    lev = d.get("level_index")
+    fh = d.get("floor_height")
+    base = 0.0
+    if lev is not None:
+        r = level_base_y(lev, fh)
+        if not r["valid"]:
+            return {"resolved": False, "world": None,
+                    "coordinate_space": space, "provenance": "UNRESOLVED",
+                    "issues": r["issues"]}
+        base = r["base_y"]
+    # الارتفاع يُضاف مرّة واحدة: إمّا من الدور أو لأن أصل المضيف يحمله أصلاً
+    if d.get("host_origin_includes_level") and lev is not None:
+        base = 0.0
+        issues.append(issue("ALIGN_DOUBLE_TRANSFORM", "INFO",
+                            d.get("source_element_id"),
+                            "the host origin already carries the level "
+                            "elevation; it was not added a second time"))
+    world = [_q(hx + lx), _q(hy + ly + base), _q(hz + lz)]
+    return {"resolved": True, "world": world, "issues": issues,
+            "source_element_id": d.get("source_element_id"),
+            "coordinate_space": space,
+            "parent_space": TC["space_parents"].get(space),
+            "local": [_q(lx), _q(ly), _q(lz)],
+            "host_id": d.get("host_id"),
+            "level_id": d.get("level_id"),
+            "level_elevation": _q(base),
+            "provenance": "CANONICAL" if not d.get("presentation")
+            else "PRESENTATION_DERIVED",
+            "level_applied_times": 0 if lev is None else 1,
+            "host_applied_times": 1 if needs_host else 0}
+
+
+def plate_rect(room_rects, site_rect):
+    """امتداد لوح الدور: اتحاد بصمات غرف الدور نفسه، والموقع بديلٌ أخير.
+
+    لوحٌ يمتدّ على الموقع كلّه فوق مبنى أصغر هو ما يجعل البلاطة العليا تبدو
+    صفيحة طائرة منفصلة عن المبنى — وهذا اشتقاق من بيانات قانونية لا اختراع.
+    """
+    rects = [r for r in (room_rects or [])
+             if isinstance(r, (list, tuple)) and len(r) == 4
+             and all(_num(v) is not None for v in r)
+             and _num(r[2]) > 0 and _num(r[3]) > 0]
+    if not rects:
+        s = site_rect if isinstance(site_rect, (list, tuple)) \
+            and len(site_rect) == 4 else None
+        if s is None or any(_num(v) is None for v in s):
+            return {"valid": False, "rect": None, "source": "UNRESOLVED",
+                    "issues": [issue("ALIGN_TRANSFORM_UNRESOLVED", "WARNING",
+                                     "plate", "neither rooms nor a site "
+                                     "rectangle are available")]}
+        return {"valid": True, "rect": [_q(_num(v)) for v in s],
+                "source": "SITE_FALLBACK", "issues": []}
+    x0 = min(_num(r[0]) for r in rects)
+    z0 = min(_num(r[1]) for r in rects)
+    x1 = max(_num(r[0]) + _num(r[2]) for r in rects)
+    z1 = max(_num(r[1]) + _num(r[3]) for r in rects)
+    return {"valid": True, "issues": [], "source": "LEVEL_ROOM_UNION",
+            "rect": [_q(x0), _q(z0), _q(x1 - x0), _q(z1 - z0)],
+            "room_count": len(rects)}
+
+
+def rack_block(room_rect, rack):
+    """كتلة الرفوف داخل الغرفة — الامتداد المتاح = امتداد الغرفة ناقص الإزاحة.
+
+    الخطأ المُصحَّح: أخذ امتداد الغرفة كاملاً بعد إزاحة موجبة، فيتجاوز الصفّ
+    حدّ الغرفة بمقدار الإزاحة بالضبط (رفوف خارج غلاف المبنى).
+    """
+    rr = room_rect if isinstance(room_rect, (list, tuple)) \
+        and len(room_rect) == 4 else None
+    if rr is None or any(_num(v) is None for v in rr):
+        return {"valid": False, "block": None,
+                "issues": [issue("ALIGN_HOST_NOT_FOUND", "WARNING", "rack",
+                                 "the hosting room rectangle is missing")]}
+    R = rack if isinstance(rack, dict) else {}
+    rx, rz, rw, rd = [_num(v) for v in rr]
+    ox = _num(R.get("x")) or 0.0
+    oz = _num(R.get("z")) or 0.0
+    ox = min(max(ox, 0.0), rw)
+    oz = min(max(oz, 0.0), rd)
+    avail_w = max(rw - ox, 0.0)
+    avail_d = max(rd - oz, 0.0)
+    w = _num(R.get("w"))
+    d = _num(R.get("d"))
+    w = avail_w if w is None or w <= 0 else min(w, avail_w)
+    d = avail_d if d is None or d <= 0 else min(d, avail_d)
+    issues = []
+    if avail_w <= 0 or avail_d <= 0:
+        issues.append(issue("ALIGN_OBJECT_OUTSIDE_HOST", "WARNING", "rack",
+                            "the declared rack offset leaves no room extent"))
+    return {"valid": True, "issues": issues, "block": {
+        "x": _q(rx + ox), "z": _q(rz + oz), "w": _q(w), "d": _q(d),
+        "room_far_x": _q(rx + rw), "room_far_z": _q(rz + rd),
+        "within_room": bool(rx + ox + w <= rx + rw + 1e-9
+                            and rz + oz + d <= rz + rd + 1e-9),
+        "offset_applied_times": 1}}
+
+
+def containment(child_box, host_box, tolerance=None):
+    """تصنيف احتواء صندوقين في فضاء العالم — بلا تحريك تلقائي لأي جسم."""
+    tol = _num(tolerance)
+    if tol is None:
+        tol = float(TC["containment_tolerance_m"])
+
+    def ok(b):
+        return (isinstance(b, dict)
+                and all(isinstance(b.get(k), (list, tuple)) and len(b[k]) == 3
+                        and all(_num(v) is not None for v in b[k])
+                        for k in ("min", "max")))
+    if not (ok(child_box) and ok(host_box)):
+        return {"classification": "UNRESOLVED", "overlap": None,
+                "issues": [issue("ALIGN_TRANSFORM_UNRESOLVED", "WARNING",
+                                 None, "a world-space box is missing")]}
+    cmin = [_num(v) for v in child_box["min"]]
+    cmax = [_num(v) for v in child_box["max"]]
+    hmin = [_num(v) for v in host_box["min"]]
+    hmax = [_num(v) for v in host_box["max"]]
+    inside = all(cmin[i] >= hmin[i] - tol and cmax[i] <= hmax[i] + tol
+                 for i in range(3))
+    disjoint = any(cmin[i] > hmax[i] + tol or cmax[i] < hmin[i] - tol
+                   for i in range(3))
+    cls = "INSIDE" if inside else ("OUTSIDE" if disjoint
+                                   else "INTERSECTING_BOUNDARY")
+    out = [_q(max(0.0, min(cmax[i], hmax[i]) - max(cmin[i], hmin[i])))
+           for i in range(3)]
+    return {"classification": cls, "overlap": out, "tolerance": _q(tol),
+            "moved_to_fit": False,
+            "issues": [] if cls in ("INSIDE", "INTERSECTING_BOUNDARY")
+            else [issue("ALIGN_OBJECT_OUTSIDE_HOST", "WARNING", None,
+                        "the object lies outside its host; it is reported, "
+                        "never snapped")]}
+
+
+def roof_alignment(top_level_index, floor_height, roof_base_y,
+                   tolerance=None):
+    """خطأ ارتفاع السطح مقابل الارتفاع القانوني المتوقَّع — لا إنزال بصري."""
+    tol = _num(tolerance)
+    if tol is None:
+        tol = float(TC["roof_tolerance_m"])
+    exp = level_base_y((_num(top_level_index) or 0) + 1, floor_height)
+    if not exp["valid"]:
+        return {"aligned": False, "expected_y": None, "error_m": None,
+                "issues": exp["issues"]}
+    got = _num(roof_base_y)
+    if got is None:
+        return {"aligned": False, "expected_y": exp["base_y"],
+                "error_m": None,
+                "issues": [issue("ALIGN_TRANSFORM_UNRESOLVED", "WARNING",
+                                 "roof", "the roof base elevation is not a "
+                                 "finite number")]}
+    err = abs(got - exp["base_y"])
+    aligned = err <= tol
+    return {"aligned": bool(aligned), "expected_y": exp["base_y"],
+            "actual_y": _q(got), "error_m": _q(err), "tolerance": _q(tol),
+            "presentation_offset_used": False,
+            "issues": [] if aligned else
+            [issue("ALIGN_ROOF_DETACHED", "WARNING", "roof",
+                   "the roof sits %.3f m from its canonical elevation; it is "
+                   "reported, never lowered by a presentation offset" % err)]}

@@ -700,6 +700,54 @@ chk('the black-viewport regression ships and is wired into the phase gate',
     and 'test_black_viewport.py' in rd('tests/phase9_2/run_all.sh')
     and 'test_viewport_pixels.js' in rd('tests/phase9_2/run_all.sh'))
 
+print('\n== 11f · THE TRANSFORM AND ALIGNMENT CONTRACT ==')
+_tc = json.loads(rd('acs_pbr.json'))['transform_contract']
+chk('the coordinate space chain is declared end to end',
+    _tc['spaces'][0] == 'PROJECT' and _tc['spaces'][-1] == 'WORLD'
+    and len(_tc['spaces']) == 7)
+chk('the axis convention is declared explicitly',
+    _tc['axis']['y'] == 'VERTICAL_ELEVATION'
+    and _tc['axis']['x'] == 'HORIZONTAL_WIDTH')
+chk('the elevation and host rules say EXACTLY ONCE',
+    'EXACTLY ONCE' in _tc['elevation_rule']
+    and 'exactly once' in _tc['host_rule'])
+chk('the plate and rack rules are declared canonically',
+    'floating plate' in _tc['plate_rule']
+    and 'MINUS the offset' in _tc['rack_rule'])
+chk('the tolerance is small and carries its justification',
+    0 < _tc['roof_tolerance_m'] <= 0.05
+    and len(_tc['tolerance_note']) > 40)
+chk('presentation offsets to hide misalignment are forbidden',
+    'PRESENTATION_OFFSET_TO_HIDE_MISALIGNMENT' in _tc['forbidden']
+    and 'AUTOMATIC_SNAP_TO_NEAREST_HOST' in _tc['forbidden'])
+chk('the shipped compiler derives its rack block from the contract',
+    'pqRackBlock([rx,rz,rw,rd],R)' in page
+    and 'const bw=Math.min(+R.w||rw,rw), bd=Math.min(+R.d||rd,rd);'
+    not in page)
+chk('the Phase 1 site-wide plate convention is retained deliberately and its '
+    'deviation is measured, not hidden',
+    'slabStrips(0,0,site.w,site.d,holes)' in page
+    and 'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page
+    and 'plate_overhang' in page
+    and 'change_requires_approval:true' in page)
+chk('alignment diagnostics ship and never move an object',
+    'window.ACS.alignmentDiagnostics' in page
+    and 'objects_moved_to_fit:0' in page
+    and 'moved_to_fit:false' in page)
+chk('world bounds are measured only after updateMatrixWorld',
+    'o.updateMatrixWorld(true);' in page)
+chk('the seven ALIGN issue codes are declared and none is blocking',
+    all(c in json.loads(rd('acs_pbr.json'))['issue_codes'] for c in (
+        'ALIGN_TRANSFORM_UNRESOLVED', 'ALIGN_HOST_NOT_FOUND',
+        'ALIGN_OBJECT_OUTSIDE_HOST', 'ALIGN_LEVEL_MISMATCH',
+        'ALIGN_ROOF_DETACHED', 'ALIGN_DOUBLE_TRANSFORM',
+        'ALIGN_AXIS_MISMATCH'))
+    and not any(c.startswith('ALIGN_') for c in
+                json.loads(rd('acs_pbr.json'))['blocking_issue_codes']))
+chk('the alignment regression ships and is wired into the phase gate',
+    exists('tests/phase9_2/test_alignment.py')
+    and 'test_alignment.py' in rd('tests/phase9_2/run_all.sh'))
+
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',
     not any(re.search(r'from\s+tests|import\s+tests|[\'"]tests/', rd(rel))

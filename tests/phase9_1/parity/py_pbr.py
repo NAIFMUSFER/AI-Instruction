@@ -122,6 +122,39 @@ out['material_safe'] = [P.material_safe(P.material(m)['material'])
         {'id': 'c', 'base_color': '#ffffff', 'metalness': 9},
         {'id': 'd', 'base_color': '#ffffff', 'roughness': None},
         {}, None)]
+ROOMS_A = [[2, 2, 8, 6], [12, 2, 6, 6]]
+SITE_A = [0, 0, 40, 30]
+ROOM_A = [10.0, 6.0, 20.0, 12.0]
+out['level_base_y'] = [P.level_base_y(i, fh) for i in (0, 1, 2, 5, -1)
+                       for fh in (3.2, 0, None, float('nan'))]
+out['plate_rect'] = [P.plate_rect(r, s2) for r in
+                     (ROOMS_A, [], [[0, 0, 0, 0]], None)
+                     for s2 in (SITE_A, None)]
+out['rack_block'] = [P.rack_block(rr, rk) for rr in (ROOM_A, None)
+                     for rk in ({'x': 5, 'z': 0}, {'x': 0, 'z': 4},
+                                {'x': 15, 'w': 99}, {'x': 25}, {}, None)]
+out['containment'] = [P.containment(c, h, t) for c in
+                      ({'min': [12, 0, 8], 'max': [14, 2, 10]},
+                       {'min': [29, 0, 17], 'max': [33, 2, 20]},
+                       {'min': [40, 0, 8], 'max': [42, 2, 10]}, None)
+                      for h in ({'min': [10, 0, 6], 'max': [30, 3, 18]},
+                                None)
+                      for t in (None, 0.5)]
+out['roof_alignment'] = [P.roof_alignment(t, 3.2, y) for t in (0, 1, 2, 5)
+                         for y in (3.2, 6.4, 9.6, 12.8, None)]
+out['resolve_transform'] = [P.resolve_transform(d) for d in (
+    {'coordinate_space': 'HOST_LOCAL', 'local': [1, 0, 2],
+     'host_origin': [10, 0, 6], 'level_index': 2, 'floor_height': 3.2,
+     'host_id': 'r1', 'level_id': 'F2', 'source_element_id': 'FURN|F2|r1|0'},
+    {'coordinate_space': 'HOST_LOCAL', 'local': [1, 0, 2],
+     'host_origin': [10, 6.4, 6], 'host_origin_includes_level': True,
+     'level_index': 2, 'floor_height': 3.2},
+    {'coordinate_space': 'SITE', 'local': [1, 0, 2]},
+    {'coordinate_space': 'HOST_LOCAL', 'local': [1, 0, 1]},
+    {'coordinate_space': 'NOWHERE', 'local': [1, 0, 1]},
+    {'coordinate_space': 'SITE'},
+    {'coordinate_space': 'SITE', 'local': [1, float('inf'), 1]},
+    {}, None)]
 out['spec_view'] = {'schema': P.SPEC['schema'],
                     'chain': P.SPEC['quality_fallback_chain'],
                     'auto_max': P.SPEC['auto_max_profile'],

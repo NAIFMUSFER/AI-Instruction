@@ -123,11 +123,13 @@ function notVerified(why) {
     + '(window.ACS.ready)', ready);
   const api = await pg.evaluate(() => ({
     diag: typeof (window.ACS || {}).renderDiagnostics === 'function',
+    align: typeof (window.ACS || {}).alignmentDiagnostics === 'function',
     setModel: typeof (window.ACS || {}).setModel === 'function',
     pbr: typeof (window.ACS || {}).pbrApply === 'function',
     ad: typeof (window.ACS || {}).adApply === 'function'
   }));
   boot('the render diagnostics bridge is available', api.diag);
+  boot('the alignment diagnostics bridge is available', api.align);
   boot('the model loading entry point is available', api.setModel);
   boot('the 9.1 and 9.2 presentation bridges are live', api.pbr && api.ad);
   boot('no page errors during boot', errs.length === 0, errs.join(' | '));
@@ -245,6 +247,50 @@ function notVerified(why) {
       visual(fname + ' · ' + label + ': model visible and viewport not black',
         ok, JSON.stringify(pp.reasons));
     }
+    /* §6/§13/§15 — محاذاة فعلية بعد كل وضع، وثبات المصفوفات عبر التبديل */
+    const align = await pg.evaluate('window.ACS.alignmentDiagnostics()');
+    visual(fname + ': every hosted object resolves a transform (none '
+      + 'unresolved, none silently at the origin)',
+      align.unresolved_transforms === 0,
+      JSON.stringify({ checked: align.objects_checked,
+        unresolved: align.unresolved_transforms,
+        samples: (align.samples || []).slice(0, 3) }));
+    visual(fname + ': no object sits outside its canonical host',
+      align.outside_host_objects === 0,
+      JSON.stringify((align.samples || []).slice(0, 4)));
+    visual(fname + ': the roof sits at its canonical elevation',
+      !align.roof_alignment || align.roof_alignment.aligned === true,
+      JSON.stringify(align.roof_alignment));
+    visual(fname + ': every level plate is one level offset apart',
+      (align.level_alignment || []).every(l => l.aligned !== false),
+      JSON.stringify(align.level_alignment));
+    visual(fname + ': the alignment layer moved nothing to make it fit',
+      align.objects_moved_to_fit === 0 && align.writes_to_model === false);
+    /* §15 — ثبات التحويلات: مصفوفات العالم القانونية بعد سلسلة التبديل
+       يجب أن تساوي خط الأساس تماماً، بلا تراكم ولا انجراف */
+    const drift = await pg.evaluate(() => {
+      const snap = () => { scene.updateMatrixWorld(true); const o = [];
+        model.traverse(m => { if (m.isMesh && m.name && m.name.indexOf('|') > 0)
+          o.push(m.name + ':' + m.matrixWorld.elements
+            .map(v => Math.round(v * 1e6) / 1e6).join(',')); });
+        return o.sort().join('|'); };
+      const base = snap();
+      const pq = window.ACS.pbr.config('HIGH', 'CLEAR_NOON', 'REALISTIC',
+        'SKY', null, null, window.ACS.pbrCaps(), window.ACS.pbrBounds());
+      if (pq.valid) window.ACS.pbrApply(pq.config);
+      ['NONE', 'SITE', 'LANDSCAPE'].forEach(cx => {
+        const c = window.ACS.archdetail.config('DETAIL_STANDARD', 'REQUESTED',
+          cx, 'STAGING_REQUESTED_ONLY', 'EXTERIOR_HERO_CORNER', 'CLEAR_SKY',
+          null, false, [], window.ACS.adModelSummary());
+        if (c.valid) window.ACS.adApply(c.config); });
+      window.ACS.adMode('ENGINEERING');
+      if (window.ACS.pbrRestore) window.ACS.pbrRestore();
+      const after = snap();
+      return { equal: base === after, len: base.length };
+    });
+    visual(fname + ': canonical world matrices are identical after the full '
+      + 'PBR/detail/context toggle sequence — no transform drift',
+      drift.equal === true, JSON.stringify(drift));
     /* الهندسة القانونية لم تتغيّر بأي وضع عرض */
     const after = await pg.evaluate('window.ACS.renderDiagnostics()');
     visual(fname + ': canonical bounds identical after the whole matrix',
