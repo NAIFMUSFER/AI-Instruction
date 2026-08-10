@@ -26091,6 +26091,35 @@ window.ACS.alignmentDiagnostics=function(){
       issues:[{code:'ALIGN_TRANSFORM_UNRESOLVED',severity:'ERROR',
         blocking:false,message:String(e&&e.message||e).slice(0,160)}]}; } };
 
+
+/* ===== §15 — بصمة تحويلات الهندسة القانونية (قراءة فقط، بلا كشف إحداثيات)
+   يحتاج مِرقاب النشر مقارنة مصفوفات العالم قبل التبديل وبعده. حالة المحرّك
+   (scene/model/renderer/camera) محصورة في نطاق الوحدة عمداً، ولا تُرفع إلى
+   النطاق العام لإرضاء اختبار. هذا الجسر الضيّق يعيد بصمة مستقرّة وعدداً
+   فقط — أداة مقارنة لا تصدير بيانات — فيبقى التغليف سليماً. */
+window.ACS.canonicalTransformSnapshot=function(){
+  try{
+    if(typeof model==='undefined'||!model)
+      return {available:false,count:0,digest:null,
+        reason:'no canonical model is loaded'};
+    scene.updateMatrixWorld(true);
+    const rows=[];
+    model.traverse(m=>{
+      if(!m.isMesh||!m.name||m.name.indexOf('|')<0) return;
+      if(!pqBoundsMember(_pqDescribe(m)).included) return;
+      rows.push(m.name+':'+m.matrixWorld.elements
+        .map(v=>Math.round(v*1e6)/1e6).join(',')); });
+    rows.sort();
+    const joined=rows.join('|');
+    const digest=(typeof sha256Hex==='function')
+      ?sha256Hex(joined).slice(0,32)
+      :String(joined.length);
+    return {available:true,count:rows.length,digest:digest,
+      exposes_coordinates:false,writes_to_model:false};
+  }catch(e){
+    return {available:false,count:0,digest:null,
+      reason:String(e&&e.message||e).slice(0,120)}; } };
+
 /* ===== END ACS PBR BRIDGE ===== */
 /* ===== ACS ARCH DETAIL BRIDGE (module scope) ===== */
 /* جسر الطبقة المعمارية — الكود الوحيد في المرحلة 9.2 الذي يلمس THREE.

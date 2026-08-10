@@ -748,6 +748,28 @@ chk('the alignment regression ships and is wired into the phase gate',
     exists('tests/phase9_2/test_alignment.py')
     and 'test_alignment.py' in rd('tests/phase9_2/run_all.sh'))
 
+print('\n== 11g · THE HARNESS NEVER TOUCHES MODULE SCOPE ==')
+import check_harness_encapsulation as HE                          # noqa: E402
+_hfails, _hscanned = HE.check(ROOT)
+chk('every page.evaluate body uses public bridges only', _hfails == [],
+    '; '.join(_hfails[:2]))
+chk('the scan is not vacuous — evaluate bodies were actually parsed',
+    _hscanned >= 10, 'bodies=%d' % _hscanned)
+chk('gate self-test: a module-scoped access is caught',
+    HE.check_source_for_test() if hasattr(HE, 'check_source_for_test')
+    else len(HE.evaluate_bodies(HE.strip_noise(
+        "pg.evaluate(() => { scene.updateMatrixWorld(true); });"))) == 1)
+chk('gate self-test: an explanatory comment naming scene is NOT a violation',
+    'scene' not in HE.strip_noise('/* touches scene here */ var a=1;'))
+chk('the narrow read-only snapshot bridge exists instead of a global',
+    'window.ACS.canonicalTransformSnapshot' in page
+    and 'exposes_coordinates:false' in page)
+chk('engine state was NOT promoted to the global scope to satisfy a test',
+    'window.scene' not in page and 'window.renderer' not in page
+    and 'window.camera' not in page)
+chk('the harness asks for the snapshot bridge during boot',
+    'canonicalTransformSnapshot' in rd('tests/deploy/verify_page_boot.js'))
+
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',
     not any(re.search(r'from\s+tests|import\s+tests|[\'"]tests/', rd(rel))

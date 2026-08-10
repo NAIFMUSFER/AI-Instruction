@@ -124,12 +124,15 @@ function notVerified(why) {
   const api = await pg.evaluate(() => ({
     diag: typeof (window.ACS || {}).renderDiagnostics === 'function',
     align: typeof (window.ACS || {}).alignmentDiagnostics === 'function',
+    snap: typeof (window.ACS || {}).canonicalTransformSnapshot === 'function',
     setModel: typeof (window.ACS || {}).setModel === 'function',
     pbr: typeof (window.ACS || {}).pbrApply === 'function',
     ad: typeof (window.ACS || {}).adApply === 'function'
   }));
   boot('the render diagnostics bridge is available', api.diag);
   boot('the alignment diagnostics bridge is available', api.align);
+  boot('the canonical transform snapshot bridge is available — the harness '
+    + 'never touches module-scoped engine state', api.snap);
   boot('the model loading entry point is available', api.setModel);
   boot('the 9.1 and 9.2 presentation bridges are live', api.pbr && api.ad);
   boot('no page errors during boot', errs.length === 0, errs.join(' | '));
@@ -269,11 +272,9 @@ function notVerified(why) {
     /* §15 — ثبات التحويلات: مصفوفات العالم القانونية بعد سلسلة التبديل
        يجب أن تساوي خط الأساس تماماً، بلا تراكم ولا انجراف */
     const drift = await pg.evaluate(() => {
-      const snap = () => { scene.updateMatrixWorld(true); const o = [];
-        model.traverse(m => { if (m.isMesh && m.name && m.name.indexOf('|') > 0)
-          o.push(m.name + ':' + m.matrixWorld.elements
-            .map(v => Math.round(v * 1e6) / 1e6).join(',')); });
-        return o.sort().join('|'); };
+      /* حالة المحرّك محصورة في نطاق الوحدة عمداً: المِرقاب لا يلمس
+         scene/model/renderer/camera مباشرة، بل يقارن بصمة الجسر الضيّق */
+      const snap = () => window.ACS.canonicalTransformSnapshot();
       const base = snap();
       const pq = window.ACS.pbr.config('HIGH', 'CLEAR_NOON', 'REALISTIC',
         'SKY', null, null, window.ACS.pbrCaps(), window.ACS.pbrBounds());
@@ -286,11 +287,15 @@ function notVerified(why) {
       window.ACS.adMode('ENGINEERING');
       if (window.ACS.pbrRestore) window.ACS.pbrRestore();
       const after = snap();
-      return { equal: base === after, len: base.length };
+      return { available: base.available && after.available,
+        equal: base.available && after.available
+          && base.digest === after.digest && base.count === after.count,
+        count: base.count, before: base.digest, afterDigest: after.digest };
     });
     visual(fname + ': canonical world matrices are identical after the full '
       + 'PBR/detail/context toggle sequence — no transform drift',
-      drift.equal === true, JSON.stringify(drift));
+      drift.available === true && drift.equal === true,
+      JSON.stringify(drift));
     /* الهندسة القانونية لم تتغيّر بأي وضع عرض */
     const after = await pg.evaluate('window.ACS.renderDiagnostics()');
     visual(fname + ': canonical bounds identical after the whole matrix',

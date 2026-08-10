@@ -27,6 +27,9 @@ guard $?
 step "0b · layer integration (one viewport contract everywhere)"
 python3 "$ROOT/tools/check_integration.py" "$ROOT"; guard $?
 
+step "0c · harness encapsulation (no module-scoped engine access in tests)"
+python3 "$ROOT/tools/check_harness_encapsulation.py" "$ROOT"; guard $?
+
 step "1 · regenerate the architectural detail browser layer"
 python3 "$ROOT/tools/build_archdetail_browser.py"; guard $?
 
