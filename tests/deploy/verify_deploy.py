@@ -44,6 +44,57 @@ def exists(rel):
     return os.path.exists(os.path.join(ROOT, rel))
 
 
+# ------------------------------------------------- 0. حارس صفحة التطبيق --
+print('\n== 0 · THE APPLICATION PAGE GUARD (EMPTY-PAGE REMEDIATION) ==')
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import check_index_guard as IG                                    # noqa: E402
+_page_fails = IG.check_file(os.path.join(ROOT, 'public', 'index.html'))
+chk('public/index.html passes the structural guard', _page_fails == [],
+    '; '.join(_page_fails[:3]))
+chk('the netlify build runs the same guard before publishing',
+    'check_index_guard.py' in rd('tools/netlify-build.sh')
+    and 'exit 1' in rd('tools/netlify-build.sh'))
+_good = rd('public/index.html')
+chk('guard self-test: an EMPTY page is refused',
+    IG.check_page_text('', 0) != [])
+chk('guard self-test: a truncated page is refused',
+    IG.check_page_text(_good[:200000]) != [])
+chk('guard self-test: a page below the generated minimum is refused',
+    any('below the generated minimum' in x
+        for x in IG.check_page_text('<!DOCTYPE html><html><body>x</body>'
+                                    '</html>')))
+chk('guard self-test: a missing importmap is refused',
+    any('importmap' in x for x in IG.check_page_text(
+        _good.replace('<script type="importmap">',
+                      '<script type="importmap-disabled">', 1))))
+chk('guard self-test: an importmap with invalid JSON is refused',
+    any('not valid JSON' in x for x in IG.check_page_text(
+        _good.replace('"three":', '"three" broken:', 1))))
+chk('guard self-test: an importmap pointing at a CDN is refused',
+    any('pinned local vendor' in x for x in IG.check_page_text(
+        _good.replace(IG.IMPORTMAP_THREE,
+                      'https://unpkg.com/three/build/three.module.js', 1))))
+chk('guard self-test: missing renderer initialization is refused',
+    any('renderer initialization' in x for x in IG.check_page_text(
+        _good.replace('new THREE.WebGLRenderer(',
+                      'new THREE.DisabledRenderer(', 1))))
+chk('guard self-test: missing scene initialization is refused',
+    any('scene initialization' in x for x in IG.check_page_text(
+        _good.replace('new THREE.Scene(', 'new THREE.Absent(', 1))))
+chk('guard self-test: missing render loop is refused',
+    any('render loop' in x for x in IG.check_page_text(
+        _good.replace('renderer.setAnimationLoop', 'renderer.noLoop', 1))))
+chk('guard self-test: a missing generated 9.1 block is refused',
+    any('PBR QUALITY' in x for x in IG.check_page_text(
+        _good.replace('/* ===== END ACS PBR QUALITY ===== */', '', 1))))
+chk('guard self-test: a duplicated generated 9.2 block is refused',
+    any('ARCH DETAIL' in x for x in IG.check_page_text(
+        _good + '\n/* ===== END ACS ARCH DETAIL ===== */')))
+chk('guard self-test: a missing file path is refused',
+    IG.check_file(os.path.join(ROOT, 'public', 'no_such_page.html')) != [])
+chk('the guard checks every phase layer structurally (10 marker pairs)',
+    len(IG.PAIRS) == 10 and len(IG.ENGINE_NEEDLES) == 5)
+
 # ---------------------------------------------------------------- 1. الوجود --
 print('\n== 1 · REQUIRED DEPLOYMENT FILES EXIST ==')
 REQUIRED = [

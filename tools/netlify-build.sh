@@ -69,3 +69,12 @@ grep -Eq "REVISION *= *['\"]160['\"]" "$VEN/three@$THREE/build/three.module.js" 
   || { echo "✗ three REVISION mismatch (expected 160)"; exit 1; }
 
 echo "✓ vendoring complete — production serves three/pdf.js locally (no runtime CDN)"
+
+# --- حارس صفحة التطبيق (المرحلة 9.2 — علاج إنتاجي دائم) -------------------
+# لا يُنشر أبداً index.html مفقود أو فارغ أو مبتور أو بلا كتل التطبيق المولَّدة.
+# منطق الفحص كله في tools/check_index_guard.py (مصدر واحد يشاركه تحقّق النشر).
+echo "▶ verifying public/index.html structure"
+[ -f tools/check_index_guard.py ] || { echo "✗ MISSING: tools/check_index_guard.py"; exit 1; }
+python3 tools/check_index_guard.py public/index.html || exit 1
+
+echo "✓ build verification complete"

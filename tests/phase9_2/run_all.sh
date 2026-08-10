@@ -67,6 +67,17 @@ python3 "$ROOT/tests/security/test_security.py"; guard $?
 step "7 · deployment closure for every canonical file"
 sh "$ROOT/tests/deploy/verify_deploy.sh"; guard $?
 
+step "7b · the application page guard and real boot check"
+python3 "$ROOT/tools/check_index_guard.py" "$ROOT/public/index.html"; guard $?
+node "$ROOT/tests/deploy/verify_page_boot.js" || {
+  rc=$?
+  if [ "$rc" -eq 2 ]; then
+    echo "page boot: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)"
+  else
+    guard "$rc"
+  fi
+}
+
 step "8 · Phase 9.1 regression (visual quality and every earlier phase)"
 sh "$ROOT/tests/phase9_1/run_all.sh" "$1"; guard $?
 
