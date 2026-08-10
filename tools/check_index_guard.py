@@ -91,7 +91,10 @@ def check_page_text(page, size=None):
             fails.append('generated begin-marker missing: %s' % a)
         elif ia > page.index(b):
             fails.append('marker pair out of order: %s' % a)
-    if page.count('window.__ACS_PQ__&&window.__ACS_PQ__.composer') != 1:
+    disp = ('window.__ACS_PQ__&&window.__ACS_PQ__.composer'
+            '&&!renderer.xr.isPresenting){window.__ACS_PQ__.composer'
+            '.render();}')
+    if page.count(disp) != 1:
         fails.append('render-loop dispatcher must appear exactly once')
     if 'else{renderer.render(scene,camera);}' not in page:
         fails.append('render-loop fallback branch is missing')

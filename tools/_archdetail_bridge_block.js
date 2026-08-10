@@ -24,14 +24,15 @@ function _adClearAll(){
   A.savedMats.forEach(([m,orig])=>{ m.material=orig; });
   A.savedMats=[]; A.applied=null; }
 
+/* الهندسة القانونية وحدها — نفس محكّم المرحلة 9.1 بلا سجلّ ثانٍ.
+   إدراج قبّة السماء والأرضية هنا كان يجعل حدود المحيط بعشرات الكيلومترات
+   فتُبنى أرضية سياقية عملاقة تبتلع الإطار: أحد مسارات الشاشة السوداء. */
 function _adBuildingMeshes(){
   const out=[];
   scene.traverse(o=>{
-    if(!o.isMesh||!o.name) return;
-    let p=o.parent,skip=false;
-    while(p){ if(p.name&&(p.name.indexOf('AD_')===0
-      ||p.name.indexOf('PQ_')===0)){ skip=true; break; } p=p.parent; }
-    if(!skip) out.push(o); });
+    if(!o.isMesh) return;
+    if(!pqBoundsMember(_pqDescribe(o)).included) return;
+    out.push(o); });
   return out; }
 
 function _adBounds(meshes){

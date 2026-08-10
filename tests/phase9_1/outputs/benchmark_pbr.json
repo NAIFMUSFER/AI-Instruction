@@ -10,16 +10,16 @@
    "bounds_radius_m": 10.0,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.06,
-    "materials_20_with_overrides": 0.18,
-    "lighting_8": 0.02,
-    "shadow_4_tiers": 0.02,
-    "quality_4_profiles": 0.02,
-    "cameras_8": 0.12,
-    "full_config_32": 5.13,
-    "capture_metadata_32": 0.06,
-    "texture_path_checks_100": 0.33,
-    "immutability_verify": 0.15
+    "materials_20": 0.13,
+    "materials_20_with_overrides": 0.33,
+    "lighting_8": 0.03,
+    "shadow_4_tiers": 0.03,
+    "quality_4_profiles": 0.15,
+    "cameras_8": 0.14,
+    "full_config_32": 6.8,
+    "capture_metadata_32": 0.07,
+    "texture_path_checks_100": 0.41,
+    "immutability_verify": 0.19
    }
   },
   {
@@ -30,16 +30,16 @@
    "bounds_radius_m": 10.0,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.05,
-    "materials_20_with_overrides": 0.06,
+    "materials_20": 0.06,
+    "materials_20_with_overrides": 0.07,
     "lighting_8": 0.01,
     "shadow_4_tiers": 0.01,
     "quality_4_profiles": 0.02,
     "cameras_8": 0.05,
-    "full_config_32": 4.8,
-    "capture_metadata_32": 0.05,
-    "texture_path_checks_100": 0.15,
-    "immutability_verify": 0.31
+    "full_config_32": 6.17,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.19,
+    "immutability_verify": 0.41
    }
   },
   {
@@ -50,16 +50,16 @@
    "bounds_radius_m": 10.59,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.05,
+    "materials_20": 0.06,
     "materials_20_with_overrides": 0.09,
     "lighting_8": 0.01,
     "shadow_4_tiers": 0.01,
     "quality_4_profiles": 0.02,
-    "cameras_8": 0.04,
-    "full_config_32": 4.79,
-    "capture_metadata_32": 0.08,
-    "texture_path_checks_100": 0.16,
-    "immutability_verify": 0.1
+    "cameras_8": 0.05,
+    "full_config_32": 6.01,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.2,
+    "immutability_verify": 0.12
    }
   },
   {
@@ -70,16 +70,16 @@
    "bounds_radius_m": 10.0,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.05,
+    "materials_20": 0.06,
     "materials_20_with_overrides": 0.06,
     "lighting_8": 0.01,
     "shadow_4_tiers": 0.01,
     "quality_4_profiles": 0.02,
-    "cameras_8": 0.04,
-    "full_config_32": 4.8,
-    "capture_metadata_32": 0.04,
-    "texture_path_checks_100": 0.12,
-    "immutability_verify": 0.09
+    "cameras_8": 0.05,
+    "full_config_32": 5.9,
+    "capture_metadata_32": 0.05,
+    "texture_path_checks_100": 0.21,
+    "immutability_verify": 0.08
    }
   },
   {
@@ -91,14 +91,14 @@
    "model_unchanged": true,
    "ms": {
     "materials_20": 0.05,
-    "materials_20_with_overrides": 0.05,
+    "materials_20_with_overrides": 0.07,
     "lighting_8": 0.01,
     "shadow_4_tiers": 0.01,
     "quality_4_profiles": 0.02,
-    "cameras_8": 0.04,
-    "full_config_32": 5.02,
-    "capture_metadata_32": 0.13,
-    "texture_path_checks_100": 0.21,
+    "cameras_8": 0.05,
+    "full_config_32": 5.99,
+    "capture_metadata_32": 0.1,
+    "texture_path_checks_100": 0.16,
     "immutability_verify": 0.06
    }
   },
@@ -115,11 +115,11 @@
     "lighting_8": 0.01,
     "shadow_4_tiers": 0.01,
     "quality_4_profiles": 0.02,
-    "cameras_8": 0.04,
-    "full_config_32": 5.1,
-    "capture_metadata_32": 0.04,
-    "texture_path_checks_100": 0.17,
-    "immutability_verify": 0.09
+    "cameras_8": 0.05,
+    "full_config_32": 5.89,
+    "capture_metadata_32": 0.05,
+    "texture_path_checks_100": 0.2,
+    "immutability_verify": 0.15
    }
   },
   {
@@ -130,16 +130,16 @@
    "bounds_radius_m": 10.0,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.05,
-    "materials_20_with_overrides": 0.06,
+    "materials_20": 0.06,
+    "materials_20_with_overrides": 0.07,
     "lighting_8": 0.01,
     "shadow_4_tiers": 0.01,
-    "quality_4_profiles": 0.03,
-    "cameras_8": 0.04,
-    "full_config_32": 4.88,
+    "quality_4_profiles": 0.02,
+    "cameras_8": 0.05,
+    "full_config_32": 6.26,
     "capture_metadata_32": 0.06,
-    "texture_path_checks_100": 0.15,
-    "immutability_verify": 0.74
+    "texture_path_checks_100": 0.2,
+    "immutability_verify": 0.86
    }
   },
   {
@@ -150,16 +150,16 @@
    "bounds_radius_m": 32.02,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.06,
-    "materials_20_with_overrides": 0.07,
-    "lighting_8": 0.01,
-    "shadow_4_tiers": 0.01,
-    "quality_4_profiles": 0.02,
-    "cameras_8": 0.05,
-    "full_config_32": 4.99,
-    "capture_metadata_32": 0.05,
-    "texture_path_checks_100": 0.16,
-    "immutability_verify": 2.04
+    "materials_20": 0.08,
+    "materials_20_with_overrides": 0.08,
+    "lighting_8": 0.02,
+    "shadow_4_tiers": 0.02,
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.06,
+    "full_config_32": 6.18,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.21,
+    "immutability_verify": 2.35
    }
   },
   {
@@ -170,16 +170,16 @@
    "bounds_radius_m": 103.08,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.07,
-    "materials_20_with_overrides": 0.08,
-    "lighting_8": 0.01,
+    "materials_20": 0.08,
+    "materials_20_with_overrides": 0.09,
+    "lighting_8": 0.02,
     "shadow_4_tiers": 0.02,
-    "quality_4_profiles": 0.02,
-    "cameras_8": 0.05,
-    "full_config_32": 4.87,
-    "capture_metadata_32": 0.04,
-    "texture_path_checks_100": 0.19,
-    "immutability_verify": 10.3
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.06,
+    "full_config_32": 6.7,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.21,
+    "immutability_verify": 13.42
    }
   },
   {
@@ -190,16 +190,16 @@
    "bounds_radius_m": 201.56,
    "model_unchanged": true,
    "ms": {
-    "materials_20": 0.07,
+    "materials_20": 0.09,
     "materials_20_with_overrides": 0.09,
-    "lighting_8": 0.01,
+    "lighting_8": 0.02,
     "shadow_4_tiers": 0.02,
     "quality_4_profiles": 0.02,
-    "cameras_8": 0.05,
-    "full_config_32": 5.04,
-    "capture_metadata_32": 0.04,
-    "texture_path_checks_100": 0.17,
-    "immutability_verify": 19.82
+    "cameras_8": 0.06,
+    "full_config_32": 6.32,
+    "capture_metadata_32": 0.07,
+    "texture_path_checks_100": 0.22,
+    "immutability_verify": 27.96
    }
   }
  ]

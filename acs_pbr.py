@@ -414,3 +414,207 @@ def capture_metadata(cfg, model_hash, width_px, height_px, generated_at=None):
           "generated_at": generated_at,
           "is_engineering_evidence": False}
     return {"valid": True, "metadata": md, "issues": issues}
+
+
+# ------------------------------------ حدود العرض والقصّ (علاج الشاشة السوداء) --
+VB = SPEC["viewport_bounds"]
+CLIP = SPEC["camera_clip"]
+VIEWPORT_CONTRACT = SPEC["viewport_contract_version"]
+VIEWPORT_CONTRACT_SYMBOLS = tuple(SPEC["viewport_contract_symbols"])
+
+
+def bounds_member(desc):
+    """هل يدخل هذا الكائن في حدود المشهد القانونية؟
+
+    القاعدة: الهندسة القانونية وحدها. قبّة السماء والأرضية السياقية وحامل
+    اللاعب وعلامات التصحيح وكل مجموعة عرضية تُستبعد صراحةً. إدخال قبّة
+    السماء (مقياس 45000) يضخّم نصف القطر آلاف الأضعاف، فتُوضع كاميرا
+    الإعدادات خارج القبّة وخلف مستوى القصّ البعيد — وهذه هي الشاشة السوداء.
+    """
+    d = desc if isinstance(desc, dict) else {}
+    name = d.get("name")
+    name = name if isinstance(name, str) else ""
+    parents = [p for p in (d.get("parent_names") or []) if isinstance(p, str)]
+    flags = d.get("user_data") if isinstance(d.get("user_data"), dict) else {}
+    if not d.get("is_mesh"):
+        return {"included": False, "reason": "NOT_A_MESH"}
+    for f in VB["excluded_userdata_flags"]:
+        if flags.get(f):
+            return {"included": False, "reason": "PRESENTATION_FLAG:%s" % f}
+    for n in [name] + parents:
+        if n in VB["excluded_object_names"]:
+            return {"included": False, "reason": "EXCLUDED_NAME:%s" % n}
+        for pre in VB["excluded_name_prefixes"]:
+            if n.startswith(pre):
+                return {"included": False, "reason": "EXCLUDED_PREFIX:%s" % pre}
+    root = VB["canonical_root_name"]
+    sep = VB["canonical_tag_separator"]
+    if root in parents or name == root:
+        return {"included": True, "reason": "CANONICAL_ROOT"}
+    if sep in name:
+        return {"included": True, "reason": "CANONICAL_TAG"}
+    if VB["require_canonical_membership"]:
+        return {"included": False, "reason": "NOT_CANONICAL_GEOMETRY"}
+    return {"included": True, "reason": "DEFAULT"}
+
+
+def bounds_from_descriptors(objects):
+    """حدود قانونية من أوصاف كائنات — تعيد None عند غياب أي هندسة قانونية."""
+    mins = [None, None, None]
+    maxs = [None, None, None]
+    used = 0
+    for o in (objects or []):
+        if not bounds_member(o)["included"]:
+            continue
+        box = o.get("box") if isinstance(o, dict) else None
+        if not (isinstance(box, dict)
+                and all(isinstance(box.get(k), (list, tuple))
+                        and len(box[k]) == 3 for k in ("min", "max"))):
+            continue
+        ok = True
+        for i in range(3):
+            a, b = _num(box["min"][i]), _num(box["max"][i])
+            if a is None or b is None:
+                ok = False
+                break
+        if not ok:
+            continue
+        for i in range(3):
+            a, b = _num(box["min"][i]), _num(box["max"][i])
+            mins[i] = a if mins[i] is None else min(mins[i], a)
+            maxs[i] = b if maxs[i] is None else max(maxs[i], b)
+        used += 1
+    if not used:
+        return {"valid": False, "bounds": None, "member_count": 0,
+                "issues": [issue("PQ_BOUNDS_UNAVAILABLE", "WARNING", None,
+                                 "no canonical geometry is present in the "
+                                 "scene")]}
+    size = [maxs[i] - mins[i] for i in range(3)]
+    return {"valid": True, "member_count": used, "issues": [], "bounds": {
+        "cx": _q((mins[0] + maxs[0]) / 2.0),
+        "cy": _q((mins[1] + maxs[1]) / 2.0),
+        "cz": _q((mins[2] + maxs[2]) / 2.0),
+        "min_y": _q(mins[1]),
+        "size": [_q(v) for v in size],
+        "radius": _q(max(max(size) / 2.0, 0.5))}}
+
+
+def camera_clip(bounds, position):
+    """مستويا القصّ يحتويان النموذج دائماً، والمسافة تبقى داخل قبّة السماء."""
+    b = bounds if isinstance(bounds, dict) else {}
+    r = _num(b.get("radius"))
+    if r is None or r <= 0:
+        r = 20.0
+    cx = _num(b.get("cx")) or 0.0
+    cy = _num(b.get("cy")) or 0.0
+    cz = _num(b.get("cz")) or 0.0
+    p = position if isinstance(position, (list, tuple)) and len(position) == 3 \
+        else [cx, cy + r, cz + r * 2.0]
+    px, py, pz = [(_num(v) or 0.0) for v in p]
+    dist = math.sqrt((px - cx) ** 2 + (py - cy) ** 2 + (pz - cz) ** 2)
+    issues = []
+    sky_limit = float(CLIP["sky_dome_radius_m"]) \
+        * float(CLIP["max_distance_ratio_of_sky"])
+    clamped = False
+    if dist > sky_limit:
+        k = sky_limit / dist if dist > 0 else 0.0
+        px, py, pz = (cx + (px - cx) * k, cy + (py - cy) * k,
+                      cz + (pz - cz) * k)
+        dist = sky_limit
+        clamped = True
+        issues.append(issue("PQ_CAMERA_CLAMPED", "INFO", None,
+                            "camera distance clamped inside the sky dome"))
+    near = max(float(CLIP["near_min"]),
+               min(dist * float(CLIP["near_ratio_of_distance"]),
+                   max(dist - r * 1.5, float(CLIP["near_min"]))))
+    far = min(max((dist + r * float(CLIP["far_margin_factor"])),
+                  float(CLIP["far_min"])), float(CLIP["far_max"]))
+    return {"valid": True, "issues": issues, "clip": {
+        "near": _q(near), "far": _q(far), "distance": _q(dist),
+        "position": [_q(px), _q(py), _q(pz)],
+        "clamped": clamped, "inside_sky_dome": dist <= sky_limit,
+        "camera_inside_bounds": dist <= r,
+        # النموذج مشمول إذا غطّى المستوى البعيد أقصاه، والقريب لم يقطع مقدّمته.
+        # الكاميرا داخل الكرة (مشهد داخلي) ⇒ المقدّمة خلف القريب حتماً.
+        "contains_model": bool(far > dist + r - 1e-9
+                               and (dist <= r
+                                    or near < dist - r + 1e-9))}}
+
+
+def frustum_contains(cam, bounds):
+    """هل يتقاطع صندوق النموذج مع هرم الرؤية فعلاً؟ حساب صريح لا ظنّ."""
+    c = cam if isinstance(cam, dict) else {}
+    b = bounds if isinstance(bounds, dict) else {}
+    pos = c.get("position") or [0.0, 0.0, 0.0]
+    tgt = c.get("target") or [0.0, 0.0, 0.0]
+    fov = _num(c.get("fov")) or 50.0
+    aspect = _num(c.get("aspect")) or 1.6
+    near = _num(c.get("near"))
+    far = _num(c.get("far"))
+    near = 0.05 if near is None else near
+    far = 1000.0 if far is None else far
+    cx = _num(b.get("cx")) or 0.0
+    cy = _num(b.get("cy")) or 0.0
+    cz = _num(b.get("cz")) or 0.0
+    r = _num(b.get("radius"))
+    if r is None or r <= 0:
+        r = 1.0
+    fx, fy, fz = tgt[0] - pos[0], tgt[1] - pos[1], tgt[2] - pos[2]
+    flen = math.sqrt(fx * fx + fy * fy + fz * fz) or 1.0
+    fx, fy, fz = fx / flen, fy / flen, fz / flen
+    vx, vy, vz = cx - pos[0], cy - pos[1], cz - pos[2]
+    depth = vx * fx + vy * fy + vz * fz
+    dist = math.sqrt(vx * vx + vy * vy + vz * vz)
+    # كاميرا داخل كرة النموذج (المشاهد الداخلية والمشي) تتقاطع معه حتماً
+    inside_bounds = dist <= r
+    facing = depth > 0 or inside_bounds
+    half_v = math.radians(float(fov)) / 2.0
+    half_h = math.atan(math.tan(half_v) * float(aspect))
+    # مسافة مركز الكرة عن المحور البصري
+    lat = math.sqrt(max(dist * dist - depth * depth, 0.0))
+    in_near_far = (depth + r > near) and (depth - r < far)
+    # نصف عرض الهرم عند هذا العمق + هامش نصف القطر
+    limit_v = abs(depth) * math.tan(half_v) + r / max(math.cos(half_v), 1e-6)
+    limit_h = abs(depth) * math.tan(half_h) + r / max(math.cos(half_h), 1e-6)
+    in_cone = lat <= max(limit_v, limit_h)
+    if inside_bounds:
+        in_near_far = True
+        in_cone = True
+    inside = bool(facing and in_near_far and in_cone)
+    return {"contains": inside, "facing": facing,
+            "inside_bounds": bool(inside_bounds),
+            "depth": _q(depth), "distance": _q(dist),
+            "lateral": _q(lat), "near": _q(near), "far": _q(far),
+            "within_clip": bool(in_near_far), "within_cone": bool(in_cone),
+            "issues": [] if inside else
+            [issue("PQ_MODEL_OUT_OF_FRUSTUM", "WARNING", None,
+                   "the model bounding sphere does not intersect the view "
+                   "frustum")]}
+
+
+def material_safe(mat):
+    """بوّابة الأمان: خامة عرضية غير صالحة تسقط مفتوحةً إلى خامة الهندسة،
+    لا إلى جسم أسود أو غير مرئي (§7)."""
+    m = mat if isinstance(mat, dict) else {}
+    reasons = []
+    col = m.get("base_color")
+    if not (isinstance(col, str) and len(col) == 7 and col[0] == "#"
+            and all(ch in "0123456789abcdefABCDEF" for ch in col[1:])):
+        reasons.append("INVALID_COLOR")
+    for k, lo, hi in (("roughness", 0.0, 1.0), ("metalness", 0.0, 1.0),
+                      ("opacity", 0.0, 1.0), ("transmission", 0.0, 1.0)):
+        if k not in m or m.get(k) is None:
+            continue          # غير مضبوط = يبقى على قيمة المحرّك، وهذا آمن
+        v = _num(m.get(k))
+        if v is None or v < lo or v > hi:
+            reasons.append("INVALID_%s" % k.upper())
+    op = _num(m.get("opacity"))
+    if m.get("opacity") is not None and op is not None and op <= 0.0:
+        reasons.append("FULLY_TRANSPARENT")
+    safe = not reasons
+    return {"safe": safe, "reasons": reasons,
+            "fallback": None if safe else "ENGINEERING_MATERIAL",
+            "issues": [] if safe else
+            [issue("PQ_MATERIAL_FAIL_OPEN", "WARNING", m.get("id"),
+                   "presentation material refused (%s); keeping the "
+                   "engineering material" % ",".join(reasons))]}

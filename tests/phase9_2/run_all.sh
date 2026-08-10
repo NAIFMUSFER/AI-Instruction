@@ -24,6 +24,9 @@ print("imports: OK (%d modules)" % len(mods))
 PY
 guard $?
 
+step "0b · layer integration (one viewport contract everywhere)"
+python3 "$ROOT/tools/check_integration.py" "$ROOT"; guard $?
+
 step "1 · regenerate the architectural detail browser layer"
 python3 "$ROOT/tools/build_archdetail_browser.py"; guard $?
 
@@ -67,7 +70,13 @@ python3 "$ROOT/tests/security/test_security.py"; guard $?
 step "7 · deployment closure for every canonical file"
 sh "$ROOT/tests/deploy/verify_deploy.sh"; guard $?
 
-step "7b · the application page guard and real boot check"
+step "7a · the black-viewport regression (bounds, clip, frustum, fail-open)"
+python3 "$HERE/test_black_viewport.py"; guard $?
+
+step "7b · the viewport pixel analyser (positive and negative fixtures)"
+node "$ROOT/tests/deploy/test_viewport_pixels.js"; guard $?
+
+step "7c · the application page guard and real boot check"
 python3 "$ROOT/tools/check_index_guard.py" "$ROOT/public/index.html"; guard $?
 node "$ROOT/tests/deploy/verify_page_boot.js" || {
   rc=$?

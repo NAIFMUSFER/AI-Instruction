@@ -57,6 +57,43 @@ out.configs=[
 out.captures=[[1280,720],[1920,1080],[2560,1440],[99999,10],[0,0],[null,null]]
   .map(wh=>pqCaptureMetadata(
     out.configs[0].valid?out.configs[0].config:null,'hash_abc',wh[0],wh[1],null));
+const SKY={name:'SKY_DOME',is_mesh:true,parent_names:[],
+  box:{min:[-22500,-22500,-22500],max:[22500,22500,22500]}};
+const UNNAMED_SKY={name:'',is_mesh:true,parent_names:[],box:SKY.box};
+const WALL={name:'WALL|F0|r1|s0',is_mesh:true,parent_names:['BUILDING'],
+  box:{min:[0,0,0],max:[12,3,9]}};
+const TAGGED={name:'FLOOR|F0|r1|plate',is_mesh:true,parent_names:[],
+  box:{min:[-2,-0.1,-2],max:[14,0.1,11]}};
+const CTX={name:'AD_CONTEXT_PLANE0',is_mesh:true,
+  parent_names:['AD_CONTEXT'],user_data:{visual_only:true},
+  box:{min:[-200,-1,-200],max:[200,-0.9,200]}};
+const DBG={name:'COORD_DEBUG_MARKER',is_mesh:true,parent_names:[],
+  user_data:{acs_debug_only:true},box:{min:[0,0,0],max:[1,1,1]}};
+const NOTMESH={name:'PLAYER',is_mesh:false,parent_names:[]};
+const OBJS=[SKY,UNNAMED_SKY,WALL,TAGGED,CTX,DBG,NOTMESH];
+out.bounds_member=OBJS.map(pqBoundsMember)
+  .concat([pqBoundsMember({}),pqBoundsMember(null)]);
+out.bounds_sets=[OBJS,[WALL],[SKY,CTX],[],null,
+  [Object.assign({},WALL,{box:{min:['a',0,0],max:[1,1,1]}})]]
+  .map(pqBoundsFromDescriptors);
+out.camera_clip=[];
+[{cx:6,cy:1.5,cz:4.5,radius:7.5},{cx:0,cy:0,cz:0,radius:0},{},null]
+  .forEach(b=>{ [[0,20000,54000],[6,20,30],[6,1.5,4.5],null].forEach(pos=>{
+    out.camera_clip.push(pqCameraClip(b,pos)); }); });
+out.frustum=[];
+[{position:[0,20000,54000],target:[6,1.5,4.5],fov:45,aspect:1.6,near:0.05,
+  far:6000},
+ {position:[30,20,30],target:[6,1.5,4.5],fov:45,aspect:1.6,near:0.1,far:500},
+ {position:[6,1.5,4.5],target:[60,1.5,4.5],fov:60,aspect:1.6,near:0.05,
+  far:500},{},null].forEach(c=>{
+  [{cx:6,cy:1.5,cz:4.5,radius:7.5},{},null].forEach(b=>{
+    out.frustum.push(pqFrustumContains(c,b)); }); });
+out.material_safe=Object.keys(PQ_MATERIALS).sort(_scmp)
+  .map(m=>pqMaterialSafe(pqMaterial(m).material))
+  .concat([{id:'a',base_color:'#ffffff',opacity:0.0},
+    {id:'b',base_color:'red'},{id:'c',base_color:'#ffffff',metalness:9},
+    {id:'d',base_color:'#ffffff',roughness:null},{},null]
+    .map(pqMaterialSafe));
 out.spec_view={schema:ACS_PBR_SPEC.schema,
   chain:ACS_PBR_SPEC.quality_fallback_chain,
   auto_max:ACS_PBR_SPEC.auto_max_profile,

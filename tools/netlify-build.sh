@@ -73,6 +73,10 @@ echo "✓ vendoring complete — production serves three/pdf.js locally (no runt
 # --- حارس صفحة التطبيق (المرحلة 9.2 — علاج إنتاجي دائم) -------------------
 # لا يُنشر أبداً index.html مفقود أو فارغ أو مبتور أو بلا كتل التطبيق المولَّدة.
 # منطق الفحص كله في tools/check_index_guard.py (مصدر واحد يشاركه تحقّق النشر).
+echo "▶ verifying layer integration (one viewport contract everywhere)"
+[ -f tools/check_integration.py ] || { echo "✗ MISSING: tools/check_integration.py"; exit 1; }
+python3 tools/check_integration.py || exit 1
+
 echo "▶ verifying public/index.html structure"
 [ -f tools/check_index_guard.py ] || { echo "✗ MISSING: tools/check_index_guard.py"; exit 1; }
 python3 tools/check_index_guard.py public/index.html || exit 1

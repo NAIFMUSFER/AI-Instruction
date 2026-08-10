@@ -22,3 +22,18 @@ the generation path; classify each as (a) declared deterministic normalization w
 provenance + issue code, or (b) silent invention to be removed and replaced by an
 explicit unresolved report; extend the adversarial suites to pin the chosen contract.
 No canonical semantics were modified by the Phase 9.2 remediation.
+
+
+## KI-2 · Live raster verification requires the deployed environment (OPEN, environmental)
+
+The black-viewport remediation is verified by explicit geometry calculation, by a
+real-browser decoded-pixel analyser with positive and negative fixtures, and by a
+fixture-loading boot harness. The final confirmation — the actual deployed page
+rendering an actual model in actual pixels — cannot run in this sandbox: there is no
+vendored Three.js (npm registry blocked) and no network egress to the deployment
+(`ERR_TUNNEL_CONNECTION_FAILED`). Run on any networked machine:
+
+    node tests/deploy/verify_page_boot.js https://sprightly-selkie-d906c3.netlify.app/
+
+It prints BOOT and VISUAL MODEL as two separate verdicts and, on failure, names the
+responsible layer through the mode matrix and `window.ACS.renderDiagnostics()`.

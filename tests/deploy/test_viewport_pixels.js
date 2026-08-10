@@ -185,6 +185,53 @@ chk('the thresholds are reported with every verdict (explainable)',
     chk('an actual WebGL frame cleared to black FAILS',
       glBlack.verdict === 'EFFECTIVELY_BLACK',
       JSON.stringify(glBlack.reasons));
+    /* §C — الانحدار المطلوب حرفياً: كانفس WebGL أسود + شريط أدوات ظاهر
+       يجب أن يفشل. هذا هو شكل العطل الإنتاجي بالضبط: المستخدم يرى واجهة
+       سليمة ونافذة عرض سوداء، والفحص القديم كان يمرّ لأن بكسلات الواجهة
+       دخلت العيّنة. هنا لا تدخل: العيّنة من مستطيل الكانفس وحده. */
+    await pg.setContent(`<!doctype html><meta charset=utf-8>
+      <style>body{margin:0;background:#101418}
+        #bar{position:fixed;top:0;left:0;right:0;height:64px;
+          background:linear-gradient(90deg,#e63946,#f1faee,#457b9d);
+          color:#fff;font:20px sans-serif;padding:8px}
+        #side{position:fixed;top:64px;left:0;width:220px;bottom:0;
+          background:#22303c;color:#eee;font:14px sans-serif;padding:10px}
+        canvas{position:fixed;top:64px;left:220px;right:0;bottom:0;
+          width:calc(100vw - 220px);height:calc(100vh - 64px)}</style>
+      <div id=bar>ACS TOOLBAR — شريط أدوات ظاهر وملوّن</div>
+      <div id=side>لوحة جانبية<br>طبقات<br>عناصر<br>تصدير</div>
+      <canvas id=c width=640 height=360></canvas><script>(function(){
+        var O={preserveDrawingBuffer:true};
+        var cv=document.getElementById('c');
+        var gl=cv.getContext('webgl2',O)||cv.getContext('webgl',O);
+        window.__GL__=!!gl;
+        if(gl){ gl.clearColor(0,0,0,1); gl.clear(gl.COLOR_BUFFER_BIT); }
+        window.__PAINTED__=true; })();<\/script>`,
+      { waitUntil: 'load' });
+    const blackGlWithUi = await PX.analysePageViewport(pg, '#c');
+    const uiVisible = await pg.evaluate(() => {
+      const b = document.getElementById('bar');
+      const s = document.getElementById('side');
+      return !!b && !!s && getComputedStyle(b).display !== 'none'
+        && b.getBoundingClientRect().height > 20
+        && s.getBoundingClientRect().width > 100;
+    });
+    chk('the bright toolbar and sidebar really are visible in that fixture',
+      uiVisible === true);
+    chk('§C REGRESSION — black WebGL canvas + visible toolbar = FAIL',
+      blackGlWithUi.verdict === 'EFFECTIVELY_BLACK'
+      && blackGlWithUi.near_black_pct === 100
+      && blackGlWithUi.non_background_pct === 0,
+      JSON.stringify({ verdict: blackGlWithUi.verdict,
+        reasons: blackGlWithUi.reasons,
+        near_black: blackGlWithUi.near_black_pct,
+        non_background: blackGlWithUi.non_background_pct,
+        mean: blackGlWithUi.luminance_mean,
+        variance: blackGlWithUi.luminance_variance }));
+    chk('the UI pixels contributed nothing — the sample is canvas-only',
+      blackGlWithUi.canvas_size.width === 640
+      && blackGlWithUi.luminance_max === 0,
+      'max_luminance=' + blackGlWithUi.luminance_max);
   } else {
     console.log('  · no WebGL context in this browser build: '
       + 'NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED');

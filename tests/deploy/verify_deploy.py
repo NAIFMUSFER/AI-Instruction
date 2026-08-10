@@ -633,6 +633,73 @@ chk('the bridge adds only AD_* presentation groups',
 chk('the archdetail layer needs no new vendored module',
     'archdetail' not in rd('tools/netlify-build.sh'))
 
+print('\n== 11d2 · ONE VIEWPORT CONTRACT ACROSS EVERY LAYER ==')
+sys.path.insert(0, ROOT)
+import check_integration as IG2                                   # noqa: E402
+import acs_pbr as _PQ_MOD                                         # noqa: E402
+_ifails, _ifacts = IG2.check(ROOT)
+chk('the integration gate passes on this tree', _ifails == [],
+    '; '.join(_ifails[:3]))
+chk('the contract version is declared in the specification',
+    bool(_ifacts.get('contract')), str(_ifacts.get('contract')))
+chk('the python layer declares the same contract at runtime',
+    _ifacts.get('python_contract') == _ifacts.get('contract'))
+chk('the netlify build refuses to publish a partially merged tree',
+    'check_integration.py' in rd('tools/netlify-build.sh'))
+chk('the black-viewport test refuses to run on a partial tree instead of '
+    'raising AttributeError',
+    'PARTIALLY MERGED TREE'
+    in rd('tests/phase9_2/test_black_viewport.py'))
+chk('the boot harness announces its version so a stale copy is visible',
+    'HARNESS: verify_page_boot'
+    in rd('tests/deploy/verify_page_boot.js'))
+chk('every contract symbol is callable in the python layer',
+    all(callable(getattr(_PQ_MOD, _s, None))
+        for _s in json.loads(rd('acs_pbr.json'))
+        ['viewport_contract_symbols']))
+chk('every contract symbol is mirrored in the shipped page',
+    all(m in page for m in ('pqBoundsMember', 'pqBoundsFromDescriptors',
+                            'pqCameraClip', 'pqFrustumContains',
+                            'pqMaterialSafe')))
+
+print('\n== 11e · THE VIEWPORT VISIBILITY APPARATUS (BLACK-SCREEN REMEDIATION) ==')
+chk('the decoded-pixel analyser ships',
+    exists('tests/deploy/lib_viewport_pixels.js')
+    and exists('tests/deploy/test_viewport_pixels.js'))
+chk('the boot harness separates BOOT from VISUAL MODEL',
+    'VISUAL MODEL' in rd('tests/deploy/verify_page_boot.js')
+    and 'BOOT:' in rd('tests/deploy/verify_page_boot.js'))
+chk('the boot harness loads real canonical fixtures, not an empty workspace',
+    'base_fixtures.json' in rd('tests/deploy/verify_page_boot.js')
+    and 'setModel' in rd('tests/deploy/verify_page_boot.js'))
+chk('the discredited PNG byte-size heuristic is gone for good',
+    'png.length>25000' not in rd('tests/deploy/verify_page_boot.js')
+    and 'uniform black frame' not in rd('tests/deploy/verify_page_boot.js'))
+chk('the analyser decodes RGBA and reports luminance statistics',
+    all(k in rd('tests/deploy/lib_viewport_pixels.js') for k in (
+        'getImageData', 'luminance_mean', 'luminance_variance',
+        'near_black_pct', 'luminance_buckets')))
+_pq2 = json.loads(rd('acs_pbr.json'))
+chk('the sky dome and ground plane are canonically excluded from bounds',
+    'SKY_DOME' in _pq2['viewport_bounds']['excluded_object_names']
+    and 'GROUND_PLANE' in _pq2['viewport_bounds']['excluded_object_names'])
+chk('the page names the sky dome and ground plane so they can be excluded',
+    "sky.name='SKY_DOME'" in page and "g.name='GROUND_PLANE'" in page)
+chk('the camera clip contract is applied by the bridge, not just declared',
+    'pqCameraClip' in page and 'pqFrustumContains' in page
+    and '_pqApplyCameraSafety' in page)
+chk('the render diagnostics bridge is present and presentation-only',
+    'window.ACS.renderDiagnostics' in page
+    and 'exposes_canonical_state:false' in page)
+chk('presentation material application fails open to the engineering material',
+    'pqMaterialSafe' in page and 'MATERIAL_FAIL_OPEN' in page)
+chk('the composer is resized with the renderer',
+    'composer.setSize' in page and '_resizeHooked' in page)
+chk('the black-viewport regression ships and is wired into the phase gate',
+    exists('tests/phase9_2/test_black_viewport.py')
+    and 'test_black_viewport.py' in rd('tests/phase9_2/run_all.sh')
+    and 'test_viewport_pixels.js' in rd('tests/phase9_2/run_all.sh'))
+
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',
     not any(re.search(r'from\s+tests|import\s+tests|[\'"]tests/', rd(rel))

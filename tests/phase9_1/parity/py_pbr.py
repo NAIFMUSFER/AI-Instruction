@@ -74,6 +74,54 @@ out['captures'] = [P.capture_metadata(
     'hash_abc', w, h, None) for (w, h) in
     [(1280, 720), (1920, 1080), (2560, 1440), (99999, 10), (0, 0),
      (None, None)]]
+SKY = {'name': 'SKY_DOME', 'is_mesh': True, 'parent_names': [],
+       'box': {'min': [-22500, -22500, -22500],
+               'max': [22500, 22500, 22500]}}
+UNNAMED_SKY = {'name': '', 'is_mesh': True, 'parent_names': [],
+               'box': SKY['box']}
+WALL = {'name': 'WALL|F0|r1|s0', 'is_mesh': True,
+        'parent_names': ['BUILDING'],
+        'box': {'min': [0, 0, 0], 'max': [12, 3, 9]}}
+TAGGED = {'name': 'FLOOR|F0|r1|plate', 'is_mesh': True, 'parent_names': [],
+          'box': {'min': [-2, -0.1, -2], 'max': [14, 0.1, 11]}}
+CTX = {'name': 'AD_CONTEXT_PLANE0', 'is_mesh': True,
+       'parent_names': ['AD_CONTEXT'],
+       'user_data': {'visual_only': True},
+       'box': {'min': [-200, -1, -200], 'max': [200, -0.9, 200]}}
+DBG = {'name': 'COORD_DEBUG_MARKER', 'is_mesh': True, 'parent_names': [],
+       'user_data': {'acs_debug_only': True},
+       'box': {'min': [0, 0, 0], 'max': [1, 1, 1]}}
+NOTMESH = {'name': 'PLAYER', 'is_mesh': False, 'parent_names': []}
+OBJS = [SKY, UNNAMED_SKY, WALL, TAGGED, CTX, DBG, NOTMESH]
+out['bounds_member'] = [P.bounds_member(o) for o in OBJS] \
+    + [P.bounds_member({}), P.bounds_member(None)]
+out['bounds_sets'] = [P.bounds_from_descriptors(x) for x in
+                      (OBJS, [WALL], [SKY, CTX], [], None,
+                       [dict(WALL, box={'min': ['a', 0, 0],
+                                        'max': [1, 1, 1]})])]
+out['camera_clip'] = [P.camera_clip(b, pos) for b in
+                      ({'cx': 6, 'cy': 1.5, 'cz': 4.5, 'radius': 7.5},
+                       {'cx': 0, 'cy': 0, 'cz': 0, 'radius': 0}, {}, None)
+                      for pos in ([0, 20000, 54000], [6, 20, 30],
+                                  [6, 1.5, 4.5], None)]
+out['frustum'] = [P.frustum_contains(c, b) for c in
+                  ({'position': [0, 20000, 54000], 'target': [6, 1.5, 4.5],
+                    'fov': 45, 'aspect': 1.6, 'near': 0.05, 'far': 6000},
+                   {'position': [30, 20, 30], 'target': [6, 1.5, 4.5],
+                    'fov': 45, 'aspect': 1.6, 'near': 0.1, 'far': 500},
+                   {'position': [6, 1.5, 4.5], 'target': [60, 1.5, 4.5],
+                    'fov': 60, 'aspect': 1.6, 'near': 0.05, 'far': 500},
+                   {}, None)
+                  for b in ({'cx': 6, 'cy': 1.5, 'cz': 4.5, 'radius': 7.5},
+                            {}, None)]
+out['material_safe'] = [P.material_safe(P.material(m)['material'])
+                        for m in sorted(P.MATERIALS)] \
+    + [P.material_safe(x) for x in
+       ({'id': 'a', 'base_color': '#ffffff', 'opacity': 0.0},
+        {'id': 'b', 'base_color': 'red'},
+        {'id': 'c', 'base_color': '#ffffff', 'metalness': 9},
+        {'id': 'd', 'base_color': '#ffffff', 'roughness': None},
+        {}, None)]
 out['spec_view'] = {'schema': P.SPEC['schema'],
                     'chain': P.SPEC['quality_fallback_chain'],
                     'auto_max': P.SPEC['auto_max_profile'],

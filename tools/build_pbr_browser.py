@@ -385,6 +385,157 @@ function pqCaptureMetadata(cfg,modelHash,widthPx,heightPx,generatedAt){
     generated_at:(generatedAt===undefined)?null:generatedAt,
     is_engineering_evidence:false};
   return {valid:true,metadata:md,issues:[]}; }
+
+/* ------------------ حدود العرض والقصّ (علاج الشاشة السوداء) ------------- */
+const PQ_VB = ACS_PBR_SPEC.viewport_bounds;
+const PQ_CLIP = ACS_PBR_SPEC.camera_clip;
+const PQ_VIEWPORT_CONTRACT = ACS_PBR_SPEC.viewport_contract_version;
+
+function pqBoundsMember(desc){
+  const d=(desc&&typeof desc==='object')?desc:{};
+  const name=(typeof d.name==='string')?d.name:'';
+  const parents=(d.parent_names||[]).filter(x=>typeof x==='string');
+  const flags=(d.user_data&&typeof d.user_data==='object')?d.user_data:{};
+  if(!d.is_mesh) return {included:false,reason:'NOT_A_MESH'};
+  for(let i=0;i<PQ_VB.excluded_userdata_flags.length;i++){
+    const f=PQ_VB.excluded_userdata_flags[i];
+    if(flags[f]) return {included:false,reason:'PRESENTATION_FLAG:'+f}; }
+  const chain=[name].concat(parents);
+  for(let i=0;i<chain.length;i++){
+    const n=chain[i];
+    if(PQ_VB.excluded_object_names.indexOf(n)>=0)
+      return {included:false,reason:'EXCLUDED_NAME:'+n};
+    for(let j=0;j<PQ_VB.excluded_name_prefixes.length;j++){
+      const pre=PQ_VB.excluded_name_prefixes[j];
+      if(n.slice(0,pre.length)===pre)
+        return {included:false,reason:'EXCLUDED_PREFIX:'+pre}; } }
+  const root=PQ_VB.canonical_root_name, sep=PQ_VB.canonical_tag_separator;
+  if(parents.indexOf(root)>=0||name===root)
+    return {included:true,reason:'CANONICAL_ROOT'};
+  if(name.indexOf(sep)>=0) return {included:true,reason:'CANONICAL_TAG'};
+  if(PQ_VB.require_canonical_membership)
+    return {included:false,reason:'NOT_CANONICAL_GEOMETRY'};
+  return {included:true,reason:'DEFAULT'}; }
+
+function pqBoundsFromDescriptors(objects){
+  const mins=[null,null,null], maxs=[null,null,null];
+  let used=0;
+  (objects||[]).forEach(o=>{
+    if(!pqBoundsMember(o).included) return;
+    const box=(o&&typeof o==='object')?o.box:null;
+    if(!(box&&typeof box==='object'&&Array.isArray(box.min)
+      &&Array.isArray(box.max)&&box.min.length===3&&box.max.length===3))
+      return;
+    for(let i=0;i<3;i++)
+      if(_pqNum(box.min[i])===null||_pqNum(box.max[i])===null) return;
+    for(let i=0;i<3;i++){
+      const a=_pqNum(box.min[i]), b=_pqNum(box.max[i]);
+      mins[i]=(mins[i]===null)?a:Math.min(mins[i],a);
+      maxs[i]=(maxs[i]===null)?b:Math.max(maxs[i],b); }
+    used++; });
+  if(!used) return {valid:false,bounds:null,member_count:0,
+    issues:[pqIssue('PQ_BOUNDS_UNAVAILABLE','WARNING',null,
+      'no canonical geometry is present in the scene')]};
+  const size=[maxs[0]-mins[0],maxs[1]-mins[1],maxs[2]-mins[2]];
+  return {valid:true,member_count:used,issues:[],bounds:{
+    cx:_pqQ((mins[0]+maxs[0])/2.0),cy:_pqQ((mins[1]+maxs[1])/2.0),
+    cz:_pqQ((mins[2]+maxs[2])/2.0),min_y:_pqQ(mins[1]),
+    size:size.map(_pqQ),
+    radius:_pqQ(Math.max(Math.max(size[0],Math.max(size[1],size[2]))/2.0,
+      0.5))}}; }
+
+function pqCameraClip(bounds,position){
+  const b=(bounds&&typeof bounds==='object')?bounds:{};
+  let r=_pqNum(b.radius);
+  if(r===null||r<=0) r=20.0;
+  const cx=_pqNum(b.cx)||0.0, cy=_pqNum(b.cy)||0.0, cz=_pqNum(b.cz)||0.0;
+  const p=(Array.isArray(position)&&position.length===3)?position
+    :[cx,cy+r,cz+r*2.0];
+  let px=_pqNum(p[0])||0.0, py=_pqNum(p[1])||0.0, pz=_pqNum(p[2])||0.0;
+  let dist=Math.sqrt(Math.pow(px-cx,2)+Math.pow(py-cy,2)+Math.pow(pz-cz,2));
+  const issues=[];
+  const skyLimit=Number(PQ_CLIP.sky_dome_radius_m)
+    *Number(PQ_CLIP.max_distance_ratio_of_sky);
+  let clamped=false;
+  if(dist>skyLimit){
+    const k=dist>0?(skyLimit/dist):0.0;
+    px=cx+(px-cx)*k; py=cy+(py-cy)*k; pz=cz+(pz-cz)*k;
+    dist=skyLimit; clamped=true;
+    issues.push(pqIssue('PQ_CAMERA_CLAMPED','INFO',null,
+      'camera distance clamped inside the sky dome')); }
+  const near=Math.max(Number(PQ_CLIP.near_min),
+    Math.min(dist*Number(PQ_CLIP.near_ratio_of_distance),
+      Math.max(dist-r*1.5,Number(PQ_CLIP.near_min))));
+  const far=Math.min(Math.max(dist+r*Number(PQ_CLIP.far_margin_factor),
+    Number(PQ_CLIP.far_min)),Number(PQ_CLIP.far_max));
+  return {valid:true,issues:issues,clip:{
+    near:_pqQ(near),far:_pqQ(far),distance:_pqQ(dist),
+    position:[_pqQ(px),_pqQ(py),_pqQ(pz)],
+    clamped:clamped,inside_sky_dome:dist<=skyLimit,
+    camera_inside_bounds:dist<=r,
+    contains_model:!!(far>dist+r-1e-9
+      &&(dist<=r||near<dist-r+1e-9))}}; }
+
+function pqFrustumContains(cam,bounds){
+  const c=(cam&&typeof cam==='object')?cam:{};
+  const b=(bounds&&typeof bounds==='object')?bounds:{};
+  const pos=c.position||[0.0,0.0,0.0], tgt=c.target||[0.0,0.0,0.0];
+  const fov=_pqNum(c.fov)||50.0, aspect=_pqNum(c.aspect)||1.6;
+  let near=_pqNum(c.near); near=(near===null)?0.05:near;
+  let far=_pqNum(c.far); far=(far===null)?1000.0:far;
+  const cx=_pqNum(b.cx)||0.0, cy=_pqNum(b.cy)||0.0, cz=_pqNum(b.cz)||0.0;
+  let r=_pqNum(b.radius);
+  if(r===null||r<=0) r=1.0;
+  let fx=tgt[0]-pos[0], fy=tgt[1]-pos[1], fz=tgt[2]-pos[2];
+  const flen=Math.sqrt(fx*fx+fy*fy+fz*fz)||1.0;
+  fx/=flen; fy/=flen; fz/=flen;
+  const vx=cx-pos[0], vy=cy-pos[1], vz=cz-pos[2];
+  const depth=vx*fx+vy*fy+vz*fz;
+  const dist=Math.sqrt(vx*vx+vy*vy+vz*vz);
+  const insideBounds=dist<=r;
+  const facing=depth>0||insideBounds;
+  const halfV=(Number(fov)*Math.PI/180)/2.0;
+  const halfH=Math.atan(Math.tan(halfV)*Number(aspect));
+  const lat=Math.sqrt(Math.max(dist*dist-depth*depth,0.0));
+  const inNearFar=(depth+r>near)&&(depth-r<far);
+  const limitV=Math.abs(depth)*Math.tan(halfV)
+    +r/Math.max(Math.cos(halfV),1e-6);
+  const limitH=Math.abs(depth)*Math.tan(halfH)
+    +r/Math.max(Math.cos(halfH),1e-6);
+  let inCone=lat<=Math.max(limitV,limitH);
+  let inClip=inNearFar;
+  if(insideBounds){ inClip=true; inCone=true; }
+  const inside=!!(facing&&inClip&&inCone);
+  return {contains:inside,facing:facing,inside_bounds:!!insideBounds,
+    depth:_pqQ(depth),
+    distance:_pqQ(dist),lateral:_pqQ(lat),near:_pqQ(near),far:_pqQ(far),
+    within_clip:!!inClip,within_cone:!!inCone,
+    issues:inside?[]:[pqIssue('PQ_MODEL_OUT_OF_FRUSTUM','WARNING',null,
+      'the model bounding sphere does not intersect the view frustum')]}; }
+
+function pqMaterialSafe(mat){
+  const m=(mat&&typeof mat==='object')?mat:{};
+  const reasons=[];
+  const col=m.base_color;
+  if(!(typeof col==='string'&&col.length===7&&col.charAt(0)==='#'
+    &&/^[0-9a-fA-F]{6}$/.test(col.slice(1)))) reasons.push('INVALID_COLOR');
+  [['roughness',0.0,1.0],['metalness',0.0,1.0],['opacity',0.0,1.0],
+   ['transmission',0.0,1.0]].forEach(t=>{
+    const k=t[0];
+    if(!(k in m)||m[k]===null) return;   /* غير مضبوط = آمن */
+    const v=_pqNum(m[k]);
+    if(v===null||v<t[1]||v>t[2])
+      reasons.push('INVALID_'+k.toUpperCase()); });
+  const op=_pqNum(m.opacity);
+  if(m.opacity!==null&&m.opacity!==undefined&&op!==null&&op<=0.0)
+    reasons.push('FULLY_TRANSPARENT');
+  const safe=reasons.length===0;
+  return {safe:safe,reasons:reasons,
+    fallback:safe?null:'ENGINEERING_MATERIAL',
+    issues:safe?[]:[pqIssue('PQ_MATERIAL_FAIL_OPEN','WARNING',
+      (m.id===undefined)?null:m.id,
+      'presentation material refused ('+reasons.join(',')
+      +'); keeping the engineering material')]}; }
 """
 
 PANEL = r"""
@@ -512,7 +663,12 @@ if(typeof window!=='undefined'){
     shadowConfig:pqShadowConfig, quality:pqQuality, autoProfile:pqAutoProfile,
     camera:pqCamera, environment:pqEnvironment,
     texturePathOk:pqTexturePathOk, config:pqConfig,
-    captureMetadata:pqCaptureMetadata, panel:PQ};
+    captureMetadata:pqCaptureMetadata,
+    boundsMember:pqBoundsMember,
+    boundsFromDescriptors:pqBoundsFromDescriptors,
+    cameraClip:pqCameraClip, frustumContains:pqFrustumContains,
+    materialSafe:pqMaterialSafe,
+    viewportContract:()=>PQ_VIEWPORT_CONTRACT, panel:PQ};
 }
 """
 

@@ -31,6 +31,29 @@ sys.path.insert(0, HERE)
 
 import acs_pbr as P                                               # noqa: E402
 import acs_archdetail as A                                        # noqa: E402
+
+# ---------------------------------------------------------------- preflight --
+# لا يُسمح بانفجار AttributeError عميق حين تصل شجرة نصف مدمَجة: يُبلَّغ العطل
+# باسم الرمز الناقص وبالإجراء المطلوب، لأن هذا بالضبط ما حدث في الإنتاج
+# (acs_pbr has no attribute 'CLIP' من ملف اختبار أحدث من الوحدة).
+_REQUIRED = ('VB', 'CLIP', 'VIEWPORT_CONTRACT', 'bounds_member',
+             'bounds_from_descriptors', 'camera_clip', 'frustum_contains',
+             'material_safe')
+_missing = [s for s in _REQUIRED if not hasattr(P, s)]
+if _missing:
+    print('BLACK VIEWPORT REGRESSION: CANNOT RUN — PARTIALLY MERGED TREE')
+    print('  acs_pbr.py is missing: %s' % ', '.join(_missing))
+    print('  expected viewport contract: %s'
+          % P.SPEC.get('viewport_contract_version', '<not declared>'))
+    print('  this test and acs_pbr.py come from different deliveries.')
+    print('  run: python3 tools/check_integration.py   for the full report')
+    sys.exit(1)
+_declared = P.SPEC.get('viewport_contract_version')
+if _declared and P.VIEWPORT_CONTRACT != _declared:
+    print('BLACK VIEWPORT REGRESSION: CANNOT RUN — CONTRACT MISMATCH')
+    print('  python layer: %s   specification: %s'
+          % (P.VIEWPORT_CONTRACT, _declared))
+    sys.exit(1)
 import acs_docs as D                                              # noqa: E402
 import acs_authoring as AU                                        # noqa: E402
 import lib_ad_fixtures as LF                                      # noqa: E402

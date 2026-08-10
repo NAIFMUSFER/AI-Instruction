@@ -4,21 +4,32 @@
    كل كائن يضيفه يحمل PQ_ في اسمه ويوضع في المشهد لا في مجموعة المبنى، فيبقى
    خارج تصدير GLB الهندسي وخارج BIM والتوثيق والكمّيات بالبناء لا بالوعد. */
 window.__ACS_PQ__={composer:null,context:null,saved:null,fills:[],applied:null};
+/* وصف كائن للمحكّم النقي: الاسم، سلسلة الآباء، أعلام العرض، وصندوقه. */
+function _pqDescribe(o){
+  const parents=[]; let p=o.parent;
+  while(p){ if(p.name) parents.push(p.name); p=p.parent; }
+  return {name:o.name||'',is_mesh:!!o.isMesh,parent_names:parents,
+    user_data:o.userData||{}}; }
+
+/* حدود المشهد القانونية — الهندسة القانونية وحدها. قبّة السماء والأرضية
+   السياقية وحامل اللاعب وكل مجموعة عرضية مستبعَدة صراحةً: إدخالها كان يضخّم
+   نصف القطر آلاف الأضعاف فيخرج المشهد من هرم الرؤية ومن القبّة ⇒ شاشة سوداء. */
 function _pqSceneBounds(){
   try{
-    const box=new THREE.Box3();
-    let found=false;
+    const box=new THREE.Box3(); let found=0;
     scene.traverse(o=>{
-      if(o.isMesh&&o.name!=='PQ_CONTEXT'&&!o.userData.acs_debug_only
-        &&(!o.parent||o.parent.name!=='PQ_CONTEXT')
-        &&(!o.parent||o.parent.name!=='VISUAL_ONLY')){
-        box.expandByObject(o); found=true; } });
+      if(!o.isMesh) return;
+      if(!pqBoundsMember(_pqDescribe(o)).included) return;
+      box.expandByObject(o); found++; });
     if(!found) return null;
     const c=box.getCenter(new THREE.Vector3());
-    const s=box.getSize(new THREE.Vector3());
+    const sz=box.getSize(new THREE.Vector3());
+    if(![c.x,c.y,c.z,sz.x,sz.y,sz.z].every(v=>isFinite(v))) return null;
     return {cx:c.x,cy:c.y,cz:c.z,min_y:box.min.y,
-      radius:Math.max(s.x,s.y,s.z)/2||10};
+      size:[sz.x,sz.y,sz.z],member_count:found,
+      radius:Math.max(Math.max(sz.x,Math.max(sz.y,sz.z))/2,0.5)};
   }catch(e){ return null; } }
+
 window.ACS.pbrBounds=_pqSceneBounds;
 window.ACS.pbrCaps=function(){
   try{
@@ -132,8 +143,17 @@ window.ACS.pbrApply=function(cfg){
         const m=matCache[key], name=m.userData.matName;
         const map=pqMaterialForEngineering(name);
         if(!map.mapped) continue;                 /* غير المصنَّف يبقى كما هو */
-        const def=pqMaterial(map.material_id,
-          (cfg.material_overrides||{})[map.material_id]).material;
+        const _res=pqMaterial(map.material_id,
+          (cfg.material_overrides||{})[map.material_id]);
+        if(!_res.valid){ report.fallbacks.push('MATERIAL_KEPT'); continue; }
+        const def=_res.material;
+        /* §7 — بوّابة الأمان: خامة غير صالحة تسقط مفتوحةً إلى خامة الهندسة
+           لا إلى جسم أسود أو شفّاف تماماً */
+        const _safe=pqMaterialSafe(def);
+        if(!_safe.safe){
+          report.fallbacks.push('MATERIAL_FAIL_OPEN');
+          (_safe.issues||[]).forEach(i=>report.issues.push(i));
+          continue; }
         if(def.three_material==='physical'&&name==='window'){
           if(!m.userData._pqReplacement){
             const g=new THREE.MeshPhysicalMaterial({
@@ -190,7 +210,13 @@ window.ACS.pbrApply=function(cfg){
           composer.addPass(new mods[1].RenderPass(scene,camera));
           if(cfg.ssao_enabled&&mods[5]){
             const ss=new mods[5].SSAOPass(scene,camera,innerWidth,innerHeight);
-            ss.kernelRadius=0.5; ss.minDistance=0.001; ss.maxDistance=0.15;
+            /* نطاق SSAO يُشتقّ من حجم النموذج الحقيقي: القيم الثابتة على مشهد
+               كبير تجعل الحجب كاملاً فيسودّ الإطار */
+            const _b=_pqSceneBounds();
+            const _r=(_b&&isFinite(_b.radius))?_b.radius:10;
+            ss.kernelRadius=Math.max(0.05,Math.min(_r*0.03,2.0));
+            ss.minDistance=Math.max(0.0005,_r*0.00005);
+            ss.maxDistance=Math.max(0.02,Math.min(_r*0.02,1.0));
             composer.addPass(ss); }
           if(cfg.quality.antialias==='FXAA_COMPOSER'){
             const fx=new mods[3].ShaderPass(mods[4].FXAAShader);
@@ -199,7 +225,15 @@ window.ACS.pbrApply=function(cfg){
               1/(innerHeight*renderer.getPixelRatio()));
             composer.addPass(fx); }
           composer.addPass(new mods[2].OutputPass());
+          composer.setSize(innerWidth,innerHeight);
           window.__ACS_PQ__.composer=composer;
+          /* الحلقة تستعمل المؤلِّف؛ فلا بدّ من ملاءمة مقاسه عند كل تحجيم،
+             وإلا رُسم بمقاس قديم (إطار فارغ/مشوّه) */
+          if(!window.__ACS_PQ__._resizeHooked){
+            window.__ACS_PQ__._resizeHooked=true;
+            addEventListener('resize',()=>{
+              const c=window.__ACS_PQ__.composer;
+              if(c&&c.setSize) c.setSize(innerWidth,innerHeight); }); }
         }catch(e){ window.__ACS_PQ__.composer=null;
           report.fallbacks.push('POST_UNAVAILABLE'); }
       }).catch(()=>{ window.__ACS_PQ__.composer=null;
@@ -223,17 +257,44 @@ function _pqRestoreMaterialsOnly(){
     m.roughness=rec.roughness; m.metalness=rec.metalness;
     if(rec.color!==null&&m.color) m.color.setHex(rec.color);
     m.emissiveIntensity=rec.emissiveIntensity; m.needsUpdate=true; } }
+/* عقد أمان الكاميرا (§8): بعد أي وضع كاميرا، تُعاد ملاءمة مستويي القصّ
+   ليحتويا النموذج، وتُقصّ المسافة لتبقى داخل قبّة السماء، ثم يُتحقّق فعلياً
+   من تقاطع النموذج مع هرم الرؤية. الفشل يُبلَّغ ولا يُترك أسود صامتاً. */
+function _pqApplyCameraSafety(b,pos,target){
+  const issues=[];
+  if(!b) return {applied:false,issues:[{code:'PQ_BOUNDS_UNAVAILABLE',
+    severity:'WARNING',blocking:false,
+    message:'no canonical geometry — camera left untouched'}]};
+  const cl=pqCameraClip(b,pos);
+  cl.issues.forEach(i=>issues.push(i));
+  const P=cl.clip.position;
+  camera.position.set(P[0],P[1],P[2]);
+  camera.near=cl.clip.near; camera.far=cl.clip.far;
+  if(typeof innerWidth!=='undefined'&&innerHeight)
+    camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  if(typeof orbit!=='undefined'&&orbit&&orbit.target){
+    orbit.target.set(target[0],target[1],target[2]); orbit.update(); }
+  const fr=pqFrustumContains({position:P,target:target,fov:camera.fov,
+    aspect:camera.aspect,near:camera.near,far:camera.far},b);
+  fr.issues.forEach(i=>issues.push(i));
+  return {applied:true,clip:cl.clip,frustum:fr,issues:issues}; }
+
 window.ACS.pbrCameraPreset=function(presetName){
   try{
     const b=_pqSceneBounds();
     const r=pqCamera(presetName,b);
     if(!r.valid) return r;
     camera.fov=r.camera.fov; camera.updateProjectionMatrix();
-    camera.position.set(r.camera.position[0],r.camera.position[1],
-      r.camera.position[2]);
-    if(typeof orbit!=='undefined'&&orbit&&orbit.target){
-      orbit.target.set(r.camera.target[0],r.camera.target[1],
-        r.camera.target[2]); orbit.update(); }
+    const safety=_pqApplyCameraSafety(b,r.camera.position,r.camera.target);
+    r.safety=safety;
+    (safety.issues||[]).forEach(i=>r.issues.push(i));
+    if(!safety.applied){
+      camera.position.set(r.camera.position[0],r.camera.position[1],
+        r.camera.position[2]);
+      if(typeof orbit!=='undefined'&&orbit&&orbit.target){
+        orbit.target.set(r.camera.target[0],r.camera.target[1],
+          r.camera.target[2]); orbit.update(); } }
     return r;
   }catch(e){ return {valid:false,camera:null,
     issues:[{code:'PQ_THREE_UNAVAILABLE',severity:'ERROR',blocking:false,
@@ -262,3 +323,112 @@ window.ACS.pbrCapture=function(opts){
   }catch(e){ return {captured:false,
     issues:[{code:'PQ_THREE_UNAVAILABLE',severity:'ERROR',blocking:false,
       message:String(e&&e.message||e).slice(0,120)}]}; } };
+
+/* ===================== §5 — تشخيص العرض (حقائق عرضية فقط) =================
+   يكشف حالة الرسم لا حالة الهندسة: لا يقرأ نموذجاً قانونياً ولا يعدّله،
+   ولا يُصدِّر أي قيمة هندسية. وجوده يجعل «أقلعت الصفحة» و«ظهر النموذج»
+   سؤالين منفصلين يُجابان بالأرقام لا بالظنّ. */
+function _pqViewportLuminance(){
+  try{
+    const gl=renderer.getContext();
+    const w=Math.max(1,Math.min(renderer.domElement.width,320));
+    const h=Math.max(1,Math.min(renderer.domElement.height,180));
+    const px=new Uint8Array(w*h*4);
+    gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);
+    let sum=0,sum2=0,dark=0;
+    const buckets={};
+    const n=w*h;
+    for(let i=0;i<n;i++){
+      const r=px[i*4],g=px[i*4+1],b=px[i*4+2];
+      const l=0.2126*r+0.7152*g+0.0722*b;
+      sum+=l; sum2+=l*l;
+      if(l<8) dark++;
+      buckets[Math.floor(l/16)]=1; }
+    const mean=sum/n, varr=Math.max(0,sum2/n-mean*mean);
+    return {sampled:n,luminance_mean:Math.round(mean*100)/100,
+      luminance_variance:Math.round(varr*100)/100,
+      near_black_pct:Math.round((dark/n)*10000)/100,
+      luminance_buckets:Object.keys(buckets).length,
+      status:(dark/n>0.985||(mean<3&&varr<4))?'BLACK':'NON_BLACK'};
+  }catch(e){ return {sampled:0,status:'UNAVAILABLE',
+    error:String(e&&e.message||e).slice(0,80)}; } }
+
+window.ACS.renderDiagnostics=function(){
+  try{
+    const info=renderer.info||{render:{},memory:{}};
+    const el=renderer.domElement;
+    let meshes=0,visible=0,geoms=0,mats=0,canon=0;
+    const seenG={},seenM={};
+    scene.traverse(o=>{
+      if(!o.isMesh) return;
+      meshes++;
+      let vis=o.visible, p=o.parent;
+      while(vis&&p){ vis=p.visible; p=p.parent; }
+      if(vis) visible++;
+      if(pqBoundsMember(_pqDescribe(o)).included) canon++;
+      if(o.geometry&&!seenG[o.geometry.uuid]){ seenG[o.geometry.uuid]=1; geoms++; }
+      if(o.material&&!seenM[o.material.uuid]){ seenM[o.material.uuid]=1; mats++; } });
+    const lights={ambient:0,hemisphere:0,directional:0,point:0,spot:0};
+    let lightSum=0;
+    scene.traverse(o=>{
+      if(!o.isLight) return;
+      const t=o.isAmbientLight?'ambient':o.isHemisphereLight?'hemisphere'
+        :o.isDirectionalLight?'directional':o.isPointLight?'point'
+        :o.isSpotLight?'spot':null;
+      if(t){ lights[t]++; lightSum+=(o.intensity||0); } });
+    const b=_pqSceneBounds();
+    const tgt=(typeof orbit!=='undefined'&&orbit&&orbit.target)
+      ?[orbit.target.x,orbit.target.y,orbit.target.z]
+      :[0,0,0];
+    const fr=b?pqFrustumContains({position:[camera.position.x,
+        camera.position.y,camera.position.z],target:tgt,fov:camera.fov,
+        aspect:camera.aspect,near:camera.near,far:camera.far},b):null;
+    let ctxOk=false;
+    try{ ctxOk=!!renderer.getContext()&&!renderer.getContext().isContextLost(); }
+    catch(e){ ctxOk=false; }
+    return {
+      renderer_ready:true, webgl_context_ok:ctxOk,
+      webgl2:!!renderer.capabilities.isWebGL2,
+      canvas_width:el.width, canvas_height:el.height,
+      css_width:el.clientWidth, css_height:el.clientHeight,
+      device_pixel_ratio:(typeof devicePixelRatio!=='undefined')
+        ?devicePixelRatio:1,
+      pixel_ratio:renderer.getPixelRatio(),
+      draw_calls:info.render?info.render.calls:null,
+      triangles:info.render?info.render.triangles:null,
+      geometries:info.memory?info.memory.geometries:null,
+      textures:info.memory?info.memory.textures:null,
+      scene_children:scene.children.length,
+      mesh_count:meshes, visible_meshes:visible,
+      canonical_meshes:canon,
+      geometry_count:geoms, material_count:mats,
+      scene_background:scene.background?
+        (scene.background.isColor?('#'+scene.background.getHexString())
+          :'TEXTURE'):null,
+      scene_environment:!!scene.environment,
+      model_bounds:b,
+      camera_position:[camera.position.x,camera.position.y,camera.position.z],
+      camera_target:tgt,
+      camera_quaternion:[camera.quaternion.x,camera.quaternion.y,
+        camera.quaternion.z,camera.quaternion.w],
+      camera_near:camera.near, camera_far:camera.far,
+      camera_fov:camera.fov, camera_aspect:camera.aspect,
+      projection_matrix_finite:camera.projectionMatrix.elements
+        .every(v=>isFinite(v)),
+      camera_in_frustum:fr?fr.contains:null,
+      camera_frustum_detail:fr,
+      lights:lights, light_intensity_sum:Math.round(lightSum*1000)/1000,
+      tone_mapping_exposure:renderer.toneMappingExposure,
+      shadows_enabled:renderer.shadowMap.enabled,
+      shadow_map_size:sun&&sun.shadow?sun.shadow.mapSize.x:null,
+      presentation_profile:(window.__ACS_PQ__&&window.__ACS_PQ__.applied)
+        ?window.__ACS_PQ__.applied:null,
+      archdetail_applied:(window.__ACS_AD__&&window.__ACS_AD__.applied)
+        ?window.__ACS_AD__.applied:null,
+      composer_active:!!((window.__ACS_PQ__||{}).composer),
+      viewport_luminance:_pqViewportLuminance(),
+      writes_to_model:false, exposes_canonical_state:false };
+  }catch(e){
+    return {renderer_ready:false,webgl_context_ok:false,
+      error:String(e&&e.message||e).slice(0,160),
+      writes_to_model:false,exposes_canonical_state:false}; } };
