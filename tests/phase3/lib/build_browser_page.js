@@ -140,7 +140,16 @@ let wsDom='', wsCss='';
   const dcb='/* ===== ACS DOCS STYLES (generated) ===== */';
   const dce='/* ===== END ACS DOCS STYLES ===== */';
   if(page.indexOf(dcb)>=0&&page.indexOf(dce)>=0)
-    wsCss+=page.slice(page.indexOf(dcb)+dcb.length,page.indexOf(dce)); }
+    wsCss+=page.slice(page.indexOf(dcb)+dcb.length,page.indexOf(dce));
+  /* كتلة لوحة الجودة البصرية تُؤخذ من نفس المصدر المولَّد كذلك */
+  const qb='<!-- ===== ACS PBR DOM (generated) ===== -->';
+  const qe='<!-- ===== END ACS PBR DOM ===== -->';
+  if(page.indexOf(qb)>=0&&page.indexOf(qe)>=0)
+    wsDom+=page.slice(page.indexOf(qb)+qb.length,page.indexOf(qe));
+  const qcb='/* ===== ACS PBR STYLES (generated) ===== */';
+  const qce='/* ===== END ACS PBR STYLES ===== */';
+  if(page.indexOf(qcb)>=0&&page.indexOf(qce)>=0)
+    wsCss+=page.slice(page.indexOf(qcb)+qcb.length,page.indexOf(qce)); }
 const html='<!doctype html><meta charset="utf-8"><title>'+suite+'</title>\n'
   +'<style>\n'+wsCss+'\n</style>\n'
   +'<body><div id="reportBox"></div>\n'+wsDom+'\n<script>\n'

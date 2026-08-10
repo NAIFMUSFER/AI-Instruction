@@ -1,0 +1,206 @@
+{
+ "note": "CPU ms in sandbox; no FPS or GPU measurement exists in this environment",
+ "fps_claimed": false,
+ "rows": [
+  {
+   "model": "villa",
+   "spaces": 11,
+   "walls": 38,
+   "configs_built": 32,
+   "bounds_radius_m": 10.0,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.07,
+    "materials_20_with_overrides": 0.19,
+    "lighting_8": 0.02,
+    "shadow_4_tiers": 0.02,
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.08,
+    "full_config_32": 7.01,
+    "capture_metadata_32": 0.07,
+    "texture_path_checks_100": 0.38,
+    "immutability_verify": 0.22
+   }
+  },
+  {
+   "model": "villa_glazed",
+   "spaces": 11,
+   "walls": 38,
+   "configs_built": 32,
+   "bounds_radius_m": 10.0,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.06,
+    "materials_20_with_overrides": 0.06,
+    "lighting_8": 0.02,
+    "shadow_4_tiers": 0.02,
+    "quality_4_profiles": 0.02,
+    "cameras_8": 0.05,
+    "full_config_32": 6.08,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.2,
+    "immutability_verify": 0.42
+   }
+  },
+  {
+   "model": "hotel",
+   "spaces": 10,
+   "walls": 37,
+   "configs_built": 32,
+   "bounds_radius_m": 10.59,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.06,
+    "materials_20_with_overrides": 0.1,
+    "lighting_8": 0.01,
+    "shadow_4_tiers": 0.01,
+    "quality_4_profiles": 0.02,
+    "cameras_8": 0.05,
+    "full_config_32": 6.2,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.21,
+    "immutability_verify": 0.12
+   }
+  },
+  {
+   "model": "clinic",
+   "spaces": 5,
+   "walls": 15,
+   "configs_built": 32,
+   "bounds_radius_m": 10.0,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.07,
+    "materials_20_with_overrides": 0.06,
+    "lighting_8": 0.01,
+    "shadow_4_tiers": 0.01,
+    "quality_4_profiles": 0.02,
+    "cameras_8": 0.05,
+    "full_config_32": 6.62,
+    "capture_metadata_32": 0.07,
+    "texture_path_checks_100": 0.16,
+    "immutability_verify": 0.12
+   }
+  },
+  {
+   "model": "warehouse",
+   "spaces": 4,
+   "walls": 15,
+   "configs_built": 32,
+   "bounds_radius_m": 58.31,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.09,
+    "materials_20_with_overrides": 0.06,
+    "lighting_8": 0.01,
+    "shadow_4_tiers": 0.01,
+    "quality_4_profiles": 0.02,
+    "cameras_8": 0.05,
+    "full_config_32": 6.1,
+    "capture_metadata_32": 0.1,
+    "texture_path_checks_100": 0.18,
+    "immutability_verify": 0.07
+   }
+  },
+  {
+   "model": "office",
+   "spaces": 6,
+   "walls": 23,
+   "configs_built": 32,
+   "bounds_radius_m": 10.0,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.06,
+    "materials_20_with_overrides": 0.06,
+    "lighting_8": 0.01,
+    "shadow_4_tiers": 0.01,
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.05,
+    "full_config_32": 6.04,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.24,
+    "immutability_verify": 0.16
+   }
+  },
+  {
+   "model": "clash_mep",
+   "spaces": 11,
+   "walls": 38,
+   "configs_built": 32,
+   "bounds_radius_m": 10.0,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.06,
+    "materials_20_with_overrides": 0.07,
+    "lighting_8": 0.01,
+    "shadow_4_tiers": 0.01,
+    "quality_4_profiles": 0.02,
+    "cameras_8": 0.05,
+    "full_config_32": 6.18,
+    "capture_metadata_32": 0.07,
+    "texture_path_checks_100": 0.28,
+    "immutability_verify": 0.93
+   }
+  },
+  {
+   "model": "grid_100",
+   "spaces": 100,
+   "walls": 220,
+   "configs_built": 32,
+   "bounds_radius_m": 32.02,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.07,
+    "materials_20_with_overrides": 0.12,
+    "lighting_8": 0.02,
+    "shadow_4_tiers": 0.02,
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.05,
+    "full_config_32": 6.25,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.21,
+    "immutability_verify": 2.61
+   }
+  },
+  {
+   "model": "grid_500",
+   "spaces": 500,
+   "walls": 1060,
+   "configs_built": 32,
+   "bounds_radius_m": 103.08,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.08,
+    "materials_20_with_overrides": 0.1,
+    "lighting_8": 0.02,
+    "shadow_4_tiers": 0.02,
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.06,
+    "full_config_32": 6.88,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.22,
+    "immutability_verify": 12.93
+   }
+  },
+  {
+   "model": "grid_1000",
+   "spaces": 1000,
+   "walls": 2110,
+   "configs_built": 32,
+   "bounds_radius_m": 201.56,
+   "model_unchanged": true,
+   "ms": {
+    "materials_20": 0.08,
+    "materials_20_with_overrides": 0.1,
+    "lighting_8": 0.02,
+    "shadow_4_tiers": 0.02,
+    "quality_4_profiles": 0.03,
+    "cameras_8": 0.06,
+    "full_config_32": 6.22,
+    "capture_metadata_32": 0.06,
+    "texture_path_checks_100": 0.25,
+    "immutability_verify": 26.05
+   }
+  }
+ ]
+}

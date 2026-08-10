@@ -1,0 +1,293 @@
+{
+  "schema": "acs.pbr/1",
+  "version": "1.0.0",
+  "compiler_version": "acs-pbr/1.0.0",
+
+  "presentation_only": true,
+  "writes_to_model": false,
+  "reverse_write_allowed": false,
+  "mutates_engineering_model": false,
+  "model_hash_inputs": ["model"],
+  "presentation_config_hash_inputs": ["config"],
+  "authority_note": "this layer upgrades how the model LOOKS. It never changes what the model IS. Every value here is a presentation value; no roughness, metalness, transmission or emissive figure is ever evidence of an engineering property, and the canonical model hash is computed from the model alone.",
+
+  "pipeline": [
+    "CANONICAL_ENGINEERING_MODEL",
+    "READ_ONLY_PRESENTATION_COMPILER",
+    "REALTIME_PBR_SCENE",
+    "OPTIONAL_POST_PROCESSING",
+    "SCREEN_OR_IMAGE_OUTPUT"
+  ],
+  "reverse_arrow_exists": false,
+
+  "quality_positioning": "real-time physically based rendering in a browser viewport. This is not path tracing and not an offline renderer, and no photorealism claim is made beyond what real-time PBR achieves.",
+  "photorealism_claimed": false,
+  "offline_render_claimed": false,
+  "path_tracing_claimed": false,
+
+  "provenance_classes": [
+    "ENGINEERING_VALUE",
+    "USER_VISUAL_OVERRIDE",
+    "PRESENTATION_DEFAULT"
+  ],
+  "provenance_note": "a presentation material is PRESENTATION_DEFAULT unless the user overrides a field, which marks that field USER_VISUAL_OVERRIDE. ENGINEERING_VALUE never originates in this layer; nothing here is promoted into an engineering material property.",
+  "engineering_material_promotion_allowed": false,
+
+  "materials_modes": ["ENGINEERING", "REALISTIC"],
+  "default_materials_mode": "ENGINEERING",
+  "materials_mode_note": "ENGINEERING keeps the existing readable engineering appearance untouched. REALISTIC swaps the visual appearance of mapped mesh classes for the PBR presentation materials below, reversibly, in the scene only.",
+
+  "materials": [
+    {"id": "plaster", "name_en": "Architectural plaster", "name_ar": "لياسة معمارية", "base_color": "#e8e4dc", "roughness": 0.85, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.35, "texture_scale_m": 2.2, "procedural_texture": "plaster", "three_material": "standard", "double_sided": false},
+    {"id": "painted_wall", "name_en": "Painted wall", "name_ar": "جدار مدهون", "base_color": "#eceae4", "roughness": 0.6, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.15, "texture_scale_m": 2.4, "procedural_texture": "plaster", "three_material": "standard", "double_sided": false},
+    {"id": "concrete_exposed", "name_en": "Exposed concrete", "name_ar": "خرسانة ظاهرة", "base_color": "#b8b5af", "roughness": 0.92, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.5, "texture_scale_m": 2.8, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "concrete_polished", "name_en": "Polished concrete", "name_ar": "خرسانة مصقولة", "base_color": "#c4c1bb", "roughness": 0.25, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 3.0, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "ceramic_tile", "name_en": "Ceramic tile", "name_ar": "بلاط سيراميك", "base_color": "#d8d5cf", "roughness": 0.18, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.2, "texture_scale_m": 1.6, "procedural_texture": "tile", "three_material": "standard", "double_sided": false},
+    {"id": "stone", "name_en": "Stone", "name_ar": "حجر", "base_color": "#a99f90", "roughness": 0.8, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.6, "texture_scale_m": 2.0, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "wood", "name_en": "Wood", "name_ar": "خشب", "base_color": "#7a4a22", "roughness": 0.55, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.3, "texture_scale_m": 1.4, "procedural_texture": "wood", "three_material": "standard", "double_sided": false},
+    {"id": "steel_structural", "name_en": "Structural steel", "name_ar": "فولاذ إنشائي", "base_color": "#8f959c", "roughness": 0.45, "metalness": 0.85, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.2, "texture_scale_m": 1.0, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "steel_painted", "name_en": "Painted steel", "name_ar": "فولاذ مدهون", "base_color": "#5f6a72", "roughness": 0.5, "metalness": 0.6, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.15, "texture_scale_m": 1.2, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "aluminum", "name_en": "Aluminium frame", "name_ar": "ألمنيوم", "base_color": "#c9cdd2", "roughness": 0.3, "metalness": 0.9, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 0.8, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "glass_clear", "name_en": "Clear architectural glass", "name_ar": "زجاج معماري شفّاف", "base_color": "#eaf2f5", "roughness": 0.06, "metalness": 0.0, "opacity": 0.35, "transmission": 0.85, "ior": 1.52, "thickness_m": 0.01, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "physical", "double_sided": false},
+    {"id": "glass_tinted", "name_en": "Tinted glass", "name_ar": "زجاج ملوّن", "base_color": "#7fa8b5", "roughness": 0.08, "metalness": 0.0, "opacity": 0.45, "transmission": 0.6, "ior": 1.52, "thickness_m": 0.012, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "physical", "double_sided": false},
+    {"id": "roof_membrane", "name_en": "Roofing membrane", "name_ar": "غشاء تسقيف", "base_color": "#4b4e52", "roughness": 0.9, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.3, "texture_scale_m": 2.5, "procedural_texture": "asphalt", "three_material": "standard", "double_sided": false},
+    {"id": "asphalt", "name_en": "Asphalt", "name_ar": "أسفلت", "base_color": "#3a3a3d", "roughness": 0.95, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.4, "texture_scale_m": 3.0, "procedural_texture": "asphalt", "three_material": "standard", "double_sided": false},
+    {"id": "soil", "name_en": "Soil / landscape", "name_ar": "تربة", "base_color": "#8a7a5f", "roughness": 0.95, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.5, "texture_scale_m": 3.0, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "fabric", "name_en": "Furniture fabric", "name_ar": "قماش أثاث", "base_color": "#5b6a86", "roughness": 0.9, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.4, "texture_scale_m": 1.0, "procedural_texture": "fabric", "three_material": "standard", "double_sided": false},
+    {"id": "plastic", "name_en": "Generic plastic", "name_ar": "بلاستيك", "base_color": "#d0d3d8", "roughness": 0.4, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "rack_steel", "name_en": "Warehouse rack steel", "name_ar": "فولاذ أرفف", "base_color": "#3a6ea5", "roughness": 0.45, "metalness": 0.7, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.2, "texture_scale_m": 1.0, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "carton", "name_en": "Cardboard carton", "name_ar": "كرتون", "base_color": "#b98e57", "roughness": 0.85, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": null, "emissive_intensity": 0.0, "normal_scale": 0.3, "texture_scale_m": 0.8, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "safety_paint", "name_en": "Safety paint", "name_ar": "دهان سلامة", "base_color": "#f2b705", "roughness": 0.5, "metalness": 0.0, "opacity": null, "transmission": null, "ior": null, "thickness_m": null, "emissive": "#f2b705", "emissive_intensity": 0.05, "normal_scale": 0.05, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false}
+  ],
+  "material_count": 20,
+  "material_license": "PROCEDURAL",
+  "material_note": "every presentation material is procedural and visual-only. No material here carries a fire rating, a structural grade, a U-value or any engineering meaning, and none is ever written back to the model.",
+
+  "engineering_material_map": {
+    "wall": "painted_wall",
+    "ceiling": "plaster",
+    "floor": "ceramic_tile",
+    "door": "wood",
+    "window": "glass_clear",
+    "steel": "steel_structural",
+    "beam": "steel_painted",
+    "deck": "steel_painted",
+    "frame": "rack_steel",
+    "guard": "safety_paint",
+    "goods": "carton",
+    "pallet": "wood",
+    "belt": "plastic",
+    "furn": "wood",
+    "furn_soft": "fabric",
+    "ac": "aluminum",
+    "dockdoor": "steel_painted",
+    "counter": "stone",
+    "roof": "roof_membrane"
+  },
+  "unmapped_material_policy": "KEEP_ENGINEERING_APPEARANCE",
+
+  "lighting_presets": {
+    "STUDIO_DAY": {"sun_azimuth_deg": 40, "sun_elevation_deg": 55, "sun_intensity": 1.6, "sun_color": "#ffffff", "hemisphere_intensity": 0.7, "ambient_intensity": 0.0, "exposure": 1.0, "shadows": true, "background": "NEUTRAL", "fills": [{"azimuth_deg": 220, "elevation_deg": 30, "intensity": 0.5, "color": "#eef2f8", "visual_only": true}]},
+    "CLEAR_NOON": {"sun_azimuth_deg": 180, "sun_elevation_deg": 70, "sun_intensity": 2.8, "sun_color": "#fffdf5", "hemisphere_intensity": 0.6, "ambient_intensity": 0.0, "exposure": 1.05, "shadows": true, "background": "SKY", "fills": []},
+    "GOLDEN_HOUR": {"sun_azimuth_deg": 255, "sun_elevation_deg": 12, "sun_intensity": 2.2, "sun_color": "#ffc27a", "hemisphere_intensity": 0.5, "ambient_intensity": 0.0, "exposure": 1.1, "shadows": true, "background": "SKY", "fills": []},
+    "OVERCAST": {"sun_azimuth_deg": 180, "sun_elevation_deg": 45, "sun_intensity": 0.9, "sun_color": "#e8ecf2", "hemisphere_intensity": 1.1, "ambient_intensity": 0.0, "exposure": 1.0, "shadows": true, "background": "SKY", "fills": []},
+    "INTERIOR_DAY": {"sun_azimuth_deg": 140, "sun_elevation_deg": 50, "sun_intensity": 1.2, "sun_color": "#ffffff", "hemisphere_intensity": 0.9, "ambient_intensity": 0.35, "exposure": 1.0, "shadows": true, "background": "SKY", "fills": []},
+    "INTERIOR_NIGHT": {"sun_azimuth_deg": 0, "sun_elevation_deg": -10, "sun_intensity": 0.0, "sun_color": "#ffffff", "hemisphere_intensity": 0.15, "ambient_intensity": 0.25, "exposure": 0.95, "shadows": false, "background": "DARK", "fills": [{"azimuth_deg": 45, "elevation_deg": 60, "intensity": 0.6, "color": "#ffd9a0", "visual_only": true}, {"azimuth_deg": 225, "elevation_deg": 50, "intensity": 0.4, "color": "#cfe0ff", "visual_only": true}]},
+    "WAREHOUSE": {"sun_azimuth_deg": 200, "sun_elevation_deg": 65, "sun_intensity": 1.4, "sun_color": "#f5f7fa", "hemisphere_intensity": 0.8, "ambient_intensity": 0.2, "exposure": 1.0, "shadows": true, "background": "NEUTRAL", "fills": [{"azimuth_deg": 20, "elevation_deg": 55, "intensity": 0.45, "color": "#eef1f5", "visual_only": true}]},
+    "PRESENTATION_SOFT": {"sun_azimuth_deg": 60, "sun_elevation_deg": 35, "sun_intensity": 1.8, "sun_color": "#fff8ee", "hemisphere_intensity": 0.8, "ambient_intensity": 0.1, "exposure": 1.02, "shadows": true, "background": "SKY", "fills": [{"azimuth_deg": 240, "elevation_deg": 25, "intensity": 0.35, "color": "#e8eefc", "visual_only": true}]}
+  },
+  "lighting_note": "presentation lights are VISUAL_ONLY. Represented MEP light fixtures remain engineering data and are never reused as presentation lights; an emissive fixture glow is appearance, not a luminaire schedule.",
+  "mep_lights_reused_as_presentation": false,
+
+  "environment_modes": {
+    "NEUTRAL": {"source": "ROOM_ENVIRONMENT", "intensity": 1.0},
+    "SKY": {"source": "PROCEDURAL_SKY", "intensity": 1.0},
+    "STUDIO": {"source": "ROOM_ENVIRONMENT", "intensity": 1.25}
+  },
+  "environment_note": "environment lighting is generated locally through PMREM from the procedural sky or the bundled room environment. No HDRI is fetched from any remote host at runtime; a local HDR asset may only come from the declared asset root.",
+  "remote_environment_allowed": false,
+
+  "shadow_tiers": {
+    "LOW":    {"map_size": 1024, "bias": -0.0005, "normal_bias": 0.02, "radius": 1.0},
+    "MEDIUM": {"map_size": 2048, "bias": -0.0004, "normal_bias": 0.03, "radius": 2.0},
+    "HIGH":   {"map_size": 4096, "bias": -0.0003, "normal_bias": 0.04, "radius": 3.0},
+    "ULTRA":  {"map_size": 8192, "bias": -0.00025, "normal_bias": 0.05, "radius": 4.0}
+  },
+  "shadow_type": "PCF_SOFT",
+  "shadow_camera_margin": 1.15,
+  "shadow_note": "the shadow camera extents are computed from the actual model bounds with the declared margin — no building size is hard-coded. Bias and normal bias are tuned against acne and peter-panning per tier.",
+
+  "quality_profiles": {
+    "PERFORMANCE": {"pixel_ratio_max": 1.0, "shadow_tier": "LOW", "ssao": false, "antialias": "RENDERER_MSAA", "environment": "NEUTRAL", "post_processing": false, "bloom": false},
+    "BALANCED":    {"pixel_ratio_max": 1.5, "shadow_tier": "MEDIUM", "ssao": false, "antialias": "RENDERER_MSAA", "environment": "SKY", "post_processing": false, "bloom": false},
+    "HIGH":        {"pixel_ratio_max": 2.0, "shadow_tier": "HIGH", "ssao": true, "antialias": "FXAA_COMPOSER", "environment": "SKY", "post_processing": true, "bloom": false},
+    "ULTRA":       {"pixel_ratio_max": 2.0, "shadow_tier": "ULTRA", "ssao": true, "antialias": "FXAA_COMPOSER", "environment": "SKY", "post_processing": true, "bloom": true}
+  },
+  "quality_requirements": {
+    "PERFORMANCE": {"webgl2": false, "min_max_texture_size": 2048},
+    "BALANCED":    {"webgl2": false, "min_max_texture_size": 4096},
+    "HIGH":        {"webgl2": true,  "min_max_texture_size": 8192},
+    "ULTRA":       {"webgl2": true,  "min_max_texture_size": 16384}
+  },
+  "quality_fallback_chain": ["ULTRA", "HIGH", "BALANCED", "PERFORMANCE"],
+  "auto_max_profile": "HIGH",
+  "quality_note": "ULTRA is never selected automatically; it is a user choice gated by capability detection. When a capability requirement fails the profile degrades down the declared chain — HIGH to BALANCED to PERFORMANCE — and the degradation is reported, never silent. A failed effect never blanks the viewport.",
+
+  "post_processing_modules": [
+    "postprocessing/EffectComposer.js",
+    "postprocessing/RenderPass.js",
+    "postprocessing/ShaderPass.js",
+    "postprocessing/OutputPass.js",
+    "postprocessing/SSAOPass.js",
+    "shaders/FXAAShader.js",
+    "shaders/CopyShader.js",
+    "shaders/SSAOShader.js"
+  ],
+  "post_processing_note": "post-processing modules are vendored locally from the pinned three@0.160.0 examples tree and imported from the same origin. If a module is absent or fails to initialise, the standard renderer path remains and the failure is reported as PQ_POST_UNAVAILABLE.",
+  "bloom_note": "bloom, where enabled on ULTRA, is subtle exposure-relative glow only. Gaming or neon visuals are out of contract.",
+
+  "camera_presets": {
+    "EXTERIOR_HERO":      {"fov": 42, "azimuth_deg": 35, "elevation_deg": 18, "distance_factor": 2.6, "target": "CENTER", "eye_height_m": null},
+    "EXTERIOR_CORNER":    {"fov": 45, "azimuth_deg": 135, "elevation_deg": 22, "distance_factor": 2.4, "target": "CENTER", "eye_height_m": null},
+    "EYE_LEVEL":          {"fov": 55, "azimuth_deg": 20, "elevation_deg": 0, "distance_factor": 2.2, "target": "EYE", "eye_height_m": 1.6},
+    "AERIAL":             {"fov": 40, "azimuth_deg": 210, "elevation_deg": 55, "distance_factor": 3.0, "target": "CENTER", "eye_height_m": null},
+    "INTERIOR_WIDE":      {"fov": 62, "azimuth_deg": 45, "elevation_deg": 8, "distance_factor": 0.45, "target": "CENTER", "eye_height_m": 1.6},
+    "INTERIOR_EYE_LEVEL": {"fov": 58, "azimuth_deg": 90, "elevation_deg": 0, "distance_factor": 0.4, "target": "EYE", "eye_height_m": 1.6},
+    "WAREHOUSE_OVERVIEW": {"fov": 50, "azimuth_deg": 320, "elevation_deg": 35, "distance_factor": 2.2, "target": "CENTER", "eye_height_m": null},
+    "DOLLHOUSE":          {"fov": 45, "azimuth_deg": 225, "elevation_deg": 40, "distance_factor": 2.4, "target": "CENTER", "eye_height_m": null}
+  },
+  "fov_min": 20,
+  "fov_max": 75,
+  "camera_note": "every preset frames from the real model bounds, deterministically. FOV is clamped to an architecturally sane range; no fisheye and no arbitrary clipping through geometry by construction of the distance factor.",
+
+  "ground_context": {
+    "enabled_default": true,
+    "group_name": "PQ_CONTEXT",
+    "visual_only": true,
+    "ground_materials": ["soil", "asphalt", "concrete_polished"],
+    "default_ground_material": "soil",
+    "size_factor": 6.0,
+    "roads_generated": false,
+    "parking_generated": false,
+    "landscaping_generated": false,
+    "neighboring_buildings_generated": false,
+    "excluded_from": ["BIM", "DOCUMENTATION", "QUANTITIES", "ENGINEERING_GLB", "MODEL_HASH"],
+    "note": "presentation context is a ground plane and a sky only. It lives in the scene, never in the building group, so it is structurally excluded from the engineering GLB export, from BIM, from documentation and from quantities."
+  },
+
+  "exposure_min": 0.5,
+  "exposure_max": 1.8,
+  "exposure_step": 0.05,
+  "tone_mapping": "ACES_FILMIC",
+  "output_color_space": "SRGB",
+  "color_note": "output color space is sRGB with ACES filmic tone mapping for presentation presets. Exposure is clamped to the declared range against washed-out whites and crushed blacks.",
+
+  "capture": {
+    "type": "PRESENTATION_OUTPUT",
+    "is_engineering_evidence": false,
+    "resolutions": [[1280, 720], [1920, 1080], [2560, 1440]],
+    "max_dimension_px": 4096,
+    "transparent_background_allowed": true,
+    "metadata_fields": ["type", "camera_preset", "quality_profile", "lighting_preset", "materials_mode", "environment", "exposure", "model_hash", "presentation_config_hash", "width_px", "height_px", "generated_at", "is_engineering_evidence"]
+  },
+
+  "texture_policy": {
+    "local_only": true,
+    "allowed_asset_root": "assets/materials/",
+    "safe_asset_pattern": "^assets/materials/[A-Za-z0-9][A-Za-z0-9._\\-]{0,80}\\.(png|jpg|jpeg|webp|hdr)$",
+    "allowed_schemes": [],
+    "remote_texture_allowed": false,
+    "local_texture_sets": [],
+    "map_kinds": ["base_color", "roughness", "normal", "ao"],
+    "world_scale_tiling": true,
+    "missing_texture_fallback": "PROCEDURAL_PBR",
+    "note": "textures load only from the declared same-origin asset root and only when listed in local_texture_sets. The shipped default set is empty, so the renderer performs zero texture fetches and falls back to the deterministic procedural materials — no broken texture icon and no network dependency. World-scale tiling reuses the existing per-face UV scaling; a texture is never stretched independently per mesh."
+  },
+
+  "unsafe_patterns": [
+    "javascript:",
+    "data:text/html",
+    "<script",
+    "onerror=",
+    "eval(",
+    "new Function",
+    "file://",
+    "../",
+    "..\\"
+  ],
+  "forbidden_property_keys": [
+    "__proto__",
+    "constructor",
+    "prototype",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__"
+  ],
+
+  "limits": {
+    "max_pixel_ratio": 2.0,
+    "max_fill_lights": 4,
+    "max_capture_px": 4096,
+    "max_override_fields": 12,
+    "max_asset_path_length": 100,
+    "max_exposure": 1.8,
+    "min_exposure": 0.5,
+    "max_shadow_map": 8192
+  },
+
+  "issue_codes": [
+    "PQ_INVALID_PROFILE",
+    "PQ_INVALID_PRESET",
+    "PQ_INVALID_MATERIAL",
+    "PQ_INVALID_MODE",
+    "PQ_INVALID_ENVIRONMENT",
+    "PQ_INVALID_EXPOSURE",
+    "PQ_INVALID_RESOLUTION",
+    "PQ_INVALID_OVERRIDE",
+    "PQ_UNSAFE_ASSET_PATH",
+    "PQ_REMOTE_ASSET_REFUSED",
+    "PQ_UNSUPPORTED_CAPABILITY",
+    "PQ_FALLBACK_APPLIED",
+    "PQ_THREE_UNAVAILABLE",
+    "PQ_POST_UNAVAILABLE",
+    "PQ_PROPERTY_REFUSED"
+  ],
+  "blocking_issue_codes": [
+    "PQ_INVALID_PROFILE",
+    "PQ_INVALID_PRESET",
+    "PQ_INVALID_MATERIAL",
+    "PQ_INVALID_MODE",
+    "PQ_INVALID_ENVIRONMENT",
+    "PQ_INVALID_RESOLUTION",
+    "PQ_UNSAFE_ASSET_PATH",
+    "PQ_REMOTE_ASSET_REFUSED"
+  ],
+
+  "ui_labels": {
+    "en": {"panel": "Visual quality", "quality": "Quality", "lighting": "Lighting", "materials": "Materials", "shadows": "Shadows", "ao": "Ambient occlusion", "environment": "Environment", "exposure": "Exposure", "capture": "Screenshot", "advanced": "Advanced", "close": "Close", "engineering": "Engineering", "realistic": "Realistic", "on": "On", "off": "Off", "apply": "Apply", "performance": "Performance", "balanced": "Balanced", "high": "High", "ultra": "Ultra", "neutral": "Neutral", "sky": "Sky", "studio": "Studio"},
+    "ar": {"panel": "الجودة البصرية", "quality": "الجودة", "lighting": "الإضاءة", "materials": "الخامات", "shadows": "الظلال", "ao": "الإطباق المحيطي", "environment": "البيئة", "exposure": "التعريض", "capture": "لقطة", "advanced": "متقدّم", "close": "إغلاق", "engineering": "هندسي", "realistic": "واقعي", "on": "تشغيل", "off": "إيقاف", "apply": "تطبيق", "performance": "أداء", "balanced": "متوازن", "high": "عالٍ", "ultra": "أقصى", "neutral": "محايدة", "sky": "سماء", "studio": "استوديو"}
+  },
+
+  "panel_controls": ["QUALITY", "LIGHTING", "MATERIALS_MODE", "SHADOWS", "AO", "ENVIRONMENT", "EXPOSURE", "CAPTURE"],
+  "panel_forbidden_controls": ["MOVE_WALL", "RESIZE_SPACE", "EDIT_MODEL", "SET_FIRE_RATING", "SET_MATERIAL_GRADE", "APPROVE_DRAWING"],
+
+  "verification_classes": ["CODE_VERIFIED", "RUNTIME_VERIFIED", "NOT_VERIFIED"],
+  "webgl_render_verified_here": false,
+  "webgl_render_note": "the deterministic configuration layer is code-verified and parity-verified. Actual WebGL rendering of these settings requires the vendored Three.js runtime, which the build sandbox cannot fetch; raster results are NOT VERIFIED until run on a networked deployment.",
+
+  "hard_stop_boundaries": [
+    "ENGINEERING_DIMENSION_CHANGE",
+    "OPENING_INVENTION",
+    "ROOM_INVENTION",
+    "FLOOR_INVENTION",
+    "STRUCTURAL_MEMBER_INVENTION",
+    "MEP_SYSTEM_INVENTION",
+    "FIRE_SYSTEM_INVENTION",
+    "BIM_DATA_CHANGE",
+    "DOCUMENTATION_QUANTITY_CHANGE",
+    "PRESENTATION_TO_ENGINEERING_PROMOTION",
+    "AI_CANONICAL_GEOMETRY_MUTATION",
+    "RUNTIME_CDN_FETCH"
+  ]
+}

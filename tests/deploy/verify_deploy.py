@@ -62,6 +62,7 @@ INJECTORS = [
     ('tools/build_render_browser.py', 'acs_render.json'),
     ('tools/build_bim_browser.py', 'acs_bim.json'),
     ('tools/build_docs_browser.py', 'acs_docs.json'),
+    ('tools/build_pbr_browser.py', 'acs_pbr.json'),
 ]
 for tool, spec in INJECTORS:
     chk('%s is present' % tool, exists(tool))
@@ -172,6 +173,7 @@ SPEC_VARS = [
     ('acs_render.json', 'ACS_RENDER_SPEC'),
     ('acs_bim.json', 'ACS_BIM_SPEC'),
     ('acs_docs.json', 'ACS_DOCS_SPEC'),
+    ('acs_pbr.json', 'ACS_PBR_SPEC'),
 ]
 for spec, var in SPEC_VARS:
     if not exists(spec):
@@ -519,6 +521,31 @@ for spec in sorted(x for x in browser_specs if x.endswith('.json')):
 chk('a browser-only layer is not silently required by the backend',
     all((s.replace('.json', '') not in closure)
         for s in browser_specs if s.endswith('.json')))
+
+print('\n== 11c · THE VISUAL QUALITY BRIDGE AND ITS VENDORED MODULES ==')
+# جسر الجودة يعيش داخل سكربت الوحدة، فلا تمسكه علامات الكتل الكلاسيكية —
+# يُفحص هنا صراحةً: موجود مرّة واحدة، وخطّاف الحلقة واحد، ولا CDN وقت التشغيل.
+chk('the PBR bridge is present exactly once',
+    page.count('/* ===== ACS PBR BRIDGE (module scope) ===== */') == 1
+    and page.count('/* ===== END ACS PBR BRIDGE ===== */') == 1)
+chk('the render loop hook is present exactly once',
+    page.count('window.__ACS_PQ__&&window.__ACS_PQ__.composer') == 1)
+chk('the original render call survives as the fallback path',
+    'else{renderer.render(scene,camera);}' in page)
+chk('post-processing modules import from the local vendor origin only',
+    page.count("import('three/addons/postprocessing/") >= 4
+    and "import('http" not in page and 'import("http' not in page)
+_pq = json.loads(rd('acs_pbr.json'))
+for mod in _pq['post_processing_modules']:
+    chk('the vendor build verifies %s' % mod,
+        'examples/jsm/' + mod in rd('tools/netlify-build.sh'))
+chk('the local texture root exists and documents the empty-set default',
+    exists('public/assets/materials/README.txt')
+    and _pq['texture_policy']['local_texture_sets'] == []
+    and _pq['texture_policy']['remote_texture_allowed'] is False)
+chk('no remote texture or environment host is referenced by the quality layer',
+    _pq['remote_environment_allowed'] is False
+    and _pq['texture_policy']['allowed_schemes'] == [])
 
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',
