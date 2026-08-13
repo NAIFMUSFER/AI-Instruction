@@ -21,6 +21,15 @@ services:
         value: "claude-sonnet-5,claude-haiku-4-5"
       # مهلة الخادم للتوليد الواحد: أقصر من مهلة الواجهة (900 ث) عمداً، حتى يصل
       # العميل 504 بجسد JSON بدل انقطاع بلا رد يتعذّر تصنيفه.
+      # ميزانية المخرج الواحدة. كل ميزانيات المراحل تُشتقّ منها بنِسَب معلنة في
+      # acs_generation.py — لا رقم ثانٍ يُضبَط هنا ولا ثابت مدفون في الكود.
+      - key: ACS_LLM_MAX_OUTPUT_TOKENS
+        value: "32000"
+      # حدود التصعيد بعد الانقطاع: تغيير استراتيجية واحد، وتقسيمان للمجموعة.
+      - key: ACS_MAX_ESCALATIONS
+        value: "1"
+      - key: ACS_MAX_GROUP_SPLITS
+        value: "2"
       - key: ACS_REQUEST_TIMEOUT_S
         value: "840"
       - key: ACS_UPSTREAM_TIMEOUT_S

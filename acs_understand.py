@@ -19,8 +19,10 @@ import re
 import sys
 import json
 import time
+import threading
 
 import acs_api_errors as E                     # عقد الأخطاء الموحّد (رموز + تصنيف)
+import acs_generation as G                     # ميزانية المخرج واستراتيجية التوليد
 
 # ---------------------------------------------------------------------------
 # 1) مخطّط البيانات المختصر (يُحقن في التعليمات)
@@ -290,7 +292,7 @@ def detect_type(text, explicit=None):
 
 def system_prompt(btype="residential"):
     industrial = _is_industrial(btype)
-    schema = SCHEMA_BRIEF + (SCHEMA_INDUSTRIAL if industrial else "")
+    schema = SCHEMA_BRIEF + (SCHEMA_INDUSTRIAL if industrial else "") + G.COMPACT_RULE
     know = KNOWLEDGE_WAREHOUSE if industrial else KNOWLEDGE
     head = ("أنت مهندس مستودعات ولوجستيات خبير (Warehouse / Fulfilment Center Design). "
             if industrial else
@@ -409,14 +411,22 @@ def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
 
 
 def call_llm(description, model=None, max_tokens=None, truncate=True, content=None,
-             btype=None, user_msg=None):
-    """content اختياري: قائمة بلوكات (نص/صور) للرؤية. وإلا يُرسل description كنص."""
+             btype=None, user_msg=None, stage="single", telemetry=None):
+    """content اختياري: قائمة بلوكات (نص/صور) للرؤية. وإلا يُرسل description كنص.
+
+    `telemetry` قاموس اختياري يُملأ بالقياسات الآمنة (لا نصّ الزائر ولا مفتاح):
+    stage · stop_reason · input_tokens · output_tokens · max_output_tokens ·
+    completion_chars · attempts · complete.
+    """
+    tel = telemetry if telemetry is not None else {}
+    tel.setdefault("stage", stage)
+    tel.setdefault("complete", False)
     try:
         import anthropic
     except Exception:
         raise E.AcsApiError(E.ACS_NOT_CONFIGURED, "مكتبة anthropic غير مثبّتة على الخادم.")
     model = (model or os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5")).strip()
-    max_tokens = int(max_tokens or os.environ.get("ACS_MAX_TOKENS", "32000"))
+    max_tokens = int(max_tokens or G.stage_budget("single"))
     api_key = clean_key(os.environ.get("ANTHROPIC_API_KEY"))
     if not api_key:
         raise E.AcsApiError(E.ACS_UPSTREAM_NOT_CONFIGURED)
@@ -452,15 +462,14 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
         except (AttributeError, TypeError):
             return client.messages.create(**kw)   # مكتبة قديمة
 
-    # سلّم محاولات: أهمّها تعطيل "التفكير الموسّع" الذي قد يبتلع كل الميزانية
-    # ويترك النص فارغاً (stop=max_tokens مع out_chars=0).
+    # سلّم محاولات مقصور على حالة واحدة: رد **بلا نصّ إطلاقاً**، وسببها المعروف
+    # أنّ "التفكير الموسّع" ابتلع الميزانية كلّها (stop=max_tokens مع out_chars=0).
+    # لا يُستعمل هذا السلّم لعلاج الانقطاع: تكرار الطلب نفسه بميزانية أقلّ يقطع
+    # المخرج أبكر لا أمتن. الانقطاع يعالجه تغيير الاستراتيجية في understand().
     OFF = {"type": "disabled"}
     attempts = [
-        (max_tokens, OFF),          # الأفضل: بلا تفكير، سقف عالٍ
-        (max_tokens, None),         # افتراضي النموذج
-        (max(max_tokens, 32000), None),
-        (16000, OFF),
-        (8000, None),
+        (max_tokens, OFF),                       # الأفضل: بلا تفكير، سقف كامل
+        (max_tokens, None),                      # افتراضي النموذج
     ]
 
     # §8 إعادة المحاولة محدودة وللأعطال العابرة وحدها. مفتاح مرفوض أو نموذج غير
@@ -485,12 +494,21 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
         parts = [getattr(b, "text", None) for b in (msg.content or [])]
         text = "".join(p for p in parts if p)
         stop = getattr(msg, "stop_reason", "?")
-        out_tok = getattr(getattr(msg, "usage", None), "output_tokens", "?")
-        print("[ACS-LLM] model=%s thinking=%s max_tokens=%s stop=%s out_chars=%d out_tokens=%s"
-              % (model, "off" if think else "default", mt, stop, len(text), out_tok))
+        usage = getattr(msg, "usage", None)
+        tel.update({"stop_reason": stop,
+                    "output_tokens": getattr(usage, "output_tokens", None),
+                    "input_tokens": getattr(usage, "input_tokens", None),
+                    "max_output_tokens": mt,
+                    "completion_chars": len(text),
+                    "attempts": tried,
+                    "thinking": "off" if think else "default"})
+        print("[ACS-LLM] stage=%s model=%s thinking=%s max_tokens=%s stop=%s "
+              "out_chars=%d out_tokens=%s in_tokens=%s"
+              % (stage, model, "off" if think else "default", mt, stop, len(text),
+                 tel["output_tokens"], tel["input_tokens"]))
 
         if text.strip():
-            break               # نجحنا
+            break               # وصل نصّ — الحكم على اكتماله بعد الحلقة
         print("[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…")
 
     if not text.strip():
@@ -502,50 +520,34 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
             upstream={"provider": "anthropic", "kind": "empty_text",
                       "attempts": tried})
 
+    # ── عقد سبب التوقّف (§10): الحكم قبل التحليل، لا بعده ────────────────────
+    # سبب التوقّف يثبت الاكتمال من عدمه بذاته. تحليل نصّ يُعرف سلفاً أنه مبتور
+    # هدرٌ في أحسن الأحوال، وقبولُ نصفِ نموذجٍ في أسوئها — وهو ما كان يحدث:
+    # كان `_balance_json` يغلق الأقواس الناقصة فيمرّ نموذج ناقص إلى المصرِّف.
     if stop == "max_tokens":
-        # المخرج انقطع — نحاول إغلاق الأقواس الناقصة لإنقاذ ما أمكن
-        text = _balance_json(text)
-        print("[ACS-LLM] تحذير: انقطع المخرج (max_tokens) — حاولنا إصلاحه. "
-              "لنتيجة كاملة: قصّر الوصف أو ارفع ACS_MAX_TOKENS.")
+        print("[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.")
+        raise E.AcsApiError(
+            E.ACS_UPSTREAM_TRUNCATED,
+            "انقطع رد النموذج عند سقف المخرج (%d رمزاً) في المرحلة %s."
+            % (tel.get("max_output_tokens") or 0, stage),
+            upstream={"provider": "anthropic", "kind": "max_tokens",
+                      "attempts": tried})
+    if stop == "refusal":
+        raise E.AcsApiError(E.ACS_UPSTREAM_REFUSED,
+                            upstream={"provider": "anthropic", "kind": "refusal",
+                                      "attempts": tried})
+    if stop not in ("end_turn", "stop_sequence", "?", None):
+        print("[ACS-LLM] سبب توقّف غير معروف: %r — يُعامَل معاملة المكتمل ثم "
+              "يحكم عليه المحلّل." % stop)
+    tel["complete"] = True
     return text
 
 
-def _balance_json(s):
-    """ينقذ JSON مقطوع: يقصّ عند آخر عنصر مكتمل ثم يغلق الأقواس بترتيبها الصحيح."""
-    try:
-        json.loads(s)
-        return s                      # سليم أصلاً
-    except Exception:
-        pass
-
-    # امسح حالة المكدّس عند كل موضع
-    stacks = []                       # (index, tuple(stack)) بعد كل قوس إغلاق
-    stack = []; in_str = False; esc = False
-    for i, ch in enumerate(s):
-        if esc:
-            esc = False; continue
-        if in_str:
-            if ch == "\\": esc = True
-            elif ch == '"': in_str = False
-            continue
-        if ch == '"':
-            in_str = True; continue
-        if ch in "{[":
-            stack.append("}" if ch == "{" else "]")
-        elif ch in "}]":
-            if stack: stack.pop()
-            stacks.append((i, tuple(stack)))
-
-    # جرّب القصّ عند كل إغلاق من النهاية للبداية
-    for i, st in reversed(stacks[-4000:]):
-        cand = s[:i + 1].rstrip().rstrip(",")
-        cand += "".join(reversed(st))
-        try:
-            json.loads(cand)
-            return cand
-        except Exception:
-            continue
-    return s
+# ملاحظة معمارية (§8): كانت هنا `_balance_json` تغلق الأقواس الناقصة في مخرج
+# مقطوع لتُنقذ «ما أمكن». حُذفت عمداً ولا تُعاد: نصفُ نموذجٍ مغلَقٍ بالأقواس يمرّ
+# التحقّق البنيوي الخفيف ثم يصل المصرِّف مبتوراً — مبنى بلا مناطق أو بغرف ناقصة
+# يُعرَض على المستخدم كأنه ناتج صحيح. المخرج المقطوع يُطرَح، والعلاج تغيير
+# الاستراتيجية لا ترميم النصّ.
 
 # ---------------------------------------------------------------------------
 # 6) استخراج + تحقّق JSON
@@ -613,7 +615,7 @@ def _save_raw(text):
         pass
 
 
-def extract_json(raw, _repaired=False):
+def extract_json(raw):
     """رد النموذج → كائن واحد. أي غموض يُرفَع كخطأ مصنّف، لا كتخمين صامت."""
     text = (raw or "").strip()
     if not text:
@@ -634,12 +636,7 @@ def extract_json(raw, _repaired=False):
     if len(found) == 1:
         return found[0][2]
 
-    # لا كائن مكتمل: الاحتمال الأول انقطاع المخرج. إصلاح حتمي واحد ثم نُعلن العجز.
-    if not _repaired:
-        fixed = _balance_json(text)
-        if fixed != text and len(scan_top_level_json(fixed)[0]) == 1:
-            print("[ACS-JSON] رد مقطوع — أُصلح بإغلاق الأقواس المتبقّية.")
-            return extract_json(fixed, _repaired=True)
+    # لا كائن مكتمل. لا ترميم: مخرج مقطوع نتيجتُه خطأ معلن، لا نموذج ناقص صامت.
     _save_raw(text)
     code = (E.ACS_UPSTREAM_TRUNCATED if (truncated or malformed)
             else E.ACS_UPSTREAM_INVALID_JSON)
@@ -669,9 +666,10 @@ def call_llm_repair(description, building, issues, model=None):
         "\n\nالنموذج الحالي:\n" + json.dumps(building, ensure_ascii=False)
     )
     # سقف أعلى: المخرج المُصلَح بحجم النموذج كاملاً
-    mt = int(os.environ.get("ACS_MAX_TOKENS_REPAIR", "48000"))
+    mt = G.stage_budget("repair")
     bt = str((building.get("meta") or {}).get("type") or detect_type(description))
-    return call_llm(fix_prompt, model=model, max_tokens=mt, truncate=False, btype=bt, user_msg="")
+    return call_llm(fix_prompt, model=model, max_tokens=mt, truncate=False, btype=bt,
+                    user_msg="", stage="repair")
 
 
 def apply_notes(building, notes, model=None):
@@ -743,32 +741,85 @@ DETAIL_MSG = (
     "لا تُخرج مناطق أخرى ولا شرحاً.\n\n")
 
 
-def _plan(description, model=None, btype="residential"):
-    mt = int(os.environ.get("ACS_MAX_TOKENS_PLAN", "16000"))
+def _plan(description, model=None, btype="residential", telemetry=None):
+    mt = G.stage_budget("plan")
     out = validate(extract_json(call_llm(description, model=model, max_tokens=mt,
-                                         btype=btype, user_msg=PLAN_MSG)))
+                                         btype=btype, user_msg=PLAN_MSG,
+                                         stage="plan", telemetry=telemetry)))
     return out
 
 
-def _detail_group(description, plan_ctx, rooms, model, btype):
-    mt = int(os.environ.get("ACS_MAX_TOKENS_DETAIL", "24000"))
+def _detail_group(description, plan_ctx, rooms, model, btype, telemetry=None):
+    mt = G.stage_budget("detail")
     body = (DETAIL_MSG + "سياق الخطة (للاتّساق فقط):\n" + plan_ctx +
             "\n\nالمناطق المطلوب تفصيلها الآن:\n" +
             json.dumps(rooms, ensure_ascii=False) +
             "\n\nالطلب الأصلي كاملاً (نفّذ منه ما يخصّ هذه المناطق):\n" + description)
-    txt = call_llm(body, model=model, max_tokens=mt, truncate=False, btype=btype, user_msg="")
+    txt = call_llm(body, model=model, max_tokens=mt, truncate=False, btype=btype,
+                   user_msg="", stage="detail", telemetry=telemetry)
     data = extract_json(txt)
     return data.get("rooms") or (data if isinstance(data, list) else [])
 
 
-def understand_deep(description, model=None, group_size=None, workers=None, strict=False, btype=None):
-    """توليد على مرحلتين مع تفصيل متوازٍ — للطلبات الضخمة."""
+def _detail_group_split(description, plan_ctx, rooms, model, btype, depth=0,
+                        stages=None):
+    """§12: مجموعة انقطع مخرجها تُقسَّم قسمين ويُعاد تفصيلها — لا تُعاد كما هي.
+
+    إعادة النداء نفسه بعد انقطاع تعطي الانقطاع نفسه وتحرق نداءً. التقسيم يغيّر
+    الطلب فعلاً: نصف المناطق ⇒ نصف المخرج. العمق محدود بـ MAX_GROUP_SPLITS،
+    وعند بلوغه يُرفع الخطأ مصنّفاً بدل الدوران.
+    """
+    tel = {}
+    try:
+        out = _detail_group(description, plan_ctx, rooms, model, btype, telemetry=tel)
+        if stages is not None:
+            stages.append(_safe_stage(tel, len(rooms), "detail", depth))
+        return out
+    except E.AcsApiError as err:
+        if stages is not None:
+            stages.append(_safe_stage(tel, len(rooms), "detail", depth, err.code))
+        if err.code != E.ACS_UPSTREAM_TRUNCATED or depth >= G.MAX_GROUP_SPLITS:
+            raise
+        halves = G.split_group(rooms)
+        if not halves:
+            raise
+        print("[ACS-DEEP] انقطعت مجموعة من %d منطقة — تُقسَم إلى %d+%d (عمق %d)."
+              % (len(rooms), len(halves[0]), len(halves[1]), depth + 1))
+        out = []
+        for half in halves:
+            out.extend(_detail_group_split(description, plan_ctx, half, model,
+                                           btype, depth + 1, stages) or [])
+        return out
+
+
+def _safe_stage(tel, n_rooms, stage, depth=0, error=None):
+    """قياس مرحلة واحدة — أرقام فقط. لا نصّ زائر ولا مفتاح ولا محتوى رد."""
+    return {"stage": stage, "depth": depth, "zones": n_rooms,
+            "stop_reason": tel.get("stop_reason"),
+            "input_tokens": tel.get("input_tokens"),
+            "output_tokens": tel.get("output_tokens"),
+            "max_output_tokens": tel.get("max_output_tokens"),
+            "completion_chars": tel.get("completion_chars"),
+            "parsed": bool(tel.get("complete")) and error is None,
+            "error": error}
+
+
+def understand_deep(description, model=None, group_size=None, workers=None,
+                    strict=False, btype=None, stages=None):
+    """توليد على مراحل مع تفصيل متوازٍ — للطلبات التي لا يسعها نداء واحد."""
     import acs_validate as V
     btype = detect_type(description, btype)
+    stages = stages if stages is not None else []
     print("[ACS-DEEP] نوع المبنى: %s" % btype)
 
     desc = description + (STRICT_RULE if strict else "")
-    building = _plan(desc, model=model, btype=btype)
+    _ptel = {}
+    try:
+        building = _plan(desc, model=model, btype=btype, telemetry=_ptel)
+        stages.append(_safe_stage(_ptel, 0, "plan"))
+    except E.AcsApiError as err:
+        stages.append(_safe_stage(_ptel, 0, "plan", 0, err.code))
+        raise
     plan_rooms = []
     for tmpl, fdef in (building.get("floors") or {}).items():
         for r in (fdef.get("rooms") or []):
@@ -798,15 +849,24 @@ def understand_deep(description, model=None, group_size=None, workers=None, stri
     import concurrent.futures as cf
     results = {}
 
+    _slock = threading.Lock()
+
     def work(k):
         tmpl, rs = groups[k]
+        local = []
         try:
-            det = _detail_group(desc, ctx, rs, model, btype)
+            det = _detail_group_split(desc, ctx, rs, model, btype, 0, local)
             print("[ACS-DEEP] مجموعة %d/%d ✓ (%d منطقة)" % (k + 1, len(groups), len(det)))
             return tmpl, det
         except Exception as e:
-            print("[ACS-DEEP] مجموعة %d/%d ✗ %s — نُبقي الخطة الأولية." % (k + 1, len(groups), str(e)[:160]))
+            # المرحلة الأولى تبقى: منطقة بهيكلها الصحيح بلا تفاصيل أصدق من لا شيء،
+            # وأصدق من نصف تفصيل مبتور. ويُسجَّل ذلك في القياسات لا يُبتلع صامتاً.
+            print("[ACS-DEEP] مجموعة %d/%d ✗ %s — تبقى بخطتها بلا تفاصيل."
+                  % (k + 1, len(groups), str(e)[:160]))
             return tmpl, rs
+        finally:
+            with _slock:
+                stages.extend(local)
 
     with cf.ThreadPoolExecutor(max_workers=max(1, wk)) as ex:
         for tmpl, det in ex.map(work, range(len(groups))):
@@ -819,12 +879,28 @@ def understand_deep(description, model=None, group_size=None, workers=None, stri
             rid = str(r.get("id"))
             new = by_id.pop(rid, None)
             if new:
+                # §7: هندسة المرحلة الأولى مرجع. أي rect مخالف من مرحلة التفصيل
+                # يُطرَح ويُسجَّل، ولا يُعاد كتابة موضع منطقة في الخفاء.
+                if new.get("rect") and list(new["rect"]) != list(r.get("rect") or []):
+                    building.setdefault("meta", {}).setdefault(
+                        "acs_stage_diagnostics", []).append(
+                        {"code": "STAGE_RECT_OVERRIDE_REJECTED",
+                         "template": tmpl, "id": rid})
                 new["rect"] = r.get("rect", new.get("rect"))     # الخطة تحكم المواضع
                 new.pop("brief", None)
                 merged.append(new)
             else:
                 r.pop("brief", None); merged.append(r)
-        merged.extend(by_id.values())                            # مناطق أضافها التفصيل
+        # §7: مناطق لم تكن في الخطة. لا تُحذف (قد تحمل بنداً طلبه العميل) ولا
+        # تُدمَج صامتة: تُقبل ويُعلَن عنها في meta كتشخيص صريح.
+        if by_id:
+            extra = sorted(by_id.keys())
+            print("[ACS-DEEP] ⚠ التفصيل أضاف %d منطقة خارج الخطة: %s"
+                  % (len(extra), ", ".join(extra[:8])))
+            building.setdefault("meta", {}).setdefault(
+                "acs_stage_diagnostics", []).append(
+                {"code": "STAGE_ADDED_ZONES", "template": tmpl, "ids": extra[:32]})
+        merged.extend(by_id.values())
         building["floors"][tmpl]["rooms"] = merged
 
     building.setdefault("meta", {})["type"] = building["meta"].get("type", btype)
@@ -847,42 +923,86 @@ def understand_deep(description, model=None, group_size=None, workers=None, stri
     return building
 
 
-def _should_go_deep(description):
+def _deep_override():
+    """ACS_DEEP: True يفرض المراحل، False يفرض النداء الواحد، None يترك التقدير.
+
+    كان هنا سابقاً `_should_go_deep` يحكم بطول **المدخل** (>2200 حرفاً أو ١٢ بنداً
+    مرقّماً). ذلك المقياس هو أصل العطل الإنتاجي: «مستودع بسيط 20×15م…» وصفٌ من
+    ٥٥ حرفاً، فيمرّ دائماً في مسار النداء الواحد مهما كان مخرجه — وحجم المخرج
+    لا يُقاس بطول المدخل. الحكم صار لـ acs_generation.plan_strategy.
+    """
     mode = os.environ.get("ACS_DEEP", "auto").lower()
     if mode in ("1", "on", "always", "true"):
         return True
     if mode in ("0", "off", "never", "false"):
         return False
-    d = description or ""
-    # طلب طويل، أو مرقّم ببنود كثيرة، أو مبنى صناعي = مخرج أكبر من نداء واحد
-    bullets = len(re.findall(r"(?m)^\s*(?:[-*•]|\d+[.)])\s+", d))
-    return len(d) > 2200 or bullets >= 12
+    return None
 
 
-def understand(description, model=None, repair_rounds=None, deep=None, strict=False, btype=None):
-    """وصف → Building JSON، مع حلقة تحقّق وإصلاح ذاتي.
-    الطلبات الكبيرة تُوجَّه تلقائياً إلى التوليد على مرحلتين حتى لا يُقطع أي بند."""
+FATAL_UPSTREAM = (E.ACS_UPSTREAM_NOT_CONFIGURED, E.ACS_UPSTREAM_AUTH,
+                  E.ACS_UPSTREAM_PERMISSION, E.ACS_UPSTREAM_MODEL_REJECTED,
+                  E.ACS_UPSTREAM_REFUSED, E.ACS_NOT_CONFIGURED)
+
+
+def understand(description, model=None, repair_rounds=None, deep=None, strict=False,
+               btype=None, site_w=None, site_d=None, floors=None):
+    """وصف → Building JSON كامل، أو خطأ مصنّف. لا نموذج ناقص بينهما.
+
+    القرار قبل النداء (§5/§6): يُقدَّر حجم المخرج حتمياً ويُصنَّف الطلب، فتُختار
+    المرحلة الواحدة للصغير والمراحل للكبير. القرار بعد الانقطاع (§12): لا يُعاد
+    الطلب نفسه — تُرفَّع الاستراتيجية إلى المراحل مرّة واحدة، ثم تُقسَّم المجموعة
+    المنقطعة. وإن بقي الانقطاع، خطأ معلن لا نصف نموذج.
+    """
     import acs_validate as V
-    if deep if deep is not None else _should_go_deep(description):
-        try:
-            return understand_deep(description, model=model, strict=strict, btype=btype)
-        except E.AcsApiError as e:
-            # عطل دائم (مفتاح/صلاحية/نموذج مرفوض) لا يُصلحه تبديل المسار — لا تُخفِه
-            # خلف مسار ثانٍ يفشل بنفس السبب بعد دقائق.
-            if e.code in (E.ACS_UPSTREAM_NOT_CONFIGURED, E.ACS_UPSTREAM_AUTH,
-                          E.ACS_UPSTREAM_PERMISSION, E.ACS_UPSTREAM_MODEL_REJECTED,
-                          E.ACS_NOT_CONFIGURED):
-                raise
-            print("[ACS-DEEP] فشل المسار العميق (%s) — نعود للنداء الواحد." % e.code)
-        except Exception as e:
-            print("[ACS-DEEP] فشل المسار العميق (%s) — نعود للنداء الواحد." % str(e)[:200])
-
     btype = detect_type(description, btype)
+    forced = deep if deep is not None else _deep_override()
+    plan = G.plan_strategy(description, btype, site_w, site_d, floors, forced=forced)
+    stages = []
+    print("[ACS-PLAN] class=%s est_out=%d zones=%d budget=%d -> %s (%s)"
+          % (plan["size_class"], plan["estimated_output_tokens"],
+             plan["estimated_zones"], plan["max_output_tokens"],
+             plan["strategy"], plan["reason"]))
+
+    def _stamp(b, strategy, escalations):
+        m = b.setdefault("meta", {})
+        m["acs_mode"] = "deep" if strategy == G.STRATEGY_STAGED else "single"
+        m["acs_generation"] = {
+            "contract": plan["contract"],
+            "strategy": strategy,
+            "size_class": plan["size_class"],
+            "estimated_output_tokens": plan["estimated_output_tokens"],
+            "estimated_zones": plan["estimated_zones"],
+            "max_output_tokens": plan["max_output_tokens"],
+            "single_stage_threshold_tokens": plan["single_stage_threshold_tokens"],
+            "escalations": escalations,
+            "stages": stages[:24]}
+        return b
+
+    if plan["strategy"] == G.STRATEGY_STAGED:
+        return _stamp(understand_deep(description, model=model, strict=strict,
+                                      btype=btype, stages=stages),
+                      G.STRATEGY_STAGED, 0)
+
     rounds = int(repair_rounds if repair_rounds is not None
                  else os.environ.get("ACS_REPAIR_ROUNDS", "1"))
 
-    building = validate(extract_json(call_llm(
-        description + (STRICT_RULE if strict else ""), model=model, btype=btype)))
+    _tel = {}
+    try:
+        building = validate(extract_json(call_llm(
+            description + (STRICT_RULE if strict else ""), model=model, btype=btype,
+            max_tokens=G.stage_budget("single"), stage="single", telemetry=_tel)))
+        stages.append(_safe_stage(_tel, plan["estimated_zones"], "single"))
+    except E.AcsApiError as err:
+        stages.append(_safe_stage(_tel, plan["estimated_zones"], "single", 0, err.code))
+        # §12: انقطاع المرحلة الواحدة يُعالَج بتغيير الاستراتيجية مرّة واحدة —
+        # لا بإعادة النداء نفسه، ولا بترميم النصّ المقطوع.
+        if (err.code == E.ACS_UPSTREAM_TRUNCATED
+                and G.MAX_STRATEGY_ESCALATIONS >= 1 and forced is None):
+            print("[ACS-PLAN] انقطع النداء الواحد — تصعيد إلى التوليد على مراحل.")
+            return _stamp(understand_deep(description, model=model, strict=strict,
+                                          btype=btype, stages=stages),
+                          G.STRATEGY_STAGED, 1)
+        raise
     building.setdefault("meta", {}).setdefault("type", btype)
     if strict:
         building["meta"]["strict"] = True
@@ -922,7 +1042,7 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
     if issues:
         print("[ACS-CHECK] مخالفات متبقية (%d). أمثلة:\n%s"
               % (len(issues), V.format_issues(issues, 8)))
-    return building
+    return _stamp(building, G.STRATEGY_SINGLE, 0)
 
 # ---------------------------------------------------------------------------
 # CLI

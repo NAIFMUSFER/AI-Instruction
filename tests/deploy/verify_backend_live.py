@@ -81,6 +81,15 @@ def request(base, path, method="GET", body=None, headers=None, timeout=60):
         return 0, {}, "", "%s: %s" % (type(e).__name__, str(e)[:200])
 
 
+def _hget(headers, name):
+    """رؤوس HTTP غير حسّاسة لحالة الأحرف؛ قاموس urllib ليس كذلك دائماً."""
+    low = name.lower()
+    for k, v in (headers or {}).items():
+        if str(k).lower() == low:
+            return v
+    return ""
+
+
 def as_json(text):
     try:
         return json.loads(text), True
@@ -212,10 +221,23 @@ def main():
     allow = hd.get("access-control-allow-origin") or hd.get("Access-Control-Allow-Origin")
     chk("the preflight for %s is granted" % origin, allow == origin,
         "allow-origin=%r (HTTP %s)" % (allow, st))
-    expose = (hd.get("access-control-expose-headers")
-              or hd.get("Access-Control-Expose-Headers") or "")
-    chk("X-Request-ID is exposed to the page so the user can quote it",
+    # ملاحظة تشخيصية مهمّة: `Access-Control-Expose-Headers` **لا يظهر أبداً** في
+    # رد الـpreflight. المواصفة تجعل الـpreflight يحمل allow-origin/methods/headers
+    # وmax-age فقط، وexpose-headers يخصّ الرد الفعلي. فحصه على OPTIONS يعطي فشلاً
+    # كاذباً دائماً — وهو سبب تقرير «X-Request-ID is not exposed» رغم صحّة الضبط.
+    st2, hd2, tx2, err2 = request(base, "/health", headers={"Origin": origin})
+    expose = _hget(hd2, "access-control-expose-headers")
+    chk("the ACTUAL response (not the preflight) grants the page the origin",
+        _hget(hd2, "access-control-allow-origin") == origin,
+        str(_hget(hd2, "access-control-allow-origin")))
+    chk("X-Request-ID is exposed on the actual response so the page can read it",
         "x-request-id" in expose.lower(), expose or "<none>")
+    chk("Retry-After is exposed on the actual response so the page can honour it",
+        "retry-after" in expose.lower(), expose or "<none>")
+    chk("the preflight itself does not carry expose-headers "
+        "(per the CORS spec — checking it there is a verifier bug)",
+        not (hd.get("access-control-expose-headers")
+             or hd.get("Access-Control-Expose-Headers")))
     st, hd, tx, err = request(base, "/v1/understand", method="OPTIONS", headers={
         "Origin": "https://evil.example", "Access-Control-Request-Method": "POST"})
     bad = hd.get("access-control-allow-origin") or hd.get("Access-Control-Allow-Origin")
@@ -249,10 +271,47 @@ def main():
                     bool(b.get("levels")) and bool(b.get("floors")))
                 rooms = sum(len(fl.get("rooms", []))
                             for fl in (b.get("floors") or {}).values())
-                chk("the generated model contains rooms (%d)" % rooms, rooms > 0)
+                chk("levels >= 1", len(b.get("levels") or []) >= 1,
+                    str(len(b.get("levels") or [])))
+                chk("rooms >= 2 (%d)" % rooms, rooms >= 2)
+                chk("every room carries a well-formed rect — nothing truncated "
+                    "mid-object reached the compiler",
+                    all(isinstance(r.get("rect"), list) and len(r["rect"]) == 4
+                        for fl in (b.get("floors") or {}).values()
+                        for r in fl.get("rooms", [])))
                 chk("one level was produced as requested",
                     len(b.get("levels") or []) == 1,
                     str(len(b.get("levels") or [])))
+                gen = j.get("generation") or {}
+                chk("the response declares which generation strategy ran",
+                    bool(gen.get("strategy")), str(gen))
+                chk("no stage stopped at max_tokens",
+                    "max_tokens" not in (gen.get("stop_reasons") or []),
+                    str(gen.get("stop_reasons")))
+                # §2 — الالتقاط المطلوب حرفياً، بأرقام حقيقية من هذا النداء
+                print("\n  ── §2 capture ──")
+                print("  model            : %s" % (hj.get("model_configured")
+                                                   if isinstance(hj, dict) else "?"))
+                print("  strategy         : %s (%s)" % (gen.get("strategy"),
+                                                        gen.get("size_class")))
+                print("  single/multi     : %s" % ("multi-stage"
+                      if gen.get("strategy") == "staged" else "single-stage"))
+                print("  deep mode used   : %s" % (j.get("mode") == "deep"))
+                print("  stages           : %s (escalations=%s)"
+                      % (gen.get("stages"), gen.get("escalations")))
+                print("  max out tokens   : %s" % gen.get("max_output_tokens"))
+                print("  output tokens    : %s" % gen.get("output_tokens_total"))
+                print("  input tokens     : %s" % gen.get("input_tokens_total"))
+                print("  stop reasons     : %s" % (gen.get("stop_reasons") or []))
+                print("  completion       : %d chars of building JSON"
+                      % len(json.dumps(b, ensure_ascii=False)))
+                print("  parse status     : json.loads(response.text) OK")
+                for sd in (gen.get("stage_detail") or []):
+                    print("    stage=%-7s depth=%s stop=%-10s out=%-6s max=%-6s "
+                          "parsed=%s err=%s"
+                          % (sd.get("stage"), sd.get("depth"), sd.get("stop_reason"),
+                             sd.get("output_tokens"), sd.get("max_output_tokens"),
+                             sd.get("parsed"), sd.get("error")))
                 chk("the response reports coverage of the request",
                     isinstance(j.get("report"), dict))
                 print("  levels=%s rooms=%s mode=%s issues=%s"

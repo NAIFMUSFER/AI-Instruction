@@ -105,3 +105,34 @@ worker slot stays occupied until it returns. Bounded by `ACS_UPSTREAM_TIMEOUT_S`
 shorter than the 840s request deadline) so the thread almost always ends first, and by the
 existing per-IP and global rate limits. Moving generation to a separate process pool would
 make cancellation real; that is a larger change than this remediation's scope.
+
+## KI-6 · The exact live token numbers behind the truncation were never captured (OPEN, environmental)
+
+The truncation hotfix was built from what is provable offline: the routing rule
+(`_should_go_deep`) judged **input** length, so a 55-character warehouse prompt always took
+the single-stage path; no output-size estimate existed anywhere; the budget lived in five
+unrelated constants; `_balance_json` brace-repaired a `max_tokens` reply instead of
+discarding it; and the attempt ladder "recovered" from truncation by retrying the same
+request at 16000 then 8000 tokens — a smaller ceiling, which truncates sooner.
+
+What is **not** captured here is the live pair of numbers from the failing run: how many
+output tokens the model actually produced before `max_tokens`, and how much of that budget
+extended thinking consumed. This sandbox has no API key and no egress to the provider, so
+no real generation could be run. That is now instrumented rather than guessed:
+`/v1/understand` returns a `generation` block (strategy, size class, per-stage stop reason,
+input/output tokens, per-stage ceiling), and `verify_backend_live.py --generation` prints
+the full §2 capture. Run it once after deploying and the numbers become evidence.
+
+If that capture shows the *plan* stage itself stopping at `max_tokens` for a small prompt,
+the cause is extended thinking eating the budget rather than model size, and the fix is a
+`thinking` budget cap rather than more staging — the telemetry now distinguishes the two.
+
+## KI-7 · Stage-1 geometry is authoritative, but the arithmetic autofix still moves rooms afterwards (OPEN, by design, worth naming)
+
+`understand_deep` rejects any `rect` a detail stage tries to rewrite and records
+`STAGE_RECT_OVERRIDE_REJECTED`. After the merge, however, `acs_layout.autofix` — which
+predates this work — still shifts rooms to resolve overlaps, so the final rect can differ
+from stage 1. That is a declared engineering step, not a staged-generation leak, and it sits
+squarely inside KI-1's scope (automatic engineering adjustments). It is named here so the
+distinction is not mistaken for a stage-authority failure: the test suite asserts the detail
+stage's geometry loses, not that the final rect equals stage 1 byte for byte.

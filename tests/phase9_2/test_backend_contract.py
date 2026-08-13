@@ -194,8 +194,11 @@ CASES = [
      E.ACS_UPSTREAM_TRAILING_JSON),
     ('an empty response', '   ', E.ACS_UPSTREAM_EMPTY_RESPONSE),
     ('a refusal with no JSON at all', 'I cannot do that.', E.ACS_UPSTREAM_INVALID_JSON),
-    ('a truncated object (deterministically repaired)',
-     '{"site":{"w":20,"d":15},"floors":{"f0":{"rooms":[{"rect":[0,0,5,5]}', 'OK'),
+    # كان هذا يُصلَح بإغلاق الأقواس ويُقبَل. صار يُرفَض عمداً (§8 من علاج الانقطاع):
+    # نصفُ نموذجٍ مغلَقٍ بالأقواس يمرّ التحقّق الخفيف ثم يصل المصرِّف مبتوراً.
+    ('a truncated object is REJECTED, never brace-repaired',
+     '{"site":{"w":20,"d":15},"floors":{"f0":{"rooms":[{"rect":[0,0,5,5]}',
+     E.ACS_UPSTREAM_TRUNCATED),
 ]
 for name, raw, want in CASES:
     try:

@@ -836,6 +836,52 @@ chk('the live backend verifier ships and defaults to no model spend',
 chk('the live verifier reads the base from the page, not a second copy',
     'CONFIGURED_BASE' in rd('tests/deploy/verify_backend_live.py'))
 
+print('\n== 11i · ONE OUTPUT BUDGET AND A COMPLETION CONTRACT ==')
+import acs_generation as _GEN                                     # noqa: E402
+_gen_src = rd('acs_generation.py')
+_und = rd('acs_understand.py')
+chk('the generation budget module is deployed and copied into the image',
+    exists('acs_generation.py') and 'acs_generation.py' in docker)
+chk('it declares a contract version', bool(_GEN.GENERATION_CONTRACT_VERSION))
+chk('there is exactly ONE authoritative output budget name',
+    'ACS_LLM_MAX_OUTPUT_TOKENS' in _gen_src and _GEN.max_output_tokens() > 0)
+chk('every stage budget derives from it — no free token constant remains in the '
+    'generation path',
+    not re.search(r'max_tokens\s*=\s*\d{4,}', _und)
+    and 'ACS_MAX_TOKENS", "32000"' not in _und)
+chk('the deployment declares the budget and the escalation bounds',
+    all(k in ry for k in ('ACS_LLM_MAX_OUTPUT_TOKENS', 'ACS_MAX_ESCALATIONS',
+                          'ACS_MAX_GROUP_SPLITS')))
+chk('the stop-reason contract is judged BEFORE parsing',
+    'if stop == "max_tokens"' in _und
+    and _und.index('if stop == "max_tokens"') < _und.index('def extract_json'))
+chk('a max_tokens stop raises the truncation code rather than returning text',
+    'E.ACS_UPSTREAM_TRUNCATED' in _und and 'refusal' in _und)
+chk('brace repair of a truncated reply is gone from the codebase',
+    'def _balance_json' not in _und)
+chk('the input-length heuristic that mis-routed the production prompt is gone',
+    'def _should_go_deep' not in _und and 'plan_strategy' in _und)
+chk('truncation never retries the identical request — it changes strategy',
+    'MAX_STRATEGY_ESCALATIONS' in _gen_src and '_detail_group_split' in _und)
+chk('the escalation and split limits are finite',
+    0 <= _GEN.MAX_STRATEGY_ESCALATIONS <= 3 and 1 <= _GEN.MAX_GROUP_SPLITS <= 4)
+chk('stage-1 geometry is authoritative and any override is reported',
+    'STAGE_RECT_OVERRIDE_REJECTED' in _und and 'STAGE_ADDED_ZONES' in _und)
+chk('the compact-output rule reaches the shipped instructions',
+    'COMPACT_RULE' in _gen_src and 'G.COMPACT_RULE' in _und)
+chk('generation telemetry is aggregate-only in the API response',
+    'def _generation_summary' in api_src
+    and 'requirements' not in api_src.split('def _generation_summary')[1][:600])
+chk('the production prompt classifies SMALL and takes one stage',
+    _GEN.plan_strategy(
+        "مستودع بسيط 20×15م، دور واحد، منطقة تخزين ومنطقة استقبال.",
+        "warehouse", 20, 15, 1)["size_class"] == _GEN.SMALL)
+chk('a distribution-centre prompt is routed to staged generation',
+    _GEN.plan_strategy(
+        "مركز توزيع 120×80م: استلام، تخزين، التقاط، تغليف، فرز، شحن، "
+        "12 رصيف تحميل، مكاتب", "warehouse", 120, 80, 1)["strategy"]
+    == _GEN.STRATEGY_STAGED)
+
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',
     not any(re.search(r'from\s+tests|import\s+tests|[\'"]tests/', rd(rel))

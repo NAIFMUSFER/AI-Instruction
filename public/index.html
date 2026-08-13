@@ -27833,6 +27833,14 @@ const ACS_ERR_HINT={
   INVALID_JSON:'رد الخادم ليس JSON صالحاً — هذا عطل في الخادم لا في وصفك.',
   VALID_API_ERROR:'أعلن الخادم فشلاً مصنّفاً.'
 };
+/* تلميح إضافي حسب رمز الخادم — يشرح ما يفعله المستخدم، لا ما يعنيه الرمز تقنياً */
+const ACS_CODE_HINT={
+  ACS_UPSTREAM_TRUNCATED:'الطلب أنتج نموذجاً أكبر من حدّ التوليد في نداء واحد. '
+    +'أعِد المحاولة (يُعاد التوليد على مراحل تلقائياً)، أو قلّل التفاصيل المطلوبة.',
+  ACS_UPSTREAM_TRAILING_JSON:'ردّ المحرّك جاء بأكثر من كائن واحد؛ لن نخمّن أيّهما النموذج.',
+  ACS_UPSTREAM_RATE_LIMIT:'المحرّك مشغول — انتظر قليلاً ثم أعِد المحاولة.',
+  ACS_UPSTREAM_NOT_CONFIGURED:'الخادم يعمل لكن بلا مفتاح محرّك — راجع إعدادات النشر.'
+};
 function acsErrorPanel(res, onRetry, onLocal){
   const box=document.getElementById('reportBox'); if(!box) return;
   const rid=res.request_id||'';
@@ -27843,7 +27851,8 @@ function acsErrorPanel(res, onRetry, onLocal){
     '<div style="border:1px solid #f8717155;background:#7f1d1d22;border-radius:12px;padding:12px;line-height:1.7">'
     +'<div style="font-weight:700;color:#fca5a5;margin-bottom:6px">✕ لم يُنفَّذ التوليد على الخادم</div>'
     +'<div>'+esc(res.message||'')+'</div>'
-    +'<div style="opacity:.85;margin-top:6px">'+esc(ACS_ERR_HINT[res.status]||'')+esc(wait)+'</div>'
+    +'<div style="opacity:.85;margin-top:6px">'
+      +esc(ACS_CODE_HINT[res.code]||ACS_ERR_HINT[res.status]||'')+esc(wait)+'</div>'
     +'<div style="opacity:.7;margin-top:8px;font-size:12px">'
       +'التصنيف: <code>'+esc(code)+'</code>'
       +(res.http?(' · HTTP '+esc(String(res.http))):'')

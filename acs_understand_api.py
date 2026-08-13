@@ -366,12 +366,37 @@ def ready():
             "api_key_configured": True, "sdk": sdk}
 
 
+def _generation_summary(meta):
+    """ملخّص آمن للواجهة: تصنيف وأرقام مجمّعة — لا نصّ زائر ولا محتوى رد."""
+    g = meta.get("acs_generation") or {}
+    if not g:
+        return None
+    st = g.get("stages") or []
+    return {"strategy": g.get("strategy"), "size_class": g.get("size_class"),
+            "estimated_output_tokens": g.get("estimated_output_tokens"),
+            "max_output_tokens": g.get("max_output_tokens"),
+            "escalations": g.get("escalations", 0),
+            "stages": len(st),
+            "stop_reasons": sorted({s.get("stop_reason") for s in st
+                                    if s.get("stop_reason")}),
+            "output_tokens_total": sum(s.get("output_tokens") or 0 for s in st),
+            "input_tokens_total": sum(s.get("input_tokens") or 0 for s in st),
+            "stage_detail": [{"stage": s.get("stage"), "depth": s.get("depth"),
+                              "stop_reason": s.get("stop_reason"),
+                              "output_tokens": s.get("output_tokens"),
+                              "input_tokens": s.get("input_tokens"),
+                              "max_output_tokens": s.get("max_output_tokens"),
+                              "parsed": s.get("parsed"),
+                              "error": s.get("error")} for s in st[:12]]}
+
+
 def _understand_payload(building):
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
     return {"ok": True, "building": building, "levels": len(building["levels"]),
             "rooms": nr, "type": meta.get("type"),
             "mode": meta.get("acs_mode", "single"),
+            "generation": _generation_summary(meta),
             "issues": meta.get("acs_issues", 0), "report": _report(building)}
 
 
@@ -394,8 +419,11 @@ async def understand(req: UnderstandReq, request: Request):
     bt = req.btype if (req.btype and req.btype != "auto") else None
 
     def _work():
+        # أبعاد الأرض وعدد الأدوار تصل إلى مقدّر حجم المخرج: القرار «مرحلة واحدة
+        # أم مراحل» يحتاجها، وبدونها يُقدَّر مبنى ٩٦٠٠ م² كأنه غرفة.
         return U.understand(text, model=_safe_model(req.model), deep=req.deep,
-                            strict=bool(req.strict), btype=bt)
+                            strict=bool(req.strict), btype=bt,
+                            site_w=req.site_w, site_d=req.site_d, floors=req.floors)
 
     try:
         building = await run_bounded(_work, "الفهم والتوليد")

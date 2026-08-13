@@ -85,6 +85,9 @@ python3 "$HERE/test_alignment.py"; guard $?
 step "7a3 · the backend API contract (error envelope, JSON parser, endpoints)"
 python3 "$HERE/test_backend_contract.py"; guard $?
 
+step "7a4 · generation budget, truncation and staging"
+python3 "$HERE/test_generation_budget.py"; guard $?
+
 step "7b · the viewport pixel analyser (positive and negative fixtures)"
 node "$ROOT/tests/deploy/test_viewport_pixels.js"; guard $?
 
