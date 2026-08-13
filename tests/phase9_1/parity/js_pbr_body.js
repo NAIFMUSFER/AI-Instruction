@@ -127,6 +127,51 @@ out.resolve_transform=[
   {coordinate_space:'SITE'},
   {coordinate_space:'SITE',local:[1,Infinity,1]},
   {},null].map(pqResolveTransform);
+
+/* ── تكافؤ عقد استرداد العرض (render-recovery/1.0.0) ─────────────────────── */
+const RR_BOXES=[
+  {min:[0,0,0],max:[1,3,6]},
+  {min:[0,0,0],max:[400,18,300]},
+  {min:[99999.0,0,0],max:[99999.2,0.2,0.2]},
+  {min:[0,0,0],max:[99999.0,1,1]},
+  {min:[5,5,5],max:[1,1,1]},
+  {min:[0,0,0],max:[0,0,0]},
+  null];
+out.element_valid=RR_BOXES.map(b=>pqElementValid(b?{box:b}:{}))
+  .concat([pqElementValid(null)]);
+const RR_SETS=[
+  [{is_mesh:true,parent_names:['BUILDING'],name:'WALL|F0|a',
+    box:{min:[0,0,0],max:[10,3,8]}}],
+  [{is_mesh:true,parent_names:['BUILDING'],name:'WALL|F0|a',
+    box:{min:[0,0,0],max:[10,3,8]}},
+   {is_mesh:true,parent_names:['BUILDING'],name:'ELEC|F0|p',
+    box:{min:[99999,0,0],max:[99999.2,0.2,0.2]}}],
+  (function(){const a=[];for(let i=0;i<8;i++)a.push({is_mesh:true,
+     parent_names:['BUILDING'],name:'WALL|F0|a',box:{min:[0,0,0],max:[1,1,1]}});
+   a.push({is_mesh:true,parent_names:['BUILDING'],name:'WALL|F0|big',
+     box:{min:[0,0,0],max:[400,10,10]}}); return a;})(),
+  [{is_mesh:true,name:'SKY_DOME',parent_names:[],
+    box:{min:[-45000,-45000,-45000],max:[45000,45000,45000]}}],
+  []];
+out.robust_bounds=RR_SETS.map(pqRobustBounds);
+out.fit_distance=[];
+[0.5,20,84,1902,46000,null].forEach(r=>{ [40,52,75].forEach(f=>{
+  [0.6,1.6,3.2].forEach(a=>{ out.fit_distance.push(pqFitDistance(r,f,a)); }); }); });
+out.camera_fit=[];
+[15,84,500,1902,20000].forEach(r=>{ [42,52].forEach(f=>{ [0.6,1.6].forEach(a=>{
+  out.camera_fit.push(pqCameraFit({cx:0,cy:0,cz:0,radius:r},f,a)); }); }); });
+out.camera_fit.push(pqCameraFit({radius:0},52,1.6));
+out.camera_fit.push(pqCameraFit(null,52,1.6));
+out.recovery_plan=[
+  {canonical_meshes:1500,draw_calls:212,viewport_black:true,
+   composer_active:true,materials_replaced:true},
+  {canonical_meshes:1500,draw_calls:212,viewport_black:true,
+   composer_active:false,materials_replaced:false},
+  {canonical_meshes:0,draw_calls:0,viewport_black:true},
+  {canonical_meshes:10,draw_calls:0,viewport_black:true},
+  {canonical_meshes:10,draw_calls:5,viewport_black:false},
+  {},null].map(pqRecoveryPlan);
+
 out.spec_view={schema:ACS_PBR_SPEC.schema,
   chain:ACS_PBR_SPEC.quality_fallback_chain,
   auto_max:ACS_PBR_SPEC.auto_max_profile,

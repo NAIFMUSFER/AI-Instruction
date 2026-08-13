@@ -65,8 +65,23 @@ function serve() {
 function fixtures() {
   const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'phase3',
     'fixtures', 'base_fixtures.json'), 'utf8'));
-  return [['villa', base.villa_glazed || base.villa],
-          ['warehouse', base.warehouse]];
+  const out = [['villa_glazed', base.villa_glazed || base.villa],
+               ['warehouse', base.warehouse]];
+  if (base.apartment6 || base.apartment) {
+    out.push(['apartment_6_level', base.apartment6 || base.apartment]);
+  }
+  /* §18 — النموذج المولَّد الكبير، وصورته ومعه إحداثيّة شاردة واحدة.
+     الثاني هو إعادة إنتاج الشاشة السوداء المُبلَّغ عنها: النموذج نفسه تماماً
+     زائد نقطة عند x=99999 — فإن مرّ الأول وسقط الثاني قبل العلاج، فالسبب هو
+     تلوّث الحدود لا حجم النموذج. */
+  const dir = path.join(ROOT, 'tests', 'phase9_2', 'fixtures');
+  for (const [label, file] of [
+    ['live_large_generated', 'live_large_generated.json'],
+    ['live_large_generated_outlier', 'live_large_generated_outlier.json']]) {
+    const fp = path.join(dir, file);
+    if (fs.existsSync(fp)) out.push([label, JSON.parse(fs.readFileSync(fp, 'utf8'))]);
+  }
+  return out;
 }
 
 function notVerified(why) {
@@ -194,6 +209,43 @@ function notVerified(why) {
       JSON.stringify({ reasons: px.reasons, mean: px.luminance_mean,
         near_black_pct: px.near_black_pct,
         buckets: px.luminance_buckets }));
+
+    /* §13 — جسر التحقّق القرائي: النتيجة الواحدة التي تلخّص «هل يُرى؟» */
+    const vv = await pg.evaluate('window.ACS.verifyVisibleModel()');
+    visual(fname + ': verifyVisibleModel reports a loaded model with meshes',
+      vv.model_loaded === true && vv.canonical_meshes > 0,
+      JSON.stringify({ loaded: vv.model_loaded, meshes: vv.canonical_meshes }));
+    visual(fname + ': it reports the camera inside the frustum and valid clip',
+      vv.camera_in_frustum === true && vv.clip_valid === true,
+      JSON.stringify({ frustum: vv.camera_in_frustum, clip: vv.clip_valid,
+        near: vv.camera_near, far: vv.camera_far }));
+    visual(fname + ': it reports visible pixels',
+      vv.pixels_visible === true, vv.pixel_status);
+    visual(fname + ': near/far were reconciled for THIS model, not left at the '
+      + 'construction defaults 0.05 / 6000',
+      !(vv.camera_near === 0.05 && vv.camera_far === 6000),
+      'near=' + vv.camera_near + ' far=' + vv.camera_far);
+    const rr = await pg.evaluate('window.ACS.renderRecoveryReport()');
+    visual(fname + ': the camera reconciliation ran and applied',
+      !!(rr.last_fit && rr.last_fit.applied), JSON.stringify(rr.last_fit && {
+        applied: rr.last_fit.applied, frustum: rr.last_fit.camera_in_frustum,
+        excluded: (rr.last_fit.diagnostics || {}).excluded_invalid_bounds }));
+    visual(fname + ': no recovery cycle was needed for a healthy load',
+      rr.cycles === 0 || (rr.recovery && rr.recovery.recovered === true),
+      JSON.stringify({ cycles: rr.cycles }));
+    if (fname === 'live_large_generated_outlier') {
+      visual(fname + ': the stray coordinate was excluded from camera bounds '
+        + '(this is the reported black-viewport mechanism)',
+        ((rr.last_fit || {}).diagnostics || {}).excluded_invalid_bounds > 0,
+        JSON.stringify((rr.last_fit || {}).diagnostics));
+      visual(fname + ': and the scene radius stayed building-scale anyway',
+        vv.scene_radius > 0 && vv.scene_radius < 5000, String(vv.scene_radius));
+    }
+    const rp = await pg.evaluate('window.ACS.renderResourcePressure()');
+    visual(fname + ': resource pressure is measured (calls/tris/geometries)',
+      rp.draw_calls !== null && rp.geometries !== null,
+      JSON.stringify({ calls: rp.draw_calls, geo: rp.geometries,
+        pressure: rp.pressure }));
 
     /* §3 — مصفوفة الأوضاع: أيّ طبقة تُسوّد الإطار إن سوّدته */
     const MODES = [

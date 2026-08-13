@@ -836,3 +836,219 @@ def roof_alignment(top_level_index, floor_height, roof_base_y,
             [issue("ALIGN_ROOF_DETACHED", "WARNING", "roof",
                    "the roof sits %.3f m from its canonical elevation; it is "
                    "reported, never lowered by a presentation offset" % err)]}
+
+
+# ---------------------------------------------------------------------------
+# عقد استرداد العرض (render-recovery/1.0.0)
+#
+# الحادثة التي يعالجها: نموذج مولّد حيّ بمئات العناصر — الواجهة حيّة، وعدّادات
+# الطبقات ممتلئة (٥٦٤ جداراً، ٢٤٣ نقطة كهرباء…) — والمشهد أسود بالكامل.
+#
+# السبب أن مسار تحميل النموذج الأساسي لم يكن يستعمل عقد أمان المشهد إطلاقاً:
+#   1. الحدود من Box3().setFromObject(model) — كل شبكة في مجموعة المبنى بلا أي
+#      فحص صلاحية. إحداثيّة واحدة تالفة بين مئات العناصر المولَّدة تكفي.
+#   2. camera.near/far تُضبطان مرّة عند إنشاء الكاميرا (0.05 / 6000) ولا
+#      يُعاد ضبطهما عند تحميل نموذج جديد أبداً.
+# فنقطةٌ شاردة عند x=99999 تحوّل نصف القطر من ٨٤ م إلى ٥٠ كم، وتضع الكاميرا على
+# بُعد ١٠٧ كم بينما المستوى البعيد ٦ كم — فلا يتقاطع شيء ويُمسح الإطار أسود.
+# ---------------------------------------------------------------------------
+RR = SPEC["render_recovery"]
+RENDER_RECOVERY_CONTRACT = RR["version"]
+RENDER_RECOVERY_SYMBOLS = tuple(RR["symbols"])
+
+
+def element_valid(desc):
+    """هل يصلح هذا العنصر لحساب الحدود؟ الاستبعاد للتالف وحده، ومعلَّل دائماً.
+
+    لا يُستبعد عنصر لأنه كبير: مبنى كبير هندسةٌ مشروعة. يُستبعد لأنه غير منتهٍ
+    (NaN/Infinity)، أو منقلب، أو بامتداد يتجاوز حدّ المعقول المعماري، أو بموضع
+    يبعد عشرات الكيلومترات عن الأصل — وكلّها حالات لا يمكن أن تكون هندسة مبنى.
+    """
+    d = desc if isinstance(desc, dict) else {}
+    box = d.get("box") if isinstance(d.get("box"), dict) else None
+    if not (box and all(isinstance(box.get(k), (list, tuple))
+                        and len(box[k]) == 3 for k in ("min", "max"))):
+        return {"valid": False, "reason": "NO_BOX", "extent": None}
+    lo, hi = [], []
+    for i in range(3):
+        a, b = _num(box["min"][i]), _num(box["max"][i])
+        if a is None or b is None:
+            return {"valid": False, "reason": "NON_FINITE", "extent": None}
+        lo.append(a)
+        hi.append(b)
+    size = [hi[i] - lo[i] for i in range(3)]
+    if any(s < 0 for s in size):
+        return {"valid": False, "reason": "INVERTED_BOX", "extent": None}
+    extent = max(size)
+    far_from_origin = max(max(abs(v) for v in lo), max(abs(v) for v in hi))
+    if extent > float(RR["max_element_extent_m"]):
+        return {"valid": False, "reason": "EXTENT_ABSURD", "extent": _q(extent)}
+    if far_from_origin > float(RR["max_coordinate_m"]):
+        return {"valid": False, "reason": "COORDINATE_ABSURD",
+                "extent": _q(extent), "distance": _q(far_from_origin)}
+    if extent < float(RR["min_element_extent_m"]):
+        return {"valid": True, "reason": "DEGENERATE_BUT_FINITE",
+                "extent": _q(extent), "degenerate": True}
+    return {"valid": True, "reason": "OK", "extent": _q(extent)}
+
+
+def _median(values):
+    v = sorted(values)
+    n = len(v)
+    if not n:
+        return 0.0
+    return v[n // 2] if n % 2 else (v[n // 2 - 1] + v[n // 2]) / 2.0
+
+
+def robust_bounds(objects):
+    """حدود قانونية محصّنة ضد الشذوذ، مع تقرير كامل عمّا استُبعد ولماذا."""
+    members, invalid, extents = [], [], []
+    for o in (objects or []):
+        if not bounds_member(o)["included"]:
+            continue
+        v = element_valid(o)
+        if not v["valid"]:
+            invalid.append({"name": (o or {}).get("name"), "reason": v["reason"],
+                            "extent": v.get("extent"),
+                            "distance": v.get("distance")})
+            continue
+        members.append(o)
+        if v.get("extent") is not None:
+            extents.append(v["extent"])
+
+    res = bounds_from_descriptors(members)
+    issues = list(res.get("issues") or [])
+    outliers = []
+    if extents:
+        med = _median(extents)
+        ratio = float(RR["outlier_extent_ratio"])
+        if med > 0:
+            for o, e in zip(members, extents):
+                if e > med * ratio:
+                    outliers.append({"name": o.get("name"), "extent": e,
+                                     "median": _q(med),
+                                     "ratio": _q(e / med)})
+    for x in invalid:
+        issues.append(issue("RENDER_INVALID_ELEMENT", "WARNING", x.get("name"),
+                            "excluded from camera fitting: %s" % x["reason"]))
+    for x in outliers:
+        # لا يُحذف: هندسة كبيرة قد تكون مشروعة تماماً. يُبلَّغ عنها فقط.
+        issues.append(issue("RENDER_BOUNDS_OUTLIER", "INFO", x.get("name"),
+                            "element extent far exceeds the median — kept in "
+                            "bounds, reported for inspection (see "
+                            "diagnostics.outliers for the figures)"))
+    out = dict(res)
+    out["issues"] = issues
+    out["diagnostics"] = {
+        "canonical_mesh_count": len(members) + len(invalid),
+        "included_in_bounds": res.get("member_count", 0),
+        "excluded_invalid_bounds": len(invalid),
+        "max_element_extent": _q(max(extents)) if extents else None,
+        "median_element_extent": _q(_median(extents)) if extents else None,
+        "scene_radius": (res.get("bounds") or {}).get("radius"),
+        "outliers": outliers[:16],
+        "excluded": invalid[:16]}
+    return out
+
+
+def fit_distance(radius, fov_deg, aspect):
+    """أقرب مسافة تُدخل كرة النموذج كاملةً في الهرم، مضروبة بهامش معلن.
+
+    الحدّ الحاكم هو أضيق البعدين: الرأسي دائماً fov، والأفقي fov المكافئ بعد
+    نسبة العرض. تجاهل الأفقي على شاشة ضيّقة يقصّ المبنى من جانبيه.
+    """
+    r = _num(radius)
+    r = 20.0 if (r is None or r <= 0) else r
+    fov = _num(fov_deg) or 50.0
+    fov = min(max(fov, float(SPEC["fov_min"])), float(SPEC["fov_max"]))
+    asp = _num(aspect) or 1.6
+    if asp <= 0:
+        asp = 1.6
+    vfov = math.radians(fov)
+    hfov = 2.0 * math.atan(math.tan(vfov / 2.0) * asp)
+    limiting = min(vfov, hfov)
+    d = r / max(math.sin(limiting / 2.0), 1e-6)
+    d = max(d * float(RR["fit_margin"]), float(RR["fit_min_distance_m"]))
+    return _q(d)
+
+
+def camera_fit(bounds, fov_deg=None, aspect=None, azimuth_deg=35.0,
+               elevation_deg=22.0, attempt=0):
+    """مصالحة الكاميرا الوحيدة المخوَّلة بعد تحميل نموذج.
+
+    تعيد الموضع والهدف ومستويي القصّ **معاً**: فصل الموضع عن القصّ هو العطل —
+    كان الموضع يُشتقّ من الحدود بينما near/far يبقيان على قيمتَي الإنشاء.
+    """
+    b = bounds if isinstance(bounds, dict) else {}
+    r = _num(b.get("radius"))
+    if r is None or r <= 0:
+        return {"valid": False, "camera_in_frustum": False, "issues": [issue(
+            "PQ_BOUNDS_UNAVAILABLE", "WARNING", None,
+            "no usable canonical radius — camera cannot be fitted")],
+            "camera": None}
+    cx = _num(b.get("cx")) or 0.0
+    cy = _num(b.get("cy")) or 0.0
+    cz = _num(b.get("cz")) or 0.0
+    fov = _num(fov_deg) or 52.0
+    asp = _num(aspect) or 1.6
+    dist = fit_distance(r, fov, asp)
+    if attempt > 0:
+        dist = _q(dist * (float(RR["refit_distance_gain"]) ** attempt))
+    az = math.radians(_num(azimuth_deg) or 35.0)
+    el = math.radians(_num(elevation_deg) or 22.0)
+    pos = [cx + dist * math.cos(el) * math.cos(az),
+           cy + dist * math.sin(el),
+           cz + dist * math.cos(el) * math.sin(az)]
+    clip = camera_clip({"cx": cx, "cy": cy, "cz": cz, "radius": r}, pos)
+    cam = {"position": clip["clip"]["position"], "target": [_q(cx), _q(cy), _q(cz)],
+           "fov": _q(fov), "aspect": _q(asp),
+           "near": clip["clip"]["near"], "far": clip["clip"]["far"]}
+    fr = frustum_contains(cam, {"cx": cx, "cy": cy, "cz": cz, "radius": r})
+    issues = list(clip.get("issues") or []) + list(fr.get("issues") or [])
+    ok = bool(fr.get("contains"))
+    if not ok and attempt < int(RR["refit_attempts"]):
+        return camera_fit(bounds, fov_deg, aspect, azimuth_deg, elevation_deg,
+                          attempt + 1)
+    if not ok:
+        issues.append(issue("CAMERA_FIT_FAILED", "WARNING", None,
+                            "the model is not inside the frustum after %d "
+                            "deterministic re-fit(s)" % int(RR["refit_attempts"])))
+    return {"valid": ok, "issues": issues, "camera": cam, "attempt": attempt,
+            "camera_in_frustum": ok, "distance": clip["clip"]["distance"]}
+
+
+def recovery_plan(state):
+    """خطوات الاسترداد الحتمية حين يبقى الإطار أسود رغم وجود هندسة ونداءات رسم.
+
+    دورة واحدة فقط. الغرض تشخيصي بقدر ما هو علاجي: أول خطوة تُعيد الصورة هي
+    الطبقة المسؤولة، وتُسجَّل باسمها بدل أن يُترك المستخدم أمام سواد صامت.
+    """
+    s = state if isinstance(state, dict) else {}
+    meshes = _num(s.get("canonical_meshes")) or 0
+    calls = _num(s.get("draw_calls")) or 0
+    black = bool(s.get("viewport_black"))
+    if not black:
+        return {"needed": False, "steps": [], "issues": [],
+                "reason": "VIEWPORT_NOT_BLACK"}
+    if meshes <= 0:
+        return {"needed": False, "steps": [], "reason": "NO_CANONICAL_GEOMETRY",
+                "issues": [issue("PQ_BOUNDS_UNAVAILABLE", "WARNING", None,
+                                 "nothing canonical to recover")]}
+    if calls <= 0:
+        return {"needed": False, "steps": [], "reason": "NO_DRAW_CALLS",
+                "issues": [issue("RENDER_BLACK_VIEWPORT", "WARNING", None,
+                                 "geometry exists but nothing was drawn")]}
+    steps = []
+    for name in RR["recovery_steps"]:
+        if name == "DISABLE_COMPOSER" and not s.get("composer_active"):
+            continue
+        if name == "RESTORE_ENGINEERING_MATERIALS" \
+                and not s.get("materials_replaced"):
+            continue
+        steps.append(name)
+    return {"needed": True, "steps": steps,
+            "max_cycles": int(RR["max_recovery_cycles"]),
+            "reason": "BLACK_WITH_GEOMETRY_AND_DRAW_CALLS",
+            "issues": [issue("RENDER_BLACK_VIEWPORT", "WARNING", None,
+                             "canonical geometry and draw calls produced a "
+                             "black frame — running one recovery cycle")]}

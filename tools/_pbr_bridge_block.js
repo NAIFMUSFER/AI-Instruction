@@ -624,3 +624,181 @@ window.ACS.canonicalTransformSnapshot=function(){
   }catch(e){
     return {available:false,count:0,digest:null,
       reason:String(e&&e.message||e).slice(0,120)}; } };
+
+/* ═══════ استرداد العرض للنماذج المولَّدة الحيّة (render-recovery/1.0.0) ═════
+   العطل: نموذج مولّد بمئات العناصر — الواجهة حيّة والعدّادات ممتلئة والمشهد
+   أسود. السبب أن setModel كان يؤطّر الكاميرا من Box3().setFromObject(model):
+   كل شبكة بلا فحص صلاحية، وnear/far يبقيان على قيمتَي إنشاء الكاميرا
+   (0.05 / 6000) بلا إعادة ضبط. نقطة واحدة عند x=99999 ⇒ نصف قطر ٥٠ كم ⇒
+   كاميرا على بُعد ١٠٧ كم خلف مستوى قصّ ٦ كم ⇒ إطار أسود.
+   هنا المصالحة الوحيدة المخوَّلة بعد تحميل نموذج، وتمرّ بالعقد القانوني نفسه. */
+window.__ACS_RR__={last_fit:null,last_verify:null,recovery:null,cycles:0};
+
+/* وصف كائن مع صندوقه العالمي — لازم لفحص الصلاحية، والوصف بلا صندوق أعمى. */
+function _pqDescribeBoxed(o){
+  const d=_pqDescribe(o);
+  try{
+    const b=new THREE.Box3().setFromObject(o);
+    d.box={min:[b.min.x,b.min.y,b.min.z],max:[b.max.x,b.max.y,b.max.z]};
+  }catch(e){ d.box=null; }
+  return d; }
+
+/* أوصاف الهندسة القانونية وحدها — قبّة السماء والأرضية والسياق مستبعدة بالعقد. */
+function _pqCanonicalDescriptors(){
+  const out=[];
+  try{
+    scene.updateMatrixWorld(true);
+    scene.traverse(o=>{ if(o.isMesh) out.push(_pqDescribeBoxed(o)); });
+  }catch(e){}
+  return out; }
+
+/* حدود محصّنة: تستبعد التالف وحده وتُبلّغ عن الشاذّ بلا حذف هندسة مشروعة. */
+function _pqRobustSceneBounds(){
+  const r=pqRobustBounds(_pqCanonicalDescriptors());
+  return r; }
+
+/* ── المصالحة الوحيدة: موضع وهدف ومستويا قصّ معاً، لا موضعٌ بلا قصّ ───────── */
+function acsReconcileCamera(opts){
+  opts=opts||{};
+  const rb=_pqRobustSceneBounds();
+  const rec={contract:PQ_RENDER_RECOVERY_CONTRACT,
+    diagnostics:rb.diagnostics||null,issues:(rb.issues||[]).slice(0,24),
+    applied:false,camera_in_frustum:false,bounds:rb.bounds||null};
+  if(!rb.valid||!rb.bounds){ window.__ACS_RR__.last_fit=rec; return rec; }
+  const asp=(camera&&camera.aspect)?camera.aspect:1.6;
+  const fov=(camera&&camera.fov)?camera.fov:52;
+  const fit=pqCameraFit(rb.bounds,fov,asp,
+    (opts.azimuth===undefined)?35:opts.azimuth,
+    (opts.elevation===undefined)?22:opts.elevation,0);
+  rec.issues=rec.issues.concat((fit.issues||[]).slice(0,12));
+  rec.camera_in_frustum=!!fit.camera_in_frustum;
+  rec.attempt=fit.attempt;
+  rec.distance=fit.distance;
+  if(!fit.camera){ window.__ACS_RR__.last_fit=rec; return rec; }
+  const c=fit.camera;
+  try{
+    camera.position.set(c.position[0],c.position[1],c.position[2]);
+    camera.near=c.near; camera.far=c.far;
+    camera.updateProjectionMatrix();
+    if(typeof orbit!=='undefined'&&orbit&&orbit.target){
+      /* هدف نموذج سابق لا يبقى أبداً: مركز حدود النموذج الحالي وحده. */
+      orbit.target.set(c.target[0],c.target[1],c.target[2]); orbit.update(); }
+    rec.applied=true;
+  }catch(e){ rec.error=String(e&&e.message||e).slice(0,120); }
+  rec.camera={position:c.position,target:c.target,near:c.near,far:c.far,
+    fov:c.fov,aspect:c.aspect};
+  window.__ACS_RR__.last_fit=rec;
+  return rec; }
+
+/* ── §8 فتح آمن للمعالجة اللاحقة: مؤلِّف أسود لا يُبقى أبداً ────────────────── */
+function _pqDisableComposer(reason){
+  if(!window.__ACS_PQ__||!window.__ACS_PQ__.composer) return false;
+  window.__ACS_PQ__.composer=null;
+  window.__ACS_RR__.postprocess_fail_open=reason||'BLACK_FRAME';
+  try{ renderer.render(scene,camera); }catch(e){}
+  return true; }
+
+/* ── §13 جسر قراءة فقط: هل النموذج مرئيّ فعلاً؟ لا يغيّر حالة ولا يرسم ────── */
+window.ACS.verifyVisibleModel=function(){
+  try{
+    const d=(typeof window.ACS.renderDiagnostics==='function')
+      ?window.ACS.renderDiagnostics():{};
+    const rb=_pqRobustSceneBounds();
+    const px=(typeof window.ACS.viewportPixels==='function')
+      ?window.ACS.viewportPixels():{status:'UNAVAILABLE'};
+    const fit=window.__ACS_RR__.last_fit;
+    const clipValid=!!(camera&&isFinite(camera.near)&&isFinite(camera.far)
+      &&camera.near>0&&camera.far>camera.near);
+    const out={
+      model_loaded:!!(typeof model!=='undefined'&&model),
+      canonical_meshes:(rb.diagnostics||{}).canonical_mesh_count||0,
+      included_in_bounds:(rb.diagnostics||{}).included_in_bounds||0,
+      excluded_invalid_bounds:(rb.diagnostics||{}).excluded_invalid_bounds||0,
+      visible_meshes:d.visible_meshes===undefined?null:d.visible_meshes,
+      draw_calls:d.draw_calls===undefined?null:d.draw_calls,
+      triangles:d.triangles===undefined?null:d.triangles,
+      geometries:d.geometries===undefined?null:d.geometries,
+      textures:d.textures===undefined?null:d.textures,
+      bounds_valid:!!rb.valid,
+      scene_radius:(rb.bounds||{}).radius===undefined?null:(rb.bounds||{}).radius,
+      camera_in_frustum:fit?!!fit.camera_in_frustum:null,
+      clip_valid:clipValid,
+      camera_near:camera?camera.near:null, camera_far:camera?camera.far:null,
+      webgl_context_ok:!!d.webgl_context_ok,
+      composer_active:!!((window.__ACS_PQ__||{}).composer),
+      pixels_visible:(px&&px.status)?px.status!=='BLACK':null,
+      pixel_status:(px&&px.status)||'UNAVAILABLE',
+      outliers:(rb.diagnostics||{}).outliers||[],
+      fallback_used:window.__ACS_RR__.postprocess_fail_open
+        ||((window.__ACS_RR__.recovery||{}).applied_step||null),
+      recovery_cycles:window.__ACS_RR__.cycles,
+      contract:PQ_RENDER_RECOVERY_CONTRACT,
+      exposes_coordinates:false, writes_to_model:false};
+    window.__ACS_RR__.last_verify=out;
+    return out;
+  }catch(e){ return {model_loaded:false,error:String(e&&e.message||e).slice(0,120),
+    contract:PQ_RENDER_RECOVERY_CONTRACT}; } };
+
+/* ── §14 دورة استرداد واحدة، حتمية، وتُسمّي الطبقة المسؤولة ───────────────── */
+function acsRecoverBlackViewport(){
+  const v=window.ACS.verifyVisibleModel();
+  const plan=pqRecoveryPlan({canonical_meshes:v.canonical_meshes,
+    draw_calls:v.draw_calls, viewport_black:(v.pixel_status==='BLACK'),
+    composer_active:v.composer_active,
+    materials_replaced:!!((window.__ACS_PQ__||{}).saved)});
+  const rec={contract:PQ_RENDER_RECOVERY_CONTRACT,plan:plan,
+    attempted:[],applied_step:null,recovered:false,
+    issues:(plan.issues||[]).slice(0,8)};
+  if(!plan.needed||window.__ACS_RR__.cycles>=plan.max_cycles){
+    window.__ACS_RR__.recovery=rec; return rec; }
+  window.__ACS_RR__.cycles++;
+  for(let i=0;i<plan.steps.length;i++){
+    const step=plan.steps[i];
+    rec.attempted.push(step);
+    try{
+      if(step==='DISABLE_COMPOSER') _pqDisableComposer('BLACK_FRAME');
+      else if(step==='RESTORE_ENGINEERING_MATERIALS'){
+        if(typeof window.ACS.pbrRestore==='function') window.ACS.pbrRestore(); }
+      else if(step==='REFIT_CAMERA') acsReconcileCamera();
+      else if(step==='RENDER_BASE') renderer.render(scene,camera);
+      renderer.render(scene,camera);
+    }catch(e){ rec.error=String(e&&e.message||e).slice(0,120); }
+    const px=(typeof window.ACS.viewportPixels==='function')
+      ?window.ACS.viewportPixels():{status:'UNAVAILABLE'};
+    if(px&&px.status&&px.status!=='BLACK'){
+      rec.applied_step=step; rec.recovered=true;
+      rec.issues.push(pqIssue('RENDER_RECOVERED','INFO',null,
+        'the viewport recovered after '+step+' — that layer is responsible'));
+      break; } }
+  if(!rec.recovered) rec.issues.push(pqIssue('RENDER_BLACK_VIEWPORT','WARNING',
+    null,'one recovery cycle did not restore visible pixels'));
+  window.__ACS_RR__.recovery=rec;
+  return rec; }
+
+/* تقرير قراءة فقط عن آخر مصالحة واسترداد — للمِرقاب وللكونسول. */
+window.ACS.renderRecoveryReport=function(){
+  return {contract:PQ_RENDER_RECOVERY_CONTRACT,
+    last_fit:window.__ACS_RR__.last_fit,
+    last_verify:window.__ACS_RR__.last_verify,
+    recovery:window.__ACS_RR__.recovery,
+    cycles:window.__ACS_RR__.cycles,
+    postprocess_fail_open:window.__ACS_RR__.postprocess_fail_open||null}; };
+
+/* ── §11 ضغط موارد WebGL: قياس وتحذير، بلا أي مساس بالصحّة ───────────────── */
+window.ACS.renderResourcePressure=function(){
+  try{
+    const info=renderer.info||{render:{},memory:{}};
+    const calls=(info.render||{}).calls||0, tris=(info.render||{}).triangles||0;
+    const geo=(info.memory||{}).geometries||0, tex=(info.memory||{}).textures||0;
+    const flags=[];
+    if(calls>PQ_RR.draw_call_warn) flags.push('DRAW_CALLS');
+    if(geo>PQ_RR.geometry_warn) flags.push('GEOMETRIES');
+    if(tris>PQ_RR.triangle_warn) flags.push('TRIANGLES');
+    return {draw_calls:calls,triangles:tris,geometries:geo,textures:tex,
+      thresholds:{draw_calls:PQ_RR.draw_call_warn,
+        geometries:PQ_RR.geometry_warn,triangles:PQ_RR.triangle_warn},
+      pressure:flags,
+      issues:flags.length?[pqIssue('RENDER_RESOURCE_PRESSURE','INFO',null,
+        'resource pressure: '+flags.join(', ')+' — correctness unaffected')]:[]};
+  }catch(e){ return {draw_calls:null,pressure:[],
+    error:String(e&&e.message||e).slice(0,80)}; } };

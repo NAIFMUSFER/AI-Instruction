@@ -812,6 +812,145 @@ const PQ = (function(){
     currentConfig:currentConfig};
 })();
 
+/* --------- عقد استرداد العرض (مرآة render-recovery/1.0.0) ---------------
+   مسار تحميل النموذج الأساسي كان يحسب الحدود بـ Box3().setFromObject(model):
+   كل شبكة في مجموعة المبنى بلا فحص صلاحية، وnear/far يبقيان على قيمتَي إنشاء
+   الكاميرا (0.05 / 6000) فلا يُعاد ضبطهما عند تحميل نموذج جديد أبداً. فإحداثيّة
+   واحدة تالفة بين مئات العناصر المولَّدة تحوّل نصف القطر من ٨٤ م إلى ٥٠ كم
+   وتضع الكاميرا على بُعد ١٠٧ كم خلف مستوى قصّ ثابت عند ٦ كم ⇒ إطار أسود
+   والواجهة حيّة وعدّادات الطبقات ممتلئة. */
+const PQ_RR = ACS_PBR_SPEC.render_recovery;
+const PQ_RENDER_RECOVERY_CONTRACT = PQ_RR.version;
+
+function pqElementValid(desc){
+  const d=(desc&&typeof desc==='object')?desc:{};
+  const box=(d.box&&typeof d.box==='object')?d.box:null;
+  if(!(box&&Array.isArray(box.min)&&Array.isArray(box.max)
+       &&box.min.length===3&&box.max.length===3))
+    return {valid:false,reason:'NO_BOX',extent:null};
+  const lo=[],hi=[];
+  for(let i=0;i<3;i++){
+    const a=_pqNum(box.min[i]), b=_pqNum(box.max[i]);
+    if(a===null||b===null) return {valid:false,reason:'NON_FINITE',extent:null};
+    lo.push(a); hi.push(b); }
+  const size=[hi[0]-lo[0],hi[1]-lo[1],hi[2]-lo[2]];
+  if(size.some(v=>v<0)) return {valid:false,reason:'INVERTED_BOX',extent:null};
+  const extent=Math.max(size[0],Math.max(size[1],size[2]));
+  const far=Math.max(Math.max(Math.abs(lo[0]),Math.abs(lo[1]),Math.abs(lo[2])),
+                     Math.max(Math.abs(hi[0]),Math.abs(hi[1]),Math.abs(hi[2])));
+  if(extent>PQ_RR.max_element_extent_m)
+    return {valid:false,reason:'EXTENT_ABSURD',extent:_pqQ(extent)};
+  if(far>PQ_RR.max_coordinate_m)
+    return {valid:false,reason:'COORDINATE_ABSURD',extent:_pqQ(extent),
+            distance:_pqQ(far)};
+  if(extent<PQ_RR.min_element_extent_m)
+    return {valid:true,reason:'DEGENERATE_BUT_FINITE',extent:_pqQ(extent),
+            degenerate:true};
+  return {valid:true,reason:'OK',extent:_pqQ(extent)}; }
+
+function _pqMedian(v){
+  const a=v.slice().sort((x,y)=>x-y), n=a.length;
+  if(!n) return 0;
+  return (n%2)?a[(n-n%2)/2]:(a[n/2-1]+a[n/2])/2; }
+
+function pqRobustBounds(objects){
+  const members=[],invalid=[],extents=[];
+  (objects||[]).forEach(o=>{
+    if(!pqBoundsMember(o).included) return;
+    const v=pqElementValid(o);
+    if(!v.valid){ invalid.push({name:(o||{}).name,reason:v.reason,
+      extent:v.extent===undefined?null:v.extent,
+      distance:v.distance===undefined?null:v.distance}); return; }
+    members.push(o);
+    if(v.extent!==null&&v.extent!==undefined) extents.push(v.extent); });
+  const res=pqBoundsFromDescriptors(members);
+  const issues=(res.issues||[]).slice();
+  const outliers=[];
+  if(extents.length){
+    const med=_pqMedian(extents);
+    if(med>0) members.forEach((o,i)=>{
+      if(extents[i]>med*PQ_RR.outlier_extent_ratio)
+        outliers.push({name:o.name,extent:extents[i],median:_pqQ(med),
+                       ratio:_pqQ(extents[i]/med)}); }); }
+  invalid.forEach(x=>issues.push(pqIssue('RENDER_INVALID_ELEMENT','WARNING',
+    x.name,'excluded from camera fitting: '+x.reason)));
+  outliers.forEach(x=>issues.push(pqIssue('RENDER_BOUNDS_OUTLIER','INFO',x.name,
+    'element extent far exceeds the median — kept in bounds, reported for '
+    +'inspection (see diagnostics.outliers for the figures)')));
+  const out=Object.assign({},res);
+  out.issues=issues;
+  out.diagnostics={canonical_mesh_count:members.length+invalid.length,
+    included_in_bounds:res.member_count||0,
+    excluded_invalid_bounds:invalid.length,
+    max_element_extent:extents.length?_pqQ(Math.max.apply(null,extents)):null,
+    median_element_extent:extents.length?_pqQ(_pqMedian(extents)):null,
+    scene_radius:(res.bounds||{}).radius===undefined?null:(res.bounds||{}).radius,
+    outliers:outliers.slice(0,16),excluded:invalid.slice(0,16)};
+  return out; }
+
+function pqFitDistance(radius,fovDeg,aspect){
+  let r=_pqNum(radius); if(r===null||r<=0) r=20;
+  let fov=_pqNum(fovDeg); if(fov===null) fov=50;
+  fov=Math.min(Math.max(fov,ACS_PBR_SPEC.fov_min),ACS_PBR_SPEC.fov_max);
+  let asp=_pqNum(aspect); if(asp===null||asp<=0) asp=1.6;
+  const vfov=fov*Math.PI/180;
+  const hfov=2*Math.atan(Math.tan(vfov/2)*asp);
+  const lim=Math.min(vfov,hfov);
+  let d=r/Math.max(Math.sin(lim/2),1e-6);
+  d=Math.max(d*PQ_RR.fit_margin,PQ_RR.fit_min_distance_m);
+  return _pqQ(d); }
+
+function pqCameraFit(bounds,fovDeg,aspect,azimuthDeg,elevationDeg,attempt){
+  const b=(bounds&&typeof bounds==='object')?bounds:{};
+  attempt=attempt||0;
+  const r=_pqNum(b.radius);
+  if(r===null||r<=0) return {valid:false,camera_in_frustum:false,camera:null,
+    issues:[pqIssue('PQ_BOUNDS_UNAVAILABLE','WARNING',null,
+      'no usable canonical radius — camera cannot be fitted')]};
+  const cx=_pqNum(b.cx)||0, cy=_pqNum(b.cy)||0, cz=_pqNum(b.cz)||0;
+  const fov=_pqNum(fovDeg)||52, asp=_pqNum(aspect)||1.6;
+  let dist=pqFitDistance(r,fov,asp);
+  if(attempt>0) dist=_pqQ(dist*Math.pow(PQ_RR.refit_distance_gain,attempt));
+  const az=((azimuthDeg===undefined||azimuthDeg===null)?35:azimuthDeg)*Math.PI/180;
+  const el=((elevationDeg===undefined||elevationDeg===null)?22:elevationDeg)*Math.PI/180;
+  const pos=[cx+dist*Math.cos(el)*Math.cos(az), cy+dist*Math.sin(el),
+             cz+dist*Math.cos(el)*Math.sin(az)];
+  const clip=pqCameraClip({cx:cx,cy:cy,cz:cz,radius:r},pos);
+  const cam={position:clip.clip.position,target:[_pqQ(cx),_pqQ(cy),_pqQ(cz)],
+    fov:_pqQ(fov),aspect:_pqQ(asp),near:clip.clip.near,far:clip.clip.far};
+  const fr=pqFrustumContains(cam,{cx:cx,cy:cy,cz:cz,radius:r});
+  const issues=(clip.issues||[]).concat(fr.issues||[]);
+  const ok=!!fr.contains;
+  if(!ok&&attempt<PQ_RR.refit_attempts)
+    return pqCameraFit(bounds,fovDeg,aspect,azimuthDeg,elevationDeg,attempt+1);
+  if(!ok) issues.push(pqIssue('CAMERA_FIT_FAILED','WARNING',null,
+    'the model is not inside the frustum after '+PQ_RR.refit_attempts
+    +' deterministic re-fit(s)'));
+  return {valid:ok,issues:issues,camera:cam,attempt:attempt,
+    camera_in_frustum:ok,distance:clip.clip.distance}; }
+
+function pqRecoveryPlan(state){
+  const s=(state&&typeof state==='object')?state:{};
+  const meshes=_pqNum(s.canonical_meshes)||0, calls=_pqNum(s.draw_calls)||0;
+  if(!s.viewport_black) return {needed:false,steps:[],issues:[],
+    reason:'VIEWPORT_NOT_BLACK'};
+  if(meshes<=0) return {needed:false,steps:[],reason:'NO_CANONICAL_GEOMETRY',
+    issues:[pqIssue('PQ_BOUNDS_UNAVAILABLE','WARNING',null,
+      'nothing canonical to recover')]};
+  if(calls<=0) return {needed:false,steps:[],reason:'NO_DRAW_CALLS',
+    issues:[pqIssue('RENDER_BLACK_VIEWPORT','WARNING',null,
+      'geometry exists but nothing was drawn')]};
+  const steps=[];
+  PQ_RR.recovery_steps.forEach(n=>{
+    if(n==='DISABLE_COMPOSER'&&!s.composer_active) return;
+    if(n==='RESTORE_ENGINEERING_MATERIALS'&&!s.materials_replaced) return;
+    steps.push(n); });
+  return {needed:true,steps:steps,max_cycles:PQ_RR.max_recovery_cycles,
+    reason:'BLACK_WITH_GEOMETRY_AND_DRAW_CALLS',
+    issues:[pqIssue('RENDER_BLACK_VIEWPORT','WARNING',null,
+      'canonical geometry and draw calls produced a black frame — running one '
+      +'recovery cycle')]}; }
+
 if(typeof window!=='undefined'){
   window.ACS=window.ACS||{};
   window.ACS.pbr={
@@ -827,6 +966,10 @@ if(typeof window!=='undefined'){
     cameraClip:pqCameraClip, frustumContains:pqFrustumContains,
     materialSafe:pqMaterialSafe,
     viewportContract:()=>PQ_VIEWPORT_CONTRACT,
+    renderRecoveryContract:()=>PQ_RENDER_RECOVERY_CONTRACT,
+    elementValid:pqElementValid, robustBounds:pqRobustBounds,
+    fitDistance:pqFitDistance, cameraFit:pqCameraFit,
+    recoveryPlan:pqRecoveryPlan,
     levelBaseY:pqLevelBaseY, resolveTransform:pqResolveTransform,
     plateRect:pqPlateRect, rackBlock:pqRackBlock,
     containment:pqContainment, roofAlignment:pqRoofAlignment, panel:PQ};

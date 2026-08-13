@@ -88,6 +88,9 @@ python3 "$HERE/test_backend_contract.py"; guard $?
 step "7a4 · generation budget, truncation and staging"
 python3 "$HERE/test_generation_budget.py"; guard $?
 
+step "7a5 · live generated model: black-viewport recovery and complexity"
+python3 "$HERE/test_live_render.py"; guard $?
+
 step "7b · the viewport pixel analyser (positive and negative fixtures)"
 node "$ROOT/tests/deploy/test_viewport_pixels.js"; guard $?
 

@@ -162,6 +162,56 @@ out['spec_view'] = {'schema': P.SPEC['schema'],
                     'tone': P.SPEC['tone_mapping'],
                     'limits': P.SPEC['limits']}
 
+# ── تكافؤ عقد استرداد العرض (render-recovery/1.0.0) ─────────────────────────
+_RR_BOXES = [
+    {"min": [0, 0, 0], "max": [1, 3, 6]},
+    {"min": [0, 0, 0], "max": [400, 18, 300]},
+    {"min": [99999.0, 0, 0], "max": [99999.2, 0.2, 0.2]},
+    {"min": [0, 0, 0], "max": [99999.0, 1, 1]},
+    {"min": [5, 5, 5], "max": [1, 1, 1]},
+    {"min": [0, 0, 0], "max": [0, 0, 0]},
+    None,
+]
+out['element_valid'] = [P.element_valid({"box": b} if b else {})
+                        for b in _RR_BOXES] + [P.element_valid(None)]
+_RR_SETS = [
+    [{"is_mesh": True, "parent_names": ["BUILDING"], "name": "WALL|F0|a",
+      "box": {"min": [0, 0, 0], "max": [10, 3, 8]}}],
+    [{"is_mesh": True, "parent_names": ["BUILDING"], "name": "WALL|F0|a",
+      "box": {"min": [0, 0, 0], "max": [10, 3, 8]}},
+     {"is_mesh": True, "parent_names": ["BUILDING"], "name": "ELEC|F0|p",
+      "box": {"min": [99999, 0, 0], "max": [99999.2, 0.2, 0.2]}}],
+    [{"is_mesh": True, "parent_names": ["BUILDING"], "name": "WALL|F0|a",
+      "box": {"min": [0, 0, 0], "max": [1, 1, 1]}}] * 8
+    + [{"is_mesh": True, "parent_names": ["BUILDING"], "name": "WALL|F0|big",
+        "box": {"min": [0, 0, 0], "max": [400, 10, 10]}}],
+    [{"is_mesh": True, "name": "SKY_DOME", "parent_names": [],
+      "box": {"min": [-45000, -45000, -45000], "max": [45000, 45000, 45000]}}],
+    [],
+]
+out['robust_bounds'] = [P.robust_bounds(s) for s in _RR_SETS]
+out['fit_distance'] = [P.fit_distance(r, f, a)
+                       for r in (0.5, 20, 84, 1902, 46000, None)
+                       for f in (40, 52, 75)
+                       for a in (0.6, 1.6, 3.2)]
+out['camera_fit'] = [P.camera_fit({"cx": 0, "cy": 0, "cz": 0, "radius": r}, f, a)
+                     for r in (15, 84, 500, 1902, 20000)
+                     for f in (42, 52)
+                     for a in (0.6, 1.6)] \
+    + [P.camera_fit({"radius": 0}, 52, 1.6), P.camera_fit(None, 52, 1.6)]
+out['recovery_plan'] = [P.recovery_plan(s) for s in (
+    {"canonical_meshes": 1500, "draw_calls": 212, "viewport_black": True,
+     "composer_active": True, "materials_replaced": True},
+    {"canonical_meshes": 1500, "draw_calls": 212, "viewport_black": True,
+     "composer_active": False, "materials_replaced": False},
+    {"canonical_meshes": 0, "draw_calls": 0, "viewport_black": True},
+    {"canonical_meshes": 10, "draw_calls": 0, "viewport_black": True},
+    {"canonical_meshes": 10, "draw_calls": 5, "viewport_black": False},
+    {}, None)]
+
 with open(OUT, 'w', encoding='utf-8') as fh:
+
+
+
     json.dump(out, fh, ensure_ascii=False, sort_keys=True)
 print('parity written: %d groups' % len(out))

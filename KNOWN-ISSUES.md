@@ -136,3 +136,37 @@ from stage 1. That is a declared engineering step, not a staged-generation leak,
 squarely inside KI-1's scope (automatic engineering adjustments). It is named here so the
 distinction is not mistaken for a stage-authority failure: the test suite asserts the detail
 stage's geometry loses, not that the final rect equals stage 1 byte for byte.
+
+## KI-8 · The failing live Building JSON was never captured (OPEN, environmental)
+
+The black-viewport mechanism is proven by arithmetic and reproduced by a fixture, but the
+actual JSON behind the reported screenshot was never obtained — this sandbox cannot reach
+the deployment over HTTP and no capture was supplied. So
+`tests/phase9_2/fixtures/live_large_generated.json` is **reconstructed** to the reported
+element census (walls 564, floors 6, doors 82, windows 35, electrical 243, lighting 108,
+cameras 26, HVAC 44, safety 78, furniture 172, objects 188), and the `_outlier` variant adds
+exactly one stray coordinate to reproduce the proven mechanism. The fixture says so in its
+own `_provenance` block and the test asserts it says so.
+
+What this means precisely: the *mechanism* is proven (one invalid coordinate, or any radius
+above ~1902 m, empties the frustum while the UI stays populated), and the fix is proven to
+remove it. What is **not** proven is that the specific model in the screenshot failed for
+that reason rather than some third cause. To close this, capture the Building JSON from a
+failing session (`ACS.exportModel?.()` or the network tab) and drop it in as
+`live_large_generated_captured.json`; the boot harness picks up any fixture in that folder.
+
+## KI-9 · The A–J render state matrix is executed, but not in this sandbox (OPEN, environmental)
+
+`tests/deploy/verify_page_boot.js` now walks BASE → PBR off/on → post-processing → arch
+detail → context for every fixture including the two large ones, calling
+`ACS.renderDiagnostics()`, `ACS.verifyVisibleModel()` and the decoded-RGBA analyser after
+each transition, and it fails if any state turns the viewport black. It cannot run here:
+`public/vendor` is empty because the npm registry is blocked, so the harness exits 2 with
+`NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED`. Run it on any networked machine, or against
+the deployed URL:
+
+    sh tools/vendor.sh && node tests/deploy/verify_page_boot.js
+    node tests/deploy/verify_page_boot.js https://sprightly-selkie-d906c3.netlify.app/
+
+That single command produces the STATE | MESHES | CALLS | TRIANGLES | FRUSTUM | NEAR/FAR |
+PIXEL | RESULT table §4 asks for, with real numbers.

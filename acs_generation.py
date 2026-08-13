@@ -20,6 +20,7 @@
 # يحذف بنداً ولا يغيّر بُعداً — تلك مسألة KI-1 وهي خارج نطاق هذا الملف تماماً.
 # =============================================================================
 
+import json
 import os
 import re
 
@@ -277,3 +278,154 @@ COMPACT_RULE = r"""
   معرّف المنطقة. لا تُعِد نصّ الطلب كاملاً، ولا تصف النموذج مرّة ثانية بالكلمات.
 - لا شرح ولا تعليق خارج كائن JSON. كائن واحد في المستوى الأعلى، لا أكثر.
 """
+
+
+# ---------------------------------------------------------------------------
+# §16 تغطية المتطلّبات — هل ضاع بندٌ من طلب العميل تحت اسم «اقتصاد المخرج»؟
+# التمثيل المضغوط يعني كتابة صفّ رفوف بدل مئة رفّ. لا يعني إسقاط بند طلبه
+# العميل. هذا التقرير يفصل الأمرين بالأرقام بدل الاطمئنان.
+# ---------------------------------------------------------------------------
+_REQ_SPLIT = re.compile(r"[،,؛;\n•\-\*]|(?:(?<=\s)و(?=\s))")
+
+
+def request_items(description):
+    """بنود الطلب كما كتبها العميل — تقطيع حتمي، بلا نموذج ولا تخمين."""
+    out = []
+    for raw in _REQ_SPLIT.split(description or ""):
+        t = " ".join((raw or "").split()).strip(" .:،")
+        if len(t) >= 3 and any(ch.isalpha() for ch in t):
+            out.append(t)
+    return out
+
+
+# جدول مرادفات معلن: الطلب عربيّ والمعرّفات في النموذج إنجليزية، فبلا هذا
+# الجدول يظهر بندٌ منفَّذ فعلاً على أنه «غير ممثَّل». الجدول بيانات صريحة يمكن
+# مراجعتها، لا استنتاج لغوي.
+ROLE_SYNONYMS = {
+    "storage": ("تخزين", "مخزن", "بالتات"), "picking": ("التقاط", "انتقاء"),
+    "packing": ("تغليف", "تعبئة"), "receiving": ("استقبال", "استلام", "وارد"),
+    "shipping": ("شحن", "صادر", "إرسالية"), "sorting": ("فرز", "تصنيف"),
+    "office": ("مكتب", "مكاتب", "إدارة", "اداره"), "corridor": ("ممر", "ممرات"),
+    "maintenance": ("صيانة", "ورشة"), "staff": ("استراحة", "موظفين", "خدمات"),
+    "dock": ("رصيف", "أرصفة"), "crossdock": ("كروس", "عبور"),
+    "qc": ("فحص", "جودة"), "consolidation": ("تجميع",),
+    "labeling": ("ملصقات", "ترقيم"), "safety": ("سلامة", "طوارئ", "حريق"),
+    "aisle": ("ممر خدمة",), "admin": ("إداري",), "it": ("سيرفر", "سيرفرات"),
+    "majlis": ("مجلس",), "living": ("صالة", "معيشة"), "kitchen": ("مطبخ",),
+    "bed": ("نوم", "غرفة نوم"), "bath": ("حمام", "دورة مياه"),
+    "balcony": ("بلكونة", "شرفة"), "stair": ("درج", "سلم"),
+    "elevator": ("مصعد",), "parking": ("موقف", "مواقف", "قبو"),
+    "light": ("إنارة", "اضاءة", "إضاءة"), "camera": ("كاميرا", "كاميرات"),
+    "ac": ("تكييف", "مكيّف"), "outlet": ("فيش", "كهرباء", "أفياش"),
+    "rack": ("رفوف", "رف"), "station": ("محطة", "محطات"),
+    "level": ("دور", "أدوار", "طابق", "طوابق", "مستوى", "مستويات"),
+}
+
+
+def _synonym_hits(text):
+    """كل معرّف إنجليزي يقابله لفظ عربي ورد في النصّ — بالجدول المعلن وحده."""
+    t = (text or "")
+    return {en for en, ars in ROLE_SYNONYMS.items() if any(a in t for a in ars)}
+
+
+def _model_text(building):
+    """كل ما يمكن أن يشهد بتنفيذ بند: المعرّفات والأدوار والأنواع وسطور meta."""
+    parts = []
+    b = building if isinstance(building, dict) else {}
+    meta = b.get("meta") or {}
+    for key in ("requirements", "extras", "added"):
+        for row in (meta.get(key) or []):
+            if isinstance(row, dict):
+                parts.extend(str(v) for v in row.values())
+            else:
+                parts.append(str(row))
+    for fdef in (b.get("floors") or {}).values():
+        for r in (fdef.get("rooms") or []):
+            parts.append(str(r.get("id") or ""))
+            parts.append(str(r.get("role") or ""))
+            for arr in ("racks", "lanes", "stations", "docks", "points",
+                        "furniture", "doors", "windows"):
+                for it in (r.get(arr) or []):
+                    if isinstance(it, dict):
+                        parts.append(str(it.get("kind") or it.get("type")
+                                          or it.get("name") or arr))
+                    else:
+                        parts.append(arr)
+    return " ".join(parts).lower()
+
+
+def coverage_report(description, building):
+    """requested / represented / unresolved — بأرقام قابلة للمقارنة بين نسختين.
+
+    المطابقة لفظية ومحافظة: بندٌ يُعدّ ممثَّلاً إذا ظهرت إحدى كلماته الدالّة في
+    معرّفات النموذج أو أدواره أو سطور meta. الغرض كشف **الانحدار** بين تشغيلين،
+    لا إصدار حكم دلالي — ولذلك لا يُستعمل هذا التقرير لتعديل النموذج أبداً.
+    """
+    items = request_items(description)
+    hay = _model_text(building)
+    meta = (building or {}).get("meta") or {}
+    declared = len(meta.get("requirements") or [])
+    represented, unresolved = [], []
+    for it in items:
+        words = [w for w in re.split(r"\W+", it) if len(w) >= 3]
+        hit = any(w.lower() in hay for w in words) if words else False
+        if not hit:
+            hit = any(en in hay for en in _synonym_hits(it))
+        (represented if hit else unresolved).append(it)
+    return {"requested_count": len(items),
+            "represented_count": len(represented),
+            "unresolved_count": len(unresolved),
+            "omitted_count": max(0, len(items) - len(represented)),
+            "declared_requirements": declared,
+            "coverage_ratio": round(len(represented) / max(1, len(items)), 4),
+            "unresolved": unresolved[:24]}
+
+
+# ---------------------------------------------------------------------------
+# §17 سلامة عدد العناصر — تكرار حقيقي أم كثافة مشروعة؟
+# لا يُحذف شيء هنا. الحذف الصامت يُفقد بيانات مشروعة؛ التقرير يكشف الشذوذ
+# ويترك القرار للمراجعة.
+# ---------------------------------------------------------------------------
+def duplication_report(building):
+    """يبلّغ عن عناصر متطابقة تماماً داخل نفس الحيّز — ولا يحذف منها شيئاً."""
+    b = building if isinstance(building, dict) else {}
+    dup = {}
+    totals = {}
+    for tmpl, fdef in (b.get("floors") or {}).items():
+        for r in (fdef.get("rooms") or []):
+            rid = str(r.get("id"))
+            for arr in ("points", "furniture", "racks", "lanes", "stations",
+                        "docks", "doors", "windows"):
+                items = r.get(arr) or []
+                totals[arr] = totals.get(arr, 0) + len(items)
+                seen = {}
+                for it in items:
+                    if not isinstance(it, dict):
+                        continue
+                    key = json.dumps(it, sort_keys=True, ensure_ascii=False)
+                    seen[key] = seen.get(key, 0) + 1
+                for key, n in seen.items():
+                    if n > 1:
+                        k = "%s/%s/%s" % (tmpl, rid, arr)
+                        dup.setdefault(k, 0)
+                        dup[k] += n - 1
+    rooms = [r for fdef in (b.get("floors") or {}).values()
+             for r in (fdef.get("rooms") or [])]
+    ids = [str(r.get("id")) for r in rooms]
+    dup_ids = sorted({i for i in ids if ids.count(i) > 1})
+    templates = list((b.get("floors") or {}).keys())
+    levels = b.get("levels") or []
+    tmpl_use = {}
+    for lv in levels:
+        t = str((lv or {}).get("template"))
+        tmpl_use[t] = tmpl_use.get(t, 0) + 1
+    return {"element_totals": totals,
+            "exact_duplicates_within_room": sum(dup.values()),
+            "duplicate_sites": sorted(dup.items(), key=lambda kv: -kv[1])[:16],
+            "duplicate_room_ids": dup_ids[:16],
+            "template_count": len(templates),
+            "level_count": len(levels),
+            "template_reuse": tmpl_use,
+            "note": "reported only. Legitimate distinct objects are never "
+                    "deduplicated automatically; a shared template used by "
+                    "several levels is reuse, not duplication."}

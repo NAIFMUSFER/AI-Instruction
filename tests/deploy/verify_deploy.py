@@ -882,6 +882,52 @@ chk('a distribution-centre prompt is routed to staged generation',
         "12 رصيف تحميل، مكاتب", "warehouse", 120, 80, 1)["strategy"]
     == _GEN.STRATEGY_STAGED)
 
+print('\n== 11j · THE LIVE MODEL RENDER-RECOVERY CONTRACT ==')
+_RR = _PQ_MOD.RR
+chk('the render-recovery contract is declared in the canonical spec',
+    _PQ_MOD.RENDER_RECOVERY_CONTRACT == 'render-recovery/1.0.0')
+chk('the spec, the python layer and the shipped page all carry it',
+    'render_recovery' in rd('acs_pbr.json')
+    and 'RENDER_RECOVERY_CONTRACT' in rd('acs_pbr.py')
+    and 'render-recovery/1.0.0' in page)
+chk('every declared symbol exists in the python layer',
+    all(hasattr(_PQ_MOD, s) for s in _PQ_MOD.RENDER_RECOVERY_SYMBOLS))
+chk('every declared symbol has a browser mirror in the shipped page',
+    all(('pq' + s.title().replace('_', '')) in page
+        for s in _PQ_MOD.RENDER_RECOVERY_SYMBOLS))
+chk('the model-load path reconciles the camera through the contract',
+    'acsReconcileCamera' in page
+    and 'window.ACS.verifyVisibleModel' in page)
+chk('the model-load path assigns near and far — the defect was that it never did',
+    'camera.near=c.near; camera.far=c.far' in page.replace('\n', ' ')
+    or 'camera.near=c.near' in page)
+chk('one recovery cycle only, and it is declared',
+    int(_RR['max_recovery_cycles']) == 1 and 'RENDER_BLACK_VIEWPORT' in page)
+chk('post-processing fails open to the base renderer, never to black',
+    '_pqDisableComposer' in page and 'POSTPROCESS_FAIL_OPEN' in rd('acs_pbr.json'))
+chk('render failure classes are separate from transport classes in the page',
+    'ACS_TRANSPORT_CLASSES' in page and 'RENDER_BLACK_VIEWPORT' in page
+    and 'window.ACS.lastFailure' in page)
+chk('the large live-model regression fixtures ship with the tests',
+    exists('tests/phase9_2/fixtures/live_large_generated.json')
+    and exists('tests/phase9_2/fixtures/live_large_generated_outlier.json'))
+chk('the large fixture declares its provenance honestly',
+    'RECONSTRUCTED' in rd('tests/phase9_2/fixtures/live_large_generated.json')
+    and '"captured_from_live_backend": false'
+    in rd('tests/phase9_2/fixtures/live_large_generated.json').lower())
+chk('the boot harness loads the large fixtures and the outlier variant',
+    'live_large_generated_outlier' in rd('tests/deploy/verify_page_boot.js'))
+chk('the requirement-coverage and duplication audits ship',
+    'def coverage_report' in rd('acs_generation.py')
+    and 'def duplication_report' in rd('acs_generation.py'))
+chk('one stray coordinate no longer moves the camera: proven here, not asserted',
+    _PQ_MOD.robust_bounds([
+        {'is_mesh': True, 'parent_names': ['BUILDING'], 'name': 'WALL|F0|a',
+         'box': {'min': [0, 0, 0], 'max': [10, 3, 8]}},
+        {'is_mesh': True, 'parent_names': ['BUILDING'], 'name': 'ELEC|F0|p',
+         'box': {'min': [99999, 0, 0], 'max': [99999.2, .2, .2]}}
+    ])['bounds']['radius'] < 20)
+
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',
     not any(re.search(r'from\s+tests|import\s+tests|[\'"]tests/', rd(rel))

@@ -912,7 +912,16 @@
   "ALIGN_LEVEL_MISMATCH",
   "ALIGN_ROOF_DETACHED",
   "ALIGN_DOUBLE_TRANSFORM",
-  "ALIGN_AXIS_MISMATCH"
+  "ALIGN_AXIS_MISMATCH",
+  "RENDER_INVALID_ELEMENT",
+  "RENDER_BOUNDS_OUTLIER",
+  "CAMERA_FIT_FAILED",
+  "POSTPROCESS_FAIL_OPEN",
+  "SSAO_FAIL_OPEN",
+  "RENDER_BLACK_VIEWPORT",
+  "RENDER_RECOVERED",
+  "RENDER_CONTEXT_LOST",
+  "RENDER_RESOURCE_PRESSURE"
  ],
  "blocking_issue_codes": [
   "PQ_INVALID_PROFILE",
@@ -1126,5 +1135,47 @@
    "OUTSIDE",
    "UNRESOLVED"
   ]
+ },
+ "render_recovery": {
+  "version": "render-recovery/1.0.0",
+  "symbols": [
+   "element_valid",
+   "robust_bounds",
+   "fit_distance",
+   "camera_fit",
+   "recovery_plan"
+  ],
+  "max_element_extent_m": 5000.0,
+  "max_coordinate_m": 50000.0,
+  "min_element_extent_m": 1e-06,
+  "outlier_extent_ratio": 50.0,
+  "fit_margin": 1.25,
+  "fit_min_distance_m": 1.0,
+  "refit_attempts": 1,
+  "refit_distance_gain": 1.6,
+  "settle_frames": 2,
+  "max_recovery_cycles": 1,
+  "recovery_steps": [
+   "DISABLE_COMPOSER",
+   "RESTORE_ENGINEERING_MATERIALS",
+   "REFIT_CAMERA",
+   "RENDER_BASE"
+  ],
+  "black_pixel_pct": 98.5,
+  "ssao_black_pct": 95.0,
+  "draw_call_warn": 3000,
+  "geometry_warn": 12000,
+  "triangle_warn": 6000000,
+  "failure_classes": [
+   "API_NETWORK_ERROR",
+   "API_HTTP_ERROR",
+   "MODEL_PARSE_ERROR",
+   "MODEL_VALIDATION_ERROR",
+   "MODEL_LOAD_ERROR",
+   "RENDER_CAMERA_ERROR",
+   "RENDER_POSTPROCESS_ERROR",
+   "RENDER_BLACK_VIEWPORT"
+  ],
+  "note": "the base model-load path must reconcile the camera through the same canonical contract the presets use. A raw Box3 over every mesh in the building group, with near/far left at their construction values, lets ONE corrupt generated coordinate inflate the radius by three orders of magnitude and push the camera past a fixed far plane: the UI stays alive, the layer counts stay populated, and the frame clears to black."
  }
 }
