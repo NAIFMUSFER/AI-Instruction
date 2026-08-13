@@ -30,6 +30,9 @@ python3 "$ROOT/tools/check_integration.py" "$ROOT"; guard $?
 step "0c · harness encapsulation (no module-scoped engine access in tests)"
 python3 "$ROOT/tools/check_harness_encapsulation.py" "$ROOT"; guard $?
 
+step "0d · one authoritative API base (page + CSP)"
+python3 "$ROOT/tools/check_api_base.py" "$ROOT"; guard $?
+
 step "1 · regenerate the architectural detail browser layer"
 python3 "$ROOT/tools/build_archdetail_browser.py"; guard $?
 
@@ -79,6 +82,9 @@ python3 "$HERE/test_black_viewport.py"; guard $?
 step "7a2 · the transform and alignment regression (roof, racks, levels, axis)"
 python3 "$HERE/test_alignment.py"; guard $?
 
+step "7a3 · the backend API contract (error envelope, JSON parser, endpoints)"
+python3 "$HERE/test_backend_contract.py"; guard $?
+
 step "7b · the viewport pixel analyser (positive and negative fixtures)"
 node "$ROOT/tests/deploy/test_viewport_pixels.js"; guard $?
 
@@ -113,6 +119,16 @@ else
   printf '\n=== 10 · real Chromium ===\nSKIPPED (pass --browser to run). '
   printf 'Without it: NOT VERIFIED — CHROMIUM ENVIRONMENT UNAVAILABLE\n'
 fi
+
+step "11 · the live backend (needs egress to the deployment)"
+python3 "$ROOT/tests/deploy/verify_backend_live.py" || {
+  rc=$?
+  if [ "$rc" -eq 2 ]; then
+    echo "live backend: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)"
+  else
+    guard "$rc"
+  fi
+}
 
 printf '\n==============================================\n'
 if [ "$FAIL" -eq 0 ]; then

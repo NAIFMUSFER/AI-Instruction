@@ -467,9 +467,26 @@ if exists('.env.example'):
     chk('the .env.example names the secret without setting it',
         re.search(r'^ANTHROPIC_API_KEY=\s*$', ex, re.M) is not None
         or re.search(r'^ANTHROPIC_API_KEY=<', ex, re.M) is not None)
+# لا يُثبَّت هذا على صياغة بعينها: يُفحص كل موضع يُذكر فيه اسم المتغيّر، ويُطلب
+# أن يكون سياقه وجودياً (bool/strip/إلحاق اسم) لا تمريراً للقيمة.
+_key_lines = [ln for ln in api_src.split('\n') if 'ANTHROPIC_API_KEY' in ln]
+chk('the API reads the key name somewhere (the check is not vacuous)',
+    len(_key_lines) >= 1)
+chk('every mention of the key is existence-only — the value is never returned',
+    all(('bool(' in ln) or ln.strip().startswith('#') or 'append(' in ln
+        for ln in _key_lines), '; '.join(_key_lines)[:200])
+chk('the key-presence helper returns a boolean, not the key',
+    re.search(r'def _api_key_configured[^\n]*\n(?:\s+"""[\s\S]*?"""\n)?\s+return bool\(',
+              api_src) is not None)
+_key_value_reads = [ln for ln in _key_lines
+                    if re.search(r'(return|print|yield|format\()', ln)
+                    and 'bool(' not in ln]
+chk('no response, log line or f-string carries the key value',
+    _key_value_reads == [], '; '.join(_key_value_reads)[:200])
 chk('the API never returns the key itself, only whether one is set',
-    '"key": bool(' in api_src and 'ANTHROPIC_API_KEY' in api_src
-    and not re.search(r'return[^\n]*os\.environ\.get\("ANTHROPIC_API_KEY"\)', api_src))
+    'api_key_configured' in api_src and not any(
+        'bool(' not in ln for ln in _key_lines
+        if re.match(r'\s*return\b', ln)))
 
 # ------------------------------------------------ 11. اتّساق داخلي للحزمة --
 print('\n== 11 · THE PRODUCTION BUNDLE IS INTERNALLY SELF-CONSISTENT ==')
@@ -769,6 +786,55 @@ chk('engine state was NOT promoted to the global scope to satisfy a test',
     and 'window.camera' not in page)
 chk('the harness asks for the snapshot bridge during boot',
     'canonicalTransformSnapshot' in rd('tests/deploy/verify_page_boot.js'))
+
+print('\n== 11h · ONE AUTHORITATIVE API BASE, AND THE API ERROR CONTRACT ==')
+import check_api_base as AB                                       # noqa: E402
+_afails, _ainfo = AB.check(ROOT)
+chk('the shipped page declares exactly one API origin and every /v1 call '
+    'is classified', _afails == [], '; '.join(_afails[:2]))
+chk('the configured origin is https', str(_ainfo.get('base','')).startswith('https://'),
+    str(_ainfo.get('base')))
+chk('the CSP connect-src allows exactly that origin — otherwise the browser '
+    'blocks every call from the deployed page', _ainfo.get('csp_ok') is True)
+chk('gate self-test: a second hard-coded origin would be caught',
+    'route every call through ACS_API.url()' in rd('tools/check_api_base.py'))
+chk('the error-contract module is deployed and copied into the image',
+    exists('acs_api_errors.py') and 'acs_api_errors.py' in docker)
+_err = rd('acs_api_errors.py')
+chk('the error contract declares a version and the ACS_UPSTREAM_* family',
+    'ERROR_CONTRACT_VERSION' in _err and _err.count('ACS_UPSTREAM_') > 20)
+chk('the envelope is the only failure shape: ok/error{code,message,request_id,'
+    'retryable,upstream}',
+    all(('"%s"' % k) in _err or ("'%s'" % k) in _err
+        for k in ('code', 'message', 'request_id', 'retryable', 'upstream')))
+chk('secrets are redacted before any message leaves the process',
+    'def redact' in _err and 'sk-ant-' in _err and '[REDACTED]' in _err)
+_api = rd('acs_understand_api.py')
+chk('the API imports the shared error contract rather than re-inventing one',
+    'import acs_api_errors as E' in _api)
+chk('no failure path returns a traceback or an exception string to the client',
+    'HTTPException(500' not in _api and 'str(e)[:900]' not in _api)
+chk('the envelope middleware is inside CORS so error responses stay readable',
+    _api.index('acs_envelope_middleware') < _api.index('CORSMiddleware,'))
+chk('/health and /ready are both declared, and neither returns a credential',
+    '@app.get("/health")' in _api and '@app.get("/ready")' in _api
+    and 'def _api_key_configured' in _api)
+chk('startup validation names missing variables only, never values',
+    '_startup_env_check' in _api and 'MISSING (names only)' in _api)
+chk('generation is bounded by a server deadline that answers 504 JSON',
+    'run_bounded' in _api and 'ACS_TIMEOUT' in _api)
+chk('rate limits are unchanged and 429 carries Retry-After',
+    all(k in _api for k in ('ACS_RL_GEN_HOUR', 'ACS_RL_GEN_DAY',
+                            'ACS_RL_EDIT_HOUR', 'ACS_RL_GLOBAL_DAY'))
+    and 'Retry-After' in _api)
+chk('the deterministic JSON parser replaced the naive brace slice',
+    'def scan_top_level_json' in rd('acs_understand.py')
+    and 'rfind("}")' not in rd('acs_understand.py'))
+chk('the live backend verifier ships and defaults to no model spend',
+    exists('tests/deploy/verify_backend_live.py')
+    and "--generation" in rd('tests/deploy/verify_backend_live.py'))
+chk('the live verifier reads the base from the page, not a second copy',
+    'CONFIGURED_BASE' in rd('tests/deploy/verify_backend_live.py'))
 
 print('\n== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==')
 chk('no deployed source imports anything from tests/',

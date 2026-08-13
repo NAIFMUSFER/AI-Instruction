@@ -71,3 +71,37 @@ with
 
 then regenerate the Phase-4 baseline and re-run the full chain. Restricting the change
 to levels above 0 (keeping the ground plot slab) is the narrower option.
+
+## KI-4 · The live POST contract cannot be exercised from this sandbox (OPEN, environmental)
+
+The backend error contract is verified three ways here: by unit assertions over
+`acs_api_errors`, by deterministic parser cases that reproduce the exact production
+`Extra data` failure, and by structural analysis of every failure path in
+`acs_understand_api.py`. The fourth way — a real HTTP conversation — cannot run in this
+sandbox. `pip install fastapi` is blocked (the package index is unreachable), so the
+`TestClient` section (د) of `tests/phase9_2/test_backend_contract.py` reports
+`NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED` instead of passing. Outbound HTTP to the
+deployment is also blocked (`Tunnel connection failed: 403`), so
+`tests/deploy/verify_backend_live.py` exits 2 rather than failing.
+
+DNS and TLS to `acs-engine.onrender.com` **were** verified from here directly (the host
+resolves to two addresses and presents a valid certificate), and `GET /` and
+`GET /health` were read successfully through the one permitted web-fetch path.
+
+On any networked machine, both gaps close with:
+
+    pip install -r requirements.txt
+    python3 tests/phase9_2/test_backend_contract.py     # section د executes
+    python3 tests/deploy/verify_backend_live.py         # free, no model call
+    python3 tests/deploy/verify_backend_live.py --generation   # spends one call
+
+## KI-5 · A generation abandoned by the 504 deadline keeps running to completion (OPEN, accepted)
+
+`run_bounded` answers the client with `504 ACS_TIMEOUT` and a valid JSON body once
+`ACS_REQUEST_TIMEOUT_S` elapses, but the worker thread underneath it cannot be killed —
+Python has no thread cancellation. The thread finishes its upstream call and its result is
+discarded. Consequences, stated rather than hidden: the model call is still billed, and a
+worker slot stays occupied until it returns. Bounded by `ACS_UPSTREAM_TIMEOUT_S` (600s,
+shorter than the 840s request deadline) so the thread almost always ends first, and by the
+existing per-IP and global rate limits. Moving generation to a separate process pool would
+make cancellation real; that is a larger change than this remediation's scope.

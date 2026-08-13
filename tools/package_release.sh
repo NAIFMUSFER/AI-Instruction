@@ -27,6 +27,7 @@ esac
 
 echo "▶ 1/7 structural guard on the source tree"
 python3 tools/check_index_guard.py public/index.html
+python3 tools/check_api_base.py "$ROOT"
 
 echo "▶ 2/7 creating archive"
 rm -f "$OUTZIP" "$OUTZIP.sha256"
@@ -52,6 +53,8 @@ echo "✓ index.html sha256 $SRC_SHA ($(wc -c < public/index.html) bytes)"
 
 echo "▶ 5/7 structural guard on the extracted copy"
 ( cd "$EXTRACT" && python3 tools/check_index_guard.py public/index.html )
+( cd "$EXTRACT" && python3 tools/check_api_base.py "$EXTRACT" )
+( cd "$EXTRACT" && python3 tests/phase9_2/test_backend_contract.py >/dev/null     && echo "✓ backend API contract holds inside the extraction" )
 
 echo "▶ 6/7 full deploy verification from the extracted copy"
 ( cd "$EXTRACT" && sh tests/deploy/verify_deploy.sh )

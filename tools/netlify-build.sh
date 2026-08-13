@@ -81,4 +81,8 @@ echo "▶ verifying public/index.html structure"
 [ -f tools/check_index_guard.py ] || { echo "✗ MISSING: tools/check_index_guard.py"; exit 1; }
 python3 tools/check_index_guard.py public/index.html || exit 1
 
+echo "▶ verifying the single API base and its CSP allowance"
+[ -f tools/check_api_base.py ] || { echo "✗ MISSING: tools/check_api_base.py"; exit 1; }
+python3 tools/check_api_base.py || exit 1
+
 echo "✓ build verification complete"

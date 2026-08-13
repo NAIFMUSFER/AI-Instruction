@@ -9,12 +9,44 @@
 <link rel="icon" href="data:," />
 
 <!-- ══════════════════════════════════════════════════════════════════════
-     إعداد واحد فقط: رابط خادم محرّك الفهم.
-     ضعه هنا مرّة واحدة، فيعمل الذكاء تلقائياً لكل زائر بلا أن يكتب شيئاً.
+     ACS API BASE — المصدر الوحيد لعنوان الخادم في هذه الصفحة كلها.
+     غيّره هنا مرّة واحدة فقط. ممنوع كتابة العنوان مرّة ثانية في أي مكان:
+     كل نداء يمرّ عبر ACSAPI.url(path)، فلا يبقى عنوان مكرّر يُنسى عند النقل.
      مثال: "https://acs-engine.onrender.com"   (بلا / في النهاية)
      ══════════════════════════════════════════════════════════════════════ -->
 <script>
-  window.ACS_SERVER = "https://acs-engine.onrender.com";   // خادم محرّك الفهم (مباشر لكل زائر)
+(function(){
+  "use strict";
+  var CONFIGURED_BASE = "https://acs-engine.onrender.com";   // ← الإعداد الوحيد
+
+  function norm(u){ return String(u||"").trim().replace(/\/+$/,""); }
+
+  var ACSAPI = {
+    contract: "acs-api-base/1.0.0",
+    configured: norm(CONFIGURED_BASE),
+    override: "",                     // من حقل الإعدادات المتقدّمة، إن مُلئ
+    /* المصدر الفعّال: التجاوز اليدوي إن وُجد، وإلا الإعداد. لا قيمة ثالثة. */
+    base: function(){ return norm(this.override) || this.configured; },
+    source: function(){ return norm(this.override) ? "manual-override" : "configured"; },
+    url: function(path){
+      var b = this.base();
+      if(!b) return "";
+      return b + (String(path||"").charAt(0)==="/" ? path : "/"+String(path||""));
+    },
+    host: function(){ try{ return new URL(this.base()).host; }catch(e){ return ""; } },
+    scheme: function(){ try{ return new URL(this.base()).protocol.replace(":",""); }catch(e){ return ""; } }
+  };
+  window.ACS_API = ACSAPI;
+  /* توافق خلفي: كان اسم الإعداد القديم ACS_SERVER. يبقى قراءةً فقط ومشتقّاً
+     من نفس المصدر، حتى لا يتفرّع عنوانان في الصفحة. */
+  try{
+    Object.defineProperty(window, "ACS_SERVER", {
+      get: function(){ return ACSAPI.base(); },
+      set: function(v){ ACSAPI.override = norm(v); },
+      configurable: true
+    });
+  }catch(e){ window.ACS_SERVER = ACSAPI.base(); }
+})();
 </script>
 
 <style>
@@ -27138,10 +27170,12 @@ document.getElementById('bNotesApply').onclick=async()=>{
   if(!lastBuilding){statusEl.textContent='ولّد نموذجاً أولاً.';return;}
   statusEl.textContent='🤖 تنفيذ '+pend.length+' تعديلاً على النموذج… قد يأخذ دقائق.';
   try{
-    const r=await fetch(llm+'/v1/edit',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({building:lastBuilding, notes:pend})});
-    if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,200));
-    const data=await r.json();
+    const res=await acsFetchJSON('/v1/edit',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({building:lastBuilding, notes:pend})}, 900000);
+    if(res.status!==ACS_NET.SUCCESS||!(res.body&&res.body.building))
+      throw new Error(res.message+(res.request_id?(' · معرّف الطلب '+res.request_id):''));
+    const data=res.body;
     setModel(data.building);
     notes=[]; rebuildMarkers(); renderNotes();
     statusEl.textContent='✓ نُفّذت التعديلات — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى';
@@ -27629,9 +27663,93 @@ document.getElementById('genText').onclick=()=>{
 };
 /* ===== الخادم المدمج: يعمل لكل زائر بلا كتابة أي رابط ===== */
 let SRV_OK=false;
+/* ===== عقد نداء الواجهة: عنوان واحد، تصنيف صريح، جسد يُقرأ مرّة واحدة ===== */
 function srvURL(){
+  /* المصدر الوحيد window.ACS_API. الحقل اليدوي تجاوزٌ يُغذّيه، لا عنوان ثانٍ. */
   const manual=((document.getElementById('llmURL')||{}).value||'').trim();
-  return (manual||window.ACS_SERVER||'').trim().replace(/\/+$/,'');
+  window.ACS_API.override=manual;
+  return window.ACS_API.base();
+}
+function apiURL(path){ srvURL(); return window.ACS_API.url(path); }
+
+const ACS_NET={
+  SUCCESS:'SUCCESS', OFFLINE:'NETWORK_OFFLINE', DNS:'NETWORK_DNS',
+  TIMEOUT:'TIMEOUT', NOT_CONFIGURED:'NOT_CONFIGURED',
+  HTTP_4XX:'HTTP_4XX', HTTP_429:'HTTP_429', HTTP_5XX:'HTTP_5XX',
+  INVALID_JSON:'INVALID_JSON', API_ERROR:'VALID_API_ERROR'
+};
+let ACS_LAST_CALL=null;      /* آخر نتيجة نداء — يقرأها ACS.apiDiagnostics() */
+
+/* نداء واحد مصنَّف. لا نستدعي response.json() على العمياء أبداً: الجسد يُقرأ
+   نصّاً مرّة واحدة ثمّ يُحلَّل، فخطأ التحليل يصير حالة معلنة لا استثناءً مبهماً،
+   ولا يقع «body stream already read» عند محاولة قراءته مرّتين. */
+async function acsFetchJSON(path, opts, timeoutMs){
+  const started=Date.now();
+  const url=apiURL(path);
+  const out={status:'', http:0, request_id:'', url:url, path:path,
+             ms:0, body:null, message:'', retryable:false, retry_after:0};
+  const done=(o)=>{ o.ms=Date.now()-started; ACS_LAST_CALL=o; return o; };
+  if(!window.ACS_API.base()){
+    out.status=ACS_NET.NOT_CONFIGURED;
+    out.message='عنوان محرّك الفهم غير مضبوط في هذه النسخة من الصفحة.';
+    return done(out);
+  }
+  if(typeof navigator!=='undefined' && navigator.onLine===false){
+    out.status=ACS_NET.OFFLINE; out.message='لا يوجد اتصال بالإنترنت على هذا الجهاز.';
+    return done(out);
+  }
+  const c=new AbortController();
+  const t=setTimeout(()=>c.abort(), Math.max(1000, timeoutMs||60000));
+  let r;
+  try{
+    r=await fetch(url, Object.assign({signal:c.signal}, opts||{}));
+  }catch(e){
+    clearTimeout(t);
+    if(e && e.name==='AbortError'){
+      out.status=ACS_NET.TIMEOUT;
+      out.message='انتهت المهلة قبل رد الخادم ('+Math.round((timeoutMs||60000)/1000)+' ثانية).';
+      out.retryable=true; return done(out);
+    }
+    /* المتصفّح لا يكشف سبب فشل الشبكة لسكربت الصفحة (TypeError: Failed to fetch
+       تغطّي DNS وCORS والرفض). نُعلن ذلك صراحةً بدل ادّعاء سبب بعينه. */
+    out.status=(typeof navigator!=='undefined' && navigator.onLine===false)
+      ? ACS_NET.OFFLINE : ACS_NET.DNS;
+    out.message='تعذّر الوصول إلى الخادم على '+window.ACS_API.host()
+      +' (تعذّر تحديد الاسم، أو رفض الاتصال، أو منع CORS).';
+    out.retryable=true; return done(out);
+  }
+  clearTimeout(t);
+  out.http=r.status;
+  out.request_id=(r.headers&&r.headers.get&&r.headers.get('X-Request-ID'))||'';
+  const ra=(r.headers&&r.headers.get&&r.headers.get('Retry-After'))||'';
+  out.retry_after=parseInt(ra,10)||0;
+  let raw='';
+  try{ raw=await r.text(); }catch(e){ raw=''; }        /* ← قراءة واحدة فقط */
+  let data=null, parsed=false;
+  if(raw){ try{ data=JSON.parse(raw); parsed=true; }catch(e){ parsed=false; } }
+  out.body=data;
+  if(!parsed){
+    out.status=ACS_NET.INVALID_JSON;
+    out.message='رد الخادم ليس JSON صالحاً (HTTP '+r.status+'، '
+      +raw.length+' حرفاً). أول ما ورد: '+raw.slice(0,80).replace(/\s+/g,' ');
+    return done(out);
+  }
+  if(data && data.ok===false && data.error){
+    out.status=ACS_NET.API_ERROR;
+    out.request_id=data.error.request_id||out.request_id;
+    out.message=data.error.message||'فشل معلن من الخادم.';
+    out.code=data.error.code||''; out.retryable=!!data.error.retryable;
+    return done(out);
+  }
+  if(!r.ok){
+    out.status = r.status===429?ACS_NET.HTTP_429
+               : (r.status>=500?ACS_NET.HTTP_5XX:ACS_NET.HTTP_4XX);
+    out.message=(data&&(data.detail||data.message))||('HTTP '+r.status+' من الخادم.');
+    out.retryable=(r.status===429||r.status>=500);
+    return done(out);
+  }
+  out.status=ACS_NET.SUCCESS;
+  return done(out);
 }
 function srvPill(cls,txt){
   const p=document.getElementById('srvPill'); if(!p) return;
@@ -27643,20 +27761,21 @@ async function checkServer(quiet){
     srvPill('bad','محرّك الفهم غير مضبوط — التوليد سيكون محلياً تقريبياً. '
       +'<span style="opacity:.75">(ضع رابط الخادم في الإعدادات المتقدّمة أو في أعلى ملف الموقع)</span>');
     return false; }
-  try{
-    const c=new AbortController(); const t=setTimeout(()=>c.abort(),12000);
-    const r=await fetch(u+'/health',{signal:c.signal}); clearTimeout(t);
-    const j=await r.json();
-    SRV_OK=!!(j&&j.ok&&j.key);
-    if(SRV_OK){ const L=j.limits||{};
-      srvPill('ok','✓ محرّك الفهم متصل — التوليد يقرأ وصفك ويبني عليه'
-        +(L.gen_hour?(' <span style="opacity:.7">(حتى '+L.gen_hour+' عمليات/ساعة)</span>'):'')); }
-    else srvPill('bad','الخادم يعمل لكن بلا مفتاح API — التوليد سيكون محلياً.');
-  }catch(e){
+  const res=await acsFetchJSON('/health',{method:'GET'},12000);
+  if(res.status!==ACS_NET.SUCCESS){
     SRV_OK=false;
-    srvPill('bad','تعذّر الوصول لمحرّك الفهم — سنولّد محلياً. '
-      +'<span style="opacity:.75">(قد يكون الخادم نائماً؛ أعِد المحاولة بعد دقيقة)</span>');
+    srvPill('bad','تعذّر الوصول لمحرّك الفهم على '+esc(window.ACS_API.host())+' — '
+      +esc(res.status)+'. <span style="opacity:.75">(قد يكون الخادم نائماً؛ أعِد المحاولة بعد دقيقة)</span>');
+    return false;
   }
+  const j=res.body||{};
+  /* الحقول الجديدة أولاً، والقديمة توافقاً — الخادم يعلن كليهما في /health */
+  const keyed=(j.api_key_configured!==undefined)?!!j.api_key_configured:!!j.key;
+  SRV_OK=!!(j.ok&&keyed);
+  if(SRV_OK){ const L=j.limits||{};
+    srvPill('ok','✓ محرّك الفهم متصل — التوليد يقرأ وصفك ويبني عليه'
+      +(L.gen_hour?(' <span style="opacity:.7">(حتى '+L.gen_hour+' عمليات/ساعة)</span>'):'')); }
+  else srvPill('bad','الخادم يعمل لكن بلا مفتاح API — التوليد سيكون محلياً.');
   return SRV_OK;
 }
 /* تقرير التغطية: يعرض كل بند من طلب العميل وأين نُفِّذ */
@@ -27699,52 +27818,96 @@ function showReport(rep, userText){
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
-document.getElementById('genLLM').onclick=async()=>{
+/* ===== لوحة خطأ ظاهرة: تشرح، وتُظهر معرّف الطلب، وتُعيد المحاولة ==========
+   قاعدة §11: عند فشل التوليد لا يُحمَّل أي نموذج من رد فاشل، ولا يُترك المشهد
+   موهماً بالنجاح. البديل المحلي التقريبي خيار صريح يضغطه المستخدم بنفسه ويُسمّى
+   ما هو: تقريبي، لا ناتج المحرّك. */
+const ACS_ERR_HINT={
+  NOT_CONFIGURED:'عنوان محرّك الفهم غير مضبوط في هذه النسخة من الصفحة.',
+  NETWORK_OFFLINE:'الجهاز غير متصل بالإنترنت.',
+  NETWORK_DNS:'تعذّر الوصول إلى مضيف الخادم. قد يكون اسم النطاق لا يُترجَم، أو الخدمة متوقّفة، أو أصل الصفحة غير مسموح في CORS.',
+  TIMEOUT:'انتهت المهلة قبل أن يردّ الخادم. الطلبات الكبيرة تحتاج وقتاً أطول — قصّر الوصف أو أعِد المحاولة.',
+  HTTP_429:'تجاوزت حدّ الطلبات المسموح. انتظر ثم أعِد المحاولة.',
+  HTTP_4XX:'رفض الخادم الطلب.',
+  HTTP_5XX:'عطل داخلي في الخادم.',
+  INVALID_JSON:'رد الخادم ليس JSON صالحاً — هذا عطل في الخادم لا في وصفك.',
+  VALID_API_ERROR:'أعلن الخادم فشلاً مصنّفاً.'
+};
+function acsErrorPanel(res, onRetry, onLocal){
+  const box=document.getElementById('reportBox'); if(!box) return;
+  const rid=res.request_id||'';
+  const code=res.code||res.status||'';
+  const wait=res.retry_after?(' — أعِد المحاولة بعد '+res.retry_after+' ثانية'):'';
+  box.className='report open';
+  box.innerHTML=
+    '<div style="border:1px solid #f8717155;background:#7f1d1d22;border-radius:12px;padding:12px;line-height:1.7">'
+    +'<div style="font-weight:700;color:#fca5a5;margin-bottom:6px">✕ لم يُنفَّذ التوليد على الخادم</div>'
+    +'<div>'+esc(res.message||'')+'</div>'
+    +'<div style="opacity:.85;margin-top:6px">'+esc(ACS_ERR_HINT[res.status]||'')+esc(wait)+'</div>'
+    +'<div style="opacity:.7;margin-top:8px;font-size:12px">'
+      +'التصنيف: <code>'+esc(code)+'</code>'
+      +(res.http?(' · HTTP '+esc(String(res.http))):'')
+      +' · الخادم: <code>'+esc(window.ACS_API.host()||'—')+'</code>'
+      +(rid?(' · معرّف الطلب: <code id="acsReqId">'+esc(rid)+'</code>'):'')
+    +'</div>'
+    +'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
+      +'<button id="acsRetryBtn" type="button">إعادة المحاولة</button>'
+      +'<button id="acsLocalBtn" type="button">توليد محلي تقريبي (ليس ناتج المحرّك)</button>'
+    +'</div></div>';
+  const rb=document.getElementById('acsRetryBtn'); if(rb) rb.onclick=onRetry;
+  const lb=document.getElementById('acsLocalBtn'); if(lb) lb.onclick=onLocal;
+}
+
+async function acsGenerateFromServer(){
   const txt=document.getElementById('descText').value.trim();
   if(!txt){statusEl.textContent='اكتب وصفاً أولاً.';return;}
   const W=+document.getElementById('siteW').value||30,D=+document.getElementById('siteD').value||25,
         nF=+document.getElementById('nFloors').value||3;
-  const u=srvURL();
-  const fallback=(why)=>{
-    statusEl.textContent=why+' — ولّدنا نموذجاً محلياً تقريبياً. عدّله بملاحظات المهندس أو أعِد المحاولة.';
+  const localOnDemand=()=>{
+    statusEl.textContent='⚠ نموذج محلي تقريبي — ليس ناتج محرّك الفهم.';
     try{ setModel(buildLocal(txt,W,D,nF)); }catch(e){ statusEl.textContent='خطأ: '+e.message; }
   };
-  if(!u){ fallback('محرّك الفهم غير مضبوط'); return; }
   const big=txt.length>2200||(txt.match(/(?:^|\n)\s*(?:[-*•]|\d+[.)])\s+/g)||[]).length>=12;
   statusEl.textContent='🤖 محرّك الفهم يقرأ وصفك بنداً بنداً ويبني المبنى'
     +(big?' — طلبك كبير، يُبنى على مرحلتين وقد يأخذ عدّة دقائق…':'… لحظات.');
   document.getElementById('reportBox').className='report';
-  try{
-    const c=new AbortController(); const t=setTimeout(()=>c.abort(),900000);   // 15 دقيقة
-    const r=await fetch(u+'/v1/understand',{method:'POST',signal:c.signal,
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text:txt,
-        btype:((document.getElementById('bType')||{}).value||'auto'),
-        strict:!!(document.getElementById('strictMode')||{}).checked,
-        site_w:(+document.getElementById('siteW').value||null),
-        site_d:(+document.getElementById('siteD').value||null),
-        floors:(+document.getElementById('nFloors').value||null)})});
-    clearTimeout(t);
-    if(!r.ok){
-      let msg=''; try{ msg=(await r.json()).detail||''; }catch(e){ msg=(await r.text()).slice(0,160); }
-      if(r.status===429){ statusEl.textContent='⏳ '+msg; return; }
-      throw new Error(msg||('HTTP '+r.status));
-    }
-    const data=await r.json();
-    setModel(data.building);
-    SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
-    LAST_REQUEST_TEXT = txt;            // نص العميل الأصلي مرجع التحقّق
-    showReport(data.report, txt);       // يُصنَّف حسب المصدر ولا يُرفَع بلا إثبات
-    const n=((data.report||{}).requirements||[]).length;
-    statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
-      +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
-      +((data.mode==='deep')?' · (توليد على مرحلتين)':'');
-  }catch(e){
-    console.error(e);
-    if(e.name==='AbortError') fallback('طال الانتظار على الخادم');
-    else fallback('تعذّر الاتصال بالخادم ('+String(e.message).slice(0,90)+')');
+
+  const res=await acsFetchJSON('/v1/understand',{method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({text:txt,
+      btype:((document.getElementById('bType')||{}).value||'auto'),
+      strict:!!(document.getElementById('strictMode')||{}).checked,
+      site_w:(+document.getElementById('siteW').value||null),
+      site_d:(+document.getElementById('siteD').value||null),
+      floors:(+document.getElementById('nFloors').value||null)})}, 900000);
+
+  if(res.status!==ACS_NET.SUCCESS){
+    /* لا setModel هنا إطلاقاً: نموذج من رد فاشل ادّعاءُ نجاح. */
+    SRV_OK=false;
+    srvPill('bad','محرّك الفهم لم يستجب — '+esc(res.status));
+    statusEl.textContent='✕ فشل التوليد على الخادم ('+res.status+')'
+      +(res.request_id?(' · معرّف الطلب '+res.request_id):'');
+    acsErrorPanel(res, acsGenerateFromServer, localOnDemand);
+    console.error('[ACS-API]', res.status, res.code||'', res.request_id||'', res.message);
+    return;
   }
-};
+  const data=res.body||{};
+  if(!data.building){                 /* 200 بلا نموذج = فشل، لا نجاح صامت */
+    acsErrorPanel({status:ACS_NET.INVALID_JSON, http:res.http, request_id:res.request_id,
+      message:'ردّ الخادم بنجاح لكن بلا حقل building.'}, acsGenerateFromServer, localOnDemand);
+    statusEl.textContent='✕ رد غير مكتمل من الخادم.';
+    return;
+  }
+  setModel(data.building);
+  SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
+  LAST_REQUEST_TEXT = txt;            // نص العميل الأصلي مرجع التحقّق
+  showReport(data.report, txt);       // يُصنَّف حسب المصدر ولا يُرفَع بلا إثبات
+  const n=((data.report||{}).requirements||[]).length;
+  statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
+    +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
+    +((data.mode==='deep')?' · (توليد على مرحلتين)':'');
+}
+document.getElementById('genLLM').onclick=acsGenerateFromServer;
 document.getElementById('loadExample').onclick=()=>{setModel(EXAMPLE);};
 document.getElementById('loadWarehouse').onclick=()=>{
   statusEl.textContent='بناء مستودع تجارة إلكترونية 120×80 م…';
@@ -27757,6 +27920,25 @@ document.getElementById('loadWarehouse').onclick=()=>{
   t.onclick=()=>{ p.classList.toggle('open'); t.textContent=p.classList.contains('open')?'✕':'☰'; };
   // أغلق اللوحة تلقائياً بعد التوليد على الجوال
   window.ACS=window.ACS||{};
+  /* ===== تشخيص الواجهة ↔ الخادم — قراءة فقط، بلا أي نداء شبكة =====
+     يجيب سؤالاً واحداً بعد أي عطل: أيّ عنوان استُعمل فعلاً، من أين جاء، وكيف
+     صُنِّف آخر نداء. لا يُصدِر طلباً ولا يغيّر حالة، ولا يكشف أي سرّ. */
+  window.ACS.apiDiagnostics=()=>({
+    contract:(window.ACS_API||{}).contract||'',
+    base:(window.ACS_API&&window.ACS_API.base())||'',
+    host:(window.ACS_API&&window.ACS_API.host())||'',
+    scheme:(window.ACS_API&&window.ACS_API.scheme())||'',
+    source:(window.ACS_API&&window.ACS_API.source())||'',
+    configured:(window.ACS_API||{}).configured||'',
+    override_present:!!((window.ACS_API||{}).override||''),
+    page_origin:(location&&location.origin)||'',
+    online:(typeof navigator!=='undefined')?navigator.onLine!==false:null,
+    server_ok:SRV_OK,
+    classes:Object.keys(ACS_NET).map(k=>ACS_NET[k]),
+    last_call:ACS_LAST_CALL?{status:ACS_LAST_CALL.status,code:ACS_LAST_CALL.code||'',
+      http:ACS_LAST_CALL.http,path:ACS_LAST_CALL.path,ms:ACS_LAST_CALL.ms,
+      request_id:ACS_LAST_CALL.request_id||'',retryable:!!ACS_LAST_CALL.retryable}:null
+  });
   /* مفتّش علاقات للمطوّر فقط (Console): ACS.relationships() / ACS.relationshipIssues() */
   window.ACS.relationships=()=>lastBuilding?buildRelationships(lastBuilding,'bld_0'):[];
   window.ACS.relationshipSummary=()=>relationshipSummary(window.ACS.relationships());
@@ -28353,9 +28535,10 @@ async function planToLLM(blobs, llm, W, D, nF, info){
   const bt=pickedType(document.getElementById('descText').value||'');
   if(bt&&bt!=='auto') fd.append('btype', bt);
   if((document.getElementById('strictMode')||{}).checked) fd.append('strict','1');
-  const r=await fetch(llm+'/v1/understand/image',{method:'POST',body:fd});
-  if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,200));
-  const data=await r.json();
+  const res=await acsFetchJSON('/v1/understand/image',{method:'POST',body:fd}, 900000);
+  if(res.status!==ACS_NET.SUCCESS||!(res.body&&res.body.building))
+    throw new Error(res.message+(res.request_id?(' · معرّف الطلب '+res.request_id):''));
+  const data=res.body;
   setModel(data.building);
   info.textContent='✓ قُرئ المخطط بالرؤية — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى'
                    +(data.issues?(' · '+data.issues+' ملاحظة'):'');
@@ -28397,15 +28580,16 @@ async function handleImport(f){
           const fd=new FormData(); fd.append('file', f);
           const bt0=(document.getElementById('bType')||{}).value||'auto';
           if(bt0!=='auto') fd.append('btype', bt0);
-          const r=await fetch(llm+'/v1/understand/pdf',{method:'POST',body:fd});
-          if(r.status===422){                       // PDF بلا نص = مخطط مرسوم → الرؤية
+          const res=await acsFetchJSON('/v1/understand/pdf',{method:'POST',body:fd}, 900000);
+          if(res.http===422){                       // PDF بلا نص = مخطط مرسوم → الرؤية
             info.textContent='📐 المخطط مرسوم بلا نص — أقرأه بالرؤية… قد يأخذ دقيقة.';
             const blobs=await pdfPagesToBlobs(f,3);
             await planToLLM(blobs, llm, W, D, nF, info);
             return;
           }
-          if(!r.ok) throw new Error('HTTP '+r.status+' — '+(await r.text()).slice(0,200));
-          const data=await r.json();
+          if(res.status!==ACS_NET.SUCCESS||!(res.body&&res.body.building))
+            throw new Error(res.message+(res.request_id?(' · معرّف الطلب '+res.request_id):''));
+          const data=res.body;
           setModel(data.building);
           info.textContent='✓ تولّد بالذكاء من الـPDF — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى';
           return;

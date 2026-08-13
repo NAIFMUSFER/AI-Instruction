@@ -18,6 +18,9 @@ import os
 import re
 import sys
 import json
+import time
+
+import acs_api_errors as E                     # عقد الأخطاء الموحّد (رموز + تصنيف)
 
 # ---------------------------------------------------------------------------
 # 1) مخطّط البيانات المختصر (يُحقن في التعليمات)
@@ -411,14 +414,20 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
     try:
         import anthropic
     except Exception:
-        raise RuntimeError("مكتبة anthropic غير مثبّتة على الخادم.")
+        raise E.AcsApiError(E.ACS_NOT_CONFIGURED, "مكتبة anthropic غير مثبّتة على الخادم.")
     model = (model or os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5")).strip()
     max_tokens = int(max_tokens or os.environ.get("ACS_MAX_TOKENS", "32000"))
     api_key = clean_key(os.environ.get("ANTHROPIC_API_KEY"))
     if not api_key:
-        raise RuntimeError("مفتاح المحرّك غير مضبوط على الخادم.")
+        raise E.AcsApiError(E.ACS_UPSTREAM_NOT_CONFIGURED)
 
-    client = anthropic.Anthropic(api_key=api_key)
+    # مهلة صريحة على نداء المنبع: بلا هذا يعلّق العامل حتى تقتله البوّابة
+    # فيرى العميل انقطاعاً بلا جسد رد — وهو ما لا يمكن تصنيفه ولا عرضه.
+    timeout_s = float(os.environ.get("ACS_UPSTREAM_TIMEOUT_S", "600"))
+    try:
+        client = anthropic.Anthropic(api_key=api_key, timeout=timeout_s)
+    except TypeError:                      # مكتبة قديمة بلا وسيط timeout
+        client = anthropic.Anthropic(api_key=api_key)
     if content is not None:
         msgs = [{"role": "user", "content": content}]
         sys_p = vision_prompt(btype or "residential")
@@ -454,14 +463,23 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
         (8000, None),
     ]
 
-    text = ""; stop = "?"; last_err = None
+    # §8 إعادة المحاولة محدودة وللأعطال العابرة وحدها. مفتاح مرفوض أو نموذج غير
+    # موجود لا يُصلحه التكرار: يستهلك دقائق ورصيداً ثم يعطي الرسالة نفسها متأخّرة.
+    text = ""; stop = "?"; last_err = None; tried = 0
+    backoff = float(os.environ.get("ACS_UPSTREAM_BACKOFF_S", "2"))
     for mt, think in attempts:
+        tried += 1
         try:
             msg = _call(mt, think)
         except Exception as e:
-            last_err = e
-            print("[ACS-LLM] call failed (max_tokens=%s, thinking=%s): %s"
-                  % (mt, "off" if think else "default", str(e)[:300]))
+            err = E.classify_upstream(e, attempts=tried)
+            last_err = err
+            print("[ACS-LLM] call failed (max_tokens=%s, thinking=%s) -> %s"
+                  % (mt, "off" if think else "default", err.code))
+            if not err.retryable:
+                raise err                     # عطل دائم: أعلِنه فوراً بلا تكرار
+            if tried < len(attempts) and backoff > 0:
+                time.sleep(min(backoff * tried, 15))
             continue
 
         parts = [getattr(b, "text", None) for b in (msg.content or [])]
@@ -476,10 +494,13 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
         print("[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…")
 
     if not text.strip():
-        raise RuntimeError(
-            "النموذج أعاد رداً فارغاً في كل المحاولات (آخر stop_reason=%s). "
-            "جرّب: set ACS_MAX_TOKENS=48000 أو تبديل ACS_LLM_MODEL. آخر خطأ: %s"
-            % (stop, str(last_err)[:200]))
+        if isinstance(last_err, E.AcsApiError):
+            raise last_err                    # آخر عطل عابر مصنّف: أوضح من العموم
+        raise E.AcsApiError(
+            E.ACS_UPSTREAM_EMPTY_RESPONSE,
+            "أعاد النموذج رداً فارغاً في كل المحاولات (آخر stop_reason=%s)." % stop,
+            upstream={"provider": "anthropic", "kind": "empty_text",
+                      "attempts": tried})
 
     if stop == "max_tokens":
         # المخرج انقطع — نحاول إغلاق الأقواس الناقصة لإنقاذ ما أمكن
@@ -529,28 +550,102 @@ def _balance_json(s):
 # ---------------------------------------------------------------------------
 # 6) استخراج + تحقّق JSON
 # ---------------------------------------------------------------------------
-def extract_json(raw):
-    raw = (raw or "").strip()
-    if not raw:
-        raise ValueError("رد النموذج فارغ — لا يوجد JSON لتحليله.")
-    m = re.search(r"```(?:json)?\s*(\{.*\})\s*```", raw, re.S)
-    if m:
-        raw = m.group(1)
-    else:
-        a, b = raw.find("{"), raw.rfind("}")
-        if a >= 0 and b > a:
-            raw = raw[a:b+1]
+def scan_top_level_json(raw):
+    """مسح حتمي واعٍ بالسلاسل لكل كائن JSON **في المستوى الأعلى** وحده.
+
+    لماذا لا `raw.find('{')` مع `raw.rfind('}')`، ولا نمط أقواس نصّي؟ لأن كليهما
+    يقتطع من أول قوس إلى آخر قوس فيبتلع ما بين كائنين — فإن أعاد النموذج كائناً
+    ثم سطر شرح فيه قوس، صار المقتطع كائنين مُلصقين وانفجر
+    `json.JSONDecodeError: Extra data`. هذا بعينه ما أسقط /v1/understand.
+
+    ولماذا لا `raw_decode` من كل `{`؟ لأن الكائن الخارجي إن كان مقطوعاً فشل فكّه،
+    فينزلق المؤشّر إلى قوس **داخلي** فيُحسَب كائناً أعلى-مستوى زوراً، فيُقرأ
+    مخرج مبتور واحد على أنه عدّة كائنات. نتتبّع العمق بأنفسنا فلا ننزل أبداً.
+
+    يعيد (objects, malformed, truncated):
+      objects   : قائمة (start, end, obj) لكل مدى متوازن فُكّ ترميزه بنجاح
+      malformed : عدد المديات المتوازنة التي رفضها json (تلف داخلي)
+      truncated : True إن انتهى النصّ وقوس أعلى-مستوى ما يزال مفتوحاً
+    """
+    objects, malformed = [], 0
+    depth = 0
+    start = -1
+    in_str = False
+    esc = False
+    for i, ch in enumerate(raw):
+        if esc:
+            esc = False
+            continue
+        if in_str:
+            if ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+            continue
+        if ch == '"':
+            in_str = True
+            continue
+        if ch in "{[":
+            if depth == 0 and ch == "{":
+                start = i
+            depth += 1
+        elif ch in "}]":
+            if depth == 0:
+                continue                       # قوس إغلاق يتيم في نصّ سردي
+            depth -= 1
+            if depth == 0 and start >= 0:
+                span = raw[start:i + 1]
+                try:
+                    objects.append((start, i + 1, json.loads(span)))
+                except ValueError:
+                    malformed += 1
+                start = -1
+    return objects, malformed, (depth > 0)
+
+
+def _save_raw(text):
+    """يحفظ الرد الخام لتشخيص الخادم. لا يُذكر مساره أبداً في رد العميل."""
     try:
-        return json.loads(raw)
-    except json.JSONDecodeError as e:
-        # احفظ الرد الخام للفحص، وأعطِ رسالة مفيدة
-        try:
-            with open("last_llm_response.txt", "w", encoding="utf-8") as f:
-                f.write(raw)
-        except Exception:
-            pass
-        raise ValueError("تعذّر تحليل JSON (%s). حُفظ الرد الخام في last_llm_response.txt "
-                         "— غالباً انقطع المخرج: قصّر الوصف أو ارفع ACS_MAX_TOKENS." % e)
+        with open(os.environ.get("ACS_RAW_DUMP", "last_llm_response.txt"),
+                  "w", encoding="utf-8") as f:
+            f.write(E.redact(text))
+    except Exception:
+        pass
+
+
+def extract_json(raw, _repaired=False):
+    """رد النموذج → كائن واحد. أي غموض يُرفَع كخطأ مصنّف، لا كتخمين صامت."""
+    text = (raw or "").strip()
+    if not text:
+        raise E.AcsApiError(E.ACS_UPSTREAM_EMPTY_RESPONSE)
+
+    found, malformed, truncated = scan_top_level_json(text)
+    if len(found) > 1:
+        first, second = found[0], found[1]
+        _save_raw(text)
+        print("[ACS-JSON] رد فيه %d كائن أعلى-مستوى؛ الأول %d..%d والتالي عند %d"
+              % (len(found), first[0], first[1], second[0]))
+        raise E.AcsApiError(
+            E.ACS_UPSTREAM_TRAILING_JSON,
+            "رد النموذج يحوي أكثر من كائن JSON أعلى-مستوى (الأول ينتهي عند %d "
+            "والتالي يبدأ عند %d). لن نخمّن أيّهما النموذج."
+            % (first[1], second[0]),
+            upstream={"provider": "anthropic", "kind": "trailing_json"})
+    if len(found) == 1:
+        return found[0][2]
+
+    # لا كائن مكتمل: الاحتمال الأول انقطاع المخرج. إصلاح حتمي واحد ثم نُعلن العجز.
+    if not _repaired:
+        fixed = _balance_json(text)
+        if fixed != text and len(scan_top_level_json(fixed)[0]) == 1:
+            print("[ACS-JSON] رد مقطوع — أُصلح بإغلاق الأقواس المتبقّية.")
+            return extract_json(fixed, _repaired=True)
+    _save_raw(text)
+    code = (E.ACS_UPSTREAM_TRUNCATED if (truncated or malformed)
+            else E.ACS_UPSTREAM_INVALID_JSON)
+    raise E.AcsApiError(
+        code, E.MESSAGE_AR[code] + " قصّر الوصف أو ارفع ACS_MAX_TOKENS.",
+        upstream={"provider": "anthropic", "kind": "unparsable_response"})
 
 def validate(building):
     """تحقّق بنيوي خفيف + إصلاحات أمان (بلا اعتماد خارجي)."""
@@ -771,6 +866,14 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
     if deep if deep is not None else _should_go_deep(description):
         try:
             return understand_deep(description, model=model, strict=strict, btype=btype)
+        except E.AcsApiError as e:
+            # عطل دائم (مفتاح/صلاحية/نموذج مرفوض) لا يُصلحه تبديل المسار — لا تُخفِه
+            # خلف مسار ثانٍ يفشل بنفس السبب بعد دقائق.
+            if e.code in (E.ACS_UPSTREAM_NOT_CONFIGURED, E.ACS_UPSTREAM_AUTH,
+                          E.ACS_UPSTREAM_PERMISSION, E.ACS_UPSTREAM_MODEL_REJECTED,
+                          E.ACS_NOT_CONFIGURED):
+                raise
+            print("[ACS-DEEP] فشل المسار العميق (%s) — نعود للنداء الواحد." % e.code)
         except Exception as e:
             print("[ACS-DEEP] فشل المسار العميق (%s) — نعود للنداء الواحد." % str(e)[:200])
 
