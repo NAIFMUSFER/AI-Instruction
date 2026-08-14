@@ -11,6 +11,8 @@
 #   موضع المبنى داخل الموقع: building.position {x, z, rotation°} (افتراضي 0,0,0)
 # =============================================================================
 
+import json
+
 SCHEMA = "acs.project/1"
 
 
@@ -26,6 +28,11 @@ def is_project(obj):
 def is_building(obj):
     """نموذج المرحلة 1: يحوي floors (و levels عادةً) بلا غلاف مشروع."""
     return isinstance(obj, dict) and not is_project(obj) and isinstance(obj.get("floors"), dict)
+
+
+def _deep_copy(v):
+    """نسخة عميقة قبل توليد المعرّفات — المُدخَل لا يُعدَّل في مكانه أبداً."""
+    return json.loads(json.dumps(v)) if isinstance(v, (dict, list)) else v
 
 
 def new_ids(building, index=0):
@@ -58,6 +65,10 @@ def to_project(data, name=None, project_id=None):
     if not is_building(data):
         raise ValueError("ليس نموذج مبنى ولا مشروعاً صالحاً")
 
+    # F-01/PROJECT_ELEMENT_IDS: المعرّفات الحتمية تُولَّد على نسخة عميقة. المُدخَل
+    # لا يُمسّ إطلاقاً — كان `ensure_element_ids(data, ...)` يكتب في كائن المتصل
+    # فيخالف الثابتة التي يحرسها acs_revision.canonical_building وتُوثّقها الصفحة.
+    data = _deep_copy(data)
     meta = data.get("meta") or {}
     btype = str(meta.get("type") or "residential").lower()
     bid = new_ids(data, 0)
@@ -118,6 +129,7 @@ def add_building(project, building, building_type=None, name=None, position=None
     blds = project["project"].setdefault("buildings", [])
     idx = len(blds)
     bid = _slug((building.get("meta") or {}).get("id") or name or ("bld_%d" % idx), "bld_%d" % idx)
+    building = _deep_copy(building)          # المُدخَل لا يُمسّ (PROJECT_ELEMENT_IDS)
     ensure_element_ids(building, bid)
     if active:
         for b in blds:

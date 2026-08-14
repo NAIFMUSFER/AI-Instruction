@@ -30,6 +30,15 @@ from pydantic import BaseModel
 
 import acs_understand as U
 import acs_api_errors as E
+import acs_logging as LOGGING
+import acs_build_info as BUILD
+import acs_rate_limit as RL
+import acs_upload_security as UPLOAD
+import acs_engineering_authority as EA
+import acs_generation_job as JOBS
+
+LOG = LOGGING.StructuredLogger(service="ACS Understanding Engine",
+                               version=BUILD.SERVICE_VERSION)
 
 SERVICE_NAME = "ACS Understanding Engine"
 SERVICE_VERSION = "1.3"
@@ -62,7 +71,11 @@ def _error_response(request, err: "E.AcsApiError"):
     if err.retry_after:
         headers["Retry-After"] = str(int(err.retry_after))
     # سجلّ الخادم: الرمز والمعرّف فقط — لا مفاتيح ولا رؤوس تفويض ولا نص الزائر.
-    print("[ACS-ERR] %s %s -> %s (%d)" % (rid, request.url.path, err.code, err.status))
+    LOG.error("request_failed", request_id=rid, endpoint=request.url.path,
+              error_code=err.code, status=err.status,
+              upstream_class=(err.upstream or {}).get("kind")
+              if isinstance(getattr(err, "upstream", None), dict) else None,
+              retry_after=err.retry_after)
     return JSONResponse(status_code=err.status, content=body, headers=headers)
 
 
@@ -80,10 +93,11 @@ async def acs_envelope_middleware(request: Request, call_next):
     except E.AcsApiError as err:
         return _error_response(request, err)
     except Exception as exc:                       # noqa: BLE001 — لا شيء يخرج غير مغلّف
-        import traceback
-        print("\n===== ACS UNHANDLED (%s) =====" % rid)
-        traceback.print_exc()
-        print("==============================\n")
+        # F-18: لا traceback خام في مسار الطلب. الـtraceback يتجاوز التعقيم وقد
+        # يحمل جسم طلب المزوّد — أي وصف الزائر — إلى السجلّ.
+        LOG.exception("unhandled_request_error", exc,
+                      request_id=rid, endpoint=request.url.path,
+                      method=request.method)
         return _error_response(request, E.AcsApiError(
             E.ACS_INTERNAL, "%s (%s)" % (E.MESSAGE_AR[E.ACS_INTERNAL],
                                          type(exc).__name__)))
@@ -166,50 +180,41 @@ ALLOWED_MODELS = {m.strip() for m in os.environ.get(
     "ACS_ALLOWED_MODELS", "claude-sonnet-5,claude-haiku-4-5").split(",") if m.strip()}
 
 
+def _upload_error(exc):
+    """يحوّل رفض الرفع إلى مغلّف الخطأ القياسي — 4xx لا 500، وبلا اسم ملفّ خام."""
+    code = getattr(exc, "code", "UPLOAD_REJECTED")
+    too_big = code in ("IMAGE_TOO_LARGE", "PDF_TOO_LARGE", "JSON_TOO_LARGE",
+                       "DXF_TOO_LARGE", "IMAGE_TOO_MANY_PIXELS",
+                       "IMAGE_SIDE_TOO_LARGE", "IMAGE_PIXEL_BUDGET_EXCEEDED",
+                       "PDF_TOO_MANY_PAGES", "TOO_MANY_FILES")
+    api = E.AcsApiError(
+        E.ACS_PAYLOAD_TOO_LARGE if too_big else E.ACS_UNPROCESSABLE,
+        getattr(exc, "message_ar", None) or "تعذّر قبول الملفّ المرفوع.")
+    return api
+
+
 def _safe_model(m):
     """لا يختار الزائر النموذج — إلا من قائمة مسموحة صراحةً."""
     m = (m or "").strip()
     return m if m in ALLOWED_MODELS else None
 
-_hits = defaultdict(deque)
-_lock = threading.Lock()
-
-
-TRUSTED_HOPS = int(os.environ.get("ACS_TRUSTED_PROXIES", "1"))
+# F-04: الحدّ صار في acs_rate_limit — مخزن ذرّي مشترك (Redis) أو ذاكرة محدودة
+# المفاتيح. الحدّ داخل العملية وحده كان يتضاعف مع كل عامل ومع كل نسخة، ويتسرّب
+# مع كل هوية مزوّرة. التفاصيل والاختبارات في acs_rate_limit.py.
+TRUSTED_HOPS = RL.trusted_hops()
+_LIMITER = RL.default_limiter()
 
 
 def _client_ip(request: Request) -> str:
-    """آخر قيمة في X-Forwarded-For هي التي يكتبها البروكسي الموثوق؛
-    أوّلها يكتبها العميل ويستطيع تزويرها كل طلب لتجاوز حدّ المعدّل."""
-    fwd = request.headers.get("x-forwarded-for")
-    if fwd:
-        parts = [p.strip() for p in fwd.split(",") if p.strip()]
-        if parts:
-            return parts[-min(TRUSTED_HOPS, len(parts))]
-    real = request.headers.get("x-real-ip")
-    if real:
-        return real.strip()
-    return request.client.host if request.client else "?"
+    """هويّة العميل — منطق الرؤوس كلّه في acs_rate_limit.client_identity.
 
-
-def _rate(key: str, limit: int, window: int, consume: bool = True):
-    """نافذة منزلقة داخل العملية. consume=False يفحص بلا تسجيل."""
-    now = time.time()
-    with _lock:
-        q = _hits[key]
-        while q and now - q[0] > window:
-            q.popleft()
-        if len(q) >= limit:
-            if not q:
-                return True, 0
-            return False, int(window - (now - q[0])) + 1
-        if consume:
-            q.append(now)
-        # تنظيف دوري لمفاتيح الـIP الفارغة (تسرّب ذاكرة في خادم طويل العمر)
-        if len(_hits) > 4000:
-            for k in [k for k, v in list(_hits.items()) if not v]:
-                _hits.pop(k, None)
-        return True, 0
+    X-Real-IP لم يعد يُصدَّق افتراضياً: كان يمنح كل طلب دلواً جديداً."""
+    try:
+        headers = {k.lower(): v for k, v in request.headers.items()}
+    except Exception:                                           # pragma: no cover
+        headers = {}
+    peer = request.client.host if request.client else None
+    return RL.client_identity(headers, peer)
 
 
 def _too_many(msg, wait):
@@ -219,27 +224,15 @@ def _too_many(msg, wait):
 
 
 def guard(request: Request, kind: str = "gen"):
+    """يطبّق الحدّ المشترك. الترتيب محفوظ: العام يُفحَص بلا استهلاك، ثم حدّ
+    الزائر، ثم يُستهلك العام — وإلا أطفأ زائرٌ مرفوضٌ الخدمة للجميع."""
     ip = _client_ip(request)
-    # افحص العام بلا استهلاك أولاً، ثم حدّ الزائر، ولا تُسجّل في العام إلا بعد نجاحهما —
-    # وإلا استطاع زائر واحد مرفوض أن يستنفد السقف العام ويُطفئ الخدمة للجميع.
-    ok, wait = _rate("ALL:day", RL_GLOBAL_DAY, 86400, consume=False)
-    if not ok:
-        raise _too_many("بلغ الخادم سقفه اليومي. حاول غداً أو شغّل نسخة خاصة بك.", wait)
-    if kind == "gen":
-        ok, wait = _rate("h:" + ip, RL_GEN_HOUR, 3600)
-        if not ok:
-            raise _too_many("تجاوزت %d عمليات توليد في الساعة. أعِد المحاولة بعد %d دقيقة."
-                            % (RL_GEN_HOUR, max(1, wait // 60)), wait)
-        ok, wait = _rate("d:" + ip, RL_GEN_DAY, 86400)
-        if not ok:
-            raise _too_many("تجاوزت %d عملية توليد اليوم. أعِد المحاولة غداً."
-                            % RL_GEN_DAY, wait)
-    else:
-        ok, wait = _rate("e:" + ip, RL_EDIT_HOUR, 3600)
-        if not ok:
-            raise _too_many("تجاوزت حدّ التعديلات في الساعة. أعِد المحاولة بعد %d دقيقة."
-                            % max(1, wait // 60), wait)
-    _rate("ALL:day", RL_GLOBAL_DAY, 86400)      # يُستهلك العام بعد اجتياز كل الفحوص
+    decision = _LIMITER.check(ip, kind)
+    if not decision.get("allowed"):
+        raise _too_many(decision.get("message")
+                        or "تجاوزت الحدّ المسموح. أعِد المحاولة لاحقاً.",
+                        decision.get("retry_after"))
+    return decision
 
 
 def _cap(text: str) -> str:
@@ -259,14 +252,54 @@ REQUEST_TIMEOUT_S = float(os.environ.get("ACS_REQUEST_TIMEOUT_S", "840"))
 _POOL = concurrent.futures.ThreadPoolExecutor(
     max_workers=int(os.environ.get("ACS_WORKER_THREADS", "8")),
     thread_name_prefix="acs-gen")
+_JOBS = JOBS.default_runner()
+
+
+async def run_job(target, kwargs, what="التوليد", seconds=None, request_id=None):
+    """F-06: التوليد عملية مستقلّة تُنهى فعلاً عند المهلة.
+
+    كان الخيط المتروك يُكمل نداء المزوّد ويحتجز مقعده حتى ٦٠٠ ثانية أخرى، فيشبع
+    المجمّع ويحوّل كل طلب تالٍ إلى 504. الآن يُنهى العامل ويتحرّر المقعد فوراً."""
+    limit = float(seconds or REQUEST_TIMEOUT_S)
+    loop = asyncio.get_running_loop()
+    started = time.time()
+
+    def _event(job):
+        LOG.info("generation_job", request_id=job.request_id, job_id=job.id,
+                 state=job.state, target=job.target,
+                 duration_ms=job.duration_ms(), error_class=job.error_class)
+
+    def _call():
+        return _JOBS.run(target, kwargs, timeout_s=limit,
+                         request_id=request_id, on_event=_event)
+
+    try:
+        return await loop.run_in_executor(_POOL, _call)
+    except JOBS.JobRejected as exc:
+        LOG.warn("generation_rejected", request_id=request_id,
+                 detail=str(exc)[:200], in_flight=_JOBS.in_flight())
+        raise E.AcsApiError(
+            E.ACS_RATE_LIMITED,
+            "الخادم مشغول بالكامل الآن. أعِد المحاولة بعد قليل.",
+            retryable=True, retry_after=30)
+    except TimeoutError:
+        LOG.warn("generation_timeout", request_id=request_id, target=target,
+                 duration_ms=int((time.time() - started) * 1000),
+                 slot_released=True, available=_JOBS.available())
+        raise E.AcsApiError(
+            E.ACS_TIMEOUT,
+            "تجاوز %s مهلة الخادم (%d ثانية). قصّر الوصف أو قسّمه ثم أعِد المحاولة."
+            % (what, int(limit)))
+    except JOBS.JobError as exc:
+        raise E.classify_upstream(exc)
 
 
 async def run_bounded(fn, what="التوليد", seconds=None):
+    """مسار متوافق قديم — محفوظ للاستدعاءات الخارجية. لا يُستعمل في أي مسار
+    توليد داخل هذا الملفّ: الخيط المتروك بعد المهلة لا يُلغى، وهذا سبب F-06."""
     limit = float(seconds or REQUEST_TIMEOUT_S)
     loop = asyncio.get_running_loop()
     fut = loop.run_in_executor(_POOL, fn)
-    # الخيط المتروك بعد المهلة يُكمل عمله (بايثون لا تقتل خيطاً، ولا ندّعي ذلك)؛
-    # نستهلك نتيجته حتى لا يُسجَّل "exception was never retrieved" في السجلّ.
     fut.add_done_callback(lambda ft: ft.cancelled() or ft.exception())
     try:
         return await asyncio.wait_for(asyncio.shield(fut), timeout=limit)
@@ -335,8 +368,38 @@ def health():
             "model": _model_configured(),          # توافق خلفي
             "key": _api_key_configured(),          # توافق خلفي
             "limits": {"gen_hour": RL_GEN_HOUR, "gen_day": RL_GEN_DAY,
+                       "edit_hour": RL_EDIT_HOUR, "global_day": RL_GLOBAL_DAY,
                        "max_text": MAX_TEXT,
-                       "request_timeout_s": int(REQUEST_TIMEOUT_S)}}
+                       "max_upload_bytes": MAX_UPLOAD,
+                       "max_building_chars": MAX_BUILDING,
+                       "request_timeout_s": int(REQUEST_TIMEOUT_S)},
+            # حالة الأنظمة الفرعية — بلا أي سرّ ولا عنوان مخزن ولا كلمة مرور
+            "rate_limit": RL.health_status(),
+            "uploads": UPLOAD.health_status(),
+            "engineering_changes": EA.health_status(),
+            "logging": LOGGING.health_status(),
+            "generation_jobs": JOBS.health_status(),
+            "build": {k: v for k, v in BUILD.build_info().items()
+                      if k in ("version", "git_sha_short", "built_at",
+                               "provenance_verified")}}
+
+
+@app.get("/version")
+def version():
+    """أصل البناء — SHA وطابع زمني ونسخ المخطّطات. لا سرّ ولا مسار ملفّ.
+
+    بلا هذا لا يستطيع تحقّقٌ إنتاجيّ أن يقول أيّ نسخة قاسها."""
+    info = BUILD.build_info()
+    return {"service": info["service"],
+            "version": info["version"],
+            "git_sha": info["git_sha"],
+            "git_sha_short": info["git_sha_short"],
+            "git_branch": info["git_branch"],
+            "built_at": info["built_at"],
+            "provenance_verified": info["provenance_verified"],
+            "schema_versions": dict(info["schema_versions"],
+                                    error_contract=E.ERROR_CONTRACT_VERSION,
+                                    engineering_changes=EA.SCHEMA)}
 
 
 @app.get("/ready")
@@ -390,13 +453,58 @@ def _generation_summary(meta):
                               "error": s.get("error")} for s in st[:12]]}
 
 
+def _engineering_authority(building):
+    """F-01 — سلطة التغيير الهندسي.
+
+    كان النظام يُصلح النموذج حسابياً بعد التوليد بلا إفصاح: يُزيح الغرف، ويقلّصها،
+    ويضيف أبواباً وكواشف دخان ومرشّات وأفياشاً. صار ذلك كلّه اقتراحات تُعرَض ولا
+    تُطبَّق. النموذج المُعاد هنا هو مخرج التوليد نفسه، ولا يوجد مسار إيداع تلقائي.
+
+    الاقتراحات تُعاد في الرد لا داخل النموذج، حتى لا يغيّر الإفصاحُ بصمةَ النموذج."""
+    try:
+        plan = EA.plan(building)
+    except Exception as exc:                                    # noqa: BLE001
+        LOG.exception("engineering_plan_failed", exc)
+        return {"available": False, "applied": False, "auto_commit_path": False,
+                "proposals": [], "proposal_count": 0,
+                "detail": "NOT EVALUATED — the proposal planner did not run"}
+    return {"available": True,
+            "applied": False,
+            "auto_commit_path": False,
+            "engineering_authority": False,
+            "requires_user_confirmation": bool(plan["proposals"]),
+            "proposal_count": len(plan["proposals"]),
+            "model_hash_before": plan["model_hash_before"],
+            "model_hash_after": plan["model_hash_after"],
+            "model_unchanged": plan["unchanged"],
+            "safe_normalisations": plan["safe_changes"],
+            "proposals": plan["proposals"],
+            "registry": plan["registry"]}
+
+
+def _edit_diff(before, after):
+    """فرق مُسطَّح بين نموذجين — للعرض قبل الاستبدال، لا للإيداع."""
+    try:
+        return EA.flat_diff(before, after)
+    except Exception as exc:                                    # noqa: BLE001
+        LOG.exception("edit_diff_failed", exc)
+        return {"available": False,
+                "detail": "NOT EVALUATED — the diff could not be computed"}
+
+
 def _understand_payload(building):
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
+    authority = _engineering_authority(building)
     return {"ok": True, "building": building, "levels": len(building["levels"]),
             "rooms": nr, "type": meta.get("type"),
             "mode": meta.get("acs_mode", "single"),
             "generation": _generation_summary(meta),
+            "engineering_authority": authority,
+            "engineering_proposals": authority.get("proposals") or [],
+            "compliance": {"status": "NOT_EVALUATED",
+                           "note": "لا حزمة أنظمة موثّقة محمّلة — هذا تحقّق نموذج "
+                                   "هندسي وليس مطابقة أنظمة."},
             "issues": meta.get("acs_issues", 0), "report": _report(building)}
 
 
@@ -418,22 +526,19 @@ async def understand(req: UnderstandReq, request: Request):
         text = "[معطيات الموقع من العميل] " + " ".join(hints) + "\n" + text
     bt = req.btype if (req.btype and req.btype != "auto") else None
 
-    def _work():
-        # أبعاد الأرض وعدد الأدوار تصل إلى مقدّر حجم المخرج: القرار «مرحلة واحدة
-        # أم مراحل» يحتاجها، وبدونها يُقدَّر مبنى ٩٦٠٠ م² كأنه غرفة.
-        return U.understand(text, model=_safe_model(req.model), deep=req.deep,
-                            strict=bool(req.strict), btype=bt,
-                            site_w=req.site_w, site_d=req.site_d, floors=req.floors)
-
+    # أبعاد الأرض وعدد الأدوار تصل إلى مقدّر حجم المخرج: القرار «مرحلة واحدة
+    # أم مراحل» يحتاجها، وبدونها يُقدَّر مبنى ٩٦٠٠ م² كأنه غرفة.
+    _kwargs = dict(text=text, model=_safe_model(req.model), deep=req.deep,
+                   strict=bool(req.strict), btype=bt,
+                   site_w=req.site_w, site_d=req.site_d, floors=req.floors)
     try:
-        building = await run_bounded(_work, "الفهم والتوليد")
+        building = await run_job("acs_understand:understand", _kwargs,
+                                 "الفهم والتوليد", request_id=rid)
     except E.AcsApiError:
         raise                                     # مصنّف سلفاً — لا تُعِد تغليفه
     except Exception as e:
-        import traceback
-        print("\n===== ACS ERROR (%s) =====" % rid)
-        traceback.print_exc()
-        print("============================\n")
+        LOG.exception("generation_failed", e, request_id=rid,
+                      endpoint="/v1/understand")
         raise E.classify_upstream(e)
     return _understand_payload(building)
 
@@ -446,13 +551,26 @@ class EditReq(BaseModel):
 
 @app.post("/v1/edit")
 async def edit(req: EditReq, request: Request):
-    """ينفّذ ملاحظات المهندس على النموذج ويعيده بعد التحقّق والإصلاح."""
-    import traceback
+    """ينفّذ ملاحظات المهندس على النموذج ويعيد الفرق قبل أي استبدال.
+
+    F-01: هذا المسار يستبدل النموذج كاملاً بمخرج نموذج لغوي. صار الرد يحمل
+    engineering_diff و requires_confirmation، فلا يستبدل العميل نموذجه بلا عرض
+    ما تغيّر. الخادم لا يودع شيئاً — لا يملك مشروعاً أصلاً."""
     if not req.notes:
         raise E.AcsApiError(E.ACS_BAD_REQUEST, "لا توجد ملاحظات.")
     guard(request, "edit")
     rid = request_id_of(request)
-    print("[ACS] edit: %d ملاحظة" % len(req.notes))
+    LOG.info("edit_requested", request_id=rid, endpoint="/v1/edit",
+             notes=len(req.notes))
+    # F-19: النموذج الوارد JSON غير موثوق — الحجم والعمق وعدد المفاتيح ومفاتيح
+    # تلويث النموذج الأولي تُفحَص قبل أي معالجة.
+    try:
+        UPLOAD.validate_json_bytes(
+            json.dumps(req.building, ensure_ascii=False).encode("utf-8"))
+    except UPLOAD.UploadRejected as exc:
+        LOG.warn("upload_rejected", request_id=rid, endpoint="/v1/edit",
+                 error_code=exc.code, detail=getattr(exc, "detail", None))
+        raise _upload_error(exc)
     if len(json.dumps(req.building, ensure_ascii=False)) > MAX_BUILDING:
         raise E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE,
                             "النموذج كبير جداً للتعديل — قلّل التفاصيل أو عدّل دوراً واحداً.")
@@ -460,17 +578,23 @@ async def edit(req: EditReq, request: Request):
         raise E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE,
                             "عدد الملاحظات كبير (%d) — أرسلها على دفعات." % len(req.notes))
     try:
-        out = await run_bounded(
-            lambda: U.apply_notes(req.building, req.notes, model=_safe_model(req.model)),
-            "تنفيذ التعديلات")
+        out = await run_job("acs_understand:apply_notes",
+                            dict(building=req.building, notes=req.notes,
+                                 model=_safe_model(req.model)),
+                            "تنفيذ التعديلات", request_id=rid)
     except E.AcsApiError:
         raise
     except Exception as e:
-        print("\n===== ACS EDIT ERROR (%s) =====" % rid); traceback.print_exc(); print("=========================\n")
+        LOG.exception("edit_failed", e, request_id=rid, endpoint="/v1/edit")
         raise E.classify_upstream(e)
-    nr = sum(len(f.get("rooms", [])) for f in out["floors"].values())
-    return {"ok": True, "building": out, "levels": len(out["levels"]), "rooms": nr,
-            "issues": out.get("meta", {}).get("acs_issues", 0)}
+    payload = _understand_payload(out)
+    payload["engineering_diff"] = _edit_diff(req.building, out)
+    payload["requires_confirmation"] = True
+    payload["change_id"] = "EDIT_MODEL_REPLACEMENT"
+    payload["confirmation_note"] = (
+        "هذا الرد اقتراح استبدال للنموذج كاملاً. اعرض الفرق على المستخدم قبل "
+        "اعتماده — الخادم لا يودع ولا يملك سلطة هندسية.")
+    return payload
 
 
 @app.post("/v1/understand/image")
@@ -488,79 +612,87 @@ async def understand_image(
     """يقرأ مخططاً معمارياً مرسوماً (صورة/صور) بالرؤية ويبني النموذج."""
     import base64, traceback
     guard(request, "gen")
-    imgs = []
-    for f in files[:6]:                       # حتى 6 صفحات
-        data = await f.read()
-        if len(data) > 5 * 1024 * 1024:
-            raise E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE,
-                                "حجم الصورة كبير (%.1f م.ب) — صغّرها إلى أقل من 5 م.ب."
-                                % (len(data) / 1048576))
-        mt = f.content_type or "image/png"
-        if mt not in ("image/png", "image/jpeg", "image/webp", "image/gif"):
-            mt = "image/png"
-        imgs.append((mt, base64.standard_b64encode(data).decode("ascii")))
+    # F-05: لا ثقة باسم الملفّ ولا بـContent-Type. البايتات تُشمّ وتُفكّ فعلاً
+    # وتُعاد ترميزاً بلا بيانات وصفية قبل أن تغادر الخادم. لا إعادة وسم صامتة.
+    rid = request_id_of(request)
+    raw = []
+    for f in files:
+        raw.append((await f.read(), f.content_type))
+    try:
+        checked = UPLOAD.validate_images(raw)
+    except UPLOAD.UploadRejected as exc:
+        LOG.warn("upload_rejected", request_id=rid, endpoint="/v1/understand/image",
+                 error_code=exc.code, detail=getattr(exc, "detail", None),
+                 files=len(raw))
+        raise _upload_error(exc)
+    imgs = [(c["media_type"],
+             base64.standard_b64encode(c["normalized"]).decode("ascii"))
+            for c in checked]
     if not imgs:
         raise E.AcsApiError(E.ACS_BAD_REQUEST, "لم تُرفع صور.")
-    rid = request_id_of(request)
-    print("[ACS] plan images: %d" % len(imgs))
+    LOG.info("upload_accepted", request_id=rid, endpoint="/v1/understand/image",
+             files=len(imgs),
+             pixels=sum(c["width"] * c["height"] for c in checked))
     bt = btype if (btype and btype != "auto") else None
     _strict = str(strict) in ("1", "true", "True")
     try:
-        building = await run_bounded(
-            lambda: U.understand_images(imgs, site_w=site_w, site_d=site_d,
-                                        floors=floors, model=_safe_model(model),
-                                        notes=notes, strict=_strict, btype=bt),
-            "قراءة المخطط")
+        building = await run_job("acs_understand:understand_images",
+                                 dict(images=imgs, site_w=site_w, site_d=site_d,
+                                      floors=floors, model=_safe_model(model),
+                                      notes=notes, strict=_strict, btype=bt),
+                                 "قراءة المخطط", request_id=rid)
     except E.AcsApiError:
         raise
     except Exception as e:
-        print("\n===== ACS VISION ERROR (%s) =====" % rid); traceback.print_exc(); print("===========================\n")
+        LOG.exception("vision_generation_failed", e, request_id=rid,
+                      endpoint="/v1/understand/image")
         raise E.classify_upstream(e)
-    nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
-    return {"ok": True, "building": building, "levels": len(building["levels"]), "rooms": nr,
-            "issues": building.get("meta", {}).get("acs_issues", 0),
-            "report": _report(building)}
+    return _understand_payload(building)
 
 
 @app.post("/v1/understand/pdf")
 async def understand_pdf(request: Request, file: UploadFile = File(...),
                          btype: str | None = Form(None), model: str | None = None):
-    import tempfile, os as _os, traceback
     guard(request, "gen")
     rid = request_id_of(request)
     data = await file.read()
-    if len(data) > MAX_UPLOAD:
-        raise E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE,
-                            "حجم الملف %.1f م.ب — الحدّ %d م.ب."
-                            % (len(data) / 1048576, MAX_UPLOAD // 1048576))
-    # ملف مؤقت متوافق مع ويندوز/لينكس (لا تستخدم /tmp مباشرة)
-    fd, tmp = tempfile.mkstemp(suffix=".pdf", prefix="acs_")
+    # F-05: لا ملفّ مؤقّت، ولا اسم ملفّ في السجلّ، ولا توقيع مفترض. التحقّق يقرأ
+    # البايتات في الذاكرة، ويرفض التوقيع الخاطئ والمشفّر والمقطوع وعدد الصفحات
+    # قبل استخراج أي نصّ — فلا يصير خطأ العميل خطأ 500 من المحلّل.
     try:
-        with _os.fdopen(fd, "wb") as f:
-            f.write(data)
-        text = U.pdf_to_text(tmp)
-        print("[ACS] PDF %s -> %d chars" % (file.filename, len(text)))
+        checked = UPLOAD.validate_pdf(data)
+    except UPLOAD.UploadRejected as exc:
+        LOG.warn("upload_rejected", request_id=rid, endpoint="/v1/understand/pdf",
+                 error_code=exc.code, detail=getattr(exc, "detail", None),
+                 filename_label=UPLOAD.safe_filename_label(file.filename))
+        raise _upload_error(exc)
+    text = checked["text"]
+    LOG.info("upload_accepted", request_id=rid, endpoint="/v1/understand/pdf",
+             filename_label=UPLOAD.safe_filename_label(file.filename),
+             pages=checked["pages"], chars=len(text),
+             truncated=bool(checked.get("truncated")))
+    try:
         if len(text.strip()) < 50:
             raise E.AcsApiError(
                 E.ACS_UNPROCESSABLE,
                 "PDF بلا نص — يبدو مخططاً مرسوماً/مصوّراً. أرسله كصورة إلى "
                 "/v1/understand/image ليُقرأ بالرؤية (الموقع يفعل ذلك تلقائياً).")
         text = _cap(text)
-        building = await run_bounded(
-            lambda: U.understand(text, model=_safe_model(model),
-                                 btype=(btype if (btype and btype != "auto") else None)),
-            "فهم PDF")
+        building = await run_job(
+            "acs_understand:understand",
+            dict(text=text, model=_safe_model(model),
+                 btype=(btype if (btype and btype != "auto") else None)),
+            "فهم PDF", request_id=rid)
     except E.AcsApiError:
         raise
     except Exception as e:
-        print("\n===== ACS PDF ERROR (%s) =====" % rid); traceback.print_exc(); print("================================\n")
+        LOG.exception("pdf_generation_failed", e, request_id=rid,
+                      endpoint="/v1/understand/pdf")
         raise E.classify_upstream(e)
-    finally:
-        try: _os.remove(tmp)
-        except Exception: pass
-    nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
-    return {"ok": True, "building": building, "levels": len(building["levels"]), "rooms": nr,
-            "chars": len(text), "report": _report(building)}
+    payload = _understand_payload(building)
+    payload["chars"] = len(text)
+    payload["pdf_pages"] = checked["pages"]
+    return payload
 
 
 # ---------------------------------------------------------------------------

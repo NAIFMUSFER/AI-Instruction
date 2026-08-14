@@ -32,6 +32,7 @@
   "MOVE_OBJECT", "ADD_OBJECT", "DELETE_OBJECT",
   "CHANGE_LEVEL_HEIGHT", "ADD_LEVEL", "DELETE_LEVEL",
   "MOVE_STAIR", "ADD_STAIR", "DELETE_STAIR",
+  "ADD_POINT", "MOVE_POINT", "DELETE_POINT", "CHANGE_POINT_PROPERTIES",
   "CHANGE_SITE_DIMENSIONS", "CHANGE_BUILDING_POSITION", "CHANGE_BUILDING_ROTATION",
   "PROMOTE_VISUAL_OBJECT", "LOCK_ELEMENT", "UNLOCK_ELEMENT",
   "MOVE_COLUMN", "MOVE_DUCT", "CHANGE_FIRE_DOOR_METADATA"
@@ -44,6 +45,7 @@
   "MOVE_OBJECT", "ADD_OBJECT", "DELETE_OBJECT",
   "CHANGE_LEVEL_HEIGHT", "ADD_LEVEL", "DELETE_LEVEL",
   "MOVE_STAIR", "ADD_STAIR", "DELETE_STAIR",
+  "ADD_POINT", "MOVE_POINT", "DELETE_POINT", "CHANGE_POINT_PROPERTIES",
   "CHANGE_SITE_DIMENSIONS", "CHANGE_BUILDING_POSITION", "CHANGE_BUILDING_ROTATION",
   "PROMOTE_VISUAL_OBJECT", "LOCK_ELEMENT", "UNLOCK_ELEMENT"
  ],
@@ -67,8 +69,11 @@
   "CHANGE_BUILDING_ROTATION": "SITE",
   "PROMOTE_VISUAL_OBJECT": "ARCHITECTURE",
   "LOCK_ELEMENT": "PROJECT", "UNLOCK_ELEMENT": "PROJECT",
+  "ADD_POINT": "ARCHITECTURE", "MOVE_POINT": "ARCHITECTURE",
+  "DELETE_POINT": "ARCHITECTURE", "CHANGE_POINT_PROPERTIES": "ARCHITECTURE",
   "MOVE_COLUMN": "STRUCTURE", "MOVE_DUCT": "MEP", "CHANGE_FIRE_DOOR_METADATA": "FLS"
  },
+ "point_command_note": "A Phase-1 point (light, outlet, switch, smoke, sprinkler, camera, exit, extinguisher, assembly) lives in floors.<template>.rooms.<space>.points, the architectural semantic source, exactly like objects. The MEP and FLS records are compiled projections of it and stay read-only. The point commands are therefore declared ARCHITECTURE: they write the source, never a compiled discipline record. They exist so a system-detected gap (a missing smoke detector, a missing exit) can be committed through the one authoring path after explicit approval, instead of being auto-inserted by the layout autofixer as it was before the F-01 remediation.",
  "disciplines": ["ARCHITECTURE", "STRUCTURE", "MEP", "FLS", "SITE", "PROJECT"],
  "authorable_disciplines": ["ARCHITECTURE", "SITE", "PROJECT"],
  "discipline_note": "A command may only write inside the model region its declared discipline owns. An architectural command that would alter a structural, MEP or fire/life-safety record is refused with AUTHORING_SCOPE_VIOLATION rather than allowed to reach across disciplines.",
@@ -122,6 +127,11 @@
   "object.x": "EDITABLE",
   "object.z": "EDITABLE",
   "object.count": "EDITABLE",
+  "point.type": "EDITABLE",
+  "point.x": "EDITABLE",
+  "point.z": "EDITABLE",
+  "point.height": "EDITABLE",
+  "point.auto": "READ_ONLY",
   "level.template": "READ_ONLY",
   "level.index": "READ_ONLY",
   "level.name": "EDITABLE",
@@ -184,7 +194,7 @@
  },
  "commit_policy_note": "A model-integrity ERROR always rejects the commit. A WARNING — for example a coordination finding that appeared or disappeared — does not reject the commit by itself, but under the declared default policy it must be acknowledged explicitly by the caller. The policy is stated here rather than hidden in code, and ALLOW_SILENTLY is available only if a caller chooses it deliberately.",
 
- "destructive_command_types": ["DELETE_WALL", "DELETE_DOOR", "DELETE_WINDOW", "DELETE_SPACE", "DELETE_LEVEL", "DELETE_OBJECT", "DELETE_STAIR"],
+ "destructive_command_types": ["DELETE_WALL", "DELETE_DOOR", "DELETE_WINDOW", "DELETE_SPACE", "DELETE_LEVEL", "DELETE_OBJECT", "DELETE_STAIR", "DELETE_POINT"],
  "confirmation_note": "A destructive command, or any command whose dependency report is non-empty, requires an explicit confirmation token equal to the transaction's computed confirmation digest. A harmless preview never requires confirmation.",
 
  "limits": {
@@ -226,6 +236,10 @@
   "DELETE_SPACE": ["ARCHITECTURE", "RELATIONSHIPS", "COORDINATION", "VISUAL", "RUNTIME", "NAVIGATION", "EGRESS", "DISTANCE", "OCCUPANCY", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],
   "MOVE_OBJECT": ["ARCHITECTURE", "VISUAL", "RUNTIME", "SNAPSHOTS", "PRESENTATION_RENDERS"],
   "ADD_OBJECT": ["ARCHITECTURE", "VISUAL", "RUNTIME", "SNAPSHOTS", "PRESENTATION_RENDERS"],
+  "ADD_POINT": ["ARCHITECTURE", "MEP", "FLS", "COORDINATION", "VISUAL", "RUNTIME", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],
+  "MOVE_POINT": ["ARCHITECTURE", "MEP", "FLS", "COORDINATION", "VISUAL", "RUNTIME", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],
+  "DELETE_POINT": ["ARCHITECTURE", "MEP", "FLS", "COORDINATION", "VISUAL", "RUNTIME", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],
+  "CHANGE_POINT_PROPERTIES": ["ARCHITECTURE", "MEP", "FLS", "COORDINATION", "VISUAL", "RUNTIME", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],
   "DELETE_OBJECT": ["ARCHITECTURE", "VISUAL", "RUNTIME", "SNAPSHOTS", "PRESENTATION_RENDERS"],
   "CHANGE_LEVEL_HEIGHT": ["ARCHITECTURE", "RELATIONSHIPS", "COORDINATION", "VISUAL", "RUNTIME", "NAVIGATION", "EGRESS", "DISTANCE", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],
   "ADD_LEVEL": ["ARCHITECTURE", "RELATIONSHIPS", "COORDINATION", "VISUAL", "RUNTIME", "NAVIGATION", "EGRESS", "DISTANCE", "OCCUPANCY", "RULE_RESULTS", "SNAPSHOTS", "PRESENTATION_RENDERS"],

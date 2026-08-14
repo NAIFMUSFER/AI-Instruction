@@ -395,15 +395,10 @@ def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
     issues, stats = V.validate_building(building)
     print("[ACS-VISION] قراءة المخطط: %d مخالفة · %s" % (len(issues), stats))
 
-    try:
-        import acs_layout as L
-        rep = L.autofix(building)
-        issues, stats = V.validate_building(building)
-        print("[ACS-FIX] إصلاح حسابي: حُرّكت %d غرفة · تداخل متبقٍ %d · %s"
-              % (rep["moved"], rep["remaining"], "؛ ".join(rep["tight"]) or "المساحات تسع"))
-        print("[ACS-VISION] بعد الإصلاح: %d مخالفة · %s" % (len(issues), stats))
-    except Exception as e:
-        print("[ACS-FIX] تخطّي: %s" % str(e)[:200])
+        # F-01: المصلِح الحسابي لم يعد يكتب في النموذج. ما كان يغيّره صار
+        # اقتراحاً يُحسَب في طبقة الـAPI عبر acs_engineering_authority.plan
+        # ويُعرَض على المستخدم. النموذج المعروض هنا هو مخرج التوليد نفسه.
+    print("[ACS-VISION] لا إصلاح تلقائي: %d مخالفة تُعرَض ولا تُصلَّح صامتاً" % len(issues))
 
     building.setdefault("meta", {})["acs_issues"] = len(issues)
     building["meta"].setdefault("source", "plan-image")
@@ -699,13 +694,10 @@ def apply_notes(building, notes, model=None):
 
     issues, stats = V.validate_building(out)
     print("[ACS-EDIT] بعد التعديل: %d مخالفة · %s" % (len(issues), stats))
-    try:
-        import acs_layout as L
-        L.autofix(out)
-        issues, stats = V.validate_building(out)
-        print("[ACS-EDIT] بعد الإصلاح الحسابي: %d مخالفة · %s" % (len(issues), stats))
-    except Exception as e:
-        print("[ACS-EDIT] تخطّي الإصلاح: %s" % str(e)[:200])
+        # F-01: المصلِح الحسابي لم يعد يكتب في النموذج. ما كان يغيّره صار
+        # اقتراحاً يُحسَب في طبقة الـAPI عبر acs_engineering_authority.plan
+        # ويُعرَض على المستخدم. النموذج المعروض هنا هو مخرج التوليد نفسه.
+    print("[ACS-EDIT] لا إصلاح تلقائي: %d مخالفة تُعرَض ولا تُصلَّح صامتاً" % len(issues))
     out.setdefault("meta", {})["acs_issues"] = len(issues)
     return out
 
@@ -803,6 +795,26 @@ def _safe_stage(tel, n_rooms, stage, depth=0, error=None):
             "parsed": bool(tel.get("complete")) and error is None,
             "error": error}
 
+
+
+def _preserve_added_disclosure(building):
+    """ينقل meta.added إلى إفصاح صريح بدل محوه (F-01).
+
+    الوضع الصارم يعني ألّا يضيف النظام شيئاً — لا أن يُخفي ما أضافه المولّد.
+    المحو القديم كان يفقد المعلومة الوحيدة التي تُخبر المستخدم بما لم يطلبه."""
+    meta = building.setdefault("meta", {})
+    added = meta.get("added") or []
+    if added:
+        disc = meta.setdefault("acs_engineering_disclosure", {})
+        prev = list(disc.get("ai_added") or [])
+        for item in added:
+            if item not in prev:
+                prev.append(item)
+        disc["ai_added"] = prev
+        disc["note"] = ("عناصر أضافها المولّد ولم يطلبها الوصف — تُعرَض للمراجعة "
+                        "ولا تُعدّ جزءاً من نيّة التصميم.")
+    meta["added"] = []
+    return building
 
 def understand_deep(description, model=None, group_size=None, workers=None,
                     strict=False, btype=None, stages=None):
@@ -907,18 +919,17 @@ def understand_deep(description, model=None, group_size=None, workers=None,
     building["meta"]["acs_mode"] = "deep"
     if strict:
         building["meta"]["strict"] = True
-        building["meta"]["added"] = []
+        # F-01: الوضع الصارم لا يمحو إفصاح النموذج عمّا أضافه. القائمة تُنقَل إلى
+        # حقل إفصاح صريح بدل أن تُفقَد، فيبقى للمستخدم ما يراجعه ويحذفه.
+        _preserve_added_disclosure(building)
     reqs = building["meta"].get("requirements") or []
     print("[ACS-DEEP] تقرير التغطية: %d بند من طلب العميل" % len(reqs))
     issues, stats = V.validate_building(building)
     print("[ACS-DEEP] بعد الدمج: %d مخالفة · %s" % (len(issues), stats))
-    try:
-        import acs_layout as L
-        L.autofix(building)
-        issues, stats = V.validate_building(building)
-        print("[ACS-DEEP] بعد الإصلاح الحسابي: %d مخالفة · %s" % (len(issues), stats))
-    except Exception as e:
-        print("[ACS-DEEP] تخطّي الإصلاح: %s" % str(e)[:200])
+        # F-01: المصلِح الحسابي لم يعد يكتب في النموذج. ما كان يغيّره صار
+        # اقتراحاً يُحسَب في طبقة الـAPI عبر acs_engineering_authority.plan
+        # ويُعرَض على المستخدم. النموذج المعروض هنا هو مخرج التوليد نفسه.
+    print("[ACS-DEEP] لا إصلاح تلقائي: %d مخالفة تُعرَض ولا تُصلَّح صامتاً" % len(issues))
     building["meta"]["acs_issues"] = len(issues)
     return building
 
@@ -1006,7 +1017,9 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
     building.setdefault("meta", {}).setdefault("type", btype)
     if strict:
         building["meta"]["strict"] = True
-        building["meta"]["added"] = []
+        # F-01: الوضع الصارم لا يمحو إفصاح النموذج عمّا أضافه. القائمة تُنقَل إلى
+        # حقل إفصاح صريح بدل أن تُفقَد، فيبقى للمستخدم ما يراجعه ويحذفه.
+        _preserve_added_disclosure(building)
     issues, stats = V.validate_building(building)
     print("[ACS-CHECK] جولة 0 (%s): %d مخالفة · %s" % (btype, len(issues), stats))
 
@@ -1027,16 +1040,11 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
             print("[ACS-CHECK] النتيجة أسوأ — نُبقي السابق.")
             break
 
-    # ── إصلاح حسابي نهائي: التداخلات والفتحات والنقاط (بلا LLM، مجاني ومضمون) ──
-    try:
-        import acs_layout as L
-        rep = L.autofix(building)
-        issues, stats = V.validate_building(building)
-        print("[ACS-FIX] إصلاح حسابي: حُرّكت %d غرفة · تداخل متبقٍ %d · %s"
-              % (rep["moved"], rep["remaining"], "؛ ".join(rep["tight"]) or "المساحات تسع"))
-        print("[ACS-CHECK] بعد الإصلاح الحسابي: %d مخالفة · %s" % (len(issues), stats))
-    except Exception as e:
-        print("[ACS-FIX] تخطّي الإصلاح الحسابي: %s" % str(e)[:200])
+    # ── لا إصلاح حسابي صامت (F-01) ──
+        # F-01: المصلِح الحسابي لم يعد يكتب في النموذج. ما كان يغيّره صار
+        # اقتراحاً يُحسَب في طبقة الـAPI عبر acs_engineering_authority.plan
+        # ويُعرَض على المستخدم. النموذج المعروض هنا هو مخرج التوليد نفسه.
+    print("[ACS-CHECK] لا إصلاح تلقائي: %d مخالفة تُعرَض ولا تُصلَّح صامتاً" % len(issues))
 
     building.setdefault("meta", {})["acs_issues"] = len(issues)
     if issues:

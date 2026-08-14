@@ -563,6 +563,10 @@ image_files = set(copied)
 # أدوات سطر أوامر تعمل خارج الخادوم وخارج الصفحة: تُصنَّف صراحةً بدل أن تبقى
 # يتيمة. الشرط أن يثبت الفحص أن الخادوم لا يصل إليها فعلاً.
 OFFLINE_TOOLS = ['acs_compiler.py']
+# رفقاء طبقة التأليف: شيفرة مرجعية تعيش حيث تعيش مرآة التأليف في المتصفّح، ولا
+# تُشحَن في صورة الخادوم. تُصنَّف صراحةً، ويُثبَت أدناه أن الخادوم لا يصل إليها.
+AUTHORING_COMPANIONS = ['acs_engineering_approval.py']
+browser_specs |= set(AUTHORING_COMPANIONS)
 all_specs = sorted(x for x in os.listdir(ROOT)
                    if re.match(r'^acs_.*\.(py|json)$', x))
 unclassified = []
@@ -577,6 +581,11 @@ note('%d offline command-line tool(s), deployed nowhere by design: %s'
      % (len(OFFLINE_TOOLS), ', '.join(OFFLINE_TOOLS)))
 chk('every canonical file is classified: image, browser mirror or offline tool',
     unclassified == [], ', '.join(unclassified))
+for t in AUTHORING_COMPANIONS:
+    chk('the authoring companion %s is genuinely unreachable from the API' % t,
+        t[:-3] not in closure)
+    chk('the authoring companion %s is not shipped in the container' % t,
+        t not in image_files)
 for t in OFFLINE_TOOLS:
     chk('the offline tool %s is genuinely unreachable from the API' % t,
         t[:-3] not in closure)

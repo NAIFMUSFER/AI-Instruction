@@ -1,0 +1,338 @@
+{
+  "schema": "acs-engineering-changes/1.0.0",
+  "version": "1.0.0",
+  "compiler_version": "acs-engineering-authority-1.0.0",
+  "note": "سجلّ آليّ لكل تغيير يستطيع النظام إحداثه على النموذج الهندسي القانوني. لا يوجد تغيير مسموح خارج هذا السجلّ: كل معرّف هنا إمّا تطبيع ميكانيكي معلن آمن (SAFE_NORMALIZATION) أو اقتراح هندسي يتطلّب موافقة صريحة (ENGINEERING_PROPOSAL). عند الشكّ يُصنَّف التغيير اقتراحاً.",
+  "classes": ["SAFE_NORMALIZATION", "ENGINEERING_PROPOSAL"],
+  "class_note": "SAFE_NORMALIZATION يقتصر على التحويلات الميكانيكية: تدوير عددي قانوني، ترتيب حتمي، إزالة ضجيج تسلسل مستحيل، وتطبيع مخطّط لا يغيّر المعنى الهندسي. أي تعديل يمسّ نيّة التصميم — أبعاد أو مواضع أو أعداد أو عناصر سلامة أو أمن — هو ENGINEERING_PROPOSAL بلا استثناء.",
+  "canonical_model_boundary": "النموذج القانوني يبدأ عند خرج التوليد المقبول (بعد دمج المراحل وجولة الإصلاح داخل التوليد نفسه). كل ما يجري بعد ذلك — وعلى رأسه المصلِح الحسابي في acs_layout — يقع خارج الحدّ ولا يجوز أن يكتب في النموذج بلا موافقة.",
+  "authority_note": "لا يملك النظام سلطة هندسية. engineering_authority=false في كل اقتراح يولّده النظام، ولا يوجد مسار إيداع تلقائي.",
+  "single_mutation_path": "acs_authoring.commit_transaction — لا مسار كتابة ثانٍ. الاقتراح المعتمد يُترجَم إلى أمر تأليف قانوني ويمرّ بالمسار نفسه: تطبيع ← معاينة ← تحقّق ← تأكيد صريح ← إيداع ← مراجعة جديدة.",
+  "proposal_schema": {
+    "proposal_id": "prop:<sha256_16>",
+    "type": "<change_id>",
+    "target_ids": ["<canonical element id>"],
+    "before": {},
+    "after": {},
+    "reason": "string",
+    "source": "SYSTEM",
+    "engineering_authority": false,
+    "committed": false,
+    "requires_explicit_confirmation": true,
+    "base_revision": "rev:<sha256_16>|null",
+    "model_hash_before": "<sha256_hex>"
+  },
+  "rules": [
+    {
+      "change_id": "LAYOUT_ROUND_RECT",
+      "source_module": "acs_layout.py",
+      "class": "SAFE_NORMALIZATION",
+      "changes_canonical_model": true,
+      "reason": "تدوير قيم المستطيل إلى منزلتين عشريتين بالترميز الرقمي القانوني نفسه المستعمل في البصمة. لا يغيّر المعنى الهندسي ولا يتجاوز نصف مليمتر.",
+      "requires_user_confirmation": false,
+      "provenance_required": true,
+      "tolerance_m": 0.005,
+      "test_suite": "remediation/test_engineering_authority.py::safe_rounding_is_bounded"
+    },
+    {
+      "change_id": "UNDERSTAND_STRUCTURAL_DEFAULTS",
+      "source_module": "acs_understand.py",
+      "class": "SAFE_NORMALIZATION",
+      "changes_canonical_model": true,
+      "reason": "ملء قيمة غائبة أصلاً (floor_height / wall_h / wall_t) بقيمة افتراضية معلنة. يُطبَّق فقط عند الغياب التامّ، ولا يستبدل قيمة ذكرها المستخدم أبداً، ويُسجَّل مصدره system_default في meta.acs_provenance.",
+      "requires_user_confirmation": false,
+      "provenance_required": true,
+      "applies_only_when_absent": true,
+      "test_suite": "remediation/test_engineering_authority.py::defaults_never_overwrite"
+    },
+    {
+      "change_id": "UNDERSTAND_STAGE_MERGE",
+      "source_module": "acs_understand.py",
+      "class": "SAFE_NORMALIZATION",
+      "changes_canonical_model": false,
+      "reason": "دمج مرحلتي التوليد (الخطة تحكم المواضع) يقع داخل التوليد نفسه وقبل وجود نموذج قانوني. مُسجَّل أصلاً في meta.acs_stage_diagnostics.",
+      "requires_user_confirmation": false,
+      "provenance_required": true,
+      "test_suite": "remediation/test_engineering_authority.py::stage_merge_is_pre_canonical"
+    },
+    {
+      "change_id": "PROJECT_ELEMENT_IDS",
+      "source_module": "acs_project.py",
+      "class": "SAFE_NORMALIZATION",
+      "changes_canonical_model": false,
+      "reason": "توليد معرّفات حتمية (level.id / level.elevation / room.space_id) على نسخة عميقة. البصمة قبل التوليد وبعده متطابقة، والمُدخَل لا يُمسّ.",
+      "requires_user_confirmation": false,
+      "provenance_required": true,
+      "must_deep_copy": true,
+      "test_suite": "remediation/test_engineering_authority.py::ids_never_mutate_input"
+    },
+    {
+      "change_id": "LAYOUT_RESOLVE_OVERLAPS",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إزاحة غرفة أو منطقة لفضّ تداخل مكاني. يغيّر موضع عنصر هندسي ذكره التصميم.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "RESIZE_SPACE",
+      "test_suite": "remediation/test_engineering_authority.py::case_h_room_overlap"
+    },
+    {
+      "change_id": "LAYOUT_CLAMP_TO_SITE",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "اقتطاع عرض/عمق غرفة أو منطقة لتبقى داخل حدود الأرض. يغيّر أبعاداً هندسية.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "RESIZE_SPACE",
+      "test_suite": "remediation/test_engineering_authority.py::case_f_zone_resize"
+    },
+    {
+      "change_id": "LAYOUT_SHELF_PACK",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إعادة رصّ كل الغرف في صفوف مولَّدة آلياً. أعلى تغيير أثراً على المخطّط.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "RESIZE_SPACE",
+      "test_suite": "remediation/test_engineering_authority.py::case_h_room_overlap"
+    },
+    {
+      "change_id": "LAYOUT_PROPORTIONAL_SHRINK",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "تقليص كل الغرف 7% في كل جولة (حتى 8 جولات) لتتّسع داخل الأرض. يفقد التصميم حتى 44% من أبعاده المعلنة.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "RESIZE_SPACE",
+      "test_suite": "remediation/test_engineering_authority.py::case_f_zone_resize"
+    },
+    {
+      "change_id": "LAYOUT_SITE_EXPANSION",
+      "source_module": "acs_engineering_authority.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "توسيع الأرض بدل تقليص الغرف عندما لا تتّسع المساحات. البديل غير الهدّام، ويُعرَض ولا يُطبَّق.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "CHANGE_SITE_DIMENSIONS",
+      "test_suite": "remediation/test_engineering_authority.py::case_a_site_expansion"
+    },
+    {
+      "change_id": "LAYOUT_AISLE_WIDTH",
+      "source_module": "acs_engineering_authority.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "توسيع ممرّ صناعي دون الحدّ الأدنى المذكور. يُرصَد ويُقترَح ولا يُغيَّر تلقائياً أبداً.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "RESIZE_SPACE",
+      "test_suite": "remediation/test_engineering_authority.py::case_b_aisle_resize"
+    },
+    {
+      "change_id": "LAYOUT_OPENING_WIDTH_FIT",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "تصغير عرض باب أو نافذة ليتّسع على حافّته. عرض الباب قرار هندسي ومسار خروج.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "CHANGE_DOOR_PROPERTIES",
+      "test_suite": "remediation/test_engineering_authority.py::openings_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_OPENING_OFFSET_SET",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "تثبيت إزاحة فتحة داخل الحافّة، أو اختراع إزاحة غائبة (منتصف الحافّة). موضع الفتحة نيّة تصميم.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "MOVE_DOOR",
+      "test_suite": "remediation/test_engineering_authority.py::openings_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_POINT_CLAMP",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إزاحة نقطة (إنارة، فيش، كاميرا، كاشف، مرشّة، مخرج) لتبقى داخل الغرفة. موضع عنصر سلامة أو أمن.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "MOVE_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_POINT_HEIGHT_STANDARD",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "استبدال ارتفاع نقطة ذكره المستخدم بقيمة جدول قياسية. يمحو قيمة صرّح بها المستخدم.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "CHANGE_POINT_PROPERTIES",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_FURNITURE_CLAMP",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إزاحة قطعة أثاث لتبقى داخل الغرفة. محتوى نموذج لا عرض.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "MOVE_OBJECT",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_ADD_DOOR",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إنشاء باب لم يذكره التصميم. الباب مسار خروج وعنصر معماري.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_DOOR",
+      "test_suite": "remediation/test_engineering_authority.py::case_c_exit_addition"
+    },
+    {
+      "change_id": "LAYOUT_ADD_LIGHT",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة نقطة إنارة لم تُذكر. عنصر كهربائي يدخل جداول الكمّيات والأحمال.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_ADD_INDUSTRIAL_LIGHT",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "شبكة إنارة صناعية مولّدة (حتى 24 نقطة) في منطقة مفتوحة أو غلاف.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_ADD_SMOKE_DETECTOR",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة كاشف دخان لم يذكره التصميم. عنصر إنذار حريق وسلامة أرواح.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::case_d_smoke_detector"
+    },
+    {
+      "change_id": "LAYOUT_ADD_SPRINKLER",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة مرشّات إطفاء (حتى 20) في منطقة صناعية مفتوحة. عنصر إطفاء حريق.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::case_e_sprinkler"
+    },
+    {
+      "change_id": "LAYOUT_ADD_OUTLET",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة أفياش لم تُذكر. عناصر كهربائية تدخل الأحمال والكمّيات.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "LAYOUT_ADD_SWITCH",
+      "source_module": "acs_layout.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة مفتاح إنارة عند الباب. عنصر كهربائي لم يُذكر.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+    },
+    {
+      "change_id": "FLS_ADD_EXIT",
+      "source_module": "acs_engineering_authority.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة مخرج طوارئ عند نقص العدد المذكور. قرار سلامة أرواح لا يجوز اتخاذه آلياً.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::case_c_exit_addition"
+    },
+    {
+      "change_id": "SEC_ADD_CAMERA",
+      "source_module": "acs_engineering_authority.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "زيادة عدد الكاميرات عند نقصه. قرار أمني يغيّر عدداً هندسياً.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::case_g_camera_count"
+    },
+    {
+      "change_id": "FLS_ADD_EXTINGUISHER",
+      "source_module": "acs_engineering_authority.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة طفّايات عند نقص العدد المذكور مقابل المساحة.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::code_gaps_are_proposed"
+    },
+    {
+      "change_id": "FLS_ADD_ASSEMBLY_POINT",
+      "source_module": "acs_engineering_authority.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "إضافة نقطة تجمّع خارجية عند غيابها.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": "ADD_POINT",
+      "test_suite": "remediation/test_engineering_authority.py::code_gaps_are_proposed"
+    },
+    {
+      "change_id": "EDIT_MODEL_REPLACEMENT",
+      "source_module": "acs_understand.py",
+      "class": "ENGINEERING_PROPOSAL",
+      "changes_canonical_model": true,
+      "reason": "استبدال النموذج كاملاً بمخرج نموذج لغوي انطلاقاً من ملاحظات نصّية. يجب أن يُعرَض الفرق قبل الاستبدال ولا يُودَع بلا تأكيد.",
+      "requires_user_confirmation": true,
+      "provenance_required": true,
+      "authoring_command": null,
+      "diff_required": true,
+      "test_suite": "remediation/test_engineering_authority.py::edit_returns_diff_and_requires_confirmation"
+    }
+  ],
+  "removed_behaviours": [
+    {
+      "id": "UNDERSTAND_STRICT_CLEAR_ADDED",
+      "was": "acs_understand.py كان يمسح meta.added في الوضع الصارم فيفقد إفصاح النموذج عمّا أضافه.",
+      "now": "القائمة تُحفَظ في meta.acs_engineering_disclosure.ai_added ولا تُمحى.",
+      "test_suite": "remediation/test_engineering_authority.py::disclosure_is_never_wiped"
+    },
+    {
+      "id": "LAYOUT_SILENT_AUTOFIX",
+      "was": "acs_layout.autofix كان يكتب في النموذج مباشرة في كل مسارات التوليد بلا إفصاح ولا موافقة.",
+      "now": "الوضع الافتراضي PROPOSE: النموذج القانوني يبقى مطابقاً بايت ببايت، وتُولَّد اقتراحات.",
+      "test_suite": "remediation/test_engineering_authority.py::model_hash_unchanged_before_approval"
+    }
+  ]
+}

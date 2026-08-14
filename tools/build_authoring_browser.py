@@ -222,6 +222,22 @@ function auResolveTarget(model,targetId,buildingId){
         return {kind:'OBJECT',template:template,room_id:roomId,object_index:i,issues:[]}; }
     return {kind:null,issues:[_auIssue('INVALID_TARGET',tid,
       'the object behind this id does not exist')]}; }
+  if(parts.length>=3&&last.indexOf('point_')===0){
+    /* نقطة دلالية داخل غرفة: <template>.<room>.point_<n> */
+    let template, roomId;
+    if(parts.length>=4){ template=parts[1]; roomId=parts.slice(2,parts.length-1).join('.'); }
+    else { template=parts[0]; roomId=parts[1]; }
+    let room=_auFindRoom(model,template,roomId);
+    if(room===null&&parts.length>=4){
+      template=parts[0]; roomId=parts.slice(1,parts.length-1).join('.');
+      room=_auFindRoom(model,template,roomId); }
+    if(room!==null){
+      const i=parseInt(last.split('_').pop(),10);
+      const pts=room.points||[];
+      if(i>=0&&i<pts.length)
+        return {kind:'POINT',template:template,room_id:roomId,point_index:i,issues:[]}; }
+    return {kind:null,issues:[_auIssue('INVALID_TARGET',tid,
+      'the point behind this id does not exist')]}; }
   return {kind:null,issues:[_auIssue('INVALID_TARGET',tid,
     'target does not resolve in the canonical model')]}; }
 
@@ -730,6 +746,77 @@ function _auApply(model,cmd,buildingId){
       obj.x=_auQ(x); obj.z=_auQ(z);
       changed=['floors.'+t+'.rooms.'+rid+'.objects['+i+']'];
       dep=isStair?['vertical_connectivity']:[]; }
+  } else if(ctype==='MOVE_POINT'||ctype==='DELETE_POINT'
+            ||ctype==='CHANGE_POINT_PROPERTIES'){
+    /* نقطة المرحلة الأولى مصدر معماري دلالي (مثل objects) تُشتقّ منه الميكانيكا
+       والحريق. تُحرَّر هنا ليمرّ الاقتراح الهندسي المعتمد بمسار الإيداع الواحد. */
+    const res=auResolveTarget(candidate,target,bid);
+    if(res.kind!=='POINT'){
+      issues.push.apply(issues,(res.issues&&res.issues.length)?res.issues
+        :[_auIssue('INVALID_TARGET',target,'not a point')]);
+      return fail(); }
+    const t=res.template, rid=res.room_id, i=res.point_index;
+    const room=_auFindRoom(candidate,t,rid), pt=(room.points||[])[i];
+    if(ctype==='DELETE_POINT'){
+      dep=[t+'.'+rid+'.point_'+i]; brk=[t+'.'+rid+'.point_'+i];
+      room.points=room.points.filter((o,j)=>j!==i);
+      changed=['floors.'+t+'.rooms.'+rid+'.points'];
+    } else if(ctype==='MOVE_POINT'){
+      const x=needNum('x'), z=needNum('z');
+      if(x===null||z===null) return fail();
+      const rect=(room.rect||[0,0,0,0]).map(_auNum);
+      if(x<-1e-9||z<-1e-9||x>(rect[2]||0)+1e-9||z>(rect[3]||0)+1e-9)
+        return bad('COORDINATE_OUT_OF_BOUNDS',target,
+          'a point is addressed in space-local coordinates and must stay inside '+
+          'its host rectangle');
+      pt.x=_auQ(x); pt.z=_auQ(z);
+      changed=['floors.'+t+'.rooms.'+rid+'.points['+i+']'];
+    } else {
+      let touched=false;
+      if(Object.prototype.hasOwnProperty.call(params,'height')){
+        const v=_auNum(params.height);
+        if(v===null||v<0||v>AU_MAX_DIM)
+          return bad('INVALID_PARAMETER','height',
+            'a finite height within the declared bounds is required');
+        pt.height=_auQ(v); touched=true; }
+      if(Object.prototype.hasOwnProperty.call(params,'point_type')){
+        const pv=_auEnum(params.point_type);
+        if(!pv) return bad('INVALID_PARAMETER','point_type',
+          'a semantic point type is required');
+        pt.type=pv.toLowerCase(); touched=true; }
+      if(!touched) return bad('INVALID_PARAMETER','parameters',
+        'no editable point property was supplied');
+      changed=['floors.'+t+'.rooms.'+rid+'.points['+i+']']; }
+  } else if(ctype==='ADD_POINT'){
+    const res=auResolveTarget(candidate,target,bid);
+    if(res.kind!=='SPACE'){
+      issues.push.apply(issues,(res.issues&&res.issues.length)?res.issues
+        :[_auIssue('HOST_INVALID',target,'a point must be added to a space')]);
+      return _auResult(issues,{candidate:null,changed_paths:[],
+        dependencies:res.candidates||[],dependency_breaking:[]}); }
+    const t=res.template, rid=res.room_id, room=_auFindRoom(candidate,t,rid);
+    const ptype=_auEnum(params.point_type);
+    if(!ptype) return bad('INVALID_PARAMETER','point_type',
+      'a semantic point type is required');
+    const x=needNum('x'), z=needNum('z');
+    if(x===null||z===null) return fail();
+    const rect=(room.rect||[0,0,0,0]).map(_auNum);
+    if(x<-1e-9||z<-1e-9||x>(rect[2]||0)+1e-9||z>(rect[3]||0)+1e-9)
+      return bad('COORDINATE_OUT_OF_BOUNDS',target,
+        'a point is addressed in space-local coordinates and must stay inside '+
+        'its host rectangle');
+    const pts=room.points||[];
+    if(pts.length>=AU_LIMITS.max_spaces_per_level)
+      return bad('INVALID_PARAMETER','points','the declared point cap is reached');
+    const np={type:ptype.toLowerCase(),x:_auQ(x),z:_auQ(z)};
+    const ph=_auNum(params.height);
+    if(ph!==null){
+      if(ph<0||ph>AU_MAX_DIM)
+        return bad('INVALID_PARAMETER','height',
+          'a finite height within the declared bounds is required');
+      np.height=_auQ(ph); }
+    room.points=pts.concat([np]);
+    changed=['floors.'+t+'.rooms.'+rid+'.points['+(room.points.length-1)+']'];
   } else if(ctype==='ADD_OBJECT'||ctype==='ADD_STAIR'){
     const res=auResolveTarget(candidate,target,bid);
     if(res.kind!=='SPACE'){

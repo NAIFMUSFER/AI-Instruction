@@ -333,6 +333,27 @@ def resolve_target(model, target_id, building_id="bld_0"):
                         "object_index": i, "issues": []}
         return {"kind": None, "issues": [_issue("INVALID_TARGET", tid,
                                                 "the object behind this id does not exist")]}
+    # نقطة دلالية داخل غرفة: <template>.<room>.point_<n>
+    if len(parts) >= 3 and parts[-1].startswith("point_"):
+        if len(parts) >= 4:
+            template, room_id = parts[1], ".".join(parts[2:-1])
+        else:
+            template, room_id = parts[0], parts[1]
+        room = _find_room(model, template, room_id)
+        if room is None and len(parts) >= 4:
+            template, room_id = parts[0], ".".join(parts[1:-1])
+            room = _find_room(model, template, room_id)
+        if room is not None:
+            try:
+                i = int(parts[-1].split("_")[-1])
+            except ValueError:
+                i = -1
+            pts = room.get("points") or []
+            if 0 <= i < len(pts):
+                return {"kind": "POINT", "template": template, "room_id": room_id,
+                        "point_index": i, "issues": []}
+        return {"kind": None, "issues": [_issue("INVALID_TARGET", tid,
+                                                "the point behind this id does not exist")]}
     return {"kind": None, "issues": [_issue("INVALID_TARGET", tid,
                                             "target does not resolve in the canonical model")]}
 
@@ -995,6 +1016,99 @@ def _apply(model, cmd, building_id="bld_0"):
             obj["z"] = _q(z)
             changed = ["floors.%s.rooms.%s.objects[%d]" % (t, rid, i)]
             dep = ["vertical_connectivity"] if is_stair else []
+
+    # ----------------------------------------------------------- نقاط ----
+    # نقطة المرحلة الأولى مصدر معماري دلالي (مثل objects) تُشتقّ منه سجلّات
+    # الميكانيكا والحريق. تُحرَّر هنا لأن اقتراحاً هندسياً معتمداً — كاشف دخان
+    # ناقص، مخرج ناقص — يجب أن يمرّ بمسار الإيداع الواحد لا بمسار ثانٍ.
+    elif ctype in ("MOVE_POINT", "DELETE_POINT", "CHANGE_POINT_PROPERTIES"):
+        res = resolve_target(candidate, target, building_id)
+        if res["kind"] != "POINT":
+            issues.extend(res["issues"] or [_issue("INVALID_TARGET", target,
+                                                   "not a point")])
+            return _result(issues, candidate=None, changed_paths=[], dependencies=[],
+                           dependency_breaking=[])
+        t, rid, i = res["template"], res["room_id"], res["point_index"]
+        room = _find_room(candidate, t, rid)
+        pt = (room.get("points") or [])[i]
+        if ctype == "DELETE_POINT":
+            dep = ["%s.%s.point_%d" % (t, rid, i)]
+            brk = list(dep)
+            room["points"] = [p for j, p in enumerate(room["points"]) if j != i]
+            changed = ["floors.%s.rooms.%s.points" % (t, rid)]
+        elif ctype == "MOVE_POINT":
+            x = need_num("x")
+            z = need_num("z")
+            if x is None or z is None:
+                return _result(issues, candidate=None, changed_paths=[], dependencies=[],
+                               dependency_breaking=[])
+            rect = [_num(v) for v in (room.get("rect") or [0, 0, 0, 0])]
+            if x < -1e-9 or z < -1e-9 or x > (rect[2] or 0) + 1e-9 \
+                    or z > (rect[3] or 0) + 1e-9:
+                return bad("COORDINATE_OUT_OF_BOUNDS", target,
+                           "a point is addressed in space-local coordinates and must stay "
+                           "inside its host rectangle")
+            pt["x"] = _q(x)
+            pt["z"] = _q(z)
+            changed = ["floors.%s.rooms.%s.points[%d]" % (t, rid, i)]
+        else:                                          # CHANGE_POINT_PROPERTIES
+            touched = False
+            if "height" in params:
+                v = _num(params.get("height"))
+                if v is None or v < 0.0 or v > MAX_DIM:
+                    return bad("INVALID_PARAMETER", "height",
+                               "a finite height within the declared bounds is required")
+                pt["height"] = _q(v)
+                touched = True
+            if "point_type" in params:
+                pv = _enum(params.get("point_type"))
+                if not pv:
+                    return bad("INVALID_PARAMETER", "point_type",
+                               "a semantic point type is required")
+                pt["type"] = pv.lower()
+                touched = True
+            if not touched:
+                return bad("INVALID_PARAMETER", "parameters",
+                           "no editable point property was supplied")
+            changed = ["floors.%s.rooms.%s.points[%d]" % (t, rid, i)]
+
+    elif ctype == "ADD_POINT":
+        res = resolve_target(candidate, target, building_id)
+        if res["kind"] != "SPACE":
+            issues.extend(res["issues"] or [_issue("HOST_INVALID", target,
+                                                   "a point must be added to a space")])
+            return _result(issues, candidate=None, changed_paths=[],
+                           dependencies=res.get("candidates") or [],
+                           dependency_breaking=[])
+        t, rid = res["template"], res["room_id"]
+        room = _find_room(candidate, t, rid)
+        ptype = _enum(params.get("point_type"))
+        if not ptype:
+            return bad("INVALID_PARAMETER", "point_type",
+                       "a semantic point type is required")
+        x = need_num("x")
+        z = need_num("z")
+        if x is None or z is None:
+            return _result(issues, candidate=None, changed_paths=[], dependencies=[],
+                           dependency_breaking=[])
+        rect = [_num(v) for v in (room.get("rect") or [0, 0, 0, 0])]
+        if x < -1e-9 or z < -1e-9 or x > (rect[2] or 0) + 1e-9 \
+                or z > (rect[3] or 0) + 1e-9:
+            return bad("COORDINATE_OUT_OF_BOUNDS", target,
+                       "a point is addressed in space-local coordinates and must stay "
+                       "inside its host rectangle")
+        pts = room.get("points") or []
+        if len(pts) >= int(LIMITS["max_spaces_per_level"]):
+            return bad("INVALID_PARAMETER", "points", "the declared point cap is reached")
+        new = {"type": ptype.lower(), "x": _q(x), "z": _q(z)}
+        h = _num(params.get("height"))
+        if h is not None:
+            if h < 0.0 or h > MAX_DIM:
+                return bad("INVALID_PARAMETER", "height",
+                           "a finite height within the declared bounds is required")
+            new["height"] = _q(h)
+        room["points"] = list(pts) + [new]
+        changed = ["floors.%s.rooms.%s.points[%d]" % (t, rid, len(room["points"]) - 1)]
 
     elif ctype in ("ADD_OBJECT", "ADD_STAIR"):
         res = resolve_target(candidate, target, building_id)

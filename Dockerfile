@@ -28,6 +28,14 @@ COPY acs_fls.py acs_fls.json ./
 COPY acs_coord.py acs_coord.json ./
 # العرض البصري والتقديم (تصوير يحفظ الهندسة — لا تعديل هندسي ولا توليد هندسة)
 COPY acs_visual.py acs_visual.json ./
+# ── طبقات المعالجة المضافة في تصحيح ثقة الإنتاج ──
+# سلطة التغيير الهندسي: السجلّ الآليّ ومحرّك الاقتراحات (F-01)
+COPY acs_engineering_authority.py acs_engineering_changes.json ./
+# أمن الرفع (F-05/F-19)، الحدّ الموزّع (F-04)، إلغاء التوليد (F-06)
+COPY acs_upload_security.py acs_rate_limit.py acs_generation_job.py ./
+# السجلّ المنظَّم (F-18) وأصل البناء (provenance)
+COPY acs_logging.py acs_build_info.py ./
+
 ENV ACS_LLM_MODEL=claude-sonnet-5
 EXPOSE 8000
 CMD ["sh","-c","uvicorn acs_understand_api:app --host 0.0.0.0 --port ${PORT:-8000}"]
