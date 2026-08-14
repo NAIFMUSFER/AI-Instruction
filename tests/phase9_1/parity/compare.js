@@ -18,6 +18,19 @@ const S=v=>JSON.stringify(canon(v));
 const J=JSON.parse(fs.readFileSync(JS,'utf8'));
 const P=JSON.parse(fs.readFileSync(PY,'utf8'));
 const keys=Array.from(new Set(Object.keys(J).concat(Object.keys(P)))).sort();
+/* عدم الخواء: ٠/٠ ليس تطابقاً بل غياب مقارنة. الحدّ أدناه هو ما يُنتَج فعلاً. */
+const MIN_GROUPS=31;
+if(keys.length===0){
+  console.log('✗ THE COMPARISON SET IS EMPTY — nothing was compared');
+  process.exit(2); }
+if(Object.keys(J).length===0||Object.keys(P).length===0){
+  console.log('✗ ONE SIDE WROTE NOTHING — js:'+Object.keys(J).length
+    +' py:'+Object.keys(P).length); process.exit(2); }
+if(keys.length<MIN_GROUPS){
+  console.log('✗ THE COMPARISON IS VACUOUS: '+keys.length+' groups, minimum '
+    +MIN_GROUPS); process.exit(2); }
+console.log('not vacuous: '+keys.length+' groups compared (minimum '
+  +MIN_GROUPS+')');
 let bad=0;
 keys.forEach(k=>{
   const a=S(J[k]), b=S(P[k]);

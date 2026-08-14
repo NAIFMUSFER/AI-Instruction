@@ -73,7 +73,7 @@ step "13 · security and configuration"
 python3 "$ROOT/tests/security/test_security.py"; guard $?
 
 step "14 · Phase 1/2/3 regression (no phase may be broken by Phase 4)"
-sh "$ROOT/tests/phase3/run_all.sh"; guard $?
+sh "$ROOT/tests/phase3/run_all.sh" "$1"; guard $?
 
 step "15 · deterministic runtime benchmarks (no FPS, no GPU, no pixel claim)"
 node "$ROOT/tests/lib/run.js" "$HERE/benchmark_runtime.js"

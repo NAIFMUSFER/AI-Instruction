@@ -156,3 +156,7 @@ window
 # خطّاف اختياري: طبقة مساحة العمل تستدعيه فقط بعد فحص typeof، وهو غير موجود
 # في هذا البناء. تركه معرّفاً حرّاً يحفظ السلوك نفسه في الوحدة كما في النطاق الواحد.
 buildModelFromText
+# دوالّ window العامّة التي تُستدعى بلا بادئة في شيفرة الصفحة
+addEventListener
+removeEventListener
+dispatchEvent

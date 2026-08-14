@@ -85,7 +85,7 @@ step "8 · backend and configuration security"
 python3 "$ROOT/tests/security/test_security.py"; guard $?
 
 step "9 · Phase 6 regression (workspace and every earlier phase)"
-sh "$ROOT/tests/phase6/run_all.sh"; guard $?
+sh "$ROOT/tests/phase6/run_all.sh" "$1"; guard $?
 
 step "10 · deterministic render benchmarks (no FPS, no GPU, no pixel claim)"
 node "$ROOT/tests/lib/run.js" "$HERE/benchmark_render.js"

@@ -122,17 +122,52 @@ function evalTimeFreeRefs(ast) {
   return hits;
 }
 
+/* أسماء تنشرها وحدةٌ في سجلّ الربط المتأخّر: تُقرأ من الشجرة لا بتعبير نمطي،
+   ويُشترط الشكل القانوني الوحيد الذي يكتبه tools/frontend_split.js —
+   Object.assign(__ACS_LATE, { a, b, c }); بمفاتيح مختصرة فقط. */
+function latePublications(ast) {
+  const out = [];
+  for (const st of ast.program.body) {
+    if (st.type !== 'ExpressionStatement') continue;
+    const e = st.expression;
+    if (!e || e.type !== 'CallExpression') continue;
+    const c = e.callee;
+    if (!c || c.type !== 'MemberExpression' || c.object.name !== 'Object'
+        || c.property.name !== 'assign') continue;
+    if (e.arguments.length !== 2 || e.arguments[0].name !== '__ACS_LATE'
+        || e.arguments[1].type !== 'ObjectExpression') continue;
+    for (const p of e.arguments[1].properties) {
+      if (p.type !== 'ObjectProperty' || !p.shorthand
+          || p.key.type !== 'Identifier')
+        throw new Error('unexpected shape in an __ACS_LATE publication');
+      out.push(p.key.name);
+    }
+  }
+  return out;
+}
+
 const parts = [];
 const declared = new Set();
 const stats = [];
 
-/* __ACS_SHARED وحده يُمهَّد: كائن الحالة الذي نقل إليه المفكّك الأسماء التي
-   تُكتب عبر حدود الوحدات. كل ما عداه يأتي من الملفّات نفسها. */
-parts.push('const __ACS_SHARED = {};');
-declared.add('__ACS_SHARED');
-
 const mods = APP.modules();
 const loadOrder = APP.order();
+
+/* سجلّا الأوراق يتصدّران الحزمة كما يتصدّران public/app/main.js: __ACS_SHARED
+   (الأسماء التي تُكتب عبر حدود الوحدات) و __ACS_LATE (الإحالات الأمامية).
+   يُقرآن من ملفّيهما ولا يُصطنعان كائنين فارغين: مجموعة المفاتيح وختم
+   Object.seal يبقيان كما في المتصفّح، فنشرُ اسم غير مسجَّل يظهر بدل أن يمرّ. */
+parts.push(APP.registryPrelude(mods));
+for (const f of APP.REGISTRIES) {
+  if (loadOrder.indexOf(f) !== APP.REGISTRIES.indexOf(f))
+    throw new Error('leaf registry is not imported first by public/app/main.js: '
+                    + f);
+  topLevelNames(parse(APP.stripModuleSyntax(mods[f], f), f))
+    .forEach(n => declared.add(n));
+}
+if (!declared.has('__ACS_SHARED') || !declared.has('__ACS_LATE'))
+  throw new Error('the leaf registries did not declare __ACS_SHARED/__ACS_LATE');
+stats.push(APP.REGISTRIES.join(' + ') + ' — leaf registries');
 
 /* تحقّق: كل وحدة مُدرَجة موجودة، وترتيب الإدراج هو ترتيب التحميل الحقيقي */
 {
@@ -179,6 +214,19 @@ for (const f of PREFIX) {
              + why + '`) ==== */\n' + head);
   stats.push(f + ' — pure prefix [0,' + cut + ') of ' + body.length
              + ' top-level statements, boundary: ' + why);
+  /* سطر النشر `Object.assign(__ACS_LATE, {…})` يكتبه المفكّك في آخر الوحدة،
+     أي بعد الحدّ دائماً. إسقاطه يترك السجلّ فارغاً من أسماء أُدرِجت تصريحاتها
+     فعلاً، فينهار كل مستدعٍ أسبق بـ «ليست دالّة». يُعاد بثّه هنا مقصوراً على
+     ما صرّحت به البادئة المُدرَجة — لا اسم يُنشَر بلا شيفرته. */
+  const pub = latePublications(ast).filter(n => declared.has(n));
+  const skipped = latePublications(ast).filter(n => !declared.has(n));
+  if (pub.length)
+    parts.push('/* ==== public/app/' + f + ' (late-binding publications whose '
+               + 'declarations are included) ==== */\n'
+               + 'Object.assign(__ACS_LATE, { ' + pub.join(', ') + ' });');
+  stats.push(f + ' — publishes ' + (pub.join(', ') || '(none)')
+             + (skipped.length ? '; beyond the boundary: ' + skipped.join(', ')
+                               : ''));
 }
 
 for (const f of Object.keys(PICK)) {

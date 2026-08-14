@@ -1,7 +1,7 @@
 {
   "schema": "acs-production-verification/1.0.0",
   "tool": "tests/production/verify_live.py",
-  "started_at": "2026-08-14T17:24:43Z",
+  "started_at": "2026-08-14T18:55:34Z",
   "frontend": "https://sprightly-selkie-d906c3.netlify.app",
   "backend": "https://acs-engine.onrender.com",
   "expect_sha": null,
@@ -77,6 +77,7 @@
     "/app/generated/render-engine.js",
     "/app/generated/runtime.js",
     "/app/generated/workspace-ui.js",
+    "/app/late-bindings.js",
     "/app/render/scene.js",
     "/app/shared-state.js",
     "/app/trust/core.js",
@@ -151,7 +152,7 @@
     {
       "group": "B",
       "id": "B1",
-      "name": "every critical JS module returns 200 (42 file(s))",
+      "name": "every critical JS module returns 200 (43 file(s))",
       "status": "NOT VERIFIED",
       "detail": "",
       "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"

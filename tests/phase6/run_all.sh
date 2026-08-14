@@ -88,7 +88,7 @@ step "8 · backend and configuration security"
 python3 "$ROOT/tests/security/test_security.py"; guard $?
 
 step "9 · Phase 5 regression (authoring must not weaken)"
-sh "$ROOT/tests/phase5/run_all.sh"; guard $?
+sh "$ROOT/tests/phase5/run_all.sh" "$1"; guard $?
 
 step "10 · deterministic workspace benchmarks (no FPS, no GPU, no pixel claim)"
 node "$ROOT/tests/lib/run.js" "$HERE/benchmark_workspace.js"

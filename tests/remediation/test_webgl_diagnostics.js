@@ -727,17 +727,29 @@ try {
       const out = await pg.evaluate(() => {
         const btn = document.getElementById('acsDiagBtn');
         const peer = document.getElementById('bShot');   /* ضابط: زرّ قائم */
-        /* يُقاس قبل أي تعديل من الفاحص نفسه: السطر أدناه يضبط style.display
-           على السلف، فقياس بعده يقيس أثر الفاحص لا الوثيقة المشحونة. */
+        /* يُقاس قبل أي تعديل من الفاحص نفسه، فقياس بعده يقيس أثر الفاحص
+           لا الوثيقة المشحونة. */
         const inlineStyleAttrs = document.querySelectorAll('[style]').length;
         /* لوح الأدوات كلّه مخفيّ ما لم يُقلع سكربت الوحدة (لا Three.js هنا).
            نُظهر نفس السلف الذي يُظهره التطبيق عند فتح التبويب، ثم نقيس زرّنا
-           وزرّاً قائماً بجانبه بنفس المسطرة — فلا يمرّ زرّ مخفيّ بخصوصية. */
+           وزرّاً قائماً بجانبه بنفس المسطرة — فلا يمرّ زرّ مخفيّ بخصوصية.
+
+           F-11 — الإظهار يجري بنزع الصنف acs-hidden، وهو بالضبط ما يفعله
+           التطبيق المشحون (classList.toggle في ui/workspace-ui-wiring.js).
+           الحيلة القديمة (e.style.display='block') صارت بلا أثر لسببين معاً:
+           القاعدة الخارجية .acs-hidden{display:none!important} تغلب أي
+           نمط سطري، والسياسة الصارمة لا تسمح بنمط سطري أصلاً. لو بقيت،
+           لقاس هذا الفحص زرّاً لم يُعرَض قطّ وأعلن ذلك فشلاً أبدياً. */
         let e = btn;
         while (e && e !== document.body) {
-          if (getComputedStyle(e).display === 'none') e.style.display = 'block';
+          e.classList.remove('acs-hidden');
           e = e.parentElement;
         }
+        if (getComputedStyle(btn).display === 'none'
+            || btn.getBoundingClientRect().width === 0)
+          throw new Error('the shipped mechanism did not reveal acsDiagBtn: '
+            + 'display=' + getComputedStyle(btn).display
+            + ' width=' + btn.getBoundingClientRect().width);
         btn.focus();
         const gl = document.createElement('canvas').getContext('webgl2');
         return {

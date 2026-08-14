@@ -347,7 +347,8 @@ function main() {
   + '   ترتيب الاستيراد هو ترتيب المقاطع في الصفحة الأصلية بالضبط، فالتقييم\n'
   + '   يجري بالتتابع نفسه. لا منطق هنا: الوحدات هي المنطق.\n'
   + '   ============================================================ */\n'
-  + order.map(f => "import './" + f + "';").join('\n') + '\n';
+  + ["import './shared-state.js';", "import './late-bindings.js';"]
+      .concat(order.map(f => "import './" + f + "';")).join('\n') + '\n';
 
   if (check) {
     console.log('--check: nothing written');

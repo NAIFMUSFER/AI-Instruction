@@ -54,6 +54,9 @@ python3 "$HERE/test_plate_extent.py"; guard $?
 step "F-09 · shipped bundle measurement (measurement only — F-09 NOT IMPLEMENTED)"
 python3 "$HERE/test_bundle_report.py"; guard $?
 
+step "F-09 · module evaluation order (acyclic graph, backward edges, __ACS_LATE)"
+node "$HERE/test_module_graph.js"; guard $?
+
 step "F-11 · content security policy"
 node "$ROOT/tests/lib/run.js" "$HERE/test_csp.js"; guard $?
 # القياس الحيّ للسياسة في Chromium حقيقي (يكتب tests/remediation/outputs/csp_probe.json)

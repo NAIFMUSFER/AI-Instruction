@@ -37,6 +37,14 @@ function order() {
    حين استخرجها tests/phase3/lib/extract_browser_bundle.js من الصفحة. */
 const PURE = ['core/viewer.js', 'core/standards.js', 'core/disciplines.js'];
 
+/* سجلّا الأوراق اللذان يستوردهما public/app/main.js أوّلاً: __ACS_SHARED
+   (الأسماء التي تُكتَب عبر حدود الوحدات) و __ACS_LATE (الإحالات الأمامية).
+   في نطاق Node الواحد يجب أن يوجد الاثنان قبل أي مقطع، تماماً كما في الصفحة.
+   لا يُصطنعان ككائنين فارغين: يُقرآن من ملفّيهما الحقيقيّين، فيبقى مجموع
+   المفاتيح ومنعُ التوسعة (Object.seal) كما هو في المتصفّح، ونشرُ اسم غير
+   مسجَّل يظهر بدل أن يمرّ صامتاً. */
+const REGISTRIES = ['shared-state.js', 'late-bindings.js'];
+
 function shell() {
   return fs.readFileSync(path.join(PUB, 'index.html'), 'utf8');
 }
@@ -69,32 +77,47 @@ function pageText() {
 
 /* يزيل جُمل import/export من نصّ وحدة فيعود المقطع إلى نطاق واحد كما كان.
    الإزالة سطريّة على الشكل القانونيّ الذي يكتبه tools/frontend_split.js وحده،
-   ويُتحقَّق منها: أي جملة import/export متبقّية تُرفَع خطأً بدل أن تمرّ صامتة. */
+   ويُتحقَّق منها: أي جملة import/export متبقّية تُرفَع خطأً بدل أن تمرّ صامتة.
+   `export const/function/…` (وهو شكل سجلّي الأوراق وحدهما) يفقد الكلمة
+   المفتاحية فقط: التصريح نفسه يبقى حرفاً بحرف في النطاق الواحد. */
 function stripModuleSyntax(src, label) {
   const out = src
     .replace(/^import\s*\{[^}]*\}\s*from\s*'[^']*';\s*$/gm, '')
     .replace(/^import\s+\*\s+as\s+\w+\s+from\s*'[^']*';\s*$/gm, '')
     .replace(/^import\s*\{[^}]*\}\s*from\s*"[^"]*";\s*$/gm, '')
     .replace(/^import\s+'[^']*';\s*$/gm, '')
-    .replace(/^export\s*\{[^}]*\};\s*$/gm, '');
+    .replace(/^export\s*\{[^}]*\};\s*$/gm, '')
+    .replace(/^export\s+(?=(?:const|let|var|function|class|async)\b)/gm, '');
   const left = /^(import|export)\s/m.exec(out);
   if (left) throw new Error('unstripped module syntax in ' + label + ': '
                             + out.slice(left.index, left.index + 90));
   return out;
 }
 
+/* نصّ السجلّين مجرّداً من جُمل الوحدات — يتصدّر كل حزمة Node. */
+function registryPrelude(mods) {
+  const m = mods || modules();
+  return REGISTRIES.map(f => {
+    if (!m[f]) throw new Error('registry module not found: public/app/' + f);
+    return '/* ==== public/app/' + f + ' (leaf registry) ==== */\n'
+           + stripModuleSyntax(m[f], f);
+  }).join('\n\n');
+}
+
 function nodeBundle(files) {
   const list = files || PURE;
   const mods = modules();
-  /* __ACS_SHARED وحده يُمهَّد: هو الكائن الذي نقل إليه المفكّك الأسماء القليلة
-     التي تُكتب عبر الوحدات. كل ما عداه يأتي من الملفّات نفسها. */
-  const parts = ['const __ACS_SHARED = {};'];
+  /* السجلّان أوّلاً — بمفاتيحهما الحقيقية وختمهما — ثم الوحدات المطلوبة.
+     كل ما عداهما يأتي من الملفّات نفسها: لا بدائل ولا أسماء مصطنعة. */
+  const parts = [registryPrelude(mods)];
   for (const f of list) {
+    if (REGISTRIES.indexOf(f) >= 0) continue;
     if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
     parts.push('/* ==== ' + f + ' ==== */\n' + stripModuleSyntax(mods[f], f));
   }
   return parts.join('\n\n');
 }
 
-module.exports = { ROOT, PUB, APP, PURE, order, shell, modules, appText,
-                   pageText, nodeBundle, stripModuleSyntax };
+module.exports = { ROOT, PUB, APP, PURE, REGISTRIES, order, shell, modules,
+                   appText, pageText, nodeBundle, registryPrelude,
+                   stripModuleSyntax };

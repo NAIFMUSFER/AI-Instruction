@@ -3,6 +3,8 @@
    ترتيب الاستيراد هو ترتيب المقاطع في الصفحة الأصلية بالضبط، فالتقييم
    يجري بالتتابع نفسه. لا منطق هنا: الوحدات هي المنطق.
    ============================================================ */
+import './shared-state.js';
+import './late-bindings.js';
 import './core/viewer.js';
 import './core/standards.js';
 import './core/disciplines.js';

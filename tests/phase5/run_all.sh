@@ -73,7 +73,7 @@ step "13 · security and configuration"
 python3 "$ROOT/tests/security/test_security.py"; guard $?
 
 step "14 · Phase 4 regression (runtime immutability must not weaken)"
-sh "$ROOT/tests/phase4/run_all.sh"; guard $?
+sh "$ROOT/tests/phase4/run_all.sh" "$1"; guard $?
 
 step "15 · deterministic authoring benchmarks (no FPS, no GPU, no pixel claim)"
 node "$ROOT/tests/lib/run.js" "$HERE/benchmark_authoring.js"

@@ -21,6 +21,35 @@ const canon = v => {
 const J = JSON.parse(fs.readFileSync(JS, 'utf8'));
 const P = JSON.parse(fs.readFileSync(PY, 'utf8'));
 const keys = Array.from(new Set(Object.keys(J).concat(Object.keys(P)))).sort();
+
+/* عدم الخواء: مقارنة بلا مشاهد ليست نجاحاً بل غياب فحص. الحدّان أدناه هما ما
+   يُنتَج فعلاً اليوم؛ نقصان أيّهما يعني أن جانباً توقّف عن الكتابة أو أن ملفّاً
+   قديماً في /tmp قُرئ — وكلاهما فشل يُعلَن، لا مرور صامت. */
+const MIN_KEYS = 116, MIN_ADV = 16;
+if (keys.length === 0) {
+  console.log('✗ THE COMPARISON SET IS EMPTY — nothing was compared');
+  process.exit(2);
+}
+if (Object.keys(J).length === 0 || Object.keys(P).length === 0) {
+  console.log('✗ ONE SIDE WROTE NOTHING — js:' + Object.keys(J).length
+              + ' py:' + Object.keys(P).length);
+  process.exit(2);
+}
+if (keys.length < MIN_KEYS) {
+  console.log('✗ THE COMPARISON IS VACUOUS: ' + keys.length
+              + ' groups, minimum ' + MIN_KEYS);
+  process.exit(2);
+}
+if (Object.keys(J.__adversarial__ || {}).length < MIN_ADV) {
+  console.log('✗ THE ADVERSARIAL BLOCK IS VACUOUS: '
+              + Object.keys(J.__adversarial__ || {}).length
+              + ', minimum ' + MIN_ADV);
+  process.exit(2);
+}
+console.log('not vacuous: ' + keys.length + ' groups (minimum ' + MIN_KEYS
+            + ') and ' + Object.keys(J.__adversarial__ || {}).length
+            + ' adversarial cases (minimum ' + MIN_ADV + ')');
+
 let bad = 0;
 keys.forEach(k => {
   const a = JSON.stringify(canon(J[k]));

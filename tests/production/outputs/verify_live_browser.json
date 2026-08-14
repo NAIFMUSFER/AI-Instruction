@@ -1,7 +1,7 @@
 {
   "schema": "acs-production-verification/1.0.0",
   "tool": "tests/production/verify_live_browser.js",
-  "started_at": "2026-08-14T17:24:45.035Z",
+  "started_at": "2026-08-14T18:55:35.737Z",
   "frontend": "https://sprightly-selkie-d906c3.netlify.app",
   "expect_sha": null,
   "groups": [

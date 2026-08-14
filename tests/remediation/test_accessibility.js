@@ -346,9 +346,16 @@ chk('the focus-outline check is not vacuous — an unfocused control has no outl
    فعلاً حتى يكون «أوّل موضع Tab» أوّلَ موضع حقيقي لا بقيّة اجتياز سابق. */
 await page.reload({waitUntil:'domcontentloaded'});
 await page.waitForTimeout(400);
-await page.evaluate(()=>{ const l=document.getElementById('login');
-  if(l) l.style.display='none';
-  const lf=document.getElementById('left'); if(lf) lf.style.display=''; });
+/* F-11 — بالآليّة المشحونة نفسها (boot/engine-guard.js): الصنف لا style. */
+const railUp=await page.evaluate(()=>{ const l=document.getElementById('login');
+  if(l) l.classList.add('acs-hidden');
+  const lf=document.getElementById('left');
+  if(lf){ lf.classList.remove('acs-hidden'); lf.style.display=''; }
+  return {rail:lf?getComputedStyle(lf).display:null,
+          login:l?getComputedStyle(l).display:null}; });
+chk('the tool rail is laid out before the tab order is walked — otherwise this '
+    +'section would measure a page with almost no controls on it',
+    railUp.rail!=='none'&&railUp.rail!==null&&railUp.login==='none', railUp);
 await page.keyboard.press('Tab');
 const order=[];
 for(let i=0;i<60;i++){
@@ -524,31 +531,42 @@ chk('the accessibility baseline runs even though the 3D module script did not',
     baseline===true);
 
 /* F-09/F-11 — الإخفاء الابتدائي كان خاصيّة مضمّنة style="display:none"، وصار
-   صنفاً من أصناف الأدوات (.acs-u-NN). مبدّل التبويبات المشحون يُظهر اللوح
-   بـ p.style.display='' — وهو ما كان يمسح الخاصيّة المضمّنة. الصنف لا يُمسَح
-   هكذا، فالتوكيدة الأولى هنا تقيس الآليّة المشحونة نفسها لا نتيجتها. */
+   صنف .acs-hidden وقاعدته الخارجية display:none!important. لذلك تبدّل المبدّل
+   المشحون نفسه: showTab في public/app/ui/workspace-ui-wiring.js صار ينزع الصنف
+   *ثم* يضبط style.display (السطران معاً)، وحارس الإقلاع في
+   public/app/boot/engine-guard.js يُظهر #left بنزع الصنف كذلك.
+   هذا الفحص يُشغّل الآليّة المشحونة كما هي — نسخةً من سطرَي showTab لا صياغةً
+   أخرى. الصيغة القديمة (style.display='' وحدها) لم تعد آليّةً مشحونة: قاعدة
+   !important تغلبها، فكانت تقيس فشلاً من صنعها هي لا من الصفحة. */
 const tabSwitch=await page.evaluate(()=>{
-  const lg=document.getElementById('login'); if(lg) lg.style.display='none';
-  const lf=document.getElementById('left'); if(lf) lf.style.display='';
+  /* نسخة حرفية من public/app/boot/engine-guard.js */
+  const lg=document.getElementById('login'); if(lg) lg.classList.add('acs-hidden');
+  const lf=document.getElementById('left'); if(lf) lf.classList.remove('acs-hidden');
   const sp=document.getElementById('acsPanelShow');
-  /* بالضبط ما تفعله public/app/ui/workspace-ui-wiring.js عند تبديل التبويب */
+  /* نسخة حرفية من سطرَي showTab في ui/workspace-ui-wiring.js */
+  sp.classList.toggle('acs-hidden', false);
   sp.style.display='';
   return {display:getComputedStyle(sp).display,
           cls:String(sp.className||''),
           leftDisplay:lf?getComputedStyle(lf).display:null};
 });
-chk('the shipped tab switcher can actually reveal a panel: setting '
-    +"style.display='' overrides whatever hides it by default",
+chk('the shipped tab switcher can actually reveal a panel: showTab removes '
+    +".acs-hidden and clears style.display, and the panel then lays out",
     tabSwitch.display!=='none', tabSwitch);
-/* حتى تبقى فحوص التركيز أدناه قابلة للقياس، يُرفَع الإخفاء صراحةً ومُعلَناً.
-   هذا تعويض معلن لا إخفاء لعطل: العطل نفسه مُثبَت في التوكيدة أعلاه. */
-await page.evaluate(()=>{ const a=document.getElementById('acsA11yAlt');
+chk('and the shipped boot guard reveals the tool rail the same way',
+    tabSwitch.leftDisplay!=='none'&&tabSwitch.leftDisplay!==null, tabSwitch);
+/* حتى تبقى فحوص التركيز أدناه قابلة للقياس، يُرفَع الإخفاء بالآليّة المشحونة
+   نفسها. أي بقاء لـ display:none بعدها عطلٌ يُعلَن هنا لا يُبتلَع. */
+const revealed=await page.evaluate(()=>{ const a=document.getElementById('acsA11yAlt');
   a.className=a.className.replace(/\bon\b/g,''); a.setAttribute('aria-hidden','true');
   const sp=document.getElementById('acsPanelShow');
-  if(sp && getComputedStyle(sp).display==='none') sp.style.display='block';
+  sp.classList.remove('acs-hidden'); sp.style.display='';
   const lf=document.getElementById('left');
-  if(lf && getComputedStyle(lf).display==='none') lf.style.display='flex';
-  const lg=document.getElementById('login'); if(lg) lg.style.display='none'; });
+  lf.classList.remove('acs-hidden'); lf.style.display='';
+  const lg=document.getElementById('login'); if(lg) lg.classList.add('acs-hidden');
+  return {panel:getComputedStyle(sp).display, rail:getComputedStyle(lf).display}; });
+chk('the panel and the tool rail are really laid out before focus is measured',
+    revealed.panel!=='none'&&revealed.rail!=='none', revealed);
 const canFocus=await page.evaluate(()=>{
   const b=document.getElementById('acsA11yOpen'); b.focus();
   return document.activeElement===b; });
