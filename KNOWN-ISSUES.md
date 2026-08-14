@@ -6,10 +6,12 @@
 >
 > | | closed | still open |
 > |---|---|---|
-> | | KI-1, KI-3, KI-5, KI-7 | KI-2, KI-4, KI-6, KI-8, KI-9 |
+> | | KI-1, KI-3, KI-5, KI-7, **KI-10**, **KI-11** | KI-2, KI-4, KI-6, KI-8, KI-9, KI-12 |
 >
-> New items opened by this remediation: **KI-10** (frontend modularisation, F-09) and
-> **KI-11** (CSP still carries `unsafe-inline`/`unsafe-eval`, F-11 — blocked on KI-10).
+> KI-10 (F-09 frontend modularisation) and KI-11 (F-11 strict CSP) were opened by the
+> first remediation pass and closed by the second. The five still-open legacy items are
+> all environmental — they need network egress or a vendored Three.js. **KI-12** is new
+> and is a performance item only: the optional feature panels are still eager.
 
 ## KI-1 · Automatic engineering changes reported by generation (SEMANTIC — **CLOSED**)
 
@@ -242,51 +244,127 @@ That single command produces the STATE | MESHES | CALLS | TRIANGLES | FRUSTUM | 
 PIXEL | RESULT table §4 asks for, with real numbers.
 
 
-## KI-10 · The frontend is still a single 1.86 MB `public/index.html` (OPEN — F-09 not implemented)
+## KI-10 · The frontend was a single 1.86 MB `public/index.html` (**CLOSED**)
 
-**Status:** measured, not fixed. `tools/bundle_report.py` →
-`tests/performance/bundle_report.json`: 1,862,256 bytes total (gzip 512,974); one
-`<script type="module">` of 1,757,305 bytes; generated marker blocks 791,508 bytes;
-hand-written remainder 1,070,748 bytes (57.5%). Target shell 153,600 bytes — the page
-is **12.12× over budget** and `budget_met: false`.
+**Closed by:** F-09. **Evidence:** `tests/remediation/test_bundle_report.py` (91/0),
+`tests/remediation/test_module_graph.js` (32/0), `tools/check_index_guard.py`, and
+`tests/deploy/verify_deploy.sh` (584/0).
 
-**Why it matters beyond load time:** it is the hard blocker for KI-11. `'unsafe-inline'`
-cannot leave the CSP while the entire application is inline in the page.
-
-**Shape of the remediation:** split into `public/app/{core,api,runtime,workspace,
-authoring,render,bim,docs,pbr,archdetail}.js`; keep generated mirrors but write them to
-dedicated modules; lazy-load the BIM, Documentation, PBR and Architectural Detail
-panels; preserve Python↔JS parity; replace `check_index_guard.py`'s `MIN_BYTES >
-1,000,000` with a module-integrity check. `tests/remediation/test_bundle_report.py`
-(97 passed) fails if the report ever claims the work was done.
-
-
-## KI-11 · The deployed CSP still carries `'unsafe-inline'` and `'unsafe-eval'` (OPEN — blocked on KI-10)
-
-**Status:** measured in real Chromium with the production policy served as a genuine
-response header (`tests/remediation/csp_browser_probe.js` →
-`tests/remediation/outputs/csp_probe.json`).
-
-| | deployed policy | hardened trial |
+| | before | after |
 |---|---|---|
-| CSP violations | 0 | 62 |
-| hostile inline `<script>` executed | **yes** | no |
-| hostile `eval()` / `new Function()` executed | **yes / yes** | no / no |
-| application boots | yes | **no — it does not start at all** |
+| `public/index.html` | **1,863,894 B** (gzip 513,557) | **44,255 B** (gzip 12,410) — 2.4 % of the old page |
+| executable inline JS | 7 classic scripts + one 1,758,943 B module | **0** — the only inline `<script>` is `type="importmap"` |
+| `<style>` blocks | 1 (46,752 B) | **0** — `public/app/styles/app.css` |
+| `style="…"` attributes | 50 | **0** — 28 generated `.acs-u-NN` classes + `.acs-hidden` |
+| first-party modules | 1 | **25** files under `public/app/`, largest 228,695 B (12.6 % of the total, cap 307,200) |
 
-Recorded as `KNOWN-WEAKNESS · CSP-INLINE-EXEC`, `CSP-EVAL-EXEC`, `CSP-FUNCTION-CTOR` —
-never as a pass. Any XSS sink is therefore directly exploitable, and the page parses
-attacker-supplied DXF and JSON client-side.
+**Module layout** — `main.js` (entry, imports in the original evaluation order),
+`shared-state.js` and `late-bindings.js` (the two leaf registries), `boot/` (5 classic
+scripts), `styles/app.css`, `core/{viewer,standards,disciplines}.js`,
+`generated/{runtime,authoring,workspace-ui,render-engine,bim,docs,pbr,arch-detail,
+pbr-bridge,arch-detail-bridge}.js`, `render/scene.js`, `ui/workspace-ui-wiring.js`,
+`trust/{core,wiring}.js`.
 
-**What was done anyway (pure tightening, no refactor needed):** `form-action 'self'`,
-`frame-src 'none'`, `manifest-src 'self'`, `media-src 'self'`,
-`upgrade-insecure-requests` added; nothing removed or widened.
+**Why it is safe.** The split was mechanical, not hand-cut: `tools/frontend_split.js`
+parses the module with a real JS parser, computes each segment's top-level declarations
+and free identifiers, and generates every `import`/`export` from that computation. Two
+properties made it possible and are now locked by `test_module_graph.js`:
 
-**Why it cannot simply be removed:** the application has **zero** real `eval(` call
-sites — `'unsafe-eval'` exists entirely for `es-module-shims@1.8.2`, which loads only on
-browsers without import-map support. Dropping it removes iOS/iPadOS ≤ 16.3, macOS
-Safari ≤ 16.3, Firefox ≤ 107 (incl. ESR 102), Chrome/Edge ≤ 88, Samsung ≤ 14 — a total
-outage, not a degradation. `CSP-HARDENING.md` carries the ordered nonce/hash migration
-plan and the full compatibility table. Also found there: `CSP-SHIM-OVERFETCH` — the
-shim's `HTMLScriptElement.supports` feature test makes Chrome/Edge 89–105 download it
-needlessly; fixable without KI-10.
+* **No application identifier is read at module-evaluation time** — every cross-segment
+  reference is inside a function. Measured, not assumed.
+* **The graph is acyclic and every edge points backwards** in `main.js`'s order, so the
+  evaluation order is byte-for-byte the pre-split page order. The 20 forward references
+  go through `late-bindings.js`; the 8 bindings written across module boundaries go
+  through `shared-state.js`, because an ES import binding is read-only.
+
+The old guard asserted `MIN_BYTES = 1_000_000` — *the page must be at least a megabyte
+or it is truncated*. That constant is now `MAX_BYTES = 204_800` and the build fails
+above it. The inversion of that one constant is the whole finding.
+
+**Anti-gaming:** `test_bundle_report.py` fails if the module count drops below 15 or if
+any single module holds more than 20 % of first-party JS — so "F-09 done" cannot be
+claimed by moving 1.7 MB from HTML into one `app.js`.
+
+**Still true and unchanged:** the split moved bytes, it did not shrink them. Total
+first-party JavaScript is 1,819,588 B across 25 now-cacheable files. Lazy-loading of the
+optional panels is **not** implemented (`lazy_bytes: 0`, reported honestly); the four
+heavy feature layers are still in the eager graph. That is a performance item, not a
+security or architecture one, and it is recorded here as **KI-12**.
+
+
+## KI-11 · The deployed CSP carried `'unsafe-inline'` and `'unsafe-eval'` (**CLOSED**)
+
+**Closed by:** F-11, which F-09 unblocked. **Evidence:** `tests/remediation/csp_browser_probe.js`
+→ `tests/remediation/outputs/csp_probe.json`, measured in real Chromium with the
+production policy served as a genuine response header; `tests/remediation/test_csp.js`
+(141 assertions, 30/30 hostile policy mutants caught); `tests/security/test_security.py`
+(377/0); `tools/check_csp_hash.py`.
+
+**Final policy:**
+```
+default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
+frame-src 'none'; form-action 'self';
+script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA=';
+style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self';
+connect-src 'self' https://acs-engine.onrender.com; media-src 'self';
+manifest-src 'self'; upgrade-insecure-requests
+```
+
+| attack | before | after |
+|---|---|---|
+| hostile inline `<script>` | **EXECUTED** | **BLOCKED** |
+| `eval("…")` | **EXECUTED** | **BLOCKED** |
+| `new Function("…")()` | **EXECUTED** | **BLOCKED** |
+| `javascript:` URL | not measured | **BLOCKED** |
+| external cross-origin script | not measured | **BLOCKED** |
+| inline event handler | not measured | **BLOCKED** |
+| `data:text/javascript` | not measured | **BLOCKED** |
+| `blob:` script | not measured | **BLOCKED** |
+| `setAttribute('style', …)` | allowed | **BLOCKED** |
+| `element.style.prop = …` | allowed | **still ALLOWED** (CSSOM is not governed by `style-src` — measured) |
+| normal-boot CSP violations | 0 | **0** |
+
+**Methodology note that matters:** `page.evaluate()` injects through the CDP debugger,
+which bypasses CSP. Measuring `eval` from inside it reports EXECUTED even under a strict
+policy. Both the probe and `tools/csp_static_server.py` measure `eval`/`new Function`
+from a same-origin **external** script and carry a comment saying why.
+
+**The single remaining hash.** An import map cannot be an external file with adequate
+cross-browser support, so it is the one inline element left. It is pinned by content
+sha256; `tools/check_csp_hash.py` fails the build if the page, `public/app/importmap.sha256`
+and `netlify.toml` ever disagree — a one-character edit to the map cannot ship silently.
+
+**es-module-shims was removed.** It was the sole reason for `'unsafe-eval'` and `blob:`
+(the application contains zero real `eval(`/`new Function(` call sites). Browsers older
+than Chrome/Edge 89, Firefox 108 and Safari/iOS 16.4 lose the application entirely. That
+population is stated in versions; its **market share is NOT VERIFIED** — no network, no
+analytics. `CSP-HARDENING.md` §4.3 documents the alternative that would restore those
+browsers without `unsafe-eval` (rewrite the bare `'three'` specifiers in the vendored
+addons at build time, making the import map unnecessary); it is NOT implemented and NOT
+tested, because there is no vendored tree here.
+
+**Three defects this hardening exposed, all fixed and measured:**
+1. `onclick="location.reload()"` on the engine-failure button — dead under the new
+   policy, i.e. the only recovery affordance shown when the 3D engine fails did nothing.
+   Rewired with `addEventListener` in `boot/engine-guard.js`; the page now really reloads.
+2. `.acs-u-03{display:none}` replacing `style="display:none"` broke the tab switcher —
+   `p.style.display=''` cannot clear a class rule. Fixed with a semantic `.acs-hidden`
+   that the shipped `showTab` removes; proven in Chromium with the shipped function,
+   the real markup and the real stylesheet: exactly one panel visible per tab.
+3. The same conversion left `#left` visible before login (`#left{display:flex}` outranks
+   a class). Fixed; measured `none` before login and `flex` after.
+
+
+## KI-12 · Optional feature panels are not lazy-loaded (OPEN — performance only)
+
+`tests/performance/bundle_report.json` records `lazy_bytes: 0`. The BIM, Documentation,
+PBR and Architectural-Detail layers (≈ 361 KB together) are imported eagerly by
+`public/app/main.js`, because the split preserved the original evaluation order exactly
+and those layers register `window.ACS` methods that other modules bind at load.
+
+Making them lazy means giving each an explicit `init()` and deferring the `window.ACS`
+registration behind it — a behavioural change that must be proven not to alter the
+`window.ACS` surface, the render loop, or listener counts. It is a performance item with
+no security or correctness consequence, and it was deliberately not attempted in the same
+pass as the split: mixing a mechanical, parser-verified refactor with a behavioural one
+would have made both unreviewable.
