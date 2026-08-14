@@ -15,33 +15,33 @@
     X-Frame-Options = "DENY"
     # صلاحيات المتصفح: يُسمح بالكاميرا وتتبّع WebXR للواجهة نفسها فقط، والبقية معطّلة
     Permissions-Policy = "camera=(self), xr-spatial-tracking=(self), fullscreen=(self), microphone=(), geolocation=(), payment=(), usb=()"
-    # سياسة محتوى دفاعية. ملاحظات الاستثناءات:
-    #  • كل مكتبات التشغيل محلية الآن (three + الإضافات + es-module-shims + pdf.js في /vendor)،
-    #    لذا script-src = 'self' فقط (+ 'unsafe-inline'/'unsafe-eval' للوحدة inline والـshim) — بلا CDN.
-    #  • blob: في script-src: يحتاجه es-module-shims وحده لتنفيذ الوحدات المُعاد كتابتها،
-    #    وهو الآن لا يُحمَّل إلا على متصفح لا يدعم importmap أصلاً (iOS Safari < 16.4).
-    #    المتصفحات الحديثة لا تُنشئ blob إطلاقاً. الإضافة ضيّقة (blob من نفس الأصل) ولا تمنح
-    #    قدرة جديدة إذ إن 'unsafe-eval' موجود أصلاً. لإسقاط دعم iOS<16.4: احذف كتلة الشيم
-    #    من index.html ثم احذف blob: من هنا ⇒ سياسة أضيق.
-    #  • worker-src 'self' blob: لعامل pdf.js المحلي.  • img-src data:/blob: لخامات WebGL واللقطات.
-    #  • connect-src مثبّت على 'self' + نطاق خادم الفهم (acs-engine.onrender.com).
-    #    عند تجاوز الخادم يدوياً لنطاق آخر، أضِف نطاقه هنا.
-    #  • frame-ancestors 'none' + object-src 'none' + base-uri 'self' لتقليل السطح.
-    #  ملاحظة: لم تُضَف COEP عمداً (تكسر خامات الكانفس عبر الأصول).
+    # ── سياسة محتوى صارمة (F-11 · مُغلَق) ─────────────────────────────────
+    # صارت ممكنة بعد F-09: لم يبقَ في public/index.html سطر جافاسكربت قابل
+    # للتنفيذ ولا كتلة <style> ولا سمة style="…" واحدة. التطبيق كلّه ملفّات
+    # تحت /app/، فلم يعد لـ'unsafe-inline' سبب ولا مبرّر.
     #
-    #  F-11 (تشديد مضاف — لا يحتاج أي إعادة هيكلة، ولم يُحذف ولم يُوسَّع أي شيء
-    #  ممّا سبق):
-    #   • form-action 'self'         — الصفحة لا تحوي أي <form> (صفر عنصر)، فهذا
-    #     يمنع حقن نموذج يسرّب بيانات المشروع إلى مضيف خارجي.
-    #   • frame-src 'none'           — لا <iframe> حقيقي في الصفحة (الأربع
-    #     إشارات الموجودة سلاسل داخل مواصفات JSON لقوائم الوسوم الممنوعة).
-    #   • manifest-src 'self'        — لا rel="manifest" اليوم؛ يُثبَّت الآن.
-    #   • media-src 'self'           — لا <video>/<audio> اليوم؛ يُثبَّت الآن.
-    #   • upgrade-insecure-requests  — أي مرجع http:// يُرقّى إلى https قبل الطلب.
-    #  ما لم يُحذَف ولماذا، وخطة الترحيل إلى nonce/hash: CSP-HARDENING.md.
-    #  تشديد CSP غير مكتمل عمداً: 'unsafe-inline'/'unsafe-eval' لا يمكن حذفهما
-    #  قبل F-09 (تفكيك public/index.html إلى public/app/*.js).
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests"
+    #  • script-src 'self' + بصمة خريطة الاستيراد وحدها.
+    #    خريطة الاستيراد لا يمكن أن تكون خارجية (لا متصفّح يدعم src عليها
+    #    دعماً كافياً)، فهي العنصر الداخليّ الوحيد الباقي، وتُسمَح ببصمة
+    #    sha256 حتميّة يحسبها tools/frontend_shell.js ويتحقّق منها
+    #    tools/check_csp_hash.py في كل بناء. بصمةٌ واحدة لمحتوى واحد معروف
+    #    ليست ثغرة: أي تعديل بايت واحد في الخريطة يبطلها ويوقف تحميلها.
+    #  • لا 'unsafe-inline' ولا 'unsafe-eval' ولا blob: في script-src.
+    #    السبب الوحيد لهما كان es-module-shims، وقد حُذف — الأثر على التوافق
+    #    محسوب بالإصدارات في CSP-HARDENING.md §5، وليس تخميناً.
+    #  • style-src 'self' — بلا 'unsafe-inline'. كتابة الخصائص من الشيفرة
+    #    (element.style.x = …) لا يحكمها CSP، وقد قِيس ذلك في Chromium حقيقي
+    #    لا افتُرض؛ الدليل في tests/remediation/outputs/csp_probe.json.
+    #  • worker-src 'self' — عامل pdf.js يُحمَّل من مسار محلّي حقيقي، فلا حاجة
+    #    إلى blob:. إن ظهر في الإنتاج أن pdf.js يلجأ إلى عامل blob احتياطي،
+    #    فالتوجيه الواحد الذي يُضاف هو worker-src 'self' blob: ولا شيء غيره.
+    #  • img-src data: blob: — خامات WebGL واللقطات وصور المستخدم المستوردة.
+    #  • font-src 'self' — لا @font-face ولا خطّ data: في app.css (صفر).
+    #  • frame-src/object-src 'none' · form-action 'self' — لا إطار ولا كائن
+    #    ولا نموذج في الصفحة (صفر عنصر لكلٍّ منها، مفحوصة لا مفترَضة).
+    #  ملاحظة: لم تُضَف COEP عمداً (تكسر خامات الكانفس عبر الأصول).
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+
 
 # ── منع فهرسة الاستوديو نفسه ───────────────────────────────────────────────
 # `/` و`/index.html` هما تطبيق الاستوديو (لا صفحة تسويق): يفتح على بطاقة دخول
