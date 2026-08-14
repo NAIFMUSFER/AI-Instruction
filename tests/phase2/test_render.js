@@ -22,9 +22,15 @@ globalThis.THREE={
     this.position={x:0,y:0,z:0,set:(a,b,c)=>{this.position.x=a;this.position.y=b;this.position.z=c;}};
     boxes.push(this); }
 };
-globalThis.getMat=()=>({userData:{}});
-globalThis.scaleBoxUV=()=>{};
-globalThis.OBJ_UNKNOWN=[];
+/* الخامات مستبعدة عمداً: هذا فحص هندسة لا مظهر، وخامة حقيقية تحتاج WebGL.
+   قبل F-09 كان المستخرج يترك getMat خارج الحزمة فيكفي تعريفه على globalThis؛
+   صارت الحزمة تحمل الأصل، فالإبدال يجري على الارتباط نفسه ويُتحقَّق منه. */
+getMat=()=>({userData:{}});
+scaleBoxUV=()=>{};
+OBJ_UNKNOWN=[];
+if(getMat('x').map!==undefined)
+  throw new Error('the material stub did not take effect — this suite would then '
+    +'be making a pixel claim it cannot verify');
 
 const run=(model)=>{ boxes.length=0; const g=compile(C(model));
   return {group:g, boxes:boxes.slice()}; };

@@ -1,5 +1,5 @@
 /* جانب جافاسكربت من تكافؤ المرحلة 4 — يعمل داخل شيفرة المتصفّح المستخرَجة من
-   public/index.html، ويكرّر ما يفعله py_runtime.py حرفاً بحرف على نفس التجهيزات. */
+   وحدات public/app/ (لا من الصفحة: بعد F-09 صارت قشرة)، ويكرّر ما يفعله py_runtime.py حرفاً بحرف على نفس التجهيزات. */
 const fs=require('fs'), path=require('path');
 const HERE=__dirname, PHASE=path.resolve(HERE,'..'), ROOT=path.resolve(PHASE,'..','..');
 /* يعمل تحت Node وداخل المتصفّح معاً: نفس الجسم، ولا نسخة ثانية من المنطق. */

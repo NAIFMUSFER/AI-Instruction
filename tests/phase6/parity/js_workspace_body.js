@@ -1,5 +1,5 @@
 /* جانب جافاسكربت من تكافؤ المرحلة 6 — يعمل داخل شيفرة المتصفّح المستخرَجة من
-   public/index.html، ويكرّر ما يفعله py_workspace.py حرفاً بحرف. */
+   وحدات public/app/ (لا من الصفحة: بعد F-09 صارت قشرة)، ويكرّر ما يفعله py_workspace.py حرفاً بحرف. */
 const fs=require('fs'), path=require('path');
 const HERE=__dirname, PHASE=path.resolve(HERE,'..'), ROOT=path.resolve(PHASE,'..','..');
 const _tmp=(function(){ try{ return require('os').tmpdir(); }catch(e){ return '/tmp'; } })();

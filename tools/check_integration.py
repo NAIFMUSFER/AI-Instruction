@@ -12,12 +12,24 @@
 
     python3 tools/check_integration.py            # يفحص شجرة العمل
     python3 tools/check_integration.py <root>     # يفحص شجرة أخرى
+
+بعد F-09: «الصفحة المشحونة» لم تعد ملفّاً واحداً. كل رمز كان يُطلَب من نصّ
+public/index.html يُطلَب الآن من نصّ الوحدات (app_source.app_text)، وما هو علامة
+DOM يُطلَب من القشرة (app_source.shell). لم يسقط شرط واحد: انتقل كلٌّ إلى الطبقة
+التي صار يعيش فيها فعلاً — البحث عن `pqBoundsMember` في القشرة اليوم لا يجده
+مهما كانت الشجرة سليمة، فيصير الحارس عقيماً؛ وهذا ما يمنعه هذا الفصل.
 """
 import io
 import json
 import os
 import re
 import sys
+
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+import app_source as A                                            # noqa: E402
 
 REQUIRED_PY_SYMBOLS = ('VB', 'CLIP', 'VIEWPORT_CONTRACT',
                        'VIEWPORT_CONTRACT_SYMBOLS', 'bounds_member',
@@ -29,13 +41,29 @@ REQUIRED_JS_SYMBOLS = ('PQ_VB', 'PQ_CLIP', 'PQ_VIEWPORT_CONTRACT',
 REQUIRED_BRIDGE_SYMBOLS = ('_pqDescribe', '_pqSceneBounds',
                            '_pqApplyCameraSafety',
                            'window.ACS.renderDiagnosticsDetail')
-# F-08 — عقد تشخيص العرض الدائم يعيش في سكربت الوحدة المكتوب يدوياً، لا في كتلة
-# مولَّدة. هذه الرموز تُطلَب من الصفحة نفسها حتى لا يمرّ نشر بلا تشخيص.
-REQUIRED_PAGE_DIAG_SYMBOLS = ('window.ACS.renderDiagnostics=function',
-                              'window.ACS.captureRenderFailure=function',
-                              'window.ACS_BUILD_INFO',
-                              'ACS_DIAG_KEYS',
-                              'id="acsDiagBtn"')
+# F-08 — عقد تشخيص العرض الدائم. كان يعيش في سكربت الوحدة داخل الصفحة؛ بعد F-09
+# صار في وحدات /app/. الرموز نفسها، والمطلب نفسه: لا يمرّ نشر بلا تشخيص.
+REQUIRED_APP_DIAG_SYMBOLS = ('window.ACS.renderDiagnostics=function',
+                             'window.ACS.captureRenderFailure=function',
+                             'window.ACS_BUILD_INFO',
+                             'renderDiagnostics',
+                             'captureRenderFailure',
+                             'ACS_BUILD_INFO',
+                             'ACS_DIAG_KEYS')
+# ما هو علامة لا شيفرة: زرّ التشخيص عنصر DOM، فمكانه القشرة وحدها.
+REQUIRED_SHELL_DIAG_MARKUP = ('id="acsDiagBtn"',)
+# رموز أصل البناء انتقلت إلى سكربت الإقلاع الذي يملك window.ACS_BUILD_INFO،
+# وهو ما تختمه tools/stamp_build_tokens.py الآن.
+BUILD_INFO_REL = os.path.join('public', 'app', 'boot', 'build-info.js')
+# (الرمز النائب، اسم الحقل الذي يحمله في RAW). الفحص على الحقل لا على الرمز
+# وحده: بعد أن يختم tools/stamp_build_tokens.py لا يبقى رمز نائب، والاشتراط
+# على الرمز حينها يُفشل كل بناء مختوم — أي يجعل الحارس يعاقب السلوك الصحيح.
+# المطلوب هو أن يبقى موضع الاستبدال قائماً وأن تكون حالته موحّدة: إمّا ثلاثة
+# رموز نائبة، وإمّا ثلاث قيم مختومة — لا نصف ختم.
+BUILD_TOKEN_FIELDS = (('__ACS_GIT_SHA__', 'git_sha'),
+                      ('__ACS_BUILT_AT__', 'built_at'),
+                      ('__ACS_FRONTEND_VERSION__', 'frontend_version'))
+BUILD_TOKENS = tuple(t for t, _f in BUILD_TOKEN_FIELDS)
 # الوسم القديم يُعرَف بجملة الطباعة نفسها لا بذكرها في تعليق شارح
 LEGACY_HARNESS_PRINT = re.compile(r"""console\.log\(\s*['"]PAGE BOOT""")
 HARNESS_VERSION_MARKER = 'HARNESS: verify_page_boot'
@@ -57,9 +85,20 @@ def check(root):
             return None
         return _read(root, rel)
 
+    # الشجرة التي تُقرأ منها الوحدات هي شجرة app_source نفسها. لو طُلب فحص شجرة
+    # أخرى لكان الحارس يفحص وحدات هذه الشجرة ويظنّها تلك — فشل صامت، فيُرفَض
+    # صراحةً بدل أن يُخفى.
+    if os.path.realpath(root) != os.path.realpath(A.ROOT):
+        return (['this gate reads the application modules through '
+                 'tools/app_source.py, which is bound to %s; it cannot verify '
+                 'the unrelated tree %s' % (A.ROOT, os.path.realpath(root))],
+                facts)
+
     spec_raw = need('acs_pbr.json')
     py = need('acs_pbr.py')
-    page = need(os.path.join('public', 'index.html'))
+    shell = need(os.path.join('public', 'index.html'))
+    build_info = need(BUILD_INFO_REL)
+    app = A.app_text()
     bridge = need(os.path.join('tools', '_pbr_bridge_block.js'))
     injector = need(os.path.join('tools', 'build_pbr_browser.py'))
     test = need(os.path.join('tests', 'phase9_2', 'test_black_viewport.py'))
@@ -94,12 +133,12 @@ def check(root):
         fails.append('acs_pbr.py does not read the contract version from the '
                      'specification')
 
-    # 3) المرآة المولَّدة في الصفحة المشحونة
+    # 3) المرآة المولَّدة في شيفرة التطبيق المشحونة (كانت في نصّ الصفحة)
     for sym in REQUIRED_JS_SYMBOLS:
-        if sym not in page:
-            fails.append('public/index.html lacks the browser mirror symbol '
-                         '%s — regenerate with tools/build_pbr_browser.py'
-                         % sym)
+        if sym not in app:
+            fails.append('the shipped application modules lack the browser '
+                         'mirror symbol %s — regenerate with '
+                         'tools/build_pbr_browser.py' % sym)
     for sym in REQUIRED_JS_SYMBOLS:
         if sym not in injector:
             fails.append('tools/build_pbr_browser.py does not emit %s' % sym)
@@ -108,27 +147,59 @@ def check(root):
     for sym in REQUIRED_BRIDGE_SYMBOLS:
         if sym not in bridge:
             fails.append('tools/_pbr_bridge_block.js lacks %s' % sym)
-        if sym not in page:
-            fails.append('public/index.html lacks the bridge symbol %s' % sym)
+        if sym not in app:
+            fails.append('the shipped application modules lack the bridge '
+                         'symbol %s' % sym)
     if 'pqBoundsMember(_pqDescribe(o))' not in bridge:
         fails.append('the bridge does not route scene bounds through the '
                      'shared predicate')
 
-    # 4b) عقد تشخيص العرض الدائم موجود في الصفحة نفسها (F-08)
-    for sym in REQUIRED_PAGE_DIAG_SYMBOLS:
-        if sym not in page:
+    # 4b) عقد تشخيص العرض الدائم (F-08): الشيفرة في الوحدات، والعلامة في القشرة
+    for sym in REQUIRED_APP_DIAG_SYMBOLS:
+        if sym not in app:
+            fails.append('the shipped application modules lack the '
+                         'render-diagnostics symbol %s' % sym)
+    for mark in REQUIRED_SHELL_DIAG_MARKUP:
+        if mark not in shell:
             fails.append('public/index.html lacks the render-diagnostics '
-                         'symbol %s' % sym)
-    for _tok in ('__ACS_GIT_SHA__', '__ACS_BUILT_AT__',
-                 '__ACS_FRONTEND_VERSION__'):
-        if _tok not in page:
-            fails.append('public/index.html lacks the build-identity '
-                         'substitution token %s' % _tok)
+                         'markup %s — the code would exist with no way to '
+                         'reach it' % mark)
 
-    # 5) العقد نفسه مكتوب حرفياً في الصفحة المشحونة
-    if contract and contract not in page:
-        fails.append('the shipped page does not carry the contract version %s'
-                     % contract)
+    # 4c) موضع استبدال أصل البناء: انتقل إلى public/app/boot/build-info.js،
+    # وهو ما تختمه tools/stamp_build_tokens.py. بقاؤه في القشرة يعني ختماً في
+    # غير محلّه — رمزٌ لا تراه الأداة فيخرج البناء UNPROVENANCED بصمت.
+    _bi_rel = BUILD_INFO_REL.replace(os.sep, '/')
+    _placeholder = []
+    for _tok, _field in BUILD_TOKEN_FIELDS:
+        mfield = re.search(r'\b%s\s*:\s*"([^"]*)"' % re.escape(_field),
+                           build_info)
+        if not mfield:
+            fails.append('%s does not declare the build-identity field %s — '
+                         'tools/stamp_build_tokens.py would have nothing to '
+                         'substitute and the frontend would ship '
+                         'UNPROVENANCED' % (_bi_rel, _field))
+            continue
+        val = mfield.group(1)
+        if not val:
+            fails.append('%s declares %s as an empty string — neither a '
+                         'placeholder nor a stamped value' % (_bi_rel, _field))
+        _placeholder.append(val == _tok)
+        if _tok in shell:
+            fails.append('public/index.html still carries the build-identity '
+                         'token %s — provenance now lives in %s only'
+                         % (_tok, _bi_rel))
+    if _placeholder and len(set(_placeholder)) != 1:
+        fails.append('%s is HALF-STAMPED: some build-identity fields still '
+                     'hold their placeholder token and others were '
+                     'substituted. A build either has an identity or admits '
+                     'it has none — it never has half of one' % _bi_rel)
+    facts['build_provenance'] = ('UNSTAMPED' if all(_placeholder or [True])
+                                 else 'STAMPED')
+
+    # 5) العقد نفسه مكتوب حرفياً في الشيفرة المشحونة
+    if contract and contract not in app:
+        fails.append('the shipped application modules do not carry the '
+                     'contract version %s' % contract)
 
     # 6) الاختبار والمِرقاب من نفس الجيل
     if 'P.CLIP' in test and 'CLIP' not in py:
@@ -185,8 +256,9 @@ def main():
               'python3 tools/build_archdetail_browser.py')
         sys.exit(1)
     print('✓ integration gate: every layer declares %s '
-          '(spec, python, browser mirror, bridge, shipped page, tests)'
-          % facts.get('contract'))
+          '(spec, python, browser mirror, bridge, shipped app modules under '
+          'public/app/, the index shell markup, boot/build-info.js tokens, '
+          'tests)' % facts.get('contract'))
 
 
 if __name__ == '__main__':

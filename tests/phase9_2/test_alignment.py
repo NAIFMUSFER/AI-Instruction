@@ -338,7 +338,12 @@ for name in ('warehouse', 'villa_glazed', 'apartment_balconies'):
              for k in ('walls', 'spaces', 'openings')} == counts0)
 
 print('\n== L · WHAT THE SHIPPED COMPILER ACTUALLY DOES ==')
-page = open(os.path.join(ROOT, 'public', 'index.html'), encoding='utf-8').read()
+# بعد F-09 صار المصرِّف وحدات ES تحت public/app/ والصفحة قشرة بلا شيفرة.
+# البحث عن رمز يجري على شيفرة التطبيق كلّها بترتيب التحميل الحقيقي.
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as _APPSRC                                      # noqa: E402
+page = _APPSRC.app_text()
+assert len(page) > 1000000, 'the application code did not load'
 chk('the rack block is derived through the shared contract (fix applied)',
     'pqRackBlock([rx,rz,rw,rd],R)' in page)
 chk('the old unclamped rack extent is gone from the compiler',

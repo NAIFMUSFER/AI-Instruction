@@ -4,6 +4,7 @@
    المصدر المولِّد: tools/build_pbr_browser.py
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
+import { __ACS_LATE } from '../late-bindings.js';
 import { _scmp, ingestCanonicalJson, sha256Hex } from '../core/standards.js';
 import { _pyRound } from '../core/viewer.js';
 
@@ -910,5 +911,10 @@ if(typeof window!=='undefined'){
 }
 
 /* ===== END ACS PBR QUALITY ===== */
+
+/* نشر الارتباطات التي يقرأها مقطع أسبق — تُقرأ داخل دوالّ فقط،
+   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً. */
+Object.assign(__ACS_LATE, { pqPlateRect, pqRackBlock });
+
 
 export { ACS_PBR_SPEC, PQ, PQ_BLOCKING, PQ_CAMERAS, PQ_CHAIN, PQ_CLIP, PQ_ENVS, PQ_ISSUES, PQ_LIGHTING, PQ_LIMITS, PQ_MATERIALS, PQ_MAT_MAP, PQ_OVERRIDABLE, PQ_PLATE_POLICY, PQ_QUALITY, PQ_RENDER_RECOVERY_CONTRACT, PQ_REQ, PQ_RR, PQ_SHADOWS, PQ_SPACES, PQ_TC, PQ_VB, PQ_VIEWPORT_CONTRACT, _pqMedian, _pqMeets, _pqNum, _pqQ, _pqSha16, pqAutoProfile, pqBoundsFromDescriptors, pqBoundsMember, pqCamera, pqCameraClip, pqCameraFit, pqCapabilitiesNormalise, pqCaptureMetadata, pqConfig, pqContainment, pqElementValid, pqEnvironment, pqExposureClamp, pqFitDistance, pqFrustumContains, pqIssue, pqLevelBaseY, pqLighting, pqMaterial, pqMaterialForEngineering, pqMaterialSafe, pqPlatePolicy, pqPlateRect, pqQuality, pqRackBlock, pqRecoveryPlan, pqResolveTransform, pqRobustBounds, pqRoofAlignment, pqSafeKey, pqShadowConfig, pqTexturePathOk };

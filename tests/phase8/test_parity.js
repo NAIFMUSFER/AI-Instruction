@@ -127,11 +127,19 @@ console.log('\n== THE COMPARISON IS NOT VACUOUS ==');
 
 console.log('\n== THE DECLARED BOUNDARY IS STATED, NOT DISGUISED ==');
 (function(){
-  const src=fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8');
+  /* بحث عن رمز لا عن علامة: بعد F-09 الرموز في وحدات public/app/ لا في القشرة،
+     والقشرة لا تحمل شيفرة. الفحص على شيفرة التطبيق كلّها، ويُثبَت أنّ التصريح
+     في وحدة التبادل المولَّدة نفسها لا في مكان آخر. */
+  const APPSRC=require(path.join(ROOT,'tests','phase3','lib_app_files.js'));
+  const src=APPSRC.appText();
   chk('the browser declares that it does not parse STEP',
       /BX_STEP_PARSER_IN_BROWSER\s*=\s*false/.test(src));
   chk('the browser export descriptor says serialisation is not done here',
       /serialised_in_browser:false/.test(src));
+  chk('both declarations live in the generated exchange module, and it is imported',
+      /BX_STEP_PARSER_IN_BROWSER\s*=\s*false/.test(APPSRC.mod('generated/bim.js'))
+      &&/serialised_in_browser:false/.test(APPSRC.mod('generated/bim.js'))
+      &&APPSRC.order().indexOf('generated/bim.js')>=0);
   const P=JSON.parse(fs.readFileSync(PY,'utf8'));
   chk('the serialisation-only fields exist on the python side and are excluded openly',
       !!P['villa'].manifest_serialised_only

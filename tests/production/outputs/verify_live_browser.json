@@ -1,7 +1,7 @@
 {
   "schema": "acs-production-verification/1.0.0",
   "tool": "tests/production/verify_live_browser.js",
-  "started_at": "2026-08-14T13:45:23.006Z",
+  "started_at": "2026-08-14T17:24:45.035Z",
   "frontend": "https://sprightly-selkie-d906c3.netlify.app",
   "expect_sha": null,
   "groups": [
@@ -14,8 +14,8 @@
   "counts": {
     "pass": 0,
     "fail": 0,
-    "not_verified": 29,
-    "total": 29
+    "not_verified": 33,
+    "total": 33
   },
   "exit_code": 2,
   "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
@@ -232,6 +232,38 @@
       "group": "F",
       "id": "F3",
       "name": "no horizontal overflow in the Arabic layout",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H1",
+      "name": "the deployed page is a shell under 200 KB with /app/main.js as its only module entry",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H2",
+      "name": "the classic boot scripts and the external stylesheet load and apply",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H3",
+      "name": "no <style> block, no style= attribute and no inline event handler",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H4",
+      "name": "the deployed CSP raised no violation in a real browser",
       "status": "NOT VERIFIED",
       "detail": "",
       "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"

@@ -18,9 +18,20 @@ fs.readdirSync(TESTS).forEach(d=>{
   fs.readdirSync(fd).filter(f=>/\.json$/.test(f)).forEach(f=>{
     const t=fs.readFileSync(path.join(fd,f),'utf8');
     files[path.join(fd,f)]=t; if(!(f in files)) files[f]=t; }); });
-/* صفحة التطبيق نفسها: فحص واجهة المطوّر يقرأ الكتلة المحقونة منها مباشرةً */
+/* صفحة التطبيق نفسها: القشرة — العلامة وخريطة الاستيراد. تبقى بالمفتاحين
+   اللذين تطلبهما الاختبارات التي تفحص العلامة (معرّفات العناصر، سمات الوصول). */
 { const t=fs.readFileSync(path.join(REPO,'public','index.html'),'utf8');
   files[path.join(REPO,'public','index.html')]=t; files['public/index.html']=t; }
+/* وشيفرة التطبيق نفسها: بعد F-09 صارت وحدات ES تحت public/app/. كل ملفّ يُقدَّم
+   بمساره المطلق وبمساره النسبي من جذر المستودع، كي يقرأ الاختبار
+   public/app/generated/*.js داخل الصفحة كما يقرأه في Node بلا فرع ثانٍ. */
+(function addAppTree(dir){
+  fs.readdirSync(dir).sort().forEach(f=>{
+    const p=path.join(dir,f);
+    if(fs.statSync(p).isDirectory()) return addAppTree(p);
+    const t=fs.readFileSync(p,'utf8');
+    files[p]=t; files[path.relative(REPO,p).split(path.sep).join('/')]=t; }); })(
+  path.join(REPO,'public','app'));
 /* المواصفات القانونية تُقدَّم بكل صيغة مسار قد يطلبها اختبار (اختبار الانحراف) */
 fs.readdirSync(REPO).filter(f=>/^acs_.*\.json$/.test(f)).forEach(f=>{
   const t=fs.readFileSync(path.join(REPO,f),'utf8');
@@ -102,63 +113,25 @@ let body=shim+'\n'+pure+'\n(function(){\n'+test
 /* أي "</script" داخل نصّ أو JSON يقطع الوسم — نهرّبه دون تغيير قيمة أي سلسلة */
 body=body.replace(/<\/script/gi,'<\\/script').replace(/<!--/g,'<\\!--')
          .replace(/\u2028/g,'\\u2028').replace(/\u2029/g,'\\u2029');
-/* كتلة DOM لمساحة العمل تُؤخذ من نفس المصدر المولَّد في الصفحة، لا نسخة ثانية،
-   كي تعمل فحوص الواجهة داخل الصفحة كما تعمل في التطبيق */
+/* كتل DOM والأنماط تُؤخذ من نفس المصدر المولَّد الذي يشحنه التطبيق، لا نسخة
+   ثانية: العلامة من القشرة public/index.html، والأنماط من public/app/styles/app.css
+   بعد أن نقل F-09 الوسم <style> المضمَّن إلى ملفّ.
+   الغياب لم يعد يُتجاوَز بصمت: صفحة بلا كتلة تجعل فحوص الواجهة تمرّ على فراغ. */
 let wsDom='', wsCss='';
-{ const page=fs.readFileSync(path.join(REPO,'public','index.html'),'utf8');
-  const db='<!-- ===== ACS WORKSPACE DOM (generated) ===== -->';
-  const de='<!-- ===== END ACS WORKSPACE DOM ===== -->';
-  if(page.indexOf(db)>=0&&page.indexOf(de)>=0)
-    wsDom=page.slice(page.indexOf(db)+db.length,page.indexOf(de));
-  const cb='/* ===== ACS WORKSPACE STYLES (generated) ===== */';
-  const ce='/* ===== END ACS WORKSPACE STYLES ===== */';
-  if(page.indexOf(cb)>=0&&page.indexOf(ce)>=0)
-    wsCss=page.slice(page.indexOf(cb)+cb.length,page.indexOf(ce));
-  /* كتلة لوحة التصوير تُؤخذ من نفس المصدر المولَّد أيضاً */
-  const rb='<!-- ===== ACS RENDER DOM (generated) ===== -->';
-  const re_='<!-- ===== END ACS RENDER DOM ===== -->';
-  if(page.indexOf(rb)>=0&&page.indexOf(re_)>=0)
-    wsDom+=page.slice(page.indexOf(rb)+rb.length,page.indexOf(re_));
-  const rcb='/* ===== ACS RENDER STYLES (generated) ===== */';
-  const rce='/* ===== END ACS RENDER STYLES ===== */';
-  if(page.indexOf(rcb)>=0&&page.indexOf(rce)>=0)
-    wsCss+=page.slice(page.indexOf(rcb)+rcb.length,page.indexOf(rce));
-  /* كتلة لوحة التبادل تُؤخذ من نفس المصدر المولَّد كذلك — لا نسخة ثانية */
-  const bb='<!-- ===== ACS BIM DOM (generated) ===== -->';
-  const be='<!-- ===== END ACS BIM DOM ===== -->';
-  if(page.indexOf(bb)>=0&&page.indexOf(be)>=0)
-    wsDom+=page.slice(page.indexOf(bb)+bb.length,page.indexOf(be));
-  const bcb='/* ===== ACS BIM STYLES (generated) ===== */';
-  const bce='/* ===== END ACS BIM STYLES ===== */';
-  if(page.indexOf(bcb)>=0&&page.indexOf(bce)>=0)
-    wsCss+=page.slice(page.indexOf(bcb)+bcb.length,page.indexOf(bce));
-  /* كتلة لوحة التوثيق تُؤخذ من نفس المصدر المولَّد كذلك */
-  const db2='<!-- ===== ACS DOCS DOM (generated) ===== -->';
-  const de2='<!-- ===== END ACS DOCS DOM ===== -->';
-  if(page.indexOf(db2)>=0&&page.indexOf(de2)>=0)
-    wsDom+=page.slice(page.indexOf(db2)+db2.length,page.indexOf(de2));
-  const dcb='/* ===== ACS DOCS STYLES (generated) ===== */';
-  const dce='/* ===== END ACS DOCS STYLES ===== */';
-  if(page.indexOf(dcb)>=0&&page.indexOf(dce)>=0)
-    wsCss+=page.slice(page.indexOf(dcb)+dcb.length,page.indexOf(dce));
-  /* كتلة لوحة الجودة البصرية تُؤخذ من نفس المصدر المولَّد كذلك */
-  const qb='<!-- ===== ACS PBR DOM (generated) ===== -->';
-  const qe='<!-- ===== END ACS PBR DOM ===== -->';
-  if(page.indexOf(qb)>=0&&page.indexOf(qe)>=0)
-    wsDom+=page.slice(page.indexOf(qb)+qb.length,page.indexOf(qe));
-  const qcb='/* ===== ACS PBR STYLES (generated) ===== */';
-  const qce='/* ===== END ACS PBR STYLES ===== */';
-  if(page.indexOf(qcb)>=0&&page.indexOf(qce)>=0)
-    wsCss+=page.slice(page.indexOf(qcb)+qcb.length,page.indexOf(qce));
-  /* كتلة لوحة العرض المعماري تُؤخذ من نفس المصدر المولَّد كذلك */
-  const ab='<!-- ===== ACS ARCH DETAIL DOM (generated) ===== -->';
-  const ae='<!-- ===== END ACS ARCH DETAIL DOM ===== -->';
-  if(page.indexOf(ab)>=0&&page.indexOf(ae)>=0)
-    wsDom+=page.slice(page.indexOf(ab)+ab.length,page.indexOf(ae));
-  const acb='/* ===== ACS ARCH DETAIL STYLES (generated) ===== */';
-  const ace='/* ===== END ACS ARCH DETAIL STYLES ===== */';
-  if(page.indexOf(acb)>=0&&page.indexOf(ace)>=0)
-    wsCss+=page.slice(page.indexOf(acb)+acb.length,page.indexOf(ace)); }
+{ const shell=fs.readFileSync(path.join(REPO,'public','index.html'),'utf8');
+  const appCss=fs.readFileSync(path.join(REPO,'public','app','styles','app.css'),'utf8');
+  const PANELS=['WORKSPACE','RENDER','BIM','DOCS','PBR','ARCH DETAIL'];
+  const cut=(src,open,close,where)=>{
+    const a=src.indexOf(open), b=src.indexOf(close);
+    if(a<0||b<a) throw new Error('generated block missing from '+where+': '+open);
+    return src.slice(a+open.length,b); };
+  PANELS.forEach(name=>{
+    wsDom+=cut(shell,'<!-- ===== ACS '+name+' DOM (generated) ===== -->',
+                     '<!-- ===== END ACS '+name+' DOM ===== -->',
+                     'public/index.html');
+    wsCss+=cut(appCss,'/* ===== ACS '+name+' STYLES (generated) ===== */',
+                      '/* ===== END ACS '+name+' STYLES ===== */',
+                      'public/app/styles/app.css'); }); }
 const html='<!doctype html><meta charset="utf-8"><title>'+suite+'</title>\n'
   +'<style>\n'+wsCss+'\n</style>\n'
   +'<body><div id="reportBox"></div>\n'+wsDom+'\n<script>\n'

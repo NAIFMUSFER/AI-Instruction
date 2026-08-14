@@ -3,10 +3,10 @@
    مُستخرَج من public/index.html بـ tools/frontend_split.js (F-09).
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
+import { __ACS_LATE } from '../late-bindings.js';
 import { _mnid, _snum, compileArchitecture, compileFls, compileMep, compileStructure, flsElementById, flsRenderItems, mepElementById, mepRenderItems, structElementById, structRenderItems } from '../core/disciplines.js';
 import { _scmp, modelHash, sha256Hex } from '../core/standards.js';
 import { FLOOR_NAMES, RoomEnvironment, Sky, THREE, _pyRound, getMat } from '../core/viewer.js';
-import { lastBuilding, model, setSun } from '../ui/workspace-ui-wiring.js';
 
 
 
@@ -3034,18 +3034,18 @@ function _visRestore(){
   try{ renderer.clippingPlanes=[]; }catch(err){}
   VIS_STATE=null; }
 function applyVisualMode(mode,opts){
-  if(!lastBuilding||!model) return null;
+  if(!__ACS_LATE.lastBuilding||!__ACS_LATE.model) return null;
   _visRestore();
   opts=Object.assign({},opts||{},{mode:mode});
   let sc;
-  try{ sc=compileVisualScene(lastBuilding,opts.building_id||'bld_0',null,0,opts); }
+  try{ sc=compileVisualScene(__ACS_LATE.lastBuilding,opts.building_id||'bld_0',null,0,opts); }
   catch(e){ return null; }
   /* فهرسة أجسام المشهد بمعرّف العنصر المصدر كي نلوّن الشبكات القائمة كما هي */
   const byId={};
   sc.objects.forEach(o=>{ if(o.source_element_id) byId[o.source_element_id]=o; });
   VIS_ORIGINAL=[];
   const eng=VIS_ENGINEERING_MODES.indexOf(sc.mode)>=0;
-  model.traverse(m=>{
+  __ACS_LATE.model.traverse(m=>{
     if(!m.isMesh) return;
     VIS_ORIGINAL.push({mesh:m,material:m.material,visible:m.visible});
     const u=m.userData||{};
@@ -3084,7 +3084,7 @@ function applyVisualMode(mode,opts){
   /* إضاءة التقديم — طبقة بصرية مستقلّة عن وحدات إنارة MEP */
   const p=VIS_LIGHTING_PARAMS[sc.presentation.lighting_preset];
   try{
-    setSun(p.sun_elevation_deg,p.sun_azimuth_deg);
+    __ACS_LATE.setSun(p.sun_elevation_deg,p.sun_azimuth_deg);
     sun.intensity=p.sun_intensity;
     sun.color.set(p.sun_color);
     sun.castShadow=!!sc.presentation.quality_params.shadows;
@@ -3111,6 +3111,11 @@ function applyVisualMode(mode,opts){
     note:'presentation state applied to the existing scene; the model geometry is '+
          'unchanged and no visual object is part of the building group'}; }
 function clearVisualMode(){ _visRestore(); return true; }
+
+
+/* نشر الارتباطات التي يقرأها مقطع أسبق — تُقرأ داخل دوالّ فقط،
+   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً. */
+Object.assign(__ACS_LATE, { compileCoordination, compileVisualScene, spaceCategories });
 
 
 export { ACS_COORD_SPEC, ACS_INDUSTRIAL, ACS_PROGRAMS, ACS_SPACE_CATEGORIES, ACS_VISUAL_SPEC, COORD_CELL, COORD_CLASH_SEVERITY, COORD_CLASH_STATUSES, COORD_CLASH_TYPES, COORD_DETECTOR_VERSION, COORD_DISCIPLINES, COORD_DISCIPLINE_PAIRS, COORD_ELEMENT_KINDS, COORD_EXEMPTION_KINDS, COORD_GEOMETRY_CONFIDENCE, COORD_RECONCILIATION_STATES, COORD_SCHEMA, COORD_SEVERITIES, COORD_SNAPSHOT_STATUSES, VIS_AI_MAY_CHANGE, VIS_AI_MAY_NOT_CHANGE, VIS_AI_STAGES, VIS_ASSET_CLASSES, VIS_ASSET_LICENSES, VIS_CAMERA_DEFAULTS, VIS_CAMERA_PRESETS, VIS_COMPILER_VERSION, VIS_CONTROL_BUFFERS, VIS_CUTAWAY_METHODS, VIS_DECORATION_CLASS, VIS_DECORATION_KINDS, VIS_DEFAULT_LIGHTING, VIS_DEFAULT_QUALITY, VIS_DEFAULT_THEME, VIS_DRIFT_CODES, VIS_DRIFT_SEVERITIES, VIS_DRIFT_SEVERITY, VIS_ELEVATION_FACES, VIS_ENGINEERING_MODES, VIS_ENG_PALETTE, VIS_ENTOURAGE_CLASS, VIS_GROUP, VIS_LANDSCAPE_CLASS, VIS_LAYERS, VIS_LIGHTING_PARAMS, VIS_LIGHTING_PRESETS, VIS_LOD_LEVELS, VIS_MATERIALS, VIS_MATERIAL_CLASS, VIS_MODES, VIS_MODE_LAYERS, VIS_ORIGINAL, VIS_ORTHO_MODES, VIS_PLAN_STYLES, VIS_PRESENTATION_KEY, VIS_PRESENTATION_MODES, VIS_PROVENANCE, VIS_QUALITY_PARAMS, VIS_QUALITY_PROFILES, VIS_RENDER_AUTHORITY, VIS_RENDER_KINDS, VIS_SCHEMA, VIS_SECTION_AXES, VIS_SNAPSHOT_DEFAULTS, VIS_SNAPSHOT_FORMATS, VIS_SNAPSHOT_MAX_PX, VIS_STATE, VIS_THEMES, VIS_THEME_PALETTE, VIS_VALIDATION_CODES, VIS_WATER_KINDS, _CO_EPS, _CO_MAX_CELLS, _CO_NON_SOLID, _CO_PAIR_SET, _CO_SEMANTIC_MEP, _CO_SEMANTIC_PARTNER, _CO_SEMANTIC_SOURCE, _VIS_ASSETS, _VIS_ASSET_BY_TYPE, _VIS_ASSET_INDEX, _VIS_DECOR_BY_NAME, _VIS_EPS, _VIS_FACE_AXIS, _coAabbOf, _coAabbOverlap, _coArchVolumes, _coCanon, _coCellSpan, _coCells, _coClashId, _coClearance, _coExempt, _coFixed, _coFlsVolumes, _coFmt6, _coGsrc, _coHostKind, _coIndexAabb, _coMepVolumes, _coMk, _coMkSemantic, _coNum, _coObb, _coObbOverlap, _coPenCovers, _coPenExempt, _coPenetrations, _coProj, _coProjectKey, _coQ, _coRefStr, _coRefStr1, _coRot, _coSegBox, _coSemanticConflicts, _coStructVolumes, _coVol, _vArchObjects, _vAssetFor, _vAssign, _vBboxOf, _vCamera, _vCanon, _vCounts, _vCutaway, _vDecorKinds, _vDecorationObjects, _vDisciplineObjects, _vDollhouse, _vEntourageObjects, _vFitDistance, _vFlsObjects, _vLandscapeObjects, _vLight, _vLights, _vMode, _vNum, _vObj, _vQ, _vQuality, _vRequestedBuffers, _vRoofCap, _vRot, _vSeg, _vSha16, _vSiteObjects, _vSort, _vStyle, _vTheme, _vVal, _vWaterObjects, _vWorld, _visColorOf, _visRestore, app, applyVisualMode, checkCoordSnapshot, checkProjectSnapshot, clearVisualMode, compileCoordination, compileProjectCoordination, compileVisualScene, coordBroadPhase, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, coordSeverityOf, coordSummary, detectTypeJS, isIndustrialProgram, pmrem, programOf, quickModel, renderer, scene, sky, spaceCategories, statusEl, su, sun, visAiEnhancementRequest, visAssetById, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visSummary, visValidateAsset, visValidateScene };

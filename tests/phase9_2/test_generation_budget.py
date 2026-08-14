@@ -430,7 +430,11 @@ chk('the generation summary exposes only aggregates — no prompt, no raw reply'
 chk('site dimensions and floor count reach the estimator from the request',
     'site_w=req.site_w' in _api and 'floors=req.floors' in _api)
 
-_page = io.open(os.path.join(ROOT, 'public', 'index.html'), encoding='utf-8').read()
+# بعد F-09: الرموز في وحدات public/app/ لا في القشرة.
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as _APPSRC                                      # noqa: E402
+_page = _APPSRC.app_text()
+assert len(_page) > 1000000, 'the application code did not load'
 chk('§18 · the page shows the server\'s Arabic truncation message and a retry, '
     'never a raw SDK code',
     'acsErrorPanel' in _page and 'إعادة المحاولة' in _page

@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
-"""F-09 — قياس الصفحة المشحونة فعلاً. قياس فقط، بلا أي إعادة هيكلة.
+"""F-09 — قياس الواجهة المشحونة فعلاً بعد التفكيك. قياس فقط، بلا إعادة هيكلة.
 
     python3 tools/bundle_report.py            # يكتب tests/performance/bundle_report.json
     python3 tools/bundle_report.py --stdout   # يطبع ولا يكتب
 
-لماذا هذا الملفّ موجود: F-09 (تفكيك public/index.html إلى public/app/*.js) لم
-يُنفَّذ. الادّعاء بأنه نُفّذ أسهل من تنفيذه، فيُوضَع أوّلاً رقمٌ لا يقبل الادّعاء:
-حجم الصفحة الحقيقي، موزّعاً على كل كتلة فيها، مقارَناً بميزانية معلنة. أي
-"تحسين" لاحق يُقاس بهذا الملفّ نفسه أو لا يُقاس.
+لماذا هذا الملفّ موجود: الادّعاء بأن F-09 نُفّذ أسهل من تنفيذه. فوُضع أوّلاً رقمٌ
+لا يقبل الادّعاء — حجم الصفحة الحقيقي موزّعاً على كل كتلة فيها، مقارَناً بميزانية
+معلنة — وكان يقول حينها `F-09 NOT IMPLEMENTED`. الآن جرى التفكيك فعلاً، فتغيّر ما
+يُقاس: لم تعد الصفحة هي الحزمة، بل صارت قشرةً تشير إلى ملفّات تحت public/app/.
+
+والسؤال لم يعد «هل جرى تفكيك؟» بل «أهو تفكيك حقيقي أم إعادة تسمية؟». تقسيمٌ يضع
+٩٥٪ من الشيفرة في ملفّ واحد ويشتّت الباقي على ثمانية عشر ملفّاً يبدو مفكَّكاً في
+عدّ الملفّات ولا يفكّك شيئاً. لذلك يُقاس هنا لكل وحدة حجمها ونسبتها من مجموع شيفرة
+الطرف الأوّل، ويُفحَص في tests/remediation/test_bundle_report.py أن أكبر وحدة تبقى
+دون عتبة معلنة من ذلك المجموع. هذا هو الرقم المضادّ للتلاعب.
+
+ما لا يُقاس لا يُقدَّر:
+  • brotli يُبلَّغ عنه فقط إذا كانت الوحدة مستوردة، وإلّا null مع سبب.
+  • public/vendor فارغ في هذا الصندوق، فأحجام المكتبات null مع سبب.
+  • «الشيفرة المؤجَّلة» صفرٌ اليوم — يُقال صفراً صراحةً مع تعداد نداءات import()
+    الديناميكية التي وُجدت فعلاً وسببِ عدم احتسابها.
 
 الحتمية شرط: لا طابع زمني ولا مسار مطلق في المخرَج، وgzip يُضغط بـmtime=0.
-تشغيلان متتاليان يعطيان بايتاً ببايت المخرَج نفسه — وهذا ما يفحصه
-tests/remediation/test_bundle_report.py.
-
-ما لا يُقاس لا يُقدَّر: brotli يُبلَّغ عنه فقط إذا كانت الوحدة مستوردة فعلاً،
-وإلّا null مع سبب. مجلّد public/vendor فارغ في هذا الصندوق، فأحجام المكتبات
-المعبَّأة null مع سبب — لا تقدير، ولا رقم من الذاكرة.
+تشغيلان متتاليان يعطيان بايتاً ببايت المخرَج نفسه.
 """
 import gzip
 import hashlib
@@ -27,15 +34,23 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+import app_source as A                                            # noqa: E402
+
 PAGE_REL = "public/index.html"
+CSS_REL = "public/app/styles/app.css"
 OUT_REL = "tests/performance/bundle_report.json"
 
-# ميزانية القشرة بعد F-09. الرقم ليس اعتباطياً: قشرة HTML لا تحمل تطبيقاً، بل
-# ترويسة + عنصر canvas + وسم <link> + وسم <script type="module" src>. 150 KB
-# سقف كريم لذلك حتى مع كتل DOM المولَّدة كاملةً في الصفحة.
-SHELL_BUDGET_BYTES = 150 * 1024
-# أكبر ملفّ JS واحد بعد التفكيك: تقسيم لا ينتج عنه قطعة أصغر من ذلك ليس تقسيماً.
-MAX_SINGLE_MODULE_BYTES = 300 * 1024
+# ── الميزانية المعلَنة ──────────────────────────────────────────────────────
+# سقف القشرة: 200 KB. هو نفسه MAX_BYTES في tools/check_index_guard.py — رقم
+# واحد لمعنى واحد. القشرة تحمل العلامة وكتل DOM المولَّدة ووسوم التحميل فقط.
+SHELL_BUDGET_BYTES = 200 * 1024              # 204800
+# والمفضَّل أشدّ من السقف: 150 KB. السقف يمنع الارتداد، والمفضَّل هو الهدف.
+SHELL_PREFERRED_BYTES = 150 * 1024           # 153600
+# أكبر ملفّ JS واحد: تقسيمٌ لا ينتج عنه قطعة أصغر من ذلك ليس تقسيماً.
+MAX_SINGLE_MODULE_BYTES = 300 * 1024         # 307200
 
 
 def read(rel):
@@ -56,7 +71,6 @@ def gzip_bytes(text):
 
 
 def brotli_bytes(text):
-    """brotli إن كان مستورَداً فعلاً. غير ذلك: None وسبب — لا تقدير أبداً."""
     try:
         import brotli                                            # noqa: F401
     except Exception:                                            # noqa: BLE001
@@ -70,15 +84,9 @@ def brotli_bytes(text):
         return None, "brotli import succeeded but compression failed: %r" % (exc,)
 
 
-# ------------------------------------------------------------- العناصر ------
+# ─────────────────────────────────────────────── عناصر القشرة (مسح تسلسلي) ──
 def script_and_style_elements(page):
-    """مسح تسلسلي — لا regex عام.
-
-    السبب: النصّ يحوي آلاف السلاسل التي تبدأ بـ`<script` داخل مواصفات JSON
-    (قوائم الوسوم الممنوعة). أي regex عام يعدّها عناصر. المسح التسلسلي يقفز من
-    نهاية كل عنصر إلى ما بعده، فلا يرى ما بداخله. `</script>` كاملةً لا تظهر
-    داخل أي سلسلة في هذا الملفّ (السلاسل تكتب `</script` بلا `>`).
-    """
+    """مسح تسلسلي — لا regex عام. يقفز من نهاية كل عنصر فلا يرى ما بداخله."""
     scripts, styles = [], []
     i = 0
     while True:
@@ -93,15 +101,14 @@ def script_and_style_elements(page):
         body = page[ge + 1:e]
         kind = "module" if 'type="module"' in attrs else (
             "importmap" if 'type="importmap"' in attrs else "classic")
+        src = re.search(r'\bsrc\s*=\s*"([^"]+)"', attrs)
         scripts.append({
             "index": len(scripts) + 1,
             "line": page.count("\n", 0, a) + 1,
             "kind": kind,
-            "attributes": attrs,
-            "body_bytes": b(body),
-            "element_bytes": b(page[a:e + 9]),
-            "body_start": ge + 1,
-            "body_end": e,
+            "external": bool(src),
+            "src": src.group(1) if src else None,
+            "inline_body_bytes": b(body),
         })
         i = e + 9
     i = 0
@@ -113,59 +120,51 @@ def script_and_style_elements(page):
         e = page.find("</style>", ge)
         if e < 0:
             break
-        styles.append({
-            "index": len(styles) + 1,
-            "line": page.count("\n", 0, a) + 1,
-            "body_bytes": b(page[ge + 1:e]),
-            "element_bytes": b(page[a:e + 8]),
-            "body_start": ge + 1,
-            "body_end": e,
-        })
+        styles.append({"index": len(styles) + 1,
+                       "line": page.count("\n", 0, a) + 1,
+                       "body_bytes": b(page[ge + 1:e])})
         i = e + 8
     return scripts, styles
 
 
-# ---------------------------------------------------- الكتل المولَّدة --------
-JS_BEGIN = re.compile(r"/\* ===== ACS (?!END)([A-Z0-9][A-Z0-9 .]*?)"
-                      r"(?: \(([^)]*)\))? ===== \*/")
-DOM_BEGIN = re.compile(r"<!-- ===== ACS (?!END)([A-Z0-9][A-Z0-9 .]*?)"
-                       r"(?: \(([^)]*)\))? ===== -->")
+# ───────────────────────────────────────────── رسم بيان الاستيراد الساكن ───
+STATIC_IMPORT = re.compile(
+    r"""^import\s+(?:[^;'"]*?from\s*)?['"]([^'"]+)['"];""", re.M)
+DYNAMIC_IMPORT = re.compile(r"""\bimport\(\s*['"]([^'"]+)['"]""")
+
+# علامات الكتل المولَّدة — نفس الشكل الذي يكتبه المولِّدون بالضبط، بعلامة النهاية
+# ` ===== */` أو ` ===== -->`. بدونها يلتقط النمط أي تعليق يبدأ بـ`ACS` فيُبالغ العدّ.
+JS_BEGIN = re.compile(r"/\* ===== ACS (?!END)[A-Z0-9][A-Z0-9 .]*?"
+                      r"(?: \([^)]*\))? ===== \*/")
+DOM_BEGIN = re.compile(r"<!-- ===== ACS (?!END)[A-Z0-9][A-Z0-9 .]*?"
+                       r"(?: \([^)]*\))? ===== -->")
 
 
-def generated_blocks(page, style_ranges):
-    """كل كتلة مولَّدة بعلامتَي بداية ونهاية، مصنَّفة CSS / JS / DOM.
+def eager_closure(modules, entry="main.js"):
+    """كل وحدة يصل إليها main.js باستيراد ساكن — أي كل ما يُقيَّم عند الإقلاع."""
+    seen, stack = set(), [entry]
+    while stack:
+        cur = stack.pop()
+        if cur in seen or cur not in modules:
+            continue
+        seen.add(cur)
+        for spec in STATIC_IMPORT.findall(modules[cur]):
+            if spec.startswith("."):
+                tgt = os.path.normpath(os.path.join(
+                    os.path.dirname(cur), spec)).replace(os.sep, "/")
+                stack.append(tgt)
+    return seen
 
-    التصنيف ليس بالاسم بل بالموقع: ما يقع داخل جسم <style> فهو CSS، وما كان
-    تعليق HTML فهو DOM، وما بقي فهو JS. هكذا لا يخدع اسمٌ التصنيف.
-    """
+
+def dynamic_specifiers(modules):
+    """كل نداء import() ديناميكي، مصنَّفاً: طرفٌ أوّل أم مكتبة موردة."""
     out = []
-    for rx, comment_kind, end_fmt in (
-            (JS_BEGIN, "js", "/* ===== END ACS %s ===== */"),
-            (DOM_BEGIN, "dom", "<!-- ===== END ACS %s ===== -->")):
-        for m in rx.finditer(page):
-            name = m.group(1).strip()
-            end_marker = end_fmt % name
-            e = page.find(end_marker, m.end())
-            if e < 0:
-                out.append({"name": name, "kind": "UNPAIRED", "error":
-                            "no end marker %r" % end_marker})
-                continue
-            start, stop = m.start(), e + len(end_marker)
-            kind = comment_kind
-            if comment_kind == "js" and any(s <= start < t for s, t in style_ranges):
-                kind = "css"
-            out.append({
-                "name": name,
-                "kind": kind,
-                "generator": (m.group(2) or "").replace("generated by ", "")
-                             .replace("generated", "").strip() or None,
-                "begin_line": page.count("\n", 0, start) + 1,
-                "end_line": page.count("\n", 0, stop) + 1,
-                "bytes": b(page[start:stop]),
-                "start": start,
-                "stop": stop,
-            })
-    out.sort(key=lambda x: x.get("start", 0))
+    for name in sorted(modules):
+        for spec in DYNAMIC_IMPORT.findall(modules[name]):
+            out.append({"in_module": "public/app/" + name,
+                        "specifier": spec,
+                        "first_party": spec.startswith(".")
+                        or spec.startswith("/app/")})
     return out
 
 
@@ -176,7 +175,9 @@ def vendor_report():
                 "reason": "public/vendor does not exist in this checkout; "
                           "Netlify populates it at build time via "
                           "tools/netlify-build.sh. NOT MEASURED — no estimate "
-                          "is substituted."}
+                          "is substituted. (es-module-shims is no longer "
+                          "vendored at all: F-11 removed it from the page and "
+                          "from tools/netlify-build.sh.)"}
     files = []
     for base, _dirs, names in os.walk(vdir):
         for n in sorted(names):
@@ -188,147 +189,216 @@ def vendor_report():
         return {"present": True, "empty": True, "total_bytes": None,
                 "files": None,
                 "reason": "public/vendor exists but is EMPTY in this sandbox "
-                          "(no network, tools/vendor.sh has never run). The "
-                          "21 vendored runtime assets — three@0.160.0 + addons "
-                          "+ es-module-shims@1.8.2 + pdfjs@4.0.379 — are NOT "
-                          "MEASURED here. NOT VERIFIED — EXTERNAL ENVIRONMENT "
-                          "REQUIRED."}
+                          "(no network, tools/vendor.sh has never run). The 17 "
+                          "vendored runtime assets — the three@0.160.0 build "
+                          "plus 14 addons, and the pdfjs@4.0.379 module and "
+                          "worker — are NOT MEASURED here. (es-module-shims is "
+                          "no longer vendored at all: F-11 removed it from the "
+                          "page and from tools/netlify-build.sh.) NOT VERIFIED "
+                          "— EXTERNAL ENVIRONMENT REQUIRED."}
     return {"present": True, "empty": False,
             "total_bytes": sum(f["bytes"] for f in files),
             "file_count": len(files), "files": files, "reason": None}
 
 
+# ───────────────────────────────────────────────────────────────── البناء ──
 def build():
     page = read(PAGE_REL)
     raw = page.encode("utf-8")
     scripts, styles = script_and_style_elements(page)
-    style_ranges = [(s["body_start"], s["body_end"]) for s in styles]
-    blocks = generated_blocks(page, style_ranges)
 
-    by_kind = {"js": [], "css": [], "dom": [], "UNPAIRED": []}
-    for blk in blocks:
-        by_kind.setdefault(blk["kind"], []).append(blk)
+    modules = A.modules()
+    sizes = {k: b(v) for k, v in modules.items()}
+    boot = sorted(k for k in modules if k.startswith("boot/"))
+    first_party_total = sum(sizes.values())
 
-    gen_total = sum(x["bytes"] for x in blocks if "bytes" in x)
-    module_scripts = [s for s in scripts if s["kind"] == "module"]
-    module_bytes = sum(s["body_bytes"] for s in module_scripts)
-    classic_bytes = sum(s["body_bytes"] for s in scripts if s["kind"] == "classic")
-    importmap_bytes = sum(s["body_bytes"] for s in scripts if s["kind"] == "importmap")
-    style_bytes = sum(s["body_bytes"] for s in styles)
+    eager = eager_closure(modules)
+    core_bytes = sum(sizes[k] for k in eager)
+    boot_bytes = sum(sizes[k] for k in boot)
+    # المؤجَّل: وحدة طرفٍ أوّل لا يبلغها الاستيراد الساكن من main.js وليست سكربت
+    # إقلاع. اليوم لا توجد واحدة — يُقال صفراً، ولا يُتظاهَر بتقسيم كسول.
+    lazy = sorted(k for k in modules
+                  if k not in eager and not k.startswith("boot/"))
+    dyn = dynamic_specifiers(modules)
+    dyn_first_party = [d for d in dyn if d["first_party"]]
 
-    # المولَّد داخل وحدة التطبيق وحدها — يفصل ما يُولَّد عمّا كُتب باليد فيها
-    gen_in_module = 0
-    for s in module_scripts:
-        for blk in blocks:
-            if "start" in blk and s["body_start"] <= blk["start"] < s["body_end"]:
-                gen_in_module += blk["bytes"]
-
+    css = A.css_text()
     br, br_reason = brotli_bytes(page)
 
+    per_module = sorted(
+        ({"path": "public/app/" + k,
+          "bytes": sizes[k],
+          "gzip_bytes": gzip_bytes(modules[k]),
+          "group": (k.split("/")[0] if "/" in k else "(root)"),
+          "loaded": ("boot-classic" if k.startswith("boot/")
+                     else "eager" if k in eager else "unreferenced"),
+          "pct_of_first_party_js": round(
+              100.0 * sizes[k] / first_party_total, 2)}
+         for k in modules),
+        key=lambda m: (-m["bytes"], m["path"]))
+    largest = per_module[0]
+
+    warnings = [{"path": m["path"], "bytes": m["bytes"],
+                 "over_by_bytes": m["bytes"] - MAX_SINGLE_MODULE_BYTES}
+                for m in per_module if m["bytes"] > MAX_SINGLE_MODULE_BYTES]
+
+    shell_bytes = len(raw)
+    inline_exec = [s for s in scripts
+                   if not s["external"] and s["kind"] != "importmap"]
+    app_text = A.app_text()
+
     report = {
-        "report": "acs.bundle/1",
-        "status": "F-09 NOT IMPLEMENTED — measurement only",
+        "report": "acs.bundle/2",
+        "status": (
+            "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a %d "
+            "byte shell and every byte of application JavaScript (%d bytes) "
+            "lives in %d files under public/app/. This file records where the "
+            "bytes are; it does NOT prove the application still runs. Runtime "
+            "behaviour is the browser tests' job, not this tool's."
+            % (shell_bytes, first_party_total, len(modules))),
         "what_this_is": (
-            "A measurement of the page that is actually shipped today. It "
-            "does NOT modify the page, does not split it, and must not be "
-            "read as evidence that the frontend was modularised. It exists so "
-            "that the claim 'F-09 is done' can never be made without a number "
-            "moving in this file."),
+            "A measurement of the frontend that is actually shipped today: the "
+            "index shell, every first-party module under public/app/, the "
+            "stylesheet and the boot scripts. It does NOT modify anything and "
+            "must not be read as evidence that the application works — only "
+            "that the bytes are where this report says they are. Its second "
+            "job is anti-gaming: each module's share of total first-party "
+            "JavaScript is reported, so a 'split' that leaves one file holding "
+            "most of the code cannot hide behind a file count."),
         "deterministic": True,
         "determinism_note": (
             "No timestamp and no absolute path is written. gzip uses mtime=0. "
             "Two consecutive runs produce byte-identical output; "
             "tests/remediation/test_bundle_report.py asserts exactly that."),
-        "source": {
+
+        "shell": {
             "path": PAGE_REL,
             "sha256": hashlib.sha256(raw).hexdigest(),
-            "bytes": len(raw),
-            "characters": len(page),
-            "lines": page.count("\n") + 1,
-        },
-        "compression": {
-            "raw_bytes": len(raw),
+            "raw_bytes": shell_bytes,
             "gzip_bytes": gzip_bytes(page),
             "gzip_level": 9,
             "brotli_bytes": br,
             "brotli_reason": br_reason,
-            "note": ("gzip is measured with the standard library. brotli is "
-                     "reported only when a brotli module is importable; it is "
-                     "never estimated. Netlify serves brotli in production, so "
-                     "a null here means the production transfer size is "
-                     "UNMEASURED in this sandbox, not that brotli is unused."),
-        },
-        "elements": {
+            "characters": len(page),
+            "lines": page.count("\n") + 1,
             "script_element_count": len(scripts),
+            "external_script_count": len([s for s in scripts if s["external"]]),
+            "inline_executable_script_count": len(inline_exec),
+            "inline_importmap_bytes": sum(s["inline_body_bytes"] for s in scripts
+                                          if s["kind"] == "importmap"),
             "style_element_count": len(styles),
-            "scripts": [{k: v for k, v in s.items()
-                         if k not in ("body_start", "body_end")}
-                        for s in scripts],
-            "styles": [{k: v for k, v in s.items()
-                        if k not in ("body_start", "body_end")}
-                       for s in styles],
-            "totals": {
-                "classic_script_bytes": classic_bytes,
-                "importmap_script_bytes": importmap_bytes,
-                "module_script_bytes": module_bytes,
-                "style_bytes": style_bytes,
-            },
+            "inline_style_attribute_count": len(
+                re.findall(r'\sstyle\s*=\s*"', page)),
+            "scripts": scripts,
+            "note": ("inline_executable_script_count, style_element_count and "
+                     "inline_style_attribute_count are all 0 by design after "
+                     "F-11 — that is exactly what lets the CSP drop "
+                     "'unsafe-inline' from script-src and style-src. The one "
+                     "remaining inline element is the import map, allowed by "
+                     "the sha256 pinned in netlify.toml."),
         },
+
+        "javascript": {
+            "first_party_total_bytes": first_party_total,
+            "first_party_module_count": len(modules),
+            "core_initial_bytes": core_bytes,
+            "core_initial_module_count": len(eager),
+            "core_initial_note": (
+                "core = public/app/main.js plus everything it reaches through "
+                "static imports; all of it is parsed and evaluated on first "
+                "load. The five boot scripts are loaded on first paint too, "
+                "but they are classic <script src> elements outside the module "
+                "graph, so they are counted separately."),
+            "boot_bytes": boot_bytes,
+            "boot_script_count": len(boot),
+            "boot_scripts": [{"path": "public/app/" + k, "bytes": sizes[k]}
+                             for k in boot],
+            "initial_javascript_bytes": core_bytes + boot_bytes,
+            "lazy_bytes": sum(sizes[k] for k in lazy),
+            "lazy_module_count": len(lazy),
+            "lazy_modules": ["public/app/" + k for k in lazy],
+            "lazy_note": (
+                "ZERO first-party JavaScript is code-split behind a dynamic "
+                "import today, and that is reported as 0 rather than dressed "
+                "up. %d dynamic import() call(s) do exist in the modules, but "
+                "every one targets a vendored library specifier "
+                "(three/addons/*, /vendor/pdfjs@*) — %d of them are "
+                "first-party — so none defers first-party bytes. Route-level "
+                "or panel-level lazy loading of first-party code is NOT "
+                "IMPLEMENTED." % (len(dyn), len(dyn_first_party))),
+            "dynamic_imports": dyn,
+            "dynamic_import_count": len(dyn),
+            "first_party_dynamic_import_count": len(dyn_first_party),
+            "modules": per_module,
+            "largest_module": largest,
+            "largest_module_pct_of_first_party_js":
+                largest["pct_of_first_party_js"],
+        },
+
+        "css": {
+            "path": CSS_REL,
+            "raw_bytes": b(css),
+            "gzip_bytes": gzip_bytes(css),
+            "note": ("this file is the former inline <style> block plus the "
+                     "generated .acs-u-NN utility classes that replaced every "
+                     "style=\"…\" attribute in the markup."),
+        },
+
         "generated_blocks": {
-            "counts": {"js": len(by_kind["js"]), "css": len(by_kind["css"]),
-                       "dom": len(by_kind["dom"]),
-                       "unpaired": len(by_kind["UNPAIRED"])},
-            "expected_counts": {"js": 10, "css": 6, "dom": 6},
-            "total_bytes": gen_total,
-            "bytes_by_kind": {
-                k: sum(x["bytes"] for x in by_kind[k] if "bytes" in x)
-                for k in ("js", "css", "dom")},
-            "blocks": [{kk: vv for kk, vv in blk.items()
-                        if kk not in ("start", "stop")} for blk in blocks],
+            "js_pairs_in_modules": len(JS_BEGIN.findall(app_text)),
+            "css_pairs_in_stylesheet": len(JS_BEGIN.findall(css)),
+            "dom_pairs_in_shell": len(DOM_BEGIN.findall(page)),
+            "expected": {"js_pairs_in_modules": 10,
+                         "css_pairs_in_stylesheet": 6,
+                         "dom_pairs_in_shell": 6},
+            "note": ("the generated markers survived the split intact: the JS "
+                     "pairs moved into public/app/generated/*.js, the CSS "
+                     "pairs into public/app/styles/app.css, and the DOM pairs "
+                     "stayed in the shell, where markup belongs."),
         },
-        "hand_written": {
-            "remainder_bytes": len(raw) - gen_total,
-            "remainder_pct_of_page": round(
-                100.0 * (len(raw) - gen_total) / len(raw), 2),
-            "hand_written_inside_application_module_bytes":
-                module_bytes - gen_in_module,
-            "generated_inside_application_module_bytes": gen_in_module,
-            "note": ("`remainder` is everything outside every paired generated "
-                     "marker: the markup, the seven inline scripts' "
-                     "hand-written parts and the hand-written half of the "
-                     "application module. It is the part a regenerate cannot "
-                     "rewrite, and therefore the part F-09 must move by hand."),
-        },
+
         "vendor": vendor_report(),
+
         "budget": {
             "target": (
-                "After F-09 the deployed index.html is an index SHELL — markup "
-                "plus <link rel=stylesheet> plus <script type=module "
-                "src=/app/main.js> — and every line of application logic lives "
-                "in cacheable files under public/app/. The shell must be "
-                "dramatically smaller than the current >1 MB page."),
+                "The deployed index.html is an index SHELL — markup, "
+                "<link rel=stylesheet>, five classic boot scripts and "
+                "<script type=module src=/app/main.js> — and every line of "
+                "application logic lives in cacheable files under public/app/."),
             "index_shell_budget_bytes": SHELL_BUDGET_BYTES,
+            "index_shell_preferred_bytes": SHELL_PREFERRED_BYTES,
             "max_single_module_budget_bytes": MAX_SINGLE_MODULE_BYTES,
-            "current_index_bytes": len(raw),
-            "current_delta_bytes": len(raw) - SHELL_BUDGET_BYTES,
-            "current_ratio_over_budget": round(
-                float(len(raw)) / SHELL_BUDGET_BYTES, 2),
-            "largest_single_inline_script_bytes":
-                max([s["body_bytes"] for s in scripts]) if scripts else 0,
-            "largest_single_delta_bytes":
-                (max([s["body_bytes"] for s in scripts]) if scripts else 0)
-                - MAX_SINGLE_MODULE_BYTES,
-            "budget_met": False,
+            "current_index_bytes": shell_bytes,
+            "headroom_bytes": SHELL_BUDGET_BYTES - shell_bytes,
+            "preferred_headroom_bytes": SHELL_PREFERRED_BYTES - shell_bytes,
+            "ratio_of_budget_used": round(
+                float(shell_bytes) / SHELL_BUDGET_BYTES, 4),
+            "budget_met": shell_bytes <= SHELL_BUDGET_BYTES,
+            "preferred_met": shell_bytes <= SHELL_PREFERRED_BYTES,
+            "largest_module_bytes": largest["bytes"],
+            "largest_module_headroom_bytes":
+                MAX_SINGLE_MODULE_BYTES - largest["bytes"],
             "budget_note": (
-                "These are TARGETS declared here, not achievements. "
-                "budget_met is false and will stay false until F-09 lands. No "
-                "runtime performance consequence of the current size is "
-                "measured by this tool — see tests/performance/run_perf.js, "
-                "which cannot run in this sandbox either."),
+                "index_shell_budget_bytes is the same constant as MAX_BYTES in "
+                "tools/check_index_guard.py, which fails the build above it. "
+                "budget_met and preferred_met are COMPUTED from the measured "
+                "size here, never asserted."),
         },
+
+        "module_size_warnings": warnings,
+        "module_size_warning_threshold_bytes": MAX_SINGLE_MODULE_BYTES,
+        "module_size_warning_note": (
+            "any first-party module above the threshold is listed here AND "
+            "fails tools/check_index_guard.py unless it is written into that "
+            "tool's OVERSIZE_ALLOWLIST with a stated reason. The list is empty "
+            "today."),
+
         "not_measured_here": [
-            "runtime parse/execute cost of the 1.6 MB inline module — needs a "
-            "browser with public/vendor populated: NOT VERIFIED — EXTERNAL "
+            "whether the split application still boots and renders — that "
+            "needs a browser with public/vendor populated: NOT VERIFIED — "
+            "EXTERNAL ENVIRONMENT REQUIRED",
+            "the HTTP/2 request overhead of serving many files instead of one, "
+            "and the cache-hit benefit of doing so: NOT VERIFIED — EXTERNAL "
             "ENVIRONMENT REQUIRED",
             "production transfer size over brotli — no brotli module here",
             "vendored library sizes — public/vendor is empty in this sandbox",
@@ -347,30 +417,39 @@ def main():
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with io.open(out, "w", encoding="utf-8") as fh:
         fh.write(text)
-    g = rep["generated_blocks"]["counts"]
+    s, j, bg = rep["shell"], rep["javascript"], rep["budget"]
     print("wrote %s" % OUT_REL)
-    print("  page                : %d bytes (gzip %d, brotli %s)"
-          % (rep["source"]["bytes"], rep["compression"]["gzip_bytes"],
-             rep["compression"]["brotli_bytes"]))
-    print("  script elements     : %d  (module %d B, classic %d B, importmap %d B)"
-          % (rep["elements"]["script_element_count"],
-             rep["elements"]["totals"]["module_script_bytes"],
-             rep["elements"]["totals"]["classic_script_bytes"],
-             rep["elements"]["totals"]["importmap_script_bytes"]))
-    print("  style elements      : %d  (%d B)"
-          % (rep["elements"]["style_element_count"],
-             rep["elements"]["totals"]["style_bytes"]))
-    print("  generated blocks    : js=%d css=%d dom=%d unpaired=%d  (%d B)"
-          % (g["js"], g["css"], g["dom"], g["unpaired"],
-             rep["generated_blocks"]["total_bytes"]))
-    print("  hand-written remain : %d bytes (%.2f%%)"
-          % (rep["hand_written"]["remainder_bytes"],
-             rep["hand_written"]["remainder_pct_of_page"]))
-    print("  budget              : shell %d B, current %d B, delta +%d B (%.2f×)"
-          % (SHELL_BUDGET_BYTES, rep["budget"]["current_index_bytes"],
-             rep["budget"]["current_delta_bytes"],
-             rep["budget"]["current_ratio_over_budget"]))
-    print("  STATUS              : %s" % rep["status"])
+    print("  index shell         : %d B raw, %d B gzip (brotli %s)"
+          % (s["raw_bytes"], s["gzip_bytes"], s["brotli_bytes"]))
+    print("                        %d inline executable script(s), %d <style> "
+          "block(s), %d style= attribute(s)"
+          % (s["inline_executable_script_count"], s["style_element_count"],
+             s["inline_style_attribute_count"]))
+    print("  first-party JS      : %d B in %d modules"
+          % (j["first_party_total_bytes"], j["first_party_module_count"]))
+    print("  core initial JS     : %d B in %d modules  (+ %d B in %d boot "
+          "scripts = %d B on first load)"
+          % (j["core_initial_bytes"], j["core_initial_module_count"],
+             j["boot_bytes"], j["boot_script_count"],
+             j["initial_javascript_bytes"]))
+    print("  lazy first-party JS : %d B in %d modules — honestly zero"
+          % (j["lazy_bytes"], j["lazy_module_count"]))
+    print("  css                 : %d B raw, %d B gzip"
+          % (rep["css"]["raw_bytes"], rep["css"]["gzip_bytes"]))
+    print("  largest module      : %s — %d B (%.2f%% of first-party JS)"
+          % (j["largest_module"]["path"], j["largest_module"]["bytes"],
+             j["largest_module_pct_of_first_party_js"]))
+    print("  module warnings     : %d over %d B"
+          % (len(rep["module_size_warnings"]),
+             rep["module_size_warning_threshold_bytes"]))
+    print("  budget              : shell %d B of %d B (%.1f%% used, preferred "
+          "%d B) · budget_met=%s preferred_met=%s"
+          % (bg["current_index_bytes"], bg["index_shell_budget_bytes"],
+             100.0 * bg["ratio_of_budget_used"],
+             bg["index_shell_preferred_bytes"], bg["budget_met"],
+             bg["preferred_met"]))
+    print("  STATUS              : %s"
+          % rep["status"].split(".")[0].strip())
     return 0
 
 

@@ -1,7 +1,7 @@
 ACS PRODUCTION VERIFICATION — live HTTP layer
   frontend : https://sprightly-selkie-d906c3.netlify.app
   backend  : https://acs-engine.onrender.com
-  started  : 2026-08-14T13:45:21Z
+  started  : 2026-08-14T17:24:43Z
 
 ── deployment targets as the repository declares them (static, cited only — never a runtime PASS) ──
   netlify.toml            publish='public'  connect-src="'self' https://acs-engine.onrender.com"
@@ -36,8 +36,8 @@ ACS PRODUCTION VERIFICATION — live HTTP layer
       reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
 
 ── B · أصول الواجهة: الوحدات الحرِجة، Three.js 160، لا CDN، لا CSP violation ──
-  derived asset list: 18 file(s) — 18 declared by tools/netlify-build.sh must=(), the rest from the import map in public/index.html
-  ― B1     every critical JS module returns 200 (18 file(s))
+  derived asset list: 42 file(s) — 17 declared by tools/netlify-build.sh must=(), 25 application files under /app/ (shell entry, boot scripts, stylesheet and every ES module), the rest from the import map in the shell
+  ― B1     every critical JS module returns 200 (42 file(s))
       NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
       reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
   ― B2     the served Three.js declares REVISION 160
@@ -53,6 +53,15 @@ ACS PRODUCTION VERIFICATION — live HTTP layer
       NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
       reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
   ― B6     every import specifier in the page resolves to a served module
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B7     the deployed page is a SHELL under 200000 bytes that loads /app/main.js
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B8     the deployed frontend is provenanced: the build-identity boot script is served with substituted tokens
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B9     every application file under /app/ was served 200
       NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
       reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
 
@@ -71,6 +80,6 @@ ACS PRODUCTION VERIFICATION — live HTTP layer
       reason: no expected revision was supplied; pass --expect-sha <sha> to turn this into a measured check
 
 ──────────────────────────────────────────────────────────────────────
-HTTP LAYER: 0 PASS · 0 FAIL · 18 NOT VERIFIED (of 18 checks)
+HTTP LAYER: 0 PASS · 0 FAIL · 21 NOT VERIFIED (of 21 checks)
 summary: /tmp/acs/tests/production/outputs/verify_live.json
 VERDICT: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED — nothing was observed; no check is claimed as passing.

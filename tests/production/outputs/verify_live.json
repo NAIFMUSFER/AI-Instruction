@@ -1,7 +1,7 @@
 {
   "schema": "acs-production-verification/1.0.0",
   "tool": "tests/production/verify_live.py",
-  "started_at": "2026-08-14T13:45:21Z",
+  "started_at": "2026-08-14T17:24:43Z",
   "frontend": "https://sprightly-selkie-d906c3.netlify.app",
   "backend": "https://acs-engine.onrender.com",
   "expect_sha": null,
@@ -10,7 +10,7 @@
     "api_default_origin": "https://sprightly-selkie-d906c3.netlify.app",
     "page_configured_base": "https://acs-engine.onrender.com",
     "netlify_publish": "public",
-    "netlify_csp": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com",
+    "netlify_csp": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests",
     "netlify_connect_src": "'self' https://acs-engine.onrender.com"
   },
   "groups": [
@@ -28,8 +28,8 @@
   "counts": {
     "pass": 0,
     "fail": 0,
-    "not_verified": 18,
-    "total": 18
+    "not_verified": 21,
+    "total": 21
   },
   "exit_code": 2,
   "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
@@ -55,9 +55,33 @@
     "/vendor/three@0.160.0/examples/jsm/shaders/FXAAShader.js",
     "/vendor/three@0.160.0/examples/jsm/shaders/CopyShader.js",
     "/vendor/three@0.160.0/examples/jsm/shaders/SSAOShader.js",
-    "/vendor/es-module-shims@1.8.2/es-module-shims.js",
     "/vendor/pdfjs@4.0.379/pdf.min.mjs",
-    "/vendor/pdfjs@4.0.379/pdf.worker.min.mjs"
+    "/vendor/pdfjs@4.0.379/pdf.worker.min.mjs",
+    "/app/main.js",
+    "/app/boot/a11y-baseline.js",
+    "/app/boot/api-base.js",
+    "/app/boot/build-info.js",
+    "/app/boot/debug-toggle.js",
+    "/app/boot/engine-guard.js",
+    "/app/styles/app.css",
+    "/app/core/disciplines.js",
+    "/app/core/standards.js",
+    "/app/core/viewer.js",
+    "/app/generated/arch-detail-bridge.js",
+    "/app/generated/arch-detail.js",
+    "/app/generated/authoring.js",
+    "/app/generated/bim.js",
+    "/app/generated/docs.js",
+    "/app/generated/pbr-bridge.js",
+    "/app/generated/pbr.js",
+    "/app/generated/render-engine.js",
+    "/app/generated/runtime.js",
+    "/app/generated/workspace-ui.js",
+    "/app/render/scene.js",
+    "/app/shared-state.js",
+    "/app/trust/core.js",
+    "/app/trust/wiring.js",
+    "/app/ui/workspace-ui-wiring.js"
   ],
   "checks": [
     {
@@ -127,7 +151,7 @@
     {
       "group": "B",
       "id": "B1",
-      "name": "every critical JS module returns 200 (18 file(s))",
+      "name": "every critical JS module returns 200 (42 file(s))",
       "status": "NOT VERIFIED",
       "detail": "",
       "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
@@ -168,6 +192,30 @@
       "group": "B",
       "id": "B6",
       "name": "every import specifier in the page resolves to a served module",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B7",
+      "name": "the deployed page is a SHELL under 200000 bytes that loads /app/main.js",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B8",
+      "name": "the deployed frontend is provenanced: the build-identity boot script is served with substituted tokens",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B9",
+      "name": "every application file under /app/ was served 200",
       "status": "NOT VERIFIED",
       "detail": "",
       "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"

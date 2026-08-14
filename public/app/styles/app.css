@@ -721,7 +721,10 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
    ============================================================ */
 .acs-u-01{margin-inline-start:8px;min-height:44px;padding:2px 14px;border-radius:6px;border:0;background:#fff;color:#7f1d1d;font-weight:700;cursor:pointer;}
 .acs-u-02{opacity:.85;}
-.acs-u-03{display:none;}
+/* حالة الإخفاء الابتدائية. صنف دلالي لا رقم مولَّد: الشيفرة تزيله لتُظهر
+   العنصر (classList.remove) بدل أن تكتب style.display، لأن سمة style ممنوعة
+   بـ style-src 'self' وقيمةَ الصنف لا يمحوها إسنادُ خاصيّة فارغ. */
+.acs-hidden{display:none!important;}
 .acs-u-04{min-height:0;}
 .acs-u-05{width:100%;margin-top:8px;}
 .acs-u-06{margin-top:8px;}

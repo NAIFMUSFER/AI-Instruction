@@ -108,6 +108,11 @@ const PLAN = [
   ['F', 'F1', 'the document declares lang=ar and dir=rtl'],
   ['F', 'F2', 'no meaningful untranslated English chrome'],
   ['F', 'F3', 'no horizontal overflow in the Arabic layout'],
+  ['H', 'H1', 'the deployed page is a shell under 200 KB with /app/main.js as '
+    + 'its only module entry'],
+  ['H', 'H2', 'the classic boot scripts and the external stylesheet load and apply'],
+  ['H', 'H3', 'no <style> block, no style= attribute and no inline event handler'],
+  ['H', 'H4', 'the deployed CSP raised no violation in a real browser'],
   ['G', 'G5', 'window.ACS_BUILD_INFO carries the frontend build SHA and timestamp'],
   ['G', 'G6', 'the frontend build SHA matches --expect-sha'],
 ];
@@ -120,6 +125,10 @@ function planRemaining(reason) {
 const PRIMARY_CONTROLS = ['#wsBtnTree', '#wsBtnMode', '#wsBtnUndo', '#wsBtnRedo',
   '#wsBtnHistory', '#wsBtnIssues', '#wsBtnExport', '#wsBtnLang', '#wsBtnInsp'];
 const VIEWPORTS = [375, 390, 430, 768, 1024, 1440, 1920];
+
+/* F-09 — الصفحة المنشورة قشرة. الرقم نفسه المستعمل في tests/production/
+   verify_live.py، ومصدره أن الملفّ الواحد قبل التفكيك كان 1,863,894 بايت. */
+const SHELL_MAX_BYTES = 200000;
 
 /* مصطلحات تقنية إنجليزية مقبولة داخل واجهة عربية — لا تُعدّ «غير مترجمة».
    القائمة صريحة عمداً: أي كلمة إنجليزية خارجها تُعَدّ chrome غير مترجم. */
@@ -338,11 +347,82 @@ async function checkBuildInfo(pg, expectSha) {
   return buildInfo;
 }
 
+/* ── H · شكل ما نُشر فعلاً: قشرة + وحدات + ورقة أنماط خارجية (F-09/F-11) ──
+   يُقاس على المستند المخدوم لا على المستودع. نشرٌ ما زال يحمل التطبيق داخل
+   الصفحة ليس «نجاحاً» — هو نشر شجرة أخرى، ويجب أن يُرى كذلك. */
+async function checkShippedShape(pg) {
+  console.log('\n── H · شكل الواجهة المنشورة: قشرة ووحدات وأنماط خارجية ──');
+  const shape = await pg.evaluate(() => ({
+    html_bytes: document.documentElement.outerHTML.length,
+    inline_scripts: Array.from(document.querySelectorAll('script'))
+      .filter(x => !x.src).map(x => x.type || 'text/javascript'),
+    module_entries: Array.from(document.querySelectorAll('script[type=module]'))
+      .map(x => x.getAttribute('src')),
+    boot_scripts: Array.from(document.querySelectorAll('script[src]'))
+      .map(x => x.getAttribute('src')).filter(u => /^\/app\/boot\//.test(u)),
+    stylesheets: Array.from(document.querySelectorAll('link[rel=stylesheet]'))
+      .map(x => x.getAttribute('href')),
+    sheet_count: document.styleSheets.length,
+    css_rules: (function () { let n = 0;
+      for (const s of document.styleSheets) {
+        try { n += s.cssRules.length; } catch (e) { } } return n; })(),
+    style_blocks: document.querySelectorAll('style').length,
+    inline_style_attrs: document.querySelectorAll('[style]').length,
+    inline_handlers: Array.from(document.querySelectorAll('*'))
+      .filter(el => Array.from(el.attributes)
+        .some(a => /^on[a-z]+$/.test(a.name)))
+      .map(el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '')).slice(0, 6)
+  }));
+  const shellProblems = [];
+  if (shape.html_bytes >= SHELL_MAX_BYTES)
+    shellProblems.push('the served document is ' + shape.html_bytes
+      + ' bytes — a shell must be under ' + SHELL_MAX_BYTES);
+  if (shape.inline_scripts.length !== 1
+    || shape.inline_scripts[0] !== 'importmap')
+    shellProblems.push('inline <script> types: '
+      + JSON.stringify(shape.inline_scripts));
+  if (JSON.stringify(shape.module_entries) !== JSON.stringify(['/app/main.js']))
+    shellProblems.push('module entry points: '
+      + JSON.stringify(shape.module_entries));
+  ok('H', 'H1', 'the deployed page is a SHELL under ' + SHELL_MAX_BYTES
+    + ' bytes whose only inline script is the import map and whose only module '
+    + 'entry is /app/main.js',
+    shellProblems.length === 0,
+    shellProblems.join(' | ') || shape.html_bytes
+      + ' bytes, entry /app/main.js, one inline import map');
+  ok('H', 'H2', 'the classic boot scripts and the EXTERNAL stylesheet are '
+    + 'loaded and applied by the deployed page',
+    shape.boot_scripts.length >= 1 && shape.stylesheets.length === 1
+    && /^\/app\/styles\//.test(shape.stylesheets[0] || '')
+    && shape.sheet_count >= 1 && shape.css_rules > 200,
+    JSON.stringify({ boot: shape.boot_scripts, css: shape.stylesheets,
+      sheets: shape.sheet_count, rules: shape.css_rules }));
+  ok('H', 'H3', 'the deployed document carries no <style> block, no style= '
+    + 'attribute and no inline event handler — under the strict CSP the last '
+    + 'two are dead code, not styling',
+    shape.style_blocks === 0 && shape.inline_style_attrs === 0
+    && shape.inline_handlers.length === 0,
+    JSON.stringify({ style_blocks: shape.style_blocks,
+      style_attrs: shape.inline_style_attrs,
+      handlers: shape.inline_handlers }));
+  return shape;
+}
+
 /* الفحوص التي تبقى قابلة للرصد على مستند حُمِّل ولم يُقلع تطبيقه */
-async function documentLevelChecks(pg, expectSha) {
+async function documentLevelChecks(pg, expectSha, cspViolations) {
+  await checkShippedShape(pg);
+  reportCSP(cspViolations);
   await checkResponsive(pg, false);
   await checkArabic(pg, false);
   await checkBuildInfo(pg, expectSha);
+}
+
+/* F-11 — خرق السياسة على النشر الحقيقي فشل مرصود لا بيئة ناقصة */
+function reportCSP(cspViolations) {
+  const v = cspViolations || [];
+  ok('H', 'H4', 'the deployed Content-Security-Policy raised no violation in a '
+    + 'real browser', v.length === 0,
+    v.slice(0, 4).join(' | ') || 'no CSP violation reported by Chromium');
 }
 
 /* ── التشغيل ─────────────────────────────────────────────────────────────── */
@@ -448,7 +528,7 @@ async function documentLevelChecks(pg, expectSha) {
     /* الصفحة حُمِّلت فعلاً، فبعض الفحوص ما زالت قابلة للرصد على مستوى المستند.
        التنازل عنها هنا يكون تكاسلاً لا أمانة: نقيس ما يمكن قياسه، ونُعلن
        NOT VERIFIED لما يعتمد على تطبيق لم يقلع فقط. */
-    await documentLevelChecks(pg, EXPECT_SHA);
+    await documentLevelChecks(pg, EXPECT_SHA, cspViolations);
     await browser.close();
     planRemaining('the application never reached window.ACS.ready, so no '
       + 'downstream behaviour could be observed');
@@ -792,7 +872,9 @@ async function documentLevelChecks(pg, expectSha) {
       JSON.stringify(exported));
   }
 
-  /* ═══ E · F · G — تُقاس بنفس الدوالّ المشتركة في المسارين ══════════════ */
+  /* ═══ E · F · G · H — تُقاس بنفس الدوالّ المشتركة في المسارين ═════════ */
+  await checkShippedShape(pg);
+  reportCSP(cspViolations);
   await checkResponsive(pg, true);
   await checkArabic(pg, true);
   const buildInfo = await checkBuildInfo(pg, EXPECT_SHA);

@@ -32,6 +32,7 @@ const A = require(path.join(__dirname, 'frontend_analyze.js'));
 
 const APP = path.join(ROOT, 'public', 'app');
 const SHARED = '__ACS_SHARED';
+const LATE = '__ACS_LATE';
 
 /* قواطع إضافية داخل المقاطع اليدوية الكبيرة — تُطبَّق عند أوّل تعليمة عليا
    يبدأ نصّها بالمرساة. الهدف ألّا تتجاوز وحدة واحدة سقف 300 ك.ب المعلن. */
@@ -211,8 +212,30 @@ function main() {
   /* اسم يكتبه مالكه ويقرأه غيره يبقى ارتباطاً حيّاً — القراءة عبر الاستيراد
      تُحدَّث تلقائياً، فلا حاجة لنقله إلى الحالة المشتركة. */
 
+  /* رتبة كل مقطع في ترتيب التقييم الأصلي */
+  const ORDER = scans.map(s => s.key);
+  const indexOfKey = k => ORDER.indexOf(k);
+
+  /* مرور تمهيدي: أي اسم يُقرَأ من مقطع سابق لمالكه هو ربط متأخّر */
+  const lateNames = new Set();
+  const lateByOwner = new Map();
+  for (const s of scans) {
+    for (const n of s.info.free) {
+      if (mutable.has(n)) continue;
+      const own = owner.get(n);
+      if (!own || own === s.key) continue;
+      if (indexOfKey(own) > indexOfKey(s.key)) {
+        lateNames.add(n);
+        if (!lateByOwner.has(own)) lateByOwner.set(own, new Set());
+        lateByOwner.get(own).add(n);
+      }
+    }
+  }
+
   console.log('segments: %d · shared mutable bindings: %d (%s)',
               scans.length, mutable.size, [...mutable].sort().join(', ') || '—');
+  console.log('forward (late-bound) references: %d (%s)',
+              lateNames.size, [...lateNames].sort().join(', ') || '—');
 
   /* 4) تحويل كل مقطع */
   const emitted = [];
@@ -241,18 +264,37 @@ function main() {
         }
       }
     }
-    let body = applyEdits(s.src, edits);
+    let body = null;   /* يُبنى بعد حساب lateReads أدناه */
 
-    /* استيرادات: كل معرّف حرّ يملكه مقطع آخر */
+    /* استيرادات: كل معرّف حرّ يملكه مقطع آخر.
+
+       ترتيب تقييم وحدات ES يتبع رسم الاستيراد لا ترتيب الاستيراد في نقطة
+       الدخول: أي حافة إلى مقطع لاحق تقلب الترتيب الأصلي وتخلق دورة، فيقرأ
+       جسمُ وحدةٍ ارتباطاً لم يُهيَّأ بعد (TDZ). لذلك:
+         • حافة إلى مقطع سابق  → import عاديّ (آمنة، والترتيب محفوظ).
+         • حافة إلى مقطع لاحق  → عبر سجلّ ربط متأخّر __ACS_LATE.
+       كل الحواف الأمامية في هذا التطبيق تُقرأ داخل دوالّ لا وقت التقييم — وهذا
+       مُقاس بالمحلّل النحويّ لا مفترَض — فالربط المتأخّر يحفظ الدلالة تماماً،
+       ويصير الرسم لا دوريّاً وترتيب التقييم = ترتيب main.js = الترتيب الأصلي. */
     const needs = new Map();
+    const lateReads = new Set();
     for (const n of s.info.free) {
       if (mutable.has(n)) continue;
       const own = owner.get(n);
       if (!own || own === s.key) continue;
+      if (indexOfKey(own) > indexOfKey(s.key)) { lateReads.add(n); continue; }
       const f = FILES[own];
       if (!needs.has(f)) needs.set(f, new Set());
       needs.get(f).add(n);
     }
+
+    const publishes = [...(lateByOwner.get(s.key) || [])].sort();
+    if (lateReads.size) {
+      for (const h of occurrences(s.info.ast, lateReads))
+        edits.push({ start: h.start, end: h.end, text: LATE + '.' + h.name });
+    }
+    body = applyEdits(s.src, edits);
+
     const rel = f => {
       let r = path.relative(path.dirname(file), f).replace(/\\/g, '/');
       return r.startsWith('.') ? r : './' + r;
@@ -260,6 +302,9 @@ function main() {
     const importLines = [...needs.entries()].sort()
       .map(([f, names]) => 'import { ' + [...names].sort().join(', ')
                            + " } from '" + rel(f) + "';");
+    if (lateReads.size || publishes.length)
+      importLines.unshift("import { " + LATE + " } from '"
+                          + rel('late-bindings.js') + "';");
     if (mutable.size && (occurrenceCount(body) > 0))
       importLines.unshift("import { " + SHARED + " } from '"
                           + rel('shared-state.js') + "';");
@@ -267,12 +312,16 @@ function main() {
     /* تصديرات: كل ما يصرّح به المقطع ويحتاجه غيره (نصدّر الكلّ — أبسط وأأمن) */
     const exportNames = [...s.info.declared, ...s.info.imported]
       .filter(n => !mutable.has(n)).sort();
+    const publishLine = publishes.length
+      ? '\n\n/* نشر الارتباطات التي يقرأها مقطع أسبق — تُقرأ داخل دوالّ فقط،\n'
+        + '   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً. */\n'
+        + 'Object.assign(' + LATE + ', { ' + publishes.join(', ') + ' });\n' : '';
     const exportLine = exportNames.length
       ? '\n\nexport { ' + exportNames.join(', ') + ' };\n' : '\n';
 
     const text = header(s.key, file, s.generator)
                + (importLines.length ? importLines.join('\n') + '\n\n' : '')
-               + body + exportLine;
+               + body + publishLine + exportLine;
     emitted.push({ key: s.key, file, text, bytes: Buffer.byteLength(text, 'utf8'),
                    declared: exportNames, kind: s.kind });
 
@@ -305,13 +354,27 @@ function main() {
     return report(emitted, mutable);
   }
 
-  fs.rmSync(APP, { recursive: true, force: true });
+  /* لا نمسح app/ كلّه: boot/ و styles/ يملكهما tools/frontend_shell.js */
+  for (const d of ['core', 'generated', 'render', 'ui', 'trust'])
+    fs.rmSync(path.join(APP, d), { recursive: true, force: true });
   for (const e of emitted) {
     const dst = path.join(APP, e.file);
     fs.mkdirSync(path.dirname(dst), { recursive: true });
     fs.writeFileSync(dst, e.text);
   }
   fs.writeFileSync(path.join(APP, 'shared-state.js'), sharedText);
+  fs.writeFileSync(path.join(APP, 'late-bindings.js'),
+    '/* ============================================================\n'
+  + '   public/app/late-bindings.js\n'
+  + '   سجلّ الربط المتأخّر. ترتيب تقييم وحدات ES يتبع رسم الاستيراد، فحافةٌ\n'
+  + '   إلى وحدة لاحقة تقلب الترتيب وتفتح دورة. الأسماء هنا يقرؤها مقطع أسبق\n'
+  + '   من مالكها، وكلّها تُقرأ داخل دوالّ لا وقت التقييم (مُقاس بالمحلّل\n'
+  + '   النحويّ). المرور بهذا السجلّ يبقي الرسم لا دورياً وترتيب التقييم\n'
+  + '   مطابقاً لترتيب الصفحة قبل التفكيك.\n'
+  + '   ============================================================ */\n'
+  + 'export const ' + LATE + ' = Object.seal({\n'
+  + [...lateNames].sort().map(n => '  ' + n + ': undefined,').join('\n')
+  + '\n});\n');
   fs.writeFileSync(path.join(APP, 'main.js'), mainText);
   console.log('wrote %d modules under public/app/', emitted.length + 2);
   return report(emitted, mutable);

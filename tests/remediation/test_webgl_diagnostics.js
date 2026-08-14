@@ -19,7 +19,19 @@ const HERE = __dirname, ROOT = _np.resolve(HERE, '..', '..');
 let pass = 0, fail = 0;
 const chk = (n, c, d) => { c ? (pass++, console.log('  ✓', n))
   : (fail++, console.log('  ✗', n, d === undefined ? '' : d)); };
-const PAGE = fs.readFileSync(_np.join(ROOT, 'public', 'index.html'), 'utf8');
+/* F-09 — الواجهة لم تعد ملفّاً واحداً. المصدر الواحد الذي يعرف التخطيط هو
+   tests/lib/app_source.js: SHELL للعلامة، APP للشيفرة، PAGE لِما كان يُقرأ
+   قبل التفكيك على أنه «الصفحة» (قشرة + شيفرة). البحث عن رمز يجري على APP،
+   والبحث عن عنصر DOM يجري على SHELL — خلطهما هو ما جعل الملفّ الواحد يمرّ. */
+const AS = require(_np.join(ROOT, 'tests', 'lib', 'app_source.js'));
+const SHELL = AS.shell();
+const APP = AS.appText();
+const BOOTJS = (function () {
+  const m = AS.modules(), out = {};
+  Object.keys(m).forEach(k => { if (k.indexOf('boot/') === 0) out[k] = m[k]; });
+  return out;
+})();
+const PAGE = AS.pageText();
 const py = (code) => execFileSync('python3', ['-c', code],
   { cwd: ROOT, encoding: 'utf8', maxBuffer: 1 << 26 });
 
@@ -36,11 +48,11 @@ const MARK_A = '/* ==== ACS RUNTIME RENDER DIAGNOSTICS '
 const MARK_B = '/* ==== END ACS RUNTIME RENDER DIAGNOSTICS ==== */';
 console.log('\n== §1 — THE DIAGNOSTICS CONTRACT SHIPS IN THE HAND-WRITTEN '
   + 'MODULE ==');
-chk('the block exists exactly once in the shipped page',
-    PAGE.split(MARK_A).length - 1 === 1
-    && PAGE.split(MARK_B).length - 1 === 1);
-const iA = PAGE.indexOf(MARK_A), iB = PAGE.indexOf(MARK_B);
-const BLOCK = (iA >= 0 && iB > iA) ? PAGE.slice(iA, iB + MARK_B.length) : '';
+chk('the block exists exactly once in the shipped application code',
+    APP.split(MARK_A).length - 1 === 1
+    && APP.split(MARK_B).length - 1 === 1);
+const iA = APP.indexOf(MARK_A), iB = APP.indexOf(MARK_B);
+const BLOCK = (iA >= 0 && iB > iA) ? APP.slice(iA, iB + MARK_B.length) : '';
 chk('the block carries real code, not a stub', BLOCK.length > 4000,
     String(BLOCK.length));
 /* لا يعيش داخل كتلة مولَّدة: كل الكتل المولَّدة تنتهي قبل بدايته أو تبدأ بعده */
@@ -48,10 +60,10 @@ chk('the block carries real code, not a stub', BLOCK.length > 4000,
   const gen = [];
   const re = /\/\* ===== ACS [A-Z0-9 .]+\(generated[^\n]*\n/g;
   let m;
-  while ((m = re.exec(PAGE)) !== null) gen.push(m.index);
+  while ((m = re.exec(APP)) !== null) gen.push(m.index);
   const ends = [];
   const re2 = /\/\* ===== END ACS [A-Z0-9 .]+ ===== \*\//g;
-  while ((m = re2.exec(PAGE)) !== null) ends.push(m.index);
+  while ((m = re2.exec(APP)) !== null) ends.push(m.index);
   const inside = gen.some((g, i) => {
     const e = ends.filter(x => x > g)[0];
     return e !== undefined && iA > g && iA < e;
@@ -59,12 +71,21 @@ chk('the block carries real code, not a stub', BLOCK.length > 4000,
   chk('the block lives OUTSIDE every generated block, so a regenerate cannot '
       + 'overwrite it', inside === false);
 })();
-chk('the block is inside the application module script',
-    (function () {
-      const s = PAGE.indexOf('<script type="module">');
-      const e = PAGE.indexOf('\n</script>', s);
-      return iA > s && iA < e;
-    })());
+/* F-09 — «داخل سكربت الوحدة» صار «داخل وحدة ES يستوردها main.js». هذا أشدّ:
+   الشرط الآن أن تكون الكتلة في ملفّ واحد بعينه، وأن يكون ذلك الملفّ مستورَداً
+   فعلاً في رسم الاستيراد — لا مجرّد وجود نصّ بين وسمَي <script>. */
+(function () {
+  const mods = AS.modules();
+  const owners = Object.keys(mods).filter(k => mods[k].indexOf(MARK_A) >= 0);
+  chk('the block lives in exactly ONE shipped module', owners.length === 1,
+      owners.join(', '));
+  chk('that module is imported by public/app/main.js in the boot order — an '
+      + 'orphaned file would ship but never run',
+      owners.length === 1 && AS.order().indexOf(owners[0]) >= 0,
+      owners[0] + ' order=' + JSON.stringify(AS.order()));
+  chk('the shell carries no copy of it: the page is a shell, the code is a '
+      + 'module', SHELL.indexOf(MARK_A) < 0);
+})();
 
 console.log('\n== §2 — NO NETWORK PATH IN captureRenderFailure (STATIC) ==');
 const CAP_SRC = (function () {
@@ -91,8 +112,8 @@ chk('it revokes the object URL instead of leaking it',
 chk('it states in its own output that nothing was transmitted',
     /uploaded:false/.test(CAP_SRC) && /transmits_anything:false/.test(CAP_SRC));
 chk('the static scan is not vacuous: the same scan DOES find network calls '
-    + 'elsewhere in the page',
-    PAGE.indexOf('fetch(') >= 0 && PAGE.indexOf('XMLHttpRequest') >= 0);
+    + 'elsewhere in the application code',
+    APP.indexOf('fetch(') >= 0 && APP.indexOf('XMLHttpRequest') >= 0);
 
 /* ------------------------------------------------- بيئة تنفيذ مضبوطة ---- */
 function makeEnv(opts) {
@@ -432,23 +453,36 @@ function headWindow() {
   return w;
 }
 console.log('\n== §8 — THE BUILD IDENTITY IS A PLACEHOLDER, NOT A FAKE ==');
+/* F-09/F-11 — السكربت الكلاسيكي خرج من الصفحة إلى public/app/boot/build-info.js
+   (الصفحة لا تحمل جافاسكربت تنفيذياً مضمّناً بعد الآن). يُقرأ من ملفّه، ويُشترط
+   أن تُحمّله القشرة قبل وحدة التطبيق — وإلّا بقيت window.ACS_BUILD_INFO غائبة
+   عند إقلاع الوحدات. */
+const BUILD_INFO_REL = 'boot/build-info.js';
+const BUILD_SRC = BOOTJS[BUILD_INFO_REL] || '';
+chk('the build-identity script ships as a classic boot script file',
+    BUILD_SRC.length > 800, String(BUILD_SRC.length));
 ['__ACS_GIT_SHA__', '__ACS_BUILT_AT__', '__ACS_FRONTEND_VERSION__']
-  .forEach(t => chk('the exact substitution token ' + t + ' ships in the page',
-    PAGE.indexOf(t) >= 0));
-chk('window.ACS_BUILD_INFO is defined in a classic <head> script, before the '
-    + 'module',
+  .forEach(t => chk('the exact substitution token ' + t + ' ships in the '
+    + 'build-identity boot script', BUILD_SRC.indexOf(t) >= 0));
+chk('window.ACS_BUILD_INFO is defined by a classic <head> script that the '
+    + 'shell loads BEFORE the application module',
     (function () {
-      const i = PAGE.indexOf('window.ACS_BUILD_INFO = INFO;');
-      const m = PAGE.indexOf('<script type="module">');
-      return i > 0 && m > 0 && i < m;
+      const s = SHELL.indexOf('<script src="/app/' + BUILD_INFO_REL + '">');
+      const m = SHELL.indexOf('<script type="module" src="/app/main.js">');
+      return BUILD_SRC.indexOf('window.ACS_BUILD_INFO = INFO;') >= 0
+        && s > 0 && m > 0 && s < m
+        && SHELL.slice(0, SHELL.indexOf('</head>')).indexOf(
+          '<script src="/app/' + BUILD_INFO_REL + '">') >= 0;
     })());
+chk('the boot script is classic, not a module — it must run before the module '
+    + 'graph, and a deferred module would be too late',
+    /<script src="\/app\/boot\/build-info\.js"><\/script>/.test(SHELL)
+    && !/type="module"[^>]*build-info/.test(SHELL));
 chk('an unsubstituted build reports null for every field and declares itself '
     + 'UNPROVENANCED',
     (function () {
-      const a = PAGE.indexOf('<script>\n/* ======');
-      const s = PAGE.indexOf('(function(){', a);
-      const e = PAGE.indexOf('</script>', s);
-      const src = PAGE.slice(s, e);
+      const s = BUILD_SRC.indexOf('(function(){');
+      const src = BUILD_SRC.slice(s);
       const w = headWindow();
       new Function('window', 'document', 'URL', 'Blob', 'setTimeout',
         'navigator', src)(w, w.__doc, {}, function () { },
@@ -461,10 +495,8 @@ chk('an unsubstituted build reports null for every field and declares itself '
 chk('a substituted build reports the real values and declares itself '
     + 'provenanced',
     (function () {
-      const a = PAGE.indexOf('<script>\n/* ======');
-      const s = PAGE.indexOf('(function(){', a);
-      const e = PAGE.indexOf('</script>', s);
-      let src = PAGE.slice(s, e);
+      const s = BUILD_SRC.indexOf('(function(){');
+      let src = BUILD_SRC.slice(s);
       src = src.replace('"__ACS_GIT_SHA__"', '"abc123def456"')
         .replace('"__ACS_BUILT_AT__"', '"2026-08-14T00:00:00Z"')
         .replace('"__ACS_FRONTEND_VERSION__"', '"10.0.0"');
@@ -479,10 +511,12 @@ chk('a substituted build reports the real values and declares itself '
     })());
 
 console.log('\n== §9 — THE VISIBLE, KEYBOARD-REACHABLE UI ACTION ==');
+/* العلامة تُقرأ من القشرة وحدها: زرٌّ «موجود» لأن نصّه صادف وقوعه في سلسلة
+   جافاسكربت ليس زرّاً في الـDOM. البحث في SHELL يجعل هذه التوكيدات أشدّ. */
 const BTN = (function () {
-  const i = PAGE.indexOf('id="acsDiagBtn"');
+  const i = SHELL.indexOf('id="acsDiagBtn"');
   if (i < 0) return '';
-  return PAGE.slice(PAGE.lastIndexOf('<button', i), PAGE.indexOf('</button>', i));
+  return SHELL.slice(SHELL.lastIndexOf('<button', i), SHELL.indexOf('</button>', i));
 })();
 chk('the download action exists in the hand-written DOM', BTN.length > 40);
 chk('it is a real <button>, so it is focusable and Enter/Space activate it '
@@ -496,25 +530,30 @@ chk('it carries both labels: تنزيل التشخيص and Download diagnostics'
 chk('it carries an aria-label', /aria-label="[^"]{5,}"/.test(BTN));
 chk('the action lives OUTSIDE every generated DOM block',
     (function () {
-      const i = PAGE.indexOf('id="acsDiagBtn"');
-      const g = PAGE.indexOf('<!-- ===== ACS WORKSPACE DOM (generated) ===== -->');
+      const i = SHELL.indexOf('id="acsDiagBtn"');
+      const g = SHELL.indexOf('<!-- ===== ACS WORKSPACE DOM (generated) ===== -->');
       return i > 0 && g > 0 && i < g;
     })());
 chk('the build identifier is rendered in a visible system-info area',
-    PAGE.indexOf('id="acsBuildId"') >= 0
-    && PAGE.indexOf('معلومات النظام والتشخيص') >= 0);
+    SHELL.indexOf('id="acsBuildId"') >= 0
+    && SHELL.indexOf('معلومات النظام والتشخيص') >= 0);
 chk('the status line is announced to assistive technology',
-    /id="acsDiagState"[^>]*aria-live="polite"/.test(PAGE));
+    /id="acsDiagState"[^>]*aria-live="polite"/.test(SHELL));
 chk('the page tells the user the file is not uploaded anywhere',
-    PAGE.indexOf('ولا يُرفع إلى أيّ خادوم') >= 0);
+    SHELL.indexOf('ولا يُرفع إلى أيّ خادوم') >= 0);
+/* F-11 — الزرّ يعمل بلا معالج مضمّن: سياسة الأمن الصارمة تحظر onclick= في
+   العلامة، فلو اعتمد عليه لكان زرّاً ميّتاً في الإنتاج. */
+chk('the download action carries NO inline event-handler attribute — the '
+    + 'strict CSP would make one dead code',
+    !/\son[a-z]+=/.test(BTN), BTN.slice(0, 160));
 
 console.log('\n== §10 — F-07 PARITY: ONE PLATE CONTRACT IN BOTH LANGUAGES ==');
 const PYPOL = JSON.parse(py(
   'import json,acs_pbr;print(json.dumps(acs_pbr.PLATE_POLICY,sort_keys=True))'));
 const JSPOL = (function () {
-  const i = PAGE.indexOf('const PQ_PLATE_POLICY=');
-  const j = PAGE.indexOf(';\n', i);
-  return JSON.parse(PAGE.slice(i + 'const PQ_PLATE_POLICY='.length, j));
+  const i = APP.indexOf('const PQ_PLATE_POLICY=');
+  const j = APP.indexOf(';\n', i);
+  return JSON.parse(APP.slice(i + 'const PQ_PLATE_POLICY='.length, j));
 })();
 chk('the browser policy mirror is byte-identical to the Python source',
     JSON.stringify(JSPOL, Object.keys(JSPOL).sort())
@@ -525,7 +564,7 @@ chk('the policy names the new convention and records the old one',
     && JSPOL.previous_policy === 'PHASE1_SITE_WIDE_PLATE'
     && JSPOL.previous_pinned_by === 'PHASE4_GOLDEN_BASELINE');
 chk('pqPlatePolicy is exposed on the browser contract surface',
-    PAGE.indexOf('platePolicy:pqPlatePolicy') >= 0);
+    APP.indexOf('platePolicy:pqPlatePolicy') >= 0);
 /* المطابقة الحقيقية: نفس المُدخَلات إلى plate_rect و pqPlateRect و
    slab_strips و slabStrips، والمخرَجات تُقارَن رقماً برقم. */
 const CASES = [
@@ -645,21 +684,52 @@ try {
         _np.join(ROOT, 'node_modules', 'playwright'))});
       const path = require('path'), fs = require('fs'), http = require('http');
       const PUB = ${JSON.stringify(_np.join(ROOT, 'public'))};
+      /* F-09/F-11 — الصفحة صارت قشرة تحمّل وحدات ES وورقة أنماط خارجية.
+         نوع المحتوى الخاطئ يمنع تحميل الوحدة أصلاً (المتصفّح يشترط نوع
+         جافاسكربت لـ type="module")، والسياسة تُبَثّ رأساً حقيقياً كما في
+         الإنتاج، فما يُقاس هنا هو ما يجري هناك — لا بيئة متساهلة. */
+      const CSP = ${JSON.stringify((function () {
+        const nt = fs.readFileSync(_np.join(ROOT, 'netlify.toml'), 'utf8');
+        const m = /Content-Security-Policy\\s*=\\s*"([^"]+)"/.exec(nt);
+        return m ? m[1] : '';
+      })())};
+      const MIME = { '.html': 'text/html; charset=utf-8',
+        '.js': 'text/javascript; charset=utf-8',
+        '.mjs': 'text/javascript; charset=utf-8',
+        '.css': 'text/css; charset=utf-8', '.json': 'application/json',
+        '.png': 'image/png', '.svg': 'image/svg+xml', '.txt': 'text/plain',
+        '.xml': 'application/xml' };
       const srv = http.createServer((rq, rs) => {
         const u = decodeURIComponent(rq.url.split('?')[0]);
         const p = path.normalize(path.join(PUB, u === '/' ? 'index.html' : u));
-        if (!p.startsWith(PUB) || !fs.existsSync(p)) { rs.writeHead(404); rs.end(); return; }
-        rs.writeHead(200, { 'Content-Type': 'text/html' });
+        if (!p.startsWith(PUB) || !fs.existsSync(p)
+            || fs.statSync(p).isDirectory()) { rs.writeHead(404); rs.end(); return; }
+        const h = { 'Content-Type':
+          MIME[path.extname(p)] || 'application/octet-stream',
+          'X-Content-Type-Options': 'nosniff' };
+        if (CSP) h['Content-Security-Policy'] = CSP;
+        rs.writeHead(200, h);
         fs.createReadStream(p).pipe(rs);
       });
       await new Promise(r => srv.listen(0, '127.0.0.1', r));
       const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
       const pg = await b.newPage();
+      const bad = [];
+      pg.on('response', r => { if (r.status() >= 400)
+        bad.push(r.status() + ' ' + r.url()); });
+      await pg.addInitScript(() => {
+        window.__CSPV = [];
+        document.addEventListener('securitypolicyviolation',
+          e => window.__CSPV.push(e.violatedDirective + ' ' + e.blockedURI));
+      });
       await pg.goto('http://127.0.0.1:' + srv.address().port + '/index.html',
         { waitUntil: 'domcontentloaded' });
       const out = await pg.evaluate(() => {
         const btn = document.getElementById('acsDiagBtn');
         const peer = document.getElementById('bShot');   /* ضابط: زرّ قائم */
+        /* يُقاس قبل أي تعديل من الفاحص نفسه: السطر أدناه يضبط style.display
+           على السلف، فقياس بعده يقيس أثر الفاحص لا الوثيقة المشحونة. */
+        const inlineStyleAttrs = document.querySelectorAll('[style]').length;
         /* لوح الأدوات كلّه مخفيّ ما لم يُقلع سكربت الوحدة (لا Three.js هنا).
            نُظهر نفس السلف الذي يُظهره التطبيق عند فتح التبويب، ثم نقيس زرّنا
            وزرّاً قائماً بجانبه بنفس المسطرة — فلا يمرّ زرّ مخفيّ بخصوصية. */
@@ -686,9 +756,22 @@ try {
           build_id_text: (document.getElementById('acsBuildId') || {})
             .textContent || null,
           webgl2: !!gl,
+          /* F-09 — الأنماط خرجت من الصفحة إلى ورقة خارجية: إن لم تُحمَّل عاد
+             كل قياس تخطيط أعلاه بلا معنى. تُقاس بقاعدة مشحونة فيها. */
+          stylesheets: document.styleSheets.length,
+          css_rules: (function () { let n = 0;
+            for (const s of document.styleSheets) {
+              try { n += s.cssRules.length; } catch (e) { }
+            } return n; })(),
+          inline_style_attrs: inlineStyleAttrs,
+          csp_violations: (window.__CSPV || []).slice(0, 8),
           three_loaded: typeof window.ACS === 'object' && !!window.ACS.ready
         };
       });
+      /* /vendor/ غائب في هذا الصندوق بلا شبكة — يُفصَل صراحةً عن
+         أصول التطبيق حتى لا يخفي غيابُه سقوطَ وحدةٍ حقيقيّ ولا يزيّف نجاحاً */
+      out.bad_responses = bad.filter(x => x.indexOf('/vendor/') < 0).slice(0, 8);
+      out.bad_vendor = bad.filter(x => x.indexOf('/vendor/') >= 0).length;
       await b.close(); srv.close();
       console.log(JSON.stringify(out));
     })().catch(e => { console.log(JSON.stringify({ error: String(e.message) })); });
@@ -725,6 +808,26 @@ if (CHROME && !CHROME.error) {
       CHROME.build_id_el === true);
   chk('real Chromium: WebGL2 IS available here — the missing piece is '
       + 'Three.js, not the GPU stack', CHROME.webgl2 === true);
+  /* F-09/F-11 — يُقاس هذا تحت رأس السياسة الإنتاجي الحقيقي ونوع محتوى صحيح */
+  chk('real Chromium: the EXTERNAL stylesheet loaded and its rules applied — '
+      + 'the layout measured above is the shipped layout, not a bare document',
+      CHROME.stylesheets >= 1 && CHROME.css_rules > 200,
+      JSON.stringify([CHROME.stylesheets, CHROME.css_rules]));
+  chk('real Chromium: not one element carries a style= attribute in the '
+      + 'served DOM — the strict CSP forbids it and the utility classes '
+      + 'replaced them',
+      CHROME.inline_style_attrs === 0, String(CHROME.inline_style_attrs));
+  chk('real Chromium: the production CSP raised NO violation while the shell, '
+      + 'the boot scripts and the stylesheet loaded',
+      Array.isArray(CHROME.csp_violations) && CHROME.csp_violations.length === 0,
+      JSON.stringify(CHROME.csp_violations));
+  chk('real Chromium: every APPLICATION asset the shell asks for was served — '
+      + 'no 404 for a boot script, a module or the stylesheet',
+      Array.isArray(CHROME.bad_responses) && CHROME.bad_responses.length === 0,
+      JSON.stringify(CHROME.bad_responses));
+  console.log('  ── /vendor/ requests that 404ed here: ' + CHROME.bad_vendor
+    + ' — NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (public/vendor is '
+    + 'empty in this sandbox; Netlify populates it at build time)');
   console.log('  ── real Chromium reports module ready = '
     + CHROME.three_loaded + ' (false is expected without vendored Three.js)');
 } else {

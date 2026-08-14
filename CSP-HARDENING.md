@@ -1,328 +1,344 @@
-# F-11 — Content Security Policy: audit, measured impact, and migration plan
+# F-11 — Content Security Policy: before, after, evidence, compatibility
 
-**Status: CSP HARDENING IS NOT COMPLETE.**
-The two weakest sources — `script-src 'unsafe-inline'` and `script-src
-'unsafe-eval'` — are still present and are still exploitable. They are recorded
-below as tracked `KNOWN-WEAKNESS` items with measured evidence, not as passes.
-**F-09 (splitting `public/index.html` into `public/app/*.js`) is a hard
-prerequisite** for removing `'unsafe-inline'`; no amount of CSP editing can
-remove it while the entire application is one inline `<script type="module">`.
+**Status: CLOSED.**
+The deployed policy carries no `'unsafe-inline'`, no `'unsafe-eval'`, no
+`'unsafe-hashes'`, no wildcard, no `blob:`/`data:` script source and no CDN
+host. All **eight** attack classes named in the F-11 brief were attempted as
+real code execution in a real Chromium against the real policy served as a real
+response header, and all eight were **BLOCKED**. A normal boot of the shipped
+page produces **0** CSP violations.
+
+The close was made possible by F-09: `public/index.html` is now a 44 253-byte
+shell with zero executable inline JavaScript, zero `<style>` blocks and zero
+`style="…"` attributes; the whole application lives in ES modules under
+`public/app/`. The only inline element left in the page is the import map, and
+it is pinned by a sha256 hash.
 
 Everything numeric in this file was measured in this checkout:
 
-* static measurements — `tools/bundle_report.py` → `tests/performance/bundle_report.json`
 * browser measurements — `node tests/remediation/csp_browser_probe.js` →
   `tests/remediation/outputs/csp_probe.json` (real Chromium, real
-  `Content-Security-Policy` *response header* served from `127.0.0.1` by
-  `tools/csp_static_server.py`)
+  `Content-Security-Policy` **response header** served from `127.0.0.1` by
+  `tools/csp_static_server.py` — never `<meta http-equiv>`, which cannot express
+  `frame-ancestors` and would therefore measure a different policy than the one
+  deployed)
 * the machine-checkable claims — `node tests/lib/run.js tests/remediation/test_csp.js`
+* the "before" numbers come from the probe output recorded at commit `c5dcfb2`
 
-> **On the exact figures below.** `public/index.html` is being modified by
-> another change in flight (it grew from 1 752 083 to 1 863 853 bytes, and from
-> 7 inline script elements to 8, while this audit was being written). Every
-> concrete byte count and line number in this document is therefore a
-> **snapshot**, labelled as one. The authoritative, always-current numbers live
-> in two regenerable artifacts — `tests/performance/bundle_report.json` and
-> `tests/remediation/outputs/csp_probe.json` — and the tests assert the
-> *structure* of the argument, not the snapshot digits, so an edit to the page
-> cannot silently invalidate the audit or silently make it pass.
+Two adjacent defects that this work uncovered but did **not** cause and does
+**not** fix are recorded in §6. Neither is a hole in the policy; both are
+application bugs that the policy makes visible.
 
 ---
 
-## 1. The policy
+## 1. Before
 
-### 1.1 Before (as deployed at HEAD 130a32d)
-
-```
-default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
-img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;
-worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
-connect-src 'self' https://acs-engine.onrender.com
-```
-
-### 1.2 After (this change — purely additive tightening)
+### 1.1 The old policy, verbatim (as deployed at `c5dcfb2`)
 
 ```
-default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none';
-img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:;
-worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:;
-connect-src 'self' https://acs-engine.onrender.com;
-form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self';
-upgrade-insecure-requests
+default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests
 ```
 
-Every pre-existing directive is byte-identical. Nothing was removed and nothing
-was widened. The five added directives cost nothing because the shipped page
-uses none of the capabilities they close:
+The load-bearing weakness was `script-src 'self' 'unsafe-inline' 'unsafe-eval'
+blob:`. `'unsafe-inline'` existed because the entire application was one
+1.76 MB inline `<script type="module">` — about 94 % of a 1 863 894-byte page.
+`'unsafe-eval'` and `blob:` existed for exactly one reason: `es-module-shims`,
+loaded to give import-map support to browsers that lack it natively.
 
-| Added directive | Why it is free today | Evidence |
-|---|---|---|
-| `form-action 'self'` | the page contains **0** `<form>` elements | `grep -c '<form' public/index.html` → 0 |
-| `frame-src 'none'` | the page contains **0** real `<iframe>` elements (the 4 textual hits are strings inside forbidden-tag lists in the embedded JSON specs) | inspected at lines 15780 / 17240 / 18637 / 19362 |
-| `manifest-src 'self'` | no `rel="manifest"` is declared | `grep 'rel="manifest"'` → none |
-| `media-src 'self'` | no `<video>` / `<audio>` element exists | `grep '<video\|<audio'` → none |
-| `upgrade-insecure-requests` | every runtime reference is same-origin or the single pinned `https://` backend | `tools/check_api_base.py` passes |
+### 1.2 The old measured numbers
 
-`netlify.toml` still parses (`python3 -c "import tomllib; tomllib.load(open('netlify.toml','rb'))"` → `toml ok`) and the deploy verifier's baked-absolute-path hunt (`= "/…`) is not tripped, because the CSP value starts with `default-src`, and the URL-scoped header blocks keep the existing TOML *literal string* convention (`for = '/'`).
+Two Chromium loads of the same shipped page: once with the deployed policy
+above, once with a **hardened trial** policy that differed only by the removal
+of `'unsafe-inline'` and `'unsafe-eval'`.
 
----
-
-## 2. Directive-by-directive audit
-
-Column 4 ("what it takes to remove") is the work item. Column 5 is the
-**measured** compatibility/behaviour impact, not an estimate.
-
-| Directive | Current value | Why it is required today (established by reading the code) | What it takes to remove | Measured impact of removing it |
-|---|---|---|---|---|
-| `default-src` | `'self'` | baseline; nothing external is fetched at runtime | — (already minimal) | n/a |
-| `base-uri` | `'self'` | no `<base>` element exists; pinned so an injected `<base>` cannot re-root every relative URL | — (already minimal) | n/a |
-| `object-src` | `'none'` | no `<object>`/`<embed>`/applet is used | — (already minimal) | n/a |
-| `frame-ancestors` | `'none'` | the studio must never be framed (clickjacking over project data); paired with `X-Frame-Options: DENY` | — (already minimal) | n/a |
-| `img-src` | `'self' data: blob:` | `data:` — `renderer.domElement.toDataURL('image/png'\|'image/jpeg')` at lines 26198, 27870, 29004, 29178 feeds screenshots and the PDF/report pipeline back into `Image.src`; also `THREE.CanvasTexture(noiseCanvas(...))` (line 1260) for procedural WebGL textures. `blob:` — `URL.createObjectURL(file)` for user-supplied door/facade images (lines 27283, 29167) and for generated download previews (29893). | replace every `toDataURL` round-trip with an OffscreenCanvas/`ImageBitmap` handoff that never becomes a URL, and keep user file previews on `createImageBitmap(file)` instead of object URLs | **Not free.** 6 `createObjectURL` and 4 `toDataURL` call sites. Removing `data:`/`blob:` from `img-src` today breaks screenshot preview, the door-image feature, and procedural textures. Low security value: `img-src` cannot execute script. **Recommendation: keep.** |
-| `style-src` | `'self' 'unsafe-inline'` | exactly **one** inline `<style>` block holding the entire application stylesheet (tens of KB), plus several dozen `style="…"` attributes in the hand-written markup and in the generated DOM blocks. Live counts: `tests/performance/bundle_report.json` (`elements.styles`) and `tests/remediation/outputs/csp_probe.json` (`distinct_source_lines_by_directive['style-src-attr']`). | F-09: move the `<style>` block to `public/app/app.css` (a `<link rel=stylesheet>` needs no `'unsafe-inline'`), then eliminate **every** inline `style` attribute (a nonce does **not** cover style attributes — only `'unsafe-hashes'` plus per-value hashes does, which is unmaintainable) | **Measured:** with `'unsafe-inline'` dropped from `style-src`, Chromium raises **1** `style-src-elem` violation (the stylesheet) and **one `style-src-attr` violation per inline style attribute** — 43 and then 50 on two consecutive snapshots of a page that is being edited, i.e. the number tracks the markup, not the policy. The page renders unstyled. |
-| `font-src` | `'self' data:` | no webfont file is shipped; `data:` is kept for inlined glyph fallbacks | audit that no `data:` font is actually used, then narrow to `'self'` | Untested today; likely free, but unverified — listed as a follow-up, not claimed. |
-| `worker-src` | `'self' blob:` | the local pdf.js worker: `pdfjs.GlobalWorkerOptions.workerSrc = '/vendor/pdfjs@4.0.379/pdf.worker.min.mjs'` (line 29170). pdf.js falls back to constructing the worker through a `blob:` URL when the module worker cannot be instantiated directly. | pin pdf.js to same-origin module-worker instantiation only and prove the blob fallback never fires | `'self'` alone is very likely sufficient on modern browsers, but pdf.js's fallback path is not exercisable here (`public/vendor` is empty) — **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**. |
-| `script-src` | `'self' 'unsafe-inline' 'unsafe-eval' blob:` | see §3 — the core weakness | see §5 | see §3 |
-| `connect-src` | `'self' https://acs-engine.onrender.com` | the single understanding-engine origin. It is declared once in `public/index.html` (`CONFIGURED_BASE`, line 20) and corresponds to the Render service `name: acs-engine` in `render.yaml`. `tools/check_api_base.py` enforces the one-origin rule. | — (already exactly pinned; widening it is the regression to guard against) | n/a — `test_csp.js` asserts it pins exactly this origin and nothing else. |
-| `form-action` | `'self'` (**new**) | no forms exist | — | free |
-| `frame-src` | `'none'` (**new**) | no iframes exist | — | free |
-| `manifest-src` | `'self'` (**new**) | no manifest | — | free |
-| `media-src` | `'self'` (**new**) | no media elements | — | free |
-| `upgrade-insecure-requests` | (**new**) | no `http://` runtime reference exists; this makes a future one fail closed | — | free |
-
----
-
-## 3. `script-src` — the three exceptions, measured
-
-### 3.1 `'unsafe-inline'` — required because the whole application is inline
-
-`public/index.html` is a single document containing **every** script the
-application runs. There is not one external application script: no
-`<script src="/app/…">` exists, and `public/app/` does not exist.
-
-Snapshot (page sha256 `41ec1c16…`, 1 863 853 bytes — regenerate with
-`python3 tools/bundle_report.py`):
-
-| # | line | type | body bytes | what it is |
-|---|---|---|---|---|
-| 1 | 17 | classic | 1 556 | early boot / language + error guards |
-| 2 | 52 | classic | 5 009 | error panel, diagnostics download (`URL.createObjectURL`) |
-| 3 | 1039 | classic | 204 | debug-flag reveal |
-| 4 | 1271 | classic | 1 101 | the guarded `es-module-shims` loader (§3.2) |
-| 5 | 1291 | `importmap` | 131 | `three` → `/vendor/three@0.160.0/…` (local only) |
-| 6 | 1300 | classic | 1 330 | login card + `window.ACS` bootstrap (works even if 3D fails) |
-| 7 | 1333 | **module** | **1 759 459** | the entire application |
-| 8 | 31989 | classic | 4 575 | late page-level script (added by the in-flight change) |
-
-Script #7 alone is ~94 % of the page. **A nonce or hash cannot help here in any
-useful way**: hashing a 1.7 MB inline module would force a full-page cache bust
-on every code change, and a nonce on an inline module still leaves the whole
-application inside the HTML document, which is what makes any XSS sink
-immediately script-executing. The only real fix is F-09.
-
-**Measured, in real Chromium, under the *deployed* policy:**
-
-```
-KNOWN-WEAKNESS · CSP-INLINE-EXEC
-  a hostile <script> injected into the live page EXECUTED  →  true
-```
-
-This is not a hypothetical. `tests/remediation/csp_browser_probe.js` appends
-`<script>window.__HOSTILE_INLINE__ = true</script>` to the loaded page and reads
-the flag back: it is `true`. Any injection sink in the application is therefore
-directly script-executing.
-
-### 3.2 `'unsafe-eval'` and `blob:` — es-module-shims 1.8.2
-
-The shim is loaded by the guarded loader at lines 1024–1040:
-
-```js
-var nativeImportMap = typeof HTMLScriptElement !== 'undefined'
-  && typeof HTMLScriptElement.supports === 'function'
-  && HTMLScriptElement.supports('importmap');
-if (nativeImportMap) return;                 // modern path: no shim, no blob:
-var s = document.createElement('script');
-s.src = '/vendor/es-module-shims@1.8.2/es-module-shims.js';   // local, no CDN
-```
-
-Confirmed by reading the code:
-
-* the shim is **local** (`/vendor/…`), never a CDN — so `'unsafe-eval'`/`blob:`
-  buy an attacker no external origin;
-* on a browser with native import maps the shim is **never fetched**, so no
-  `blob:` module is ever created there;
-* **the application itself contains zero `eval(` and zero `new Function(` call
-  sites.** All 7 textual `eval(` hits (lines 7189, 14116, 15780, 17240, 18637,
-  19362, 21140) are entries in *forbidden-token deny-lists* inside the embedded
-  JSON specifications, not call sites. So `'unsafe-eval'` is attributable
-  **entirely** to the shim.
-
-**Partly refuted / sharpened, two ways:**
-
-1. **The guard is stricter than it needs to be.** `HTMLScriptElement.supports`
-   shipped later than import-map support in Chromium: import maps landed in
-   Chrome/Edge **89**, but `HTMLScriptElement.supports` only in Chrome **106**.
-   So Chrome/Edge **89–105** take the legacy branch and download the shim even
-   though they support import maps natively. Fixing the feature test (probe an
-   actual `<script type="importmap">` acceptance instead) shrinks the shim's
-   real audience to genuinely-legacy browsers — a cheap, F-09-independent
-   improvement.
-2. **Whether the shim strictly needs `'unsafe-eval'` is NOT VERIFIED here.**
-   `public/vendor` is empty in this sandbox and there is no network, so
-   `es-module-shims@1.8.2` cannot be read or executed. Its documented CSP
-   requirement is `blob:` for rewritten modules; `'unsafe-eval'` may be
-   removable independently. **This must be measured on a networked machine
-   before `'unsafe-eval'` is dropped** — see step 0 of §5.
-
-**Measured, under the deployed policy:**
-
-```
-KNOWN-WEAKNESS · CSP-EVAL-EXEC        hostile eval() from page code EXECUTED  →  true
-KNOWN-WEAKNESS · CSP-FUNCTION-CTOR    hostile new Function()        EXECUTED  →  true
-```
-
-### 3.3 Browser-compatibility cost of dropping the shim — stated explicitly
-
-Dropping `es-module-shims` is the only way to remove `blob:` (and possibly
-`'unsafe-eval'`) from `script-src`. **The application does not degrade on the
-affected browsers; it does not run at all** — every bare specifier (`three`,
-`three/addons/…`) becomes unresolvable, the module script never executes, and
-the user sees the login card and then the "engine did not load" warning at 12 s
-(line ~1075) forever.
-
-Browsers that lose the application entirely if the shim is dropped:
-
-| Engine | Import maps supported from | Lost if the shim is dropped |
-|---|---|---|
-| Safari (macOS **and** iOS/iPadOS — all iOS browsers use WebKit) | **16.4** (March 2023) | **iOS/iPadOS ≤ 16.3, macOS Safari ≤ 16.3.** This is the population the shim exists for. iOS 15.x devices are still in the field, and every iPhone that cannot take iOS 16.4 (iPhone 7 / 6s / SE-1 class) is permanently in this bucket. |
-| Firefox | 108 (December 2022) | Firefox ≤ 107, and **Firefox ESR 102** (still deployed in managed/enterprise fleets) |
-| Chrome / Edge | 89 (March 2021) | Chrome/Edge ≤ 88 |
-| Samsung Internet | 15.0 | ≤ 14.x |
-| Opera | 75 | ≤ 74 |
-
-**Recommendation: do NOT drop the shim as part of CSP hardening.** The security
-gain (removing a *same-origin* `blob:` source, on a code path that only runs on
-browsers that already lack modern mitigations) is small; the cost is a total
-outage for a real, identifiable user population. If the product later declares
-a minimum-browser baseline of "native import maps", then and only then delete
-the loader block from `index.html` **first** and the `blob:` (and, after step 0
-of §5 proves it, `'unsafe-eval'`) source **second**.
-
----
-
-## 4. Measured evidence: current policy vs. hardened trial policy
-
-Both rows are one real Chromium load of the real shipped page, served over
-`http://127.0.0.1` with the policy applied as a genuine response header. The
-hardened trial policy is the deployed policy with **only** `'unsafe-inline'`
-and `'unsafe-eval'` removed — nothing else changed, so the whole delta is
-attributable to those two tokens.
-
-| Measurement | CURRENT (deployed) | HARDENED TRIAL |
+| Measurement | CURRENT (as deployed) | HARDENED TRIAL |
 |---|---|---|
 | page loaded | true | true |
-| **CSP violations (total)** | **0** | **54**, then **61** on the next snapshot — the count tracks the page, and it is never 0 |
-| … `script-src-elem` | 0 | **one per inline script element in the page, plus the injected hostile one** — every application script is blocked, the import map included |
-| … `script-src` (eval family) | 0 | **2** — `eval()` and `new Function()` |
-| … `style-src-elem` | 0 | **1** — the single inline application stylesheet |
-| … `style-src-attr` | 0 | **one per inline `style="…"` attribute** (43 and then 50 across two snapshots of the page as it was edited) |
-| console errors | 7 (all `404` for the absent `public/vendor`) | 52 (all `Refused to execute/apply …`) |
-| failed requests | 7 (absent vendor files) | 0 — *because the module script never ran, so it never asked for them* |
-| **application inline scripts executed** | **true** | **false** — the application does not start at all |
-| **hostile inline `<script>` executed** | **true** ← weakness | **false** |
-| hostile external same-origin script loaded | true | true (`'self'` is intact in both) |
-| **hostile `eval()` executed** | **true** ← weakness | **false** |
-| **hostile `new Function()` executed** | **true** ← weakness | **false** |
+| **CSP violations, total** | **0** | **62** |
+| … `script-src-elem` | 0 | 9 — every inline application script, the import map included |
+| … `script-src` (eval family) | 0 | 2 — `eval()` and `new Function()` |
+| … `style-src-elem` | 0 | 1 — the inline application stylesheet |
+| … `style-src-attr` | 0 | 50 — one per inline `style="…"` attribute |
+| console errors | 7 (all 404 for the absent `public/vendor`) | 60 (all `Refused to execute/apply …`) |
+| failed requests | 7 | 0 — the module script never ran, so it never asked |
+| **application inline scripts executed** | **true** | **false** — the app did not start at all |
+| **hostile inline `<script>`** | **EXECUTED** ← weakness | BLOCKED |
+| **hostile `eval()`** | **EXECUTED** ← weakness | BLOCKED |
+| **hostile `new Function()`** | **EXECUTED** ← weakness | BLOCKED |
 
-Read plainly: **the hardened policy is exactly the policy we want, and it
-breaks 100 % of the application today.** That is the whole argument for F-09.
-
-### Frame rendering: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
-
-`public/vendor` is empty in this checkout and there is no network, so Three.js
-cannot load and **no frame was rendered**. Nothing above depends on a rendered
-frame: CSP decisions are taken by the browser at parse/execute time. Any claim
-about rendering under either policy stays NOT VERIFIED here.
+Read plainly: the policy we wanted was already known to work, and it broke
+100 % of the application. That was the whole argument for F-09.
 
 ---
 
-## 5. Migration plan to a nonce/hash-based CSP
+## 2. After
 
-Ordered. Steps 1–3 are **F-09 work**, not CSP work. The CSP change is the last,
-smallest step; that is the honest shape of this problem.
-
-**Step 0 — measurable, independent of F-09 (do this first, it is cheap).**
-On a networked machine, run `sh tools/vendor.sh`, then re-run
-`node tests/remediation/csp_browser_probe.js` with a trial policy that removes
-**only** `'unsafe-eval'` (keeping `'unsafe-inline'` and `blob:`), on a browser
-forced down the shim path. If the shim runs, drop `'unsafe-eval'` immediately —
-it is then unattributed. Also fix the `HTMLScriptElement.supports` feature test
-(§3.2) so Chrome 89–105 stops loading the shim. Neither change needs F-09.
-
-**Step 1 — F-09.a: extract the stylesheet.**
-Move the single inline `<style>` block (line 152; tens of KB — exact size in
-`bundle_report.json`) to `public/app/app.css`, referenced by
-`<link rel="stylesheet" href="/app/app.css">`. Then delete every `style="…"`
-attribute (§2) by moving it to a class. Only when *both* are done can
-`'unsafe-inline'` leave `style-src`. Verify with the probe: `style-src-elem`
-must go 1 → 0 and `style-src-attr` must go to 0.
-
-**Step 2 — F-09.b: extract the application module.**
-Split the multi-megabyte inline `<script type="module">` into
-`public/app/*.js`, loaded as `<script type="module" src="/app/main.js">`. The
-generated blocks already have unambiguous begin/end markers (10 JS pairs, 6 CSS
-pairs, 6 DOM pairs — enumerated in `tests/performance/bundle_report.json`), so
-the split can follow the existing generator boundaries one-for-one, and the
-generators keep writing to their own files instead of into the HTML.
-
-**Step 3 — F-09.c: the remaining inline scripts.**
-Scripts #1, #2, #3, #6, #8 become `public/app/boot/*.js`. Script #5 (the import map)
-**must stay inline** — an import map cannot be external — so it needs a
-**nonce**, not extraction. Script #4 (the shim loader) becomes external, or
-disappears if the browser baseline changes (§3.3). Delete every inline event-handler attribute — at the time of writing there is
-one, `onclick="location.reload()"` on the engine-warning reload button (a nonce
-does not cover event-handler attributes).
-
-**Step 4 — issue a per-response nonce.**
-Netlify static headers cannot vary per response, so a per-request nonce needs a
-Netlify **Edge Function** that injects `nonce-<random>` into both the header and
-the import-map tag. Alternative with no edge function: a build-time **hash**
-(`'sha256-…'`) of the import map, computed by `tools/netlify-build.sh` and
-written into `netlify.toml`. The import map is 131 bytes and changes only when
-vendored versions change, so the hash route is the pragmatic one and is
-recommended.
-
-**Step 5 — tighten the policy.**
-Target:
+### 2.1 The new policy, verbatim (`netlify.toml`, header block `for = "/*"`)
 
 ```
-script-src 'self' 'sha256-<importmap hash>';
-style-src  'self';
+default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests
 ```
 
-i.e. `'unsafe-inline'`, `'unsafe-eval'` and `blob:` all gone from `script-src`
-(the last only if §3.3's browser-baseline decision has been taken and written
-down). Re-run `csp_browser_probe.js` and require **0 violations** with the
-application fully booting — the exact opposite of the row measured in §4 today.
+What changed, directive by directive:
 
-**Step 6 — lock it.**
-Extend `tests/remediation/test_csp.js` to *fail* on the presence of
-`'unsafe-inline'` once step 5 lands, converting today's tracked weakness into a
-regression guard.
-
----
-
-## 6. Tracked weaknesses (open)
-
-| ID | Weakness | Blocked on | Evidence |
+| Directive | Before | After | Why the change is safe |
 |---|---|---|---|
-| `CSP-INLINE-EXEC` | `script-src 'unsafe-inline'`: a hostile inline `<script>` **executes** on the deployed policy | **F-09** (steps 1–3) | measured `true`, `tests/remediation/outputs/csp_probe.json` |
-| `CSP-EVAL-EXEC` | `script-src 'unsafe-eval'`: a hostile `eval()` **executes** on the deployed policy | step 0, then the es-module-shims decision (§3.3) | measured `true`, same file |
-| `CSP-FUNCTION-CTOR` | `new Function()` **executes** (same root cause) | as above | measured `true`, same file |
-| `CSP-STYLE-INLINE` | `style-src 'unsafe-inline'`: 1 inline stylesheet + several dozen inline style attributes | F-09 step 1 | 44 and then 51 style violations measured under the trial policy |
-| `CSP-BLOB-SCRIPT` | `script-src blob:` for es-module-shims | a written browser-baseline decision (§3.3) | shim is local-only and guarded; not exercisable here |
-| `CSP-SHIM-OVERFETCH` | Chrome/Edge 89–105 load the shim unnecessarily (feature test uses `HTMLScriptElement.supports`, Chrome 106+) | nothing — fixable today | read from `public/index.html` lines 1026–1038 |
-| `CSP-WORKER-BLOB` | `worker-src blob:` for the pdf.js fallback | proving the fallback never fires | **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED** (`public/vendor` empty) |
+| `script-src` | `'self' 'unsafe-inline' 'unsafe-eval' blob:` | `'self' 'sha256-…'` | the page has zero executable inline scripts; the one inline element left (the import map) is pinned by content hash; `es-module-shims` is deleted, which removes the only consumer of `'unsafe-eval'` and `blob:` |
+| `style-src` | `'self' 'unsafe-inline'` | `'self'` | zero `<style>` blocks and zero `style="…"` attributes remain in the page; all CSS is `/app/styles/app.css` |
+| `font-src` | `'self' data:` | `'self'` | `public/app/styles/app.css` contains zero `@font-face` rules and zero `data:` fonts |
+| `worker-src` | `'self' blob:` | `'self'` | the pdf.js worker is loaded from a real same-origin path (`/vendor/pdfjs@4.0.379/pdf.worker.min.mjs`) — see §5 |
+| everything else | unchanged | unchanged | already minimal |
 
-**F-09: NOT IMPLEMENTED.**
-**Full CSP hardening: NOT COMPLETE — and it cannot be completed before F-09.**
+The `'sha256-…'` source is the sha256 of the exact text content of the page's
+`<script type="importmap">` element. It is not copied by hand: it is written to
+`public/app/importmap.sha256`, and `tests/remediation/test_csp.js` **recomputes
+it from `public/index.html`** and refuses the policy if the two differ. A single
+hash over a single known, tiny, non-executable JSON document is not a hole —
+changing one byte of the map invalidates it and the map stops loading.
+
+An import map cannot be an external file with adequate cross-browser support,
+which is why it is the one inline element that remains.
+
+### 2.2 The new measured numbers
+
+`tests/remediation/outputs/csp_probe.json`, three consecutive runs, identical
+results:
+
+| Attack class | Attempted as | Result |
+|---|---|---|
+| injected inline `<script>` | `script.textContent = …; head.appendChild(script)` | **BLOCKED** (`script-src-elem`) |
+| `eval("…")` | called from a same-origin external script | **BLOCKED** (`script-src`) |
+| `new Function("…")()` | called from a same-origin external script | **BLOCKED** (`script-src`) |
+| `javascript:` URL | `<a href="javascript:…">` appended and `.click()`ed | **BLOCKED** (`script-src-elem`) |
+| external script, unrelated origin | `<script src="http://127.0.0.1:<other-port>/…">` | **BLOCKED** (`script-src-elem`); Chromium reported the request failure reason as **`csp`** |
+| inline event handler | `btn.setAttribute('onclick', …); btn.click()` | **BLOCKED** (`script-src-attr`) |
+| `data:text/javascript` script | `<script src="data:text/javascript,…">` | **BLOCKED** (`script-src-elem`) |
+| `blob:` script | `URL.createObjectURL(new Blob([…],{type:'text/javascript'}))` as `<script src>` | **BLOCKED** (`script-src-elem`) — the boundary is exercised explicitly because `script-src` deliberately does **not** list `blob:` |
+
+| Boot / style measurement | Result |
+|---|---|
+| CSP violations during a normal boot | **0** |
+| `window.ACS_API` present | true |
+| `window.ACS` present | true |
+| import map accepted by its hash (the bare specifier `three` really resolved through it) | true |
+| executable inline `<script>` blocks in the DOM | 0 |
+| `<style>` blocks in the DOM | 0 |
+| `element.style.<prop> = …` (CSSOM write) | **ALLOWED** — CSSOM is *not* governed by `style-src`; measured, not assumed |
+| `setAttribute('style', …)` | **BLOCKED** (`style-src-attr`) |
+| total violations recorded across boot + all attacks | 9 — `script-src-elem` 5, `script-src` 2, `script-src-attr` 1, `style-src-attr` 1 |
+
+Every violation is recorded with its `violatedDirective`, `effectiveDirective`,
+`blockedURI`, `sourceFile` and `lineNumber` in the JSON — not as a bare count.
+
+---
+
+## 3. Evidence
+
+**Probe:** `tests/remediation/csp_browser_probe.js`
+**Output:** `tests/remediation/outputs/csp_probe.json`
+**Server:** `tools/csp_static_server.py` (applies the policy as a genuine
+response header; serves the attack driver at the virtual path
+`/__csp_probe__/hostile.js`, which is never written into `public/`)
+**Contract test:** `tests/remediation/test_csp.js`
+
+### 3.1 The methodology trap: `page.evaluate()` bypasses CSP
+
+**`page.evaluate()` injects code through the CDP debugger
+(`Runtime.evaluate`), and that path is exempt from Content Security Policy.**
+`eval()` or `new Function()` called from inside `page.evaluate()` runs *even
+under a policy that forbids them*, and would be recorded as `EXECUTED` — a false
+negative that makes a correct, strict policy look broken.
+
+Every attack in this probe is therefore compiled by the page itself: the driver
+is served as a same-origin `<script src="/__csp_probe__/hostile.js">` and the
+page's ordinary script machinery — the machinery the policy governs — fetches
+and compiles it. `page.evaluate()` is used for exactly two things: appending
+that one `<script>` element (a plain DOM insertion, itself subject to CSP) and
+reading result *data* back out. The warning is repeated in the header of both
+`tools/csp_static_server.py` and `tests/remediation/csp_browser_probe.js` so it
+cannot be re-introduced by accident.
+
+### 3.2 The cross-origin script really is cross-origin
+
+The "unrelated origin" is a second real HTTP server bound to a **second port on
+127.0.0.1**. A different port is a different origin by definition
+(scheme + host + port), the server resolves and responds, and it serves the
+payload with **no CSP header of its own**. So the block is attributable to the
+page's policy and nothing else. Chromium reported the failure reason on the
+`requestfailed` event as **`csp`** — observed, not assumed, and not a DNS
+failure.
+
+### 3.3 The probe is not vacuous
+
+Run against a deliberately permissive policy
+(`script-src * 'unsafe-inline' 'unsafe-eval' data: blob:`) the same probe
+reports all eight attack classes as `EXECUTED`, prints a `KNOWN-WEAKNESS` line
+for each and exits non-zero. Against the deployed policy it reports eight
+`BLOCKED` and exits zero. It fails the build if any attack executes or if a
+normal boot produces any CSP violation.
+
+`tests/remediation/test_csp.js` is validated the same way: **30 hostile mutants
+of the real policy — each a single hostile edit — are fed through the same
+auditor used for the real policy, and all 30 are rejected (30/30).** Three
+benign rewrites (source order swapped, directive order rotated, extra
+whitespace) still pass, proving the gate checks meaning rather than doing string
+comparison.
+
+### 3.4 Exact environment
+
+| | |
+|---|---|
+| Chromium | **141.0.7390.37** (`/opt/pw-browsers/chromium`) |
+| Playwright | 1.62.1 |
+| Node | v22 |
+| Platform | linux x64 |
+| `public/vendor` | **absent** in this checkout, and there is no network |
+
+Because `public/vendor` is empty, the bare specifier `three` could not otherwise
+resolve and the ES module graph would never start. The probe therefore generates
+a **TEST-ONLY Three.js stub** at runtime into a temporary directory
+(`/tmp/acs-csp-probe-vendor-*`) and serves it as an overlay above `public/`.
+**Not one byte is written inside `public/`.** The stub is labelled TEST-ONLY in
+its own file header and in the `environment` block of the JSON output.
+
+**The stub renders nothing. Rendering behaviour is NOT VERIFIED here.** This
+probe measures *policy* — what the browser permits — not rendering. CSP
+decisions are taken by the browser at parse/compile time and do not require a
+rendered frame, so nothing in §2.2 depends on one.
+
+---
+
+## 4. Compatibility — the `es-module-shims` removal
+
+`es-module-shims` was deleted from the page. It was the sole reason
+`script-src` ever carried `'unsafe-eval'` and `blob:`.
+
+### 4.1 What is lost, stated in versions
+
+Import maps are natively supported from:
+
+| Engine | Native import maps from | Lost by dropping the shim |
+|---|---|---|
+| Chrome / Edge | **89** (March 2021) | Chrome/Edge **≤ 88** |
+| Firefox | **108** (December 2022) | Firefox **≤ 107**, including **ESR 102** in managed fleets |
+| Safari (macOS) | **16.4** (March 2023) | macOS Safari **≤ 16.3** |
+| Safari / WebKit on iOS & iPadOS (every iOS browser is WebKit) | **16.4** | iOS/iPadOS **≤ 16.3** — including every device that cannot take 16.4 (iPhone 7 / 6s / SE-1 class), permanently |
+
+On those versions the application does not degrade — **it does not run at all**.
+Every bare specifier (`three`, `three/addons/…`) becomes unresolvable, the
+module script never executes, and the user sees the login card followed by the
+"engine did not load" warning.
+
+**How large is that population as a share of real users? NOT VERIFIED.**
+Market share cannot be measured from this sandbox: there is no network, no
+analytics access and no usage data in the repository. Any percentage stated here
+would be invented. The loss is stated in **versions**, which is a fact, and not
+in **market share**, which is not knowable offline.
+
+### 4.2 What was bought with it
+
+`'unsafe-eval'` is not a per-browser concession — it is a **policy-wide**
+property of the response header. It was served to, and borne by, **100 % of
+users**, including every modern browser that never fetched the shim, in order to
+keep serving browsers that could not run the application securely anyway. It
+made the eval family available to any injection sink in the application: under
+the old policy `eval()` and `new Function()` were **measured executing**
+(§1.2). Removing it removes that primitive for everyone, permanently.
+
+The same trade applies to `blob:` in `script-src`: a `blob:` script source is a
+general-purpose XSS primitive for all users, and it existed only for the shim's
+module-rewriting path.
+
+### 4.3 The alternative that keeps those browsers *without* `'unsafe-eval'`
+
+There is one, and it is worth recording precisely because it was
+**NOT IMPLEMENTED** and **NOT TESTED** here.
+
+The shim exists only to resolve **bare specifiers**. If the vendored Three.js
+tree is post-processed at build time so that every bare specifier is rewritten
+to a relative path — `import … from 'three'` →
+`import … from '/vendor/three@0.160.0/build/three.module.js'`, and likewise for
+the `three/addons/` prefix inside `examples/jsm/**` (the addon files import
+`three` internally, which is why the whole `jsm` tree must be rewritten, not
+just the application) — then **the import map itself becomes unnecessary**.
+Without an import map there are no bare specifiers to shim, plain ES modules
+work back to Chrome 61 / Firefox 60 / Safari 10.1, and `script-src` could drop
+even the one remaining sha256 hash.
+
+**Why it is not implemented or tested in this change:** `public/vendor` does not
+exist in this checkout — there is **no vendored tree** to rewrite — and there is
+**no network** to fetch one. `tools/netlify-build.sh` populates `public/vendor`
+only inside Netlify's build environment. A rewrite pass written here could not
+be run against a single real file, so it would be untested code claiming an
+untested compatibility improvement. That is worse than an honest gap. It belongs
+in the build script, next to `tools/vendor.sh`, and must be validated on a
+networked machine.
+
+---
+
+## 5. Remaining exceptions
+
+These three, and nothing else.
+
+| Exception | Why it is there | What would remove it |
+|---|---|---|
+| **`img-src 'self' data: blob:`** | `data:` — the inline favicon (`href="data:,"`) and canvas snapshots taken with `toDataURL()`. `blob:` — WebGL textures and user-imported images handed to the page through `URL.createObjectURL()` (7 call sites in `public/app/`), plus screenshot export. An image source is not a script source: neither token can execute code. | moving snapshot/import flows to same-origin object URLs served by a worker; low value, real cost |
+| **The single `'sha256-…'` in `script-src`** | The import map. An import map **cannot** be an external file with adequate cross-browser support, so it is the one inline element left in the page; it is pinned by content, so any edit invalidates it. It is JSON, not code. | rewriting the bare specifiers at build time so no import map is needed at all — see §4.3 (NOT IMPLEMENTED) |
+| **`worker-src 'self'`** | Not an exception so much as a note: pdf.js is loaded from a real same-origin path and sets `GlobalWorkerOptions.workerSrc = '/vendor/pdfjs@4.0.379/pdf.worker.min.mjs'`, so `'self'` is sufficient. pdf.js does, however, have a documented fallback that constructs its worker through a `blob:` URL when the module worker cannot be instantiated directly. That fallback is **NOT VERIFIED** here — `public/vendor` is empty and there is no network. | nothing. But if the fallback is ever observed in production, **the single directive to add is `worker-src 'self' blob:`** — and nothing else. Do not widen `script-src`. |
+
+---
+
+## 6. Adjacent defects found while measuring (not policy holes)
+
+Both were surfaced by this work, neither is caused by the policy, and neither is
+fixed here — they live in files outside F-11's scope.
+
+### 6.1 A dead inline event handler in the shipped page — OPEN
+
+`public/index.html` line 33 still carries
+`onclick="location.reload()"` on the reload button inside the `#engineWarn`
+alert. Under `script-src 'self' 'sha256-…'` an inline event handler **never
+runs** — this is attack class 6 in §2.2, measured `BLOCKED`. The policy is
+correct; the button is silently dead. It must be rewired to an
+`addEventListener` in a module under `public/app/`.
+`tests/remediation/test_csp.js` fails on it by name until it is.
+
+### 6.2 The ES module graph does not evaluate to completion — OPEN
+
+Boot produces **0 CSP violations**, but a plain JavaScript error:
+
+```
+Failed to read the 'MathUtils' property from 'Module':
+Cannot access 'MathUtils' before initialization
+```
+
+`public/app/core/viewer.js` lists `import '../render/scene.js'` (source line 10)
+**before** `import * as THREE from 'three'` (line 12). ES modules evaluate
+dependencies in source order, and `scene.js` → `ui/workspace-ui-wiring.js` calls
+`setSun(52,135)` at top level, which reads `THREE.MathUtils`. At that moment the
+body of the `three` module has not run — the probe records
+`boot.three_module_body_evaluated: false` — so the binding is still in its
+temporal dead zone and the graph throws.
+
+This is **not** an artefact of the TEST-ONLY stub and **not** a consequence of
+the CSP: real `three.module.js` exports `MathUtils` as a `const` exactly as the
+stub does, so a real vendored Three.js fails identically. It is an import-order
+defect in the F-09 split. Diagnosis is recorded in
+`csp_probe.json` under `boot.module_graph_diagnosis`.
+
+---
+
+## 7. How to re-measure
+
+```
+node tests/lib/run.js tests/remediation/test_csp.js     # the contract
+node tests/remediation/csp_browser_probe.js             # the real browser
+cat tests/remediation/outputs/csp_probe.json            # the evidence
+```
+
+The probe exits non-zero if any of the eight attack classes reports `EXECUTED`
+or if a normal boot produces any CSP violation. The contract test exits non-zero
+if the policy drifts, if the import-map hash stops matching the page, if a CDN
+host or a second remote origin appears, if a real `eval(`/`new Function(` call
+site appears under `public/app/`, or if this document stops matching the policy
+it describes.

@@ -3,8 +3,12 @@
      node tests/remediation/test_accessibility.js
 
    نطاق هذا التشغيل مُعلَن بدقّة:
-     · يُحمَّل public/index.html من file:// . Three.js غير مُعبَّأ في هذا
-       الصندوق (public/vendor فارغ، لا شبكة)، فسكربت الوحدة يفشل عند الاستيراد.
+     · تُخدَم public/ على 127.0.0.1 بأنواع محتوى صحيحة وبرأس سياسة الأمن
+       الإنتاجي نفسه. (قبل F-09 كان التحميل من file:// كافياً لأن الصفحة كانت
+       تحمل أنماطها وشيفرتها؛ بعده صارت قشرة تشير إلى /app/… بمسارات جذريّة
+       لا يحلّها file://، فكان القياس يجري على وثيقة بلا أنماط.) Three.js غير
+       مُعبَّأ في هذا الصندوق (public/vendor فارغ، لا شبكة)، فرسم الوحدات يفشل
+       عند استيراده.
        هذا متوقَّع، وليس نجاحاً ولا فشلاً في إتاحة الوصول: النطاق هنا هو طبقة
        DOM/ARIA وحدها، وهي بالضبط الطبقة التي يقرأها قارئ الشاشة.
      · axe-core غير مُعبَّأ في هذا المستودع (فُحص node_modules وpublic). لا
@@ -13,10 +17,46 @@
      · بكسلات WebGL لا يقرؤها قارئ شاشة أصلاً. لذلك يُفحَص البديل النصّي، لا
        الصورة.
    ========================================================================== */
-const fs=require('fs'), path=require('path');
+const fs=require('fs'), path=require('path'), http=require('http');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
-const PAGE='file://'+path.join(ROOT,'public','index.html');
+const PUB=path.join(ROOT,'public');
 const {chromium}=require(path.join(ROOT,'node_modules','playwright'));
+/* المصدر الوحيد الذي يعرف تخطيط الواجهة بعد F-09 */
+const AS=require(path.join(ROOT,'tests','lib','app_source.js'));
+const CSSTEXT=fs.existsSync(path.join(PUB,'app','styles','app.css'))
+  ? fs.readFileSync(path.join(PUB,'app','styles','app.css'),'utf8') : '';
+const TRUST=require(path.join(HERE,'_trust_core.js'));
+
+/* F-09 — الصفحة صارت قشرة تشير إلى /app/… بمسارات جذريّة، وfile:// لا يحلّها:
+   الورقة الخارجية لا تُحمَّل فيعود كل قياس تباين أو هدف لمس قياساً على وثيقة
+   عارية. تُخدَم public/ على 127.0.0.1 بأنواع محتوى صحيحة وبرأس السياسة
+   الإنتاجي نفسه، فما يُقاس هنا هو ما يراه المستخدم هناك. */
+function productionCSP(){
+  try{ const nt=fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8');
+    const m=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(nt);
+    return m?m[1]:''; }catch(e){ return ''; }
+}
+const MIME={'.html':'text/html; charset=utf-8',
+  '.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8',
+  '.css':'text/css; charset=utf-8','.json':'application/json',
+  '.png':'image/png','.svg':'image/svg+xml','.txt':'text/plain',
+  '.xml':'application/xml'};
+function serve(){
+  const CSP=productionCSP();
+  return new Promise(res=>{
+    const srv=http.createServer((rq,rs)=>{
+      const u=decodeURIComponent(rq.url.split('?')[0]);
+      const f=path.normalize(path.join(PUB,u==='/'?'index.html':u));
+      if(!f.startsWith(PUB)||!fs.existsSync(f)||fs.statSync(f).isDirectory()){
+        rs.writeHead(404); rs.end(); return; }
+      const h={'Content-Type':MIME[path.extname(f)]||'application/octet-stream',
+               'X-Content-Type-Options':'nosniff'};
+      if(CSP) h['Content-Security-Policy']=CSP;
+      rs.writeHead(200,h); fs.createReadStream(f).pipe(rs);
+    });
+    srv.listen(0,'127.0.0.1',()=>res(srv));
+  });
+}
 
 let pass=0, fail=0, soft=0;
 const chk=(n,c,d)=>{ c?(pass++,console.log('  ✓',n))
@@ -39,7 +79,8 @@ async function launch(){
 }
 
 (async()=>{
-console.log('HARNESS: accessibility DOM/ARIA layer, real Chromium, file:// load');
+console.log('HARNESS: accessibility DOM/ARIA layer, real Chromium, '
+  +'http:// load of public/ under the production CSP');
 const AXE=findAxe();
 if(AXE) console.log('axe-core found at '+AXE);
 else console.log('axe-core: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED '
@@ -53,11 +94,18 @@ catch(e){
   console.log('ACCESSIBILITY: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED');
   process.exit(2);
 }
+const SRV=await serve();
+const PAGE='http://127.0.0.1:'+SRV.address().port+'/index.html';
+console.log('serving public/ at '+PAGE
+  +' with the production Content-Security-Policy as a real response header');
 const ctx=await browser.newContext({viewport:{width:1440,height:900}});
 const page=await ctx.newPage();
 const consoleErrors=[];
 page.on('console',m=>{ if(m.type()==='error') consoleErrors.push(m.text()); });
 page.on('pageerror',e=>consoleErrors.push('pageerror: '+String(e.message)));
+await page.addInitScript(()=>{ window.__CSPV=[];
+  document.addEventListener('securitypolicyviolation',
+    e=>window.__CSPV.push(e.violatedDirective+' '+(e.blockedURI||''))); });
 await page.goto(PAGE,{waitUntil:'domcontentloaded'});
 await page.waitForTimeout(700);
 
@@ -71,6 +119,67 @@ console.log('  · the module script cannot run without vendored Three.js in this
   +'sandbox — that is EXPECTED and is neither an accessibility pass nor failure.');
 const modErrs=consoleErrors.filter(t=>/three|module|import/i.test(t));
 note('module-load errors observed (expected, out of scope)', modErrs.length);
+
+/* ── §0b — الطبقة التي يقرأها قارئ الشاشة تعتمد الآن على ورقة أنماط خارجية ──
+   قبل F-11 كانت الأنماط مضمّنة في الصفحة، فكانت تصل دائماً. الآن هي طلب ثانٍ
+   تحكمه السياسة ونوع المحتوى: إن لم تصل، عاد كل قياس تباين وهدف لمس أدناه
+   قياساً على وثيقة عارية — أي نجاحاً كاذباً. تُقاس أوّلاً. */
+const cssState=await page.evaluate(()=>({
+  sheets:document.styleSheets.length,
+  rules:(function(){let n=0;for(const s of document.styleSheets){
+    try{n+=s.cssRules.length;}catch(e){}}return n;})(),
+  styleBlocks:document.querySelectorAll('style').length,
+  inlineStyleAttrs:document.querySelectorAll('[style]').length,
+  inlineHandlers:Array.from(document.querySelectorAll('*'))
+    .filter(el=>Array.from(el.attributes).some(a=>/^on[a-z]+$/.test(a.name)))
+    .map(el=>(el.tagName.toLowerCase()+(el.id?'#'+el.id:''))),
+  utilities:Array.from(new Set(Array.from(document.querySelectorAll('[class]'))
+    .flatMap(el=>String(el.className).split(/\s+/))
+    .filter(c=>/^acs-u-\d+$/.test(c)))).sort(),
+  csp:(window.__CSPV||[])
+}));
+chk('the EXTERNAL stylesheet loaded and its rules resolved — every contrast and '
+    +'touch-target measurement below is made against the shipped styling',
+    cssState.sheets>=1 && cssState.rules>200, cssState);
+chk('no <style> block and no style= attribute survive in the served document — '
+    +'the strict CSP forbids the second and the utility classes replaced it',
+    cssState.styleBlocks===0 && cssState.inlineStyleAttrs===0, cssState);
+chk('the .acs-u-NN utility classes that replaced the inline styles are really '
+    +'in use in the DOM', cssState.utilities.length>=20,
+    cssState.utilities.length);
+chk('every utility class used in the DOM is defined in the external stylesheet '
+    +'— none silently lost its declaration in the move',
+    CSSTEXT.length>1000
+    && cssState.utilities.every(c=>CSSTEXT.indexOf('.'+c)>=0),
+    cssState.utilities.filter(c=>CSSTEXT.indexOf('.'+c)<0).join(', '));
+chk('NO element carries an inline event handler: under this CSP it would never '
+    +'fire, so a control that depends on one is unusable by anyone — keyboard '
+    +'or mouse', cssState.inlineHandlers.length===0,
+    cssState.inlineHandlers.join(', '));
+chk('the production CSP raised no violation while the DOM/ARIA layer loaded',
+    cssState.csp.length===0, JSON.stringify(cssState.csp));
+
+/* الإخفاء الابتدائي جزء من الطبقة التي يقرأها قارئ الشاشة: لوحُ مشروعٍ مرئيّ
+   قبل الدخول يضع عشرات عناصر التحكّم في ترتيب Tab أمام بطاقة الدخول. قبل
+   F-11 كان الإخفاء خاصيّةً مضمّنة تعلو كل قاعدة؛ بعده صار صنفاً يُهزَم بأي
+   قاعدة مُعرِّف. يُقاس هنا على الوثيقة المخدومة بلا أي تدخّل. */
+const gate=await page.evaluate(()=>{
+  const g=id=>{const e=document.getElementById(id);
+    return e?{display:getComputedStyle(e).display,
+              cls:String(e.className||'')}:null;};
+  return {login:g('login'), left:g('left'),
+          panelModel:g('acsPanelModel'), panelShow:g('acsPanelShow'),
+          clipBox:g('clipBox')};
+});
+chk('at load the login gate is the visible surface and the project panel is '
+    +'still hidden — a visible panel puts dozens of controls ahead of the login '
+    +'card in the Tab order',
+    !!gate.login && gate.login.display!=='none'
+    && !!gate.left && gate.left.display==='none', gate);
+chk('at load the inactive tab panels are hidden, so Tab does not walk through '
+    +'three panels at once',
+    !!gate.panelModel && gate.panelModel.display==='none'
+    && !!gate.panelShow && gate.panelShow.display==='none', gate);
 
 console.log('\n== §1 — اسم متاح لكل عنصر تفاعلي في الـDOM المكتوب يدوياً ==');
 /* اسم متاح = محتوى نصّي حقيقي، أو aria-label، أو aria-labelledby، أو <label for>.
@@ -298,14 +407,27 @@ chk('the 3D canvas host itself declares the same limitation and points at the wa
 
 /* نحقن نموذجاً ونطلب البديل النصّي مباشرةً من الدوالّ المشحونة.
    سكربت الوحدة لم يعمل هنا (لا Three.js)، فنشغّل نواة العرض النصّي وحدها. */
+/* F-09 — النواة لم تعد داخل الصفحة: صارت وحدة تُخدَم على /app/trust/core.js
+   ويستوردها رسم الوحدات. الفحص أشدّ الآن: يُطلَب الملفّ من الخادم نفسه الذي
+   يخدم الصفحة، ويُشترط أن يعود 200 وأن يحمل العلامتين — «موجود في نصّ
+   الصفحة» كان يمرّ حتى لو لم يكن الملفّ قابلاً للتحميل أصلاً. */
 const built=await page.evaluate(async()=>{
-  const src=document.documentElement.outerHTML;
+  const r=await fetch('/app/trust/core.js');
+  if(!r.ok) return {error:'the trust-core module did not load: HTTP '+r.status};
+  const src=await r.text();
   const b=src.indexOf('/* ===== ACS PRODUCTION TRUST CORE (hand-written · pure');
   const e=src.indexOf('/* ===== END ACS PRODUCTION TRUST CORE ===== */');
-  if(b<0||e<0) return {error:'core block not found in the served page'};
-  return {found:true};
+  if(b<0||e<0) return {error:'core markers not found in the served module'};
+  return {found:true, bytes:src.length,
+          exported:/export\s*\{[^}]*ACS_TRUST\b/.test(src)};
 });
-chk('the pure trust core is present in the served page', built.found===true, built);
+chk('the pure trust core is served as a module, with its markers intact',
+    built.found===true && built.bytes>4000, built);
+chk('and it is exported, so the module graph can reach it', built.exported===true,
+    built);
+chk('the shell reaches it through the single module entry point',
+    AS.shell().indexOf('<script type="module" src="/app/main.js">')>=0
+    && AS.order().indexOf('trust/core.js')>=0, AS.order().join(','));
 
 const rendered=await page.evaluate(()=>{
   /* نبني البديل النصّي بيدنا من نفس هيكل النموذج للتحقّق من العلامات المشحونة،
@@ -401,11 +523,31 @@ const baseline=await page.evaluate(()=>!!(window.ACS&&window.ACS.a11yBaselineRea
 chk('the accessibility baseline runs even though the 3D module script did not',
     baseline===true);
 
+/* F-09/F-11 — الإخفاء الابتدائي كان خاصيّة مضمّنة style="display:none"، وصار
+   صنفاً من أصناف الأدوات (.acs-u-NN). مبدّل التبويبات المشحون يُظهر اللوح
+   بـ p.style.display='' — وهو ما كان يمسح الخاصيّة المضمّنة. الصنف لا يُمسَح
+   هكذا، فالتوكيدة الأولى هنا تقيس الآليّة المشحونة نفسها لا نتيجتها. */
+const tabSwitch=await page.evaluate(()=>{
+  const lg=document.getElementById('login'); if(lg) lg.style.display='none';
+  const lf=document.getElementById('left'); if(lf) lf.style.display='';
+  const sp=document.getElementById('acsPanelShow');
+  /* بالضبط ما تفعله public/app/ui/workspace-ui-wiring.js عند تبديل التبويب */
+  sp.style.display='';
+  return {display:getComputedStyle(sp).display,
+          cls:String(sp.className||''),
+          leftDisplay:lf?getComputedStyle(lf).display:null};
+});
+chk('the shipped tab switcher can actually reveal a panel: setting '
+    +"style.display='' overrides whatever hides it by default",
+    tabSwitch.display!=='none', tabSwitch);
+/* حتى تبقى فحوص التركيز أدناه قابلة للقياس، يُرفَع الإخفاء صراحةً ومُعلَناً.
+   هذا تعويض معلن لا إخفاء لعطل: العطل نفسه مُثبَت في التوكيدة أعلاه. */
 await page.evaluate(()=>{ const a=document.getElementById('acsA11yAlt');
   a.className=a.className.replace(/\bon\b/g,''); a.setAttribute('aria-hidden','true');
-  /* الزرّ يقع في تبويب «العرض» المخفي افتراضياً */
-  const sp=document.getElementById('acsPanelShow'); if(sp) sp.style.display='';
-  const lf=document.getElementById('left'); if(lf) lf.style.display='';
+  const sp=document.getElementById('acsPanelShow');
+  if(sp && getComputedStyle(sp).display==='none') sp.style.display='block';
+  const lf=document.getElementById('left');
+  if(lf && getComputedStyle(lf).display==='none') lf.style.display='flex';
   const lg=document.getElementById('login'); if(lg) lg.style.display='none'; });
 const canFocus=await page.evaluate(()=>{
   const b=document.getElementById('acsA11yOpen'); b.focus();
@@ -437,7 +579,10 @@ chk('ESCAPE CLOSES the dialog — the trap is escapable, so it is not a keyboard
 chk('FOCUS RETURNS to the control that opened it',
     closed.focus==='acsA11yOpen', closed);
 
-const escSrc=fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8');
+/* F-09 — «مصدر الصفحة» بعد التفكيك = القشرة + شيفرة الوحدات. البحث عن رمز
+   يجري على الشيفرة، والبحث عن علامة على القشرة؛ ما يلي منطق مشحون فيُقرأ من
+   الشيفرة، وما هو علامة يُقرأ من القشرة صراحةً حيث يلزم. */
+const escSrc=AS.appText();
 chk('the shipped source wires Escape-to-close and a Tab focus trap for dialogs',
     escSrc.indexOf("if(ev.key==='Escape'){ ev.stopPropagation(); close(); }")>=0
     && escSrc.indexOf("else if(ev.key==='Tab'){ trap(el,ev); }")>=0);
@@ -561,9 +706,9 @@ chk('the reduced-motion check is not vacuous — the panel does animate otherwis
     parseFloat(normal)>0.05, normal);
 
 console.log('\n== §11 — إفصاح القدرات معطَّل ومُعلَّم في العلامات نفسها ==');
-const capSrc=escSrc;
+const capSrc=escSrc;                     /* الشيفرة: ما يبني الأزرار */
 chk('the page ships a capability-disclosure container',
-    capSrc.indexOf('id="acsCapList"')>=0);
+    AS.shell().indexOf('id="acsCapList"')>=0);   /* العلامة: في القشرة */
 chk('the disclosure buttons are rendered disabled with aria-disabled',
     capSrc.indexOf("'<button type=\"button\" class=\"ghost acs-cap-btn\" disabled '")>=0
     && capSrc.indexOf("+'aria-disabled=\"true\" '")>=0);
@@ -583,14 +728,10 @@ console.log('\n== §12 — طبقة التوصيل المشحونة تعمل ف�
    يدوياً لا تلمس Three.js: نحقنها كما هي من الصفحة المشحونة مع بدائل صريحة
    لهوياتها من نطاق الوحدة، فنُثبت أنّها تُنفَّذ ولا ترمي، وأن IndexedDB يدور
    فعلاً، وأنّ العلامات التي تنتجها هي المطلوبة. */
-const SRC=fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8');
-const cut=(a,b)=>{ const i=SRC.indexOf(a), j=SRC.indexOf(b);
-  if(i<0||j<0) throw new Error('block not found: '+a.slice(0,50));
-  return SRC.slice(i, j+b.length); };
-const CORE_SRC=cut('/* ===== ACS PRODUCTION TRUST CORE (hand-written · pure',
-                   '/* ===== END ACS PRODUCTION TRUST CORE ===== */');
-const WIRE_SRC=cut('/* ===== ACS PRODUCTION TRUST WIRING (hand-written',
-                   '/* ===== END ACS PRODUCTION TRUST WIRING ===== */');
+/* الكتلتان تُقرآن من وحدتيهما المشحونتين عبر المُحمِّل الواحد، لا بنسخة ثانية
+   ولا باقتطاع نصّي مكرَّر هنا. */
+const CORE_SRC=TRUST.coreBlock();
+const WIRE_SRC=TRUST.wiringBlock();
 const SPEC=JSON.parse(fs.readFileSync(path.join(ROOT,'acs_authoring.json'),'utf8'));
 
 const wired=await page.evaluate(async ([core, wire, spec])=>{
@@ -601,15 +742,21 @@ const wired=await page.evaluate(async ([core, wire, spec])=>{
   const errs=[];
   window.__setModelCalls=0;
   const setModel=()=>{ window.__setModelCalls++; };
-  const acsErrorPanel=()=>{};
-  const acsFetchJSON=async()=>({status:'SUCCESS'});
+  /* F-09 — الأسماء التي تُكتَب عبر حدود الوحدات انتقلت إلى الكائن المشترك
+     __ACS_SHARED (ارتباط الاستيراد في ES للقراءة فقط). نُمهّده هنا بنفس
+     البدائل التي كانت تُمرَّر وسائطَ من قبل، فما يُنفَّذ يبقى الكتلة المشحونة
+     نفسها بلا تعديل حرف واحد فيها. */
+  const __ACS_SHARED={ LAST_REQUEST_TEXT:'وصف المستخدم',
+    acsErrorPanel:()=>{}, acsFetchJSON:async()=>({status:'SUCCESS'}),
+    ACS_EXTRA_RULESETS:undefined, ACS_INGEST_STORE:undefined,
+    ACS_OCCUPANCY_STORE:undefined, DETAIL:undefined, USE_TEX:undefined };
+  window.__ACS_SHARED_PROBE=__ACS_SHARED;
   try{
     /* eslint-disable no-new-func */
-    new Function('setModel','statusEl','lastBuilding','LAST_REQUEST_TEXT','notes',
-                 'acsErrorPanel','acsFetchJSON','ACS_AUTHORING_SPEC',
+    new Function('setModel','statusEl','lastBuilding','notes',
+                 'ACS_AUTHORING_SPEC','__ACS_SHARED',
                  core+'\n'+wire)
-      (setModel, statusEl, MODEL, 'وصف المستخدم', [], acsErrorPanel,
-       acsFetchJSON, spec);
+      (setModel, statusEl, MODEL, [], spec, __ACS_SHARED);
   }catch(e){ errs.push(String(e&&e.message||e)); }
   await new Promise(r=>setTimeout(r,600));
   const A=window.ACS||{};
@@ -702,6 +849,7 @@ chk('this tab is told it owns the project', wired.tabs==='THIS_TAB_OWNS', wired.
 chk('nothing is left in flight after wiring settles', wired.inflight===false);
 
 await browser.close();
+SRV.close();
 
 console.log('\n══════════════════════════════════════════════');
 console.log('ACCESSIBILITY (DOM/ARIA layer, real Chromium): '

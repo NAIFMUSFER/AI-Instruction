@@ -207,9 +207,20 @@ console.log('\n== §8 — الصفحة المشحونة توصّل هذا فعل
 (function(){
   chk('the shipped page sends the Idempotency-Key header on the engine calls',
       page.indexOf("o.headers['Idempotency-Key']=ACS_ACTIVE_IDEMPOTENCY_KEY;")>=0);
+  /* F-09 — بعد التفكيك صار الناقل ارتباطاً مشتركاً عبر الوحدات
+     (__ACS_SHARED.acsFetchJSON) لأن ارتباط الاستيراد في ES للقراءة فقط.
+     التوكيدة أشدّ الآن: لا يكفي وجود السطرين، بل يجب أن يقع الالتفاف مرّة
+     واحدة بالضبط — التفافان يعنيان ناقلَين ومفتاح تكرار ضائع — وأن يمرّ
+     الملفوف فعلاً إلى الناقل الملتقَط لا إلى ناقل ثانٍ. */
   chk('the header is added by wrapping the ONE existing transport, not a second one',
-      page.indexOf('const _acsFetchBase=acsFetchJSON;')>=0
-      && page.indexOf('acsFetchJSON=function(path, opts, timeoutMs){')>=0);
+      page.indexOf('const _acsFetchBase=__ACS_SHARED.acsFetchJSON;')>=0
+      && page.indexOf('__ACS_SHARED.acsFetchJSON=function(path, opts, timeoutMs){')>=0
+      && page.split('const _acsFetchBase=').length-1===1
+      && page.split('acsFetchJSON=function(path, opts, timeoutMs){').length-1===1);
+  chk('the wrapper calls through to the captured base transport, so no request '
+      +'bypasses the idempotency layer',
+      page.indexOf('return _acsFetchBase(path,o,timeoutMs);')>=0
+      && page.indexOf('return _acsFetchBase(path,opts,timeoutMs);')>=0);
   chk('the key is only attached to the operations that need it',
       page.indexOf("const OP_PATHS={'/v1/understand':'GENERATE','/v1/edit':'EDIT',")>=0);
   chk('the generate button is disabled while a request is in flight',

@@ -1,4 +1,7 @@
-/* يتحقّق من ربط واجهة العرض البصري بتشغيل الكتلة المحقونة نفسها في index.html */
+/* يتحقّق من ربط واجهة العرض البصري بتشغيل الكتلة الحقيقية نفسها من وحدة التطبيق.
+   بعد F-09 لم تعد الكتلة داخل public/index.html بل داخل وحدة ES مستوردة من
+   public/app/main.js، فالفحص صار أدقّ: الوحدة موجودة، ومستوردة فعلاً، والكتلة
+   فيها وحدها لا في أي وحدة أخرى. */
 const fs=require('fs'), path=require('path');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
 const SC=JSON.parse(fs.readFileSync(path.join(HERE,'fixtures','visual_scenarios.json'),'utf8'));
@@ -6,11 +9,22 @@ let pass=0,fail=0;
 const chk=(n,c,d)=>{c?(pass++,console.log('  ✓',n)):(fail++,console.log('  ✗',n,d===undefined?'':d))};
 const lastBuilding=JSON.parse(JSON.stringify(SC.models.villa_full));
 const registry={};
-const src=fs.readFileSync(path.join(ROOT,'public','index.html'),'utf8');
-const a=src.indexOf('/* ---- عرض بصري وتقديم');
-const b=src.indexOf('/* ---- تنسيق بين التخصّصات', a);
+const OPEN='/* ---- عرض بصري وتقديم', CLOSE='/* ---- تنسيق بين التخصّصات';
+const MOD='ui/workspace-ui-wiring.js';
+const main=fs.readFileSync(path.join(ROOT,'public','app','main.js'),'utf8');
+const IMPORTS=main.split('\n').map(l=>(/^import '\.\/(.+?)';$/.exec(l)||[])[1])
+                   .filter(Boolean);
+const src=fs.readFileSync(path.join(ROOT,'public','app',MOD),'utf8');
+const a=src.indexOf(OPEN);
+const b=src.indexOf(CLOSE, a);
 const block=src.slice(a,b);
-chk('the visual dev API block exists in index.html', block.length>2500, block.length);
+chk('the visual dev API block exists in public/app/'+MOD, a>=0&&b>a&&block.length>2500,
+    block.length);
+chk('public/app/main.js imports the module that carries it',
+    IMPORTS.indexOf(MOD)>=0, IMPORTS.join(','));
+chk('the block is defined in exactly one application module',
+    IMPORTS.filter(f=>fs.readFileSync(path.join(ROOT,'public','app',f),'utf8')
+                        .indexOf(OPEN)>=0).length===1);
 /* مضيف محايد يعمل في Node وفي المتصفّح معاً: لا اعتماد على global ولا على
    كائن window الحقيقي للصفحة */
 const HOST={ACS:{}};

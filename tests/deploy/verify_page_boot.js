@@ -43,24 +43,48 @@ const visual = (n, c, d) => rec(VISUAL, n, c, d);
 
 const RESOLUTIONS = [[1920, 1080], [1440, 900], [1280, 800]];
 
+/* F-11 — السياسة الإنتاجية تُقرأ من netlify.toml وتُبَثّ رأساً حقيقياً هنا.
+   قياس الإقلاع بلا سياسة كان يقيس بيئةً لا وجود لها: ما يمرّ في مِرقاب بلا
+   رؤوس قد يُحجَب في الإنتاج، وهذا بالضبط شكل «أقلعت عندي ولم تُقلع هناك». */
+function productionCSP() {
+  try {
+    const nt = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf8');
+    const m = /Content-Security-Policy\s*=\s*"([^"]+)"/.exec(nt);
+    return m ? m[1] : '';
+  } catch (e) { return ''; }
+}
+
 function serve() {
-  const MIME = { '.html': 'text/html', '.js': 'text/javascript',
-    '.mjs': 'text/javascript', '.css': 'text/css',
+  /* F-09 — الصفحة صارت قشرة تحمّل وحدات ES: نوع المحتوى ليس تفصيلاً تجميلياً،
+     فالمتصفّح يرفض type="module" بأي نوع غير جافاسكربت، وnosniff يجعل ذلك
+     صريحاً كما في الإنتاج بدل أن ينقذنا التخمين. */
+  const MIME = { '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.mjs': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
     '.json': 'application/json', '.png': 'image/png',
-    '.svg': 'image/svg+xml' };
+    '.svg': 'image/svg+xml', '.txt': 'text/plain', '.xml': 'application/xml' };
+  const CSP = productionCSP();
   return new Promise(res => {
     const srv = http.createServer((rq, rs) => {
       const u = decodeURIComponent(rq.url.split('?')[0]);
       const p = path.normalize(path.join(PUB, u === '/' ? 'index.html' : u));
       if (!p.startsWith(PUB) || !fs.existsSync(p)
         || fs.statSync(p).isDirectory()) { rs.writeHead(404); rs.end(); return; }
-      rs.writeHead(200, { 'Content-Type':
-        MIME[path.extname(p)] || 'application/octet-stream' });
+      const h = { 'Content-Type':
+        MIME[path.extname(p)] || 'application/octet-stream',
+        'X-Content-Type-Options': 'nosniff' };
+      if (CSP) h['Content-Security-Policy'] = CSP;
+      rs.writeHead(200, h);
       fs.createReadStream(p).pipe(rs);
     });
     srv.listen(0, '127.0.0.1', () => res(srv));
   });
 }
+
+/* المصدر الوحيد الذي يعرف تخطيط الواجهة بعد F-09 — لا قائمة وحدات ثانية
+   تُكتب هنا وتتقادم في أوّل إضافة. */
+const APPSRC = require(path.join(ROOT, 'tests', 'lib', 'app_source.js'));
 
 function fixtures() {
   const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'phase3',
@@ -108,13 +132,36 @@ function notVerified(why) {
   const srv = TARGET ? null : await serve();
   const base = TARGET
     || ('http://127.0.0.1:' + srv.address().port + '/index.html');
-  const b = await chromium.launch();
+  /* متصفّح غائب ليس فشلاً في المنتَج: يُعلَن NOT VERIFIED ويخرج بالرمز 2،
+     ولا يُحسَب نجاحاً بحال. المسار البديل هو نفسه الذي تستعمله بقيّة المراقب. */
+  let b = null;
+  try { b = await chromium.launch(); }
+  catch (e1) {
+    try { b = await chromium.launch(
+      { executablePath: '/opt/pw-browsers/chromium' }); }
+    catch (e2) {
+      if (srv) srv.close();
+      notVerified('chromium could not be launched: '
+        + String(e2.message).split('\n')[0].slice(0, 120));
+    }
+  }
   const pg = await b.newPage({ viewport: { width: RESOLUTIONS[0][0],
     height: RESOLUTIONS[0][1] } });
-  const errs = [], bad = [];
+  const errs = [], bad = [], served = new Set();
   pg.on('pageerror', e => errs.push(String(e.message).slice(0, 200)));
-  pg.on('response', r => { if (r.status() >= 400)
-    bad.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 110)); });
+  pg.on('response', r => {
+    if (r.status() >= 400)
+      bad.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 110));
+    else served.add(new URL(r.url()).pathname);
+  });
+  /* F-11 — كل خرق للسياسة يُلتقط من الصفحة نفسها لا من سجلّ الكونسول:
+     الخرق حدثٌ في الوثيقة، والاعتماد على نصّ رسالة الكونسول هشّ. */
+  await pg.addInitScript(() => {
+    window.__CSPV = [];
+    document.addEventListener('securitypolicyviolation', e =>
+      window.__CSPV.push(e.violatedDirective + ' ' + (e.blockedURI || '')
+        + ' ' + (e.sourceFile || '')));
+  });
 
   const specContract = (function(){
     try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'acs_pbr.json'),
@@ -128,13 +175,72 @@ function notVerified(why) {
     notVerified('the target could not be loaded: '
       + String(e.message).slice(0, 120)); }
   boot('the page loaded', true);
+
+  /* ── F-09/F-11 — الصفحة قشرة، والتطبيق وحدات: يُقاس ذلك قبل أي شيء ─────
+     «أقلعت الصفحة» بعد التفكيك تعني: القشرة وصلت، والسكربتات الكلاسيكية
+     عملت، وورقة الأنماط طُبِّقت، ورسم الوحدات حُمِّل كلّه — بلا خرق سياسة
+     واحد. سقوط أيٍّ من هذه يعطي صفحةً «تحمّلت» ولا تعمل. */
+  const shape = await pg.evaluate(() => ({
+    inline_scripts: Array.from(document.querySelectorAll('script'))
+      .filter(s => !s.src).map(s => s.type || 'text/javascript'),
+    module_entries: Array.from(document.querySelectorAll('script[type=module]'))
+      .map(s => s.getAttribute('src')),
+    classic_boot: Array.from(document.querySelectorAll('script[src]'))
+      .map(s => s.getAttribute('src')).filter(x => /^\/app\/boot\//.test(x)),
+    stylesheets: document.styleSheets.length,
+    css_rules: (function () { let n = 0;
+      for (const s of document.styleSheets) {
+        try { n += s.cssRules.length; } catch (e) { } } return n; })(),
+    inline_style_attrs: document.querySelectorAll('[style]').length,
+    inline_handlers: Array.from(document.querySelectorAll('*'))
+      .filter(el => Array.from(el.attributes)
+        .some(a => /^on[a-z]+$/.test(a.name))).length,
+    build: window.ACS_BUILD_INFO || null,
+    api_base: typeof window.ACS_API === 'object' && !!window.ACS_API,
+    csp: (window.__CSPV || []).slice(0, 10)
+  }));
+  boot('the shipped page is a SHELL: its only inline script is the import map',
+    shape.inline_scripts.length === 1
+    && shape.inline_scripts[0] === 'importmap',
+    JSON.stringify(shape.inline_scripts));
+  boot('the shell declares exactly one ES-module entry point, /app/main.js',
+    JSON.stringify(shape.module_entries) === JSON.stringify(['/app/main.js']),
+    JSON.stringify(shape.module_entries));
+  boot('every classic boot script the shell names actually loaded',
+    shape.classic_boot.length === Object.keys(APPSRC.modules())
+      .filter(k => k.indexOf('boot/') === 0).length
+    && shape.classic_boot.every(u => served.has(u) || !!TARGET),
+    JSON.stringify(shape.classic_boot));
+  boot('the classic boot scripts ran before the module graph: '
+    + 'window.ACS_BUILD_INFO and the API base exist',
+    !!shape.build && shape.build.contract === 'acs-build-info/1.0.0'
+    && shape.api_base === true, JSON.stringify(shape.build));
+  boot('the EXTERNAL stylesheet loaded and its rules applied',
+    shape.stylesheets >= 1 && shape.css_rules > 200,
+    JSON.stringify([shape.stylesheets, shape.css_rules]));
+  boot('no element carries a style= attribute and none carries an inline '
+    + 'event handler — the strict CSP would silently kill both',
+    shape.inline_style_attrs === 0 && shape.inline_handlers === 0,
+    JSON.stringify([shape.inline_style_attrs, shape.inline_handlers]));
+  boot('the production CSP raised NO violation during boot',
+    shape.csp.length === 0, JSON.stringify(shape.csp));
+  if (!TARGET) {
+    const want = Object.keys(APPSRC.modules())
+      .filter(k => k.indexOf('boot/') !== 0);
+    const missing = want.filter(k => !served.has('/app/' + k));
+    boot('EVERY shipped module under public/app/ was fetched by the browser — '
+      + 'no module ships without being reached, none 404s',
+      missing.length === 0,
+      missing.length + ' not fetched: ' + missing.slice(0, 5).join(', '));
+  }
+
   let ready = false;
   try {
     await pg.waitForFunction('window.ACS&&window.ACS.ready===true', null,
       { timeout: 30000 });
     ready = true;
   } catch (e) { /* reported below */ }
-  boot('the module script executed and THREE was imported '
+  boot('the module graph executed to completion and THREE was imported '
     + '(window.ACS.ready)', ready);
   const api = await pg.evaluate(() => ({
     diag: typeof (window.ACS || {}).renderDiagnostics === 'function',
@@ -447,6 +553,9 @@ function notVerified(why) {
 
   boot('no page errors after the full run', errs.length === 0,
     errs.slice(0, 3).join(' | '));
+  const cspEnd = await pg.evaluate('(window.__CSPV || []).slice(0, 10)');
+  boot('the production CSP raised NO violation across the whole run either',
+    Array.isArray(cspEnd) && cspEnd.length === 0, JSON.stringify(cspEnd));
   await b.close(); if (srv) srv.close();
   summarise();
 })().catch(e => {

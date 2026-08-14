@@ -84,18 +84,33 @@ WINDOW = 200            # نصف قطر سياق النفي بالحروف
 
 surfaces = []
 surfaces += sorted(glob.glob(os.path.join(ROOT, 'public', '*.html')))
+# F-09 — قبل التفكيك كانت كل شيفرة الواجهة داخل public/index.html، فمسح الصفحة
+# كان يمسح التطبيق كلّه. بعده صارت الصفحة قشرة: مسحُها وحدها يفقد كل موضع في
+# الشيفرة صامتاً. تُضاف الوحدات وورقة الأنماط صراحةً، ويُثبَت أدناه أن العدّ
+# بعد التفكيك ليس أقلّ ممّا كان قبله.
+surfaces += sorted(glob.glob(os.path.join(ROOT, 'public', 'app', '**', '*.js'),
+                             recursive=True))
+surfaces += sorted(glob.glob(os.path.join(ROOT, 'public', 'app', '**', '*.css'),
+                             recursive=True))
 surfaces += sorted(glob.glob(os.path.join(ROOT, 'acs_*.json')))
 surfaces += [os.path.join(ROOT, n) for n in
              ('acs_docs.py', 'acs_bim.py', 'acs_rules.py')]
 surfaces += sorted(glob.glob(os.path.join(ROOT, '*.md')))
 surfaces = [s for s in surfaces if os.path.isfile(s)]
 
+_surface_rel = [rel(x) for x in surfaces]
 chk('the scanner actually walks the user-facing surfaces (page, specs, reports)',
     len(surfaces) >= 20
-    and any(s.endswith('public/index.html') for s in
-            [rel(x) for x in surfaces])
-    and rel(os.path.join(ROOT, 'acs_docs.py')) in [rel(x) for x in surfaces],
+    and 'public/index.html' in _surface_rel
+    and rel(os.path.join(ROOT, 'acs_docs.py')) in _surface_rel,
     str(len(surfaces)))
+chk('the scanner walks the shipped application modules too — the shell alone '
+    'is no longer the application (F-09)',
+    'public/app/main.js' in _surface_rel
+    and 'public/app/trust/core.js' in _surface_rel
+    and 'public/app/styles/app.css' in _surface_rel
+    and len([s for s in _surface_rel if s.startswith('public/app/')]) >= 20,
+    str(len([s for s in _surface_rel if s.startswith('public/app/')])))
 
 whitelisted = []        # (file, line, token, marker)
 violations = []         # (file, line, token, excerpt)
@@ -142,6 +157,39 @@ chk('every whitelisted occurrence names its file, its line and the marker that '
         for x in whitelisted))
 chk('the negation vocabulary is a short declared list, not an open door',
     len(NEGATION_MARKERS) <= 12)
+
+# ── لا تُفقَد تغطية بالتفكيك: عدّ ما قبل F-09 هو الأرضية ──────────────────
+# قبل التفكيك كانت الواجهة كلّها ملفّاً واحداً (public/index.html، 1,863,894
+# بايت) وحمل هذه المواضع بالضبط. بعد التفكيك يجب أن يجد الماسح العدد نفسه أو
+# أكثر عبر القشرة + الوحدات + ورقة الأنماط. أي نقص يعني أن مسحاً ضاع صامتاً.
+FRONTEND_BASELINE = {'code compliant': 5, 'certified': 6, 'مطابق للكود': 1}
+FRONTEND_PREFIXES = ('public/',)
+_front = [x for x in (whitelisted + [(v[0], v[1], v[2], None)
+                                     for v in violations])
+          if x[0].startswith(FRONTEND_PREFIXES)]
+_front_counts = {}
+for _fp, _ln, _tok, _mk in _front:
+    _front_counts[_tok] = _front_counts.get(_tok, 0) + 1
+print('\n  عدّ المواضع في سطح الواجهة المشحون (قشرة + وحدات + أنماط):')
+for _tok in sorted(set(list(FRONTEND_BASELINE) + list(_front_counts))):
+    print('    · «%s»  now=%d  pre-split baseline=%d'
+          % (_tok, _front_counts.get(_tok, 0), FRONTEND_BASELINE.get(_tok, 0)))
+_lost = {t: (n, _front_counts.get(t, 0))
+         for t, n in FRONTEND_BASELINE.items() if _front_counts.get(t, 0) < n}
+chk('the split lost NO scanner coverage: every claim token the single-file page '
+    'carried is still found in the shipped frontend surface',
+    _lost == {}, str(_lost))
+chk('the frontend occurrences now live in the modules, not in the shell — and '
+    'they are still classified, not skipped',
+    sum(_front_counts.values()) >= sum(FRONTEND_BASELINE.values())
+    and all(x[0].startswith('public/app/') for x in _front),
+    str(sorted(set(x[0] for x in _front))))
+_front_viol = [v for v in violations if v[0].startswith(FRONTEND_PREFIXES)]
+chk('no shipped frontend file asserts compliance outside a negation context',
+    _front_viol == [], ' | '.join('%s:%d [%s]' % (v[0], v[1], v[2])
+                                  for v in _front_viol[:4]))
+chk('the app stylesheet was scanned too (a claim can be shipped as CSS content)',
+    'public/app/styles/app.css' in _surface_rel)
 
 # النفي وحده لا يكفي: نتأكّد أن الماسح يمسك ادّعاءً حقيقياً لو ظهر.
 _probe = 'the produced model is fully compliant with the building code'

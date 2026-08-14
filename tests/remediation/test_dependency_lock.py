@@ -312,7 +312,13 @@ chk('the locked version is the exact version package.json names (%r)'
 print('\n── ح · THE VENDORED FRONTEND VERSIONS AGREE IN EVERY PLACE ──')
 sh = rd('tools/netlify-build.sh')
 guard = rd('tools/check_index_guard.py')
-page = rd('public/index.html')
+# F-09 — القشرة تحمل خريطة الاستيراد (three)، والوحدات تحمل الاستيراد الديناميكي
+# (pdf.js). كلاهما شيفرة منشورة، فالمصدر الواحد هنا هو tools/app_source.py:
+# القشرة + الوحدات + ورقة الأنماط. قراءة الصفحة وحدها كانت ستفقد pdf.js صامتاً.
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as AS                                           # noqa: E402
+shell = AS.shell()
+page = AS.page_text() + '\n' + AS.css_text()
 
 SOURCES = {
     'three': [
@@ -323,7 +329,7 @@ SOURCES = {
          r'/vendor/three@([0-9][\w.\-]*)/build/'),
         ('tools/check_index_guard.py IMPORTMAP_ADDONS', guard,
          r'/vendor/three@([0-9][\w.\-]*)/examples/'),
-        ('public/index.html importmap', page,
+        ('public/index.html importmap', shell,
          r'/vendor/three@([0-9][\w.\-]*)/'),
         # المسارات المطلقة داخل أدوات التحقّق: رفع الرقم في netlify-build.sh وحده
         # يجعل هذه الملفّات تقرأ مساراً غير موجود، فتفشل بعد النشر لا قبله
@@ -337,24 +343,20 @@ SOURCES = {
          rd('tests/phase9_2/capture_reference_92.js'),
          r"'three@([0-9][\w.\-]*)'"),
     ],
-    'es-module-shims': [
-        ('tools/netlify-build.sh SHIMS=', sh, r'^SHIMS=([0-9][\w.\-]*)'),
-        ('tools/netlify-build.sh header comment', sh,
-         r'#.*\bes-module-shims ([0-9][\w.\-]*)'),
-        ('public/index.html shim loader', page,
-         r'/vendor/es-module-shims@([0-9][\w.\-]*)/'),
-    ],
+    # F-11 — es-module-shims حُذف: خرائط الاستيراد أصلية في كل متصفّح مدعوم،
+    # والمُلطِّف كان يقرأ الوسوم ويقيّم نصّاً، وهو ما كان يفرض 'unsafe-inline'.
+    # لم يعد له موضع في الواجهة المشحونة، فلم يعد له عقدُ إصدار يُطابَق: عقده
+    # الآن هو الغياب، ويُفحَص أدناه فحصاً موجباً لا بإسقاطه من الجدول.
     'pdfjs-dist': [
         ('tools/netlify-build.sh PDFJS=', sh, r'^PDFJS=([0-9][\w.\-]*)'),
         ('tools/netlify-build.sh header comment', sh,
          r'#.*\bpdfjs-dist ([0-9][\w.\-]*)'),
-        ('public/index.html dynamic import', page,
+        ('public/app dynamic import', page,
          r'/vendor/pdfjs@([0-9][\w.\-]*)/'),
     ],
 }
 # النُّسخ المعلنة في tools/netlify-build.sh هي المرجع: هي التي تُجلب فعلاً
-DECLARED = {'three': '0.160.0', 'es-module-shims': '1.8.2',
-            'pdfjs-dist': '4.0.379'}
+DECLARED = {'three': '0.160.0', 'pdfjs-dist': '4.0.379'}
 for lib, sources in sorted(SOURCES.items()):
     seen = {}
     for label, text, pattern in sources:
@@ -373,6 +375,31 @@ for lib, sources in sorted(SOURCES.items()):
 chk('the shim/pdf/three paths in the page are local, never a CDN',
     not re.search(r'(unpkg\.com|jsdelivr\.net|cdnjs\.cloudflare\.com)'
                   r'[^"\']*(three|pdfjs|es-module-shims)', page))
+
+# ── es-module-shims: عقده الآن هو الغياب، ويُفحَص موجباً ──────────────────
+print('\n── ح٢ · es-module-shims IS NO LONGER A RUNTIME DEPENDENCY (F-11) ──')
+_shim_refs = []
+for _rel, _txt in (('public/index.html (shell)', shell),
+                   ('public/app/**/*.js (modules)', AS.app_text()),
+                   ('public/app/styles/app.css', AS.css_text())):
+    for _m in re.finditer(r'/vendor/es-module-shims[^\s"\'<>)]*', _txt):
+        _shim_refs.append('%s: %s' % (_rel, _m.group(0)))
+chk('nothing in the shipped frontend loads or resolves es-module-shims — no '
+    'script tag, no vendor path, in the shell, the modules or the stylesheet',
+    _shim_refs == [], ' | '.join(_shim_refs[:4]))
+chk('the shell carries no <script> pointing at the shim',
+    re.search(r'<script[^>]+src="[^"]*es-module-shims', shell) is None)
+chk('the import map is native and needs no polyfill: it is the only inline '
+    'script in the shell and it declares type="importmap"',
+    len(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>', shell)) == 1
+    and '<script type="importmap">' in shell,
+    str(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>', shell)))
+# الجانب الآخر من العقد: ما دام غير مستعمَل فلا يجوز أن يظلّ البناء يجلبه.
+# هذا فحص على tools/netlify-build.sh، وسقوطه يعني حمولةً ميتة تُنشر بلا مستهلك.
+_shim_build = sorted(set(re.findall(r'es-module-shims[@\-][0-9][\w.\-]*', sh)))
+chk('the build script no longer vendors es-module-shims — an unreferenced '
+    'vendored library is dead payload on every deploy',
+    _shim_build == [] and 'SHIMS=' not in sh, ', '.join(_shim_build) or 'SHIMS=')
 
 # ══════════════════════════ ط · مدخل تدقيق التبعيات ════════════════════════
 print('\n── ط · A DEPENDENCY-AUDIT ENTRY POINT EXISTS AND RUNS ──')

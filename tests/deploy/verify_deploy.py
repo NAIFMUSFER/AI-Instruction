@@ -3,15 +3,27 @@
 
 القاعدة التي يفرضها هذا الملفّ: لا يُعدّ ملفّ منشوراً لمجرّد وجوده في المستودع.
 كل وحدة يصل إليها مدخل الخادوم فعلاً يجب أن ينسخها Dockerfile، وكل كتلة متصفّح
-مولَّدة يجب أن تكون داخل الصفحة التي ينشرها Netlify، ولا يجوز أن يتسرّب مسار
-صندوق رمليّ ولا سرّ إلى ما يُنشر.
+مولَّدة يجب أن تكون داخل ما ينشره Netlify، ولا يجوز أن يتسرّب مسار صندوق رمليّ
+ولا سرّ إلى ما يُنشر.
+
+F-09/F-11 — بعد تفكيك الصفحة لم تعد `page` مفهوماً واحداً. صار عندنا اثنان:
+
+    shell   نصّ public/index.html — العلامة وخريطة الاستيراد فقط.
+    app     شيفرة التطبيق كلّها موصولة بترتيب التحميل الحقيقي.
+
+توكيدات العلامة تُقاس على shell، وتوكيدات الرموز على app. `page` = الاثنان
+معاً، ولا تُستعمل إلّا حيث يكون المطلوب «في أيٍّ منهما» صراحةً. المصدر الوحيد
+الذي يعرف هذا التخطيط هو tools/app_source.py — لا يُكرَّر هنا.
 """
 import ast
 import hashlib
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -47,53 +59,132 @@ def exists(rel):
 # ------------------------------------------------- 0. حارس صفحة التطبيق --
 print('\n== 0 · THE APPLICATION PAGE GUARD (EMPTY-PAGE REMEDIATION) ==')
 sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as AS                                           # noqa: E402
 import check_index_guard as IG                                    # noqa: E402
+
+# القشرة والشيفرة: مفهومان لا مفهوم واحد. راجع سلسلة التوثيق أعلى الملفّ.
+shell = AS.shell()
+app = AS.app_text()
+page = AS.page_text()
+css = AS.css_text()
+modules = AS.modules()
+boot_scripts = AS.boot_scripts()
+
 _page_fails = IG.check_file(os.path.join(ROOT, 'public', 'index.html'))
 chk('public/index.html passes the structural guard', _page_fails == [],
     '; '.join(_page_fails[:3]))
 chk('the netlify build runs the same guard before publishing',
     'check_index_guard.py' in rd('tools/netlify-build.sh')
     and 'exit 1' in rd('tools/netlify-build.sh'))
-_good = rd('public/index.html')
-chk('guard self-test: an EMPTY page is refused',
-    IG.check_page_text('', 0) != [])
-chk('guard self-test: a truncated page is refused',
-    IG.check_page_text(_good[:200000]) != [])
-chk('guard self-test: a page below the generated minimum is refused',
-    any('below the generated minimum' in x
-        for x in IG.check_page_text('<!DOCTYPE html><html><body>x</body>'
-                                    '</html>')))
-chk('guard self-test: a missing importmap is refused',
-    any('importmap' in x for x in IG.check_page_text(
-        _good.replace('<script type="importmap">',
-                      '<script type="importmap-disabled">', 1))))
-chk('guard self-test: an importmap with invalid JSON is refused',
-    any('not valid JSON' in x for x in IG.check_page_text(
-        _good.replace('"three":', '"three" broken:', 1))))
-chk('guard self-test: an importmap pointing at a CDN is refused',
-    any('pinned local vendor' in x for x in IG.check_page_text(
-        _good.replace(IG.IMPORTMAP_THREE,
-                      'https://unpkg.com/three/build/three.module.js', 1))))
-chk('guard self-test: missing renderer initialization is refused',
-    any('renderer initialization' in x for x in IG.check_page_text(
-        _good.replace('new THREE.WebGLRenderer(',
-                      'new THREE.DisabledRenderer(', 1))))
-chk('guard self-test: missing scene initialization is refused',
-    any('scene initialization' in x for x in IG.check_page_text(
-        _good.replace('new THREE.Scene(', 'new THREE.Absent(', 1))))
-chk('guard self-test: missing render loop is refused',
-    any('render loop' in x for x in IG.check_page_text(
-        _good.replace('renderer.setAnimationLoop', 'renderer.noLoop', 1))))
-chk('guard self-test: a missing generated 9.1 block is refused',
-    any('PBR QUALITY' in x for x in IG.check_page_text(
-        _good.replace('/* ===== END ACS PBR QUALITY ===== */', '', 1))))
-chk('guard self-test: a duplicated generated 9.2 block is refused',
-    any('ARCH DETAIL' in x for x in IG.check_page_text(
-        _good + '\n/* ===== END ACS ARCH DETAIL ===== */')))
+
+
+# ── الفحوص السلبية تُجرى على شجرة حقيقية، لا على نصّ في الذاكرة ──────────
+# قبل F-09 كان كل ما يفحصه الحارس داخل ملفّ واحد، فكان تحوير نصّه كافياً. الآن
+# الشيفرة في ملفّات، والحارس يقرأ الشجرة. نُحوّر نسخةً كاملة من tools/ و public/
+# ونشغّل الحارس عليها كما يشغّله البناء بالضبط:
+#     python3 tools/check_index_guard.py public/index.html
+# فيبقى الفحص الذاتي صحيحاً مهما كانت آليّة الحارس الداخلية، ويبقى مقيساً على
+# ما يجري في البناء لا على استدعاء دالّة داخلية قد لا تكون هي المسار الحقيقي.
+def _guard_run(mutate):
+    tmp = tempfile.mkdtemp(prefix='acs_guard_')
+    try:
+        shutil.copytree(os.path.join(ROOT, 'tools'), os.path.join(tmp, 'tools'))
+        shutil.copytree(os.path.join(ROOT, 'public'),
+                        os.path.join(tmp, 'public'))
+        if mutate is not None:
+            mutate(tmp)
+        r = subprocess.run(
+            [sys.executable, os.path.join('tools', 'check_index_guard.py'),
+             os.path.join('public', 'index.html')],
+            cwd=tmp, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        return r.returncode, r.stdout.decode('utf-8', 'replace')
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def _tree_files(root):
+    out = [os.path.join(root, 'public', 'index.html')]
+    for base, _d, fns in os.walk(os.path.join(root, 'public', 'app')):
+        out += [os.path.join(base, x) for x in sorted(fns)]
+    return [x for x in out if os.path.isfile(x)]
+
+
+def _edit(root, needle, repl, append=False):
+    """يحوّر أوّل ملفّ في الشجرة المنشورة يحمل `needle`. غيابُه خطأ صريح."""
+    for p_ in _tree_files(root):
+        try:
+            with open(p_, encoding='utf-8') as fh:
+                t = fh.read()
+        except (OSError, UnicodeDecodeError):
+            continue
+        if needle in t:
+            t = (t + repl) if append else t.replace(needle, repl, 1)
+            with open(p_, 'w', encoding='utf-8') as fh:
+                fh.write(t)
+            return True
+    raise AssertionError('the needle is not in the published tree: %r' % needle)
+
+
+_base_rc, _base_out = _guard_run(None)
+# لولا هذه، لكانت كل الفحوص السلبية أدناه عقيمة: لو كان الحارس يقرأ شجرة
+# المستودع بدل النسخة، لسقطت النسخة السليمة أيضاً ولمرّ كل تحوير «بنجاح».
+chk('guard self-test harness: an UNMUTATED copy of the published tree passes, '
+    'so the guard really reads the tree it is pointed at',
+    _base_rc == 0, _base_out[:200])
+
+
+def _refused(name, mutate):
+    rc, out = _guard_run(mutate)
+    chk('guard self-test: %s' % name, rc != 0, out[:200])
+    return out
+
+
+_refused('an EMPTY page is refused',
+         lambda r: open(os.path.join(r, 'public', 'index.html'), 'w').close())
+_refused('a truncated page is refused',
+         lambda r: open(os.path.join(r, 'public', 'index.html'), 'w',
+                        encoding='utf-8').write(shell[:len(shell) // 3]))
+_stub = _refused(
+    'a stub page is refused',
+    lambda r: open(os.path.join(r, 'public', 'index.html'), 'w',
+                   encoding='utf-8').write(
+        '<!DOCTYPE html><html><body>x</body></html>'))
+chk('guard self-test: and it says WHY the stub is refused, in bytes or '
+    'structure — not a bare non-zero exit',
+    re.search(r'byte|minimum|size|structure|importmap|module', _stub, re.I)
+    is not None, _stub[:200])
+_refused('a missing importmap is refused',
+         lambda r: _edit(r, '<script type="importmap">',
+                         '<script type="importmap-disabled">'))
+_refused('an importmap with invalid JSON is refused',
+         lambda r: _edit(r, '"three":', '"three" broken:'))
+_refused('an importmap pointing at a CDN is refused',
+         lambda r: _edit(r, IG.IMPORTMAP_THREE,
+                         'https://unpkg.com/three/build/three.module.js'))
+_refused('a missing application entry (<script type=module src>) is refused',
+         lambda r: _edit(r, '<script type="module" src="/app/main.js">',
+                         '<script type="disabled" src="/app/main.js">'))
+_refused('a deleted application entry MODULE is refused — the page would '
+         'serve a 404 to its own entry point',
+         lambda r: os.remove(os.path.join(r, 'public', 'app', 'main.js')))
+# كل خيط محرّك معلَن، وكل زوج علامات معلَن — لا ثلاثة منها فقط كما كان.
+for _needle, _what in IG.ENGINE_NEEDLES:
+    _refused('missing %s is refused (declared engine needle)' % _what,
+             (lambda n: (lambda r: _edit(r, n, '/* removed by self-test */')))(
+                 _needle))
+for _a, _b in IG.PAIRS:
+    _refused('a missing generated end-marker is refused: %s' % _b[:46],
+             (lambda b: (lambda r: _edit(r, b, '')))(_b))
+    _refused('a DUPLICATED generated end-marker is refused: %s' % _b[:46],
+             (lambda b: (lambda r: _edit(r, b, '\n' + b, append=True)))(_b))
 chk('guard self-test: a missing file path is refused',
     IG.check_file(os.path.join(ROOT, 'public', 'no_such_page.html')) != [])
 chk('the guard checks every phase layer structurally (10 marker pairs)',
     len(IG.PAIRS) == 10 and len(IG.ENGINE_NEEDLES) == 5)
+note('the guard self-tests run the guard as the build runs it '
+     '(python3 tools/check_index_guard.py public/index.html) against a mutated '
+     'copy of tools/ + public/, covering all %d engine needles and all %d '
+     'marker pairs' % (len(IG.ENGINE_NEEDLES), len(IG.PAIRS)))
 
 # ---------------------------------------------------------------- 1. الوجود --
 print('\n== 1 · REQUIRED DEPLOYMENT FILES EXIST ==')
@@ -199,9 +290,11 @@ note('%d module(s) are browser-mirrored only and intentionally absent from the '
 chk('no module the API needs is missing from the image',
     all((m + '.py') in copied for m in closure))
 
-# ----------------------------------------- 4. الواجهة: كتل مولَّدة داخل الصفحة --
-print('\n== 4 · THE PUBLISHED PAGE CARRIES EVERY GENERATED BROWSER BLOCK ==')
-page = rd('public/index.html')
+# ------------------------------ 4. الواجهة: كتل مولَّدة داخل ما يُنشر فعلاً --
+print('\n== 4 · THE PUBLISHED FRONTEND CARRIES EVERY GENERATED BROWSER BLOCK ==')
+# قبل F-09: «الكتلة داخل index.html». بعده: الكتلة داخل وحدة تحت public/app/
+# **يستوردها main.js**. البديل أشدّ لا أضعف: لا يكفي وجود النصّ في ملفّ ما، بل
+# يجب أن يكون الملفّ في رسم الاستيراد وإلّا شُحن ولم يُقيَّم أبداً.
 MARKERS = []
 for tool, _ in INJECTORS:
     if not exists(tool):
@@ -212,9 +305,25 @@ for tool, _ in INJECTORS:
         MARKERS.append((tool, m))
 chk('marker definitions were found in the injectors', len(MARKERS) >= 10,
     str(len(MARKERS)))
+_IMPORTED = set(AS.order())
+_carrier = {}                     # علامة → الملفّات المنشورة التي تحملها
+_frontend_files = dict(modules)
+_frontend_files['index.html(shell)'] = shell
+if css:
+    _frontend_files['styles/app.css'] = css
 for tool, m in MARKERS:
-    chk('the page carries exactly one %s' % (m[:58] + ('…' if len(m) > 58 else '')),
-        page.count(m) == 1, '%d occurrence(s), from %s' % (page.count(m), tool))
+    hits = sorted(k for k, v in _frontend_files.items() if m in v)
+    total = sum(v.count(m) for v in _frontend_files.values())
+    _carrier[m] = hits
+    label = m[:58] + ('…' if len(m) > 58 else '')
+    chk('the published frontend carries exactly one %s' % label,
+        total == 1, '%d occurrence(s), from %s' % (total, tool))
+    chk('and it is in a file the browser actually evaluates: %s' % label,
+        len(hits) == 1
+        and (hits[0] in _IMPORTED or hits[0] in ('index.html(shell)',
+                                                 'styles/app.css')
+             or hits[0].startswith('boot/')),
+        '%s (main.js imports %d module(s))' % (hits, len(_IMPORTED)))
 
 print('\n== 5 · THE MIRRORED SPECIFICATIONS HAVE NOT DRIFTED FROM THE FILES ==')
 SPEC_VARS = [
@@ -231,9 +340,10 @@ SPEC_VARS = [
 for spec, var in SPEC_VARS:
     if not exists(spec):
         continue
-    m = re.search(re.escape('const ' + var) + r'\s*=\s*(\{.*?\});\s*\n', page, re.S)
+    m = re.search(re.escape('const ' + var) + r'\s*=\s*(\{.*?\});\s*\n', app, re.S)
     if not m:
-        chk('%s is mirrored into the page as %s' % (spec, var), False, 'not found')
+        chk('%s is mirrored into the shipped modules as %s' % (spec, var),
+            False, 'not found')
         continue
     try:
         mirrored = json.loads(m.group(1))
@@ -241,7 +351,8 @@ for spec, var in SPEC_VARS:
     except ValueError as e:
         ok = False
         mirrored = str(e)
-    chk('%s in the page is byte-equal to the file on disk' % var, ok)
+    chk('%s in the shipped modules is byte-equal to the file on disk' % var,
+        ok)
 
 # ------------------------------------------------------ 6. تهيئة Netlify --
 print('\n== 6 · NETLIFY CONFIGURATION IS VALID AND MATCHES REALITY ==')
@@ -382,6 +493,47 @@ chk('the CSP pins connect-src rather than allowing anything',
     and '*' not in csp.group(1).split('connect-src')[1].split(';')[0])
 chk('framing is denied', 'X-Frame-Options' in nt and "frame-ancestors 'none'" in nt)
 
+# ── 6b · السياسة الصارمة: لا استثناء مضمّن ولا تقييم نصّ (F-11) ──────────
+print('\n== 6b · THE CONTENT SECURITY POLICY IS STRICT, AND THE PAGE EARNS IT ==')
+CSP_TEXT = csp.group(1) if csp else ''
+CSP_DIRS = {}
+for _d in [x.strip() for x in CSP_TEXT.split(';') if x.strip()]:
+    _parts = _d.split()
+    CSP_DIRS[_parts[0]] = _parts[1:]
+note('the declared CSP has %d directive(s): %s'
+     % (len(CSP_DIRS), ', '.join(sorted(CSP_DIRS))))
+chk('the policy parses into named directives at all', len(CSP_DIRS) >= 8,
+    str(sorted(CSP_DIRS)))
+_unsafe = sorted(d for d, v in CSP_DIRS.items()
+                 if "'unsafe-inline'" in v or "'unsafe-eval'" in v)
+chk("NO directive carries 'unsafe-inline' or 'unsafe-eval' — not one",
+    _unsafe == [], ', '.join(_unsafe))
+chk('script-src is exactly \'self\' plus one sha256 source',
+    [x for x in CSP_DIRS.get('script-src', []) if not x.startswith("'sha256-")]
+    == ["'self'"], str(CSP_DIRS.get('script-src')))
+_hashes = [x.strip("'") for x in CSP_DIRS.get('script-src', [])
+           if x.startswith("'sha256-")]
+chk('script-src carries EXACTLY ONE hash source', len(_hashes) == 1,
+    str(_hashes))
+_IMAP_HASH = AS.importmap_hash()
+chk('that hash is the sha256 of the page\'s own inline import map — the only '
+    'inline script left in the shell',
+    _hashes == [_IMAP_HASH], 'policy=%s computed=%s' % (_hashes, _IMAP_HASH))
+chk('the recorded hash file agrees with the page and the policy',
+    (not exists('public/app/importmap.sha256'))
+    or rd('public/app/importmap.sha256').strip() == _IMAP_HASH,
+    rd('public/app/importmap.sha256').strip()
+    if exists('public/app/importmap.sha256') else 'absent')
+chk("style-src is 'self' only — the stylesheet is external, so no inline "
+    'style needs allowing', CSP_DIRS.get('style-src') == ["'self'"],
+    str(CSP_DIRS.get('style-src')))
+for _d, _want in (('default-src', ["'self'"]), ('base-uri', ["'self'"]),
+                  ('object-src', ["'none'"]), ('frame-ancestors', ["'none'"]),
+                  ('frame-src', ["'none'"]), ('form-action', ["'self'"]),
+                  ('worker-src', ["'self'"]), ('font-src', ["'self'"])):
+    chk('%s is %s' % (_d, ' '.join(_want)), CSP_DIRS.get(_d) == _want,
+        str(CSP_DIRS.get(_d)))
+
 # -------------------------------------------------------- 7. تهيئة Render --
 print('\n== 7 · RENDER CONFIGURATION IS VALID AND MATCHES REALITY ==')
 ry = rd('render.yaml')
@@ -433,8 +585,15 @@ chk('no environment variable is both undeclared and undefaulted',
 print('\n== 9 · NO SANDBOX PATH LEAKS INTO ANYTHING DEPLOYED ==')
 DEPLOYED = ['public/index.html', 'Dockerfile', 'netlify.toml', 'render.yaml',
             'requirements.txt', 'tools/netlify-build.sh', 'tools/vendor.sh']
+# F-09 — الصفحة وحدها لم تعد الواجهة. كل ملفّ منشور تحت public/app/ يُمسح أيضاً:
+# مسار صندوق أو سرّ في وحدة يُنشر تماماً كما يُنشر في الصفحة.
+DEPLOYED += sorted('public/app/' + k for k in modules)
+if exists('public/app/styles/app.css'):
+    DEPLOYED.append('public/app/styles/app.css')
 DEPLOYED += sorted(m + '.py' for m in closure)
 DEPLOYED += [x for x in os.listdir(ROOT) if re.match(r'^acs_.*\.(py|json)$', x)]
+note('%d published frontend file(s) are scanned for sandbox paths and secrets '
+     'alongside the page' % (len(modules) + (1 if css else 0)))
 SANDBOX = re.compile(r'/home/[a-z]+/|/opt/pw-browsers|/tmp/acs_|file:///home/')
 for rel in sorted(set(DEPLOYED)):
     if not exists(rel):
@@ -490,16 +649,122 @@ chk('the API never returns the key itself, only whether one is set',
 
 # ------------------------------------------------ 11. اتّساق داخلي للحزمة --
 print('\n== 11 · THE PRODUCTION BUNDLE IS INTERNALLY SELF-CONSISTENT ==')
-chk('the published page is a single self-contained file',
-    os.path.getsize(os.path.join(ROOT, 'public/index.html')) > 100000)
-srcs = re.findall(r'<script[^>]+src="([^"]+)"', page)
-links = re.findall(r'<link[^>]+href="([^"]+)"', page)
-remote = [u for u in srcs + links
+# ── ما حلّ محلّ «صفحة واحدة قائمة بذاتها» ────────────────────────────────
+# التوكيدة القديمة كانت: حجم public/index.html > 100 ك.ب — أي «الصفحة تحمل كل
+# شيء». هذا بالضبط ما ثبّت العيب: مليون وثمانمئة ألف بايت لا يُخزَّن منها شيء
+# ولا تحتمل سياسة أمن صارمة. بديلها ثلاث توكيدات أشدّ مجتمعةً:
+#   (١) الصفحة قشرة صغيرة،
+#   (٢) الشيفرة لم تختفِ بل انتقلت — مجموعها لا يقلّ عمّا كان،
+#   (٣) وكل ملفّ منها موصول فعلاً بمدخل الوحدات.
+SHELL_BYTES = os.path.getsize(os.path.join(ROOT, 'public/index.html'))
+MOD_BYTES = sum(len(v.encode('utf-8')) for v in modules.values())
+CSS_BYTES = len(css.encode('utf-8'))
+PRE_SPLIT_PAGE_BYTES = 1863894      # المقيس على الشجرة قبل F-09
+note('shell=%d B · %d module(s)=%d B · css=%d B · pre-split single page=%d B'
+     % (SHELL_BYTES, len(modules), MOD_BYTES, CSS_BYTES,
+        PRE_SPLIT_PAGE_BYTES))
+chk('the published page is a SHELL, not the application: under 200 KB',
+    SHELL_BYTES < 200000, str(SHELL_BYTES))
+chk('and dramatically smaller than the single file it replaced (under a tenth)',
+    SHELL_BYTES * 10 < PRE_SPLIT_PAGE_BYTES, str(SHELL_BYTES))
+chk('the application did not shrink, it moved: shell + modules + stylesheet '
+    'carry at least what the single page carried',
+    SHELL_BYTES + MOD_BYTES + CSS_BYTES >= PRE_SPLIT_PAGE_BYTES * 0.9,
+    str(SHELL_BYTES + MOD_BYTES + CSS_BYTES))
+chk('the application is split into separately cacheable modules',
+    len(modules) >= 15, str(len(modules)))
+
+# ── الصفحة لا تحمل جافاسكربت تنفيذياً مضمّناً، ولا نمطاً مضمّناً (F-11) ──
+_inline_scripts = re.findall(r'<script(?![^>]*\bsrc=)([^>]*)>', shell)
+_non_importmap = [a for a in _inline_scripts
+                  if 'type="importmap"' not in a]
+chk('the page contains NO executable inline script: the only inline <script> '
+    'is the import map',
+    len(_inline_scripts) == 1 and _non_importmap == [],
+    'inline=%r' % (_inline_scripts,))
+chk('the page contains NO <style> block', not re.search(r'<style[\s>]', shell),
+    'a <style> block is present')
+_style_attrs = re.findall(r'<[^>]*\sstyle\s*=\s*"[^"]*"', shell)
+chk('the page contains NO style= attribute — the .acs-u-NN utility classes '
+    'replaced every one of them', _style_attrs == [],
+    '; '.join(x[:70] for x in _style_attrs[:3]))
+_UTIL = sorted(set(re.findall(r'\bacs-u-\d+\b', shell)))
+chk('the utility classes that replaced them ship in the external stylesheet, '
+    'so nothing lost its styling silently',
+    all(('.' + u) in css for u in _UTIL) and len(_UTIL) > 0,
+    ', '.join(u for u in _UTIL if ('.' + u) not in css)[:120])
+_inline_handlers = sorted(set(re.findall(r'\s(on[a-z]+)\s*=\s*"', shell)))
+chk('the page carries NO inline event-handler attribute — under this CSP one '
+    'would never fire, so its presence is dead code, not style',
+    _inline_handlers == [], ', '.join(_inline_handlers))
+
+# ── كل مرجع في القشرة يُحلّ إلى ملفّ موجود ────────────────────────────────
+srcs = re.findall(r'<script[^>]+src="([^"]+)"', shell)
+links = re.findall(r'<link[^>]+rel="stylesheet"[^>]*href="([^"]+)"', shell) \
+    + re.findall(r'<link[^>]+href="([^"]+)"[^>]*rel="stylesheet"', shell)
+all_links = re.findall(r'<link[^>]+href="([^"]+)"', shell)
+remote = [u for u in srcs + all_links
           if u.startswith('http://') or u.startswith('//')
           or (u.startswith('https://') and 'acs-engine.onrender.com' not in u)]
 chk('the page loads no remote script or stylesheet at runtime', remote == [],
     ', '.join(remote[:3]))
-local_refs = [u for u in srcs + links if u.startswith('./') or u.startswith('/')
+chk('the shell declares at least one script and exactly one stylesheet',
+    len(srcs) >= 2 and len(links) == 1, 'scripts=%r css=%r' % (srcs, links))
+_ref_missing = []
+for u in srcs + links:
+    if re.match(r'^[a-z]+:', u):                      # data: / https: — ليست ملفّاً
+        continue
+    _fp = os.path.join(ROOT, 'public', u.lstrip('./').lstrip('/'))
+    if not (os.path.isfile(_fp) and os.path.getsize(_fp) > 0):
+        _ref_missing.append(u)
+chk('EVERY <script src> and <link rel=stylesheet> in the shell resolves to a '
+    'non-empty file that exists in public/', _ref_missing == [],
+    ', '.join(_ref_missing))
+chk('the module entry point the shell names is public/app/main.js',
+    '<script type="module" src="/app/main.js"></script>' in shell)
+chk('every classic boot script the shell names exists under public/app/boot/',
+    all(os.path.isfile(os.path.join(ROOT, 'public', 'app', 'boot', b))
+        for b in boot_scripts) and len(boot_scripts) == 5,
+    ', '.join(sorted(boot_scripts)))
+_boot_referenced = sorted(set(re.findall(r'src="/app/boot/([^"]+)"', shell)))
+chk('and every boot script that ships is actually referenced by the shell — '
+    'no orphan boot file',
+    _boot_referenced == sorted(boot_scripts),
+    'referenced=%s shipped=%s' % (_boot_referenced, sorted(boot_scripts)))
+
+# ── رسم الاستيراد مغلق: لا وحدة يتيمة ولا استيراد مفقود ─────────────────
+_IMPORTED = AS.order()
+_EXEMPT = {'main.js', 'shared-state.js'}
+_expected = sorted(k for k in modules
+                   if k not in _EXEMPT and not k.startswith('boot/')
+                   and not k.startswith('styles/'))
+_orphans = [k for k in _expected if k not in _IMPORTED]
+_missing_imports = [k for k in _IMPORTED if k not in modules]
+chk('public/app/main.js imports EVERY shipped module except boot/, styles/, '
+    'main.js and shared-state.js — no orphan file is published',
+    _orphans == [], ', '.join(_orphans))
+chk('and every module main.js imports really exists — no missing import',
+    _missing_imports == [], ', '.join(_missing_imports))
+chk('the import list has no duplicate: a module evaluated twice is a second '
+    'copy of its state',
+    len(_IMPORTED) == len(set(_IMPORTED)),
+    str(sorted(x for x in set(_IMPORTED) if _IMPORTED.count(x) > 1)))
+note('main.js imports %d module(s) in the original evaluation order; '
+     'shared-state.js carries the %d bindings written across module boundaries'
+     % (len(_IMPORTED),
+        len(re.findall(r'^\s+\w+:', modules.get('shared-state.js', ''), re.M))))
+chk('the cross-module write surface is a single sealed object, not a set of '
+    'globals',
+    'Object.seal(' in modules.get('shared-state.js', '')
+    and 'export const __ACS_SHARED' in modules.get('shared-state.js', ''))
+
+# ── es-module-shims ذهب: لا في القشرة ولا في الوحدات ولا في متطلّبات التوريد ──
+_shim_page = re.findall(r'/vendor/es-module-shims[^\s"\'<>)]*', shell + app + css)
+chk('es-module-shims is referenced nowhere in the shipped frontend (shell, '
+    'modules or stylesheet)', _shim_page == [], ', '.join(_shim_page[:3]))
+
+local_refs = [u for u in srcs + all_links
+              if u.startswith('./') or u.startswith('/')
               or not re.match(r'^[a-z]+:', u)]
 missing_local = [u for u in local_refs
                  if not os.path.exists(os.path.join(ROOT, 'public',
@@ -520,11 +785,21 @@ if os.path.isdir(vend):
     for dp, _dn, fns in os.walk(vend):
         vendor_files += [os.path.join(dp, x) for x in fns]
 nb = rd('tools/netlify-build.sh')
+# النُّسخ تُقرأ من السكربت نفسه لا من قائمة مكتوبة بيد: رفعُ رقمٍ هناك لا يجوز
+# أن يمرّ لأن هذا الملفّ ما زال يحمل الرقم القديم.
+_vars = dict(re.findall(r'^([A-Z]+)=([0-9][\w.\-]*)\s*$', nb, re.M))
+note('the build script declares %d vendored version(s): %s'
+     % (len(_vars), ', '.join('%s=%s' % kv for kv in sorted(_vars.items()))))
 must_vendor = re.findall(r'"\$VEN/([^"]+)"', nb)
 must_vendor = sorted(set(v for v in must_vendor
                          if v.count('/') >= 1 and not v.endswith('/')))
-must_vendor = [v.replace('$THREE', '0.160.0').replace('$SHIMS', '1.8.2')
-                .replace('$PDFJS', '4.0.379') for v in must_vendor]
+_unresolved = sorted(set(v for v in must_vendor
+                         for t in re.findall(r'\$([A-Z]+)', v)
+                         if t not in _vars))
+chk('every version placeholder in the vendor list resolves to a declared '
+    'variable', _unresolved == [], ', '.join(_unresolved))
+for _k, _v in _vars.items():
+    must_vendor = [v.replace('$' + _k, _v) for v in must_vendor]
 present = [v for v in must_vendor
            if os.path.isfile(os.path.join(vend, v))
            and os.path.getsize(os.path.join(vend, v)) > 0]
@@ -542,8 +817,25 @@ else:
         'command, not expected in the repository',
         bool(cmd) and 'netlify-build.sh' in cmd.group(1))
 chk('the vendor fetch script pins exact versions',
-    all(v in rd('tools/netlify-build.sh')
-        for v in ('THREE=0.160.0', 'SHIMS=1.8.2', 'PDFJS=4.0.379')))
+    all(re.match(r'^\d+(\.\d+)*$', v) for v in _vars.values())
+    and _vars.get('THREE') == '0.160.0' and _vars.get('PDFJS') == '4.0.379',
+    str(_vars))
+# F-11 — es-module-shims حُذف من الواجهة. حمولة مُوَرَّدة بلا مستهلك تُنشر في
+# كل بناء ولا يطلبها أحد: تُرفَض هنا صراحةً بدل أن تبقى بلا مالك.
+_shim_vendor = sorted(set(v for v in must_vendor if 'es-module-shims' in v))
+chk('the build script vendors NO es-module-shims: nothing in the shipped '
+    'frontend loads it, so fetching it is dead payload on every deploy',
+    _shim_vendor == [] and 'SHIMS' not in _vars,
+    ', '.join(_shim_vendor) or 'SHIMS=%s' % _vars.get('SHIMS'))
+chk('the vendored libraries are exactly the two the frontend actually '
+    'resolves: three (import map) and pdfjs (dynamic import)',
+    sorted(_vars) == ['PDFJS', 'THREE'], str(sorted(_vars)))
+_vendor_needed = sorted(set(re.findall(r'/vendor/([A-Za-z0-9@.\-]+)/',
+                                       shell + app)))
+chk('every /vendor/ package the frontend references is fetched by the build '
+    'script', all(any(v.startswith(pkg) for v in must_vendor)
+                  for pkg in _vendor_needed),
+    'referenced=%s' % _vendor_needed)
 chk('the vendor fetch script fails the build on a missing file',
     'set -euo pipefail' in rd('tools/netlify-build.sh')
     and 'MISSING/EMPTY' in rd('tools/netlify-build.sh'))
@@ -605,15 +897,15 @@ print('\n== 11c · THE VISUAL QUALITY BRIDGE AND ITS VENDORED MODULES ==')
 # جسر الجودة يعيش داخل سكربت الوحدة، فلا تمسكه علامات الكتل الكلاسيكية —
 # يُفحص هنا صراحةً: موجود مرّة واحدة، وخطّاف الحلقة واحد، ولا CDN وقت التشغيل.
 chk('the PBR bridge is present exactly once',
-    page.count('/* ===== ACS PBR BRIDGE (module scope) ===== */') == 1
-    and page.count('/* ===== END ACS PBR BRIDGE ===== */') == 1)
+    app.count('/* ===== ACS PBR BRIDGE (module scope) ===== */') == 1
+    and app.count('/* ===== END ACS PBR BRIDGE ===== */') == 1)
 chk('the render loop hook is present exactly once',
-    page.count('window.__ACS_PQ__&&window.__ACS_PQ__.composer') == 1)
+    app.count('window.__ACS_PQ__&&window.__ACS_PQ__.composer') == 1)
 chk('the original render call survives as the fallback path',
-    'else{renderer.render(scene,camera);}' in page)
+    'else{renderer.render(scene,camera);}' in app)
 chk('post-processing modules import from the local vendor origin only',
-    page.count("import('three/addons/postprocessing/") >= 4
-    and "import('http" not in page and 'import("http' not in page)
+    app.count("import('three/addons/postprocessing/") >= 4
+    and "import('http" not in app and 'import("http' not in app)
 _pq = json.loads(rd('acs_pbr.json'))
 for mod in _pq['post_processing_modules']:
     chk('the vendor build verifies %s' % mod,
@@ -629,24 +921,24 @@ chk('no remote texture or environment host is referenced by the quality layer',
 print('\n== 11d · THE ARCHITECTURAL DETAIL LAYER (PHASE 9.2) ==')
 # طبقة التفصيل المعماري تمتد فوق 9.1 بلا محرّك ثانٍ ولا سجلّ مكرّر.
 chk('the archdetail bridge is present exactly once',
-    page.count('/* ===== ACS ARCH DETAIL BRIDGE (module scope) ===== */') == 1
-    and page.count('/* ===== END ACS ARCH DETAIL BRIDGE ===== */') == 1)
+    app.count('/* ===== ACS ARCH DETAIL BRIDGE (module scope) ===== */') == 1
+    and app.count('/* ===== END ACS ARCH DETAIL BRIDGE ===== */') == 1)
 chk('the archdetail generated block is present exactly once',
-    page.count('/* ===== ACS ARCH DETAIL '
+    app.count('/* ===== ACS ARCH DETAIL '
                '(generated by tools/build_archdetail_browser.py) ===== */')
-    == 1 and page.count('/* ===== END ACS ARCH DETAIL ===== */') == 1)
+    == 1 and app.count('/* ===== END ACS ARCH DETAIL ===== */') == 1)
 chk('the 9.1 render loop hook is still single — no second dispatcher',
-    page.count('window.__ACS_PQ__&&window.__ACS_PQ__.composer') == 1)
+    app.count('window.__ACS_PQ__&&window.__ACS_PQ__.composer') == 1)
 _ad = json.loads(rd('acs_archdetail.json'))
 chk('the layer extends acs.pbr and never reverses',
     _ad['extends'] == 'acs.pbr' and _ad['reverse_arrow_exists'] is False
     and _ad['writes_to_model'] is False)
-_ada = page.index('/* ===== ACS ARCH DETAIL '
+_ada = app.index('/* ===== ACS ARCH DETAIL '
                   '(generated by tools/build_archdetail_browser.py) ===== */')
-_ade = page.index('/* ===== END ACS ARCH DETAIL ===== */')
-_adb = page.index('/* ===== ACS ARCH DETAIL BRIDGE (module scope) ===== */')
-_adz = page.index('/* ===== END ACS ARCH DETAIL BRIDGE ===== */')
-_adlayer = page[_ada:_ade] + page[_adb:_adz]
+_ade = app.index('/* ===== END ACS ARCH DETAIL ===== */')
+_adb = app.index('/* ===== ACS ARCH DETAIL BRIDGE (module scope) ===== */')
+_adz = app.index('/* ===== END ACS ARCH DETAIL BRIDGE ===== */')
+_adlayer = app[_ada:_ade] + app[_adb:_adz]
 chk('no network scheme in the architectural layer',
     'http://' not in _adlayer and 'https://' not in _adlayer)
 chk('no url-based gltf, remote texture or executable asset policy',
@@ -684,7 +976,7 @@ chk('every contract symbol is callable in the python layer',
         for _s in json.loads(rd('acs_pbr.json'))
         ['viewport_contract_symbols']))
 chk('every contract symbol is mirrored in the shipped page',
-    all(m in page for m in ('pqBoundsMember', 'pqBoundsFromDescriptors',
+    all(m in app for m in ('pqBoundsMember', 'pqBoundsFromDescriptors',
                             'pqCameraClip', 'pqFrustumContains',
                             'pqMaterialSafe')))
 
@@ -710,17 +1002,17 @@ chk('the sky dome and ground plane are canonically excluded from bounds',
     'SKY_DOME' in _pq2['viewport_bounds']['excluded_object_names']
     and 'GROUND_PLANE' in _pq2['viewport_bounds']['excluded_object_names'])
 chk('the page names the sky dome and ground plane so they can be excluded',
-    "sky.name='SKY_DOME'" in page and "g.name='GROUND_PLANE'" in page)
+    "sky.name='SKY_DOME'" in app and "g.name='GROUND_PLANE'" in app)
 chk('the camera clip contract is applied by the bridge, not just declared',
-    'pqCameraClip' in page and 'pqFrustumContains' in page
-    and '_pqApplyCameraSafety' in page)
+    'pqCameraClip' in app and 'pqFrustumContains' in app
+    and '_pqApplyCameraSafety' in app)
 chk('the render diagnostics bridge is present and presentation-only',
-    'window.ACS.renderDiagnostics' in page
-    and 'exposes_canonical_state:false' in page)
+    'window.ACS.renderDiagnostics' in app
+    and 'exposes_canonical_state:false' in app)
 chk('presentation material application fails open to the engineering material',
-    'pqMaterialSafe' in page and 'MATERIAL_FAIL_OPEN' in page)
+    'pqMaterialSafe' in app and 'MATERIAL_FAIL_OPEN' in app)
 chk('the composer is resized with the renderer',
-    'composer.setSize' in page and '_resizeHooked' in page)
+    'composer.setSize' in app and '_resizeHooked' in app)
 chk('the black-viewport regression ships and is wired into the phase gate',
     exists('tests/phase9_2/test_black_viewport.py')
     and 'test_black_viewport.py' in rd('tests/phase9_2/run_all.sh')
@@ -747,20 +1039,20 @@ chk('presentation offsets to hide misalignment are forbidden',
     'PRESENTATION_OFFSET_TO_HIDE_MISALIGNMENT' in _tc['forbidden']
     and 'AUTOMATIC_SNAP_TO_NEAREST_HOST' in _tc['forbidden'])
 chk('the shipped compiler derives its rack block from the contract',
-    'pqRackBlock([rx,rz,rw,rd],R)' in page
+    'pqRackBlock([rx,rz,rw,rd],R)' in app
     and 'const bw=Math.min(+R.w||rw,rw), bd=Math.min(+R.d||rd,rd);'
-    not in page)
+    not in app)
 # F-07 / KI-3 — كانت هذه التوكيدة تثبّت السلوك القديم («الاصطلاح مُبقًى عمداً»)،
 # فاستُبدلت بتوكيدة أشدّ على السلوك الجديد: الامتداد من عقد الامتداد الوحيد،
 # ونصّ اللوح على مقاس الموقع مُزال من المصرِّف نصّاً لا اصطلاحاً.
 chk('the level plate is derived from the room footprint through the single '
     'shared extent contract, and the site-wide plate is gone from the compiler',
-    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page
-    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in page
-    and 'slabStrips(0,0,site.w,site.d,holes)' not in page
-    and 'PHASE10_FOOTPRINT_PLATE' in page
-    and 'plate_overhang' in page
-    and 'change_requires_approval:true' in page)
+    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in app
+    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in app
+    and 'slabStrips(0,0,site.w,site.d,holes)' not in app
+    and 'PHASE10_FOOTPRINT_PLATE' in app
+    and 'plate_overhang' in app
+    and 'change_requires_approval:true' in app)
 chk('the plate policy change is provenanced, not silent: the new name, the '
     'previous name, what pinned it and why it changed all ship',
     _PQ_MOD.PLATE_POLICY['policy'] == 'PHASE10_FOOTPRINT_PLATE'
@@ -770,18 +1062,18 @@ chk('the plate policy change is provenanced, not silent: the new name, the '
     and len(_PQ_MOD.PLATE_POLICY['reason']) > 60
     and _PQ_MOD.PLATE_POLICY['changes_canonical_model'] is False
     and _PQ_MOD.PLATE_POLICY['changes_quantities'] is False
-    and 'PHASE1_SITE_WIDE_PLATE' in page)
+    and 'PHASE1_SITE_WIDE_PLATE' in app)
 chk('the Python compiler and the page agree on the plate extent contract',
     'PBR.plate_rect(' in rd('acs_compiler.py')
     and 'PBR.slab_strips(' in rd('acs_compiler.py')
     and 'site["w"], 0.15, site["d"], "floor", "FLOOR|%s|slab|0" % fkey'
     not in rd('acs_compiler.py'))
 chk('alignment diagnostics ship and never move an object',
-    'window.ACS.alignmentDiagnostics' in page
-    and 'objects_moved_to_fit:0' in page
-    and 'moved_to_fit:false' in page)
+    'window.ACS.alignmentDiagnostics' in app
+    and 'objects_moved_to_fit:0' in app
+    and 'moved_to_fit:false' in app)
 chk('world bounds are measured only after updateMatrixWorld',
-    'o.updateMatrixWorld(true);' in page)
+    'o.updateMatrixWorld(true);' in app)
 chk('the seven ALIGN issue codes are declared and none is blocking',
     all(c in json.loads(rd('acs_pbr.json'))['issue_codes'] for c in (
         'ALIGN_TRANSFORM_UNRESOLVED', 'ALIGN_HOST_NOT_FOUND',
@@ -808,8 +1100,8 @@ chk('gate self-test: a module-scoped access is caught',
 chk('gate self-test: an explanatory comment naming scene is NOT a violation',
     'scene' not in HE.strip_noise('/* touches scene here */ var a=1;'))
 chk('the narrow read-only snapshot bridge exists instead of a global',
-    'window.ACS.canonicalTransformSnapshot' in page
-    and 'exposes_coordinates:false' in page)
+    'window.ACS.canonicalTransformSnapshot' in app
+    and 'exposes_coordinates:false' in app)
 chk('engine state was NOT promoted to the global scope to satisfy a test',
     'window.scene' not in page and 'window.renderer' not in page
     and 'window.camera' not in page)
@@ -918,25 +1210,25 @@ chk('the render-recovery contract is declared in the canonical spec',
 chk('the spec, the python layer and the shipped page all carry it',
     'render_recovery' in rd('acs_pbr.json')
     and 'RENDER_RECOVERY_CONTRACT' in rd('acs_pbr.py')
-    and 'render-recovery/1.0.0' in page)
+    and 'render-recovery/1.0.0' in app)
 chk('every declared symbol exists in the python layer',
     all(hasattr(_PQ_MOD, s) for s in _PQ_MOD.RENDER_RECOVERY_SYMBOLS))
 chk('every declared symbol has a browser mirror in the shipped page',
-    all(('pq' + s.title().replace('_', '')) in page
+    all(('pq' + s.title().replace('_', '')) in app
         for s in _PQ_MOD.RENDER_RECOVERY_SYMBOLS))
 chk('the model-load path reconciles the camera through the contract',
-    'acsReconcileCamera' in page
-    and 'window.ACS.verifyVisibleModel' in page)
+    'acsReconcileCamera' in app
+    and 'window.ACS.verifyVisibleModel' in app)
 chk('the model-load path assigns near and far — the defect was that it never did',
-    'camera.near=c.near; camera.far=c.far' in page.replace('\n', ' ')
-    or 'camera.near=c.near' in page)
+    'camera.near=c.near; camera.far=c.far' in app.replace('\n', ' ')
+    or 'camera.near=c.near' in app)
 chk('one recovery cycle only, and it is declared',
-    int(_RR['max_recovery_cycles']) == 1 and 'RENDER_BLACK_VIEWPORT' in page)
+    int(_RR['max_recovery_cycles']) == 1 and 'RENDER_BLACK_VIEWPORT' in app)
 chk('post-processing fails open to the base renderer, never to black',
-    '_pqDisableComposer' in page and 'POSTPROCESS_FAIL_OPEN' in rd('acs_pbr.json'))
+    '_pqDisableComposer' in app and 'POSTPROCESS_FAIL_OPEN' in rd('acs_pbr.json'))
 chk('render failure classes are separate from transport classes in the page',
-    'ACS_TRANSPORT_CLASSES' in page and 'RENDER_BLACK_VIEWPORT' in page
-    and 'window.ACS.lastFailure' in page)
+    'ACS_TRANSPORT_CLASSES' in app and 'RENDER_BLACK_VIEWPORT' in app
+    and 'window.ACS.lastFailure' in app)
 chk('the large live-model regression fixtures ship with the tests',
     exists('tests/phase9_2/fixtures/live_large_generated.json')
     and exists('tests/phase9_2/fixtures/live_large_generated_outlier.json'))

@@ -52,6 +52,15 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 OUTDIR = os.path.join(HERE, "outputs")
 
+# F-09 — الواجهة صارت قشرة + وحدات ES. المصدر الوحيد الذي يعرف هذا التخطيط هو
+# tools/app_source.py؛ لا تُكتَب هنا قائمة ملفّات ثانية تتقادم عند أوّل إضافة.
+sys.path.insert(0, os.path.join(ROOT, "tools"))
+import app_source as APPSRC                                       # noqa: E402
+
+# القشرة المنشورة قشرة: لو عاد الخادم بصفحة بحجم الملفّ الواحد القديم فذلك
+# نشرٌ لشجرة أخرى، لا نجاح.
+SHELL_MAX_BYTES = 200000
+
 # ── الأهداف الافتراضية ──────────────────────────────────────────────────────
 # مصدرها المُعلن في المستودع، لا رقم مكتوب هنا من الذاكرة:
 #   netlify.toml                     → publish=public ، CSP connect-src للخادم
@@ -233,7 +242,9 @@ def declared_targets():
     api = read_repo("acs_understand_api.py")
     m = re.search(r"_DEFAULT_ORIGIN\s*=\s*\"([^\"]+)\"", api)
     out["api_default_origin"] = m.group(1) if m else ""
-    page = read_repo("public/index.html")
+    # F-09 — CONFIGURED_BASE خرج من الصفحة إلى public/app/boot/api-base.js.
+    # يُبحَث عنه في القشرة والوحدات والسكربتات الكلاسيكية معاً عبر المصدر الواحد.
+    page = APPSRC.page_text() + "\n" + "\n".join(APPSRC.boot_scripts().values())
     m = re.search(r"CONFIGURED_BASE\s*=\s*\"([^\"]*)\"", page)
     out["page_configured_base"] = (m.group(1) if m else "").rstrip("/")
     toml = read_repo("netlify.toml")
@@ -273,10 +284,10 @@ def critical_assets():
     تُعاد مساراً URL مطلقاً على أصل الواجهة."""
     sh = read_repo("tools/netlify-build.sh")
     variables = {}
-    for name in ("THREE", "SHIMS", "PDFJS", "VEN"):
-        m = re.search(r"^%s=(\S+)" % name, sh, re.M)
-        if m:
-            variables[name] = m.group(1).strip().strip('"')
+    # تُقرأ كل المتغيّرات المعلَنة، لا قائمة أسماء مكتوبة هنا: حذف SHIMS أو
+    # إضافة مكتبة جديدة يجب أن ينعكس تلقائياً بدل أن يبقى اسمٌ ميّت.
+    for name, value in re.findall(r"^([A-Z][A-Z0-9_]*)=(\S+)$", sh, re.M):
+        variables[name] = value.strip().strip('"')
     variables.setdefault("VEN", "public/vendor")
 
     def expand(raw):
@@ -297,10 +308,26 @@ def critical_assets():
                 assets.append("/" + path[len("public/"):])
     declared_by_build = list(assets)
 
-    page = read_repo("public/index.html")
+    # ── F-09 — أصول التطبيق نفسها صارت أصولاً حرِجة ────────────────────────
+    # قبل التفكيك كان كل شيء داخل index.html، فكانت «الأصول الحرِجة» هي
+    # المكتبات المُوَرَّدة وحدها. الآن سقوطُ أيّ ملفّ تحت public/app/ يعني صفحةً
+    # تُحمَّل ولا تعمل — وهذا بالضبط ما يجب أن يُقاس على النشر الحقيقي.
+    app_assets = ["/app/main.js"]
+    app_assets += ["/app/boot/" + b for b in sorted(APPSRC.boot_scripts())]
+    if os.path.isfile(os.path.join(ROOT, "public", "app", "styles", "app.css")):
+        app_assets.append("/app/styles/app.css")
+    app_assets += sorted("/app/" + k for k in APPSRC.modules()
+                         if k != "main.js" and not k.startswith("boot/"))
+    seen_app = set()
+    app_assets = [a for a in app_assets
+                  if not (a in seen_app or seen_app.add(a))]
+    assets += app_assets
+
+    shell = APPSRC.shell()
+    page = APPSRC.page_text()
     # خريطة الاستيراد: تحوّل "three" و"three/addons/" إلى مسارات /vendor
     imap = {}
-    m = re.search(r'<script type="importmap">(.*?)</script>', page, re.S)
+    m = re.search(r'<script type="importmap">(.*?)</script>', shell, re.S)
     if m:
         try:
             imap = (json.loads(m.group(1)) or {}).get("imports") or {}
@@ -320,7 +347,7 @@ def critical_assets():
         if a not in seen:
             seen.add(a)
             ordered.append(a)
-    return ordered, declared_by_build, imap
+    return ordered, declared_by_build, imap, app_assets
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -522,11 +549,13 @@ def group_a(R, frontend, backend, timeout, state):
 # ══════════════════════════════════════════════════════════════════════════
 def group_b(R, frontend, backend, timeout, state):
     print("\n── B · أصول الواجهة: الوحدات الحرِجة، Three.js 160، لا CDN، لا CSP violation ──")
-    assets, declared, imap = critical_assets()
+    assets, declared, imap, app_assets = critical_assets()
     state["assets"] = assets
+    state["app_assets"] = app_assets
     print("  derived asset list: %d file(s) — %d declared by tools/netlify-build.sh "
-          "must=(), the rest from the import map in public/index.html"
-          % (len(assets), len(declared)))
+          "must=(), %d application files under /app/ (shell entry, boot scripts, "
+          "stylesheet and every ES module), the rest from the import map in the "
+          "shell" % (len(assets), len(declared), len(app_assets)))
 
     root = state.get("frontend_root")
     if not root or not root.reached:
@@ -538,7 +567,12 @@ def group_b(R, frontend, backend, timeout, state):
                 ("B3", "no runtime CDN reference is served"),
                 ("B4", "the CSP header is present and forbids external script origins"),
                 ("B5", "no unexpected 404 among the critical assets"),
-                ("B6", "every import specifier in the page resolves to a served module")):
+                ("B6", "every import specifier in the page resolves to a served module"),
+                ("B7", "the deployed page is a SHELL under %d bytes that loads "
+                       "/app/main.js" % SHELL_MAX_BYTES),
+                ("B8", "the deployed frontend is provenanced: the build-identity "
+                       "boot script is served with substituted tokens"),
+                ("B9", "every application file under /app/ was served 200")):
             R.not_verified("B", cid, name, why)
         return
 
@@ -550,7 +584,12 @@ def group_b(R, frontend, backend, timeout, state):
                 ("B2", "the served Three.js declares REVISION 160"),
                 ("B3", "no runtime CDN reference is served"),
                 ("B5", "no unexpected 404 among the critical assets"),
-                ("B6", "every import specifier in the page resolves to a served module")):
+                ("B6", "every import specifier in the page resolves to a served module"),
+                ("B7", "the deployed page is a SHELL under %d bytes that loads "
+                       "/app/main.js" % SHELL_MAX_BYTES),
+                ("B8", "the deployed frontend is provenanced: the build-identity "
+                       "boot script is served with substituted tokens"),
+                ("B9", "every application file under /app/ was served 200")):
             R.not_verified("B", cid, name, why)
         # الـCSP ما زال قابلاً للقياس من الترويسة نفسها
         csp = root.header("content-security-policy")
@@ -563,6 +602,7 @@ def group_b(R, frontend, backend, timeout, state):
     bad_status, empty, cdn_hits = [], [], []
     three_rev = None
     fetched = 0
+    fetched_text = {}
     for path in assets:
         url = urllib.parse.urljoin(frontend + "/", path.lstrip("/"))
         ar = http(url, timeout=timeout)
@@ -579,6 +619,8 @@ def group_b(R, frontend, backend, timeout, state):
         for host in CDN_HOSTS:
             if host in ar.text:
                 cdn_hits.append("%s references %s" % (path, host))
+        if path.startswith("/app/"):
+            fetched_text[path] = ar.text
         if path.endswith("three.module.js"):
             m = re.search(r"REVISION\s*=\s*['\"]([^'\"]+)['\"]", ar.text)
             three_rev = m.group(1) if m else None
@@ -614,6 +656,20 @@ def group_b(R, frontend, backend, timeout, state):
         if backend.rstrip("/") not in connect:
             csp_problems.append("connect-src %r does not allow the backend %s"
                                 % (connect.strip(), backend))
+        # F-11 — السياسة المخدومة يجب أن تكون الصارمة نفسها. 'unsafe-inline'
+        # في script-src يُبطل السياسة كلّها: أي حقن نصّي يُنفَّذ عندها.
+        if "unsafe-inline" in csp:
+            csp_problems.append("the served CSP still allows 'unsafe-inline'")
+        if "unsafe-eval" in csp:
+            csp_problems.append("the served CSP still allows 'unsafe-eval'")
+        sd = re.search(r"script-src([^;]*)", csp)
+        if not sd or "sha256-" not in sd.group(1):
+            csp_problems.append("script-src carries no sha256 source, so the "
+                                "inline import map cannot be running under it")
+        st = re.search(r"style-src([^;]*)", csp)
+        if not st or st.group(1).split() != ["'self'"]:
+            csp_problems.append("style-src is %r, not 'self' only"
+                                % (st.group(1).strip() if st else None))
     R.ok("B", "B4", "the CSP header is present, forbids external script origins "
                     "and allows exactly the backend in connect-src",
          not csp_problems, "; ".join(csp_problems) if csp_problems else csp[:240])
@@ -649,6 +705,77 @@ def group_b(R, frontend, backend, timeout, state):
          not unresolved, "; ".join(unresolved) or
          "%d import specifiers resolved through the import map and served"
          % len(served_specs))
+
+    # ── B7 · الصفحة المنشورة قشرة، لا التطبيق كلّه (F-09) ───────────────────
+    shell_problems = []
+    shell_bytes = len(root.raw)
+    if shell_bytes >= SHELL_MAX_BYTES:
+        shell_problems.append("the served page is %d bytes — a shell must be "
+                              "under %d" % (shell_bytes, SHELL_MAX_BYTES))
+    if '<script type="module" src="/app/main.js">' not in root.text:
+        shell_problems.append("the served page does not load /app/main.js as its "
+                              "module entry point")
+    inline = re.findall(r'<script(?![^>]*\bsrc=)([^>]*)>', root.text)
+    if len(inline) != 1 or 'type="importmap"' not in "".join(inline):
+        shell_problems.append("the served page carries %d inline <script> "
+                              "block(s); only the import map may be inline"
+                              % len(inline))
+    if re.search(r"<style[\s>]", root.text):
+        shell_problems.append("the served page carries a <style> block")
+    if re.search(r"<[^>]*\sstyle\s*=\s*\"", root.text):
+        shell_problems.append("the served page carries a style= attribute")
+    handlers = sorted(set(re.findall(r"\s(on[a-z]+)\s*=\s*[\"']", root.text)))
+    if handlers:
+        shell_problems.append("the served page carries inline event handler(s): "
+                              "%s — under this CSP they never fire"
+                              % ", ".join(handlers))
+    R.ok("B", "B7", "the deployed page is a SHELL under %d bytes with no inline "
+                    "script but the import map, no inline style and no inline "
+                    "handler" % SHELL_MAX_BYTES,
+         not shell_problems,
+         "; ".join(shell_problems) or "%d bytes, module entry /app/main.js, "
+         "one inline import map" % shell_bytes)
+
+    # ── B8 · هوية البناء المنشور: من السكربت الكلاسيكي المخدوم نفسه ─────────
+    bi_path = "/app/boot/build-info.js"
+    bi = fetched_text.get(bi_path)
+    state["served_build_info"] = bi or ""
+    if bi is None:
+        R.not_verified("B", "B8", "the deployed frontend is provenanced through "
+                                  "window.ACS_BUILD_INFO",
+                       "%s was not among the fetched assets" % bi_path)
+    else:
+        prov = []
+        if "window.ACS_BUILD_INFO" not in bi:
+            prov.append("the served boot script never assigns "
+                        "window.ACS_BUILD_INFO")
+        raw = re.search(r'git_sha:\s*"([^"]*)"', bi)
+        val = raw.group(1) if raw else ""
+        if re.match(r"^__[A-Z0-9_]+__$", val or ""):
+            prov.append("git_sha is still the literal placeholder %r — the build "
+                        "step never substituted it, so the deployed frontend is "
+                        "UNPROVENANCED" % val)
+        elif not re.match(r"^[0-9a-f]{7,40}$", val or ""):
+            prov.append("no build SHA could be read out of the served boot "
+                        "script (git_sha=%r)" % val)
+        else:
+            state["frontend_sha"] = val
+        if bi_path not in root.text:
+            prov.append("the shell does not reference %s, so the boot script "
+                        "never runs on the deployed page" % bi_path)
+        R.ok("B", "B8", "the deployed frontend is provenanced: %s is served and "
+                        "its build tokens were substituted" % bi_path,
+             not prov, "; ".join(prov) or "git_sha=%s" % val)
+
+    # ── B9 · كل ملفّ تطبيق أُعلن أنه يُشحن، وصل فعلاً بحالة 200 ────────────
+    app_bad = [x for x in bad_status
+               if x.split(" ")[0].startswith("/app/")]
+    R.ok("B", "B9", "every application file under /app/ was served 200 "
+                    "(%d file(s): the module entry, %d boot script(s), the "
+                    "stylesheet and every ES module)"
+         % (len(app_assets), len(APPSRC.boot_scripts())),
+         not app_bad, "; ".join(app_bad) or
+         "all %d /app/ assets 200 and non-empty" % len(app_assets))
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -689,10 +816,18 @@ def group_g(R, frontend, backend, expect_sha, state):
         # الصفحة قد تُسند كائناً حرفياً أو متغيّراً يُبنى من رموز نائبة يستبدلها
         # البناء (__ACS_GIT_SHA__). الحالتان تُميَّزان: إسناد موجود برمز نائب لم
         # يُستبدَل ليس provenance — هو بناء بلا هويّة، وهذا FAIL مرصود لا PASS.
-        state["frontend_sha"] = ""
-        assigned = re.search(r"window\.ACS_BUILD_INFO\s*=", root.text) is not None
+        # F-09 — الإسناد خرج من الصفحة إلى public/app/boot/build-info.js.
+        # المجموعة B جلبت السكربت فعلاً؛ نقرأ بايتاته المخدومة إن توفّرت،
+        # وإلّا فالصفحة نفسها (لنشرٍ ما زال يحمل الإسناد مضمّناً).
+        served_bi = (state.get("served_build_info") or "")
+        provenance_text = root.text + "\n" + served_bi
+        state.setdefault("frontend_sha", "")
+        if not state["frontend_sha"]:
+            state["frontend_sha"] = ""
+        assigned = re.search(r"window\.ACS_BUILD_INFO\s*=",
+                             provenance_text) is not None
         literal = re.search(r"window\.ACS_BUILD_INFO\s*=\s*(\{.*?\})\s*;",
-                            root.text, re.S)
+                            provenance_text, re.S)
         placeholder = False
         if literal:
             try:
@@ -702,7 +837,7 @@ def group_g(R, frontend, backend, expect_sha, state):
             except Exception:
                 pass
         if not state["frontend_sha"]:
-            m = re.search(r"git_sha\s*:\s*\"([^\"]*)\"", root.text)
+            m = re.search(r"git_sha\s*:\s*\"([^\"]*)\"", provenance_text)
             raw = m.group(1) if m else ""
             if re.match(r"^__[A-Z0-9_]+__$", raw or ""):
                 placeholder = True
@@ -722,8 +857,8 @@ def group_g(R, frontend, backend, expect_sha, state):
                       "read out of the served bytes")
         else:
             detail = "frontend git_sha=%s" % state["frontend_sha"]
-        R.ok("G", "G2", "the frontend page declares window.ACS_BUILD_INFO with a "
-                        "substituted build SHA",
+        R.ok("G", "G2", "the deployed frontend declares window.ACS_BUILD_INFO "
+                        "with a substituted build SHA (shell + boot scripts)",
              bool(state["frontend_sha"]), detail)
 
     fsha, bsha = state.get("frontend_sha"), state.get("backend_sha")

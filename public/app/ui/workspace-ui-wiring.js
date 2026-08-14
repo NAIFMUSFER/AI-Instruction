@@ -4,6 +4,7 @@
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
+import { __ACS_LATE } from '../late-bindings.js';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, FLOOR_NAMES, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
@@ -1120,7 +1121,13 @@ renderer.setAnimationLoop(()=>{
 
 /* ========================= الواجهة / التبويبات / الدخول ========================= */
 function showTab(t){
-  document.querySelectorAll('[data-panel]').forEach(p=>p.style.display=p.dataset.panel===t?'':'none');
+  /* الإخفاء الابتدائي صنفٌ الآن لا سمة style (style-src 'self')، وإسناد
+     style.display='' لا يمحو قاعدة صنف — فالتبديل يجري على الصنف أيضاً. */
+  document.querySelectorAll('[data-panel]').forEach(p=>{
+    const on = p.dataset.panel===t;
+    p.classList.toggle('acs-hidden', !on);
+    p.style.display = on ? '' : 'none';
+  });
   const bd=document.querySelector('.body'); if(bd) bd.scrollTop=0;
 }
 document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
@@ -2535,7 +2542,10 @@ document.getElementById('cbNote').onclick=()=>{
 };
 document.getElementById('cbClip').onclick=()=>{
   const el=document.getElementById('clipBox');
-  const show=!(el.style.display&&el.style.display!=='none');
+  const show=el.classList.contains('acs-hidden')
+    || !(el.style.display&&el.style.display!=='none');
+  /* الإخفاء الابتدائي صنفٌ الآن (style-src 'self')، فالإظهار يزيله */
+  el.classList.toggle('acs-hidden', !show);
   el.style.display=show?'block':'none';
   const hint=document.getElementById('clipHint'); if(hint) hint.style.display=show?'none':'';
   document.getElementById('cbClip').classList.toggle('on',show);
@@ -2836,6 +2846,11 @@ window.ACS.captureRenderFailure=function(opts){
 })();
 /* ==== END ACS RUNTIME RENDER DIAGNOSTICS ==== */
 
+
+
+/* نشر الارتباطات التي يقرأها مقطع أسبق — تُقرأ داخل دوالّ فقط،
+   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً. */
+Object.assign(__ACS_LATE, { camera, lastBuilding, model, orbit, setSun });
 
 
 export { ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };

@@ -4,11 +4,11 @@
    المصدر المولِّد: module scope
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
+import { __ACS_LATE } from '../late-bindings.js';
 import { sha256Hex } from '../core/standards.js';
 import { RoomEnvironment, THREE, matCache } from '../core/viewer.js';
 import { ACS_PBR_SPEC, PQ_PLATE_POLICY, PQ_RENDER_RECOVERY_CONTRACT, PQ_RR, PQ_TC, pqBoundsMember, pqCamera, pqCameraClip, pqCameraFit, pqCaptureMetadata, pqContainment, pqFrustumContains, pqIssue, pqLevelBaseY, pqMaterial, pqMaterialForEngineering, pqMaterialSafe, pqPlateRect, pqRecoveryPlan, pqRobustBounds, pqRoofAlignment } from './pbr.js';
 import { pmrem, renderer, scene, sky, sun } from '../render/scene.js';
-import { camera, lastBuilding, model, orbit, setSun } from '../ui/workspace-ui-wiring.js';
 
 /* ===== ACS PBR BRIDGE (module scope) ===== */
 /* جسر الجودة البصرية — يعيش في نطاق الوحدة حيث THREE والمشهد الحيّ.
@@ -128,7 +128,7 @@ window.ACS.pbrApply=function(cfg){
       report.changed.push('shadows'); }
     /* 2. الشمس والملء — أضواء عرضية فقط، لا صلة بتجهيزات MEP */
     const L=cfg.lighting;
-    setSun(L.sun_elevation_deg,L.sun_azimuth_deg);
+    __ACS_LATE.setSun(L.sun_elevation_deg,L.sun_azimuth_deg);
     sun.intensity=L.sun_intensity; sun.color.set(L.sun_color);
     window.__ACS_PQ__.fills.forEach(f=>{ scene.remove(f); });
     window.__ACS_PQ__.fills=[];
@@ -220,9 +220,9 @@ window.ACS.pbrApply=function(cfg){
       ]).then(mods=>{
         try{
           const composer=new mods[0].EffectComposer(renderer);
-          composer.addPass(new mods[1].RenderPass(scene,camera));
+          composer.addPass(new mods[1].RenderPass(scene,__ACS_LATE.camera));
           if(cfg.ssao_enabled&&mods[5]){
-            const ss=new mods[5].SSAOPass(scene,camera,innerWidth,innerHeight);
+            const ss=new mods[5].SSAOPass(scene,__ACS_LATE.camera,innerWidth,innerHeight);
             /* نطاق SSAO يُشتقّ من حجم النموذج الحقيقي: القيم الثابتة على مشهد
                كبير تجعل الحجب كاملاً فيسودّ الإطار */
             const _b=_pqSceneBounds();
@@ -281,15 +281,15 @@ function _pqApplyCameraSafety(b,pos,target){
   const cl=pqCameraClip(b,pos);
   cl.issues.forEach(i=>issues.push(i));
   const P=cl.clip.position;
-  camera.position.set(P[0],P[1],P[2]);
-  camera.near=cl.clip.near; camera.far=cl.clip.far;
+  __ACS_LATE.camera.position.set(P[0],P[1],P[2]);
+  __ACS_LATE.camera.near=cl.clip.near; __ACS_LATE.camera.far=cl.clip.far;
   if(typeof innerWidth!=='undefined'&&innerHeight)
-    camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  if(typeof orbit!=='undefined'&&orbit&&orbit.target){
-    orbit.target.set(target[0],target[1],target[2]); orbit.update(); }
-  const fr=pqFrustumContains({position:P,target:target,fov:camera.fov,
-    aspect:camera.aspect,near:camera.near,far:camera.far},b);
+    __ACS_LATE.camera.aspect=innerWidth/innerHeight;
+  __ACS_LATE.camera.updateProjectionMatrix();
+  if(typeof __ACS_LATE.orbit!=='undefined'&&__ACS_LATE.orbit&&__ACS_LATE.orbit.target){
+    __ACS_LATE.orbit.target.set(target[0],target[1],target[2]); __ACS_LATE.orbit.update(); }
+  const fr=pqFrustumContains({position:P,target:target,fov:__ACS_LATE.camera.fov,
+    aspect:__ACS_LATE.camera.aspect,near:__ACS_LATE.camera.near,far:__ACS_LATE.camera.far},b);
   fr.issues.forEach(i=>issues.push(i));
   return {applied:true,clip:cl.clip,frustum:fr,issues:issues}; }
 
@@ -298,16 +298,16 @@ window.ACS.pbrCameraPreset=function(presetName){
     const b=_pqSceneBounds();
     const r=pqCamera(presetName,b);
     if(!r.valid) return r;
-    camera.fov=r.camera.fov; camera.updateProjectionMatrix();
+    __ACS_LATE.camera.fov=r.camera.fov; __ACS_LATE.camera.updateProjectionMatrix();
     const safety=_pqApplyCameraSafety(b,r.camera.position,r.camera.target);
     r.safety=safety;
     (safety.issues||[]).forEach(i=>r.issues.push(i));
     if(!safety.applied){
-      camera.position.set(r.camera.position[0],r.camera.position[1],
+      __ACS_LATE.camera.position.set(r.camera.position[0],r.camera.position[1],
         r.camera.position[2]);
-      if(typeof orbit!=='undefined'&&orbit&&orbit.target){
-        orbit.target.set(r.camera.target[0],r.camera.target[1],
-          r.camera.target[2]); orbit.update(); } }
+      if(typeof __ACS_LATE.orbit!=='undefined'&&__ACS_LATE.orbit&&__ACS_LATE.orbit.target){
+        __ACS_LATE.orbit.target.set(r.camera.target[0],r.camera.target[1],
+          r.camera.target[2]); __ACS_LATE.orbit.update(); } }
     return r;
   }catch(e){ return {valid:false,camera:null,
     issues:[{code:'PQ_THREE_UNAVAILABLE',severity:'ERROR',blocking:false,
@@ -319,12 +319,12 @@ window.ACS.pbrCapture=function(opts){
     const h=Math.min(o.height||1080,ACS_PBR_SPEC.capture.max_dimension_px);
     const pw=renderer.domElement.width, ph=renderer.domElement.height;
     renderer.setSize(w,h,false);
-    camera.aspect=w/h; camera.updateProjectionMatrix();
+    __ACS_LATE.camera.aspect=w/h; __ACS_LATE.camera.updateProjectionMatrix();
     if(window.__ACS_PQ__.composer) window.__ACS_PQ__.composer.render();
-    else renderer.render(scene,camera);
+    else renderer.render(scene,__ACS_LATE.camera);
     const url=renderer.domElement.toDataURL('image/png');
     renderer.setSize(pw,ph,false);
-    camera.aspect=pw/ph; camera.updateProjectionMatrix();
+    __ACS_LATE.camera.aspect=pw/ph; __ACS_LATE.camera.updateProjectionMatrix();
     const mh=(window.ACS&&window.ACS.workspace&&window.ACS.workspace.project)
       ?null:null;
     const cfgHash=window.__ACS_PQ__.applied;
@@ -393,12 +393,12 @@ window.ACS.renderDiagnosticsDetail=function(){
         :o.isSpotLight?'spot':null;
       if(t){ lights[t]++; lightSum+=(o.intensity||0); } });
     const b=_pqSceneBounds();
-    const tgt=(typeof orbit!=='undefined'&&orbit&&orbit.target)
-      ?[orbit.target.x,orbit.target.y,orbit.target.z]
+    const tgt=(typeof __ACS_LATE.orbit!=='undefined'&&__ACS_LATE.orbit&&__ACS_LATE.orbit.target)
+      ?[__ACS_LATE.orbit.target.x,__ACS_LATE.orbit.target.y,__ACS_LATE.orbit.target.z]
       :[0,0,0];
-    const fr=b?pqFrustumContains({position:[camera.position.x,
-        camera.position.y,camera.position.z],target:tgt,fov:camera.fov,
-        aspect:camera.aspect,near:camera.near,far:camera.far},b):null;
+    const fr=b?pqFrustumContains({position:[__ACS_LATE.camera.position.x,
+        __ACS_LATE.camera.position.y,__ACS_LATE.camera.position.z],target:tgt,fov:__ACS_LATE.camera.fov,
+        aspect:__ACS_LATE.camera.aspect,near:__ACS_LATE.camera.near,far:__ACS_LATE.camera.far},b):null;
     let ctxOk=false;
     try{ ctxOk=!!renderer.getContext()&&!renderer.getContext().isContextLost(); }
     catch(e){ ctxOk=false; }
@@ -423,13 +423,13 @@ window.ACS.renderDiagnosticsDetail=function(){
           :'TEXTURE'):null,
       scene_environment:!!scene.environment,
       model_bounds:b,
-      camera_position:[camera.position.x,camera.position.y,camera.position.z],
+      camera_position:[__ACS_LATE.camera.position.x,__ACS_LATE.camera.position.y,__ACS_LATE.camera.position.z],
       camera_target:tgt,
-      camera_quaternion:[camera.quaternion.x,camera.quaternion.y,
-        camera.quaternion.z,camera.quaternion.w],
-      camera_near:camera.near, camera_far:camera.far,
-      camera_fov:camera.fov, camera_aspect:camera.aspect,
-      projection_matrix_finite:camera.projectionMatrix.elements
+      camera_quaternion:[__ACS_LATE.camera.quaternion.x,__ACS_LATE.camera.quaternion.y,
+        __ACS_LATE.camera.quaternion.z,__ACS_LATE.camera.quaternion.w],
+      camera_near:__ACS_LATE.camera.near, camera_far:__ACS_LATE.camera.far,
+      camera_fov:__ACS_LATE.camera.fov, camera_aspect:__ACS_LATE.camera.aspect,
+      projection_matrix_finite:__ACS_LATE.camera.projectionMatrix.elements
         .every(v=>isFinite(v)),
       camera_in_frustum:fr?fr.contains:null,
       camera_frustum_detail:fr,
@@ -470,7 +470,7 @@ function _pqWorldBox(o){
 
 window.ACS.alignmentDiagnostics=function(){
   try{
-    if(typeof model==='undefined'||!model)
+    if(typeof __ACS_LATE.model==='undefined'||!__ACS_LATE.model)
       return {objects_checked:0,canonical_hosts_checked:0,
         unresolved_transforms:0,detached_objects:0,outside_host_objects:0,
         roof_alignment:null,level_alignment:[],max_position_error_m:null,
@@ -478,18 +478,18 @@ window.ACS.alignmentDiagnostics=function(){
           blocking:false,message:'no canonical model is loaded'}],
         writes_to_model:false};
     scene.updateMatrixWorld(true);
-    const fh=(lastBuilding&&Number(lastBuilding.floor_height))||3.2;
+    const fh=(__ACS_LATE.lastBuilding&&Number(__ACS_LATE.lastBuilding.floor_height))||3.2;
     /* أصول الغرف من البيانات القانونية نفسها لا من المشهد */
     const hosts={};
     const levelsSeen={};
-    ((lastBuilding||{}).levels||[]).forEach(lv=>{
-      const tmpl=(((lastBuilding||{}).floors)||{})[lv.template]||{};
+    ((__ACS_LATE.lastBuilding||{}).levels||[]).forEach(lv=>{
+      const tmpl=(((__ACS_LATE.lastBuilding||{}).floors)||{})[lv.template]||{};
       levelsSeen['F'+lv.index]={index:lv.index,rects:[]};
       (tmpl.rooms||[]).forEach(r=>{
         if(!Array.isArray(r.rect)||r.rect.length!==4) return;
         const key='F'+lv.index+'|'+(r.id||'room');
         const y=pqLevelBaseY(lv.index,fh).base_y;
-        const H=Number(r.wall_h)||Number((lastBuilding||{}).wall_h)||3.0;
+        const H=Number(r.wall_h)||Number((__ACS_LATE.lastBuilding||{}).wall_h)||3.0;
         hosts[key]={rect:r.rect,level_index:lv.index,base_y:y,
           box:{min:[r.rect[0],y,r.rect[1]],
                max:[r.rect[0]+r.rect[2],y+H,r.rect[1]+r.rect[3]]}};
@@ -498,7 +498,7 @@ window.ACS.alignmentDiagnostics=function(){
     let checked=0,unresolved=0,outside=0,detached=0,maxErr=0;
     const hosted={INSIDE:0,INTERSECTING_BOUNDARY:0,OUTSIDE:0,UNRESOLVED:0};
     const sample=[];
-    model.traverse(o=>{
+    __ACS_LATE.model.traverse(o=>{
       if(!o.isMesh) return;
       const t=_pqTagParts(o);
       if(!t) return;
@@ -537,7 +537,7 @@ window.ACS.alignmentDiagnostics=function(){
       const L=levelsSeen[k];
       const expect=pqLevelBaseY(L.index,fh).base_y;
       let minY=Infinity;
-      model.traverse(o=>{
+      __ACS_LATE.model.traverse(o=>{
         if(!o.isMesh) return;
         const t=_pqTagParts(o);
         if(!t||t.floor!==k||t.layer!=='FLOOR') return;
@@ -562,7 +562,7 @@ window.ACS.alignmentDiagnostics=function(){
        فعلاً في المشهد لا على الاصطلاح: فإن عاد لوحٌ يتجاوز بصمة دوره بأكثر
        من متر رُفع ALIGN_ROOF_DETACHED لأيّ دور — لا للأدوار العليا وحدها. */
     const renderedPlate={};
-    model.traverse(o=>{
+    __ACS_LATE.model.traverse(o=>{
       if(!o.isMesh) return;
       const t=_pqTagParts(o);
       if(!t||t.layer!=='FLOOR'||!t.rest
@@ -578,7 +578,7 @@ window.ACS.alignmentDiagnostics=function(){
     Object.keys(levelsSeen).sort().forEach(k=>{
       const L=levelsSeen[k];
       if(!L.rects.length) return;
-      const site=((lastBuilding||{}).site)||{};
+      const site=((__ACS_LATE.lastBuilding||{}).site)||{};
       const sw=Number(site.w)||0, sd=Number(site.d)||0;
       const pr=pqPlateRect(L.rects,[0,0,sw,sd]).rect;
       if(!pr||!(sw>0&&sd>0)) return;
@@ -610,12 +610,12 @@ window.ACS.alignmentDiagnostics=function(){
           message:'the rendered level plate overhangs its own room footprint '
             +'by '+over.toFixed(2)+' m, which the declared '
             +PQ_PLATE_POLICY.policy+' convention forbids'}); });
-    const idx=((lastBuilding||{}).levels||[]).map(l=>Number(l.index));
+    const idx=((__ACS_LATE.lastBuilding||{}).levels||[]).map(l=>Number(l.index));
     const top=idx.length?Math.max.apply(null,idx):null;
     let roof=null;
     if(top!==null){
       let roofY=null;
-      model.traverse(o=>{
+      __ACS_LATE.model.traverse(o=>{
         if(!o.isMesh) return;
         const t=_pqTagParts(o);
         if(!t||t.layer!=='FLOOR'||t.floor!=='F'+top) return;
@@ -648,12 +648,12 @@ window.ACS.alignmentDiagnostics=function(){
    فقط — أداة مقارنة لا تصدير بيانات — فيبقى التغليف سليماً. */
 window.ACS.canonicalTransformSnapshot=function(){
   try{
-    if(typeof model==='undefined'||!model)
+    if(typeof __ACS_LATE.model==='undefined'||!__ACS_LATE.model)
       return {available:false,count:0,digest:null,
         reason:'no canonical model is loaded'};
     scene.updateMatrixWorld(true);
     const rows=[];
-    model.traverse(m=>{
+    __ACS_LATE.model.traverse(m=>{
       if(!m.isMesh||!m.name||m.name.indexOf('|')<0) return;
       if(!pqBoundsMember(_pqDescribe(m)).included) return;
       rows.push(m.name+':'+m.matrixWorld.elements
@@ -709,8 +709,8 @@ function acsReconcileCamera(opts){
     diagnostics:rb.diagnostics||null,issues:(rb.issues||[]).slice(0,24),
     applied:false,camera_in_frustum:false,bounds:rb.bounds||null};
   if(!rb.valid||!rb.bounds){ window.__ACS_RR__.last_fit=rec; return rec; }
-  const asp=(camera&&camera.aspect)?camera.aspect:1.6;
-  const fov=(camera&&camera.fov)?camera.fov:52;
+  const asp=(__ACS_LATE.camera&&__ACS_LATE.camera.aspect)?__ACS_LATE.camera.aspect:1.6;
+  const fov=(__ACS_LATE.camera&&__ACS_LATE.camera.fov)?__ACS_LATE.camera.fov:52;
   const fit=pqCameraFit(rb.bounds,fov,asp,
     (opts.azimuth===undefined)?35:opts.azimuth,
     (opts.elevation===undefined)?22:opts.elevation,0);
@@ -721,12 +721,12 @@ function acsReconcileCamera(opts){
   if(!fit.camera){ window.__ACS_RR__.last_fit=rec; return rec; }
   const c=fit.camera;
   try{
-    camera.position.set(c.position[0],c.position[1],c.position[2]);
-    camera.near=c.near; camera.far=c.far;
-    camera.updateProjectionMatrix();
-    if(typeof orbit!=='undefined'&&orbit&&orbit.target){
+    __ACS_LATE.camera.position.set(c.position[0],c.position[1],c.position[2]);
+    __ACS_LATE.camera.near=c.near; __ACS_LATE.camera.far=c.far;
+    __ACS_LATE.camera.updateProjectionMatrix();
+    if(typeof __ACS_LATE.orbit!=='undefined'&&__ACS_LATE.orbit&&__ACS_LATE.orbit.target){
       /* هدف نموذج سابق لا يبقى أبداً: مركز حدود النموذج الحالي وحده. */
-      orbit.target.set(c.target[0],c.target[1],c.target[2]); orbit.update(); }
+      __ACS_LATE.orbit.target.set(c.target[0],c.target[1],c.target[2]); __ACS_LATE.orbit.update(); }
     rec.applied=true;
   }catch(e){ rec.error=String(e&&e.message||e).slice(0,120); }
   rec.camera={position:c.position,target:c.target,near:c.near,far:c.far,
@@ -739,7 +739,7 @@ function _pqDisableComposer(reason){
   if(!window.__ACS_PQ__||!window.__ACS_PQ__.composer) return false;
   window.__ACS_PQ__.composer=null;
   window.__ACS_RR__.postprocess_fail_open=reason||'BLACK_FRAME';
-  try{ renderer.render(scene,camera); }catch(e){}
+  try{ renderer.render(scene,__ACS_LATE.camera); }catch(e){}
   return true; }
 
 /* ── §13 جسر قراءة فقط: هل النموذج مرئيّ فعلاً؟ لا يغيّر حالة ولا يرسم ────── */
@@ -751,10 +751,10 @@ window.ACS.verifyVisibleModel=function(){
     const px=(typeof window.ACS.viewportPixels==='function')
       ?window.ACS.viewportPixels():{status:'UNAVAILABLE'};
     const fit=window.__ACS_RR__.last_fit;
-    const clipValid=!!(camera&&isFinite(camera.near)&&isFinite(camera.far)
-      &&camera.near>0&&camera.far>camera.near);
+    const clipValid=!!(__ACS_LATE.camera&&isFinite(__ACS_LATE.camera.near)&&isFinite(__ACS_LATE.camera.far)
+      &&__ACS_LATE.camera.near>0&&__ACS_LATE.camera.far>__ACS_LATE.camera.near);
     const out={
-      model_loaded:!!(typeof model!=='undefined'&&model),
+      model_loaded:!!(typeof __ACS_LATE.model!=='undefined'&&__ACS_LATE.model),
       canonical_meshes:(rb.diagnostics||{}).canonical_mesh_count||0,
       included_in_bounds:(rb.diagnostics||{}).included_in_bounds||0,
       excluded_invalid_bounds:(rb.diagnostics||{}).excluded_invalid_bounds||0,
@@ -767,7 +767,7 @@ window.ACS.verifyVisibleModel=function(){
       scene_radius:(rb.bounds||{}).radius===undefined?null:(rb.bounds||{}).radius,
       camera_in_frustum:fit?!!fit.camera_in_frustum:null,
       clip_valid:clipValid,
-      camera_near:camera?camera.near:null, camera_far:camera?camera.far:null,
+      camera_near:__ACS_LATE.camera?__ACS_LATE.camera.near:null, camera_far:__ACS_LATE.camera?__ACS_LATE.camera.far:null,
       webgl_context_ok:!!d.webgl_context_ok,
       composer_active:!!((window.__ACS_PQ__||{}).composer),
       pixels_visible:(px&&px.status)?px.status!=='BLACK':null,
@@ -804,8 +804,8 @@ function acsRecoverBlackViewport(){
       else if(step==='RESTORE_ENGINEERING_MATERIALS'){
         if(typeof window.ACS.pbrRestore==='function') window.ACS.pbrRestore(); }
       else if(step==='REFIT_CAMERA') acsReconcileCamera();
-      else if(step==='RENDER_BASE') renderer.render(scene,camera);
-      renderer.render(scene,camera);
+      else if(step==='RENDER_BASE') renderer.render(scene,__ACS_LATE.camera);
+      renderer.render(scene,__ACS_LATE.camera);
     }catch(e){ rec.error=String(e&&e.message||e).slice(0,120); }
     const px=(typeof window.ACS.viewportPixels==='function')
       ?window.ACS.viewportPixels():{status:'UNAVAILABLE'};

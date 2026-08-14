@@ -421,10 +421,47 @@ if (VP) {
     + VP.heap_delta_bytes + ' B)');
 }
 
+/* ═════════════════════════════ §5 — شكل ما يُشحن فعلاً (F-09) ═══════════ */
+/* الرقم الوحيد المتعلّق بالأداء الذي يمكن قياسه هنا بلا متصفّح هو ما يصل إلى
+   المستخدم أوّل مرّة. قبل F-09 كانت الصفحة 1,863,894 بايت لا يُخزَّن منها شيء
+   بين نشرين لأن كل شيء داخلها. الآن قشرة صغيرة + ملفّات قابلة للتخزين. هذا
+   قياس حقيقي على الشجرة، لا هدف معلَن — ويُميَّز عن الميزانيات صراحةً. */
+console.log('\n== §5 — WHAT THE FIRST REQUEST ACTUALLY COSTS (MEASURED HERE) ==');
+const AS = require(_np.join(ROOT, 'tests', 'lib', 'app_source.js'));
+const SHELL_BYTES = Buffer.byteLength(AS.shell(), 'utf8');
+const MODS = AS.modules();
+const MOD_BYTES = Object.keys(MODS)
+  .reduce((n, k) => n + Buffer.byteLength(MODS[k], 'utf8'), 0);
+const CSS_BYTES = fs.existsSync(_np.join(ROOT, 'public', 'app', 'styles',
+  'app.css')) ? fs.statSync(_np.join(ROOT, 'public', 'app', 'styles',
+  'app.css')).size : 0;
+const PRE_SPLIT_PAGE_BYTES = 1863894;   /* المقيس على HEAD السابق للتفكيك */
+console.log('  MEASURED: shell=' + SHELL_BYTES + ' B · modules='
+  + Object.keys(MODS).length + ' file(s)/' + MOD_BYTES + ' B · css='
+  + CSS_BYTES + ' B · pre-split single page=' + PRE_SPLIT_PAGE_BYTES + ' B');
+chk('the shipped page is a SHELL: it is under 200 KB, and under a tenth of the '
+    + 'single file it replaced',
+    SHELL_BYTES < 200000 && SHELL_BYTES * 10 < PRE_SPLIT_PAGE_BYTES,
+    String(SHELL_BYTES));
+chk('the application itself did not shrink — it moved: the modules carry at '
+    + 'least as much code as the old page did',
+    MOD_BYTES + CSS_BYTES + SHELL_BYTES >= PRE_SPLIT_PAGE_BYTES * 0.9,
+    String(MOD_BYTES + CSS_BYTES + SHELL_BYTES));
+chk('the code is split into separately cacheable files, not one bundle',
+    Object.keys(MODS).length >= 15, String(Object.keys(MODS).length));
+chk('the styles left the page too — an external stylesheet is cacheable, a '
+    + '<style> block is not', CSS_BYTES > 1000 && !/<style[\s>]/.test(AS.shell()),
+    String(CSS_BYTES));
+chk('no module is empty — an empty file is a shipped request that buys nothing',
+    Object.keys(MODS).every(k => MODS[k].length > 0),
+    Object.keys(MODS).filter(k => !MODS[k].length).join(', '));
+
 console.log('\n  NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: no ACS frame was '
   + 'rendered and no application performance number exists. F-14 budgets are '
   + 'TARGETS; the quality governor is a SPECIFICATION and is NOT implemented '
-  + 'in public/index.html.');
+  + 'in the shipped frontend (public/index.html + public/app/). The §5 numbers '
+  + 'above are measured bytes on this tree, not a rendering measurement, and '
+  + 'transfer size after compression is NOT VERIFIED here.');
 console.log('\n──────────────────────────────────────────────');
 console.log('PERFORMANCE CONTRACT: ' + pass + ' passed, ' + fail + ' failed');
 if (fail) process.exit(1);

@@ -143,12 +143,12 @@
     "url_scheme": "http://127.0.0.1 (loopback, never proxied)",
     "page": "tests/performance/vacuity_page.html — canvas + getContext('webgl2') + requestAnimationFrame loop, no Three.js, no framework",
     "measurement_code": "IDENTICAL to the application path: sampleFrames(), heap(), gpuStats(), perfCounters(), navigationTiming()",
-    "page_load_ms": 87,
+    "page_load_ms": 95,
     "navigation_timing": {
-      "response_end_ms": 9.3,
-      "dom_interactive_ms": 81.7,
-      "dom_content_loaded_ms": 81.9,
-      "load_event_end_ms": 81.9,
+      "response_end_ms": 12.5,
+      "dom_interactive_ms": 86,
+      "dom_content_loaded_ms": 86.1,
+      "load_event_end_ms": 86.2,
       "transfer_size_bytes": 5505,
       "decoded_body_bytes": 5205
     },
@@ -157,28 +157,28 @@
       "frames": {
         "measured": true,
         "requested_window_ms": 2500,
-        "actual_window_ms": 2502.4,
-        "frames": 150,
-        "fps_average": 59.543,
-        "frame_time_mean_ms": 16.795,
-        "frame_time_min_ms": -14.2,
-        "frame_time_max_ms": 33.4,
+        "actual_window_ms": 2507.4,
+        "frames": 152,
+        "fps_average": 60.222,
+        "frame_time_mean_ms": 16.605,
+        "frame_time_min_ms": -9.2,
+        "frame_time_max_ms": 33.3,
         "frame_time_p5_ms": 16.6,
         "frame_time_p50_ms": 16.7,
-        "frame_time_p95_ms": 16.7,
+        "frame_time_p95_ms": 16.8,
         "fps_at_p5_frame_time": 60.241,
-        "fps_at_p95_frame_time": 59.88
+        "fps_at_p95_frame_time": 59.524
       },
       "gpu": {
         "source": "plain WebGL2 page counters (vacuity proof)",
-        "draw_calls": 18544,
-        "triangles": 37088,
+        "draw_calls": 19392,
+        "triangles": 38784,
         "geometries": null,
         "textures": null,
         "programs": null,
         "canonical_meshes": null,
         "visible_meshes": null,
-        "frames_drawn": 188
+        "frames_drawn": 193
       }
     },
     "heavy_load": {
@@ -186,12 +186,12 @@
       "frames": {
         "measured": true,
         "requested_window_ms": 2500,
-        "actual_window_ms": 2528.9,
-        "frames": 45,
-        "fps_average": 17.399,
-        "frame_time_mean_ms": 57.475,
-        "frame_time_min_ms": -4.4,
-        "frame_time_max_ms": 83.4,
+        "actual_window_ms": 2536.8,
+        "frames": 44,
+        "fps_average": 16.95,
+        "frame_time_mean_ms": 58.995,
+        "frame_time_min_ms": -13.1,
+        "frame_time_max_ms": 66.7,
         "frame_time_p5_ms": 49.9,
         "frame_time_p50_ms": 66.6,
         "frame_time_p95_ms": 66.7,
@@ -200,28 +200,28 @@
       },
       "gpu": {
         "source": "plain WebGL2 page counters (vacuity proof)",
-        "draw_calls": 143472,
-        "triangles": 286944,
+        "draw_calls": 141920,
+        "triangles": 283840,
         "geometries": null,
         "textures": null,
         "programs": null,
         "canonical_meshes": null,
         "visible_meshes": null,
-        "frames_drawn": 242
+        "frames_drawn": 246
       }
     },
     "heap_before_alloc": {
-      "used_js_heap_bytes": 1480521,
-      "total_js_heap_bytes": 3692633,
+      "used_js_heap_bytes": 1533385,
+      "total_js_heap_bytes": 3954777,
       "js_heap_limit_bytes": 2248146944
     },
     "heap_after_alloc_64mb": {
-      "used_js_heap_bytes": 68055610,
+      "used_js_heap_bytes": 68055358,
       "total_js_heap_bytes": 70528750,
       "js_heap_limit_bytes": 2248146944
     },
     "heap_alloc_blocks": 64,
-    "heap_delta_bytes": 66575089,
+    "heap_delta_bytes": 66521973,
     "counters": {
       "webgl_context_count": 1,
       "context_lost_events": 0,
@@ -230,8 +230,8 @@
       "render_loop_detail": [
         {
           "id": "1821045140",
-          "calls": 251,
-          "self_rescheduled": 251
+          "calls": 254,
+          "self_rescheduled": 254
         }
       ],
       "duplicate_event_listener_count": 0,

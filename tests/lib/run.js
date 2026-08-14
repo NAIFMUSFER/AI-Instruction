@@ -1,5 +1,7 @@
-/* مشغّل موحّد لكل مراحل المستودع: يستخرج شيفرة المتصفّح من public/index.html
-   ثم يشغّل ملفّ الاختبار في نطاق واحد معها بـ __dirname الحقيقي للملفّ. */
+/* مشغّل موحّد لكل مراحل المستودع: يبني حزمة شيفرة المتصفّح من وحدات
+   public/app/ عبر tests/phase3/lib/extract_browser_bundle.js (وهو بدوره يقرأ
+   من tests/lib/app_source.js وحدها، لا من نصّ الصفحة كما كان قبل F-09)، ثم
+   يشغّل ملفّ الاختبار في نطاق واحد معها بـ __dirname الحقيقي للملفّ. */
 const fs=require('fs'), os=require('os'), path=require('path');
 const {execFileSync}=require('child_process');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');

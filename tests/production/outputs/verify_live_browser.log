@@ -1,6 +1,6 @@
 ACS PRODUCTION VERIFICATION — real Chromium layer
   frontend : https://sprightly-selkie-d906c3.netlify.app
-  started  : 2026-08-14T13:45:21.795Z
+  started  : 2026-08-14T17:24:43.954Z
   chromium : /opt/pw-browsers/chromium
 
 ── loading the deployed frontend ──
@@ -85,6 +85,18 @@ ACS PRODUCTION VERIFICATION — real Chromium layer
   ― F3    no horizontal overflow in the Arabic layout
       NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
       reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― H1    the deployed page is a shell under 200 KB with /app/main.js as its only module entry
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― H2    the classic boot scripts and the external stylesheet load and apply
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― H3    no <style> block, no style= attribute and no inline event handler
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― H4    the deployed CSP raised no violation in a real browser
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
   ― G5    window.ACS_BUILD_INFO carries the frontend build SHA and timestamp
       NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
       reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
@@ -93,6 +105,6 @@ ACS PRODUCTION VERIFICATION — real Chromium layer
       reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
 
 ──────────────────────────────────────────────────────────────────────
-BROWSER LAYER: 0 PASS · 0 FAIL · 29 NOT VERIFIED (of 29 checks)
+BROWSER LAYER: 0 PASS · 0 FAIL · 33 NOT VERIFIED (of 33 checks)
 summary: /tmp/acs/tests/production/outputs/verify_live_browser.json
 VERDICT: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED — no pixel was rendered here and nothing is claimed.

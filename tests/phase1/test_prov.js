@@ -1,3 +1,5 @@
+/* F-09: الأسماء التي تُكتب عبر حدود الوحدات انتقلت إلى كائن الحالة المشترك
+   __ACS_SHARED؛ الاختبار يكتب حيث يقرأ التطبيق فعلاً، لا في اسم ميت. */
 let pass=0,fail=0; const chk=(n,c,d)=>{c?(pass++,console.log('  ✓',n)):(fail++,console.log('  ✗',n,d===undefined?'':d))};
 const VILLA='فيلا دورين، الدور الأرضي يحتوي على مجلس وصالة ومطبخ وغرفة ضيوف وحمامين، والدور الأول يحتوي على 4 غرف نوم و3 حمامات وصالة عائلية، مع درج وموقف سيارتين.';
 const FORBIDDEN=/وفق\s+الكود|متطلّب\s*كود|متطلب\s*كود|مطابق\s+للكود|متوافق\s+مع\s+الكود|code[- ]?compliant|code[- ]?required|إصلاح\s*:|تم\s+التحقق\s+هندسي/i;
@@ -61,12 +63,12 @@ const H_CLAIM={req:'مخرج طوارئ ثانٍ', rule_id:'SBC801-4.2', standar
                condition:'occupancy>50', result:'required'};
 let H1=classifyReport({requirements:[JSON.parse(JSON.stringify(H_CLAIM))]}, VILLA);
 chk('full FIELDS but rule not loaded ⇒ rejected', H1.rule.length===0, JSON.stringify(H1.rule));
-chk('registry holds zero regulatory rules', regulatoryRuleCount(ACS_EXTRA_RULESETS)===0);
+chk('registry holds zero regulatory rules', regulatoryRuleCount(__ACS_SHARED.ACS_EXTRA_RULESETS)===0);
 // قاعدة اصطناعية موجودة فعلاً في السجلّ لا تفتح البوّابة أبداً
 chk('synthetic TEST_ONLY rule can never open the gate',
-    codeRequiredAllowed('TEST_ONLY.NUMERIC_MAX_001',ACS_EXTRA_RULESETS)===false);
+    codeRequiredAllowed('TEST_ONLY.NUMERIC_MAX_001',__ACS_SHARED.ACS_EXTRA_RULESETS)===false);
 // نحقن مجموعة تنظيمية موثّقة (اختبار آلية البوّابة فقط — ليست قاعدة كود حقيقية)
-ACS_EXTRA_RULESETS=[{ruleset_id:'GATE_TEST',ruleset_version:'1',standard:'SBC 801',edition:'2018',
+__ACS_SHARED.ACS_EXTRA_RULESETS=[{ruleset_id:'GATE_TEST',ruleset_version:'1',standard:'SBC 801',edition:'2018',
   completeness:'partial',coverage_scope:'gate mechanics probe',regulatory:true,
   rules:[{rule_id:'SBC801-4.2',namespace:'GATE_TEST',regulatory:true,title:'gate probe',
     category:'egress',severity:'info',enabled:true,revision:1,
@@ -81,10 +83,10 @@ let H2=classifyReport({requirements:[JSON.parse(JSON.stringify(H_CLAIM))]}, VILL
 chk('loaded + verified regulatory rule ⇒ CODE_REQUIRED accepted',
     H2.rule.length===1&&H2.rule[0].source===PROV.RULE, JSON.stringify(H2.rule));
 // إزالة التحقّق من المصدر تُغلق البوّابة فوراً
-ACS_EXTRA_RULESETS[0].rules[0].source.verified=false;
+__ACS_SHARED.ACS_EXTRA_RULESETS[0].rules[0].source.verified=false;
 let H3=classifyReport({requirements:[JSON.parse(JSON.stringify(H_CLAIM))]}, VILLA);
 chk('unverified source ⇒ gate closes again', H3.rule.length===0, JSON.stringify(H3.rule));
-ACS_EXTRA_RULESETS=[];
+__ACS_SHARED.ACS_EXTRA_RULESETS=[];
 
 console.log('\n== RENDER — no forbidden phrases + distinct sections ==');
 showReport({requirements:[{req:'عدد الأدوار 3'},{req:'مجلس'}],

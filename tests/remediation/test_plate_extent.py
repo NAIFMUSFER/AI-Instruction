@@ -356,7 +356,14 @@ for _name in sorted(FIXTURES):
 
 print('\n== ح · PYTHON AND THE BROWSER SHARE ONE CONTRACT ==')
 src = rd('acs_compiler.py')
-page = rd(os.path.join('public', 'index.html'))
+# F-09 — شيفرة المتصفّح لم تعد داخل الصفحة: تُقرأ من وحداتها عبر المصدر الواحد
+# tools/app_source.py. البحث عن رمز يجري على الشيفرة (app_text) لا على القشرة،
+# فلا يمرّ رمزٌ لأنه صادف وجوده في العلامة.
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as AS                                           # noqa: E402
+page = AS.app_text()
+chk('the browser compiler lives in a shipped module, not in the page shell',
+    'pqPlateRect(' not in AS.shell() and 'pqPlateRect(' in page)
 chk('the Python compiler imports the shared contract instead of computing its '
     'own extent',
     'import acs_pbr as PBR' in src and 'PBR.plate_rect(' in src

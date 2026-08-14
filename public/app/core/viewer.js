@@ -4,10 +4,7 @@
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
-import { archDoorConnectsConfirmed, archOpeningAnchor, compileArchitecture, compileFls, compileMep, compileStructure, flsRenderItems, mepRenderItems, structRenderItems } from './disciplines.js';
-import { codeRequiredAllowed } from './standards.js';
-import { pqPlateRect, pqRackBlock } from '../generated/pbr.js';
-import { spaceCategories } from '../render/scene.js';
+import { __ACS_LATE } from '../late-bindings.js';
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -531,7 +528,7 @@ function buildRacks(group, room, fkey, baseY, def){
     /* عقد المحاذاة: الامتداد المتاح = امتداد الغرفة ناقص الإزاحة. أخذ
        الامتداد كاملاً بعد إزاحة موجبة كان يُخرج الصفّ خارج الغرفة بمقدار
        الإزاحة بالضبط — وهو سبب ظهور الرفوف خارج غلاف المبنى. */
-    const _rb=pqRackBlock([rx,rz,rw,rd],R).block;
+    const _rb=__ACS_LATE.pqRackBlock([rx,rz,rw,rd],R).block;
     const bx=_rb.x, bz=_rb.z;
     const bw=_rb.w, bd=_rb.d;
     const runLen = dir==='x'? bw : bd;               // طول الصف
@@ -763,7 +760,7 @@ function compile(data){
   /* البلاطة تُقرأ من المصرِّف المعماري: نفس مصدر الحقيقة الذي تقرأه العلاقات
      والمسافات، وفراغات النوى تُقصّ منها فعلاً. */
   let ARCH=null;
-  try{ ARCH=compileArchitecture(data,'bld_0',null,0); }catch(e){ ARCH=null; }
+  try{ ARCH=__ACS_LATE.compileArchitecture(data,'bld_0',null,0); }catch(e){ ARCH=null; }
   (data.levels||[]).forEach(lvl=>{
     const fdef=(data.floors||{})[lvl.template]||{}; const baseY=lvl.index*fh; const fkey='F'+lvl.index;
     const holes=ARCH?ARCH.voids.filter(v=>v.level_index===lvl.index).map(v=>v.rect):[];
@@ -778,7 +775,7 @@ function compile(data){
        منفصلاً وبمقاس الموقع (ensureGround). التغيير عرضيّ بحت: لا مستطيل غرفة
        ولا مساحة ولا كمية ولا بصمة نموذج يتغيّر به. السياسة وسابقتها وسببها
        معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
-    const _pp=pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
+    const _pp=__ACS_LATE.pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
     const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
     slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
@@ -788,8 +785,8 @@ function compile(data){
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */
   try{
-    const ST=compileStructure(data,'bld_0',null,0,ARCH);
-    structRenderItems(ST).forEach(it=>{
+    const ST=__ACS_LATE.compileStructure(data,'bld_0',null,0,ARCH);
+    __ACS_LATE.structRenderItems(ST).forEach(it=>{
       if(it.kind==='GRID_LINE'||!(it.ex>0&&it.ey>0&&it.ez>0)) return;
       const m=addBox(grp,it.cx,it.cy,it.cz,it.ex,it.ey,it.ez,'frame',it.name,false,
                      STRUCT_KIND_COLOR[it.kind]||'#64748b',it.rot_y||0);
@@ -800,8 +797,8 @@ function compile(data){
   /* طبقات عرض MEP — منفصلة لكل تخصّص ومخفيّة افتراضياً. كثير من الأبعاد هنا
      احتياط عرض، ولذلك يحمل كل جسم مصدر هندسته صراحةً ولا يُصدَّر كقيمة هندسية. */
   try{
-    const MP=compileMep(data,'bld_0',null,0,ARCH,null,true);
-    mepRenderItems(MP).forEach(it=>{
+    const MP=__ACS_LATE.compileMep(data,'bld_0',null,0,ARCH,null,true);
+    __ACS_LATE.mepRenderItems(MP).forEach(it=>{
       if(!(it.ex>0&&it.ey>0&&it.ez>0)) return;
       const disc=(it.kind==='RISER')?'RISER':it.discipline;
       const m=addBox(grp,it.cx,it.cy,it.cz,it.ex,it.ey,it.ez,'frame',it.name,false,
@@ -814,8 +811,8 @@ function compile(data){
   /* طبقات عرض الحريق وسلامة الأرواح — مخفيّة افتراضياً. ما رسمته طبقة MEP
      يبقى لها: العنصر المُشار إليه هنا يُوسم referenced ولا يُرسم مرّة ثانية. */
   try{
-    const FL=compileFls(data,'bld_0',null,0,ARCH,null,null);
-    flsRenderItems(FL).forEach(it=>{
+    const FL=__ACS_LATE.compileFls(data,'bld_0',null,0,ARCH,null,null);
+    __ACS_LATE.flsRenderItems(FL).forEach(it=>{
       if(it.render_mode!=='emitted') return;          // لا تكرار لهندسة MEP
       if(!(it.ex>0&&it.ey>0&&it.ez>0)) return;
       const m=addBox(grp,it.cx,it.cy,it.cz,it.ex,it.ey,it.ez,'frame',it.name,false,
@@ -1494,8 +1491,8 @@ let ACS_PROJECT_CODE_CONTEXT = {jurisdiction:null, rulepacks:[],
 __ACS_SHARED.ACS_OCCUPANCY_STORE = {classifications:[], packs:[]};
 function hasRuleEvidence(it){
   if(!(it && it.rule_id && it.standard && it.condition && it.result)) return false;
-  if(typeof codeRequiredAllowed!=='function') return false;
-  return codeRequiredAllowed(it.rule_id, __ACS_SHARED.ACS_EXTRA_RULESETS);
+  if(typeof __ACS_LATE.codeRequiredAllowed!=='function') return false;
+  return __ACS_LATE.codeRequiredAllowed(it.rule_id, __ACS_SHARED.ACS_EXTRA_RULESETS);
 }
 /* عبارات تدّعي مطابقة كود أو تحقّقاً هندسياً لم يحدث */
 const CLAIM_RE = /\(?\s*(?:متطلّب|متطلب|مطلوب)\s*(?:نظام\s*\/?\s*)?كود\s*\)?|وفق\s+الكود|حسب\s+الكود|مطابق\s+للكود|متوافق\s+مع\s+الكود|مطلوب\s+نظامي(?:اً|ا)?|code[- ]?compliant|code[- ]?required|تم\s+التحقق\s+هندسي(?:اً|ا)?|إصلاح\s*:/gi;
@@ -1642,7 +1639,7 @@ function projectEnvelope(b){
   env.schema=ACS_PROJECT_SCHEMA;
   env.project={ id:pr.project.id, name:pr.project.name, site:pr.project.site,
     buildings:[{ id:'bld_0', name:(b.meta||{}).name||'مبنى 1', building_type:bt,
-      programs:[bt], space_categories:spaceCategories(bt),
+      programs:[bt], space_categories:__ACS_LATE.spaceCategories(bt),
       position:{x:0,z:0,rotation:0}, active:true, self:true }],
     meta:{created_from:'phase1_building',
           note:'حقول المبنى النشط في جذر الملف نفسه (توافق مع مستهلكي المرحلة 1)'}};
@@ -1655,19 +1652,19 @@ function projectEnvelope(b){
      احتياطات العرض لا تُصدَّر كبيانات إنشائية: كل عنصر يحمل مصدره. */
   try{
     if(b.structural){ env.structural = b.structural;            // كما ورد، بلا تعديل
-      env.structural_compiled = compileStructure(b,'bld_0'); }
+      env.structural_compiled = __ACS_LATE.compileStructure(b,'bld_0'); }
   }catch(e){ }
   /* نموذج MEP المصرَّف يُصدَّر إضافةً ولا يستبدل أي تمثيل معماري أو إنشائي.
      احتياطات العرض لا تُصدَّر كبيانات هندسية: كل عنصر يحمل مصدره. */
   try{
     if(b.mep){ env.mep = b.mep;                                 // كما ورد، بلا تعديل
-      env.mep_compiled = compileMep(b,'bld_0'); }
+      env.mep_compiled = __ACS_LATE.compileMep(b,'bld_0'); }
   }catch(e){ }
   /* نموذج الحريق وسلامة الأرواح يُصدَّر إضافةً ولا يستبدل أي تمثيل آخر،
      ولا يُصدَّر احتياط عرض كبيانات هندسية. */
   try{
     if(b.fire_life_safety){ env.fire_life_safety = b.fire_life_safety;
-      env.fire_life_safety_compiled = compileFls(b,'bld_0'); }
+      env.fire_life_safety_compiled = __ACS_LATE.compileFls(b,'bld_0'); }
   }catch(e){ }
   return env;
 }
@@ -1721,10 +1718,10 @@ function buildRelationships(building,bid){
      فراغين بالضبط يرفع الحافة من inferred إلى confirmed. غيابه لا يخفض شيئاً
      ولا يحذف حافة — الاستنتاج الهندسي القديم يبقى كما هو. */
   let _arch=null;
-  try{ _arch=compileArchitecture(building,bid); }catch(e){ _arch=null; }
+  try{ _arch=__ACS_LATE.compileArchitecture(building,bid); }catch(e){ _arch=null; }
   const _doorEvidence=(via,sid,other)=>{
     if(!_arch) return null;
-    const ev=archDoorConnectsConfirmed(_arch,via);
+    const ev=__ACS_LATE.archDoorConnectsConfirmed(_arch,via);
     if(!ev) return null;
     const s=ev.spaces.slice().sort();
     const want=[sid,other].sort();
@@ -2209,7 +2206,7 @@ function _dsRooms(building,bid){ bid=bid||'bld_0'; const idx={};
   return idx; }
 /* يصرّف الهندسة المعمارية إن أمكن. غيابها لا يمنع القياس ولا يغيّر نتيجة */
 function architectureOf(building,bid){
-  try{ return compileArchitecture(building,bid||'bld_0'); }catch(e){ return null; } }
+  try{ return __ACS_LATE.compileArchitecture(building,bid||'bld_0'); }catch(e){ return null; } }
 /* نقطة عبور الباب من هندسته الفعلية (الحافة + الإزاحة)، لا من مركز الغرفة.
    حين تتوفّر هندسة الفتحة المصرَّفة نقرأ المرساة منها: هي المصدر المفضّل لأنها
    نفس المصدر الذي يرسم الجدار. للمستطيلات المحاذية للمحاور القيمتان متطابقتان
@@ -2222,7 +2219,7 @@ function doorAnchor(room,doorIndex,arch,spaceId,levelIndex){
   // لا نختلق موضع باب: الحافة والإزاحة يجب أن تكونا مصرَّحتين في النموذج
   if(d.edge===null||d.edge===undefined||d.offset===null||d.offset===undefined) return null;
   if(arch&&spaceId!==null&&spaceId!==undefined){
-    const pt=archOpeningAnchor(arch,spaceId+'.door_'+doorIndex,levelIndex);
+    const pt=__ACS_LATE.archOpeningAnchor(arch,spaceId+'.door_'+doorIndex,levelIndex);
     if(pt!==null&&pt!==undefined) return [Number(pt[0]),Number(pt[1])]; }
   const x=rc[0], z=rc[1], w=rc[2], dep=rc[3];
   const off=Number(d.offset||0), e=String(d.edge||'N').toUpperCase().slice(0,1);

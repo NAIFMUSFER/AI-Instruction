@@ -6,12 +6,18 @@
 الخدمة إلى مضيف آخر كان يتطلّب تعديل خمسة مواضع؛ نسيان واحدٍ منها يعطي
 `Failed to fetch` بلا سبب ظاهر — أو نجاحاً في التطوير وفشلاً في الإنتاج وحده.
 
+بعد F-09 لم يعد «في الصفحة» يعني ملفّاً واحداً: الإعداد الوحيد انتقل إلى
+public/app/boot/api-base.js، ومواضع النداء إلى وحدات public/app/. الشرط لم
+يتغيّر — عنوانٌ واحد لا خمسة — بل تغيّر النصّ الذي يُبحَث فيه: app_source.app_text()
+بدل نصّ الصفحة. فحص التكرار يجري على القشرة والشيفرة معاً (page_text)، فلا يهرب
+عنوانٌ ثانٍ بأن يُكتَب في العلامة.
+
 يفحص:
-  1. `CONFIGURED_BASE` معرّف مرّة واحدة بالضبط في public/index.html.
-  2. لا يظهر مضيف الـAPI في الصفحة إلا في سطر الإعداد وسطر المثال في التعليق.
+  1. `CONFIGURED_BASE` معرّف مرّة واحدة بالضبط في شيفرة التطبيق كلّها.
+  2. لا يظهر مضيف الـAPI في القشرة ولا في الشيفرة إلا في سطر الإعداد وسطر المثال.
   3. كل مسار `/v1/...` يُنادى عبر acsFetchJSON، ولا يبقى `fetch(` خام على الخادم.
   4. `connect-src` في netlify.toml يسمح بأصل الإعداد نفسه — وإلا حجبه المتصفّح.
-  5. جسور التشخيص وتصنيفات الفشل موجودة في الصفحة المشحونة.
+  5. جسور التشخيص وتصنيفات الفشل موجودة في الوحدات المشحونة.
 
     python3 tools/check_api_base.py [<root>]
 """
@@ -20,7 +26,15 @@ import os
 import re
 import sys
 
+_HERE = os.path.dirname(os.path.abspath(__file__))
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+import app_source as A                                            # noqa: E402
+
 PAGE = os.path.join("public", "index.html")
+# الموضع الوحيد المسموح به لتعريف CONFIGURED_BASE بعد F-09
+API_BASE_REL = os.path.join("public", "app", "boot", "api-base.js")
 TOML = "netlify.toml"
 
 REQUIRED_SYMBOLS = (
@@ -40,14 +54,36 @@ def check(root):
     page_path = os.path.join(root, PAGE)
     if not os.path.isfile(page_path):
         return ["%s is missing" % PAGE], {}
-    page = io.open(page_path, encoding="utf-8").read()
+    if os.path.realpath(root) != os.path.realpath(A.ROOT):
+        return (["this gate reads the application modules through "
+                 "tools/app_source.py, which is bound to %s; it cannot verify "
+                 "the unrelated tree %s" % (A.ROOT, os.path.realpath(root))],
+                {})
+    base_path = os.path.join(root, API_BASE_REL)
+    if not os.path.isfile(base_path):
+        return ["%s is missing — the single API origin has no home"
+                % API_BASE_REL.replace(os.sep, "/")], {}
 
-    # 1) إعداد واحد فقط
+    shell = A.shell()
+    app = A.app_text()              # كل شيفرة التطبيق، بترتيب التحميل الحقيقي
+    page = A.page_text()            # القشرة + الشيفرة — نظير `page` قبل F-09
+
+    # 1) إعداد واحد فقط، وفي ملفّه المعلَن وحده
     bases = re.findall(r'CONFIGURED_BASE\s*=\s*"([^"]*)"', page)
     if len(bases) != 1:
-        fails.append("public/index.html must define CONFIGURED_BASE exactly once "
-                     "(found %d)" % len(bases))
+        fails.append("the shipped frontend must define CONFIGURED_BASE exactly "
+                     "once across public/index.html and public/app/ (found %d)"
+                     % len(bases))
         return fails, {}
+    if 'CONFIGURED_BASE' in shell:
+        fails.append("public/index.html still mentions CONFIGURED_BASE — the "
+                     "single origin lives in %s only"
+                     % API_BASE_REL.replace(os.sep, "/"))
+    if not re.search(r'CONFIGURED_BASE\s*=\s*"',
+                     io.open(base_path, encoding="utf-8").read()):
+        fails.append("%s does not define CONFIGURED_BASE — the configuration "
+                     "site has drifted out of its declared file"
+                     % API_BASE_REL.replace(os.sep, "/"))
     base = bases[0].rstrip("/")
     m = re.match(r"^(https?)://([^/]+)$", base)
     if not m:
@@ -67,13 +103,18 @@ def check(root):
                      "(%d line(s)); route every call through ACS_API.url() instead: %s"
                      % (len(live), live[0].strip()[:100]))
 
-    # 3) لا نداء خام لمسارات الخادم
-    raw = re.findall(r"fetch\(\s*(?:llm|u|srv|base)\s*\+\s*['\"]/v1", page)
+    # 3) لا نداء خام لمسارات الخادم — يُمسَح في شيفرة التطبيق، فهي موضع النداء
+    raw = re.findall(r"fetch\(\s*(?:llm|u|srv|base)\s*\+\s*['\"]/v1", app)
     if raw:
         fails.append("%d raw fetch(base + '/v1/...') call site(s) remain — "
                      "they bypass classification and the single base" % len(raw))
-    for path in sorted(set(re.findall(r"['\"](/v1/[a-z/]+)['\"]", page))):
-        callers = re.findall(r"(\w+)\(\s*['\"]" + re.escape(path) + r"['\"]", page)
+    v1_paths = sorted(set(re.findall(r"['\"](/v1/[a-z/]+)['\"]", app)))
+    if not v1_paths:
+        fails.append("no /v1/... endpoint is referenced anywhere in "
+                     "public/app/ — either the API layer vanished or this gate "
+                     "is scanning the wrong text")
+    for path in v1_paths:
+        callers = re.findall(r"(\w+)\(\s*['\"]" + re.escape(path) + r"['\"]", app)
         bad = [c for c in callers if c not in ("acsFetchJSON", "url", "apiURL")]
         if bad:
             fails.append("%s is called through %s — must go through acsFetchJSON"
@@ -104,15 +145,18 @@ def check(root):
     else:
         fails.append("netlify.toml is missing — CSP cannot be verified")
 
-    # 5) رموز العقد موجودة
+    # 5) رموز العقد موجودة في الشيفرة المشحونة
     for sym in REQUIRED_SYMBOLS:
-        if sym not in page:
-            fails.append("shipped page is missing required API-contract symbol %r" % sym)
+        if sym not in app:
+            fails.append("the shipped application modules are missing required "
+                         "API-contract symbol %r" % sym)
     for cls in REQUIRED_CLASSES:
-        if ("'%s'" % cls) not in page:
-            fails.append("shipped page is missing failure class %r" % cls)
+        if ("'%s'" % cls) not in app:
+            fails.append("the shipped application modules are missing failure "
+                         "class %r" % cls)
 
-    return fails, {"base": base, "host": host, "csp_ok": bool(csp_origin)}
+    return fails, {"base": base, "host": host, "csp_ok": bool(csp_origin),
+                   "v1_paths": len(v1_paths)}
 
 
 def main():
@@ -123,8 +167,11 @@ def main():
         for f in fails:
             print("  ✗ %s" % f)
         sys.exit(1)
-    print("✓ API base: one authoritative origin %s · every /v1 call classified · "
-          "CSP connect-src allows it" % info.get("base"))
+    print("✓ API base: one authoritative origin %s declared in %s · all %d /v1 "
+          "endpoint(s) routed through acsFetchJSON in public/app/ · CSP "
+          "connect-src allows it"
+          % (info.get("base"), API_BASE_REL.replace(os.sep, "/"),
+             info.get("v1_paths")))
 
 
 if __name__ == "__main__":
