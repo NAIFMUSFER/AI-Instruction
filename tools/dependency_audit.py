@@ -10,7 +10,7 @@
      وبلا `-r` (صورة Docker تنسخ هذا الملفّ وحده فلا يصل إليه ملفّ آخر).
   3. package-lock.json: نسخة القفل موجودة، وplaywright/playwright-core مثبّتان
      بنفس الإصدار بالضبط، ومع بصمة sha512 لكل حزمة.
-  4. إصدارات الواجهة الموردة الثلاثة (three · es-module-shims · pdfjs-dist)
+  4. إصدارات الواجهة الموردة الحالية (three · pdfjs-dist)
      متطابقة في ثلاثة مواضع: tools/netlify-build.sh و tools/check_index_guard.py
      و public/index.html. أي انحراف في موضع واحد يُفشل التدقيق.
 
@@ -103,7 +103,17 @@ def parse_txt(text):
 
 # ───────────────────────────────────────────── إصدارات الواجهة الموردة ──
 def vendored_versions(root):
-    """يستخرج الإصدارات الثلاثة من كل موضع تُذكر فيه."""
+    """Extract versions only from locations that remain authoritative.
+
+    Architecture note:
+      * es-module-shims was intentionally removed during the strict-CSP /
+        native-ES-module remediation and is no longer a shipped dependency.
+      * pdfjs-dist is vendored by tools/netlify-build.sh and consumed through
+        the modular frontend; public/index.html is no longer an authoritative
+        version declaration for it.
+      * three remains referenced by multiple runtime/test/config locations, so
+        all of those declarations must continue to agree.
+    """
     sh = rd(root, 'tools/netlify-build.sh')
     guard = rd(root, 'tools/check_index_guard.py')
     page = rd(root, 'public/index.html')
@@ -123,8 +133,8 @@ def vendored_versions(root):
             'public/index.html':
                 one(r'/vendor/three@([0-9][0-9A-Za-z.\-]*)/', page, 'three@'),
             'netlify.toml':
-                one(r'three@([0-9][0-9A-Za-z.\-]*)', rd(root, 'netlify.toml'),
-                    'three@'),
+                one(r'three@([0-9][0-9A-Za-z.\-]*)',
+                    rd(root, 'netlify.toml'), 'three@'),
             'tests/deploy/verify_page_boot.js':
                 one(r"'three@([0-9][0-9A-Za-z.\-]*)'",
                     rd(root, 'tests/deploy/verify_page_boot.js'), 'three@'),
@@ -136,26 +146,14 @@ def vendored_versions(root):
                     rd(root, 'tests/phase9_2/capture_reference_92.js'),
                     'three@'),
         },
-        'es-module-shims': {
-            'tools/netlify-build.sh (SHIMS=)':
-                one(r'^SHIMS=([0-9][0-9A-Za-z.\-]*)', sh, 'SHIMS='),
-            'tools/netlify-build.sh (header comment)':
-                one(r'#.*\bes-module-shims ([0-9][0-9A-Za-z.\-]*)', sh,
-                    'comment'),
-            'public/index.html':
-                one(r'/vendor/es-module-shims@([0-9][0-9A-Za-z.\-]*)/', page,
-                    'es-module-shims@'),
-        },
         'pdfjs-dist': {
             'tools/netlify-build.sh (PDFJS=)':
                 one(r'^PDFJS=([0-9][0-9A-Za-z.\-]*)', sh, 'PDFJS='),
             'tools/netlify-build.sh (header comment)':
-                one(r'#.*\bpdfjs-dist ([0-9][0-9A-Za-z.\-]*)', sh, 'comment'),
-            'public/index.html':
-                one(r'/vendor/pdfjs@([0-9][0-9A-Za-z.\-]*)/', page, 'pdfjs@'),
+                one(r'#.*\bpdfjs-dist ([0-9][0-9A-Za-z.\-]*)',
+                    sh, 'comment'),
         },
     }
-
 
 # ───────────────────────────────────────────────────────────── التدقيق ──
 class Audit(object):

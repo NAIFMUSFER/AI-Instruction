@@ -24,3 +24,4 @@ fastapi==0.110
 pypdf==4.0
 python-multipart==0.0.9
 uvicorn[standard]==0.27
+Pillow==12.3.0

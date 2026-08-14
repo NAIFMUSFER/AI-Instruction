@@ -43,3 +43,5 @@ pypdf
 
 # تحليل multipart/form-data لرفع الملفّات — تتطلّبه FastAPI لـ UploadFile
 python-multipart
+
+Pillow
