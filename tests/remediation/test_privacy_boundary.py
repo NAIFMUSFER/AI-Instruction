@@ -324,9 +324,7 @@ for _i in range(4):
     _test_key = _TEST_KEY_PREFIX + 'abc123DEF456ghi789jkl'
     U._save_raw('reply %d key=%s' % (_i, _test_key))
 
-for _i in range(4):
-    _test_key = _TEST_KEY_PREFIX + 'abc123DEF456ghi789jkl'
-    U._save_raw('reply %d key=%s' % (_i, _test_key))
+
 _files = sorted(os.listdir(_probe_dir)) if os.path.isdir(_probe_dir) else []
 chk('with the switch on, at most ACS_RAW_DUMP_KEEP files survive rotation',
     len(_files) == 2, str(len(_files)))
