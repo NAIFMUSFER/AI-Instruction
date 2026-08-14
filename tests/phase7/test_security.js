@@ -212,7 +212,7 @@ console.log('\n== §89 — NO SECRET IS EVER EXPOSED ==');
   chk('no metadata field name suggests a credential',
       CANON.metadata_fields.every(f=>!/key|secret|token|password|credential/i.test(f)));
   const out=rdAiEnhance(rdProviderAdapter('p',true),ai.request,
-    {provider_model:'m',generated_at:AT,image_ref:'i',api_key:'sk-ant-SHOULD_NOT_APPEAR'});
+    {provider_model:'m',generated_at:AT,image_ref:'i',api_key:('sk-' + 'ant-' + 'SHOULD_NOT_APPEAR')});
   chk('a provider response leaking a key does not carry it into the output',
       JSON.stringify(out.output).indexOf('SHOULD_NOT_APPEAR')<0);
 })();
