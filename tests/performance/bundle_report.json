@@ -1,0 +1,333 @@
+{
+  "budget": {
+    "budget_met": false,
+    "budget_note": "These are TARGETS declared here, not achievements. budget_met is false and will stay false until F-09 lands. No runtime performance consequence of the current size is measured by this tool — see tests/performance/run_perf.js, which cannot run in this sandbox either.",
+    "current_delta_bytes": 1710294,
+    "current_index_bytes": 1863894,
+    "current_ratio_over_budget": 12.13,
+    "index_shell_budget_bytes": 153600,
+    "largest_single_delta_bytes": 1451743,
+    "largest_single_inline_script_bytes": 1758943,
+    "max_single_module_budget_bytes": 307200,
+    "target": "After F-09 the deployed index.html is an index SHELL — markup plus <link rel=stylesheet> plus <script type=module src=/app/main.js> — and every line of application logic lives in cacheable files under public/app/. The shell must be dramatically smaller than the current >1 MB page."
+  },
+  "compression": {
+    "brotli_bytes": null,
+    "brotli_reason": "brotli is not importable in this environment (no `brotli` / `brotlicffi` module, and the standard library ships no brotli compressor); reported as null rather than estimated",
+    "gzip_bytes": 513557,
+    "gzip_level": 9,
+    "note": "gzip is measured with the standard library. brotli is reported only when a brotli module is importable; it is never estimated. Netlify serves brotli in production, so a null here means the production transfer size is UNMEASURED in this sandbox, not that brotli is unused.",
+    "raw_bytes": 1863894
+  },
+  "determinism_note": "No timestamp and no absolute path is written. gzip uses mtime=0. Two consecutive runs produce byte-identical output; tests/remediation/test_bundle_report.py asserts exactly that.",
+  "deterministic": true,
+  "elements": {
+    "script_element_count": 8,
+    "scripts": [
+      {
+        "attributes": "",
+        "body_bytes": 1556,
+        "element_bytes": 1573,
+        "index": 1,
+        "kind": "classic",
+        "line": 17
+      },
+      {
+        "attributes": "",
+        "body_bytes": 5009,
+        "element_bytes": 5026,
+        "index": 2,
+        "kind": "classic",
+        "line": 52
+      },
+      {
+        "attributes": "",
+        "body_bytes": 204,
+        "element_bytes": 221,
+        "index": 3,
+        "kind": "classic",
+        "line": 1039
+      },
+      {
+        "attributes": "",
+        "body_bytes": 1101,
+        "element_bytes": 1118,
+        "index": 4,
+        "kind": "classic",
+        "line": 1271
+      },
+      {
+        "attributes": "type=\"importmap\"",
+        "body_bytes": 131,
+        "element_bytes": 165,
+        "index": 5,
+        "kind": "importmap",
+        "line": 1291
+      },
+      {
+        "attributes": "",
+        "body_bytes": 1330,
+        "element_bytes": 1347,
+        "index": 6,
+        "kind": "classic",
+        "line": 1300
+      },
+      {
+        "attributes": "type=\"module\"",
+        "body_bytes": 1758943,
+        "element_bytes": 1758974,
+        "index": 7,
+        "kind": "module",
+        "line": 1333
+      },
+      {
+        "attributes": "",
+        "body_bytes": 4575,
+        "element_bytes": 4592,
+        "index": 8,
+        "kind": "classic",
+        "line": 31965
+      }
+    ],
+    "style_element_count": 1,
+    "styles": [
+      {
+        "body_bytes": 46752,
+        "element_bytes": 46767,
+        "index": 1,
+        "line": 152
+      }
+    ],
+    "totals": {
+      "classic_script_bytes": 13775,
+      "importmap_script_bytes": 131,
+      "module_script_bytes": 1758943,
+      "style_bytes": 46752
+    }
+  },
+  "generated_blocks": {
+    "blocks": [
+      {
+        "begin_line": 488,
+        "bytes": 10501,
+        "end_line": 635,
+        "generator": null,
+        "kind": "css",
+        "name": "WORKSPACE STYLES"
+      },
+      {
+        "begin_line": 636,
+        "bytes": 3286,
+        "end_line": 695,
+        "generator": null,
+        "kind": "css",
+        "name": "RENDER STYLES"
+      },
+      {
+        "begin_line": 696,
+        "bytes": 3362,
+        "end_line": 750,
+        "generator": null,
+        "kind": "css",
+        "name": "BIM STYLES"
+      },
+      {
+        "begin_line": 751,
+        "bytes": 3611,
+        "end_line": 810,
+        "generator": null,
+        "kind": "css",
+        "name": "DOCS STYLES"
+      },
+      {
+        "begin_line": 811,
+        "bytes": 1824,
+        "end_line": 840,
+        "generator": null,
+        "kind": "css",
+        "name": "PBR STYLES"
+      },
+      {
+        "begin_line": 841,
+        "bytes": 1070,
+        "end_line": 861,
+        "generator": null,
+        "kind": "css",
+        "name": "ARCH DETAIL STYLES"
+      },
+      {
+        "begin_line": 13166,
+        "bytes": 73804,
+        "end_line": 14360,
+        "generator": "tools/build_runtime_browser.py",
+        "kind": "js",
+        "name": "RUNTIME LAYER"
+      },
+      {
+        "begin_line": 14361,
+        "bytes": 114626,
+        "end_line": 16025,
+        "generator": "tools/build_authoring_browser.py",
+        "kind": "js",
+        "name": "AUTHORING LAYER"
+      },
+      {
+        "begin_line": 16026,
+        "bytes": 101323,
+        "end_line": 17485,
+        "generator": "tools/build_workspace_ui.py",
+        "kind": "js",
+        "name": "WORKSPACE UI"
+      },
+      {
+        "begin_line": 17486,
+        "bytes": 98013,
+        "end_line": 18882,
+        "generator": "tools/build_render_browser.py",
+        "kind": "js",
+        "name": "RENDER ENGINE"
+      },
+      {
+        "begin_line": 18883,
+        "bytes": 55053,
+        "end_line": 19606,
+        "generator": "tools/build_bim_browser.py",
+        "kind": "js",
+        "name": "BIM EXCHANGE"
+      },
+      {
+        "begin_line": 19607,
+        "bytes": 113416,
+        "end_line": 21384,
+        "generator": "tools/build_docs_browser.py",
+        "kind": "js",
+        "name": "DOCUMENTATION"
+      },
+      {
+        "begin_line": 21385,
+        "bytes": 72339,
+        "end_line": 22287,
+        "generator": "tools/build_pbr_browser.py",
+        "kind": "js",
+        "name": "PBR QUALITY"
+      },
+      {
+        "begin_line": 22288,
+        "bytes": 69707,
+        "end_line": 23030,
+        "generator": "tools/build_archdetail_browser.py",
+        "kind": "js",
+        "name": "ARCH DETAIL"
+      },
+      {
+        "begin_line": 26133,
+        "bytes": 43581,
+        "end_line": 26970,
+        "generator": "module scope",
+        "kind": "js",
+        "name": "PBR BRIDGE"
+      },
+      {
+        "begin_line": 26971,
+        "bytes": 17219,
+        "end_line": 27351,
+        "generator": "module scope",
+        "kind": "js",
+        "name": "ARCH DETAIL BRIDGE"
+      },
+      {
+        "begin_line": 31789,
+        "bytes": 4054,
+        "end_line": 31858,
+        "generator": null,
+        "kind": "dom",
+        "name": "WORKSPACE DOM"
+      },
+      {
+        "begin_line": 31859,
+        "bytes": 933,
+        "end_line": 31879,
+        "generator": null,
+        "kind": "dom",
+        "name": "RENDER DOM"
+      },
+      {
+        "begin_line": 31880,
+        "bytes": 976,
+        "end_line": 31899,
+        "generator": null,
+        "kind": "dom",
+        "name": "BIM DOM"
+      },
+      {
+        "begin_line": 31900,
+        "bytes": 1010,
+        "end_line": 31919,
+        "generator": null,
+        "kind": "dom",
+        "name": "DOCS DOM"
+      },
+      {
+        "begin_line": 31920,
+        "bytes": 627,
+        "end_line": 31935,
+        "generator": null,
+        "kind": "dom",
+        "name": "PBR DOM"
+      },
+      {
+        "begin_line": 31936,
+        "bytes": 1173,
+        "end_line": 31959,
+        "generator": null,
+        "kind": "dom",
+        "name": "ARCH DETAIL DOM"
+      }
+    ],
+    "bytes_by_kind": {
+      "css": 23654,
+      "dom": 8773,
+      "js": 759081
+    },
+    "counts": {
+      "css": 6,
+      "dom": 6,
+      "js": 10,
+      "unpaired": 0
+    },
+    "expected_counts": {
+      "css": 6,
+      "dom": 6,
+      "js": 10
+    },
+    "total_bytes": 791508
+  },
+  "hand_written": {
+    "generated_inside_application_module_bytes": 759081,
+    "hand_written_inside_application_module_bytes": 999862,
+    "note": "`remainder` is everything outside every paired generated marker: the markup, the seven inline scripts' hand-written parts and the hand-written half of the application module. It is the part a regenerate cannot rewrite, and therefore the part F-09 must move by hand.",
+    "remainder_bytes": 1072386,
+    "remainder_pct_of_page": 57.53
+  },
+  "not_measured_here": [
+    "runtime parse/execute cost of the 1.6 MB inline module — needs a browser with public/vendor populated: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+    "production transfer size over brotli — no brotli module here",
+    "vendored library sizes — public/vendor is empty in this sandbox"
+  ],
+  "report": "acs.bundle/1",
+  "source": {
+    "bytes": 1863894,
+    "characters": 1791244,
+    "lines": 32065,
+    "path": "public/index.html",
+    "sha256": "29c0688644d9466a9754cb5326b418fcd28139affe684ca525cde5a18796c5a5"
+  },
+  "status": "F-09 NOT IMPLEMENTED — measurement only",
+  "vendor": {
+    "files": null,
+    "present": false,
+    "reason": "public/vendor does not exist in this checkout; Netlify populates it at build time via tools/netlify-build.sh. NOT MEASURED — no estimate is substituted.",
+    "total_bytes": null
+  },
+  "what_this_is": "A measurement of the page that is actually shipped today. It does NOT modify the page, does not split it, and must not be read as evidence that the frontend was modularised. It exists so that the claim 'F-09 is done' can never be made without a number moving in this file."
+}

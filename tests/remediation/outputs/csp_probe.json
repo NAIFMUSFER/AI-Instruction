@@ -1,0 +1,612 @@
+{
+  "status": "MEASURED",
+  "generated_at_utc": "2026-08-14T14:54:32.223Z",
+  "chromium": "playwright 1.62.1",
+  "vendor_present": false,
+  "frame_rendered": false,
+  "frame_rendered_note": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: public/vendor is empty, Three.js cannot load, no frame can be rendered in this sandbox",
+  "current_policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests",
+  "hardened_trial_policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests",
+  "results": [
+    {
+      "label": "CURRENT",
+      "csp": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests",
+      "page_loaded": true,
+      "load_error": null,
+      "violations_total": 0,
+      "violations_by_directive": {},
+      "distinct_source_lines_by_directive": {},
+      "violations": [],
+      "page_errors": [],
+      "page_error_count": 0,
+      "console_errors": [
+        "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "Failed to load resource: the server responded with a status of 404 (File not found)",
+        "Failed to load resource: the server responded with a status of 404 (File not found)"
+      ],
+      "console_error_count": 7,
+      "failed_requests": [
+        "http://127.0.0.1:37711/vendor/three@0.160.0/examples/jsm/controls/OrbitControls.js :: net::ERR_ABORTED",
+        "http://127.0.0.1:37711/vendor/three@0.160.0/examples/jsm/webxr/ARButton.js :: net::ERR_ABORTED",
+        "http://127.0.0.1:37711/vendor/three@0.160.0/build/three.module.js :: net::ERR_ABORTED",
+        "http://127.0.0.1:37711/vendor/three@0.160.0/examples/jsm/webxr/VRButton.js :: net::ERR_ABORTED",
+        "http://127.0.0.1:37711/vendor/three@0.160.0/examples/jsm/objects/Sky.js :: net::ERR_ABORTED",
+        "http://127.0.0.1:37711/vendor/three@0.160.0/examples/jsm/exporters/GLTFExporter.js :: net::ERR_ABORTED",
+        "http://127.0.0.1:37711/vendor/three@0.160.0/examples/jsm/environments/RoomEnvironment.js :: net::ERR_ABORTED"
+      ],
+      "failed_request_count": 7,
+      "application_inline_scripts_executed": true,
+      "application_ready": false,
+      "hostile_inline_executed": true,
+      "hostile_external_script_ran": true,
+      "hostile_eval_executed": true,
+      "hostile_function_ctor_executed": true,
+      "hostile_eval_error": null
+    },
+    {
+      "label": "HARDENED_TRIAL",
+      "csp": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests",
+      "page_loaded": true,
+      "load_error": null,
+      "violations_total": 62,
+      "violations_by_directive": {
+        "script-src-elem": 9,
+        "style-src-elem": 1,
+        "style-src-attr": 50,
+        "script-src": 2
+      },
+      "distinct_source_lines_by_directive": {
+        "script-src-elem": [
+          7,
+          17,
+          52,
+          1039,
+          1271,
+          1291,
+          1300,
+          1333,
+          31965
+        ],
+        "style-src-elem": [
+          152
+        ],
+        "style-src-attr": [
+          875,
+          876,
+          893,
+          919,
+          945,
+          946,
+          952,
+          957,
+          961,
+          970,
+          976,
+          978,
+          979,
+          988,
+          991,
+          992,
+          997,
+          1012,
+          1022,
+          1023,
+          1025,
+          1038,
+          1051,
+          1054,
+          1075,
+          1079,
+          1083,
+          1085,
+          1091,
+          1094,
+          1122,
+          1127,
+          1128,
+          1129,
+          1130,
+          1131,
+          1132,
+          1133,
+          1134,
+          1202,
+          1204,
+          1226,
+          1227,
+          1256,
+          1260,
+          31864,
+          31885,
+          31905,
+          31925,
+          31940
+        ],
+        "script-src": [
+          6,
+          8
+        ]
+      },
+      "violations": [
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 17,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 52,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 152,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 875,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 876,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 893,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 919,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 945,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 946,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 952,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 957,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 961,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 970,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 976,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 978,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 979,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 988,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 991,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 992,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 997,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1012,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1022,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1023,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1025,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1038,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1039,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1051,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1054,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1075,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1079,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1083,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1085,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1091,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1094,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1122,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1127,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1128,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1129,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1130,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1131,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1132,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1133,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1134,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1202,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1204,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1226,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1227,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1256,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1260,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1271,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1291,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1300,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 1333,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 31864,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 31885,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 31905,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 31925,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "style-src-attr",
+          "blocked": "inline",
+          "sample": "",
+          "line": 31940,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 31965,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src-elem",
+          "blocked": "inline",
+          "sample": "",
+          "line": 7,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "sample": "",
+          "line": 6,
+          "disposition": "enforce"
+        },
+        {
+          "directive": "script-src",
+          "blocked": "eval",
+          "sample": "",
+          "line": 8,
+          "disposition": "enforce"
+        }
+      ],
+      "page_errors": [],
+      "page_error_count": 0,
+      "console_errors": [
+        "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' blob:\". Either the 'unsafe-inline' keyword, a hash ('sha256-7LEW+mVr/7UFzfNkMCrm+IVwbIJpn98E0dEm1hd",
+        "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' blob:\". Either the 'unsafe-inline' keyword, a hash ('sha256-x4gmmTe08uSo2jujRNtOQM0vCl86rfGBXi7ANOy",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-xjI6lWM8aIitsY73nFzoVQSGCkFOpqlxmwXbtnItxTw='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-0QQM6ruZ21uKgTUe8T9Txuhp0hTl+oqTUP9k66ghGsM='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-geN5Lqfr77jcfc1WI53KL68S+s4XSV6IMcBlpHbdqdo='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-uhVTCuMK0nni7wbd22feJjuFi0zTw49wPiZNuGNRLHE='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-ziA7wYdEw9D92qbls01liI+Xxj8j1+t95Cz3ymbRakA='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-Q6l/5JQ8gS4/hmb/iuI7UP6nV9T9k4kqc1rFNxUTXG0='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-cuW9hQj1q2oJs2tYWR6sWtCHXzHk3l7MGwRJdaBz0tc='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-LQa2E1mrDXWdbRbGsBad4zbKLegM30er5RJjKOJpREo='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-MMxXHBrZph4qb/UlpDFsFHKFYbE04l07Bf7e9unOdwA='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-MBZH9QZeml0E0yon5qCXUR0ySivGGUxaqL8ogCbXaKA='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-g3JdLG4AGBF2Dco/JPDrbKcJXqUyg08GNvfSPehNIxk='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-g3JdLG4AGBF2Dco/JPDrbKcJXqUyg08GNvfSPehNIxk='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-g3JdLG4AGBF2Dco/JPDrbKcJXqUyg08GNvfSPehNIxk='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-g3JdLG4AGBF2Dco/JPDrbKcJXqUyg08GNvfSPehNIxk='), o",
+        "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-aqNNdDLnnrDOnTNdkJpYlAxKVJtLt9CtFLklmInuUAE='), o"
+      ],
+      "console_error_count": 60,
+      "failed_requests": [],
+      "failed_request_count": 0,
+      "application_inline_scripts_executed": false,
+      "application_ready": false,
+      "hostile_inline_executed": false,
+      "hostile_external_script_ran": true,
+      "hostile_eval_executed": false,
+      "hostile_function_ctor_executed": false,
+      "hostile_eval_error": "Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: \"script-"
+    }
+  ],
+  "known_weaknesses": [
+    "KNOWN-WEAKNESS · CSP-INLINE-EXEC · script-src 'unsafe-inline' is present, and a hostile inline <script> injected into the live page EXECUTED under the deployed policy (measured, not assumed). Any XSS sink in the application is therefore directly exploitable. Tracked in CSP-HARDENING.md; removal is blocked on F-09.",
+    "KNOWN-WEAKNESS · CSP-EVAL-EXEC · script-src 'unsafe-eval' is present, and a hostile eval() called from same-origin page code EXECUTED under the deployed policy (measured, not assumed). Tracked in CSP-HARDENING.md; removal requires dropping es-module-shims, which drops iOS Safari < 16.4.",
+    "KNOWN-WEAKNESS · CSP-FUNCTION-CTOR · new Function() EXECUTED under the deployed policy (same root cause as CSP-EVAL-EXEC)."
+  ],
+  "hardening_status": "NOT COMPLETE — F-09 (frontend modularisation) is a prerequisite for removing script-src 'unsafe-inline'"
+}

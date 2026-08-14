@@ -1,0 +1,288 @@
+{
+  "schema": "acs.performance.budgets/1",
+  "version": "1.0.0",
+  "status": "TARGETS ONLY — NOT MEASURED IN THIS ENVIRONMENT",
+  "measured": false,
+  "measured_note": "Every number in this file is a TARGET that the product declares for itself. NONE of them has been measured in this checkout. public/vendor is empty and there is no network, so Three.js cannot load and no frame can be rendered here; tests/performance/run_perf.js therefore exits 2 with NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED instead of reporting numbers. A budget with no measurement beside it is a promise, not a result, and must never be quoted as one.",
+  "how_to_measure": "On a machine with network access: sh tools/vendor.sh && node tests/performance/run_perf.js. To measure against the deployment instead: node tests/performance/run_perf.js --target https://<host>/index.html. The harness writes tests/performance/outputs/perf.json and compares every measured value against this file.",
+  "device_classes": {
+    "DESKTOP": {
+      "description": "Discrete or modern integrated GPU, 1920x1080, devicePixelRatio 1.0-2.0, no thermal throttling. This is the class the studio is designed for.",
+      "reference_hardware": "any GPU able to run WebGL2 with 16 texture units and a 2048 shadow map",
+      "quality_tier": "FULL"
+    },
+    "MID_RANGE_MOBILE": {
+      "description": "A phone/tablet of roughly 2020-2022 mid-range class: 4-6 GB RAM, tile-based GPU, devicePixelRatio 2.5-3.0 reported but capped by the quality governor. See tests/performance/quality_governor.json for the exact parameters applied.",
+      "reference_hardware": "Adreno 6xx / Mali-G7x / Apple A12 class",
+      "quality_tier": "MID_RANGE_MOBILE"
+    }
+  },
+  "fixture_classes": {
+    "SMALL": {
+      "fixtures": ["villa", "clinic"],
+      "description": "single building, 1-2 levels, under ~40 spaces"
+    },
+    "MEDIUM": {
+      "fixtures": ["apartment_generated", "hotel", "office"],
+      "description": "multi-level, ~40-150 spaces — the class the FPS budget is stated on"
+    },
+    "LARGE": {
+      "fixtures": ["warehouse", "spaces_100", "spaces_500"],
+      "description": "large plate or high space count"
+    },
+    "STRESS": {
+      "fixtures": ["spaces_1000", "live_large_generated"],
+      "description": "deliberately beyond the design envelope; budgets are relaxed and a graceful, classified slowdown is acceptable — a crash, a black viewport or a lost context is not"
+    }
+  },
+  "budgets": {
+    "frame_rate": [
+      {
+        "id": "FPS_DESKTOP_MEDIUM",
+        "device_class": "DESKTOP",
+        "fixture_class": "MEDIUM",
+        "metric": "fps_average",
+        "operator": ">=",
+        "target": 45,
+        "unit": "fps",
+        "window_seconds": 5,
+        "justification": "45 fps is the point below which orbiting a model stops feeling like direct manipulation. It is deliberately below 60 so that a single dropped frame per 20 does not fail the build, and deliberately above 30 because architectural review is a continuous-motion task (orbit, walk, section sweep), not a static viewing task.",
+        "measured": false
+      },
+      {
+        "id": "FPS_MOBILE_NAVIGATION",
+        "device_class": "MID_RANGE_MOBILE",
+        "fixture_class": "MEDIUM",
+        "metric": "fps_average",
+        "operator": ">=",
+        "target": 24,
+        "unit": "fps",
+        "window_seconds": 5,
+        "scenario": "navigation (orbit + pan), quality governor engaged",
+        "justification": "24 fps is the floor at which camera motion still reads as motion rather than as a slideshow. A mid-range phone with the governor engaged is not expected to match desktop; it is expected to stay usable. Below 24 the client stops navigating and starts waiting.",
+        "measured": false
+      },
+      {
+        "id": "FRAME_TIME_P95_DESKTOP_MEDIUM",
+        "device_class": "DESKTOP",
+        "fixture_class": "MEDIUM",
+        "metric": "frame_time_p95_ms",
+        "operator": "<=",
+        "target": 33.0,
+        "unit": "ms",
+        "justification": "An average hides stutter. p95 at 33 ms means at most 1 frame in 20 is worse than 30 fps, which is what a user actually perceives as smoothness.",
+        "measured": false
+      },
+      {
+        "id": "FRAME_TIME_P95_MOBILE",
+        "device_class": "MID_RANGE_MOBILE",
+        "fixture_class": "MEDIUM",
+        "metric": "frame_time_p95_ms",
+        "operator": "<=",
+        "target": 60.0,
+        "unit": "ms",
+        "justification": "Paired with FPS_MOBILE_NAVIGATION so that a 24 fps average cannot be reached by alternating 60 fps and 5 fps.",
+        "measured": false
+      },
+      {
+        "id": "FPS_DESKTOP_STRESS_FLOOR",
+        "device_class": "DESKTOP",
+        "fixture_class": "STRESS",
+        "metric": "fps_average",
+        "operator": ">=",
+        "target": 15,
+        "unit": "fps",
+        "justification": "Beyond the design envelope the requirement is not speed but survival: the model must still be inspectable and the context must not be lost.",
+        "measured": false
+      }
+    ],
+    "load_and_build": [
+      {
+        "id": "FIRST_CONTENT_LOAD_DESKTOP",
+        "device_class": "DESKTOP",
+        "metric": "first_content_load_ms",
+        "operator": "<=",
+        "target": 2500,
+        "unit": "ms",
+        "justification": "Time to the HTML being parsed and the login card interactive. The page is a single 1.75 MB document today (tests/performance/bundle_report.json), so this budget is the one F-09 most directly moves.",
+        "measured": false
+      },
+      {
+        "id": "JS_PARSE_INIT_DESKTOP",
+        "device_class": "DESKTOP",
+        "metric": "js_parse_init_ms",
+        "operator": "<=",
+        "target": 1200,
+        "unit": "ms",
+        "justification": "Parsing and executing a 1 676 008-byte inline module is a single non-interruptible main-thread block. Splitting it (F-09) is the only way to make this budget reachable on mobile.",
+        "measured": false
+      },
+      {
+        "id": "THREE_INIT_DESKTOP",
+        "device_class": "DESKTOP",
+        "metric": "three_init_ms",
+        "operator": "<=",
+        "target": 1500,
+        "unit": "ms",
+        "justification": "From module execution to window.ACS.ready === true: importing three + 6 addons, creating the renderer, the scene and the environment.",
+        "measured": false
+      },
+      {
+        "id": "MODEL_BUILD_MEDIUM",
+        "device_class": "DESKTOP",
+        "fixture_class": "MEDIUM",
+        "metric": "model_build_ms",
+        "operator": "<=",
+        "target": 1500,
+        "unit": "ms",
+        "justification": "Turning a canonical model into meshes. This is the number that grows with space count and therefore the one to watch on the 100/500/1000-space fixtures.",
+        "measured": false
+      },
+      {
+        "id": "FIRST_VISIBLE_FRAME_MEDIUM",
+        "device_class": "DESKTOP",
+        "fixture_class": "MEDIUM",
+        "metric": "first_visible_frame_ms",
+        "operator": "<=",
+        "target": 4000,
+        "unit": "ms",
+        "justification": "End to end: navigation start to the first frame that actually contains the model (draw calls > 0 and non-black decoded pixels). This is the only load number the user experiences.",
+        "measured": false
+      }
+    ],
+    "scene_complexity": [
+      {
+        "id": "DRAW_CALLS_MEDIUM",
+        "device_class": "DESKTOP",
+        "fixture_class": "MEDIUM",
+        "metric": "draw_calls",
+        "operator": "<=",
+        "target": 1500,
+        "unit": "calls/frame",
+        "justification": "Draw calls, not triangles, are what a tile-based mobile GPU runs out of first.",
+        "measured": false
+      },
+      {
+        "id": "DRAW_CALLS_STRESS",
+        "device_class": "DESKTOP",
+        "fixture_class": "STRESS",
+        "metric": "draw_calls",
+        "operator": "<=",
+        "target": 6000,
+        "unit": "calls/frame",
+        "justification": "Four times the MEDIUM allowance. Beyond the design envelope the scene is allowed to be expensive, but an unbounded draw-call count is the signal that per-element meshes were never batched at all, which is a build problem rather than a model-size problem.",
+        "measured": false
+      },
+      {
+        "id": "TRIANGLES_MEDIUM",
+        "device_class": "DESKTOP",
+        "fixture_class": "MEDIUM",
+        "metric": "triangles",
+        "operator": "<=",
+        "target": 2000000,
+        "unit": "triangles/frame",
+        "justification": "2 M triangles per frame is comfortably within a desktop GPU's reach and is stated mainly as a tripwire: a medium building that suddenly rasterises more than this has gained geometry it was never given, usually from a subdivided or duplicated mesh.",
+        "measured": false
+      }
+    ],
+    "memory_and_lifetime": [
+      {
+        "id": "HEAP_AFTER_20_PROJECT_SWITCHES",
+        "metric": "heap_growth_pct_after_20_switches",
+        "operator": "<=",
+        "target": 15.0,
+        "unit": "%",
+        "scenario": "switch 20 projects sequentially, then force a settle period",
+        "justification": "Some growth is normal (caches, JIT). Sustained linear growth is a leak. 15 % over 20 switches distinguishes the two without demanding a perfectly flat heap, which JS never gives.",
+        "measured": false
+      },
+      {
+        "id": "GEOMETRIES_RETURN_TO_BASELINE",
+        "metric": "renderer_info_memory_geometries_delta_after_dispose",
+        "operator": "<=",
+        "target": 0,
+        "unit": "geometries",
+        "justification": "renderer.info.memory.geometries is the ground truth for GPU-side disposal. After loading a model and disposing it, the count must return to its baseline. A positive delta is an undisposed BufferGeometry, i.e. leaked VRAM that no GC will ever reclaim.",
+        "measured": false
+      },
+      {
+        "id": "TEXTURES_RETURN_TO_BASELINE",
+        "metric": "renderer_info_memory_textures_delta_after_dispose",
+        "operator": "<=",
+        "target": 0,
+        "unit": "textures",
+        "justification": "Same argument as geometries. Textures leak faster in bytes.",
+        "measured": false
+      },
+      {
+        "id": "PBR_ENTER_EXIT_LEAK",
+        "metric": "geometries_delta_after_10_pbr_cycles",
+        "operator": "<=",
+        "target": 0,
+        "unit": "geometries",
+        "scenario": "enter and exit PBR 10 times",
+        "measured": false
+      },
+      {
+        "id": "CONTEXT_LANDSCAPE_TOGGLE_LEAK",
+        "metric": "geometries_delta_after_50_context_toggles",
+        "operator": "<=",
+        "target": 0,
+        "unit": "geometries",
+        "scenario": "toggle site context / landscape 50 times",
+        "measured": false
+      },
+      {
+        "id": "SCREENSHOT_LEAK",
+        "metric": "heap_growth_pct_after_20_screenshots",
+        "operator": "<=",
+        "target": 10.0,
+        "unit": "%",
+        "scenario": "create and dispose 20 screenshots",
+        "justification": "toDataURL and createObjectURL both retain until explicitly released; a missing revokeObjectURL shows up here.",
+        "measured": false
+      },
+      {
+        "id": "WEBGL_CONTEXT_COUNT",
+        "metric": "webgl_context_count",
+        "operator": "<=",
+        "target": 1,
+        "unit": "contexts",
+        "justification": "Browsers hard-limit live WebGL contexts (typically 8-16). More than one live context means a renderer was recreated without disposing the old one, and the 9th model load will lose the context and black the viewport.",
+        "measured": false
+      },
+      {
+        "id": "CONTEXT_LOSS_EVENTS",
+        "metric": "context_loss_events",
+        "operator": "<=",
+        "target": 0,
+        "unit": "events",
+        "justification": "Zero, always. A lost context is the black-viewport production failure this repository already had once.",
+        "measured": false
+      },
+      {
+        "id": "RENDER_LOOP_COUNT",
+        "metric": "render_loop_count",
+        "operator": "<=",
+        "target": 1,
+        "unit": "loops",
+        "justification": "Two concurrent requestAnimationFrame loops double GPU work invisibly and are a classic result of re-initialising the viewer instead of reusing it.",
+        "measured": false
+      },
+      {
+        "id": "DUPLICATE_EVENT_LISTENERS",
+        "metric": "duplicate_event_listener_count",
+        "operator": "<=",
+        "target": 0,
+        "unit": "listeners",
+        "scenario": "after 20 project switches, compare per-target listener counts with the baseline",
+        "measured": false
+      }
+    ]
+  },
+  "not_verified": {
+    "statement": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+    "reason": "public/vendor is empty in this checkout and the sandbox has no network, so Three.js cannot be loaded and no frame can be rendered. Not one budget in this file has been measured against the application.",
+    "what_was_proven_instead": "tests/performance/run_perf.js measures a minimal, self-written WebGL2 page served from 127.0.0.1 (tests/performance/vacuity_page.html) and reports real FPS, frame-time percentiles and heap numbers from it. That proves the measurement code is not vacuous. It proves nothing whatsoever about the application."
+  }
+}

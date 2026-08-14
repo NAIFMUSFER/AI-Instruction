@@ -28,7 +28,20 @@
     #    عند تجاوز الخادم يدوياً لنطاق آخر، أضِف نطاقه هنا.
     #  • frame-ancestors 'none' + object-src 'none' + base-uri 'self' لتقليل السطح.
     #  ملاحظة: لم تُضَف COEP عمداً (تكسر خامات الكانفس عبر الأصول).
-    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com"
+    #
+    #  F-11 (تشديد مضاف — لا يحتاج أي إعادة هيكلة، ولم يُحذف ولم يُوسَّع أي شيء
+    #  ممّا سبق):
+    #   • form-action 'self'         — الصفحة لا تحوي أي <form> (صفر عنصر)، فهذا
+    #     يمنع حقن نموذج يسرّب بيانات المشروع إلى مضيف خارجي.
+    #   • frame-src 'none'           — لا <iframe> حقيقي في الصفحة (الأربع
+    #     إشارات الموجودة سلاسل داخل مواصفات JSON لقوائم الوسوم الممنوعة).
+    #   • manifest-src 'self'        — لا rel="manifest" اليوم؛ يُثبَّت الآن.
+    #   • media-src 'self'           — لا <video>/<audio> اليوم؛ يُثبَّت الآن.
+    #   • upgrade-insecure-requests  — أي مرجع http:// يُرقّى إلى https قبل الطلب.
+    #  ما لم يُحذَف ولماذا، وخطة الترحيل إلى nonce/hash: CSP-HARDENING.md.
+    #  تشديد CSP غير مكتمل عمداً: 'unsafe-inline'/'unsafe-eval' لا يمكن حذفهما
+    #  قبل F-09 (تفكيك public/index.html إلى public/app/*.js).
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com; form-action 'self'; frame-src 'none'; manifest-src 'self'; media-src 'self'; upgrade-insecure-requests"
 
 # ── منع فهرسة الاستوديو نفسه ───────────────────────────────────────────────
 # `/` و`/index.html` هما تطبيق الاستوديو (لا صفحة تسويق): يفتح على بطاقة دخول

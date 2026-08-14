@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ACS perf harness vacuity page — plain WebGL2, no Three.js</title>
+<!--
+  This page exists for ONE reason: to prove that tests/performance/run_perf.js
+  really measures, rather than printing plausible numbers.
+
+  The real application cannot be measured in this sandbox — public/vendor is
+  empty, so Three.js never loads and no frame is ever rendered. A harness that
+  only ever reports "NOT VERIFIED" is indistinguishable from a harness that is
+  broken. So the harness is pointed at this page instead: a plain canvas, a raw
+  webgl2 context, a hand-written shader and a requestAnimationFrame loop, with
+  NO framework of any kind. If the harness produces real FPS, real frame-time
+  percentiles and a real heap reading here, the measurement code works.
+
+  Nothing here says anything about the application's performance.
+-->
+<style>
+  html,body{margin:0;padding:0;background:#101014;overflow:hidden}
+  canvas{display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+(function () {
+  'use strict';
+  var canvas = document.getElementById('c');
+  var gl = canvas.getContext('webgl2', { antialias: false });
+
+  window.__VACUITY__ = {
+    webgl2: !!gl, frames: 0, drawCalls: 0, triangles: 0,
+    started: performance.now(), lastFrameAt: 0, error: null,
+    /* حِمل قابل للضبط: يسمح للمِرقاب بإثبات أن الأرقام تتحرّك مع العمل */
+    quadsPerFrame: 240, ballast: []
+  };
+  if (!gl) { window.__VACUITY__.error = 'webgl2 unavailable'; return; }
+
+  function size() {
+    var d = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.floor(canvas.clientWidth * d));
+    canvas.height = Math.max(1, Math.floor(canvas.clientHeight * d));
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  window.addEventListener('resize', size);
+  size();
+
+  var VS = '#version 300 es\n'
+    + 'in vec2 a_pos;\n'
+    + 'uniform vec2 u_off;\n'
+    + 'uniform float u_scale;\n'
+    + 'out vec2 v_uv;\n'
+    + 'void main(){ v_uv = a_pos; '
+    + 'gl_Position = vec4(a_pos * u_scale + u_off, 0.0, 1.0); }\n';
+  var FS = '#version 300 es\n'
+    + 'precision mediump float;\n'
+    + 'in vec2 v_uv;\n'
+    + 'uniform float u_t;\n'
+    + 'out vec4 o;\n'
+    + 'void main(){\n'
+    + '  float a = sin(v_uv.x * 24.0 + u_t) * cos(v_uv.y * 24.0 - u_t);\n'
+    + '  float b = fract(sin(dot(v_uv, vec2(12.9898, 78.233))) * 43758.5453);\n'
+    + '  o = vec4(0.25 + 0.35 * a, 0.35 + 0.25 * b, 0.55 + 0.30 * a * b, 1.0);\n'
+    + '}\n';
+
+  function sh(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+      window.__VACUITY__.error = gl.getShaderInfoLog(s); return null;
+    }
+    return s;
+  }
+  var prog = gl.createProgram();
+  var vs = sh(gl.VERTEX_SHADER, VS), fs = sh(gl.FRAGMENT_SHADER, FS);
+  if (!vs || !fs) return;
+  gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+    window.__VACUITY__.error = gl.getProgramInfoLog(prog); return;
+  }
+  gl.useProgram(prog);
+
+  var quad = new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]);
+  var vao = gl.createVertexArray();
+  gl.bindVertexArray(vao);
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, quad, gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(prog, 'a_pos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+  var uOff = gl.getUniformLocation(prog, 'u_off');
+  var uScale = gl.getUniformLocation(prog, 'u_scale');
+  var uT = gl.getUniformLocation(prog, 'u_t');
+
+  /* حلقة رسم واحدة فقط — المِرقاب يعدّ الحلقات، فوجود ثانية سيظهر عنده. */
+  function frame(t) {
+    var V = window.__VACUITY__;
+    gl.clearColor(0.06, 0.06, 0.08, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    var n = V.quadsPerFrame, side = Math.ceil(Math.sqrt(n));
+    var sc = 1.0 / side;
+    for (var i = 0; i < n; i++) {
+      var x = (i % side) / side * 2 - 1 + sc;
+      var y = Math.floor(i / side) / side * 2 - 1 + sc;
+      gl.uniform2f(uOff, x, y);
+      gl.uniform1f(uScale, sc * 0.92);
+      gl.uniform1f(uT, t * 0.001 + i * 0.05);
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+      V.drawCalls++; V.triangles += 2;
+    }
+    V.frames++; V.lastFrameAt = t;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* كتلة ذاكرة صغيرة تُخصَّص عند الطلب: تُثبت أن قراءة الكومة حقيقية
+     (الرقم يرتفع فعلاً حين يُطلب التخصيص) وأنها ليست ثابتاً مطبوعاً. */
+  window.__VACUITY_ALLOC__ = function (mb) {
+    for (var i = 0; i < mb; i++) {
+      window.__VACUITY__.ballast.push(new Float64Array(131072));  // 1 MiB
+    }
+    return window.__VACUITY__.ballast.length;
+  };
+  window.__VACUITY_FREE__ = function () {
+    var n = window.__VACUITY__.ballast.length;
+    window.__VACUITY__.ballast.length = 0;
+    return n;
+  };
+})();
+</script>
+</body>
+</html>

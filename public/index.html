@@ -348,6 +348,143 @@
     button,.ghost{min-height:38px}
     #left input,#left select,#left textarea{font-size:16px}   /* يمنع تكبير iOS التلقائي */
   }
+/* ===== ACS PRODUCTION TRUST STYLES (hand-written) =====
+   إتاحة الوصول أولاً: تركيز مرئي، أهداف لمس ≥44 بكسل على الجوال، احترام
+   تفضيل تقليل الحركة، وطبقة العرض للحفظ المحلي وإفصاح القدرات والبديل النصّي.
+   كتلة مكتوبة يدوياً — لا يولّدها مولّد. */
+
+/* — تركيز مرئي على كامل الواجهة المكتوبة يدوياً (كانت بلا أي مؤشّر تركيز) — */
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,summary:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid #7dd3fc;outline-offset:2px;border-radius:6px}
+a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3fc}
+/* المتصفّحات التي لا تدعم :focus-visible لا تُترك بلا مؤشّر */
+@supports not selector(:focus-visible){
+  a:focus,button:focus,input:focus,select:focus,textarea:focus{
+    outline:3px solid #7dd3fc;outline-offset:2px} }
+
+/* — روابط التخطّي: أوّل ما يبلغه Tab — */
+.acs-skip{position:fixed;inset-block-start:-100px;inset-inline-start:8px;z-index:200;
+  background:#7dd3fc;color:#04283b;font-weight:800;padding:10px 14px;border-radius:0 0 10px 10px;
+  text-decoration:none;font-size:13px;transition:inset-block-start .12s ease}
+.acs-skip:focus{inset-block-start:0}
+
+/* — منطقة حيّة مخفية بصرياً لا عن قارئ الشاشة — */
+.acs-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+
+/* — حالة الحفظ المحلي — */
+#acsSaveState{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;
+  font-size:11.5px;border:1px solid var(--line);border-radius:9px;padding:7px 9px;
+  margin-top:6px;line-height:1.7}
+#acsSaveState .ar{font-weight:700}
+#acsSaveState .en{opacity:.72;font-size:10.5px}
+#acsSaveState .ts{opacity:.6;font-size:10px}
+#acsSaveState[data-tone=ok]{border-color:#22c55e66;background:#22c55e12;color:#bbf7d0}
+#acsSaveState[data-tone=busy]{border-color:#38bdf866;background:#38bdf812;color:#bae6fd}
+#acsSaveState[data-tone=error]{border-color:#ef444477;background:#ef444414;color:#fecaca}
+#acsSaveState[data-tone=neutral]{color:var(--muted)}
+#acsTabState{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:11px;margin-top:6px;
+  border:1px dashed var(--line);border-radius:9px;padding:6px 9px;line-height:1.7}
+#acsTabState .en{opacity:.7;font-size:10.5px}
+#acsTabState[data-acs-tabs=ANOTHER_TAB_OWNS]{border-color:#f59e0b88;background:#f59e0b12}
+#acsRecoverBox{display:none;margin-top:8px;border:1px solid #38bdf866;background:#38bdf80f;
+  border-radius:10px;padding:9px;font-size:11.5px;line-height:1.8}
+#acsRecoverBox .acs-rec-line b{display:block;color:#7dd3fc}
+#acsRecoverBox .acs-rec-line span{opacity:.75;font-size:10.5px}
+#acsRecoverBox .acs-rec-meta{opacity:.65;font-size:10px;margin-top:2px}
+#acsRecoverBox .acs-rec-act{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+#acsRecoverBox .acs-rec-bad{margin-top:8px;border-top:1px solid var(--line);padding-top:6px}
+#acsRecoverBox .acs-rec-bad b{color:#fca5a5;display:block}
+#acsRecoverBox ul{margin:4px 0 0;padding-inline-start:16px;font-size:10px;opacity:.8}
+.acs-local-note{font-size:10.5px;color:var(--muted);line-height:1.7;margin-top:6px}
+
+/* — إفصاح القدرات: ما هو معلَن وغير منفَّذ — */
+#acsCapList{margin-top:6px}
+.acs-cap-g{margin-top:8px}
+.acs-cap-g h4{font-size:10.5px;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.4px;margin-bottom:4px}
+.acs-cap-btn{display:block;width:100%;text-align:start;margin-top:5px;line-height:1.7;
+  opacity:.62;cursor:not-allowed;border-style:dashed}
+.acs-cap-btn code{color:#fbbf24;font-size:11px}
+.acs-cap-btn .acs-cap-lbl{display:inline-block;margin-inline-start:6px;font-size:10px;
+  border:1px solid #f59e0b66;border-radius:999px;padding:1px 7px;color:#fbbf24}
+.acs-cap-btn .acs-cap-why{display:block;font-size:10px;opacity:.8;margin-top:3px}
+
+/* — لوحة الخطأ الموحّدة — */
+.acs-err{border:1px solid #f8717155;background:#7f1d1d22;border-radius:12px;
+  padding:12px;line-height:1.75}
+.acs-err-h{font-weight:700;color:#fca5a5;margin-bottom:4px}
+.acs-err-en{opacity:.82;font-size:11.5px}
+.acs-err-meta{opacity:.7;margin-top:8px;font-size:11px}
+.acs-err-act{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.acs-err-act button{min-height:44px;padding:0 14px;border-radius:9px;
+  border:1px solid var(--line);background:#152241;color:var(--txt);cursor:pointer}
+
+/* — البديل النصّي للعرض ثلاثي الأبعاد — */
+#acsA11yAlt{display:none;position:fixed;inset:0;z-index:120;background:#070d18f2;
+  overflow:auto;padding:16px;color:var(--txt);direction:rtl}
+#acsA11yAlt.on{display:block}
+#acsA11yAlt .acs-a11y-card{max-width:1000px;margin:0 auto;background:#0d1729;
+  border:1px solid var(--line);border-radius:16px;padding:16px}
+#acsA11yAlt h2{font-size:16px;margin:0 0 6px;border:0;padding:0;color:var(--txt)}
+#acsA11yAlt h3{font-size:13px;margin:18px 0 6px;color:#7dd3fc;border-top:1px solid var(--line);
+  padding-top:10px}
+#acsA11yAlt .acs-a11y-bar{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+#acsA11yAlt .acs-a11y-bar button{min-height:44px;min-width:44px;padding:0 14px;
+  border-radius:10px;border:1px solid var(--line);background:#152241;color:var(--txt);
+  cursor:pointer;font-size:13px}
+.acs-a11y-limit{border:1px solid #f59e0b66;background:#f59e0b14;border-radius:10px;
+  padding:10px;font-size:12px;line-height:1.9}
+.acs-a11y-limit b{color:#fbbf24}
+.acs-a11y-tree{list-style:none;margin:0;padding:0;font-size:12.5px;line-height:1.9}
+.acs-a11y-tree ul{list-style:none;margin:0;padding-inline-start:16px}
+.acs-a11y-tree>li>span{font-weight:700;color:#bae6fd}
+.acs-a11y-tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin-top:6px}
+.acs-a11y-tbl caption{caption-side:top;text-align:start;font-size:10.5px;
+  color:var(--muted);padding-bottom:5px;line-height:1.7}
+.acs-a11y-tbl th,.acs-a11y-tbl td{border:1px solid var(--line);padding:5px 7px;
+  text-align:start}
+.acs-a11y-tbl thead th{background:#152241;color:#cbd5e1;font-size:10.5px;
+  text-transform:uppercase}
+.acs-a11y-tbl .unk{color:#fbbf24;font-style:italic}
+.acs-a11y-tbl .unk.en{opacity:.7;font-size:10px;margin-inline-start:5px}
+.acs-a11y-plan{background:#fff;border:1px solid var(--line);border-radius:10px;
+  padding:8px;margin-top:6px;overflow:auto}
+.acs-a11y-iss{list-style:none;margin:6px 0 0;padding:0;font-size:11.5px;line-height:1.9}
+.acs-a11y-iss li{border:1px solid var(--line);border-radius:8px;padding:6px 9px;margin-top:5px}
+.acs-a11y-iss li[data-sev=ERROR]{border-color:#ef444488;background:#ef444412}
+.acs-a11y-iss li[data-sev=WARNING]{border-color:#f59e0b88;background:#f59e0b12}
+.acs-a11y-iss li b{font-size:10px;opacity:.8;margin-inline-end:6px}
+
+/* — أهداف اللمس على الجوال: 44 بكسل حدّاً أدنى (WCAG 2.1 AA · 2.5.5 AAA baseline) — */
+@media (max-width:820px),(pointer:coarse){
+  button,.ghost,.btn,.card,.wbtn,#camBar button,.tabs button,label.file,.filebtn,
+  select,input[type=file],input[type=color],summary{min-height:44px}
+  button,.ghost,.wbtn,#camBar button{min-width:44px}
+  #panelToggle{width:56px;height:56px}
+  .lay input[type=checkbox]{width:24px;height:24px}
+  #left input[type=range]{height:44px}
+}
+
+/* شريط الكاميرا كان يُصغَّر بـ scale(.92) على الجوال فيهبط الهدف الفعلي
+   دون 44 بكسل رغم min-height — نُلغي التصغير بدل أن نكذب على المقياس. */
+@media (max-width:820px){
+  #camBar{transform:translateX(-50%)!important}
+  #camBar button{width:44px;height:44px}
+}
+.acs-skip{min-height:44px;display:inline-flex;align-items:center}
+
+/* — احترام تفضيل تقليل الحركة — */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms!important;animation-iteration-count:1!important;
+    transition-duration:.001ms!important;scroll-behavior:auto!important}
+  #left{transition:none!important}
+  .acs-skip{transition:none!important}
+}
+/* ===== END ACS PRODUCTION TRUST STYLES ===== */
+
 /* ===== ACS WORKSPACE STYLES (generated) ===== */
 :root{
   --ws-bg:#0e1116; --ws-panel:#151a21; --ws-panel2:#1b212a; --ws-line:#252c37;
@@ -726,21 +863,27 @@
 </style>
 </head>
 <body>
-<div id="app"></div>
+<!-- ===== ACS PRODUCTION TRUST DOM · SKIP LINKS (hand-written) ===== -->
+<a class="acs-skip" href="#left">تخطّي إلى لوحة المشروع · Skip to the project panel</a>
+<a class="acs-skip" href="#acsA11yOpen">تخطّي إلى البديل النصّي للعرض ثلاثي الأبعاد ·
+  Skip to the text alternative for the 3D view</a>
+<div id="acsLiveRegion" class="acs-sr" role="status" aria-live="polite"
+     aria-atomic="true"></div>
+<div id="app" role="img" lang="ar" aria-label="لوحة عرض ثلاثي الأبعاد (WebGL) — لا يستطيع قارئ الشاشة تفسير بكسلاتها؛ البديل النصّي الكامل متاح عبر الزرّ «فتح البديل النصّي للعرض». 3D WebGL viewport — a screen reader cannot interpret its pixels; the full text alternative is available from the “Open the text alternative” button."></div>
 
-<div id="engineWarn">تعذّر تحميل محرّك العرض ثلاثي الأبعاد — قد يكون أحد مزوّدي المكتبات (CDN) غير متاح.
-  <button onclick="location.reload()" style="margin-inline-start:8px;padding:2px 10px;border-radius:6px;border:0;background:#fff;color:#7f1d1d;font-weight:700;cursor:pointer">إعادة التحميل</button>
+<div id="engineWarn" role="alert" aria-live="assertive">تعذّر تحميل محرّك العرض ثلاثي الأبعاد — قد يكون أحد مزوّدي المكتبات (CDN) غير متاح.
+  <button type="button" onclick="location.reload()" aria-label="إعادة تحميل الصفحة — Reload the page" title="إعادة تحميل الصفحة / Reload the page" style="margin-inline-start:8px;min-height:44px;padding:2px 14px;border-radius:6px;border:0;background:#fff;color:#7f1d1d;font-weight:700;cursor:pointer">إعادة التحميل</button>
   <span style="opacity:.85">(المتصفحات القديمة جداً قد لا تدعم العرض ثلاثي الأبعاد.)</span></div>
-<button id="panelToggle" title="اللوحة">☰</button>
+<button id="panelToggle" type="button" title="إظهار أو إخفاء لوحة المشروع / Show or hide the project panel" aria-label="إظهار أو إخفاء لوحة المشروع — Show or hide the project panel" aria-expanded="false" aria-controls="left"><span aria-hidden="true">☰</span></button>
 
 <!-- شاشة الدخول -->
 <div id="login">
   <div class="card">
     <h1>AI Construction Studio</h1>
     <div class="tag">استوديو توليد المباني ثلاثية الأبعاد — بوابة العميل</div>
-    <label>الاسم</label><input id="lgName" placeholder="اسمك أو اسم المنشأة" />
-    <label>البريد الإلكتروني</label><input id="lgEmail" type="email" placeholder="you@example.com" />
-    <label>اسم المشروع</label><input id="lgProject" placeholder="مثال: عمارة سكنية بالرياض" />
+    <label for="lgName">الاسم <span lang="en" dir="ltr">· Name</span></label><input id="lgName" placeholder="اسمك أو اسم المنشأة" />
+    <label for="lgEmail">البريد الإلكتروني <span lang="en" dir="ltr">· Email</span></label><input id="lgEmail" type="email" placeholder="you@example.com" />
+    <label for="lgProject">اسم المشروع <span lang="en" dir="ltr">· Project name</span></label><input id="lgProject" placeholder="مثال: عمارة سكنية بالرياض" />
     <button id="lgGo">دخول ▸</button>
     <div class="hint">نموذج تجريبي — الدخول محلي (يُربط لاحقاً بمصادقة حقيقية).</div>
   </div>
@@ -753,18 +896,18 @@
     <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
   </header>
 
-    <div class="tabs">
-    <button data-tab="make" class="active">١ · المشروع</button>
-    <button data-tab="model">٢ · النموذج</button>
-    <button data-tab="show">٣ · العرض</button>
+    <div class="tabs" role="tablist" aria-label="أقسام لوحة المشروع — Project panel sections">
+    <button type="button" role="tab" data-tab="make" class="active" aria-selected="true" aria-controls="acsPanelMake" id="acsTabMake">١ · المشروع</button>
+    <button type="button" role="tab" data-tab="model" aria-selected="false" aria-controls="acsPanelModel" id="acsTabModel">٢ · النموذج</button>
+    <button type="button" role="tab" data-tab="show" aria-selected="false" aria-controls="acsPanelShow" id="acsTabShow">٣ · العرض</button>
   </div>
 
   <div class="body">
     <!-- ═════ ١ · المشروع: مدخل واحد موحّد ═════ -->
-    <div data-panel="make">
+    <div data-panel="make" id="acsPanelMake" role="tabpanel" aria-labelledby="acsTabMake" tabindex="0">
       <div class="note">اكتب وصف مبناك بلغتك، أو ارفع مخططاً — المحرّك يقرأ ويبني بنداً بنداً.</div>
 
-      <textarea id="descText" placeholder="مثال:
+      <textarea id="descText" aria-label="وصف المبنى بالكلمات — Describe the building in your own words" placeholder="مثال:
 عمارة سكنية 22×16 م، ٣ أدوار، شقتان بكل دور.
 غرفة معيشة 5×4، مطبخ 4×3، غرفة نوم رئيسية 4.5×4 بحمام خاص، غرفة نوم ثانية 4×3.5.
 مصعد ودرج رئيسي، مواقف أمامية، كاميرات في المداخل، رشاشات حريق.
@@ -773,14 +916,14 @@
       <label class="filebtn" for="impFile">📎 أو ارفع ملفاً — مخطط · صورة · PDF · DXF · JSON
         <input id="impFile" type="file" hidden
                accept=".json,.dxf,.png,.jpg,.jpeg,.webp,.pdf,image/*"></label>
-      <div id="impInfo" class="note" style="min-height:0"></div>
+      <div id="impInfo" class="note" role="status" aria-live="polite" style="min-height:0"></div>
 
       <div class="fld">
-        <div><label>عرض الأرض (م)</label><input id="siteW" type="number" value="22"></div>
-        <div><label>عمق الأرض (م)</label><input id="siteD" type="number" value="16"></div>
-        <div><label>عدد الأدوار</label><input id="nFloors" type="number" value="3"></div>
+        <div><label for="siteW">عرض الأرض (م)</label><input id="siteW" type="number" value="22"></div>
+        <div><label for="siteD">عمق الأرض (م)</label><input id="siteD" type="number" value="16"></div>
+        <div><label for="nFloors">عدد الأدوار</label><input id="nFloors" type="number" value="3"></div>
       </div>
-      <div class="fld"><div><label>نوع المبنى</label>
+      <div class="fld"><div><label for="bType">نوع المبنى</label>
         <select id="bType">
           <option value="auto" selected>كشف تلقائي من الوصف</option>
           <option value="residential">سكني — فلل وعمائر</option>
@@ -788,8 +931,8 @@
         </select></div></div>
 
       <button class="btn" id="genLLM">🤖 توليد المبنى</button>
-      <div id="srvPill" class="srv">…</div>
-      <div id="reportBox" class="report"></div>
+      <div id="srvPill" class="srv" role="status" aria-live="polite">…</div>
+      <div id="reportBox" class="report" role="region" aria-label="تقرير التغطية وحالات الخطأ — Coverage report and error states"></div>
 
       <div class="cards">
         <button class="card" id="loadExample"><b>عمارة سكنية</b><span>مثال جاهز — الرياض</span></button>
@@ -798,23 +941,23 @@
 
       <details class="adv"><summary>خيارات متقدّمة</summary>
         <div class="lay"><input type="checkbox" id="strictMode">
-          <span class="nm">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره</span></div>
+          <label class="nm" for="strictMode">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره <span lang="en" dir="ltr">· Follow my description literally</span></label></div>
         <button class="ghost" id="genText" style="width:100%;margin-top:8px">توليد محلي فوري (بلا ذكاء)</button>
-        <div class="fld" style="margin-top:8px"><div><label>خادم المحرّك — تجاوز يدوي</label>
+        <div class="fld" style="margin-top:8px"><div><label for="llmURL">خادم المحرّك — تجاوز يدوي</label>
           <input id="llmURL" placeholder="يُستخدم الخادم المدمج تلقائياً"></div></div>
       </details>
     </div>
 
     <!-- ═════ ٢ · النموذج: أدوار · طبقات · تشطيبات · ملاحظات ═════ -->
-    <div data-panel="model" style="display:none">
+    <div data-panel="model" id="acsPanelModel" role="tabpanel" aria-labelledby="acsTabModel" tabindex="0" style="display:none">
       <h2>الأدوار</h2>
       <div class="row" id="floors"></div>
 
       <h2>المقطع <span class="pill">قصّ المبنى</span></h2>
       <div id="clipBox" style="display:none">
-        <div class="clipRow"><span>س</span><input id="clip_x" type="range" min="0" max="100" value="100"><i id="clipVal_x">—</i></div>
-        <div class="clipRow"><span>ع</span><input id="clip_y" type="range" min="0" max="100" value="100"><i id="clipVal_y">—</i></div>
-        <div class="clipRow"><span>ص</span><input id="clip_z" type="range" min="0" max="100" value="100"><i id="clipVal_z">—</i></div>
+        <div class="clipRow"><span aria-hidden="true">س</span><input aria-label="قصّ على المحور س — Clip on the X axis" id="clip_x" type="range" min="0" max="100" value="100"><i id="clipVal_x">—</i></div>
+        <div class="clipRow"><span aria-hidden="true">ع</span><input aria-label="قصّ على المحور ع — Clip on the Y axis" id="clip_y" type="range" min="0" max="100" value="100"><i id="clipVal_y">—</i></div>
+        <div class="clipRow"><span aria-hidden="true">ص</span><input aria-label="قصّ على المحور ص — Clip on the Z axis" id="clip_z" type="range" min="0" max="100" value="100"><i id="clipVal_z">—</i></div>
         <button class="ghost" id="clipReset" style="width:100%;margin-top:6px">إلغاء المقطع</button>
       </div>
       <div class="note" id="clipHint">اضغط ✂️ في الشريط العلوي لفتح أدوات المقطع.</div>
@@ -825,12 +968,12 @@
       <h2>التشطيبات — لون أو صورة حقيقية</h2>
       <div id="doorbox" class="doorbox">
         <div class="row" style="gap:6px;align-items:center">
-          <select id="texTarget" class="mini">
+          <select id="texTarget" class="mini" aria-label="سطح التشطيب — Finish surface">
             <option value="DOOR">أبواب</option><option value="WALL">جدران</option>
             <option value="FLOOR">أرضيات</option><option value="FURN">أثاث</option>
             <option value="OBJ">عناصر</option><option value="WINDOW">نوافذ</option>
           </select>
-          <input id="texRepeat" type="number" value="1" min="0.1" step="0.5" class="mini" style="width:58px" title="تكرار الصورة">
+          <input id="texRepeat" type="number" value="1" min="0.1" step="0.5" class="mini" style="width:58px" aria-label="تكرار الصورة — Image repeat" title="تكرار الصورة / Image repeat">
         </div>
         <div class="row" style="margin-top:6px">
           <label class="file" style="flex:1">📷 اختر صورة<input id="doorfile" type="file" accept="image/*" hidden></label>
@@ -851,14 +994,14 @@
     </div>
 
     <!-- ═════ ٣ · العرض: شمس · نظارة · تصدير ═════ -->
-    <div data-panel="show" style="display:none">
+    <div data-panel="show" id="acsPanelShow" role="tabpanel" aria-labelledby="acsTabShow" tabindex="0" style="display:none">
       <h2>دراسة الشمس والظل</h2>
-      <div id="sunOut" class="note"></div>
+      <div id="sunOut" class="note" role="status" aria-live="polite"></div>
       <div class="fld">
-        <div><label>الساعة</label><input id="sunHour" type="range" min="5" max="19" step="0.25" value="12"></div>
-        <div><label>اليوم من السنة</label><input id="sunDay" type="range" min="1" max="365" value="172"></div>
+        <div><label for="sunHour">الساعة</label><input id="sunHour" type="range" min="5" max="19" step="0.25" value="12"></div>
+        <div><label for="sunDay">اليوم من السنة</label><input id="sunDay" type="range" min="1" max="365" value="172"></div>
       </div>
-      <div class="fld"><div><label>خط العرض</label>
+      <div class="fld"><div><label for="sunCity">خط العرض</label>
         <select id="sunCity">
           <option value="24.71">الرياض</option><option value="21.49">جدة</option>
           <option value="26.42">الدمام</option><option value="21.39">مكة</option>
@@ -866,25 +1009,25 @@
         </select></div></div>
 
       <h2>🥽 نظّارة الواقع الافتراضي</h2>
-      <div id="vrbox" class="vrbox"><div id="vrState" class="note" style="margin:0 0 8px">…</div></div>
+      <div id="vrbox" class="vrbox"><div id="vrState" class="note" role="status" aria-live="polite" style="margin:0 0 8px">…</div></div>
       <div class="lay"><input type="checkbox" id="vrSnap" checked>
-        <span class="nm">التفاف مُقطَّع 30° (أريح للمعدة)</span></div>
-      <div class="fld"><div><label>سرعة المشي في VR</label>
+        <label class="nm" for="vrSnap">التفاف مُقطَّع 30° (أريح للمعدة) <span lang="en" dir="ltr">· Snap turning, 30°</span></label></div>
+      <div class="fld"><div><label for="vrSpeed">سرعة المشي في VR</label>
         <input id="vrSpeed" type="range" min="10" max="80" value="26"></div></div>
       <div class="note"><b>VR:</b> العصا اليسرى مشي · اليمنى التفاف · الزناد انتقال · A/B تغيير الدور.<br>
         <b>الماكيت:</b> المبنى مصغّر على طاولتك — اليمنى تدوّره، الزناد يعيده أمامك.</div>
 
       <h2>التصدير</h2>
       <div class="row">
-        <button class="ghost" id="bGlb" style="flex:1">⬇ GLB للأنريل</button>
-        <button class="ghost" id="bJson" style="flex:1">⬇ بيانات JSON</button>
+        <button class="ghost" type="button" id="bGlb" style="flex:1" aria-label="تصدير النموذج بصيغة GLB — Export the model as GLB" title="تصدير النموذج بصيغة GLB / Export the model as GLB">⬇ GLB للأنريل</button>
+        <button class="ghost" type="button" id="bJson" style="flex:1" aria-label="تصدير بيانات المشروع JSON — Export the project data as JSON" title="تصدير بيانات المشروع JSON / Export the project data as JSON">⬇ بيانات JSON</button>
       </div>
-      <div class="row"><button class="ghost" id="bShot" style="flex:1">📷 حفظ صورة</button></div>
+      <div class="row"><button class="ghost" type="button" id="bShot" style="flex:1" aria-label="حفظ صورة من العرض — Save a snapshot of the view" title="حفظ صورة من العرض / Save a snapshot of the view"><span aria-hidden="true">📷</span> حفظ صورة</button></div>
 
       <h2>الجودة والأداء</h2>
       <div class="lay"><input type="checkbox" id="texOn" checked>
-        <span class="nm">خامات واقعية</span></div>
-      <div class="fld"><div><label>مستوى التفصيل</label>
+        <label class="nm" for="texOn">خامات واقعية <span lang="en" dir="ltr">· Realistic materials</span></label></div>
+      <div class="fld"><div><label for="detailSel">مستوى التفصيل</label>
         <select id="detailSel">
           <option value="0.5">خفيف — أسرع على الجوال</option>
           <option value="1" selected>متوازن</option>
@@ -911,6 +1054,74 @@
            style="min-height:14px"></div>
       <div class="note">يُجهَّز الملفّ في متصفّحك ولا يُرفع إلى أيّ خادوم.</div>
 
+      <!-- ===== ACS PRODUCTION TRUST DOM · PANEL (hand-written) =====
+           F-15 الحفظ المحلي · F-16 إفصاح القدرات · البديل النصّي للعرض.
+           كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. -->
+      <h2 id="acsLocalH">الحفظ المحلي على هذا الجهاز
+        <span class="pill" lang="en" dir="ltr">Local, on this device</span></h2>
+      <div id="acsSaveState" role="status" aria-live="polite" aria-atomic="true"
+           aria-labelledby="acsLocalH" data-acs-save="IDLE" data-tone="neutral">
+        <span class="ar" lang="ar">لم يُحفَظ بعد على هذا الجهاز</span>
+        <span class="en" lang="en" dir="ltr">Not yet saved on this device</span>
+      </div>
+      <div id="acsTabState" role="status" aria-live="polite"
+           data-acs-tabs="NO_TAB"></div>
+      <div id="acsRecoverBox" role="region"
+           aria-label="استعادة عمل محفوظ محلياً — Recover work saved locally"></div>
+      <div class="row">
+        <button class="ghost" type="button" id="acsSaveNow" style="flex:1"
+                aria-label="حفظ الآن محلياً على هذا الجهاز — Save now locally on this device"
+                title="حفظ الآن محلياً على هذا الجهاز / Save now locally on this device"
+                >💾 حفظ الآن محلياً</button>
+        <button class="ghost" type="button" id="acsExportBackup" style="flex:1"
+                aria-label="تصدير نسخة احتياطية إلى ملفّ على جهازك — Export a backup file to your device"
+                title="تصدير نسخة احتياطية إلى ملفّ على جهازك / Export a backup file to your device"
+                >⬇ تصدير نسخة احتياطية</button>
+      </div>
+      <div class="row">
+        <label class="file" for="acsRestoreBackup" style="flex:1"
+               id="acsRestoreLbl">⬆ استعادة نسخة احتياطية من ملفّ</label>
+        <input id="acsRestoreBackup" type="file" accept=".json,application/json"
+               aria-labelledby="acsRestoreLbl" style="flex:1;min-height:44px">
+      </div>
+      <div class="row">
+        <button class="ghost" type="button" id="acsClearLocal" style="flex:1"
+                aria-label="مسح البيانات المحفوظة محلياً على هذا الجهاز — Clear data saved locally on this device"
+                title="مسح البيانات المحفوظة محلياً على هذا الجهاز (يُطلَب تأكيد) / Clear data saved locally on this device (confirmation required)"
+                >🗑 مسح البيانات المحلية</button>
+      </div>
+      <div id="acsRestoreState" class="note" role="status" aria-live="polite"
+           style="min-height:14px"></div>
+      <p class="acs-local-note" id="acsLocalNote">
+        كل ما سبق <b>محفوظ محلياً على هذا الجهاز</b> داخل متصفّحك (IndexedDB).
+        ليس نسخاً احتياطياً على خادم، ولا يُرفع إلى أي جهة، ويختفي إن مسحت بيانات
+        المتصفّح أو استعملت جهازاً آخر.
+        <span lang="en" dir="ltr">Everything above is <b>saved locally on this device</b>
+        inside your browser (IndexedDB). It is not a server backup, nothing is uploaded,
+        and it is gone if you clear browser data or use another device.</span>
+      </p>
+
+      <h2 id="acsCapH">قدرات معلَنة غير منفَّذة بعد
+        <span class="pill" lang="en" dir="ltr">Declared, not yet implemented</span></h2>
+      <p class="acs-local-note">
+        المحرّك يُعلن هذه العمليات في مفرداته ليذكر مالكها الهندسي صراحةً، ولا
+        ينفّذها في هذه المرحلة. تُعرض هنا معطّلة ومُعلَّمة بدل أن تظهر كأزرار
+        حيّة تُخيّب الظنّ.
+        <span lang="en" dir="ltr">The engine declares these operations in its vocabulary so
+        their engineering ownership is stated, and does not implement them in this phase.
+        They are shown here disabled and labelled rather than as live buttons that fail.</span>
+      </p>
+      <div id="acsCapList" role="group" aria-labelledby="acsCapH"></div>
+
+      <h2 id="acsAltH">البديل النصّي للعرض ثلاثي الأبعاد
+        <span class="pill" lang="en" dir="ltr">Text alternative</span></h2>
+      <div class="row">
+        <button class="ghost" type="button" id="acsA11yOpen" style="flex:1"
+                aria-label="فتح البديل النصّي للعرض ثلاثي الأبعاد — Open the text alternative to the 3D view"
+                title="فتح البديل النصّي: شجرة المشروع والعناصر والخصائص والملاحظات والمسقط والجداول / Open the text alternative: project tree, elements, properties, issues, floor plan and schedules"
+                >📄 فتح البديل النصّي للعرض</button>
+      </div>
+
       <h2>دليل الألوان</h2>
       <div class="legend">
         <span><i class="dot" style="background:#e01a1a"></i>فيش</span>
@@ -925,45 +1136,81 @@
     </div>
   </div>
 
-  <div id="status">جاهز — اكتب وصفاً واضغط «توليد».</div>
+  <div id="status" role="status" aria-live="polite" aria-atomic="true">جاهز — اكتب وصفاً واضغط «توليد».</div>
+</div>
+
+<!-- ===== ACS PRODUCTION TRUST DOM · ACCESSIBLE ALTERNATIVE (hand-written) =====
+     بديل نصّي حقيقي للوحة العرض ثلاثي الأبعاد. لا يُدّعى هنا أنّ قارئ الشاشة
+     يقرأ بكسلات WebGL — لا يفعل، والقيد مذكور في العلامات نفسها لا في وثيقة
+     منفصلة. كل ما هنا مشتقّ من هندسة النموذج مباشرةً.
+     كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. -->
+<div id="acsA11yAlt" role="dialog" aria-modal="true" aria-hidden="true"
+     aria-labelledby="acsA11yTitle" aria-describedby="acsA11yLimit">
+  <div class="acs-a11y-card">
+    <h2 id="acsA11yTitle">البديل النصّي للعرض ثلاثي الأبعاد
+      <span lang="en" dir="ltr">· Text alternative to the 3D view</span></h2>
+    <p class="acs-a11y-limit" id="acsA11yLimit">
+      <b>قيد معلَن:</b> لوحة العرض ثلاثي الأبعاد مبنيّة على WebGL، وقارئ الشاشة
+      <b>لا يستطيع</b> تفسير بكسلاتها؛ لا يوجد نصّ داخل الصورة المرسومة. لذلك
+      يُشتَقّ كل ما في هذه الصفحة من هندسة النموذج نفسها — لا من الشاشة — وهي
+      المصدر المتاح فعلاً: شجرة المشروع، وقائمة العناصر وخصائصها، والملاحظات،
+      ومسقط أفقي متجهي، والجداول. أي قيمة غير معروفة تُكتب «غير محدد» ولا
+      تُستبدَل بصفر ولا بتقدير.
+      <span lang="en" dir="ltr"><b>Declared limitation:</b> the 3D viewport is WebGL and a
+      screen reader <b>cannot</b> interpret its pixels — there is no text inside the drawn
+      image. Everything on this page is therefore derived from the model geometry itself,
+      not from the screen: project tree, element list and properties, issues, a vector
+      floor plan and schedules. Any unknown value is written “Not specified”, never
+      replaced with zero or an estimate.</span>
+    </p>
+    <div class="acs-a11y-bar">
+      <button type="button" id="acsA11yRefresh"
+              aria-label="تحديث البديل النصّي من النموذج الحالي — Refresh the text alternative from the current model"
+              title="تحديث من النموذج الحالي / Refresh from the current model">↻ تحديث</button>
+      <button type="button" id="acsA11yClose"
+              aria-label="إغلاق البديل النصّي — Close the text alternative"
+              title="إغلاق / Close">✕ إغلاق</button>
+    </div>
+    <div id="acsA11yBody"></div>
+  </div>
 </div>
 
 <!-- لوحة تحكّم المشي -->
-<div id="walkHUD">
+<div id="walkHUD" role="group" aria-label="لوحة التحكّم بالمشي — Walk controls">
   <div id="joy"><div id="joyKnob"></div></div>
-  <div id="walkBtns">
-    <button class="wbtn" id="wUp" title="أعلى">▲</button>
-    <button class="wbtn" id="wDown" title="أسفل">▼</button>
-    <button class="wbtn" id="wRun" title="سرعة">🏃</button>
-    <button class="wbtn" id="wExit" title="خروج">✕</button>
+  <div id="walkBtns" role="toolbar" aria-label="أدوات وضع المشي — Walk mode controls">
+    <button class="wbtn" type="button" id="wUp" aria-label="الصعود درجة إلى أعلى — Step up" title="الصعود درجة إلى أعلى / Step up"><span aria-hidden="true">▲</span></button>
+    <button class="wbtn" type="button" id="wDown" aria-label="النزول درجة إلى أسفل — Step down" title="النزول درجة إلى أسفل / Step down"><span aria-hidden="true">▼</span></button>
+    <button class="wbtn" type="button" id="wRun" aria-label="تبديل سرعة الجري — Toggle running speed" title="تبديل سرعة الجري / Toggle running speed"><span aria-hidden="true">🏃</span></button>
+    <button class="wbtn" type="button" id="wExit" aria-label="الخروج من وضع المشي — Exit walk mode" title="الخروج من وضع المشي / Exit walk mode"><span aria-hidden="true">✕</span></button>
   </div>
   <div id="walkOpts">
-    <label>مجال الرؤية <input id="optFov" type="range" min="45" max="100" value="70"></label>
-    <label>ارتفاع النظر <input id="optEye" type="range" min="80" max="220" value="160"></label>
-    <label>السرعة <input id="optSpd" type="range" min="1" max="12" value="4"></label>
+    <label for="optFov">مجال الرؤية <span lang="en" dir="ltr">Field of view</span> <input id="optFov" type="range" min="45" max="100" value="70"></label>
+    <label for="optEye">ارتفاع النظر <span lang="en" dir="ltr">Eye height</span> <input id="optEye" type="range" min="80" max="220" value="160"></label>
+    <label for="optSpd">السرعة <span lang="en" dir="ltr">Speed</span> <input id="optSpd" type="range" min="1" max="12" value="4"></label>
     <span id="walkHint">اسحب للنظر · الجويستيك للحركة · WASD على الحاسب</span>
   </div>
 </div>
 
 <!-- نافذة ملاحظة المهندس -->
-<div id="noteModal">
+<div id="noteModal" role="dialog" aria-modal="true" aria-labelledby="nmTitle" aria-hidden="true">
   <div class="nm-card">
-    <h3>طلب تعديل على عنصر</h3>
-    <div id="nmTarget" class="nm-target"></div>
+    <h3 id="nmTitle">طلب تعديل على عنصر <span lang="en" dir="ltr">· Request a change to an element</span></h3>
+    <div id="nmTarget" class="nm-target" role="status" aria-live="polite"></div>
     <!-- تغيير اللون فوراً بلا خادم -->
     <div class="nm-color">
-      <label style="margin:0 0 6px">🎨 تغيير اللون فوراً (بلا خادم · نتيجة لحظية)</label>
-      <div class="sw" id="nmSwatches"></div>
+      <label for="nmColor" style="margin:0 0 6px">🎨 تغيير اللون فوراً (بلا خادم · نتيجة لحظية)</label>
+      <div class="sw" id="nmSwatches" role="group" aria-label="ألوان جاهزة — Preset colours"></div>
       <div class="row" style="align-items:center;gap:8px;margin-top:8px">
-        <input id="nmColor" type="color" value="#22c55e" title="لون مخصّص">
+        <input id="nmColor" type="color" value="#22c55e" aria-label="لون مخصّص — Custom colour" title="لون مخصّص / Custom colour">
         <button class="ghost cbtn" data-surface="wall">جدران الغرفة</button>
         <button class="ghost cbtn" data-surface="floor">الأرضية</button>
         <button class="ghost cbtn" data-surface="ceiling">السقف</button>
         <button class="ghost cbtn" data-surface="self">هذا العنصر</button>
       </div>
-      <div id="nmColorMsg" class="nm-msg"></div>
+      <div id="nmColorMsg" class="nm-msg" role="status" aria-live="polite"></div>
     </div>
-    <label>نوع الطلب</label>
+    <label for="nmKind">نوع الطلب <span lang="en" dir="ltr">· Request kind</span></label>
     <select id="nmKind">
       <option value="تعديل">تعديل</option>
       <option value="لون">لون / تشطيب</option>
@@ -973,7 +1220,7 @@
       <option value="إضافة">إضافة عنصر</option>
       <option value="ملاحظة">ملاحظة عامة</option>
     </select>
-    <label>الوصف</label>
+    <label for="nmText">الوصف <span lang="en" dir="ltr">· Description</span></label>
     <textarea id="nmText" placeholder="مثال: غيّر لون جدار هذه الغرفة إلى أخضر · وسّع المجلس إلى 6×5 م · انقل الباب لمنتصف الجدار الشرقي."></textarea>
     <div class="nm-hint">إن كتبت طلب لون (مثل «الجدار أخضر») سيُنفَّذ فوراً عند الحفظ بلا انتظار الخادم.</div>
     <div class="row" style="margin-top:10px">
@@ -983,20 +1230,20 @@
   </div>
 </div>
 
-<div id="camBar">
-  <button data-view="orbit" class="on" title="مداري">🔄</button>
-  <button data-view="arch"  title="لقطة معمارية">🏛️</button>
-  <button data-view="bird"  title="عين الطائر">🦅</button>
-  <button data-view="top"   title="مسقط علوي">⬛</button>
-  <button data-view="tour"  title="جولة تلقائية">🎬</button>
-  <button data-view="walk"  title="منظور شخصي — مشي">🚶</button>
-  <span class="sep"></span>
-  <button data-tool="measure" title="قياس مسافة">📏</button>
-  <button data-tool="area" title="قياس مساحة">▱</button>
-  <button id="cbClip" title="مقطع">✂️</button>
-  <span class="sep"></span>
-  <button id="cbNote" title="تحديد وتعليق">✏️</button>
-  <button id="cbShot" title="حفظ صورة">📷</button>
+<div id="camBar" role="toolbar" aria-label="مناظير الكاميرا وأدوات القياس — Camera views and measurement tools">
+  <button type="button" data-view="orbit" class="on" aria-label="منظور مداري حول المبنى — Orbit view" title="منظور مداري حول المبنى / Orbit view" aria-pressed="true"><span aria-hidden="true">🔄</span></button>
+  <button type="button" data-view="arch"  aria-label="لقطة معمارية — Architectural view" title="لقطة معمارية / Architectural view" aria-pressed="false"><span aria-hidden="true">🏛️</span></button>
+  <button type="button" data-view="bird"  aria-label="عين الطائر — Bird’s-eye view" title="عين الطائر / Bird’s-eye view" aria-pressed="false"><span aria-hidden="true">🦅</span></button>
+  <button type="button" data-view="top"   aria-label="مسقط علوي — Top view" title="مسقط علوي / Top view" aria-pressed="false"><span aria-hidden="true">⬛</span></button>
+  <button type="button" data-view="tour"  aria-label="جولة تلقائية — Automatic tour" title="جولة تلقائية / Automatic tour" aria-pressed="false"><span aria-hidden="true">🎬</span></button>
+  <button type="button" data-view="walk"  aria-label="منظور شخصي — مشي — Walk-through view" title="منظور شخصي — مشي / Walk-through view" aria-pressed="false"><span aria-hidden="true">🚶</span></button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" data-tool="measure" aria-label="قياس مسافة — Measure distance" title="قياس مسافة / Measure distance" aria-pressed="false"><span aria-hidden="true">📏</span></button>
+  <button type="button" data-tool="area" aria-label="قياس مساحة — Measure area" title="قياس مساحة / Measure area" aria-pressed="false"><span aria-hidden="true">▱</span></button>
+  <button type="button" id="cbClip" aria-label="أدوات المقطع — Section tools" title="أدوات المقطع / Section tools" aria-pressed="false"><span aria-hidden="true">✂️</span></button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" id="cbNote" aria-label="وضع التحديد والتعليق — Select and comment mode" title="وضع التحديد والتعليق / Select and comment mode" aria-pressed="false"><span aria-hidden="true">✏️</span></button>
+  <button type="button" id="cbShot" aria-label="حفظ صورة من العرض — Save a snapshot of the view" title="حفظ صورة من العرض / Save a snapshot of the view" aria-pressed="false"><span aria-hidden="true">📷</span></button>
 </div>
 <div id="measHUD"></div>
 <div id="info"></div>
@@ -1004,11 +1251,11 @@
 <div id="drop">أفلِت صورة باب</div>
 
 <!-- محرّر رسم الغرف فوق المخطط -->
-<div id="tracer">
+<div id="tracer" role="dialog" aria-modal="true" aria-label="رسم الغرف على المخطط — Trace rooms over the plan">
   <div class="tbar">
     <b style="color:#38bdf8">رسم الغرف على المخطط</b>
     <span class="thint">اسحب لرسم مستطيل = غرفة</span>
-    <label>عرض المخطط (م): <input id="trW" type="number" value="30"></label>
+    <label for="trW">عرض المخطط (م) <span lang="en" dir="ltr">· Plan width (m)</span>: <input id="trW" type="number" value="30"></label>
     <span id="trCount" class="pill">0 غرفة</span>
     <span style="flex:1"></span>
     <button class="ghost" id="trUndo">تراجع</button>
@@ -29927,6 +30174,1617 @@ window.ACS.captureRenderFailure=function(opts){
 })();
 /* ==== END ACS RUNTIME RENDER DIAGNOSTICS ==== */
 
+/* ===== ACS PRODUCTION TRUST CORE (hand-written · pure · no DOM · no IndexedDB) =====
+   نواة نقيّة واحدة لأربع مسؤوليات إنتاجية: الحفظ المحلي (F-15)، إفصاح القدرات
+   (F-16)، جدول حالات الخطأ الظاهر للمستخدم، وسلامة التزامن والنقر المزدوج.
+   لا تلمس هذه الكتلة DOM ولا IndexedDB ولا الشبكة: كل ما فيها دوالّ نقيّة
+   قابلة للاختبار في Node وحده. الطبقة التي تلمس المتصفّح تغلّفها وحدها.
+   هذه كتلة مكتوبة يدوياً — لا يولّدها أي مولّد ولا تُقارَن بايتياً. */
+function ACS_TRUST_CORE(){
+'use strict';
+
+/* ─────────────────────── 0 · أدوات نقيّة مشتركة ─────────────────────── */
+function _canon(v){
+  if(v===null||v===undefined) return 'n';
+  const t=typeof v;
+  if(t==='number') return isFinite(v)?('#'+String(v)):'n';
+  if(t==='boolean') return v?'t':'f';
+  if(t==='string') return 's'+v.length+':'+v;
+  if(Array.isArray(v)) return '['+v.map(_canon).join(',')+']';
+  if(t==='object'){
+    const ks=Object.keys(v).filter(k=>v[k]!==undefined).sort();
+    return '{'+ks.map(k=>k.length+':'+k+'='+_canon(v[k])).join(',')+'}';
+  }
+  return 'n';
+}
+/* بصمة 64-بت في مرورٍ واحد (مساران مستقلّان 32-بت). ليست تعمية، ولا تُقدَّم
+   على أنّها كذلك: وظيفتها كشف الفساد والتلف، لا مقاومة خصم. */
+function _hash64(s){
+  const str=String(s);
+  let h1=0x811c9dc5>>>0, h2=0x9e3779b9>>>0;
+  for(let i=0;i<str.length;i++){
+    const c=str.charCodeAt(i);
+    h1=Math.imul(h1^(c&0xff),0x01000193)>>>0;
+    h1=(h1^(h1>>>15))>>>0;
+    h2=Math.imul(h2^(((c>>>8)&0xff)|((c&0xff)<<8)),0x85ebca6b)>>>0;
+    h2=(h2^(h2>>>13))>>>0;
+  }
+  return ('00000000'+h1.toString(16)).slice(-8)
+        +('00000000'+h2.toString(16)).slice(-8);
+}
+function _deepFreeze(o){
+  if(o&&(typeof o==='object')&&!Object.isFrozen(o)){
+    Object.freeze(o);
+    Object.keys(o).forEach(k=>_deepFreeze(o[k]));
+  }
+  return o;
+}
+function _clone(o){ try{ return JSON.parse(JSON.stringify(o)); }catch(e){ return null; } }
+
+/* ══════════════════════════════════════════════════════════════════════
+   1 · F-15 — الحفظ المحلي الآمن ضدّ الفساد
+   ══════════════════════════════════════════════════════════════════════ */
+const P_CONTRACT   = 'acs-local-project/1';
+const P_SCHEMA     = 3;      /* مخطّط السجلّ الحالي */
+const P_MIN_SCHEMA = 2;      /* أقدم مخطّط نعرف كيف نرقّيه */
+const P_KEEP       = 3;      /* عدد السجلّات المحفوظة قبل التقليم */
+
+const P_CODES={
+  OK:'OK',
+  NOT_OBJECT:'RECORD_NOT_OBJECT',
+  BAD_CONTRACT:'RECORD_BAD_CONTRACT',
+  MISSING:'RECORD_MISSING_FIELD',
+  PAYLOAD_NOT_JSON:'RECORD_PAYLOAD_NOT_JSON',
+  TRUNCATED:'RECORD_TRUNCATED',
+  HASH_MISMATCH:'RECORD_HASH_MISMATCH',
+  SCHEMA_OLDER:'RECORD_SCHEMA_OLDER',
+  SCHEMA_TOO_OLD:'RECORD_SCHEMA_TOO_OLD',
+  SCHEMA_NEWER:'RECORD_SCHEMA_NEWER',
+  NO_RECORDS:'NO_RECORDS',
+  NONE_USABLE:'NO_USABLE_RECORD',
+  NOT_SERIALISABLE:'PROJECT_NOT_SERIALISABLE'
+};
+
+/* عبارات ممنوعة منعاً باتّاً في أي نصّ يصف الحفظ المحلي: هذا ليس نسخاً
+   احتياطياً سحابياً ولا يجوز أن يُفهَم كذلك ولو تلميحاً. */
+const P_FORBIDDEN_CLAIMS=[
+  'cloud','سحاب','السحابة','نسخة احتياطية سحابية','backed up to',
+  'synced','مزامنة','on our servers','على خوادمنا','خادومنا','remote backup'
+];
+function assertNoCloudClaim(text){
+  const t=String(text||'').toLowerCase();
+  const hit=P_FORBIDDEN_CLAIMS.filter(w=>t.indexOf(String(w).toLowerCase())>=0);
+  return {ok:hit.length===0, offending:hit};
+}
+
+const P_STATUS={
+  IDLE:  {key:'IDLE',   tone:'neutral',
+          ar:'لم يُحفَظ بعد على هذا الجهاز',
+          en:'Not yet saved on this device'},
+  SAVING:{key:'SAVING', tone:'busy',
+          ar:'جارٍ الحفظ محلياً على هذا الجهاز…',
+          en:'Saving locally on this device…'},
+  SAVED: {key:'SAVED',  tone:'ok',
+          ar:'محفوظ محلياً على هذا الجهاز',
+          en:'saved locally on this device'},
+  FAILED:{key:'FAILED', tone:'error',
+          ar:'تعذّر الحفظ المحلي — نسختك الأخيرة السليمة ما زالت موجودة',
+          en:'Local save failed — your last good copy is still intact'},
+  RECOVERED:{key:'RECOVERED', tone:'ok',
+          ar:'استُعيد آخر عمل محفوظ محلياً على هذا الجهاز',
+          en:'Recovered the last work saved locally on this device'},
+  QUOTA: {key:'QUOTA',  tone:'error',
+          ar:'مساحة التخزين المحلية ممتلئة — لم يُكتب سجلّ جديد، والسجلّ السليم الأخير لم يُمَس',
+          en:'Local storage is full — no new record was written and the last good record was not touched'}
+};
+function statusLabel(key){
+  const s=P_STATUS[key]||P_STATUS.IDLE;
+  return {key:s.key, tone:s.tone, ar:s.ar, en:s.en};
+}
+
+function encode(project, opts){
+  const o=opts||{};
+  let payload=null;
+  try{ payload=JSON.stringify(project===undefined?null:project); }
+  catch(e){ payload=null; }
+  if(typeof payload!=='string')
+    return {ok:false, code:P_CODES.NOT_SERIALISABLE, record:null};
+  const model=(project&&typeof project==='object'&&project.model!==undefined)
+    ? project.model : project;
+  const now=(typeof o.now==='number'&&isFinite(o.now))?o.now:0;
+  const ph=_hash64(payload);
+  const rec={
+    contract:P_CONTRACT,
+    schema_version:(typeof o.schema_version==='number')?o.schema_version:P_SCHEMA,
+    record_id:o.record_id||('rec_'+now+'_'+ph.slice(0,10)),
+    project_id:String((project&&project.project_id)||o.project_id||'default'),
+    revision_id:(project&&(project.current_revision||project.revision_id))
+                ||o.revision_id||null,
+    model_hash:_hash64(_canon(model)),
+    saved_at_ms:now,
+    origin:o.origin||'AUTOSAVE',
+    payload_bytes:payload.length,
+    payload_hash:ph,
+    payload:payload
+  };
+  return {ok:true, code:P_CODES.OK, record:rec};
+}
+
+function validateRecord(rec){
+  const out={valid:false, usable:false, code:'', reasons:[],
+             schema_relation:'UNKNOWN', migrated:false,
+             record_id:(rec&&rec.record_id)||null};
+  if(!rec||typeof rec!=='object'||Array.isArray(rec)){
+    out.code=P_CODES.NOT_OBJECT; out.reasons.push('record is not a plain object');
+    return out; }
+  if(rec.contract!==P_CONTRACT){
+    out.code=P_CODES.BAD_CONTRACT;
+    out.reasons.push('contract is '+JSON.stringify(rec.contract)
+                     +', expected '+JSON.stringify(P_CONTRACT));
+    return out; }
+  const need=['schema_version','record_id','model_hash','saved_at_ms',
+              'payload','payload_bytes','payload_hash'];
+  const miss=need.filter(k=>rec[k]===undefined||rec[k]===null);
+  if(miss.length){
+    out.code=P_CODES.MISSING; out.reasons.push('missing field(s): '+miss.join(', '));
+    return out; }
+  const sv=rec.schema_version;
+  if(typeof sv!=='number'||!isFinite(sv)){
+    out.code=P_CODES.MISSING; out.reasons.push('schema_version is not a number');
+    return out; }
+  out.schema_relation = (sv===P_SCHEMA)?'CURRENT':(sv>P_SCHEMA?'NEWER':'OLDER');
+  if(typeof rec.payload!=='string'){
+    out.code=P_CODES.PAYLOAD_NOT_JSON; out.reasons.push('payload is not a string');
+    return out; }
+  if(typeof rec.payload_bytes!=='number'||rec.payload.length!==rec.payload_bytes){
+    out.code=P_CODES.TRUNCATED;
+    out.reasons.push('declared '+rec.payload_bytes+' characters, found '
+                     +rec.payload.length);
+    return out; }
+  if(_hash64(rec.payload)!==rec.payload_hash){
+    out.code=P_CODES.HASH_MISMATCH; out.reasons.push('payload hash does not match');
+    return out; }
+  let obj=null;
+  try{ obj=JSON.parse(rec.payload); }
+  catch(e){ out.code=P_CODES.PAYLOAD_NOT_JSON;
+            out.reasons.push('payload is not valid JSON'); return out; }
+  const model=(obj&&typeof obj==='object'&&obj.model!==undefined)?obj.model:obj;
+  if(_hash64(_canon(model))!==rec.model_hash){
+    out.code=P_CODES.HASH_MISMATCH; out.reasons.push('model hash does not match');
+    return out; }
+  /* البنية سليمة. يبقى سؤال المخطّط. */
+  if(out.schema_relation==='NEWER'){
+    out.valid=true; out.usable=false; out.code=P_CODES.SCHEMA_NEWER;
+    out.reasons.push('written by a newer build (schema '+sv+' > '+P_SCHEMA
+                     +') — preserved, never overwritten, never guessed at');
+    return out; }
+  if(out.schema_relation==='OLDER'){
+    if(sv<P_MIN_SCHEMA){
+      out.valid=true; out.usable=false; out.code=P_CODES.SCHEMA_TOO_OLD;
+      out.reasons.push('schema '+sv+' is older than the oldest migratable '
+                       +P_MIN_SCHEMA+' — preserved for manual export');
+      return out; }
+    out.valid=true; out.usable=true; out.migrated=true; out.code=P_CODES.SCHEMA_OLDER;
+    out.reasons.push('schema '+sv+' will be migrated forward to '+P_SCHEMA);
+    return out; }
+  out.valid=true; out.usable=true; out.code=P_CODES.OK;
+  return out;
+}
+
+function migrateProject(obj, fromSchema){
+  const p=(obj&&typeof obj==='object'&&!Array.isArray(obj))?obj:{model:obj};
+  p.schema_migrated_from=fromSchema;
+  p.schema_version=P_SCHEMA;
+  return p;
+}
+
+function decode(rec){
+  const v=validateRecord(rec);
+  const out={ok:false, code:v.code, project:null, migrated:false,
+             schema_relation:v.schema_relation, reasons:v.reasons.slice(),
+             record_id:v.record_id,
+             revision_id:(rec&&rec.revision_id)||null,
+             model_hash:(rec&&rec.model_hash)||null,
+             saved_at_ms:(rec&&typeof rec.saved_at_ms==='number')?rec.saved_at_ms:null,
+             preserve:(v.code===P_CODES.SCHEMA_NEWER
+                       ||v.code===P_CODES.SCHEMA_TOO_OLD)};
+  if(!v.usable) return out;
+  let obj=null;
+  try{ obj=JSON.parse(rec.payload); }
+  catch(e){ out.code=P_CODES.PAYLOAD_NOT_JSON; return out; }
+  if(v.migrated){ obj=migrateProject(obj, rec.schema_version); out.migrated=true; }
+  out.ok=true; out.code=P_CODES.OK; out.project=obj;
+  return out;
+}
+
+/* يختار السجلّ الذي يُستأنَف منه العمل بعد إعادة التحميل.
+   قاعدتان لا تُكسران:
+     · لا يُعاد سجلّ غير صالح أبداً — الفساد لا يُقدَّم على أنّه عمل المستخدم.
+     · لا يُحجَر على شيء إن لم يبقَ سجلّ سليم واحد — لا نُتلف آخر ما بقي. */
+function chooseRecovery(records){
+  const out={chosen:null, chosen_id:null, code:P_CODES.NO_RECORDS,
+             considered:0, accepted:[], rejected:[], preserve:[], quarantine:[],
+             migrated:false, note:''};
+  const list=Array.isArray(records)?records:[];
+  out.considered=list.length;
+  if(!list.length){ out.note='no local record exists yet'; return out; }
+  list.forEach(r=>{
+    const v=validateRecord(r);
+    const id=(r&&r.record_id)||null;
+    if(v.usable){
+      out.accepted.push({record_id:id, code:v.code, migrated:v.migrated,
+        saved_at_ms:(r&&typeof r.saved_at_ms==='number')?r.saved_at_ms:0,
+        record:r});
+    }else{
+      out.rejected.push({record_id:id, code:v.code, reasons:v.reasons.slice()});
+      if(v.code===P_CODES.SCHEMA_NEWER||v.code===P_CODES.SCHEMA_TOO_OLD)
+        out.preserve.push(id);
+      else out.quarantine.push(id);
+    }
+  });
+  if(!out.accepted.length){
+    out.code=P_CODES.NONE_USABLE;
+    /* لا سجلّ سليم ⇒ لا نحجر على أي شيء ولا نحذف: ما بقي هو كلّ ما بقي. */
+    out.quarantine=[];
+    out.note='no usable record; every remaining record is preserved untouched '
+            +'so it can still be exported by hand';
+    return out; }
+  out.accepted.sort((a,b)=>{
+    if(b.saved_at_ms!==a.saved_at_ms) return b.saved_at_ms-a.saved_at_ms;
+    return a.record_id<b.record_id?1:(a.record_id>b.record_id?-1:0); });
+  const best=out.accepted[0];
+  out.chosen=best.record; out.chosen_id=best.record_id;
+  out.migrated=!!best.migrated;
+  out.code=best.migrated?P_CODES.SCHEMA_OLDER:P_CODES.OK;
+  return out;
+}
+
+function classifyStorageError(err){
+  if(!err) return 'STORAGE_UNKNOWN';
+  const n=String(err.name||''), m=String(err.message||''), c=err.code;
+  if(n==='QuotaExceededError'||n==='NS_ERROR_DOM_QUOTA_REACHED'
+     ||c===22||c===1014||/quota|exceeded the quota/i.test(m))
+    return 'STORAGE_QUOTA';
+  if(n==='InvalidStateError')  return 'STORAGE_UNAVAILABLE';
+  if(n==='AbortError')         return 'STORAGE_ABORTED';
+  if(n==='VersionError')       return 'STORAGE_VERSION';
+  if(n==='SecurityError')      return 'STORAGE_BLOCKED';
+  return 'STORAGE_UNKNOWN';
+}
+
+function _pState(s){
+  const st=s||{};
+  return {pointer:st.pointer||null,
+          records:Array.isArray(st.records)?st.records.slice():[],
+          last_good:st.last_good||null,
+          last_error:st.last_error||null,
+          last_saved_at_ms:(typeof st.last_saved_at_ms==='number')
+                            ?st.last_saved_at_ms:null};
+}
+/* خطّة الكتابة المعاملاتية: اكتب سجلاً *جديداً*، تحقّق منه، ثمّ اقلب المؤشّر.
+   لا يُكتب فوق النسخة السليمة الوحيدة أبداً؛ قلب المؤشّر هو آخر خطوة. */
+function planWrite(state, project, opts){
+  const s=_pState(state);
+  const enc=encode(project, opts);
+  if(!enc.ok) return {ok:false, code:enc.code, plan:null};
+  const id=enc.record.record_id;
+  const keep=[id].concat(s.records.filter(x=>x!==id)).slice(0,P_KEEP);
+  if(s.pointer&&keep.indexOf(s.pointer)<0) keep.push(s.pointer);
+  const prune=s.records.filter(x=>keep.indexOf(x)<0);
+  return {ok:true, code:P_CODES.OK, plan:{
+    new_record:enc.record,
+    new_record_id:id,
+    previous_pointer:s.pointer,
+    steps:['PUT_NEW_RECORD','READ_BACK_AND_VALIDATE','FLIP_POINTER','PRUNE_OLD'],
+    pointer_flip_is_last:true,
+    overwrites_existing_record:false,
+    keep:keep, prune:prune}};
+}
+function applyWriteResult(state, plan, result){
+  const s=_pState(state);
+  const r=result||{};
+  if(!plan||!plan.new_record)
+    return {ok:false, code:'NO_PLAN', status:'FAILED', state:s, pointer_moved:false,
+            last_good_survived:true};
+  if(r.ok===true){
+    const id=plan.new_record_id;
+    const records=[id].concat(s.records.filter(x=>x!==id&&plan.prune.indexOf(x)<0));
+    return {ok:true, code:'SAVED', status:'SAVED', pointer_moved:true,
+      last_good_survived:true,
+      state:{pointer:id, records:records, last_good:id, last_error:null,
+             last_saved_at_ms:plan.new_record.saved_at_ms}};
+  }
+  const cls=classifyStorageError(r.error);
+  /* فشل الكتابة ⇒ المؤشّر لا يتحرّك، والسجلّ السليم السابق يبقى كما هو. */
+  return {ok:false, code:cls,
+    status:(cls==='STORAGE_QUOTA')?'QUOTA':'FAILED',
+    pointer_moved:false, last_good_survived:true,
+    state:{pointer:s.pointer, records:s.records.slice(), last_good:s.last_good,
+           last_error:cls, last_saved_at_ms:s.last_saved_at_ms}};
+}
+
+/* نسخة احتياطية يُنزّلها المستخدم — ملفّ محلي، لا رفع ولا خادم. */
+const B_CONTRACT='acs-project-backup/1';
+function exportBackup(project, opts){
+  const o=opts||{};
+  const enc=encode(project,{now:o.now||0, origin:'MANUAL_EXPORT',
+                            project_id:o.project_id});
+  if(!enc.ok) return {ok:false, code:enc.code, file:null};
+  const env={contract:B_CONTRACT, schema_version:P_SCHEMA,
+             exported_at_ms:o.now||0,
+             storage:'LOCAL_FILE_DOWNLOAD',
+             storage_note_ar:'ملفّ يُنزَّل إلى جهازك — لا يُرفع إلى أي خادم.',
+             storage_note_en:'A file downloaded to your device — nothing is uploaded.',
+             record:enc.record};
+  const text=JSON.stringify(env,null,1);
+  return {ok:true, code:P_CODES.OK, envelope:env, file:{
+    filename:'ACS-project-backup-'+(enc.record.model_hash.slice(0,8))+'.json',
+    mime:'application/json;charset=utf-8', text:text, bytes:text.length}};
+}
+function restoreBackup(text){
+  let env=null;
+  try{ env=JSON.parse(String(text)); }
+  catch(e){ return {ok:false, code:'BACKUP_NOT_JSON', project:null, reasons:
+    ['the selected file is not valid JSON']}; }
+  if(!env||typeof env!=='object'||env.contract!==B_CONTRACT)
+    return {ok:false, code:'BACKUP_BAD_CONTRACT', project:null, reasons:
+      ['the selected file is not an ACS project backup']};
+  const d=decode(env.record);
+  return {ok:d.ok, code:d.ok?P_CODES.OK:d.code, project:d.project,
+          migrated:d.migrated, schema_relation:d.schema_relation,
+          reasons:d.reasons.slice()};
+}
+
+const persistence={
+  CONTRACT:P_CONTRACT, SCHEMA_VERSION:P_SCHEMA, MIN_SCHEMA_VERSION:P_MIN_SCHEMA,
+  KEEP_RECORDS:P_KEEP, CODES:P_CODES, STATUS:P_STATUS,
+  FORBIDDEN_CLOUD_CLAIMS:P_FORBIDDEN_CLAIMS,
+  encode:encode, decode:decode, validateRecord:validateRecord,
+  chooseRecovery:chooseRecovery, migrateProject:migrateProject,
+  classifyStorageError:classifyStorageError,
+  planWrite:planWrite, applyWriteResult:applyWriteResult,
+  statusLabel:statusLabel, assertNoCloudClaim:assertNoCloudClaim,
+  exportBackup:exportBackup, restoreBackup:restoreBackup,
+  hash:_hash64, canonical:_canon
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   2 · جدول حالات الخطأ الظاهرة للمستخدم (Task 3)
+   لكلّ صنف: رمز، نصّ عربي وإنجليزي، قابلية الإعادة، أمان الإعادة، إجراء.
+   لا أثر مكدّس، ولا رسالة خام من المتصفّح، ولا صنف بلا نصّ للمستخدم.
+   ══════════════════════════════════════════════════════════════════════ */
+const E=function(code,ar,en,retryable,retrySafe,action,extra){
+  const o={code:code, ar:ar, en:en, retryable:!!retryable,
+           retry_safe:!!retrySafe, action:action,
+           request_id_required:true, shows_stack_trace:false};
+  if(extra) Object.keys(extra).forEach(k=>{ o[k]=extra[k]; });
+  return o; };
+
+const errorStates={
+  NETWORK_OFFLINE: E('NETWORK_OFFLINE',
+    'لا يوجد اتصال بالإنترنت على هذا الجهاز. لم يُرسَل الطلب أصلاً.',
+    'This device is offline. The request was never sent.',
+    true, true, 'RETRY_WHEN_ONLINE'),
+  NETWORK_DNS: E('NETWORK_DNS',
+    'تعذّر الوصول إلى مضيف الخادم (تعذّر تحليل الاسم، أو رُفض الاتصال، أو منعته سياسة CORS). لم يصل الطلب إلى الخادم.',
+    'The server host could not be reached (name resolution, refused connection, or CORS). The request did not reach the server.',
+    true, true, 'RETRY'),
+  TIMEOUT: E('TIMEOUT',
+    'انتهت المهلة قبل ردّ الخادم. قد يكون الطلب قد نُفِّذ على الخادم رغم ذلك.',
+    'The request timed out before the server answered. It may still have been processed.',
+    true, false, 'RETRY_WITH_IDEMPOTENCY_KEY'),
+  HTTP_429: E('HTTP_429',
+    'تجاوزت حدّ الطلبات المسموح. رُفض الطلب قبل تنفيذ أي عمل.',
+    'You exceeded the request limit. The request was refused before any work was done.',
+    true, true, 'RETRY_AFTER_WAIT', {honours_retry_after:true}),
+  HTTP_4XX_VALIDATION: E('HTTP_4XX_VALIDATION',
+    'رفض الخادم محتوى الطلب. تكرار الطلب نفسه سيُرفض بالنتيجة نفسها — عدّل المُدخَل.',
+    'The server rejected the request content. Repeating it unchanged will fail identically — change the input.',
+    false, false, 'FIX_INPUT'),
+  HTTP_5XX: E('HTTP_5XX',
+    'عطل داخلي في الخادم. قد يكون الطلب قد نُفِّذ جزئياً.',
+    'An internal server fault. The request may have been partially processed.',
+    true, false, 'RETRY_WITH_IDEMPOTENCY_KEY'),
+  INVALID_JSON: E('INVALID_JSON',
+    'ردّ الخادم ليس JSON صالحاً. هذا عطل في الخادم لا في مُدخَلك، وقد يكون العمل قد نُفِّذ.',
+    'The server reply was not valid JSON. That is a server fault, not an input fault, and the work may already have run.',
+    true, false, 'RETRY_WITH_IDEMPOTENCY_KEY'),
+  PROVIDER_UNAVAILABLE: E('PROVIDER_UNAVAILABLE',
+    'مزوّد النموذج اللغوي غير متاح أو مُحمَّل حالياً. قد يكون النداء قد احتُسِب عليه.',
+    'The language-model provider is unavailable or overloaded. The call may already have been counted.',
+    true, false, 'RETRY_WITH_IDEMPOTENCY_KEY'),
+  FILE_REJECTED: E('FILE_REJECTED',
+    'رُفض الملفّ المرفوع (النوع أو الحجم أو المحتوى). اختر ملفاً آخر.',
+    'The uploaded file was rejected (type, size or content). Choose a different file.',
+    false, false, 'CHOOSE_ANOTHER_FILE'),
+  WEBGL_UNSUPPORTED: E('WEBGL_UNSUPPORTED',
+    'هذا المتصفّح أو الجهاز لا يدعم العرض ثلاثي الأبعاد. بيانات المشروع والبديل النصّي تبقى صالحة للاستعمال.',
+    'This browser or device does not support 3D rendering. The project data and the text alternative remain usable.',
+    false, false, 'USE_ACCESSIBLE_ALTERNATIVE'),
+  WEBGL_CONTEXT_LOST: E('WEBGL_CONTEXT_LOST',
+    'فقد المتصفّح سياق العرض ثلاثي الأبعاد. الاستعادة محلية بالكامل ولا تمسّ الخادم ولا مشروعك.',
+    'The browser lost the 3D rendering context. Recovery is entirely local and touches neither the server nor your project.',
+    true, true, 'RESTORE_CONTEXT'),
+  BLACK_VIEWPORT: E('BLACK_VIEWPORT',
+    'اكتُشِف مشهد أسود: النموذج مُحمَّل لكن لا شيء ظاهر. أُعيد ضبط الكاميرا محلياً — لا يُرسَل شيء.',
+    'A black viewport was detected: the model is loaded but nothing is visible. The camera is reset locally — nothing is sent.',
+    true, true, 'RESET_CAMERA'),
+  STORAGE_QUOTA: E('STORAGE_QUOTA',
+    'مساحة التخزين المحلية ممتلئة. لم يُكتب سجلّ جديد، ونسختك السليمة الأخيرة لم تُمَس. صدّر نسخة احتياطية ثمّ امسح البيانات المحلية.',
+    'Local storage is full. No new record was written and your last good copy was not touched. Export a backup, then clear local data.',
+    false, false, 'EXPORT_THEN_CLEAR_LOCAL_DATA'),
+  STALE_REVISION: E('STALE_REVISION',
+    'تغيّر المشروع منذ أن بدأت هذا التعديل. لم يُودَع شيء. راجِع المراجعة الأحدث ثمّ أعِد المحاولة على أساسها.',
+    'The project changed after you started this edit. Nothing was committed. Review the newer revision and re-base your edit.',
+    false, false, 'RELOAD_LATEST_REVISION', {http_status:409})
+};
+
+/* العمليات المعلنة: هل هي مُتماثلة (idempotent) وهل تحمل مفتاح تكرار؟ */
+const operations={
+  HEALTH:  {idempotent:true,  idempotency_key:false, billable:false},
+  GENERATE:{idempotent:false, idempotency_key:true,  billable:true},
+  EDIT:    {idempotent:false, idempotency_key:true,  billable:true},
+  UNDERSTAND_IMAGE:{idempotent:false, idempotency_key:true, billable:true},
+  UNDERSTAND_PDF:  {idempotent:false, idempotency_key:true, billable:true},
+  COMMIT:  {idempotent:false, idempotency_key:true,  billable:false},
+  EXPORT:  {idempotent:true,  idempotency_key:false, billable:false},
+  LOCAL_SAVE:{idempotent:true, idempotency_key:false, billable:false}
+};
+
+/* خريطة رموز الخادم → أصناف العرض. يجب أن تكون *كلّية* على
+   acs_api_errors.CODES: كلّ رمز يصل إلى حالة يراها المستخدم. */
+const codeMap={
+  ACS_BAD_REQUEST:'HTTP_4XX_VALIDATION',
+  ACS_VALIDATION_FAILED:'HTTP_4XX_VALIDATION',
+  ACS_PAYLOAD_TOO_LARGE:'FILE_REJECTED',
+  ACS_UNPROCESSABLE:'HTTP_4XX_VALIDATION',
+  ACS_NOT_FOUND:'HTTP_4XX_VALIDATION',
+  ACS_METHOD_NOT_ALLOWED:'HTTP_4XX_VALIDATION',
+  ACS_RATE_LIMITED:'HTTP_429',
+  ACS_TIMEOUT:'TIMEOUT',
+  ACS_NOT_CONFIGURED:'PROVIDER_UNAVAILABLE',
+  ACS_INTERNAL:'HTTP_5XX',
+  ACS_UPSTREAM_NOT_CONFIGURED:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_AUTH:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_PERMISSION:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_MODEL_REJECTED:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_BAD_REQUEST:'HTTP_4XX_VALIDATION',
+  ACS_UPSTREAM_RATE_LIMIT:'HTTP_429',
+  ACS_UPSTREAM_OVERLOADED:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_UNAVAILABLE:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_TIMEOUT:'TIMEOUT',
+  ACS_UPSTREAM_CONNECTION:'PROVIDER_UNAVAILABLE',
+  ACS_UPSTREAM_EMPTY_RESPONSE:'INVALID_JSON',
+  ACS_UPSTREAM_INVALID_JSON:'INVALID_JSON',
+  ACS_UPSTREAM_TRAILING_JSON:'INVALID_JSON',
+  ACS_UPSTREAM_TRUNCATED:'INVALID_JSON',
+  ACS_UPSTREAM_REFUSED:'HTTP_4XX_VALIDATION',
+  ACS_UPSTREAM_UNKNOWN:'HTTP_5XX'
+};
+/* أصناف طبقة النقل في acsFetchJSON → أصناف العرض نفسها */
+const netMap={
+  NETWORK_OFFLINE:'NETWORK_OFFLINE', NETWORK_DNS:'NETWORK_DNS',
+  TIMEOUT:'TIMEOUT', HTTP_429:'HTTP_429', HTTP_4XX:'HTTP_4XX_VALIDATION',
+  HTTP_5XX:'HTTP_5XX', INVALID_JSON:'INVALID_JSON',
+  NOT_CONFIGURED:'PROVIDER_UNAVAILABLE', VALID_API_ERROR:'HTTP_5XX'
+};
+
+/* يحلّ نتيجة نداء واحدة إلى حالة مستخدم واحدة. لا يعيد null أبداً. */
+function resolveErrorState(res){
+  const r=res||{};
+  let cls=null;
+  if(r.class && errorStates[r.class]) cls=r.class;
+  if(!cls && r.code && codeMap[r.code]) cls=codeMap[r.code];
+  if(!cls && r.status && netMap[r.status]) cls=netMap[r.status];
+  if(!cls && typeof r.http==='number' && r.http){
+    cls = r.http===429?'HTTP_429' : (r.http>=500?'HTTP_5XX':'HTTP_4XX_VALIDATION'); }
+  if(!cls) cls='HTTP_5XX';
+  const base=errorStates[cls];
+  const op=r.operation||'GENERATE';
+  const opd=operations[op]||operations.GENERATE;
+  const retry_safe_here = base.retry_safe && opd.idempotent===true;
+  const key_makes_safe  = !!(opd.idempotency_key && r.idempotency_key);
+  return {
+    class:cls, code:base.code, ar:base.ar, en:base.en,
+    retryable:base.retryable, retry_safe:base.retry_safe,
+    action:base.action, operation:op,
+    operation_idempotent:opd.idempotent===true,
+    retry_safe_for_operation:retry_safe_here,
+    /* الزرّ يظهر فقط حين تكون الإعادة آمنة فعلاً: إمّا العملية متماثلة،
+       أو نُعيد إرسالها بمفتاح تكرار يمنع الازدواج على الخادم. */
+    show_retry_button: base.retryable && (retry_safe_here||key_makes_safe),
+    request_id: String(r.request_id||''),
+    http: (typeof r.http==='number')?r.http:0,
+    retry_after: (typeof r.retry_after==='number')?r.retry_after:0,
+    /* لا أثر مكدّس ولا رسالة خام: النصّ المعروض هو النصّ المعلن وحده. */
+    shows_stack_trace:false
+  };
+}
+function errorStateCoverage(codes){
+  const list=Array.isArray(codes)?codes:Object.keys(codeMap);
+  const missing=list.filter(c=>!codeMap[c]||!errorStates[codeMap[c]]);
+  return {total:list.length, missing:missing, complete:missing.length===0};
+}
+/* علامات أثر المكدّس التي لا يجوز أن تظهر لمستخدم */
+const STACK_MARKERS=['\n    at ','Traceback (most recent call last)',
+  '.js:','@http','ReferenceError','TypeError:','stack trace',
+  'File "','Uncaught '];
+function containsStackTrace(text){
+  const t=String(text||'');
+  return STACK_MARKERS.some(m=>t.indexOf(m)>=0);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   3 · التزامن وسلامة النقر المزدوج (Task 4)
+   ══════════════════════════════════════════════════════════════════════ */
+/* مفتاح التكرار يُشتقّ من *نيّة المستخدم* لا من محاولة الإرسال: نفس النيّة
+   عبر كل إعادات المحاولة ⇒ نفس المفتاح ⇒ لا ازدواج في الفوترة ولا في الإيداع. */
+function intentKey(intent){
+  const i=intent||{};
+  const material={op:String(i.op||''), project_id:String(i.project_id||'default'),
+    base_revision:(i.base_revision===undefined||i.base_revision===null)
+      ?null:String(i.base_revision),
+    payload_hash:String(i.payload_hash||''),
+    intent_seq:(typeof i.intent_seq==='number')?i.intent_seq:0};
+  return 'acs-'+String(material.op||'OP').toLowerCase()+'-'+_hash64(_canon(material));
+}
+function payloadHash(payload){
+  if(typeof payload==='string') return _hash64(payload);
+  return _hash64(_canon(payload));
+}
+function _cState(s){
+  const st=s||{};
+  return {inflight:Object.assign({}, st.inflight||{}),
+          intent_seq:Object.assign({}, st.intent_seq||{}),
+          keys:Object.assign({}, st.keys||{}),
+          completed:Object.assign({}, st.completed||{})};
+}
+/* نيّة جديدة: تُزاد فقط حين تتغيّر الحمولة أو حين اكتملت نيّة سابقة.
+   نقرتان متتاليتان بلا تغيير ⇒ نفس المفتاح ⇒ لا طلب ثانٍ يُفوتَر. */
+function beginIntent(state, req){
+  const s=_cState(state);
+  const r=req||{};
+  const op=String(r.op||'GENERATE');
+  const ph=String(r.payload_hash||'');
+  const slot=op+'|'+String(r.project_id||'default');
+  const prev=s.keys[slot]||null;
+  let seq=(typeof s.intent_seq[slot]==='number')?s.intent_seq[slot]:0;
+  const changed = !prev || prev.payload_hash!==ph
+    || String(prev.base_revision)!==String(r.base_revision===undefined?null:r.base_revision)
+    || prev.completed===true;
+  if(changed) seq=seq+1;
+  const key=intentKey({op:op, project_id:r.project_id, base_revision:r.base_revision,
+                       payload_hash:ph, intent_seq:seq});
+  if(s.inflight[slot]){
+    return {allowed:false, code:'REQUEST_ALREADY_IN_FLIGHT', reused_key:true,
+      idempotency_key:s.inflight[slot].idempotency_key, state:s,
+      ar:'الطلب قيد التنفيذ بالفعل — لن يُرسَل طلب ثانٍ ولن تُحتسب عملية ثانية.',
+      en:'A request is already in flight — no second request is sent and no second operation is billed.'};
+  }
+  s.intent_seq[slot]=seq;
+  s.keys[slot]={payload_hash:ph,
+    base_revision:(r.base_revision===undefined?null:r.base_revision),
+    idempotency_key:key, intent_seq:seq, completed:false};
+  s.inflight[slot]={idempotency_key:key, started_at_ms:r.now||0};
+  return {allowed:true, code:'STARTED', reused_key:!changed,
+    idempotency_key:key, intent_seq:seq, slot:slot, state:s,
+    headers:{'Idempotency-Key':key},
+    ar:'جارٍ التنفيذ…', en:'Working…'};
+}
+function endIntent(state, req, outcome){
+  const s=_cState(state);
+  const r=req||{};
+  const slot=String(r.op||'GENERATE')+'|'+String(r.project_id||'default');
+  delete s.inflight[slot];
+  if(s.keys[slot] && outcome && outcome.ok===true){
+    s.keys[slot].completed=true;
+    s.completed[s.keys[slot].idempotency_key]=true;
+  }
+  return {state:s, code:(outcome&&outcome.ok)?'COMPLETED':'ENDED', slot:slot};
+}
+function isInFlight(state, op, projectId){
+  const s=_cState(state);
+  return !!s.inflight[String(op)+'|'+String(projectId||'default')];
+}
+/* حارس المراجعة القاعدية: الإيداع على أساس قديم يُرفض برمز واحد ثابت. */
+function checkBaseRevision(currentRevision, baseRevision){
+  const cur=(currentRevision===undefined||currentRevision===null)
+    ?null:String(currentRevision);
+  const base=(baseRevision===undefined||baseRevision===null)
+    ?null:String(baseRevision);
+  if(base===null)
+    return {ok:false, code:'MISSING_BASE_REVISION', http_status:400,
+      ar:'لم تُذكر المراجعة التي بُني عليها هذا التعديل.',
+      en:'The revision this edit was based on was not stated.'};
+  if(cur!==null && cur!==base)
+    return {ok:false, code:'STALE_BASE_REVISION', http_status:409,
+      current_revision:cur, base_revision:base,
+      ar:errorStates.STALE_REVISION.ar, en:errorStates.STALE_REVISION.en};
+  return {ok:true, code:'BASE_REVISION_CURRENT', http_status:200,
+    current_revision:cur, base_revision:base};
+}
+
+/* تعدّد الألسنة: مُخفِّض نقيّ. المالك محدَّد حتمياً وليس سباقاً. */
+const TAB_TTL_MS=15000;
+function _tState(s){
+  const st=s||{};
+  return {self_id:st.self_id||null,
+          tabs:JSON.parse(JSON.stringify(st.tabs||{}))};
+}
+function tabsReduce(state, msg, nowMs){
+  const s=_tState(state);
+  const now=(typeof nowMs==='number')?nowMs:0;
+  const m=msg||{};
+  if(m.type==='SELF'){ s.self_id=String(m.tab_id); }
+  if(m.type==='HELLO'||m.type==='HEARTBEAT'||m.type==='CLAIM'){
+    const id=String(m.tab_id||'');
+    if(id){
+      const prev=s.tabs[id]||{};
+      s.tabs[id]={tab_id:id, project_id:String(m.project_id||'default'),
+        claimed_at_ms:(typeof prev.claimed_at_ms==='number')
+          ?prev.claimed_at_ms
+          :((typeof m.claimed_at_ms==='number')?m.claimed_at_ms:now),
+        seen_at_ms:now};
+    }
+  }
+  if(m.type==='BYE'){ delete s.tabs[String(m.tab_id||'')]; }
+  Object.keys(s.tabs).forEach(id=>{
+    if(now - (s.tabs[id].seen_at_ms||0) > TAB_TTL_MS) delete s.tabs[id]; });
+  return s;
+}
+function tabOwner(state, projectId, nowMs){
+  const s=_tState(state);
+  const now=(typeof nowMs==='number')?nowMs:0;
+  const pid=String(projectId||'default');
+  const live=Object.keys(s.tabs).map(k=>s.tabs[k])
+    .filter(t=>t.project_id===pid && (now-(t.seen_at_ms||0))<=TAB_TTL_MS)
+    .sort((a,b)=>{
+      if(a.claimed_at_ms!==b.claimed_at_ms) return a.claimed_at_ms-b.claimed_at_ms;
+      return a.tab_id<b.tab_id?-1:(a.tab_id>b.tab_id?1:0); });
+  if(!live.length)
+    return {owner_id:null, is_self:false, tabs:0, code:'NO_TAB',
+      ar:'لا لسان مسجَّل لهذا المشروع.', en:'No tab is registered for this project.'};
+  const owner=live[0];
+  const isSelf=(s.self_id!==null && owner.tab_id===String(s.self_id));
+  return {owner_id:owner.tab_id, is_self:isSelf, tabs:live.length,
+    code:isSelf?'THIS_TAB_OWNS':'ANOTHER_TAB_OWNS',
+    ar:isSelf
+      ? ('هذا اللسان هو صاحب المشروع'
+         +(live.length>1?(' — و'+(live.length-1)+' لسان آخر مفتوح للقراءة فقط.'):'.'))
+      : ('لسان آخر ('+owner.tab_id+') يملك هذا المشروع الآن — التحرير هنا معطّل '
+         +'حتى تُغلقه أو تستلم الملكية صراحةً.'),
+    en:isSelf
+      ? ('This tab owns the project'
+         +(live.length>1?(' — '+(live.length-1)+' other tab(s) are read-only.'):'.'))
+      : ('Another tab ('+owner.tab_id+') currently owns this project — editing here '
+         +'is disabled until you close it or explicitly take over.')};
+}
+
+const concurrency={
+  intentKey:intentKey, payloadHash:payloadHash,
+  beginIntent:beginIntent, endIntent:endIntent, isInFlight:isInFlight,
+  checkBaseRevision:checkBaseRevision,
+  tabsReduce:tabsReduce, tabOwner:tabOwner, TAB_TTL_MS:TAB_TTL_MS,
+  operations:operations
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   4 · F-16 — إفصاح القدرات: المعلَن مقابل المنفَّذ
+   ══════════════════════════════════════════════════════════════════════ */
+const NOT_SUPPORTED_LABEL={
+  ar:'غير مدعوم بعد', en:'Not yet supported',
+  both:'غير مدعوم بعد / Not yet supported'};
+
+function capabilityGap(declared, implemented){
+  const d=Array.isArray(declared)?declared:[];
+  const i=Array.isArray(implemented)?implemented:[];
+  return d.filter(x=>i.indexOf(x)<0);
+}
+/* يبني جدول الإفصاح من مواصفة التأليف نفسها — لا قوائم مكرّرة يدوياً. */
+function capabilityDisclosure(spec){
+  const s=spec||{};
+  const cmdGap=capabilityGap(s.command_types, s.implemented_command_types);
+  const snapGap=capabilityGap(s.snap_types, s.implemented_snap_types);
+  const gizGap=capabilityGap(s.gizmo_operations, s.implemented_gizmo_operations);
+  const why={
+    COMMAND:{code:'COMMAND_NOT_IMPLEMENTED',
+      ar:'أُعلِن هذا الأمر في مفردات المحرّك ليُذكر مالكه الهندسي صراحةً، ولم يُنفَّذ في هذه المرحلة. إرساله يُرفَض برمز COMMAND_NOT_IMPLEMENTED ولا يُنفَّذ صامتاً ولا يُحوَّل إلى تعديل معماري آخر.',
+      en:'This command is declared in the engine vocabulary so its engineering ownership is stated, but it is not implemented in this phase. Submitting it is refused with COMMAND_NOT_IMPLEMENTED; it is never silently ignored and never rewritten into a different edit.'},
+    SNAP:{code:'SNAP_TYPE_NOT_IMPLEMENTED',
+      ar:'نوع الالتقاط هذا معلَن في المواصفة ولم يُنفَّذ بعد. المنفَّذ هو NONE وGRID فقط.',
+      en:'This snap type is declared in the specification and is not implemented yet. Only NONE and GRID are implemented.'},
+    GIZMO:{code:'GIZMO_OPERATION_NOT_IMPLEMENTED',
+      ar:'عملية المقبض هذه معلَنة ولم تُنفَّذ بعد؛ المنفَّذ هو TRANSLATE وحده لأنّ التدوير والتحجيم لا يحملان معنى هندسياً لكل عنصر في هذه المرحلة.',
+      en:'This gizmo operation is declared and not implemented yet; only TRANSLATE is implemented, because rotate and scale do not carry a domain meaning for every element in this phase.'}
+  };
+  const entry=(kind,value)=>({
+    kind:kind, value:value, implemented:false,
+    label_ar:NOT_SUPPORTED_LABEL.ar, label_en:NOT_SUPPORTED_LABEL.en,
+    label:NOT_SUPPORTED_LABEL.both,
+    refusal_code:why[kind].code, why_ar:why[kind].ar, why_en:why[kind].en,
+    ui_requirement:{must_be_absent_or_disabled:true, disabled:true,
+      aria_disabled:'true', requires_title:true, requires_aria_description:true}});
+  return {
+    contract:'acs-capability-disclosure/1.0.0',
+    label:NOT_SUPPORTED_LABEL,
+    commands:{declared:(s.command_types||[]).slice(),
+              implemented:(s.implemented_command_types||[]).slice(),
+              not_implemented:cmdGap, entries:cmdGap.map(v=>entry('COMMAND',v))},
+    snap_types:{declared:(s.snap_types||[]).slice(),
+              implemented:(s.implemented_snap_types||[]).slice(),
+              not_implemented:snapGap, entries:snapGap.map(v=>entry('SNAP',v))},
+    gizmo_operations:{declared:(s.gizmo_operations||[]).slice(),
+              implemented:(s.implemented_gizmo_operations||[]).slice(),
+              not_implemented:gizGap, entries:gizGap.map(v=>entry('GIZMO',v))},
+    all_entries:[].concat(cmdGap.map(v=>entry('COMMAND',v)),
+                          snapGap.map(v=>entry('SNAP',v)),
+                          gizGap.map(v=>entry('GIZMO',v)))
+  };
+}
+/* يفحص وصفاً مجرَّداً لعنصر واجهة: هل يعرض قدرة غير منفَّذة بلا إفصاح؟
+   مجرّد عن DOM عمداً حتى يُختبَر في Node، وتغلّفه طبقة DOM. */
+function auditAffordance(af, disclosure){
+  const a=af||{};
+  const value=String(a.value||'');
+  const kind=String(a.kind||'COMMAND');
+  const bucket=(kind==='SNAP')?disclosure.snap_types
+              :(kind==='GIZMO')?disclosure.gizmo_operations
+              :disclosure.commands;
+  const unimplemented=bucket.not_implemented.indexOf(value)>=0;
+  if(!unimplemented) return {ok:true, code:'IMPLEMENTED', value:value, kind:kind,
+    violations:[]};
+  const v=[];
+  if(a.disabled!==true) v.push('NOT_DISABLED');
+  if(String(a.aria_disabled)!=='true') v.push('MISSING_ARIA_DISABLED');
+  const text=String(a.text||'')+' '+String(a.aria_label||'');
+  if(text.indexOf(NOT_SUPPORTED_LABEL.ar)<0
+     ||text.toLowerCase().indexOf(NOT_SUPPORTED_LABEL.en.toLowerCase())<0)
+    v.push('MISSING_NOT_SUPPORTED_LABEL');
+  if(!String(a.title||'').trim()) v.push('MISSING_TITLE');
+  if(!String(a.aria_description||'').trim()) v.push('MISSING_ARIA_DESCRIPTION');
+  if(a.has_handler===true&&a.disabled!==true) v.push('DEAD_BUTTON_WITH_HANDLER');
+  return {ok:v.length===0, code:v.length?'UNDISCLOSED_UNIMPLEMENTED':'DISCLOSED',
+          value:value, kind:kind, violations:v};
+}
+const capability={
+  NOT_SUPPORTED_LABEL:NOT_SUPPORTED_LABEL,
+  capabilityGap:capabilityGap, capabilityDisclosure:capabilityDisclosure,
+  auditAffordance:auditAffordance
+};
+
+
+/* ══════════════════════════════════════════════════════════════════════
+   5 · البديل النصّي للعرض ثلاثي الأبعاد — اشتقاق نقيّ من هندسة النموذج
+   قارئ الشاشة لا يقرأ بكسلات WebGL. لذلك يُشتَقّ هنا ما يمكن قراءته فعلاً:
+   شجرة، عناصر وخصائص، ملاحظات، مسقط متجهي، وجداول. نقيّ عمداً ليُختبَر.
+   ══════════════════════════════════════════════════════════════════════ */
+function _a11yEsc(x){ return String(x==null?'':x).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function a11yBuild(b){
+  const model=b||null;
+  if(!model||typeof model!=='object') return {tree:[], elements:[], schedules:[], issues:[], plan:null,
+                     site:null, empty:true};
+  const site=model.site||{w:null,d:null};
+  const levels=(model.levels||[]).map(l=>({index:l.index, name:l.name||('#'+l.index),
+    template:l.template||''}));
+  const floors=model.floors||{};
+  const tree=[], elements=[], schedules=[];
+  const rows=[];
+  levels.forEach(l=>{
+    const f=floors[l.template]||{};
+    const rooms=(f.rooms||[]);
+    tree.push({kind:'LEVEL', id:'level_'+l.index, name:l.name,
+      children:rooms.map(r=>({kind:'SPACE', id:r.id,
+        name:r.id, rect:r.rect||null}))});
+    rooms.forEach(r=>{
+      const rc=r.rect||[null,null,null,null];
+      const area=(rc[2]!=null&&rc[3]!=null)?(rc[2]*rc[3]):null;
+      elements.push({level:l.name, id:r.id, kind:'SPACE',
+        x:rc[0], z:rc[1], w:rc[2], d:rc[3], area:area,
+        doors:(r.doors||[]).length, windows:(r.windows||[]).length,
+        points:(r.points||[]).length, furniture:(r.furniture||[]).length});
+      rows.push({level:l.name, id:r.id, w:rc[2], d:rc[3], area:area,
+        doors:(r.doors||[]).length, windows:(r.windows||[]).length});
+    });
+  });
+  schedules.push({name:'جدول الفراغات / Space schedule', rows:rows});
+  const ground=levels.length?(floors[levels[0].template]||{}):{};
+  return {empty:false, site:site, levels:levels, tree:tree, elements:elements,
+          schedules:schedules,
+          plan:{w:site.w||30, d:site.d||25, rooms:(ground.rooms||[]).map(r=>({
+            id:r.id, rect:r.rect||[0,0,0,0]}))},
+          issues:a11yIssues(model, elements)};
+}
+function a11yIssues(model, elements){
+  const out=[];
+  if(!(model.levels||[]).length)
+    out.push({severity:'ERROR', ar:'لا توجد مستويات في النموذج.',
+              en:'The model declares no levels.'});
+  elements.filter(e=>e.w==null||e.d==null).forEach(e=>
+    out.push({severity:'WARNING',
+      ar:'الفراغ '+e.id+' بلا أبعاد معلنة — تُعرض «غير محدد» ولا تُخمَّن.',
+      en:'Space '+e.id+' has no declared dimensions — shown as Not specified, never guessed.'}));
+  if(!elements.length)
+    out.push({severity:'INFO', ar:'لا فراغات في النموذج الحالي.',
+              en:'The current model contains no spaces.'});
+  return out;
+}
+function a11yPlanSvg(plan, escFn){
+  if(!plan) return '';
+  const W=plan.w||30, D=plan.d||25, S=16, pad=10;
+  const w=Math.round(W*S)+pad*2, h=Math.round(D*S)+pad*2;
+  let s='<svg role="img" viewBox="0 0 '+w+' '+h+'" width="100%" '
+    +'aria-labelledby="acsPlanTitle acsPlanDesc">'
+    +'<title id="acsPlanTitle">مسقط أفقي للدور الأرضي / Ground floor plan</title>'
+    +'<desc id="acsPlanDesc">رسم متجهي مولَّد من هندسة النموذج نفسها، لا من بكسلات '
+    +'العرض ثلاثي الأبعاد. أرض '+W+'×'+D+' متر و'+plan.rooms.length+' فراغاً. '
+    +'A vector drawing derived from the model geometry itself, not from 3D pixels. '
+    +'Site '+W+' by '+D+' metres with '+plan.rooms.length+' spaces.</desc>'
+    +'<rect x="'+pad+'" y="'+pad+'" width="'+Math.round(W*S)+'" height="'
+    +Math.round(D*S)+'" fill="#ffffff" stroke="#1f2937" stroke-width="2"/>';
+  plan.rooms.forEach(r=>{
+    const rc=r.rect||[0,0,0,0];
+    s+='<g><rect x="'+(pad+rc[0]*S)+'" y="'+(pad+rc[1]*S)+'" width="'+(rc[2]*S)
+      +'" height="'+(rc[3]*S)+'" fill="#e5edff" stroke="#1d4ed8" stroke-width="1.5"/>'
+      +'<text x="'+(pad+rc[0]*S+4)+'" y="'+(pad+rc[1]*S+14)
+      +'" font-size="11" fill="#111827">'+(escFn||_a11yEsc)(r.id)+'</text></g>';
+  });
+  return s+'</svg>';
+}
+
+const accessibility={
+  buildModel:a11yBuild, issues:a11yIssues, planSvg:a11yPlanSvg, escape:_a11yEsc,
+  canvas_limitation:{
+    ar:'لوحة العرض ثلاثي الأبعاد مبنيّة على WebGL ولا يستطيع قارئ الشاشة تفسير بكسلاتها.',
+    en:'The 3D viewport is WebGL and a screen reader cannot interpret its pixels.'}
+};
+
+return _deepFreeze({
+  contract:'acs-production-trust/1.0.0',
+  persistence:persistence,
+  errorStates:errorStates,
+  errorCodeMap:codeMap,
+  errorNetMap:netMap,
+  operations:operations,
+  resolveErrorState:resolveErrorState,
+  errorStateCoverage:errorStateCoverage,
+  containsStackTrace:containsStackTrace,
+  STACK_MARKERS:STACK_MARKERS,
+  concurrency:concurrency,
+  capability:capability,
+  accessibility:accessibility,
+  hash:_hash64, canonical:_canon, clone:_clone
+});
+}
+const ACS_TRUST=ACS_TRUST_CORE();
+/* ===== END ACS PRODUCTION TRUST CORE ===== */
+
+/* ===== ACS PRODUCTION TRUST WIRING (hand-written · DOM · IndexedDB · network) =====
+   الطبقة الوحيدة التي تلمس المتصفّح. كل منطقٍ قابلٍ للاختبار يعيش في النواة
+   النقيّة أعلاه؛ ما هنا هو التوصيل وحده: IndexedDB، DOM، BroadcastChannel،
+   واعتراض مسارات الشبكة القائمة. لا نظام إشعارات ثانٍ: نُعيد استعمال
+   #status و#reportBox و#engineWarn وشريط رسائل مساحة العمل كما هي.
+   كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. */
+(function ACS_TRUST_WIRING(){
+'use strict';
+const T=ACS_TRUST;
+window.ACS=window.ACS||{};
+const $=id=>document.getElementById(id);
+const escT=s=>String(s==null?'':s).replace(/[&<>"]/g,
+  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ═══════════ 0 · إعلان النواة على window (قابل للفحص من الاختبارات) ═══════════ */
+window.ACS.trust        = T;
+window.ACS.errorStates  = T.errorStates;
+window.ACS.errorCodeMap = T.errorCodeMap;
+window.ACS.resolveErrorState = r=>T.resolveErrorState(r);
+window.ACS.errorStateCoverage = c=>T.errorStateCoverage(c);
+window.ACS.concurrency  = T.concurrency;
+
+/* ═══════════ 1 · F-15 · الحفظ المحلي على IndexedDB ═══════════ */
+const P=T.persistence;
+const DB_NAME='acs_local_project', DB_VER=1;
+const ST_REC='records', ST_META='meta';
+const PTR_KEY='pointer';
+let pState={pointer:null, records:[], last_good:null, last_error:null,
+            last_saved_at_ms:null};
+let pStatusKey='IDLE', pLastCode='', pDbError=null, pRecovered=null;
+
+function idbOpen(){
+  return new Promise((res,rej)=>{
+    let rq;
+    try{ rq=indexedDB.open(DB_NAME,DB_VER); }
+    catch(e){ rej(e); return; }
+    rq.onupgradeneeded=()=>{ const db=rq.result;
+      if(!db.objectStoreNames.contains(ST_REC))
+        db.createObjectStore(ST_REC,{keyPath:'record_id'});
+      if(!db.objectStoreNames.contains(ST_META))
+        db.createObjectStore(ST_META); };
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error||new Error('indexedDB open failed'));
+    rq.onblocked=()=>rej(Object.assign(new Error('indexedDB blocked'),
+                                       {name:'InvalidStateError'}));
+  });
+}
+function idbTx(db, stores, mode, work){
+  return new Promise((res,rej)=>{
+    let tx;
+    try{ tx=db.transaction(stores,mode); }catch(e){ rej(e); return; }
+    let out=null;
+    tx.oncomplete=()=>res(out);
+    tx.onerror=()=>rej(tx.error||new Error('transaction failed'));
+    tx.onabort=()=>rej(tx.error||Object.assign(new Error('transaction aborted'),
+                                               {name:'AbortError'}));
+    try{ out=work(tx); }catch(e){ try{tx.abort();}catch(_e){} rej(e); }
+  });
+}
+function req(r){ return new Promise((res,rej)=>{
+  r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); }); }
+
+async function pReadAll(){
+  const db=await idbOpen();
+  let recs=[], ptr=null;
+  await idbTx(db,[ST_REC,ST_META],'readonly',tx=>{
+    tx.objectStore(ST_REC).getAll().onsuccess=e=>{ recs=e.target.result||[]; };
+    tx.objectStore(ST_META).get(PTR_KEY).onsuccess=e=>{ ptr=e.target.result||null; };
+  });
+  db.close();
+  return {records:recs, pointer:ptr};
+}
+
+/* الكتابة المعاملاتية: سجلّ جديد ⇒ قراءة تحقّق ⇒ قلب المؤشّر ⇒ تقليم.
+   لا نكتب فوق السجلّ السليم الوحيد أبداً، ولا يتحرّك المؤشّر قبل التحقّق. */
+async function pSave(project, origin){
+  const plan=P.planWrite(pState, project, {now:Date.now(), origin:origin||'AUTOSAVE',
+    project_id:(project&&project.project_id)||'default'});
+  if(!plan.ok){ pApply(P.applyWriteResult(pState,null,{ok:false})); return plan; }
+  pSetStatus('SAVING');
+  let db=null;
+  try{
+    db=await idbOpen();
+    /* 1) اكتب سجلاً جديداً بمعرّف جديد */
+    await idbTx(db,[ST_REC],'readwrite',tx=>{
+      tx.objectStore(ST_REC).put(plan.plan.new_record); });
+    /* 2) اقرأه وتحقّق منه فعلاً قبل أن تثق به */
+    let back=null;
+    await idbTx(db,[ST_REC],'readonly',tx=>{
+      tx.objectStore(ST_REC).get(plan.plan.new_record_id).onsuccess
+        =e=>{ back=e.target.result||null; }; });
+    const v=P.validateRecord(back);
+    if(!v.usable) throw Object.assign(new Error('read-back validation failed: '+v.code),
+                                      {name:'DataError'});
+    /* 3) الآن فقط اقلب المؤشّر */
+    await idbTx(db,[ST_META],'readwrite',tx=>{
+      tx.objectStore(ST_META).put(plan.plan.new_record_id, PTR_KEY); });
+    /* 4) قلّم القديم — بعد أن صار للمؤشّر هدف سليم */
+    if(plan.plan.prune.length)
+      await idbTx(db,[ST_REC],'readwrite',tx=>{
+        const s=tx.objectStore(ST_REC);
+        plan.plan.prune.forEach(id=>s.delete(id)); });
+    db.close();
+    pApply(P.applyWriteResult(pState, plan.plan, {ok:true}));
+    return {ok:true, code:'SAVED', record_id:plan.plan.new_record_id};
+  }catch(e){
+    if(db) try{ db.close(); }catch(_e){}
+    const r=P.applyWriteResult(pState, plan.plan, {ok:false, error:e});
+    pApply(r);
+    return {ok:false, code:r.code, error_name:String(e&&e.name||'')};
+  }
+}
+function pApply(r){
+  pState=r.state; pLastCode=r.code;
+  pSetStatus(r.status==='SAVED'?'SAVED':(r.code==='STORAGE_QUOTA'?'QUOTA':'FAILED'));
+  if(r.code==='STORAGE_QUOTA') showErrorState({class:'STORAGE_QUOTA',
+    operation:'LOCAL_SAVE', request_id:''});
+}
+function pSetStatus(key){
+  pStatusKey=key;
+  const el=$('acsSaveState'); if(!el) return;
+  const L=P.statusLabel(key);
+  el.setAttribute('data-acs-save', L.key);
+  el.setAttribute('data-tone', L.tone);
+  el.innerHTML='<span class="ar" lang="ar">'+escT(L.ar)+'</span>'
+    +'<span class="en" lang="en" dir="ltr">'+escT(L.en)+'</span>'
+    +(pState.last_saved_at_ms
+      ?('<span class="ts" lang="ar"> · '
+        +escT(new Date(pState.last_saved_at_ms).toLocaleTimeString('ar'))+'</span>')
+      :'');
+}
+async function pRecover(){
+  let all;
+  try{ all=await pReadAll(); }
+  catch(e){ pDbError=P.classifyStorageError(e); pSetStatus('FAILED');
+            return {ok:false, code:pDbError}; }
+  const pick=P.chooseRecovery(all.records);
+  pState={pointer:all.pointer, records:all.records.map(r=>r&&r.record_id),
+          last_good:pick.chosen_id, last_error:null,
+          last_saved_at_ms:pick.chosen?pick.chosen.saved_at_ms:null};
+  pRecovered=pick;
+  /* الحجر لا يحذف: يُعلَّم السجلّ الفاسد ويُنقل جانباً، ولا يقع أصلاً إن لم
+     يبقَ سجلّ سليم واحد. */
+  if(pick.quarantine.length){
+    try{
+      const db=await idbOpen();
+      await idbTx(db,[ST_REC],'readwrite',tx=>{
+        const s=tx.objectStore(ST_REC);
+        pick.quarantine.forEach(id=>{ if(!id) return;
+          const g=s.get(id);
+          g.onsuccess=()=>{ const rec=g.result; if(!rec) return;
+            rec.quarantined=true; rec.quarantined_at_ms=Date.now();
+            s.put(rec); }; }); });
+      db.close();
+    }catch(e){ /* الحجر تحسين لا شرط — فشله لا يفقد شيئاً */ }
+  }
+  if(!pick.chosen){
+    pSetStatus('IDLE');
+    if(pick.rejected.length) pBanner(pick);
+    return {ok:false, code:pick.code, rejected:pick.rejected};
+  }
+  const d=P.decode(pick.chosen);
+  if(!d.ok){ pSetStatus('FAILED'); pBanner(pick); return {ok:false, code:d.code}; }
+  pSetStatus('RECOVERED');
+  pBanner(pick, d);
+  return {ok:true, code:'RECOVERED', project:d.project, migrated:d.migrated,
+          record_id:pick.chosen_id};
+}
+function pBanner(pick, decoded){
+  const box=$('acsRecoverBox'); if(!box) return;
+  const bad=pick.rejected.length;
+  let h='';
+  if(decoded&&decoded.ok){
+    h+='<div class="acs-rec-line"><b lang="ar">وُجد عمل محفوظ محلياً على هذا الجهاز</b>'
+      +'<span lang="en" dir="ltr">Work saved locally on this device was found</span></div>'
+      +'<div class="acs-rec-meta" dir="ltr">rev '+escT(decoded.revision_id||'—')
+      +' · hash '+escT(String(decoded.model_hash||'').slice(0,10))
+      +' · '+escT(new Date(decoded.saved_at_ms||0).toLocaleString('ar'))
+      +(decoded.migrated?' · migrated from an older schema':'')+'</div>'
+      +'<div class="acs-rec-act">'
+      +'<button type="button" id="acsRecRestore" class="ghost">استعادة هذا العمل / Restore</button>'
+      +'<button type="button" id="acsRecDismiss" class="ghost">تجاهل / Dismiss</button></div>';
+  }
+  if(bad){
+    h+='<div class="acs-rec-bad"><b lang="ar">سجلّات محلية لم تُقبل — لم تُحذف</b>'
+      +'<span lang="en" dir="ltr">Local records were not accepted — nothing was deleted</span>'
+      +'<ul>'+pick.rejected.map(r=>'<li dir="ltr">'+escT(r.record_id||'(no id)')
+        +' — '+escT(r.code)+'</li>').join('')+'</ul></div>';
+  }
+  box.innerHTML=h; box.style.display=h?'block':'none';
+  const rb=$('acsRecRestore');
+  if(rb) rb.onclick=()=>{
+    const d=P.decode(pick.chosen);
+    if(d.ok&&d.project&&d.project.model){
+      try{ setModel(d.project.model); }catch(e){}
+      statusEl.textContent='✓ استُعيد آخر عمل محفوظ محلياً على هذا الجهاز.';
+    }
+    box.style.display='none'; };
+  const db2=$('acsRecDismiss');
+  if(db2) db2.onclick=()=>{ box.style.display='none'; };
+}
+async function pClear(){
+  const ok=window.confirm('سيُمسح كل ما هو محفوظ محلياً لهذا المشروع على هذا الجهاز '
+    +'ولا يمكن التراجع. صدّر نسخة احتياطية أولاً إن أردت الاحتفاظ بها.\n\n'
+    +'This deletes everything saved locally for this project on this device and '
+    +'cannot be undone. Export a backup first if you want to keep it.');
+  if(!ok) return {ok:false, code:'CANCELLED'};
+  try{
+    const db=await idbOpen();
+    await idbTx(db,[ST_REC,ST_META],'readwrite',tx=>{
+      tx.objectStore(ST_REC).clear(); tx.objectStore(ST_META).delete(PTR_KEY); });
+    db.close();
+    pState={pointer:null,records:[],last_good:null,last_error:null,last_saved_at_ms:null};
+    pSetStatus('IDLE');
+    const box=$('acsRecoverBox'); if(box){ box.innerHTML=''; box.style.display='none'; }
+    return {ok:true, code:'CLEARED'};
+  }catch(e){ return {ok:false, code:P.classifyStorageError(e)}; }
+}
+function pProject(){
+  return {contract:'acs-local-project-payload/1',
+    project_id:'default',
+    current_revision:(window.ACS_CURRENT_REVISION||null),
+    model:(typeof lastBuilding!=='undefined')?lastBuilding:null,
+    request_text:(typeof LAST_REQUEST_TEXT!=='undefined')?LAST_REQUEST_TEXT:'',
+    notes:(typeof notes!=='undefined')?notes:[],
+    generation_in_flight:!!ACS_GEN_IN_FLIGHT};
+}
+function pDownload(name, mime, text){
+  const blob=new Blob([text],{type:mime});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download=name; a.rel='noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} },30000);
+}
+
+window.ACS.persistence={
+  /* النواة النقيّة كما هي — هي المُختبَرة في Node */
+  encode:P.encode, decode:P.decode, validateRecord:P.validateRecord,
+  chooseRecovery:P.chooseRecovery, planWrite:P.planWrite,
+  applyWriteResult:P.applyWriteResult, classifyStorageError:P.classifyStorageError,
+  statusLabel:P.statusLabel, assertNoCloudClaim:P.assertNoCloudClaim,
+  exportBackup:P.exportBackup, restoreBackup:P.restoreBackup,
+  CONTRACT:P.CONTRACT, SCHEMA_VERSION:P.SCHEMA_VERSION, CODES:P.CODES,
+  /* غلاف IndexedDB */
+  save:(origin)=>pSave(pProject(), origin||'MANUAL'),
+  recover:()=>pRecover(),
+  clear:()=>pClear(),
+  state:()=>JSON.parse(JSON.stringify(pState)),
+  status:()=>({key:pStatusKey, label:P.statusLabel(pStatusKey),
+               last_code:pLastCode, db_error:pDbError}),
+  lastRecovery:()=>pRecovered?{code:pRecovered.code, chosen_id:pRecovered.chosen_id,
+    accepted:pRecovered.accepted.length, rejected:pRecovered.rejected.slice(),
+    preserved:pRecovered.preserve.slice(), quarantined:pRecovered.quarantine.slice()}:null,
+  storage_kind:'INDEXEDDB_LOCAL_TO_THIS_DEVICE',
+  is_cloud_backup:false
+};
+
+/* ═══════════ 2 · حالات الخطأ الظاهرة — مسار عرض واحد ═══════════ */
+function showErrorState(res, onRetry, onLocal){
+  const st=T.resolveErrorState(res||{});
+  const box=$('reportBox');
+  const rid=st.request_id||'';
+  const wait=st.retry_after?(' — أعِد المحاولة بعد '+st.retry_after+' ثانية / retry after '
+    +st.retry_after+'s'):'';
+  if(box){
+    box.className='report open';
+    box.innerHTML=
+      '<div class="acs-err" data-acs-error="'+escT(st.class)+'" role="alert">'
+      +'<div class="acs-err-h" lang="ar">✕ '+escT(st.ar)+'</div>'
+      +'<div class="acs-err-en" lang="en" dir="ltr">'+escT(st.en)+'</div>'
+      +'<div class="acs-err-meta" dir="ltr">'
+        +'class <code>'+escT(st.class)+'</code>'
+        +' · retryable <code>'+(st.retryable?'yes':'no')+'</code>'
+        +' · retry-safe <code>'+(st.retry_safe_for_operation?'yes':'no')+'</code>'
+        +(st.http?(' · HTTP '+escT(String(st.http))):'')
+        +escT(wait)
+        +(rid?(' · request id <code id="acsReqId">'+escT(rid)+'</code>')
+             :' · <span data-acs-noreqid="1">no request id (the request never reached the server)</span>')
+      +'</div>'
+      +'<div class="acs-err-act">'
+        +(st.show_retry_button
+          ?'<button id="acsRetryBtn" type="button">إعادة المحاولة / Retry</button>':'')
+        +'<button id="acsLocalBtn" type="button">توليد محلي تقريبي (ليس ناتج المحرّك) / Local approximation</button>'
+      +'</div></div>';
+    const rb=$('acsRetryBtn'); if(rb&&onRetry) rb.onclick=onRetry;
+    const lb=$('acsLocalBtn');
+    if(lb){ if(onLocal) lb.onclick=onLocal; else lb.style.display='none'; }
+  }
+  try{ if(typeof statusEl!=='undefined'&&statusEl)
+    statusEl.textContent='✕ '+st.ar+(rid?(' · معرّف الطلب '+rid):''); }catch(e){}
+  const live=$('acsLiveRegion');
+  if(live) live.textContent=st.ar+' — '+st.en;
+  return st;
+}
+window.ACS.showErrorState=(res,onRetry,onLocal)=>showErrorState(res,onRetry,onLocal);
+
+/* نُبدّل مسار الخطأ القائم بدل أن نبني نظاماً ثانياً: نفس العنصر، نفس
+   معرّفات الأزرار، نفس المستدعين — والنصّ الآن من الجدول المعلن. */
+acsErrorPanel=function(res,onRetry,onLocal){
+  const r=res||{};
+  return showErrorState({status:r.status, code:r.code, http:r.http,
+    request_id:r.request_id, retry_after:r.retry_after,
+    operation:r.operation||'GENERATE',
+    idempotency_key:ACS_ACTIVE_IDEMPOTENCY_KEY}, onRetry, onLocal);
+};
+
+/* ═══════════ 3 · التزامن: قفل التنفيذ ومفتاح التكرار ═══════════ */
+let cState={inflight:{},intent_seq:{},keys:{},completed:{}};
+let ACS_ACTIVE_IDEMPOTENCY_KEY='';
+let ACS_GEN_IN_FLIGHT=false;
+const OP_PATHS={'/v1/understand':'GENERATE','/v1/edit':'EDIT',
+  '/v1/understand/image':'UNDERSTAND_IMAGE','/v1/understand/pdf':'UNDERSTAND_PDF'};
+
+/* نغلّف ناقل الشبكة القائم — لا ناقل ثانٍ: نضيف الرأس فقط. */
+const _acsFetchBase=acsFetchJSON;
+acsFetchJSON=function(path, opts, timeoutMs){
+  const op=OP_PATHS[String(path||'').split('?')[0]];
+  if(op&&ACS_ACTIVE_IDEMPOTENCY_KEY){
+    const o=Object.assign({}, opts||{});
+    o.headers=Object.assign({}, o.headers||{});
+    o.headers['Idempotency-Key']=ACS_ACTIVE_IDEMPOTENCY_KEY;
+    return _acsFetchBase(path,o,timeoutMs);
+  }
+  return _acsFetchBase(path,opts,timeoutMs);
+};
+
+function lockedRun(op, btnId, payload, fn, opts){
+  const o=opts||{};
+  const own=tabOwnership();
+  if(o.requires_ownership&&own.owner_id&&!own.is_self){
+    showErrorState({class:'STALE_REVISION', operation:op});
+    liveSay(own.ar+' / '+own.en);
+    return Promise.resolve({ok:false, code:'ANOTHER_TAB_OWNS'});
+  }
+  const r=T.concurrency.beginIntent(cState,{op:op, project_id:'default',
+    base_revision:o.base_revision, payload_hash:T.concurrency.payloadHash(payload),
+    now:Date.now()});
+  if(!r.allowed){
+    liveSay(r.ar+' / '+r.en);
+    try{ if(typeof statusEl!=='undefined'&&statusEl) statusEl.textContent='⏳ '+r.ar; }catch(e){}
+    return Promise.resolve({ok:false, code:r.code,
+      idempotency_key:r.idempotency_key});
+  }
+  cState=r.state;
+  ACS_ACTIVE_IDEMPOTENCY_KEY=r.idempotency_key;
+  if(op==='GENERATE') ACS_GEN_IN_FLIGHT=true;
+  const btn=btnId?$(btnId):null;
+  if(btn){ btn.disabled=true; btn.setAttribute('aria-disabled','true');
+           btn.setAttribute('aria-busy','true');
+           btn.setAttribute('data-acs-inflight','1'); }
+  const finish=(ok)=>{
+    cState=T.concurrency.endIntent(cState,{op:op,project_id:'default'},{ok:!!ok}).state;
+    ACS_ACTIVE_IDEMPOTENCY_KEY='';
+    if(op==='GENERATE') ACS_GEN_IN_FLIGHT=false;
+    if(btn){ btn.disabled=false; btn.removeAttribute('aria-disabled');
+             btn.removeAttribute('aria-busy'); btn.removeAttribute('data-acs-inflight'); }
+    tabSend('HEARTBEAT');
+  };
+  let p;
+  try{ p=Promise.resolve(fn(r.idempotency_key)); }
+  catch(e){ finish(false); throw e; }
+  return p.then(v=>{ finish(true); return {ok:true, value:v,
+                      idempotency_key:r.idempotency_key}; },
+                e=>{ finish(false); throw e; });
+}
+window.ACS.inFlight=(op)=>T.concurrency.isInFlight(cState, op||'GENERATE','default');
+window.ACS.activeIdempotencyKey=()=>ACS_ACTIVE_IDEMPOTENCY_KEY;
+window.ACS.concurrencyState=()=>JSON.parse(JSON.stringify(cState));
+
+/* ═══════════ 4 · تعدّد الألسنة ═══════════ */
+const TAB_ID='tab_'+Math.random().toString(36).slice(2,8)+'_'+Date.now().toString(36);
+let tState=T.concurrency.tabsReduce({self_id:TAB_ID},{type:'SELF',tab_id:TAB_ID},Date.now());
+let bc=null;
+try{ if(typeof BroadcastChannel!=='undefined') bc=new BroadcastChannel('acs_project_tabs'); }
+catch(e){ bc=null; }
+function tabSend(type){
+  const msg={type:type, tab_id:TAB_ID, project_id:'default', ts:Date.now()};
+  tState=T.concurrency.tabsReduce(tState,msg,Date.now());
+  if(bc) try{ bc.postMessage(msg); }catch(e){}
+  paintTabs();
+}
+if(bc) bc.onmessage=ev=>{
+  tState=T.concurrency.tabsReduce(tState, ev&&ev.data, Date.now());
+  if(ev&&ev.data&&ev.data.type==='HELLO') tabSend('HEARTBEAT');
+  paintTabs(); };
+function tabOwnership(){ return T.concurrency.tabOwner(tState,'default',Date.now()); }
+function paintTabs(){
+  const el=$('acsTabState'); if(!el) return;
+  const o=tabOwnership();
+  el.setAttribute('data-acs-tabs', o.code);
+  el.innerHTML='<span class="ar" lang="ar">'+escT(o.ar)+'</span>'
+    +'<span class="en" lang="en" dir="ltr">'+escT(o.en)+'</span>';
+}
+window.ACS.tabs=()=>({self:TAB_ID, owner:tabOwnership(),
+  channel:bc?'BroadcastChannel':'UNAVAILABLE',
+  state:JSON.parse(JSON.stringify(tState))});
+
+/* ═══════════ 5 · F-16 · إفصاح القدرات ═══════════ */
+const DISCLOSURE=T.capability.capabilityDisclosure(
+  (typeof ACS_AUTHORING_SPEC!=='undefined')?ACS_AUTHORING_SPEC:{});
+window.ACS.capabilityDisclosure=()=>JSON.parse(JSON.stringify(DISCLOSURE));
+
+function discloseEl(el, kind, value){
+  const e=DISCLOSURE.all_entries.filter(x=>x.kind===kind&&x.value===value)[0];
+  if(!e) return false;
+  el.disabled=true;
+  el.setAttribute('aria-disabled','true');
+  el.setAttribute('data-acs-unimplemented', kind+':'+value);
+  el.setAttribute('title', value+' — '+e.label+' — '+e.why_en);
+  el.setAttribute('aria-description', e.why_ar+' / '+e.why_en);
+  el.setAttribute('aria-label', value+' — '+e.label_ar+' / '+e.label_en);
+  el.onclick=null;
+  return true;
+}
+/* التدقيق يجري على الصفحة المشحونة فعلاً وليس على ورق: أي عنصر يعلن أمراً
+   أو التقاطاً أو مقبضاً غير منفَّذ ولا يُفصح ⇒ يُسجَّل ويُفصَح عنه قسراً. */
+function auditCapabilityAffordances(root){
+  const scope=root||document;
+  const sel='[data-acs-cmd],[data-acs-snap],[data-acs-gizmo],[data-ws-op],[data-au-command]';
+  const out={checked:0, violations:[], repaired:[]};
+  Array.prototype.forEach.call(scope.querySelectorAll(sel), el=>{
+    const kind=el.hasAttribute('data-acs-snap')?'SNAP'
+              :el.hasAttribute('data-acs-gizmo')?'GIZMO':'COMMAND';
+    const value=el.getAttribute('data-acs-cmd')||el.getAttribute('data-acs-snap')
+      ||el.getAttribute('data-acs-gizmo')||el.getAttribute('data-ws-op')
+      ||el.getAttribute('data-au-command')||'';
+    out.checked++;
+    const r=T.capability.auditAffordance({kind:kind, value:value,
+      disabled:el.disabled===true,
+      aria_disabled:el.getAttribute('aria-disabled'),
+      text:(el.textContent||''), aria_label:el.getAttribute('aria-label')||'',
+      title:el.getAttribute('title')||'',
+      aria_description:el.getAttribute('aria-description')||'',
+      has_handler:!!el.onclick}, DISCLOSURE);
+    if(!r.ok){
+      out.violations.push({value:value, kind:kind, violations:r.violations,
+        id:el.id||null});
+      if(discloseEl(el,kind,value)) out.repaired.push(value);
+    }
+  });
+  return out;
+}
+window.ACS.auditCapabilityAffordances=(r)=>auditCapabilityAffordances(r);
+
+function paintDisclosure(){
+  const box=$('acsCapList'); if(!box) return;
+  const gr=[['COMMAND','أوامر التحرير / Editing commands'],
+            ['SNAP','أنواع الالتقاط / Snap types'],
+            ['GIZMO','عمليات المقبض / Gizmo operations']];
+  let h='';
+  gr.forEach(([k,t])=>{
+    const es=DISCLOSURE.all_entries.filter(e=>e.kind===k);
+    if(!es.length) return;
+    h+='<div class="acs-cap-g"><h4>'+escT(t)+'</h4>';
+    es.forEach(e=>{
+      h+='<button type="button" class="ghost acs-cap-btn" disabled '
+        +'aria-disabled="true" '
+        +'data-acs-'+(k==='COMMAND'?'cmd':k==='SNAP'?'snap':'gizmo')+'="'+escT(e.value)+'" '
+        +'title="'+escT(e.value+' — '+e.label+' — '+e.why_en)+'" '
+        +'aria-description="'+escT(e.why_ar+' / '+e.why_en)+'" '
+        +'aria-label="'+escT(e.value+' — '+e.label_ar+' / '+e.label_en)+'">'
+        +'<code dir="ltr">'+escT(e.value)+'</code> '
+        +'<span class="acs-cap-lbl">'+escT(e.label)+'</span>'
+        +'<span class="acs-cap-why" lang="ar">'+escT(e.why_ar)+'</span>'
+        +'</button>';
+    });
+    h+='</div>';
+  });
+  box.innerHTML=h;
+}
+
+/* ═══════════ 6 · إتاحة الوصول — البديل النصّي للعرض ثلاثي الأبعاد ═══════════ */
+function liveSay(t){ const el=$('acsLiveRegion'); if(el) el.textContent=String(t||''); }
+window.ACS.announce=liveSay;
+
+/* البنّاء نقيّ في النواة؛ هنا نُمرّر له النموذج الحيّ من نطاق الوحدة. */
+const a11yBuild=b=>T.accessibility.buildModel(
+  b||((typeof lastBuilding!=='undefined')?lastBuilding:null));
+const a11yPlanSvg=p=>T.accessibility.planSvg(p, escT);
+function a11yRender(){
+  const host=$('acsA11yBody'); if(!host) return null;
+  const d=a11yBuild(null);
+  const N='<span class="unk" lang="ar">غير محدد</span>'
+        +'<span class="unk en" lang="en" dir="ltr">Not specified</span>';
+  const num=v=>(v==null||!isFinite(v))?N:escT(String(Math.round(v*100)/100));
+  let h='';
+  if(d.empty){
+    h='<p lang="ar">لا يوجد مشروع محمَّل بعد. ولّد مبنى أو افتح مثالاً، ثمّ عُد إلى هنا.</p>'
+     +'<p lang="en" dir="ltr">No project is loaded yet. Generate a building or open an '
+     +'example, then return here.</p>';
+    host.innerHTML=h; return d;
+  }
+  h+='<h3 id="acsA11yTreeH" lang="ar">شجرة المشروع <span lang="en" dir="ltr">· Project tree</span></h3>'
+    +'<ul role="tree" aria-labelledby="acsA11yTreeH" class="acs-a11y-tree">';
+  d.tree.forEach(l=>{
+    h+='<li role="treeitem" aria-expanded="true"><span>'+escT(l.name)+'</span><ul role="group">'
+      +l.children.map(c=>'<li role="treeitem">'+escT(c.name)+'</li>').join('')
+      +'</ul></li>';
+  });
+  h+='</ul>';
+  h+='<h3 id="acsA11yElH" lang="ar">قائمة العناصر وخصائصها '
+    +'<span lang="en" dir="ltr">· Element list and properties</span></h3>'
+    +'<table class="acs-a11y-tbl"><caption>كل قيمة غير معروفة تُعرض «غير محدد» '
+    +'ولا تُستبدل بصفر أو تقدير / Any unknown value is shown as Not specified, '
+    +'never as zero or an estimate.</caption><thead><tr>'
+    +'<th scope="col">الدور</th><th scope="col">المعرّف</th>'
+    +'<th scope="col">العرض (م)</th><th scope="col">العمق (م)</th>'
+    +'<th scope="col">المساحة (م²)</th><th scope="col">أبواب</th>'
+    +'<th scope="col">نوافذ</th><th scope="col">نقاط</th></tr></thead><tbody>';
+  d.elements.forEach(e=>{
+    h+='<tr><td>'+escT(e.level)+'</td><th scope="row">'+escT(e.id)+'</th>'
+      +'<td>'+num(e.w)+'</td><td>'+num(e.d)+'</td><td>'+num(e.area)+'</td>'
+      +'<td>'+escT(String(e.doors))+'</td><td>'+escT(String(e.windows))+'</td>'
+      +'<td>'+escT(String(e.points))+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  h+='<h3 lang="ar">المسقط الأفقي <span lang="en" dir="ltr">· Floor plan</span></h3>'
+    +'<div class="acs-a11y-plan">'+a11yPlanSvg(d.plan)+'</div>';
+  h+='<h3 id="acsA11yIsH" lang="ar">الملاحظات <span lang="en" dir="ltr">· Issues</span></h3>'
+    +'<ul aria-labelledby="acsA11yIsH" class="acs-a11y-iss">'
+    +(d.issues.length?d.issues.map(i=>'<li data-sev="'+escT(i.severity)+'">'
+      +'<b dir="ltr">'+escT(i.severity)+'</b> <span lang="ar">'+escT(i.ar)+'</span> '
+      +'<span lang="en" dir="ltr">'+escT(i.en)+'</span></li>').join('')
+      :'<li lang="ar">لا ملاحظات مسجّلة على النموذج الحالي.</li>')
+    +'</ul>';
+  d.schedules.forEach((s,si)=>{
+    h+='<h3 id="acsA11ySch'+si+'">'+escT(s.name)+'</h3>'
+      +'<table class="acs-a11y-tbl" aria-labelledby="acsA11ySch'+si+'"><thead><tr>'
+      +'<th scope="col">الدور</th><th scope="col">الفراغ</th>'
+      +'<th scope="col">العرض</th><th scope="col">العمق</th>'
+      +'<th scope="col">المساحة</th><th scope="col">أبواب</th>'
+      +'<th scope="col">نوافذ</th></tr></thead><tbody>'
+      +s.rows.map(r=>'<tr><td>'+escT(r.level)+'</td><th scope="row">'+escT(r.id)
+        +'</th><td>'+num(r.w)+'</td><td>'+num(r.d)+'</td><td>'+num(r.area)
+        +'</td><td>'+escT(String(r.doors))+'</td><td>'+escT(String(r.windows))
+        +'</td></tr>').join('')
+      +'</tbody></table>';
+  });
+  host.innerHTML=h;
+  return d;
+}
+window.ACS.accessibleModel=()=>a11yBuild(null);
+window.ACS.renderAccessibleAlternative=()=>a11yRender();
+
+/* إدارة تركيز الحوارات — للبديل النصّي ولنافذة ملاحظة المهندس */
+const FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]),'
+  +'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+function trapFocus(el, ev){
+  const items=Array.prototype.filter.call(el.querySelectorAll(FOCUSABLE),
+    n=>n.offsetParent!==null||n===document.activeElement);
+  if(!items.length) return;
+  const first=items[0], last=items[items.length-1];
+  if(ev.shiftKey && document.activeElement===first){ ev.preventDefault(); last.focus(); }
+  else if(!ev.shiftKey && document.activeElement===last){ ev.preventDefault(); first.focus(); }
+}
+function makeModal(el, closeFn){
+  if(!el||el.getAttribute('data-acs-modal')==='1') return;
+  el.setAttribute('data-acs-modal','1');
+  el.addEventListener('keydown', ev=>{
+    if(ev.key==='Escape'){ ev.stopPropagation(); closeFn(); }
+    else if(ev.key==='Tab'){ trapFocus(el, ev); }
+  });
+}
+let a11yReturnFocus=null;
+function a11yOpen(){
+  const p=$('acsA11yAlt'); if(!p) return;
+  a11yReturnFocus=document.activeElement;
+  a11yRender();
+  p.classList.add('on');
+  p.removeAttribute('aria-hidden');
+  const c=$('acsA11yClose'); if(c) c.focus();
+  liveSay('فُتح البديل النصّي للعرض ثلاثي الأبعاد.');
+}
+function a11yClose(){
+  const p=$('acsA11yAlt'); if(!p) return;
+  p.classList.remove('on');
+  p.setAttribute('aria-hidden','true');
+  if(a11yReturnFocus&&a11yReturnFocus.focus) a11yReturnFocus.focus();
+}
+window.ACS.openAccessibleAlternative=a11yOpen;
+window.ACS.closeAccessibleAlternative=a11yClose;
+
+/* ═══════════ 7 · التوصيل بعناصر الصفحة القائمة ═══════════ */
+function wireAll(){
+  /* 7a-c · أساس ARIA (لغة مساحة العمل، المناطق الحيّة، حوار الملاحظة، مصيدة
+     التركيز، Escape) يملكه السكربت الكلاسيكي «ACS A11Y BASELINE» وحده، فيبقى
+     عاملاً حتى إن فشل استيراد Three.js ومات سكربت الوحدة كلّه. لا نكرّره هنا:
+     مالك واحد لكل سلوك. */
+
+  /* 7d · الحفظ المحلي */
+  const bs=$('acsSaveNow');
+  if(bs) bs.onclick=()=>{ window.ACS.persistence.save('MANUAL'); };
+  const be=$('acsExportBackup');
+  if(be) be.onclick=()=>{
+    const r=P.exportBackup(pProject(),{now:Date.now()});
+    if(!r.ok){ liveSay('تعذّر تجهيز النسخة الاحتياطية.'); return; }
+    pDownload(r.file.filename, r.file.mime, r.file.text);
+    liveSay('نُزِّلت نسخة احتياطية إلى جهازك — لم تُرفع إلى أي خادم.'); };
+  const br=$('acsRestoreBackup');
+  if(br) br.onchange=ev=>{
+    const f=ev.target.files&&ev.target.files[0]; if(!f) return;
+    const rd=new FileReader();
+    rd.onload=()=>{
+      const r=P.restoreBackup(rd.result);
+      const out=$('acsRestoreState');
+      if(r.ok&&r.project&&r.project.model){
+        try{ setModel(r.project.model); }catch(e){}
+        if(out) out.textContent='✓ استُعيدت النسخة الاحتياطية من ملفّك المحلي.'
+          +' / Backup restored from your local file.';
+        liveSay('استُعيدت النسخة الاحتياطية.');
+      }else{
+        if(out) out.textContent='✕ لم تُقبل النسخة الاحتياطية ('+r.code+') — '
+          +'لم يُغيَّر شيء. / Backup rejected ('+r.code+') — nothing was changed.';
+      }
+      ev.target.value='';
+    };
+    rd.readAsText(f); };
+  const bc2=$('acsClearLocal');
+  if(bc2) bc2.onclick=async()=>{
+    const r=await pClear();
+    const out=$('acsRestoreState');
+    if(out) out.textContent=(r.ok?'✓ مُسحت البيانات المحلية على هذا الجهاز.'
+      :'لم يُمسح شيء ('+r.code+').'); };
+
+  /* 7e · إفصاح القدرات */
+  paintDisclosure();
+  const audit=auditCapabilityAffordances(document);
+  window.ACS.lastCapabilityAudit=()=>JSON.parse(JSON.stringify(audit));
+  if(audit.violations.length)
+    console.warn('[ACS-F16] undisclosed unimplemented affordance(s) repaired at runtime:',
+                 audit.violations);
+
+  /* 7f · البديل النصّي — الفتح والإغلاق ومصيدة التركيز يملكها السكربت
+     الكلاسيكي؛ هنا نملأ محتواه من النموذج وحسب. */
+  const ob=$('acsA11yOpen');
+  if(ob) ob.addEventListener('click', ()=>{ a11yRender();
+    liveSay('فُتح البديل النصّي للعرض ثلاثي الأبعاد.'); });
+  const rb=$('acsA11yRefresh'); if(rb) rb.onclick=()=>{ a11yRender();
+    liveSay('حُدِّث البديل النصّي من النموذج الحالي.'); };
+
+  /* 7g · قفل النقر المزدوج على التوليد + مفتاح التكرار */
+  const g=$('genLLM');
+  if(g){
+    g.onclick=()=>{
+      const txt=($('descText')||{}).value||'';
+      lockedRun('GENERATE','genLLM',
+        {text:txt, w:($('siteW')||{}).value, d:($('siteD')||{}).value,
+         f:($('nFloors')||{}).value},
+        ()=>acsGenerateFromServer());
+    };
+  }
+  /* 7h · قفل الإيداع + حارس المراجعة القاعدية */
+  const na=$('bNotesApply');
+  if(na){
+    const base=na.onclick;
+    na.onclick=()=>{
+      const cur=window.ACS_CURRENT_REVISION||null;
+      const chk=T.concurrency.checkBaseRevision(cur, ACS_EDIT_BASE_REVISION||cur);
+      if(!chk.ok&&chk.code==='STALE_BASE_REVISION'){
+        showErrorState({class:'STALE_REVISION', operation:'COMMIT'});
+        return; }
+      lockedRun('EDIT','bNotesApply',
+        {notes:(typeof notes!=='undefined')?notes:[], base:cur},
+        ()=>base.call(na), {requires_ownership:true, base_revision:cur});
+    };
+  }
+  /* 7i · قفل التصدير — لا ملفّان من نقرة مزدوجة */
+  [['bGlb','EXPORT'],['bJson','EXPORT'],['bShot','EXPORT'],
+   ['acsExportBackup','EXPORT']].forEach(([id,op])=>{
+    const el=$(id); if(!el||!el.onclick) return;
+    const base=el.onclick;
+    el.onclick=()=>lockedRun(op+':'+id, id, {t:Date.now()},
+      ()=>new Promise(r=>{ base.call(el); setTimeout(r,400); }));
+  });
+
+  /* 7i2 · مزامنة aria مع أصناف CSS يملكها السكربت الكلاسيكي وحده. */
+
+  /* 7j · الحفظ التلقائي واستعادة ما بعد إعادة التحميل */
+  pSetStatus('IDLE');
+  paintTabs(); tabSend('HELLO');
+  setInterval(()=>tabSend('HEARTBEAT'), 5000);
+  window.addEventListener('pagehide',()=>{ if(bc) try{ bc.postMessage(
+    {type:'BYE',tab_id:TAB_ID,project_id:'default',ts:Date.now()}); }catch(e){} });
+
+  let lastHash='';
+  const tick=()=>{
+    let m=null;
+    try{ m=(typeof lastBuilding!=='undefined')?lastBuilding:null; }catch(e){ m=null; }
+    if(!m) return;
+    const h=T.hash(T.canonical(m));
+    if(h===lastHash) return;
+    lastHash=h;
+    pSave(pProject(),'AUTOSAVE');
+  };
+  setInterval(tick, 2500);
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden') tick(); });
+
+  pRecover().then(r=>{
+    window.ACS.recoveryResult=()=>r;
+    if(r.ok&&r.project&&r.project.model){
+      let has=false;
+      try{ has=!!lastBuilding; }catch(e){ has=false; }
+      if(!has){
+        try{ setModel(r.project.model); }catch(e){}
+        pSetStatus('RECOVERED');
+        try{ if(typeof statusEl!=='undefined'&&statusEl)
+          statusEl.textContent='✓ استُعيد آخر عمل محفوظ محلياً على هذا الجهاز'
+            +(r.project.generation_in_flight
+              ?' — كان التوليد جارياً وقت الإغلاق ولم يكتمل؛ أعِد الضغط على «توليد».'
+              :'.'); }catch(e){}
+      }
+    }
+  }).catch(()=>{});
+}
+let ACS_EDIT_BASE_REVISION=null;
+
+if(document.readyState==='loading')
+  document.addEventListener('DOMContentLoaded', wireAll);
+else wireAll();
+
+window.ACS.trustReady=true;
+})();
+/* ===== END ACS PRODUCTION TRUST WIRING ===== */
+
 </script>
 <!-- ===== ACS WORKSPACE DOM (generated) ===== -->
 <div id="acsWorkspace" role="application" aria-label="AI Construction Studio workspace">
@@ -30099,6 +31957,108 @@ window.ACS.captureRenderFailure=function(opts){
 </div>
 
 <!-- ===== END ACS ARCH DETAIL DOM ===== -->
+<!-- ===== ACS A11Y BASELINE (hand-written classic script — no module, no Three.js) =====
+     إتاحة الوصول لا يجوز أن تعتمد على نجاح تحميل محرّك ثلاثي الأبعاد. ما هنا
+     يعمل حتى لو فشل استيراد Three.js تماماً: يُصلح ما لا يمكن تحريره في الكتل
+     المولَّدة (لغة مساحة العمل الإنجليزية داخل مستند عربي) ويثبّت الأساس.
+     كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. -->
+<script>
+(function(){
+  try{
+    /* مساحة العمل المولَّدة تحمل تسميات إنجليزية داخل مستند lang="ar":
+       نُعلن لغتها بدل أن نُحرّر كتلة مولَّدة. */
+    var EN=['acsWorkspace','wsModal','wsToasts','rvPanel','rvView','bxPanel',
+            'dcPanel','pqPanel'];
+    for(var i=0;i<EN.length;i++){
+      var e=document.getElementById(EN[i]);
+      if(e&&!e.getAttribute('lang')) e.setAttribute('lang','en');
+    }
+    /* حالة aria تتبع أصناف CSS التي تبدّلها المعالِجات القديمة. */
+    var sync=function(){
+      var t=document.querySelectorAll('.tabs button[role=tab]'),j;
+      for(j=0;j<t.length;j++)
+        t[j].setAttribute('aria-selected',
+          t[j].className.indexOf('active')>=0?'true':'false');
+      var c=document.querySelectorAll('#camBar button[aria-pressed]');
+      for(j=0;j<c.length;j++)
+        c[j].setAttribute('aria-pressed',
+          (' '+c[j].className+' ').indexOf(' on ')>=0?'true':'false');
+      var p=document.getElementById('panelToggle'),l=document.getElementById('left');
+      if(p&&l) p.setAttribute('aria-expanded',
+        (' '+l.className+' ').indexOf(' open ')>=0?'true':'false');
+    };
+    sync();
+    if(typeof MutationObserver!=='undefined'){
+      var mo=new MutationObserver(sync), k;
+      var w=document.querySelectorAll('.tabs button[role=tab],#camBar button[aria-pressed]');
+      for(k=0;k<w.length;k++) mo.observe(w[k],{attributes:true,attributeFilter:['class']});
+      var lp=document.getElementById('left');
+      if(lp) mo.observe(lp,{attributes:true,attributeFilter:['class']});
+      var nm=document.getElementById('noteModal');
+      if(nm) mo.observe(nm,{attributes:true,attributeFilter:['class']});
+    }
+    /* الحوارات: Escape يغلق، وTab محبوس داخل الحوار، والتركيز يعود لفاتحه.
+       مكتوب هنا بلا وحدات حتى يبقى صالحاً في المسار المتدهور. */
+    var FOCUSABLE='a[href],button:not([disabled]),input:not([disabled]),'
+      +'select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+    function trap(el,ev){
+      var items=[],all=el.querySelectorAll(FOCUSABLE),i;
+      for(i=0;i<all.length;i++) if(all[i].offsetParent!==null) items.push(all[i]);
+      if(!items.length) return;
+      var f=items[0], l=items[items.length-1];
+      if(ev.shiftKey&&document.activeElement===f){ ev.preventDefault(); l.focus(); }
+      else if(!ev.shiftKey&&document.activeElement===l){ ev.preventDefault(); f.focus(); }
+    }
+    function dialog(el, close){
+      if(!el) return;
+      el.setAttribute('data-acs-dialog','1');
+      el.addEventListener('keydown',function(ev){
+        if(ev.key==='Escape'){ ev.stopPropagation(); close(); }
+        else if(ev.key==='Tab'){ trap(el,ev); }
+      });
+    }
+    var nmEl=document.getElementById('noteModal'), nmBack=null;
+    if(nmEl){
+      var wasOn=(' '+nmEl.className+' ').indexOf(' on ')>=0;
+      dialog(nmEl,function(){ nmEl.className=nmEl.className.replace(/\bon\b/g,''); });
+      if(typeof MutationObserver!=='undefined'){
+        new MutationObserver(function(){
+          var on=(' '+nmEl.className+' ').indexOf(' on ')>=0;
+          if(on===wasOn) return;
+          wasOn=on;
+          nmEl.setAttribute('aria-hidden', on?'false':'true');
+          if(on){ nmBack=document.activeElement; }
+          else if(nmBack&&nmBack.focus){ var r=nmBack; nmBack=null;
+            try{ r.focus(); }catch(e){} }
+        }).observe(nmEl,{attributes:true,attributeFilter:['class']});
+      }
+    }
+    var alt=document.getElementById('acsA11yAlt'), altBack=null;
+    function altClose(){
+      if(!alt) return;
+      alt.className=alt.className.replace(/\bon\b/g,'');
+      alt.setAttribute('aria-hidden','true');
+      if(altBack&&altBack.focus){ var r=altBack; altBack=null; try{ r.focus(); }catch(e){} }
+    }
+    function altOpen(){
+      if(!alt) return;
+      altBack=document.activeElement;
+      alt.className=alt.className+' on';
+      alt.removeAttribute('aria-hidden');
+      var c=document.getElementById('acsA11yClose'); if(c) c.focus();
+    }
+    dialog(alt, altClose);
+    var ob=document.getElementById('acsA11yOpen');
+    if(ob) ob.addEventListener('click', altOpen);
+    var cb=document.getElementById('acsA11yClose');
+    if(cb) cb.addEventListener('click', altClose);
+    window.ACS=window.ACS||{};
+    window.ACS.a11yBaselineReady=true;
+  }catch(e){ /* الأساس تحسين لا يجوز أن يكسر الصفحة */ }
+})();
+</script>
+<!-- ===== END ACS A11Y BASELINE ===== -->
+
 
 </body>
 </html>

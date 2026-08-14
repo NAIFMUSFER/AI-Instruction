@@ -1,0 +1,253 @@
+{
+  "schema": "acs.performance.perf/1",
+  "status": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+  "measured": false,
+  "application_measured": false,
+  "reason": "public/vendor is empty: the vendored Three.js runtime (three@0.160.0 + addons) is absent and this sandbox has no network, so the 3D runtime cannot boot and no frame can be rendered. Run `sh tools/vendor.sh` on a networked machine, or pass --target <url> to measure the deployment.",
+  "nothing_was_measured": "No FPS, no frame time, no draw call, no triangle count and no memory figure for the ACS application appears anywhere in this file. Not one number was estimated, interpolated or carried over from another run.",
+  "budgets_source": "tests/performance/budgets.json",
+  "budgets_status": "TARGETS ONLY — NOT MEASURED IN THIS ENVIRONMENT",
+  "quality_governor_source": "tests/performance/quality_governor.json",
+  "quality_governor_status": "SPECIFICATION ONLY — NOT IMPLEMENTED IN public/index.html",
+  "fixtures_that_would_be_measured": [
+    {
+      "name": "villa",
+      "label": "small villa",
+      "class": "SMALL",
+      "provenance": "tests/phase3/fixtures/base_fixtures.json",
+      "levels": 2,
+      "rooms": 11,
+      "measured": false
+    },
+    {
+      "name": "apartment_generated",
+      "label": "apartment (6 levels × 6 units)",
+      "class": "MEDIUM",
+      "provenance": "generated programmatically — base_fixtures.json contains no apartment fixture; declared synthetic rather than passed off as real",
+      "levels": 6,
+      "rooms": 7,
+      "measured": false
+    },
+    {
+      "name": "hotel",
+      "label": "hotel",
+      "class": "MEDIUM",
+      "provenance": "tests/phase3/fixtures/base_fixtures.json",
+      "levels": 3,
+      "rooms": 6,
+      "measured": false
+    },
+    {
+      "name": "clinic",
+      "label": "clinic",
+      "class": "SMALL",
+      "provenance": "tests/phase3/fixtures/base_fixtures.json",
+      "levels": 1,
+      "rooms": 5,
+      "measured": false
+    },
+    {
+      "name": "warehouse",
+      "label": "warehouse",
+      "class": "LARGE",
+      "provenance": "tests/phase3/fixtures/base_fixtures.json",
+      "levels": 1,
+      "rooms": 4,
+      "measured": false
+    },
+    {
+      "name": "office",
+      "label": "office",
+      "class": "MEDIUM",
+      "provenance": "tests/phase3/fixtures/base_fixtures.json",
+      "levels": 2,
+      "rooms": 6,
+      "measured": false
+    },
+    {
+      "name": "spaces_100",
+      "label": "100-space synthetic",
+      "class": "LARGE",
+      "provenance": "generated programmatically by tests/performance/run_perf.js (deterministic, no randomness); every room carries synthetic:true and source:perf_fixture and has no design or regulatory meaning",
+      "levels": 2,
+      "rooms": 100,
+      "measured": false
+    },
+    {
+      "name": "spaces_500",
+      "label": "500-space synthetic",
+      "class": "LARGE",
+      "provenance": "generated programmatically by tests/performance/run_perf.js (deterministic, no randomness); every room carries synthetic:true and source:perf_fixture and has no design or regulatory meaning",
+      "levels": 10,
+      "rooms": 500,
+      "measured": false
+    },
+    {
+      "name": "spaces_1000",
+      "label": "1000-space synthetic",
+      "class": "STRESS",
+      "provenance": "generated programmatically by tests/performance/run_perf.js (deterministic, no randomness); every room carries synthetic:true and source:perf_fixture and has no design or regulatory meaning",
+      "levels": 20,
+      "rooms": 1000,
+      "measured": false
+    },
+    {
+      "name": "live_large_generated",
+      "label": "large generated model",
+      "class": "STRESS",
+      "provenance": "tests/phase9_2/fixtures/live_large_generated.json",
+      "levels": 6,
+      "rooms": 141,
+      "measured": false
+    }
+  ],
+  "leak_scenarios_that_would_be_run": [
+    {
+      "id": "SWITCH_20_PROJECTS",
+      "description": "load 20 different models sequentially into the same viewer",
+      "iterations": 20,
+      "budget_id": "HEAP_AFTER_20_PROJECT_SWITCHES",
+      "measured": false
+    },
+    {
+      "id": "PBR_ENTER_EXIT",
+      "description": "enter and exit PBR presentation repeatedly",
+      "iterations": 10,
+      "budget_id": "PBR_ENTER_EXIT_LEAK",
+      "measured": false
+    },
+    {
+      "id": "CONTEXT_LANDSCAPE_TOGGLE",
+      "description": "toggle site context and landscape 50 times",
+      "iterations": 50,
+      "budget_id": "CONTEXT_LANDSCAPE_TOGGLE_LEAK",
+      "measured": false
+    },
+    {
+      "id": "SCREENSHOT_CREATE_DISPOSE",
+      "description": "create and dispose screenshots, checking revokeObjectURL",
+      "iterations": 20,
+      "budget_id": "SCREENSHOT_LEAK",
+      "measured": false
+    },
+    {
+      "id": "VR_ENTER_EXIT",
+      "description": "enter and exit VR where the device supports it; on a machine with no XR device this is reported as UNSUPPORTED, never as a pass",
+      "iterations": 3,
+      "budget_id": null,
+      "measured": false
+    }
+  ],
+  "vacuity_proof": {
+    "proved": true,
+    "url_scheme": "http://127.0.0.1 (loopback, never proxied)",
+    "page": "tests/performance/vacuity_page.html — canvas + getContext('webgl2') + requestAnimationFrame loop, no Three.js, no framework",
+    "measurement_code": "IDENTICAL to the application path: sampleFrames(), heap(), gpuStats(), perfCounters(), navigationTiming()",
+    "page_load_ms": 87,
+    "navigation_timing": {
+      "response_end_ms": 9.3,
+      "dom_interactive_ms": 81.7,
+      "dom_content_loaded_ms": 81.9,
+      "load_event_end_ms": 81.9,
+      "transfer_size_bytes": 5505,
+      "decoded_body_bytes": 5205
+    },
+    "light_load": {
+      "quads_per_frame": 64,
+      "frames": {
+        "measured": true,
+        "requested_window_ms": 2500,
+        "actual_window_ms": 2502.4,
+        "frames": 150,
+        "fps_average": 59.543,
+        "frame_time_mean_ms": 16.795,
+        "frame_time_min_ms": -14.2,
+        "frame_time_max_ms": 33.4,
+        "frame_time_p5_ms": 16.6,
+        "frame_time_p50_ms": 16.7,
+        "frame_time_p95_ms": 16.7,
+        "fps_at_p5_frame_time": 60.241,
+        "fps_at_p95_frame_time": 59.88
+      },
+      "gpu": {
+        "source": "plain WebGL2 page counters (vacuity proof)",
+        "draw_calls": 18544,
+        "triangles": 37088,
+        "geometries": null,
+        "textures": null,
+        "programs": null,
+        "canonical_meshes": null,
+        "visible_meshes": null,
+        "frames_drawn": 188
+      }
+    },
+    "heavy_load": {
+      "quads_per_frame": 2400,
+      "frames": {
+        "measured": true,
+        "requested_window_ms": 2500,
+        "actual_window_ms": 2528.9,
+        "frames": 45,
+        "fps_average": 17.399,
+        "frame_time_mean_ms": 57.475,
+        "frame_time_min_ms": -4.4,
+        "frame_time_max_ms": 83.4,
+        "frame_time_p5_ms": 49.9,
+        "frame_time_p50_ms": 66.6,
+        "frame_time_p95_ms": 66.7,
+        "fps_at_p5_frame_time": 20.04,
+        "fps_at_p95_frame_time": 14.993
+      },
+      "gpu": {
+        "source": "plain WebGL2 page counters (vacuity proof)",
+        "draw_calls": 143472,
+        "triangles": 286944,
+        "geometries": null,
+        "textures": null,
+        "programs": null,
+        "canonical_meshes": null,
+        "visible_meshes": null,
+        "frames_drawn": 242
+      }
+    },
+    "heap_before_alloc": {
+      "used_js_heap_bytes": 1480521,
+      "total_js_heap_bytes": 3692633,
+      "js_heap_limit_bytes": 2248146944
+    },
+    "heap_after_alloc_64mb": {
+      "used_js_heap_bytes": 68055610,
+      "total_js_heap_bytes": 70528750,
+      "js_heap_limit_bytes": 2248146944
+    },
+    "heap_alloc_blocks": 64,
+    "heap_delta_bytes": 66575089,
+    "counters": {
+      "webgl_context_count": 1,
+      "context_lost_events": 0,
+      "context_restored_events": 0,
+      "render_loop_count": 1,
+      "render_loop_detail": [
+        {
+          "id": "1821045140",
+          "calls": 251,
+          "self_rescheduled": 251
+        }
+      ],
+      "duplicate_event_listener_count": 0,
+      "harness_own_sampling_loops_excluded": 1,
+      "in_page_errors": []
+    },
+    "page_errors": [],
+    "sensitivity_checks": {
+      "fps_falls_when_the_gpu_load_rises": true,
+      "heap_rises_when_memory_is_allocated": true,
+      "exactly_one_webgl_context_seen": true,
+      "exactly_one_render_loop_seen": true,
+      "note": "These are the checks that separate a real measurement from a printed constant. If the numbers did not move with the load, the harness would be reporting fiction."
+    },
+    "what_this_proves": "The measurement code produces real, load-sensitive FPS, frame-time percentile and heap numbers in this Chromium.",
+    "what_this_does_not_prove": "Nothing at all about the ACS application. The application was NOT measured — see status."
+  },
+  "exit_code": 2
+}

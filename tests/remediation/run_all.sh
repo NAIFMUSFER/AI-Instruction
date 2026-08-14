@@ -51,8 +51,14 @@ python3 "$HERE/test_dependency_lock.py"; guard $?
 step "F-07 · floor plate extent"
 python3 "$HERE/test_plate_extent.py"; guard $?
 
+step "F-09 · shipped bundle measurement (measurement only — F-09 NOT IMPLEMENTED)"
+python3 "$HERE/test_bundle_report.py"; guard $?
+
 step "F-11 · content security policy"
 node "$ROOT/tests/lib/run.js" "$HERE/test_csp.js"; guard $?
+# القياس الحيّ للسياسة في Chromium حقيقي (يكتب tests/remediation/outputs/csp_probe.json)
+# يُشغَّل مع --browser فقط، ويُسجّل ضعف 'unsafe-inline'/'unsafe-eval' سطرَ
+# KNOWN-WEAKNESS بدل أن يمرّره صامتاً.
 
 step "F-08 · webgl runtime diagnostics (node scope)"
 node "$ROOT/tests/lib/run.js" "$HERE/test_webgl_diagnostics.js"; guard $?
@@ -61,7 +67,15 @@ step "concurrency and production error ui (node scope)"
 node "$ROOT/tests/lib/run.js" "$HERE/test_concurrency.js"; guard $?
 node "$ROOT/tests/lib/run.js" "$HERE/test_production_error_ui.js"; guard $?
 
+step "F-15 · local persistence safety (node scope)"
+node "$ROOT/tests/lib/run.js" "$HERE/test_persistence.js"; guard $?
+
+step "api wiring · every job target and keyword binds to its real signature"
+python3 "$HERE/test_api_wiring.py"; guard $?
+
 if [ "$1" = "--browser" ]; then
+  step "F-11 · content security policy measured in real Chromium"
+  node "$HERE/csp_browser_probe.js"; soft $? "csp browser probe"
   step "accessibility · WCAG 2.1 AA baseline in real Chromium"
   node "$HERE/test_accessibility.js"; soft $? "accessibility"
   step "F-14 · WebGL performance in real Chromium"
