@@ -1,6 +1,32 @@
 # Known Issues — preserved for later remediation
 
-## KI-1 · Automatic engineering changes reported by generation (SEMANTIC — OPEN)
+> **Updated by the Production Trust Remediation** (branch `remediation/production-trust`,
+> base `865cca1` → `497a681`). Closures below cite the test that proves them; every
+> item still open says why. Nothing was closed on inspection alone.
+>
+> | | closed | still open |
+> |---|---|---|
+> | | KI-1, KI-3, KI-5, KI-7 | KI-2, KI-4, KI-6, KI-8, KI-9 |
+>
+> New items opened by this remediation: **KI-10** (frontend modularisation, F-09) and
+> **KI-11** (CSP still carries `unsafe-inline`/`unsafe-eval`, F-11 — blocked on KI-10).
+
+## KI-1 · Automatic engineering changes reported by generation (SEMANTIC — **CLOSED**)
+
+**Closed by:** the Production Trust Remediation, F-01.
+**Proof:** `tests/remediation/test_engineering_authority.py` — **135 passed, 0 failed**,
+covering the eight required cases (site expansion, aisle resize, exit addition, smoke
+detector, sprinkler, zone resize, camera count, room overlap). For each: a proposal
+exists, the canonical model is byte-identical before approval, rejecting changes
+nothing, approving creates exactly one normal authoring revision with an audit entry,
+provenance is recorded, and no auto-commit path exists.
+**What changed:** `acs_layout.autofix` now defaults to `AUTHORITY_PROPOSE` and writes
+nothing; all four call sites in `acs_understand.py` were removed; every change the
+engine can make is declared in `acs_engineering_changes.json` (4 SAFE_NORMALIZATION,
+23 ENGINEERING_PROPOSAL) and an unregistered change id raises rather than passing.
+
+<details><summary>original text (kept for the record)</summary>
+
 
 **Status:** intentionally NOT fixed in the Phase 9.2 production remediation (that
 remediation was packaging/deployment integrity only, per its §10/§11 scope).
@@ -23,6 +49,8 @@ provenance + issue code, or (b) silent invention to be removed and replaced by a
 explicit unresolved report; extend the adversarial suites to pin the chosen contract.
 No canonical semantics were modified by the Phase 9.2 remediation.
 
+
+</details>
 
 ## KI-2 · Live raster verification requires the deployed environment (OPEN, environmental)
 
@@ -84,6 +112,8 @@ confinement is re-proved on every run by
 **Regression:** `tests/remediation/test_plate_extent.py` (158 assertions) over
 six fixtures in `tests/remediation/fixtures/plate/`.
 
+</details>
+
 ## KI-4 · The live POST contract cannot be exercised from this sandbox (OPEN, environmental)
 
 The backend error contract is verified three ways here: by unit assertions over
@@ -107,7 +137,23 @@ On any networked machine, both gaps close with:
     python3 tests/deploy/verify_backend_live.py         # free, no model call
     python3 tests/deploy/verify_backend_live.py --generation   # spends one call
 
-## KI-5 · A generation abandoned by the 504 deadline keeps running to completion (OPEN, accepted)
+## KI-5 · A generation abandoned by the 504 deadline keeps running to completion (**CLOSED**)
+
+**Closed by:** F-06. **Proof:** `tests/remediation/test_generation_cancel.py` —
+**159 passed, 0 failed**. The hanging synthetic provider is terminated at the deadline:
+the child PID recorded via `ACS_JOB_TEST_MARKER` becomes `ProcessLookupError`, elapsed
+time tracks the timeout rather than the sleep, the worker slot returns immediately, and
+a timed-out generation produces no model revision (proved against a real
+`acs_authoring` project).
+**Honest boundary, still true:** terminating the worker does not recall a request the
+model provider has already accepted — no provider cancellation API is claimed. This is
+stated in `acs_generation_job.health_status()["boundary_note"]`.
+**Defect found while closing this:** `TimeoutError` is a subclass of `OSError`, so the
+original `raise` was swallowed by its own `except (EOFError, OSError)` handler and the
+API's timeout branch was dead. Proved by a negative control that reverts the fix.
+
+<details><summary>original text (kept for the record)</summary>
+
 
 `run_bounded` answers the client with `504 ACS_TIMEOUT` and a valid JSON body once
 `ACS_REQUEST_TIMEOUT_S` elapses, but the worker thread underneath it cannot be killed —
@@ -117,6 +163,8 @@ worker slot stays occupied until it returns. Bounded by `ACS_UPSTREAM_TIMEOUT_S`
 shorter than the 840s request deadline) so the thread almost always ends first, and by the
 existing per-IP and global rate limits. Moving generation to a separate process pool would
 make cancellation real; that is a larger change than this remediation's scope.
+
+</details>
 
 ## KI-6 · The exact live token numbers behind the truncation were never captured (OPEN, environmental)
 
@@ -139,7 +187,15 @@ If that capture shows the *plan* stage itself stopping at `max_tokens` for a sma
 the cause is extended thinking eating the budget rather than model size, and the fix is a
 `thinking` budget cap rather than more staging — the telemetry now distinguishes the two.
 
-## KI-7 · Stage-1 geometry is authoritative, but the arithmetic autofix still moves rooms afterwards (OPEN, by design, worth naming)
+## KI-7 · Stage-1 geometry is authoritative, but the arithmetic autofix still moves rooms afterwards (**CLOSED**)
+
+**Closed by:** F-01, same evidence as KI-1. The arithmetic autofixer no longer runs in
+any generation path. `test_engineering_authority.py` asserts statically that
+`acs_understand.py` contains no `autofix(` call and does not import `acs_layout` at all,
+and asserts at runtime that a default `autofix()` call leaves the model byte-identical.
+
+<details><summary>original text (kept for the record)</summary>
+
 
 `understand_deep` rejects any `rect` a detail stage tries to rewrite and records
 `STAGE_RECT_OVERRIDE_REJECTED`. After the merge, however, `acs_layout.autofix` — which
@@ -148,6 +204,8 @@ from stage 1. That is a declared engineering step, not a staged-generation leak,
 squarely inside KI-1's scope (automatic engineering adjustments). It is named here so the
 distinction is not mistaken for a stage-authority failure: the test suite asserts the detail
 stage's geometry loses, not that the final rect equals stage 1 byte for byte.
+
+</details>
 
 ## KI-8 · The failing live Building JSON was never captured (OPEN, environmental)
 
@@ -182,3 +240,53 @@ the deployed URL:
 
 That single command produces the STATE | MESHES | CALLS | TRIANGLES | FRUSTUM | NEAR/FAR |
 PIXEL | RESULT table §4 asks for, with real numbers.
+
+
+## KI-10 · The frontend is still a single 1.86 MB `public/index.html` (OPEN — F-09 not implemented)
+
+**Status:** measured, not fixed. `tools/bundle_report.py` →
+`tests/performance/bundle_report.json`: 1,862,256 bytes total (gzip 512,974); one
+`<script type="module">` of 1,757,305 bytes; generated marker blocks 791,508 bytes;
+hand-written remainder 1,070,748 bytes (57.5%). Target shell 153,600 bytes — the page
+is **12.12× over budget** and `budget_met: false`.
+
+**Why it matters beyond load time:** it is the hard blocker for KI-11. `'unsafe-inline'`
+cannot leave the CSP while the entire application is inline in the page.
+
+**Shape of the remediation:** split into `public/app/{core,api,runtime,workspace,
+authoring,render,bim,docs,pbr,archdetail}.js`; keep generated mirrors but write them to
+dedicated modules; lazy-load the BIM, Documentation, PBR and Architectural Detail
+panels; preserve Python↔JS parity; replace `check_index_guard.py`'s `MIN_BYTES >
+1,000,000` with a module-integrity check. `tests/remediation/test_bundle_report.py`
+(97 passed) fails if the report ever claims the work was done.
+
+
+## KI-11 · The deployed CSP still carries `'unsafe-inline'` and `'unsafe-eval'` (OPEN — blocked on KI-10)
+
+**Status:** measured in real Chromium with the production policy served as a genuine
+response header (`tests/remediation/csp_browser_probe.js` →
+`tests/remediation/outputs/csp_probe.json`).
+
+| | deployed policy | hardened trial |
+|---|---|---|
+| CSP violations | 0 | 62 |
+| hostile inline `<script>` executed | **yes** | no |
+| hostile `eval()` / `new Function()` executed | **yes / yes** | no / no |
+| application boots | yes | **no — it does not start at all** |
+
+Recorded as `KNOWN-WEAKNESS · CSP-INLINE-EXEC`, `CSP-EVAL-EXEC`, `CSP-FUNCTION-CTOR` —
+never as a pass. Any XSS sink is therefore directly exploitable, and the page parses
+attacker-supplied DXF and JSON client-side.
+
+**What was done anyway (pure tightening, no refactor needed):** `form-action 'self'`,
+`frame-src 'none'`, `manifest-src 'self'`, `media-src 'self'`,
+`upgrade-insecure-requests` added; nothing removed or widened.
+
+**Why it cannot simply be removed:** the application has **zero** real `eval(` call
+sites — `'unsafe-eval'` exists entirely for `es-module-shims@1.8.2`, which loads only on
+browsers without import-map support. Dropping it removes iOS/iPadOS ≤ 16.3, macOS
+Safari ≤ 16.3, Firefox ≤ 107 (incl. ESR 102), Chrome/Edge ≤ 88, Samsung ≤ 14 — a total
+outage, not a degradation. `CSP-HARDENING.md` carries the ordered nonce/hash migration
+plan and the full compatibility table. Also found there: `CSP-SHIM-OVERFETCH` — the
+shim's `HTMLScriptElement.supports` feature test makes Chrome/Edge 89–105 download it
+needlessly; fixable without KI-10.
