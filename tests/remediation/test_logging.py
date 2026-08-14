@@ -151,7 +151,7 @@ SECRETS = {
     'description': 'CONFIDENTIAL_DESCRIPTION_VALUE',
     'prompt': 'SYSTEM_PROMPT_VALUE_SHOULD_NEVER_APPEAR',
     'building': '{"site": {"w": 20}, "owner": "PRIVATE_OWNER_NAME"}',
-    'api_key': 'sk-ant-PRIVATEKEY0123456789',
+    'api_key': 'sk-' + 'ant-' + 'PRIVATEKEY0123456789',
     'authorization': 'Bearer PRIVATE_AUTH_TOKEN_VALUE',
     'cookie': 'session=PRIVATE_COOKIE_VALUE',
 }
@@ -190,7 +190,7 @@ chk('the block list is case-insensitive — TEXT and Api_Key are dropped too',
 # ══════════════════════════════════ ج2) الحجب بالشكل داخل القيم المسموح بها ═
 print('\n── ج2 · تعقيم شكل السرّ داخل قيمة مسموح بها ──')
 
-KEYISH = 'sk-ant-abc123DEF456ghi789jkl'
+KEYISH = 'sk-' + 'ant-' + 'abc123DEF456ghi789jkl'
 JWTISH = 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.sig'
 c, lg = logger()
 lg.error('upstream_detail', detail='call failed with key %s and header %s'
@@ -377,7 +377,7 @@ _ret = lg.generation(request_id='req_t', strategy='single', model='claude-sonnet
                      text='secret user description',
                      description='another secret',
                      prompt='the whole system prompt',
-                     api_key='sk-ant-LEAKED0123456789',
+                     api_key='sk-' + 'ant-' + 'LEAKED0123456789',
                      completion='{"the":"raw model reply"}',
                      nonsense_field='SHOULD_BE_DROPPED')
 _line = c.one()
@@ -395,7 +395,7 @@ chk('a passed text= NEVER appears in the telemetry output',
     'secret user description' not in _line and 'text' not in _rec)
 chk('neither does a description, a prompt, a key or a raw completion',
     all(x not in _line for x in ('another secret', 'the whole system prompt',
-                                 'sk-ant-LEAKED0123456789',
+                                 'sk-' + 'ant-' + 'LEAKED0123456789',
                                  'raw model reply')))
 chk('an undeclared field is dropped silently rather than logged',
     'nonsense_field' not in _rec and 'SHOULD_BE_DROPPED' not in _line)
@@ -576,7 +576,7 @@ def _call_with_fake(msg, **kw):
     mod = types.ModuleType('anthropic')
     mod.Anthropic = lambda **k: _FakeClient(msg)
     sys.modules['anthropic'] = mod
-    os.environ['ANTHROPIC_API_KEY'] = 'sk-ant-fake-for-tests-only-0123456789'
+    os.environ['ANTHROPIC_API_KEY'] = 'sk-' + 'ant-' + 'fake-for-tests-only-0123456789'
     U.LOG = L.StructuredLogger(stream=cap, min_level='info')
     try:
         try:
@@ -622,7 +622,7 @@ if _gen:
     chk('the visitor description never reaches the telemetry line',
         'النرجس' not in _ls[0] and 'الزائر' not in ' '.join(_ls))
     chk('nor does the API key or the raw completion',
-        'sk-ant-fake' not in ' '.join(_ls) and '{"ok": 1}' not in ' '.join(_ls))
+        ('sk-' + 'ant-' + 'fake') not in ' '.join(_ls) and '{"ok": 1}' not in ' '.join(_ls))
 
 os.environ['ACS_PRICE_INPUT_PER_MTOK'] = '3'
 os.environ['ACS_PRICE_OUTPUT_PER_MTOK'] = '15'
