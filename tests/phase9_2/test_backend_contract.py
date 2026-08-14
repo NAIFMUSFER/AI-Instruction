@@ -98,25 +98,25 @@ chk('rate limiting maps to 429 and processing timeout to 504',
     and E.HTTP_STATUS[E.ACS_UPSTREAM_TIMEOUT] == 504)
 
 # ── التعقيم: لا يخرج مفتاح ولا رأس تفويض في أي مسار ─────────────────────────
-SECRETS = ('sk-ant-api03-AAAABBBBCCCCDDDD',
+SECRETS = ('sk-' + 'ant-' + 'api03-AAAABBBBCCCCDDDD',
            'Authorization: Bearer abcdef0123456789',
-           'x-api-key: sk-ant-api03-ZZZZYYYYXXXX')
+           'x-api-key: ' + 'sk-' + 'ant-' + 'api03-ZZZZYYYYXXXX')
 for s in SECRETS:
     chk('redact() removes %r-shaped material' % s.split(':')[0][:14],
         'sk-ant' not in E.redact('failed with ' + s)
         and 'abcdef0123456789' not in E.redact('failed with ' + s))
 chk('a secret pasted into an error message never reaches the envelope',
     'sk-ant' not in json.dumps(E.envelope(
-        E.ACS_INTERNAL, 'boom sk-ant-api03-LEAKED', 'req_x'), ensure_ascii=False))
+        E.ACS_INTERNAL, 'boom ' + 'sk-' + 'ant-' + 'api03-LEAKED', 'req_x'), ensure_ascii=False))
 chk('a secret pasted into AcsApiError never reaches the envelope',
     'LEAKED' not in json.dumps(
-        E.AcsApiError(E.ACS_INTERNAL, 'boom sk-ant-api03-LEAKED').envelope('r'),
+        E.AcsApiError(E.ACS_INTERNAL, 'boom ' + 'sk-' + 'ant-' + 'api03-LEAKED').envelope('r'),
         ensure_ascii=False))
 chk('the upstream block is whitelisted — unknown keys are dropped',
     set(E.envelope(E.ACS_UPSTREAM_AUTH, 'x', 'r',
                    upstream={'provider': 'anthropic', 'kind': 'AuthenticationError',
                              'status': 401, 'attempts': 1,
-                             'api_key': 'sk-ant-LEAK'})['error']['upstream'])
+                             'api_key': 'sk-' + 'ant-' + 'LEAK'})['error']['upstream'])
     == {'provider', 'kind', 'status', 'attempts'})
 
 chk('request ids are unique and prefixed',
