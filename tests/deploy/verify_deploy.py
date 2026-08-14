@@ -750,12 +750,32 @@ chk('the shipped compiler derives its rack block from the contract',
     'pqRackBlock([rx,rz,rw,rd],R)' in page
     and 'const bw=Math.min(+R.w||rw,rw), bd=Math.min(+R.d||rd,rd);'
     not in page)
-chk('the Phase 1 site-wide plate convention is retained deliberately and its '
-    'deviation is measured, not hidden',
-    'slabStrips(0,0,site.w,site.d,holes)' in page
-    and 'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page
+# F-07 / KI-3 — كانت هذه التوكيدة تثبّت السلوك القديم («الاصطلاح مُبقًى عمداً»)،
+# فاستُبدلت بتوكيدة أشدّ على السلوك الجديد: الامتداد من عقد الامتداد الوحيد،
+# ونصّ اللوح على مقاس الموقع مُزال من المصرِّف نصّاً لا اصطلاحاً.
+chk('the level plate is derived from the room footprint through the single '
+    'shared extent contract, and the site-wide plate is gone from the compiler',
+    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page
+    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in page
+    and 'slabStrips(0,0,site.w,site.d,holes)' not in page
+    and 'PHASE10_FOOTPRINT_PLATE' in page
     and 'plate_overhang' in page
     and 'change_requires_approval:true' in page)
+chk('the plate policy change is provenanced, not silent: the new name, the '
+    'previous name, what pinned it and why it changed all ship',
+    _PQ_MOD.PLATE_POLICY['policy'] == 'PHASE10_FOOTPRINT_PLATE'
+    and _PQ_MOD.PLATE_POLICY['previous_policy'] == 'PHASE1_SITE_WIDE_PLATE'
+    and _PQ_MOD.PLATE_POLICY['previous_pinned_by'] == 'PHASE4_GOLDEN_BASELINE'
+    and _PQ_MOD.PLATE_POLICY['extent_source'] == 'plate_rect'
+    and len(_PQ_MOD.PLATE_POLICY['reason']) > 60
+    and _PQ_MOD.PLATE_POLICY['changes_canonical_model'] is False
+    and _PQ_MOD.PLATE_POLICY['changes_quantities'] is False
+    and 'PHASE1_SITE_WIDE_PLATE' in page)
+chk('the Python compiler and the page agree on the plate extent contract',
+    'PBR.plate_rect(' in rd('acs_compiler.py')
+    and 'PBR.slab_strips(' in rd('acs_compiler.py')
+    and 'site["w"], 0.15, site["d"], "floor", "FLOOR|%s|slab|0" % fkey'
+    not in rd('acs_compiler.py'))
 chk('alignment diagnostics ship and never move an object',
     'window.ACS.alignmentDiagnostics' in page
     and 'objects_moved_to_fit:0' in page

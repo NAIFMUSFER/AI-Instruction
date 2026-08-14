@@ -343,17 +343,32 @@ chk('the rack block is derived through the shared contract (fix applied)',
     'pqRackBlock([rx,rz,rw,rd],R)' in page)
 chk('the old unclamped rack extent is gone from the compiler',
     'const bw=Math.min(+R.w||rw,rw), bd=Math.min(+R.d||rd,rd);' not in page)
-chk('the site-wide plate convention is RETAINED deliberately, because it is '
-    'declared since Phase 1 and pinned by the Phase 4 golden baseline',
-    'slabStrips(0,0,site.w,site.d,holes)' in page
-    and 'خطّ الأساس الذهبي' in page
-    and 'لا يُطبَّق بلا موافقة صريحة' in page)
-chk('the corrected plate extent is still computed by the contract, so the '
-    'deviation is measured rather than forgotten',
-    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page)
-chk('the plate overhang is reported by the alignment diagnostics, not hidden '
-    'by a presentation offset',
+# F-07 / KI-3 — كانت التوكيدة السابقة تثبّت بقاء الاصطلاح القديم
+# (PHASE1_SITE_WIDE_PLATE). استُبدلت بتوكيدة أشدّ: اللوح على مقاس الموقع مُزال
+# من المصرِّف نصّاً، والامتداد يأتي من عقد الامتداد الوحيد، والسياسة الجديدة
+# معلَنة باسمها واسم سابقتها وسببها فلا يكون التغيير صامتاً.
+chk('the site-wide plate is APPLIED-AND-GONE: the compiler no longer builds a '
+    'plate on the site rectangle',
+    'slabStrips(0,0,site.w,site.d,holes)' not in page
+    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in page
+    and 'PHASE10_FOOTPRINT_PLATE' in page)
+chk('the plate extent is computed by the shared contract, not by a second '
+    'extent calculator',
+    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page
+    and P.PLATE_POLICY['extent_source'] == 'plate_rect')
+chk('the plate policy records its predecessor and the reason for the change, '
+    'so the convention did not move silently',
+    P.PLATE_POLICY['policy'] == 'PHASE10_FOOTPRINT_PLATE'
+    and P.PLATE_POLICY['previous_policy'] == 'PHASE1_SITE_WIDE_PLATE'
+    and P.PLATE_POLICY['previous_pinned_by'] == 'PHASE4_GOLDEN_BASELINE'
+    and P.PLATE_POLICY['presentation_only'] is True
+    and P.PLATE_POLICY['changes_canonical_model'] is False
+    and len(P.PLATE_POLICY['reason']) > 60)
+chk('the plate overhang is still reported by the alignment diagnostics, now '
+    'measured against the rendered plate, not hidden by a presentation offset',
     'plate_overhang' in page and 'PHASE1_SITE_WIDE_PLATE' in page
+    and 'rendered_plate' in page
+    and 'avoided_site_overhang_m' in page
     and 'change_requires_approval:true' in page)
 _ov = P.plate_rect([[8, 5, 14, 13]], [0, 0, 30, 24])
 chk('the contract quantifies the overhang for a villa-scale building '

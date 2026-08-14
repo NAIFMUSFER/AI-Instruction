@@ -28,7 +28,14 @@ REQUIRED_JS_SYMBOLS = ('PQ_VB', 'PQ_CLIP', 'PQ_VIEWPORT_CONTRACT',
                        'pqCameraClip', 'pqFrustumContains', 'pqMaterialSafe')
 REQUIRED_BRIDGE_SYMBOLS = ('_pqDescribe', '_pqSceneBounds',
                            '_pqApplyCameraSafety',
-                           'window.ACS.renderDiagnostics')
+                           'window.ACS.renderDiagnosticsDetail')
+# F-08 — عقد تشخيص العرض الدائم يعيش في سكربت الوحدة المكتوب يدوياً، لا في كتلة
+# مولَّدة. هذه الرموز تُطلَب من الصفحة نفسها حتى لا يمرّ نشر بلا تشخيص.
+REQUIRED_PAGE_DIAG_SYMBOLS = ('window.ACS.renderDiagnostics=function',
+                              'window.ACS.captureRenderFailure=function',
+                              'window.ACS_BUILD_INFO',
+                              'ACS_DIAG_KEYS',
+                              'id="acsDiagBtn"')
 # الوسم القديم يُعرَف بجملة الطباعة نفسها لا بذكرها في تعليق شارح
 LEGACY_HARNESS_PRINT = re.compile(r"""console\.log\(\s*['"]PAGE BOOT""")
 HARNESS_VERSION_MARKER = 'HARNESS: verify_page_boot'
@@ -106,6 +113,17 @@ def check(root):
     if 'pqBoundsMember(_pqDescribe(o))' not in bridge:
         fails.append('the bridge does not route scene bounds through the '
                      'shared predicate')
+
+    # 4b) عقد تشخيص العرض الدائم موجود في الصفحة نفسها (F-08)
+    for sym in REQUIRED_PAGE_DIAG_SYMBOLS:
+        if sym not in page:
+            fails.append('public/index.html lacks the render-diagnostics '
+                         'symbol %s' % sym)
+    for _tok in ('__ACS_GIT_SHA__', '__ACS_BUILT_AT__',
+                 '__ACS_FRONTEND_VERSION__'):
+        if _tok not in page:
+            fails.append('public/index.html lacks the build-identity '
+                         'substitution token %s' % _tok)
 
     # 5) العقد نفسه مكتوب حرفياً في الصفحة المشحونة
     if contract and contract not in page:

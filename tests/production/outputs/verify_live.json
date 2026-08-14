@@ -1,0 +1,208 @@
+{
+  "schema": "acs-production-verification/1.0.0",
+  "tool": "tests/production/verify_live.py",
+  "started_at": "2026-08-14T13:45:21Z",
+  "frontend": "https://sprightly-selkie-d906c3.netlify.app",
+  "backend": "https://acs-engine.onrender.com",
+  "expect_sha": null,
+  "declared_targets": {
+    "render_allowed_origins": "https://sprightly-selkie-d906c3.netlify.app",
+    "api_default_origin": "https://sprightly-selkie-d906c3.netlify.app",
+    "page_configured_base": "https://acs-engine.onrender.com",
+    "netlify_publish": "public",
+    "netlify_csp": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com",
+    "netlify_connect_src": "'self' https://acs-engine.onrender.com"
+  },
+  "groups": [
+    "A",
+    "B",
+    "G"
+  ],
+  "browser_groups_elsewhere": [
+    "C",
+    "D",
+    "E",
+    "F",
+    "G(frontend runtime)"
+  ],
+  "counts": {
+    "pass": 0,
+    "fail": 0,
+    "not_verified": 18,
+    "total": 18
+  },
+  "exit_code": 2,
+  "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+  "observed": {
+    "frontend_reachable": false,
+    "backend_reachable": false,
+    "frontend_sha": null,
+    "backend_sha": null
+  },
+  "critical_assets": [
+    "/vendor/three@0.160.0/build/three.module.js",
+    "/vendor/three@0.160.0/examples/jsm/controls/OrbitControls.js",
+    "/vendor/three@0.160.0/examples/jsm/webxr/VRButton.js",
+    "/vendor/three@0.160.0/examples/jsm/webxr/ARButton.js",
+    "/vendor/three@0.160.0/examples/jsm/exporters/GLTFExporter.js",
+    "/vendor/three@0.160.0/examples/jsm/objects/Sky.js",
+    "/vendor/three@0.160.0/examples/jsm/environments/RoomEnvironment.js",
+    "/vendor/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js",
+    "/vendor/three@0.160.0/examples/jsm/postprocessing/RenderPass.js",
+    "/vendor/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js",
+    "/vendor/three@0.160.0/examples/jsm/postprocessing/OutputPass.js",
+    "/vendor/three@0.160.0/examples/jsm/postprocessing/SSAOPass.js",
+    "/vendor/three@0.160.0/examples/jsm/shaders/FXAAShader.js",
+    "/vendor/three@0.160.0/examples/jsm/shaders/CopyShader.js",
+    "/vendor/three@0.160.0/examples/jsm/shaders/SSAOShader.js",
+    "/vendor/es-module-shims@1.8.2/es-module-shims.js",
+    "/vendor/pdfjs@4.0.379/pdf.min.mjs",
+    "/vendor/pdfjs@4.0.379/pdf.worker.min.mjs"
+  ],
+  "checks": [
+    {
+      "group": "A",
+      "id": "A1",
+      "name": "frontend root answers 200",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A2",
+      "name": "GET / answers 200 with the service JSON",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A3",
+      "name": "GET /health answers 200 and declares configuration",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A4",
+      "name": "GET /ready is a real verdict (200 ready or 503 envelope)",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A5",
+      "name": "GET /version matches the acs_build_info contract",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A6",
+      "name": "an invalid route returns the declared error envelope",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A7",
+      "name": "a CORS preflight from the allowed origin is accepted",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "A",
+      "id": "A8",
+      "name": "a CORS preflight from an unrelated origin is refused",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B1",
+      "name": "every critical JS module returns 200 (18 file(s))",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B2",
+      "name": "the served Three.js declares REVISION 160",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B3",
+      "name": "no runtime CDN reference is served",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B4",
+      "name": "the CSP header is present and forbids external script origins",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B5",
+      "name": "no unexpected 404 among the critical assets",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "B",
+      "id": "B6",
+      "name": "every import specifier in the page resolves to a served module",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "G",
+      "id": "G1",
+      "name": "the backend build SHA and timestamp are captured from GET /version",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "G",
+      "id": "G2",
+      "name": "the frontend page declares window.ACS_BUILD_INFO with a build SHA",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>"
+    },
+    {
+      "group": "G",
+      "id": "G3",
+      "name": "the frontend and the backend report the same build SHA",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "one of the two SHAs was never observed (frontend=None backend=None)"
+    },
+    {
+      "group": "G",
+      "id": "G4",
+      "name": "the deployed revision matches the expected one",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "no expected revision was supplied; pass --expect-sha <sha> to turn this into a measured check"
+    }
+  ]
+}

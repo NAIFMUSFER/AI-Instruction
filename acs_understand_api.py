@@ -528,7 +528,7 @@ async def understand(req: UnderstandReq, request: Request):
 
     # أبعاد الأرض وعدد الأدوار تصل إلى مقدّر حجم المخرج: القرار «مرحلة واحدة
     # أم مراحل» يحتاجها، وبدونها يُقدَّر مبنى ٩٦٠٠ م² كأنه غرفة.
-    _kwargs = dict(text=text, model=_safe_model(req.model), deep=req.deep,
+    _kwargs = dict(description=text, model=_safe_model(req.model), deep=req.deep,
                    strict=bool(req.strict), btype=bt,
                    site_w=req.site_w, site_d=req.site_d, floors=req.floors)
     try:
@@ -680,7 +680,7 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
         text = _cap(text)
         building = await run_job(
             "acs_understand:understand",
-            dict(text=text, model=_safe_model(model),
+            dict(description=text, model=_safe_model(model),
                  btype=(btype if (btype and btype != "auto") else None)),
             "فهم PDF", request_id=rid)
     except E.AcsApiError:

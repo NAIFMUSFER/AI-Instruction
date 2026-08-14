@@ -19,6 +19,10 @@ import struct
 import base64
 import numpy as np
 
+# عقد الامتداد المشترك: امتداد لوح الدور وقصّ الفراغات يأتيان من مصدر واحد
+# تشترك فيه بايثون والصفحة (acs_pbr.plate_rect / pqPlateRect) — لا حاسب ثانٍ.
+import acs_pbr as PBR
+
 _OBJ_ACC = None   # مجمّع تقرير تغطية العناصر أثناء التجميع (يضبطه compile_building)
 
 # ---------------------------------------------------------------------------
@@ -839,14 +843,50 @@ def build_room(bld, room, fkey, base_y, defaults):
 
 
 # ---------------------------------------------------------------------------
+# مستوى الموقع العرضي — PHASE10_FOOTPRINT_PLATE §site_plane
+# ---------------------------------------------------------------------------
+def build_site_plane(bld, defaults):
+    """مستوى الموقع/الأرض: هذا وحده ما يمثّل قطعة الأرض، ومنفصل عن ألواح الأدوار.
+
+    توأم GROUND_PLANE في الصفحة: يحمل وسم طبقة SITE لا FLOOR، فلا يُخلط أبداً
+    بلوح دور ولا يدخل في حساب بصمة أيّ دور.
+    """
+    site = defaults["site"]
+    w = float(site.get("w") or 0.0)
+    d = float(site.get("d") or 0.0)
+    if not (w > 0 and d > 0):
+        return False
+    bld.add_box(w / 2.0, -0.1 - 0.025, d / 2.0, w, 0.05, d,
+                "floor", "SITE|GROUND|plane|0")
+    return True
+
+
+# ---------------------------------------------------------------------------
 # بناء دور كامل (لوح أرضية + غرف)
 # ---------------------------------------------------------------------------
-def build_level(bld, level, floor_def, base_y, defaults, fkey):
+def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None):
+    """PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان لوح الدور يمتدّ على الموقع كلّه:
+
+        bld.add_box(site["w"]/2.0, base_y - 0.075, site["d"]/2.0,
+                    site["w"], 0.15, site["d"], "floor", "FLOOR|%s|slab|0")
+
+    فوق مبنًى أصغر من قطعة الأرض تبدو ألواح الأدوار صفائح طائرة. صار الامتداد
+    اتحاد بصمات غرف الدور نفسه عبر عقد الامتداد الوحيد acs_pbr.plate_rect
+    (توأمه في المتصفّح pqPlateRect)، والموقع بديلٌ أخير معلَن حين لا يصرّح الدور
+    بغرفة، وفراغات النوى تُقصّ من اللوح بشرائح محاذية للمحاور تماماً كما في
+    الصفحة. التغيير عرضيّ بحت: لا مستطيل غرفة ولا مساحة ولا كمية تتغيّر به.
+    """
     site = defaults["site"]
-    # لوح أرضية للدور
-    bld.add_box(site["w"]/2.0, base_y - 0.075, site["d"]/2.0,
-                site["w"], 0.15, site["d"], "floor", "FLOOR|%s|slab|0" % fkey)
-    for room in floor_def.get("rooms", []):
+    rooms = floor_def.get("rooms", []) or []
+    site_rect = [0.0, 0.0, float(site.get("w") or 0.0),
+                 float(site.get("d") or 0.0)]
+    pp = PBR.plate_rect([r.get("rect") for r in rooms], site_rect)
+    pr = pp["rect"] if (pp.get("valid") and pp.get("rect")) else site_rect
+    for k, s in enumerate(PBR.slab_strips(pr[0], pr[1], pr[2], pr[3],
+                                          holes or [])):
+        bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
+                    s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
+    for room in rooms:
         build_room(bld, room, fkey, base_y, defaults)
 
 
@@ -867,13 +907,23 @@ def compile_building(data, out_path):
     }
     floors = data.get("floors", {})
     fh = data.get("floor_height", defaults["wall_h"] + 0.2)
+    # مستوى الموقع العرضي أولاً، ثم ألواح الأدوار ببصمة غرف كل دور فوقه
+    build_site_plane(bld, defaults)
+    # فراغات النوى من المصرِّف المعماري — نفس مصدر الحقيقة الذي تقرأه الصفحة
+    try:
+        import acs_arch
+        _arch = acs_arch.compile_architecture(data, "bld_0", None, 0)
+    except Exception:
+        _arch = None
     for lvl in data.get("levels", []):
         idx = lvl["index"]
         tmpl = lvl["template"]
         fdef = floors.get(tmpl, {})
         base_y = idx * fh
         fkey = "F%d" % idx
-        build_level(bld, lvl, fdef, base_y, defaults, fkey)
+        holes = [v["rect"] for v in ((_arch or {}).get("voids") or [])
+                 if v.get("level_index") == idx] if _arch else []
+        build_level(bld, lvl, fdef, base_y, defaults, fkey, holes)
     n, size = bld.export_gltf(out_path)
     # دلالات التغطية: مرِّر excluded/added من meta كما هي (لا تُدمَج مع requested)
     meta = data.get("meta") or {}

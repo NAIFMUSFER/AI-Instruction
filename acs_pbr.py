@@ -739,6 +739,105 @@ def plate_rect(room_rects, site_rect):
             "room_count": len(rects)}
 
 
+# ---------------------------------------------------------------------------
+# سياسة اللوح — معلَنة باسمها ومصدرها، لا تغييراً صامتاً (KI-3 / F-07)
+# ---------------------------------------------------------------------------
+# الاصطلاح القديم PHASE1_SITE_WIDE_PLATE كان يمدّ لوح كل دور على الموقع كلّه،
+# فيبدو لوح الدور الأعلى فوق مبنًى أصغر من قطعة الأرض صفيحةً طائرة معلَّقة بلا
+# شيء تحت حوافّها. الاصطلاح الجديد PHASE10_FOOTPRINT_PLATE يشتقّ امتداد كل لوح
+# من اتحاد بصمات غرف الدور نفسه عبر plate_rect وحده — لا حاسب امتداد ثانٍ —
+# ويبقي مستوى الموقع/الأرض مستوى عرضٍ منفصلاً بمقاس الموقع. التغيير عرضيّ بحت:
+# لا مستطيل غرفة ولا مساحة ولا كمية ولا بصمة نموذج تتغيّر به.
+PLATE_POLICY = {
+    "policy": "PHASE10_FOOTPRINT_PLATE",
+    "previous_policy": "PHASE1_SITE_WIDE_PLATE",
+    "previous_pinned_by": "PHASE4_GOLDEN_BASELINE",
+    "reason": "a level plate spanning the whole site above a smaller building "
+              "reads as a detached flying sheet (KI-3). The extent now comes "
+              "from the level's own room-footprint union through the single "
+              "shared plate_rect contract.",
+    "closes": "KI-3",
+    "extent_source": "plate_rect",
+    "level_slab_extent": "LEVEL_ROOM_UNION",
+    "level_slab_fallback": "SITE_FALLBACK",
+    "applies_to_levels": "ALL_BUILDING_LEVELS",
+    "site_plane": "SITE_PRESENTATION_PLANE",
+    "site_plane_extent": "SITE_RECT",
+    "site_plane_separate": True,
+    "voids_subtracted": True,
+    "presentation_only": True,
+    "changes_canonical_model": False,
+    "changes_room_rects": False,
+    "changes_areas": False,
+    "changes_quantities": False,
+    "changes_model_hash": False,
+    "golden_baseline_regenerated": True,
+}
+
+
+def plate_policy():
+    """السياسة المعلَنة لامتداد الألواح — نسخة، فلا يعدّلها مستدعٍ."""
+    return json.loads(json.dumps(PLATE_POLICY))
+
+
+def slab_strips(x0, z0, w, d, holes):
+    """يقصّ مستطيلات الفراغ من لوح مستطيل بشرائح محاذية للمحاور.
+
+    توأم بايثون لـ slabStrips في الصفحة: لا CSG ولا تقريب — كل شريحة صلبة
+    فعلاً، وما تحت النواة يبقى مفتوحاً. الترتيب والمخرَج متطابقان مع الجافاسكربت
+    حرفاً بحرف حتى يبقى ما يراه المستخدم في المتصفّح هو نفسه ما يخرج من المصرِّف
+    غير المتّصل.
+    """
+    x0 = _num(x0) or 0.0
+    z0 = _num(z0) or 0.0
+    w = _num(w)
+    d = _num(d)
+    if w is None or d is None or w <= 0 or d <= 0:
+        return []
+
+    def cut(lo, hi, vals):
+        s = {lo, hi}
+        for v in vals:
+            if lo + 1e-6 < v < hi - 1e-6:
+                s.add(v)
+        return sorted(s)
+
+    hs = []
+    for h in (holes or []):
+        if not (isinstance(h, (list, tuple)) and len(h) == 4):
+            continue
+        if any(_num(v) is None for v in h):
+            continue
+        a = max(x0, _num(h[0]))
+        b = max(z0, _num(h[1]))
+        c = min(x0 + w, _num(h[0]) + _num(h[2]))
+        e = min(z0 + d, _num(h[1]) + _num(h[3]))
+        if c > a + 1e-6 and e > b + 1e-6:
+            hs.append([a, b, c, e])
+    if not hs:
+        return [[x0, z0, w, d]]
+    xs = cut(x0, x0 + w, [v for h in hs for v in (h[0], h[2])])
+    zs = cut(z0, z0 + d, [v for h in hs for v in (h[1], h[3])])
+    out = []
+    for i in range(len(zs) - 1):
+        run = None
+        for j in range(len(xs) - 1):
+            cx = (xs[j] + xs[j + 1]) / 2.0
+            cz = (zs[i] + zs[i + 1]) / 2.0
+            solid = not any(h[0] < cx < h[2] and h[1] < cz < h[3] for h in hs)
+            if solid:
+                if run:
+                    run[1] = xs[j + 1]
+                else:
+                    run = [xs[j], xs[j + 1]]
+            elif run:
+                out.append([run[0], zs[i], run[1] - run[0], zs[i + 1] - zs[i]])
+                run = None
+        if run:
+            out.append([run[0], zs[i], run[1] - run[0], zs[i + 1] - zs[i]])
+    return out
+
+
 def rack_block(room_rect, rack):
     """كتلة الرفوف داخل الغرفة — الامتداد المتاح = امتداد الغرفة ناقص الإزاحة.
 

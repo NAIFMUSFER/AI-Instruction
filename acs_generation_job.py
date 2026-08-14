@@ -243,18 +243,19 @@ class JobRunner(object):
         job.state = STATE_RUNNING
         proc.start()
         child.close()                       # الأب لا يحتفظ بطرف الكتابة
+        # ملاحظة دقيقة: TimeoutError في بايثون ٣ صنف فرعي من OSError. لو رُفِعت
+        # داخل هذه المحاولة لالتقطها معالج (EOFError, OSError) وحوّلها JobError،
+        # فتضيع المهلة ولا يراها المستدعي. لذلك تُرفَع بعد الخروج من المحاولة.
+        timed_out = False
         try:
-            ready = parent.poll(job.timeout_s)
-            if not ready:
-                job.cancel(STATE_TIMED_OUT)
-                with self._lock:
-                    self._stats["timed_out"] += 1
-                if on_event:
-                    on_event(job)
-                raise TimeoutError("generation exceeded %d s and the worker was "
-                                   "terminated" % int(job.timeout_s))
-            kind, payload = parent.recv()
+            if parent.poll(job.timeout_s):
+                kind, payload = parent.recv()
+            else:
+                timed_out = True
+                job.cancel(STATE_TIMED_OUT)     # إنهاء فوريّ لا انتظار
         except (EOFError, OSError) as exc:
+            if timed_out:                       # لا نُخفي المهلة خلف خطأ أنبوب
+                raise
             job.state = STATE_FAILED
             job.error_class = type(exc).__name__
             job.finished_at = time.time()
@@ -275,6 +276,13 @@ class JobRunner(object):
             if proc.is_alive():                                 # pragma: no cover
                 proc.kill()
                 proc.join(TERMINATE_GRACE_S)
+        if timed_out:
+            with self._lock:
+                self._stats["timed_out"] += 1
+            if on_event:
+                on_event(job)
+            raise TimeoutError("generation exceeded %d s and the worker was "
+                               "terminated" % int(job.timeout_s))
         job.finished_at = time.time()
         if kind == "ok":
             job.state = STATE_SUCCEEDED

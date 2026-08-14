@@ -38,39 +38,51 @@ vendored Three.js (npm registry blocked) and no network egress to the deployment
 It prints BOOT and VISUAL MODEL as two separate verdicts and, on failure, names the
 responsible layer through the mode matrix and `window.ACS.renderDiagnostics()`.
 
-## KI-3 · The Phase-1 site-wide floor plate overhangs smaller buildings (OPEN, needs approval)
+## KI-3 · The Phase-1 site-wide floor plate overhangs smaller buildings (CLOSED)
 
-**Status:** identified, measured and reported — deliberately NOT changed.
+**Status:** APPLIED in Phase 10 (F-07). The convention changed from
+`PHASE1_SITE_WIDE_PLATE` to `PHASE10_FOOTPRINT_PLATE`.
 
-Since Phase 1 the rendered floor plate of every level spans the whole **site**
+Since Phase 1 the rendered floor plate of every level spanned the whole **site**
 rectangle, not the level's own rooms. Above a building smaller than its plot the
-upper plates project past the walls with nothing beneath their edges, which is what
-reads as a *floating roof/slab*. For a villa on a 30×24 m plot with a 14×13 m
-footprint the plate is ≈4.7× the building area.
+upper plates projected past the walls with nothing beneath their edges, which is
+what read as a *floating roof/slab*. For a villa on a 30×24 m plot with a 14×13 m
+footprint the plate was ≈4.7× the building area.
 
-This is a **declared display convention**, not a transform bug, and it is pinned by
-the Phase-4 golden baseline (`MODEL REGRESSION`, exact mesh positions and sizes for
-23 fixtures). Changing it alters rendered geometry for every model and every stored
-baseline, so it is escalated rather than slipped in.
+**What changed.** Every level plate is now derived from the union of that level's
+own room footprints through the single shared extent contract
+(`acs_pbr.plate_rect` / `pqPlateRect`) — there is no second extent calculator.
+Core voids are still subtracted (`acs_pbr.slab_strips` / `slabStrips`). The
+site rectangle is used only as the declared `SITE_FALLBACK` when a level declares
+no rooms, and a footprint that genuinely equals the plot is left alone. The
+site/ground presentation plane is separate and still site-sized
+(`GROUND_PLANE` in the browser scene, `SITE|GROUND|plane|0` in the offline
+compiler); it lives outside the `BUILDING` group, so it is excluded from bounds,
+export, BIM and quantities by construction.
 
-**Already in place:** the correct extent is computed by the shared contract
-(`plate_rect` / `pqPlateRect`), and `window.ACS.alignmentDiagnostics().plate_overhang`
-reports, per level, the site plate, the room-union plate, the overhang in metres, the
-area ratio, `convention: PHASE1_SITE_WIDE_PLATE` and `change_requires_approval: true`.
-Levels above ground that overhang by more than 1 m raise `ALIGN_ROOF_DETACHED`.
+**Provenance, not silence.** `acs_pbr.PLATE_POLICY` (mirrored to the browser as
+`PQ_PLATE_POLICY`, injected at build time from the Python source) records the new
+policy name, the previous policy name, what pinned it
+(`PHASE4_GOLDEN_BASELINE`), the reason, and the explicit declaration that
+nothing canonical moved. `alignmentDiagnostics().plate_overhang` now reports the
+site plate, the room-union plate, the **rendered** plate measured from the scene,
+the residual overhang, and `avoided_site_overhang_m` — the overhang the old
+convention would have produced. `ALIGN_ROOF_DETACHED` is now raised for **any**
+level whose rendered plate exceeds its own footprint by more than 1 m, not only
+for levels above ground: a stricter rule than before.
 
-**To apply, with approval:** in `public/index.html` replace
+**Impact, measured.** The Phase-4 golden baseline
+(`tests/phase3/fixtures/mesh_baseline.json`) was regenerated. 39 `FLOOR|*|slab|*`
+meshes changed across 7 of the 8 baseline models (the warehouse footprint equals
+its site, so it did not move) and **not one non-slab mesh changed** name,
+visibility, position, size or rotation. Every engineering model hash is
+unchanged. The pre-change baseline is archived at
+`tests/remediation/fixtures/plate/mesh_baseline_phase1_site_wide.json` and the
+confinement is re-proved on every run by
+`tests/remediation/test_webgl_diagnostics.js` §11.
 
-    slabStrips(0,0,site.w,site.d,holes)
-
-with
-
-    (function(){const _p=pqPlateRect((fdef.rooms||[]).map(r=>r.rect),
-      [0,0,site.w,site.d]).rect;
-      return slabStrips(_p[0],_p[1],_p[2],_p[3],holes);})()
-
-then regenerate the Phase-4 baseline and re-run the full chain. Restricting the change
-to levels above 0 (keeping the ground plot slab) is the narrower option.
+**Regression:** `tests/remediation/test_plate_extent.py` (158 assertions) over
+six fixtures in `tests/remediation/fixtures/plate/`.
 
 ## KI-4 · The live POST contract cannot be exercised from this sandbox (OPEN, environmental)
 

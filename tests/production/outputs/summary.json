@@ -1,0 +1,34 @@
+{
+  "schema": "acs-production-verification-suite/1.0.0",
+  "started_at": "2026-08-14T13:45:20Z",
+  "parts": {
+    "verify_live.json": {
+      "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+      "exit_code": 2,
+      "counts": {
+        "pass": 0,
+        "fail": 0,
+        "not_verified": 18,
+        "total": 18
+      }
+    },
+    "verify_live_browser.json": {
+      "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+      "exit_code": 2,
+      "counts": {
+        "pass": 0,
+        "fail": 0,
+        "not_verified": 29,
+        "total": 29
+      }
+    }
+  },
+  "counts": {
+    "pass": 0,
+    "fail": 0,
+    "not_verified": 47,
+    "total": 47
+  },
+  "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+  "exit_code": 2
+}

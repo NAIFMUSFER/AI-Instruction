@@ -73,6 +73,15 @@ echo "✓ vendoring complete — production serves three/pdf.js locally (no runt
 # --- حارس صفحة التطبيق (المرحلة 9.2 — علاج إنتاجي دائم) -------------------
 # لا يُنشر أبداً index.html مفقود أو فارغ أو مبتور أو بلا كتل التطبيق المولَّدة.
 # منطق الفحص كله في tools/check_index_guard.py (مصدر واحد يشاركه تحقّق النشر).
+# --- أصل البناء: تُختَم هوية النسخة في الصفحة قبل أي فحص بنيوي ---------------
+# بلا هذه الخطوة تبقى window.ACS_BUILD_INFO عند الرموز النائبة وتعلن الصفحة عن
+# نفسها UNPROVENANCED. الختم يجعل تحقّق الإنتاج قادراً على قول "أيّ نسخة قِستُ".
+echo "▶ stamping build provenance into public/index.html"
+python3 tools/write_build_info.py >/dev/null || true
+python3 tools/stamp_build_tokens.py || {
+  echo "⚠ build provenance not stamped — the page will declare UNPROVENANCED"; }
+python3 tools/stamp_build_tokens.py --check
+
 echo "▶ verifying layer integration (one viewport contract everywhere)"
 [ -f tools/check_integration.py ] || { echo "✗ MISSING: tools/check_integration.py"; exit 1; }
 python3 tools/check_integration.py || exit 1

@@ -23,6 +23,11 @@ import threading
 
 import acs_api_errors as E                     # عقد الأخطاء الموحّد (رموز + تصنيف)
 import acs_generation as G                     # ميزانية المخرج واستراتيجية التوليد
+import acs_logging as LOGGING                  # سجلّ إنتاج منظَّم (F-18) — قناة التليمتري
+
+# سجلّ هذه الوحدة. كل حدث سطر JSON واحد بحقول معلنة، والحجب بالاسم يمنع
+# دخول وصف الزائر أو المفتاح أو الرد الخام إلى السجلّ.
+LOG = LOGGING.StructuredLogger(service="ACS Understanding Engine")
 
 # ---------------------------------------------------------------------------
 # 1) مخطّط البيانات المختصر (يُحقن في التعليمات)
@@ -367,7 +372,8 @@ def vision_prompt(btype="residential"):
 
 
 def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
-                      repair_rounds=None, notes="", strict=False, btype=None):
+                      repair_rounds=None, notes="", strict=False, btype=None,
+                      request_id=None):
     """images: قائمة (media_type, base64). يقرأ المخطط بالرؤية ويعيد Building JSON مُتحقَّقاً."""
     import acs_validate as V
     hint = []
@@ -388,7 +394,9 @@ def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
                     "اقرأ هذا المخطط وحوّله إلى Building JSON كامل.\n" + "\n".join(hint)})
 
     vt = detect_type((notes or "") + " " + " ".join(hint), btype)
-    building = validate(extract_json(call_llm(None, model=model, content=content, btype=vt)))
+    building = validate(extract_json(call_llm(None, model=model, content=content,
+                                             btype=vt, stage="vision",
+                                             request_id=request_id)))
     building.setdefault("meta", {}).setdefault("type", vt)
     if strict:
         building["meta"]["strict"] = True
@@ -405,8 +413,139 @@ def understand_images(images, site_w=None, site_d=None, floors=None, model=None,
     return building
 
 
+# ---------------------------------------------------------------------------
+# تليمتري التوليد (F-13) — أرقام وتصنيفات فقط، لا نصّ زائر ولا مفتاح ولا رد خام
+# ---------------------------------------------------------------------------
+def _env_str(name, default=""):
+    v = os.environ.get(name, default)
+    return v.strip() if isinstance(v, str) else default
+
+
+def _env_float(name, default=None):
+    """رقم من البيئة بلا انفجار عند القيمة الفارغة أو التالفة.
+
+    القيمة الفارغة في ملفّ البيئة تعني «غير مضبوط»، لا صفراً: `float("")` يرفع
+    ValueError عند الإقلاع — وهو صنف عطل قائم في المستودع لا نزيد عليه."""
+    raw = _env_str(name, "")
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_int(name, default):
+    raw = _env_str(name, "")
+    if not raw:
+        return default
+    try:
+        return int(float(raw))
+    except (TypeError, ValueError):
+        return default
+
+
+def _env_flag(name, default=False):
+    raw = _env_str(name, "").lower()
+    if not raw:
+        return default
+    return raw in ("1", "true", "yes", "on")
+
+
+def _estimated_cost_usd(input_tokens, output_tokens):
+    """تكلفة تقديرية **فقط** إن صرّح المشغّل بالتسعيرة في البيئة.
+
+    التسعيرة تتغيّر بتغيّر عقد المزوّد والنموذج. رقمٌ نخترعه من جدول مدفون يظهر
+    في لوحة التكلفة كأنه فاتورة. غياب الضبط ⇒ غياب الحقل: لا صفر ولا تخمين."""
+    pin = _env_float("ACS_PRICE_INPUT_PER_MTOK", None)
+    pout = _env_float("ACS_PRICE_OUTPUT_PER_MTOK", None)
+    if pin is None and pout is None:
+        return None
+    cost = (((input_tokens or 0) / 1000000.0) * (pin or 0.0)
+            + ((output_tokens or 0) / 1000000.0) * (pout or 0.0))
+    return round(cost, 6)
+
+
+def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
+                               request_id=None, duration_ms=None, success=True,
+                               error_code=None, upstream_class=None):
+    """حدث تليمتري واحد لكل نداء توليد — نجح أو فشل (F-13).
+
+    القناة `StructuredLogger.generation` تُسقط أي حقل غير معلن، فلا يمرّ منها
+    وصف زائر ولا مفتاح ولا رد خام حتى لو مُرِّر خطأً."""
+    try:
+        tel = tel or {}
+        stop = tel.get("stop_reason")
+        attempts = tel.get("attempts")
+        fields = {
+            "strategy": strategy,
+            "model": tel.get("model") or model,
+            "stages": stage,
+            "input_tokens": tel.get("input_tokens"),
+            "output_tokens": tel.get("output_tokens"),
+            "stop_reason": stop,
+            "max_output_tokens": tel.get("max_output_tokens"),
+            "duration_ms": duration_ms,
+            "retries": (max(0, int(attempts) - 1)
+                        if isinstance(attempts, int) else 0),
+            "truncated": bool(stop == "max_tokens"
+                              or error_code == E.ACS_UPSTREAM_TRUNCATED),
+            "upstream_class": upstream_class,
+            "success": bool(success),
+            "error_code": error_code,
+        }
+        # معرّف الطلب يُمرَّر من المتّصل أو لا يظهر. معرّف مخترَع لا يطابق سجلّ
+        # الطلب أسوأ من غيابه: يوهم بربطٍ غير موجود.
+        if request_id:
+            fields["request_id"] = request_id
+        cost = _estimated_cost_usd(tel.get("input_tokens"),
+                                   tel.get("output_tokens"))
+        if cost is not None:
+            fields["estimated_cost_usd"] = cost
+        return LOG.generation(**fields)
+    except Exception:                     # التليمتري لا يُسقط توليداً ناجحاً
+        return None
+
+
 def call_llm(description, model=None, max_tokens=None, truncate=True, content=None,
-             btype=None, user_msg=None, stage="single", telemetry=None):
+             btype=None, user_msg=None, stage="single", telemetry=None,
+             request_id=None, strategy=None):
+    """نداء النموذج + حدث تليمتري واحد له مهما كانت النتيجة (F-13).
+
+    التوقيع الأصلي محفوظ حرفياً؛ `request_id` و`strategy` وسيطان اختياريان
+    يمرّرهما المتّصل إن كانا لديه. لا يُخترَع معرّف طلب هنا."""
+    tel = telemetry if telemetry is not None else {}
+    t0 = time.time()
+
+    def _ms():
+        return int((time.time() - t0) * 1000)
+
+    try:
+        text = _call_llm_impl(description, model=model, max_tokens=max_tokens,
+                              truncate=truncate, content=content, btype=btype,
+                              user_msg=user_msg, stage=stage, telemetry=tel)
+    except E.AcsApiError as err:
+        up = err.upstream if isinstance(getattr(err, "upstream", None), dict) else {}
+        _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
+                                   request_id=request_id, duration_ms=_ms(),
+                                   success=False, error_code=err.code,
+                                   upstream_class=(up or {}).get("kind"))
+        raise
+    except Exception as err:                                  # noqa: BLE001
+        _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
+                                   request_id=request_id, duration_ms=_ms(),
+                                   success=False,
+                                   upstream_class=type(err).__name__)
+        raise
+    _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
+                               request_id=request_id, duration_ms=_ms(),
+                               success=True)
+    return text
+
+
+def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
+                   content=None, btype=None, user_msg=None, stage="single",
+                   telemetry=None):
     """content اختياري: قائمة بلوكات (نص/صور) للرؤية. وإلا يُرسل description كنص.
 
     `telemetry` قاموس اختياري يُملأ بالقياسات الآمنة (لا نصّ الزائر ولا مفتاح):
@@ -421,6 +560,7 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
     except Exception:
         raise E.AcsApiError(E.ACS_NOT_CONFIGURED, "مكتبة anthropic غير مثبّتة على الخادم.")
     model = (model or os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5")).strip()
+    tel["model"] = model                       # المعرّف المُستعمل فعلاً، للتليمتري
     max_tokens = int(max_tokens or G.stage_budget("single"))
     api_key = clean_key(os.environ.get("ANTHROPIC_API_KEY"))
     if not api_key:
@@ -600,14 +740,80 @@ def scan_top_level_json(raw):
     return objects, malformed, (depth > 0)
 
 
-def _save_raw(text):
-    """يحفظ الرد الخام لتشخيص الخادم. لا يُذكر مساره أبداً في رد العميل."""
+RAW_DUMP_DIR_DEFAULT = "acs_raw_dumps"
+RAW_DUMP_KEEP_DEFAULT = 5
+
+
+def raw_dump_enabled():
+    """الحفظ الخام اشتراك صريح، ومطفأ افتراضياً — في الإنتاج وغيره.
+
+    الرد الخام هو مخرج النموذج عن وصف الزائر: قد يحمل أسماءه وأرقامه وعنوان
+    مشروعه. حفظه على قرص الخادم بلا طلب صريح احتفاظٌ ببيانات لم يأذن بها أحد.
+    `ACS_ENV=production` لا يغيّر القاعدة: يبقى مطفأً ما لم يُضبط المتغيّر."""
+    return _env_flag("ACS_RAW_DUMP_ENABLED", False)
+
+
+def raw_dump_status():
+    """حالة الحفظ الخام — للفحص والصحّة. لا يعيد مساراً ولا محتوى."""
+    return {"enabled": raw_dump_enabled(),
+            "env": LOGGING.ENV,
+            "keep": max(1, _env_int("ACS_RAW_DUMP_KEEP", RAW_DUMP_KEEP_DEFAULT)),
+            "dir_mode": "0o700", "file_mode": "0o600",
+            "path_exposed_to_client": False}
+
+
+def _raw_dump_dir():
+    return _env_str("ACS_RAW_DUMP_DIR", "") or RAW_DUMP_DIR_DEFAULT
+
+
+def _rotate_raw_dumps(directory, keep):
+    """يُبقي أحدث `keep` ملفّاً ويحذف ما قبلها — لا نموّ بلا حدّ على القرص."""
     try:
-        with open(os.environ.get("ACS_RAW_DUMP", "last_llm_response.txt"),
-                  "w", encoding="utf-8") as f:
-            f.write(E.redact(text))
-    except Exception:
+        names = [n for n in os.listdir(directory) if n.startswith("raw_")]
+        paths = [os.path.join(directory, n) for n in names]
+        paths = [p for p in paths if os.path.isfile(p)]
+        paths.sort(key=lambda p: (os.path.getmtime(p), p))
+        for old in paths[:max(0, len(paths) - keep)]:
+            try:
+                os.remove(old)
+            except OSError:
+                pass
+    except OSError:
         pass
+
+
+def _save_raw(text):
+    """يحفظ الرد الخام لتشخيص الخادم — باشتراك صريح وحده.
+
+    مطفأ افتراضياً؛ يكتب في مجلّد مقصور (0o700) بملفّ 0o600 عبر `os.open`،
+    ويُبقي عدداً محدوداً من الملفّات. المسار لا يُذكر أبداً في رد العميل ولا
+    في السجلّ. التعقيم `E.redact` يبقى مطبَّقاً على المحتوى كما كان."""
+    if not raw_dump_enabled():
+        return None
+    directory = _raw_dump_dir()
+    keep = max(1, _env_int("ACS_RAW_DUMP_KEEP", RAW_DUMP_KEEP_DEFAULT))
+    try:
+        os.makedirs(directory, mode=0o700, exist_ok=True)
+        try:
+            os.chmod(directory, 0o700)
+        except OSError:
+            pass
+        name = "raw_%s_%s.txt" % (time.strftime("%Y%m%dT%H%M%S", time.gmtime()),
+                                  os.urandom(4).hex())
+        path = os.path.join(directory, name)
+        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+        fd = os.open(path, flags, 0o600)
+        try:
+            os.write(fd, E.redact(text).encode("utf-8"))
+        finally:
+            os.close(fd)
+        _rotate_raw_dumps(directory, keep)
+        # لا مسار في السجلّ: اسم الملفّ ليس سرّاً لكنه ليس معلومة تشخيص أيضاً.
+        LOG.warn("raw_dump_written", stage="extract_json", kept=keep,
+                 chars=len(text or ""))
+        return path
+    except Exception:                                          # noqa: BLE001
+        return None
 
 
 def extract_json(raw):
@@ -650,7 +856,8 @@ def validate(building):
             assert "rect" in r and len(r["rect"]) == 4, "غرفة بلا rect صحيح: %s" % r.get("id")
     return building
 
-def call_llm_repair(description, building, issues, model=None):
+def call_llm_repair(description, building, issues, model=None,
+                    request_id=None, strategy=None):
     """يُعيد النموذج لإصلاح المخالفات المكتشفة (حلقة التحقّق والإصلاح)."""
     import acs_validate as V
     fix_prompt = (
@@ -664,7 +871,8 @@ def call_llm_repair(description, building, issues, model=None):
     mt = G.stage_budget("repair")
     bt = str((building.get("meta") or {}).get("type") or detect_type(description))
     return call_llm(fix_prompt, model=model, max_tokens=mt, truncate=False, btype=bt,
-                    user_msg="", stage="repair")
+                    user_msg="", stage="repair", request_id=request_id,
+                    strategy=strategy)
 
 
 def apply_notes(building, notes, model=None):
@@ -733,28 +941,33 @@ DETAIL_MSG = (
     "لا تُخرج مناطق أخرى ولا شرحاً.\n\n")
 
 
-def _plan(description, model=None, btype="residential", telemetry=None):
+def _plan(description, model=None, btype="residential", telemetry=None,
+          request_id=None):
     mt = G.stage_budget("plan")
     out = validate(extract_json(call_llm(description, model=model, max_tokens=mt,
                                          btype=btype, user_msg=PLAN_MSG,
-                                         stage="plan", telemetry=telemetry)))
+                                         stage="plan", telemetry=telemetry,
+                                         request_id=request_id,
+                                         strategy=G.STRATEGY_STAGED)))
     return out
 
 
-def _detail_group(description, plan_ctx, rooms, model, btype, telemetry=None):
+def _detail_group(description, plan_ctx, rooms, model, btype, telemetry=None,
+                  request_id=None):
     mt = G.stage_budget("detail")
     body = (DETAIL_MSG + "سياق الخطة (للاتّساق فقط):\n" + plan_ctx +
             "\n\nالمناطق المطلوب تفصيلها الآن:\n" +
             json.dumps(rooms, ensure_ascii=False) +
             "\n\nالطلب الأصلي كاملاً (نفّذ منه ما يخصّ هذه المناطق):\n" + description)
     txt = call_llm(body, model=model, max_tokens=mt, truncate=False, btype=btype,
-                   user_msg="", stage="detail", telemetry=telemetry)
+                   user_msg="", stage="detail", telemetry=telemetry,
+                   request_id=request_id, strategy=G.STRATEGY_STAGED)
     data = extract_json(txt)
     return data.get("rooms") or (data if isinstance(data, list) else [])
 
 
 def _detail_group_split(description, plan_ctx, rooms, model, btype, depth=0,
-                        stages=None):
+                        stages=None, request_id=None):
     """§12: مجموعة انقطع مخرجها تُقسَّم قسمين ويُعاد تفصيلها — لا تُعاد كما هي.
 
     إعادة النداء نفسه بعد انقطاع تعطي الانقطاع نفسه وتحرق نداءً. التقسيم يغيّر
@@ -763,7 +976,8 @@ def _detail_group_split(description, plan_ctx, rooms, model, btype, depth=0,
     """
     tel = {}
     try:
-        out = _detail_group(description, plan_ctx, rooms, model, btype, telemetry=tel)
+        out = _detail_group(description, plan_ctx, rooms, model, btype,
+                            telemetry=tel, request_id=request_id)
         if stages is not None:
             stages.append(_safe_stage(tel, len(rooms), "detail", depth))
         return out
@@ -780,7 +994,8 @@ def _detail_group_split(description, plan_ctx, rooms, model, btype, depth=0,
         out = []
         for half in halves:
             out.extend(_detail_group_split(description, plan_ctx, half, model,
-                                           btype, depth + 1, stages) or [])
+                                           btype, depth + 1, stages,
+                                           request_id=request_id) or [])
         return out
 
 
@@ -817,7 +1032,7 @@ def _preserve_added_disclosure(building):
     return building
 
 def understand_deep(description, model=None, group_size=None, workers=None,
-                    strict=False, btype=None, stages=None):
+                    strict=False, btype=None, stages=None, request_id=None):
     """توليد على مراحل مع تفصيل متوازٍ — للطلبات التي لا يسعها نداء واحد."""
     import acs_validate as V
     btype = detect_type(description, btype)
@@ -827,7 +1042,8 @@ def understand_deep(description, model=None, group_size=None, workers=None,
     desc = description + (STRICT_RULE if strict else "")
     _ptel = {}
     try:
-        building = _plan(desc, model=model, btype=btype, telemetry=_ptel)
+        building = _plan(desc, model=model, btype=btype, telemetry=_ptel,
+                         request_id=request_id)
         stages.append(_safe_stage(_ptel, 0, "plan"))
     except E.AcsApiError as err:
         stages.append(_safe_stage(_ptel, 0, "plan", 0, err.code))
@@ -867,7 +1083,8 @@ def understand_deep(description, model=None, group_size=None, workers=None,
         tmpl, rs = groups[k]
         local = []
         try:
-            det = _detail_group_split(desc, ctx, rs, model, btype, 0, local)
+            det = _detail_group_split(desc, ctx, rs, model, btype, 0, local,
+                                      request_id=request_id)
             print("[ACS-DEEP] مجموعة %d/%d ✓ (%d منطقة)" % (k + 1, len(groups), len(det)))
             return tmpl, det
         except Exception as e:
@@ -956,7 +1173,7 @@ FATAL_UPSTREAM = (E.ACS_UPSTREAM_NOT_CONFIGURED, E.ACS_UPSTREAM_AUTH,
 
 
 def understand(description, model=None, repair_rounds=None, deep=None, strict=False,
-               btype=None, site_w=None, site_d=None, floors=None):
+               btype=None, site_w=None, site_d=None, floors=None, request_id=None):
     """وصف → Building JSON كامل، أو خطأ مصنّف. لا نموذج ناقص بينهما.
 
     القرار قبل النداء (§5/§6): يُقدَّر حجم المخرج حتمياً ويُصنَّف الطلب، فتُختار
@@ -991,7 +1208,8 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
 
     if plan["strategy"] == G.STRATEGY_STAGED:
         return _stamp(understand_deep(description, model=model, strict=strict,
-                                      btype=btype, stages=stages),
+                                      btype=btype, stages=stages,
+                                      request_id=request_id),
                       G.STRATEGY_STAGED, 0)
 
     rounds = int(repair_rounds if repair_rounds is not None
@@ -1001,7 +1219,8 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
     try:
         building = validate(extract_json(call_llm(
             description + (STRICT_RULE if strict else ""), model=model, btype=btype,
-            max_tokens=G.stage_budget("single"), stage="single", telemetry=_tel)))
+            max_tokens=G.stage_budget("single"), stage="single", telemetry=_tel,
+            request_id=request_id, strategy=plan["strategy"])))
         stages.append(_safe_stage(_tel, plan["estimated_zones"], "single"))
     except E.AcsApiError as err:
         stages.append(_safe_stage(_tel, plan["estimated_zones"], "single", 0, err.code))
@@ -1011,7 +1230,8 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
                 and G.MAX_STRATEGY_ESCALATIONS >= 1 and forced is None):
             print("[ACS-PLAN] انقطع النداء الواحد — تصعيد إلى التوليد على مراحل.")
             return _stamp(understand_deep(description, model=model, strict=strict,
-                                          btype=btype, stages=stages),
+                                          btype=btype, stages=stages,
+                                          request_id=request_id),
                           G.STRATEGY_STAGED, 1)
         raise
     building.setdefault("meta", {}).setdefault("type", btype)
@@ -1028,7 +1248,9 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
             break
         print("[ACS-CHECK] إرسال %d مخالفة للإصلاح (جولة %d)…" % (len(issues), i + 1))
         try:
-            fixed = validate(extract_json(call_llm_repair(description, building, issues, model=model)))
+            fixed = validate(extract_json(call_llm_repair(
+                description, building, issues, model=model,
+                request_id=request_id, strategy=plan["strategy"])))
         except Exception as e:
             print("[ACS-CHECK] فشل الإصلاح (%s) — نُبقي النموذج السابق." % str(e)[:200])
             break

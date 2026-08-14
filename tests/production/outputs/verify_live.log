@@ -1,0 +1,76 @@
+ACS PRODUCTION VERIFICATION — live HTTP layer
+  frontend : https://sprightly-selkie-d906c3.netlify.app
+  backend  : https://acs-engine.onrender.com
+  started  : 2026-08-14T13:45:21Z
+
+── deployment targets as the repository declares them (static, cited only — never a runtime PASS) ──
+  netlify.toml            publish='public'  connect-src="'self' https://acs-engine.onrender.com"
+  render.yaml             ACS_ALLOWED_ORIGINS='https://sprightly-selkie-d906c3.netlify.app'
+  acs_understand_api.py   _DEFAULT_ORIGIN='https://sprightly-selkie-d906c3.netlify.app'
+  public/index.html       CONFIGURED_BASE='https://acs-engine.onrender.com'
+
+── A · HTTP: الواجهة والخادم وعقد الأخطاء وCORS ──
+  ― A1     frontend root answers 200
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A2     GET / answers 200 with the service JSON
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A3     GET /health answers 200 and declares configuration
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A4     GET /ready is a real verdict (200 ready or 503 envelope)
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A5     GET /version matches the acs_build_info contract
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A6     an invalid route returns the declared error envelope
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A7     a CORS preflight from the allowed origin is accepted
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― A8     a CORS preflight from an unrelated origin is refused
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+
+── B · أصول الواجهة: الوحدات الحرِجة، Three.js 160، لا CDN، لا CSP violation ──
+  derived asset list: 18 file(s) — 18 declared by tools/netlify-build.sh must=(), the rest from the import map in public/index.html
+  ― B1     every critical JS module returns 200 (18 file(s))
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B2     the served Three.js declares REVISION 160
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B3     no runtime CDN reference is served
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B4     the CSP header is present and forbids external script origins
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B5     no unexpected 404 among the critical assets
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― B6     every import specifier in the page resolves to a served module
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+
+── G · أصل النشر: SHA الخادم من /version وSHA الواجهة من ACS_BUILD_INFO ──
+  ― G1     the backend build SHA and timestamp are captured from GET /version
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― G2     the frontend page declares window.ACS_BUILD_INFO with a build SHA
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: egress proxy refused the CONNECT tunnel (HTTP 403) — this sandbox cannot reach arbitrary external hosts: URLError: <urlopen error Tunnel connection failed: 403 Forbidden>
+  ― G3     the frontend and the backend report the same build SHA
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: one of the two SHAs was never observed (frontend=None backend=None)
+  ― G4     the deployed revision matches the expected one
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: no expected revision was supplied; pass --expect-sha <sha> to turn this into a measured check
+
+──────────────────────────────────────────────────────────────────────
+HTTP LAYER: 0 PASS · 0 FAIL · 18 NOT VERIFIED (of 18 checks)
+summary: /tmp/acs/tests/production/outputs/verify_live.json
+VERDICT: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED — nothing was observed; no check is claimed as passing.

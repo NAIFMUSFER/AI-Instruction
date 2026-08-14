@@ -10,6 +10,7 @@
 """
 import json
 import os
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -624,6 +625,13 @@ function pqPlateRect(roomRects,siteRect){
     rect:[_pqQ(x0),_pqQ(z0),_pqQ(x1-x0),_pqQ(z1-z0)],
     room_count:rects.length}; }
 
+/* سياسة اللوح — توأم PLATE_POLICY في acs_pbr.py حرفاً بحرف (KI-3 / F-07).
+   الاصطلاح القديم PHASE1_SITE_WIDE_PLATE كان يمدّ لوح كل دور على الموقع كلّه
+   فيبدو لوح الدور الأعلى صفيحة طائرة فوق مبنًى أصغر من قطعة الأرض. الجديد
+   يشتقّ الامتداد من plate_rect وحده، ويبقي مستوى الموقع مستوى عرضٍ منفصلاً. */
+const PQ_PLATE_POLICY=__PLATE_POLICY__;
+function pqPlatePolicy(){ return JSON.parse(JSON.stringify(PQ_PLATE_POLICY)); }
+
 function pqRackBlock(roomRect,rack){
   const rr=(Array.isArray(roomRect)&&roomRect.length===4)?roomRect:null;
   if(rr===null||rr.some(v=>_pqNum(v)===null))
@@ -971,7 +979,8 @@ if(typeof window!=='undefined'){
     fitDistance:pqFitDistance, cameraFit:pqCameraFit,
     recoveryPlan:pqRecoveryPlan,
     levelBaseY:pqLevelBaseY, resolveTransform:pqResolveTransform,
-    plateRect:pqPlateRect, rackBlock:pqRackBlock,
+    plateRect:pqPlateRect, platePolicy:pqPlatePolicy,
+    rackBlock:pqRackBlock,
     containment:pqContainment, roofAlignment:pqRoofAlignment, panel:PQ};
 }
 """
@@ -1004,6 +1013,13 @@ def build():
     body = (BODY + PANEL).replace(
         "__SPEC__", json.dumps(spec, ensure_ascii=False,
                                separators=(",", ":")))
+    # سياسة اللوح تُحقن من acs_pbr.PLATE_POLICY نفسها، فلا نسخة ثانية تنحرف
+    sys.path.insert(0, ROOT)
+    import acs_pbr as _PBR
+    body = body.replace(
+        "__PLATE_POLICY__", json.dumps(_PBR.PLATE_POLICY, ensure_ascii=False,
+                                       sort_keys=True,
+                                       separators=(",", ":")))
     js_block = JS_BEGIN + "\n" + body + "\n" + JS_END + "\n"
     css_block = CSS_BEGIN + "\n" + CSS + "\n" + CSS_END + "\n"
     dom_block = DOM_BEGIN + "\n" + DOM + "\n" + DOM_END + "\n"

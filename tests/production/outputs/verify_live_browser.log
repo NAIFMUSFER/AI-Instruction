@@ -1,0 +1,98 @@
+ACS PRODUCTION VERIFICATION — real Chromium layer
+  frontend : https://sprightly-selkie-d906c3.netlify.app
+  started  : 2026-08-14T13:45:21.795Z
+  chromium : /opt/pw-browsers/chromium
+
+── loading the deployed frontend ──
+  ― C1    no uncaught page error during boot
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C2    the viewport initialises (canvas sized, WebGL context available)
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C3    a WebGL rendering context is really available
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C4    a test model renders (canonical meshes, draw calls, triangles)
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C5    the pixel output is non-empty (decoded RGBA, not black)
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C6    ENGINEERING / PBR / ARCHITECTURAL mode transitions succeed
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C7    no failed asset request and no CSP violation during boot
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― C8    no uncaught page error after the whole run
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D1    create/open a project
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D2    generate or load a fixture model
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D3    select an element
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D4    inspect the selected element
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D5    enter edit mode
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D6    preview a change without touching the committed model
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D7    cancel the preview
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D8    preview again
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D9    commit the change
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D10   undo
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D11   redo
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D12   open the BIM panel
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D13   open the documentation panel
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― D14   export
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― E1    no horizontal overflow at 375/390/430/768/1024/1440/1920
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― E2    the primary controls stay reachable at every width
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― F1    the document declares lang=ar and dir=rtl
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― F2    no meaningful untranslated English chrome
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― F3    no horizontal overflow in the Arabic layout
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― G5    window.ACS_BUILD_INFO carries the frontend build SHA and timestamp
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+  ― G6    the frontend build SHA matches --expect-sha
+      NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+      reason: the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/
+
+──────────────────────────────────────────────────────────────────────
+BROWSER LAYER: 0 PASS · 0 FAIL · 29 NOT VERIFIED (of 29 checks)
+summary: /tmp/acs/tests/production/outputs/verify_live_browser.json
+VERDICT: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED — no pixel was rendered here and nothing is claimed.

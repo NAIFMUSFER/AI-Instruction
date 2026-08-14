@@ -138,6 +138,9 @@ function notVerified(why) {
     + '(window.ACS.ready)', ready);
   const api = await pg.evaluate(() => ({
     diag: typeof (window.ACS || {}).renderDiagnostics === 'function',
+    diagDetail: typeof (window.ACS || {}).renderDiagnosticsDetail
+      === 'function',
+    capture: typeof (window.ACS || {}).captureRenderFailure === 'function',
     align: typeof (window.ACS || {}).alignmentDiagnostics === 'function',
     snap: typeof (window.ACS || {}).canonicalTransformSnapshot === 'function',
     setModel: typeof (window.ACS || {}).setModel === 'function',
@@ -145,6 +148,11 @@ function notVerified(why) {
     ad: typeof (window.ACS || {}).adApply === 'function'
   }));
   boot('the render diagnostics bridge is available', api.diag);
+  boot('the detailed render diagnostics bridge is available (renamed from '
+    + 'renderDiagnostics when the F-08 fixed-key contract took that name)',
+    api.diagDetail);
+  boot('the render-failure capture entry point is available (F-08)',
+    api.capture);
   boot('the alignment diagnostics bridge is available', api.align);
   boot('the canonical transform snapshot bridge is available — the harness '
     + 'never touches module-scoped engine state', api.snap);
@@ -153,14 +161,14 @@ function notVerified(why) {
   boot('no page errors during boot', errs.length === 0, errs.join(' | '));
   boot('no failed asset requests', bad.length === 0, bad.slice(0, 4).join(' | '));
 
-  if (!ready || !api.diag || !api.setModel) {
+  if (!ready || !api.diag || !api.diagDetail || !api.setModel) {
     await b.close(); if (srv) srv.close();
     summarise(); return;
   }
 
   /* §6 — نموذج قانوني محدّد يُحمَّل فعلاً؛ لا يصحّ الفحص على ورشة فارغة */
   console.log('\n== EMPTY WORKSPACE IS NOT A PASS (§6) ==');
-  const emptyDiag = await pg.evaluate('window.ACS.renderDiagnostics()');
+  const emptyDiag = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
   visual('an empty workspace reports NO canonical geometry instead of '
     + 'sky-sized bounds (the old false pass)',
     emptyDiag.model_bounds === null && emptyDiag.canonical_meshes === 0,
@@ -174,7 +182,7 @@ function notVerified(why) {
     await pg.waitForTimeout(1200);
     await pg.evaluate(() => new Promise(r =>
       requestAnimationFrame(() => requestAnimationFrame(r))));
-    const d = await pg.evaluate('window.ACS.renderDiagnostics()');
+    const d = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     visual(fname + ': canonical bounds are finite and building-scale',
       !!d.model_bounds && isFinite(d.model_bounds.radius)
       && d.model_bounds.radius > 0 && d.model_bounds.radius < 5000,
@@ -247,11 +255,24 @@ function notVerified(why) {
       JSON.stringify({ calls: rp.draw_calls, geo: rp.geometries,
         pressure: rp.pressure }));
 
-    /* §3 — مصفوفة الأوضاع: أيّ طبقة تُسوّد الإطار إن سوّدته */
+    /* §3 — مصفوفة الأوضاع: أيّ طبقة تُسوّد الإطار إن سوّدته.
+       F-08 — وُسِّعت لتشمل الحالات التسع المطلوبة صراحةً: BASE، PBR OFF،
+       PBR ON، POST PROCESS، ARCH DETAIL، SITE CONTEXT، LANDSCAPE،
+       ENGINEERING، والمسار الاحتياطي لجهاز يدعم VR. */
     const MODES = [
+      ['BASE (no presentation layer applied)', () => {
+        if (typeof window.ACS.pbrRestore === 'function') window.ACS.pbrRestore();
+        if (typeof window.ACS.adMode === 'function')
+          window.ACS.adMode('ENGINEERING');
+      }],
       ['PBR OFF / DETAIL OFF', () => { }],
       ['PBR ON (HIGH, REALISTIC, SKY)', () => {
         const c = window.ACS.pbr.config('HIGH', 'CLEAR_NOON', 'REALISTIC',
+          'SKY', null, null, window.ACS.pbrCaps(), window.ACS.pbrBounds());
+        if (c.valid) window.ACS.pbrApply(c.config);
+      }],
+      ['POST PROCESS (ULTRA, composer + SSAO)', () => {
+        const c = window.ACS.pbr.config('ULTRA', 'STUDIO_DAY', 'REALISTIC',
           'SKY', null, null, window.ACS.pbrCaps(), window.ACS.pbrBounds());
         if (c.valid) window.ACS.pbrApply(c.config);
       }],
@@ -279,6 +300,18 @@ function notVerified(why) {
           'CLEAR_SKY', null, false, [], window.ACS.adModelSummary());
         if (c.valid) window.ACS.adApply(c.config);
       }],
+      ['ENGINEERING (compare mode restored)', () => {
+        if (typeof window.ACS.adMode === 'function')
+          window.ACS.adMode('ENGINEERING');
+      }],
+      ['VR-CAPABLE FALLBACK (xr enabled, not presenting)', () => {
+        /* لا جلسة XR حقيقية في مِرقاب بلا نظّارة: نتحقّق من أن مسار العرض
+           العادي يبقى حيّاً بينما محرّك XR مفعَّل — أي أن الاحتياطي لا يُسوّد
+           الإطار. الجلسة الحقيقية تبقى NOT VERIFIED هنا. */
+        window.__ACS_XR_PROBE__ = { xr_enabled: null, presenting: null };
+        const d = window.ACS.renderDiagnostics();
+        window.__ACS_XR_PROBE__ = d.xr_state;
+      }],
       ['CAMERA PRESET EXTERIOR_HERO', () => {
         window.ACS.pbrCameraPreset('EXTERIOR_HERO');
       }]
@@ -290,7 +323,8 @@ function notVerified(why) {
       await pg.evaluate(fn);
       await pg.evaluate(() => new Promise(r =>
         requestAnimationFrame(() => requestAnimationFrame(r))));
-      const dd = await pg.evaluate('window.ACS.renderDiagnostics()');
+      const dd = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
+      const df = await pg.evaluate('window.ACS.renderDiagnostics()');
       const pp = await PX.analysePageViewport(pg, 'canvas');
       const ok = pp.verdict === 'VISIBLE_CONTENT' && dd.draw_calls > 0
         && dd.camera_in_frustum === true;
@@ -301,7 +335,44 @@ function notVerified(why) {
         + (ok ? 'PASS' : 'FAIL ' + JSON.stringify(pp.reasons)));
       visual(fname + ' · ' + label + ': model visible and viewport not black',
         ok, JSON.stringify(pp.reasons));
+      /* F-08 — الشروط الأربعة على كل حالة عرض، من عقد التشخيص مضبوط
+         المفاتيح: بكسلات غير صفرية، كاميرا بلا NaN/لانهاية، حدود مشهد
+         صالحة، ولا إحداثية غير صالحة. */
+      visual(fname + ' · ' + label + ': non-zero visible pixels were probed '
+        + 'in the real framebuffer',
+        !!df.pixel_probe && df.pixel_probe.non_zero_pixels > 0,
+        JSON.stringify(df.pixel_probe));
+      visual(fname + ' · ' + label + ': no NaN or infinite camera value',
+        Array.isArray(df.camera_position)
+        && df.camera_position.every(Number.isFinite)
+        && Array.isArray(df.camera_target)
+        && df.camera_target.every(Number.isFinite)
+        && Number.isFinite(df.near) && Number.isFinite(df.far)
+        && df.near > 0 && df.far > df.near,
+        JSON.stringify({ p: df.camera_position, t: df.camera_target,
+          near: df.near, far: df.far }));
+      visual(fname + ' · ' + label + ': scene bounds are finite and '
+        + 'building-scale, and no coordinate is invalid',
+        !!df.scene_bounds && df.scene_bounds.min.every(Number.isFinite)
+        && df.scene_bounds.max.every(Number.isFinite)
+        && Number.isFinite(df.scene_bounds.radius)
+        && df.scene_bounds.radius > 0
+        && df.invalid_coordinate_count === 0,
+        JSON.stringify({ bounds: df.scene_bounds,
+          invalid: df.invalid_coordinate_count }));
+      visual(fname + ' · ' + label + ': the diagnostics contract returns '
+        + 'exactly its declared keys',
+        Object.keys(df).length === 24,
+        JSON.stringify(Object.keys(df)));
     }
+    /* الحالة التاسعة: المسار الاحتياطي على جهاز يدعم VR — لا جلسة XR هنا */
+    const xrProbe = await pg.evaluate('window.__ACS_XR_PROBE__ || null');
+    visual(fname + ' · VR-CAPABLE FALLBACK: the XR state is really read from '
+      + 'the renderer and the non-XR path stayed alive (a real headset '
+      + 'session is NOT VERIFIED here)',
+      !!xrProbe && typeof xrProbe.presenting === 'boolean'
+      && xrProbe.presenting === false,
+      JSON.stringify(xrProbe));
     /* §6/§13/§15 — محاذاة فعلية بعد كل وضع، وثبات المصفوفات عبر التبديل */
     const align = await pg.evaluate('window.ACS.alignmentDiagnostics()');
     visual(fname + ': every hosted object resolves a transform (none '
@@ -349,7 +420,7 @@ function notVerified(why) {
       drift.available === true && drift.equal === true,
       JSON.stringify(drift));
     /* الهندسة القانونية لم تتغيّر بأي وضع عرض */
-    const after = await pg.evaluate('window.ACS.renderDiagnostics()');
+    const after = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     visual(fname + ': canonical bounds identical after the whole matrix',
       JSON.stringify(after.model_bounds) === JSON.stringify(d.model_bounds),
       JSON.stringify([d.model_bounds, after.model_bounds]));
@@ -363,7 +434,7 @@ function notVerified(why) {
     await pg.waitForTimeout(400);
     await pg.evaluate(() => new Promise(r =>
       requestAnimationFrame(() => requestAnimationFrame(r))));
-    const d = await pg.evaluate('window.ACS.renderDiagnostics()');
+    const d = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     const px = await PX.analysePageViewport(pg, 'canvas');
     visual(w + '×' + h + ': canvas sized, aspect updated, viewport not black',
       d.canvas_width > 0 && d.canvas_height > 0 && d.css_width > 0

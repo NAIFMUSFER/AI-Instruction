@@ -49,6 +49,106 @@
 })();
 </script>
 
+<script>
+/* ===========================================================================
+   F-08 — هوية البناء المشحون. القيم أدناه رموز نائبة يستبدلها مسار البناء
+   (tools/netlify-build.sh عبر tools/write_build_info.py). الرمز الذي لم
+   يُستبدَل يُبلَّغ null لا قيمة مختلَقة: بناء بلا إسناد يجب أن يُرى بلا إسناد،
+   لا أن يبدو موثَّقاً كذباً. لا شبكة، لا تخزين، لا أثر جانبي هنا.
+   =========================================================================== */
+(function(){
+  "use strict";
+  var RAW = {
+    git_sha:          "__ACS_GIT_SHA__",
+    built_at:         "__ACS_BUILT_AT__",
+    frontend_version: "__ACS_FRONTEND_VERSION__"
+  };
+  /* الرمز النائب يُبنى تركيباً حتى لا يطابق نفسه نصّاً في هذا الملفّ */
+  function unsubstituted(v, name){
+    var token = "__" + "ACS_" + name + "__";
+    return (typeof v !== "string") || v === "" || v === token;
+  }
+  var INFO = {
+    contract: "acs-build-info/1.0.0",
+    git_sha:          unsubstituted(RAW.git_sha, "GIT_SHA") ? null : RAW.git_sha,
+    built_at:         unsubstituted(RAW.built_at, "BUILT_AT") ? null : RAW.built_at,
+    frontend_version: unsubstituted(RAW.frontend_version, "FRONTEND_VERSION")
+                        ? null : RAW.frontend_version,
+    fabricated: false
+  };
+  INFO.substituted = !(INFO.git_sha === null && INFO.built_at === null
+                       && INFO.frontend_version === null);
+  INFO.provenance = INFO.substituted ? "BUILD_SUBSTITUTED" : "UNPROVENANCED";
+  INFO.short = INFO.git_sha ? String(INFO.git_sha).slice(0, 12) : null;
+  INFO.label = INFO.substituted
+    ? ((INFO.frontend_version || "?") + " · " + (INFO.short || "?")
+       + " · " + (INFO.built_at || "?"))
+    : "UNPROVENANCED BUILD — no build step substituted the identity tokens";
+  window.ACS_BUILD_INFO = INFO;
+
+  /* أخطاء الإقلاع تُسجَّل من أوّل لحظة: إن مات سكربت الوحدة (Three.js غائب
+     مثلاً) فهذه هي الحالة التي يحتاج فيها المستخدم التشخيص أكثر ما يحتاجه. */
+  var BOOT_ERRORS = [];
+  window.ACS_BOOT_ERRORS = BOOT_ERRORS;
+  window.addEventListener("error", function(e){
+    if(BOOT_ERRORS.length < 20)
+      BOOT_ERRORS.push({ message: String((e && e.message) || e).slice(0,200),
+        source: String((e && e.filename) || "").slice(0,200),
+        line: (e && e.lineno) || null });
+  }, true);
+
+  function paintBuildId(){
+    try{
+      var el = document.getElementById("acsBuildId");
+      if(!el) return;
+      el.textContent = INFO.label;
+      if(!INFO.substituted) el.setAttribute("data-unprovenanced","1");
+    }catch(e){}
+  }
+  /* احتياطي التشخيص: إن لم يُقلع سكربت الوحدة فلا وجود لـ
+     window.ACS.captureRenderFailure، ويبقى الزرّ ميّتاً في اللحظة التي يهمّ
+     فيها أكثر من غيرها. هذا المعالِج الكلاسيكي ينزّل ما هو معروف يقيناً —
+     هويّة البناء وأخطاء الإقلاع — ولا يخمّن رقماً ولا يرسل شيئاً إلى أي جهة.
+     يستبدله معالِج الوحدة الكامل حالما يُقلع. */
+  function fallbackDiagnostics(){
+    var payload = {
+      contract: "acs-render-failure/1.0.0",
+      capture_source: "CLASSIC_FALLBACK_MODULE_NOT_EXECUTED",
+      uploaded: false, upload_target: null, transmits_anything: false,
+      build_info: INFO,
+      application_module_executed: !!(window.ACS && window.ACS.ready),
+      boot_errors: BOOT_ERRORS,
+      user_agent: (typeof navigator !== "undefined")
+        ? navigator.userAgent : null,
+      note: "the application module did not execute, so no renderer, scene or "
+          + "pixel measurement exists. Nothing here is guessed."
+    };
+    var text = JSON.stringify(payload, null, 2);
+    try{
+      var url = URL.createObjectURL(new Blob([text],
+        { type: "application/json" }));
+      var a = document.createElement("a");
+      a.href = url; a.download = "acs-render-diagnostics-boot-failure.json";
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function(){ try{ URL.revokeObjectURL(url); }catch(e){} },
+        30000);
+    }catch(e){}
+    var st = document.getElementById("acsDiagState");
+    if(st) st.textContent = "لم يُقلع سكربت التطبيق — نُزِّل تشخيص الإقلاع "
+      + "المتاح فقط. لم يُرسَل إلى أي جهة.";
+    return payload;
+  }
+  function wireFallback(){
+    paintBuildId();
+    var btn = document.getElementById("acsDiagBtn");
+    if(btn && !btn.onclick) btn.onclick = fallbackDiagnostics;
+  }
+  if(document.readyState === "loading")
+    document.addEventListener("DOMContentLoaded", wireFallback);
+  else wireFallback();
+})();
+</script>
+
 <style>
   :root{--bg:#0b1220;--panel:#111c31f5;--txt:#e9eefc;--acc:#38bdf8;--acc2:#22c55e;--line:#ffffff1c;--muted:#9fb0cc}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -795,6 +895,21 @@
       <div id="statCount" class="note" style="min-height:14px;display:none"></div>
       <script>(function(){try{var dbg=/[?&]debug=1/.test(location.search)||localStorage.getItem('acs_debug')==='1';
         if(dbg){var e=document.getElementById('statCount'); if(e) e.style.display='';}}catch(e){}})();</script>
+
+      <!-- F-08 · معلومات النظام والتشخيص — عنصر DOM مكتوب يدوياً (غير مولَّد).
+           الزرّ يجهّز ملفّ تشخيص محلياً ولا يرسله إلى أي جهة. -->
+      <h2>معلومات النظام والتشخيص</h2>
+      <div class="note">هوية البناء المشحون:
+        <b id="acsBuildId" data-acs="build-id">…</b></div>
+      <div class="row">
+        <button class="ghost" id="acsDiagBtn" type="button" style="flex:1"
+                aria-label="تنزيل التشخيص — Download diagnostics"
+                title="تنزيل التشخيص / Download diagnostics"
+                data-acs="download-diagnostics">⤓ تنزيل التشخيص</button>
+      </div>
+      <div id="acsDiagState" class="note" role="status" aria-live="polite"
+           style="min-height:14px"></div>
+      <div class="note">يُجهَّز الملفّ في متصفّحك ولا يُرفع إلى أيّ خادوم.</div>
 
       <h2>دليل الألوان</h2>
       <div class="legend">
@@ -1721,20 +1836,26 @@ function compile(data){
   const def={site,wall_h:data.wall_h||3.0,wall_t:data.wall_t||0.15,industrial:industrial};
   const fh=data.floor_height||(def.wall_h+0.2);
   /* البلاطة تُقرأ من المصرِّف المعماري: نفس مصدر الحقيقة الذي تقرأه العلاقات
-     والمسافات. امتداد اللوح يبقى مقاس الموقع كما في المرحلة 1 (اصطلاح عرض،
-     لا ادّعاء هندسي)؛ الجديد أنّ فراغات النوى تُقصّ منه فعلاً. */
+     والمسافات، وفراغات النوى تُقصّ منها فعلاً. */
   let ARCH=null;
   try{ ARCH=compileArchitecture(data,'bld_0',null,0); }catch(e){ ARCH=null; }
   (data.levels||[]).forEach(lvl=>{
     const fdef=(data.floors||{})[lvl.template]||{}; const baseY=lvl.index*fh; const fkey='F'+lvl.index;
     const holes=ARCH?ARCH.voids.filter(v=>v.level_index===lvl.index).map(v=>v.rect):[];
-    /* امتداد اللوح اصطلاح عرض معلَن منذ المرحلة 1 ومثبَّت في خطّ أساس
-       المرحلة 4 (خطّ الأساس الذهبي). تقليصه إلى بصمة غرف الدور يزيل
-       «الصفيحة الطائرة» فوق المباني الأصغر من الموقع، لكنه يغيّر هندسة
-       معروضة مثبَّتة، فلا يُطبَّق بلا موافقة صريحة وتجديد خطّ الأساس.
-       المقاس الصحيح محسوب ومُبلَّغ في تشخيص المحاذاة:
-         pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]) */
-    slabStrips(0,0,site.w,site.d,holes).forEach((s,k)=>
+    /* PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان اللوح يُبنى على مستطيل
+       الموقع كاملاً (المُدخَل السابق: صفر، صفر، عرض الموقع، عمق الموقع)
+       تحت الاصطلاح السابق PHASE1_SITE_WIDE_PLATE المثبَّت بخطّ أساس المرحلة 4،
+       فيمتدّ لوح كل دور على الموقع كلّه ويبدو فوق مبنًى أصغر من قطعة الأرض
+       صفيحةً طائرة معلَّقة بلا شيء تحت حوافّها. صار الامتداد اتحاد بصمات غرف
+       الدور نفسه، محسوباً بعقد الامتداد الوحيد pqPlateRect (توأمه في بايثون
+       acs_pbr.plate_rect) — لا حاسب امتداد ثانٍ — والموقع بديلٌ أخير معلَن
+       (SITE_FALLBACK) حين لا يصرّح الدور بغرفة. مستوى الموقع العرضي يبقى
+       منفصلاً وبمقاس الموقع (ensureGround). التغيير عرضيّ بحت: لا مستطيل غرفة
+       ولا مساحة ولا كمية ولا بصمة نموذج يتغيّر به. السياسة وسابقتها وسببها
+       معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
+    const _pp=pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
+    const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
+    slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
     (fdef.rooms||[]).forEach(r=>buildRoom(grp,r,fkey,baseY,def));
@@ -21559,6 +21680,13 @@ function pqPlateRect(roomRects,siteRect){
     rect:[_pqQ(x0),_pqQ(z0),_pqQ(x1-x0),_pqQ(z1-z0)],
     room_count:rects.length}; }
 
+/* سياسة اللوح — توأم PLATE_POLICY في acs_pbr.py حرفاً بحرف (KI-3 / F-07).
+   الاصطلاح القديم PHASE1_SITE_WIDE_PLATE كان يمدّ لوح كل دور على الموقع كلّه
+   فيبدو لوح الدور الأعلى صفيحة طائرة فوق مبنًى أصغر من قطعة الأرض. الجديد
+   يشتقّ الامتداد من plate_rect وحده، ويبقي مستوى الموقع مستوى عرضٍ منفصلاً. */
+const PQ_PLATE_POLICY={"applies_to_levels":"ALL_BUILDING_LEVELS","changes_areas":false,"changes_canonical_model":false,"changes_model_hash":false,"changes_quantities":false,"changes_room_rects":false,"closes":"KI-3","extent_source":"plate_rect","golden_baseline_regenerated":true,"level_slab_extent":"LEVEL_ROOM_UNION","level_slab_fallback":"SITE_FALLBACK","policy":"PHASE10_FOOTPRINT_PLATE","presentation_only":true,"previous_pinned_by":"PHASE4_GOLDEN_BASELINE","previous_policy":"PHASE1_SITE_WIDE_PLATE","reason":"a level plate spanning the whole site above a smaller building reads as a detached flying sheet (KI-3). The extent now comes from the level's own room-footprint union through the single shared plate_rect contract.","site_plane":"SITE_PRESENTATION_PLANE","site_plane_extent":"SITE_RECT","site_plane_separate":true,"voids_subtracted":true};
+function pqPlatePolicy(){ return JSON.parse(JSON.stringify(PQ_PLATE_POLICY)); }
+
 function pqRackBlock(roomRect,rack){
   const rr=(Array.isArray(roomRect)&&roomRect.length===4)?roomRect:null;
   if(rr===null||rr.some(v=>_pqNum(v)===null))
@@ -21904,7 +22032,8 @@ if(typeof window!=='undefined'){
     fitDistance:pqFitDistance, cameraFit:pqCameraFit,
     recoveryPlan:pqRecoveryPlan,
     levelBaseY:pqLevelBaseY, resolveTransform:pqResolveTransform,
-    plateRect:pqPlateRect, rackBlock:pqRackBlock,
+    plateRect:pqPlateRect, platePolicy:pqPlatePolicy,
+    rackBlock:pqRackBlock,
     containment:pqContainment, roofAlignment:pqRoofAlignment, panel:PQ};
 }
 
@@ -26110,7 +26239,10 @@ function _pqViewportLuminance(){
   }catch(e){ return {sampled:0,status:'UNAVAILABLE',
     error:String(e&&e.message||e).slice(0,80)}; } }
 
-window.ACS.renderDiagnostics=function(){
+/* التشخيص التفصيلي للعرض (العقد القديم، بكل مفاتيحه) — صار باسمه الصريح
+   renderDiagnosticsDetail، لأن window.ACS.renderDiagnostics صار عقداً
+   مضبوط المفاتيح يعيش في سكربت الوحدة المكتوب يدوياً (F-08). */
+window.ACS.renderDiagnosticsDetail=function(){
   try{
     const info=renderer.info||{render:{},memory:{}};
     const el=renderer.domElement;
@@ -26297,9 +26429,24 @@ window.ACS.alignmentDiagnostics=function(){
         actual_plate_top_y:actual,
         error_m:(err===null)?null:Math.round(err*1000)/1000,
         aligned:(err!==null&&err<=Number(PQ_TC.roof_tolerance_m))}); });
-    /* اصطلاح لوح الموقع المعلَن منذ المرحلة 1: اللوح يمتدّ على الموقع كلّه.
-       فوق مبنى أصغر من الموقع يبرز اللوح خارج الغلاف فيبدو صفيحة طائرة.
-       يُقاس البروز ويُبلَّغ هنا بدل إخفائه بإزاحة عرضية (§7). */
+    /* PHASE10_FOOTPRINT_PLATE (KI-3): امتداد لوح الدور صار اتحاد بصمات غرفه
+       عبر pqPlateRect وحده، والاصطلاح السابق PHASE1_SITE_WIDE_PLATE مسجَّل
+       هنا بسببه فلا يكون التغيير صامتاً. الفرق الآن يُقاس على اللوح المرسوم
+       فعلاً في المشهد لا على الاصطلاح: فإن عاد لوحٌ يتجاوز بصمة دوره بأكثر
+       من متر رُفع ALIGN_ROOF_DETACHED لأيّ دور — لا للأدوار العليا وحدها. */
+    const renderedPlate={};
+    model.traverse(o=>{
+      if(!o.isMesh) return;
+      const t=_pqTagParts(o);
+      if(!t||t.layer!=='FLOOR'||!t.rest
+         ||String(t.rest).indexOf('slab')!==0) return;
+      const wb=_pqWorldBox(o);
+      if(!wb) return;
+      const cur=renderedPlate[t.floor];
+      renderedPlate[t.floor]=cur
+        ?[Math.min(cur[0],wb.min[0]),Math.min(cur[1],wb.min[2]),
+          Math.max(cur[2],wb.max[0]),Math.max(cur[3],wb.max[2])]
+        :[wb.min[0],wb.min[2],wb.max[0],wb.max[2]]; });
     const plateOverhang=[];
     Object.keys(levelsSeen).sort().forEach(k=>{
       const L=levelsSeen[k];
@@ -26309,20 +26456,33 @@ window.ACS.alignmentDiagnostics=function(){
       const pr=pqPlateRect(L.rects,[0,0,sw,sd]).rect;
       if(!pr||!(sw>0&&sd>0)) return;
       const ratio=(sw*sd)/Math.max(pr[2]*pr[3],1e-9);
-      const over=Math.max(sw-pr[2],sd-pr[3]);
+      const avoided=Math.max(sw-pr[2],sd-pr[3]);
+      const rp=renderedPlate[k]||null;
+      const rendered=rp?[rp[0],rp[1],rp[2]-rp[0],rp[3]-rp[1]]:null;
+      const over=rendered
+        ?Math.max(pr[0]-rendered[0],pr[1]-rendered[1],
+                  (rendered[0]+rendered[2])-(pr[0]+pr[2]),
+                  (rendered[1]+rendered[3])-(pr[1]+pr[3]),0)
+        :null;
       plateOverhang.push({level:k,index:L.index,
         site_plate:[0,0,sw,sd],room_union_plate:pr,
-        overhang_m:Math.round(over*1000)/1000,
+        rendered_plate:rendered?rendered.map(v=>Math.round(v*1000)/1000):null,
+        overhang_m:(over===null)?null:Math.round(over*1000)/1000,
+        avoided_site_overhang_m:Math.round(avoided*1000)/1000,
         area_ratio:Math.round(ratio*100)/100,
-        convention:'PHASE1_SITE_WIDE_PLATE',
-        pinned_by:'PHASE4_GOLDEN_BASELINE',
+        convention:PQ_PLATE_POLICY.policy,
+        previous_convention:PQ_PLATE_POLICY.previous_policy,
+        previous_pinned_by:PQ_PLATE_POLICY.previous_pinned_by,
+        change_reason:PQ_PLATE_POLICY.reason,
+        extent_source:PQ_PLATE_POLICY.extent_source,
+        pinned_by:'PHASE10_PRODUCTION_TRUST',
         change_requires_approval:true});
-      if(L.index>0&&over>1.0)
+      if(over!==null&&over>1.0)
         issues.push({code:'ALIGN_ROOF_DETACHED',severity:'WARNING',
           blocking:false,element_id:k,
-          message:'the level plate overhangs the building by '
-            +over.toFixed(2)+' m ('+ratio.toFixed(1)+'x its footprint) '
-            +'under the declared site-wide plate convention'}); });
+          message:'the rendered level plate overhangs its own room footprint '
+            +'by '+over.toFixed(2)+' m, which the declared '
+            +PQ_PLATE_POLICY.policy+' convention forbids'}); });
     const idx=((lastBuilding||{}).levels||[]).map(l=>Number(l.index));
     const top=idx.length?Math.max.apply(null,idx):null;
     let roof=null;
@@ -26458,8 +26618,8 @@ function _pqDisableComposer(reason){
 /* ── §13 جسر قراءة فقط: هل النموذج مرئيّ فعلاً؟ لا يغيّر حالة ولا يرسم ────── */
 window.ACS.verifyVisibleModel=function(){
   try{
-    const d=(typeof window.ACS.renderDiagnostics==='function')
-      ?window.ACS.renderDiagnostics():{};
+    const d=(typeof window.ACS.renderDiagnosticsDetail==='function')
+      ?window.ACS.renderDiagnosticsDetail():{};
     const rb=_pqRobustSceneBounds();
     const px=(typeof window.ACS.viewportPixels==='function')
       ?window.ACS.viewportPixels():{status:'UNAVAILABLE'};
@@ -26972,11 +27132,25 @@ function walkMove(dt){
 }
 
 let ground=null;
-function ensureGround(cx,cz,size){ if(ground)scene.remove(ground);
-  const g=new THREE.Mesh(new THREE.PlaneGeometry(size,size),
+/* مستوى الموقع/الأرض العرضي — PHASE10_FOOTPRINT_PLATE §site_plane.
+   هذا المستوى وحده هو ما يمثّل قطعة الأرض: يغطّي مستطيل الموقع كاملاً ويتمركز
+   عليه، ويعيش في المشهد لا في مجموعة BUILDING، فهو مستثنى بنيوياً من الحدود
+   القانونية ومن التصدير ومن الكميات. ألواح أدوار المبنى فوقه لم تعد تمتدّ على
+   الموقع بل على بصمة غرف كل دور. */
+function ensureGround(cx,cz,size,siteRect){ if(ground)scene.remove(ground);
+  const sr=(Array.isArray(siteRect)&&siteRect.length===4
+    &&siteRect.every(v=>Number.isFinite(Number(v)))
+    &&Number(siteRect[2])>0&&Number(siteRect[3])>0)
+    ?siteRect.map(Number):null;
+  const sz=sr?Math.max(Number(size)||0,sr[2],sr[3]):size;
+  const gx=sr?(sr[0]+sr[2]/2):cx, gz=sr?(sr[1]+sr[3]/2):cz;
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(sz,sz),
     new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.95,metalness:0}));
-  g.rotation.x=-Math.PI/2; g.position.set(cx,-0.1,cz); g.receiveShadow=true;
+  g.rotation.x=-Math.PI/2; g.position.set(gx,-0.1,gz); g.receiveShadow=true;
   g.name='GROUND_PLANE'; g.userData.presentation_context=true;
+  g.userData.acs_site_plane={site_rect:sr,covers_site:!!sr,size_m:sz,
+    policy:'PHASE10_FOOTPRINT_PLATE',separate_from_level_slabs:true,
+    in_building_group:false};
   ground=g; scene.add(g);}
 
 let model=null,registry={},floorsFound=new Set(),floorSel='all',doorMeshes=[],doorTexture=null,bounds={c:new THREE.Vector3(),r:60};
@@ -27045,7 +27219,8 @@ function setModel(data){
   const sc=sun.shadow.camera; const R=bounds.r*1.3;
   sc.left=-R;sc.right=R;sc.top=R;sc.bottom=-R;sc.near=1;sc.far=bounds.r*6; sc.updateProjectionMatrix();
   sun.target.position.copy(bounds.c); scene.add(sun.target);
-  ensureGround(bounds.c.x,bounds.c.z,bounds.r*10);
+  ensureGround(bounds.c.x,bounds.c.z,bounds.r*10,
+    [0,0,Number((data.site||{}).w)||0,Number((data.site||{}).d)||0]);
   buildFloors(); buildLayers(); updateVis();
   let n=0; model.traverse(o=>{if(o.isMesh)n++});
   const nz=Object.values(data.floors||{}).reduce((a,f)=>a+((f.rooms||[]).length),0);
@@ -29474,6 +29649,283 @@ document.getElementById('clipReset').onclick=resetClip;
   h.oninput=upd; d.oninput=upd; c.onchange=upd; upd();
 })();
 markView('orbit');
+
+/* ==== ACS RUNTIME RENDER DIAGNOSTICS (F-08 · hand-written, NOT generated) ====
+   عقد تشخيص دائم يعمل في الإنتاج: كل قيمة هنا مقيسة فعلاً من المُصيِّر ومن
+   المشهد ومن البكسلات، وما لا يمكن قياسه في هذا المتصفّح يُعاد null — لا رقم
+   مختلَق أبداً. لا يكتب في النموذج، ولا يرسل شيئاً إلى أي جهة. */
+const ACS_DIAG_KEYS=['build_sha','model_hash','revision_id','canvas_size',
+  'device_pixel_ratio','webgl_version','renderer','object_count','mesh_count',
+  'triangle_count','draw_calls','scene_bounds','camera_position',
+  'camera_target','near','far','frustum_intersections',
+  'invalid_coordinate_count','max_coordinate_abs','render_mode',
+  'postprocessing','xr_state','context_lost','pixel_probe'];
+
+function _acsFin(v){ return (typeof v==='number'&&isFinite(v))?v:null; }
+
+/* بصمة البناء — من window.ACS_BUILD_INFO وحده، وغيابها null لا قيمة بديلة */
+function _acsBuildSha(){
+  try{ const b=window.ACS_BUILD_INFO;
+    return (b&&typeof b.git_sha==='string'&&b.git_sha)?b.git_sha:null;
+  }catch(e){ return null; } }
+
+/* اسم المُصيِّر الحقيقي من WebGL — لا سلسلة ثابتة */
+function _acsRendererName(gl){
+  try{
+    const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    if(ext){ const s=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+      if(s) return String(s); }
+    const s2=gl.getParameter(gl.RENDERER);
+    return s2?String(s2):null;
+  }catch(e){ return null; } }
+
+/* مسح فعلي للبكسلات: عدد البكسلات غير الصفرية ومتوسّط النصوع.
+   يُقرأ من مخزن الرسم نفسه بـ readPixels؛ وإن تعذّر فمن نسخة مصغَّرة عبر
+   getImageData. تعذُّر الاثنين ⇒ كل الأرقام null وسبب معلَن. */
+function _acsPixelProbe(){
+  const out={method:null,sampled:0,non_zero_pixels:null,non_zero_pct:null,
+    luminance_mean:null,max_luminance:null,reason:null};
+  let el=null;
+  try{ el=renderer.domElement; }catch(e){ el=null; }
+  if(!el){ out.reason='NO_CANVAS'; return out; }
+  try{
+    const gl=renderer.getContext();
+    if(gl&&!gl.isContextLost()){
+      const w=Math.max(1,Math.min(el.width||1,320));
+      const h=Math.max(1,Math.min(el.height||1,180));
+      const px=new Uint8Array(w*h*4);
+      gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);
+      const n=w*h; let nz=0,sum=0,mx=0;
+      for(let i=0;i<n;i++){
+        const r=px[i*4],g=px[i*4+1],b=px[i*4+2];
+        if(r!==0||g!==0||b!==0) nz++;
+        const l=0.2126*r+0.7152*g+0.0722*b;
+        sum+=l; if(l>mx) mx=l; }
+      out.method='READ_PIXELS'; out.sampled=n; out.non_zero_pixels=nz;
+      out.non_zero_pct=Math.round((nz/n)*10000)/100;
+      out.luminance_mean=Math.round((sum/n)*1000)/1000;
+      out.max_luminance=Math.round(mx*1000)/1000;
+      return out; }
+    out.reason='CONTEXT_LOST';
+  }catch(e){ out.reason='READ_PIXELS_FAILED:'+String(e&&e.message||e).slice(0,60); }
+  try{
+    const w=Math.max(1,Math.min(el.width||1,160));
+    const h=Math.max(1,Math.min(el.height||1,90));
+    const c=document.createElement('canvas'); c.width=w; c.height=h;
+    const cx=c.getContext('2d');
+    if(!cx){ out.reason=(out.reason||'')+'|NO_2D_CONTEXT'; return out; }
+    cx.drawImage(el,0,0,w,h);
+    const d=cx.getImageData(0,0,w,h).data;
+    const n=w*h; let nz=0,sum=0,mx=0;
+    for(let i=0;i<n;i++){
+      const r=d[i*4],g=d[i*4+1],b=d[i*4+2];
+      if(r!==0||g!==0||b!==0) nz++;
+      const l=0.2126*r+0.7152*g+0.0722*b;
+      sum+=l; if(l>mx) mx=l; }
+    out.method='GET_IMAGE_DATA'; out.sampled=n; out.non_zero_pixels=nz;
+    out.non_zero_pct=Math.round((nz/n)*10000)/100;
+    out.luminance_mean=Math.round((sum/n)*1000)/1000;
+    out.max_luminance=Math.round(mx*1000)/1000;
+    out.reason=out.reason||null;
+  }catch(e){
+    out.reason=(out.reason?out.reason+'|':'')
+      +'GET_IMAGE_DATA_FAILED:'+String(e&&e.message||e).slice(0,60); }
+  return out; }
+
+window.ACS.renderDiagnostics=function(){
+  const D={}; ACS_DIAG_KEYS.forEach(k=>{ D[k]=null; });
+  D.build_sha=_acsBuildSha();
+  /* هويّة النموذج المحمَّل — مشتقّة من النموذج القانوني نفسه، لا مخزَّنة */
+  try{
+    if(lastBuilding){
+      const rev=modelRevision(lastBuilding,'building','bld_0',null);
+      D.model_hash=rev.model_hash||null;
+      D.revision_id=rev.revision_id||null; }
+  }catch(e){ D.model_hash=null; D.revision_id=null; }
+  let gl=null,el=null;
+  try{ el=renderer.domElement; gl=renderer.getContext(); }catch(e){ }
+  if(el) D.canvas_size={width:_acsFin(el.width),height:_acsFin(el.height),
+    css_width:_acsFin(el.clientWidth),css_height:_acsFin(el.clientHeight)};
+  try{ D.device_pixel_ratio=(typeof window.devicePixelRatio==='number')
+    ?window.devicePixelRatio:null; }catch(e){ D.device_pixel_ratio=null; }
+  try{ D.webgl_version=renderer.capabilities
+    ?(renderer.capabilities.isWebGL2?2:1):null; }catch(e){ D.webgl_version=null; }
+  D.renderer=gl?_acsRendererName(gl):null;
+  try{ D.context_lost=gl?!!gl.isContextLost():null; }catch(e){ D.context_lost=null; }
+  /* عدّ حقيقي بمرور على الشجرة، لا رقم مخزَّن */
+  try{
+    scene.updateMatrixWorld(true);
+    let objects=0,meshes=0,bad=0,maxAbs=0,inFrustum=0;
+    const box=new THREE.Box3(); let boxed=0;
+    let frustum=null;
+    try{
+      camera.updateMatrixWorld(true);
+      const m=new THREE.Matrix4().multiplyMatrices(camera.projectionMatrix,
+        camera.matrixWorldInverse);
+      frustum=new THREE.Frustum().setFromProjectionMatrix(m);
+    }catch(e){ frustum=null; }
+    const b3=new THREE.Box3(), sp=new THREE.Sphere();
+    scene.traverse(o=>{
+      objects++;
+      if(!o.isMesh) return;
+      meshes++;
+      let ok=true;
+      try{
+        b3.setFromObject(o);
+        const vs=[b3.min.x,b3.min.y,b3.min.z,b3.max.x,b3.max.y,b3.max.z];
+        if(!vs.every(v=>isFinite(v))) ok=false;
+        else{
+          vs.forEach(v=>{ if(Math.abs(v)>maxAbs) maxAbs=Math.abs(v); });
+          if(frustum){ b3.getBoundingSphere(sp);
+            if(frustum.intersectsSphere(sp)) inFrustum++; }
+          box.union(b3); boxed++; }
+      }catch(e){ ok=false; }
+      if(!ok) bad++; });
+    D.object_count=objects; D.mesh_count=meshes;
+    D.invalid_coordinate_count=bad;
+    D.max_coordinate_abs=boxed?Math.round(maxAbs*1000)/1000:null;
+    D.frustum_intersections=frustum?inFrustum:null;
+    if(boxed&&isFinite(box.min.x)){
+      const c=box.getCenter(new THREE.Vector3());
+      const s=box.getSize(new THREE.Vector3());
+      D.scene_bounds={min:[box.min.x,box.min.y,box.min.z],
+        max:[box.max.x,box.max.y,box.max.z],
+        center:[c.x,c.y,c.z],size:[s.x,s.y,s.z],
+        radius:Math.max(s.x,s.y,s.z)/2,measured_meshes:boxed}; }
+  }catch(e){ }
+  /* أرقام المُصيِّر من renderer.info.render مباشرةً */
+  try{
+    const inf=renderer.info&&renderer.info.render?renderer.info.render:null;
+    D.draw_calls=inf?_acsFin(inf.calls):null;
+    D.triangle_count=inf?_acsFin(inf.triangles):null;
+  }catch(e){ }
+  try{
+    D.camera_position=[camera.position.x,camera.position.y,camera.position.z];
+    D.near=_acsFin(camera.near); D.far=_acsFin(camera.far);
+  }catch(e){ }
+  try{
+    D.camera_target=(typeof orbit!=='undefined'&&orbit&&orbit.target)
+      ?[orbit.target.x,orbit.target.y,orbit.target.z]:null;
+  }catch(e){ D.camera_target=null; }
+  /* وضع العرض الفعلي المطبَّق — من الحالة المطبَّقة لا من نيّة المستخدم */
+  try{
+    const pq=(window.__ACS_PQ__&&window.__ACS_PQ__.applied)
+      ?window.__ACS_PQ__.applied:null;
+    const ad=(window.__ACS_AD__&&window.__ACS_AD__.applied)
+      ?window.__ACS_AD__.applied:null;
+    const parts=[];
+    if(pq) parts.push('PBR:'+JSON.stringify(pq).slice(0,80));
+    if(ad) parts.push('AD:'+JSON.stringify(ad).slice(0,80));
+    try{ if(renderer.xr&&renderer.xr.isPresenting) parts.push('XR'); }catch(e){}
+    D.render_mode=parts.length?parts.join('|'):'BASE';
+  }catch(e){ D.render_mode=null; }
+  try{
+    const comp=(window.__ACS_PQ__||{}).composer||null;
+    D.postprocessing={composer_active:!!comp,
+      pass_count:(comp&&comp.passes)?comp.passes.length:null,
+      fail_open_reason:(window.__ACS_RR__
+        &&window.__ACS_RR__.postprocess_fail_open)
+        ?window.__ACS_RR__.postprocess_fail_open:null};
+  }catch(e){ D.postprocessing=null; }
+  try{
+    const xr=renderer.xr||null;
+    D.xr_state=xr?{enabled:!!xr.enabled,presenting:!!xr.isPresenting,
+      session:!!(xr.getSession&&xr.getSession()),
+      supported:(typeof navigator!=='undefined'&&navigator.xr)?true:false}
+      :null;
+  }catch(e){ D.xr_state=null; }
+  D.pixel_probe=_acsPixelProbe();
+  /* العقد مضبوط المفاتيح: لا مفتاح زائد ولا ناقص */
+  const out={}; ACS_DIAG_KEYS.forEach(k=>{ out[k]=(k in D)?D[k]:null; });
+  return out; };
+
+/* هل نافذة العرض خالية فعلاً؟ سؤال بكسلات، لا ظنّ. */
+window.ACS.viewportBlank=function(){
+  const p=_acsPixelProbe();
+  if(p.non_zero_pct===null) return {blank:null,probe:p};
+  return {blank:p.non_zero_pct<=1.5,probe:p}; };
+
+/* حزمة تشخيص قابلة للتنزيل. لا شبكة إطلاقاً: لا fetch ولا XMLHttpRequest ولا
+   sendBeacon ولا أي إرسال — Blob و objectURL ورابط تنزيل محلي فقط. */
+window.ACS.captureRenderFailure=function(opts){
+  const o=opts||{};
+  const rec={contract:'acs-render-failure/1.0.0',
+    captured_at_ms:(typeof performance!=='undefined'&&performance.now)
+      ?Math.round(performance.now()):null,
+    uploaded:false,upload_target:null,transmits_anything:false,
+    build_info:null,viewport_blank:null,diagnostics:null,
+    camera:null,render_mode:null,building_json:null,
+    building_json_included:false,building_json_excluded_reason:null,
+    detail:null,download:null,issues:[]};
+  try{ rec.build_info=window.ACS_BUILD_INFO||null; }catch(e){ rec.build_info=null; }
+  let blank=null;
+  try{ const v=window.ACS.viewportBlank(); rec.viewport_blank=v; blank=v.blank; }
+  catch(e){ rec.issues.push('VIEWPORT_PROBE_FAILED'); }
+  try{ rec.diagnostics=window.ACS.renderDiagnostics(); }
+  catch(e){ rec.issues.push('DIAGNOSTICS_FAILED'); }
+  try{ rec.detail=(typeof window.ACS.renderDiagnosticsDetail==='function')
+    ?window.ACS.renderDiagnosticsDetail():null; }catch(e){ rec.detail=null; }
+  try{
+    rec.camera={position:(rec.diagnostics||{}).camera_position||null,
+      target:(rec.diagnostics||{}).camera_target||null,
+      near:(rec.diagnostics||{}).near,far:(rec.diagnostics||{}).far,
+      fov:_acsFin(camera.fov),aspect:_acsFin(camera.aspect)};
+  }catch(e){ rec.camera=null; }
+  rec.render_mode=(rec.diagnostics||{}).render_mode||null;
+  /* نموذج المبنى يُرفَق إن كان إرفاقه آمناً: قابل للتسلسل وتحت سقف الحجم */
+  try{
+    if(!lastBuilding) rec.building_json_excluded_reason='NO_MODEL_LOADED';
+    else{
+      const s=JSON.stringify(lastBuilding);
+      if(s.length>4000000) rec.building_json_excluded_reason='TOO_LARGE';
+      else{ rec.building_json=JSON.parse(s); rec.building_json_included=true; } }
+  }catch(e){ rec.building_json_excluded_reason='NOT_SERIALISABLE'; }
+  rec.blank_detected=blank;
+  let text=null;
+  try{ text=JSON.stringify(rec,null,2); }
+  catch(e){ text=JSON.stringify({contract:rec.contract,
+    issues:['REPORT_NOT_SERIALISABLE']},null,2); }
+  const name='acs-render-diagnostics-'
+    +((rec.diagnostics||{}).build_sha||'unprovenanced')+'.json';
+  let url=null;
+  try{
+    const blob=new Blob([text],{type:'application/json'});
+    url=URL.createObjectURL(blob);
+    rec.download={filename:name,object_url:url,bytes:text.length,
+      revoked:false,uploaded:false};
+    if(o.download!==false){
+      const a=document.createElement('a');
+      a.href=url; a.download=name; a.rel='noopener';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>{ try{ URL.revokeObjectURL(url); }catch(e){} },30000); }
+  }catch(e){
+    rec.issues.push('BLOB_UNAVAILABLE:'+String(e&&e.message||e).slice(0,60));
+    rec.download={filename:name,object_url:null,bytes:text.length,
+      revoked:null,uploaded:false}; }
+  rec.report_json=text;
+  return rec; };
+
+/* زرّ التنزيل ومعرّف البناء المرئي — عناصر مكتوبة يدوياً في DOM الصفحة */
+(function(){
+  try{
+    /* المعالِج الكامل يستبدل الاحتياطي الكلاسيكي الآن وقد أقلع المحرّك */
+    const btn=document.getElementById('acsDiagBtn');
+    if(btn) btn.onclick=function(){
+      const r=window.ACS.captureRenderFailure();
+      const st=document.getElementById('acsDiagState');
+      if(st) st.textContent='تم تجهيز ملفّ التشخيص ('+((r.download||{}).bytes||0)
+        +' بايت) — لم يُرسَل إلى أي جهة.';
+    };
+    /* معرّف البناء يُرسَم في السكربت الكلاسيكي في <head> حتى يظهر حتى لو مات
+       سكربت الوحدة؛ هنا نعيد رسمه فقط إن لم يكن قد رُسم بعد. */
+    const b=window.ACS_BUILD_INFO||{};
+    const idEl=document.getElementById('acsBuildId');
+    if(idEl&&(!idEl.textContent||idEl.textContent==='…')){
+      idEl.textContent=b.label||'UNPROVENANCED BUILD';
+      if(!b.substituted) idEl.setAttribute('data-unprovenanced','1'); }
+  }catch(e){ }
+})();
+/* ==== END ACS RUNTIME RENDER DIAGNOSTICS ==== */
 
 </script>
 <!-- ===== ACS WORKSPACE DOM (generated) ===== -->

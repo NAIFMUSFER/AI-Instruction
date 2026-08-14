@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  sitemap.xml — الصفحات العامّة وحدها.
+
+  الاستوديو (/ و/index.html) غير مدرج عمداً: هو تطبيق خلف بطاقة دخول ويعرض
+  بيانات مشاريع خاصّة، وهو محجوب بـ Disallow في robots.txt وبترويسة
+  X-Robots-Tag: noindex, nofollow في netlify.toml.
+
+  /privacy.html هو الصفحة العامّة الوحيدة المنشورة في public/ اليوم، وهي
+  موجودة فعلاً وتحمل <meta name="robots" content="index,follow">. لا تُضَف إلى
+  هذا الملفّ أي صفحة لم تُنشَر فعلاً.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://sprightly-selkie-d906c3.netlify.app/privacy.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>

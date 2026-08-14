@@ -1,0 +1,42 @@
+{
+  "_fixture": {
+    "id": "footprint_equals_site",
+    "intent": "the single case where the plate legitimately equals the site: one room covering the whole plot. The policy must NOT shrink it.",
+    "provenance": "SYNTHETIC_REGRESSION",
+    "provenance_note": "SYNTHETIC_REGRESSION — authored for the F-07 / KI-3 plate-extent regression. Not a captured production model and never presented as one. Every rectangle here is chosen to make the site-wide plate defect visible and its fix measurable.",
+    "reconstructed": false
+  },
+  "floor_height": 8.0,
+  "floors": {
+    "g": {
+      "rooms": [
+        {
+          "id": "hall",
+          "rect": [
+            0,
+            0,
+            60,
+            40
+          ]
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "index": 0,
+      "name": "ground",
+      "template": "g"
+    }
+  ],
+  "meta": {
+    "name": "footprint_equals_site",
+    "type": "warehouse"
+  },
+  "site": {
+    "d": 40,
+    "w": 60
+  },
+  "wall_h": 7.5,
+  "wall_t": 0.2
+}

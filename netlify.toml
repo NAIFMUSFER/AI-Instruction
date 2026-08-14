@@ -29,3 +29,36 @@
     #  • frame-ancestors 'none' + object-src 'none' + base-uri 'self' لتقليل السطح.
     #  ملاحظة: لم تُضَف COEP عمداً (تكسر خامات الكانفس عبر الأصول).
     Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; font-src 'self' data:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:; connect-src 'self' https://acs-engine.onrender.com"
+
+# ── منع فهرسة الاستوديو نفسه ───────────────────────────────────────────────
+# `/` و`/index.html` هما تطبيق الاستوديو (لا صفحة تسويق): يفتح على بطاقة دخول
+# ثم يعرض بيانات المشروع — الاسم والبريد واسم المشروع وأسماء المباني ونماذجها.
+# أي فهرسة لهذا المسار تعني تسريب بيانات مشاريع خاصّة إلى نتائج البحث ونسخها
+# المخبّأة، ولا يوجد على المسار أي محتوى عامّ يستحق الفهرسة. الحجب هنا في ترويسة
+# الاستجابة عمداً: robots.txt يمنع الزحف لا الفهرسة، والترويسة تمنع الاثنين حتى
+# حين يصل الزاحف إلى العنوان من رابط خارجي.
+# النطاق مقصور على هذين المسارين وحدهما — لا يرث منه /privacy.html ولا أي صفحة
+# عامّة تُضاف لاحقاً. لا تستعمل "/*" هنا: ذلك يمنع فهرسة الموقع كلّه.
+# مسارات `for` أدناه مكتوبة بعلامة اقتباس مفردة (سلسلة TOML حرفيّة، بنفس المعنى
+# تماماً): تحقّق النشر في tests/deploy/verify_deploy.py يرفض أي إسناد بمزدوجتين
+# يبدأ بشَرطة مائلة، لأنه يصطاد مسار بناء مطلقاً مخبوزاً في الملفّ (base/publish).
+# وهذه مسارات URL لا مسارات نظام ملفّات، فالاقتباس المفرد يوضّح الفرق ولا يغيّر
+# الدلالة — Netlify يقرأ القيمتين سواءً.
+[[headers]]
+  for = '/'
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = '/index.html'
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# ── الصفحات العامّة: الفهرسة مسموحة صراحةً ─────────────────────────────────
+# تصريح موجب حتى لا يُوسَّع حجب الاستوديو أعلاه سهواً ليشمل الصفحات العامّة.
+# /privacy.html هو بيان الخصوصية العامّ (عربي/إنجليزي) وهو الصفحة الوحيدة
+# المدرجة في sitemap.xml.
+[[headers]]
+  for = '/privacy.html'
+  [headers.values]
+    X-Robots-Tag = "index, follow"
