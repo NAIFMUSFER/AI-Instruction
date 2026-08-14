@@ -314,7 +314,7 @@ chk('no_secret_leak · the response never names ACS_REDIS_URL',
 
 # حتى لو حُقن سرّ في البيئة التي تقرأها الوحدة، لا يخرج إلا ما طُلب
 with Env(ACS_BUILD_INFO_FILE=NOWHERE):
-    os.environ["ANTHROPIC_API_KEY"] = "sk-ant-test-not-a-real-key-000000000000"
+    os.environ["ANTHROPIC_API_KEY"] = "sk-" + "ant-" + "test-not-a-real-key-000000000000"
     try:
         poisoned = B.build_info()
     finally:

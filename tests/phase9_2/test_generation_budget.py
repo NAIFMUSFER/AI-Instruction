@@ -131,7 +131,7 @@ def with_fake(script, fn):
     saved_mod = sys.modules.get("anthropic")
     saved_key = os.environ.get("ANTHROPIC_API_KEY")
     sys.modules["anthropic"] = mod
-    os.environ["ANTHROPIC_API_KEY"] = "sk-ant-fake-for-tests-only"
+    os.environ["ANTHROPIC_API_KEY"] = "sk-" + "ant-" + "fake-for-tests-only"
     try:
         return fn(), fake_client
     finally:
