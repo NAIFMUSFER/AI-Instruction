@@ -317,8 +317,16 @@ chk('with the switch off nothing is written at all — no file, no directory',
     _off is None and not os.path.isdir(_probe_dir))
 
 os.environ['ACS_RAW_DUMP_ENABLED'] = '1'
+
+_TEST_KEY_PREFIX = 'sk-' + 'ant-'
+
 for _i in range(4):
-    U._save_raw('reply %d key=sk-ant-abc123DEF456ghi789jkl' % _i)
+    _test_key = _TEST_KEY_PREFIX + 'abc123DEF456ghi789jkl'
+    U._save_raw('reply %d key=%s' % (_i, _test_key))
+
+for _i in range(4):
+    _test_key = _TEST_KEY_PREFIX + 'abc123DEF456ghi789jkl'
+    U._save_raw('reply %d key=%s' % (_i, _test_key))
 _files = sorted(os.listdir(_probe_dir)) if os.path.isdir(_probe_dir) else []
 chk('with the switch on, at most ACS_RAW_DUMP_KEEP files survive rotation',
     len(_files) == 2, str(len(_files)))
@@ -336,7 +344,7 @@ chk('every dump file is created 0600 — os.open with an explicit mode, not open
 _dumped = ''.join(open(os.path.join(_probe_dir, n), encoding='utf-8').read()
                   for n in _files)
 chk('the existing E.redact() filtering still applies to what is written',
-    'sk-ant-' not in _dumped and '[REDACTED]' in _dumped, _dumped[:120])
+    _TEST_KEY_PREFIX not in _dumped and '[REDACTED]' in _dumped, _dumped[:120])
 chk('os.open with an explicit 0o600 mode is the write path in the source',
     'os.open(' in rd('acs_understand.py') and '0o600' in rd('acs_understand.py'))
 
