@@ -484,6 +484,19 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
   .ws-row{min-height:var(--ws-hit)}
 }
 
+/* ── F-30 · KI-13 — بدائل سمة style ────────────────────────────────────────
+   `style-src 'self'` يحجب سمة style مهما كان طريقها، ومنها نصّ innerHTML.
+   ما كان ثابتاً صار صنفاً معلناً هنا، وما كان ديناميكياً (إزاحة الشجرة) صار
+   خاصيّة CSS مخصّصة يعيّنها ACS_STYLE عبر CSSOM بعد الإدراج. */
+.ws-dim{color:var(--ws-dim)}
+.ws-note-dim{color:var(--ws-dim);font-size:11px}
+.ws-btn-block{width:100%;margin:3px 0}
+.ws-btn-wide{width:100%;margin-top:8px}
+/* عمق الشجرة غير محدود مسبقاً، فلا يمثّله عدد منتهٍ من الأصناف. القيمة
+   الاحتياطية 6px هي إزاحة العمق صفر — أي أن تعذّر التعيين يعطي شجرة بلا
+   إزاحة، لا شجرة مكسورة. */
+.ws-row[data-ws-node]{padding-inline-start:var(--ws-indent, 6px)}
+
 /* ===== END ACS WORKSPACE STYLES ===== */
 /* ===== ACS RENDER STYLES (generated) ===== */
 .rv-panel{position:fixed;inset-block:0;inset-inline-end:0;width:min(94vw,380px);
@@ -543,6 +556,9 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
   .rv-panel{width:100vw}
   .rv-gallery{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
 }
+/* F-30 · KI-13 — بديل سمة style التي يحجبها `style-src 'self'` داخل innerHTML.
+   نصّ بديل يظهر حين لا يكون هناك SVG معروض. */
+.rv-placeholder{padding:20px;color:#333}
 
 /* ===== END ACS RENDER STYLES ===== */
 /* ===== ACS BIM STYLES (generated) ===== */
@@ -648,10 +664,17 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
 .dc-table th{color:var(--ws-dim);font-weight:600;text-transform:uppercase;font-size:10px}
 .dc-table td.unk{color:var(--ws-dim);font-style:italic}
 .dc-note{color:var(--ws-dim);font-size:11px;margin-top:6px}
+/* F-30 · KI-13 — هندسة اللوحة والعروض تصل عبر خصائص CSS مخصّصة يعيّنها
+   ACS_STYLE عبر CSSOM، لا عبر سمة style التي يحجبها `style-src 'self'`.
+   القيم الاحتياطية ليست تجميلاً: لو تعذّر تعيين خاصيّة تبقى اللوحة بنسبة A4
+   أفقيّة ويبقى العرض مرئياً بأبعاد معقولة، بدل الانهيار إلى ‎0×0‎ في الزاوية
+   وهو بالضبط ما كان يحدث حين تُحجَب السمة. */
 .dc-sheet{position:relative;border:1px solid var(--ws-line);background:#fff;
-  border-radius:6px}
+  border-radius:6px;aspect-ratio:var(--dc-sheet-ar, 297/210)}
 .dc-vp{position:absolute;border:1px dashed var(--ws-accent);font-size:9px;
-  color:#333;overflow:hidden}
+  color:#333;overflow:hidden;
+  left:var(--dc-vp-x, 0%);top:var(--dc-vp-y, 0%);
+  width:var(--dc-vp-w, 10%);height:var(--dc-vp-h, 10%)}
 .dc-field{display:flex;gap:8px;align-items:center;padding:3px 0}
 .dc-field label{color:var(--ws-dim);font-size:11px;flex:0 0 92px}
 .dc-field select,.dc-field input{flex:1;min-height:var(--ws-hit);background:var(--ws-panel2);
@@ -754,3 +777,41 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
 .acs-u-26{margin-top:10px;}
 .acs-u-27{color:#38bdf8;}
 .acs-u-28{flex:0 0 auto;}
+
+/* ============================================================================
+   F-30 · KI-13 — أصناف بديلة عن سمات style التي كانت تُحقن عبر innerHTML في
+   public/app/ui/workspace-ui-wiring.js.
+
+   السياسة الإنتاجية `style-src 'self'` تحجب سمة style مهما كان طريق وصولها،
+   ومنها نصّ يُسنَد إلى innerHTML. الأثر المقيس قبل الإصلاح: خرقٌ عند الإقلاع من
+   workspace-ui-wiring.js:1300 (شارة حالة الخادم)، ولوحة عطل التوليد تفقد إطارها
+   وصفَّ أزرارها (display:flex) فيلتصق زرّا «إعادة المحاولة» و«توليد محلّي».
+
+   كلّها قيم ثابتة، فالصنف المعلن هو البديل الصحيح — لا حاجة إلى أي آلية
+   ديناميكية هنا. الهندسة الديناميكية وحدها تمرّ عبر ACS_STYLE (CSSOM).
+
+   ملفّ workspace-ui-wiring.js مصدرٌ قانونيّ مكتوب يدوياً لا مخرجٌ مولَّد:
+   tools/frontend_split.js أداة هجرة استُهلك مدخلها (public/index.html صار قشرة
+   بصفر سكربت مضمّن، وA.segments عليها تعيد مقطعاً واحداً منحلّاً). يثبّت ذلك
+   اختبار tests/remediation/test_csp_style_architecture.js §٤.
+   ============================================================================ */
+.acs-warn{color:#f59e0b}
+.acs-ok{color:#22c55e}
+.acs-dim-60{opacity:.6}
+.acs-dim-65{opacity:.65}
+.acs-dim-70{opacity:.7}
+.acs-dim-75{opacity:.75}
+.acs-dim-80{opacity:.8}
+.acs-dim-85{opacity:.85}
+.acs-mt-6{margin-top:6px}
+/* زرّ لون مربّع صغير — كان يُضبط بـ style.cssText. CSSOM ليس محجوباً بالسياسة
+   (مقيس)، لكنّ الصنف يزيل الالتباس ويجعل القياس البصريّ في مكان واحد. */
+.acs-swatch-btn{width:22px;height:22px;padding:0;border:none;background:none;
+  cursor:pointer}
+/* لوحة عطل التوليد — الكتلة التي كانت تفقد كل تنسيقها تحت السياسة. */
+.acs-errbox{border:1px solid #f8717155;background:#7f1d1d22;border-radius:12px;
+  padding:12px;line-height:1.7}
+.acs-errtitle{font-weight:700;color:#fca5a5;margin-bottom:6px}
+.acs-errbody{opacity:.85;margin-top:6px}
+.acs-errhint{opacity:.7;margin-top:8px;font-size:12px}
+.acs-errrow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}

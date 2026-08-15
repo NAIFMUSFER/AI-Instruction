@@ -153,6 +153,17 @@ function wire() {
       const panel = panelOf(entry.ns);
       try { if (panel && panel.close) panel.close(); } catch (e) { /* لا تُسقط البقيّة */ }
     }
+    /* مساحة العمل سطحٌ يملأ الشاشة ويغطّي شريط المداخل نفسه، ولا يحمل شريطُ
+       أدواتها زرّ إغلاق. بلا هذا السطر يفتحها المستخدم ولا يجد طريق عودة —
+       عطلٌ يقيسه اختبار KI-13 مباشرةً حين يحاول فتح لوحة بعدها. */
+    const WS = (window.ACS || {}).workspace;
+    try {
+      const el = $('acsWorkspace');
+      if (WS && WS.close && el && el.classList.contains('on')) {
+        WS.close();
+        announce('أُغلقت مساحة العمل.');
+      }
+    } catch (e) { /* لا تُسقط البقيّة */ }
   });
   return true;
 }

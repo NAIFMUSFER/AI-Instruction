@@ -165,6 +165,14 @@ jobs:
             node tests/phase3/lib/run_browser.js "$PWD/tests/phase9_2/test_archdetail_browser.js"
             node tests/deploy/test_viewport_pixels.js
             node tests/deploy/verify_page_boot.js
+            # KI-13 · F-30 — معمارية التنسيق تحت السياسة الإنتاجية. تُشغَّل هنا
+            # لأن هذه هي الوظيفة الوحيدة التي تملك Chromium حقيقياً و
+            # public/vendor مملوءاً، فيقاس الرسم الكامل لا رسمٌ مُكعَّب.
+            # تفشل الوظيفة إن أعاد أي ملفّ مشحون إدخال سمة style، أو انحرف
+            # مخرجٌ مولَّد عن مولّده، أو ضعّف أحدٌ style-src في netlify.toml.
+            node tests/remediation/test_csp_style_architecture.js
+            node tests/remediation/test_panel_entry.js
+            node tests/remediation/test_module_graph.js
           } 2>&1 | tee logs/chromium-browser.log
       - uses: actions/upload-artifact@v4
         if: always()

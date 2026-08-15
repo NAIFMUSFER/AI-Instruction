@@ -81,10 +81,17 @@ CSS = r""".dc-panel{position:fixed;inset-block:0;inset-inline-end:0;width:min(96
 .dc-table th{color:var(--ws-dim);font-weight:600;text-transform:uppercase;font-size:10px}
 .dc-table td.unk{color:var(--ws-dim);font-style:italic}
 .dc-note{color:var(--ws-dim);font-size:11px;margin-top:6px}
+/* F-30 · KI-13 — هندسة اللوحة والعروض تصل عبر خصائص CSS مخصّصة يعيّنها
+   ACS_STYLE عبر CSSOM، لا عبر سمة style التي يحجبها `style-src 'self'`.
+   القيم الاحتياطية ليست تجميلاً: لو تعذّر تعيين خاصيّة تبقى اللوحة بنسبة A4
+   أفقيّة ويبقى العرض مرئياً بأبعاد معقولة، بدل الانهيار إلى ‎0×0‎ في الزاوية
+   وهو بالضبط ما كان يحدث حين تُحجَب السمة. */
 .dc-sheet{position:relative;border:1px solid var(--ws-line);background:#fff;
-  border-radius:6px}
+  border-radius:6px;aspect-ratio:var(--dc-sheet-ar, 297/210)}
 .dc-vp{position:absolute;border:1px dashed var(--ws-accent);font-size:9px;
-  color:#333;overflow:hidden}
+  color:#333;overflow:hidden;
+  left:var(--dc-vp-x, 0%);top:var(--dc-vp-y, 0%);
+  width:var(--dc-vp-w, 10%);height:var(--dc-vp-h, 10%)}
 .dc-field{display:flex;gap:8px;align-items:center;padding:3px 0}
 .dc-field label{color:var(--ws-dim);font-size:11px;flex:0 0 92px}
 .dc-field select,.dc-field input{flex:1;min-height:var(--ws-hit);background:var(--ws-panel2);
@@ -1813,14 +1820,18 @@ const DC = (function(){
       if(s){
         const W=s.paper_mm[0],H=s.paper_mm[1];
         const scale=100.0/W;
+        /* F-30 · KI-13: الهندسة تخرج في data-acs-style لا في style. سمة style
+           يحجبها `style-src 'self'` مهما كان طريقها، ومنها innerHTML — فكان كل
+           عرض ينهار إلى ‎0×0‎ في الزاوية بينما تبدو العلامة سليمة في DOM.
+           ACS_STYLE.apply يعيّنها عبر CSSOM بعد الإدراج (انظر render()). */
         const vps=s.viewports.map(v=>'<div class="dc-vp" data-dc-viewport="'+
-          esc(v.viewport_id)+'" style="left:'+(v.x*scale)+'%;top:'+
-          (v.y/H*100)+'%;width:'+(v.width*scale)+'%;height:'+
+          esc(v.viewport_id)+'" data-acs-style="--dc-vp-x:'+(v.x*scale)+'%;--dc-vp-y:'+
+          (v.y/H*100)+'%;--dc-vp-w:'+(v.width*scale)+'%;--dc-vp-h:'+
           (v.height/H*100)+'%">'+esc(v.view_id.slice(0,10))+'</div>').join('');
         p.push('<div class="dc-sec" data-dc-section="SHEET"><h4>'+
           esc(s.sheet_number||s.sheet_id)+'</h4>'+
           '<div class="dc-sheet" data-dc-sheet="'+esc(s.sheet_id)+
-          '" style="aspect-ratio:'+_dcFmt(W)+'/'+_dcFmt(H)+'">'+vps+'</div>'+
+          '" data-acs-style="--dc-sheet-ar:'+_dcFmt(W)+'/'+_dcFmt(H)+'">'+vps+'</div>'+
           row('paper',s.paper_size+' '+s.orientation)+
           row('viewports',s.viewports.length)+
           row('status',s.status||ACS_DOCS_SPEC.unknown_display)+'</div>'); } }
@@ -1839,6 +1850,10 @@ const DC = (function(){
         '<div class="dc-note">every exported file is bound to the model hash '+
         'that produced it</div></div>'); }
     host.innerHTML=p.join('');
+    /* F-30 · KI-13: هندسة اللوحة والعروض تُطبَّق عبر CSSOM مباشرةً بعد الإدراج.
+       بلا هذا السطر تبقى القيم في السمة ولا تصل إلى العنصر، فينهار كل عرض
+       إلى ‎0×0‎ — وهو ما كانت السياسة تفعله بسمة style قبل هذا الإصلاح. */
+    if(typeof window!=='undefined'&&window.ACS_STYLE) window.ACS_STYLE.apply(host);
     Array.prototype.forEach.call(host.querySelectorAll('[data-dc-node]'),el=>{
       el.onclick=()=>select(el.getAttribute('data-dc-node'),
         el.getAttribute('data-dc-id')); }); }

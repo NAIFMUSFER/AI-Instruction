@@ -16,6 +16,13 @@
      ══════════════════════════════════════════════════════════════════════ -->
 <script src="/app/boot/api-base.js"></script>
 
+<!-- F-30 · KI-13: جسر الهندسة الديناميكية. `style-src 'self'` يحجب سمة style
+     مهما كان طريقها (علامة، أو setAttribute، أو داخل نصّ innerHTML)، ولا يحكم
+     واجهة CSSOM. الطبقات تكتب data-acs-style ثم تنادي ACS_STYLE.apply فتُطبَّق
+     القيم عبر setProperty بقائمة سماح للأسماء والقيم. كلاسيكيّ وقبل الوحدات:
+     أوّل كتابة innerHTML قد تسبق تقييم رسم الوحدات. -->
+<script src="/app/boot/style-bridge.js"></script>
+
 <script src="/app/boot/build-info.js"></script>
 
 <link rel="stylesheet" href="/app/styles/app.css" />

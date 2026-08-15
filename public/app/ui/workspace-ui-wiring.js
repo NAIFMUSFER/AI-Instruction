@@ -137,7 +137,7 @@ function setModel(data){
   statusEl.textContent=`تم التوليد ✓  ${n} عنصر · ${nz} منطقة/غرفة · ${Object.keys(registry).length} طبقة · ${floorsFound.size} دور`;
   const statEl=document.getElementById('statCount');
   if(statEl) statEl.innerHTML=`<b>${n}</b> عنصر ثلاثي الأبعاد مبنيّ من <b>${nz}</b> منطقة في الوصف.`
-    +(n>6000?' <span style="color:#f59e0b">— خفّض «مستوى التفصيل» إن تباطأت الحركة.</span>':'');
+    +(n>6000?' <span class="acs-warn">— خفّض «مستوى التفصيل» إن تباطأت الحركة.</span>':'');
   if(window.ACS&&window.ACS.closePanel) window.ACS.closePanel();
   showTab('model'); document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='model'));
   /* §14: بعد إطارين من الاستقرار، إن بقي المشهد أسود مع وجود هندسة ونداءات
@@ -247,8 +247,8 @@ renderer.domElement.addEventListener('click',ev=>{ if(walkState.active||!model)r
   if(t[0]==='STRUCT'){ infoEl.innerHTML=structInfoCard(o); return; }
   if(t[0]==='MEP'){ infoEl.innerHTML=mepInfoCard(o); return; }
   if(t[0]==='FLS'){ infoEl.innerHTML=flsInfoCard(o); return; }
-  infoEl.innerHTML=`<b>${esc(LAYER_NAMES[t[0]]||t[0])}</b><br>الدور: ${esc(FLOOR_NAMES[t[1]]||t[1])} · الغرفة: ${esc(t[2]||'-')}<br><span style="opacity:.6">${esc(t[3]||'')}</span>`;
-  if(doorTexture){applyDoorTex(o);infoEl.innerHTML+='<br><span style="color:#22c55e">✓ طُبّقت الصورة على هذا العنصر</span>';}
+  infoEl.innerHTML=`<b>${esc(LAYER_NAMES[t[0]]||t[0])}</b><br>الدور: ${esc(FLOOR_NAMES[t[1]]||t[1])} · الغرفة: ${esc(t[2]||'-')}<br><span class="acs-dim-60">${esc(t[3]||'')}</span>`;
+  if(doorTexture){applyDoorTex(o);infoEl.innerHTML+='<br><span class="acs-ok">✓ طُبّقت الصورة على هذا العنصر</span>';}
   else infoQuickColors(o);});
 
 /* بطاقة عنصر إنشائي: حقائق النموذج فقط — لا حكم سلامة ولا كفاية ولا مطابقة.
@@ -273,11 +273,11 @@ function structInfoCard(o){
           .filter(v=>v!==null&&v!==undefined).join('×')||'-'));
   else if(u.kind==='COLUMN'||u.kind==='BEAM') L.push('المقطع: غير مذكور');
   if(el&&el.stack) L.push('التكديس: '+esc(el.stack.state));
-  L.push('<span style="opacity:.65">هندسة العرض: '+
+  L.push('<span class="acs-dim-65">هندسة العرض: '+
     (u.geometry_source==='display_fallback'
       ?'احتياط عرض — ليست قياساً إنشائياً'
       :'من النموذج')+'</span>');
-  L.push('<span style="opacity:.65">تمثيل إنشائي فقط — لا تصميم ولا أحمال ولا مطابقة كود'+
+  L.push('<span class="acs-dim-65">تمثيل إنشائي فقط — لا تصميم ولا أحمال ولا مطابقة كود'+
          '</span>');
   return L.join('<br>'); }
 /* بطاقة عنصر MEP: حقائق النموذج فقط — لا كفاية خدمة ولا مطابقة ولا حالة سلامة.
@@ -303,11 +303,11 @@ function mepInfoCard(o){
   if(el&&el.size) L.push('المقاس: '+esc([el.size.diameter_m,el.size.width_m,el.size.height_m]
       .filter(v=>v!==null&&v!==undefined).join('×')||'-'));
   else if(u.kind==='SEGMENT') L.push('المقاس: غير مذكور');
-  L.push('<span style="opacity:.65">هندسة العرض: '+
+  L.push('<span class="acs-dim-65">هندسة العرض: '+
     (u.geometry_source==='display_fallback'
       ?'احتياط عرض — ليست مقاساً هندسياً'
       :'من النموذج')+'</span>');
-  L.push('<span style="opacity:.65">تمثيل MEP فقط — لا تصميم ولا حساب أحمال ولا كفاية '+
+  L.push('<span class="acs-dim-65">تمثيل MEP فقط — لا تصميم ولا حساب أحمال ولا كفاية '+
          'خدمة ولا مطابقة كود</span>');
   return L.join('<br>'); }
 /* بطاقة عنصر حريق/سلامة: حقائق النموذج فقط — لا تغطية ولا كفاية ولا مطابقة.
@@ -330,8 +330,8 @@ function flsInfoCard(o){
     (el.target_resolved?'':' — الهدف غير موجود'));
   if(el&&el.rating_minutes) L.push('المقاومة: '+
     (el.rating_minutes.value===null?'غير مذكورة (لا تُستنتج)':esc(el.rating_minutes.value)+' د'));
-  L.push('<span style="opacity:.65">هندسة العرض: احتياط عرض — ليست قياساً هندسياً</span>');
-  L.push('<span style="opacity:.65">تمثيل بيانات فقط — الجهاز موجود ≠ التغطية مؤكّدة؛ '+
+  L.push('<span class="acs-dim-65">هندسة العرض: احتياط عرض — ليست قياساً هندسياً</span>');
+  L.push('<span class="acs-dim-65">تمثيل بيانات فقط — الجهاز موجود ≠ التغطية مؤكّدة؛ '+
          'لا تصميم حريق ولا محاكاة ولا مطابقة كود</span>');
   return L.join('<br>'); }
 /* لوحة ألوان سريعة داخل بطاقة العنصر: نقرة واحدة تلوّن جدران هذه الغرفة فقط */
@@ -348,7 +348,7 @@ function infoQuickColors(o){
     bar.appendChild(i);
   });
   const cst=document.createElement('input'); cst.type='color'; cst.value='#22c55e';
-  cst.style.cssText='width:22px;height:22px;padding:0;border:none;background:none;cursor:pointer';
+  cst.className='acs-swatch-btn';
   cst.oninput=()=>{ statusEl.textContent=applyFinish(tag,surf,cst.value,o); };
   bar.appendChild(cst);
   infoEl.appendChild(wrap); infoEl.appendChild(bar);
@@ -600,7 +600,7 @@ function applySunStudy(){
   if(out) out.innerHTML='<b>'+String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0')+'</b> · '
     + d.toLocaleDateString('ar-SA',{month:'long',day:'numeric'})
     + ' · ارتفاع الشمس <b>'+a.elev.toFixed(0)+'°</b>'
-    + (a.elev<=0?' — <span style="color:#f59e0b">بعد الغروب</span>':'');
+    + (a.elev<=0?' — <span class="acs-warn">بعد الغروب</span>':'');
 }
 
 /* ========================= ملاحظات المهندس (تحديد + طلب تعديل) ========================= */
@@ -651,7 +651,7 @@ function renderNotes(){
   notes.forEach((n,i)=>{
     const d=document.createElement('div'); d.className='noteItem'+(n.done?' done':'');
     d.innerHTML='<span class="del" data-i="'+i+'">✕</span><b>'+esc(n.kind)+'</b> — '+
-      esc(n.room)+' ('+esc(n.layer)+')<br><span style="opacity:.8">'+esc(n.text)+'</span>'+
+      esc(n.room)+' ('+esc(n.layer)+')<br><span class="acs-dim-80">'+esc(n.text)+'</span>'+
       (n.done?'<br><span class="ok">✓ نُفّذ فوراً محلياً</span>':'');
     d.querySelector('.del').onclick=()=>{notes.splice(i,1);rebuildMarkers();renderNotes();};
     box.appendChild(d);
@@ -1303,13 +1303,13 @@ async function checkServer(quiet){
   const u=srvURL();
   if(!u){ SRV_OK=false;
     srvPill('bad','محرّك الفهم غير مضبوط — التوليد سيكون محلياً تقريبياً. '
-      +'<span style="opacity:.75">(ضع رابط الخادم في الإعدادات المتقدّمة أو في أعلى ملف الموقع)</span>');
+      +'<span class="acs-dim-75">(ضع رابط الخادم في الإعدادات المتقدّمة أو في أعلى ملف الموقع)</span>');
     return false; }
   const res=await __ACS_SHARED.acsFetchJSON('/health',{method:'GET'},12000);
   if(res.status!==ACS_NET.SUCCESS){
     SRV_OK=false;
     srvPill('bad','تعذّر الوصول لمحرّك الفهم على '+esc(window.ACS_API.host())+' — '
-      +esc(res.status)+'. <span style="opacity:.75">(قد يكون الخادم نائماً؛ أعِد المحاولة بعد دقيقة)</span>');
+      +esc(res.status)+'. <span class="acs-dim-75">(قد يكون الخادم نائماً؛ أعِد المحاولة بعد دقيقة)</span>');
     return false;
   }
   const j=res.body||{};
@@ -1318,7 +1318,7 @@ async function checkServer(quiet){
   SRV_OK=!!(j.ok&&keyed);
   if(SRV_OK){ const L=j.limits||{};
     srvPill('ok','✓ محرّك الفهم متصل — التوليد يقرأ وصفك ويبني عليه'
-      +(L.gen_hour?(' <span style="opacity:.7">(حتى '+L.gen_hour+' عمليات/ساعة)</span>'):'')); }
+      +(L.gen_hour?(' <span class="acs-dim-70">(حتى '+L.gen_hour+' عمليات/ساعة)</span>'):'')); }
   else srvPill('bad','الخادم يعمل لكن بلا مفتاح API — التوليد سيكون محلياً.');
   return SRV_OK;
 }
@@ -1409,18 +1409,18 @@ __ACS_SHARED.acsErrorPanel = function acsErrorPanel(res, onRetry, onLocal){
   const wait=res.retry_after?(' — أعِد المحاولة بعد '+res.retry_after+' ثانية'):'';
   box.className='report open';
   box.innerHTML=
-    '<div style="border:1px solid #f8717155;background:#7f1d1d22;border-radius:12px;padding:12px;line-height:1.7">'
-    +'<div style="font-weight:700;color:#fca5a5;margin-bottom:6px">✕ لم يُنفَّذ التوليد على الخادم</div>'
+    '<div class="acs-errbox">'
+    +'<div class="acs-errtitle">✕ لم يُنفَّذ التوليد على الخادم</div>'
     +'<div>'+esc(res.message||'')+'</div>'
-    +'<div style="opacity:.85;margin-top:6px">'
+    +'<div class="acs-errbody">'
       +esc(ACS_CODE_HINT[res.code]||ACS_ERR_HINT[res.status]||'')+esc(wait)+'</div>'
-    +'<div style="opacity:.7;margin-top:8px;font-size:12px">'
+    +'<div class="acs-errhint">'
       +'التصنيف: <code>'+esc(code)+'</code>'
       +(res.http?(' · HTTP '+esc(String(res.http))):'')
       +' · الخادم: <code>'+esc(window.ACS_API.host()||'—')+'</code>'
       +(rid?(' · معرّف الطلب: <code id="acsReqId">'+esc(rid)+'</code>'):'')
     +'</div>'
-    +'<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'
+    +'<div class="acs-errrow">'
       +'<button id="acsRetryBtn" type="button">إعادة المحاولة</button>'
       +'<button id="acsLocalBtn" type="button">توليد محلي تقريبي (ليس ناتج المحرّك)</button>'
     +'</div></div>';
@@ -2214,7 +2214,7 @@ async function handleImport(f){
 /* محرّر الرسم اليدوي لم يعد يُفتح تلقائياً — يبقى مخرجاً أخيراً باختيار المستخدم */
 async function offerTracer(fileOrImg, info, why){
   info.innerHTML = why + ' يمكنك إعادة المحاولة، أو رسم الغرف يدوياً كحلّ أخير.'
-    + ' <button class="ghost" id="trFallback" style="margin-top:6px">✏️ رسم يدوي</button>';
+    + ' <button class="ghost acs-mt-6" id="trFallback">✏️ رسم يدوي</button>';
   const b=document.getElementById('trFallback');
   if(b) b.onclick=async()=>{
     const img=(fileOrImg instanceof Blob) ? await fileToImage(fileOrImg) : fileOrImg;

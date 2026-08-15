@@ -90,6 +90,9 @@ CSS = r""".rv-panel{position:fixed;inset-block:0;inset-inline-end:0;width:min(94
   .rv-panel{width:100vw}
   .rv-gallery{grid-template-columns:repeat(auto-fill,minmax(104px,1fr))}
 }
+/* F-30 · KI-13 — بديل سمة style التي يحجبها `style-src 'self'` داخل innerHTML.
+   نصّ بديل يظهر حين لا يكون هناك SVG معروض. */
+.rv-placeholder{padding:20px;color:#333}
 """
 
 DOM = r"""<aside class="rv-panel" id="rvPanel" role="dialog" aria-label="Visualisation"
@@ -1464,7 +1467,7 @@ const RV = (function(){
     const r=S.renders.filter(x=>x.render_id===id)[0];
     const v=$('rvView'), box=$('rvViewBox');
     if(!v||!box||!r) return null;
-    box.innerHTML=r.svg?r.svg:('<div style="padding:20px;color:#333">'+
+    box.innerHTML=r.svg?r.svg:('<div class="rv-placeholder">'+
       esc(r.view_type)+' — deterministic base render requires the 3D runtime</div>');
     v.classList.add('on');
     return r; }

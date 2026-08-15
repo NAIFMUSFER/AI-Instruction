@@ -722,9 +722,15 @@ chk('EVERY <script src> and <link rel=stylesheet> in the shell resolves to a '
     ', '.join(_ref_missing))
 chk('the module entry point the shell names is public/app/main.js',
     '<script type="module" src="/app/main.js"></script>' in shell)
+# العدد ثابت معلن لا مشتقّ: قائمة متقلّصة بصمت هي كيف يختفي سكربت إقلاع
+# فيصير الحارس أخضر والصفحة ناقصة. يُحدَّث عمداً عند إضافة سكربت أو حذفه.
+#   5 → 6 مع F-30 (KI-13): boot/style-bridge.js يطبّق الهندسة الديناميكية
+#   عبر CSSOM لأن `style-src 'self'` يحجب سمة style حتى داخل innerHTML.
+EXPECTED_BOOT_SCRIPTS = 6
 chk('every classic boot script the shell names exists under public/app/boot/',
     all(os.path.isfile(os.path.join(ROOT, 'public', 'app', 'boot', b))
-        for b in boot_scripts) and len(boot_scripts) == 5,
+        for b in boot_scripts)
+    and len(boot_scripts) == EXPECTED_BOOT_SCRIPTS,
     ', '.join(sorted(boot_scripts)))
 _boot_referenced = sorted(set(re.findall(r'src="/app/boot/([^"]+)"', shell)))
 chk('and every boot script that ships is actually referenced by the shell — '

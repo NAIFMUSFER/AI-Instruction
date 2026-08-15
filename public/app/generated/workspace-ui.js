@@ -567,6 +567,8 @@ const WS = (function(){
     $('wsModalTitle').textContent=title;
     $('wsModalSub').textContent=sub||'';
     $('wsModalBody').innerHTML=bodyHtml||'';
+    if(typeof window!=='undefined'&&window.ACS_STYLE)
+      window.ACS_STYLE.apply($('wsModalBody'));
     const a=$('wsModalActions'); a.innerHTML='';
     (actions||[]).forEach(act=>{
       const b=document.createElement('button');
@@ -667,11 +669,14 @@ const WS = (function(){
       parts.push('<div class="ws-row'+sel+'" role="treeitem" tabindex="-1"'+
         ' data-ws-node="'+esc(r.node_id)+'" data-ws-kind="'+esc(r.kind)+'"'+
         ' aria-selected="'+(sel?'true':'false')+'"'+
-        ' style="padding-inline-start:'+(6+r.depth*13)+'px">'+
+        ' data-acs-style="--ws-indent:'+(6+r.depth*13)+'px">'+
         '<span class="tw">'+tw+'</span>'+
         '<span class="nm">'+esc(r.name)+'</span>'+
         '<span class="kd">'+esc(r.kind)+'</span></div>'); });
     host.innerHTML=parts.join('');
+    /* F-30 · KI-13: إزاحة عمق الشجرة تُطبَّق عبر CSSOM بعد الإدراج — سمة style
+       يحجبها `style-src 'self'` حتى داخل innerHTML. */
+    if(typeof window!=='undefined'&&window.ACS_STYLE) window.ACS_STYLE.apply(host);
     Array.prototype.forEach.call(host.querySelectorAll('[data-ws-node]'),el=>{
       el.onclick=()=>{ const id=el.getAttribute('data-ws-node');
         if(el.querySelector('.tw').textContent) toggleNode(id);
@@ -741,7 +746,7 @@ const WS = (function(){
       p.push('</div>'); }
     const iss=m.sections.ISSUES||[];
     p.push('<div class="ws-sec" data-ws-section="ISSUES"><h4>ISSUES ('+iss.length+')</h4>');
-    if(!iss.length) p.push('<div class="k" style="color:var(--ws-dim)">—</div>');
+    if(!iss.length) p.push('<div class="k ws-dim">—</div>');
     iss.forEach(i=>p.push('<div class="ws-f"><span class="k">'+esc(i.category)+
       '</span><span class="v"><span>'+esc(i.code)+' · '+esc(i.severity)+
       '</span></span></div>'));
@@ -755,14 +760,14 @@ const WS = (function(){
       p.push('<div class="ws-sec" data-ws-section="OPERATIONS"><h4>OPERATIONS</h4>');
       m.operations.forEach(op=>{
         if(op.operation==='INSPECT') return;
-        p.push('<button class="ws-btn" style="width:100%;margin:3px 0"'+
+        p.push('<button class="ws-btn ws-btn-block"'+
           ' data-ws-op="'+esc(op.operation)+'"'+(op.enabled?'':' disabled')+
           ' title="'+esc(op.reason||'')+'">'+esc(op.operation)+'</button>'); });
       p.push('</div>'); }
     /* نصوص الإفصاح التعاقدي تُعرض بالإنجليزية القانونية في اللغتين ولا تُترجَم:
        ترجمتها قد تُزحزح معناها الهندسي. تُوسَم صراحةً كي لا تُحسب خلطاً لغوياً. */
-    p.push('<div class="ws-sec"><div class="k" data-ws-note="canonical" lang="en"'+
-      ' style="color:var(--ws-dim);font-size:11px">'+esc(m.note)+'</div></div>');
+    p.push('<div class="ws-sec"><div class="k ws-note-dim" data-ws-note="canonical"'+
+      ' lang="en">'+esc(m.note)+'</div></div>');
     host.innerHTML=p.join('');
     Array.prototype.forEach.call(host.querySelectorAll('[data-ws-op]'),el=>{
       el.onclick=()=>startOperation(el.getAttribute('data-ws-op')); }); }
@@ -1169,7 +1174,7 @@ const WS = (function(){
     const out=$('wsAIOut');
     if(!target.valid){
       const cands=(target.candidates||[]).map(c=>
-        '<button class="ws-btn" style="width:100%;margin:3px 0" data-ws-cand="'+esc(c)+
+        '<button class="ws-btn ws-btn-block" data-ws-cand="'+esc(c)+
         '">'+esc(c)+'</button>').join('');
       if(out) out.innerHTML='<div class="ws-sec" data-ws-section="AMBIGUOUS">'+
         '<h4>'+esc(target.issues[0]?target.issues[0].code:'INVALID_TARGET')+'</h4>'+
@@ -1190,7 +1195,7 @@ const WS = (function(){
       esc(cmd.type)+'</span></span></div>'+
       '<div class="ws-f"><span class="k">target</span><span class="v"><span>'+
       esc(target.target)+'</span></span></div>'+
-      '<button class="ws-btn pri" style="width:100%;margin-top:8px" data-ws-apply="1">'+
+      '<button class="ws-btn pri ws-btn-wide" data-ws-apply="1">'+
       esc(t('preview'))+'</button></div>';
     if(out) Array.prototype.forEach.call(out.querySelectorAll('[data-ws-apply]'),el=>{
       el.onclick=()=>{ closeModal(); beginPreview(p.proposal.command); }; });

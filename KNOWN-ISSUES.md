@@ -14,6 +14,17 @@
 > Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
 > measurement that proves it, not an inspection note.
 
+> **CSP remediation pass (F-30).** **KI-13 is now CLOSED** and **KI-22** was
+> found and closed with it. Both are proved by
+> `tests/remediation/test_csp_style_architecture.js` — 61 assertions in real
+> Chromium under the production policy read from `netlify.toml` and served as a
+> genuine response header: zero style violations across boot, login, model load,
+> the workspace, all five panels and a composed A3 documentation sheet, with the
+> sheet geometry measured from `getBoundingClientRect` rather than asserted from
+> the model. `style-src 'self'` is unchanged and no `'unsafe-inline'`,
+> `'unsafe-eval'` or `'unsafe-hashes'` was introduced.
+> **KI-14 remains OPEN** — it was deliberately not touched by this pass.
+
 > **Updated by the Production Trust Remediation** (branch `remediation/production-trust`,
 > base `865cca1` → `497a681`). Closures below cite the test that proves them; every
 > item still open says why. Nothing was closed on inspection alone.
@@ -391,7 +402,145 @@ Every item below was reproduced by running code in this repository. Numbers are
 measurements from those runs, not estimates. The environment had no network and
 no `fastapi`, so nothing here depends on either.
 
-## KI-13 · `style-src 'self'` silently drops the `style="…"` attributes the panels inject (OPEN — behavioural fix needed)
+## KI-13 · `style-src 'self'` silently dropped every `style="…"` the panels injected (**CLOSED** — F-30)
+
+**Closed by:** F-30. **Proof:** `tests/remediation/test_csp_style_architecture.js`
+— **61 passed, 0 failed** in real Chromium, with the production policy read out
+of `netlify.toml` itself and served as a genuine response header.
+
+### The live failure, reproduced before the fix
+
+Production reported, and this repository reproduced byte-for-byte:
+
+```
+style-src-attr | public/app/ui/workspace-ui-wiring.js:1300 | blocked: inline
+Refused to apply inline style because it violates the following
+Content Security Policy directive: "style-src 'self'".
+```
+
+That line is `srvPill()`, which writes the server-status badge with
+`p.innerHTML = txt` where `txt` carries `<span style="opacity:.75">`. It runs on
+every boot, so every visitor hit it.
+
+### Root cause
+
+`style-src` governs the style **attribute**, not the CSSOM interface — and it
+governs it *however the attribute arrives*: written in markup, set through
+`setAttribute('style', …)`, or parsed out of a string assigned to `innerHTML`.
+The layers used the third route, so the attribute reached the DOM and the
+browser refused to apply it. The element looked perfect in devtools and had none
+of its geometry.
+
+`netlify.toml` had reasoned only about `element.style.x = …` (CSSOM, which **is**
+allowed) and concluded the page was clean. True of the static shell; false of
+every panel.
+
+### Every affected file, and where each was fixed
+
+| shipped artefact | sites | canonical source fixed |
+|---|---|---|
+| `public/app/generated/docs.js` | 2 | `tools/build_docs_browser.py` |
+| `public/app/generated/workspace-ui.js` | 6 | `tools/build_workspace_ui.py` |
+| `public/app/generated/render-engine.js` | 1 | `tools/build_render_browser.py` |
+| `public/app/ui/workspace-ui-wiring.js` | 20 + 1 `cssText` | itself — it is canonical, see below |
+
+**`ui/workspace-ui-wiring.js` is not a generated artefact.** The only tool that
+ever produced it is `tools/frontend_split.js`, whose input is the inline code in
+`public/index.html`. After F-09 that page is a shell with **zero** executable
+inline scripts, so the tool has no input left and cannot regenerate the file.
+This is asserted, not assumed: `test_csp_style_architecture.js` §4 measures the
+inline-script count (0), runs `frontend_analyze.segments()` on the current page
+(returns 1 degenerate segment, not the application), and greps every tool in
+`tools/` for one that *writes* that path (none — two merely mention it in a
+comment).
+
+### The remediation architecture
+
+Two mechanisms, chosen by whether the value space is finite:
+
+**Finite values → predefined CSS classes.** All 20 hand-written sites and 4 of
+the generated ones were constant (`opacity:.65`, `color:#f59e0b`,
+`width:100%;margin:3px 0`, the whole error-panel block). They became declared
+classes: `.acs-dim-65`, `.acs-warn`, `.ws-btn-block`, `.acs-errbox` and friends,
+in `app.css` for the hand layer and inside each builder's own generated CSS
+block for the generated layers.
+
+**Genuinely dynamic geometry → CSS custom properties applied through CSSOM.**
+Sheet aspect ratio, viewport `left/top/width/height`, and tree indent depth have
+unbounded value spaces that no finite class set can express. The markup now
+carries `data-acs-style="--dc-vp-x:12.5%;…"`, and the new boot script
+`public/app/boot/style-bridge.js` applies it with `element.style.setProperty()`
+after insertion. The stylesheet consumes the variables with real fallbacks
+(`left: var(--dc-vp-x, 0%)`, `aspect-ratio: var(--dc-sheet-ar, 297/210)`), so a
+value that never arrives yields a visible element rather than a collapsed one.
+
+**The bridge validates; the old attribute never did.** Values reach these
+properties from the model, and the model comes from user text or an uploaded
+file. `ACS_STYLE` applies a declaration only if the property is on an explicit
+allow-list (or is an `--acs-/--ws-/--dc-` custom property) *and* the value
+matches a narrow grammar — number-with-unit, `a/b` ratio, hex colour,
+`var(--name)`, or a bare keyword. `url(…)`, `expression(…)`, `@import`,
+`;{}<>\` and anything over 64 characters are refused and counted in
+`ACS_STYLE.stats()`. Measured in §6: `url(javascript:1)`, an off-list property,
+and `expression(alert(1))` are all dropped while the legitimate declarations
+around them apply. The fix therefore closes an injection surface that the
+original inline attribute left wide open.
+
+### Real-browser evidence
+
+Production policy as a real response header, full user path — boot → login →
+model → workspace → all five panels → a composed A3 sheet:
+
+```
+boot            0 violations
+login + tab     0 violations
+model load      0 violations
+workspace open  0 violations
+five panels     0 violations
+documentation   0 violations
+TOTAL           0 violations
+```
+
+The only two violations recorded in the whole run come from §1's **deliberate
+negative controls**, which inject a style attribute on purpose to prove the
+policy is still enforcing. The test asserts they fire (`probeViolations >= 2`);
+without them the zero above would prove nothing.
+
+**Documentation layout, measured from the page — not from the model:**
+
+```
+sheet          495 × 350.03 px   aspect-ratio: 420 / 297   (A3 landscape, from the model)
+viewport #1    4.76% / 6.73%  ·  42.86% × 40.40%  ⇒  211.28 × 140.61 px  @ +24.47, +24.42
+viewport #2   52.38% / 50.51%  ·  40.48% × 37.04%  ⇒  199.55 × 128.89 px  @ +259.23, +176.77
+```
+
+Nothing is 0×0, nothing sits at the corner, and every measured pixel matches the
+requested percentage within 2 px. `aspect-ratio` reads `420 / 297` — the value
+from the sheet's paper size, not the stylesheet fallback.
+
+**A defect this test caught in the fix itself:** the first version of the bridge
+validated ratio values only for the literal `aspect-ratio` property, so
+`--dc-sheet-ar: 420/297` was silently dropped and the sheet fell back to
+`297/210`. Both are 1.414, so the ratio assertion passed by coincidence — the
+`aspect-ratio` **string** comparison is what exposed it.
+
+### The policy is unchanged
+
+`test_csp_style_architecture.js` §5 asserts against `netlify.toml` directly:
+`style-src 'self'` present verbatim; no `'unsafe-inline'`, no `'unsafe-eval'`,
+no `'unsafe-hashes'`, no `style-src-attr` or `style-src-elem` directive added.
+The CSP header is byte-identical to the one deployed before this pass.
+
+### Regression protection
+
+`test_csp_style_architecture.js` §2 walks the **shipped** `public/` tree — the
+generated artefacts, not the generators — and fails on `style="`, `style='`,
+`.setAttribute("style"` or `.style.cssText =` in any of them. It carries its own
+canary so a scanner that stopped seeing anything would fail rather than pass
+silently. §3 re-runs all eight browser injectors and fails on any byte of drift,
+so a hand-edit to a generated file cannot survive.
+
+<details><summary>original text (kept for the record)</summary>
 
 **Measured:** `tests/remediation/test_panel_entry.js` opens all six panels in
 real Chromium under the production policy served as a genuine response header,
@@ -413,14 +562,21 @@ sheet viewport collapses to 0×0 at the corner), `generated/workspace-ui.js`,
 `acsErrorPanel`, the backend-failure UI, which loses the `display:flex` row
 holding its Retry and local-generate buttons).
 
-**Why it is not fixed here:** the correct fix is to move dynamic geometry to
-CSSOM assignment (`el.style.left = …` after insertion, which the policy
-permits) or to generated classes. Most of the call sites live in
-`public/app/generated/*`, which is emitted by `tools/build_*_browser.py` from
-the Python layers — editing the JavaScript directly would be overwritten by the
-next regeneration. The change therefore belongs in the builders, is behavioural,
-and must be proven not to alter the `window.ACS` surface. That is a separate
-pass, deliberately not mixed with the mechanical fixes in this one.
+</details>
+
+## KI-22 · The workspace had no way back once opened (**CLOSED** — F-30)
+
+Found while exercising F-27's entry points for this pass: `#acsWorkspace` is a
+full-screen surface that covers the launcher bar, and its toolbar carries no
+close button — so a user who opened it was stranded. Measured directly: the
+Chromium run could not click any panel button after opening the workspace,
+because the workspace intercepted every pointer event.
+
+**Fixed:** `Escape` now closes the workspace as well as the five dialog panels,
+in `public/app/ui/panels-entry.js`. **Proof:**
+`test_csp_style_architecture.js` §7 asserts the workspace opens, then that
+`Escape` closes it, and only then opens the remaining five panels — the same
+sequence a user performs.
 
 ## KI-14 · Upload validation and layout run on the asyncio event loop (OPEN — architectural)
 

@@ -1360,7 +1360,7 @@ const RV = (function(){
     const r=S.renders.filter(x=>x.render_id===id)[0];
     const v=$('rvView'), box=$('rvViewBox');
     if(!v||!box||!r) return null;
-    box.innerHTML=r.svg?r.svg:('<div style="padding:20px;color:#333">'+
+    box.innerHTML=r.svg?r.svg:('<div class="rv-placeholder">'+
       esc(r.view_type)+' — deterministic base render requires the 3D runtime</div>');
     v.classList.add('on');
     return r; }
