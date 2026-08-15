@@ -543,6 +543,88 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
     return text
 
 
+def _sdk_version():
+    """نسخة anthropic المثبّتة — للتليمتري وحده. لا تُسقط النداء إن غابت."""
+    try:
+        import anthropic
+        v = getattr(anthropic, "__version__", None)
+        if v:
+            return str(v)
+    except Exception:                                             # noqa: BLE001
+        pass
+    try:
+        from importlib import metadata
+        return str(metadata.version("anthropic"))
+    except Exception:                                             # noqa: BLE001
+        return "unknown"
+
+
+def _sdk_supports(client, param):
+    """هل يقبل عميل anthropic المثبَّت هذا الوسيط؟ سؤالٌ يُسأل مرّة قبل النداء.
+
+    F-31: العطل الإنتاجي كان إرسال `thinking` إلى anthropic==0.40 — نسخةٌ لا
+    تعرفه، وتوقيعها keyword-only صريح بلا **kwargs. النتيجة TypeError من ربط
+    الوسائط، قبل أي بايت شبكة، ثم يُصنَّف «عطل غير مصنّف من مزوّد النموذج».
+
+    الفحص بالاستبطان لا بالنسخة: رقم النسخة يخدع (رزم مُعاد توزيعها، تفريعات،
+    وسطاء متوافقون)، أمّا التوقيع فهو ما ستربط به بايثون فعلاً. ووجود
+    **kwargs في التوقيع يعني قبولاً غير محدود، فيُعدّ دعماً.
+    """
+    import inspect
+    for name in ("stream", "create"):
+        fn = getattr(getattr(client, "messages", None), name, None)
+        if fn is None:
+            continue
+        try:
+            sig = inspect.signature(fn)
+        except (TypeError, ValueError):                           # noqa: PERF203
+            continue                       # لا يمكن استبطانه: جرّب الآخر
+        params = sig.parameters
+        if param in params:
+            return True
+        if any(p.kind == inspect.Parameter.VAR_KEYWORD
+               for p in params.values()):
+            return True
+    return False
+
+
+def _classify_call_error(exc, attempts=None, sdk_version=None):
+    """يفصل العطل المحلّي عن عطل المزوّد قبل أي تصنيف upstream.
+
+    F-33: TypeError من ربط الوسائط عطلٌ في تكامل هذا الخادم مع المكتبة — لا
+    شأن للمزوّد به، ولم يصل إليه بايت واحد. تصنيفه ACS_UPSTREAM_UNKNOWN كان
+    يكذب على المستخدم (502 «عطل من مزوّد النموذج») ويُسمّم قياس أعطال المزوّد
+    لدى المشغّل، ويرسل من يبحث عن السبب إلى الجهة الخطأ تماماً.
+
+    الحدّ دقيق: TypeError الصادر عن ربط الوسائط وحده. TypeError من داخل
+    الشبكة أو التحليل يبقى على تصنيفه القديم، فلا يتحوّل عطل مزوّد حقيقيّ إلى
+    «عطل محلّي» بالخطأ المعاكس.
+    """
+    if isinstance(exc, E.AcsApiError):
+        return exc
+    if isinstance(exc, TypeError):
+        text = str(exc)
+        binding = ("unexpected keyword argument" in text
+                   or "required keyword-only argument" in text
+                   or "required positional argument" in text
+                   or "got multiple values for" in text
+                   or "takes no arguments" in text)
+        if binding:
+            # اسم الوسيط المخالف — معرّف برمجيّ لا محتوى مستخدم، فآمن للسجلّ.
+            bad = None
+            m = re.search(r"keyword argument '([A-Za-z_][A-Za-z0-9_]*)'", text)
+            if m:
+                bad = m.group(1)
+            return E.AcsApiError(
+                E.ACS_INTEGRATION_ERROR,
+                upstream={"provider": "anthropic", "kind": "TypeError",
+                          "fault": "local_integration",
+                          "parameter": bad,
+                          "sdk_version": sdk_version or _sdk_version(),
+                          "attempts": attempts})
+    return E.classify_upstream(exc, attempts=attempts)
+
+
 def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                    content=None, btype=None, user_msg=None, stage="single",
                    telemetry=None):
@@ -561,6 +643,8 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         raise E.AcsApiError(E.ACS_NOT_CONFIGURED, "مكتبة anthropic غير مثبّتة على الخادم.")
     model = (model or os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5")).strip()
     tel["model"] = model                       # المعرّف المُستعمل فعلاً، للتليمتري
+    sdk_ver = _sdk_version()
+    tel["sdk_version"] = sdk_ver               # يفرّق عطل التكامل عن عطل المزوّد
     max_tokens = int(max_tokens or G.stage_budget("single"))
     api_key = clean_key(os.environ.get("ANTHROPIC_API_KEY"))
     if not api_key:
@@ -586,16 +670,31 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         msgs = [{"role": "user", "content": (default_msg if user_msg is None else user_msg) + desc}]
         sys_p = system_prompt(btype or detect_type(desc))
 
+    supports_thinking = _sdk_supports(client, "thinking")
+
     def _call(mt, thinking):
-        """يستخدم البثّ (streaming) — مطلوب للمخرجات الكبيرة، ويعمل مع الصغيرة أيضاً."""
+        """يستخدم البثّ (streaming) — مطلوب للمخرجات الكبيرة، ويعمل مع الصغيرة أيضاً.
+
+        F-31: `thinking` يُرسَل **فقط** إذا كانت النسخة المثبّتة تعرفه.
+        anthropic==0.40 المثبّتة في requirements.txt لا تعرفه إطلاقاً — أُضيف
+        لاحقاً — وتوقيعها keyword-only صريح بلا **kwargs، فكان إرساله يرفع
+        TypeError من ربط الوسائط في بايثون قبل أي اتصال بالشبكة. على نسخة لا
+        تعرف «التفكير الموسّع» أصلاً، إغفالُ الوسيط هو بالضبط ما يعنيه
+        `{"type": "disabled"}`: لا سلوك يُفقَد.
+        """
         kw = dict(model=model, max_tokens=mt, system=sys_p, messages=msgs)
-        if thinking is not None:
+        if thinking is not None and supports_thinking:
             kw["thinking"] = thinking
         try:
             with client.messages.stream(**kw) as s:
                 return s.get_final_message()
-        except (AttributeError, TypeError):
-            return client.messages.create(**kw)   # مكتبة قديمة
+        except AttributeError:
+            # F-32: الرجوع إلى create() مقصور على «مكتبة بلا stream()» وحدها.
+            # كان TypeError مشمولاً هنا أيضاً، فكان وسيطٌ لا تعرفه المكتبة
+            # يُعاد إرساله حرفياً إلى create() فيفشل الفشل نفسه — تكرارٌ مضمون
+            # الفشل يمحو أثر السبب. خطأ الوسائط ليس «مكتبة قديمة بلا بثّ»:
+            # يُترك ليصنَّف عطلاً محلياً في _classify_call_error.
+            return client.messages.create(**kw)
 
     # سلّم محاولات مقصور على حالة واحدة: رد **بلا نصّ إطلاقاً**، وسببها المعروف
     # أنّ "التفكير الموسّع" ابتلع الميزانية كلّها (stop=max_tokens مع out_chars=0).
@@ -616,10 +715,15 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         try:
             msg = _call(mt, think)
         except Exception as e:
-            err = E.classify_upstream(e, attempts=tried)
+            # F-33: العطل المحلّي يُفصَل عن عطل المزوّد هنا، لا بعد أن يصير 502.
+            err = _classify_call_error(e, attempts=tried, sdk_version=sdk_ver)
             last_err = err
-            print("[ACS-LLM] call failed (max_tokens=%s, thinking=%s) -> %s"
-                  % (mt, "off" if think else "default", err.code))
+            up = err.upstream if isinstance(err.upstream, dict) else {}
+            print("[ACS-LLM] call failed (max_tokens=%s, thinking=%s, sdk=%s) "
+                  "-> %s%s"
+                  % (mt, "off" if think else "default", sdk_ver, err.code,
+                     (" parameter=%s" % up.get("parameter"))
+                     if up.get("parameter") else ""))
             if not err.retryable:
                 raise err                     # عطل دائم: أعلِنه فوراً بلا تكرار
             if tried < len(attempts) and backoff > 0:

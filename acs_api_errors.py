@@ -32,6 +32,11 @@ ACS_RATE_LIMITED       = "ACS_RATE_LIMITED"
 ACS_TIMEOUT            = "ACS_TIMEOUT"
 ACS_NOT_CONFIGURED     = "ACS_NOT_CONFIGURED"
 ACS_INTERNAL           = "ACS_INTERNAL"
+# F-33: عطلٌ في تكامل هذا الخادم مع مكتبة المزوّد — لا في المزوّد نفسه. مثاله
+# المقيس: إرسال وسيط لا تعرفه النسخة المثبّتة، فترفع بايثون TypeError عند ربط
+# الوسائط قبل أي بايت شبكة. كان يُصنَّف ACS_UPSTREAM_UNKNOWN، فيقرأ المستخدم
+# «عطل من مزوّد النموذج» عن خطأ برمجيّ محلّي بحت، ويُسمَّم قياس أعطال المزوّد.
+ACS_INTEGRATION_ERROR  = "ACS_INTEGRATION_ERROR"
 
 # ── رموز المنبع (النموذج اللغوي / مزوّده) ───────────────────────────────────
 ACS_UPSTREAM_NOT_CONFIGURED   = "ACS_UPSTREAM_NOT_CONFIGURED"
@@ -55,6 +60,7 @@ CODES = (
     ACS_BAD_REQUEST, ACS_VALIDATION_FAILED, ACS_PAYLOAD_TOO_LARGE,
     ACS_UNPROCESSABLE, ACS_NOT_FOUND, ACS_METHOD_NOT_ALLOWED,
     ACS_RATE_LIMITED, ACS_TIMEOUT, ACS_NOT_CONFIGURED, ACS_INTERNAL,
+    ACS_INTEGRATION_ERROR,
     ACS_UPSTREAM_NOT_CONFIGURED, ACS_UPSTREAM_AUTH, ACS_UPSTREAM_PERMISSION,
     ACS_UPSTREAM_MODEL_REJECTED, ACS_UPSTREAM_BAD_REQUEST,
     ACS_UPSTREAM_RATE_LIMIT, ACS_UPSTREAM_OVERLOADED,
@@ -87,6 +93,8 @@ HTTP_STATUS = {
     ACS_TIMEOUT: 504,
     ACS_NOT_CONFIGURED: 503,
     ACS_INTERNAL: 500,
+    # 500 لا 502: العطل هنا، والمستخدم لا يملك ما يفعله سوى إبلاغ المشغّل.
+    ACS_INTEGRATION_ERROR: 500,
     ACS_UPSTREAM_NOT_CONFIGURED: 503,
     ACS_UPSTREAM_AUTH: 502,
     ACS_UPSTREAM_PERMISSION: 502,
@@ -117,6 +125,9 @@ MESSAGE_AR = {
     ACS_TIMEOUT: "انتهت مهلة المعالجة على الخادم قبل اكتمال التوليد.",
     ACS_NOT_CONFIGURED: "الخادم غير مكتمل الضبط.",
     ACS_INTERNAL: "عطل داخلي غير متوقّع في الخادم.",
+    ACS_INTEGRATION_ERROR: ("عطل في تكامل الخادم مع مكتبة مزوّد النموذج — "
+                            "ليس عطلاً في طلبك ولا لدى المزوّد. أُبلِغ المشغّل، "
+                            "ولا يفيد تكرار المحاولة."),
     ACS_UPSTREAM_NOT_CONFIGURED: "مفتاح المحرّك غير مضبوط على الخادم.",
     ACS_UPSTREAM_AUTH: "رفض مزوّد النموذج بيانات الاعتماد.",
     ACS_UPSTREAM_PERMISSION: "لا صلاحية لدى الخادم لاستخدام هذا النموذج.",

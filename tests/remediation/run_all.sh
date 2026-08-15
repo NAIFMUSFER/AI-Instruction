@@ -73,6 +73,11 @@ node "$ROOT/tests/lib/run.js" "$HERE/test_production_error_ui.js"; guard $?
 step "F-15 · local persistence safety (node scope)"
 node "$ROOT/tests/lib/run.js" "$HERE/test_persistence.js"; guard $?
 
+# F-31…F-34: مسار نداء المزوّد — بديل SDK بتوقيع v0.40.0 الحقيقي، فيكشف عدم
+# تطابق التوقيع الذي لا يمكن لبديلٍ يقبل **kwargs أن يكشفه.
+step "F-31…F-34 · provider integration (local TypeError is never an upstream fault)"
+python3 "$HERE/test_provider_integration.py"; guard $?
+
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 

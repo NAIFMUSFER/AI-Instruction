@@ -62,7 +62,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1814868,
+    "core_initial_bytes": 1815248,
     "core_initial_module_count": 21,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 7,
@@ -105,17 +105,17 @@
     ],
     "first_party_dynamic_import_count": 0,
     "first_party_module_count": 27,
-    "first_party_total_bytes": 1840417,
-    "initial_javascript_bytes": 1840417,
+    "first_party_total_bytes": 1840797,
+    "initial_javascript_bytes": 1840797,
     "largest_module": {
       "bytes": 228695,
       "group": "core",
       "gzip_bytes": 48724,
       "loaded": "eager",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 12.43
+      "pct_of_first_party_js": 12.42
     },
-    "largest_module_pct_of_first_party_js": 12.43,
+    "largest_module_pct_of_first_party_js": 12.42,
     "lazy_bytes": 0,
     "lazy_module_count": 0,
     "lazy_modules": [],
@@ -127,7 +127,7 @@
         "gzip_bytes": 48724,
         "loaded": "eager",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 12.43
+        "pct_of_first_party_js": 12.42
       },
       {
         "bytes": 205018,
@@ -215,7 +215,7 @@
         "gzip_bytes": 20057,
         "loaded": "eager",
         "path": "public/app/generated/arch-detail.js",
-        "pct_of_first_party_js": 3.86
+        "pct_of_first_party_js": 3.85
       },
       {
         "bytes": 56339,
@@ -226,12 +226,12 @@
         "pct_of_first_party_js": 3.06
       },
       {
-        "bytes": 48177,
+        "bytes": 48557,
         "group": "trust",
-        "gzip_bytes": 15581,
+        "gzip_bytes": 15716,
         "loaded": "eager",
         "path": "public/app/trust/core.js",
-        "pct_of_first_party_js": 2.62
+        "pct_of_first_party_js": 2.64
       },
       {
         "bytes": 45991,
@@ -433,7 +433,7 @@
     "sha256": "141407caa2d13db9a8de8932a802329f6c5e82ea4c176572d79835907336a555",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 47424 byte shell and every byte of application JavaScript (1840417 bytes) lives in 27 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 47424 byte shell and every byte of application JavaScript (1840797 bytes) lives in 27 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,

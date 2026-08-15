@@ -14,6 +14,14 @@
 > Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
 > measurement that proves it, not an inspection note.
 
+> **Provider-integration pass (F-31…F-34).** `POST /v1/understand` was
+> returning **502 `ACS_UPSTREAM_UNKNOWN`** for a `TypeError` raised **inside
+> this server**, before a single byte reached Anthropic. Reproduced against the
+> pinned SDK's real signature, fixed at the root, and pinned by
+> `tests/remediation/test_provider_integration.py` (56 assertions). See
+> **KI-23**. `LIVE PROVIDER CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED`
+> (no credentials in this sandbox). **KI-14 remains OPEN and untouched.**
+
 > **CSP remediation pass (F-30).** **KI-13 is now CLOSED** and **KI-22** was
 > found and closed with it. Both are proved by
 > `tests/remediation/test_csp_style_architecture.js` — 61 assertions in real
@@ -807,3 +815,118 @@ accepted, `textContent.length` 131 not 136.
 
 `.gitattributes` was added (`* text=auto eol=lf`, with binary fixtures marked)
 so a checkout on Windows cannot reintroduce this.
+
+## KI-23 · A local `TypeError` was reported as a provider fault, and `/v1/understand` returned 502 (**CLOSED** — F-31…F-34)
+
+**Closed by:** F-31 (root cause), F-32 (fallback discipline), F-33
+(classification), F-34 (process boundary).
+**Proof:** `tests/remediation/test_provider_integration.py` — **56 passed,
+0 failed**, including a red-team run that re-introduces all three defects and
+watches the suite fail with the exact production signature.
+
+### The production failure
+
+```
+[ACS-PLAN] class=LARGE est_out=34437 zones=51 budget=32000 -> staged
+[ACS-DEEP] نوع المبنى: warehouse
+[ACS-LLM] call failed (max_tokens=16000, thinking=off) -> ACS_UPSTREAM_UNKNOWN
+{"event":"llm_generation","success":false,"upstream_class":"TypeError","duration_ms":389}
+{"event":"generation_job","state":"FAILED","error_class":"AcsApiError"}
+{"error_code":"ACS_UPSTREAM_UNKNOWN","upstream_class":"JobError","status":502}
+```
+
+The 389 ms is the tell: there was no network round trip at all.
+
+### Exact error and location
+
+```
+TypeError: Messages.stream() got an unexpected keyword argument 'thinking'
+    acs_understand.py:595   →  with client.messages.stream(**kw)
+TypeError: Messages.create() got an unexpected keyword argument 'thinking'
+    acs_understand.py:598   →  except (AttributeError, TypeError): create(**kw)
+    (escapes at :617 / :624 into E.classify_upstream)
+```
+
+### Root cause — three defects in series
+
+**F-31 · the argument does not exist in the pinned SDK.** `requirements.txt`
+pins `anthropic==0.40`. That version's `Messages.create()` and
+`Messages.stream()` are keyword-only, fully explicit, and carry **no**
+`thinking` parameter and **no** `**kwargs` (primary source: anthropic-sdk-python
+`v0.40.0`, `src/anthropic/resources/messages.py`; the parameter is present by
+`v0.47.0`). The first rung of the attempt ladder always sent
+`thinking={"type":"disabled"}`, so Python's own argument binding raised
+`TypeError` before any HTTP call.
+
+**F-32 · the fallback guaranteed the same failure.** `except (AttributeError,
+TypeError)` was written for "an old library with no `stream()`", but it also
+swallowed the argument-binding error and re-sent the **identical** kwargs to
+`create()` — a retry that could only fail the same way, while erasing the trail.
+
+**F-33/F-34 · the classification was destroyed twice.** `TypeError` matches no
+entry in `_BY_CLASS`, carries no HTTP status, and is not a `ConnectionError`, so
+`classify_upstream` fell through to `ACS_UPSTREAM_UNKNOWN` — 502, *"unclassified
+fault from the model provider"* — for a purely local bug, poisoning the
+operator's upstream-error telemetry. Then the process boundary destroyed what was
+left: `_child` shipped only `(class name, message)`, so every classified error
+arrived at the parent as `JobError(error_class="AcsApiError")` and was
+re-classified from scratch under a class name no table knows.
+
+### Why no existing test caught it
+
+The `anthropic` doubles in `test_generation_budget.py` and `test_logging.py`
+declare `create(self, **kw)` and `stream(self, **kw)`. **A double that accepts
+any keyword argument cannot detect a signature mismatch.** The new suite's
+double copies the `v0.40.0` signature verbatim, so the error is raised by
+Python's argument binding, not by test logic — and it disappears on its own if
+the pin is raised.
+
+### The fix
+
+* **F-31:** `_sdk_supports(client, "thinking")` inspects the installed client's
+  real signature once, before the loop, and the parameter is sent only if it is
+  accepted (a `**kwargs` signature counts as accepting). On a version that has no
+  extended thinking, omitting the parameter *is* `{"type": "disabled"}` — no
+  behaviour is lost. Introspection rather than a version string: forks, vendored
+  copies and compatible proxies all lie about versions; the signature is what
+  Python will actually bind against.
+* **F-32:** the fallback to `create()` now triggers on `AttributeError` only.
+* **F-33:** new code **`ACS_INTEGRATION_ERROR`** (HTTP **500**, not retryable,
+  not in `UPSTREAM_CODES`). Client message: *"a fault in this server's
+  integration with the model provider's library — not a fault in your request
+  and not at the provider"*. Server telemetry adds `fault=local_integration`,
+  the offending `parameter` name, and the installed `sdk_version`. Scope is
+  deliberately narrow: only a `TypeError` whose text is an argument-binding
+  failure. A `TypeError` from inside the network or parsing layer keeps its old
+  classification, so a real provider fault is never mislabelled local.
+* **F-34:** `_child` now also ships `{acs_code, message, retryable, upstream}`
+  — envelope fields only, already passed through `E.redact`, no traceback, no
+  prompt, no raw provider response. The parent re-raises the same `AcsApiError`;
+  a code that is not in the declared table is ignored rather than trusted. Both
+  executors (process and thread) do this, the older 2-tuple payload is still
+  accepted for rolling deploys, and `generation_job` logs now carry
+  `error_code`.
+
+### Model identifier — checked, not changed
+
+`claude-sonnet-5` is passed **verbatim** to `messages.create(model=…)`; there is
+no alias table anywhere in the repository. It is **not** implicated in this
+failure: a bad identifier produces `NotFoundError`/404 →
+`ACS_UPSTREAM_MODEL_REJECTED` after a network round trip, whereas this failure
+was a local `TypeError` at 389 ms with no request sent. Per instruction it was
+left alone. Whether the identifier is correct for the account is a separate
+question this evidence cannot answer, and closing it needs the live call below.
+
+### Not verified here
+
+`LIVE PROVIDER CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.`
+`api.anthropic.com:443` is reachable from this sandbox (TLS handshake succeeds,
+`GET /v1/messages` → 405), but there is no `ANTHROPIC_API_KEY` and PyPI is
+blocked (403) so `anthropic==0.40` cannot be installed. On a networked machine
+with the production key:
+
+    pip install -r requirements.txt
+    python3 tests/deploy/verify_backend_live.py --generation
+
+That single command exercises the real SDK, the real model identifier and the
+staged path, and prints the token capture that also closes KI-6.

@@ -76,6 +76,67 @@ class JobError(Exception):
         self.error_class = error_class or "Exception"
 
 
+def _classified_payload(exc):
+    """F-34: يحفظ تصنيف AcsApiError عبر حدّ العملية.
+
+    كان الأب يستلم (اسم الصنف، النصّ) وحدهما، فيصير كل عطل مصنَّف في الابنة
+    JobError عند الأب، ثم يعيد classify_upstream تصنيفه من الصفر باسم الصنف
+    "JobError" — وهو ليس في أي جدول — فينتهي كل شيء إلى ACS_UPSTREAM_UNKNOWN.
+    هكذا ضاع تصنيفٌ صحيح صُنع في الابنة، وظهر عطلٌ محلّي «عطلاً من المزوّد».
+
+    ما يُشحَن هنا حقول مغلّف الخطأ نفسها لا غير: رمزٌ من قائمة معلنة، ورسالةٌ
+    مُنقّاة سلفاً بـE.redact، ومغلّف upstream وصفيّ. لا أثر استدعاء، ولا نصّ
+    توجيه، ولا رد مزوّد خام، ولا مفتاح.
+    """
+    try:
+        import acs_api_errors as _E
+        if isinstance(exc, _E.AcsApiError):
+            up = exc.upstream if isinstance(exc.upstream, dict) else None
+            return {"acs_code": exc.code,
+                    "message": _E.redact(str(exc.message))[:800],
+                    "retryable": bool(exc.retryable),
+                    "upstream": up}
+    except Exception:                                           # noqa: BLE001
+        pass
+    return None
+
+
+def _unpack_err(payload):
+    """يقبل الشكل القديم (اسم، نصّ) والجديد (اسم، نصّ، تصنيف) معاً.
+
+    التوافق مقصود: عمليةٌ ابنة من نشرٍ سابق قد تكون ما زالت حيّة أثناء النشر
+    المتدرّج، فلا يجوز أن ينكسر الأب على شكلٍ أقصر.
+    """
+    if isinstance(payload, (tuple, list)):
+        if len(payload) >= 3:
+            return payload[0], payload[1], payload[2]
+        if len(payload) == 2:
+            return payload[0], payload[1], None
+    return "Exception", str(payload)[:2000], None
+
+
+def _reraise_classified(classified):
+    """يعيد بناء AcsApiError من الحمولة المشحونة ويرفعه كما هو.
+
+    بلا هذا يصير كل عطل مصنَّف JobError عند الأب، ثم يُصنَّف من جديد باسم صنف
+    لا يعرفه أي جدول، فينتهي ACS_UPSTREAM_UNKNOWN مهما كان أصله. الرمز يُقبل
+    فقط إن كان في القائمة المعلنة — فلا تحقن ابنةٌ مُخترَقة رمزاً مُختلقاً.
+    """
+    if not isinstance(classified, dict):
+        return
+    code = classified.get("acs_code")
+    try:
+        import acs_api_errors as _E
+    except Exception:                                           # noqa: BLE001
+        return
+    if code not in _E.HTTP_STATUS:
+        return
+    up = classified.get("upstream")
+    raise _E.AcsApiError(code, classified.get("message"),
+                         retryable=classified.get("retryable"),
+                         upstream=up if isinstance(up, dict) else None)
+
+
 def _child(target, kwargs, conn):                               # pragma: no cover
     """جسم العملية الابنة — تُستورَد الوحدة هنا لا تُنقَل الدالّة."""
     try:
@@ -86,7 +147,8 @@ def _child(target, kwargs, conn):                               # pragma: no cov
         conn.send(("ok", value))
     except BaseException as exc:                                # noqa: BLE001
         try:
-            conn.send(("err", (type(exc).__name__, str(exc)[:2000])))
+            conn.send(("err", (type(exc).__name__, str(exc)[:2000],
+                               _classified_payload(exc))))
         except Exception:
             pass
     finally:
@@ -101,6 +163,7 @@ class GenerationJob(object):
 
     __slots__ = ("id", "state", "created_at", "started_at", "finished_at",
                  "request_id", "target", "result", "error", "error_class",
+                 "error_code",
                  "_proc", "_parent", "_lock", "_cancelled", "timeout_s")
 
     def __init__(self, target, request_id=None, timeout_s=None):
@@ -114,6 +177,9 @@ class GenerationJob(object):
         self.result = None
         self.error = None
         self.error_class = None
+        # F-34: رمز التصنيف كما صُنع في الابنة — يظهر في سجلّ generation_job
+        # فيُقرأ العطل المحلّي عطلاً محلياً في التليمتري لا «عطل مزوّد».
+        self.error_code = None
         self.timeout_s = float(timeout_s or DEFAULT_TIMEOUT_S)
         self._proc = None
         self._parent = None
@@ -159,6 +225,7 @@ class GenerationJob(object):
                 "started_at": self.started_at, "finished_at": self.finished_at,
                 "duration_ms": self.duration_ms(),
                 "error_class": self.error_class,
+                "error_code": self.error_code,
                 "timeout_s": self.timeout_s}
 
 
@@ -293,11 +360,14 @@ class JobRunner(object):
                 on_event(job)
             return payload
         job.state = STATE_FAILED
-        job.error_class, job.error = payload
+        job.error_class, job.error, classified = _unpack_err(payload)
+        if isinstance(classified, dict):
+            job.error_code = classified.get("acs_code")
         with self._lock:
             self._stats["failed"] += 1
         if on_event:
             on_event(job)
+        _reraise_classified(classified)     # F-34: التصنيف يعبر حدّ العملية
         raise JobError(job.error, job.error_class)
 
     def _execute_thread(self, job, kwargs, on_event):
@@ -310,7 +380,8 @@ class JobRunner(object):
                 fn = getattr(importlib.import_module(mod_name), fn_name)
                 box["ok"] = fn(**kwargs)
             except BaseException as exc:                        # noqa: BLE001
-                box["err"] = (type(exc).__name__, str(exc)[:2000])
+                box["err"] = (type(exc).__name__, str(exc)[:2000],
+                              _classified_payload(exc))
 
         th = threading.Thread(target=_run, daemon=True)
         job.started_at = time.time()
@@ -330,11 +401,14 @@ class JobRunner(object):
         job.finished_at = time.time()
         if "err" in box:
             job.state = STATE_FAILED
-            job.error_class, job.error = box["err"]
+            job.error_class, job.error, classified = _unpack_err(box["err"])
+            if isinstance(classified, dict):
+                job.error_code = classified.get("acs_code")
             with self._lock:
                 self._stats["failed"] += 1
             if on_event:
                 on_event(job)
+            _reraise_classified(classified)  # F-34: نفس السلوك في المسارين
             raise JobError(job.error, job.error_class)
         job.state = STATE_SUCCEEDED
         job.result = box.get("ok")
@@ -388,3 +462,17 @@ def _echo(value=None, **_):                                     # pragma: no cov
 
 def _boom(message="synthetic provider failure", **_):           # pragma: no cover
     raise RuntimeError(message)
+
+
+def _boom_classified(code=None, **_):                           # pragma: no cover
+    """هدف اصطناعي: عطلٌ **مصنَّف** كما يصنعه مسار النموذج داخل الابنة.
+
+    يثبت F-34 عبر عملية حقيقية: قبل الإصلاح كان هذا الرمز يصل الأب
+    JobError(error_class="AcsApiError") ثم يُعاد تصنيفه ACS_UPSTREAM_UNKNOWN
+    فيصير 502 «عطل من مزوّد النموذج» عن عطل محلّي بحت.
+    """
+    import acs_api_errors as _E
+    raise _E.AcsApiError(code or _E.ACS_INTEGRATION_ERROR,
+                         upstream={"provider": "anthropic", "kind": "TypeError",
+                                   "fault": "local_integration",
+                                   "parameter": "thinking"})

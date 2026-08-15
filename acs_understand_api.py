@@ -344,7 +344,10 @@ async def run_job(target, kwargs, what="التوليد", seconds=None, request_i
     def _event(job):
         LOG.info("generation_job", request_id=job.request_id, job_id=job.id,
                  state=job.state, target=job.target,
-                 duration_ms=job.duration_ms(), error_class=job.error_class)
+                 duration_ms=job.duration_ms(), error_class=job.error_class,
+                 # F-34: الرمز المصنَّف في الابنة. بلا هذا كان السجلّ يقول
+                 # error_class=AcsApiError ولا يقول أي عطل هو.
+                 error_code=job.error_code)
 
     def _call():
         return _JOBS.run(target, kwargs, timeout_s=limit,

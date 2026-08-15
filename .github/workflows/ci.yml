@@ -291,6 +291,10 @@ jobs:
             python3 tools/dependency_audit.py
             echo
             python3 tests/remediation/test_dependency_lock.py
+            echo
+            # F-31…F-34: يثبّت أن الوسائط المرسَلة تطابق توقيع النسخة المثبّتة،
+            # وأن عطلاً محلياً لا يُنسب إلى المزوّد. لا شبكة ولا مفتاح.
+            python3 tests/remediation/test_provider_integration.py
           } 2>&1 | tee logs/dependency-audit.log
       - name: CVE scan (advisory — needs the network, does not gate the PR)
         # This is the ONE dependency check that cannot be done offline, so it is

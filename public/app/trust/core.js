@@ -474,6 +474,10 @@ const codeMap={
   ACS_TIMEOUT:'TIMEOUT',
   ACS_NOT_CONFIGURED:'PROVIDER_UNAVAILABLE',
   ACS_INTERNAL:'HTTP_5XX',
+  /* F-33: عطل تكامل محلّي — لا عند المزوّد ولا في طلب المستخدم. يُعرض حالةً
+     من فئة 5xx لأن الإصلاح عند المشغّل، ولا يُعرض PROVIDER_UNAVAILABLE كي لا
+     يُلقى اللوم على المزوّد كما كان يحدث قبل الإصلاح. */
+  ACS_INTEGRATION_ERROR:'HTTP_5XX',
   ACS_UPSTREAM_NOT_CONFIGURED:'PROVIDER_UNAVAILABLE',
   ACS_UPSTREAM_AUTH:'PROVIDER_UNAVAILABLE',
   ACS_UPSTREAM_PERMISSION:'PROVIDER_UNAVAILABLE',
