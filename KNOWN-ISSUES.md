@@ -14,6 +14,19 @@
 > Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
 > measurement that proves it, not an inspection note.
 
+> **Final hardening pass (F-46…F-49).** **KI-14 is now CLOSED by
+> measurement**: heavy upload validation — and the engineering planner that
+> ran on *every successful response* — moved to a bounded persistent process
+> pool. Worst measured event-loop stall fell from **1591 ms to 17.9 ms**, and
+> from **1482 ms to 2.9 ms** for a payload the gate *rejects*. Rate limiting
+> stopped being a warning and became an enforced startup invariant. Scene
+> complexity is a declared contract, `slabStrips` is 115× faster with
+> byte-identical output, every user-controlled loop is bounded, thirteen
+> silent `catch` blocks now report, and floors scale past F9. Pinned by
+> `test_event_loop.py` (66), `test_scene_limits.js` (171) and
+> `test_scene_benchmark.js` (80). **KI-2, KI-4 and KI-6 remain OPEN —
+> environmental, no egress and no three.js in this sandbox.**
+
 > **Post-200 apply pass (F-41…F-45).** `POST /v1/understand` was returning
 > **200 OK with a valid LARGE building** and the viewport stayed empty — no
 > exception, no error panel, and a status line reading «تم التوليد ✓ 2001
@@ -1258,3 +1271,212 @@ offers reaches only two expressions in `buildRacks`; the conveyor e-stop loop at
 `compile`'s four `catch(e){}` blocks can drop a whole discipline layer with no
 console line; and floor buttons sort lexicographically (`F0,F1,F10,F2`) while
 `FLOOR_NAMES` only covers `F0`–`F6`.
+
+---
+
+# Final production-hardening pass — F-46…F-49 (over commit `02cf7e3`)
+
+## KI-14 · Upload validation and the engineering planner ran on the asyncio event loop (**CLOSED** — F-46)
+
+**Closed by:** F-46 (`acs_cpu_pool` — a bounded, persistent process pool; every
+CPU-heavy path moved off the loop).
+**Proof:** `tests/remediation/test_event_loop.py` — **66 passed, 0 failed**, on
+a real asyncio loop, a real HTTP server, the shipped validators, a light client
+on a separate thread, and a real `redis-server`.
+
+### Reproduced first, on the heaviest **accepted** input
+
+| path | event-loop stall BEFORE | longest light request BEFORE | stall AFTER | longest AFTER |
+|---|---|---|---|---|
+| `validate_json_bytes` (3 000 rooms) | 4.5 ms | 6.7 ms | 1.2 ms | 1.5 ms |
+| `validate_pdf` (200 pages — the page cap) | 230.3 ms | 228.3 ms | **1.2 ms** | 4.2 ms |
+| `validate_images` (3340² px — the decode cap) | 425.9 ms | 427.4 ms | **1.3 ms** | 1.0 ms |
+| `validate_images` ×6 — **rejected** by the pixel budget | **1482.4 ms** | 1488.5 ms | **2.9 ms** | 2.5 ms |
+| `EA.plan` (4 000 rooms, 528 KB — under `ACS_MAX_BUILDING`) | **1591.4 ms** | 1588.2 ms | **17.9 ms** | 24.9 ms |
+
+Thresholds (declared in `lib_loop_probe`, not lowered): stall ≤ 250 ms,
+p95 ≤ 500 ms. p95 after is 0.6–1.3 ms on every path.
+
+Two findings the original KI-14 text did not have:
+
+* The **rejected** six-image batch was the worst case, not the accepted one:
+  1.5 s of total server paralysis for a payload the gate throws away. That is a
+  denial-of-service primitive built out of a rejection.
+* `_engineering_authority` → `EA.plan()` ran on the loop for **every successful
+  `/v1/understand` response**, not only on `/v1/edit`. Its cost is
+  super-linear — 2.8 ms at 20 rooms, 398 ms at 1 600, **1.6 s at 4 000, 5.7 s at
+  8 400** — and all of those are models under the accepted size ceiling. That is
+  the "multi-second synchronous CPU work on the event loop" the acceptance
+  criteria forbid, on the success path.
+
+### The fix
+
+`acs_cpu_pool.CpuPool`: persistent `ProcessPoolExecutor` (spawn), **2 workers +
+8 queue slots**, `max_tasks_per_child=50`, 45 s per-operation timeout.
+Processes, not threads, because pypdf is pure Python and holds the GIL. A
+persistent pool, not the generation `JobRunner`, because that spawns one process
+per job (correct for a minutes-long cancellable generation, wrong for a 400 ms
+validation) and because validation must not consume a generation slot.
+
+* **Bounded concurrency and deterministic rejection.** Saturation is an
+  immediate `PoolSaturated` → HTTP 429 with `Retry-After`, never an unbounded
+  queue that later dies on the gateway timeout.
+* **Timeout and disconnect.** Both free the admission slot immediately and
+  classify (504 / cancelled). The worker finishes what it started — Python
+  cannot kill a task inside a `ProcessPoolExecutor` and we do not claim to, the
+  same boundary the generation runner declares for the provider. The difference
+  that matters here: the work is **bounded by the upload contract itself**
+  (bytes, pixels, pages, decompression), so abandoned work terminates in
+  measured time rather than opening an unbounded-consumption path.
+* **No unsafe state crosses the boundary.** `UploadRejected(code, message_ar,
+  detail)` was **not picklable** — Python rebuilds exceptions from `self.args`,
+  which is one string, while `__init__` needs two. The worker therefore returns
+  a declared envelope, never an exception, and the parent rebuilds the rejection
+  from an allow-listed code. `__reduce__` was also added at the source, because
+  a class that cannot be pickled is a trap for the next caller.
+* **Only declared targets run.** `TARGETS` maps five short names to two modules;
+  a name arriving from the network can never select a callable.
+* **Degradation is reported, never silent.** If the platform forbids `spawn`,
+  the pool falls back to threads and `/health` says `executor=thread`,
+  `isolated=false`, `degraded=true`.
+
+Zero synchronous `UPLOAD.validate_*`, `EA.plan(` or `EA.flat_diff(` calls remain
+in `acs_understand_api.py` (asserted). `/health` carries `cpu_pool`.
+
+## Rate limiting — an operational decision, not a warning (F-47)
+
+`/health` used to report `PROCESS_LOCAL_RATE_LIMIT` and
+`PRODUCTION_WITHOUT_DISTRIBUTED_BACKEND` and then start normally. A warning that
+prevents nothing: two instances mean two quotas, a rolling deploy briefly means
+three, and `ACS_RL_GLOBAL_DAY` — the one real safety valve on spend — becomes
+silently multiplicable.
+
+The production architecture was read from the deployment, not assumed:
+`render.yaml` declares one Docker web service on `plan: starter` with no
+autoscaling, and the `Dockerfile` runs `uvicorn` **without `--workers`**. One
+process, one instance. That is now an **enforced invariant**:
+
+| state | meaning | startup |
+|---|---|---|
+| `distributed_backend` | Redis (or equivalent) shared atomic store | starts |
+| `development` | not production | starts |
+| `single_instance_declared` | production + `ACS_SINGLE_INSTANCE=1` + platform concurrency 1 | starts |
+| `UNDECLARED_SINGLE_INSTANCE` | production, process-local limiter, no acknowledgement | **refuses to start** |
+| `SINGLE_INSTANCE_INVARIANT_VIOLATED` | acknowledged, but `WEB_CONCURRENCY`/`UVICORN_WORKERS`/… > 1 | **refuses to start** |
+
+`render.yaml` now carries `ACS_SINGLE_INSTANCE=1` with the reason and the exact
+escape hatch (`ACS_RATE_LIMIT_BACKEND=redis` + `ACS_REDIS_URL`).
+
+The distributed path was **exercised against a real `redis-server`**, through a
+dependency-free RESP client (`tests/remediation/lib_resp_client.py`) written
+because PyPI returns 403 here while `redis-server` is installed — the atomicity
+measured is Redis's own:
+
+* four workers sharing one quota of 5 → **exactly 5 of 20** accepted (per-process
+  limiting would have allowed 20)
+* eight threads × ten attempts against a quota of 10 → **exactly 10** accepted
+* Redis down + `fail_policy=closed` → requests refused, not silently opened
+* Redis down + `fail_policy=open` → opened **and** the failure is reported;
+  `health_status().healthy` is false
+
+## Scene complexity, compiler visibility and floor scalability (F-48)
+
+* **`SCENE_LIMITS`** — one frozen, exported, tested contract
+  (`acs.scene-limits/1.0.0`) with 23 named limits. Every previously buried
+  `Math.min(…, 40)` / `(…, 60)` / `(…, 200)` now reads from it. New global caps:
+  total meshes, levels, rooms per level, cores per level, slab strips, object
+  parts, points per room, generator span, text-derived repeats.
+* **`slabStrips` was O(V³)** in core count — 2.5 ms at 64 holes, 141 ms at 256,
+  **919 ms at 512**. Replaced with a per-z-band sweep using binary search and a
+  difference array: O(V² log V). Measured after: 0.18 ms at 64, 2.3 ms at 256,
+  **8.1 ms at 512 — 115× faster**. Output is byte-identical to the previous
+  algorithm, proved against an inline copy of it over 36 seeded hole sets.
+  A 64-core cap now also applies, with a `SLAB_CORES_CAPPED` diagnostic.
+* **Unbounded loops closed.** The conveyor emergency-stop loop
+  (`es = Math.max(1, Math.floor(len/12))`) had no ceiling — reverting the fix
+  **hangs the test runner**, which is what an unbounded user-controlled loop
+  means in practice. Same for stair treads and railing posts (no cap), and the
+  generator site span (`Infinity` flowed into a division-derived loop). Two
+  helpers, `acsCount` and `acsFit`, now clamp every model-supplied repetition and
+  record `COUNT_NOT_FINITE` / `COUNT_BELOW_ONE` / `COUNT_ABOVE_LIMIT`.
+  Effect on real models: exactly one count moved anywhere — a 1200×800 warehouse
+  went 18 661 → 18 637 meshes, the 24 previously-uncapped e-stops.
+* **Silent catches.** Thirteen `catch(e){}` blocks in the shipped compiler path
+  now record a subsystem, a reason code and a count —
+  `ARCH_COMPILE_FAILED`, `SLAB_VOIDS_LOST` (the `ARCH=null` case, which silently
+  deleted every core void from every slab), `STRUCT_/MEP_/FLS_COMPILE_FAILED`
+  and eight more. Aggregated, never one line per primitive, and carrying no
+  building content or prompt text. This immediately paid for itself: the first
+  benchmark run reported `ARCH_COMPILE_FAILED` five times and exposed a missing
+  module import in the new harness that would otherwise have been measured as a
+  valid result.
+* **`acsCompileSummary()`** exposes accepted / rejected / non-finite / capped /
+  specialization failures / degradation decisions, and the post-200 apply
+  boundary now refuses to claim a *complete* render when a subsystem was
+  dropped — a new `MODEL_DEGRADED_RENDER` class, distinct from
+  `MODEL_LOAD_ERROR` because the model did load.
+* **Floors.** Sorting is natural, not lexicographic (`F0,F1,…,F9,F10,F11`,
+  verified at 1, 7, 12 and 50 floors). The `F0–F6` naming ceiling is gone, and
+  with it a real bug: `F6` was hard-mapped to "السطح" (roof), which is wrong on
+  any building taller than seven storeys. Roof-ness is now derived from the
+  actual top index, with a deterministic ordinal fallback for any index.
+
+## Performance budgets (F-49) — real Chromium, real WebGL2
+
+Declared before measuring, in `tests/remediation/test_scene_benchmark.js`, and
+not lowered afterwards: first visible frame after the HTTP response ≤ 2 s SMALL,
+≤ 4 s MEDIUM, ≤ 8 s LARGE/VERY_LARGE/ADVERSARIAL; no main-thread stall > 1 s.
+
+| fixture | meshes | desktop 1440×900 | mobile 390×844 | tablet 820×1180 | budget |
+|---|---|---|---|---|---|
+| SMALL | 95 | 208 ms | 32 ms | 87 ms | 2 000 |
+| MEDIUM | 1 309 | 195 ms | 66 ms | 132 ms | 4 000 |
+| LARGE | 2 917 | 243 ms | 116 ms | 182 ms | 8 000 |
+| VERY_LARGE | 16 316 | 757 ms | 480 ms | 650 ms | 8 000 |
+| ADVERSARIAL (8 levels × 64 cores) | 47 855 | 1 653 ms | 1 253 ms | 1 536 ms | 8 000 |
+
+Longest single synchronous span: 296 ms (`compile`, ADVERSARIAL desktop).
+Non-background pixels 4.4 %–33.9 % on every fixture and viewport; zero
+application exceptions across fifteen runs. ADVERSARIAL is the only fixture that
+degrades, and it says so: `["SLAB_CORES_CAPPED"]`.
+
+## Reconciliation of the environmental NOT VERIFIED items
+
+The rule applied: an item is closed only where **evidence produced in this pass**
+satisfies its original acceptance criteria. Evidence reported by the operator is
+recorded as an operator attestation and labelled as such — it is not converted
+into a measurement this pass did not make.
+
+* **KI-2 · live raster verification** — **STILL OPEN (environmental).** This pass
+  measured real WebGL2 rasterisation of the shipped `compile()` output in real
+  Chromium at three viewports, but `public/vendor` is empty here (npm 403), so
+  three.js itself was not exercised. KI-2's criterion is the deployed renderer.
+* **KI-4 · live HTTP contract** — **STILL OPEN (environmental).** All egress from
+  this sandbox returns `403 CONNECT tunnel failed`; `acs-engine.onrender.com` and
+  the Netlify origin are both unreachable. No live request was made this pass.
+* **KI-6 · live token capture** — **STILL OPEN (environmental).** No
+  `ANTHROPIC_API_KEY` and no network; no provider call was made this pass.
+* **KI-13 / KI-23 / KI-24 / KI-25** — recorded as **LIVE VERIFIED (operator
+  attestation, 2026-08-15)** against commit `02cf7e3`: a real LARGE warehouse
+  request returned 200 with a visible 3D model, `/health` reports the deployed
+  SHA, CORS is correct for the Netlify origin, and the production CSP is strict.
+  Their in-repository regression suites remain green in this pass (61 / 56 / 72 /
+  85 + 30 assertions). This pass did not independently re-observe production.
+
+## Still open after this pass
+
+* **KI-2, KI-4, KI-6** — environmental, above. Each closes with one run from a
+  networked machine; the exact commands are in their original entries.
+* Floor-index assumptions found and **not** fixed (outside the scope of the
+  files touched): `pbr-bridge.js:621` derives roof-ness from `max(level.index)`
+  and picks the wrong slab on a sparse index set; `pbr-bridge.js:487,490,496`
+  build host keys as `'F'+lv.index` with no validation, which reproduces the
+  KI-25 `Fundefined` shape on the PBR side; and `viewer.js`'s
+  `_navLevelsForTemplate`, `_levelElevation` and `ARCH.voids.filter(v =>
+  v.level_index === li)` match on the raw `level.index` rather than the index
+  `compile()` derives, so a level whose index had to be derived gets no voids and
+  no navigation edges. None can crash or silently report success — they degrade
+  visibly — but they are a genuine inconsistency between two index sources.
+* ~20 empty `catch` blocks in `workspace-ui-wiring.js` outside the compiler path
+  (GPU disposal, `localStorage`, XR, PDF import, render diagnostics). Each already
+  assigns an explicit fallback; they were left alone deliberately.

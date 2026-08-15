@@ -606,6 +606,114 @@ def make_backend(env=None, client=None):
 
 
 # ---------------------------------------------------------------------------
+# §4b — قرار الإنتاج (KI-14 pass · F-47): لا تحذير بلا قرار.
+#
+# كان /health يقول PROCESS_LOCAL_RATE_LIMIT و
+# PRODUCTION_WITHOUT_DISTRIBUTED_BACKEND ثم يُقلع الخادم عادياً. تحذيرٌ لا
+# يمنع شيئاً ولا يُلزم أحداً: نسختان من الخدمة تعنيان حصّتين، وإعادة نشرٍ
+# متدرّجة تعني ثلاث حصص لحظياً، والسقف اليوميّ العامّ — وهو أهمّ صمّام أمان
+# على الرصيد — يصير قابلاً للمضاعفة بعدد النسخ بلا أن يعلم أحد.
+#
+# فإمّا مخزنٌ موزّع، وإمّا **إقرارٌ صريح** بأن النشر عمليّة واحدة ونسخة واحدة.
+# والإقرار ليس كلاماً: إن أعلنت المنصّة تزامناً أكبر من واحد نُسقط الإقلاع.
+# ---------------------------------------------------------------------------
+
+#: متغيّرات تُعلن بها المنصّات عدد العمليات أو النسخ. أيّها > 1 ينقض الإقرار.
+CONCURRENCY_VARS = ("WEB_CONCURRENCY", "UVICORN_WORKERS", "GUNICORN_WORKERS",
+                    "ACS_INSTANCES", "NUM_INSTANCES", "RENDER_INSTANCE_COUNT",
+                    "FLY_MACHINE_COUNT")
+
+INVARIANT_DISTRIBUTED = "distributed_backend"
+INVARIANT_SINGLE = "single_instance_declared"
+INVARIANT_DEV = "development"
+INVARIANT_UNDECLARED = "UNDECLARED_SINGLE_INSTANCE"
+INVARIANT_VIOLATED = "SINGLE_INSTANCE_INVARIANT_VIOLATED"
+
+
+class ProductionInvariantError(RuntimeError):
+    """ضبطٌ إنتاجيّ لا يجوز الإقلاع عليه. يُرفع عند بدء التشغيل لا عند أول طلب."""
+
+
+def declared_concurrency(env=None):
+    """أكبر تزامن تُعلنه المنصّة، والمتغيّر الذي أعلنه. (1, None) إن لم يُعلَن."""
+    best, who = 1, None
+    for name in CONCURRENCY_VARS:
+        raw = env_str(name, "", env).strip()
+        if not raw:
+            continue
+        try:
+            v = int(raw)
+        except ValueError:
+            continue
+        if v > best:
+            best, who = v, name
+    return best, who
+
+
+def production_invariant(limiter=None, env=None):
+    """القرار التشغيليّ الصريح. يعيد قاموساً؛ `ok=False` يعني: لا تُقلع.
+
+    الحالات:
+      distributed_backend         مخزن مشترك ذرّي — أي عدد نسخ مقبول.
+      development                 خارج الإنتاج — الحدّ المحليّ كافٍ.
+      single_instance_declared    الإنتاج، بلا مخزن موزّع، وبإقرار صريح
+                                  ACS_SINGLE_INSTANCE=1، والمنصّة تعلن تزامن ١.
+      UNDECLARED_SINGLE_INSTANCE  الإنتاج بلا مخزن ولا إقرار ⇒ لا إقلاع.
+      SINGLE_INSTANCE_INVARIANT_VIOLATED
+                                  أُقرَّ بنسخة واحدة والمنصّة تعلن أكثر ⇒ لا إقلاع.
+    """
+    lim = limiter if limiter is not None else default_limiter(env)
+    distributed = bool(getattr(lim.backend, "distributed", False))
+    is_prod = env_str("ACS_ENV", "development", env).lower() == "production"
+    declared = env_flag("ACS_SINGLE_INSTANCE", False, env)
+    concurrency, source = declared_concurrency(env)
+    out = {"contract": CONTRACT_VERSION, "ok": True, "state": None,
+           "distributed": distributed, "production": is_prod,
+           "single_instance_declared": bool(declared),
+           "declared_concurrency": concurrency,
+           "concurrency_source": source, "detail": ""}
+    if distributed:
+        out["state"] = INVARIANT_DISTRIBUTED
+        out["detail"] = ("rate limits are shared atomically; any instance "
+                         "count is safe")
+        return out
+    if not is_prod:
+        out["state"] = INVARIANT_DEV
+        out["detail"] = "not production; a process-local limiter is acceptable"
+        return out
+    if not declared:
+        out["ok"] = False
+        out["state"] = INVARIANT_UNDECLARED
+        out["detail"] = (
+            "ACS_ENV=production with a process-local rate limiter and no "
+            "ACS_SINGLE_INSTANCE=1 acknowledgement. Either set "
+            "ACS_RATE_LIMIT_BACKEND=redis with ACS_REDIS_URL, or declare the "
+            "single-instance invariant explicitly.")
+        return out
+    if concurrency > 1:
+        out["ok"] = False
+        out["state"] = INVARIANT_VIOLATED
+        out["detail"] = (
+            "ACS_SINGLE_INSTANCE=1 was declared but %s=%d asks for more than "
+            "one process/instance. Each instance would carry its own quota, so "
+            "the global daily cap would be multiplied silently."
+            % (source, concurrency))
+        return out
+    out["state"] = INVARIANT_SINGLE
+    out["detail"] = ("single process, single instance, declared and verified; "
+                     "quotas are exact for this deployment")
+    return out
+
+
+def enforce_production_invariant(limiter=None, env=None):
+    """يرفع ProductionInvariantError إن كان الضبط لا يجوز الإقلاع عليه."""
+    d = production_invariant(limiter, env)
+    if not d["ok"]:
+        raise ProductionInvariantError("%s: %s" % (d["state"], d["detail"]))
+    return d
+
+
+# ---------------------------------------------------------------------------
 # §5 — الهويّة. دالّة صرفة: لا FastAPI ولا Request ولا حالة.
 # ---------------------------------------------------------------------------
 #: أطول ترويسة يُنظر فيها. أي أطول ⇒ مشوّهة ⇒ تُهمَل كاملةً (لا تُقصّ جزئياً،
@@ -957,6 +1065,8 @@ def health_status(limiter=None, env=None):
     out = {
         "contract": CONTRACT_VERSION,
         "backend": getattr(backend, "name", "unknown"),
+        # F-47: القرار التشغيليّ نفسه، لا التحذير وحده.
+        "production_invariant": production_invariant(lim, env),
         "distributed": distributed,
         "fail_policy": lim.fail_policy,
         "limits": dict(lim.limits),
@@ -981,6 +1091,10 @@ __all__ = [
     "RateLimiter", "make_backend", "backend_choice", "redis_client_from_url",
     "client_identity", "normalise_ip", "trusted_hops",
     "health_status", "default_limiter", "reset_default_limiter",
+    "ProductionInvariantError", "production_invariant",
+    "enforce_production_invariant", "declared_concurrency",
+    "CONCURRENCY_VARS", "INVARIANT_DISTRIBUTED", "INVARIANT_SINGLE",
+    "INVARIANT_DEV", "INVARIANT_UNDECLARED", "INVARIANT_VIOLATED",
     "limits_from_env", "fail_policy_from_env", "env_int", "env_str",
     "env_flag",
     "SCOPE_GLOBAL_DAY", "SCOPE_GEN_HOUR", "SCOPE_GEN_DAY", "SCOPE_EDIT_HOUR",

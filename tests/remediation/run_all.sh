@@ -88,6 +88,14 @@ python3 "$HERE/test_plan_chunking.py"; guard $?
 step "KI-25 · F-41…F-45 · post-200 model apply (a 200 that does not display is a failure)"
 node "$ROOT/tests/lib/run.js" "$HERE/test_model_apply.js"; guard $?
 
+# KI-14/F-46/F-47: حلقة asyncio حقيقيّة + مدقّقات مشحونة + redis-server حقيقيّ.
+step "KI-14 · F-46/F-47 · event-loop isolation and the rate-limit decision"
+python3 "$HERE/test_event_loop.py"; guard $?
+
+# هندسة المشهد المحدودة (KI-25 pass): سقوف معلنة وحلقات مقيّدة وأخطاء مرئية.
+step "scene complexity · declared limits, bounded loops, visible compiler failures"
+node "$ROOT/tests/lib/run.js" "$HERE/test_scene_limits.js"; guard $?
+
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 
@@ -108,6 +116,9 @@ if [ "$1" = "--browser" ]; then
   # three.js نفسه غير مُعبَّأ هنا، والملفّ يعلن ذلك بنفسه في مخرجه.
   step "KI-25 · F-41…F-45 · the applied model is actually drawn (real Chromium, real WebGL2)"
   node "$HERE/test_apply_render_browser.js"; guard $?
+  # ميزانيات الأداء المعلنة على سطح المكتب والجوال واللوحي.
+  step "performance budgets · SMALL…ADVERSARIAL on desktop, mobile and tablet"
+  node "$HERE/test_scene_benchmark.js"; guard $?
 else
   printf '\n=== accessibility and performance ===\nSKIPPED (pass --browser). '
   printf 'Without it: NOT VERIFIED — CHROMIUM ENVIRONMENT UNAVAILABLE\n'

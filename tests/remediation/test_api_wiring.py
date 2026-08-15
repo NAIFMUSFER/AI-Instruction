@@ -140,11 +140,22 @@ chk('every documented endpoint is still present',
     {'root', 'health', 'ready', 'version', 'understand', 'edit',
      'understand_image', 'understand_pdf'} <= routes, str(sorted(routes)))
 
+import acs_cpu_pool as _CPUP
+chk('the engineering planner is reachable through the declared cpu-pool target',
+    _CPUP.TARGETS.get('ea_plan') == ('acs_engineering_authority', 'plan')
+    and 'await _validate("ea_plan"' in API_SRC)
+chk('and no handler calls the planner synchronously any more (KI-14)',
+    'EA.plan(' not in API_SRC and 'EA.flat_diff(' not in API_SRC)
 print('\n── ج · وحدات التصحيح مستوردة ومستعملة فعلاً ──')
 for mod, alias, use in (('acs_logging', 'LOGGING', 'LOG.'),
                         ('acs_rate_limit', 'RL', 'RL.'),
                         ('acs_upload_security', 'UPLOAD', 'UPLOAD.'),
-                        ('acs_engineering_authority', 'EA', 'EA.plan'),
+                        # KI-14/F-46: مخطّط سلطة التغيير لم يعد يُستدعى
+                        # مباشرةً — نداؤه المتزامن كان يوقف الحلقة ١٫٦ ثانية
+                        # على نموذج تحت السقف. صار يمرّ بمجمّع العمليات،
+                        # فالمرساة استعمالٌ مباشر باقٍ، ومسار المجمّع
+                        # يُتحقَّق منه في الفحصين التاليين.
+                        ('acs_engineering_authority', 'EA', 'EA.health_status'),
                         ('acs_generation_job', 'JOBS', 'JOBS.'),
                         ('acs_build_info', 'BUILD', 'BUILD.build_info')):
     chk('%s is imported' % mod, ('import %s as %s' % (mod, alias)) in API_SRC)

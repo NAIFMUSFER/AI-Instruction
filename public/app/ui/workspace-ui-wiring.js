@@ -7,7 +7,7 @@ import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
-import { ACS_PROJECT_CODE_CONTEXT, ARButton, FLOOR_NAMES, acsBuildDefects, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
+import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
 import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, applyVisualMode, checkCoordSnapshot, clearVisualMode, compileCoordination, compileVisualScene, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, detectTypeJS, isIndustrialProgram, renderer, scene, sky, statusEl, su, sun, visAiEnhancementRequest, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visValidateAsset, visValidateScene } from '../render/scene.js';
 
@@ -157,7 +157,13 @@ function setModel(data){
   buildFloors(); buildLayers(); updateVis();
   let n=0; model.traverse(o=>{if(o.isMesh)n++});
   const nz=Object.values(data.floors||{}).reduce((a,f)=>a+((f.rooms||[]).length),0);
-  statusEl.textContent=`تم التوليد ✓  ${n} عنصر · ${nz} منطقة/غرفة · ${Object.keys(registry).length} طبقة · ${floorsFound.size} دور`;
+  /* KI-26/F-46 · «تم التوليد ✓» كانت تُكتب مهما سقط من النموذج. setModel هو
+     المسار المشترك (خادم · مثال · مستودع محلي · استيراد)، فالصدق يبدأ هنا. */
+  let _sum=null; try{ _sum=acsCompileSummary(); }catch(e){ _sum=null; }
+  const _deg=!!(_sum&&_sum.degraded);
+  statusEl.textContent=(_deg?'⚠ بُني ناقصاً  ':'تم التوليد ✓  ')
+    +`${n} عنصر · ${nz} منطقة/غرفة · ${Object.keys(registry).length} طبقة · ${floorsFound.size} دور`
+    +(_deg?(' — سقط: '+(_sum.degradation_reasons||[]).join(' · ')):'');
   const statEl=document.getElementById('statCount');
   if(statEl) statEl.innerHTML=`<b>${n}</b> عنصر ثلاثي الأبعاد مبنيّ من <b>${nz}</b> منطقة في الوصف.`
     +(n>6000?' <span class="acs-warn">— خفّض «مستوى التفصيل» إن تباطأت الحركة.</span>':'');
@@ -193,7 +199,24 @@ function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHT
     b.onclick=()=>{floorSel=k;[...wrap.children].forEach(c=>c.classList.remove('active'));b.classList.add('active');updateVis();};
     wrap.appendChild(b);};
   mk('all','الكل');
-  [...floorsFound].sort().forEach(f=>mk(f,FLOOR_NAMES[f]||f));}
+  /* ═══ KI-26/F-46 · ترتيب الأدوار طبيعيّ لا معجميّ ═══════════════════════
+     كان: ‎[...floorsFound].sort()‎ — مقارنةٌ نصّية على مفاتيح مثل 'F10'، فينتج
+     F0,F1,F10,F11,F2,…,F9 في كل مبنى فيه عشرة أدوار فأكثر. المستخدم يرى
+     شريطاً لا يطابق مبناه، ويضغط «الدور ٢» فيقفز إلى العاشر بصرياً.
+     والاسم كان ‎FLOOR_NAMES[f]||f‎ — جدولٌ يقف عند F6 (وF6 نفسه مسمّى
+     «السطح» كذباً)، فما فوقه يُعرَض مفتاحاً خاماً «F7».
+     الآن: ترتيبٌ عدديّ من ‎acsFloorOrder‎، واسمٌ من ‎acsFloorName‎ يعرف عدد
+     الأدوار الكلّي فيسمّي السطحَ سطحاً حين يكون الأعلى فعلاً لا حين يكون ٦. */
+  acsFloorOrder(floorsFound).forEach(f=>mk(f,floorLabel(f)));}
+/* اسم الدور المعروض في كل موضع بالواجهة — مصدرٌ واحد لا خمسة.
+   ‎acsFloorName‎ يحتاج عدد الأدوار الكلّي ليقرّر أيّها السطح؛ يُشتقّ هنا من
+   أكبر رقم دورٍ موجود فعلاً في المشهد (لا من عدد المفاتيح: مبنًى مفاتيحه
+   F0 وF5 وحدهما ليس مبنى دورين). لا يعيد قيمةً فارغة أبداً. */
+function floorLabel(fkey){
+  let top=-1;
+  floorsFound.forEach(k=>{ const i=acsFloorIndex(k); if(i!==null&&i>top) top=i; });
+  return acsFloorName(fkey, top+1);
+}
 /* الطبقات */
 function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHTML='';
   LAYER_ORDER.filter(l=>registry[l]).forEach(l=>{const r=registry[l];
@@ -270,7 +293,7 @@ renderer.domElement.addEventListener('click',ev=>{ if(walkState.active||!model)r
   if(t[0]==='STRUCT'){ infoEl.innerHTML=structInfoCard(o); return; }
   if(t[0]==='MEP'){ infoEl.innerHTML=mepInfoCard(o); return; }
   if(t[0]==='FLS'){ infoEl.innerHTML=flsInfoCard(o); return; }
-  infoEl.innerHTML=`<b>${esc(LAYER_NAMES[t[0]]||t[0])}</b><br>الدور: ${esc(FLOOR_NAMES[t[1]]||t[1])} · الغرفة: ${esc(t[2]||'-')}<br><span class="acs-dim-60">${esc(t[3]||'')}</span>`;
+  infoEl.innerHTML=`<b>${esc(LAYER_NAMES[t[0]]||t[0])}</b><br>الدور: ${esc(floorLabel(t[1]))} · الغرفة: ${esc(t[2]||'-')}<br><span class="acs-dim-60">${esc(t[3]||'')}</span>`;
   if(doorTexture){applyDoorTex(o);infoEl.innerHTML+='<br><span class="acs-ok">✓ طُبّقت الصورة على هذا العنصر</span>';}
   else infoQuickColors(o);});
 
@@ -281,7 +304,10 @@ function structInfoCard(o){
   let el=null, mat=null;
   try{ const ST=compileStructure(lastBuilding,'bld_0');
        el=structElementById(ST,u.id);
-       mat=el?_sMaterialName(ST,el.material_ref):null; }catch(e){}
+       mat=el?_sMaterialName(ST,el.material_ref):null; }
+  catch(e){ /* KI-26/F-46: كان ‎catch(e){}‎ فارغاً — بطاقةٌ تُعرض بلا حقائق
+     النموذج تبدو «عنصراً بلا بيانات» وهي في الحقيقة «مصرِّفٌ سقط». */
+    acsBuildDefect('specialization_failed','INFOCARD_STRUCT_COMPILE_FAILED','STRUCT'); }
   const L=[];
   L.push('<b>'+esc(LAYER_NAMES.STRUCT)+'</b>');
   L.push('المعرّف: '+esc(u.id||'-'));
@@ -310,7 +336,9 @@ function mepInfoCard(o){
   let el=null, sys=null;
   try{ const MP=compileMep(lastBuilding,'bld_0');
        el=mepElementById(MP,u.id);
-       sys=el?mepSystemById(MP,el.system_id):null; }catch(e){}
+       sys=el?mepSystemById(MP,el.system_id):null; }
+  catch(e){ /* KI-26/F-46: كان ‎catch(e){}‎ فارغاً */
+    acsBuildDefect('specialization_failed','INFOCARD_MEP_COMPILE_FAILED','MEP'); }
   const L=[];
   L.push('<b>'+esc(LAYER_NAMES['MEP_'+(u.discipline||'OTHER')]||'MEP')+'</b>');
   L.push('المعرّف: '+esc(u.id||'-'));
@@ -338,7 +366,9 @@ function mepInfoCard(o){
 function flsInfoCard(o){
   const u=(o.userData&&o.userData.fls)||{};
   let el=null;
-  try{ const FL=compileFls(lastBuilding,'bld_0'); el=flsElementById(FL,u.id); }catch(e){}
+  try{ const FL=compileFls(lastBuilding,'bld_0'); el=flsElementById(FL,u.id); }
+  catch(e){ /* KI-26/F-46: كان ‎catch(e){}‎ فارغاً */
+    acsBuildDefect('specialization_failed','INFOCARD_FLS_COMPILE_FAILED','FLS'); }
   const L=[];
   L.push('<b>'+esc(LAYER_NAMES[u.layer]||'حريق/سلامة')+'</b>');
   L.push('المعرّف: '+esc(u.id||'-'));
@@ -478,7 +508,7 @@ function applyFinish(tag, surface, hex, mesh){
     const ms=meshesOfRoom(rr.fkey,rr.rid,['WALL']);
     const m=getMat('wall',hex);
     ms.forEach(o=>{o.material=m;});
-    return 'طُبّق اللون على '+ms.length+' جزء جدار في غرفة «'+rr.rid+'» (الدور '+(FLOOR_NAMES[rr.fkey]||rr.fkey)+') ✓';
+    return 'طُبّق اللون على '+ms.length+' جزء جدار في غرفة «'+rr.rid+'» (الدور '+floorLabel(rr.fkey)+') ✓';
   }
   // أرضية/سقف: قد لا يكون اللوح موجوداً بعد → أنشئه في مكانه
   const det=surface==='floor'?'plate':'ceil';
@@ -635,7 +665,7 @@ function openNote(obj, point){
   noteTarget=obj; notePoint=point.clone();
   const t=(obj.userData.tag||'').split('|');
   document.getElementById('nmTarget').textContent=
-    (LAYER_NAMES[t[0]]||t[0])+' · الدور: '+(FLOOR_NAMES[t[1]]||t[1])+' · الغرفة: '+(t[2]||'-')+' · '+(t[3]||'');
+    (LAYER_NAMES[t[0]]||t[0])+' · الدور: '+floorLabel(t[1])+' · الغرفة: '+(t[2]||'-')+' · '+(t[3]||'');
   document.getElementById('nmText').value='';
   document.getElementById('nmColorMsg').textContent='';
   noteModal.classList.add('on');
@@ -690,7 +720,7 @@ document.getElementById('nmSave').onclick=()=>{
   const tag=noteTarget.userData.tag||'';
   const t=tag.split('|');
   const note={kind:document.getElementById('nmKind').value, text:txt,
-    layer:LAYER_NAMES[t[0]]||t[0], floor:FLOOR_NAMES[t[1]]||t[1], room:t[2]||'-',
+    layer:LAYER_NAMES[t[0]]||t[0], floor:floorLabel(t[1]), room:t[2]||'-',
     tag:tag, p:[notePoint.x,notePoint.y,notePoint.z]};
 
   /* تنفيذ فوري لطلبات اللون — بلا انتظار الخادم */
@@ -1406,7 +1436,13 @@ const ACS_ERR_HINT={
 const ACS_FAIL={
   API_NETWORK_ERROR:'API_NETWORK_ERROR', API_HTTP_ERROR:'API_HTTP_ERROR',
   MODEL_PARSE_ERROR:'MODEL_PARSE_ERROR', MODEL_VALIDATION_ERROR:'MODEL_VALIDATION_ERROR',
-  MODEL_LOAD_ERROR:'MODEL_LOAD_ERROR', RENDER_CAMERA_ERROR:'RENDER_CAMERA_ERROR',
+  MODEL_LOAD_ERROR:'MODEL_LOAD_ERROR',
+  /* KI-26/F-46 — «حُمِّل النموذج وسقط منه جزء». ليس MODEL_LOAD_ERROR: النموذج
+     وصل وبُني وعُرض فعلاً، لكن تخصّصاً كاملاً سقط أو حدَّ تعقيدٍ قصّ محتوى.
+     الخلط بينهما كذبتان: إعلانُ فشلٍ تامّ على مبنًى معروض، أو إعلانُ نجاحٍ
+     تامّ على مبنًى ناقص. هذه الفئة هي المنزلة بينهما. */
+  MODEL_DEGRADED_RENDER:'MODEL_DEGRADED_RENDER',
+  RENDER_CAMERA_ERROR:'RENDER_CAMERA_ERROR',
   RENDER_POSTPROCESS_ERROR:'RENDER_POSTPROCESS_ERROR',
   RENDER_BLACK_VIEWPORT:'RENDER_BLACK_VIEWPORT'};
 const ACS_TRANSPORT_CLASSES=['NETWORK_DNS','NETWORK_OFFLINE','TIMEOUT','NOT_CONFIGURED',
@@ -1513,6 +1549,14 @@ function acsApplyBuilding(building, opts){
     unknown_object:dfx.unknown_object,
     reasons:dfx.reasons, samples:(dfx.samples||[]).slice(0,8)}:null;
 
+  /* KI-26/F-46 · خلاصة المترجم: سقوط تخصّص أو قرار تدهور تعقيد.
+     كان الحاجز يسأل «هل رُفضت غرفة؟ هل هندسةٌ غير منتهية؟» فقط، فمبنًى بُني
+     بلا فراغات نوى إطلاقاً (ARCH سقط) أو بلا نصف رفوفه (حدّ تعقيد) كان يمرّ
+     إلى «تم التوليد ✓» بلا كلمة. */
+  let sum=null;
+  try{ sum=acsCompileSummary(); }catch(e){ sum=null; }
+  out.summary=sum;
+
   let v=null;
   try{ v=window.ACS.verifyVisibleModel(); }catch(e){ v=null; }
   out.scene=v?{canonical_meshes:v.canonical_meshes,
@@ -1560,9 +1604,22 @@ function acsApplyBuilding(building, opts){
   }
   out.reached=mark('CAMERA_FIT_COMPLETE');
 
-  /* ٥ · الإطار الحقيقيّ يُقاس بعد الرسم لا الآن. النجاح مؤقّت حتى يعود
+  /* ٥ · هل المعروض هو المطلوب كاملاً؟ التخصّص الساقط والتعقيد المقصوص لا
+        يمنعان العرض — النموذج على الشاشة — لكنّهما يمنعان **ادّعاء اكتماله**.
+        ولهذا تُصنَّف الحالة MODEL_DEGRADED_RENDER لا MODEL_LOAD_ERROR. */
+  out.degraded=!!(sum&&sum.degraded);
+  out.degradation=out.degraded?{
+    specialization_failures:sum.specialization_failures,
+    complexity_degradations:sum.complexity_degradations,
+    capped_expansions:sum.capped_expansions,
+    suppressed_meshes:sum.suppressed_meshes,
+    reasons:(sum.degradation_reasons||[]).slice(0,12)}:null;
+  if(out.degraded) mark('COMPLEXITY_DEGRADED');
+
+  /* ٦ · الإطار الحقيقيّ يُقاس بعد الرسم لا الآن. النجاح مؤقّت حتى يعود
         acsApplyFirstFrame بجواب البكسلات. */
-  out.ok=true; out.class=null;
+  out.ok=true;
+  out.class=out.degraded?ACS_FAIL.MODEL_DEGRADED_RENDER:null;
   out.reached=mark('AWAITING_FIRST_FRAME');
   ACS_LAST_APPLY=out; return out;
 }
@@ -1587,7 +1644,9 @@ function acsApplyFirstFrame(res){
     res.reached='FIRST_FRAME_NOT_VERIFIED';
     res.pixels_verified=false;
   }else{
-    res.reached='VISIBLE'; res.pixels_verified=true;
+    /* KI-26/F-46: مرسومةٌ نعم، كاملةٌ لا. لا يُكتب VISIBLE على مبنًى ناقص. */
+    res.reached=res.degraded?'VISIBLE_DEGRADED':'VISIBLE';
+    res.pixels_verified=true;
   }
   ACS_LAST_APPLY=res; return res;
 }
@@ -1645,7 +1704,17 @@ __ACS_SHARED.acsApplyErrorPanel = function acsApplyErrorPanel(ap, res, onRetry, 
   const box=document.getElementById('reportBox'); if(!box) return;
   const rid=(res||{}).request_id||'';
   const d=ap.defects||{}; const s=ap.scene||{};
+  const deg=ap.degradation||null;
   const bits=[];
+  if(deg){
+    if(deg.specialization_failures) bits.push(deg.specialization_failures
+      +' تخصّصاً سقط كاملاً');
+    if(deg.complexity_degradations) bits.push(deg.complexity_degradations
+      +' قرار تدهور تعقيد');
+    if(deg.capped_expansions) bits.push(deg.capped_expansions+' توسّعاً مقصوصاً');
+    if(deg.suppressed_meshes) bits.push(deg.suppressed_meshes+' عنصراً مكبوتاً');
+    if((deg.reasons||[]).length) bits.push('الأسباب: '+deg.reasons.join(' · '));
+  }
   if(d.rejected_room) bits.push(d.rejected_room+' غرفة مرفوضة');
   if(d.non_finite_box) bits.push(d.non_finite_box+' عنصراً بإحداثيّات غير صالحة');
   if(d.derived_level_index) bits.push(d.derived_level_index+' دوراً بلا رقم');
@@ -1653,14 +1722,26 @@ __ACS_SHARED.acsApplyErrorPanel = function acsApplyErrorPanel(ap, res, onRetry, 
   if(s.canonical_meshes!=null) bits.push('بُني '+s.canonical_meshes
     +' عنصراً، وصل الحدود '+s.included_in_bounds);
   box.className='report open';
+  /* KI-26/F-46 · العنوان يتبع الحقيقة: مبنًى معروضٌ ناقص ليس مبنًى لم يُعرَض.
+     لوحةٌ تقول «لم يُعرَض» فوق مشهدٍ ظاهر تُفقد المستخدمَ الثقةَ في اللوحة
+     كلّها، فيتجاهل التحذير الحقيقي: أن جزءاً من مبناه ليس أمامه. */
+  const _degTitle=(ap.degraded===true&&ap.ok!==false);
   box.innerHTML=
     '<div class="acs-errbox">'
-    +'<div class="acs-errtitle">✕ وصل النموذج من الخادم ولم يُعرَض</div>'
-    +'<div>'+esc(ap.error||'')+'</div>'
+    +'<div class="acs-errtitle">'
+      +(_degTitle?'⚠ عُرض النموذج ناقصاً — سقط منه جزء'
+                 :'✕ وصل النموذج من الخادم ولم يُعرَض')+'</div>'
+    +'<div>'+esc(ap.error||(_degTitle?('لم يُبنَ كل ما في النموذج: '
+      +((ap.degradation||{}).reasons||[]).join(' · ')):''))+'</div>'
     +'<div class="acs-errbody">'
-      +'الخادم نفّذ التوليد وأجاب بنجاح — العطل في تحميل النموذج داخل '
-      +'المتصفّح، لا في الشبكة ولا في المحرّك. النموذج محفوظ ويمكن تنزيله '
-      +'للفحص عبر <code>ACS.captureRenderFailure()</code>.</div>'
+      +(_degTitle
+        ?('الخادم نفّذ التوليد وأجاب بنجاح، والنموذج مبنيّ ومعروض — لكن جزءاً '
+          +'منه لم يُبنَ (تخصّصٌ سقط أو حدُّ تعقيدٍ قصّ محتوى). ما تراه ليس '
+          +'كامل النموذج. عقد الحدود: <code>'
+          +esc(((ap.summary||{}).contract)||'')+'</code>.')
+        :('الخادم نفّذ التوليد وأجاب بنجاح — العطل في تحميل النموذج داخل '
+          +'المتصفّح، لا في الشبكة ولا في المحرّك. النموذج محفوظ ويمكن تنزيله '
+          +'للفحص عبر <code>ACS.captureRenderFailure()</code>.'))+'</div>'
     +'<div class="acs-errhint">'
       +'التصنيف: <code>'+esc(ap.class||'')+'</code>'
       +' · توقّف عند: <code>'+esc(ap.reached||'')+'</code>'
@@ -1755,6 +1836,17 @@ async function acsGenerateFromServer(){
       console.error('[ACS-APPLY]', fr.class, fr.reached, fr.error||'');
       return;
     }
+    /* KI-26/F-46: «بُني من وصفك» جملةُ اكتمال. لا تُكتب فوق مبنًى سقط منه
+       تخصّصٌ أو قُصّ منه محتوى — يُقال الناقصُ ناقصاً، وتُفتَح لوحة التفصيل. */
+    if(fr.degraded){
+      acsFail(ACS_FAIL.MODEL_DEGRADED_RENDER,
+              ((fr.degradation||{}).reasons||[]).join(',').slice(0,120));
+      statusEl.textContent='⚠ عُرض النموذج ناقصاً — لم يُبنَ كل ما في وصفك ('
+        +((fr.degradation||{}).reasons||[]).join(' · ')+')';
+      __ACS_SHARED.acsApplyErrorPanel(fr, res, acsGenerateFromServer, localOnDemand);
+      console.warn('[ACS-APPLY]', ACS_FAIL.MODEL_DEGRADED_RENDER, fr.degradation);
+      return;
+    }
     statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
       +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
       +((data.mode==='deep')?' · (توليد على مرحلتين)':'')
@@ -1786,6 +1878,10 @@ document.getElementById('loadWarehouse').onclick=()=>{
      detail:ACS_LAST_FAILURE.detail,
      is_transport:ACS_TRANSPORT_CLASSES.indexOf(ACS_LAST_FAILURE.class)>=0}:null;
   window.ACS.failureClasses=()=>Object.keys(ACS_FAIL).map(k=>ACS_FAIL[k]);
+  /* KI-26/F-46 · عقد حدود التعقيد معروضٌ للقراءة: أي قصٍّ في المشهد يمكن
+     مطابقته بالحدّ الذي سبّبه، بلا قراءة الشيفرة. */
+  window.ACS.sceneLimits=()=>Object.assign({},SCENE_LIMITS);
+  window.ACS.compileSummary=()=>acsCompileSummary();
   window.ACS.apiDiagnostics=()=>({
     contract:(window.ACS_API||{}).contract||'',
     base:(window.ACS_API&&window.ACS_API.base())||'',
@@ -2324,7 +2420,7 @@ function decorateRoom(r){const [x,z,w,d]=r.rect;
   return r;}
 function wrapBuilding(rooms, W, D, nF){
   const levels=[{index:0,name:'الأرضي',template:'ground'}];
-  for(let i=1;i<=nF;i++)levels.push({index:i,name:FLOOR_NAMES['F'+i]||('الدور '+i),template:'typical'});
+  for(let i=1;i<=nF;i++)levels.push({index:i,name:acsFloorName('F'+i,nF+2),template:'typical'});
   levels.push({index:nF+1,name:'السطح',template:'roof'});
   const ground={rooms:[{id:'lobby',rect:[W/2-4,1,8,7],
     doors:[{edge:'N',offset:4,width:2.5,height:2.5,material:'glass'}],
@@ -3141,4 +3237,4 @@ window.ACS.captureRenderFailure=function(opts){
 Object.assign(__ACS_LATE, { camera, lastBuilding, model, orbit, setSun });
 
 
-export { ACS_APPLY_CONTRACT, ACS_APPLY_MIN_KEPT, ACS_LAST_APPLY, acsApplyBuilding, acsApplyFirstFrame, acsApplyTicket, _acsErrorSite, _acsStackHead, _acsZonesAsked, ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };
+export { ACS_APPLY_CONTRACT, ACS_APPLY_MIN_KEPT, floorLabel, ACS_LAST_APPLY, acsApplyBuilding, acsApplyFirstFrame, acsApplyTicket, _acsErrorSite, _acsStackHead, _acsZonesAsked, ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };

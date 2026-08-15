@@ -177,7 +177,9 @@ jobs:
             # failure, not a success. Node scope here; real WebGL2 pixels
             # are measured by test_apply_render_browser.js.
             node tests/lib/run.js tests/remediation/test_model_apply.js
+            node tests/lib/run.js tests/remediation/test_scene_limits.js
             node tests/remediation/test_apply_render_browser.js
+            node tests/remediation/test_scene_benchmark.js
           } 2>&1 | tee logs/chromium-browser.log
       - uses: actions/upload-artifact@v4
         if: always()
@@ -305,6 +307,10 @@ jobs:
             # and truncates past it, so a stage whose output does not fit its
             # ceiling fails the build instead of reaching production.
             python3 tests/remediation/test_plan_chunking.py
+            echo
+            # KI-14: heavy upload validation must not block the event loop.
+            # Uses a real asyncio server and a real redis-server.
+            python3 tests/remediation/test_event_loop.py
           } 2>&1 | tee logs/dependency-audit.log
       - name: CVE scan (advisory — needs the network, does not gate the PR)
         # This is the ONE dependency check that cannot be done offline, so it is

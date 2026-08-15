@@ -121,7 +121,57 @@ const MEP_DISC_COLOR={ELECTRICAL:'#eab308',LIGHTING:'#fde047',ICT:'#38bdf8',
 /* ألوان تمييز نوع العنصر الإنشائي فقط — لا ترمز إلى سلامة ولا حالة ولا مطابقة */
 const STRUCT_KIND_COLOR={COLUMN:'#b45309',BEAM:'#0f766e',STRUCTURAL_SLAB:'#475569',
   STRUCTURAL_WALL:'#7c3aed',STRUCTURAL_CORE:'#a16207',FOUNDATION:'#334155'};
-const FLOOR_NAMES={F0:'الأرضي',F1:'الأول',F2:'الثاني',F3:'الثالث',F4:'الرابع',F5:'الخامس',F6:'السطح'};
+/* KI-26/F-46 — أسماء الأدوار: جدولٌ للترتيب العربي فقط، بلا سقف وبلا كذبة.
+   ما كان خطأً قبل هذا السطر: الجدول كان
+     {F0:'الأرضي',…,F5:'الخامس',F6:'السطح'}
+   وفيه عطلان يظهران معاً في أي مبنى أطول من ستّة أدوار:
+     · **F6 مُسمّى «السطح» دائماً.** في برج من اثني عشر دوراً كان الدور
+       السادس يُعرَض «السطح» بينما فوقه ستّة أدوار — تسميةٌ كاذبة تُبنى
+       عليها قرارات المستخدم (يختار «السطح» فيرى دوراً في وسط المبنى).
+       المرتفع ليس صفةَ رقمٍ ثابت: «السطح» صفةُ الأعلى فعلاً لا صفةُ الرقم ٦.
+     · **ما فوق F6 بلا اسم إطلاقاً.** `FLOOR_NAMES[f]||f` كان يعرض المفتاح
+       الخام «F7»، وفي مواضع أخرى يعرض قيمة فارغة.
+   الآن: الجدول ترتيبٌ لغويّ محض (لا «سطح» فيه)، و`acsFloorName` وحدها تقرّر
+   متى يكون الدور سطحاً — بمعرفة عدد الأدوار الكلّي — ولأي رقم مهما كبر. */
+const FLOOR_NAMES={F0:'الأرضي',F1:'الأول',F2:'الثاني',F3:'الثالث',F4:'الرابع',
+  F5:'الخامس',F6:'السادس',F7:'السابع',F8:'الثامن',F9:'التاسع',F10:'العاشر'};
+/* رقم الدور من مفتاحه: 'F12' → 12، وما ليس بهذا الشكل → null (لا NaN صامتة) */
+function acsFloorIndex(fkey){
+  const m=/^F(\d+)$/.exec(String(fkey==null?'':fkey).trim());
+  if(!m) return null;
+  const n=Number(m[1]);
+  return (isFinite(n)&&n>=0)?n:null;
+}
+/* اسم دورٍ حتميّ لأي رقم. `total` عدد الأدوار الكلّي إن عُرِف — وبه وحده
+   يصير الأعلى «السطح». بلا `total` لا يُدّعى سطحٌ أبداً: الادّعاء بلا قياس
+   هو ما أنتج «F6 = السطح». لا تعيد هذه الدالّة قيمةً فارغة إطلاقاً. */
+function acsFloorName(fkey, total){
+  const key=String(fkey==null?'':fkey).trim();
+  const i=acsFloorIndex(key);
+  if(i===null) return key||'—';                 // مفتاح غير قياسي يُعرَض كما هو
+  const t=Number(total);
+  const known=(isFinite(t)&&t>=1)?Math.floor(t):null;
+  if(known!==null&&known>1&&i===known-1) return 'السطح';
+  if(i===0) return 'الأرضي';
+  return FLOOR_NAMES['F'+i]||('الدور '+i);
+}
+/* ترتيب طبيعي للأدوار: F0,F1,…,F9,F10,F11 لا F0,F1,F10,F11,F2.
+   ما كان خطأً قبله: ‎[...floorsFound].sort()‎ ترتيبٌ معجميّ على نصوص، فيقفز
+   F10 قبل F2 في كل مبنى فيه عشرة أدوار فأكثر — وشريط الأدوار يعرض ترتيباً
+   لا يطابق المبنى. المفاتيح غير القياسية تبقى (لا تُحذف) وتُوضَع بعد المرقَّمة
+   بترتيبها النصّي، فلا يختفي دورٌ من الشريط لأن اسمه لم يعجب المُقارِن. */
+function acsFloorOrder(keys){
+  const list=Array.from(keys||[]);
+  return list.map((k,i)=>({k:k,i:i,n:acsFloorIndex(k)}))
+    .sort((a,b)=>{
+      if(a.n!==null&&b.n!==null) return (a.n-b.n)||(a.i-b.i);
+      if(a.n!==null) return -1;
+      if(b.n!==null) return 1;
+      const sa=String(a.k), sb=String(b.k);
+      return (sa<sb?-1:sa>sb?1:0)||(a.i-b.i);
+    })
+    .map(e=>e.k);
+}
 
 /* ---------- مولّد خامات إجرائية واقعية (بلا إنترنت، بلا حقوق) ---------- */
 const texCache={};
@@ -231,25 +281,199 @@ function scaleBoxUV(geo,w,h,d,scale){
 
 /* ========================= المترجم الهندسي (JS) ========================= */
 
+/* ════════════ KI-26/F-46 · عقد تعقيد المشهد — حدٌّ واحد مُعلَن ══════════════
+   ما كان خطأً قبل هذا الكائن: كل حدّ في المترجم كان رقماً مدفوناً في جسم
+   دالّة — ‎Math.min(+o.count||1,200)‎ في buildObjects، و‎Math.min(rows,40)‎ في
+   buildRacks، و‎Math.min(Math.floor(len/6),20)‎ في buildLanes… ثمانية عشر رقماً
+   في تسعة مواضع، لا يعرف أحدها الآخر ولا يقرأها أحد من خارج الدالّة. ثلاث
+   نتائج مباشرة:
+     · لا سقف كلّي إطلاقاً. حاصل ضرب الحدود المحلّية يبلغ ملايين الشبكات،
+       فسطرٌ واحد في النموذج (غرفة برفوفٍ متطرّفة) يجمّد اللسان قبل أن يصل
+       أيّ حارس.
+     · مواضع بلا حدّ أصلاً — ‎es=Math.max(1,Math.floor(len/12))‎ في السير
+       الناقل — فقاعةُ سيرٍ عبر قاعة ٢ كم تولّد ١٦٦ نقطة إيقاف من عنصرٍ واحد،
+       وقاعةٌ بعرضٍ غير معقول تولّد آلافاً.
+     · ولمّا كان الحدّ مدفوناً، كان القصّ صامتاً: يُبنى أقلّ ممّا طُلب ولا
+       يعلم المستخدم ولا طبقةُ الربط.
+   الآن: كل حدّ اسمٌ في هذا الكائن الواحد، وكل قصٍّ يُحصى في سجلّ العيوب،
+   وفوقها كلّها سقفٌ كلّي واحد ‎max_total_meshes‎ في addBox نفسه.
+   القيم ليست مخترعة: كل ما كان مقصوصاً اليوم بقي على قيمته حرفياً حتى لا
+   يتغيّر مبنًى واحد قائم، وما لم يكن له حدّ أُعطي حدّاً مشتقّاً من أكبر ما
+   يبنيه مولّدا هذا الملفّ فعلاً (١٨٦٦١ شبكة لمستودع ١٢٠٠×٨٠٠ م).
+   ═══════════════════════════════════════════════════════════════════════ */
+const SCENE_LIMITS=Object.freeze({
+  contract:'acs.scene-limits/1.0.0',
+  /* السقف الكلّي: ~٨× أكبر مشهد يبنيه مولّد هذا الملفّ. ليس هدف أداء بل
+     ضمانة ألّا يُجمَّد اللسان: ما بعده يُمنَع ويُحصى ولا يُرمى استثناء. */
+  max_total_meshes:150000,
+  max_levels:64,                 // أطول ما يُعقل + هامش (لم يكن له حدّ)
+  max_rooms_per_level:400,       // (لم يكن له حدّ) — مولّد المستودع يبلغ ~٣٠
+  /* رفوف — الأربعة الأولى كانت مدفونة في buildRacks بهذه القيم نفسها */
+  max_racks_per_room:40,         // (لم يكن له حدّ) طول قائمة racks
+  max_rack_rows:40,              // كان Math.min(rows,40)
+  max_rack_bays:60,              // كان Math.min(Math.floor(runLen/bay),60)
+  max_rack_levels:10,            // كان Math.min(+R.levels||K.levels,10)
+  max_rack_segments:20,          // كان DQ(8,2,20)
+  max_rack_posts:14,             // كان DQ(6,2,14)
+  /* ممرّات وسيور */
+  max_lanes_per_room:200,        // (لم يكن له حدّ) طول قائمة lanes
+  max_lane_arrows:20,            // كان Math.min(Math.floor(len/6),20)
+  max_conveyor_parts:24,         // كان Math.min(Math.floor(len/2.5),24) للأرجل
+                                 // ولم يكن لنقاط الإيقاف حدّ إطلاقاً
+  /* محطات وأرصفة */
+  max_stations_per_room:60,      // كان Math.min(+S.count||1,60)
+  max_docks_per_room:24,         // كان Math.min(+D.count||1,24)
+  /* عناصر عامّة */
+  max_objects_per_room:400,      // (لم يكن له حدّ) طول قائمة objects
+  max_object_count:200,          // كان Math.min(+o.count||1,200)
+  max_object_parts:64,           // درجات السلّم وقوائم الدرابزين (لم يكن لهما حدّ)
+  max_points_per_room:2000,      // (لم يكن له حدّ) طول قائمة points
+  /* بلاطة الدور ونواها */
+  max_cores_per_level:64,        // (لم يكن له حدّ) وكان زمن slabStrips مكعّباً فيه
+  /* حدٌّ خلفيّ لشرائح البلاطة: أسوأ حالة نظرية عند max_cores_per_level هي
+     ~2V² = ٨٣٢٠ شريحة، فهذا الرقم ضعفها. لا يُتوقّع أن يُفعَّل إطلاقاً؛
+     تفعيلُه يعني أن حدّ النوى نفسه اختُرق. */
+  max_slab_strips_per_level:16384,
+  /* مولّدا النصّ: امتداد الأرض يُقاد بمُدخَل المستخدم بلا سقف علوي، وحلقات
+     الغلاف (كاميرات · طفايات) مشتقّة منه قسمةً. ٢ كم أوسع من أي منشأة. */
+  max_generator_span_m:2000,
+  max_text_repeats:64,           // تكرار مشتقّ من عدد مذكور في نصّ عربي
+  max_text_outlets:10            // كان Math.min(nOut,10) مدفوناً في المحلّل
+});
+
+/* ── عدّاد تكرار آمن واحد لكل حلقة يقودها النموذج ────────────────────────────
+   يستبدل ثمانية عشر تعبير ‎Math.max(1,Math.min(+v||fb,LIM))‎ متفرّقاً. العقد:
+     · حقلٌ غائب (undefined/null/'') ليس عيباً — يُعاد البديل بلا حصر.
+     · NaN أو ‎-Infinity‎ أو ما دون الواحد: مُدخَل مرفوض، يُعاد البديل ويُحصى
+       في rejected_field. (السلوك العدديّ نفسه الذي كان: ‎||fb‎ ثم ‎Math.max(1,…)‎.)
+     · ما فوق الحدّ (ويشمل ‎+Infinity‎): يُقصّ إلى الحدّ ويُحصى في
+       capped_expansion — أي «بُني أقلّ ممّا طُلب»، وهو ما تقرؤه طبقة الربط.
+     · ما بين الواحد والحدّ: يُعاد كما هو (مقطوعَ الكسر) بلا أي عيب — ولهذا
+       لا يتحرّك أي مبنى قائم.
+   لا ترمي هذه الدالّة أبداً. */
+function acsCount(value, fallback, max, label){
+  const lim=Math.max(1,Math.floor(isFinite(max)&&max>=1?max:1));
+  const fbRaw=Number(fallback);
+  const fb=Math.max(1,Math.min(isFinite(fbRaw)&&fbRaw>=1?Math.floor(fbRaw):1,lim));
+  if(value===undefined||value===null||value==='') return fb;
+  const raw=Number(value);
+  if(!(raw===raw)||raw===-Infinity){            // NaN أو سالب لا نهائي
+    acsBuildDefect('rejected_field','COUNT_NOT_FINITE',label);
+    return fb;
+  }
+  if(raw>lim){
+    acsBuildDefect('capped_expansion','COUNT_ABOVE_LIMIT',label);
+    return lim;
+  }
+  const n=Math.floor(raw);
+  if(n<1){
+    acsBuildDefect('rejected_field','COUNT_BELOW_ONE',label);
+    return fb;
+  }
+  return n;
+}
+/* أخت acsCount لمقادير **مشتقّة من الهندسة** لا مذكورة في النموذج: «كم
+   خليجاً يتّسع له طول الصفّ» أو «كم سهماً في ممرٍّ بهذا الطول». الفارق الوحيد
+   أن ما دون الواحد هنا ليس عيباً بل واقعٌ هندسي طبيعي (ممرٌّ أقصر من ستّة
+   أمتار يستحقّ سهماً واحداً) — وهو ما كان ‎Math.max(1,…)‎ يفعله أصلاً، ولا
+   يسقط به محتوى بل يُبنى أكثر لا أقلّ. غير المنتهي وما فوق الحدّ يُحصيان. */
+function acsFit(value, max, label){
+  const lim=Math.max(1,Math.floor(isFinite(max)&&max>=1?max:1));
+  const raw=Number(value);
+  if(!(raw===raw)||raw===-Infinity){
+    acsBuildDefect('rejected_field','COUNT_NOT_FINITE',label);
+    return 1;
+  }
+  if(raw>lim){
+    acsBuildDefect('capped_expansion','COUNT_ABOVE_LIMIT',label);
+    return lim;
+  }
+  const n=Math.floor(raw);
+  return n<1?1:n;
+}
+/* امتداد أرضٍ يقوده مُدخَل المستخدم. مولّدا هذا الملفّ يشتقّان من ‎W‎ و‎D‎
+   أعدادَ حلقات الغلاف قسمةً (كاميرات كل ٢٥ م، طفايات كل ١٢ م…)، ولم يكن
+   للامتداد سقف: ‎Math.max(30,+W||120)‎ يمرّر ‎Infinity‎ كما هي فتصير الحلقة
+   لا نهائية قبل أن تُبنى شبكة واحدة. الحدّ الأدنى والبديل كما كانا حرفياً. */
+function acsSpan(value, fallback, min, label){
+  let v=Number(value)||fallback;
+  if(v>SCENE_LIMITS.max_generator_span_m){
+    acsBuildDefect('capped_expansion','GENERATOR_SPAN_CAPPED',label);
+    v=SCENE_LIMITS.max_generator_span_m;
+  }
+  return Math.max(min,v);
+}
+/* قصّ طول قائمة قادمة من النموذج. لا تُحذف عناصر بصمت: ما زاد يُحصى بسببه،
+   وحقلٌ يُنتظَر قائمةً فجاء عدداً أو كائناً يُرفَض ويُحصى بدل أن يرمي. */
+function acsCapList(list, max, reason, label){
+  if(!Array.isArray(list)){
+    if(list!==undefined&&list!==null&&list!==false)
+      acsBuildDefect('rejected_field','FIELD_NOT_A_LIST',label);
+    return [];
+  }
+  if(list.length<=max) return list;
+  acsBuildDefect('capped_expansion',reason,label);
+  return list.slice(0,max);
+}
+
 /* KI-25/F-42 — سجلّ عيوب البناء: ما رُفض وما سقط، بالعدد والسبب.
    لم يكن في المترجم موضعٌ واحد يقول «الذي بنيتُه ليس الذي أُعطيت». كان
    العنصر التالف يُبنى صامتاً بإحداثيّة NaN، أو تُلقى الغرفة كلّها باستثناء
    يهدم المشهد. كلاهما يُحصى هنا الآن، وطبقةُ الربط تقرأ السجلّ قبل أن تعلن
    نجاحاً. لا محتوى مبنى فيه: أعداد ورموز أسباب وأسماء وسوم فقط. */
+/* KI-26/F-46 وسّع السجلّ بثلاثة أصناف: تخصّصٌ سقط كاملاً، وتوسّعٌ قُصّ،
+   وقرارُ تدهورٍ في التعقيد — مع عدّاد المقبول والمكبوت. لا آليّة ثانية. */
 let BUILD_DEFECTS=null;
+/* الأصناف التي تعني «المعروض أقلّ ممّا طُلب» — لا مجرّد «مُدخَلٌ رُفض» */
+const DEGRADING_KINDS={capped_expansion:1, specialization_failed:1,
+                       complexity_degraded:1};
 function acsBuildDefectsReset(){
   BUILD_DEFECTS={non_finite_box:0, rejected_room:0, rejected_field:0,
-                 derived_level_index:0, unknown_object:0, reasons:{}, samples:[]};
+                 derived_level_index:0, unknown_object:0,
+                 accepted_box:0, suppressed_box:0,
+                 capped_expansion:0, specialization_failed:0,
+                 complexity_degraded:0,
+                 reasons:{}, degradation_reasons:[], samples:[]};
   return BUILD_DEFECTS;
 }
 function acsBuildDefect(kind, reason, sample){
   if(!BUILD_DEFECTS) acsBuildDefectsReset();
   BUILD_DEFECTS[kind]=(BUILD_DEFECTS[kind]||0)+1;
   BUILD_DEFECTS.reasons[reason]=(BUILD_DEFECTS.reasons[reason]||0)+1;
+  if(DEGRADING_KINDS[kind]&&BUILD_DEFECTS.degradation_reasons.indexOf(reason)<0
+     &&BUILD_DEFECTS.degradation_reasons.length<24)
+    BUILD_DEFECTS.degradation_reasons.push(reason);
   if(sample&&BUILD_DEFECTS.samples.length<12)
     BUILD_DEFECTS.samples.push(String(sample).slice(0,64));
 }
 function acsBuildDefects(){ return BUILD_DEFECTS||acsBuildDefectsReset(); }
+/* ── KI-26/F-46 · خلاصة المترجم: ما قُبل وما رُفض وما قُصّ وما سقط ──────────
+   موضعٌ واحد يجيب «هل المعروض هو المطلوب؟» بالأعداد. تقرؤه طبقة الربط قبل
+   أن تعلن نجاحاً، فلا يبقى «تم التوليد ✓» فوق مبنًى ناقص تخصّصاً كاملاً.
+   لا محتوى مبنى فيه ولا نصّ مستخدم: أعداد ورموز أسباب فقط. */
+function acsCompileSummary(){
+  const d=acsBuildDefects();
+  const spec=d.specialization_failed||0;
+  const cx=d.complexity_degraded||0;
+  const cap=d.capped_expansion||0;
+  return {
+    contract:SCENE_LIMITS.contract,
+    accepted_objects:d.accepted_box||0,
+    rejected_objects:(d.rejected_room||0)+(d.rejected_field||0),
+    rejected_rooms:d.rejected_room||0,
+    rejected_fields:d.rejected_field||0,
+    rejected_non_finite_geometry:d.non_finite_box||0,
+    capped_expansions:cap,
+    specialization_failures:spec,
+    complexity_degradations:cx,
+    suppressed_meshes:d.suppressed_box||0,
+    unknown_objects:d.unknown_object||0,
+    derived_level_indexes:d.derived_level_index||0,
+    degraded:(spec+cx+cap)>0,
+    degradation_reasons:(d.degradation_reasons||[]).slice(0,24),
+    reasons:Object.assign({},d.reasons||{})
+  };
+}
 
 function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
   /* KI-25/F-42 — الحارس القديم ‎ex<=0‎ لا يوقف NaN ولا undefined: كلاهما
@@ -263,6 +487,20 @@ function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
     return;
   }
   if(ex<=0||ey<=0||ez<=0) return;
+  /* KI-26/F-46 — السقف الكلّي، وهو آخر حارس بعد كل الحدود المحلّية.
+     ما كان خطأً قبله: الحدود المحلّية تتضاعف — أربعون رفّاً × أربعون صفّاً ×
+     عشرة مستويات × عشرين قطعة = ٣٢٠ ألف شبكة من غرفةٍ واحدة، وكلٌّ منها
+     «داخل حدّه». فلم يكن في المترجم موضعٌ واحد يقول «كفى». هنا يقول.
+     حتميّ: العدّاد يتقدّم بترتيب البناء نفسه، فنفس المُدخَل يُكبَت عند نفس
+     النقطة بالضبط. ولا يرمي: يُحصى المكبوت ويُعلَن قرار التدهور مرّة واحدة. */
+  if(!BUILD_DEFECTS) acsBuildDefectsReset();
+  if(BUILD_DEFECTS.accepted_box>=SCENE_LIMITS.max_total_meshes){
+    BUILD_DEFECTS.suppressed_box++;
+    if(BUILD_DEFECTS.suppressed_box===1)
+      acsBuildDefect('complexity_degraded','SCENE_COMPLEXITY_LIMIT',name);
+    return;
+  }
+  BUILD_DEFECTS.accepted_box++;
   const g=new THREE.BoxGeometry(ex,ey,ez);
   const m=getMat(mat,tint);
   if(m.map&&m.userData.texScale) scaleBoxUV(g,ex,ey,ez,m.userData.texScale);
@@ -378,7 +616,10 @@ function buildRoom(group,room,fkey,baseY,def){
     const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
     if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
     else addBox(group,fixed,cy,uc,0.05,h,wd,'window',`WINDOW|${fkey}|${name}|${i}`,false);});
-  acsList(room,'points').forEach((pt,j)=>{const kind=pt.type||'outlet';const K=POINT_KINDS[kind]||POINT_KINDS.outlet;
+  /* KI-26/F-46 — طول قائمة النقاط يقوده النموذج ولم يكن له حدّ: قائمةٌ فيها
+     مليون نقطة كانت تولّد مليون شبكة قبل أن يصل أيّ حارس. ما زاد يُحصى. */
+  acsCapList(acsList(room,'points'),SCENE_LIMITS.max_points_per_room,
+             'POINTS_CAPPED',name).forEach((pt,j)=>{const kind=pt.type||'outlet';const K=POINT_KINDS[kind]||POINT_KINDS.outlet;
     const[layer,mat,defH,size]=K;const px=x+(pt.x==null?w/2:pt.x),pz=z+(pt.z==null?d/2:pt.z);let py;
     if(defH==null){ if(kind==='camera')py=baseY+H-0.15; else if(kind==='ac')py=baseY+H-0.35; else py=baseY+H-size[1]/2-0.02; }
     else py=baseY+(pt.height==null?defH:pt.height);
@@ -495,7 +736,11 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
     for(const sx of[-1,1]) for(const sz of[-1,1])
       B(sx*w*0.46,0.33,sz*d*0.34, 0.22,0.62,0.62,'bumper');
   }else if(shape==='stairs'){
-    const n=Math.max(4,Math.round(h/0.17)), rise=h/n, run=d/n;
+    /* KI-26/F-46: عدد الدرجات مشتقّ من ارتفاعٍ يذكره النموذج وبلا حدّ —
+       ‎h=1e9‎ كانت تعني ستّة مليارات درجة، أي تجميد اللسان قبل أي حارس. */
+    const n=Math.max(4,acsFit(Math.round(h/0.17),
+                              SCENE_LIMITS.max_object_parts,'stairs.steps'));
+    const rise=h/n, run=d/n;
     for(let i=0;i<n;i++) B(0,rise*(i+0.5),-d/2+run*(i+0.5), w,rise,run,'concrete_m');
     for(const sx of[-1,1]) B(sx*(w/2+0.03),h*0.55,0, 0.06,0.06,d,'frame');
   }else if(shape==='elevator'){
@@ -505,7 +750,9 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
     B(0,h*0.5,0, w,h,d,'concrete_m');
   }else if(shape==='railing'){
     B(0,h,0, w,0.06,0.06,'frame');
-    const n=Math.max(2,Math.round(w/1.1));
+    /* KI-26/F-46: قوائم الدرابزين مشتقّة من عرضٍ يذكره النموذج وبلا حدّ */
+    const n=Math.max(2,acsFit(Math.round(w/1.1),
+                              SCENE_LIMITS.max_object_parts,'railing.posts'));
     for(let i=0;i<=n;i++) B(-w/2+w*i/n,h*0.5,0, 0.05,h,0.05,'frame');
   }else if(shape==='tree'||shape==='palm'){
     const th=shape==='palm'?h*0.72:h*0.42;
@@ -547,9 +794,11 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
 /* يبني كل عناصر الغرفة، مع التكرار (count/pitch) */
 function buildObjects(group, room, fkey, baseY){
   const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
-  acsList(room,'objects').forEach((o,i)=>{
+  acsCapList(acsList(room,'objects'),SCENE_LIMITS.max_objects_per_room,
+             'OBJECTS_CAPPED','room.objects').forEach((o,i)=>{
     const kind=objKind(o);
-    const n=Math.max(1,Math.min(+o.count||1,200));
+    /* KI-26/F-46: كان ‎Math.min(+o.count||1,200)‎ — نفس المئتين، والقصّ مُحصى */
+    const n=acsCount(o.count,1,SCENE_LIMITS.max_object_count,'object.count');
     const pitch=+o.pitch||1.2, dir=(o.dir==='z')?'z':'x';
     for(let k=0;k<n;k++){
       const ox=(+o.x||rw/2)+(dir==='x'?pitch*k:0);
@@ -582,10 +831,18 @@ const RACK_DEF={
 /* رفوف: صفوف متكرّرة بممرّات بينها */
 function buildRacks(group, room, fkey, baseY, def){
   const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
-  acsList(room,'racks').forEach((R,ri)=>{
+  acsCapList(acsList(room,'racks'),SCENE_LIMITS.max_racks_per_room,
+             'RACKS_CAPPED','room.racks').forEach((R,ri)=>{
     const K=RACK_DEF[R.kind]||RACK_DEF.pallet;
     const depth=+R.depth||K.depth, bay=+R.bay||K.bay, H=+R.h||K.h;
-    const lv=Math.max(1,Math.min(+R.levels||K.levels,10)), aisle=+R.aisle||K.aisle;
+    /* KI-26/F-46: كان ‎Math.min(+R.levels||K.levels,10)‎ — الرقم ١٠ مدفوناً
+       والقصّ صامتاً. القيمة نفسها الآن باسمها، والقصّ مُحصى. */
+    const _lvGiven=Number(R.levels);
+    if(R.levels!==undefined&&R.levels!==null&&R.levels!==''
+       &&!(isFinite(_lvGiven)&&_lvGiven>=1))
+      acsBuildDefect('rejected_field','LEVELS_NOT_A_COUNT','rack.levels');
+    const lv=acsCount(_lvGiven||K.levels,1,SCENE_LIMITS.max_rack_levels,
+                      'rack.levels'), aisle=+R.aisle||K.aisle;
     const dir=(R.dir==='z')?'z':'x';                 // اتجاه امتداد صف الرفّ
     /* عقد المحاذاة: الامتداد المتاح = امتداد الغرفة ناقص الإزاحة. أخذ
        الامتداد كاملاً بعد إزاحة موجبة كان يُخرج الصفّ خارج الغرفة بمقدار
@@ -596,11 +853,20 @@ function buildRacks(group, room, fkey, baseY, def){
     const runLen = dir==='x'? bw : bd;               // طول الصف
     const across = dir==='x'? bd : bw;               // العمق المتاح للصفوف
     const pitch  = depth+aisle;
-    let rows=+R.rows||Math.max(1,Math.floor((across+aisle)/pitch));
-    rows=Math.max(1,Math.min(rows,40));
-    const bays=Math.max(1,Math.min(Math.floor(runLen/bay),60));
-    const segs=Math.min(bays,DQ(8,2,20));            // تقسيم البضاعة (حدّ للأداء)
-    const posts=Math.min(bays+1,DQ(6,2,14));
+    /* KI-26/F-46 — عدد الصفوف والخلجان: كلاهما قسمةٌ على مقاسٍ يقوده النموذج.
+       ‎bay‎ أو ‎pitch‎ متناهيان في الصغر يُخرجان ملايين التكرارات، وسالبهما
+       أو ‎NaN‎ يُخرجان مبنًى ناقصاً بلا خبر. القيمة العدديّة كما كانت
+       (٤٠ و٦٠)، والفرق أنّ كل قصٍّ يُحصى وكل مُدخَل غير عدديّ يُعلَن. */
+    const _rowsGiven=Number(R.rows);
+    if(R.rows!==undefined&&R.rows!==null&&R.rows!==''
+       &&!(isFinite(_rowsGiven)&&_rowsGiven>=1))
+      acsBuildDefect('rejected_field','ROWS_NOT_A_COUNT','rack.rows');
+    const rows=_rowsGiven
+      ?acsCount(_rowsGiven,1,SCENE_LIMITS.max_rack_rows,'rack.rows')
+      :acsFit(Math.floor((across+aisle)/pitch),SCENE_LIMITS.max_rack_rows,'rack.rows');
+    const bays=acsFit(Math.floor(runLen/bay),SCENE_LIMITS.max_rack_bays,'rack.bays');
+    const segs=Math.min(bays,DQ(8,2,SCENE_LIMITS.max_rack_segments));
+    const posts=Math.min(bays+1,DQ(6,2,SCENE_LIMITS.max_rack_posts));
     const tint=normHex(R.color);
     for(let r=0;r<rows;r++){
       const off=r*pitch+depth/2;
@@ -650,7 +916,8 @@ const LANE_MAT={forklift:'paint_lane',pedestrian:'paint_ped',amr:'paint_amr',rob
   one_way:'paint_lane',zone:'paint_zone',fire:'paint_fire',safety:'paint_fire'};
 function buildLanes(group, room, fkey, baseY, def){
   const [rx,rz]=room.rect, nm=room.id||'room';
-  acsList(room,'lanes').forEach((L,li)=>{
+  acsCapList(acsList(room,'lanes'),SCENE_LIMITS.max_lanes_per_room,
+             'LANES_CAPPED','room.lanes').forEach((L,li)=>{
     const kind=L.kind||'forklift';
     const x=rx+(+L.x||0), z=rz+(+L.z||0), w=+L.w||2.5, d=+L.d||2.5;
     const dir=(L.dir==='z')?'z':'x';
@@ -671,7 +938,9 @@ function buildLanes(group, room, fkey, baseY, def){
     }
     // أسهم اتجاه الحركة
     if(L.arrow!==false&&kind!=='zone'){
-      const n=Math.max(1,Math.min(Math.floor(len/6),20));
+      /* KI-26/F-46: كان ‎Math.min(Math.floor(len/6),20)‎ — نفس العشرين، لكن
+         القصّ صار مُحصى: ممرٌّ بطول ٥٠٠ م يُطلب له ٨٣ سهماً ويُبنى له ٢٠. */
+      const n=acsFit(Math.floor(len/6),SCENE_LIMITS.max_lane_arrows,'lane.arrows');
       const sign=(L.reverse?-1:1);
       for(let i=0;i<n;i++){
         const u=len*((i+0.5)/n);
@@ -696,14 +965,22 @@ function buildConveyor(group,x,z,w,d,dir,baseY,fkey,nm,li,L){
     else addBox(group,cx+sgn*(w/2-0.03),baseY+h+0.16,cz,0.06,0.22,d,'guard',
           `SAFETY|${fkey}|${nm}|convrail${li}`,false);
   }
-  const legs=Math.max(2,Math.min(Math.floor(len/2.5),24));
+  const legs=Math.max(2,acsFit(Math.floor(len/2.5),
+                               SCENE_LIMITS.max_conveyor_parts,'conveyor.legs'));
   for(let i=0;i<legs;i++){
     const u=len*(i/(legs-1||1));
     const lx=dir==='x'? x+u : cx, lz=dir==='x'? cz : z+u;
     addBox(group,lx,baseY+h/2,lz,0.09,h,0.09,'frame',`FURN|${fkey}|${nm}|convleg${li}_${i}`,false);
   }
-  // نقاط إيقاف الطوارئ كل ~12م
-  const es=Math.max(1,Math.floor(len/12));
+  /* نقاط إيقاف الطوارئ كل ~12م.
+     KI-26/F-46 — هذا السطر كان الوحيد في المترجم بلا حدٍّ علويّ إطلاقاً:
+       ‎const es=Math.max(1,Math.floor(len/12));‎
+     الأرجل فوقه محصورة بأربعة وعشرين، وهو مفتوح. فسيرٌ واحد في قاعة بطول
+     ٢٤٠٠ م — أو عنصرُ lane واحد بـ‎w‎ ضخمة قادمة من نموذج مولَّد — يُنتج
+     مئتَي نقطة إيقاف من سطر JSON واحد، وكلّها تُعدّ في «عدد العناصر» المعروض.
+     الآن: نفس حدّ الأرجل باسمه، وما زاد يُحصى ويُعلَن. */
+  const es=acsFit(Math.floor(len/12),SCENE_LIMITS.max_conveyor_parts,
+                  'conveyor.estop');
   for(let i=0;i<es;i++){
     const u=len*((i+0.5)/es);
     const ex2=dir==='x'? x+u : cx+wid/2, ez2=dir==='x'? cz+wid/2 : z+u;
@@ -727,7 +1004,8 @@ function buildStations(group, room, fkey, baseY, def){
     const K=STA_DEF[S.kind]||STA_DEF.pack;
     const w=+S.w||K.w, d=+S.d||K.d, h=+S.h||K.h, pitch=+S.pitch||K.pitch;
     const dir=(S.dir==='z')?'z':'x';
-    const n=Math.max(1,Math.min(+S.count||1,60));
+    /* KI-26/F-46: كان ‎Math.min(+S.count||1,60)‎ — نفس الستّين، والقصّ مُحصى */
+    const n=acsCount(S.count,1,SCENE_LIMITS.max_stations_per_room,'station.count');
     const x0=rx+(+S.x||0.6), z0=rz+(+S.z||0.6);
     const tint=normHex(S.color);
     for(let i=0;i<n;i++){
@@ -753,7 +1031,9 @@ function buildStations(group, room, fkey, baseY, def){
 function buildDocks(group, room, fkey, baseY, def){
   const rect=room.rect, nm=room.id||'room';
   acsList(room,'docks').forEach((D,di)=>{
-    const n=Math.max(1,Math.min(+D.count||1,24));
+    /* KI-26/F-46: كان ‎Math.min(+D.count||1,24)‎ هنا وفي dockOpenings معاً —
+       ولا بدّ أن يبقيا متطابقين وإلّا بُني جدارٌ مصمت مكان بابِ رصيف. */
+    const n=acsCount(D.count,1,SCENE_LIMITS.max_docks_per_room,'dock.count');
     const pitch=+D.pitch||(( +D.width||3.0)+1.8);
     for(let i=0;i<n;i++){
       const off=(+D.offset||3)+pitch*i, wd=+D.width||3.0, dh=+D.height||4.0;
@@ -779,7 +1059,7 @@ function buildDocks(group, room, fkey, baseY, def){
 function dockOpenings(room){
   const out={N:[],S:[],E:[],W:[]};
   acsList(room,'docks').forEach(D=>{
-    const n=Math.max(1,Math.min(+D.count||1,24));
+    const n=acsCount(D.count,1,SCENE_LIMITS.max_docks_per_room,'dock.count');
     const wd=+D.width||3.0, dh=+D.height||4.0, pitch=+D.pitch||(wd+1.8), e=normEdge(D.edge);
     for(let i=0;i<n;i++) out[e].push([openU(e,room.rect,(+D.offset||3)+pitch*i),wd,0,dh]);
   });
@@ -789,25 +1069,79 @@ function dockOpenings(room){
 const ADMIN_ROLES={office:1,admin:1,it:1,staff:1,maintenance:1,meeting:1};
 /* يقصّ مستطيلات الفراغ من بلاطة مستطيلة بشرائح محاذية للمحاور — لا CSG ولا
    تقريب: كل شريحة صلبة فعلاً، وما تحت النواة يبقى مفتوحاً. */
+/* ══════════ KI-26/F-46 · قصّ البلاطة: من المكعّب إلى المربّع ═══════════════
+   ما كان خطأً قبل هذه النسخة: الشكل كان صحيحاً وزمنه مكعّباً في عدد النوى V.
+   ‎xs‎ و‎zs‎ يحملان ~2V+2 قيمة قصٍّ لكلٍّ، فعدد الخلايا ~4V²، و‎hs.some(…)‎
+   داخل الحلقة المزدوجة يمسح النوى كلّها لكل خليّة — أي ~4V³ مقارنة.
+   القياس على مستوى ١٢٠×٨٠ م (أفضل خمس محاولات، مللي ثانية):
+       V=  1 →  0.009 |  V= 64 →   2.547
+       V=  8 →  0.093 |  V=128 →  17.540
+       V= 16 →  0.076 |  V=256 → 141.038
+       V= 32 →  0.378 |  V=512 → 919.064
+   كل مضاعفة لـV تضرب الزمن بثمانية تقريباً: ٢٥٦ نواة تُجمّد اللسان ثُمن ثانية
+   **لكل دور**، و٥١٢ تقارب الثانية. ولا حدّ على V أصلاً، فالمُدخَل يقرّر.
+
+   الإصلاح، ولماذا لا يغيّر بكسلاً واحداً:
+     ١ · ‎max_cores_per_level‎ يقصّ عدد النوى ويُحصي ما قُصّ (SLAB_CORES_CAPPED)
+         بدل أن يُبتلَع في زمنٍ لا ينتهي.
+     ٢ · لكل شريط ‎z‎ تُجمَع النوى الفاعلة فيه مرّة واحدة (O(V))، ثم يُعلَّم
+         مدى كل نواة على محور ‎x‎ بمصفوفة فروق ومسحٍ ثنائيّ (O(log X) للنواة،
+         و O(X) للشريط) بدل مسح النوى لكل خليّة. الزمن يصير ~O(V² log V).
+     ٣ · **المقارنات نفسها حرفياً**: ‎cx>h[0] && cx<h[2]‎ و‎cz>h[1] && cz<h[3]‎
+         على منتصفاتٍ محسوبةٍ بالتعبير نفسه ‎(a+b)/2‎، وترتيب الحلقتين نفسه،
+         وبناء المقاطع نفسه. لا حساب عائم جديد ولا تقريب — فالمخرج مطابق
+         بايتاً ببايت لأي مجموعة نوى عند الحدّ أو دونه، وذلك مقفولٌ باختبار
+         مقارنة ضدّ الخوارزمية القديمة نفسها (tests/remediation/test_scene_limits.js).
+   ═══════════════════════════════════════════════════════════════════════ */
 function slabStrips(x0,z0,W,D,holes){
   const cut=(lo,hi,vals)=>{ const s=new Set([lo,hi]);
     vals.forEach(v=>{ if(v>lo+1e-6&&v<hi-1e-6) s.add(v); });
     return Array.from(s).sort((a,b)=>a-b); };
-  const hs=(holes||[]).map(h=>[Math.max(x0,h[0]),Math.max(z0,h[1]),
+  let src=Array.isArray(holes)?holes:[];
+  if(src.length>SCENE_LIMITS.max_cores_per_level){
+    acsBuildDefect('complexity_degraded','SLAB_CORES_CAPPED','level.cores');
+    src=src.slice(0,SCENE_LIMITS.max_cores_per_level);
+  }
+  const hs=src.map(h=>[Math.max(x0,h[0]),Math.max(z0,h[1]),
     Math.min(x0+W,h[0]+h[2]),Math.min(z0+D,h[1]+h[3])]).filter(h=>h[2]>h[0]+1e-6&&h[3]>h[1]+1e-6);
   if(!hs.length) return [[x0,z0,W,D]];
   const xs=cut(x0,x0+W,hs.flatMap(h=>[h[0],h[2]]));
   const zs=cut(z0,z0+D,hs.flatMap(h=>[h[1],h[3]]));
+  const nx=xs.length-1;                       // عدد خلايا المحور x
+  /* منتصفات المحور x مرّة واحدة للبلاطة كلّها — تعبيرها هو تعبير النسخة
+     السابقة نفسه، فلا فرق في آخر بتّ من العدد العائم. */
+  const mx=new Array(nx);
+  for(let j=0;j<nx;j++) mx[j]=(xs[j]+xs[j+1])/2;
+  /* أوّل خليّة منتصفها ‎> v‎ (أو ‎>= v‎) — بحث ثنائي على مصفوفة متزايدة تماماً */
+  const firstGt=v=>{ let lo=0,hi=nx;
+    while(lo<hi){ const m=(lo+hi)>>1; if(mx[m]>v) hi=m; else lo=m+1; } return lo; };
+  const firstGe=v=>{ let lo=0,hi=nx;
+    while(lo<hi){ const m=(lo+hi)>>1; if(mx[m]>=v) hi=m; else lo=m+1; } return lo; };
+  const diff=new Int32Array(nx+1);
   const out=[];
   for(let i=0;i+1<zs.length;i++){
-    let run=null;
-    for(let j=0;j+1<xs.length;j++){
-      const cx=(xs[j]+xs[j+1])/2, cz=(zs[i]+zs[i+1])/2;
-      const solid=!hs.some(h=>cx>h[0]&&cx<h[2]&&cz>h[1]&&cz<h[3]);
+    const cz=(zs[i]+zs[i+1])/2;
+    diff.fill(0);
+    for(let k=0;k<hs.length;k++){
+      const h=hs[k];
+      if(!(cz>h[1]&&cz<h[3])) continue;       // نفس شرط النسخة السابقة حرفياً
+      const a=firstGt(h[0]), b=firstGe(h[2]); // {j : mx[j]>h[0] && mx[j]<h[2]}
+      if(b>a){ diff[a]++; diff[b]--; }
+    }
+    let cover=0, run=null;
+    for(let j=0;j<nx;j++){
+      cover+=diff[j];
+      const solid=(cover===0);
       if(solid){ if(run) run[1]=xs[j+1]; else run=[xs[j],xs[j+1]]; }
       else if(run){ out.push([run[0],zs[i],run[1]-run[0],zs[i+1]-zs[i]]); run=null; }
     }
     if(run) out.push([run[0],zs[i],run[1]-run[0],zs[i+1]-zs[i]]);
+  }
+  /* حدٌّ خلفيّ: عند احترام حدّ النوى لا يمكن بلوغه نظرياً — بلوغُه يعني أن
+     الحدّ نفسه اختُرق، فيُقصّ المخرج ويُعلَن بدل أن يمرّ آلافُ الشرائح. */
+  if(out.length>SCENE_LIMITS.max_slab_strips_per_level){
+    acsBuildDefect('complexity_degraded','SLAB_STRIPS_CAPPED','level.slab');
+    return out.slice(0,SCENE_LIMITS.max_slab_strips_per_level);
   }
   return out;
 }
@@ -822,7 +1156,18 @@ function compile(data){
   /* البلاطة تُقرأ من المصرِّف المعماري: نفس مصدر الحقيقة الذي تقرأه العلاقات
      والمسافات، وفراغات النوى تُقصّ منها فعلاً. */
   let ARCH=null;
-  try{ ARCH=__ACS_LATE.compileArchitecture(data,'bld_0',null,0); }catch(e){ ARCH=null; }
+  /* KI-26/F-46 — الصمت الأخطر في هذا الملفّ كان هنا:
+       try{ ARCH=… }catch(e){ ARCH=null; }
+     ‎ARCH‎ هو مصدر فراغات النوى (‎ARCH.voids‎) التي تُقصّ من بلاطة كل دور.
+     ‎ARCH=null‎ يجعل ‎holes‎ مصفوفةً فارغة لكل مستوى، فتُبنى البلاطات **صمّاء
+     فوق مناور المصاعد والدرج** — يختفي كل فراغ رأسي في المبنى، والمشهد يبدو
+     سليماً تماماً، والعدّاد يقول «تم التوليد ✓». عطلٌ صامت كامل من سطر واحد.
+     الآن: سقوط التخصّص يُحصى، وضياعُ الفراغات يُحصى معه بسببٍ خاصّ به،
+     وطبقةُ الربط لا تعلن عرضاً كاملاً بعده. */
+  try{ ARCH=__ACS_LATE.compileArchitecture(data,'bld_0',null,0); }
+  catch(e){ ARCH=null;
+    acsBuildDefect('specialization_failed','ARCH_COMPILE_FAILED','ARCH');
+    acsBuildDefect('complexity_degraded','SLAB_VOIDS_LOST','ARCH'); }
   /* KI-25/F-42 — رقم الدور مشتقّ لا مُفترَض.
      كان: ‎const baseY=lvl.index*fh; const fkey='F'+lvl.index;‎ بلا فحص. عقد
      النموذج يوجب `index` صحيحاً، لكن العارض يقرأ نماذج من مصادر لا يحكمها
@@ -831,7 +1176,10 @@ function compile(data){
      ‎undefined × 4 = NaN‎ لكل دور و‎'Fundefined'‎ مفتاحاً واحداً للأدوار
      كلّها: ألفا شبكة تُبنى عند إحداثيّة غير معرَّفة، والعدّاد يقول «تمّ».
      الآن: رقم صحيح موجود يُحترَم، وغيابه يُشتقّ من ترتيب المصفوفة ويُحصى. */
-  const _levels=(data.levels||[]).map((lvl,i)=>{
+  /* KI-26/F-46: عدد المستويات يقوده النموذج ولم يكن له حدّ — مصفوفةٌ فيها
+     مئة ألف مستوى كانت تُبنى كلّها. ما زاد يُقصّ ويُحصى، ولا يُسقَط بصمت. */
+  const _levels=acsCapList(data.levels,
+      SCENE_LIMITS.max_levels,'LEVELS_CAPPED','model.levels').map((lvl,i)=>{
     const raw=(lvl&&typeof lvl==='object')?lvl:{};
     let idx=Number(raw.index);
     if(!(isFinite(idx)&&idx>=0&&idx===Math.floor(idx))){
@@ -861,7 +1209,9 @@ function compile(data){
     slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
-    (fdef.rooms||[]).forEach(r=>buildRoom(grp,r,fkey,baseY,def));
+    acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,
+               'ROOMS_CAPPED','level.rooms')
+      .forEach(r=>buildRoom(grp,r,fkey,baseY,def));
   });
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */
@@ -874,7 +1224,10 @@ function compile(data){
       if(m){ m.visible=false;
         m.userData.struct={id:it.id,kind:it.kind,geometry_source:it.geometry_source,
           element_source:it.element_source,material_ref:it.material_ref}; } });
-  }catch(e){ /* غياب بيانات إنشائية لا يمنع العرض المعماري إطلاقاً */ }
+  }catch(e){
+    /* غياب بيانات إنشائية لا يمنع العرض المعماري إطلاقاً — لكنّه لم يعد
+       صامتاً: KI-26/F-46 جعل سقوط الطبقة كلّها مُحصى برمز سببه. */
+    acsBuildDefect('specialization_failed','STRUCT_COMPILE_FAILED','STRUCT'); }
   /* طبقات عرض MEP — منفصلة لكل تخصّص ومخفيّة افتراضياً. كثير من الأبعاد هنا
      احتياط عرض، ولذلك يحمل كل جسم مصدر هندسته صراحةً ولا يُصدَّر كقيمة هندسية. */
   try{
@@ -888,7 +1241,9 @@ function compile(data){
         m.userData.mep={id:it.id,kind:it.kind,discipline:it.discipline,
           geometry_source:it.geometry_source,element_source:it.element_source,
           terminal_type:it.terminal_type||null,adapted:it.adapted===true}; } });
-  }catch(e){ /* غياب بيانات MEP لا يمنع العرض المعماري ولا الإنشائي */ }
+  }catch(e){
+    /* غياب بيانات MEP لا يمنع العرض المعماري ولا الإنشائي — ويُحصى (KI-26/F-46) */
+    acsBuildDefect('specialization_failed','MEP_COMPILE_FAILED','MEP'); }
   /* طبقات عرض الحريق وسلامة الأرواح — مخفيّة افتراضياً. ما رسمته طبقة MEP
      يبقى لها: العنصر المُشار إليه هنا يُوسم referenced ولا يُرسم مرّة ثانية. */
   try{
@@ -902,7 +1257,9 @@ function compile(data){
         m.userData.fls={id:it.id,kind:it.kind,device_type:it.device_type,
           category:it.category,layer:it.layer,render_mode:it.render_mode,
           geometry_source:it.geometry_source,element_source:it.element_source}; } });
-  }catch(e){ /* غياب بيانات الحريق لا يمنع أي عرض آخر */ }
+  }catch(e){
+    /* غياب بيانات الحريق لا يمنع أي عرض آخر — ويُحصى (KI-26/F-46) */
+    acsBuildDefect('specialization_failed','FLS_COMPILE_FAILED','FLS'); }
   return grp;
 }
 
@@ -966,13 +1323,19 @@ function parseDescription(text, siteW, siteD, nFloors){
     r.windows=[]; if(/نافذة|نوافذ|شباك/.test(r.block)){const wm=r.block.match(dim);
       r.windows.push({edge:'S',offset:r.d/2>0?r.w/2:1,width:Math.min(r.w-1,/(\d+(?:\.\d+)?)\s*متر/.test(r.block)?parseFloat(RegExp.$1):2),sill:0.9,height:1.6});}
     r.points=[]; r.furniture=[];
-    const put=(type,n,spread)=>{for(let i=0;i<n;i++){const fx=0.5+((i+1)/(n+1))*(r.w-1);
-      r.points.push({type, x:fx, z:spread});}};
-    const nOut=countNear(r.block,'(?:أفياش|افياش|فيش|فيشين|مخارج|مخرج)'); if(nOut)put('outlet',Math.min(nOut,10),0.3);
+    /* KI-26/F-46: ‎n‎ هنا مشتقّ من رقمٍ يذكره نصّ عربي حرّ («٩٩٩٩٩ فيشة»)،
+       فيجب أن يبقى محصوراً باسمٍ معلَن لا بأمنية. */
+    const put=(type,n,spread)=>{
+      n=acsFit(n,SCENE_LIMITS.max_text_repeats,'text.points');
+      for(let i=0;i<n;i++){const fx=0.5+((i+1)/(n+1))*(r.w-1);
+        r.points.push({type, x:fx, z:spread});}};
+    const nOut=countNear(r.block,'(?:أفياش|افياش|فيش|فيشين|مخارج|مخرج)'); if(nOut)put('outlet',Math.min(nOut,SCENE_LIMITS.max_text_outlets),0.3);
     if(/مفتاح/.test(r.block))r.points.push({type:'switch',x:r.w-0.5,z:0.5});
     if(/شبكة|RJ45|إنترنت|انترنت/.test(r.block))r.points.push({type:'network',x:0.3,z:r.d/2});
     if(/شاشة|تلفزيون|تلفاز/.test(r.block))r.points.push({type:'tv',x:r.w-0.3,z:r.d/2});
-    const nCam=countNear(r.block,'(?:كاميرات|كاميرا)'); for(let i=0;i<nCam;i++)r.points.push({type:'camera',x:0.3+i,z:0.3});
+    const nCam=countNear(r.block,'(?:كاميرات|كاميرا)');
+    const nCamB=nCam?acsFit(nCam,SCENE_LIMITS.max_text_repeats,'text.cameras'):0;
+    for(let i=0;i<nCamB;i++)r.points.push({type:'camera',x:0.3+i,z:0.3});
     if(/ثريا|إنارة|انارة|سبوت|لمبة|إضاءة/.test(r.block))r.points.push({type:'light',x:r.w/2,z:r.d/2});
     else r.points.push({type:'light',x:r.w/2,z:r.d/2});
     if(/تكييف|مكيف|VRF|سبليت/.test(r.block))r.points.push({type:'ac',x:r.w/2,z:0.2});
@@ -982,8 +1345,12 @@ function parseDescription(text, siteW, siteD, nFloors){
   });
   // مبنى: أرضي بسيط + أدوار نموذجية مكرّرة + سطح
   const levels=[{index:0,name:'الأرضي',template:'ground'}];
-  for(let i=1;i<=nFloors;i++)levels.push({index:i,name:FLOOR_NAMES['F'+i]||('الدور '+i),template:'typical'});
-  levels.push({index:nFloors+1,name:'السطح',template:'roof'});
+  /* KI-26/F-46: الاسم من العقد الوحيد ‎acsFloorName‎ — الأدوار الوسطى لا
+     تُسمّى «السطح» مهما بلغ رقمها، والسطح هو الأعلى فعلاً وحده. */
+  const _tot=nFloors+2;
+  for(let i=1;i<=nFloors;i++)
+    levels.push({index:i,name:acsFloorName('F'+i,_tot),template:'typical'});
+  levels.push({index:nFloors+1,name:acsFloorName('F'+(nFloors+1),_tot),template:'roof'});
   const ground={rooms:[{id:'lobby',rect:[siteW/2-4,1,8,7],
     doors:[{edge:'N',offset:4,width:2.5,height:2.5,material:'glass'}],
     windows:[{edge:'N',offset:1.5,width:2,sill:1,height:1.6}],
@@ -1003,7 +1370,9 @@ function parseDescription(text, siteW, siteD, nFloors){
    حركة وسلامة · إدارة وخدمات · ترميز لوني وقياسات واقعية.
    ================================================================== */
 function warehouseModel(W,D,opt){
-  opt=opt||{}; W=Math.max(30,+W||120); D=Math.max(25,+D||80);
+  opt=opt||{};
+  /* KI-26/F-46: كان ‎Math.max(30,+W||120)‎ بلا سقف — انظر acsSpan */
+  W=acsSpan(W,120,30,'warehouse.site_w'); D=acsSpan(D,80,25,'warehouse.site_d');
   const H=Math.max(6,Math.min(+opt.clear||12,16));      // ارتفاع صافٍ
   const OPT_DOCK=+opt.docks||0, OPT_PACK=+opt.pack||0, OPT_AISLE=+opt.aisle||0;
   const R=[], P=(t,x,z,h)=>{const o={type:t,x:+x.toFixed(2),z:+z.toFixed(2)};if(h!=null)o.height=h;return o;};
@@ -1303,7 +1672,7 @@ function negatedAt(cmap, idx){
 }
 function warehouseFromText(txt, W, D, opt){
   opt=opt||{}; const t=normDigits(stripBidi(txt||''));
-  W=Math.max(20,+W||100); D=Math.max(15,+D||60);
+  W=acsSpan(W,100,20,'text.site_w'); D=acsSpan(D,60,15,'text.site_d');
   const found=[], excluded=[], cmap=clauseMap(t);
   for(const Zd of ZONE_LIB){
     const re=new RegExp(Zd.re.source,'ig');
@@ -1728,25 +2097,31 @@ function projectEnvelope(b){
   try{
     env.relationships = buildRelationships(b,'bld_0');
     env.project.relationships = buildProjectRelationships(pr);
-  }catch(e){ env.relationships=[]; env.project.relationships=[]; }
+  }catch(e){ env.relationships=[]; env.project.relationships=[];
+    /* KI-26/F-46: طبقةُ علاقاتٍ كاملة كانت تسقط إلى مصفوفتين فارغتين بلا
+       أثر — الملفّ المصدَّر يبدو سليماً وهو بلا حافّة واحدة. تُحصى الآن. */
+    acsBuildDefect('specialization_failed','RELATIONSHIPS_COMPILE_FAILED','REL'); }
   /* النموذج الإنشائي المصرَّف يُصدَّر إضافةً ولا يستبدل أي تمثيل معماري.
      احتياطات العرض لا تُصدَّر كبيانات إنشائية: كل عنصر يحمل مصدره. */
   try{
     if(b.structural){ env.structural = b.structural;            // كما ورد، بلا تعديل
       env.structural_compiled = __ACS_LATE.compileStructure(b,'bld_0'); }
-  }catch(e){ }
+  }catch(e){   /* KI-26/F-46: كان ‎catch(e){ }‎ فارغاً حرفياً */
+    acsBuildDefect('specialization_failed','EXPORT_STRUCT_COMPILE_FAILED','STRUCT'); }
   /* نموذج MEP المصرَّف يُصدَّر إضافةً ولا يستبدل أي تمثيل معماري أو إنشائي.
      احتياطات العرض لا تُصدَّر كبيانات هندسية: كل عنصر يحمل مصدره. */
   try{
     if(b.mep){ env.mep = b.mep;                                 // كما ورد، بلا تعديل
       env.mep_compiled = __ACS_LATE.compileMep(b,'bld_0'); }
-  }catch(e){ }
+  }catch(e){   /* KI-26/F-46: كان ‎catch(e){ }‎ فارغاً حرفياً */
+    acsBuildDefect('specialization_failed','EXPORT_MEP_COMPILE_FAILED','MEP'); }
   /* نموذج الحريق وسلامة الأرواح يُصدَّر إضافةً ولا يستبدل أي تمثيل آخر،
      ولا يُصدَّر احتياط عرض كبيانات هندسية. */
   try{
     if(b.fire_life_safety){ env.fire_life_safety = b.fire_life_safety;
       env.fire_life_safety_compiled = __ACS_LATE.compileFls(b,'bld_0'); }
-  }catch(e){ }
+  }catch(e){   /* KI-26/F-46: كان ‎catch(e){ }‎ فارغاً حرفياً */
+    acsBuildDefect('specialization_failed','EXPORT_FLS_COMPILE_FAILED','FLS'); }
   return env;
 }
 /* ==================================================================
@@ -1799,7 +2174,11 @@ function buildRelationships(building,bid){
      فراغين بالضبط يرفع الحافة من inferred إلى confirmed. غيابه لا يخفض شيئاً
      ولا يحذف حافة — الاستنتاج الهندسي القديم يبقى كما هو. */
   let _arch=null;
-  try{ _arch=__ACS_LATE.compileArchitecture(building,bid); }catch(e){ _arch=null; }
+  /* KI-26/F-46: سقوط الدليل المعماري لا يحذف حافّة، لكنّه يُنزل كل حافّة
+     من confirmed إلى inferred بلا خبر — يُحصى الآن. */
+  try{ _arch=__ACS_LATE.compileArchitecture(building,bid); }
+  catch(e){ _arch=null;
+    acsBuildDefect('specialization_failed','REL_ARCH_EVIDENCE_UNAVAILABLE','ARCH'); }
   const _doorEvidence=(via,sid,other)=>{
     if(!_arch) return null;
     const ev=__ACS_LATE.archDoorConnectsConfirmed(_arch,via);
@@ -2287,7 +2666,10 @@ function _dsRooms(building,bid){ bid=bid||'bld_0'; const idx={};
   return idx; }
 /* يصرّف الهندسة المعمارية إن أمكن. غيابها لا يمنع القياس ولا يغيّر نتيجة */
 function architectureOf(building,bid){
-  try{ return __ACS_LATE.compileArchitecture(building,bid||'bld_0'); }catch(e){ return null; } }
+  try{ return __ACS_LATE.compileArchitecture(building,bid||'bld_0'); }
+  catch(e){   /* KI-26/F-46: كان يعيد null صامتاً */
+    acsBuildDefect('specialization_failed','ARCH_QUERY_FAILED','ARCH');
+    return null; } }
 /* نقطة عبور الباب من هندسته الفعلية (الحافة + الإزاحة)، لا من مركز الغرفة.
    حين تتوفّر هندسة الفتحة المصرَّفة نقرأ المرساة منها: هي المصدر المفضّل لأنها
    نفس المصدر الذي يرسم الجدار. للمستطيلات المحاذية للمحاور القيمتان متطابقتان
@@ -2544,4 +2926,4 @@ function distanceSummary(m){
    ================================================================== */
 
 
-export { ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };
+export { ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, SCENE_LIMITS, DEGRADING_KINDS, acsCount, acsFit, acsCapList, acsSpan, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };

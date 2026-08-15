@@ -195,6 +195,18 @@ class UploadRejected(Exception):
         self.detail = str(detail or "")
         Exception.__init__(self, "%s: %s" % (self.code, self.detail or self.code))
 
+    def __reduce__(self):
+        """KI-14/F-46: يجعل الرفض قابلاً للتخليص فعلاً.
+
+        الصيغة الافتراضية لاستثناءات بايثون تعيد البناء من `self.args` وحدها،
+        وهي هنا وسيطٌ واحد بينما `__init__` يطلب اثنين — فكان
+        `pickle.loads(pickle.dumps(rejection))` يرفع TypeError. لم يظهر ذلك ما
+        دام الرفض لا يعبر حدّ عملية؛ وقد صار يعبره حين انتقل التدقيق إلى مجمّع
+        عمليات. المجمّع لا يعتمد على هذا (يشحن مغلّفاً لا استثناء) — لكنّ صنفاً
+        لا يُخلَّص فخٌّ لأي مستدعٍ لاحق، فيُصلَح عند مصدره.
+        """
+        return (self.__class__, (self.code, self.message_ar, self.detail))
+
     def as_dict(self):
         return {"code": self.code, "message_ar": self.message_ar,
                 "detail": self.detail}

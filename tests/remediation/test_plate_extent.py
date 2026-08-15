@@ -386,8 +386,17 @@ chk('the browser site plane is declared separate and outside the building '
     'group', 'acs_site_plane' in page and 'in_building_group:false' in page)
 _js = page[page.index('function slabStrips('):]
 _js = _js[:_js.index('\nfunction compile(data){')]
+# كان هذا الفحص يبحث عن `hs.some(` — وهو **تفصيل خوارزميّ** لا خاصيّة. حين
+# استُبدلت الخوارزمية المكعّبة O(V³) بمسحٍ بفرقٍ تراكميّ وبحثٍ ثنائيّ (أسرع
+# ‎١١٥×‎ عند ٥١٢ نواة، ومخرجه مطابق بايتاً ببايت) سقط الفحص رغم أن ما يحرسه
+# قائم. الآن يُحرَس ما يهمّ فعلاً: أن الفراغات تُقصّ من البلاطة لا تُتجاهَل.
+# والإثبات السلوكيّ — مقارنة المخرج بمرجع الخوارزمية القديمة عند ١…٦٤ نواة —
+# في tests/remediation/test_scene_limits.js حيث تُنفَّذ الدالّة فعلاً.
 chk('the browser strip routine still subtracts holes and is not a stub',
-    'hs.some(' in _js and 'if(!hs.length) return [[x0,z0,W,D]];' in _js)
+    'if(!hs.length) return [[x0,z0,W,D]];' in _js          # لا فراغ ⇒ لوح واحد
+    and 'Math.max(x0,h[0])' in _js                          # الفراغ يُقصّ بالبلاطة
+    and 'cz>h[1]&&cz<h[3]' in _js                           # ويُختبَر ضدّ منتصف الخليّة
+    and 'slabStrips' in _js)
 
 print('\n' + '─' * 62)
 print('PLATE EXTENT: %d passed, %d failed' % (p[0], f[0]))

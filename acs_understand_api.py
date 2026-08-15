@@ -35,6 +35,7 @@ import acs_build_info as BUILD
 import acs_rate_limit as RL
 import acs_upload_security as UPLOAD
 import acs_engineering_authority as EA
+import acs_cpu_pool as CPU
 import acs_generation_job as JOBS
 
 LOG = LOGGING.StructuredLogger(service="ACS Understanding Engine",
@@ -331,6 +332,43 @@ _POOL = concurrent.futures.ThreadPoolExecutor(
     thread_name_prefix="acs-gen")
 _JOBS = JOBS.default_runner()
 
+# ---------------------------------------------------------------------------
+# KI-14/F-46 · مجمّع العمل الحاسوبيّ. مدقّقات الرفع كانت تُستدعى متزامنةً داخل
+# `async def`، فتوقف الحلقة كلّها: ٤٤٩ms لصورة واحدة مقبولة، و١٤٩٠ms لدفعة
+# **مرفوضة** — أي أن الرفض نفسه كان سلاح حرمانٍ من الخدمة. القياس في
+# tests/remediation/test_event_loop.py.
+# ---------------------------------------------------------------------------
+_CPU = CPU.default_pool()
+
+
+async def _validate(target, *args):
+    """يشغّل مدقّقاً معلناً خارج الحلقة، ويترجم أعطال المجمّع إلى مغلّف الأخطاء.
+
+    الرفض (UploadRejected) يصعد كما هو ليعالجه `_upload_error` بلا تغيير في
+    عقد الأخطاء. أما الإشباع والمهلة وموت العامل فأعطال خادم مصنّفة.
+    """
+    try:
+        return await CPU.run(target, args)
+    except CPU.PoolSaturated as exc:
+        LOG.warn("validation_rejected", detail=str(exc)[:200],
+                 in_flight=_CPU.in_flight())
+        raise E.AcsApiError(
+            E.ACS_RATE_LIMITED,
+            "الخادم مشغول بفحص ملفّات أخرى. أعِد المحاولة بعد قليل.",
+            retryable=True, retry_after=15)
+    except CPU.PoolTimeout:
+        LOG.warn("validation_timeout", target=target,
+                 timeout_s=_CPU.timeout_s)
+        raise E.AcsApiError(
+            E.ACS_TIMEOUT,
+            "تجاوز فحص الملفّ مهلة الخادم. قلّل حجم الملفّ أو عدد الصفحات.")
+    except CPU.WorkerCrashed as exc:
+        LOG.warn("validation_worker_crashed", target=target,
+                 detail=str(exc)[:120])
+        raise E.AcsApiError(
+            E.ACS_UPSTREAM_UNKNOWN,
+            "تعذّر فحص الملفّ على الخادم. أعِد المحاولة.", retryable=True)
+
 
 async def run_job(target, kwargs, what="التوليد", seconds=None, request_id=None):
     """F-06: التوليد عملية مستقلّة تُنهى فعلاً عند المهلة.
@@ -468,6 +506,9 @@ def health():
             "engineering_changes": EA.health_status(),
             "logging": LOGGING.health_status(),
             "generation_jobs": JOBS.health_status(),
+            # KI-14/F-46: حالة مجمّع العمل الحاسوبيّ. `isolated=false` يعني
+            # أن المنصّة منعت spawn وأننا على خيوط — تدهورٌ مُعلَن لا صامت.
+            "cpu_pool": CPU.health_status(),
             "build": {k: v for k, v in BUILD.build_info().items()
                       if k in ("version", "git_sha_short", "built_at",
                                "provenance_verified")}}
@@ -542,7 +583,7 @@ def _generation_summary(meta):
                               "error": s.get("error")} for s in st[:12]]}
 
 
-def _engineering_authority(building):
+async def _engineering_authority(building):
     """F-01 — سلطة التغيير الهندسي.
 
     كان النظام يُصلح النموذج حسابياً بعد التوليد بلا إفصاح: يُزيح الغرف، ويقلّصها،
@@ -551,7 +592,10 @@ def _engineering_authority(building):
 
     الاقتراحات تُعاد في الرد لا داخل النموذج، حتى لا يغيّر الإفصاحُ بصمةَ النموذج."""
     try:
-        plan = EA.plan(building)
+        # KI-14/F-46: كان هذا النداء يعمل على الحلقة في كل رد ناجح. قياساً:
+        # ٢٫٨ms عند ٢٠ غرفة · ٣٩٨ms عند ١٦٠٠ · ٥٧١٤ms عند ٨٤٠٠ — والأخير
+        # نموذجٌ تحت سقف ACS_MAX_BUILDING. أي خمس ثوانٍ من الشلل على **نجاح**.
+        plan = await _validate("ea_plan", building)
     except Exception as exc:                                    # noqa: BLE001
         LOG.exception("engineering_plan_failed", exc)
         return {"available": False, "applied": False, "auto_commit_path": False,
@@ -571,20 +615,21 @@ def _engineering_authority(building):
             "registry": plan["registry"]}
 
 
-def _edit_diff(before, after):
+async def _edit_diff(before, after):
     """فرق مُسطَّح بين نموذجين — للعرض قبل الاستبدال، لا للإيداع."""
     try:
-        return EA.flat_diff(before, after)
+        # KI-14/F-46: الفرق المسطَّح يمرّ على النموذجين كاملين — خارج الحلقة.
+        return await _validate("ea_flat_diff", before, after)
     except Exception as exc:                                    # noqa: BLE001
         LOG.exception("edit_diff_failed", exc)
         return {"available": False,
                 "detail": "NOT EVALUATED — the diff could not be computed"}
 
 
-def _understand_payload(building):
+async def _understand_payload(building):
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
-    authority = _engineering_authority(building)
+    authority = await _engineering_authority(building)
     return {"ok": True, "building": building, "levels": len(building["levels"]),
             "rooms": nr, "type": meta.get("type"),
             "mode": meta.get("acs_mode", "single"),
@@ -629,7 +674,7 @@ async def understand(req: UnderstandReq, request: Request):
         LOG.exception("generation_failed", e, request_id=rid,
                       endpoint="/v1/understand")
         raise E.classify_upstream(e)
-    return _understand_payload(building)
+    return await _understand_payload(building)
 
 
 class EditReq(BaseModel):
@@ -653,9 +698,13 @@ async def edit(req: EditReq, request: Request):
              notes=len(req.notes))
     # F-19: النموذج الوارد JSON غير موثوق — الحجم والعمق وعدد المفاتيح ومفاتيح
     # تلويث النموذج الأولي تُفحَص قبل أي معالجة.
+    # KI-14/F-46: التسلسل والتحقّق كلاهما حاسوبيّ ويكبر مع النموذج (٩٠٠ ك.ب
+    # مسموحة، عمق ٤٠، مئة ألف مفتاح). قياسه اليوم ~١٠ms، وهو دون العتبة —
+    # لكنّه يكبر مع المدخل، والمبدأ واحد: لا تحليل مدخلٍ غير موثوق على الحلقة.
     try:
-        UPLOAD.validate_json_bytes(
-            json.dumps(req.building, ensure_ascii=False).encode("utf-8"))
+        await _validate("validate_json_bytes",
+                        json.dumps(req.building, ensure_ascii=False)
+                        .encode("utf-8"))
     except UPLOAD.UploadRejected as exc:
         LOG.warn("upload_rejected", request_id=rid, endpoint="/v1/edit",
                  error_code=exc.code, detail=getattr(exc, "detail", None))
@@ -679,8 +728,8 @@ async def edit(req: EditReq, request: Request):
     except Exception as e:
         LOG.exception("edit_failed", e, request_id=rid, endpoint="/v1/edit")
         raise E.classify_upstream(e)
-    payload = _understand_payload(out)
-    payload["engineering_diff"] = _edit_diff(req.building, out)
+    payload = await _understand_payload(out)
+    payload["engineering_diff"] = await _edit_diff(req.building, out)
     payload["requires_confirmation"] = True
     payload["change_id"] = "EDIT_MODEL_REPLACEMENT"
     payload["confirmation_note"] = (
@@ -715,7 +764,7 @@ async def understand_image(
         seen += size
         raw.append((data, f.content_type))
     try:
-        checked = UPLOAD.validate_images(raw)
+        checked = await _validate("validate_images", raw)
     except UPLOAD.UploadRejected as exc:
         LOG.warn("upload_rejected", request_id=rid, endpoint="/v1/understand/image",
                  error_code=exc.code, detail=getattr(exc, "detail", None),
@@ -743,7 +792,7 @@ async def understand_image(
         LOG.exception("vision_generation_failed", e, request_id=rid,
                       endpoint="/v1/understand/image")
         raise E.classify_upstream(e)
-    return _understand_payload(building)
+    return await _understand_payload(building)
 
 
 @app.post("/v1/understand/pdf")
@@ -758,7 +807,7 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
     # البايتات في الذاكرة، ويرفض التوقيع الخاطئ والمشفّر والمقطوع وعدد الصفحات
     # قبل استخراج أي نصّ — فلا يصير خطأ العميل خطأ 500 من المحلّل.
     try:
-        checked = UPLOAD.validate_pdf(data)
+        checked = await _validate("validate_pdf", data)
     except UPLOAD.UploadRejected as exc:
         LOG.warn("upload_rejected", request_id=rid, endpoint="/v1/understand/pdf",
                  error_code=exc.code, detail=getattr(exc, "detail", None),
@@ -787,7 +836,7 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
         LOG.exception("pdf_generation_failed", e, request_id=rid,
                       endpoint="/v1/understand/pdf")
         raise E.classify_upstream(e)
-    payload = _understand_payload(building)
+    payload = await _understand_payload(building)
     payload["chars"] = len(text)
     payload["pdf_pages"] = checked["pages"]
     return payload
@@ -816,3 +865,17 @@ def _startup_env_check():
     if missing:
         print("[ACS-BOOT] MISSING (names only): %s" % ", ".join(sorted(set(missing))))
         print("[ACS-BOOT] الخدمة حيّة لكن /ready سيردّ 503 حتى يكتمل الضبط.")
+    # F-47: قرار حدّ المعدّل يُتَّخذ عند الإقلاع لا يُؤجَّل إلى تحذير في /health.
+    # ضبطٌ إنتاجيّ بحدٍّ محليّ العملية وبلا إقرار صريح — أو بإقرارٍ تنقضه
+    # المنصّة بإعلانها تزامناً أكبر من واحد — لا يجوز الإقلاع عليه: السقف
+    # اليوميّ العامّ يصير قابلاً للمضاعفة بعدد النسخ بلا أن يعلم أحد.
+    inv = RL.production_invariant()
+    print("[ACS-BOOT] rate-limit invariant: %s (distributed=%s, concurrency=%s)"
+          % (inv["state"], inv["distributed"], inv["declared_concurrency"]))
+    if not inv["ok"]:
+        print("[ACS-BOOT] REFUSING TO START — %s" % inv["detail"])
+        raise RL.ProductionInvariantError("%s: %s" % (inv["state"], inv["detail"]))
+    # F-46: العمّال يُوقظون قبل أوّل طلب حقيقيّ، فلا يدفع أوّل مستخدمٍ ثمن spawn.
+    _cpu = _CPU.warmup()
+    print("[ACS-BOOT] cpu pool: executor=%s isolated=%s workers=%d queue=%d"
+          % (_cpu["executor"], _cpu["isolated"], _cpu["workers"], _cpu["queue"]))
