@@ -178,7 +178,13 @@ class StructuredLogger(object):
                    "sdk_version", "transport", "thinking_sent",
                    "provider_error_type", "provider_param",
                    "provider_limit", "provider_detail",
-                   "requested_max_tokens", "budget_clamped")
+                   "requested_max_tokens", "budget_clamped",
+                   # هجرة المزوّد: أيّ مزوّد ونموذج ومضيف خدم هذا النداء، وهل
+                   # وقع تحويل إلى بديل ولماذا. `provider_base_host` مضيفٌ
+                   # وحده — لا عنوان كامل، فالعنوان قد يحمل اعتماداً مضمَّناً.
+                   "provider", "provider_model", "provider_base_host",
+                   "fallback_attempted", "fallback_provider",
+                   "fallback_reason", "fallback_success")
         clean = {k: v for k, v in fields.items() if k in allowed}
         return self._emit("info", "llm_generation", **clean)
 

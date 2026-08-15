@@ -25,6 +25,7 @@ import acs_api_errors as E                     # عقد الأخطاء المو�
 import acs_generation as G                     # ميزانية المخرج واستراتيجية التوليد
 import acs_plan_chunks as PC                   # عقد الخطّة المحدود والتقطيع (KI-24)
 import acs_logging as LOGGING                  # سجلّ إنتاج منظَّم (F-18) — قناة التليمتري
+import acs_provider as PROV                    # حلّ المزوّد: اسم/مفتاح/عنوان/نموذج
 
 # سجلّ هذه الوحدة. كل حدث سطر JSON واحد بحقول معلنة، والحجب بالاسم يمنع
 # دخول وصف الزائر أو المفتاح أو الرد الخام إلى السجلّ.
@@ -505,6 +506,15 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
             "provider_param": tel.get("provider_param"),
             "provider_limit": tel.get("provider_limit"),
             "provider_detail": tel.get("provider_detail"),
+            # هجرة المزوّد — بلا هذه الحقول لا يفرّق سجلّ الإنتاج بين عطلٍ عند
+            # deepseek وعطلٍ عند anthropic، ولا يُعرف هل ردّ البديل أم الأساسي.
+            "provider": tel.get("provider"),
+            "provider_model": tel.get("provider_model"),
+            "provider_base_host": tel.get("provider_base_host"),
+            "fallback_attempted": tel.get("fallback_attempted"),
+            "fallback_provider": tel.get("fallback_provider"),
+            "fallback_reason": tel.get("fallback_reason"),
+            "fallback_success": tel.get("fallback_success"),
         }
         # KI-24/F-38: موضع الشريحة في السلسلة. بلا هذين الحقلين لا يمكن نسب
         # عطلٍ إلى شريحة بعينها في سجلّ الإنتاج.
@@ -611,7 +621,8 @@ def _sdk_supports(client, param):
     return False
 
 
-def _classify_call_error(exc, attempts=None, sdk_version=None):
+def _classify_call_error(exc, attempts=None, sdk_version=None,
+                         provider="anthropic"):
     """يفصل العطل المحلّي عن عطل المزوّد قبل أي تصنيف upstream.
 
     F-33: TypeError من ربط الوسائط عطلٌ في تكامل هذا الخادم مع المكتبة — لا
@@ -640,12 +651,67 @@ def _classify_call_error(exc, attempts=None, sdk_version=None):
                 bad = m.group(1)
             return E.AcsApiError(
                 E.ACS_INTEGRATION_ERROR,
-                upstream={"provider": "anthropic", "kind": "TypeError",
+                upstream={"provider": provider, "kind": "TypeError",
                           "fault": "local_integration",
                           "parameter": bad,
                           "sdk_version": sdk_version or _sdk_version(),
                           "attempts": attempts})
-    return E.classify_upstream(exc, attempts=attempts)
+    return E.classify_upstream(exc, attempts=attempts, provider=provider)
+
+
+def _sdk_accepts_base_url():
+    """هل يقبل بانِ العميل المثبَّت الوسيط base_url؟ استبطانٌ لا رقم نسخة.
+
+    هذا هو المفصل كلّه في هجرة المزوّد: deepseek يُنادى عبر مكتبة anthropic
+    نفسها بتبديل نقطة النهاية وحدها. مكتبةٌ لا تقبل base_url ستتجاهله بصمت لو
+    مُرِّر عبر **kwargs غير موجودة، أو ترفع TypeError — وفي الحالتين ينتهي
+    الطلب إلى api.anthropic.com بمفتاح deepseek. هذا ليس «تدهوراً لطيفاً»:
+    إنه إرسال اعتماد مزوّد إلى مزوّد آخر. لذلك يُفحَص قبل النداء ويُرفض.
+    """
+    try:
+        import anthropic
+        import inspect
+        sig = inspect.signature(anthropic.Anthropic.__init__)
+    except Exception:                                             # noqa: BLE001
+        return False
+    params = sig.parameters
+    if "base_url" in params:
+        return True
+    return any(p.kind == inspect.Parameter.VAR_KEYWORD
+               for p in params.values())
+
+
+def _build_client(cfg, timeout_s):
+    """عميلٌ مضبوطٌ على نقطة نهاية المزوّد المحلول. لا يخمّن ولا يتساهل."""
+    import anthropic
+    if not cfg.ok:
+        # ضبطٌ ناقص: عطل مشغّل معلن باسم المتغيّر، لا عطل منبع.
+        if cfg.state == PROV.MISSING_BASE_URL:
+            raise E.AcsApiError(
+                E.ACS_INTEGRATION_ERROR,
+                "المزوّد %s يحتاج نقطة نهاية صريحة ولم تُضبط (%s)."
+                % (cfg.provider, ", ".join(cfg.missing)),
+                upstream={"provider": cfg.provider, "kind": "missing_base_url",
+                          "fault": "local_integration"})
+        raise E.AcsApiError(E.ACS_UPSTREAM_NOT_CONFIGURED)
+
+    kw = {"api_key": cfg.api_key}
+    if cfg.base_url:
+        if not _sdk_accepts_base_url():
+            # لا رجوع صامت إلى نقطة النهاية الافتراضية: انظر _sdk_accepts_base_url.
+            raise E.AcsApiError(
+                E.ACS_INTEGRATION_ERROR,
+                "المكتبة المثبّتة لا تقبل base_url، فلا يمكن مناداة المزوّد %s."
+                % cfg.provider,
+                upstream={"provider": cfg.provider, "kind": "base_url_unsupported",
+                          "fault": "local_integration",
+                          "parameter": "base_url",
+                          "sdk_version": _sdk_version()})
+        kw["base_url"] = cfg.base_url
+    try:
+        return anthropic.Anthropic(timeout=timeout_s, **kw)
+    except TypeError:                      # مكتبة قديمة بلا وسيط timeout
+        return anthropic.Anthropic(**kw)
 
 
 def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
@@ -661,25 +727,19 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
     tel.setdefault("stage", stage)
     tel.setdefault("complete", False)
     try:
-        import anthropic
+        import anthropic                                          # noqa: F401
     except Exception:
         raise E.AcsApiError(E.ACS_NOT_CONFIGURED, "مكتبة anthropic غير مثبّتة على الخادم.")
-    model = (model or os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5")).strip()
-    tel["model"] = model                       # المعرّف المُستعمل فعلاً، للتليمتري
+
     sdk_ver = _sdk_version()
     tel["sdk_version"] = sdk_ver               # يفرّق عطل التكامل عن عطل المزوّد
     max_tokens = int(max_tokens or G.stage_budget("single"))
-    api_key = clean_key(os.environ.get("ANTHROPIC_API_KEY"))
-    if not api_key:
-        raise E.AcsApiError(E.ACS_UPSTREAM_NOT_CONFIGURED)
+    model_override = (model or "").strip() or None
 
     # مهلة صريحة على نداء المنبع: بلا هذا يعلّق العامل حتى تقتله البوّابة
     # فيرى العميل انقطاعاً بلا جسد رد — وهو ما لا يمكن تصنيفه ولا عرضه.
     timeout_s = float(os.environ.get("ACS_UPSTREAM_TIMEOUT_S", "600"))
-    try:
-        client = anthropic.Anthropic(api_key=api_key, timeout=timeout_s)
-    except TypeError:                      # مكتبة قديمة بلا وسيط timeout
-        client = anthropic.Anthropic(api_key=api_key)
+
     if content is not None:
         msgs = [{"role": "user", "content": content}]
         sys_p = vision_prompt(btype or "residential")
@@ -693,135 +753,185 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         msgs = [{"role": "user", "content": (default_msg if user_msg is None else user_msg) + desc}]
         sys_p = system_prompt(btype or detect_type(desc))
 
-    supports_thinking = _sdk_supports(client, "thinking")
+    def _attempt(cfg):
+        """نداءٌ كاملٌ على مزوّدٍ واحد محلول. يعيد النصّ أو يرفع AcsApiError.
 
-    def _call(mt, thinking):
-        """يستخدم البثّ (streaming) — مطلوب للمخرجات الكبيرة، ويعمل مع الصغيرة أيضاً.
-
-        F-31: `thinking` يُرسَل **فقط** إذا كانت النسخة المثبّتة تعرفه.
-        anthropic==0.40 المثبّتة في requirements.txt لا تعرفه إطلاقاً — أُضيف
-        لاحقاً — وتوقيعها keyword-only صريح بلا **kwargs، فكان إرساله يرفع
-        TypeError من ربط الوسائط في بايثون قبل أي اتصال بالشبكة. على نسخة لا
-        تعرف «التفكير الموسّع» أصلاً، إغفالُ الوسيط هو بالضبط ما يعنيه
-        `{"type": "disabled"}`: لا سلوك يُفقَد.
+        كلّ ما بداخله كان جسد `_call_llm_impl` قبل هجرة المزوّد، حرفياً: سلّم
+        المحاولتين، وعقد سبب التوقّف، والتليمتري. المتغيّر الوحيد أن المفتاح
+        والنموذج ونقطة النهاية تأتي من `cfg` بدل قراءة المحيط هنا.
         """
-        kw = dict(model=model, max_tokens=mt, system=sys_p, messages=msgs)
-        if thinking is not None and supports_thinking:
-            kw["thinking"] = thinking
-        try:
-            with client.messages.stream(**kw) as s:
-                return s.get_final_message()
-        except AttributeError:
-            tel["transport"] = "create"          # F-50: أيّ مسار سلكه النداء
-            # F-32: الرجوع إلى create() مقصور على «مكتبة بلا stream()» وحدها.
-            # كان TypeError مشمولاً هنا أيضاً، فكان وسيطٌ لا تعرفه المكتبة
-            # يُعاد إرساله حرفياً إلى create() فيفشل الفشل نفسه — تكرارٌ مضمون
-            # الفشل يمحو أثر السبب. خطأ الوسائط ليس «مكتبة قديمة بلا بثّ»:
-            # يُترك ليصنَّف عطلاً محلياً في _classify_call_error.
-            return client.messages.create(**kw)
+        model = model_override or cfg.model
+        client = _build_client(cfg, timeout_s)
+        # ما سيُسجَّل: أيّ مزوّد ونموذج ومضيف خدم هذا النداء فعلاً.
+        tel["model"] = model
+        tel["provider"] = cfg.provider
+        tel["provider_model"] = model
+        tel["provider_base_host"] = cfg.base_host
 
-    # سلّم محاولات مقصور على حالة واحدة: رد **بلا نصّ إطلاقاً**، وسببها المعروف
-    # أنّ "التفكير الموسّع" ابتلع الميزانية كلّها (stop=max_tokens مع out_chars=0).
-    # لا يُستعمل هذا السلّم لعلاج الانقطاع: تكرار الطلب نفسه بميزانية أقلّ يقطع
-    # المخرج أبكر لا أمتن. الانقطاع يعالجه تغيير الاستراتيجية في understand().
-    OFF = {"type": "disabled"}
-    attempts = [
-        (max_tokens, OFF),                       # الأفضل: بلا تفكير، سقف كامل
-        (max_tokens, None),                      # افتراضي النموذج
-    ]
+        supports_thinking = _sdk_supports(client, "thinking")
 
-    # §8 إعادة المحاولة محدودة وللأعطال العابرة وحدها. مفتاح مرفوض أو نموذج غير
-    # موجود لا يُصلحه التكرار: يستهلك دقائق ورصيداً ثم يعطي الرسالة نفسها متأخّرة.
-    text = ""; stop = "?"; last_err = None; tried = 0
-    backoff = float(os.environ.get("ACS_UPSTREAM_BACKOFF_S", "2"))
-    for mt, think in attempts:
-        tried += 1
-        # F-50: يُسجَّل ما **طُلب** قبل النداء. كان max_output_tokens يُملأ بعد
-        # نجاح الرد وحده، فسجلُّ الرفض يقول max_output_tokens=null — أي أن
-        # أهمّ رقمٍ في تشخيص رفض 400 كان يغيب عن كل نداء فاشل بالضبط.
-        tel["requested_max_tokens"] = int(mt)
-        tel.setdefault("max_output_tokens", int(mt))
-        tel["thinking_sent"] = bool(think is not None and supports_thinking)
-        tel["transport"] = "stream"
-        try:
-            msg = _call(mt, think)
-        except Exception as e:
-            # F-33: العطل المحلّي يُفصَل عن عطل المزوّد هنا، لا بعد أن يصير 502.
-            err = _classify_call_error(e, attempts=tried, sdk_version=sdk_ver)
-            last_err = err
-            up = err.upstream if isinstance(err.upstream, dict) else {}
-            # F-50: حقول المزوّد الآمنة تُنقَل إلى التليمتري، فيصل السجلّ سببُ
-            # الرفض لا اسم صنف الاستثناء وحده.
-            tel["provider_error_type"] = up.get("error_type")
-            tel["provider_param"] = up.get("param") or up.get("parameter")
-            tel["provider_limit"] = up.get("limit")
-            tel["provider_detail"] = up.get("detail")
-            print("[ACS-LLM] call failed (stage=%s max_tokens=%s thinking=%s "
-                  "sdk=%s transport=%s) -> %s%s%s%s"
-                  % (stage, mt, "off" if think else "default", sdk_ver,
-                     tel.get("transport"), err.code,
-                     (" param=%s" % tel["provider_param"])
-                     if tel.get("provider_param") else "",
-                     (" provider_limit=%s" % up.get("limit"))
-                     if up.get("limit") else "",
-                     (" detail=%s" % up.get("detail"))
-                     if up.get("detail") else ""))
-            if not err.retryable:
-                raise err                     # عطل دائم: أعلِنه فوراً بلا تكرار
-            if tried < len(attempts) and backoff > 0:
-                time.sleep(min(backoff * tried, 15))
-            continue
+        def _call(mt, thinking):
+            """يستخدم البثّ (streaming) — مطلوب للمخرجات الكبيرة، ويعمل مع الصغيرة أيضاً.
 
-        parts = [getattr(b, "text", None) for b in (msg.content or [])]
-        text = "".join(p for p in parts if p)
-        stop = getattr(msg, "stop_reason", "?")
-        usage = getattr(msg, "usage", None)
-        tel.update({"stop_reason": stop,
-                    "output_tokens": getattr(usage, "output_tokens", None),
-                    "input_tokens": getattr(usage, "input_tokens", None),
-                    "max_output_tokens": mt,
-                    "completion_chars": len(text),
-                    "attempts": tried,
-                    "thinking": "off" if think else "default"})
-        print("[ACS-LLM] stage=%s model=%s thinking=%s max_tokens=%s stop=%s "
-              "out_chars=%d out_tokens=%s in_tokens=%s"
-              % (stage, model, "off" if think else "default", mt, stop, len(text),
-                 tel["output_tokens"], tel["input_tokens"]))
+            F-31: `thinking` يُرسَل **فقط** إذا كانت النسخة المثبّتة تعرفه.
+            anthropic==0.40 المثبّتة في requirements.txt لا تعرفه إطلاقاً — أُضيف
+            لاحقاً — وتوقيعها keyword-only صريح بلا **kwargs، فكان إرساله يرفع
+            TypeError من ربط الوسائط في بايثون قبل أي اتصال بالشبكة. على نسخة لا
+            تعرف «التفكير الموسّع» أصلاً، إغفالُ الوسيط هو بالضبط ما يعنيه
+            `{"type": "disabled"}`: لا سلوك يُفقَد.
+            """
+            kw = dict(model=model, max_tokens=mt, system=sys_p, messages=msgs)
+            if thinking is not None and supports_thinking:
+                kw["thinking"] = thinking
+            try:
+                with client.messages.stream(**kw) as s:
+                    return s.get_final_message()
+            except AttributeError:
+                tel["transport"] = "create"      # F-50: أيّ مسار سلكه النداء
+                # F-32: الرجوع إلى create() مقصور على «مكتبة بلا stream()» وحدها.
+                # كان TypeError مشمولاً هنا أيضاً، فكان وسيطٌ لا تعرفه المكتبة
+                # يُعاد إرساله حرفياً إلى create() فيفشل الفشل نفسه — تكرارٌ مضمون
+                # الفشل يمحو أثر السبب. خطأ الوسائط ليس «مكتبة قديمة بلا بثّ»:
+                # يُترك ليصنَّف عطلاً محلياً في _classify_call_error.
+                return client.messages.create(**kw)
 
-        if text.strip():
-            break               # وصل نصّ — الحكم على اكتماله بعد الحلقة
-        print("[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…")
+        # سلّم محاولات مقصور على حالة واحدة: رد **بلا نصّ إطلاقاً**، وسببها المعروف
+        # أنّ "التفكير الموسّع" ابتلع الميزانية كلّها (stop=max_tokens مع out_chars=0).
+        # لا يُستعمل هذا السلّم لعلاج الانقطاع: تكرار الطلب نفسه بميزانية أقلّ يقطع
+        # المخرج أبكر لا أمتن. الانقطاع يعالجه تغيير الاستراتيجية في understand().
+        OFF = {"type": "disabled"}
+        attempts = [
+            (max_tokens, OFF),                   # الأفضل: بلا تفكير، سقف كامل
+            (max_tokens, None),                  # افتراضي النموذج
+        ]
 
-    if not text.strip():
-        if isinstance(last_err, E.AcsApiError):
-            raise last_err                    # آخر عطل عابر مصنّف: أوضح من العموم
-        raise E.AcsApiError(
-            E.ACS_UPSTREAM_EMPTY_RESPONSE,
-            "أعاد النموذج رداً فارغاً في كل المحاولات (آخر stop_reason=%s)." % stop,
-            upstream={"provider": "anthropic", "kind": "empty_text",
-                      "attempts": tried})
+        # §8 إعادة المحاولة محدودة وللأعطال العابرة وحدها. مفتاح مرفوض أو نموذج غير
+        # موجود لا يُصلحه التكرار: يستهلك دقائق ورصيداً ثم يعطي الرسالة نفسها متأخّرة.
+        text = ""; stop = "?"; last_err = None; tried = 0
+        backoff = float(os.environ.get("ACS_UPSTREAM_BACKOFF_S", "2"))
+        for mt, think in attempts:
+            tried += 1
+            # F-50: يُسجَّل ما **طُلب** قبل النداء. كان max_output_tokens يُملأ بعد
+            # نجاح الرد وحده، فسجلُّ الرفض يقول max_output_tokens=null — أي أن
+            # أهمّ رقمٍ في تشخيص رفض 400 كان يغيب عن كل نداء فاشل بالضبط.
+            tel["requested_max_tokens"] = int(mt)
+            tel.setdefault("max_output_tokens", int(mt))
+            tel["thinking_sent"] = bool(think is not None and supports_thinking)
+            tel["transport"] = cfg.transport
+            try:
+                msg = _call(mt, think)
+            except Exception as e:
+                # F-33: العطل المحلّي يُفصَل عن عطل المزوّد هنا، لا بعد أن يصير 502.
+                err = _classify_call_error(e, attempts=tried,
+                                           sdk_version=sdk_ver,
+                                           provider=cfg.provider)
+                last_err = err
+                up = err.upstream if isinstance(err.upstream, dict) else {}
+                # F-50: حقول المزوّد الآمنة تُنقَل إلى التليمتري، فيصل السجلّ سببُ
+                # الرفض لا اسم صنف الاستثناء وحده.
+                tel["provider_error_type"] = up.get("error_type")
+                tel["provider_param"] = up.get("param") or up.get("parameter")
+                tel["provider_limit"] = up.get("limit")
+                tel["provider_detail"] = up.get("detail")
+                print("[ACS-LLM] call failed (stage=%s provider=%s host=%s "
+                      "model=%s max_tokens=%s thinking=%s sdk=%s transport=%s)"
+                      " -> %s%s%s%s"
+                      % (stage, cfg.provider, cfg.base_host or "default", model,
+                         mt, "off" if think else "default", sdk_ver,
+                         tel.get("transport"), err.code,
+                         (" param=%s" % tel["provider_param"])
+                         if tel.get("provider_param") else "",
+                         (" provider_limit=%s" % up.get("limit"))
+                         if up.get("limit") else "",
+                         (" detail=%s" % up.get("detail"))
+                         if up.get("detail") else ""))
+                if not err.retryable:
+                    raise err                 # عطل دائم: أعلِنه فوراً بلا تكرار
+                if tried < len(attempts) and backoff > 0:
+                    time.sleep(min(backoff * tried, 15))
+                continue
 
-    # ── عقد سبب التوقّف (§10): الحكم قبل التحليل، لا بعده ────────────────────
-    # سبب التوقّف يثبت الاكتمال من عدمه بذاته. تحليل نصّ يُعرف سلفاً أنه مبتور
-    # هدرٌ في أحسن الأحوال، وقبولُ نصفِ نموذجٍ في أسوئها — وهو ما كان يحدث:
-    # كان `_balance_json` يغلق الأقواس الناقصة فيمرّ نموذج ناقص إلى المصرِّف.
-    if stop == "max_tokens":
-        print("[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.")
-        raise E.AcsApiError(
-            E.ACS_UPSTREAM_TRUNCATED,
-            "انقطع رد النموذج عند سقف المخرج (%d رمزاً) في المرحلة %s."
-            % (tel.get("max_output_tokens") or 0, stage),
-            upstream={"provider": "anthropic", "kind": "max_tokens",
-                      "attempts": tried})
-    if stop == "refusal":
-        raise E.AcsApiError(E.ACS_UPSTREAM_REFUSED,
-                            upstream={"provider": "anthropic", "kind": "refusal",
-                                      "attempts": tried})
-    if stop not in ("end_turn", "stop_sequence", "?", None):
-        print("[ACS-LLM] سبب توقّف غير معروف: %r — يُعامَل معاملة المكتمل ثم "
-              "يحكم عليه المحلّل." % stop)
-    tel["complete"] = True
-    return text
+            parts = [getattr(b, "text", None) for b in (msg.content or [])]
+            text = "".join(p for p in parts if p)
+            stop = getattr(msg, "stop_reason", "?")
+            usage = getattr(msg, "usage", None)
+            tel.update({"stop_reason": stop,
+                        "output_tokens": getattr(usage, "output_tokens", None),
+                        "input_tokens": getattr(usage, "input_tokens", None),
+                        "max_output_tokens": mt,
+                        "completion_chars": len(text),
+                        "attempts": tried,
+                        "thinking": "off" if think else "default"})
+            print("[ACS-LLM] stage=%s provider=%s host=%s model=%s thinking=%s "
+                  "max_tokens=%s stop=%s out_chars=%d out_tokens=%s in_tokens=%s"
+                  % (stage, cfg.provider, cfg.base_host or "default", model,
+                     "off" if think else "default", mt, stop, len(text),
+                     tel["output_tokens"], tel["input_tokens"]))
+
+            if text.strip():
+                break           # وصل نصّ — الحكم على اكتماله بعد الحلقة
+            print("[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…")
+
+        if not text.strip():
+            if isinstance(last_err, E.AcsApiError):
+                raise last_err                # آخر عطل عابر مصنّف: أوضح من العموم
+            raise E.AcsApiError(
+                E.ACS_UPSTREAM_EMPTY_RESPONSE,
+                "أعاد النموذج رداً فارغاً في كل المحاولات (آخر stop_reason=%s)." % stop,
+                upstream={"provider": cfg.provider, "kind": "empty_text",
+                          "attempts": tried})
+
+        # ── عقد سبب التوقّف (§10): الحكم قبل التحليل، لا بعده ────────────────
+        # سبب التوقّف يثبت الاكتمال من عدمه بذاته. تحليل نصّ يُعرف سلفاً أنه مبتور
+        # هدرٌ في أحسن الأحوال، وقبولُ نصفِ نموذجٍ في أسوئها — وهو ما كان يحدث:
+        # كان `_balance_json` يغلق الأقواس الناقصة فيمرّ نموذج ناقص إلى المصرِّف.
+        if stop == "max_tokens":
+            print("[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.")
+            raise E.AcsApiError(
+                E.ACS_UPSTREAM_TRUNCATED,
+                "انقطع رد النموذج عند سقف المخرج (%d رمزاً) في المرحلة %s."
+                % (tel.get("max_output_tokens") or 0, stage),
+                upstream={"provider": cfg.provider, "kind": "max_tokens",
+                          "attempts": tried})
+        if stop == "refusal":
+            raise E.AcsApiError(E.ACS_UPSTREAM_REFUSED,
+                                upstream={"provider": cfg.provider,
+                                          "kind": "refusal",
+                                          "attempts": tried})
+        if stop not in ("end_turn", "stop_sequence", "?", None):
+            print("[ACS-LLM] سبب توقّف غير معروف: %r — يُعامَل معاملة المكتمل ثم "
+                  "يحكم عليه المحلّل." % stop)
+        tel["complete"] = True
+        return text
+
+    # ── المزوّد الأساسي، ثم بديلٌ واحدٌ محدود عند سببٍ مسموح وحده ──────────────
+    # «محدود» هنا حرفيّة: محاولةٌ واحدة على مزوّدٍ واحد، والبديل نفسه لا يُحوَّل
+    # منه إلى ثالث ولا يعود إلى الأوّل. لا حلقة، ولا عودٌ ذاتيّ، ولا تصعيد.
+    primary_cfg = PROV.primary()
+    tel["fallback_attempted"] = False
+    try:
+        return _attempt(primary_cfg)
+    except E.AcsApiError as err:
+        fb = PROV.fallback()
+        allowed, reason = PROV.should_fallback(err.code, fb)
+        tel["fallback_reason"] = reason
+        if not allowed:
+            # سببُ الامتناع يُسجَّل أيضاً: «لم يقع تحويل» و«لا بديل مضبوط»
+            # خبران مختلفان، وخلطهما يجعل ضبطاً معطّلاً يبدو سياسةً مقصودة.
+            raise
+        print("[ACS-LLM] provider fallback: %s -> %s (%s, %s)"
+              % (primary_cfg.provider, fb.provider, err.code, reason))
+        tel["fallback_attempted"] = True
+        tel["fallback_provider"] = fb.provider
+        tel["fallback_success"] = False
+        # التليمتري يُنظَّف من آثار فشل الأساسي حتى لا يُنسب إلى البديل.
+        for k in ("provider_error_type", "provider_param", "provider_limit",
+                  "provider_detail", "stop_reason", "output_tokens",
+                  "input_tokens", "completion_chars"):
+            tel.pop(k, None)
+        out = _attempt(fb)                 # يرفع بنفسه إن فشل — ولا يُحوَّل ثانيةً
+        tel["fallback_success"] = True
+        return out
 
 
 # ملاحظة معمارية (§8): كانت هنا `_balance_json` تغلق الأقواس الناقصة في مخرج

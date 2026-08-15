@@ -143,12 +143,12 @@
     "url_scheme": "http://127.0.0.1 (loopback, never proxied)",
     "page": "tests/performance/vacuity_page.html — canvas + getContext('webgl2') + requestAnimationFrame loop, no Three.js, no framework",
     "measurement_code": "IDENTICAL to the application path: sampleFrames(), heap(), gpuStats(), perfCounters(), navigationTiming()",
-    "page_load_ms": 131,
+    "page_load_ms": 142,
     "navigation_timing": {
-      "response_end_ms": 16,
-      "dom_interactive_ms": 118.6,
-      "dom_content_loaded_ms": 118.7,
-      "load_event_end_ms": 118.9,
+      "response_end_ms": 16.4,
+      "dom_interactive_ms": 131.2,
+      "dom_content_loaded_ms": 131.4,
+      "load_event_end_ms": 131.5,
       "transfer_size_bytes": 5505,
       "decoded_body_bytes": 5205
     },
@@ -157,28 +157,28 @@
       "frames": {
         "measured": true,
         "requested_window_ms": 2500,
-        "actual_window_ms": 2509.8,
-        "frames": 139,
-        "fps_average": 54.984,
-        "frame_time_mean_ms": 18.187,
-        "frame_time_min_ms": -6.8,
-        "frame_time_max_ms": 33.4,
+        "actual_window_ms": 2520.7,
+        "frames": 92,
+        "fps_average": 36.101,
+        "frame_time_mean_ms": 27.7,
+        "frame_time_min_ms": -12.6,
+        "frame_time_max_ms": 50,
         "frame_time_p5_ms": 16.6,
-        "frame_time_p50_ms": 16.7,
-        "frame_time_p95_ms": 33.3,
+        "frame_time_p50_ms": 33.3,
+        "frame_time_p95_ms": 33.4,
         "fps_at_p5_frame_time": 60.241,
-        "fps_at_p95_frame_time": 30.03
+        "fps_at_p95_frame_time": 29.94
       },
       "gpu": {
         "source": "plain WebGL2 page counters (vacuity proof)",
-        "draw_calls": 16880,
-        "triangles": 33760,
+        "draw_calls": 11952,
+        "triangles": 23904,
         "geometries": null,
         "textures": null,
         "programs": null,
         "canonical_meshes": null,
         "visible_meshes": null,
-        "frames_drawn": 173
+        "frames_drawn": 118
       }
     },
     "heavy_load": {
@@ -186,42 +186,42 @@
       "frames": {
         "measured": true,
         "requested_window_ms": 2500,
-        "actual_window_ms": 2542.7,
-        "frames": 43,
-        "fps_average": 16.518,
-        "frame_time_mean_ms": 60.54,
-        "frame_time_min_ms": -7.2,
-        "frame_time_max_ms": 83.3,
-        "frame_time_p5_ms": 50,
-        "frame_time_p50_ms": 66.6,
-        "frame_time_p95_ms": 66.7,
-        "fps_at_p5_frame_time": 20,
-        "fps_at_p95_frame_time": 14.993
+        "actual_window_ms": 2546.2,
+        "frames": 36,
+        "fps_average": 13.746,
+        "frame_time_mean_ms": 72.749,
+        "frame_time_min_ms": -3.7,
+        "frame_time_max_ms": 83.4,
+        "frame_time_p5_ms": 66.6,
+        "frame_time_p50_ms": 66.7,
+        "frame_time_p95_ms": 83.4,
+        "fps_at_p5_frame_time": 15.015,
+        "fps_at_p95_frame_time": 11.99
       },
       "gpu": {
         "source": "plain WebGL2 page counters (vacuity proof)",
-        "draw_calls": 137008,
-        "triangles": 274016,
+        "draw_calls": 112880,
+        "triangles": 225760,
         "geometries": null,
         "textures": null,
         "programs": null,
         "canonical_meshes": null,
         "visible_meshes": null,
-        "frames_drawn": 225
+        "frames_drawn": 162
       }
     },
     "heap_before_alloc": {
-      "used_js_heap_bytes": 2007005,
-      "total_js_heap_bytes": 4532313,
+      "used_js_heap_bytes": 1752485,
+      "total_js_heap_bytes": 4479065,
       "js_heap_limit_bytes": 2248146944
     },
     "heap_after_alloc_64mb": {
-      "used_js_heap_bytes": 68055074,
-      "total_js_heap_bytes": 70790894,
+      "used_js_heap_bytes": 68050954,
+      "total_js_heap_bytes": 70004462,
       "js_heap_limit_bytes": 2248146944
     },
     "heap_alloc_blocks": 64,
-    "heap_delta_bytes": 66048069,
+    "heap_delta_bytes": 66298469,
     "counters": {
       "webgl_context_count": 1,
       "context_lost_events": 0,
@@ -230,8 +230,8 @@
       "render_loop_detail": [
         {
           "id": "1821045140",
-          "calls": 233,
-          "self_rescheduled": 233
+          "calls": 170,
+          "self_rescheduled": 170
         }
       ],
       "duplicate_event_listener_count": 0,

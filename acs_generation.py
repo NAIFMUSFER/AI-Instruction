@@ -73,15 +73,29 @@ STAGE_FLOOR = 4000                 # لا مرحلة بميزانية أصغر �
 # المطلوب صار يُسجَّل، وأن رفض المزوّد صار يُصنَّف ACS_UPSTREAM_MAX_TOKENS
 # ويحمل الحدّ الذي أعلنه المزوّد نفسه، فيعرف المشغّل ماذا يضبط هنا بالضبط.
 def model_max_output():
-    """سقف مخرجات النموذج المُعلَن، أو None إن لم يُعلَن. لا يُخمَّن أبداً."""
+    """سقف مخرجات النموذج المُعلَن، أو None إن لم يُعلَن. لا يُخمَّن أبداً.
+
+    ترتيب المصادر — والأول يحسم:
+      1) ACS_LLM_MODEL_MAX_OUTPUT: رقم المشغّل، يعلو كل شيء.
+      2) سقفُ المزوّد **الموثّق عنده** (acs_provider.PROVIDER_SPEC): موجودٌ
+         لـdeepseek (384000، موثّق) وغائبٌ لـanthropic — فيبقى None هناك.
+    لا مصدر ثالث، ولا رقم يُخترَع حين يغيب المصدران. وبما أن سقف المزوّد
+    الموثّق أعلى بكثير من ميزانية النشر (32000)، فإدخاله لا يغيّر أي ميزانية
+    قائمة — يجعل المصدر معلناً وقابلاً للقياس بدل أن يكون فراغاً.
+    """
     raw = os.environ.get("ACS_LLM_MODEL_MAX_OUTPUT", "")
-    if not raw:
-        return None
+    if raw:
+        try:
+            v = int(str(raw).strip())
+        except (TypeError, ValueError):
+            return None
+        return v if v > 0 else None
     try:
-        v = int(str(raw).strip())
-    except (TypeError, ValueError):
+        import acs_provider as _PROV
+        v = _PROV.documented_max_output()
+    except Exception:                                           # noqa: BLE001
         return None
-    return v if v > 0 else None
+    return int(v) if isinstance(v, int) and v > 0 else None
 
 
 def clamp_to_model(value):

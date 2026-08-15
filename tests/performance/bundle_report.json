@@ -62,7 +62,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1873760,
+    "core_initial_bytes": 1874292,
     "core_initial_module_count": 21,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 7,
@@ -105,8 +105,8 @@
     ],
     "first_party_dynamic_import_count": 0,
     "first_party_module_count": 27,
-    "first_party_total_bytes": 1899309,
-    "initial_javascript_bytes": 1899309,
+    "first_party_total_bytes": 1899841,
+    "initial_javascript_bytes": 1899841,
     "largest_module": {
       "bytes": 228695,
       "group": "core",
@@ -183,7 +183,7 @@
         "gzip_bytes": 30587,
         "loaded": "eager",
         "path": "public/app/generated/workspace-ui.js",
-        "pct_of_first_party_js": 5.48
+        "pct_of_first_party_js": 5.47
       },
       {
         "bytes": 99740,
@@ -215,7 +215,7 @@
         "gzip_bytes": 20057,
         "loaded": "eager",
         "path": "public/app/generated/arch-detail.js",
-        "pct_of_first_party_js": 3.74
+        "pct_of_first_party_js": 3.73
       },
       {
         "bytes": 56339,
@@ -226,12 +226,12 @@
         "pct_of_first_party_js": 2.97
       },
       {
-        "bytes": 48965,
+        "bytes": 49497,
         "group": "trust",
-        "gzip_bytes": 15868,
+        "gzip_bytes": 16025,
         "loaded": "eager",
         "path": "public/app/trust/core.js",
-        "pct_of_first_party_js": 2.58
+        "pct_of_first_party_js": 2.61
       },
       {
         "bytes": 45991,
@@ -433,7 +433,7 @@
     "sha256": "141407caa2d13db9a8de8932a802329f6c5e82ea4c176572d79835907336a555",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 47424 byte shell and every byte of application JavaScript (1899309 bytes) lives in 27 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 47424 byte shell and every byte of application JavaScript (1899841 bytes) lives in 27 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,

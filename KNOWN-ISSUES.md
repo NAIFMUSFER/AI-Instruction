@@ -1576,3 +1576,89 @@ After deploying this commit, one retry of the same request produces a log line
 carrying `provider_param`, `provider_limit`, `requested_max_tokens`,
 `sdk_version`, `transport`, `thinking_sent` and the stage — which names the cause
 without another round of guessing.
+
+---
+
+## KI-26 · The provider was hard-wired, so a billing outage had no exit (**CLOSED** — multi-provider migration)
+
+**Status:** CLOSED. **Measured, live, on `0912415` and again on `c9bafa0`.**
+
+### What was measured
+
+The F-50 diagnostics pass ended with the provider's own words, on
+`req_034b149147eb43a5` at `2026-08-15T17:58:26Z`:
+
+```
+provider_error_type = invalid_request_error
+provider_detail     = "Your credit balance is too low to access the
+                       Anthropic API. Please go to Plans & Billing to
+                       upgrade or purchase credits."
+```
+
+Diagnosis complete — and the system had **no move to make**. Three separate
+defects, each invisible until this exact failure:
+
+1. **No exit.** `_call_llm_impl` built its client inline:
+   `anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"], …)`. The
+   provider name, key and endpoint were three decisions scattered inside the
+   generation function — the one function guarded by KI-23, KI-24 and F-50.
+   Switching endpoint meant editing the generation path.
+
+2. **Wrong classification.** A 400 whose cause is the operator's account was
+   `ACS_UPSTREAM_BAD_REQUEST` → 502 → «رفض المزوّد صياغة الطلب». The request
+   was perfectly well-formed. The user was told their input was the problem,
+   and the frontend map put it in `HTTP_4XX_VALIDATION`.
+
+3. **Wrong provider name in every log.** `classify_upstream` hard-coded
+   `{"provider": "anthropic"}` in the string. On any other endpoint that is
+   worse than a missing field: an absence that looks like information.
+
+### What changed
+
+`acs_provider.py` — a pure resolution layer, no SDK import, no connection, no
+secret in any output. It resolves provider · key · base URL · model ·
+transport · documented ceiling for a primary and one optional fallback. No
+generation-stage code knows which provider is active.
+
+**The endpoint-safety rule is the load-bearing one.** DeepSeek is reached
+through the *anthropic* SDK with `base_url` swapped. If `base_url` were
+dropped for any reason — an older SDK, a signature change — the request would
+go to `api.anthropic.com` **carrying a DeepSeek key**. That is credential
+disclosure, not graceful degradation. So `_sdk_accepts_base_url()` introspects
+`anthropic.Anthropic.__init__` before the call and raises
+`ACS_INTEGRATION_ERROR` if the endpoint cannot be applied. Measured: **zero
+bytes sent** in that case.
+
+`ACS_UPSTREAM_BILLING` — 503, not retryable, and a user message that names no
+balance, no account and no billing. Classified from provider evidence only:
+DeepSeek's documented `402 Insufficient Balance`, an `error_type` of
+`billing_error`, or an explicit phrase from `BILLING_MARKERS`. A generic 400
+stays a generic 400 — asserted.
+
+Fallback is an **allow-list of three codes** (`UNAVAILABLE`, `OVERLOADED`,
+`CONNECTION`), one attempt, one alternate provider, no recursion. Timeout is
+deliberately *not* eligible: a timeout does not prove the provider declined
+the work, and a second copy doubles the spend on generation that may already
+be running. Billing is eligible only behind an explicit
+`ACS_LLM_FALLBACK_ON_BILLING=1` — an automatic switch would move spending to
+another vendor with no human decision.
+
+### What did not change
+
+`STAGE_SHARE`, `STAGE_FLOOR`, stage budgets (32000/16000/24000 on the
+production ceiling), single-vs-staged routing, KI-24 chunk constants, prompts,
+schema, repair, scene generation, rendering, engineering authority. All
+asserted, not claimed. Existing Anthropic deployments keep working on the old
+`ANTHROPIC_API_KEY` alone — and that key is **never** lent to DeepSeek.
+
+Pinned by `tests/remediation/test_multi_provider.py` (111 assertions).
+Red-team verified: re-introducing the silent `base_url` drop fails 12
+assertions, lending the legacy key fails 3, removing the billing branch fails
+3, widening the fallback allow-list fails 5, dropping the new telemetry fields
+fails 3, and making the fallback recursive fails 14.
+
+**LIVE DEEPSEEK CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.** There is
+no DeepSeek key here and PyPI is blocked, so the real SDK cannot be installed.
+What is proven is resolution, endpoint targeting, classification, the fallback
+bound and secret isolation — measured against a double carrying the real
+v0.40.0 signature that records what the client was built with.

@@ -37,6 +37,7 @@ import acs_upload_security as UPLOAD
 import acs_engineering_authority as EA
 import acs_cpu_pool as CPU
 import acs_generation_job as JOBS
+import acs_provider as PROV
 
 LOG = LOGGING.StructuredLogger(service="ACS Understanding Engine",
                                version=BUILD.SERVICE_VERSION)
@@ -201,8 +202,11 @@ MAX_BUILDING = env_int("ACS_MAX_BUILDING", 900000)   # حجم النموذج ف�
 # بلا أي حدّ حجم ويُمرَّر إلى المُوجّه بـtruncate=False، فأربعون ملاحظة بعشرة
 # ملايين حرف تُقبل وتُنسخ عبر حدّ العملية.
 MAX_NOTES = env_int("ACS_MAX_NOTES_CHARS", 20000)
-ALLOWED_MODELS = {m.strip() for m in os.environ.get(
-    "ACS_ALLOWED_MODELS", "claude-sonnet-5,claude-haiku-4-5").split(",") if m.strip()}
+# ACS_ALLOWED_MODELS إن ضُبط يعلو كل شيء. وإلّا تُشتقّ القائمة من المزوّد
+# المحلول — فالافتراضي المدفون `claude-sonnet-5,claude-haiku-4-5` كان يرفض كل
+# معرّف deepseek، فيقلع الخادم ثم يردّ /ready بـ503 على ضبطٍ صحيح تماماً.
+# على المزوّد anthropic (الافتراضي) الناتج مطابقٌ حرفياً لما كان.
+ALLOWED_MODELS = PROV.allowed_models()
 
 
 def _upload_error(exc):
@@ -457,12 +461,28 @@ class UnderstandReq(BaseModel):
 
 
 def _model_configured() -> str:
-    return (os.environ.get("ACS_LLM_MODEL", "claude-sonnet-5") or "").strip()
+    """معرّف النموذج الفعليّ بعد حلّ المزوّد — لا الافتراضي المدفون."""
+    return (PROV.primary().model or "").strip()
 
 
 def _api_key_configured() -> bool:
-    """وجود المفتاح فقط — قيمته لا تُقرأ ولا تُطبع ولا تُعاد بأي شكل."""
-    return bool((os.environ.get("ANTHROPIC_API_KEY") or "").strip())
+    """وجود المفتاح فقط — قيمته لا تُقرأ ولا تُطبع ولا تُعاد بأي شكل.
+
+    القرار كلّه في acs_provider (الجديد والقديم، ولمن يُقبل كلٌّ منهما).
+    """
+    return bool(PROV.primary().api_key)
+
+
+def _key_env_name() -> str:
+    """أسماء المتغيّرات المقبولة للمفتاح — أسماءٌ لا قيم. تُشتقّ من عقد المزوّد
+    الواحد، فلا يوجد في هذا الملفّ اسمُ متغيّرٍ سرّيّ مكتوبٌ حرفياً."""
+    p = PROV.primary()
+    names = ["ACS_LLM_API_KEY"]
+    legacy = (PROV.PROVIDER_SPEC.get(p.provider or "") or {}).get(
+        "legacy_key_env")
+    if legacy:
+        names.append(legacy)
+    return "/".join(names)
 
 
 @app.get("/")
@@ -506,6 +526,9 @@ def health():
             "engineering_changes": EA.health_status(),
             "logging": LOGGING.health_status(),
             "generation_jobs": JOBS.health_status(),
+            # حالة مزوّد النموذج — أسماء ومضيف فقط. لا مفتاح، ولا عنوان كامل
+            # (قد يحمل اعتماداً مضمَّناً)، ولا رصيد حساب ولا أي حالة فوترة.
+            "llm": PROV.health_status(),
             # KI-14/F-46: حالة مجمّع العمل الحاسوبيّ. `isolated=false` يعني
             # أن المنصّة منعت spawn وأننا على خيوط — تدهورٌ مُعلَن لا صامت.
             "cpu_pool": CPU.health_status(),
@@ -538,12 +561,17 @@ def ready():
     الحياة (/health) شيء والجاهزية شيء آخر — الخلط بينهما يخفي خادماً حيّاً عاجزاً."""
     missing = []
     if not _api_key_configured():
-        missing.append("ANTHROPIC_API_KEY")       # الاسم فقط، بلا قيمة
+        missing.append(_key_env_name())           # الاسم فقط، بلا قيمة
     model = _model_configured()
     if not model:
         missing.append("ACS_LLM_MODEL")
     elif model not in ALLOWED_MODELS:
         missing.append("ACS_ALLOWED_MODELS")
+    _p = PROV.primary()
+    if _p.state == PROV.UNKNOWN_PROVIDER:
+        missing.append("ACS_LLM_PROVIDER")
+    elif _p.state == PROV.MISSING_BASE_URL:
+        missing.append("ACS_LLM_BASE_URL")
     try:
         import anthropic                          # noqa: F401
         sdk = True
@@ -850,18 +878,33 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
 @app.on_event("startup")
 def _startup_env_check():
     ok, missing = [], []
-    (ok if _api_key_configured() else missing).append("ANTHROPIC_API_KEY")
+    (ok if _api_key_configured() else missing).append(_key_env_name())
     model = _model_configured()
     (ok if model else missing).append("ACS_LLM_MODEL")
     if model and model not in ALLOWED_MODELS:
         missing.append("ACS_ALLOWED_MODELS")
     (ok if _origins else missing).append("ACS_ALLOWED_ORIGINS")
+    _p, _f = PROV.primary(), PROV.fallback()
+    if _p.state == PROV.UNKNOWN_PROVIDER:
+        missing.append("ACS_LLM_PROVIDER")
+    elif _p.state == PROV.MISSING_BASE_URL:
+        missing.append("ACS_LLM_BASE_URL")
     print("[ACS-BOOT] %s v%s · error-contract=%s" %
           (SERVICE_NAME, SERVICE_VERSION, E.ERROR_CONTRACT_VERSION))
     print("[ACS-BOOT] port=%s host=0.0.0.0 timeout=%ds origins=%d models=%d"
           % (os.environ.get("PORT", "8000"), int(REQUEST_TIMEOUT_S),
              len(_origins), len(ALLOWED_MODELS)))
     print("[ACS-BOOT] configured: %s" % (", ".join(sorted(ok)) or "—"))
+    # المزوّد يُعلَن عند الإقلاع باسمه ومضيفه: نشرٌ يظنّ نفسه على deepseek بينما
+    # يُنادي api.anthropic.com عطلٌ صامتٌ تماماً في السجلّ بلا هذا السطر.
+    print("[ACS-BOOT] llm provider=%s model=%s host=%s transport=%s state=%s"
+          % (_p.provider, _p.model, _p.base_host or "sdk-default",
+             _p.transport, _p.state))
+    print("[ACS-BOOT] llm fallback=%s%s (on_billing=%s)"
+          % (_f.provider or "none",
+             (" model=%s host=%s" % (_f.model, _f.base_host or "sdk-default"))
+             if _f.ok else " [%s]" % _f.state,
+             PROV.fallback_on_billing()))
     if missing:
         print("[ACS-BOOT] MISSING (names only): %s" % ", ".join(sorted(set(missing))))
         print("[ACS-BOOT] الخدمة حيّة لكن /ready سيردّ 503 حتى يكتمل الضبط.")

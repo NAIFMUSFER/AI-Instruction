@@ -314,6 +314,10 @@ jobs:
             echo
             # F-50: a provider 400 must name the offending parameter.
             python3 tests/remediation/test_provider_reject.py
+            echo
+            # Multi-provider: a DeepSeek configuration must never be able to
+            # reach api.anthropic.com, and the fallback is one bounded attempt.
+            python3 tests/remediation/test_multi_provider.py
           } 2>&1 | tee logs/dependency-audit.log
       - name: CVE scan (advisory — needs the network, does not gate the PR)
         # This is the ONE dependency check that cannot be done offline, so it is

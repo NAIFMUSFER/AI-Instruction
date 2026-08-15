@@ -100,6 +100,12 @@ node "$ROOT/tests/lib/run.js" "$HERE/test_scene_limits.js"; guard $?
 step "F-50 · provider 400 diagnostics and the single model-output ceiling"
 python3 "$HERE/test_provider_reject.py"; guard $?
 
+# هجرة المزوّد: البديل هنا يسجّل **إلى أين** كان النداء ذاهباً — وهو الفحص
+# الذي يمنع وصول مفتاح deepseek إلى api.anthropic.com، ولا يكشفه بديلٌ لا
+# يحفظ ما بُني به العميل.
+step "multi-provider · deepseek primary, one bounded anthropic fallback, billing"
+python3 "$HERE/test_multi_provider.py"; guard $?
+
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 

@@ -31,6 +31,23 @@ services:
       - key: ACS_SINGLE_INSTANCE
         value: "1"
 
+      # ── مزوّد النموذج ──────────────────────────────────────────────────
+      # هذا المخطّط يبقى على anthropic: نشرٌ قائم لا يتغيّر بمجرّد ترقية الكود.
+      # للتحويل إلى deepseek أساسياً، اضبط في لوحة Render (لا في هذا الملفّ):
+      #     ACS_LLM_PROVIDER      = deepseek
+      #     ACS_LLM_BASE_URL      = https://api.deepseek.com/anthropic
+      #     ACS_LLM_API_KEY       = <سرّ — في اللوحة وحدها>
+      #     ACS_LLM_MODEL         = deepseek-v4-pro
+      #     ACS_ALLOWED_MODELS    = deepseek-v4-pro,deepseek-v4-flash
+      # وللإبقاء على anthropic بديلاً:
+      #     ACS_LLM_FALLBACK_PROVIDER = anthropic
+      #     ACS_LLM_FALLBACK_MODEL    = claude-sonnet-5
+      #     ACS_LLM_FALLBACK_API_KEY  = <سرّ>   (أو يُترك ليُستعمل
+      #                                          ANTHROPIC_API_KEY أعلاه)
+      # التحويل عند عطل الرصيد معطّل افتراضياً — فعّله صراحةً إن أردته:
+      #     ACS_LLM_FALLBACK_ON_BILLING = 1
+      - key: ACS_LLM_PROVIDER
+        value: anthropic
       - key: ACS_LLM_MODEL
         value: claude-sonnet-5
       # قائمة النماذج المسموح للزائر طلبها. غيابها كان يترك الافتراضي ضمنياً في

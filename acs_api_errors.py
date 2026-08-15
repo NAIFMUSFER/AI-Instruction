@@ -49,6 +49,13 @@ ACS_UPSTREAM_BAD_REQUEST      = "ACS_UPSTREAM_BAD_REQUEST"
 # لا تُخبر المشغّل بشيء يفعله، بينما هذا العطل بالذات له إجراء واحد معروف:
 # اضبط ACS_LLM_MODEL_MAX_OUTPUT على السقف الذي أعلنه المزوّد نفسه.
 ACS_UPSTREAM_MAX_TOKENS       = "ACS_UPSTREAM_MAX_TOKENS"
+# مقيس حيّاً (req_034b149147eb43a5): المزوّد ردّ 400 بـ
+#   error.type=invalid_request_error
+#   "Your credit balance is too low to access the Anthropic API…"
+# فصُنّف ACS_UPSTREAM_BAD_REQUEST وقرأ المستخدم «رفض المزوّد صياغة الطلب».
+# صياغة الطلب كانت سليمة تماماً؛ العطل تشغيليّ عند المشغّل. الرمز منفصل لأن
+# الإجراء منفصل، والرسالة الظاهرة لا تكشف شيئاً عن حساب المشغّل ولا رصيده.
+ACS_UPSTREAM_BILLING          = "ACS_UPSTREAM_BILLING"
 ACS_UPSTREAM_RATE_LIMIT       = "ACS_UPSTREAM_RATE_LIMIT"
 ACS_UPSTREAM_OVERLOADED       = "ACS_UPSTREAM_OVERLOADED"
 ACS_UPSTREAM_UNAVAILABLE      = "ACS_UPSTREAM_UNAVAILABLE"
@@ -68,7 +75,7 @@ CODES = (
     ACS_INTEGRATION_ERROR,
     ACS_UPSTREAM_NOT_CONFIGURED, ACS_UPSTREAM_AUTH, ACS_UPSTREAM_PERMISSION,
     ACS_UPSTREAM_MODEL_REJECTED, ACS_UPSTREAM_BAD_REQUEST,
-    ACS_UPSTREAM_MAX_TOKENS,
+    ACS_UPSTREAM_MAX_TOKENS, ACS_UPSTREAM_BILLING,
     ACS_UPSTREAM_RATE_LIMIT, ACS_UPSTREAM_OVERLOADED,
     ACS_UPSTREAM_UNAVAILABLE, ACS_UPSTREAM_TIMEOUT, ACS_UPSTREAM_CONNECTION,
     ACS_UPSTREAM_EMPTY_RESPONSE, ACS_UPSTREAM_INVALID_JSON,
@@ -86,6 +93,31 @@ RETRYABLE = frozenset({
     ACS_UPSTREAM_CONNECTION, ACS_UPSTREAM_EMPTY_RESPONSE,
     ACS_TIMEOUT,
 })
+
+# التحويل إلى مزوّد بديل مسموح لهذه وحدها — قائمة سماح، والافتراض المنع.
+# قائمة منعٍ كانت ستفتح الباب لكل رمز جديد يُضاف لاحقاً بلا أن ينتبه أحد.
+#
+# ما ليس هنا، ولماذا:
+#   ACS_INTEGRATION_ERROR     عطلنا نحن — سيتكرّر حرفياً عند أي مزوّد.
+#   ACS_UPSTREAM_BAD_REQUEST  طلبنا نحن مُصاغ خطأً — كذلك.
+#   ACS_UPSTREAM_MAX_TOKENS   ضبطُ سقفٍ عندنا — تحويله يخفي عطل ضبط.
+#   ACS_UPSTREAM_AUTH/PERMISSION/MODEL_REJECTED  ضبط اعتماد أو معرّف.
+#   ACS_UPSTREAM_INVALID_JSON / TRAILING_JSON / TRUNCATED / REFUSED /
+#   EMPTY_RESPONSE            مخرج النموذج وصل وكان رديئاً؛ إعادة التوليد عند
+#                             مزوّد آخر إنفاقٌ مضاعف على عطلٍ ليس عطل توفّر.
+#   ACS_UPSTREAM_TIMEOUT      المهلة لا تثبت أن المزوّد لم يقبل الطلب: قد يكون
+#                             يولّد الآن. إرسال نسخة ثانية يضاعف الكلفة على
+#                             عملٍ ربّما اكتمل.
+#   ACS_UPSTREAM_RATE_LIMIT   حدّ معدّل عابر له إعادة محاولة، لا تحويل.
+# ACS_UPSTREAM_BILLING مشروطة بمفتاح صريح — انظر acs_provider.should_fallback.
+FALLBACK_ELIGIBLE = frozenset({
+    ACS_UPSTREAM_UNAVAILABLE,
+    ACS_UPSTREAM_OVERLOADED,
+    ACS_UPSTREAM_CONNECTION,
+})
+
+#: تُضاف إلى ما سبق فقط حين يُفعّل المشغّل ACS_LLM_FALLBACK_ON_BILLING.
+FALLBACK_ELIGIBLE_ON_BILLING = frozenset({ACS_UPSTREAM_BILLING})
 
 # رمز → حالة HTTP. الحالة تصف ما يفعله العميل، لا مكان العطل.
 HTTP_STATUS = {
@@ -107,6 +139,9 @@ HTTP_STATUS = {
     ACS_UPSTREAM_MODEL_REJECTED: 502,
     ACS_UPSTREAM_BAD_REQUEST: 502,
     ACS_UPSTREAM_MAX_TOKENS: 502,
+    # 503 لا 502: العطل ليس في الطلب ولا في المزوّد كخدمة، بل في توفّر الخدمة
+    # لدينا. 503 هو ما يقرؤه وكيلٌ أو مراقبٌ على أنه «عُد لاحقاً»، وهو الصحيح.
+    ACS_UPSTREAM_BILLING: 503,
     ACS_UPSTREAM_RATE_LIMIT: 429,
     ACS_UPSTREAM_OVERLOADED: 503,
     ACS_UPSTREAM_UNAVAILABLE: 503,
@@ -140,6 +175,11 @@ MESSAGE_AR = {
     ACS_UPSTREAM_PERMISSION: "لا صلاحية لدى الخادم لاستخدام هذا النموذج.",
     ACS_UPSTREAM_MODEL_REJECTED: "رفض المزوّد معرّف النموذج المطلوب.",
     ACS_UPSTREAM_BAD_REQUEST: "رفض المزوّد صياغة الطلب.",
+    # لا تذكر رصيداً ولا فوترةً ولا حساباً: المستخدم ليس المشغّل، وكشفُ حالة
+    # حساب المشغّل له تسريبُ معلومة تشغيلية بلا فائدة له. التفصيل الآمن يبقى
+    # في تليمتري المشغّل وحدها.
+    ACS_UPSTREAM_BILLING: ("خدمة الذكاء الاصطناعي غير متاحة حالياً بسبب "
+                           "إعدادات مزوّد الخدمة."),
     ACS_UPSTREAM_MAX_TOKENS: "طلب الخادم سقف مخرجات أعلى ممّا يسمح به "
                              "النموذج. راجع إعدادات النشر.",
     ACS_UPSTREAM_RATE_LIMIT: "بلغ المزوّد حدّ الطلبات. أعِد المحاولة بعد قليل.",
@@ -237,6 +277,9 @@ _BY_CLASS = (
 )
 
 _BY_STATUS = {400: ACS_UPSTREAM_BAD_REQUEST, 401: ACS_UPSTREAM_AUTH,
+              # deepseek يعلن 402 «Insufficient Balance» صراحةً — حالةٌ
+              # لا تحتمل تأويلاً، فلا تحتاج مطابقة نصّ.
+              402: ACS_UPSTREAM_BILLING,
               403: ACS_UPSTREAM_PERMISSION, 404: ACS_UPSTREAM_MODEL_REJECTED,
               408: ACS_UPSTREAM_TIMEOUT, 413: ACS_UPSTREAM_BAD_REQUEST,
               429: ACS_UPSTREAM_RATE_LIMIT, 500: ACS_UPSTREAM_UNAVAILABLE,
@@ -273,6 +316,19 @@ PROVIDER_ERROR_TYPES = (
     "invalid_request_error", "authentication_error", "permission_error",
     "not_found_error", "request_too_large", "rate_limit_error",
     "api_error", "overloaded_error", "billing_error",
+)
+
+#: شواهد الرصيد/الحساب الصريحة. لا يُصنَّف 400 عامّ فوترةً أبداً — يجب أن يقول
+#: المزوّد ذلك بنفسه. القائمة صريحة ومحدودة عمداً: توسيعها بمرادفات ظنّية يحوّل
+#: كل رفض غامض إلى «فوترة»، فيُرسل المشغّل إلى صفحة الدفع بدل سبب العطل.
+BILLING_MARKERS = (
+    "credit balance",          # anthropic — مقيس حيّاً
+    "purchase credits",        # anthropic — مقيس حيّاً
+    "billing",                 # عامّ لدى المزوّدَين
+    "account balance",
+    "insufficient balance",    # deepseek — 402 Insufficient Balance
+    "run out of balance",      # deepseek — نصّ التوثيق
+    "quota",
 )
 
 _ASCII_SAFE = re.compile(r"[^\x20-\x7E]+")
@@ -362,8 +418,31 @@ def safe_provider_detail(exc, max_chars=240):
     return out
 
 
-def classify_upstream(exc, attempts=None):
-    """استثناء من مسار النموذج → AcsApiError مصنّف. لا يرمي أبداً."""
+def is_billing_evidence(detail, status=None):
+    """هل يثبت المزوّد بنفسه أن العطل رصيد/حساب؟ الافتراض «لا».
+
+    ثلاثة شواهد مقبولة، وكلّها من المزوّد لا من تخميننا:
+      • حالة 402 المخصّصة لذلك عند deepseek،
+      • error.type = billing_error،
+      • عبارة صريحة من BILLING_MARKERS في رسالة التحقّق.
+    ما عدا ذلك يبقى على تصنيفه — 400 غامض ليس فوترةً.
+    """
+    if status == 402:
+        return True
+    d = detail if isinstance(detail, dict) else {}
+    if d.get("error_type") == "billing_error":
+        return True
+    text = str(d.get("detail") or "").lower()
+    return any(mark in text for mark in BILLING_MARKERS) if text else False
+
+
+def classify_upstream(exc, attempts=None, provider="anthropic"):
+    """استثناء من مسار النموذج → AcsApiError مصنّف. لا يرمي أبداً.
+
+    `provider` يدخل الحقل `upstream.provider` وحده. كان الاسم مثبّتاً
+    "anthropic" في النصّ، فكان سجلّ نشرٍ على deepseek يسمّي المزوّد الخطأ في كل
+    عطل — أسوأ من غياب الحقل، لأنه غيابٌ يبدو معلومة.
+    """
     if isinstance(exc, AcsApiError):
         return exc
     name = type(exc).__name__
@@ -403,14 +482,20 @@ def classify_upstream(exc, attempts=None):
         detail = safe_provider_detail(exc)
     except Exception:                                           # noqa: BLE001
         detail = {}
+    # الفوترة تُفحَص **قبل** سقف الرموز: رفض الرصيد يأتي 400 بلا وسيط مخالف
+    # وبلا حدّ، فلا يتنازع الفرعان — لكن الترتيب يجعل ذلك خاصيّةً لا مصادفة.
+    if code in (ACS_UPSTREAM_BAD_REQUEST, ACS_UPSTREAM_UNKNOWN,
+                ACS_UPSTREAM_PERMISSION, ACS_UPSTREAM_BILLING) and \
+            is_billing_evidence(detail, status):
+        code = ACS_UPSTREAM_BILLING
     # 400 سببه سقف المخرجات له رمزه: الإجراء معروف، فلا يُخفى تحت العامّ.
     # الشرط: `max_tokens` هو الوسيط **المخالف**، أو أن المزوّد ذكر حدّ
     # المخرجات صراحةً. ذكرُ max_tokens في شرح عطلٍ آخر لا يكفي.
-    if code == ACS_UPSTREAM_BAD_REQUEST and (
+    elif code == ACS_UPSTREAM_BAD_REQUEST and (
             detail.get("param") == "max_tokens"
             or detail.get("limit") is not None):
         code = ACS_UPSTREAM_MAX_TOKENS
-    up = {"provider": "anthropic", "kind": name,
+    up = {"provider": provider or "anthropic", "kind": name,
           "status": status, "attempts": attempts}
     for key in ("error_type", "param", "requested", "limit",
                 "provider_request_id", "detail"):

@@ -496,6 +496,11 @@ const codeMap={
      خطأ من الزائر ولا عطل شبكة: يُعرَض كعطل خادم صريح، ولا يُقترَح على
      المستخدم أن يقصّر وصفه — تقصيره لن يغيّر سقفاً مضبوطاً في النشر. */
   ACS_UPSTREAM_MAX_TOKENS:'HTTP_5XX',
+  /* رصيد/حساب المزوّد. PROVIDER_UNAVAILABLE لأن هذا بالضبط ما يعيشه المستخدم:
+     الخدمة غير متاحة الآن ولا شيء في طلبه يصلحها. لا يُعرَض HTTP_4XX كما كان
+     يحدث حين كان يندرج تحت ACS_UPSTREAM_BAD_REQUEST — فيُلام الزائر على صياغة
+     طلبٍ كانت سليمة. ولا تُذكَر الفوترة في أي نصّ يراه المستخدم. */
+  ACS_UPSTREAM_BILLING:'PROVIDER_UNAVAILABLE',
   ACS_UPSTREAM_REFUSED:'HTTP_4XX_VALIDATION',
   ACS_UPSTREAM_UNKNOWN:'HTTP_5XX'
 };
