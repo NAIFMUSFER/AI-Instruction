@@ -368,14 +368,29 @@ print('\n── د · هندسة المرحلة الأولى مرجع لا يُ�
 
 
 def _staged_with_rogue_detail():
-    """مرحلة التفصيل تحاول تغيير rect ومقاس الأرض وتضيف منطقة لم تُخطَّط."""
-    plan_text = json.dumps(tiny_building(), ensure_ascii=False)
+    """مرحلة التفصيل تحاول تغيير rect ومقاس الأرض وتضيف منطقة لم تُخطَّط.
+
+    BIG_PROMPT يُصنَّف LARGE (٥٤ منطقة مقدَّرة)، فمخرج خطّته المقدَّر يتجاوز
+    سقف مرحلته — وهو بالضبط عطل KI-24. لذلك تمرّ خطّته الآن بالمسار المحدود:
+    بيان ← شريحة ← تفصيل، لا بنداء خطّة واحد. السيناريو المُبرمَج يتبع هذا
+    التسلسل. المُختبَر في §٧ لم يتغيّر: هندسة المرحلة الأولى لا تنقضها مرحلة
+    التفصيل مهما أعادت كتابتها.
+    """
+    tb = tiny_building()
+    outline = dict((k, tb[k]) for k in
+                   ("site", "floor_height", "wall_h", "wall_t", "levels", "meta"))
+    outline["zones"] = [{"id": r["id"], "role": r["role"], "template": "t"}
+                        for r in tb["floors"]["t"]["rooms"]]
+    outline_text = json.dumps(outline, ensure_ascii=False)
+    chunk_text = json.dumps({"rooms": tb["floors"]["t"]["rooms"]},
+                            ensure_ascii=False)
     rogue = json.dumps({"rooms": [
         {"id": "storage", "rect": [5.0, 5.0, 1.0, 1.0], "role": "storage"},
         {"id": "receiving", "rect": [10.0, 0.2, 9.4, 14.6], "role": "receiving"},
         {"id": "ghost_zone", "rect": [0, 0, 3, 3], "role": "office"}]},
         ensure_ascii=False)
-    return with_fake([FakeMessage(plan_text, "end_turn"),
+    return with_fake([FakeMessage(outline_text, "end_turn"),
+                      FakeMessage(chunk_text, "end_turn"),
                       FakeMessage(rogue, "end_turn")],
                      lambda: U.understand(BIG_PROMPT, btype='warehouse',
                                           site_w=120, site_d=80, floors=1,

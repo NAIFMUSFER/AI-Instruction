@@ -538,6 +538,23 @@ treats it as absent.
 | `ACS_MAX_GROUPS` | `14` | Hard cap on detail groups. |
 | `ACS_REPAIR_ROUNDS` | `1` | Repair rounds after validation failure. |
 
+### Bounded plan chunking (KI-24 · `acs_plan_chunks`)
+
+The plan stage used to be one call that had to emit the whole building; on a
+LARGE workload its output did not fit its ceiling and the request died with
+`ACS_UPSTREAM_TRUNCATED`. It is now `outline → plan_chunk[0..n]`, with chunk
+size derived from the budget and re-derived from measured output.
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `ACS_MAX_TOKENS_OUTLINE` | *(unset → derived from `ACS_MAX_BUILDING_ZONES`)* | Ceiling for the outline stage. The outline is the one stage that cannot be split, so its ceiling is sized to the declared capacity rather than to a fraction of the budget. |
+| `ACS_MAX_BUILDING_ZONES` | `400` | Declared capacity. Above it the outline still keeps every zone but reports `PLAN_OUTLINE_TOO_LARGE`. |
+| `ACS_PLAN_BRIEF_MAX_CHARS` | `160` | Contract cap on the per-zone `brief` in a plan chunk. Unbounded prose here is what made the plan output unbounded. |
+| `ACS_PLAN_CHUNK_SAFETY` | `0.60` | Fraction of a chunk's ceiling the estimate is allowed to fill. |
+| `ACS_PLAN_VERBOSITY_TOLERANCE` | `3.0` | How far past the contract the model may run before a chunk is sent unprobed. Above it, a small pilot call measures the real per-zone cost first. |
+| `ACS_MAX_PLAN_CHUNK_SPLITS` | `3` | Times a chunk that reached its ceiling may be halved and retried. The ceiling itself is never raised. |
+| `ACS_MAX_PLAN_CHUNKS` | `24` | Hard cap on plan chunks per request. Zones beyond it are resolved deterministically and reported, never deleted. |
+
 ### Timeouts and execution
 
 | Variable | Default | Meaning |

@@ -23,6 +23,7 @@ import threading
 
 import acs_api_errors as E                     # عقد الأخطاء الموحّد (رموز + تصنيف)
 import acs_generation as G                     # ميزانية المخرج واستراتيجية التوليد
+import acs_plan_chunks as PC                   # عقد الخطّة المحدود والتقطيع (KI-24)
 import acs_logging as LOGGING                  # سجلّ إنتاج منظَّم (F-18) — قناة التليمتري
 
 # سجلّ هذه الوحدة. كل حدث سطر JSON واحد بحقول معلنة، والحجب بالاسم يمنع
@@ -468,7 +469,8 @@ def _estimated_cost_usd(input_tokens, output_tokens):
 
 def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
                                request_id=None, duration_ms=None, success=True,
-                               error_code=None, upstream_class=None):
+                               error_code=None, upstream_class=None,
+                               chunk_index=None, chunk_count=None):
     """حدث تليمتري واحد لكل نداء توليد — نجح أو فشل (F-13).
 
     القناة `StructuredLogger.generation` تُسقط أي حقل غير معلن، فلا يمرّ منها
@@ -494,6 +496,12 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
             "success": bool(success),
             "error_code": error_code,
         }
+        # KI-24/F-38: موضع الشريحة في السلسلة. بلا هذين الحقلين لا يمكن نسب
+        # عطلٍ إلى شريحة بعينها في سجلّ الإنتاج.
+        if chunk_index is not None:
+            fields["chunk_index"] = int(chunk_index)
+        if chunk_count is not None:
+            fields["chunk_count"] = int(chunk_count)
         # معرّف الطلب يُمرَّر من المتّصل أو لا يظهر. معرّف مخترَع لا يطابق سجلّ
         # الطلب أسوأ من غيابه: يوهم بربطٍ غير موجود.
         if request_id:
@@ -509,7 +517,7 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
 
 def call_llm(description, model=None, max_tokens=None, truncate=True, content=None,
              btype=None, user_msg=None, stage="single", telemetry=None,
-             request_id=None, strategy=None):
+             request_id=None, strategy=None, chunk_index=None, chunk_count=None):
     """نداء النموذج + حدث تليمتري واحد له مهما كانت النتيجة (F-13).
 
     التوقيع الأصلي محفوظ حرفياً؛ `request_id` و`strategy` وسيطان اختياريان
@@ -529,17 +537,22 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
         _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
                                    request_id=request_id, duration_ms=_ms(),
                                    success=False, error_code=err.code,
-                                   upstream_class=(up or {}).get("kind"))
+                                   upstream_class=(up or {}).get("kind"),
+                                   chunk_index=chunk_index,
+                                   chunk_count=chunk_count)
         raise
     except Exception as err:                                  # noqa: BLE001
         _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
                                    request_id=request_id, duration_ms=_ms(),
                                    success=False,
-                                   upstream_class=type(err).__name__)
+                                   upstream_class=type(err).__name__,
+                                   chunk_index=chunk_index,
+                                   chunk_count=chunk_count)
         raise
     _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
                                request_id=request_id, duration_ms=_ms(),
-                               success=True)
+                               success=True, chunk_index=chunk_index,
+                               chunk_count=chunk_count)
     return text
 
 
@@ -1045,6 +1058,219 @@ DETAIL_MSG = (
     "لا تُخرج مناطق أخرى ولا شرحاً.\n\n")
 
 
+OUTLINE_MSG = (
+    "اقرأ طلب العميل التالي كاملاً ثم أعِد **بيان المناطق** فقط بصيغة JSON.\n"
+    "هذه أصغر مرحلة في التوليد: لا مستطيلات، ولا أبعاد لكل منطقة، ولا نثر، ولا "
+    "تفاصيل داخلية إطلاقاً. المطلوب حصراً:\n"
+    '{ "site":{"w":,"d":}, "floor_height":, "wall_h":, "wall_t":,\n'
+    '  "levels":[{"id","template","elevation"}],\n'
+    '  "zones":[ {"id":"معرّف قصير بالإنجليزية","role":"دور الحيّز",'
+    '"template":"اسم قالب الدور"} ] }\n\n'
+    "**شرط القبول**: راجع الطلب بنداً بنداً. لكل حيّز طلبه العميل سطرٌ واحد في "
+    "zones — إن طلب ثلاثة فثلاثة، وإن طلب أربعين فأربعون. لا تدمج حيّزين ولا "
+    "تحذف واحداً ولا تضف من قالب جاهز. السطر لا يتجاوز بضع كلمات: التفاصيل "
+    "والمقاسات تأتي في مرحلة تالية.\n"
+    "طلب العميل:\n\n")
+
+PLAN_CHUNK_MSG = (
+    "هذا بيان معتمد لمبنى، ومطلوب منك الآن **هندسة المناطق المذكورة أدناه فقط**.\n"
+    "أعِد JSON بهذا الشكل حصراً: {\"rooms\":[ {\"id\",\"rect\":[x,y,w,d],"
+    "\"role\",\"walls\",\"brief\"} ]}\n"
+    "احتفظ بنفس id بالضبط لكل منطقة مطلوبة، ولا تُخرج منطقة غير مذكورة.\n"
+    "الحقل brief سطر واحد لا يتجاوز %d حرفاً: ينقل أعداد العميل وأسماءه لهذا "
+    "الحيّز وحده (مثال: «١٢ محطة تغليف، ٦ مستويات رفّ»). لا تُعِد كتابة الطلب "
+    "فيه، ولا تكتب تفاصيل داخلية (لا racks ولا points ولا furniture) — تلك "
+    "مرحلة تالية.\n"
+    "المستطيلات داخل حدود الأرض ولا تتداخل.\n\n" % PC.BRIEF_MAX_CHARS)
+
+
+def _outline(description, model=None, btype="residential", telemetry=None,
+             request_id=None):
+    """المرحلة الصغرى: بيان المناطق وحده (F-35).
+
+    مخرجها ≈ ٢٤ رمزاً للمنطقة مقيسةً، وسقفها مشتقّ من السعة المعلنة
+    (MAX_BUILDING_ZONES) لأنها المرحلة الوحيدة التي لا يمكن شطرها: قبلها لا
+    يعرف الخادم شيئاً يُقسَم عليه. هذا البيان هو مرساة الحتمية: بعده يعرف
+    الخادم عدد المناطق وترتيبها وأسماءها، فيصير التقطيع محسوباً لا مخمَّناً.
+    """
+    mt = PC.outline_budget()
+    raw = extract_json(call_llm(description, model=model, max_tokens=mt,
+                                btype=btype, user_msg=OUTLINE_MSG,
+                                stage=PC.STAGE_OUTLINE, telemetry=telemetry,
+                                request_id=request_id,
+                                strategy=G.STRATEGY_STAGED))
+    zones, issues = PC.normalise_outline(raw)
+    envelope = {}
+    if isinstance(raw, dict):
+        for key in ("site", "floor_height", "wall_h", "wall_t", "levels", "meta"):
+            if key in raw:
+                envelope[key] = raw[key]
+    return zones, envelope, issues
+
+
+def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
+                telemetry=None, request_id=None):
+    """شريحة واحدة من الخطّة — مخرجها محدود سلفاً بحجم الشريحة (F-36)."""
+    ask = [{"id": z, "role": (zones_by_id.get(z) or {}).get("role", "")}
+           for z in chunk["zone_ids"]]
+    body = (PLAN_CHUNK_MSG
+            + "المناطق المطلوب هندستها الآن (%d منطقة):\n" % len(ask)
+            + json.dumps(ask, ensure_ascii=False)
+            + "\n\nالطلب الأصلي كاملاً (خذ منه ما يخصّ هذه المناطق):\n"
+            + description)
+    txt = call_llm(body, model=model, max_tokens=chunk["budget"], truncate=False,
+                   btype=btype, user_msg="", stage=PC.STAGE_PLAN_CHUNK,
+                   telemetry=telemetry, request_id=request_id,
+                   strategy=G.STRATEGY_STAGED, chunk_index=chunk["index"],
+                   chunk_count=chunk.get("chunk_count"))
+    return PC.validate_chunk(chunk, extract_json(txt))
+
+
+def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
+                      stages, request_id=None, depth=0, rate=None):
+    """شريحة خطّة واحدة، وإن بلغت سقفها شُطرت وأُعيدت — لا رُفع سقفها (F-39).
+
+    يعيد كلفة المنطقة المقيسة بعد هذه الشريحة، لتُشتقّ منها أحجام ما بعدها.
+
+    حجم الشريحة محسوب من تقدير يفترض أن النموذج يحترم سقف `brief`. الافتراض
+    معقول لكنه **غير مضمون**، والاتّكال على مخرجٍ غير مضمون هو نفسه خطأ العطل
+    الأصلي. فإن بلغت شريحة سقفها رغم الحساب، لا يُعاد النداء كما هو (يعطي
+    الانقطاع نفسه ويحرق نداءً) ولا يُرفع السقف (يؤجّل العطل إلى مبنى أكبر):
+    تُشطر الشريحة نصفين — طلبٌ مختلف فعلاً، نصف المناطق ⇒ نصف المخرج مهما
+    أطال النموذج نثره.
+
+    الشطر مشروط بدليل بلوغ السقف (stop_reason=max_tokens) لا بمجرّد رمز
+    الخطأ: رداً مشوّهاً لسببٍ آخر شطرُه يحرق نداءين ولا يصلح شيئاً — فذاك
+    يُنسب إلى PLAN_CHUNK_FAILED مباشرةً.
+
+    العمق محدود بـ MAX_CHUNK_SPLITS وحجم الشريحة بـ MIN_CHUNK_ZONES. عند
+    بلوغ أيّهما تُنسَب الشريحة إلى PLAN_CHUNK_FAILED وتُحَلّ مناطقها بمستطيل
+    مشتقّ حتميّاً — لا دوران ولا حذف منطقة طلبها العميل.
+
+    الهوية محفوظة: `index` من البيان و`part` من الشطر، والدمج يرتّب بترتيب
+    البيان لا بترتيب الوصول، فالشطر لا يغيّر بايتاً واحداً من المخرج النهائي.
+    """
+    ctel = {}
+    n_chunks = chunk.get("chunk_count")
+    label = "%d%s" % (chunk["index"] + 1, chunk.get("part") and
+                      ("." + chunk["part"]) or "")
+    try:
+        rooms, iss = _plan_chunk(description, chunk, zones_by_id, model=model,
+                                 btype=btype, telemetry=ctel,
+                                 request_id=request_id)
+        stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
+                                  chunk["index"]))
+        results.append((chunk, rooms, iss))
+        return PC.measured_zone_rate(ctel.get("output_tokens"), chunk["count"],
+                                     rate)
+    except E.AcsApiError as err:
+        stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
+                                  chunk["index"], err.code))
+        hit_ceiling = (err.code == E.ACS_UPSTREAM_TRUNCATED
+                       and ctel.get("stop_reason") == "max_tokens")
+        if hit_ceiling:
+            # بلغ السقف ⇒ الكلفة الحقيقية للمنطقة **لا تقلّ** عن السقف مقسوماً
+            # على عددها. نأخذها حدّاً أدنى فتصغر كل شريحة بعدها.
+            rate = PC.measured_zone_rate(ctel.get("max_output_tokens")
+                                         or chunk["budget"],
+                                         chunk["count"], rate)
+        halves = PC.split_chunk(chunk, depth) if hit_ceiling else []
+        if not halves:
+            # نسبة عطل صريحة: الشريحة رقم كذا فشلت بالرمز كذا. لا يُسقط الباقي.
+            print("[ACS-PLAN] شريحة %s/%s ✗ %s — مناطقها تُحَلّ حتميّاً وتُعلَن."
+                  % (label, n_chunks, err.code))
+            results.append((chunk, [], [{"code": "PLAN_CHUNK_FAILED",
+                                         "chunk": chunk["index"],
+                                         "part": chunk.get("part", ""),
+                                         "depth": depth,
+                                         "error_code": err.code}]))
+            return rate
+    print("[ACS-PLAN] شريحة %s/%s بلغت سقفها (%d منطقة) → تُشطر %s (عمق %d)."
+          % (label, n_chunks, chunk["count"],
+             "+".join(str(h["count"]) for h in halves), depth + 1))
+    results.append((chunk, [], [{"code": "PLAN_CHUNK_SPLIT",
+                                 "chunk": chunk["index"],
+                                 "part": chunk.get("part", ""),
+                                 "depth": depth + 1,
+                                 "zones": chunk["count"],
+                                 "into": [h["count"] for h in halves]}]))
+    for half in halves:
+        rate = _plan_chunk_split(description, half, zones_by_id, model, btype,
+                                 results, stages, request_id=request_id,
+                                 depth=depth + 1, rate=rate)
+    return rate
+
+
+def _plan_bounded(description, model=None, btype="residential", stages=None,
+                  request_id=None, strategy_plan=None):
+    """الخطّة عبر مراحل محدودة: بيان ← شرائح ← دمج حتميّ (KI-24).
+
+    لا نداء هنا يعتمد على مخرج غير محدود: البيان مسقوف بكلفة معلومة للمنطقة،
+    وكل شريحة مسقوفة بحجم محسوب من ميزانيتها. عطل شريحة يُنسب إليها ولا يُسقط
+    التوليد: مناطقها تُحَلّ بمستطيل مشتقّ حتميّاً وتُعلَن PLAN_ZONE_UNRESOLVED.
+
+    الشرائح تُقتطع **أثناء التنفيذ** لا دفعةً واحدة (F-40): كلفة المنطقة
+    المقيسة من كل ردٍّ مكتمل تُغذّي حجم ما بعده، والحمل الذي قد يبلغ سقفه
+    يسبقه نداءٌ استكشافيّ صغير يقيس قبل الالتزام. التخطيط المسبق يبقى محسوباً
+    للتليمتري وللتقرير — لكن التنفيذ لا يلتزم بتقدير كذّبه القياس.
+    """
+    stages = stages if stages is not None else []
+    otel = {}
+    try:
+        zones, envelope, issues = _outline(description, model=model, btype=btype,
+                                           telemetry=otel, request_id=request_id)
+        stages.append(_safe_stage(otel, len(zones), PC.STAGE_OUTLINE))
+    except E.AcsApiError as err:
+        stages.append(_safe_stage(otel, 0, PC.STAGE_OUTLINE, 0, err.code))
+        raise
+    if not zones:
+        raise E.AcsApiError(E.ACS_UPSTREAM_INVALID_JSON,
+                            "لم يُعِد النموذج أي منطقة في مرحلة البيان.",
+                            upstream={"provider": "anthropic",
+                                      "kind": "empty_outline"})
+
+    chunking = PC.plan_chunks(zones)
+    zones_by_id = {z["id"]: z for z in zones}
+    print("[ACS-PLAN] بيان %d منطقة → %d شريحة × %d منطقة مبدئياً "
+          "(سقف الشريحة %d رمزاً؛ الحجم يُعاد اشتقاقه من القياس)"
+          % (len(zones), chunking["chunk_count"], chunking["chunk_size"],
+             chunking["budget"]))
+
+    results = []
+    pending = PC.group_by_template(zones)
+    rate = None
+    index = 0
+    capped = 0
+    while pending:
+        if index >= PC.MAX_PLAN_CHUNKS:
+            # لا قصّ صامت: ما بقي يُعلَن عدداً، ومناطقه تُحَلّ حتميّاً في الدمج.
+            capped = len(pending)
+            print("[ACS-PLAN] ⚠ بلغ سقف الشرائح (%d) و%d منطقة بلا هندسة —"
+                  " تُحَلّ حتميّاً وتُعلَن." % (PC.MAX_PLAN_CHUNKS, capped))
+            break
+        chunk, pending = PC.next_chunk(pending, index, rate=rate)
+        if chunk is None:
+            break
+        index += 1
+        # عدد الشرائح لا يُعرَف سلفاً في المسار المتكيّف. المُعلَن في التليمتري
+        # **إسقاط حيّ** بأفضل معرفة الآن، لا رقم مخطَّط كذّبه القياس: المنفَّذ
+        # + ما تسعه بقيّة المناطق بالحجم الحالي. يبقى الرقم مفهوماً للمشغّل
+        # ولا يدّعي يقيناً لا يملكه.
+        projected = index + -(-len(pending) // max(1, PC.chunk_size_for(rate=rate)))
+        rate = _plan_chunk_split(
+            description, dict(chunk, chunk_count=projected),
+            zones_by_id, model, btype, results, stages,
+            request_id=request_id, depth=0, rate=rate)
+
+    building, merge_issues = PC.merge_plan(zones, results, envelope)
+    building.setdefault("meta", {})["acs_plan_report"] = PC.plan_report(
+        strategy_plan, zones, chunking, results, executed=index,
+        measured_zone_tokens=rate, capped_zones=capped)
+    for i in issues:
+        building["meta"].setdefault("acs_stage_diagnostics", []).append(i)
+    return validate(building)
+
+
 def _plan(description, model=None, btype="residential", telemetry=None,
           request_id=None):
     mt = G.stage_budget("plan")
@@ -1136,7 +1362,8 @@ def _preserve_added_disclosure(building):
     return building
 
 def understand_deep(description, model=None, group_size=None, workers=None,
-                    strict=False, btype=None, stages=None, request_id=None):
+                    strict=False, btype=None, stages=None, request_id=None,
+                    strategy_plan=None):
     """توليد على مراحل مع تفصيل متوازٍ — للطلبات التي لا يسعها نداء واحد."""
     import acs_validate as V
     btype = detect_type(description, btype)
@@ -1144,14 +1371,43 @@ def understand_deep(description, model=None, group_size=None, workers=None,
     print("[ACS-DEEP] نوع المبنى: %s" % btype)
 
     desc = description + (STRICT_RULE if strict else "")
-    _ptel = {}
-    try:
-        building = _plan(desc, model=model, btype=btype, telemetry=_ptel,
-                         request_id=request_id)
-        stages.append(_safe_stage(_ptel, 0, "plan"))
-    except E.AcsApiError as err:
-        stages.append(_safe_stage(_ptel, 0, "plan", 0, err.code))
-        raise
+
+    # KI-24/F-37: أي مسار للخطّة؟ القرار محسوب قبل النداء لا بعد انقطاعه.
+    #
+    # المقدّر يقدّر النموذج **النهائي**؛ ما لم يكن يُقدَّر قطّ هو مخرج **الخطّة**
+    # نفسها. وهو ما انقطع في الإنتاج: est_out=34437 لخمسين منطقة، وسقف مرحلة
+    # plan ‏16000، ولا حارس بينهما. هنا يُقدَّر مخرج الخطّة صراحةً ويُقارن
+    # بسقفه مع هامش الأمان نفسه المستعمل في التقطيع.
+    _sp = strategy_plan if isinstance(strategy_plan, dict) else None
+    _zones_est = int((_sp or {}).get("estimated_zones")
+                     or G.estimate_zones(description, btype))
+    _plan_est = PC.estimate_plan_chunk_tokens(_zones_est, requirements=40)
+    _plan_cap = int(PC.plan_chunk_budget() * PC.CHUNK_SAFETY)
+    _bounded = _plan_est > _plan_cap
+    print("[ACS-PLAN] تقدير مخرج الخطّة %d رمزاً · سقف آمن %d · المسار: %s"
+          % (_plan_est, _plan_cap, "شرائح محدودة" if _bounded else "خطّة واحدة"))
+
+    if _bounded:
+        building = _plan_bounded(desc, model=model, btype=btype, stages=stages,
+                                 request_id=request_id, strategy_plan=_sp)
+    else:
+        _ptel = {}
+        try:
+            building = _plan(desc, model=model, btype=btype, telemetry=_ptel,
+                             request_id=request_id)
+            stages.append(_safe_stage(_ptel, 0, "plan"))
+        except E.AcsApiError as err:
+            stages.append(_safe_stage(_ptel, 0, "plan", 0, err.code))
+            # F-37: انقطاع الخطّة لم يكن له مسار تعافٍ إطلاقاً — تصعيد «واحد ←
+            # مراحل» يعالج النداء الواحد، وتقسيم المجموعة يعالج التفصيل،
+            # والخطّة بينهما بلا حارس فيسقط الطلب كلّه بـ502. الآن تُعاد
+            # بشرائح محدودة مرّة واحدة: طلبٌ مختلف فعلاً لا تكرارٌ للطلب نفسه.
+            if err.code != E.ACS_UPSTREAM_TRUNCATED:
+                raise
+            print("[ACS-PLAN] انقطعت الخطّة عند سقفها — إعادة بشرائح محدودة.")
+            building = _plan_bounded(desc, model=model, btype=btype,
+                                     stages=stages, request_id=request_id,
+                                     strategy_plan=_sp)
     plan_rooms = []
     for tmpl, fdef in (building.get("floors") or {}).items():
         for r in (fdef.get("rooms") or []):
@@ -1313,7 +1569,8 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
     if plan["strategy"] == G.STRATEGY_STAGED:
         return _stamp(understand_deep(description, model=model, strict=strict,
                                       btype=btype, stages=stages,
-                                      request_id=request_id),
+                                      request_id=request_id,
+                                      strategy_plan=plan),
                       G.STRATEGY_STAGED, 0)
 
     # F-19: `int(os.environ.get("ACS_REPAIR_ROUNDS", "1"))` كان يرفع ValueError
@@ -1339,7 +1596,8 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
             print("[ACS-PLAN] انقطع النداء الواحد — تصعيد إلى التوليد على مراحل.")
             return _stamp(understand_deep(description, model=model, strict=strict,
                                           btype=btype, stages=stages,
-                                          request_id=request_id),
+                                          request_id=request_id,
+                                          strategy_plan=plan),
                           G.STRATEGY_STAGED, 1)
         raise
     building.setdefault("meta", {}).setdefault("type", btype)

@@ -78,6 +78,11 @@ node "$ROOT/tests/lib/run.js" "$HERE/test_persistence.js"; guard $?
 step "F-31…F-34 · provider integration (local TypeError is never an upstream fault)"
 python3 "$HERE/test_provider_integration.py"; guard $?
 
+# KI-24/F-35…F-40: المزوّد المزيّف هنا **يفرض سقف الرموز** ويقصّ ما تجاوزه،
+# فيكشف عطل الميزانية الذي لا يكشفه بديلٌ يعيد رداً صالحاً دائماً.
+step "KI-24 · F-35…F-40 · bounded plan chunking (no stage reaches its ceiling)"
+python3 "$HERE/test_plan_chunking.py"; guard $?
+
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 

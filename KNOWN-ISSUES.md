@@ -14,6 +14,17 @@
 > Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
 > measurement that proves it, not an inspection note.
 
+> **Bounded-plan pass (F-35…F-40).** `POST /v1/understand` was returning
+> **502 `ACS_UPSTREAM_TRUNCATED`** on any LARGE building: staged generation
+> split the *detail* stage but never the *plan*, so the plan's own output could
+> not fit the plan's own ceiling. The plan is now `outline → plan_chunk[0..n]`
+> with chunk size derived from the budget and **re-derived from measured
+> output**; a chunk that reaches its ceiling is halved rather than re-sent or
+> given a bigger ceiling, and no stage ceiling was raised. See **KI-24**, pinned
+> by `tests/remediation/test_plan_chunking.py` (59 assertions against a provider
+> double that enforces `max_tokens`). `LIVE LARGE GENERATION: NOT VERIFIED —
+> EXTERNAL ENVIRONMENT REQUIRED`. **KI-14 remains OPEN and untouched.**
+
 > **Provider-integration pass (F-31…F-34).** `POST /v1/understand` was
 > returning **502 `ACS_UPSTREAM_UNKNOWN`** for a `TypeError` raised **inside
 > this server**, before a single byte reached Anthropic. Reproduced against the
@@ -930,3 +941,140 @@ with the production key:
 
 That single command exercises the real SDK, the real model identifier and the
 staged path, and prints the token capture that also closes KI-6.
+
+---
+
+## KI-24 · A LARGE building's **plan** could not fit its own stage ceiling, and `/v1/understand` returned 502 (**CLOSED** — F-35…F-40)
+
+**Closed by:** F-35 (outline stage), F-36 (bounded plan chunks), F-37 (recovery
+for the legacy single-call plan), F-38 (chunk-level telemetry), F-39 (split a
+chunk that reached its ceiling), F-40 (size chunks from measured output, not
+from an estimate the provider is free to ignore).
+**Proof:** `tests/remediation/test_plan_chunking.py` — **59 passed, 0 failed**,
+against a provider double that **enforces `max_tokens`** and truncates past it.
+Red-team verified: disabling F-39 alone fails 2 assertions, disabling F-40 alone
+fails 3, disabling both fails 5, and reverting the outline ceiling to its old
+25 % share fails 3.
+**KI-14 remains OPEN and untouched.**
+
+### The production failure
+
+```
+[ACS-PLAN] class=LARGE est_out=34437 zones=51 budget=32000 -> staged (estimate_exceeds_budget)
+POST /v1/understand -> 502  ACS_UPSTREAM_TRUNCATED
+«رد مزود النموذج توقف عند حد المخرجات (16000 رمزًا) في المرحلة plan»
+```
+
+### Root cause
+
+Staged generation split the **detail** stage and never split the **plan**. The
+plan was one call that had to emit the whole building — every zone with its id,
+rect, role and an **open-length `brief`** — under a ceiling of 50 % of the
+budget. Nothing in the system estimated the *plan's* output (the estimator sized
+the final model only), nothing compared that estimate to the stage ceiling, and
+nothing recovered if the plan truncated: the single→staged escalation covers the
+one-shot call and `_detail_group_split` covers detail, but the plan sat between
+them with no guard. So a large enough request killed the whole generation — not
+because the model could not fit the budget, but because its *description* could
+not fit its stage.
+
+### The fix — three bounded stages instead of two
+
+`outline → plan_chunk[0..n] → detail_chunk[0..m]`, in the new pure module
+`acs_plan_chunks.py` (no provider call, no network, no randomness, no clock).
+
+* **F-35 · outline.** A small call that returns only the envelope and a flat
+  `(id, role, template)` list — no rects, no prose. ≈24 tokens/zone measured.
+  It is the **determinism anchor**: after it the server knows how many zones
+  there are, what they are called and in what order, so chunking is computed
+  rather than guessed. It is also the one stage that *cannot* be split (before
+  it there is nothing to split on), so its ceiling is derived from the declared
+  capacity `ACS_MAX_BUILDING_ZONES` — not from a comfortable fraction. The old
+  25 % share held 299 zones and then truncated silently.
+* **F-36 · bounded chunks.** `chunk_size = floor(budget × safety / cost-per-zone)`,
+  derived, never a buried constant. Chunk boundaries are **semantic** — a chunk
+  never mixes two templates (levels), so a failure is attributable and the model
+  keeps coherent context. No JSON byte range is ever split. `brief` is capped by
+  contract at `ACS_PLAN_BRIEF_MAX_CHARS`; unbounded prose in the plan was what
+  made the plan's output unbounded.
+* **F-37 · legacy recovery.** If the workload still starts on the single-call
+  plan and that call truncates, it escalates **once** to the bounded path
+  instead of returning 502. This is a genuinely different request, not a retry
+  of the same one.
+* **F-38 · telemetry.** Every generation event now carries
+  `chunk_index` / `chunk_count` alongside `stage`, `strategy`, `input_tokens`,
+  `output_tokens`, `max_output_tokens`, `stop_reason`, `duration_ms` and
+  `success`. `acs_logging.generation()` drops undeclared fields silently, so
+  both names had to be added to its allow-list — they are. The merged model
+  carries `meta.acs_plan_report`: counts, codes, planned vs executed chunks,
+  estimated vs measured per-zone cost. Numbers and codes only — no prompt, no
+  building content, no key, no raw provider text (asserted).
+* **F-39 · split, never raise.** A chunk that reaches its ceiling is **halved
+  and re-sent**, bounded by `ACS_MAX_PLAN_CHUNK_SPLITS` and `MIN_CHUNK_ZONES`.
+  Not re-sent unchanged (same request ⇒ same truncation, one call burned) and
+  not given a bigger ceiling (that just moves the failure to a bigger building).
+  The split is gated on `stop_reason == "max_tokens"`, so a response malformed
+  for some other reason is attributed rather than pointlessly halved.
+* **F-40 · measure, do not assume.** Chunk size derived from the estimate
+  assumes the model honours the declared `brief` cap. That assumption is
+  reasonable but **not guaranteed**, and relying on an unguaranteed output is
+  the original bug in a new place. So: the per-zone cost of every completed
+  chunk is measured and drives the size of the next one (downward only, so the
+  adaptation is monotone and deterministic); and a workload large enough that
+  `VERBOSITY_TOLERANCE`× overrun would reach the ceiling is preceded by a small
+  **pilot** chunk that measures before the run commits. F-39 stays as the last
+  guard for verbosity that changes mid-generation.
+
+### Measured — provider double that ignores the `brief` contract 4.4×
+
+Ceiling 16000 tokens/chunk. `worst` is the largest single-call output.
+
+| class | zones | calls | worst | ceiling | calls at ceiling |
+|---|---|---|---|---|---|
+| SMALL | 6 | 2 | 2184 | 16000 | 0 |
+| MEDIUM | 20 | 2 | 7275 | 16000 | 0 |
+| LARGE | 51 | 4 | 9457 | 16000 | 0 |
+| VERY_LARGE | 220 | 11 | 9469 | 16000 | 0 |
+
+The LARGE run in detail — the exact shape of the production failure:
+
+```
+outline      51 zones   ->  1367 / 17701
+plan_chunk    4 zones   ->  1457 / 16000   (pilot: measures 365 tok/zone vs 156 estimated)
+plan_chunk   26 zones   ->  9457 / 16000
+plan_chunk   21 zones   ->  7648 / 16000
+report: planned 1 chunk, executed 3, estimated 156 tok/zone, measured 365
+```
+
+Without F-40 the same workload sends all 51 zones in one chunk, hits 16000,
+and (with F-39) recovers by splitting — correct, but one full call wasted.
+Without both, it is the production 502.
+
+### Guarantees held
+
+Chunking does not change ids, references, geometry semantics, source
+traceability, validation contracts or revision semantics. The merge is ordered
+by the **outline**, not by response arrival, so chunk order and retries are
+byte-identical (asserted). A failed or capped chunk never deletes a zone the
+client asked for: its zones get a deterministic fallback rect and a
+`PLAN_ZONE_UNRESOLVED` diagnostic. Truncated JSON is still never repaired or
+accepted — `stop_reason=max_tokens` still classifies as `ACS_UPSTREAM_TRUNCATED`
+(asserted). Upload limits, CSP, the API error contract, generation process
+isolation and the KI-23 SDK-compatibility fix are unchanged (asserted).
+No stage ceiling was raised to make this pass: `stage_budget('plan')` is still
+0.50 × budget and `stage_budget('single')` is still the full budget (asserted).
+
+### Not verified here
+
+`LIVE LARGE GENERATION: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.`
+Same sandbox limits as KI-23: no `ANTHROPIC_API_KEY`, and PyPI returns 403 so
+`anthropic==0.40` cannot be installed. Everything above is measured against a
+double that enforces `max_tokens` exactly as the provider does, which is what
+makes it capable of reproducing this class of failure at all — but it is not a
+live call. On a networked machine with the production key:
+
+    pip install -r requirements.txt
+    python3 tests/deploy/verify_backend_live.py --generation
+
+with a 50+ zone warehouse prompt reproduces the original 502 on the base commit
+and must complete on this one.

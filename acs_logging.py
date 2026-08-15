@@ -161,11 +161,14 @@ class StructuredLogger(object):
     # ------------------------------------------------------------- تليمتري --
     def generation(self, **fields):
         """تليمتري توليد: أرقام وتصنيفات فقط (F-13). لا وصف زائر ولا رد خام."""
+        # KI-24/F-38: chunk_index و chunk_count معلنان صراحةً. القناة تُسقط أي
+        # حقل غير معلن، فلولا إعلانهما لاختفى موضع العطل من سجلّ الإنتاج بلا
+        # أثر — وهو ما يجعل شريحةً فاشلة بين عشرين شريحة غير قابلة للتشخيص.
         allowed = ("request_id", "strategy", "model", "stages", "input_tokens",
                    "output_tokens", "stop_reason", "max_output_tokens",
                    "duration_ms", "retries", "truncated", "upstream_class",
                    "success", "error_code", "estimated_cost_usd", "escalations",
-                   "endpoint")
+                   "endpoint", "chunk_index", "chunk_count")
         clean = {k: v for k, v in fields.items() if k in allowed}
         return self._emit("info", "llm_generation", **clean)
 

@@ -295,6 +295,11 @@ jobs:
             # F-31…F-34: يثبّت أن الوسائط المرسَلة تطابق توقيع النسخة المثبّتة،
             # وأن عطلاً محلياً لا يُنسب إلى المزوّد. لا شبكة ولا مفتاح.
             python3 tests/remediation/test_provider_integration.py
+            echo
+            # KI-24 / F-35…F-40: the provider double here ENFORCES max_tokens
+            # and truncates past it, so a stage whose output does not fit its
+            # ceiling fails the build instead of reaching production.
+            python3 tests/remediation/test_plan_chunking.py
           } 2>&1 | tee logs/dependency-audit.log
       - name: CVE scan (advisory — needs the network, does not gate the PR)
         # This is the ONE dependency check that cannot be done offline, so it is
