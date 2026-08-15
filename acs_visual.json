@@ -1,0 +1,731 @@
+{
+ "schema": "acs.visual/1",
+ "compiler_version": "acs-visual-compiler/1.0.0",
+ "note": "VISUAL RENDERING AND PRESENTATION — GEOMETRY-PRESERVING VISUALISATION ONLY. This layer reads the compiled architectural, structural, MEP, fire/life-safety and coordination models and produces a derived visual scene: objects, materials, lights, cameras, environment and presentation state. It never moves a wall, a door, a window, a stair, a structural member, an MEP route or a fire device; it never adds or removes a room, changes the floor count, or alters the building footprint. Appearance is not engineering truth.",
+ "derivation_note": "the visual scene is DERIVED. It is never written back into any discipline model, and compiling it leaves the architectural, structural, MEP, fire/life-safety and coordination models byte-identical.",
+ "authority_note": "a visual material, a decoration object, an entourage figure, a landscape placeholder, a ground plane and a sky are APPEARANCE. None of them is a structural material, a fire rating, a thermal property, an occupant, an engineering object, a coverage input or a code input, and none of them is ever counted as one.",
+ "visual_modes": [
+  "ENGINEERING",
+  "ARCHITECTURAL",
+  "PRESENTATION",
+  "DOLLHOUSE",
+  "CUTAWAY",
+  "FLOOR_PLAN_2D",
+  "SECTION",
+  "ELEVATION",
+  "VR"
+ ],
+ "mode_note": "every mode is a different presentation of the SAME compiled model. A mode changes what is shown, how it is shaded and where the camera stands. No mode regenerates, simplifies or re-authors geometry, and switching modes can never change what exists in the building.",
+ "mode_intent": {
+  "ENGINEERING": "technical clarity over realism; discipline layers and the coordination overlay are available and nothing technical is hidden",
+  "ARCHITECTURAL": "architectural finishes, glazing, ceilings and roofs; still literal geometry",
+  "PRESENTATION": "realistic lighting, shadows, environment and composed cameras",
+  "DOLLHOUSE": "roof hidden and upper enclosure clipped so interiors read from above",
+  "CUTAWAY": "reversible clipping planes through the same geometry",
+  "FLOOR_PLAN_2D": "orthographic plan derived from architectural geometry",
+  "SECTION": "orthographic cut on a stated plane",
+  "ELEVATION": "orthographic facade projection of the real envelope",
+  "VR": "presentation shading at true physical scale for WebXR"
+ },
+ "engineering_modes": [
+  "ENGINEERING"
+ ],
+ "presentation_modes": [
+  "ARCHITECTURAL",
+  "PRESENTATION",
+  "DOLLHOUSE",
+  "CUTAWAY",
+  "VR"
+ ],
+ "orthographic_modes": [
+  "FLOOR_PLAN_2D",
+  "SECTION",
+  "ELEVATION"
+ ],
+ "visual_layers": [
+  "ARCHITECTURE",
+  "STRUCTURE",
+  "MEP",
+  "FLS",
+  "COORDINATION",
+  "FURNITURE",
+  "SITE",
+  "LANDSCAPE",
+  "ENTOURAGE"
+ ],
+ "layer_note": "layers toggle independently. PRESENTATION-family modes may hide technical layers; ENGINEERING mode may not — hiding a discipline in the engineering view would misrepresent the model rather than present it.",
+ "mode_default_layers": {
+  "ENGINEERING": [
+   "ARCHITECTURE",
+   "STRUCTURE",
+   "MEP",
+   "FLS"
+  ],
+  "ARCHITECTURAL": [
+   "ARCHITECTURE",
+   "SITE"
+  ],
+  "PRESENTATION": [
+   "ARCHITECTURE",
+   "SITE",
+   "LANDSCAPE"
+  ],
+  "DOLLHOUSE": [
+   "ARCHITECTURE",
+   "FURNITURE",
+   "SITE"
+  ],
+  "CUTAWAY": [
+   "ARCHITECTURE",
+   "STRUCTURE",
+   "SITE"
+  ],
+  "FLOOR_PLAN_2D": [
+   "ARCHITECTURE"
+  ],
+  "SECTION": [
+   "ARCHITECTURE"
+  ],
+  "ELEVATION": [
+   "ARCHITECTURE"
+  ],
+  "VR": [
+   "ARCHITECTURE",
+   "SITE",
+   "LANDSCAPE"
+  ]
+ },
+ "clash_overlay_modes": [
+  "ENGINEERING"
+ ],
+ "clash_overlay_note": "coordination clashes are an ENGINEERING overlay and are off by default everywhere else. They are never removed from the model to make an image attractive — they are simply not drawn in an architectural presentation, and the engineering view always shows them on request.",
+ "material_class": "VISUAL_MATERIAL",
+ "material_class_note": "every entry in this library is appearance only. It carries no structural strength, no fire rating, no reaction-to-fire class, no thermal conductivity, no U-value and no acoustic rating, and none may be inferred from its name. A wall that looks like concrete is not a concrete wall.",
+ "materials": {
+  "paint_white": {
+   "base_color": "#f2f1ee",
+   "roughness": 0.92,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "paint"
+  },
+  "paint_warm": {
+   "base_color": "#e9e2d6",
+   "roughness": 0.92,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "paint"
+  },
+  "paint_grey": {
+   "base_color": "#c9cbcc",
+   "roughness": 0.9,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "paint"
+  },
+  "plaster": {
+   "base_color": "#e6e2da",
+   "roughness": 0.95,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "plaster"
+  },
+  "concrete": {
+   "base_color": "#b8b8b4",
+   "roughness": 0.88,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "concrete"
+  },
+  "concrete_dark": {
+   "base_color": "#8d8f8e",
+   "roughness": 0.86,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "concrete"
+  },
+  "stone": {
+   "base_color": "#cdc4b4",
+   "roughness": 0.8,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "stone"
+  },
+  "marble": {
+   "base_color": "#efeeea",
+   "roughness": 0.25,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "stone"
+  },
+  "wood_light": {
+   "base_color": "#c79f6d",
+   "roughness": 0.62,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "wood"
+  },
+  "wood_dark": {
+   "base_color": "#7a5433",
+   "roughness": 0.58,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "wood"
+  },
+  "glass_clear": {
+   "base_color": "#cfe3ec",
+   "roughness": 0.06,
+   "metalness": 0.0,
+   "opacity": 0.28,
+   "family": "glass"
+  },
+  "glass_tinted": {
+   "base_color": "#8fa9b6",
+   "roughness": 0.08,
+   "metalness": 0.0,
+   "opacity": 0.42,
+   "family": "glass"
+  },
+  "metal_steel": {
+   "base_color": "#9aa0a6",
+   "roughness": 0.35,
+   "metalness": 0.9,
+   "opacity": 1.0,
+   "family": "metal"
+  },
+  "metal_dark": {
+   "base_color": "#4d5257",
+   "roughness": 0.4,
+   "metalness": 0.85,
+   "opacity": 1.0,
+   "family": "metal"
+  },
+  "metal_brass": {
+   "base_color": "#b08d4f",
+   "roughness": 0.3,
+   "metalness": 0.95,
+   "opacity": 1.0,
+   "family": "metal"
+  },
+  "tile": {
+   "base_color": "#dcdcd6",
+   "roughness": 0.3,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "tile"
+  },
+  "carpet": {
+   "base_color": "#8a8378",
+   "roughness": 0.98,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "carpet"
+  },
+  "fabric": {
+   "base_color": "#b7ada0",
+   "roughness": 0.95,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "fabric"
+  },
+  "asphalt": {
+   "base_color": "#4a4a4c",
+   "roughness": 0.95,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "asphalt"
+  },
+  "grass": {
+   "base_color": "#6f8f4a",
+   "roughness": 1.0,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "grass"
+  },
+  "water": {
+   "base_color": "#3f7f9c",
+   "roughness": 0.05,
+   "metalness": 0.0,
+   "opacity": 0.75,
+   "family": "water"
+  },
+  "roof_tile": {
+   "base_color": "#8d5b46",
+   "roughness": 0.75,
+   "metalness": 0.0,
+   "opacity": 1.0,
+   "family": "tile"
+  },
+  "technical": {
+   "base_color": "#8fa3b8",
+   "roughness": 0.7,
+   "metalness": 0.1,
+   "opacity": 1.0,
+   "family": "technical"
+  }
+ },
+ "material_families": [
+  "paint",
+  "plaster",
+  "concrete",
+  "stone",
+  "wood",
+  "glass",
+  "metal",
+  "tile",
+  "carpet",
+  "fabric",
+  "asphalt",
+  "grass",
+  "water",
+  "technical"
+ ],
+ "material_provenance": [
+  "USER",
+  "IMPORTED",
+  "AI_SUGGESTED",
+  "SYSTEM_DEFAULT",
+  "VISUAL_THEME"
+ ],
+ "provenance_note": "a material chosen by the system is SYSTEM_DEFAULT and a material chosen by a theme is VISUAL_THEME. Neither is ever recorded as a user requirement, and an AI-suggested finish stays AI_SUGGESTED until a human states otherwise.",
+ "themes": [
+  "Modern",
+  "Contemporary",
+  "Classic",
+  "Industrial",
+  "Minimal",
+  "Luxury",
+  "Neutral"
+ ],
+ "theme_note": "a theme selects finishes and light colour only. It cannot change a room dimension, a layout, an opening, a level count, a building type or any engineering system, and the test suite asserts that the compiled architectural model is byte-identical across every theme.",
+ "theme_palette": {
+  "Modern": {
+   "wall": "paint_white",
+   "floor": "wood_light",
+   "ceiling": "paint_white",
+   "roof": "concrete",
+   "frame": "metal_dark",
+   "glass": "glass_clear",
+   "accent": "wood_dark"
+  },
+  "Contemporary": {
+   "wall": "paint_warm",
+   "floor": "tile",
+   "ceiling": "paint_white",
+   "roof": "concrete",
+   "frame": "metal_steel",
+   "glass": "glass_clear",
+   "accent": "stone"
+  },
+  "Classic": {
+   "wall": "plaster",
+   "floor": "marble",
+   "ceiling": "plaster",
+   "roof": "roof_tile",
+   "frame": "wood_dark",
+   "glass": "glass_clear",
+   "accent": "wood_dark"
+  },
+  "Industrial": {
+   "wall": "concrete",
+   "floor": "concrete_dark",
+   "ceiling": "concrete",
+   "roof": "metal_dark",
+   "frame": "metal_dark",
+   "glass": "glass_tinted",
+   "accent": "metal_steel"
+  },
+  "Minimal": {
+   "wall": "paint_white",
+   "floor": "concrete",
+   "ceiling": "paint_white",
+   "roof": "concrete",
+   "frame": "metal_steel",
+   "glass": "glass_clear",
+   "accent": "paint_grey"
+  },
+  "Luxury": {
+   "wall": "marble",
+   "floor": "marble",
+   "ceiling": "plaster",
+   "roof": "stone",
+   "frame": "metal_brass",
+   "glass": "glass_clear",
+   "accent": "wood_dark"
+  },
+  "Neutral": {
+   "wall": "paint_white",
+   "floor": "tile",
+   "ceiling": "paint_white",
+   "roof": "concrete",
+   "frame": "metal_steel",
+   "glass": "glass_clear",
+   "accent": "paint_grey"
+  }
+ },
+ "default_theme": "Neutral",
+ "engineering_palette": {
+  "ARCH_WALL": "#cfd4d9",
+  "ARCH_SLAB": "#b9c0c7",
+  "ARCH_OPENING": "#8fb7d6",
+  "STRUCTURE": "#e0a458",
+  "MEP": "#5aa9e6",
+  "FLS": "#e05a5a",
+  "COORDINATION": "#ff2d55"
+ },
+ "decoration_class": "VISUAL_DECORATION",
+ "decoration_kinds": [
+  "sofa",
+  "table",
+  "chair",
+  "bed",
+  "cabinet",
+  "tv",
+  "rug",
+  "plant",
+  "curtain",
+  "lamp",
+  "decor"
+ ],
+ "decoration_note": "decoration is VISUAL_ONLY and is generated by the renderer, never by the user's brief. It is excluded from object preservation, coverage requirements, engineering exports, code evaluation, MEP loads and occupant counts. An object the user actually asked for lives in the engineering model and stays there — it is never re-labelled as decoration, and decoration is never promoted into the model without an explicit user action that this phase does not implement.",
+ "entourage_class": "VISUAL_ONLY_ENTOURAGE",
+ "entourage_kinds": [
+  "person",
+  "car",
+  "bicycle"
+ ],
+ "landscape_class": "VISUAL_ONLY_LANDSCAPE",
+ "landscape_kinds": [
+  "tree",
+  "shrub",
+  "grass_patch"
+ ],
+ "site_note": "site geometry is never invented. A visual ground plane, a sky and landscape placeholders are allowed and are tagged visual_only; a road, a parking bay, a fence or a pool appears only where the model states one.",
+ "water_kinds": [
+  "pool",
+  "fountain",
+  "water_feature"
+ ],
+ "water_note": "visual water is emitted only for an explicitly represented pool, fountain or water feature. No pool is ever invented.",
+ "camera_presets": [
+  "EXTERIOR_FRONT",
+  "EXTERIOR_REAR",
+  "EXTERIOR_CORNER",
+  "TOP",
+  "DOLLHOUSE",
+  "INTERIOR_ROOM",
+  "WALKTHROUGH",
+  "SECTION",
+  "ELEVATION",
+  "PANORAMA_360"
+ ],
+ "camera_note": "camera state is presentation state, never model truth. Framing is computed from the model's own bounding volume with a stated margin; a camera change never regenerates geometry, and a door visible in one view exists at the same coordinates in every other view.",
+ "camera_defaults": {
+  "fov_deg": 45.0,
+  "margin": 1.25,
+  "near_m": 0.05,
+  "far_m": 4000.0,
+  "eye_height_m": 1.6,
+  "min_distance_m": 2.0
+ },
+ "lighting_presets": [
+  "DAY",
+  "GOLDEN_HOUR",
+  "NIGHT"
+ ],
+ "lighting_preset_params": {
+  "DAY": {
+   "sun_elevation_deg": 58.0,
+   "sun_azimuth_deg": 140.0,
+   "sun_intensity": 3.0,
+   "sun_color": "#fff6e6",
+   "sky_intensity": 1.0,
+   "ambient_intensity": 0.45,
+   "ambient_color": "#dfeaff",
+   "background": "sky",
+   "exposure": 1.0
+  },
+  "GOLDEN_HOUR": {
+   "sun_elevation_deg": 12.0,
+   "sun_azimuth_deg": 258.0,
+   "sun_intensity": 2.4,
+   "sun_color": "#ffca7a",
+   "sky_intensity": 0.8,
+   "ambient_intensity": 0.35,
+   "ambient_color": "#ffd9b0",
+   "background": "sky",
+   "exposure": 1.15
+  },
+  "NIGHT": {
+   "sun_elevation_deg": -14.0,
+   "sun_azimuth_deg": 300.0,
+   "sun_intensity": 0.05,
+   "sun_color": "#334a6b",
+   "sky_intensity": 0.12,
+   "ambient_intensity": 0.12,
+   "ambient_color": "#26334d",
+   "background": "night_sky",
+   "exposure": 1.3
+  }
+ },
+ "default_lighting": "DAY",
+ "lighting_note": "presentation lighting is a visual light rig. It is a different layer from MEP lighting fixtures: a visual light is never counted as a luminaire, an MEP fixture is never treated as a presentation light source, and no illuminance, lux level or lighting adequacy is claimed anywhere.",
+ "night_fixture_note": "NIGHT may place a small visual emitter at a represented MEP lighting terminal so interiors read at night. That emitter is appearance only and asserts nothing about the fixture's output or adequacy.",
+ "quality_profiles": [
+  "LOW",
+  "MEDIUM",
+  "HIGH",
+  "ULTRA"
+ ],
+ "quality_params": {
+  "LOW": {
+   "pixel_ratio": 1.0,
+   "shadows": false,
+   "shadow_map": 0,
+   "texture_px": 256,
+   "antialias": false,
+   "tone_mapping": "none",
+   "environment": "flat",
+   "max_visual_objects": 4000
+  },
+  "MEDIUM": {
+   "pixel_ratio": 1.5,
+   "shadows": true,
+   "shadow_map": 1024,
+   "texture_px": 512,
+   "antialias": true,
+   "tone_mapping": "aces",
+   "environment": "room",
+   "max_visual_objects": 12000
+  },
+  "HIGH": {
+   "pixel_ratio": 2.0,
+   "shadows": true,
+   "shadow_map": 2048,
+   "texture_px": 1024,
+   "antialias": true,
+   "tone_mapping": "aces",
+   "environment": "room",
+   "max_visual_objects": 30000
+  },
+  "ULTRA": {
+   "pixel_ratio": 2.0,
+   "shadows": true,
+   "shadow_map": 4096,
+   "texture_px": 2048,
+   "antialias": true,
+   "tone_mapping": "aces",
+   "environment": "room",
+   "max_visual_objects": 60000
+  }
+ },
+ "default_quality": "MEDIUM",
+ "quality_note": "a quality profile controls pixel ratio, shadow maps, texture size, post-processing and environment quality. It never changes geometry, and a lower profile drops visual-only detail before it ever drops a modelled element.",
+ "lod_levels": [
+  "FULL",
+  "SIMPLIFIED",
+  "MASSING"
+ ],
+ "lod_note": "level of detail applies to visual-only assets and to distant repeated objects. A modelled architectural, structural, MEP or fire element is never removed by LOD in ENGINEERING mode, and the scene records which LOD each object was emitted at.",
+ "instancing_note": "repeated visual-only objects sharing an asset and a material are grouped into instancing candidates. A modelled element is never merged into an instance group, because merging would destroy per-element selection and traceability.",
+ "floor_plan_styles": [
+  "TECHNICAL",
+  "CLEAN",
+  "MONOCHROME",
+  "ZONING"
+ ],
+ "floor_plan_note": "the plan is projected from the same architectural geometry as the 3D view. It is a derived drawing, not a CAD deliverable, and it makes no CAD-grade claim about tolerance, line weight standards or drafting conventions.",
+ "dimension_sources": [
+  "model",
+  "unknown"
+ ],
+ "dimension_note": "a dimension is emitted only where the model states the geometry it measures. An unknown value is emitted as null with source 'unknown' and is never replaced by a plausible number.",
+ "section_axes": [
+  "x",
+  "z"
+ ],
+ "elevation_faces": [
+  "NORTH",
+  "SOUTH",
+  "EAST",
+  "WEST"
+ ],
+ "elevation_note": "an elevation projects the real envelope and its real openings. No opening is ever added to balance a facade.",
+ "dollhouse_note": "dollhouse hides the roof and clips enclosure above a stated cut height. It is expressed as visibility and clipping directives over the SAME objects — no second model is generated, no wall is shortened in the model, and every room keeps its exact position and size.",
+ "cutaway_methods": [
+  "CLIP_PLANE",
+  "LEVEL_ISOLATION",
+  "WALL_CLIP"
+ ],
+ "cutaway_note": "cutaway is reversible rendering state. Clipping planes and visibility flags are recorded on the scene; the model geometry is untouched and restoring the scene restores the full view exactly.",
+ "snapshot_formats": [
+  "PNG",
+  "JPEG"
+ ],
+ "snapshot_defaults": {
+  "width": 1920,
+  "height": 1080,
+  "format": "PNG",
+  "quality": 0.92,
+  "transparent": false
+ },
+ "snapshot_max_px": 33177600,
+ "render_kinds": [
+  "DETERMINISTIC_RENDER",
+  "AI_ENHANCED_VISUALISATION"
+ ],
+ "render_authority": {
+  "DETERMINISTIC_RENDER": "ENGINEERING_VIEW_OF_MODEL",
+  "AI_ENHANCED_VISUALISATION": "VISUALISATION"
+ },
+ "render_authority_note": "only a deterministic render of the compiled geometry may be labelled an engineering view. Any AI-enhanced image is labelled VISUALISATION and can never be presented as the model.",
+ "control_buffers": [
+  "depth",
+  "normal",
+  "object_id",
+  "semantic_mask",
+  "edge",
+  "room_id"
+ ],
+ "control_buffer_note": "control buffers are deterministic descriptors of the real geometry, computed from the compiled model. They exist to constrain a future AI enhancement pass and to make drift detectable; they are not themselves an enhancement, and this phase rasterises none of them. An AI request carries requested_control_buffers (the ordered names asked for) AND control_buffers (a map from each requested name to its deterministic descriptor: the ids, classes or counts a future generator would consume). No pixel buffer is generated, claimed or implied.",
+ "ai_enhancement_stages": [
+  "CANONICAL_MODEL",
+  "DETERMINISTIC_BASE_RENDER",
+  "CONTROL_BUFFERS",
+  "AI_ENHANCEMENT",
+  "PRESENTATION_IMAGE"
+ ],
+ "ai_may_change": [
+  "materials",
+  "lighting",
+  "vegetation",
+  "weather",
+  "furniture_style",
+  "surface_detail",
+  "sky",
+  "post_processing"
+ ],
+ "ai_may_not_change": [
+  "wall_positions",
+  "door_count",
+  "window_count",
+  "floor_count",
+  "stair_location",
+  "building_footprint",
+  "room_count",
+  "level_elevations"
+ ],
+ "ai_note": "AI enhancement is strictly downstream of the model. This phase ships the interface, the constraints and the drift check — it ships NO image generator, makes no network call, and provides no path by which an enhanced image can be written back into any model.",
+ "drift_codes": [
+  "VISUAL_GEOMETRY_DRIFT",
+  "VISUAL_FEATURE_COUNT_MISMATCH",
+  "VISUAL_FOOTPRINT_MISMATCH",
+  "VISUAL_LEVEL_COUNT_MISMATCH",
+  "VISUAL_CONTROL_BUFFER_MISSING",
+  "VISUAL_SOURCE_HASH_MISMATCH",
+  "VISUAL_SIGNATURE_MISSING"
+ ],
+ "drift_severities": [
+  "INFO",
+  "WARNING",
+  "ERROR"
+ ],
+ "drift_code_severity": {
+  "VISUAL_GEOMETRY_DRIFT": "ERROR",
+  "VISUAL_FEATURE_COUNT_MISMATCH": "ERROR",
+  "VISUAL_FOOTPRINT_MISMATCH": "ERROR",
+  "VISUAL_LEVEL_COUNT_MISMATCH": "ERROR",
+  "VISUAL_CONTROL_BUFFER_MISSING": "WARNING",
+  "VISUAL_SOURCE_HASH_MISMATCH": "WARNING",
+  "VISUAL_SIGNATURE_MISSING": "ERROR"
+ },
+ "drift_note": "a drift finding says an image disagrees with the model it claims to depict. It never rewrites the model, never silently discards the image, and never asserts which of the two is aesthetically better — it marks the image as untrustworthy as geometry.",
+ "asset_classes": [
+  "VISUAL_ONLY",
+  "SEMANTIC"
+ ],
+ "asset_required_fields": [
+  "id",
+  "type",
+  "asset_class",
+  "dimensions_m",
+  "license",
+  "source"
+ ],
+ "asset_licenses": [
+  "PROCEDURAL",
+  "CC0",
+  "CC-BY",
+  "PROPRIETARY_LICENSED",
+  "UNKNOWN"
+ ],
+ "asset_note": "the asset library is local and controlled. Nothing is downloaded automatically, an asset with UNKNOWN license is never emitted into a scene, asset metadata is data and is never executed, and an asset that is missing degrades to simple procedural geometry rather than breaking the render.",
+ "procedural_fallback_note": "when no library asset is available the scene emits a labelled procedural box of the stated dimensions. It is tagged as a fallback and, like every render fallback in this platform, it is never promoted into engineering data.",
+ "texture_note": "no remote CDN texture is required or requested. Materials are parametric (base colour, roughness, metalness, opacity) and any texture must be locally vendored; this phase introduces no new production network dependency.",
+ "vr_scale_note": "one model metre is one physical metre in VR. Any visualisation scaling is explicit, is recorded on the scene, and never happens silently.",
+ "walkthrough_note": "walkthrough is a visual camera path. It is not accessibility-compliant navigation, it makes no clearance, width or route-adequacy claim, and it does not alter the navigation, egress or walking-distance layers.",
+ "export_note": "the engineering GLB keeps its current semantics. A presentation GLB is a separate, explicitly requested export that may carry visual materials, decoration and landscape; the two are never interchanged, and visual scene state is never merged into the engineering JSON — it is written, if at all, into a separate additive block.",
+ "presentation_block_key": "presentation",
+ "revision_note": "a render records the model hash it was produced from. If the building changes afterwards the render remains historical and is reported STALE rather than relabelled current, and no visual state ever enters a revision hash.",
+ "forbidden_claims": [
+  "photoreal_is_measured",
+  "render_is_as_built",
+  "ai_generated_geometry",
+  "visually_verified_compliance",
+  "lighting_adequate",
+  "material_fire_rated",
+  "material_structural_grade",
+  "thermally_compliant",
+  "accessibility_verified",
+  "decoration_is_engineering_object",
+  "entourage_is_occupant"
+ ],
+ "id_patterns": {
+  "scene": "vscene_<model_hash_16>_<mode>",
+  "object": "<bid>.vis.<n>",
+  "decoration": "<bid>.vis.deco_<n>",
+  "landscape": "<bid>.vis.land_<n>",
+  "entourage": "<bid>.vis.ent_<n>",
+  "light": "<bid>.vis.light_<n>",
+  "camera": "<bid>.vis.cam_<preset>",
+  "render": "vrender_<sha256_16>"
+ },
+ "rule_inputs": [
+  "visual.scene.object_count",
+  "visual.scene.visual_only_count",
+  "visual.scene.mode",
+  "visual.render.exists"
+ ],
+ "rule_note": "factual inputs only. Nothing here is a regulatory input, appearance is never compared to a threshold, and no visual value ever feeds a code evaluation.",
+ "no_generator_note": "this phase ships NO geometry generator, NO design operation, NO image generator and NO network call. It answers how the model should be shown, never what the model should be.",
+ "validation_codes": [
+  "MATERIAL_NOT_VISUAL_CLASS",
+  "MATERIAL_CARRIES_ENGINEERING_PROPERTY",
+  "MATERIAL_NOT_IN_LIBRARY",
+  "MATERIAL_PROVENANCE_INVALID",
+  "VISUAL_OBJECT_MARKED_SEMANTIC",
+  "VISUAL_ONLY_OBJECT_WITH_SOURCE",
+  "DECORATION_LINKED_TO_MODEL_ELEMENT",
+  "MODELLED_OBJECT_WITHOUT_SOURCE"
+ ],
+ "source_reference_invariant": "the source-reference rule is universal and symmetric, and holds for every object regardless of visual_class, material, theme, asset, LOD, geometry source, render mode, discipline or decoration category. If visual_only is false the object MUST carry a source_element_id identifying its canonical source element; failing that is MODELLED_OBJECT_WITHOUT_SOURCE. If visual_only is true the object MUST NOT carry a source_element_id at all; failing that is VISUAL_ONLY_OBJECT_WITH_SOURCE. DECORATION_LINKED_TO_MODEL_ELEMENT is a specialisation that is reported in addition for a VISUAL_DECORATION object, never instead of the universal code.",
+ "ai_request_fields": [
+  "stage_pipeline",
+  "scene_id",
+  "model_hash",
+  "building_id",
+  "base_render_required",
+  "requested_control_buffers",
+  "control_buffers",
+  "geometry_signature",
+  "prompt",
+  "strength",
+  "may_change",
+  "may_not_change",
+  "writes_to_model",
+  "generator_shipped",
+  "network_call",
+  "authority"
+ ],
+ "ai_request_note": "every AI request carries a deterministic descriptor for each requested control buffer and the geometry signature the enhancement may not change. A request with no geometry signature is not a valid constrained request: the consistency check reports VISUAL_SIGNATURE_MISSING rather than silently passing an unconstrained image."
+}

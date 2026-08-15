@@ -1,0 +1,311 @@
+{
+ "columns": [
+  "column_id",
+  "level",
+  "section",
+  "material",
+  "height_m",
+  "grid_refs",
+  "provenance"
+ ],
+ "level_id": null,
+ "note": "a schedule is a view over the model; a missing value stays missing",
+ "row_count": 9,
+ "rows": [
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_A1"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_A,grid_z_1"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_A1",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_A2"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_A,grid_z_2"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_A2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_A3"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_A,grid_z_3"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_A3",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_B1"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_B,grid_z_1"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_B1",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_B2"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_B,grid_z_2"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_B2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_B3"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_B,grid_z_3"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_B3",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_C1"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_C,grid_z_1"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_C1",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_C2"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_C,grid_z_2"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_C2",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  },
+  {
+   "column_id": {
+    "status": "STATED",
+    "value": "bld_0.C_C3"
+   },
+   "grid_refs": {
+    "status": "STATED",
+    "value": "grid_x_C,grid_z_3"
+   },
+   "height_m": {
+    "status": "STATED",
+    "value": 3.2
+   },
+   "level": {
+    "status": "STATED",
+    "value": "bld_0.flr_0"
+   },
+   "material": {
+    "status": "STATED",
+    "value": "mat_c30"
+   },
+   "provenance": {
+    "discipline": "STRUCTURE",
+    "provenance": "MODEL_DERIVED",
+    "source_element_id": "bld_0.C_C3",
+    "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590"
+   },
+   "section": {
+    "status": "STATED",
+    "value": "rectangular"
+   }
+  }
+ ],
+ "schedule_id": "sched_84a1134e56ac31fa",
+ "schedule_type": "COLUMN_SCHEDULE",
+ "source_model_hash": "0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590",
+ "source_revision": "rev:9c6b92aac9c47570",
+ "spec_version": "acs.docs/1.0.0",
+ "unknown_cell_count": 0,
+ "writes_to_model": false
+}

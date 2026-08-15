@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="568" height="432" viewBox="0 0 568 432" font-family="system-ui,Segoe UI,Tahoma,sans-serif">
+<rect width="568" height="432" fill="#ffffff"/>
+<rect x="46" y="216" width="102" height="102" fill="#f2efe9" stroke="none" data-space="bld_0.f.bath2"/>
+<rect x="46" y="46" width="204" height="170" fill="#f2efe9" stroke="none" data-space="bld_0.f.bed1"/>
+<rect x="318" y="46" width="204" height="170" fill="#f2efe9" stroke="none" data-space="bld_0.f.bed2"/>
+<rect x="250" y="46" width="68" height="340" fill="#f2efe9" stroke="none" data-space="bld_0.f.corridor_f"/>
+<rect x="318" y="216" width="204" height="170" fill="#f2efe9" stroke="none" data-space="bld_0.f.family"/>
+<line x1="46" y1="46" x2="250" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_0"/>
+<line x1="250" y1="46" x2="318" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_1"/>
+<line x1="46" y1="216" x2="46" y2="318" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_10"/>
+<line x1="148" y1="216" x2="148" y2="318" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_11"/>
+<line x1="250" y1="46" x2="250" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_12"/>
+<line x1="250" y1="216" x2="250" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_13"/>
+<line x1="318" y1="46" x2="318" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_14"/>
+<line x1="318" y1="216" x2="318" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_15"/>
+<line x1="522" y1="46" x2="522" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_16"/>
+<line x1="522" y1="216" x2="522" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_17"/>
+<line x1="318" y1="46" x2="522" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_2"/>
+<line x1="46" y1="216" x2="148" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_3"/>
+<line x1="148" y1="216" x2="250" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_4"/>
+<line x1="318" y1="216" x2="522" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_5"/>
+<line x1="46" y1="318" x2="148" y2="318" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_6"/>
+<line x1="250" y1="386" x2="318" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_7"/>
+<line x1="318" y1="386" x2="522" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_8"/>
+<line x1="46" y1="46" x2="46" y2="216" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_1.wall_9"/>
+<rect x="83.4" y="313.58" width="27.2" height="8.84" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" data-door="bld_0.f.bath2.door_0@1"/>
+<rect x="245.58" y="115.7" width="8.84" height="30.6" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" data-door="bld_0.f.bed1.door_0@1"/>
+<rect x="313.58" y="115.7" width="8.84" height="30.6" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" data-door="bld_0.f.bed2.door_0@1"/>
+<rect x="313.58" y="285.7" width="8.84" height="30.6" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" data-door="bld_0.f.family.door_0@1"/>
+<rect x="73.2" y="314.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.bath2.window_0@1"/>
+<rect x="42.94" y="243.2" width="6.12" height="47.6" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.bath2.window_1@1"/>
+<rect x="124.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.bed1.window_0@1"/>
+<rect x="42.94" y="107.2" width="6.12" height="47.6" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.bed1.window_1@1"/>
+<rect x="396.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.bed2.window_0@1"/>
+<rect x="518.94" y="107.2" width="6.12" height="47.6" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.bed2.window_1@1"/>
+<rect x="260.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.corridor_f.window_0@1"/>
+<rect x="260.2" y="382.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.corridor_f.window_1@1"/>
+<rect x="396.2" y="382.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.family.window_0@1"/>
+<rect x="518.94" y="277.2" width="6.12" height="47.6" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.f.family.window_1@1"/>
+<rect x="263.6" y="246.6" width="40.8" height="142.8" fill="#e3ded3" stroke="#2b2b2b" stroke-width="1" data-stair="bld_0.core_0"/>
+<text x="97" y="267" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.f.bath2">bath2</text>
+<text x="97" y="280" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">9 m²</text>
+<text x="148" y="131" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.f.bed1">bed1</text>
+<text x="148" y="144" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">30 m²</text>
+<text x="420" y="131" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.f.bed2">bed2</text>
+<text x="420" y="144" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">30 m²</text>
+<text x="284" y="216" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.f.corridor_f">corridor_f</text>
+<text x="284" y="229" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">20 m²</text>
+<text x="420" y="301" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.f.family">family</text>
+<text x="420" y="314" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">30 m²</text>
+<text x="46" y="418" fill="#3a3a3a" font-size="9" opacity="0.7">presentation drawing — not a construction drawing</text>
+</svg>

@@ -1,0 +1,224 @@
+{
+  "schema": "acs.performance.quality_governor/1",
+  "version": "1.0.0",
+  "status": "SPECIFICATION ONLY — NOT IMPLEMENTED IN public/index.html",
+  "implemented": false,
+  "implementation_note": "This file declares what the quality governor must do. It is deliberately NOT wired into public/index.html here: that file is owned by another change in flight. Implementing it means reading this specification and applying exactly these parameter values behind the tier detection described in `tier_detection` — not inventing new ones. tests/remediation/test_performance.js asserts that whatever this file declares can never drop semantic geometry.",
+
+  "purpose": "A mid-range phone cannot render the full-quality scene at a usable frame rate. The governor answers that by lowering PRESENTATION quality only. It is a rendering budget, not an editing decision.",
+
+  "invariants": {
+    "never_removes_semantic_geometry": true,
+    "writes_to_model": false,
+    "changes_model_hash": false,
+    "changes_element_count": false,
+    "changes_revision": false,
+    "statement": "NO QUALITY TIER MAY EVER REMOVE, MERGE, HIDE, DECIMATE, CULL, SIMPLIFY OR OMIT A SINGLE PIECE OF SEMANTIC GEOMETRY. A wall, slab, column, beam, door, window, opening, stair, ramp, room boundary, MEP run, fixture, fire-safety element or any other element that came from the canonical model is present, complete and dimensionally exact at every tier. What changes is how it is SHADED, not what EXISTS. A client who opens the model on a phone is looking at the same building as a client who opens it on a workstation — a dimmer picture of it, never a smaller one.",
+    "consequence_if_violated": "A drawing that silently omits elements on some devices is not a lower-quality drawing; it is a wrong drawing. Any tier that removes semantic geometry must be treated as a correctness defect, not a performance trade-off.",
+    "protected_element_classes": [
+      "wall", "slab", "floor", "ceiling", "roof", "column", "beam", "brace",
+      "foundation", "door", "window", "opening", "stair", "ramp", "elevator",
+      "room", "space", "zone", "level", "duct", "pipe", "conduit", "fixture",
+      "outlet", "switch", "panel", "sprinkler", "smoke_detector",
+      "fire_extinguisher", "exit_sign", "egress_path", "site_boundary",
+      "user_requested_object"
+    ],
+    "forbidden_actions_at_every_tier": [
+      "remove_semantic_geometry",
+      "hide_semantic_geometry",
+      "cull_semantic_geometry",
+      "decimate_semantic_geometry",
+      "merge_semantic_elements",
+      "drop_levels",
+      "drop_rooms",
+      "drop_walls",
+      "drop_openings",
+      "drop_mep",
+      "drop_fire_safety",
+      "simplify_element_dimensions",
+      "reduce_element_count",
+      "skip_element_classes",
+      "substitute_proxy_for_semantic_element",
+      "write_to_model",
+      "alter_model_hash"
+    ],
+    "allowed_action_domains": [
+      "shadow", "ambient_occlusion", "postprocessing", "pixel_ratio",
+      "antialiasing", "environment", "tone_mapping", "material_quality",
+      "texture_resolution", "light_count", "decorative_context_lod",
+      "reflection", "anisotropy", "render_scale"
+    ],
+    "decorative_context_is_not_semantic": "The only thing a tier may reduce in COUNT is purely decorative, non-canonical site dressing added by the presentation layer for a nicer image — the generic neighbouring blocks, trees, street furniture and ground clutter that carry visual_only:true and were never part of the canonical model. That reduction is expressed as `decorative_context_lod` and is bounded below by `decorative_context_minimum_fraction` so that context never vanishes entirely. Anything carrying a source_element_id from the canonical model is semantic and is out of reach of every tier."
+  },
+
+  "tier_detection": {
+    "order": ["explicit_user_override", "measured_frame_time", "device_heuristics"],
+    "explicit_user_override": "A user-visible quality control always wins and is never overridden by the governor.",
+    "measured_frame_time": {
+      "sample_frames": 120,
+      "demote_if_p95_frame_time_ms_above": 60.0,
+      "promote_if_p95_frame_time_ms_below": 18.0,
+      "min_seconds_between_tier_changes": 8.0,
+      "note": "Hysteresis is mandatory. A governor that flips tiers every second is worse than no governor."
+    },
+    "device_heuristics": {
+      "mid_range_mobile_if": {
+        "any_of": [
+          "navigator.userAgentData.mobile === true",
+          "matchMedia('(pointer: coarse)').matches && screen.width <= 1024",
+          "navigator.hardwareConcurrency <= 6",
+          "navigator.deviceMemory !== undefined && navigator.deviceMemory <= 6",
+          "WEBGL_debug_renderer_info UNMASKED_RENDERER matches /Adreno|Mali|PowerVR|Apple A(9|10|11|12|13)/"
+        ]
+      },
+      "note": "Heuristics only choose a STARTING tier. measured_frame_time then corrects it. No device is permanently condemned by its user-agent string."
+    }
+  },
+
+  "tiers": {
+    "FULL": {
+      "label": "Desktop / full quality",
+      "removes_semantic_geometry": false,
+      "writes_to_model": false,
+      "parameters": {
+        "shadow_enabled": true,
+        "shadow_map_size": 2048,
+        "shadow_type": "PCFSoftShadowMap",
+        "shadow_cascade_count": 3,
+        "shadow_camera_far_multiplier": 2.5,
+        "ssao_enabled": true,
+        "ssao_kernel_samples": 16,
+        "ssao_kernel_radius_m": 0.8,
+        "ssao_render_scale": 1.0,
+        "postprocessing_enabled": true,
+        "bloom_enabled": true,
+        "antialias": "MSAA_4X",
+        "device_pixel_ratio_cap": 2.0,
+        "render_scale": 1.0,
+        "environment_map_resolution": 512,
+        "environment_from_scene": true,
+        "tone_mapping": "ACESFilmic",
+        "max_dynamic_lights": 8,
+        "material_quality": "PBR_FULL",
+        "texture_max_dimension": 2048,
+        "anisotropy": 8,
+        "reflection_probe_enabled": true,
+        "decorative_context_lod": 1.0,
+        "decorative_context_draw_distance_m": 400
+      }
+    },
+    "MID_RANGE_MOBILE": {
+      "label": "Mid-range mobile / reduced presentation quality, identical geometry",
+      "removes_semantic_geometry": false,
+      "writes_to_model": false,
+      "target_budget_ids": ["FPS_MOBILE_NAVIGATION", "FRAME_TIME_P95_MOBILE"],
+      "parameters": {
+        "shadow_enabled": true,
+        "shadow_map_size": 512,
+        "shadow_type": "PCFShadowMap",
+        "shadow_cascade_count": 1,
+        "shadow_camera_far_multiplier": 1.5,
+        "ssao_enabled": true,
+        "ssao_kernel_samples": 4,
+        "ssao_kernel_radius_m": 0.5,
+        "ssao_render_scale": 0.5,
+        "postprocessing_enabled": false,
+        "bloom_enabled": false,
+        "antialias": "OFF",
+        "device_pixel_ratio_cap": 1.25,
+        "render_scale": 1.0,
+        "environment_map_resolution": 128,
+        "environment_from_scene": false,
+        "tone_mapping": "ACESFilmic",
+        "max_dynamic_lights": 3,
+        "material_quality": "PBR_REDUCED",
+        "texture_max_dimension": 512,
+        "anisotropy": 1,
+        "reflection_probe_enabled": false,
+        "decorative_context_lod": 0.35,
+        "decorative_context_draw_distance_m": 120
+      },
+      "parameter_deltas_from_FULL": {
+        "shadow_map_size": "2048 → 512 (16× fewer shadow texels; the single largest mobile win)",
+        "shadow_type": "PCFSoftShadowMap → PCFShadowMap (one tap instead of a kernel)",
+        "shadow_cascade_count": "3 → 1 (one shadow render pass instead of three)",
+        "ssao_kernel_samples": "16 → 4",
+        "ssao_render_scale": "1.0 → 0.5 (quarter-resolution AO buffer, upsampled)",
+        "postprocessing_enabled": "true → false (no composer; direct render)",
+        "antialias": "MSAA_4X → OFF",
+        "device_pixel_ratio_cap": "2.0 → 1.25 (on a DPR-3 phone this is a 5.8× reduction in shaded pixels and is the second largest win)",
+        "environment_map_resolution": "512 → 128",
+        "max_dynamic_lights": "8 → 3",
+        "texture_max_dimension": "2048 → 512",
+        "anisotropy": "8 → 1",
+        "decorative_context_lod": "1.0 → 0.35 (decorative, non-canonical site dressing only — see invariants)"
+      }
+    },
+    "MINIMUM_SAFE": {
+      "label": "Last resort before an unusable frame rate — still no geometry removed",
+      "removes_semantic_geometry": false,
+      "writes_to_model": false,
+      "parameters": {
+        "shadow_enabled": false,
+        "shadow_map_size": 256,
+        "shadow_type": "BasicShadowMap",
+        "shadow_cascade_count": 1,
+        "shadow_camera_far_multiplier": 1.0,
+        "ssao_enabled": false,
+        "ssao_kernel_samples": 0,
+        "ssao_kernel_radius_m": 0.0,
+        "ssao_render_scale": 0.5,
+        "postprocessing_enabled": false,
+        "bloom_enabled": false,
+        "antialias": "OFF",
+        "device_pixel_ratio_cap": 1.0,
+        "render_scale": 0.75,
+        "environment_map_resolution": 64,
+        "environment_from_scene": false,
+        "tone_mapping": "Linear",
+        "max_dynamic_lights": 1,
+        "material_quality": "UNLIT_FLAT",
+        "texture_max_dimension": 256,
+        "anisotropy": 1,
+        "reflection_probe_enabled": false,
+        "decorative_context_lod": 0.0,
+        "decorative_context_draw_distance_m": 0
+      },
+      "note": "Even here decorative_context_lod 0.0 removes only visual_only:true dressing that was never in the canonical model. Every wall, slab, opening and fixture is still drawn, at full dimensional fidelity, unlit."
+    }
+  },
+
+  "decorative_context_lod": {
+    "applies_to_only": "objects carrying visual_only:true AND no source_element_id",
+    "decorative_context_minimum_fraction": 0.0,
+    "semantic_context_exempt": "Site boundary, setbacks, levels, and any context object the user explicitly requested carry a source_element_id and are exempt from LOD entirely."
+  },
+
+  "validation_contract": {
+    "note": "tests/remediation/test_performance.js implements exactly this contract and runs it against this file, and against deliberately hostile mutants of it. If the contract could not reject a hostile tier, it would be decoration.",
+    "every_tier_must_declare": ["removes_semantic_geometry", "writes_to_model", "parameters"],
+    "every_tier_must_have": {
+      "removes_semantic_geometry": false,
+      "writes_to_model": false
+    },
+    "parameter_key_allowlist_prefixes": [
+      "shadow_", "ssao_", "postprocessing_", "bloom_", "antialias",
+      "device_pixel_ratio_cap", "render_scale", "environment_", "tone_mapping",
+      "max_dynamic_lights", "material_quality", "texture_", "anisotropy",
+      "reflection_", "decorative_context_"
+    ],
+    "parameter_key_forbidden_substrings": [
+      "geometry", "element", "room", "space", "wall", "slab", "column",
+      "beam", "door", "window", "opening", "stair", "level", "mep", "duct",
+      "pipe", "fixture", "sprinkler", "egress", "cull", "drop", "omit",
+      "remove", "decimate", "merge", "simplify", "skip", "hide", "prune",
+      "model", "hash", "revision", "semantic"
+    ],
+    "forbidden_substring_exception": "none — a parameter name containing any forbidden substring is rejected outright, because the safest governor is one that has no vocabulary for touching the model."
+  },
+
+  "not_measured": {
+    "statement": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+    "reason": "No tier in this file has been applied to a running renderer here. public/vendor is empty and there is no network, so Three.js cannot load and no frame can be rendered. The parameter values are engineering choices with stated reasoning, not measured optima. Their effect on frame time must be measured with tests/performance/run_perf.js on real hardware before any of them is treated as settled."
+  }
+}

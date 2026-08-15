@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="5022" height="405" viewBox="0 0 5022 405" font-family="system-ui,Segoe UI,Tahoma,sans-serif">
+<rect width="5022" height="405" fill="#ffffff"/>
+<rect x="556" y="47.9" width="3400" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_7" data-kind="WALL"/>
+<rect x="46" y="47.9" width="1020" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_9" data-kind="WALL"/>
+<rect x="556" y="46.2" width="3400" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_envelope" data-kind="CEILING"/>
+<rect x="556" y="353.9" width="3400" height="5.1" fill="#c6c2ba" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.slab" data-kind="SLAB"/>
+<rect x="2936" y="47.9" width="2040" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_14" data-kind="WALL"/>
+<rect x="556" y="47.9" width="1020" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_5" data-kind="WALL"/>
+<rect x="1576" y="47.9" width="1360" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_6" data-kind="WALL"/>
+<rect x="2596" y="47.9" width="680" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_12" data-kind="WALL"/>
+<rect x="556" y="46.2" width="1020" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_receiving" data-kind="CEILING"/>
+<rect x="1576" y="46.2" width="1360" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_storage" data-kind="CEILING"/>
+<rect x="1066" y="47.9" width="1020" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_10" data-kind="WALL"/>
+<rect x="46" y="47.9" width="1020" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_8" data-kind="WALL"/>
+<rect x="553.96" y="282.5" width="4.08" height="71.4" fill="#8a6a44" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.o.receiving.door_0@0" data-kind="DOOR"/>
+<rect x="2936" y="47.9" width="680" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_4" data-kind="WALL"/>
+<rect x="2936" y="46.2" width="680" height="1.7" fill="#d2cec6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.ceiling_office" data-kind="CEILING"/>
+<rect x="2766" y="47.9" width="340" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_11" data-kind="WALL"/>
+<rect x="3446" y="47.9" width="340" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_13" data-kind="WALL"/>
+<rect x="2933.96" y="282.5" width="4.08" height="71.4" fill="#8a6a44" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.o.office.door_0@0" data-kind="DOOR"/>
+<rect x="556" y="47.9" width="1020" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_0" data-kind="WALL"/>
+<rect x="1576" y="47.9" width="1360" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_1" data-kind="WALL"/>
+<rect x="2936" y="47.9" width="680" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_2" data-kind="WALL"/>
+<rect x="3616" y="47.9" width="340" height="306" fill="#dcd8d0" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.flr_0.wall_3" data-kind="WALL"/>
+<rect x="2232.2" y="275.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.o.envelope.window_0@0" data-kind="WINDOW"/>
+<rect x="3252.2" y="275.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.o.office.window_0@0" data-kind="WINDOW"/>
+<rect x="1042.2" y="275.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.o.receiving.window_0@0" data-kind="WINDOW"/>
+<rect x="2232.2" y="275.7" width="47.6" height="47.6" fill="#9dc4d6" stroke="#3a3a3a" stroke-width="0.6" data-shape="bld_0.o.storage.window_0@0" data-kind="WINDOW"/>
+<line x1="18.4" y1="353.9" x2="5003.6" y2="353.9" stroke="#111" stroke-width="1.4"/>
+<text x="46" y="391" fill="#333" font-size="10">SOUTH elevation — 6 modelled openings, 0 invented</text>
+</svg>

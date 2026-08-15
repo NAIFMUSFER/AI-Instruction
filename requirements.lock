@@ -1,0 +1,119 @@
+# =============================================================================
+#  requirements.lock —  ⚠ GENERATED OFFLINE.  THIS IS NOT A REGISTRY RESOLUTION.
+# =============================================================================
+#
+#  READ THIS BEFORE TRUSTING A SINGLE LINE OF THIS FILE.
+#
+#  1. NO HASHES ARE PRESENT.
+#     This file was produced on a machine with no access to PyPI
+#     (`pip install`, `pip download` and `pip index` all return HTTP 403).
+#     A hash cannot be computed without the artefact, and an invented hash is
+#     worse than an absent one: it turns `--require-hashes` from a guarantee
+#     into theatre. So there are none. Installing from this file gives you
+#     version pinning ONLY — not artefact integrity.
+#
+#  2. THE PIN SET WAS DERIVED, NOT RESOLVED.
+#     Every `==` below is FLOOR-DERIVED: it is the exact lower bound the
+#     repository itself declared in requirements.txt before this lock existed
+#     (fastapi>=0.110, uvicorn[standard]>=0.27, anthropic>=0.40, pypdf>=4.0,
+#     python-multipart>=0.0.9). That is the only version evidence that exists
+#     anywhere in this repository — grep proves it: no manifest, no phase log,
+#     no report and no deployment file records a resolved Python version.
+#     A floor is the one number the project has ever asserted compatibility
+#     with, so it is the one number that can be pinned without inventing.
+#     It is ALMOST CERTAINLY NOT what the live Render deployment is running:
+#     the ranges were open, so each `docker build` resolved to whatever was
+#     newest that day, and that resolution was never recorded.
+#
+#  3. THE TRANSITIVE CLOSURE IS NOT RESOLVED.
+#     Every transitive line below is marked `# UNRESOLVED-OFFLINE` and is
+#     COMMENTED OUT, so pip never reads it. Both the version AND the
+#     membership of those packages are unverified here: dependency metadata
+#     lives in the wheel, and no wheel could be fetched. The names are the
+#     expected closure recorded so the shape of the work is visible — they
+#     are a TODO list for the networked regeneration, not a claim.
+#
+#  4. REGENERATE THIS FILE ON A NETWORKED MACHINE. EXACT COMMAND:
+#
+#         python3 -m pip install pip-tools
+#         pip-compile --generate-hashes --output-file requirements.lock requirements.in
+#
+#     Then mirror the resolved direct pins into requirements.txt (the Docker
+#     image copies requirements.txt alone, so it cannot use `-r`), and run:
+#
+#         python3 tests/remediation/test_dependency_lock.py
+#         python3 tools/dependency_audit.py
+#
+#  5. GRAMMAR OF THIS FILE (parsed by tests/remediation/test_dependency_lock.py)
+#         name[extras]==version        an active, installable pin
+#             # via ...                pip-compile provenance comment
+#         # UNRESOLVED-OFFLINE  name   # via ...
+#                                      a package whose version could not be
+#                                      determined offline; inert, never installed
+#
+#  NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED:
+#     artefact hashes · transitive closure · CVE status of every pin below ·
+#     whether a newer compatible release exists.
+# =============================================================================
+
+# ------------------------------------------------------------ direct pins ---
+# (FLOOR-DERIVED from the repository's own declared lower bounds — see §2)
+
+anthropic==0.40
+    # via -r requirements.in
+    # FLOOR-DERIVED from `anthropic>=0.40`; not resolved against PyPI.
+
+fastapi==0.110
+    # via -r requirements.in
+    # FLOOR-DERIVED from `fastapi>=0.110`; not resolved against PyPI.
+
+pypdf==4.0
+    # via -r requirements.in
+    # FLOOR-DERIVED from `pypdf>=4.0`; not resolved against PyPI.
+
+Pillow==12.3.0
+# via -r requirements.in
+# PINNED from the version explicitly declared in requirements.in/requirements.txt.
+# This pin is required by acs_upload_security.py (PIL.Image, PIL.ImageOps).
+# It was verified to import successfully in the local remediation environment.
+# Artefact integrity is still NOT VERIFIED here because this offline lock carries no hashes.
+
+python-multipart==0.0.9
+    # via -r requirements.in
+    # FLOOR-DERIVED from `python-multipart>=0.0.9`; not resolved against PyPI.
+    # ⚠ this floor is old enough that a CVE review is mandatory before the next
+    #   production deploy. That review needs a network — see tools/dependency_audit.py.
+
+uvicorn[standard]==0.27
+    # via -r requirements.in
+    # FLOOR-DERIVED from `uvicorn[standard]>=0.27`; not resolved against PyPI.
+    # The [standard] extra pulls a further closure of its own (httptools, uvloop,
+    # websockets, watchfiles, python-dotenv, pyyaml) — all UNRESOLVED-OFFLINE below.
+
+# ------------------------------------------------- transitive closure (TODO) -
+# Inert. Commented out on purpose: pip must never read a line whose version is
+# unknown. Each entry names a package expected in the closure and the direct
+# dependency that is expected to pull it. BOTH the version and the membership
+# are unverified — see §3.
+
+# UNRESOLVED-OFFLINE  annotated-types        # via pydantic
+# UNRESOLVED-OFFLINE  anyio                  # via anthropic, httpx, starlette
+# UNRESOLVED-OFFLINE  certifi                # via httpcore, httpx
+# UNRESOLVED-OFFLINE  click                  # via uvicorn
+# UNRESOLVED-OFFLINE  distro                 # via anthropic
+# UNRESOLVED-OFFLINE  h11                    # via httpcore, uvicorn
+# UNRESOLVED-OFFLINE  httpcore               # via httpx
+# UNRESOLVED-OFFLINE  httptools              # via uvicorn[standard]
+# UNRESOLVED-OFFLINE  httpx                  # via anthropic
+# UNRESOLVED-OFFLINE  idna                   # via anyio, httpx
+# UNRESOLVED-OFFLINE  jiter                  # via anthropic
+# UNRESOLVED-OFFLINE  pydantic               # via anthropic, fastapi
+# UNRESOLVED-OFFLINE  pydantic-core          # via pydantic
+# UNRESOLVED-OFFLINE  python-dotenv          # via uvicorn[standard]
+# UNRESOLVED-OFFLINE  pyyaml                 # via uvicorn[standard]
+# UNRESOLVED-OFFLINE  sniffio                # via anyio, anthropic
+# UNRESOLVED-OFFLINE  starlette              # via fastapi
+# UNRESOLVED-OFFLINE  typing-extensions      # via anthropic, fastapi, pydantic, pypdf
+# UNRESOLVED-OFFLINE  uvloop                 # via uvicorn[standard]
+# UNRESOLVED-OFFLINE  watchfiles             # via uvicorn[standard]
+# UNRESOLVED-OFFLINE  websockets             # via uvicorn[standard]

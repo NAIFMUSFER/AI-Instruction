@@ -1,0 +1,27 @@
+# =============================================================================
+# requirements.txt — الملفّ الذي يستهلكه النشر مباشرةً.
+#
+#   Dockerfile:  COPY requirements.txt .
+#                RUN pip install --no-cache-dir -r requirements.txt
+#
+# الصورة تنسخ هذا الملفّ **وحده**، فلا يجوز أن يكون سطراً واحداً `-r
+# requirements.lock`: الملفّ المُحال إليه لن يكون داخل الصورة فينكسر البناء.
+# لذلك تُكرَّر هنا تثبيتات التبعيات المباشرة نصّاً، ويحرس تطابقَها مع
+# requirements.lock اختبارُ tests/remediation/test_dependency_lock.py — أي انحراف
+# بين الملفّين يُفشل الاختبار قبل أن يصل إلى الإنتاج.
+#
+# لا مواصفة مفتوحة هنا (لا >= ولا ~= ولا * ولا اسم مجرّد): كل سطر == بالضبط.
+#
+# ⚠ الأرقام مشتقّة من الحدّ الأدنى المعلن في المستودع نفسه (fastapi>=0.110 …)
+#   ولم تُحلّ مقابل PyPI لأن بيئة التوليد بلا شبكة، ولا بصمات (hashes) معها.
+#   لا تُحرَّر هذه الأرقام هنا: حرّر requirements.in ثم أعد توليد requirements.lock
+#   على آلة متّصلة، ثم انسخ التثبيتات المحلولة إلى هنا:
+#       pip-compile --generate-hashes --output-file requirements.lock requirements.in
+#   التفاصيل والتحذيرات كاملة في requirements.lock و DEPENDENCY-POLICY.md.
+# =============================================================================
+anthropic==0.40
+fastapi==0.110
+pypdf==4.0
+python-multipart==0.0.9
+uvicorn[standard]==0.27
+Pillow==12.3.0

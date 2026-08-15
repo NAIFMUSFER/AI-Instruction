@@ -1,0 +1,123 @@
+{
+  "_fixture": {
+    "id": "irregular_multi_room",
+    "intent": "six rooms of different sizes on the ground level and three above: the union is irregular and neither level equals the site",
+    "provenance": "SYNTHETIC_REGRESSION",
+    "provenance_note": "SYNTHETIC_REGRESSION — authored for the F-07 / KI-3 plate-extent regression. Not a captured production model and never presented as one. Every rectangle here is chosen to make the site-wide plate defect visible and its fix measurable.",
+    "reconstructed": false
+  },
+  "floor_height": 3.2,
+  "floors": {
+    "f": {
+      "rooms": [
+        {
+          "id": "office1",
+          "rect": [
+            5,
+            4,
+            8,
+            6
+          ]
+        },
+        {
+          "id": "office2",
+          "rect": [
+            13,
+            4,
+            7,
+            6
+          ]
+        },
+        {
+          "id": "meet",
+          "rect": [
+            5,
+            10,
+            12,
+            5
+          ]
+        }
+      ]
+    },
+    "g": {
+      "rooms": [
+        {
+          "id": "lobby",
+          "rect": [
+            5,
+            4,
+            9,
+            7
+          ]
+        },
+        {
+          "id": "clinic1",
+          "rect": [
+            14,
+            4,
+            6,
+            4
+          ]
+        },
+        {
+          "id": "clinic2",
+          "rect": [
+            14,
+            8,
+            6,
+            3
+          ]
+        },
+        {
+          "id": "lab",
+          "rect": [
+            5,
+            11,
+            5,
+            6
+          ]
+        },
+        {
+          "id": "store",
+          "rect": [
+            10,
+            11,
+            4,
+            3
+          ]
+        },
+        {
+          "id": "wc",
+          "rect": [
+            14,
+            11,
+            3,
+            3
+          ]
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "index": 0,
+      "name": "ground",
+      "template": "g"
+    },
+    {
+      "index": 1,
+      "name": "first",
+      "template": "f"
+    }
+  ],
+  "meta": {
+    "name": "irregular_multi_room",
+    "type": "villa"
+  },
+  "site": {
+    "d": 40,
+    "w": 50
+  },
+  "wall_h": 3.0,
+  "wall_t": 0.15
+}

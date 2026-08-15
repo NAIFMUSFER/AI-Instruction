@@ -1,0 +1,55 @@
+{
+ "body_hash": "ddba4a72d3b3d0531a95016290d08eebf437f7eb3a24e31bf475c4c8cf091398",
+ "config_hash": "9cbdcbdef1f4af92",
+ "deterministic_fields": [
+  "global_ids",
+  "entity_order",
+  "hierarchy",
+  "relationships",
+  "geometry",
+  "properties",
+  "file_body"
+ ],
+ "door_count": 11,
+ "entity_count": 904,
+ "export_id": "bimexp_03f304e4c429384d",
+ "file_hash": "128ba9b0dc824805f68bd48a094e16194d674590115b1b2f22a50adf9c05a401",
+ "generated_at": "2026-01-01T00:00:00Z",
+ "generator_version": "acs-bim/1.0.0",
+ "level_count": 2,
+ "losses": [
+  {
+   "entity_id": null,
+   "message": "wall thickness is not stated in the model and is not invented on export",
+   "severity": "WARNING",
+   "type": "PROPERTY_LOSS"
+  },
+  {
+   "entity_id": "bld_0.flr_0.slab",
+   "message": "slab thickness is not stated in the model",
+   "severity": "INFO",
+   "type": "PROPERTY_LOSS"
+  },
+  {
+   "entity_id": "bld_0.flr_1.slab",
+   "message": "slab thickness is not stated in the model",
+   "severity": "INFO",
+   "type": "PROPERTY_LOSS"
+  }
+ ],
+ "model_hash": "b5cd130bd7bf11c05f249058a67ade2aeb4c1240a416e64be0fff3126bec26f2",
+ "non_deterministic_fields": [
+  "generated_at"
+ ],
+ "object_count": 91,
+ "revision_id": "rev:8461e441d0e2f99e",
+ "schema": "IFC4",
+ "slab_count": 2,
+ "space_count": 11,
+ "stair_count": 2,
+ "unsupported_count": 0,
+ "wall_count": 44,
+ "warnings": [],
+ "window_count": 21,
+ "writes_to_model": false
+}

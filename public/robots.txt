@@ -1,0 +1,27 @@
+# =============================================================================
+# robots.txt — AI Construction Studio
+#
+# `/` هو تطبيق الاستوديو نفسه (public/index.html): يفتح على بطاقة دخول ثم يعرض
+# بيانات المشروع — الاسم والبريد واسم المشروع والنماذج المولَّدة. لا محتوى عامّاً
+# فيه يستحق الفهرسة، وفهرسته تعني تسريب بيانات مشاريع خاصّة إلى نتائج البحث.
+# لذلك: Disallow على الجذر، واستثناء صريح للصفحات العامّة وحدها.
+#
+# robots.txt يمنع الزحف لا الفهرسة. المنع الفعلي للفهرسة في ترويسة
+# X-Robots-Tag: noindex, nofollow المضبوطة على `/` و`/index.html` في
+# netlify.toml — الملفّان يعملان معاً ولا يُغني أحدهما عن الآخر.
+#
+# الصفحة العامّة الوحيدة المنشورة الآن هي /privacy.html (بيان الخصوصية،
+# عربي/إنجليزي، ويحمل بنفسه <meta name="robots" content="index,follow">).
+# =============================================================================
+
+User-agent: *
+Disallow: /
+Allow: /privacy.html
+Allow: /robots.txt
+Allow: /sitemap.xml
+
+# ملفّات البناء الموردة (three · es-module-shims · pdf.js) — لا قيمة لفهرستها
+Disallow: /vendor/
+Disallow: /assets/
+
+Sitemap: https://sprightly-selkie-d906c3.netlify.app/sitemap.xml

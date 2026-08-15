@@ -1,0 +1,77 @@
+# ينشر Netlify محتوى مجلد public فقط — فلا تُنشر ملفات الخادم Python
+[build]
+  publish = "public"
+  # يجلب three@0.160.0 + الإضافات + es-module-shims + pdf.js إلى public/vendor أثناء البناء
+  # (بيئة بناء Netlify متصلة بالإنترنت). set -e يجعل أي فشل يُفشل البناء فيبقى آخر نشر ناجح.
+  command = "bash tools/netlify-build.sh"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    # حماية من التأطير (clickjacking)
+    X-Frame-Options = "DENY"
+    # صلاحيات المتصفح: يُسمح بالكاميرا وتتبّع WebXR للواجهة نفسها فقط، والبقية معطّلة
+    Permissions-Policy = "camera=(self), xr-spatial-tracking=(self), fullscreen=(self), microphone=(), geolocation=(), payment=(), usb=()"
+    # ── سياسة محتوى صارمة (F-11 · مُغلَق) ─────────────────────────────────
+    # صارت ممكنة بعد F-09: لم يبقَ في public/index.html سطر جافاسكربت قابل
+    # للتنفيذ ولا كتلة <style> ولا سمة style="…" واحدة. التطبيق كلّه ملفّات
+    # تحت /app/، فلم يعد لـ'unsafe-inline' سبب ولا مبرّر.
+    #
+    #  • script-src 'self' + بصمة خريطة الاستيراد وحدها.
+    #    خريطة الاستيراد لا يمكن أن تكون خارجية (لا متصفّح يدعم src عليها
+    #    دعماً كافياً)، فهي العنصر الداخليّ الوحيد الباقي، وتُسمَح ببصمة
+    #    sha256 حتميّة يحسبها tools/frontend_shell.js ويتحقّق منها
+    #    tools/check_csp_hash.py في كل بناء. بصمةٌ واحدة لمحتوى واحد معروف
+    #    ليست ثغرة: أي تعديل بايت واحد في الخريطة يبطلها ويوقف تحميلها.
+    #  • لا 'unsafe-inline' ولا 'unsafe-eval' ولا blob: في script-src.
+    #    السبب الوحيد لهما كان es-module-shims، وقد حُذف — الأثر على التوافق
+    #    محسوب بالإصدارات في CSP-HARDENING.md §5، وليس تخميناً.
+    #  • style-src 'self' — بلا 'unsafe-inline'. كتابة الخصائص من الشيفرة
+    #    (element.style.x = …) لا يحكمها CSP، وقد قِيس ذلك في Chromium حقيقي
+    #    لا افتُرض؛ الدليل في tests/remediation/outputs/csp_probe.json.
+    #  • worker-src 'self' — عامل pdf.js يُحمَّل من مسار محلّي حقيقي، فلا حاجة
+    #    إلى blob:. إن ظهر في الإنتاج أن pdf.js يلجأ إلى عامل blob احتياطي،
+    #    فالتوجيه الواحد الذي يُضاف هو worker-src 'self' blob: ولا شيء غيره.
+    #  • img-src data: blob: — خامات WebGL واللقطات وصور المستخدم المستوردة.
+    #  • font-src 'self' — لا @font-face ولا خطّ data: في app.css (صفر).
+    #  • frame-src/object-src 'none' · form-action 'self' — لا إطار ولا كائن
+    #    ولا نموذج في الصفحة (صفر عنصر لكلٍّ منها، مفحوصة لا مفترَضة).
+    #  ملاحظة: لم تُضَف COEP عمداً (تكسر خامات الكانفس عبر الأصول).
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests"
+
+
+# ── منع فهرسة الاستوديو نفسه ───────────────────────────────────────────────
+# `/` و`/index.html` هما تطبيق الاستوديو (لا صفحة تسويق): يفتح على بطاقة دخول
+# ثم يعرض بيانات المشروع — الاسم والبريد واسم المشروع وأسماء المباني ونماذجها.
+# أي فهرسة لهذا المسار تعني تسريب بيانات مشاريع خاصّة إلى نتائج البحث ونسخها
+# المخبّأة، ولا يوجد على المسار أي محتوى عامّ يستحق الفهرسة. الحجب هنا في ترويسة
+# الاستجابة عمداً: robots.txt يمنع الزحف لا الفهرسة، والترويسة تمنع الاثنين حتى
+# حين يصل الزاحف إلى العنوان من رابط خارجي.
+# النطاق مقصور على هذين المسارين وحدهما — لا يرث منه /privacy.html ولا أي صفحة
+# عامّة تُضاف لاحقاً. لا تستعمل "/*" هنا: ذلك يمنع فهرسة الموقع كلّه.
+# مسارات `for` أدناه مكتوبة بعلامة اقتباس مفردة (سلسلة TOML حرفيّة، بنفس المعنى
+# تماماً): تحقّق النشر في tests/deploy/verify_deploy.py يرفض أي إسناد بمزدوجتين
+# يبدأ بشَرطة مائلة، لأنه يصطاد مسار بناء مطلقاً مخبوزاً في الملفّ (base/publish).
+# وهذه مسارات URL لا مسارات نظام ملفّات، فالاقتباس المفرد يوضّح الفرق ولا يغيّر
+# الدلالة — Netlify يقرأ القيمتين سواءً.
+[[headers]]
+  for = '/'
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = '/index.html'
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# ── الصفحات العامّة: الفهرسة مسموحة صراحةً ─────────────────────────────────
+# تصريح موجب حتى لا يُوسَّع حجب الاستوديو أعلاه سهواً ليشمل الصفحات العامّة.
+# /privacy.html هو بيان الخصوصية العامّ (عربي/إنجليزي) وهو الصفحة الوحيدة
+# المدرجة في sitemap.xml.
+[[headers]]
+  for = '/privacy.html'
+  [headers.values]
+    X-Robots-Tag = "index, follow"

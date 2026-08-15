@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" data-acs-doc="1" data-view-type="MEP_PLAN" data-view-id="view_74a111e1f2a15202" data-model-hash="0f461df33b5560e4fd8a1086cb37d5554cd90cd0a908d31ce78bd8a833c57590" data-scale-mode="FIT_TO_SHEET" data-construction-drawing="false">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<line x1="12" y1="214.02" x2="28.38" y2="214.02" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="230.4" x2="12" y2="214.02" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="230.4" x2="28.38" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="257.7" x2="12" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="257.7" x2="44.76" y2="257.7" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="44.76" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="12" y2="257.7" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="28.38" y1="230.4" x2="28.38" y2="214.02" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="28.38" y1="230.4" x2="44.76" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="44.76" y1="230.4" x2="55.68" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="44.76" y1="257.7" x2="44.76" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="44.76" y1="285" x2="55.68" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="44.76" y1="285" x2="44.76" y2="257.7" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="55.68" y1="230.4" x2="88.44" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="55.68" y1="257.7" x2="55.68" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="55.68" y1="257.7" x2="88.44" y2="257.7" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="55.68" y1="285" x2="55.68" y2="257.7" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="55.68" y1="285" x2="88.44" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="88.44" y1="257.7" x2="88.44" y2="230.4" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="88.44" y1="285" x2="88.44" y2="257.7" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="17.46" y1="279.54" x2="66.6" y2="279.54" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="174.981" y="174.981" width="1.638" height="1.638" fill="none" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="229.581" y="65.781" width="1.638" height="1.638" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="284.181" y="11.181" width="1.638" height="1.638" fill="none" stroke="#000000" stroke-width="0.35" data-cls="PROJECTED"/>
+<rect x="12" y="214.02" width="16.38" height="16.38" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="230.4" width="32.76" height="27.3" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="257.7" width="32.76" height="27.3" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="44.76" y="230.4" width="10.92" height="54.6" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="55.68" y="230.4" width="32.76" height="27.3" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="55.68" y="257.7" width="32.76" height="27.3" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<text x="20.19" y="222.21" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">bath1</text>
+<text x="28.38" y="244.05" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">guest</text>
+<text x="28.38" y="271.35" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">majlis</text>
+<text x="50.22" y="257.7" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">corridor</text>
+<text x="72.06" y="244.05" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">kitchen</text>
+<text x="72.06" y="271.35" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">living</text>
+<text x="12" y="292" font-family="monospace" font-size="2.4" fill="#000000">model-derived documentation — not a construction drawing</text>
+</svg>

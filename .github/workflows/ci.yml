@@ -1,0 +1,446 @@
+# =============================================================================
+# CI — every gate that can run without touching production.
+#
+# Rules this file obeys:
+#   • A pull request FAILS if any mandatory job fails. The `ci-required` job at
+#     the bottom is the single status check to mark "required" in branch
+#     protection: it re-reads the result of every other job and fails unless all
+#     of them succeeded, so a newly added job can never silently become optional.
+#   • Nothing here talks to the live deployment. Live production verification is
+#     a SEPARATE workflow (production-verify.yml), triggered manually or on a
+#     schedule, never from a PR.
+#   • Every job writes its output to logs/<job>.log and uploads it, pass or
+#     fail. `test-logs` then bundles them into one artifact.
+#   • Versions match the environment the repository was verified in
+#     (tests/remediation_baseline/environment.txt): Python 3.11, Node 22.
+# =============================================================================
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ---------------------------------------------------------------------------
+  python-contracts:
+    name: 1 · Python contracts (py_compile + phase suites)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install the pinned backend dependencies
+        # This is also the first real proof that the pins in requirements.txt
+        # resolve at all: they were derived offline from the repository's own
+        # declared floors and have never been checked against PyPI.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run the Python contract suites
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          {
+            echo "=== 0 · syntax and imports ==="
+            python -m py_compile acs_*.py && echo "py_compile: OK"
+            python - <<'PY'
+          import importlib
+          mods = ["acs_visual", "acs_runtime", "acs_authoring", "acs_workspace",
+                  "acs_render", "acs_bim", "acs_docs", "acs_pbr", "acs_archdetail",
+                  "acs_understand", "acs_understand_api", "acs_validate",
+                  "acs_layout", "acs_api_errors", "acs_generation"]
+          for m in mods:
+              importlib.import_module(m)
+          print("imports: OK (%d modules)" % len(mods))
+          PY
+          } 2>&1 | tee logs/python-contracts.log
+          for t in tests/phase8/test_bim.py \
+                   tests/phase9/test_docs.py \
+                   tests/phase9_1/test_pbr.py \
+                   tests/phase9_2/test_alignment.py \
+                   tests/phase9_2/test_archdetail.py \
+                   tests/phase9_2/test_backend_contract.py \
+                   tests/phase9_2/test_black_viewport.py \
+                   tests/phase9_2/test_generation_budget.py \
+                   tests/phase9_2/test_live_render.py ; do
+            echo "=== $t ===" | tee -a logs/python-contracts.log
+            python3 "$t" 2>&1 | tee -a logs/python-contracts.log
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-python-contracts
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  js-parity:
+    name: 2 · JS ⇄ Python parity and browser-mirror suites
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parity of every mirrored layer (Python vs the shipped JS)
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          : > logs/js-parity.log
+          for t in tests/phase4/test_parity.js \
+                   tests/phase5/test_parity.js \
+                   tests/phase6/test_parity.js \
+                   tests/phase7/test_parity.js \
+                   tests/phase8/test_parity.js \
+                   tests/phase9/test_parity.js \
+                   tests/phase9_1/test_parity.js \
+                   tests/phase9_2/test_parity.js ; do
+            echo "=== $t ===" | tee -a logs/js-parity.log
+            node "$t" 2>&1 | tee -a logs/js-parity.log
+          done
+      - name: The JS mirrors themselves (run against the shipped page bundle)
+        shell: bash
+        run: |
+          set -o pipefail
+          for t in tests/phase2/test_*.js tests/phase3/test_visual.js \
+                   tests/phase3/test_visual_adversarial.js \
+                   tests/phase3/test_dev_api.js ; do
+            echo "=== $t ===" | tee -a logs/js-parity.log
+            node tests/lib/run.js "$t" 2>&1 | tee -a logs/js-parity.log
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-js-parity
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  chromium-browser:
+    name: 3 · Real Chromium (Playwright — this job MAY use the network)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the locked Playwright and its browser binaries
+        # `npm ci` installs package-lock.json exactly and fails on any drift
+        # from package.json. The browser binaries are NOT in the repository —
+        # downloading them is why this job needs the network.
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Vendor the frontend runtime libraries (three · shims · pdf.js)
+        # public/vendor/ is git-ignored and populated at build time. Without it
+        # the page cannot boot, so the browser suites would be meaningless.
+        run: bash tools/netlify-build.sh
+      - name: Browser suites against the shipped page
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          {
+            node tests/phase3/lib/run_browser.js test_visual.js
+            node tests/phase3/lib/run_browser.js test_dev_api.js
+            node tests/phase3/lib/run_browser.js "$PWD/tests/phase6/test_dom.js"
+            node tests/phase3/lib/run_browser.js "$PWD/tests/phase9_2/test_archdetail_browser.js"
+            node tests/deploy/test_viewport_pixels.js
+            node tests/deploy/verify_page_boot.js
+          } 2>&1 | tee logs/chromium-browser.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-chromium-browser
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  security:
+    name: 4 · Security and configuration
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: tests/security
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python3 tests/security/test_security.py 2>&1 | tee logs/security.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-security
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  accessibility:
+    name: 5 · Accessibility (DOM contract of the shipped page)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: DOM/ARIA contract
+        # NOTE ON SCOPE — this asserts the DOM contract the repository declares:
+        # every top-bar control carries an accessible label, aria-pressed /
+        # aria-live / aria-modal are present where the spec requires them, and
+        # the specification itself does NOT claim formal conformance
+        # (ACS_WORKSPACE_SPEC.accessibility.claims_formal_compliance === false).
+        # Formal WCAG conformance and real assistive-technology testing are
+        # NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (a human with a screen
+        # reader). This job must never be described as a WCAG pass.
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          {
+            node tests/lib/run.js tests/phase6/test_dom.js
+            echo
+            echo "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: formal WCAG"
+            echo "conformance and assistive-technology testing are outside CI."
+          } 2>&1 | tee logs/accessibility.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-accessibility
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  deploy-verification:
+    name: 6 · Deployment closure (content, not the live site)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: tests/deploy/verify_deploy.sh
+        # Verifies WHAT WOULD BE DEPLOYED (import closure vs Dockerfile COPY,
+        # generated page blocks, no secret, no sandbox path). It never contacts
+        # the deployment — that is production-verify.yml.
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          sh tests/deploy/verify_deploy.sh 2>&1 | tee logs/deploy-verification.log
+      - name: Fail if the working tree was modified by the regenerators
+        # verify_deploy.sh re-runs the browser-block injectors. If that changes
+        # public/index.html, the committed page is stale.
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-deploy-verification
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  dependency-audit:
+    name: 7 · Dependency audit and lock contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline audit + lock contract
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          {
+            python3 tools/dependency_audit.py
+            echo
+            python3 tests/remediation/test_dependency_lock.py
+          } 2>&1 | tee logs/dependency-audit.log
+      - name: CVE scan (advisory — needs the network, does not gate the PR)
+        # This is the ONE dependency check that cannot be done offline, so it is
+        # done here where the network exists. It is `continue-on-error` on
+        # purpose: a newly published advisory must not block an unrelated PR,
+        # but it must be visible in the log and in the job summary.
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          python -m pip install --upgrade pip pip-audit
+          {
+            echo "=== pip-audit (requirements.txt) ==="
+            pip-audit -r requirements.txt || echo "pip-audit reported findings"
+            echo "=== npm audit (package-lock only) ==="
+            npm audit --package-lock-only || echo "npm audit reported findings"
+          } 2>&1 | tee -a logs/dependency-audit.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-dependency-audit
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  build-frontend:
+    name: 8 · Frontend build gates (index guard · integration · API base)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static gates that tools/netlify-build.sh runs after vendoring
+        # tools/netlify-build.sh has NO check-only mode: every path in it does a
+        # real `npm pack`. So this job runs the three guards the script invokes
+        # after vendoring, plus a shell syntax check of the script itself. The
+        # vendoring half is exercised for real in the chromium-browser job.
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          {
+            bash -n tools/netlify-build.sh && echo "netlify-build.sh: shell syntax OK"
+            python3 tools/check_integration.py
+            python3 tools/check_index_guard.py public/index.html
+            python3 tools/check_api_base.py
+            python3 tools/check_harness_encapsulation.py
+          } 2>&1 | tee logs/build-frontend.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-build-frontend
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  docker-build:
+    name: 9 · Docker image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: docker build
+        # Builds the exact image Render builds. This is where the pinned
+        # requirements.txt is proven installable end to end.
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          docker build -t acs-engine:ci . 2>&1 | tee logs/docker-build.log
+      - name: The image boots and answers /health
+        shell: bash
+        run: |
+          set -o pipefail
+          docker run -d --rm -p 8000:8000 -e PORT=8000 --name acs-ci acs-engine:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8000/health > /tmp/health.json; then break; fi
+            sleep 2
+          done
+          cat /tmp/health.json | tee -a logs/docker-build.log
+          docker logs acs-ci 2>&1 | tail -50 | tee -a logs/docker-build.log
+          docker stop acs-ci
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-docker-build
+          path: logs/
+          if-no-files-found: warn
+
+  # ---------------------------------------------------------------------------
+  test-logs:
+    name: 10 · Collect every test log
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - python-contracts
+      - js-parity
+      - chromium-browser
+      - security
+      - accessibility
+      - deploy-verification
+      - dependency-audit
+      - build-frontend
+      - docker-build
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: all-logs
+          pattern: log-*
+          merge-multiple: false
+      - name: Index what was collected
+        shell: bash
+        run: |
+          {
+            echo "run: ${{ github.run_id }}  ref: ${{ github.ref }}"
+            echo "commit: ${{ github.sha }}"
+            echo
+            find all-logs -type f | sort
+          } | tee all-logs/INDEX.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ci-logs-${{ github.run_id }}
+          path: all-logs/
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  ci-required:
+    name: CI required (mark THIS one as the required status check)
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - python-contracts
+      - js-parity
+      - chromium-browser
+      - security
+      - accessibility
+      - deploy-verification
+      - dependency-audit
+      - build-frontend
+      - docker-build
+    steps:
+      - name: Fail unless every mandatory job succeeded
+        shell: bash
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS"
+          bad=0
+          for state in failure cancelled skipped; do
+            if echo "$RESULTS" | grep -q "\"result\": *\"$state\""; then
+              echo "::error::a mandatory CI job is in state '$state' — this pull request cannot merge"
+              bad=1
+            fi
+          done
+          if [ "$bad" -ne 0 ]; then
+            exit 1
+          fi
+          echo "all mandatory jobs succeeded"

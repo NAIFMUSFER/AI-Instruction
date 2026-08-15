@@ -1,0 +1,79 @@
+{
+ "body_hash": "4c3850cb4c50a0177de54a163c85c43a6e8004faa37ff04cbe6b73e5e9749389",
+ "config_hash": "9cbdcbdef1f4af92",
+ "deterministic_fields": [
+  "global_ids",
+  "entity_order",
+  "hierarchy",
+  "relationships",
+  "geometry",
+  "properties",
+  "file_body"
+ ],
+ "door_count": 8,
+ "entity_count": 698,
+ "export_id": "bimexp_94ce321e65776277",
+ "file_hash": "d2c6ec3417989fafdb9855f09d67fc655d836041c059d1e6857fbf4ccb2a1f65",
+ "generated_at": "2026-01-01T00:00:00Z",
+ "generator_version": "acs-bim/1.0.0",
+ "level_count": 3,
+ "losses": [
+  {
+   "entity_id": "bld_0.flr_0.g.obj_0",
+   "message": "no declared IFC mapping for this object kind",
+   "severity": "WARNING",
+   "type": "UNSUPPORTED_ENTITY"
+  },
+  {
+   "entity_id": "bld_0.flr_1.t.obj_0",
+   "message": "no declared IFC mapping for this object kind",
+   "severity": "WARNING",
+   "type": "UNSUPPORTED_ENTITY"
+  },
+  {
+   "entity_id": "bld_0.flr_2.t.obj_0",
+   "message": "no declared IFC mapping for this object kind",
+   "severity": "WARNING",
+   "type": "UNSUPPORTED_ENTITY"
+  },
+  {
+   "entity_id": null,
+   "message": "wall thickness is not stated in the model and is not invented on export",
+   "severity": "WARNING",
+   "type": "PROPERTY_LOSS"
+  },
+  {
+   "entity_id": "bld_0.flr_0.slab",
+   "message": "slab thickness is not stated in the model",
+   "severity": "INFO",
+   "type": "PROPERTY_LOSS"
+  },
+  {
+   "entity_id": "bld_0.flr_1.slab",
+   "message": "slab thickness is not stated in the model",
+   "severity": "INFO",
+   "type": "PROPERTY_LOSS"
+  },
+  {
+   "entity_id": "bld_0.flr_2.slab",
+   "message": "slab thickness is not stated in the model",
+   "severity": "INFO",
+   "type": "PROPERTY_LOSS"
+  }
+ ],
+ "model_hash": "c6a46eeac4ada6827c7bc915a0f79b274b9ed0ab0ab7bad31b2575b2e8116a85",
+ "non_deterministic_fields": [
+  "generated_at"
+ ],
+ "object_count": 74,
+ "revision_id": "rev:b500779f01d8df43",
+ "schema": "IFC4",
+ "slab_count": 3,
+ "space_count": 10,
+ "stair_count": 3,
+ "unsupported_count": 3,
+ "wall_count": 40,
+ "warnings": [],
+ "window_count": 10,
+ "writes_to_model": false
+}

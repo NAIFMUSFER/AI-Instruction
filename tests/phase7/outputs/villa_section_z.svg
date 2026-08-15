@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="738" height="310" viewBox="0 0 738 310" font-family="system-ui,Segoe UI,Tahoma,sans-serif">
+<rect width="738" height="310" fill="#ffffff"/>
+<rect x="168.4" y="78.7" width="27.2" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bath2.door_0@1"/>
+<rect x="158.2" y="71.9" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bath2.window_0@1"/>
+<rect x="332.96" y="78.7" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bed1.door_0@1"/>
+<rect x="209.2" y="71.9" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bed1.window_0@1"/>
+<rect x="128.96" y="71.9" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bed1.window_1@1"/>
+<rect x="400.96" y="78.7" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bed2.door_0@1"/>
+<rect x="481.2" y="71.9" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bed2.window_0@1"/>
+<rect x="604.96" y="71.9" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.bed2.window_1@1"/>
+<rect x="345.2" y="71.9" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.corridor_f.window_0@1"/>
+<rect x="345.2" y="71.9" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.corridor_f.window_1@1"/>
+<rect x="400.96" y="78.7" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.family.door_0@1"/>
+<rect x="481.2" y="71.9" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.family.window_0@1"/>
+<rect x="604.96" y="71.9" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.f.family.window_1@1"/>
+<rect x="131" y="155.2" width="102" height="1.7" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.ceiling_bath1"/>
+<rect x="403" y="155.2" width="204" height="1.7" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.ceiling_living"/>
+<rect x="131" y="155.2" width="204" height="1.7" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.ceiling_majlis"/>
+<rect x="131" y="156.9" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_0"/>
+<rect x="335" y="156.9" width="68" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_1"/>
+<rect x="46" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_10"/>
+<rect x="46" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_11"/>
+<rect x="80" y="156.9" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_12"/>
+<rect x="182" y="156.9" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_13"/>
+<rect x="250" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_14"/>
+<rect x="250" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_15"/>
+<rect x="318" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_16"/>
+<rect x="318" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_17"/>
+<rect x="522" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_18"/>
+<rect x="522" y="156.9" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_19"/>
+<rect x="403" y="156.9" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_2"/>
+<rect x="131" y="156.9" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_3"/>
+<rect x="403" y="156.9" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_4"/>
+<rect x="131" y="156.9" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_5"/>
+<rect x="233" y="156.9" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_6"/>
+<rect x="335" y="156.9" width="68" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_7"/>
+<rect x="403" y="156.9" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_8"/>
+<rect x="131" y="156.9" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_0.wall_9"/>
+<rect x="131" y="46.4" width="204" height="1.7" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.ceiling_bed1"/>
+<rect x="403" y="46.4" width="204" height="1.7" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.ceiling_bed2"/>
+<rect x="131" y="48.1" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_0"/>
+<rect x="335" y="48.1" width="68" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_1"/>
+<rect x="250" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_12"/>
+<rect x="250" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_13"/>
+<rect x="318" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_14"/>
+<rect x="318" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_15"/>
+<rect x="522" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_16"/>
+<rect x="522" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_17"/>
+<rect x="403" y="48.1" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_2"/>
+<rect x="131" y="48.1" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_3"/>
+<rect x="233" y="48.1" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_4"/>
+<rect x="403" y="48.1" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_5"/>
+<rect x="131" y="48.1" width="102" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_6"/>
+<rect x="335" y="48.1" width="68" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_7"/>
+<rect x="403" y="48.1" width="204" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_8"/>
+<rect x="46" y="48.1" width="170" height="102" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.flr_1.wall_9"/>
+<rect x="168.4" y="187.5" width="27.2" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.bath1.door_0@0"/>
+<rect x="158.2" y="180.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.bath1.window_0@0"/>
+<rect x="128.96" y="180.7" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.bath1.window_1@0"/>
+<rect x="332.96" y="187.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.corridor.door_0@0"/>
+<rect x="345.2" y="180.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.corridor.window_0@0"/>
+<rect x="345.2" y="180.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.corridor.window_1@0"/>
+<rect x="332.96" y="187.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.guest.door_0@0"/>
+<rect x="128.96" y="180.7" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.guest.window_0@0"/>
+<rect x="400.96" y="187.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.kitchen.door_0@0"/>
+<rect x="481.2" y="180.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.kitchen.window_0@0"/>
+<rect x="604.96" y="180.7" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.kitchen.window_1@0"/>
+<rect x="400.96" y="187.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.living.door_0@0"/>
+<rect x="481.2" y="180.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.living.window_0@0"/>
+<rect x="604.96" y="180.7" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.living.window_1@0"/>
+<rect x="332.96" y="187.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.majlis.door_0@0"/>
+<rect x="128.96" y="187.5" width="4.08" height="71.4" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.majlis.door_1@0"/>
+<rect x="209.2" y="180.7" width="47.6" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.majlis.window_0@0"/>
+<rect x="128.96" y="180.7" width="4.08" height="47.6" fill="#eeece8" stroke="#cfcbc4" stroke-width="0.5" data-beyond="bld_0.g.majlis.window_1@0"/>
+<rect x="348.6" y="150.1" width="40.8" height="108.8" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.core_0" data-kind="STAIR"/>
+<rect x="128.96" y="71.9" width="4.08" height="47.6" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.f.bath2.window_1@1" data-kind="WINDOW"/>
+<rect x="335" y="155.2" width="68" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.ceiling_corridor" data-kind="CEILING"/>
+<rect x="131" y="155.2" width="204" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.ceiling_guest" data-kind="CEILING"/>
+<rect x="403" y="155.2" width="204" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.ceiling_kitchen" data-kind="CEILING"/>
+<rect x="131" y="258.9" width="476" height="5.1" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_0.slab" data-kind="SLAB"/>
+<rect x="131" y="46.4" width="102" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_1.ceiling_bath2" data-kind="CEILING"/>
+<rect x="335" y="46.4" width="68" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_1.ceiling_corridor_f" data-kind="CEILING"/>
+<rect x="403" y="46.4" width="204" height="1.7" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_1.ceiling_family" data-kind="CEILING"/>
+<rect x="131" y="150.1" width="476" height="5.1" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_1.slab" data-kind="SLAB"/>
+<rect x="80" y="48.1" width="102" height="102" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_1.wall_10" data-kind="WALL"/>
+<rect x="182" y="48.1" width="102" height="102" fill="#2b2b2b" stroke="#000" stroke-width="0.8" data-cut="bld_0.flr_1.wall_11" data-kind="WALL"/>
+<text x="46" y="296" fill="#333" font-size="10">section on z at 6.5 m — 12 cut elements</text>
+</svg>

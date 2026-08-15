@@ -1,0 +1,112 @@
+{
+ "issues": [],
+ "report": {
+  "compared": {
+   "building_count": {
+    "equal": true,
+    "roundtrip": 1,
+    "source": 1
+   },
+   "containment": {
+    "equal": true,
+    "resolved": 23
+   },
+   "door_count": {
+    "equal": true,
+    "roundtrip": 2,
+    "source": 2
+   },
+   "door_positions": {
+    "equal": true,
+    "matched": 2,
+    "unmatched": 0
+   },
+   "host_relationships": {
+    "equal": true,
+    "expected": 2,
+    "resolved": 2
+   },
+   "level_count": {
+    "equal": true,
+    "roundtrip": 1,
+    "source": 1
+   },
+   "level_elevations": {
+    "equal": true,
+    "roundtrip": [
+     0.0
+    ],
+    "source": [
+     0.0
+    ]
+   },
+   "slab_count": {
+    "equal": true,
+    "roundtrip": 1,
+    "source": 1
+   },
+   "space_count": {
+    "equal": true,
+    "roundtrip": 4,
+    "source": 4
+   },
+   "space_names": {
+    "equal": true,
+    "roundtrip": 4,
+    "source": 4
+   },
+   "stair_count": {
+    "equal": true,
+    "roundtrip": 0,
+    "source": 0
+   },
+   "wall_count": {
+    "equal": true,
+    "roundtrip": 16,
+    "source": 16
+   },
+   "wall_dimensions": {
+    "equal": true,
+    "mismatched": 0
+   },
+   "wall_positions": {
+    "equal": true,
+    "matched": 16,
+    "unmatched": 0
+   },
+   "window_count": {
+    "equal": true,
+    "roundtrip": 0,
+    "source": 0
+   },
+   "window_positions": {
+    "equal": true,
+    "matched": 0,
+    "unmatched": 0
+   }
+  },
+  "critical_loss_count": 0,
+  "geometry_fidelity": 1.0,
+  "losses": [],
+  "model_hash": "66f51598133d1c20583cb1f79aeb9013ba74ed8992484bfeeb7ea1941d2f6ea0",
+  "note": "a critical geometry loss can never report PASS.",
+  "property_fidelity": 1.0,
+  "relationship_fidelity": 1.0,
+  "report_id": "bimrt_e115717228673053",
+  "revision_id": "rev:a4a64eeb185fe67a",
+  "schema": "acs.bim/1",
+  "semantic_fidelity": 1.0,
+  "source_file_hash": "bdda60cfdc9f8e636c4aff410b171b3162cf31865d917e09edf5db568b9e7c3d",
+  "status": "PASS",
+  "tolerances": {
+   "angle_tolerance_deg": 0.01,
+   "area_tolerance_m2": 0.01,
+   "dimension_tolerance_m": 0.001,
+   "elevation_tolerance_m": 0.001,
+   "position_tolerance_m": 0.001
+  },
+  "warnings": [],
+  "writes_to_model": false
+ },
+ "valid": true
+}

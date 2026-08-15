@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Construction Studio — استوديو العميل</title>
+<!-- أيقونة مضمّنة (data:) — تمنع طلب /favicon.ico التلقائي الذي يعيد 404 في الكونسول.
+     بلا ملف إضافي وبلا طلب شبكة؛ img-src في CSP يسمح بـ data: أصلاً. -->
+<link rel="icon" href="data:," />
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     ACS API BASE — المصدر الوحيد لعنوان الخادم في هذه الصفحة كلها.
+     غيّره هنا مرّة واحدة فقط. ممنوع كتابة العنوان مرّة ثانية في أي مكان:
+     كل نداء يمرّ عبر ACSAPI.url(path)، فلا يبقى عنوان مكرّر يُنسى عند النقل.
+     مثال: "https://acs-engine.onrender.com"   (بلا / في النهاية)
+     ══════════════════════════════════════════════════════════════════════ -->
+<script src="/app/boot/api-base.js"></script>
+
+<script src="/app/boot/build-info.js"></script>
+
+<link rel="stylesheet" href="/app/styles/app.css" />
+</head>
+<body>
+<!-- ===== ACS PRODUCTION TRUST DOM · SKIP LINKS (hand-written) ===== -->
+<a class="acs-skip" href="#left">تخطّي إلى لوحة المشروع · Skip to the project panel</a>
+<a class="acs-skip" href="#acsA11yOpen">تخطّي إلى البديل النصّي للعرض ثلاثي الأبعاد ·
+  Skip to the text alternative for the 3D view</a>
+<div id="acsLiveRegion" class="acs-sr" role="status" aria-live="polite"
+     aria-atomic="true"></div>
+<div id="app" role="img" lang="ar" aria-label="لوحة عرض ثلاثي الأبعاد (WebGL) — لا يستطيع قارئ الشاشة تفسير بكسلاتها؛ البديل النصّي الكامل متاح عبر الزرّ «فتح البديل النصّي للعرض». 3D WebGL viewport — a screen reader cannot interpret its pixels; the full text alternative is available from the “Open the text alternative” button."></div>
+
+<div id="engineWarn" role="alert" aria-live="assertive">تعذّر تحميل محرّك العرض ثلاثي الأبعاد — قد يكون أحد مزوّدي المكتبات (CDN) غير متاح.
+  <button class="acs-u-01" id="engineWarnReload" type="button" aria-label="إعادة تحميل الصفحة — Reload the page" title="إعادة تحميل الصفحة / Reload the page">إعادة التحميل</button>
+  <span class="acs-u-02">(المتصفحات القديمة جداً قد لا تدعم العرض ثلاثي الأبعاد.)</span></div>
+<button id="panelToggle" type="button" title="إظهار أو إخفاء لوحة المشروع / Show or hide the project panel" aria-label="إظهار أو إخفاء لوحة المشروع — Show or hide the project panel" aria-expanded="false" aria-controls="left"><span aria-hidden="true">☰</span></button>
+
+<!-- شاشة الدخول -->
+<div id="login">
+  <div class="card">
+    <h1>AI Construction Studio</h1>
+    <div class="tag">استوديو توليد المباني ثلاثية الأبعاد — بوابة العميل</div>
+    <label for="lgName">الاسم <span lang="en" dir="ltr">· Name</span></label><input id="lgName" placeholder="اسمك أو اسم المنشأة" />
+    <label for="lgEmail">البريد الإلكتروني <span lang="en" dir="ltr">· Email</span></label><input id="lgEmail" type="email" placeholder="you@example.com" />
+    <label for="lgProject">اسم المشروع <span lang="en" dir="ltr">· Project name</span></label><input id="lgProject" placeholder="مثال: عمارة سكنية بالرياض" />
+    <button id="lgGo">دخول ▸</button>
+    <div class="hint">نموذج تجريبي — الدخول محلي (يُربط لاحقاً بمصادقة حقيقية).</div>
+  </div>
+</div>
+
+<!-- اللوحة -->
+<div class="acs-hidden" id="left">
+  <header>
+    <h1>ACS — استوديو المشروع <span class="pill" id="who"></span></h1>
+    <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
+  </header>
+
+    <div class="tabs" role="tablist" aria-label="أقسام لوحة المشروع — Project panel sections">
+    <button type="button" role="tab" data-tab="make" class="active" aria-selected="true" aria-controls="acsPanelMake" id="acsTabMake">١ · المشروع</button>
+    <button type="button" role="tab" data-tab="model" aria-selected="false" aria-controls="acsPanelModel" id="acsTabModel">٢ · النموذج</button>
+    <button type="button" role="tab" data-tab="show" aria-selected="false" aria-controls="acsPanelShow" id="acsTabShow">٣ · العرض</button>
+  </div>
+
+  <div class="body">
+    <!-- ═════ ١ · المشروع: مدخل واحد موحّد ═════ -->
+    <div data-panel="make" id="acsPanelMake" role="tabpanel" aria-labelledby="acsTabMake" tabindex="0">
+      <div class="note">اكتب وصف مبناك بلغتك، أو ارفع مخططاً — المحرّك يقرأ ويبني بنداً بنداً.</div>
+
+      <textarea id="descText" aria-label="وصف المبنى بالكلمات — Describe the building in your own words" placeholder="مثال:
+عمارة سكنية 22×16 م، ٣ أدوار، شقتان بكل دور.
+غرفة معيشة 5×4، مطبخ 4×3، غرفة نوم رئيسية 4.5×4 بحمام خاص، غرفة نوم ثانية 4×3.5.
+مصعد ودرج رئيسي، مواقف أمامية، كاميرات في المداخل، رشاشات حريق.
+ضع في الصالة كنبة وطاولة وشاشة، وأربعة أشخاص لبيان المقياس."></textarea>
+
+      <label class="filebtn" for="impFile">📎 أو ارفع ملفاً — مخطط · صورة · PDF · DXF · JSON
+        <input id="impFile" type="file" hidden
+               accept=".json,.dxf,.png,.jpg,.jpeg,.webp,.pdf,image/*"></label>
+      <div id="impInfo" class="note acs-u-04" role="status" aria-live="polite"></div>
+
+      <div class="fld">
+        <div><label for="siteW">عرض الأرض (م)</label><input id="siteW" type="number" value="22"></div>
+        <div><label for="siteD">عمق الأرض (م)</label><input id="siteD" type="number" value="16"></div>
+        <div><label for="nFloors">عدد الأدوار</label><input id="nFloors" type="number" value="3"></div>
+      </div>
+      <div class="fld"><div><label for="bType">نوع المبنى</label>
+        <select id="bType">
+          <option value="auto" selected>كشف تلقائي من الوصف</option>
+          <option value="residential">سكني — فلل وعمائر</option>
+          <option value="warehouse">مستودع · مركز توزيع · مصنع</option>
+        </select></div></div>
+
+      <button class="btn" id="genLLM">🤖 توليد المبنى</button>
+      <div id="srvPill" class="srv" role="status" aria-live="polite">…</div>
+      <div id="reportBox" class="report" role="region" aria-label="تقرير التغطية وحالات الخطأ — Coverage report and error states"></div>
+
+      <div class="cards">
+        <button class="card" id="loadExample"><b>عمارة سكنية</b><span>مثال جاهز — الرياض</span></button>
+        <button class="card" id="loadWarehouse"><b>مستودع 120×80</b><span>مثال جاهز — لوجستي</span></button>
+      </div>
+
+      <details class="adv"><summary>خيارات متقدّمة</summary>
+        <div class="lay"><input type="checkbox" id="strictMode">
+          <label class="nm" for="strictMode">التزم بوصفي حرفياً — لا تُضِف عنصراً لم أذكره <span lang="en" dir="ltr">· Follow my description literally</span></label></div>
+        <button class="ghost acs-u-05" id="genText">توليد محلي فوري (بلا ذكاء)</button>
+        <div class="fld acs-u-06"><div><label for="llmURL">خادم المحرّك — تجاوز يدوي</label>
+          <input id="llmURL" placeholder="يُستخدم الخادم المدمج تلقائياً"></div></div>
+      </details>
+    </div>
+
+    <!-- ═════ ٢ · النموذج: أدوار · طبقات · تشطيبات · ملاحظات ═════ -->
+    <div class="acs-hidden" data-panel="model" id="acsPanelModel" role="tabpanel" aria-labelledby="acsTabModel" tabindex="0">
+      <h2>الأدوار</h2>
+      <div class="row" id="floors"></div>
+
+      <h2>المقطع <span class="pill">قصّ المبنى</span></h2>
+      <div class="acs-hidden" id="clipBox">
+        <div class="clipRow"><span aria-hidden="true">س</span><input aria-label="قصّ على المحور س — Clip on the X axis" id="clip_x" type="range" min="0" max="100" value="100"><i id="clipVal_x">—</i></div>
+        <div class="clipRow"><span aria-hidden="true">ع</span><input aria-label="قصّ على المحور ع — Clip on the Y axis" id="clip_y" type="range" min="0" max="100" value="100"><i id="clipVal_y">—</i></div>
+        <div class="clipRow"><span aria-hidden="true">ص</span><input aria-label="قصّ على المحور ص — Clip on the Z axis" id="clip_z" type="range" min="0" max="100" value="100"><i id="clipVal_z">—</i></div>
+        <button class="ghost acs-u-07" id="clipReset">إلغاء المقطع</button>
+      </div>
+      <div class="note" id="clipHint">اضغط ✂️ في الشريط العلوي لفتح أدوات المقطع.</div>
+
+      <h2>الطبقات</h2>
+      <div id="layers"></div>
+
+      <h2>التشطيبات — لون أو صورة حقيقية</h2>
+      <div id="doorbox" class="doorbox">
+        <div class="row acs-u-08">
+          <select id="texTarget" class="mini" aria-label="سطح التشطيب — Finish surface">
+            <option value="DOOR">أبواب</option><option value="WALL">جدران</option>
+            <option value="FLOOR">أرضيات</option><option value="FURN">أثاث</option>
+            <option value="OBJ">عناصر</option><option value="WINDOW">نوافذ</option>
+          </select>
+          <input id="texRepeat" type="number" value="1" min="0.1" step="0.5" class="mini acs-u-09" aria-label="تكرار الصورة — Image repeat" title="تكرار الصورة / Image repeat">
+        </div>
+        <div class="row acs-u-10">
+          <label class="file acs-u-11">📷 اختر صورة<input id="doorfile" type="file" accept="image/*" hidden></label>
+          <button class="ghost" id="applyAll" disabled>تطبيق</button>
+          <button class="ghost" id="clearDoor">إلغاء</button>
+        </div>
+        <div class="hintline">أو أفلِت صورة على الشاشة · أو انقر عنصراً بعينه بعد اختيارها.
+          ولتغيير لون غرفة: انقر جدارها واختر لوناً من البطاقة.</div>
+      </div>
+
+      <h2>ملاحظات المهندس <span class="pill" id="noteCount">0</span></h2>
+      <div class="row"><button class="ghost acs-u-11" id="bNoteMode">✏️ وضع التحديد والتعليق</button></div>
+      <div id="notesList"></div>
+      <div class="row">
+        <button class="ghost acs-u-11" id="bNotesExport">⬇ تصدير</button>
+        <button class="ghost acs-u-11" id="bNotesApply">🤖 تنفيذ التعديلات</button>
+      </div>
+    </div>
+
+    <!-- ═════ ٣ · العرض: شمس · نظارة · تصدير ═════ -->
+    <div class="acs-hidden" data-panel="show" id="acsPanelShow" role="tabpanel" aria-labelledby="acsTabShow" tabindex="0">
+      <h2>دراسة الشمس والظل</h2>
+      <div id="sunOut" class="note" role="status" aria-live="polite"></div>
+      <div class="fld">
+        <div><label for="sunHour">الساعة</label><input id="sunHour" type="range" min="5" max="19" step="0.25" value="12"></div>
+        <div><label for="sunDay">اليوم من السنة</label><input id="sunDay" type="range" min="1" max="365" value="172"></div>
+      </div>
+      <div class="fld"><div><label for="sunCity">خط العرض</label>
+        <select id="sunCity">
+          <option value="24.71">الرياض</option><option value="21.49">جدة</option>
+          <option value="26.42">الدمام</option><option value="21.39">مكة</option>
+          <option value="24.47">المدينة</option><option value="28.38">حائل</option>
+        </select></div></div>
+
+      <h2>🥽 نظّارة الواقع الافتراضي</h2>
+      <div id="vrbox" class="vrbox"><div id="vrState" class="note acs-u-12" role="status" aria-live="polite">…</div></div>
+      <div class="lay"><input type="checkbox" id="vrSnap" checked>
+        <label class="nm" for="vrSnap">التفاف مُقطَّع 30° (أريح للمعدة) <span lang="en" dir="ltr">· Snap turning, 30°</span></label></div>
+      <div class="fld"><div><label for="vrSpeed">سرعة المشي في VR</label>
+        <input id="vrSpeed" type="range" min="10" max="80" value="26"></div></div>
+      <div class="note"><b>VR:</b> العصا اليسرى مشي · اليمنى التفاف · الزناد انتقال · A/B تغيير الدور.<br>
+        <b>الماكيت:</b> المبنى مصغّر على طاولتك — اليمنى تدوّره، الزناد يعيده أمامك.</div>
+
+      <h2>التصدير</h2>
+      <div class="row">
+        <button class="ghost acs-u-11" type="button" id="bGlb" aria-label="تصدير النموذج بصيغة GLB — Export the model as GLB" title="تصدير النموذج بصيغة GLB / Export the model as GLB">⬇ GLB للأنريل</button>
+        <button class="ghost acs-u-11" type="button" id="bJson" aria-label="تصدير بيانات المشروع JSON — Export the project data as JSON" title="تصدير بيانات المشروع JSON / Export the project data as JSON">⬇ بيانات JSON</button>
+      </div>
+      <div class="row"><button class="ghost acs-u-11" type="button" id="bShot" aria-label="حفظ صورة من العرض — Save a snapshot of the view" title="حفظ صورة من العرض / Save a snapshot of the view"><span aria-hidden="true">📷</span> حفظ صورة</button></div>
+
+      <h2>الجودة والأداء</h2>
+      <div class="lay"><input type="checkbox" id="texOn" checked>
+        <label class="nm" for="texOn">خامات واقعية <span lang="en" dir="ltr">· Realistic materials</span></label></div>
+      <div class="fld"><div><label for="detailSel">مستوى التفصيل</label>
+        <select id="detailSel">
+          <option value="0.5">خفيف — أسرع على الجوال</option>
+          <option value="1" selected>متوازن</option>
+          <option value="1.8">عالٍ — أقصى واقعية</option>
+        </select></div></div>
+      <!-- تشخيص للمطوّر (عدّ العناصر الخام): مخفي إلا في وضع التصحيح
+           (?debug=1 في الرابط أو localStorage.acs_debug='1') -->
+      <div id="statCount" class="note acs-u-13"></div>
+      <script src="/app/boot/debug-toggle.js"></script>
+
+      <!-- F-08 · معلومات النظام والتشخيص — عنصر DOM مكتوب يدوياً (غير مولَّد).
+           الزرّ يجهّز ملفّ تشخيص محلياً ولا يرسله إلى أي جهة. -->
+      <h2>معلومات النظام والتشخيص</h2>
+      <div class="note">هوية البناء المشحون:
+        <b id="acsBuildId" data-acs="build-id">…</b></div>
+      <div class="row">
+        <button class="ghost acs-u-11" id="acsDiagBtn" type="button"
+                aria-label="تنزيل التشخيص — Download diagnostics"
+                title="تنزيل التشخيص / Download diagnostics"
+                data-acs="download-diagnostics">⤓ تنزيل التشخيص</button>
+      </div>
+      <div id="acsDiagState" class="note acs-u-14" role="status" aria-live="polite"
+          ></div>
+      <div class="note">يُجهَّز الملفّ في متصفّحك ولا يُرفع إلى أيّ خادوم.</div>
+
+      <!-- ===== ACS PRODUCTION TRUST DOM · PANEL (hand-written) =====
+           F-15 الحفظ المحلي · F-16 إفصاح القدرات · البديل النصّي للعرض.
+           كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. -->
+      <h2 id="acsLocalH">الحفظ المحلي على هذا الجهاز
+        <span class="pill" lang="en" dir="ltr">Local, on this device</span></h2>
+      <div id="acsSaveState" role="status" aria-live="polite" aria-atomic="true"
+           aria-labelledby="acsLocalH" data-acs-save="IDLE" data-tone="neutral">
+        <span class="ar" lang="ar">لم يُحفَظ بعد على هذا الجهاز</span>
+        <span class="en" lang="en" dir="ltr">Not yet saved on this device</span>
+      </div>
+      <div id="acsTabState" role="status" aria-live="polite"
+           data-acs-tabs="NO_TAB"></div>
+      <div id="acsRecoverBox" role="region"
+           aria-label="استعادة عمل محفوظ محلياً — Recover work saved locally"></div>
+      <div class="row">
+        <button class="ghost acs-u-11" type="button" id="acsSaveNow"
+                aria-label="حفظ الآن محلياً على هذا الجهاز — Save now locally on this device"
+                title="حفظ الآن محلياً على هذا الجهاز / Save now locally on this device"
+                >💾 حفظ الآن محلياً</button>
+        <button class="ghost acs-u-11" type="button" id="acsExportBackup"
+                aria-label="تصدير نسخة احتياطية إلى ملفّ على جهازك — Export a backup file to your device"
+                title="تصدير نسخة احتياطية إلى ملفّ على جهازك / Export a backup file to your device"
+                >⬇ تصدير نسخة احتياطية</button>
+      </div>
+      <div class="row">
+        <label class="file acs-u-11" for="acsRestoreBackup"
+               id="acsRestoreLbl">⬆ استعادة نسخة احتياطية من ملفّ</label>
+        <input class="acs-u-15" id="acsRestoreBackup" type="file" accept=".json,application/json"
+               aria-labelledby="acsRestoreLbl">
+      </div>
+      <div class="row">
+        <button class="ghost acs-u-11" type="button" id="acsClearLocal"
+                aria-label="مسح البيانات المحفوظة محلياً على هذا الجهاز — Clear data saved locally on this device"
+                title="مسح البيانات المحفوظة محلياً على هذا الجهاز (يُطلَب تأكيد) / Clear data saved locally on this device (confirmation required)"
+                >🗑 مسح البيانات المحلية</button>
+      </div>
+      <div id="acsRestoreState" class="note acs-u-14" role="status" aria-live="polite"
+          ></div>
+      <p class="acs-local-note" id="acsLocalNote">
+        كل ما سبق <b>محفوظ محلياً على هذا الجهاز</b> داخل متصفّحك (IndexedDB).
+        ليس نسخاً احتياطياً على خادم، ولا يُرفع إلى أي جهة، ويختفي إن مسحت بيانات
+        المتصفّح أو استعملت جهازاً آخر.
+        <span lang="en" dir="ltr">Everything above is <b>saved locally on this device</b>
+        inside your browser (IndexedDB). It is not a server backup, nothing is uploaded,
+        and it is gone if you clear browser data or use another device.</span>
+      </p>
+
+      <h2 id="acsCapH">قدرات معلَنة غير منفَّذة بعد
+        <span class="pill" lang="en" dir="ltr">Declared, not yet implemented</span></h2>
+      <p class="acs-local-note">
+        المحرّك يُعلن هذه العمليات في مفرداته ليذكر مالكها الهندسي صراحةً، ولا
+        ينفّذها في هذه المرحلة. تُعرض هنا معطّلة ومُعلَّمة بدل أن تظهر كأزرار
+        حيّة تُخيّب الظنّ.
+        <span lang="en" dir="ltr">The engine declares these operations in its vocabulary so
+        their engineering ownership is stated, and does not implement them in this phase.
+        They are shown here disabled and labelled rather than as live buttons that fail.</span>
+      </p>
+      <div id="acsCapList" role="group" aria-labelledby="acsCapH"></div>
+
+      <h2 id="acsAltH">البديل النصّي للعرض ثلاثي الأبعاد
+        <span class="pill" lang="en" dir="ltr">Text alternative</span></h2>
+      <div class="row">
+        <button class="ghost acs-u-11" type="button" id="acsA11yOpen"
+                aria-label="فتح البديل النصّي للعرض ثلاثي الأبعاد — Open the text alternative to the 3D view"
+                title="فتح البديل النصّي: شجرة المشروع والعناصر والخصائص والملاحظات والمسقط والجداول / Open the text alternative: project tree, elements, properties, issues, floor plan and schedules"
+                >📄 فتح البديل النصّي للعرض</button>
+      </div>
+
+      <h2>دليل الألوان</h2>
+      <div class="legend">
+        <span><i class="dot acs-u-16"></i>فيش</span>
+        <span><i class="dot acs-u-17"></i>مفتاح</span>
+        <span><i class="dot acs-u-18"></i>شبكة</span>
+        <span><i class="dot acs-u-19"></i>إنارة</span>
+        <span><i class="dot acs-u-20"></i>كاميرا</span>
+        <span><i class="dot acs-u-21"></i>تكييف</span>
+        <span><i class="dot acs-u-22"></i>سلامة</span>
+        <span><i class="dot acs-u-23"></i>شاشة</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="status" role="status" aria-live="polite" aria-atomic="true">جاهز — اكتب وصفاً واضغط «توليد».</div>
+</div>
+
+<!-- ===== ACS PRODUCTION TRUST DOM · ACCESSIBLE ALTERNATIVE (hand-written) =====
+     بديل نصّي حقيقي للوحة العرض ثلاثي الأبعاد. لا يُدّعى هنا أنّ قارئ الشاشة
+     يقرأ بكسلات WebGL — لا يفعل، والقيد مذكور في العلامات نفسها لا في وثيقة
+     منفصلة. كل ما هنا مشتقّ من هندسة النموذج مباشرةً.
+     كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. -->
+<div id="acsA11yAlt" role="dialog" aria-modal="true" aria-hidden="true"
+     aria-labelledby="acsA11yTitle" aria-describedby="acsA11yLimit">
+  <div class="acs-a11y-card">
+    <h2 id="acsA11yTitle">البديل النصّي للعرض ثلاثي الأبعاد
+      <span lang="en" dir="ltr">· Text alternative to the 3D view</span></h2>
+    <p class="acs-a11y-limit" id="acsA11yLimit">
+      <b>قيد معلَن:</b> لوحة العرض ثلاثي الأبعاد مبنيّة على WebGL، وقارئ الشاشة
+      <b>لا يستطيع</b> تفسير بكسلاتها؛ لا يوجد نصّ داخل الصورة المرسومة. لذلك
+      يُشتَقّ كل ما في هذه الصفحة من هندسة النموذج نفسها — لا من الشاشة — وهي
+      المصدر المتاح فعلاً: شجرة المشروع، وقائمة العناصر وخصائصها، والملاحظات،
+      ومسقط أفقي متجهي، والجداول. أي قيمة غير معروفة تُكتب «غير محدد» ولا
+      تُستبدَل بصفر ولا بتقدير.
+      <span lang="en" dir="ltr"><b>Declared limitation:</b> the 3D viewport is WebGL and a
+      screen reader <b>cannot</b> interpret its pixels — there is no text inside the drawn
+      image. Everything on this page is therefore derived from the model geometry itself,
+      not from the screen: project tree, element list and properties, issues, a vector
+      floor plan and schedules. Any unknown value is written “Not specified”, never
+      replaced with zero or an estimate.</span>
+    </p>
+    <div class="acs-a11y-bar">
+      <button type="button" id="acsA11yRefresh"
+              aria-label="تحديث البديل النصّي من النموذج الحالي — Refresh the text alternative from the current model"
+              title="تحديث من النموذج الحالي / Refresh from the current model">↻ تحديث</button>
+      <button type="button" id="acsA11yClose"
+              aria-label="إغلاق البديل النصّي — Close the text alternative"
+              title="إغلاق / Close">✕ إغلاق</button>
+    </div>
+    <div id="acsA11yBody"></div>
+  </div>
+</div>
+
+<!-- لوحة تحكّم المشي -->
+<div id="walkHUD" role="group" aria-label="لوحة التحكّم بالمشي — Walk controls">
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="walkBtns" role="toolbar" aria-label="أدوات وضع المشي — Walk mode controls">
+    <button class="wbtn" type="button" id="wUp" aria-label="الصعود درجة إلى أعلى — Step up" title="الصعود درجة إلى أعلى / Step up"><span aria-hidden="true">▲</span></button>
+    <button class="wbtn" type="button" id="wDown" aria-label="النزول درجة إلى أسفل — Step down" title="النزول درجة إلى أسفل / Step down"><span aria-hidden="true">▼</span></button>
+    <button class="wbtn" type="button" id="wRun" aria-label="تبديل سرعة الجري — Toggle running speed" title="تبديل سرعة الجري / Toggle running speed"><span aria-hidden="true">🏃</span></button>
+    <button class="wbtn" type="button" id="wExit" aria-label="الخروج من وضع المشي — Exit walk mode" title="الخروج من وضع المشي / Exit walk mode"><span aria-hidden="true">✕</span></button>
+  </div>
+  <div id="walkOpts">
+    <label for="optFov">مجال الرؤية <span lang="en" dir="ltr">Field of view</span> <input id="optFov" type="range" min="45" max="100" value="70"></label>
+    <label for="optEye">ارتفاع النظر <span lang="en" dir="ltr">Eye height</span> <input id="optEye" type="range" min="80" max="220" value="160"></label>
+    <label for="optSpd">السرعة <span lang="en" dir="ltr">Speed</span> <input id="optSpd" type="range" min="1" max="12" value="4"></label>
+    <span id="walkHint">اسحب للنظر · الجويستيك للحركة · WASD على الحاسب</span>
+  </div>
+</div>
+
+<!-- نافذة ملاحظة المهندس -->
+<div id="noteModal" role="dialog" aria-modal="true" aria-labelledby="nmTitle" aria-hidden="true">
+  <div class="nm-card">
+    <h3 id="nmTitle">طلب تعديل على عنصر <span lang="en" dir="ltr">· Request a change to an element</span></h3>
+    <div id="nmTarget" class="nm-target" role="status" aria-live="polite"></div>
+    <!-- تغيير اللون فوراً بلا خادم -->
+    <div class="nm-color">
+      <label class="acs-u-24" for="nmColor">🎨 تغيير اللون فوراً (بلا خادم · نتيجة لحظية)</label>
+      <div class="sw" id="nmSwatches" role="group" aria-label="ألوان جاهزة — Preset colours"></div>
+      <div class="row acs-u-25">
+        <input id="nmColor" type="color" value="#22c55e" aria-label="لون مخصّص — Custom colour" title="لون مخصّص / Custom colour">
+        <button class="ghost cbtn" data-surface="wall">جدران الغرفة</button>
+        <button class="ghost cbtn" data-surface="floor">الأرضية</button>
+        <button class="ghost cbtn" data-surface="ceiling">السقف</button>
+        <button class="ghost cbtn" data-surface="self">هذا العنصر</button>
+      </div>
+      <div id="nmColorMsg" class="nm-msg" role="status" aria-live="polite"></div>
+    </div>
+    <label for="nmKind">نوع الطلب <span lang="en" dir="ltr">· Request kind</span></label>
+    <select id="nmKind">
+      <option value="تعديل">تعديل</option>
+      <option value="لون">لون / تشطيب</option>
+      <option value="نقل">نقل / تغيير موضع</option>
+      <option value="أبعاد">تغيير أبعاد</option>
+      <option value="حذف">حذف</option>
+      <option value="إضافة">إضافة عنصر</option>
+      <option value="ملاحظة">ملاحظة عامة</option>
+    </select>
+    <label for="nmText">الوصف <span lang="en" dir="ltr">· Description</span></label>
+    <textarea id="nmText" placeholder="مثال: غيّر لون جدار هذه الغرفة إلى أخضر · وسّع المجلس إلى 6×5 م · انقل الباب لمنتصف الجدار الشرقي."></textarea>
+    <div class="nm-hint">إن كتبت طلب لون (مثل «الجدار أخضر») سيُنفَّذ فوراً عند الحفظ بلا انتظار الخادم.</div>
+    <div class="row acs-u-26">
+      <button class="btn g acs-u-11" id="nmSave">حفظ الملاحظة</button>
+      <button class="ghost" id="nmCancel">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div id="camBar" role="toolbar" aria-label="مناظير الكاميرا وأدوات القياس — Camera views and measurement tools">
+  <button type="button" data-view="orbit" class="on" aria-label="منظور مداري حول المبنى — Orbit view" title="منظور مداري حول المبنى / Orbit view" aria-pressed="true"><span aria-hidden="true">🔄</span></button>
+  <button type="button" data-view="arch"  aria-label="لقطة معمارية — Architectural view" title="لقطة معمارية / Architectural view" aria-pressed="false"><span aria-hidden="true">🏛️</span></button>
+  <button type="button" data-view="bird"  aria-label="عين الطائر — Bird’s-eye view" title="عين الطائر / Bird’s-eye view" aria-pressed="false"><span aria-hidden="true">🦅</span></button>
+  <button type="button" data-view="top"   aria-label="مسقط علوي — Top view" title="مسقط علوي / Top view" aria-pressed="false"><span aria-hidden="true">⬛</span></button>
+  <button type="button" data-view="tour"  aria-label="جولة تلقائية — Automatic tour" title="جولة تلقائية / Automatic tour" aria-pressed="false"><span aria-hidden="true">🎬</span></button>
+  <button type="button" data-view="walk"  aria-label="منظور شخصي — مشي — Walk-through view" title="منظور شخصي — مشي / Walk-through view" aria-pressed="false"><span aria-hidden="true">🚶</span></button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" data-tool="measure" aria-label="قياس مسافة — Measure distance" title="قياس مسافة / Measure distance" aria-pressed="false"><span aria-hidden="true">📏</span></button>
+  <button type="button" data-tool="area" aria-label="قياس مساحة — Measure area" title="قياس مساحة / Measure area" aria-pressed="false"><span aria-hidden="true">▱</span></button>
+  <button type="button" id="cbClip" aria-label="أدوات المقطع — Section tools" title="أدوات المقطع / Section tools" aria-pressed="false"><span aria-hidden="true">✂️</span></button>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" id="cbNote" aria-label="وضع التحديد والتعليق — Select and comment mode" title="وضع التحديد والتعليق / Select and comment mode" aria-pressed="false"><span aria-hidden="true">✏️</span></button>
+  <button type="button" id="cbShot" aria-label="حفظ صورة من العرض — Save a snapshot of the view" title="حفظ صورة من العرض / Save a snapshot of the view" aria-pressed="false"><span aria-hidden="true">📷</span></button>
+</div>
+<div id="measHUD"></div>
+<div id="info"></div>
+<div id="tip">انقر عنصراً لتفاصيله ولتلوينه فوراً 🎨 · اسحب للتدوير · عجلة للتقريب</div>
+<div id="drop">أفلِت صورة باب</div>
+
+<!-- محرّر رسم الغرف فوق المخطط -->
+<div id="tracer" role="dialog" aria-modal="true" aria-label="رسم الغرف على المخطط — Trace rooms over the plan">
+  <div class="tbar">
+    <b class="acs-u-27">رسم الغرف على المخطط</b>
+    <span class="thint">اسحب لرسم مستطيل = غرفة</span>
+    <label for="trW">عرض المخطط (م) <span lang="en" dir="ltr">· Plan width (m)</span>: <input id="trW" type="number" value="30"></label>
+    <span id="trCount" class="pill">0 غرفة</span>
+    <span class="acs-u-11"></span>
+    <button class="ghost" id="trUndo">تراجع</button>
+    <button class="ghost" id="trClear">مسح الكل</button>
+    <button class="btn g" id="trGen">توليد 3D ▸</button>
+    <button class="ghost" id="trClose">إغلاق ✕</button>
+  </div>
+  <div id="trWrap"><canvas id="trCanvas"></canvas></div>
+</div>
+
+<!-- شيم لدعم importmap على المتصفحات الأقدم (iOS Safari < 16.4).
+     تحميل صامد: إذا فشل أحد الـCDN جرّب التالي، فلا يكسر مزوّدٌ واحدٌ الصفحة. -->
+<!-- es-module-shims removed: خرائط الاستيراد أصلية في كل متصفّح مدعوم،
+     والـshim كان السبب الوحيد لـ script-src 'unsafe-eval' و blob:.
+     الأثر على التوافق موثّق بالأرقام في CSP-HARDENING.md §5. -->
+<!-- خريطة الاستيراد المحلية (بلا CDN) — يملأ public/vendor أثناء بناء Netlify
+     عبر tools/netlify-build.sh (three@0.160.0 + الإضافات + es-module-shims + pdf.js).
+     خريطة واحدة فعّالة فقط، تشير لمسارات محلية — لا اعتماد على unpkg/jsdelivr/cdnjs وقت التشغيل. -->
+<script type="importmap">
+{ "imports":{
+  "three":"/vendor/three@0.160.0/build/three.module.js",
+  "three/addons/":"/vendor/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+
+<!-- الدخول والواجهة الأساسية: سكربت عادي يعمل دائماً حتى لو فشل تحميل محرّك 3D -->
+<script src="/app/boot/engine-guard.js"></script>
+
+<script type="module" src="/app/main.js"></script>
+<!-- ===== ACS WORKSPACE DOM (generated) ===== -->
+<div id="acsWorkspace" role="application" aria-label="AI Construction Studio workspace">
+  <div class="ws-top" role="toolbar" aria-label="Workspace toolbar">
+    <span class="ws-brand">ACS</span>
+    <span class="ws-proj" id="wsProjName" data-ws="project-name">—</span>
+    <span class="ws-rev" id="wsRev" data-ws="revision" title="Current revision">—</span>
+    <span class="ws-sp"></span>
+    <button class="ws-btn" id="wsBtnTree" aria-label="Toggle project tree" title="Project tree (B)">☰</button>
+    <button class="ws-btn" id="wsBtnMode" aria-label="Toggle edit mode" title="View / Edit mode (E)"
+      aria-pressed="false" data-ws="mode-toggle">👁 <span id="wsModeLbl">VIEW</span></button>
+    <button class="ws-btn" id="wsBtnUndo" aria-label="Undo" title="Undo (Ctrl+Z)" disabled>↶</button>
+    <button class="ws-btn" id="wsBtnRedo" aria-label="Redo" title="Redo (Ctrl+Shift+Z)" disabled>↷</button>
+    <button class="ws-btn" id="wsBtnHistory" aria-label="Revision history" title="Revision history">⏱</button>
+    <button class="ws-btn" id="wsBtnIssues" aria-label="Issue center" title="Issue center">⚠ <span id="wsIssueN">0</span></button>
+    <button class="ws-btn" id="wsBtnAI" aria-label="Assistant" title="Assistant">✦</button>
+    <button class="ws-btn" id="wsBtnExport" aria-label="Export center" title="Export">⤓</button>
+    <button class="ws-btn" id="wsBtnLang" aria-label="Switch language" title="Language">ع/EN</button>
+    <button class="ws-btn" id="wsBtnInsp" aria-label="Toggle inspector" title="Inspector (I)">▤</button>
+  </div>
+
+  <div class="ws-main">
+    <aside class="ws-pane left" id="wsTreePane" aria-label="Project tree">
+      <h3 id="wsTreeTitle">Project</h3>
+      <div class="ws-filters" id="wsTreeFilters" role="group" aria-label="Discipline filters"></div>
+      <div class="ws-scroll" id="wsTree" role="tree" aria-label="Project structure" tabindex="0"></div>
+    </aside>
+
+    <section class="ws-view" id="wsViewport" aria-label="3D viewport">
+      <div class="ws-view-host" id="wsViewHost"></div>
+      <div class="ws-preview-badge" id="wsPreviewBadge">PREVIEW</div>
+      <div class="ws-loading" id="wsLoading">…</div>
+      <div class="ws-degraded" id="wsDegraded">
+        <div><b id="wsDegradedTitle">3D engine unavailable</b><br>
+        <span id="wsDegradedBody">The project data, tree, inspector, issues and history stay usable.</span></div>
+      </div>
+    </section>
+
+    <aside class="ws-pane right" id="wsInspPane" aria-label="Inspector">
+      <div class="ws-grab" aria-hidden="true"></div>
+      <h3 id="wsInspTitle">Inspector</h3>
+      <div class="ws-scroll" id="wsInsp"></div>
+    </aside>
+  </div>
+
+  <div class="ws-status" role="status" aria-live="polite">
+    <span data-ws="status-rev"><i id="wsLblRev">rev</i> <b id="wsStRev">—</b></span>
+    <span data-ws="status-level"><i id="wsLblLevel">level</i> <b id="wsStLevel">All</b></span>
+    <span data-ws="status-mode"><i id="wsLblMode">mode</i> <b id="wsStMode">VIEW</b></span>
+    <span data-ws="status-nav"><i id="wsLblNav">nav</i> <b id="wsStNav">ORBIT</b></span>
+    <span class="ws-pill" id="wsStSaved">unsaved</span>
+    <span class="ws-pill err" id="wsStErr">0 errors</span>
+    <span class="ws-pill warn" id="wsStWarn">0 warnings</span>
+    <span class="ws-pill info" id="wsStInfo">0 info</span>
+    <span class="ws-pill" id="wsStPreview">no preview</span>
+    <span class="ws-sp"></span>
+    <span data-ws="compliance"><i id="wsLblCompliance">compliance</i> <b id="wsStCompliance">NOT_EVALUATED</b></span>
+  </div>
+</div>
+
+<div class="ws-modal" id="wsModal" role="dialog" aria-modal="true" aria-labelledby="wsModalTitle">
+  <div class="ws-card">
+    <h2 id="wsModalTitle">—</h2>
+    <div class="sub" id="wsModalSub"></div>
+    <div id="wsModalBody"></div>
+    <div class="ws-actions" id="wsModalActions"></div>
+  </div>
+</div>
+<div class="ws-toasts" id="wsToasts" aria-live="polite" aria-atomic="false"></div>
+
+<!-- ===== END ACS WORKSPACE DOM ===== -->
+<!-- ===== ACS RENDER DOM (generated) ===== -->
+<aside class="rv-panel" id="rvPanel" role="dialog" aria-label="Visualisation"
+  aria-modal="false" data-rv="panel">
+  <div class="rv-head">
+    <h3 id="rvTitle">Visualize</h3>
+    <span class="acs-u-11"></span>
+    <button class="rv-btn" id="rvClose" aria-label="Close visualisation">✕</button>
+  </div>
+  <div class="rv-body" id="rvBody"></div>
+  <div class="rv-foot">
+    <button class="rv-btn" id="rvPreview" data-rv-action="preview">Preview</button>
+    <button class="rv-btn pri" id="rvRender" data-rv-action="render">Render</button>
+    <button class="rv-btn" id="rvCompare" data-rv-action="compare">Compare</button>
+    <button class="rv-btn" id="rvExport" data-rv-action="export">Export</button>
+  </div>
+</aside>
+<div class="rv-view" id="rvView" role="dialog" aria-label="Render output">
+  <div class="box" id="rvViewBox"></div>
+</div>
+
+<!-- ===== END ACS RENDER DOM ===== -->
+<!-- ===== ACS BIM DOM (generated) ===== -->
+<aside class="bx-panel" id="bxPanel" role="dialog" aria-label="BIM exchange"
+  data-bx="panel">
+  <div class="bx-head">
+    <h3 id="bxTitle">BIM / Exchange</h3>
+    <span class="acs-u-11"></span>
+    <button class="bx-btn" id="bxClose" aria-label="Close BIM exchange">✕</button>
+  </div>
+  <div class="bx-body" id="bxBody"></div>
+  <div class="bx-foot">
+    <button class="bx-btn" id="bxImport" data-bx-action="import">Import BIM</button>
+    <button class="bx-btn" id="bxExport" data-bx-action="export">Export BIM</button>
+    <button class="bx-btn" id="bxValidate" data-bx-action="validate">Validate</button>
+    <button class="bx-btn" id="bxCompare" data-bx-action="compare">Compare</button>
+    <button class="bx-btn" id="bxProposals" data-bx-action="proposals">Proposals</button>
+    <button class="bx-btn" id="bxRoundtrip" data-bx-action="roundtrip">Round-trip</button>
+  </div>
+</aside>
+
+<!-- ===== END ACS BIM DOM ===== -->
+<!-- ===== ACS DOCS DOM (generated) ===== -->
+<aside class="dc-panel" id="dcPanel" role="dialog" aria-label="Documentation"
+  data-dc="panel">
+  <div class="dc-head">
+    <h3 id="dcTitle">Documentation</h3>
+    <span class="acs-u-11"></span>
+    <button class="dc-btn" id="dcClose" aria-label="Close documentation">✕</button>
+  </div>
+  <div class="dc-body" id="dcBody"></div>
+  <div class="dc-foot">
+    <button class="dc-btn" id="dcNewView" data-dc-action="CREATE_VIEW">New view</button>
+    <button class="dc-btn" id="dcSchedules" data-dc-action="GENERATE_SCHEDULE">Schedules</button>
+    <button class="dc-btn" id="dcQuantities" data-dc-action="GENERATE_QUANTITIES">Quantities</button>
+    <button class="dc-btn" id="dcSheet" data-dc-action="COMPOSE_SHEET">Sheet</button>
+    <button class="dc-btn" id="dcRegenerate" data-dc-action="REGENERATE">Regenerate</button>
+    <button class="dc-btn pri" id="dcExport" data-dc-action="EXPORT">Export</button>
+  </div>
+</aside>
+
+<!-- ===== END ACS DOCS DOM ===== -->
+<!-- ===== ACS PBR DOM (generated) ===== -->
+<aside class="pq-panel" id="pqPanel" role="dialog" aria-label="Visual quality"
+  data-pq="panel">
+  <div class="pq-head">
+    <h3 id="pqTitle">Visual quality</h3>
+    <span class="acs-u-11"></span>
+    <button class="pq-btn" id="pqClose" aria-label="Close visual quality">✕</button>
+  </div>
+  <div class="pq-body" id="pqBody"></div>
+  <div class="pq-foot">
+    <button class="pq-btn pri" id="pqApply" data-pq-action="APPLY">Apply</button>
+    <button class="pq-btn" id="pqCapture" data-pq-action="CAPTURE">Screenshot</button>
+  </div>
+</aside>
+
+<!-- ===== END ACS PBR DOM ===== -->
+<!-- ===== ACS ARCH DETAIL DOM (generated) ===== -->
+
+<div id="adPanel" data-ad="panel">
+  <div class="ad-h"><span id="adTitle"></span>
+    <button class="acs-u-28" id="adClose">×</button></div>
+  <label id="adDetailLbl"></label><select id="adDetail"></select>
+  <label id="adFacadeLbl"></label><select id="adFacade"></select>
+  <label id="adContextLbl"></label><select id="adContext"></select>
+  <label id="adStagingLbl"></label><select id="adStaging"></select>
+  <label id="adCameraLbl"></label><select id="adCamera"></select>
+  <label><input type="checkbox" id="adDiagnostic">
+    <span id="adDiagLbl"></span></label>
+  <div class="ad-row"><button id="adApplyBtn">✓</button>
+    <span id="adStatus" data-ad-status="NOT_APPLIED">—</span></div>
+  <div class="ad-row"><span id="adCompareLbl"></span></div>
+  <div class="ad-row">
+    <button id="adCompareE" data-ad-compare="ENGINEERING">E</button>
+    <button id="adCompareP" data-ad-compare="PBR">P</button>
+    <button id="adCompareA" data-ad-compare="ARCHITECTURAL">A</button></div>
+  <div id="adDiagOut"></div>
+  <div class="ad-note" id="adReadonly"></div>
+</div>
+
+<!-- ===== END ACS ARCH DETAIL DOM ===== -->
+<!-- ===== ACS A11Y BASELINE (hand-written classic script — no module, no Three.js) =====
+     إتاحة الوصول لا يجوز أن تعتمد على نجاح تحميل محرّك ثلاثي الأبعاد. ما هنا
+     يعمل حتى لو فشل استيراد Three.js تماماً: يُصلح ما لا يمكن تحريره في الكتل
+     المولَّدة (لغة مساحة العمل الإنجليزية داخل مستند عربي) ويثبّت الأساس.
+     كتلة مكتوبة يدوياً — لا يولّدها مولّد ولا تُقارَن بايتياً. -->
+<script src="/app/boot/a11y-baseline.js"></script>
+<!-- ===== END ACS A11Y BASELINE ===== -->
+
+
+</body>
+</html>

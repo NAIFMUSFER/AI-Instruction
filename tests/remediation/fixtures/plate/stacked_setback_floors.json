@@ -1,0 +1,96 @@
+{
+  "_fixture": {
+    "id": "stacked_setback_floors",
+    "intent": "three levels with three different footprints: 24x10, 20x8 and 10x6 — every level's plate must follow its OWN rooms",
+    "provenance": "SYNTHETIC_REGRESSION",
+    "provenance_note": "SYNTHETIC_REGRESSION — authored for the F-07 / KI-3 plate-extent regression. Not a captured production model and never presented as one. Every rectangle here is chosen to make the site-wide plate defect visible and its fix measurable.",
+    "reconstructed": false
+  },
+  "floor_height": 3.2,
+  "floors": {
+    "f": {
+      "rooms": [
+        {
+          "id": "flat1",
+          "rect": [
+            4,
+            4,
+            10,
+            8
+          ]
+        },
+        {
+          "id": "flat2",
+          "rect": [
+            14,
+            4,
+            10,
+            8
+          ]
+        }
+      ]
+    },
+    "g": {
+      "rooms": [
+        {
+          "id": "shop1",
+          "rect": [
+            3,
+            3,
+            12,
+            10
+          ]
+        },
+        {
+          "id": "shop2",
+          "rect": [
+            15,
+            3,
+            12,
+            10
+          ]
+        }
+      ]
+    },
+    "s": {
+      "rooms": [
+        {
+          "id": "penthouse",
+          "rect": [
+            6,
+            6,
+            10,
+            6
+          ]
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "index": 0,
+      "name": "ground",
+      "template": "g"
+    },
+    {
+      "index": 1,
+      "name": "first",
+      "template": "f"
+    },
+    {
+      "index": 2,
+      "name": "second",
+      "template": "s"
+    }
+  ],
+  "meta": {
+    "name": "stacked_setback_floors",
+    "type": "villa"
+  },
+  "site": {
+    "d": 26,
+    "w": 34
+  },
+  "wall_h": 3.0,
+  "wall_t": 0.15
+}

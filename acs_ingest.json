@@ -1,0 +1,977 @@
+{
+ "schema": "acs.ingest/1",
+ "pipeline_version": "acs-ingest/1.0.0",
+ "note": "SYNTHETIC FIXTURES ONLY. No official standard text, clause number, edition, page or URL appears in this file. Every document is synthetic=true and official=false, every rule is regulatory=false / namespace TEST_ONLY. Real regulatory content may only enter through the documented ingestion pipeline with authoritative supplied source material and explicit approval. Real (non-synthetic) source documents live in acs_sources.json, never here.",
+ "excerpt_max_chars": 300,
+ "document_states": [
+  "UNVERIFIED",
+  "SOURCE_IDENTIFIED",
+  "OFFICIAL_SOURCE_VERIFIED",
+  "CONTENT_VERIFIED",
+  "SUPERSEDED",
+  "REVOKED",
+  "INVALID"
+ ],
+ "document_transitions": {
+  "UNVERIFIED": [
+   "SOURCE_IDENTIFIED",
+   "INVALID"
+  ],
+  "SOURCE_IDENTIFIED": [
+   "OFFICIAL_SOURCE_VERIFIED",
+   "CONTENT_VERIFIED",
+   "INVALID",
+   "REVOKED"
+  ],
+  "OFFICIAL_SOURCE_VERIFIED": [
+   "CONTENT_VERIFIED",
+   "SUPERSEDED",
+   "REVOKED",
+   "INVALID"
+  ],
+  "CONTENT_VERIFIED": [
+   "SUPERSEDED",
+   "REVOKED",
+   "INVALID"
+  ],
+  "SUPERSEDED": [
+   "REVOKED"
+  ],
+  "REVOKED": [],
+  "INVALID": []
+ },
+ "fragment_states": [
+  "EXTRACTED",
+  "REVIEWED",
+  "SUPERSEDED",
+  "INVALID"
+ ],
+ "fragment_kinds": [
+  "clause",
+  "table_row",
+  "table_cell",
+  "definition",
+  "exception",
+  "footnote",
+  "toc_locator"
+ ],
+ "candidate_states": [
+  "EXTRACTED",
+  "NEEDS_INTERPRETATION",
+  "NEEDS_CROSS_REFERENCE",
+  "NEEDS_EXCEPTION_REVIEW",
+  "READY_FOR_VERIFICATION",
+  "REJECTED",
+  "VERIFIED"
+ ],
+ "candidate_transitions": {
+  "EXTRACTED": [
+   "NEEDS_INTERPRETATION",
+   "NEEDS_CROSS_REFERENCE",
+   "NEEDS_EXCEPTION_REVIEW",
+   "READY_FOR_VERIFICATION",
+   "REJECTED"
+  ],
+  "NEEDS_INTERPRETATION": [
+   "NEEDS_CROSS_REFERENCE",
+   "NEEDS_EXCEPTION_REVIEW",
+   "READY_FOR_VERIFICATION",
+   "REJECTED"
+  ],
+  "NEEDS_CROSS_REFERENCE": [
+   "NEEDS_INTERPRETATION",
+   "NEEDS_EXCEPTION_REVIEW",
+   "READY_FOR_VERIFICATION",
+   "REJECTED"
+  ],
+  "NEEDS_EXCEPTION_REVIEW": [
+   "NEEDS_INTERPRETATION",
+   "NEEDS_CROSS_REFERENCE",
+   "READY_FOR_VERIFICATION",
+   "REJECTED"
+  ],
+  "READY_FOR_VERIFICATION": [
+   "VERIFIED",
+   "REJECTED",
+   "NEEDS_INTERPRETATION",
+   "NEEDS_CROSS_REFERENCE",
+   "NEEDS_EXCEPTION_REVIEW"
+  ],
+  "REJECTED": [
+   "NEEDS_INTERPRETATION"
+  ],
+  "VERIFIED": [
+   "REJECTED",
+   "NEEDS_INTERPRETATION"
+  ]
+ },
+ "pack_states": [
+  "DRAFT",
+  "UNDER_REVIEW",
+  "VERIFIED_PARTIAL",
+  "VERIFIED_FOR_DECLARED_SCOPE",
+  "SUPERSEDED",
+  "REVOKED"
+ ],
+ "pack_transitions": {
+  "DRAFT": [
+   "UNDER_REVIEW",
+   "REVOKED"
+  ],
+  "UNDER_REVIEW": [
+   "VERIFIED_PARTIAL",
+   "VERIFIED_FOR_DECLARED_SCOPE",
+   "DRAFT",
+   "REVOKED"
+  ],
+  "VERIFIED_PARTIAL": [
+   "VERIFIED_FOR_DECLARED_SCOPE",
+   "SUPERSEDED",
+   "REVOKED",
+   "UNDER_REVIEW"
+  ],
+  "VERIFIED_FOR_DECLARED_SCOPE": [
+   "SUPERSEDED",
+   "REVOKED",
+   "UNDER_REVIEW"
+  ],
+  "SUPERSEDED": [
+   "REVOKED"
+  ],
+  "REVOKED": []
+ },
+ "pipeline_stages": [
+  "SOURCE_ADDED",
+  "SOURCE_VERIFIED",
+  "CLAUSES_EXTRACTED",
+  "CANDIDATE_RULES",
+  "REVIEW",
+  "VERIFIED_RULES",
+  "DRAFT_RULE_PACK",
+  "VERIFIED_RULE_PACK",
+  "PROJECT_ACTIVATION"
+ ],
+ "origin_types": [
+  "uploaded_file",
+  "official_url",
+  "manual_reference"
+ ],
+ "extraction_methods": [
+  "manual_transcription",
+  "text_layer_extraction",
+  "ocr",
+  "ai_assisted_extraction",
+  "structured_import"
+ ],
+ "verification_methods": [
+  "explicit_manual_approval",
+  "dual_manual_approval",
+  "authority_attestation",
+  "ai_suggestion"
+ ],
+ "relation_types": [
+  "supersedes",
+  "superseded_by",
+  "amends",
+  "amended_by",
+  "references",
+  "depends_on"
+ ],
+ "exception_resolutions": [
+  "open",
+  "resolved",
+  "declared_unsupported"
+ ],
+ "store": {
+  "documents": [
+   {
+    "document_id": "SYNDOC-ED1",
+    "source_id": "synthetic_test",
+    "title": "TEST_STANDARD_001 synthetic fixture, Edition 1",
+    "standard": "TEST_STANDARD_001",
+    "edition": "1",
+    "jurisdiction": {
+     "country": null,
+     "region": null,
+     "authority": null
+    },
+    "document_type": "synthetic_fixture",
+    "official": false,
+    "synthetic": true,
+    "origin": {
+     "type": "manual_reference",
+     "url": null,
+     "filename": null
+    },
+    "integrity": {
+     "sha256": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+     "size_bytes": 295
+    },
+    "verification": {
+     "status": "UNVERIFIED",
+     "method": null,
+     "evidence": null,
+     "verified_at": null,
+     "verified_by": null
+    },
+    "relations": [],
+    "synthetic_content": "TEST_STANDARD_001 (SYNTHETIC FIXTURE) — Edition 1\nT.1 A measured route shall not exceed the synthetic ceiling stated in Table T-1.\nT.2 Except as permitted by Section T.9, a synthetic opening shall meet Table T-2.\nT.3 Definitions: 'synthetic route' means a route produced by this fixture only.\n"
+   },
+   {
+    "document_id": "SYNDOC-ED2",
+    "source_id": "synthetic_test",
+    "title": "TEST_STANDARD_001 synthetic fixture, Edition 2",
+    "standard": "TEST_STANDARD_001",
+    "edition": "2",
+    "jurisdiction": {
+     "country": null,
+     "region": null,
+     "authority": null
+    },
+    "document_type": "synthetic_fixture",
+    "official": false,
+    "synthetic": true,
+    "origin": {
+     "type": "manual_reference",
+     "url": null,
+     "filename": null
+    },
+    "integrity": {
+     "sha256": "7e55ebca47e2936ee889bbed4fedc75d75bc4a6d21d9687df10d5f991e5d490b",
+     "size_bytes": 134
+    },
+    "verification": {
+     "status": "UNVERIFIED",
+     "method": null,
+     "evidence": null,
+     "verified_at": null,
+     "verified_by": null
+    },
+    "relations": [
+     {
+      "type": "supersedes",
+      "document_id": "SYNDOC-ED1"
+     }
+    ],
+    "synthetic_content": "TEST_STANDARD_001 (SYNTHETIC FIXTURE) — Edition 2\nT.1 A measured route shall not exceed the revised synthetic ceiling in Table T-1.\n"
+   },
+   {
+    "document_id": "SYNDOC-LOOKS-OFFICIAL",
+    "source_id": "synthetic_test",
+    "title": "TEST_NATIONAL_STANDARD synthetic fixture (title looks official, source is not)",
+    "standard": "TEST_NATIONAL_STANDARD",
+    "edition": "A",
+    "jurisdiction": {
+     "country": null,
+     "region": null,
+     "authority": null
+    },
+    "document_type": "synthetic_fixture",
+    "official": false,
+    "synthetic": true,
+    "origin": {
+     "type": "manual_reference",
+     "url": null,
+     "filename": null
+    },
+    "integrity": {
+     "sha256": "cbe3d6348bc714cb82c3c8954549ecb6dd4cf622ea466b71d4aafe666b578df2",
+     "size_bytes": 134
+    },
+    "verification": {
+     "status": "UNVERIFIED",
+     "method": null,
+     "evidence": null,
+     "verified_at": null,
+     "verified_by": null
+    },
+    "relations": [],
+    "synthetic_content": "TEST_NATIONAL_STANDARD (SYNTHETIC FIXTURE, NOT OFFICIAL) — Edition A\nN.1 A synthetic placeholder clause with no regulatory meaning.\n"
+   }
+  ],
+  "fragments": [
+   {
+    "fragment_id": "SYNFRAG-ED1-T1",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "section": "T.1",
+    "clause": "T.1",
+    "page": null,
+    "kind": "clause",
+    "text_reference": "SYNDOC-ED1 §T.1 line 2",
+    "excerpt": "A measured route shall not exceed the synthetic ceiling stated in Table T-1.",
+    "normalized_meaning": "measured route length has a stated synthetic ceiling",
+    "location": {
+     "start": 52,
+     "end": 133
+    },
+    "extraction_method": "manual_transcription",
+    "status": "EXTRACTED"
+   },
+   {
+    "fragment_id": "SYNFRAG-ED1-T1-TABLE",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "section": "T.1",
+    "clause": "Table T-1",
+    "page": null,
+    "kind": "table_row",
+    "text_reference": "SYNDOC-ED1 Table T-1 row 'synthetic-A'",
+    "excerpt": null,
+    "normalized_meaning": "row synthetic-A carries the ceiling value",
+    "location": {
+     "start": 0,
+     "end": 0
+    },
+    "extraction_method": "manual_transcription",
+    "status": "EXTRACTED"
+   },
+   {
+    "fragment_id": "SYNFRAG-ED1-T2",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "section": "T.2",
+    "clause": "T.2",
+    "page": null,
+    "kind": "clause",
+    "text_reference": "SYNDOC-ED1 §T.2 line 3",
+    "excerpt": "Except as permitted by Section T.9, a synthetic opening shall meet Table T-2.",
+    "normalized_meaning": "opening requirement with an unresolved exception reference",
+    "location": {
+     "start": 134,
+     "end": 210
+    },
+    "extraction_method": "manual_transcription",
+    "status": "EXTRACTED"
+   },
+   {
+    "fragment_id": "SYNFRAG-ED1-DEF",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "section": "T.3",
+    "clause": "T.3",
+    "page": null,
+    "kind": "definition",
+    "text_reference": "SYNDOC-ED1 §T.3 definitions",
+    "excerpt": "'synthetic route' means a route produced by this fixture only.",
+    "normalized_meaning": "term definition for the synthetic fixture",
+    "location": {
+     "start": 211,
+     "end": 280
+    },
+    "extraction_method": "manual_transcription",
+    "status": "EXTRACTED"
+   },
+   {
+    "fragment_id": "SYNFRAG-ED2-T1",
+    "document_id": "SYNDOC-ED2",
+    "document_hash": "7e55ebca47e2936ee889bbed4fedc75d75bc4a6d21d9687df10d5f991e5d490b",
+    "section": "T.1",
+    "clause": "T.1",
+    "page": null,
+    "kind": "clause",
+    "text_reference": "SYNDOC-ED2 §T.1 line 2",
+    "excerpt": "A measured route shall not exceed the revised synthetic ceiling in Table T-1.",
+    "normalized_meaning": "edition 2 revises the synthetic ceiling",
+    "location": {
+     "start": 52,
+     "end": 130
+    },
+    "extraction_method": "manual_transcription",
+    "status": "EXTRACTED"
+   }
+  ],
+  "candidates": [
+   {
+    "candidate_id": "SYNCAND-ED1-T1",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "fragment_ids": [
+     "SYNFRAG-ED1-T1",
+     "SYNFRAG-ED1-T1-TABLE"
+    ],
+    "section": "T.1",
+    "clause": "T.1",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "manual_structured_mapping",
+    "ai_assisted": false,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_ED1_MAX",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "1",
+     "section": "T.1",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "ROUTE",
+     "applies_to": {
+      "subject_type": "ROUTE",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "route.walking_distance_m",
+       "unit": "m",
+       "required": true,
+       "quality": {
+        "status_key": "route.distance_status",
+        "accept": [
+         "COMPLETE"
+        ],
+        "reasons": {
+         "PARTIAL": "INCOMPLETE_DISTANCE_MEASUREMENT",
+         "GEOMETRY_NOT_SUPPORTED": "GEOMETRY_NOT_SUPPORTED",
+         "NOT_MEASURED": "DISTANCE_NOT_MEASURED",
+         "INVALID_PATH": "INVALID_PATH"
+        }
+       }
+      }
+     ],
+     "operator": "numeric_max",
+     "expected": {
+      "value": 30,
+      "unit": "m"
+     },
+     "exceptions": []
+    },
+    "exceptions": [],
+    "cross_references": [],
+    "definition_refs": [
+     {
+      "term": "synthetic route",
+      "fragment_id": "SYNFRAG-ED1-DEF"
+     }
+    ],
+    "table_context": {
+     "table_id": "Table T-1",
+     "row": "synthetic-A",
+     "column": "ceiling",
+     "conditions": [
+      {
+       "factor": "synthetic_category",
+       "value": "A"
+      }
+     ]
+    },
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   },
+   {
+    "candidate_id": "SYNCAND-ED2-T1",
+    "document_id": "SYNDOC-ED2",
+    "document_hash": "7e55ebca47e2936ee889bbed4fedc75d75bc4a6d21d9687df10d5f991e5d490b",
+    "fragment_ids": [
+     "SYNFRAG-ED2-T1"
+    ],
+    "section": "T.1",
+    "clause": "T.1",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "manual_structured_mapping",
+    "ai_assisted": false,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_ED2_MAX",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "2",
+     "section": "T.1",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "ROUTE",
+     "applies_to": {
+      "subject_type": "ROUTE",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "route.walking_distance_m",
+       "unit": "m",
+       "required": true,
+       "quality": {
+        "status_key": "route.distance_status",
+        "accept": [
+         "COMPLETE"
+        ],
+        "reasons": {
+         "PARTIAL": "INCOMPLETE_DISTANCE_MEASUREMENT",
+         "GEOMETRY_NOT_SUPPORTED": "GEOMETRY_NOT_SUPPORTED",
+         "NOT_MEASURED": "DISTANCE_NOT_MEASURED",
+         "INVALID_PATH": "INVALID_PATH"
+        }
+       }
+      }
+     ],
+     "operator": "numeric_max",
+     "expected": {
+      "value": 25,
+      "unit": "m"
+     },
+     "exceptions": []
+    },
+    "exceptions": [],
+    "cross_references": [],
+    "definition_refs": [],
+    "table_context": null,
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   },
+   {
+    "candidate_id": "SYNCAND-EXC",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "fragment_ids": [
+     "SYNFRAG-ED1-T2"
+    ],
+    "section": "T.2",
+    "clause": "T.2",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "manual_structured_mapping",
+    "ai_assisted": false,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_OPENING_MIN",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "1",
+     "section": "T.2",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "DOOR",
+     "applies_to": {
+      "subject_type": "DOOR",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "door.clear_width",
+       "unit": "m",
+       "required": true
+      }
+     ],
+     "operator": "numeric_min",
+     "expected": {
+      "value": 900,
+      "unit": "mm"
+     },
+     "exceptions": []
+    },
+    "exceptions": [
+     {
+      "condition": "as permitted by Section T.9",
+      "source_reference": "SYNDOC-ED1 §T.9",
+      "resolution": "open"
+     }
+    ],
+    "cross_references": [],
+    "definition_refs": [],
+    "table_context": null,
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   },
+   {
+    "candidate_id": "SYNCAND-XREF",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "fragment_ids": [
+     "SYNFRAG-ED1-T2"
+    ],
+    "section": "T.2",
+    "clause": "T.2",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "manual_structured_mapping",
+    "ai_assisted": false,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_XREF",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "1",
+     "section": "T.2",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "ROUTE",
+     "applies_to": {
+      "subject_type": "ROUTE",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "route.hops",
+       "unit": "count",
+       "required": true
+      }
+     ],
+     "operator": "count_min",
+     "expected": {
+      "value": 1
+     },
+     "exceptions": []
+    },
+    "exceptions": [],
+    "cross_references": [
+     {
+      "label": "Section T.9",
+      "resolution": "open",
+      "fragment_id": null
+     }
+    ],
+    "definition_refs": [],
+    "table_context": null,
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   },
+   {
+    "candidate_id": "SYNCAND-AI",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "fragment_ids": [
+     "SYNFRAG-ED1-T1"
+    ],
+    "section": "T.1",
+    "clause": "T.1",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "ai_assisted_structured_mapping",
+    "ai_assisted": true,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_AI_DRAFT",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "1",
+     "section": "T.1",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "ROUTE",
+     "applies_to": {
+      "subject_type": "ROUTE",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "route.hops",
+       "unit": "count",
+       "required": true
+      }
+     ],
+     "operator": "count_min",
+     "expected": {
+      "value": 1
+     },
+     "exceptions": []
+    },
+    "exceptions": [],
+    "cross_references": [],
+    "definition_refs": [],
+    "table_context": null,
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   },
+   {
+    "candidate_id": "SYNCAND-BROKEN",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0105f93da68dfc03abd9a396de9bf761f6bdbd22ecceda71372fb353f9bdafb9",
+    "fragment_ids": [
+     "SYNFRAG-MISSING-4.2"
+    ],
+    "section": "4.2",
+    "clause": "4.2",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "manual_structured_mapping",
+    "ai_assisted": false,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_BROKEN",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "1",
+     "section": "4.2",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "ROUTE",
+     "applies_to": {
+      "subject_type": "ROUTE",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "route.hops",
+       "unit": "count",
+       "required": true
+      }
+     ],
+     "operator": "count_min",
+     "expected": {
+      "value": 1
+     },
+     "exceptions": []
+    },
+    "exceptions": [],
+    "cross_references": [],
+    "definition_refs": [],
+    "table_context": null,
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   },
+   {
+    "candidate_id": "SYNCAND-STALEHASH",
+    "document_id": "SYNDOC-ED1",
+    "document_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "fragment_ids": [
+     "SYNFRAG-ED1-T1"
+    ],
+    "section": "T.1",
+    "clause": "T.1",
+    "page": null,
+    "extraction_method": "manual_transcription",
+    "interpretation_method": "manual_structured_mapping",
+    "ai_assisted": false,
+    "proposed_rule": {
+     "rule_id": "TEST_ONLY.SYN_STALE",
+     "namespace": "TEST_ONLY",
+     "regulatory": false,
+     "title": "synthetic rule derived from a synthetic fixture document",
+     "category": "synthetic",
+     "severity": "info",
+     "enabled": true,
+     "revision": 1,
+     "standard": "TEST_STANDARD_001",
+     "edition": "1",
+     "section": "T.1",
+     "jurisdiction_required": false,
+     "jurisdiction": {
+      "country": null,
+      "region": null,
+      "authority": null
+     },
+     "source": {
+      "type": "synthetic_test",
+      "source_id": "synthetic_test",
+      "document_id": null,
+      "page": null,
+      "clause": null,
+      "url": null,
+      "verified": false
+     },
+     "subject_type": "ROUTE",
+     "applies_to": {
+      "subject_type": "ROUTE",
+      "conditions": []
+     },
+     "inputs": [
+      {
+       "key": "route.hops",
+       "unit": "count",
+       "required": true
+      }
+     ],
+     "operator": "count_min",
+     "expected": {
+      "value": 1
+     },
+     "exceptions": []
+    },
+    "exceptions": [],
+    "cross_references": [],
+    "definition_refs": [],
+    "table_context": null,
+    "status": "EXTRACTED",
+    "status_detail": [],
+    "verification": null,
+    "history": []
+   }
+  ],
+  "rulepacks": [
+   {
+    "rulepack_id": "TEST_ONLY.SYNPACK",
+    "version": "1",
+    "standard": "TEST_STANDARD_001",
+    "edition": "1",
+    "jurisdiction": {
+     "country": null,
+     "region": null,
+     "authority": null
+    },
+    "source_documents": [
+     "SYNDOC-ED1"
+    ],
+    "candidate_ids": [],
+    "verification": {
+     "status": "DRAFT",
+     "method": null,
+     "verified_at": null,
+     "verified_by": null,
+     "notes": null
+    },
+    "coverage_scope": [
+     "synthetic.route_ceiling"
+    ],
+    "completeness": "partial",
+    "regulatory": false,
+    "synthetic": true,
+    "history": []
+   },
+   {
+    "rulepack_id": "TEST_ONLY.SYNPACK_ED2",
+    "version": "1",
+    "standard": "TEST_STANDARD_001",
+    "edition": "2",
+    "jurisdiction": {
+     "country": null,
+     "region": null,
+     "authority": null
+    },
+    "source_documents": [
+     "SYNDOC-ED2"
+    ],
+    "candidate_ids": [],
+    "verification": {
+     "status": "DRAFT",
+     "method": null,
+     "verified_at": null,
+     "verified_by": null,
+     "notes": null
+    },
+    "coverage_scope": [
+     "synthetic.route_ceiling"
+    ],
+    "completeness": "partial",
+    "regulatory": false,
+    "synthetic": true,
+    "history": []
+   }
+  ]
+ },
+ "origin_authorities": [
+  "issuing_authority",
+  "authorized_distributor",
+  "third_party_redistribution",
+  "unknown"
+ ]
+}

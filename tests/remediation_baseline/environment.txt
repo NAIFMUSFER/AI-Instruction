@@ -1,0 +1,11 @@
+=== ENVIRONMENT ===
+2026-08-14T11:54:15Z
+branch: main
+HEAD: 865cca1e956d81052c6be5e24d049638155bc70a
+git status: 1 modified files
+Python 3.11.15
+v22.22.2
+10.9.7
+playwright(node): 1.62.1
+playwright(py): 1.56.0
+uname: Linux vm 6.18.5-fc-v20 #1 SMP PREEMPT_DYNAMIC @0 x86_64 x86_64 x86_64 GNU/Linux

@@ -1,0 +1,126 @@
+{
+ "issues": [],
+ "report": {
+  "compared": {
+   "building_count": {
+    "equal": true,
+    "roundtrip": 1,
+    "source": 1
+   },
+   "containment": {
+    "equal": true,
+    "resolved": 4112
+   },
+   "door_count": {
+    "equal": true,
+    "roundtrip": 512,
+    "source": 512
+   },
+   "door_positions": {
+    "equal": true,
+    "matched": 512,
+    "unmatched": 0
+   },
+   "host_relationships": {
+    "equal": true,
+    "expected": 1536,
+    "resolved": 1536
+   },
+   "level_count": {
+    "equal": true,
+    "roundtrip": 8,
+    "source": 8
+   },
+   "level_elevations": {
+    "equal": true,
+    "roundtrip": [
+     0.0,
+     3.4,
+     6.8,
+     10.2,
+     13.6,
+     17.0,
+     20.4,
+     23.8
+    ],
+    "source": [
+     0.0,
+     3.4,
+     6.8,
+     10.2,
+     13.6,
+     17.0,
+     20.4,
+     23.8
+    ]
+   },
+   "slab_count": {
+    "equal": true,
+    "roundtrip": 8,
+    "source": 8
+   },
+   "space_count": {
+    "equal": true,
+    "roundtrip": 512,
+    "source": 512
+   },
+   "space_names": {
+    "equal": true,
+    "roundtrip": 512,
+    "source": 512
+   },
+   "stair_count": {
+    "equal": true,
+    "roundtrip": 8,
+    "source": 8
+   },
+   "wall_count": {
+    "equal": true,
+    "roundtrip": 2048,
+    "source": 2048
+   },
+   "wall_dimensions": {
+    "equal": true,
+    "mismatched": 0
+   },
+   "wall_positions": {
+    "equal": true,
+    "matched": 2048,
+    "unmatched": 0
+   },
+   "window_count": {
+    "equal": true,
+    "roundtrip": 1024,
+    "source": 1024
+   },
+   "window_positions": {
+    "equal": true,
+    "matched": 1024,
+    "unmatched": 0
+   }
+  },
+  "critical_loss_count": 0,
+  "geometry_fidelity": 1.0,
+  "losses": [],
+  "model_hash": "e189c3646ca47e0917f59d1e45c54f7e0dd5d1a308829400042f13b1775874cf",
+  "note": "a critical geometry loss can never report PASS.",
+  "property_fidelity": 1.0,
+  "relationship_fidelity": 1.0,
+  "report_id": "bimrt_153ad7d4d635c6a0",
+  "revision_id": "rev:85034e60560dcfd8",
+  "schema": "acs.bim/1",
+  "semantic_fidelity": 1.0,
+  "source_file_hash": "2d532ce8a421f81a76cc6d287e02ae1257a1ba173b3d85887a77635edea89fa7",
+  "status": "PASS",
+  "tolerances": {
+   "angle_tolerance_deg": 0.01,
+   "area_tolerance_m2": 0.01,
+   "dimension_tolerance_m": 0.001,
+   "elevation_tolerance_m": 0.001,
+   "position_tolerance_m": 0.001
+  },
+  "warnings": [],
+  "writes_to_model": false
+ },
+ "valid": true
+}

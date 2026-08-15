@@ -1,0 +1,78 @@
+{
+  "_fixture": {
+    "id": "l_shaped_footprint",
+    "intent": "an L-shaped footprint: the union rectangle is 16x18, still far smaller than the 30x24 plot",
+    "provenance": "SYNTHETIC_REGRESSION",
+    "provenance_note": "SYNTHETIC_REGRESSION — authored for the F-07 / KI-3 plate-extent regression. Not a captured production model and never presented as one. Every rectangle here is chosen to make the site-wide plate defect visible and its fix measurable.",
+    "reconstructed": false
+  },
+  "floor_height": 3.2,
+  "floors": {
+    "f": {
+      "rooms": [
+        {
+          "id": "wingA_f",
+          "rect": [
+            2,
+            2,
+            16,
+            6
+          ]
+        },
+        {
+          "id": "wingB_f",
+          "rect": [
+            2,
+            8,
+            6,
+            12
+          ]
+        }
+      ]
+    },
+    "g": {
+      "rooms": [
+        {
+          "id": "wingA",
+          "rect": [
+            2,
+            2,
+            16,
+            6
+          ]
+        },
+        {
+          "id": "wingB",
+          "rect": [
+            2,
+            8,
+            6,
+            12
+          ]
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "index": 0,
+      "name": "ground",
+      "template": "g"
+    },
+    {
+      "index": 1,
+      "name": "first",
+      "template": "f"
+    }
+  ],
+  "meta": {
+    "name": "l_shaped_footprint",
+    "type": "villa"
+  },
+  "site": {
+    "d": 24,
+    "w": 30
+  },
+  "wall_h": 3.0,
+  "wall_t": 0.15
+}

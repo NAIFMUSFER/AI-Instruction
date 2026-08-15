@@ -1,0 +1,1447 @@
+{
+ "models": {
+  "villa": {
+   "meta": {
+    "type": "villa",
+    "name": "villa"
+   },
+   "site": {
+    "w": 30,
+    "d": 24
+   },
+   "wall_h": 3,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "name": "ground",
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "name": "first",
+     "template": "f"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "majlis",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        },
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 1.2
+        }
+       ]
+      },
+      {
+       "id": "corridor",
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "objects": [
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 1,
+         "z": 8
+        }
+       ]
+      },
+      {
+       "id": "living",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "kitchen",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "guest",
+       "rect": [
+        0,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bath1",
+       "rect": [
+        0,
+        10,
+        3,
+        3
+       ],
+       "doors": [
+        {
+         "edge": "N",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ]
+      }
+     ]
+    },
+    "f": {
+     "rooms": [
+      {
+       "id": "corridor_f",
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ],
+       "objects": [
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 1,
+         "z": 8
+        }
+       ]
+      },
+      {
+       "id": "bed1",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bed2",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "family",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bath2",
+       "rect": [
+        0,
+        5,
+        3,
+        3
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "wall_t": 0.2
+  },
+  "villaS": {
+   "meta": {
+    "type": "villa",
+    "name": "villa"
+   },
+   "site": {
+    "w": 30,
+    "d": 24
+   },
+   "wall_h": 3,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "name": "ground",
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "name": "first",
+     "template": "f"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "majlis",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        },
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 1.2
+        }
+       ]
+      },
+      {
+       "id": "corridor",
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "objects": [
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 1,
+         "z": 8,
+         "risers": 16,
+         "tread_m": 0.28,
+         "riser_m": 0.2
+        }
+       ]
+      },
+      {
+       "id": "living",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "kitchen",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "guest",
+       "rect": [
+        0,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bath1",
+       "rect": [
+        0,
+        10,
+        3,
+        3
+       ],
+       "doors": [
+        {
+         "edge": "N",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ]
+      }
+     ]
+    },
+    "f": {
+     "rooms": [
+      {
+       "id": "corridor_f",
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ],
+       "objects": [
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 1,
+         "z": 8,
+         "risers": 16,
+         "tread_m": 0.28,
+         "riser_m": 0.2
+        }
+       ]
+      },
+      {
+       "id": "bed1",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bed2",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "family",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bath2",
+       "rect": [
+        0,
+        5,
+        3,
+        3
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "wall_t": 0.2
+  },
+  "hotel": {
+   "meta": {
+    "type": "hotel",
+    "name": "hotel"
+   },
+   "site": {
+    "w": 40,
+    "d": 30
+   },
+   "wall_h": 3,
+   "floor_height": 3.3,
+   "levels": [
+    {
+     "index": 0,
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "template": "t"
+    },
+    {
+     "index": 2,
+     "template": "t"
+    }
+   ],
+   "floors": {
+    "t": {
+     "rooms": [
+      {
+       "id": "corridor",
+       "rect": [
+        0,
+        5,
+        20,
+        2
+       ]
+      },
+      {
+       "id": "guest_1",
+       "rect": [
+        0,
+        0,
+        5,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "guest_2",
+       "rect": [
+        5,
+        0,
+        5,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "core",
+       "rect": [
+        10,
+        0,
+        4,
+        5
+       ],
+       "objects": [
+        {
+         "kind": "elevator",
+         "count": 2,
+         "x": 1,
+         "z": 2
+        },
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 3,
+         "z": 2
+        }
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2,
+         "width": 1.2
+        }
+       ]
+      }
+     ]
+    },
+    "g": {
+     "rooms": [
+      {
+       "id": "lobby",
+       "rect": [
+        0,
+        5,
+        20,
+        2
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 1,
+         "width": 2
+        }
+       ]
+      },
+      {
+       "id": "core_g",
+       "rect": [
+        10,
+        0,
+        4,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2,
+         "width": 1.2
+        }
+       ],
+       "objects": [
+        {
+         "kind": "elevator",
+         "count": 2,
+         "x": 1,
+         "z": 2
+        },
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 3,
+         "z": 2
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "wall_t": 0.2
+  },
+  "LONG": {
+   "meta": {
+    "type": "office"
+   },
+   "site": {
+    "w": 60,
+    "d": 20
+   },
+   "wall_h": 3,
+   "wall_t": 0.2,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "template": "g"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "r1",
+       "rect": [
+        0,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "hall",
+       "rect": [
+        4,
+        0,
+        24,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        },
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "r2",
+       "rect": [
+        28,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "WIDE": {
+   "meta": {
+    "type": "office"
+   },
+   "site": {
+    "w": 60,
+    "d": 20
+   },
+   "wall_h": 3,
+   "wall_t": 0.2,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "template": "g"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "r1",
+       "rect": [
+        0,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9,
+         "clear_width_m": 0.95
+        }
+       ]
+      },
+      {
+       "id": "hall",
+       "rect": [
+        4,
+        0,
+        24,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        },
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "r2",
+       "rect": [
+        28,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "NARROW": {
+   "meta": {
+    "type": "office"
+   },
+   "site": {
+    "w": 60,
+    "d": 20
+   },
+   "wall_h": 3,
+   "wall_t": 0.2,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "template": "g"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "r1",
+       "rect": [
+        0,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9,
+         "clear_width_m": 0.85
+        }
+       ]
+      },
+      {
+       "id": "hall",
+       "rect": [
+        4,
+        0,
+        24,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        },
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "r2",
+       "rect": [
+        28,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "POLY": {
+   "meta": {
+    "type": "office"
+   },
+   "site": {
+    "w": 60,
+    "d": 20
+   },
+   "wall_h": 3,
+   "wall_t": 0.2,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "template": "g"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "r1",
+       "rect": [
+        0,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "hall",
+       "rect": [
+        4,
+        0,
+        24,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        },
+        {
+         "edge": "E",
+         "offset": 2,
+         "width": 0.9
+        }
+       ],
+       "polygon": [
+        [
+         4,
+         0
+        ],
+        [
+         28,
+         0
+        ],
+        [
+         28,
+         4
+        ],
+        [
+         16,
+         6
+        ],
+        [
+         4,
+         4
+        ]
+       ]
+      },
+      {
+       "id": "r2",
+       "rect": [
+        28,
+        0,
+        4,
+        4
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2,
+         "width": 0.9
+        }
+       ]
+      }
+     ]
+    }
+   }
+  },
+  "NOMETA": {
+   "site": {
+    "w": 30,
+    "d": 24
+   },
+   "wall_h": 3,
+   "floor_height": 3.2,
+   "levels": [
+    {
+     "index": 0,
+     "name": "ground",
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "name": "first",
+     "template": "f"
+    }
+   ],
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "id": "majlis",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        },
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 1.2
+        }
+       ]
+      },
+      {
+       "id": "corridor",
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "objects": [
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 1,
+         "z": 8,
+         "risers": 16,
+         "tread_m": 0.28,
+         "riser_m": 0.2
+        }
+       ]
+      },
+      {
+       "id": "living",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "kitchen",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "guest",
+       "rect": [
+        0,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bath1",
+       "rect": [
+        0,
+        10,
+        3,
+        3
+       ],
+       "doors": [
+        {
+         "edge": "N",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ]
+      }
+     ]
+    },
+    "f": {
+     "rooms": [
+      {
+       "id": "corridor_f",
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ],
+       "objects": [
+        {
+         "kind": "stairs",
+         "count": 1,
+         "x": 1,
+         "z": 8,
+         "risers": 16,
+         "tread_m": 0.28,
+         "riser_m": 0.2
+        }
+       ]
+      },
+      {
+       "id": "bed1",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bed2",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "family",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ],
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ]
+      },
+      {
+       "id": "bath2",
+       "rect": [
+        0,
+        5,
+        3,
+        3
+       ],
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "wall_t": 0.2
+  }
+ },
+ "queries": [
+  {
+   "n": "pass.complete",
+   "m": "villaS",
+   "rule": "TEST_ONLY.NUMERIC_MAX_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "partial",
+   "m": "villa",
+   "rule": "TEST_ONLY.NUMERIC_MAX_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "geom.unsupported",
+   "m": "POLY",
+   "rule": "TEST_ONLY.NUMERIC_MAX_001",
+   "subj": "ROUTE:bld_0.g.r1>bld_0.g.r2",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "ed1.pass",
+   "m": "LONG",
+   "rule": "TEST_ONLY.EDITION_MAX_001",
+   "rs": "TEST_ONLY.STD_ED1",
+   "subj": "ROUTE:bld_0.g.r1>bld_0.g.r2",
+   "ctx": {
+    "evaluated_at": "T0",
+    "edition_pin": {
+     "TEST_STANDARD": "1"
+    }
+   }
+  },
+  {
+   "n": "ed2.fail",
+   "m": "LONG",
+   "rule": "TEST_ONLY.EDITION_MAX_001",
+   "rs": "TEST_ONLY.STD_ED2",
+   "subj": "ROUTE:bld_0.g.r1>bld_0.g.r2",
+   "ctx": {
+    "evaluated_at": "T0",
+    "edition_pin": {
+     "TEST_STANDARD": "2"
+    }
+   }
+  },
+  {
+   "n": "ed2.notpinned",
+   "m": "LONG",
+   "rule": "TEST_ONLY.EDITION_MAX_001",
+   "rs": "TEST_ONLY.STD_ED2",
+   "subj": "ROUTE:bld_0.g.r1>bld_0.g.r2",
+   "ctx": {
+    "evaluated_at": "T0",
+    "edition_pin": {
+     "TEST_STANDARD": "1"
+    }
+   }
+  },
+  {
+   "n": "jur.unset",
+   "m": "villaS",
+   "rule": "TEST_ONLY.JURISDICTION_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "jur.set",
+   "m": "villaS",
+   "rule": "TEST_ONLY.JURISDICTION_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0",
+    "jurisdiction": {
+     "country": "TESTLAND"
+    }
+   }
+  },
+  {
+   "n": "jur.mismatch",
+   "m": "villaS",
+   "rule": "TEST_ONLY.JURISDICTION_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0",
+    "jurisdiction": {
+     "country": "OTHERLAND"
+    }
+   }
+  },
+  {
+   "n": "missing.input",
+   "m": "LONG",
+   "rule": "TEST_ONLY.NUMERIC_MIN_001",
+   "subj": "DOOR:bld_0.g.r1.door_0",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "unit.pass",
+   "m": "WIDE",
+   "rule": "TEST_ONLY.NUMERIC_MIN_001",
+   "subj": "DOOR:bld_0.g.r1.door_0",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "unit.fail",
+   "m": "NARROW",
+   "rule": "TEST_ONLY.NUMERIC_MIN_001",
+   "subj": "DOOR:bld_0.g.r1.door_0",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "exists",
+   "m": "villaS",
+   "rule": "TEST_ONLY.EXISTS_001",
+   "subj": "EGRESS:bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "count_min",
+   "m": "villaS",
+   "rule": "TEST_ONLY.COUNT_MIN_001",
+   "subj": "EGRESS:bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "enum",
+   "m": "villaS",
+   "rule": "TEST_ONLY.ENUM_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "bool.pass",
+   "m": "villaS",
+   "rule": "TEST_ONLY.BOOL_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "bool.fail",
+   "m": "villaS",
+   "rule": "TEST_ONLY.BOOL_001",
+   "subj": "ROUTE:bld_0.g.majlis>bld_0.g.living",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "range",
+   "m": "villaS",
+   "rule": "TEST_ONLY.RANGE_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "all_of",
+   "m": "villaS",
+   "rule": "TEST_ONLY.ALL_OF_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "any_of",
+   "m": "villaS",
+   "rule": "TEST_ONLY.ANY_OF_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  },
+  {
+   "n": "apply.hotel",
+   "m": "hotel",
+   "rule": "TEST_ONLY.PROGRAM_APPLICABILITY_001",
+   "subj": "ROUTE:bld_0.t.guest_1@2>bld_0.g.lobby@0",
+   "ctx": {
+    "evaluated_at": "T0"
+   },
+   "buildingSubject": true
+  },
+  {
+   "n": "apply.villa",
+   "m": "villaS",
+   "rule": "TEST_ONLY.PROGRAM_APPLICABILITY_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   },
+   "buildingSubject": true
+  },
+  {
+   "n": "apply.nometa",
+   "m": "NOMETA",
+   "rule": "TEST_ONLY.PROGRAM_APPLICABILITY_001",
+   "subj": "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   },
+   "buildingSubject": true
+  },
+  {
+   "n": "subject.mismatch",
+   "m": "villaS",
+   "rule": "TEST_ONLY.NUMERIC_MAX_001",
+   "subj": "SPACE:bld_0.g.majlis",
+   "ctx": {
+    "evaluated_at": "T0"
+   }
+  }
+ ],
+ "sets": [
+  {
+   "n": "set.core.villaS",
+   "m": "villaS",
+   "ruleset": "TEST_ONLY.CORE",
+   "buildingSubject": true,
+   "subjects": [
+    "ROUTE:bld_0.f.bed1>bld_0.g.majlis",
+    "EGRESS:bld_0.g.majlis",
+    "DOOR:bld_0.g.majlis.door_0",
+    "SPACE:bld_0.g.majlis",
+    "BUILDING:bld_0"
+   ]
+  },
+  {
+   "n": "set.core.LONG",
+   "m": "LONG",
+   "ruleset": "TEST_ONLY.CORE",
+   "buildingSubject": true,
+   "subjects": [
+    "ROUTE:bld_0.g.r1>bld_0.g.r2",
+    "EGRESS:bld_0.g.r1",
+    "DOOR:bld_0.g.r1.door_0"
+   ]
+  },
+  {
+   "n": "set.jur.villaS",
+   "m": "villaS",
+   "ruleset": "TEST_ONLY.JURISDICTION",
+   "buildingSubject": true,
+   "subjects": [
+    "ROUTE:bld_0.f.bed1>bld_0.g.majlis"
+   ]
+  }
+ ]
+}

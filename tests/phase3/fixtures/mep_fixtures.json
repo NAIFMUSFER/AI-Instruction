@@ -1,0 +1,2055 @@
+{
+ "models": {
+  "clash_mep": {
+   "floor_height": 3.2,
+   "floors": {
+    "f": {
+     "rooms": [
+      {
+       "id": "corridor_f",
+       "objects": [
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 1,
+         "z": 8
+        }
+       ],
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "bed1",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "bed2",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "family",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ],
+       "id": "bath2",
+       "rect": [
+        0,
+        5,
+        3,
+        3
+       ]
+      }
+     ]
+    },
+    "g": {
+     "rooms": [
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        },
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 1.2
+        }
+       ],
+       "id": "majlis",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "corridor",
+       "objects": [
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 1,
+         "z": 8
+        }
+       ],
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "living",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "kitchen",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "guest",
+       "rect": [
+        0,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "N",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ],
+       "id": "bath1",
+       "rect": [
+        0,
+        10,
+        3,
+        3
+       ]
+      }
+     ]
+    }
+   },
+   "levels": [
+    {
+     "index": 0,
+     "name": "ground",
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "name": "first",
+     "template": "f"
+    }
+   ],
+   "mep": {
+    "equipment": [
+     {
+      "id": "eq_far",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_x",
+      "type": "fan",
+      "x": 50,
+      "z": 50
+     }
+    ],
+    "nodes": [
+     {
+      "id": "n1",
+      "kind": "source",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_x",
+      "x": 1,
+      "z": 1
+     },
+     {
+      "id": "n2",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_x",
+      "x": 10,
+      "z": 1
+     },
+     {
+      "id": "n3",
+      "kind": "source",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_p",
+      "x": 7,
+      "z": 5
+     },
+     {
+      "id": "n4",
+      "kind": "terminal",
+      "level": 1,
+      "source": "test_fixture",
+      "system_id": "sys_p",
+      "x": 7,
+      "z": 5
+     }
+    ],
+    "risers": [
+     {
+      "arch_core_id": "bld_0.core_0",
+      "arch_core_link_source": "ai_inference",
+      "id": "ris_bad",
+      "kind": "duct_riser",
+      "levels": [
+       0,
+       1
+      ],
+      "source": "test_fixture",
+      "system_ids": [
+       "sys_x"
+      ],
+      "x": 30,
+      "z": 20
+     }
+    ],
+    "segments": [
+     {
+      "from_node": "n1",
+      "id": "seg_duct",
+      "kind": "duct",
+      "level": 0,
+      "polyline": [
+       [
+        1,
+        2.6,
+        1
+       ],
+       [
+        10,
+        2.6,
+        1
+       ]
+      ],
+      "size": {
+       "height_m": 0.25,
+       "width_m": 0.4
+      },
+      "source": "test_fixture",
+      "system_id": "sys_x",
+      "to_node": "n2"
+     },
+     {
+      "from_node": "n3",
+      "id": "seg_pipe",
+      "kind": "pipe",
+      "polyline": [
+       [
+        7,
+        0.2,
+        5
+       ],
+       [
+        7,
+        4.5,
+        5
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.05
+      },
+      "source": "test_fixture",
+      "system_id": "sys_p",
+      "to_node": "n4"
+     },
+     {
+      "from_node": "n3",
+      "id": "seg_beam",
+      "kind": "duct",
+      "level": 1,
+      "polyline": [
+       [
+        3.5,
+        3,
+        -2
+       ],
+       [
+        3.5,
+        3,
+        2
+       ]
+      ],
+      "size": {
+       "height_m": 0.25,
+       "width_m": 0.4
+      },
+      "source": "test_fixture",
+      "system_id": "sys_x",
+      "to_node": "n4"
+     },
+     {
+      "from_node": "n3",
+      "id": "seg_out",
+      "kind": "pipe",
+      "polyline": [
+       [
+        60,
+        0.5,
+        60
+       ],
+       [
+        70,
+        0.5,
+        60
+       ]
+      ],
+      "source": "test_fixture",
+      "system_id": "sys_p",
+      "to_node": "n4"
+     }
+    ],
+    "synthetic": true,
+    "systems": [
+     {
+      "id": "sys_x",
+      "medium": "air",
+      "name": "Supply",
+      "source": "test_fixture",
+      "type": "HVAC_SUPPLY"
+     },
+     {
+      "id": "sys_p",
+      "medium": "water",
+      "name": "Water",
+      "source": "test_fixture",
+      "type": "DOMESTIC_COLD_WATER"
+     }
+    ],
+    "terminals": [
+     {
+      "id": "t_far",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_x",
+      "type": "diffuser",
+      "x": 40,
+      "z": 40
+     }
+    ]
+   },
+   "meta": {
+    "name": "villa",
+    "type": "villa"
+   },
+   "site": {
+    "d": 24,
+    "w": 30
+   },
+   "structural": {
+    "beams": [
+     {
+      "from": "n_f_A1",
+      "id": "B_A1_B1",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_B1"
+     },
+     {
+      "from": "n_f_B1",
+      "id": "B_B1_C1",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_C1"
+     },
+     {
+      "from": "n_f_A2",
+      "id": "B_A2_B2",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_B2"
+     },
+     {
+      "from": "n_f_B2",
+      "id": "B_B2_C2",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_C2"
+     },
+     {
+      "from": "n_f_A1",
+      "id": "B_A1_A2",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_A2"
+     },
+     {
+      "from": "n_f_B1",
+      "id": "B_B1_B2",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_B2"
+     },
+     {
+      "from": "n_f_C1",
+      "id": "B_C1_C2",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "section": {
+       "depth": 0.5,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.25
+      },
+      "source": "test_fixture",
+      "to": "n_f_C2"
+     }
+    ],
+    "columns": [
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_A",
+       "grid_z_1"
+      ],
+      "id": "C_A1",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 0,
+       "z": 0
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_A",
+       "grid_z_2"
+      ],
+      "id": "C_A2",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 0,
+       "z": 5
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_A",
+       "grid_z_3"
+      ],
+      "id": "C_A3",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 0,
+       "z": 10
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_B",
+       "grid_z_1"
+      ],
+      "id": "C_B1",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 7,
+       "z": 0
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_B",
+       "grid_z_2"
+      ],
+      "id": "C_B2",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 7,
+       "z": 5
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_B",
+       "grid_z_3"
+      ],
+      "id": "C_B3",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 7,
+       "z": 10
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_C",
+       "grid_z_1"
+      ],
+      "id": "C_C1",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 14,
+       "z": 0
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_C",
+       "grid_z_2"
+      ],
+      "id": "C_C2",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 14,
+       "z": 5
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     },
+     {
+      "base_level": 0,
+      "grid_refs": [
+       "grid_x_C",
+       "grid_z_3"
+      ],
+      "id": "C_C3",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 14,
+       "z": 10
+      },
+      "section": {
+       "depth": 0.3,
+       "shape": "rectangular",
+       "source": "test_fixture",
+       "width": 0.3
+      },
+      "source": "test_fixture",
+      "top_level": 1
+     }
+    ],
+    "foundations": [
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_A1",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 0,
+       "z": 0
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_A1"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_A2",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 0,
+       "z": 5
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_A2"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_A3",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 0,
+       "z": 10
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_A3"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_B1",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 7,
+       "z": 0
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_B1"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_B2",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 7,
+       "z": 5
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_B2"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_B3",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 7,
+       "z": 10
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_B3"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_C1",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 14,
+       "z": 0
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_C1"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_C2",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 14,
+       "z": 5
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_C2"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     },
+     {
+      "depth_m": 1.2,
+      "embedment_m": 1,
+      "id": "F_C3",
+      "material_ref": "mat_c30",
+      "position": {
+       "x": 14,
+       "z": 10
+      },
+      "source": "test_fixture",
+      "supports": [
+       "C_C3"
+      ],
+      "thickness_m": 0.4,
+      "type": "isolated_footing",
+      "width_m": 1.2
+     }
+    ],
+    "grid_systems": [
+     {
+      "grids": [
+       {
+        "axis": "X",
+        "id": "grid_x_A",
+        "label": "A",
+        "position_m": 0,
+        "source": "test_fixture"
+       },
+       {
+        "axis": "X",
+        "id": "grid_x_B",
+        "label": "B",
+        "position_m": 7,
+        "source": "test_fixture"
+       },
+       {
+        "axis": "X",
+        "id": "grid_x_C",
+        "label": "C",
+        "position_m": 14,
+        "source": "test_fixture"
+       },
+       {
+        "axis": "Z",
+        "id": "grid_z_1",
+        "label": "1",
+        "position_m": 0,
+        "source": "test_fixture"
+       },
+       {
+        "axis": "Z",
+        "id": "grid_z_2",
+        "label": "2",
+        "position_m": 5,
+        "source": "test_fixture"
+       },
+       {
+        "axis": "Z",
+        "id": "grid_z_3",
+        "label": "3",
+        "position_m": 10,
+        "source": "test_fixture"
+       }
+      ],
+      "id": "gs_main",
+      "label": "Main",
+      "origin": {
+       "x": 0,
+       "z": 0
+      },
+      "rotation_deg": 0,
+      "source": "test_fixture"
+     }
+    ],
+    "materials": [
+     {
+      "id": "mat_c30",
+      "material": "concrete",
+      "source": "test_fixture"
+     }
+    ],
+    "meta": {
+     "note": "synthetic fixture — not a real structural design",
+     "regulatory": false
+    },
+    "nodes": [
+     {
+      "id": "n_g_A1",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 0,
+      "z": 0
+     },
+     {
+      "id": "n_f_A1",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 0,
+      "z": 0
+     },
+     {
+      "id": "n_g_A2",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 0,
+      "z": 5
+     },
+     {
+      "id": "n_f_A2",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 0,
+      "z": 5
+     },
+     {
+      "id": "n_g_A3",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 0,
+      "z": 10
+     },
+     {
+      "id": "n_f_A3",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 0,
+      "z": 10
+     },
+     {
+      "id": "n_g_B1",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 7,
+      "z": 0
+     },
+     {
+      "id": "n_f_B1",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 7,
+      "z": 0
+     },
+     {
+      "id": "n_g_B2",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 7,
+      "z": 5
+     },
+     {
+      "id": "n_f_B2",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 7,
+      "z": 5
+     },
+     {
+      "id": "n_g_B3",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 7,
+      "z": 10
+     },
+     {
+      "id": "n_f_B3",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 7,
+      "z": 10
+     },
+     {
+      "id": "n_g_C1",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 14,
+      "z": 0
+     },
+     {
+      "id": "n_f_C1",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 14,
+      "z": 0
+     },
+     {
+      "id": "n_g_C2",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 14,
+      "z": 5
+     },
+     {
+      "id": "n_f_C2",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 14,
+      "z": 5
+     },
+     {
+      "id": "n_g_C3",
+      "level": 0,
+      "source": "test_fixture",
+      "x": 14,
+      "z": 10
+     },
+     {
+      "id": "n_f_C3",
+      "level": 1,
+      "source": "test_fixture",
+      "x": 14,
+      "z": 10
+     }
+    ],
+    "slabs": [
+     {
+      "classification": "supplied",
+      "id": "S_F1",
+      "level": 1,
+      "material_ref": "mat_c30",
+      "outline": [
+       0,
+       0,
+       14,
+       10
+      ],
+      "source": "test_fixture",
+      "supported_by": [
+       "B_A1_B1",
+       "B_B1_C1"
+      ],
+      "thickness_m": 0.2
+     }
+    ],
+    "status": "REPRESENTED",
+    "synthetic": true
+   },
+   "wall_h": 3
+  },
+  "hotel_mep": {
+   "floor_height": 3.3,
+   "floors": {
+    "g": {
+     "rooms": [
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 1,
+         "width": 2
+        }
+       ],
+       "id": "lobby",
+       "rect": [
+        0,
+        5,
+        20,
+        2
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2,
+         "width": 1.2
+        }
+       ],
+       "id": "core_g",
+       "objects": [
+        {
+         "count": 2,
+         "kind": "elevator",
+         "x": 1,
+         "z": 2
+        },
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 3,
+         "z": 2
+        }
+       ],
+       "rect": [
+        10,
+        0,
+        4,
+        5
+       ]
+      }
+     ]
+    },
+    "t": {
+     "rooms": [
+      {
+       "id": "corridor",
+       "rect": [
+        0,
+        5,
+        20,
+        2
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "guest_1",
+       "rect": [
+        0,
+        0,
+        5,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "guest_2",
+       "rect": [
+        5,
+        0,
+        5,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 2,
+         "width": 1.2
+        }
+       ],
+       "id": "core",
+       "objects": [
+        {
+         "count": 2,
+         "kind": "elevator",
+         "x": 1,
+         "z": 2
+        },
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 3,
+         "z": 2
+        }
+       ],
+       "rect": [
+        10,
+        0,
+        4,
+        5
+       ]
+      }
+     ]
+    }
+   },
+   "levels": [
+    {
+     "index": 0,
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "template": "t"
+    },
+    {
+     "index": 2,
+     "template": "t"
+    }
+   ],
+   "mep": {
+    "meta": {
+     "note": "synthetic fixture — riser and level mechanics only",
+     "regulatory": false
+    },
+    "nodes": [
+     {
+      "id": "n_ris_e_L0",
+      "kind": "riser_connection",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "x": 11,
+      "z": 1
+     },
+     {
+      "id": "n_ris_w_L0",
+      "kind": "riser_connection",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 12,
+      "z": 1
+     },
+     {
+      "id": "n_ris_e_L1",
+      "kind": "riser_connection",
+      "level": 1,
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "x": 11,
+      "z": 1
+     },
+     {
+      "id": "n_ris_w_L1",
+      "kind": "riser_connection",
+      "level": 1,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 12,
+      "z": 1
+     },
+     {
+      "id": "n_ris_e_L2",
+      "kind": "riser_connection",
+      "level": 2,
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "x": 11,
+      "z": 1
+     },
+     {
+      "id": "n_ris_w_L2",
+      "kind": "riser_connection",
+      "level": 2,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 12,
+      "z": 1
+     }
+    ],
+    "penetrations": [
+     {
+      "host_id": "bld_0.flr_1.slab",
+      "host_type": "ARCH_SLAB",
+      "id": "pen_e_1",
+      "level": 1,
+      "segment_id": "seg_ris_e_L0",
+      "source": "test_fixture",
+      "x": 11,
+      "z": 1
+     }
+    ],
+    "risers": [
+     {
+      "arch_core_id": "bld_0.core_0",
+      "arch_core_link_source": "imported",
+      "id": "ris_e",
+      "kind": "electrical_riser",
+      "levels": [
+       0,
+       1,
+       2
+      ],
+      "source": "test_fixture",
+      "system_ids": [
+       "sys_pow"
+      ],
+      "x": 11,
+      "z": 1
+     },
+     {
+      "id": "ris_w",
+      "kind": "plumbing_riser",
+      "levels": [
+       0,
+       1,
+       2
+      ],
+      "source": "test_fixture",
+      "system_ids": [
+       "sys_cw"
+      ],
+      "x": 12,
+      "z": 1
+     },
+     {
+      "id": "ris_d",
+      "kind": "drainage_stack",
+      "levels": [
+       0,
+       1,
+       2
+      ],
+      "source": "test_fixture",
+      "system_ids": [
+       "sys_san"
+      ],
+      "x": 12.5,
+      "z": 1
+     },
+     {
+      "id": "ris_a",
+      "kind": "duct_riser",
+      "levels": [
+       0,
+       1,
+       2
+      ],
+      "source": "test_fixture",
+      "system_ids": [
+       "sys_air"
+      ],
+      "x": 13,
+      "z": 1
+     }
+    ],
+    "segments": [
+     {
+      "from_node": "n_ris_e_L0",
+      "id": "seg_ris_e_L0",
+      "kind": "cable_tray",
+      "polyline": [
+       [
+        11,
+        0,
+        1
+       ],
+       [
+        11,
+        3.3,
+        1
+       ]
+      ],
+      "size": {
+       "height_m": 0.1,
+       "width_m": 0.3
+      },
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "to_node": "n_ris_e_L1"
+     },
+     {
+      "from_node": "n_ris_w_L0",
+      "id": "seg_ris_w_L0",
+      "kind": "pipe",
+      "polyline": [
+       [
+        12,
+        0,
+        1
+       ],
+       [
+        12,
+        3.3,
+        1
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.05
+      },
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "to_node": "n_ris_w_L1"
+     },
+     {
+      "from_node": "n_ris_e_L1",
+      "id": "seg_ris_e_L1",
+      "kind": "cable_tray",
+      "polyline": [
+       [
+        11,
+        3.3,
+        1
+       ],
+       [
+        11,
+        6.6,
+        1
+       ]
+      ],
+      "size": {
+       "height_m": 0.1,
+       "width_m": 0.3
+      },
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "to_node": "n_ris_e_L2"
+     },
+     {
+      "from_node": "n_ris_w_L1",
+      "id": "seg_ris_w_L1",
+      "kind": "pipe",
+      "polyline": [
+       [
+        12,
+        3.3,
+        1
+       ],
+       [
+        12,
+        6.6,
+        1
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.05
+      },
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "to_node": "n_ris_w_L2"
+     }
+    ],
+    "status": "PARTIAL",
+    "synthetic": true,
+    "systems": [
+     {
+      "id": "sys_pow",
+      "medium": "electricity",
+      "name": "Normal Power",
+      "source": "test_fixture",
+      "type": "ELECTRICAL_POWER"
+     },
+     {
+      "id": "sys_cw",
+      "medium": "water",
+      "name": "Cold Water",
+      "source": "test_fixture",
+      "type": "DOMESTIC_COLD_WATER"
+     },
+     {
+      "id": "sys_san",
+      "medium": "wastewater",
+      "name": "Sanitary",
+      "source": "test_fixture",
+      "type": "SANITARY_DRAINAGE"
+     },
+     {
+      "id": "sys_air",
+      "medium": "air",
+      "name": "Supply Air",
+      "source": "test_fixture",
+      "type": "HVAC_SUPPLY"
+     }
+    ],
+    "terminals": [
+     {
+      "id": "t_sock_L0",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "type": "socket",
+      "x": 2,
+      "z": 2
+     },
+     {
+      "id": "t_diff_L0",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_air",
+      "type": "diffuser",
+      "x": 3,
+      "z": 2
+     },
+     {
+      "id": "t_sock_L1",
+      "level": 1,
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "type": "socket",
+      "x": 2,
+      "z": 2
+     },
+     {
+      "id": "t_diff_L1",
+      "level": 1,
+      "source": "test_fixture",
+      "system_id": "sys_air",
+      "type": "diffuser",
+      "x": 3,
+      "z": 2
+     },
+     {
+      "id": "t_sock_L2",
+      "level": 2,
+      "source": "test_fixture",
+      "system_id": "sys_pow",
+      "type": "socket",
+      "x": 2,
+      "z": 2
+     },
+     {
+      "id": "t_diff_L2",
+      "level": 2,
+      "source": "test_fixture",
+      "system_id": "sys_air",
+      "type": "diffuser",
+      "x": 3,
+      "z": 2
+     }
+    ]
+   },
+   "meta": {
+    "name": "hotel",
+    "type": "hotel"
+   },
+   "site": {
+    "d": 30,
+    "w": 40
+   },
+   "wall_h": 3
+  },
+  "villa_mep": {
+   "floor_height": 3.2,
+   "floors": {
+    "f": {
+     "rooms": [
+      {
+       "id": "corridor_f",
+       "objects": [
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 1,
+         "z": 8
+        }
+       ],
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "bed1",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "bed2",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "family",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "S",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ],
+       "id": "bath2",
+       "rect": [
+        0,
+        5,
+        3,
+        3
+       ]
+      }
+     ]
+    },
+    "g": {
+     "rooms": [
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        },
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 1.2
+        }
+       ],
+       "id": "majlis",
+       "rect": [
+        0,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "corridor",
+       "objects": [
+        {
+         "count": 1,
+         "kind": "stairs",
+         "x": 1,
+         "z": 8
+        }
+       ],
+       "rect": [
+        6,
+        0,
+        2,
+        10
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "living",
+       "rect": [
+        8,
+        0,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "W",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "kitchen",
+       "rect": [
+        8,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "E",
+         "offset": 2.5,
+         "width": 0.9
+        }
+       ],
+       "id": "guest",
+       "rect": [
+        0,
+        5,
+        6,
+        5
+       ]
+      },
+      {
+       "doors": [
+        {
+         "edge": "N",
+         "offset": 1.5,
+         "width": 0.8
+        }
+       ],
+       "id": "bath1",
+       "rect": [
+        0,
+        10,
+        3,
+        3
+       ]
+      }
+     ]
+    }
+   },
+   "levels": [
+    {
+     "index": 0,
+     "name": "ground",
+     "template": "g"
+    },
+    {
+     "index": 1,
+     "name": "first",
+     "template": "f"
+    }
+   ],
+   "mep": {
+    "equipment": [
+     {
+      "connections": [
+       "n_db"
+      ],
+      "dimensions": {
+       "d": 0.15,
+       "h": 0.6,
+       "w": 0.4
+      },
+      "id": "eq_db",
+      "level": 0,
+      "ports": [
+       {
+        "type": "electrical"
+       }
+      ],
+      "source": "test_fixture",
+      "space": "bld_0.g.corridor@0",
+      "system_id": "sys_pow",
+      "type": "distribution_board",
+      "x": 6.5,
+      "z": 0.4
+     },
+     {
+      "connections": [
+       "n_ahu"
+      ],
+      "id": "eq_split",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "type": "split_unit",
+      "x": 6.8,
+      "z": 9.5
+     }
+    ],
+    "meta": {
+     "note": "synthetic fixture — not a designed MEP system",
+     "regulatory": false
+    },
+    "nodes": [
+     {
+      "id": "n_db",
+      "kind": "distribution_point",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.corridor@0",
+      "system_id": "sys_pow",
+      "x": 6.5,
+      "z": 0.4
+     },
+     {
+      "id": "n_cw_in",
+      "kind": "source",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 0.2,
+      "z": 0.2
+     },
+     {
+      "id": "n_cw_bath",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "x": 1.5,
+      "z": 11
+     },
+     {
+      "id": "n_san_bath",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_san",
+      "x": 1.6,
+      "z": 11
+     },
+     {
+      "id": "n_san_out",
+      "kind": "source",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_san",
+      "x": 1.6,
+      "z": 13.5
+     },
+     {
+      "id": "n_ahu",
+      "kind": "equipment_connection",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "x": 6.8,
+      "z": 9.5
+     },
+     {
+      "id": "n_diff",
+      "kind": "terminal",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "x": 3,
+      "z": 2.5
+     }
+    ],
+    "segments": [
+     {
+      "from_node": "n_cw_in",
+      "id": "seg_cw_1",
+      "kind": "pipe",
+      "level": 0,
+      "material": "ppr",
+      "polyline": [
+       [
+        0.2,
+        0.35,
+        0.2
+       ],
+       [
+        0.2,
+        0.35,
+        11
+       ],
+       [
+        1.5,
+        0.35,
+        11
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.025
+      },
+      "source": "test_fixture",
+      "system_id": "sys_cw",
+      "to_node": "n_cw_bath"
+     },
+     {
+      "from_node": "n_san_bath",
+      "id": "seg_san_1",
+      "kind": "pipe",
+      "level": 0,
+      "material": "upvc",
+      "polyline": [
+       [
+        1.6,
+        -0.3,
+        11
+       ],
+       [
+        1.6,
+        -0.3,
+        13.5
+       ]
+      ],
+      "size": {
+       "diameter_m": 0.11
+      },
+      "source": "test_fixture",
+      "system_id": "sys_san",
+      "to_node": "n_san_out"
+     },
+     {
+      "from_node": "n_ahu",
+      "id": "seg_sup_1",
+      "kind": "duct",
+      "level": 0,
+      "source": "test_fixture",
+      "system_id": "sys_sup",
+      "to_node": "n_diff"
+     }
+    ],
+    "status": "REPRESENTED",
+    "synthetic": true,
+    "systems": [
+     {
+      "id": "sys_light",
+      "medium": "electricity",
+      "name": "Lighting",
+      "source": "test_fixture",
+      "type": "LIGHTING"
+     },
+     {
+      "id": "sys_pow",
+      "medium": "electricity",
+      "name": "Normal Power",
+      "source": "test_fixture",
+      "type": "ELECTRICAL_POWER"
+     },
+     {
+      "id": "sys_cw",
+      "medium": "water",
+      "name": "Cold Water",
+      "source": "test_fixture",
+      "type": "DOMESTIC_COLD_WATER"
+     },
+     {
+      "id": "sys_san",
+      "medium": "wastewater",
+      "name": "Sanitary",
+      "source": "test_fixture",
+      "type": "SANITARY_DRAINAGE"
+     },
+     {
+      "id": "sys_sup",
+      "medium": "air",
+      "name": "Supply Air",
+      "source": "test_fixture",
+      "type": "HVAC_SUPPLY"
+     }
+    ],
+    "terminals": [
+     {
+      "id": "t_l1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_light",
+      "type": "light_fixture",
+      "x": 3,
+      "z": 2.5
+     },
+     {
+      "id": "t_s1",
+      "level": 0,
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_pow",
+      "type": "socket",
+      "x": 0.8,
+      "z": 0.3
+     },
+     {
+      "id": "t_wc",
+      "level": 0,
+      "node": "n_san_bath",
+      "source": "test_fixture",
+      "space": "bld_0.g.bath1@0",
+      "system_id": "sys_san",
+      "type": "wc",
+      "x": 1.4,
+      "z": 11.4
+     },
+     {
+      "id": "t_lav",
+      "level": 0,
+      "node": "n_cw_bath",
+      "source": "test_fixture",
+      "space": "bld_0.g.bath1@0",
+      "system_id": "sys_cw",
+      "type": "lavatory",
+      "x": 1.5,
+      "z": 11
+     },
+     {
+      "id": "t_diff",
+      "level": 0,
+      "node": "n_diff",
+      "source": "test_fixture",
+      "space": "bld_0.g.majlis@0",
+      "system_id": "sys_sup",
+      "type": "diffuser",
+      "x": 3,
+      "z": 2.5
+     }
+    ]
+   },
+   "meta": {
+    "name": "villa",
+    "type": "villa"
+   },
+   "site": {
+    "d": 24,
+    "w": 30
+   },
+   "wall_h": 3
+  }
+ }
+}

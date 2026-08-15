@@ -1,0 +1,477 @@
+{
+  "schema": "acs.archdetail",
+  "version": "9.2.0",
+  "presentation_layer_version": "9.2.0",
+  "note": "Phase 9.2 — architectural visual fidelity, façade detailing and presentation context. A read-only layer DOWNSTREAM of the canonical model and the Phase 9.1 PBR layer. It extends acs_pbr; it never replaces it, never duplicates its lighting/material/camera/quality registries, and never writes anything into engineering geometry, structure, MEP, FLS, BIM, documentation, quantities, navigation, compliance or authoring history.",
+  "extends": "acs.pbr",
+  "presentation_only": true,
+  "writes_to_model": false,
+  "reverse_write_allowed": false,
+  "reverse_arrow_exists": false,
+  "mutates_engineering_model": false,
+  "photorealism_claimed": false,
+  "path_tracing_claimed": false,
+  "ray_tracing_claimed": false,
+  "global_illumination_claimed": false,
+  "physically_simulated_sunlight_claimed": false,
+  "bim_grade_facade_detailing_claimed": false,
+  "construction_detailing_claimed": false,
+  "code_compliance_claimed": false,
+  "parking_engineering_claimed": false,
+  "landscape_design_claimed": false,
+  "lighting_design_claimed": false,
+  "pipeline": [
+    "CANONICAL_ENGINEERING_MODEL",
+    "EXISTING_VISUAL_COMPILER",
+    "EXISTING_PBR_LAYER",
+    "ARCHITECTURAL_PRESENTATION_DETAIL_LAYER",
+    "LIGHTING_ENVIRONMENT_POST_PROCESS",
+    "VIEWPORT_OR_IMAGE"
+  ],
+  "model_hash_inputs": ["model"],
+  "presentation_config_hash_inputs": ["config"],
+
+  "detail_classes": {
+    "CANONICAL_GEOMETRY": "directly represented by the canonical model",
+    "DERIVED_PRESENTATION_DETAIL": "safe visual derivative of existing geometry, e.g. a frame generated around an existing window opening",
+    "REQUESTED_PRESENTATION_DETAIL": "explicitly requested by the user but not engineering-authoritative, e.g. a beige stone facade appearance",
+    "DEFAULT_PRESENTATION_CONTEXT": "neutral context added solely for visualization, e.g. a ground plane",
+    "UNRESOLVED": "the requested item cannot be represented safely without engineering invention"
+  },
+  "detail_class_promotion_allowed": false,
+
+  "object_authority_classes": {
+    "CANONICAL_OBJECT": "the canonical model already contains the object; presentation may improve its visual geometry and materials",
+    "USER_REQUESTED_OBJECT": "explicitly requested and carried by the existing object-preservation layer; rendered as presentation geometry without becoming engineering truth",
+    "PRESENTATION_CONTEXT_OBJECT": "added only when presentation context/staging is explicitly enabled; visual_only and presentation_context both true",
+    "UNRESOLVED_OBJECT": "placement, size, type or quantity cannot be determined safely; never fabricated"
+  },
+
+  "required_flags_on_presentation_objects": [
+    "visual_only", "source_element_id", "provenance", "confidence", "reason"
+  ],
+  "context_flag": "presentation_context",
+
+  "detail_profiles": {
+    "DETAIL_OFF": {
+      "note": "Phase 9.1 appearance only",
+      "window_frames": false, "reveals": false, "facade_zoning": false,
+      "furniture_detail": "PHASE9_1", "context_objects": false,
+      "led_lighting": false, "landscape_lod": "NONE", "ao_boost": false
+    },
+    "DETAIL_STANDARD": {
+      "note": "frames + reveals + material zoning + moderate furniture detail",
+      "window_frames": true, "reveals": true, "facade_zoning": true,
+      "furniture_detail": "STANDARD", "context_objects": true,
+      "led_lighting": true, "landscape_lod": "STANDARD", "ao_boost": false
+    },
+    "DETAIL_HIGH": {
+      "note": "higher presentation detail + enhanced context + stronger AO/shadows; no ultra-high mesh density",
+      "window_frames": true, "reveals": true, "facade_zoning": true,
+      "furniture_detail": "HIGH", "context_objects": true,
+      "led_lighting": true, "landscape_lod": "HIGH", "ao_boost": true
+    }
+  },
+  "default_detail_profile": "DETAIL_OFF",
+  "mobile_detail_fallback": {"DETAIL_HIGH": "DETAIL_STANDARD"},
+  "mobile_may_disable_ssao": true,
+  "mobile_may_reduce_landscape": true,
+  "blank_viewport_allowed": false,
+  "canonical_object_removal_allowed": false,
+
+  "presentation_offset_max_m": 0.06,
+  "presentation_offset_note": "every visual-only depth element (cladding skin, reveal, trim, sill, lintel cap, panel offset, parapet coping, balcony edge finish) stays within this offset of its canonical source surface. It never changes canonical dimensions and is removable with no model change.",
+
+  "facade_zone_materials": [
+    "stone_beige", "plaster_painted", "plaster_architectural",
+    "concrete_exposed_zone", "panel_gray", "wood_accent",
+    "metal_cladding", "glass_zone"
+  ],
+  "facade_zoning_rules": {
+    "primary_source": "exterior wall surfaces already represented by the canonical compiler",
+    "accent_sources": ["parapet band if represented", "base course band within offset tolerance", "distinct represented wall groups"],
+    "invent_walls": false,
+    "change_wall_thickness": false,
+    "unresolved_issue": "AD_VISUAL_DETAIL_UNRESOLVED",
+    "note": "zoning assigns presentation materials to EXISTING represented surfaces only. If a requested accent zone cannot be deterministically derived, it is reported unresolved — never fabricated."
+  },
+
+  "window_assembly": {
+    "parts": ["frame", "glass_pane", "sill", "reveal"],
+    "frame_finishes": {"dark": "#2b2e33", "gray": "#6b7077", "light": "#c9ccd1"},
+    "default_frame_finish": "dark",
+    "frame_material": "aluminum",
+    "frame_thickness_ratio": 0.045,
+    "frame_thickness_min_m": 0.03,
+    "frame_thickness_max_m": 0.09,
+    "frame_depth_m": 0.05,
+    "sill_depth_m": 0.04,
+    "sill_drop_m": 0.02,
+    "changes_opening_size": false,
+    "changes_opening_position": false,
+    "changes_window_count": false
+  },
+
+  "door_visual_classes": {
+    "wood_solid": {"material": "wood", "note": "default residential leaf"},
+    "metal_painted": {"material": "steel_painted", "note": "service/plant rooms when represented as metal"},
+    "alu_glass": {"material": "aluminum", "glass": true, "note": "represented glass doors"},
+    "service_door": {"material": "steel_painted", "note": "represented service doors"},
+    "entrance_door": {"material": "wood", "emphasis": true, "note": "represented main entrance"},
+    "warehouse_dock_door": {"material": "galvanized_metal", "note": "represented dock doors"},
+    "generic": {"material": "wood", "note": "unknown represented type — generic presentation door"}
+  },
+  "door_class_evidence_map": {
+    "door_glass": "alu_glass", "dockdoor": "warehouse_dock_door", "door": "wood_solid"
+  },
+  "door_inference_forbidden": ["fire_rating", "security_rating", "engineering_material_truth"],
+
+  "balcony_rules": {
+    "represented_when": ["space role balcony", "railing objects hosted on an exterior edge"],
+    "enhancements": ["slab finish", "fascia material", "parapet finish", "railing finish if represented", "underside contact shadow", "edge definition"],
+    "create_engineering_geometry": false,
+    "unrepresented_request_status": "REQUESTED_BUT_NOT_REPRESENTED",
+    "ui_note_en": "Balcony requested but not represented in canonical geometry.",
+    "ui_note_ar": "طُلبت بلكونة لكنها غير ممثَّلة في النموذج القانوني."
+  },
+
+  "roofline_rules": {
+    "enhance_only_if_represented": ["parapet", "roof edge", "rooftop enclosure", "mechanical room", "stair headhouse", "elevator shaft"],
+    "invent_rooftop_equipment": false,
+    "invent_height": false
+  },
+
+  "led_lighting": {
+    "types": ["facade_strip", "balcony_strip", "entrance_wash", "cove", "wall_washer", "bollard_light"],
+    "visual_only": true,
+    "mep_reuse_forbidden": true,
+    "creates": [],
+    "never_creates": ["electrical_circuit", "load", "panel_assignment", "cable_route", "mep_fixture_schedule_entry"],
+    "requires_represented_host": true,
+    "emissive_intensity": 1.6,
+    "strip_height_m": 0.04,
+    "strip_depth_m": 0.03
+  },
+
+  "interior_detail_scope": ["wall finish", "floor finish", "ceiling appearance", "door appearance", "window glass depth", "cabinetry", "counters", "wardrobes", "furniture material", "sanitary fixtures where represented", "appliances where represented"],
+  "interior_invention_allowed": false,
+
+  "staging_modes": {
+    "STAGING_OFF": "no staging objects at all",
+    "STAGING_REQUESTED_ONLY": "improve only objects the canonical object-preservation layer carries",
+    "STAGING_PRESENTATION_DEFAULT": "explicitly user-selected; added items are visual_only + presentation_context and never enter BIM, quantities, engineering exports or documentation schedules"
+  },
+  "default_staging_mode": "STAGING_REQUESTED_ONLY",
+
+  "kitchen_layouts": ["L", "U", "LINEAR", "PARALLEL"],
+  "kitchen_layout_rule": "a layout is chosen only when the canonical model has selected one; an ambiguous phrase like «L أو U حسب الدور» resolves to AD_KITCHEN_LAYOUT_UNRESOLVED, never to an invented deterministic engineering layout",
+
+  "bathroom_fixtures": ["toilet", "sink", "shower", "bath", "mirror", "vanity"],
+  "bathroom_rules": {"place_if_absent": false, "infer_plumbing": false},
+
+  "site_presentation": {
+    "classes": ["CANONICAL_SITE", "REQUESTED_SITE_PRESENTATION", "DEFAULT_CONTEXT"],
+    "surfaces": ["neutral_plane", "paving", "asphalt", "curb", "entry_path", "parking_surface"],
+    "invent_site_boundaries": false,
+    "invent_roads": false
+  },
+
+  "parking_rules": {
+    "represented_when": ["space role parking", "objects of kind parking_bay"],
+    "visual": ["asphalt_or_paving", "painted_bay_markings", "wheel_stops if represented or requested", "disabled_bay_marking only if represented", "directional_arrows only if represented or requested"],
+    "invent_bay_count": false,
+    "unresolved_status": "PARKING_REQUESTED_NOT_GEOMETRICALLY_RESOLVED",
+    "neutral_zone_requires_explicit_enable": true
+  },
+
+  "landscape": {
+    "assets": ["tree", "palm", "shrub", "hedge", "planter", "grass", "ground_cover", "gravel", "paving", "curb", "path"],
+    "default": "OFF",
+    "enable_via": ["explicit user request", "presentation context mode"],
+    "lods": ["LOW", "STANDARD", "HIGH"],
+    "enters_engineering_model": false,
+    "fake_irrigation": false,
+    "fake_species": false,
+    "fake_tree_count": false
+  },
+
+  "entrance_rules": {
+    "enhance_if_represented": ["material differentiation", "light wash", "door framing", "paving approach", "camera composition"],
+    "canopy_only_if_represented": true
+  },
+
+  "vertical_core_rules": {
+    "enhance": ["stair", "elevator_shaft", "core_walls"],
+    "invent_forbidden": ["manufacturer", "speed", "capacity", "cabin_dimensions"],
+    "unverified_capacity_is_request_provenance_only": true
+  },
+
+  "fls_presentation_rules": {
+    "enhance_existing_only": ["extinguisher", "sprinkler", "smoke", "sign", "camera"],
+    "add_missing_devices": false,
+    "imply_coverage_or_compliance": false
+  },
+
+  "variation": {
+    "deterministic": true,
+    "seed_inputs": ["model_hash", "element_id", "material_id"],
+    "roughness_jitter_max": 0.08,
+    "albedo_jitter_max": 0.05,
+    "normal_perturb_max": 0.3,
+    "note": "the same model always renders the same visual variation; no runtime randomness"
+  },
+
+  "presentation_materials": [
+    {"id": "stone_beige", "name_en": "Beige natural stone (presentation)", "name_ar": "حجر طبيعي بيج (عرضي)", "base_color": "#d6c7ab", "roughness": 0.78, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.55, "texture_scale_m": 1.2, "procedural_texture": "stone_courses", "three_material": "standard", "double_sided": false},
+    {"id": "plaster_architectural", "name_en": "Architectural plaster", "name_ar": "لياسة معمارية", "base_color": "#e3ded2", "roughness": 0.85, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.3, "texture_scale_m": 2.2, "procedural_texture": "plaster", "three_material": "standard", "double_sided": false},
+    {"id": "panel_gray", "name_en": "Gray accent panel", "name_ar": "لوح رمادي", "base_color": "#7d8085", "roughness": 0.55, "metalness": 0.15, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.25, "texture_scale_m": 1.5, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "wood_accent", "name_en": "Wood accent cladding", "name_ar": "كسوة خشبية", "base_color": "#8a5a30", "roughness": 0.6, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.5, "texture_scale_m": 1.4, "procedural_texture": "wood", "three_material": "standard", "double_sided": false},
+    {"id": "metal_cladding", "name_en": "Metal cladding", "name_ar": "كسوة معدنية", "base_color": "#9aa0a8", "roughness": 0.38, "metalness": 0.75, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.3, "texture_scale_m": 1.0, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "concrete_exposed_zone", "name_en": "Exposed concrete zone", "name_ar": "خرسانة ظاهرة (منطقة)", "base_color": "#a3a19c", "roughness": 0.8, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.45, "texture_scale_m": 1.8, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "automotive_paint", "name_en": "Automotive paint", "name_ar": "طلاء سيارة", "base_color": "#3a4a5f", "roughness": 0.25, "metalness": 0.7, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "vehicle_glass", "name_en": "Vehicle glass", "name_ar": "زجاج مركبة", "base_color": "#8fb6cf", "roughness": 0.06, "metalness": 0.0, "opacity": 0.55, "transmission": 0.55, "ior": 1.52, "thickness_m": 0.005, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "physical", "double_sided": false},
+    {"id": "tire_rubber", "name_en": "Tire rubber", "name_ar": "مطاط إطار", "base_color": "#1c1d1f", "roughness": 0.92, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.2, "texture_scale_m": 0.5, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "black_plastic", "name_en": "Black plastic", "name_ar": "بلاستيك أسود", "base_color": "#232427", "roughness": 0.6, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 0.6, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "chrome", "name_en": "Chrome", "name_ar": "كروم", "base_color": "#dfe3e8", "roughness": 0.08, "metalness": 1.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "painted_metal", "name_en": "Painted metal", "name_ar": "معدن مدهون", "base_color": "#5c6570", "roughness": 0.45, "metalness": 0.55, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.15, "texture_scale_m": 1.0, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "galvanized_metal", "name_en": "Galvanized metal", "name_ar": "معدن مجلفن", "base_color": "#aeb4ba", "roughness": 0.5, "metalness": 0.8, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.25, "texture_scale_m": 0.9, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "safety_yellow", "name_en": "Safety yellow", "name_ar": "أصفر سلامة", "base_color": "#f2c018", "roughness": 0.55, "metalness": 0.1, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "forklift_body", "name_en": "Forklift body", "name_ar": "جسم رافعة", "base_color": "#e8a013", "roughness": 0.5, "metalness": 0.35, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "forklift_mast", "name_en": "Forklift mast", "name_ar": "صاري رافعة", "base_color": "#3c4046", "roughness": 0.42, "metalness": 0.7, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 0.8, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "road_asphalt", "name_en": "Road asphalt", "name_ar": "أسفلت طريق", "base_color": "#3b3c3f", "roughness": 0.95, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.4, "texture_scale_m": 2.5, "procedural_texture": "asphalt", "three_material": "standard", "double_sided": false},
+    {"id": "parking_paint", "name_en": "Parking bay paint", "name_ar": "دهان مواقف", "base_color": "#e8e8e6", "roughness": 0.9, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "curb_concrete", "name_en": "Concrete curb", "name_ar": "بردورة خرسانية", "base_color": "#b9b7b1", "roughness": 0.85, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.3, "texture_scale_m": 1.0, "procedural_texture": "concrete", "three_material": "standard", "double_sided": false},
+    {"id": "paving_stone", "name_en": "Paving stone", "name_ar": "بلاط أرصفة", "base_color": "#a89f90", "roughness": 0.8, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.5, "texture_scale_m": 1.2, "procedural_texture": "tile", "three_material": "standard", "double_sided": false},
+    {"id": "grass", "name_en": "Grass", "name_ar": "عشب", "base_color": "#4d7c3a", "roughness": 0.95, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.6, "texture_scale_m": 1.8, "procedural_texture": "grass", "three_material": "standard", "double_sided": false},
+    {"id": "foliage", "name_en": "Foliage", "name_ar": "أوراق شجر", "base_color": "#3f7d3a", "roughness": 0.9, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.5, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": true},
+    {"id": "tree_bark", "name_en": "Tree bark", "name_ar": "لحاء", "base_color": "#6b4a2a", "roughness": 0.95, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.7, "texture_scale_m": 0.8, "procedural_texture": "wood", "three_material": "standard", "double_sided": false},
+    {"id": "gravel", "name_en": "Decorative gravel", "name_ar": "حصى", "base_color": "#9a938a", "roughness": 0.98, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.8, "texture_scale_m": 0.9, "procedural_texture": "asphalt", "three_material": "standard", "double_sided": false},
+    {"id": "bollard_paint", "name_en": "Bollard paint", "name_ar": "دهان عمود حماية", "base_color": "#c8b023", "roughness": 0.5, "metalness": 0.2, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.1, "texture_scale_m": 0.5, "procedural_texture": null, "three_material": "standard", "double_sided": false},
+    {"id": "fence_metal", "name_en": "Metal fence", "name_ar": "سور معدني", "base_color": "#44484e", "roughness": 0.5, "metalness": 0.6, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#000000", "emissive_intensity": 0.0, "normal_scale": 0.15, "texture_scale_m": 1.0, "procedural_texture": "metal", "three_material": "standard", "double_sided": false},
+    {"id": "led_strip", "name_en": "LED strip (visual only)", "name_ar": "شريط LED (عرضي فقط)", "base_color": "#fff2d0", "roughness": 0.4, "metalness": 0.0, "opacity": 1.0, "transmission": 0.0, "ior": 1.5, "thickness_m": 0.0, "emissive": "#ffe9b8", "emissive_intensity": 1.6, "normal_scale": 0.0, "texture_scale_m": 1.0, "procedural_texture": null, "three_material": "standard", "double_sided": false}
+  ],
+  "presentation_material_count": 27,
+  "presentation_materials_are_engineering_truth": false,
+
+  "object_library": {
+    "vehicles": ["car", "suv", "pickup", "van", "truck", "delivery_truck", "bus", "emergency_vehicle"],
+    "material_handling": ["forklift", "reach_truck", "pallet_jack", "order_picker", "stacker", "tugger", "cart", "hand_trolley"],
+    "logistics": ["pallet", "carton", "crate", "drum", "ibc", "rack", "shelving", "workbench", "dock_equipment", "dock_bumper", "bollard", "safety_barrier", "guard_rail", "traffic_cone", "wheel_stop", "waste_container"],
+    "furniture": ["sofa", "armchair", "dining_table", "dining_chair", "bed", "wardrobe", "desk", "office_chair", "tv_console", "kitchen_cabinet", "counter", "warehouse_rack"],
+    "landscape": ["tree", "palm", "shrub", "hedge", "planter", "grass_patch", "ground_cover", "gravel_bed", "paving_area", "curb_run", "path"],
+    "site": ["parking_bay", "road_marking", "directional_arrow", "fence", "gate", "sliding_gate", "barrier_arm", "security_booth", "light_pole", "bench", "bike_rack", "signage", "flag_pole"],
+    "construction_requested_only": ["crane_proxy", "excavator_proxy", "loader_proxy", "generator", "compressor", "container", "temporary_cabin"]
+  },
+  "emergency_vehicle_requires_explicit_request": true,
+  "construction_equipment_requires_request_or_representation": true,
+
+  "vehicle_recipes": {
+    "car": {"parts": ["body", "cabin", "wheel:4", "glazing", "headlight:2", "taillight:2"], "dims_m": [1.85, 4.55, 1.45]},
+    "suv": {"parts": ["body", "cabin_high", "wheel:4", "glazing", "headlight:2", "taillight:2"], "dims_m": [1.95, 4.75, 1.75]},
+    "pickup": {"parts": ["cab", "cargo_bed", "wheel:4", "glazing", "headlight:2", "taillight:2"], "dims_m": [1.95, 5.30, 1.85]},
+    "van": {"parts": ["body_tall", "cabin", "wheel:4", "glazing", "headlight:2", "taillight:2"], "dims_m": [2.00, 5.40, 2.20]},
+    "truck": {"parts": ["cab", "cargo_body", "wheel:6", "glazing", "headlight:2"], "dims_m": [2.55, 12.0, 4.00]},
+    "delivery_truck": {"parts": ["cab", "box_body", "wheel:4", "glazing", "headlight:2"], "dims_m": [2.30, 7.20, 3.20]},
+    "bus": {"parts": ["body_long", "glazing_band", "wheel:6", "headlight:2"], "dims_m": [2.55, 12.0, 3.40]},
+    "emergency_vehicle": {"parts": ["body", "cabin", "wheel:4", "glazing", "light_bar"], "dims_m": [2.00, 5.40, 2.30]}
+  },
+  "vehicle_invention_forbidden": ["make", "model", "license_plate", "engine", "vin", "manufacturer_specific_geometry"],
+
+  "forklift_recipes": {
+    "COUNTERBALANCE_FORKLIFT": {"parts": ["chassis", "operator_compartment", "overhead_guard", "mast", "fork:2", "counterweight", "wheel:4"], "dims_m": [1.20, 2.20, 2.30]},
+    "REACH_TRUCK": {"parts": ["chassis_narrow", "operator_compartment", "overhead_guard", "mast_tall", "fork:2", "outrigger:2", "wheel:4"], "dims_m": [1.10, 2.40, 2.60]},
+    "PALLET_JACK": {"parts": ["handle", "fork:2", "wheel:4"], "dims_m": [0.60, 1.60, 1.20]},
+    "ORDER_PICKER": {"parts": ["chassis_narrow", "platform", "mast_tall", "fork:2", "wheel:4"], "dims_m": [1.00, 2.20, 2.80]},
+    "STACKER": {"parts": ["chassis_narrow", "handle", "mast", "fork:2", "wheel:4"], "dims_m": [0.85, 1.90, 2.00]},
+    "GENERIC_FORKLIFT_PRESENTATION": {"parts": ["chassis", "operator_compartment", "overhead_guard", "mast", "fork:2", "counterweight", "wheel:4"], "dims_m": [1.20, 2.20, 2.30]}
+  },
+  "forklift_inference_forbidden": ["lifting_capacity", "mast_height_rating", "battery_type", "fuel_type", "manufacturer", "rated_load"],
+
+  "furniture_recipes": {
+    "sofa": ["seat", "back", "arm:2", "leg:4"],
+    "armchair": ["seat", "back", "arm:2", "leg:4"],
+    "dining_table": ["top", "leg:4"],
+    "dining_chair": ["seat", "back", "leg:4"],
+    "bed": ["base", "mattress", "headboard", "pillow:2"],
+    "wardrobe": ["carcass", "door:2", "plinth"],
+    "desk": ["top", "leg:4", "modesty_panel"],
+    "office_chair": ["seat", "back", "column", "star_base"],
+    "tv_console": ["carcass", "top", "leg:4"],
+    "kitchen_cabinet": ["carcass", "door:2", "counter_top"],
+    "counter": ["carcass", "counter_top"],
+    "shelving": ["upright:2", "shelf:4"],
+    "warehouse_rack": ["upright:2", "beam_pair:3", "deck:3"],
+    "pallet": ["deck_boards", "stringer:3"],
+    "carton": ["box", "tape_line"]
+  },
+
+  "landscape_recipes": {
+    "tree": {"parts": ["trunk", "canopy_cluster:3"], "lod_clusters": {"LOW": 1, "STANDARD": 3, "HIGH": 5}},
+    "palm": {"parts": ["trunk_tall", "frond:6"], "lod_fronds": {"LOW": 4, "STANDARD": 6, "HIGH": 8}},
+    "shrub": {"parts": ["cluster:2"], "lod_clusters": {"LOW": 1, "STANDARD": 2, "HIGH": 3}},
+    "hedge": {"parts": ["volume"], "lod_clusters": {"LOW": 1, "STANDARD": 1, "HIGH": 1}},
+    "planter": {"parts": ["box", "soil_fill", "cluster:1"]}
+  },
+
+  "instancing": {
+    "instanced_classes": ["car", "tree", "shrub", "bollard", "wheel_stop", "traffic_cone", "carton", "pallet"],
+    "merge_canonical_selectable_objects": false,
+    "instance_metadata": ["object_id", "provenance", "visual_only", "class"]
+  },
+
+  "scale_priority": ["explicit canonical dimensions", "explicit user dimensions", "object-category defaults marked PRESENTATION_DEFAULT"],
+  "placement_priority": ["canonical coordinates", "explicit user coordinates", "deterministic placement inside an already-defined requested zone", "UNRESOLVED"],
+  "auto_populate_spaces": false,
+
+  "environment_presets": {
+    "NEUTRAL_STUDIO": {"base_mode": "NEUTRAL", "sun_tint": "#ffffff", "note": "existing PMREM room environment"},
+    "CLEAR_SKY": {"base_mode": "SKY", "sun_tint": "#fff4e0", "note": "existing procedural sky, noon turbidity"},
+    "OVERCAST_SKY": {"base_mode": "SKY", "sun_tint": "#e8e9ec", "note": "existing procedural sky, high turbidity, softened sun"},
+    "SUNSET_SKY": {"base_mode": "SKY", "sun_tint": "#ffcf9a", "note": "existing procedural sky, low sun elevation"}
+  },
+  "environment_runtime_cdn": false,
+  "environment_remote_hdri": false,
+
+  "camera_presets_arch": {
+    "EXTERIOR_HERO_FRONT": {"fov": 42, "azimuth_deg": 15, "elevation_deg": 12, "distance_factor": 2.5, "target": "CENTER"},
+    "EXTERIOR_HERO_CORNER": {"fov": 45, "azimuth_deg": 40, "elevation_deg": 14, "distance_factor": 2.4, "target": "CENTER"},
+    "EXTERIOR_STREET_LEVEL": {"fov": 55, "azimuth_deg": 30, "elevation_deg": 2, "distance_factor": 2.0, "target": "EYE", "eye_height_m": 1.6},
+    "EXTERIOR_AERIAL": {"fov": 40, "azimuth_deg": 45, "elevation_deg": 55, "distance_factor": 3.0, "target": "CENTER"},
+    "INTERIOR_LIVING": {"fov": 62, "azimuth_deg": 210, "elevation_deg": 4, "distance_factor": 0.45, "target": "EYE", "eye_height_m": 1.5},
+    "INTERIOR_KITCHEN": {"fov": 60, "azimuth_deg": 150, "elevation_deg": 4, "distance_factor": 0.4, "target": "EYE", "eye_height_m": 1.5},
+    "INTERIOR_BEDROOM": {"fov": 58, "azimuth_deg": 250, "elevation_deg": 4, "distance_factor": 0.42, "target": "EYE", "eye_height_m": 1.45},
+    "INTERIOR_CORRIDOR": {"fov": 65, "azimuth_deg": 0, "elevation_deg": 2, "distance_factor": 0.35, "target": "EYE", "eye_height_m": 1.55},
+    "WAREHOUSE_AISLE": {"fov": 60, "azimuth_deg": 90, "elevation_deg": 4, "distance_factor": 0.5, "target": "EYE", "eye_height_m": 1.65},
+    "WAREHOUSE_OVERVIEW_92": {"fov": 50, "azimuth_deg": 35, "elevation_deg": 30, "distance_factor": 1.9, "target": "CENTER"},
+    "DOLLHOUSE_HERO": {"fov": 45, "azimuth_deg": 30, "elevation_deg": 35, "distance_factor": 2.1, "target": "CENTER"}
+  },
+  "camera_registry_note": "these presets EXTEND the Phase 9.1 registry through the same resolver (bounds-framed, FOV clamped 20–75, deterministic, no fisheye). The Phase 9.1 presets are untouched.",
+  "exterior_hero_three_quarter": true,
+
+  "two_point_perspective": {
+    "implemented": false,
+    "status": "NOT IMPLEMENTED",
+    "reason": "vertical-correction via projection shear was prototyped conceptually but interacts with the existing navigation raycasting; a fake or fragile implementation is worse than an honest absence. Documented per §31."
+  },
+
+  "auto_presentation": {
+    "modes_it_may_set": ["camera_preset", "lighting_preset", "quality_profile", "environment", "materials_mode", "detail_profile"],
+    "may_change_engineering_geometry": false,
+    "by_building_type": {
+      "warehouse": {"camera": "WAREHOUSE_OVERVIEW_92", "lighting": "WAREHOUSE", "environment": "NEUTRAL_STUDIO", "detail": "DETAIL_STANDARD"},
+      "villa": {"camera": "EXTERIOR_HERO_CORNER", "lighting": "CLEAR_NOON", "environment": "CLEAR_SKY", "detail": "DETAIL_STANDARD"},
+      "clinic": {"camera": "EXTERIOR_HERO_FRONT", "lighting": "STUDIO_DAY", "environment": "NEUTRAL_STUDIO", "detail": "DETAIL_STANDARD"},
+      "hotel": {"camera": "EXTERIOR_HERO_CORNER", "lighting": "GOLDEN_HOUR", "environment": "CLEAR_SKY", "detail": "DETAIL_STANDARD"},
+      "office": {"camera": "EXTERIOR_HERO_FRONT", "lighting": "CLEAR_NOON", "environment": "CLEAR_SKY", "detail": "DETAIL_STANDARD"},
+      "generic": {"camera": "EXTERIOR_HERO_CORNER", "lighting": "CLEAR_NOON", "environment": "CLEAR_SKY", "detail": "DETAIL_STANDARD"}
+    },
+    "interior_mode": {"camera": "INTERIOR_LIVING", "lighting": "INTERIOR_DAY", "environment": "NEUTRAL_STUDIO", "detail": "DETAIL_STANDARD"}
+  },
+
+  "request_interpretation": {
+    "classes": ["SAFE_VISUAL_OVERRIDE", "REQUIRES_ENGINEERING_CHANGE", "AMBIGUOUS", "UNSUPPORTED"],
+    "keyword_map": [
+      {"keys_ar": ["حجر بيج", "حجر طبيعي بيج", "حجر طبيعي"], "keys_en": ["beige stone", "natural stone"], "intent": "facade_material", "value": "stone_beige", "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["لمسات رمادية", "رمادي"], "keys_en": ["gray accent", "grey accent"], "intent": "facade_accent", "value": "panel_gray", "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["زجاج عاكس"], "keys_en": ["reflective glass"], "intent": "glass_appearance", "value": "reflective", "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["زجاج ملون", "زجاج داكن"], "keys_en": ["tinted glass"], "intent": "glass_appearance", "value": "tinted", "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["إنارة مخفية", "إنارة LED مخفية", "ليد مخفي", "إنارة خارجية مخفية"], "keys_en": ["concealed led", "hidden led", "cove lighting"], "intent": "led_lighting", "value": "facade_strip", "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["كسوة خشب", "خشب بالواجهة"], "keys_en": ["wood cladding", "wood accent"], "intent": "facade_accent", "value": "wood_accent", "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["بلكونات أكبر", "بلكونة أكبر", "توسيع البلكونة"], "keys_en": ["bigger balconies", "larger balcony"], "intent": "balcony_resize", "value": null, "class": "REQUIRES_ENGINEERING_CHANGE"},
+      {"keys_ar": ["بلكونة", "بلكونات", "شرفة", "شرفات"], "keys_en": ["balcony", "balconies"], "intent": "balcony_presence", "value": null, "class": "AMBIGUOUS"},
+      {"keys_ar": ["مواقف أمامية وخلفية", "مواقف أمامية", "مواقف خلفية", "مواقف سيارات"], "keys_en": ["front parking", "rear parking", "parking"], "intent": "parking", "value": null, "class": "AMBIGUOUS"},
+      {"keys_ar": ["حديقة", "نخيل", "شجيرات", "تشجير"], "keys_en": ["garden", "palms", "shrubs", "landscaping"], "intent": "landscape", "value": null, "class": "SAFE_VISUAL_OVERRIDE"},
+      {"keys_ar": ["مطبخ L أو U", "L أو U"], "keys_en": ["l or u kitchen"], "intent": "kitchen_layout", "value": null, "class": "AMBIGUOUS"},
+      {"keys_ar": ["دور إضافي", "طابق إضافي", "غرفة إضافية"], "keys_en": ["extra floor", "extra room"], "intent": "massing_change", "value": null, "class": "REQUIRES_ENGINEERING_CHANGE"}
+    ],
+    "unknown_class": "UNSUPPORTED",
+    "descriptive_language_is_not_engineering_permission": true
+  },
+
+  "diagnostic_statuses": [
+    "APPLIED", "ENHANCED", "CANONICAL_GEOMETRY_PRESENT", "VISUAL_ONLY_APPLIED",
+    "REQUESTED_NOT_GEOMETRICALLY_RESOLVED", "REQUESTED_BUT_NOT_REPRESENTED",
+    "UNRESOLVED", "REQUIRES_ENGINEERING_CHANGE", "PRESENTATION_CONTEXT",
+    "APPLIED_FROM_USER_REQUEST", "APPLIED_TO_CANONICAL_PARKING", "NOT_REQUESTED"
+  ],
+  "diagnostic_fields": ["requested_visual_features", "represented_visual_features", "unresolved_visual_features", "engineering_change_required", "presentation_defaults_used", "requested_objects", "canonical_objects", "presentation_objects", "unresolved_objects", "presentation_default_objects"],
+  "silent_drop_forbidden": true,
+
+  "coverage_metric": {
+    "name": "VISUAL_REQUEST_COVERAGE",
+    "is_engineering_completeness": false,
+    "has_compliance_meaning": false,
+    "fields": ["requested", "represented", "unresolved", "requires_engineering_change", "coverage_ratio"]
+  },
+
+  "capture_metadata_extension": [
+    "presentation_layer_version", "architectural_detail_level", "context_mode",
+    "staging_mode", "visual_request_coverage"
+  ],
+
+  "ui_labels": {
+    "en": {"panel": "Architectural Presentation", "detail": "Architectural detail", "facade": "Façade", "context": "Context", "staging": "Staging", "camera": "Camera", "diagnostic": "Show visual diagnostic", "off": "Off", "standard": "Standard", "high": "High", "engineering": "Engineering", "requested": "Requested appearance", "realistic": "Realistic", "none": "None", "neutral": "Neutral", "site": "Site", "landscape": "Landscape", "requested_only": "Requested only", "presentation": "Presentation", "auto": "Auto", "hero": "Hero", "street": "Street", "aerial": "Aerial", "interior": "Interior", "readonly": "The engineering model stays read-only here.", "compare": "Compare: Engineering / PBR / Architectural"},
+    "ar": {"panel": "العرض المعماري", "detail": "التفصيل المعماري", "facade": "الواجهة", "context": "المحيط", "staging": "التأثيث العرضي", "camera": "الكاميرا", "diagnostic": "عرض التشخيص البصري", "off": "إيقاف", "standard": "قياسي", "high": "عالٍ", "engineering": "هندسي", "requested": "المظهر المطلوب", "realistic": "واقعي", "none": "بلا", "neutral": "محايد", "site": "موقع", "landscape": "تنسيق", "requested_only": "المطلوب فقط", "presentation": "عرضي", "auto": "تلقائي", "hero": "بطولي", "street": "شارع", "aerial": "جوي", "interior": "داخلي", "readonly": "النموذج الهندسي يبقى للقراءة فقط هنا.", "compare": "مقارنة: هندسي / PBR / معماري"}
+  },
+  "panel_controls": ["adDetail", "adFacade", "adContext", "adStaging", "adCamera", "adDiagnostic", "adCompare"],
+  "panel_forbidden_controls": ["raw_shader_editor", "arbitrary_texture_url", "engineering_dimension_edit", "model_write", "mep_circuit_edit"],
+
+  "issue_codes": {
+    "AD_VISUAL_DETAIL_UNRESOLVED": "WARNING",
+    "AD_KITCHEN_LAYOUT_UNRESOLVED": "WARNING",
+    "AD_PARKING_NOT_RESOLVED": "WARNING",
+    "AD_BALCONY_NOT_REPRESENTED": "WARNING",
+    "AD_OBJECT_UNRESOLVED": "WARNING",
+    "AD_PLACEMENT_UNRESOLVED": "WARNING",
+    "AD_INVALID_PROFILE": "ERROR",
+    "AD_INVALID_MODE": "ERROR",
+    "AD_INVALID_MATERIAL": "ERROR",
+    "AD_INVALID_CAMERA": "ERROR",
+    "AD_INVALID_ENVIRONMENT": "ERROR",
+    "AD_INVALID_OBJECT_KIND": "ERROR",
+    "AD_REQUEST_UNSUPPORTED": "WARNING",
+    "AD_REQUIRES_ENGINEERING_CHANGE": "WARNING",
+    "AD_THREE_UNAVAILABLE": "ERROR",
+    "AD_MOBILE_FALLBACK_APPLIED": "INFO",
+    "AD_PRESENTATION_DEFAULT_DIMENSIONS": "INFO",
+    "AD_HOST_NOT_REPRESENTED": "WARNING"
+  },
+  "blocking_issue_codes": ["AD_INVALID_PROFILE", "AD_INVALID_MODE", "AD_INVALID_MATERIAL", "AD_INVALID_CAMERA", "AD_INVALID_ENVIRONMENT", "AD_INVALID_OBJECT_KIND", "AD_THREE_UNAVAILABLE"],
+
+  "hard_stop_boundaries": [
+    "REVERSE_WRITE_TO_MODEL",
+    "PRESENTATION_TO_ENGINEERING_PROMOTION",
+    "CANONICAL_DIMENSION_CHANGE_FOR_AESTHETICS",
+    "INVENTED_OPENING_ROOM_FLOOR_MEMBER_OR_SYSTEM",
+    "INVENTED_BALCONY_GEOMETRY",
+    "INVENTED_PARKING_COUNT",
+    "INVENTED_ROOFTOP_EQUIPMENT",
+    "MEP_FIXTURE_REUSE_AS_PRESENTATION_LIGHT",
+    "LED_TO_ELECTRICAL_CIRCUIT",
+    "MISSING_FLS_DEVICE_ADDED_FOR_LOOKS",
+    "RUNTIME_CDN_FETCH",
+    "ARBITRARY_TEXTURE_URL",
+    "URL_BASED_GLTF_INJECTION",
+    "EXECUTABLE_IMPORTED_ASSET",
+    "CANONICAL_OBJECT_COUNT_CHANGE",
+    "SILENT_REQUEST_DROP"
+  ],
+
+  "group_names": {"detail": "AD_DETAIL", "context": "AD_CONTEXT", "staging": "AD_STAGING", "lighting": "AD_LIGHT"},
+  "compare_modes": ["ENGINEERING", "PBR", "ARCHITECTURAL"],
+
+  "performance": {
+    "shared_materials": true,
+    "instanced_mesh_for_repeats": true,
+    "merge_presentation_geometry_where_safe": true,
+    "merge_canonical_meshes": false,
+    "lod_for_optional_context": true,
+    "ultra_high_mesh_density": false
+  },
+
+  "texture_policy_inherited_from": "acs.pbr",
+  "remote_texture_allowed": false,
+  "user_filesystem_paths_allowed": false,
+  "url_gltf_allowed": false,
+  "executable_assets_allowed": false
+}

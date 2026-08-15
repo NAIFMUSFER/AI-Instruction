@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="3492" height="2132" viewBox="0 0 3492 2132" font-family="system-ui,Segoe UI,Tahoma,sans-serif">
+<rect width="3492" height="2132" fill="#ffffff"/>
+<rect x="46" y="46" width="3400" height="2040" fill="#f2efe9" stroke="none" data-space="bld_0.o.envelope"/>
+<rect x="2426" y="46" width="680" height="340" fill="#f2efe9" stroke="none" data-space="bld_0.o.office"/>
+<rect x="46" y="46" width="1020" height="1020" fill="#f2efe9" stroke="none" data-space="bld_0.o.receiving"/>
+<rect x="1066" y="46" width="1360" height="1020" fill="#f2efe9" stroke="none" data-space="bld_0.o.storage"/>
+<line x1="46" y1="46" x2="1066" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_0"/>
+<line x1="1066" y1="46" x2="2426" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_1"/>
+<line x1="1066" y1="46" x2="1066" y2="1066" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_10"/>
+<line x1="2426" y1="46" x2="2426" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_11"/>
+<line x1="2426" y1="386" x2="2426" y2="1066" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_12"/>
+<line x1="3106" y1="46" x2="3106" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_13"/>
+<line x1="3446" y1="46" x2="3446" y2="2086" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_14"/>
+<line x1="2426" y1="46" x2="3106" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_2"/>
+<line x1="3106" y1="46" x2="3446" y2="46" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_3"/>
+<line x1="2426" y1="386" x2="3106" y2="386" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_4"/>
+<line x1="46" y1="1066" x2="1066" y2="1066" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_5"/>
+<line x1="1066" y1="1066" x2="2426" y2="1066" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_6"/>
+<line x1="46" y1="2086" x2="3446" y2="2086" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_7"/>
+<line x1="46" y1="46" x2="46" y2="1066" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_8"/>
+<line x1="46" y1="1066" x2="46" y2="2086" stroke="#2b2b2b" stroke-width="5.1" stroke-linecap="square" data-wall="bld_0.flr_0.wall_9"/>
+<rect x="2421.58" y="200.7" width="8.84" height="30.6" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" data-door="bld_0.o.office.door_0@0"/>
+<rect x="41.58" y="505" width="8.84" height="102" fill="#ffffff" stroke="#2b2b2b" stroke-width="1" data-door="bld_0.o.receiving.door_0@0"/>
+<rect x="1722.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.o.envelope.window_0@0"/>
+<rect x="2742.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.o.office.window_0@0"/>
+<rect x="532.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.o.receiving.window_0@0"/>
+<rect x="1722.2" y="42.94" width="47.6" height="6.12" fill="#ffffff" stroke="#4a7d94" stroke-width="1.4" data-window="bld_0.o.storage.window_0@0"/>
+<text x="1746" y="1066" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.o.envelope">envelope</text>
+<text x="1746" y="1079" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">6000 m²</text>
+<text x="2766" y="216" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.o.office">office</text>
+<text x="2766" y="229" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">200 m²</text>
+<text x="556" y="556" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.o.receiving">receiving</text>
+<text x="556" y="569" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">900 m²</text>
+<text x="1746" y="556" fill="#3a3a3a" font-size="11" text-anchor="middle" data-label="bld_0.o.storage">storage</text>
+<text x="1746" y="569" fill="#3a3a3a" font-size="9" text-anchor="middle" opacity="0.75">1200 m²</text>
+<text x="46" y="2118" fill="#3a3a3a" font-size="9" opacity="0.7">presentation drawing — not a construction drawing</text>
+</svg>

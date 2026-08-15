@@ -1,0 +1,118 @@
+{
+ "schema": "acs.arch/1",
+ "compiler_version": "acs-arch-compiler/1.0.0",
+ "note": "Architectural geometry only. No structural, MEP, fire, accessibility or code content. Every element here is architectural; nothing is load-bearing, rated or compliant.",
+ "element_types": [
+  "WALL",
+  "DOOR",
+  "WINDOW",
+  "OPENING",
+  "FLOOR_SLAB",
+  "FLOOR_OPENING",
+  "CEILING",
+  "ROOF",
+  "STAIR",
+  "ELEVATOR_SHAFT",
+  "CORE",
+  "ENVELOPE"
+ ],
+ "provenance_values": [
+  "user",
+  "imported",
+  "ai_inference",
+  "system_default",
+  "unknown"
+ ],
+ "exposure_values": [
+  "interior",
+  "exterior",
+  "unresolved"
+ ],
+ "evidence_status": [
+  "confirmed",
+  "inferred",
+  "unresolved"
+ ],
+ "level_kinds": [
+  "occupied",
+  "technical",
+  "roof"
+ ],
+ "host_status": [
+  "resolved",
+  "partial",
+  "unresolved"
+ ],
+ "boundary_basis": [
+  "rectangle_edges",
+  "polygon_edges",
+  "unsupported_shape"
+ ],
+ "defaults": {
+  "wall_thickness_m": 0.15,
+  "wall_height_m": 3.0,
+  "door_width_m": 0.9,
+  "door_height_m": 2.1,
+  "window_width_m": 1.2,
+  "window_height_m": 1.6,
+  "window_sill_m": 0.9,
+  "slab_thickness_m": 0.15,
+  "stair_footprint_m": [
+   1.2,
+   4.2
+  ],
+  "elevator_footprint_m": [
+   2.1,
+   2.3
+  ]
+ },
+ "defaults_note": "these are RENDER FALLBACKS. When the model does not state a value the semantic field stays null and the fallback is exposed separately as render_fallback_*, so a drawing convenience can never be read as an engineering fact",
+ "forbidden_claims": [
+  "load_bearing",
+  "structural",
+  "fire_rated",
+  "fire_resistance",
+  "compliant",
+  "code_required",
+  "accessible_route",
+  "egress_width_compliant",
+  "thermal_performance",
+  "acoustic_rating"
+ ],
+ "geometry_issue_codes": [
+  "WALL_ZERO_LENGTH",
+  "WALL_NEGATIVE_THICKNESS",
+  "WALL_DUPLICATE_OVERLAP",
+  "OPENING_HOST_UNRESOLVED",
+  "OPENING_OUTSIDE_HOST",
+  "OPENING_WIDER_THAN_HOST",
+  "WINDOW_ABOVE_WALL_HEIGHT",
+  "WINDOW_BELOW_FLOOR",
+  "DOOR_TALLER_THAN_WALL",
+  "SPACE_OVERLAP",
+  "SPACE_CONTAINED",
+  "SPACE_OUTSIDE_FOOTPRINT",
+  "SPACE_SHAPE_UNSUPPORTED",
+  "LEVEL_ELEVATION_INCONSISTENT",
+  "LEVEL_STACK_GAP",
+  "LEVEL_STACK_OVERLAP",
+  "CORE_WITHOUT_SERVED_LEVELS",
+  "CORE_POSITION_NOT_STATED",
+  "VOID_MISSING_FOR_CORE"
+ ],
+ "id_patterns": {
+  "level": "<bid>.flr_<index>",
+  "wall": "<bid>.flr_<index>.wall_<n>",
+  "door": "<space_id>.door_<i>",
+  "window": "<space_id>.window_<i>",
+  "slab": "<bid>.flr_<index>.slab",
+  "void": "<bid>.flr_<index>.void_<n>",
+  "ceiling": "<bid>.flr_<index>.ceiling_<space>",
+  "roof": "<bid>.flr_<index>.roof",
+  "core": "<bid>.core_<n>",
+  "envelope": "<bid>.envelope"
+ },
+ "id_note": "wall numbering follows the canonical sort of the wall's own geometry, not the room iteration order, so the same building always produces the same wall ids",
+ "source_of_truth": "the semantic model (spaces, doors, windows, levels, objects) is the single source of truth. Physical elements are compiled from it deterministically; renderer, exports, relationships and distance all consume the same compiler output instead of each deriving their own wall geometry",
+ "axis_note": "segments carry an explicit local axis and the building transform (position + rotation) is applied as a separate step, so no new algorithm assumes world-axis alignment. Existing Phase 1 probes remain axis-aligned and are reported as such"
+}

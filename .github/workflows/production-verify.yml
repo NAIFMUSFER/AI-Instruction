@@ -1,0 +1,137 @@
+# =============================================================================
+# Production verification — the LIVE deployment, not the repository.
+#
+# ⚠ THIS WORKFLOW IS DELIBERATELY NOT PART OF PULL-REQUEST CI. ⚠
+#
+# Why it is separate:
+#
+#   1. It cannot be faked offline. Every check here is a real HTTP conversation
+#     with https://acs-engine.onrender.com and the Netlify site. In a sandbox
+#     with no egress these scripts exit 2 and print
+#     "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED" — which is honest, and
+#     which is also exactly why a green PR check here would be a lie: it would
+#     mean "we did not look", rendered as a tick.
+#
+#   2. It costs money and it touches shared state. The generation path spends a
+#     real Anthropic call against the production key and consumes the
+#     deployment's own rate-limit budget (ACS_RL_GLOBAL_DAY = 400/day). A test
+#     that every pull request re-runs would drain a production safety valve.
+#
+#   3. It tests a DIFFERENT ARTEFACT than a PR does. A pull request proposes a
+#     change; production runs whatever was last deployed. A red result here
+#     means "production is broken now", not "this diff is wrong" — so it must
+#     never block a merge, and it must be able to fire when there is no diff
+#     at all.
+#
+# Triggers: workflow_dispatch and schedule ONLY. Do not add pull_request or
+# push. If you need this signal on a PR, you need a staging deployment, not
+# this file.
+# =============================================================================
+name: Production verification (LIVE)
+
+on:
+  workflow_dispatch:
+    inputs:
+      spend_a_generation:
+        description: >-
+          Run the generation check too. This SPENDS ONE REAL MODEL CALL against
+          the production key and one slot of the daily global budget.
+        type: boolean
+        default: false
+  schedule:
+    # 06:17 UTC daily. Off the hour on purpose: the hour is the busiest slot on
+    # shared runners, and a cold Render start already costs ~50s.
+    - cron: '17 6 * * *'
+
+concurrency:
+  group: production-verify
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  live-backend:
+    name: Live backend (real HTTP to the deployment)
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the pinned backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Free checks — reachability, /health, error contract
+        # Exit code 2 from this script means "no egress", not "broken". It is
+        # reported as a failure HERE on purpose: this workflow exists solely to
+        # reach the network, so a runner that cannot is a broken run.
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python3 tests/deploy/verify_backend_live.py 2>&1 | tee logs/production-live-backend.log
+
+      - name: Generation check — SPENDS ONE REAL MODEL CALL
+        # No API key is passed to this runner on purpose: the script talks to
+        # the deployment over HTTP and the DEPLOYMENT holds the key (render.yaml
+        # declares ANTHROPIC_API_KEY with sync:false, entered by hand in the
+        # Render dashboard). A key in CI would be a second copy of a secret that
+        # this job does not need.
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.spend_a_generation }}
+        shell: bash
+        run: |
+          set -o pipefail
+          python3 tests/deploy/verify_backend_live.py --generation 2>&1 \
+            | tee -a logs/production-live-backend.log
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-verify-${{ github.run_id }}
+          path: logs/
+          if-no-files-found: warn
+
+  live-page-boot:
+    name: Live page boot (real Chromium against the deployed page)
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the locked Playwright and Chromium
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Vendor the frontend runtime libraries
+        # Mirrors what Netlify does at build time; without it the page has no
+        # three.js to import and "boot" would mean nothing.
+        run: bash tools/netlify-build.sh
+      - name: Boot the page and analyse the rendered viewport
+        # This is the check that would have caught the production black-viewport
+        # defect: it looks at pixels, not at "the engine reported ready".
+        shell: bash
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          {
+            node tests/deploy/verify_page_boot.js
+            node tests/deploy/test_viewport_pixels.js
+          } 2>&1 | tee logs/production-page-boot.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: production-page-boot-${{ github.run_id }}
+          path: logs/
+          if-no-files-found: warn

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" data-acs-doc="1" data-view-type="FLOOR_PLAN" data-view-id="view_7db90c7c7b12acdc" data-model-hash="bb66d851a3704cff3091cf2649982269195ba3ce2f71d5f2642b44b5cf41a044" data-scale-mode="TRUE_SCALE" data-construction-drawing="false">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<line x1="12" y1="271" x2="12" y2="259" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="37" y1="245" x2="47" y2="245" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="37" y1="245" x2="47" y2="245" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="72" y1="269.5" x2="72" y2="260.5" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="12" y1="195" x2="72" y2="195" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="245" x2="72" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="245" x2="12" y2="195" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="72" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="12" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="195" x2="112" y2="195" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="245" x2="72" y2="195" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="245" x2="112" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="285" x2="112" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="72" y1="285" x2="72" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="112" y1="245" x2="112" y2="195" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="112" y1="245" x2="152" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="112" y1="285" x2="112" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="112" y1="285" x2="152" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="152" y1="285" x2="152" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="12" y="195" width="140" height="90" fill="none" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="195" width="60" height="50" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="245" width="60" height="40" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="72" y="195" width="40" height="50" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="72" y="245" width="40" height="40" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="112" y="245" width="40" height="40" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<text x="12" y="265" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D059DAD</text>
+<text x="42" y="220" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">waiting</text>
+<text x="42" y="245" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D12CE82</text>
+<text x="42" y="245" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D85A4CF</text>
+<text x="42" y="265" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">reception</text>
+<text x="72" y="265" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">D7F75AE</text>
+<text x="92" y="220" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">pharmacy</text>
+<text x="92" y="265" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">exam_1</text>
+<text x="132" y="265" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">lab</text>
+<text x="12" y="292" font-family="monospace" font-size="2.4" fill="#000000">model-derived documentation — not a construction drawing</text>
+</svg>
