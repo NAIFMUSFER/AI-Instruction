@@ -55,9 +55,18 @@ const FULL = [
    كلّه)، ثم تنتقل عند «المشهد والعرض» إلى renderer/scene/camera. */
 const PREFIX = ['render/scene.js'];
 
-/* من طبقة الربط لا نأخذ إلّا ما كان المستخرج القديم يأخذه منها بالضبط:
-   showReport و esc — وهما ما تفحصه اختبارات المرحلتين 1 و2. */
-const PICK = { 'ui/workspace-ui-wiring.js': ['showReport', 'esc'] };
+/* من طبقة الربط كان المستخرج القديم يأخذ showReport و esc وحدهما — وهما ما
+   تفحصه اختبارات المرحلتين ١ و٢.
+   KI-25/F-44 أضاف حاجز التطبيق بعد 200: منطقه نقيّ ويقرأ setModel و
+   window.ACS.verifyVisibleModel و acsBuildDefects بأسماءَ يمكن إبدالها في
+   نطاق الاختبار، فيُقاس تصنيفه بلا متصفّح. البكسلات لا تُدّعى هنا: لها
+   اختبار Chromium وحده. */
+const PICK = { 'ui/workspace-ui-wiring.js': [
+  'showReport', 'esc',
+  'ACS_FAIL', 'ACS_APPLY_CONTRACT', 'ACS_APPLY_MIN_KEPT',
+  'ACS_APPLY_SEQ', 'ACS_LAST_APPLY',
+  'acsApplyTicket', 'acsApplyBuilding', 'acsApplyFirstFrame',
+  '_acsZonesAsked', '_acsErrorSite', '_acsStackHead', '_acsFin', 'acsFail'] };
 
 /* المعرّفات المتاحة في Node نفسه: تُقرأ من البيئة لا من قائمة مكتوبة بيد،
    فلا تتقادم. ما ليس فيها ولا مصرَّحاً به قبله يحتاج بيئة متصفّح. */

@@ -7,7 +7,7 @@ import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
-import { ACS_PROJECT_CODE_CONTEXT, ARButton, FLOOR_NAMES, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
+import { ACS_PROJECT_CODE_CONTEXT, ARButton, FLOOR_NAMES, acsBuildDefects, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
 import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, applyVisualMode, checkCoordSnapshot, clearVisualMode, compileCoordination, compileVisualScene, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, detectTypeJS, isIndustrialProgram, renderer, scene, sky, statusEl, su, sun, visAiEnhancementRequest, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visValidateAsset, visValidateScene } from '../render/scene.js';
 
@@ -70,15 +70,38 @@ let lastBuilding=null;
 function setModel(data){
   // المرحلة 2: يقبل مشروعاً أو مبنى — يعرض المبنى النشط بلا أي تغيير في العارض
   if(isProjectModel(data)){ const ab=activeBuilding(data); if(ab) data=ab; }
-  if(data) lastBuilding=data; else data=lastBuilding;
-  if(!data) return;
-  if(model){                                        // حرّر ذاكرة الرسوميات قبل الاستبدال
+  const incoming = data || lastBuilding;
+  if(!incoming) return;
+  /* ═══ KI-25/F-43 · يُبنى الجديد قبل أن يُهدَم القديم ══════════════════════
+     كان الترتيب معكوساً: يُحرَّر المشهد القديم وتُتلَف خاماته كلّها، **ثم**
+     يُستدعى compile. فاستثناءٌ واحد فيه — غرفةٌ بلا rect مثلاً — يترك
+     المستخدم أمام نافذة فارغة بلا نموذج قديم يعود إليه ولا رسالة، لأن
+     `lastBuilding` كان قد صار النموذجَ المعطوب في السطر الذي سبق. حتى
+     `setModel(null)` بعدها (تغيير مستوى التفصيل، إطفاء الخامات) يعيد رمي
+     الاستثناء نفسه: الصفحة تبقى معطّلة حتى تُحدَّث.
+     الآن: البناء أوّلاً على خاماتٍ جديدة، والتراجع معرَّف — إن رمى compile
+     عادت الخامات القديمة كما كانت والمشهد لم يُمَسّ، ثم يصعد الاستثناء إلى
+     حاجز التطبيق ليُصنَّف. ولا يصير النموذج الجديد هو `lastBuilding` إلّا
+     بعد أن يُبنى فعلاً. */
+  const _prevMats={};
+  for(const k in matCache){ _prevMats[k]=matCache[k]; delete matCache[k]; }
+  let _next;
+  try{
+    _next=compile(incoming);
+  }catch(e){
+    for(const k in matCache) delete matCache[k];
+    for(const k in _prevMats) matCache[k]=_prevMats[k];
+    throw e;
+  }
+  if(data) lastBuilding=data;
+  for(const k in _prevMats){ const m=_prevMats[k];
+    if(m&&m.dispose){ try{ m.dispose(); }catch(e){} } }
+  if(model){                                        // حرّر ذاكرة الرسوميات بعد نجاح البناء
     model.traverse(o=>{ if(o.isMesh&&o.geometry) o.geometry.dispose(); });
     scene.remove(model);
   }
-  for(const k in matCache){ const m=matCache[k];
-    if(m&&m.dispose){ try{ m.dispose(); }catch(e){} } delete matCache[k]; }
-  model=compile(data); scene.add(model);
+  data=incoming;
+  model=_next; scene.add(model);
   registry={};floorsFound=new Set();doorMeshes=[];
   model.traverse(o=>{ if(!o.isMesh)return;
     const tag=o.name||'MISC|F0|?|0'; const parts=tag.split('|');
@@ -1394,6 +1417,191 @@ function acsFail(cls,detail){
     phase:(cls.indexOf('RENDER_')===0)?'RENDER'
       :(cls.indexOf('MODEL_')===0)?'MODEL':'API'};
   return ACS_LAST_FAILURE; }
+/* ═══════════ KI-25/F-44 · حاجز تطبيق ما بعد 200 ═══════════════════════════
+   العطل الذي يغلقه هذا الحاجز
+   ---------------------------
+   كان بين «الخادم أجاب 200 بنموذج صالح» و«المستخدم يرى مبنى» ستّ خطوات بلا
+   حارس واحد:
+
+       setModel(data.building);
+       SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
+
+   لا try/catch، ولا سؤال واحد عمّا إذا كان النموذج قد وصل المشهد فعلاً. فكان
+   للفشل بعد 200 وجهان، وكلاهما مسكوت عنه:
+
+     · **استثناء** داخل compile — غرفةٌ بلا rect مثلاً — يصعد من دالّة async
+       فيصير رفضاً غير ملتقَط. لا لوحة خطأ، ولا زرّ إعادة، وشريط الحالة يبقى
+       إلى الأبد على «🤖 محرّك الفهم يقرأ وصفك…». المستخدم ينتظر ما لن يأتي.
+     · **لا استثناء إطلاقاً** — وهو ما وقع فعلاً في KI-25: مستوىً بلا `index`
+       يبني ألفي شبكة عند إحداثيّة NaN. عقدُ الحدود يستبعدها بحقّ (لأنها
+       تالفة)، والعدّاد يعدّها، فتُكتب «تم التوليد ✓ 2001 عنصر» فوق نافذة
+       فارغة. **نجاحٌ مُعلَن على لا شيء.**
+
+   ما يفعله الحاجز
+   ---------------
+   لا يُعلَن نجاح قبل أن تثبت أربع حقائق بالقياس لا بالافتراض:
+     ١ · setModel رجع بلا استثناء.
+     ٢ · ما بُني هو ما أُعطي: لا غرف مرفوضة، ولا هندسة غير منتهية، ولا مناطق
+         سقطت بين البيان والمشهد.
+     ٣ · الكاميرا محدودة وحدود المشهد صالحة والنموذج داخل الهرم.
+     ٤ · إطارٌ حقيقيّ واحد رُسم على الأقلّ، وبكسلاته ليست خلفيّةً موحّدة.
+
+   وإخفاق أيٍّ منها يُصنَّف بدقّة — MODEL_LOAD_ERROR أو RENDER_CAMERA_ERROR أو
+   RENDER_BLACK_VIEWPORT — ويُعرَض بلوحة فيها زرّ إعادة. لا يُنسَب أبداً إلى
+   الشبكة ولا إلى الخادم: الخادم أجاب 200 وأجاب صحيحاً، والعطل عندنا.
+   ═══════════════════════════════════════════════════════════════════════ */
+const ACS_APPLY_CONTRACT='acs.apply-boundary/1.0.0';
+/* حصّة الهندسة التي إن سقطت صار المعروض شيئاً آخر غير المطلوب. ليست صفراً:
+   عنصرٌ شاذّ واحد يُستبعَد من الحدود سلوكٌ سليم قائم منذ KI-3. */
+const ACS_APPLY_MIN_KEPT=0.90;
+let ACS_LAST_APPLY=null;
+let ACS_APPLY_SEQ=0;
+/* KI-25/F-45 · عدّاد الأجيال: ردٌّ قديم لا يكتب فوق نموذج أحدث منه. زرّ
+   «إعادة المحاولة» في لوحة الخطأ لم يكن يمرّ بقفل الزرّ الرئيس، فثلاث نقرات
+   تعني ثلاثة نداءات متزامنة، والفائز هو آخر الواصلين لا آخر المطلوبين. */
+function acsApplyTicket(){ ACS_APPLY_SEQ+=1; return ACS_APPLY_SEQ; }
+
+function _acsZonesAsked(b){
+  let n=0;
+  const floors=(b||{}).floors||{};
+  const levels=Array.isArray((b||{}).levels)?(b||{}).levels:[];
+  if(levels.length){
+    levels.forEach(l=>{ const f=floors[(l||{}).template];
+      n+=(((f||{}).rooms)||[]).length; });
+    return n;
+  }
+  for(const k in floors) n+=((floors[k]||{}).rooms||[]).length;
+  return n;
+}
+
+function acsApplyBuilding(building, opts){
+  opts=opts||{};
+  const steps=[];
+  const mark=s=>{ steps.push(s); return s; };
+  const out={contract:ACS_APPLY_CONTRACT, ok:false, class:null, reached:null,
+    steps:steps, error:null, at:null, defects:null, scene:null,
+    zones_asked:_acsZonesAsked(building), stale:false};
+  mark('RESPONSE_RECEIVED');
+
+  /* ١ · جيل الطلب: ردٌّ سبقه ردٌّ أحدث لا يُطبَّق ولا يُعدّ فشلاً. */
+  if(opts.seq!==undefined&&opts.seq!==ACS_APPLY_SEQ){
+    out.stale=true; out.class='STALE_RESPONSE_IGNORED';
+    out.reached=mark('STALE_IGNORED'); ACS_LAST_APPLY=out; return out;
+  }
+  mark('BUILDING_ACCEPTED');
+
+  /* ٢ · التطبيق. setModel يبني الجديد قبل هدم القديم (F-43)، فاستثناءٌ هنا
+        يترك المشهد السابق سليماً — تراجعٌ معرَّف لا حالة نصفيّة. */
+  try{
+    setModel(building);
+    out.reached=mark('SET_MODEL_COMPLETE');
+  }catch(e){
+    out.class=ACS_FAIL.MODEL_LOAD_ERROR;
+    out.reached=mark('SET_MODEL_THREW');
+    out.error=String((e&&e.message)||e).slice(0,200);
+    out.at=_acsErrorSite(e);
+    out.stack=_acsStackHead(e);
+    ACS_LAST_APPLY=out; return out;
+  }
+
+  /* ٣ · هل بُني ما أُعطي؟ */
+  let dfx=null;
+  try{ dfx=acsBuildDefects(); }catch(e){ dfx=null; }
+  out.defects=dfx?{non_finite_box:dfx.non_finite_box,
+    rejected_room:dfx.rejected_room, rejected_field:dfx.rejected_field,
+    derived_level_index:dfx.derived_level_index,
+    unknown_object:dfx.unknown_object,
+    reasons:dfx.reasons, samples:(dfx.samples||[]).slice(0,8)}:null;
+
+  let v=null;
+  try{ v=window.ACS.verifyVisibleModel(); }catch(e){ v=null; }
+  out.scene=v?{canonical_meshes:v.canonical_meshes,
+    included_in_bounds:v.included_in_bounds,
+    excluded_invalid_bounds:v.excluded_invalid_bounds,
+    bounds_valid:v.bounds_valid, scene_radius:v.scene_radius,
+    camera_in_frustum:v.camera_in_frustum, clip_valid:v.clip_valid,
+    camera_near:v.camera_near, camera_far:v.camera_far,
+    draw_calls:v.draw_calls, webgl_context_ok:v.webgl_context_ok}:null;
+
+  const built=(v&&v.canonical_meshes)||0;
+  const kept=(v&&v.included_in_bounds)||0;
+  if(built>0&&kept/built<ACS_APPLY_MIN_KEPT){
+    out.class=ACS_FAIL.MODEL_LOAD_ERROR;
+    out.reached=mark('GEOMETRY_LOST');
+    out.error='بُنيت '+built+' شبكة ولم تصل الحدود إلّا '+kept
+      +' — الهندسة المعروضة ليست الهندسة المطلوبة.';
+    ACS_LAST_APPLY=out; return out;
+  }
+  if(dfx&&(dfx.rejected_room>0||dfx.non_finite_box>0)){
+    out.class=ACS_FAIL.MODEL_LOAD_ERROR;
+    out.reached=mark('MODEL_ELEMENTS_REJECTED');
+    out.error='رُفض من النموذج: '+dfx.rejected_room+' غرفة و'
+      +dfx.non_finite_box+' عنصراً بإحداثيّات غير صالحة.';
+    ACS_LAST_APPLY=out; return out;
+  }
+  if(built===0&&out.zones_asked>0){
+    out.class=ACS_FAIL.MODEL_LOAD_ERROR;
+    out.reached=mark('NO_GEOMETRY_BUILT');
+    out.error='الرد يحمل '+out.zones_asked+' منطقة ولم تُبنَ منها هندسة.';
+    ACS_LAST_APPLY=out; return out;
+  }
+  mark('GEOMETRY_VERIFIED');
+
+  /* ٤ · الكاميرا: محدودة، وحدودها صالحة، والنموذج داخل هرم الرؤية. */
+  const camOk=!!(v&&v.bounds_valid&&v.clip_valid
+    &&_acsFin(v.camera_near)!==null&&_acsFin(v.camera_far)!==null
+    &&_acsFin(v.scene_radius)!==null);
+  if(!camOk||(v&&v.camera_in_frustum===false)){
+    out.class=ACS_FAIL.RENDER_CAMERA_ERROR;
+    out.reached=mark('CAMERA_FIT_FAILED');
+    out.error='تعذّرت مصالحة الكاميرا مع حدود النموذج'
+      +(v&&v.camera_in_frustum===false?' (النموذج خارج هرم الرؤية).':'.');
+    ACS_LAST_APPLY=out; return out;
+  }
+  out.reached=mark('CAMERA_FIT_COMPLETE');
+
+  /* ٥ · الإطار الحقيقيّ يُقاس بعد الرسم لا الآن. النجاح مؤقّت حتى يعود
+        acsApplyFirstFrame بجواب البكسلات. */
+  out.ok=true; out.class=null;
+  out.reached=mark('AWAITING_FIRST_FRAME');
+  ACS_LAST_APPLY=out; return out;
+}
+
+/* الشطر الثاني من الحاجز: يُستدعى بعد إطارين حقيقيّين. لا يدّعي نجاحاً قبل
+   أن تكون النافذة قد رسمت شيئاً غير خلفيّتها. */
+function acsApplyFirstFrame(res){
+  if(!res||!res.ok) return res;
+  let blank=null, probe=null;
+  try{ const b=window.ACS.viewportBlank(); blank=b.blank; probe=b.probe; }
+  catch(e){ blank=null; }
+  res.pixel_probe=probe?{method:probe.method,non_zero_pct:probe.non_zero_pct,
+    max_luminance:probe.max_luminance,reason:probe.reason}:null;
+  res.steps.push('FIRST_FRAME_MEASURED');
+  if(blank===true){
+    res.ok=false; res.class=ACS_FAIL.RENDER_BLACK_VIEWPORT;
+    res.reached='VIEWPORT_EMPTY';
+    res.error='بُني النموذج وضُبطت الكاميرا، ولم تُرسَم النافذة.';
+  }else if(blank===null){
+    /* لا سياق بكسلات (عتاد غير متاح): يُعلَن NOT VERIFIED ولا يُدّعى نجاح
+       ولا يُدّعى فشل. الادّعاء بلا قياس هو ما أوقعنا في KI-25. */
+    res.reached='FIRST_FRAME_NOT_VERIFIED';
+    res.pixels_verified=false;
+  }else{
+    res.reached='VISIBLE'; res.pixels_verified=true;
+  }
+  ACS_LAST_APPLY=res; return res;
+}
+
+function _acsErrorSite(e){
+  const s=String((e&&e.stack)||'');
+  const m=s.match(/((?:https?:\/\/|\/)[^\s()]+?\.js):(\d+):(\d+)/);
+  return m?(m[1].split('/').slice(-2).join('/')+':'+m[2]+':'+m[3]):null;
+}
+function _acsStackHead(e){
+  return String((e&&e.stack)||'').split('\n').slice(0,4)
+    .map(l=>l.trim()).join(' | ').slice(0,320);
+}
+
 /* تلميح إضافي حسب رمز الخادم — يشرح ما يفعله المستخدم، لا ما يعنيه الرمز تقنياً */
 const ACS_CODE_HINT={
   ACS_UPSTREAM_TRUNCATED:'الطلب أنتج نموذجاً أكبر من حدّ التوليد في نداء واحد. '
@@ -1428,6 +1636,46 @@ __ACS_SHARED.acsErrorPanel = function acsErrorPanel(res, onRetry, onLocal){
   const lb=document.getElementById('acsLocalBtn'); if(lb) lb.onclick=onLocal;
 };
 
+/* KI-25/F-44 · لوحة عطل ما بعد 200 — منفصلة عمداً عن لوحة عطل الخادم.
+   الخلط بينهما هو الكذبة التي يمنعها هذا الفصل: «لم يُنفَّذ التوليد على
+   الخادم» جملةٌ خاطئة تماماً حين يكون الخادم قد نفّذ وأجاب 200 ونجح، وعطبُنا
+   نحن في العرض. المستخدم الذي يقرأ الأولى يتّهم الشبكة ويعيد المحاولة إلى ما
+   لا نهاية؛ والذي يقرأ الثانية يعرف أن نموذجه موجود ومحفوظ. */
+__ACS_SHARED.acsApplyErrorPanel = function acsApplyErrorPanel(ap, res, onRetry, onLocal){
+  const box=document.getElementById('reportBox'); if(!box) return;
+  const rid=(res||{}).request_id||'';
+  const d=ap.defects||{}; const s=ap.scene||{};
+  const bits=[];
+  if(d.rejected_room) bits.push(d.rejected_room+' غرفة مرفوضة');
+  if(d.non_finite_box) bits.push(d.non_finite_box+' عنصراً بإحداثيّات غير صالحة');
+  if(d.derived_level_index) bits.push(d.derived_level_index+' دوراً بلا رقم');
+  if(d.rejected_field) bits.push(d.rejected_field+' حقلاً بشكل غير متوقّع');
+  if(s.canonical_meshes!=null) bits.push('بُني '+s.canonical_meshes
+    +' عنصراً، وصل الحدود '+s.included_in_bounds);
+  box.className='report open';
+  box.innerHTML=
+    '<div class="acs-errbox">'
+    +'<div class="acs-errtitle">✕ وصل النموذج من الخادم ولم يُعرَض</div>'
+    +'<div>'+esc(ap.error||'')+'</div>'
+    +'<div class="acs-errbody">'
+      +'الخادم نفّذ التوليد وأجاب بنجاح — العطل في تحميل النموذج داخل '
+      +'المتصفّح، لا في الشبكة ولا في المحرّك. النموذج محفوظ ويمكن تنزيله '
+      +'للفحص عبر <code>ACS.captureRenderFailure()</code>.</div>'
+    +'<div class="acs-errhint">'
+      +'التصنيف: <code>'+esc(ap.class||'')+'</code>'
+      +' · توقّف عند: <code>'+esc(ap.reached||'')+'</code>'
+      +(ap.at?(' · <code>'+esc(ap.at)+'</code>'):'')
+      +(rid?(' · معرّف الطلب: <code id="acsReqId">'+esc(rid)+'</code>'):'')
+      +(bits.length?('<br>'+esc(bits.join(' · '))):'')
+    +'</div>'
+    +'<div class="acs-errrow">'
+      +'<button id="acsRetryBtn" type="button">إعادة التوليد</button>'
+      +'<button id="acsLocalBtn" type="button">توليد محلي تقريبي (ليس ناتج المحرّك)</button>'
+    +'</div></div>';
+  const rb=document.getElementById('acsRetryBtn'); if(rb) rb.onclick=onRetry;
+  const lb=document.getElementById('acsLocalBtn'); if(lb) lb.onclick=onLocal;
+};
+
 async function acsGenerateFromServer(){
   const txt=document.getElementById('descText').value.trim();
   if(!txt){statusEl.textContent='اكتب وصفاً أولاً.';return;}
@@ -1437,6 +1685,9 @@ async function acsGenerateFromServer(){
     statusEl.textContent='⚠ نموذج محلي تقريبي — ليس ناتج محرّك الفهم.';
     try{ setModel(buildLocal(txt,W,D,nF)); }catch(e){ statusEl.textContent='خطأ: '+e.message; }
   };
+  /* KI-25/F-45 · تذكرة الجيل تُسحب قبل النداء. أي نداء يبدأ بعدها يُبطلها،
+     فردُّ النداء الأقدم يصل ويُهمَل بدل أن يكتب فوق نموذج أحدث منه. */
+  const _seq=acsApplyTicket();
   const big=txt.length>2200||(txt.match(/(?:^|\n)\s*(?:[-*•]|\d+[.)])\s+/g)||[]).length>=12;
   statusEl.textContent='🤖 محرّك الفهم يقرأ وصفك بنداً بنداً ويبني المبنى'
     +(big?' — طلبك كبير، يُبنى على مرحلتين وقد يأخذ عدّة دقائق…':'… لحظات.');
@@ -1472,14 +1723,46 @@ async function acsGenerateFromServer(){
     statusEl.textContent='✕ رد غير مكتمل من الخادم.';
     return;
   }
-  setModel(data.building);
+  /* KI-25/F-44: التطبيق يمرّ بالحاجز. الخادم أجاب 200 وأجاب صحيحاً — وما
+     يفشل بعد هذه النقطة عطلٌ عندنا، يُصنَّف ويُعرَض ولا يُنسَب إلى الشبكة. */
+  const ap=acsApplyBuilding(data.building,{seq:_seq});
+  if(ap.stale){
+    console.warn('[ACS-APPLY] رد أقدم من الطلب الحالي — أُهمل بلا تطبيق.');
+    return;
+  }
+  if(!ap.ok){
+    SRV_OK=true;                       /* الخادم سليم: لا تُطفَأ شارته بعطلنا */
+    srvPill('ok','✓ محرّك الفهم متصل');
+    acsFail(ap.class, ap.reached+(ap.at?(' @'+ap.at):''));
+    statusEl.textContent='✕ وصل النموذج من الخادم ولم يُعرَض — '+ap.class;
+    __ACS_SHARED.acsApplyErrorPanel(ap, res, acsGenerateFromServer, localOnDemand);
+    console.error('[ACS-APPLY]', ap.class, ap.reached, ap.at||'', ap.error||'',
+                  ap.stack||'');
+    return;
+  }
   SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
   __ACS_SHARED.LAST_REQUEST_TEXT = txt;            // نص العميل الأصلي مرجع التحقّق
   showReport(data.report, txt);       // يُصنَّف حسب المصدر ولا يُرفَع بلا إثبات
   const n=((data.report||{}).requirements||[]).length;
-  statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
-    +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
-    +((data.mode==='deep')?' · (توليد على مرحلتين)':'');
+  /* «جارٍ العرض» لا «تمّ»: النجاح لا يُعلَن قبل قياس إطار حقيقيّ. */
+  statusEl.textContent='… النموذج مبنيّ — يُنتظَر أوّل إطار مرسوم';
+  const _finish=()=>{
+    const fr=acsApplyFirstFrame(ap);
+    if(!fr.ok){
+      acsFail(fr.class, fr.reached);
+      statusEl.textContent='✕ بُني النموذج ولم تُرسَم النافذة — '+fr.class;
+      __ACS_SHARED.acsApplyErrorPanel(fr, res, acsGenerateFromServer, localOnDemand);
+      console.error('[ACS-APPLY]', fr.class, fr.reached, fr.error||'');
+      return;
+    }
+    statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
+      +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
+      +((data.mode==='deep')?' · (توليد على مرحلتين)':'')
+      +(fr.pixels_verified===false?' · (تعذّر قياس البكسلات في هذا العتاد)':'');
+  };
+  if(typeof requestAnimationFrame==='function')
+    requestAnimationFrame(()=>requestAnimationFrame(_finish));
+  else _finish();
 }
 document.getElementById('genLLM').onclick=acsGenerateFromServer;
 document.getElementById('loadExample').onclick=()=>{setModel(EXAMPLE);};
@@ -2858,4 +3141,4 @@ window.ACS.captureRenderFailure=function(opts){
 Object.assign(__ACS_LATE, { camera, lastBuilding, model, orbit, setSun });
 
 
-export { ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };
+export { ACS_APPLY_CONTRACT, ACS_APPLY_MIN_KEPT, ACS_LAST_APPLY, acsApplyBuilding, acsApplyFirstFrame, acsApplyTicket, _acsErrorSite, _acsStackHead, _acsZonesAsked, ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };

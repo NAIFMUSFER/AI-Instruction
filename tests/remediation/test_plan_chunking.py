@@ -572,6 +572,76 @@ def main():
     chk("وتحت السعة لا يُعلَن شيء",
         not any(i.get("code") == "PLAN_OUTLINE_TOO_LARGE" for i in _oi2))
 
+    # ═══════════════ م · عقد المستويات (KI-25 · F-41) ═══════════════════════
+    # العارض يشتقّ ارتفاع الدور ومفتاح طبقته من `index`. مستوىً بلا index
+    # يبني المبنى عند NaN: هندسةٌ موجودة وعدّادٌ صحيح ولا بكسل. وهو ما حدث
+    # حين ضاق توجيه البيان في KI-24 فأسقط الحقل من العقد.
+    print("\n== م · عقد المستويات: index مفروض لا مطلوب ==")
+    _lv, _li = PC.normalise_levels(
+        [{"id": "L0", "template": "t0", "elevation": 0},
+         {"id": "L1", "template": "t1", "elevation": 4.0},
+         {"id": "L2", "template": "t2", "elevation": 8.0}])
+    chk("مستويات بلا index تُعطى أرقاماً صحيحة",
+        [l["index"] for l in _lv] == [0, 1, 2],
+        json.dumps([l.get("index") for l in _lv]))
+    chk("والاشتقاق مُعلَن لا صامت",
+        sum(1 for i in _li if i["code"] == "PLAN_LEVEL_INDEX_DERIVED") == 3,
+        json.dumps([i["code"] for i in _li], ensure_ascii=False))
+    # الترتيب يتبع الارتفاع لا ترتيب المصفوفة: بيانٌ مبعثر يعطي نفس المبنى.
+    _lv2, _ = PC.normalise_levels(
+        [{"id": "Lb", "template": "t", "elevation": 8.0},
+         {"id": "La", "template": "t", "elevation": 0.0},
+         {"id": "Lc", "template": "t", "elevation": 4.0}])
+    chk("والترتيب من الارتفاع لا من ترتيب المصفوفة",
+        [(l["id"], l["index"]) for l in _lv2]
+        == [("La", 0), ("Lc", 1), ("Lb", 2)],
+        json.dumps([(l["id"], l["index"]) for l in _lv2]))
+    _lv3, _li3 = PC.normalise_levels(
+        [{"id": "A", "index": 0, "template": "t"},
+         {"id": "B", "index": 0, "template": "t"},
+         {"id": "C", "index": 2, "template": "t"}])
+    chk("ورقمان مكرّران يُفضّان بلا حذف مستوى",
+        len(_lv3) == 3 and sorted(l["index"] for l in _lv3) == [0, 1, 2],
+        json.dumps([(l["id"], l["index"]) for l in _lv3]))
+    chk("والتكرار مُعلَن",
+        any(i["code"] == "PLAN_LEVEL_INDEX_DUPLICATE" for i in _li3))
+    chk("ورقم صحيح مُصرَّح به يُحترَم كما هو",
+        [l["index"] for l in PC.normalise_levels(
+            [{"id": "L0", "index": 0, "template": "t"},
+             {"id": "L5", "index": 5, "template": "t"}])[0]] == [0, 5])
+    _bad = [{"index": "أرضي", "id": "X", "template": "t"},
+            {"index": -1, "id": "Y", "template": "t"},
+            {"index": 1.5, "id": "Z", "template": "t"}]
+    _lv4, _ = PC.normalise_levels(_bad)
+    chk("وقيمة غير صالحة (نصّ · سالب · كسر) تُشتقّ ولا تُمرَّر",
+        all(isinstance(l["index"], int) and l["index"] >= 0 for l in _lv4),
+        json.dumps([l["index"] for l in _lv4]))
+    _lv5, _li5 = PC.normalise_levels(
+        [{"id": "L0", "index": 0, "template": "ghost"}],
+        {"real": {"rooms": [{"id": "r1"}, {"id": "r2"}]}})
+    chk("ومستوىً يشير إلى قالب غير موجود يُعلَن",
+        any(i["code"] == "PLAN_LEVEL_TEMPLATE_MISSING" for i in _li5))
+    chk("وقالبٌ لا يشير إليه مستوى يُعلَن بعدد غرفه",
+        any(i["code"] == "PLAN_TEMPLATE_ORPHANED" and i["rooms"] == 2
+            for i in _li5),
+        json.dumps(_li5, ensure_ascii=False))
+    chk("ومستويات فارغة تُعلَن ولا ترفع",
+        PC.normalise_levels([])[1][0]["code"] == "PLAN_LEVELS_EMPTY")
+    # المصبّ: validate() تفرض العقد على كل مسار، لا التوجيه وحده.
+    _U = fresh()
+    _b = _U.validate({"site": {"w": 20, "d": 15}, "levels": [
+        {"id": "L0", "template": "t", "elevation": 0},
+        {"id": "L1", "template": "t", "elevation": 3.2}],
+        "floors": {"t": {"rooms": [{"id": "r", "rect": [0, 0, 4, 4]}]}}})
+    chk("و validate() تفرضه على أي نموذج مهما كان مصدره",
+        all("index" in l for l in _b["levels"]),
+        json.dumps(_b["levels"], ensure_ascii=False))
+    chk("وتُرفق التشخيص بالنموذج",
+        any(d.get("code") == "PLAN_LEVEL_INDEX_DERIVED"
+            for d in _b["meta"]["acs_stage_diagnostics"]))
+    chk("وتوجيه البيان صار يطلب index صراحةً",
+        '"index"' in _U.OUTLINE_MSG and "index عدد صحيح" in _U.OUTLINE_MSG)
+
     if _saved_key is None:
         os.environ.pop("ANTHROPIC_API_KEY", None)
     else:

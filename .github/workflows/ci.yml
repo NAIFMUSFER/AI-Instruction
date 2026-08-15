@@ -173,6 +173,11 @@ jobs:
             node tests/remediation/test_csp_style_architecture.js
             node tests/remediation/test_panel_entry.js
             node tests/remediation/test_module_graph.js
+            # KI-25: a 200 whose building never reaches the viewport is a
+            # failure, not a success. Node scope here; real WebGL2 pixels
+            # are measured by test_apply_render_browser.js.
+            node tests/lib/run.js tests/remediation/test_model_apply.js
+            node tests/remediation/test_apply_render_browser.js
           } 2>&1 | tee logs/chromium-browser.log
       - uses: actions/upload-artifact@v4
         if: always()

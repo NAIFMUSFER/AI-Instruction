@@ -230,7 +230,38 @@ function scaleBoxUV(geo,w,h,d,scale){
 }
 
 /* ========================= المترجم الهندسي (JS) ========================= */
+
+/* KI-25/F-42 — سجلّ عيوب البناء: ما رُفض وما سقط، بالعدد والسبب.
+   لم يكن في المترجم موضعٌ واحد يقول «الذي بنيتُه ليس الذي أُعطيت». كان
+   العنصر التالف يُبنى صامتاً بإحداثيّة NaN، أو تُلقى الغرفة كلّها باستثناء
+   يهدم المشهد. كلاهما يُحصى هنا الآن، وطبقةُ الربط تقرأ السجلّ قبل أن تعلن
+   نجاحاً. لا محتوى مبنى فيه: أعداد ورموز أسباب وأسماء وسوم فقط. */
+let BUILD_DEFECTS=null;
+function acsBuildDefectsReset(){
+  BUILD_DEFECTS={non_finite_box:0, rejected_room:0, rejected_field:0,
+                 derived_level_index:0, unknown_object:0, reasons:{}, samples:[]};
+  return BUILD_DEFECTS;
+}
+function acsBuildDefect(kind, reason, sample){
+  if(!BUILD_DEFECTS) acsBuildDefectsReset();
+  BUILD_DEFECTS[kind]=(BUILD_DEFECTS[kind]||0)+1;
+  BUILD_DEFECTS.reasons[reason]=(BUILD_DEFECTS.reasons[reason]||0)+1;
+  if(sample&&BUILD_DEFECTS.samples.length<12)
+    BUILD_DEFECTS.samples.push(String(sample).slice(0,64));
+}
+function acsBuildDefects(){ return BUILD_DEFECTS||acsBuildDefectsReset(); }
+
 function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
+  /* KI-25/F-42 — الحارس القديم ‎ex<=0‎ لا يوقف NaN ولا undefined: كلاهما
+     يعطي false في المقارنة، فتُبنى شبكة بإحداثيّات غير معرَّفة. العتاد لا
+     يرسمها، وعقدُ الحدود يستبعدها، وعدّاد الواجهة يعدّها — فيرى المستخدم
+     «تم التوليد ✓ ٢٠٠١ عنصر» ونافذةً فارغة. هذا هو عطل KI-25 بالحرف.
+     الآن: ما ليس عدداً منتهياً لا يدخل المشهد، ويُحصى بسببه. */
+  if(!(isFinite(ex)&&isFinite(ey)&&isFinite(ez)
+       &&isFinite(cx)&&isFinite(cy)&&isFinite(cz))){
+    acsBuildDefect('non_finite_box','NON_FINITE_GEOMETRY',name);
+    return;
+  }
   if(ex<=0||ey<=0||ez<=0) return;
   const g=new THREE.BoxGeometry(ex,ey,ez);
   const m=getMat(mat,tint);
@@ -269,15 +300,43 @@ function wallOpenings(group,axis,fixed,u0,u1,y0,H,t,openings,fkey,room,tag,tint,
     else addBox(group,fixed,cy,cu,t,h,w,wm,`WALL|${fkey}|${room}|${tag}s${k}`,!glass,tint);
   });
 }
+/* KI-25/F-42 — مستطيل صالح أو لا شيء. كان ‎const[x,z,w,d]=room.rect‎ يرمي
+   ‎TypeError: rect is not iterable‎ على أوّل غرفة بلا rect، والاستثناء يصعد
+   من compile إلى setModel — وقد **حُذف المشهد القديم قبله** — فتبقى النافذة
+   فارغة وشريط الحالة على «يقرأ وصفك…» بلا خطأ ولا زرّ إعادة. غرفةٌ واحدة
+   تالفة لا يجوز أن تهدم مبنى كاملاً: تُرفَض وتُحصى وتُعلَن. */
+function acsRoomRect(room){
+  const r=(room||{}).rect;
+  if(!Array.isArray(r)||r.length<4) return null;
+  const v=[Number(r[0]),Number(r[1]),Number(r[2]),Number(r[3])];
+  if(!v.every(isFinite)) return null;
+  if(!(v[2]>0&&v[3]>0)) return null;
+  return v;
+}
+/* حقلٌ يُنتظَر مصفوفةً وقد يأتي عدداً أو كائناً من مولّد لغوي. كان
+   ‎if(room.racks) (room.racks||[]).forEach‎ يمرّ الحارس ثم يرمي. */
+function acsList(room,key){
+  const v=(room||{})[key];
+  if(v==null||v===false) return [];
+  if(Array.isArray(v)) return v;
+  acsBuildDefect('rejected_field','FIELD_NOT_A_LIST',
+                 String((room||{}).id||'?')+'.'+key);
+  return [];
+}
 function buildRoom(group,room,fkey,baseY,def){
-  const rect=room.rect,[x,z,w,d]=rect;
+  const rect=acsRoomRect(room);
+  if(!rect){
+    acsBuildDefect('rejected_room','ROOM_RECT_INVALID',(room||{}).id||'?');
+    return;
+  }
+  const [x,z,w,d]=rect;
   const H=room.wall_h||def.wall_h, t=def.wall_t, name=room.id||'room';
   /* تشطيبات الغرفة: لون خاص بهذه الغرفة وحدها */
   const wcol=normHex(room.wall_color), fcol=normHex(room.floor_color), ccol=normHex(room.ceiling_color);
   const per={N:[],S:[],E:[],W:[]};
-  (room.doors||[]).forEach(dr=>{dr.edge=normEdge(dr.edge);
+  acsList(room,'doors').forEach(dr=>{dr.edge=normEdge(dr.edge);
     per[dr.edge].push([openU(dr.edge,rect,dr.offset),dr.width||0.9,0,dr.height||2.1]);});
-  (room.windows||[]).forEach(wn=>{const s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+  acsList(room,'windows').forEach(wn=>{const s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
     wn.edge=normEdge(wn.edge);
     per[wn.edge].push([openU(wn.edge,rect,wn.offset),wn.width||1.2,s,s+h]);});
   const dk=dockOpenings(room);
@@ -310,21 +369,21 @@ function buildRoom(group,room,fkey,baseY,def){
                   'floor',`FLOOR|${fkey}|${name}|plate`,false,fcol);
   if(ccol) addBox(group,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
                   'ceiling',`FLOOR|${fkey}|${name}|ceil`,false,ccol);
-  (room.doors||[]).forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
+  acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
     const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
     const dcol=normHex(dr.color);
     if(axis==='x')addBox(group,uc,cy,fixed,wd,dh,0.06,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);
     else addBox(group,fixed,cy,uc,0.06,dh,wd,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);});
-  (room.windows||[]).forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+  acsList(room,'windows').forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
     const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
     if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
     else addBox(group,fixed,cy,uc,0.05,h,wd,'window',`WINDOW|${fkey}|${name}|${i}`,false);});
-  (room.points||[]).forEach((pt,j)=>{const kind=pt.type||'outlet';const K=POINT_KINDS[kind]||POINT_KINDS.outlet;
+  acsList(room,'points').forEach((pt,j)=>{const kind=pt.type||'outlet';const K=POINT_KINDS[kind]||POINT_KINDS.outlet;
     const[layer,mat,defH,size]=K;const px=x+(pt.x==null?w/2:pt.x),pz=z+(pt.z==null?d/2:pt.z);let py;
     if(defH==null){ if(kind==='camera')py=baseY+H-0.15; else if(kind==='ac')py=baseY+H-0.35; else py=baseY+H-size[1]/2-0.02; }
     else py=baseY+(pt.height==null?defH:pt.height);
     addBox(group,px,py,pz,size[0],size[1],size[2],mat,`${layer}|${fkey}|${name}|${kind}${j}`,false);});
-  (room.furniture||[]).forEach((fu,k)=>{const fx=x+fu.x,fz=z+fu.z,fw=fu.w||0.8,fd=fu.d||0.8,fh=fu.h||0.8;
+  acsList(room,'furniture').forEach((fu,k)=>{const fx=x+fu.x,fz=z+fu.z,fw=fu.w||0.8,fd=fu.d||0.8,fh=fu.h||0.8;
     addBox(group,fx,baseY+fh/2,fz,fw,fh,fd,fu.mat||'furn',`FURN|${fkey}|${name}|${fu.name||'obj'}${k}`,true);});
   /* العناصر الصناعية المضغوطة */
   if(room.racks)    buildRacks(group,room,fkey,baseY,def);
@@ -488,7 +547,7 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
 /* يبني كل عناصر الغرفة، مع التكرار (count/pitch) */
 function buildObjects(group, room, fkey, baseY){
   const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
-  (room.objects||[]).forEach((o,i)=>{
+  acsList(room,'objects').forEach((o,i)=>{
     const kind=objKind(o);
     const n=Math.max(1,Math.min(+o.count||1,200));
     const pitch=+o.pitch||1.2, dir=(o.dir==='z')?'z':'x';
@@ -498,7 +557,10 @@ function buildObjects(group, room, fkey, baseY){
       if(ox>rw+2||oz>rd+2) break;
       buildObject(group,o,kind||'box',rx+ox,rz+oz,baseY+(+o.y||0),fkey,nm,i*1000+k);
     }
-    if(!kind) OBJ_UNKNOWN.push(o.name||o.kind||'?');
+    if(!kind){ OBJ_UNKNOWN.push(o.name||o.kind||'?');
+      /* KI-25/F-42: كان هذا السجلّ يُكتَب ولا يُقرأ في أي ملفّ منشور —
+         نوعٌ لم يعرفه المترجم يُبنى صندوقاً عامّاً ولا يعلم به أحد. */
+      acsBuildDefect('unknown_object','OBJECT_KIND_UNKNOWN',o.name||o.kind); }
   });
 }
 
@@ -520,7 +582,7 @@ const RACK_DEF={
 /* رفوف: صفوف متكرّرة بممرّات بينها */
 function buildRacks(group, room, fkey, baseY, def){
   const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
-  (room.racks||[]).forEach((R,ri)=>{
+  acsList(room,'racks').forEach((R,ri)=>{
     const K=RACK_DEF[R.kind]||RACK_DEF.pallet;
     const depth=+R.depth||K.depth, bay=+R.bay||K.bay, H=+R.h||K.h;
     const lv=Math.max(1,Math.min(+R.levels||K.levels,10)), aisle=+R.aisle||K.aisle;
@@ -588,7 +650,7 @@ const LANE_MAT={forklift:'paint_lane',pedestrian:'paint_ped',amr:'paint_amr',rob
   one_way:'paint_lane',zone:'paint_zone',fire:'paint_fire',safety:'paint_fire'};
 function buildLanes(group, room, fkey, baseY, def){
   const [rx,rz]=room.rect, nm=room.id||'room';
-  (room.lanes||[]).forEach((L,li)=>{
+  acsList(room,'lanes').forEach((L,li)=>{
     const kind=L.kind||'forklift';
     const x=rx+(+L.x||0), z=rz+(+L.z||0), w=+L.w||2.5, d=+L.d||2.5;
     const dir=(L.dir==='z')?'z':'x';
@@ -661,7 +723,7 @@ const STA_DEF={pack:{w:1.8,d:0.9,h:0.9,pitch:2.6,screen:true,printer:true},
   wrap:{w:1.6,d:1.6,h:2.0,pitch:3.0,screen:false,printer:false}};
 function buildStations(group, room, fkey, baseY, def){
   const [rx,rz,rw,rd]=room.rect, nm=room.id||'room';
-  (room.stations||[]).forEach((S,si)=>{
+  acsList(room,'stations').forEach((S,si)=>{
     const K=STA_DEF[S.kind]||STA_DEF.pack;
     const w=+S.w||K.w, d=+S.d||K.d, h=+S.h||K.h, pitch=+S.pitch||K.pitch;
     const dir=(S.dir==='z')?'z':'x';
@@ -690,7 +752,7 @@ function buildStations(group, room, fkey, baseY, def){
 /* أرصفة التحميل: باب منزلق + لوح تسوية + مصدّات */
 function buildDocks(group, room, fkey, baseY, def){
   const rect=room.rect, nm=room.id||'room';
-  (room.docks||[]).forEach((D,di)=>{
+  acsList(room,'docks').forEach((D,di)=>{
     const n=Math.max(1,Math.min(+D.count||1,24));
     const pitch=+D.pitch||(( +D.width||3.0)+1.8);
     for(let i=0;i<n;i++){
@@ -716,7 +778,7 @@ function buildDocks(group, room, fkey, baseY, def){
 /* فتحات الأرصفة تُحسَب ضمن فتحات الجدار حتى لا يُبنى جدار مصمت مكانها */
 function dockOpenings(room){
   const out={N:[],S:[],E:[],W:[]};
-  (room.docks||[]).forEach(D=>{
+  acsList(room,'docks').forEach(D=>{
     const n=Math.max(1,Math.min(+D.count||1,24));
     const wd=+D.width||3.0, dh=+D.height||4.0, pitch=+D.pitch||(wd+1.8), e=normEdge(D.edge);
     for(let i=0;i<n;i++) out[e].push([openU(e,room.rect,(+D.offset||3)+pitch*i),wd,0,dh]);
@@ -750,7 +812,7 @@ function slabStrips(x0,z0,W,D,holes){
   return out;
 }
 function compile(data){
-  OBJ_UNKNOWN=[];
+  OBJ_UNKNOWN=[]; acsBuildDefectsReset();
   const grp=new THREE.Group(); grp.name='BUILDING';
   const site=data.site||{w:30,d:25};
   const bt=String(((data.meta||{}).type)||'residential').toLowerCase();
@@ -761,9 +823,28 @@ function compile(data){
      والمسافات، وفراغات النوى تُقصّ منها فعلاً. */
   let ARCH=null;
   try{ ARCH=__ACS_LATE.compileArchitecture(data,'bld_0',null,0); }catch(e){ ARCH=null; }
-  (data.levels||[]).forEach(lvl=>{
-    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=lvl.index*fh; const fkey='F'+lvl.index;
-    const holes=ARCH?ARCH.voids.filter(v=>v.level_index===lvl.index).map(v=>v.rect):[];
+  /* KI-25/F-42 — رقم الدور مشتقّ لا مُفترَض.
+     كان: ‎const baseY=lvl.index*fh; const fkey='F'+lvl.index;‎ بلا فحص. عقد
+     النموذج يوجب `index` صحيحاً، لكن العارض يقرأ نماذج من مصادر لا يحكمها
+     عقد الخادم (استيراد JSON، DXF، نموذج محفوظ من نسخة أقدم) — وقد قرأ فعلاً
+     نموذجاً من خادمنا نفسه بعد أن ضاق توجيه البيان في KI-24. النتيجة كانت
+     ‎undefined × 4 = NaN‎ لكل دور و‎'Fundefined'‎ مفتاحاً واحداً للأدوار
+     كلّها: ألفا شبكة تُبنى عند إحداثيّة غير معرَّفة، والعدّاد يقول «تمّ».
+     الآن: رقم صحيح موجود يُحترَم، وغيابه يُشتقّ من ترتيب المصفوفة ويُحصى. */
+  const _levels=(data.levels||[]).map((lvl,i)=>{
+    const raw=(lvl&&typeof lvl==='object')?lvl:{};
+    let idx=Number(raw.index);
+    if(!(isFinite(idx)&&idx>=0&&idx===Math.floor(idx))){
+      idx=i;
+      acsBuildDefect('derived_level_index','LEVEL_INDEX_MISSING',
+                     String(raw.id||('#'+i)));
+    }
+    return {raw:raw,index:idx};
+  });
+  _levels.forEach(_lv=>{
+    const lvl=_lv.raw, li=_lv.index;
+    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=li*fh; const fkey='F'+li;
+    const holes=ARCH?ARCH.voids.filter(v=>v.level_index===li).map(v=>v.rect):[];
     /* PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان اللوح يُبنى على مستطيل
        الموقع كاملاً (المُدخَل السابق: صفر، صفر، عرض الموقع، عمق الموقع)
        تحت الاصطلاح السابق PHASE1_SITE_WIDE_PLATE المثبَّت بخطّ أساس المرحلة 4،
@@ -2463,4 +2544,4 @@ function distanceSummary(m){
    ================================================================== */
 
 
-export { ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };
+export { ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };

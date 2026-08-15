@@ -83,6 +83,11 @@ python3 "$HERE/test_provider_integration.py"; guard $?
 step "KI-24 · F-35…F-40 · bounded plan chunking (no stage reaches its ceiling)"
 python3 "$HERE/test_plan_chunking.py"; guard $?
 
+# KI-25/F-41…F-45: يُشغَّل compile() المشحون على بديل هندسة معلَن، فيُقاس ما
+# يُبنى فعلاً لا ما يُدَّعى. البكسلات لها الملفّ التالي تحت --browser.
+step "KI-25 · F-41…F-45 · post-200 model apply (a 200 that does not display is a failure)"
+node "$ROOT/tests/lib/run.js" "$HERE/test_model_apply.js"; guard $?
+
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 
@@ -99,6 +104,10 @@ if [ "$1" = "--browser" ]; then
   # KI-13/F-30: يقيس السياسة الإنتاجية نفسها من netlify.toml كرأس استجابة حقيقيّ.
   step "KI-13 · F-30 · CSP style architecture (real Chromium, production policy)"
   node "$HERE/test_csp_style_architecture.js"; guard $?
+  # KI-25: WebGL2 حقيقيّ وreadPixels حقيقيّ على هندسة compile() المشحونة.
+  # three.js نفسه غير مُعبَّأ هنا، والملفّ يعلن ذلك بنفسه في مخرجه.
+  step "KI-25 · F-41…F-45 · the applied model is actually drawn (real Chromium, real WebGL2)"
+  node "$HERE/test_apply_render_browser.js"; guard $?
 else
   printf '\n=== accessibility and performance ===\nSKIPPED (pass --browser). '
   printf 'Without it: NOT VERIFIED — CHROMIUM ENVIRONMENT UNAVAILABLE\n'

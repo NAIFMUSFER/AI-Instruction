@@ -963,7 +963,14 @@ def extract_json(raw):
         upstream={"provider": "anthropic", "kind": "unparsable_response"})
 
 def validate(building):
-    """تحقّق بنيوي خفيف + إصلاحات أمان (بلا اعتماد خارجي)."""
+    """تحقّق بنيوي خفيف + إصلاحات أمان (بلا اعتماد خارجي).
+
+    KI-25/F-41: هنا يُفرَض عقد المستويات. هذه الدالة هي المصبّ الوحيد لكل
+    مسارات التوليد (النداء الواحد، الخطّة القديمة، الخطّة المحدودة، الإصلاح،
+    الملاحظات)، فوضعُ العقد فيها يعني أن `index` لا يعتمد على طاعة النموذج
+    لتوجيهٍ ما. مستوىً بلا index يجعل العارض يبني المبنى عند NaN: هندسةٌ
+    موجودة وعدّادٌ صحيح ولا بكسل واحد — وهو عطل KI-25 بالحرف.
+    """
     assert isinstance(building.get("site"), dict), "site مفقود"
     building.setdefault("floor_height", 3.2); building.setdefault("wall_h", 3.0); building.setdefault("wall_t", 0.15)
     assert building.get("levels"), "levels مفقود"
@@ -971,6 +978,14 @@ def validate(building):
     for tmpl, fdef in building["floors"].items():
         for r in fdef.get("rooms", []):
             assert "rect" in r and len(r["rect"]) == 4, "غرفة بلا rect صحيح: %s" % r.get("id")
+    lv, lv_issues = PC.normalise_levels(building.get("levels"), building.get("floors"))
+    if lv:
+        building["levels"] = lv
+    if lv_issues:
+        diag = building.setdefault("meta", {}).setdefault("acs_stage_diagnostics", [])
+        for i in lv_issues:
+            if i not in diag:
+                diag.append(i)
     return building
 
 def call_llm_repair(description, building, issues, model=None,
@@ -1063,7 +1078,13 @@ OUTLINE_MSG = (
     "هذه أصغر مرحلة في التوليد: لا مستطيلات، ولا أبعاد لكل منطقة، ولا نثر، ولا "
     "تفاصيل داخلية إطلاقاً. المطلوب حصراً:\n"
     '{ "site":{"w":,"d":}, "floor_height":, "wall_h":, "wall_t":,\n'
-    '  "levels":[{"id","template","elevation"}],\n'
+    # KI-25: «index» ليس زينة. العارض يشتقّ ارتفاع كل دور منه (baseY = index ×‏
+    # floor_height) ويشتقّ مفتاح طبقته منه (F0 · F1 …). بيانٌ بلا index يبني
+    # المبنى كلّه عند إحداثيّة غير معرَّفة. أُسقط سهواً حين ضاق هذا التوجيه في
+    # KI-24، وصار كل مبنى كبير يُبنى ولا يُعرَض. مُعاد هنا، ومحروسٌ في
+    # validate() فلا يعود يعتمد على طاعة النموذج للتوجيه.
+    '  "levels":[{"index":0,"id":"L0","name":"","template":""}],  '
+    '// index عدد صحيح يبدأ من صفر للأسفل، ويزيد واحداً لكل دور فوقه\n'
     '  "zones":[ {"id":"معرّف قصير بالإنجليزية","role":"دور الحيّز",'
     '"template":"اسم قالب الدور"} ] }\n\n'
     "**شرط القبول**: راجع الطلب بنداً بنداً. لكل حيّز طلبه العميل سطرٌ واحد في "

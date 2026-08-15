@@ -14,6 +14,21 @@
 > Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
 > measurement that proves it, not an inspection note.
 
+> **Post-200 apply pass (F-41…F-45).** `POST /v1/understand` was returning
+> **200 OK with a valid LARGE building** and the viewport stayed empty — no
+> exception, no error panel, and a status line reading «تم التوليد ✓ 2001
+> عنصر». KI-24's narrowed outline prompt had dropped `index` from `levels`,
+> and the viewer derives every storey's elevation and layer key from it, so
+> 1947 of 2001 meshes were built at `NaN`. The level contract is now enforced
+> in `validate()` rather than requested in a prompt, the compiler refuses
+> geometry it cannot place, the new scene is built before the old one is
+> demolished, and **success is not declared until a real frame is measured**.
+> See **KI-25**, pinned by `tests/remediation/test_model_apply.js` (85
+> assertions) and `tests/remediation/test_apply_render_browser.js` (30
+> assertions in real Chromium with real WebGL2). `LIVE FRONTEND APPLY
+> (three.js): NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED`.
+> **KI-14 remains OPEN and untouched.**
+
 > **Bounded-plan pass (F-35…F-40).** `POST /v1/understand` was returning
 > **502 `ACS_UPSTREAM_TRUNCATED`** on any LARGE building: staged generation
 > split the *detail* stage but never the *plan*, so the plan's own output could
@@ -1078,3 +1093,168 @@ live call. On a networked machine with the production key:
 
 with a 50+ zone warehouse prompt reproduces the original 502 on the base commit
 and must complete on this one.
+
+---
+
+## KI-25 · `/v1/understand` returned **200 with a valid building** and the viewport stayed empty (**CLOSED** — F-41…F-45)
+
+**Closed by:** F-41 (the level contract, enforced not requested), F-42 (the
+compiler never emits geometry it cannot place), F-43 (build before demolish,
+with a defined rollback), F-44 (a post-200 apply boundary), F-45 (a request
+generation so a stale response cannot overwrite a newer model).
+**Proof:** `tests/remediation/test_model_apply.js` — **85 passed, 0 failed**
+(node scope, the shipped `compile()` on a declared geometry double) and
+`tests/remediation/test_apply_render_browser.js` — **30 passed, 0 failed**
+(real Chromium, real WebGL2, real `gl.readPixels`).
+Red-team verified: reverting F-41's viewer-side derivation fails 7 node
+assertions and **5 browser assertions**, and drops the production-shaped
+payload from **44.53 % non-background pixels to 0 %**; reverting F-42's
+`addBox` guard fails 3; reverting F-42's `rect` guard fails 12; undeclaring the
+sealed shared-state key fails 2.
+**KI-13, KI-23 and KI-24 are untouched and still green. KI-14 remains OPEN.**
+
+### The production failure
+
+```
+POST https://acs-engine.onrender.com/v1/understand → 200 OK
+request_id req_8914f73983354f22 · submitted=1 succeeded=1 failed=0 in_flight=0
+ok:true · building present · site 22×16 · levels L0/L1/L2 · rooms, racks,
+lanes, points, furniture · acs_plan_report: staged · LARGE · chunks_executed=10
+· capped=false · failed_chunks=[]
+```
+
+The backend did everything right — which is why KI-24 is live-verified by this
+same evidence. Nothing was displayed.
+
+### Exact exception and location
+
+**There is none, and that is the finding.** Nothing threw. The failure was
+arithmetic and silent:
+
+```
+public/app/core/viewer.js:824   const baseY = lvl.index*fh;  const fkey = 'F'+lvl.index;
+                                → undefined * 4 = NaN        → 'Fundefined'
+```
+
+Measured on a production-shaped payload (22×16, L0/L1/L2, 54 zones):
+
+| | levels **with** `index` | levels **without** `index` |
+|---|---|---|
+| meshes built | 2001 | 2001 |
+| reached the camera bounds | 2001 | **54** |
+| excluded `NON_FINITE` | 0 | **1947** |
+| floor keys | `F0 F1 F2` | **`Fundefined`** |
+| scene radius | 10.34 | 8.83 |
+| `bounds_valid` / `camera_in_frustum` | true / true | **true / true** |
+| exception | none | none |
+| status line shown to the user | `تم التوليد ✓ 2001 عنصر` | `تم التوليد ✓ 2001 عنصر` |
+
+Every guard in the system reported success. The KI-3 robust-bounds contract
+excluded the corrupt meshes — correctly, that is its job for a stray outlier —
+and the counter counted them, so the UI wrote a truthful-looking sentence over
+an empty window. **A success declared on nothing is worse than an exception.**
+
+### Root cause
+
+The canonical model contract (`acs_understand.py:55`) has always been
+`"levels": [ {"index": int, "name": str, "template": str} ]`, and the viewer
+derives both the storey elevation and the storey layer key from `index`. When
+KI-24 narrowed the outline prompt to the smallest possible schema it asked for
+`{"id","template","elevation"}` and dropped `index`; `merge_plan` passes the
+outline envelope through verbatim. So **every LARGE building** — every request
+that takes the bounded plan path — came back with index-less levels. Small and
+medium buildings, which still take the single-call path where the model sees
+the full schema in the system prompt, were unaffected. That is why this
+survived a green suite and reached production.
+
+### The fix — four independent layers, each red-team verified
+
+* **F-41 · the contract is enforced, not requested.** `PC.normalise_levels()`
+  is a pure deterministic normaliser: a declared integer `index` is honoured, a
+  missing one is derived from `elevation` order (or array order), duplicates are
+  resolved without dropping a level, and every derivation is reported
+  (`PLAN_LEVEL_INDEX_DERIVED`, `PLAN_LEVEL_INDEX_DUPLICATE`). It also reports a
+  level naming a template that does not exist and a `floors` key no level
+  references — two silent drops that predate this bug. It is called from
+  `acs_understand.validate()`, the one funnel every generation path passes
+  through, so the contract no longer depends on the model obeying a prompt. The
+  prompt asks for `index` too — but that is now the hint, not the guarantee.
+* **F-42 · the compiler never emits geometry it cannot place.** `addBox`'s old
+  guard was `if(ex<=0||ey<=0||ez<=0) return;` — and `NaN<=0` and `undefined<=0`
+  are both `false`, so corrupt boxes sailed straight through. Now a non-finite
+  position or extent is refused and counted. The viewer also derives a level
+  index of its own when one is missing (models arrive from JSON import, DXF and
+  older saves, not only from this server), rejects a room whose `rect` is not
+  four finite numbers instead of throwing `rect is not iterable`, and tolerates
+  a list-shaped field that arrives as a scalar. Every refusal lands in a build-
+  defect ledger — counts, reason codes and layer tags, no building content.
+* **F-43 · build before demolish.** `setModel` used to dispose the old scene and
+  every material *before* calling `compile`. One exception left the user with an
+  empty window, no old model to fall back to, and `lastBuilding` already
+  replaced by the poison model — so even a later detail-level change re-threw
+  and the page stayed dead until reload. Now the new group is compiled first on
+  a fresh material cache; on failure the old materials are restored and the
+  scene is untouched, and `lastBuilding` is only advanced after a successful
+  compile.
+* **F-44 · the boundary.** Between "200 with a building" and "the user sees a
+  model" there was no `try`, and no question asked. Now success is not declared
+  until four things are measured: `setModel` returned; what was built is what
+  was given (no rejected rooms, no non-finite geometry, ≥90 % of built meshes
+  reached the camera bounds); the camera is finite, its bounds valid and the
+  model inside the frustum; and **one real frame was drawn whose pixels are not
+  a uniform background**. Failure classifies as `MODEL_LOAD_ERROR`,
+  `RENDER_CAMERA_ERROR` or `RENDER_BLACK_VIEWPORT` and opens a panel with a
+  retry — never as a network or API fault, because the server succeeded. The
+  panel is deliberately a different panel with different words; telling the user
+  "the server did not generate" when it did is what sends them to retry forever.
+* **F-45 · request generation.** The error panel's retry button bypassed the
+  double-click lock on the main button, so three clicks meant three concurrent
+  900-second requests and the *last to land* won `setModel`. Each request now
+  draws a ticket; a response whose ticket has been superseded is discarded, and
+  discarding it is not reported as a failure.
+
+### Measured in real Chromium (real WebGL2, real `readPixels`)
+
+| | meshes | radius | draw calls | non-background pixels | distinct colours |
+|---|---|---|---|---|---|
+| production-shaped LARGE | 1263 | 10.275 | 1263 | **44.53 %** | 25 |
+| same payload, levels without `index` | 1263 | 10.275 | 1263 | **44.53 %** | 25 |
+| negative control — geometry at NaN | 1263 | — | 0 | **0.00 %** | **1** |
+| same, with F-41 reverted | — | — | — | **0.00 %** | 0 |
+
+A new model replaces the old one: after a small model follows the large one the
+frame hash changes, the mesh count changes and the scene radius changes.
+Zero unhandled application exceptions, zero failed requests, zero CSP
+violations under the production policy read from `netlify.toml`.
+
+### Not verified here
+
+`LIVE FRONTEND APPLY (three.js): NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.`
+`public/vendor` is empty in this checkout (`tools/netlify-build.sh` fills it at
+build time) and the npm registry returns 403, so `three@0.160.0` cannot be
+obtained. The browser suite therefore rasterises the shipped `compile()` output
+through a real WebGL2 context with real shaders written for the test, driven by
+the shipped `pqCameraFit` — which proves the geometry and the camera are
+drawable, and proves the defect makes them undrawable, but does **not** prove
+three.js's own scene graph draws them. Closing that needs one run on a built
+tree:
+
+    bash tools/vendor.sh
+    node tests/remediation/test_apply_render_browser.js
+
+The CI `chromium-browser` job already vendors the runtime, so this closes on the
+first pipeline run.
+
+### Still open after this pass
+
+**KI-14** (upload validation and layout run on the asyncio event loop) is
+unchanged and still OPEN — it was deliberately not touched.
+Found while auditing this chain and **not fixed here**, recorded so they are not
+lost: `slabStrips` is O(V³) in core count with no cap (a level pierced by ~150
+stair/lift cores costs millions of comparisons on the main thread); there is no
+global scene object-count limit, and the "lower the detail level" advice the UI
+offers reaches only two expressions in `buildRacks`; the conveyor e-stop loop at
+`viewer.js:644` is the one uncapped count loop among the industrial builders;
+`compile`'s four `catch(e){}` blocks can drop a whole discipline layer with no
+console line; and floor buttons sort lexicographically (`F0,F1,F10,F2`) while
+`FLOOR_NAMES` only covers `F0`–`F6`.

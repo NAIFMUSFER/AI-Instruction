@@ -118,6 +118,12 @@ ISSUE_CODES = (
     "PLAN_CHUNK_FAILED",
     "PLAN_CHUNK_SPLIT",
     "PLAN_ZONE_UNRESOLVED",
+    # KI-25/F-41 · عقد المستويات
+    "PLAN_LEVELS_EMPTY",
+    "PLAN_LEVEL_INDEX_DERIVED",
+    "PLAN_LEVEL_INDEX_DUPLICATE",
+    "PLAN_LEVEL_TEMPLATE_MISSING",
+    "PLAN_TEMPLATE_ORPHANED",
 )
 
 
@@ -594,7 +600,118 @@ def plan_report(strategy_plan, outline_zones, chunking, chunk_results,
             "issue_codes": codes}
 
 
-# ── ٦ · العقد المُعلَن ──────────────────────────────────────────────────────
+# ── ٦ · عقد المستويات (KI-25 · F-41) ───────────────────────────────────────
+def normalise_levels(levels, floors=None):
+    """يُعيد المستويات إلى العقد القانونيّ: لكل مستوى `index` صحيح وفريد.
+
+    لماذا هذه الدالة موجودة
+    -----------------------
+    العقد المُعلَن في acs_understand.py يقول:
+        "levels": [ {"index": int, "name": str, "template": str} ]
+    والعارض يبني عليه حرفياً: ارتفاع الدور ‎baseY = index × floor_height‎،
+    ومفتاح طبقته ‎'F' + index‎. مستوىً بلا `index` يعطي ‎undefined × 4 = NaN‎
+    فيُبنى المبنى كلّه عند إحداثيّة غير معرَّفة: الشبكات موجودة، وعدّادها
+    صحيح، ولا يرسم منها العتاد شيئاً. لا خطأ يُرفع ولا رسالة تظهر.
+
+    ولذلك لا يكفي أن **يُطلَب** `index` في التوجيه: طاعة النموذج ليست عقداً.
+    هذه الدالة هي العقد — تمرّ بها كل خطّة من كل مسار قبل أن تغادر الخادم.
+
+    الاشتقاق حتميّ تماماً
+    ---------------------
+      · `index` صحيح موجود ⇒ يُحترَم.
+      · غائب أو غير صالح ⇒ يُشتقّ من ترتيب `elevation` إن صرّحت به المستويات
+        كلّها بأرقام (فالأدنى هو الأرضي)، وإلّا من ترتيب المصفوفة.
+      · مكرّر ⇒ الأوّل يحتفظ به والتالي ينزل إلى أوّل رقم حرّ — لا يُحذف
+        مستوىً طلبه العميل ولا يُدمج دوران.
+
+    يعيد (المستويات، المسائل). لا يرفع أبداً: مستوىً معطوب لا يُسقط توليداً.
+    """
+    issues = []
+    raw = [l for l in (levels or []) if isinstance(l, dict)]
+    if not raw:
+        return [], [{"code": "PLAN_LEVELS_EMPTY"}]
+
+    def _int(v):
+        if isinstance(v, bool):
+            return None
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            return None
+        if f != f or f in (float("inf"), float("-inf")) or f != int(f) or f < 0:
+            return None
+        return int(f)
+
+    # ترتيب الاشتقاق: الارتفاع إن صرّحت به المستويات كلّها، وإلّا ترتيب المصفوفة.
+    elevs = [_num(l.get("elevation")) for l in raw]
+    if all(e is not None for e in elevs) and len(set(elevs)) == len(elevs):
+        order = [i for i, _e in sorted(enumerate(elevs), key=lambda p: p[1])]
+    else:
+        order = list(range(len(raw)))
+    rank = {}
+    for r, i in enumerate(order):
+        rank[i] = r
+
+    declared = {}
+    for i, l in enumerate(raw):
+        declared[i] = _int(l.get("index"))
+
+    out = [None] * len(raw)
+    taken = set()
+    # أوّلاً من صرّح برقم صحيح — ترتيب المصفوفة يفضّ التكرار حتميّاً.
+    for i, l in enumerate(raw):
+        idx = declared[i]
+        if idx is None or idx in taken:
+            continue
+        taken.add(idx)
+        out[i] = idx
+    for i, l in enumerate(raw):
+        if out[i] is not None:
+            continue
+        if declared[i] is not None:
+            issues.append({"code": "PLAN_LEVEL_INDEX_DUPLICATE",
+                           "id": str(l.get("id") or i), "declared": declared[i]})
+        else:
+            issues.append({"code": "PLAN_LEVEL_INDEX_DERIVED",
+                           "id": str(l.get("id") or i), "from": rank[i]})
+        cand = rank[i]
+        while cand in taken:
+            cand += 1
+        taken.add(cand)
+        out[i] = cand
+
+    tmpl_keys = set((floors or {}).keys())
+    used = set()
+    fixed = []
+    for i, l in enumerate(raw):
+        idx = out[i]
+        tmpl = str(l.get("template") or "").strip()
+        if not tmpl:
+            tmpl = "t"
+        if tmpl_keys and tmpl not in tmpl_keys:
+            # لا يُصحَّح باختراع قالب: يُعلَن. الدور يظهر بلوحه فارغاً، وسبب
+            # فراغه مكتوب بدل أن يبدو عطلاً في العرض.
+            issues.append({"code": "PLAN_LEVEL_TEMPLATE_MISSING",
+                           "id": str(l.get("id") or idx), "template": tmpl})
+        used.add(tmpl)
+        lv = dict(l)
+        lv["index"] = idx
+        lv["template"] = tmpl
+        lv["id"] = str(l.get("id") or ("L%d" % idx))
+        lv["name"] = str(l.get("name") or lv["id"])
+        fixed.append(lv)
+
+    for orphan in sorted(tmpl_keys - used):
+        # قالب لا يشير إليه مستوى = غرفٌ بناها المولّد ولن يراها أحد. تُعلَن.
+        issues.append({"code": "PLAN_TEMPLATE_ORPHANED", "template": orphan,
+                       "rooms": len(((floors or {}).get(orphan) or {})
+                                    .get("rooms") or [])})
+
+    fixed.sort(key=lambda l: (l["index"], str(l["id"])))
+    return fixed, issues
+
+
+# ── ٧ · العقد المُعلَن ──────────────────────────────────────────────────────
 def spec():
     return {"module": "acs_plan_chunks",
             "contract_version": CONTRACT_VERSION,
