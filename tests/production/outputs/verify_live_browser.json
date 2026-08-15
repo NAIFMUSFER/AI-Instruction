@@ -1,0 +1,293 @@
+{
+  "schema": "acs-production-verification/1.0.0",
+  "tool": "tests/production/verify_live_browser.js",
+  "started_at": "2026-08-14T18:55:35.737Z",
+  "frontend": "https://sprightly-selkie-d906c3.netlify.app",
+  "expect_sha": null,
+  "groups": [
+    "C",
+    "D",
+    "E",
+    "F",
+    "G(browser)"
+  ],
+  "counts": {
+    "pass": 0,
+    "fail": 0,
+    "not_verified": 33,
+    "total": 33
+  },
+  "exit_code": 2,
+  "verdict": "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED",
+  "checks": [
+    {
+      "group": "C",
+      "id": "C1",
+      "name": "no uncaught page error during boot",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C2",
+      "name": "the viewport initialises (canvas sized, WebGL context available)",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C3",
+      "name": "a WebGL rendering context is really available",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C4",
+      "name": "a test model renders (canonical meshes, draw calls, triangles)",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C5",
+      "name": "the pixel output is non-empty (decoded RGBA, not black)",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C6",
+      "name": "ENGINEERING / PBR / ARCHITECTURAL mode transitions succeed",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C7",
+      "name": "no failed asset request and no CSP violation during boot",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "C",
+      "id": "C8",
+      "name": "no uncaught page error after the whole run",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D1",
+      "name": "create/open a project",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D2",
+      "name": "generate or load a fixture model",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D3",
+      "name": "select an element",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D4",
+      "name": "inspect the selected element",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D5",
+      "name": "enter edit mode",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D6",
+      "name": "preview a change without touching the committed model",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D7",
+      "name": "cancel the preview",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D8",
+      "name": "preview again",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D9",
+      "name": "commit the change",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D10",
+      "name": "undo",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D11",
+      "name": "redo",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D12",
+      "name": "open the BIM panel",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D13",
+      "name": "open the documentation panel",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "D",
+      "id": "D14",
+      "name": "export",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "E",
+      "id": "E1",
+      "name": "no horizontal overflow at 375/390/430/768/1024/1440/1920",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "E",
+      "id": "E2",
+      "name": "the primary controls stay reachable at every width",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "F",
+      "id": "F1",
+      "name": "the document declares lang=ar and dir=rtl",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "F",
+      "id": "F2",
+      "name": "no meaningful untranslated English chrome",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "F",
+      "id": "F3",
+      "name": "no horizontal overflow in the Arabic layout",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H1",
+      "name": "the deployed page is a shell under 200 KB with /app/main.js as its only module entry",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H2",
+      "name": "the classic boot scripts and the external stylesheet load and apply",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H3",
+      "name": "no <style> block, no style= attribute and no inline event handler",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "H",
+      "id": "H4",
+      "name": "the deployed CSP raised no violation in a real browser",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "G",
+      "id": "G5",
+      "name": "window.ACS_BUILD_INFO carries the frontend build SHA and timestamp",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    },
+    {
+      "group": "G",
+      "id": "G6",
+      "name": "the frontend build SHA matches --expect-sha",
+      "status": "NOT VERIFIED",
+      "detail": "",
+      "reason": "the frontend could not be loaded: page.goto: net::ERR_TUNNEL_CONNECTION_FAILED at https://sprightly-selkie-d906c3.netlify.app/"
+    }
+  ],
+  "environment": {
+    "playwright": true,
+    "chromium": true,
+    "loaded": false
+  }
+}

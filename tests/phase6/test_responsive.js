@@ -60,7 +60,7 @@ async function open(browser,w,h,pageFile){
 (async()=>{
   execFileSync(process.execPath,[BUILD,DRIVER],{stdio:'pipe'});
   const page=path.join(os.tmpdir(),'acs_ws_driver_browser.html');
-  const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+  const browser=await chromium.launch();
 
   console.log('\n== §2/§87 — RESPONSIVE LAYOUT AT EVERY TESTED WIDTH ==');
   for(const w of WIDTHS){

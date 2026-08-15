@@ -1,0 +1,105 @@
+{
+  "_fixture": {
+    "id": "villa_small_on_large_plot",
+    "intent": "a 14x13 m building centred on a 40x32 m plot: the old plate was 7.0x the building footprint",
+    "provenance": "SYNTHETIC_REGRESSION",
+    "provenance_note": "SYNTHETIC_REGRESSION — authored for the F-07 / KI-3 plate-extent regression. Not a captured production model and never presented as one. Every rectangle here is chosen to make the site-wide plate defect visible and its fix measurable.",
+    "reconstructed": false
+  },
+  "floor_height": 3.2,
+  "floors": {
+    "f": {
+      "rooms": [
+        {
+          "id": "bed1",
+          "rect": [
+            8,
+            5,
+            7,
+            6
+          ]
+        },
+        {
+          "id": "bed2",
+          "rect": [
+            15,
+            5,
+            7,
+            6
+          ]
+        },
+        {
+          "id": "family",
+          "rect": [
+            8,
+            11,
+            14,
+            7
+          ]
+        }
+      ]
+    },
+    "g": {
+      "rooms": [
+        {
+          "id": "majlis",
+          "rect": [
+            8,
+            5,
+            6,
+            5
+          ]
+        },
+        {
+          "id": "living",
+          "rect": [
+            14,
+            5,
+            8,
+            5
+          ]
+        },
+        {
+          "id": "kitchen",
+          "rect": [
+            8,
+            10,
+            6,
+            8
+          ]
+        },
+        {
+          "id": "guest",
+          "rect": [
+            14,
+            10,
+            8,
+            8
+          ]
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "index": 0,
+      "name": "ground",
+      "template": "g"
+    },
+    {
+      "index": 1,
+      "name": "first",
+      "template": "f"
+    }
+  ],
+  "meta": {
+    "name": "villa_small_on_large_plot",
+    "type": "villa"
+  },
+  "site": {
+    "d": 32,
+    "w": 40
+  },
+  "wall_h": 3.0,
+  "wall_t": 0.15
+}

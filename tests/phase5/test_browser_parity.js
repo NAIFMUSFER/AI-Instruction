@@ -37,7 +37,7 @@ function nodeCounts(suite){
 }
 
 (async()=>{
-  const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+  const browser=await chromium.launch();
   console.log('\n== EVERY AUTHORING SUITE RUNS IN A REAL BROWSER ENGINE ==');
   for(const entry of SUITES){
     const suite=entry[0], exact=entry[1];
@@ -65,7 +65,7 @@ function nodeCounts(suite){
   }
 
   console.log('\n== THE BROWSER RESULT AGREES WITH PYTHON BYTE FOR BYTE ==');
-  execFileSync('python3',[path.join(HERE,'parity','py_authoring.py')],
+  execFileSync('python',[path.join(HERE,'parity','py_authoring.py')],
     {env:Object.assign({},process.env,{ACS_PARITY_AUTHORING_PY:PY}),stdio:'pipe'});
   execFileSync(process.execPath,[BUILD,path.join(HERE,'parity','js_authoring_body.js')],
     {stdio:'pipe'});

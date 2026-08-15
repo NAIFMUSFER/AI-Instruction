@@ -43,24 +43,48 @@ const visual = (n, c, d) => rec(VISUAL, n, c, d);
 
 const RESOLUTIONS = [[1920, 1080], [1440, 900], [1280, 800]];
 
+/* F-11 — السياسة الإنتاجية تُقرأ من netlify.toml وتُبَثّ رأساً حقيقياً هنا.
+   قياس الإقلاع بلا سياسة كان يقيس بيئةً لا وجود لها: ما يمرّ في مِرقاب بلا
+   رؤوس قد يُحجَب في الإنتاج، وهذا بالضبط شكل «أقلعت عندي ولم تُقلع هناك». */
+function productionCSP() {
+  try {
+    const nt = fs.readFileSync(path.join(ROOT, 'netlify.toml'), 'utf8');
+    const m = /Content-Security-Policy\s*=\s*"([^"]+)"/.exec(nt);
+    return m ? m[1] : '';
+  } catch (e) { return ''; }
+}
+
 function serve() {
-  const MIME = { '.html': 'text/html', '.js': 'text/javascript',
-    '.mjs': 'text/javascript', '.css': 'text/css',
+  /* F-09 — الصفحة صارت قشرة تحمّل وحدات ES: نوع المحتوى ليس تفصيلاً تجميلياً،
+     فالمتصفّح يرفض type="module" بأي نوع غير جافاسكربت، وnosniff يجعل ذلك
+     صريحاً كما في الإنتاج بدل أن ينقذنا التخمين. */
+  const MIME = { '.html': 'text/html; charset=utf-8',
+    '.js': 'text/javascript; charset=utf-8',
+    '.mjs': 'text/javascript; charset=utf-8',
+    '.css': 'text/css; charset=utf-8',
     '.json': 'application/json', '.png': 'image/png',
-    '.svg': 'image/svg+xml' };
+    '.svg': 'image/svg+xml', '.txt': 'text/plain', '.xml': 'application/xml' };
+  const CSP = productionCSP();
   return new Promise(res => {
     const srv = http.createServer((rq, rs) => {
       const u = decodeURIComponent(rq.url.split('?')[0]);
       const p = path.normalize(path.join(PUB, u === '/' ? 'index.html' : u));
       if (!p.startsWith(PUB) || !fs.existsSync(p)
         || fs.statSync(p).isDirectory()) { rs.writeHead(404); rs.end(); return; }
-      rs.writeHead(200, { 'Content-Type':
-        MIME[path.extname(p)] || 'application/octet-stream' });
+      const h = { 'Content-Type':
+        MIME[path.extname(p)] || 'application/octet-stream',
+        'X-Content-Type-Options': 'nosniff' };
+      if (CSP) h['Content-Security-Policy'] = CSP;
+      rs.writeHead(200, h);
       fs.createReadStream(p).pipe(rs);
     });
     srv.listen(0, '127.0.0.1', () => res(srv));
   });
 }
+
+/* المصدر الوحيد الذي يعرف تخطيط الواجهة بعد F-09 — لا قائمة وحدات ثانية
+   تُكتب هنا وتتقادم في أوّل إضافة. */
+const APPSRC = require(path.join(ROOT, 'tests', 'lib', 'app_source.js'));
 
 function fixtures() {
   const base = JSON.parse(fs.readFileSync(path.join(ROOT, 'tests', 'phase3',
@@ -108,13 +132,36 @@ function notVerified(why) {
   const srv = TARGET ? null : await serve();
   const base = TARGET
     || ('http://127.0.0.1:' + srv.address().port + '/index.html');
-  const b = await chromium.launch();
+  /* متصفّح غائب ليس فشلاً في المنتَج: يُعلَن NOT VERIFIED ويخرج بالرمز 2،
+     ولا يُحسَب نجاحاً بحال. المسار البديل هو نفسه الذي تستعمله بقيّة المراقب. */
+  let b = null;
+  try { b = await chromium.launch(); }
+  catch (e1) {
+    try { b = await chromium.launch(
+      { executablePath: '/opt/pw-browsers/chromium' }); }
+    catch (e2) {
+      if (srv) srv.close();
+      notVerified('chromium could not be launched: '
+        + String(e2.message).split('\n')[0].slice(0, 120));
+    }
+  }
   const pg = await b.newPage({ viewport: { width: RESOLUTIONS[0][0],
     height: RESOLUTIONS[0][1] } });
-  const errs = [], bad = [];
+  const errs = [], bad = [], served = new Set();
   pg.on('pageerror', e => errs.push(String(e.message).slice(0, 200)));
-  pg.on('response', r => { if (r.status() >= 400)
-    bad.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 110)); });
+  pg.on('response', r => {
+    if (r.status() >= 400)
+      bad.push('HTTP ' + r.status() + ' ' + r.url().slice(0, 110));
+    else served.add(new URL(r.url()).pathname);
+  });
+  /* F-11 — كل خرق للسياسة يُلتقط من الصفحة نفسها لا من سجلّ الكونسول:
+     الخرق حدثٌ في الوثيقة، والاعتماد على نصّ رسالة الكونسول هشّ. */
+  await pg.addInitScript(() => {
+    window.__CSPV = [];
+    document.addEventListener('securitypolicyviolation', e =>
+      window.__CSPV.push(e.violatedDirective + ' ' + (e.blockedURI || '')
+        + ' ' + (e.sourceFile || '')));
+  });
 
   const specContract = (function(){
     try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'acs_pbr.json'),
@@ -128,16 +175,78 @@ function notVerified(why) {
     notVerified('the target could not be loaded: '
       + String(e.message).slice(0, 120)); }
   boot('the page loaded', true);
+
+  /* ── F-09/F-11 — الصفحة قشرة، والتطبيق وحدات: يُقاس ذلك قبل أي شيء ─────
+     «أقلعت الصفحة» بعد التفكيك تعني: القشرة وصلت، والسكربتات الكلاسيكية
+     عملت، وورقة الأنماط طُبِّقت، ورسم الوحدات حُمِّل كلّه — بلا خرق سياسة
+     واحد. سقوط أيٍّ من هذه يعطي صفحةً «تحمّلت» ولا تعمل. */
+  const shape = await pg.evaluate(() => ({
+    inline_scripts: Array.from(document.querySelectorAll('script'))
+      .filter(s => !s.src).map(s => s.type || 'text/javascript'),
+    module_entries: Array.from(document.querySelectorAll('script[type=module]'))
+      .map(s => s.getAttribute('src')),
+    classic_boot: Array.from(document.querySelectorAll('script[src]'))
+      .map(s => s.getAttribute('src')).filter(x => /^\/app\/boot\//.test(x)),
+    stylesheets: document.styleSheets.length,
+    css_rules: (function () { let n = 0;
+      for (const s of document.styleSheets) {
+        try { n += s.cssRules.length; } catch (e) { } } return n; })(),
+    inline_style_attrs: document.querySelectorAll('[style]').length,
+    inline_handlers: Array.from(document.querySelectorAll('*'))
+      .filter(el => Array.from(el.attributes)
+        .some(a => /^on[a-z]+$/.test(a.name))).length,
+    build: window.ACS_BUILD_INFO || null,
+    api_base: typeof window.ACS_API === 'object' && !!window.ACS_API,
+    csp: (window.__CSPV || []).slice(0, 10)
+  }));
+  boot('the shipped page is a SHELL: its only inline script is the import map',
+    shape.inline_scripts.length === 1
+    && shape.inline_scripts[0] === 'importmap',
+    JSON.stringify(shape.inline_scripts));
+  boot('the shell declares exactly one ES-module entry point, /app/main.js',
+    JSON.stringify(shape.module_entries) === JSON.stringify(['/app/main.js']),
+    JSON.stringify(shape.module_entries));
+  boot('every classic boot script the shell names actually loaded',
+    shape.classic_boot.length === Object.keys(APPSRC.modules())
+      .filter(k => k.indexOf('boot/') === 0).length
+    && shape.classic_boot.every(u => served.has(u) || !!TARGET),
+    JSON.stringify(shape.classic_boot));
+  boot('the classic boot scripts ran before the module graph: '
+    + 'window.ACS_BUILD_INFO and the API base exist',
+    !!shape.build && shape.build.contract === 'acs-build-info/1.0.0'
+    && shape.api_base === true, JSON.stringify(shape.build));
+  boot('the EXTERNAL stylesheet loaded and its rules applied',
+    shape.stylesheets >= 1 && shape.css_rules > 200,
+    JSON.stringify([shape.stylesheets, shape.css_rules]));
+  boot('no element carries a style= attribute and none carries an inline '
+    + 'event handler — the strict CSP would silently kill both',
+    shape.inline_style_attrs === 0 && shape.inline_handlers === 0,
+    JSON.stringify([shape.inline_style_attrs, shape.inline_handlers]));
+  boot('the production CSP raised NO violation during boot',
+    shape.csp.length === 0, JSON.stringify(shape.csp));
+  if (!TARGET) {
+    const want = Object.keys(APPSRC.modules())
+      .filter(k => k.indexOf('boot/') !== 0);
+    const missing = want.filter(k => !served.has('/app/' + k));
+    boot('EVERY shipped module under public/app/ was fetched by the browser — '
+      + 'no module ships without being reached, none 404s',
+      missing.length === 0,
+      missing.length + ' not fetched: ' + missing.slice(0, 5).join(', '));
+  }
+
   let ready = false;
   try {
     await pg.waitForFunction('window.ACS&&window.ACS.ready===true', null,
       { timeout: 30000 });
     ready = true;
   } catch (e) { /* reported below */ }
-  boot('the module script executed and THREE was imported '
+  boot('the module graph executed to completion and THREE was imported '
     + '(window.ACS.ready)', ready);
   const api = await pg.evaluate(() => ({
     diag: typeof (window.ACS || {}).renderDiagnostics === 'function',
+    diagDetail: typeof (window.ACS || {}).renderDiagnosticsDetail
+      === 'function',
+    capture: typeof (window.ACS || {}).captureRenderFailure === 'function',
     align: typeof (window.ACS || {}).alignmentDiagnostics === 'function',
     snap: typeof (window.ACS || {}).canonicalTransformSnapshot === 'function',
     setModel: typeof (window.ACS || {}).setModel === 'function',
@@ -145,6 +254,11 @@ function notVerified(why) {
     ad: typeof (window.ACS || {}).adApply === 'function'
   }));
   boot('the render diagnostics bridge is available', api.diag);
+  boot('the detailed render diagnostics bridge is available (renamed from '
+    + 'renderDiagnostics when the F-08 fixed-key contract took that name)',
+    api.diagDetail);
+  boot('the render-failure capture entry point is available (F-08)',
+    api.capture);
   boot('the alignment diagnostics bridge is available', api.align);
   boot('the canonical transform snapshot bridge is available — the harness '
     + 'never touches module-scoped engine state', api.snap);
@@ -153,14 +267,14 @@ function notVerified(why) {
   boot('no page errors during boot', errs.length === 0, errs.join(' | '));
   boot('no failed asset requests', bad.length === 0, bad.slice(0, 4).join(' | '));
 
-  if (!ready || !api.diag || !api.setModel) {
+  if (!ready || !api.diag || !api.diagDetail || !api.setModel) {
     await b.close(); if (srv) srv.close();
     summarise(); return;
   }
 
   /* §6 — نموذج قانوني محدّد يُحمَّل فعلاً؛ لا يصحّ الفحص على ورشة فارغة */
   console.log('\n== EMPTY WORKSPACE IS NOT A PASS (§6) ==');
-  const emptyDiag = await pg.evaluate('window.ACS.renderDiagnostics()');
+  const emptyDiag = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
   visual('an empty workspace reports NO canonical geometry instead of '
     + 'sky-sized bounds (the old false pass)',
     emptyDiag.model_bounds === null && emptyDiag.canonical_meshes === 0,
@@ -174,7 +288,7 @@ function notVerified(why) {
     await pg.waitForTimeout(1200);
     await pg.evaluate(() => new Promise(r =>
       requestAnimationFrame(() => requestAnimationFrame(r))));
-    const d = await pg.evaluate('window.ACS.renderDiagnostics()');
+    const d = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     visual(fname + ': canonical bounds are finite and building-scale',
       !!d.model_bounds && isFinite(d.model_bounds.radius)
       && d.model_bounds.radius > 0 && d.model_bounds.radius < 5000,
@@ -247,11 +361,24 @@ function notVerified(why) {
       JSON.stringify({ calls: rp.draw_calls, geo: rp.geometries,
         pressure: rp.pressure }));
 
-    /* §3 — مصفوفة الأوضاع: أيّ طبقة تُسوّد الإطار إن سوّدته */
+    /* §3 — مصفوفة الأوضاع: أيّ طبقة تُسوّد الإطار إن سوّدته.
+       F-08 — وُسِّعت لتشمل الحالات التسع المطلوبة صراحةً: BASE، PBR OFF،
+       PBR ON، POST PROCESS، ARCH DETAIL، SITE CONTEXT، LANDSCAPE،
+       ENGINEERING، والمسار الاحتياطي لجهاز يدعم VR. */
     const MODES = [
+      ['BASE (no presentation layer applied)', () => {
+        if (typeof window.ACS.pbrRestore === 'function') window.ACS.pbrRestore();
+        if (typeof window.ACS.adMode === 'function')
+          window.ACS.adMode('ENGINEERING');
+      }],
       ['PBR OFF / DETAIL OFF', () => { }],
       ['PBR ON (HIGH, REALISTIC, SKY)', () => {
         const c = window.ACS.pbr.config('HIGH', 'CLEAR_NOON', 'REALISTIC',
+          'SKY', null, null, window.ACS.pbrCaps(), window.ACS.pbrBounds());
+        if (c.valid) window.ACS.pbrApply(c.config);
+      }],
+      ['POST PROCESS (ULTRA, composer + SSAO)', () => {
+        const c = window.ACS.pbr.config('ULTRA', 'STUDIO_DAY', 'REALISTIC',
           'SKY', null, null, window.ACS.pbrCaps(), window.ACS.pbrBounds());
         if (c.valid) window.ACS.pbrApply(c.config);
       }],
@@ -279,6 +406,18 @@ function notVerified(why) {
           'CLEAR_SKY', null, false, [], window.ACS.adModelSummary());
         if (c.valid) window.ACS.adApply(c.config);
       }],
+      ['ENGINEERING (compare mode restored)', () => {
+        if (typeof window.ACS.adMode === 'function')
+          window.ACS.adMode('ENGINEERING');
+      }],
+      ['VR-CAPABLE FALLBACK (xr enabled, not presenting)', () => {
+        /* لا جلسة XR حقيقية في مِرقاب بلا نظّارة: نتحقّق من أن مسار العرض
+           العادي يبقى حيّاً بينما محرّك XR مفعَّل — أي أن الاحتياطي لا يُسوّد
+           الإطار. الجلسة الحقيقية تبقى NOT VERIFIED هنا. */
+        window.__ACS_XR_PROBE__ = { xr_enabled: null, presenting: null };
+        const d = window.ACS.renderDiagnostics();
+        window.__ACS_XR_PROBE__ = d.xr_state;
+      }],
       ['CAMERA PRESET EXTERIOR_HERO', () => {
         window.ACS.pbrCameraPreset('EXTERIOR_HERO');
       }]
@@ -290,7 +429,8 @@ function notVerified(why) {
       await pg.evaluate(fn);
       await pg.evaluate(() => new Promise(r =>
         requestAnimationFrame(() => requestAnimationFrame(r))));
-      const dd = await pg.evaluate('window.ACS.renderDiagnostics()');
+      const dd = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
+      const df = await pg.evaluate('window.ACS.renderDiagnostics()');
       const pp = await PX.analysePageViewport(pg, 'canvas');
       const ok = pp.verdict === 'VISIBLE_CONTENT' && dd.draw_calls > 0
         && dd.camera_in_frustum === true;
@@ -301,7 +441,44 @@ function notVerified(why) {
         + (ok ? 'PASS' : 'FAIL ' + JSON.stringify(pp.reasons)));
       visual(fname + ' · ' + label + ': model visible and viewport not black',
         ok, JSON.stringify(pp.reasons));
+      /* F-08 — الشروط الأربعة على كل حالة عرض، من عقد التشخيص مضبوط
+         المفاتيح: بكسلات غير صفرية، كاميرا بلا NaN/لانهاية، حدود مشهد
+         صالحة، ولا إحداثية غير صالحة. */
+      visual(fname + ' · ' + label + ': non-zero visible pixels were probed '
+        + 'in the real framebuffer',
+        !!df.pixel_probe && df.pixel_probe.non_zero_pixels > 0,
+        JSON.stringify(df.pixel_probe));
+      visual(fname + ' · ' + label + ': no NaN or infinite camera value',
+        Array.isArray(df.camera_position)
+        && df.camera_position.every(Number.isFinite)
+        && Array.isArray(df.camera_target)
+        && df.camera_target.every(Number.isFinite)
+        && Number.isFinite(df.near) && Number.isFinite(df.far)
+        && df.near > 0 && df.far > df.near,
+        JSON.stringify({ p: df.camera_position, t: df.camera_target,
+          near: df.near, far: df.far }));
+      visual(fname + ' · ' + label + ': scene bounds are finite and '
+        + 'building-scale, and no coordinate is invalid',
+        !!df.scene_bounds && df.scene_bounds.min.every(Number.isFinite)
+        && df.scene_bounds.max.every(Number.isFinite)
+        && Number.isFinite(df.scene_bounds.radius)
+        && df.scene_bounds.radius > 0
+        && df.invalid_coordinate_count === 0,
+        JSON.stringify({ bounds: df.scene_bounds,
+          invalid: df.invalid_coordinate_count }));
+      visual(fname + ' · ' + label + ': the diagnostics contract returns '
+        + 'exactly its declared keys',
+        Object.keys(df).length === 24,
+        JSON.stringify(Object.keys(df)));
     }
+    /* الحالة التاسعة: المسار الاحتياطي على جهاز يدعم VR — لا جلسة XR هنا */
+    const xrProbe = await pg.evaluate('window.__ACS_XR_PROBE__ || null');
+    visual(fname + ' · VR-CAPABLE FALLBACK: the XR state is really read from '
+      + 'the renderer and the non-XR path stayed alive (a real headset '
+      + 'session is NOT VERIFIED here)',
+      !!xrProbe && typeof xrProbe.presenting === 'boolean'
+      && xrProbe.presenting === false,
+      JSON.stringify(xrProbe));
     /* §6/§13/§15 — محاذاة فعلية بعد كل وضع، وثبات المصفوفات عبر التبديل */
     const align = await pg.evaluate('window.ACS.alignmentDiagnostics()');
     visual(fname + ': every hosted object resolves a transform (none '
@@ -349,7 +526,7 @@ function notVerified(why) {
       drift.available === true && drift.equal === true,
       JSON.stringify(drift));
     /* الهندسة القانونية لم تتغيّر بأي وضع عرض */
-    const after = await pg.evaluate('window.ACS.renderDiagnostics()');
+    const after = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     visual(fname + ': canonical bounds identical after the whole matrix',
       JSON.stringify(after.model_bounds) === JSON.stringify(d.model_bounds),
       JSON.stringify([d.model_bounds, after.model_bounds]));
@@ -363,7 +540,7 @@ function notVerified(why) {
     await pg.waitForTimeout(400);
     await pg.evaluate(() => new Promise(r =>
       requestAnimationFrame(() => requestAnimationFrame(r))));
-    const d = await pg.evaluate('window.ACS.renderDiagnostics()');
+    const d = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     const px = await PX.analysePageViewport(pg, 'canvas');
     visual(w + '×' + h + ': canvas sized, aspect updated, viewport not black',
       d.canvas_width > 0 && d.canvas_height > 0 && d.css_width > 0
@@ -376,6 +553,9 @@ function notVerified(why) {
 
   boot('no page errors after the full run', errs.length === 0,
     errs.slice(0, 3).join(' | '));
+  const cspEnd = await pg.evaluate('(window.__CSPV || []).slice(0, 10)');
+  boot('the production CSP raised NO violation across the whole run either',
+    Array.isArray(cspEnd) && cspEnd.length === 0, JSON.stringify(cspEnd));
   await b.close(); if (srv) srv.close();
   summarise();
 })().catch(e => {

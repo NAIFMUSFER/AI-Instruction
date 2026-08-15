@@ -18,7 +18,16 @@ api=_open('acs_understand_api.py',encoding='utf-8').read()
 nt=_open('netlify.toml',encoding='utf-8').read()
 df=_open('Dockerfile',encoding='utf-8').read()
 ry=_open('render.yaml',encoding='utf-8').read()
-idx=_open('public/index.html',encoding='utf-8').read()
+# F-09 — الواجهة لم تعد ملفّاً واحداً: القشرة public/index.html + وحدات ES تحت
+# public/app/. المصدر الوحيد الذي يعرف هذا التخطيط هو tools/app_source.py.
+#   shell   العلامة وخريطة الاستيراد فقط  ·  appsrc  شيفرة التطبيق كلّها
+#   idx     الاثنان معاً — البديل المطابق دلالياً لِما كان يُقرأ «الصفحة»
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as AS                                            # noqa: E402
+shell=AS.shell()
+appsrc=AS.app_text()
+appcss=AS.css_text()
+idx=AS.page_text()
 
 chk('S1 CORS مقيّد بأصول معلومة (لا *)',
     'allow_origins' in api and '"*"' not in re.search(r'allow_origins\s*=\s*\[[^\]]*\]|allow_origins=[^,\)]*', api).group(0),
@@ -35,6 +44,64 @@ chk('S7 رؤوس الأمان الأساسية موجودة',
 chk('S8 connect-src يقتصر على الخادم المعلوم',
     "connect-src 'self' https://acs-engine.onrender.com" in nt)
 chk('S9 الرسائل لا تطبع أسراراً', not re.search(r'print\([^)]*(api_key|API_KEY|token)', api))
+
+# ══════════════════ F-11 · السياسة صارمة، والصفحة تستحقّها ═════════════════
+# قبل F-11 كانت السياسة تحمل 'unsafe-inline' لأن الصفحة كانت جافاسكربت مضمّناً
+# وأنماطاً مضمّنة، وكانت تحمل 'unsafe-eval' لأن es-module-shims يقيّم نصّاً.
+# مع 'unsafe-inline' في script-src تصبح السياسة زينةً: أي حقن نصّي ينفَّذ. الآن
+# لا استثناء واحداً، والفحوص أدناه ترفض عودته بأي صيغة وفي أي توجيه.
+_csp_m = re.search(r'Content-Security-Policy\s*=\s*"([^"]+)"', nt)
+CSP = _csp_m.group(1) if _csp_m else ''
+CSPD = {}
+for _d in [x.strip() for x in CSP.split(';') if x.strip()]:
+    _pp = _d.split()
+    CSPD[_pp[0]] = _pp[1:]
+chk('S6a سياسة أمن المحتوى مُعلَنة وتُحلَّل إلى توجيهات', len(CSPD) >= 8,
+    str(sorted(CSPD)))
+_unsafe_dirs = sorted(d for d, v in CSPD.items()
+                      if "'unsafe-inline'" in v or "'unsafe-eval'" in v)
+chk("S6b لا توجيه واحد يحمل 'unsafe-inline' أو 'unsafe-eval'",
+    _unsafe_dirs == [] and 'unsafe-inline' not in CSP
+    and 'unsafe-eval' not in CSP, ', '.join(_unsafe_dirs))
+_script_hashes = [x for x in CSPD.get('script-src', []) if x.startswith("'sha256-")]
+chk("S6c script-src = 'self' + بصمة sha256 واحدة بالضبط، لا أكثر",
+    [x for x in CSPD.get('script-src', []) if not x.startswith("'sha256-")]
+    == ["'self'"] and len(_script_hashes) == 1, str(CSPD.get('script-src')))
+chk('S6d البصمة هي بصمة خريطة الاستيراد المضمّنة في الصفحة نفسها',
+    _script_hashes == ["'%s'" % AS.importmap_hash()],
+    'policy=%s computed=%s' % (_script_hashes, AS.importmap_hash()))
+chk("S6e style-src = 'self' وحدها — ورقة الأنماط خارجية فلا نمط مضمّن يُسمَح",
+    CSPD.get('style-src') == ["'self'"], str(CSPD.get('style-src')))
+chk("S6f object-src/frame-src/frame-ancestors = 'none' و base-uri/form-action = 'self'",
+    CSPD.get('object-src') == ["'none'"]
+    and CSPD.get('frame-src') == ["'none'"]
+    and CSPD.get('frame-ancestors') == ["'none'"]
+    and CSPD.get('base-uri') == ["'self'"]
+    and CSPD.get('form-action') == ["'self'"], str(CSPD))
+chk('S6g لا مصدر بديل عامّ (*) في أي توجيه',
+    not any(x == '*' or x.startswith('*.') or x.endswith(':*')
+            for v in CSPD.values() for x in v), str(CSPD))
+# الصفحة تستحقّ السياسة: لا شيفرة تنفيذية مضمّنة ولا نمط مضمّن ولا معالج مضمّن.
+_inline_scripts = re.findall(r'<script(?![^>]*\bsrc=)([^>]*)>', shell)
+chk('S6h الصفحة لا تحمل جافاسكربت تنفيذياً مضمّناً: السكربت المضمّن الوحيد هو '
+    'خريطة الاستيراد',
+    len(_inline_scripts) == 1
+    and all('type="importmap"' in a for a in _inline_scripts),
+    repr(_inline_scripts))
+chk('S6i الصفحة لا تحمل كتلة <style> ولا خاصيّة style=',
+    not re.search(r'<style[\s>]', shell)
+    and re.search(r'<[^>]*\sstyle\s*=\s*"', shell) is None)
+_handlers = sorted(set(re.findall(r'\s(on[a-z]+)\s*=\s*["\']', shell)))
+chk('S6j لا معالج حدث مضمّن في العلامة (onclick/onload/…): السياسة تمنع '
+    'تنفيذه، فوجوده شيفرة ميّتة لا زينة',
+    _handlers == [], ', '.join(_handlers))
+chk('S6k ولا معالج مضمّن في العلامة التي تولّدها الشيفرة أيضاً',
+    not re.search(r'<[a-z]+[^>]{0,200}?\son(?:click|load|error|change|input|'
+                  r'submit|mouseover|focus|blur|keydown|keyup)\s*=\s*[\'"\\]',
+                  appsrc), 'a generated markup string carries an inline handler')
+chk('S6l es-module-shims لم يعد يُحمَّل: لا وسم ولا مسار /vendor/ له',
+    not re.search(r'/vendor/es-module-shims', shell + appsrc + appcss)
+    and not re.search(r'<script[^>]+es-module-shims', shell))
 # عزل الصناعي متطابق بايت-بايت
 # المجال الصناعي: نفس الكلمات الأربع الإنجليزية في الملفات الثلاثة
 files=['acs_validate.py','acs_layout.py','acs_compiler.py']

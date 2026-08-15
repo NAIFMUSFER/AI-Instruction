@@ -22,9 +22,15 @@ globalThis.THREE={
     this.position={x:0,y:0,z:0,set:(a,b,c)=>{this.position.x=a;this.position.y=b;this.position.z=c;}};
     boxes.push(this); }
 };
-globalThis.getMat=()=>({userData:{}});
-globalThis.scaleBoxUV=()=>{};
-globalThis.OBJ_UNKNOWN=[];
+/* الخامات مستبعدة عمداً: هذا فحص هندسة لا مظهر، وخامة حقيقية تحتاج WebGL.
+   قبل F-09 كان المستخرج يترك getMat خارج الحزمة فيكفي تعريفه على globalThis؛
+   صارت الحزمة تحمل الأصل، فالإبدال يجري على الارتباط نفسه ويُتحقَّق منه. */
+getMat=()=>({userData:{}});
+scaleBoxUV=()=>{};
+OBJ_UNKNOWN=[];
+if(getMat('x').map!==undefined)
+  throw new Error('the material stub did not take effect — this suite would then '
+    +'be making a pixel claim it cannot verify');
 
 const run=(model)=>{ boxes.length=0; const g=compile(C(model));
   return {group:g, boxes:boxes.slice()}; };
@@ -41,9 +47,49 @@ console.log('\n== §16 — SLAB IS CUT AT VERTICAL CORES ==');
       s1.length>1, s1.length);
   const site=FX.villa.site;
   const area=s1.reduce((s,b)=>s+b.g.p[0]*b.g.p[2],0);
-  const hole=voids.reduce((s,v)=>s+v.rect[2]*v.rect[3],0);
+  /* ── F-07 / KI-3 — PHASE1_SITE_WIDE_PLATE ← PHASE10_FOOTPRINT_PLATE ──────
+     كان لوح كل دور يُبنى على مستطيل الموقع كلّه، فكان المتوقَّع هنا
+     site.w*site.d − hole = 30×24 − 1.2×4.2 = 720 − 5.04 = 714.96. صار امتداد
+     اللوح اتحادَ بصمات غرف الدور نفسه (عقد pqPlateRect وحده)، والموقع مستوى
+     عرضٍ منفصل. المتوقَّع الجديد يُشتقّ من التجهيزة لا يُكتب رقماً:
+
+       غرف الدور 1: [6,0,2,10] [0,0,6,5] [8,0,6,5] [8,5,6,5] [0,5,3,3]
+       اتحاد بصماتها = [0,0,14,10]                    → 14 × 10 = 140
+       فراغ الدرج    = [6.4,5.9,1.2,4.2] يمتدّ إلى z=10.1 أي 0.1 م خارج اللوح
+                       (بصمة النواة احتياط عرض حول موضع مستنتَج)، فما يُقصّ
+                       من اللوح هو تقاطعه معه = [6.4,5.9,1.2,4.1] → 4.92
+       المتوقَّع = 140 − 4.92 = 135.08
+
+     التوكيدة لم تُضعَّف بل شُدّت: يُتحقَّق أوّلاً أن امتداد اللوح المرسوم هو
+     اتحاد بصمات الدور بعينه (لا المساحة وحدها)، ثم أن المجموع مطابق تماماً،
+     ثم أن الامتداد لم يعد امتداد الموقع — فلا يعود PHASE1_SITE_WIDE_PLATE
+     خِلسةً ويمرّ. */
+  const lvl1=(FX.villa.levels||[]).filter(l=>l.index===1)[0];
+  const rects=((FX.villa.floors||{})[lvl1.template]||{}).rooms.map(r=>r.rect);
+  const px0=Math.min.apply(null,rects.map(r=>r[0]));
+  const pz0=Math.min.apply(null,rects.map(r=>r[1]));
+  const px1=Math.max.apply(null,rects.map(r=>r[0]+r[2]));
+  const pz1=Math.max.apply(null,rects.map(r=>r[1]+r[3]));
+  const span=(a0,a1,b0,b1)=>Math.max(0,Math.min(a1,b1)-Math.max(a0,b0));
+  const drawn={x0:Math.min.apply(null,s1.map(b=>b.position.x-b.g.p[0]/2)),
+               z0:Math.min.apply(null,s1.map(b=>b.position.z-b.g.p[2]/2)),
+               x1:Math.max.apply(null,s1.map(b=>b.position.x+b.g.p[0]/2)),
+               z1:Math.max.apply(null,s1.map(b=>b.position.z+b.g.p[2]/2))};
+  chk('F-07: the plate spans the level room-footprint union, not the site',
+      Math.abs(drawn.x0-px0)<1e-6&&Math.abs(drawn.z0-pz0)<1e-6
+      &&Math.abs(drawn.x1-px1)<1e-6&&Math.abs(drawn.z1-pz1)<1e-6,
+      JSON.stringify(drawn)+' vs ['+[px0,pz0,px1,pz1].join(',')+']');
+  /* الفراغ يُقصّ على حدود اللوح: ما خرج عنه لم يكن مرسوماً أصلاً */
+  const hole=voids.reduce((s,v)=>s+span(v.rect[0],v.rect[0]+v.rect[2],px0,px1)
+                                  *span(v.rect[1],v.rect[1]+v.rect[3],pz0,pz1),0);
+  const expected=(px1-px0)*(pz1-pz0)-hole;
   chk('the rendered strips total exactly the plate area minus the void area',
-      Math.abs(area-(site.w*site.d-hole))<1e-6, area+' vs '+(site.w*site.d-hole));
+      Math.abs(area-expected)<1e-6, area+' vs '+expected);
+  chk('F-07: and that total is no longer the old site-wide plate figure',
+      Math.abs(area-(site.w*site.d
+        -voids.reduce((s,v)=>s+v.rect[2]*v.rect[3],0)))>1e-6,
+      area+' vs old '+(site.w*site.d
+        -voids.reduce((s,v)=>s+v.rect[2]*v.rect[3],0)));
   const inside=(b,v)=>{ const x0=b.position.x-b.g.p[0]/2, x1=b.position.x+b.g.p[0]/2;
     const z0=b.position.z-b.g.p[2]/2, z1=b.position.z+b.g.p[2]/2;
     return x0+1e-9<v.rect[0]+v.rect[2] && x1-1e-9>v.rect[0] &&

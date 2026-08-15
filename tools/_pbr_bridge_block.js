@@ -353,7 +353,10 @@ function _pqViewportLuminance(){
   }catch(e){ return {sampled:0,status:'UNAVAILABLE',
     error:String(e&&e.message||e).slice(0,80)}; } }
 
-window.ACS.renderDiagnostics=function(){
+/* التشخيص التفصيلي للعرض (العقد القديم، بكل مفاتيحه) — صار باسمه الصريح
+   renderDiagnosticsDetail، لأن window.ACS.renderDiagnostics صار عقداً
+   مضبوط المفاتيح يعيش في سكربت الوحدة المكتوب يدوياً (F-08). */
+window.ACS.renderDiagnosticsDetail=function(){
   try{
     const info=renderer.info||{render:{},memory:{}};
     const el=renderer.domElement;
@@ -540,9 +543,24 @@ window.ACS.alignmentDiagnostics=function(){
         actual_plate_top_y:actual,
         error_m:(err===null)?null:Math.round(err*1000)/1000,
         aligned:(err!==null&&err<=Number(PQ_TC.roof_tolerance_m))}); });
-    /* اصطلاح لوح الموقع المعلَن منذ المرحلة 1: اللوح يمتدّ على الموقع كلّه.
-       فوق مبنى أصغر من الموقع يبرز اللوح خارج الغلاف فيبدو صفيحة طائرة.
-       يُقاس البروز ويُبلَّغ هنا بدل إخفائه بإزاحة عرضية (§7). */
+    /* PHASE10_FOOTPRINT_PLATE (KI-3): امتداد لوح الدور صار اتحاد بصمات غرفه
+       عبر pqPlateRect وحده، والاصطلاح السابق PHASE1_SITE_WIDE_PLATE مسجَّل
+       هنا بسببه فلا يكون التغيير صامتاً. الفرق الآن يُقاس على اللوح المرسوم
+       فعلاً في المشهد لا على الاصطلاح: فإن عاد لوحٌ يتجاوز بصمة دوره بأكثر
+       من متر رُفع ALIGN_ROOF_DETACHED لأيّ دور — لا للأدوار العليا وحدها. */
+    const renderedPlate={};
+    model.traverse(o=>{
+      if(!o.isMesh) return;
+      const t=_pqTagParts(o);
+      if(!t||t.layer!=='FLOOR'||!t.rest
+         ||String(t.rest).indexOf('slab')!==0) return;
+      const wb=_pqWorldBox(o);
+      if(!wb) return;
+      const cur=renderedPlate[t.floor];
+      renderedPlate[t.floor]=cur
+        ?[Math.min(cur[0],wb.min[0]),Math.min(cur[1],wb.min[2]),
+          Math.max(cur[2],wb.max[0]),Math.max(cur[3],wb.max[2])]
+        :[wb.min[0],wb.min[2],wb.max[0],wb.max[2]]; });
     const plateOverhang=[];
     Object.keys(levelsSeen).sort().forEach(k=>{
       const L=levelsSeen[k];
@@ -552,20 +570,33 @@ window.ACS.alignmentDiagnostics=function(){
       const pr=pqPlateRect(L.rects,[0,0,sw,sd]).rect;
       if(!pr||!(sw>0&&sd>0)) return;
       const ratio=(sw*sd)/Math.max(pr[2]*pr[3],1e-9);
-      const over=Math.max(sw-pr[2],sd-pr[3]);
+      const avoided=Math.max(sw-pr[2],sd-pr[3]);
+      const rp=renderedPlate[k]||null;
+      const rendered=rp?[rp[0],rp[1],rp[2]-rp[0],rp[3]-rp[1]]:null;
+      const over=rendered
+        ?Math.max(pr[0]-rendered[0],pr[1]-rendered[1],
+                  (rendered[0]+rendered[2])-(pr[0]+pr[2]),
+                  (rendered[1]+rendered[3])-(pr[1]+pr[3]),0)
+        :null;
       plateOverhang.push({level:k,index:L.index,
         site_plate:[0,0,sw,sd],room_union_plate:pr,
-        overhang_m:Math.round(over*1000)/1000,
+        rendered_plate:rendered?rendered.map(v=>Math.round(v*1000)/1000):null,
+        overhang_m:(over===null)?null:Math.round(over*1000)/1000,
+        avoided_site_overhang_m:Math.round(avoided*1000)/1000,
         area_ratio:Math.round(ratio*100)/100,
-        convention:'PHASE1_SITE_WIDE_PLATE',
-        pinned_by:'PHASE4_GOLDEN_BASELINE',
+        convention:PQ_PLATE_POLICY.policy,
+        previous_convention:PQ_PLATE_POLICY.previous_policy,
+        previous_pinned_by:PQ_PLATE_POLICY.previous_pinned_by,
+        change_reason:PQ_PLATE_POLICY.reason,
+        extent_source:PQ_PLATE_POLICY.extent_source,
+        pinned_by:'PHASE10_PRODUCTION_TRUST',
         change_requires_approval:true});
-      if(L.index>0&&over>1.0)
+      if(over!==null&&over>1.0)
         issues.push({code:'ALIGN_ROOF_DETACHED',severity:'WARNING',
           blocking:false,element_id:k,
-          message:'the level plate overhangs the building by '
-            +over.toFixed(2)+' m ('+ratio.toFixed(1)+'x its footprint) '
-            +'under the declared site-wide plate convention'}); });
+          message:'the rendered level plate overhangs its own room footprint '
+            +'by '+over.toFixed(2)+' m, which the declared '
+            +PQ_PLATE_POLICY.policy+' convention forbids'}); });
     const idx=((lastBuilding||{}).levels||[]).map(l=>Number(l.index));
     const top=idx.length?Math.max.apply(null,idx):null;
     let roof=null;
@@ -701,8 +732,8 @@ function _pqDisableComposer(reason){
 /* ── §13 جسر قراءة فقط: هل النموذج مرئيّ فعلاً؟ لا يغيّر حالة ولا يرسم ────── */
 window.ACS.verifyVisibleModel=function(){
   try{
-    const d=(typeof window.ACS.renderDiagnostics==='function')
-      ?window.ACS.renderDiagnostics():{};
+    const d=(typeof window.ACS.renderDiagnosticsDetail==='function')
+      ?window.ACS.renderDiagnosticsDetail():{};
     const rb=_pqRobustSceneBounds();
     const px=(typeof window.ACS.viewportPixels==='function')
       ?window.ACS.viewportPixels():{status:'UNAVAILABLE'};

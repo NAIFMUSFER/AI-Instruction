@@ -1,4 +1,7 @@
-require('/tmp/pure.js');
+/* أثر بائد من مستخرج قديم كان يكتب /tmp/pure.js: المشغّل الموحّد
+   tests/lib/run.js يقيّم حزمة المتصفّح في النطاق نفسه قبل جسم الاختبار، وصفحة
+   اختبار المتصفّح كانت تحذف هذا السطر أصلاً. حذفه يجعل الجناح يعمل في
+   البيئتين معاً بدل أن يكون متاحاً في المتصفّح وحده. */
 let pass=0, fail=0;
 function check(name, cond, detail){ if(cond){pass++; console.log('  ✓',name);} else {fail++; console.log('  ✗',name,'—',detail||'');} }
 

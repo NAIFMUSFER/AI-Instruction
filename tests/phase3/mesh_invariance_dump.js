@@ -9,9 +9,16 @@ globalThis.THREE={
     this.position={x:0,y:0,z:0,set:(a,b,c)=>{this.position.x=a;this.position.y=b;this.position.z=c;}};
     boxes.push(this); }
 };
-globalThis.getMat=()=>({userData:{}});
-globalThis.scaleBoxUV=()=>{};
-globalThis.OBJ_UNKNOWN=[];
+/* الخامات مستبعدة عمداً: هذه بصمة هندسة لا بصمة مظهر، وبناء خامة حقيقية يحتاج
+   سياق WebGL. قبل F-09 كان المستخرج يقتطع getMat خارج الحزمة فيكفي تعريفه على
+   globalThis؛ صارت الحزمة تحمل الأصل، فالإبدال يجري على الارتباط نفسه — وهو
+   أصدق: الاستبدال معلن ومُتحقَّق منه بدل أن يعتمد على غياب صامت. */
+getMat=()=>({userData:{}});
+scaleBoxUV=()=>{};
+OBJ_UNKNOWN=[];
+if(typeof getMat('x').userData!=='object'||getMat('x').map!==undefined)
+  throw new Error('the material stub did not take effect — a real material would '
+    +'need a WebGL context and would make this a pixel claim, not a geometry one');
 
 const path=require('path'), HERE=__dirname;
 const FIXD=path.join(HERE,'fixtures');

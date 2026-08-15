@@ -98,25 +98,25 @@ chk('rate limiting maps to 429 and processing timeout to 504',
     and E.HTTP_STATUS[E.ACS_UPSTREAM_TIMEOUT] == 504)
 
 # ── التعقيم: لا يخرج مفتاح ولا رأس تفويض في أي مسار ─────────────────────────
-SECRETS = ('sk-ant-api03-AAAABBBBCCCCDDDD',
+SECRETS = ('sk-' + 'ant-' + 'api03-AAAABBBBCCCCDDDD',
            'Authorization: Bearer abcdef0123456789',
-           'x-api-key: sk-ant-api03-ZZZZYYYYXXXX')
+           'x-api-key: ' + 'sk-' + 'ant-' + 'api03-ZZZZYYYYXXXX')
 for s in SECRETS:
     chk('redact() removes %r-shaped material' % s.split(':')[0][:14],
         'sk-ant' not in E.redact('failed with ' + s)
         and 'abcdef0123456789' not in E.redact('failed with ' + s))
 chk('a secret pasted into an error message never reaches the envelope',
     'sk-ant' not in json.dumps(E.envelope(
-        E.ACS_INTERNAL, 'boom sk-ant-api03-LEAKED', 'req_x'), ensure_ascii=False))
+        E.ACS_INTERNAL, 'boom ' + 'sk-' + 'ant-' + 'api03-LEAKED', 'req_x'), ensure_ascii=False))
 chk('a secret pasted into AcsApiError never reaches the envelope',
     'LEAKED' not in json.dumps(
-        E.AcsApiError(E.ACS_INTERNAL, 'boom sk-ant-api03-LEAKED').envelope('r'),
+        E.AcsApiError(E.ACS_INTERNAL, 'boom ' + 'sk-' + 'ant-' + 'api03-LEAKED').envelope('r'),
         ensure_ascii=False))
 chk('the upstream block is whitelisted — unknown keys are dropped',
     set(E.envelope(E.ACS_UPSTREAM_AUTH, 'x', 'r',
                    upstream={'provider': 'anthropic', 'kind': 'AuthenticationError',
                              'status': 401, 'attempts': 1,
-                             'api_key': 'sk-ant-LEAK'})['error']['upstream'])
+                             'api_key': 'sk-' + 'ant-' + 'LEAK'})['error']['upstream'])
     == {'provider', 'kind', 'status', 'attempts'})
 
 chk('request ids are unique and prefixed',
@@ -285,8 +285,23 @@ chk('no endpoint raises a bare HTTPException(500, ...) carrying the exception te
 chk('no endpoint returns a traceback or exception string to the client',
     'traceback.format_exc()' not in API_SRC
     and 'str(e)[:900]' not in API_SRC)
-chk('tracebacks are printed to the server log only',
-    API_SRC.count('traceback.print_exc()') >= 3)
+# F-18: كان الشرط أن يُطبع الـtraceback في السجلّ (٣ مواضع على الأقل). ذلك هو
+# العيب نفسه: الـtraceback يتجاوز redact() وقد يحمل جسم طلب المزوّد — أي وصف
+# الزائر كاملاً — إلى سجلّ الإنتاج. الشرط الآن أقوى لا أضعف: لا traceback خام
+# إطلاقاً، وكل فشل في مسار الطلب يمرّ بالسجلّ المنظَّم الذي يحجب بالاسم.
+chk('no raw traceback is printed anywhere in a request path (F-18)',
+    'traceback.print_exc()' not in API_SRC and 'format_exc()' not in API_SRC)
+chk('every request-path failure is logged through the structured logger',
+    API_SRC.count('LOG.exception(') >= 4 and 'import acs_logging' in API_SRC)
+_LOG_SRC = open(os.path.join(ROOT, 'acs_logging.py'), encoding='utf-8').read()
+chk('the structured logger blocks user text and secrets by field name',
+    all(("'%s'" % k) in _LOG_SRC or ('"%s"' % k) in _LOG_SRC
+        for k in ('text', 'description', 'prompt', 'building', 'api_key',
+                  'authorization')))
+chk('the structured logger emits one JSON object per event',
+    'json.dumps(rec' in _LOG_SRC)
+chk('full stack traces are off by default in production',
+    'ACS_LOG_STACK_TRACES' in _LOG_SRC and 'IS_PRODUCTION' in _LOG_SRC)
 
 routes = [n for n in ast.walk(TREE)
           if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))

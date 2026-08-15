@@ -38,7 +38,7 @@ fs.writeFileSync(DRIVER,
 (async()=>{
   execFileSync(process.execPath,[BUILD,DRIVER],{stdio:'pipe'});
   const page=path.join(os.tmpdir(),'acs_ws_walk_browser.html');
-  const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
+  const browser=await chromium.launch();
   const pg=await browser.newPage({viewport:{width:1440,height:900}});
   pg.setDefaultTimeout(300000);
   pg.setDefaultNavigationTimeout(300000);
@@ -97,24 +97,128 @@ fs.writeFileSync(DRIVER,
     record(3,'GENERATE MODEL',v,e);
   }
 
-  /* 4 — استكشاف ثلاثي الأبعاد */
-  {
-    const r=await ev("const host=document.getElementById('wsViewHost');"
-      +"const rect=document.getElementById('wsViewport').getBoundingClientRect();"
-      +"const gl=(function(){ try{ const c=document.createElement('canvas');"
-      +"  return !!(c.getContext('webgl2')||c.getContext('webgl')); }"
-      +"  catch(e){ return false; } })();"
-      +"return {host:!!host,w:rect.width,h:rect.height,gl:gl,"
-      +"three:(typeof THREE!=='undefined')};");
-    const [v,e]=verdict(r,x=>{
-      if(!x.host||!(x.w>100&&x.h>100)) return ['FAIL',JSON.stringify(x)];
-      if(!x.three) return ['NOT_VERIFIED',
-        'the viewport host is present and sized '+Math.round(x.w)+'x'+Math.round(x.h)
-        +', but the 3D library is not vendored in this sandbox — '
-        +'EXTERNAL ENVIRONMENT REQUIRED'];
-      return ['PASS','the 3D viewport is present and the library is loaded']; });
-    record(4,'EXPLORE 3D',v,e);
+ /* 4 — استكشاف ثلاثي الأبعاد */
+{
+  let r;
+
+  try{
+    const value=await pg.evaluate(async()=>{
+      const host=document.getElementById('wsViewHost');
+      const viewport=document.getElementById('wsViewport');
+
+      const rect=viewport
+        ? viewport.getBoundingClientRect()
+        : {width:0,height:0};
+
+      let gl=false;
+
+      try{
+        const c=document.createElement('canvas');
+
+        gl=!!(
+          c.getContext('webgl2') ||
+          c.getContext('webgl')
+        );
+      }catch(_e){}
+
+      let threeLoaded=false;
+      let threeVersion=null;
+      let rendererAvailable=false;
+      let threeError=null;
+
+      try{
+        const mod=await import('three');
+
+        threeLoaded=!!mod;
+        threeVersion=mod.REVISION || null;
+        rendererAvailable=
+          typeof mod.WebGLRenderer==='function';
+      }catch(e){
+        threeError=String(
+          e&&e.message
+            ? e.message
+            : e
+        );
+      }
+
+      return {
+        host:!!host,
+        viewport:!!viewport,
+        w:rect.width,
+        h:rect.height,
+        gl:gl,
+        threeLoaded:threeLoaded,
+        threeVersion:threeVersion,
+        rendererAvailable:rendererAvailable,
+        threeError:threeError
+      };
+    });
+
+    r={
+      ok:true,
+      v:value
+    };
+  }catch(e){
+    r={
+      ok:false,
+      v:null,
+      err:String(
+        e&&e.message
+          ? e.message
+          : e
+      )
+    };
   }
+
+  const [v,e]=verdict(r,x=>{
+
+    if(
+      !x.host ||
+      !x.viewport ||
+      !(x.w>100&&x.h>100)
+    ){
+      return [
+        'FAIL',
+        JSON.stringify(x)
+      ];
+    }
+
+    if(!x.gl){
+      return [
+        'NOT_VERIFIED',
+        'the viewport exists, but WebGL is unavailable in this Chromium environment'
+      ];
+    }
+
+    if(
+      !x.threeLoaded ||
+      !x.rendererAvailable
+    ){
+      return [
+        'NOT_VERIFIED',
+        'the viewport and WebGL are available, but Three.js could not be loaded'
+        +(x.threeError
+          ? ' — '+x.threeError
+          : '')
+      ];
+    }
+
+    return [
+      'PASS',
+      'the 3D viewport is present; WebGL is available; Three.js revision '
+      +String(x.threeVersion)
+      +' loaded with WebGLRenderer'
+    ];
+  });
+
+  record(
+    4,
+    'EXPLORE 3D',
+    v,
+    e
+  );
+}
+
 
   /* 5 — تحديد عنصر */
   {

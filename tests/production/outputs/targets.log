@@ -1,0 +1,8 @@
+netlify.toml           publish            = 'public'
+netlify.toml           connect-src        = "'self' https://acs-engine.onrender.com"
+render.yaml            ACS_ALLOWED_ORIGINS= 'https://sprightly-selkie-d906c3.netlify.app'
+acs_understand_api.py  _DEFAULT_ORIGIN    = 'https://sprightly-selkie-d906c3.netlify.app'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '/health'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.

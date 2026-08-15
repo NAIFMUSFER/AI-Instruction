@@ -1,0 +1,232 @@
+{
+  "status": "MEASURED",
+  "generated_at_utc": "2026-08-14T18:59:35.735Z",
+  "policy": "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests",
+  "policy_source": "netlify.toml [[headers]] for = \"/*\" — delivered as a real Content-Security-Policy response header by tools/csp_static_server.py, never as <meta http-equiv> (meta cannot express frame-ancestors)",
+  "violations": [
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src-elem",
+      "effectiveDirective": "script-src-elem",
+      "blockedURI": "inline",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 60,
+      "columnNumber": 19,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src",
+      "effectiveDirective": "script-src",
+      "blockedURI": "eval",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 69,
+      "columnNumber": 14,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src",
+      "effectiveDirective": "script-src",
+      "blockedURI": "eval",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 76,
+      "columnNumber": 6,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src-attr",
+      "effectiveDirective": "script-src-attr",
+      "blockedURI": "inline",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 87,
+      "columnNumber": 7,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "style-src-attr",
+      "effectiveDirective": "style-src-attr",
+      "blockedURI": "inline",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 103,
+      "columnNumber": 8,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src-elem",
+      "effectiveDirective": "script-src-elem",
+      "blockedURI": "inline",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 120,
+      "columnNumber": 7,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src-elem",
+      "effectiveDirective": "script-src-elem",
+      "blockedURI": "http://127.0.0.1:36315/__csp_probe__/external.js",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 140,
+      "columnNumber": 21,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src-elem",
+      "effectiveDirective": "script-src-elem",
+      "blockedURI": "data",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 140,
+      "columnNumber": 21,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    },
+    {
+      "phase": "attack",
+      "violatedDirective": "script-src-elem",
+      "effectiveDirective": "script-src-elem",
+      "blockedURI": "blob",
+      "sourceFile": "http://127.0.0.1:35431/__csp_probe__/hostile.js",
+      "lineNumber": 140,
+      "columnNumber": 21,
+      "sample": "",
+      "disposition": "enforce",
+      "statusCode": 200
+    }
+  ],
+  "violations_by_directive": {
+    "script-src-elem": 5,
+    "script-src": 2,
+    "script-src-attr": 1,
+    "style-src-attr": 1
+  },
+  "unexpected_csp_violations": 0,
+  "attacks": {
+    "inline_script": "BLOCKED",
+    "eval": "BLOCKED",
+    "function_constructor": "BLOCKED",
+    "javascript_url": "BLOCKED",
+    "external_script": "BLOCKED",
+    "inline_event_handler": "BLOCKED",
+    "data_url_script": "BLOCKED",
+    "blob_script": "BLOCKED"
+  },
+  "attack_detail": {
+    "external_script_origin": "http://127.0.0.1:36315",
+    "external_script_block_reason_observed": [
+      "csp"
+    ],
+    "external_script_note": "the second origin is a real HTTP server on a second port of 127.0.0.1 (a different origin by scheme+host+port) that serves the payload with NO CSP header of its own; it resolves and responds, so a block is attributable to the page policy, not to DNS",
+    "blob_script_note": "script-src does NOT list blob:, so a blob: <script src> is expected to be blocked; the boundary is exercised explicitly",
+    "driver_load_event": "load",
+    "driver_completed": true,
+    "driver_errors": {
+      "eval": "Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKE",
+      "function_constructor": "Refused to evaluate a string as JavaScript because 'unsafe-eval' is not an allowed source of script in the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKE"
+    },
+    "driver_notes": {
+      "external_origin": "http://127.0.0.1:36315",
+      "self_origin": "http://127.0.0.1:35431",
+      "inline_handler_compiled": false,
+      "style_attribute_survived_in_dom": true,
+      "external_script_src": "http://127.0.0.1:36315/__csp_probe__/external.js",
+      "data_url_script_src": "data:text/javascript,<payload>",
+      "blob_url_created": true,
+      "blob_script_src": "blob:http://127.0.…",
+      "external_script_load_event": "error",
+      "blob_script_load_event": "error",
+      "data_url_script_load_event": "error"
+    }
+  },
+  "style": {
+    "cssom_property_write": "ALLOWED",
+    "style_attribute": "BLOCKED"
+  },
+  "style_note": "element.style.<prop> = … is a CSSOM write and is NOT governed by style-src; setAttribute(\"style\", …) IS governed by style-src-attr. Both were measured in Chromium, not assumed.",
+  "boot": {
+    "url": "/index.html (served from public/)",
+    "page_loaded": true,
+    "load_error": null,
+    "csp_violations": 0,
+    "csp_violations_detail": [],
+    "acs_api_present": true,
+    "acs_present": true,
+    "acs_global_keys": 73,
+    "import_map_accepted_by_hash": true,
+    "import_map_count": 1,
+    "module_graph_evaluated": true,
+    "three_module_body_evaluated": true,
+    "module_graph_note": "the ES module graph evaluated to completion",
+    "module_graph_diagnosis": null,
+    "executable_inline_scripts_in_dom": 0,
+    "style_blocks_in_dom": 0,
+    "page_errors": [
+      "renderer.xr.getController is not a function"
+    ],
+    "page_error_count": 1,
+    "console_errors": [
+      "Refused to execute inline script because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='\". Either the 'unsafe-inline' keyword, a hash ('sha256-vTQ+iIwL4I1/tnICU3j17vkOZtzjsZ8",
+      "Refused to execute inline event handler because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='\". Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonc",
+      "Refused to apply inline style because it violates the following Content Security Policy directive: \"style-src 'self'\". Either the 'unsafe-inline' keyword, a hash ('sha256-rtnnut5LpdAWybXNnlQ52GEmC/dbwF0ZHOAE6vguopQ='), or a nonce ('nonce-...') is required to e",
+      "Refused to run the JavaScript URL because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='\". Either the 'unsafe-inline' keyword, a hash ('sha256-...'), or a nonce ('nonce-...'",
+      "Refused to load the script 'http://127.0.0.1:36315/__csp_probe__/external.js' because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='\". Note that 'script-src-elem' was not ex",
+      "Refused to load the script 'data:text/javascript,window.__ACS_ATK_DATA__%20%3D%20true%3B' because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='\". Note that 'script-src-elem",
+      "Refused to load the script 'blob:http://127.0.0.1:35431/c5672af7-85fa-4558-999e-a2c4b97dcec4' because it violates the following Content Security Policy directive: \"script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='\". Note that 'script-src-"
+    ],
+    "console_error_count": 0,
+    "failed_requests": [
+      {
+        "url": "http://127.0.0.1:36315/__csp_probe__/external.js",
+        "error": "csp"
+      },
+      {
+        "url": "blob:http://127.0.0.1:35431/c5672af7-85fa-4558-999e-a2c4b97dcec4",
+        "error": "csp"
+      }
+    ],
+    "failed_request_count": 2,
+    "rendering": "NOT VERIFIED"
+  },
+  "environment": {
+    "chromium": "141.0.7390.37",
+    "chromium_executable": "/opt/pw-browsers/chromium",
+    "playwright": "1.62.1",
+    "node": "v22.22.2",
+    "platform": "linux x64",
+    "vendor_present": false,
+    "three_js_stub": {
+      "used": true,
+      "label": "TEST-ONLY — NOT Three.js, NOT shipped, NOT inside public/",
+      "location": "/tmp/acs-csp-probe-vendor-dgeaW9",
+      "why": "public/vendor is empty in this checkout and there is no network, so the bare specifier `three` could not otherwise resolve and the ES module graph would never boot",
+      "rendering_behaviour": "NOT VERIFIED — the stub draws nothing. This probe measures POLICY (what the browser permits), not rendering."
+    },
+    "rendering_verified": false,
+    "rendering_note": "NOT VERIFIED — no frame is asserted by this probe under any circumstances; CSP decisions are made by the browser at parse/compile time and do not require a rendered frame"
+  },
+  "summary": {
+    "attacks_executed": [],
+    "attacks_not_verified": [],
+    "all_blocked": true,
+    "boot_clean": true
+  }
+}

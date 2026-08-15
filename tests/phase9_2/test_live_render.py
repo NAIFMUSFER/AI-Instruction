@@ -310,7 +310,11 @@ chk('an empty scene is not mistaken for a render failure',
 # ═══════════════════════ هـ) الطبقة المشحونة فعلاً ═════════════════════════
 print('\n── هـ · ما شُحن في الصفحة، لا ما نُوي شحنه ──')
 
-PAGE = io.open(os.path.join(ROOT, 'public', 'index.html'), encoding='utf-8').read()
+# بعد F-09: ما شُحن صار وحدات ES تحت public/app/، والقشرة لا تحمل شيفرة.
+sys.path.insert(0, os.path.join(ROOT, 'tools'))
+import app_source as _APPSRC                                      # noqa: E402
+PAGE = _APPSRC.app_text()
+assert len(PAGE) > 1000000, 'the application code did not load'
 chk('setModel now reconciles the camera through the canonical contract',
     'acsReconcileCamera' in PAGE
     and PAGE.index('function setModel') < PAGE.rindex('acsReconcileCamera'))

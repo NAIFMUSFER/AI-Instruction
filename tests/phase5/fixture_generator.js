@@ -32,6 +32,12 @@ function models_seed_single(){
     levels:[{index:0,name:'ground',template:'g'},{index:1,name:'first',template:'f'}],
     floors:{g:{rooms:[{id:'corridor',rect:[0,0,6,5]},{id:'a',rect:[6,0,6,5]}]},
             f:{rooms:[{id:'corridor',rect:[0,0,6,5]},{id:'b',rect:[6,0,6,5]}]}}}; }
+/* نموذج يحمل نقاطاً دلالية لاختبار أوامر النقاط (كاشف دخان، كاميرا، مخرج) */
+models.pointed=(function(){ const m=C(BASE.villa);
+  const g=m.floors.g.rooms.filter(r=>r.id==='majlis')[0];
+  g.points=[{type:'smoke',x:1,z:1,height:2.9},
+            {type:'camera',x:2,z:1,height:2.7}];
+  return m; })();
 /* نموذج بقالب فارغ إضافي لاختبار ADD_LEVEL */
 models.spare_template=(function(){ const m=C(models.single_level);
   m.floors.upper={rooms:[{id:'u1',rect:[0,0,6,5]}]}; return m; })();
@@ -128,6 +134,22 @@ const scenarios=[
    parameters:{}}],
  ['move_object','windowed',{type:'MOVE_OBJECT',target_id:'g.majlis.obj_0',
    parameters:{x:2.5,z:2.5}}],
+ ['add_point','villa',{type:'ADD_POINT',target_id:'g.majlis',
+   parameters:{point_type:'smoke',x:2,z:2,height:2.9}}],
+ ['add_point_outside','villa',{type:'ADD_POINT',target_id:'g.majlis',
+   parameters:{point_type:'smoke',x:999,z:2}}],
+ ['add_point_no_type','villa',{type:'ADD_POINT',target_id:'g.majlis',
+   parameters:{x:2,z:2}}],
+ ['move_point','pointed',{type:'MOVE_POINT',target_id:'g.majlis.point_0',
+   parameters:{x:2.5,z:2.5}}],
+ ['move_point_outside','pointed',{type:'MOVE_POINT',target_id:'g.majlis.point_0',
+   parameters:{x:-4,z:2.5}}],
+ ['delete_point','pointed',{type:'DELETE_POINT',target_id:'g.majlis.point_1',
+   parameters:{}}],
+ ['point_props','pointed',{type:'CHANGE_POINT_PROPERTIES',
+   target_id:'g.majlis.point_0',parameters:{height:2.6}}],
+ ['point_props_empty','pointed',{type:'CHANGE_POINT_PROPERTIES',
+   target_id:'g.majlis.point_0',parameters:{}}],
  ['hotel_resize','hotel',{type:'RESIZE_SPACE',target_id:'g.lobby',parameters:{w:12,d:9}}],
  ['clinic_rename','clinic',{type:'RENAME_SPACE',target_id:'g.reception',
    parameters:{name:'Front Desk'}}],
