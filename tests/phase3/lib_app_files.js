@@ -21,13 +21,11 @@ const APPDIR = path.join(ROOT, 'public', 'app');
 
 function mainJs() { return fs.readFileSync(path.join(APPDIR, 'main.js'), 'utf8'); }
 
-/* ترتيب التحميل الحقيقي: قائمة الاستيراد في main.js بالترتيب المكتوب */
 function order() {
-  return mainJs().split('\n')
+  return mainJs().split(/\r?\n/)
     .map(l => (/^import '\.\/(.+?)';$/.exec(l) || [])[1])
     .filter(Boolean);
 }
-
 function mod(rel) { return fs.readFileSync(path.join(APPDIR, rel), 'utf8'); }
 
 function has(rel) { return fs.existsSync(path.join(APPDIR, rel)); }

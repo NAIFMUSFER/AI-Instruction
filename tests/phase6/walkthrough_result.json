@@ -21,8 +21,8 @@
   {
    "n": 4,
    "title": "EXPLORE 3D",
-   "verdict": "NOT_VERIFIED",
-   "evidence": "the viewport host is present and sized 836x814, but the 3D library is not vendored in this sandbox — EXTERNAL ENVIRONMENT REQUIRED"
+   "verdict": "PASS",
+   "evidence": "the 3D viewport is present; WebGL is available; Three.js revision 160 loaded with WebGLRenderer"
   },
   {
    "n": 5,

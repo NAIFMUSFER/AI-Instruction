@@ -34,8 +34,7 @@ function nodeCounts(suite){
 }
 
 (async()=>{
-  const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium'});
-  console.log('\n== EVERY SUITE RUNS IN A REAL BROWSER ENGINE ==');
+const browser=await chromium.launch();  console.log('\n== EVERY SUITE RUNS IN A REAL BROWSER ENGINE ==');
   for(const suite of SUITES){
     const nodeR=nodeCounts(suite);
     execFileSync(process.execPath,[BUILD,path.join(HERE,suite)],{stdio:'pipe'});
@@ -59,7 +58,7 @@ function nodeCounts(suite){
   }
 
   console.log('\n== THE BROWSER RESULT AGREES WITH PYTHON BYTE FOR BYTE ==');
-  execFileSync('python3',[path.join(HERE,'parity','py_runtime.py')],
+  execFileSync('python',[path.join(HERE,'parity','py_runtime.py')],
     {env:Object.assign({},process.env,{ACS_PARITY_RUNTIME_PY:PY}),stdio:'pipe'});
   const body=path.join(HERE,'parity','js_runtime_body.js');
   execFileSync(process.execPath,[BUILD,body],{stdio:'pipe'});
