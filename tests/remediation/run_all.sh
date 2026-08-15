@@ -96,6 +96,10 @@ python3 "$HERE/test_event_loop.py"; guard $?
 step "scene complexity · declared limits, bounded loops, visible compiler failures"
 node "$ROOT/tests/lib/run.js" "$HERE/test_scene_limits.js"; guard $?
 
+# F-50: رفض المزوّد 400 لا يُشخَّص من `upstream_class=BadRequestError` وحدها.
+step "F-50 · provider 400 diagnostics and the single model-output ceiling"
+python3 "$HERE/test_provider_reject.py"; guard $?
+
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 

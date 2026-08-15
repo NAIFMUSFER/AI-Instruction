@@ -311,6 +311,9 @@ jobs:
             # KI-14: heavy upload validation must not block the event loop.
             # Uses a real asyncio server and a real redis-server.
             python3 tests/remediation/test_event_loop.py
+            echo
+            # F-50: a provider 400 must name the offending parameter.
+            python3 tests/remediation/test_provider_reject.py
           } 2>&1 | tee logs/dependency-audit.log
       - name: CVE scan (advisory — needs the network, does not gate the PR)
         # This is the ONE dependency check that cannot be done offline, so it is

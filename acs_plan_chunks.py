@@ -145,11 +145,14 @@ def outline_budget():
         try:
             v = int(env)
             if v > 0:
-                return v
+                return G.clamp_to_model(v)[0]   # F-50: التجاوز يُقصّ أيضاً
         except ValueError:
             pass
     need = int(estimate_outline_tokens(MAX_BUILDING_ZONES) / CHUNK_SAFETY) + 1
-    return max(G.STAGE_FLOOR, min(int(G.max_output_tokens()), need))
+    # F-50: البيان لا يمرّ بـstage_budget، فيُقصّ هنا صراحةً إلى سقف قدرة
+    # النموذج. مسارٌ واحد غير مقصوص يكفي لإعادة رفض 400.
+    return G.clamp_to_model(
+        max(G.STAGE_FLOOR, min(int(G.max_output_tokens()), need)))[0]
 
 
 def outline_capacity(budget=None):

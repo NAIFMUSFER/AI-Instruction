@@ -62,18 +62,54 @@ _LEGACY_STAGE_ENV = {
 STAGE_FLOOR = 4000                 # لا مرحلة بميزانية أصغر من هذا
 
 
+# ── F-50 · سقف قدرة النموذج: مصدرٌ واحد مُعلَن ──────────────────────────────
+# لم يكن في المستودع كلّه ثابتٌ يقول «كم يقبل هذا النموذج من رموز مخرجة».
+# كلّ سقف كان مشتقّاً من ACS_LLM_MAX_OUTPUT_TOKENS وحده — وهو رقمٌ يضبطه
+# المشغّل، لا قدرةُ النموذج. فإن جاوز ما نطلبه ما يقبله النموذج ردّ المزوّد
+# 400 فوراً، وهو رفضٌ لا يصلحه تكرار ولا تقسيم.
+#
+# القيمة الافتراضية **غير مضبوطة عمداً**: اختراع رقم هنا تخمينٌ قد يقصّ سقفاً
+# مشروعاً. فحين لا تُضبَط، يبقى السلوك كما هو تماماً — والفرق أن الرقم
+# المطلوب صار يُسجَّل، وأن رفض المزوّد صار يُصنَّف ACS_UPSTREAM_MAX_TOKENS
+# ويحمل الحدّ الذي أعلنه المزوّد نفسه، فيعرف المشغّل ماذا يضبط هنا بالضبط.
+def model_max_output():
+    """سقف مخرجات النموذج المُعلَن، أو None إن لم يُعلَن. لا يُخمَّن أبداً."""
+    raw = os.environ.get("ACS_LLM_MODEL_MAX_OUTPUT", "")
+    if not raw:
+        return None
+    try:
+        v = int(str(raw).strip())
+    except (TypeError, ValueError):
+        return None
+    return v if v > 0 else None
+
+
+def clamp_to_model(value):
+    """يعيد (القيمة بعد القصّ، هل قُصَّت). لا يرفع القيمة أبداً — يخفضها فقط."""
+    cap = model_max_output()
+    v = int(value)
+    if cap is None or v <= cap:
+        return v, False
+    return cap, True
+
+
 def stage_budget(stage):
-    """ميزانية المرحلة — مشتقّة من الميزانية الواحدة، لا ثابتاً مستقلاً."""
+    """ميزانية المرحلة — مشتقّة من الميزانية الواحدة، لا ثابتاً مستقلاً.
+
+    F-50: ثمّ تُقصّ إلى سقف قدرة النموذج إن أُعلن. القصّ عند نقطة الاشتقاق
+    الوحيدة، فلا يبقى مسارٌ يبني سقفاً غير مقصوص — بما فيها التجاوزات
+    القديمة ACS_MAX_TOKENS_PLAN وأخواتها.
+    """
     env = _LEGACY_STAGE_ENV.get(stage)
     if env and os.environ.get(env):
         try:
             v = int(os.environ[env])
             if v > 0:
-                return v
+                return clamp_to_model(v)[0]
         except ValueError:
             pass
     share = STAGE_SHARE.get(stage, 1.0)
-    return max(STAGE_FLOOR, int(max_output_tokens() * share))
+    return clamp_to_model(max(STAGE_FLOOR, int(max_output_tokens() * share)))[0]
 
 
 # ── 2) المقدّر الحتمي ───────────────────────────────────────────────────────

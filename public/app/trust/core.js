@@ -492,6 +492,10 @@ const codeMap={
   ACS_UPSTREAM_INVALID_JSON:'INVALID_JSON',
   ACS_UPSTREAM_TRAILING_JSON:'INVALID_JSON',
   ACS_UPSTREAM_TRUNCATED:'INVALID_JSON',
+  /* F-50: سقف مخرجات أعلى ممّا يقبله النموذج. عطل ضبطٍ عند المشغّل لا
+     خطأ من الزائر ولا عطل شبكة: يُعرَض كعطل خادم صريح، ولا يُقترَح على
+     المستخدم أن يقصّر وصفه — تقصيره لن يغيّر سقفاً مضبوطاً في النشر. */
+  ACS_UPSTREAM_MAX_TOKENS:'HTTP_5XX',
   ACS_UPSTREAM_REFUSED:'HTTP_4XX_VALIDATION',
   ACS_UPSTREAM_UNKNOWN:'HTTP_5XX'
 };

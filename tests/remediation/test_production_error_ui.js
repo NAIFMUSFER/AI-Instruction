@@ -23,10 +23,11 @@ const RETRYABLE=(/^RETRYABLE\s*=\s*frozenset\(\{([\s\S]*?)\}\)/m.exec(PY)||[,'']
   .split(',').map(s=>s.trim()).filter(Boolean).map(nm=>CONSTS[nm]).filter(Boolean);
 
 console.log('\n== §0 — عقد الأخطاء قُرئ من المصدر ==');
-/* 26 → 27 مع F-33 (ACS_INTEGRATION_ERROR). العدد ثابت معلن لا مشتقّ: لو اشتُقّ
+/* 26 → 27 مع F-33 (ACS_INTEGRATION_ERROR)، ثم 28 مع F-50
+   (ACS_UPSTREAM_MAX_TOKENS). العدد ثابت معلن لا مشتقّ: لو اشتُقّ
    من المصدر لصار الفحص «الخريطة تغطّي ما تغطّيه» وهو لا يعني شيئاً. يُحدَّث
    عمداً عند إضافة رمز، ومعه يجب أن تُضاف الحالة في public/app/trust/core.js. */
-chk('acs_api_errors.CODES was read from the python source', CODES.length===27,
+chk('acs_api_errors.CODES was read from the python source', CODES.length===28,
     CODES.length);
 chk('every code resolved to a real string constant',
     CODES.every(c=>typeof c==='string'&&/^ACS_[A-Z_]+$/.test(c)));
@@ -94,7 +95,7 @@ console.log('\n== §4 — الخريطة كلّية على acs_api_errors.CODES 
   const cov=T.errorStateCoverage(CODES);
   chk('every backend code resolves to a user state — the map is TOTAL',
       cov.complete===true && cov.missing.length===0, cov.missing);
-  chk('the coverage check actually counted all 27 codes', cov.total===27, cov.total);
+  chk('the coverage check actually counted all 28 codes', cov.total===28, cov.total);
   CODES.forEach(code=>{
     const st=T.resolveErrorState({code:code, status:'VALID_API_ERROR',
       request_id:'req_'+code, operation:'GENERATE'});

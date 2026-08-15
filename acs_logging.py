@@ -168,7 +168,17 @@ class StructuredLogger(object):
                    "output_tokens", "stop_reason", "max_output_tokens",
                    "duration_ms", "retries", "truncated", "upstream_class",
                    "success", "error_code", "estimated_cost_usd", "escalations",
-                   "endpoint", "chunk_index", "chunk_count")
+                   "endpoint", "chunk_index", "chunk_count",
+                   # F-50: بلا هذه الحقول كان سجلّ الإنتاج يقول
+                   # `upstream_class=BadRequestError` ولا يقول أيّ وسيط رفضه
+                   # المزوّد ولا أيّ سقف طُلب ولا أيّ نسخة SDK تعمل. كلّها
+                   # مصنّفات وأرقام: لا نصّ زائر ولا رد خام ولا مفتاح.
+                   # (sdk_version كان يُقاس فعلاً في acs_understand ثم تُسقطه
+                   #  هذه القائمة صامتةً — نفس عطل KI-24/F-38 في موضع آخر.)
+                   "sdk_version", "transport", "thinking_sent",
+                   "provider_error_type", "provider_param",
+                   "provider_limit", "provider_detail",
+                   "requested_max_tokens", "budget_clamped")
         clean = {k: v for k, v in fields.items() if k in allowed}
         return self._emit("info", "llm_generation", **clean)
 

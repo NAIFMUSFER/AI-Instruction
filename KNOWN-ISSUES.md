@@ -1480,3 +1480,99 @@ into a measurement this pass did not make.
 * ~20 empty `catch` blocks in `workspace-ui-wiring.js` outside the compiler path
   (GPU disposal, `localStorage`, XR, PDF import, render diagnostics). Each already
   assigns an explicit fallback; they were left alone deliberately.
+
+---
+
+## Provider 400 · `ACS_UPSTREAM_BAD_REQUEST` was undiagnosable (**diagnostics CLOSED** — F-50; underlying 400 **NOT DIAGNOSED**)
+
+**Live evidence** (`0912415`): `POST /v1/understand` → 502
+`ACS_UPSTREAM_BAD_REQUEST`, `request_id=req_1e1db28104a9462e`,
+`duration_ms=884`, `upstream_class=BadRequestError`.
+
+**Proof of the fix:** `tests/remediation/test_provider_reject.py` — **57 passed,
+0 failed**.
+**LIVE PROVIDER CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED** (no key, no
+egress: every outbound connection from this sandbox returns `403 CONNECT tunnel
+failed`).
+
+### What the evidence establishes
+
+`884 ms` means the request **reached Anthropic and was rejected by validation** —
+this is not KI-23's shape (that was 389 ms with no network round trip at all).
+
+And the provider-call path is **byte-identical** between `02cf7e3` — the commit
+whose live LARGE request returned 200 with a visible model — and `0912415`:
+
+```
+git diff --stat 02cf7e3 0912415 -- acs_understand.py acs_generation.py \
+                                   acs_plan_chunks.py acs_api_errors.py
+(empty)
+```
+
+The only deployment change was `ACS_SINGLE_INSTANCE=1`, which never reaches the
+provider. So the 400 was **not** introduced by a change to how this server builds
+its request. It follows that the cause is one of: a different request shape
+driven by a different prompt (a different stage and `max_tokens`), a change on
+the provider side (model capability, API version, account entitlement), or an
+SDK version resolved at image-build time that differs from the pin.
+
+**Which of those it is cannot be determined from the deployed system, because
+the deployed system discards every field that would say.** Three independent
+gaps, each verified by reading the shipped code:
+
+1. `acs_api_errors.classify_upstream` kept `{provider, kind, status, attempts}`
+   and **dropped the provider's structured body** — the `invalid_request_error`
+   message that names the offending parameter and its limit.
+2. `sdk_version` was measured in `acs_understand` and then **silently dropped by
+   the `acs_logging.generation` allow-list** — the same class of defect as
+   KI-24/F-38, in a second place.
+3. `max_output_tokens` was only written to telemetry **after a successful
+   response**, so every failed call logged `max_output_tokens=null` — the single
+   most useful number for diagnosing a 400, absent from exactly the case that
+   needs it.
+
+A fourth, structural: **there is no model-capability constant anywhere in the
+repository.** Every ceiling derives from `ACS_LLM_MAX_OUTPUT_TOKENS`, which is an
+operator's number, not the model's. Today that yields
+single/repair 32000, detail 24000, **outline 17701**, plan/plan_chunk 16000, and
+nothing compares any of them against what the model actually accepts.
+
+### The fix (F-50) — diagnostics, not a guess
+
+* **`safe_provider_detail(exc)`** extracts, from the provider's own structured
+  body: `error_type` (allow-listed), `param` (allow-listed, read from the
+  message's leading `param:` prefix — because `"stream: must be true when
+  max_tokens is greater than 21333"` blames `stream`, not `max_tokens`),
+  `requested` and `limit` (integers from the canonical wording),
+  `provider_request_id`, and a `detail` string that is redacted, stripped of all
+  non-ASCII and capped at 240 chars. Arabic is what user descriptions and system
+  prompts are written in here, so the ASCII filter provably removes them — that
+  is asserted with a deliberately leaky message.
+* **`ACS_UPSTREAM_MAX_TOKENS`** — a distinct code when `max_tokens` is the
+  offending parameter or the provider states an output limit, because that case
+  has exactly one operator action, and "the provider rejected the request
+  wording" does not communicate it.
+* **The logging allow-list** now carries `sdk_version`, `transport`,
+  `thinking_sent`, `requested_max_tokens`, `budget_clamped`,
+  `provider_error_type`, `provider_param`, `provider_limit`, `provider_detail`.
+* **`requested_max_tokens` is recorded before the call**, not after success.
+* **`acs_generation.model_max_output()` / `clamp_to_model()`** — one authoritative
+  ceiling from `ACS_LLM_MODEL_MAX_OUTPUT`, applied at the single derivation point
+  so no path can build an unclamped ceiling (including the legacy
+  `ACS_MAX_TOKENS_PLAN` / `ACS_MAX_TOKENS_OUTLINE` overrides). **It is unset by
+  default and no number is invented**: with it unset, behaviour is byte-identical
+  to today. When the provider states its real limit in a 400, that number is now
+  logged, so the operator sets this from the provider's own words.
+
+Nothing was raised. `STAGE_SHARE` is unchanged, KI-23's `thinking` gating is
+unchanged, KI-24's bounded chunking is unchanged — all asserted.
+
+### Verdict on the underlying 400
+
+**NOT DIAGNOSED.** The exact provider validation reason could not be reproduced
+or extracted here: no API key, no egress, and the deployed build never recorded
+it. What this pass changed is that the **next** occurrence is self-describing.
+After deploying this commit, one retry of the same request produces a log line
+carrying `provider_param`, `provider_limit`, `requested_max_tokens`,
+`sdk_version`, `transport`, `thinking_sent` and the stage — which names the cause
+without another round of guessing.

@@ -44,6 +44,11 @@ ACS_UPSTREAM_AUTH             = "ACS_UPSTREAM_AUTH"
 ACS_UPSTREAM_PERMISSION       = "ACS_UPSTREAM_PERMISSION"
 ACS_UPSTREAM_MODEL_REJECTED   = "ACS_UPSTREAM_MODEL_REJECTED"
 ACS_UPSTREAM_BAD_REQUEST      = "ACS_UPSTREAM_BAD_REQUEST"
+# F-50: رفضٌ من المزوّد سببه سقف المخرجات تحديداً. كان يندرج تحت
+# ACS_UPSTREAM_BAD_REQUEST العامّ («رفض المزوّد صياغة الطلب») — وهي رسالة
+# لا تُخبر المشغّل بشيء يفعله، بينما هذا العطل بالذات له إجراء واحد معروف:
+# اضبط ACS_LLM_MODEL_MAX_OUTPUT على السقف الذي أعلنه المزوّد نفسه.
+ACS_UPSTREAM_MAX_TOKENS       = "ACS_UPSTREAM_MAX_TOKENS"
 ACS_UPSTREAM_RATE_LIMIT       = "ACS_UPSTREAM_RATE_LIMIT"
 ACS_UPSTREAM_OVERLOADED       = "ACS_UPSTREAM_OVERLOADED"
 ACS_UPSTREAM_UNAVAILABLE      = "ACS_UPSTREAM_UNAVAILABLE"
@@ -63,6 +68,7 @@ CODES = (
     ACS_INTEGRATION_ERROR,
     ACS_UPSTREAM_NOT_CONFIGURED, ACS_UPSTREAM_AUTH, ACS_UPSTREAM_PERMISSION,
     ACS_UPSTREAM_MODEL_REJECTED, ACS_UPSTREAM_BAD_REQUEST,
+    ACS_UPSTREAM_MAX_TOKENS,
     ACS_UPSTREAM_RATE_LIMIT, ACS_UPSTREAM_OVERLOADED,
     ACS_UPSTREAM_UNAVAILABLE, ACS_UPSTREAM_TIMEOUT, ACS_UPSTREAM_CONNECTION,
     ACS_UPSTREAM_EMPTY_RESPONSE, ACS_UPSTREAM_INVALID_JSON,
@@ -100,6 +106,7 @@ HTTP_STATUS = {
     ACS_UPSTREAM_PERMISSION: 502,
     ACS_UPSTREAM_MODEL_REJECTED: 502,
     ACS_UPSTREAM_BAD_REQUEST: 502,
+    ACS_UPSTREAM_MAX_TOKENS: 502,
     ACS_UPSTREAM_RATE_LIMIT: 429,
     ACS_UPSTREAM_OVERLOADED: 503,
     ACS_UPSTREAM_UNAVAILABLE: 503,
@@ -133,6 +140,8 @@ MESSAGE_AR = {
     ACS_UPSTREAM_PERMISSION: "لا صلاحية لدى الخادم لاستخدام هذا النموذج.",
     ACS_UPSTREAM_MODEL_REJECTED: "رفض المزوّد معرّف النموذج المطلوب.",
     ACS_UPSTREAM_BAD_REQUEST: "رفض المزوّد صياغة الطلب.",
+    ACS_UPSTREAM_MAX_TOKENS: "طلب الخادم سقف مخرجات أعلى ممّا يسمح به "
+                             "النموذج. راجع إعدادات النشر.",
     ACS_UPSTREAM_RATE_LIMIT: "بلغ المزوّد حدّ الطلبات. أعِد المحاولة بعد قليل.",
     ACS_UPSTREAM_OVERLOADED: "المزوّد مُحمَّل حالياً. أعِد المحاولة بعد قليل.",
     ACS_UPSTREAM_UNAVAILABLE: "خدمة المزوّد غير متاحة حالياً.",
@@ -235,6 +244,124 @@ _BY_STATUS = {400: ACS_UPSTREAM_BAD_REQUEST, 401: ACS_UPSTREAM_AUTH,
               529: ACS_UPSTREAM_OVERLOADED}
 
 
+# ── F-50 · استخراج آمن لسبب رفض المزوّد ─────────────────────────────────────
+# العطل الذي يغلقه هذا القسم
+# --------------------------
+#     POST /v1/understand → 502 ACS_UPSTREAM_BAD_REQUEST
+#     upstream_class=BadRequestError · duration_ms=884
+# و**لا شيء غير ذلك**. المزوّد يردّ 400 بجسدٍ منظَّم يسمّي الوسيط المخالف
+# ويذكر حدّه، وclassify_upstream كان يحتفظ بأربعة حقول فقط —
+# (provider, kind, status, attempts) — ويُلقي الباقي. فيصل المشغّل خبرٌ لا
+# يقود إلى أي إجراء: «رفض المزوّد صياغة الطلب». الطلب فيه عشرة وسائط، وأيّها
+# المخالف لا يُعرَف إلّا بتخمين.
+#
+# ما يُستخرَج هنا **مصنَّفات لا نصّ حرّ**: نوع الخطأ من المزوّد، واسم الوسيط
+# من قائمة معلنة، والأرقام. والرسالة نفسها تمرّ بمصفاة صارمة (ASCII فقط،
+# محدودة الطول، بعد redact) — وهي كافية لأنّ رسائل التحقّق عند المزوّد تصف
+# **شكل** الطلب لا محتواه، والمحتوى هنا عربيّ فتسقطه المصفاة حتماً.
+
+#: أسماء وسائط واجهة الرسائل. لا يُسجَّل اسمٌ خارج هذه القائمة أبداً.
+PROVIDER_PARAMS = (
+    "max_tokens", "model", "messages", "system", "thinking", "temperature",
+    "top_p", "top_k", "stop_sequences", "stream", "tools", "tool_choice",
+    "metadata", "anthropic-beta", "anthropic-version", "container",
+    "service_tier", "mcp_servers", "betas",
+)
+
+#: أنواع الأخطاء التي يعلنها المزوّد. أي نوع آخر يُسجَّل "other".
+PROVIDER_ERROR_TYPES = (
+    "invalid_request_error", "authentication_error", "permission_error",
+    "not_found_error", "request_too_large", "rate_limit_error",
+    "api_error", "overloaded_error", "billing_error",
+)
+
+_ASCII_SAFE = re.compile(r"[^\x20-\x7E]+")
+_MAXTOK_RE = re.compile(
+    r"max_tokens\s*:?\s*(\d+)\s*>\s*(\d+)", re.I)
+_LIMIT_RE = re.compile(r"maximum allowed number of output tokens[^0-9]{0,40}(\d+)",
+                       re.I)
+
+
+def _provider_body(exc):
+    """جسد الخطأ المنظَّم من المزوّد إن وُجد. لا يرمي أبداً."""
+    body = getattr(exc, "body", None)
+    if isinstance(body, dict):
+        return body
+    resp = getattr(exc, "response", None)
+    if resp is not None:
+        try:
+            j = resp.json()
+            if isinstance(j, dict):
+                return j
+        except Exception:                                       # noqa: BLE001
+            pass
+    return None
+
+
+def safe_provider_detail(exc, max_chars=240):
+    """حقولٌ آمنة تصف **سبب** رفض المزوّد. لا مفتاح ولا نصّ زائر ولا جسد خام.
+
+    تعيد قاموساً قد يحمل:
+        error_type   نوعٌ من PROVIDER_ERROR_TYPES أو "other"
+        param        اسمٌ من PROVIDER_PARAMS وحدها
+        requested    العدد الذي طلبه الخادم (حين يذكره المزوّد)
+        limit        الحدّ الذي يسمح به المزوّد (حين يذكره)
+        provider_request_id  معرّف الطلب عند المزوّد، للمراسلة
+        detail       رسالة التحقّق **بعد** التنقية: ASCII فقط ومحدودة الطول
+    """
+    out = {}
+    body = _provider_body(exc)
+    err = body.get("error") if isinstance(body, dict) else None
+    msg = ""
+    if isinstance(err, dict):
+        t = str(err.get("type") or "")
+        out["error_type"] = t if t in PROVIDER_ERROR_TYPES else (
+            "other" if t else None)
+        msg = str(err.get("message") or "")
+    if not msg:
+        msg = str(getattr(exc, "message", "") or "")
+    if not msg:
+        msg = str(exc)
+
+    # الرقم المطلوب والحدّ المسموح — من صياغة المزوّد القانونية نفسها.
+    m = _MAXTOK_RE.search(msg)
+    if m:
+        out["requested"] = int(m.group(1))
+        out["limit"] = int(m.group(2))
+    else:
+        m2 = _LIMIT_RE.search(msg)
+        if m2:
+            out["limit"] = int(m2.group(1))
+
+    # اسم الوسيط: المزوّد يضعه **بادئةً قبل أوّل نقطتين** —
+    #     "stream: must be true when max_tokens is greater than 21333"
+    # المخالف هنا `stream` لا `max_tokens`، والأخير مذكورٌ في الشرح وحده.
+    # لذلك تُقرأ البادئة أوّلاً، ولا يُلجأ إلى المسح العامّ إلّا إن غابت —
+    # وإلّا نُسب العطل إلى الوسيط الخطأ وأُرسل المشغّل إلى الجهة الخطأ.
+    low = msg.lower()
+    head = low.split(":", 1)[0].strip() if ":" in low else ""
+    root = head.split(".", 1)[0].strip() if head else ""
+    if root in PROVIDER_PARAMS:
+        out["param"] = root
+    else:
+        for name in sorted(PROVIDER_PARAMS, key=len, reverse=True):
+            if name in low:
+                out["param"] = name
+                break
+
+    rid = getattr(exc, "request_id", None)
+    if isinstance(rid, str) and 0 < len(rid) <= 64:
+        out["provider_request_id"] = rid
+
+    # المصفاة: redact ثم إسقاط كل ما ليس ASCII مطبوعاً ثم قصّ. الوصف والتوجيه
+    # في هذا المشروع عربيّان، فإسقاط غير ASCII يمحوهما حتماً لو تسرّبا.
+    clean = _ASCII_SAFE.sub(" ", redact(msg))
+    clean = " ".join(clean.split())[:int(max_chars)]
+    if clean:
+        out["detail"] = clean
+    return out
+
+
 def classify_upstream(exc, attempts=None):
     """استثناء من مسار النموذج → AcsApiError مصنّف. لا يرمي أبداً."""
     if isinstance(exc, AcsApiError):
@@ -269,6 +396,24 @@ def classify_upstream(exc, attempts=None):
             code = ACS_UPSTREAM_CONNECTION
         else:
             code = ACS_UPSTREAM_UNKNOWN
-    return AcsApiError(code, MESSAGE_AR[code],
-                       upstream={"provider": "anthropic", "kind": name,
-                                 "status": status, "attempts": attempts})
+    # F-50: سبب الرفض يُستخرَج ويُحفَظ. كان يُلقى، فيصل المشغّل
+    # `upstream_class=BadRequestError` وحدها — خبرٌ لا يقود إلى إجراء.
+    detail = {}
+    try:
+        detail = safe_provider_detail(exc)
+    except Exception:                                           # noqa: BLE001
+        detail = {}
+    # 400 سببه سقف المخرجات له رمزه: الإجراء معروف، فلا يُخفى تحت العامّ.
+    # الشرط: `max_tokens` هو الوسيط **المخالف**، أو أن المزوّد ذكر حدّ
+    # المخرجات صراحةً. ذكرُ max_tokens في شرح عطلٍ آخر لا يكفي.
+    if code == ACS_UPSTREAM_BAD_REQUEST and (
+            detail.get("param") == "max_tokens"
+            or detail.get("limit") is not None):
+        code = ACS_UPSTREAM_MAX_TOKENS
+    up = {"provider": "anthropic", "kind": name,
+          "status": status, "attempts": attempts}
+    for key in ("error_type", "param", "requested", "limit",
+                "provider_request_id", "detail"):
+        if detail.get(key) is not None:
+            up[key] = detail[key]
+    return AcsApiError(code, MESSAGE_AR[code], upstream=up)

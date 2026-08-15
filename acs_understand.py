@@ -495,6 +495,16 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
             "upstream_class": upstream_class,
             "success": bool(success),
             "error_code": error_code,
+            # F-50 · ما يجعل رفض المزوّد قابلاً للتشخيص من السجلّ وحده.
+            "sdk_version": tel.get("sdk_version"),
+            "transport": tel.get("transport"),
+            "thinking_sent": tel.get("thinking_sent"),
+            "requested_max_tokens": tel.get("requested_max_tokens"),
+            "budget_clamped": tel.get("budget_clamped"),
+            "provider_error_type": tel.get("provider_error_type"),
+            "provider_param": tel.get("provider_param"),
+            "provider_limit": tel.get("provider_limit"),
+            "provider_detail": tel.get("provider_detail"),
         }
         # KI-24/F-38: موضع الشريحة في السلسلة. بلا هذين الحقلين لا يمكن نسب
         # عطلٍ إلى شريحة بعينها في سجلّ الإنتاج.
@@ -702,6 +712,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             with client.messages.stream(**kw) as s:
                 return s.get_final_message()
         except AttributeError:
+            tel["transport"] = "create"          # F-50: أيّ مسار سلكه النداء
             # F-32: الرجوع إلى create() مقصور على «مكتبة بلا stream()» وحدها.
             # كان TypeError مشمولاً هنا أيضاً، فكان وسيطٌ لا تعرفه المكتبة
             # يُعاد إرساله حرفياً إلى create() فيفشل الفشل نفسه — تكرارٌ مضمون
@@ -725,6 +736,13 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
     backoff = float(os.environ.get("ACS_UPSTREAM_BACKOFF_S", "2"))
     for mt, think in attempts:
         tried += 1
+        # F-50: يُسجَّل ما **طُلب** قبل النداء. كان max_output_tokens يُملأ بعد
+        # نجاح الرد وحده، فسجلُّ الرفض يقول max_output_tokens=null — أي أن
+        # أهمّ رقمٍ في تشخيص رفض 400 كان يغيب عن كل نداء فاشل بالضبط.
+        tel["requested_max_tokens"] = int(mt)
+        tel.setdefault("max_output_tokens", int(mt))
+        tel["thinking_sent"] = bool(think is not None and supports_thinking)
+        tel["transport"] = "stream"
         try:
             msg = _call(mt, think)
         except Exception as e:
@@ -732,11 +750,22 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             err = _classify_call_error(e, attempts=tried, sdk_version=sdk_ver)
             last_err = err
             up = err.upstream if isinstance(err.upstream, dict) else {}
-            print("[ACS-LLM] call failed (max_tokens=%s, thinking=%s, sdk=%s) "
-                  "-> %s%s"
-                  % (mt, "off" if think else "default", sdk_ver, err.code,
-                     (" parameter=%s" % up.get("parameter"))
-                     if up.get("parameter") else ""))
+            # F-50: حقول المزوّد الآمنة تُنقَل إلى التليمتري، فيصل السجلّ سببُ
+            # الرفض لا اسم صنف الاستثناء وحده.
+            tel["provider_error_type"] = up.get("error_type")
+            tel["provider_param"] = up.get("param") or up.get("parameter")
+            tel["provider_limit"] = up.get("limit")
+            tel["provider_detail"] = up.get("detail")
+            print("[ACS-LLM] call failed (stage=%s max_tokens=%s thinking=%s "
+                  "sdk=%s transport=%s) -> %s%s%s%s"
+                  % (stage, mt, "off" if think else "default", sdk_ver,
+                     tel.get("transport"), err.code,
+                     (" param=%s" % tel["provider_param"])
+                     if tel.get("provider_param") else "",
+                     (" provider_limit=%s" % up.get("limit"))
+                     if up.get("limit") else "",
+                     (" detail=%s" % up.get("detail"))
+                     if up.get("detail") else ""))
             if not err.retryable:
                 raise err                     # عطل دائم: أعلِنه فوراً بلا تكرار
             if tried < len(attempts) and backoff > 0:
