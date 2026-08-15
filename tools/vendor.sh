@@ -1,79 +1,91 @@
 #!/usr/bin/env bash
 # =============================================================================
-# vendor.sh — يُنزّل مكتبات العرض إلى public/vendor لاستضافة محلية كاملة (بلا CDN).
-# شغّله من جذر المستودع في بيئة لديها وصول للشبكة (جهاز المطوّر أو CI):
+# vendor.sh — يجلب مكتبات العرض إلى public/vendor لاستضافة محلية كاملة (بلا CDN).
+# شغّله من جذر المستودع على جهاز متّصل بالشبكة:
 #     bash tools/vendor.sh
-# ثم في public/index.html: عطّل خريطة الاستيراد الخارجية وفعّل الكتلة «المحلية».
 #
-# النُّسخ مثبّتة لتطابق ما يتوقّعه المشروع — لا تُحدّثها دون التحقّق من التوافق.
-#   three            0.160.0   (three.module.js + الإضافات الستّ المستخدَمة فعلاً)
-#   es-module-shims  1.8.2
-#   pdf.js           4.0.379   (اختياري — لقراءة نص الـPDF محلياً)
+# النتيجة مطابقة لما ينتجه tools/netlify-build.sh في بيئة بناء Netlify، عمداً:
+# البناء المحلّي والبناء المنشور يجب أن يشحنا الشجرة نفسها بالضبط.
+#
+# F-29 — ثلاثة أعطال أُغلقت هنا:
+#   1. كان الملفّ ينزّل es-module-shims **ويُدرجه في قائمة اللازم**. لكنّ F-11
+#      حذفه من الصفحة، و netlify-build.sh يُفشل البناء صراحةً إن وجد أي أثر له
+#      في public/vendor. أي أن اتّباع التعليمات الموثّقة محلياً كان يُنتج شجرةً
+#      يرفضها البناء المنشور.
+#   2. كان ينزّل ستّ إضافات فقط، والتطبيق يستورد **اثنتي عشرة**: الستّ الساكنة،
+#      إضافةً إلى EffectComposer و RenderPass و OutputPass و ShaderPass و
+#      SSAOPass و FXAAShader في generated/pbr-bridge.js (وهي بدورها تسحب
+#      CopyShader و SSAOShader). فيسقط SSAO و FXAA بصمت إلى POST_UNAVAILABLE،
+#      و tools/verify-offline.mjs يطبع PASS لأنه يفحص ACS.ready وحدها.
+#   3. كان يطلب «تعطيل خريطة الاستيراد الخارجية» و«تبديل مصفوفة SHIMS في
+#      index.html» — وكلاهما لم يعد له وجود: الصفحة تحوي خريطة استيراد واحدة
+#      محلّية أصلاً.
+#
+# النُّسخ مثبّتة لتطابق ما يستورده التطبيق — لا تُحدّثها دون التحقّق من التوافق:
+#   three 0.160.0  ·  pdfjs-dist 4.0.379
 # =============================================================================
 set -euo pipefail
+
 THREE=0.160.0
-SHIMS=1.8.2
 PDFJS=4.0.379
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-VEN="$ROOT/public/vendor"
-DST="$VEN/three@$THREE"
-mkdir -p "$DST/build" "$DST/examples/jsm" "$VEN/es-module-shims@$SHIMS" "$VEN/pdfjs@$PDFJS"
+cd "$ROOT"
+VEN="public/vendor"
+mkdir -p "$VEN"
 
-base="https://unpkg.com/three@$THREE"
-# النواة
-curl -fsSL "$base/build/three.module.js" -o "$DST/build/three.module.js"
-# الإضافات الستّ المستوردة في index.html (وتوابعها الداخلية تُحلّ عبر خريطة الاستيراد)
-addons=(
-  controls/OrbitControls.js
-  webxr/VRButton.js
-  webxr/ARButton.js
-  exporters/GLTFExporter.js
-  objects/Sky.js
-  environments/RoomEnvironment.js
-)
-for a in "${addons[@]}"; do
-  mkdir -p "$DST/examples/jsm/$(dirname "$a")"
-  curl -fsSL "$base/examples/jsm/$a" -o "$DST/examples/jsm/$a"
-done
-# ملاحظة: بعض الإضافات تستورد ملفات jsm أخرى (utils, libs). إن ظهر خطأ استيراد
-# في الكونسول، أضِف المسار الناقص إلى القائمة أعلاه، أو انسخ examples/jsm كاملاً:
-#   npm pack three@$THREE && tar -xzf three-$THREE.tgz && \
-#   cp -r package/examples/jsm/* "$DST/examples/jsm/"
+echo "▶ vendoring three@$THREE (examples/jsm كاملاً حتى تُحلّ استيرادات الإضافات الداخلية)"
+npm pack "three@$THREE" >/dev/null
+tar -xzf "three-$THREE.tgz"
+mkdir -p "$VEN/three@$THREE/build" "$VEN/three@$THREE/examples"
+cp package/build/three.module.js "$VEN/three@$THREE/build/three.module.js"
+rm -rf "$VEN/three@$THREE/examples/jsm"
+cp -R package/examples/jsm "$VEN/three@$THREE/examples/jsm"
+rm -rf package "three-$THREE.tgz"
 
-# es-module-shims
-curl -fsSL "https://cdn.jsdelivr.net/npm/es-module-shims@$SHIMS/dist/es-module-shims.js" \
-  -o "$VEN/es-module-shims@$SHIMS/es-module-shims.js"
+echo "▶ vendoring pdfjs-dist@$PDFJS (module + worker)"
+npm pack "pdfjs-dist@$PDFJS" >/dev/null
+tar -xzf "pdfjs-dist-$PDFJS.tgz"
+mkdir -p "$VEN/pdfjs@$PDFJS"
+cp package/build/pdf.min.mjs        "$VEN/pdfjs@$PDFJS/pdf.min.mjs"        2>/dev/null || cp package/build/pdf.mjs        "$VEN/pdfjs@$PDFJS/pdf.min.mjs"
+cp package/build/pdf.worker.min.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs" 2>/dev/null || cp package/build/pdf.worker.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs"
+rm -rf package "pdfjs-dist-$PDFJS.tgz"
 
-# pdf.js (اختياري)
-curl -fsSL "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/$PDFJS/pdf.min.mjs" \
-  -o "$VEN/pdfjs@$PDFJS/pdf.min.mjs" || true
-curl -fsSL "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/$PDFJS/pdf.worker.min.mjs" \
-  -o "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs" || true
-
-echo "✓ تم التنزيل إلى public/vendor. فعّل الآن خريطة الاستيراد المحلية في index.html،"
-echo "  ولاستضافة es-module-shims محلياً بدّل مصفوفة SHIMS في index.html إلى /vendor/..."
-
-# --- التحقّق الذاتي: تأكّد من وجود كل ملف مطلوب ومن رقم النسخة ---------------
-echo; echo "── التحقّق من الملفات ──"
-fail=0
+# --- التحقّق: نفس قائمة netlify-build.sh حرفاً بحرف (١٧ ملفّاً) --------------
+echo "▶ verifying vendored files"
 must=(
-  "$DST/build/three.module.js"
-  "$DST/examples/jsm/controls/OrbitControls.js"
-  "$DST/examples/jsm/webxr/VRButton.js"
-  "$DST/examples/jsm/webxr/ARButton.js"
-  "$DST/examples/jsm/exporters/GLTFExporter.js"
-  "$DST/examples/jsm/objects/Sky.js"
-  "$DST/examples/jsm/environments/RoomEnvironment.js"
-  "$VEN/es-module-shims@$SHIMS/es-module-shims.js"
+  "$VEN/three@$THREE/build/three.module.js"
+  "$VEN/three@$THREE/examples/jsm/controls/OrbitControls.js"
+  "$VEN/three@$THREE/examples/jsm/webxr/VRButton.js"
+  "$VEN/three@$THREE/examples/jsm/webxr/ARButton.js"
+  "$VEN/three@$THREE/examples/jsm/exporters/GLTFExporter.js"
+  "$VEN/three@$THREE/examples/jsm/objects/Sky.js"
+  "$VEN/three@$THREE/examples/jsm/environments/RoomEnvironment.js"
+  "$VEN/three@$THREE/examples/jsm/postprocessing/EffectComposer.js"
+  "$VEN/three@$THREE/examples/jsm/postprocessing/RenderPass.js"
+  "$VEN/three@$THREE/examples/jsm/postprocessing/ShaderPass.js"
+  "$VEN/three@$THREE/examples/jsm/postprocessing/OutputPass.js"
+  "$VEN/three@$THREE/examples/jsm/postprocessing/SSAOPass.js"
+  "$VEN/three@$THREE/examples/jsm/shaders/FXAAShader.js"
+  "$VEN/three@$THREE/examples/jsm/shaders/CopyShader.js"
+  "$VEN/three@$THREE/examples/jsm/shaders/SSAOShader.js"
+  "$VEN/pdfjs@$PDFJS/pdf.min.mjs"
+  "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs"
 )
-for m in "${must[@]}"; do
-  if [ -s "$m" ]; then echo "  ✓ $(echo "$m" | sed "s#$ROOT/##")"; else echo "  ✗ ناقص: $m"; fail=1; fi
+EXPECTED_VENDORED=17
+[ "${#must[@]}" -eq "$EXPECTED_VENDORED" ] || {
+  echo "✗ vendored-file list has ${#must[@]} entries, expected $EXPECTED_VENDORED"
+  echo "  حدّث EXPECTED_VENDORED عمداً — القائمة المتقلّصة هي كيف يصير أصلٌ ناقصٌ"
+  echo "  بناءً أخضرَ وشاشةً سوداء"
+  exit 1; }
+for f in "${must[@]}"; do
+  [ -s "$f" ] || { echo "✗ MISSING/EMPTY: $f"; exit 1; }
 done
-# رقم نسخة three يجب أن يكون 0.160.0
-if grep -Eq "REVISION *= *['\"]160['\"]" "$DST/build/three.module.js" 2>/dev/null; then
-  echo "  ✓ three REVISION = 160 (النسخة 0.160.0)"
-else
-  echo "  ⚠ لم أجد REVISION=160 صراحةً — تحقّق يدوياً: grep REVISION build/three.module.js"
-fi
-[ "$fail" = 0 ] && echo "── كل الملفات موجودة. التالي: فعّل الخريطة المحلية ثم شغّل tools/verify-offline.mjs ──" \
-              || { echo "── نقص ملفات — راجع الأخطاء أعلاه ──"; exit 1; }
+# لا يُشحَن ما لا يُطلَب — نفس شرط netlify-build.sh حتى لا يختلف البناءان.
+[ ! -e "$VEN/es-module-shims" ] && [ -z "$(find "$VEN" -maxdepth 1 -name 'es-module-shims@*' -print -quit)" ] || {
+  echo "✗ es-module-shims موجود في $VEN ولا شيء يحمّله (F-11)"; exit 1; }
+grep -Eq "REVISION *= *['\"]160['\"]" "$VEN/three@$THREE/build/three.module.js" \
+  || { echo "✗ three REVISION mismatch (expected 160)"; exit 1; }
+
+echo "✓ تمّ. public/vendor صار مطابقاً لما ينتجه tools/netlify-build.sh."
+echo "  لا حاجة إلى تعديل شيء في public/index.html: خريطة الاستيراد فيها محلّية"
+echo "  أصلاً وتشير إلى /vendor/three@$THREE/‎."

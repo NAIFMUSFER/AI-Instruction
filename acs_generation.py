@@ -157,17 +157,23 @@ def estimate_zones(description, btype=None, site_w=None, site_d=None, floors=Non
 
     by_area = 0
     if site_w and site_d:
+        # F-24: OverflowError ليس ابناً لـValueError، فلم يكن يُلتقط هنا. مع
+        # site_w = inf كان `int(area / AREA_PER_ZONE[kind])` يرفعه فيهرب من
+        # understand() كلّها، ويُصنَّف في العملية الابنة عطلاً upstream، فيصل
+        # المستخدم 502 «عطل غير مصنّف من مزوّد النموذج» عن حسابٍ محلّي بحت.
+        # مقاس أرض غير منتهٍ أو NaN لا يدلّ على عدد المناطق أصلاً: يُهمَل.
         try:
             area = float(site_w) * float(site_d)
-            by_area = int(area / AREA_PER_ZONE[kind]) + 1
-        except (TypeError, ValueError):
+            if area == area and area not in (float("inf"), float("-inf")):
+                by_area = int(area / AREA_PER_ZONE[kind]) + 1
+        except (TypeError, ValueError, OverflowError):
             by_area = 0
 
     zones = max(MIN_ZONES, by_text, by_area)
     # قوالب الأدوار مشتركة، فالأدوار لا تضاعف المناطق إلا جزئياً
     try:
         nf = int(floors or 1)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         nf = 1
     if nf > 1:
         zones = int(zones * min(FLOOR_FACTOR_CAP, 1.0 + 0.35 * (nf - 1)))

@@ -1,5 +1,19 @@
 # Known Issues — preserved for later remediation
 
+> **Independent audit pass (F-19 … F-29).** A third-party review of the
+> `AI3_clean` tree ran every offline suite (≈5,200 assertions, 0 failures) and
+> then went looking for what those suites do not cover. It found defects that no
+> test asserted, each reproduced by measurement inside this repository, and fixed
+> them. Two items are recorded as **still open** because closing them is a
+> behavioural change that needs an explicit decision.
+>
+> | | closed by this pass | opened by this pass |
+> |---|---|---|
+> | | **KI-15 … KI-21** | **KI-13, KI-14** |
+>
+> Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
+> measurement that proves it, not an inspection note.
+
 > **Updated by the Production Trust Remediation** (branch `remediation/production-trust`,
 > base `865cca1` → `497a681`). Closures below cite the test that proves them; every
 > item still open says why. Nothing was closed on inspection alone.
@@ -368,3 +382,272 @@ registration behind it — a behavioural change that must be proven not to alter
 no security or correctness consequence, and it was deliberately not attempted in the same
 pass as the split: mixing a mechanical, parser-verified refactor with a behavioural one
 would have made both unreviewable.
+
+---
+
+# Independent audit pass — KI-13 … KI-21
+
+Every item below was reproduced by running code in this repository. Numbers are
+measurements from those runs, not estimates. The environment had no network and
+no `fastapi`, so nothing here depends on either.
+
+## KI-13 · `style-src 'self'` silently drops the `style="…"` attributes the panels inject (OPEN — behavioural fix needed)
+
+**Measured:** `tests/remediation/test_panel_entry.js` opens all six panels in
+real Chromium under the production policy served as a genuine response header,
+and records `style-src-attr … BLOCKED` violations. The repository's own
+`tests/remediation/outputs/csp_probe.json` already recorded the same directive,
+and `tests/remediation/test_csp.js` already asserts that `setAttribute("style",
+…)` is blocked — but `netlify.toml` §32-34 reasoned only about
+`element.style.x = …` (CSSOM, which **is** allowed), and concluded the page was
+clean. That conclusion is true of the static shell and false of the panels.
+
+**Why it was invisible until now:** the panels could not be opened at all
+(KI-19), so the code paths that inject those attributes never ran in any
+browser measurement.
+
+**Where:** `generated/docs.js` (`.dc-vp` / `.dc-sheet` take *all* their geometry
+— `left/top/width/height/aspect-ratio` — from the blocked attribute, so every
+sheet viewport collapses to 0×0 at the corner), `generated/workspace-ui.js`,
+`generated/render-engine.js`, `ui/workspace-ui-wiring.js` (including
+`acsErrorPanel`, the backend-failure UI, which loses the `display:flex` row
+holding its Retry and local-generate buttons).
+
+**Why it is not fixed here:** the correct fix is to move dynamic geometry to
+CSSOM assignment (`el.style.left = …` after insertion, which the policy
+permits) or to generated classes. Most of the call sites live in
+`public/app/generated/*`, which is emitted by `tools/build_*_browser.py` from
+the Python layers — editing the JavaScript directly would be overwritten by the
+next regeneration. The change therefore belongs in the builders, is behavioural,
+and must be proven not to alter the `window.ACS` surface. That is a separate
+pass, deliberately not mixed with the mechanical fixes in this one.
+
+## KI-14 · Upload validation and layout run on the asyncio event loop (OPEN — architectural)
+
+**Where:** `acs_understand_api.py` — `UPLOAD.validate_images`,
+`UPLOAD.validate_pdf`, the two `json.dumps` + `validate_json_bytes` calls on
+`/v1/edit`, and `EA.plan()` → `acs_layout._autofix_apply` (O(n²), 60 iterations)
+are synchronous CPU-bound calls inside `async def` handlers, with no
+`run_in_executor`. The LLM path is correctly off-loaded through `run_job`; the
+validation path is not.
+
+**Consequence:** uvicorn runs one event loop thread, so while any of these burn
+CPU, every other connection stalls — including `healthCheckPath: /health`
+(`render.yaml`), which makes Render mark the instance unhealthy and restart it.
+The declared `ACS_REQUEST_TIMEOUT_S` (840 s) wraps `run_job` only; nothing
+bounds the validation phase.
+
+**Mitigated, not closed, by this pass:** F-21/F-22/F-23 cap the *worst case* of
+that CPU work (see KI-18 and KI-19 below) — a PDF that used to run unbounded now
+finishes in ≈3 s at the very worst, and the image path is rejected from the
+header without decoding. The architectural point stands: those seconds still
+block the loop. Closing it means routing validation through `_POOL` the same way
+generation is, and proving the error contract is unchanged.
+
+## KI-15 · Empty environment variables prevented the server from importing at all (**CLOSED** — F-19)
+
+**Reproduced:** `int(os.environ.get("ACS_MAX_UPLOAD_MB", "12"))` with the
+variable set to `""` raises `ValueError: invalid literal for int() with base 10:
+''` — at module import, so `acs_understand_api` never loads and the service does
+not boot. `.env.example` shipped `ACS_MAX_BUILDING=`, `ACS_MAX_UPLOAD_MB=` and
+`ACS_REPAIR_ROUNDS=` **as empty strings**, and its own header instructs
+`cp .env.example .env`. The `ACS_REPAIR_ROUNDS` case is worse than a boot
+failure: it raises inside the generation subprocess, is classified by
+`classify_upstream`, and reaches the user as **502 `ACS_UPSTREAM_UNKNOWN` — an
+unclassified fault from the model provider**, for a purely local config error.
+
+**Fixed:** `acs_understand_api.env_int()` (same shape as the `env_int` that
+already existed in `acs_rate_limit`) now backs every integer read in that module;
+`acs_understand.py` uses its own existing `_env_int` for `ACS_REPAIR_ROUNDS`;
+`.env.example` ships real values with a comment saying why.
+
+## KI-16 · `MAX_UPLOAD` was declared, advertised in `/health`, and never compared to anything (**CLOSED** — F-21)
+
+**Reproduced:** `grep` for `MAX_UPLOAD` across the whole repository returned
+exactly two occurrences in code — its definition (`acs_understand_api.py:177`)
+and its publication in `/health` (`:373`) — plus documentation claiming it is
+enforced. Both upload handlers did `await file.read()` (or `await f.read()` per
+part) **before** any size check, so the entire body became resident first; the
+12 MiB check inside `validate_pdf` could only fire afterwards.
+
+**Fixed:** `_read_capped()` reads in 256 KiB chunks and raises
+`ACS_PAYLOAD_TOO_LARGE` the moment the running total crosses `MAX_UPLOAD`,
+across all parts of a multi-image request. `/health` now advertises a limit that
+exists.
+
+## KI-17 · `/v1/edit` `notes` had a count limit and no size limit (**CLOSED** — F-20)
+
+**Where:** the handler checked `len(req.notes) > 40` and nothing else;
+`validate_json_bytes` and `MAX_BUILDING` are applied to `req.building` only.
+`acs_understand.apply_notes` interpolates each note's `text`/`layer`/`floor`/
+`room` into the prompt and calls `call_llm(..., truncate=False)`, explicitly
+disabling the `MAX_DESC_CHARS` clamp. Forty notes of ten million characters each
+was a 400 MB body, accepted, parsed, and pickled across the `spawn` boundary.
+
+**Fixed:** `_cap_notes()` bounds the total to `ACS_MAX_NOTES_CHARS` (20,000 by
+default) on `/v1/edit` and on the `notes` form field of `/v1/understand/image`.
+
+## KI-18 · A 120 KB PNG allocated 601 MB and was accepted (**CLOSED** — F-22)
+
+**Reproduced in this repository:**
+
+```
+PNG 11000×3600, solid colour  →     122,723 bytes on the wire   (limit 5,242,880)
+                                 39,600,000 pixels              (limit 40,000,000)
+                                      11,000 px longest side    (limit 12,000)
+validate_image(...)           →  1.23 s, peak RSS 601 MB, ACCEPTED
+```
+
+Every declared limit measures the wire or the pixel count; none measured the
+decoded raster. The `Image.MAX_IMAGE_PIXELS` bomb guard is set *equal to* the
+pixel budget, so it can never fire below it. The Render `starter` instance has
+512 MB: one unauthenticated request killed the process, and the in-memory
+rate-limit state died with it. `validate_images` allows six.
+
+**Fixed:** `ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES` (32 MiB default) is checked from
+the *header*, before `im.load()`, using bytes-per-pixel derived from the declared
+mode; a shared batch budget follows the same rule. New codes
+`IMAGE_DECODED_TOO_LARGE` and `IMAGE_DECODED_BUDGET_EXCEEDED`.
+**After:** the same PNG is rejected in 0.00 s with no decode; a realistic
+4000×2800 plan still passes. Regression: `tests/remediation/test_upload_security.py`
+§N, including the non-vacuousness check that the payload really does clear all
+three old limits.
+
+## KI-19 · A 72 KB PDF pinned the CPU for 62 seconds and was accepted (**CLOSED** — F-23)
+
+**Reproduced in this repository** (one page, Flate content stream, ~260:1):
+
+| file | expands to | before | after |
+|---|---|---|---|
+| 4 KB | 0.9 MB | 0.37 s | 0.23 s |
+| 18 KB | 4.6 MB | 5.04 s | 0.80 s |
+| 72 KB | 18.4 MB | **62.07 s** | **3.12 s** |
+| 268 KB | 74 MB | (super-linear) | **0.03 s — rejected** |
+| 1.0 MB | 294 MB | (super-linear) | **0.04 s — rejected** |
+
+The 400,000-character budget was checked *between* pages and applied *after*
+each one, but `page.extract_text()` itself was unbounded — and pypdf decompresses
+and parses the whole content stream into an operation list *before* extraction
+begins, so a character budget cannot reach that phase at all. The allowed
+maximum, 12 MiB, is 166× the 72 KB case.
+
+**Fixed, two layers:** `_extract_page_text()` passes a `visitor_text` callback
+that aborts the moment the remaining character budget is reached; and
+`_flate_expansion()` measures total Flate expansion **before** any extraction,
+decompressing each stream with an explicit `max_length` so the measurement
+itself can never build more than the budget in memory. Budget
+`ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES`, 24 MiB by default; new code
+`PDF_DECOMPRESSION_BOMB`. Worst case is now bounded at ≈3 s. Regression:
+`tests/remediation/test_upload_security.py` §O.
+
+## KI-20 · `site_w: 1e400` surfaced as "unclassified fault from the model provider" (**CLOSED** — F-24)
+
+**Reproduced:** pydantic v2 defaults to `allow_inf_nan=True`, so
+`{"text":"x","site_w":1e400,"site_d":1e400}` yields `inf`. In
+`acs_generation.plan_strategy`, `int(area / AREA_PER_ZONE[kind])` then raises
+`OverflowError` — which is **not** a subclass of `ValueError`, so the
+`except (TypeError, ValueError)` immediately around it does not catch it. The
+exception escapes `understand()`, is caught only by the generic handler in the
+child process, and is classified as an upstream failure: the user sees **502
+`ACS_UPSTREAM_UNKNOWN`** for a local arithmetic bug, at zero token cost to the
+caller and with the operator's upstream-error telemetry poisoned.
+
+**Fixed, two layers:** `UnderstandReq` sets `allow_inf_nan=False` and bounds
+`site_w`/`site_d` (`gt=0, le=100000`) and `floors` (`ge=1, le=400`), so the
+request is rejected as a 422 validation error with the field named; and
+`plan_strategy` additionally ignores non-finite areas and catches
+`OverflowError`, so the `/v1/understand/image` form path — which does not go
+through that model — is covered too.
+
+## KI-21 · Production shipped as `ACS_ENV=development`, as root, with six unreachable feature panels (**CLOSED** — F-25 … F-29)
+
+Five separate defects, grouped because each is a small, verified fix.
+
+**F-25 · `ACS_ENV` was never set anywhere.** Neither `render.yaml` nor the
+`Dockerfile` set it, so `acs_logging.ENV` stayed `"development"`,
+`IS_PRODUCTION` stayed `False`, and `STACK_TRACES = not IS_PRODUCTION` was
+therefore **`True` in production** — the full formatted traceback printed on
+every unhandled error, which is precisely what F-18 claimed to have closed.
+`E.redact` strips key-shaped substrings only; it does not strip request bodies,
+prompt text or internal paths carried in frame context. Second consequence:
+`acs_rate_limit.health_status()` only raises
+`PRODUCTION_WITHOUT_DISTRIBUTED_BACKEND` when `ACS_ENV=production`, so `/health`
+reported the limiter as fine while it was a per-process `MemoryBackend` — making
+the `ACS_RL_GLOBAL_DAY=400` spend cap, described in `render.yaml` as "the most
+important safety valve", reset on every deploy, restart and OOM kill.
+*Fixed:* set in both `render.yaml` and the `Dockerfile`.
+
+**F-26 · the container ran as uid 0.** `python:3.11-slim` sets no `USER` and the
+`Dockerfile` added none. *Fixed:* a non-root `acs` user (uid 10001) owns `/app`
+and runs the server; nothing needs root after `pip install`.
+
+**F-27 · six shipped feature panels had no entry point.** `#acsWorkspace`,
+`#rvPanel`, `#bxPanel`, `#dcPanel`, `#pqPanel` and `#adPanel` ship their full
+markup in `public/index.html` and their full logic in `public/app/generated/*`,
+and **no line of shipped code called `init()`, `bind()` or `open()` on any of
+them** — a repository-wide grep found the calls only inside `tests/`. Every
+panel is `display:none` until a `.on` class that nothing added. So the project
+tree, inspector, issue centre, revision history, undo/redo, language toggle, and
+the BIM / documentation / render / visual-quality / architectural-detail panels
+were unreachable from the browser; and because `bind()` never ran, the B/E/I/F
+and Ctrl+Z shortcuts and the `beforeunload` unsaved-work guard were never
+installed either — closing the tab discarded edits with no prompt.
+*Why no suite caught it:* every existing suite calls `init()` itself before
+asserting, which proves the panel works **if invoked**, not that anything
+invokes it. The one file that would have caught it,
+`tests/production/verify_live_browser.js`, looks for `#wsBtnTree` on the live
+page and has never run (`NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED`).
+*Fixed:* `public/app/ui/panels-entry.js` (imported last by `main.js`), a
+six-button launcher group in the shell wired with `addEventListener` only, and
+`window.ACS.exportModel()` exposed from `ui/workspace-ui-wiring.js` so the
+panels can be handed the active model. *Proof:*
+`tests/remediation/test_panel_entry.js` — 29 assertions in real Chromium under
+the production CSP: all six panels actually acquire `.on`, `init()` really wires
+the ten workspace-toolbar buttons, clicking with no model explains what is
+missing instead of opening an empty panel, and a negative control asserts no
+second entry point exists.
+
+**F-28 · `?debug=1` was a no-op.** `boot/debug-toggle.js` did
+`e.style.display=''`, but after the F-09 migration `#statCount` is hidden by a
+*class* (`.acs-u-13{display:none}`), and clearing an inline property cannot beat
+a class rule. The element counter was updated on every frame and never shown.
+*Fixed:* an explicit `.acs-debug-on` class, the same technique
+`boot/engine-guard.js` already used correctly.
+
+**F-29 · `tools/vendor.sh` produced a tree the production build rejects.** It
+still downloaded `es-module-shims` **and listed it as mandatory**, while
+`tools/netlify-build.sh` fails the build if any trace of it exists in
+`public/vendor` (F-11 removed it). It also fetched six addons while the
+application imports twelve — the six postprocessing/shader modules used by
+`generated/pbr-bridge.js` were missing, so SSAO and FXAA would silently degrade
+to `POST_UNAVAILABLE` while `tools/verify-offline.mjs` still printed PASS
+(it only checks `ACS.ready`). Its closing instructions referred to an external
+import map and a `SHIMS` array that no longer exist in the page.
+*Fixed:* rewritten to produce byte-for-byte what `netlify-build.sh` produces,
+with the same 17-file checklist and the same anti-shrink guard.
+
+---
+
+## Packaging note — not a code defect
+
+The `AI3CLEAN.zip` archive as received had **CRLF line endings on 366 of its
+files** (the repository itself is LF). Consequences measured here:
+
+* `sh tests/deploy/verify_deploy.sh` failed immediately with
+  `cd: can't cd to <root>` — the trailing `\r` became part of the path. The
+  same applies to `tools/netlify-build.sh` and `tools/vendor.sh` on a Linux
+  build agent, and to `RUN` lines in the `Dockerfile`.
+* `tests/remediation/test_bundle_report.py` reported **20 failures**: every
+  byte count in `tests/performance/bundle_report.json` disagreed with the files
+  on disk (`index.html` 44,882 on disk vs 44,255 declared, and so on). After
+  normalising to LF, every size matched exactly and the suite returned
+  91 passed / 0 failed.
+
+Not affected, verified rather than assumed: **the CSP import-map hash still
+matches.** The HTML tokenizer normalises `\r\n` to `\n` while preprocessing the
+input stream, so the browser hashes the LF form; measured in real Chromium with
+the production policy as a genuine response header — zero violations, import map
+accepted, `textContent.length` 131 not 136.
+
+`.gitattributes` was added (`* text=auto eol=lf`, with binary fixtures marked)
+so a checkout on Windows cannot reintroduce this.

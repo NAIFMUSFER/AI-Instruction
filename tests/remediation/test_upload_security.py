@@ -52,7 +52,9 @@ _REQUIRED = ('SPEC', 'UploadRejected', 'sniff', 'safe_filename_label',
              'ACS_UPLOAD_MAX_PDF_BYTES', 'ACS_UPLOAD_MAX_PDF_PAGES',
              'ACS_UPLOAD_MAX_PDF_TEXT_CHARS', 'ACS_UPLOAD_MAX_JSON_BYTES',
              'ACS_UPLOAD_MAX_JSON_DEPTH', 'ACS_UPLOAD_MAX_JSON_KEYS',
-             'ACS_UPLOAD_MAX_DXF_BYTES')
+             'ACS_UPLOAD_MAX_DXF_BYTES',
+             'ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES', '_decoded_bytes',    # F-22
+             'ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES', '_flate_expansion')  # F-23
 _missing = [s for s in _REQUIRED if not hasattr(S, s)]
 if _missing:
     print('UPLOAD SECURITY: CANNOT RUN — PARTIALLY MERGED TREE')
@@ -690,7 +692,9 @@ def _call_name(node):
 
 CALLED = {_call_name(n) for n in ast.walk(TREE) if isinstance(n, ast.Call)}
 
-ALLOWED_IMPORTS = {'io', 'json', 'os', 'warnings', 'PIL', 'pypdf'}
+# zlib أُضيف مع F-23: حارس قنبلة انضغاط PDF يفكّ كل مجرى بحدّ max_length صريح
+# فلا يبني في الذاكرة أكثر من الميزانية. وحدة قياسية بلا شبكة ولا نظام ملفّات.
+ALLOWED_IMPORTS = {'io', 'json', 'os', 'warnings', 'zlib', 'PIL', 'pypdf'}
 chk('الوحدة لا تستورد سوى %s' % ', '.join(sorted(ALLOWED_IMPORTS)),
     IMPORTED <= ALLOWED_IMPORTS, 'extra=%s' % sorted(IMPORTED
                                                      - ALLOWED_IMPORTS))
@@ -752,9 +756,13 @@ chk('لا استثناء غير UploadRejected يتسرّب من %d حمولة �
 
 print('\n== L · قراءة البيئة لا تُسقط الإقلاع (عطل int("") الكامن) ==')
 ENV_NAMES = ('ACS_UPLOAD_MAX_IMAGE_BYTES', 'ACS_UPLOAD_MAX_IMAGE_PIXELS',
-             'ACS_UPLOAD_MAX_IMAGE_SIDE', 'ACS_UPLOAD_MAX_IMAGES',
+             'ACS_UPLOAD_MAX_IMAGE_SIDE',
+             'ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES',      # F-22
+             'ACS_UPLOAD_MAX_IMAGES',
              'ACS_UPLOAD_MAX_PDF_BYTES', 'ACS_UPLOAD_MAX_PDF_PAGES',
-             'ACS_UPLOAD_MAX_PDF_TEXT_CHARS', 'ACS_UPLOAD_MAX_JSON_BYTES',
+             'ACS_UPLOAD_MAX_PDF_TEXT_CHARS',
+             'ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES',   # F-23
+             'ACS_UPLOAD_MAX_JSON_BYTES',
              'ACS_UPLOAD_MAX_JSON_DEPTH', 'ACS_UPLOAD_MAX_JSON_KEYS',
              'ACS_UPLOAD_MAX_DXF_BYTES')
 DEFAULTS = copy.deepcopy(S.SPEC['limits'])
@@ -793,6 +801,102 @@ S = importlib.reload(S)
 chk('الحدود عادت إلى الافتراضي بعد استعادة البيئة',
     S.SPEC['limits'] == DEFAULTS)
 
+print('\n== N · ميزانية الذاكرة بعد فكّ الترميز (F-22) ==')
+# صورة PNG صلبة اللون تمرّ من الحدود الثلاثة القديمة كلّها: ١٢٠ ك.ب على السلك
+# (الحدّ ٥ م.ب)، و٣٩٫٦ مليون بكسل (الحدّ ٤٠ مليون)، وضلع ١١٠٠٠ (الحدّ ١٢٠٠٠).
+# قياساً قبل الإصلاح: ذروة ٦٠١ م.ب وقُبِلت — على نسخة بـ٥١٢ م.ب هذا قتل للعملية.
+_bomb = io.BytesIO()
+Image.new('RGB', (11000, 3600), (3, 7, 11)).save(_bomb, 'PNG', optimize=True)
+_bomb = _bomb.getvalue()
+chk('الصورة الاصطناعية تمرّ فعلاً من الحدود الثلاثة القديمة (الفحص غير عبثي)',
+    len(_bomb) <= S.ACS_UPLOAD_MAX_IMAGE_BYTES
+    and 11000 * 3600 <= S.ACS_UPLOAD_MAX_IMAGE_PIXELS
+    and 11000 <= S.ACS_UPLOAD_MAX_IMAGE_SIDE,
+    'wire=%d px=%d' % (len(_bomb), 11000 * 3600))
+try:
+    S.validate_image(_bomb, 'image/png')
+    _code = None
+except S.UploadRejected as exc:
+    _code = exc.code
+chk('صورة ٣٩٫٦ مليون بكسل تُرفض بـIMAGE_DECODED_TOO_LARGE قبل أي فكّ ترميز',
+    _code == 'IMAGE_DECODED_TOO_LARGE', _code)
+_ok = io.BytesIO()
+Image.new('RGB', (2400, 1700), (200, 30, 60)).save(_ok, 'PNG')
+_ok = _ok.getvalue()
+try:
+    _res = S.validate_image(_ok, 'image/png')
+    _pass = _res['width'] == 2400 and _res['height'] == 1700
+except S.UploadRejected as exc:
+    _pass = False
+    _res = exc.code
+chk('مخطّط معماري واقعي ‎2400×1700‎ ما زال يُقبل (لا رفض زائد)', _pass, _res)
+chk('الميزانية تُحسب بالبايتات لا بالبكسلات (RGBA أثقل من L لنفس الأبعاد)',
+    S._decoded_bytes('RGBA', 100, 100) == 4 * 10000
+    and S._decoded_bytes('L', 100, 100) == 10000
+    and S._decoded_bytes('MODE-NOT-KNOWN', 100, 100) == 4 * 10000)
+
+print('\n== O · قنبلة انضغاط PDF (F-23) ==')
+
+
+def _flate_pdf(repeats):
+    """PDF بصفحة واحدة، مجرى محتواه ينضغط بنسبة عالية جداً."""
+    body = (b'BT /F1 8 Tf 10 10 Td (' + b'A' * 200 + b') Tj ET\n') * repeats
+    comp = zlib.compress(body, 9)
+    objs = [b'<< /Type /Catalog /Pages 2 0 R >>',
+            b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+            b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] '
+            b'/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+            b'<< /Length %d /Filter /FlateDecode >>\nstream\n' % len(comp)
+            + comp + b'\nendstream',
+            b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
+    out = io.BytesIO()
+    out.write(b'%PDF-1.4\n')
+    offsets = []
+    for i, obj in enumerate(objs, 1):
+        offsets.append(out.tell())
+        out.write(b'%d 0 obj\n' % i + obj + b'\nendobj\n')
+    start = out.tell()
+    out.write(b'xref\n0 %d\n0000000000 65535 f \n' % (len(objs) + 1))
+    for off in offsets:
+        out.write(b'%010d 00000 n \n' % off)
+    out.write(b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n'
+              % (len(objs) + 1, start))
+    return out.getvalue(), len(body)
+
+
+_pdf, _expanded = _flate_pdf(300000)
+chk('القنبلة أصغر بكثير من سقف الحجم وصفحتها واحدة (الفحص غير عبثي)',
+    len(_pdf) < S.ACS_UPLOAD_MAX_PDF_BYTES
+    and _expanded > S.ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES,
+    'file=%d expands=%d' % (len(_pdf), _expanded))
+try:
+    S.validate_pdf(_pdf)
+    _code = None
+except S.UploadRejected as exc:
+    _code = exc.code
+chk('PDF يتمدّد فوق الميزانية يُرفض بـPDF_DECOMPRESSION_BOMB',
+    _code == 'PDF_DECOMPRESSION_BOMB', _code)
+_small, _ = _flate_pdf(200)
+try:
+    _res = S.validate_pdf(_small)
+    _pass = len(_res['text']) > 0 and _res['pages'] == 1
+except S.UploadRejected as exc:
+    _pass = False
+    _res = exc.code
+chk('PDF نصّي عادي ما زال يُقبل ويُستخرج نصّه (لا رفض زائد)', _pass, _res)
+_mid, _ = _flate_pdf(80000)
+try:
+    _res = S.validate_pdf(_mid)
+    _pass = _res['truncated'] is True and \
+        len(_res['text']) <= S.ACS_UPLOAD_MAX_PDF_TEXT_CHARS
+except S.UploadRejected as exc:
+    _pass = False
+    _res = exc.code
+chk('صفحة واحدة طويلة تُقصّ عند سقف الأحرف وتُعلَن truncated', _pass, _res)
+_measured, _over = S._flate_expansion(_pdf, 1024)
+chk('قياس التمدّد نفسه محدود بالميزانية فلا يصير الفحص هجوماً',
+    _over is True and _measured <= 4096, '%d' % _measured)
+
 print('\n== M · العقد المُعلَن صالح للعرض في /health ==')
 h = S.health_status()
 _blob = json.dumps(h, ensure_ascii=False).lower()
@@ -815,8 +919,10 @@ chk('GIF معلن مرفوضاً و PNG/JPEG/WEBP معلنة مقبولة',
 USED = ('EMPTY_UPLOAD', 'TOO_MANY_FILES', 'IMAGE_TOO_LARGE',
         'IMAGE_TYPE_NOT_ALLOWED', 'IMAGE_TYPE_MISMATCH',
         'IMAGE_TOO_MANY_PIXELS', 'IMAGE_SIDE_TOO_LARGE',
-        'IMAGE_PIXEL_BUDGET_EXCEEDED', 'IMAGE_CORRUPT', 'PDF_TOO_LARGE',
+        'IMAGE_PIXEL_BUDGET_EXCEEDED', 'IMAGE_CORRUPT',
+        'IMAGE_DECODED_TOO_LARGE', 'PDF_TOO_LARGE',
         'PDF_BAD_SIGNATURE', 'PDF_ENCRYPTED', 'PDF_TOO_MANY_PAGES',
+        'PDF_DECOMPRESSION_BOMB',
         'PDF_UNREADABLE', 'JSON_TOO_LARGE', 'JSON_MALFORMED', 'JSON_TOO_DEEP',
         'JSON_TOO_MANY_KEYS', 'JSON_FORBIDDEN_KEY', 'DXF_TOO_LARGE',
         'DXF_MALFORMED')

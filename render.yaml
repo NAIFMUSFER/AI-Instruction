@@ -13,6 +13,13 @@ services:
       - key: ANTHROPIC_API_KEY
         sync: false
 
+      # F-25: بلا هذا يبقى ACS_ENV = "development" على الخادم الحيّ، فتُطبَع
+      # آثار الاستدعاء كاملةً في السجلّ عند كل عطل غير معالَج (acs_logging
+      # يشتقّ STACK_TRACES من not IS_PRODUCTION)، ولا يُعلن /health أن الحدّ
+      # يعمل على ذاكرة العملية وحدها بلا مخزن موزّع.
+      - key: ACS_ENV
+        value: production
+
       - key: ACS_LLM_MODEL
         value: claude-sonnet-5
       # قائمة النماذج المسموح للزائر طلبها. غيابها كان يترك الافتراضي ضمنياً في

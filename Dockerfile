@@ -37,5 +37,15 @@ COPY acs_upload_security.py acs_rate_limit.py acs_generation_job.py ./
 COPY acs_logging.py acs_build_info.py ./
 
 ENV ACS_LLM_MODEL=claude-sonnet-5
+# F-25: بلا هذا يبقى ACS_ENV = "development" في الإنتاج، فيصير IS_PRODUCTION
+# في acs_logging مساوياً False، وSTACK_TRACES = not IS_PRODUCTION أي True —
+# فيُطبع أثر الاستدعاء كاملاً في سجلّ الإنتاج عند كل عطل غير معالَج، وهو
+# بالضبط ما ادّعى F-18 إغلاقه. ويمنع أيضاً acs_rate_limit من رفع
+# PRODUCTION_WITHOUT_DISTRIBUTED_BACKEND حين يعمل الحدّ على ذاكرة العملية وحدها.
+ENV ACS_ENV=production
+# F-26: بلا USER كانت كل عملية داخل الحاوية تعمل بـuid 0 — python:3.11-slim
+# لا يحدّد مستخدماً. لا شيء هنا يحتاج الجذر بعد انتهاء pip install.
+RUN useradd --create-home --uid 10001 acs && chown -R acs:acs /app
+USER acs
 EXPOSE 8000
 CMD ["sh","-c","uvicorn acs_understand_api:app --host 0.0.0.0 --port ${PORT:-8000}"]

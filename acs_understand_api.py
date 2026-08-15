@@ -26,7 +26,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 import acs_understand as U
 import acs_api_errors as E
@@ -169,13 +169,37 @@ async def _h_any(request: Request, exc: Exception):
 # حماية الخادم العام: حدّ طلبات لكل IP + حدّ يومي إجمالي + حدّ حجم النص.
 # الخادم مفتوح للزوّار، والمفتاح عليه — بلا هذا يمكن استنزاف الرصيد في دقائق.
 # ---------------------------------------------------------------------------
-RL_GEN_HOUR  = int(os.environ.get("ACS_RL_GEN_HOUR", "8"))     # توليد/زائر/ساعة
-RL_GEN_DAY   = int(os.environ.get("ACS_RL_GEN_DAY", "25"))     # توليد/زائر/يوم
-RL_EDIT_HOUR = int(os.environ.get("ACS_RL_EDIT_HOUR", "30"))   # تعديلات/زائر/ساعة
-RL_GLOBAL_DAY = int(os.environ.get("ACS_RL_GLOBAL_DAY", "400"))  # سقف يومي للخادم كله
-MAX_TEXT = int(os.environ.get("ACS_MAX_TEXT", "60000"))        # حرفاً لكل طلب
-MAX_UPLOAD = int(os.environ.get("ACS_MAX_UPLOAD_MB", "12")) * 1024 * 1024
-MAX_BUILDING = int(os.environ.get("ACS_MAX_BUILDING", "900000"))   # حجم النموذج في /v1/edit
+def env_int(name, default):
+    """قراءة عدد صحيح من البيئة بلا إسقاط الخدمة عند الاستيراد.
+
+    F-19: كان `int(os.environ.get(...))` يرفع ValueError على القيمة الفارغة،
+    و`.env.example` نفسه يشحن `ACS_MAX_BUILDING=` و`ACS_MAX_UPLOAD_MB=` فارغَين
+    مع تعليمة `cp .env.example .env` — فينكسر استيراد الوحدة كلّها ولا يقلع
+    الخادم إطلاقاً. القيمة الفارغة أو غير الرقمية أو غير الموجبة تعود إلى
+    الافتراضي المُعلن. نفس المعالجة الموجودة أصلاً في acs_rate_limit.env_int.
+    """
+    default = int(default)
+    raw = os.environ.get(name)
+    if raw is None or not str(raw).strip():
+        return default
+    try:
+        value = int(str(raw).strip())
+    except (TypeError, ValueError):
+        return default
+    return value if value > 0 else default
+
+
+RL_GEN_HOUR  = env_int("ACS_RL_GEN_HOUR", 8)       # توليد/زائر/ساعة
+RL_GEN_DAY   = env_int("ACS_RL_GEN_DAY", 25)       # توليد/زائر/يوم
+RL_EDIT_HOUR = env_int("ACS_RL_EDIT_HOUR", 30)     # تعديلات/زائر/ساعة
+RL_GLOBAL_DAY = env_int("ACS_RL_GLOBAL_DAY", 400)  # سقف يومي للخادم كله
+MAX_TEXT = env_int("ACS_MAX_TEXT", 60000)          # حرفاً لكل طلب
+MAX_UPLOAD = env_int("ACS_MAX_UPLOAD_MB", 12) * 1024 * 1024
+MAX_BUILDING = env_int("ACS_MAX_BUILDING", 900000)   # حجم النموذج في /v1/edit
+# F-20: سقف مجموع أحرف الملاحظات في /v1/edit و/v1/understand/image. كان الحقل
+# بلا أي حدّ حجم ويُمرَّر إلى المُوجّه بـtruncate=False، فأربعون ملاحظة بعشرة
+# ملايين حرف تُقبل وتُنسخ عبر حدّ العملية.
+MAX_NOTES = env_int("ACS_MAX_NOTES_CHARS", 20000)
 ALLOWED_MODELS = {m.strip() for m in os.environ.get(
     "ACS_ALLOWED_MODELS", "claude-sonnet-5,claude-haiku-4-5").split(",") if m.strip()}
 
@@ -243,6 +267,59 @@ def _cap(text: str) -> str:
     return text
 
 
+def _cap_notes(notes) -> None:
+    """F-20: سقف على الملاحظات — نصّاً واحداً أو قائمة كائنات.
+
+    كان MAX_NOTES غير موجود أصلاً: الحقل `notes` في /v1/edit يُفحص عدده (٤٠)
+    ولا يُفحص حجمه، ثم يُدرَج حرفياً في نصّ التوجيه بـtruncate=False.
+    """
+    if not notes:
+        return
+    if isinstance(notes, str):
+        total = len(notes)
+    else:
+        total = 0
+        for n in notes:
+            if isinstance(n, str):
+                total += len(n)
+            else:
+                for key in ("text", "layer", "floor", "room"):
+                    value = getattr(n, key, None)
+                    if value is None and isinstance(n, dict):
+                        value = n.get(key)
+                    if isinstance(value, str):
+                        total += len(value)
+    if total > MAX_NOTES:
+        raise E.AcsApiError(
+            E.ACS_PAYLOAD_TOO_LARGE,
+            "الملاحظات طويلة جداً (%d حرف). الحدّ %d — اختصرها أو أرسلها على دفعات."
+            % (total, MAX_NOTES))
+
+
+async def _read_capped(upload, budget, seen=0):
+    """F-21: يقرأ الملفّ المرفوع على دفعات ويتوقّف فور تجاوز MAX_UPLOAD.
+
+    كان `await file.read()` يُحضر الجسد كلّه إلى الذاكرة قبل أي فحص حجم، وكان
+    MAX_UPLOAD مُعلناً في /health وغير مستعمَل في أي مقارنة في المستودع كلّه
+    (موضعان فقط: تعريفه وعرضه). جسد ٤ غيغابايت كان يصير مقيماً في الذاكرة قبل
+    أن يُستشار حدّ الاثني عشر ميغابايت.
+    """
+    chunks = []
+    total = 0
+    while True:
+        chunk = await upload.read(262144)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total + seen > budget:
+            raise E.AcsApiError(
+                E.ACS_PAYLOAD_TOO_LARGE,
+                "حجم الرفع أكبر من الحدّ المسموح (%d ميغابايت)."
+                % (budget // (1024 * 1024)))
+        chunks.append(chunk)
+    return b"".join(chunks), total
+
+
 # ---------------------------------------------------------------------------
 # مهلة صريحة على كل توليد: العامل المحجوز بلا سقف يبتلع خيطاً ثم تقتله البوّابة،
 # فيصل العميل انقطاعٌ بلا جسد رد — لا يمكن تصنيفه ولا عرضه. هنا نردّ 504 بجسد JSON.
@@ -250,7 +327,7 @@ def _cap(text: str) -> str:
 # ---------------------------------------------------------------------------
 REQUEST_TIMEOUT_S = float(os.environ.get("ACS_REQUEST_TIMEOUT_S", "840"))
 _POOL = concurrent.futures.ThreadPoolExecutor(
-    max_workers=int(os.environ.get("ACS_WORKER_THREADS", "8")),
+    max_workers=env_int("ACS_WORKER_THREADS", 8),
     thread_name_prefix="acs-gen")
 _JOBS = JOBS.default_runner()
 
@@ -319,13 +396,22 @@ def _report(building: dict) -> dict:
 
 
 class UnderstandReq(BaseModel):
+    # F-24: pydantic v2 يقبل inf/nan افتراضياً (allow_inf_nan=True). كان
+    # {"text":"x","site_w":1e400,"site_d":1e400} يمرّ فيصير site_w = inf، ثم
+    # يرفع acs_generation.plan_strategy الخطأ OverflowError عند
+    # `int(area / AREA_PER_ZONE[kind])` — وهو ليس ضمن `except (TypeError,
+    # ValueError)` هناك — فيهرب إلى except العام في العملية الابنة ويظهر
+    # للمستخدم 502 «عطل غير مصنّف من مزوّد النموذج». عطلٌ محلّي يُنسب إلى طرف
+    # ثالث، ويستهلك مقعد توليد وعملية كاملة بلا أي تكلفة رموز على المهاجم.
+    model_config = ConfigDict(allow_inf_nan=False)
+
     text: str
     model: str | None = None
     btype: str | None = None      # auto | residential | warehouse | office | retail
     strict: bool | None = None    # التزام حرفي بوصف العميل: لا إضافات قياسية
-    site_w: float | None = None   # أبعاد الأرض من الواجهة (اختيارية)
-    site_d: float | None = None
-    floors: int | None = None
+    site_w: float | None = Field(default=None, gt=0, le=100000)
+    site_d: float | None = Field(default=None, gt=0, le=100000)
+    floors: int | None = Field(default=None, ge=1, le=400)
     deep: bool | None = None      # فرض/تعطيل التوليد على مرحلتين
 
 
@@ -577,6 +663,9 @@ async def edit(req: EditReq, request: Request):
     if len(req.notes) > 40:
         raise E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE,
                             "عدد الملاحظات كبير (%d) — أرسلها على دفعات." % len(req.notes))
+    # F-20: العدد وحده لا يكفي — الحجم كان بلا أي حدّ، والنصّ يُمرَّر إلى
+    # المُوجّه بـtruncate=False فلا يقصّه MAX_DESC_CHARS أيضاً.
+    _cap_notes(req.notes)
     try:
         out = await run_job("acs_understand:apply_notes",
                             dict(building=req.building, notes=req.notes,
@@ -615,9 +704,13 @@ async def understand_image(
     # F-05: لا ثقة باسم الملفّ ولا بـContent-Type. البايتات تُشمّ وتُفكّ فعلاً
     # وتُعاد ترميزاً بلا بيانات وصفية قبل أن تغادر الخادم. لا إعادة وسم صامتة.
     rid = request_id_of(request)
+    _cap_notes(notes)
     raw = []
+    seen = 0
     for f in files:
-        raw.append((await f.read(), f.content_type))
+        data, size = await _read_capped(f, MAX_UPLOAD, seen)
+        seen += size
+        raw.append((data, f.content_type))
     try:
         checked = UPLOAD.validate_images(raw)
     except UPLOAD.UploadRejected as exc:
@@ -652,10 +745,12 @@ async def understand_image(
 
 @app.post("/v1/understand/pdf")
 async def understand_pdf(request: Request, file: UploadFile = File(...),
-                         btype: str | None = Form(None), model: str | None = None):
+                         btype: str | None = Form(None),
+                         model: str | None = Form(None)):
     guard(request, "gen")
     rid = request_id_of(request)
-    data = await file.read()
+    # F-21: القراءة محدودة بـMAX_UPLOAD قبل أن يصير الجسد مقيماً في الذاكرة.
+    data, _ = await _read_capped(file, MAX_UPLOAD)
     # F-05: لا ملفّ مؤقّت، ولا اسم ملفّ في السجلّ، ولا توقيع مفترض. التحقّق يقرأ
     # البايتات في الذاكرة، ويرفض التوقيع الخاطئ والمشفّر والمقطوع وعدد الصفحات
     # قبل استخراج أي نصّ — فلا يصير خطأ العميل خطأ 500 من المحلّل.

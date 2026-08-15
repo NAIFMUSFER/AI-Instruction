@@ -1212,8 +1212,12 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
                                       request_id=request_id),
                       G.STRATEGY_STAGED, 0)
 
-    rounds = int(repair_rounds if repair_rounds is not None
-                 else os.environ.get("ACS_REPAIR_ROUNDS", "1"))
+    # F-19: `int(os.environ.get("ACS_REPAIR_ROUNDS", "1"))` كان يرفع ValueError
+    # على القيمة الفارغة — و.env.example يشحن هذا المتغيّر فارغاً. الخطأ يقع
+    # داخل عملية التوليد فيُصنَّف upstream ويصل المستخدم 502 «عطل من مزوّد
+    # النموذج» عن خطأ ضبط محلّي بحت. _env_int في هذا الملفّ يتحمّل الفراغ أصلاً.
+    rounds = (int(repair_rounds) if repair_rounds is not None
+              else _env_int("ACS_REPAIR_ROUNDS", 1))
 
     _tel = {}
     try:

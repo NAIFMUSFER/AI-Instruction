@@ -83,6 +83,9 @@ if [ "$1" = "--browser" ]; then
   node "$HERE/test_accessibility.js"; soft $? "accessibility"
   step "F-14 · WebGL performance in real Chromium"
   node "$HERE/test_performance.js"; soft $? "performance"
+  # F-27: لا يحتاج three مُعبَّأً — يخدم كعباً أدنى ويعلن ذلك في مخرجه.
+  step "F-27 · panel entry points reachable from the shipped UI (real Chromium)"
+  node "$HERE/test_panel_entry.js"; guard $?
 else
   printf '\n=== accessibility and performance ===\nSKIPPED (pass --browser). '
   printf 'Without it: NOT VERIFIED — CHROMIUM ENVIRONMENT UNAVAILABLE\n'

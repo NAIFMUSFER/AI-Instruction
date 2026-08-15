@@ -2025,6 +2025,11 @@ document.getElementById('loadWarehouse').onclick=()=>{
 window.ACS = window.ACS || {};
 window.ACS.showExample = ()=>setModel(EXAMPLE);
 window.ACS.setModel = setModel;
+/* F-27: المبنى المعروض حالياً — قراءة فقط. lastBuilding كان محبوساً داخل هذه
+   الوحدة، فلم يكن لأي مقطع آخر طريق إلى النموذج النشط، ولهذا لم تكن لوحات
+   المراحل ٦…٩٫٢ قابلة للفتح أصلاً (لا مشروع تُبنى عليه). لا نسخة ثانية ولا
+   حالة موازية: هذا هو نفس المرجع الذي يعرضه العارض. */
+window.ACS.exportModel = ()=>lastBuilding;
 window.ACS.ready = true;
 if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(EXAMPLE); }
 

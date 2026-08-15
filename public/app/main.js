@@ -22,3 +22,8 @@ import './generated/arch-detail-bridge.js';
 import './ui/workspace-ui-wiring.js';
 import './trust/core.js';
 import './trust/wiring.js';
+/* F-27: مداخل لوحات المراحل ٦…٩٫٢. يأتي أخيراً لأنه يقرأ
+   window.ACS.workspace و window.ACS.{render,bim,docs,pbr,archdetail}.panel
+   التي تنشرها الوحدات أعلاه، و window.ACS.exportModel التي ينشرها
+   ui/workspace-ui-wiring.js. */
+import './ui/panels-entry.js';

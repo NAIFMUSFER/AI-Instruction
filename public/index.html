@@ -196,6 +196,37 @@
       <div id="statCount" class="note acs-u-13"></div>
       <script src="/app/boot/debug-toggle.js"></script>
 
+      <!-- ===== F-27 · مداخل لوحات المراحل ٦…٩٫٢ (كتلة مكتوبة يدوياً) =====
+           اللوحات كانت مشحونة كاملةً — علاماتها في هذه الصفحة ومنطقها في
+           public/app/generated/‎ — وبلا أي مدخل: لا سطر في الشيفرة المشحونة
+           يستدعي init() ولا open() لأيٍّ منها، فكانت غير قابلة للوصول من
+           الواجهة إطلاقاً. التوصيل في public/app/ui/panels-entry.js عبر
+           addEventListener وحده: سياسة CSP تمنع المعالِج داخل العلامة. -->
+      <h2 id="acsPanelsH">لوحات العمل المتقدّمة</h2>
+      <div class="row" role="group" aria-labelledby="acsPanelsH">
+        <button class="ghost acs-u-11" type="button" id="acsOpenWorkspace"
+                aria-label="فتح مساحة العمل — Open the workspace"
+                title="مساحة العمل: الشجرة والمفتّش ومركز المسائل والمراجعات">☰ مساحة العمل</button>
+        <button class="ghost acs-u-11" type="button" id="acsOpenRender"
+                aria-label="فتح لوحة العرض — Open the visualisation panel"
+                title="لوحة العرض">🎬 العرض</button>
+        <button class="ghost acs-u-11" type="button" id="acsOpenBim"
+                aria-label="فتح لوحة تبادل BIM — Open the BIM exchange panel"
+                title="تبادل BIM">🏗 تبادل BIM</button>
+      </div>
+      <div class="row" role="group" aria-labelledby="acsPanelsH">
+        <button class="ghost acs-u-11" type="button" id="acsOpenDocs"
+                aria-label="فتح لوحة التوثيق — Open the documentation panel"
+                title="التوثيق: المساقط واللوحات والجداول">📐 التوثيق</button>
+        <button class="ghost acs-u-11" type="button" id="acsOpenPbr"
+                aria-label="فتح لوحة جودة العرض — Open the visual quality panel"
+                title="جودة العرض">✨ جودة العرض</button>
+        <button class="ghost acs-u-11" type="button" id="acsOpenDetail"
+                aria-label="فتح لوحة التفصيل المعماري — Open the architectural detail panel"
+                title="التفصيل المعماري">🧱 التفصيل</button>
+      </div>
+      <div id="acsPanelsState" class="note" role="status" aria-live="polite"></div>
+
       <!-- F-08 · معلومات النظام والتشخيص — عنصر DOM مكتوب يدوياً (غير مولَّد).
            الزرّ يجهّز ملفّ تشخيص محلياً ولا يرسله إلى أي جهة. -->
       <h2>معلومات النظام والتشخيص</h2>

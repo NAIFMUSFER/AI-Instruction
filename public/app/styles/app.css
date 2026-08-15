@@ -725,6 +725,10 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
    العنصر (classList.remove) بدل أن تكتب style.display، لأن سمة style ممنوعة
    بـ style-src 'self' وقيمةَ الصنف لا يمحوها إسنادُ خاصيّة فارغ. */
 .acs-hidden{display:none!important;}
+/* F-28: مفتاح ?debug=1. كان boot/debug-toggle.js يمسح نمطاً سطرياً لم يعد
+   موجوداً بعد F-09، فلم يظهر عدّاد العناصر أبداً. صنفٌ صريح يهزم
+   .acs-u-13{display:none} ويحفظ min-height الخاصّ به. */
+.acs-debug-on{display:block!important;}
 .acs-u-04{min-height:0;}
 .acs-u-05{width:100%;margin-top:8px;}
 .acs-u-06{margin-top:8px;}

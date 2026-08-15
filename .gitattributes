@@ -1,0 +1,48 @@
+# =============================================================================
+# .gitattributes — تطبيع نهايات الأسطر.
+#
+# لماذا: وصلت نسخة من هذا المستودع بنهايات CRLF على ٣٦٦ ملفّاً. النتيجة المقيسة:
+#   • `sh tests/deploy/verify_deploy.sh` يفشل فوراً بـ`cd: can't cd to <root>`
+#     لأن الـ\r صار جزءاً من المسار. نفس الشيء ينطبق على tools/netlify-build.sh
+#     وtools/vendor.sh على وكيل بناء لينكس، وعلى سطور RUN في Dockerfile.
+#   • tests/remediation/test_bundle_report.py يفشل بعشرين تأكيداً: كل عدّ
+#     بايتات في tests/performance/bundle_report.json يخالف ما على القرص.
+# بعد التطبيع إلى LF طابقت الأحجام كلّها وعاد الاختبار ٩١/٠.
+#
+# ملاحظة مقيسة لا مفترَضة: بصمة خريطة الاستيراد في CSP لا تتأثّر — محلّل HTML
+# يطبّع \r\n إلى \n أثناء تهيئة مجرى الإدخال، فالمتصفّح يبصم الصيغة LF.
+# =============================================================================
+* text=auto eol=lf
+
+# نصّ صريح — لا تخمين
+*.py    text eol=lf
+*.js    text eol=lf
+*.mjs   text eol=lf
+*.json  text eol=lf
+*.html  text eol=lf
+*.css   text eol=lf
+*.md    text eol=lf
+*.sh    text eol=lf
+*.toml  text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.txt   text eol=lf
+*.xml   text eol=lf
+*.in    text eol=lf
+*.lock  text eol=lf
+*.ifc   text eol=lf
+*.sha256 text eol=lf
+Dockerfile text eol=lf
+.env.example text eol=lf
+
+# ثنائيّ — لا يُلمس
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.webp  binary
+*.gif   binary
+*.pdf   binary
+*.woff  binary
+*.woff2 binary
+*.glb   binary
+*.zip   binary

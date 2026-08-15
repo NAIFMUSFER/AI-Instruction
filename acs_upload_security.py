@@ -38,6 +38,7 @@ import io
 import json
 import os
 import warnings
+import zlib
 
 from PIL import Image, ImageOps
 import pypdf
@@ -62,10 +63,47 @@ def _env_int(name, default):
 ACS_UPLOAD_MAX_IMAGE_BYTES = _env_int("ACS_UPLOAD_MAX_IMAGE_BYTES", 5 * 1024 * 1024)
 ACS_UPLOAD_MAX_IMAGE_PIXELS = _env_int("ACS_UPLOAD_MAX_IMAGE_PIXELS", 40_000_000)
 ACS_UPLOAD_MAX_IMAGE_SIDE = _env_int("ACS_UPLOAD_MAX_IMAGE_SIDE", 12000)
+# F-22: ميزانية الذاكرة بعد فكّ الترميز — بالبايتات لا بالبكسلات.
+#
+# الحدود الثلاثة أعلاه كلّها تقيس ما يصل عبر السلك أو عدد البكسلات، ولا يقيس
+# أيٌّ منها ما يشغله الرستر بعد فكّ الترميز. صورة PNG صلبة اللون بحجم ١٢٠ ك.ب
+# على السلك تعلن ‎11000×3600‎ = ٣٩٫٦ مليون بكسل: دون سقف البكسلات (٤٠ مليون)،
+# ودون سقف البايتات (٥ م.ب)، ودون سقف الضلع (١٢٠٠٠). قياساً في هذا المستودع:
+# `validate_image` عليها بلغت ذروة الذاكرة ٦٠١ م.ب وقُبِلت. نسخة Render من فئة
+# starter تملك ٥١٢ م.ب، فطلب واحد غير موثّق يقتل العملية بكاملها.
+#
+# الرقم أدناه هو حجم الرستر الخام (عرض × ارتفاع × بايتات القناة). التضخيم
+# المقيس على مسار PNG ≈ ٥ أضعاف الرستر (تحميل + exif_transpose + tobytes +
+# frombytes + مخزن الترميز)، فـ ٣٢ م.ب رستر ≈ ١٧٠ م.ب ذروة — ضمن حدود نسخة
+# ٥١٢ م.ب مع هامش. ‎32 MiB‎ من RGB ≈ ١١٫٢ مليون بكسل ≈ ‎4000×2800‎، وهو أعلى
+# بكثير من أي مخطّط معماري يُرفع للقراءة بالرؤية.
+ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES = _env_int(
+    "ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES", 32 * 1024 * 1024)
+# بايتات الرستر لكل بكسل حسب الوضع المُعلن في الرأس. الوضع غير المعروف يُحسب
+# بأربعة بايتات — التقدير يعلو ولا يقلّ، فلا يمرّ حِمل غير محسوب.
+_MODE_BYTES_PER_PIXEL = {
+    "1": 1, "L": 1, "P": 1, "LA": 2, "La": 2, "I;16": 2, "I;16B": 2,
+    "I;16L": 2, "RGB": 3, "YCbCr": 3, "LAB": 3, "HSV": 3, "BGR;24": 3,
+    "RGBA": 4, "RGBa": 4, "RGBX": 4, "CMYK": 4, "I": 4, "F": 4, "PA": 4,
+}
+
+
+def _decoded_bytes(mode, width, height):
+    """حجم الرستر الخام بعد فكّ الترميز — تقدير أعلى لا أدنى."""
+    return int(width) * int(height) * _MODE_BYTES_PER_PIXEL.get(str(mode), 4)
 ACS_UPLOAD_MAX_IMAGES = _env_int("ACS_UPLOAD_MAX_IMAGES", 6)
 ACS_UPLOAD_MAX_PDF_BYTES = _env_int("ACS_UPLOAD_MAX_PDF_BYTES", 12 * 1024 * 1024)
 ACS_UPLOAD_MAX_PDF_PAGES = _env_int("ACS_UPLOAD_MAX_PDF_PAGES", 200)
 ACS_UPLOAD_MAX_PDF_TEXT_CHARS = _env_int("ACS_UPLOAD_MAX_PDF_TEXT_CHARS", 400000)
+# F-23: سقف مجموع ما تتمدّد إليه مجاري المحتوى المضغوطة داخل الملفّ.
+#
+# سقف الحجم (١٢ م.ب) وسقف الصفحات (٢٠٠) وسقف الأحرف (٤٠٠ ألف) لا يقيس أيٌّ
+# منها ما يتمدّد إليه المحتوى بعد فكّ الضغط. pypdf يفكّ مجرى الصفحة كاملاً
+# ويحلّله إلى قائمة عمليات **قبل** أن يبدأ الاستخراج، فسقف الأحرف لا يوقف تلك
+# المرحلة. قياساً في هذا المستودع: ملفّ بصفحة واحدة حجمه ٧٢ ك.ب يتمدّد مجراه
+# إلى ١٨٫٤ م.ب وشغّل المعالج ٦٢ ثانية قبل هذا الإصلاح.
+ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES = _env_int(
+    "ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES", 24 * 1024 * 1024)
 ACS_UPLOAD_MAX_JSON_BYTES = _env_int("ACS_UPLOAD_MAX_JSON_BYTES", 900000)
 ACS_UPLOAD_MAX_JSON_DEPTH = _env_int("ACS_UPLOAD_MAX_JSON_DEPTH", 40)
 ACS_UPLOAD_MAX_JSON_KEYS = _env_int("ACS_UPLOAD_MAX_JSON_KEYS", 100000)
@@ -96,12 +134,15 @@ ISSUE_CODES = (
     "IMAGE_TOO_MANY_PIXELS",
     "IMAGE_SIDE_TOO_LARGE",
     "IMAGE_PIXEL_BUDGET_EXCEEDED",
+    "IMAGE_DECODED_TOO_LARGE",
+    "IMAGE_DECODED_BUDGET_EXCEEDED",
     "IMAGE_CORRUPT",
     "IMAGE_REENCODE_FAILED",
     "PDF_TOO_LARGE",
     "PDF_BAD_SIGNATURE",
     "PDF_ENCRYPTED",
     "PDF_TOO_MANY_PAGES",
+    "PDF_DECOMPRESSION_BOMB",
     "PDF_UNREADABLE",
     "JSON_TOO_LARGE",
     "JSON_MALFORMED",
@@ -119,10 +160,12 @@ SPEC = {
         "max_image_bytes": ACS_UPLOAD_MAX_IMAGE_BYTES,
         "max_image_pixels": ACS_UPLOAD_MAX_IMAGE_PIXELS,
         "max_image_side": ACS_UPLOAD_MAX_IMAGE_SIDE,
+        "max_image_decoded_bytes": ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES,
         "max_images": ACS_UPLOAD_MAX_IMAGES,
         "max_pdf_bytes": ACS_UPLOAD_MAX_PDF_BYTES,
         "max_pdf_pages": ACS_UPLOAD_MAX_PDF_PAGES,
         "max_pdf_text_chars": ACS_UPLOAD_MAX_PDF_TEXT_CHARS,
+        "max_pdf_decompressed_bytes": ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES,
         "max_json_bytes": ACS_UPLOAD_MAX_JSON_BYTES,
         "max_json_depth": ACS_UPLOAD_MAX_JSON_DEPTH,
         "max_json_keys": ACS_UPLOAD_MAX_JSON_KEYS,
@@ -405,6 +448,18 @@ def validate_image(data, declared_content_type=None):
                     "واحداً ثابتاً بصيغة PNG أو JPEG ثم أعد الرفع.",
                     "multi-frame image rejected (%d frames)" % frames)
 
+        # F-22: ميزانية الذاكرة تُفحص من الرأس **قبل** أي فكّ ترميز. الحدود
+        # الثلاثة السابقة تقيس السلك والبكسلات، ولا يقيس أيّها الرستر الناتج.
+        decoded_budget = int(ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES)
+        decoded = _decoded_bytes(im.mode, width, height)
+        if decoded > decoded_budget:
+            _reject("IMAGE_DECODED_TOO_LARGE",
+                    "الصورة تحتاج %.0f م.ب من الذاكرة بعد فكّ ضغطها والحدّ "
+                    "%.0f م.ب — صدّرها بدقّة أقل (مثلاً ‎4000×2800‎) ثم أعد "
+                    "الرفع." % (_mb(decoded), _mb(decoded_budget)),
+                    "decoded raster %d bytes (%s %dx%d) exceeds budget %d"
+                    % (decoded, im.mode, width, height, decoded_budget))
+
         # الآن فقط يُحمَّل فعلياً: هذا ما يثبت أن الملف غير مبتور.
         try:
             im.load()
@@ -489,7 +544,9 @@ def validate_images(items):
                 "image count %d exceeds limit %d" % (len(seq), max_images))
 
     budget = int(ACS_UPLOAD_MAX_IMAGE_PIXELS)
+    decoded_budget = int(ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES)
     used = 0
+    used_decoded = 0
     out = []
     for index, item in enumerate(seq):
         data, declared = _item_parts(item)
@@ -507,12 +564,111 @@ def validate_images(items):
                     % (budget // 1000000),
                     "batch pixels %d exceed shared budget %d at image #%d"
                     % (used, budget, index + 1))
+        # F-22: ميزانية ذاكرة مشتركة للدفعة أيضاً، وإلا مرّت ستّ صور كلٌّ منها
+        # تحت السقف الفردي ومجموعها فوق ما تحتمله النسخة.
+        used_decoded += _decoded_bytes("RGBA", result["width"], result["height"])
+        if used_decoded > decoded_budget * max_images:
+            _reject("IMAGE_DECODED_BUDGET_EXCEEDED",
+                    "مجموع ما تحتاجه الصور من الذاكرة بعد فكّ ضغطها أكبر من "
+                    "ميزانية المعالجة — ارفعها على دفعات أصغر أو بدقّة أقل.",
+                    "batch decoded %d bytes exceed shared budget %d at image #%d"
+                    % (used_decoded, decoded_budget * max_images, index + 1))
         result["index"] = index
         out.append(result)
     return out
 
 
 # -------------------------------------------------------------- PDF --
+def _flate_expansion(data, budget):
+    """يقيس تمدّد مجاري zlib داخل الملفّ بلا تجاوز الميزانية أصلاً.
+
+    F-23: المسح على البايتات الخام وحدها — لا يلمس بنية pypdf الداخلية ولا
+    يعتمد عليها. كل مجرى يُفكّ بـ`decompressobj` بحدّ `max_length`، فلا يُبنى
+    في الذاكرة أكثر ممّا تبقّى من الميزانية مهما بلغت نسبة الانضغاط. المجاري
+    غير المضغوطة بـFlate (صور JPEG مثلاً) تفشل في zlib فتُتجاوَز بلا كلفة.
+
+    يعيد (المجموع، هل تجاوز الميزانية).
+    """
+    budget = int(budget)
+    total = 0
+    position = 0
+    length = len(data)
+    while position < length:
+        start = data.find(b"stream", position)
+        if start < 0:
+            break
+        cursor = start + 6
+        if data[cursor:cursor + 2] == b"\r\n":
+            cursor += 2
+        elif data[cursor:cursor + 1] in (b"\n", b"\r"):
+            cursor += 1
+        end = data.find(b"endstream", cursor)
+        if end < 0:
+            break
+        position = end + 9
+        blob = data[cursor:end]
+        if not blob:
+            continue
+        try:
+            engine = zlib.decompressobj()
+            room = budget - total + 1          # +1 حتى يظهر التجاوز صراحةً
+            produced = len(engine.decompress(blob, room))
+            while engine.unconsumed_tail and produced < room:
+                produced += len(engine.decompress(engine.unconsumed_tail,
+                                                  room - produced))
+        except zlib.error:
+            continue                            # ليس مجرى Flate — لا شأن لنا به
+        total += produced
+        if total > budget:
+            return total, True
+    return total, False
+
+
+class _PageBudgetReached(Exception):
+    """إشارة داخلية: بلغت هذه الصفحة وحدها سقف الأحرف المتبقّي — أوقِف الاستخراج."""
+
+
+def _extract_page_text(page, room):
+    """F-23: استخراج نصّ صفحة واحدة **محدوداً** بالمساحة المتبقّية.
+
+    الحلقة في validate_pdf كانت تفحص الميزانية قبل الصفحة وتقصّ بعدها، لكن
+    `page.extract_text()` نفسه كان بلا حدّ: صفحة واحدة قد يتمدّد مجرى محتواها
+    إلى ما لا نهاية. قياساً في هذا المستودع، ملفّ PDF بصفحة واحدة حجمه ٧٢ ك.ب
+    (مجرى منضغط يتمدّد إلى ١٨٫٤ م.ب) شغّل المعالج ٦٢ ثانية وقُبِل — وسقف الحجم
+    المسموح ١٢ م.ب، أي ١٦٦ ضعفاً منه.
+
+    هنا يُمرَّر مراقب نصّي إلى pypdf: يجمع القطع ويتوقّف فور بلوغ المساحة
+    المتبقّية، فينتهي تفكيك المجرى عند الحدّ بدل أن يمضي إلى آخره. يعيد
+    (النصّ، هل قُطع).
+    """
+    room = max(0, int(room))
+    if room <= 0:
+        return "", True
+    parts = []
+    seen = [0]
+
+    def _visit(text, cm=None, tm=None, font=None, size=None):
+        if not text:
+            return
+        parts.append(text)
+        seen[0] += len(text)
+        if seen[0] >= room:
+            raise _PageBudgetReached()
+
+    try:
+        whole = page.extract_text(visitor_text=_visit)
+    except _PageBudgetReached:
+        return "".join(parts)[:room], True
+    except TypeError:
+        # نسخة pypdf لا تعرف visitor_text: نعود إلى الاستخراج الكامل مع القصّ.
+        whole = page.extract_text() or ""
+        return (whole[:room], True) if len(whole) > room else (whole, False)
+    whole = whole or ""
+    if len(whole) > room:
+        return whole[:room], True
+    return whole, False
+
+
 def validate_pdf(data):
     """يتحقّق من PDF في الذاكرة ويستخرج نصّه بحدود صريحة.
 
@@ -587,6 +743,19 @@ def validate_pdf(data):
                 "(أو قسّم الملف) ثم أعد الرفع." % (page_count, max_pages),
                 "page count %d exceeds limit %d" % (page_count, max_pages))
 
+    # F-23: قنبلة الانضغاط تُرفض **قبل** أي استخراج. pypdf يفكّ مجرى الصفحة
+    # كاملاً ويحلّله إلى قائمة عمليات قبل أن يبدأ الاستخراج، فلا يوقفه سقف
+    # الأحرف. القياس نفسه محدود بالميزانية فلا يصير الفحص هجوماً بذاته.
+    expanded_budget = int(ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES)
+    expanded, overflowed = _flate_expansion(data, expanded_budget)
+    if overflowed:
+        _reject("PDF_DECOMPRESSION_BOMB",
+                "محتوى الملفّ يتمدّد بعد فكّ ضغطه إلى أكثر من %.0f م.ب وهو فوق "
+                "حدّ المعالجة — أعد تصديره من البرنامج الأصلي (أو اطبعه إلى PDF "
+                "جديد) ثم ارفعه." % _mb(expanded_budget),
+                "flate streams expand beyond %d bytes (file %d bytes)"
+                % (expanded_budget, size))
+
     char_budget = int(ACS_UPLOAD_MAX_PDF_TEXT_CHARS)
     chunks = []
     total = 0
@@ -596,10 +765,14 @@ def validate_pdf(data):
             truncated = True
             break
         try:
-            piece = pages[index].extract_text() or ""
+            piece, cut = _extract_page_text(pages[index], char_budget - total)
         except Exception:
-            piece = ""                              # صفحة عاجزة لا تُسقط المستند
+            piece, cut = "", False                  # صفحة عاجزة لا تُسقط المستند
+        if cut:
+            truncated = True
         if not piece:
+            if truncated:
+                break
             continue
         room = char_budget - total
         if len(piece) > room:
@@ -722,10 +895,13 @@ def health_status():
             "max_image_bytes": int(ACS_UPLOAD_MAX_IMAGE_BYTES),
             "max_image_pixels": int(ACS_UPLOAD_MAX_IMAGE_PIXELS),
             "max_image_side": int(ACS_UPLOAD_MAX_IMAGE_SIDE),
+            "max_image_decoded_bytes": int(ACS_UPLOAD_MAX_IMAGE_DECODED_BYTES),
             "max_images": int(ACS_UPLOAD_MAX_IMAGES),
             "max_pdf_bytes": int(ACS_UPLOAD_MAX_PDF_BYTES),
             "max_pdf_pages": int(ACS_UPLOAD_MAX_PDF_PAGES),
             "max_pdf_text_chars": int(ACS_UPLOAD_MAX_PDF_TEXT_CHARS),
+            "max_pdf_decompressed_bytes":
+                int(ACS_UPLOAD_MAX_PDF_DECOMPRESSED_BYTES),
             "max_json_bytes": int(ACS_UPLOAD_MAX_JSON_BYTES),
             "max_json_depth": int(ACS_UPLOAD_MAX_JSON_DEPTH),
             "max_json_keys": int(ACS_UPLOAD_MAX_JSON_KEYS),
