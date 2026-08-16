@@ -199,18 +199,95 @@ def chunk_size_for(budget=None, safety=None, rate=None):
     return max(MIN_CHUNK_ZONES, min(MAX_CHUNK_ZONES, n))
 
 
-def measured_zone_rate(out_tokens, zone_count, previous=None):
+def _tokens_are_content_proxy_default():
+    """القدرة المُعلَنة للمزوّد العامل. الغياب يعني السلوك القائم (True).
+
+    لا شيء في هذه الوحدة يعرف اسم مزوّد — الشرط الثاني في تفويض W2. تُقرأ
+    قدرةٌ مُعلَنة، وأي عطل قراءة يسقط إلى السلوك القائم لا إلى الجديد.
+    """
+    try:
+        import acs_provider as _PROV
+        return bool(_PROV.capability("output_tokens_are_content_proxy"))
+    except Exception:                                           # noqa: BLE001
+        return True
+
+
+# W2-C · كم حرفاً مرئياً في رمز محتوى واحد. نفس ثابت 2.2 الذي يُشتقّ منه
+# T_PLAN_BRIEF أعلاه — مصدرٌ واحد لا رقمان يتباعدان.
+VISIBLE_CHARS_PER_TOKEN = 2.2
+
+# سقف صريح لتكيّف الكلفة. بلا سقف، قياسٌ واحدٌ شاذّ يهبط بالشريحة إلى
+# MIN_CHUNK_ZONES ولا يعود منها أبداً (التكيّف أحاديّ الاتجاه). هذا هو
+# الحدّ الأعلى الذي يعنيه «explicit bounds» في تفويض W2.
+MAX_ZONE_RATE_FACTOR = VERBOSITY_TOLERANCE
+
+
+def zone_rate_ceiling():
+    """أقصى كلفة منطقة يقبلها التكيّف — عددٌ مُعلَن لا مدفون."""
+    return int(estimate_plan_zone_tokens() * MAX_ZONE_RATE_FACTOR)
+
+
+def measured_zone_rate(out_tokens, zone_count, previous=None,
+                       visible_chars=None, completed_zones=None,
+                       tokens_are_content_proxy=None):
     """كلفة المنطقة كما قاسها ردٌّ فعليّ — لا كما يقدّرها العقد (F-40).
 
     التقدير المعلن أرضيّةٌ لا سقف: النموذج الأوجز من العقد لا يُكافأ بشرائح
     أكبر (فقد يُسهب في الشريحة التالية)، والأكثر إسهاباً يُخفّض حجم شرائحه
     فوراً. فالتكيّف أحاديّ الاتجاه — نحو الأمان — وبذلك يبقى حتميّاً: نفس
     القياسات بنفس الترتيب تعطي نفس الأحجام دائماً.
+
+    W2-C · ما الذي يُقاس بالضبط
+    ---------------------------
+    F-40 يقيس `output_tokens / zones` ويقرؤه «كثافة المحتوى». القراءة صحيحة
+    عند مزوّدٍ رموزُ مخرجه محتوىً مرئيّ. وكاذبة عند مزوّدٍ ليست كذلك — وقد
+    قِيسَ ذلك حيّاً (SHA 681ec04):
+
+        stage=plan  max_tokens=16000  out_tokens=16000  out_chars=0
+                    blocks=1  types=thinking:1  text_blocks=0
+
+    ستّة عشر ألف رمزٍ لم يصل منها حرفٌ واحد. يقرؤها F-40 «4000 رمزاً للمنطقة»
+    فتهبط الشريحة 60→35→20→11→6→4، ويتضاعف عدد النداءات حتى تقتل المهلة
+    (840 ث) الطلبَ كلَّه. وكلّ نداءٍ من تلك النداءات يعيد إنتاج القياس نفسه،
+    فالتكيّف يغذّي نفسه: كلّما صغرت الشريحة بقي الرمز ثابتاً وصغرت أكثر.
+
+    فحين تعلن قدرةُ المزوّد أن رموز المخرج **ليست** وكيلاً عن المحتوى، تُقاس
+    الكثافة ممّا وصل فعلاً ويمكن التحقّق منه:
+
+        · `visible_chars`    أحرف النصّ المرئيّ من الرد،
+        · `completed_zones`  المناطق التي اجتازت validate_chunk فعلاً.
+
+    وحدود القياس صريحة:
+      · لا محتوى مرئي ولا منطقة مكتملة ⇒ **لا قياس**: يُعاد ما كان. ردٌّ بلا
+        محتوى لا يقول شيئاً عن كثافة المحتوى، وقراءته كثافةً هي العطل نفسه.
+        (الانقطاع يعالجه الشطر F-39 — طلبٌ مختلف فعلاً — لا تصغيرُ الكلّ.)
+      · وسقفٌ أعلى zone_rate_ceiling(): قياسٌ شاذّ واحد لا يشلّ ما بعده.
+      · والرتابة محفوظة: النتيجة لا تنقص أبداً عن `previous`.
+
+    مسار المزوّد الوكيل (anthropic والافتراضي) **لم يُمَسّ**: نفس السطور، نفس
+    الأرقام، بلا سقفٍ جديد ولا وسيطٍ جديد يؤثّر فيه — القاعدة 4.
     """
     base = max(int(previous or 0), estimate_plan_zone_tokens())
-    n = max(1, int(zone_count or 0))
-    seen = int(int(out_tokens or 0) / n) + 1
-    return max(base, seen)
+    proxy = (_tokens_are_content_proxy_default()
+             if tokens_are_content_proxy is None
+             else bool(tokens_are_content_proxy))
+    if proxy:
+        n = max(1, int(zone_count or 0))
+        seen = int(int(out_tokens or 0) / n) + 1
+        return max(base, seen)
+
+    try:
+        chars = int(visible_chars or 0)
+    except (TypeError, ValueError):
+        chars = 0
+    try:
+        done = int(completed_zones if completed_zones is not None else 0)
+    except (TypeError, ValueError):
+        done = 0
+    if chars <= 0 or done <= 0:
+        return base                     # لا محتوى ⇒ لا قياس كثافة ⇒ لا تكيّف
+    seen = int(chars / VISIBLE_CHARS_PER_TOKEN / done) + 1
+    return max(base, min(zone_rate_ceiling(), seen))
 
 
 def needs_pilot(zone_count, budget=None, rate=None, tolerance=None):
@@ -727,6 +804,11 @@ def spec():
             "max_chunk_splits": MAX_CHUNK_SPLITS,
             "verbosity_tolerance": VERBOSITY_TOLERANCE,
             "pilot_zones": PILOT_ZONES,
+            # W2-C · حدود التكيّف المُعلَنة، وأي محاسبةٍ يعمل بها الآن.
+            "visible_chars_per_token": VISIBLE_CHARS_PER_TOKEN,
+            "max_zone_rate_factor": MAX_ZONE_RATE_FACTOR,
+            "zone_rate_ceiling": zone_rate_ceiling(),
+            "output_tokens_are_content_proxy": _tokens_are_content_proxy_default(),
             "outline_budget": outline_budget(),
             "plan_chunk_budget": plan_chunk_budget(),
             "plan_zone_tokens": estimate_plan_zone_tokens(),

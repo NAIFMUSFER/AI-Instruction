@@ -195,7 +195,14 @@ class StructuredLogger(object):
                    "cache_read_input_tokens", "cache_creation_input_tokens",
                    "reasoning_tokens",
                    # W2-D: محاولةٌ مطابقة بايتاً لم تُرسَل.
-                   "retry_skipped_reason", "retries_skipped")
+                   "retry_skipped_reason", "retries_skipped",
+                   # W2-C/W2-E: بأيّ محاسبةٍ وُجّه الطلب، وبأيّ دلالةٍ حُكِم على
+                   # الرد. بلا هذين يبقى «لماذا صُعِّد؟» و«لماذا لم يصغر
+                   # التقطيع؟» بلا جواب في سجلّ الإنتاج — نفس عطل القناة
+                   # الصامتة الذي أخفى sdk_version في F-50 وchunk_index في
+                   # KI-24/F-38.
+                   "response_semantic", "content_token_multiplier",
+                   "accounted_output_tokens", "measured_zone_tokens")
         clean = {k: v for k, v in fields.items() if k in allowed}
         return self._emit("info", "llm_generation", **clean)
 

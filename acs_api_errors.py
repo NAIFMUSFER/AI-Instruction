@@ -62,6 +62,12 @@ ACS_UPSTREAM_UNAVAILABLE      = "ACS_UPSTREAM_UNAVAILABLE"
 ACS_UPSTREAM_TIMEOUT          = "ACS_UPSTREAM_TIMEOUT"
 ACS_UPSTREAM_CONNECTION       = "ACS_UPSTREAM_CONNECTION"
 ACS_UPSTREAM_EMPTY_RESPONSE   = "ACS_UPSTREAM_EMPTY_RESPONSE"
+# W2-E · رد وصل فعلاً، واستهلك ميزانيته، ولم يحمل حرفاً مرئياً واحداً.
+# ليس EMPTY_RESPONSE: «أعاد النموذج رداً فارغاً» وصفٌ كاذب لستّة عشر ألف رمزٍ
+# محاسَبة في كتلة تفكير — وهو ما قيس حيّاً. وليس TRUNCATED: لا يوجد نصفُ JSON
+# يُقصّ. تمييزه يغيّر ثلاثة قرارات: أنه لا يُعاد كما هو، وأنه دليل بلوغ سقف
+# يستدعي الشطر والتصعيد، وأن المشغّل يقرأ سببه الحقيقي في السجلّ.
+ACS_UPSTREAM_NO_VISIBLE_OUTPUT = "ACS_UPSTREAM_NO_VISIBLE_OUTPUT"
 ACS_UPSTREAM_INVALID_JSON     = "ACS_UPSTREAM_INVALID_JSON"
 ACS_UPSTREAM_TRAILING_JSON    = "ACS_UPSTREAM_TRAILING_JSON"
 ACS_UPSTREAM_TRUNCATED        = "ACS_UPSTREAM_TRUNCATED"
@@ -78,7 +84,8 @@ CODES = (
     ACS_UPSTREAM_MAX_TOKENS, ACS_UPSTREAM_BILLING,
     ACS_UPSTREAM_RATE_LIMIT, ACS_UPSTREAM_OVERLOADED,
     ACS_UPSTREAM_UNAVAILABLE, ACS_UPSTREAM_TIMEOUT, ACS_UPSTREAM_CONNECTION,
-    ACS_UPSTREAM_EMPTY_RESPONSE, ACS_UPSTREAM_INVALID_JSON,
+    ACS_UPSTREAM_EMPTY_RESPONSE, ACS_UPSTREAM_NO_VISIBLE_OUTPUT,
+    ACS_UPSTREAM_INVALID_JSON,
     ACS_UPSTREAM_TRAILING_JSON, ACS_UPSTREAM_TRUNCATED, ACS_UPSTREAM_REFUSED,
     ACS_UPSTREAM_UNKNOWN,
 )
@@ -119,6 +126,65 @@ FALLBACK_ELIGIBLE = frozenset({
 #: تُضاف إلى ما سبق فقط حين يُفعّل المشغّل ACS_LLM_FALLBACK_ON_BILLING.
 FALLBACK_ELIGIBLE_ON_BILLING = frozenset({ACS_UPSTREAM_BILLING})
 
+# ── W2-E · دلالة الرد: أربع حالات لا حالتان ────────────────────────────────
+# كان المسار يعرف حالتين: «فيه نصّ» و«ليس فيه نصّ». فسقط الردّ الذي استهلك
+# ميزانيته كلّها في كتلة تفكير — ردٌّ وصل، وكلّف ميزانية كاملة، ودلّ على بلوغ
+# السقف — في خانة «رد فارغ»، فلم يُشطَر ولم يُصعَّد ووصل المستخدم 502 برسالة
+# تقول إن النموذج لم يُجب. هذه الدالّة خالصة: لا SDK ولا شبكة ولا بيئة، تُختبَر
+# وحدها على الحالات الأربع المقيسة حيّاً.
+RESP_OK = "ok"
+RESP_TRUNCATED = "truncated"
+RESP_NO_VISIBLE_OUTPUT = "no_visible_output"
+RESP_EMPTY = "empty"
+RESP_REFUSED = "refused"
+RESPONSE_SEMANTICS = (RESP_OK, RESP_TRUNCATED, RESP_NO_VISIBLE_OUTPUT,
+                      RESP_EMPTY, RESP_REFUSED)
+
+#: أدلّة بلوغ سقف المخرج. الشطر (F-39) وتصعيد الاستراتيجية (§12) يشترطان دليلاً
+#: على بلوغ السقف لا رمزاً بعينه — فلا يُسقط رمزٌ جديد أحدَهما صامتاً.
+CEILING_CODES = frozenset({ACS_UPSTREAM_TRUNCATED, ACS_UPSTREAM_NO_VISIBLE_OUTPUT})
+
+
+def classify_response(stop_reason, visible_chars, text_blocks=0,
+                      nontext_blocks=0):
+    """دلالة ردٍّ وصل فعلاً → (الدلالة، رمز الخطأ أو None). دالّة خالصة.
+
+    الترتيب مقصود، وكلّ فرعٍ منه حالةٌ مقيسة على الإنتاج (SHA 681ec04):
+
+      · refusal                     → امتناع مُعلَن، مهما كان ما وصل.
+      · نصّ مرئي + stop=max_tokens   → TRUNCATED. نصفُ JSON قُطِع، والشطر يفيده.
+                                       (قِيس: out_chars=18982 عند 32000 رمزاً.)
+      · نصّ مرئي + غير ذلك           → OK. الحكم على صلاحيته للمحلّل بعدُ.
+      · بلا نصّ + كتلة غير نصّية     → NO_VISIBLE_OUTPUT. الميزانية ذهبت إلى
+                                       محتوى لا نراه. (قِيس: out_tokens=16000،
+                                       blocks=1، types=thinking:1، 0 حرف.)
+      · بلا نصّ وبلا كتل             → EMPTY. لم يصل شيء أصلاً.
+
+    ملاحظة على الترتيب: النصّ المرئي يُحكَم عليه **قبل** الكتل غير النصّية، فردٌّ
+    يحمل تفكيراً ونصّاً معاً لا يُصنَّف «بلا مخرج مرئي» لمجرّد وجود التفكير —
+    وهو الشكل الغالب في الحالات الناجحة المقيسة (blocks=2, text:1, thinking:1).
+    """
+    stop = str(stop_reason or "")
+    try:
+        chars = int(visible_chars or 0)
+    except (TypeError, ValueError):
+        chars = 0
+    try:
+        nontext = int(nontext_blocks or 0)
+    except (TypeError, ValueError):
+        nontext = 0
+
+    if stop == "refusal":
+        return RESP_REFUSED, ACS_UPSTREAM_REFUSED
+    if chars > 0:
+        if stop == "max_tokens":
+            return RESP_TRUNCATED, ACS_UPSTREAM_TRUNCATED
+        return RESP_OK, None
+    if nontext > 0:
+        return RESP_NO_VISIBLE_OUTPUT, ACS_UPSTREAM_NO_VISIBLE_OUTPUT
+    return RESP_EMPTY, ACS_UPSTREAM_EMPTY_RESPONSE
+
+
 # رمز → حالة HTTP. الحالة تصف ما يفعله العميل، لا مكان العطل.
 HTTP_STATUS = {
     ACS_BAD_REQUEST: 400,
@@ -148,6 +214,7 @@ HTTP_STATUS = {
     ACS_UPSTREAM_TIMEOUT: 504,
     ACS_UPSTREAM_CONNECTION: 502,
     ACS_UPSTREAM_EMPTY_RESPONSE: 502,
+    ACS_UPSTREAM_NO_VISIBLE_OUTPUT: 502,
     ACS_UPSTREAM_INVALID_JSON: 502,
     ACS_UPSTREAM_TRAILING_JSON: 502,
     ACS_UPSTREAM_TRUNCATED: 502,
@@ -188,6 +255,9 @@ MESSAGE_AR = {
     ACS_UPSTREAM_TIMEOUT: "انتهت مهلة انتظار رد النموذج.",
     ACS_UPSTREAM_CONNECTION: "تعذّر الاتصال بمزوّد النموذج.",
     ACS_UPSTREAM_EMPTY_RESPONSE: "أعاد النموذج رداً فارغاً.",
+    ACS_UPSTREAM_NO_VISIBLE_OUTPUT: (
+        "استهلك النموذج ميزانية المخرج كاملةً في محتوى غير مرئي ولم يُعِد نصّاً. "
+        "حاول تقليل التفاصيل أو أعِد المحاولة."),
     ACS_UPSTREAM_INVALID_JSON: "رد النموذج ليس JSON صالحاً.",
     ACS_UPSTREAM_TRAILING_JSON: "رد النموذج يحوي أكثر من كائن JSON — لن نخمّن أيّها النموذج.",
     ACS_UPSTREAM_TRUNCATED: (

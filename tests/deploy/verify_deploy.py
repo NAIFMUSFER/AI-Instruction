@@ -1164,8 +1164,10 @@ chk('the live verifier reads the base from the page, not a second copy',
     'CONFIGURED_BASE' in rd('tests/deploy/verify_backend_live.py'))
 
 print('\n== 11i · ONE OUTPUT BUDGET AND A COMPLETION CONTRACT ==')
+import acs_api_errors as _ERR                                    # noqa: E402
 import acs_generation as _GEN                                     # noqa: E402
 _gen_src = rd('acs_generation.py')
+_api_err_src = rd('acs_api_errors.py')
 _und = rd('acs_understand.py')
 chk('the generation budget module is deployed and copied into the image',
     exists('acs_generation.py') and 'acs_generation.py' in docker)
@@ -1179,11 +1181,39 @@ chk('every stage budget derives from it — no free token constant remains in th
 chk('the deployment declares the budget and the escalation bounds',
     all(k in ry for k in ('ACS_LLM_MAX_OUTPUT_TOKENS', 'ACS_MAX_ESCALATIONS',
                           'ACS_MAX_GROUP_SPLITS')))
+# W2-E: كان هذا الفحص مربوطاً بالسلسلة الحرفية `if stop == "max_tokens"`.
+# الثابت المحروس سلوكيّ — «الحكم على اكتمال الرد يسبق تحليله» — والسلسلة
+# مجرّد تهجئة له، فتغيّرت التهجئة (صار الحكم مشتقّاً من دلالة الرد) وسقط
+# الفحص على ثابتٍ لم يُكسَر. يُقاس الآن بمواضع العُقد لا بنصّها.
+_und_tree = ast.parse(_und)
+_impl = next((n for n in ast.walk(_und_tree)
+              if isinstance(n, ast.FunctionDef) and n.name == '_call_llm_impl'),
+             None)
+_verdict_lines = [n.lineno for n in ast.walk(_impl or _und_tree)
+                  if isinstance(n, ast.Call)
+                  and isinstance(n.func, ast.Attribute)
+                  and n.func.attr == 'classify_response']
+_extract_line = next((n.lineno for n in ast.walk(_und_tree)
+                      if isinstance(n, ast.FunctionDef)
+                      and n.name == 'extract_json'), 0)
 chk('the stop-reason contract is judged BEFORE parsing',
-    'if stop == "max_tokens"' in _und
-    and _und.index('if stop == "max_tokens"') < _und.index('def extract_json'))
+    bool(_verdict_lines) and bool(_extract_line)
+    and min(_verdict_lines) < _extract_line,
+    (_verdict_lines, _extract_line))
 chk('a max_tokens stop raises the truncation code rather than returning text',
-    'E.ACS_UPSTREAM_TRUNCATED' in _und and 'refusal' in _und)
+    'E.RESP_TRUNCATED' in _und and 'refusal' in _api_err_src
+    and 'raise E.AcsApiError(' in _und
+    and _ERR.classify_response('max_tokens', 500, 1, 0)[1]
+    == _ERR.ACS_UPSTREAM_TRUNCATED)
+# وحالةٌ رابعة قِيست حيّاً: ميزانيةٌ كاملة في محتوى غير مرئي. لا هي فراغ ولا
+# هي نصفُ JSON — ولها رمزها، وهي دليل بلوغ سقفٍ يُشطَر ويُصعَّد.
+chk('a full budget spent on non-visible content is not called an empty reply',
+    _ERR.classify_response('max_tokens', 0, 0, 1)[1]
+    == _ERR.ACS_UPSTREAM_NO_VISIBLE_OUTPUT
+    and _ERR.ACS_UPSTREAM_NO_VISIBLE_OUTPUT in _ERR.CEILING_CODES
+    and _ERR.ACS_UPSTREAM_TRUNCATED in _ERR.CEILING_CODES)
+chk('every ceiling code is mapped to a user-facing state in the shipped page',
+    all(c in rd('public/app/trust/core.js') for c in _ERR.CEILING_CODES))
 chk('brace repair of a truncated reply is gone from the codebase',
     'def _balance_json' not in _und)
 chk('the input-length heuristic that mis-routed the production prompt is gone',

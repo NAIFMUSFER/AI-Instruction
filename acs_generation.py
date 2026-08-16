@@ -274,6 +274,43 @@ def classify(estimated_tokens, budget=None):
     return VERY_LARGE
 
 
+# ── W2-C · التوجيه محسوبٌ باقتصاد المزوّد العامل، لا باقتصاد مزوّدٍ واحد ────
+# العطل المُقاس حيّاً (SHA 681ec04):
+#     est=15944  budget=32000  عتبة المرحلة الواحدة=19200  →  single
+#     ثم: out_tokens=31022 لمخرج 20463 حرفاً، والحالة التالية 32000 وقُطِعت.
+# المقدّر أعلاه ليس مخطئاً: هو يقدّر **حجم المحتوى**. الخطأ أن العتبة تقارنه
+# بميزانيةٍ تُحاسِب شيئاً آخر. عند مزوّدٍ يبتلع نصف ميزانيته في محتوى غير مرئي،
+# «١٥٩٤٤ رمز محتوى» تعني إنفاق ≈٣٢٠٠٠ رمز محاسَب — أي الميزانية كلّها.
+#
+# العلاج ليس رفع السقف (ممنوع صراحةً، القاعدة 6) بل تصحيح **وحدة القياس**:
+# يُترجَم تقدير المحتوى إلى رموز محاسَبة قبل التصنيف. أثره في اتّجاه واحد فقط —
+# التوجيه إلى المراحل أبكر. مع anthropic المضاعِف 1.0، فالحساب يعطي العدد
+# نفسه بايتاً ببايت والسلوك لا يتغيّر إطلاقاً (القاعدة 4).
+def content_token_multiplier():
+    """كم رمز مخرج محاسَب يكلّفه رمزُ محتوى واحد عند المزوّد العامل.
+
+    تُقرأ **قدرةً مُعلَنة** لا اسم مزوّد: لا شيء هنا يعرف «deepseek» ولا
+    «anthropic». الغياب أو أي عطل قراءة يعيد 1.0 — أي السلوك القائم حرفياً.
+    """
+    try:
+        import acs_provider as _PROV
+        v = _PROV.capability("content_token_multiplier")
+    except Exception:                                           # noqa: BLE001
+        return 1.0
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return 1.0
+    return f if f == f and f >= 1.0 else 1.0
+
+
+def accounted_output_tokens(estimated_content_tokens, multiplier=None):
+    """تقدير المحتوى مترجَماً إلى رموز مخرج **محاسَبة**. لا يخفض أبداً."""
+    m = float(multiplier if multiplier is not None else content_token_multiplier())
+    m = m if m == m and m >= 1.0 else 1.0
+    return int(int(estimated_content_tokens) * m)
+
+
 def plan_strategy(description, btype=None, site_w=None, site_d=None,
                   floors=None, forced=None):
     """القرار الكامل قبل أي نداء: تقدير، تصنيف، استراتيجية، ميزانيات.
@@ -283,7 +320,11 @@ def plan_strategy(description, btype=None, site_w=None, site_d=None,
     """
     budget = max_output_tokens()
     est, zones = estimate_output_tokens(description, btype, site_w, site_d, floors)
-    cls = classify(est, budget)
+    # W2-C: التصنيف على الطلب **المحاسَب** لا على تقدير المحتوى وحده. مع
+    # مضاعِف 1.0 (anthropic والافتراضي) `accounted == est` والقرار لا يتغيّر.
+    mult = content_token_multiplier()
+    accounted = accounted_output_tokens(est, mult)
+    cls = classify(accounted, budget)
     if forced is True:
         strategy, why = STRATEGY_STAGED, "forced"
     elif forced is False:
@@ -294,6 +335,10 @@ def plan_strategy(description, btype=None, site_w=None, site_d=None,
         strategy, why = STRATEGY_STAGED, "estimate_exceeds_budget"
     return {"contract": GENERATION_CONTRACT_VERSION,
             "estimated_output_tokens": est,
+            # مُعلَنان صراحةً: المشغّل يقرأ **لماذا** وُجّه الطلب إلى المراحل،
+            # ويرى المضاعِف الذي وُجّه به. صمتٌ هنا يجعل التوجيه غير قابل للمراجعة.
+            "content_token_multiplier": mult,
+            "accounted_output_tokens": accounted,
             "estimated_zones": zones,
             "size_class": cls,
             "max_output_tokens": budget,

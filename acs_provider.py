@@ -55,6 +55,13 @@ PROVIDER_SPEC = {
         "documented_max_output": None,    # غير موثّق هنا: لا يُخترع
         "legacy_key_env": "ANTHROPIC_API_KEY",
         "key_prefix": "sk-ant-",
+        "capabilities": {
+            # النظام كلّه مُعاير على هذا المزوّد منذ نشأته: `output_tokens`
+            # تقارب حجم JSON المرئي، فتُقرأ كثافةً وتُشتقّ منها أحجام الشرائح.
+            # هذا هو السلوك القائم، ويبقى كما هو حرفياً.
+            "output_tokens_are_content_proxy": True,
+            "content_token_multiplier": 1.0,
+        },
     },
     "deepseek": {
         "base_url": "https://api.deepseek.com/anthropic",
@@ -63,7 +70,42 @@ PROVIDER_SPEC = {
         "documented_max_output": 384000,  # موثّق: MAXIMUM 384K
         "legacy_key_env": None,           # لا مفتاح قديم يُستعار لهذا المزوّد
         "key_prefix": None,
+        "capabilities": {
+            # W2-B · مُقاسٌ حيّاً على الإنتاج (SHA 681ec04)، لا مُستنتَج:
+            #   stage=single  out_tokens=13945  out_chars=6917   cpt=0.496
+            #   stage=single  out_tokens=31022  out_chars=20463  cpt=0.6596
+            #   stage=single  out_tokens=32000  out_chars=18982  cpt=0.5932 (قُطِع)
+            #   stage=plan    out_tokens=16000  out_chars=0      cpt=0.0
+            #                 blocks=1 types=thinking:1 text_blocks=0
+            # النداء الأخير يحسم المسألة: ميزانيةٌ كاملة استُهلكت في كتلة تفكير
+            # وحدها، بصفر حرفٍ مرئيّ. فـ`output_tokens` عند هذا المزوّد ليست
+            # وكيلاً عن حجم المحتوى — لا كثافةً تُقرأ ولا سعةً تُحجَز عليها.
+            "output_tokens_are_content_proxy": False,
+            # كم رمز مخرج **محاسَب** يستهلكه رمزُ محتوى واحد يقدّره المقدّر.
+            # مشتقّ من الحالة المتوسّطة المقيسة: تقدير 15944 → استهلاك 31022،
+            # أي 1.946. المعلن 2.0 بهامشٍ في اتّجاه الأمان وحده. لا يرفع سقفاً:
+            # يرفع **الطلبَ المقدَّر** فيُوجَّه إلى المراحل أبكر (القاعدة 6).
+            "content_token_multiplier": 2.0,
+        },
     },
+}
+
+# قيم القدرة حين لا يعلنها المزوّد. الافتراض هو السلوك القائم: أي مزوّد جديد
+# يُعامَل معاملة anthropic حتى يُقاس ويُعلَن خلافُ ذلك — فلا يتغيّر سلوكٌ بصمت.
+CAPABILITY_DEFAULTS = {
+    "output_tokens_are_content_proxy": True,
+    "content_token_multiplier": 1.0,
+}
+
+#: حدود المضاعِف. أقلّ من 1.0 يعني ادّعاء أن المزوّد أوفر من المقدّر — وهو رفعٌ
+#: للعتبة في اتّجاه الخطر، فيُمنع. والأعلى حارسٌ ضدّ ضبطٍ خاطئ يشلّ التوجيه.
+MIN_CONTENT_TOKEN_MULTIPLIER = 1.0
+MAX_CONTENT_TOKEN_MULTIPLIER = 8.0
+
+#: تجاوزات المشغّل — لتصحيح إعلانٍ كذّبه القياس بلا تعديل شفرة ولا نشر.
+_CAPABILITY_ENV = {
+    "output_tokens_are_content_proxy": "ACS_LLM_OUTPUT_TOKENS_CONTENT_PROXY",
+    "content_token_multiplier": "ACS_LLM_CONTENT_TOKEN_MULTIPLIER",
 }
 
 #: النقل المسموح. `stream` هو سلوك الإنتاج القائم ولا يتغيّر بلا ضبط صريح.
@@ -279,6 +321,58 @@ def documented_max_output(cfg=None):
         "documented_max_output")
 
 
+def capabilities(cfg=None):
+    """قدرات المزوّد المُعلَنة — قاموسٌ واحد، تجاوزات المشغّل تعلوه (W2-B).
+
+    لماذا «قدرة» لا «اسم مزوّد»
+    ---------------------------
+    الشرط الثاني في تفويض W2: «لا تتفرّع على اسم المزوّد داخل منطق التقطيع».
+    الاسم صفةُ هوية لا صفةُ سلوك: مزوّدٌ ثالث قد يشارك deepseek محاسبتَه،
+    وdeepseek نفسه قد يغيّرها غداً. فما يقرؤه منطقُ التوجيه والتقطيع هو
+    **ما يفعله المزوّد** كما أُعلن هنا وقِيسَ حيّاً — لا مَن هو.
+
+    القيم مقيَّدة ومُصحَّحة: قيمة غير صالحة تسقط إلى المُعلَن، والمُعلَن يسقط
+    إلى CAPABILITY_DEFAULTS. لا يرفع هذا أبداً.
+    """
+    cfg = cfg or primary()
+    spec_caps = (PROVIDER_SPEC.get(cfg.provider or "") or {}).get("capabilities")
+    out = dict(CAPABILITY_DEFAULTS)
+    if isinstance(spec_caps, dict):
+        out.update(spec_caps)
+
+    raw = _env(_CAPABILITY_ENV["output_tokens_are_content_proxy"])
+    if raw:
+        low = raw.lower()
+        if low in ("1", "true", "yes", "on"):
+            out["output_tokens_are_content_proxy"] = True
+        elif low in ("0", "false", "no", "off"):
+            out["output_tokens_are_content_proxy"] = False
+
+    raw = _env(_CAPABILITY_ENV["content_token_multiplier"])
+    if raw:
+        try:
+            out["content_token_multiplier"] = float(raw)
+        except (TypeError, ValueError):
+            pass
+
+    out["output_tokens_are_content_proxy"] = bool(
+        out.get("output_tokens_are_content_proxy"))
+    try:
+        m = float(out.get("content_token_multiplier"))
+    except (TypeError, ValueError):
+        m = CAPABILITY_DEFAULTS["content_token_multiplier"]
+    if m != m:                                          # NaN
+        m = CAPABILITY_DEFAULTS["content_token_multiplier"]
+    out["content_token_multiplier"] = max(
+        MIN_CONTENT_TOKEN_MULTIPLIER, min(MAX_CONTENT_TOKEN_MULTIPLIER, m))
+    return out
+
+
+def capability(name, cfg=None):
+    """قدرة واحدة بالاسم. الاسم المجهول يعيد None — لا يرفع ولا يُخمَّن."""
+    return capabilities(cfg).get(name)
+
+
 def health_status():
     """حالة المزوّد لـ/health — أسماء وحالات فقط. لا مفتاح ولا عنوان كامل."""
     p = primary()
@@ -295,7 +389,11 @@ def health_status():
             "fallback_model": f.model if f.ok else None,
             "fallback_base_host": f.base_host if f.ok else None,
             "fallback_state": f.state,
-            "fallback_on_billing": fallback_on_billing()}
+            "fallback_on_billing": fallback_on_billing(),
+            # W2-B: القدرة المُعلَنة تظهر في /health لأن التوجيه والتقطيع
+            # يقرآنها. مشغّلٌ يرى تصعيداً غير متوقّع يحتاج أن يعرف بأي محاسبة
+            # يعمل النظام الآن — بلا قراءة شفرة ولا تخمين.
+            "capabilities": capabilities(p)}
 
 
 def spec():
@@ -305,4 +403,9 @@ def spec():
             "transports": list(TRANSPORTS),
             "states": [RESOLVED, UNKNOWN_PROVIDER, MISSING_KEY,
                        MISSING_BASE_URL, NOT_CONFIGURED],
+            "capability_keys": sorted(CAPABILITY_DEFAULTS),
+            "capability_defaults": dict(CAPABILITY_DEFAULTS),
+            "capability_env": dict(_CAPABILITY_ENV),
+            "content_token_multiplier_bounds": [MIN_CONTENT_TOKEN_MULTIPLIER,
+                                                MAX_CONTENT_TOKEN_MULTIPLIER],
             "provider_spec": {k: dict(v) for k, v in PROVIDER_SPEC.items()}}

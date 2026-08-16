@@ -492,6 +492,12 @@ const codeMap={
   ACS_UPSTREAM_INVALID_JSON:'INVALID_JSON',
   ACS_UPSTREAM_TRAILING_JSON:'INVALID_JSON',
   ACS_UPSTREAM_TRUNCATED:'INVALID_JSON',
+  /* W2-E: استهلك المزوّد ميزانية المخرج كاملةً في محتوى غير مرئي فلم يصل نصّ.
+     يُعرَض INVALID_JSON كأخيه ACS_UPSTREAM_TRUNCATED: من موقع المستخدم الحدث
+     واحد — لم يصل نموذجٌ صالح، وتقليل التفاصيل هو ما يفيده. لا يُعرَض
+     PROVIDER_UNAVAILABLE لأن الخدمة متاحة وردّت فعلاً، ولا HTTP_5XX لأن
+     الإصلاح ليس عند المشغّل. */
+  ACS_UPSTREAM_NO_VISIBLE_OUTPUT:'INVALID_JSON',
   /* F-50: سقف مخرجات أعلى ممّا يقبله النموذج. عطل ضبطٍ عند المشغّل لا
      خطأ من الزائر ولا عطل شبكة: يُعرَض كعطل خادم صريح، ولا يُقترَح على
      المستخدم أن يقصّر وصفه — تقصيره لن يغيّر سقفاً مضبوطاً في النشر. */

@@ -491,8 +491,9 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
             "duration_ms": duration_ms,
             "retries": (max(0, int(attempts) - 1)
                         if isinstance(attempts, int) else 0),
+            # W2-E: بلوغ السقف بلوغٌ له سواء وصل نصفُ JSON أم لم يصل حرف.
             "truncated": bool(stop == "max_tokens"
-                              or error_code == E.ACS_UPSTREAM_TRUNCATED),
+                              or error_code in E.CEILING_CODES),
             "upstream_class": upstream_class,
             "success": bool(success),
             "error_code": error_code,
@@ -529,6 +530,9 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
             # W2-D · محاولةٌ لم تُرسَل لأنها مطابقة بايتاً لما أُرسل.
             "retry_skipped_reason": tel.get("retry_skipped_reason"),
             "retries_skipped": tel.get("retries_skipped"),
+            # W2-E · بأيّ دلالةٍ حُكِم على الرد. بلا هذا الحقل يبقى
+            # «لماذا صُعِّد هذا الطلب ولم يُصعَّد ذاك؟» بلا جواب.
+            "response_semantic": tel.get("response_semantic"),
         }
         # KI-24/F-38: موضع الشريحة في السلسلة. بلا هذين الحقلين لا يمكن نسب
         # عطلٍ إلى شريحة بعينها في سجلّ الإنتاج.
@@ -1014,29 +1018,58 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                 break           # وصل نصّ — الحكم على اكتماله بعد الحلقة
             print("[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…")
 
-        if not text.strip():
-            if isinstance(last_err, E.AcsApiError):
-                raise last_err                # آخر عطل عابر مصنّف: أوضح من العموم
+        # ── W2-E · دلالة الرد قبل أي تحليل ───────────────────────────────────
+        # كان الحكم هنا ثنائياً: «فيه نصّ» ثمّ فحصُ سبب التوقّف. فردٌّ استهلك
+        # ميزانيته كلّها في كتلة تفكير (0 حرف، 16000 رمزاً، stop=max_tokens)
+        # كان يُصنَّف EMPTY_RESPONSE — وصفٌ كاذب، ورمزٌ لا يُشطَر ولا يُصعَّد،
+        # فينتهي الطلب 502 بلا محاولة تعافٍ واحدة. الدلالة الآن مُشتقّة من
+        # محاسبة الكتل (W2-A) بدالّة خالصة مختبَرة على القيم المقيسة حيّاً.
+        sem, code = E.classify_response(stop, len(text),
+                                        tel.get("text_blocks") or 0,
+                                        tel.get("nontext_blocks") or 0)
+        tel["response_semantic"] = sem
+
+        # الأسبقيّة كما كانت حرفياً: بلا نصّ مرئي، عطلٌ عابر مصنَّف يعلو أي حكم
+        # على شكل الرد. تغييرها هنا كان سيبتلع 529 من محاولةٍ تالية.
+        if (sem in (E.RESP_EMPTY, E.RESP_NO_VISIBLE_OUTPUT)
+                and isinstance(last_err, E.AcsApiError)):
+            raise last_err                # آخر عطل عابر مصنّف: أوضح من العموم
+        if sem == E.RESP_EMPTY:
             raise E.AcsApiError(
-                E.ACS_UPSTREAM_EMPTY_RESPONSE,
+                code,
                 "أعاد النموذج رداً فارغاً في كل المحاولات (آخر stop_reason=%s)." % stop,
                 upstream={"provider": cfg.provider, "kind": "empty_text",
+                          "attempts": tried})
+        if sem == E.RESP_NO_VISIBLE_OUTPUT:
+            # ردٌّ وصل وكلّف ميزانيةً كاملة ولم يحمل حرفاً. تمييزه عن «الفارغ»
+            # هو ما يجعله دليلَ بلوغ سقفٍ يستدعي الشطر والتصعيد (E.CEILING_CODES).
+            print("[ACS-LLM] استُهلكت الميزانية في محتوى غير مرئي — "
+                  "blocks=%s types=%s out_tokens=%s out_chars=0 — "
+                  "يُعامَل معاملة بلوغ السقف لا معاملة الرد الفارغ."
+                  % (tel.get("content_blocks"), tel.get("content_block_types"),
+                     tel.get("output_tokens")))
+            raise E.AcsApiError(
+                code,
+                "استهلك النموذج سقف المخرج (%d رمزاً) في محتوى غير مرئي في "
+                "المرحلة %s ولم يُعِد نصّاً." % (tel.get("max_output_tokens") or 0,
+                                               stage),
+                upstream={"provider": cfg.provider, "kind": "no_visible_output",
                           "attempts": tried})
 
         # ── عقد سبب التوقّف (§10): الحكم قبل التحليل، لا بعده ────────────────
         # سبب التوقّف يثبت الاكتمال من عدمه بذاته. تحليل نصّ يُعرف سلفاً أنه مبتور
         # هدرٌ في أحسن الأحوال، وقبولُ نصفِ نموذجٍ في أسوئها — وهو ما كان يحدث:
         # كان `_balance_json` يغلق الأقواس الناقصة فيمرّ نموذج ناقص إلى المصرِّف.
-        if stop == "max_tokens":
+        if sem == E.RESP_TRUNCATED:
             print("[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.")
             raise E.AcsApiError(
-                E.ACS_UPSTREAM_TRUNCATED,
+                code,
                 "انقطع رد النموذج عند سقف المخرج (%d رمزاً) في المرحلة %s."
                 % (tel.get("max_output_tokens") or 0, stage),
                 upstream={"provider": cfg.provider, "kind": "max_tokens",
                           "attempts": tried})
-        if stop == "refusal":
-            raise E.AcsApiError(E.ACS_UPSTREAM_REFUSED,
+        if sem == E.RESP_REFUSED:
+            raise E.AcsApiError(code,
                                 upstream={"provider": cfg.provider,
                                           "kind": "refusal",
                                           "attempts": tried})
@@ -1463,19 +1496,34 @@ def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
         stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
                                   chunk["index"]))
         results.append((chunk, rooms, iss))
+        # W2-C: `rooms` هي المناطق التي اجتازت validate_chunk فعلاً —
+        # «المحتوى المكتمل المتحقَّق منه» الذي يطلبه التفويض. عند المزوّد
+        # الوكيل تُهمَل هذه الوسائط تماماً ويبقى الحساب كما كان.
         return PC.measured_zone_rate(ctel.get("output_tokens"), chunk["count"],
-                                     rate)
+                                     rate,
+                                     visible_chars=ctel.get("output_chars"),
+                                     completed_zones=len(rooms))
     except E.AcsApiError as err:
         stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
                                   chunk["index"], err.code))
-        hit_ceiling = (err.code == E.ACS_UPSTREAM_TRUNCATED
+        hit_ceiling = (err.code in E.CEILING_CODES
                        and ctel.get("stop_reason") == "max_tokens")
         if hit_ceiling:
-            # بلغ السقف ⇒ الكلفة الحقيقية للمنطقة **لا تقلّ** عن السقف مقسوماً
-            # على عددها. نأخذها حدّاً أدنى فتصغر كل شريحة بعدها.
+            # عند مزوّدٍ رموزُ مخرجه محتوىً: بلغ السقف ⇒ الكلفة الحقيقية
+            # للمنطقة **لا تقلّ** عن السقف مقسوماً على عددها. حدٌّ أدنى
+            # تصغر به كل شريحة بعدها. سلوكٌ قائم لم يُمَسّ.
+            #
+            # W2-C: وعند مزوّدٍ ليست كذلك، هذا هو بالضبط الاستنتاج الذي
+            # كذّبه القياس الحيّ: 16000 رمزاً و0 حرف لا تقول إن المنطقة
+            # تكلّف 4000 رمزاً — تقول إن الميزانية ذهبت إلى غير المحتوى.
+            # فيُمرَّر ما وصل مرئياً وعددُ ما اكتمل (صفر هنا: لم يُتحقَّق من
+            # منطقة واحدة)، وتقرّر الدالّة أن لا قياس ⇒ لا تصغير.
+            # الانقطاع يعالجه الشطر أدناه — طلبٌ مختلف فعلاً.
             rate = PC.measured_zone_rate(ctel.get("max_output_tokens")
                                          or chunk["budget"],
-                                         chunk["count"], rate)
+                                         chunk["count"], rate,
+                                         visible_chars=ctel.get("output_chars"),
+                                         completed_zones=0)
         halves = PC.split_chunk(chunk, depth) if hit_ceiling else []
         if not halves:
             # نسبة عطل صريحة: الشريحة رقم كذا فشلت بالرمز كذا. لا يُسقط الباقي.
@@ -1616,7 +1664,9 @@ def _detail_group_split(description, plan_ctx, rooms, model, btype, depth=0,
     except E.AcsApiError as err:
         if stages is not None:
             stages.append(_safe_stage(tel, len(rooms), "detail", depth, err.code))
-        if err.code != E.ACS_UPSTREAM_TRUNCATED or depth >= G.MAX_GROUP_SPLITS:
+        # W2-E: الشرط دليلُ بلوغ السقف لا رمزٌ بعينه. ردٌّ استهلك ميزانيته
+        # في محتوى غير مرئي بلغ السقف تماماً كما يبلغه نصٌّ مقطوع.
+        if err.code not in E.CEILING_CODES or depth >= G.MAX_GROUP_SPLITS:
             raise
         halves = G.split_group(rooms)
         if not halves:
@@ -1704,9 +1754,10 @@ def understand_deep(description, model=None, group_size=None, workers=None,
             # مراحل» يعالج النداء الواحد، وتقسيم المجموعة يعالج التفصيل،
             # والخطّة بينهما بلا حارس فيسقط الطلب كلّه بـ502. الآن تُعاد
             # بشرائح محدودة مرّة واحدة: طلبٌ مختلف فعلاً لا تكرارٌ للطلب نفسه.
-            if err.code != E.ACS_UPSTREAM_TRUNCATED:
+            if err.code not in E.CEILING_CODES:
                 raise
-            print("[ACS-PLAN] انقطعت الخطّة عند سقفها — إعادة بشرائح محدودة.")
+            print("[ACS-PLAN] بلغت الخطّة سقفها (%s) — إعادة بشرائح محدودة."
+                  % err.code)
             building = _plan_bounded(desc, model=model, btype=btype,
                                      stages=stages, request_id=request_id,
                                      strategy_plan=_sp)
@@ -1893,9 +1944,13 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
         stages.append(_safe_stage(_tel, plan["estimated_zones"], "single", 0, err.code))
         # §12: انقطاع المرحلة الواحدة يُعالَج بتغيير الاستراتيجية مرّة واحدة —
         # لا بإعادة النداء نفسه، ولا بترميم النصّ المقطوع.
-        if (err.code == E.ACS_UPSTREAM_TRUNCATED
+        # W2-E: العطل المُقاس حيّاً كان NO_VISIBLE_OUTPUT في المرحلة الواحدة،
+        # فلم يُصعَّد أصلاً ووصل المستخدم 502 بلا محاولة تعافٍ. بلوغ السقف
+        # بلوغٌ للسقف أياً كان ما مُلئ به.
+        if (err.code in E.CEILING_CODES
                 and G.MAX_STRATEGY_ESCALATIONS >= 1 and forced is None):
-            print("[ACS-PLAN] انقطع النداء الواحد — تصعيد إلى التوليد على مراحل.")
+            print("[ACS-PLAN] بلغ النداء الواحد سقفه (%s) — تصعيد إلى "
+                  "التوليد على مراحل." % err.code)
             return _stamp(understand_deep(description, model=model, strict=strict,
                                           btype=btype, stages=stages,
                                           request_id=request_id,

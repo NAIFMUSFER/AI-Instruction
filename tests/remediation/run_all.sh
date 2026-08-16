@@ -42,6 +42,12 @@ python3 "$HERE/test_p0_hardening.py"; guard $?
 step "W2-A/W2-D · provider response accounting and the identical-retry skip"
 python3 "$HERE/test_provider_accounting.py"; guard $?
 
+# W2-B/W2-C/W2-E: القدرة المُعلَنة تحلّ محلّ اسم المزوّد، والتوجيه والتقطيع
+# يُقاسان بالمحتوى المرئي المكتمل، ودلالة الرد أربع حالات لا اثنتان.
+# شواهده السالبة تُعيد إنتاج الانهيار المقيس 60→35→20→11→6→4.
+step "W2-B/W2-C/W2-E · provider capability, routing and response semantics"
+python3 "$HERE/test_provider_capability.py"; guard $?
+
 step "F-01 · engineering authority: no silent engineering change"
 python3 "$HERE/test_engineering_authority.py"; guard $?
 
