@@ -143,12 +143,12 @@
     "url_scheme": "http://127.0.0.1 (loopback, never proxied)",
     "page": "tests/performance/vacuity_page.html — canvas + getContext('webgl2') + requestAnimationFrame loop, no Three.js, no framework",
     "measurement_code": "IDENTICAL to the application path: sampleFrames(), heap(), gpuStats(), perfCounters(), navigationTiming()",
-    "page_load_ms": 142,
+    "page_load_ms": 128,
     "navigation_timing": {
-      "response_end_ms": 16.4,
-      "dom_interactive_ms": 131.2,
-      "dom_content_loaded_ms": 131.4,
-      "load_event_end_ms": 131.5,
+      "response_end_ms": 12.5,
+      "dom_interactive_ms": 120.3,
+      "dom_content_loaded_ms": 120.5,
+      "load_event_end_ms": 120.6,
       "transfer_size_bytes": 5505,
       "decoded_body_bytes": 5205
     },
@@ -157,11 +157,11 @@
       "frames": {
         "measured": true,
         "requested_window_ms": 2500,
-        "actual_window_ms": 2520.7,
+        "actual_window_ms": 2521.8,
         "frames": 92,
-        "fps_average": 36.101,
-        "frame_time_mean_ms": 27.7,
-        "frame_time_min_ms": -12.6,
+        "fps_average": 36.085,
+        "frame_time_mean_ms": 27.712,
+        "frame_time_min_ms": -11.4,
         "frame_time_max_ms": 50,
         "frame_time_p5_ms": 16.6,
         "frame_time_p50_ms": 33.3,
@@ -186,12 +186,12 @@
       "frames": {
         "measured": true,
         "requested_window_ms": 2500,
-        "actual_window_ms": 2546.2,
+        "actual_window_ms": 2514.5,
         "frames": 36,
-        "fps_average": 13.746,
-        "frame_time_mean_ms": 72.749,
-        "frame_time_min_ms": -3.7,
-        "frame_time_max_ms": 83.4,
+        "fps_average": 13.919,
+        "frame_time_mean_ms": 71.843,
+        "frame_time_min_ms": -2.1,
+        "frame_time_max_ms": 100,
         "frame_time_p5_ms": 66.6,
         "frame_time_p50_ms": 66.7,
         "frame_time_p95_ms": 83.4,
@@ -211,17 +211,17 @@
       }
     },
     "heap_before_alloc": {
-      "used_js_heap_bytes": 1752485,
-      "total_js_heap_bytes": 4479065,
+      "used_js_heap_bytes": 1673665,
+      "total_js_heap_bytes": 4216921,
       "js_heap_limit_bytes": 2248146944
     },
     "heap_after_alloc_64mb": {
-      "used_js_heap_bytes": 68050954,
+      "used_js_heap_bytes": 68050934,
       "total_js_heap_bytes": 70004462,
       "js_heap_limit_bytes": 2248146944
     },
     "heap_alloc_blocks": 64,
-    "heap_delta_bytes": 66298469,
+    "heap_delta_bytes": 66377269,
     "counters": {
       "webgl_context_count": 1,
       "context_lost_events": 0,

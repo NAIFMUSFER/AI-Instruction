@@ -28,7 +28,14 @@ import urllib.request
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
 
+# W0 · العنوان يُقرأ من مصدره القانوني الواحد. كان يُقرأ من public/index.html
+# وحده، وF-09 نقل CONFIGURED_BASE منها إلى public/app/boot/api-base.js — فصار
+# هذا الملفّ يخرج بالرمز 2 «لا عنوان» **قبل فتح أي مقبس**، على كل جهاز، كل يوم،
+# وهو السكربت الحيّ الوحيد في production-verify.yml. البوّابة الحيّة لم تكن
+# تتحقّق من شيء. تُمسَح القشرة وكل سكربتات الإقلاع معاً، فلا يوجد عنوان ثانٍ
+# يُكتب في أي مكان: هذا قارئٌ للمصدر القائم، لا مصدرٌ جديد.
 PAGE = os.path.join(ROOT, "public", "index.html")
+BOOT_DIR = os.path.join(ROOT, "public", "app", "boot")
 GEN_PROMPT = "مستودع بسيط 20×15م، دور واحد، منطقة تخزين ومنطقة استقبال."
 
 p = [0]
@@ -51,16 +58,30 @@ def note(name, why):
     print("  ― %s: NOT VERIFIED — %s" % (name, why))
 
 
+def _shipped_sources():
+    """نصّ القشرة + كل سكربت إقلاع كلاسيكيّ، بالترتيب. لا شيء خارج المشحون."""
+    texts = []
+    for path in [PAGE] + sorted(
+            os.path.join(BOOT_DIR, n) for n in (os.listdir(BOOT_DIR)
+                                                if os.path.isdir(BOOT_DIR) else [])
+            if n.endswith(".js")):
+        try:
+            with open(path, encoding="utf-8") as fh:
+                texts.append(fh.read())
+        except Exception:                                         # noqa: BLE001
+            continue
+    return "\n".join(texts)
+
+
 def configured_base():
-    """العنوان يُقرأ من الصفحة المشحونة نفسها — لا يُكتب هنا مرّة ثانية."""
-    try:
-        with open(PAGE, encoding="utf-8") as fh:
-            m = re.search(r'CONFIGURED_BASE\s*=\s*"([^"]*)"', fh.read())
-        if m:
-            return m.group(1).rstrip("/")
-    except Exception:
-        pass
-    return ""
+    """العنوان يُقرأ من المصدر المشحون — القشرة أو سكربتات الإقلاع.
+
+    F-09 نقل الثابت من الصفحة إلى public/app/boot/api-base.js. البحث في
+    الاثنين معاً يعني أن نقلة أخرى مستقبلاً لن تُعطِّل هذه البوّابة صامتةً،
+    وأن العنوان يبقى مكتوباً مرّة واحدة في المستودع كلّه.
+    """
+    m = re.search(r'CONFIGURED_BASE\s*=\s*"([^"]*)"', _shipped_sources())
+    return m.group(1).rstrip("/") if m else ""
 
 
 def request(base, path, method="GET", body=None, headers=None, timeout=60):
@@ -103,7 +124,9 @@ def main():
     args = [a for a in args if not a.startswith("--")]
     base = (args[0] if args else configured_base()).rstrip("/")
     if not base:
-        print("BACKEND LIVE: no base URL (pass one, or set CONFIGURED_BASE in the page)")
+        print("BACKEND LIVE: no base URL — CONFIGURED_BASE was not found in "
+              "public/index.html nor in public/app/boot/*.js. Pass one "
+              "explicitly, or restore the constant in its canonical source.")
         return 2
     host = re.sub(r"^https?://", "", base).split("/")[0]
     print("BACKEND LIVE VERIFICATION — %s" % base)
@@ -158,9 +181,28 @@ def main():
             "model_configured" in hj and isinstance(hj.get("api_key_configured"), bool))
         chk("/health never returns any credential material",
             "sk-ant" not in tx and "Bearer " not in tx)
-        chk("the deployed model identifier is the pinned one",
-            hj.get("model_configured") == "claude-sonnet-5",
+        # W0 · كان هذا يثبّت claude-sonnet-5 حرفياً، فيصير أحمرَ على نشرٍ
+        # deepseek صحيح تماماً. المُثبَّت الآن هو ما يجب أن يصحّ لأي مزوّد:
+        # أن المعرّف المُعلَن غير فارغ وأنه **يطابق** ما حلّته طبقة المزوّد.
+        llm = hj.get("llm") if isinstance(hj.get("llm"), dict) else {}
+        chk("the deployed model identifier is declared and non-empty",
+            bool(str(hj.get("model_configured") or "").strip()),
             str(hj.get("model_configured")))
+        chk("/health exposes the resolved provider block",
+            bool(llm.get("llm_provider")) and "llm_state" in llm,
+            json.dumps(llm, ensure_ascii=False)[:160])
+        chk("the provider resolved cleanly (no missing key or endpoint)",
+            llm.get("llm_state") == "resolved", str(llm.get("llm_state")))
+        chk("model_configured agrees with the resolved provider model",
+            llm.get("llm_model") == hj.get("model_configured"),
+            "%s vs %s" % (llm.get("llm_model"), hj.get("model_configured")))
+        chk("the provider host is declared, and it is a host not a URL",
+            llm.get("llm_base_host") is None
+            or ("://" not in str(llm.get("llm_base_host"))
+                and "/" not in str(llm.get("llm_base_host"))),
+            str(llm.get("llm_base_host")))
+        chk("/health leaks no credential through the provider block",
+            "api_key" not in json.dumps(llm) or llm.get("api_key_configured") in (True, False))
         chk("the deployment has an API key configured",
             hj.get("api_key_configured") is True)
 

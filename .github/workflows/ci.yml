@@ -52,6 +52,7 @@ jobs:
           set -o pipefail
           mkdir -p logs
           {
+            set -e   # W0: بلا هذا تُقاس حالةُ آخر أمرٍ في المجموعة وحدها
             echo "=== 0 · syntax and imports ==="
             python -m py_compile acs_*.py && echo "py_compile: OK"
             python - <<'PY'
@@ -65,7 +66,12 @@ jobs:
           print("imports: OK (%d modules)" % len(mods))
           PY
           } 2>&1 | tee logs/python-contracts.log
-          for t in tests/phase8/test_bim.py \
+          # W0: كانت هذه حلقة `for` عارية، وحالة خروجها حالةُ آخر تكرار وحده،
+          # فلم يكن يُفشِل الوظيفةَ إلا آخر اختبار. تُشغَّل الآن عبر مُشغِّل يجمع
+          # الأعطال ويخرج بغير صفر إن فشل **أيّ** هدف.
+          bash tools/ci_run.sh --log logs/python-contracts.log \
+               --label "python contract suites" --runner "python3" \
+                   tests/phase8/test_bim.py \
                    tests/phase9/test_docs.py \
                    tests/phase9_1/test_pbr.py \
                    tests/phase9_2/test_alignment.py \
@@ -73,10 +79,7 @@ jobs:
                    tests/phase9_2/test_backend_contract.py \
                    tests/phase9_2/test_black_viewport.py \
                    tests/phase9_2/test_generation_budget.py \
-                   tests/phase9_2/test_live_render.py ; do
-            echo "=== $t ===" | tee -a logs/python-contracts.log
-            python3 "$t" 2>&1 | tee -a logs/python-contracts.log
-          done
+                   tests/phase9_2/test_live_render.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -102,27 +105,42 @@ jobs:
           set -o pipefail
           mkdir -p logs
           : > logs/js-parity.log
-          for t in tests/phase4/test_parity.js \
+          bash tools/ci_run.sh --log logs/js-parity.log \
+               --label "parity suites" --runner "node" \
+                   tests/phase4/test_parity.js \
                    tests/phase5/test_parity.js \
                    tests/phase6/test_parity.js \
                    tests/phase7/test_parity.js \
                    tests/phase8/test_parity.js \
                    tests/phase9/test_parity.js \
                    tests/phase9_1/test_parity.js \
-                   tests/phase9_2/test_parity.js ; do
-            echo "=== $t ===" | tee -a logs/js-parity.log
-            node "$t" 2>&1 | tee -a logs/js-parity.log
-          done
+                   tests/phase9_2/test_parity.js
       - name: The JS mirrors themselves (run against the shipped page bundle)
         shell: bash
         run: |
           set -o pipefail
-          for t in tests/phase2/test_*.js tests/phase3/test_visual.js \
+          # glob مُوسَّع بالصَّدَفة ثم يُمرَّر كأهداف صريحة للمُشغِّل.
+          bash tools/ci_run.sh --log logs/js-parity.log \
+               --label "js mirror suites" --runner "node tests/lib/run.js" \
+                   tests/phase2/test_*.js \
+                   tests/phase3/test_visual.js \
                    tests/phase3/test_visual_adversarial.js \
-                   tests/phase3/test_dev_api.js ; do
-            echo "=== $t ===" | tee -a logs/js-parity.log
-            node tests/lib/run.js "$t" 2>&1 | tee -a logs/js-parity.log
-          done
+                   tests/phase3/test_dev_api.js
+      - name: Remediation contracts that need only Node (W0 — previously ungated)
+        # These five were outside every workflow. They pin the production error
+        # UI (the backend code -> user state map must stay TOTAL), the declared
+        # CSP, the WebGL diagnostics contract, request concurrency and local
+        # persistence safety. Nothing here needs a browser or the network.
+        shell: bash
+        run: |
+          set -o pipefail
+          bash tools/ci_run.sh --log logs/js-parity.log \
+               --label "remediation (node scope)" --runner "node tests/lib/run.js" \
+                   tests/remediation/test_production_error_ui.js \
+                   tests/remediation/test_csp.js \
+                   tests/remediation/test_webgl_diagnostics.js \
+                   tests/remediation/test_concurrency.js \
+                   tests/remediation/test_persistence.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -158,29 +176,41 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p logs
-          {
-            node tests/phase3/lib/run_browser.js test_visual.js
-            node tests/phase3/lib/run_browser.js test_dev_api.js
-            node tests/phase3/lib/run_browser.js "$PWD/tests/phase6/test_dom.js"
-            node tests/phase3/lib/run_browser.js "$PWD/tests/phase9_2/test_archdetail_browser.js"
-            node tests/deploy/test_viewport_pixels.js
-            node tests/deploy/verify_page_boot.js
-            # KI-13 · F-30 — معمارية التنسيق تحت السياسة الإنتاجية. تُشغَّل هنا
-            # لأن هذه هي الوظيفة الوحيدة التي تملك Chromium حقيقياً و
-            # public/vendor مملوءاً، فيقاس الرسم الكامل لا رسمٌ مُكعَّب.
-            # تفشل الوظيفة إن أعاد أي ملفّ مشحون إدخال سمة style، أو انحرف
-            # مخرجٌ مولَّد عن مولّده، أو ضعّف أحدٌ style-src في netlify.toml.
-            node tests/remediation/test_csp_style_architecture.js
-            node tests/remediation/test_panel_entry.js
-            node tests/remediation/test_module_graph.js
-            # KI-25: a 200 whose building never reaches the viewport is a
-            # failure, not a success. Node scope here; real WebGL2 pixels
-            # are measured by test_apply_render_browser.js.
-            node tests/lib/run.js tests/remediation/test_model_apply.js
-            node tests/lib/run.js tests/remediation/test_scene_limits.js
-            node tests/remediation/test_apply_render_browser.js
-            node tests/remediation/test_scene_benchmark.js
-          } 2>&1 | tee logs/chromium-browser.log
+          # W0: كانت هذه مجموعة أقواس، فحالة خروجها آخر أمرٍ وحده — نفس عطل
+          # الحلقة في موضعٍ خامس. ثلاثة مُشغِّلات لأن البادئات مختلفة، وعلَمٌ
+          # واحد يجمعها: أيّ فشل في أيّ منها يُفشل الوظيفة.
+          rc=0
+          bash tools/ci_run.sh --log logs/chromium-browser.log \
+               --label "page bundle in Chromium" \
+               --runner "node tests/phase3/lib/run_browser.js" \
+                   test_visual.js \
+                   test_dev_api.js \
+                   "$PWD/tests/phase6/test_dom.js" \
+                   "$PWD/tests/phase9_2/test_archdetail_browser.js" || rc=1
+          # KI-13 · F-30 — معمارية التنسيق تحت السياسة الإنتاجية. تُشغَّل هنا
+          # لأن هذه هي الوظيفة الوحيدة التي تملك Chromium حقيقياً و
+          # public/vendor مملوءاً، فيقاس الرسم الكامل لا رسمٌ مُكعَّب.
+          # KI-25: رد 200 لا يصل النافذة عطلٌ لا نجاح — والبكسلات تُقاس في
+          # test_apply_render_browser.js على WebGL2 حقيقي.
+          # W0: أُضيف test_accessibility و csp_browser_probe — كانا خارج كل
+          # الوظائف، وهذه الوظيفة الوحيدة التي تملك ما يقيسانه. والمِسبار هو
+          # ما يكتب outputs/csp_probe.json الذي يمنح test_csp.js ~15 تأكيداً.
+          bash tools/ci_run.sh --log logs/chromium-browser.log \
+               --label "browser suites (direct)" --runner "node" \
+                   tests/deploy/test_viewport_pixels.js \
+                   tests/deploy/verify_page_boot.js \
+                   tests/remediation/test_csp_style_architecture.js \
+                   tests/remediation/test_panel_entry.js \
+                   tests/remediation/test_module_graph.js \
+                   tests/remediation/test_apply_render_browser.js \
+                   tests/remediation/test_scene_benchmark.js \
+                   tests/remediation/test_accessibility.js \
+                   tests/remediation/csp_browser_probe.js || rc=1
+          bash tools/ci_run.sh --log logs/chromium-browser.log \
+               --label "node-scope scene suites" --runner "node tests/lib/run.js" \
+                   tests/remediation/test_model_apply.js \
+                   tests/remediation/test_scene_limits.js || rc=1
+          exit $rc
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -233,6 +263,7 @@ jobs:
           set -o pipefail
           mkdir -p logs
           {
+            set -e   # W0: بلا هذا تُقاس حالةُ آخر أمرٍ في المجموعة وحدها
             node tests/lib/run.js tests/phase6/test_dom.js
             echo
             echo "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: formal WCAG"
@@ -294,31 +325,31 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p logs
-          {
-            python3 tools/dependency_audit.py
-            echo
-            python3 tests/remediation/test_dependency_lock.py
-            echo
-            # F-31…F-34: يثبّت أن الوسائط المرسَلة تطابق توقيع النسخة المثبّتة،
-            # وأن عطلاً محلياً لا يُنسب إلى المزوّد. لا شبكة ولا مفتاح.
-            python3 tests/remediation/test_provider_integration.py
-            echo
-            # KI-24 / F-35…F-40: the provider double here ENFORCES max_tokens
-            # and truncates past it, so a stage whose output does not fit its
-            # ceiling fails the build instead of reaching production.
-            python3 tests/remediation/test_plan_chunking.py
-            echo
-            # KI-14: heavy upload validation must not block the event loop.
-            # Uses a real asyncio server and a real redis-server.
-            python3 tests/remediation/test_event_loop.py
-            echo
-            # F-50: a provider 400 must name the offending parameter.
-            python3 tests/remediation/test_provider_reject.py
-            echo
-            # Multi-provider: a DeepSeek configuration must never be able to
-            # reach api.anthropic.com, and the fallback is one bounded attempt.
-            python3 tests/remediation/test_multi_provider.py
-          } 2>&1 | tee logs/dependency-audit.log
+          # W0: كانت هذه مجموعةَ أقواس `{ … } | tee`، وحالة خروجها حالةُ آخر
+          # أمرٍ فيها وحده — نفس عطل الحلقة في موضعٍ رابع. أُعيد إنتاجه.
+          python3 tools/dependency_audit.py 2>&1 | tee logs/dependency-audit.log
+          rc_audit=${PIPESTATUS[0]}
+          bash tools/ci_run.sh --log logs/dependency-audit.log \
+               --label "dependency + provider + remediation contracts" \
+               --runner "python3" \
+                   tests/remediation/test_dependency_lock.py \
+                   tests/remediation/test_provider_integration.py \
+                   tests/remediation/test_plan_chunking.py \
+                   tests/remediation/test_event_loop.py \
+                   tests/remediation/test_provider_reject.py \
+                   tests/remediation/test_multi_provider.py \
+                   tests/remediation/test_upload_security.py \
+                   tests/remediation/test_rate_limit.py \
+                   tests/remediation/test_engineering_authority.py \
+                   tests/remediation/test_generation_cancel.py \
+                   tests/remediation/test_logging.py \
+                   tests/remediation/test_privacy_boundary.py \
+                   tests/remediation/test_build_metadata.py \
+                   tests/remediation/test_plate_extent.py \
+                   tests/remediation/test_bundle_report.py \
+                   tests/remediation/test_api_wiring.py
+          rc_suites=$?
+          if [ "$rc_audit" -ne 0 ] || [ "$rc_suites" -ne 0 ]; then exit 1; fi
       - name: CVE scan (advisory — needs the network, does not gate the PR)
         # This is the ONE dependency check that cannot be done offline, so it is
         # done here where the network exists. It is `continue-on-error` on
@@ -364,6 +395,7 @@ jobs:
           set -o pipefail
           mkdir -p logs
           {
+            set -e   # W0: بلا هذا تُقاس حالةُ آخر أمرٍ في المجموعة وحدها
             bash -n tools/netlify-build.sh && echo "netlify-build.sh: shell syntax OK"
             python3 tools/check_integration.py
             python3 tools/check_index_guard.py public/index.html

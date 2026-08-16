@@ -8,7 +8,11 @@
 # الخروج غير الصفري يعني فشلاً حقيقياً. ما يحتاج بيئة خارجية يخرج بالرمز 2
 # ويُعلَن NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED، ولا يُحسَب نجاحاً.
 # ==============================================================================
-set -e
+# W0: كان هنا `set -e`. مع `cmd; guard $?` يموت السكربت عند أوّل فشل قبل أن
+# يُنفَّذ `guard` إطلاقاً، فكان المُجمِّع `FAIL` وفرعُ «FAILURES PRESENT» شفرةً
+# ميتةً لا تُبلَغ أبداً — أي أن السكربت كان يتوقّف بصمت بدل أن يُكمل ويُبلِّغ.
+# أُعيد إنتاجه: `set -e; false; guard $?` يخرج بـ1 بلا طباعة شيء.
+# الآن تُجمَع كل الأعطال وتُطبَع مرّةً واحدة، والخروج غير الصفريّ في النهاية.
 HERE=$(cd "$(dirname "$0")" && pwd)
 ROOT=$(cd "$HERE/../.." && pwd)
 cd "$ROOT"
@@ -23,6 +27,10 @@ soft() {
     guard "$rc"
   fi
 }
+
+# W0: بوّابات التحقّق نفسها — دلالة خروج CI، ووصول المتحقّق الحيّ.
+step "W0 · CI cannot false-green and the live verifier reaches the backend"
+python3 "$HERE/test_ci_gate.py"; guard $?
 
 step "F-01 · engineering authority: no silent engineering change"
 python3 "$HERE/test_engineering_authority.py"; guard $?
