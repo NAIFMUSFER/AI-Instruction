@@ -352,6 +352,32 @@ def plan(building, base_revision=None, building_id="bld_0", include_code_gaps=Tr
             "registry": {"schema": SCHEMA, "version": VERSION}}
 
 
+def plan_with_model(building, base_revision=None, building_id="bld_0",
+                    include_code_gaps=True):
+    """`plan()` مع النموذج الذي طُبِّقت عليه التطبيعات الآمنة فعلاً.
+
+    W1-B. `plan()` يطبّق SAFE_NORMALIZATION **على الكائن الممرَّر** — وهذا
+    عقده المُعلَن. لكنه يعمل داخل عامل CPU منفصل (KI-14/F-46)، والعامل يستلم
+    نسخةً مُسلسَلة، فالتطبيع يقع على نسخة الابن وحدها. ما يعود إلى الأب هو
+    قاموس النتيجة فقط، فكان الردّ يقول «طُبِّقت أربع تطبيعات آمنة» ويُرجع
+    نموذجاً لا يحوي واحدة منها — و`model_hash_before` يصف كائن العامل لا
+    الكائن المُعاد.
+
+    مُقاس: نموذج بـ rect=[0,0,10.004,8.0079] وبلا floor_height يعود إلى
+    العميل بـ rect غير مُدوَّر و`floor_height=None`، بينما الردّ يعلن
+    UNDERSTAND_STRUCTURAL_DEFAULTS و LAYOUT_ROUND_RECT مطبَّقتين. وغياب
+    `floor_height` بالذات هو عائلة عطل KI-25 نفسها: العارض يشتقّ
+    `baseY = index × floor_height`.
+
+    لا يتغيّر نموذج السلطة: SAFE_NORMALIZATION تُطبَّق كما كانت،
+    وENGINEERING_PROPOSAL تبقى اقتراحاً لا يُودَع. الفرق الوحيد أن النموذج
+    الذي طُبِّقت عليه هو النموذج الذي يعود.
+    """
+    out = plan(building, base_revision=base_revision, building_id=building_id,
+               include_code_gaps=include_code_gaps)
+    return {"plan": out, "building": building}
+
+
 def apply_safe_normalisations(building, building_id="bld_0"):
     """يطبّق التطبيعات المصنّفة آمنة فقط، ويوثّق مصدر كل واحدة.
 

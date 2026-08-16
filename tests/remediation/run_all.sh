@@ -32,6 +32,11 @@ soft() {
 step "W0 · CI cannot false-green and the live verifier reaches the backend"
 python3 "$HERE/test_ci_gate.py"; guard $?
 
+# W1: أعطال P0 — قنبلة الانضغاط، تطبيعات السلطة، مقعد المجمّع، اسم المزوّد،
+# وسقف الملاحظات. لكلٍّ شاهدٌ سالب يُعيد إدخال العطل الأصلي.
+step "W1 · P0 security and correctness"
+python3 "$HERE/test_p0_hardening.py"; guard $?
+
 step "F-01 · engineering authority: no silent engineering change"
 python3 "$HERE/test_engineering_authority.py"; guard $?
 

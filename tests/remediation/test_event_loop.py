@@ -336,8 +336,21 @@ def main():
             == (a_ea["heavy_result"] or {}).get("out"))
         api_src = io.open(os.path.join(ROOT, "acs_understand_api.py"),
                           encoding="utf-8").read()
+        # W1-B نقل المعالج إلى الهدف `ea_plan_model` (نفس `plan()` داخل نفس
+        # الوحدة، لكنه يعيد النموذج المُطبَّع معه). الثابت المحروس هنا هو ثابت
+        # KI-14 نفسه ولم يتغيّر: لا نداء مخطّط متزامن على الحلقة، والنداء يمرّ
+        # عبر هدفٍ **معلَن** في مجمّع المعالجة. المرساة تتبع الهدف الجديد بدل
+        # أن تثبّت اسماً بعينه.
+        import acs_cpu_pool as _CP
+        _awaited = [t for t in _CP.TARGETS
+                    if t.startswith("ea_plan")
+                    and ('await _validate("%s")' % t) in api_src.replace(
+                        ", building)", ")")]
         chk("ولا نداء EA.plan متزامن باقٍ في أي معالج",
-            "EA.plan(" not in api_src and 'await _validate("ea_plan"' in api_src)
+            "EA.plan(" not in api_src
+            and any(('await _validate("%s"' % t) in api_src
+                    for t in _CP.TARGETS if t.startswith("ea_plan")),
+            str(_awaited))
         chk("ولا EA.flat_diff متزامن",
             "EA.flat_diff(" not in api_src
             and 'await _validate("ea_flat_diff"' in api_src)

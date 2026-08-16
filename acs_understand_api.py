@@ -272,6 +272,45 @@ def _cap(text: str) -> str:
     return text
 
 
+#: سقوف مسح الوزن. المسح نفسه يجب ألّا يصير هجوماً على بنيةٍ متداخلة.
+_WEIGH_MAX_NODES = 20000
+_WEIGH_MAX_DEPTH = 12
+
+
+def _string_weight(value, budget, _depth=0, _seen=None):
+    """مجموع أطوال **كل** السلاسل داخل قيمة، بمسحٍ محدود يتوقّف عند الميزانية.
+
+    يُحسَب المفتاح والقيمة معاً: كلاهما يصل التوجيه.
+    """
+    if _seen is None:
+        _seen = [0]                                   # عدّاد عُقَد مشترك
+    total = 0
+    if _depth > _WEIGH_MAX_DEPTH:
+        return budget + 1                             # عمق مريب: يُعدّ تجاوزاً
+    if isinstance(value, str):
+        return len(value)
+    if isinstance(value, dict):
+        items = value.items()
+    elif isinstance(value, (list, tuple)):
+        items = ((None, v) for v in value)
+    else:
+        # كائن pydantic أو ما شابه: تُقرأ حقوله المعلنة إن وُجدت.
+        data = getattr(value, "__dict__", None)
+        if not isinstance(data, dict):
+            return 0
+        items = data.items()
+    for key, item in items:
+        _seen[0] += 1
+        if _seen[0] > _WEIGH_MAX_NODES:
+            return budget + 1                         # بنية أوسع من أن تُقاس
+        if isinstance(key, str):
+            total += len(key)
+        total += _string_weight(item, budget, _depth + 1, _seen)
+        if total > budget:
+            return total                              # خروج مبكر: لا مسح زائد
+    return total
+
+
 def _cap_notes(notes) -> None:
     """F-20: سقف على الملاحظات — نصّاً واحداً أو قائمة كائنات.
 
@@ -283,17 +322,13 @@ def _cap_notes(notes) -> None:
     if isinstance(notes, str):
         total = len(notes)
     else:
-        total = 0
-        for n in notes:
-            if isinstance(n, str):
-                total += len(n)
-            else:
-                for key in ("text", "layer", "floor", "room"):
-                    value = getattr(n, key, None)
-                    if value is None and isinstance(n, dict):
-                        value = n.get(key)
-                    if isinstance(value, str):
-                        total += len(value)
+        # W1-E: كان العدّ مقصوراً على أربعة مفاتيح — text/layer/floor/room —
+        # فأيّ مفتاحٍ آخر لا يُحسب إطلاقاً. مقيس: `[{"kind": "A"*10_000_000}]`
+        # يمرّ، و`[{"kind": "A"*5_000_000}] × 40` (٢٠٠ م.ب) يمرّ كذلك، بينما
+        # ٣٠ ٠٠٠ حرفاً في `text` تُرفض. والملاحظات تُدرَج في التوجيه
+        # بـ`truncate=False`، فالمقياس يجب أن يكون ما يصل التوجيه فعلاً:
+        # **كل** سلسلة في الملاحظة، مهما كان مفتاحها وعمقها.
+        total = _string_weight(notes, MAX_NOTES)
     if total > MAX_NOTES:
         raise E.AcsApiError(
             E.ACS_PAYLOAD_TOO_LARGE,
@@ -413,7 +448,7 @@ async def run_job(target, kwargs, what="التوليد", seconds=None, request_i
             "تجاوز %s مهلة الخادم (%d ثانية). قصّر الوصف أو قسّمه ثم أعِد المحاولة."
             % (what, int(limit)))
     except JOBS.JobError as exc:
-        raise E.classify_upstream(exc)
+        raise E.classify_upstream(exc, provider=_resolved_provider())
 
 
 async def run_bounded(fn, what="التوليد", seconds=None):
@@ -471,6 +506,20 @@ def _api_key_configured() -> bool:
     القرار كلّه في acs_provider (الجديد والقديم، ولمن يُقبل كلٌّ منهما).
     """
     return bool(PROV.primary().api_key)
+
+
+def _resolved_provider() -> str:
+    """اسم المزوّد المحلول فعلاً — لا اسمٌ مكتوب حرفياً.
+
+    W1-D: كانت أربعةُ مواضع تنادي `E.classify_upstream(e)` بلا `provider=`،
+    فتأخذ الافتراضَ "anthropic". على نشرٍ deepseek — وهو النشر الحيّ — كان كلُّ
+    عطلٍ يُرفع من طبقة الواجهة يُنسَب إلى anthropic، بما في ذلك موتُ عمليتنا
+    نحن تحت ضغط الذاكرة. وهذا أسوأ من حقلٍ غائب: غيابٌ يُقرأ معلومةً.
+    """
+    try:
+        return PROV.primary().provider or "unknown"
+    except Exception:                                             # noqa: BLE001
+        return "unknown"
 
 
 def _key_env_name() -> str:
@@ -623,12 +672,19 @@ async def _engineering_authority(building):
         # KI-14/F-46: كان هذا النداء يعمل على الحلقة في كل رد ناجح. قياساً:
         # ٢٫٨ms عند ٢٠ غرفة · ٣٩٨ms عند ١٦٠٠ · ٥٧١٤ms عند ٨٤٠٠ — والأخير
         # نموذجٌ تحت سقف ACS_MAX_BUILDING. أي خمس ثوانٍ من الشلل على **نجاح**.
-        plan = await _validate("ea_plan", building)
+        # W1-B: يعود النموذج المُطبَّع مع الخطّة. كان `ea_plan` يطبّق
+        # SAFE_NORMALIZATION داخل العامل على نسخته المُسلسَلة وحدها، فيعلن الردّ
+        # تطبيعاتٍ لا يحويها النموذج المُعاد، وتصف البصماتُ كائنَ العامل لا
+        # الكائنَ المُعاد. مقيس: floor_height تعود None إلى العميل بينما الردّ
+        # يعلنها 3.2 — وهي بالضبط عائلة KI-25 (baseY = index × floor_height).
+        out = await _validate("ea_plan_model", building)
+        plan = out["plan"]
+        normalised = out["building"]
     except Exception as exc:                                    # noqa: BLE001
         LOG.exception("engineering_plan_failed", exc)
         return {"available": False, "applied": False, "auto_commit_path": False,
                 "proposals": [], "proposal_count": 0,
-                "detail": "NOT EVALUATED — the proposal planner did not run"}
+                "detail": "NOT EVALUATED — the proposal planner did not run"}, None
     return {"available": True,
             "applied": False,
             "auto_commit_path": False,
@@ -640,7 +696,7 @@ async def _engineering_authority(building):
             "model_unchanged": plan["unchanged"],
             "safe_normalisations": plan["safe_changes"],
             "proposals": plan["proposals"],
-            "registry": plan["registry"]}
+            "registry": plan["registry"]}, normalised
 
 
 async def _edit_diff(before, after):
@@ -655,9 +711,15 @@ async def _edit_diff(before, after):
 
 
 async def _understand_payload(building):
+    # W1-B: التطبيع أوّلاً، ثم العدّ والردّ — على النموذج نفسه الذي سيخرج.
+    # كان العدّ يسبق `_engineering_authority`، فحتى لو عاد نموذجٌ مُطبَّع لكانت
+    # الأعداد والبصمات تصف كائناً آخر. إن لم يعمل المخطّط (`None`) يبقى
+    # النموذج كما وصل — لا يُخترَع تطبيع ولا يُدَّعى.
+    authority, normalised = await _engineering_authority(building)
+    if isinstance(normalised, dict) and normalised.get("floors") is not None:
+        building = normalised
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
-    authority = await _engineering_authority(building)
     return {"ok": True, "building": building, "levels": len(building["levels"]),
             "rooms": nr, "type": meta.get("type"),
             "mode": meta.get("acs_mode", "single"),
@@ -701,7 +763,7 @@ async def understand(req: UnderstandReq, request: Request):
     except Exception as e:
         LOG.exception("generation_failed", e, request_id=rid,
                       endpoint="/v1/understand")
-        raise E.classify_upstream(e)
+        raise E.classify_upstream(e, provider=_resolved_provider())
     return await _understand_payload(building)
 
 
@@ -755,7 +817,7 @@ async def edit(req: EditReq, request: Request):
         raise
     except Exception as e:
         LOG.exception("edit_failed", e, request_id=rid, endpoint="/v1/edit")
-        raise E.classify_upstream(e)
+        raise E.classify_upstream(e, provider=_resolved_provider())
     payload = await _understand_payload(out)
     payload["engineering_diff"] = await _edit_diff(req.building, out)
     payload["requires_confirmation"] = True
@@ -819,7 +881,7 @@ async def understand_image(
     except Exception as e:
         LOG.exception("vision_generation_failed", e, request_id=rid,
                       endpoint="/v1/understand/image")
-        raise E.classify_upstream(e)
+        raise E.classify_upstream(e, provider=_resolved_provider())
     return await _understand_payload(building)
 
 
@@ -863,7 +925,7 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
     except Exception as e:
         LOG.exception("pdf_generation_failed", e, request_id=rid,
                       endpoint="/v1/understand/pdf")
-        raise E.classify_upstream(e)
+        raise E.classify_upstream(e, provider=_resolved_provider())
     payload = await _understand_payload(building)
     payload["chars"] = len(text)
     payload["pdf_pages"] = checked["pages"]

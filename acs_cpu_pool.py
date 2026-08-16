@@ -106,6 +106,9 @@ TARGETS = {
     # ٢٠ غرفة، و٣٩٨ms عند ١٦٠٠، و**٥٧١٤ms** عند ٨٤٠٠ — وكلّها نماذج تحت سقف
     # ACS_MAX_BUILDING. خمس ثوانٍ من الشلل التامّ على ردٍّ ناجح.
     "ea_plan": ("acs_engineering_authority", "plan"),
+    # W1-B: يعيد النموذج الذي طُبِّقت عليه التطبيعات الآمنة معه — بلا هذا
+    # تبقى تطبيعات العامل في العامل، ويُعلنها الردّ على نموذج لا يحويها.
+    "ea_plan_model": ("acs_engineering_authority", "plan_with_model"),
     "ea_flat_diff": ("acs_engineering_authority", "flat_diff"),
 }
 
@@ -355,23 +358,29 @@ async def run(target, args=(), kwargs=None, timeout_s=None, pool=None):
     t0 = time.perf_counter()
     fut, release = p.submit(target, args, kwargs, limit)
     aio = asyncio.wrap_future(fut)
+    # W1-C: `finally` لا سلسلةَ `except`. كانت أربعُ حالاتٍ تُطلق المقعد —
+    # المهلة، وموت العامل، والإلغاء، والنجاح — وأيُّ استثناءٍ خامس يهرب بلا
+    # إطلاق. وليس هذا فرضاً: خطأ تسلسل (PicklingError) عند حلّ المستقبل، أو أيّ
+    # استثناء غير متوقّع من المنفّذ، يسرّب مقعداً. وعشَرةٌ منها (السعة = عاملان
+    # + ثمانية في الطابور) تُقفل التدقيق إقفالاً دائماً حتى إعادة التشغيل،
+    # فيصير كلُّ رفعٍ تالٍ 429 بلا سببٍ ظاهر في السجلّ.
+    # `release()` عديمة الأثر عند التكرار (`released["v"]`)، فالإطلاق مضمونٌ
+    # مرّةً واحدة مهما كان المسار.
     try:
-        env = await asyncio.wait_for(aio, timeout=limit)
-    except asyncio.TimeoutError:
-        p.note_timeout()
-        release()
-        raise PoolTimeout("validation exceeded %.0fs" % limit)
-    except concurrent.futures.process.BrokenProcessPool as exc:
-        p.note_crash()
-        release()
-        # عاملٌ مات يترك المجمّع معطوباً: يُعاد بناؤه فلا يبقى الخادم بلا تدقيق.
-        p.shutdown()
-        raise WorkerCrashed(type(exc).__name__)
-    except asyncio.CancelledError:
-        # انقطاع العميل: المقعد يعود فوراً، والعمل محدود بعقد المدخل فينتهي.
-        release()
-        raise
-    else:
+        try:
+            env = await asyncio.wait_for(aio, timeout=limit)
+        except asyncio.TimeoutError:
+            p.note_timeout()
+            raise PoolTimeout("validation exceeded %.0fs" % limit)
+        except concurrent.futures.process.BrokenProcessPool as exc:
+            p.note_crash()
+            # عاملٌ مات يترك المجمّع معطوباً: يُعاد بناؤه فلا يبقى الخادم بلا
+            # تدقيق. shutdown لا تمسّ العدّاد ولا السيمافور، فالترتيب آمن.
+            p.shutdown()
+            raise WorkerCrashed(type(exc).__name__)
+    finally:
+        # انقطاع العميل (CancelledError) يمرّ من هنا أيضاً: المقعد يعود فوراً،
+        # والعمل محدود بعقد المدخل فينتهي من تلقائه.
         release()
     p.note_wait((time.perf_counter() - t0) * 1000.0)
     return p.unwrap(env)

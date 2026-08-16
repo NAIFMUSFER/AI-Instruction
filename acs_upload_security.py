@@ -34,9 +34,11 @@
 # قراءة الإعدادات من البيئة تتحمّل القيمة الفارغة "" وتعود إلى الافتراضي —
 # المستودع فيه عطل إقلاع كامن من نوع int("") قادم من .env.example، ولا يُكرَّر هنا.
 # =============================================================================
+import base64                   # W1-A: فكّ ASCII85 المحدود في سلسلة المُرشِّحات
 import io
 import json
 import os
+import re                       # W1-A: قراءة /Filter من البايتات الخام
 import warnings
 import zlib
 
@@ -591,15 +593,151 @@ def validate_images(items):
 
 
 # -------------------------------------------------------------- PDF --
+#: مُرشِّحات PDF التي **تُوسِّع** البايتات. السلسلة تُطبَّق بالترتيب، وهذه
+#: وحدها ما يمكن أن يتمدّد.
+_EXPANDING_FILTERS = ("FlateDecode", "Fl", "LZWDecode", "LZW",
+                      "RunLengthDecode", "RL")
+#: مُرشِّحات تُصغِّر أو تُبقي الحجم — تُطبَّق لبلوغ الطبقة التالية في السلسلة.
+_TRANSCODE_FILTERS = ("ASCIIHexDecode", "AHx", "ASCII85Decode", "A85")
+#: مُرمِّزات صور. مخرجها بكسلات لا نصّ، وpypdf لا يفكّها أثناء استخراج النصّ،
+#: وحدودُ الصور محروسة في مسارها الخاصّ. تُنهي السلسلة ولا تُقاس.
+_IMAGE_FILTERS = ("DCTDecode", "DCT", "JPXDecode", "CCITTFaxDecode", "CCF",
+                  "JBIG2Decode", "Crypt")
+
+_FILTER_RE = re.compile(rb"/Filter\s*(\[[^\]]*\]|/[A-Za-z0-9]+)")
+
+
+def _declared_filters(header):
+    """أسماء المُرشِّحات كما أعلنها قاموس المجرى نفسه، بالترتيب.
+
+    القراءة من البايتات الخام لا من بنية pypdf — وهي خاصيّة F-23 الأصلية:
+    الحارس يجب ألّا يعتمد على المكتبة التي يحرسها.
+    """
+    m = _FILTER_RE.search(header)
+    if not m:
+        return []
+    return [n.decode("ascii", "replace")
+            for n in re.findall(rb"/([A-Za-z0-9]+)", m.group(1))]
+
+
+def _rle_decode_len(blob, room):
+    """طول مخرج RunLengthDecode، محدوداً بـ`room` فلا يصير القياس هجوماً."""
+    out = 0
+    i = 0
+    n = len(blob)
+    while i < n and out <= room:
+        ln = blob[i]
+        i += 1
+        if ln == 128:
+            break
+        if ln < 128:
+            take = ln + 1
+            out += take
+            i += take
+        else:
+            out += 257 - ln
+            i += 1
+    return out
+
+
+def _lzw_decode_len(blob, room):
+    """طول مخرج LZWDecode (متغيّر PDF، EarlyChange=1)، محدوداً بـ`room`.
+
+    يُحسَب الطول لا المحتوى: الاحتفاظ بالبايتات يجعل الحارس نفسه قنبلة.
+    """
+    base = [bytes([i]) for i in range(256)] + [b"", b""]
+    table = list(base)
+    bits, width, buf = 0, 9, 0
+    prev = None
+    out = 0
+    for byte in blob:
+        buf = (buf << 8) | byte
+        bits += 8
+        while bits >= width:
+            bits -= width
+            code = (buf >> bits) & ((1 << width) - 1)
+            if code == 256:
+                table = list(base)
+                width, prev = 9, None
+                continue
+            if code == 257:
+                return out
+            if prev is None:
+                entry = table[code] if code < len(table) else b""
+            elif code < len(table):
+                entry = table[code]
+                table.append(prev + entry[:1])
+            else:
+                entry = prev + prev[:1]
+                table.append(entry)
+            out += len(entry)
+            if out > room:
+                return out
+            prev = entry
+            if len(table) + 1 >= (1 << width) and width < 12:
+                width += 1
+    return out
+
+
+def _decode_stage(name, blob, room):
+    """طبقة واحدة من السلسلة → (البايتات للطبقة التالية أو None، عددُها).
+
+    البايتات تُعاد فقط حين تلزم الطبقةَ التالية، وبحجمٍ محدود دائماً. `None`
+    تعني «لا يمكن متابعة السلسلة من هنا» — وهي ليست «آمن».
+    """
+    if name in ("FlateDecode", "Fl"):
+        try:
+            engine = zlib.decompressobj()
+            out = engine.decompress(bytes(blob), room)
+            while engine.unconsumed_tail and len(out) < room:
+                out += engine.decompress(engine.unconsumed_tail,
+                                         room - len(out))
+            return out, len(out)
+        except zlib.error:
+            return None, 0
+    if name in ("LZWDecode", "LZW"):
+        try:
+            return None, _lzw_decode_len(bytes(blob), room)
+        except Exception:                                     # noqa: BLE001
+            return None, 0
+    if name in ("RunLengthDecode", "RL"):
+        try:
+            return None, _rle_decode_len(bytes(blob), room)
+        except Exception:                                     # noqa: BLE001
+            return None, 0
+    if name in ("ASCIIHexDecode", "AHx"):
+        return None, max(0, len(blob) // 2)
+    if name in ("ASCII85Decode", "A85"):
+        try:
+            raw = bytes(blob[:min(len(blob), room * 2 + 64)])
+            out = base64.a85decode(b"".join(raw.split()), adobe=True)
+            return out[:room + 1], min(len(out), room + 1)
+        except Exception:                                     # noqa: BLE001
+            return None, 0
+    return None, 0
+
+
 def _flate_expansion(data, budget):
-    """يقيس تمدّد مجاري zlib داخل الملفّ بلا تجاوز الميزانية أصلاً.
+    """يقيس تمدّد مجاري PDF بعد فكّ **سلسلة المُرشِّحات المعلنة كاملةً**.
 
-    F-23: المسح على البايتات الخام وحدها — لا يلمس بنية pypdf الداخلية ولا
-    يعتمد عليها. كل مجرى يُفكّ بـ`decompressobj` بحدّ `max_length`، فلا يُبنى
-    في الذاكرة أكثر ممّا تبقّى من الميزانية مهما بلغت نسبة الانضغاط. المجاري
-    غير المضغوطة بـFlate (صور JPEG مثلاً) تفشل في zlib فتُتجاوَز بلا كلفة.
+    W1-A. F-23 قاس طبقة zlib واحدة لكل مجرى، وتخطّى صامتاً كل ما تعجز zlib
+    عنه. وهذا مُقاس لا مُستنتَج — ملفّ 713 بايتاً يعلن
+    `/Filter [/FlateDecode /FlateDecode]` كان يُقاس 61 162 بايتاً ويمرّ، بينما
+    pypdf، الذي يحترم السلسلة، يبني منه 60 م.ب. و`/LZWDecode` و
+    `/RunLengthDecode` كانا يُقاسان **صفراً** لأن zlib ترفضهما فيُتخطّيان.
+    أي أن الحارس كان يقيس ما يفهمه هو، لا ما سيفكّه المستهلك.
 
-    يعيد (المجموع، هل تجاوز الميزانية).
+    الآن تُقرأ `/Filter` من قاموس المجرى نفسه — بايتات خام، فالحارس لا يعتمد
+    على المكتبة التي يحرسها — وتُطبَّق الطبقات بالترتيب بمفكّكات **محدودة**
+    بما تبقّى من الميزانية، فلا يُبنى في الذاكرة أكثر ممّا يُسمح به مهما بلغت
+    نسبة الانضغاط: القياس نفسه لا يصير هجوماً.
+
+    مُرمِّزات الصور (DCT/JPX/CCITT/JBIG2) تُنهي السلسلة ولا تُقاس — مخرجها
+    بكسلات لا نصّ، وpypdf لا يفكّها في استخراج النصّ، وحدود الصور محروسة في
+    مسارها. وطبقة لا يمكن تقييمها تُنهي السلسلة أيضاً: يُحتسَب ما أُنتج، ولا
+    يُدَّعى أمانُ ما بعده.
+
+    يعيد (المجموع، هل تجاوز الميزانية) — نفس عقد الإرجاع السابق حرفياً.
     """
     budget = int(budget)
     total = 0
@@ -621,15 +759,34 @@ def _flate_expansion(data, budget):
         blob = data[cursor:end]
         if not blob:
             continue
-        try:
-            engine = zlib.decompressobj()
-            room = budget - total + 1          # +1 حتى يظهر التجاوز صراحةً
-            produced = len(engine.decompress(blob, room))
-            while engine.unconsumed_tail and produced < room:
-                produced += len(engine.decompress(engine.unconsumed_tail,
-                                                  room - produced))
-        except zlib.error:
-            continue                            # ليس مجرى Flate — لا شأن لنا به
+
+        # قاموس المجرى يسبق الكلمة `stream` مباشرةً.
+        header = data[max(0, start - 2048):start]
+        names = _declared_filters(header)
+        room = budget - total + 1              # +1 حتى يظهر التجاوز صراحةً
+
+        if not names:
+            # لا سلسلة معلنة: سلوك F-23 الأصلي حرفياً — zlib عارية.
+            _, produced = _decode_stage("FlateDecode", blob, room)
+            total += produced
+            if total > budget:
+                return total, True
+            continue
+
+        current = blob
+        produced = 0
+        for name in names:
+            if name in _IMAGE_FILTERS:
+                break                          # بكسلات لا نصّ — تُنهي السلسلة
+            nxt, produced = _decode_stage(name, current, room)
+            if produced > room:
+                total += produced
+                return total, True
+            if (name in _EXPANDING_FILTERS or name in _TRANSCODE_FILTERS) \
+                    and nxt is not None:
+                current = nxt
+                continue
+            break                              # لا متابعة: مجهول أو غير قابل
         total += produced
         if total > budget:
             return total, True

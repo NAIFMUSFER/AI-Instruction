@@ -694,7 +694,13 @@ CALLED = {_call_name(n) for n in ast.walk(TREE) if isinstance(n, ast.Call)}
 
 # zlib أُضيف مع F-23: حارس قنبلة انضغاط PDF يفكّ كل مجرى بحدّ max_length صريح
 # فلا يبني في الذاكرة أكثر من الميزانية. وحدة قياسية بلا شبكة ولا نظام ملفّات.
-ALLOWED_IMPORTS = {'io', 'json', 'os', 'warnings', 'zlib', 'PIL', 'pypdf'}
+# W1-A أضاف `re` و`base64`: قراءة `/Filter` من البايتات الخام، وفكّ طبقة
+# ASCII85 المحدودة داخل سلسلة المُرشِّحات. كلتاهما قياسية خالصة: لا شبكة، ولا
+# نظام ملفّات، ولا تنفيذ. والقائمة تبقى قائمة **سماح** — والفحوص التالية
+# تثبت مستقلّةً غياب tempfile/subprocess/pickle/fastapi وغياب open() إطلاقاً،
+# فتوسيعها هنا لا يفتح أياً من تلك الأبواب.
+ALLOWED_IMPORTS = {'io', 'json', 'os', 're', 'base64', 'warnings', 'zlib',
+                   'PIL', 'pypdf'}
 chk('الوحدة لا تستورد سوى %s' % ', '.join(sorted(ALLOWED_IMPORTS)),
     IMPORTED <= ALLOWED_IMPORTS, 'extra=%s' % sorted(IMPORTED
                                                      - ALLOWED_IMPORTS))

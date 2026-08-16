@@ -141,9 +141,17 @@ chk('every documented endpoint is still present',
      'understand_image', 'understand_pdf'} <= routes, str(sorted(routes)))
 
 import acs_cpu_pool as _CPUP
+# W1-B: المعالج ينادي `ea_plan_model` — نفس الوحدة، ونفس `plan()` داخلها،
+# لكنه يعيد النموذج المُطبَّع معه. كلا الهدفين يبقيان معلنَين، والمقيس هنا أن
+# المعالج يستعمل الهدف الذي **يُرجِع** النموذج، لا الذي يترك تطبيعاته في العامل.
 chk('the engineering planner is reachable through the declared cpu-pool target',
     _CPUP.TARGETS.get('ea_plan') == ('acs_engineering_authority', 'plan')
-    and 'await _validate("ea_plan"' in API_SRC)
+    and _CPUP.TARGETS.get('ea_plan_model')
+        == ('acs_engineering_authority', 'plan_with_model')
+    and 'await _validate("ea_plan_model"' in API_SRC)
+chk('the target the handler uses is the one that returns the normalised model',
+    'await _validate("ea_plan"' not in API_SRC.replace(
+        'await _validate("ea_plan_model"', ''))
 chk('and no handler calls the planner synchronously any more (KI-14)',
     'EA.plan(' not in API_SRC and 'EA.flat_diff(' not in API_SRC)
 print('\n── ج · وحدات التصحيح مستوردة ومستعملة فعلاً ──')
