@@ -184,7 +184,18 @@ class StructuredLogger(object):
                    # وحده — لا عنوان كامل، فالعنوان قد يحمل اعتماداً مضمَّناً.
                    "provider", "provider_model", "provider_base_host",
                    "fallback_attempted", "fallback_provider",
-                   "fallback_reason", "fallback_success")
+                   "fallback_reason", "fallback_success",
+                   # W2-A: محاسبة كتل الرد. بلا هذه الحقول لا يستطيع السجلّ
+                   # الإجابة عن «out_tokens=16000 و out_chars=0 — أين ذهبت؟»،
+                   # وهو السؤال الذي يقرّر تصميم W2-C. أنواعٌ وأعدادٌ وأطوال:
+                   # لا نصّ، ولا محتوى كتلة، ولا توجيه، ولا مفتاح.
+                   "output_chars", "chars_per_output_token",
+                   "content_blocks", "content_block_types",
+                   "text_blocks", "nontext_blocks", "text_block_chars",
+                   "cache_read_input_tokens", "cache_creation_input_tokens",
+                   "reasoning_tokens",
+                   # W2-D: محاولةٌ مطابقة بايتاً لم تُرسَل.
+                   "retry_skipped_reason", "retries_skipped")
         clean = {k: v for k, v in fields.items() if k in allowed}
         return self._emit("info", "llm_generation", **clean)
 

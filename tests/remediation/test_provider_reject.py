@@ -186,9 +186,23 @@ def main():
             ("sdk_version", "transport", "thinking_sent",
              "requested_max_tokens", "provider_error_type",
              "provider_param", "provider_limit", "provider_detail")))
+    # W2-D غيّر توقيع `_call` (صار يأخذ وسائط مبنيّة سلفاً حتى يمكن بصمُها قبل
+    # الإرسال). الثابت المحروس هو ثابت F-50 نفسه ولم يتغيّر: يُسجَّل السقف
+    # المطلوب **قبل** أن يُنادى المزوّد. تُقاس المواضع بالمحلّل لا بتهجئة النداء.
+    import ast as _ast
+    _t = _ast.parse(us)
+    _rec = [n.lineno for n in _ast.walk(_t)
+            if isinstance(n, _ast.Assign)
+            and any(isinstance(tg, _ast.Subscript)
+                    and isinstance(tg.slice, _ast.Constant)
+                    and tg.slice.value == "requested_max_tokens"
+                    for tg in n.targets)]
+    _callsites = [n.lineno for n in _ast.walk(_t)
+                  if isinstance(n, _ast.Call) and isinstance(n.func, _ast.Name)
+                  and n.func.id == "_call"]
     chk("والسقف المطلوب يُسجَّل **قبل** النداء لا بعد نجاحه",
-        us.index('tel["requested_max_tokens"] = int(mt)')
-        < us.index("msg = _call(mt, think)"))
+        bool(_rec) and bool(_callsites) and min(_rec) < min(_callsites),
+        "record@%s call@%s" % (_rec, _callsites))
     # القناة الحقيقية: هل تمرّ الحقول فعلاً؟
     buf = io.StringIO()
     try:

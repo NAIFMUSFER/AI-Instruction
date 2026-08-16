@@ -515,6 +515,20 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
             "fallback_provider": tel.get("fallback_provider"),
             "fallback_reason": tel.get("fallback_reason"),
             "fallback_success": tel.get("fallback_success"),
+            # W2-A · محاسبة الرد: أين ذهبت رموز المخرجات فعلاً.
+            "output_chars": tel.get("output_chars"),
+            "chars_per_output_token": tel.get("chars_per_output_token"),
+            "content_blocks": tel.get("content_blocks"),
+            "content_block_types": tel.get("content_block_types"),
+            "text_blocks": tel.get("text_blocks"),
+            "nontext_blocks": tel.get("nontext_blocks"),
+            "text_block_chars": tel.get("text_block_chars"),
+            "cache_read_input_tokens": tel.get("cache_read_input_tokens"),
+            "cache_creation_input_tokens": tel.get("cache_creation_input_tokens"),
+            "reasoning_tokens": tel.get("reasoning_tokens"),
+            # W2-D · محاولةٌ لم تُرسَل لأنها مطابقة بايتاً لما أُرسل.
+            "retry_skipped_reason": tel.get("retry_skipped_reason"),
+            "retries_skipped": tel.get("retries_skipped"),
         }
         # KI-24/F-38: موضع الشريحة في السلسلة. بلا هذين الحقلين لا يمكن نسب
         # عطلٍ إلى شريحة بعينها في سجلّ الإنتاج.
@@ -659,6 +673,85 @@ def _classify_call_error(exc, attempts=None, sdk_version=None,
     return E.classify_upstream(exc, attempts=attempts, provider=provider)
 
 
+#: نوع الكتلة يُنقّى إلى معرّف خالص. اسم النوع معرّفٌ برمجيّ لا محتوى، لكن
+#: التنقية تجعل ذلك خاصيّةً مضمونة لا افتراضاً عن سلوك المزوّد.
+_BLOCK_TYPE_RE = re.compile(r"[^A-Za-z0-9_]")
+
+
+def _block_type(block):
+    """اسم نوع كتلة الرد — معرّفٌ وحده، ولا شيء من محتواها."""
+    raw = getattr(block, "type", None)
+    if not isinstance(raw, str) or not raw:
+        raw = type(block).__name__
+    return _BLOCK_TYPE_RE.sub("", str(raw))[:32] or "unknown"
+
+
+def _block_accounting(blocks):
+    """W2-A: أين ذهبت رموز المخرجات — بالبنية لا بالتخمين.
+
+    السؤال الذي لا يستطيع السجلّ الحاليّ الإجابة عنه: نداءٌ يُبلَّغ عنه
+    `out_tokens=16000` و`out_chars=0`. أين ذهبت الستّة عشر ألفاً؟ الاستخراج
+    القائم `getattr(b, "text", None)` يُبقي الكتل النصّية وحدها ويُسقط ما عداها
+    **صامتاً** — وتلك الكتل استهلكت الميزانية. فإن كان المزوّد يعيد كتل تفكير
+    أو كتلاً بلا نصّ، فهذا الفراغ في المحاسبة هو ما يخفيها. وإن لم يكن يفعل،
+    فالقياس يقول ذلك أيضاً — وهو ما يمنع بناء W2-C على فرضية.
+
+    يُسجَّل: العدد، والأنواع بأسمائها، وكم كتلةً نصّية وكم غير نصّية، وأطوال
+    النصّ لكل كتلة. لا يُسجَّل: نصّ، ولا محتوى كتلة، ولا توجيه، ولا نموذج
+    مبنى، ولا مفتاح.
+    """
+    counts = {}
+    lens = []
+    text_blocks = 0
+    for b in blocks or ():
+        t = _block_type(b)
+        counts[t] = counts.get(t, 0) + 1
+        tx = getattr(b, "text", None)
+        if isinstance(tx, str):
+            text_blocks += 1
+            lens.append(len(tx))
+        else:
+            lens.append(0)
+    total = len(blocks or ())
+    return {"content_blocks": total,
+            "content_block_types": ",".join(
+                "%s:%d" % (k, v) for k, v in sorted(counts.items())) or "none",
+            "text_blocks": text_blocks,
+            "nontext_blocks": max(0, total - text_blocks),
+            "text_block_chars": ",".join(str(n) for n in lens[:24]) or "none"}
+
+
+def _usage_extras(usage):
+    """حقول الاستخدام الإضافية إن أعلنها المزوّد — أرقامٌ وحدها.
+
+    `input_tokens` غير موثوق به بذاته: مقيس حيّاً أن محاولةً مطابقةً بايتاً
+    للأولى أُبلغ عنها 60 رمز مدخل مقابل 5692. تسجيل حقول الكاش يفصل «ذاكرة
+    مؤقّتة أصابت» عن «محاسبة غير موثوقة» بدل الخلط بينهما.
+    """
+    out = {}
+    for name in ("cache_read_input_tokens", "cache_creation_input_tokens",
+                 "reasoning_tokens"):
+        v = getattr(usage, name, None)
+        if isinstance(v, int):
+            out[name] = v
+    return out
+
+
+def _request_fingerprint(kw):
+    """بصمة مستقرّة لطلبٍ واحد — للمقارنة وحدها، لا للتسجيل.
+
+    W2-D: تُبنى من الوسائط كما ستُرسَل بالضبط. لا تُطبَع ولا تُسجَّل ولا تخرج
+    من العملية: وظيفتها الوحيدة أن تُجيب «هل أُرسل هذا الطلب حرفياً من قبل؟»
+    قبل دفع ميزانيةٍ ثانية عليه.
+    """
+    import hashlib
+    try:
+        canon = json.dumps(kw, sort_keys=True, ensure_ascii=False, default=repr)
+    except Exception:                                             # noqa: BLE001
+        canon = repr(sorted(kw.items(), key=lambda kv: str(kv[0])))
+    return hashlib.sha256(canon.encode("utf-8", "replace")).hexdigest()
+
+
 def _sdk_accepts_base_url():
     """هل يقبل بانِ العميل المثبَّت الوسيط base_url؟ استبطانٌ لا رقم نسخة.
 
@@ -770,8 +863,11 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
 
         supports_thinking = _sdk_supports(client, "thinking")
 
-        def _call(mt, thinking):
-            """يستخدم البثّ (streaming) — مطلوب للمخرجات الكبيرة، ويعمل مع الصغيرة أيضاً.
+        def _build_kw(mt, thinking):
+            """وسائط الطلب — تُبنى مرّةً، فتُبصَم ويُنادى بها الشيءُ نفسه.
+
+            W2-D: كانت تُبنى داخل `_call` فلا يمكن مقارنة طلبين قبل إرسالهما.
+            فصلُها يجعل «هل هذا الطلب مطابقٌ لطلبٍ أُرسل؟» سؤالاً يُجاب قبل الدفع.
 
             F-31: `thinking` يُرسَل **فقط** إذا كانت النسخة المثبّتة تعرفه.
             anthropic==0.40 المثبّتة في requirements.txt لا تعرفه إطلاقاً — أُضيف
@@ -783,6 +879,10 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             kw = dict(model=model, max_tokens=mt, system=sys_p, messages=msgs)
             if thinking is not None and supports_thinking:
                 kw["thinking"] = thinking
+            return kw
+
+        def _call(kw):
+            """ينفّذ وسائط مبنيّة سلفاً. البثّ أوّلاً، وcreate لمكتبة بلا stream."""
             try:
                 with client.messages.stream(**kw) as s:
                     return s.get_final_message()
@@ -809,6 +909,15 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         # موجود لا يُصلحه التكرار: يستهلك دقائق ورصيداً ثم يعطي الرسالة نفسها متأخّرة.
         text = ""; stop = "?"; last_err = None; tried = 0
         backoff = float(os.environ.get("ACS_UPSTREAM_BACKOFF_S", "2"))
+        # W2-D: بصمات الطلبات المُرسَلة فعلاً في هذا النداء. سلّم المحاولات وُضع
+        # ليغيّر **إعداد التفكير** وحده؛ ومع anthropic==0.40 لا يُرسَل `thinking`
+        # إطلاقاً (KI-23/F-31)، فالمحاولتان تبنيان الوسائط نفسها حرفياً. إعادةُ
+        # إرسال طلبٍ مطابقٍ بايتاً لطلبٍ فشل هي دفعُ ميزانيةٍ كاملةٍ ثانيةً على
+        # نتيجةٍ معروفة سلفاً — مقيس حيّاً: 16000 ثم 16000 رمزاً، ونفس
+        # `stop=max_tokens` ونفس `out_chars=0`.
+        # القاعدة عامّة لا مخصّصة: تُقارَن البصمة، فإن اختلف الطلب فعلاً — نسخة
+        # SDK تعرف `thinking`، أو سقفٌ مختلف — أُرسِل كما كان.
+        sent_fingerprints = set()
         for mt, think in attempts:
             tried += 1
             # F-50: يُسجَّل ما **طُلب** قبل النداء. كان max_output_tokens يُملأ بعد
@@ -818,8 +927,22 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             tel.setdefault("max_output_tokens", int(mt))
             tel["thinking_sent"] = bool(think is not None and supports_thinking)
             tel["transport"] = cfg.transport
+            kw = _build_kw(mt, think)
+            fp = _request_fingerprint(kw)
+            if fp in sent_fingerprints:
+                tel["retry_skipped_reason"] = "identical_request"
+                tel["retries_skipped"] = int(tel.get("retries_skipped") or 0) + 1
+                print("[ACS-LLM] retry skipped: request is byte-identical to "
+                      "one already sent (stage=%s max_tokens=%s thinking=%s "
+                      "sdk=%s) — it cannot produce a different result and would "
+                      "cost another full budget" % (stage, mt,
+                                                    "off" if think else "default",
+                                                    sdk_ver))
+                tried -= 1                    # لم يُرسَل شيء: لا تُحتسَب محاولة
+                continue
+            sent_fingerprints.add(fp)
             try:
-                msg = _call(mt, think)
+                msg = _call(kw)
             except Exception as e:
                 # F-33: العطل المحلّي يُفصَل عن عطل المزوّد هنا، لا بعد أن يصير 502.
                 err = _classify_call_error(e, attempts=tried,
@@ -851,22 +974,41 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                     time.sleep(min(backoff * tried, 15))
                 continue
 
-            parts = [getattr(b, "text", None) for b in (msg.content or [])]
+            blocks = list(msg.content or [])
+            parts = [getattr(b, "text", None) for b in blocks]
             text = "".join(p for p in parts if p)
             stop = getattr(msg, "stop_reason", "?")
             usage = getattr(msg, "usage", None)
+            # W2-A: محاسبة كتل الرد — أنواعٌ وأعدادٌ وأطوال، لا محتوى.
+            acct = _block_accounting(blocks)
             tel.update({"stop_reason": stop,
                         "output_tokens": getattr(usage, "output_tokens", None),
                         "input_tokens": getattr(usage, "input_tokens", None),
                         "max_output_tokens": mt,
                         "completion_chars": len(text),
+                        "output_chars": len(text),
                         "attempts": tried,
                         "thinking": "off" if think else "default"})
+            tel.update(acct)
+            tel.update(_usage_extras(usage))
+            # النسبة الحاسمة في W2: كم حرفاً مرئياً مقابل كل رمز مخرج. هي التي
+            # تقول إن كانت رموزُ المخرج وكيلاً عن حجم JSON أم لا.
+            _ot = tel.get("output_tokens")
+            tel["chars_per_output_token"] = (
+                round(len(text) / float(_ot), 4) if isinstance(_ot, int) and _ot > 0
+                else None)
             print("[ACS-LLM] stage=%s provider=%s host=%s model=%s thinking=%s "
-                  "max_tokens=%s stop=%s out_chars=%d out_tokens=%s in_tokens=%s"
+                  "max_tokens=%s stop=%s out_chars=%d out_tokens=%s in_tokens=%s "
+                  "blocks=%d types=%s text_blocks=%d nontext_blocks=%d "
+                  "chars_per_out_token=%s%s"
                   % (stage, cfg.provider, cfg.base_host or "default", model,
                      "off" if think else "default", mt, stop, len(text),
-                     tel["output_tokens"], tel["input_tokens"]))
+                     tel["output_tokens"], tel["input_tokens"],
+                     acct["content_blocks"], acct["content_block_types"],
+                     acct["text_blocks"], acct["nontext_blocks"],
+                     tel.get("chars_per_output_token"),
+                     "".join(" %s=%s" % (k, v)
+                             for k, v in sorted(_usage_extras(usage).items()))))
 
             if text.strip():
                 break           # وصل نصّ — الحكم على اكتماله بعد الحلقة

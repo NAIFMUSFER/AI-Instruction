@@ -37,6 +37,11 @@ python3 "$HERE/test_ci_gate.py"; guard $?
 step "W1 · P0 security and correctness"
 python3 "$HERE/test_p0_hardening.py"; guard $?
 
+# W2-A/W2-D: محاسبة كتل الرد، وإسقاط المحاولة المطابقة بايتاً. القياس أوّلاً:
+# تصميم W2-C ينتظر ما يقوله السجلّ الحيّ عن أنواع الكتل.
+step "W2-A/W2-D · provider response accounting and the identical-retry skip"
+python3 "$HERE/test_provider_accounting.py"; guard $?
+
 step "F-01 · engineering authority: no silent engineering change"
 python3 "$HERE/test_engineering_authority.py"; guard $?
 
