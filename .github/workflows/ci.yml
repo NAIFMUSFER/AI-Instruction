@@ -352,7 +352,8 @@ jobs:
                    tests/remediation/test_p0_hardening.py \
                    tests/remediation/test_provider_accounting.py \
                    tests/remediation/test_provider_capability.py \
-                   tests/remediation/test_browser_acquisition.py
+                   tests/remediation/test_browser_acquisition.py \
+                   tests/remediation/test_asgi_client_contract.py
           rc_suites=$?
           if [ "$rc_audit" -ne 0 ] || [ "$rc_suites" -ne 0 ]; then exit 1; fi
       - name: CVE scan (advisory — needs the network, does not gate the PR)

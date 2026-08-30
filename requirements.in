@@ -45,3 +45,31 @@ pypdf
 python-multipart
 
 Pillow
+
+# ── القيدان اللذان كانا متعدّيين ومسكوتاً عنهما ─────────────────────────────
+# صارا مُعلَنَين هنا لأن CI كسر بسببهما، لا استعراضاً للاكتمال.
+#
+# starlette يجلبه fastapi، و httpx يجلبه anthropic. كلاهما كان بلا تثبيت،
+# فكان `pip install -r requirements.txt` يحلّهما إلى أحدث ما هو متاح **يوم
+# التشغيل**. وفي 2024-11-28 أطلق httpx إصداره 0.28.0 وفيه:
+#
+#     «The deprecated `app` argument has now been removed.»
+#
+# بينما TestClient في starlette 0.36.x ما زال يمرّر `app=` إلى httpx.Client
+# (أُزيل في starlette 0.37.0 · PR #2526 · 2024-02-05). و fastapi==0.110
+# يقصر starlette على `>=0.36.3,<0.37.0` — أي أنه **يستبعد كل إصدار من
+# starlette يعمل مع httpx ≥ 0.28**. فالتعارض بنيويّ لا عرضيّ:
+#
+#     TypeError: Client.__init__() got an unexpected keyword argument 'app'
+#
+# التثبيت هنا هو الحلّ الحتميّ الأصغر: يُبقي أرضية fastapi/starlette كما
+# أعلنها المستودع، ويوقف انجراف httpx وحده. و httpx==0.27.2 (آخر 0.27.x)
+# يُرضي قيد anthropic `httpx>=0.23.0, <1` ويعمل مع starlette 0.36.3.
+#
+# البديل — رفع fastapi إلى ≥0.115 لتحرير starlette ≥0.37 — يغيّر زمن تشغيل
+# الإنتاج نفسه، ولا دليل توافق عليه في هذا المستودع. لا يُتّخذ بلا قياس.
+#
+# ⚠ لا تُرقَّ httpx إلى 0.28+ قبل رفع starlette إلى ≥0.37.0 (ومعه fastapi).
+#   الثابتُ محروسٌ باختبار: tests/remediation/test_asgi_client_contract.py
+starlette
+httpx

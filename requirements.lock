@@ -90,6 +90,30 @@ uvicorn[standard]==0.27
     # The [standard] extra pulls a further closure of its own (httptools, uvloop,
     # websockets, watchfiles, python-dotenv, pyyaml) — all UNRESOLVED-OFFLINE below.
 
+starlette==0.36.3
+    # via fastapi, -r requirements.in
+    # NOT floor-derived and NOT invented: 0.36.3 is the ONLY version fastapi==0.110
+    # permits at the top of its own declared range. From fastapi 0.110.0's
+    # pyproject.toml, verbatim:
+    #     "starlette>=0.36.3,<0.37.0"
+    # and 0.36.3 (2024-02-04) is the last release of the 0.36.x series. So this
+    # pin removes a float without narrowing anything fastapi allows.
+
+httpx==0.27.2
+    # via anthropic, fastapi.testclient, -r requirements.in
+    # PINNED BY MEASURED INCOMPATIBILITY, not by preference:
+    #   httpx 0.28.0 (2024-11-28) — «The deprecated `app` argument has now
+    #     been removed.»
+    #   starlette removed the `app=` pass-through in TestClient only in
+    #     0.37.0 (2024-02-05, PR #2526) — a version fastapi==0.110 forbids.
+    # So on this dependency set every httpx ≥ 0.28 raises, at TestClient
+    # construction, before a single assertion runs:
+    #     TypeError: Client.__init__() got an unexpected keyword argument 'app'
+    # 0.27.2 (2024-08-27) is the highest 0.27.x, and satisfies anthropic 0.40's
+    # own declared `httpx>=0.23.0, <1`.
+    # ⚠ Raising this to 0.28+ REQUIRES starlette ≥ 0.37.0 first (and therefore a
+    #   fastapi bump). Guarded by tests/remediation/test_asgi_client_contract.py.
+
 # ------------------------------------------------- transitive closure (TODO) -
 # Inert. Commented out on purpose: pip must never read a line whose version is
 # unknown. Each entry names a package expected in the closure and the direct
@@ -104,7 +128,6 @@ uvicorn[standard]==0.27
 # UNRESOLVED-OFFLINE  h11                    # via httpcore, uvicorn
 # UNRESOLVED-OFFLINE  httpcore               # via httpx
 # UNRESOLVED-OFFLINE  httptools              # via uvicorn[standard]
-# UNRESOLVED-OFFLINE  httpx                  # via anthropic
 # UNRESOLVED-OFFLINE  idna                   # via anyio, httpx
 # UNRESOLVED-OFFLINE  jiter                  # via anthropic
 # UNRESOLVED-OFFLINE  pydantic               # via anthropic, fastapi
@@ -112,7 +135,6 @@ uvicorn[standard]==0.27
 # UNRESOLVED-OFFLINE  python-dotenv          # via uvicorn[standard]
 # UNRESOLVED-OFFLINE  pyyaml                 # via uvicorn[standard]
 # UNRESOLVED-OFFLINE  sniffio                # via anyio, anthropic
-# UNRESOLVED-OFFLINE  starlette              # via fastapi
 # UNRESOLVED-OFFLINE  typing-extensions      # via anthropic, fastapi, pydantic, pypdf
 # UNRESOLVED-OFFLINE  uvloop                 # via uvicorn[standard]
 # UNRESOLVED-OFFLINE  watchfiles             # via uvicorn[standard]

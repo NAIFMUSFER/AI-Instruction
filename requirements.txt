@@ -25,3 +25,12 @@ pypdf==4.0
 python-multipart==0.0.9
 uvicorn[standard]==0.27
 Pillow==12.3.0
+
+# ── تثبيتان يمنعان انجرافاً كسر CI فعلاً ───────────────────────────────────
+# starlette يجلبه fastapi و httpx يجلبه anthropic؛ كلاهما كان بلا تثبيت،
+# فكان كل تشغيل يحلّهما إلى أحدث المتاح يوم تشغيله. httpx 0.28.0 حذف وسيط
+# `app`، و TestClient في starlette 0.36.x ما زال يمرّره، و fastapi==0.110
+# يقصر starlette على <0.37.0 — فالتعارض حتميّ لا احتماليّ. التفصيل الكامل
+# والأدلّة في requirements.in و DEPENDENCY-POLICY.md.
+starlette==0.36.3
+httpx==0.27.2

@@ -139,6 +139,11 @@ python3 "$HERE/test_api_wiring.py"; guard $?
 step "browser acquisition · one binary resolver, no direct chromium.launch"
 python3 "$HERE/test_browser_acquisition.py"; guard $?
 
+# ثبات طبقة اختبار ASGI: httpx 0.28 حذف وسيط `app` بينما starlette الذي
+# يسمح به fastapi==0.110 ما زال يمرّره. التثبيت هو الإصلاح، وهذا حارسه.
+step "asgi client contract · the pinned starlette/httpx pair can build TestClient"
+python3 "$HERE/test_asgi_client_contract.py"; guard $?
+
 if [ "$1" = "--browser" ]; then
   step "F-11 · content security policy measured in real Chromium"
   node "$HERE/csp_browser_probe.js"; soft $? "csp browser probe"
