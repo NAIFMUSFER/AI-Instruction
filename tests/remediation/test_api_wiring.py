@@ -192,6 +192,65 @@ for alias, attr in sorted(seen):
     chk('%s.%s exists in %s' % (alias, attr, ALIASES[alias]),
         hasattr(mod, attr))
 
+print('\n── هـ · كل اسمٍ تلمسه الاختبارات على وحدة الـAPI موجودٌ فيها ──')
+# العطل الذي أوجب هذا القسم:
+#   tests/phase9_2/test_backend_contract.py كان ينادي `API._hits.clear()`.
+#   أزال تصحيحُ F-04 ذلك القاموس ونقل العدّ إلى acs_rate_limit، فصار النداء
+#   AttributeError يُسقط الملفّ كلّه — ووظيفةَ CI معه.
+#   ولم يظهر سنةً كاملة لأن القسم كان يموت قبله بسطرٍ واحد على
+#   TypeError من TestClient. عطلٌ يختبئ خلف عطل.
+#
+# الفحص ساكن عمداً: يقرأ الشجرة النحوية لوحدة الـAPI ولا يستوردها، فيعمل هنا
+# حيث fastapi غير مثبّتة — أي في البيئة نفسها التي أخفت العطل.
+API_TOP = set()
+for node in TREE.body:
+    if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+        API_TOP.add(node.name)
+    elif isinstance(node, ast.Assign):
+        for t in node.targets:
+            if isinstance(t, ast.Name):
+                API_TOP.add(t.id)
+    elif isinstance(node, ast.AnnAssign) and isinstance(node.target, ast.Name):
+        API_TOP.add(node.target.id)
+    elif isinstance(node, (ast.Import, ast.ImportFrom)):
+        for a in node.names:
+            API_TOP.add(a.asname or a.name.split('.')[0])
+    elif isinstance(node, (ast.If, ast.Try)):
+        for sub in ast.walk(node):
+            if isinstance(sub, ast.Assign):
+                for t in sub.targets:
+                    if isinstance(t, ast.Name):
+                        API_TOP.add(t.id)
+            elif isinstance(sub, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                API_TOP.add(sub.name)
+
+chk('the api module exposes a non-trivial top-level surface',
+    len(API_TOP) > 30, str(len(API_TOP)))
+
+CONSUMERS = ['tests/phase9_2/test_backend_contract.py']
+touched = 0
+for rel in CONSUMERS:
+    path = os.path.join(ROOT, rel)
+    chk(rel + ' exists', os.path.exists(path))
+    if not os.path.exists(path):
+        continue
+    tree = ast.parse(open(path, encoding='utf-8').read(), rel)
+    names = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Attribute) and isinstance(node.value, ast.Name) \
+                and node.value.id == 'API':
+            names.add(node.attr)
+    chk(rel + ' really does reach into the api module', len(names) >= 4,
+        str(sorted(names)))
+    for attr in sorted(names):
+        touched += 1
+        chk('%s uses API.%s — and acs_understand_api defines it'
+            % (rel.split("/")[-1], attr), attr in API_TOP,
+            'not a module-level name in acs_understand_api.py')
+
+print('  · %d API attribute reference(s) checked statically, no import needed'
+      % touched)
+
 print('\n' + '─' * 62)
 print('API WIRING: %d passed, %d failed' % (p[0], f[0]))
 sys.exit(1 if f[0] else 0)

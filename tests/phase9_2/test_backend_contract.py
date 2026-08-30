@@ -370,6 +370,31 @@ except Exception as _e:                                           # noqa: BLE001
 if _live:
     client = TestClient(API.app, raise_server_exceptions=False)
 
+    # ── حالة حدّ المعدّل: من الوحدة الحقيقية، لا من قاموسٍ لم يعد موجوداً ──
+    # كان هذا القسم يعبث بـ`API._hits` و`API.RL_GEN_HOUR` مباشرةً. أزال تصحيحُ
+    # F-04 الاثنين من مسار القرار: العدّ صار في acs_rate_limit، و
+    # `_LIMITER = RL.default_limiter()` يُربَط عند الاستيراد ويقرأ حدوده من
+    # البيئة، فلا يرى إسناداً لاحقاً إلى API.RL_GEN_HOUR.
+    #
+    # ولم يظهر ذلك لأن هذا القسم كان يموت قبله بسطر واحد:
+    #     TypeError: Client.__init__() got an unexpected keyword argument 'app'
+    # فبقيت الإشارتان الميّتتان سنةً كاملة خلف عطلٍ آخر. الآن يُختبَر المحدّد
+    # الحقيقي: نفس التوكيدات، على المسار الذي يعمل في الإنتاج فعلاً.
+    import acs_rate_limit as RLM                                  # noqa: E402
+
+    def _rl_reset(gen_hour=None):
+        """يعيد بناء المحدّد الوحيد، اختيارياً بحدٍّ ساعيّ آخر.
+
+        إعادةُ الربط على API._LIMITER لازمة: الوحدة أمسكت المرجع عند
+        الاستيراد، فتصفيرُ المصنع وحده يترك الخادم على النسخة القديمة."""
+        if gen_hour is None:
+            os.environ.pop('ACS_RL_GEN_HOUR', None)
+        else:
+            os.environ['ACS_RL_GEN_HOUR'] = str(gen_hour)
+        RLM.reset_default_limiter()
+        API._LIMITER = RLM.default_limiter()
+        return API._LIMITER
+
     def probe(method, path, **kw):
         r = getattr(client, method)(path, **kw)
         try:
@@ -468,9 +493,14 @@ if _live:
 
     # حدّ المعدّل ما يزال يعمل ويردّ JSON صالحاً مع Retry-After
     saved = API.RL_GEN_HOUR
+    saved_env = os.environ.get('ACS_RL_GEN_HOUR')
     try:
-        API.RL_GEN_HOUR = 1
-        API._hits.clear()
+        API.RL_GEN_HOUR = 1          # ما يُعرَض في /health
+        lim = _rl_reset(1)           # وما يُقرّر فعلاً
+        chk('the limiter under test really carries gen_hour = 1 — the probe '
+            'below measures the enforced limit, not a displayed one',
+            RLM.health_status(lim)['limits']['gen_hour'] == 1,
+            str(RLM.health_status(lim)['limits']))
         for _ in range(3):
             rl = client.post('/v1/understand', json={'text': 'مستودع صغير'},
                              headers={'X-Forwarded-For': '203.0.113.9'})
@@ -485,7 +515,10 @@ if _live:
         chk('a 429 is retryable in the envelope', rlb['error']['retryable'] is True)
     finally:
         API.RL_GEN_HOUR = saved
-        API._hits.clear()
+        if saved_env is None:
+            _rl_reset()
+        else:
+            _rl_reset(saved_env)
 
     # فشل المنبع يخرج مصنّفاً وليس 500 عاماً
     _real = U.understand
@@ -507,7 +540,7 @@ if _live:
             and 'sk-ant' not in au.text)
     finally:
         U.understand = _real
-        API._hits.clear()
+        _rl_reset()
 
     # العطل الأصلي، حيّاً: رد بكائنين → مغلّف مصنّف، لا «Extra data» ولا 500
     def _extra(*a, **k):
@@ -525,7 +558,7 @@ if _live:
             'Extra data' not in ex.text)
     finally:
         U.understand = _real
-        API._hits.clear()
+        _rl_reset()
 
     # مهلة الخادم → 504 بجسد JSON
     import time as _t
@@ -541,7 +574,7 @@ if _live:
     finally:
         API.REQUEST_TIMEOUT_S = saved_to
         U.understand = _real
-        API._hits.clear()
+        _rl_reset()
 
     # انفلات غير متوقّع تماماً
     try:
@@ -553,7 +586,7 @@ if _live:
             (E.ACS_UPSTREAM_UNKNOWN, E.ACS_INTERNAL))
     finally:
         U.understand = _real
-        API._hits.clear()
+        _rl_reset()
 
 print('\n──────────────────────────────────────────────')
 print('BACKEND CONTRACT: %d passed, %d failed%s'
