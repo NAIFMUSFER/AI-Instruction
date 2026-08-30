@@ -358,8 +358,22 @@ class JobRunner(object):
                 self._stats["failed"] += 1
             if on_event:
                 on_event(job)
-            raise JobError("the generation worker died before returning a result",
-                           type(exc).__name__)
+            # رمزُ خروج الابنة هو الدليل الوحيد على *كيف* ماتت: 0 خرجت طبيعياً
+            # بلا إرسال · موجب رفعت استثناءً · سالب قتلتها إشارة (‑9 = SIGKILL،
+            # ‑11 = خطأ تجزئة). بلا هذا السطر يبدو كل موت واحداً، فيُقرأ عطلُ
+            # بيئةٍ عطلاً في نقل التصنيف. أثبت هذا الرقمُ فعلاً أن الابنة كانت
+            # تُعيد تنفيذ ملفّ الاختبار (spawn/_fixup_main_from_path) وتموت
+            # قبل الإرسال، لا أن الحدّ يفقد التصنيف.
+            code = None
+            try:
+                proc.join(TERMINATE_GRACE_S)
+                code = proc.exitcode
+            except Exception:                                   # pragma: no cover
+                code = None
+            raise JobError(
+                "the generation worker died before returning a result "
+                "(child exit code: %s)" % ("unknown" if code is None else code),
+                type(exc).__name__)
         finally:
             try:
                 parent.close()

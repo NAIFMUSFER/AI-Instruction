@@ -168,6 +168,54 @@ def main():
     chk("the error table itself was not mutated by any of this",
         E.HTTP_STATUS == before)
 
+    print("\n== ح · موتُ العامل بلا إرسال: يُبلَّغ برمز خروجه، ويبقى مجهولاً ==")
+    # هذه هي الحالة التي أنتجت EOFError في CI. لم تكن عطلاً في نقل التصنيف —
+    # كانت الابنة تموت قبل الإرسال أصلاً، لأن spawn يعيد تنفيذ ملفّ نقطة
+    # الدخول، وملفّ الاختبار لم يكن محروساً بـ__main__ فأعاد بناء TestClient
+    # في كل عامل. رمزُ الخروج هو ما يفصل «مات» عن «فقد التصنيف».
+    exc, _ = run("die_without_sending")
+    chk("a worker that exits without sending is reported, not swallowed",
+        isinstance(exc, JOBS.JobError),
+        "%s: %s" % (type(exc).__name__, str(exc)[:120]))
+    chk("the parent names the pipe symptom (EOFError) as the error class",
+        getattr(exc, "error_class", None) == "EOFError",
+        str(getattr(exc, "error_class", None)))
+    chk("and it carries the CHILD'S EXIT CODE, so a dead worker is "
+        "distinguishable from a lost classification",
+        "child exit code: 7" in str(exc), str(exc)[:160])
+    chk("a dead worker is NOT promoted to a typed upstream code",
+        not isinstance(exc, E.AcsApiError))
+    chk("it classifies as ACS_UPSTREAM_UNKNOWN, like any unknown failure",
+        E.classify_upstream(exc).code == E.ACS_UPSTREAM_UNKNOWN,
+        E.classify_upstream(exc).code)
+
+    print("\n== ط · كل ملفّ يبلغ مُشغِّل الوظائف محروسٌ بـ__main__ ==")
+    # بلا الحارس تعيد كل ابنةٍ تنفيذ الملفّ كاملاً. وأسوأ ما في ذلك أنه لا
+    # يظهر فشلاً نظيفاً: توكيدُ المهلة كان **يمرّ لسببٍ خاطئ** — الأب ينتظر
+    # مهلته ويعلن TIMED_OUT مهما فعلت الابنة، والابنة ميّتة أصلاً.
+    import re as _re
+    tests_root = os.path.join(ROOT, "tests")
+    reach, unguarded = [], []
+    for dirpath, dirnames, files in os.walk(tests_root):
+        dirnames[:] = [d for d in dirnames if d != "node_modules"]
+        for fn in files:
+            if not fn.endswith(".py"):
+                continue
+            path = os.path.join(dirpath, fn)
+            with open(path, encoding="utf-8") as fh:
+                src = fh.read()
+            if "acs_generation_job" not in src and "default_runner" not in src:
+                continue
+            rel = os.path.relpath(path, ROOT)
+            reach.append(rel)
+            if not _re.search(r'^if __name__ ?== ?[\'"]__main__[\'"]', src, _re.M):
+                unguarded.append(rel)
+    chk("there are files that reach the job runner (%d)" % len(reach),
+        len(reach) >= 3, str(reach))
+    chk("EVERY one of them guards __main__ — spawn re-executes the entry file, "
+        "so an unguarded suite re-runs itself inside every worker",
+        not unguarded, str(unguarded))
+
     print("\n== ز · لا تسريب: لا مفتاح ولا أثر استدعاء يعبر الحدّ إلى العميل ==")
     exc, _ = run("leaky_failure")
     text = "%s %s %s" % (type(exc).__name__, exc, getattr(exc, "error_class", ""))

@@ -284,4 +284,14 @@ print('  · %d API attribute reference(s) checked statically, no import needed'
 
 print('\n' + '─' * 62)
 print('API WIRING: %d passed, %d failed' % (p[0], f[0]))
-sys.exit(1 if f[0] else 0)
+
+
+# ── حارس نقطة الدخول ────────────────────────────────────────────────────────
+# هذا الملفّ يستورد acs_generation_job (ليتحقّق من رموزه) ولا يولّد عمليات
+# اليوم. والحارس مع ذلك ليس زينة: spawn يعيد تنفيذ ملفّ نقطة الدخول في كل
+# عاملٍ يُنشأ، فأيّ استدعاءٍ للمُشغِّل يُضاف لاحقاً هنا يجعل الملفّ يعيد تشغيل
+# نفسه داخل كل ابنة — وهو ما حدث فعلاً في tests/phase9_2/test_backend_contract.py
+# وأنتج EOFError في CI. الحارس يجعل «تُستورَد» غير «تُشغَّل» من الآن.
+# مثبَّت في tests/remediation/test_job_boundary.py §ط.
+if __name__ == '__main__':
+    sys.exit(1 if f[0] else 0)
