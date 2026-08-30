@@ -12,9 +12,9 @@
      FULL    وحدات نقيّة بكاملها (لا DOM ولا Three ولا window) — تُدرَج كما هي.
      PREFIX  وحدة تبدأ بطبقات نقيّة وتنتهي بمحرّك المتصفّح: تُدرَج البادئة
              القصوى من تعليماتها العليا التي تُقيَّم في Node بلا بيئة متصفّح.
-             الحدّ يُحسَب بمحلّل نحويّ حقيقي (Babel المضمّن في playwright)، لا
-             بمرساة نصّية: أوّل تعليمة عليا تحتاج معرّفاً حرّاً غير معرَّف في
-             Node ولا مصرَّحاً به قبلها هي الحدّ.
+             الحدّ يُقاس بالتنفيذ لا بالاستنتاج: أكبر بادئةٍ تعمل في `node:vm`
+             بلا ReferenceError. أوّل تعليمة تحتاج معرّفاً غير موجود في Node
+             ولا مصرَّحاً به قبلها هي الحدّ، والاسم يأتي من الخطأ نفسه.
      PICK    تصريحات عليا مسمّاة تُنتزع من وحدة متصفّح بالاسم عبر الشجرة
              النحويّة (لا بمدى أسطر). كل اسم مطلوب يجب أن يوجد وإلا فشل البناء.
 
@@ -28,9 +28,14 @@ const path = require('path');
 const os = require('os');
 
 const ROOT = path.resolve(__dirname, '..', '..', '..');
+const vm = require('node:vm');
 const APP = require(path.join(ROOT, 'tests', 'lib', 'app_source.js'));
-const B = require(path.join(ROOT, 'node_modules', 'playwright', 'lib',
-                            'transform', 'babelBundle.js'));
+/* تقطيعُ التعليمات وأسماءُ التصريحات بأدوات Node وحدها — لا محلّل خارجيّ.
+   كان هنا `require(node_modules/playwright/lib/transform/babelBundle.js)`:
+   مسارٌ داخليّ غير موثَّق في تبعية تطوير لا تُركَّب إلّا في وظيفةٍ واحدة من
+   تسع في CI، فكانت كل وظيفة أخرى تسقط قبل أوّل توكيد بـ«Cannot find module».
+   التفصيل والتكافؤ المُثبَّت في tests/lib/js_segment.js. */
+const SEG = require(path.join(ROOT, 'tests', 'lib', 'js_segment.js'));
 
 const OUT = process.env.ACS_BUNDLE
          || path.join(os.tmpdir(), 'acs_browser_bundle.js');
@@ -68,15 +73,17 @@ const PICK = { 'ui/workspace-ui-wiring.js': [
   'acsApplyTicket', 'acsApplyBuilding', 'acsApplyFirstFrame',
   '_acsZonesAsked', '_acsErrorSite', '_acsStackHead', '_acsFin', 'acsFail'] };
 
-/* المعرّفات المتاحة في Node نفسه: تُقرأ من البيئة لا من قائمة مكتوبة بيد،
-   فلا تتقادم. ما ليس فيها ولا مصرَّحاً به قبله يحتاج بيئة متصفّح. */
-const NODE_GLOBALS = new Set(
-  Object.getOwnPropertyNames(globalThis)
-    .concat(['undefined', 'arguments', 'globalThis', 'require', 'module',
-             'exports', '__dirname', '__filename']));
+/* لم تعد هناك قائمة معرّفاتٍ مكتوبة: الحدّ يقيسه التنفيذ في `node:vm`،
+   ومعرّفات Node المتاحة هي ما يتيحه المُفسِّر نفسه لحظة القياس. */
 
+/* تحقّق نحويّ بواجهة Node العامّة. يرمي كما كان يرمي المحلّل السابق. */
 function parse(src, label) {
-  return B.babelParse(src, String(label).replace(/[^A-Za-z0-9_.-]/g, '_'), false);
+  try {
+    new vm.Script(src, { filename: String(label) });
+  } catch (e) {
+    throw new Error('syntax error in ' + label + ': ' + e.message);
+  }
+  return true;
 }
 
 /* التحليل النحويّ لِـ ١٫٤ م.ب في كل تشغيل اختبار مكلف بلا فائدة، لكن التخزين
@@ -88,6 +95,7 @@ function stamp() {
   const h = require('crypto').createHash('sha256');
   h.update(fs.readFileSync(__filename));
   h.update(fs.readFileSync(path.join(ROOT, 'tests', 'lib', 'app_source.js')));
+  h.update(fs.readFileSync(path.join(ROOT, 'tests', 'lib', 'js_segment.js')));
   const mods = APP.modules();
   for (const f of Object.keys(mods).sort()) { h.update(f); h.update(mods[f]); }
   return '/* acs-browser-bundle sha256:' + h.digest('hex') + ' */';
@@ -108,48 +116,71 @@ if (!process.env.ACS_BUNDLE_FORCE) {
   }
 }
 
-/* التصريحات العليا لنصّ — من الشجرة، لا بتعبير نمطي */
-function topLevelNames(ast) {
-  const out = [];
-  B.traverse(ast, {
-    Program(p) { out.push.apply(out, Object.keys(p.scope.bindings)); p.stop(); }
-  });
-  return out;
+/* التصريحات العليا لنصّ — من حدود التعليمات، لا ببحثٍ حرّ في الملفّ */
+function topLevelNames(src) {
+  return SEG.declaredNames(src);
 }
 
-/* المعرّفات الحرّة المستعملة وقت التقييم (خارج أي دالّة) مع مواضعها */
-function evalTimeFreeRefs(ast) {
-  const hits = [];
-  B.traverse(ast, {
-    ReferencedIdentifier(p) {
-      const n = p.node.name;
-      if (p.scope.hasBinding(n, true)) return;      /* محلول داخل الوحدة */
-      if (p.getFunctionParent()) return;            /* داخل دالّة: لا يُقيَّم الآن */
-      hits.push({ name: n, at: p.node.start });
+/* أكبر عددٍ من التعليمات العليا يعمل فعلاً في Node.
+
+   هذا قياسٌ لا استنتاج: تُنفَّذ البادئة في `node:vm` فوق ما سبقها من الحزمة،
+   ويُنظَر هل ترمي ReferenceError. الخاصية رتيبة — ما إن تحتاج تعليمةٌ معرّفاً
+   غائباً حتى تحتاجه كل بادئةٍ أطول — فيكفي بحثٌ ثنائيّ.
+
+   وهو أدقّ ممّا كان: المعيار السابق «معرّف حرّ خارج أي دالّة» تقديرٌ ساكن،
+   وهذا هو السلوك نفسه الذي تعتمد عليه المجموعات حين تحمّل الحزمة. */
+function runsInNode(prelude, code) {
+  const ctx = vm.createContext(Object.create(null));
+  try {
+    vm.runInContext(prelude + '\n' + code, ctx,
+                    { filename: 'acs_prefix_probe.js', timeout: 120000 });
+    return { ok: true, missing: null };
+  } catch (e) {
+    /* الخطأ يأتي من عالَم `vm` الآخر، فـ`instanceof` من عالَمنا يكذب دائماً.
+       الاسم هو المعيار الصحيح عبر العوالم. */
+    if (e && (e.name === 'ReferenceError'
+              || /is not defined/.test(String(e && e.message)))) {
+      const m = /^(\w[\w$]*) is not defined/.exec(String(e.message));
+      return { ok: false, missing: m ? m[1] : String(e.message) };
     }
-  });
-  return hits;
+    /* خطأ آخر (TypeError مثلاً) ليس حدّ متصفّح: البادئة مقبولة نحوياً
+       ودلالياً هنا، والمشكلة في التنفيذ لا في الغياب. */
+    return { ok: true, missing: null };
+  }
+}
+
+function pureStatementCount(prelude, src, stmts) {
+  let lo = 0, hi = stmts.length, why = null;
+  const at = k => k === 0 ? '' : src.slice(0, stmts[k - 1].end);
+  if (runsInNode(prelude, at(hi)).ok) return { cut: hi, why: null };
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    const r = runsInNode(prelude, at(mid));
+    if (r.ok) lo = mid;
+    else { hi = mid - 1; why = r.missing; }
+  }
+  /* اسم الحدّ من التعليمة التي سقطت، لا من آخر محاولة */
+  const r = runsInNode(prelude, at(lo + 1));
+  if (!r.ok) why = r.missing;
+  return { cut: lo, why: why };
 }
 
 /* أسماء تنشرها وحدةٌ في سجلّ الربط المتأخّر: تُقرأ من الشجرة لا بتعبير نمطي،
    ويُشترط الشكل القانوني الوحيد الذي يكتبه tools/frontend_split.js —
    Object.assign(__ACS_LATE, { a, b, c }); بمفاتيح مختصرة فقط. */
-function latePublications(ast) {
+function latePublications(src, stmts) {
   const out = [];
-  for (const st of ast.program.body) {
-    if (st.type !== 'ExpressionStatement') continue;
-    const e = st.expression;
-    if (!e || e.type !== 'CallExpression') continue;
-    const c = e.callee;
-    if (!c || c.type !== 'MemberExpression' || c.object.name !== 'Object'
-        || c.property.name !== 'assign') continue;
-    if (e.arguments.length !== 2 || e.arguments[0].name !== '__ACS_LATE'
-        || e.arguments[1].type !== 'ObjectExpression') continue;
-    for (const p of e.arguments[1].properties) {
-      if (p.type !== 'ObjectProperty' || !p.shorthand
-          || p.key.type !== 'Identifier')
-        throw new Error('unexpected shape in an __ACS_LATE publication');
-      out.push(p.key.name);
+  for (const st of stmts) {
+    const text = src.slice(st.start, st.end);
+    const m = /^Object\s*\.\s*assign\s*\(\s*__ACS_LATE\s*,\s*\{([^}]*)\}\s*\)\s*;?$/
+      .exec(SEG.head(text).trim());
+    if (!m) continue;
+    for (const raw of m[1].split(',')) {
+      const k = raw.trim();
+      if (!k) continue;
+      if (!/^[A-Za-z_$][\w$]*$/.test(k))
+        throw new Error('unexpected shape in an __ACS_LATE publication: ' + k);
+      out.push(k);
     }
   }
   return out;
@@ -171,8 +202,7 @@ for (const f of APP.REGISTRIES) {
   if (loadOrder.indexOf(f) !== APP.REGISTRIES.indexOf(f))
     throw new Error('leaf registry is not imported first by public/app/main.js: '
                     + f);
-  topLevelNames(parse(APP.stripModuleSyntax(mods[f], f), f))
-    .forEach(n => declared.add(n));
+  topLevelNames(APP.stripModuleSyntax(mods[f], f)).forEach(n => declared.add(n));
 }
 if (!declared.has('__ACS_SHARED') || !declared.has('__ACS_LATE'))
   throw new Error('the leaf registries did not declare __ACS_SHARED/__ACS_LATE');
@@ -194,30 +224,26 @@ stats.push(APP.REGISTRIES.join(' + ') + ' — leaf registries');
 
 for (const f of FULL) {
   const src = APP.stripModuleSyntax(mods[f], f);
-  topLevelNames(parse(src, f)).forEach(n => declared.add(n));
+  topLevelNames(src).forEach(n => declared.add(n));
   parts.push('/* ==== public/app/' + f + ' (whole module) ==== */\n' + src);
   stats.push(f + ' — whole module');
 }
 
 for (const f of PREFIX) {
   const src = APP.stripModuleSyntax(mods[f], f);
-  const ast = parse(src, f);
-  const body = ast.program.body;
-  const refs = evalTimeFreeRefs(ast);
-  let cut = body.length, why = null;
-  for (let i = 0; i < body.length && cut === body.length; i++) {
-    const st = body[i];
-    for (const r of refs) {
-      if (r.at < st.start || r.at >= st.end) continue;
-      if (declared.has(r.name) || NODE_GLOBALS.has(r.name)) continue;
-      cut = i; why = r.name; break;
-    }
-  }
+  parse(src, f);
+  const body = SEG.topLevelStatements(src);
+  /* البادئة تُقاس فوق ما تراكم من الحزمة، فتُحلّ أسماءُ الوحدات السابقة كما
+     تُحلّ في التحميل الحقيقي، ولا يُحسَب غيابها حدَّ متصفّح. */
+  const prelude = parts.join('\n\n');
+  const measured = pureStatementCount(prelude, src, body);
+  const cut = measured.cut;
+  const why = measured.why;
   if (cut === body.length)
     throw new Error('no browser boundary found in ' + f
                     + ' — it is fully pure, list it in FULL instead');
   const head = src.slice(0, body[cut].start);
-  topLevelNames(parse(head, f)).forEach(n => declared.add(n));
+  topLevelNames(head).forEach(n => declared.add(n));
   parts.push('/* ==== public/app/' + f + ' (pure prefix: ' + cut
              + ' top-level statements; stops at the first one that needs `'
              + why + '`) ==== */\n' + head);
@@ -227,8 +253,9 @@ for (const f of PREFIX) {
      أي بعد الحدّ دائماً. إسقاطه يترك السجلّ فارغاً من أسماء أُدرِجت تصريحاتها
      فعلاً، فينهار كل مستدعٍ أسبق بـ «ليست دالّة». يُعاد بثّه هنا مقصوراً على
      ما صرّحت به البادئة المُدرَجة — لا اسم يُنشَر بلا شيفرته. */
-  const pub = latePublications(ast).filter(n => declared.has(n));
-  const skipped = latePublications(ast).filter(n => !declared.has(n));
+  const allPub = latePublications(src, body);
+  const pub = allPub.filter(n => declared.has(n));
+  const skipped = allPub.filter(n => !declared.has(n));
   if (pub.length)
     parts.push('/* ==== public/app/' + f + ' (late-binding publications whose '
                + 'declarations are included) ==== */\n'
@@ -241,18 +268,17 @@ for (const f of PREFIX) {
 for (const f of Object.keys(PICK)) {
   const want = PICK[f];
   const src = APP.stripModuleSyntax(mods[f], f);
-  const ast = parse(src, f);
+  parse(src, f);
   const taken = [];
   const found = new Set();
-  for (const st of ast.program.body) {
-    let n = null;
-    if (st.type === 'FunctionDeclaration' || st.type === 'ClassDeclaration')
-      n = st.id && st.id.name;
-    else if (st.type === 'VariableDeclaration' && st.declarations.length === 1
-             && st.declarations[0].id.type === 'Identifier')
-      n = st.declarations[0].id.name;
-    if (n && want.indexOf(n) >= 0 && !found.has(n)) {
-      found.add(n); taken.push(src.slice(st.start, st.end)); declared.add(n);
+  for (const st of SEG.topLevelStatements(src)) {
+    const text = src.slice(st.start, st.end);
+    const names = SEG.statementDeclaredNames(text);
+    /* تصريحٌ واحد باسمٍ واحد فقط يُنتزَع: `let a=1,b=2;` لا يُقتطع نصفه. */
+    if (names.length !== 1) continue;
+    const n = names[0];
+    if (want.indexOf(n) >= 0 && !found.has(n)) {
+      found.add(n); taken.push(text); declared.add(n);
     }
   }
   const missing = want.filter(n => !found.has(n));

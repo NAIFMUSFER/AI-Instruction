@@ -141,6 +141,16 @@ jobs:
                    tests/remediation/test_webgl_diagnostics.js \
                    tests/remediation/test_concurrency.js \
                    tests/remediation/test_persistence.js
+      - name: The bundle extractor needs no installed dependency
+        # This job deliberately does NOT run `npm ci`. That is exactly the
+        # condition under which the extractor used to die on a private
+        # Playwright path, so this is the right job to prove it never returns.
+        shell: bash
+        run: |
+          set -o pipefail
+          bash tools/ci_run.sh --log logs/js-parity.log \
+               --label "bundle extractor (no node_modules)" --runner "node" \
+                   tests/remediation/test_bundle_extractor.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:

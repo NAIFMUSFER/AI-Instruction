@@ -144,6 +144,10 @@ python3 "$HERE/test_browser_acquisition.py"; guard $?
 step "asgi client contract · the pinned starlette/httpx pair can build TestClient"
 python3 "$HERE/test_asgi_client_contract.py"; guard $?
 
+# مستخرِج حزمة المتصفّح: يعمل بلا node_modules ولا مسارٍ داخليّ في Playwright.
+step "bundle extractor · no dev dependency, no private module path"
+node "$HERE/test_bundle_extractor.js"; guard $?
+
 if [ "$1" = "--browser" ]; then
   step "F-11 · content security policy measured in real Chromium"
   node "$HERE/csp_browser_probe.js"; soft $? "csp browser probe"
