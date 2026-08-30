@@ -144,6 +144,11 @@ python3 "$HERE/test_browser_acquisition.py"; guard $?
 step "asgi client contract · the pinned starlette/httpx pair can build TestClient"
 python3 "$HERE/test_asgi_client_contract.py"; guard $?
 
+# كل تبعية خارجية مطلوبة يبلغها هدفٌ في CI — ولو متعدّيةً عبر وحدات المستودع —
+# تُركِّبها الوظيفة التي تشغّله. numpy وصلت عبر acs_compiler لا عبر سطر استيراد.
+step "ci dependencies · every required third-party import is installed by its job"
+python3 "$HERE/test_ci_dependencies.py"; guard $?
+
 # مستخرِج حزمة المتصفّح: يعمل بلا node_modules ولا مسارٍ داخليّ في Playwright.
 step "bundle extractor · no dev dependency, no private module path"
 node "$HERE/test_bundle_extractor.js"; guard $?

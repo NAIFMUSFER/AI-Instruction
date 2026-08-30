@@ -35,3 +35,19 @@
 # tests/remediation/test_generation_cancel.py — يعدّ العمليات الأبناء بعد
 # الإلغاء ليثبت أن إنهاء العامل لا يترك عملية يتيمة. لا يستعمله الخادم.
 psutil==7.2.2
+
+# acs_compiler.py — المترجم الهندسي (Building JSON → glTF). أداةُ سطر أوامر
+# تعمل خارج الخدمة: `python3 acs_compiler.py <building.json> <out.gltf>`.
+# **ليست في صورة الإنتاج**، وتحقّق النشر يثبت ذلك بنفسه:
+#     · 1 offline command-line tool(s), deployed nowhere by design: acs_compiler.py
+#     ✓ the offline tool acs_compiler.py is genuinely unreachable from the API
+#     ✓ the offline tool acs_compiler.py is not shipped in the container
+# و`Dockerfile` لا ينسخها في أي سطر COPY. فـnumpy ليست تبعية زمن تشغيل
+# للمنتج، ووضعُها في requirements.txt كان سيشحن مكتبةً ثقيلة إلى الإنتاج
+# لأداةٍ لا تعمل هناك.
+#
+# ومع ذلك هي تبعية **مطلوبة** لاختبار: tests/remediation/test_plate_extent.py
+# يستورد acs_compiler ليقارن امتداد لوح الدور بين بايثون والمتصفّح. الاستيراد
+# متعدٍّ — الاختبار لا يذكر numpy — ولذلك يمشي
+# tests/remediation/test_ci_dependencies.py إغلاقَ الاستيراد لا سطوره.
+numpy==2.4.4
