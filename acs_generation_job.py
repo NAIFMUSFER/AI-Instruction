@@ -137,6 +137,34 @@ def _reraise_classified(classified):
                          upstream=up if isinstance(up, dict) else None)
 
 
+def _child_message(exc):
+    """نصّ الخطأ كما يعبر الأنبوب — مُنقّى وبلا أثر استدعاء.
+
+    كان يُشحَن `str(exc)` خاماً. المسار المصنَّف كان يُنقّى بـE.redact، أما
+    المسار **غير** المصنَّف — أي كل استثناء لم يعرفه أحد — فكان يعبر كما هو.
+    فإن حمل نصّه مفتاحاً أو إطار أثرِ استدعاء، وصل ذلك إلى JobError عند الأب،
+    ومنه إلى السجلّ. المغلّف الخارج إلى العميل كان يُنقّى، لكن السجلّ ليس أقلّ
+    حساسية من الجسم.
+
+    قاسه tests/remediation/test_job_boundary.py §ز بعطلٍ نصُّه يحمل الاثنين.
+    التنقية هنا هي نفسها المطبَّقة في كل مكان: acs_api_errors.redact.
+    """
+    text = str(exc)
+    try:
+        import acs_api_errors as _E
+        text = _E.redact(text)
+    except Exception:                                           # noqa: BLE001
+        pass
+    # إطارات أثر الاستدعاء لا تُنقل: الموضع يخصّ الخادم لا المستدعي، وقد
+    # يفشي مسارات نشرٍ داخلية. أوّل سطرٍ يبدأ إطاراً يقطع النصّ.
+    cut = len(text)
+    for marker in ('\n  File "', "\nTraceback (", '\n  File \''):
+        at = text.find(marker)
+        if 0 <= at < cut:
+            cut = at
+    return text[:cut][:2000]
+
+
 def _child(target, kwargs, conn):                               # pragma: no cover
     """جسم العملية الابنة — تُستورَد الوحدة هنا لا تُنقَل الدالّة."""
     try:
@@ -147,7 +175,7 @@ def _child(target, kwargs, conn):                               # pragma: no cov
         conn.send(("ok", value))
     except BaseException as exc:                                # noqa: BLE001
         try:
-            conn.send(("err", (type(exc).__name__, str(exc)[:2000],
+            conn.send(("err", (type(exc).__name__, _child_message(exc),
                                _classified_payload(exc))))
         except Exception:
             pass

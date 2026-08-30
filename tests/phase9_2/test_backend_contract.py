@@ -381,6 +381,33 @@ if _live:
     # فبقيت الإشارتان الميّتتان سنةً كاملة خلف عطلٍ آخر. الآن يُختبَر المحدّد
     # الحقيقي: نفس التوكيدات، على المسار الذي يعمل في الإنتاج فعلاً.
     import acs_rate_limit as RLM                                  # noqa: E402
+    import acs_generation_job as JOBSM                            # noqa: E402
+
+    # ── لماذا لم يعد هذا القسم يرقّع U.understand ─────────────────────────
+    # العامل يعمل في عملية أخرى (spawn) ويستورد وحدة الهدف باسمها. فترقيعُ
+    # `acs_understand.understand` هنا لا يبلغه إطلاقاً: الابنة تنادي الأصل.
+    # فكانت هذه التوكيدات الثلاثة تُدخِل عطلاً لا يراه الخادم، ويصل بدله عطلُ
+    # الأصل — RuntimeError غير مصنَّف — فيُقرأ ACS_UPSTREAM_UNKNOWN:
+    #     متوقَّع 504/ACS_TIMEOUT           واقع 502/ACS_UPSTREAM_UNKNOWN
+    #     متوقَّع ACS_UPSTREAM_AUTH          واقع ACS_UPSTREAM_UNKNOWN
+    #     متوقَّع ACS_UPSTREAM_TRAILING_JSON واقع ACS_UPSTREAM_UNKNOWN
+    # الرمز كان صادقاً؛ التجربة هي التي لم تقع.
+    #
+    # الآن يُوجَّه هدف الوظيفة إلى tests/remediation/lib_job_faults.py: دوالّ
+    # حقيقية تُستورَد في العامل كما يُستورَد الأصل، فيقع العطل حيث يقع في
+    # الإنتاج ويعبر حدّ العملية نفسه. لا توكيد تغيّر، ولا رمز خُفِّف.
+    # وحدّ العملية ذاته مقيس مستقلاً في tests/remediation/test_job_boundary.py.
+    _FAULTS = os.path.join(ROOT, 'tests', 'remediation')
+    if _FAULTS not in sys.path:
+        sys.path.insert(0, _FAULTS)
+    _real_target = API.TARGET_UNDERSTAND
+
+    def _fault(name):
+        """يوجّه هدف /v1/understand إلى دالّة عطلٍ تعمل داخل العامل."""
+        API.TARGET_UNDERSTAND = 'lib_job_faults:' + name
+
+    def _restore_target():
+        API.TARGET_UNDERSTAND = _real_target
 
     def _rl_reset(gen_hour=None):
         """يعيد بناء المحدّد الوحيد، اختيارياً بحدٍّ ساعيّ آخر.
@@ -523,11 +550,8 @@ if _live:
     # فشل المنبع يخرج مصنّفاً وليس 500 عاماً
     _real = U.understand
 
-    def _boom(*a, **k):
-        raise E.classify_upstream(fake('AuthenticationError', 401))
-
     try:
-        U.understand = _boom
+        _fault('upstream_auth')
         au = client.post('/v1/understand', json={'text': 'مستودع بسيط 20×15م'},
                          headers={'X-Forwarded-For': '198.51.100.7'})
         aub = json.loads(au.text)
@@ -539,15 +563,12 @@ if _live:
             (aub['error']['upstream'] or {}).get('provider') == 'anthropic'
             and 'sk-ant' not in au.text)
     finally:
-        U.understand = _real
+        _restore_target()
         _rl_reset()
 
     # العطل الأصلي، حيّاً: رد بكائنين → مغلّف مصنّف، لا «Extra data» ولا 500
-    def _extra(*a, **k):
-        return U.extract_json(PROD)
-
     try:
-        U.understand = _extra
+        _fault('upstream_trailing_json')
         ex = client.post('/v1/understand', json={'text': 'مستودع بسيط 20×15م'},
                          headers={'X-Forwarded-For': '198.51.100.8'})
         exb = json.loads(ex.text)
@@ -557,15 +578,15 @@ if _live:
         chk('the client never sees the raw "Extra data" decoder text again',
             'Extra data' not in ex.text)
     finally:
-        U.understand = _real
+        _restore_target()
         _rl_reset()
 
-    # مهلة الخادم → 504 بجسد JSON
-    import time as _t
+    # مهلة الخادم → 504 بجسد JSON. التوقّف يقع في العامل فعلاً، فتُقاس المهلة
+    # على المسار الذي يعمل في الإنتاج لا على دالّة نائمة في عملية الاختبار.
     saved_to = API.REQUEST_TIMEOUT_S
     try:
         API.REQUEST_TIMEOUT_S = 0.4
-        U.understand = lambda *a, **k: (_t.sleep(3), {})[1]
+        _fault('stall')
         to = client.post('/v1/understand', json={'text': 'مستودع بسيط 20×15م'},
                          headers={'X-Forwarded-For': '198.51.100.9'})
         tob = json.loads(to.text)
@@ -573,20 +594,28 @@ if _live:
             to.status_code == 504 and tob['error']['code'] == E.ACS_TIMEOUT)
     finally:
         API.REQUEST_TIMEOUT_S = saved_to
-        U.understand = _real
+        _restore_target()
         _rl_reset()
 
-    # انفلات غير متوقّع تماماً
+    # انفلات غير متوقّع تماماً — يبقى مجهولاً، ولا يُرقّى إلى رمزٍ مصنَّف
     try:
-        U.understand = lambda *a, **k: (_ for _ in ()).throw(ZeroDivisionError('x'))
+        _fault('unknown_failure')
         un = client.post('/v1/understand', json={'text': 'مستودع بسيط 20×15م'},
                          headers={'X-Forwarded-For': '198.51.100.10'})
         chk('a wholly unexpected exception still returns one valid JSON envelope',
             json.loads(un.text)['error']['code'] in
             (E.ACS_UPSTREAM_UNKNOWN, E.ACS_INTERNAL))
     finally:
-        U.understand = _real
+        _restore_target()
         _rl_reset()
+
+    chk('the real generation target was restored — no later assertion runs '
+        'against a fault module', API.TARGET_UNDERSTAND == _real_target,
+        API.TARGET_UNDERSTAND)
+    chk('and U.understand was never monkeypatched away in this section: the '
+        'worker imports the module itself, so a parent-side patch would have '
+        'staged a fault the server never sees',
+        U.understand is _real)
 
 print('\n──────────────────────────────────────────────')
 print('BACKEND CONTRACT: %d passed, %d failed%s'

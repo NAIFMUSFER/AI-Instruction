@@ -149,6 +149,15 @@ python3 "$HERE/test_asgi_client_contract.py"; guard $?
 step "ci dependencies · every required third-party import is installed by its job"
 python3 "$HERE/test_ci_dependencies.py"; guard $?
 
+# هويّة الخطأ المصنَّف تعبر حدّ العملية — والمجهول يبقى مجهولاً. يقيس الحدّ
+# الحقيقيّ (spawn) لا محاكاةً له، فأعطال العامل تقع حيث تقع في الإنتاج.
+step "job boundary · typed errors survive the process boundary, unknown stays unknown"
+python3 "$HERE/test_job_boundary.py"; guard $?
+
+# الوظيفة التي تُقلع الصورة تُعلن طوبولوجيتها، والإنتاج يظلّ يرفض غير المُعلَن.
+step "container topology · CI declares one instance; production still refuses undeclared"
+python3 "$HERE/test_container_topology.py"; guard $?
+
 # مستخرِج حزمة المتصفّح: يعمل بلا node_modules ولا مسارٍ داخليّ في Playwright.
 step "bundle extractor · no dev dependency, no private module path"
 node "$HERE/test_bundle_extractor.js"; guard $?

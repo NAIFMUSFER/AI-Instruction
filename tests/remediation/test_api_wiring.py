@@ -52,6 +52,32 @@ def _dict_keys(node):
     return None
 
 
+# ثوابت الوحدة: اسم -> حرفيّ. أهداف run_job صارت أسماءً مسمّاة لا سلاسل
+# مبعثرة (نقطةُ ضبطٍ واحدة لـ«أي وحدة تنفّذ التوليد»)، فيُحلّ الاسم خطوةً
+# واحدة إلى حرفيّه. العقد لم يضعف: الهدف ما زال يجب أن يكون قابلاً للحلّ
+# **ساكناً** إلى "module:function"، وما زال يُستورَد ويُربَط فعلاً أدناه.
+MODULE_CONSTANTS = {}
+for _n in TREE.body:
+    if isinstance(_n, ast.Assign) and len(_n.targets) == 1 \
+            and isinstance(_n.targets[0], ast.Name) \
+            and isinstance(_n.value, ast.Constant) \
+            and isinstance(_n.value.value, str):
+        MODULE_CONSTANTS[_n.targets[0].id] = _n.value.value
+
+
+def _as_target(node, locals_map):
+    """حرفيّ الهدف من عقدة: سلسلةً مباشرةً، أو اسماً يُحلّ إلى سلسلة."""
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.Name):
+        if node.id in MODULE_CONSTANTS:
+            return MODULE_CONSTANTS[node.id]
+        v = locals_map.get(node.id)
+        if isinstance(v, ast.Constant) and isinstance(v.value, str):
+            return v.value
+    return None
+
+
 # خريطة الإسنادات المحلّية داخل كل دالّة: name -> عقدة القيمة
 def _local_assignments(fn_node):
     out = {}
@@ -73,8 +99,7 @@ for fn in ast.walk(TREE):
         if not (isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
                 and node.func.id == 'run_job'):
             continue
-        target = node.args[0].value if node.args and isinstance(
-            node.args[0], ast.Constant) else None
+        target = _as_target(node.args[0], locals_map) if node.args else None
         keys = None
         if len(node.args) > 1:
             arg = node.args[1]
@@ -85,9 +110,15 @@ for fn in ast.walk(TREE):
 
 chk('every generation route reaches a job target',
     len(calls) >= 4, str([(c[0], c[1]) for c in calls]))
-chk('every run_job target is a literal "module:function" string',
+chk('every run_job target resolves STATICALLY to a "module:function" string '
+    '(a literal, or a module constant holding one — never a computed value)',
     all(isinstance(c[1], str) and ':' in c[1] for c in calls),
     str([c[1] for c in calls]))
+chk('the named targets are real module constants, and each names the module '
+    'that actually implements generation',
+    all(v.startswith('acs_') and ':' in v
+        for k, v in MODULE_CONSTANTS.items() if k.startswith('TARGET_')),
+    str({k: v for k, v in MODULE_CONSTANTS.items() if k.startswith('TARGET_')}))
 chk('every run_job keyword set is statically resolvable',
     all(c[2] is not None for c in calls),
     str([(c[0], c[3]) for c in calls if c[2] is None]))

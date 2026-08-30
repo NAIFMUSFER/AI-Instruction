@@ -385,7 +385,9 @@ jobs:
                    tests/remediation/test_provider_capability.py \
                    tests/remediation/test_browser_acquisition.py \
                    tests/remediation/test_asgi_client_contract.py \
-                   tests/remediation/test_ci_dependencies.py
+                   tests/remediation/test_ci_dependencies.py \
+                   tests/remediation/test_job_boundary.py \
+                   tests/remediation/test_container_topology.py
           rc_suites=$?
           if [ "$rc_audit" -ne 0 ] || [ "$rc_suites" -ne 0 ]; then exit 1; fi
       - name: CVE scan (advisory — needs the network, does not gate the PR)
@@ -493,8 +495,28 @@ jobs:
             done
           }
 
-          # بلا --rm: الحاوية الساقطة تبقى ليُقرأ سببُ سقوطها.
-          docker run -d -p 8000:8000 -e PORT=8000 --name acs-ci acs-engine:ci \
+          # ── طوبولوجيا هذه الوظيفة، مُعلَنة لا مفترَضة ────────────────────
+          # الأداة التي أُضيفت في الالتزام السابق أثبتت السبب بدل تخمينه:
+          #     ExitCode 3 · Status exited · Cmd sh -c "uvicorn … --host 0.0.0.0"
+          #     [ACS-BOOT] REFUSING TO START — ACS_ENV=production with a
+          #     process-local rate limiter and no ACS_SINGLE_INSTANCE=1
+          #     acknowledgement.
+          # الصورة تبني وتُقلع؛ الخادم هو من يرفض. والرفض صحيح: حدُّ معدّلٍ
+          # محليّ العملية بلا إقرارٍ يعني أن السقف اليوميّ يتضاعف بعدد النسخ
+          # بصمت. لا يُضعَّف الثابت ولا يُلتفّ عليه بتعديل Dockerfile.
+          #
+          # وهذه الوظيفة تشغّل **حاويةً واحدة** بالضبط: `docker run` واحد،
+          # اسمٌ واحد، ومنفذٌ واحد. فالإقرار هنا وصفٌ صادق للطوبولوجيا التي
+          # تُختبَر، لا التفاف عليها — وهو المخرج الذي يعلنه نصّ الرفض نفسه.
+          # الإنتاج لا يتأثّر: القيم تُمرَّر إلى هذا التشغيل وحده.
+          # واسمُ متغيّر التزامن هو WEB_CONCURRENCY بالضبط — وهو أحد الأسماء
+          # في acs_rate_limit.CONCURRENCY_VARS. اسمٌ غيره يمرّ صامتاً بلا أثر،
+          # فيبدو الإقرار مضبوطاً وهو لا يُقرأ. مثبَّت باختبار.
+          docker run -d -p 8000:8000 -e PORT=8000 \
+            -e ACS_ENV=production \
+            -e ACS_SINGLE_INSTANCE=1 \
+            -e WEB_CONCURRENCY=1 \
+            --name acs-ci acs-engine:ci \
             2>&1 | tee -a logs/docker-build.log
 
           healthy=0
