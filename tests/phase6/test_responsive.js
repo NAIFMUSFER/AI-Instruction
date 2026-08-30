@@ -7,6 +7,11 @@ const {execFileSync}=require('child_process');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
 const BUILD=path.join(ROOT,'tests','phase3','lib','build_browser_page.js');
 const SHOTS=path.join(HERE,'screenshots');
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة
+   Playwright بالرقم، فينجح حيث جرى `playwright install` ويفشل حيث
+   تحمل الصورة بناءً آخر. المُحدِّد يجيب السؤال مرّة واحدة لكل بيئة. */
+const PW=require(path.join(ROOT,'tools','pw_chromium.js'));
 let pass=0,fail=0;
 const chk=(n,c,d)=>{c?(pass++,console.log('  ✓',n)):(fail++,console.log('  ✗',n,d===undefined?'':d))};
 
@@ -60,7 +65,7 @@ async function open(browser,w,h,pageFile){
 (async()=>{
   execFileSync(process.execPath,[BUILD,DRIVER],{stdio:'pipe'});
   const page=path.join(os.tmpdir(),'acs_ws_driver_browser.html');
-  const browser=await chromium.launch();
+  const browser=await PW.launch();
 
   console.log('\n== §2/§87 — RESPONSIVE LAYOUT AT EVERY TESTED WIDTH ==');
   for(const w of WIDTHS){

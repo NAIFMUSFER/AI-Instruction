@@ -23,6 +23,10 @@ const fs = require('fs'), path = require('path'), http = require('http');
 const HERE = __dirname, ROOT = path.resolve(HERE, '..', '..');
 const PUB = path.join(ROOT, 'public');
 const PX = require(path.join(HERE, 'lib_viewport_pixels.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   كان هنا احتياطٌ يدويّ مكرَّر — launch() ثم launch({executablePath:'/opt/…'})
+   — يخبز مسار صورة هذا الصندوق ويكرّر قراراً موضعه ملفّ واحد. */
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
 const TARGET = process.argv[2] || null;
 
 /* هوية المِرقاب: النسخة القديمة كانت تطبع «PAGE BOOT: N passed» ولا تفرّق
@@ -125,8 +129,7 @@ function notVerified(why) {
     if (!fs.existsSync(three) || fs.statSync(three).size < 100000)
       notVerified('vendored Three.js is absent from public/vendor');
   }
-  let chromium;
-  try { ({ chromium } = require('playwright')); }
+  try { require('playwright'); }
   catch (e) { notVerified('playwright is not installed'); }
 
   const srv = TARGET ? null : await serve();
@@ -135,15 +138,11 @@ function notVerified(why) {
   /* متصفّح غائب ليس فشلاً في المنتَج: يُعلَن NOT VERIFIED ويخرج بالرمز 2،
      ولا يُحسَب نجاحاً بحال. المسار البديل هو نفسه الذي تستعمله بقيّة المراقب. */
   let b = null;
-  try { b = await chromium.launch(); }
+  try { b = await PW.launch(); }
   catch (e1) {
-    try { b = await chromium.launch(
-      { executablePath: '/opt/pw-browsers/chromium' }); }
-    catch (e2) {
-      if (srv) srv.close();
-      notVerified('chromium could not be launched: '
-        + String(e2.message).split('\n')[0].slice(0, 120));
-    }
+    if (srv) srv.close();
+    notVerified('chromium could not be launched: '
+      + String(e1.message).split('\n')[0].slice(0, 160));
   }
   const pg = await b.newPage({ viewport: { width: RESOLUTIONS[0][0],
     height: RESOLUTIONS[0][1] } });

@@ -16,6 +16,11 @@ const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
 const PUB=path.join(ROOT,'public');
 const OUT=path.join(HERE,'outputs','reference');
 const CANON=JSON.parse(fs.readFileSync(path.join(ROOT,'acs_pbr.json'),'utf8'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة
+   Playwright بالرقم، فينجح حيث جرى `playwright install` ويفشل حيث
+   تحمل الصورة بناءً آخر. المُحدِّد يجيب السؤال مرّة واحدة لكل بيئة. */
+const PW=require(path.join(ROOT,'tools','pw_chromium.js'));
 
 /* المشاهد الثمانية: كل مشهد = إعداد كاميرا معلَن + إضاءة معلَنة + جودة معلَنة.
    كلها من acs_pbr.json — لا مشهد مخترَع خارج المواصفة. */
@@ -80,11 +85,11 @@ function serve(){
       +'pairs land in tests/phase9_1/outputs/reference/.');
     process.exit(2);   /* رمز مميّز: بيئة ناقصة، لا فشل اختبار ولا نجاح مزيَّف */
   }
-  const {chromium}=require('playwright');
+  require('playwright');
   fs.mkdirSync(OUT,{recursive:true});
   const srv=await serve();
   const base='http://127.0.0.1:'+srv.address().port;
-  const b=await chromium.launch();
+  const b=await PW.launch();
   const pg=await b.newPage({viewport:{width:1600,height:900},deviceScaleFactor:1});
   const errs=[]; pg.on('pageerror',e=>errs.push(e.message));
   await pg.goto(base+'/index.html',{waitUntil:'load'});

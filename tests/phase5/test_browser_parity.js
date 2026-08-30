@@ -10,6 +10,11 @@ const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
 const RUN=path.join(ROOT,'tests','lib','run.js');
 const BUILD=path.join(ROOT,'tests','phase3','lib','build_browser_page.js');
 const PY=path.join(os.tmpdir(),'acs_parity_authoring_py.json');
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة
+   Playwright بالرقم، فينجح حيث جرى `playwright install` ويفشل حيث
+   تحمل الصورة بناءً آخر. المُحدِّد يجيب السؤال مرّة واحدة لكل بيئة. */
+const PW=require(path.join(ROOT,'tools','pw_chromium.js'));
 
 let pass=0,fail=0;
 const chk=(n,c,d)=>{c?(pass++,console.log('  ✓',n)):(fail++,console.log('  ✗',n,d===undefined?'':d))};
@@ -37,7 +42,7 @@ function nodeCounts(suite){
 }
 
 (async()=>{
-  const browser=await chromium.launch();
+  const browser=await PW.launch();
   console.log('\n== EVERY AUTHORING SUITE RUNS IN A REAL BROWSER ENGINE ==');
   for(const entry of SUITES){
     const suite=entry[0], exact=entry[1];

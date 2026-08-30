@@ -42,7 +42,11 @@ const PX = require(path.join(ROOT, 'tests', 'deploy', 'lib_viewport_pixels.js'))
 
 const DEFAULT_FRONTEND = 'https://sprightly-selkie-d906c3.netlify.app';
 const NV_SUFFIX = 'NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED';
-const CHROMIUM_PATH = '/opt/pw-browsers/chromium';
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js).
+   كان هنا مسارٌ مخبوز من صورة هذا الصندوق مع سقوطٍ صامت إلى `{}` عند غيابه —
+   وهو أسوأ من الخبز وحده: يُخفي *أيّ* ثنائيّة استُعملت فعلاً. الآن يُسأل
+   المُحدِّد، ويُطبَع المسار ومصدره، ويبقى الغياب معلَناً لا مُبتلَعاً. */
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
 
 /* ── الوسائط ─────────────────────────────────────────────────────────────── */
 function argOf(name, fallback) {
@@ -431,18 +435,18 @@ function reportCSP(cspViolations) {
   console.log('  frontend : ' + FRONTEND);
   console.log('  started  : ' + new Date().toISOString());
 
-  let chromium = null;
-  try { ({ chromium } = require('playwright')); }
+  try { require('playwright'); }
   catch (e) {
     planRemaining('Playwright is not installed here: ' + e.message);
     finish({ environment: { playwright: false } });
   }
-  const execPath = fs.existsSync(CHROMIUM_PATH) ? CHROMIUM_PATH : undefined;
-  console.log('  chromium : ' + (execPath || 'playwright default download'));
+  const acq = PW.resolve();
+  console.log('  chromium : ' + (acq.path || 'NONE')
+    + ' (' + (acq.source || 'not found') + ')');
 
   let browser;
   try {
-    browser = await chromium.launch(execPath ? { executablePath: execPath } : {});
+    browser = await PW.launch();
   } catch (e) {
     planRemaining('Chromium could not be launched: ' + String(e.message).slice(0, 200));
     finish({ environment: { playwright: true, chromium: false } });
