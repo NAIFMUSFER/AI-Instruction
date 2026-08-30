@@ -250,6 +250,56 @@ def main():
     chk("the same shape now reaches the failure branch and exits non-zero",
         rc == 1 and "FAILURES PRESENT" in out, "rc=%s" % rc)
 
+    print("\n== ز · كل وظيفة تشغّل مجموعات Python تُركِّب تثبيتاتها أوّلاً ==")
+    # العطل: `7 · Dependency audit and lock contract` كانت تشغّل ٢٢ مجموعة على
+    # مفسّرٍ عارٍ — checkout، setup-python، setup-node، ثم المجموعات مباشرةً.
+    # فسقطت ستٌّ منها لأن ما تستورده غير مركَّب، لا لأن فيها عطلاً:
+    #   test_event_loop · test_upload_security · test_generation_cancel
+    #   test_privacy_boundary · test_api_wiring · test_p0_hardening
+    # أُعيد إنتاجه بحجب الحزم عن المفسّر، ثم أُصلح بخطوة تركيب.
+    #
+    # الثابت هنا يمنع تكرارها في وظيفةٍ تُضاف لاحقاً: من شغّل مجموعةً بـpython3
+    # فليُركِّب التثبيتات قبلها.
+    jobs = re.split(r"\n  (?=[a-z][a-z0-9-]*:\n)", ci)
+    runs_python, installs = [], {}
+    for blk in jobs[1:]:
+        m = re.match(r"\s*([a-z0-9-]+):", blk)
+        if not m:
+            continue
+        name = m.group(1)
+        # وظيفة «تشغّل مجموعات» = تمرّر أهداف .py إلى مُشغِّل python3
+        if re.search(r'--runner\s+"python3"', blk) or \
+           re.search(r"^\s*python3?\s+\S*tests/\S+\.py", blk, re.M):
+            runs_python.append(name)
+            installs[name] = bool(
+                re.search(r"pip install[^\n]*-r\s+requirements\.txt", blk))
+    chk("ci.yml declares at least two jobs that run Python suites",
+        len(runs_python) >= 2, str(runs_python))
+    for name in runs_python:
+        chk("job '%s' installs the pinned requirements before running them"
+            % name, installs[name],
+            "no `pip install -r requirements.txt` step in this job")
+
+    print("\n== ح · تبعية الاختبار مثبّتة، ولم تُجعَل اختيارية ==")
+    dev = os.path.join(ROOT, "requirements-dev.txt")
+    chk("requirements-dev.txt exists", os.path.exists(dev))
+    devtxt = open(dev, encoding="utf-8").read() if os.path.exists(dev) else ""
+    chk("psutil is pinned there with ==, not a floor or a bare name",
+        re.search(r"^psutil==\d+\.\d+", devtxt, re.M) is not None)
+    chk("it is NOT in requirements.txt — the production image must not carry a "
+        "test-only package",
+        "psutil" not in open(os.path.join(ROOT, "requirements.txt"),
+                             encoding="utf-8").read())
+    chk("the job that needs it installs it",
+        re.search(r"pip install[^\n]*requirements-dev\.txt", ci) is not None)
+    gen = open(os.path.join(ROOT, "tests", "remediation",
+                            "test_generation_cancel.py"), encoding="utf-8").read()
+    chk("and the suite still imports psutil directly — the dependency was "
+        "installed, not made optional",
+        re.search(r"^\s*import psutil\s*$", gen, re.M) is not None)
+    chk("no try/except was wrapped around that import to let it pass silently",
+        not re.search(r"try:\s*\n\s*import psutil\s*\n\s*except", gen))
+
     print("\n" + "=" * 62)
     print("CI GATE: %d passed, %d failed" % (p[0], f[0]))
     print("LIVE HTTP REACHABILITY: NOT VERIFIED — EXTERNAL ENVIRONMENT "

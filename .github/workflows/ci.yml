@@ -237,6 +237,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install the pinned dependencies
+        # Same latent defect as job 7 had: this job runs a Python suite on a
+        # bare interpreter. It passes today only because that suite happens to
+        # import nothing third-party — one added import would break it for a
+        # reason that has nothing to do with security. Installed, not gambled.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
       - name: tests/security
         shell: bash
         run: |
@@ -330,6 +338,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install the pinned dependencies the remediation suites import
+        # This job used to run 22 suites on a BARE interpreter: checkout,
+        # setup-python, setup-node, then straight into the tests. Six of them
+        # import packages that were therefore never installed, and failed for
+        # that reason alone — no logic defect in any of them:
+        #   test_event_loop · test_upload_security · test_generation_cancel
+        #   test_privacy_boundary · test_api_wiring · test_p0_hardening
+        # Job 1 has always installed requirements.txt; this job simply never
+        # did. Nothing was made optional and no import was wrapped to pass a
+        # test: the dependency is real, so it is installed.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
       - name: Offline audit + lock contract
         shell: bash
         run: |
@@ -440,17 +461,70 @@ jobs:
           mkdir -p logs
           docker build -t acs-engine:ci . 2>&1 | tee logs/docker-build.log
       - name: The image boots and answers /health
+        # لماذا لا `--rm` هنا
+        # ----------------------
+        # كانت الحاوية تُشغَّل بـ`--rm`، فإن سقطت عند الإقلاع حذفها Docker
+        # فوراً. فما وصل السجلّ هو نتيجةُ الحذف لا سببُ السقوط:
+        #     curl: (56) Recv failure: Connection reset by peer
+        #     Error response from daemon: No such container: acs-ci
+        # أي أن الاستثناء الذي أوقف الخادم لم يُطبَع قطّ. الحاوية تبقى الآن
+        # حتى تُقرأ، ثم تُحذف صراحةً.
+        #
+        # هذه الخطوة أداةُ تشخيص لا فرضية: لا تدّعي سبباً (ربط المنفذ، PORT،
+        # نقطة الدخول، تبعية ناقصة) — تطبع ما تقوله الحاوية نفسها. والبوّابة
+        # تبقى كما هي: إن لم يُجب /health خرجت الخطوة بغير صفر.
         shell: bash
         run: |
           set -o pipefail
-          docker run -d --rm -p 8000:8000 -e PORT=8000 --name acs-ci acs-engine:ci
+          say() { printf '\n=== %s ===\n' "$1" | tee -a logs/docker-build.log; }
+          dump() {
+            say "docker ps -a"
+            docker ps -a 2>&1 | tee -a logs/docker-build.log
+            say "docker logs acs-ci (the startup exception, if any)"
+            docker logs acs-ci 2>&1 | tail -300 | tee -a logs/docker-build.log
+            say "docker inspect acs-ci — ExitCode · Error · Cmd · Entrypoint"
+            for f in State.ExitCode State.OOMKilled State.Error State.Status \
+                     State.StartedAt State.FinishedAt Config.Cmd \
+                     Config.Entrypoint Config.User Config.WorkingDir \
+                     Config.ExposedPorts HostConfig.PortBindings; do
+              v=$(docker inspect -f "{{json .$f}}" acs-ci 2>&1 || echo '<unavailable>')
+              printf '%-26s %s\n' "$f" "$v" | tee -a logs/docker-build.log
+            done
+          }
+
+          # بلا --rm: الحاوية الساقطة تبقى ليُقرأ سببُ سقوطها.
+          docker run -d -p 8000:8000 -e PORT=8000 --name acs-ci acs-engine:ci \
+            2>&1 | tee -a logs/docker-build.log
+
+          healthy=0
           for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:8000/health > /tmp/health.json; then break; fi
+            state=$(docker inspect -f '{{.State.Status}}' acs-ci 2>/dev/null || echo missing)
+            if [ "$state" != "running" ]; then
+              say "container state is '$state' after $((i*2))s — it is not running"
+              break
+            fi
+            if curl -fsS http://127.0.0.1:8000/health > /tmp/health.json 2>/dev/null; then
+              healthy=1
+              break
+            fi
             sleep 2
           done
-          cat /tmp/health.json | tee -a logs/docker-build.log
-          docker logs acs-ci 2>&1 | tail -50 | tee -a logs/docker-build.log
-          docker stop acs-ci
+
+          dump
+          if [ "$healthy" -eq 1 ]; then
+            say "/health"
+            cat /tmp/health.json | tee -a logs/docker-build.log
+          fi
+
+          # التنظيف بعد قراءة كل شيء، وبحراسة الوجود لا بكتم الخطأ.
+          if docker ps -a --format '{{.Names}}' | grep -qx acs-ci; then
+            docker rm -f acs-ci > /dev/null
+          fi
+
+          if [ "$healthy" -ne 1 ]; then
+            echo "::error::the image did not answer /health — see the container logs and inspect output above"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
