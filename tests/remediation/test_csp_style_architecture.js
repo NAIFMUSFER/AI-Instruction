@@ -43,8 +43,10 @@ const ROOT = path.resolve(HERE, '..', '..');
 const PUB = path.join(ROOT, 'public');
 const APP = path.join(PUB, 'app');
 const H = require(path.join(HERE, 'lib_csp_harness.js'));
-const { chromium } = require(path.join(ROOT, 'node_modules', 'playwright'));
-
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   نداء chromium.launch() المباشر يطلب البناء الذي تتوقّعه نسخة Playwright
+   المثبّتة، فيسقط في صندوق يحمل بناءً آخر — فشلُ بيئةٍ لا فشلُ منتج. */
 let pass = 0, fail = 0;
 const chk = (name, cond, detail) => {
   if (cond) { pass++; console.log('  ✓', name); }
@@ -207,7 +209,7 @@ const MODEL = {
 
 async function live() {
   const srv = await H.serve();
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const browser = await PW.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   const consoleLog = [];
   H.attachConsole(page, consoleLog);

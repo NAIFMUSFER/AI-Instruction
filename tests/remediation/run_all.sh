@@ -133,6 +133,12 @@ python3 "$HERE/test_multi_provider.py"; guard $?
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 
+# اكتساب المتصفّح: مسار واحد (tools/pw_chromium.js) لا أربعة. كان الغياب
+# البيئيّ نفسه يُقرأ «NOT VERIFIED» في مجموعتين و«FAILURE» في مجموعتين،
+# وكانت 110 توكيدات لا تحتاج three.js أصلاً لا تُنفَّذ. يُفحَص بلا متصفّح.
+step "browser acquisition · one binary resolver, no direct chromium.launch"
+python3 "$HERE/test_browser_acquisition.py"; guard $?
+
 if [ "$1" = "--browser" ]; then
   step "F-11 · content security policy measured in real Chromium"
   node "$HERE/csp_browser_probe.js"; soft $? "csp browser probe"

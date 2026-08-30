@@ -51,7 +51,10 @@ const HERE = __dirname;
 const ROOT = path.resolve(HERE, '..', '..');
 const PUB = path.join(ROOT, 'public');
 const APP = path.join(PUB, 'app');
-const { chromium } = require(path.join(ROOT, 'node_modules', 'playwright'));
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   نداء chromium.launch() المباشر يطلب البناء الذي تتوقّعه نسخة Playwright
+   المثبّتة، فيسقط في صندوق يحمل بناءً آخر — فشلُ بيئةٍ لا فشلُ منتج. */
 
 let pass = 0, fail = 0;
 const chk = (name, cond, detail) => {
@@ -293,7 +296,7 @@ async function live() {
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const port = server.address().port;
 
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const browser = await PW.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push('pageerror: ' + e.message + '\n'

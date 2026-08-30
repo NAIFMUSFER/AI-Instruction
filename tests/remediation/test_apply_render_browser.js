@@ -33,7 +33,11 @@ const path = require('path');
 
 const HERE = __dirname;
 const ROOT = path.resolve(HERE, '..', '..');
-const { chromium } = require(path.join(ROOT, 'node_modules', 'playwright'));
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js).
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة Playwright
+   المثبّتة (مثلاً 1234)، فيفشل في صندوق يحمل 1194 — وهو فشلُ بيئةٍ لا فشلُ
+   منتج. الأخوات (csp_browser_probe, run_perf) تمرّ من هنا منذ البداية. */
 const H = require(path.join(HERE, 'lib_csp_harness.js'));
 
 let pass = 0, fail = 0;
@@ -212,7 +216,7 @@ async function main() {
     '/ki25.html': PAGE,
     '/vendor/three@0.160.0/build/three.module.js': GL_THREE } });
   const base = 'http://127.0.0.1:' + srv.port;
-  const browser = await chromium.launch({
+  const browser = await PW.launch({
     args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader',
            '--disable-gpu-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
