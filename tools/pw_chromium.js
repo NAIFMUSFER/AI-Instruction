@@ -107,6 +107,12 @@ function resolve(acq) {
     if (!v) continue;
     searched.push(k + '=' + v);
     if (fs.existsSync(v)) return { path: v, source: k, searched: searched };
+    /* تجاوزٌ صريح لا يمكن تنفيذه لا يُتجاوَز بصمت: لو سقط إلى المصدر التالي
+       لَحصل المشغّل على متصفّحٍ آخر غير الذي طلبه، ولَما علم. الأسبقيّة
+       المعلَنة تعني أن الأوّل يُنفَّذ أو يُرفَض، لا أن يُهمَل. */
+    return { path: null, source: null, searched: searched,
+             refusal: 'the explicit override ' + k + '=' + v
+               + ' names a file that does not exist' };
   }
 
   if (o.playwright === false) {
@@ -127,20 +133,48 @@ function resolve(acq) {
   if (scanned.length) {
     return { path: scanned[0], source: 'scanned', searched: searched };
   }
-  return { path: null, source: null, searched: searched };
+  return { path: null, source: null, searched: searched, refusal: null };
 }
 
 function executable(acq) {
   return resolve(acq).path;
 }
 
+/* سطرُ الاختيار: أيّ ثنائيّة، من أيّ مصدر، وأين فُتِّش. يُكتَب على stderr مرّة
+   واحدة لكل عملية — لأن مخرجات stdout تُقارَن بايتاً ببايت في أجنحة التكافؤ
+   ولا يجوز أن يزحزحها سطرُ تشخيص. بلا هذا السطر كان سجلّ CI يقول «فشل الإقلاع»
+   ولا يقول أيّ ملفٍّ حاول أن يُقلِع ولا لماذا اختير. */
+let _announced = false;
+function announce(r) {
+  if (_announced) return;
+  _announced = true;
+  process.stderr.write('[ACS-BROWSER] selected: ' + r.path
+    + '  source: ' + r.source
+    + '\n[ACS-BROWSER] searched: ' + r.searched.join(' | ') + '\n');
+}
+
 async function launch(opts, acq) {
-  const { chromium } = require('playwright');
+  /* الترتيب مقصود: يُحسَم الاكتساب **قبل** تحميل playwright. عكسُه هو العطل
+     الذي أسقط توكيدَين في وظيفة CI السابعة: تلك الوظيفة لا تشغّل `npm ci`،
+     فكان require('playwright') يرمي «Cannot find module 'playwright'» فيصل
+     المستدعي خطأُ وحدةٍ مفقودة بدل رفضِ اكتسابٍ يسمّي ما فُتِّش عنه. والغياب
+     نفسه مُسجَّل أصلاً داخل searched، فالرسالة الصحيحة موجودة ولم تكن تُقال. */
   const r = resolve(acq);
   if (!r.path) {
     throw new Error('no Chromium binary is available in this sandbox — '
+      + (r.refusal ? r.refusal + ' — ' : '')
       + 'searched: ' + r.searched.join(' | '));
   }
+  let chromium;
+  try { ({ chromium } = require('playwright')); }
+  catch (e) {
+    /* رفضٌ ثانٍ صريح، لا سقوطٌ صامت: توجد ثنائيّة ولا توجد المكتبة التي
+       تقودها. تُسمّى الحالة بعينها بدل أن تُقرأ «لا متصفّح». */
+    throw new Error('a Chromium binary was found at ' + r.path
+      + ' (source: ' + r.source + ') but the playwright package itself is not '
+      + 'installed, so it cannot be driven: ' + String(e && e.message));
+  }
+  announce(r);
   return chromium.launch(Object.assign({ executablePath: r.path }, opts || {}));
 }
 

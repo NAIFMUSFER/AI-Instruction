@@ -158,6 +158,11 @@ python3 "$HERE/test_job_boundary.py"; guard $?
 step "container topology · CI declares one instance; production still refuses undeclared"
 python3 "$HERE/test_container_topology.py"; guard $?
 
+# مصادر التنسيق في العلامة: الوثيقة المخدومة لا تحمل سمة style، ولا مصدر في
+# شيفرة التطبيق يعيدها (عشر مربّعات لون + كانفس three.js).
+step "inline style sources · nothing in the app writes styling into the markup"
+python3 "$HERE/test_inline_style_sources.py"; guard $?
+
 # مستخرِج حزمة المتصفّح: يعمل بلا node_modules ولا مسارٍ داخليّ في Playwright.
 step "bundle extractor · no dev dependency, no private module path"
 node "$HERE/test_bundle_extractor.js"; guard $?

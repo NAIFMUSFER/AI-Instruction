@@ -2977,7 +2977,9 @@ function quickModel(W,D,nF,nRooms){
 const app=document.getElementById('app'), statusEl=document.getElementById('status');
 const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
+/* updateStyle=false: بقيمته الضمنية true يكتب three.js أبعاد الكانفس في سمة
+   style. الأبعاد من #app > canvas في app.css؛ مخزن الرسم يضبطه setSize كما كان. */
+renderer.setSize(innerWidth,innerHeight,false);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;

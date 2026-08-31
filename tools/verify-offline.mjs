@@ -13,7 +13,12 @@
 import http from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
-import { chromium } from 'playwright';
+import { createRequire } from 'node:module';
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js) كما
+   في كل ملفّ يطلق متصفّحاً في هذه الشجرة. الملفّ ESM والمُحدِّد CJS، فيُحمَّل
+   بـcreateRequire — لا نسخة ثانية منه ولا قرار اكتسابٍ ثانٍ. */
+const require = createRequire(import.meta.url);
+const PW = require('./pw_chromium.js');
 
 const ROOT = new URL('../public/', import.meta.url).pathname;
 const CDN_HOSTS = ['unpkg.com', 'cdn.jsdelivr.net', 'cdnjs.cloudflare.com'];
@@ -37,7 +42,7 @@ const server = http.createServer(async (req, res) => {
 const PORT = 8791;
 await new Promise(r => server.listen(PORT, r));
 
-const browser = await chromium.launch({ args: ['--no-sandbox'] });
+const browser = await PW.launch({ args: ['--no-sandbox'] });
 const page = await browser.newPage({ viewport: { width: 1200, height: 800 } });
 
 const blocked = [], pageErrors = [];

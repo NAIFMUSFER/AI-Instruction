@@ -76,6 +76,11 @@ BAKED = re.compile(r"executablePath\s*:\s*['\"]/opt/")
 SANDBOX_ROOT = re.compile(r"/opt/pw-browsers")
 
 SKIP_DIRS = {"node_modules", ".git", "vendor", "screenshots", "outputs"}
+# الامتدادات الثلاثة كلّها: أوّل صيغةٍ من هذا المسح فحصت `.js` وحدها، فبقي
+# tools/verify-offline.mjs — نصّ تحقّقٍ موثَّق في VERIFICATION-RUNBOOK — ينادي
+# chromium.launch مباشرةً خارج المُحدِّد. الامتداد ليس تفصيلاً في عقدٍ يدّعي
+# تغطية الشجرة كلّها.
+JS_EXT = (".js", ".mjs", ".cjs")
 
 
 def js_files():
@@ -84,7 +89,7 @@ def js_files():
     for base, dirs, files in os.walk(ROOT):
         dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
         for f in files:
-            if not f.endswith(".js"):
+            if not f.endswith(JS_EXT):
                 continue
             p = os.path.join(base, f)
             if os.path.abspath(p) == os.path.abspath(HELPER):
@@ -121,6 +126,10 @@ TARGETS = js_files()
 chk("there are JavaScript files to check at all", len(TARGETS) > 10, len(TARGETS))
 # النطاق نفسه جزءٌ من العقد: حصرُ المسح في tests/remediation هو ما سمح
 # بعودة العطل، فيُثبَّت أن المسح يتجاوزه.
+chk("the scan covers .mjs and .cjs too, not only .js — a .mjs verification "
+    "script is how a direct chromium.launch survived the first scan",
+    any(t.endswith(".mjs") or t.endswith(".cjs") for t in TARGETS),
+    [t for t in TARGETS if t.endswith((".mjs", ".cjs"))][:5])
 chk("the scan reaches beyond tests/remediation — the narrow scan is what let "
     "the baked path survive",
     any(t.startswith("tests" + os.sep + "deploy") for t in TARGETS)
@@ -172,6 +181,9 @@ EXPECTED = [
     os.path.join("tests", "phase6", "walkthrough.js"),
     os.path.join("tests", "phase9_1", "capture_reference.js"),
     os.path.join("tests", "phase9_2", "capture_reference_92.js"),
+    # نصّ تحقّق موثَّق (VERIFICATION-RUNBOOK.md §A) لا مجموعة اختبار — والعقد
+    # يشمله: «كل ملفّ يطلق Chromium»، لا «كل اختبار».
+    os.path.join("tools", "verify-offline.mjs"),
 ]
 for f in EXPECTED:
     chk(f + " requires tools/pw_chromium.js", f in users, users)
@@ -262,6 +274,158 @@ else:
     # لا يُدَّعى نجاح ولا يُدَّعى فشل: البيئة نفسها غير متاحة.
     print("  · live resolver probe NOT VERIFIED — EXTERNAL ENVIRONMENT "
           "REQUIRED (node unavailable): %s" % (out,))
+
+print("\n== د٢ · الرفض يبقى رفضَ اكتساب حتى بلا حزمة playwright ==")
+# هذا بالضبط ما أسقط توكيدَين في الوظيفة السابعة على GitHub Actions:
+#     BROWSER ACQUISITION: 41 passed, 2 failed
+# تلك الوظيفة لا تشغّل `npm ci`، فحزمة playwright غير مركَّبة فيها أصلاً. وكان
+# launch() يحمّلها **قبل** أن يحسم الاكتساب، فيصل المستدعي:
+#     Cannot find module 'playwright'
+# بدل رفضِ اكتسابٍ يسمّي ما فُتِّش عنه. والغياب مُسجَّل داخل searched أصلاً،
+# فالرسالة الصحيحة كانت موجودة ولا تُقال.
+#
+# يُقاس هنا بعزلٍ حقيقي: تُنسَخ الشيفرة نفسها إلى مجلّد خارج الشجرة، وتُشغَّل
+# بلا NODE_PATH، فلا تُحَلّ playwright من أي جذر. لا محاكاة للغياب: غيابٌ فعليّ.
+ISO = tempfile.mkdtemp(prefix="acs_acq_iso_")
+helper_bytes = open(HELPER, "rb").read()
+iso_helper = os.path.join(ISO, "pw_chromium.js")
+open(iso_helper, "wb").write(helper_bytes)
+chk("the isolated copy is the same resolver, byte for byte",
+    open(iso_helper, "rb").read() == helper_bytes)
+ISO_PROBE = r"""
+const PW = require(process.argv[2]);
+let pwPresent = true;
+try { require('playwright'); } catch (e) { pwPresent = false; }
+(async () => {
+  let threw = '', launched = false;
+  try { await PW.launch({}, { env: {}, roots: [] }); launched = true; }
+  catch (e) { threw = String(e.message); }
+  console.log(JSON.stringify({ pwPresent: pwPresent, threw: threw,
+                               launched: launched }));
+})();
+"""
+iso_probe = os.path.join(ISO, "probe.js")
+open(iso_probe, "w", encoding="utf-8").write(ISO_PROBE)
+iso_env = dict(os.environ)
+iso_env.pop("NODE_PATH", None)
+for k in ("ACS_CHROMIUM", "CHROMIUM_PATH", "PLAYWRIGHT_CHROMIUM_EXECUTABLE"):
+    iso_env.pop(k, None)
+try:
+    io_out = subprocess.run([os.environ.get("NODE", "node"), iso_probe,
+                             iso_helper],
+                            cwd=ISO, env=iso_env, capture_output=True,
+                            text=True, timeout=90)
+    iso_live = io_out.stdout.strip().splitlines()[-1] if io_out.stdout.strip() else ""
+except (OSError, subprocess.TimeoutExpired) as e:
+    iso_live, io_out = "", e
+
+if iso_live.startswith("{"):
+    import json as _json
+    w = _json.loads(iso_live)
+    chk("the isolation is real: playwright genuinely cannot be resolved there — "
+        "this is CI job 7's condition, which runs no `npm ci`",
+        w["pwPresent"] is False, w)
+    chk("and launch() still refuses as an ACQUISITION failure, not as a missing "
+        "module — the message names the browser, not the package",
+        w["launched"] is False
+        and w["threw"].startswith("no Chromium binary is available"),
+        w["threw"][:220])
+    chk("and it still names what was searched, including that playwright "
+        "itself could not be loaded",
+        "searched:" in w["threw"]
+        and "playwright could not be loaded" in w["threw"], w["threw"][:260])
+else:
+    print("  · isolated no-playwright probe NOT VERIFIED — EXTERNAL "
+          "ENVIRONMENT REQUIRED (node unavailable): %s" % (io_out,))
+
+print("\n== د٣ · تجاوزٌ صريح لا يُنفَّذ لا يُتجاوَز بصمت ==")
+# الأسبقيّة المعلَنة: تجاوزٌ صريح ← ثنائيّة Playwright المُدارة ← جذور البحث.
+# فلو سقط تجاوزٌ خاطئ إلى المصدر التالي لَحصل المشغّل على متصفّحٍ غير الذي
+# طلبه ولَما علم — وهو سقوطٌ صامت بالتعريف. يُقاس على آلةٍ **فيها** متصفّح
+# صالح، وإلا لم يثبت شيء: الرفض هنا ليس لعدم وجود بديل، بل لأن الصريح صريح.
+OVERRIDE_PROBE = r"""
+const PW = require(process.argv[2]);
+const BAD = { env: { ACS_CHROMIUM: '/definitely/not/a/browser' } };
+(async () => {
+  const real = PW.resolve();
+  const r = PW.resolve(BAD);
+  let threw = '', launched = false;
+  try { const b = await PW.launch({}, BAD); launched = true; await b.close(); }
+  catch (e) { threw = String(e.message); }
+  console.log(JSON.stringify({ realPath: real.path, path: r.path,
+    source: r.source, refusal: r.refusal || '', threw: threw,
+    launched: launched }));
+})();
+"""
+ov_probe = os.path.join(tmpd, "override.js")
+open(ov_probe, "w", encoding="utf-8").write(OVERRIDE_PROBE)
+try:
+    ov_out = subprocess.run([os.environ.get("NODE", "node"), ov_probe, HELPER],
+                            cwd=ROOT, capture_output=True, text=True,
+                            timeout=90)
+    ov_live = ov_out.stdout.strip().splitlines()[-1] if ov_out.stdout.strip() else ""
+except (OSError, subprocess.TimeoutExpired) as e:
+    ov_live, ov_out = "", e
+
+if ov_live.startswith("{"):
+    import json as _json
+    o = _json.loads(ov_live)
+    if o["realPath"]:
+        chk("a VALID browser exists on this machine — so the refusal below is "
+            "about the override, not about scarcity", bool(o["realPath"]),
+            o["realPath"])
+        chk("an explicit override naming a file that does not exist resolves to "
+            "NOTHING — it does not quietly fall through to another browser",
+            o["path"] is None and o["source"] is None, o)
+        chk("and launch() refuses, naming the override that could not be honoured",
+            o["launched"] is False
+            and "/definitely/not/a/browser" in o["threw"]
+            and "override" in o["threw"], o["threw"][:220])
+        chk("and the refusal is distinguishable from 'no browser anywhere'",
+            "does not exist" in o["refusal"], o["refusal"])
+    else:
+        print("  · override witness NOT VERIFIED — EXTERNAL ENVIRONMENT "
+              "REQUIRED: no valid browser on this machine, so a refusal here "
+              "would prove nothing.")
+else:
+    print("  · override witness NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED "
+          "(node unavailable): %s" % (ov_out,))
+
+print("\n== د٤ · السجلّ يقول أيّ ثنائيّة اختيرت ومن أين ==")
+chk("the resolver announces the selection: path, source and searched locations",
+    "[ACS-BROWSER] selected: " in hcode and "source: " in hcode
+    and "[ACS-BROWSER] searched: " in hcode)
+chk("and it announces on stderr, so byte-compared stdout of the parity suites "
+    "is not disturbed", "process.stderr.write('[ACS-BROWSER]" in hcode)
+# الإعلان لا يُقاس إلا من إطلاقٍ نجح فعلاً — مسابر §د٣ ترفض عمداً فلا تُعلن.
+LAUNCH_PROBE = r"""
+const PW = require(process.argv[2]);
+(async () => {
+  try { const b = await PW.launch(); await b.close(); console.log('LAUNCHED'); }
+  catch (e) { console.log('NOLAUNCH ' + e.message); }
+})();
+"""
+ln_probe = os.path.join(tmpd, "launch.js")
+open(ln_probe, "w", encoding="utf-8").write(LAUNCH_PROBE)
+try:
+    ln = subprocess.run([os.environ.get("NODE", "node"), ln_probe, HELPER],
+                        cwd=ROOT, capture_output=True, text=True, timeout=180)
+except (OSError, subprocess.TimeoutExpired) as e:
+    ln = None
+if ln is not None and "LAUNCHED" in (ln.stdout or ""):
+    chk("a REAL successful launch emits the selection line on stderr",
+        "[ACS-BROWSER] selected: " in (ln.stderr or ""),
+        (ln.stderr or "")[:200])
+    chk("and that line names an executable that actually exists",
+        any(os.path.exists(tok) for tok in (ln.stderr or "").split()
+            if tok.startswith("/")), (ln.stderr or "")[:200])
+    chk("and the searched locations are reported beside it",
+        "[ACS-BROWSER] searched: " in (ln.stderr or ""),
+        (ln.stderr or "")[:300])
+else:
+    print("  · live launch announcement NOT VERIFIED — EXTERNAL ENVIRONMENT "
+          "REQUIRED (no browser here): %s"
+          % ((ln.stdout.strip() if ln is not None else "node unavailable"),))
 
 print("\n== هـ · شاهد سالب: المُجرِّد لا يُخفي نداءً حقيقياً ==")
 # لو كان code_only() هو ما يُمرِّر الملفّات، لمرّ هذا أيضاً. لا يمرّ.

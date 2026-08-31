@@ -394,8 +394,10 @@ function infoQuickColors(o){
   const lbl = surf==='wall'?'لوّن جدران هذه الغرفة':(surf==='floor'?'لوّن الأرضية':'لوّن هذا العنصر');
   const wrap=document.createElement('div'); wrap.className='qcl'; wrap.textContent='🎨 '+lbl+':';
   const bar=document.createElement('div'); bar.className='qc';
-  COLOR_SWATCH.forEach(([nm,hx])=>{
-    const i=document.createElement('i'); i.style.background=hx; i.title=nm;
+  COLOR_SWATCH.forEach(([nm,hx],ix)=>{
+    /* اللون صنفٌ في ورقة الأنماط لا سمة style: القيم عشرةٌ ثابتة معلنة في
+       COLOR_SWATCH، فلا شيء منها ديناميكيّ يستدعي كتابته في العلامة. */
+    const i=document.createElement('i'); i.className=swatchClass(ix); i.title=nm;
     i.onclick=ev=>{ ev.stopPropagation();
       const msg=applyFinish(tag,surf,hx,o); statusEl.textContent=msg; };
     bar.appendChild(i);
@@ -423,6 +425,10 @@ const AR_COLORS={
   'بنفسجي':'#8b5cf6','موف':'#a78bfa','purple':'#8b5cf6','ليلكي':'#c4b5fd',
   'ترابي':'#a89078','رملي':'#dcc9a6','شمبانيا':'#e8d9bd'
 };
+/* صنفُ اللون المقابل لموضعه في COLOR_SWATCH — معرَّف في
+   public/app/styles/app.css (.acs-sw-01 … .acs-sw-10). وجودُ دالّةٍ واحدة
+   يمنع انحراف الترتيب بين القائمة والأصناف. */
+function swatchClass(ix){ return 'acs-sw-'+String(ix+1).padStart(2,'0'); }
 const COLOR_SWATCH=[['أخضر','#22c55e'],['أزرق','#2563eb'],['رمادي','#8b8f96'],['بيج','#e3d5b8'],
   ['أبيض','#f5f5f2'],['أصفر','#facc15'],['أحمر','#e11d48'],['بني','#6b4423'],['بنفسجي','#8b5cf6'],['كحلي','#1e293b']];
 
@@ -674,8 +680,9 @@ function openNote(obj, point){
 /* لوحة الألوان السريعة داخل النافذة */
 (function initSwatches(){
   const box=document.getElementById('nmSwatches'), inp=document.getElementById('nmColor');
-  COLOR_SWATCH.forEach(([nm,hx])=>{
-    const i=document.createElement('i'); i.style.background=hx; i.title=nm; i.dataset.hex=hx;
+  COLOR_SWATCH.forEach(([nm,hx],ix)=>{
+    const i=document.createElement('i'); i.className=swatchClass(ix); i.title=nm;
+    i.dataset.hex=hx;
     i.onclick=()=>{ inp.value=hx;
       [...box.children].forEach(c=>c.classList.remove('on')); i.classList.add('on'); };
     box.appendChild(i);
@@ -956,7 +963,10 @@ drop.addEventListener('dragleave',()=>drop.style.display='none');
 addEventListener('drop',e=>{e.preventDefault();drop.style.display='none';
   const f=e.dataTransfer.files[0];if(f&&/^image\//.test(f.type))useDoorImage(f);});
 
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  /* updateStyle=false: الأبعاد من ورقة الأنماط (#app > canvas)، فلا يكتب
+     three.js سمة style على الكانفس. */
+  renderer.setSize(innerWidth,innerHeight,false);});
 let last=performance.now();
 /* ==================================================================
    الواقع الافتراضي — Meta Quest 3 وغيرها عبر WebXR
