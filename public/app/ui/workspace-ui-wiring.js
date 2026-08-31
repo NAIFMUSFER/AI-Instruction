@@ -22,6 +22,17 @@ const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.05,6000);
 /* حامل اللاعب (dolly): في VR تتحكّم النظارة بالكاميرا، ونحن نحرّك الحامل */
 const player=new THREE.Group(); player.name='PLAYER'; scene.add(player); player.add(camera);
 const orbit=new OrbitControls(camera,renderer.domElement); orbit.enableDamping=true;
+/* OrbitControls يكتب `style.touchAction='none'` على عنصره في المُنشئ — إسناد CSSOM
+   لا تحجبه السياسة، لكنه يُسلسَل سمةَ style في الوثيقة المخدومة (العنصر الأخير
+   الذي قاسته وظيفة CI ٣ بعد إزالة العشرة والكانفس: inlineStyleAttrs = 1).
+   السلوك نفسه تحمله قاعدة `#app > canvas{touch-action:none}` في app.css، فتُزال
+   السمة المُسلسَلة هنا. لا يُكتب المُنشئ هذه القيمة إلا مرّةً واحدة.
+   القراءة قبل الإزالة مقصودة ومقيسة: Blink يُسلسِل سمة style كسولاً، وإزالتها
+   وهي غير مُسلسَلة بعدُ تترك `style=""` قائمةً (قِيس في Chromium 141: set ثم
+   removeAttribute مباشرةً ⇒ hasAttribute=true؛ set ثم getAttribute ثم
+   removeAttribute ⇒ false). القراءة تُزامنها فتُزال فعلاً. */
+renderer.domElement.getAttribute('style');
+renderer.domElement.removeAttribute('style');
 /* ---- متحكّم مشي يعمل على الحاسب والجوال (بلا Pointer Lock) ---- */
 const walkState={active:false, yaw:0, pitch:0, eye:1.6, speed:4, run:1, vx:0, vz:0, vy:0};
 function walkLook(dx,dy){
@@ -3243,8 +3254,13 @@ window.ACS.captureRenderFailure=function(opts){
 
 
 /* نشر الارتباطات التي يقرأها مقطع أسبق — تُقرأ داخل دوالّ فقط،
-   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً. */
-Object.assign(__ACS_LATE, { camera, lastBuilding, model, orbit, setSun });
+   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً.
+   `model` و`lastBuilding` يُعاد إسنادهما عند كل تحميل، وObject.assign ينسخ
+   القيمة (null) لا الربط؛ فيُنشر معهما مرجعٌ حيّ يقرؤه السجلّ عند كل قراءة
+   (انظر late-bindings.js). */
+const modelRef = () => model;
+const lastBuildingRef = () => lastBuilding;
+Object.assign(__ACS_LATE, { camera, lastBuilding, lastBuildingRef, model, modelRef, orbit, setSun });
 
 
 export { ACS_APPLY_CONTRACT, ACS_APPLY_MIN_KEPT, floorLabel, ACS_LAST_APPLY, acsApplyBuilding, acsApplyFirstFrame, acsApplyTicket, _acsErrorSite, _acsStackHead, _acsZonesAsked, ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };

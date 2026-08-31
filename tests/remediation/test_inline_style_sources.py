@@ -207,6 +207,25 @@ chk("and it honours setSize's updateStyle argument the same way",
 chk("and it still yields the canvas to an explicit canvas option, exactly as "
     "the real renderer does", "if (o.canvas)" in probe)
 
+print("\n== ج٣ · OrbitControls: touch-action من ورقة الأنماط لا من العلامة ==")
+# بعد إزالة العشرة والكانفس بقي واحد — قِيس على origin (54cc876) وبكعبٍ أمين:
+#     <canvas style="touch-action: none;">
+# يكتبه مُنشئ OrbitControls عبر CSSOM (domElement.style.touchAction='none').
+# السلوك نفسه تحمله القاعدة في app.css، وتُزال السمة المُسلسَلة بعد الإنشاء —
+# بقراءةٍ قبل الإزالة، لأن Blink يُسلسِل السمة كسولاً وإزالتُها وهي غير
+# مُسلسَلة تترك `style=""` (مقيس: set→remove ⇒ hasAttribute=true؛
+# set→get→remove ⇒ false).
+after_orbit = wiring.split("new OrbitControls(camera,renderer.domElement)")[1][:900]
+chk("the stylesheet carries touch-action:none for the canvas",
+    re.search(r"#app\s*>\s*canvas\{[^}]*touch-action:none", css) is not None)
+chk("right after OrbitControls is constructed the serialized style attribute is "
+    "synchronised then removed — in that order",
+    0 <= after_orbit.find("renderer.domElement.getAttribute('style')")
+    < after_orbit.find("renderer.domElement.removeAttribute('style')"))
+chk("the TEST-ONLY OrbitControls stub writes touchAction like the real one, so "
+    "the local probe cannot under-count again",
+    "dom.style.touchAction = 'none'" in probe)
+
 print("\n== د · شواهد سالبة: الكواشف تُدين الأسطر التي أُصلحت بعينها ==")
 chk("the paint detector fires on the exact line that produced the ten",
     bool(PAINT.search("const i=document.createElement('i'); i.style.background=hx;")))

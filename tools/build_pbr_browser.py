@@ -1047,7 +1047,13 @@ def _late_keys():
         _fail("no Object.seal({...}) registry in %s — the late-binding "
               "registry moved or changed shape; the bridge cannot be bound."
               % LATE_PATH)
-    return set(re.findall(r"^\s*([A-Za-z_$][\w$]*)\s*:", m.group(1), re.M))
+    body = m.group(1)
+    keys = set(re.findall(r"^\s*([A-Za-z_$][\w$]*)\s*:", body, re.M))
+    # مفتاحٌ واصلٌ (get name() / set name(v)) مفتاحٌ أيضاً: `model` و
+    # `lastBuilding` يُقرآن عبر مرجعٍ حيّ لأن قيمتيهما تتبدّلان بعد النشر.
+    keys |= set(re.findall(r"^\s*(?:get|set)\s+([A-Za-z_$][\w$]*)\s*\(",
+                           body, re.M))
+    return keys
 
 
 def _late_bind(src, names):

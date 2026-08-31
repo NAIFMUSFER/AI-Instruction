@@ -14,20 +14,21 @@ function _pqDescribe(o){
 /* حدود المشهد القانونية — الهندسة القانونية وحدها. قبّة السماء والأرضية
    السياقية وحامل اللاعب وكل مجموعة عرضية مستبعَدة صراحةً: إدخالها كان يضخّم
    نصف القطر آلاف الأضعاف فيخرج المشهد من هرم الرؤية ومن القبّة ⇒ شاشة سوداء. */
+/* سلطةُ حدودٍ واحدة. كانت هنا حسبةٌ ثانية ساذجة (اتّحاد Box3 لكل الأعضاء)
+   موازيةً لطبقة الاسترداد pqRobustBounds التي تستبعد العنصر التالف وتُبلّغ عنه.
+   فكانت الكاميرا تُصالَح على الحدود المحصَّنة بينما تُبنى الأرضية السياقية
+   ونطاق SSAO وإعدادات الكاميرا وتشخيص model_bounds على الحدود الملوَّثة:
+   إحداثيّةٌ شاردة واحدة عند x=99999 أعطت model_bounds بنصف قطر ٥٠ كم
+   (مقيس في CI على live_large_generated_outlier) والمنظرُ سليم. الآن تمرّ
+   الحدود كلّها من الطبقة المحصَّنة نفسها، بالشكل نفسه الذي كان يعيده هذا
+   الملفّ: {cx,cy,cz,min_y,size,radius,member_count} أو null بلا هندسة. */
 function _pqSceneBounds(){
   try{
-    const box=new THREE.Box3(); let found=0;
-    scene.traverse(o=>{
-      if(!o.isMesh) return;
-      if(!pqBoundsMember(_pqDescribe(o)).included) return;
-      box.expandByObject(o); found++; });
-    if(!found) return null;
-    const c=box.getCenter(new THREE.Vector3());
-    const sz=box.getSize(new THREE.Vector3());
-    if(![c.x,c.y,c.z,sz.x,sz.y,sz.z].every(v=>isFinite(v))) return null;
-    return {cx:c.x,cy:c.y,cz:c.z,min_y:box.min.y,
-      size:[sz.x,sz.y,sz.z],member_count:found,
-      radius:Math.max(Math.max(sz.x,Math.max(sz.y,sz.z))/2,0.5)};
+    const rb=_pqRobustSceneBounds();
+    if(!rb||!rb.valid||!rb.bounds) return null;
+    const b=rb.bounds;
+    if(![b.cx,b.cy,b.cz,b.min_y,b.radius].every(v=>isFinite(v))) return null;
+    return Object.assign({},b,{member_count:rb.member_count||0});
   }catch(e){ return null; } }
 
 window.ACS.pbrBounds=_pqSceneBounds;

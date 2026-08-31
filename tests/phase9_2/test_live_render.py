@@ -318,6 +318,16 @@ assert len(PAGE) > 1000000, 'the application code did not load'
 chk('setModel now reconciles the camera through the canonical contract',
     'acsReconcileCamera' in PAGE
     and PAGE.index('function setModel') < PAGE.rindex('acsReconcileCamera'))
+# سلطةُ حدودٍ واحدة (مقيس في CI على live_large_generated_outlier: كانت
+# renderDiagnosticsDetail().model_bounds بنصف قطر ٥٠ كم من اتّحاد Box3 ساذج
+# بينما الكاميرا مُصالَحة على الحدود المحصَّنة نفسها التي استبعدت الشاردة).
+_BRIDGE = PAGE.split('function _pqSceneBounds(){')[1].split('\n\n')[0]
+chk('_pqSceneBounds — the bounds every consumer reads (ground context, SSAO, '
+    'camera presets, diagnostics) — is the ROBUST layer, not a second naive '
+    'Box3 union', '_pqRobustSceneBounds()' in _BRIDGE
+    and 'expandByObject' not in _BRIDGE)
+chk('and it keeps the shape its consumers read (radius, centre, member_count)',
+    'member_count' in _BRIDGE and 'radius' in _BRIDGE)
 chk('setModel no longer frames from a raw unfiltered Box3 as its primary path',
     PAGE.split('function setModel')[1].split('buildFloors()')[0]
     .index('acsReconcileCamera')
