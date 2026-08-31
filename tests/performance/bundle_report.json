@@ -62,7 +62,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1875863,
+    "core_initial_bytes": 1876430,
     "core_initial_module_count": 21,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 7,
@@ -105,17 +105,17 @@
     ],
     "first_party_dynamic_import_count": 0,
     "first_party_module_count": 27,
-    "first_party_total_bytes": 1901412,
-    "initial_javascript_bytes": 1901412,
+    "first_party_total_bytes": 1901979,
+    "initial_javascript_bytes": 1901979,
     "largest_module": {
       "bytes": 228695,
       "group": "core",
       "gzip_bytes": 48724,
       "loaded": "eager",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 12.03
+      "pct_of_first_party_js": 12.02
     },
-    "largest_module_pct_of_first_party_js": 12.03,
+    "largest_module_pct_of_first_party_js": 12.02,
     "lazy_bytes": 0,
     "lazy_module_count": 0,
     "lazy_modules": [],
@@ -127,7 +127,7 @@
         "gzip_bytes": 48724,
         "loaded": "eager",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 12.03
+        "pct_of_first_party_js": 12.02
       },
       {
         "bytes": 205018,
@@ -154,12 +154,12 @@
         "pct_of_first_party_js": 10.4
       },
       {
-        "bytes": 165490,
+        "bytes": 166057,
         "group": "render",
-        "gzip_bytes": 49903,
+        "gzip_bytes": 50111,
         "loaded": "eager",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 8.7
+        "pct_of_first_party_js": 8.73
       },
       {
         "bytes": 116758,
@@ -191,7 +191,7 @@
         "gzip_bytes": 29046,
         "loaded": "eager",
         "path": "public/app/generated/render-engine.js",
-        "pct_of_first_party_js": 5.25
+        "pct_of_first_party_js": 5.24
       },
       {
         "bytes": 75987,
@@ -247,7 +247,7 @@
         "gzip_bytes": 12069,
         "loaded": "eager",
         "path": "public/app/trust/wiring.js",
-        "pct_of_first_party_js": 1.9
+        "pct_of_first_party_js": 1.89
       },
       {
         "bytes": 18198,
@@ -433,7 +433,7 @@
     "sha256": "141407caa2d13db9a8de8932a802329f6c5e82ea4c176572d79835907336a555",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 47424 byte shell and every byte of application JavaScript (1901412 bytes) lives in 27 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 47424 byte shell and every byte of application JavaScript (1901979 bytes) lives in 27 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,

@@ -271,8 +271,22 @@ export class PMREMGenerator {
   compileEquirectangularShader() {} compileCubemapShader() {} dispose() {}
 }
 export class WebGLRenderer {
-  constructor() {
-    this.domElement = document.createElement('canvas');
+  /* يعكس سلوكين من المحرّك الحقيقيّ **مرئيَّين في DOM**، فلا يُبلِّغ هذا
+     المسبار عن سمات style أقلّ ممّا يراه CI:
+       · createCanvasElement() ينشئ الكانفس ويكتب style.display='block'
+         — ولا يُنفَّذ إن مُرِّر canvas في الخيارات.
+       · setSize(w,h,updateStyle) يكتب width/height بالبكسل ما لم
+         يكن updateStyle === false.
+     كانت النسخة السابقة تنشئ الكانفس بلا تنسيق وتترك setSize فارغة، فكان
+     العدّ المحليّ ١٠ بينما CI يقيس ١١ — أي أن الفارق كان في الكعب لا في
+     المنتَج. ما عدا ذلك لا يزال كعباً: لا رسم ولا WebGL. */
+  constructor(opts) {
+    const o = opts || {};
+    if (o.canvas) { this.domElement = o.canvas; }
+    else {
+      this.domElement = document.createElement('canvas');
+      this.domElement.style.display = 'block';
+    }
     this.shadowMap = { enabled: false, type: 2, needsUpdate: false };
     this.xr = { enabled: false, isPresenting: false, addEventListener() {},
       getSession() { return null; }, setReferenceSpaceType() {} };
@@ -281,7 +295,13 @@ export class WebGLRenderer {
     this.outputColorSpace = 'srgb'; this.toneMapping = 0; this.toneMappingExposure = 1;
     this.localClippingEnabled = false; this.clippingPlanes = [];
   }
-  setPixelRatio() {} setSize() {} setClearColor() {} setAnimationLoop() {}
+  setPixelRatio() {}
+  setSize(w, h, updateStyle) {
+    if (updateStyle === false || !this.domElement.style) return;
+    this.domElement.style.width = w + 'px';
+    this.domElement.style.height = h + 'px';
+  }
+  setClearColor() {} setAnimationLoop() {}
   render() {} clear() {} dispose() {} forceContextLoss() {} compile() {}
   getPixelRatio() { return 1; }
   getContext() { return null; }

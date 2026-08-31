@@ -171,6 +171,42 @@ chk("the stylesheet sizes the canvas instead",
     is not None,
     [ln for ln in css.splitlines() if "canvas" in ln][:3])
 
+print("\n== ج٢ · الكانفس مِلكُ التطبيق لا مِلكُ المحرّك ==")
+# الوسيط الثالث في setSize لم يكن كافياً: حين لا يُمرَّر `canvas` إلى
+# WebGLRenderer ينشئه المحرّك عبر createCanvasElement() الذي يكتب
+# style.display='block' على العنصر — مسارٌ آخر تماماً لا يمرّ بـsetSize.
+# قِيس على الشجرة كما هي على origin: inlineStyleAttrs = 1، والعنصر:
+#     <canvas style="display: block;">
+# تمريرُ العنصر يجعل المحرّك لا يلمس تنسيقه إطلاقاً.
+scene = rd(SCENE)
+ctor = re.search(r"new\s+THREE\.WebGLRenderer\(\{([^}]*)\}", code_only(scene))
+chk("the renderer is still constructed in one place", ctor is not None)
+chk("and it is handed a canvas the application created — so three.js never "
+    "runs createCanvasElement() and never owns the element's style",
+    ctor is not None and re.search(r"\bcanvas\b", ctor.group(1)) is not None,
+    ctor.group(1)[:80] if ctor else "")
+chk("the application really creates that element itself",
+    re.search(r"const\s+canvas\s*=\s*document\.createElement\('canvas'\)",
+              code_only(scene)) is not None)
+chk("no other shipped module constructs a renderer that could re-introduce it",
+    sum(len(re.findall(r"new\s+THREE\.WebGLRenderer\(", code_only(v)))
+        for v in SRC.values()) == 1,
+    [f for f, v in SRC.items()
+     if "new THREE.WebGLRenderer(" in code_only(v)])
+
+# والكعب الذي يقيس به هذا المستودع محلياً يجب أن يعكس السلوكين المرئيَّين في
+# DOM، وإلا عاد يعدّ ١٠ بينما CI يعدّ ١١ — وهو ما حدث فعلاً.
+PROBE = os.path.join(HERE, "csp_browser_probe.js")
+probe = rd(PROBE)
+chk("the TEST-ONLY three.js stub mirrors createCanvasElement's "
+    "style.display='block' — otherwise the local probe under-reports what CI "
+    "measures", "this.domElement.style.display = 'block'" in probe)
+chk("and it honours setSize's updateStyle argument the same way",
+    "setSize(w, h, updateStyle)" in probe
+    and "if (updateStyle === false" in probe)
+chk("and it still yields the canvas to an explicit canvas option, exactly as "
+    "the real renderer does", "if (o.canvas)" in probe)
+
 print("\n== د · شواهد سالبة: الكواشف تُدين الأسطر التي أُصلحت بعينها ==")
 chk("the paint detector fires on the exact line that produced the ten",
     bool(PAINT.search("const i=document.createElement('i'); i.style.background=hx;")))
@@ -182,6 +218,11 @@ chk("the setSize detector fires on the exact two-argument call that produced "
     "the eleventh", _head.count(",") < 2, _head)
 chk("and it accepts the three-argument form the repository already used "
     "elsewhere", "renderer.setSize(w,h,false)".split("(")[1].count(",") == 2)
+_ctor_old = "new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true})"
+chk("the canvas-ownership detector fires on the exact constructor that let "
+    "three.js create and style the element",
+    re.search(r"\bcanvas\b",
+              re.search(r"\{([^}]*)\}", _ctor_old).group(1)) is None)
 
 print("\n" + "─" * 62)
 print("INLINE STYLE SOURCES: %d passed, %d failed" % (_p, _f))
