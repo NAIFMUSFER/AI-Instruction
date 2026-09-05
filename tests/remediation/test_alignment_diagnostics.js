@@ -3,6 +3,7 @@
 'use strict';
 const fs = require('fs'), path = require('path');
 const root = path.resolve(__dirname, '../..');
+const expectations = require(path.join(root, 'tests/deploy/lib_alignment_expectations.js'));
 let passed = 0, failed = 0;
 function check(name, ok, detail) {
   if (ok) { passed++; console.log('  ✓ '+name); }
@@ -46,6 +47,15 @@ for (const name of ['live_large_generated','live_large_generated_outlier']) {
   check(name+': all input levels remain distinct',r.level_alignment.length===input.levels.length);
   check(name+': derived addresses are labelled as rendering fallback',r.level_alignment.every(x=>x.index_source==='ARRAY_ORDER_RENDER_FALLBACK'));
   check(name+': canonical input stays byte-equivalent',JSON.stringify(input)===before);
+  check(name+': reconstructed input reports its recorded conflicts',expectations.evaluate(name,input,r).ok,r);
+  const vertical=r.samples.find(x=>x.axes.length===1&&x.axes[0]==='y');
+  check(name+': vertical separation is measured, not reported as zero',vertical&&Math.abs(vertical.error_m-.435)<.001,vertical);
+  check(name+': clearing known conflicts is rejected',!expectations.evaluate(name,input,{...r,outside_host_objects:0}).ok);
+  check(name+': one additional conflict is rejected',!expectations.evaluate(name,input,{...r,outside_host_objects:r.outside_host_objects+1}).ok);
+  check(name+': hiding vertical conflicts is rejected',!expectations.evaluate(name,input,{...r,outside_axes:{...r.outside_axes,y:0}}).ok);
+  check(name+': downgrading review status is rejected',!expectations.evaluate(name,input,{...r,review_status:'NOT_EVALUATED'}).ok);
+  check(name+': changed fixture requires explicit expectation review',!expectations.evaluate(name,{...input,wall_h:8.5},r).ok);
+  check(name+': fitting objects to hide conflicts is rejected',!expectations.evaluate(name,input,{...r,objects_moved_to_fit:1}).ok);
 }
 const sample={site:{w:12,d:10},floor_height:4.2,wall_h:3.5,wall_t:.2,
  levels:[{index:0,template:'g'},{index:3,template:'g'}],
@@ -54,6 +64,8 @@ const valid=diagnose(sample);
 check('explicit non-contiguous indices are preserved',valid.level_alignment.map(x=>x.index).join(',')==='0,3');
 check('explicit indices retain their source',valid.level_alignment.every(x=>x.index_source==='MODEL_INDEX'));
 check('explicit-index plates and roof align',valid.level_alignment.every(x=>x.aligned)&&valid.roof_alignment.aligned);
+check('valid model retains the zero-outside gate',expectations.evaluate('valid_model',sample,valid).ok,valid);
+check('valid geometry does not claim engineering approval',valid.review_status==='NOT_EVALUATED');
 const bad=diagnose(sample,built=>built.traverse(o=>{
  if(o.isMesh&&o.name.startsWith('FURN|'))o.position.x+=100;
  if(o.isMesh&&o.name.startsWith('FLOOR|F3|'))o.position.y+=1;
@@ -61,6 +73,14 @@ const bad=diagnose(sample,built=>built.traverse(o=>{
 check('displaced hosted object is rejected',bad.outside_host_objects>0,bad);
 check('displaced plate is rejected',bad.level_alignment.some(x=>!x.aligned));
 check('displaced roof is rejected',bad.roof_alignment.aligned===false);
+check('unexpected containment failures do not qualify as negative fixtures',!expectations.evaluate('valid_model',sample,bad).ok);
+const verticalOnly=diagnose(sample,built=>built.traverse(o=>{
+ if(o.isMesh&&o.name.startsWith('FURN|'))o.position.y+=10;
+}));
+check('vertical-only displacement is rejected',verticalOnly.outside_host_objects>0,verticalOnly);
+check('vertical-only displacement has positive measured error',verticalOnly.max_position_error_m>6,verticalOnly.max_position_error_m);
+check('vertical-only displacement is attributed to the y axis',verticalOnly.outside_axes.y>0&&verticalOnly.outside_axes.x===0&&verticalOnly.outside_axes.z===0,verticalOnly.outside_axes);
+check('vertical-only samples include measured separation',verticalOnly.samples.every(x=>x.error_m>6&&x.axes.join(',')==='y'),verticalOnly.samples);
 material.dispose();
 console.log(`ALIGNMENT DIAGNOSTICS: ${passed} passed, ${failed} failed (real Three.js; no WebGL)`);
 process.exitCode=failed?1:0;

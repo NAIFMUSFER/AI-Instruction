@@ -28,6 +28,7 @@ const PX = require(path.join(HERE, 'lib_viewport_pixels.js'));
    — يخبز مسار صورة هذا الصندوق ويكرّر قراراً موضعه ملفّ واحد. */
 const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
 const TARGET = process.argv[2] || null;
+const ALIGN_EXPECT=require('./lib_alignment_expectations.js');
 
 /* هوية المِرقاب: النسخة القديمة كانت تطبع «PAGE BOOT: N passed» ولا تفرّق
    بين صفحة أقلعت ونموذج ظهر. طباعة الهوية تجعل تشغيل نسخة قديمة مرئياً
@@ -486,9 +487,9 @@ function notVerified(why) {
       JSON.stringify({ checked: align.objects_checked,
         unresolved: align.unresolved_transforms,
         samples: (align.samples || []).slice(0, 3) }));
-    visual(fname + ': no object sits outside its canonical host',
-      align.outside_host_objects === 0,
-      JSON.stringify((align.samples || []).slice(0, 4)));
+    const containment=ALIGN_EXPECT.evaluate(fname,fmodel,align);
+    visual(fname + ': '+containment.kind,containment.ok,
+      JSON.stringify({expectation:containment,samples:(align.samples||[]).slice(0,4)}));
     visual(fname + ': the roof sits at its canonical elevation',
       !align.roof_alignment || align.roof_alignment.aligned === true,
       JSON.stringify(align.roof_alignment));

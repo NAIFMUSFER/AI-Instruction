@@ -490,6 +490,7 @@ window.ACS.alignmentDiagnostics=function(){
     let checked=0,unresolved=0,outside=0,detached=0,maxErr=0;
     const hosted={INSIDE:0,INTERSECTING_BOUNDARY:0,OUTSIDE:0,UNRESOLVED:0};
     const sample=[];
+    const outsideAxes={x:0,y:0,z:0};
     model.traverse(o=>{
       if(!o.isMesh) return;
       const t=_pqTagParts(o);
@@ -515,10 +516,15 @@ window.ACS.alignmentDiagnostics=function(){
         outside++;
         const dx=Math.max(h.box.min[0]-wb.max[0],wb.min[0]-h.box.max[0],0);
         const dz=Math.max(h.box.min[2]-wb.max[2],wb.min[2]-h.box.max[2],0);
-        const err=Math.max(dx,dz);
+        const dy=Math.max(h.box.min[1]-wb.max[1],wb.min[1]-h.box.max[1],0);
+        const err=Math.max(dx,dy,dz);
+        const gaps=[dx,dy,dz];
+        const axes=['x','y','z'].filter((axis,i)=>gaps[i]>Number(PQ_TC.containment_tolerance_m));
+        axes.forEach(axis=>outsideAxes[axis]++);
         if(err>maxErr) maxErr=err;
         if(sample.length<12) sample.push({element_id:o.name,host:key,
           error_m:Math.round(err*1000)/1000,
+          axes:axes,
           classification:c.classification});
         if(issues.length<40) issues.push({code:'ALIGN_OBJECT_OUTSIDE_HOST',
           severity:'WARNING',blocking:false,element_id:o.name,
@@ -621,6 +627,8 @@ window.ACS.alignmentDiagnostics=function(){
       canonical_hosts_checked:Object.keys(hosts).length,
       unresolved_transforms:unresolved,detached_objects:detached,
       outside_host_objects:outside,containment:hosted,
+      outside_axes:outsideAxes,
+      review_status:(outside||unresolved||detached)?'REVIEW_REQUIRED':'NOT_EVALUATED',
       roof_alignment:roof,level_alignment:levelAlign,
       plate_overhang:plateOverhang,
       max_position_error_m:Math.round(maxErr*1000)/1000,
