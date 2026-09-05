@@ -155,6 +155,31 @@ chk('precedence · the environment beats the build_info.json file',
     both_info["git_sha"] == ENV_SHA and both_info["built_at"] == ENV_BUILT,
     repr((both_info["git_sha"], both_info["built_at"])))
 
+with Env(ACS_GIT_SHA=ENV_SHA, ACS_BUILD_INFO_FILE=FILE_PATH):
+    mixed_info = B.build_info()
+chk('a deployment SHA cannot borrow the timestamp of a different commit',
+    mixed_info['built_at'] == B.UNKNOWN, repr(mixed_info))
+chk('mixed-commit metadata is never reported as verified',
+    mixed_info['provenance_verified'] is False)
+chk('a deployment SHA cannot borrow a different commit branch or version',
+    mixed_info['git_branch'] == B.UNKNOWN
+    and mixed_info['version'] == B.SERVICE_VERSION)
+with Env(ACS_GIT_SHA=FILE_SHA, ACS_BUILD_INFO_FILE=FILE_PATH):
+    matching_info = B.build_info()
+chk('matching-commit file metadata remains usable',
+    matching_info['built_at'] == FILE_BUILT
+    and matching_info['provenance_verified'] is True)
+with Env(ACS_GIT_SHA='not-a-commit', ACS_BUILT_AT=ENV_BUILT,
+         ACS_BUILD_INFO_FILE=NOWHERE):
+    invalid_sha = B.build_info()
+chk('a nonempty but invalid commit is not verified provenance',
+    invalid_sha['provenance_verified'] is False)
+with Env(ACS_GIT_SHA=ENV_SHA, ACS_BUILT_AT='not-a-timestamp',
+         ACS_BUILD_INFO_FILE=NOWHERE):
+    invalid_time = B.build_info()
+chk('a nonempty but invalid build timestamp is not verified provenance',
+    invalid_time['provenance_verified'] is False)
+
 with Env(ACS_BUILD_INFO_FILE=FILE_PATH):
     file_info = B.build_info()
 chk('file · with the environment unset the file is used for the sha',

@@ -2,7 +2,7 @@
 FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --require-hashes -r requirements.txt
 COPY acs_understand.py acs_understand_api.py acs_validate.py acs_layout.py ./
 # عقد الأخطاء الموحّد وعقد ميزانية المخرج — بلا هذين لا تقلع الواجهة (ImportError)
 # وacs_plan_chunks عقد الخطّة المحدود (KI-24): يستورده acs_understand مباشرةً.

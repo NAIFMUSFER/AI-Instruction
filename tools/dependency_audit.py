@@ -46,7 +46,7 @@ def rd(root, rel):
 def parse_requirement_line(line):
     """يعيد (name, extras, specifier, version) أو None لسطر غير طلب."""
     s = line.split('#', 1)[0].strip()
-    if not s:
+    if not s or s.startswith('--hash='):
         return None
     m = re.match(r'^([A-Za-z0-9][A-Za-z0-9._-]*)'      # الاسم
                  r'(\[[^\]]*\])?'                       # الإضافات
@@ -231,7 +231,7 @@ def main(root):
           'be read inside it' % (txt_includes[0] if txt_includes else ''))
     for r in txt_reqs:
         raw = r['raw']
-        opened = [s for s in OPEN_SPECIFIERS if s in raw]
+        opened = [s for s in OPEN_SPECIFIERS if s in raw.split(';', 1)[0]]
         if opened:
             a.bad('open-ended specifier in requirements.txt: %s' % raw,
                   'found %s' % ', '.join(opened))
@@ -317,10 +317,11 @@ def main(root):
     print('          npm audit --package-lock-only')
     print('  ! %s' % NOT_VERIFIED)
     print('      · artefact hash verification for the Python pins.')
-    print('        requirements.lock carries NO hashes — none were invented.')
-    print('        regenerate on a networked machine:')
-    print('          pip-compile --generate-hashes '
-          '--output-file requirements.lock requirements.in')
+    print('        hashes are recorded in the lock; verify fetched bytes with:')
+    print('          pip install --require-hashes -r requirements.txt')
+    print('        regenerate only after reviewing dependency changes:')
+    print('          uv pip compile --universal --python-version 3.11 '
+          '--generate-hashes --no-strip-extras requirements.in -o requirements.lock')
     print('  ! %s' % NOT_VERIFIED)
     print('      · whether a newer compatible release exists for any pin,')
     print('        and the transitive closure itself (%d name(s) still marked '

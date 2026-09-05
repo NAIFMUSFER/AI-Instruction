@@ -2487,13 +2487,13 @@ function dxfToBuilding(text,W,D,nF){
 /* ---- استقبال الملف ---- */
 function fileToImage(f){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(f);});}
 async function loadPdfJs(){
-  const pdfjs=await import('/vendor/pdfjs@4.0.379/pdf.min.mjs');   // محلي — بلا CDN
-  pdfjs.GlobalWorkerOptions.workerSrc='/vendor/pdfjs@4.0.379/pdf.worker.min.mjs';
+  const pdfjs=await import('/vendor/pdfjs@4.10.38/pdf.min.mjs');   // محلي — بلا CDN
+  pdfjs.GlobalWorkerOptions.workerSrc='/vendor/pdfjs@4.10.38/pdf.worker.min.mjs';
   return pdfjs;
 }
 async function pdfFirstPage(f){
   const pdfjs=await loadPdfJs();
-  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf}).promise; const page=await pdf.getPage(1);
+  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf,isEvalSupported:false}).promise; const page=await pdf.getPage(1);
   const vp=page.getViewport({scale:2}); const c=document.createElement('canvas'); c.width=vp.width;c.height=vp.height;
   await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
   const img=new Image(); await new Promise(r=>{img.onload=r;img.src=c.toDataURL('image/png');}); return img;
@@ -2501,7 +2501,7 @@ async function pdfFirstPage(f){
 /* استخراج نص الـPDF مع إعادة بناء الأسطر حسب الإحداثي الرأسي */
 async function pdfText(f){
   const pdfjs=await loadPdfJs();
-  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf}).promise; let out='';
+  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf,isEvalSupported:false}).promise; let out='';
   for(let p=1;p<=pdf.numPages;p++){ const page=await pdf.getPage(p); const tc=await page.getTextContent();
     const lines={};
     tc.items.forEach(it=>{ if(!it.str) return; const y=Math.round(it.transform[5]);
@@ -2531,7 +2531,7 @@ async function planToLLM(blobs, llm, W, D, nF, info){
 function canvasToBlob(c){return new Promise(res=>c.toBlob(res,'image/png'));}
 async function pdfPagesToBlobs(f, maxPages){
   const pdfjs=await loadPdfJs(); const buf=await f.arrayBuffer();
-  const pdf=await pdfjs.getDocument({data:buf}).promise; const out=[];
+  const pdf=await pdfjs.getDocument({data:buf,isEvalSupported:false}).promise; const out=[];
   const n=Math.min(pdf.numPages, maxPages||3);
   for(let p=1;p<=n;p++){ const page=await pdf.getPage(p);
     let sc=2; const vp0=page.getViewport({scale:1});

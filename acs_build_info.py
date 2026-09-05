@@ -16,7 +16,9 @@
 # =============================================================================
 import json
 import os
+import re
 import subprocess
+from datetime import datetime
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 UNKNOWN = "unknown"
@@ -74,10 +76,17 @@ def build_info():
     """أصل البناء كما هو — بلا اختراع ولا سرّ."""
     fileinfo = _from_file()
     sha = _env_first(_ENV_SHA) or fileinfo.get("git_sha") or _from_git() or UNKNOWN
-    built = _env_first(_ENV_BUILT) or fileinfo.get("built_at") or UNKNOWN
-    branch = _env_first(_ENV_BRANCH) or fileinfo.get("git_branch") or UNKNOWN
+    # Metadata from a different commit cannot establish this deployment's age.
+    matching_file = fileinfo if fileinfo.get("git_sha") == sha else {}
+    built = _env_first(_ENV_BUILT) or matching_file.get("built_at") or UNKNOWN
+    branch = _env_first(_ENV_BRANCH) or matching_file.get("git_branch") or UNKNOWN
     version = (os.environ.get("ACS_VERSION", "") or "").strip() \
-        or fileinfo.get("version") or SERVICE_VERSION
+        or matching_file.get("version") or SERVICE_VERSION
+    try:
+        timestamp = datetime.fromisoformat(str(built).replace("Z", "+00:00"))
+        valid_time = timestamp.tzinfo is not None
+    except (ValueError, TypeError):
+        valid_time = False
     return {
         "service": SERVICE_NAME,
         "version": version,
@@ -86,7 +95,8 @@ def build_info():
         "git_branch": branch,
         "built_at": built,
         "schema_versions": dict(SCHEMA_VERSIONS),
-        "provenance_verified": sha != UNKNOWN and built != UNKNOWN,
+        "provenance_verified": bool(re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?",
+                                                 str(sha))) and valid_time,
     }
 
 

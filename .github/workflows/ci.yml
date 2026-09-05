@@ -207,6 +207,7 @@ jobs:
           # ما يكتب outputs/csp_probe.json الذي يمنح test_csp.js ~15 تأكيداً.
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "browser suites (direct)" --runner "node" \
+                   tests/remediation/test_pdf_runtime.mjs \
                    tests/deploy/test_viewport_pixels.js \
                    tests/deploy/verify_page_boot.js \
                    tests/remediation/test_csp_style_architecture.js \
@@ -391,22 +392,16 @@ jobs:
                    tests/remediation/test_inline_style_sources.py
           rc_suites=$?
           if [ "$rc_audit" -ne 0 ] || [ "$rc_suites" -ne 0 ]; then exit 1; fi
-      - name: CVE scan (advisory — needs the network, does not gate the PR)
+      - name: CVE scan (required — findings or unavailable advisories block release)
         # This is the ONE dependency check that cannot be done offline, so it is
-        # done here where the network exists. It is `continue-on-error` on
-        # purpose: a newly published advisory must not block an unrelated PR,
-        # but it must be visible in the log and in the job summary.
-        continue-on-error: true
+        # required here where the network exists. Findings and service errors
+        # both block ci-required; neither is silently converted into success.
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           python -m pip install --upgrade pip pip-audit
-          {
-            echo "=== pip-audit (requirements.txt) ==="
-            pip-audit -r requirements.txt || echo "pip-audit reported findings"
-            echo "=== npm audit (package-lock only) ==="
-            npm audit --package-lock-only || echo "npm audit reported findings"
-          } 2>&1 | tee -a logs/dependency-audit.log
+          pip-audit -r requirements.txt 2>&1 | tee -a logs/dependency-audit.log
+          npm audit --package-lock-only 2>&1 | tee -a logs/dependency-audit.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -428,7 +423,7 @@ jobs:
           node-version: '22'
       - name: Static gates that tools/netlify-build.sh runs after vendoring
         # tools/netlify-build.sh has NO check-only mode: every path in it does a
-        # real `npm pack`. So this job runs the three guards the script invokes
+        # real `npm ci`. So this job runs the three guards the script invokes
         # after vendoring, plus a shell syntax check of the script itself. The
         # vendoring half is exercised for real in the chromium-browser job.
         shell: bash

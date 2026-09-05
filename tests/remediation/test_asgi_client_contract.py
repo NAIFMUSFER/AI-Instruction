@@ -74,7 +74,7 @@ def pins(text):
     """يقرأ `name==version` من سطر غير معلَّق. المفاتيح بحروف صغيرة وبلا extras."""
     out = {}
     for line in text.splitlines():
-        line = line.split('#', 1)[0].strip()
+        line = line.split('#', 1)[0].strip().rstrip(chr(92)).strip()
         if not line:
             continue
         m = re.match(r'^([A-Za-z0-9._-]+)(\[[^\]]*\])?==([^\s;]+)$', line)
@@ -111,7 +111,7 @@ for name in ('starlette', 'httpx'):
     chk('%s is pinned in requirements.lock' % name, name in LOCK, sorted(LOCK))
     chk('%s is declared in requirements.in (a human decision, not a '
         'resolver accident)' % name,
-        re.search(r'^\s*%s\s*$' % name, FILES['requirements.in'], re.M)
+        re.search(r'^\s*%s(?:==[^\s]+)?\s*$' % name, FILES['requirements.in'], re.M)
         is not None)
     chk('%s agrees between requirements.txt and requirements.lock' % name,
         TXT.get(name) == LOCK.get(name),
@@ -138,16 +138,18 @@ chk('httpx satisfies anthropic 0.40\'s own declared `httpx>=0.23.0, <1`',
     (0, 23, 0) <= ver(H) < (1, 0, 0), H)
 
 print('\n== ج · التثبيت لا يخالف ما يعلنه fastapi نفسه ==')
-# fastapi 0.110.0 · pyproject.toml, verbatim: "starlette>=0.36.3,<0.37.0"
-FASTAPI_STARLETTE_RANGE = ((0, 36, 3), (0, 37, 0))
-chk('fastapi is pinned at the version this range was read from',
-    TXT.get('fastapi') == '0.110', TXT.get('fastapi'))
-chk('the starlette pin sits inside fastapi 0.110\'s declared range '
-    '>=0.36.3,<0.37.0 — it removes a float, it does not narrow the framework',
-    FASTAPI_STARLETTE_RANGE[0] <= ver(S) < FASTAPI_STARLETTE_RANGE[1], S)
-chk('that range excludes every starlette that works with httpx>=0.28, which '
-    'is why httpx had to be the pin that moves',
-    FASTAPI_STARLETTE_RANGE[1] <= STARLETTE_FIXED_AT)
+from importlib import metadata
+installed_fastapi = metadata.version('fastapi')
+chk('the installed FastAPI version matches the reviewed pin',
+    TXT.get('fastapi') == installed_fastapi, installed_fastapi)
+framework_requirements = metadata.requires('fastapi') or []
+chk('the installed FastAPI distribution declares its Starlette dependency',
+    any(r.lower().startswith('starlette') for r in framework_requirements))
+import subprocess
+resolved = subprocess.run([sys.executable, '-m', 'pip', 'check'],
+                          capture_output=True, text=True, timeout=30)
+chk('the resolved framework and provider dependencies satisfy their real metadata',
+    resolved.returncode == 0, resolved.stdout + resolved.stderr)
 
 print('\n== د · شاهد سالب: القاعدة تُدين التركيبة التي كسرت CI فعلاً ==')
 # لو كانت compatible() متساهلة لمرّ كل ما تحتها. لا يمرّ.

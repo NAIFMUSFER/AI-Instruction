@@ -1,9 +1,12 @@
 # ينشر Netlify محتوى مجلد public فقط — فلا تُنشر ملفات الخادم Python
 [build]
   publish = "public"
-  # يجلب three@0.160.0 + الإضافات + es-module-shims + pdf.js إلى public/vendor أثناء البناء
+  # يجلب three@0.160.0 + الإضافات + PDF.js من package-lock.json إلى public/vendor أثناء البناء
   # (بيئة بناء Netlify متصلة بالإنترنت). set -e يجعل أي فشل يُفشل البناء فيبقى آخر نشر ناجح.
   command = "bash tools/netlify-build.sh"
+
+[build.environment]
+  NODE_VERSION = "22"
 
 [[headers]]
   for = "/*"

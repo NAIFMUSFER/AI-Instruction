@@ -102,6 +102,8 @@ jobs:
     name: Live page boot (real Chromium against the deployed page)
     runs-on: ubuntu-latest
     environment: production
+    env:
+      ACS_FRONTEND_URL: https://sprightly-selkie-d906c3.netlify.app/
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -114,21 +116,15 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
-      - name: Vendor the frontend runtime libraries
-        # Mirrors what Netlify does at build time; without it the page has no
-        # three.js to import and "boot" would mean nothing.
-        run: bash tools/netlify-build.sh
       - name: Boot the page and analyse the rendered viewport
         # This is the check that would have caught the production black-viewport
         # defect: it looks at pixels, not at "the engine reported ready".
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           mkdir -p logs
-          {
-            node tests/deploy/verify_page_boot.js
-            node tests/deploy/test_viewport_pixels.js
-          } 2>&1 | tee logs/production-page-boot.log
+          node tests/deploy/verify_page_boot.js "$ACS_FRONTEND_URL" \
+            2>&1 | tee logs/production-page-boot.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
