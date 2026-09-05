@@ -1145,6 +1145,16 @@ function slabStrips(x0,z0,W,D,holes){
   }
   return out;
 }
+/* Rendering address only: preserve the compiler's existing fallback and never
+   write an inferred index into the authoritative model. Diagnostics uses this
+   same resolver so an absent index cannot turn F0/F1 into Fundefined. */
+function acsRenderLevel(lvl, position){
+  const raw=(lvl&&typeof lvl==='object')?lvl:{};
+  const candidate=Number(raw.index);
+  const derived=!(isFinite(candidate)&&candidate>=0&&candidate===Math.floor(candidate));
+  return {raw:raw,index:derived?position:candidate,derived:derived};
+}
+
 function compile(data){
   OBJ_UNKNOWN=[]; acsBuildDefectsReset();
   const grp=new THREE.Group(); grp.name='BUILDING';
@@ -1180,14 +1190,12 @@ function compile(data){
      مئة ألف مستوى كانت تُبنى كلّها. ما زاد يُقصّ ويُحصى، ولا يُسقَط بصمت. */
   const _levels=acsCapList(data.levels,
       SCENE_LIMITS.max_levels,'LEVELS_CAPPED','model.levels').map((lvl,i)=>{
-    const raw=(lvl&&typeof lvl==='object')?lvl:{};
-    let idx=Number(raw.index);
-    if(!(isFinite(idx)&&idx>=0&&idx===Math.floor(idx))){
-      idx=i;
+    const resolved=acsRenderLevel(lvl,i);
+    if(resolved.derived){
       acsBuildDefect('derived_level_index','LEVEL_INDEX_MISSING',
-                     String(raw.id||('#'+i)));
+                     String(resolved.raw.id||('#'+i)));
     }
-    return {raw:raw,index:idx};
+    return resolved;
   });
   _levels.forEach(_lv=>{
     const lvl=_lv.raw, li=_lv.index;
@@ -2926,4 +2934,4 @@ function distanceSummary(m){
    ================================================================== */
 
 
-export { ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, SCENE_LIMITS, DEGRADING_KINDS, acsCount, acsFit, acsCapList, acsSpan, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };
+export { acsRenderLevel, ACS_PROJECT_CODE_CONTEXT, ACS_PROJECT_SCHEMA, ADMIN_ROLES, SCENE_LIMITS, DEGRADING_KINDS, acsCount, acsFit, acsCapList, acsSpan, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, ARButton, AR_NUM, CLAIM_RE, CLAUSE_SEP, CONNECT_RE, CORRIDOR_ASPECT, DIST_BASES, DIST_STATUSES, DQ, EG_DESTINATIONS, EG_MARGIN, EG_PEOPLE, EG_PROBE, EG_SOURCES, EG_STATUSES, EG_USABLE, FLOOR_NAMES, FLS_LAYER_COLOR, GLTFExporter, LANE_MAT, LAYER_NAMES, LAYER_ORDER, MAT, MEP_DISC_COLOR, NAV_TRAVERSABLE, NEG_RE, OBJ_AR, OBJ_KIND_AR, OBJ_LIB, OBJ_MAT, OBJ_PARENT, OBJ_SYN_EXTRA, OBJ_UNKNOWN, OrbitControls, POINT_KINDS, PROV, RACK_DEF, REL_ADJ_TOL, REL_CORE_TOL, REL_DOOR_PROBE, REL_SOURCES, REL_STATUSES, REL_TOUCH_EPS, REL_TYPES, ROLE_COLOR, ROOM_KW, RoomEnvironment, STA_DEF, STRUCT_KIND_COLOR, Sky, TEXMAP, TEX_GEN, THREE, VRButton, ZONE_LIB, _AL, _AR_KEYS, _EN_KEYS, _OBJ_ALL_KEYS, _dsCentroid, _dsDist, _dsFindObject, _dsIsRect, _dsRect, _dsRooms, _dualCount, _egChars, _egFootprint, _egPeople, _egProbe, _egRect, _egSid, _fx2, _inSpaceLength, _levelElevation, _navCentroids, _navLevelsForTemplate, _navResolve, _objPoint, _pyRound, _r3, _relContains, _relGapOverlap, _relKind, _relLevelId, _relLevelsFor, _relRect, _relSpaceId, _stairGeometry, _viaDoor, _wordIn, activeBuilding, addBox, architectureOf, attachObjects, auditEgress, buildConveyor, buildDocks, buildLanes, buildNavGraph, buildObject, buildObjects, buildProjectRelationships, buildRacks, buildRelationships, buildRoom, buildStations, classifyReport, clauseMap, cleanName, compile, countNear, detectMeta, distanceSummary, dockOpenings, doorAnchor, edgeGeom, egressSummary, ensureElementIds, extractExits, findEgress, findPath, getMat, getTex, grain, hasRoomKW, hasRuleEvidence, isBuildingModel, isProjectModel, knownSpaces, acsBuildDefect, acsBuildDefects, acsBuildDefectsReset, acsList, acsRoomRect, matCache, measurePath, navIssues, navNodeId, negatedAt, noiseCanvas, normDigits, normEdge, normHex, numNear, objCoverage, objKind, objectsFromText, openU, parseDescription, pathSummary, projectEnvelope, relationshipSummary, requestedFloorsFromText, rnd, scaleBoxUV, slabStrips, stampMeta, statedNumbers, stripBidi, texCache, toProject, truthify, usableExits, validateExits, validateMeasurement, validatePath, validateRelationships, wallOpenings, warehouseFromText, warehouseModel };

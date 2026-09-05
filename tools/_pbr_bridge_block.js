@@ -470,18 +470,22 @@ window.ACS.alignmentDiagnostics=function(){
     /* أصول الغرف من البيانات القانونية نفسها لا من المشهد */
     const hosts={};
     const levelsSeen={};
-    ((lastBuilding||{}).levels||[]).forEach(lv=>{
+    const inputLevels=((lastBuilding||{}).levels||[]);
+    const renderedLevels=(Array.isArray(inputLevels)?inputLevels:[])
+      .slice(0,SCENE_LIMITS.max_levels).map(acsRenderLevel);
+    renderedLevels.forEach(resolved=>{
+      const lv=resolved.raw, li=resolved.index;
       const tmpl=(((lastBuilding||{}).floors)||{})[lv.template]||{};
-      levelsSeen['F'+lv.index]={index:lv.index,rects:[]};
+      levelsSeen['F'+li]={index:li,derived:resolved.derived,rects:[]};
       (tmpl.rooms||[]).forEach(r=>{
         if(!Array.isArray(r.rect)||r.rect.length!==4) return;
-        const key='F'+lv.index+'|'+(r.id||'room');
-        const y=pqLevelBaseY(lv.index,fh).base_y;
+        const key='F'+li+'|'+(r.id||'room');
+        const y=pqLevelBaseY(li,fh).base_y;
         const H=Number(r.wall_h)||Number((lastBuilding||{}).wall_h)||3.0;
-        hosts[key]={rect:r.rect,level_index:lv.index,base_y:y,
+        hosts[key]={rect:r.rect,level_index:li,base_y:y,
           box:{min:[r.rect[0],y,r.rect[1]],
                max:[r.rect[0]+r.rect[2],y+H,r.rect[1]+r.rect[3]]}};
-        levelsSeen['F'+lv.index].rects.push(r.rect); }); });
+        levelsSeen['F'+li].rects.push(r.rect); }); });
     const issues=[];
     let checked=0,unresolved=0,outside=0,detached=0,maxErr=0;
     const hosted={INSIDE:0,INTERSECTING_BOUNDARY:0,OUTSIDE:0,UNRESOLVED:0};
@@ -540,7 +544,9 @@ window.ACS.alignmentDiagnostics=function(){
           blocking:false,element_id:k,
           message:'level plate top is '+err.toFixed(3)+' m from '
             +expect.toFixed(3)+' m'}); }
-      levelAlign.push({level:k,index:L.index,expected_base_y:expect,
+      levelAlign.push({level:k,index:L.index,
+        index_source:L.derived?'ARRAY_ORDER_RENDER_FALLBACK':'MODEL_INDEX',
+        expected_base_y:expect,
         actual_plate_top_y:actual,
         error_m:(err===null)?null:Math.round(err*1000)/1000,
         aligned:(err!==null&&err<=Number(PQ_TC.roof_tolerance_m))}); });
@@ -598,7 +604,7 @@ window.ACS.alignmentDiagnostics=function(){
           message:'the rendered level plate overhangs its own room footprint '
             +'by '+over.toFixed(2)+' m, which the declared '
             +PQ_PLATE_POLICY.policy+' convention forbids'}); });
-    const idx=((lastBuilding||{}).levels||[]).map(l=>Number(l.index));
+    const idx=renderedLevels.map(l=>l.index);
     const top=idx.length?Math.max.apply(null,idx):null;
     let roof=null;
     if(top!==null){

@@ -220,7 +220,8 @@ jobs:
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "node-scope scene suites" --runner "node tests/lib/run.js" \
                    tests/remediation/test_model_apply.js \
-                   tests/remediation/test_scene_limits.js || rc=1
+                   tests/remediation/test_scene_limits.js \
+                   tests/remediation/test_alignment_diagnostics.js || rc=1
           exit $rc
       - uses: actions/upload-artifact@v4
         if: always()
