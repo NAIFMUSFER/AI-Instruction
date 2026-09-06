@@ -1,0 +1,35 @@
+{
+  "regression_before": {
+    "passed": 0,
+    "failed": 6
+  },
+  "regression_after": {
+    "passed": 8,
+    "failed": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 110,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 125
+  },
+  "source_manifest": "tested-source.json",
+  "netlify_build": {
+    "exit": 0,
+    "checkout_base": "0a0e4edd34bd44a2b3b0a9b83b1c87019801d455",
+    "changes": "C09b source/test files, matching tested-source.json; build-info stamped checkout base"
+  },
+  "real_local_generation": "503: missing provider credential for both original cases",
+  "comparison": "all saved output bytes equal to C09a; only prior validation differences vs original baseline",
+  "pixel_verification": "NOT_VERIFIED",
+  "remaining_C09": [
+    "architecture",
+    "SVG",
+    "IFC",
+    "validator",
+    "DXF import"
+  ],
+  "original_22": "NOT_AVAILABLE"
+}

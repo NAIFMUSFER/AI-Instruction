@@ -1,0 +1,42 @@
+[
+  {
+    "file": "public/app/core/polygon.js",
+    "source_sha256": "af1e15518e136e389768151365aea25c2bad7c5d76d1e04a7abf7ac976595dbd",
+    "tested_sha256": "af1e15518e136e389768151365aea25c2bad7c5d76d1e04a7abf7ac976595dbd"
+  },
+  {
+    "file": "public/app/core/viewer.js",
+    "source_sha256": "396fe1b5b7eb590b6f3ab3b981272195b056c0002ed1b07984fdf7d199255a36",
+    "tested_sha256": "396fe1b5b7eb590b6f3ab3b981272195b056c0002ed1b07984fdf7d199255a36"
+  },
+  {
+    "file": "public/app/main.js",
+    "source_sha256": "5591f3b6f48bfb9bd8280fc5a58695897ae681fd7d5b64a48b112322d06dca39",
+    "tested_sha256": "5591f3b6f48bfb9bd8280fc5a58695897ae681fd7d5b64a48b112322d06dca39"
+  },
+  {
+    "file": "tests/phase3/lib/extract_browser_bundle.js",
+    "source_sha256": "42a88d11598f728ce7fd91e3f3d3c3f88e0b8426d1cdf6a30f50653e0fddfc20",
+    "tested_sha256": "42a88d11598f728ce7fd91e3f3d3c3f88e0b8426d1cdf6a30f50653e0fddfc20"
+  },
+  {
+    "file": "tests/lib/app_source.js",
+    "source_sha256": "87b58244faf9b06b6fb940d673a414b5b6540cc31b2585ffc10811e6f627ef06",
+    "tested_sha256": "87b58244faf9b06b6fb940d673a414b5b6540cc31b2585ffc10811e6f627ef06"
+  },
+  {
+    "file": "tools/app_source.py",
+    "source_sha256": "ab6cb94febe52c076bd8e7e9eb6ac43be4885a403f7d5f22e9a468c29257a95e",
+    "tested_sha256": "ab6cb94febe52c076bd8e7e9eb6ac43be4885a403f7d5f22e9a468c29257a95e"
+  },
+  {
+    "file": "tests/remediation/test_polygon_meshes.js",
+    "source_sha256": "77ece2928d1ee308f99deaa31b7bde373d085228a4befea67068e43a0f65650c",
+    "tested_sha256": "77ece2928d1ee308f99deaa31b7bde373d085228a4befea67068e43a0f65650c"
+  },
+  {
+    "file": "tests/remediation/test_scene_limits.js",
+    "source_sha256": "5797b65002d95deb6ce6e8529f6acb19d1a64bee07f649c1259f51a7ff535786",
+    "tested_sha256": "5797b65002d95deb6ce6e8529f6acb19d1a64bee07f649c1259f51a7ff535786"
+  }
+]

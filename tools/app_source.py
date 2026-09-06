@@ -21,7 +21,7 @@ PUB = os.path.join(ROOT, "public")
 APP = os.path.join(PUB, "app")
 
 # الطبقات النقيّة: لا DOM ولا Three ولا window
-PURE = ("core/viewer.js", "core/standards.js", "core/disciplines.js")
+PURE = ("core/polygon.js", "core/viewer.js", "core/standards.js", "core/disciplines.js")
 
 
 def _read(p):

@@ -38,6 +38,7 @@ const OUT = process.env.ACS_BUNDLE
 /* الوحدات النقيّة بكاملها، بترتيب التحميل الحقيقي المعلن في public/app/main.js.
    كلٌّ منها كانت مقطعاً في الصفحة الواحدة، وكلٌّ منها تُقيَّم في Node وحدها. */
 const FULL = [
+  'core/polygon.js',
   'core/viewer.js',
   'core/standards.js',
   'core/disciplines.js',

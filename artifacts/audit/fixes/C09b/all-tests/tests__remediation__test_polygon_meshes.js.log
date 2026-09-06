@@ -1,0 +1,9 @@
+PASS concave L area and notch
+PASS sloping door and immutable Building
+PASS core void and coloured finishes
+PASS invalid polygon is not silently rendered
+PASS clockwise outline and open-zone label
+PASS explicit negative origin is preserved
+PASS Python and shipped JavaScript polygon parity
+PASS polygon and box meshes share the same scene budget
+POLYGON MESHES: 8 passed, 0 failed (actual meshes; no pixels)

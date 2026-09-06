@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" data-acs-doc="1" data-view-type="FLOOR_PLAN" data-view-id="view_f5b44399ec2e076f" data-model-hash="604c6bcc6841ebb3873589c2c3d4dfcb3be5dfabd71ac962382b0d562bc2ae17" data-scale-mode="TRUE_SCALE" data-construction-drawing="false">
+<rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
+<line x1="37.5" y1="285" x2="46.5" y2="285" stroke="#000000" stroke-width="0.25" data-cls="ANNOTATION"/>
+<line x1="12" y1="245" x2="52" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="52" y2="285" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="12" y1="285" x2="12" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<line x1="52" y1="285" x2="52" y2="245" stroke="#000000" stroke-width="0.7" data-cls="CUT"/>
+<rect x="12" y="245" width="40" height="40" fill="none" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<rect x="12" y="245" width="40" height="40" fill="#000000" fill-opacity="0.06" stroke="#000000" stroke-width="0.13" stroke-dasharray="1.6 1.2" data-cls="REFERENCE"/>
+<text x="32" y="265" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">م_وحمام_2×</text>
+<text x="42" y="285" font-family="monospace" font-size="2.6" text-anchor="middle" fill="#000000" data-cls="ANNOTATION">DE9B245</text>
+<text x="12" y="292" font-family="monospace" font-size="2.4" fill="#000000">model-derived documentation — not a construction drawing</text>
+</svg>

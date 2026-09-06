@@ -254,7 +254,7 @@ chk('ولا حدَّ مُعلَنٍ لا تقرؤه الشيفرة (كلّها �
 /* لكل دالّة: الحدّ الذي كان مدفوناً فيها صار اسماً، ولم يبقَ في جسمها
    ‎Math.min(…, <عدد>)‎ واحد. */
 const MOVED = [
-  ['addBox', ['max_total_meshes']],
+  ['acsAcceptMesh', ['max_total_meshes']],
   ['buildRoom', ['max_points_per_room']],
   ['buildRacks', ['max_racks_per_room', 'max_rack_levels', 'max_rack_rows',
                   'max_rack_bays', 'max_rack_segments', 'max_rack_posts']],
@@ -270,6 +270,9 @@ const MOVED = [
   ['acsSpan', ['max_generator_span_m']],
   ['parseDescription', ['max_text_repeats']]
 ];
+chk('الصندوق والمضلع يستعملان حارس عدد الشبكات نفسه',
+    fnSrc('addBox').includes('acsAcceptMesh(name)')
+    && fnSrc('addPolygonPrism').includes('acsAcceptMesh(name)'));
 MOVED.forEach(([fn, keys]) => {
   const src = fnSrc(fn);
   chk((fn + ' — نصّه انتُزع من المصدر').padEnd(52), src.length > 40,

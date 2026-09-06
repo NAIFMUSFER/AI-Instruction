@@ -5,6 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { ACS_POLYGON } from './polygon.js';
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -475,6 +476,17 @@ function acsCompileSummary(){
   };
 }
 
+function acsAcceptMesh(name){
+  if(!BUILD_DEFECTS) acsBuildDefectsReset();
+  if(BUILD_DEFECTS.accepted_box>=SCENE_LIMITS.max_total_meshes){
+    BUILD_DEFECTS.suppressed_box++;
+    if(BUILD_DEFECTS.suppressed_box===1)
+      acsBuildDefect('complexity_degraded','SCENE_COMPLEXITY_LIMIT',name);
+    return false;
+  }
+  BUILD_DEFECTS.accepted_box++;
+  return true;
+}
 function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
   /* KI-25/F-42 — الحارس القديم ‎ex<=0‎ لا يوقف NaN ولا undefined: كلاهما
      يعطي false في المقارنة، فتُبنى شبكة بإحداثيّات غير معرَّفة. العتاد لا
@@ -493,14 +505,7 @@ function addBox(group, cx,cy,cz, ex,ey,ez, mat, name, shadow, tint, rotY){
      «داخل حدّه». فلم يكن في المترجم موضعٌ واحد يقول «كفى». هنا يقول.
      حتميّ: العدّاد يتقدّم بترتيب البناء نفسه، فنفس المُدخَل يُكبَت عند نفس
      النقطة بالضبط. ولا يرمي: يُحصى المكبوت ويُعلَن قرار التدهور مرّة واحدة. */
-  if(!BUILD_DEFECTS) acsBuildDefectsReset();
-  if(BUILD_DEFECTS.accepted_box>=SCENE_LIMITS.max_total_meshes){
-    BUILD_DEFECTS.suppressed_box++;
-    if(BUILD_DEFECTS.suppressed_box===1)
-      acsBuildDefect('complexity_degraded','SCENE_COMPLEXITY_LIMIT',name);
-    return;
-  }
-  BUILD_DEFECTS.accepted_box++;
+  if(!acsAcceptMesh(name)) return;
   const g=new THREE.BoxGeometry(ex,ey,ez);
   const m=getMat(mat,tint);
   if(m.map&&m.userData.texScale) scaleBoxUV(g,ex,ey,ez,m.userData.texScale);
@@ -561,7 +566,82 @@ function acsList(room,key){
                  String((room||{}).id||'?')+'.'+key);
   return [];
 }
-function buildRoom(group,room,fkey,baseY,def){
+function addPolygonPrism(group,ring,bottom,top,mat,name,tint=null){
+  if(!Number.isFinite(bottom)||!Number.isFinite(top))throw Error('POLYGON_HEIGHT_INVALID');
+  if(top<=bottom||!acsAcceptMesh(name))return;
+  const pos=[],uv=[],indices=[];
+  const face=points=>{
+    const start=pos.length/3;
+    points.forEach(p=>{pos.push(...p);uv.push(p[0],p[2]);});
+    for(let i=1;i+1<points.length;i++)indices.push(start,start+i,start+i+1);
+  };
+  face(ring.map(([x,z])=>[x,bottom,z]));
+  face(ring.slice().reverse().map(([x,z])=>[x,top,z]));
+  ACS_POLYGON.edges(ring).forEach(([a,b])=>face([[a[0],bottom,a[1]],[a[0],top,a[1]],
+                                                              [b[0],top,b[1]],[b[0],bottom,b[1]]]));
+  const geom=new THREE.BufferGeometry();
+  geom.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  geom.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+  geom.setIndex(indices);geom.computeVertexNormals();
+  const mesh=new THREE.Mesh(geom,getMat(mat,tint));mesh.name=name;
+  mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;
+}
+function appendPolygonEdge(group,local,a,b,inward=1){
+  const angle=-Math.atan2(b[1]-a[1],b[0]-a[0]);
+  const transform=new THREE.Matrix4().compose(new THREE.Vector3(a[0],0,a[1]),
+    new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),angle),new THREE.Vector3(1,1,inward));
+  local.children.slice().forEach(mesh=>{mesh.applyMatrix4(transform);group.add(mesh);});
+}
+function buildPolygonEnvelope(group,room,fkey,baseY,def,holes){
+  const P=ACS_POLYGON,ring=P.room_ring(room),segments=P.edges(ring);
+  const H=room.wall_h==null?def.wall_h:room.wall_h,t=def.wall_t,name=room.id||'room';
+  const zone=normHex(room.wall_color)||ROLE_COLOR[room.role];
+  const mode=room.walls||((def.industrial&&room.role&&!ADMIN_ROLES[room.role])?'none':'full');
+  const heights={none:0,line:0,low:1.1,rail:1.1,half:1.8},height=heights[mode]==null?H:heights[mode];
+  const openings=ring.map(()=>[]);
+  for(const kind of ['doors','windows']){
+    acsList(room,kind).forEach((op,index)=>{
+      const edge=P.edge_index(room,op),[a,b]=segments[edge],off=Number(op.offset);
+      const width=op.width==null?(kind==='doors'?.9:1.2):Number(op.width);
+      const h=op.height==null?(kind==='doors'?2.1:1.6):Number(op.height);
+      const sill=kind==='doors'?0:(op.sill==null?.9:Number(op.sill));
+      if(![off,width,h,sill].every(Number.isFinite)||width<=0||h<=0||sill<0
+         ||off-width/2 < -P.EPS||off+width/2>Math.hypot(b[0]-a[0],b[1]-a[1])+P.EPS||sill+h>H+P.EPS)
+        throw Error('POLYGON_OPENING_INVALID: opening must fit its boundary edge and wall height');
+      openings[edge].push([off,width,sill,sill+h]);
+      const mat=kind==='doors'?(op.material==='glass'?'door_glass':'door'):'window',local=new THREE.Group();
+      addBox(local,off,baseY+sill+h/2,0,width,h,kind==='doors'?.05:.04,mat,
+             `${kind==='doors'?'DOOR':'WINDOW'}|${fkey}|${name}|${index}`,true,normHex(op.color));
+      appendPolygonEdge(group,local,a,b);
+    });
+  }
+  acsList(room,'docks').forEach((dock,index)=>{
+    const edge=P.edge_index(room,dock),[a,b]=segments[edge],length=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    const localRoom={id:name,rect:[0,0,length,1],docks:[{...dock,edge:'N'}]},local=new THREE.Group();
+    openings[edge].push(...dockOpenings(localRoom).N);buildDocks(local,localRoom,fkey,baseY,def);
+    local.children.forEach(m=>{m.name=m.name.replace('dock0_',`dock${index}_`).replace('leveler0_',`leveler${index}_`).replace('bump0_',`bump${index}_`);});
+    appendPolygonEdge(group,local,a,b,P.signed_area(ring)>0?1:-1);
+  });
+  segments.forEach(([a,b],index)=>{
+    const length=Math.hypot(b[0]-a[0],b[1]-a[1]),local=new THREE.Group();
+    if(mode==='none'||mode==='line'){
+      addBox(local,length/2,baseY+.006,0,length,.012,.15,'paint_zone',
+             `FLOOR|${fkey}|${name}|zone${index}`,false,zone||'#2563eb');
+    }else wallOpenings(local,'x',0,0,length,baseY,height,t,openings[index],fkey,name,'w'+index,zone,mode==='glass');
+    appendPolygonEdge(group,local,a,b);
+  });
+  const cells=P.cells([ring],holes.map(P.rect_ring));
+  if((mode==='none'||mode==='line')&&cells.length){
+    const cell=cells.reduce((a,b)=>P.signed_area(a)>=P.signed_area(b)?a:b),c=cell.reduce((a,p)=>[a[0]+p[0]/cell.length,a[1]+p[1]/cell.length],[0,0]);
+    const label=cell.map(p=>[c[0]+(p[0]-c[0])*.5,c[1]+(p[1]-c[1])*.5]);
+    addPolygonPrism(group,label,baseY+.003,baseY+.017,'paint_zone',`FLOOR|${fkey}|${name}|label`,zone||'#2563eb');
+  }
+  for(const[colour,mat,tag,bottom,top]of [[room.floor_color,'floor','plate',baseY,baseY+.024],
+                                         [room.ceiling_color,'ceiling','ceil',baseY+H-.055,baseY+H-.005]]){
+    const tint=normHex(colour);if(tint)cells.forEach((cell,i)=>addPolygonPrism(group,cell,bottom,top,mat,`FLOOR|${fkey}|${name}|${tag}${i}`,tint));
+  }
+}
+function buildRoom(group,room,fkey,baseY,def,holes=[]){
   const rect=acsRoomRect(room);
   if(!rect){
     acsBuildDefect('rejected_room','ROOM_RECT_INVALID',(room||{}).id||'?');
@@ -569,53 +649,57 @@ function buildRoom(group,room,fkey,baseY,def){
   }
   const [x,z,w,d]=rect;
   const H=room.wall_h||def.wall_h, t=def.wall_t, name=room.id||'room';
-  /* تشطيبات الغرفة: لون خاص بهذه الغرفة وحدها */
-  const wcol=normHex(room.wall_color), fcol=normHex(room.floor_color), ccol=normHex(room.ceiling_color);
-  const per={N:[],S:[],E:[],W:[]};
-  acsList(room,'doors').forEach(dr=>{dr.edge=normEdge(dr.edge);
-    per[dr.edge].push([openU(dr.edge,rect,dr.offset),dr.width||0.9,0,dr.height||2.1]);});
-  acsList(room,'windows').forEach(wn=>{const s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
-    wn.edge=normEdge(wn.edge);
-    per[wn.edge].push([openU(wn.edge,rect,wn.offset),wn.width||1.2,s,s+h]);});
-  const dk=dockOpenings(room);
-  for(const e of['N','S','E','W']) per[e]=per[e].concat(dk[e]);
-
-  /* نمط الجدار: مناطق المستودع وحدها مفتوحة (دهان أرضي).
-     الغرف السكنية/المكتبية تبقى بجدران كاملة حتى لو حملت role. */
-  const wallsMode=room.walls||((def.industrial&&room.role&&!ADMIN_ROLES[room.role])?'none':'full');
-  const WH={none:0, line:0, low:1.10, half:1.80, rail:1.10, glass:H, full:H};
-  const hW=(WH[wallsMode]==null?H:WH[wallsMode]);
-  if(wallsMode==='none'||wallsMode==='line'){
-    /* حدّ المنطقة: شريط دهان أرضي بلون الوظيفة + لوحة اسم المنطقة */
-    const zc=wcol||ROLE_COLOR[room.role]||'#2563eb';
-    for(const e of['N','S','E','W']){
-      const[axis,fixed,u0,u1]=edgeGeom(e,rect);
-      if(axis==='x') addBox(group,(u0+u1)/2,baseY+0.006,fixed,u1-u0,0.012,0.15,'paint_zone',
-            `FLOOR|${fkey}|${name}|zone${e}`,false,zc);
-      else addBox(group,fixed,baseY+0.006,(u0+u1)/2,0.15,0.012,u1-u0,'paint_zone',
-            `FLOOR|${fkey}|${name}|zone${e}`,false,zc);
-    }
-    addBox(group,x+w/2,baseY+0.01,z+d/2,Math.min(w*0.5,6),0.014,Math.min(d*0.22,2.2),'paint_zone',
-      `FLOOR|${fkey}|${name}|label`,false,zc);
+  if(Object.hasOwn(room,'polygon')){
+    buildPolygonEnvelope(group,room,fkey,baseY,def,holes);
   }else{
-    for(const e of['N','S','E','W']){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
-      wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
-        wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
+    /* تشطيبات الغرفة: لون خاص بهذه الغرفة وحدها */
+    const wcol=normHex(room.wall_color), fcol=normHex(room.floor_color), ccol=normHex(room.ceiling_color);
+    const per={N:[],S:[],E:[],W:[]};
+    acsList(room,'doors').forEach(dr=>{dr.edge=normEdge(dr.edge);
+      per[dr.edge].push([openU(dr.edge,rect,dr.offset),dr.width||0.9,0,dr.height||2.1]);});
+    acsList(room,'windows').forEach(wn=>{const s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+      wn.edge=normEdge(wn.edge);
+      per[wn.edge].push([openU(wn.edge,rect,wn.offset),wn.width||1.2,s,s+h]);});
+    const dk=dockOpenings(room);
+    for(const e of['N','S','E','W']) per[e]=per[e].concat(dk[e]);
+
+    /* نمط الجدار: مناطق المستودع وحدها مفتوحة (دهان أرضي).
+       الغرف السكنية/المكتبية تبقى بجدران كاملة حتى لو حملت role. */
+    const wallsMode=room.walls||((def.industrial&&room.role&&!ADMIN_ROLES[room.role])?'none':'full');
+    const WH={none:0, line:0, low:1.10, half:1.80, rail:1.10, glass:H, full:H};
+    const hW=(WH[wallsMode]==null?H:WH[wallsMode]);
+    if(wallsMode==='none'||wallsMode==='line'){
+      /* حدّ المنطقة: شريط دهان أرضي بلون الوظيفة + لوحة اسم المنطقة */
+      const zc=wcol||ROLE_COLOR[room.role]||'#2563eb';
+      for(const e of['N','S','E','W']){
+        const[axis,fixed,u0,u1]=edgeGeom(e,rect);
+        if(axis==='x') addBox(group,(u0+u1)/2,baseY+0.006,fixed,u1-u0,0.012,0.15,'paint_zone',
+              `FLOOR|${fkey}|${name}|zone${e}`,false,zc);
+        else addBox(group,fixed,baseY+0.006,(u0+u1)/2,0.15,0.012,u1-u0,'paint_zone',
+              `FLOOR|${fkey}|${name}|zone${e}`,false,zc);
+      }
+      addBox(group,x+w/2,baseY+0.01,z+d/2,Math.min(w*0.5,6),0.014,Math.min(d*0.22,2.2),'paint_zone',
+        `FLOOR|${fkey}|${name}|label`,false,zc);
+    }else{
+      for(const e of['N','S','E','W']){const[axis,fixed,u0,u1]=edgeGeom(e,rect);
+        wallOpenings(group,axis,fixed,u0,u1,baseY,hW,t,per[e],fkey,name,'w'+e,
+          wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
+    }
+    /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
+    if(fcol) addBox(group,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
+                    'floor',`FLOOR|${fkey}|${name}|plate`,false,fcol);
+    if(ccol) addBox(group,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
+                    'ceiling',`FLOOR|${fkey}|${name}|ceil`,false,ccol);
+    acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
+      const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
+      const dcol=normHex(dr.color);
+      if(axis==='x')addBox(group,uc,cy,fixed,wd,dh,0.06,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);
+      else addBox(group,fixed,cy,uc,0.06,dh,wd,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);});
+    acsList(room,'windows').forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
+      const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
+      if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
+      else addBox(group,fixed,cy,uc,0.05,h,wd,'window',`WINDOW|${fkey}|${name}|${i}`,false);});
   }
-  /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
-  if(fcol) addBox(group,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
-                  'floor',`FLOOR|${fkey}|${name}|plate`,false,fcol);
-  if(ccol) addBox(group,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
-                  'ceiling',`FLOOR|${fkey}|${name}|ceil`,false,ccol);
-  acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
-    const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
-    const dcol=normHex(dr.color);
-    if(axis==='x')addBox(group,uc,cy,fixed,wd,dh,0.06,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);
-    else addBox(group,fixed,cy,uc,0.06,dh,wd,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);});
-  acsList(room,'windows').forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
-    const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
-    if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
-    else addBox(group,fixed,cy,uc,0.05,h,wd,'window',`WINDOW|${fkey}|${name}|${i}`,false);});
   /* KI-26/F-46 — طول قائمة النقاط يقوده النموذج ولم يكن له حدّ: قائمةٌ فيها
      مليون نقطة كانت تولّد مليون شبكة قبل أن يصل أيّ حارس. ما زاد يُحصى. */
   acsCapList(acsList(room,'points'),SCENE_LIMITS.max_points_per_room,
@@ -630,7 +714,7 @@ function buildRoom(group,room,fkey,baseY,def){
   if(room.racks)    buildRacks(group,room,fkey,baseY,def);
   if(room.lanes)    buildLanes(group,room,fkey,baseY,def);
   if(room.stations) buildStations(group,room,fkey,baseY,def);
-  if(room.docks)    buildDocks(group,room,fkey,baseY,def);
+  if(room.docks&&!Object.hasOwn(room,'polygon')) buildDocks(group,room,fkey,baseY,def);
   if(room.objects)  buildObjects(group,room,fkey,baseY);
 }
 /* ==================================================================
@@ -1207,12 +1291,17 @@ function compile(data){
        معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
     const _pp=__ACS_LATE.pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
     const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
+    if((fdef.rooms||[]).some(r=>Object.hasOwn(r,'polygon'))){
+      const cells=ACS_POLYGON.cells((fdef.rooms||[]).map(ACS_POLYGON.room_ring),holes.map(ACS_POLYGON.rect_ring));
+      cells.forEach((cell,k)=>addPolygonPrism(grp,cell,baseY-.15,baseY,'floor',`FLOOR|${fkey}|slab|polygon${k}`));
+    }else{
     slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
+    }
     acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,
                'ROOMS_CAPPED','level.rooms')
-      .forEach(r=>buildRoom(grp,r,fkey,baseY,def));
+      .forEach(r=>buildRoom(grp,r,fkey,baseY,def,holes));
   });
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */

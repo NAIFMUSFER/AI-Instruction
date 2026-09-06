@@ -1,0 +1,10 @@
+[
+  {
+    "issue": "C09a",
+    "original_commit": "85e8327fb92362c8d47ac366bc0b726fd2af945b",
+    "published_commit": "0a0e4edd34bd44a2b3b0a9b83b1c87019801d455",
+    "tree": "c7a685cb6c6e539db24750e5931296024ea32bf1",
+    "tree_equal": true,
+    "original_commit_object": "tree c7a685cb6c6e539db24750e5931296024ea32bf1\nparent 32b643f6c5fd34c0fa302f331f21561ed9b906b0\nauthor Codex <codex@openai.com> 1788715925 +0200\ncommitter Codex <codex@openai.com> 1788715925 +0200\n\nfix: حفظ حدود المضلعات وفراغاتها في glTF — acs_compiler.py\n"
+  }
+]

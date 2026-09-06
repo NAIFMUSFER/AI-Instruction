@@ -5,6 +5,7 @@
    ============================================================ */
 import './shared-state.js';
 import './late-bindings.js';
+import './core/polygon.js';
 import './core/viewer.js';
 import './core/standards.js';
 import './core/disciplines.js';

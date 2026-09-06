@@ -35,7 +35,7 @@ function order() {
 
 /* الطبقات النقيّة: لا DOM ولا Three ولا window — تعمل في Node كما كانت تعمل
    حين استخرجها tests/phase3/lib/extract_browser_bundle.js من الصفحة. */
-const PURE = ['core/viewer.js', 'core/standards.js', 'core/disciplines.js'];
+const PURE = ['core/polygon.js', 'core/viewer.js', 'core/standards.js', 'core/disciplines.js'];
 
 /* سجلّا الأوراق اللذان يستوردهما public/app/main.js أوّلاً: __ACS_SHARED
    (الأسماء التي تُكتَب عبر حدود الوحدات) و __ACS_LATE (الإحالات الأمامية).

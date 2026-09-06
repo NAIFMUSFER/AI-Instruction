@@ -1,0 +1,7 @@
+
+== §1 — THE POLICY IS DELIVERED AS A RESPONSE HEADER AND PARSES ==
+  ✓ netlify.toml declares a Content-Security-Policy response header
+  ✓ the policy is on the site-wide header block, not a single path
+  ✓ no <meta http-equiv="Content-Security-Policy"> shadows the header (meta cannot express frame-ancestors and would measure a different policy than the one deployed)
+  ✓ exactly one Content-Security-Policy assignment exists in netlify.toml
+  policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests

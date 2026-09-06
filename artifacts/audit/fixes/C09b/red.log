@@ -1,0 +1,84 @@
+POLYGON MESHES: 0 passed, 6 failed (actual meshes; no pixels)
+FAIL concave L area and notch
+AssertionError [ERR_ASSERTION]: area=36
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25631:7)
+    at check (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25628:31)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25629:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_meshes.js:3:28)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL sloping door and immutable Building
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ '{"site":{"w":20,"d":25},"wall_h":3,"wall_t":0.15,"floor_height":3.2,"levels":[{"index":0,"template":"plan","elevation":7}],"floors":{"plan":{"rooms":[{"id":"polygon","rect":[3,4,6,6],"polygon":[[3,4],[9,4],[3,10]],"walls":"full","doors":[{"edge_index":1,"offset":4.242640687119285,"width":1,"height":2.1,"edge":"N"}]}]}}}'
+- '{"site":{"w":20,"d":25},"wall_h":3,"wall_t":0.15,"floor_height":3.2,"levels":[{"index":0,"template":"plan","elevation":7}],"floors":{"plan":{"rooms":[{"id":"polygon","rect":[3,4,6,6],"polygon":[[3,4],[9,4],[3,10]],"walls":"full","doors":[{"edge_index":1,"offset":4.242640687119285,"width":1,"height":2.1}]}]}}}'
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25637:27)
+    at check (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25628:31)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25634:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_meshes.js:3:28)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL core void and coloured finishes
+AssertionError [ERR_ASSERTION]: area=35
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25647:45)
+    at check (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25628:31)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25644:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_meshes.js:3:28)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL invalid polygon is not silently rendered
+AssertionError [ERR_ASSERTION]: Missing expected exception.
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25654:7)
+    at check (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25628:31)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25653:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_meshes.js:3:28)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL clockwise outline and open-zone label
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  a.ok(Math.abs(area(triangles(g,'|slab|',7))-20)<1e-5)
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25658:7)
+    at check (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25628:31)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25656:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_meshes.js:3:28)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL explicit negative origin is preserved
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  a.ok(Math.abs(area(ts)-20)<1e-5)
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25663:7)
+    at check (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25628:31)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25661:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_meshes.js:3:28)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)

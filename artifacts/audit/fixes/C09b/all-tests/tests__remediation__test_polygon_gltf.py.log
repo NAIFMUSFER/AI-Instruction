@@ -1,0 +1,12 @@
+test_concave_slab_area_and_notch (__main__.PolygonGltf.test_concave_slab_area_and_notch) ... ok
+test_core_void_and_coloured_finishes_keep_the_notch (__main__.PolygonGltf.test_core_void_and_coloured_finishes_keep_the_notch) ... ok
+test_diagonal_wall_opening_keeps_position_and_width (__main__.PolygonGltf.test_diagonal_wall_opening_keeps_position_and_width) ... ok
+test_invalid_ring_fails_before_file_is_written (__main__.PolygonGltf.test_invalid_ring_fails_before_file_is_written) ... ok
+test_offset_origin_is_preserved (__main__.PolygonGltf.test_offset_origin_is_preserved) ... ok
+test_union_diagonal_intersections_and_winding (__main__.PolygonGltf.test_union_diagonal_intersections_and_winding) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.023s
+
+OK
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0
