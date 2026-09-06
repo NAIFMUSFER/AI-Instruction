@@ -1,0 +1,39 @@
+{
+  "issue": "C15",
+  "source_base": "d7e72056ef718119e8e3c5785d1fcd17efa08070",
+  "red": {
+    "tests": 2,
+    "failures": 4
+  },
+  "green": {
+    "tests": 2,
+    "failures": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 118,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 133
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "ifc_schema_errors": {
+    "fixture": 0,
+    "warehouse": 0,
+    "chalet": "export refused: H10"
+  },
+  "IFC4_EXPRESS_fixture_errors": 7,
+  "EXPRESS_issues": [
+    "C16",
+    "C17",
+    "C18"
+  ]
+}

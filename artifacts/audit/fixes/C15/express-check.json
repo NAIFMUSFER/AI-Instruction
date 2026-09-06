@@ -1,0 +1,51 @@
+[
+  {
+    "level": "error",
+    "message": "(exists(lastmodifieddate) or (not exists(lastmodifieddate) and (not exists(changeaction))) or (not exists(lastmodifieddate) and exists(changeaction) and (changeaction == IfcChangeActionEnum.NOTDEFINED or changeaction == IfcChangeActionEnum.NOCHANGE)))\n\nViolated by:\n    ((False or (not False and not True) or (not False and True and ('ADDED' == 'NOTDEFINED' or 'ADDED' == 'NOCHANGE'))))\n     +  where False = exists(<indeterminate_type object at 0x7f66efcd4470>)\n     +  and   False = exists(<indeterminate_type object at 0x7f66efcd4470>)\n     +  and   True = exists('ADDED')\n     +  and   False = exists(<indeterminate_type object at 0x7f66efcd4470>)\n     +  and   True = exists('ADDED')\n     +  and   'NOTDEFINED' = IfcChangeActionEnum.NOTDEFINED\n     +  and   'NOCHANGE' = IfcChangeActionEnum.NOCHANGE\n\nOn instance:\n    #5=IfcOwnerHistory(#3,#4,$,.ADDED.,$,$,$,0)\n",
+    "type": "entity_rule",
+    "instance": "#5=IfcOwnerHistory(#3,#4,$,.ADDED.,$,$,$,0)",
+    "attribute": "IfcOwnerHistory.CorrectChangeAction"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in relatedelements if 'ifc4.ifcspatialstructureelement' in typeof(temp)]) == 0)\n\nViolated by:\n    (1 == 0)\n     +  where 1 = sizeof([#41=IfcSpace('33Luaz_L1bksJy0xpqaOzM',#5,'one',$,$,#33,#40,'one',.ELEMENT.,.INTERNAL.,7.)])\n\nOn instance:\n    #125=IfcRelContainedInSpatialStructure('1AyeT9OBActfSU6GKj$fjq',#5,$,$,(#41,#53,#63,#73,#83,#91,#103,#115,#124),#29)\n",
+    "type": "entity_rule",
+    "instance": "#125=IfcRelContainedInSpatialStructure('1AyeT9OBActfSU6GKj$fjq',#5,$,$,(#41,#53,#63,#73,#83,#91,#103,#115,#124),#29)",
+    "attribute": "IfcRelContainedInSpatialStructure.WR31"
+  },
+  {
+    "level": "error",
+    "message": "(hiindex(SELF.Decomposes) == 1 and 'ifc4.ifcrelaggregates' in typeof(SELF.Decomposes[1]) and ('ifc4.ifcproject' in typeof(SELF.Decomposes[1].RelatingObject) or 'ifc4.ifcspatialstructureelement' in typeof(SELF.Decomposes[1].RelatingObject)))\n\nViolated by:\n    ((0 == 1))\n     +  where 0 = hiindex(())\n     +    where () = #41=IfcSpace('33Luaz_L1bksJy0xpqaOzM',#5,'one',$,$,#33,#40,'one',.ELEMENT.,.INTERNAL.,7.).Decomposes\n\nOn instance:\n    #41=IfcSpace('33Luaz_L1bksJy0xpqaOzM',#5,'one',$,$,#33,#40,'one',.ELEMENT.,.INTERNAL.,7.)\n",
+    "type": "entity_rule",
+    "instance": "#41=IfcSpace('33Luaz_L1bksJy0xpqaOzM',#5,'one',$,$,#33,#40,'one',.ELEMENT.,.INTERNAL.,7.)",
+    "attribute": "IfcSpatialStructureElement.WR41"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #53=IfcWallStandardCase('0etbV8xzL6rvSuHsmW_Vq1',#5,'bld_0.flr_0.g.one.wall_N',$,$,#42,#52,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#53=IfcWallStandardCase('0etbV8xzL6rvSuHsmW_Vq1',#5,'bld_0.flr_0.g.one.wall_N',$,$,#42,#52,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #63=IfcWallStandardCase('2RsdIewQYkbp5ZP$LS4QLZ',#5,'bld_0.flr_0.g.one.wall_S',$,$,#56,#62,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#63=IfcWallStandardCase('2RsdIewQYkbp5ZP$LS4QLZ',#5,'bld_0.flr_0.g.one.wall_S',$,$,#56,#62,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #73=IfcWallStandardCase('2dMtOXCk3000duB46vA8lX',#5,'bld_0.flr_0.g.one.wall_W',$,$,#66,#72,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#73=IfcWallStandardCase('2dMtOXCk3000duB46vA8lX',#5,'bld_0.flr_0.g.one.wall_W',$,$,#66,#72,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #83=IfcWallStandardCase('0_vkdD6EuilkP7Lnc0sXOZ',#5,'bld_0.flr_0.g.one.wall_E',$,$,#76,#82,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#83=IfcWallStandardCase('0_vkdD6EuilkP7Lnc0sXOZ',#5,'bld_0.flr_0.g.one.wall_E',$,$,#76,#82,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  }
+]

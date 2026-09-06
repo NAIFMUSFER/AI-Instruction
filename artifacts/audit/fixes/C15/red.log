@@ -1,0 +1,61 @@
+test_door_and_window_each_serialize_all_thirteen_ifc4_attributes (__main__.IfcOpeningAttributes.test_door_and_window_each_serialize_all_thirteen_ifc4_attributes) ... 
+  test_door_and_window_each_serialize_all_thirteen_ifc4_attributes (__main__.IfcOpeningAttributes.test_door_and_window_each_serialize_all_thirteen_ifc4_attributes) (entity='IFCDOOR') ... FAIL
+  test_door_and_window_each_serialize_all_thirteen_ifc4_attributes (__main__.IfcOpeningAttributes.test_door_and_window_each_serialize_all_thirteen_ifc4_attributes) (entity='IFCWINDOW') ... FAIL
+test_unstated_types_remain_unknown_after_stated_height_and_width (__main__.IfcOpeningAttributes.test_unstated_types_remain_unknown_after_stated_height_and_width) ... 
+  test_unstated_types_remain_unknown_after_stated_height_and_width (__main__.IfcOpeningAttributes.test_unstated_types_remain_unknown_after_stated_height_and_width) (entity='IFCDOOR') ... FAIL
+  test_unstated_types_remain_unknown_after_stated_height_and_width (__main__.IfcOpeningAttributes.test_unstated_types_remain_unknown_after_stated_height_and_width) (entity='IFCWINDOW') ... FAIL
+
+======================================================================
+FAIL: test_door_and_window_each_serialize_all_thirteen_ifc4_attributes (__main__.IfcOpeningAttributes.test_door_and_window_each_serialize_all_thirteen_ifc4_attributes) (entity='IFCDOOR')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_ifc_opening_attributes.py", line 13, in test_door_and_window_each_serialize_all_thirteen_ifc4_attributes
+    self.assertEqual(len(e['args']),13)
+AssertionError: 12 != 13
+
+======================================================================
+FAIL: test_door_and_window_each_serialize_all_thirteen_ifc4_attributes (__main__.IfcOpeningAttributes.test_door_and_window_each_serialize_all_thirteen_ifc4_attributes) (entity='IFCWINDOW')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_ifc_opening_attributes.py", line 13, in test_door_and_window_each_serialize_all_thirteen_ifc4_attributes
+    self.assertEqual(len(e['args']),13)
+AssertionError: 12 != 13
+
+======================================================================
+FAIL: test_unstated_types_remain_unknown_after_stated_height_and_width (__main__.IfcOpeningAttributes.test_unstated_types_remain_unknown_after_stated_height_and_width) (entity='IFCDOOR')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_ifc_opening_attributes.py", line 22, in test_unstated_types_remain_unknown_after_stated_height_and_width
+    self.assertEqual(e['args'][10:],[None,None,None])
+AssertionError: Lists differ: [None, None] != [None, None, None]
+
+Second list contains 1 additional elements.
+First extra element 2:
+None
+
+- [None, None]
++ [None, None, None]
+?        ++++++
+
+
+======================================================================
+FAIL: test_unstated_types_remain_unknown_after_stated_height_and_width (__main__.IfcOpeningAttributes.test_unstated_types_remain_unknown_after_stated_height_and_width) (entity='IFCWINDOW')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_ifc_opening_attributes.py", line 22, in test_unstated_types_remain_unknown_after_stated_height_and_width
+    self.assertEqual(e['args'][10:],[None,None,None])
+AssertionError: Lists differ: [None, None] != [None, None, None]
+
+Second list contains 1 additional elements.
+First extra element 2:
+None
+
+- [None, None]
++ [None, None, None]
+?        ++++++
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.005s
+
+FAILED (failures=4)

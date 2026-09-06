@@ -1,0 +1,44 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the browser implementation ran and wrote its result
+  ✓ the python implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
+  ✓ the canonical comparison reports no mismatch
+  ✓ a real comparison was performed for scenario
+  ✓ every scenario agrees between the two implementations
+  ✓ a real comparison was performed for command hash
+  ✓ every command hash agrees between the two implementations
+  ✓ a real comparison was performed for candidate model hash
+  ✓ every candidate model hash agrees between the two implementations
+  ✓ a real comparison was performed for validation issue sequence
+  ✓ every validation issue sequence agrees between the two implementations
+  ✓ a real comparison was performed for transaction result
+  ✓ every transaction result agrees between the two implementations
+  ✓ a real comparison was performed for revision diff
+  ✓ every revision diff agrees between the two implementations
+  ✓ a real comparison was performed for adversarial case
+  ✓ every adversarial case agrees between the two implementations
+
+== THE COMPARISON IS NOT VACUOUS ==
+  ✓ both files carry the same keys
+  ✓ the comparison covers a substantial number of scenarios
+  ✓ at least one scenario actually committed a revision
+  ✓ at least one scenario was refused by both
+  ✓ committed revisions match one for one
+  ✓ committed model hashes match one for one
+  ✓ undo results match where an undo was performed
+  ✓ redo results match where a redo was performed
+  ✓ the adversarial block is populated on both sides
+  ✓ both implementations agree that no adversarial command changed a model
+  ✓ a planted difference would be detected
+  ✓ the target resolver agrees on every probed identifier
+  ✓ the editable-property model agrees on every probed identifier
+  ✓ natural-language target resolution agrees, including the ambiguous case
+  ✓ the model-integrity verdict agrees
+  ✓ the AI proposal is identical in both implementations
+  ✓ a save and load round trip yields the same hash and revision in both
+  ✓ a non-ASCII command parameter hashes identically in both
+
+──────────────────────────────────────────────
+AUTHORING PARITY: 35 passed, 0 failed

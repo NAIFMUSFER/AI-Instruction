@@ -1,0 +1,14 @@
+[
+  {
+    "path": "acs_bim.py",
+    "source_sha256": "dd95066c1406aa184367c40cfb1e56629619d20f717ec13ef13274be9db25f03",
+    "tested_sha256": "dd95066c1406aa184367c40cfb1e56629619d20f717ec13ef13274be9db25f03",
+    "equal": true
+  },
+  {
+    "path": "tests/remediation/test_ifc_opening_attributes.py",
+    "source_sha256": "107acccf81f5c25326ce7bf4bb5075b90ced379f3071a76751c6ba328d1d2675",
+    "tested_sha256": "107acccf81f5c25326ce7bf4bb5075b90ced379f3071a76751c6ba328d1d2675",
+    "equal": true
+  }
+]

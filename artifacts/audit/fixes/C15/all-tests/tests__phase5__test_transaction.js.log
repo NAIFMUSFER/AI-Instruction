@@ -1,0 +1,23 @@
+
+== §6 — TRANSACTION LIFECYCLE ==
+  ✓ a fresh project is IDLE
+  ✓ beginning an edit enters DRAFT
+  ✓ the draft pins the base revision
+  ✓ a valid preview reaches PREVIEWED
+  ✓ a valid transaction reaches VALIDATED
+  ✓ the model is still untouched at VALIDATED
+  ✓ an explicit commit reaches COMMITTED
+  ✓ the returned project is a new object, not the old one
+  ✓ the old project object still holds the old revision
+  ✓ an invalid target reaches REJECTED
+  ✓ a stale base revision reaches STALE_BASE_REVISION
+  ✓ a dependency conflict reaches CONFLICT
+  ✓ an unknown command reaches INVALID_COMMAND
+
+== §79 — TEST A: PREVIEW MOVE WALL, THEN CANCEL ==
+  ✓ the preview succeeds
+  ✓ the base model hash is still H1
+  ✓ the candidate is a different hash H2
+  ✓ the preview declares itself a preview and not committed
+  ✓ the canonical model object is untouched after the preview
+  ✓ the project revision did not move

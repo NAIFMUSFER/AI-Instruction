@@ -596,7 +596,7 @@ def serialise_ifc(exchange, generated_at=None):
                                  step_string(op["canonical_id"] + ":void"), opl, pds))
                 f.add("IFCRELVOIDSELEMENT", "'%s',%s,$,$,%s,%s"
                       % (guid(op["canonical_id"] + ":voids"), owner, host, ovoid))
-            ref = f.add(ifctype, "'%s',%s,%s,$,$,%s,%s,$,%s,%s,$,$"
+            ref = f.add(ifctype, "'%s',%s,%s,$,$,%s,%s,$,%s,%s,$,$,$"
                         % (guid(op["canonical_id"]), owner,
                            step_string(op["canonical_id"]), pl, pds,
                            step_real(oh), step_real(op["width"])))

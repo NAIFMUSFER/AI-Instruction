@@ -1,0 +1,7 @@
+[
+  {
+    "path": "tests/remediation/test_ifc_opening_attributes.py",
+    "before": null,
+    "after": "PASS"
+  }
+]

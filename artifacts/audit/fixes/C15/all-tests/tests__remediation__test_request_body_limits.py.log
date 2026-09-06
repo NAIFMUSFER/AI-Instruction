@@ -1,0 +1,15 @@
+test_chunked_file_stops_before_consuming_tail (__main__.RequestBodyLimits.test_chunked_file_stops_before_consuming_tail) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_PAYLOAD_TOO_LARGE", "event": "request_failed", "level": "error", "request_id": "req_afaa90a9310d40d6", "service": "ACS Understanding Engine", "status": 413, "ts": "2026-09-06T18:52:44Z", "version": "1.3"}
+ok
+test_declared_oversize_rejected_before_body_read (__main__.RequestBodyLimits.test_declared_oversize_rejected_before_body_read) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_PAYLOAD_TOO_LARGE", "event": "request_failed", "level": "error", "request_id": "req_1efc1aaa9d784c07", "service": "ACS Understanding Engine", "status": 413, "ts": "2026-09-06T18:52:44Z", "version": "1.3"}
+ok
+test_nonfile_part_limit_runs_before_endpoint_validation (__main__.RequestBodyLimits.test_nonfile_part_limit_runs_before_endpoint_validation) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_BAD_REQUEST", "event": "request_failed", "level": "error", "request_id": "req_917bf31a50cb4719", "service": "ACS Understanding Engine", "status": 400, "ts": "2026-09-06T18:52:44Z", "version": "1.3"}
+ok
+test_small_file_keeps_existing_validation_and_error_contract (__main__.RequestBodyLimits.test_small_file_keeps_existing_validation_and_error_contract) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_UNPROCESSABLE", "event": "request_failed", "level": "error", "request_id": "req_d71637d2b78247cc", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:52:44Z", "version": "1.3"}
+ok
+test_urlencoded_field_limit_runs_before_endpoint (__main__.RequestBodyLimits.test_urlencoded_field_limit_runs_before_endpoint) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_BAD_REQUEST", "event": "request_failed", "level": "error", "request_id": "req_5eaf906404e9411a", "service": "ACS Understanding Engine", "status": 400, "ts": "2026-09-06T18:52:44Z", "version": "1.3"}
+ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.188s
+
+OK

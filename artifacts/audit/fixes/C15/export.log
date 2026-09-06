@@ -1,0 +1,31 @@
+[ACS] objects: requested=4 generated=4 generic_box=0 unsupported=0
+[
+  {
+    "case": "warehouse",
+    "source": "shipped local generator; DOM controls stubbed; no provider call, no pixel verification",
+    "generation_s": 0.02133762200000001,
+    "language_understanding_and_engineering_generation": "combined local parser/buildLocal execution",
+    "validation_s": 0.0038784570060670376,
+    "architecture_compilation_s": 0.0023484459961764514,
+    "gltf_export_s": 0.08756598198669963,
+    "svg_export_s": 0.02262075900216587,
+    "measured_total_s": 0.13775126599110898,
+    "gltf_nodes": 1140,
+    "gltf_buffer_bytes": 1039680,
+    "native_dxf_export": "NOT_IMPLEMENTED; audit-room-outlines.dxf is an audit-only room-outline projection"
+  },
+  {
+    "case": "chalet",
+    "source": "shipped local generator; DOM controls stubbed; no provider call, no pixel verification",
+    "generation_s": 0.025727629999999863,
+    "language_understanding_and_engineering_generation": "combined local parser/buildLocal execution",
+    "validation_s": 0.0006841229915153235,
+    "architecture_compilation_s": 0.0005562800070038065,
+    "gltf_export_s": 0.010569029996986501,
+    "svg_export_s": 0.005035252994275652,
+    "measured_total_s": 0.042572315989781145,
+    "gltf_nodes": 143,
+    "gltf_buffer_bytes": 130416,
+    "native_dxf_export": "NOT_IMPLEMENTED; audit-room-outlines.dxf is an audit-only room-outline projection"
+  }
+]
