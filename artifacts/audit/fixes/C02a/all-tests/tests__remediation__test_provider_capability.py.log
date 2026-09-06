@@ -1,0 +1,128 @@
+
+== أ · W2-B — قدرة المزوّد بيانٌ مُعلَن لا اسمٌ يُتفرَّع عليه ==
+  ✓ anthropic يعلن أن رموز مخرجه وكيلٌ عن المحتوى — وهو السلوك القائم
+  ✓ deepseek يعلن أنها ليست كذلك — وهو ما قِيس حيّاً
+  ✓ مضاعِف anthropic 1.0 بالضبط: لا يغيّر أي حساب قائم
+  ✓ مضاعِف deepseek 2.0 — مشتقّ من القياس (31022/15944 = 1.946) بهامش أمان
+  ✓ كل مفتاح قدرة له افتراضٌ مُعلَن في CAPABILITY_DEFAULTS
+  ✓ الافتراض هو السلوك القائم: مزوّدٌ لا يعلن قدرةً يُعامَل معاملة الوكيل
+  ✓ مضاعِفٌ دون 1.0 يُرفَض: ادّعاءُ وفرٍ يرفع العتبة في اتّجاه الخطر
+  ✓ ومضاعِفٌ هارب يُقصّ إلى الحدّ الأعلى المُعلَن
+  ✓ وقيمةٌ غير رقمية تسقط إلى المُعلَن لا إلى صفر ولا إلى استثناء
+  ✓ للمشغّل تجاوزٌ صريح إن كذّب القياسُ الإعلان — بلا تعديل شفرة
+  ✓ القدرة تظهر في /health: المشغّل يرى بأيّ محاسبةٍ يعمل النظام
+  ✓ والعقد يعلن المفاتيح وحدودها بدل دفنها
+  ✓ القدرة لا تحمل مفتاحاً ولا عنواناً كاملاً
+  ✓ منطق التقطيع لا يذكر اسم مزوّدٍ في أي قيمة نصّية منفَّذة
+  ✓ ومنطق التوجيه كذلك
+  ✓ acs_plan_chunks لا يستورد acs_provider في أعلى الملفّ — القدرة تُقرأ عند الحاجة فتبقى الوحدة نقيّة وقابلة للاختبار بلا بيئة
+
+== ب · W2-C — التوجيه محسوبٌ باقتصاد المزوّد العامل (المطلب 5) ==
+  ✓ مع الوكيل: الطلب المحاسَب = تقدير المحتوى نفسه، بلا زيادة رمز
+  ✓ والحالة الحيّة تبقى MEDIUM ⇒ نداءٌ واحد — سلوكٌ قائم لم يتغيّر
+  ✓ الحالة الحيّة: est=15944 دون العتبة 19200 — ولذلك اختير النداء الواحد
+  ✓ وقد استهلك فعلاً 31022 ثمّ 32000 وقُطِع: العتبة كانت تقيس بالوحدة الخطأ
+  ✓ بعد W2-C: الطلب المحاسَب 31888 يتجاوز العتبة ⇒ يُوجَّه إلى المراحل
+  ✓ ولا يُوجَّه SMALL إلى المراحل بلا سبب: 6917 حرفاً نجحت حيّاً وتبقى واحدة
+  ✓ plan_strategy يعلن المضاعِف والطلب المحاسَب — التوجيه قابل للمراجعة
+  ✓ ولا يُخفي تقدير المحتوى الأصلي خلفه
+  ✓ المطلب 6 — لا سقفَ رُفِع: ميزانيات المراحل واحدة عند المزوّدين
+  ✓ ولا الميزانية الواحدة ولا سقف البيان
+  ✓ والمضاعِف يرفع **الطلب المقدَّر** لا `max_tokens` — لا يظهر في أي ميزانية
+
+== ج · W2-C — كلفة المنطقة تُقاس بما وصل ويمكن التحقّق منه ==
+  ✓ القراءة الحيّة (16000 رمزاً، 0 حرف، 0 منطقة مكتملة) لا تُغيّر الكلفة
+  ✓ ولا تُغيّرها حتى لو سبقتها كلفةٌ أعلى: الرتابة محفوظة، ولا ارتفاع بلا قياس
+  ✓ محتوىً مرئيّ مكتمل يُقاس فعلاً: 4400 حرفاً / 10 مناطق ⇒ 201 رمزاً
+  ✓ والمقيس دون التقدير لا يُكافأ بشريحة أكبر — التكيّف أحاديّ الاتجاه
+  ✓ وسقفٌ صريح يمنع قياساً شاذّاً واحداً من شلّ ما بعده
+  ✓ السقف مُعلَن لا مدفون، ومشتقّ من تسامح الإسهاب القائم
+  ✓ والرتابة غير المتناقصة (شرط F-40) محفوظة عبر أي تسلسل قياسات
+  ✓ وحتميّ: نفس المدخل يعطي نفس المخرج دائماً
+  ✓ والمحاسبة المُعلَنة تظهر في عقد الوحدة
+  ✓ والقدرة تُقرأ من المزوّد حين لا تُمرَّر صراحةً
+  ✓ وتعود إلى الوكيل عند المزوّد الوكيل
+
+== د١ · شاهد سالب — إعادة رموز المخرج تُعيد الانهيار رقماً برقم ==
+  ✓ بالصياغة القديمة: [60, 35, 20, 11, 6, 4] — وهو الانهيار الموثّق في التدقيق حرفياً
+  ✓ العطل حقيقيّ لا نظريّ: الشريحة تنتهي عند MIN_CHUNK_ZONES
+  ✓ وعدد النداءات لمئة منطقة يتضاعف 12.5× (2 → 25 نداءً)
+  ✓ بالصياغة الجديدة: [60, 60, 60, 60, 60, 60] — ثابتة، فلا تصعيد ولا انفجار نداءات
+  ✓ والفرق نابعٌ من القياس وحده: نفس المدخل، ونفس الميزانية، ونفس الحلقة
+
+== د٢ · شاهد سالب — مسار المزوّد الوكيل مطابقٌ لما كان (المطلب 4) ==
+  ✓ ١٨٠ تركيبة: القديم == الجديد == الجديد بوسائط W2-C ممرَّرة
+  ✓ ومع المزوّد الوكيل تُقرأ القدرة من البيئة فتعطي النتيجة نفسها
+  ✓ وسلسلة الانهيار نفسها ما زالت تعمل عند الوكيل — لم يُضعَف حارسٌ قائم
+  ✓ وplan_strategy عند الوكيل: التصنيف مُشتقّ من التقدير نفسه لا من مضاعَفه
+
+== هـ · W2-E — دلالة الرد تُشتقّ من محاسبة الكتل (المطلب 7) ==
+  ✓ ١ سقفٌ + تفكيرٌ وحده + صفرُ حرف ⇒ NO_VISIBLE_OUTPUT
+  ✓ ٢ سقفٌ + JSON مرئيّ جزئيّ ⇒ TRUNCATED
+  ✓ ٣ end_turn + نصّ صالح ⇒ OK بلا رمز خطأ
+  ✓ ٤ ردٌّ بلا أي كتلة ⇒ EMPTY_RESPONSE — وهي حالةٌ أخرى فعلاً
+  ✓ والامتناع المُعلَن يعلو كلّ ذلك
+  ✓ ردٌّ يحمل تفكيراً ونصّاً معاً — الشكل الغالب حيّاً — لا يُصنَّف بلا مخرج
+  ✓ الدلالات الخمس معلنة، والدالّة لا تعيد غيرها
+  ✓ الدالّة خالصة: لا بيئة ولا شبكة ولا SDK — قيمٌ داخلة وقيمٌ خارجة
+  ✓ ومحصّنة ضدّ قيمٍ غير رقمية بدل أن ترفع داخل مسار الرد
+  ✓ الرمز الجديد مُعلَن في CODES وله حالة HTTP ورسالة عربية
+  ✓ ورسالته لا تقول «رداً فارغاً» — الوصف الكاذب هو نصف العطل
+  ✓ وليس قابلاً لإعادة المحاولة: حدثُ سقفٍ حتميّ، وتكرارُه حرقُ ميزانية كاملة
+  ✓ ولا للتحويل إلى مزوّد بديل: المخرج وصل ورديئاً، وليست مسألة توفّر
+  ✓ وهو دليل بلوغ سقفٍ إلى جانب TRUNCATED — فيُشطَر ويُصعَّد
+  ✓ ورسالته لا تحمل مساراً ولا اسم صنف بايثون
+  ✓ موضع القرار «شطر مجموعة التفصيل» يقرأ دليل بلوغ السقف لا رمزاً بعينه
+  ✓ موضع القرار «إعادة الخطّة بشرائح محدودة» يقرأ دليل بلوغ السقف لا رمزاً بعينه
+  ✓ موضع القرار «تصعيد النداء الواحد» يقرأ دليل بلوغ السقف لا رمزاً بعينه
+  ✓ موضع القرار «شطر شريحة الخطّة» يقرأ دليل بلوغ السقف لا رمزاً بعينه
+  ✓ ولم يبقَ موضعُ قرارِ سقفٍ يقارن TRUNCATED وحدها
+
+== د٣ · شاهد سالب — ردٌّ استهلك ميزانيته تفكيراً لا يمرّ أبداً ==
+[ACS-LLM] stage=plan_chunk provider=deepseek host=api.deepseek.com model=deepseek-v4-pro thinking=off max_tokens=16000 stop=max_tokens out_chars=0 out_tokens=16000 in_tokens=5692 blocks=1 types=thinking:1 text_blocks=0 nontext_blocks=1 chars_per_out_token=0.0
+[ACS-LLM] رد بلا نص — أجرّب إعداداً آخر…
+[ACS-LLM] retry skipped: request is byte-identical to one already sent (stage=plan_chunk max_tokens=16000 thinking=default sdk=0.40.0) — it cannot produce a different result and would cost another full budget
+[ACS-LLM] استُهلكت الميزانية في محتوى غير مرئي — blocks=1 types=thinking:1 out_tokens=16000 out_chars=0 — يُعامَل معاملة بلوغ السقف لا معاملة الرد الفارغ.
+{"chars_per_output_token": 0.0, "content_block_types": "thinking:1", "content_blocks": 1, "duration_ms": 1, "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "input_tokens": 5692, "level": "info", "max_output_tokens": 16000, "model": "deepseek-v4-pro", "nontext_blocks": 1, "output_chars": 0, "output_tokens": 16000, "provider": "deepseek", "provider_base_host": "api.deepseek.com", "provider_model": "deepseek-v4-pro", "requested_max_tokens": 16000, "response_semantic": "no_visible_output", "retries": 0, "retries_skipped": 1, "retry_skipped_reason": "identical_request", "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "plan_chunk", "stop_reason": "max_tokens", "strategy": "staged", "success": false, "text_block_chars": "0", "text_blocks": 0, "thinking_sent": false, "transport": "stream", "truncated": true, "ts": "2026-09-06T13:29:15Z"}
+  ✓ يُرفَع NO_VISIBLE_OUTPUT لا EMPTY_RESPONSE — الوصف صار صادقاً
+  ✓ ولا يعود نصّ إطلاقاً: لا شيء يصل إلى extract_json
+  ✓ والتليمتري يحمل الدلالة صراحةً
+  ✓ والمحاسبة تقول أين ذهبت الميزانية: كتلةٌ واحدة غير نصّية
+  ✓ وW2-D ما زال يمنع الطلب المطابق بايتاً — نداءٌ واحد لا اثنان (المطلب 8)
+  ✓ والدلالة تعبر قائمة السماح إلى سجلّ الإنتاج بدل أن تُسقَط صامتةً
+  ✓ وبلا محاسبة الكتل (W2-A) كان التصنيف سيبقى EMPTY — المحاسبة حاملة
+  ✓ والسجلّ لا يحمل مفتاحاً ولا عنواناً كاملاً
+
+== د٤ · شاهد سالب — نصفُ JSON عند السقف انقطاعٌ لا فراغ ==
+[ACS-LLM] stage=single provider=deepseek host=api.deepseek.com model=deepseek-v4-pro thinking=off max_tokens=32000 stop=max_tokens out_chars=44 out_tokens=32000 in_tokens=5000 blocks=2 types=text:1,thinking:1 text_blocks=1 nontext_blocks=1 chars_per_out_token=0.0014
+[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.
+{"chars_per_output_token": 0.0014, "content_block_types": "text:1,thinking:1", "content_blocks": 2, "duration_ms": 1, "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "input_tokens": 5000, "level": "info", "max_output_tokens": 32000, "model": "deepseek-v4-pro", "nontext_blocks": 1, "output_chars": 44, "output_tokens": 32000, "provider": "deepseek", "provider_base_host": "api.deepseek.com", "provider_model": "deepseek-v4-pro", "requested_max_tokens": 32000, "response_semantic": "truncated", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "stop_reason": "max_tokens", "strategy": "staged", "success": false, "text_block_chars": "0,44", "text_blocks": 1, "thinking_sent": false, "transport": "stream", "truncated": true, "ts": "2026-09-06T13:29:15Z"}
+  ✓ يُرفَع TRUNCATED — وهو ما يستدعي الشطر والتصعيد
+  ✓ وليس EMPTY_RESPONSE ولا NO_VISIBLE_OUTPUT: النصّ وصل ومرئيّ
+  ✓ والدلالة truncated في التليمتري
+  ✓ والنصف الواصل لا يُرمَّم ولا يُغلَق قوسُه ولا يمرّ إلى المصرِّف
+  ✓ ومحاسبة الكتل تفصل النصّي عن غيره في نفس الرد
+  ✓ ونسبة الأحرف إلى الرمز محسوبة — وهي المقياس الذي أثبت العطل
+  ✓ والنصّ الواصل نفسه لا يظهر في السجلّ
+[ACS-LLM] stage=single provider=deepseek host=api.deepseek.com model=deepseek-v4-pro thinking=off max_tokens=32000 stop=end_turn out_chars=28 out_tokens=13945 in_tokens=5000 blocks=2 types=text:1,thinking:1 text_blocks=1 nontext_blocks=1 chars_per_out_token=0.002
+{"chars_per_output_token": 0.002, "content_block_types": "text:1,thinking:1", "content_blocks": 2, "duration_ms": 1, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 5000, "level": "info", "max_output_tokens": 32000, "model": "deepseek-v4-pro", "nontext_blocks": 1, "output_chars": 28, "output_tokens": 13945, "provider": "deepseek", "provider_base_host": "api.deepseek.com", "provider_model": "deepseek-v4-pro", "requested_max_tokens": 32000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "stop_reason": "end_turn", "strategy": "staged", "success": true, "text_block_chars": "0,28", "text_blocks": 1, "thinking_sent": false, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:29:15Z"}
+  ✓ والردّ السليم يمرّ كما كان — لا حارسَ جديدٌ يعترض الحالة الناجحة
+  ✓ ودلالته ok وtel['complete'] صحيح
+
+== و · الثوابت السابقة (المطلبان 8 و9) ==
+  ✓ KI-24: ثوابت التقطيع كما هي — لم يُرفع سقفٌ ولا وُسِّع هامش
+  ✓ F-39: الشطر ما زال حارس الانقطاع — لم يُستبدَل بتصغير الكلّ
+  ✓ F-40: النداء الاستكشافي ما زال قائماً
+  ✓ STAGE_SHARE والميزانيات كما هي — لم يُمَسّ اقتصاد المراحل
+  ✓ KI-23: لا `thinking` يُرسَل مع SDK 0.40 — لم يتغيّر شيء في بناء الطلب
+  ✓ W2-D: البصمة ما زالت تُحسَب ولا تُسجَّل أبداً
+  ✓ F-50: تشخيص رفض المزوّد قائم بحقوله كلّها
+  ✓ عزل الأسرار: القدرة لا تُقرَأ من مفتاح ولا تفتح مساراً إلى مزوّد آخر
+
+──────────────────────────────────────────────────────────────
+LIVE LARGE ACCEPTANCE: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.
+  هذا الملفّ يثبت المنطق على القيم المقيسة حيّاً. أنّ توليد LARGE
+  حقيقياً يكتمل دون 840 ث بلا تصعيد تقطيع يحتاج نشراً وتشغيلاً —
+  وهو ما يبقى شرطاً في بوّابة W2 بعد النشر، مع W2-G.
+──────────────────────────────────────────────────────────────
+PROVIDER CAPABILITY / ROUTING / RESPONSE SEMANTICS: 92 passed, 0 failed

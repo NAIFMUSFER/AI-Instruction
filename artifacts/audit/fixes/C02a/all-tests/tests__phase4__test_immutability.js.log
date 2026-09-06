@@ -1,0 +1,14 @@
+
+== §7 — ENGINEERING_HASH_BEFORE == ENGINEERING_HASH_AFTER ==
+  ✓ villa: the engineering model hash is unchanged by a full runtime session
+  ✓ villa: the visual scene hash is unchanged by a full runtime session
+  ✓ hotel: the engineering model hash is unchanged by a full runtime session
+  ✓ hotel: the visual scene hash is unchanged by a full runtime session
+  ✓ clinic: the engineering model hash is unchanged by a full runtime session
+  ✓ clinic: the visual scene hash is unchanged by a full runtime session
+  ✓ warehouse: the engineering model hash is unchanged by a full runtime session
+  ✓ warehouse: the visual scene hash is unchanged by a full runtime session
+  ✓ office: the engineering model hash is unchanged by a full runtime session
+  ✓ office: the visual scene hash is unchanged by a full runtime session
+  ✓ villa_full: the engineering model hash is unchanged by a full runtime session
+  ✓ villa_full: the visual scene hash is unchanged by a full runtime session

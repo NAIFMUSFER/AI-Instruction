@@ -1,0 +1,46 @@
+{
+  "site": {
+    "w": 20,
+    "d": 25
+  },
+  "floor_height": 3.2,
+  "levels": [
+    {
+      "index": 0,
+      "template": "g"
+    },
+    {
+      "index": 1,
+      "template": "g"
+    }
+  ],
+  "floors": {
+    "g": {
+      "rooms": [
+        {
+          "id": "warehouse",
+          "rect": [
+            0,
+            0,
+            10,
+            10
+          ],
+          "walls": "none",
+          "objects": [
+            {
+              "kind": "forklift",
+              "x": 3,
+              "z": 3,
+              "w": 1.2,
+              "d": 2.2
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "type": "warehouse",
+    "strict": true
+  }
+}

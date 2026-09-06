@@ -1,0 +1,9 @@
+{
+  "regression_before": {"tests": 5, "failures_including_subtests": 3, "errors": 2},
+  "regression_after": {"tests": 5, "failures": 0, "errors": 0},
+  "full_suite": {"files": 120, "PASS": 105, "FAIL": 7, "NOT_VERIFIED": 8},
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "engineering files byte-identical; validation gains explicit vertical alignment scope; chalet core identity is NOT_EVALUATED",
+  "scope": "stated core identities and horizontal footprints only; unknown identities are not guessed; existing classifier defect C12 separately proven before fixing",
+  "pixel_validation": "NOT_VERIFIED"
+}

@@ -67,12 +67,14 @@ Room = {
   "windows": [ {"edge":"N|S|E|W","offset":float,"width":float,"sill":float,"height":float} ],
   "points":  [ {"type": PointType, "x":float, "z":float, "height":float?} ],  // x,z داخل الغرفة من ركنها
   "furniture":[ {"name":str,"x":float,"z":float,"w":float,"d":float,"h":float,"mat":"furn|furn_soft|counter|tv"} ],
-  "objects": [ {"kind":str,"name":str?,"x":float,"z":float,"y":float?,
+  "objects": [ {"kind":str,"name":str?,"id":str?,"core_id":str?,"x":float,"z":float,"y":float?,
                 "w":float?,"d":float?,"h":float?,"rot":deg?,"color":"#RRGGBB"?,
                 "count":int?,"pitch":float?,"dir":"x|z"?} ]
 }
 
 **"objects" — أي شيء يذكره العميل يُبنى هنا، ولا يُسقَط بند أبداً.**
+للدرج والمصعد: صرّح core_id ثابتاً للنواة نفسها عبر الأدوار، مع x/z وw/d؛
+النوى المستقلة تحمل معرّفات مختلفة. غياب الهوية/الموضع لا يثبت تطابقاً رأسياً.
 kind معروف (يُبنى بمجسّم مناسب): person · worker · visitor · engineer · child ·
   robot · amr · cobot · forklift · reachtruck · car · van · truck · trailer ·
   stairs(درج) · elevator(مصعد) · column(عمود) · railing · barrier ·

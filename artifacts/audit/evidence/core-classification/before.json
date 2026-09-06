@@ -1,0 +1,75 @@
+{
+  "architecture_kind": "ELEVATOR_SHAFT",
+  "relation_kind": "elevator",
+  "cores": [
+    {
+      "type": "ELEVATOR_SHAFT",
+      "x": 3.0,
+      "z": 3.0,
+      "position_source": "imported",
+      "footprint_w_m": {
+        "value": 1.2,
+        "render_fallback": 2.1,
+        "source": "imported"
+      },
+      "footprint_d_m": {
+        "value": 2.2,
+        "render_fallback": 2.3,
+        "source": "imported"
+      },
+      "served_levels": [
+        0,
+        1
+      ],
+      "spaces": [
+        "bld_0.g.warehouse"
+      ],
+      "via": [
+        "bld_0.g.warehouse.elevator_0",
+        "bld_0.g.warehouse.elevator_0"
+      ],
+      "id": "bld_0.core_0"
+    }
+  ],
+  "voids": [
+    {
+      "id": "bld_0.flr_1.void_0",
+      "type": "FLOOR_OPENING",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_1",
+      "level_index": 1,
+      "core_id": "bld_0.core_0",
+      "core_type": "ELEVATOR_SHAFT",
+      "rect": [
+        2.4,
+        1.9,
+        1.2,
+        2.2
+      ],
+      "footprint_source": "imported",
+      "note": "architectural void only — no structural framing implied"
+    }
+  ],
+  "vertical_edges": [
+    {
+      "id": "bld_0.rel_1",
+      "type": "VERTICAL_CONNECTS",
+      "from": "bld_0.flr_0",
+      "to": "bld_0.flr_1",
+      "source": "geometry_inference",
+      "status": "inferred",
+      "via": "bld_0.g.warehouse.elevator_0",
+      "meta": {
+        "kind": "elevator",
+        "serviced_levels": [
+          0,
+          1
+        ],
+        "from_space": "bld_0.g.warehouse",
+        "to_space": "bld_0.g.warehouse",
+        "from_level": 0,
+        "to_level": 1
+      }
+    }
+  ]
+}

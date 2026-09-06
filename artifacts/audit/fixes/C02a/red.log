@@ -1,0 +1,54 @@
+test_aligned_control_has_no_false_alerts_and_reports_scope (__main__.CoreAlignment.test_aligned_control_has_no_false_alerts_and_reports_scope) ... ERROR
+test_changed_stated_footprint_is_detected (__main__.CoreAlignment.test_changed_stated_footprint_is_detected) ... FAIL
+test_coordinates_are_compared_in_building_not_room_space (__main__.CoreAlignment.test_coordinates_are_compared_in_building_not_room_space) ... ok
+test_shifted_stair_and_elevator_are_each_detected (__main__.CoreAlignment.test_shifted_stair_and_elevator_are_each_detected) ... 
+  test_shifted_stair_and_elevator_are_each_detected (__main__.CoreAlignment.test_shifted_stair_and_elevator_are_each_detected) (kind='stairs') ... FAIL
+  test_shifted_stair_and_elevator_are_each_detected (__main__.CoreAlignment.test_shifted_stair_and_elevator_are_each_detected) (kind='elevator') ... FAIL
+test_unknown_core_identity_is_disclosed_without_inventing_a_match (__main__.CoreAlignment.test_unknown_core_identity_is_disclosed_without_inventing_a_match) ... ERROR
+
+======================================================================
+ERROR: test_aligned_control_has_no_false_alerts_and_reports_scope (__main__.CoreAlignment.test_aligned_control_has_no_false_alerts_and_reports_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_alignment.py", line 53, in test_aligned_control_has_no_false_alerts_and_reports_scope
+    self.assertEqual(stats["vertical_alignment"]["status"], "COMPLETED")
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'vertical_alignment'
+
+======================================================================
+ERROR: test_unknown_core_identity_is_disclosed_without_inventing_a_match (__main__.CoreAlignment.test_unknown_core_identity_is_disclosed_without_inventing_a_match)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_alignment.py", line 62, in test_unknown_core_identity_is_disclosed_without_inventing_a_match
+    self.assertEqual(stats["vertical_alignment"]["status"], "NOT_EVALUATED")
+                     ~~~~~^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'vertical_alignment'
+
+======================================================================
+FAIL: test_changed_stated_footprint_is_detected (__main__.CoreAlignment.test_changed_stated_footprint_is_detected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_alignment.py", line 38, in test_changed_stated_footprint_is_detected
+    self.assertTrue(any("CORE_FOOTPRINT_MISMATCH" in issue
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_shifted_stair_and_elevator_are_each_detected (__main__.CoreAlignment.test_shifted_stair_and_elevator_are_each_detected) (kind='stairs')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_alignment.py", line 31, in test_shifted_stair_and_elevator_are_each_detected
+    self.assertTrue(any("CORE_VERTICAL_MISALIGNMENT" in issue
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_shifted_stair_and_elevator_are_each_detected (__main__.CoreAlignment.test_shifted_stair_and_elevator_are_each_detected) (kind='elevator')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_alignment.py", line 31, in test_shifted_stair_and_elevator_are_each_detected
+    self.assertTrue(any("CORE_VERTICAL_MISALIGNMENT" in issue
+AssertionError: False is not true : []
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+FAILED (failures=3, errors=2)

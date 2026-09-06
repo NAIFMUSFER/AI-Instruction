@@ -151,6 +151,68 @@ def _item_geometry_issues(room, template, width, depth, stats):
     return issues
 
 
+def _core_alignment_issues(building, stats):
+    import acs_arch
+    issues, groups, unresolved = [], {}, []
+    for level in building.get("levels") or []:
+        template = level.get("template")
+        index = _finite_number(level.get("index"))
+        if index is None:
+            continue
+        for room in (building.get("floors", {}).get(template, {}).get("rooms") or []):
+            rect = room.get("rect")
+            if not isinstance(rect, (list, tuple)) or len(rect) != 4:
+                continue
+            rect = [_finite_number(value) for value in rect]
+            if any(value is None for value in rect) or rect[2] <= 0 or rect[3] <= 0:
+                continue
+            for oi, obj in enumerate(room.get("objects") or []):
+                if not isinstance(obj, dict):
+                    continue
+                kind = acs_arch._core_kind(obj)
+                if kind is None:
+                    continue
+                ref = "levels/%s/%s/%s/objects/%d" % (level.get("index"), template, room.get("id", "?"), oi)
+                core_id = obj.get("core_id") or obj.get("id")
+                x, z = _finite_number(obj.get("x")), _finite_number(obj.get("z"))
+                if not core_id or x is None or z is None or obj.get("count", 1) != 1:
+                    unresolved.append({"subject": ref, "reason": "identity_position_or_single_instance_not_stated"})
+                    continue
+                w, d = _finite_number(obj.get("w")), _finite_number(obj.get("d"))
+                rot = _finite_number(obj.get("rot", 0))
+                footprint = None
+                if w is not None and d is not None and rot is not None and w > 0 and d > 0:
+                    angle = math.radians(rot)
+                    footprint = (abs(math.cos(angle)) * w + abs(math.sin(angle)) * d,
+                                 abs(math.sin(angle)) * w + abs(math.cos(angle)) * d)
+                else:
+                    unresolved.append({"subject": ref, "reason": "footprint_not_stated"})
+                groups.setdefault((kind, str(core_id)), []).append({
+                    "index": index, "subject": ref, "position": (rect[0] + x, rect[1] + z),
+                    "footprint": footprint})
+    checked = 0
+    for (kind, core_id), instances in sorted(groups.items()):
+        instances.sort(key=lambda item: item["index"])
+        if len({item["index"] for item in instances}) < 2:
+            unresolved.append({"subject": core_id, "reason": "no_second_level_for_comparison"})
+            continue
+        checked += 1
+        reference = instances[0]
+        for item in instances[1:]:
+            if any(abs(a - b) > GEOMETRY_EPSILON_M for a, b in zip(reference["position"], item["position"])):
+                issues.append("[%s/core/%s] CORE_VERTICAL_MISALIGNMENT: موضع النواة لا يطابق المستوى %s."
+                              % (item["subject"], core_id, reference["index"]))
+            if reference["footprint"] is not None and item["footprint"] is not None:
+                if any(abs(a - b) > GEOMETRY_EPSILON_M for a, b in zip(reference["footprint"], item["footprint"])):
+                    issues.append("[%s/core/%s] CORE_FOOTPRINT_MISMATCH: بصمة النواة تختلف بين المستويات."
+                                  % (item["subject"], core_id))
+    stats["vertical_alignment"] = {"status": ("PARTIAL" if checked and unresolved else
+        "COMPLETED" if checked else "NOT_EVALUATED" if unresolved else "NOT_APPLICABLE"),
+        "checked_groups": checked, "unresolved": unresolved,
+        "scope": "stated identity and horizontal footprint; not structural or stair-flight design"}
+    return issues
+
+
 def validate_building(b):
     """يعيد (issues, stats). issues = قائمة نصوص عربية موجّهة للنموذج."""
     issues = []
@@ -346,6 +408,7 @@ def validate_building(b):
         # ما يطلبه العميل هو المرجع؛ فمن أراد مخزناً بلا منطقة التقاط فله ذلك.
         # نُبقي فقط ما هو متطلّب سلامة/حياة حقيقي، وهو يُضاف ولا يُنقص من طلبه.
 
+    issues.extend(_core_alignment_issues(b, stats))
     return issues, stats
 
 
