@@ -1,0 +1,64 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the python implementation ran and wrote its result
+  ✓ the shared staging representation was produced by the parser side
+  ✓ the browser implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
+  ✓ the canonical comparison reports no mismatch
+  ✓ a real comparison was performed for top-level key
+  ✓ every top-level key agrees between the two implementations
+  ✓ a real comparison was performed for exchange model
+  ✓ every exchange model agrees between the two implementations
+  ✓ a real comparison was performed for exchange validation
+  ✓ every exchange validation agrees between the two implementations
+  ✓ a real comparison was performed for export manifest
+  ✓ every export manifest agrees between the two implementations
+  ✓ a real comparison was performed for import diff
+  ✓ every import diff agrees between the two implementations
+  ✓ a real comparison was performed for conflict set
+  ✓ every conflict set agrees between the two implementations
+  ✓ a real comparison was performed for proposal set
+  ✓ every proposal set agrees between the two implementations
+  ✓ a real comparison was performed for generated command
+  ✓ every generated command agrees between the two implementations
+  ✓ a real comparison was performed for staleness verdict
+  ✓ every staleness verdict agrees between the two implementations
+  ✓ a real comparison was performed for empty commit
+  ✓ every empty commit agrees between the two implementations
+  ✓ a real comparison was performed for deterministic identifier set
+  ✓ every deterministic identifier set agrees between the two implementations
+  ✓ a real comparison was performed for model hash
+  ✓ every model hash agrees between the two implementations
+  ✓ a real comparison was performed for commit case
+  ✓ every commit case agrees between the two implementations
+  ✓ a real comparison was performed for specification view
+  ✓ every specification view agrees between the two implementations
+  ✓ a real comparison was performed for safety verdict set
+  ✓ every safety verdict set agrees between the two implementations
+  ✓ a real comparison was performed for unit factor table
+  ✓ every unit factor table agrees between the two implementations
+
+== THE COMPARISON IS NOT VACUOUS ==
+  ✓ the comparison covers every shipped fixture model
+  ✓ every model produced a real exchange model
+  ✓ every model produced a real staged comparison
+  ✓ at least one model carries doors and windows in the exchange
+  ✓ the commit case really committed through the authoring path
+  ✓ the same command was generated on both sides
+  ✓ the command uses only the phase 5 vocabulary
+  ✓ both implementations agree the model is untouched by exchange work
+  ✓ the mandatory invariant is identical on both sides
+  ✓ a hostile string is judged unsafe by both implementations
+  ✓ a legitimate Arabic name is judged safe by both implementations
+  ✓ an inert label is not refused by either implementation
+  ✓ but a prototype key is refused as a key by both implementations
+  ✓ the safety verdict tables are carried as pairs, never as object keys
+
+== THE DECLARED BOUNDARY IS STATED, NOT DISGUISED ==
+  ✓ the browser declares that it does not parse STEP
+  ✓ the browser export descriptor says serialisation is not done here
+  ✓ both declarations live in the generated exchange module, and it is imported
+  ✓ the serialisation-only fields exist on the python side and are excluded openly
+
+BIM PARITY SUITE: 54 passed, 0 failed

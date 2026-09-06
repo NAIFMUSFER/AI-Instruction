@@ -1,0 +1,51 @@
+{
+  "legacy_issues": [
+    "[ground/lobby] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ground/lobby/objects/0/instance/3] ITEM_OUTSIDE_ROOM: بصمة العنصر خارج الغرفة.",
+    "[typical/م_وحمام_2×] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات)."
+  ],
+  "stats": {
+    "levels": 5,
+    "rooms": 5,
+    "points": 4,
+    "object_footprints_unstated": 1,
+    "vertical_alignment": {
+      "status": "NOT_EVALUATED",
+      "checked_groups": 0,
+      "unresolved": [
+        {
+          "subject": "levels/0/ground/lobby/objects/0",
+          "reason": "identity_position_or_single_instance_not_stated"
+        }
+      ],
+      "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+    },
+    "access": {
+      "status": "PARTIAL",
+      "rooms": 7,
+      "door_edges": 0,
+      "reachable_rooms": 4,
+      "unreachable_rooms": [],
+      "unresolved_rooms": [
+        "bld_0.roof.parapet@4",
+        "bld_0.roof.solar@4",
+        "bld_0.roof.tanks@4"
+      ],
+      "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+    }
+  },
+  "architecture_issues": [
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.roof.parapet@4",
+      "other": "bld_0.roof.tanks@4",
+      "overlap_m2": 12.0
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.roof.parapet@4",
+      "other": "bld_0.roof.solar@4",
+      "overlap_m2": 60.0
+    }
+  ]
+}

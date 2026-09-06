@@ -1,0 +1,12 @@
+[
+  {
+    "path": "tests/remediation/test_polygon_documentation.js",
+    "before": null,
+    "after": "PASS"
+  },
+  {
+    "path": "tests/remediation/test_polygon_documentation.py",
+    "before": null,
+    "after": "PASS"
+  }
+]

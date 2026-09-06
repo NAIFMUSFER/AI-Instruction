@@ -1,0 +1,15 @@
+{
+  "quantity": {
+    "quantity_id": "qty_160b913f5805c61c",
+    "quantity_type": "FLOOR_AREA",
+    "quantity": 36.0,
+    "unit": "m2",
+    "source_element_ids": [
+      "bld_0.flr_0.slab"
+    ],
+    "source_element_count": 1,
+    "measurement_basis": "sum of architectural slab outlines",
+    "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+  },
+  "expected_m2": 20
+}

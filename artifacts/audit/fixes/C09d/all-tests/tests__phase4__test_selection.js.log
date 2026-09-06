@@ -1,0 +1,142 @@
+
+== §23 — SELECTION ACROSS EVERY DISCIPLINE ==
+  ✓ an object of discipline ARCHITECTURE exists in the fixtures
+  ✓ ARCHITECTURE object is selectable
+  ✓ ARCHITECTURE selection reports the runtime id, the visual id and the source id
+  ✓ ARCHITECTURE selection is marked runtime-only
+  ✓ ARCHITECTURE selection reports the discipline and kind it was compiled with
+  ✓ an object of discipline STRUCTURE exists in the fixtures
+  ✓ STRUCTURE object is selectable
+  ✓ STRUCTURE selection reports the runtime id, the visual id and the source id
+  ✓ STRUCTURE selection is marked runtime-only
+  ✓ STRUCTURE selection reports the discipline and kind it was compiled with
+  ✓ an object of discipline MEP exists in the fixtures
+  ✓ MEP object is selectable
+  ✓ MEP selection reports the runtime id, the visual id and the source id
+  ✓ MEP selection is marked runtime-only
+  ✓ MEP selection reports the discipline and kind it was compiled with
+  ✓ an object of discipline FLS exists in the fixtures
+  ✓ FLS object is selectable
+  ✓ FLS selection reports the runtime id, the visual id and the source id
+  ✓ FLS selection is marked runtime-only
+  ✓ FLS selection reports the discipline and kind it was compiled with
+  ✓ an object of discipline FURNITURE exists in the fixtures
+  ✓ FURNITURE object is selectable
+  ✓ FURNITURE selection reports the runtime id, the visual id and the source id
+  ✓ FURNITURE selection is marked runtime-only
+  ✓ FURNITURE selection reports the discipline and kind it was compiled with
+  ✓ a visual-only object exists in the fixture
+  ✓ a visual-only object is selectable
+  ✓ a visual-only selection declares itself visual-only, never engineering
+  ✓ an engineering object is not marked visual-only
+
+== SELECTION BY ANY OF THE THREE IDENTITIES ==
+  ✓ an object resolves by its runtime id
+  ✓ an object resolves by its visual id
+  ✓ an object resolves by its source element id
+
+== SELECTION STATE LIVES IN RUNTIME STATE ALONE ==
+  ✓ a fresh runtime state carries no selection
+  ✓ the selection is recorded in runtime state
+  ✓ the runtime scene is byte-identical after a selection
+  ✓ the source model is byte-identical after a selection
+  ✓ no runtime object carries a selected flag
+  ✓ selecting a second object replaces the first — selection is single
+  ✓ deselection clears the selection
+  ✓ deselection is marked runtime-only
+  ✓ the returned selection is a copy, not a live reference
+
+== INVALID SELECTION TARGETS ARE REFUSED ==
+  ✓ selection refuses an unknown identifier
+  ✓ a refused selection leaves runtime state untouched (an unknown identifier)
+  ✓ selection refuses an empty string
+  ✓ a refused selection leaves runtime state untouched (an empty string)
+  ✓ selection refuses a null target
+  ✓ a refused selection leaves runtime state untouched (a null target)
+  ✓ selection refuses a numeric target
+  ✓ a refused selection leaves runtime state untouched (a numeric target)
+  ✓ selection refuses an object target
+  ✓ a refused selection leaves runtime state untouched (an object target)
+  ✓ selection refuses an array target
+  ✓ a refused selection leaves runtime state untouched (an array target)
+  ✓ selection refuses a boolean target
+  ✓ a refused selection leaves runtime state untouched (a boolean target)
+  ✓ selection refuses a room identifier used as an object
+  ✓ a refused selection leaves runtime state untouched (a room identifier used as an object)
+  ✓ selection refuses a portal identifier used as an object
+  ✓ a refused selection leaves runtime state untouched (a portal identifier used as an object)
+
+== §24 — INSPECTION SHOWS SOURCE-BACKED VALUES ONLY ==
+  ✓ inspection succeeds for a source-backed object
+  ✓ inspection is marked runtime-only
+  ✓ inspection names the source element, not just the runtime id
+  ✓ inspection declares the object source-backed
+  ✓ inspected dimensions equal the compiled runtime box exactly
+  ✓ inspected position equals the compiled runtime centre exactly
+  ✓ inspected orientation equals the compiled yaw exactly
+  ✓ every inspected numeric value is finite
+  ✓ inspection reports the collision policy and its basis
+  ✓ inspection states that an absent property is NOT_SPECIFIED
+
+== ABSENT PROPERTIES ARE NOT_SPECIFIED, NEVER INVENTED ==
+  ✓ an absent material is reported NOT_SPECIFIED
+  ✓ an absent material_provenance is reported NOT_SPECIFIED
+  ✓ an absent asset_id is reported NOT_SPECIFIED
+  ✓ an absent exposure is reported NOT_SPECIFIED
+  ✓ an absent host_wall_id is reported NOT_SPECIFIED
+  ✓ no absent property is replaced by null, zero, an empty string or false
+  ✓ inspection without a visual scene still answers, reporting NOT_SPECIFIED
+  ✓ inspection without a visual scene keeps the geometry it does own
+
+== INSPECTION INVENTS NO ENGINEERING DATA ==
+  ✓ no inspection anywhere invents a rating, a load or a code value
+  ✓ the forbidden pattern is not vacuous — it catches a planted value
+  ✓ inspection denies being a compliance statement in its own words
+
+== A VISUAL-ONLY OBJECT IS NEVER PRESENTED AS ENGINEERING ==
+  ✓ a visual-only inspection declares visual_only
+  ✓ a visual-only inspection is not source-backed
+  ✓ a visual-only inspection reports NOT_SPECIFIED as its engineering source
+  ✓ a visual-only inspection is flagged visual metadata only
+  ✓ an engineering object is not flagged visual metadata only
+
+== ROOMS ARE INSPECTABLE AS ROOMS ==
+  ✓ a room inspects as kind ROOM
+  ✓ a room inspection names its canonical space instance
+  ✓ room dimensions equal the canonical rectangle exactly
+  ✓ a room inspection is source-backed and invents nothing
+  ✓ a room with no declared area reports NOT_SPECIFIED, never zero
+
+== INSPECTION IS PURE ==
+  ✓ inspecting every object and room leaves the runtime scene unchanged
+  ✓ inspecting every object and room leaves the visual scene unchanged
+  ✓ inspecting every object and room leaves the source model unchanged
+  ✓ inspection is deterministic across repeated calls
+  ✓ mutating a returned inspection cannot reach the runtime scene
+
+== INVALID INSPECTION TARGETS ==
+  ✓ inspection refuses target "no_such_id"
+  ✓ inspection refuses target ""
+  ✓ inspection refuses target null
+  ✓ inspection refuses target 42
+  ✓ inspection refuses target {"a":1}
+  ✓ inspection refuses target ["x"]
+  ✓ inspection refuses target false
+
+== §22 — SELECT AND INSPECT ARE DECLARED ACTIONS ==
+  ✓ the action SELECT is declared in the canonical specification
+  ✓ the action DESELECT is declared in the canonical specification
+  ✓ the action INSPECT is declared in the canonical specification
+  ✓ SELECT on an OBJECT validates
+  ✓ a selection payload carrying a write intent is refused
+  ✓ an inspection claiming to write to the model is refused
+
+── multiple models ──
+  ✓ hotel: the first object selects and inspects without an issue
+  ✓ clinic: the first object selects and inspects without an issue
+  ✓ warehouse: the first object selects and inspects without an issue
+  ✓ office: the first object selects and inspects without an issue
+  ✓ mixed_use: the first object selects and inspects without an issue
+
+──────────────────────────────────────────────
+SELECTION: 113 passed, 0 failed

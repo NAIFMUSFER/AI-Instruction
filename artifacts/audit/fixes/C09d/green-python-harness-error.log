@@ -1,0 +1,20 @@
+test_pdf_contains_closed_six_vertex_vector_path (__main__.PolygonDocumentation.test_pdf_contains_closed_six_vertex_vector_path) ... ok
+test_room_tag_stays_inside_concave_room (__main__.PolygonDocumentation.test_room_tag_stays_inside_concave_room) ... ok
+test_section_intersects_polygon_not_its_bounding_box (__main__.PolygonDocumentation.test_section_intersects_polygon_not_its_bounding_box) ... ok
+test_slab_has_no_internal_sweep_partition_as_a_boundary (__main__.PolygonDocumentation.test_slab_has_no_internal_sweep_partition_as_a_boundary) ... ok
+test_slab_void_geometry_and_real_quantity (__main__.PolygonDocumentation.test_slab_void_geometry_and_real_quantity) ... ERROR
+test_svg_fill_has_actual_area_and_no_notch (__main__.PolygonDocumentation.test_svg_fill_has_actual_area_and_no_notch) ... ok
+
+======================================================================
+ERROR: test_slab_void_geometry_and_real_quantity (__main__.PolygonDocumentation.test_slab_void_geometry_and_real_quantity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 53, in test_slab_void_geometry_and_real_quantity
+    quantity=next(q for q in p['quantities']['quantities'] if q['quantity_type']=='FLOOR_AREA')
+                             ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+KeyError: 'quantities'
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.048s
+
+FAILED (errors=1)

@@ -1,0 +1,32 @@
+[
+  {
+    "path": "acs_docs.py",
+    "source_sha256": "4854df75771df3b37246ced43ad019b33f9e812ddf6734a638e92c9eb485ac90",
+    "tested_sha256": "4854df75771df3b37246ced43ad019b33f9e812ddf6734a638e92c9eb485ac90",
+    "equal": true
+  },
+  {
+    "path": "tools/build_docs_browser.py",
+    "source_sha256": "b9d5bf320c491115d9616283b50efe91610a3f1bbf4bc7405d447dd6795f3560",
+    "tested_sha256": "b9d5bf320c491115d9616283b50efe91610a3f1bbf4bc7405d447dd6795f3560",
+    "equal": true
+  },
+  {
+    "path": "public/app/generated/docs.js",
+    "source_sha256": "bb36d7c73982421f2b3b372c250ed967ce755f736f0211141b905b4556cf592d",
+    "tested_sha256": "bb36d7c73982421f2b3b372c250ed967ce755f736f0211141b905b4556cf592d",
+    "equal": true
+  },
+  {
+    "path": "tests/remediation/test_polygon_documentation.py",
+    "source_sha256": "0a9fcff091d8521b2c98aa042c302a655cd8a452e55301ff22bb479a07323dc9",
+    "tested_sha256": "0a9fcff091d8521b2c98aa042c302a655cd8a452e55301ff22bb479a07323dc9",
+    "equal": true
+  },
+  {
+    "path": "tests/remediation/test_polygon_documentation.js",
+    "source_sha256": "4d9717245fd097ff4f2eaefe6f5afba085164f649fa21483742224852ce309f8",
+    "tested_sha256": "4d9717245fd097ff4f2eaefe6f5afba085164f649fa21483742224852ce309f8",
+    "equal": true
+  }
+]

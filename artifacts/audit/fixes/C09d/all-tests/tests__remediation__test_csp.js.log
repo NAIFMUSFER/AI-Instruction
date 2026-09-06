@@ -1,0 +1,103 @@
+
+== §1 — THE POLICY IS DELIVERED AS A RESPONSE HEADER AND PARSES ==
+  ✓ netlify.toml declares a Content-Security-Policy response header
+  ✓ the policy is on the site-wide header block, not a single path
+  ✓ no <meta http-equiv="Content-Security-Policy"> shadows the header (meta cannot express frame-ancestors and would measure a different policy than the one deployed)
+  ✓ exactly one Content-Security-Policy assignment exists in netlify.toml
+  policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; frame-src 'none'; form-action 'self'; script-src 'self' 'sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA='; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; worker-src 'self'; connect-src 'self' https://acs-engine.onrender.com; media-src 'self'; manifest-src 'self'; upgrade-insecure-requests
+
+== §2 — EVERY REQUIRED DIRECTIVE IS PRESENT WITH THE EXPECTED VALUE ==
+  ✓ every directive name appears exactly once
+  ✓ `default-src` is present with exactly ["'self'"]
+  ✓ `base-uri` is present with exactly ["'self'"]
+  ✓ `object-src` is present with exactly ["'none'"]
+  ✓ `frame-ancestors` is present with exactly ["'none'"]
+  ✓ `frame-src` is present with exactly ["'none'"]
+  ✓ `form-action` is present with exactly ["'self'"]
+  ✓ `style-src` is present with exactly ["'self'"]
+  ✓ `img-src` is present with exactly ["'self'","data:","blob:"]
+  ✓ `font-src` is present with exactly ["'self'"]
+  ✓ `worker-src` is present with exactly ["'self'"]
+  ✓ `media-src` is present with exactly ["'self'"]
+  ✓ `manifest-src` is present with exactly ["'self'"]
+  ✓ `connect-src` is present
+  ✓ `script-src` is present
+  ✓ `upgrade-insecure-requests` is present (valueless directive)
+
+== §3 — NO 'unsafe-inline' AND NO 'unsafe-eval', IN ANY DIRECTIVE ==
+  ✓ no directive carries 'unsafe-inline'
+  ✓ no directive carries 'unsafe-eval'
+  ✓ no directive carries 'unsafe-hashes'
+  ✓ no directive carries 'wasm-unsafe-eval'
+  ✓ no other 'unsafe-*' keyword appears anywhere
+  ✓ the raw policy text contains the substring 'unsafe- zero times
+
+== §4 — script-src IS EXACTLY 'self' PLUS ONE IMPORT-MAP HASH, AND THE HASH IS RECOMPUTED FROM THE PAGE ==
+  ✓ the shipped page contains exactly one <script type="importmap">
+  ✓ the import map body was located and hashed independently by this test
+  sha256 of the page import map, computed here: sha256-kmeUkbmn7TSoFc+bR+iKEW0CLiuQIqi5X7Op3y+XBkA=
+  ✓ script-src carries exactly 'self' plus hash sources and nothing else
+  ✓ script-src carries exactly ONE hash source
+  ✓ that one hash source is a sha256 hash
+  ✓ the hash in the deployed policy equals the sha256 of the page import map (recomputed here from public/index.html, not copied from the policy)
+  ✓ no `data:` source in script-src or default-src (a data: script is an XSS primitive)
+  ✓ no `blob:` source in script-src or default-src (the es-module-shims blob worker was the only reason it was ever there)
+  ✓ public/app/importmap.sha256 agrees with the hash computed here
+  ✓ no import map entry points at a remote origin
+
+== §5 — THE SURFACE-REDUCING DIRECTIVES ARE EXACT ==
+  ✓ `object-src` is exactly 'none'
+  ✓ `base-uri` is exactly 'self'
+  ✓ `frame-ancestors` is exactly 'none'
+  ✓ `frame-src` is exactly 'none'
+  ✓ `form-action` is exactly 'self'
+  ✓ frame-ancestors is backed by X-Frame-Options: DENY for old agents
+  ✓ no `javascript:` source in any directive
+  ✓ the raw policy text contains no `javascript:` at all
+  ✓ no bare wildcard `*` source in any directive
+  ✓ no wildcard-subdomain source (`*.`) anywhere
+  ✓ no insecure `http:` scheme source, and no `http://` origin
+
+== §6 — connect-src PINS EXACTLY THE DECLARED BACKEND ORIGIN ==
+  ✓ render.yaml declares exactly one web service with a name
+  backend origin derived from render.yaml: https://acs-engine.onrender.com
+  ✓ public/app declares the same origin exactly once
+  ✓ connect-src is exactly ['self', <backend origin>] and nothing else
+  ✓ the backend CORS allow-list origin was located in acs_understand_api.py
+  ✓ that frontend origin is NOT in connect-src — it is what the backend allows to call it, not what the page may call
+  ✓ render.yaml ACS_ALLOWED_ORIGINS names the frontend, matching the API default (one origin story, not two)
+  ✓ no second remote origin was added to any directive
+
+== §7 — NO CDN HOST IN THE POLICY, AND NO RUNTIME CDN URL OR EXECUTABLE INLINE SCRIPT IN THE SHIPPED PAGE ==
+  ✓ no directive allows any known CDN host
+  ✓ public/index.html carries no reference to cdn.jsdelivr.net
+  ✓ public/index.html carries no reference to unpkg.com
+  ✓ public/index.html carries no reference to cdnjs.cloudflare.com
+  ✓ public/index.html carries no reference to ajax.googleapis.com
+  ✓ public/index.html carries no reference to esm.sh
+  ✓ public/index.html carries no reference to skypack.dev
+  ✓ public/index.html carries no reference to jspm.io
+  ✓ public/index.html carries no reference to polyhaven.com
+  ✓ public/index.html carries no reference to fonts.googleapis.com
+  ✓ public/index.html carries no reference to fonts.gstatic.com
+  ✓ public/index.html carries no reference to code.jquery.com
+  ✓ public/index.html carries no reference to stackpath.bootstrapcdn.com
+  ✓ public/index.html carries no reference to raw.githubusercontent.com
+  ✓ no module under public/app/ carries a runtime CDN URL
+  ✓ no <script src="http…"> in the shipped page
+  ✓ no <link href="http…"> in the shipped page
+  ✓ es-module-shims is gone from the shipped page as a loadable asset (it was the only reason 'unsafe-eval' and blob: ever existed in script-src)
+  ✓ the shipped page carries ZERO executable inline <script> blocks (the only inline element left is the import map, pinned by hash)
+  ✓ every <script src> in the shipped page is a local absolute path
+  ✓ the shipped page carries ZERO inline event-handler attributes (on…="…") — under `script-src 'self' 'sha256-…'` such a handler NEVER runs, so any control that relies on one is silently dead
+  ✓ the shipped page carries no <style> block (style-src is 'self')
+  ✓ the shipped page carries no style="…" attribute
+
+== §8 — public/app/ CONTAINS NO eval( / new Function( CALL SITE ==
+  ✓ no module under public/app/ contains a real eval( or new Function( call site
+  quoted deny-list occurrences deliberately excluded: 7  [core/standards.js:3658, generated/authoring.js:13, generated/bim.js:12, generated/docs.js:14, generated/pbr.js:13, generated/render-engine.js:11, generated/workspace-ui.js:15]
+  ✓ every excluded occurrence is literally one of ["eval(","exec(","new Function(","new Function"] written as a quoted element of a list — the exclusion is proven per occurrence, not assumed wholesale
+  ✓ and each of those really sits in a deny-list / embedded JSON spec context
+  ✓ the dynamic-execution scan is not vacuous — it flags a real call site
+  ✓ …and it does exclude a quoted deny-list entry, and only a quoted one
+  ✓ …and a quoted string that is NOT a bare deny-list entry is still counted as a call site (the exclusion cannot be widened by quoting)

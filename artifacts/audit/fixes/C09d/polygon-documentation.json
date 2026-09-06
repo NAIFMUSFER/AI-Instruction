@@ -1,0 +1,1053 @@
+{
+  "project": {
+    "schema": "acs.authoring/1",
+    "version": "1.0.0",
+    "engine_version": "acs-authoring-engine/1.0.0",
+    "building_id": "bld_0",
+    "model": {
+      "site": {
+        "w": 20,
+        "d": 25
+      },
+      "wall_h": 3,
+      "wall_t": 0.15,
+      "floor_height": 3.2,
+      "levels": [
+        {
+          "index": 0,
+          "template": "plan",
+          "elevation": 7
+        }
+      ],
+      "floors": {
+        "plan": {
+          "rooms": [
+            {
+              "id": "polygon",
+              "rect": [
+                0,
+                0,
+                6,
+                6
+              ],
+              "polygon": [
+                [
+                  0,
+                  0
+                ],
+                [
+                  6,
+                  0
+                ],
+                [
+                  6,
+                  2
+                ],
+                [
+                  2,
+                  2
+                ],
+                [
+                  2,
+                  6
+                ],
+                [
+                  0,
+                  6
+                ]
+              ],
+              "walls": "full"
+            }
+          ]
+        }
+      }
+    },
+    "model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+    "current_revision": "rev:a4a96005b7346e28",
+    "history": [
+      {
+        "revision_id": "rev:a4a96005b7346e28",
+        "parent_revision_id": null,
+        "model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+        "command_id": null,
+        "command_hash": null,
+        "authoring_source": "IMPORT",
+        "actor_id": null,
+        "created_at": null,
+        "summary": "initial revision",
+        "changed_paths": [],
+        "reverts_revision_id": null
+      }
+    ],
+    "audit_log": [],
+    "revision_models": {
+      "rev:a4a96005b7346e28": {
+        "site": {
+          "w": 20,
+          "d": 25
+        },
+        "wall_h": 3,
+        "wall_t": 0.15,
+        "floor_height": 3.2,
+        "levels": [
+          {
+            "index": 0,
+            "template": "plan",
+            "elevation": 7
+          }
+        ],
+        "floors": {
+          "plan": {
+            "rooms": [
+              {
+                "id": "polygon",
+                "rect": [
+                  0,
+                  0,
+                  6,
+                  6
+                ],
+                "polygon": [
+                  [
+                    0,
+                    0
+                  ],
+                  [
+                    6,
+                    0
+                  ],
+                  [
+                    6,
+                    2
+                  ],
+                  [
+                    2,
+                    2
+                  ],
+                  [
+                    2,
+                    6
+                  ],
+                  [
+                    0,
+                    6
+                  ]
+                ],
+                "walls": "full"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "authoring": {
+      "base_revision": "rev:a4a96005b7346e28",
+      "working_revision": null,
+      "pending_commands": [],
+      "preview": null,
+      "validation": [],
+      "transaction_status": "IDLE",
+      "history": []
+    },
+    "note": "the canonical engineering model and its revision pointer. Transient authoring state lives beside the model, never inside it."
+  },
+  "spec": {
+    "view_type": "FLOOR_PLAN",
+    "level_id": "bld_0.flr_0",
+    "discipline": "ARCHITECTURE",
+    "scale": "1:100",
+    "dimension_policy": "FULL_CHAIN",
+    "annotation_policy": "TAGS_ONLY"
+  },
+  "result": {
+    "valid": true,
+    "view": {
+      "view_id": "view_30c79880b67f90e8",
+      "view_type": "FLOOR_PLAN",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "discipline": "ARCHITECTURE",
+      "orientation": null,
+      "cut_plane": null,
+      "view_depth": null,
+      "crop_region": null,
+      "scale": "1:100",
+      "scale_mode": "TRUE_SCALE",
+      "visible_categories": [
+        "WALL",
+        "DOOR",
+        "WINDOW",
+        "OPENING",
+        "SPACE",
+        "SLAB",
+        "VOID",
+        "CORE",
+        "STAIR"
+      ],
+      "hidden_categories": [
+        "COLUMN",
+        "BEAM",
+        "STRUCTURAL_SLAB",
+        "FOUNDATION",
+        "GRID",
+        "MEP_EQUIPMENT",
+        "MEP_TERMINAL",
+        "MEP_SEGMENT",
+        "MEP_RISER",
+        "MEP_PENETRATION",
+        "FLS_DEVICE",
+        "FLS_SIGN",
+        "FLS_EXIT",
+        "FLS_BARRIER",
+        "CLASH"
+      ],
+      "annotation_policy": "TAGS_ONLY",
+      "dimension_policy": "FULL_CHAIN",
+      "source_model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+      "source_revision": "rev:a4a96005b7346e28",
+      "support": "SUPPORTED",
+      "support_basis": "architectural walls, openings, spaces, slabs, voids and cores",
+      "status": "CURRENT",
+      "writes_to_model": false,
+      "spec_version": "acs.docs/1.0.0",
+      "counts": {
+        "SLAB": 1,
+        "SPACE": 1,
+        "WALL": 6
+      }
+    },
+    "geometry": {
+      "valid": true,
+      "elements": [
+        {
+          "category": "SLAB",
+          "id": "bld_0.flr_0.slab",
+          "geometry_class": "PROJECTED",
+          "shape": "cells",
+          "rect": [
+            0.0,
+            0.0,
+            6.0,
+            6.0
+          ],
+          "thickness": null,
+          "thickness_status": "UNKNOWN",
+          "outline_basis": "polygon_union",
+          "cells": [
+            [
+              [
+                0.0,
+                0.0
+              ],
+              [
+                2.0,
+                0.0
+              ],
+              [
+                2.0,
+                6.0
+              ],
+              [
+                0.0,
+                6.0
+              ]
+            ],
+            [
+              [
+                2.0,
+                0.0
+              ],
+              [
+                6.0,
+                0.0
+              ],
+              [
+                6.0,
+                2.0
+              ],
+              [
+                2.0,
+                2.0
+              ]
+            ]
+          ]
+        },
+        {
+          "category": "SPACE",
+          "id": "bld_0.plan.polygon@0",
+          "space_id": "bld_0.plan.polygon",
+          "geometry_class": "CUT",
+          "shape": "polygon",
+          "rect": [
+            0.0,
+            0.0,
+            6.0,
+            6.0
+          ],
+          "name": "polygon",
+          "area_m2": 20.0,
+          "area_basis": "polygon_edges",
+          "polygon": [
+            [
+              0.0,
+              0.0
+            ],
+            [
+              6.0,
+              0.0
+            ],
+            [
+              6.0,
+              2.0
+            ],
+            [
+              2.0,
+              2.0
+            ],
+            [
+              2.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ]
+          ]
+        },
+        {
+          "category": "WALL",
+          "id": "bld_0.flr_0.wall_0",
+          "geometry_class": "CUT",
+          "shape": "segment",
+          "start": [
+            0.0,
+            0.0
+          ],
+          "end": [
+            6.0,
+            0.0
+          ],
+          "thickness": 0.15,
+          "thickness_status": "STATED",
+          "shared": false,
+          "exposure": "exterior",
+          "exposure_status": "inferred"
+        },
+        {
+          "category": "WALL",
+          "id": "bld_0.flr_0.wall_1",
+          "geometry_class": "CUT",
+          "shape": "segment",
+          "start": [
+            2.0,
+            2.0
+          ],
+          "end": [
+            6.0,
+            2.0
+          ],
+          "thickness": 0.15,
+          "thickness_status": "STATED",
+          "shared": false,
+          "exposure": "unresolved",
+          "exposure_status": "unresolved"
+        },
+        {
+          "category": "WALL",
+          "id": "bld_0.flr_0.wall_2",
+          "geometry_class": "CUT",
+          "shape": "segment",
+          "start": [
+            0.0,
+            6.0
+          ],
+          "end": [
+            2.0,
+            6.0
+          ],
+          "thickness": 0.15,
+          "thickness_status": "STATED",
+          "shared": false,
+          "exposure": "exterior",
+          "exposure_status": "inferred"
+        },
+        {
+          "category": "WALL",
+          "id": "bld_0.flr_0.wall_3",
+          "geometry_class": "CUT",
+          "shape": "segment",
+          "start": [
+            0.0,
+            0.0
+          ],
+          "end": [
+            0.0,
+            6.0
+          ],
+          "thickness": 0.15,
+          "thickness_status": "STATED",
+          "shared": false,
+          "exposure": "exterior",
+          "exposure_status": "inferred"
+        },
+        {
+          "category": "WALL",
+          "id": "bld_0.flr_0.wall_4",
+          "geometry_class": "CUT",
+          "shape": "segment",
+          "start": [
+            2.0,
+            2.0
+          ],
+          "end": [
+            2.0,
+            6.0
+          ],
+          "thickness": 0.15,
+          "thickness_status": "STATED",
+          "shared": false,
+          "exposure": "unresolved",
+          "exposure_status": "unresolved"
+        },
+        {
+          "category": "WALL",
+          "id": "bld_0.flr_0.wall_5",
+          "geometry_class": "CUT",
+          "shape": "segment",
+          "start": [
+            6.0,
+            0.0
+          ],
+          "end": [
+            6.0,
+            2.0
+          ],
+          "thickness": 0.15,
+          "thickness_status": "STATED",
+          "shared": false,
+          "exposure": "exterior",
+          "exposure_status": "inferred"
+        }
+      ],
+      "issues": [],
+      "bounds": {
+        "min_x": 0.0,
+        "max_x": 6.0,
+        "min_z": 0.0,
+        "max_z": 6.0
+      },
+      "level": {
+        "id": "bld_0.flr_0",
+        "index": 0,
+        "template": "plan",
+        "name": null,
+        "kind": "occupied",
+        "elevation_m": 7.0,
+        "elevation_source": "imported",
+        "auto_added": false
+      },
+      "counts": {
+        "SLAB": 1,
+        "SPACE": 1,
+        "WALL": 6
+      }
+    },
+    "dimensions": {
+      "dimensions": [
+        {
+          "dimension_id": "dim_9f5d5278918bb5ba",
+          "measurement_type": "OVERALL_BUILDING",
+          "source_element_ids": [
+            "__extent_z"
+          ],
+          "exact_value": 6.0,
+          "display_value": "6.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "DERIVED_FROM_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_f2718e90c85da9b2",
+          "measurement_type": "OVERALL_BUILDING",
+          "source_element_ids": [
+            "__extent_x"
+          ],
+          "exact_value": 6.0,
+          "display_value": "6.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "DERIVED_FROM_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_d2f6c6a4657e2b97",
+          "measurement_type": "SPACE_DEPTH",
+          "source_element_ids": [
+            "bld_0.plan.polygon@0"
+          ],
+          "exact_value": 6.0,
+          "display_value": "6.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_b32548dd23421e1b",
+          "measurement_type": "SPACE_WIDTH",
+          "source_element_ids": [
+            "bld_0.plan.polygon@0"
+          ],
+          "exact_value": 6.0,
+          "display_value": "6.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_4260353c8dbfd7c8",
+          "measurement_type": "WALL_SEGMENT_LENGTH",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_2"
+          ],
+          "exact_value": 2.0,
+          "display_value": "2.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_99b8f8e8833f86d6",
+          "measurement_type": "WALL_SEGMENT_LENGTH",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_1"
+          ],
+          "exact_value": 4.0,
+          "display_value": "4.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_c9980ae26192120c",
+          "measurement_type": "WALL_SEGMENT_LENGTH",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_5"
+          ],
+          "exact_value": 2.0,
+          "display_value": "2.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_f2bdde35574f1a48",
+          "measurement_type": "WALL_SEGMENT_LENGTH",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_0"
+          ],
+          "exact_value": 6.0,
+          "display_value": "6.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_f6230264427b2bef",
+          "measurement_type": "WALL_SEGMENT_LENGTH",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_3"
+          ],
+          "exact_value": 6.0,
+          "display_value": "6.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        },
+        {
+          "dimension_id": "dim_fd746d436aac2bc6",
+          "measurement_type": "WALL_SEGMENT_LENGTH",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_4"
+          ],
+          "exact_value": 4.0,
+          "display_value": "4.000",
+          "unit": "m",
+          "precision": 3,
+          "provenance": "MODEL_GEOMETRY",
+          "measurement_status": "MEASURED",
+          "view_id": "view_30c79880b67f90e8"
+        }
+      ],
+      "issues": [],
+      "counts": {
+        "total": 10,
+        "measured": 10,
+        "unknown": 0
+      }
+    },
+    "annotations": {
+      "annotations": [
+        {
+          "annotation_id": "ann_bd173c199d92b6dc",
+          "annotation_type": "ROOM_TAG",
+          "provenance": "MODEL_DERIVED",
+          "text": "polygon",
+          "source_element_ids": [
+            "bld_0.plan.polygon@0"
+          ],
+          "x": 1.0,
+          "y": 3.0,
+          "view_id": "view_30c79880b67f90e8"
+        }
+      ],
+      "issues": [],
+      "counts": {
+        "total": 1,
+        "by_provenance": {
+          "MODEL_DERIVED": 1
+        }
+      }
+    },
+    "issues": []
+  },
+  "ops": {
+    "ops": [
+      {
+        "op": "line",
+        "x1": 12.0,
+        "y1": 225.0,
+        "x2": 32.0,
+        "y2": 225.0,
+        "cls": "CUT"
+      },
+      {
+        "op": "line",
+        "x1": 12.0,
+        "y1": 285.0,
+        "x2": 72.0,
+        "y2": 285.0,
+        "cls": "CUT"
+      },
+      {
+        "op": "line",
+        "x1": 12.0,
+        "y1": 285.0,
+        "x2": 12.0,
+        "y2": 225.0,
+        "cls": "CUT"
+      },
+      {
+        "op": "line",
+        "x1": 32.0,
+        "y1": 265.0,
+        "x2": 72.0,
+        "y2": 265.0,
+        "cls": "CUT"
+      },
+      {
+        "op": "line",
+        "x1": 32.0,
+        "y1": 265.0,
+        "x2": 32.0,
+        "y2": 225.0,
+        "cls": "CUT"
+      },
+      {
+        "op": "line",
+        "x1": 72.0,
+        "y1": 285.0,
+        "x2": 72.0,
+        "y2": 265.0,
+        "cls": "CUT"
+      },
+      {
+        "op": "line",
+        "x1": 12.0,
+        "y1": 225.0,
+        "x2": 32.0,
+        "y2": 225.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "line",
+        "x1": 12.0,
+        "y1": 285.0,
+        "x2": 12.0,
+        "y2": 225.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "line",
+        "x1": 12.0,
+        "y1": 285.0,
+        "x2": 32.0,
+        "y2": 285.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "line",
+        "x1": 32.0,
+        "y1": 265.0,
+        "x2": 32.0,
+        "y2": 225.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "line",
+        "x1": 32.0,
+        "y1": 265.0,
+        "x2": 72.0,
+        "y2": 265.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "line",
+        "x1": 32.0,
+        "y1": 285.0,
+        "x2": 72.0,
+        "y2": 285.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "line",
+        "x1": 72.0,
+        "y1": 285.0,
+        "x2": 72.0,
+        "y2": 265.0,
+        "cls": "REFERENCE"
+      },
+      {
+        "op": "polygon",
+        "points": [
+          [
+            12.0,
+            285.0
+          ],
+          [
+            72.0,
+            285.0
+          ],
+          [
+            72.0,
+            265.0
+          ],
+          [
+            32.0,
+            265.0
+          ],
+          [
+            32.0,
+            225.0
+          ],
+          [
+            12.0,
+            225.0
+          ]
+        ],
+        "cls": "REFERENCE",
+        "fill": true,
+        "x": 12.0,
+        "y": 225.0
+      },
+      {
+        "op": "text",
+        "x": 22.0,
+        "y": 255.0,
+        "text": "polygon",
+        "cls": "ANNOTATION",
+        "anchor": "middle",
+        "size": 2.6
+      }
+    ],
+    "transform": {
+      "k": 10.0,
+      "ox": 0.0,
+      "oy": 0.0
+    },
+    "mode": "MONOCHROME",
+    "scale_mode": "TRUE_SCALE",
+    "scale": "1:100",
+    "paper_mm": [
+      420.0,
+      297.0
+    ]
+  },
+  "sheet": {
+    "sheet_id": "test",
+    "paper_mm": [
+      420,
+      297
+    ],
+    "viewports": [
+      {
+        "view_id": "view_30c79880b67f90e8",
+        "x": 0,
+        "y": 0,
+        "width": 420,
+        "height": 297
+      }
+    ]
+  },
+  "quantities": {
+    "valid": true,
+    "report": {
+      "report_id": "qty_36eff6815552064b",
+      "quantities": [
+        {
+          "quantity_id": "qty_7260db24c29c99bb",
+          "quantity_type": "BEAM_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented beams",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_871f0c2cddaf503f",
+          "quantity_type": "BEAM_LENGTH",
+          "quantity": null,
+          "unit": "m",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "sum of represented beam lengths",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_f98ceb1c3b65fd64",
+          "quantity_type": "COLUMN_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented columns",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_f21ad734e33b6607",
+          "quantity_type": "DOOR_COUNT",
+          "quantity": 0.0,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented door openings",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        },
+        {
+          "quantity_id": "qty_160b913f5805c61c",
+          "quantity_type": "FLOOR_AREA",
+          "quantity": 20.0,
+          "unit": "m2",
+          "source_element_ids": [
+            "bld_0.flr_0.slab"
+          ],
+          "source_element_count": 1,
+          "measurement_basis": "sum of architectural slab outlines",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        },
+        {
+          "quantity_id": "qty_31a094137ad658bc",
+          "quantity_type": "FLS_DEVICE_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented fire and life-safety devices",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_41ae41d34ee43948",
+          "quantity_type": "FLS_SIGN_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented signage",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_42cd03cd9c41099b",
+          "quantity_type": "FOUNDATION_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented foundations",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_1886d22ffa08b065",
+          "quantity_type": "LEVEL_COUNT",
+          "quantity": 1.0,
+          "unit": "count",
+          "source_element_ids": [
+            "bld_0.flr_0"
+          ],
+          "source_element_count": 1,
+          "measurement_basis": "architectural levels",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        },
+        {
+          "quantity_id": "qty_0a706277edc93dfc",
+          "quantity_type": "MEP_EQUIPMENT_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented MEP equipment",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_fabf652fcda67c79",
+          "quantity_type": "MEP_SEGMENT_LENGTH",
+          "quantity": null,
+          "unit": "m",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "sum of represented routed segment lengths",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_2c484af87e5d4d95",
+          "quantity_type": "MEP_TERMINAL_COUNT",
+          "quantity": null,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented MEP terminals",
+          "coverage_status": "NOT_AVAILABLE"
+        },
+        {
+          "quantity_id": "qty_7b9aa33b0ba4c954",
+          "quantity_type": "ROOM_COUNT",
+          "quantity": 1.0,
+          "unit": "count",
+          "source_element_ids": [
+            "bld_0.plan.polygon@0"
+          ],
+          "source_element_count": 1,
+          "measurement_basis": "architectural spaces",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        },
+        {
+          "quantity_id": "qty_ab270299855756de",
+          "quantity_type": "SPACE_AREA",
+          "quantity": 20.0,
+          "unit": "m2",
+          "source_element_ids": [
+            "bld_0.plan.polygon@0"
+          ],
+          "source_element_count": 1,
+          "measurement_basis": "sum of canonical space areas",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        },
+        {
+          "quantity_id": "qty_ff71c90612c68885",
+          "quantity_type": "WALL_LENGTH",
+          "quantity": 24.0,
+          "unit": "m",
+          "source_element_ids": [
+            "bld_0.flr_0.wall_0",
+            "bld_0.flr_0.wall_1",
+            "bld_0.flr_0.wall_2",
+            "bld_0.flr_0.wall_3",
+            "bld_0.flr_0.wall_4",
+            "bld_0.flr_0.wall_5"
+          ],
+          "source_element_count": 6,
+          "measurement_basis": "sum of compiled wall segment lengths",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        },
+        {
+          "quantity_id": "qty_ffe8a6370e8e68ac",
+          "quantity_type": "WINDOW_COUNT",
+          "quantity": 0.0,
+          "unit": "count",
+          "source_element_ids": [],
+          "source_element_count": 0,
+          "measurement_basis": "represented window openings",
+          "coverage_status": "COMPLETE_FOR_REPRESENTED_MODEL"
+        }
+      ],
+      "count": 16,
+      "source_model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+      "source_revision": "rev:a4a96005b7346e28",
+      "is_bill_of_quantities": false,
+      "is_cost_estimate": false,
+      "writes_to_model": false,
+      "note": "a factual model quantity report. Coverage is stated against the represented model only; no cost, rate or price exists here",
+      "spec_version": "acs.docs/1.0.0"
+    },
+    "issues": [
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "COLUMN_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      },
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "BEAM_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      },
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "FOUNDATION_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      },
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "MEP_EQUIPMENT_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      },
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "MEP_TERMINAL_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      },
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "FLS_DEVICE_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      },
+      {
+        "code": "DOC_QUANTITY_PARTIAL",
+        "severity": "INFO",
+        "element_id": "FLS_SIGN_COUNT",
+        "message": "no represented data for this discipline",
+        "blocking": false
+      }
+    ]
+  },
+  "pdf_streams": [
+    "q\n1 1 1 rg 0 0 1190.551 841.89 re f\n0 0 0 RG\nq\n2.835 0 0 2.835 0 0 cm\n0.7 w\n12 72 m 32 72 l S\n0.7 w\n12 12 m 72 12 l S\n0.7 w\n12 12 m 12 72 l S\n0.7 w\n32 32 m 72 32 l S\n0.7 w\n32 32 m 32 72 l S\n0.7 w\n72 12 m 72 32 l S\n0.13 w\n12 72 m 32 72 l S\n0.13 w\n12 12 m 12 72 l S\n0.13 w\n12 12 m 32 12 l S\n0.13 w\n32 32 m 32 72 l S\n0.13 w\n32 32 m 72 32 l S\n0.13 w\n32 12 m 72 12 l S\n0.13 w\n72 12 m 72 32 l S\n0.13 w\n12 12 m 72 12 l 72 32 l 32 32 l 32 72 l 12 72 l h S\n0.25 w\nBT /F1 2.6 Tf 22 42 Td (polygon) Tj ET\nQ\n0.2 w 0 0 1190.551 841.89 re S\nBT /F1 7 Tf 10 10 Td (sheet_number: NOT_SPECIFIED) Tj ET\nBT /F1 7 Tf 10 19 Td (sheet_title: NOT_SPECIFIED) Tj ET\nBT /F1 7 Tf 10 28 Td (revision: NOT_SPECIFIED) Tj ET\nBT /F1 7 Tf 10 37 Td (scale: NOT_SPECIFIED) Tj ET\nBT /F1 7 Tf 10 46 Td (status: NOT_SPECIFIED) Tj ET\nBT /F1 6 Tf 10 55 Td (model-derived documentation - not a construction drawing) Tj ET\nQ"
+  ]
+}

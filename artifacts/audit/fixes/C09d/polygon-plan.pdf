@@ -1,0 +1,76 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 1190.551 841.89] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 881 >>
+stream
+q
+1 1 1 rg 0 0 1190.551 841.89 re f
+0 0 0 RG
+q
+2.835 0 0 2.835 0 0 cm
+0.7 w
+12 72 m 32 72 l S
+0.7 w
+12 12 m 72 12 l S
+0.7 w
+12 12 m 12 72 l S
+0.7 w
+32 32 m 72 32 l S
+0.7 w
+32 32 m 32 72 l S
+0.7 w
+72 12 m 72 32 l S
+0.13 w
+12 72 m 32 72 l S
+0.13 w
+12 12 m 12 72 l S
+0.13 w
+12 12 m 32 12 l S
+0.13 w
+32 32 m 32 72 l S
+0.13 w
+32 32 m 72 32 l S
+0.13 w
+32 12 m 72 12 l S
+0.13 w
+72 12 m 72 32 l S
+0.13 w
+12 12 m 72 12 l 72 32 l 32 32 l 32 72 l 12 72 l h S
+0.25 w
+BT /F1 2.6 Tf 22 42 Td (polygon) Tj ET
+Q
+0.2 w 0 0 1190.551 841.89 re S
+BT /F1 7 Tf 10 10 Td (sheet_number: NOT_SPECIFIED) Tj ET
+BT /F1 7 Tf 10 19 Td (sheet_title: NOT_SPECIFIED) Tj ET
+BT /F1 7 Tf 10 28 Td (revision: NOT_SPECIFIED) Tj ET
+BT /F1 7 Tf 10 37 Td (scale: NOT_SPECIFIED) Tj ET
+BT /F1 7 Tf 10 46 Td (status: NOT_SPECIFIED) Tj ET
+BT /F1 6 Tf 10 55 Td (model-derived documentation - not a construction drawing) Tj ET
+Q
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000121 00000 n 
+0000000255 00000 n 
+0000001187 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1284
+%%EOF

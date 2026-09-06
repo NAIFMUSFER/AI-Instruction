@@ -336,7 +336,10 @@ function _dcBounds(elems){
     if(e.shape==='rect'){ const r=e.rect; xs.push(r[0],r[0]+r[2]); zs.push(r[1],r[1]+r[3]); }
     else if(e.shape==='segment'){ xs.push(e.start[0],e.end[0]); zs.push(e.start[1],e.end[1]); }
     else if(e.shape==='point'||e.shape==='point_or_rect'){
-      if(e.x!==null&&e.x!==undefined){ xs.push(e.x); zs.push(e.z); } } });
+      if(e.x!==null&&e.x!==undefined){ xs.push(e.x); zs.push(e.z); } }
+    else if(e.shape==='polygon'||e.shape==='cells'){
+      const rings=e.shape==='polygon'?[e.polygon]:e.cells;
+      rings.forEach(r=>r.forEach(p=>{xs.push(p[0]);zs.push(p[1]);})); } });
   if(!xs.length) return null;
   return {min_x:_dcQ(Math.min.apply(null,xs)),max_x:_dcQ(Math.max.apply(null,xs)),
     min_z:_dcQ(Math.min.apply(null,zs)),max_z:_dcQ(Math.max.apply(null,zs))}; }
@@ -368,7 +371,9 @@ function dcPlanGeometry(project,view,src){
           'space rectangle is not resolvable')); return; }
       elems.push({category:'SPACE',id:s.id,space_id:_dcN(s.space_id),
         geometry_class:'CUT',shape:'rect',rect:r.map(_dcQ),name:_dcN(s.name),
-        area_m2:_dcQ(_dcNum(s.area_m2)||0),area_basis:_dcN(s.boundary_basis)}); }); }
+        area_m2:_dcQ(_dcNum(s.area_m2)||0),area_basis:_dcN(s.boundary_basis)});
+      if(s.boundary_basis==='polygon_edges')Object.assign(elems[elems.length-1],
+        {shape:'polygon',polygon:s.polygon}); }); }
   [['DOOR','DOOR'],['WINDOW','WINDOW']].forEach(pair=>{
     const cat=pair[0],typ=pair[1];
     if(!vis[cat]) return;
@@ -398,7 +403,8 @@ function dcPlanGeometry(project,view,src){
       const th=dcStated(s.thickness_m);
       elems.push({category:'SLAB',id:s.id,geometry_class:'PROJECTED',shape:'rect',
         rect:o.map(_dcQ),thickness:th.value,thickness_status:th.status,
-        outline_basis:_dcN(s.outline_basis)}); } });
+        outline_basis:_dcN(s.outline_basis)});
+      if(s.cells!==undefined)Object.assign(elems[elems.length-1],{shape:'cells',cells:s.cells}); } });
   if(vis.CORE||vis.STAIR) arch.cores.forEach(c=>{
     if(lvl!==null&&(c.served_levels||[]).indexOf(lvl.index)<0) return;
     const x=_dcNum(c.x),z=_dcNum(c.z);
@@ -412,6 +418,48 @@ function dcPlanGeometry(project,view,src){
   elems.sort((a,b)=>_scmp(a.category,b.category)||_scmp(String(a.id),String(b.id)));
   return {valid:true,elements:elems,issues:issues,bounds:_dcBounds(elems),
     level:lvl,counts:_dcCounts(elems)}; }
+
+function _dcCellEdges(cells){
+  const vertices=cells.flat(), segments=new Map();
+  cells.forEach(r=>ACS_POLYGON.edges(r).forEach(([a,b])=>{
+    const dx=b[0]-a[0],dz=b[1]-a[1],length2=dx*dx+dz*dz,cuts=new Set([0,1]);
+    vertices.forEach(p=>{if(ACS_POLYGON.on_segment(p,a,b))
+      cuts.add(Math.max(0,Math.min(1,((p[0]-a[0])*dx+(p[1]-a[1])*dz)/length2)));});
+    const ordered=Array.from(cuts).sort((a,b)=>a-b);
+    for(let i=1;i<ordered.length;i++){
+      const lo=ordered[i-1],hi=ordered[i];
+      if((hi-lo)*Math.sqrt(length2)<=ACS_POLYGON.EPS)continue;
+      const ends=[lo,hi].map(t=>[_dcQ(a[0]+t*dx),_dcQ(a[1]+t*dz)]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+      const key=JSON.stringify(ends),entry=segments.get(key);
+      if(entry)entry.count++;else segments.set(key,{ends:ends,count:1}); }
+  }));
+  return Array.from(segments.values()).filter(e=>e.count===1).map(e=>e.ends)
+    .sort((a,b)=>a[0][0]-b[0][0]||a[0][1]-b[0][1]||a[1][0]-b[1][0]||a[1][1]-b[1][1]); }
+
+function _dcCellSection(cells,axis,at){
+  const i=axis==='x'?0:1, intervals=[];
+  cells.forEach(r=>{
+    const values=[];
+    ACS_POLYGON.edges(r).forEach(([a,b])=>{
+      const delta=b[i]-a[i];
+      if(Math.abs(delta)<=ACS_POLYGON.EPS){
+        if(Math.abs(at-a[i])<=ACS_POLYGON.EPS)values.push(a[1-i],b[1-i]);
+      }else if(at>=Math.min(a[i],b[i])-ACS_POLYGON.EPS&&at<=Math.max(a[i],b[i])+ACS_POLYGON.EPS)
+        values.push(a[1-i]+(at-a[i])/delta*(b[1-i]-a[1-i])); });
+    if(values.length&&Math.max(...values)-Math.min(...values)>ACS_POLYGON.EPS)
+      intervals.push([Math.min(...values),Math.max(...values)]); });
+  const merged=[];
+  intervals.sort((a,b)=>a[0]-b[0]||a[1]-b[1]).forEach(([lo,hi])=>{
+    const last=merged[merged.length-1];
+    if(last&&lo<=last[1]+ACS_POLYGON.EPS)last[1]=Math.max(last[1],hi);
+    else merged.push([lo,hi]); });
+  return merged; }
+
+function _dcPolygonLabel(ring){
+  const cells=ACS_POLYGON.cells([ring]);
+  let cell=cells[0];
+  cells.forEach(c=>{if(Math.abs(ACS_POLYGON.signed_area(c))>Math.abs(ACS_POLYGON.signed_area(cell)))cell=c;});
+  return [0,1].map(i=>cell.reduce((s,p)=>s+p[i],0)/cell.length); }
 
 function _dcDisciplineElements(view,src,issues){
   const vis={}; view.visible_categories.forEach(c=>{ vis[c]=true; });
@@ -638,7 +686,7 @@ function dcSectionGeometry(project,view,src){
     const a0=axis==='x'?x:z, a1=axis==='x'?x+w_:z+d_;
     if(!(at>=a0-1e-9&&at<=a1+1e-9)) return;
     const full=axis==='x'?[z,z+d_]:[x,x+w_];
-    let strips=[[full[0],full[1]]];
+    let strips=s.cells!==undefined?_dcCellSection(s.cells,axis,at):[[full[0],full[1]]];
     voids.forEach(v=>{
       if(v.level_id!==s.level_id) return;
       const r=(v.rect||[]).map(_dcNum);
@@ -771,9 +819,10 @@ function dcAnnotations(project,view,geom,notes){
     const c=e.category;
     if(c==='SPACE'){
       const r=e.rect, nm=e.name;
+      const tag=e.shape==='polygon'?_dcPolygonLabel(e.polygon):[r[0]+r[2]/2.0,r[1]+r[3]/2.0];
       add('ROOM_TAG','MODEL_DERIVED',
         (typeof nm==='string'&&nm)?nm:String(e.space_id||e.id),
-        [e.id],r[0]+r[2]/2.0,r[1]+r[3]/2.0); }
+        [e.id],tag[0],tag[1]); }
     else if((c==='DOOR'||c==='WINDOW')
       &&(pol==='TAGS_ONLY'||pol==='TAGS_AND_NOTES'||pol==='FULL')){
       let px=(e.x===undefined)?null:e.x, pz=(e.z===undefined)?null:e.z;
@@ -984,6 +1033,8 @@ function dcQuantities(project,options,src){
     'sum of canonical space areas',known.length===areas.length?C:'PARTIAL');
   let fa=0; const slabKnown=[];
   arch.slabs.forEach(s=>{
+    if(s.cells!==undefined){fa+=s.cells.reduce((sum,c)=>sum+Math.abs(ACS_POLYGON.signed_area(c)),0);
+      slabKnown.push(s.id);return;}
     const o=(s.outline||[]).map(_dcNum);
     if(o.length===4&&!o.some(x=>x===null)){ fa+=o[2]*o[3]; slabKnown.push(s.id); } });
   add('FLOOR_AREA',fa,'m2',slabKnown,'sum of architectural slab outlines',
@@ -1083,10 +1134,18 @@ function dcDrawOps(view,geom,dims,anns,wMm,hMm,marginMm,mode){
     const p=pt(a,b);
     ops.push({op:'text',x:_dcQ(p[0]),y:_dcQ(p[1]),text:String(s),cls:cls,
       anchor:anchor||'middle',size:_dcQ(size===undefined?2.6:size)}); }
+  function polygon(ring,cls,fill){
+    const points=ring.map(p=>pt(p[0],p[1]).map(_dcQ));
+    ops.push({op:'polygon',points:points,cls:cls,fill:!!fill,
+      x:Math.min(...points.map(p=>p[0])),y:Math.min(...points.map(p=>p[1]))}); }
   geom.elements.forEach(e=>{
     const c=e.category, gc=e.geometry_class;
     const cls=gc==='CUT'?'CUT':(gc==='PROJECTED'?'PROJECTED':'REFERENCE');
-    if(c==='SPACE'&&plan){ const r=e.rect; rect(r[0],r[1],r[2],r[3],'REFERENCE',true); }
+    if(c==='SPACE'&&plan){
+      if(e.shape==='polygon')polygon(e.polygon,'REFERENCE',true);
+      else {const r=e.rect;rect(r[0],r[1],r[2],r[3],'REFERENCE',true);} }
+    else if(c==='SLAB'&&plan&&e.shape==='cells')
+      _dcCellEdges(e.cells).forEach(([a,b])=>line(a[0],a[1],b[0],b[1],'REFERENCE'));
     else if((c==='SLAB'||c==='STRUCTURAL_SLAB')&&plan&&e.shape==='rect'){
       const r=e.rect; rect(r[0],r[1],r[2],r[3],'REFERENCE',false); }
     else if(c==='VOID'&&plan){ const r=e.rect; rect(r[0],r[1],r[2],r[3],'PROJECTED',false); }
@@ -1164,6 +1223,11 @@ function dcViewSvg(view,geom,dims,anns,options){
       const fo=op.fill?' fill-opacity="0.06"':'';
       p.push('<rect x="'+_dcFmt(op.x)+'" y="'+_dcFmt(op.y)+'" width="'+_dcFmt(op.w)
         +'" height="'+_dcFmt(op.h)+'" fill="'+fill+'"'+fo+' stroke="'+stroke
+        +'" stroke-width="'+_dcFmt(lw)+'"'+dash+' data-cls="'+cls+'"/>'); }
+    else if(op.op==='polygon'){
+      const points=op.points.map(p=>p.map(_dcFmt).join(',')).join(' ');
+      const fill=op.fill?col.thin:'none',fo=op.fill?' fill-opacity="0.06"':'';
+      p.push('<polygon points="'+points+'" fill="'+fill+'"'+fo+' stroke="'+stroke
         +'" stroke-width="'+_dcFmt(lw)+'"'+dash+' data-cls="'+cls+'"/>'); }
     else if(op.op==='text')
       p.push('<text x="'+_dcFmt(op.x)+'" y="'+_dcFmt(op.y)
@@ -1404,7 +1468,7 @@ function dcRevisionClouds(impactReport,geomBefore,geomAfter){
       ===ingestCanonicalJson(eb===null?null:eb)) return;
     const ref=eb||ea;
     let box=null;
-    if(ref.shape==='rect'){ const r=ref.rect;
+    if(['rect','polygon','cells'].includes(ref.shape)){ const r=ref.rect;
       box=[_dcQ(r[0]),_dcQ(r[1]),_dcQ(r[2]),_dcQ(r[3])]; }
     else if(ref.shape==='segment'){
       const xs=[ref.start[0],ref.end[0]], zs=[ref.start[1],ref.end[1]];
@@ -1459,6 +1523,8 @@ function dcSheetPdfStreams(sheets,drawings){
         else if(op.op==='rect')
           ops.push(_dcFmt(op.x)+' '+_dcFmt(d.paper_mm[1]-op.y-op.h)+' '
             +_dcFmt(op.w)+' '+_dcFmt(op.h)+' re S');
+        else if(op.op==='polygon')
+          ops.push(op.points.map((p,i)=>_dcFmt(p[0])+' '+_dcFmt(d.paper_mm[1]-p[1])+' '+(i?'l':'m')).join(' ')+' h S');
         else if(op.op==='text')
           ops.push('BT /F1 '+_dcFmt(op.size)+' Tf '+_dcFmt(op.x)+' '
             +_dcFmt(d.paper_mm[1]-op.y)+' Td ('

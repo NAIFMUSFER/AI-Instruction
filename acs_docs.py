@@ -13,6 +13,7 @@ import math
 import os
 
 import acs_ingest as ING
+import acs_polygon as POLY
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_HERE, "acs_docs.json"), "r", encoding="utf-8") as _f:
@@ -363,6 +364,8 @@ def plan_geometry(project, view, src=None):
                           "name": s.get("name"),
                           "area_m2": _q(_num(s.get("area_m2")) or 0.0),
                           "area_basis": s.get("boundary_basis")})
+            if s.get("boundary_basis") == "polygon_edges":
+                elems[-1].update(shape="polygon", polygon=s["polygon"])
     for cat, typ in (("DOOR", "DOOR"), ("WINDOW", "WINDOW")):
         if cat not in vis:
             continue
@@ -403,6 +406,8 @@ def plan_geometry(project, view, src=None):
                               "thickness": th["value"],
                               "thickness_status": th["status"],
                               "outline_basis": s.get("outline_basis")})
+                if "cells" in s:
+                    elems[-1].update(shape="cells", cells=s["cells"])
     if "CORE" in vis or "STAIR" in vis:
         for c in arch["cores"]:
             if lvl is not None and lvl["index"] not in (c.get("served_levels") or []):
@@ -646,10 +651,67 @@ def _bounds_of(elems):
             if e.get("x") is not None:
                 xs.append(e["x"])
                 zs.append(e["z"])
+        elif e.get("shape") in ("polygon", "cells"):
+            rings = [e["polygon"]] if e["shape"] == "polygon" else e["cells"]
+            for ring in rings:
+                xs.extend(p[0] for p in ring)
+                zs.extend(p[1] for p in ring)
     if not xs:
         return None
     return {"min_x": _q(min(xs)), "max_x": _q(max(xs)),
             "min_z": _q(min(zs)), "max_z": _q(max(zs))}
+
+
+def _cell_edges(cells):
+    """Union boundary only: split T-junctions and cancel shared cell edges."""
+    vertices = [p for ring in cells for p in ring]
+    segments = {}
+    for ring in cells:
+        for a, b in POLY.edges(ring):
+            dx, dz = b[0]-a[0], b[1]-a[1]
+            length2 = dx*dx+dz*dz
+            cuts = {0.0, 1.0}
+            for p in vertices:
+                if POLY.on_segment(p, a, b):
+                    cuts.add(max(0.0, min(1.0, ((p[0]-a[0])*dx+(p[1]-a[1])*dz)/length2)))
+            ordered = sorted(cuts)
+            for lo, hi in zip(ordered, ordered[1:]):
+                if (hi-lo)*math.sqrt(length2) <= POLY.EPS:
+                    continue
+                ends = sorted([(_q(a[0]+t*dx), _q(a[1]+t*dz)) for t in (lo, hi)])
+                key = tuple(ends)
+                segments[key] = segments.get(key, 0)+1
+    return [[list(a), list(b)] for (a, b), count in sorted(segments.items()) if count == 1]
+
+
+def _cell_section(cells, axis, at):
+    """Intersect convex cells with a vertical plane, then merge their intervals."""
+    i = 0 if axis == "x" else 1
+    intervals = []
+    for ring in cells:
+        values = []
+        for a, b in POLY.edges(ring):
+            delta = b[i]-a[i]
+            if abs(delta) <= POLY.EPS:
+                if abs(at-a[i]) <= POLY.EPS:
+                    values.extend([a[1-i], b[1-i]])
+            elif min(a[i], b[i])-POLY.EPS <= at <= max(a[i], b[i])+POLY.EPS:
+                values.append(a[1-i]+(at-a[i])/delta*(b[1-i]-a[1-i]))
+        if values and max(values)-min(values) > POLY.EPS:
+            intervals.append((min(values), max(values)))
+    merged = []
+    for lo, hi in sorted(intervals):
+        if merged and lo <= merged[-1][1]+POLY.EPS:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], hi))
+        else:
+            merged.append((lo, hi))
+    return merged
+
+
+def _polygon_label(ring):
+    # A convex cell's vertex mean is inside it even when the room centroid is not.
+    cell = max(POLY.cells([ring]), key=lambda c: abs(POLY.signed_area(c)))
+    return [sum(p[i] for p in cell)/len(cell) for i in (0, 1)]
 
 
 # ------------------------------------------------------ الواجهات (§20) ----
@@ -838,8 +900,8 @@ def section_geometry(project, view, src=None):
         a0, a1 = (x, x + w_) if axis == "x" else (z, z + d_)
         if not (a0 - 1e-9 <= at <= a1 + 1e-9):
             continue
-        strips = [(z, z + d_)] if axis == "x" else (x, x + w_)
-        strips = [(z, z + d_)] if axis == "x" else [(x, x + w_)]
+        strips = (_cell_section(s["cells"], axis, at) if "cells" in s else
+                  ([(z, z + d_)] if axis == "x" else [(x, x + w_)]))
         for v in voids:
             if v.get("level_id") != s.get("level_id"):
                 continue
@@ -1010,10 +1072,12 @@ def annotations(project, view, geom, notes=None, src=None):
         c = e["category"]
         if c == "SPACE":
             x, z, w, d = e["rect"]
+            tag_x, tag_z = (_polygon_label(e["polygon"]) if e.get("shape") == "polygon"
+                            else (x + w/2.0, z + d/2.0))
             nm = e.get("name")
             add("ROOM_TAG", "MODEL_DERIVED",
                 nm if isinstance(nm, str) and nm else str(e.get("space_id") or e["id"]),
-                [e["id"]], x + w / 2.0, z + d / 2.0)
+                [e["id"]], tag_x, tag_z)
         elif c in ("DOOR", "WINDOW") and pol in ("TAGS_ONLY", "TAGS_AND_NOTES", "FULL"):
             px = e.get("x")
             pz = e.get("z")
@@ -1329,6 +1393,10 @@ def quantities(project, options=None, src=None):
     slab_known = []
     fa = 0.0
     for s in arch["slabs"]:
+        if "cells" in s:
+            fa += sum(abs(POLY.signed_area(c)) for c in s["cells"])
+            slab_known.append(s["id"])
+            continue
         o = [_num(x) for x in (s.get("outline") or [])]
         if len(o) == 4 and all(x is not None for x in o):
             fa += o[2] * o[3]
@@ -1489,13 +1557,24 @@ def draw_ops(view, geom, dims, anns, width_mm, height_mm, margin_mm=12.0,
         ops.append({"op": "text", "x": _q(x), "y": _q(y), "text": str(s),
                     "cls": cls, "anchor": anchor, "size": _q(size)})
 
+    def polygon(ring, cls, fill=False):
+        points = [[_q(v) for v in pt(*p)] for p in ring]
+        ops.append({"op": "polygon", "points": points, "cls": cls, "fill": bool(fill),
+                    "x": min(p[0] for p in points), "y": min(p[1] for p in points)})
+
     for e in geom["elements"]:
         c, gc = e["category"], e.get("geometry_class")
         cls = "CUT" if gc == "CUT" else ("PROJECTED" if gc == "PROJECTED"
                                          else "REFERENCE")
         if c == "SPACE" and plan:
-            x, z, w, d = e["rect"]
-            rect(x, z, w, d, "REFERENCE", fill=True)
+            if e.get("shape") == "polygon":
+                polygon(e["polygon"], "REFERENCE", fill=True)
+            else:
+                x, z, w, d = e["rect"]
+                rect(x, z, w, d, "REFERENCE", fill=True)
+        elif c == "SLAB" and plan and e.get("shape") == "cells":
+            for a, b in _cell_edges(e["cells"]):
+                line(*a, *b, "REFERENCE")
         elif c in ("SLAB", "STRUCTURAL_SLAB") and plan and e.get("shape") == "rect":
             x, z, w, d = e["rect"]
             rect(x, z, w, d, "REFERENCE")
@@ -1589,6 +1668,13 @@ def view_svg(view, geom, dims, anns, options=None):
                      'stroke="%s" stroke-width="%s"%s data-cls="%s"/>'
                      % (_fmt(op["x"]), _fmt(op["y"]), _fmt(op["w"]), _fmt(op["h"]),
                         fill, fo, stroke, _fmt(lw), dash, cls))
+        elif op["op"] == "polygon":
+            points = " ".join("%s,%s" % (_fmt(x), _fmt(y)) for x, y in op["points"])
+            fill = col["thin"] if op.get("fill") else "none"
+            fo = ' fill-opacity="0.06"' if op.get("fill") else ""
+            p.append('<polygon points="%s" fill="%s"%s stroke="%s" '
+                     'stroke-width="%s"%s data-cls="%s"/>'
+                     % (points, fill, fo, stroke, _fmt(lw), dash, cls))
         elif op["op"] == "text":
             p.append('<text x="%s" y="%s" font-family="monospace" font-size="%s" '
                      'text-anchor="%s" fill="%s" data-cls="%s">%s</text>'
@@ -1895,7 +1981,7 @@ def revision_clouds(impact_report, geom_before, geom_after):
             continue
         ref = eb or ea
         box = None
-        if ref.get("shape") == "rect":
+        if ref.get("shape") in ("rect", "polygon", "cells"):
             x, z, w, d = ref["rect"]
             box = [_q(x), _q(z), _q(w), _q(d)]
         elif ref.get("shape") == "segment":
@@ -1963,6 +2049,11 @@ def sheet_pdf(sheets, drawings, generated_at=None, producer=None):
                                % (_fmt(op["x"]),
                                   _fmt(d["paper_mm"][1] - op["y"] - op["h"]),
                                   _fmt(op["w"]), _fmt(op["h"])))
+                elif op["op"] == "polygon":
+                    path = " ".join("%s %s %s" % (_fmt(x), _fmt(d["paper_mm"][1]-y),
+                                    "m" if i == 0 else "l")
+                                    for i, (x, y) in enumerate(op["points"]))
+                    ops.append(path + " h S")
                 elif op["op"] == "text":
                     ops.append("BT /F1 %s Tf %s %s Td (%s) Tj ET"
                                % (_fmt(op["size"]), _fmt(op["x"]),

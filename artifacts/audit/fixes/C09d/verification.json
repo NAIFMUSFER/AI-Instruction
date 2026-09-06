@@ -1,0 +1,45 @@
+{
+  "issue": "C09d",
+  "source_base": "3fd7949134a2fe27ae14d89e7facfce62b5760e5",
+  "red": {
+    "python_tests": 6,
+    "python_failures": 7,
+    "javascript_pass": 0,
+    "javascript_fail": 2
+  },
+  "green": {
+    "python_tests": 6,
+    "python_failures": 0,
+    "javascript_pass": 2,
+    "javascript_fail": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 116,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 131
+  },
+  "http_generation": {
+    "warehouse": 503,
+    "chalet": 503,
+    "reason": "provider credential unavailable"
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "actual_ESM_import": {
+    "exit_code": 0,
+    "checkout": "audit-cad-verify with installed dependencies",
+    "polygon_present_in_svg": true,
+    "pixel_check": false
+  },
+  "limitations": [
+    "original independent 22-defect fixture unavailable",
+    "browser pixels not verified",
+    "IFC / validator / CAD import polygon support remains open",
+    "DXF cases are audit-only outline projections"
+  ]
+}

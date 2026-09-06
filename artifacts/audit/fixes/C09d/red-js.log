@@ -1,0 +1,38 @@
+FAIL polygon documentation 0
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(svg.includes('<polygon '))
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25926:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL polygon documentation 1
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    [
+      0,
++     6
+-     2
+    ]
+  ]
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25929:18)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+POLYGON DOCUMENTATION: 0 passed, 2 failed

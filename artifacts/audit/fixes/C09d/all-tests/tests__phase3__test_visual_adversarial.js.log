@@ -1,0 +1,34 @@
+
+== A — visual_only WITH a source element must be REJECTED ==
+  ✓ A · generic visual object with a source element is rejected
+  ✓ A · landscape-classed object with a source element is rejected
+  ✓ A · entourage-classed object with a source element is rejected
+  ✓ A · decoration-classed object with a source element is rejected
+  ✓ A · asset-based object with a source element is rejected
+  ✓ A · system-generated roof cap with a source element is rejected
+  ✓ A · theme-generated object with a source element is rejected
+  ✓ A · AI-suggested-material object with a source element is rejected
+  ✓ A · instanced object with a source element is rejected
+  ✓ A · simplified-LOD object with a source element is rejected
+  ✓ A · MEP-layered visual object with a source element is rejected
+  ✓ A · FLS-layered visual object with a source element is rejected
+  ✓ A · site ground plane with a source element is rejected
+  ✓ A · the decoration specialisation is reported IN ADDITION, never instead
+  ✓ A · the rejection code is part of the declared vocabulary
+  ✓ A · an empty-string source is still a source and is rejected
+  ✓ A · validation is deterministic across repeated runs
+
+== B — visual_only=false WITHOUT a source element must be REJECTED ==
+  ✓ B · modelled architecture wall with no source is rejected
+  ✓ B · modelled structure member with no source is rejected
+  ✓ B · modelled MEP segment with no source is rejected
+  ✓ B · modelled FLS device with no source is rejected
+  ✓ B · a modelled object with an absent source key is rejected
+
+== ACCEPTANCE — the two valid shapes must pass cleanly ==
+  ✓ visual_only:true + source_element_id:null is accepted
+  ✓ visual_only:true with the source key absent is accepted
+  ✓ visual_only:false + a valid source element is accepted
+  ✓ a mixed valid scene is accepted
+
+== FULL PATH — the compiler never emits a violating object ==

@@ -1,0 +1,87 @@
+test_pdf_contains_closed_six_vertex_vector_path (__main__.PolygonDocumentation.test_pdf_contains_closed_six_vertex_vector_path) ... FAIL
+test_room_tag_stays_inside_concave_room (__main__.PolygonDocumentation.test_room_tag_stays_inside_concave_room) ... ERROR
+test_section_intersects_polygon_not_its_bounding_box (__main__.PolygonDocumentation.test_section_intersects_polygon_not_its_bounding_box) ... 
+  test_section_intersects_polygon_not_its_bounding_box (__main__.PolygonDocumentation.test_section_intersects_polygon_not_its_bounding_box) (axis='x') ... FAIL
+  test_section_intersects_polygon_not_its_bounding_box (__main__.PolygonDocumentation.test_section_intersects_polygon_not_its_bounding_box) (axis='z') ... FAIL
+test_slab_has_no_internal_sweep_partition_as_a_boundary (__main__.PolygonDocumentation.test_slab_has_no_internal_sweep_partition_as_a_boundary) ... FAIL
+test_slab_void_geometry_and_real_quantity (__main__.PolygonDocumentation.test_slab_void_geometry_and_real_quantity) ... FAIL
+test_svg_fill_has_actual_area_and_no_notch (__main__.PolygonDocumentation.test_svg_fill_has_actual_area_and_no_notch) ... FAIL
+
+======================================================================
+ERROR: test_room_tag_stays_inside_concave_room (__main__.PolygonDocumentation.test_room_tag_stays_inside_concave_room)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 66, in test_room_tag_stays_inside_concave_room
+    self.assertTrue(G.contains_point(L,[tags[0]['x'],tags[0]['y']],boundary=False))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: contains_point() got an unexpected keyword argument 'boundary'
+
+======================================================================
+FAIL: test_pdf_contains_closed_six_vertex_vector_path (__main__.PolygonDocumentation.test_pdf_contains_closed_six_vertex_vector_path)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 72, in test_pdf_contains_closed_six_vertex_vector_path
+    self.assertTrue(paths)
+AssertionError: [] is not true
+
+======================================================================
+FAIL: test_section_intersects_polygon_not_its_bounding_box (__main__.PolygonDocumentation.test_section_intersects_polygon_not_its_bounding_box) (axis='x')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 61, in test_section_intersects_polygon_not_its_bounding_box
+    self.assertEqual([(e['u0'],e['u1']) for e in slabs],[(0,2)])
+AssertionError: Lists differ: [(0.0, 6.0)] != [(0, 2)]
+
+First differing element 0:
+(0.0, 6.0)
+(0, 2)
+
+- [(0.0, 6.0)]
++ [(0, 2)]
+
+======================================================================
+FAIL: test_section_intersects_polygon_not_its_bounding_box (__main__.PolygonDocumentation.test_section_intersects_polygon_not_its_bounding_box) (axis='z')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 61, in test_section_intersects_polygon_not_its_bounding_box
+    self.assertEqual([(e['u0'],e['u1']) for e in slabs],[(0,2)])
+AssertionError: Lists differ: [(0.0, 6.0)] != [(0, 2)]
+
+First differing element 0:
+(0.0, 6.0)
+(0, 2)
+
+- [(0.0, 6.0)]
++ [(0, 2)]
+
+======================================================================
+FAIL: test_slab_has_no_internal_sweep_partition_as_a_boundary (__main__.PolygonDocumentation.test_slab_has_no_internal_sweep_partition_as_a_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 81, in test_slab_has_no_internal_sweep_partition_as_a_boundary
+    self.assertEqual(slab.get('shape'),'cells')
+AssertionError: 'rect' != 'cells'
+- rect
++ cells
+
+
+======================================================================
+FAIL: test_slab_void_geometry_and_real_quantity (__main__.PolygonDocumentation.test_slab_void_geometry_and_real_quantity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 51, in test_slab_void_geometry_and_real_quantity
+    self.assertAlmostEqual(sum(abs(G.signed_area(c)) for c in cells),19,places=5)
+AssertionError: 0 != 19 within 5 places (19 difference)
+
+======================================================================
+FAIL: test_svg_fill_has_actual_area_and_no_notch (__main__.PolygonDocumentation.test_svg_fill_has_actual_area_and_no_notch)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_documentation.py", line 39, in test_svg_fill_has_actual_area_and_no_notch
+    self.assertEqual(len(filled),1)
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.051s
+
+FAILED (failures=6, errors=1)
