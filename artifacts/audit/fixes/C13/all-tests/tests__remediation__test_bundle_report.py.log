@@ -1,0 +1,68 @@
+
+== أ · THE REPORT EXISTS AND IS REGENERATED DETERMINISTICALLY ==
+  ✓ tools/bundle_report.py exists
+  ✓ the tool still declares itself measurement-only
+  ✓ the tool runs cleanly (twice)
+  ✓ two consecutive runs produce byte-identical output — the report is a usable baseline, not a moving target
+  ✓ the output carries no timestamp field (the usual source of false diffs)
+  ✓ the output embeds no absolute sandbox path
+  ✓ the tool writes tests/performance/bundle_report.json
+  ✓ the written file equals what the tool prints
+  ✓ the report declares itself deterministic
+  ✓ the report announces the post-split schema (acs.bundle/2)
+
+== ب · EVERY NUMBER MATCHES A FRESH INDEPENDENT MEASUREMENT ==
+  ✓ this test imports neither the tool it checks nor the shared app_source helper (otherwise it would be comparing them with themselves)
+  ✓ shell raw bytes match
+  ✓ shell raw bytes match os.path.getsize as a third witness
+  ✓ shell sha256 matches
+  ✓ shell line count matches
+  ✓ shell gzip size matches an independently computed gzip
+  ✓ gzip is a real reduction, so it was really computed (not copied from raw)
+  ✓ script element count matches (8)
+  ✓ external script count matches (7)
+
+  -- the CSP-relevant zeroes, measured not asserted --
+  ✓ ZERO executable inline scripts in the shell — this is what lets script-src drop 'unsafe-inline'
+  ✓ ZERO <style> blocks in the shell (independently counted)
+  ✓ ZERO style="…" attributes in the shell (independently counted)
+  ✓ exactly one inline element remains and it is the import map
+
+  -- the module tree --
+  ✓ first-party module count matches an independent walk (28)
+  ✓ total first-party JS bytes match (1920650)
+  ✓ the per-module list covers every module on disk, once each
+  ✓ the per-module byte counts sum to the declared total
+  ✓ the per-module list is sorted largest first
+  ✓ module core/standards.js                   232729 bytes matches getsize
+  ✓ module core/disciplines.js                 207905 bytes matches getsize
+  ✓ module core/viewer.js                      203476 bytes matches getsize
+  ✓ module ui/workspace-ui-wiring.js           201956 bytes matches getsize
+  ✓ module render/scene.js                     165257 bytes matches getsize
+  ✓ the largest module is the one an independent measurement finds (core/standards.js)
+  ✓ core initial JS matches the independently computed static closure (1895101 bytes in 22 modules)
+  ✓ boot scripts are counted separately and match (25549 bytes in 6 files)
+  ✓ core + boot equals the declared first-load JavaScript
+
+  -- lazy JS: reported honestly, not invented --
+  ✓ lazy first-party JS is reported as the real number (0 bytes, 0 modules)
+  ✓ there is no lazy first-party JS today and the report SAYS SO instead of implying code-splitting that was never done
+  ✓ every dynamic import() found is accounted for, and none of them is first-party (so none of them defers first-party bytes)
+
+  -- stylesheet and generated markers --
+  ✓ the stylesheet byte count matches getsize (53599)
+  ✓ the stylesheet gzip size matches an independent gzip
+  ✓ all 10 generated JS marker pairs survived the split into public/app/
+  ✓ all 6 generated CSS pairs are in the extracted stylesheet
+  ✓ all 6 generated DOM pairs stayed in the shell (independently counted)
+
+  -- brotli and vendored assets: null-with-reason, never estimated --
+  ✓ brotli is reported as a number if and only if a brotli module is importable; otherwise null WITH a reason
+  ✓ no estimated or rounded brotli number is smuggled in as a string
+  ✓ vendored asset sizes are reported as null with a reason while public/vendor is unpopulated
+  ✓ the vendor reason names the real cause and does not claim a measurement
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_bundle_report.py", line 358, in <module>
+    or 'no longer vendored' in V['reason'], V.get('reason', '')[:120])
+                                            ~~~~~~~~~~~~~~~~~~~^^^^^^
+TypeError: 'NoneType' object is not subscriptable

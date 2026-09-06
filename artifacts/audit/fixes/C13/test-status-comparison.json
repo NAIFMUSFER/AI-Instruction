@@ -1,0 +1,12 @@
+[
+  {
+    "path": "tests/remediation/test_svg_opening_origin.js",
+    "before": null,
+    "after": "PASS"
+  },
+  {
+    "path": "tests/remediation/test_svg_opening_origin.py",
+    "before": null,
+    "after": "PASS"
+  }
+]

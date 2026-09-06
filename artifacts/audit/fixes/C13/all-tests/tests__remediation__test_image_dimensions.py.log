@@ -1,0 +1,27 @@
+test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) ... {"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_ebaaffe4d78e480a", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_3afc4dfc7c6c4954", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_3c84c5a5f9954bd1", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_4a6dd250654346af", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_ad478d3441114a11", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_d70e742c05de499a", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_d4dd814bd9e34312", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_ca3571b1e8064330", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_05e6d5cbf7074213", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_f3d56ae770974fbe", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_1918d75d856e4964", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_5f32cd41df3d48fb", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_3f89cccad2dc4704", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:57Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_0a85d9ebf8b1446f", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:58Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_2a56c5b9db3c47c7", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:58Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_8df25c0dd99c4963", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:15:58Z", "version": "1.3"}
+ok
+test_optional_dimensions_remain_optional (__main__.ImageDimensions.test_optional_dimensions_remain_optional) ... {"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_cd354aca888046eb", "service": "ACS Understanding Engine", "ts": "2026-09-06T18:15:58Z", "version": "1.3"}
+ok
+test_valid_dimensions_and_hints_reach_provider_unchanged (__main__.ImageDimensions.test_valid_dimensions_and_hints_reach_provider_unchanged) ... {"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_7c9918844b654939", "service": "ACS Understanding Engine", "ts": "2026-09-06T18:15:58Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_203ebcb36f574ac2", "service": "ACS Understanding Engine", "ts": "2026-09-06T18:15:58Z", "version": "1.3"}
+ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.242s
+
+OK

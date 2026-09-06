@@ -1,0 +1,130 @@
+test_elevation_and_section_use_the_correct_door_projection (__main__.SvgOpeningOrigin.test_elevation_and_section_use_the_correct_door_projection) ... FAIL
+test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) ... 
+  test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='N') ... FAIL
+  test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='S') ... FAIL
+  test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='E') ... FAIL
+  test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='W') ... FAIL
+test_oblique_host_and_unknown_width_point (__main__.SvgOpeningOrigin.test_oblique_host_and_unknown_width_point) ... FAIL
+test_split_wall_start_is_subtracted_instead_of_room_origin (__main__.SvgOpeningOrigin.test_split_wall_start_is_subtracted_instead_of_room_origin) ... FAIL
+test_svg_door_remains_centred_in_its_host (__main__.SvgOpeningOrigin.test_svg_door_remains_centred_in_its_host) ... FAIL
+
+======================================================================
+FAIL: test_elevation_and_section_use_the_correct_door_projection (__main__.SvgOpeningOrigin.test_elevation_and_section_use_the_correct_door_projection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 78, in test_elevation_and_section_use_the_correct_door_projection
+    self.assertEqual((door['u0'],door['u1']),(12.5,13.5))
+AssertionError: Tuples differ: (22.5, 23.5) != (12.5, 13.5)
+
+First differing element 0:
+22.5
+12.5
+
+- (22.5, 23.5)
+?  ^     ^
+
++ (12.5, 13.5)
+?  ^     ^
+
+
+======================================================================
+FAIL: test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='N')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 43, in test_four_edges_keep_canonical_opening_centres
+    self.assertEqual(centre,expected)
+AssertionError: Lists differ: [23.0, 5.0] != [13, 5]
+
+First differing element 0:
+23.0
+13
+
+- [23.0, 5.0]
++ [13, 5]
+
+======================================================================
+FAIL: test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='S')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 43, in test_four_edges_keep_canonical_opening_centres
+    self.assertEqual(centre,expected)
+AssertionError: Lists differ: [23.0, 11.0] != [13, 11]
+
+First differing element 0:
+23.0
+13
+
+- [23.0, 11.0]
++ [13, 11]
+
+======================================================================
+FAIL: test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='E')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 43, in test_four_edges_keep_canonical_opening_centres
+    self.assertEqual(centre,expected)
+AssertionError: Lists differ: [16.0, 13.0] != [16, 8]
+
+First differing element 1:
+13.0
+8
+
+- [16.0, 13.0]
++ [16, 8]
+
+======================================================================
+FAIL: test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) (edge='W')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 43, in test_four_edges_keep_canonical_opening_centres
+    self.assertEqual(centre,expected)
+AssertionError: Lists differ: [10.0, 13.0] != [10, 8]
+
+First differing element 1:
+13.0
+8
+
+- [10.0, 13.0]
++ [10, 8]
+
+======================================================================
+FAIL: test_oblique_host_and_unknown_width_point (__main__.SvgOpeningOrigin.test_oblique_host_and_unknown_width_point)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 58, in test_oblique_host_and_unknown_width_point
+    for i in (0,1):self.assertAlmostEqual((g["start"][i]+g["end"][i])/2,3,places=5)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0.0 != 3 within 5 places (3.0 difference)
+
+======================================================================
+FAIL: test_split_wall_start_is_subtracted_instead_of_room_origin (__main__.SvgOpeningOrigin.test_split_wall_start_is_subtracted_instead_of_room_origin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 53, in test_split_wall_start_is_subtracted_instead_of_room_origin
+    self.assertEqual(g["start"],[4.5,4]);self.assertEqual(g["end"],[5.5,4])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [7.5, 4.0] != [4.5, 4]
+
+First differing element 0:
+7.5
+4.5
+
+- [7.5, 4.0]
+?  ^     --
+
++ [4.5, 4]
+?  ^
+
+
+======================================================================
+FAIL: test_svg_door_remains_centred_in_its_host (__main__.SvgOpeningOrigin.test_svg_door_remains_centred_in_its_host)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.py", line 72, in test_svg_door_remains_centred_in_its_host
+    self.assertAlmostEqual(centre(doors[0]),centre(north),places=5)
+AssertionError: 142.0 != 42.0 within 5 places (100.0 difference)
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.082s
+
+FAILED (failures=8)

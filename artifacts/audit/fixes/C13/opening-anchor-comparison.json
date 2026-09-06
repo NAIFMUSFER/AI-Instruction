@@ -1,0 +1,74 @@
+[
+  {
+    "case": "warehouse",
+    "level": 0,
+    "resolved_openings": 7,
+    "max_anchor_error_m": 3.552713678800501e-15,
+    "bounds": {
+      "min_x": 0.0,
+      "max_x": 30.0,
+      "min_z": 0.0,
+      "max_z": 25.0
+    }
+  },
+  {
+    "case": "chalet",
+    "level": 0,
+    "resolved_openings": 2,
+    "max_anchor_error_m": 0.0,
+    "bounds": {
+      "min_x": 6.0,
+      "max_x": 14.0,
+      "min_z": 1.0,
+      "max_z": 8.0
+    }
+  },
+  {
+    "case": "chalet",
+    "level": 1,
+    "resolved_openings": 1,
+    "max_anchor_error_m": 0.0,
+    "bounds": {
+      "min_x": 1.0,
+      "max_x": 5.0,
+      "min_z": 1.0,
+      "max_z": 5.0
+    }
+  },
+  {
+    "case": "chalet",
+    "level": 2,
+    "resolved_openings": 1,
+    "max_anchor_error_m": 0.0,
+    "bounds": {
+      "min_x": 1.0,
+      "max_x": 5.0,
+      "min_z": 1.0,
+      "max_z": 5.0
+    }
+  },
+  {
+    "case": "chalet",
+    "level": 3,
+    "resolved_openings": 1,
+    "max_anchor_error_m": 0.0,
+    "bounds": {
+      "min_x": 1.0,
+      "max_x": 5.0,
+      "min_z": 1.0,
+      "max_z": 5.0
+    }
+  },
+  {
+    "case": "chalet",
+    "level": 4,
+    "resolved_openings": 0,
+    "max_anchor_error_m": 0.0,
+    "bounds": {
+      "min_x": 0.2,
+      "max_x": 19.8,
+      "min_z": 0.2,
+      "max_z": 24.8
+    }
+  }
+]

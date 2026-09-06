@@ -1,0 +1,32 @@
+[
+  {
+    "path": "acs_docs.py",
+    "source_sha256": "60ca7c6e1b937efa78bbaa13c545553d1a149bf062a24ccedf188403f56f9097",
+    "tested_sha256": "60ca7c6e1b937efa78bbaa13c545553d1a149bf062a24ccedf188403f56f9097",
+    "equal": true
+  },
+  {
+    "path": "tools/build_docs_browser.py",
+    "source_sha256": "2e092e1e7a6f4c010f65b749916113535d91803d2efc110846dcc31ca72ea452",
+    "tested_sha256": "2e092e1e7a6f4c010f65b749916113535d91803d2efc110846dcc31ca72ea452",
+    "equal": true
+  },
+  {
+    "path": "public/app/generated/docs.js",
+    "source_sha256": "a905cb07f1756e13cd00f4c9faaac5fb223f1f42d164ee7b204de0ff368b5ca0",
+    "tested_sha256": "a905cb07f1756e13cd00f4c9faaac5fb223f1f42d164ee7b204de0ff368b5ca0",
+    "equal": true
+  },
+  {
+    "path": "tests/remediation/test_svg_opening_origin.py",
+    "source_sha256": "43ae6887627a62a34378b7a9ad286360e3989b4e8831551e287ef6f44bfba6f2",
+    "tested_sha256": "43ae6887627a62a34378b7a9ad286360e3989b4e8831551e287ef6f44bfba6f2",
+    "equal": true
+  },
+  {
+    "path": "tests/remediation/test_svg_opening_origin.js",
+    "source_sha256": "26260082f43db3d5e3e6c68486dda64dcbf045839cc02fd88ff972e54fa1f5ca",
+    "tested_sha256": "26260082f43db3d5e3e6c68486dda64dcbf045839cc02fd88ff972e54fa1f5ca",
+    "equal": true
+  }
+]

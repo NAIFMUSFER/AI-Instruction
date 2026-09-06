@@ -1,0 +1,41 @@
+
+== AUDIT 2/3: 10 building types (local DATA pipeline) ==
+  ✓ Villa: type=villa (generic)
+  ✓ Villa: NO industrial fields injected
+  ✓ Villa: has rooms/spaces
+  ✓ Apartment bldg: type=apartment (generic)
+  ✓ Apartment bldg: NO industrial fields injected
+  ✓ Apartment bldg: has rooms/spaces
+  ✓ Hotel: type=hotel (generic)
+  ✓ Hotel: NO industrial fields injected
+  ✓ Hotel: has rooms/spaces
+  ✓ Clinic: type=clinic (generic)
+  ✓ Clinic: NO industrial fields injected
+  ✓ Clinic: has rooms/spaces
+  ✓ Office: type=office (generic)
+  ✓ Office: NO industrial fields injected
+  ✓ Office: has rooms/spaces
+  ✓ Restaurant: type=restaurant (generic)
+  ✓ Restaurant: NO industrial fields injected
+  ✓ Restaurant: has rooms/spaces
+  ✓ School: type=school (generic)
+  ✓ School: NO industrial fields injected
+  ✓ School: has rooms/spaces
+  ✓ Hospital: type=hospital (generic)
+  ✓ Hospital: NO industrial fields injected
+  ✓ Hospital: has rooms/spaces
+  ✓ Warehouse: type=warehouse (industrial)
+  ✓ Factory: type=factory (industrial)
+
+== AUDIT 3: cross-domain negative — no industrial objects auto-added ==
+  ✓ villa objects contain none of forklift/amr/conveyor/rack
+  ✓ villa may contain car (requested)
+  ✓ hotel: no industrial objects
+  ✓ hotel: no industrial fields
+  ✓ clinic: no industrial objects
+  ✓ clinic: no industrial fields
+
+== AUDIT 5: generic object model works across contexts ==
+  ✓ cars/chairs/beds/table/people all parsed generically
+
+TYPES RESULT: 33 passed, 0 failed

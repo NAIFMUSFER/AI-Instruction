@@ -1,0 +1,52 @@
+{
+  "issue": "C13",
+  "source_base": "81de30cc9db14ce3ad0cf5205557a29a574c0f42",
+  "red": {
+    "python_tests": 5,
+    "python_failures": 8,
+    "javascript_pass": 0,
+    "javascript_fail": 5
+  },
+  "green": {
+    "python_tests": 5,
+    "python_failures": 0,
+    "javascript_pass": 5,
+    "javascript_fail": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 114,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 129
+  },
+  "http_generation": {
+    "warehouse": 503,
+    "chalet": 503,
+    "reason": "provider credential unavailable"
+  },
+  "changed_from_previous": {
+    "warehouse": [
+      "floor-0.svg"
+    ],
+    "chalet": [
+      "floor-0.svg",
+      "floor-1.svg",
+      "floor-2.svg",
+      "floor-3.svg"
+    ]
+  },
+  "unchanged": [
+    "building.json",
+    "building.gltf",
+    "validation.json",
+    "audit-room-outlines.dxf"
+  ],
+  "limitations": [
+    "original independent 22-defect fixture unavailable",
+    "browser pixels not verified",
+    "local generator still violates room/floor requirements",
+    "DXF is an audit-only outline projection"
+  ]
+}

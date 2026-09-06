@@ -192,8 +192,12 @@ function _dcWallRect(w){
 function _dcOpeningPlan(o,arch){
   const host=arch.walls.filter(w=>w.id===o.host_wall_id)[0]||null;
   const wd=dcStated(o.width_m);
-  const u=_dcNum(o.u_center);
+  let u=_dcNum(o.u_center);
   if(!host||u===null) return null;
+  const hostU0=_dcNum(host.u0);
+  if(hostU0===null) return null;
+  // u_center is global in the wall frame; start already includes u0.
+  u-=hostU0;
   const sx=_dcNum(host.start.x),sz=_dcNum(host.start.z);
   const ex=_dcNum(host.end.x),ez=_dcNum(host.end.z);
   if([sx,sz,ex,ez].some(v=>v===null)) return null;

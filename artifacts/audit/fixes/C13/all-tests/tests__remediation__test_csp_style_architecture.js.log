@@ -1,0 +1,40 @@
+
+== 2 · فحص ساكن على المخرجات المشحونة (لا المصدر وحده) ==
+  ✓ الشجرة المفحوصة هي public/ الفعليّة وفيها الطبقات المولَّدة
+  ✓ صفر آلية تنسيق محجوبة في أي ملفّ مشحون
+  ✓ الفاحص نفسه غير عبثيّ — يصطاد الآليات الثلاث في عيّنة مخالفة
+  ✓ data-acs-style لا يُحسب خرقاً (وهو البديل المقصود)
+
+== 3 · المولّدات ومخرجاتها متزامنة ==
+  ✓ build_workspace_ui.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_render_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_docs_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_bim_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_pbr_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_archdetail_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_runtime_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+  ✓ build_authoring_browser.py يعيد إنتاج مخرجه بايتاً ببايت (لا انحراف يدويّ)
+
+== 4 · هل workspace-ui-wiring.js مخرجٌ مولَّد؟ ==
+  ✓ public/index.html فيها صفر سكربت مضمّن قابل للتنفيذ (مدخل المولّد استُهلك)
+  ✓ frontend_analyze.segments على الصفحة الحالية لا تعيد مقاطع التطبيق
+  ✓ لا أداة في tools/ تكتب ui/workspace-ui-wiring.js (ذِكرُه في تعليق ليس توليداً)
+
+== 5 · السياسة الإنتاجية لم تُضعَّف ==
+  ✓ netlify.toml ما زال يحوي style-src 'self' حرفياً
+  ✓ لا 'unsafe-inline' في أي مكان من السياسة
+  ✓ لا 'unsafe-eval' في أي مكان من السياسة
+  ✓ لا توجيه style-src-attr ولا style-src-elem مُضاف
+  ✓ لا 'unsafe-hashes' (وهو ما يعيد سمات style من الباب الخلفي)
+
+  ! تعذّر تشغيل Chromium: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+
+CSP STYLE ARCHITECTURE: 20 passed, 0 failed  (الطبقة الحيّة: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED)

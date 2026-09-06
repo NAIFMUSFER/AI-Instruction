@@ -1,0 +1,96 @@
+SVG OPENING ORIGIN: 0 passed, 5 failed
+FAIL opening centre N
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
++   23,
+-   13,
+    5
+  ]
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25913:14)
+    at test (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25908:30)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25910:5)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL opening centre S
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
++   23,
+-   13,
+    11
+  ]
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25913:14)
+    at test (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25908:30)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25910:5)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL opening centre E
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    16,
++   13
+-   8
+  ]
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25913:14)
+    at test (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25908:30)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25910:5)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL opening centre W
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    10,
++   13
+-   8
+  ]
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25913:14)
+    at test (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25908:30)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25910:5)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+FAIL oblique shared wall
+AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+
+  assert.ok(Math.abs((v+g.end[i])/2-3)<1e-5)
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25919:35)
+    at Array.forEach (<anonymous>)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25919:13)
+    at test (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25908:30)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25916:3)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_svg_opening_origin.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)

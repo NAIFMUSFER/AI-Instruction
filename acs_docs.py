@@ -436,6 +436,11 @@ def _opening_plan(o, arch):
     u = _num(o.get("u_center"))
     if host is None or u is None:
         return None
+    host_u0 = _num(host.get("u0"))
+    if host_u0 is None:
+        return None
+    # u_center is a global wall-frame coordinate; start already includes u0.
+    u -= host_u0
     sx, sz = _num(host["start"]["x"]), _num(host["start"]["z"])
     ex, ez = _num(host["end"]["x"]), _num(host["end"]["z"])
     if None in (sx, sz, ex, ez):
