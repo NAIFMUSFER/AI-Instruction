@@ -83,7 +83,7 @@ def _file_string(info, name, default=UNKNOWN):
 def build_info():
     """أصل البناء كما هو — بلا اختراع ولا سرّ."""
     fileinfo = _from_file()
-    source = (os.environ.get("ACS_BUILD_INFO_SOURCE") or "").strip() or "environment"
+    source = (os.environ.get("ACS_BUILD_INFO_SOURCE", "environment") or "").strip() or "environment"
     if source == "environment":
         # Compatibility mode for existing native/local deployments.
         sha = _env_first(_ENV_SHA) or fileinfo.get("git_sha") or _from_git() or UNKNOWN

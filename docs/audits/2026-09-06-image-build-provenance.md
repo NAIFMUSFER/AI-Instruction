@@ -109,14 +109,46 @@ Logs: `evidence/build-provenance-regression.log`,
 ## Browser verification and CI status
 
 No frontend files are changed. This phase has not executed a new real-browser
-run locally: **BROWSER NOT VERIFIED for this new commit**. The previous main
+run locally: **BROWSER NOT VERIFIED locally for this change**. The previous main
 revision's CI #35 and live verification #23 remain separate historical evidence.
 
-Docker is not installed in the current local environment. The new CI verifier
-contains **14 required checks** against the running image, but those are not
-counted as passed until the GitHub job runs. At preparation of this commit,
-**CI VERIFICATION PENDING**. All existing required jobs, including real Chromium
-and cancellation, remain mandatory.
+Draft [PR #5](https://github.com/NAIFMUSFER/AI-Instruction/pull/5) was published
+at `3594581e48329c9112832dc6e491ed02d63a0d50`.
+[CI #36](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/34010050384)
+provided the following evidence at preparation of this corrective commit:
+
+- The real Docker build/boot job succeeded. Its image provenance verifier
+  passed **14/14**, including the artifact, HTTP endpoints, expected checkout
+  revision, build interval and resistance to injected stale runtime timestamps.
+- The dependency/provider/remediation group passed **27 targets / 0 failed**.
+  Cancellation passed **159/159** in GitHub's runner; the local process-inspection
+  limitation remains recorded above. Both Python and npm advisory scans reported
+  no known vulnerabilities.
+- Deployment closure failed **599 passed / 1 failed**: `ACS_BUILD_INFO_SOURCE`
+  was not recognized as defaulted. The checker inspects the explicit default
+  argument of `os.environ.get`; it does not infer chained `or` expressions.
+  The corrective change declares `environment` as that explicit default while
+  preserving empty-string handling. No checker, exemption or gate was changed.
+- Real Chromium was still running at this point. CI #36 is not claimed green.
+
+After the correction, these commands were executed from the repository root:
+
+```bash
+PATH=/workspace/scratch/5b03d54e3a82/acs-build-metadata-venv/bin:$PATH sh tests/deploy/verify_deploy.sh
+/workspace/scratch/5b03d54e3a82/acs-build-metadata-venv/bin/python tests/remediation/test_image_build_metadata.py
+/workspace/scratch/5b03d54e3a82/acs-build-metadata-venv/bin/python tests/remediation/test_build_metadata.py
+```
+
+Results: deployment closure **600 passed / 0 failed**, all **5** browser block
+regenerators succeeded without changing tracked generated files, image metadata
+**41 passed / 0 failed**, and existing metadata **99 passed / 0 failed**. Logs are
+`evidence/build-provenance-deploy-closure-fixed.log`,
+`evidence/build-provenance-image-final.log` and
+`evidence/build-provenance-metadata-final.log` in the audit workspace.
+
+Docker is not installed locally; its execution evidence above comes from the
+named GitHub job. **CI VERIFICATION PENDING for the corrective revision**. All
+existing required jobs, including real Chromium and cancellation, remain mandatory.
 
 ## Deployment status and prioritized release plan
 
