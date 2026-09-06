@@ -1,0 +1,28 @@
+test_api_returns_review_diff_outside_the_canonical_model (__main__.RepairProposal.test_api_returns_review_diff_outside_the_canonical_model) ... ok
+test_better_issue_count_does_not_authorise_dimension_change (__main__.RepairProposal.test_better_issue_count_does_not_authorise_dimension_change) ... ok
+test_clean_model_does_not_request_repair (__main__.RepairProposal.test_clean_model_does_not_request_repair) ... ok
+test_repair_prompt_contains_the_original_request (__main__.RepairProposal.test_repair_prompt_contains_the_original_request) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.005s
+
+OK
+[ACS-PLAN] class=SMALL est_out=1815 zones=2 budget=32000 -> single (forced)
+[ACS-CHECK] جولة 0 (residential): 2 مخالفة · {'levels': 1, 'rooms': 1, 'points': 0, 'vertical_alignment': {'status': 'NOT_APPLICABLE', 'checked_groups': 0, 'unresolved': [], 'scope': 'stated identity and horizontal footprint; not structural or stair-flight design'}, 'access': {'status': 'COMPLETED', 'rooms': 1, 'door_edges': 0, 'reachable_rooms': 1, 'unreachable_rooms': [], 'unresolved_rooms': [], 'scope': 'door/open-area paths to exterior on the same level; interlevel and code egress not evaluated'}}
+[ACS-CHECK] إرسال 2 مخالفة لاقتراح إصلاح (جولة 1)…
+[ACS-CHECK] جولة 1: 0 مخالفة · {'levels': 1, 'rooms': 1, 'points': 2, 'vertical_alignment': {'status': 'NOT_APPLICABLE', 'checked_groups': 0, 'unresolved': [], 'scope': 'stated identity and horizontal footprint; not structural or stair-flight design'}, 'access': {'status': 'COMPLETED', 'rooms': 1, 'door_edges': 0, 'reachable_rooms': 1, 'unreachable_rooms': [], 'unresolved_rooms': [], 'scope': 'door/open-area paths to exterior on the same level; interlevel and code egress not evaluated'}}
+[ACS-CHECK] لا إصلاح تلقائي: 2 مخالفة تُعرَض ولا تُصلَّح صامتاً
+[ACS-CHECK] مخالفات متبقية (2). أمثلة:
+- [g/room] بلا إنارة — أضِف light أو spot.
+- [g/room] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).
+[ACS-PLAN] class=SMALL est_out=1815 zones=2 budget=32000 -> single (forced)
+[ACS-CHECK] جولة 0 (residential): 2 مخالفة · {'levels': 1, 'rooms': 1, 'points': 0, 'vertical_alignment': {'status': 'NOT_APPLICABLE', 'checked_groups': 0, 'unresolved': [], 'scope': 'stated identity and horizontal footprint; not structural or stair-flight design'}, 'access': {'status': 'COMPLETED', 'rooms': 1, 'door_edges': 0, 'reachable_rooms': 1, 'unreachable_rooms': [], 'unresolved_rooms': [], 'scope': 'door/open-area paths to exterior on the same level; interlevel and code egress not evaluated'}}
+[ACS-CHECK] إرسال 2 مخالفة لاقتراح إصلاح (جولة 1)…
+[ACS-CHECK] جولة 1: 0 مخالفة · {'levels': 1, 'rooms': 1, 'points': 2, 'vertical_alignment': {'status': 'NOT_APPLICABLE', 'checked_groups': 0, 'unresolved': [], 'scope': 'stated identity and horizontal footprint; not structural or stair-flight design'}, 'access': {'status': 'COMPLETED', 'rooms': 1, 'door_edges': 0, 'reachable_rooms': 1, 'unreachable_rooms': [], 'unresolved_rooms': [], 'scope': 'door/open-area paths to exterior on the same level; interlevel and code egress not evaluated'}}
+[ACS-CHECK] لا إصلاح تلقائي: 2 مخالفة تُعرَض ولا تُصلَّح صامتاً
+[ACS-CHECK] مخالفات متبقية (2). أمثلة:
+- [g/room] بلا إنارة — أضِف light أو spot.
+- [g/room] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).
+[ACS-PLAN] class=SMALL est_out=1725 zones=2 budget=32000 -> single (forced)
+[ACS-CHECK] جولة 0 (residential): 0 مخالفة · {'levels': 1, 'rooms': 1, 'points': 2, 'vertical_alignment': {'status': 'NOT_APPLICABLE', 'checked_groups': 0, 'unresolved': [], 'scope': 'stated identity and horizontal footprint; not structural or stair-flight design'}, 'access': {'status': 'COMPLETED', 'rooms': 1, 'door_edges': 0, 'reachable_rooms': 1, 'unreachable_rooms': [], 'unresolved_rooms': [], 'scope': 'door/open-area paths to exterior on the same level; interlevel and code egress not evaluated'}}
+[ACS-CHECK] لا إصلاح تلقائي: 0 مخالفة تُعرَض ولا تُصلَّح صامتاً

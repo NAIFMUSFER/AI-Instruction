@@ -1,0 +1,73 @@
+
+── أ · كل هدف run_job يُحلّ فعلاً وكل وسيط يُربَط فعلاً ──
+  ✓ every generation route reaches a job target
+  ✓ every run_job target is a literal "module:function" string
+  ✓ every run_job keyword set is statically resolvable
+  ✓ understand · the target module acs_understand imports
+  ✓ understand · acs_understand:understand exists and is callable
+  ✓ understand · every keyword binds to acs_understand:understand
+  ✓ understand · every required parameter of acs_understand:understand is supplied
+  ✓ edit · the target module acs_understand imports
+  ✓ edit · acs_understand:apply_notes exists and is callable
+  ✓ edit · every keyword binds to acs_understand:apply_notes
+  ✓ edit · every required parameter of acs_understand:apply_notes is supplied
+  ✓ understand_image · the target module acs_understand imports
+  ✓ understand_image · acs_understand:understand_images exists and is callable
+  ✓ understand_image · every keyword binds to acs_understand:understand_images
+  ✓ understand_image · every required parameter of acs_understand:understand_images is supplied
+  ✓ understand_pdf · the target module acs_understand imports
+  ✓ understand_pdf · acs_understand:understand exists and is callable
+  ✓ understand_pdf · every keyword binds to acs_understand:understand
+  ✓ understand_pdf · every required parameter of acs_understand:understand is supplied
+
+── ب · لا مسار توليد يستعمل المسار غير القابل للإلغاء ──
+  ✓ no route calls the legacy uncancellable run_bounded
+  ✓ every documented endpoint is still present
+  ✓ the engineering planner is reachable through the declared cpu-pool target
+  ✓ the target the handler uses is the one that returns the normalised model
+  ✓ and no handler calls the planner synchronously any more (KI-14)
+
+── ج · وحدات التصحيح مستوردة ومستعملة فعلاً ──
+  ✓ acs_logging is imported
+  ✓ acs_logging is actually used
+  ✓ acs_logging imports cleanly on its own
+  ✓ acs_rate_limit is imported
+  ✓ acs_rate_limit is actually used
+  ✓ acs_rate_limit imports cleanly on its own
+  ✓ acs_upload_security is imported
+  ✓ acs_upload_security is actually used
+  ✓ acs_upload_security imports cleanly on its own
+  ✓ acs_engineering_authority is imported
+  ✓ acs_engineering_authority is actually used
+  ✓ acs_engineering_authority imports cleanly on its own
+  ✓ acs_generation_job is imported
+  ✓ acs_generation_job is actually used
+  ✓ acs_generation_job imports cleanly on its own
+  ✓ acs_build_info is imported
+  ✓ acs_build_info is actually used
+  ✓ acs_build_info imports cleanly on its own
+
+── د · كل دالّة يستدعيها الـAPI من وحدات التصحيح موجودة فعلاً ──
+  ✓ the api references at least one symbol per remediation module
+  ✓ BUILD.SERVICE_VERSION exists in acs_build_info
+  ✓ BUILD.build_info exists in acs_build_info
+  ✓ EA.SCHEMA exists in acs_engineering_authority
+  ✓ EA.health_status exists in acs_engineering_authority
+  ✓ JOBS.JobError exists in acs_generation_job
+  ✓ JOBS.JobRejected exists in acs_generation_job
+  ✓ JOBS.default_runner exists in acs_generation_job
+  ✓ JOBS.health_status exists in acs_generation_job
+  ✓ LOGGING.StructuredLogger exists in acs_logging
+  ✓ LOGGING.health_status exists in acs_logging
+  ✓ RL.ProductionInvariantError exists in acs_rate_limit
+  ✓ RL.client_identity exists in acs_rate_limit
+  ✓ RL.default_limiter exists in acs_rate_limit
+  ✓ RL.health_status exists in acs_rate_limit
+  ✓ RL.production_invariant exists in acs_rate_limit
+  ✓ RL.trusted_hops exists in acs_rate_limit
+  ✓ UPLOAD.UploadRejected exists in acs_upload_security
+  ✓ UPLOAD.health_status exists in acs_upload_security
+  ✓ UPLOAD.safe_filename_label exists in acs_upload_security
+
+──────────────────────────────────────────────────────────────
+API WIRING: 62 passed, 0 failed

@@ -1,0 +1,90 @@
+
+── أ · النموذج الكبير: حيازة مطابقة للعدّادات المبلَّغة ──
+  ✓ the fixture states plainly that it is reconstructed, not captured
+  ✓ and that it was not hand-simplified until the failure went away
+  ✓ it carries 6 levels, as reported
+  ✓ it carries 564 wall segments (4 per space x 141 spaces)
+  ✓ the electrical point census matches (243)
+  ✓ the lighting census matches (108)
+  ✓ the camera census matches (26)
+  ✓ the HVAC census matches (44)
+  ✓ the safety census matches (78)
+  ✓ furniture and equipment censuses match (172 / 188)
+  ✓ door and window censuses match (82 / 35)
+  ✓ the fixture yields hundreds of canonical descriptors (2470)
+  ✓ THIS IS NOT AN EMPTY MODEL — every count above is non-zero
+
+── ب · تحديد أول حالة تنقلب فيها الصورة إلى السواد ──
+  ✓ the clean large model has a sane radius (46.8 m)
+  ✓ ONE stray coordinate inflates the radius to 49999.35 m
+  ✓ the old framing then puts the camera 107731 m away while far stays 6000 m
+  ✓ OLD PATH · clean large model: the model IS in the frustum (so size alone was never the reported failure)
+  ✓ OLD PATH · one stray coordinate: the model is NOT in the frustum ⇒ black viewport with a fully populated UI
+  ✓ the old path's silent size ceiling is R = far / (2.1546 + 1) = 1902 m
+  ✓ above that ceiling the old path loses the model too
+  ✓ the first bad state is therefore MODEL LOAD (camera reconciliation), before any PBR, post-processing or architectural-detail layer runs
+
+── ج · عقد الاسترداد: الحدود المحصّنة ومصالحة الكاميرا ──
+  ✓ the render-recovery contract is declared and versioned
+  ✓ it declares its five symbols
+  ✓ NEW PATH · the stray element is excluded and named (2 scene instances from 1 source point, because its template serves 2 levels)
+  ✓ NEW PATH · the radius is identical with and without the stray element
+  ✓ the diagnostics report every field §7 asks for
+  ✓ NEW PATH · the large model is in the frustum
+  ✓ NEW PATH · the model WITH the stray coordinate is also in the frustum — the reported failure is gone
+  ✓ near and far are now derived per model, not frozen at 0.05 / 6000
+  ✓ near is positive and strictly less than far
+  ✓ the camera target is the finite bounds centre, never a stale one
+  ✓ a 500 m-radius model is framed correctly (old path failed above 1902 m)
+  ✓ a 1902 m-radius model is framed correctly (old path failed above 1902 m)
+  ✓ a 5000 m-radius model is framed correctly (old path failed above 1902 m)
+  ✓ a 20000 m-radius model is framed correctly (old path failed above 1902 m)
+  ✓ a legitimately huge building is NEVER excluded from its own bounds
+  ✓ only genuinely impossible geometry is excluded, and each exclusion says why
+  ✓ an outlier that is still valid is REPORTED, not deleted
+  ✓ §12 · the sky dome, ground plane and every presentation group stay out of canonical bounds
+
+── د · المعالجة اللاحقة تفشل مفتوحةً، والاسترداد دورة واحدة ──
+  ✓ §14 · a black frame with geometry and draw calls triggers recovery
+  ✓ §8 · disabling the composer is always the first step — a black composer is never preserved
+  ✓ the full deterministic sequence is composer → materials → camera → base
+  ✓ recovery is capped at exactly one cycle — no endless loop
+  ✓ steps that cannot apply are skipped, not attempted blindly
+  ✓ a visible viewport never triggers recovery
+  ✓ zero draw calls is reported as its own condition, not "recovered"
+  ✓ an empty scene is not mistaken for a render failure
+
+── هـ · ما شُحن في الصفحة، لا ما نُوي شحنه ──
+  ✓ setModel now reconciles the camera through the canonical contract
+  ✓ setModel no longer frames from a raw unfiltered Box3 as its primary path
+  ✓ even the fallback path now assigns near and far — the original defect cannot survive there either
+  ✓ the shipped camera is still constructed with the same defaults, so the test above describes the real starting state
+  ✓ the browser mirror ships pqElementValid
+  ✓ the browser mirror ships pqRobustBounds
+  ✓ the browser mirror ships pqFitDistance
+  ✓ the browser mirror ships pqCameraFit
+  ✓ the browser mirror ships pqRecoveryPlan
+  ✓ §13 · the read-only verification bridge ships
+  ✓ §13 · it reports every field the contract asks for
+  ✓ §14 · the auto-recovery runs after two animation frames, once
+  ✓ §11 · resource pressure is measured and warned about, never "fixed" by dropping geometry
+  ✓ §15 · render failure classes exist and are separate from transport classes
+  ✓ §15 · a black viewport is classified RENDER_*, never NETWORK_DNS
+  ✓ engine state was still not promoted to globals to make any of this work
+
+── و · لم يضع بندٌ تحت اسم اقتصاد المخرج، ولا تكرار صامت ──
+  ✓ the coverage report returns the four counts §16 asks for
+  ✓ every requested item in this prompt is represented in the model (6/6)
+  ✓ coverage is measured against the model itself, not against a promise
+  ✓ an item genuinely absent from the model IS reported unresolved
+  ✓ the compact-output rule never mentions removing or reducing requirements
+  ✓ and it explicitly protects per-instance data the client asked for
+  ✓ the duplication report counts elements per array
+  ✓ this fixture contains no exact duplicate within any space
+  ✓ no room id is duplicated across the model
+  ✓ §17 · a shared floor template used by several levels is reported as REUSE, not as duplication
+  ✓ a real duplicate IS detected when one exists
+  ✓ nothing is deduplicated automatically — the report says so in words
+
+──────────────────────────────────────────────
+LIVE RENDER RECOVERY: 75 passed, 0 failed

@@ -1,0 +1,431 @@
+[
+  {
+    "name": "warehouse",
+    "mode": "shipped_local_generator_with_DOM_controls_stubbed",
+    "understanding_ms": 22.345854000000145,
+    "site": {
+      "w": 30,
+      "d": 25
+    },
+    "levels": 1,
+    "rooms": [
+      {
+        "id": "envelope",
+        "rect": [
+          0,
+          0,
+          30,
+          25
+        ]
+      },
+      {
+        "id": "inbound_docks",
+        "rect": [
+          0,
+          0,
+          12.99,
+          2.81
+        ]
+      },
+      {
+        "id": "fast_unload",
+        "rect": [
+          0,
+          2.81,
+          12.99,
+          1.88
+        ]
+      },
+      {
+        "id": "inbound_staging",
+        "rect": [
+          0,
+          4.69,
+          19.5,
+          2.19
+        ]
+      },
+      {
+        "id": "qc_inspection",
+        "rect": [
+          12.99,
+          0,
+          6.51,
+          4.69
+        ]
+      },
+      {
+        "id": "crossdock",
+        "rect": [
+          19.5,
+          0,
+          10.5,
+          4.69
+        ]
+      },
+      {
+        "id": "replenishment",
+        "rect": [
+          19.5,
+          4.69,
+          6.51,
+          2.19
+        ]
+      },
+      {
+        "id": "maintenance",
+        "rect": [
+          26.01,
+          4.69,
+          3.99,
+          2.19
+        ]
+      },
+      {
+        "id": "bulk_pallet_A",
+        "rect": [
+          0,
+          6.88,
+          8.47,
+          10
+        ]
+      },
+      {
+        "id": "medium_shelf_B",
+        "rect": [
+          8.47,
+          6.88,
+          6.49,
+          10
+        ]
+      },
+      {
+        "id": "bin_storage_C",
+        "rect": [
+          14.96,
+          6.88,
+          5,
+          10
+        ]
+      },
+      {
+        "id": "flow_racks_fast",
+        "rect": [
+          19.96,
+          6.88,
+          4.49,
+          10
+        ]
+      },
+      {
+        "id": "replen_aisle_main",
+        "rect": [
+          24.45,
+          6.88,
+          4,
+          10
+        ]
+      },
+      {
+        "id": "inventory_office",
+        "rect": [
+          26.01,
+          6.88,
+          3.99,
+          2.5
+        ]
+      },
+      {
+        "id": "it_server_room",
+        "rect": [
+          26.01,
+          9.38,
+          3.99,
+          1.88
+        ]
+      },
+      {
+        "id": "meeting_room",
+        "rect": [
+          26.01,
+          11.25,
+          3.99,
+          1.88
+        ]
+      },
+      {
+        "id": "rest_area",
+        "rect": [
+          26.01,
+          13.13,
+          3.99,
+          2.19
+        ]
+      },
+      {
+        "id": "lockers",
+        "rect": [
+          26.01,
+          15.31,
+          3.99,
+          1.56
+        ]
+      },
+      {
+        "id": "batch_picking",
+        "rect": [
+          0,
+          16.88,
+          6,
+          3.13
+        ]
+      },
+      {
+        "id": "wave_picking",
+        "rect": [
+          6,
+          16.88,
+          6,
+          3.13
+        ]
+      },
+      {
+        "id": "zone_picking",
+        "rect": [
+          12,
+          16.88,
+          6.51,
+          3.13
+        ]
+      },
+      {
+        "id": "amr_field",
+        "rect": [
+          18.51,
+          16.88,
+          5.49,
+          3.13
+        ]
+      },
+      {
+        "id": "human_picking",
+        "rect": [
+          24,
+          16.88,
+          6,
+          3.13
+        ]
+      },
+      {
+        "id": "packing",
+        "rect": [
+          0,
+          20,
+          7.98,
+          2.81
+        ]
+      },
+      {
+        "id": "labeling_qa",
+        "rect": [
+          7.98,
+          20,
+          3.99,
+          2.81
+        ]
+      },
+      {
+        "id": "void_fill",
+        "rect": [
+          12,
+          20,
+          3,
+          2.81
+        ]
+      },
+      {
+        "id": "consolidation",
+        "rect": [
+          15,
+          20,
+          4.5,
+          2.81
+        ]
+      },
+      {
+        "id": "auto_sorter",
+        "rect": [
+          19.5,
+          20,
+          6.99,
+          2.81
+        ]
+      },
+      {
+        "id": "manual_sort",
+        "rect": [
+          26.49,
+          20,
+          3.51,
+          2.81
+        ]
+      },
+      {
+        "id": "dispatch_dhl",
+        "rect": [
+          0,
+          22.81,
+          5.01,
+          2.19
+        ]
+      },
+      {
+        "id": "dispatch_aramex",
+        "rect": [
+          5.01,
+          22.81,
+          5.01,
+          2.19
+        ]
+      },
+      {
+        "id": "dispatch_smsa",
+        "rect": [
+          10.02,
+          22.81,
+          4.5,
+          2.19
+        ]
+      },
+      {
+        "id": "lastmile_lanes",
+        "rect": [
+          14.52,
+          22.81,
+          5.49,
+          2.19
+        ]
+      },
+      {
+        "id": "pallet_wrapping",
+        "rect": [
+          20.01,
+          22.81,
+          3,
+          2.19
+        ]
+      },
+      {
+        "id": "outbound_docks",
+        "rect": [
+          23.01,
+          22.81,
+          6.99,
+          2.19
+        ]
+      }
+    ]
+  },
+  {
+    "name": "chalet",
+    "mode": "shipped_local_generator_with_DOM_controls_stubbed",
+    "understanding_ms": 18.143659999999954,
+    "site": {
+      "w": 20,
+      "d": 25
+    },
+    "levels": 5,
+    "rooms": [
+      {
+        "id": "lobby",
+        "rect": [
+          6,
+          1,
+          8,
+          7
+        ]
+      },
+      {
+        "id": "م_وحمام_2×",
+        "rect": [
+          1,
+          1,
+          4,
+          4
+        ]
+      },
+      {
+        "id": "parapet",
+        "rect": [
+          0.2,
+          0.2,
+          19.6,
+          24.6
+        ]
+      },
+      {
+        "id": "tanks",
+        "rect": [
+          1,
+          1,
+          4,
+          3
+        ]
+      },
+      {
+        "id": "solar",
+        "rect": [
+          8,
+          17,
+          10,
+          6
+        ]
+      }
+    ]
+  },
+  {
+    "name": "warehouse_without_sorting_fallback",
+    "site": {
+      "w": 30,
+      "d": 25
+    },
+    "levels": 1,
+    "room_ids": [
+      "envelope",
+      "inbound_docks",
+      "fast_unload",
+      "inbound_staging",
+      "qc_inspection",
+      "crossdock",
+      "replenishment",
+      "maintenance",
+      "bulk_pallet_A",
+      "medium_shelf_B",
+      "bin_storage_C",
+      "flow_racks_fast",
+      "replen_aisle_main",
+      "inventory_office",
+      "it_server_room",
+      "meeting_room",
+      "rest_area",
+      "lockers",
+      "batch_picking",
+      "wave_picking",
+      "zone_picking",
+      "amr_field",
+      "human_picking",
+      "packing",
+      "labeling_qa",
+      "void_fill",
+      "consolidation",
+      "auto_sorter",
+      "manual_sort",
+      "dispatch_dhl",
+      "dispatch_aramex",
+      "dispatch_smsa",
+      "lastmile_lanes",
+      "pallet_wrapping",
+      "outbound_docks"
+    ]
+  }
+]

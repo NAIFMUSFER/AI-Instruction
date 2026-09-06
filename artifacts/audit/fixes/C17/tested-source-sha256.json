@@ -1,0 +1,14 @@
+[
+  {
+    "file": "acs_bim.py",
+    "source_sha256": "81e6fae2758f7bd4eae122c39f2c5d1d99d204e4a79448d0d440087bd44250e5",
+    "tested_sha256": "81e6fae2758f7bd4eae122c39f2c5d1d99d204e4a79448d0d440087bd44250e5",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_ifc_spatial_aggregation.py",
+    "source_sha256": "d3ca0ea053e84a0292af8d2738ce5bd6c3d49b2efa681f2d29279c1ad148cbf7",
+    "tested_sha256": "d3ca0ea053e84a0292af8d2738ce5bd6c3d49b2efa681f2d29279c1ad148cbf7",
+    "equal": true
+  }
+]

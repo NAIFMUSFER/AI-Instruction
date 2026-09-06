@@ -1,0 +1,22 @@
+{
+  "url": "http://127.0.0.1:8001/ready",
+  "method": "GET",
+  "request": null,
+  "status": 503,
+  "headers": {
+    "x-request-id": "req_c88befcdedd14910",
+    "content-type": "application/json"
+  },
+  "body": {
+    "ok": false,
+    "error": {
+      "code": "ACS_NOT_CONFIGURED",
+      "message": "الخادم حيّ لكنه غير جاهز للتوليد. ناقص: ACS_LLM_API_KEY/ANTHROPIC_API_KEY",
+      "request_id": "req_c88befcdedd14910",
+      "retryable": false,
+      "upstream": null
+    },
+    "contract": "acs-error-envelope/1.0.0"
+  },
+  "seconds": 0.064
+}

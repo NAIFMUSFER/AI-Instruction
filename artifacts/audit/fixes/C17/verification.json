@@ -1,0 +1,53 @@
+{
+  "issue": "C17",
+  "source_base": "361a588667e4df04d505fb01387931300696be80",
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 120,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 135
+  },
+  "existing_test_status_changes": {},
+  "new_test_results": {
+    "tests/remediation/test_ifc_spatial_aggregation.py": "PASS"
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "local_generation_and_export_seconds": {
+    "warehouse": 0.14593749497870248,
+    "chalet": 0.03707670298573634
+  },
+  "ifc_independent_validation": [
+    {
+      "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/evidence/ifc-schema/building.json",
+      "export_valid": true,
+      "schema": "IFC4",
+      "schema_errors": 0,
+      "validation_errors": 4,
+      "express_rules_evaluated": true,
+      "checker_version": "0.8.5",
+      "sha256": "ead254dc5e9169bb1d1ae2f5e19b32521366a2e8550c7963789d4dcf23a40319",
+      "seconds": 2.4036513429891784
+    }
+  ],
+  "red": {
+    "tests": 2,
+    "failures": 4
+  },
+  "green": {
+    "tests": 2,
+    "failures": 0
+  },
+  "IFC4_EXPRESS_removed_rules": [
+    "IfcRelContainedInSpatialStructure.WR31",
+    "IfcSpatialStructureElement.WR41"
+  ]
+}

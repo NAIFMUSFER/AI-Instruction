@@ -1,0 +1,104 @@
+
+== A · THE DEFECT REPRODUCED BY EXPLICIT CALCULATION ==
+  ✓ the old rule inflates the radius to sky scale (22500 m)
+  ✓ the preset camera is then pushed tens of kilometres out (58500 m)
+  ✓ the camera ends up OUTSIDE the sky dome — the dome stops drawing
+  ✓ with the page far plane at 6000 the building is OUT of the frustum
+  ✓ nothing is left to draw: no dome, no model — an all-black frame
+
+== B · THE CORRECTED BOUNDS RULE ==
+  ✓ the sky dome is refused by name
+  ✓ an UNNAMED sky-sized mesh is refused too (canonical membership rule)
+  ✓ the presentation ground plane is refused
+  ✓ an AD_ context plane is refused
+  ✓ a debug marker is refused
+  ✓ canonical building geometry is accepted
+  ✓ a canonically tagged mesh with no BUILDING parent is accepted
+  ✓ the corrected radius is building scale, not sky scale
+  ✓ the corrected member count equals the canonical mesh count
+  ✓ a scene with no canonical geometry reports it instead of inventing bounds (this is what made the old boot test false-pass)
+
+== C · EVERY PRESET NOW FRAMES THE MODEL — ALL MODELS ==
+  ✓ villa_glazed: all 19 camera presets keep the model inside the frustum, the clip planes and the sky dome
+  ✓ warehouse: all 19 camera presets keep the model inside the frustum, the clip planes and the sky dome
+  ✓ hotel: all 19 camera presets keep the model inside the frustum, the clip planes and the sky dome
+  ✓ clinic: all 19 camera presets keep the model inside the frustum, the clip planes and the sky dome
+  ✓ apartment_balconies: all 19 camera presets keep the model inside the frustum, the clip planes and the sky dome
+
+== D · CLIP-PLANE AND DISTANCE SAFETY (§8) ==
+  ✓ an absurd camera distance is clamped inside the sky dome
+  ✓ near stays positive and far always contains the model
+  ✓ near is never pushed past the model front face
+  ✓ far never exceeds the declared ceiling
+  ✓ a degenerate camera position falls back to a framing distance
+  ✓ a camera looking away from the model is reported, not hidden
+  ✓ a camera inside the model still counts as intersecting
+
+== E · MATERIAL SAFETY FAILS OPEN, NEVER TO BLACK (§7) ==
+  ✓ shipped material aluminum is safe to apply
+  ✓ shipped material asphalt is safe to apply
+  ✓ shipped material carton is safe to apply
+  ✓ shipped material ceramic_tile is safe to apply
+  ✓ shipped material concrete_exposed is safe to apply
+  ✓ shipped material concrete_polished is safe to apply
+  ✓ shipped material fabric is safe to apply
+  ✓ shipped material glass_clear is safe to apply
+  ✓ shipped material glass_tinted is safe to apply
+  ✓ shipped material painted_wall is safe to apply
+  ✓ shipped material plaster is safe to apply
+  ✓ shipped material plastic is safe to apply
+  ✓ shipped material rack_steel is safe to apply
+  ✓ shipped material roof_membrane is safe to apply
+  ✓ shipped material safety_paint is safe to apply
+  ✓ shipped material soil is safe to apply
+  ✓ shipped material steel_painted is safe to apply
+  ✓ shipped material steel_structural is safe to apply
+  ✓ shipped material stone is safe to apply
+  ✓ shipped material wood is safe to apply
+  ✓ shipped presentation material automotive_paint is safe to apply
+  ✓ shipped presentation material black_plastic is safe to apply
+  ✓ shipped presentation material bollard_paint is safe to apply
+  ✓ shipped presentation material chrome is safe to apply
+  ✓ shipped presentation material concrete_exposed_zone is safe to apply
+  ✓ shipped presentation material curb_concrete is safe to apply
+  ✓ shipped presentation material fence_metal is safe to apply
+  ✓ shipped presentation material foliage is safe to apply
+  ✓ shipped presentation material forklift_body is safe to apply
+  ✓ shipped presentation material forklift_mast is safe to apply
+  ✓ shipped presentation material galvanized_metal is safe to apply
+  ✓ shipped presentation material grass is safe to apply
+  ✓ shipped presentation material gravel is safe to apply
+  ✓ shipped presentation material led_strip is safe to apply
+  ✓ shipped presentation material metal_cladding is safe to apply
+  ✓ shipped presentation material painted_metal is safe to apply
+  ✓ shipped presentation material panel_gray is safe to apply
+  ✓ shipped presentation material parking_paint is safe to apply
+  ✓ shipped presentation material paving_stone is safe to apply
+  ✓ shipped presentation material plaster_architectural is safe to apply
+  ✓ shipped presentation material road_asphalt is safe to apply
+  ✓ shipped presentation material safety_yellow is safe to apply
+  ✓ shipped presentation material stone_beige is safe to apply
+  ✓ shipped presentation material tire_rubber is safe to apply
+  ✓ shipped presentation material tree_bark is safe to apply
+  ✓ shipped presentation material vehicle_glass is safe to apply
+  ✓ shipped presentation material wood_accent is safe to apply
+  ✓ an unsafe material (FULLY_TRANSPARENT) falls open to the engineering material
+  ✓ an unsafe material (INVALID_COLOR) falls open to the engineering material
+  ✓ an unsafe material (INVALID_ROUGHNESS) falls open to the engineering material
+  ✓ an unsafe material (INVALID_METALNESS) falls open to the engineering material
+
+== F · CANONICAL IMMUTABILITY ACROSS THE REMEDIATION (§11) ==
+  ✓ villa_glazed: canonical bytes, hash and revision unchanged by every viewport operation
+  ✓ warehouse: canonical bytes, hash and revision unchanged by every viewport operation
+  ✓ hotel: canonical bytes, hash and revision unchanged by every viewport operation
+  ✓ clinic: canonical bytes, hash and revision unchanged by every viewport operation
+  ✓ apartment_balconies: canonical bytes, hash and revision unchanged by every viewport operation
+
+== G · THE SPEC RECORDS THE RULE, NOT JUST THE CODE ==
+  ✓ viewport bounds exclusions are declared canonically
+  ✓ the camera clip contract is declared canonically
+  ✓ the four remediation issue codes are declared
+  ✓ none of them is a blocking code — a viewport warning never blanks the application
+
+──────────────────────────────────────────────
+BLACK VIEWPORT REGRESSION: 87 passed, 0 failed

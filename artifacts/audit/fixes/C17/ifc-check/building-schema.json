@@ -1,0 +1,30 @@
+[
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #51=IfcWallStandardCase('2VqTHTA4TISoJK4mGrmsok',#5,'bld_0.flr_0.plan.polygon.wall_N',$,$,#40,#50,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#51=IfcWallStandardCase('2VqTHTA4TISoJK4mGrmsok',#5,'bld_0.flr_0.plan.polygon.wall_N',$,$,#40,#50,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #61=IfcWallStandardCase('2CZ34PEkcBLNGjQQsUqFDT',#5,'bld_0.flr_0.plan.polygon.wall_S',$,$,#54,#60,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#61=IfcWallStandardCase('2CZ34PEkcBLNGjQQsUqFDT',#5,'bld_0.flr_0.plan.polygon.wall_S',$,$,#54,#60,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #71=IfcWallStandardCase('2k0GtoTkhvNyAfNWAipqnN',#5,'bld_0.flr_0.plan.polygon.wall_W',$,$,#64,#70,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#71=IfcWallStandardCase('2k0GtoTkhvNyAfNWAipqnN',#5,'bld_0.flr_0.plan.polygon.wall_W',$,$,#64,#70,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  },
+  {
+    "level": "error",
+    "message": "(sizeof([temp for temp in usedin(SELF, 'ifc4.ifcrelassociates.relatedobjects') if 'ifc4.ifcrelassociatesmaterial' in typeof(temp) and 'ifc4.ifcmateriallayersetusage' in typeof(temp.RelatingMaterial)]) == 1)\n\nViolated by:\n    (0 == 1)\n     +  where 0 = sizeof([])\n\nOn instance:\n    #81=IfcWallStandardCase('2oYJz_g$v6nkpa9DW1LaD3',#5,'bld_0.flr_0.plan.polygon.wall_E',$,$,#74,#80,$,.STANDARD.)\n",
+    "type": "entity_rule",
+    "instance": "#81=IfcWallStandardCase('2oYJz_g$v6nkpa9DW1LaD3',#5,'bld_0.flr_0.plan.polygon.wall_E',$,$,#74,#80,$,.STANDARD.)",
+    "attribute": "IfcWallStandardCase.HasMaterialLayerSetUsage"
+  }
+]

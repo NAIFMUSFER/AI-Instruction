@@ -1,0 +1,313 @@
+
+== §0 — SPEC INTEGRITY AND THE NON-NEGOTIABLE PIPELINE ==
+  ✓ the browser spec is byte-identical to acs_render.json
+  ✓ the compiler version is declared
+  ✓ the pipeline runs model to image and never the reverse
+  ✓ the base render is declared the geometry authority
+  ✓ only the model feeds the model hash
+  ✓ every one of the eleven output types is declared
+  ✓ no photorealistic generator is claimed as shipped
+  ✓ the four verification classes are declared and distinguished
+  ✓ stub output is explicitly not a rendering pass
+
+== §1 — THE RENDER REQUEST IS TYPED, PINNED AND PRESENTATION ONLY ==
+  ✓ a well-formed request is accepted
+  ✓ the request is pinned to the model hash
+  ✓ the request is pinned to the revision
+  ✓ the request declares it never writes to the model
+  ✓ every declared request field is present
+  ✓ an unknown view type is refused, not defaulted
+  ✓ an unknown quality is refused
+  ✓ an unknown theme is refused
+  ✓ an unknown lighting preset is refused
+  ✓ an oversized resolution is refused
+  ✓ a resolution is only recorded when it was accepted
+  ✓ the same inputs produce the same request id
+  ✓ a different theme produces a different request id
+
+== §3 — THE DETERMINISTIC PATH NEVER DEPENDS ON AI ==
+  ✓ a camera is solved with no provider present
+  ✓ a deterministic descriptor exists without AI
+  ✓ the deterministic descriptor claims no engineering authority
+  ✓ with no provider the base render remains the output
+  ✓ a provider failure produces a real issue, never a blank output
+  ✓ a provider failure touches nothing in the model
+
+== §4-§7 — MATERIALS ARE APPEARANCE, NEVER ENGINEERING ==
+  ✓ all sixteen visual classes are declared
+  ✓ every library material carries every required field
+  ✓ every library material is marked visual only
+  ✓ no bundled material carries an unknown licence
+  ✓ every material class in the library is a declared class
+  ✓ materials carry PBR values, not engineering properties
+  ✓ the specification says a visual material implies no engineering property
+  ✓ every object receives a material
+  ✓ every assignment is marked visual only
+  ✓ a visual default records that it was applied, not that a finish is known
+  ✓ assigning materials writes nothing to the model
+  ✓ different themes really produce different material sets
+  ✓ every theme covers every declared slot
+  ✓ texture scale is mapped in world metres, not per object
+  ✓ glass has transparency and low roughness without an engineering claim
+
+== §7 — A VISUAL OVERRIDE IS NEVER A SPECIFICATION CHANGE ==
+  ✓ a presentation override is applied
+  ✓ a presentation override writes nothing to the model
+  ✓ an intended specification change is refused here
+  ✓ it is routed to the authoring path instead
+  ✓ the two operations are explicitly never merged
+  ✓ an unknown material is refused
+  ✓ an override carrying markup is refused
+
+== §11-§15 — LIGHTING, ENVIRONMENT, SHADOWS AND QUALITY ==
+  ✓ all eight lighting presets are declared
+  ✓ every preset has real parameters
+  ✓ a preset sun is labelled a visual preset, not solar analysis
+  ✓ a project orientation changes the label to project orientation
+  ✓ no solar analysis is claimed anywhere
+  ✓ night presets turn on interior fixtures rather than faking daylight
+  ✓ an environment map falls back to a procedural sky when absent
+  ✓ an environment map is used when a local asset exists
+  ✓ no environment path depends on a remote host
+  ✓ all four shadow modes are declared with real parameters
+  ✓ shadow cost rises with quality
+  ✓ ambient occlusion is optional by quality profile
+  ✓ post processing is declared and never geometric
+  ✓ a constrained device degrades cost, not geometry
+
+== §17-§20, §28-§30 — CAMERAS COME FROM REAL GEOMETRY ==
+  ✓ all ten camera presets are declared
+  ✓ the preset FRONT_EXTERIOR solves against real bounds
+  ✓ the preset REAR_EXTERIOR solves against real bounds
+  ✓ the preset FRONT_CORNER solves against real bounds
+  ✓ the preset REAR_CORNER solves against real bounds
+  ✓ the preset BIRDS_EYE solves against real bounds
+  ✓ the preset DOLLHOUSE solves against real bounds
+  ✓ the preset TOP solves against real bounds
+  ✓ the preset STREET_VIEW solves against real bounds
+  ✓ an unknown preset is refused, never silently defaulted
+  ✓ every field of view stays inside the declared sane range
+  ✓ the top view is orthographic, not a wide perspective
+  ✓ framing keeps the whole building in front of the camera
+  ✓ a camera declares it is presentation state
+  ✓ an interior camera is placed inside the real space
+  ✓ the interior camera keeps a declared clearance from the wall
+  ✓ the interior camera sits at eye level above the space floor
+  ✓ an interior camera for a space that does not exist is refused
+  ✓ a space too small for a safe camera is refused, not guessed
+
+== §21-§23 — DOLLHOUSE, EXPLODE AND CUTAWAY ARE VISUAL ONLY ==
+  ✓ the dollhouse hides the roof rather than deleting it
+  ✓ the dollhouse duplicates no geometry
+  ✓ the dollhouse is reversible
+  ✓ wall clipping declares a clip plane, not a new model
+  ✓ level isolation hides other levels only
+  ✓ an exploded view offsets display positions only
+  ✓ an exploded view never changes a level elevation
+  ✓ a cutting plane works on the x axis
+  ✓ a cutting plane works on the y axis
+  ✓ a cutting plane works on the z axis
+  ✓ an unknown cut axis is refused
+  ✓ every transform declares it writes nothing to the model
+
+== §24-§27 — PLANS, SECTIONS AND ELEVATIONS COME FROM THE MODEL ==
+  ✓ a plan is produced from the compiled architecture
+  ✓ the plan carries real walls
+  ✓ the plan carries real doors
+  ✓ the plan carries real windows
+  ✓ the plan carries stairs where the model has them
+  ✓ the plan carries space names
+  ✓ plan dimensions state that they come from the model
+  ✓ every plan wall identifier exists in the architecture
+  ✓ every plan opening identifier exists in the architecture
+  ✓ no north indicator is drawn when orientation is unknown
+  ✓ a north indicator appears once orientation is declared
+  ✓ the plan is never called a construction drawing
+  ✓ furniture is drawn only when asked for
+  ✓ all four plan styles produce a drawing
+  ✓ an unknown plan style is refused
+  ✓ the plan serialises to real SVG
+  ✓ the SVG states it is not a construction drawing
+  ✓ the SVG carries a node per real wall
+  ✓ an elevation is produced from the real envelope
+  ✓ the elevation invents no facade feature
+  ✓ every elevation shape is a real scene object
+  ✓ the elevation excludes visual-only objects
+  ✓ all four faces produce an elevation
+  ✓ an unknown face is refused
+  ✓ the elevation SVG reports how many openings are modelled and none invented
+  ✓ a section is produced
+  ✓ the section separates cut elements from those beyond
+  ✓ the section reports the level elevations it found
+  ✓ every section shape is a real scene object
+  ✓ both section axes work
+  ✓ an unknown section axis is refused
+  ✓ the section serialises to real SVG
+
+== §35-§36 — CONTROL BUFFERS ARE DETERMINISTIC AND ALIGNED ==
+  ✓ control buffers are produced
+  ✓ all six buffer kinds exist
+  ✓ every buffer has exactly width times height samples
+  ✓ buffers are rasterised on the CPU and depend on no GPU
+  ✓ the same inputs produce a byte-identical buffer set
+  ✓ the buffer set carries the camera it was taken from
+  ✓ buffers from the same camera and size are aligned
+  ✓ buffers at a different size fail alignment
+  ✓ buffers from a different camera fail alignment
+  ✓ a missing buffer set fails alignment rather than passing quietly
+  ✓ an impossible resolution is refused
+  ✓ the semantic mask uses only declared classes
+  ✓ the object buffer indexes real scene objects
+  ✓ generating buffers writes nothing to the model
+  ✓ a buffer serialises to a real PNG
+  ✓ the PNG is byte-identical on a second run
+  ✓ a buffer that was not requested yields no image
+
+== §37-§38 — THE AI CONTRACT STATES WHAT MUST BE PRESERVED ==
+  ✓ the contract names every preserved feature
+  ✓ the contract names what may be enhanced
+  ✓ no preserved feature is also enhanceable
+  ✓ the prompt text states the preservation constraint literally
+  ✓ an enhancement request is accepted with buffers and a base render
+  ✓ the request carries the control buffers, so it is never text only
+  ✓ the request is pinned to the model and the camera
+  ✓ the request declares no engineering authority and no model write
+  ✓ an enhancement request without control buffers is refused
+  ✓ an enhancement request without a base render is refused
+  ✓ a base render and buffers from different cameras are refused
+  ✓ an AI output is typed as an AI enhanced visualisation
+  ✓ an AI output claims no engineering authority
+  ✓ an AI output stays traceable to the model, revision, base render and camera
+  ✓ an AI output writes nothing to the model
+
+== §87-§89 — THE PROVIDER IS AN ADAPTER, AND KEYS STAY SERVER SIDE ==
+  ✓ the adapter declares what it accepts and returns
+  ✓ the adapter is provider agnostic
+  ✓ a secret is required and lives in the server environment only
+  ✓ no secret appears in the client, the metadata or a log
+  ✓ no provider assumption leaks into the visual scene specification
+  ✓ no render metadata field is a secret
+
+== §39-§41 — GEOMETRY DRIFT IS DETECTED, CLASSIFIED AND REFUSED ==
+  ✓ features are extracted from the control buffers
+  ✓ the silhouette measures the model, not the decoration
+  ✓ all eight drift types are declared
+  ✓ every drift type has a declared severity
+  ✓ all three fidelity statuses are declared
+  ✓ an identical candidate passes
+  ✓ a passing candidate may be presented as model faithful
+  ✓ a candidate showing WINDOW_ADDED is classified
+  ✓ a candidate showing WINDOW_ADDED is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying WINDOW_ADDED writes nothing to the model
+  ✓ a candidate showing WINDOW_REMOVED is classified
+  ✓ a candidate showing WINDOW_REMOVED is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying WINDOW_REMOVED writes nothing to the model
+  ✓ a candidate showing DOOR_MOVED is classified
+  ✓ a candidate showing DOOR_MOVED is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying DOOR_MOVED writes nothing to the model
+  ✓ a candidate showing FLOOR_COUNT_DRIFT is classified
+  ✓ a candidate showing FLOOR_COUNT_DRIFT is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying FLOOR_COUNT_DRIFT writes nothing to the model
+  ✓ a candidate showing FOOTPRINT_DRIFT is classified
+  ✓ a candidate showing FOOTPRINT_DRIFT is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying FOOTPRINT_DRIFT writes nothing to the model
+  ✓ a candidate showing WALL_LAYOUT_DRIFT is classified
+  ✓ a candidate showing WALL_LAYOUT_DRIFT is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying WALL_LAYOUT_DRIFT writes nothing to the model
+  ✓ a candidate showing ROOF_GEOMETRY_DRIFT is classified
+  ✓ a candidate showing ROOF_GEOMETRY_DRIFT is rejected
+  ✓ a rejected candidate is not presented as model faithful
+  ✓ a rejected candidate may be regenerated
+  ✓ classifying ROOF_GEOMETRY_DRIFT writes nothing to the model
+  ✓ a missing semantic object is flagged rather than ignored
+  ✓ a candidate from another camera is refused
+  ✓ a candidate pinned to another model is refused
+  ✓ a missing feature set is refused, not defaulted to a pass
+  ✓ the specification says material differences are not drift
+
+== §43-§48 — VARIANTS, FURNITURE, LANDSCAPE AND ENTOURAGE ==
+  ✓ two variants share the same model hash
+  ✓ two variants are genuinely different configurations
+  ✓ switching variant creates no engineering revision
+  ✓ all six style variants are declared
+  ✓ semantic and visual-only objects are counted separately
+  ✓ a visual object never enters the semantic count
+  ✓ every visual-only object is tagged
+  ✓ visual landscape never becomes site engineering data
+
+== §49 — NO BUILDING TYPE LEAKS INTO ANOTHER ==
+  ✓ industrial context is never enabled by default
+  ✓ villa_glazed: industrial equipment context is off unless asked for
+  ✓ hotel_glazed: industrial equipment context is off unless asked for
+  ✓ clinic_glazed: industrial equipment context is off unless asked for
+  ✓ warehouse_glazed: industrial equipment context is off unless asked for
+  ✓ industrial context turns on only when explicitly requested
+  ✓ the specification states the type never implies the context
+  ✓ a villa render carries no industrial-only material by default
+  ✓ a clinic render invents no equipment
+
+== §55-§58, §61 — METADATA, TRACEABILITY, STALENESS AND GALLERY ==
+  ✓ every declared metadata field is recorded
+  ✓ the render names its model hash and revision
+  ✓ the render names its camera and view type
+  ✓ the render certifies nothing
+  ✓ a resolution is only claimed when one was actually produced
+  ✓ a produced resolution is recorded as rendered
+  ✓ all three standard resolutions are declared
+  ✓ a fresh render is current
+  ✓ after the model moves on the render is marked stale
+  ✓ a stale render is never deleted automatically
+  ✓ a stale render is never silently re-pointed
+  ✓ the render keeps naming the revision it came from
+  ✓ the gallery card carries every declared field
+  ✓ the gallery counts stale renders
+  ✓ no cloud persistence is claimed
+
+== §70-§72 — THE ENGINEERING HARD GATE ==
+  ✓ villa_glazed: the whole render pipeline leaves the model hash unchanged
+  ✓ villa_glazed: the whole render pipeline creates no revision
+  ✓ villa_glazed: the canonical model is byte-identical afterwards
+  ✓ hotel_glazed: the whole render pipeline leaves the model hash unchanged
+  ✓ hotel_glazed: the whole render pipeline creates no revision
+  ✓ hotel_glazed: the canonical model is byte-identical afterwards
+  ✓ clinic_glazed: the whole render pipeline leaves the model hash unchanged
+  ✓ clinic_glazed: the whole render pipeline creates no revision
+  ✓ clinic_glazed: the canonical model is byte-identical afterwards
+  ✓ warehouse_glazed: the whole render pipeline leaves the model hash unchanged
+  ✓ warehouse_glazed: the whole render pipeline creates no revision
+  ✓ warehouse_glazed: the canonical model is byte-identical afterwards
+  ✓ villa: the whole render pipeline leaves the model hash unchanged
+  ✓ villa: the whole render pipeline creates no revision
+  ✓ villa: the canonical model is byte-identical afterwards
+  ✓ warehouse: the whole render pipeline leaves the model hash unchanged
+  ✓ warehouse: the whole render pipeline creates no revision
+  ✓ warehouse: the canonical model is byte-identical afterwards
+
+== §72 — NO AI RESULT CAN REACH ANY ENGINEERING LAYER ==
+  ✓ an AI response carrying a model payload changes nothing
+  ✓ the AI output object exposes no model, structure, MEP, FLS or coordination key
+  ✓ the AI output declares no engineering authority
+  ✓ nothing in the AI path claims to write to the model
+
+== §85 — NO FALSE PHOTOREALISM AND NO FORBIDDEN CLAIM ==
+  ✓ the specification declares its forbidden claims
+  ✓ no forbidden claim is asserted as true anywhere in the specification
+  ✓ no code system is named anywhere in the render specification
+  ✓ the specification never claims a render is as built
+  ✓ the specification never claims visual compliance verification
+  ✓ performance metrics exclude frames per second and GPU behaviour
+
+──────────────────────────────────────────────
+RENDER CONTRACT: 272 passed, 0 failed

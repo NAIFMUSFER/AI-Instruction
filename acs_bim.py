@@ -480,7 +480,7 @@ def serialise_ifc(exchange, generated_at=None):
     f.add("IFCRELAGGREGATES", "'%s',%s,$,$,%s,(%s)"
           % (guid("agg:site"), owner, site, bldg))
 
-    storeys, storey_pl, contained = [], {}, {}
+    storeys, storey_pl, contained, storey_spaces = [], {}, {}, {}
     for lv in exchange["levels"]:
         pl = f.placement(bldg_pl, 0.0, 0.0, lv["elevation"])
         st = f.add("IFCBUILDINGSTOREY", "'%s',%s,%s,$,$,%s,$,$,.ELEMENT.,%s"
@@ -489,6 +489,7 @@ def serialise_ifc(exchange, generated_at=None):
         storeys.append(st)
         storey_pl[lv["index"]] = pl
         contained[lv["index"]] = []
+        storey_spaces[lv["index"]] = []
     if storeys:
         f.add("IFCRELAGGREGATES", "'%s',%s,$,$,%s,(%s)"
               % (guid("agg:building"), owner, bldg, ",".join(storeys)))
@@ -512,7 +513,7 @@ def serialise_ifc(exchange, generated_at=None):
                     % (guid(sp["canonical_id"]), owner, step_string(sp["name"]), pl, pds,
                        step_string(sp["number"]), step_real(sp["elevation"])))
         space_refs[sp["canonical_id"]] = ref
-        contained.setdefault(sp["level_index"], []).append(ref)
+        storey_spaces.setdefault(sp["level_index"], []).append(ref)
 
     wall_refs = {}
     for wl in exchange["walls"]:
@@ -620,12 +621,18 @@ def serialise_ifc(exchange, generated_at=None):
         contained.setdefault(st["level_index"], []).append(ref)
 
     for lv in exchange["levels"]:
+        st = storeys[exchange["levels"].index(lv)]
+        spaces = storey_spaces.get(lv["index"]) or []
+        if spaces:
+            f.add("IFCRELAGGREGATES", "'%s',%s,$,$,%s,(%s)"
+                  % (guid("agg:spaces:%s" % lv["canonical_id"]), owner, st,
+                     ",".join(spaces)))
         items = contained.get(lv["index"]) or []
         if not items:
             continue
         f.add("IFCRELCONTAINEDINSPATIALSTRUCTURE", "'%s',%s,$,$,(%s),%s"
               % (guid("contain:%s" % lv["canonical_id"]), owner, ",".join(items),
-                 storeys[exchange["levels"].index(lv)]))
+                 st))
 
     body = "\n".join(f.lines)
     stamp = generated_at or "1970-01-01T00:00:00"
@@ -1472,6 +1479,20 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
     for host, items in rel["contains"].items():
         for it in items:
             storey_of[it] = host
+    # Spaces decompose their storey; they are not contained physical products.
+    space_parents = {}
+    for host, items in rel["aggregates"].items():
+        for it in items:
+            if ents.get(it, {}).get("type") == "IFCSPACE":
+                space_parents.setdefault(it, set()).add(host)
+    for it, parents in space_parents.items():
+        if it in storey_of:
+            parents.add(storey_of[it])
+        storey_of.pop(it, None)
+        if len(parents) == 1:
+            parent = next(iter(parents))
+            if ents.get(parent, {}).get("type") == "IFCBUILDINGSTOREY":
+                storey_of[it] = parent
     space_of_storey = {}
 
     out_entities = []

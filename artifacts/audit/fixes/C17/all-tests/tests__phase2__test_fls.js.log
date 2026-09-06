@@ -1,0 +1,14 @@
+
+== §1 — NO FIRE DESIGN, NO SIMULATION, NO CODE ==
+  ✓ the FLS spec implements no fire code value
+  ✓ the spec states in writing that there is no Fire / Life-Safety engine
+  ✓ the only mentions of a fire code are in the forbidden lists and the denial text
+  ✓ regulatory rule count is still zero
+  ✓ real occupancy classification count is still zero
+  ✓ browser spec is byte-identical to acs_fls.json
+  ✓ twelve FLS element types declared
+  ✓ twenty-two device types declared
+  ✓ COMPLIANT / SAFE / APPROVED / CERTIFIED / DESIGNED are not model statuses
+  ✓ UNSAFE / CODE_VIOLATION / FIRE_VIOLATION are not severities
+  ✓ no compiled FLS element carries a coverage, hydraulic or compliance field
+  ✓ no invented K-factor, density, candela, audibility or travel limit appears in any field

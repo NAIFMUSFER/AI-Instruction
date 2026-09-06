@@ -1,0 +1,68 @@
+
+== أ · الشاهد السالب — العطل الأصلي، مُعاد إدخاله ==
+  ✓ a bare `for` loop EXITS 0 although its first item failed — this is the defect, reproduced
+  ✓ `set -o pipefail` does NOT fix it — it governs the pipe, not the loop
+  ✓ a `{ … } | tee` group EXITS 0 although its first command failed — the same defect, fifth site
+  ✓ `set -e` + `cmd; guard $?` never reaches guard — run_all.sh's accumulator was dead code
+
+== ب · tools/ci_run.sh — أيّ فشل، لا آخر فشل ==
+  ✓ the runner exists and is executable
+  ✓ a FIRST-item failure fails the runner
+  ✓ and the failing target is named in the output
+  ✓ a LAST-item failure fails the runner too
+  ✓ a MIDDLE-item failure fails the runner
+  ✓ all-pass exits 0
+  ✓ and the summary counts every target
+  ✓ an EMPTY target list is refused, not reported as success
+  ✓ a missing --runner is refused
+  ✓ the log is written even when a target fails
+  ✓ the exit code is the TEST's, not tee's — PIPESTATUS is read
+  ✓ a target that cannot even start fails the runner
+
+== ج · كل موضع تشغيل اختبار في CI صار مُبوَّباً ==
+  ✓ no bare `for t in` test loop remains in ci.yml
+  ✓ every brace group that runs a command declares `set -e`
+  ✓ the runner is actually used by ci.yml
+  ✓ the aggregate in job 3 is a flag, not last-command semantics
+  ✓ production-verify pipes a single command with pipefail, so its status is the script's
+
+== د · المجموعات التي لم تكن مُبوَّبة صارت مُبوَّبة ==
+  ✓ CI now runs test_upload_security.py
+  ✓ CI now runs test_rate_limit.py
+  ✓ CI now runs test_engineering_authority.py
+  ✓ CI now runs test_generation_cancel.py
+  ✓ CI now runs test_logging.py
+  ✓ CI now runs test_privacy_boundary.py
+  ✓ CI now runs test_build_metadata.py
+  ✓ CI now runs test_plate_extent.py
+  ✓ CI now runs test_bundle_report.py
+  ✓ CI now runs test_api_wiring.py
+  ✓ CI now runs test_production_error_ui.js
+  ✓ CI now runs test_csp.js
+  ✓ CI now runs test_webgl_diagnostics.js
+  ✓ CI now runs test_concurrency.js
+  ✓ CI now runs test_persistence.js
+  ✓ CI now runs test_accessibility.js
+  ✓ CI now runs csp_browser_probe.js
+  ✓ test_performance.js is excluded on purpose (duplicate coverage: the same budgets are measure)
+  ✓ run_all.sh is excluded on purpose (an orchestrator, not a suite — CI lists its targ)
+
+== هـ · verify_backend_live يحلّ العنوان من مصدره القانوني ==
+  ✓ configured_base() resolves a non-empty https origin
+  ✓ and it equals the constant in public/app/boot/api-base.js — the canonical source, not a second copy
+  ✓ the shell no longer carries the constant at all (F-09 moved it), which is why reading only the shell returned nothing
+  ✓ the verifier reads the boot scripts, not just the shell
+  ✓ no second source of truth: the origin literal appears in no executable statement of the verifier (a docstring usage example is documentation, not configuration)
+  ✓ NEGATIVE CONTROL — with the constant absent from every shipped source, the verifier resolves nothing and cannot silently invent an origin
+  ✓ and it recovers once the real sources are restored
+  ✓ the stale hard-coded model assertion is gone
+  ✓ and the provider block is asserted instead
+
+== و · run_all.sh لم يعد يموت قبل مُجمِّعه ==
+  ✓ run_all.sh no longer sets -e, so `guard $?` is reachable
+  ✓ its accumulator and its failure branch are still present
+  ✓ the same shape now reaches the failure branch and exits non-zero
+
+==============================================================
+CI GATE: 52 passed, 0 failed
+LIVE HTTP REACHABILITY: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (this sandbox blocks the CONNECT tunnel; DNS and TLS to the configured origin DO succeed, which is what this file can prove).

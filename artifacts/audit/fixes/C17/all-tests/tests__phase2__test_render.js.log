@@ -1,0 +1,67 @@
+
+== §16 — SLAB IS CUT AT VERTICAL CORES ==
+  ✓ the villa model does have a stair void on level 1
+  ✓ a level with no void still renders a single slab box
+  ✓ the level the stair passes through renders several slab strips instead of one
+  ✓ F-07: the plate spans the level room-footprint union, not the site
+  ✓ the rendered strips total exactly the plate area minus the void area
+  ✓ F-07: and that total is no longer the old site-wide plate figure
+  ✓ no rendered strip covers any part of the stair void
+  ✓ every strip keeps the Phase 1 slab thickness and elevation
+  ✓ all slab boxes still carry the FLOOR| naming Phase 1 selection depends on
+
+== §17 — NO PHASE 1 RENDER REGRESSION ==
+  ✓ clinic: no vertical core ⇒ exactly one slab per level, as before
+  ✓ warehouse: no vertical core ⇒ exactly one slab per level, as before
+  ✓ hotel: rooms and walls are still built on every level
+  ✓ hotel: an edge carrying a door is split into several solid segments
+  ✓ hotel: an edge with no opening stays a single solid segment
+  ✓ compile still returns a group named BUILDING
+  ✓ compile never emits a zero-size box
+
+== §18 — STRIP GEOMETRY IS EXACT, NOT APPROXIMATE ==
+  ✓ a hole in the middle yields four strips around it
+  ✓ a hole touching an edge yields three strips
+  ✓ a hole covering the whole plate yields no strip
+  ✓ a hole entirely outside the plate is ignored
+  ✓ a hole partly outside is clipped, not dropped
+  ✓ two holes both get cut
+  ✓ overlapping holes are not double-subtracted
+  ✓ no strip has zero or negative extent
+
+== §19 — STRUCTURAL DEBUG LAYER IN THE RENDERER ==
+  ✓ structural boxes are emitted into the scene
+  ✓ they use the STRUCT| naming convention for GLB export
+  ✓ every structural box is hidden by default
+  ✓ every structural box records where its geometry came from
+  ✓ a column box is present for every compiled column
+  ✓ grid lines are NOT drawn as solid boxes
+  ✓ a model with no structural data emits no structural box
+  ✓ the architectural boxes are identical with and without structural data
+  ✓ a warehouse whose sections are unknown still draws, but as display fallback
+  ✓ colour marks the element kind, never a safety state
+
+== §20 — MEP DEBUG LAYERS IN THE RENDERER ==
+  ✓ MEP boxes are emitted into the scene
+  ✓ they use the MEP| naming convention for GLB export
+  ✓ every MEP box is hidden by default
+  ✓ every MEP box records where its geometry came from
+  ✓ an unrouted duct draws nothing at all
+  ✓ a model with no MEP data emits no MEP box
+  ✓ the architectural boxes are identical with and without MEP data
+  ✓ a warehouse whose sizes are unknown still draws, but as display fallback
+  ✓ adapted Phase 1 points are drawn and marked as adapted
+  ✓ colour marks the discipline, never a safety state
+
+== §21 — FLS DEBUG LAYERS IN THE RENDERER ==
+  ✓ FLS boxes are emitted into the scene
+  ✓ they use the FLS| naming convention for GLB export
+  ✓ every FLS box is hidden by default
+  ✓ every FLS box declares its geometry is a display fallback
+  ✓ only emitted items are drawn — referenced MEP devices are not duplicated
+  ✓ a Phase 1 adapted detector is NOT drawn a second time by the FLS layer
+  ✓ a model with no FLS data emits no FLS box
+  ✓ the architectural boxes are identical with and without FLS data
+  ✓ colour marks the layer, never a compliance state
+
+RENDER: 53 passed, 0 failed
