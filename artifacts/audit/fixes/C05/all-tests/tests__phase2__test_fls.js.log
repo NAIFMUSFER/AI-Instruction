@@ -1,0 +1,213 @@
+
+== §1 — NO FIRE DESIGN, NO SIMULATION, NO CODE ==
+  ✓ the FLS spec implements no fire code value
+  ✓ the spec states in writing that there is no Fire / Life-Safety engine
+  ✓ the only mentions of a fire code are in the forbidden lists and the denial text
+  ✓ regulatory rule count is still zero
+  ✓ real occupancy classification count is still zero
+  ✓ browser spec is byte-identical to acs_fls.json
+  ✓ twelve FLS element types declared
+  ✓ twenty-two device types declared
+  ✓ COMPLIANT / SAFE / APPROVED / CERTIFIED / DESIGNED are not model statuses
+  ✓ UNSAFE / CODE_VIOLATION / FIRE_VIOLATION are not severities
+  ✓ no compiled FLS element carries a coverage, hydraulic or compliance field
+  ✓ no invented K-factor, density, candela, audibility or travel limit appears in any field
+  ✓ the language actually used is representational
+
+== §2 — CODE_REQUIRED GATE ==
+  ✓ code_required and rule are not provenance values
+  ✓ they are named explicitly as forbidden provenance
+  ✓ a model claiming code_required provenance is neutralised, not obeyed
+  ✓ every audit reports code_required as exactly zero
+  ✓ a system-added Phase 1 smoke detector stays system_default through two adapters
+  ✓ a user-supplied Phase 1 point keeps its user provenance
+  ✓ the string code_required does not appear in the compiled models at all
+
+== §3 — ADAPTERS DO NOT DUPLICATE ==
+  ✓ exits come from the egress foundation, not a second inference engine
+  ✓ an adapted exit references the egress exit id
+  ✓ the FLS exit list matches the egress exit list exactly
+  ✓ stairs are referenced from the architectural cores
+  ✓ an adapted stair creates no geometry, only a reference
+  ✓ the render layer marks referenced devices as referenced, not emitted
+  ✓ an FLS-declared device IS emitted, because nothing else draws it
+  ✓ the spec states the no-duplication rule in writing
+  ✓ MEP fire systems are referenced, not re-modelled
+  ✓ the MEP model stays the source of truth for topology
+  ✓ no FLS element maintains a sprinkler pipe network
+
+== §4 — DEVICE PRESENT IS NOT COVERAGE ==
+  ✓ one declared detector yields exactly one represented device
+  ✓ the audit reports coverage and compliance as NOT_EVALUATED
+  ✓ nothing anywhere says the room is protected or covered
+  ✓ the DEVICE_IN_SPACE edge carries an explicit non-coverage disclaimer
+  ✓ every relationship repeats that it is factual only
+  ✓ the four semantic distinctions are declared structurally
+  ✓ and the compiled model carries them
+
+== §5 — ABSENCE IS NOT A VIOLATION ==
+  ✓ a building with no FLS data is NOT_DEFINED
+  ✓ and has zero issues caused merely by absence
+  ✓ no fire device was added automatically
+  ✓ the status basis explains that only references exist
+  ✓ a warehouse gets no sprinkler or hydrant just for being a warehouse
+  ✓ a villa fixture without sprinklers reports zero, not a deficiency
+  ✓ no issue code implies a missing element is a fault
+  ✓ the spec states it plainly
+
+== §6 — FIRE DOOR ONLY WHEN DECLARED ==
+  ✓ the same architectural door yields no fire door without metadata
+  ✓ the architectural door itself still exists untouched
+  ✓ declaring it explicitly creates exactly one FLS reference
+  ✓ the reference resolves to the real architectural opening
+  ✓ its rating is carried, never inferred
+  ✓ an unstated rating stays null with an explicit note
+  ✓ the spec says a normal door is not a fire door
+
+== §7 — BARRIER ONLY WHEN DECLARED ==
+  ✓ the villa has real shared architectural walls
+  ✓ but none of them is a fire barrier without metadata
+  ✓ declaring one explicitly creates exactly one barrier referencing its host wall
+  ✓ a structural wall is never promoted to a barrier either
+  ✓ a barrier with no stated rating reports a data gap, not a violation
+  ✓ the spec says an architectural wall is not a fire barrier
+
+== §8 — STAIRS AND SHAFTS ARE NOT PROTECTED BY DEFAULT ==
+  ✓ an adapted stair has protection_status unknown
+  ✓ and it is never called a protected stair
+  ✓ a declared protected stair says so explicitly
+  ✓ a declared shaft protection is carried, never assumed
+  ✓ an MEP riser is not a fire shaft by itself
+  ✓ the audit counts only declared protected stairs
+  ✓ the spec states the rule
+
+== §9 — ZONES ARE NEVER INFERRED ==
+  ✓ no zone exists without explicit data
+  ✓ rooms are never turned into compartments
+  ✓ a declared zone compiles and resolves its spaces
+  ✓ it produces ZONE_CONTAINS_SPACE edges for exactly its declared spaces
+  ✓ a zone with no spaces is reported as a data gap, not populated by inference
+  ✓ the spec states the rule
+
+== §10 — DETECTION, ALARM, SUPPRESSION, FIRE WATER ==
+  ✓ devices map to declared categories
+  ✓ a smoke detector is DETECTION and a sounder is ALARM
+  ✓ a declared loop membership is represented, never designed
+  ✓ a declared alarm zone is represented, never derived from floors
+  ✓ a panel-controls-device edge exists only where declared
+  ✓ sprinkler heads are represented with no spacing, coverage or K-factor
+  ✓ an MEP sprinkler terminal is referenced rather than re-created
+  ✓ a fire pump in MEP equipment is referenced as a FIRE_WATER device
+  ✓ extinguishers and hose reels are represented without quantity or travel analysis
+
+== §11 — SIGNAGE AND EMERGENCY LIGHTING ==
+  ✓ an exit sign references a real exit
+  ✓ SIGN_INDICATES_EXIT is emitted for it
+  ✓ whether signage is required or adequate is never determined
+  ✓ a sign pointing at a nonexistent exit is a model-integrity ERROR
+  ✓ and the target is never invented
+  ✓ emergency lights are represented with no lux or autonomy
+
+== §12 — ASSEMBLY POINTS, REFUGE, SMOKE CONTROL ==
+  ✓ an assembly point is represented at site scope
+  ✓ no path from an exit to it is created
+  ✓ an assembly point inside the footprint is reported as a data problem
+  ✓ a refuge area exists only where declared
+  ✓ a lobby, landing or corridor never becomes a refuge area
+  ✓ accessibility is never evaluated for a refuge area
+  ✓ smoke control entries are data placeholders only
+  ✓ no smoke or airflow field is produced
+
+== §13 — EGRESS, DISTANCE AND OCCUPANCY INTEGRATION ==
+  ✓ a measured egress result can be quoted as factual data
+  ✓ it is never compared to a code travel-distance limit
+  ✓ no travel-distance limit exists anywhere in the layer
+  ✓ a missing space yields no fabricated egress fact
+  ✓ the building programme is never used as a fire occupancy classification
+  ✓ the verified regulatory occupancy count is still zero
+
+== §14 — MODEL INTEGRITY VALIDATION ==
+  ✓ the deliberately broken fixture triggers every integrity check
+  ✓ every issue code is declared in the spec with a severity
+  ✓ issues are ordered ERROR first, then WARNING, then INFO
+  ✓ no issue is a code or fire-compliance verdict
+  ✓ an unknown FLS collection is reported and NOT interpreted
+  ✓ a foreign building id is caught rather than silently re-namespaced
+  ✓ a NaN coordinate is rejected rather than propagated
+  ✓ a device located inside a stair void is reported as a fact, not a fault
+
+== §15 — DETERMINISM, NAMESPACING AND TRANSFORMS ==
+  ✓ compiling twice gives byte-identical output
+  ✓ the compiler never mutates the model it reads
+  ✓ a second building namespaces every FLS id
+  ✓ two buildings can never collide on an id
+  ✓ a transform never changes the compiled data
+  ✓ the building transform is applied on read
+  ✓ rotation is applied about the building origin
+
+== §16 — REVISION HASH ==
+  ✓ moving a detector changes the model hash
+  ✓ removing a sprinkler changes the model hash
+  ✓ changing a fire-door rating changes the model hash
+  ✓ changing zone membership changes the model hash
+  ✓ changing an exit-sign target changes the model hash
+  ✓ changing a fire system reference changes the model hash
+  ✓ toggling layer visibility does NOT change the model hash
+  ✓ moving the camera still does not change the hash
+  ✓ compiling the FLS model does not change the hash
+
+== §17 — RENDER AND EXPORT ==
+  ✓ render items use the FLS| naming convention
+  ✓ every requested debug layer exists
+  ✓ layer labels say data only, never compliance
+  ✓ every render item declares its geometry is a display fallback
+  ✓ render items never carry an engineering or compliance verdict
+  ✓ colour marks the element type only, never a state
+  ✓ no red-means-violation logic exists
+
+== §18 — RULE ENGINE CONTRACT (INPUTS ONLY) ==
+  ✓ device existence and counts are exposed as factual inputs
+  ✓ an absent device type is exposed as false, not as a deficiency
+  ✓ exit and zone counts are exposed
+  ✓ fire-door and barrier ratings are exposed only when real
+  ✓ no regulatory rule was added anywhere
+  ✓ the rule inputs contain no threshold, limit or verdict
+
+== §19 — NO ARCH / STRUCT / MEP / NAV / EGRESS / DISTANCE REGRESSION ==
+  ✓ adding an FLS block changes no architectural element
+  ✓ adding an FLS block changes no structural element
+  ✓ adding an FLS block changes no MEP element
+  ✓ compiling FLS does not mutate the MEP model
+  ✓ relationships are identical with and without the FLS block
+  ✓ navigation is identical with and without the FLS block
+  ✓ egress selection and routing are identical
+  ✓ walking distance is unchanged — no barrier or device reroutes anything
+  ✓ and the model says so in writing
+
+== §20 — PROGRAMME NEUTRALITY AND AUDIT ==
+  ✓ villa_fls: compiles through the same element vocabulary
+  ✓ villa_fls: every issue code is declared
+  ✓ villa_fls: the audit reports compliance as NOT_EVALUATED
+  ✓ hotel_fls: compiles through the same element vocabulary
+  ✓ hotel_fls: every issue code is declared
+  ✓ hotel_fls: the audit reports compliance as NOT_EVALUATED
+  ✓ clinic_fls: compiles through the same element vocabulary
+  ✓ clinic_fls: every issue code is declared
+  ✓ clinic_fls: the audit reports compliance as NOT_EVALUATED
+  ✓ warehouse_fls: compiles through the same element vocabulary
+  ✓ warehouse_fls: every issue code is declared
+  ✓ warehouse_fls: the audit reports compliance as NOT_EVALUATED
+  ✓ mixed_fls: compiles through the same element vocabulary
+  ✓ mixed_fls: every issue code is declared
+  ✓ mixed_fls: the audit reports compliance as NOT_EVALUATED
+  ✓ three different programmes share one unchanged FLS model
+  ✓ half are declared and half are referenced from MEP — never duplicated geometry
+  ✓ no FLS property changed with the occupancy or programme
+  ✓ a clinic gets no healthcare-specific requirement
+
+== §21 — SECURITY ==
+  ✓ no eval / Function in the FLS layer
+  ✓ no network call in the FLS layer
+  ✓ a hostile element id cannot escape into markup
+
+FLS: 169 passed, 0 failed

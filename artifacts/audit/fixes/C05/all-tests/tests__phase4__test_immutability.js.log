@@ -1,0 +1,153 @@
+
+== §7 — ENGINEERING_HASH_BEFORE == ENGINEERING_HASH_AFTER ==
+  ✓ villa: the engineering model hash is unchanged by a full runtime session
+  ✓ villa: the visual scene hash is unchanged by a full runtime session
+  ✓ hotel: the engineering model hash is unchanged by a full runtime session
+  ✓ hotel: the visual scene hash is unchanged by a full runtime session
+  ✓ clinic: the engineering model hash is unchanged by a full runtime session
+  ✓ clinic: the visual scene hash is unchanged by a full runtime session
+  ✓ warehouse: the engineering model hash is unchanged by a full runtime session
+  ✓ warehouse: the visual scene hash is unchanged by a full runtime session
+  ✓ office: the engineering model hash is unchanged by a full runtime session
+  ✓ office: the visual scene hash is unchanged by a full runtime session
+  ✓ villa_full: the engineering model hash is unchanged by a full runtime session
+  ✓ villa_full: the visual scene hash is unchanged by a full runtime session
+  ✓ clash_full: the engineering model hash is unchanged by a full runtime session
+  ✓ clash_full: the visual scene hash is unchanged by a full runtime session
+  ✓ fls_full: the engineering model hash is unchanged by a full runtime session
+  ✓ fls_full: the visual scene hash is unchanged by a full runtime session
+  ✓ mixed_use: the engineering model hash is unchanged by a full runtime session
+  ✓ mixed_use: the visual scene hash is unchanged by a full runtime session
+  ✓ villa_windows: the engineering model hash is unchanged by a full runtime session
+  ✓ villa_windows: the visual scene hash is unchanged by a full runtime session
+  ✓ no_site: the engineering model hash is unchanged by a full runtime session
+  ✓ no_site: the visual scene hash is unchanged by a full runtime session
+
+== COMPILATION ITSELF MUTATES NOTHING ==
+  ✓ villa: compiling the runtime scene leaves the model byte-identical
+  ✓ villa: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ hotel: compiling the runtime scene leaves the model byte-identical
+  ✓ hotel: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ clinic: compiling the runtime scene leaves the model byte-identical
+  ✓ clinic: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ warehouse: compiling the runtime scene leaves the model byte-identical
+  ✓ warehouse: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ office: compiling the runtime scene leaves the model byte-identical
+  ✓ office: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ villa_full: compiling the runtime scene leaves the model byte-identical
+  ✓ villa_full: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ clash_full: compiling the runtime scene leaves the model byte-identical
+  ✓ clash_full: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ fls_full: compiling the runtime scene leaves the model byte-identical
+  ✓ fls_full: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ mixed_use: compiling the runtime scene leaves the model byte-identical
+  ✓ mixed_use: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ villa_windows: compiling the runtime scene leaves the model byte-identical
+  ✓ villa_windows: compiling the runtime scene leaves the visual scene byte-identical
+  ✓ no_site: compiling the runtime scene leaves the model byte-identical
+  ✓ no_site: compiling the runtime scene leaves the visual scene byte-identical
+
+== THE RUNTIME SCENE SHARES NO REFERENCE WITH ITS SOURCE ==
+  ✓ the visual object behind the first runtime object was found
+  ✓ mutating the runtime box does not reach the visual geometry
+  ✓ mutating the runtime collision flag does not reach the visual object
+  ✓ pushing into the runtime object array does not reach the visual array
+  ✓ emptying the runtime room array does not empty the canonical spaces
+
+== §31 — NESTED MUTATION ATTACKS ==
+  ✓ after a top-level scalar on the runtime scene, the visual scene is still byte-identical
+  ✓ after a top-level scalar on the runtime scene, the source model is still byte-identical
+  ✓ after a nested object on a runtime object, the visual scene is still byte-identical
+  ✓ after a nested object on a runtime object, the source model is still byte-identical
+  ✓ after a nested array element on a runtime object, the visual scene is still byte-identical
+  ✓ after a nested array element on a runtime object, the source model is still byte-identical
+  ✓ after a whole nested object replaced, the visual scene is still byte-identical
+  ✓ after a whole nested object replaced, the source model is still byte-identical
+  ✓ after a new field grafted onto a runtime object, the visual scene is still byte-identical
+  ✓ after a new field grafted onto a runtime object, the source model is still byte-identical
+  ✓ after a runtime room rewritten, the visual scene is still byte-identical
+  ✓ after a runtime room rewritten, the source model is still byte-identical
+  ✓ after a portal rewritten, the visual scene is still byte-identical
+  ✓ after a portal rewritten, the source model is still byte-identical
+  ✓ after a surface rewritten, the visual scene is still byte-identical
+  ✓ after a surface rewritten, the source model is still byte-identical
+  ✓ after the spatial index rewritten, the visual scene is still byte-identical
+  ✓ after the spatial index rewritten, the source model is still byte-identical
+  ✓ after the defaults rewritten, the visual scene is still byte-identical
+  ✓ after the defaults rewritten, the source model is still byte-identical
+  ✓ after the counts rewritten, the visual scene is still byte-identical
+  ✓ after the counts rewritten, the source model is still byte-identical
+  ✓ after a selection written into runtime state, the visual scene is still byte-identical
+  ✓ after a selection written into runtime state, the source model is still byte-identical
+  ✓ after a measurement forged into runtime state, the visual scene is still byte-identical
+  ✓ after a measurement forged into runtime state, the source model is still byte-identical
+  ✓ after a portal state forged into runtime state, the visual scene is still byte-identical
+  ✓ after a portal state forged into runtime state, the source model is still byte-identical
+  ✓ after a write flag forced on runtime state, the visual scene is still byte-identical
+  ✓ after a write flag forced on runtime state, the source model is still byte-identical
+  ✓ a rebuilt runtime scene is unaffected by the tampered copy
+
+== §31 — MUTATING THE SOURCE GEOMETRY DIRECTLY IS DETECTED ==
+  ✓ a room rectangle in the source model was actually altered for this test
+  ✓ a real change in the source model changes the compiled runtime scene
+  ✓ the original model is still byte-identical — the test mutated a copy
+  ✓ recompiling the untouched model reproduces the original hash exactly
+
+== §30 — EVERY DECLARED WRITE INTENT IS REFUSED ==
+  ✓ the specification declares the write-intent vocabulary
+  ✓ the intent set_geometry is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_position is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_rotation is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_dimension is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_source_id is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent add_element is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent delete_element is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent move_element is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_property is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent write_model is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_width is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_height is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_level is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ the intent set_material_property is refused with RUNTIME_MODEL_WRITE_ATTEMPT
+  ✓ an unlisted set_ prefix is refused
+  ✓ an unlisted write_ prefix is refused
+  ✓ a raw geometry key is refused
+  ✓ a source identity key is refused
+  ✓ a vertex list is refused
+  ✓ a transform is refused
+  ✓ an upper-case write intent is refused
+  ✓ a mixed-case write intent is refused
+  ✓ an explicit writes_to_model claim is refused
+  ✓ a harmless payload is not falsely accused
+  ✓ every accepted action reports that it writes nothing
+
+== A RUNTIME CONFIGURATION MAY NOT REQUEST A WRITE ==
+  ✓ a runtime configuration asking to write to the model is refused
+  ✓ the refusal does not silently produce a writable scene
+  ✓ the source visual scene is untouched by the refused configuration
+  ✓ a clean compilation still declares that it writes nothing
+
+== §32 — NO REVERSE FLOW EXISTS ANYWHERE IN THE CONTRACT ==
+  ✓ the runtime scene declares that it writes nothing to the model
+  ✓ the runtime state declares that it writes nothing to the model
+  ✓ the runtime scene names the visual scene it derives from
+  ✓ the runtime state names the same source scene
+  ✓ every runtime object points back at a visual object
+  ✓ every source-backed runtime object points back at a source element
+  ✓ no visual object was given a runtime identifier
+  ✓ no canonical model element was given a runtime identifier
+  ✓ no canonical model element was given a walkability field
+  ✓ the runtime layer publishes no writer, setter or applier
+  ✓ the probe is not vacuous — it does see a function that exists
+
+== THE RUNTIME IDENTIFIER NAMESPACE IS SEPARATE ==
+  ✓ the specification declares the runtime identifier patterns
+  ✓ every runtime object identifier is namespaced
+  ✓ every runtime room identifier is namespaced
+  ✓ every walkable surface identifier is namespaced
+  ✓ every obstacle identifier is namespaced
+  ✓ every portal identifier is namespaced
+  ✓ the runtime scene identifier is namespaced
+  ✓ no runtime identifier collides with a source element identifier
+
+== REPEATED SESSIONS NEVER DRIFT ==

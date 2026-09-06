@@ -1,0 +1,23 @@
+{
+  "regression_before": {
+    "python_tests": 2,
+    "python_failures_including_subtests": 3,
+    "javascript_exit": 1
+  },
+  "regression_after": {
+    "python_tests": 2,
+    "python_failures": 0,
+    "javascript_geometry_checks": 312,
+    "javascript_failures": 0
+  },
+  "full_suite": {
+    "files": 112,
+    "PASS": 97,
+    "FAIL": 7,
+    "NOT_VERIFIED": 8
+  },
+  "explicit_floor_top_m": 7.5,
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "both local-generator cases byte-identical; separate explicit elevation fixture corrected",
+  "pixel_validation": "NOT_VERIFIED"
+}

@@ -1,0 +1,33 @@
+test_explicit_elevation_moves_all_exported_geometry (__main__.LevelElevation.test_explicit_elevation_moves_all_exported_geometry) ... FAIL
+test_explicit_zero_and_basement_and_legacy_fallback (__main__.LevelElevation.test_explicit_zero_and_basement_and_legacy_fallback) ... 
+  test_explicit_zero_and_basement_and_legacy_fallback (__main__.LevelElevation.test_explicit_zero_and_basement_and_legacy_fallback) (elevation=0) ... FAIL
+  test_explicit_zero_and_basement_and_legacy_fallback (__main__.LevelElevation.test_explicit_zero_and_basement_and_legacy_fallback) (elevation=-3.5) ... FAIL
+
+======================================================================
+FAIL: test_explicit_elevation_moves_all_exported_geometry (__main__.LevelElevation.test_explicit_elevation_moves_all_exported_geometry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_level_elevation.py", line 55, in test_explicit_elevation_moves_all_exported_geometry
+    self.assertAlmostEqual(b[name][extent][1] - a[name][extent][1], 4.3, places=5, msg=name)
+AssertionError: 0.0 != 4.3 within 5 places (4.3 difference) : FLOOR|F1|slab|0
+
+======================================================================
+FAIL: test_explicit_zero_and_basement_and_legacy_fallback (__main__.LevelElevation.test_explicit_zero_and_basement_and_legacy_fallback) (elevation=0)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_level_elevation.py", line 67, in test_explicit_zero_and_basement_and_legacy_fallback
+    self.assertTrue(all(abs(v["max"][1] - expected) < 1e-5 for v in floor))
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_explicit_zero_and_basement_and_legacy_fallback (__main__.LevelElevation.test_explicit_zero_and_basement_and_legacy_fallback) (elevation=-3.5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_level_elevation.py", line 67, in test_explicit_zero_and_basement_and_legacy_fallback
+    self.assertTrue(all(abs(v["max"][1] - expected) < 1e-5 for v in floor))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.012s
+
+FAILED (failures=3)

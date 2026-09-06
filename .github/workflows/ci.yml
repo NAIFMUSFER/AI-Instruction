@@ -46,6 +46,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install numpy==2.4.4
       - name: Run the Python contract suites
         shell: bash
         run: |
@@ -78,6 +79,7 @@ jobs:
                    tests/phase9_2/test_archdetail.py \
                    tests/phase9_2/test_backend_contract.py \
                    tests/remediation/test_request_body_limits.py \
+                   tests/remediation/test_level_elevation.py \
                    tests/phase9_2/test_black_viewport.py \
                    tests/phase9_2/test_generation_budget.py \
                    tests/phase9_2/test_live_render.py
@@ -210,6 +212,7 @@ jobs:
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "node-scope scene suites" --runner "node tests/lib/run.js" \
                    tests/remediation/test_model_apply.js \
+                   tests/remediation/test_level_elevation.js \
                    tests/remediation/test_scene_limits.js || rc=1
           exit $rc
       - uses: actions/upload-artifact@v4

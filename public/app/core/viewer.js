@@ -1191,7 +1191,8 @@ function compile(data){
   });
   _levels.forEach(_lv=>{
     const lvl=_lv.raw, li=_lv.index;
-    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=li*fh; const fkey='F'+li;
+    const fdef=(data.floors||{})[lvl.template]||{};
+    const baseY=lvl.elevation==null?li*fh:Number(lvl.elevation); const fkey='F'+li;
     const holes=ARCH?ARCH.voids.filter(v=>v.level_index===li).map(v=>v.rect):[];
     /* PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان اللوح يُبنى على مستطيل
        الموقع كاملاً (المُدخَل السابق: صفر، صفر، عرض الموقع، عمق الموقع)

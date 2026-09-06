@@ -1,0 +1,126 @@
+
+== §87 — TEST I: THE PHASE 4 RUNTIME ATTACK STILL FAILS ==
+  ✓ the runtime write-attempt code still exists
+  ✓ the runtime still refuses the write intent set_geometry
+  ✓ the runtime still refuses the write intent set_position
+  ✓ the runtime still refuses the write intent set_rotation
+  ✓ the runtime still refuses the write intent set_dimension
+  ✓ the runtime still refuses the write intent set_source_id
+  ✓ the runtime still refuses the write intent add_element
+  ✓ the runtime still refuses the write intent delete_element
+  ✓ the runtime still refuses the write intent move_element
+  ✓ the runtime still refuses the write intent set_property
+  ✓ the runtime still refuses the write intent write_model
+  ✓ the runtime still refuses the write intent set_width
+  ✓ the runtime still refuses the write intent set_height
+  ✓ the runtime still refuses the write intent set_level
+  ✓ the runtime still refuses the write intent set_material_property
+  ✓ the runtime still refuses the payload key set_anything
+  ✓ the runtime still refuses the payload key write_whatever
+  ✓ the runtime still refuses the payload key geometry
+  ✓ the runtime still refuses the payload key source_element_id
+  ✓ the runtime still refuses the payload key vertices
+  ✓ the runtime still refuses the payload key transform
+  ✓ the runtime still refuses an explicit writes_to_model claim
+  ✓ a runtime configuration asking to write is still refused
+  ✓ the runtime scene still declares that it writes nothing
+  ✓ the runtime state still declares that it writes nothing
+  ✓ the authoring layer added no runtime writer, setter or applier
+  ✓ the probe is not vacuous — it does see a function that exists
+
+== A FULL RUNTIME SESSION STILL CANNOT REACH THE MODEL ==
+  ✓ villa: the engineering model hash is unchanged by a full runtime session
+  ✓ villa: the visual scene is unchanged by the runtime attack
+  ✓ villa: the project revision did not move
+  ✓ hotel: the engineering model hash is unchanged by a full runtime session
+  ✓ hotel: the visual scene is unchanged by the runtime attack
+  ✓ hotel: the project revision did not move
+  ✓ clinic: the engineering model hash is unchanged by a full runtime session
+  ✓ clinic: the visual scene is unchanged by the runtime attack
+  ✓ clinic: the project revision did not move
+  ✓ warehouse: the engineering model hash is unchanged by a full runtime session
+  ✓ warehouse: the visual scene is unchanged by the runtime attack
+  ✓ warehouse: the project revision did not move
+  ✓ office: the engineering model hash is unchanged by a full runtime session
+  ✓ office: the visual scene is unchanged by the runtime attack
+  ✓ office: the project revision did not move
+  ✓ windowed: the engineering model hash is unchanged by a full runtime session
+  ✓ windowed: the visual scene is unchanged by the runtime attack
+  ✓ windowed: the project revision did not move
+  ✓ single_level: the engineering model hash is unchanged by a full runtime session
+  ✓ single_level: the visual scene is unchanged by the runtime attack
+  ✓ single_level: the project revision did not move
+
+== §4/§76 — NO IN-PLACE MUTATION OF A CANONICAL MODEL ==
+  ✓ villa: the canonical model is byte-identical after every preview and attempt
+  ✓ villa: the project hash is unchanged
+  ✓ villa: no revision was appended by a preview or a refused commit
+  ✓ hotel: the canonical model is byte-identical after every preview and attempt
+  ✓ hotel: the project hash is unchanged
+  ✓ hotel: no revision was appended by a preview or a refused commit
+  ✓ clinic: the canonical model is byte-identical after every preview and attempt
+  ✓ clinic: the project hash is unchanged
+  ✓ clinic: no revision was appended by a preview or a refused commit
+  ✓ warehouse: the canonical model is byte-identical after every preview and attempt
+  ✓ warehouse: the project hash is unchanged
+  ✓ warehouse: no revision was appended by a preview or a refused commit
+  ✓ office: the canonical model is byte-identical after every preview and attempt
+  ✓ office: the project hash is unchanged
+  ✓ office: no revision was appended by a preview or a refused commit
+  ✓ windowed: the canonical model is byte-identical after every preview and attempt
+  ✓ windowed: the project hash is unchanged
+  ✓ windowed: no revision was appended by a preview or a refused commit
+  ✓ single_level: the canonical model is byte-identical after every preview and attempt
+  ✓ single_level: the project hash is unchanged
+  ✓ single_level: no revision was appended by a preview or a refused commit
+
+== §76 — HASH BEHAVIOUR ACROSS PREVIEW, REJECTION AND COMMIT ==
+  ✓ for a preview, the base model hash is unchanged
+  ✓ for a preview, the candidate carries a different hash
+  ✓ for a rejected commit, the base model hash is unchanged
+  ✓ a rejected commit says so plainly
+  ✓ for a committed transaction, the new model gets a new hash
+  ✓ the old model object remains immutable and history-addressable
+  ✓ the committed project points at the new hash
+
+== THE CANDIDATE SHARES NO REFERENCE WITH THE BASE ==
+  ✓ mutating the candidate does not reach the canonical model
+  ✓ mutating the committed project does not reach the previous model
+  ✓ mutating the committed project does not reach the stored revision snapshot
+
+== §3 — NO GENERIC WRITE ESCAPE HATCH EXISTS ==
+  ✓ the python engine exposes no setModel or writeModel function
+  ✓ the browser layer exposes no generic setter
+  ✓ the generated authoring layer appears exactly once in the whole application
+  ✓ it lives in public/app/generated/authoring.js, and public/app/main.js imports it
+  ✓ the developer API exposes no generic write entry point
+  ✓ every forbidden command type is refused, not merely absent
+  ✓ the only path into the model is a commit
+
+== §77 — THE HARD GATE: PHASE 4 IMMUTABILITY IS INTACT ==
+  ✓ the Phase 4 attack — a top-level scalar on the runtime scene — still reaches no engineering model
+  ✓ the Phase 4 attack — a nested object on a runtime object — still reaches no engineering model
+  ✓ the Phase 4 attack — a nested array element — still reaches no engineering model
+  ✓ the Phase 4 attack — a grafted field — still reaches no engineering model
+  ✓ the Phase 4 attack — a forged selection — still reaches no engineering model
+  ✓ the Phase 4 attack — a forged measurement — still reaches no engineering model
+  ✓ the Phase 4 attack — a forged portal state — still reaches no engineering model
+  ✓ the Phase 4 attack — a forced write flag — still reaches no engineering model
+  ✓ the visual scene is still byte-identical after every replayed attack
+  ✓ a fresh runtime scene is unaffected by the tampered copy
+  ✓ rsBefore was captured so the replay is not vacuous
+  ✓ the Phase 4 immutability suite was actually executed
+  ✓ every Phase 4 mutation attack still fails as it must
+  ✓ the Phase 4 suite still carries a substantial number of checks
+  ✓ the Phase 4 adversarial suite still passes in full
+
+== §11/§12 — PRESENTATION NEVER BECOMES ENGINEERING ==
+  ✓ the presentation scene really carries visual-only objects
+  ✓ a visual-only object id is not an authoring target
+  ✓ a decoration cannot be edited by an ordinary command
+  ✓ the canonical model gained nothing from the presentation scene
+  ✓ a display-only field is classified as such and is never editable
+  ✓ promotion is the only way a visual object becomes semantic content
+
+──────────────────────────────────────────────
+IMMUTABILITY: 107 passed, 0 failed

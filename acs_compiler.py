@@ -919,7 +919,8 @@ def compile_building(data, out_path):
         idx = lvl["index"]
         tmpl = lvl["template"]
         fdef = floors.get(tmpl, {})
-        base_y = idx * fh
+        # Same explicit elevation contract as acs_arch._levels.
+        base_y = float(lvl["elevation"]) if lvl.get("elevation") is not None else idx * fh
         fkey = "F%d" % idx
         holes = [v["rect"] for v in ((_arch or {}).get("voids") or [])
                  if v.get("level_index") == idx] if _arch else []
