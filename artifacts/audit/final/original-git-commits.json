@@ -1,0 +1,61 @@
+{
+  "scope": "Exact original commit objects before GitHub publication; their trees/blobs are identical to the published history. Recreate each with git hash-object -w -t commit --stdin from its UTF-8 field.",
+  "commits": [
+    {
+      "sha": "97652a2a45f9eb9f3948606cb01e4038c662d2a5",
+      "git_commit_object_utf8": "tree 6a9882a80a516c6515647061d2809ec5ea1c6475\nparent 962f8daec2f194957d1a4322ce1ed22fd39086ea\nauthor Codex <codex@openai.com> 1788696974 +0200\ncommitter Codex <codex@openai.com> 1788696974 +0200\n\ndocs: توثيق خط الأساس والأدلة قبل الإصلاح — AUDIT-REPORT.md\n"
+    },
+    {
+      "sha": "c5a00d17d65046e2662a8bb4796cae63182f04c1",
+      "git_commit_object_utf8": "tree b9f7f20e35b87975e4702e1816489c2f6c4553ac\nparent 97652a2a45f9eb9f3948606cb01e4038c662d2a5\nauthor Codex <codex@openai.com> 1788697739 +0200\ncommitter Codex <codex@openai.com> 1788697739 +0200\n\nfix: حماية تحليل أجسام الرفع — acs_understand_api.py\n"
+    },
+    {
+      "sha": "90614943f2a0011cd7c485fe03f38977d372a5b8",
+      "git_commit_object_utf8": "tree 0595acc38e3e600ad67954a96eab3ca1e938de2d\nparent c5a00d17d65046e2662a8bb4796cae63182f04c1\nauthor Codex <codex@openai.com> 1788698257 +0200\ncommitter Codex <codex@openai.com> 1788698257 +0200\n\nfix: احترام المنسوب الصريح في الهندسة والتصدير — acs_compiler.py\n"
+    },
+    {
+      "sha": "5b2ac6965073f4b2f896f46c5858145e5fe7e31e",
+      "git_commit_object_utf8": "tree 3e6890a1ff4dac18d39cf3814548163774411db5\nparent 90614943f2a0011cd7c485fe03f38977d372a5b8\nauthor Codex <codex@openai.com> 1788698806 +0200\ncommitter Codex <codex@openai.com> 1788698806 +0200\n\nfix: إيقاف التصدير عند فقدان المعمار — acs_compiler.py\n"
+    },
+    {
+      "sha": "0f72f793e659c10621d01d9e002f37b183e00e0a",
+      "git_commit_object_utf8": "tree 1446cdfc7287dd3fb88b8eaac0404d09606d35a5\nparent 5b2ac6965073f4b2f896f46c5858145e5fe7e31e\nauthor Codex <codex@openai.com> 1788699175 +0200\ncommitter Codex <codex@openai.com> 1788699175 +0200\n\nfix: رفض أبعاد الصور غير الصالحة — acs_understand_api.py\n"
+    },
+    {
+      "sha": "0eb94a6b93bf9d3fd1cb468d400d0de2a3bf4ae8",
+      "git_commit_object_utf8": "tree 679ff87e9bf010b83b684b4eb172ecfaf8a9e4bf\nparent 0f72f793e659c10621d01d9e002f37b183e00e0a\nauthor Codex <codex@openai.com> 1788699544 +0200\ncommitter Codex <codex@openai.com> 1788699544 +0200\n\nfix: احتساب مخالفات النموذج الخارج وإرجاع تفاصيلها — acs_understand_api.py\n"
+    },
+    {
+      "sha": "00b8b9d0f5c91e22a52ac9a69ae8dd0130ad333b",
+      "git_commit_object_utf8": "tree e06b0861aad4ae80540bfb1e55e6d3cf916251af\nparent 0eb94a6b93bf9d3fd1cb468d400d0de2a3bf4ae8\nauthor Codex <codex@openai.com> 1788700026 +0200\ncommitter Codex <codex@openai.com> 1788700026 +0200\n\nfix: كشف الفتحات غير الصالحة وحدودها الرأسية — acs_validate.py\n"
+    },
+    {
+      "sha": "4608ad48b26f386fac56913d97e52f282e801bfb",
+      "git_commit_object_utf8": "tree 195921519acc785e6f39701f44616e7b1810d5b4\nparent 00b8b9d0f5c91e22a52ac9a69ae8dd0130ad333b\nauthor Codex <codex@openai.com> 1788700458 +0200\ncommitter Codex <codex@openai.com> 1788700458 +0200\n\nfix: كشف الأعداد والهويات والحدود الهندسية غير الصالحة — acs_validate.py\n"
+    },
+    {
+      "sha": "30d9fbeb4a729b3a55154455b07137d78284d88f",
+      "git_commit_object_utf8": "tree ab355987116433b27afc93d1b0b1c3af5d3f8a29\nparent 4608ad48b26f386fac56913d97e52f282e801bfb\nauthor Codex <codex@openai.com> 1788701134 +0200\ncommitter Codex <codex@openai.com> 1788701134 +0200\n\nfix: حفظ إصلاح النموذج كمقترح دون استبدال صامت — acs_understand.py\n"
+    },
+    {
+      "sha": "9d1ba7d06880a152e909947eeca0218fdb671ac3",
+      "git_commit_object_utf8": "tree 5a546bb843b30e756cbda34e00e78adc8ae3b705\nparent 30d9fbeb4a729b3a55154455b07137d78284d88f\nauthor Codex <codex@openai.com> 1788701593 +0200\ncommitter Codex <codex@openai.com> 1788701593 +0200\n\nfix: التحقق من تطابق النوى ذات الهوية الصريحة — acs_validate.py\n"
+    },
+    {
+      "sha": "5ec07f6cc37995d94f6add0db99f561a239fae7d",
+      "git_commit_object_utf8": "tree 4f96497a51c28bad934c36225fcd8258725a6403\nparent 9d1ba7d06880a152e909947eeca0218fdb671ac3\nauthor Codex <codex@openai.com> 1788702150 +0200\ncommitter Codex <codex@openai.com> 1788702150 +0200\n\nfix: منع تصنيف الرافعة الشوكية كمصعد — acs_arch.py\n"
+    },
+    {
+      "sha": "9597a126e2cb96765d22447ddcf7c6422e1701e9",
+      "git_commit_object_utf8": "tree 09f7b432952837629df5adbd92fe9ab5273330ab\nparent 5ec07f6cc37995d94f6add0db99f561a239fae7d\nauthor Codex <codex@openai.com> 1788703641 +0200\ncommitter Codex <codex@openai.com> 1788703641 +0200\n\nfix: كشف الغرف المعزولة مع إعلان نقص نطاق الوصول — acs_validate.py\n"
+    },
+    {
+      "sha": "595ee80bed048f965caf76c7a6320337753de53f",
+      "git_commit_object_utf8": "tree 0dcf2f9fcabe1d8203fe548f22f1898ecd26e64d\nparent 9597a126e2cb96765d22447ddcf7c6422e1701e9\nauthor Codex <codex@openai.com> 1788704124 +0200\ncommitter Codex <codex@openai.com> 1788704124 +0200\n\ndocs: تثبيت نتائج التدقيق ونقطة القرار — AUDIT-REPORT.md\n"
+    },
+    {
+      "sha": "372afa20aee206c57d63ce25ba36c28470d30bbc",
+      "git_commit_object_utf8": "tree 2f4bad1509d0aa7faf1beda3e18206760d5e9914\nparent 595ee80bed048f965caf76c7a6320337753de53f\nauthor Codex <codex@openai.com> 1788704254 +0200\ncommitter Codex <codex@openai.com> 1788704254 +0200\n\ndocs: توثيق حجب رفع فرع التدقيق — AUDIT-REPORT.md\n"
+    }
+  ]
+}

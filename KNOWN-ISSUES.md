@@ -1666,6 +1666,10 @@ v0.40.0 signature that records what the client was built with.
 
 هذا التحديث يخص الأصل remediation/production-trust@962f8da، ولا يصف تلقائياً main أو النشر الحالي.
 السجل الجامع: [AUDIT-REPORT.md](AUDIT-REPORT.md). الإغلاقات التاريخية أدناه لا تتجاوز نطاق اختبارها.
+رُفع فرع audit/fix-2026-09-06 إلى GitHub بموافقة المستخدم، مع تطابق محتوى كل commit.
+عبارات «لم يُنشر» أدناه تخص نشر التطبيق على Render/Netlify. معرّفات commits المحلية
+ومقابلاتها المنشورة محفوظة في artifacts/audit/final/published-commit-map.json؛ آخر إصلاح
+منتج منشور هو 183aedc5d9982452752daac46003f40b5100d189، المقابل للمحلي 9597a12.
 
 | البند | الحالة | الدليل/الحد |
 |---|---|---|

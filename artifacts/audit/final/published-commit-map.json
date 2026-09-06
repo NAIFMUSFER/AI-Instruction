@@ -1,0 +1,120 @@
+{
+  "method": "GitHub connector Git Data API; one commit per original change, same messages and ordered parent chain; exact tree SHA verified for every step",
+  "base_commit": "962f8daec2f194957d1a4322ce1ed22fd39086ea",
+  "branch": "audit/fix-2026-09-06",
+  "published_initial_head": "2d76546d187084178b717ba3ef7d6afd52f053a4",
+  "commits": [
+    {
+      "local_commit": "97652a2a45f9eb9f3948606cb01e4038c662d2a5",
+      "remote_commit": "267eff0f69855c41c4706b2fcb3e8eabf06543f5",
+      "tree": "6a9882a80a516c6515647061d2809ec5ea1c6475",
+      "parent": "962f8daec2f194957d1a4322ce1ed22fd39086ea",
+      "message": "docs: توثيق خط الأساس والأدلة قبل الإصلاح — AUDIT-REPORT.md",
+      "content_verified": true
+    },
+    {
+      "local_commit": "c5a00d17d65046e2662a8bb4796cae63182f04c1",
+      "remote_commit": "1c8318f9ca32086d943e6d46a7db0daa2ea595d4",
+      "tree": "b9f7f20e35b87975e4702e1816489c2f6c4553ac",
+      "parent": "267eff0f69855c41c4706b2fcb3e8eabf06543f5",
+      "message": "fix: حماية تحليل أجسام الرفع — acs_understand_api.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "90614943f2a0011cd7c485fe03f38977d372a5b8",
+      "remote_commit": "076b0eae76bd9480b61c202a1a432377fb6f45eb",
+      "tree": "0595acc38e3e600ad67954a96eab3ca1e938de2d",
+      "parent": "1c8318f9ca32086d943e6d46a7db0daa2ea595d4",
+      "message": "fix: احترام المنسوب الصريح في الهندسة والتصدير — acs_compiler.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "5b2ac6965073f4b2f896f46c5858145e5fe7e31e",
+      "remote_commit": "a5374a3460109fefb134696d850a8f44188ada71",
+      "tree": "3e6890a1ff4dac18d39cf3814548163774411db5",
+      "parent": "076b0eae76bd9480b61c202a1a432377fb6f45eb",
+      "message": "fix: إيقاف التصدير عند فقدان المعمار — acs_compiler.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "0f72f793e659c10621d01d9e002f37b183e00e0a",
+      "remote_commit": "02d2813e52fdb2a1ea045d91609c9c1bb04ec4ea",
+      "tree": "1446cdfc7287dd3fb88b8eaac0404d09606d35a5",
+      "parent": "a5374a3460109fefb134696d850a8f44188ada71",
+      "message": "fix: رفض أبعاد الصور غير الصالحة — acs_understand_api.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "0eb94a6b93bf9d3fd1cb468d400d0de2a3bf4ae8",
+      "remote_commit": "32ed41136a5730ca6c77180d0619df223a548a17",
+      "tree": "679ff87e9bf010b83b684b4eb172ecfaf8a9e4bf",
+      "parent": "02d2813e52fdb2a1ea045d91609c9c1bb04ec4ea",
+      "message": "fix: احتساب مخالفات النموذج الخارج وإرجاع تفاصيلها — acs_understand_api.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "00b8b9d0f5c91e22a52ac9a69ae8dd0130ad333b",
+      "remote_commit": "c79e0b97f50d22847e826f0a063476fcda135835",
+      "tree": "e06b0861aad4ae80540bfb1e55e6d3cf916251af",
+      "parent": "32ed41136a5730ca6c77180d0619df223a548a17",
+      "message": "fix: كشف الفتحات غير الصالحة وحدودها الرأسية — acs_validate.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "4608ad48b26f386fac56913d97e52f282e801bfb",
+      "remote_commit": "f890743a97e4b225080e32e910636fcb78250b1c",
+      "tree": "195921519acc785e6f39701f44616e7b1810d5b4",
+      "parent": "c79e0b97f50d22847e826f0a063476fcda135835",
+      "message": "fix: كشف الأعداد والهويات والحدود الهندسية غير الصالحة — acs_validate.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "30d9fbeb4a729b3a55154455b07137d78284d88f",
+      "remote_commit": "ae7626cec88369a5267fc0a61dd71ada6a4c2c0e",
+      "tree": "ab355987116433b27afc93d1b0b1c3af5d3f8a29",
+      "parent": "f890743a97e4b225080e32e910636fcb78250b1c",
+      "message": "fix: حفظ إصلاح النموذج كمقترح دون استبدال صامت — acs_understand.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "9d1ba7d06880a152e909947eeca0218fdb671ac3",
+      "remote_commit": "5e88040817e3d183684394163f06dba24ee8b831",
+      "tree": "5a546bb843b30e756cbda34e00e78adc8ae3b705",
+      "parent": "ae7626cec88369a5267fc0a61dd71ada6a4c2c0e",
+      "message": "fix: التحقق من تطابق النوى ذات الهوية الصريحة — acs_validate.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "5ec07f6cc37995d94f6add0db99f561a239fae7d",
+      "remote_commit": "e93823470702e8afe5506c9b9570056e6040369b",
+      "tree": "4f96497a51c28bad934c36225fcd8258725a6403",
+      "parent": "5e88040817e3d183684394163f06dba24ee8b831",
+      "message": "fix: منع تصنيف الرافعة الشوكية كمصعد — acs_arch.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "9597a126e2cb96765d22447ddcf7c6422e1701e9",
+      "remote_commit": "183aedc5d9982452752daac46003f40b5100d189",
+      "tree": "09f7b432952837629df5adbd92fe9ab5273330ab",
+      "parent": "e93823470702e8afe5506c9b9570056e6040369b",
+      "message": "fix: كشف الغرف المعزولة مع إعلان نقص نطاق الوصول — acs_validate.py",
+      "content_verified": true
+    },
+    {
+      "local_commit": "595ee80bed048f965caf76c7a6320337753de53f",
+      "remote_commit": "bdbdce9facffe2502131d1c5cbb5615d0ff2ad0f",
+      "tree": "0dcf2f9fcabe1d8203fe548f22f1898ecd26e64d",
+      "parent": "183aedc5d9982452752daac46003f40b5100d189",
+      "message": "docs: تثبيت نتائج التدقيق ونقطة القرار — AUDIT-REPORT.md",
+      "content_verified": true
+    },
+    {
+      "local_commit": "372afa20aee206c57d63ce25ba36c28470d30bbc",
+      "remote_commit": "2d76546d187084178b717ba3ef7d6afd52f053a4",
+      "tree": "2f4bad1509d0aa7faf1beda3e18206760d5e9914",
+      "parent": "bdbdce9facffe2502131d1c5cbb5615d0ff2ad0f",
+      "message": "docs: توثيق حجب رفع فرع التدقيق — AUDIT-REPORT.md",
+      "content_verified": true
+    }
+  ]
+}

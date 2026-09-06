@@ -69,3 +69,11 @@ python artifacts/audit/tools/audit_inventory.py /absolute/path/to/candidate /abs
 These 11 individual defect witnesses and one valid control do not replace the independent all-22 fixture.
 Whitespace in raw logs is intentionally preserved verbatim; whitespace gates apply to changed source,
 not to rewriting captured stdout/stderr.
+
+The audit branch was published with explicit user approval through the connected GitHub app because
+the local Git CLI had no login credential. Each original commit was recreated separately, preserving
+its message, ordered parent chain and exact tree SHA. `final/published-commit-map.json` maps the original
+local IDs used throughout these records to the published IDs. `final/original-git-commits.json` preserves
+the exact original commit-object text; its Git object hashes were checked before saving. Published
+history contains the corresponding trees and blobs, so those original commit objects can be restored
+locally without reconstructing file content. This publication did not merge or deploy the application.

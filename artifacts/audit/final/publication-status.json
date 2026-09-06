@@ -1,10 +1,23 @@
 {
   "branch": "audit/fix-2026-09-06",
-  "status": "BLOCKED_BY_AUTOMATIC_APPROVAL_REVIEW",
-  "action": "git push -u origin audit/fix-2026-09-06",
-  "reason": "Publishing changes and audit artifacts to a public GitHub repository requires explicit user authorization; creating and working on the branch did not supply that authorization.",
-  "retried": false,
-  "local_product_commit": "9597a126e2cb96765d22447ddcf7c6422e1701e9",
+  "status": "PUBLISHED_WITH_USER_APPROVAL",
+  "authorization": "User explicitly approved publishing this branch and the audit artifacts in the conversation.",
+  "method": "GitHub connector Git Data API",
+  "prior_blockers": [
+    {
+      "kind": "automatic approval review",
+      "resolved": "explicit user approval"
+    },
+    {
+      "kind": "git CLI authentication",
+      "resolved": "used the connected GitHub app with confirmed repository push permission"
+    }
+  ],
+  "original_local_head": "372afa20aee206c57d63ce25ba36c28470d30bbc",
+  "verified_published_head": "2d76546d187084178b717ba3ef7d6afd52f053a4",
+  "verified_commit_trees": 14,
+  "original_local_product_commit": "9597a126e2cb96765d22447ddcf7c6422e1701e9",
+  "published_product_commit": "183aedc5d9982452752daac46003f40b5100d189",
   "deployment_performed": false,
-  "required_user_action": "Explicit permission to publish the audit branch and artifacts to the public repository."
+  "merge_performed": false
 }
