@@ -583,13 +583,14 @@ size derived from the budget and re-derived from measured output.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `ACS_GIT_SHA` | *(unset)* | Commit SHA injected by the deployment; highest precedence. |
-| `ACS_BUILT_AT` | *(unset)* | ISO-8601 build timestamp injected by the deployment. |
+| `ACS_BUILD_INFO_SOURCE` | `file` in Docker; otherwise `environment` | Docker reads the stamped file only; native/local deployments retain the legacy environment-first order. Unknown modes fail closed. |
+| `ACS_GIT_SHA` | *(unset)* | Build-time SHA for Docker; highest runtime precedence only in `environment` mode. |
+| `ACS_BUILT_AT` | *(unset)* | Legacy runtime timestamp in `environment` mode only. Ignored by Docker's `file` mode; do not set a manual build date on Render. |
 | `ACS_GIT_BRANCH` | *(unset)* | Branch name injected by the deployment. |
-| `ACS_VERSION` | *(unset → `1.3`)* | Overrides the declared service version. |
+| `ACS_VERSION` | *(unset → `1.3`)* | Stamper or legacy runtime version override; file mode uses the artifact version. |
 | `ACS_BUILD_INFO_FILE` | *(unset → `<repo>/build_info.json`)* | Path to the stamped provenance file. |
 | `RENDER_GIT_COMMIT`, `COMMIT_REF`, `GITHUB_SHA`, `SOURCE_VERSION` | *(platform)* | Platform aliases read for the SHA, in that order after `ACS_GIT_SHA`. |
-| `BUILD_TIMESTAMP` | *(platform)* | Platform alias for the build timestamp. |
+| `BUILD_TIMESTAMP` | *(unset)* | Legacy timestamp alias, not a value Render automatically generates. Ignored in `file` mode. |
 | `RENDER_GIT_BRANCH`, `BRANCH`, `HEAD` | *(platform)* | Platform aliases for the branch. |
 | `SOURCE_DATE_EPOCH` | *(unset)* | Reproducible-build timestamp honoured by `tools/write_build_info.py`. |
 
@@ -865,8 +866,15 @@ Three version axes, each with a single source of truth:
    `api_base: acs-api-base/1.0.0`. `/version` merges in the live
    `ERROR_CONTRACT_VERSION` and `acs_engineering_authority.SCHEMA`. Individual
    layers additionally carry their own `schema` / `version` in their JSON specs.
-3. **Build provenance** — `acs_build_info.build_info()`, with a strict source
-   precedence and no invention at any level:
+3. **Build provenance** — `acs_build_info.build_info()`. Docker explicitly sets
+   `ACS_BUILD_INFO_SOURCE=file`: SHA, timestamp, branch and version come from one
+   `acs-build-info/1.0.0` artifact written during image build. Stale runtime
+   `ACS_BUILT_AT`, `BUILD_TIMESTAMP`, SHA or version overrides cannot rename it.
+   Missing/corrupt/wrong-schema artifacts return unknown identity and
+   `provenance_verified: false`; startup time is never substituted for build time.
+
+   Outside Docker, the default `ACS_BUILD_INFO_SOURCE=environment` preserves the
+   previous source precedence:
 
    1. `ACS_GIT_SHA` / `ACS_BUILT_AT` / `ACS_GIT_BRANCH` (injected by the deploy);
    2. platform variables — `RENDER_GIT_COMMIT`, `COMMIT_REF`, `GITHUB_SHA`,
@@ -877,8 +885,9 @@ Three version axes, each with a single source of truth:
    5. the literal string `"unknown"`, reported as-is, with
       `provenance_verified: false`.
 
-   `provenance_verified` is true only when both a SHA and a timestamp were
-   resolved. `build_identifier()` returns a short display string,
+   `provenance_verified` requires a full hexadecimal SHA and a timezone-aware
+   timestamp. This is metadata validation, not cryptographic attestation or
+   independent proof of the build clock. `build_identifier()` returns a short display string,
    `"<version> · <12-char sha>"`.
 
 Stamping provenance at build time:
@@ -894,8 +903,38 @@ when present), resolves the timestamp from `--built-at`, then `SOURCE_DATE_EPOCH
 then the current UTC time, writes `build_info.json` at the repository root and
 prints the JSON. With `SOURCE_DATE_EPOCH` set the output is byte-identical
 between runs — verified here. The file is git-ignored: it is derived from the
-commit, it changes on every build, and in production the environment variables
-take precedence over it anyway.
+commit. Docker invokes the stamper with `--require-provenance`, which refuses
+missing/invalid SHAs or timestamps before writing. The image build therefore
+requires a known commit; it does not silently ship an unidentifiable artifact.
+
+Render automatically exposes `RENDER_GIT_COMMIT` and `RENDER_GIT_BRANCH` at build
+time through the public build arguments declared in the Dockerfile. No API key
+or timestamp environment variable needs to be added. Other Docker builders must
+pass the commit explicitly (this single-line command works in Bash and PowerShell):
+
+```sh
+docker build --build-arg ACS_GIT_SHA="$(git rev-parse HEAD)" --build-arg ACS_GIT_BRANCH="$(git branch --show-current)" -t acs-engine:local .
+```
+
+The stamp layer includes the revision build arguments, so a commit change
+invalidates it even if only frontend files changed. Reusing a cached layer for
+the same commit retains that layer's original timestamp; a restart or redeploy
+is not a new build timestamp. `.dockerignore` excludes local stamps, Git data,
+secrets and installed dependencies from the build context.
+
+Migration: approve and deploy the new image, then verify `/version` against the
+expected commit and the build artifact. Existing `ACS_BUILT_AT` or
+`BUILD_TIMESTAMP` values are ignored in file mode; removing them later is cleanup,
+not a prerequisite for correct output. Do not change `ACS_BUILD_INFO_SOURCE` back
+to `environment` on Docker. Native deployments keep the old behavior unless
+they explicitly opt into `file` with a generated artifact.
+
+The Docker CI job injects stale timestamps on purpose and compares the running
+`/version` and `/health` responses with the artifact and build-time interval.
+`tests/remediation/test_image_build_metadata.py` separately runs the real writer
+and reader in fresh processes without a Git checkout. Neither test spends an AI
+provider call. See [Render Docker build arguments](https://render.com/docs/docker#environment-variable-translation)
+and [Render's documented revision variables](https://render.com/docs/environment-variables).
 
 Contract tests: `tests/remediation/test_build_metadata.py` exercises the whole
 precedence chain, the `"unknown"` floor, the absence of secrets and absolute

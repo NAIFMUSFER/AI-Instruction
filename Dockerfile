@@ -38,6 +38,19 @@ COPY acs_upload_security.py acs_rate_limit.py acs_generation_job.py acs_cpu_pool
 # السجلّ المنظَّم (F-18) وأصل البناء (provenance)
 COPY acs_logging.py acs_build_info.py ./
 
+# Stamp once while building, not when the service starts. Render provides
+# RENDER_GIT_* as build arguments; other builders must supply ACS_GIT_SHA.
+# Only public revision metadata is declared here, never API keys or secrets.
+# A different commit invalidates this layer even when backend sources match.
+COPY tools/write_build_info.py tools/write_build_info.py
+ARG ACS_GIT_SHA
+ARG ACS_GIT_BRANCH
+ARG RENDER_GIT_COMMIT
+ARG RENDER_GIT_BRANCH
+RUN python tools/write_build_info.py --require-provenance > /dev/null
+# Explicit migration for Docker only: ignore stale runtime identity overrides.
+ENV ACS_BUILD_INFO_SOURCE=file
+
 ENV ACS_LLM_MODEL=claude-sonnet-5
 # F-25: بلا هذا يبقى ACS_ENV = "development" في الإنتاج، فيصير IS_PRODUCTION
 # في acs_logging مساوياً False، وSTACK_TRACES = not IS_PRODUCTION أي True —

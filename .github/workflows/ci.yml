@@ -379,6 +379,7 @@ jobs:
                    tests/remediation/test_logging.py \
                    tests/remediation/test_privacy_boundary.py \
                    tests/remediation/test_build_metadata.py \
+                   tests/remediation/test_image_build_metadata.py \
                    tests/remediation/test_plate_extent.py \
                    tests/remediation/test_bundle_report.py \
                    tests/remediation/test_api_wiring.py \
@@ -458,9 +459,13 @@ jobs:
         # requirements.txt is proven installable end to end.
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           mkdir -p logs
-          docker build -t acs-engine:ci . 2>&1 | tee logs/docker-build.log
+          printf 'ACS_IMAGE_BUILD_START=%s\n' "$(date +%s)" >> "$GITHUB_ENV"
+          docker build --build-arg ACS_GIT_SHA="$GITHUB_SHA" \
+            --build-arg ACS_GIT_BRANCH="$GITHUB_REF_NAME" \
+            -t acs-engine:ci . 2>&1 | tee logs/docker-build.log
+          printf 'ACS_IMAGE_BUILD_END=%s\n' "$(date +%s)" >> "$GITHUB_ENV"
       - name: The image boots and answers /health
         # لماذا لا `--rm` هنا
         # ----------------------
@@ -514,6 +519,8 @@ jobs:
             -e ACS_ENV=production \
             -e ACS_SINGLE_INSTANCE=1 \
             -e WEB_CONCURRENCY=1 \
+            -e ACS_BUILT_AT=2000-01-01T00:00:00Z \
+            -e BUILD_TIMESTAMP=2000-01-01T00:00:00Z \
             --name acs-ci acs-engine:ci \
             2>&1 | tee -a logs/docker-build.log
 
@@ -532,9 +539,47 @@ jobs:
           done
 
           dump
+          provenance_ok=0
           if [ "$healthy" -eq 1 ]; then
             say "/health"
             cat /tmp/health.json | tee -a logs/docker-build.log
+            # Actual HTTP + artifact comparison, with stale runtime timestamps
+            # deliberately injected above. No provider call or credential needed.
+            if docker exec -i -e ACS_EXPECTED_SHA="$GITHUB_SHA" \
+              -e ACS_IMAGE_BUILD_START -e ACS_IMAGE_BUILD_END acs-ci python - \
+              <<'PY' 2>&1 | tee -a logs/docker-build.log
+          import json, os, urllib.request
+          from datetime import datetime
+          from pathlib import Path
+          artifact = json.loads(Path('/app/build_info.json').read_text())
+          with urllib.request.urlopen('http://127.0.0.1:8000/version', timeout=10) as r:
+              version = json.load(r)
+          with urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=10) as r:
+              health = json.load(r)['build']
+          stamp = datetime.fromisoformat(artifact['built_at'].replace('Z', '+00:00'))
+          checks = [
+              ('artifact commit equals checkout', artifact['git_sha'] == os.environ['ACS_EXPECTED_SHA']),
+              ('artifact timestamp belongs to this build',
+               stamp.tzinfo is not None and int(os.environ['ACS_IMAGE_BUILD_START'])
+               <= stamp.timestamp() <= int(os.environ['ACS_IMAGE_BUILD_END'])),
+              ('file mode is active in the image', os.environ.get('ACS_BUILD_INFO_SOURCE') == 'file'),
+              ('stale timestamp cannot override the image', version['built_at'] != os.environ['ACS_BUILT_AT']),
+              ('version validates embedded identity', version['provenance_verified'] is True),
+              ('health validates embedded identity', health['provenance_verified'] is True),
+          ]
+          checks += [(f'version {key} matches artifact', version[key] == artifact[key])
+                     for key in ('git_sha', 'git_sha_short', 'built_at', 'git_branch', 'version')]
+          checks += [(f'health {key} matches version', health[key] == version[key])
+                     for key in ('git_sha_short', 'built_at', 'version')]
+          for name, ok in checks:
+              print(('PASS ' if ok else 'FAIL ') + name)
+          failures = sum(not ok for _, ok in checks)
+          print(f'IMAGE PROVENANCE: {len(checks) - failures} passed, {failures} failed')
+          raise SystemExit(1 if failures else 0)
+          PY
+            then
+              provenance_ok=1
+            fi
           fi
 
           # التنظيف بعد قراءة كل شيء، وبحراسة الوجود لا بكتم الخطأ.
@@ -544,6 +589,10 @@ jobs:
 
           if [ "$healthy" -ne 1 ]; then
             echo "::error::the image did not answer /health — see the container logs and inspect output above"
+            exit 1
+          fi
+          if [ "$provenance_ok" -ne 1 ]; then
+            echo "::error::image provenance did not match the artifact and build interval"
             exit 1
           fi
       - uses: actions/upload-artifact@v4
