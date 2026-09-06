@@ -1039,9 +1039,15 @@ What such a run must establish, in this order:
    `ACS.verifyVisibleModel()` and the decoded-RGBA analyser after each
    transition. This is what closes KI-2 and KI-9.
 6. **The live POST contract.** `python3 tests/deploy/verify_backend_live.py`
-   (free, no model call) and, when spending one call is acceptable,
+   (free, no model call) and, when spending on one generation request is acceptable,
    `python3 tests/deploy/verify_backend_live.py --generation`, which prints the
-   full generation telemetry capture. This is what closes KI-4 and KI-6.
+   full generation telemetry capture. The server may perform internal repair
+   according to its configured policy. The requested generation must return
+   HTTP 200 with `ok=true` and satisfy the model checks. A classified error
+   envelope, including a rate limit or provider rejection, still fails the
+   generation verification. An unavailable network remains unverified; no
+   successful generation is inferred from health/readiness alone.
+   Offline exit-code regression: `python3 tests/remediation/test_live_generation_verdict.py`.
 7. **Rate limiting against a real backend.** With `ACS_RATE_LIMIT_BACKEND=redis`
    and a real `ACS_REDIS_URL`, confirm the per-visitor and global ceilings hold
    across more than one server replica and that the fail-closed policy rejects

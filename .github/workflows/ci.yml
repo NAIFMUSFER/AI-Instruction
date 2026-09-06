@@ -384,6 +384,7 @@ jobs:
                    tests/remediation/test_bundle_report.py \
                    tests/remediation/test_api_wiring.py \
                    tests/remediation/test_ci_gate.py \
+                   tests/remediation/test_live_generation_verdict.py \
                    tests/remediation/test_p0_hardening.py \
                    tests/remediation/test_provider_accounting.py \
                    tests/remediation/test_provider_capability.py \
