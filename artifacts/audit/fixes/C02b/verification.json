@@ -1,0 +1,34 @@
+{
+  "regression_before": {
+    "tests": 6,
+    "failures": 4,
+    "errors": 1,
+    "additional_failing_witnesses": [
+      "API scope status",
+      "nested envelope access"
+    ]
+  },
+  "regression_after": {
+    "tests": 8,
+    "failures": 0,
+    "errors": 0
+  },
+  "full_suite": {
+    "files": 123,
+    "PASS": 108,
+    "FAIL": 7,
+    "NOT_VERIFIED": 8
+  },
+  "individual_validator_cases": {
+    "matched": 12,
+    "defect_cases": 11,
+    "valid_controls": 1,
+    "original_22_fixture": "NOT_AVAILABLE"
+  },
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "geometry byte-identical to baseline; validator observations and explicit access/core scope differ; warehouse 66 issues and chalet 3 issues",
+  "access_scope": "same-level rectangular door/open-area paths to exterior; nested envelopes, docks and unsupported shapes may be PARTIAL/NOT_EVALUATED; not interlevel code egress",
+  "pixel_validation": "NOT_VERIFIED",
+  "development_correction": "first access result falsely claimed warehouse maintenance isolation; counterexample saved, report corrected before adjustment and full suite rerun",
+  "security_gate_adjustment": "S10b now reads intended legacy industrial assignment, retaining original domain assertion"
+}

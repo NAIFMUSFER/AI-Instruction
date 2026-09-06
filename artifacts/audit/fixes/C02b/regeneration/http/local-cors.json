@@ -1,0 +1,12 @@
+{
+  "url": "http://127.0.0.1:8001/v1/understand",
+  "method": "OPTIONS",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "http://127.0.0.1:8080",
+    "content-type": "text/plain; charset=utf-8"
+  },
+  "body_text": "OK",
+  "seconds": 0.001
+}

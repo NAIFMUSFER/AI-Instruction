@@ -1,0 +1,58 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the browser implementation ran and wrote its result
+  ✓ the python implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
+  ✓ the canonical comparison reports no mismatch
+  ✓ a real comparison was performed for top-level key
+  ✓ every top-level key agrees between the two implementations
+  ✓ a real comparison was performed for camera solution
+  ✓ every camera solution agrees between the two implementations
+  ✓ a real comparison was performed for material assignment
+  ✓ every material assignment agrees between the two implementations
+  ✓ a real comparison was performed for drawing
+  ✓ every drawing agrees between the two implementations
+  ✓ a real comparison was performed for control buffer set
+  ✓ every control buffer set agrees between the two implementations
+  ✓ a real comparison was performed for geometry feature set
+  ✓ every geometry feature set agrees between the two implementations
+  ✓ a real comparison was performed for vector output
+  ✓ every vector output agrees between the two implementations
+  ✓ a real comparison was performed for raster byte stream
+  ✓ every raster byte stream agrees between the two implementations
+  ✓ a real comparison was performed for model hash
+  ✓ every model hash agrees between the two implementations
+  ✓ a real comparison was performed for drift case
+  ✓ every drift case agrees between the two implementations
+  ✓ a real comparison was performed for AI boundary case
+  ✓ every AI boundary case agrees between the two implementations
+  ✓ a real comparison was performed for material operation
+  ✓ every material operation agrees between the two implementations
+  ✓ a real comparison was performed for interior camera case
+  ✓ every interior camera case agrees between the two implementations
+
+== THE COMPARISON IS NOT VACUOUS ==
+  ✓ both files carry the same keys
+  ✓ the comparison covers every shipped fixture model
+  ✓ every model produced real control buffers
+  ✓ every model produced a geometry feature set
+  ✓ at least one model shows real openings in the buffers
+  ✓ at least one model shows more than one storey band
+  ✓ every model produced non-trivial vector output
+  ✓ the vector output is identical character for character
+  ✓ the raster byte streams are identical
+  ✓ a self comparison passes in both implementations
+  ✓ every synthetic drift case is rejected identically
+  ✓ an identical candidate passes in both implementations
+  ✓ a missing semantic object warns in both implementations
+  ✓ the AI request is refused identically without buffers or a base render
+  ✓ an unreachable provider falls back identically
+  ✓ a hostile reference is dropped from the prompt in both
+  ✓ a specification-intent override is refused in both
+  ✓ a space too small for a camera is refused in both
+  ✓ industrial context stays off by default in both
+  ✓ a planted difference would be detected
+
+──────────────────────────────────────────────
+RENDER PARITY: 49 passed, 0 failed

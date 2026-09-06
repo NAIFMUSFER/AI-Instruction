@@ -1,0 +1,146 @@
+
+── أ · A: deepseek أساسياً — مزوّد ومفتاح وعنوان ونموذج ──
+  ✓ provider resolves to deepseek
+  ✓ the base URL is the documented Anthropic-compatible endpoint
+  ✓ the host recorded for telemetry is api.deepseek.com
+  ✓ the DeepSeek key is selected
+  ✓ the model is the configured DeepSeek identifier
+  ✓ the configuration resolves cleanly
+  ✓ the allowed-model list admits the DeepSeek identifier
+  ✓ with no explicit base URL the documented default is used, never Anthropic's
+  ✓ with no explicit model the documented DeepSeek default is used
+
+── ب · B: نشر anthropic القائم يظلّ يعمل بمتغيّراته القديمة ──
+  ✓ with no ACS_LLM_PROVIDER the provider defaults to anthropic
+  ✓ the legacy ANTHROPIC_API_KEY is accepted
+  ✓ no base URL is imposed on anthropic — the SDK default stands
+  ✓ the model default is unchanged
+  ✓ the allowed-model default is byte-identical to the pre-migration set
+  ✓ an explicit ACS_LLM_API_KEY overrides the legacy one
+  ✓ ANTHROPIC_API_KEY is NEVER used as an implicit DeepSeek key
+  ✓ the missing variable is named, and named correctly
+  ✓ PROVIDER_SPEC declares no legacy key env for deepseek
+  ✓ an unknown provider name is a configuration fault, not an upstream one
+
+── ج · C: لا مفتاح — أساسيّاً ولا بديلاً — يظهر في أي مخرَج ──
+  ✓ no key appears in /health provider state
+  ✓ /health carries the host, not the URL
+  ✓ primary public() carries no key
+  ✓ primary repr() carries no key
+  ✓ fallback public() carries no key
+  ✓ fallback repr() carries no key
+  ✓ ProviderConfig has no __dict__ to leak (declared __slots__)
+  ✓ the module source contains no credential-shaped literal
+  ✓ redact() removes a DeepSeek-shaped key from any message
+  ✓ safe_provider_detail() strips the key out of the provider message
+
+── د · D: ضبط deepseek لا يمكن أن ينتهي إلى api.anthropic.com ──
+[ACS-LLM] stage=single provider=deepseek host=api.deepseek.com model=deepseek-v4-pro thinking=off max_tokens=1000 stop=end_turn out_chars=8 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0089
+  ✓ the call succeeds through the DeepSeek endpoint
+  ✓ exactly one upstream call was made
+  ✓ the client was built with the DeepSeek base URL
+  ✓ the DeepSeek key — and only it — was sent
+  ✓ the DeepSeek model was requested
+  ✓ an SDK without base_url support is refused
+  ✓ it is a local integration fault, not an upstream one
+  ✓ the refusal names base_url as the parameter
+  ✓ the refusal carries no key
+  ✓ NOT ONE byte was sent when the endpoint could not be applied
+  ✓ the guard is introspection, not a version string
+
+── هـ · E: سبب مسموح ⇒ نداء بديل واحد بالضبط، ونجاحه يُعاد ──
+[ACS-LLM] call failed (stage=plan provider=deepseek host=api.deepseek.com model=deepseek-v4-pro max_tokens=1000 thinking=off sdk=0.40.0 transport=stream) -> ACS_UPSTREAM_OVERLOADED param=stream detail=upstream is overloaded
+[ACS-LLM] retry skipped: request is byte-identical to one already sent (stage=plan max_tokens=1000 thinking=default sdk=0.40.0) — it cannot produce a different result and would cost another full budget
+[ACS-LLM] provider fallback: deepseek -> anthropic (ACS_UPSTREAM_OVERLOADED, provider_unavailable)
+[ACS-LLM] stage=plan provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=1000 stop=end_turn out_chars=19 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0211
+  ✓ the fallback's answer is what the caller receives
+  ✓ the fallback provider was called exactly once
+  ✓ the fallback used the fallback key, not the primary one
+  ✓ the fallback used the fallback model
+  ✓ the primary was not retried after the switch
+  ✓ telemetry records that a fallback was attempted
+  ✓ telemetry names the fallback provider
+  ✓ telemetry records the reason
+  ✓ telemetry records the outcome
+  ✓ telemetry attributes the answer to the provider that served it
+[ACS-LLM] call failed (stage=plan provider=deepseek host=api.deepseek.com model=deepseek-v4-pro max_tokens=1000 thinking=off sdk=0.40.0 transport=stream) -> ACS_UPSTREAM_OVERLOADED param=stream detail=upstream is overloaded
+[ACS-LLM] retry skipped: request is byte-identical to one already sent (stage=plan max_tokens=1000 thinking=default sdk=0.40.0) — it cannot produce a different result and would cost another full budget
+[ACS-LLM] provider fallback: deepseek -> anthropic (ACS_UPSTREAM_OVERLOADED, provider_unavailable)
+[ACS-LLM] call failed (stage=plan provider=anthropic host=default model=claude-sonnet-5 max_tokens=1000 thinking=off sdk=0.40.0 transport=stream) -> ACS_UPSTREAM_OVERLOADED param=stream detail=upstream is overloaded
+[ACS-LLM] retry skipped: request is byte-identical to one already sent (stage=plan max_tokens=1000 thinking=default sdk=0.40.0) — it cannot produce a different result and would cost another full budget
+  ✓ a failing fallback still fails the call
+  ✓ the failure is a classified provider fault, never a runaway recursion
+  ✓ the fallback never falls back again — the call count is bounded
+  ✓ both providers were tried, each once as a provider
+  ✓ telemetry records the failed fallback as failed
+[ACS-LLM] call failed (stage=plan provider=deepseek host=api.deepseek.com model=deepseek-v4-pro max_tokens=1000 thinking=off sdk=0.40.0 transport=stream) -> ACS_UPSTREAM_OVERLOADED param=stream detail=upstream is overloaded
+[ACS-LLM] retry skipped: request is byte-identical to one already sent (stage=plan max_tokens=1000 thinking=default sdk=0.40.0) — it cannot produce a different result and would cost another full budget
+  ✓ with no fallback configured only the primary is called
+  ✓ the reason for NOT switching is recorded, not left silent
+  ✓ fallback_attempted is explicitly false, not absent
+
+── و · F: قائمة سماح — كل ما عداها ممنوع بالبناء ──
+  ✓ a fallback IS configured for this section — the check is meaningful
+  ✓ no fallback for ACS_INTEGRATION_ERROR
+  ✓ no fallback for ACS_UPSTREAM_MAX_TOKENS
+  ✓ no fallback for ACS_UPSTREAM_BAD_REQUEST
+  ✓ no fallback for ACS_UPSTREAM_INVALID_JSON
+  ✓ no fallback for ACS_UPSTREAM_TRAILING_JSON
+  ✓ no fallback for ACS_UPSTREAM_TRUNCATED
+  ✓ no fallback for ACS_UPSTREAM_REFUSED
+  ✓ no fallback for ACS_UPSTREAM_EMPTY_RESPONSE
+  ✓ no fallback for ACS_UPSTREAM_AUTH
+  ✓ no fallback for ACS_UPSTREAM_PERMISSION
+  ✓ no fallback for ACS_UPSTREAM_MODEL_REJECTED
+  ✓ no fallback for ACS_UPSTREAM_TIMEOUT
+  ✓ no fallback for ACS_UPSTREAM_RATE_LIMIT
+  ✓ no fallback for ACS_VALIDATION_FAILED
+  ✓ no fallback for ACS_UNPROCESSABLE
+  ✓ no fallback for ACS_UPSTREAM_NOT_CONFIGURED
+  ✓ the eligible set is small and explicit
+  ✓ every eligible code is a declared upstream code
+  ✓ no eligible code is one we caused ourselves
+  ✓ a local integration fault never reaches any provider
+  ✓ JSON parsing happens after the provider call returns, so malformed output structurally cannot trigger a switch
+
+── ز · G: رمز الفوترة من شاهد المزوّد وحده ──
+  ✓ the measured live 400 now classifies as ACS_UPSTREAM_BILLING
+  ✓ its HTTP status is 503 — service unavailable, not a client error
+  ✓ it is not retryable
+  ✓ the user message reveals no billing, credit or account state
+  ✓ the user message is the declared Arabic one
+  ✓ the operator still gets the safe redacted provider detail
+  ✓ the provider name is recorded, not assumed
+  ✓ DeepSeek's documented 402 Insufficient Balance classifies as billing
+  ✓ a generic 400 is NOT reclassified as billing
+  ✓ a max_tokens 400 still classifies as ACS_UPSTREAM_MAX_TOKENS, not billing
+  ✓ billing evidence is required explicitly
+  ✓ an explicit billing_error type is enough on its own
+  ✓ billing does NOT switch providers by default
+  ✓ billing switches only when the operator says so explicitly
+
+── ح · قناة السجلّ تُسقط ما لم يُعلَن — فالحقول الجديدة تُقاس ──
+[ACS-LLM] stage=single provider=deepseek host=api.deepseek.com model=deepseek-v4-pro thinking=off max_tokens=1000 stop=end_turn out_chars=8 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0089
+  ✓ a generation telemetry event was emitted
+  ✓ the channel passes provider
+  ✓ the channel passes provider_model
+  ✓ the channel passes provider_base_host
+  ✓ F-50's fields still survive the channel
+  ✓ no key reached the telemetry record
+  ✓ the full base URL never reaches the telemetry record
+
+── ط · هجرة مزوّد فقط: عقود التوليد لم تُمَسّ ──
+  ✓ STAGE_SHARE is unchanged
+  ✓ STAGE_FLOOR is unchanged
+  ✓ stage budgets are unchanged on the anthropic default
+  ✓ with no operator ceiling and no documented one, none is invented
+  ✓ DeepSeek's documented 384K ceiling is used when the operator sets none
+  ✓ that documented ceiling changes no stage budget
+  ✓ the operator's ceiling still wins over the documented one
+  ✓ KI-24 chunking constants are unchanged
+  ✓ KI-23's thinking gate is untouched
+  ✓ the provider layer opens no connection and imports no SDK
+
+==============================================================
+MULTI-PROVIDER: 111 passed, 0 failed
+LIVE DEEPSEEK CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (no key, and PyPI/egress for the real SDK is blocked here).

@@ -1,0 +1,176 @@
+
+== §25 — VISIBILITY MODES ARE DECLARED, NOT INVENTED ==
+  ✓ the canonical specification declares the visibility modes
+  ✓ the browser mirror and the canonical file agree on the mode list
+  ✓ the mode HIDE_OBJECT is declared
+  ✓ the mode SHOW_OBJECT is declared
+  ✓ the mode ISOLATE_ROOM is declared
+  ✓ the mode HIDE_ROOM is declared
+  ✓ the mode SHOW_ROOM is declared
+  ✓ the mode ISOLATE_FLOOR is declared
+  ✓ the mode HIDE_FLOOR is declared
+  ✓ the mode SHOW_FLOOR is declared
+  ✓ the mode ISOLATE_DISCIPLINE is declared
+  ✓ the mode HIDE_DISCIPLINE is declared
+  ✓ the mode SHOW_DISCIPLINE is declared
+  ✓ the mode RESTORE_VISIBILITY is declared
+
+== A FRESH STATE HIDES NOTHING ==
+  ✓ a fresh runtime state hides no object, room, level or discipline
+  ✓ a fresh runtime state isolates nothing
+  ✓ every compiled object is visible by default
+  ✓ the hidden count starts at zero
+  ✓ effective visibility declares itself runtime-only
+
+== §26 — HIDING AND SHOWING A SINGLE OBJECT ==
+  ✓ an object hides without an issue
+  ✓ the hide is marked runtime-only
+  ✓ the object appears in the hidden set
+  ✓ the object reads as not visible
+  ✓ exactly one object is hidden
+  ✓ hiding an object does not remove it from the runtime scene
+  ✓ the object still answers selection while hidden
+  ✓ the object still answers inspection while hidden
+  ✓ hiding the same object twice does not duplicate the entry
+  ✓ showing the object again clears it from the hidden set
+  ✓ the object reads as visible again
+  ✓ showing an object that was never hidden is harmless
+  ✓ an object resolves for visibility by its source element id too
+
+== HIDING AND ISOLATING A ROOM ==
+  ✓ a room hides without an issue
+  ✓ the room appears in the hidden set
+  ✓ objects assigned to the hidden room read as not visible
+  ✓ objects outside the hidden room stay visible
+  ✓ showing the room clears it
+  ✓ a room isolates without an issue
+  ✓ isolation records what is isolated and of which kind
+  ✓ isolation hides every other room and no more
+  ✓ an object in the isolated room stays visible
+  ✓ an unassigned object is never hidden by a room isolation
+  ✓ a room resolves for visibility by its space id too
+
+== HIDING AND ISOLATING A FLOOR ==
+  ✓ the fixture is multi-level
+  ✓ a floor hides without an issue
+  ✓ the level appears in the hidden set
+  ✓ objects on the hidden level read as not visible
+  ✓ objects on another level stay visible
+  ✓ an object with no level is never hidden by a floor filter
+  ✓ showing the floor clears it
+  ✓ floor isolation records what is isolated
+  ✓ floor isolation hides every other level and no more
+
+== HIDING AND ISOLATING A DISCIPLINE ==
+  ✓ the fixture carries more than one discipline
+  ✓ a discipline hides without an issue
+  ✓ every MEP object reads as not visible
+  ✓ objects of other disciplines stay visible
+  ✓ a lower-case discipline name is accepted and normalised
+  ✓ showing the discipline clears it
+  ✓ discipline isolation records what is isolated
+  ✓ discipline isolation hides only disciplines actually present
+  ✓ only MEP objects remain visible under a MEP isolation
+
+== VISUAL-ONLY OBJECTS ARE HIDEABLE LIKE ANY OTHER ==
+  ✓ a visual-only object exists in the fixture
+  ✓ a visual-only object hides
+  ✓ isolating the decoration discipline hides the engineering disciplines
+  ✓ hiding decoration never changes its engineering status
+
+== COMBINED FILTERS COMPOSE, THEY DO NOT FIGHT ==
+  ✓ an object hidden individually stays hidden alongside a discipline filter
+  ✓ the discipline filter still applies
+  ✓ clearing the discipline filter does not un-hide the individual object
+  ✓ the hidden count is the count of objects that read as not visible
+
+== RESTORE RETURNS EVERYTHING ==
+  ✓ several filters are active before the restore
+  ✓ restore succeeds and is runtime-only
+  ✓ restore clears every hidden set and the isolation
+  ✓ every object is visible again after a restore
+  ✓ a restore on a clean state is harmless
+  ✓ RESTORE_VISIBILITY as a mode behaves as the restore helper
+
+== INVALID MODES AND TARGETS ARE REFUSED ==
+  ✓ an unknown visibility mode null is refused
+  ✓ a refused mode leaves the state untouched (null)
+  ✓ an unknown visibility mode "" is refused
+  ✓ a refused mode leaves the state untouched ("")
+  ✓ an unknown visibility mode "X_RAY" is refused
+  ✓ a refused mode leaves the state untouched ("X_RAY")
+  ✓ an unknown visibility mode "hide_everything" is refused
+  ✓ a refused mode leaves the state untouched ("hide_everything")
+  ✓ an unknown visibility mode 42 is refused
+  ✓ a refused mode leaves the state untouched (42)
+  ✓ an unknown visibility mode {"m":"HIDE_OBJECT"} is refused
+  ✓ a refused mode leaves the state untouched ({"m":"HIDE_OBJECT"})
+  ✓ an unknown visibility mode ["HIDE_OBJECT"] is refused
+  ✓ a refused mode leaves the state untouched (["HIDE_OBJECT"])
+  ✓ an unknown visibility mode true is refused
+  ✓ a refused mode leaves the state untouched (true)
+  ✓ HIDE_OBJECT refuses the target "no_such_object"
+  ✓ a refused HIDE_OBJECT hides nothing
+  ✓ SHOW_OBJECT refuses the target null
+  ✓ a refused SHOW_OBJECT hides nothing
+  ✓ HIDE_OBJECT refuses the target {"a":1}
+  ✓ a refused HIDE_OBJECT hides nothing
+  ✓ HIDE_ROOM refuses the target "no_such_room"
+  ✓ a refused HIDE_ROOM hides nothing
+  ✓ ISOLATE_ROOM refuses the target null
+  ✓ a refused ISOLATE_ROOM hides nothing
+  ✓ HIDE_FLOOR refuses the target 999
+  ✓ a refused HIDE_FLOOR hides nothing
+  ✓ ISOLATE_FLOOR refuses the target "ground"
+  ✓ a refused ISOLATE_FLOOR hides nothing
+  ✓ HIDE_FLOOR refuses the target null
+  ✓ a refused HIDE_FLOOR hides nothing
+  ✓ HIDE_DISCIPLINE refuses the target "PLUMBING_ASTROLOGY"
+  ✓ a refused HIDE_DISCIPLINE hides nothing
+  ✓ ISOLATE_DISCIPLINE refuses the target null
+  ✓ a refused ISOLATE_DISCIPLINE hides nothing
+  ✓ HIDE_DISCIPLINE refuses the target 7
+  ✓ a refused HIDE_DISCIPLINE hides nothing
+
+== VISIBILITY IS EPHEMERAL — NOTHING UPSTREAM CHANGES ==
+  ✓ every visibility mode leaves the runtime scene byte-identical
+  ✓ every visibility mode leaves the visual scene byte-identical
+  ✓ every visibility mode leaves the source model byte-identical
+  ✓ no runtime object grew a visible or hidden flag
+  ✓ the object count never changes — hiding is not deletion
+  ✓ the runtime state still declares that it writes nothing to the model
+  ✓ the compiled model hash is unchanged by any visibility operation
+
+== EFFECTIVE VISIBILITY IS PURE AND DETERMINISTIC ==
+  ✓ effective visibility is identical across repeated calls
+  ✓ effective visibility does not mutate the runtime state
+  ✓ the effective visibility list is sorted by runtime object id
+  ✓ the returned visibility snapshot is a copy, not a live reference
+  ✓ hidden sets are canonically sorted
+
+== §22 — VISIBILITY IS A DECLARED ACTION WITH NO WRITE PATH ==
+  ✓ the action HIDE is declared in the canonical specification
+  ✓ the action SHOW is declared in the canonical specification
+  ✓ the action ISOLATE is declared in the canonical specification
+  ✓ a hide payload asking to delete the element is refused
+  ✓ an isolate payload asking to set geometry is refused
+
+── multiple models ──
+  ✓ villa: one hidden object yields exactly one invisible entry
+  ✓ villa: restore returns every object
+  ✓ hotel: one hidden object yields exactly one invisible entry
+  ✓ hotel: restore returns every object
+  ✓ clinic: one hidden object yields exactly one invisible entry
+  ✓ clinic: restore returns every object
+  ✓ warehouse: one hidden object yields exactly one invisible entry
+  ✓ warehouse: restore returns every object
+  ✓ office: one hidden object yields exactly one invisible entry
+  ✓ office: restore returns every object
+  ✓ mixed_use: one hidden object yields exactly one invisible entry
+  ✓ mixed_use: restore returns every object
+  ✓ no_site: one hidden object yields exactly one invisible entry
+  ✓ no_site: restore returns every object
+  ✓ a degenerate model reports an empty visibility set without throwing
+
+──────────────────────────────────────────────
+VISIBILITY: 145 passed, 0 failed

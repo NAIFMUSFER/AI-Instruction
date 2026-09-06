@@ -787,6 +787,12 @@ async def _understand_payload(building):
     # Validate the model actually returned, after normalisation. A stored
     # generation count is historical metadata, not a result for this model.
     issues, validation_stats = await _validate("validate_building", building)
+    model_validation = {"status": "COMPLETED", "scope": "acs_validate",
+                        "issues": issues, "stats": validation_stats}
+    incomplete = [scope for scope in ("access", "vertical_alignment")
+                  if (validation_stats.get(scope) or {}).get("status") in ("PARTIAL", "NOT_EVALUATED")]
+    if incomplete:
+        model_validation.update(status="PARTIAL", incomplete_scopes=incomplete)
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
     payload = {"ok": True, "building": building, "levels": len(building["levels"]),
@@ -799,8 +805,7 @@ async def _understand_payload(building):
                            "note": "لا حزمة أنظمة موثّقة محمّلة — هذا تحقّق نموذج "
                                    "هندسي وليس مطابقة أنظمة."},
             "issues": len(issues),
-            "model_validation": {"status": "COMPLETED", "scope": "acs_validate",
-                                 "issues": issues, "stats": validation_stats},
+            "model_validation": model_validation,
             "report": _report(building)}
     if isinstance(repair, dict) and isinstance(repair.get("building"), dict):
         payload["report"]["repair_proposal"] = {

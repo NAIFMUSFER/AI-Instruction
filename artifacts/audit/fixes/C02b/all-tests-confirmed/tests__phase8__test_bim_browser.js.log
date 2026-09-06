@@ -1,0 +1,11 @@
+
+== §1 — THE SPECIFICATION REACHED THE BROWSER UNCHANGED ==
+  ✓ the browser carries the canonical BIM specification
+  ✓ the mirrored specification has not drifted from the file
+  ✓ the mandatory invariant is present and correct in the browser
+  ✓ the browser states plainly that it does not parse STEP
+
+(DOM checks require a real browser — run with run_browser.js)
+
+──────────────────────────────────────────────
+BIM BROWSER: 4 passed, 0 failed

@@ -1,0 +1,10 @@
+
+== §1 — NO DESIGN, NO LOADS, NO CODE ==
+  ✓ the structural spec names no structural code
+  ✓ regulatory rule count is still zero
+  ✓ real occupancy classification count is still zero
+  ✓ browser spec is byte-identical to acs_struct.json
+  ✓ ten structural element types declared
+  ✓ DESIGNED / SAFE / COMPLIANT are not model statuses
+  ✓ UNSAFE / DANGEROUS / CODE_VIOLATION are not severities
+  ✓ rule is not a structural provenance value

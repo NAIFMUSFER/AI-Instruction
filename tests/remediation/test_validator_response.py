@@ -16,7 +16,8 @@ def building(stale_count=0, outside=False):
     return {"site": {"w": 10, "d": 10}, "meta": {"strict": True,
             "acs_issues": stale_count}, "levels": [{"index": 0, "template": "g"}],
             "floors": {"g": {"rooms": [{"id": "room", "rect":
-                [9 if outside else 1, 1, 4, 4]}]}}}
+                [9 if outside else 1, 1, 4, 4],
+                "doors": [{"edge": "N", "offset": 2}]}]}}}
 
 
 class ValidatorResponse(unittest.IsolatedAsyncioTestCase):

@@ -106,15 +106,21 @@ chk('S6l es-module-shims لم يعد يُحمَّل: لا وسم ولا مسار
 # المجال الصناعي: نفس الكلمات الأربع الإنجليزية في الملفات الثلاثة
 files=['acs_validate.py','acs_layout.py','acs_compiler.py']
 dom={}
+domain_literals={}
 for fn in files:
     t=_open(fn,encoding='utf-8').read()
-    m=re.search(r'\(\s*"warehouse"[^)]*\)', t)
-    dom[fn]=re.findall(r'"([a-z]+)"', m.group(0)) if m else []
+    # The validator also has a renderer-domain check in the access graph.
+    # S10b concerns the legacy validator assignment, not the first tuple in a file.
+    pattern = (r'industrial\s*=\s*btype\s+in\s*(\(\s*"warehouse"[^)]*\))'
+               if fn == 'acs_validate.py' else r'(\(\s*"warehouse"[^)]*\))')
+    m=re.search(pattern, t)
+    domain_literals[fn]=re.findall(r'"([^"]+)"', m.group(1)) if m else []
+    dom[fn]=[word for word in domain_literals[fn] if re.fullmatch('[a-z]+', word)]
 base=['warehouse','industrial','factory','logistics']
 chk('S10 المجال الصناعي (الكلمات الأربع) متطابق في الثلاثة',
     all(d==base for d in dom.values()), dom)
 # فرق موروث معروف: acs_validate يقبل مرادفاً عربياً إضافياً غير قابل للوصول عملياً
-extra={fn:[w for w in re.findall(r'"([^"]+)"', re.search(r'\(\s*"warehouse"[^)]*\)', _open(fn,encoding='utf-8').read()).group(0)) if w not in base] for fn in files}
+extra={fn:[w for w in domain_literals[fn] if w not in base] for fn in files}
 chk('S10b الفرق الموروث موثّق وغير قابل للوصول (btype إنجليزي فقط)',
     extra['acs_layout.py']==[] and extra['acs_compiler.py']==[] and extra['acs_validate.py']==['مستودع'],
     extra)

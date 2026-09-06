@@ -213,6 +213,102 @@ def _core_alignment_issues(building, stats):
     return issues
 
 
+def _access_issues(building, stats):
+    """Door graph on physical spaces; exterior access on each level, not egress."""
+    import acs_arch as AR
+    try:
+        arch = AR.compile_architecture(building)
+    except Exception:
+        stats["access"] = {"status": "NOT_EVALUATED", "reason": "architecture_compiler_failed"}
+        return []
+    source = {}
+    invalid_doors = set()
+    for template, floor in (building.get("floors") or {}).items():
+        for index, room in enumerate(floor.get("rooms") or []):
+            sid = AR._space_id("bld_0", template, room, index)
+            source[sid] = room
+            rect = room.get("rect")
+            if not isinstance(rect, (list, tuple)) or len(rect) != 4:
+                continue
+            for di, door in enumerate(room.get("doors") or []):
+                one = dict(room, doors=[door], windows=[])
+                w, d = _finite_number(rect[2]), _finite_number(rect[3])
+                if w is None or d is None or _opening_issues(one, template, w, d, building.get("wall_h", 3)):
+                    invalid_doors.add(sid + ".door_%d" % di)
+    spaces = {space["id"]: space for space in arch["spaces"]}
+    adj = {sid: set() for sid in spaces}
+    roots, uncertain, closed, open_nodes = set(), set(), set(), set()
+    unsupported_levels = set()
+    valid_spaces = 0
+    for sid, space in spaces.items():
+        room = source.get(space["space_id"], {})
+        if _is_envelope(room.get("id")):
+            unsupported_levels.add(space["level_index"])
+        if space["boundary_basis"] != "rectangle_edges":
+            uncertain.add(sid); unsupported_levels.add(space["level_index"])
+            continue
+        valid_spaces += 1
+        # Match the rendered boundary mode when industrial roles omit walls.
+        industrial_open = building_type(building) in ("warehouse", "industrial", "factory", "logistics") \
+            and room.get("role") and room["role"] not in ("office", "admin", "it", "staff", "maintenance", "meeting")
+        walls = str(room.get("walls") or ("none" if industrial_open else "full")).lower()
+        if room.get("docks"):
+            uncertain.add(sid)
+        if walls in ("none", "line"):
+            open_nodes.add(sid)
+        elif walls in ("low", "rail", "half") or room.get("docks"):
+            uncertain.add(sid)
+        elif not (_is_outdoor(room.get("id")) or _is_envelope(room.get("id")) or room.get("exterior") is True):
+            closed.add(sid)
+    # Unsupported boundaries and nested envelopes can conceal passages.
+    # Do not diagnose isolation from an incomplete representation.
+    uncertain.update(sid for sid, space in spaces.items() if space["level_index"] in unsupported_levels)
+    def physical(space_id, level):
+        return "%s@%s" % (space_id, level)
+    def link(a, b):
+        if a in adj and b in adj:
+            adj[a].add(b); adj[b].add(a)
+    walls = {wall["id"]: wall for wall in arch["walls"]}
+    for wall in walls.values():
+        endpoints = [physical(sid, wall["level_index"]) for sid in wall["spaces"]]
+        if wall["exposure"] == "exterior":
+            roots.update(sid for sid in endpoints if sid in open_nodes)
+        if len(endpoints) == 2 and all(sid in open_nodes for sid in endpoints):
+            link(*endpoints)
+    door_edges = 0
+    for door in arch["openings"]:
+        if door["type"] != "DOOR":
+            continue
+        sid = physical(door["space_id"], door["level_index"])
+        host = walls.get(door["host_wall_id"])
+        if door["opening_ref"] in invalid_doors or door["host_status"] != "resolved" or host is None:
+            uncertain.add(sid); continue
+        endpoints = [physical(space_id, door["level_index"]) for space_id in host["spaces"]]
+        if len(endpoints) == 2:
+            link(*endpoints); door_edges += 1
+        elif host["exposure"] == "exterior":
+            roots.add(sid)
+        else:
+            uncertain.add(sid)
+    def reachable(seeds):
+        reached = set(seeds); pending = list(seeds)
+        while pending:
+            for other in adj.get(pending.pop(), ()):
+                if other not in reached:
+                    reached.add(other); pending.append(other)
+        return reached
+    reached, possible = reachable(roots), reachable(uncertain)
+    missing = sorted(closed - reached - possible)
+    stats["access"] = {"status": ("PARTIAL" if uncertain and valid_spaces else
+        "NOT_EVALUATED" if uncertain or not spaces else "COMPLETED"),
+        "rooms": len(spaces), "door_edges": door_edges,
+        "reachable_rooms": len(reached), "unreachable_rooms": missing,
+        "unresolved_rooms": sorted(possible - reached),
+        "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"}
+    return ["[%s] ROOM_UNREACHABLE: لا يوجد مسار أبواب أو منطقة مفتوحة يصل إلى خارج المسطح في هذا الدور."
+            % sid for sid in missing]
+
+
 def validate_building(b):
     """يعيد (issues, stats). issues = قائمة نصوص عربية موجّهة للنموذج."""
     issues = []
@@ -298,11 +394,6 @@ def validate_building(b):
                     % (tmpl, rid, area))
 
             outdoor = _is_outdoor(rid)
-
-            # باب لكل غرفة داخلية (عدا الأسوار والمواقف والمناطق المفتوحة)
-            if not strict and not r.get("doors") and not outdoor and not openz \
-                    and "parking" not in low and not r.get("docks"):
-                issues.append("[%s/%s] بلا باب — أضِف باباً على حافة مناسبة." % (tmpl, rid))
 
             pts = r.get("points", []) or []
             stats["points"] += len(pts)
@@ -409,6 +500,7 @@ def validate_building(b):
         # نُبقي فقط ما هو متطلّب سلامة/حياة حقيقي، وهو يُضاف ولا يُنقص من طلبه.
 
     issues.extend(_core_alignment_issues(b, stats))
+    issues.extend(_access_issues(b, stats))
     return issues, stats
 
 

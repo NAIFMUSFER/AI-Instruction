@@ -1,0 +1,351 @@
+{
+  "scope": "11 audit counterexamples individually plus one valid control; NOT the original independent 22-issue fixture",
+  "matched": 12,
+  "cases": [
+    {
+      "case": "valid_control",
+      "issues": [],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 1,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.0017513729981146753
+    },
+    {
+      "case": "closed_room_without_access",
+      "issues": [
+        "[bld_0.g.room@0] ROOM_UNREACHABLE: لا يوجد مسار أبواب أو منطقة مفتوحة يصل إلى خارج المسطح في هذا الدور."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 0,
+          "unreachable_rooms": [
+            "bld_0.g.room@0"
+          ],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.0001830969995353371
+    },
+    {
+      "case": "furniture_outside_room",
+      "issues": [
+        "[g/room/furniture/0/instance/0] ITEM_OUTSIDE_ROOM: بصمة العنصر خارج الغرفة."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 1,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.00015868899936322123
+    },
+    {
+      "case": "object_outside_room",
+      "issues": [
+        "[g/room/objects/0/instance/0] ITEM_OUTSIDE_ROOM: بصمة العنصر خارج الغرفة."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 1,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.0006148380052763969
+    },
+    {
+      "case": "negative_dimensions",
+      "issues": [
+        "[g/room] ROOM_DIMENSIONS_INVALID: العرض والعمق يجب أن يكونا موجبين.",
+        "[bld_0.g.room@0] ROOM_UNREACHABLE: لا يوجد مسار أبواب أو منطقة مفتوحة يصل إلى خارج المسطح في هذا الدور."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 0,
+          "unreachable_rooms": [
+            "bld_0.g.room@0"
+          ],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 6.197398761287332e-05
+    },
+    {
+      "case": "nonfinite_position",
+      "issues": [
+        "[g/room] ROOM_RECT_NONFINITE: إحداثيات الغرفة يجب أن تكون منتهية."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "PARTIAL",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 0,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [
+            "bld_0.g.room@0"
+          ],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.000132310000481084
+    },
+    {
+      "case": "invalid_opening_edge",
+      "issues": [
+        "[g/room/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E أو W."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "PARTIAL",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 0,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [
+            "bld_0.g.room@0"
+          ],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.000112749999971129
+    },
+    {
+      "case": "door_above_wall",
+      "issues": [
+        "[g/room/doors/0] OPENING_ABOVE_WALL: أعلى الفتحة يتجاوز ارتفاع الجدار المضيف."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "PARTIAL",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 0,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [
+            "bld_0.g.room@0"
+          ],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.0001233670045621693
+    },
+    {
+      "case": "window_above_wall",
+      "issues": [
+        "[g/room/windows/0] OPENING_ABOVE_WALL: أعلى الفتحة يتجاوز ارتفاع الجدار المضيف."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 1,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 1,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.00010958498751278967
+    },
+    {
+      "case": "duplicate_room_identity",
+      "issues": [
+        "[g/room] ROOM_ID_DUPLICATE: معرّف غرفة مكرر في القالب."
+      ],
+      "stats": {
+        "levels": 1,
+        "rooms": 2,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "NOT_APPLICABLE",
+          "checked_groups": 0,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 1,
+          "door_edges": 0,
+          "reachable_rooms": 1,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.00018994699348695576
+    },
+    {
+      "case": "stair_vertical_misalignment",
+      "issues": [
+        "[levels/1/f1/room/objects/0/core/core-A] CORE_VERTICAL_MISALIGNMENT: موضع النواة لا يطابق المستوى 0.0."
+      ],
+      "stats": {
+        "levels": 3,
+        "rooms": 3,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "COMPLETED",
+          "checked_groups": 1,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 3,
+          "door_edges": 0,
+          "reachable_rooms": 3,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.00030951699591241777
+    },
+    {
+      "case": "elevator_vertical_misalignment",
+      "issues": [
+        "[levels/1/f1/room/objects/0/core/core-A] CORE_VERTICAL_MISALIGNMENT: موضع النواة لا يطابق المستوى 0.0."
+      ],
+      "stats": {
+        "levels": 3,
+        "rooms": 3,
+        "points": 0,
+        "vertical_alignment": {
+          "status": "COMPLETED",
+          "checked_groups": 1,
+          "unresolved": [],
+          "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+        },
+        "access": {
+          "status": "COMPLETED",
+          "rooms": 3,
+          "door_edges": 0,
+          "reachable_rooms": 3,
+          "unreachable_rooms": [],
+          "unresolved_rooms": [],
+          "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+        }
+      },
+      "matched_expectation": true,
+      "seconds": 0.00035170098999515176
+    }
+  ]
+}

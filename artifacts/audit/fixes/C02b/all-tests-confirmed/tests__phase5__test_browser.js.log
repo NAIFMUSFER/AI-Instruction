@@ -1,0 +1,74 @@
+
+== THE DEVELOPER API IS PRESENT ==
+  ✓ a window object exists in this environment
+  ✓ the developer API is skipped outside a page (declared, not faked)
+
+== SELECTION IDENTIFIES A TARGET, IT DOES NOT EDIT ==
+  ✓ an object is selected in the runtime
+  ✓ the selection changed no model
+  ✓ the selection names a source element that authoring can resolve
+  ✓ an explicit edit intent is required before any command
+
+== PREVIEW, CANCEL, PREVIEW, COMMIT ==
+  ✓ the preview is produced in this environment
+  ✓ the preview candidate differs from the base
+  ✓ the canonical model is untouched by the preview
+  ✓ cancelling returns to IDLE with zero change
+  ✓ a second preview reproduces the same candidate hash
+  ✓ the commit succeeds in this environment
+  ✓ the committed model hash equals the previewed candidate hash
+  ✓ a revision was appended
+  ✓ the previous project object still holds the previous hash
+
+== UNDO AND REDO IN THIS ENVIRONMENT ==
+  ✓ the undo restores the original hash
+  ✓ history grew to three entries
+  ✓ the redo restores the edited hash
+  ✓ history grew to four entries
+  ✓ no history entry was ever removed
+
+== PROPERTY EDITING THROUGH THE AUTHORING LAYER ==
+  ✓ the property model is produced
+  ✓ some fields are editable and some are not
+  ✓ reading properties changes nothing
+  ✓ editing an EDITABLE field goes through a typed command
+  ✓ the edited value is visible in the new property model
+  ✓ a DERIVED field cannot be set by any command
+
+== A GIZMO-BACKED COMMAND ==
+  ✓ the handle produces a typed command
+  ✓ producing the command changes nothing on its own
+  ✓ the gizmo command commits through the normal path
+  ✓ the object actually moved in the new revision
+  ✓ a scale handle on a wall is refused
+
+== RUNTIME IMMUTABILITY INSIDE THIS ENVIRONMENT ==
+  ✓ the runtime still refuses set_geometry
+  ✓ the runtime still refuses set_position
+  ✓ the runtime still refuses set_rotation
+  ✓ the runtime still refuses set_dimension
+  ✓ the runtime still refuses set_source_id
+  ✓ the runtime still refuses add_element
+  ✓ the runtime still refuses delete_element
+  ✓ the runtime still refuses move_element
+  ✓ the runtime still refuses set_property
+  ✓ the runtime still refuses write_model
+  ✓ the runtime still refuses set_width
+  ✓ the runtime still refuses set_height
+  ✓ the runtime still refuses set_level
+  ✓ the runtime still refuses set_material_property
+  ✓ a runtime action claiming to write is still refused
+  ✓ the canonical model is unchanged after a runtime attack in this environment
+  ✓ the runtime scene still declares it writes nothing
+
+== SERIALISATION CARRIES NO RUNTIME STATE ==
+  ✓ no camera state is serialised
+  ✓ no selection is serialised
+  ✓ no portal state is serialised
+  ✓ no measurement is serialised
+  ✓ the model and the revision pointer are both present
+  ✓ the project reloads with the same hash
+  ✓ runtime state starts fresh after loading
+
+──────────────────────────────────────────────
+AUTHORING BROWSER: 55 passed, 0 failed

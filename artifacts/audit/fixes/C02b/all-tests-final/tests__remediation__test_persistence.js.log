@@ -1,0 +1,137 @@
+
+== §1 — encode: كل سجلّ يحمل بصمة النموذج والمراجعة والمخطّط والوقت ==
+  ✓ encode succeeds on a serialisable project
+  ✓ the record declares the persistence contract
+  ✓ the record carries the current schema version
+  ✓ the record carries a model hash
+  ✓ the record carries the revision id
+  ✓ the record carries a timestamp
+  ✓ the record carries its own payload hash and byte count
+  ✓ encode is deterministic for the same input and clock
+  ✓ a different model produces a different model hash
+  ✓ a non-serialisable project is refused, never written half-way
+
+== §2 — decode: الرحلة ذهاباً وإياباً بلا فقد ==
+  ✓ decode returns the project unchanged
+  ✓ decode reports the revision, hash and timestamp it recovered
+  ✓ decode of a current-schema record reports no migration
+
+== §3 — سجلّ فاسد: JSON غير صالح ==
+  ✓ a record whose payload is not valid JSON is refused
+  ✓ decode never throws on bad JSON, it classifies
+  ✓ outright garbage in the payload is refused as well
+  ✓ a record that is not an object at all is refused
+  ✓ a record from a foreign contract is refused
+  ✓ a record missing a required field is refused, not defaulted
+
+== §4 — سجلّ مبتور: عدد المحارف لا يطابق المُعلَن ==
+  ✓ truncation is detected by the declared byte count before anything else
+  ✓ the refusal names the numbers it compared
+
+== §5 — بصمة لا تطابق ==
+  ✓ a payload hash mismatch is refused
+  ✓ a tampered model with a repaired payload hash is still caught by the model hash
+  ✓ the model-hash refusal says which hash failed
+
+== §6 — مخطّط أقدم من الحالي: يُرقَّى ولا يُهمَل ==
+  ✓ an older record is structurally valid and usable
+  ✓ an older record is flagged for migration, not silently accepted as current
+  ✓ decoding an older record migrates it forward and says so
+  ✓ migration preserves the user work itself
+  ✓ a record older than the oldest migratable schema is preserved, not used
+  ✓ an unmigratable old record is marked for preservation, never for deletion
+
+== §7 — مخطّط أحدث من الحالي: يُصان ولا يُخمَّن ولا يُكتَب فوقه ==
+  ✓ a newer record is recognised as structurally valid
+  ✓ a newer record is NOT used — the build cannot know its format
+  ✓ the refusal explains itself in terms the user can act on
+  ✓ decode marks a newer record for preservation
+
+== §8 — chooseRecovery: آخر سجلّ سليم ينجو دائماً ==
+  ✓ the newest usable record is chosen
+  ✓ the chosen record decodes back to the newest work
+  ✓ the corrupt record is rejected with a named code
+  ✓ the corrupt record is quarantined, never chosen
+  ✓ the future-schema record is PRESERVED, not quarantined and not chosen
+  ✓ the older good record is still accepted as a fallback candidate
+  ✓ with no usable record, nothing is chosen
+  ✓ with no usable record, NOTHING is quarantined — we never destroy the last copy
+  ✓ the empty case is a named state, not a crash
+  ✓ the choice is order-independent and deterministic
+  ✓ an exact timestamp tie is broken deterministically, not by array order
+
+== §9 — الكتابة المعاملاتية: مؤشّر يُقلَب أخيراً، ولا كتابة فوق النسخة الوحيدة ==
+  ✓ a write plan is produced
+  ✓ the plan writes a NEW record id, never the current pointer
+  ✓ the pointer flip is the last durable step, after read-back validation
+  ✓ the previous pointer is retained until the new record is proven
+  ✓ a successful write moves the pointer to the new record
+  ✓ a successful write records the new last-good
+
+== §10 — QuotaExceededError: لا فقد صامت، والسجلّ السليم لم يُمَس ==
+  ✓ a QuotaExceededError is classified by name
+  ✓ the legacy numeric quota codes are classified too
+  ✓ the failed write is reported, never swallowed
+  ✓ THE POINTER DID NOT MOVE — the last good record still owns it
+  ✓ the last good record id survives the failure untouched
+  ✓ the previous good record is still in the record list
+  ✓ the failure is remembered so the UI can show it
+  ✓ the last successful save time is not falsified by a failure
+  ✓ after a quota failure the good record is still recoverable
+  ✓ a InvalidStateError is classified as STORAGE_UNAVAILABLE
+  ✓ a AbortError is classified as STORAGE_ABORTED
+  ✓ a VersionError is classified as STORAGE_VERSION
+  ✓ a SecurityError is classified as STORAGE_BLOCKED
+  ✓ an unknown storage failure is still a named state, never silence
+
+== §11 — إعادة التحميل أثناء التحرير وأثناء التوليد ==
+  ✓ a reload mid-edit recovers the in-progress notes as well as the model
+  ✓ a reload mid-generation recovers the fact that generation was unfinished
+  ✓ an unfinished generation is never recovered as a finished one
+
+== §12 — نسخة احتياطية يدوية: ملفّ محلي، ذهاباً وإياباً ==
+  ✓ a backup file is produced
+  ✓ the backup is a JSON download with a name
+  ✓ the backup states it is a local file download
+  ✓ restoring the backup returns the identical project
+  ✓ a non-JSON file is refused with a named code, not a crash
+  ✓ a JSON file that is not an ACS backup is refused
+  ✓ a corrupted backup is refused and restores nothing
+
+== §13 — لا يُقال «سحابة» ولا «نسخة احتياطية على خادم» أبداً ==
+  ✓ status IDLE has Arabic primary text
+  ✓ status IDLE has English secondary text
+  ✓ status IDLE claims nothing about a cloud or a server
+  ✓ status SAVING has Arabic primary text
+  ✓ status SAVING has English secondary text
+  ✓ status SAVING claims nothing about a cloud or a server
+  ✓ status SAVED has Arabic primary text
+  ✓ status SAVED has English secondary text
+  ✓ status SAVED claims nothing about a cloud or a server
+  ✓ status FAILED has Arabic primary text
+  ✓ status FAILED has English secondary text
+  ✓ status FAILED claims nothing about a cloud or a server
+  ✓ status RECOVERED has Arabic primary text
+  ✓ status RECOVERED has English secondary text
+  ✓ status RECOVERED claims nothing about a cloud or a server
+  ✓ status QUOTA has Arabic primary text
+  ✓ status QUOTA has English secondary text
+  ✓ status QUOTA claims nothing about a cloud or a server
+  ✓ SAVED says exactly "محفوظ محلياً على هذا الجهاز"
+  ✓ SAVED says exactly "saved locally on this device"
+  ✓ saving / saved / failed are three distinguishable states
+  ✓ the cloud-claim guard actually fires on a cloud claim
+
+== §14 — الصفحة المشحونة تُعلن الحفظ المحلي ولا تدّعي سحابة ==
+  ✓ the shipped page exposes window.ACS.persistence
+  ✓ the shipped page uses IndexedDB, not localStorage, for the project record
+  ✓ the visible Arabic status string ships in the page
+  ✓ the visible English status string ships in the page
+  ✓ the page declares the storage kind is local to this device
+  ✓ the user-facing note explicitly denies that this is a server backup
+  ✓ the page ships explicit export / restore / clear controls
+  ✓ clearing local data asks for confirmation
+
+──────────────────────────────────────────────
+F-15 LOCAL PERSISTENCE: 105 passed, 0 failed
+NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: real IndexedDB durability across a genuine browser reload (and a real device quota wall) needs a browser with storage; this suite proves the pure logic the IndexedDB wrapper depends on.

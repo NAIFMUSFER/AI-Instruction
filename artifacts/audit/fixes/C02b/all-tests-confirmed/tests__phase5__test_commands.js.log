@@ -1,0 +1,219 @@
+
+== §24/§25 — SPACE AUTHORING USES THE GEOMETRY SOURCE OF TRUTH ==
+  ✓ a rename previews cleanly
+  ✓ a rename changes exactly the name path
+  ✓ a rename preserves the stable space id
+  ✓ a resize previews cleanly
+  ✓ a resize edits the canonical space rectangle, not a rendered box
+  ✓ a resize changes the model hash
+  ✓ a resize regenerates derived walls from the new rectangle
+  ✓ a resize reports the space boundary as an affected dependency
+  ✓ a resize below the minimum dimension is refused
+  ✓ a shrink that would strand an opening reports it out of range
+
+== ADD AND DELETE SPACE ==
+  ✓ a space is added with a stable stated id
+  ✓ adding a space preserves every existing id
+  ✓ a space added without an id gets a deterministic one
+  ✓ the deterministic id repeats exactly across runs
+  ✓ the generated id carries no timestamp or random component
+  ✓ a space overlapping an existing one is refused as an integrity failure
+  ✓ a colliding id is refused, never silently overwritten
+  ✓ deleting a space reports its dependent openings and objects by exact id
+  ✓ deleting a space actually removes it from the candidate
+
+== §19/§20 — MOVE WALL AND HOSTED ELEMENT STRATEGY ==
+  ✓ a wall with no hosted opening moves cleanly
+  ✓ the move edits the space rectangle the wall is generated from
+  ✓ a wall carrying openings refuses to move without a stated strategy
+  ✓ the specification refuses to pick a default strategy
+  ✓ KEEP_RELATIVE_POSITION moves the wall and keeps the opening on it
+  ✓ no opening is left floating by a relative move
+  ✓ KEEP_WORLD_POSITION is judged without throwing
+  ✓ KEEP_WORLD_POSITION either preserves the world position or refuses explicitly
+  ✓ CANCEL_IF_HOSTED refuses with a dependency conflict rather than moving openings
+  ✓ a move that would collapse a space is refused
+  ✓ an unknown wall is refused
+  ✓ an unknown hosted strategy is refused
+  ✓ all three declared strategies are exercised, none silently chosen
+
+== §21/§22 — ADD AND DELETE WALL ARE HONEST ABOUT THE MODEL ==
+  ✓ a free-standing wall is refused because walls are derived here
+  ✓ the refusal explains the semantic source instead of failing silently
+  ✓ deleting a derived wall is refused as a dependency conflict
+  ✓ the refusal names how many space edges generate the wall
+  ✓ nothing is orphaned because nothing was deleted
+
+== §23 — DOOR AND WINDOW AUTHORING ==
+  ✓ a door move inside its host range previews cleanly
+  ✓ the moved door keeps a valid host after the move
+  ✓ a door moved past its host edge is refused
+  ✓ the refusal states the span, the requested centre and the width
+  ✓ a door may move to another edge of its own space
+  ✓ a door is added to a space
+  ✓ a door that would not fit is refused rather than clipped
+  ✓ a door is deleted and reported as a dependency
+  ✓ door properties change
+  ✓ a width that would overflow the host edge is refused
+  ✓ a window is added with its sill preserved
+  ✓ an unknown opening index is refused
+  ✓ a space id used as a door target is refused
+
+== §26/§27 — LEVEL AND STAIR AUTHORING ==
+  ✓ a level height change previews cleanly
+  ✓ an absurd level height is refused
+  ✓ a level is added when its floor plate exists
+  ✓ the new level index is deterministic
+  ✓ a level referencing an unknown template is refused
+  ✓ the last remaining level cannot be deleted
+  ✓ a level still carrying spaces refuses to cascade silently
+  ✓ the refusal names how many spaces are in the way
+  ✓ a stair moves through the stair command
+  ✓ a stair move reports vertical connectivity as affected
+  ✓ a stair may not be moved through the generic object command
+  ✓ a stair delete reports vertical connectivity
+  ✓ a stair is added as a semantic object of kind stairs
+  ✓ no stair result claims any compliance
+
+== §28 — SITE AND BUILDING TRANSFORM ==
+  ✓ site dimensions change
+  ✓ the building position changes
+  ✓ a rotation beyond 360 degrees is normalised, not rejected arbitrarily
+  ✓ the transform is a model fact the visual and runtime layers rebuild from
+  ✓ a non-finite site dimension is refused
+
+== §29/§30 — OBJECTS AND EXPLICIT PROMOTION ==
+  ✓ a semantic object is added
+  ✓ an object with no kind is refused
+  ✓ an explicit promotion succeeds
+  ✓ the promoted object records that it came from a visual object
+  ✓ the promoted object records its provenance
+  ✓ the promoted object carries the stated semantic kind
+  ✓ promotion without a stated semantic kind is refused
+  ✓ there is no automatic promotion path anywhere
+  ✓ a visual decoration cannot become engineering data through an ordinary command
+
+== §65/§66 — LOCKS ==
+  ✓ an element locks
+  ✓ a locked element refuses a mutating command
+  ✓ the refusal names the lock reason
+  ✓ an unlock releases the element
+  ✓ unlocking something that is not locked is refused
+  ✓ unlocking an unlocked element is refused rather than silently ignored
+  ✓ an unknown lock reason is refused
+  ✓ no fake user or role backs the lock
+
+== §34/§35 — CONSTRAINTS ARE ENFORCED, NEGATIVES ARE NOT VIOLATED ==
+  ✓ a door move honouring must_not_change SPACE_RECT is allowed
+  ✓ a resize under must_not_change SPACE_RECT is refused
+  ✓ a move beyond the stated max delta is refused
+  ✓ the refusal names the actual and the allowed delta
+  ✓ a command outside the allowed scope is refused
+  ✓ every declared must_not_change subject is actually enforced
+  ✓ every declared must_preserve subject is recognised by the normaliser
+  ✓ an unknown constraint subject is refused, never ignored
+  ✓ an unknown constraint key is refused
+
+== §4 — DISCIPLINE OWNERSHIP ==
+  ✓ a structural command is refused as not implemented, never rewritten
+  ✓ the declared but unimplemented command MOVE_COLUMN is refused explicitly
+  ✓ MOVE_COLUMN declares a non-architectural owning discipline
+  ✓ the declared but unimplemented command MOVE_DUCT is refused explicitly
+  ✓ MOVE_DUCT declares a non-architectural owning discipline
+  ✓ the declared but unimplemented command CHANGE_FIRE_DOOR_METADATA is refused explicitly
+  ✓ CHANGE_FIRE_DOOR_METADATA declares a non-architectural owning discipline
+  ✓ every architectural command declares the architecture discipline
+  ✓ site commands declare the site discipline
+  ✓ a raw mutation type is refused as not allowed
+
+== §33 — AMBIGUOUS TARGETS ARE DECLARED, NEVER GUESSED ==
+  ✓ a space id present on two templates is ambiguous
+  ✓ an ambiguous target produces no candidate model
+  ✓ the resolver lists the candidates instead of choosing
+  ✓ a fully-qualified id resolves without ambiguity
+  ✓ the two candidates name their own templates
+
+== WINDOW AND OBJECT AUTHORING ==
+  ✓ a window moves inside its host edge
+  ✓ a window moved past its host edge is refused
+  ✓ a window is deleted and reported as a dependency
+  ✓ window properties including the sill change
+  ✓ a semantic object is deleted
+  ✓ a semantic object moves
+  ✓ a non-stair object move reports no vertical connectivity effect
+
+== EVERY IMPLEMENTED COMMAND TYPE IS ACTUALLY EXERCISED ==
+  ✓ every implemented command type appears in at least one scenario
+  ✓ scenario rename is judged without throwing and uses declared codes only
+  ✓ scenario resize is judged without throwing and uses declared codes only
+  ✓ scenario resize_shrink is judged without throwing and uses declared codes only
+  ✓ scenario resize_tiny is judged without throwing and uses declared codes only
+  ✓ scenario add_space is judged without throwing and uses declared codes only
+  ✓ scenario add_space_auto_id is judged without throwing and uses declared codes only
+  ✓ scenario add_space_overlap is judged without throwing and uses declared codes only
+  ✓ scenario delete_space is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_free is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_hosted_no_strategy is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_hosted_relative is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_hosted_world is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_hosted_cancel is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_collapse is judged without throwing and uses declared codes only
+  ✓ scenario move_wall_unknown is judged without throwing and uses declared codes only
+  ✓ scenario add_wall is judged without throwing and uses declared codes only
+  ✓ scenario delete_wall is judged without throwing and uses declared codes only
+  ✓ scenario move_door_ok is judged without throwing and uses declared codes only
+  ✓ scenario move_door_far is judged without throwing and uses declared codes only
+  ✓ scenario move_door_edge_flip is judged without throwing and uses declared codes only
+  ✓ scenario add_door is judged without throwing and uses declared codes only
+  ✓ scenario add_door_out is judged without throwing and uses declared codes only
+  ✓ scenario delete_door is judged without throwing and uses declared codes only
+  ✓ scenario door_props is judged without throwing and uses declared codes only
+  ✓ scenario door_props_too_wide is judged without throwing and uses declared codes only
+  ✓ scenario add_window is judged without throwing and uses declared codes only
+  ✓ scenario add_object is judged without throwing and uses declared codes only
+  ✓ scenario move_stair is judged without throwing and uses declared codes only
+  ✓ scenario move_stair_as_object is judged without throwing and uses declared codes only
+  ✓ scenario delete_stair is judged without throwing and uses declared codes only
+  ✓ scenario add_stair is judged without throwing and uses declared codes only
+  ✓ scenario level_height is judged without throwing and uses declared codes only
+  ✓ scenario level_height_absurd is judged without throwing and uses declared codes only
+  ✓ scenario add_level is judged without throwing and uses declared codes only
+  ✓ scenario add_level_unknown is judged without throwing and uses declared codes only
+  ✓ scenario delete_level_last is judged without throwing and uses declared codes only
+  ✓ scenario delete_level_occupied is judged without throwing and uses declared codes only
+  ✓ scenario site is judged without throwing and uses declared codes only
+  ✓ scenario building_pos is judged without throwing and uses declared codes only
+  ✓ scenario building_rot is judged without throwing and uses declared codes only
+  ✓ scenario promote is judged without throwing and uses declared codes only
+  ✓ scenario promote_no_kind is judged without throwing and uses declared codes only
+  ✓ scenario lock is judged without throwing and uses declared codes only
+  ✓ scenario unlock_unlocked is judged without throwing and uses declared codes only
+  ✓ scenario constraint_ok is judged without throwing and uses declared codes only
+  ✓ scenario constraint_violated is judged without throwing and uses declared codes only
+  ✓ scenario constraint_max_delta is judged without throwing and uses declared codes only
+  ✓ scenario constraint_scope is judged without throwing and uses declared codes only
+  ✓ scenario snap_grid is judged without throwing and uses declared codes only
+  ✓ scenario not_implemented is judged without throwing and uses declared codes only
+  ✓ scenario forbidden_type is judged without throwing and uses declared codes only
+  ✓ scenario ambiguous is judged without throwing and uses declared codes only
+  ✓ scenario move_window is judged without throwing and uses declared codes only
+  ✓ scenario move_window_out is judged without throwing and uses declared codes only
+  ✓ scenario delete_window is judged without throwing and uses declared codes only
+  ✓ scenario window_props is judged without throwing and uses declared codes only
+  ✓ scenario delete_object is judged without throwing and uses declared codes only
+  ✓ scenario move_object is judged without throwing and uses declared codes only
+  ✓ scenario add_point is judged without throwing and uses declared codes only
+  ✓ scenario add_point_outside is judged without throwing and uses declared codes only
+  ✓ scenario add_point_no_type is judged without throwing and uses declared codes only
+  ✓ scenario move_point is judged without throwing and uses declared codes only
+  ✓ scenario move_point_outside is judged without throwing and uses declared codes only
+  ✓ scenario delete_point is judged without throwing and uses declared codes only
+  ✓ scenario point_props is judged without throwing and uses declared codes only
+  ✓ scenario point_props_empty is judged without throwing and uses declared codes only
+  ✓ scenario hotel_resize is judged without throwing and uses declared codes only
+  ✓ scenario clinic_rename is judged without throwing and uses declared codes only
+  ✓ scenario mep_adjacent_wall is judged without throwing and uses declared codes only
+  ✓ every scenario was actually previewed
+
+──────────────────────────────────────────────
+COMMANDS: 188 passed, 0 failed

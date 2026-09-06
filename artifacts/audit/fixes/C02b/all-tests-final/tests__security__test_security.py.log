@@ -1,0 +1,379 @@
+  ✓ S1 CORS مقيّد بأصول معلومة (لا *)
+  ✓ S2 حد معدّل الطلبات قائم
+  ✓ S3 لا مفتاح API مكتوب في الشيفرة
+  ✓ S4 المفتاح يُقرأ من البيئة فقط
+  ✓ S5 معرّف النموذج claude-sonnet-5 لم يتغيّر
+  ✓ S6 CSP لا تحتوي script-src * 
+  ✓ S7 رؤوس الأمان الأساسية موجودة
+  ✓ S8 connect-src يقتصر على الخادم المعلوم
+  ✓ S9 الرسائل لا تطبع أسراراً
+  ✓ S6a سياسة أمن المحتوى مُعلَنة وتُحلَّل إلى توجيهات
+  ✓ S6b لا توجيه واحد يحمل 'unsafe-inline' أو 'unsafe-eval'
+  ✓ S6c script-src = 'self' + بصمة sha256 واحدة بالضبط، لا أكثر
+  ✓ S6d البصمة هي بصمة خريطة الاستيراد المضمّنة في الصفحة نفسها
+  ✓ S6e style-src = 'self' وحدها — ورقة الأنماط خارجية فلا نمط مضمّن يُسمَح
+  ✓ S6f object-src/frame-src/frame-ancestors = 'none' و base-uri/form-action = 'self'
+  ✓ S6g لا مصدر بديل عامّ (*) في أي توجيه
+  ✓ S6h الصفحة لا تحمل جافاسكربت تنفيذياً مضمّناً: السكربت المضمّن الوحيد هو خريطة الاستيراد
+  ✓ S6i الصفحة لا تحمل كتلة <style> ولا خاصيّة style=
+  ✓ S6j لا معالج حدث مضمّن في العلامة (onclick/onload/…): السياسة تمنع تنفيذه، فوجوده شيفرة ميّتة لا زينة
+  ✓ S6k ولا معالج مضمّن في العلامة التي تولّدها الشيفرة أيضاً
+  ✓ S6l es-module-shims لم يعد يُحمَّل: لا وسم ولا مسار /vendor/ له
+  ✓ S10 المجال الصناعي (الكلمات الأربع) متطابق في الثلاثة
+  ✗ S10b الفرق الموروث موثّق وغير قابل للوصول (btype إنجليزي فقط) {'acs_validate.py': [], 'acs_layout.py': [], 'acs_compiler.py': []}
+  ✓ S11 Dockerfile ينسخ كل وحدات التشغيل
+  ✓ S12 acs_programs.json منسوخ
+  ✓ S13 acs_rules.json منسوخ
+  ✓ S14 محرّك القواعد بلا eval/exec/Function
+  ✓ S15 نسخة المتصفّح من المحرّك بلا eval/new Function
+  ✓ S16 لا قيمة تنظيمية في سجلّ القواعد
+  ✓ S17 كل مصادر السجلّ NOT_LOADED وغير موثّقة
+  ✓ S18 عدد القواعد التنظيمية = 0
+  ✓ S19 acs_ingest.json منسوخ
+  ✓ S20 خط الاستيراد بلا eval/exec/subprocess
+  ✓ S21 نسخة المتصفّح من خط الاستيراد بلا eval/new Function
+  ✓ S29 محرّك القواعد بايثون بلا تنفيذ ديناميكي
+  ✓ S22 لا محتوى تنظيمي في تجهيزات الاستيراد
+  ✓ S23 لا رابط تنظيمي مُختلق في التجهيزات
+  ✓ S24 كل وثائق التجهيزات اصطناعية وغير رسمية
+  ✓ S25 كل الوثائق تبدأ UNVERIFIED
+  ✓ S26 كل الحزم تبدأ DRAFT بلا قواعد
+  ✓ S27 لا مرشّح مشحون بحالة VERIFIED
+  ✓ S30 acs_sources.json منسوخ في الحاوية
+  ✓ S31 سجلّ المصادر الحقيقية بلا نصّ بنود
+  ✓ S32 لا مرشّحين ولا حِزَم في سجلّ المصادر الحقيقية
+  ✓ S33 الوثيقة الحقيقية ليست CONTENT_VERIFIED
+  ✓ S34 كل شذرات السجلّ الحقيقي مواضع فهرس فقط
+  ✓ S35 acs_occupancy.json منسوخ في الحاوية
+  ✓ S36 طبقة الإشغال بلا تنفيذ ديناميكي
+  ✓ S37 نسخة المتصفّح من طبقة الإشغال بلا eval/new Function
+  ✓ S38 لا مجموعة إشغال حقيقية في حزم التصنيف
+  ✓ S39 كل حزم التصنيف اصطناعية وغير تنظيمية
+  ✓ S40 كل حزم التصنيف تُشحن DRAFT
+  ✓ S41 كل معرّفات التصنيف باسم TEST_OCC
+  ✓ S43 acs_revision.json منسوخ في الحاوية
+  ✓ S44 طبقة المراجعة بلا تنفيذ ديناميكي
+  ✓ S45 نسخة المتصفّح من طبقة المراجعة بلا eval/new Function
+  ✓ S46 خوارزمية التجزئة sha256 ولا تشفير مُخترع
+  ✓ S47 لا محتوى تنظيمي في مواصفة المراجعة
+  ✓ S48 حالة العرض مستبعَدة صراحةً
+  ✓ S49 كل مسار حسّاس/غير حسّاس للترتيب موثّق بسبب
+  ✓ S42 سجل البرامج لم يتحوّل إلى سجلّ تصنيف نظامي
+  ✓ S28 كل قاعدة مقترحة اصطناعية
+  ✓ S50 acs_arch.json منسوخ في الحاوية
+  ✓ S51 acs_arch.py منسوخ في الحاوية
+  ✓ S52 مصرّف الهندسة بلا تنفيذ ديناميكي
+  ✓ S53 نسخة المتصفّح من مصرّف الهندسة بلا eval/new Function
+  ✓ S54 لا محتوى تنظيمي في مواصفة الهندسة
+  ✓ S55 الاحتياطات معلنة كاحتياطات عرض لا كقيم هندسية
+  ✓ S56 قائمة الادّعاءات الممنوعة تغطي الإنشاء والحريق والمطابقة
+  ✓ S57 لا ادّعاء إنشائي أو حريقي في شيفرة المصرّف
+  ✓ S58 لا شبكة ولا نظام ملفات داخل المصرّف عدا قراءة مواصفته
+  ✓ S59 المصرّف لا يستورد أي محرّك قواعد أو إشغال
+  ✓ S60 acs_struct.json منسوخ في الحاوية
+  ✓ S61 acs_struct.py منسوخ في الحاوية
+  ✓ S62 طبقة النموذج الإنشائي بلا تنفيذ ديناميكي
+  ✓ S63 نسخة المتصفّح من الطبقة الإنشائية بلا eval/new Function
+  ✓ S64 لا كود إنشائي في المواصفة
+  ✓ S65 DESIGNED/SAFE/COMPLIANT ليست حالات نموذج
+  ✓ S66 UNSAFE/DANGEROUS ليست شدّات
+  ✓ S67 rule ليست مصدر إسناد إنشائي
+  ✓ S68 احتياط العرض معلن كاحتياط لا كتصميم
+  ✓ S69 الادّعاءات الممنوعة تغطي الأحمال والتسليح والكفاية
+  ✓ S70 لا حساب أحمال في شيفرة الطبقة الإنشائية
+  ✓ S71 الطبقة الإنشائية لا تستورد محرّك قواعد أو إشغال
+  ✓ S72 لا شبكة داخل الطبقة الإنشائية
+  ✓ S73 مواصفة المراجعة تستبعد إظهار الطبقات من البصمة
+  ✓ S74 acs_mep.json منسوخ في الحاوية
+  ✓ S75 acs_mep.py منسوخ في الحاوية
+  ✓ S76 طبقة MEP بلا تنفيذ ديناميكي
+  ✓ S77 نسخة المتصفّح من طبقة MEP بلا eval/new Function
+  ✓ S78 لا معيار MEP في المواصفة
+  ✓ S79 DESIGNED/COMPLIANT/ADEQUATE/BALANCED/CALCULATED ليست حالات نموذج
+  ✓ S80 UNSAFE/VIOLATION ليست شدّات
+  ✓ S81 OPTIMIZED ليست حالة توجيه
+  ✓ S82 rule/code_required ليست مصادر إسناد
+  ✓ S83 احتياط العرض معلن كاحتياط لا كقيمة هندسية
+  ✓ S84 الادّعاءات الممنوعة تغطي الأحمال والتدفّق والهيدروليك والمطابقة
+  ✓ S85 لا دوال حساب أحمال/تدفّق/تحجيم في الشيفرة
+  ✓ S86 لا محرّك حريق: المواصفة تنفيه صراحةً
+  ✓ S87 محوّل المرحلة 1 لا يستطيع كتابة code_required
+  ✓ S88 طبقة MEP لا تستورد محرّك قواعد أو إشغال
+  ✓ S89 لا شبكة داخل طبقة MEP
+  ✓ S90 MEP ليست عائقاً للملاحة في هذه المرحلة
+  ✓ S91 acs_fls.json منسوخ في الحاوية
+  ✓ S92 acs_fls.py منسوخ في الحاوية
+  ✓ S93 طبقة الحريق بلا تنفيذ ديناميكي
+  ✓ S94 نسخة المتصفّح من طبقة الحريق بلا eval/new Function
+  ✓ S95 لا قيمة كود حريق في المواصفة (خارج قوائم المنع ونصوص النفي)
+  ✓ S96 COMPLIANT/SAFE/APPROVED/CERTIFIED/DESIGNED ليست حالات نموذج
+  ✓ S97 UNSAFE/VIOLATION ليست شدّات
+  ✓ S98 code_required و rule ليستا مصدري إسناد
+  ✓ S99 code_required معلنة صراحةً كإسناد ممنوع
+  ✓ S100 لا حساب تغطية/تباعد/هيدروليك في الشيفرة
+  ✓ S101 المواصفة تنفي وجود محرّك حريق/سلامة صراحةً
+  ✓ S102 الغياب ليس مخالفة — معلن في المواصفة
+  ✓ S103 طبقة الحريق لا تستورد محرّك قواعد أو إشغال
+  ✓ S104 لا شبكة داخل طبقة الحريق
+  ✓ S105 الحريق ليس عائقاً للملاحة ولا يغيّر الإخلاء
+  ✓ S121 acs_coord.json منسوخ في الحاوية
+  ✓ S122 acs_coord.py منسوخ في الحاوية
+  ✓ S123 طبقة التنسيق بلا تنفيذ ديناميكي
+  ✓ S124 نسخة المتصفّح من طبقة التنسيق بلا eval/new Function
+  ✓ S125 لا قيمة كود في مواصفة التنسيق (خارج قوائم المنع ونصوص النفي)
+  ✓ S126 UNSAFE/FATAL/VIOLATION ليست شدّات
+  ✓ S127 RESOLVED ليست حالة تلقائية
+  ✓ S128 مفردات الإصلاح التلقائي معلنة ممنوعة
+  ✓ S129 لا مولّد حلول ولا توجيه ولا تحجيم في الشيفرة
+  ✓ S130 طبقة التنسيق لا تكتب في أي نموذج تخصّص
+  ✓ S131 التنسيق لا يستورد محرّك قواعد أو إشغال أو إخلاء
+  ✓ S132 لا شبكة داخل طبقة التنسيق
+  ✓ S133 التنسيق لا يغيّر الملاحة ولا الإخلاء في هذه المرحلة
+  ✓ S134 اللقطة تُصدَّر عند الطلب فقط ولا تُدمَج في التصدير العادي
+  ✓ S135 علامة التصحيح لا تُخبز في تصدير GLB
+  ✓ S137 acs_visual.json منسوخ في الحاوية
+  ✓ S138 acs_visual.py منسوخ في الحاوية
+  ✓ S139 طبقة العرض البصري بلا تنفيذ ديناميكي
+  ✓ S140 نسخة المتصفّح من طبقة العرض بلا eval/new Function
+  ✓ S141 لا قيمة كود في مواصفة العرض البصري
+  ✓ S142 المادة البصرية مصنّفة VISUAL_MATERIAL فقط
+  ✓ S143 لا خاصية حريق أو حرارية أو إنشائية في مكتبة المواد
+  ✓ S144 الديكور مصنّف VISUAL_DECORATION ولا يُحتسب هندسياً
+  ✓ S145 صورة الذكاء الاصطناعي لا تُعتمد نموذجاً هندسياً
+  ✓ S146 الذكاء الاصطناعي ممنوع من تغيير أي سمة تخطيط
+  ✓ S147 لا مولّد صور ولا شبكة داخل طبقة العرض
+  ✓ S148 لا مولّد هندسة ولا عملية تصميم في طبقة العرض
+  ✓ S149 لا اعتماد CDN جديد للقوام: المواد وسيطيّة محليّة
+  ✓ S150 بيانات الأصل لا تُنفَّذ: الحقول التي تحمل شيفرة تُرفض
+  ✓ S151 الأصل مجهول الرخصة لا يُبَثّ في أي مشهد
+  ✓ S152 حالة التقديم لا تدخل بصمة المراجعة
+  ✓ S153 الأجسام البصرية خارج مجموعة المبنى فلا تدخل تصدير GLB الهندسي
+  ✓ S154 العرض الهندسي لا يخفي أي تخصّص
+  ✓ S155 مقياس الواقع الافتراضي 1:1 ولا يتغيّر صامتاً
+  ✓ S136 لا مسافة انتقال نظامية
+  ✓ S-A1 طبقة التأليف بايثون بلا تنفيذ ديناميكي
+  ✓ S-A2 نسخة المتصفّح من طبقة التأليف بلا eval/new Function
+  ✓ S-A3 فحص التنفيذ الديناميكي غير عقيم
+  ✓ S-A4 مفاتيح تلويث النموذج الأولي معلنة ومرفوضة
+  ✓ S-A5 لا نوع أمر يكتب بمسار حرّ
+  ✓ S-A6 حدّ الإحداثيات معلن ومنتهٍ
+  ✓ S-A7 حدّ حجم المعاملة معلن
+  ✓ S-A8 التأليف لا يدّعي مطابقة أنظمة
+  ✓ S-A9 سجلّ التدقيق يستبعد الأسرار وسلاسل التفكير
+  ✓ S-A10 لا مسار كتابة من زمن التشغيل إلى النموذج
+  ✓ S-W1 طبقة مساحة العمل بايثون بلا تنفيذ ديناميكي
+  ✓ S-W2 كتلة الواجهة المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-W3 نسخة المتصفّح من مساحة العمل بلا eval/new Function
+  ✓ S-W4 فحص التنفيذ الديناميكي غير عقيم على كتلة الواجهة
+  ✓ S-W5 قائمة أنماط المراجع غير الآمنة معلنة في المواصفة
+  ✓ S-W6 الواجهة لا تكتب في النموذج الهندسي
+  ✓ S-W7 مساحة العمل لا تدّعي مطابقة أنظمة
+  ✓ S-W8 كلمات الحالة الممنوعة معلنة
+  ✓ S-W9 تسميات المصدر الممنوعة معلنة
+  ✓ S-W10 لا حفظ سحابي مُدّعى
+  ✓ S-W11 خطّ العرض الواقعي معلن غير منفَّذ
+  ✓ S-W12 الواجهة لا تُنشئ رابطاً برمجياً خطيراً
+  ✓ S-W13 نصوص الواجهة تُقرأ من المواصفة لا من جدول ثانٍ
+  ✓ S-W14 كل نصّ واجهة معرَّف في اللغتين
+  ✓ S-W15 حالة الواجهة مصنَّفة ولا تدخل بصمة النموذج
+  ✓ S-R1 طبقة العرض بايثون بلا تنفيذ ديناميكي
+  ✓ S-R2 كتلة العرض المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-R3 نسخة المتصفّح من طبقة العرض بلا eval/new Function
+  ✓ S-R4 فحص التنفيذ الديناميكي غير عقيم على كتلة العرض
+  ✓ S-R5 لا كتابة عكسية من صورة إلى نموذج
+  ✓ S-R6 مخرج الذكاء الاصطناعي بلا سلطة هندسية
+  ✓ S-R7 لا مولّد واقعية مشحون
+  ✓ S-R8 مفتاح المزوّد في بيئة الخادم فقط
+  ✓ S-R9 لا حقل بيانات وصفية يحمل سرّاً
+  ✓ S-R10 لا اسم مزوّد مثبَّت في المواصفة
+  ✓ S-R11 قوائم السماح معلنة للمعرّفات والمخطّطات والنصّ
+  ✓ S-R12 حدود الحجم والبكسل معلنة ومنتهية
+  ✓ S-R13 أنواع الصور المسموحة لا تشمل svg ولا html
+  ✓ S-R14 كل مادّة مشحونة إجرائية وبرخصة معلنة
+  ✓ S-R15 لا مادّة تشير إلى مضيف بعيد
+  ✓ S-R16 المادّة البصرية لا تحمل خاصّية هندسية
+  ✓ S-R17 لا نظام بناء مذكور في مواصفة العرض
+  ✓ S-R18 لا تحليل شمسي مُدّعى
+  ✓ S-R19 لا مخطّط تنفيذ مُدّعى
+  ✓ S-R20 لوحة التصوير لا تعرض أي أداة تعديل هندسي
+  ✓ S-R21 طبقة العرض لا تفتح اتصال شبكة
+  ✓ S-R22 مخازن التحكّم تُنقَّط على المعالج فلا تعتمد على بطاقة رسوميات
+  ✓ S-R23 حالات التحقّق الأربع مفصولة
+  ✓ S-B1 طبقة التبادل بايثون بلا تنفيذ ديناميكي
+  ✓ S-B2 كتلة التبادل المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-B3 نسخة المتصفّح من طبقة التبادل بلا eval/new Function
+  ✓ S-B4 فحص التنفيذ الديناميكي غير عقيم على كتلة التبادل
+  ✓ S-B5 الثابت الملزم معلَن ولا يقبل التأويل
+  ✓ S-B6 لا جلب لأي مورد بعيد من ملفّ BIM
+  ✓ S-B7 طبقة التبادل لا تفتح اتصال شبكة
+  ✓ S-B8 طبقة التبادل لا تلمس نظام الملفّات إلا لقراءة مواصفتها
+  ✓ S-B9 لا نظام بناء مذكور في مواصفة التبادل
+  ✓ S-B10 مادّة خارجية لا تُرقّى إلى مادّة هندسية
+  ✓ S-B11 كل حدّ معلَن ومنتهٍ وموجب
+  ✓ S-B12 قائمة سماح للمعرّفات معلَنة
+  ✓ S-B13 مفاتيح النموذج الأوّلي مرفوضة مفاتيحَ خاصّية
+  ✓ S-B14 لوحة التبادل تمنع صراحةً كل طريق يتخطّى المراجعة والإيداع
+  ✓ S-B15 لا أداة تعديل هندسي بين ضوابط لوحة التبادل
+  ✓ S-B22 لا مفتاح ولا سرّ في مواصفة التبادل
+  ✓ S-B16 مصدر أمر الاستيراد من مفردات المرحلة 5 لا اختراعاً
+  ✓ S-B17 حالات التحقّق معلَنة ومفصولة
+  ✓ S-B18 empty file does not crash the parser
+  ✓ S-B19 empty file is refused or typed, never silently accepted
+  ✓ S-B20 empty file writes nothing to any model
+  ✓ S-B21 empty file reports only declared issue codes
+  ✓ S-B18 not a step file at all does not crash the parser
+  ✓ S-B19 not a step file at all is refused or typed, never silently accepted
+  ✓ S-B20 not a step file at all writes nothing to any model
+  ✓ S-B21 not a step file at all reports only declared issue codes
+  ✓ S-B18 json wearing an ifc name does not crash the parser
+  ✓ S-B19 json wearing an ifc name is refused or typed, never silently accepted
+  ✓ S-B20 json wearing an ifc name writes nothing to any model
+  ✓ S-B21 json wearing an ifc name reports only declared issue codes
+  ✓ S-B18 header only, no data section does not crash the parser
+  ✓ S-B19 header only, no data section is refused or typed, never silently accepted
+  ✓ S-B20 header only, no data section writes nothing to any model
+  ✓ S-B21 header only, no data section reports only declared issue codes
+  ✓ S-B18 unterminated string does not crash the parser
+  ✓ S-B19 unterminated string is refused or typed, never silently accepted
+  ✓ S-B20 unterminated string writes nothing to any model
+  ✓ S-B21 unterminated string reports only declared issue codes
+  ✓ S-B18 unterminated argument list does not crash the parser
+  ✓ S-B19 unterminated argument list is refused or typed, never silently accepted
+  ✓ S-B20 unterminated argument list writes nothing to any model
+  ✓ S-B21 unterminated argument list reports only declared issue codes
+  ✓ S-B18 dangling reference does not crash the parser
+  ✓ S-B19 dangling reference is refused or typed, never silently accepted
+  ✓ S-B20 dangling reference writes nothing to any model
+  ✓ S-B21 dangling reference reports only declared issue codes
+  ✓ S-B18 duplicate entity number does not crash the parser
+  ✓ S-B19 duplicate entity number is refused or typed, never silently accepted
+  ✓ S-B20 duplicate entity number writes nothing to any model
+  ✓ S-B21 duplicate entity number reports only declared issue codes
+  ✓ S-B18 non-finite numeric does not crash the parser
+  ✓ S-B19 non-finite numeric is refused or typed, never silently accepted
+  ✓ S-B20 non-finite numeric writes nothing to any model
+  ✓ S-B21 non-finite numeric reports only declared issue codes
+  ✓ S-B18 script in a name does not crash the parser
+  ✓ S-B19 script in a name is refused or typed, never silently accepted
+  ✓ S-B20 script in a name writes nothing to any model
+  ✓ S-B21 script in a name reports only declared issue codes
+  ✓ S-B18 external file reference does not crash the parser
+  ✓ S-B19 external file reference is refused or typed, never silently accepted
+  ✓ S-B20 external file reference writes nothing to any model
+  ✓ S-B21 external file reference reports only declared issue codes
+  ✓ S-B18 deeply nested argument list does not crash the parser
+  ✓ S-B19 deeply nested argument list is refused or typed, never silently accepted
+  ✓ S-B20 deeply nested argument list writes nothing to any model
+  ✓ S-B21 deeply nested argument list reports only declared issue codes
+  ✓ S-B18 over-long line does not crash the parser
+  ✓ S-B19 over-long line is refused or typed, never silently accepted
+  ✓ S-B20 over-long line writes nothing to any model
+  ✓ S-B21 over-long line reports only declared issue codes
+  ✓ S-D1 طبقة التوثيق بايثون بلا تنفيذ ديناميكي
+  ✓ S-D2 كتلة التوثيق المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-D3 نسخة المتصفّح من طبقة التوثيق بلا eval/new Function
+  ✓ S-D4 فحص التنفيذ الديناميكي غير عقيم على كتلة التوثيق
+  ✓ S-D5 التوثيق للقراءة فقط ولا يكتب إلى النموذج
+  ✓ S-D6 طبقة التوثيق لا تفتح اتصال شبكة
+  ✓ S-D7 طبقة التوثيق لا تلمس نظام الملفّات إلا لقراءة مواصفتها
+  ✓ S-D8 لا نظام بناء مذكور في مواصفة التوثيق
+  ✓ S-D9 لا ادّعاء مخطّط تنفيذ ولا تنظيم ولا ختم مهني
+  ✓ S-D10 لا كلفة ولا جدول كمّيات تعاقدي
+  ✓ S-D11 كل حدّ معلَن ومنتهٍ وموجب
+  ✓ S-D12 قائمتا سماح للمعرّفات وأسماء الملفّات معلَنتان
+  ✓ S-D13 مفاتيح النموذج الأوّلي مرفوضة مفاتيحَ خاصّية
+  ✓ S-D14 لوحة التوثيق لا تعرض أي أداة تعديل هندسي
+  ✓ S-D15 لا مفتاح ولا سرّ في مواصفة التوثيق
+  ✓ S-D16 لا خروج من مجلّد التصدير
+  ✓ S-D17 لا إعادة توليد تلقائية ولا كتابة فوق التاريخ
+  ✓ S-D18 الحالات المقيَّدة معلَنة ولا يضعها النظام
+  ✓ S-D19 اتّجاه الواجهة لا يعكس الهندسة
+  ✓ S-D20 لا صور ذكاء اصطناعي في الرسم التقني
+  ✓ S-D21 حدود التوقّف معلَنة وتشمل التصميم والكلفة والاعتماد
+  ✓ S-D23 not a dict does not crash the documentation layer
+  ✓ S-D24 not a dict is refused with a typed issue
+  ✓ S-D25 not a dict reports only declared issue codes
+  ✓ S-D23 unknown view type does not crash the documentation layer
+  ✓ S-D24 unknown view type is refused with a typed issue
+  ✓ S-D25 unknown view type reports only declared issue codes
+  ✓ S-D23 unsupported view type does not crash the documentation layer
+  ✓ S-D24 unsupported view type is refused with a typed issue
+  ✓ S-D25 unsupported view type reports only declared issue codes
+  ✓ S-D23 unknown level does not crash the documentation layer
+  ✓ S-D24 unknown level is refused with a typed issue
+  ✓ S-D25 unknown level reports only declared issue codes
+  ✓ S-D23 unknown scale does not crash the documentation layer
+  ✓ S-D24 unknown scale is refused with a typed issue
+  ✓ S-D25 unknown scale reports only declared issue codes
+  ✓ S-D23 unknown paper implied does not crash the documentation layer
+  ✓ S-D24 unknown paper implied is refused with a typed issue
+  ✓ S-D25 unknown paper implied reports only declared issue codes
+  ✓ S-D23 non-finite cut does not crash the documentation layer
+  ✓ S-D24 non-finite cut is refused with a typed issue
+  ✓ S-D25 non-finite cut reports only declared issue codes
+  ✓ S-D23 infinite cut does not crash the documentation layer
+  ✓ S-D24 infinite cut is refused with a typed issue
+  ✓ S-D25 infinite cut reports only declared issue codes
+  ✓ S-D23 out of bounds cut does not crash the documentation layer
+  ✓ S-D24 out of bounds cut is refused with a typed issue
+  ✓ S-D25 out of bounds cut reports only declared issue codes
+  ✓ S-D23 bad axis does not crash the documentation layer
+  ✓ S-D24 bad axis is refused with a typed issue
+  ✓ S-D25 bad axis reports only declared issue codes
+  ✓ S-D23 malformed crop does not crash the documentation layer
+  ✓ S-D24 malformed crop is refused with a typed issue
+  ✓ S-D25 malformed crop reports only declared issue codes
+  ✓ S-D23 non-finite crop does not crash the documentation layer
+  ✓ S-D24 non-finite crop is refused with a typed issue
+  ✓ S-D25 non-finite crop reports only declared issue codes
+  ✓ S-D23 unknown discipline does not crash the documentation layer
+  ✓ S-D24 unknown discipline is refused with a typed issue
+  ✓ S-D25 unknown discipline reports only declared issue codes
+  ✓ S-D26 لا حمولة مشوّهة غيّرت النموذج
+  ✓ S-D27 paper size 'B7' is refused
+  ✓ S-D27 paper size None is refused
+  ✓ S-D27 paper size 3 is refused
+  ✓ S-D27 paper size 'A3 ' is refused
+  ✓ S-D28 filename '../a.svg' is refused
+  ✓ S-D28 filename '/etc/passwd' is refused
+  ✓ S-D28 filename '..\\a.svg' is refused
+  ✓ S-D28 filename 'a/b.svg' is refused
+  ✓ S-D28 filename 'CON' is refused
+  ✓ S-D28 filename 'xxxxxxxxxxxxxx' is refused
+  ✓ S-D29 لا مفتاح كائن من نصّ خارجي
+  ✓ S-Q1 طبقة الجودة بايثون بلا تنفيذ ديناميكي
+  ✓ S-Q2 كتلة الجودة المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-Q3 نسخة المتصفّح من طبقة الجودة بلا eval/new Function
+  ✓ S-Q4 فحص التنفيذ الديناميكي غير عقيم على كتلة الجودة
+  ✓ S-Q5 الطبقة عرضية فقط ولا تكتب إلى النموذج
+  ✓ S-Q6 بصمة النموذج من النموذج وحده وبصمة العرض من الإعداد وحده
+  ✓ S-Q7 لا ترقية خامة عرضية إلى خاصّية هندسية
+  ✓ S-Q8 لا CDN وقت التشغيل في كتلة الجودة ولا في الجسر
+  ✓ S-Q9 نسيج بعيد مرفوض وقائمة المخطّطات فارغة
+  ✓ S-Q10 كل مسار نسيج معادٍ يُرفض
+  ✓ S-Q11 لا ادّعاء واقعية مصوَّرة ولا عرض خارجي
+  ✓ S-Q12 أضواء MEP لا يُعاد استعمالها أضواء عرض
+  ✓ S-Q13 ULTRA لا يُختار تلقائياً
+  ✓ S-Q14 مفاتيح النموذج الأوّلي مرفوضة في تجاوزات الخامات
+  ✓ S-Q15 لوحة الجودة بلا أي أداة تعديل هندسي
+  ✓ S-Q16 حدود التعريض والقياس معلَنة ومنتهية
+  ✓ S-Q17 سياق العرض مستبعَد بنيوياً من BIM والتوثيق والكمّيات
+  ✓ S-R1 طبقة التفصيل المعماري بايثون بلا تنفيذ ديناميكي
+  ✓ S-R2 كتلة التفصيل المولَّدة والجسر موجودان مرّة واحدة بالضبط
+  ✓ S-R3 نسخة المتصفّح من طبقة التفصيل بلا eval/new Function
+  ✓ S-R4 فحص التنفيذ الديناميكي غير عقيم على كتلة التفصيل
+  ✓ S-R5 الطبقة عرضية فقط في اتجاه المصبّ ولا سهم عائد
+  ✓ S-R6 لا ترقية صنف عرضي ولا تغيير عدد الكائنات القانونية
+  ✓ S-R7 لا CDN وقت التشغيل في كتلة التفصيل ولا في جسرها
+  ✓ S-R8 لا نسيج بعيد ولا مسار نظام ملفّات ولا GLTF من URL
+  ✓ S-R9 مفاتيح النموذج الأوّلي مرفوضة في تجاوزات خامات العرض
+  ✓ S-R10 نص معادٍ لا ينتج نيّة ولا يكسر المفسّر
+  ✓ S-R11 كائن معادٍ يُرفض من مكتبة العرض
+  ✓ S-R12 وصف المستخدم ليس إذناً هندسياً أبداً
+  ✓ S-R13 إنارة LED لا تُنشئ أي أثر كهربائي هندسي
+  ✓ S-R14 لوحة العرض المعماري بلا أي أداة تعديل هندسي
+  ✓ S-R15 لا ادّعاء كاذب: لا تتبّع مسارات ولا إضاءة عالمية ولا امتثال
+  ✓ S-R16 الجسر يرفض إعداداً لا يصرّح writes_to_model=false
+  ✓ S-R17 التنويع حتمي البذرة ولا عشوائية وقت التشغيل
+
+BACKEND/CONFIG SECURITY: 376 passed, 1 failed

@@ -1,0 +1,5 @@
+HARNESS: accessibility DOM/ARIA layer, real Chromium, http:// load of public/ under the production CSP
+axe-core: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (not vendored in node_modules or public/; no network in this sandbox). A focused deterministic checker runs instead and is reported as such.
+
+CHROMIUM UNAVAILABLE: Error: browserType.launch: Failed to launch chromium because executable doesn't exist at /opt/pw-browsers/chromium
+ACCESSIBILITY: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED

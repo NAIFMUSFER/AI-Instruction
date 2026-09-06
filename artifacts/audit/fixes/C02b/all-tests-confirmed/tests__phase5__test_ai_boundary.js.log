@@ -1,0 +1,84 @@
+
+== §86 — TEST H: AN AI PROPOSAL IS NEVER A COMMIT ==
+  ✓ the proposal is produced
+  ✓ the status is PROPOSED_AUTHORING_COMMAND, not committed
+  ✓ the proposal is marked as needing explicit confirmation
+  ✓ the proposed command is sourced AI_PROPOSAL
+  ✓ the proposed command is still PENDING
+  ✓ the proposal carries no model and no candidate
+  ✓ the rationale is recorded as text, not as authority
+  ✓ producing a proposal changes no model
+  ✓ the proposal did not create a revision
+
+== §31/§36 — AI CANNOT BYPASS ANY GATE ==
+  ✓ an AI-sourced command cannot commit without an explicit token
+  ✓ the refusal leaves the model byte-identical
+  ✓ the transaction flags that it contains an AI proposal
+  ✓ with an explicit confirmation the same command commits normally
+  ✓ the committed revision records the AI source honestly
+  ✓ the audit entry records the AI source
+  ✓ an AI proposal of a forbidden type is refused by the same validator
+  ✓ an AI proposal still normalises through the identical schema
+  ✓ but it is still rejected by the identical validator at preview
+  ✓ an AI proposal is subject to the identical revision guard
+  ✓ an AI proposal is subject to the identical security scan
+  ✓ the specification states there is no privileged AI write path
+  ✓ the proposal note repeats the boundary in its own words
+
+== §32 — NATURAL LANGUAGE PIPELINE STOPS AT A PROPOSAL ==
+  ✓ the declared pipeline has all seven stages
+  ✓ user confirmation sits between preview and commit
+  ✓ there is no stage that goes from text straight to the model
+  ✓ a unique phrase resolves to one target
+  ✓ target resolution is a separate stage from command construction
+
+== §33 — AMBIGUITY IS DECLARED, NEVER GUESSED ==
+  ✓ an ambiguous phrase is refused
+  ✓ the refusal is AMBIGUOUS_TARGET
+  ✓ the candidates are returned so the caller can choose
+  ✓ no target was chosen on the user behalf
+  ✓ the count of matches is stated
+  ✓ a phrase matching nothing is refused rather than approximated
+  ✓ an empty phrase resolves to nothing
+  ✓ a non-string phrase is refused
+  ✓ disambiguating by template resolves cleanly
+
+== §34 — A NEGATIVE INSTRUCTION IS CARRIED, NOT DROPPED ==
+  ✓ the door moves while the negative constraint holds
+  ✓ the space rectangle is genuinely unchanged
+  ✓ a command that would violate the negative instruction is refused
+  ✓ the negative constraint survives normalisation into the command identity
+  ✓ the constraint is part of the command hash, so it cannot be dropped later
+  ✓ a transaction enforces the constraint too, not only a preview
+  ✓ the specification states negatives are never silently violated
+
+== §37/§39/§40/§43 — UI, SELECTION AND GIZMO BOUNDARIES ==
+  ✓ two UI modes are declared
+  ✓ the default mode is VIEW, not EDIT
+  ✓ runtime walking is not an editing mode
+  ✓ only translation is implemented among gizmo operations
+  ✓ a transform handle produces a typed domain command
+  ✓ the produced command carries the moved coordinates
+  ✓ the produced command still goes through the normal validator
+  ✓ a gizmo command reaches the model only through the authoring path
+  ✓ scaling is refused because a wall is not a generic mesh
+  ✓ rotation is refused for an element with no rotational meaning
+  ✓ the gizmo note states the rule
+  ✓ selecting an object in the runtime mutates nothing
+  ✓ selection is only a way to name a target, never an edit
+
+== §44 — DERIVED ELEMENTS ARE READ-ONLY ==
+  ✓ the derived kind COMPILED_WALL is declared read-only
+  ✓ the derived kind DERIVED_ENVELOPE is declared read-only
+  ✓ the derived kind COORDINATION_FINDING is declared read-only
+  ✓ the derived kind NAVIGATION_EDGE is declared read-only
+  ✓ the derived kind RUNTIME_OBSTACLE is declared read-only
+  ✓ the derived kind RUNTIME_PORTAL is declared read-only
+  ✓ the derived kind VISUAL_OBJECT is declared read-only
+  ✓ no command type targets a coordination finding directly
+  ✓ no command type targets a navigation edge or a runtime object
+  ✓ a runtime obstacle id is not an authoring target
+  ✓ a visual object id is not an authoring target either
+
+──────────────────────────────────────────────
+AI BOUNDARY: 67 passed, 0 failed

@@ -84,6 +84,7 @@ jobs:
                    tests/remediation/test_validator_openings.py \
                    tests/remediation/test_validator_geometry.py \
                    tests/remediation/test_core_alignment.py \
+                   tests/remediation/test_room_access.py \
                    tests/remediation/test_core_classification.py \
                    tests/remediation/test_repair_proposal.py \
                    tests/remediation/test_level_elevation.py \
