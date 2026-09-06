@@ -207,6 +207,7 @@ jobs:
           # ما يكتب outputs/csp_probe.json الذي يمنح test_csp.js ~15 تأكيداً.
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "browser suites (direct)" --runner "node" \
+                   tests/remediation/test_gl_probe_contract.mjs \
                    tests/remediation/test_pdf_runtime.mjs \
                    tests/deploy/test_viewport_pixels.js \
                    tests/deploy/verify_page_boot.js \

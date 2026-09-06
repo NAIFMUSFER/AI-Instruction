@@ -13,9 +13,7 @@
 
    ما لا يُقاس هنا — مُعلَن بلا مواربة
    ----------------------------------
-   three.js **غير متاح في هذا الصندوق**: public/vendor فارغ (يملؤه
-   tools/netlify-build.sh وقت البناء) وسجلّ npm يردّ 403، فلا سبيل إلى
-   three@0.160.0. لذلك رسم المشهد هنا لا يمرّ بشجرة three: يمرّ بمُنفِّذٍ
+   الرسم هنا يمرّ دائماً بمُنفِّذٍ
    بديل مكتوب في هذا الملفّ يأخذ الصناديق التي بناها ‎compile()‎ ويرسمها
    بـWebGL2 خاماً — مصفوفات وتظليل ومخزن رؤوس حقيقيّة.
 
@@ -25,7 +23,7 @@
    ذلك يبقى:
        LIVE FRONTEND APPLY (three.js): NOT VERIFIED — EXTERNAL ENVIRONMENT
        REQUIRED
-   ويُغلَق بتشغيل واحد على شجرة مبنيّة: ‎bash tools/vendor.sh‎ ثم هذا الملفّ.
+   ويُقاس التطبيق المشحون مع Three.js في tests/deploy/verify_page_boot.js.
    ========================================================================== */
 'use strict';
 const fs = require('fs');
@@ -45,9 +43,6 @@ const chk = (name, cond, detail) => {
   if (cond) { pass++; console.log('  ✓ ' + name); }
   else { fail++; console.log('  ✗ ' + name + '  ' + (detail === undefined ? '' : detail)); }
 };
-
-const VENDOR_OK = fs.existsSync(path.join(ROOT, 'public', 'vendor',
-  'three@0.160.0', 'build', 'three.module.js'));
 
 /* ═══════════ مُنفِّذ WebGL2 حقيقيّ بواجهة three الأدنى ═════════════════════
    ليس كعباً صامتاً: يفتح سياق webgl2 من اللوحة، ويصرّف تظليلاً، ويرفع رؤوس
@@ -98,8 +93,7 @@ function describe(o){
 function readPixels(){
   const gl = renderer.getContext();
   const w = Math.min(canvas.width, 320), h = Math.min(canvas.height, 200);
-  const buf = new Uint8Array(w*h*4);
-  gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,buf);
+  const buf = THREE.readGLPixels(gl,w,h);
   const seen = new Set(); let nonBg = 0, hash = 0;
   const BG = [15,18,23];                       // 0.06/0.07/0.09 بعد التحويل
   for(let i=0;i<w*h;i++){
@@ -170,6 +164,26 @@ window.__RUN_NAN = function(){
     excluded:(rb.diagnostics||{}).excluded_invalid_bounds,
     draw_calls:renderer.info.render.calls, pixels:readPixels() };
 };
+/* Real browser fault injection. Run last: the lost context is not restored. */
+window.__LOSE_CONTEXT = async function(){
+  const gl = renderer.getContext();
+  const extension = gl.getExtension('WEBGL_lose_context');
+  if(!extension) throw new Error('WEBGL_lose_context is required for this witness');
+  const lostEvent = new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>reject(new Error('context-loss event timeout')),5000);
+    canvas.addEventListener('webglcontextlost',()=>{clearTimeout(timer);resolve();},{once:true});
+  });
+  extension.loseContext();
+  await lostEvent;
+  let renderError=null, pixelError=null;
+  try{renderer.render(new THREE.Scene(),new THREE.PerspectiveCamera());}
+  catch(e){renderError=String(e.message);}
+  try{readPixels();}catch(e){pixelError=String(e.message);}
+  const raw=new Uint8Array(4);
+  gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,raw);
+  return {lost:gl.isContextLost(), vendor:gl.getParameter(gl.VENDOR),
+    raw_readback:Array.from(raw),render_error:renderError, pixel_error:pixelError};
+};
 window.__READY = true;
 `;
 
@@ -217,8 +231,8 @@ async function main() {
     '/vendor/three@0.160.0/build/three.module.js': GL_THREE } });
   const base = 'http://127.0.0.1:' + srv.port;
   const browser = await PW.launch({
-    args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader',
-           '--disable-gpu-sandbox'] });
+    // Chromium's documented SwANGLE driver selection; keep its GPU sandbox.
+    args: ['--use-gl=angle', '--use-angle=swiftshader'] });
   const page = await browser.newPage({ viewport: { width: 900, height: 600 } });
 
   const errors = [], violations = [], consoleMsgs = [];
@@ -248,19 +262,24 @@ async function main() {
     const c = document.getElementById('c');
     const gl = c.getContext('webgl2');
     return { has_gl: !!gl,
+      context_lost: gl ? gl.isContextLost() : null,
       vendor: gl ? gl.getParameter(gl.VENDOR) : null,
       renderer: gl ? gl.getParameter(gl.RENDERER) : null,
       canvas: [c.width, c.height],
       three_is_real: !!(window.THREE && window.THREE.__ACS_REAL_THREE),
+      adapter: window.THREE && window.THREE.__ACS_GL_SUBSTITUTE,
       compile_is_shipped: typeof window.__COMPILE === 'function' };
   });
   chk('سياق WebGL2 حقيقيّ مفتوح', env.has_gl === true);
+  chk('والسياق حيّ وله معلومات عتاد مقروءة', env.context_lost===false
+      && typeof env.vendor==='string' && typeof env.renderer==='string',JSON.stringify(env));
+  chk('ونطاق الرسام الاختباري معلن من الوحدة المحمّلة',
+      env.adapter==='acs.gl-three/1.0.0' && env.three_is_real===false);
   chk('واللوحة بأبعاد غير صفريّة',
       env.canvas[0] > 0 && env.canvas[1] > 0, JSON.stringify(env.canvas));
   chk('و compile() المشحون هو المُستدعَى', env.compile_is_shipped === true);
   console.log('     GL: ' + env.vendor + ' · ' + env.renderer);
-  console.log('     three.js حقيقيّ في هذه الشجرة: '
-              + (VENDOR_OK ? 'نعم' : 'لا — public/vendor فارغ (npm 403)'));
+  console.log('     renderer: ' + env.adapter + ' (raw WebGL2 test adapter; not Three.js)');
 
   /* ═══════════ ب · الحمولة الإنتاجية تُرسَم ═════════════════════════════ */
   console.log('\n== ب · رد 200 بشكل الإنتاج → مبنى مرئيّ ==');
@@ -327,7 +346,7 @@ async function main() {
   console.log('\n== هـ · توليد جديد يستبدل القديم فعلاً ==');
   const S = await page.evaluate(async (m) => window.__RUN(m), smallModel());
   chk('نموذج صغير بعد الكبير → يُرسَم أيضاً',
-      S.pixels.non_bg_pct > 5, S.pixels.non_bg_pct + '%');
+      S.pixels.non_bg_pct > 5 && S.pixels.distinct > 1, S.pixels.non_bg_pct + '%');
   chk('وبصمة الإطار تختلف عن إطار النموذج السابق',
       S.pixels.hash !== R.pixels.hash, S.pixels.hash + ' ≠ ' + R.pixels.hash);
   chk('وعدد الشبكات يختلف — ليس المشهد القديم باقياً',
@@ -340,11 +359,19 @@ async function main() {
   await page.setViewportSize({ width: 390, height: 780 });
   const M = await page.evaluate(async (m) => window.__RUN(m, 0.5), prodModel(false));
   chk('يُبنى ويُرسَم في نافذة الجوال',
-      M.error === null && M.pixels.non_bg_pct > 5,
+      M.error === null && M.pixels.non_bg_pct > 5 && M.pixels.distinct > 1,
       (M.error || '') + ' ' + M.pixels.non_bg_pct + '%');
   chk('ولا هندسة تالفة', M.defects.non_finite_box === 0
       && M.excluded === 0, M.excluded + ' سقط');
   await page.setViewportSize({ width: 900, height: 600 });
+
+  console.log('\n== فقدان سياق حقيقيّ: لا عدّادات أو بكسلات نجاح ==');
+  const lost=await page.evaluate(()=>window.__LOSE_CONTEXT());
+  chk('الشاهد أعاد فقدان السياق و GL null فعلياً',lost.lost===true&&lost.vendor===null,JSON.stringify(lost));
+  chk('القراءة الخام القديمة تُبقي المخزن صفراً رغم وجود كائن WebGL',
+      lost.raw_readback.join(',')==='0,0,0,0',JSON.stringify(lost.raw_readback));
+  chk('الرسم يرفض السياق المفقود صراحةً',/^WEBGL_CONTEXT_LOST:/.test(lost.render_error),lost.render_error);
+  chk('قراءة البكسلات ترفض السياق المفقود صراحةً',/^WEBGL_CONTEXT_LOST:/.test(lost.pixel_error),lost.pixel_error);
 
   /* ═══════════ ز · الكونسول ═════════════════════════════════════════════ */
   console.log('\n== ز · الكونسول بعد كل التوليدات ==');
@@ -361,16 +388,9 @@ async function main() {
   srv.close();
 
   console.log('\n' + '─'.repeat(62));
-  if (!VENDOR_OK) {
-    console.log('LIVE FRONTEND APPLY (three.js): NOT VERIFIED — EXTERNAL '
-      + 'ENVIRONMENT REQUIRED');
-    console.log('  public/vendor فارغ و npm يردّ 403، فلا three@0.160.0 هنا.');
-    console.log('  المقيس أعلاه: هندسة compile() المشحونة، وكاميرا العقد '
-      + 'المشحون، مرسومة بـWebGL2 حقيقيّ وبكسلات مقروءة بـreadPixels.');
-    console.log('  لإغلاق ما بقي: bash tools/vendor.sh ثم إعادة هذا الملفّ.');
-  } else {
-    console.log('LIVE FRONTEND APPLY: three.js حقيقيّ مُعبَّأ — القياس كامل.');
-  }
+  console.log('SCOPE: shipped compiler + camera contract + raw WebGL2 test adapter.');
+  console.log('LIVE FRONTEND APPLY (Three.js): NOT VERIFIED by this target; '
+    + 'measured separately by tests/deploy/verify_page_boot.js.');
   console.log('APPLY RENDER (real Chromium): %d passed, %d failed', pass, fail);
   if (fail) process.exit(1);
 }
