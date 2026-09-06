@@ -2,7 +2,7 @@
 import ast, collections, datetime, hashlib, io, json, math, os, re, subprocess, sys, zipfile
 from pathlib import Path
 
-root=Path(sys.argv[1]).resolve(); out=root/'artifacts/audit/evidence'
+root=Path(sys.argv[1]).resolve(); out=Path(sys.argv[2]).resolve() if len(sys.argv)>2 else root/'artifacts/audit/evidence'
 out.mkdir(parents=True,exist_ok=True)
 def git(*args): return subprocess.check_output(['git',*args],cwd=root)
 tracked=set(git('ls-files','-z').decode().split('\0'))-{''}

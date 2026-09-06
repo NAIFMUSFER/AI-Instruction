@@ -43,3 +43,29 @@ No log states that unavailable Chromium or missing provider credentials passed.
 The original independent 22-defect fixture was not available; our counterexamples are labelled.
 
 Secret scans only record type/location, never values. Their heuristic scope is documented.
+
+## Resume after the decision
+
+The last product commit tested is 9597a126e2cb96765d22447ddcf7c6422e1701e9.
+See AUDIT-REPORT.md section 14 for the CAD decision and the still-missing original 22-defect fixture.
+Do not merge the original untracked files from the newer main into this older branch's test suite.
+Use a clean worktree of the audit branch for candidate tests; candidate-source-check.json records
+the source equality for the completed run (the two differing JSON files are generated test outputs).
+
+Final full-suite evidence: fixes/C02b/all-tests-confirmed/.
+Final case outputs and stage timings: fixes/C02b/regeneration-final/local-exports/.
+The final Netlify build was executed in a clean worktree of the product commit above; final/ holds
+the command/result and complete log. No deployment was performed.
+
+The original audit_model_probes.py is a **baseline probe** with old expected behaviour; do not treat
+its hard-coded repair description as a final assertion. For the individual final validator witnesses:
+
+```sh
+python artifacts/audit/tools/audit_validator_cases.py /absolute/path/to/candidate artifacts/audit/evidence/model-probes /absolute/path/to/new-validator-results.json
+node artifacts/audit/tools/audit_cad_decision_probe.js /absolute/path/to/candidate /absolute/path/to/new-cad-witness
+python artifacts/audit/tools/audit_inventory.py /absolute/path/to/candidate /absolute/path/to/new-inventory
+```
+
+These 11 individual defect witnesses and one valid control do not replace the independent all-22 fixture.
+Whitespace in raw logs is intentionally preserved verbatim; whitespace gates apply to changed source,
+not to rewriting captured stdout/stderr.

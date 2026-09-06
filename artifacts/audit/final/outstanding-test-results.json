@@ -1,0 +1,192 @@
+[
+  {
+    "path": "tests/deploy/test_viewport_pixels.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/deploy/test_viewport_pixels.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.366,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__deploy__test_viewport_pixels.js.log",
+    "summary": [
+      "VIEWPORT PIXEL TEST: 8 passed, 1 failed"
+    ]
+  },
+  {
+    "path": "tests/phase1/test_gate.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_gate.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.316,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__phase1__test_gate.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase1/test_prov.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_prov.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.373,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__phase1__test_prov.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase4/test_browser_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_browser_parity.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.315,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__phase4__test_browser_parity.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase5/test_browser_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_browser_parity.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.317,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__phase5__test_browser_parity.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase6/test_responsive.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_responsive.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.766,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__phase6__test_responsive.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase9_2/test_backend_contract.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_backend_contract.py"
+    ],
+    "exit_code": 1,
+    "seconds": 0.566,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__phase9_2__test_backend_contract.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_accessibility.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_accessibility.js"
+    ],
+    "exit_code": 2,
+    "seconds": 0.319,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_accessibility.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_apply_render_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_apply_render_browser.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.316,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_apply_render_browser.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_bundle_report.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_bundle_report.py"
+    ],
+    "exit_code": 1,
+    "seconds": 0.666,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_bundle_report.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_csp_style_architecture.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_csp_style_architecture.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.616,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_csp_style_architecture.js.log",
+    "summary": [
+      "CSP STYLE ARCHITECTURE: 20 passed, 0 failed  (\u0627\u0644\u0637\u0628\u0642\u0629 \u0627\u0644\u062d\u064a\u0651\u0629: NOT VERIFIED \u2014 EXTERNAL ENVIRONMENT REQUIRED)"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_generation_cancel.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_generation_cancel.py"
+    ],
+    "exit_code": 1,
+    "seconds": 1.722,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_generation_cancel.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_panel_entry.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_panel_entry.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.369,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_panel_entry.js.log",
+    "summary": [
+      "PANEL ENTRY: 13 passed, 0 failed  (\u0627\u0644\u0637\u0628\u0642\u0629 \u0627\u0644\u062d\u064a\u0651\u0629: NOT VERIFIED \u2014 EXTERNAL ENVIRONMENT REQUIRED)"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_performance.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_performance.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.418,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_performance.js.log",
+    "summary": [
+      "PERFORMANCE CONTRACT: 121 passed, 2 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_scene_benchmark.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_scene_benchmark.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.315,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C02b/all-tests-confirmed/tests__remediation__test_scene_benchmark.js.log",
+    "summary": []
+  }
+]

@@ -1,0 +1,11 @@
+{
+  "command": [
+    "bash",
+    "tools/netlify-build.sh"
+  ],
+  "checkout": "/workspace/scratch/3196fa9f65d9/audit-final",
+  "commit": "9597a126e2cb96765d22447ddcf7c6422e1701e9",
+  "exit_code": 0,
+  "seconds": 21.035747125002672,
+  "scope": "build and asset/config gates; no deployment, browser pixels or provider E2E"
+}

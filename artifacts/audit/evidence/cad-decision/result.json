@@ -1,0 +1,49 @@
+{
+  "input": {
+    "units": "millimetres",
+    "closed": true,
+    "vertices_m": [
+      [
+        0,
+        0
+      ],
+      [
+        6,
+        0
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        2,
+        2
+      ],
+      [
+        2,
+        6
+      ],
+      [
+        0,
+        6
+      ]
+    ],
+    "polygon_area_m2": 20,
+    "site_m": [
+      20,
+      25
+    ],
+    "floors_requested": 3
+  },
+  "actual": {
+    "rect": [
+      1,
+      1,
+      18,
+      18
+    ],
+    "levels": 5,
+    "polygon_preserved": false
+  },
+  "scope": "actual shipped parsing/wrapping; floor-name formatting stub only; no renderer or live provider"
+}

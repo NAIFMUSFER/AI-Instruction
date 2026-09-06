@@ -1,0 +1,845 @@
+[
+  [
+    {
+      "file": "acs_pbr.py",
+      "line": 40,
+      "name": "_q"
+    },
+    {
+      "file": "acs_docs.py",
+      "line": 41,
+      "name": "_q"
+    },
+    {
+      "file": "acs_bim.py",
+      "line": 52,
+      "name": "_q"
+    },
+    {
+      "file": "acs_render.py",
+      "line": 55,
+      "name": "_q"
+    },
+    {
+      "file": "acs_coord.py",
+      "line": 67,
+      "name": "_q"
+    },
+    {
+      "file": "acs_runtime.py",
+      "line": 72,
+      "name": "_q"
+    },
+    {
+      "file": "acs_visual.py",
+      "line": 88,
+      "name": "_q"
+    },
+    {
+      "file": "acs_authoring.py",
+      "line": 103,
+      "name": "_q"
+    },
+    {
+      "file": "acs_arch.py",
+      "line": 42,
+      "name": "_q"
+    }
+  ],
+  [
+    {
+      "file": "acs_pbr.py",
+      "line": 44,
+      "name": "_num"
+    },
+    {
+      "file": "acs_docs.py",
+      "line": 45,
+      "name": "_num"
+    }
+  ],
+  [
+    {
+      "file": "acs_fls.py",
+      "line": 71,
+      "name": "_num"
+    },
+    {
+      "file": "acs_bim.py",
+      "line": 56,
+      "name": "_num"
+    },
+    {
+      "file": "acs_render.py",
+      "line": 60,
+      "name": "_num"
+    },
+    {
+      "file": "acs_coord.py",
+      "line": 55,
+      "name": "_num"
+    },
+    {
+      "file": "acs_runtime.py",
+      "line": 77,
+      "name": "_num"
+    },
+    {
+      "file": "acs_struct.py",
+      "line": 55,
+      "name": "_num"
+    },
+    {
+      "file": "acs_visual.py",
+      "line": 93,
+      "name": "_num"
+    },
+    {
+      "file": "acs_mep.py",
+      "line": 78,
+      "name": "_num"
+    }
+  ],
+  [
+    {
+      "file": "acs_fls.py",
+      "line": 83,
+      "name": "_is_bad_number"
+    },
+    {
+      "file": "acs_struct.py",
+      "line": 68,
+      "name": "_is_bad_number"
+    },
+    {
+      "file": "acs_mep.py",
+      "line": 91,
+      "name": "_is_bad_number"
+    }
+  ],
+  [
+    {
+      "file": "acs_fls.py",
+      "line": 120,
+      "name": "_level_of"
+    },
+    {
+      "file": "acs_mep.py",
+      "line": 144,
+      "name": "_level_of"
+    }
+  ],
+  [
+    {
+      "file": "acs_docs.py",
+      "line": 94,
+      "name": "safe_key"
+    },
+    {
+      "file": "acs_bim.py",
+      "line": 106,
+      "name": "safe_key"
+    }
+  ],
+  [
+    {
+      "file": "acs_docs.py",
+      "line": 1400,
+      "name": "_fmt"
+    },
+    {
+      "file": "acs_render.py",
+      "line": 1506,
+      "name": "_fmt"
+    }
+  ],
+  [
+    {
+      "file": "acs_occupancy.py",
+      "line": 124,
+      "name": "can_transition_pack"
+    },
+    {
+      "file": "acs_ingest.py",
+      "line": 582,
+      "name": "can_transition_pack"
+    }
+  ],
+  [
+    {
+      "file": "acs_bim.py",
+      "line": 72,
+      "name": "_sha16"
+    },
+    {
+      "file": "acs_render.py",
+      "line": 78,
+      "name": "_sha16"
+    },
+    {
+      "file": "acs_runtime.py",
+      "line": 96,
+      "name": "_sha16"
+    },
+    {
+      "file": "acs_archdetail.py",
+      "line": 51,
+      "name": "_sha16"
+    },
+    {
+      "file": "acs_visual.py",
+      "line": 109,
+      "name": "_sha16"
+    },
+    {
+      "file": "acs_authoring.py",
+      "line": 111,
+      "name": "_sha16"
+    },
+    {
+      "file": "acs_engineering_authority.py",
+      "line": 47,
+      "name": "_sha16"
+    }
+  ],
+  [
+    {
+      "file": "acs_project.py",
+      "line": 33,
+      "name": "_deep_copy"
+    },
+    {
+      "file": "acs_runtime.py",
+      "line": 100,
+      "name": "_copy"
+    },
+    {
+      "file": "acs_workspace.py",
+      "line": 64,
+      "name": "_copy"
+    },
+    {
+      "file": "acs_authoring.py",
+      "line": 115,
+      "name": "_copy"
+    },
+    {
+      "file": "acs_engineering_authority.py",
+      "line": 51,
+      "name": "_copy"
+    }
+  ],
+  [
+    {
+      "file": "acs_coord.py",
+      "line": 72,
+      "name": "_canon"
+    },
+    {
+      "file": "acs_visual.py",
+      "line": 105,
+      "name": "_canon"
+    }
+  ],
+  [
+    {
+      "file": "acs_coord.py",
+      "line": 95,
+      "name": "_rot"
+    },
+    {
+      "file": "acs_visual.py",
+      "line": 275,
+      "name": "_rot"
+    }
+  ],
+  [
+    {
+      "file": "acs_coord.py",
+      "line": 115,
+      "name": "_aabb_of"
+    },
+    {
+      "file": "acs_runtime.py",
+      "line": 136,
+      "name": "_aabb_of"
+    }
+  ],
+  [
+    {
+      "file": "acs_coord.py",
+      "line": 152,
+      "name": "_proj"
+    },
+    {
+      "file": "acs_runtime.py",
+      "line": 150,
+      "name": "_proj"
+    }
+  ],
+  [
+    {
+      "file": "acs_runtime.py",
+      "line": 66,
+      "name": "_enum"
+    },
+    {
+      "file": "acs_authoring.py",
+      "line": 83,
+      "name": "_enum"
+    }
+  ],
+  [
+    {
+      "file": "acs_struct.py",
+      "line": 73,
+      "name": "_src"
+    },
+    {
+      "file": "acs_mep.py",
+      "line": 95,
+      "name": "_src"
+    }
+  ],
+  [
+    {
+      "file": "acs_navigation.py",
+      "line": 33,
+      "name": "_levels_for_template"
+    },
+    {
+      "file": "acs_relations.py",
+      "line": 85,
+      "name": "_levels_for"
+    }
+  ],
+  [
+    {
+      "file": "acs_build_info.py",
+      "line": 39,
+      "name": "_env_first"
+    },
+    {
+      "file": "tools/write_build_info.py",
+      "line": 51,
+      "name": "_env_first"
+    }
+  ],
+  [
+    {
+      "file": "acs_egress.py",
+      "line": 33,
+      "name": "_space_id"
+    },
+    {
+      "file": "acs_arch.py",
+      "line": 58,
+      "name": "_space_id"
+    }
+  ],
+  [
+    {
+      "file": "acs_logging.py",
+      "line": 31,
+      "name": "_env"
+    },
+    {
+      "file": "acs_generation_job.py",
+      "line": 39,
+      "name": "_env"
+    }
+  ],
+  [
+    {
+      "file": "acs_opening_identity.py",
+      "line": 21,
+      "name": "_space_key"
+    },
+    {
+      "file": "acs_authoring.py",
+      "line": 243,
+      "name": "_space_key"
+    }
+  ],
+  [
+    {
+      "file": "acs_cpu_pool.py",
+      "line": 293,
+      "name": "available"
+    },
+    {
+      "file": "acs_generation_job.py",
+      "line": 254,
+      "name": "available"
+    }
+  ],
+  [
+    {
+      "file": "tools/build_runtime_browser.py",
+      "line": 28,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_authoring_browser.py",
+      "line": 29,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_render_browser.py",
+      "line": 1515,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_workspace_ui.py",
+      "line": 1731,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_visual_browser.py",
+      "line": 36,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_docs_browser.py",
+      "line": 1914,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_archdetail_browser.py",
+      "line": 47,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_bim_browser.py",
+      "line": 833,
+      "name": "_fail"
+    },
+    {
+      "file": "tools/build_pbr_browser.py",
+      "line": 1002,
+      "name": "_fail"
+    }
+  ],
+  [
+    {
+      "file": "tools/build_runtime_browser.py",
+      "line": 32,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_authoring_browser.py",
+      "line": 33,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_render_browser.py",
+      "line": 1519,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_workspace_ui.py",
+      "line": 1735,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_docs_browser.py",
+      "line": 1918,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_archdetail_browser.py",
+      "line": 51,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_bim_browser.py",
+      "line": 837,
+      "name": "_read"
+    },
+    {
+      "file": "tools/build_pbr_browser.py",
+      "line": 1006,
+      "name": "_read"
+    }
+  ],
+  [
+    {
+      "file": "tests/phase7/lib_render_fixtures.py",
+      "line": 10,
+      "name": "base"
+    },
+    {
+      "file": "tests/phase6/lib_workspace_fixtures.py",
+      "line": 10,
+      "name": "models"
+    }
+  ],
+  [
+    {
+      "file": "tests/deploy/verify_deploy.py",
+      "line": 36,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9/test_docs.py",
+      "line": 24,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9_1/test_pbr.py",
+      "line": 23,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9_2/test_alignment.py",
+      "line": 45,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9_2/test_black_viewport.py",
+      "line": 65,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9_2/test_archdetail.py",
+      "line": 26,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_upload_security.py",
+      "line": 68,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_rate_limit.py",
+      "line": 52,
+      "name": "chk"
+    }
+  ],
+  [
+    {
+      "file": "tests/deploy/verify_deploy.py",
+      "line": 50,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_dependency_lock.py",
+      "line": 50,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_asgi_client_contract.py",
+      "line": 57,
+      "name": "rd"
+    }
+  ],
+  [
+    {
+      "file": "tests/deploy/verify_deploy.py",
+      "line": 55,
+      "name": "exists"
+    },
+    {
+      "file": "tests/remediation/test_dependency_lock.py",
+      "line": 55,
+      "name": "exists"
+    }
+  ],
+  [
+    {
+      "file": "tests/phase9/lib_docs_fixtures.py",
+      "line": 14,
+      "name": "models"
+    },
+    {
+      "file": "tests/phase8/lib_bim_fixtures.py",
+      "line": 10,
+      "name": "models"
+    }
+  ],
+  [
+    {
+      "file": "tests/phase9_2/test_live_render.py",
+      "line": 51,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9_2/test_backend_contract.py",
+      "line": 36,
+      "name": "chk"
+    },
+    {
+      "file": "tests/phase9_2/test_generation_budget.py",
+      "line": 49,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_build_metadata.py",
+      "line": 37,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_dependency_lock.py",
+      "line": 41,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_privacy_boundary.py",
+      "line": 39,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_api_wiring.py",
+      "line": 30,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_plate_extent.py",
+      "line": 48,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_generation_cancel.py",
+      "line": 55,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_engineering_authority.py",
+      "line": 38,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_bundle_report.py",
+      "line": 62,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_logging.py",
+      "line": 40,
+      "name": "chk"
+    }
+  ],
+  [
+    {
+      "file": "tests/phase5/benchmark_authoring.py",
+      "line": 25,
+      "name": "gen_project"
+    },
+    {
+      "file": "tests/phase4/benchmark_runtime.py",
+      "line": 28,
+      "name": "gen_project"
+    }
+  ],
+  [
+    {
+      "file": "tests/phase5/lib_authoring_fixtures.py",
+      "line": 16,
+      "name": "hydrate"
+    },
+    {
+      "file": "tests/phase4/lib_runtime_fixtures.py",
+      "line": 15,
+      "name": "hydrate"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_ci_gate.py",
+      "line": 47,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_p0_hardening.py",
+      "line": 48,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_plan_chunking.py",
+      "line": 44,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_provider_accounting.py",
+      "line": 55,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_provider_capability.py",
+      "line": 73,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_event_loop.py",
+      "line": 58,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_provider_integration.py",
+      "line": 67,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_multi_provider.py",
+      "line": 52,
+      "name": "chk"
+    },
+    {
+      "file": "tests/remediation/test_provider_reject.py",
+      "line": 52,
+      "name": "chk"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_inline_style_sources.py",
+      "line": 65,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_container_topology.py",
+      "line": 57,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_ci_dependencies.py",
+      "line": 57,
+      "name": "rd"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_inline_style_sources.py",
+      "line": 81,
+      "name": "code_only"
+    },
+    {
+      "file": "tests/remediation/test_browser_acquisition.py",
+      "line": 101,
+      "name": "code_only"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_build_metadata.py",
+      "line": 46,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_privacy_boundary.py",
+      "line": 48,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_plate_extent.py",
+      "line": 57,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_engineering_authority.py",
+      "line": 47,
+      "name": "rd"
+    },
+    {
+      "file": "tests/remediation/test_logging.py",
+      "line": 49,
+      "name": "rd"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_repair_proposal.py",
+      "line": 70,
+      "name": "dispatch"
+    },
+    {
+      "file": "tests/remediation/test_room_access.py",
+      "line": 83,
+      "name": "dispatch"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_provider_accounting.py",
+      "line": 186,
+      "name": "run_once"
+    },
+    {
+      "file": "tests/remediation/test_provider_capability.py",
+      "line": 203,
+      "name": "run_once"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_provider_accounting.py",
+      "line": 83,
+      "name": "__init__"
+    },
+    {
+      "file": "tests/remediation/test_provider_capability.py",
+      "line": 101,
+      "name": "__init__"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_provider_accounting.py",
+      "line": 174,
+      "name": "__init__"
+    },
+    {
+      "file": "tests/remediation/test_provider_capability.py",
+      "line": 191,
+      "name": "__init__"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_provider_accounting.py",
+      "line": 179,
+      "name": "_emit"
+    },
+    {
+      "file": "tests/remediation/test_provider_capability.py",
+      "line": 196,
+      "name": "_emit"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_provider_accounting.py",
+      "line": 108,
+      "name": "_serve"
+    },
+    {
+      "file": "tests/remediation/test_provider_capability.py",
+      "line": 125,
+      "name": "_serve"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_logging.py",
+      "line": 57,
+      "name": "__init__"
+    },
+    {
+      "file": "tests/remediation/test_logging.py",
+      "line": 73,
+      "name": "reset"
+    }
+  ],
+  [
+    {
+      "file": "tests/remediation/test_provider_integration.py",
+      "line": 89,
+      "name": "__init__"
+    },
+    {
+      "file": "tests/remediation/test_multi_provider.py",
+      "line": 73,
+      "name": "__init__"
+    }
+  ]
+]
