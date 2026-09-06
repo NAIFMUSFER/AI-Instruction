@@ -1,0 +1,7 @@
+test_door_and_window_each_serialize_all_thirteen_ifc4_attributes (__main__.IfcOpeningAttributes.test_door_and_window_each_serialize_all_thirteen_ifc4_attributes) ... ok
+test_unstated_types_remain_unknown_after_stated_height_and_width (__main__.IfcOpeningAttributes.test_unstated_types_remain_unknown_after_stated_height_and_width) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.005s
+
+OK

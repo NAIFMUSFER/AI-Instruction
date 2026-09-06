@@ -1,0 +1,152 @@
+
+== §1 — SPEC INTEGRITY AND NO DRIFT ==
+  ✓ the browser spec is byte-identical to acs_authoring.json
+  ✓ schema and engine version are pinned
+  ✓ the transaction states are the six declared states
+  ✓ the four declared failure states exist
+  ✓ DRAFT can never transition straight to COMMITTED
+  ✓ no state transitions directly into a mutated model without COMMITTED
+  ✓ every declared issue code carries a declared severity
+  ✓ every command type declares its owning discipline
+  ✓ every implemented command type is part of the declared vocabulary
+  ✓ the declared-but-unimplemented set is disjoint from the implemented set
+  ✓ every command type is either implemented or explicitly declared unimplemented
+  ✓ every implemented command type appears in the dependency graph
+  ✓ the whole Part 3 vocabulary is present
+  ✓ no arbitrary path-based write type is offered
+
+== §9 — VALIDATION IS NOT CODE COMPLIANCE ==
+  ✓ the specification states plainly that validity is not compliance
+  ✓ no issue code is named as a code violation
+  ✓ the specification declares compliance NOT_EVALUATED
+  ✓ the specification carries no building-code vocabulary anywhere
+  ✓ the code vocabulary probe is not vacuous
+
+== §2 — COMMAND SCHEMA AND NORMALISATION ==
+  ✓ a well-formed command normalises
+  ✓ the normalised command carries command_id
+  ✓ the normalised command carries command_hash
+  ✓ the normalised command carries type
+  ✓ the normalised command carries discipline
+  ✓ the normalised command carries target_id
+  ✓ the normalised command carries parameters
+  ✓ the normalised command carries constraints
+  ✓ the normalised command carries source
+  ✓ the normalised command carries actor_id
+  ✓ the normalised command carries base_revision
+  ✓ the normalised command carries created_at
+  ✓ the normalised command carries status
+  ✓ the normalised command carries writes_to_model
+  ✓ the command id follows the declared pattern
+  ✓ the command declares that it writes nothing by itself
+  ✓ the default source is USER
+  ✓ an unauthenticated actor is null, never invented
+  ✓ the discipline is taken from the specification, not guessed
+
+== §45/§46 — DETERMINISTIC COMMAND IDENTITY ==
+  ✓ key order does not change the command hash
+  ✓ the same semantic edit hashes the same across repeated calls
+  ✓ a timestamp does not affect the semantic command hash
+  ✓ an actor does not affect the semantic command hash
+  ✓ the source does not affect the semantic command hash
+  ✓ a different parameter changes the hash
+  ✓ a different target changes the hash
+  ✓ a different base revision changes the hash
+  ✓ a constraint changes the hash
+  ✓ constraint order does not change the hash
+  ✓ the hash carries no timestamp or random component
+
+== §41/§47 — UNTRUSTED INPUT IS REFUSED ==
+  ✓ normalisation refuses a null command
+  ✓ the refusal of a null command uses a declared code
+  ✓ normalisation refuses a string command
+  ✓ the refusal of a string command uses a declared code
+  ✓ normalisation refuses an array command
+  ✓ the refusal of an array command uses a declared code
+  ✓ normalisation refuses a numeric command
+  ✓ the refusal of a numeric command uses a declared code
+  ✓ normalisation refuses an empty object
+  ✓ the refusal of an empty object uses a declared code
+  ✓ normalisation refuses an unknown type
+  ✓ the refusal of an unknown type uses a declared code
+  ✓ normalisation refuses an array used as a type
+  ✓ the refusal of an array used as a type uses a declared code
+  ✓ normalisation refuses a numeric type
+  ✓ the refusal of a numeric type uses a declared code
+  ✓ a path-based write type (forbidden_set_field) is refused as not allowed
+  ✓ a path-based write type (forbidden_patch) is refused as not allowed
+  ✓ a prototype-pollution key (proto_pollution) is refused before processing
+  ✓ a prototype-pollution key (constructor_key) is refused before processing
+  ✓ a prototype-pollution attempt does not pollute Object.prototype
+  ✓ an executable payload (script_value) is refused
+  ✓ an executable payload (javascript_url) is refused
+  ✓ an executable payload (eval_value) is refused
+  ✓ a non-numeric delta (nan_delta) is judged without throwing
+  ✓ a non-numeric delta (nan_delta) never reaches a model as a number
+  ✓ a non-numeric delta (inf_delta) is judged without throwing
+  ✓ a non-numeric delta (inf_delta) never reaches a model as a number
+  ✓ a non-numeric delta (bool_delta) is judged without throwing
+  ✓ a non-numeric delta (bool_delta) never reaches a model as a number
+  ✓ deep nesting is refused
+  ✓ an over-long string is refused
+  ✓ the authoring engine uses no eval, no exec and no Function constructor
+
+== §41 — DECLARED SNAPPING ONLY ==
+  ✓ an unknown snap type is refused and falls back to NONE
+  ✓ a declared but unimplemented snap type says so rather than pretending
+  ✓ grid snap rounds the parameter to the declared grid
+  ✓ snapping happens before hashing, so a snapped edit is one normal form
+  ✓ the edit grid is documented as not a structural grid
+
+== §38 — EDITABILITY CONTRACT ==
+  ✓ a space exposes an editable property model
+  ✓ wall geometry is editable through the space rectangle
+  ✓ a computed area is DERIVED, not editable
+  ✓ the model hash is DERIVED
+  ✓ a render material is DISPLAY_ONLY
+  ✓ the source id is READ_ONLY
+  ✓ every field carries one of the five declared classes
+  ✓ not every displayed property is editable
+  ✓ an editable field publishes its validation constraints
+  ✓ an opening width is editable
+  ✓ a derived host wall reference is DERIVED
+  ✓ an unstated clear width is UNKNOWN, never invented
+  ✓ a compiled wall exposes no editable geometry of its own
+  ✓ a derived element is documented as edited through its source
+
+== §16/§17 — DEPENDENCY GRAPH IS SELECTIVE, NOT BLIND ==
+  ✓ a wall move reports its dependency impact
+  ✓ a wall move invalidates ARCHITECTURE
+  ✓ a wall move invalidates RELATIONSHIPS
+  ✓ a wall move invalidates COORDINATION
+  ✓ a wall move invalidates VISUAL
+  ✓ a wall move invalidates RUNTIME
+  ✓ a wall move does not invalidate the structural discipline
+  ✓ a wall move does not invalidate MEP
+  ✓ a wall move does not invalidate fire and life safety
+  ✓ the report states no structural, MEP or FLS element was mutated
+  ✓ a window move does not invalidate navigation blindly
+  ✓ a rename does not invalidate the whole world
+  ✓ a lock invalidates nothing at all
+  ✓ deleting a door reports fire and life safety as possibly affected
+  ✓ the dependency note explains why STRUCTURE is absent architecturally
+  ✓ the impact report is factual and disclaims recommendation
+
+== §18 — CASCADE PREVIEW NAMES EXACT IDS ==
+  ✓ a destructive impact names exact element ids, never "some dependencies"
+  ✓ the affected count matches the named ids
+  ✓ the named ids resolve in the model
+
+== §95 — NO USER OR ROLE IS FABRICATED ==
+  ✓ the declared sources are exactly the four allowed
+  ✓ a commit without an identity records a null actor
+  ✓ no user, role or permission is fabricated — the absence is stated, not implied
+  ✓ no permission or role field exists anywhere in the command schema
+  ✓ an unknown source is refused rather than accepted as a new identity
+
+== §96 — NO COLLABORATION IS IMPLEMENTED ==
+  ✓ no multiplayer, websocket or CRDT vocabulary exists in the specification
+  ✓ the revision guard exists as the concurrency foundation instead
+
+──────────────────────────────────────────────
+AUTHORING CONTRACT: 127 passed, 0 failed

@@ -1,0 +1,108 @@
+
+── أ · شكل أصل البناء ──
+  ✓ build_info returns a dict
+  ✓ build_info declares service
+  ✓ build_info declares version
+  ✓ build_info declares git_sha
+  ✓ build_info declares git_sha_short
+  ✓ build_info declares git_branch
+  ✓ build_info declares built_at
+  ✓ build_info declares schema_versions
+  ✓ build_info declares provenance_verified
+  ✓ build_info returns nothing beyond the declared fields
+  ✓ service is the declared service name
+  ✓ schema_versions is a non-empty mapping of strings
+  ✓ schema_versions is a copy, so a caller cannot mutate the module constant
+  ✓ provenance_verified is a boolean, never a string
+  ✓ build_info is serialisable as JSON exactly as returned
+
+── ب · ترتيب المصادر: البيئة ← الملفّ ← git ← unknown ──
+  ✓ environment · ACS_GIT_SHA wins
+  ✓ environment · ACS_BUILT_AT wins
+  ✓ environment · the short sha is derived from the winning sha, not invented
+  ✓ environment · both sources present means provenance is verified
+  ✓ precedence · the environment beats the build_info.json file
+  ✓ file · with the environment unset the file is used for the sha
+  ✓ file · the timestamp comes from the file too
+  ✓ file · the branch comes from the file
+  ✓ file · the version comes from the file
+  ✓ file · a file-sourced build is reported as verified
+  ✓ git · this checkout really is a git repository (verified independently)
+  ✓ git · with no environment and no file the local checkout sha is used
+  ✓ git · the short sha is the first twelve characters of that sha
+  ✓ git · a sha with no timestamp is NOT reported as verified provenance
+  ✓ none · the sha is the literal "unknown"
+  ✓ none · the short sha is the literal "unknown" too, not a slice of it
+  ✓ none · the timestamp is the literal "unknown"
+  ✓ none · the branch is the literal "unknown"
+  ✓ none · provenance_verified is False and nothing is invented
+  ✓ none · the version still falls back to the declared service version
+  ✓ none · no field was filled with a fabricated placeholder
+  ✓ environment · ACS_GIT_SHA is actually read
+  ✓ environment · RENDER_GIT_COMMIT is actually read
+  ✓ environment · COMMIT_REF is actually read
+  ✓ environment · GITHUB_SHA is actually read
+  ✓ environment · SOURCE_VERSION is actually read
+  ✓ environment · ACS_BUILT_AT is actually read
+  ✓ environment · BUILD_TIMESTAMP is actually read
+  ✓ environment · ACS_GIT_BRANCH is actually read
+  ✓ environment · RENDER_GIT_BRANCH is actually read
+  ✓ environment · BRANCH is actually read
+  ✓ environment · HEAD is actually read
+  ✓ file · a corrupt build_info.json degrades instead of raising
+  ✓ file · a JSON file that is not an object is ignored, not trusted
+
+── ج · لا سرّ ولا مسار ملفّ في الردّ ──
+  ✓ no_secret_leak · the environment response contains no key-shaped value and no absolute path
+  ✓ no_secret_leak · the file response contains no key-shaped value and no absolute path
+  ✓ no_secret_leak · the none response contains no key-shaped value and no absolute path
+  ✓ no_secret_leak · the default response contains no key-shaped value and no absolute path
+  ✓ no_secret_leak · the git response contains no key-shaped value and no absolute path
+  ✓ no_secret_leak · the response never names ANTHROPIC_API_KEY
+  ✓ no_secret_leak · the response never names ACS_REDIS_URL
+  ✓ no_secret_leak · a secret present in the environment never reaches the response
+  ✓ no_secret_leak · the build_info.json path used is never echoed back
+
+── د · السلسلة الفارغة لا تُسقِط الوحدة (صنف عطل int("")) ──
+  ✓ empty_env · build_info still returns with every read variable set to ""
+  ✓ empty_env · the full declared shape survives
+  ✓ empty_env · an empty ACS_VERSION falls back to the declared version
+  ✓ empty_env · an empty ACS_GIT_SHA does not become the empty string
+  ✓ empty_env · build_identifier still returns a string
+  ✓ empty_env · whitespace-only values are treated as absent, not as data
+  ✓ empty_env · the module performs no int()/float() coercion at all
+
+── هـ · التوصيل الساكن: /version و/health في acs_understand_api.py ──
+  ✓ a route function named version exists
+  ✓ the version function is decorated with @app.get("/version")
+  ✓ a route function named health exists
+  ✓ the health function is decorated with @app.get("/health")
+  ✓ the health response includes a build key
+  ✓ the health build block is produced by acs_build_info, not hand-written
+  ✓ the version response exposes git_sha
+  ✓ the version response exposes git_sha_short
+  ✓ the version response exposes built_at
+  ✓ the version response exposes provenance_verified
+  ✓ the version response exposes schema_versions
+  ✓ the version response never mentions ANTHROPIC_API_KEY
+  ✓ the version response never mentions ACS_REDIS_URL
+  ✓ the version response contains no os.environ read of a secret
+  ✓ the health response never mentions ANTHROPIC_API_KEY
+  ✓ the health response never mentions ACS_REDIS_URL
+  ✓ the health response contains no os.environ read of a secret
+  ✓ /version is declared exactly once
+  ✓ /health is declared exactly once
+  ✓ acs_build_info is imported by the API module
+  ✓ the Dockerfile copies acs_build_info.py into the deployed image
+
+── و · معرّف قصير للعرض البشري ──
+  ✓ build_identifier returns a string
+  ✓ build_identifier is short enough to render in a UI chip
+  ✓ build_identifier is a single line
+  ✓ build_identifier joins version and short sha with a middle dot
+  ✓ build_identifier shows the short sha, never the full forty characters
+  ✓ build_identifier leaks nothing
+  ✓ build_identifier says unknown rather than inventing an identifier
+
+──────────────────────────────────────────────────────────────
+BUILD METADATA: 93 passed, 0 failed

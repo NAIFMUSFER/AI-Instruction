@@ -1,0 +1,538 @@
+
+== EVERY ADVERSARIAL COMMAND IS HANDLED ==
+  ✓ array_as_type: normalisation returns a result instead of throwing
+  ✓ array_as_type: every code is declared
+  ✓ array_as_type: every issue carries a declared severity
+  ✓ array_as_type: preview returns a result instead of throwing
+  ✓ array_as_type: preview codes are all declared
+  ✓ array_as_type: a hostile command never yields a silently accepted candidate
+  ✓ array_as_type: a transaction judges it without throwing
+  ✓ array_as_type: the transaction state is a declared state
+  ✓ array_as_type: a commit attempt does not throw
+  ✓ array_command: normalisation returns a result instead of throwing
+  ✓ array_command: every code is declared
+  ✓ array_command: every issue carries a declared severity
+  ✓ array_command: preview returns a result instead of throwing
+  ✓ array_command: preview codes are all declared
+  ✓ array_command: a hostile command never yields a silently accepted candidate
+  ✓ array_command: a transaction judges it without throwing
+  ✓ array_command: the transaction state is a declared state
+  ✓ array_command: a commit attempt does not throw
+  ✓ array_target: normalisation returns a result instead of throwing
+  ✓ array_target: every code is declared
+  ✓ array_target: every issue carries a declared severity
+  ✓ array_target: preview returns a result instead of throwing
+  ✓ array_target: preview codes are all declared
+  ✓ array_target: a hostile command never yields a silently accepted candidate
+  ✓ array_target: a transaction judges it without throwing
+  ✓ array_target: the transaction state is a declared state
+  ✓ array_target: a commit attempt does not throw
+  ✓ bad_lock_reason: normalisation returns a result instead of throwing
+  ✓ bad_lock_reason: every code is declared
+  ✓ bad_lock_reason: every issue carries a declared severity
+  ✓ bad_lock_reason: preview returns a result instead of throwing
+  ✓ bad_lock_reason: preview codes are all declared
+  ✓ bad_lock_reason: a hostile command never yields a silently accepted candidate
+  ✓ bad_lock_reason: a transaction judges it without throwing
+  ✓ bad_lock_reason: the transaction state is a declared state
+  ✓ bad_lock_reason: a commit attempt does not throw
+  ✓ bad_source: normalisation returns a result instead of throwing
+  ✓ bad_source: every code is declared
+  ✓ bad_source: every issue carries a declared severity
+  ✓ bad_source: preview returns a result instead of throwing
+  ✓ bad_source: preview codes are all declared
+  ✓ bad_source: a hostile command never yields a silently accepted candidate
+  ✓ bad_source: a transaction judges it without throwing
+  ✓ bad_source: the transaction state is a declared state
+  ✓ bad_source: a commit attempt does not throw
+  ✓ bool_delta: normalisation returns a result instead of throwing
+  ✓ bool_delta: every code is declared
+  ✓ bool_delta: every issue carries a declared severity
+  ✓ bool_delta: preview returns a result instead of throwing
+  ✓ bool_delta: preview codes are all declared
+  ✓ bool_delta: a hostile command never yields a silently accepted candidate
+  ✓ bool_delta: a transaction judges it without throwing
+  ✓ bool_delta: the transaction state is a declared state
+  ✓ bool_delta: a commit attempt does not throw
+  ✓ constraints_array: normalisation returns a result instead of throwing
+  ✓ constraints_array: every code is declared
+  ✓ constraints_array: every issue carries a declared severity
+  ✓ constraints_array: preview returns a result instead of throwing
+  ✓ constraints_array: preview codes are all declared
+  ✓ constraints_array: a hostile command never yields a silently accepted candidate
+  ✓ constraints_array: a transaction judges it without throwing
+  ✓ constraints_array: the transaction state is a declared state
+  ✓ constraints_array: a commit attempt does not throw
+  ✓ constructor_key: normalisation returns a result instead of throwing
+  ✓ constructor_key: every code is declared
+  ✓ constructor_key: every issue carries a declared severity
+  ✓ constructor_key: preview returns a result instead of throwing
+  ✓ constructor_key: preview codes are all declared
+  ✓ constructor_key: a hostile command never yields a silently accepted candidate
+  ✓ constructor_key: a transaction judges it without throwing
+  ✓ constructor_key: the transaction state is a declared state
+  ✓ constructor_key: a commit attempt does not throw
+  ✓ declared_unimplemented_snap: normalisation returns a result instead of throwing
+  ✓ declared_unimplemented_snap: every code is declared
+  ✓ declared_unimplemented_snap: every issue carries a declared severity
+  ✓ declared_unimplemented_snap: preview returns a result instead of throwing
+  ✓ declared_unimplemented_snap: preview codes are all declared
+  ✓ declared_unimplemented_snap: a hostile command never yields a silently accepted candidate
+  ✓ declared_unimplemented_snap: a transaction judges it without throwing
+  ✓ declared_unimplemented_snap: the transaction state is a declared state
+  ✓ declared_unimplemented_snap: a commit attempt does not throw
+  ✓ deep_nesting: normalisation returns a result instead of throwing
+  ✓ deep_nesting: every code is declared
+  ✓ deep_nesting: every issue carries a declared severity
+  ✓ deep_nesting: preview returns a result instead of throwing
+  ✓ deep_nesting: preview codes are all declared
+  ✓ deep_nesting: a hostile command never yields a silently accepted candidate
+  ✓ deep_nesting: a transaction judges it without throwing
+  ✓ deep_nesting: the transaction state is a declared state
+  ✓ deep_nesting: a commit attempt does not throw
+  ✓ empty_object: normalisation returns a result instead of throwing
+  ✓ empty_object: every code is declared
+  ✓ empty_object: every issue carries a declared severity
+  ✓ empty_object: preview returns a result instead of throwing
+  ✓ empty_object: preview codes are all declared
+  ✓ empty_object: a hostile command never yields a silently accepted candidate
+  ✓ empty_object: a transaction judges it without throwing
+  ✓ empty_object: the transaction state is a declared state
+  ✓ empty_object: a commit attempt does not throw
+  ✓ eval_value: normalisation returns a result instead of throwing
+  ✓ eval_value: every code is declared
+  ✓ eval_value: every issue carries a declared severity
+  ✓ eval_value: preview returns a result instead of throwing
+  ✓ eval_value: preview codes are all declared
+  ✓ eval_value: a hostile command never yields a silently accepted candidate
+  ✓ eval_value: a transaction judges it without throwing
+  ✓ eval_value: the transaction state is a declared state
+  ✓ eval_value: a commit attempt does not throw
+  ✓ forbidden_patch: normalisation returns a result instead of throwing
+  ✓ forbidden_patch: every code is declared
+  ✓ forbidden_patch: every issue carries a declared severity
+  ✓ forbidden_patch: preview returns a result instead of throwing
+  ✓ forbidden_patch: preview codes are all declared
+  ✓ forbidden_patch: a hostile command never yields a silently accepted candidate
+  ✓ forbidden_patch: a transaction judges it without throwing
+  ✓ forbidden_patch: the transaction state is a declared state
+  ✓ forbidden_patch: a commit attempt does not throw
+  ✓ forbidden_set_field: normalisation returns a result instead of throwing
+  ✓ forbidden_set_field: every code is declared
+  ✓ forbidden_set_field: every issue carries a declared severity
+  ✓ forbidden_set_field: preview returns a result instead of throwing
+  ✓ forbidden_set_field: preview codes are all declared
+  ✓ forbidden_set_field: a hostile command never yields a silently accepted candidate
+  ✓ forbidden_set_field: a transaction judges it without throwing
+  ✓ forbidden_set_field: the transaction state is a declared state
+  ✓ forbidden_set_field: a commit attempt does not throw
+  ✓ huge_coord: normalisation returns a result instead of throwing
+  ✓ huge_coord: every code is declared
+  ✓ huge_coord: every issue carries a declared severity
+  ✓ huge_coord: preview returns a result instead of throwing
+  ✓ huge_coord: preview codes are all declared
+  ✓ huge_coord: a hostile command never yields a silently accepted candidate
+  ✓ huge_coord: a transaction judges it without throwing
+  ✓ huge_coord: the transaction state is a declared state
+  ✓ huge_coord: a commit attempt does not throw
+  ✓ huge_delta: normalisation returns a result instead of throwing
+  ✓ huge_delta: every code is declared
+  ✓ huge_delta: every issue carries a declared severity
+  ✓ huge_delta: preview returns a result instead of throwing
+  ✓ huge_delta: preview codes are all declared
+  ✓ huge_delta: a hostile command never yields a silently accepted candidate
+  ✓ huge_delta: a transaction judges it without throwing
+  ✓ huge_delta: the transaction state is a declared state
+  ✓ huge_delta: a commit attempt does not throw
+  ✓ inf_delta: normalisation returns a result instead of throwing
+  ✓ inf_delta: every code is declared
+  ✓ inf_delta: every issue carries a declared severity
+  ✓ inf_delta: preview returns a result instead of throwing
+  ✓ inf_delta: preview codes are all declared
+  ✓ inf_delta: a hostile command never yields a silently accepted candidate
+  ✓ inf_delta: a transaction judges it without throwing
+  ✓ inf_delta: the transaction state is a declared state
+  ✓ inf_delta: a commit attempt does not throw
+  ✓ javascript_url: normalisation returns a result instead of throwing
+  ✓ javascript_url: every code is declared
+  ✓ javascript_url: every issue carries a declared severity
+  ✓ javascript_url: preview returns a result instead of throwing
+  ✓ javascript_url: preview codes are all declared
+  ✓ javascript_url: a hostile command never yields a silently accepted candidate
+  ✓ javascript_url: a transaction judges it without throwing
+  ✓ javascript_url: the transaction state is a declared state
+  ✓ javascript_url: a commit attempt does not throw
+  ✓ long_string: normalisation returns a result instead of throwing
+  ✓ long_string: every code is declared
+  ✓ long_string: every issue carries a declared severity
+  ✓ long_string: preview returns a result instead of throwing
+  ✓ long_string: preview codes are all declared
+  ✓ long_string: a hostile command never yields a silently accepted candidate
+  ✓ long_string: a transaction judges it without throwing
+  ✓ long_string: the transaction state is a declared state
+  ✓ long_string: a commit attempt does not throw
+  ✓ nan_delta: normalisation returns a result instead of throwing
+  ✓ nan_delta: every code is declared
+  ✓ nan_delta: every issue carries a declared severity
+  ✓ nan_delta: preview returns a result instead of throwing
+  ✓ nan_delta: preview codes are all declared
+  ✓ nan_delta: a hostile command never yields a silently accepted candidate
+  ✓ nan_delta: a transaction judges it without throwing
+  ✓ nan_delta: the transaction state is a declared state
+  ✓ nan_delta: a commit attempt does not throw
+  ✓ negative_dim: normalisation returns a result instead of throwing
+  ✓ negative_dim: every code is declared
+  ✓ negative_dim: every issue carries a declared severity
+  ✓ negative_dim: preview returns a result instead of throwing
+  ✓ negative_dim: preview codes are all declared
+  ✓ negative_dim: a hostile command never yields a silently accepted candidate
+  ✓ negative_dim: a transaction judges it without throwing
+  ✓ negative_dim: the transaction state is a declared state
+  ✓ negative_dim: a commit attempt does not throw
+  ✓ negative_max_delta: normalisation returns a result instead of throwing
+  ✓ negative_max_delta: every code is declared
+  ✓ negative_max_delta: every issue carries a declared severity
+  ✓ negative_max_delta: preview returns a result instead of throwing
+  ✓ negative_max_delta: preview codes are all declared
+  ✓ negative_max_delta: a hostile command never yields a silently accepted candidate
+  ✓ negative_max_delta: a transaction judges it without throwing
+  ✓ negative_max_delta: the transaction state is a declared state
+  ✓ negative_max_delta: a commit attempt does not throw
+  ✓ null_command: normalisation returns a result instead of throwing
+  ✓ null_command: every code is declared
+  ✓ null_command: every issue carries a declared severity
+  ✓ null_command: preview returns a result instead of throwing
+  ✓ null_command: preview codes are all declared
+  ✓ null_command: a hostile command never yields a silently accepted candidate
+  ✓ null_command: a transaction judges it without throwing
+  ✓ null_command: the transaction state is a declared state
+  ✓ null_command: a commit attempt does not throw
+  ✓ null_target: normalisation returns a result instead of throwing
+  ✓ null_target: every code is declared
+  ✓ null_target: every issue carries a declared severity
+  ✓ null_target: preview returns a result instead of throwing
+  ✓ null_target: preview codes are all declared
+  ✓ null_target: a hostile command never yields a silently accepted candidate
+  ✓ null_target: a transaction judges it without throwing
+  ✓ null_target: the transaction state is a declared state
+  ✓ null_target: a commit attempt does not throw
+  ✓ number_command: normalisation returns a result instead of throwing
+  ✓ number_command: every code is declared
+  ✓ number_command: every issue carries a declared severity
+  ✓ number_command: preview returns a result instead of throwing
+  ✓ number_command: preview codes are all declared
+  ✓ number_command: a hostile command never yields a silently accepted candidate
+  ✓ number_command: a transaction judges it without throwing
+  ✓ number_command: the transaction state is a declared state
+  ✓ number_command: a commit attempt does not throw
+  ✓ numeric_type: normalisation returns a result instead of throwing
+  ✓ numeric_type: every code is declared
+  ✓ numeric_type: every issue carries a declared severity
+  ✓ numeric_type: preview returns a result instead of throwing
+  ✓ numeric_type: preview codes are all declared
+  ✓ numeric_type: a hostile command never yields a silently accepted candidate
+  ✓ numeric_type: a transaction judges it without throwing
+  ✓ numeric_type: the transaction state is a declared state
+  ✓ numeric_type: a commit attempt does not throw
+  ✓ object_target: normalisation returns a result instead of throwing
+  ✓ object_target: every code is declared
+  ✓ object_target: every issue carries a declared severity
+  ✓ object_target: preview returns a result instead of throwing
+  ✓ object_target: preview codes are all declared
+  ✓ object_target: a hostile command never yields a silently accepted candidate
+  ✓ object_target: a transaction judges it without throwing
+  ✓ object_target: the transaction state is a declared state
+  ✓ object_target: a commit attempt does not throw
+  ✓ params_array: normalisation returns a result instead of throwing
+  ✓ params_array: every code is declared
+  ✓ params_array: every issue carries a declared severity
+  ✓ params_array: preview returns a result instead of throwing
+  ✓ params_array: preview codes are all declared
+  ✓ params_array: a hostile command never yields a silently accepted candidate
+  ✓ params_array: a transaction judges it without throwing
+  ✓ params_array: the transaction state is a declared state
+  ✓ params_array: a commit attempt does not throw
+  ✓ params_string: normalisation returns a result instead of throwing
+  ✓ params_string: every code is declared
+  ✓ params_string: every issue carries a declared severity
+  ✓ params_string: preview returns a result instead of throwing
+  ✓ params_string: preview codes are all declared
+  ✓ params_string: a hostile command never yields a silently accepted candidate
+  ✓ params_string: a transaction judges it without throwing
+  ✓ params_string: the transaction state is a declared state
+  ✓ params_string: a commit attempt does not throw
+  ✓ proto_pollution: normalisation returns a result instead of throwing
+  ✓ proto_pollution: every code is declared
+  ✓ proto_pollution: every issue carries a declared severity
+  ✓ proto_pollution: preview returns a result instead of throwing
+  ✓ proto_pollution: preview codes are all declared
+  ✓ proto_pollution: a hostile command never yields a silently accepted candidate
+  ✓ proto_pollution: a transaction judges it without throwing
+  ✓ proto_pollution: the transaction state is a declared state
+  ✓ proto_pollution: a commit attempt does not throw
+  ✓ script_value: normalisation returns a result instead of throwing
+  ✓ script_value: every code is declared
+  ✓ script_value: every issue carries a declared severity
+  ✓ script_value: preview returns a result instead of throwing
+  ✓ script_value: preview codes are all declared
+  ✓ script_value: a hostile command never yields a silently accepted candidate
+  ✓ script_value: a transaction judges it without throwing
+  ✓ script_value: the transaction state is a declared state
+  ✓ script_value: a commit attempt does not throw
+  ✓ string_command: normalisation returns a result instead of throwing
+  ✓ string_command: every code is declared
+  ✓ string_command: every issue carries a declared severity
+  ✓ string_command: preview returns a result instead of throwing
+  ✓ string_command: preview codes are all declared
+  ✓ string_command: a hostile command never yields a silently accepted candidate
+  ✓ string_command: a transaction judges it without throwing
+  ✓ string_command: the transaction state is a declared state
+  ✓ string_command: a commit attempt does not throw
+  ✓ string_dim: normalisation returns a result instead of throwing
+  ✓ string_dim: every code is declared
+  ✓ string_dim: every issue carries a declared severity
+  ✓ string_dim: preview returns a result instead of throwing
+  ✓ string_dim: preview codes are all declared
+  ✓ string_dim: a hostile command never yields a silently accepted candidate
+  ✓ string_dim: a transaction judges it without throwing
+  ✓ string_dim: the transaction state is a declared state
+  ✓ string_dim: a commit attempt does not throw
+  ✓ unknown_constraint: normalisation returns a result instead of throwing
+  ✓ unknown_constraint: every code is declared
+  ✓ unknown_constraint: every issue carries a declared severity
+  ✓ unknown_constraint: preview returns a result instead of throwing
+  ✓ unknown_constraint: preview codes are all declared
+  ✓ unknown_constraint: a hostile command never yields a silently accepted candidate
+  ✓ unknown_constraint: a transaction judges it without throwing
+  ✓ unknown_constraint: the transaction state is a declared state
+  ✓ unknown_constraint: a commit attempt does not throw
+  ✓ unknown_constraint_subject: normalisation returns a result instead of throwing
+  ✓ unknown_constraint_subject: every code is declared
+  ✓ unknown_constraint_subject: every issue carries a declared severity
+  ✓ unknown_constraint_subject: preview returns a result instead of throwing
+  ✓ unknown_constraint_subject: preview codes are all declared
+  ✓ unknown_constraint_subject: a hostile command never yields a silently accepted candidate
+  ✓ unknown_constraint_subject: a transaction judges it without throwing
+  ✓ unknown_constraint_subject: the transaction state is a declared state
+  ✓ unknown_constraint_subject: a commit attempt does not throw
+  ✓ unknown_snap: normalisation returns a result instead of throwing
+  ✓ unknown_snap: every code is declared
+  ✓ unknown_snap: every issue carries a declared severity
+  ✓ unknown_snap: preview returns a result instead of throwing
+  ✓ unknown_snap: preview codes are all declared
+  ✓ unknown_snap: a hostile command never yields a silently accepted candidate
+  ✓ unknown_snap: a transaction judges it without throwing
+  ✓ unknown_snap: the transaction state is a declared state
+  ✓ unknown_snap: a commit attempt does not throw
+  ✓ unknown_strategy: normalisation returns a result instead of throwing
+  ✓ unknown_strategy: every code is declared
+  ✓ unknown_strategy: every issue carries a declared severity
+  ✓ unknown_strategy: preview returns a result instead of throwing
+  ✓ unknown_strategy: preview codes are all declared
+  ✓ unknown_strategy: a hostile command never yields a silently accepted candidate
+  ✓ unknown_strategy: a transaction judges it without throwing
+  ✓ unknown_strategy: the transaction state is a declared state
+  ✓ unknown_strategy: a commit attempt does not throw
+  ✓ unknown_target: normalisation returns a result instead of throwing
+  ✓ unknown_target: every code is declared
+  ✓ unknown_target: every issue carries a declared severity
+  ✓ unknown_target: preview returns a result instead of throwing
+  ✓ unknown_target: preview codes are all declared
+  ✓ unknown_target: a hostile command never yields a silently accepted candidate
+  ✓ unknown_target: a transaction judges it without throwing
+  ✓ unknown_target: the transaction state is a declared state
+  ✓ unknown_target: a commit attempt does not throw
+  ✓ unknown_type: normalisation returns a result instead of throwing
+  ✓ unknown_type: every code is declared
+  ✓ unknown_type: every issue carries a declared severity
+  ✓ unknown_type: preview returns a result instead of throwing
+  ✓ unknown_type: preview codes are all declared
+  ✓ unknown_type: a hostile command never yields a silently accepted candidate
+  ✓ unknown_type: a transaction judges it without throwing
+  ✓ unknown_type: the transaction state is a declared state
+  ✓ unknown_type: a commit attempt does not throw
+  ✓ zero_dim: normalisation returns a result instead of throwing
+  ✓ zero_dim: every code is declared
+  ✓ zero_dim: every issue carries a declared severity
+  ✓ zero_dim: preview returns a result instead of throwing
+  ✓ zero_dim: preview codes are all declared
+  ✓ zero_dim: a hostile command never yields a silently accepted candidate
+  ✓ zero_dim: a transaction judges it without throwing
+  ✓ zero_dim: the transaction state is a declared state
+  ✓ zero_dim: a commit attempt does not throw
+
+== NOTHING HOSTILE REACHES THE CANONICAL MODEL ==
+  ✓ the canonical model is byte-identical after the whole adversarial sweep
+  ✓ the project hash is unchanged
+  ✓ no revision was created by any hostile command
+  ✓ Object.prototype was not polluted by any of them
+
+== HOSTILE TARGETS ==
+  ✓ the target null is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of null uses a declared code
+  ✓ the target undefined is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of undefined uses a declared code
+  ✓ the target "" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "" uses a declared code
+  ✓ the target [] is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of [] uses a declared code
+  ✓ the target {} is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of {} uses a declared code
+  ✓ the target 42 is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of 42 uses a declared code
+  ✓ the target true is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of true uses a declared code
+  ✓ the target "no.such.thing" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "no.such.thing" uses a declared code
+  ✓ the target "g." is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "g." uses a declared code
+  ✓ the target ".." is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of ".." uses a declared code
+  ✓ the target ".................................................." is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of ".................................................." uses a declared code
+  ✓ the target "g.majlis.door_-1" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "g.majlis.door_-1" uses a declared code
+  ✓ the target "g.majlis.door_1e9" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "g.majlis.door_1e9" uses a declared code
+  ✓ the target "bld_0.flr_0.wall_" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the target "runtime:obj:x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "runtime:obj:x" uses a declared code
+  ✓ the target "obstacle:x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "obstacle:x" uses a declared code
+  ✓ the target "portal:x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "portal:x" uses a declared code
+  ✓ the target "walk:space:x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "walk:space:x" uses a declared code
+  ✓ the target "measure:x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "measure:x" uses a declared code
+  ✓ the target "vis:x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "vis:x" uses a declared code
+  ✓ the target "clash_x" is resolved without throwing
+  ✓ a hostile target never resolves to an editable element
+  ✓ the refusal of "clash_x" uses a declared code
+
+== HOSTILE NUMBERS AND COORDINATES ==
+  ✓ a NaN in delta_m never reaches the model
+  ✓ a NaN in w never reaches the model
+  ✓ a NaN in d never reaches the model
+  ✓ a NaN in x never reaches the model
+  ✓ a NaN in z never reaches the model
+  ✓ a NaN in offset never reaches the model
+  ✓ a NaN in width never reaches the model
+  ✓ a NaN in height_m never reaches the model
+  ✓ a NaN in rotation_deg never reaches the model
+  ✓ a Infinity in delta_m never reaches the model
+  ✓ a Infinity in w never reaches the model
+  ✓ a Infinity in d never reaches the model
+  ✓ a Infinity in x never reaches the model
+  ✓ a Infinity in z never reaches the model
+  ✓ a Infinity in offset never reaches the model
+  ✓ a Infinity in width never reaches the model
+  ✓ a Infinity in height_m never reaches the model
+  ✓ a Infinity in rotation_deg never reaches the model
+  ✓ a negative infinity in delta_m never reaches the model
+  ✓ a negative infinity in w never reaches the model
+  ✓ a negative infinity in d never reaches the model
+  ✓ a negative infinity in x never reaches the model
+  ✓ a negative infinity in z never reaches the model
+  ✓ a negative infinity in offset never reaches the model
+  ✓ a negative infinity in width never reaches the model
+  ✓ a negative infinity in height_m never reaches the model
+  ✓ a negative infinity in rotation_deg never reaches the model
+  ✓ an absurd coordinate 1e+308 is refused
+  ✓ the refusal of 1e+308 names a declared code
+  ✓ an absurd coordinate -1e+308 is refused
+  ✓ the refusal of -1e+308 names a declared code
+  ✓ an absurd coordinate 100000000000000000 is refused
+  ✓ the refusal of 100000000000000000 names a declared code
+  ✓ an absurd coordinate -100000000000000000 is refused
+  ✓ the refusal of -100000000000000000 names a declared code
+  ✓ an absurd coordinate 999999999 is refused
+  ✓ the refusal of 999999999 names a declared code
+  ✓ the declared coordinate bound is finite and reasonable
+  ✓ the authoring bound is consistent with the runtime spatial bound
+
+== WRONG TYPES EVERYWHERE ==
+  ✓ wrong-typed shape 0 is refused
+  ✓ wrong-typed shape 0 uses declared codes only
+  ✓ wrong-typed shape 1 is refused
+  ✓ wrong-typed shape 1 uses declared codes only
+  ✓ wrong-typed shape 2 is refused
+  ✓ wrong-typed shape 2 uses declared codes only
+  ✓ wrong-typed shape 3 is refused
+  ✓ wrong-typed shape 3 uses declared codes only
+  ✓ wrong-typed shape 4 is refused
+  ✓ wrong-typed shape 4 uses declared codes only
+  ✓ wrong-typed shape 5 is refused
+  ✓ wrong-typed shape 5 uses declared codes only
+  ✓ wrong-typed shape 6 is refused
+  ✓ wrong-typed shape 6 uses declared codes only
+  ✓ wrong-typed shape 7 is refused
+  ✓ wrong-typed shape 7 uses declared codes only
+  ✓ wrong-typed shape 8 is refused
+  ✓ wrong-typed shape 8 uses declared codes only
+  ✓ wrong-typed shape 9 is refused
+  ✓ wrong-typed shape 9 uses declared codes only
+  ✓ wrong-typed shape 10 is refused
+  ✓ wrong-typed shape 10 uses declared codes only
+  ✓ wrong-typed shape 11 is refused
+  ✓ wrong-typed shape 11 uses declared codes only
+  ✓ wrong-typed shape 12 is refused
+  ✓ wrong-typed shape 12 uses declared codes only
+  ✓ wrong-typed shape 13 is refused
+  ✓ wrong-typed shape 13 uses declared codes only
+  ✓ wrong-typed shape 14 is refused
+  ✓ wrong-typed shape 14 uses declared codes only
+
+== DUPLICATE IDS, LOCKED TARGETS AND STALE REVISIONS ==
+  ✓ a duplicate explicit space id is refused
+  ✓ a locked element refuses RENAME_SPACE
+  ✓ a locked element refuses RESIZE_SPACE
+  ✓ a locked element refuses DELETE_SPACE
+  ✓ a locked element may still be unlocked
+  ✓ a locked element can still be read
+  ✓ the lock reason is exposed to the reader
+  ✓ the base revision "rev:0000000000000000" is judged without throwing
+  ✓ a mismatched base revision is refused as stale
+  ✓ the base revision "" is judged without throwing
+  ✓ the base revision "not-a-revision" is judged without throwing
+  ✓ a mismatched base revision is refused as stale
+  ✓ the base revision null is judged without throwing
+
+== MALFORMED CONSTRAINTS AND OVERSIZED BATCHES ==
+  ✓ the malformed constraint constraints_array is refused
+  ✓ the malformed constraint unknown_constraint is refused
+  ✓ the malformed constraint unknown_constraint_subject is refused
+  ✓ the malformed constraint negative_max_delta is refused
+  ✓ too many constraint entries are refused
+  ✓ an oversized batch is refused rather than attempted
+  ✓ the oversized batch produced no transaction to commit
+  ✓ a batch of hostile commands still changes nothing
+
+== ERROR ORDERING IS DETERMINISTIC ==
+  ✓ the same hostile command yields the same issue order
+  ✓ issues are ordered by severity, then code, then subject
+  ✓ every issue names its code, severity and subject
+
+──────────────────────────────────────────────
+AUTHORING ADVERSARIAL: 519 passed, 0 failed

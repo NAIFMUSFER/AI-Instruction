@@ -65,9 +65,10 @@ class RoomAccess(unittest.TestCase):
         self.assertFalse(any("ROOM_UNREACHABLE" in issue for issue in issues), issues)
         self.assertIn(stats["access"]["status"], ("PARTIAL", "NOT_EVALUATED"))
 
-    def test_unsupported_shape_and_compiler_failure_are_explicitly_unevaluated(self):
-        r = room("polygon", 0); r["polygon"] = [[0, 0], [4, 0], [0, 4]]
+    def test_invalid_shape_and_compiler_failure_are_explicitly_unevaluated(self):
+        r = room("polygon", 0); r["polygon"] = [[0, 0], [4, 4], [0, 4], [4, 0]]
         issues, stats = V.validate_building(model([r]))
+        self.assertTrue(any("POLYGON_INVALID" in issue for issue in issues))
         self.assertFalse(any("ROOM_UNREACHABLE" in issue for issue in issues))
         self.assertEqual(stats["access"]["status"], "NOT_EVALUATED")
         with patch.object(AR, "compile_architecture", side_effect=ValueError("private-input")):

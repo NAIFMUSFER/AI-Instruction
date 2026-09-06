@@ -1,0 +1,103 @@
+{
+  "building": {
+    "site": {
+      "w": 20,
+      "d": 25
+    },
+    "wall_h": 3,
+    "wall_t": 0.15,
+    "floor_height": 3.2,
+    "levels": [
+      {
+        "index": 0,
+        "template": "plan",
+        "elevation": 7
+      }
+    ],
+    "floors": {
+      "plan": {
+        "rooms": [
+          {
+            "id": "polygon",
+            "rect": [
+              0,
+              0,
+              6,
+              6
+            ],
+            "polygon": [
+              [
+                0,
+                0
+              ],
+              [
+                6,
+                0
+              ],
+              [
+                6,
+                6
+              ],
+              [
+                4,
+                6
+              ],
+              [
+                4,
+                2
+              ],
+              [
+                2,
+                2
+              ],
+              [
+                2,
+                6
+              ],
+              [
+                0,
+                6
+              ]
+            ],
+            "walls": "none",
+            "objects": [
+              {
+                "kind": "box",
+                "x": 1,
+                "z": 4,
+                "w": 0.8,
+                "d": 0.8,
+                "count": 3,
+                "pitch": 2
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "meta": {
+      "strict": true
+    }
+  },
+  "issues": [],
+  "stats": {
+    "levels": 1,
+    "rooms": 1,
+    "points": 0,
+    "vertical_alignment": {
+      "status": "NOT_APPLICABLE",
+      "checked_groups": 0,
+      "unresolved": [],
+      "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+    },
+    "access": {
+      "status": "COMPLETED",
+      "rooms": 1,
+      "door_edges": 0,
+      "reachable_rooms": 1,
+      "unreachable_rooms": [],
+      "unresolved_rooms": [],
+      "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+    }
+  }
+}

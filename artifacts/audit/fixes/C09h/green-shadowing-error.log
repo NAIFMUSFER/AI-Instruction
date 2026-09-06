@@ -1,0 +1,48 @@
+test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) ... ok
+test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) ... ok
+test_point_in_the_missing_l_notch_is_outside (__main__.PolygonValidator.test_point_in_the_missing_l_notch_is_outside) ... ok
+test_real_polygon_overlap_is_still_detected (__main__.PolygonValidator.test_real_polygon_overlap_is_still_detected) ... ERROR
+test_shared_diagonal_is_not_an_overlap_and_transmits_access (__main__.PolygonValidator.test_shared_diagonal_is_not_an_overlap_and_transmits_access) ... ERROR
+test_short_oblique_edge_bounds_the_opening_width (__main__.PolygonValidator.test_short_oblique_edge_bounds_the_opening_width) ... ok
+test_valid_polygon_door_has_no_false_alert_and_is_reachable (__main__.PolygonValidator.test_valid_polygon_door_has_no_false_alert_and_is_reachable) ... ok
+
+======================================================================
+ERROR: test_real_polygon_overlap_is_still_detected (__main__.PolygonValidator.test_real_polygon_overlap_is_still_detected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 57, in test_real_polygon_overlap_is_still_detected
+    issues, _ = self.validate(b)
+                ^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 19, in validate
+    result = V.validate_building(b)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 537, in validate_building
+    issues.extend(_core_alignment_issues(b, stats))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 173, in _core_alignment_issues
+    for level in building.get("levels") or []:
+                 ^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+
+======================================================================
+ERROR: test_shared_diagonal_is_not_an_overlap_and_transmits_access (__main__.PolygonValidator.test_shared_diagonal_is_not_an_overlap_and_transmits_access)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 47, in test_shared_diagonal_is_not_an_overlap_and_transmits_access
+    issues, stats = self.validate(b)
+                    ^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 19, in validate
+    result = V.validate_building(b)
+             ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 537, in validate_building
+    issues.extend(_core_alignment_issues(b, stats))
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 173, in _core_alignment_issues
+    for level in building.get("levels") or []:
+                 ^^^^^^^^^^^^
+AttributeError: 'tuple' object has no attribute 'get'
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.008s
+
+FAILED (errors=2)

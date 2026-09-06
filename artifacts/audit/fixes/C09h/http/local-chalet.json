@@ -1,0 +1,29 @@
+{
+  "url": "http://127.0.0.1:8001/v1/understand",
+  "method": "POST",
+  "request": {
+    "text": "شاليه 3 أدوار على أرض 20×25 م. في الأرضي صالة 6×5 م ومطبخ 4×4 م ودرج 3×4 م، وفي كل من الدورين العلويين غرفتا نوم 4×4 م وحمام 2×3 م، والدرج في الموضع نفسه بين الأدوار.",
+    "site_w": 20,
+    "site_d": 25,
+    "floors": 3,
+    "strict": true,
+    "btype": "residential"
+  },
+  "status": 503,
+  "headers": {
+    "x-request-id": "req_1debd4b341894273",
+    "content-type": "application/json"
+  },
+  "body": {
+    "ok": false,
+    "error": {
+      "code": "ACS_UPSTREAM_NOT_CONFIGURED",
+      "message": "مفتاح المحرّك غير مضبوط على الخادم.",
+      "request_id": "req_1debd4b341894273",
+      "retryable": false,
+      "upstream": null
+    },
+    "contract": "acs-error-envelope/1.0.0"
+  },
+  "seconds": 0.202
+}

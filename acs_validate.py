@@ -6,9 +6,11 @@
 # =============================================================================
 
 import math
+import acs_polygon as POLY
 
 OPENING_EDGE_TOLERANCE_M = 0.05  # existing horizontal tolerance, metres
 GEOMETRY_EPSILON_M = 1e-6        # floating-point comparisons, not a code limit
+GEOMETRY_AREA_EPSILON_M2 = 1e-6  # numerical area comparison, not a design allowance
 
 MIN_ROOM_AREA = 1.0        # م² — أصغر من ذلك غالباً خطأ
 SPLIT_AREA = 30.0          # م² — حيّز أكبر من هذا يجب تفتيته لغرف (سكني فقط)
@@ -64,6 +66,12 @@ def _finite_number(value):
 
 def _opening_issues(room, template, width, depth, wall_height):
     issues = []
+    polygon = None
+    if "polygon" in room:
+        try:
+            polygon = POLY.room_ring(room)
+        except ValueError as error:
+            return ["[%s/%s] %s" % (template, room.get("id", "?"), error)]
     host_height = _finite_number(room.get("wall_h", wall_height))
     for kind in ("doors", "windows"):
         for index, opening in enumerate(room.get(kind) or []):
@@ -74,8 +82,17 @@ def _opening_issues(room, template, width, depth, wall_height):
                 add("OPENING_INVALID", "تعريف الفتحة ليس كائناً.")
                 continue
             edge = opening.get("edge")
-            if edge not in ("N", "S", "E", "W"):
+            span = None
+            if polygon is not None:
+                index = opening.get("edge_index")
+                if isinstance(index, bool) or not isinstance(index, int) or not 0 <= index < len(polygon):
+                    add("OPENING_EDGE_INVALID", "edge_index يجب أن يحدد حافة فعلية من المضلع.")
+                else:
+                    span = math.dist(polygon[index], polygon[(index+1) % len(polygon)])
+            elif edge not in ("N", "S", "E", "W"):
                 add("OPENING_EDGE_INVALID", "الحافة يجب أن تكون N أو S أو E أو W.")
+            else:
+                span = width if edge in ("N", "S") else depth
             values = {"offset": opening.get("offset"),
                       "width": opening.get("width", 0.9 if kind == "doors" else 1.2),
                       "height": opening.get("height", 2.1 if kind == "doors" else 1.6),
@@ -93,8 +110,7 @@ def _opening_issues(room, template, width, depth, wall_height):
                 add("OPENING_HEIGHT_NON_POSITIVE", "ارتفاع الفتحة يجب أن يكون موجباً.")
             if sill < 0:
                 add("WINDOW_SILL_NEGATIVE", "أسفل النافذة يقع تحت منسوب الأرضية.")
-            if edge in ("N", "S", "E", "W") and ow > 0:
-                span = width if edge in ("N", "S") else depth
+            if span is not None and ow > 0:
                 if off - ow / 2 < -OPENING_EDGE_TOLERANCE_M or off + ow / 2 > span + OPENING_EDGE_TOLERANCE_M:
                     add("OPENING_OUTSIDE_WALL", "الفتحة خارج طول الجدار المضيف.")
             if host_height is None or host_height <= 0:
@@ -244,7 +260,7 @@ def _access_issues(building, stats):
         room = source.get(space["space_id"], {})
         if _is_envelope(room.get("id")):
             unsupported_levels.add(space["level_index"])
-        if space["boundary_basis"] != "rectangle_edges":
+        if space["boundary_basis"] not in ("rectangle_edges", "polygon_edges"):
             uncertain.add(sid); unsupported_levels.add(space["level_index"])
             continue
         valid_spaces += 1
@@ -368,6 +384,14 @@ def validate_building(b):
             if w <= 0 or d <= 0:
                 issues.append("[%s/%s] ROOM_DIMENSIONS_INVALID: العرض والعمق يجب أن يكونا موجبين." % (tmpl, rid)); continue
             area = w * d
+            polygon = None
+            if "polygon" in r:
+                try:
+                    polygon = POLY.room_ring(r)
+                except ValueError as error:
+                    issues.append("[%s/%s] %s" % (tmpl, rid, error))
+                    continue
+                area = abs(POLY.signed_area(polygon))
 
             # داخل حدود الأرض
             if x < -0.01 or z < -0.01 or x + w > W + 0.01 or z + d > D + 0.01:
@@ -448,21 +472,32 @@ def validate_building(b):
                 if px is None or pz is None:
                     issues.append("[%s/%s/points/%d] POINT_NUMBER_INVALID: إحداثيات النقطة غير منتهية." % (tmpl, rid, pi))
                     continue
-                if px < -0.05 or pz < -0.05 or px > w + 0.05 or pz > d + 0.05:
+                outside = (not POLY.contains_point(polygon, [x+px, z+pz]) if polygon is not None else
+                           px < -0.05 or pz < -0.05 or px > w + 0.05 or pz > d + 0.05)
+                if outside:
                     issues.append("[%s/%s/points/%d] POINT_OUTSIDE_ROOM: نقطة %s خارج حدود الغرفة (x=%.2f z=%.2f)."
                                   % (tmpl, rid, pi, p.get("type"), px, pz))
 
             issues.extend(_item_geometry_issues(r, tmpl, w, d, stats))
             issues.extend(_opening_issues(r, tmpl, w, d, b.get("wall_h", 3.0)))
 
-            rects.append((rid, (x, z, w, d)))
+            rects.append((rid, (x, z, w, d), polygon))
 
         # التداخل — (الغلاف الخارجي يحتوي بقية الأحياز فنستثنيه)
         rects = [rc for rc in rects if not _is_envelope(rc[0])]
         seen = 0
         for i in range(len(rects)):
             for j in range(i + 1, len(rects)):
-                if _overlap(rects[i][1], rects[j][1]):
+                left, right = rects[i], rects[j]
+                if left[2] is None and right[2] is None:
+                    overlap = _overlap(left[1], right[1])
+                else:
+                    rings = [left[2] if left[2] is not None else POLY.rect_ring(left[1]),
+                             right[2] if right[2] is not None else POLY.rect_ring(right[1])]
+                    overlap_area = (sum(abs(POLY.signed_area(ring)) for ring in rings)
+                                    - sum(abs(POLY.signed_area(cell)) for cell in POLY.cells(rings)))
+                    overlap = overlap_area > GEOMETRY_AREA_EPSILON_M2
+                if overlap:
                     issues.append("[%s] تداخل بين '%s' و'%s' — أزِح إحداهما."
                                   % (tmpl, rects[i][0], rects[j][0]))
                     seen += 1

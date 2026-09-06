@@ -110,5 +110,13 @@
     "tree": "bf6ebcc9a4d9c1d85841eb77d5a649d553c17f62",
     "tree_equal": true,
     "original_commit_object": "tree bf6ebcc9a4d9c1d85841eb77d5a649d553c17f62\nparent 7eb13516d47261654bb86a9a9e9b9a40049856cb\nauthor Codex <codex@openai.com> 1788726124 +0200\ncommitter Codex <codex@openai.com> 1788726124 +0200\n\nfix: match IFC import edits to the correct storey — acs_bim.py\n"
+  },
+  {
+    "issue": "C09g",
+    "original_commit": "d416d7a0cc3cdec75e6f00d66bbdeb49a754cfe6",
+    "published_commit": "ed80077cfd0d3db9fd1d58123cd8e46167ec3c3e",
+    "tree": "638f2705f5989d36f90c6edf6ba671f2b39cff2a",
+    "tree_equal": true,
+    "original_commit_object": "tree 638f2705f5989d36f90c6edf6ba671f2b39cff2a\nparent cfbb2c90dcd92ece858d29ae88bcea14bc9e87d0\nauthor Codex <codex@openai.com> 1788726689 +0200\ncommitter Codex <codex@openai.com> 1788726689 +0200\n\nfix: compare actual polygon geometry in IFC proposals — acs_bim.py\n"
   }
 ]

@@ -1,0 +1,223 @@
+
+== §1 — NO DESIGN, NO LOADS, NO CODE ==
+  ✓ the structural spec names no structural code
+  ✓ regulatory rule count is still zero
+  ✓ real occupancy classification count is still zero
+  ✓ browser spec is byte-identical to acs_struct.json
+  ✓ ten structural element types declared
+  ✓ DESIGNED / SAFE / COMPLIANT are not model statuses
+  ✓ UNSAFE / DANGEROUS / CODE_VIOLATION are not severities
+  ✓ rule is not a structural provenance value
+  ✓ no compiled structural element carries a load, capacity or compliance field
+  ✓ no compiled output uses structural-compliance language
+  ✓ the language actually used is representational
+
+== §2 — THE SYSTEM IS NEVER INFERRED FROM BUILDING TYPE ==
+  ✓ a warehouse is not given steel just because it is a warehouse
+  ✓ a warehouse column with no stated section keeps section=null
+  ✓ a villa is concrete only because the fixture says so
+  ✓ a model with no structural block produces no structural element
+  ✓ and that model is still perfectly valid
+  ✓ the compiler never invents a foundation to stand the 3D model on
+
+== §3 — PROVENANCE AND STATUS ==
+  ✓ every element records a provenance from the declared vocabulary
+  ✓ a fixture-sourced model is not called verified data
+  ✓ test_fixture is not in the verified-source list
+  ✓ an undeclared status is derived, never assumed
+  ✓ ai_inference is a distinct provenance from a verified one
+  ✓ the model as a whole is never marked regulatory
+  ✓ synthetic fixtures declare themselves synthetic
+
+== §4 — GRID ==
+  ✓ one grid system with six lines
+  ✓ X and Z grids are both supported
+  ✓ a grid line records whether its position was stated
+  ✓ a grid system carries its own origin and rotation
+  ✓ multiple grid systems per building are representable
+  ✓ a rotated grid is not assumed to lie on the project world axes
+  ✓ an unresolved grid reference is reported, not silently dropped
+  ✓ a suggested grid is a SUGGESTION, never model truth
+  ✓ every suggested line is sourced system_suggested, not user
+  ✓ a suggestion is not written into the model
+  ✓ no spacing supplied ⇒ no grid is invented
+  ✓ no footprint ⇒ the suggestion refuses rather than guessing
+  ✓ the suggestion says in writing that it is not design
+
+== §5 — COLUMNS ==
+  ✓ nine villa columns compile
+  ✓ a column height comes from the architectural levels, not the renderer
+  ✓ a column names the levels it spans
+  ✓ a stated section is carried verbatim
+  ✓ a column with no section keeps section=null
+  ✓ and that is reported as INFO, never as an error
+  ✓ structural_role stays unknown unless the model states it
+
+== §6 — DISPLAY FALLBACK IS NEVER STRUCTURAL DATA ==
+  ✓ an unknown section still yields render geometry
+  ✓ but that geometry is labelled display_fallback
+  ✓ and the semantic section stays null beside it
+  ✓ every render item declares where its geometry came from
+  ✓ the warehouse render items are all fallback-driven
+  ✓ the villa render items are model-driven
+  ✓ a fallback never appears in the rule inputs
+  ✓ the spec states the fallback policy in writing
+  ✓ compiling does not write the fallback back into the model
+
+== §7 — BEAMS ==
+  ✓ seven declared beams and not one auto-connected pair
+  ✓ no beam was invented between neighbouring columns
+  ✓ a beam resolves both endpoints to structural nodes
+  ✓ beam length is measured, not assumed
+  ✓ a beam naming a missing node is reported twice: bad ref and unresolved endpoint
+  ✓ a beam given bare points is flagged floating, not silently accepted
+  ✓ a zero-length beam is an ERROR
+
+== §8 — STRUCTURAL SLAB / WALL / CORE ARE NOT THE ARCHITECTURAL ONES ==
+  ✓ the architectural slabs are untouched by the structural layer
+  ✓ a structural slab exists only where the model declares one
+  ✓ a structural slab says it is a separate element
+  ✓ an architectural wall is never reclassified as structural
+  ✓ a shear wall role appears only because the fixture states it
+  ✓ a wall with no stated role stays unknown
+  ✓ an elevator shaft is not called a lateral core by itself
+  ✓ a structural core spanning levels emits CORE_SPANS_LEVELS
+  ✓ the architectural stair core is still its own element
+
+== §9 — FOUNDATIONS ==
+  ✓ nine isolated footings, exactly as declared
+  ✓ no soil property is ever produced
+  ✓ a foundation never claims a bearing capacity
+  ✓ an unrecognised foundation type falls back to other, not to a guess
+  ✓ a foundation with no supported member is reported
+  ✓ a foundation naming a member that does not exist is an ERROR
+  ✓ a foundation outside the site is reported factually
+  ✓ the foundation type is never chosen from the building type
+
+== §10 — MATERIALS ==
+  ✓ a material label alone carries no strength
+  ✓ no elastic modulus or density is inferred
+  ✓ every optional property carries its own provenance
+  ✓ a supplied property is kept with imported provenance
+  ✓ the spec states that concrete implies no f′c
+  ✓ an unknown material stays unknown
+  ✓ a member with no material reference is reported as INFO
+  ✓ a member naming a missing material is an ERROR
+
+== §11 — NODES AND LEVEL ALIGNMENT ==
+  ✓ nodes take their elevation from the architectural level table
+  ✓ a node with an invalid level reference is reported
+  ✓ no member floats on renderer-only coordinates
+  ✓ the structural level table mirrors the architectural one
+
+== §12 — COLUMN STACKING, OFFSET AND ALIGNMENT BREAK ==
+  ✓ a column directly over another is aligned
+  ✓ a 0.4 m shift is reported as an offset, not as aligned
+  ✓ an offset is a WARNING and no transfer beam is designed
+  ✓ a column with nothing under it is an alignment break, reported only
+  ✓ no transfer element was added to the model by the break
+  ✓ alignment states never leave the declared vocabulary
+  ✓ a stack edge is confirmed only when actually aligned
+  ✓ a three-storey stack aligns on every level
+
+== §13 — RELATIONSHIPS ARE NOT LOAD PATHS ==
+  ✓ every relationship type is in the declared vocabulary
+  ✓ every relationship carries the not-a-load-path note
+  ✓ a column touching a beam yields COLUMN_SUPPORTS with an explicit disclaimer
+  ✓ no relationship says a member carries anything
+  ✓ the spec states the rule in capitals
+  ✓ a declared slab support is confirmed; an undeclared one is never invented
+  ✓ a foundation placement relationship says no bearing check was made
+  ✓ relationship ids are unique and namespaced
+
+== §14 — STRUCTURAL ↔ ARCHITECTURAL INTERACTION ==
+  ✓ a column standing in a door opening is reported
+  ✓ a column inside a stair void is reported
+  ✓ a column inside the elevator travel path is reported separately
+  ✓ every clash states the basis it was tested on
+  ✓ a beam along a wall carrying a door is INFO and says clearance is not evaluated
+  ✓ a column inside a room is a spatial relationship, not a prohibition
+  ✓ a column far outside the footprint is reported, not moved
+  ✓ no clash is auto-fixed — the model is returned unchanged
+
+== §15 — INTEGRITY VALIDATION ==
+  ✓ the deliberately broken fixture triggers every integrity check
+  ✓ every issue code is declared in the spec with a severity
+  ✓ every issue carries a severity from the declared list
+  ✓ issues are ordered ERROR first, then WARNING, then INFO
+  ✓ no issue is a code-compliance verdict
+  ✓ an unknown structural collection is reported and NOT interpreted
+  ✓ a foreign building id is caught rather than silently re-namespaced
+
+== §16 — DETERMINISM, NAMESPACING AND TRANSFORMS ==
+  ✓ compiling twice gives byte-identical output
+  ✓ the compiler never mutates the model it reads
+  ✓ a second building namespaces every structural id
+  ✓ two buildings can never collide on an id
+  ✓ a transform never changes the compiled geometry
+  ✓ the building transform is applied on read
+  ✓ rotation is applied about the building origin
+  ✓ grid lines respect the building transform too
+
+== §17 — REVISION HASH ==
+  ✓ moving a column changes the model hash
+  ✓ removing a beam changes the model hash
+  ✓ changing a section changes the model hash
+  ✓ adding a foundation changes the model hash
+  ✓ changing a material property changes the model hash
+  ✓ toggling layer visibility does NOT change the model hash
+  ✓ moving the camera still does not change the hash
+  ✓ compiling the structure does not change the hash
+  ✓ a model with no structural block hashes exactly as before
+
+== §18 — RENDER AND EXPORT ==
+  ✓ render items use the STRUCT| naming convention
+  ✓ every structural kind that has geometry is represented
+  ✓ render items never carry an engineering verdict
+  ✓ a column render box sits between its two level elevations
+  ✓ grid render items are lines, not boxes
+  ✓ the structural layer is separate from the architectural layers
+  ✓ colour distinguishes element kind only, never status
+
+== §19 — RULE ENGINE CONTRACT (INPUTS ONLY) ==
+  ✓ structural facts are exposed as future rule inputs
+  ✓ a missing fact stays missing rather than defaulting
+  ✓ no regulatory rule was added anywhere
+  ✓ the rule inputs contain no threshold, limit or verdict
+
+== §20 — NO ARCHITECTURAL / NAV / EGRESS / DISTANCE REGRESSION ==
+  ✓ villa: adding a structural block changes no architectural element
+  ✓ hotel: adding a structural block changes no architectural element
+  ✓ relationships are identical with and without the structural block
+  ✓ navigation is identical with and without the structural block
+  ✓ egress is identical with and without the structural block
+  ✓ walking distance is unchanged — a column is not an obstacle in this phase
+  ✓ and the model says so in writing
+
+== §21 — BUILDING-TYPE NEUTRALITY ACROSS FIXTURES ==
+  ✓ villa_struct: compiles through the same element vocabulary
+  ✓ villa_struct: every issue code is declared
+  ✓ villa_struct: no member claims adequacy
+  ✓ villa_struct: the structural model is independent of the program registry
+  ✓ hotel_struct: compiles through the same element vocabulary
+  ✓ hotel_struct: every issue code is declared
+  ✓ hotel_struct: no member claims adequacy
+  ✓ hotel_struct: the structural model is independent of the program registry
+  ✓ warehouse_struct: compiles through the same element vocabulary
+  ✓ warehouse_struct: every issue code is declared
+  ✓ warehouse_struct: no member claims adequacy
+  ✓ warehouse_struct: the structural model is independent of the program registry
+  ✓ mixed_struct: compiles through the same element vocabulary
+  ✓ mixed_struct: every issue code is declared
+  ✓ mixed_struct: no member claims adequacy
+  ✓ mixed_struct: the structural model is independent of the program registry
+  ✓ three different programs share one structural system
+  ✓ no structural property changed with the occupancy or program
+
+== §22 — SECURITY ==
+  ✓ no eval / Function in the structural layer
+  ✓ no network call in the structural layer
+  ✓ a hostile element id cannot escape into markup
+  ✓ a NaN coordinate is rejected rather than propagated
+
+STRUCTURE: 177 passed, 0 failed

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "acs_validate.py",
+    "source_sha256": "5e17b51b35fd5f52b0924e86b7ae966650f698daea4e7b09e76aef9c98307d4b",
+    "tested_sha256": "5e17b51b35fd5f52b0924e86b7ae966650f698daea4e7b09e76aef9c98307d4b",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_polygon_validator.py",
+    "source_sha256": "acf467f4a083219f0694e1854603af1a5ca0f9e6685ecbb3b930551e59a8f5a2",
+    "tested_sha256": "acf467f4a083219f0694e1854603af1a5ca0f9e6685ecbb3b930551e59a8f5a2",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_room_access.py",
+    "source_sha256": "8af8cd26c12b3c1e1a645f47b26a015f1991043a7c2eeecf2b7f5313277bbc0b",
+    "tested_sha256": "8af8cd26c12b3c1e1a645f47b26a015f1991043a7c2eeecf2b7f5313277bbc0b",
+    "equal": true
+  }
+]

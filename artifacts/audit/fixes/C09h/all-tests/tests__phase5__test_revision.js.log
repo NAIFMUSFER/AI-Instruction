@@ -1,0 +1,106 @@
+
+== §12 — REVISION HISTORY IS APPEND-ONLY ==
+  ✓ a new project starts with exactly one revision
+  ✓ the initial revision has no parent
+  ✓ the initial revision names the model hash
+  ✓ commit 1 succeeded
+  ✓ commit 2 succeeded
+  ✓ commit 3 succeeded
+  ✓ three commits produced four revisions
+  ✓ every revision names its parent except the first
+  ✓ every revision id is unique
+  ✓ every revision id is deterministic in shape
+  ✓ no revision carries a timestamp inside its identity
+  ✓ created_at is still recorded for audit even though it is not in the identity
+  ✓ every earlier revision remains addressable
+  ✓ every stored revision model matches its recorded hash
+
+== §13 — UNDO IS A NEW REVISION, NOT A DELETION ==
+  ✓ R1 -> R2 MOVE_WALL committed
+  ✓ the undo succeeds
+  ✓ R3 is a new revision, not R1
+  ✓ the undo restores the R1 model hash
+  ✓ the undo revision records which revision it reverts
+  ✓ history grew rather than shrank
+  ✓ R2 is still present in history
+  ✓ the R2 model is still addressable
+  ✓ the undo is recorded in the audit log
+  ✓ the undo audit entry names the reverted revision
+  ✓ undoing the initial revision is refused
+  ✓ undoing an unknown revision is refused
+
+== §14 — REDO IS ALSO A NEW REVISION ==
+  ✓ the redo succeeds
+  ✓ the redo restores the post-edit hash
+  ✓ the redo appended a fourth revision
+  ✓ the mutable pointer never moved backwards
+  ✓ no history entry disappeared
+  ✓ the redo revision names what it redoes
+  ✓ redo with nothing to redo is refused
+  ✓ undo and redo can alternate without losing history
+
+== §15 — REVISION DIFF ==
+  ✓ the diff reports changed paths
+  ✓ the diff names the changed element
+  ✓ the diff carries before and after values for each change
+  ✓ the before value differs from the after value in every reported change
+  ✓ the counts agree with the lists
+  ✓ an added element is reported as added
+  ✓ a removed element is reported as removed
+  ✓ a diff against itself is empty
+
+== §16 — DEPENDENCY INVALIDATION AFTER COMMIT ==
+  ✓ the commit publishes a stale-artifact list
+  ✓ every stale artifact is one of the declared artifacts
+  ✓ a space resize marks ARCHITECTURE stale
+  ✓ a space resize marks COORDINATION stale
+  ✓ a space resize marks VISUAL stale
+  ✓ a space resize marks RUNTIME stale
+  ✓ a space resize marks NAVIGATION stale
+  ✓ a space resize marks EGRESS stale
+  ✓ a space resize marks DISTANCE stale
+  ✓ a space resize marks RULE_RESULTS stale
+  ✓ a space resize marks SNAPSHOTS stale
+  ✓ a space resize marks PRESENTATION_RENDERS stale
+  ✓ a rename does not mark the runtime scene stale
+  ✓ a lock marks nothing stale
+  ✓ a stale rule-result snapshot is invalidated by model hash, not re-judged
+  ✓ no committed change claims a new PASS or FAIL
+  ✓ the derived data of the old revision is not silently reused
+
+== §71/§72/§89 — TEST K: SAVE AND LOAD ==
+  ✓ three edits committed
+  ✓ the serialised project carries the canonical model
+  ✓ the serialised project carries the revision pointer
+  ✓ the serialised project carries history metadata
+  ✓ no runtime state is serialised
+  ✓ no transient authoring state is serialised
+  ✓ the serialisation note states the exclusion
+  ✓ the serialised text carries no preview marker
+  ✓ the project reloads
+  ✓ the reloaded model hash is identical
+  ✓ the reloaded revision pointer is identical
+  ✓ the reloaded history is intact
+  ✓ runtime state starts fresh and was not restored
+  ✓ editing continues from the reloaded project
+  ✓ a payload whose stored hash disagrees with its model is reported
+  ✓ a payload with no model is refused
+  ✓ a non-object payload is refused
+  ✓ serialising without history still carries the model and pointer
+
+== §73/§74/§75 — DETERMINISM AND STABLE IDS ==
+  ✓ the same base plus the same command yields a byte-identical candidate
+  ✓ the new model hash is identical
+  ✓ the new revision id is identical
+  ✓ the transaction id is identical
+  ✓ an ADD command generates the same deterministic id twice
+  ✓ the generated id is derived from the command, not from a clock
+  ✓ a different command yields a different generated id
+  ✓ a colliding explicit id is refused rather than overwritten
+  ✓ a second automatic id elsewhere in the same model does not collide
+  ✓ a deterministic id that already exists is resolved, never overwritten
+  ✓ adding the same space twice at the same place is refused as an overlap
+  ✓ twenty repeated commits of the same edit all produce the same revision
+
+──────────────────────────────────────────────
+REVISIONS: 89 passed, 0 failed

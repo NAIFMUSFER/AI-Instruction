@@ -1,0 +1,12 @@
+test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) ... ok
+test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) ... ok
+test_point_in_the_missing_l_notch_is_outside (__main__.PolygonValidator.test_point_in_the_missing_l_notch_is_outside) ... ok
+test_real_polygon_overlap_is_still_detected (__main__.PolygonValidator.test_real_polygon_overlap_is_still_detected) ... ok
+test_shared_diagonal_is_not_an_overlap_and_transmits_access (__main__.PolygonValidator.test_shared_diagonal_is_not_an_overlap_and_transmits_access) ... ok
+test_short_oblique_edge_bounds_the_opening_width (__main__.PolygonValidator.test_short_oblique_edge_bounds_the_opening_width) ... ok
+test_valid_polygon_door_has_no_false_alert_and_is_reachable (__main__.PolygonValidator.test_valid_polygon_door_has_no_false_alert_and_is_reachable) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.011s
+
+OK
