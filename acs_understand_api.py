@@ -371,6 +371,22 @@ _POOL = concurrent.futures.ThreadPoolExecutor(
     thread_name_prefix="acs-gen")
 _JOBS = JOBS.default_runner()
 
+# ── أهداف الوظائف: أسماءٌ لا حرفيّاتٍ مبعثرة ────────────────────────────────
+# لا يتغيّر شيء في زمن التشغيل — القيم هي القيم نفسها. الفرق أن «أي وحدة
+# تنفّذ التوليد» صار نقطةَ ضبطٍ مسمّاة بدل أربع سلاسل متكرّرة.
+#
+# ولماذا يهمّ: العامل يعمل في **عملية أخرى** تستورد الوحدة باسمها
+# (`importlib.import_module`). فترقيعُ `acs_understand.understand` في عملية
+# الاختبار لا يبلغ الابنة إطلاقاً — تنادي الأصل. ثلاثة توكيدات في
+# tests/phase9_2/test_backend_contract.py كانت تعتمد على ذلك الترقيع، فكانت
+# تُدخِل عطلاً لا يراه الخادم قطّ، ويصل المستخدمَ عطلُ الأصل بدله:
+#     متوقَّع 504/ACS_TIMEOUT · واقع 502/ACS_UPSTREAM_UNKNOWN (RuntimeError)
+# صار بإمكان الاختبار أن يوجّه الهدف إلى وحدة عطلٍ حقيقية، فيقع العطل حيث
+# يقع في الإنتاج: داخل العامل، وعبر حدّ العملية نفسه.
+TARGET_UNDERSTAND = "acs_understand:understand"
+TARGET_UNDERSTAND_IMAGES = "acs_understand:understand_images"
+TARGET_APPLY_NOTES = "acs_understand:apply_notes"
+
 # ---------------------------------------------------------------------------
 # KI-14/F-46 · مجمّع العمل الحاسوبيّ. مدقّقات الرفع كانت تُستدعى متزامنةً داخل
 # `async def`، فتوقف الحلقة كلّها: ٤٤٩ms لصورة واحدة مقبولة، و١٤٩٠ms لدفعة
@@ -756,7 +772,7 @@ async def understand(req: UnderstandReq, request: Request):
                    strict=bool(req.strict), btype=bt,
                    site_w=req.site_w, site_d=req.site_d, floors=req.floors)
     try:
-        building = await run_job("acs_understand:understand", _kwargs,
+        building = await run_job(TARGET_UNDERSTAND, _kwargs,
                                  "الفهم والتوليد", request_id=rid)
     except E.AcsApiError:
         raise                                     # مصنّف سلفاً — لا تُعِد تغليفه
@@ -809,7 +825,7 @@ async def edit(req: EditReq, request: Request):
     # المُوجّه بـtruncate=False فلا يقصّه MAX_DESC_CHARS أيضاً.
     _cap_notes(req.notes)
     try:
-        out = await run_job("acs_understand:apply_notes",
+        out = await run_job(TARGET_APPLY_NOTES,
                             dict(building=req.building, notes=req.notes,
                                  model=_safe_model(req.model)),
                             "تنفيذ التعديلات", request_id=rid)
@@ -871,7 +887,7 @@ async def understand_image(
     bt = btype if (btype and btype != "auto") else None
     _strict = str(strict) in ("1", "true", "True")
     try:
-        building = await run_job("acs_understand:understand_images",
+        building = await run_job(TARGET_UNDERSTAND_IMAGES,
                                  dict(images=imgs, site_w=site_w, site_d=site_d,
                                       floors=floors, model=_safe_model(model),
                                       notes=notes, strict=_strict, btype=bt),
@@ -916,7 +932,7 @@ async def understand_pdf(request: Request, file: UploadFile = File(...),
                 "/v1/understand/image ليُقرأ بالرؤية (الموقع يفعل ذلك تلقائياً).")
         text = _cap(text)
         building = await run_job(
-            "acs_understand:understand",
+            TARGET_UNDERSTAND,
             dict(description=text, model=_safe_model(model),
                  btype=(btype if (btype and btype != "auto") else None)),
             "فهم PDF", request_id=rid)

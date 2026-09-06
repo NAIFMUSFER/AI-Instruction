@@ -141,6 +141,16 @@ jobs:
                    tests/remediation/test_webgl_diagnostics.js \
                    tests/remediation/test_concurrency.js \
                    tests/remediation/test_persistence.js
+      - name: The bundle extractor needs no installed dependency
+        # This job deliberately does NOT run `npm ci`. That is exactly the
+        # condition under which the extractor used to die on a private
+        # Playwright path, so this is the right job to prove it never returns.
+        shell: bash
+        run: |
+          set -o pipefail
+          bash tools/ci_run.sh --log logs/js-parity.log \
+               --label "bundle extractor (no node_modules)" --runner "node" \
+                   tests/remediation/test_bundle_extractor.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -197,6 +207,8 @@ jobs:
           # ما يكتب outputs/csp_probe.json الذي يمنح test_csp.js ~15 تأكيداً.
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "browser suites (direct)" --runner "node" \
+                   tests/remediation/test_gl_probe_contract.mjs \
+                   tests/remediation/test_pdf_runtime.mjs \
                    tests/deploy/test_viewport_pixels.js \
                    tests/deploy/verify_page_boot.js \
                    tests/remediation/test_csp_style_architecture.js \
@@ -209,7 +221,8 @@ jobs:
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "node-scope scene suites" --runner "node tests/lib/run.js" \
                    tests/remediation/test_model_apply.js \
-                   tests/remediation/test_scene_limits.js || rc=1
+                   tests/remediation/test_scene_limits.js \
+                   tests/remediation/test_alignment_diagnostics.js || rc=1
           exit $rc
       - uses: actions/upload-artifact@v4
         if: always()
@@ -227,6 +240,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install the pinned dependencies
+        # Same latent defect as job 7 had: this job runs a Python suite on a
+        # bare interpreter. It passes today only because that suite happens to
+        # import nothing third-party — one added import would break it for a
+        # reason that has nothing to do with security. Installed, not gambled.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
       - name: tests/security
         shell: bash
         run: |
@@ -320,6 +341,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install the pinned dependencies the remediation suites import
+        # This job used to run 22 suites on a BARE interpreter: checkout,
+        # setup-python, setup-node, then straight into the tests. Six of them
+        # import packages that were therefore never installed, and failed for
+        # that reason alone — no logic defect in any of them:
+        #   test_event_loop · test_upload_security · test_generation_cancel
+        #   test_privacy_boundary · test_api_wiring · test_p0_hardening
+        # Job 1 has always installed requirements.txt; this job simply never
+        # did. Nothing was made optional and no import was wrapped to pass a
+        # test: the dependency is real, so it is installed.
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
       - name: Offline audit + lock contract
         shell: bash
         run: |
@@ -351,25 +385,25 @@ jobs:
                    tests/remediation/test_ci_gate.py \
                    tests/remediation/test_p0_hardening.py \
                    tests/remediation/test_provider_accounting.py \
-                   tests/remediation/test_provider_capability.py
+                   tests/remediation/test_provider_capability.py \
+                   tests/remediation/test_browser_acquisition.py \
+                   tests/remediation/test_asgi_client_contract.py \
+                   tests/remediation/test_ci_dependencies.py \
+                   tests/remediation/test_job_boundary.py \
+                   tests/remediation/test_container_topology.py \
+                   tests/remediation/test_inline_style_sources.py
           rc_suites=$?
           if [ "$rc_audit" -ne 0 ] || [ "$rc_suites" -ne 0 ]; then exit 1; fi
-      - name: CVE scan (advisory — needs the network, does not gate the PR)
+      - name: CVE scan (required — findings or unavailable advisories block release)
         # This is the ONE dependency check that cannot be done offline, so it is
-        # done here where the network exists. It is `continue-on-error` on
-        # purpose: a newly published advisory must not block an unrelated PR,
-        # but it must be visible in the log and in the job summary.
-        continue-on-error: true
+        # required here where the network exists. Findings and service errors
+        # both block ci-required; neither is silently converted into success.
         shell: bash
         run: |
-          set -o pipefail
+          set -euo pipefail
           python -m pip install --upgrade pip pip-audit
-          {
-            echo "=== pip-audit (requirements.txt) ==="
-            pip-audit -r requirements.txt || echo "pip-audit reported findings"
-            echo "=== npm audit (package-lock only) ==="
-            npm audit --package-lock-only || echo "npm audit reported findings"
-          } 2>&1 | tee -a logs/dependency-audit.log
+          pip-audit -r requirements.txt 2>&1 | tee -a logs/dependency-audit.log
+          npm audit --package-lock-only 2>&1 | tee -a logs/dependency-audit.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -391,7 +425,7 @@ jobs:
           node-version: '22'
       - name: Static gates that tools/netlify-build.sh runs after vendoring
         # tools/netlify-build.sh has NO check-only mode: every path in it does a
-        # real `npm pack`. So this job runs the three guards the script invokes
+        # real `npm ci`. So this job runs the three guards the script invokes
         # after vendoring, plus a shell syntax check of the script itself. The
         # vendoring half is exercised for real in the chromium-browser job.
         shell: bash
@@ -428,17 +462,90 @@ jobs:
           mkdir -p logs
           docker build -t acs-engine:ci . 2>&1 | tee logs/docker-build.log
       - name: The image boots and answers /health
+        # لماذا لا `--rm` هنا
+        # ----------------------
+        # كانت الحاوية تُشغَّل بـ`--rm`، فإن سقطت عند الإقلاع حذفها Docker
+        # فوراً. فما وصل السجلّ هو نتيجةُ الحذف لا سببُ السقوط:
+        #     curl: (56) Recv failure: Connection reset by peer
+        #     Error response from daemon: No such container: acs-ci
+        # أي أن الاستثناء الذي أوقف الخادم لم يُطبَع قطّ. الحاوية تبقى الآن
+        # حتى تُقرأ، ثم تُحذف صراحةً.
+        #
+        # هذه الخطوة أداةُ تشخيص لا فرضية: لا تدّعي سبباً (ربط المنفذ، PORT،
+        # نقطة الدخول، تبعية ناقصة) — تطبع ما تقوله الحاوية نفسها. والبوّابة
+        # تبقى كما هي: إن لم يُجب /health خرجت الخطوة بغير صفر.
         shell: bash
         run: |
           set -o pipefail
-          docker run -d --rm -p 8000:8000 -e PORT=8000 --name acs-ci acs-engine:ci
+          say() { printf '\n=== %s ===\n' "$1" | tee -a logs/docker-build.log; }
+          dump() {
+            say "docker ps -a"
+            docker ps -a 2>&1 | tee -a logs/docker-build.log
+            say "docker logs acs-ci (the startup exception, if any)"
+            docker logs acs-ci 2>&1 | tail -300 | tee -a logs/docker-build.log
+            say "docker inspect acs-ci — ExitCode · Error · Cmd · Entrypoint"
+            for f in State.ExitCode State.OOMKilled State.Error State.Status \
+                     State.StartedAt State.FinishedAt Config.Cmd \
+                     Config.Entrypoint Config.User Config.WorkingDir \
+                     Config.ExposedPorts HostConfig.PortBindings; do
+              v=$(docker inspect -f "{{json .$f}}" acs-ci 2>&1 || echo '<unavailable>')
+              printf '%-26s %s\n' "$f" "$v" | tee -a logs/docker-build.log
+            done
+          }
+
+          # ── طوبولوجيا هذه الوظيفة، مُعلَنة لا مفترَضة ────────────────────
+          # الأداة التي أُضيفت في الالتزام السابق أثبتت السبب بدل تخمينه:
+          #     ExitCode 3 · Status exited · Cmd sh -c "uvicorn … --host 0.0.0.0"
+          #     [ACS-BOOT] REFUSING TO START — ACS_ENV=production with a
+          #     process-local rate limiter and no ACS_SINGLE_INSTANCE=1
+          #     acknowledgement.
+          # الصورة تبني وتُقلع؛ الخادم هو من يرفض. والرفض صحيح: حدُّ معدّلٍ
+          # محليّ العملية بلا إقرارٍ يعني أن السقف اليوميّ يتضاعف بعدد النسخ
+          # بصمت. لا يُضعَّف الثابت ولا يُلتفّ عليه بتعديل Dockerfile.
+          #
+          # وهذه الوظيفة تشغّل **حاويةً واحدة** بالضبط: `docker run` واحد،
+          # اسمٌ واحد، ومنفذٌ واحد. فالإقرار هنا وصفٌ صادق للطوبولوجيا التي
+          # تُختبَر، لا التفاف عليها — وهو المخرج الذي يعلنه نصّ الرفض نفسه.
+          # الإنتاج لا يتأثّر: القيم تُمرَّر إلى هذا التشغيل وحده.
+          # واسمُ متغيّر التزامن هو WEB_CONCURRENCY بالضبط — وهو أحد الأسماء
+          # في acs_rate_limit.CONCURRENCY_VARS. اسمٌ غيره يمرّ صامتاً بلا أثر،
+          # فيبدو الإقرار مضبوطاً وهو لا يُقرأ. مثبَّت باختبار.
+          docker run -d -p 8000:8000 -e PORT=8000 \
+            -e ACS_ENV=production \
+            -e ACS_SINGLE_INSTANCE=1 \
+            -e WEB_CONCURRENCY=1 \
+            --name acs-ci acs-engine:ci \
+            2>&1 | tee -a logs/docker-build.log
+
+          healthy=0
           for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:8000/health > /tmp/health.json; then break; fi
+            state=$(docker inspect -f '{{.State.Status}}' acs-ci 2>/dev/null || echo missing)
+            if [ "$state" != "running" ]; then
+              say "container state is '$state' after $((i*2))s — it is not running"
+              break
+            fi
+            if curl -fsS http://127.0.0.1:8000/health > /tmp/health.json 2>/dev/null; then
+              healthy=1
+              break
+            fi
             sleep 2
           done
-          cat /tmp/health.json | tee -a logs/docker-build.log
-          docker logs acs-ci 2>&1 | tail -50 | tee -a logs/docker-build.log
-          docker stop acs-ci
+
+          dump
+          if [ "$healthy" -eq 1 ]; then
+            say "/health"
+            cat /tmp/health.json | tee -a logs/docker-build.log
+          fi
+
+          # التنظيف بعد قراءة كل شيء، وبحراسة الوجود لا بكتم الخطأ.
+          if docker ps -a --format '{{.Names}}' | grep -qx acs-ci; then
+            docker rm -f acs-ci > /dev/null
+          fi
+
+          if [ "$healthy" -ne 1 ]; then
+            echo "::error::the image did not answer /health — see the container logs and inspect output above"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:

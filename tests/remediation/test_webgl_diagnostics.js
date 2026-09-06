@@ -680,8 +680,8 @@ let CHROME = null;
 try {
   CHROME = JSON.parse(execFileSync(process.execPath, ['-e', `
     (async () => {
-      const { chromium } = require(${JSON.stringify(
-        _np.join(ROOT, 'node_modules', 'playwright'))});
+      const PWC = require(${JSON.stringify(
+        _np.join(ROOT, 'tools', 'pw_chromium.js'))});
       const path = require('path'), fs = require('fs'), http = require('http');
       const PUB = ${JSON.stringify(_np.join(ROOT, 'public'))};
       /* F-09/F-11 — الصفحة صارت قشرة تحمّل وحدات ES وورقة أنماط خارجية.
@@ -712,7 +712,7 @@ try {
         fs.createReadStream(p).pipe(rs);
       });
       await new Promise(r => srv.listen(0, '127.0.0.1', r));
-      const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+      const b = await PWC.launch();
       const pg = await b.newPage();
       const bad = [];
       pg.on('response', r => { if (r.status() >= 400)

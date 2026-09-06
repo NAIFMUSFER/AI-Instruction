@@ -22,6 +22,17 @@ const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.05,6000);
 /* حامل اللاعب (dolly): في VR تتحكّم النظارة بالكاميرا، ونحن نحرّك الحامل */
 const player=new THREE.Group(); player.name='PLAYER'; scene.add(player); player.add(camera);
 const orbit=new OrbitControls(camera,renderer.domElement); orbit.enableDamping=true;
+/* OrbitControls يكتب `style.touchAction='none'` على عنصره في المُنشئ — إسناد CSSOM
+   لا تحجبه السياسة، لكنه يُسلسَل سمةَ style في الوثيقة المخدومة (العنصر الأخير
+   الذي قاسته وظيفة CI ٣ بعد إزالة العشرة والكانفس: inlineStyleAttrs = 1).
+   السلوك نفسه تحمله قاعدة `#app > canvas{touch-action:none}` في app.css، فتُزال
+   السمة المُسلسَلة هنا. لا يُكتب المُنشئ هذه القيمة إلا مرّةً واحدة.
+   القراءة قبل الإزالة مقصودة ومقيسة: Blink يُسلسِل سمة style كسولاً، وإزالتها
+   وهي غير مُسلسَلة بعدُ تترك `style=""` قائمةً (قِيس في Chromium 141: set ثم
+   removeAttribute مباشرةً ⇒ hasAttribute=true؛ set ثم getAttribute ثم
+   removeAttribute ⇒ false). القراءة تُزامنها فتُزال فعلاً. */
+renderer.domElement.getAttribute('style');
+renderer.domElement.removeAttribute('style');
 /* ---- متحكّم مشي يعمل على الحاسب والجوال (بلا Pointer Lock) ---- */
 const walkState={active:false, yaw:0, pitch:0, eye:1.6, speed:4, run:1, vx:0, vz:0, vy:0};
 function walkLook(dx,dy){
@@ -394,8 +405,10 @@ function infoQuickColors(o){
   const lbl = surf==='wall'?'لوّن جدران هذه الغرفة':(surf==='floor'?'لوّن الأرضية':'لوّن هذا العنصر');
   const wrap=document.createElement('div'); wrap.className='qcl'; wrap.textContent='🎨 '+lbl+':';
   const bar=document.createElement('div'); bar.className='qc';
-  COLOR_SWATCH.forEach(([nm,hx])=>{
-    const i=document.createElement('i'); i.style.background=hx; i.title=nm;
+  COLOR_SWATCH.forEach(([nm,hx],ix)=>{
+    /* اللون صنفٌ في ورقة الأنماط لا سمة style: القيم عشرةٌ ثابتة معلنة في
+       COLOR_SWATCH، فلا شيء منها ديناميكيّ يستدعي كتابته في العلامة. */
+    const i=document.createElement('i'); i.className=swatchClass(ix); i.title=nm;
     i.onclick=ev=>{ ev.stopPropagation();
       const msg=applyFinish(tag,surf,hx,o); statusEl.textContent=msg; };
     bar.appendChild(i);
@@ -423,6 +436,10 @@ const AR_COLORS={
   'بنفسجي':'#8b5cf6','موف':'#a78bfa','purple':'#8b5cf6','ليلكي':'#c4b5fd',
   'ترابي':'#a89078','رملي':'#dcc9a6','شمبانيا':'#e8d9bd'
 };
+/* صنفُ اللون المقابل لموضعه في COLOR_SWATCH — معرَّف في
+   public/app/styles/app.css (.acs-sw-01 … .acs-sw-10). وجودُ دالّةٍ واحدة
+   يمنع انحراف الترتيب بين القائمة والأصناف. */
+function swatchClass(ix){ return 'acs-sw-'+String(ix+1).padStart(2,'0'); }
 const COLOR_SWATCH=[['أخضر','#22c55e'],['أزرق','#2563eb'],['رمادي','#8b8f96'],['بيج','#e3d5b8'],
   ['أبيض','#f5f5f2'],['أصفر','#facc15'],['أحمر','#e11d48'],['بني','#6b4423'],['بنفسجي','#8b5cf6'],['كحلي','#1e293b']];
 
@@ -674,8 +691,9 @@ function openNote(obj, point){
 /* لوحة الألوان السريعة داخل النافذة */
 (function initSwatches(){
   const box=document.getElementById('nmSwatches'), inp=document.getElementById('nmColor');
-  COLOR_SWATCH.forEach(([nm,hx])=>{
-    const i=document.createElement('i'); i.style.background=hx; i.title=nm; i.dataset.hex=hx;
+  COLOR_SWATCH.forEach(([nm,hx],ix)=>{
+    const i=document.createElement('i'); i.className=swatchClass(ix); i.title=nm;
+    i.dataset.hex=hx;
     i.onclick=()=>{ inp.value=hx;
       [...box.children].forEach(c=>c.classList.remove('on')); i.classList.add('on'); };
     box.appendChild(i);
@@ -956,7 +974,10 @@ drop.addEventListener('dragleave',()=>drop.style.display='none');
 addEventListener('drop',e=>{e.preventDefault();drop.style.display='none';
   const f=e.dataTransfer.files[0];if(f&&/^image\//.test(f.type))useDoorImage(f);});
 
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  /* updateStyle=false: الأبعاد من ورقة الأنماط (#app > canvas)، فلا يكتب
+     three.js سمة style على الكانفس. */
+  renderer.setSize(innerWidth,innerHeight,false);});
 let last=performance.now();
 /* ==================================================================
    الواقع الافتراضي — Meta Quest 3 وغيرها عبر WebXR
@@ -2466,13 +2487,13 @@ function dxfToBuilding(text,W,D,nF){
 /* ---- استقبال الملف ---- */
 function fileToImage(f){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>res(img);img.onerror=rej;img.src=URL.createObjectURL(f);});}
 async function loadPdfJs(){
-  const pdfjs=await import('/vendor/pdfjs@4.0.379/pdf.min.mjs');   // محلي — بلا CDN
-  pdfjs.GlobalWorkerOptions.workerSrc='/vendor/pdfjs@4.0.379/pdf.worker.min.mjs';
+  const pdfjs=await import('/vendor/pdfjs@4.10.38/pdf.min.mjs');   // محلي — بلا CDN
+  pdfjs.GlobalWorkerOptions.workerSrc='/vendor/pdfjs@4.10.38/pdf.worker.min.mjs';
   return pdfjs;
 }
 async function pdfFirstPage(f){
   const pdfjs=await loadPdfJs();
-  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf}).promise; const page=await pdf.getPage(1);
+  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf,isEvalSupported:false}).promise; const page=await pdf.getPage(1);
   const vp=page.getViewport({scale:2}); const c=document.createElement('canvas'); c.width=vp.width;c.height=vp.height;
   await page.render({canvasContext:c.getContext('2d'),viewport:vp}).promise;
   const img=new Image(); await new Promise(r=>{img.onload=r;img.src=c.toDataURL('image/png');}); return img;
@@ -2480,7 +2501,7 @@ async function pdfFirstPage(f){
 /* استخراج نص الـPDF مع إعادة بناء الأسطر حسب الإحداثي الرأسي */
 async function pdfText(f){
   const pdfjs=await loadPdfJs();
-  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf}).promise; let out='';
+  const buf=await f.arrayBuffer(); const pdf=await pdfjs.getDocument({data:buf,isEvalSupported:false}).promise; let out='';
   for(let p=1;p<=pdf.numPages;p++){ const page=await pdf.getPage(p); const tc=await page.getTextContent();
     const lines={};
     tc.items.forEach(it=>{ if(!it.str) return; const y=Math.round(it.transform[5]);
@@ -2510,7 +2531,7 @@ async function planToLLM(blobs, llm, W, D, nF, info){
 function canvasToBlob(c){return new Promise(res=>c.toBlob(res,'image/png'));}
 async function pdfPagesToBlobs(f, maxPages){
   const pdfjs=await loadPdfJs(); const buf=await f.arrayBuffer();
-  const pdf=await pdfjs.getDocument({data:buf}).promise; const out=[];
+  const pdf=await pdfjs.getDocument({data:buf,isEvalSupported:false}).promise; const out=[];
   const n=Math.min(pdf.numPages, maxPages||3);
   for(let p=1;p<=n;p++){ const page=await pdf.getPage(p);
     let sc=2; const vp0=page.getViewport({scale:1});
@@ -3233,8 +3254,13 @@ window.ACS.captureRenderFailure=function(opts){
 
 
 /* نشر الارتباطات التي يقرأها مقطع أسبق — تُقرأ داخل دوالّ فقط،
-   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً. */
-Object.assign(__ACS_LATE, { camera, lastBuilding, model, orbit, setSun });
+   فالنشر عند نهاية تقييم هذه الوحدة يسبق أي قراءة حتماً.
+   `model` و`lastBuilding` يُعاد إسنادهما عند كل تحميل، وObject.assign ينسخ
+   القيمة (null) لا الربط؛ فيُنشر معهما مرجعٌ حيّ يقرؤه السجلّ عند كل قراءة
+   (انظر late-bindings.js). */
+const modelRef = () => model;
+const lastBuildingRef = () => lastBuilding;
+Object.assign(__ACS_LATE, { camera, lastBuilding, lastBuildingRef, model, modelRef, orbit, setSun });
 
 
 export { ACS_APPLY_CONTRACT, ACS_APPLY_MIN_KEPT, floorLabel, ACS_LAST_APPLY, acsApplyBuilding, acsApplyFirstFrame, acsApplyTicket, _acsErrorSite, _acsStackHead, _acsZonesAsked, ACS_CODE_HINT, ACS_DIAG_KEYS, ACS_ERR_HINT, ACS_FAIL, ACS_LAST_CALL, ACS_LAST_FAILURE, ACS_NET, ACS_TRANSPORT_CLASSES, AR_COLORS, COLOR_SWATCH, EXAMPLE, MEAS_MAT, SRV_OK, TOOL, VIEWS, _acsBuildSha, _acsFin, _acsPixelProbe, _acsRendererName, acsFail, acsGenerateFromServer, addMarker, addMeasurePoint, apiURL, applyAllBtn, applyClip, applyDoorTex, applyFinish, applySunStudy, applyWalkCamera, arRestore, arScale, bounds, buildFloors, buildLayers, buildLocal, camWorld, camera, canvasToBlob, checkServer, clearMeasure, clip, decorateRoom, detectColor, detectSurface, dl, doorMeshes, doorTexture, drawTracer, drop, dxfToBuilding, ensureGround, esc, fileToImage, floorSel, floorsFound, flsInfoCard, fly, flyStep, flyTo, fmt, ground, handleImport, headLamp, infoEl, infoQuickColors, isolateTemplate, keys, last, last2, lastBuilding, loadPdfJs, markView, measure, mepInfoCard, meshesOfRoom, mode, model, mouse, noteMarkers, noteModal, noteMode, notePoint, noteTarget, notes, offerTracer, openNote, openTracer, orbit, parseDXF, pdfFirstPage, pdfPagesToBlobs, pdfText, photoApplied, pickedType, planToLLM, player, ray, real, rebuildMarkers, registry, renderNotes, resetClip, roomOfTag, setClip, setMeasureHUD, setMode, setModel, setSun, setTool, shadeBy, showCoverage, showReport, showTab, srvPill, srvURL, startWalk, stopWalk, structInfoCard, sunAngles, sunStudy, tagOf, texRepeatEl, texTargetEl, tourStep, tourT, trCanvas, trCtx, trImg, trPos, trRooms, trStart, trView, updTrCount, updateVis, useDoorImage, viewPose, vr, vrEnter, vrExit, vrRay, vrRotate, vrSetup, vrStep, vrTeleport, walkHUD, walkLook, walkMove, walkState, walkStep, wrapBuilding };

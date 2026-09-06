@@ -2975,9 +2975,17 @@ function quickModel(W,D,nF,nRooms){
 
 /* ========================= المشهد والعرض ========================= */
 const app=document.getElementById('app'), statusEl=document.getElementById('status');
-const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+/* الكانفس مِلكُنا لا مِلكُ three.js: حين لا يُمرَّر `canvas` ينشئه المحرّك
+   بنفسه عبر createCanvasElement() الذي يكتب `style.display='block'` على
+   العنصر — سمةُ style في الوثيقة المخدومة لا يمنعها أي وسيط setSize. تمرير
+   العنصر يجعل المحرّك لا يلمس تنسيقه إطلاقاً، ويأتي display والأبعاد من
+   القاعدة `#app > canvas` في app.css. */
+const canvas=document.createElement('canvas');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.setSize(innerWidth,innerHeight);
+/* updateStyle=false: بقيمته الضمنية true يكتب three.js أبعاد الكانفس في سمة
+   style. الأبعاد من #app > canvas في app.css؛ مخزن الرسم يضبطه setSize كما كان. */
+renderer.setSize(innerWidth,innerHeight,false);
 renderer.outputColorSpace=THREE.SRGBColorSpace;
 renderer.toneMapping=THREE.ACESFilmicToneMapping; renderer.toneMappingExposure=1.05;
 renderer.shadowMap.enabled=true; renderer.shadowMap.type=THREE.PCFSoftShadowMap;

@@ -214,6 +214,9 @@ console.log('\n== §5 — __ACS_LATE IS READ EARLY AND WRITTEN ONCE, BY ITS OWNE
   const REG = 'late-bindings.js';
   /* مفاتيح السجلّ كما هي في الملفّ — من الشجرة لا بتعبير نمطي */
   const regKeys = [];
+  /* مفتاحٌ واصل (get/set) هو زوجُ عُقَد في الشجرة لمفتاحٍ واحد؛ يُسجَّل باسمه
+     مرّةً، ويُذكَر هنا لأن `model` و`lastBuilding` صارا واصلَين. */
+  const accessorKeys = new Set();
   let sealed = false;
   B.traverse(parse(mods[REG], REG, true), {
     CallExpression(p) {
@@ -222,14 +225,50 @@ console.log('\n== §5 — __ACS_LATE IS READ EARLY AND WRITTEN ONCE, BY ITS OWNE
           && c.property.name === 'seal' && p.node.arguments[0]
           && p.node.arguments[0].type === 'ObjectExpression') {
         sealed = true;
-        p.node.arguments[0].properties.forEach(pr => regKeys.push(pr.key.name));
+        p.node.arguments[0].properties.forEach(pr => {
+          if (pr.type === 'ObjectMethod' && (pr.kind === 'get' || pr.kind === 'set'))
+            accessorKeys.add(pr.key.name);
+          if (regKeys.indexOf(pr.key.name) < 0) regKeys.push(pr.key.name);
+        });
       }
     }
   });
   chk('the registry is a sealed object literal, so an unregistered name cannot '
       + 'be published by accident', sealed && regKeys.length > 0);
-  chk('the registry declares the twenty forward references it is documented to',
-      regKeys.length === 20, String(regKeys.length));
+  /* كانت عشرين. صارت اثنتين وعشرين لأن اسمين منها لا يُكتبان مرّة واحدة:
+     `model` و`lastBuilding` يعاد إسنادهما عند كل تحميل، وObject.assign ينسخ
+     القيمة لا الربط، فبقي القرّاء يرون null إلى الأبد (verifyVisibleModel
+     model_loaded:false مع شبكاتٍ محسوبة، canonicalTransformSnapshot
+     available:false — مقيس في CI ومحلياً). لكلٍّ منهما الآن مرجعٌ حيّ
+     modelRef/lastBuildingRef ينشره المالك، والمفتاح القديم واصلٌ يقرأ عبره. */
+  chk('the registry declares the twenty-two forward references it is documented '
+      + 'to (twenty values + two live references)',
+      regKeys.length === 22, String(regKeys.length));
+  chk('the two names that are reassigned after publish are ACCESSORS, not '
+      + 'value slots — a value slot is exactly the snapshot bug',
+      accessorKeys.has('model') && accessorKeys.has('lastBuilding')
+      && accessorKeys.size === 2, JSON.stringify([...accessorKeys]));
+  chk('and each accessor has a live-reference slot beside it',
+      regKeys.indexOf('modelRef') >= 0 && regKeys.indexOf('lastBuildingRef') >= 0);
+  /* القياس الحيّ للآلية على السجلّ الحقيقيّ الموجود في هذا النطاق (يُحمَّل من
+     ملفّه عبر tests/lib/run.js): نشرٌ بالقيمة لقطةٌ، ونشرٌ بالمرجع حيّ. */
+  if (typeof __ACS_LATE !== 'undefined') {
+    const savedRef = __ACS_LATE.modelRef, savedVal = __ACS_LATE.model;
+    let live = { n: 1 };
+    Object.assign(__ACS_LATE, { model: live, modelRef: undefined });
+    live = { n: 2 };
+    chk('NEGATIVE WITNESS — a value published through Object.assign is a snapshot: '
+        + 'reassigning the owner\'s binding does not reach the registry',
+        __ACS_LATE.model && __ACS_LATE.model.n === 1);
+    Object.assign(__ACS_LATE, { modelRef: () => live });
+    live = { n: 3 };
+    chk('a live reference published beside it makes __ACS_LATE.model follow the '
+        + 'owner\'s CURRENT binding — readers are unchanged',
+        __ACS_LATE.model && __ACS_LATE.model.n === 3);
+    Object.assign(__ACS_LATE, { modelRef: savedRef, model: savedVal });
+  } else {
+    console.log('  · live registry witness NOT VERIFIED here (no bundle scope)');
+  }
 
   const reads = {};          /* module -> Set(name) */
   const publishedBy = {};    /* name -> [module] */

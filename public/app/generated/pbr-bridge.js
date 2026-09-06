@@ -6,7 +6,7 @@
    ============================================================ */
 import { __ACS_LATE } from '../late-bindings.js';
 import { sha256Hex } from '../core/standards.js';
-import { RoomEnvironment, THREE, matCache } from '../core/viewer.js';
+import { acsRenderLevel, SCENE_LIMITS, RoomEnvironment, THREE, matCache } from '../core/viewer.js';
 import { ACS_PBR_SPEC, PQ_PLATE_POLICY, PQ_RENDER_RECOVERY_CONTRACT, PQ_RR, PQ_TC, pqBoundsMember, pqCamera, pqCameraClip, pqCameraFit, pqCaptureMetadata, pqContainment, pqFrustumContains, pqIssue, pqLevelBaseY, pqMaterial, pqMaterialForEngineering, pqMaterialSafe, pqPlateRect, pqRecoveryPlan, pqRobustBounds, pqRoofAlignment } from './pbr.js';
 import { pmrem, renderer, scene, sky, sun } from '../render/scene.js';
 
@@ -27,20 +27,21 @@ function _pqDescribe(o){
 /* حدود المشهد القانونية — الهندسة القانونية وحدها. قبّة السماء والأرضية
    السياقية وحامل اللاعب وكل مجموعة عرضية مستبعَدة صراحةً: إدخالها كان يضخّم
    نصف القطر آلاف الأضعاف فيخرج المشهد من هرم الرؤية ومن القبّة ⇒ شاشة سوداء. */
+/* سلطةُ حدودٍ واحدة. كانت هنا حسبةٌ ثانية ساذجة (اتّحاد Box3 لكل الأعضاء)
+   موازيةً لطبقة الاسترداد pqRobustBounds التي تستبعد العنصر التالف وتُبلّغ عنه.
+   فكانت الكاميرا تُصالَح على الحدود المحصَّنة بينما تُبنى الأرضية السياقية
+   ونطاق SSAO وإعدادات الكاميرا وتشخيص model_bounds على الحدود الملوَّثة:
+   إحداثيّةٌ شاردة واحدة عند x=99999 أعطت model_bounds بنصف قطر ٥٠ كم
+   (مقيس في CI على live_large_generated_outlier) والمنظرُ سليم. الآن تمرّ
+   الحدود كلّها من الطبقة المحصَّنة نفسها، بالشكل نفسه الذي كان يعيده هذا
+   الملفّ: {cx,cy,cz,min_y,size,radius,member_count} أو null بلا هندسة. */
 function _pqSceneBounds(){
   try{
-    const box=new THREE.Box3(); let found=0;
-    scene.traverse(o=>{
-      if(!o.isMesh) return;
-      if(!pqBoundsMember(_pqDescribe(o)).included) return;
-      box.expandByObject(o); found++; });
-    if(!found) return null;
-    const c=box.getCenter(new THREE.Vector3());
-    const sz=box.getSize(new THREE.Vector3());
-    if(![c.x,c.y,c.z,sz.x,sz.y,sz.z].every(v=>isFinite(v))) return null;
-    return {cx:c.x,cy:c.y,cz:c.z,min_y:box.min.y,
-      size:[sz.x,sz.y,sz.z],member_count:found,
-      radius:Math.max(Math.max(sz.x,Math.max(sz.y,sz.z))/2,0.5)};
+    const rb=_pqRobustSceneBounds();
+    if(!rb||!rb.valid||!rb.bounds) return null;
+    const b=rb.bounds;
+    if(![b.cx,b.cy,b.cz,b.min_y,b.radius].every(v=>isFinite(v))) return null;
+    return Object.assign({},b,{member_count:rb.member_count||0});
   }catch(e){ return null; } }
 
 window.ACS.pbrBounds=_pqSceneBounds;
@@ -482,22 +483,27 @@ window.ACS.alignmentDiagnostics=function(){
     /* أصول الغرف من البيانات القانونية نفسها لا من المشهد */
     const hosts={};
     const levelsSeen={};
-    ((__ACS_LATE.lastBuilding||{}).levels||[]).forEach(lv=>{
+    const inputLevels=((__ACS_LATE.lastBuilding||{}).levels||[]);
+    const renderedLevels=(Array.isArray(inputLevels)?inputLevels:[])
+      .slice(0,SCENE_LIMITS.max_levels).map(acsRenderLevel);
+    renderedLevels.forEach(resolved=>{
+      const lv=resolved.raw, li=resolved.index;
       const tmpl=(((__ACS_LATE.lastBuilding||{}).floors)||{})[lv.template]||{};
-      levelsSeen['F'+lv.index]={index:lv.index,rects:[]};
+      levelsSeen['F'+li]={index:li,derived:resolved.derived,rects:[]};
       (tmpl.rooms||[]).forEach(r=>{
         if(!Array.isArray(r.rect)||r.rect.length!==4) return;
-        const key='F'+lv.index+'|'+(r.id||'room');
-        const y=pqLevelBaseY(lv.index,fh).base_y;
+        const key='F'+li+'|'+(r.id||'room');
+        const y=pqLevelBaseY(li,fh).base_y;
         const H=Number(r.wall_h)||Number((__ACS_LATE.lastBuilding||{}).wall_h)||3.0;
-        hosts[key]={rect:r.rect,level_index:lv.index,base_y:y,
+        hosts[key]={rect:r.rect,level_index:li,base_y:y,
           box:{min:[r.rect[0],y,r.rect[1]],
                max:[r.rect[0]+r.rect[2],y+H,r.rect[1]+r.rect[3]]}};
-        levelsSeen['F'+lv.index].rects.push(r.rect); }); });
+        levelsSeen['F'+li].rects.push(r.rect); }); });
     const issues=[];
     let checked=0,unresolved=0,outside=0,detached=0,maxErr=0;
     const hosted={INSIDE:0,INTERSECTING_BOUNDARY:0,OUTSIDE:0,UNRESOLVED:0};
     const sample=[];
+    const outsideAxes={x:0,y:0,z:0};
     __ACS_LATE.model.traverse(o=>{
       if(!o.isMesh) return;
       const t=_pqTagParts(o);
@@ -523,10 +529,15 @@ window.ACS.alignmentDiagnostics=function(){
         outside++;
         const dx=Math.max(h.box.min[0]-wb.max[0],wb.min[0]-h.box.max[0],0);
         const dz=Math.max(h.box.min[2]-wb.max[2],wb.min[2]-h.box.max[2],0);
-        const err=Math.max(dx,dz);
+        const dy=Math.max(h.box.min[1]-wb.max[1],wb.min[1]-h.box.max[1],0);
+        const err=Math.max(dx,dy,dz);
+        const gaps=[dx,dy,dz];
+        const axes=['x','y','z'].filter((axis,i)=>gaps[i]>Number(PQ_TC.containment_tolerance_m));
+        axes.forEach(axis=>outsideAxes[axis]++);
         if(err>maxErr) maxErr=err;
         if(sample.length<12) sample.push({element_id:o.name,host:key,
           error_m:Math.round(err*1000)/1000,
+          axes:axes,
           classification:c.classification});
         if(issues.length<40) issues.push({code:'ALIGN_OBJECT_OUTSIDE_HOST',
           severity:'WARNING',blocking:false,element_id:o.name,
@@ -552,7 +563,9 @@ window.ACS.alignmentDiagnostics=function(){
           blocking:false,element_id:k,
           message:'level plate top is '+err.toFixed(3)+' m from '
             +expect.toFixed(3)+' m'}); }
-      levelAlign.push({level:k,index:L.index,expected_base_y:expect,
+      levelAlign.push({level:k,index:L.index,
+        index_source:L.derived?'ARRAY_ORDER_RENDER_FALLBACK':'MODEL_INDEX',
+        expected_base_y:expect,
         actual_plate_top_y:actual,
         error_m:(err===null)?null:Math.round(err*1000)/1000,
         aligned:(err!==null&&err<=Number(PQ_TC.roof_tolerance_m))}); });
@@ -610,7 +623,7 @@ window.ACS.alignmentDiagnostics=function(){
           message:'the rendered level plate overhangs its own room footprint '
             +'by '+over.toFixed(2)+' m, which the declared '
             +PQ_PLATE_POLICY.policy+' convention forbids'}); });
-    const idx=((__ACS_LATE.lastBuilding||{}).levels||[]).map(l=>Number(l.index));
+    const idx=renderedLevels.map(l=>l.index);
     const top=idx.length?Math.max.apply(null,idx):null;
     let roof=null;
     if(top!==null){
@@ -627,6 +640,8 @@ window.ACS.alignmentDiagnostics=function(){
       canonical_hosts_checked:Object.keys(hosts).length,
       unresolved_transforms:unresolved,detached_objects:detached,
       outside_host_objects:outside,containment:hosted,
+      outside_axes:outsideAxes,
+      review_status:(outside||unresolved||detached)?'REVIEW_REQUIRED':'NOT_EVALUATED',
       roof_alignment:roof,level_alignment:levelAlign,
       plate_overhang:plateOverhang,
       max_position_error_m:Math.round(maxErr*1000)/1000,

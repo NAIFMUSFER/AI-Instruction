@@ -1,0 +1,36 @@
+{
+  "live_large_generated": {
+    "model_sha256": "1a0af0b59bc7b10b1a5b82ed72486df45e4f0b07dfa6af261af07021bc719186",
+    "fixture_role": "RECONSTRUCTED_CONFLICT_INPUT",
+    "evidence": "Explicit 8.5 m rack heights exceed the 3.8 m host wall height; furniture/equipment coordinates also exceed room-local bounds. Preserve these original reconstructed inputs and require the diagnostic conflicts, not geometric correction.",
+    "objects_checked": 1378,
+    "containment": {
+      "INSIDE": 406,
+      "INTERSECTING_BOUNDARY": 360,
+      "OUTSIDE": 612,
+      "UNRESOLVED": 0
+    },
+    "outside_axes": {
+      "x": 306,
+      "y": 270,
+      "z": 280
+    }
+  },
+  "live_large_generated_outlier": {
+    "model_sha256": "a4029b93783ae7dd1e0b5924b9fd0b78e5e5cfae6f008e97c1328f8e8f3e2b18",
+    "fixture_role": "RECONSTRUCTED_CONFLICT_INPUT",
+    "evidence": "Explicit 8.5 m rack heights exceed the 3.8 m host wall height; furniture/equipment coordinates also exceed room-local bounds. Preserve these original reconstructed inputs and require the diagnostic conflicts, not geometric correction.",
+    "objects_checked": 1378,
+    "containment": {
+      "INSIDE": 406,
+      "INTERSECTING_BOUNDARY": 360,
+      "OUTSIDE": 612,
+      "UNRESOLVED": 0
+    },
+    "outside_axes": {
+      "x": 306,
+      "y": 270,
+      "z": 280
+    }
+  }
+}

@@ -796,7 +796,9 @@ nb = rd('tools/netlify-build.sh')
 _vars = dict(re.findall(r'^([A-Z]+)=([0-9][\w.\-]*)\s*$', nb, re.M))
 note('the build script declares %d vendored version(s): %s'
      % (len(_vars), ', '.join('%s=%s' % kv for kv in sorted(_vars.items()))))
-must_vendor = re.findall(r'"\$VEN/([^"]+)"', nb)
+_must_block = re.search(r'^must=\(\n(.*?)^\)', nb, re.M | re.S)
+chk('build declares a non-empty required asset array', bool(_must_block))
+must_vendor = re.findall(r'"\$VEN/([^"]+)"', _must_block.group(1) if _must_block else '')
 must_vendor = sorted(set(v for v in must_vendor
                          if v.count('/') >= 1 and not v.endswith('/')))
 _unresolved = sorted(set(v for v in must_vendor
@@ -814,8 +816,7 @@ if len(present) == len(must_vendor) and must_vendor:
         '(%d files)' % len(present), True)
 else:
     note('public/vendor holds %d file(s); the build script requires %d and %d '
-         'are present. This sandbox has no network, so tools/netlify-build.sh '
-         'has never run here. Netlify populates this directory at build time. '
+         'are present. Run tools/netlify-build.sh to materialize locked assets. '
          'Three.js-dependent 3D runtime behaviour in this checkout is '
          'NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.'
          % (len(vendor_files), len(must_vendor), len(present)))
@@ -824,7 +825,7 @@ else:
         bool(cmd) and 'netlify-build.sh' in cmd.group(1))
 chk('the vendor fetch script pins exact versions',
     all(re.match(r'^\d+(\.\d+)*$', v) for v in _vars.values())
-    and _vars.get('THREE') == '0.160.0' and _vars.get('PDFJS') == '4.0.379',
+    and _vars.get('THREE') == '0.160.0' and _vars.get('PDFJS') == '4.10.38',
     str(_vars))
 # F-11 — es-module-shims حُذف من الواجهة. حمولة مُوَرَّدة بلا مستهلك تُنشر في
 # كل بناء ولا يطلبها أحد: تُرفَض هنا صراحةً بدل أن تبقى بلا مالك.

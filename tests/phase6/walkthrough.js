@@ -7,6 +7,11 @@ const fs=require('fs'), os=require('os'), path=require('path');
 const {execFileSync}=require('child_process');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
 const BUILD=path.join(ROOT,'tests','phase3','lib','build_browser_page.js');
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة
+   Playwright بالرقم، فينجح حيث جرى `playwright install` ويفشل حيث
+   تحمل الصورة بناءً آخر. المُحدِّد يجيب السؤال مرّة واحدة لكل بيئة. */
+const PW=require(path.join(ROOT,'tools','pw_chromium.js'));
 
 const steps=[];
 const record=(n,title,verdict,evidence)=>{
@@ -38,7 +43,7 @@ fs.writeFileSync(DRIVER,
 (async()=>{
   execFileSync(process.execPath,[BUILD,DRIVER],{stdio:'pipe'});
   const page=path.join(os.tmpdir(),'acs_ws_walk_browser.html');
-  const browser=await chromium.launch();
+  const browser=await PW.launch();
   const pg=await browser.newPage({viewport:{width:1440,height:900}});
   pg.setDefaultTimeout(300000);
   pg.setDefaultNavigationTimeout(300000);

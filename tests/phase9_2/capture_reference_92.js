@@ -17,6 +17,11 @@ const OUT=path.join(HERE,'outputs','reference');
 const CANON=JSON.parse(fs.readFileSync(
   path.join(ROOT,'acs_archdetail.json'),'utf8'));
 const PQ=JSON.parse(fs.readFileSync(path.join(ROOT,'acs_pbr.json'),'utf8'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة
+   Playwright بالرقم، فينجح حيث جرى `playwright install` ويفشل حيث
+   تحمل الصورة بناءً آخر. المُحدِّد يجيب السؤال مرّة واحدة لكل بيئة. */
+const PW=require(path.join(ROOT,'tools','pw_chromium.js'));
 
 /* §48: المشاهد المطلوبة — النموذج يبدّله المشغّل في الواجهة قبل كل زوج؛
    هذا الملف يضبط الكاميرا والإضاءة والتفصيل ويلتقط الزوج باسم المشهد. */
@@ -85,11 +90,11 @@ function serve(){
       +'land in tests/phase9_2/outputs/reference/.');
     process.exit(2);
   }
-  const {chromium}=require('playwright');
+  require('playwright');
   fs.mkdirSync(OUT,{recursive:true});
   const srv=await serve();
   const base='http://127.0.0.1:'+srv.address().port;
-  const b=await chromium.launch();
+  const b=await PW.launch();
   const pg=await b.newPage({viewport:{width:1600,height:900},
     deviceScaleFactor:1});
   const errs=[]; pg.on('pageerror',e=>errs.push(e.message));

@@ -127,7 +127,10 @@ export class Color {
   constructor(c) { this.value = c; this.r = 0; this.g = 0; this.b = 0; }
   set(c) { this.value = c; return this; }
   setHex(c) { this.value = c; return this; }
-  getHex() { return 0; } getStyle() { return '#000000'; }
+  getHex() { return typeof this.value === 'number' ? this.value : 0; }
+  getHexString() { return ('000000' + this.getHex().toString(16)).slice(-6); }
+  getStyle() { return '#' + this.getHexString(); }
+  multiplyScalar() { return this; } lerp() { return this; } offsetHSL() { return this; }
   clone() { return new Color(this.value); } copy(c) { this.value = c.value; return this; }
 }
 export class Euler {
@@ -191,9 +194,16 @@ class Geometry {
   translate() { return this; } rotateY() { return this; } scale() { return this; }
   setAttribute() { return this; } setIndex() { return this; }
 }
-export class BufferGeometry extends Geometry {}
+export class BufferGeometry extends Geometry { setFromPoints() { return this; } }
 export class BoxGeometry extends Geometry {
-  constructor(w, h, d) { super(); this.parameters = { width: w, height: h, depth: d }; }
+  /* ٢٤ رأساً (٤ لكل وجه) بسمتَي position وuv كالحقيقيّ — scaleBoxUV في
+     viewer.js يقرأ uv ويكتبها؛ بلا السمة لا يكتمل compile() محلياً. */
+  constructor(w, h, d) {
+    super(); this.parameters = { width: w, height: h, depth: d };
+    const pos = new Float32Array(24 * 3), uv = new Float32Array(24 * 2);
+    for (let i = 0; i < 24; i++) { uv[i * 2] = (i & 1); uv[i * 2 + 1] = ((i >> 1) & 1); }
+    this.attributes = { position: new BufferAttribute(pos, 3), uv: new BufferAttribute(uv, 2) };
+  }
 }
 export class PlaneGeometry extends Geometry {}
 export class CylinderGeometry extends Geometry {}
@@ -203,11 +213,24 @@ export class CircleGeometry extends Geometry {}
 export class ShapeGeometry extends Geometry {}
 export class ExtrudeGeometry extends Geometry {}
 export class EdgesGeometry extends Geometry {}
-export class BufferAttribute { constructor(a, i) { this.array = a; this.itemSize = i; } }
+export class BufferAttribute {
+  constructor(a, i) { this.array = a; this.itemSize = i; this.count = a ? (a.length / i) : 0; this.needsUpdate = false; }
+  getX(k) { return this.array[k * this.itemSize]; } getY(k) { return this.array[k * this.itemSize + 1]; }
+  getZ(k) { return this.array[k * this.itemSize + 2]; }
+  setXY(k, x, y) { this.array[k * this.itemSize] = x; this.array[k * this.itemSize + 1] = y; return this; }
+  setXYZ(k, x, y, z) { this.array[k * this.itemSize] = x; this.array[k * this.itemSize + 1] = y; this.array[k * this.itemSize + 2] = z; return this; }
+}
 export class Float32BufferAttribute extends BufferAttribute {}
 class Material {
-  constructor(p) { Object.assign(this, p || {}); this.color = new Color((p || {}).color); this.needsUpdate = false; }
-  dispose() {} clone() { return new Material(); }
+  constructor(p) {
+    Object.assign(this, p || {}); this.color = new Color((p || {}).color); this.needsUpdate = false;
+    /* كالمحرّك الحقيقيّ: لكل خامة userData وemissive وmap وclippingPlanes —
+       getMat() في viewer.js يكتب userData.texScale وemissive.set(). */
+    this.userData = {}; this.emissive = new Color((p || {}).emissive);
+    if (this.map === undefined) this.map = null; this.clippingPlanes = null;
+    this.side = (p || {}).side || 0; this.transparent = !!(p || {}).transparent;
+  }
+  dispose() {} clone() { const c = new this.constructor(); Object.assign(c, this); c.userData = Object.assign({}, this.userData); return c; }
 }
 export class MeshStandardMaterial extends Material {}
 export class MeshBasicMaterial extends Material {}
@@ -271,17 +294,45 @@ export class PMREMGenerator {
   compileEquirectangularShader() {} compileCubemapShader() {} dispose() {}
 }
 export class WebGLRenderer {
-  constructor() {
-    this.domElement = document.createElement('canvas');
+  /* يعكس سلوكين من المحرّك الحقيقيّ **مرئيَّين في DOM**، فلا يُبلِّغ هذا
+     المسبار عن سمات style أقلّ ممّا يراه CI:
+       · createCanvasElement() ينشئ الكانفس ويكتب style.display='block'
+         — ولا يُنفَّذ إن مُرِّر canvas في الخيارات.
+       · setSize(w,h,updateStyle) يكتب width/height بالبكسل ما لم
+         يكن updateStyle === false.
+     كانت النسخة السابقة تنشئ الكانفس بلا تنسيق وتترك setSize فارغة، فكان
+     العدّ المحليّ ١٠ بينما CI يقيس ١١ — أي أن الفارق كان في الكعب لا في
+     المنتَج. ما عدا ذلك لا يزال كعباً: لا رسم ولا WebGL. */
+  constructor(opts) {
+    const o = opts || {};
+    if (o.canvas) { this.domElement = o.canvas; }
+    else {
+      this.domElement = document.createElement('canvas');
+      this.domElement.style.display = 'block';
+    }
     this.shadowMap = { enabled: false, type: 2, needsUpdate: false };
+    /* سطح WebXRManager كما يستهلكه التطبيق فعلاً (getController/getCamera/
+       setFoveation): بلا هذه الثلاثة كان تقييم workspace-ui-wiring.js يرمي
+       «renderer.xr.getController is not a function» فلا يصل إلى نشر
+       window.ACS.setModel، ولا يمكن قياس مسار النموذج محلياً أصلاً. */
     this.xr = { enabled: false, isPresenting: false, addEventListener() {},
-      getSession() { return null; }, setReferenceSpaceType() {} };
+      removeEventListener() {},
+      getSession() { return null; }, setReferenceSpaceType() {},
+      getController() { return new Group(); }, getControllerGrip() { return new Group(); },
+      getHand() { return new Group(); }, getCamera() { return new PerspectiveCamera(); },
+      setFoveation() {}, getReferenceSpace() { return null; } };
     this.info = { render: { calls: 0, triangles: 0 }, memory: { geometries: 0, textures: 0 } };
     this.capabilities = { isWebGL2: true, maxTextureSize: 4096, getMaxAnisotropy() { return 1; } };
     this.outputColorSpace = 'srgb'; this.toneMapping = 0; this.toneMappingExposure = 1;
     this.localClippingEnabled = false; this.clippingPlanes = [];
   }
-  setPixelRatio() {} setSize() {} setClearColor() {} setAnimationLoop() {}
+  setPixelRatio() {}
+  setSize(w, h, updateStyle) {
+    if (updateStyle === false || !this.domElement.style) return;
+    this.domElement.style.width = w + 'px';
+    this.domElement.style.height = h + 'px';
+  }
+  setClearColor() {} setAnimationLoop() {}
   render() {} clear() {} dispose() {} forceContextLoss() {} compile() {}
   getPixelRatio() { return 1; }
   getContext() { return null; }
@@ -308,6 +359,9 @@ import { Vector3 } from 'three';
 export class OrbitControls {
   constructor(camera, dom) {
     this.object = camera; this.domElement = dom; this.target = new Vector3();
+    /* كالمحرّك الحقيقيّ: المُنشئ يكتب touchAction على العنصر (CSSOM) — وهو
+       ما يُسلسَل سمةَ style. بلا هذا السطر كان الكعب يخفي العنصر الأخير. */
+    if (dom && dom.style) dom.style.touchAction = 'none';
     this.enableDamping = false; this.dampingFactor = 0.05; this.enabled = true;
     this.minDistance = 0; this.maxDistance = Infinity; this.maxPolarAngle = Math.PI;
     this.enablePan = true; this.autoRotate = false; this.screenSpacePanning = true;

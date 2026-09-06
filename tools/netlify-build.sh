@@ -5,7 +5,7 @@
 # بلا أي اعتماد على CDN وقت التشغيل. set -e: أي فشل يُفشل البناء فيبقى آخر نشر ناجح.
 #
 # النُّسخ مثبّتة لتطابق ما يستورده التطبيق — لا تُحدّثها دون التحقّق من التوافق:
-#   three 0.160.0  ·  pdfjs-dist 4.0.379
+#   three 0.160.0  ·  pdfjs-dist 4.10.38
 #
 # es-module-shims: حُذف (F-11). الصفحة لم تعد تحمّله، فتنزيله هنا كان يعني شحن
 # ملفّ لا يطلبه أحد — وزناً ميّتاً ومساحة هجوم بلا مقابل. وهو نفسه كان السبب
@@ -15,26 +15,21 @@
 set -euo pipefail
 
 THREE=0.160.0
-PDFJS=4.0.379
+PDFJS=4.10.38
 VEN="public/vendor"
 mkdir -p "$VEN"
+# Remove the vulnerable generated copy left by pre-upgrade cached builds.
+rm -rf "$VEN/pdfjs@4.0.379"
 
-echo "▶ vendoring three@$THREE (full examples/jsm so addon internal imports resolve)"
-npm pack "three@$THREE" >/dev/null
-tar -xzf "three-$THREE.tgz"
-mkdir -p "$VEN/three@$THREE/build" "$VEN/three@$THREE/examples"
-cp package/build/three.module.js "$VEN/three@$THREE/build/three.module.js"
-cp -R package/examples/jsm "$VEN/three@$THREE/examples/jsm"
-rm -rf package "three-$THREE.tgz"
-
-echo "▶ vendoring pdfjs-dist@$PDFJS (module + worker)"
-npm pack "pdfjs-dist@$PDFJS" >/dev/null
-tar -xzf "pdfjs-dist-$PDFJS.tgz"
-mkdir -p "$VEN/pdfjs@$PDFJS"
-# أسماء الملفات في build/ قد تختلف قليلاً بين الإصدارات — جرّب المضغوط ثم العادي
-cp package/build/pdf.min.mjs        "$VEN/pdfjs@$PDFJS/pdf.min.mjs"        2>/dev/null || cp package/build/pdf.mjs        "$VEN/pdfjs@$PDFJS/pdf.min.mjs"
-cp package/build/pdf.worker.min.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs" 2>/dev/null || cp package/build/pdf.worker.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs"
-rm -rf package "pdfjs-dist-$PDFJS.tgz"
+# Install the integrity-checked lock before copying browser runtime assets.
+npm ci --ignore-scripts
+node -e 'for (const [p,v] of [["three",process.argv[1]],["pdfjs-dist",process.argv[2]]]) { if(require("./node_modules/"+p+"/package.json").version!==v) throw Error(p+" version mismatch"); }' "$THREE" "$PDFJS"
+mkdir -p "$VEN/three@$THREE/build" "$VEN/three@$THREE/examples" "$VEN/pdfjs@$PDFJS"
+cp node_modules/three/build/three.module.js "$VEN/three@$THREE/build/three.module.js"
+rm -rf "$VEN/three@$THREE/examples/jsm"
+cp -R node_modules/three/examples/jsm "$VEN/three@$THREE/examples/jsm"
+cp node_modules/pdfjs-dist/build/pdf.min.mjs "$VEN/pdfjs@$PDFJS/pdf.min.mjs"
+cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs"
 
 # --- التحقّق: كل ملف حرِج موجود وغير فارغ، وثلاثي الأبعاد بالنسخة الصحيحة ---
 # 17 ملفّاً: 15 من three (البناء + 14 إضافة) + ملفّا pdf.js. كانت 18 قبل حذف

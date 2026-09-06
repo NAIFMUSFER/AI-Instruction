@@ -15,6 +15,13 @@
    ========================================================================== */
 const path = require('path');
 const PX = require(path.join(__dirname, 'lib_viewport_pixels.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js).
+   كان هذا الملفّ يخبز executablePath:'/opt/pw-browsers/chromium' — مسار
+   صورة هذا الصندوق — فكان يفشل في GitHub Actions حيث لا وجود لذلك المسار
+   أصلاً، والثنائيّة المُدارة التي نزّلها `playwright install` تنتظر بلا
+   مستعمل. المُحدِّد يسأل Playwright عن ثنائيّتها أوّلاً، ولا يبلغ جذر
+   الصورة إلا حين تعجز — أي في صندوقٍ بلا شبكة. */
+const PW = require(path.resolve(__dirname, '..', '..', 'tools', 'pw_chromium.js'));
 let pass = 0, fail = 0;
 const chk = (n, c, d) => { c ? (pass++, console.log('  ✓', n))
   : (fail++, console.log('  ✗', n, d === undefined ? '' : d)); };
@@ -69,13 +76,12 @@ chk('the thresholds are reported with every verdict (explainable)',
 
 /* ------------------------- 2) في متصفّح حقيقي عبر الصفحة ---------------- */
 (async () => {
-  let chromium;
-  try { ({ chromium } = require('playwright')); }
+  try { require('playwright'); }
   catch (e) {
     console.log('\n(browser fixtures need playwright — NOT VERIFIED here)');
     finish(); return;
   }
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
+  const b = await PW.launch();
   const pg = await b.newPage({ viewport: { width: 900, height: 600 } });
   const fixtureErrors = [];
   pg.on('pageerror', e => fixtureErrors.push(String(e.message).slice(0, 120)));

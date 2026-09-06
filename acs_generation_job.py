@@ -137,6 +137,34 @@ def _reraise_classified(classified):
                          upstream=up if isinstance(up, dict) else None)
 
 
+def _child_message(exc):
+    """نصّ الخطأ كما يعبر الأنبوب — مُنقّى وبلا أثر استدعاء.
+
+    كان يُشحَن `str(exc)` خاماً. المسار المصنَّف كان يُنقّى بـE.redact، أما
+    المسار **غير** المصنَّف — أي كل استثناء لم يعرفه أحد — فكان يعبر كما هو.
+    فإن حمل نصّه مفتاحاً أو إطار أثرِ استدعاء، وصل ذلك إلى JobError عند الأب،
+    ومنه إلى السجلّ. المغلّف الخارج إلى العميل كان يُنقّى، لكن السجلّ ليس أقلّ
+    حساسية من الجسم.
+
+    قاسه tests/remediation/test_job_boundary.py §ز بعطلٍ نصُّه يحمل الاثنين.
+    التنقية هنا هي نفسها المطبَّقة في كل مكان: acs_api_errors.redact.
+    """
+    text = str(exc)
+    try:
+        import acs_api_errors as _E
+        text = _E.redact(text)
+    except Exception:                                           # noqa: BLE001
+        pass
+    # إطارات أثر الاستدعاء لا تُنقل: الموضع يخصّ الخادم لا المستدعي، وقد
+    # يفشي مسارات نشرٍ داخلية. أوّل سطرٍ يبدأ إطاراً يقطع النصّ.
+    cut = len(text)
+    for marker in ('\n  File "', "\nTraceback (", '\n  File \''):
+        at = text.find(marker)
+        if 0 <= at < cut:
+            cut = at
+    return text[:cut][:2000]
+
+
 def _child(target, kwargs, conn):                               # pragma: no cover
     """جسم العملية الابنة — تُستورَد الوحدة هنا لا تُنقَل الدالّة."""
     try:
@@ -147,7 +175,7 @@ def _child(target, kwargs, conn):                               # pragma: no cov
         conn.send(("ok", value))
     except BaseException as exc:                                # noqa: BLE001
         try:
-            conn.send(("err", (type(exc).__name__, str(exc)[:2000],
+            conn.send(("err", (type(exc).__name__, _child_message(exc),
                                _classified_payload(exc))))
         except Exception:
             pass
@@ -330,8 +358,22 @@ class JobRunner(object):
                 self._stats["failed"] += 1
             if on_event:
                 on_event(job)
-            raise JobError("the generation worker died before returning a result",
-                           type(exc).__name__)
+            # رمزُ خروج الابنة هو الدليل الوحيد على *كيف* ماتت: 0 خرجت طبيعياً
+            # بلا إرسال · موجب رفعت استثناءً · سالب قتلتها إشارة (‑9 = SIGKILL،
+            # ‑11 = خطأ تجزئة). بلا هذا السطر يبدو كل موت واحداً، فيُقرأ عطلُ
+            # بيئةٍ عطلاً في نقل التصنيف. أثبت هذا الرقمُ فعلاً أن الابنة كانت
+            # تُعيد تنفيذ ملفّ الاختبار (spawn/_fixup_main_from_path) وتموت
+            # قبل الإرسال، لا أن الحدّ يفقد التصنيف.
+            code = None
+            try:
+                proc.join(TERMINATE_GRACE_S)
+                code = proc.exitcode
+            except Exception:                                   # pragma: no cover
+                code = None
+            raise JobError(
+                "the generation worker died before returning a result "
+                "(child exit code: %s)" % ("unknown" if code is None else code),
+                type(exc).__name__)
         finally:
             try:
                 parent.close()

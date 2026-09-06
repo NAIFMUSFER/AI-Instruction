@@ -1,0 +1,3 @@
+# Test-only dependencies; excluded from the production container.
+psutil==7.2.2
+numpy==2.4.4

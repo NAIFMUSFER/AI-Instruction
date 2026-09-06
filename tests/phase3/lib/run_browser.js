@@ -1,6 +1,11 @@
-const {chromium}=require('playwright');
+require('playwright');                    /* وجودُ الحزمة شرطٌ صريح */
 const path=require('path'), os=require('os');
 const {execFileSync}=require('child_process');
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة
+   Playwright بالرقم، فينجح حيث جرى `playwright install` ويفشل حيث
+   تحمل الصورة بناءً آخر. المُحدِّد يجيب السؤال مرّة واحدة لكل بيئة. */
+const PW=require(path.resolve(__dirname,'..','..','..','tools','pw_chromium.js'));
 
 const suite=process.argv[2];
 const HERE=__dirname;
@@ -17,7 +22,7 @@ const page=path.join(
 );
 
 (async()=>{
-  const b=await chromium.launch();
+  const b=await PW.launch();
 
   b.on('disconnected',()=>{
     console.log('DIAG: BROWSER DISCONNECTED');

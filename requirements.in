@@ -1,47 +1,13 @@
-# =============================================================================
-# requirements.in — قائمة التبعيات المباشرة التي يحرّرها الإنسان.
-#
-# انضباط الملفّين (two-file discipline):
-#
-#   requirements.in    ← يُحرَّر يدوياً. هنا وحده تُضاف حزمة أو تُحذف. لا يُذكر
-#                        فيه شيء عن التبعيات المتعدّية (transitive) — تلك يشتقّها
-#                        المحلّل، لا الإنسان.
-#   requirements.lock  ← يُولَّد آلياً من هذا الملفّ على آلة متّصلة بالشبكة:
-#                            pip-compile --generate-hashes \
-#                                --output-file requirements.lock requirements.in
-#                        يحوي إغلاق التبعيات كاملاً بتثبيت == لكل حزمة.
-#   requirements.txt   ← ما يستهلكه Dockerfile فعلاً. يكرّر تثبيتات التبعيات
-#                        المباشرة نصّاً لأن الصورة تنسخ requirements.txt وحده
-#                        (`COPY requirements.txt .`) فلا يصحّ فيه `-r`.
-#                        تطابقه مع requirements.lock يحرسه اختبار:
-#                            tests/remediation/test_dependency_lock.py
-#
-# لماذا الفصل: الملفّ المحرَّر يدوياً يقول «ما نحتاجه»، والملفّ المولَّد يقول
-# «ما رُكِّب فعلاً وبأي إصدار بالضبط». خلط الاثنين في ملفّ واحد يجعل كل ترقية
-# تبعية متعدّية تبدو كأنها قرار بشري، ويجعل كل قرار بشري يبدو كأنه ناتج محلّل.
-#
-# ⚠ حالة هذا المستودع الآن: requirements.lock وُلِّد في بيئة بلا شبكة، فلا
-#   بصمات (hashes) فيه وإغلاق التبعيات المتعدّية غير محلول. اقرأ ترويسة
-#   requirements.lock و DEPENDENCY-POLICY.md قبل الاعتماد عليه.
-#
-# قاعدة التحديث: تُختبر الإصدارات المثبّتة الحالية أوّلاً، ولا يُرقّى إلا ما ثبتت
-# فيه ثغرة، ومع دليل توافق. التفصيل في DEPENDENCY-POLICY.md.
-# =============================================================================
-
-# إطار الواجهة الخلفية HTTP — نقطة الدخول acs_understand_api.py
-fastapi
-
-# خادم ASGI الذي يشغّل التطبيق في الحاوية (سطر CMD في Dockerfile).
-# الإضافة [standard] لازمة: منها httptools/uvloop/websockets وأداء الإنتاج.
-uvicorn[standard]
-
-# عميل نموذج اللغة — acs_understand.call_llm
-anthropic
-
-# قراءة ملفّات PDF في مسار /v1/understand/pdf
-pypdf
-
-# تحليل multipart/form-data لرفع الملفّات — تتطلّبه FastAPI لـ UploadFile
-python-multipart
-
-Pillow
+# Reviewed direct dependencies. Security upgrade: 2026-09-05.
+# FastAPI moves with Starlette; the provider SDK/httpx pair stays unchanged.
+# Regenerate the universal Python 3.11+ lock with uv 0.11.33:
+# uv pip compile --universal --python-version 3.11 --generate-hashes --no-strip-extras requirements.in -o requirements.lock
+# Copy requirements.lock to requirements.txt. Docker installs with --require-hashes.
+anthropic==0.40.0
+fastapi==0.141.1
+starlette==1.3.1
+httpx==0.27.2
+pypdf==6.16.1
+python-multipart==0.0.31
+uvicorn[standard]==0.27.0
+Pillow==12.3.0

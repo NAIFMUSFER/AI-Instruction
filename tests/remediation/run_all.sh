@@ -133,6 +133,40 @@ python3 "$HERE/test_multi_provider.py"; guard $?
 step "api wiring · every job target and keyword binds to its real signature"
 python3 "$HERE/test_api_wiring.py"; guard $?
 
+# اكتساب المتصفّح: مسار واحد (tools/pw_chromium.js) لا أربعة. كان الغياب
+# البيئيّ نفسه يُقرأ «NOT VERIFIED» في مجموعتين و«FAILURE» في مجموعتين،
+# وكانت 110 توكيدات لا تحتاج three.js أصلاً لا تُنفَّذ. يُفحَص بلا متصفّح.
+step "browser acquisition · one binary resolver, no direct chromium.launch"
+python3 "$HERE/test_browser_acquisition.py"; guard $?
+
+# ثبات طبقة اختبار ASGI: httpx 0.28 حذف وسيط `app` بينما starlette الذي
+# يسمح به fastapi==0.110 ما زال يمرّره. التثبيت هو الإصلاح، وهذا حارسه.
+step "asgi client contract · the pinned starlette/httpx pair can build TestClient"
+python3 "$HERE/test_asgi_client_contract.py"; guard $?
+
+# كل تبعية خارجية مطلوبة يبلغها هدفٌ في CI — ولو متعدّيةً عبر وحدات المستودع —
+# تُركِّبها الوظيفة التي تشغّله. numpy وصلت عبر acs_compiler لا عبر سطر استيراد.
+step "ci dependencies · every required third-party import is installed by its job"
+python3 "$HERE/test_ci_dependencies.py"; guard $?
+
+# هويّة الخطأ المصنَّف تعبر حدّ العملية — والمجهول يبقى مجهولاً. يقيس الحدّ
+# الحقيقيّ (spawn) لا محاكاةً له، فأعطال العامل تقع حيث تقع في الإنتاج.
+step "job boundary · typed errors survive the process boundary, unknown stays unknown"
+python3 "$HERE/test_job_boundary.py"; guard $?
+
+# الوظيفة التي تُقلع الصورة تُعلن طوبولوجيتها، والإنتاج يظلّ يرفض غير المُعلَن.
+step "container topology · CI declares one instance; production still refuses undeclared"
+python3 "$HERE/test_container_topology.py"; guard $?
+
+# مصادر التنسيق في العلامة: الوثيقة المخدومة لا تحمل سمة style، ولا مصدر في
+# شيفرة التطبيق يعيدها (عشر مربّعات لون + كانفس three.js).
+step "inline style sources · nothing in the app writes styling into the markup"
+python3 "$HERE/test_inline_style_sources.py"; guard $?
+
+# مستخرِج حزمة المتصفّح: يعمل بلا node_modules ولا مسارٍ داخليّ في Playwright.
+step "bundle extractor · no dev dependency, no private module path"
+node "$HERE/test_bundle_extractor.js"; guard $?
+
 if [ "$1" = "--browser" ]; then
   step "F-11 · content security policy measured in real Chromium"
   node "$HERE/csp_browser_probe.js"; soft $? "csp browser probe"

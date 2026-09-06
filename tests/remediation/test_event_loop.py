@@ -25,8 +25,7 @@
 
 نطاق القياس — مُعلَن
 --------------------
-FastAPI و uvicorn غير مثبَّتين هنا (PyPI يردّ 403)، فلا يُدّعى قياسٌ لتوجيه
-FastAPI. المقيس: حلقة asyncio حقيقيّة، وخادم HTTP حقيقيّ عليها، **ومدقّقات
+هذا الاختبار لا يستدعي توجيه FastAPI؛ فلا يُدّعى قياسه هنا. المقيس: حلقة asyncio حقيقيّة، وخادم HTTP حقيقيّ عليها، **ومدقّقات
 الرفع المشحونة نفسها**، وعميلٌ خفيف على خيط منفصل يصل أثناء التوقّف. وهذا
 كلّ ما يحتاجه السؤال: تعليمةٌ متزامنة داخل `async def` تحجب الحلقة أيّاً كان
 الإطار فوقها.
@@ -222,11 +221,58 @@ def main():
                               sort_keys=True),
                 json.dumps([(before["heavy_result"] or {}).get("out"),
                             (after["heavy_result"] or {}).get("out")]))
-        # الشاهد: الحمل الثقيل كان فعلاً ثقيلاً — وإلّا لما أثبت القياس شيئاً.
-        heavy_before = [b for k, b, a in rows if k in ("image", "image_batch")]
-        chk("والقياس ذو معنى: الحمل المتزامن كان يوقف الحلقة فعلاً قبل الإصلاح",
-            all(b["stall_ms"] > P.MAX_STALL_MS for b in heavy_before),
-            json.dumps([round(b["stall_ms"]) for b in heavy_before]))
+        # ── الشاهد: الحمل الثقيل كان فعلاً ثقيلاً ──────────────────────────
+        # كان هذا التوكيد يقيس **كل** حملٍ ثقيل بالعتبة نفسها التي تقبل بها
+        # النتيجة بعد الإصلاح (MAX_STALL_MS). وهما سؤالان مختلفان:
+        #   القبول  سقفٌ: بعد الإصلاح لا توقّف يتجاوز ٢٥٠ ms.
+        #   الشاهد  أرضيّةٌ: قبل الإصلاح كان الحمل يوقف الحلقة فعلاً.
+        # فاستعمالُ السقف أرضيّةً جعل الشاهد رهينَ سرعة الآلة لا سلوك المنتج.
+        # قياسٌ على ١٢ تشغيلاً نظيفاً هنا (توقّف ما قبل الإصلاح، ms):
+        #     json          3.7 …    28.4     pdf     184.9 …   246.5
+        #     image       365.9 …  1035.5     batch  1419.6 …  1498.2
+        # فـpdf لا يتجاوز ٢٥٠ على هذه الآلة أصلاً (أقصاه 246.5)، وGitHub قاس
+        # image عند ٢٢٢ فسقط الشاهد هناك. أي أن التوكيد كان يقيس العتاد.
+        #
+        # والادّعاء المُراد إثباته نسبيّ بطبيعته: «نقلُ العمل خارج الحلقة أزال
+        # التوقّف». فيُقاس نسبةً، مع أرضيّةٍ مطلقة على أثقل حملٍ وحده — وهو
+        # الوحيد الذي يعلو العتبة بهامشٍ على الآلتين (816 على GitHub، و1420+
+        # هنا). النتيجة أقوى دلالةً وأثبت عبر العتاد، لا أسهل.
+        heavy = {k: (b, a) for k, b, a in rows if k in ("image", "image_batch")}
+        batch_before = heavy["image_batch"][0]["stall_ms"]
+        chk("الشاهد المطلق: أثقل حملٍ متزامن كان يوقف الحلقة فوق %.0f ms"
+            % P.MAX_STALL_MS, batch_before > P.MAX_STALL_MS,
+            "%.0f ms" % batch_before)
+        # النسبة: أدنى ما قيس بين الأحمال الثقيلة ٥٥×، وحتى json 6.3×.
+        # أرضيّةٌ عند ٤× مستحيلةُ التحقّق إن لم يُنقَل العمل خارج الحلقة فعلاً.
+        MIN_GAIN = 4.0
+        gains = {k: (b["stall_ms"] / max(a["stall_ms"], 0.01))
+                 for k, (b, a) in heavy.items()}
+        chk("والشاهد النسبيّ: التوقّف قبل الإصلاح ≥ %.0f× ما هو بعده، لكل حملٍ "
+            "ثقيل — وهو الادّعاء نفسه: العمل خرج من الحلقة" % MIN_GAIN,
+            all(g >= MIN_GAIN for g in gains.values()),
+            json.dumps({k: round(v, 1) for k, v in gains.items()}))
+        # A 10 ms monitor cannot establish relative gains for work shorter
+        # than one sampling interval. Such workloads must remain below that
+        # interval; measurable stalls must strictly improve. Absolute latency
+        # limits, output parity and the heavy-work 4x witness remain above.
+        resolution_ms = P._MON_TICK * 1000
+        def improves_or_remains_unresolved(before, after):
+            return (after <= resolution_ms if before <= resolution_ms
+                    else after < before)
+        chk("measurable stalls improve; sub-tick workloads remain sub-tick",
+            all(improves_or_remains_unresolved(b["stall_ms"], a["stall_ms"])
+                for k, b, a in rows),
+            json.dumps([(k, b["stall_ms"], a["stall_ms"]) for k, b, a in rows]))
+        chk("no measurable improvement is rejected",
+            not improves_or_remains_unresolved(100, 100))
+        chk("a sub-tick workload becoming a measurable stall is rejected",
+            not improves_or_remains_unresolved(1, resolution_ms + 1))
+        chk("sub-tick equality does not claim an improvement",
+            improves_or_remains_unresolved(1, 1))
+        # شاهدٌ سالب على القاعدة نفسها: لو لم يتغيّر شيء (قبل == بعد) لَما
+        # اجتازت. فالقاعدة تُدين انعدام التحسّن، ولا تمرّ لمجرّد أنها نسبيّة.
+        chk("والقاعدة تُدين حالة «لا تحسّن»: نسبة 1.0 لا تجتاز",
+            not (1.0 >= MIN_GAIN))
         chk("وعدد الطلبات المخدومة أثناء الحمل ارتفع فعلاً",
             all(a["light_requests"] >= b["light_requests"]
                 for k, b, a in rows if k in ("image", "image_batch")),
@@ -541,7 +587,7 @@ def main():
 
     print("\n" + "─" * 62)
     print("SCOPE: real asyncio loop · real shipped validators · real redis-server.")
-    print("       FastAPI/uvicorn routing is NOT exercised (PyPI 403 here).")
+    print("       FastAPI/uvicorn routing is NOT exercised by this probe.")
     print("EVENT LOOP AND RATE-LIMIT DECISION: %d passed, %d failed" % (p[0], f[0]))
     if f[0]:
         sys.exit(1)

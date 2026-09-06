@@ -191,7 +191,7 @@ def vendor_report():
                 "reason": "public/vendor exists but is EMPTY in this sandbox "
                           "(no network, tools/vendor.sh has never run). The 17 "
                           "vendored runtime assets — the three@0.160.0 build "
-                          "plus 14 addons, and the pdfjs@4.0.379 module and "
+                          "plus 14 addons, and the pdfjs@4.10.38 module and "
                           "worker — are NOT MEASURED here. (es-module-shims is "
                           "no longer vendored at all: F-11 removed it from the "
                           "page and from tools/netlify-build.sh.) NOT VERIFIED "

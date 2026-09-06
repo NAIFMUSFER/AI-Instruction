@@ -17,12 +17,11 @@
 
    نطاق مُعلَن
    -----------
-   three.js غير متاح في هذا الصندوق (public/vendor فارغ، npm يردّ 403)، فالرسم
-   يمرّ بمنفّذ WebGL2 مكتوب في tests/remediation/lib_gl_three.js يرسم هندسة
+   الرسم يمرّ دائماً بمنفّذ WebGL2 مكتوب في tests/remediation/lib_gl_three.js يرسم هندسة
    ‎compile()‎ المشحونة بتظليل حقيقيّ. فما يُقاس هنا زمن **المترجم والعقد
    والرسم الخام** لا زمن شجرة three. ولذلك:
        LIVE THREE.JS BENCHMARK: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
-   ويُغلَق بـ‎bash tools/vendor.sh‎ ثم إعادة هذا الملفّ.
+   وجود three في public/vendor لا يغيّر نطاق هذا الاختبار.
    ========================================================================== */
 'use strict';
 const fs = require('fs');
@@ -30,7 +29,11 @@ const path = require('path');
 
 const HERE = __dirname;
 const ROOT = path.resolve(HERE, '..', '..');
-const { chromium } = require(path.join(ROOT, 'node_modules', 'playwright'));
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js).
+   النداء المباشر chromium.launch() يطلب البناء الذي تتوقّعه نسخة Playwright
+   المثبّتة (مثلاً 1234)، فيفشل في صندوق يحمل 1194 — وهو فشلُ بيئةٍ لا فشلُ
+   منتج. الأخوات (csp_browser_probe, run_perf) تمرّ من هنا منذ البداية. */
 const H = require(path.join(HERE, 'lib_csp_harness.js'));
 
 let pass = 0, fail = 0;
@@ -38,9 +41,6 @@ const chk = (n, c, d) => {
   if (c) { pass++; console.log('  ✓ ' + n); }
   else { fail++; console.log('  ✗ ' + n + '  ' + (d === undefined ? '' : d)); }
 };
-
-const VENDOR_OK = fs.existsSync(path.join(ROOT, 'public', 'vendor',
-  'three@0.160.0', 'build', 'three.module.js'));
 
 /* ═══ الميزانيات المعلنة — زمن أوّل إطار مرسوم بعد وصول رد HTTP ═══════════ */
 const BUDGET_MS = Object.freeze({
@@ -132,6 +132,8 @@ import { pqRobustBounds, pqCameraFit } from '/app/generated/pbr.js';
 window.SCENE_LIMITS = SCENE_LIMITS;
 const canvas = document.getElementById('c');
 const renderer = new THREE.WebGLRenderer({ canvas: canvas });
+window.__RENDERER_SCOPE = {three_js_real:THREE.__ACS_REAL_THREE===true,
+  adapter:THREE.__ACS_GL_SUBSTITUTE};
 const now = () => performance.now();
 
 function describe(o){
@@ -148,8 +150,7 @@ function pixels(){
      وسطها — خطأ قياس لا عطل رسم. */
   const gl=renderer.getContext();
   const w=canvas.width, h=canvas.height;
-  const b=new Uint8Array(w*h*4);
-  gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,b);
+  const b=THREE.readGLPixels(gl,w,h);
   let nz=0; const seen=new Set(); const BG=[15,18,23];
   for(let i=0;i<w*h;i++){ const r=b[i*4],g=b[i*4+1],bl=b[i*4+2];
     seen.add((r>>3)+','+(g>>3)+','+(bl>>3));
@@ -204,9 +205,9 @@ async function main() {
     '/vendor/three@0.160.0/build/three.module.js':
       fs.readFileSync(path.join(HERE, 'lib_gl_three.js'), 'utf8') } });
   const base = 'http://127.0.0.1:' + srv.port;
-  const browser = await chromium.launch({
-    args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader',
-           '--disable-gpu-sandbox', '--js-flags=--expose-gc'] });
+  const browser = await PW.launch({
+    args: ['--use-gl=angle', '--use-angle=swiftshader',
+           '--js-flags=--expose-gc'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors = [];
   page.on('pageerror', e => errors.push(String(e && e.message || e)));
@@ -218,6 +219,9 @@ async function main() {
   await page.waitForFunction(() => window.__READY === true, null, { timeout: 30000 });
 
   const LIM = await page.evaluate(() => window.SCENE_LIMITS);
+  const scope = await page.evaluate(() => window.__RENDERER_SCOPE);
+  chk('renderer scope comes from the loaded raw WebGL2 adapter',
+      scope.three_js_real===false&&scope.adapter==='acs.gl-three/1.0.0',JSON.stringify(scope));
   console.log('\n== أ · عقد حدود المشهد مشحون ومقروء ==');
   chk('SCENE_LIMITS معلن ومجمَّد في الوحدة المشحونة',
       LIM && typeof LIM.contract === 'string' && LIM.max_total_meshes > 0,
@@ -308,15 +312,12 @@ async function main() {
   fs.mkdirSync(path.join(HERE, 'outputs'), { recursive: true });
   fs.writeFileSync(path.join(HERE, 'outputs', 'scene_benchmark.json'),
     JSON.stringify({ budgets: BUDGET_MS, limits: LIM,
-      three_js_real: VENDOR_OK, rows: table }, null, 1));
+      three_js_real: scope.three_js_real, renderer_adapter:scope.adapter, rows: table }, null, 1));
 
   console.log('\n' + '─'.repeat(62));
-  if (!VENDOR_OK) {
-    console.log('LIVE THREE.JS BENCHMARK: NOT VERIFIED — EXTERNAL ENVIRONMENT '
-      + 'REQUIRED (public/vendor empty, npm 403).');
-    console.log('  Measured: shipped compile() + shipped camera contract + real '
-      + 'WebGL2 rasterisation. NOT measured: three.js scene-graph cost.');
-  }
+  console.log('LIVE THREE.JS BENCHMARK: NOT VERIFIED by this target.');
+  console.log('  Measured: shipped compile() + shipped camera contract + raw '
+    + 'WebGL2 test adapter. Three.js scene-graph cost requires a separate benchmark.');
   console.log('SCENE BENCHMARK: %d passed, %d failed', pass, fail);
   if (fail) process.exit(1);
 }

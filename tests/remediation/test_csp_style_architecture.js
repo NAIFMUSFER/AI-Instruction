@@ -43,8 +43,10 @@ const ROOT = path.resolve(HERE, '..', '..');
 const PUB = path.join(ROOT, 'public');
 const APP = path.join(PUB, 'app');
 const H = require(path.join(HERE, 'lib_csp_harness.js'));
-const { chromium } = require(path.join(ROOT, 'node_modules', 'playwright'));
-
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   نداء chromium.launch() المباشر يطلب البناء الذي تتوقّعه نسخة Playwright
+   المثبّتة، فيسقط في صندوق يحمل بناءً آخر — فشلُ بيئةٍ لا فشلُ منتج. */
 let pass = 0, fail = 0;
 const chk = (name, cond, detail) => {
   if (cond) { pass++; console.log('  ✓', name); }
@@ -207,7 +209,7 @@ const MODEL = {
 
 async function live() {
   const srv = await H.serve();
-  const browser = await chromium.launch({ args: ['--no-sandbox'] });
+  const browser = await PW.launch({ args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1400, height: 900 } });
   const consoleLog = [];
   H.attachConsole(page, consoleLog);
@@ -565,22 +567,43 @@ async function live() {
     { re: /ERR_TUNNEL_CONNECTION_FAILED|net::ERR_/, why:
       'أثر انقطاع الشبكة نفسه. متوقَّع.' },
     { re: /favicon/, why: 'لا أيقونة في المستودع. متوقَّع وغير ضارّ.' },
-    { re: /Refused to apply inline style/, why:
+    /* صياغة Chromium لرسالة الحجب تغيّرت بين الإصدارات — 141 يقول
+       «Refused to apply inline style because it violates …» و151 يقول
+       «Applying inline style violates the following Content Security Policy
+       directive …». كان المصنِّف يطابق الصياغة القديمة حرفياً، فسقط على
+       GitHub (151) بينما يمرّ هنا (141) على الحدث نفسه من الضابطَين نفسيهما.
+       يُطابَق الآن **الحدث** لا الجملة: حجبُ style مضمَّن تحت style-src —
+       ويُحدّ عددُه أدناه بعدد ما رفعه الضابطان عمداً، فلا يُعدّ حجبٌ من
+       التطبيق نفسه «متوقَّعاً» لمجرّد أن نصّه يشبه نصّ الضابط. */
+    { re: /inline style[\s\S]*Content Security Policy[\s\S]*style-src/, why:
       'من الضابطَين السالبَين في §١ وحدهما: يحقنان سمة style عمداً ليثبتا أن '
-      + 'السياسة تحجبها. حصيلة التطبيق نفسه صفر — انظر §٧.' },
+      + 'السياسة تحجبها. حصيلة التطبيق نفسه صفر — انظر §٧.',
+      bounded_by_probe: true },
   ];
-  let blockers = 0;
+  let blockers = 0, inlineStyleRefusals = 0;
   for (const [key, n] of seen) {
     const [type, text] = [key.split('|')[0], key.slice(key.indexOf('|') + 1)];
     if (type !== 'error' && type !== 'warning' && type !== 'pageerror'
         && type !== 'requestfailed') continue;
     const hit = EXPECTED.filter((e) => e.re.test(text))[0];
+    if (hit && hit.bounded_by_probe) inlineStyleRefusals += n;
     if (hit) console.log('  · EXPECTED/BENIGN ×' + n + ' [' + type + '] '
       + text.slice(0, 90) + '\n      ⤷ ' + hit.why);
     else { blockers++;
       console.log('  · OPEN BLOCKER ×' + n + ' [' + type + '] ' + text.slice(0, 140)); }
   }
   chk('لا رسالة كونسول غير مصنَّفة كمتوقَّعة', blockers === 0, String(blockers));
+  /* الحدّ الذي لم يكن موجوداً: رسائل الحجب المصنَّفة «متوقَّعة» لا تزيد عن
+     الخرقين اللذين رفعهما الضابطان عمداً. رسالةٌ ثالثة تعني أن التطبيق نفسه
+     حُجب عنه تنسيق — وهي عطلٌ لا ضجيج، مهما شابه نصُّها نصَّ الضابط. */
+  chk('ورسائل حجب style المضمَّن لا تتجاوز ما رفعه الضابطان عمداً (' + R.probeViolations + ')',
+    inlineStyleRefusals <= R.probeViolations,
+    inlineStyleRefusals + ' console message(s) vs ' + R.probeViolations + ' deliberate violation(s)');
+  chk('والمصنِّف يعرف الصياغتين: Chromium 141 وChromium 151 يصفان الحدث نفسه',
+    EXPECTED[3].re.test('Refused to apply inline style because it violates the following Content Security Policy directive: "style-src \'self\'"')
+    && EXPECTED[3].re.test('Applying inline style violates the following Content Security Policy directive \'style-src \'self\'\'. Either the'));
+  chk('ولا يبتلع رسالةً أخرى تذكر CSP بلا حجب style مضمَّن',
+    !EXPECTED[3].re.test('Refused to load the script because it violates the following Content Security Policy directive: "script-src"'));
 
   console.log('\n──────────────────────────────────────────────');
   console.log('نطاق مُعلَن: three.js مُكعَّب (public/vendor يملؤه البناء) — '

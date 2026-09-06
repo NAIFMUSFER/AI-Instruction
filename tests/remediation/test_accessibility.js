@@ -20,7 +20,10 @@
 const fs=require('fs'), path=require('path'), http=require('http');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
 const PUB=path.join(ROOT,'public');
-const {chromium}=require(path.join(ROOT,'node_modules','playwright'));
+const PW=require(path.join(ROOT,'tools','pw_chromium.js'));
+/* اكتساب المتصفّح يمرّ من مُحدِّد الثنائيّة الواحد (tools/pw_chromium.js):
+   نداء chromium.launch() المباشر يطلب البناء الذي تتوقّعه نسخة Playwright
+   المثبّتة، فيسقط في صندوق يحمل بناءً آخر — فشلُ بيئةٍ لا فشلُ منتج. */
 /* المصدر الوحيد الذي يعرف تخطيط الواجهة بعد F-09 */
 const AS=require(path.join(ROOT,'tests','lib','app_source.js'));
 const CSSTEXT=fs.existsSync(path.join(PUB,'app','styles','app.css'))
@@ -73,10 +76,7 @@ function findAxe(){
   return cands.filter(p=>fs.existsSync(p))[0]||null;
 }
 
-async function launch(){
-  try{ return await chromium.launch(); }
-  catch(e){ return await chromium.launch({executablePath:'/opt/pw-browsers/chromium'}); }
-}
+async function launch(){ return await PW.launch(); }
 
 (async()=>{
 console.log('HARNESS: accessibility DOM/ARIA layer, real Chromium, '

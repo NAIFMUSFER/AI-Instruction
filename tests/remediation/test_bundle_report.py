@@ -355,7 +355,7 @@ chk('the vendor reason names the real cause and does not claim a measurement',
 chk('the vendor reason no longer counts es-module-shims among the vendored '
     'assets — F-11 removed it from the page and from the build',
     bool(_vendor_files)
-    or 'no longer vendored' in V['reason'], V.get('reason', '')[:120])
+    or 'no longer vendored' in V['reason'], (V.get('reason') or '')[:120])
 
 # ═══════════════════════════════════════ ج · الميزانية مُحقَّقة لا مُعلَنة ═══
 print('\n== ج · THE BUDGET IS DECLARED *AND* MET, BOTH COMPUTED ==')

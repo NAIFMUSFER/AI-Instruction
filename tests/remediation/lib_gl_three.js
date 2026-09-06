@@ -5,8 +5,8 @@
    ---------------------
    السؤال في KI-25 سؤال بكسلات: هل الهندسة التي يخرجها ‎compile()‎ المشحون،
    بالكاميرا التي يحسبها عقد ‎pqCameraFit‎ المشحون، تُرسَم فعلاً؟ كعبٌ صامت لا
-   يجيب عنه بحال. و three@0.160.0 غير متاح في هذا الصندوق: ‎public/vendor‎
-   فارغ وسجلّ npm يردّ 403.
+   يجيب عنه بحال. يستخدم الاختبار هذا المنفّذ صراحةً حتى لو توفّر three؛
+   وجود المكتبة في public/vendor لا يحوّل هذا المنفّذ إلى three.js.
 
    فبدل الادّعاء أو الصمت: يفتح هذا الملفّ سياق ‎webgl2‎ حقيقياً من اللوحة،
    ويصرّف زوج تظليل حقيقيّاً، ويرفع رؤوس مكعّب وحدة إلى مخزن حقيقيّ، ويرسم كل
@@ -22,6 +22,27 @@
 
 export const __ACS_REAL_THREE = false;
 export const __ACS_GL_SUBSTITUTE = 'acs.gl-three/1.0.0';
+
+/* A context object survives context loss. Never count a zero-initialized
+   readback buffer or attempted draw calls as evidence of a rendered frame. */
+export function assertGLContext(gl, stage) {
+  if (!gl) throw new Error('WEBGL_CONTEXT_UNAVAILABLE: ' + stage);
+  if (gl.isContextLost()) throw new Error('WEBGL_CONTEXT_LOST: ' + stage);
+  const error = gl.getError();
+  if (error !== gl.NO_ERROR)
+    throw new Error('WEBGL_ERROR: ' + stage + ' (0x' + error.toString(16) + ')');
+  return gl;
+}
+
+export function readGLPixels(gl, width, height) {
+  assertGLContext(gl, 'before readPixels');
+  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0)
+    throw new Error('WEBGL_READBACK_SIZE_INVALID');
+  const pixels = new Uint8Array(width * height * 4);
+  gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+  assertGLContext(gl, 'after readPixels');
+  return pixels;
+}
 
 export class Vector3 {
   constructor(x = 0, y = 0, z = 0) { this.x = x; this.y = y; this.z = z; }
@@ -285,10 +306,10 @@ export class WebGLRenderer {
     this.toneMapping = 0; this.toneMappingExposure = 1; this.outputColorSpace = 'srgb';
     this._gl = this.domElement.getContext('webgl2', { preserveDrawingBuffer: true,
       antialias: false, alpha: false });
-    if (this._gl) this._initGL();
+    this._initGL();
   }
   _initGL() {
-    const gl = this._gl;
+    const gl = assertGLContext(this._gl, 'initialize renderer');
     const mk = (t, src) => { const s = gl.createShader(t); gl.shaderSource(s, src);
       gl.compileShader(s);
       if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
@@ -315,13 +336,14 @@ export class WebGLRenderer {
     gl.vertexAttribPointer(aNrm, 3, gl.FLOAT, false, 24, 12);
     this._vao = vao;
     gl.enable(gl.DEPTH_TEST);
+    assertGLContext(gl, 'initialize resources');
   }
   getContext() { return this._gl; }
   setSize(w, h) { if (this.domElement) { this.domElement.width = w; this.domElement.height = h; } }
   setPixelRatio() {} setClearColor() {} setAnimationLoop() {} compile() {} dispose() {}
   getPixelRatio() { return 1; }
   render(scene, camera) {
-    const gl = this._gl; if (!gl) return;
+    const gl = assertGLContext(this._gl, 'before render');
     const c = this.domElement;
     gl.viewport(0, 0, c.width, c.height);
     gl.clearColor(0.06, 0.07, 0.09, 1);
@@ -349,6 +371,7 @@ export class WebGLRenderer {
       this.info.render.calls++; this.info.render.triangles += 12;
     };
     scene.traverse(draw);
+    assertGLContext(gl, 'after render');
   }
 }
 export const REVISION = 'acs-gl-substitute';

@@ -73,7 +73,7 @@ def req_lines(text):
     out = []
     for raw in text.splitlines():
         s = raw.split('#', 1)[0].strip()
-        if not s:
+        if not s or s.startswith('--hash='):
             continue
         if s.startswith('-'):
             out.append({'raw': s, 'name': None, 'extras': '', 'spec': None,
@@ -129,31 +129,24 @@ chk('requirements.lock parses (%d active pin(s), %d UNRESOLVED-OFFLINE)'
 chk('every active line of requirements.lock is an exact == pin',
     all(r['spec'] == '==' and r['version'] for r in lock_active),
     str([r['raw'] for r in lock_active if r['spec'] != '==']))
-chk('requirements.in declares no version itself (the lock owns versions)',
-    all(r['spec'] is None for r in direct),
-    str([r['raw'] for r in direct if r['spec']]))
+chk('reviewed direct dependencies are pinned explicitly before resolution',
+    all(r['spec'] == '==' and r['version'] for r in direct))
 
-# ترويسة القفل: تقول الحقيقة عن نفسها، ولا بصمة مخترعة فيها
-print('\n── ب · THE LOCK HEADER IS HONEST ABOUT BEING OFFLINE ──')
+print('\n── ب · UNIVERSAL LOCK WITH REAL DISTRIBUTION HASHES ──')
 head = LOCK_TXT[:6000]
-chk('the header states the lock was generated OFFLINE',
-    'OFFLINE' in head)
-chk('the header states that hashes are absent',
-    re.search(r'NO HASHES|no hashes|hashes are absent', head) is not None)
-chk('the header carries the exact regeneration command',
-    'pip-compile --generate-hashes --output-file requirements.lock '
-    'requirements.in' in re.sub(r'\s+', ' ', LOCK_TXT))
-chk('no sha256 hash is fabricated anywhere in the lock',
-    '--hash=' not in LOCK_TXT and 'sha256:' not in LOCK_TXT)
-chk('every active pin carries a `# via` provenance comment',
-    all(re.search(r'^\s*%s\s*(\[[^\]]*\])?==.*?\n(\s*#[^\n]*\n)*?\s*#\s*via'
-                  % re.escape(r['name']), LOCK_TXT, re.M | re.S)
-        for r in lock_active),
-    'missing: %s' % [r['name'] for r in lock_active
-                     if not re.search(
-                         r'^\s*%s\s*(\[[^\]]*\])?==.*?\n(\s*#[^\n]*\n)*?'
-                         r'\s*#\s*via' % re.escape(r['name']),
-                         LOCK_TXT, re.M | re.S)])
+chk('the header records universal Python 3.11 resolution with hashes',
+    all(flag in head for flag in ('uv pip compile', '--universal',
+        '--python-version 3.11', '--generate-hashes', 'requirements.in')))
+chk('no dependency is left unresolved', not lock_unres)
+blocks = re.split(r'(?m)(?=^[A-Za-z0-9][A-Za-z0-9._-]*(?:\[[^\]]*\])?==)',
+                  LOCK_TXT)[1:]
+chk('every active requirement has its own hashed block',
+    len(blocks) == len(lock_active)
+    and all(re.search(r'--hash=sha256:[a-f0-9]{64}\b', block) for block in blocks))
+chk('every resolved block records why the package is installed',
+    all(re.search(r'^\s*#\s*via\b', block, re.M) for block in blocks))
+chk('deployment requirements are byte-identical to the reviewed lock',
+    TXT_TXT == LOCK_TXT)
 
 # ═══════════════════════ ج · كل تبعية مباشرة مثبّتة أو معلَّمة صراحةً ═══════
 print('\n── ج · EVERY DIRECT REQUIREMENT IS PINNED OR EXPLICITLY UNRESOLVED ──')
@@ -192,7 +185,7 @@ chk('requirements.txt is either `-r requirements.lock` or only == pins',
                                          and r['version'] for r in txt_reqs)),
     str([r['raw'] for r in txt_reqs if r['spec'] != '==']))
 for r in txt_reqs:
-    found = [t for t in OPEN_TOKENS if t in r['raw']]
+    found = [t for t in OPEN_TOKENS if t in r['raw'].split(';', 1)[0]]
     chk('no open-ended specifier in %r' % r['raw'], not found,
         'found %s' % ', '.join(found))
     chk('%r is not a bare package name' % r['raw'],
@@ -356,7 +349,7 @@ SOURCES = {
     ],
 }
 # النُّسخ المعلنة في tools/netlify-build.sh هي المرجع: هي التي تُجلب فعلاً
-DECLARED = {'three': '0.160.0', 'pdfjs-dist': '4.0.379'}
+DECLARED = {'three': '0.160.0', 'pdfjs-dist': '4.10.38'}
 for lib, sources in sorted(SOURCES.items()):
     seen = {}
     for label, text, pattern in sources:
