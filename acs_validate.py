@@ -5,6 +5,11 @@
 # القواعد مستمدة من الممارسة الشائعة وكود البناء السعودي (SBC) المرجعي.
 # =============================================================================
 
+import math
+
+OPENING_EDGE_TOLERANCE_M = 0.05  # existing horizontal tolerance, metres
+GEOMETRY_EPSILON_M = 1e-6        # floating-point comparisons, not a code limit
+
 MIN_ROOM_AREA = 1.0        # م² — أصغر من ذلك غالباً خطأ
 SPLIT_AREA = 30.0          # م² — حيّز أكبر من هذا يجب تفتيته لغرف (سكني فقط)
 MIN_CORRIDOR_W = 1.2       # م — أقل عرض ممر
@@ -45,6 +50,58 @@ def _overlap(a, b, tol=0.05):
     ax, az, aw, ad = a; bx, bz, bw, bd = b
     return not (ax + aw <= bx + tol or bx + bw <= ax + tol or
                 az + ad <= bz + tol or bz + bd <= az + tol)
+
+
+def _finite_number(value):
+    if isinstance(value, bool):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def _opening_issues(room, template, width, depth, wall_height):
+    issues = []
+    host_height = _finite_number(room.get("wall_h", wall_height))
+    for kind in ("doors", "windows"):
+        for index, opening in enumerate(room.get(kind) or []):
+            label = "[%s/%s/%s/%d]" % (template, room.get("id", "?"), kind, index)
+            def add(code, message):
+                issues.append("%s %s: %s" % (label, code, message))
+            if not isinstance(opening, dict):
+                add("OPENING_INVALID", "تعريف الفتحة ليس كائناً.")
+                continue
+            edge = opening.get("edge")
+            if edge not in ("N", "S", "E", "W"):
+                add("OPENING_EDGE_INVALID", "الحافة يجب أن تكون N أو S أو E أو W.")
+            values = {"offset": opening.get("offset"),
+                      "width": opening.get("width", 0.9 if kind == "doors" else 1.2),
+                      "height": opening.get("height", 2.1 if kind == "doors" else 1.6),
+                      "sill": opening.get("sill", 0.9) if kind == "windows" else 0}
+            numbers = {key: _finite_number(value) for key, value in values.items()}
+            for key, value in numbers.items():
+                if value is None:
+                    add("OPENING_NUMBER_INVALID", "%s يجب أن يكون عدداً منتهياً." % key)
+            if any(value is None for value in numbers.values()):
+                continue
+            off, ow, oh, sill = (numbers[key] for key in ("offset", "width", "height", "sill"))
+            if ow <= 0:
+                add("OPENING_WIDTH_NON_POSITIVE", "عرض الفتحة يجب أن يكون موجباً.")
+            if oh <= 0:
+                add("OPENING_HEIGHT_NON_POSITIVE", "ارتفاع الفتحة يجب أن يكون موجباً.")
+            if sill < 0:
+                add("WINDOW_SILL_NEGATIVE", "أسفل النافذة يقع تحت منسوب الأرضية.")
+            if edge in ("N", "S", "E", "W") and ow > 0:
+                span = width if edge in ("N", "S") else depth
+                if off - ow / 2 < -OPENING_EDGE_TOLERANCE_M or off + ow / 2 > span + OPENING_EDGE_TOLERANCE_M:
+                    add("OPENING_OUTSIDE_WALL", "الفتحة خارج طول الجدار المضيف.")
+            if host_height is None or host_height <= 0:
+                add("OPENING_HOST_HEIGHT_INVALID", "ارتفاع الجدار المضيف غير صالح.")
+            elif oh > 0 and sill + oh > host_height + GEOMETRY_EPSILON_M:
+                add("OPENING_ABOVE_WALL", "أعلى الفتحة يتجاوز ارتفاع الجدار المضيف.")
+    return issues
 
 
 def validate_building(b):
@@ -163,14 +220,7 @@ def validate_building(b):
                                   % (tmpl, rid, p.get("type"), px, pz))
                     break
 
-            # الفتحات ضمن طول الحافة
-            for kind in ("doors", "windows"):
-                for o in (r.get(kind) or []):
-                    e = o.get("edge"); off = float(o.get("offset", 0)); ow = float(o.get("width", 0.9))
-                    span = w if e in ("N", "S") else d
-                    if off - ow / 2 < -0.05 or off + ow / 2 > span + 0.05:
-                        issues.append("[%s/%s] %s على الحافة %s خارج حدود الجدار (offset=%.2f عرض=%.2f, الطول=%.2f)."
-                                      % (tmpl, rid, "باب" if kind == "doors" else "نافذة", e, off, ow, span))
+            issues.extend(_opening_issues(r, tmpl, w, d, b.get("wall_h", 3.0)))
 
             rects.append((rid, (x, z, w, d)))
 

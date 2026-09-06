@@ -1,0 +1,173 @@
+
+== §46 — NO REGULATORY CONTENT ==
+  ✓ regulatory rule count = 0
+  ✓ every shipped rule is synthetic
+  ✓ every shipped rule uses a synthetic_test source
+  ✓ registry definition issues = none
+  ✓ no SBC/IBC/NFPA/ADA/Civil-Defense value encoded in any rule
+  ✓ source registry entries are NOT_LOADED and unverified
+  ✓ no edition is fabricated for any real standard
+
+== §42 — SINGLE CANONICAL REGISTRY (drift test) ==
+  ✓ embedded browser registry is byte-identical to acs_rules.json
+  ✓ schema version matches
+  ✓ engine version matches
+  ✓ units/operators/contracts come from one source
+  ✓ rule content is not hand-maintained in two places
+
+== §39 — STORAGE SEPARATION ==
+  ✓ rule library lives outside project data
+  ✓ a project references a ruleset by id/edition only, never embeds it
+
+== §23 — SYNTHETIC PASS (COMPLETE distance) ==
+  ✓ status PASS
+  ✓ evaluation value is unrounded
+  ✓ display value is the rounded 24.905
+  ✓ required exposed with unit
+  ✓ applicability APPLICABLE + data_quality COMPLETE
+  ✓ rule is synthetic, never code-required
+  ✓ evidence chain reaches path + measurement
+  ✓ evidence names the rule source
+  ✓ rule_uid carries standard|edition|section|id|revision
+  ✓ engine version recorded
+  ✓ evaluated_at comes from context (engine invents no clock)
+
+== §24 — SYNTHETIC FAIL ==
+  ✓ status FAIL against the tighter synthetic edition
+  ✓ actual > required, both reported
+  ✓ FAIL still carries full evidence
+
+== §25 — PARTIAL ⇒ NOT_EVALUATED ==
+  ✓ status NOT_EVALUATED (not PASS, not FAIL)
+  ✓ reason INCOMPLETE_DISTANCE_MEASUREMENT
+  ✓ data_quality INCOMPLETE
+  ✓ no actual/required fabricated
+  ✓ quality evidence recorded
+
+== §26 — GEOMETRY_NOT_SUPPORTED ⇒ NOT_EVALUATED ==
+  ✓ status NOT_EVALUATED
+  ✓ reason GEOMETRY_NOT_SUPPORTED
+  ✓ no distance claimed
+
+== §27 — UNKNOWN JURISDICTION ==
+  ✓ status NOT_EVALUATED
+  ✓ reason JURISDICTION_NOT_SET
+  ✓ declared jurisdiction ⇒ evaluated
+  ✓ different jurisdiction ⇒ NOT_APPLICABLE (not FAIL)
+  ✓ Arabic input never implies a jurisdiction
+
+== §28 — EDITION ISOLATION ==
+  ✓ ambiguous rule_id across editions is never silently resolved by the gate
+  ✓ edition 1 pinned ⇒ evaluated under edition 1
+  ✓ edition 2 pinned ⇒ evaluated under edition 2
+  ✓ same rule_id, different identity
+  ✓ edition-2 rule under an edition-1 pin ⇒ NOT_APPLICABLE/EDITION_NOT_PINNED
+
+== §29 — MISSING INPUT ⇒ INSUFFICIENT_DATA ==
+  ✓ status INSUFFICIENT_DATA
+  ✓ reason names the field and why
+  ✓ never PASS, never FAIL
+  ✓ width is NOT derived from the door opening width
+
+== §30 — UNIT CONVERSION ==
+  ✓ status PASS (0.95 m vs synthetic 900 mm)
+  ✓ actual displayed in the rule unit as 950 mm
+  ✓ required displayed as 900 mm
+  ✓ comparison happened in the base unit (m)
+  ✓ 0.85 m ⇒ FAIL against the same synthetic floor
+  ✓ mm and m are never compared without conversion
+  ✓ cross-dimension comparison is refused (UNSUPPORTED)
+
+== §31 — PROVENANCE ==
+  ✓ geometry-inferred input is disclosed as such
+  ✓ inferred data is not promoted to user-confirmed
+  ✓ a user-stated field is reported as user
+
+== §32 — INVALID RULE DEFINITION ==
+  ✓ status INVALID_RULE_DEFINITION
+  ✓ rule did not execute (no actual/required)
+  ✓ missing edition reported
+  ✓ missing section reported
+  ✓ unverified source reported
+  ✓ missing document reference reported
+  ✓ invalid rule can never be code-required
+
+== §33 — CODE_REQUIRED GATE ==
+  ✓ synthetic rule never opens the gate
+  ✓ unknown rule never opens the gate
+  ✓ valid + verified + regulatory ⇒ gate opens
+  ✓ same rule unverified ⇒ gate closes
+  ✓ regulatory rule may not use a synthetic source
+  ✓ regulatory rule may not live in TEST_ONLY
+
+== §7 — APPLICABILITY vs EXISTENCE ==
+  ✓ program matches ⇒ APPLICABLE and evaluated
+  ✓ program differs ⇒ NOT_APPLICABLE (not FAIL)
+  ✓ classification missing ⇒ INSUFFICIENT_DATA (not guessed)
+  ✓ the three outcomes stay distinct
+  ✓ disabled rule ⇒ NOT_APPLICABLE/RULE_DISABLED
+
+== §16 — EVALUATOR PRIMITIVES ==
+  ✓ existence
+  ✓ count_min
+  ✓ enumeration
+  ✓ boolean_required
+  ✓ boolean_required FAIL when false
+  ✓ numeric_range
+  ✓ all_of PASS with per-clause detail
+  ✓ any_of PASS when one clause holds
+  ✓ all ten primitives are declared
+
+== §17 / §38 — EXPRESSION SAFETY & IMPORT SECURITY ==
+  ✓ engine source contains no eval/Function constructor
+  ✓ script-bearing rule rejected
+  ✓ javascript: URL rejected
+  ✓ non-https source url rejected
+  ✓ unknown operator rejected
+  ✓ unknown unit rejected
+  ✓ input outside the contract rejected
+  ✓ unknown subject_type rejected
+  ✓ duplicate rule identity rejected at ruleset level
+  ✓ nested composite operators rejected
+  ✓ unknown completeness rejected
+  ✓ complete_for_declared_scope requires a declared scope
+  ✓ invalid ruleset does not execute
+
+== §34/§35/§36 — AGGREGATION SEMANTICS ==
+  ✓ overall_compliance = NOT_DETERMINED
+  ✓ all seven state counters present
+  ✓ counters sum to rules_evaluated
+  ✓ regulatory results = 0, synthetic > 0
+  ✓ regulatory_rules_loaded = 0
+  ✓ completeness surfaced as partial
+  ✓ statement never says the building is compliant
+  ✓ statement declares how many rules were configured
+  ✓ aggregation never invents a verdict from partial passes
+
+== §14 — READ-ONLY ENGINE ==
+  ✓ model unchanged after evaluation
+  ✓ no remediation/auto-fix field is produced
+  ✓ no exit/door/stair was created
+
+== §20 — SUBJECT RESOLUTION ==
+  ✓ BUILDING resolves
+  ✓ SPACE resolves
+  ✓ DOOR resolves
+  ✓ ROUTE resolves
+  ✓ EGRESS resolves
+  ✓ unknown subject type refused
+  ✓ unknown space refused
+  ✓ subject with no prefix refused
+  ✓ unresolved subject ⇒ NOT_EVALUATED (not FAIL)
+  ✓ subject/rule type mismatch ⇒ NOT_APPLICABLE
+  ✓ all 14 subject types declared
+
+== §11 — PASS/FAIL SEMANTICS ==
+  ✓ PASS/FAIL only when applicable + complete data
+  ✓ missing data never became PASS or FAIL
+  ✓ every result declares an evaluation state
+  ✓ every non-PASS/FAIL result states a reason
+  ✓ no result claims code compliance
+  ✓ code_required_eligible false everywhere in this phase
+
+RULES: 129 passed, 0 failed

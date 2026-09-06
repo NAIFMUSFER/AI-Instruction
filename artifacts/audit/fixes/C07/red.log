@@ -1,0 +1,155 @@
+test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) ... 
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'edge': 'Q'}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'edge': None}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'offset': None}) ... ERROR
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'offset': nan}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'width': inf}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'width': 0}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'width': -1}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'height': 0}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'height': -1}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'height': nan}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'sill': -0.2}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'sill': nan}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'height': 8}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'sill': 2.5, 'height': 2}) ... FAIL
+  test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'offset': 8}) ... FAIL
+test_uses_room_wall_height_and_reports_every_opening (__main__.ValidatorOpenings.test_uses_room_wall_height_and_reports_every_opening) ... FAIL
+test_valid_edges_defaults_and_exact_boundaries_have_no_false_alerts (__main__.ValidatorOpenings.test_valid_edges_defaults_and_exact_boundaries_have_no_false_alerts) ... ok
+
+======================================================================
+ERROR: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'offset': None})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 43, in test_each_invalid_opening_is_reported_with_its_identity
+    issues, _ = V.validate_building(model)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 169, in validate_building
+    e = o.get("edge"); off = float(o.get("offset", 0)); ow = float(o.get("width", 0.9))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'edge': 'Q'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'edge': None})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'offset': nan})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'width': inf})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : ['[g/room] باب على الحافة N خارج حدود الجدار (offset=3.00 عرض=inf, الطول=6.00).']
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'width': 0})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'width': -1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'height': 0})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'height': -1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'height': nan})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'sill': -0.2})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'sill': nan})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'height': 8})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='windows', values={'sill': 2.5, 'height': 2})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) (kind='doors', values={'offset': 8})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 44, in test_each_invalid_opening_is_reported_with_its_identity
+    self.assertTrue(any(code in s and "g/room/%s/0" % kind in s
+AssertionError: False is not true : ['[g/room] باب على الحافة N خارج حدود الجدار (offset=8.00 عرض=0.90, الطول=6.00).']
+
+======================================================================
+FAIL: test_uses_room_wall_height_and_reports_every_opening (__main__.ValidatorOpenings.test_uses_room_wall_height_and_reports_every_opening)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_openings.py", line 55, in test_uses_room_wall_height_and_reports_every_opening
+    self.assertTrue(any("doors/0" in s and "OPENING_ABOVE_WALL" in s for s in issues))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+FAILED (failures=15, errors=1)

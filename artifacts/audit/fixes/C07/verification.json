@@ -1,0 +1,9 @@
+{
+  "regression_before": {"tests": 3, "failures_including_subtests": 15, "errors": 1},
+  "regression_after": {"tests": 3, "failures": 0, "errors": 0},
+  "full_suite": {"files": 116, "PASS": 101, "FAIL": 7, "NOT_VERIFIED": 8},
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "both local-generator cases byte-identical to baseline; neither contains the repaired opening counterexamples",
+  "scope": "opening diagnostics; no new compiler rejection gate",
+  "pixel_validation": "NOT_VERIFIED"
+}
