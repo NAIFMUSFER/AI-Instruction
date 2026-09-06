@@ -1,0 +1,10 @@
+{
+  "branch": "audit/fix-2026-09-06",
+  "status": "BLOCKED_BY_AUTOMATIC_APPROVAL_REVIEW",
+  "action": "git push -u origin audit/fix-2026-09-06",
+  "reason": "Publishing changes and audit artifacts to a public GitHub repository requires explicit user authorization; creating and working on the branch did not supply that authorization.",
+  "retried": false,
+  "local_product_commit": "9597a126e2cb96765d22447ddcf7c6422e1701e9",
+  "deployment_performed": false,
+  "required_user_action": "Explicit permission to publish the audit branch and artifacts to the public repository."
+}
