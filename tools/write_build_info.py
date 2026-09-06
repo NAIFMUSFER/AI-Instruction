@@ -22,6 +22,7 @@
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -112,9 +113,22 @@ def main(argv=None):
                     help="output path (default: <repo>/build_info.json)")
     ap.add_argument("--print-only", action="store_true",
                     help="print the JSON without writing the file")
+    ap.add_argument("--require-provenance", action="store_true",
+                    help="reject missing/invalid commit or timestamp before writing")
     args = ap.parse_args(argv)
 
     payload = build_payload(args.built_at)
+    if args.require_provenance:
+        try:
+            timestamp = datetime.fromisoformat(payload["built_at"].replace("Z", "+00:00"))
+            valid_time = timestamp.tzinfo is not None
+        except (ValueError, TypeError):
+            valid_time = False
+        if not re.fullmatch(r"[0-9a-f]{40}(?:[0-9a-f]{24})?", payload["git_sha"]) \
+                or not valid_time:
+            sys.stderr.write("Build provenance requires a full commit SHA and a "
+                             "timezone-aware timestamp; no file was written.\n")
+            return 1
     text = json.dumps(payload, ensure_ascii=False, indent=2,
                       sort_keys=True) + "\n"
     if not args.print_only:

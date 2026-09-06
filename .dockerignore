@@ -1,0 +1,17 @@
+.git
+.env
+.env.*
+node_modules
+**/node_modules
+__pycache__
+**/__pycache__
+*.pyc
+.venv
+venv
+public/vendor
+build_info.json
+logs
+*.log
+last_llm_response.txt
+.DS_Store
+Thumbs.db

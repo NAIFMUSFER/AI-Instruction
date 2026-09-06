@@ -50,7 +50,7 @@ def rd(rel):
 
 # كل أسماء البيئة التي تقرأها الوحدة فعلاً — تُؤخذ من الوحدة نفسها لا تُنسَخ
 ENV_NAMES = tuple(B._ENV_SHA) + tuple(B._ENV_BUILT) + tuple(B._ENV_BRANCH) + \
-    ("ACS_VERSION", "ACS_BUILD_INFO_FILE")
+    ("ACS_VERSION", "ACS_BUILD_INFO_FILE", "ACS_BUILD_INFO_SOURCE")
 
 
 class Env(object):

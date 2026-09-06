@@ -5,7 +5,9 @@
 # كان النشر بلا هويّة: لا طريقة لمعرفة أيّ التزام يعمل على الخادم أو في الصفحة،
 # فأي تحقّق إنتاجي كان يقيس "شيئاً ما" لا نسخةً بعينها.
 #
-# ترتيب المصادر — أوّل مصدر يجيب هو المعتمد، ولا يُخترَع شيء:
+# ACS_BUILD_INFO_SOURCE=file: صورة Docker تقرأ هويتها المختومة وقت البناء
+# من الملف فقط. لا يجوز لمتغير بيئة قديم أن يعيد تسمية الصورة أو تاريخها.
+# خارج الصورة يبقى الترتيب المتوافق السابق (environment، الافتراضي):
 #   1) متغيّرات البيئة التي يحقنها النشر: ACS_GIT_SHA / ACS_BUILT_AT.
 #   2) متغيّرات المنصّات المعروفة (Render / Netlify / GitHub Actions).
 #   3) ملفّ build_info.json يكتبه سكربت البناء.
@@ -31,6 +33,7 @@ SCHEMA_VERSIONS = {
     "engineering_changes": "acs-engineering-changes/1.0.0",
     "api_base": "acs-api-base/1.0.0",
 }
+BUILD_FILE_SCHEMA = "acs-build-info/1.0.0"
 
 _ENV_SHA = ("ACS_GIT_SHA", "RENDER_GIT_COMMIT", "COMMIT_REF",
             "GITHUB_SHA", "SOURCE_VERSION")
@@ -72,16 +75,34 @@ def _short(sha):
     return sha[:12] if sha and sha != UNKNOWN else UNKNOWN
 
 
+def _file_string(info, name, default=UNKNOWN):
+    value = info.get(name)
+    return value.strip() if isinstance(value, str) and value.strip() else default
+
+
 def build_info():
     """أصل البناء كما هو — بلا اختراع ولا سرّ."""
     fileinfo = _from_file()
-    sha = _env_first(_ENV_SHA) or fileinfo.get("git_sha") or _from_git() or UNKNOWN
-    # Metadata from a different commit cannot establish this deployment's age.
-    matching_file = fileinfo if fileinfo.get("git_sha") == sha else {}
-    built = _env_first(_ENV_BUILT) or matching_file.get("built_at") or UNKNOWN
-    branch = _env_first(_ENV_BRANCH) or matching_file.get("git_branch") or UNKNOWN
-    version = (os.environ.get("ACS_VERSION", "") or "").strip() \
-        or matching_file.get("version") or SERVICE_VERSION
+    source = (os.environ.get("ACS_BUILD_INFO_SOURCE") or "").strip() or "environment"
+    if source == "environment":
+        # Compatibility mode for existing native/local deployments.
+        sha = _env_first(_ENV_SHA) or fileinfo.get("git_sha") or _from_git() or UNKNOWN
+        # Metadata from a different commit cannot establish this deployment's age.
+        matching_file = fileinfo if fileinfo.get("git_sha") == sha else {}
+        built = _env_first(_ENV_BUILT) or matching_file.get("built_at") or UNKNOWN
+        branch = _env_first(_ENV_BRANCH) or matching_file.get("git_branch") or UNKNOWN
+        version = (os.environ.get("ACS_VERSION", "") or "").strip() \
+            or matching_file.get("version") or SERVICE_VERSION
+    else:
+        # File mode binds all identity fields to one build artifact. Missing,
+        # corrupt or wrong-schema files (and misspelled source modes) fail
+        # closed: never borrow runtime metadata or invent a startup timestamp.
+        stamped = fileinfo if source == "file" \
+            and fileinfo.get("schema") == BUILD_FILE_SCHEMA else {}
+        sha = _file_string(stamped, "git_sha")
+        built = _file_string(stamped, "built_at")
+        branch = _file_string(stamped, "git_branch")
+        version = _file_string(stamped, "version", SERVICE_VERSION)
     try:
         timestamp = datetime.fromisoformat(str(built).replace("Z", "+00:00"))
         valid_time = timestamp.tzinfo is not None
