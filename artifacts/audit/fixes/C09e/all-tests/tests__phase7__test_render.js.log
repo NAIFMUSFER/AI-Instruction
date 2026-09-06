@@ -1,0 +1,13 @@
+
+== §0 — SPEC INTEGRITY AND THE NON-NEGOTIABLE PIPELINE ==
+  ✓ the browser spec is byte-identical to acs_render.json
+  ✓ the compiler version is declared
+  ✓ the pipeline runs model to image and never the reverse
+  ✓ the base render is declared the geometry authority
+  ✓ only the model feeds the model hash
+  ✓ every one of the eleven output types is declared
+  ✓ no photorealistic generator is claimed as shipped
+  ✓ the four verification classes are declared and distinguished
+  ✓ stub output is explicitly not a rendering pass
+
+== §1 — THE RENDER REQUEST IS TYPED, PINNED AND PRESENTATION ONLY ==

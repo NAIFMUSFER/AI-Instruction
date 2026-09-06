@@ -1,0 +1,14 @@
+
+== ANALYSER UNIT BEHAVIOUR ==
+  ✓ a fully black frame is EFFECTIVELY_BLACK
+  ✓ a uniform very dark frame (#010203) is EFFECTIVELY_BLACK
+  ✓ a black frame with a single bright pixel is still EFFECTIVELY_BLACK
+  ✓ a dark NIGHT scene that still has lit geometry is VISIBLE_CONTENT
+  ✓ an ordinary daylight frame is VISIBLE_CONTENT
+  ✓ an empty buffer is refused rather than passed
+  ✓ a tiny sample is refused as insufficient evidence
+  ✓ the thresholds are reported with every verdict (explainable)
+  ✗ browser fixture error browserType.launch: Failed to launch chromium because executable doesn't exist at /opt/pw-browsers/chromium
+
+──────────────────────────────────────────────
+VIEWPORT PIXEL TEST: 8 passed, 1 failed

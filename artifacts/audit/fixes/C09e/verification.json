@@ -1,0 +1,67 @@
+{
+  "issue": "C09e",
+  "source_base": "ad4c0e067321c2c657a1673e2453033df2b72348",
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 123,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 138
+  },
+  "existing_test_status_changes": {},
+  "new_test_results": {
+    "tests/remediation/test_polygon_bim_exchange.js": "PASS",
+    "tests/remediation/test_polygon_ifc.py": "PASS"
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "local_generation_and_export_seconds": {
+    "warehouse": 0.13409277100878286,
+    "chalet": 0.03073876299780386
+  },
+  "ifc_independent_validation": [
+    {
+      "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/evidence/ifc-schema/building.json",
+      "export_valid": true,
+      "schema": "IFC4",
+      "schema_errors": 0,
+      "validation_errors": 0,
+      "express_rules_evaluated": true,
+      "checker_version": "0.8.5",
+      "sha256": "8ba998c6eda5451b0a251641d100f95381650bffa5fa5026a00a3c7a7cb64e16",
+      "seconds": 2.5929894410073757
+    }
+  ],
+  "red_python": {
+    "tests": 7,
+    "failures": 9
+  },
+  "green_python": {
+    "tests": 7,
+    "failures": 0
+  },
+  "red_javascript": {
+    "cases": 3,
+    "failures": 3
+  },
+  "green_javascript": {
+    "cases": 3,
+    "failures": 0
+  },
+  "independent_polygon_IFC4_EXPRESS_cases": 4,
+  "independent_tessellation_cases": 4,
+  "actual_ESM_import": "PASS",
+  "remaining_C09": [
+    "IFC import and roundtrip geometry",
+    "validator",
+    "relationships and distance",
+    "CAD input units, origin and floor count"
+  ]
+}

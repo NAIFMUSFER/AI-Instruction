@@ -1,0 +1,104 @@
+[
+  {
+    "case": "warehouse",
+    "source": "shipped local generator; DOM controls stubbed; no provider call, no pixel verification",
+    "generation_s": 0.02147718199999986,
+    "language_understanding_and_engineering_generation": "combined local parser/buildLocal execution",
+    "validation_s": 0.0041306659986730665,
+    "architecture_compilation_s": 0.002111547000822611,
+    "gltf_export_s": 0.08474109500821214,
+    "svg_export_s": 0.02163228100107517,
+    "measured_total_s": 0.13409277100878286,
+    "gltf_nodes": 1140,
+    "gltf_buffer_bytes": 1039680,
+    "native_dxf_export": "NOT_IMPLEMENTED; audit-room-outlines.dxf is an audit-only room-outline projection",
+    "files": [
+      {
+        "path": "warehouse/audit-room-outlines.dxf",
+        "bytes": 3729,
+        "sha256": "103a194a97c7a9b3d0a43e7303d64eed0c36d79e806b7117ccfbe1730772c237"
+      },
+      {
+        "path": "warehouse/building.gltf",
+        "bytes": 2417376,
+        "sha256": "5c567d29c9cfac367864713c8e9ba1d1d57ae98da034f6abb756cfcf0d68406f"
+      },
+      {
+        "path": "warehouse/building.json",
+        "bytes": 52142,
+        "sha256": "b637d4f716f3cc2ac276498adb9de021374c9294bff6b80de2738eda0d3663c8"
+      },
+      {
+        "path": "warehouse/floor-0.svg",
+        "bytes": 25143,
+        "sha256": "d40ebed62576b0dd08c59a7d8d3568e366b835f589f187f04952deb1be00414d"
+      },
+      {
+        "path": "warehouse/validation.json",
+        "bytes": 16416,
+        "sha256": "cbdb73fd46f407e60692ad78bc209740e3bdda62f91541c24aa92c3651a146a6"
+      }
+    ]
+  },
+  {
+    "case": "chalet",
+    "source": "shipped local generator; DOM controls stubbed; no provider call, no pixel verification",
+    "generation_s": 0.012775576,
+    "language_understanding_and_engineering_generation": "combined local parser/buildLocal execution",
+    "validation_s": 0.0007834429998183623,
+    "architecture_compilation_s": 0.0006684990075882524,
+    "gltf_export_s": 0.011256732992478646,
+    "svg_export_s": 0.005254511997918598,
+    "measured_total_s": 0.03073876299780386,
+    "gltf_nodes": 143,
+    "gltf_buffer_bytes": 130416,
+    "native_dxf_export": "NOT_IMPLEMENTED; audit-room-outlines.dxf is an audit-only room-outline projection",
+    "files": [
+      {
+        "path": "chalet/audit-room-outlines.dxf",
+        "bytes": 585,
+        "sha256": "902f5b40e814905978cc993005b7d6d23b7a92a7620222b24d1e406dc3123953"
+      },
+      {
+        "path": "chalet/building.gltf",
+        "bytes": 301453,
+        "sha256": "4d7d68d2c865f1eda3848b5625ed732eb6822a04db6e27a2544b63f1ed11137b"
+      },
+      {
+        "path": "chalet/building.json",
+        "bytes": 3898,
+        "sha256": "6fec5983a81ec98622d0474ed225c329606eea0d11c67edf8b2d34f3bcc2a8bc"
+      },
+      {
+        "path": "chalet/floor-0.svg",
+        "bytes": 1965,
+        "sha256": "d8e21653de13428e4cb51059006b0042fbecfbdf7f7fdebc7b76daa6a7bbb3a6"
+      },
+      {
+        "path": "chalet/floor-1.svg",
+        "bytes": 1631,
+        "sha256": "3e0a8d60db7ba9b47510506940db8607dc753339ac356f3ba176b94b969fc326"
+      },
+      {
+        "path": "chalet/floor-2.svg",
+        "bytes": 1631,
+        "sha256": "940afabc60a0e24c2ed053071c68aea7a6933c7bdc24b75b5d72ed1cbf839de6"
+      },
+      {
+        "path": "chalet/floor-3.svg",
+        "bytes": 1631,
+        "sha256": "af34960f77194003f4f606a998468f0b9cef36457cff07e5b9cc2a0c41ed48a4"
+      },
+      {
+        "path": "chalet/floor-4.svg",
+        "bytes": 2725,
+        "sha256": "18def734c19f7fd10fe6ce48aec5bc8f8c347439918b8614c0f3e7d57e5b1b00"
+      },
+      {
+        "path": "chalet/validation.json",
+        "bytes": 1558,
+        "sha256": "98873e9c25cbc4e05b9244db482d414bb359441001863d2e6c0b8083bb20ebee"
+      }
+    ]
+  }
+]

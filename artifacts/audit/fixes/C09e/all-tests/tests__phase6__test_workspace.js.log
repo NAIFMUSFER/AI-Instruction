@@ -1,0 +1,134 @@
+
+== §72 — SPEC INTEGRITY AND STATE BOUNDARIES ==
+  ✓ the browser spec is byte-identical to acs_workspace.json
+  ✓ the schema and ui version are pinned
+  ✓ the six state classes are declared
+  ✓ every ownership entry names a declared class
+  ✓ the key selected_id is owned by UI_STATE
+  ✓ the key hovered_id is owned by UI_STATE
+  ✓ the key tree_expanded is owned by UI_STATE
+  ✓ the key active_panel is owned by UI_STATE
+  ✓ the key language is owned by UI_STATE
+  ✓ the key theme is owned by UI_STATE
+  ✓ the key ui_mode is owned by UI_STATE
+  ✓ the key level_filter is owned by UI_STATE
+  ✓ the key discipline_filter is owned by UI_STATE
+  ✓ the key issue_filter is owned by UI_STATE
+  ✓ the key camera is owned by RUNTIME_STATE
+  ✓ the key navigation_mode is owned by RUNTIME_STATE
+  ✓ the key visibility is owned by RUNTIME_STATE
+  ✓ the key portal_states is owned by RUNTIME_STATE
+  ✓ the key measurements is owned by RUNTIME_STATE
+  ✓ the key model is owned by ENGINEERING_MODEL
+  ✓ the key model_hash is owned by ENGINEERING_MODEL
+  ✓ the key current_revision is owned by ENGINEERING_MODEL
+  ✓ the key history is owned by ENGINEERING_MODEL
+  ✓ the key visual_reference is owned by PRESENTATION_OUTPUT
+  ✓ the key visual_intent is owned by PRESENTATION_OUTPUT
+  ✓ the key snapshot is owned by PRESENTATION_OUTPUT
+  ✓ the key glb is owned by PRESENTATION_OUTPUT
+  ✓ only the canonical model feeds the model hash
+
+== §91 — TEST N: UI STATE CANNOT ENTER THE MODEL HASH ==
+  ✓ changing every UI key leaves the model hash unchanged
+  ✓ no UI key leaked into the canonical model
+  ✓ the boundary check reports clean
+  ✓ the model hash is still the original
+  ✓ changing every runtime key leaves the model hash unchanged
+  ✓ no revision was created by any UI or runtime change
+  ✓ the workspace summary states it writes nothing to the model
+
+== §4 — PROJECT TREE IS BUILT FROM REAL MODEL DATA ==
+  ✓ the tree is produced
+  ✓ the root is the project
+  ✓ the project contains a site
+  ✓ the site contains a building
+  ✓ every model level appears in the tree
+  ✓ every tree node kind is declared
+  ✓ every space node id resolves in the canonical model
+  ✓ every door node id resolves to a door
+  ✓ every object node id resolves to an object
+  ✓ there is no placeholder or invented node
+  ✓ the space count in the tree equals the model space count
+  ✓ building the tree writes nothing to the model
+  ✓ a model carrying MEP shows an MEP group
+  ✓ a model carrying structure shows a structure group
+  ✓ a model with no MEP shows no MEP group
+
+== §5/§76 — FILTERS AFFECT DISPLAY ONLY ==
+  ✓ a discipline filter changes what is listed
+  ✓ filtering writes nothing to the model
+  ✓ a level filter is display state only
+  ✓ expanding a node reveals its children
+  ✓ the tree declares when it needs virtualising
+  ✓ a large project asks for virtualisation
+
+== §8/§9/§10/§11 — INSPECTOR CONTRACT ==
+  ✓ the inspector resolves a space
+  ✓ the inspector exposes the section IDENTITY
+  ✓ the inspector exposes the section GEOMETRY
+  ✓ the inspector exposes the section PROPERTIES
+  ✓ the inspector exposes the section RELATIONSHIPS
+  ✓ the inspector exposes the section ISSUES
+  ✓ the inspector exposes the section PROVENANCE
+  ✓ identity carries the id, kind, discipline and level
+  ✓ every field declares a declared editability class
+  ✓ some fields are editable and some are not
+  ✓ a derived field is never editable
+  ✓ a display-only field is never editable
+  ✓ a read-only field is never editable
+  ✓ reading the inspector writes nothing
+  ✓ the inspector claims no compliance
+  ✓ relationships name real hosted openings
+  ✓ every provenance entry carries a declared label
+  ✓ no provenance label claims a regulation
+  ✓ the forbidden-label check is not vacuous
+  ✓ a forbidden source can never produce a compliance label
+
+== §86 — TEST I: UNKNOWN VALUES STAY UNKNOWN ==
+  ✓ the door inspects
+  ✓ a door with no clear width exposes the field
+  ✓ the clear width is classified UNKNOWN
+  ✓ the clear width displays as Not specified in English
+  ✓ the clear width displays as غير محدد in Arabic
+  ✓ an unknown value is never shown as zero
+  ✓ an unknown value is never shown as a default or an estimate
+  ✓ every unknown field in the whole inspector behaves the same
+  ✓ a known value is still shown as its real value
+  ✓ display formatting never rewrites the stored value
+
+== §65/§66 — NUMBERS AND UNITS ==
+  ✓ the canonical unit is the metre
+  ✓ a display conversion produces a converted value
+  ✓ a display conversion keeps the canonical value beside it
+  ✓ a display conversion never writes to the model
+  ✓ the metre conversion is the identity
+  ✓ an unknown unit converts nothing
+  ✓ display rounding does not alter the underlying precision
+
+== §24/§25 — ISSUE CENTER KEEPS CATEGORIES APART ==
+  ✓ every declared category exists in the result
+  ✓ coordination findings land in the coordination category
+  ✓ coordination findings are not merged into model integrity
+  ✓ each category has its own counts
+  ✓ the counts per severity are separate
+  ✓ the total equals the sum of the categories
+  ✓ every issue carries a declared severity
+  ✓ regulatory status is a separate axis from severity
+  ✓ a rule result keeps its own status vocabulary
+  ✓ an unknown rule status falls back to NOT_EVALUATED, never to PASS
+  ✓ no status field or value claims safety or compliance
+  ✓ the only mention of those words is the explicit denial
+  ✓ the forbidden status probe is not vacuous
+  ✓ reading issues writes nothing
+
+== §26 — ISSUE TO MODEL NAVIGATION ==
+  ✓ a coordination issue names both elements
+  ✓ a coordination issue is focusable
+  ✓ focusing writes nothing
+  ✓ an issue with no geometric target says it is not focusable
+  ✓ a clash records which two disciplines meet
+  ✓ reading targets leaves the model hash unchanged
+
+──────────────────────────────────────────────
+WORKSPACE CONTRACT: 113 passed, 0 failed

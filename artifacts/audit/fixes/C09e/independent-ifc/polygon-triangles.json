@@ -1,0 +1,78 @@
+{
+  "site": {
+    "w": 20,
+    "d": 25
+  },
+  "wall_h": 3,
+  "wall_t": 0.15,
+  "floor_height": 3.2,
+  "levels": [
+    {
+      "index": 0,
+      "template": "plan",
+      "elevation": 7
+    }
+  ],
+  "floors": {
+    "plan": {
+      "rooms": [
+        {
+          "id": "polygon",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "polygon": [
+            [
+              0,
+              0
+            ],
+            [
+              6,
+              0
+            ],
+            [
+              0,
+              6
+            ]
+          ],
+          "walls": "full",
+          "doors": [
+            {
+              "edge_index": 1,
+              "offset": 4.242640687119285,
+              "width": 1,
+              "height": 2.1
+            }
+          ]
+        },
+        {
+          "id": "other",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "polygon": [
+            [
+              6,
+              0
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              0,
+              6
+            ]
+          ],
+          "walls": "full"
+        }
+      ]
+    }
+  }
+}

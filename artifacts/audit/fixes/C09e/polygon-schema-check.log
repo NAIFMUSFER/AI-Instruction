@@ -1,0 +1,46 @@
+[
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C09e/independent-ifc/polygon-l.json",
+    "export_valid": true,
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "validation_errors": 0,
+    "express_rules_evaluated": true,
+    "checker_version": "0.8.5",
+    "sha256": "0602fa915834999583fc4b6b18f4231e4e96ebaf46e39589b70e896caab49005",
+    "seconds": 2.2889945180068025
+  },
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C09e/independent-ifc/polygon-core.json",
+    "export_valid": true,
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "validation_errors": 0,
+    "express_rules_evaluated": true,
+    "checker_version": "0.8.5",
+    "sha256": "ab86095f5cbf4e8357e89ecc5301b3199b6b2b032f25372be61b430b3cf4decf",
+    "seconds": 2.5288027430069633
+  },
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C09e/independent-ifc/polygon-triangles.json",
+    "export_valid": true,
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "validation_errors": 0,
+    "express_rules_evaluated": true,
+    "checker_version": "0.8.5",
+    "sha256": "bd8860efadc93e5d9852eb0b1470023b0cb4fca2d6fed64df306a7a1fd0da5d8",
+    "seconds": 2.2497405520116445
+  },
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C09e/independent-ifc/polygon-origin.json",
+    "export_valid": true,
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "validation_errors": 0,
+    "express_rules_evaluated": true,
+    "checker_version": "0.8.5",
+    "sha256": "2e635e9cca772110d0ea73e8253d0dbcf4b37ce45c0dc5b4f2dc71802e3f1c9c",
+    "seconds": 2.448382404007134
+  }
+]

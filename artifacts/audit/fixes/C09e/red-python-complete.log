@@ -1,0 +1,102 @@
+test_actual_space_and_slab_profiles_keep_l_area (__main__.PolygonIfc.test_actual_space_and_slab_profiles_keep_l_area) ... FAIL
+test_diagonal_shared_wall_and_opening_use_canonical_host (__main__.PolygonIfc.test_diagonal_shared_wall_and_opening_use_canonical_host) ... FAIL
+test_negative_origin_preserved_with_local_profile_coordinates (__main__.PolygonIfc.test_negative_origin_preserved_with_local_profile_coordinates) ... FAIL
+test_reverse_edge_offset_is_reported_from_the_canonical_host_start (__main__.PolygonIfc.test_reverse_edge_offset_is_reported_from_the_canonical_host_start) ... FAIL
+test_self_intersection_is_refused_without_rectangular_substitute (__main__.PolygonIfc.test_self_intersection_is_refused_without_rectangular_substitute) ... FAIL
+test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) ... 
+  test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) (opening={'edge_index': 99, 'offset': 1, 'width': 1}) ... FAIL
+  test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) (opening={'edge_index': 0, 'width': 1}) ... FAIL
+  test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) (opening={'edge_index': 0, 'offset': 5.8, 'width': 1}) ... FAIL
+test_upper_slab_retains_core_hole (__main__.PolygonIfc.test_upper_slab_retains_core_hole) ... FAIL
+
+======================================================================
+FAIL: test_actual_space_and_slab_profiles_keep_l_area (__main__.PolygonIfc.test_actual_space_and_slab_profiles_keep_l_area)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 49, in test_actual_space_and_slab_profiles_keep_l_area
+    self.assertEqual(len(result['exchange']['walls']),6)
+AssertionError: 4 != 6
+
+======================================================================
+FAIL: test_diagonal_shared_wall_and_opening_use_canonical_host (__main__.PolygonIfc.test_diagonal_shared_wall_and_opening_use_canonical_host)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 65, in test_diagonal_shared_wall_and_opening_use_canonical_host
+    self.assertEqual(len(ex['walls']),5)
+AssertionError: 8 != 5
+
+======================================================================
+FAIL: test_negative_origin_preserved_with_local_profile_coordinates (__main__.PolygonIfc.test_negative_origin_preserved_with_local_profile_coordinates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 76, in test_negative_origin_preserved_with_local_profile_coordinates
+    self.assertEqual(ring,L)
+AssertionError: Lists differ: [[0, 0], [6.0, 0], [6.0, 6.0], [0, 6.0]] != [[0, 0], [6, 0], [6, 2], [2, 2], [2, 6], [0, 6]]
+
+First differing element 2:
+[6.0, 6.0]
+[6, 2]
+
+Second list contains 2 additional elements.
+First extra element 4:
+[2, 6]
+
+- [[0, 0], [6.0, 0], [6.0, 6.0], [0, 6.0]]
++ [[0, 0], [6, 0], [6, 2], [2, 2], [2, 6], [0, 6]]
+
+======================================================================
+FAIL: test_reverse_edge_offset_is_reported_from_the_canonical_host_start (__main__.PolygonIfc.test_reverse_edge_offset_is_reported_from_the_canonical_host_start)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 82, in test_reverse_edge_offset_is_reported_from_the_canonical_host_start
+    self.assertAlmostEqual(door['x'],5,places=5)
+AssertionError: 1.414214 != 5 within 5 places (3.5857859999999997 difference)
+
+======================================================================
+FAIL: test_self_intersection_is_refused_without_rectangular_substitute (__main__.PolygonIfc.test_self_intersection_is_refused_without_rectangular_substitute)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 91, in test_self_intersection_is_refused_without_rectangular_substitute
+    self.assertFalse(result['valid']);self.assertIsNone(result['file'])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) (opening={'edge_index': 99, 'offset': 1, 'width': 1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 101, in test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated
+    self.assertFalse(result['valid']);self.assertIsNone(result['file'])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) (opening={'edge_index': 0, 'width': 1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 101, in test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated
+    self.assertFalse(result['valid']);self.assertIsNone(result['file'])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) (opening={'edge_index': 0, 'offset': 5.8, 'width': 1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 101, in test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated
+    self.assertFalse(result['valid']);self.assertIsNone(result['file'])
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_upper_slab_retains_core_hole (__main__.PolygonIfc.test_upper_slab_retains_core_hole)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc.py", line 61, in test_upper_slab_retains_core_hole
+    self.assertAlmostEqual(sum(p['area'] for p in product_profiles(step,'IFCSLAB')),39,places=5)
+AssertionError: 72.0 != 39 within 5 places (33.0 difference)
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.017s
+
+FAILED (failures=9)

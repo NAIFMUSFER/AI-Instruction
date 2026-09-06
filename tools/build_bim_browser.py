@@ -212,6 +212,79 @@ function _bxOpening(bid,lv,r,op,j,kind,x,z,w,d,elev){
     space_id:bid+'.flr_'+idx+'.'+lv.template+'.'+r.id,
     authoring_space_id:lv.template+'.'+r.id}; }
 
+function _bxApplyPolygonExchange(ex,model,levels,bid,scope){
+  const byTemplate=new Map();
+  _bxRooms(model).forEach(([t,r])=>{if(!byTemplate.has(t))byTemplate.set(t,[]);byTemplate.get(t).push(r);});
+  const selected=levels.filter(l=>(byTemplate.get(l.template)||[]).some(r=>'polygon' in r));
+  if(!selected.length)return;
+  const indices=new Set(selected.map(l=>l.index)),ids=new Map(),sourceOpenings=new Map();
+  const key=(i,s)=>JSON.stringify([i,s]);
+  selected.forEach(lv=>{
+    const idx=lv.index,template=lv.template;
+    (byTemplate.get(template)||[]).forEach(room=>{
+      if(_pyT(room.shape)||_pyT(room.vertices))throw Error('POLYGON_UNSUPPORTED: conflicting boundary representation');
+      const ring=ACS_POLYGON.room_ring(room),aid=template+'.'+room.id;
+      const arid=room.space_id||(bid+'.'+aid),sid=bid+'.flr_'+idx+'.'+aid;
+      ids.set(key(idx,arid),sid);
+      if(scope==='SPACES_ONLY')return;
+      [['door','doors'],['window','windows']].forEach(([kind,field])=>{
+        (room[field]||[]).forEach((op,j)=>{
+          if('polygon' in room){
+            const edge=ACS_POLYGON.edge_index(room,op),[a,b]=ACS_POLYGON.edges(ring)[edge];
+            const width=op.width,offset=op.offset;
+            if([width,offset].some(v=>typeof v!=='number'||!Number.isFinite(v))||width<=0||
+               offset-width/2 < -ACS_POLYGON.EPS||offset+width/2 > Math.hypot(b[0]-a[0],b[1]-a[1])+ACS_POLYGON.EPS)
+              throw Error('POLYGON_OPENING_INVALID: width and offset must fit the authored edge');
+          }
+          sourceOpenings.set(sid+'.'+kind+'_'+j,[arid+'.'+kind+'_'+j+'@'+idx,op]);
+        });
+      });
+    });
+  });
+  const arch=compileArchitecture(model,bid),spaces=new Map();
+  arch.spaces.filter(s=>indices.has(s.level_index)).forEach(s=>spaces.set(ids.get(key(s.level_index,s.space_id)),s));
+  ex.spaces.forEach(space=>{
+    if(indices.has(space.level_index)){
+      const derived=spaces.get(space.canonical_id);
+      if('polygon' in derived){space.polygon=derived.polygon;space.area_m2=_bxQ(derived.area_m2);}
+    }
+  });
+  const walls=new Map(arch.walls.filter(w=>indices.has(w.level_index)).map(w=>[w.id,w]));
+  const elevations=new Map(ex.levels.map(l=>[l.index,l.elevation]));
+  if(scope!=='SPACES_ONLY'){
+    ex.walls=ex.walls.filter(w=>!indices.has(w.level_index));
+    walls.forEach(wall=>{
+      const idx=wall.level_index,owners=wall.spaces.map(s=>ids.get(key(idx,s)));
+      const height=wall.height_m,thickness=wall.thickness_m.value;
+      ex.walls.push({canonical_id:wall.id,level_index:idx,elevation:elevations.get(idx),
+        start:[_bxQ(wall.start.x),_bxQ(wall.start.z)],end:[_bxQ(wall.end.x),_bxQ(wall.end.z)],
+        height:_bxQ(height.value!==null?height.value:height.render_fallback),
+        thickness:thickness!==null?_bxQ(thickness):null,thickness_known:thickness!==null,
+        space_id:owners[0],space_ids:owners,shared:wall.shared,edge:null});
+    });
+  }
+  const openings=new Map(arch.openings.map(o=>[o.id,o]));
+  ['doors','windows'].forEach(field=>ex[field].forEach(opening=>{
+    if(!indices.has(opening.level_index))return;
+    const [arid,source]=sourceOpenings.get(opening.canonical_id),derived=openings.get(arid);
+    const anchor=derived?archOpeningAnchor(arch,arid):null,host=derived?walls.get(derived.host_wall_id):null;
+    if(!derived||derived.host_status!=='resolved'||anchor===null||!host)
+      throw Error('POLYGON_OPENING_UNRESOLVED: no canonical host or position');
+    opening.x=_bxQ(anchor[0]);opening.z=_bxQ(anchor[1]);opening.host_wall_id=host.id;
+    opening.offset=_bxQ(Math.hypot(anchor[0]-host.start.x,anchor[1]-host.start.z));
+    opening.rotation_deg=_bxQ(Math.atan2(host.end.z-host.start.z,host.end.x-host.start.x)*180/Math.PI);
+    if('edge_index' in source){opening.edge=null;opening.edge_index=source.edge_index;
+      opening.source_edge_offset=_bxQ(source.offset);}
+  }));
+  const slabs=new Map(arch.slabs.filter(s=>indices.has(s.level_index)).map(s=>[s.level_index,s]));
+  ex.slabs.forEach(slab=>{
+    if(indices.has(slab.level_index)){
+      const derived=slabs.get(slab.level_index);
+      slab.outline=derived.outline;slab.cells=derived.cells;slab.area_m2=_bxQ(derived.area_m2);
+    }
+  });
+}
+
 function bxBuildExchange(project,options){
   const o=options||{};
   const model=project.model, bid=project.building_id||'bld_0';
@@ -292,6 +365,9 @@ function bxBuildExchange(project,options){
         ex.slabs.push({canonical_id:bid+'.flr_'+idx+'.slab',level_index:idx,
           elevation:elev,outline:[_bxQ(mnx),_bxQ(mnz),_bxQ(mxx-mnx),_bxQ(mxz-mnz)],
           thickness:null,thickness_known:false,predefined_type:'FLOOR'}); } } });
+  try{_bxApplyPolygonExchange(ex,model,levels,bid,scope);}
+  catch(error){return {valid:false,issues:[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',null,
+    error.message)],exchange:null};}
   ex.unsupported.forEach(u=>{ ex.losses.push({entity_id:u.canonical_id,
     type:'UNSUPPORTED_ENTITY',severity:'WARNING',message:u.reason}); });
   if(wallT===null&&ex.walls.length)

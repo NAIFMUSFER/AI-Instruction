@@ -1,0 +1,290 @@
+[
+  {
+    "case": "polygon-l",
+    "checker": "0.8.5",
+    "geometry": {
+      "IfcSpace": [
+        {
+          "global_id": "1GiClKaZ4a_GyYgtdsvo_4",
+          "volume_m3": 60.0,
+          "vertices": 12,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              7.0,
+              10.0
+            ]
+          ]
+        }
+      ],
+      "IfcSlab": [
+        {
+          "global_id": "0lwk2qX0cjTO2KFikLSA1x",
+          "volume_m3": 4.000000000000013,
+          "vertices": 16,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              6.8,
+              7.0
+            ]
+          ]
+        }
+      ]
+    },
+    "expected_volumes_m3": {
+      "IfcSpace": [
+        60
+      ],
+      "IfcSlab": [
+        4
+      ]
+    },
+    "passed": true
+  },
+  {
+    "case": "polygon-core",
+    "checker": "0.8.5",
+    "geometry": {
+      "IfcSpace": [
+        {
+          "global_id": "2iZjJs7T7FCni4rcRGRqrP",
+          "volume_m3": 60.0,
+          "vertices": 12,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              7.0,
+              10.0
+            ]
+          ]
+        },
+        {
+          "global_id": "2$_90iXQwI7ZWC00LSdd7f",
+          "volume_m3": 59.99999999999996,
+          "vertices": 12,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              10.2,
+              13.2
+            ]
+          ]
+        }
+      ],
+      "IfcSlab": [
+        {
+          "global_id": "2bu4WrYd3hJlEQJRQJUh8k",
+          "volume_m3": 4.000000000000013,
+          "vertices": 16,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              6.8,
+              7.0
+            ]
+          ]
+        },
+        {
+          "global_id": "0w_DsruyX5LHCgOfqePnN4",
+          "volume_m3": 3.7999999999999896,
+          "vertices": 40,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              10.0,
+              10.2
+            ]
+          ]
+        }
+      ]
+    },
+    "expected_volumes_m3": {
+      "IfcSpace": [
+        60,
+        60
+      ],
+      "IfcSlab": [
+        4,
+        3.8
+      ]
+    },
+    "passed": true
+  },
+  {
+    "case": "polygon-triangles",
+    "checker": "0.8.5",
+    "geometry": {
+      "IfcSpace": [
+        {
+          "global_id": "1io237rzkgg_$BIma1doTP",
+          "volume_m3": 54.0,
+          "vertices": 6,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              7.0,
+              10.0
+            ]
+          ]
+        },
+        {
+          "global_id": "2Iwg_o02$wfU_XyYwSG1Sb",
+          "volume_m3": 54.0,
+          "vertices": 6,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              7.0,
+              10.0
+            ]
+          ]
+        }
+      ],
+      "IfcSlab": [
+        {
+          "global_id": "3voE6YZN9k65o15dx4vmKS",
+          "volume_m3": 7.200000000000017,
+          "vertices": 8,
+          "bounds": [
+            [
+              0.0,
+              6.0
+            ],
+            [
+              0.0,
+              6.0
+            ],
+            [
+              6.8,
+              7.0
+            ]
+          ]
+        }
+      ]
+    },
+    "expected_volumes_m3": {
+      "IfcSpace": [
+        54,
+        54
+      ],
+      "IfcSlab": [
+        7.2
+      ]
+    },
+    "passed": true
+  },
+  {
+    "case": "polygon-origin",
+    "checker": "0.8.5",
+    "geometry": {
+      "IfcSpace": [
+        {
+          "global_id": "3_6gbSZ0XGuKtYriTHIZrJ",
+          "volume_m3": 60.0,
+          "vertices": 12,
+          "bounds": [
+            [
+              -100.0,
+              -94.0
+            ],
+            [
+              230.0,
+              236.0
+            ],
+            [
+              7.0,
+              10.0
+            ]
+          ]
+        }
+      ],
+      "IfcSlab": [
+        {
+          "global_id": "1XoebwDIu0gQwEloBIVf_b",
+          "volume_m3": 4.000000000000009,
+          "vertices": 16,
+          "bounds": [
+            [
+              -100.0,
+              -94.0
+            ],
+            [
+              230.0,
+              236.0
+            ],
+            [
+              6.8,
+              7.0
+            ]
+          ]
+        }
+      ]
+    },
+    "expected_volumes_m3": {
+      "IfcSpace": [
+        60
+      ],
+      "IfcSlab": [
+        4
+      ]
+    },
+    "passed": true
+  }
+]

@@ -19,6 +19,8 @@ import math
 import os
 
 import acs_ingest as ING
+import acs_polygon as POLY
+import acs_arch as AR
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_HERE, "acs_bim.json"), "r", encoding="utf-8") as _f:
@@ -229,6 +231,11 @@ class StepFile(object):
         return self.add("IFCDIRECTION", "(%s,%s,%s)"
                         % (step_real(x), step_real(y), step_real(z)), True)
 
+    def closed_profile(self, ring, origin):
+        points = [self.point(_q(x-origin[0]), _q(z-origin[1])) for x, z in ring]
+        curve = self.add("IFCPOLYLINE", "(%s)" % ",".join(points + points[:1]))
+        return self.add("IFCARBITRARYCLOSEDPROFILEDEF", ".AREA.,$,%s" % curve)
+
     def axis(self, x, y, z, rot_deg=0.0):
         p = self.point(x, y, z)
         zd = self.direction(0.0, 0.0, 1.0)
@@ -377,6 +384,12 @@ def build_exchange(project, options=None):
                     "thickness": None, "thickness_known": False,
                     "predefined_type": "FLOOR"})
 
+    try:
+        _apply_polygon_exchange(ex, model, levels, bid, scope)
+    except ValueError as error:
+        return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED",
+                "ERROR", None, str(error))], "exchange": None}
+
     for u in ex["unsupported"]:
         ex["losses"].append({"entity_id": u["canonical_id"],
                              "type": "UNSUPPORTED_ENTITY", "severity": "WARNING",
@@ -402,6 +415,102 @@ def build_exchange(project, options=None):
     ex["building_id"] = bid
     return {"valid": True, "issues": [], "exchange": ex}
 
+
+def _apply_polygon_exchange(ex, model, levels, bid, scope):
+    """Use the canonical architecture on levels with authored polygon boundaries."""
+    rooms_by_template = {}
+    for template, room in _rooms(model):
+        rooms_by_template.setdefault(template, []).append(room)
+    selected = [lv for lv in levels if any("polygon" in r for r in
+                rooms_by_template.get(lv.get("template"), []))]
+    if not selected:
+        return
+    indices = {lv["index"] for lv in selected}
+    ids, source_openings = {}, {}
+    for lv in selected:
+        idx, template = lv["index"], lv["template"]
+        for room in rooms_by_template.get(template, []):
+            if room.get("shape") or room.get("vertices"):
+                raise ValueError("POLYGON_UNSUPPORTED: conflicting boundary representation")
+            ring = POLY.room_ring(room)
+            aid = "%s.%s" % (template, room.get("id"))
+            arid = room.get("space_id") or "%s.%s" % (bid, aid)
+            sid = "%s.flr_%s.%s" % (bid, idx, aid)
+            ids[(idx, arid)] = sid
+            if scope == "SPACES_ONLY":
+                continue
+            for kind, key in (("door", "doors"), ("window", "windows")):
+                for j, op in enumerate(room.get(key) or []):
+                    if "polygon" in room:
+                        edge = POLY.edge_index(room, op)
+                        a, b = POLY.edges(ring)[edge]
+                        width, offset = op.get("width"), op.get("offset")
+                        if (any(isinstance(v, bool) or not isinstance(v, (int, float))
+                                or not math.isfinite(v) for v in (width, offset))
+                                or width <= 0 or offset-width/2 < -POLY.EPS
+                                or offset+width/2 > math.dist(a, b)+POLY.EPS):
+                            raise ValueError("POLYGON_OPENING_INVALID: width and offset must fit the authored edge")
+                    cid = "%s.%s_%s" % (sid, kind, j)
+                    source_openings[cid] = ("%s.%s_%s@%s" % (arid, kind, j, idx), op)
+
+    arch = AR.compile_architecture(model, bid)
+    spaces = {ids[(s["level_index"], s["space_id"])]: s for s in arch["spaces"]
+              if s["level_index"] in indices}
+    for space in ex["spaces"]:
+        if space["level_index"] in indices:
+            derived = spaces[space["canonical_id"]]
+            if "polygon" in derived:
+                space["polygon"] = derived["polygon"]
+                space["area_m2"] = _q(derived["area_m2"])
+
+    walls = {w["id"]: w for w in arch["walls"] if w["level_index"] in indices}
+    elevations = {lv["index"]: lv["elevation"] for lv in ex["levels"]}
+    if scope != "SPACES_ONLY":
+        ex["walls"] = [w for w in ex["walls"] if w["level_index"] not in indices]
+        for wall in walls.values():
+            idx = wall["level_index"]
+            owners = [ids[(idx, sid)] for sid in wall["spaces"]]
+            height = wall["height_m"]
+            thickness = wall["thickness_m"]["value"]
+            ex["walls"].append({"canonical_id": wall["id"], "level_index": idx,
+                "elevation": elevations[idx],
+                "start": [_q(wall["start"][k]) for k in ("x", "z")],
+                "end": [_q(wall["end"][k]) for k in ("x", "z")],
+                "height": _q(height["value"] if height["value"] is not None else height["render_fallback"]),
+                "thickness": _q(thickness) if thickness is not None else None,
+                "thickness_known": thickness is not None,
+                "space_id": owners[0], "space_ids": owners,
+                "shared": wall["shared"], "edge": None})
+
+    openings = {o["id"]: o for o in arch["openings"]}
+    for key in ("doors", "windows"):
+        for opening in ex[key]:
+            if opening["level_index"] not in indices:
+                continue
+            arid, source = source_openings[opening["canonical_id"]]
+            derived = openings.get(arid)
+            anchor = AR.opening_anchor(arch, arid) if derived else None
+            host = walls.get(derived["host_wall_id"]) if derived else None
+            if not derived or derived["host_status"] != "resolved" or anchor is None or host is None:
+                raise ValueError("POLYGON_OPENING_UNRESOLVED: no canonical host or position")
+            opening["x"], opening["z"] = map(_q, anchor)
+            opening["host_wall_id"] = host["id"]
+            opening["offset"] = _q(math.hypot(anchor[0]-host["start"]["x"],
+                                             anchor[1]-host["start"]["z"]))
+            opening["rotation_deg"] = _q(math.degrees(math.atan2(
+                host["end"]["z"]-host["start"]["z"], host["end"]["x"]-host["start"]["x"])))
+            if "edge_index" in source:
+                opening["edge"] = None
+                opening["edge_index"] = source["edge_index"]
+                opening["source_edge_offset"] = _q(source["offset"])
+
+    slabs = {s["level_index"]: s for s in arch["slabs"] if s["level_index"] in indices}
+    for slab in ex["slabs"]:
+        if slab["level_index"] in indices:
+            derived = slabs[slab["level_index"]]
+            slab["outline"] = derived["outline"]
+            slab["cells"] = derived["cells"]
+            slab["area_m2"] = _q(derived["area_m2"])
 
 def _opening_record(bid, lv, r, op, j, kind, x, z, w, d, elev, rh):
     edge = str(op.get("edge") or "N").upper()[:1]
@@ -501,9 +610,12 @@ def serialise_ifc(exchange, generated_at=None):
     for sp in exchange["spaces"]:
         x, z, w, d = sp["footprint"]
         pl = f.placement(local(sp["level_index"]), x, z, 0.0)
-        prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.profile_axis(_q(w / 2.0), _q(d / 2.0)), step_real(w),
-                        step_real(d)))
+        if "polygon" in sp:
+            prof = f.closed_profile(sp["polygon"], (x, z))
+        else:
+            prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
+                         % (f.profile_axis(_q(w / 2.0), _q(d / 2.0)), step_real(w),
+                            step_real(d)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
                          step_real(sp["height"])))
@@ -557,14 +669,18 @@ def serialise_ifc(exchange, generated_at=None):
     for sl in exchange["slabs"]:
         x, z, w, d = sl["outline"]
         pl = f.placement(local(sl["level_index"]), x, z, 0.0)
-        prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.profile_axis(_q(w / 2.0), _q(d / 2.0)), step_real(w),
-                        step_real(d)))
+        if "cells" in sl:
+            profiles = [f.closed_profile(cell, (x, z)) for cell in sl["cells"]]
+        else:
+            profiles = [f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
+                         % (f.profile_axis(_q(w / 2.0), _q(d / 2.0)), step_real(w),
+                            step_real(d)))]
         th = sl["thickness"] if sl["thickness_known"] else 0.2
-        solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
-                      % (prof, f.axis(0.0, 0.0, _q(-th)), f.direction(0.0, 0.0, 1.0),
-                         step_real(th)))
-        shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SweptSolid',(%s)" % (ctx, solid))
+        solids = [f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
+                       % (prof, f.axis(0.0, 0.0, _q(-th)), f.direction(0.0, 0.0, 1.0),
+                          step_real(th))) for prof in profiles]
+        shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SweptSolid',(%s)"
+                    % (ctx, ",".join(solids)))
         pds = f.add("IFCPRODUCTDEFINITIONSHAPE", "$,$,(%s)" % shp)
         ref = f.add("IFCSLAB", "'%s',%s,%s,$,$,%s,%s,$,.%s."
                     % (guid(sl["canonical_id"]), owner, step_string(sl["canonical_id"]),
