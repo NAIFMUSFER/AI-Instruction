@@ -1,0 +1,145 @@
+[
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C18/local-models/warehouse.json",
+    "export_valid": true,
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "validation_errors": 0,
+    "express_rules_evaluated": true,
+    "checker_version": "0.8.5",
+    "sha256": "729fbfb5eb7d832d1e5abfe5a88b947138ba28547aaa39335177e2f78efbca91",
+    "seconds": 2.620779257005779
+  },
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C18/local-models/chalet.json",
+    "export_valid": false,
+    "issues": [
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_1.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_2.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_3.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_1.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_N",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_1.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_S",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_1.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_W",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_1.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_E",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_2.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_N",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_2.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_S",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_2.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_W",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_2.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_E",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_3.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_N",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_3.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_S",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_3.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_W",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_3.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.wall_E",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_1.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.door_0",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_2.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.door_0",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      },
+      {
+        "code": "BIM_INVALID_IDENTIFIER",
+        "severity": "ERROR",
+        "entity_id": "bld_0.flr_3.typical.\u0645_\u0648\u062d\u0645\u0627\u0645_2\u00d7.door_0",
+        "message": "canonical identifier is not a plausible identifier",
+        "blocking": true
+      }
+    ]
+  }
+]

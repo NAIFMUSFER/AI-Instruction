@@ -62,5 +62,13 @@
     "tree": "2489ad0a7c59d4fb7d945731cb9540e84631c2be",
     "tree_equal": true,
     "original_commit_object": "tree 2489ad0a7c59d4fb7d945731cb9540e84631c2be\nparent 830adcc4c98ac3440cd9f343174a6785d0216857\nauthor Codex <codex@openai.com> 1788721697 +0200\ncommitter Codex <codex@openai.com> 1788721697 +0200\n\nfix: حفظ مجهولية سجل التغيير في IFC — acs_bim.py\n"
+  },
+  {
+    "issue": "C17",
+    "original_commit": "3f710163488baa6b9fa1c584e2feb2791296d970",
+    "published_commit": "c75f80973c4eaea8ae6ac7f3513d25bcd5864161",
+    "tree": "8ab1cd74264fb4ba819b44bfa3844d919dab604e",
+    "tree_equal": true,
+    "original_commit_object": "tree 8ab1cd74264fb4ba819b44bfa3844d919dab604e\nparent 361a588667e4df04d505fb01387931300696be80\nauthor Codex <codex@openai.com> 1788722122 +0200\ncommitter Codex <codex@openai.com> 1788722122 +0200\n\nfix: ربط غرف IFC بأدوارها بعلاقة التجميع — acs_bim.py\n"
   }
 ]

@@ -1,0 +1,20 @@
+[
+  {
+    "file": "acs_bim.py",
+    "source_sha256": "1780392a56fecd105a60266edc4a2869f61e25a31313f24961ff9b98302501ea",
+    "tested_sha256": "1780392a56fecd105a60266edc4a2869f61e25a31313f24961ff9b98302501ea",
+    "equal": true
+  },
+  {
+    "file": "tests/phase8/test_bim.py",
+    "source_sha256": "1cb866403ad572ec223bbb1750defe1ababf339cd490c7f71875fae20e2ac395",
+    "tested_sha256": "1cb866403ad572ec223bbb1750defe1ababf339cd490c7f71875fae20e2ac395",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_ifc_wall_class.py",
+    "source_sha256": "1809daef7d60fbc179fa4ef084bd1e31e35602cf25025b1c8db6972ad724391b",
+    "tested_sha256": "1809daef7d60fbc179fa4ef084bd1e31e35602cf25025b1c8db6972ad724391b",
+    "equal": true
+  }
+]

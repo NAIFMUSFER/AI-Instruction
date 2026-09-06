@@ -1,0 +1,7 @@
+test_existing_standard_case_import_remains_available (__main__.IfcWallClass.test_existing_standard_case_import_remains_available) ... ok
+test_general_walls_preserve_geometry_hosts_and_round_trip (__main__.IfcWallClass.test_general_walls_preserve_geometry_hosts_and_round_trip) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.008s
+
+OK

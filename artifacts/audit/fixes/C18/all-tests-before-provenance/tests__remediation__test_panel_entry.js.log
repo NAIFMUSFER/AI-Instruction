@@ -1,0 +1,29 @@
+
+== 1 · الفحص الساكن: المدخل داخل رسم الإقلاع ==
+  ✓ public/app/main.js يستورد ui/panels-entry.js (استيراد ساكن، لا كسول)
+  ✓ المدخل يأتي بعد كل وحدة ينشر عليها اعتماده
+  ✓ المدخل لا يحوي eval ولا new Function (سياسة script-src)
+  ✓ المدخل يوصّل بـaddEventListener لا بـon* داخل العلامة
+  ✓ القشرة تحوي الزرّ #acsOpenWorkspace
+  ✓ القشرة تحوي الزرّ #acsOpenRender
+  ✓ القشرة تحوي الزرّ #acsOpenBim
+  ✓ القشرة تحوي الزرّ #acsOpenDocs
+  ✓ القشرة تحوي الزرّ #acsOpenPbr
+  ✓ القشرة تحوي الزرّ #acsOpenDetail
+  ✓ كل زرّ مدخل يحمل اسماً متاحاً لقارئ الشاشة
+  ✓ لا معالِج داخل العلامة في القشرة (CSP تمنعه)
+
+== 2 · الضابط السالب: لا مدخل ثانٍ في الشيفرة المشحونة ==
+  ✓ لا وحدة مشحونة أخرى تستدعي WS.init أو panel.open — المدخل واحد لا اثنان
+
+== 3 · القياس الحيّ في Chromium ==
+  ! تعذّر تشغيل Chromium: browserType.launch: Executable doesn't exist at /root/.cache/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-linux64/chrome-headless-shell
+╔════════════════════════════════════════════════════════════╗
+║ Looks like Playwright was just installed or updated.       ║
+║ Please run the following command to download new browsers: ║
+║                                                            ║
+║     npx playwright install                                 ║
+║                                                            ║
+║ <3 Playwright Team                                         ║
+╚════════════════════════════════════════════════════════════╝
+PANEL ENTRY: 13 passed, 0 failed  (الطبقة الحيّة: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED)

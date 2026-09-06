@@ -533,7 +533,7 @@ def serialise_ifc(exchange, generated_at=None):
         axr = f.add("IFCSHAPEREPRESENTATION", "%s,'Axis','Curve2D',(%s)" % (ctx, ax))
         bod = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SweptSolid',(%s)" % (ctx, solid))
         pds = f.add("IFCPRODUCTDEFINITIONSHAPE", "$,$,(%s,%s)" % (axr, bod))
-        ref = f.add("IFCWALLSTANDARDCASE", "'%s',%s,%s,$,$,%s,%s,$,.STANDARD."
+        ref = f.add("IFCWALL", "'%s',%s,%s,$,$,%s,%s,$,.STANDARD."
                     % (guid(wl["canonical_id"]), owner,
                        step_string(wl["canonical_id"]), pl, pds))
         wall_refs[wl["canonical_id"]] = ref

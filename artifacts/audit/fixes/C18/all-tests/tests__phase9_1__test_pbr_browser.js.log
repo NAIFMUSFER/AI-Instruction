@@ -1,0 +1,23 @@
+
+== §1 — THE SPECIFICATION REACHED THE BROWSER UNCHANGED ==
+  ✓ the browser carries the canonical quality specification
+  ✓ the mirrored specification has not drifted from the file
+  ✓ the presentation-only rule is present in the browser
+  ✓ the quality API is exposed on the window
+
+== §11/§22 — THE SHIPPED APPLICATION CODE ITSELF ==
+  ✓ the module-scope bridge is present exactly once
+  ✓ the bridge lives in the generated module that main.js imports
+  ✓ the render loop dispatcher is present exactly once with a fallback
+  ✓ post-processing imports are same-origin addon modules only
+  ✓ the bridge marks every added object visual-only
+  ✓ the quality layer was extracted for inspection
+  ✓ no network scheme appears anywhere in the quality layer
+  ✓ no runtime CDN host appears in the quality layer
+  ✓ the quality layer never opens a fetch to a remote URL
+  ✓ the shipped texture policy is local-only with an empty default set
+
+(DOM checks require a real browser — run with run_browser.js)
+
+──────────────────────────────────────────────
+PBR BROWSER: 14 passed, 0 failed

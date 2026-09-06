@@ -108,8 +108,8 @@ for k in TARGETS + GLAZED:
         and types.get('IFCBUILDING') == 1)
     chk('%s: every level is a real IfcBuildingStorey' % k,
         types.get('IFCBUILDINGSTOREY') == m['level_count'])
-    chk('%s: every wall is a real IfcWallStandardCase' % k,
-        types.get('IFCWALLSTANDARDCASE') == m['wall_count'])
+    chk('%s: every wall is a real IfcWall without an invented material layer usage' % k,
+        types.get('IFCWALL') == m['wall_count'])
     chk('%s: every door is a real IfcDoor' % k,
         types.get('IFCDOOR', 0) == m['door_count'])
     chk('%s: every window is a real IfcWindow' % k,
@@ -132,7 +132,7 @@ for k in TARGETS + GLAZED:
     chk('%s: every GlobalId is 22 characters' % k,
         all(len(e['args'][0]) == 22 for e in ents.values()
             if e['type'] in ('IFCPROJECT', 'IFCSITE', 'IFCBUILDING',
-                             'IFCBUILDINGSTOREY', 'IFCSPACE', 'IFCWALLSTANDARDCASE',
+                             'IFCBUILDINGSTOREY', 'IFCSPACE', 'IFCWALLSTANDARDCASE', 'IFCWALL',
                              'IFCDOOR', 'IFCWINDOW', 'IFCSLAB', 'IFCSTAIR')
             and isinstance(e['args'][0], str)))
     chk('%s: the model hash is unchanged by the export' % k, prj['model_hash'] == h0)
@@ -676,7 +676,7 @@ if 'villa_glazed' in STAGINGS:
         json.dumps([k for k in B.SPEC['provenance_fields'] if k not in prov]))
     chk('provenance names the source file hash and the entity',
         prov['source_file_hash'] and prov['source_entity_id'].startswith('#')
-        and prov['entity_type'] == 'IFCWALLSTANDARDCASE')
+        and prov['entity_type'] == 'IFCWALL')
     chk('provenance survives mapping', prov['global_id'] is not None)
     chk('the external identifier is kept apart from any canonical identifier',
         'external_global_id' in e0 and e0.get('canonical_id') is None)

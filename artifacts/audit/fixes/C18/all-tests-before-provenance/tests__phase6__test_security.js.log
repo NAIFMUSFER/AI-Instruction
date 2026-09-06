@@ -1,0 +1,187 @@
+
+== §95 — THE ENGINE ITSELF NEVER EXECUTES A PAYLOAD ==
+  ✓ a malicious project name #0 does not crash the authoring layer
+  ✓ a malicious project name #0 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #0
+  ✓ a malicious project name #1 does not crash the authoring layer
+  ✓ a malicious project name #1 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #1
+  ✓ a malicious project name #2 does not crash the authoring layer
+  ✓ a malicious project name #2 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #2
+  ✓ a malicious project name #3 does not crash the authoring layer
+  ✓ a malicious project name #3 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #3
+  ✓ a malicious project name #4 does not crash the authoring layer
+  ✓ a malicious project name #4 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #4
+  ✓ a malicious project name #5 does not crash the authoring layer
+  ✓ a malicious project name #5 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #5
+  ✓ a malicious project name #6 does not crash the authoring layer
+  ✓ a malicious project name #6 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #6
+  ✓ a malicious project name #7 does not crash the authoring layer
+  ✓ a malicious project name #7 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #7
+  ✓ a malicious project name #8 does not crash the authoring layer
+  ✓ a malicious project name #8 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #8
+  ✓ a malicious project name #9 does not crash the authoring layer
+  ✓ a malicious project name #9 is carried as text, never parsed
+  ✓ the summary carries the same text without reinterpretation #9
+
+== §95 — A MALICIOUS EDIT IS REFUSED OR STORED AS INERT TEXT ==
+  ✓ a malicious element label #0 leaves the committed model untouched
+  ✓ a refused label #0 is refused with a real issue code
+  ✓ a malicious element label #1 leaves the committed model untouched
+  ✓ a malicious element label #2 leaves the committed model untouched
+  ✓ a malicious element label #3 leaves the committed model untouched
+  ✓ a refused label #3 is refused with a real issue code
+  ✓ a malicious element label #4 leaves the committed model untouched
+  ✓ a malicious element label #5 leaves the committed model untouched
+  ✓ a refused label #5 is refused with a real issue code
+  ✓ a malicious element label #6 leaves the committed model untouched
+  ✓ a refused label #6 is refused with a real issue code
+  ✓ a malicious element label #7 leaves the committed model untouched
+  ✓ a malicious element label #8 leaves the committed model untouched
+  ✓ a malicious element label #9 leaves the committed model untouched
+  ✓ a refused label #9 is refused with a real issue code
+
+== §95 — AN IMPORTED FILE CANNOT SMUGGLE STRUCTURE ==
+  ✓ importing prototype pollution never throws an unhandled error
+  ✓ importing prototype pollution either refuses or yields a real project
+  ✓ importing prototype pollution does not pollute Object.prototype
+  ✓ importing constructor key never throws an unhandled error
+  ✓ importing constructor key either refuses or yields a real project
+  ✓ importing constructor key does not pollute Object.prototype
+  ✓ importing script in a name never throws an unhandled error
+  ✓ importing script in a name either refuses or yields a real project
+  ✓ importing script in a name does not pollute Object.prototype
+  ✓ importing not json at all never throws an unhandled error
+  ✓ importing not json at all either refuses or yields a real project
+  ✓ importing not json at all does not pollute Object.prototype
+  ✓ importing truncated json never throws an unhandled error
+  ✓ importing truncated json either refuses or yields a real project
+  ✓ importing truncated json does not pollute Object.prototype
+  ✓ importing deeply nested never throws an unhandled error
+  ✓ importing deeply nested either refuses or yields a real project
+  ✓ importing deeply nested does not pollute Object.prototype
+
+== §95 — IMAGE AND REFERENCE METADATA IS NEVER EXECUTABLE ==
+  ✓ an executable reference source #0 is refused
+  ✓ a rejected reference #0 never enters the context
+  ✓ a caption carrying markup #0 cannot be attached
+  ✓ an executable reference source #1 is refused
+  ✓ a rejected reference #1 never enters the context
+  ✓ a caption carrying markup #1 cannot be attached
+  ✓ an executable reference source #2 is refused
+  ✓ a rejected reference #2 never enters the context
+  ✓ a caption carrying markup #2 cannot be attached
+  ✓ an executable reference source #3 is refused
+  ✓ a rejected reference #3 never enters the context
+  ✓ a caption carrying markup #3 cannot be attached
+  ✓ a rejected reference #4 never enters the context
+  ✓ a caption carrying markup #4 cannot be attached
+  ✓ an executable reference source #5 is refused
+  ✓ a rejected reference #5 never enters the context
+  ✓ a caption carrying markup #5 cannot be attached
+  ✓ an executable reference source #6 is refused
+  ✓ a rejected reference #6 never enters the context
+  ✓ a caption carrying markup #6 cannot be attached
+  ✓ a rejected reference #7 never enters the context
+  ✓ a caption carrying markup #7 cannot be attached
+  ✓ an executable reference source #8 is refused
+  ✓ a rejected reference #8 never enters the context
+  ✓ a caption carrying markup #8 cannot be attached
+  ✓ an executable reference source #9 is refused
+  ✓ a rejected reference #9 never enters the context
+  ✓ a caption carrying markup #9 cannot be attached
+  ✓ an executable reference source #10 is refused
+  ✓ a rejected reference #10 never enters the context
+  ✓ a caption carrying markup #10 cannot be attached
+  ✓ an executable reference source #11 is refused
+  ✓ a rejected reference #11 never enters the context
+  ✓ a caption carrying markup #11 cannot be attached
+  ✓ a rejected reference #12 never enters the context
+  ✓ a caption carrying markup #12 cannot be attached
+  ✓ the unsafe-pattern list is declared in the canonical spec, not inline
+
+== §95 — THE ASSISTANT CANNOT ESCALATE THROUGH TEXT ==
+  ✓ an assistant claim #0 is still classified, never trusted
+  ✓ an assistant proposal #0 never reports a commit
+  ✓ an assistant proposal #0 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #0
+  ✓ an assistant claim #1 is still classified, never trusted
+  ✓ an assistant proposal #1 never reports a commit
+  ✓ an assistant proposal #1 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #1
+  ✓ an assistant claim #2 is still classified, never trusted
+  ✓ an assistant proposal #2 never reports a commit
+  ✓ an assistant proposal #2 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #2
+  ✓ an assistant claim #3 is still classified, never trusted
+  ✓ an assistant proposal #3 never reports a commit
+  ✓ an assistant proposal #3 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #3
+  ✓ an assistant claim #4 is still classified, never trusted
+  ✓ an assistant proposal #4 never reports a commit
+  ✓ an assistant proposal #4 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #4
+  ✓ an assistant claim #5 is still classified, never trusted
+  ✓ an assistant proposal #5 never reports a commit
+  ✓ an assistant proposal #5 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #5
+  ✓ an assistant claim #6 is still classified, never trusted
+  ✓ an assistant proposal #6 never reports a commit
+  ✓ an assistant proposal #6 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #6
+  ✓ an assistant claim #7 is still classified, never trusted
+  ✓ an assistant proposal #7 never reports a commit
+  ✓ an assistant proposal #7 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #7
+  ✓ an assistant claim #8 is still classified, never trusted
+  ✓ an assistant proposal #8 never reports a commit
+  ✓ an assistant proposal #8 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #8
+  ✓ an assistant claim #9 is still classified, never trusted
+  ✓ an assistant proposal #9 never reports a commit
+  ✓ an assistant proposal #9 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #9
+  ✓ an assistant claim #10 is still classified, never trusted
+  ✓ an assistant proposal #10 never reports a commit
+  ✓ an assistant proposal #10 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #10
+  ✓ an assistant claim #11 is still classified, never trusted
+  ✓ an assistant proposal #11 never reports a commit
+  ✓ an assistant proposal #11 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #11
+  ✓ an assistant claim #12 is still classified, never trusted
+  ✓ an assistant proposal #12 never reports a commit
+  ✓ an assistant proposal #12 still demands explicit confirmation
+  ✓ the model hash is unchanged after assistant text #12
+
+== §95 — NO ISSUE OR STATUS TEXT CAN FAKE COMPLIANCE ==
+  ✓ the issue centre produced real issue text to scan
+  ✓ no issue text uses a forbidden status word
+  ✓ the issue centre states that no status here means compliant
+  ✓ the workspace never declares a compliance verdict
+
+== §95 — THE GENERATED INTERFACE CARRIES NO DYNAMIC EXECUTION ==
+  ✓ the generated workspace block appears exactly once in the whole application
+  ✓ it lives in public/app/generated/workspace-ui.js, and public/app/main.js imports it
+  ✓ the canonical spec is injected as one data assignment, not code
+  ✓ removing the spec assignment leaves the real implementation behind
+  ✓ the workspace block contains no eval
+  ✓ the workspace block constructs no function from a string
+  ✓ the workspace block never assigns a javascript: url
+  ✓ the workspace block never writes into the document stream
+  ✓ the dynamic-execution scan is not vacuous
+  ✓ an escaping helper is declared once in the workspace block
+  ✓ the escaping helper covers every dangerous character
+
+  · DOM escaping checks require a page: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+  ✓ the DOM section declares its requirement instead of faking a pass
+
+──────────────────────────────────────────────
+WORKSPACE SECURITY: 168 passed, 0 failed

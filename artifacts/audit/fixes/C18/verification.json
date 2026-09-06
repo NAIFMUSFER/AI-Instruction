@@ -1,0 +1,52 @@
+{
+  "issue": "C18",
+  "source_base": "c75f80973c4eaea8ae6ac7f3513d25bcd5864161",
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 121,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 136
+  },
+  "existing_test_status_changes": {},
+  "new_test_results": {
+    "tests/remediation/test_ifc_wall_class.py": "PASS"
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "local_generation_and_export_seconds": {
+    "warehouse": 0.14825942799842415,
+    "chalet": 0.037751249996967544
+  },
+  "ifc_independent_validation": [
+    {
+      "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/evidence/ifc-schema/building.json",
+      "export_valid": true,
+      "schema": "IFC4",
+      "schema_errors": 0,
+      "validation_errors": 0,
+      "express_rules_evaluated": true,
+      "checker_version": "0.8.5",
+      "sha256": "8ba998c6eda5451b0a251641d100f95381650bffa5fa5026a00a3c7a7cb64e16",
+      "seconds": 2.422439015004784
+    }
+  ],
+  "intermediate_local_commit": "ba96d1de0b152db42e5f5d1892cbac095d07535b",
+  "red": {
+    "tests": 2,
+    "failures": 1
+  },
+  "green": {
+    "tests": 2,
+    "failures": 0
+  },
+  "IFC4_EXPRESS_warehouse_errors": 0,
+  "chalet_IFC_export": "H10: refused before serialization, 18 identity errors"
+}

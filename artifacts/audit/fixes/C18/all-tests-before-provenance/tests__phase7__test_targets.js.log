@@ -1,0 +1,124 @@
+
+== §50 — VILLA PRESENTATION TARGET ==
+  ✓ villa: a front exterior camera is solved from real geometry
+  ✓ villa: a corner exterior camera is solved
+  ✓ villa: a dollhouse view hides the roof only
+  ✓ villa: a ground floor plan is produced with real walls and openings
+  ✓ villa: a first floor plan is produced
+  ✓ villa: the two floor plans are genuinely different
+  ✓ villa: a living room interior camera sits inside the real space
+  ✓ villa: a majlis interior camera sits inside the real space
+  ✓ villa: a night exterior lighting configuration exists
+  ✓ villa: an AI enhanced variant is prepared with full geometry control
+  ✓ villa: the AI variant is not produced here because no provider is reachable
+  ✓ villa: every produced output carries the same model hash
+  ✓ villa: every produced output carries the same revision
+  ✓ villa: producing the whole target set changed nothing
+  ✓ villa: nine of nine target outputs were produced
+
+== §51 — HOTEL TARGET (REPEATED FLOORS PRESERVED) ==
+  ✓ hotel: an exterior camera is solved
+  ✓ hotel: the model really has a lobby space
+  ✓ hotel: a lobby interior camera is solved
+  ✓ hotel: a guest room camera is solved or the space is honestly absent
+  ✓ hotel: a selected-floor dollhouse isolates one level
+  ✓ hotel: a floor plan is produced
+  ✓ hotel: the model really repeats a floor template
+  ✓ hotel: repeated floors keep identical wall geometry
+
+== §52 — WAREHOUSE TARGET (EQUIPMENT PLACEMENT PRESERVED) ==
+  ✓ warehouse: an exterior camera is solved
+  ✓ warehouse: an interior camera is solved for the largest space
+  ✓ warehouse: an engineering overlay scene still compiles
+  ✓ warehouse: presentation rendering preserves every semantic object
+  ✓ warehouse: semantic equipment objects are never tagged visual only
+
+== §53 — CLINIC TARGET (NO INVENTED EQUIPMENT) ==
+  ✓ clinic: an exterior camera is solved
+  ✓ clinic: a floor plan is produced
+  ✓ clinic: no healthcare equipment is invented in the scene
+  ✓ clinic: every visual-only object is tagged as presentation
+  ✓ clinic: the elevation invents no facade feature
+
+== §54 — MIXED PRESENTATION INTENT PER LEVEL AND SPACE ==
+  ✓ two spaces can carry different presentation intent
+  ✓ different presentation intent does not change the engineering program
+  ✓ a level can carry its own presentation intent
+  ✓ per-level intent creates no revision
+
+== §73 — TEST A: ONE MODEL, MANY RENDERS ==
+  ✓ five distinct renders were produced
+  ✓ repeating the identical configuration reproduces the identical render id
+  ✓ every render carries the identical engineering model hash
+  ✓ the project model hash is unchanged after all five
+  ✓ no revision was created
+
+== §74 — TEST B: A MATERIAL CHANGE IS A VARIANT, NOT A REVISION ==
+  ✓ the floor is changed from tile to wood visually
+  ✓ a new visual variant exists
+  ✓ both variants carry the same engineering model hash
+  ✓ the assignment really differs between the two variants
+  ✓ changing a visual material creates no revision
+
+== §75 — TEST C: A REAL EDIT MAKES THE OLD RENDER STALE ==
+  ✓ the render starts current
+  ✓ the model really carries a window to move
+  ✓ moving a window through the authoring path is accepted or refused with a code
+  ✓ the edit produced a new engineering revision
+  ✓ the earlier render is now marked stale
+  ✓ the stale render still names its own revision
+  ✓ the stale render is not deleted
+  ✓ a new render is pinned to the new revision
+  ✓ the new render is current
+  ✓ the new drawing uses the moved window position
+
+== §76/§78 — TEST D AND F: HALLUCINATED WINDOW AND FLOOR ==
+  ✓ the reference really shows modelled openings
+  ✓ the reference really shows more than one storey band
+  ✓ a synthetic extra window was painted into a wall region
+  ✓ the extractor really sees one more opening
+  ✓ TEST D: the hallucinated window is classified WINDOW_ADDED
+  ✓ TEST D: the image is not accepted as model faithful
+  ✓ TEST D: the drift is flagged with the declared code
+  ✓ TEST D: detecting the drift changed nothing in the model
+  ✓ TEST F: an extra storey band is classified FLOOR_COUNT_DRIFT
+  ✓ TEST F: the three-floor image is rejected
+  ✓ a genuinely single-storey model shows fewer storey bands
+
+== §77 — TEST E: A MATERIAL CHANGE IS AN ALLOWED DIFFERENCE ==
+  ✓ the two material sets really differ
+  ✓ changing materials leaves every geometric feature identical
+  ✓ TEST E: a plaster to stone change passes the fidelity check
+  ✓ TEST E: the passing image may be presented as model faithful
+
+== §79 — TEST G: DOLLHOUSE HIDES, IT DOES NOT REBUILD ==
+  ✓ the roof is hidden
+  ✓ every hidden identifier is a real scene object
+  ✓ the scene object list is untouched
+  ✓ the model hash is untouched
+  ✓ no geometry was duplicated
+  ✓ the operation is reversible
+
+== §80 — TEST H: A REFERENCE IMAGE CHANGES CONTEXT, NOT GEOMETRY ==
+  ✓ a luxury reference attaches
+  ✓ attaching a reference leaves the model hash unchanged
+  ✓ the render request carries the reference
+  ✓ the reference reaches the prompt as context
+  ✓ the reference cannot override geometry
+  ✓ the geometry the AI is constrained by is unchanged by the reference
+  ✓ the model hash is still unchanged
+
+== §81 — TEST I: A REQUESTED SEMANTIC OBJECT IS NEVER SILENTLY DROPPED ==
+  ✓ the missing requested objects are reported
+  ✓ the result is a warning, not a silent pass
+  ✓ the warning names the missing objects
+  ✓ objects that are present raise no warning
+
+== §82 — TEST J: INDUSTRIAL EQUIPMENT KEEPS ITS PLACE ==
+  ✓ semantic objects really appear in the control buffers
+  ✓ a render that keeps every semantic object passes
+  ✓ a render that drops a semantic object is flagged, never ignored
+  ✓ the visual-only objects are counted apart from the equipment
+
+──────────────────────────────────────────────
+RENDER TARGETS: 93 passed, 0 failed

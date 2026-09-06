@@ -1,0 +1,11 @@
+
+== §1 — THE SPECIFICATION REACHED THE BROWSER UNCHANGED ==
+  ✓ the browser carries the canonical documentation specification
+  ✓ the mirrored specification has not drifted from the file
+  ✓ the read-only rule is present and correct in the browser
+  ✓ the documentation API is exposed on the window
+
+(DOM checks require a real browser — run with run_browser.js)
+
+──────────────────────────────────────────────
+DOCS BROWSER: 4 passed, 0 failed

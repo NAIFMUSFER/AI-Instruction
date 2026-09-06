@@ -1,0 +1,36 @@
+
+== §0 — SPEC INTEGRITY AND THE NON-NEGOTIABLE PIPELINE ==
+  ✓ the browser spec is byte-identical to acs_render.json
+  ✓ the compiler version is declared
+  ✓ the pipeline runs model to image and never the reverse
+  ✓ the base render is declared the geometry authority
+  ✓ only the model feeds the model hash
+  ✓ every one of the eleven output types is declared
+  ✓ no photorealistic generator is claimed as shipped
+  ✓ the four verification classes are declared and distinguished
+  ✓ stub output is explicitly not a rendering pass
+
+== §1 — THE RENDER REQUEST IS TYPED, PINNED AND PRESENTATION ONLY ==
+  ✓ a well-formed request is accepted
+  ✓ the request is pinned to the model hash
+  ✓ the request is pinned to the revision
+  ✓ the request declares it never writes to the model
+  ✓ every declared request field is present
+  ✓ an unknown view type is refused, not defaulted
+  ✓ an unknown quality is refused
+  ✓ an unknown theme is refused
+  ✓ an unknown lighting preset is refused
+  ✓ an oversized resolution is refused
+  ✓ a resolution is only recorded when it was accepted
+  ✓ the same inputs produce the same request id
+  ✓ a different theme produces a different request id
+
+== §3 — THE DETERMINISTIC PATH NEVER DEPENDS ON AI ==
+  ✓ a camera is solved with no provider present
+  ✓ a deterministic descriptor exists without AI
+  ✓ the deterministic descriptor claims no engineering authority
+  ✓ with no provider the base render remains the output
+  ✓ a provider failure produces a real issue, never a blank output
+  ✓ a provider failure touches nothing in the model
+
+== §4-§7 — MATERIALS ARE APPEARANCE, NEVER ENGINEERING ==

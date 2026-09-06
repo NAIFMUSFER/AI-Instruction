@@ -1,0 +1,71 @@
+
+== W1-A · حارس قنبلة الانضغاط يتبع سلسلة المُرشِّحات كاملةً ==
+  ✓ single /FlateDecode is rejected
+  ✓   …and measuring it costs under 2 s (the guard is not a bomb)
+  ✓ nested [/FlateDecode /FlateDecode] is rejected
+  ✓   …and measuring it costs under 2 s (the guard is not a bomb)
+  ✓ triple [/Fl /Fl /Fl] is rejected
+  ✓   …and measuring it costs under 2 s (the guard is not a bomb)
+  ✓ /RunLengthDecode is rejected
+  ✓   …and measuring it costs under 2 s (the guard is not a bomb)
+  ✓ [/FlateDecode /RunLengthDecode] is rejected
+  ✓   …and measuring it costs under 2 s (the guard is not a bomb)
+  ✓ NEGATIVE CONTROL — the pre-W1-A guard catches only 1 of the 5 (that is the defect, reproduced)
+  ✓   …and it measured the 713-byte nested bomb at only 61162 bytes
+  ✓ no false positive: a small legitimate /FlateDecode stream
+  ✓ no false positive: a JPEG image stream (/DCTDecode)
+  ✓ no false positive: an uncompressed content stream
+  ✓ the filter chain is read from the stream dictionary, and the guard calls into pypdf nowhere — it must not depend on what it guards
+  ✓ image codecs terminate the chain instead of being measured
+  ✓ the LZW and RLE decoders return a LENGTH, not the bytes
+  ✓ the module still imports nothing dangerous
+
+== W1-B · التطبيعات المُعلَنة موجودة في النموذج المُعاد ==
+  ✓ the planner still reports its safe normalisations
+  ✓ and the RETURNED model carries every one of them
+  ✓ the hashes describe the object that comes back
+  ✓ NEGATIVE CONTROL — with the old `ea_plan` target the parent's model gets none of them, while the response still declares them
+  ✓   …and its hash describes a different object than the one returned
+  ✓ the authority model is unchanged: proposals are still not applied
+  ✓ the handler uses the target that returns the model
+  ✓ and it normalises BEFORE counting rooms and levels
+  ✓ the new target is declared in the pool allow-list
+  ✓ the old target stays declared too — nothing was removed
+
+== W1-C · كل مقعد مأخوذ يعود، مهما كان مسار الخروج ==
+  ✓ run() calls release() exactly once, and from a `finally`
+  ✓ release() is idempotent, so a `finally` cannot double-release
+  ✓ 10 x an unexpected executor exception leaves capacity intact
+  ✓ 10 x a pickling failure leaves capacity intact
+  ✓ 10 x a MemoryError from the worker leaves capacity intact
+  ✓ 10 successful runs leave capacity intact too
+
+== W1-D · عطلٌ محلّي لا يُنسَب إلى مزوّدٍ لا شأن له ==
+  ✓ no API-layer call site omits provider= any more
+  ✓ every call site passes the RESOLVED provider, not a literal
+  ✓ the helper derives the name from the provider layer
+  ✓ a local worker death on a DeepSeek deployment is labelled deepseek
+  ✓ NEGATIVE CONTROL — omitting provider= still defaults to anthropic, which is exactly why the call sites had to be fixed
+  ✓ genuine upstream classification is untouched
+
+== W1-E · سقف الملاحظات يقيس ما يصل التوجيه فعلاً ==
+  ✓ the originally guarded key is still capped
+  ✓ an oversized `kind` key is now capped too
+  ✓ an oversized `note` key is now capped too
+  ✓ an oversized `label` key is now capped too
+  ✓ an oversized `detail` key is now capped too
+  ✓ an oversized `anything_at_all` key is now capped too
+  ✓ a nested oversized value is capped
+  ✓ 40 notes x 5 000 000 chars (200 MB) is capped
+  ✓ a normal note is still accepted
+  ✓ four notes of 4 000 chars are still accepted
+  ✓ a 60-deep structure is refused rather than walked
+  ✓   …and refusing it costs under 50 ms
+  ✓ a 50 000-key structure is refused rather than walked
+  ✓   …and refusing it costs under 200 ms
+  ✓ NEGATIVE CONTROL — the four-key count accepts 10 000 000 chars in `kind` (the defect, reproduced)
+  ✓ the scan bounds are declared, not buried
+
+==============================================================
+P0 HARDENING: 57 passed, 0 failed
+PRE-PARSE BODY LIMIT: NOT IMPLEMENTED — the framework buffers and spools the whole multipart body before any handler runs, so no application-level check can bound bytes already accepted. This is a residual limitation, recorded not papered over; closing it needs a server/middleware layer and is deferred to W3.

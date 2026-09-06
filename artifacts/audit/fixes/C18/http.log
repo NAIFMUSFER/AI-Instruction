@@ -1,0 +1,4 @@
+local-health 200  0.004
+local-ready 503  0.062
+local-version 200  0.004
+local-openapi 200  0.015
