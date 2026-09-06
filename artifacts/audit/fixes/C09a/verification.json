@@ -1,0 +1,35 @@
+{
+  "regression_before": {
+    "tests": 4,
+    "failures": 4,
+    "errors": 1
+  },
+  "regression_after": {
+    "tests": 6,
+    "failures": 0,
+    "errors": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 109,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 124
+  },
+  "source_manifest": "tested-source.json",
+  "real_local_generation": "503: provider credential missing for both original cases",
+  "previous_fix_comparison": "all saved bytes equal for both cases",
+  "original_baseline_comparison": "geometry bytes equal; validation differs only due to earlier fixes",
+  "polygon_witness": "manual canonical metre Building from closed L witness, not yet DXF-imported",
+  "remaining_C09": [
+    "browser meshes",
+    "architecture",
+    "SVG",
+    "IFC",
+    "validator",
+    "DXF import"
+  ],
+  "pixel_verification": "NOT_VERIFIED",
+  "original_22": "NOT_AVAILABLE"
+}

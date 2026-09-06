@@ -1,0 +1,17 @@
+[
+  {
+    "file": "acs_compiler.py",
+    "source_sha256": "b760acd513439ddec1bad88d592ff0c111018909f0f3881b2e1d30c465a605b4",
+    "tested_sha256": "b760acd513439ddec1bad88d592ff0c111018909f0f3881b2e1d30c465a605b4"
+  },
+  {
+    "file": "acs_polygon.py",
+    "source_sha256": "e8873e2e22ee333964e7d28410e0e56ab2136c3ce485ddfd6ab0681fe0f4c66f",
+    "tested_sha256": "e8873e2e22ee333964e7d28410e0e56ab2136c3ce485ddfd6ab0681fe0f4c66f"
+  },
+  {
+    "file": "tests/remediation/test_polygon_gltf.py",
+    "source_sha256": "9c0b9140a52c0058d7b14f52f61ba5063e6a51b2ad92dc0127b7462d46835537",
+    "tested_sha256": "9c0b9140a52c0058d7b14f52f61ba5063e6a51b2ad92dc0127b7462d46835537"
+  }
+]

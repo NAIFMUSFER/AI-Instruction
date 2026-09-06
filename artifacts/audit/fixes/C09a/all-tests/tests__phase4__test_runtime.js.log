@@ -1,0 +1,62 @@
+
+== §1 — CANONICAL RUNTIME VOCABULARY AND DRIFT ==
+  ✓ browser spec is byte-identical to acs_runtime.json
+  ✓ schema, version and compiler version are pinned
+  ✓ the six navigation modes are declared
+  ✓ the eleven interaction actions are declared
+  ✓ portal states are exactly OPEN and CLOSED
+  ✓ the twelve visibility modes are declared
+  ✓ the five measurement types are declared
+  ✓ every validation code has a declared severity
+  ✓ the model-write refusal code is canonical
+  ✓ an unknown code never silently becomes a warning
+  ✓ the runtime reuses the canonical visual discipline vocabulary
+  ✓ capsule defaults live in the specification, not in code
+  ✓ the spec forbids simulation and model-write claims
+  ✓ collision behaviour is declared per kind, never inferred
+
+== §2 — DETERMINISTIC RUNTIME SCENE ==
+  ✓ the same input produces a byte-identical runtime scene
+  ✓ every fixture compiles to a valid runtime scene
+  ✓ the runtime scene references its visual source
+  ✓ the runtime id derives from the source scene id
+  ✓ writes_to_model is structurally false on every scene
+  ✓ a configuration requesting writes_to_model is refused
+  ✓ compiling does not mutate the visual scene
+  ✓ compiling does not mutate the source model
+  ✓ the runtime scene carries no timestamp
+  ✓ runtime ids are deterministic and prefixed by kind
+  ✓ runtime object ids are unique
+  ✓ objects are sorted deterministically
+  ✓ a duplicate source object id is rejected, not merged
+  ✓ a missing source scene is rejected
+  ✓ an invalid source scene is rejected
+  ✓ a failed compile still returns a well-formed empty scene
+
+== §3 — SOURCE TRACEABILITY ==
+  ✓ every model-derived runtime object names its source element
+  ✓ every runtime object records its source scene
+  ✓ a visual-only object gains no engineering source
+  ✓ every obstacle traces back to a runtime object
+  ✓ every walkable surface traces back to a canonical space
+  ✓ every portal traces back to a modelled door
+
+== §4 — RUNTIME SCENE AND RUNTIME STATE ARE SEPARATE ==
+  ✓ the state is a distinct object with its own fields
+  ✓ the state carries no compiled geometry
+  ✓ the state declares writes_to_model false
+  ✓ the state references the scene by id only
+  ✓ mutating the state does not touch the scene
+  ✓ simulation time starts at zero and advances deterministically
+  ✓ a negative or non-finite time delta is refused
+  ✓ no simulation engine is attached to the clock
+
+== §5 — RULE INPUTS AND SUMMARY ==
+  ✓ rule inputs are runtime counts only
+  ✓ no runtime count is compared to a threshold
+  ✓ the summary declares no engineering geometry was modified
+  ✓ the summary declares compliance NOT_EVALUATED
+  ✓ counts agree with the compiled collections
+
+──────────────────────────────────────────────
+RUNTIME SCENE: 49 passed, 0 failed

@@ -1,0 +1,533 @@
+
+== §0/§1 — THE SPECIFICATION AND THE READ-ONLY RULE ==
+  ✓ the documentation specification loads
+  ✓ documentation is declared read only
+  ✓ the pipeline ends at export and never returns to the model
+  ✓ the model hash inputs are the model alone
+  ✓ every issue code used by the module is declared
+  ✓ an undeclared issue code is refused
+
+== §5/§7 — VIEW TYPES AND EXPLICIT SUPPORT ==
+  ✓ twelve view types are declared
+  ✓ every declared view type carries an explicit support status
+  ✓ support states are declared and separated
+  ✓ a view type is not claimed supported merely because the enum exists
+  ✓ an unsupported view type is refused with a typed issue
+  ✓ an unknown view type is refused
+  ✓ an unknown level is refused rather than defaulted
+  ✓ an unknown scale is refused rather than invented
+  ✓ an elevation without an orientation is refused
+  ✓ a section without a cut plane is refused
+
+== §4 — DETERMINISTIC ARTIFACT IDENTITY ==
+  ✓ the same model and definition give the same view identity
+  ✓ a different definition gives a different identity
+  ✓ identities carry the declared prefix and hash length
+  ✓ no random identifiers are permitted
+
+== §16 — NO FAKE DIMENSION: A RENDER FALLBACK IS NEVER A MEASUREMENT ==
+  ✓ the fixture really has a wall with an unstated thickness and a fallback
+  ✓ the documentation reader reports it UNKNOWN
+  ✓ the render fallback is not returned in its place
+  ✓ a stated value is read as stated
+  ✓ display rounding never modifies the exact value
+  ✓ an unknown value has no display value
+
+== §84 — TEST A: A REAL FLOOR PLAN FROM CANONICAL GEOMETRY ==
+  ✓ a floor plan is produced
+  ✓ every drawn wall exists in the compiled architecture
+  ✓ every architectural wall on the level is drawn
+  ✓ every drawn space exists in the compiled architecture
+  ✓ every drawn door exists in the compiled architecture
+  ✓ every drawn window exists in the compiled architecture
+  ✓ no element is invented that the model does not contain
+  ✓ a stair core is present where the model has one
+  ✓ room labels come from the model
+  ✓ the plan carries real dimensions
+  ✓ the plan is not a rasterised viewport — it is vector element geometry
+
+== §9 — A SHARED WALL IS ONE WALL ==
+  ✓ the fixture contains at least one shared wall
+  ✓ no wall is drawn twice
+  ✓ a shared wall keeps its single canonical identity
+  ✓ the compiled architecture really carries an unresolved exposure
+  ✓ unresolved wall exposure is carried through, never resolved by the drawing
+  ✓ the documentation invents no exposure the compiler did not state
+
+== §10/§11 — DOORS AND WINDOWS ARE NOT BEAUTIFIED ==
+  ✓ no door swing is invented where the model does not specify one
+  ✓ the not-specified swing state is preserved and visible
+  ✓ every documented window corresponds to a represented opening
+  ✓ no facade beautification adds a window
+
+== §12/§13 — ROOM LABELS AND AREAS ==
+  ✓ the room schedule reports every canonical space
+  ✓ no room number is invented
+  ✓ an area states its basis rather than being asserted bare
+  ✓ unknown program stays unknown rather than guessed
+  ✓ a rendered footprint is never called a regulatory floor area
+
+== §85 — TEST B: FOUR ELEVATIONS AND BUILDING ROTATION ==
+  ✓ the north elevation is produced
+  ✓ the south elevation is produced
+  ✓ the east elevation is produced
+  ✓ the west elevation is produced
+  ✓ the four elevations differ from one another
+  ✓ the north elevation shows only represented external openings
+  ✓ the south elevation shows only represented external openings
+  ✓ the east elevation shows only represented external openings
+  ✓ the west elevation shows only represented external openings
+  ✓ the elevation records the building rotation it applied
+  ✓ a rotation is read from the model transform, not assumed zero
+  ✓ level lines come from real level elevations
+  ✓ no photorealistic content enters the engineering elevation
+
+== §86 — TEST C: A TRUE MODEL-DERIVED SECTION ==
+  ✓ a section at x=3.0 is produced
+  ✓ a section at x=7.0 is produced
+  ✓ a section at x=11.0 is produced
+  ✓ the section reports cut, projected, beyond and unresolved separately
+  ✓ the section actually cuts geometry
+  ✓ the section classifies elements beyond the declared depth
+  ✓ different section positions cut different elements
+  ✓ cut wall 0.wall_1 really spans the cut plane
+  ✓ cut wall 0.wall_7 really spans the cut plane
+  ✓ cut wall 1.wall_1 really spans the cut plane
+  ✓ cut wall 1.wall_7 really spans the cut plane
+  ✓ a section is not a floor-plan projection — it carries vertical extents
+
+== §24 — A STAIR VOID REALLY OPENS THE SLAB ==
+  ✓ the section through the void adjusts the slab strip
+  ✓ a section away from the void leaves the slab whole
+
+== §14/§15/§17 — DIMENSION ENGINE AND PROVENANCE ==
+  ✓ every dimension carries every declared field
+  ✓ every dimension names the elements it measured
+  ✓ every provenance is one of the declared kinds
+  ✓ a measured dimension has both an exact and a display value
+  ✓ the display value never changes the exact value
+  ✓ overall building dimensions are produced
+  ✓ the dimension chain policy is declared, not ad hoc
+  ✓ a NONE policy produces no cluttered chain
+
+== §16 — AN UNKNOWN OPENING WIDTH STAYS UNKNOWN IN THE DIMENSIONS ==
+  ✓ every opening in this fixture states its width, so none is guessed
+  ✓ no dimension ever equals a render fallback that has no stated value
+
+== §18 — LEVEL DATUM ==
+  ✓ level elevations are documented from the model
+  ✓ no FFL, SSL, TOS or TOC datum is invented
+  ✓ only the level elevation datum type is declared
+
+== §19 — GRIDS ARE DRAWN ONLY WHERE REPRESENTED ==
+  ✓ the architectural fixture has no structural grid
+  ✓ no grid is generated because a convention expects one
+  ✓ the grid policy is declared as represented-only
+
+== §87 — TEST D: THE ROOM SCHEDULE MATCHES CANONICAL SPACES ==
+  ✓ zero phantom rooms
+  ✓ zero missing represented rooms
+  ✓ every row names the element it reports
+  ✓ every row is bound to the model hash it was read from
+  ✓ a schedule declares it is a view over the model
+  ✓ a level-scoped schedule really narrows the scope
+
+== §88 — TEST E: DOOR AND WINDOW SCHEDULES ==
+  ✓ every door row maps to a canonical opening
+  ✓ every window row maps to a canonical opening
+  ✓ each door tag is deterministic and maps to one canonical door
+  ✓ the same door yields the same tag on a second run
+  ✓ no door type is invented
+  ✓ the fixture states nominal widths
+  ✓ clear width is never filled in from nominal width
+  ✓ an unknown clear width is displayed as NOT_SPECIFIED, not as a number
+  ✓ fire rating is not invented from the door being a door
+  ✓ material is not invented from the element kind
+  ✓ the forbidden schedule inventions are declared and named
+  ✓ the specification states nominal is not clear
+
+== §89 — TEST F: A STRUCTURAL DRAWING FROM REPRESENTED DATA ==
+  ✓ the structural fixture really carries represented structure
+  ✓ a structural plan is produced
+  ✓ represented columns appear
+  ✓ represented beams appear
+  ✓ represented grids appear
+  ✓ grid spacing dimensions come from represented grids
+  ✓ a column schedule is produced
+  ✓ a foundation schedule is produced
+  ✓ unknown material properties stay unknown
+  ✓ no reinforcement appears anywhere in the structural documentation
+  ✓ no structural sizing or adequacy is claimed
+
+== §90 — TEST G: AN MEP DRAWING KEEPS UNROUTED UNROUTED ==
+  ✓ an MEP plan is produced
+  ✓ represented MEP segments appear
+  ✓ a routed segment is drawn from its real endpoints
+  ✓ an unrouted segment is never fabricated into a route
+  ✓ an unrouted segment raises a typed issue rather than being hidden
+  ✓ no duct size, flow, pressure or capacity is generated
+  ✓ an MEP equipment schedule reports represented equipment only
+
+== §91 — TEST H: AN FLS DRAWING MAKES NO COVERAGE CLAIM ==
+  ✓ the FLS fixture really carries represented devices
+  ✓ an FLS plan is produced
+  ✓ represented devices appear on the plan
+  ✓ represented signage appears on the plan
+  ✓ the FLS documentation never says "code compliant"
+  ✓ the FLS documentation never says "coverage compliant"
+  ✓ the FLS documentation never says "adequate"
+  ✓ the FLS documentation never says "protected"
+  ✓ the FLS documentation never says "approved for construction"
+  ✓ the FLS documentation never says "certified"
+  ✓ the FLS documentation never says "meets the code"
+  ✓ the FLS documentation never says "conforms to"
+  ✓ the FLS documentation never says "fire rated as required"
+  ✓ no coverage or protection verdict is produced
+
+== §92 — TEST I: A COORDINATION SHEET FIXES NOTHING ==
+  ✓ a coordination plan is produced
+  ✓ the coordination view can show clash annotations as documentation
+  ✓ no clash is auto-resolved by documentation
+  ✓ documentation declares no remediation capability
+
+== §93 — TEST J: THE QUANTITY REPORT IS FACTUAL ==
+  ✓ the room count matches the canonical spaces
+  ✓ the door count matches the canonical door openings
+  ✓ the window count matches the canonical window openings
+  ✓ the level count matches the canonical levels
+  ✓ the wall length equals the sum of compiled wall lengths
+  ✓ the space area equals the sum of canonical space areas
+  ✓ every quantity states its unit, basis and coverage
+  ✓ a discipline with no represented data reports NOT_AVAILABLE, not zero
+  ✓ a discipline with represented data reports a real count
+  ✓ unrouted MEP segments make the segment length PARTIAL, not complete
+  ✓ the report denies being a bill of quantities
+  ✓ the report denies being a cost estimate
+  ✓ no price field appears in the quantity report
+  ✓ no rate field appears in the quantity report
+  ✓ no cost field appears in the quantity report
+  ✓ no currency field appears in the quantity report
+  ✓ no budget field appears in the quantity report
+  ✓ no labour_rate field appears in the quantity report
+  ✓ no material_price field appears in the quantity report
+  ✓ no unit_cost field appears in the quantity report
+  ✓ no total_cost field appears in the quantity report
+  ✓ no market_price field appears in the quantity report
+  ✓ no currency symbol appears anywhere in the report
+
+== §45/§46/§47/§48 — SHEETS, PAPER, VIEWPORTS AND TITLE BLOCK ==
+  ✓ a sheet is composed
+  ✓ the sheet carries every declared field
+  ✓ the sheet records the model hash it was composed from
+  ✓ all five paper sizes are declared
+  ✓ A1 is not assumed for every project
+  ✓ an unknown paper size is refused
+  ✓ every viewport has deterministic geometry
+  ✓ overlapping viewports are detected
+  ✓ overlapping content is reported, never silently moved
+  ✓ a viewport leaving the sheet is refused
+  ✓ unknown title block fields stay blank
+  ✓ no company, engineer, stamp or approval is generated
+  ✓ a neutral drawing status is used
+  ✓ a restricted status is refused
+  ✓ the restricted status APPROVED_FOR_CONSTRUCTION cannot be set by the system
+  ✓ the restricted status IFC cannot be set by the system
+  ✓ the restricted status CERTIFIED cannot be set by the system
+  ✓ the restricted status AS_BUILT cannot be set by the system
+
+== §58 — SCALE IS REPORTED, NEVER INVENTED ==
+  ✓ a view that does not fit reports FIT_TO_SHEET rather than a false scale
+  ✓ a scale that cannot fit falls back to FIT_TO_SHEET with no true scale
+  ✓ the true and fit modes are separately declared
+
+== §50/§51/§54/§55 — INDEX, REVISIONS, LEGENDS AND STYLE ==
+  ✓ a drawing index is produced
+  ✓ prefixes are configurable
+  ✓ no professional issuance status is inferred
+  ✓ the legend contains only symbols actually used
+  ✓ there is no fake symbol catalogue
+  ✓ the graphic hierarchy distinguishes every declared class
+  ✓ cut is heavier than projected, which is heavier than reference
+  ✓ style does not change engineering meaning
+  ✓ a monochrome engineering mode exists
+  ✓ changing the drawing mode changes no geometry
+  ✓ AI imagery is never mixed into technical vector drawings
+  ✓ a presentation sheet must be labelled as such
+
+== §94 — TEST K: A MODEL CHANGE MAKES DOCUMENTATION STALE ==
+  ✓ a documentation project is built
+  ✓ every artifact is CURRENT before the model moves
+  ✓ a legitimate model change commits through the phase 5 authoring path
+  ✓ the model hash really moved
+  ✓ the old view becomes STALE_MODEL_CHANGED
+  ✓ the old sheet becomes stale
+  ✓ the old schedule becomes stale
+  ✓ the old quantity report becomes stale
+  ✓ nothing was auto-regenerated
+  ✓ nothing was auto-deleted
+  ✓ the impact report names the affected views
+  ✓ the impact report names the affected sheets
+  ✓ the impact report names the affected schedules
+  ✓ the impact report claims no engineering validity
+  ✓ regeneration creates a new documentation revision
+  ✓ the previous documentation revision is preserved
+  ✓ history is never overwritten
+  ✓ the regenerated view carries the new model hash
+  ✓ the regenerated view is CURRENT against the new model
+  ✓ the regenerated view differs from the old one
+  ✓ the room tag reports exactly what the architecture compiler states
+  ✓ a geometric model change commits through the authoring path
+  ✓ the regenerated drawing really reflects the geometric change
+  ✓ the regenerated dimension reports the new measurement
+  ✓ the earlier documentation is still stale and still preserved
+  ✓ revision clouds come from a real diff
+  ✓ a revision cloud carries no engineering interpretation
+  ✓ no cloud is generated without a diff
+
+== §68/§69/§70/§71/§73 — REAL SVG, PDF AND JSON EXPORT ==
+  ✓ the SVG declares itself as SVG
+  ✓ the SVG contains real vector geometry
+  ✓ the SVG embeds no raster image as the drawing content
+  ✓ the SVG states it is not a construction drawing
+  ✓ the SVG is bound to the model hash
+  ✓ the SVG parses as real XML
+  ✓ the parsed SVG really has line and rect elements
+  ✓ no script element exists in the SVG
+  ✓ the PDF carries the real file signature
+  ✓ the PDF declares the specified version
+  ✓ the PDF ends with the end-of-file marker
+  ✓ the PDF has one page per sheet
+  ✓ the PDF declares a real MediaBox in points
+  ✓ the PDF content is not empty
+  ✓ the PDF carries a page tree, a catalogue and an xref
+  ✓ the PDF content stream carries real vector operators
+  ✓ the PDF claims no CAD interoperability
+  ✓ no DXF file is emitted with a renamed extension
+  ✓ a documentation package is exported
+  ✓ the package carries the source model hash
+  ✓ the package lists views, sheets, schedules and quantities
+  ✓ the package lists every artifact identity
+  ✓ the package records provenance and staleness
+  ✓ the package states it did not come from an IFC file
+  ✓ the export manifest carries every declared field
+  ✓ the manifest records a hash for every exported file
+  ✓ the manifest binds every file to the model hash
+  ✓ the package json is valid json
+  ✓ an export set is created
+  ✓ an export set name implies no authority or approval
+
+== §74 — DETERMINISM ==
+  ✓ the same view produces byte-identical SVG
+  ✓ a fresh project object produces the identical drawing
+  ✓ the PDF content streams are identical across runs
+  ✓ the PDF semantic hash is stable
+  ✓ generated_at is excluded from every identity
+  ✓ changing only the timestamp changes no drawing content
+
+== §95 — TEST L: THE ENGINEERING MODEL IS NEVER MUTATED ==
+  ✓ villa: the canonical model bytes are unchanged after full documentation
+  ✓ villa: the model hash is unchanged
+  ✓ villa: the revision pointer is unchanged
+  ✓ villa: real documentation was actually produced
+  ✓ villa_glazed: the canonical model bytes are unchanged after full documentation
+  ✓ villa_glazed: the model hash is unchanged
+  ✓ villa_glazed: the revision pointer is unchanged
+  ✓ villa_glazed: real documentation was actually produced
+  ✓ hotel: the canonical model bytes are unchanged after full documentation
+  ✓ hotel: the model hash is unchanged
+  ✓ hotel: the revision pointer is unchanged
+  ✓ hotel: real documentation was actually produced
+  ✓ clinic: the canonical model bytes are unchanged after full documentation
+  ✓ clinic: the model hash is unchanged
+  ✓ clinic: the revision pointer is unchanged
+  ✓ clinic: real documentation was actually produced
+  ✓ office: the canonical model bytes are unchanged after full documentation
+  ✓ office: the model hash is unchanged
+  ✓ office: the revision pointer is unchanged
+  ✓ office: real documentation was actually produced
+  ✓ warehouse: the canonical model bytes are unchanged after full documentation
+  ✓ warehouse: the model hash is unchanged
+  ✓ warehouse: the revision pointer is unchanged
+  ✓ warehouse: real documentation was actually produced
+  ✓ clash_mep: the canonical model bytes are unchanged after full documentation
+  ✓ clash_mep: the model hash is unchanged
+  ✓ clash_mep: the revision pointer is unchanged
+  ✓ clash_mep: real documentation was actually produced
+  ✓ villa_fls: the canonical model bytes are unchanged after full documentation
+  ✓ villa_fls: the model hash is unchanged
+  ✓ villa_fls: the revision pointer is unchanged
+  ✓ villa_fls: real documentation was actually produced
+
+== §96 — TEST M: ARABIC LABELS AND RTL ==
+  ✓ both languages are declared
+  ✓ every English label has an Arabic counterpart
+  ✓ the Arabic labels are actually Arabic
+  ✓ right-to-left never mirrors geometry
+  ✓ an Arabic model produces a plan
+  ✓ Arabic room names survive into the annotations
+  ✓ Arabic text appears in the SVG unchanged
+  ✓ the drawing geometry is identical whichever language names the rooms
+  ✓ a right-to-left label does not mirror a sheet coordinate
+
+== §32/§81/§97 — TEST N: ADVERSARIAL TEXT, NOTES AND FILENAMES ==
+  ✓ hostile payload #0 is recognised as unsafe
+  ✓ hostile payload #0 is refused in a title block
+  ✓ hostile payload #0 is refused as a sheet name
+  ✓ hostile payload #1 is recognised as unsafe
+  ✓ hostile payload #1 is refused in a title block
+  ✓ hostile payload #1 is refused as a sheet name
+  ✓ hostile payload #2 is recognised as unsafe
+  ✓ hostile payload #2 is refused in a title block
+  ✓ hostile payload #2 is refused as a sheet name
+  ✓ hostile payload #3 is recognised as unsafe
+  ✓ hostile payload #3 is refused in a title block
+  ✓ hostile payload #3 is refused as a sheet name
+  ✓ hostile payload #4 is recognised as unsafe
+  ✓ hostile payload #4 is refused in a title block
+  ✓ hostile payload #4 is refused as a sheet name
+  ✓ hostile payload #5 is recognised as unsafe
+  ✓ hostile payload #5 is refused in a title block
+  ✓ hostile payload #5 is refused as a sheet name
+  ✓ hostile payload #6 is recognised as unsafe
+  ✓ hostile payload #6 is refused in a title block
+  ✓ hostile payload #6 is refused as a sheet name
+  ✓ inert label #0 is carried as text, not refused
+  ✓ inert label #0 reaches the note as inert text
+  ✓ inert label #0 is marked user-authored, never model-derived
+  ✓ inert label #0 never becomes an object key
+  ✓ inert label #1 is carried as text, not refused
+  ✓ inert label #1 reaches the note as inert text
+  ✓ inert label #1 is marked user-authored, never model-derived
+  ✓ inert label #1 never becomes an object key
+  ✓ inert label #2 is carried as text, not refused
+  ✓ inert label #2 reaches the note as inert text
+  ✓ inert label #2 is marked user-authored, never model-derived
+  ✓ inert label #2 never becomes an object key
+  ✓ inert label #3 is carried as text, not refused
+  ✓ inert label #3 reaches the note as inert text
+  ✓ inert label #3 is marked user-authored, never model-derived
+  ✓ inert label #3 never becomes an object key
+  ✓ inert label #4 is carried as text, not refused
+  ✓ inert label #4 reaches the note as inert text
+  ✓ inert label #4 is marked user-authored, never model-derived
+  ✓ inert label #4 never becomes an object key
+  ✓ inert label #5 is carried as text, not refused
+  ✓ inert label #5 reaches the note as inert text
+  ✓ inert label #5 is marked user-authored, never model-derived
+  ✓ inert label #5 never becomes an object key
+  ✓ inert label #6 is carried as text, not refused
+  ✓ inert label #6 reaches the note as inert text
+  ✓ inert label #6 is marked user-authored, never model-derived
+  ✓ inert label #6 never becomes an object key
+  ✓ inert label #7 is carried as text, not refused
+  ✓ inert label #7 reaches the note as inert text
+  ✓ inert label #7 is marked user-authored, never model-derived
+  ✓ inert label #7 never becomes an object key
+  ✓ inert label #8 is carried as text, not refused
+  ✓ inert label #8 reaches the note as inert text
+  ✓ inert label #8 is marked user-authored, never model-derived
+  ✓ inert label #8 never becomes an object key
+  ✓ inert label #9 is carried as text, not refused
+  ✓ inert label #9 reaches the note as inert text
+  ✓ inert label #9 is marked user-authored, never model-derived
+  ✓ inert label #9 never becomes an object key
+  ✓ the prototype keys are refused as property keys
+  ✓ a plain property key is accepted
+  ✓ Object.prototype is untouched
+  ✓ hostile filename #0 is refused
+  ✓ hostile filename #1 is refused
+  ✓ hostile filename #2 is refused
+  ✓ hostile filename #3 is refused
+  ✓ hostile filename #4 is refused
+  ✓ hostile filename #5 is refused
+  ✓ hostile filename #6 is refused
+  ✓ hostile filename #7 is refused
+  ✓ hostile filename #8 is refused
+  ✓ hostile filename #9 is refused
+  ✓ hostile filename #10 is refused
+  ✓ a plain filename is accepted
+  ✓ a traversing export name is refused with a typed issue
+  ✓ no export may escape its directory
+  ✓ an oversized note is refused with a resource issue
+  ✓ a non-finite or out-of-bounds cut plane inf is refused
+  ✓ a non-finite or out-of-bounds cut plane nan is refused
+  ✓ a non-finite or out-of-bounds cut plane 1e+30 is refused
+  ✓ a malformed documentation definition is refused
+  ✓ a duplicate viewport identity is refused
+  ✓ a forged model hash is detected as stale rather than trusted
+  ✓ an unsupported view type cannot be forced through
+  ✓ the documentation module contains no dynamic execution
+  ✓ the documentation module opens nothing but its own specification
+
+== §115 — EXPLICIT PROHIBITIONS ARE DECLARED AND ENFORCED ==
+  ✓ STRUCTURAL_DESIGN is declared out of bounds
+  ✓ REINFORCEMENT_DESIGN is declared out of bounds
+  ✓ MEP_DESIGN is declared out of bounds
+  ✓ FIRE_ENGINEERING is declared out of bounds
+  ✓ REGULATORY_COMPLIANCE is declared out of bounds
+  ✓ COST_ESTIMATION is declared out of bounds
+  ✓ AUTOMATIC_CLASH_RESOLUTION is declared out of bounds
+  ✓ AUTONOMOUS_DESIGN is declared out of bounds
+  ✓ AI_DRAWING_GEOMETRY_MODIFICATION is declared out of bounds
+  ✓ PROFESSIONAL_APPROVAL is declared out of bounds
+  ✓ CONSTRUCTION_DETAILING is declared out of bounds
+  ✓ SHOP_DRAWINGS is declared out of bounds
+  ✓ FABRICATION_DRAWINGS is declared out of bounds
+  ✓ OCCUPANCY_DETERMINATION is declared out of bounds
+  ✓ MATERIAL_PROPERTY_INVENTION is declared out of bounds
+  ✓ AUTOMATIC_MEP_ROUTING is declared out of bounds
+  ✓ CLOUD_COLLABORATION is declared out of bounds
+  ✓ LIVE_REVIT_SYNC is declared out of bounds
+  ✓ the panel exposes no engineering mutation control
+  ✓ the panel controls are documentation actions only
+  ✓ no construction drawing, regulatory or stamp claim is made
+  ✓ documentation consumes the canonical model, never an exported IFC file
+  ✓ the detail view invents no construction assembly
+
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+DOCUMENTATION: 421 passed, 0 failed

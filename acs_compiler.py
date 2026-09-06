@@ -18,6 +18,7 @@ import sys
 import struct
 import base64
 import numpy as np
+import acs_polygon as POLY
 
 # عقد الامتداد المشترك: امتداد لوح الدور وقصّ الفراغات يأتيان من مصدر واحد
 # تشترك فيه بايثون والصفحة (acs_pbr.plate_rect / pqPlateRect) — لا حاسب ثانٍ.
@@ -195,6 +196,32 @@ class Builder:
             return
         p, n, u, i = box(cx, cy, cz, ex, ey, ez)
         self.parts.append((p, n, u, i, mat, name))
+
+    def add_prism(self, ring, bottom, top, mat, name):
+        """Extrude one convex sweep cell; retain real boundary vertex positions."""
+        if top <= bottom:
+            return
+        pos, normals, uv, indices = [], [], [], []
+        def face(points):
+            a, b, c = (np.array(p, dtype=float) for p in points[:3])
+            normal = np.cross(b-a, c-a)
+            length = np.linalg.norm(normal)
+            if length <= POLY.EPS*POLY.EPS:
+                return
+            normal /= length
+            start = len(pos)
+            pos.extend(points)
+            normals.extend([normal.tolist()]*len(points))
+            uv.extend([(p[0], p[2]) for p in points])
+            for k in range(1, len(points)-1):
+                indices.extend([start, start+k, start+k+1])
+        face([(x, bottom, z) for x, z in ring])
+        face([(x, top, z) for x, z in reversed(ring)])
+        for a, b in POLY.edges(ring):
+            face([(a[0], bottom, a[1]), (a[0], top, a[1]),
+                  (b[0], top, b[1]), (b[0], bottom, b[1])])
+        self.parts.append((np.array(pos, np.float32), np.array(normals, np.float32),
+                           np.array(uv, np.float32), np.array(indices, np.uint32), mat, name))
 
     # ---- تصدير glTF 2.0 (buffer مضمّن base64) ----
     def export_gltf(self, path):
@@ -714,90 +741,175 @@ def build_objects(bld, room, fkey, base_y, acc=None):
 # ---------------------------------------------------------------------------
 # بناء غرفة
 # ---------------------------------------------------------------------------
-def build_room(bld, room, fkey, base_y, defaults):
+def _append_edge_parts(bld, local, a, b, inward=1):
+    """Move the existing wall/dock primitives from an edge frame to site X/Z."""
+    delta = np.array(b, dtype=float)-np.array(a, dtype=float)
+    tangent = delta/np.linalg.norm(delta)
+    matrix = np.array([[tangent[0], 0, -tangent[1]*inward],
+                       [0, 1, 0], [tangent[1], 0, tangent[0]*inward]], dtype=np.float32)
+    for p, n, u, i, mat, name in local.parts:
+        points = p @ matrix.T + np.array([a[0], 0, a[1]], dtype=np.float32)
+        indices = i if inward > 0 else i.reshape(-1, 3)[:, [0, 2, 1]].reshape(-1)
+        bld.parts.append((points, n @ matrix.T, u, indices, mat, name))
+
+
+def build_polygon_envelope(bld, room, fkey, base_y, defaults, holes):
+    ring = POLY.room_ring(room)
+    segments = POLY.edges(ring)
+    H = room.get("wall_h", defaults["wall_h"])
+    t, name = defaults["wall_t"], room.get("id", "room")
+    zone = room.get("wall_color") or ROLE_COLOR.get(str(room.get("role", "")).lower())
+    admin = ("office", "admin", "it", "staff", "maintenance", "meeting")
+    mode = room.get("walls") or ("none" if defaults.get("industrial") and room.get("role")
+                                 and room["role"] not in admin else "full")
+    height = {"none": 0, "line": 0, "low": 1.1, "rail": 1.1, "half": 1.8}.get(mode, H)
+    openings = [[] for _ in ring]
+    for kind in ("doors", "windows"):
+        for index, op in enumerate(room.get(kind) or []):
+            edge = POLY.edge_index(room, op)
+            a, b = segments[edge]
+            off = float(op["offset"])
+            width = float(op.get("width", .9 if kind == "doors" else 1.2))
+            h = float(op.get("height", 2.1 if kind == "doors" else 1.6))
+            sill = 0 if kind == "doors" else float(op.get("sill", .9))
+            if (not all(np.isfinite(v) for v in (off, width, h, sill)) or width <= 0 or h <= 0
+                    or sill < 0 or off-width/2 < -POLY.EPS
+                    or off+width/2 > np.linalg.norm(np.array(b)-a)+POLY.EPS or sill+h > H+POLY.EPS):
+                raise ValueError("POLYGON_OPENING_INVALID: opening must fit its boundary edge and wall height")
+            openings[edge].append((off, width, sill, sill+h))
+            material = ("door_glass" if op.get("material") == "glass" else "door") if kind == "doors" else "window"
+            local = Builder()
+            local.add_box(off, base_y+sill+h/2, 0, width, h, .05 if kind == "doors" else .04,
+                          tinted(material, op.get("color")), "%s|%s|%s|%d" %
+                          ("DOOR" if kind == "doors" else "WINDOW", fkey, name, index))
+            _append_edge_parts(bld, local, a, b)
+    for index, dock in enumerate(room.get("docks") or []):
+        edge = POLY.edge_index(room, dock)
+        a, b = segments[edge]
+        local_room = {"id": name, "rect": [0, 0, float(np.linalg.norm(np.array(b)-a)), 1],
+                      "docks": [{**dock, "edge": "N"}]}
+        openings[edge].extend(dock_openings(local_room)["N"])
+        local = Builder()
+        build_docks(local, local_room, fkey, base_y)
+        # Keep dock identities distinct when several boundary edges have docks.
+        local.parts = [(*part[:5], part[5].replace("dock0_", "dock%d_" % index)
+                       .replace("leveler0_", "leveler%d_" % index)
+                       .replace("bump0_", "bump%d_" % index)) for part in local.parts]
+        _append_edge_parts(bld, local, a, b, 1 if POLY.signed_area(ring) > 0 else -1)
+    for index, (a, b) in enumerate(segments):
+        length = float(np.linalg.norm(np.array(b)-a))
+        local = Builder()
+        if mode in ("none", "line"):
+            local.add_box(length/2, base_y+.006, 0, length, .012, .15,
+                          tinted("paint_zone", zone or "#2563eb"),
+                          "FLOOR|%s|%s|zone%d" % (fkey, name, index))
+        else:
+            wall_with_openings(local, "x", 0, 0, length, base_y, height, t,
+                               openings[index], "WALL", fkey, name, "w%d" % index, tinted("wall", zone))
+        _append_edge_parts(bld, local, a, b)
+    cells = POLY.cells([ring], [POLY.rect_ring(h) for h in holes])
+    if mode in ("none", "line") and cells:
+        cell = max(cells, key=POLY.signed_area)
+        centre = np.mean(cell, axis=0)
+        label = [(centre+(np.array(p)-centre)*.5).tolist() for p in cell]
+        bld.add_prism(label, base_y+.003, base_y+.017,
+                      tinted("paint_zone", zone or "#2563eb"), "FLOOR|%s|%s|label" % (fkey, name))
+    for colour, material, tag, bottom, top in (
+            (room.get("floor_color"), "floor", "plate", base_y, base_y+.024),
+            (room.get("ceiling_color"), "ceiling", "ceil", base_y+H-.055, base_y+H-.005)):
+        if hex_rgb(colour):
+            for index, cell in enumerate(cells):
+                bld.add_prism(cell, bottom, top, tinted(material, colour),
+                              "FLOOR|%s|%s|%s%d" % (fkey, name, tag, index))
+
+
+def build_room(bld, room, fkey, base_y, defaults, holes=None):
     rect = room["rect"]; x, z, w, d = rect
     H = room.get("wall_h", defaults["wall_h"])
     t = defaults["wall_t"]
     name = room.get("id", "room")
 
-    # تجميع الفتحات لكل حافة
-    per_edge = {'N': [], 'S': [], 'E': [], 'W': []}
-    doors = room.get("doors", [])
-    windows = room.get("windows", [])
-    for dr in doors:
-        e = dr["edge"]; uc = opening_u(e, rect, dr["offset"])
-        per_edge[e].append((uc, dr.get("width", 0.9), 0.0, dr.get("height", 2.1)))
-    for wn in windows:
-        e = wn["edge"]; uc = opening_u(e, rect, wn["offset"])
-        sill = wn.get("sill", 0.9); wh = wn.get("height", 1.6)
-        per_edge[e].append((uc, wn.get("width", 1.2), sill, sill+wh))
-
-    # فتحات أرصفة التحميل تُحسب ضمن فتحات الجدار
-    for e, lst in dock_openings(room).items():
-        per_edge[e].extend(lst)
-
-    # تشطيبات خاصة بالغرفة (لون جدار/أرضية/سقف مطلوب من المستخدم)
-    zone_col = room.get("wall_color") or ROLE_COLOR.get(str(room.get("role", "")).lower())
-    wall_mat = tinted("wall", zone_col)
-
-    # نمط الجدار: مناطق المستودع مفتوحة (دهان أرضي) لا جدران كاملة
-    ADMIN_ROLES = ("office", "admin", "it", "staff", "maintenance", "meeting")
-    _ind = bool(defaults.get("industrial"))
-    walls_mode = room.get("walls") or (
-        "none" if (_ind and room.get("role") and room["role"] not in ADMIN_ROLES) else "full")
-    WH = {"none": 0.0, "line": 0.0, "low": 1.10, "rail": 1.10, "half": 1.80,
-          "glass": H, "full": H}
-    hW = WH.get(walls_mode, H)
-
-    if walls_mode in ("none", "line"):
-        zc = zone_col or "#2563eb"
-        for e in ('N', 'S', 'E', 'W'):
-            axis, fixed, u0, u1 = edge_geom(e, rect)
-            if axis == 'x':
-                bld.add_box((u0 + u1) / 2, base_y + 0.006, fixed, u1 - u0, 0.012, 0.15,
-                            tinted("paint_zone", zc), "FLOOR|%s|%s|zone%s" % (fkey, name, e))
-            else:
-                bld.add_box(fixed, base_y + 0.006, (u0 + u1) / 2, 0.15, 0.012, u1 - u0,
-                            tinted("paint_zone", zc), "FLOOR|%s|%s|zone%s" % (fkey, name, e))
-        bld.add_box(x + w / 2, base_y + 0.01, z + d / 2, min(w * 0.5, 6), 0.014, min(d * 0.22, 2.2),
-                    tinted("paint_zone", zc), "FLOOR|%s|%s|label" % (fkey, name))
+    if "polygon" in room:
+        build_polygon_envelope(bld, room, fkey, base_y, defaults, holes or [])
     else:
-        for e in ('N', 'S', 'E', 'W'):
-            axis, fixed, u0, u1 = edge_geom(e, rect)
-            wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
-                               per_edge[e], "WALL", fkey, name, "w"+e, wall_mat)
+        # تجميع الفتحات لكل حافة
+        per_edge = {'N': [], 'S': [], 'E': [], 'W': []}
+        doors = room.get("doors", [])
+        windows = room.get("windows", [])
+        for dr in doors:
+            e = dr["edge"]; uc = opening_u(e, rect, dr["offset"])
+            per_edge[e].append((uc, dr.get("width", 0.9), 0.0, dr.get("height", 2.1)))
+        for wn in windows:
+            e = wn["edge"]; uc = opening_u(e, rect, wn["offset"])
+            sill = wn.get("sill", 0.9); wh = wn.get("height", 1.6)
+            per_edge[e].append((uc, wn.get("width", 1.2), sill, sill+wh))
 
-    # لوح أرضية/سقف ملوّن للغرفة (يُبنى فقط عند طلب لون)
-    if hex_rgb(room.get("floor_color")):
-        bld.add_box(x + w/2.0, base_y + 0.012, z + d/2.0, max(w - t, 0.1), 0.024, max(d - t, 0.1),
-                    tinted("floor", room["floor_color"]), "FLOOR|%s|%s|plate" % (fkey, name))
-    if hex_rgb(room.get("ceiling_color")):
-        bld.add_box(x + w/2.0, base_y + H - 0.03, z + d/2.0, max(w - t, 0.1), 0.05, max(d - t, 0.1),
-                    tinted("ceiling", room["ceiling_color"]), "FLOOR|%s|%s|ceil" % (fkey, name))
+        # فتحات أرصفة التحميل تُحسب ضمن فتحات الجدار
+        for e, lst in dock_openings(room).items():
+            per_edge[e].extend(lst)
 
-    # لوح باب/زجاج في كل فتحة باب
-    for i, dr in enumerate(doors):
-        e = dr["edge"]; uc = opening_u(e, rect, dr["offset"])
-        wdt = dr.get("width", 0.9); dh = dr.get("height", 2.1)
-        mat = "door_glass" if dr.get("material") == "glass" else "door"
-        mat = tinted(mat, dr.get("color"))
-        axis, fixed, _, _ = edge_geom(e, rect)
-        cy = base_y + dh/2.0
-        if axis == 'x':
-            bld.add_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+        # تشطيبات خاصة بالغرفة (لون جدار/أرضية/سقف مطلوب من المستخدم)
+        zone_col = room.get("wall_color") or ROLE_COLOR.get(str(room.get("role", "")).lower())
+        wall_mat = tinted("wall", zone_col)
+
+        # نمط الجدار: مناطق المستودع مفتوحة (دهان أرضي) لا جدران كاملة
+        ADMIN_ROLES = ("office", "admin", "it", "staff", "maintenance", "meeting")
+        _ind = bool(defaults.get("industrial"))
+        walls_mode = room.get("walls") or (
+            "none" if (_ind and room.get("role") and room["role"] not in ADMIN_ROLES) else "full")
+        WH = {"none": 0.0, "line": 0.0, "low": 1.10, "rail": 1.10, "half": 1.80,
+              "glass": H, "full": H}
+        hW = WH.get(walls_mode, H)
+
+        if walls_mode in ("none", "line"):
+            zc = zone_col or "#2563eb"
+            for e in ('N', 'S', 'E', 'W'):
+                axis, fixed, u0, u1 = edge_geom(e, rect)
+                if axis == 'x':
+                    bld.add_box((u0 + u1) / 2, base_y + 0.006, fixed, u1 - u0, 0.012, 0.15,
+                                tinted("paint_zone", zc), "FLOOR|%s|%s|zone%s" % (fkey, name, e))
+                else:
+                    bld.add_box(fixed, base_y + 0.006, (u0 + u1) / 2, 0.15, 0.012, u1 - u0,
+                                tinted("paint_zone", zc), "FLOOR|%s|%s|zone%s" % (fkey, name, e))
+            bld.add_box(x + w / 2, base_y + 0.01, z + d / 2, min(w * 0.5, 6), 0.014, min(d * 0.22, 2.2),
+                        tinted("paint_zone", zc), "FLOOR|%s|%s|label" % (fkey, name))
         else:
-            bld.add_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+            for e in ('N', 'S', 'E', 'W'):
+                axis, fixed, u0, u1 = edge_geom(e, rect)
+                wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
+                                   per_edge[e], "WALL", fkey, name, "w"+e, wall_mat)
 
-    # زجاج النوافذ
-    for i, wn in enumerate(windows):
-        e = wn["edge"]; uc = opening_u(e, rect, wn["offset"])
-        wdt = wn.get("width", 1.2); sill = wn.get("sill", 0.9); wh = wn.get("height", 1.6)
-        axis, fixed, _, _ = edge_geom(e, rect)
-        cy = base_y + sill + wh/2.0
-        if axis == 'x':
-            bld.add_box(uc, cy, fixed, wdt, wh, 0.04, "window", "WINDOW|%s|%s|%d" % (fkey, name, i))
-        else:
-            bld.add_box(fixed, cy, uc, 0.04, wh, wdt, "window", "WINDOW|%s|%s|%d" % (fkey, name, i))
+        # لوح أرضية/سقف ملوّن للغرفة (يُبنى فقط عند طلب لون)
+        if hex_rgb(room.get("floor_color")):
+            bld.add_box(x + w/2.0, base_y + 0.012, z + d/2.0, max(w - t, 0.1), 0.024, max(d - t, 0.1),
+                        tinted("floor", room["floor_color"]), "FLOOR|%s|%s|plate" % (fkey, name))
+        if hex_rgb(room.get("ceiling_color")):
+            bld.add_box(x + w/2.0, base_y + H - 0.03, z + d/2.0, max(w - t, 0.1), 0.05, max(d - t, 0.1),
+                        tinted("ceiling", room["ceiling_color"]), "FLOOR|%s|%s|ceil" % (fkey, name))
+
+        # لوح باب/زجاج في كل فتحة باب
+        for i, dr in enumerate(doors):
+            e = dr["edge"]; uc = opening_u(e, rect, dr["offset"])
+            wdt = dr.get("width", 0.9); dh = dr.get("height", 2.1)
+            mat = "door_glass" if dr.get("material") == "glass" else "door"
+            mat = tinted(mat, dr.get("color"))
+            axis, fixed, _, _ = edge_geom(e, rect)
+            cy = base_y + dh/2.0
+            if axis == 'x':
+                bld.add_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+            else:
+                bld.add_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+
+        # زجاج النوافذ
+        for i, wn in enumerate(windows):
+            e = wn["edge"]; uc = opening_u(e, rect, wn["offset"])
+            wdt = wn.get("width", 1.2); sill = wn.get("sill", 0.9); wh = wn.get("height", 1.6)
+            axis, fixed, _, _ = edge_geom(e, rect)
+            cy = base_y + sill + wh/2.0
+            if axis == 'x':
+                bld.add_box(uc, cy, fixed, wdt, wh, 0.04, "window", "WINDOW|%s|%s|%d" % (fkey, name, i))
+            else:
+                bld.add_box(fixed, cy, uc, 0.04, wh, wdt, "window", "WINDOW|%s|%s|%d" % (fkey, name, i))
 
     # نقاط MEP (أفياش/مفاتيح/إنارة/كاميرات/تكييف/سلامة)
     for j, pt in enumerate(room.get("points", [])):
@@ -833,7 +945,7 @@ def build_room(bld, room, fkey, base_y, defaults):
         build_lanes(bld, room, fkey, base_y)
     if room.get("stations"):
         build_stations(bld, room, fkey, base_y)
-    if room.get("docks"):
+    if room.get("docks") and "polygon" not in room:
         build_docks(bld, room, fkey, base_y)
 
     # النظام العام للعناصر (room.objects) — لكل أنواع المباني، غير مشروط بالصناعي.
@@ -882,12 +994,18 @@ def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None):
                  float(site.get("d") or 0.0)]
     pp = PBR.plate_rect([r.get("rect") for r in rooms], site_rect)
     pr = pp["rect"] if (pp.get("valid") and pp.get("rect")) else site_rect
-    for k, s in enumerate(PBR.slab_strips(pr[0], pr[1], pr[2], pr[3],
-                                          holes or [])):
-        bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
-                    s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
+    if any("polygon" in room for room in rooms):
+        cells = POLY.cells([POLY.room_ring(room) for room in rooms],
+                           [POLY.rect_ring(h) for h in holes or []])
+        for k, cell in enumerate(cells):
+            bld.add_prism(cell, base_y-0.15, base_y, "floor", "FLOOR|%s|slab|polygon%d" % (fkey, k))
+    else:
+        for k, s in enumerate(PBR.slab_strips(pr[0], pr[1], pr[2], pr[3],
+                                              holes or [])):
+            bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
+                        s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
     for room in rooms:
-        build_room(bld, room, fkey, base_y, defaults)
+        build_room(bld, room, fkey, base_y, defaults, holes)
 
 
 # تقرير تغطية العناصر لآخر عملية تجميع (يقرأه المُختبِر) — دلالات:
