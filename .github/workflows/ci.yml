@@ -138,6 +138,7 @@ jobs:
                --label "remediation (node scope)" --runner "node tests/lib/run.js" \
                    tests/remediation/test_production_error_ui.js \
                    tests/remediation/test_model_review_ui.js \
+                   tests/remediation/test_opening_identity.js \
                    tests/remediation/test_csp.js \
                    tests/remediation/test_webgl_diagnostics.js \
                    tests/remediation/test_concurrency.js \
@@ -151,7 +152,8 @@ jobs:
           set -o pipefail
           bash tools/ci_run.sh --log logs/js-parity.log \
                --label "bundle extractor (no node_modules)" --runner "node" \
-                   tests/remediation/test_bundle_extractor.js
+                   tests/remediation/test_bundle_extractor.js \
+                   tests/remediation/test_opening_identity_parity.js
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -197,7 +199,8 @@ jobs:
                    test_visual.js \
                    test_dev_api.js \
                    "$PWD/tests/phase6/test_dom.js" \
-                   "$PWD/tests/phase9_2/test_archdetail_browser.js" || rc=1
+                   "$PWD/tests/phase9_2/test_archdetail_browser.js" \
+                   "$PWD/tests/remediation/test_opening_identity.js" || rc=1
           # KI-13 · F-30 — معمارية التنسيق تحت السياسة الإنتاجية. تُشغَّل هنا
           # لأن هذه هي الوظيفة الوحيدة التي تملك Chromium حقيقياً و
           # public/vendor مملوءاً، فيقاس الرسم الكامل لا رسمٌ مُكعَّب.
@@ -377,6 +380,7 @@ jobs:
                    tests/remediation/test_rate_limit.py \
                    tests/remediation/test_engineering_authority.py \
                    tests/remediation/test_model_diagnostics.py \
+                   tests/remediation/test_opening_identity.py \
                    tests/remediation/test_rule_source_boundary.py \
                    tests/remediation/test_generation_cancel.py \
                    tests/remediation/test_logging.py \

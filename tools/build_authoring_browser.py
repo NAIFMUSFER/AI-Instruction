@@ -205,6 +205,74 @@ function _auAllRooms(model){
   return out; }
 function _auSpaceKey(bid,t,rid){ return bid+'.'+t+'.'+rid; }
 
+const AU_OPENING_IDENTITY_SCHEMA='acs.opening-identity/1';
+function auOpeningIdentityIssues(model,buildingId){
+  const bid=buildingId||'bld_0', issues=[], seen=new Set();
+  const reserved=new Set([bid,'site','__proto__','constructor','prototype']);
+  _auAllRooms(model).forEach(([t,r])=>{
+    reserved.add(String(r.id));reserved.add(r.space_id||_auSpaceKey(bid,t,r.id));
+  });
+  (model.levels||[]).forEach(lv=>{if(lv&&typeof lv==='object')
+    reserved.add(lv.id||bid+'.flr_'+(lv.index===undefined?0:lv.index));});
+  const marker=model._opening_identity;
+  if(marker!==null&&marker!==undefined&&(!marker||typeof marker!=='object'||Array.isArray(marker)||
+      marker.schema!==AU_OPENING_IDENTITY_SCHEMA||!Number.isInteger(marker.next)||
+      marker.next<0||marker.next>=2147483647))
+    issues.push(_auIssue('MODEL_INTEGRITY_FAILURE','_opening_identity',
+      'unsupported opening identity version or allocator'));
+  _auAllRooms(model).forEach(([t,room])=>{
+    const sid=room.space_id||_auSpaceKey(bid,t,room.id);
+    ['doors','windows'].forEach(key=>(room[key]||[]).forEach((op,i)=>{
+      const legacy=sid+'.'+key.slice(0,-1)+'_'+i;
+      if(!op||typeof op!=='object'||Array.isArray(op)){
+        issues.push(_auIssue('MODEL_INTEGRITY_FAILURE',legacy,'an opening record is not an object'));return;}
+      const oid=Object.prototype.hasOwnProperty.call(op,'id')?op.id:
+        (marker===null||marker===undefined?legacy:null);
+      if(typeof oid!=='string'||!oid||oid.length>256||/[@\s\x00-\x1f\x7f-\x9f\ufeff<>"'\\]/.test(oid)||
+          AU_DERIVED_NS.some(ns=>oid.startsWith(ns))){
+        issues.push(_auIssue('MODEL_INTEGRITY_FAILURE',legacy,'opening identity is missing or invalid'));return;}
+      if(seen.has(oid)||reserved.has(oid)) issues.push(_auIssue('ID_COLLISION',oid,'duplicate opening identity'));
+      seen.add(oid);
+    }));
+  });
+  return issues;
+}
+function auStabiliseOpeningIds(model,buildingId){
+  const bid=buildingId||'bld_0';
+  if(auOpeningIdentityIssues(model,bid).length) throw new Error('invalid opening identity contract');
+  if(model._opening_identity!==null&&model._opening_identity!==undefined) return [];
+  const changed=[];
+  _auAllRooms(model).forEach(([t,room])=>{
+    const sid=room.space_id||_auSpaceKey(bid,t,room.id);
+    ['doors','windows'].forEach(key=>(room[key]||[]).forEach((op,i)=>{
+      if(!Object.prototype.hasOwnProperty.call(op,'id')){
+        op.id=sid+'.'+key.slice(0,-1)+'_'+i;
+        changed.push('floors.'+t+'.rooms.'+room.id+'.'+key+'['+i+'].id');
+      }
+    }));
+  });
+  model._opening_identity={schema:AU_OPENING_IDENTITY_SCHEMA,next:0};
+  return changed.concat(['_opening_identity']);
+}
+function _auNewOpeningId(model,cmd){
+  const state=model._opening_identity;
+  let serial=state.next;
+  const base=auModelHash(model), existing=new Set();
+  _auAllRooms(model).forEach(([,r])=>['doors','windows'].forEach(k=>
+    (r[k]||[]).forEach(o=>existing.add(o.id))));
+  let oid='opening_'+_auSha16({command:cmd.command_hash,serial:serial,base:base});
+  while(existing.has(oid)){
+    serial++;
+    oid='opening_'+_auSha16({command:cmd.command_hash,serial:serial,base:base});
+  }
+  state.next=serial+1;
+  return oid;
+}
+
+function _auOpeningReference(model,t,rid,key,i){
+  const op=_auFindRoom(model,t,rid)[key][i];
+  return op.id||t+'.'+rid+'.'+key.slice(0,-1)+'_'+i;
+}
 function auResolveTarget(model,targetId,buildingId){
   const bid=buildingId||'bld_0';
   const tid=(typeof targetId==='string'&&targetId)?targetId:null;
@@ -215,6 +283,20 @@ function auResolveTarget(model,targetId,buildingId){
       'this identifier names a derived projection ('+ns+'), not a semantic source; '+
       'edit the element it was derived from instead')]}; }
   const body=tid.split('@')[0], parts=body.split('.');
+  const openingHits=[];
+  _auAllRooms(model).forEach(([t,room])=>['doors','windows'].forEach(key=>
+    (room[key]||[]).forEach((op,i)=>{
+      if(op&&op.id===body) openingHits.push({kind:key==='doors'?'DOOR':'WINDOW',
+        template:t,room_id:room.id,opening_index:i,opening_key:key,issues:[]});
+    })));
+  if(openingHits.length>1) return {kind:null,issues:[_auIssue('AMBIGUOUS_TARGET',tid,
+    'duplicate opening identity')]};
+  if(openingHits.length){
+    if(tid.includes('@')&&!(model.levels||[]).some(lv=>String(lv.index)===tid.slice(tid.indexOf('@')+1)&&
+        lv.template===openingHits[0].template))
+      return {kind:null,issues:[_auIssue('INVALID_TARGET',tid,'opening instance level does not exist')]};
+    return openingHits[0];
+  }
   const last=parts[parts.length-1];
   if(parts.length>=4&&(last.indexOf('door_')===0||last.indexOf('window_')===0)){
     const kind=(last.indexOf('door_')===0)?'DOOR':'WINDOW';
@@ -230,6 +312,9 @@ function auResolveTarget(model,targetId,buildingId){
     const lst=room[key]||[];
     if(i<0||i>=lst.length) return {kind:null,issues:[_auIssue('INVALID_TARGET',tid,
       'opening index is out of range')]};
+    if(model._opening_identity!==null&&model._opening_identity!==undefined||
+       Object.prototype.hasOwnProperty.call(lst[i],'id'))
+      return {kind:null,issues:[_auIssue('INVALID_TARGET',tid,'opening identity no longer exists')]};
     return {kind:kind,template:template,room_id:roomId,opening_index:i,
       opening_key:key,issues:[]}; }
   if(parts.length>=3&&last.indexOf('wall_')===0)
@@ -449,6 +534,7 @@ function _auApply(model,cmd,buildingId){
   const issues=[]; let changed=[], dep=[], brk=[];
   const candidate=_auCopy(model);
   const ctype=cmd.type, params=cmd.parameters, target=cmd.target_id;
+  let identityPaths=[];
   const fail=()=>_auResult(issues,{candidate:null,changed_paths:[],dependencies:[],
     dependency_breaking:[]});
   const bad=(code,subj,detail)=>{ issues.push(_auIssue(code,subj,detail)); return fail(); };
@@ -464,10 +550,18 @@ function _auApply(model,cmd,buildingId){
       'value is above the declared maximum')); return null; }
     return v; };
 
+  if(['ADD_DOOR','ADD_WINDOW','DELETE_DOOR','DELETE_WINDOW','MOVE_DOOR','MOVE_WINDOW',
+      'CHANGE_DOOR_PROPERTIES','CHANGE_WINDOW_PROPERTIES'].includes(ctype)){
+    const invalid=auOpeningIdentityIssues(candidate,bid);
+    if(invalid.length) return _auResult(invalid,{candidate:null,changed_paths:[],
+      dependencies:[],dependency_breaking:[]});
+    identityPaths=auStabiliseOpeningIds(candidate,bid);
+  }
   const locks=candidate._authoring_locks||{};
+  const lockTarget=typeof target==='string'?target.split('@')[0]:target;
   if(ctype!=='LOCK_ELEMENT'&&ctype!=='UNLOCK_ELEMENT'&&target
-     &&Object.prototype.hasOwnProperty.call(locks,target))
-    return bad('TARGET_LOCKED',target,'the element is locked ('+locks[target].reason+')');
+     &&(Object.prototype.hasOwnProperty.call(locks,target)||Object.prototype.hasOwnProperty.call(locks,lockTarget)))
+    return bad('TARGET_LOCKED',target,'the element is locked ('+(locks[target]||locks[lockTarget]).reason+')');
 
   if(ctype==='CHANGE_SITE_DIMENSIONS'){
     const w=needNum('w',AU_MIN_DIM,AU_MAX_DIM), d=needNum('d',AU_MIN_DIM,AU_MAX_DIM);
@@ -567,7 +661,7 @@ function _auApply(model,cmd,buildingId){
           const off=_auNum(op.offset), wid=_auNum(op.width)||0;
           if(off!==null&&(off-wid/2<-1e-9||off+wid/2>span+1e-9))
             issues.push(_auIssue('OPENING_OUT_OF_RANGE',
-              t+'.'+rid+'.'+key.slice(0,-1)+'_'+i,
+              _auOpeningReference(candidate,t,rid,key,i),
               'the opening no longer fits the resized edge')); }); });
       dep=[t+'.'+rid];
       if(oldW!==nw||oldD!==nd) dep.push('space_boundary_changed');
@@ -575,7 +669,7 @@ function _auApply(model,cmd,buildingId){
       const rooms=_auRoomsOf(candidate,t);
       const deps=[];
       ['doors','windows'].forEach(key=>{ (room[key]||[]).forEach((op,i)=>{
-        deps.push(t+'.'+rid+'.'+key.slice(0,-1)+'_'+i); }); });
+        deps.push(_auOpeningReference(candidate,t,rid,key,i)); }); });
       (room.objects||[]).forEach((o,i)=>{ deps.push(t+'.'+rid+'.obj_'+i); });
       dep=deps; brk=deps.concat([t+'.'+rid]);
       candidate.floors[t].rooms=rooms.filter(r=>String(r.id)!==rid);
@@ -620,7 +714,7 @@ function _auApply(model,cmd,buildingId){
     const room=_auFindRoom(candidate,t,rid), op=room[key][i];
     const rect=(room.rect||[0,0,0,0]).map(_auNum);
     if(ctype.indexOf('DELETE')===0){
-      dep=[t+'.'+rid+'.'+key.slice(0,-1)+'_'+i]; brk=dep.slice();
+      dep=[_auOpeningReference(candidate,t,rid,key,i)]; brk=dep.slice();
       room[key]=room[key].filter((o,j)=>j!==i);
       changed=['floors.'+t+'.rooms.'+rid+'.'+key];
     } else if(ctype.indexOf('MOVE')===0){
@@ -685,6 +779,8 @@ function _auApply(model,cmd,buildingId){
       return bad('OPENING_OUT_OF_RANGE',target,
         'the opening would extend past its host edge');
     const nn={edge:edge,offset:_auQ(off),width:_auQ(wid)};
+    nn.id=_auNewOpeningId(candidate,cmd);
+    identityPaths.push('_opening_identity');
     ['height','sill'].forEach(k=>{ const v=_auNum(params[k]); if(v!==null) nn[k]=_auQ(v); });
     if(!room[key]) room[key]=[];
     room[key]=room[key].concat([nn]);
@@ -712,9 +808,10 @@ function _auApply(model,cmd,buildingId){
           'the engine choose');
       if(AU_HOSTED_STRATEGIES.indexOf(strategy)<0)
         return bad('INVALID_PARAMETER',strategy,'unknown hosted element strategy');
-      if(strategy==='CANCEL_IF_HOSTED')
+      if(strategy==='CANCEL_IF_HOSTED'){
+        dep=hosted.map(h=>_auOpeningReference(candidate,h[0],h[1],h[2],h[3]));
         return bad('DEPENDENCY_CONFLICT',target,'the wall carries '+hosted.length+
-          ' hosted openings and the chosen strategy is to cancel rather than move them'); }
+          ' hosted openings and the chosen strategy is to cancel rather than move them'); } }
     for(let e=0;e<edges.length;e++){
       const t=edges[e][0], rid=edges[e][1], edge=edges[e][2];
       const room=_auFindRoom(candidate,t,rid);
@@ -744,12 +841,12 @@ function _auApply(model,cmd,buildingId){
         const span=(edge==='N'||edge==='S')?_auNum(room.rect[2]):_auNum(room.rect[3]);
         const wid=_auNum(op.width)||0;
         if(newOff-wid/2<-1e-9||newOff+wid/2>span+1e-9)
-          return bad('OPENING_OUT_OF_RANGE',t+'.'+rid+'.'+key.slice(0,-1)+'_'+i,
+          return bad('OPENING_OUT_OF_RANGE',_auOpeningReference(candidate,t,rid,key,i),
             'keeping the world position would push the opening past its host edge; '+
             'choose another strategy or a smaller move');
         op.offset=_auQ(newOff);
         changed.push('floors.'+t+'.rooms.'+rid+'.'+key+'['+i+']'); } }
-    dep=hosted.map(h=>h[0]+'.'+h[1]+'.'+h[2].slice(0,-1)+'_'+h[3]);
+    dep=hosted.map(h=>_auOpeningReference(candidate,h[0],h[1],h[2],h[3]));
     brk=dep.slice();
   } else if(ctype==='ADD_WALL'){
     return bad('COMMAND_NOT_ALLOWED','ADD_WALL',
@@ -926,7 +1023,7 @@ function _auApply(model,cmd,buildingId){
     return bad('COMMAND_NOT_IMPLEMENTED',ctype,'no applier for this command type'); }
 
   return _auResult(issues,{candidate:candidate,
-    changed_paths:Array.from(new Set(changed)).sort(_scmp),
+    changed_paths:Array.from(new Set(changed.concat(identityPaths))).sort(_scmp),
     dependencies:Array.from(new Set(dep)).sort(_scmp),
     dependency_breaking:Array.from(new Set(brk)).sort(_scmp)}); }
 
@@ -1032,6 +1129,7 @@ function auValidateModelIntegrity(model,buildingId){
   const issues=[];
   if(!model||typeof model!=='object'||Array.isArray(model))
     return _auResult([_auIssue('MODEL_INTEGRITY_FAILURE','model','model must be an object')],{});
+  issues.push(...auOpeningIdentityIssues(model,buildingId));
   let levels=model.levels;
   if(!Array.isArray(levels)||!levels.length){
     issues.push(_auIssue('MODEL_INTEGRITY_FAILURE','levels',
@@ -1077,14 +1175,14 @@ function auValidateModelIntegrity(model,buildingId){
           'an opening record is not an object')); return; }
       const edge=String(op.edge||'N').toUpperCase().slice(0,1);
       if(['N','S','E','W'].indexOf(edge)<0){
-        issues.push(_auIssue('HOST_INVALID',key+'.'+k.slice(0,-1)+'_'+i,
+        issues.push(_auIssue('HOST_INVALID',(op.id||key+'.'+k.slice(0,-1)+'_'+i),
           'the opening names no valid host edge')); return; }
       const span=(edge==='N'||edge==='S')?vals[2]:vals[3];
       const off=_auNum(op.offset), wid=_auNum(op.width)||0;
-      if(off===null){ issues.push(_auIssue('HOST_INVALID',key+'.'+k.slice(0,-1)+'_'+i,
+      if(off===null){ issues.push(_auIssue('HOST_INVALID',(op.id||key+'.'+k.slice(0,-1)+'_'+i),
         'the opening carries no finite offset')); return; }
       if(off-wid/2<-1e-9||off+wid/2>span+1e-9)
-        issues.push(_auIssue('OPENING_OUT_OF_RANGE',key+'.'+k.slice(0,-1)+'_'+i,
+        issues.push(_auIssue('OPENING_OUT_OF_RANGE',(op.id||key+'.'+k.slice(0,-1)+'_'+i),
           'the opening does not fit its host edge')); }); });
     (r.objects||[]).forEach((o,i)=>{
       if(!o||typeof o!=='object'||Array.isArray(o)||!o.kind)
@@ -1123,7 +1221,7 @@ function auDependencyImpact(command,model,buildingId){
   if(res.kind==='SPACE'){
     const room=_auFindRoom(model,res.template,res.room_id)||{};
     ['doors','windows'].forEach(key=>{ (room[key]||[]).forEach((op,i)=>{
-      detail.push(res.template+'.'+res.room_id+'.'+key.slice(0,-1)+'_'+i); }); });
+      detail.push(_auOpeningReference(model,res.template,res.room_id,key,i)); }); });
     (room.objects||[]).forEach((o,i)=>{
       detail.push(res.template+'.'+res.room_id+'.obj_'+i); }); }
   const ids=Array.from(new Set(affected.concat(detail))).sort(_scmp);
@@ -1542,7 +1640,7 @@ function auEditableProperties(model,targetId,buildingId){
   } else if(kind==='DOOR'||kind==='WINDOW'){
     const room=_auFindRoom(model,res.template,res.room_id);
     const op=room[res.opening_key][res.opening_index];
-    add('opening.id',targetId,AU_EDITABILITY['opening.id'],'derived');
+    add('opening.id',op.id||targetId,op.id?'READ_ONLY':AU_EDITABILITY['opening.id'],op.id?'model':'derived');
     add('opening.edge',op.edge,AU_EDITABILITY['opening.edge'],'model');
     add('opening.offset',op.offset,AU_EDITABILITY['opening.offset'],'model');
     add('opening.width_m',op.width,AU_EDITABILITY['opening.width_m'],'model');
@@ -1654,6 +1752,8 @@ function auLoadProject(payload,buildingId){
     return _auResult([_auIssue('MODEL_INTEGRITY_FAILURE','model',
       'the payload carries no canonical model')],{project:null});
   const bid=buildingId||payload.building_id||'bld_0';
+  const identityIssues=auOpeningIdentityIssues(model,bid);
+  if(identityIssues.length) return _auResult(identityIssues,{project:null,runtime_state_restored:false});
   const h=auModelHash(model,'building',bid);
   if(payload.model_hash&&payload.model_hash!==h)
     issues.push(_auIssue('MODEL_INTEGRITY_FAILURE','model_hash',

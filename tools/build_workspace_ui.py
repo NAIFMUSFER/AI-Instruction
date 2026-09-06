@@ -400,10 +400,10 @@ function wsProjectTree(project,arch,coordination,lang){
       const rid=String(r.id);
       sp.push(node(bid+'.'+tmpl+'.'+rid,'SPACE',r.name||rid,'ARCHITECTURE',null,
         {template:tmpl,level_index:idx,space_id:rid}));
-      (r.doors||[]).forEach((op,j)=>dr.push(node(bid+'.'+tmpl+'.'+rid+'.door_'+j,'DOOR',
+      (r.doors||[]).forEach((op,j)=>dr.push(node(op.id||bid+'.'+tmpl+'.'+rid+'.door_'+j,'DOOR',
         rid+' · '+_L('t_door')+' '+j,'ARCHITECTURE',null,
         {space_id:rid,level_index:idx,edge:op.edge})));
-      (r.windows||[]).forEach((op,j)=>wn.push(node(bid+'.'+tmpl+'.'+rid+'.window_'+j,'WINDOW',
+      (r.windows||[]).forEach((op,j)=>wn.push(node(op.id||bid+'.'+tmpl+'.'+rid+'.window_'+j,'WINDOW',
         rid+' · '+_L('t_window')+' '+j,'ARCHITECTURE',null,
         {space_id:rid,level_index:idx,edge:op.edge})));
       (r.objects||[]).forEach((o,j)=>ob.push(node(tmpl+'.'+rid+'.obj_'+j,'OBJECT',
@@ -497,14 +497,17 @@ function _wsRelationships(model,res,arch,bid){
      ['objects','CONTAINS_OBJECT','obj']].forEach(e=>{
       (room[e[0]]||[]).forEach((x,j)=>{
         const nid=(e[0]==='objects')?(res.template+'.'+res.room_id+'.obj_'+j)
-          :(bid+'.'+res.template+'.'+res.room_id+'.'+e[2]+'_'+j);
+          :(x.id||bid+'.'+res.template+'.'+res.room_id+'.'+e[2]+'_'+j);
         out.push({relation:e[1],target_id:nid,resolved:true}); }); });
   } else if(kind==='DOOR'||kind==='WINDOW'){
     out.push({relation:'HOSTED_BY_SPACE',
       target_id:bid+'.'+res.template+'.'+res.room_id,resolved:true});
     let host=null;
+    const room=_auFindRoom(model,res.template,res.room_id);
+    const source=room[res.opening_key][res.opening_index];
+    const oid=source.id||bid+'.'+res.template+'.'+res.room_id+'.'+kind.toLowerCase()+'_'+res.opening_index;
     if(arch) (arch.openings||[]).forEach(op=>{
-      if(host===null&&String(op.space_id||'').slice(-res.room_id.length)===res.room_id)
+      if(host===null&&op.opening_ref===oid)
         host=op.host_wall_id; });
     out.push({relation:'HOSTED_BY_WALL',target_id:host,resolved:host!==null});
   } else if(kind==='OBJECT'){
@@ -516,8 +519,10 @@ function _wsElementIssues(project,targetId,res,coordination,bid){
   const integ=auValidateModelIntegrity(project.model,bid);
   let key=null;
   if(res.kind==='SPACE') key=res.template+'.'+res.room_id;
-  else if(res.kind==='DOOR'||res.kind==='WINDOW')
-    key=res.template+'.'+res.room_id+'.'+res.kind.toLowerCase()+'_'+res.opening_index;
+  else if(res.kind==='DOOR'||res.kind==='WINDOW'){
+    const r=((project.model.floors[res.template]||{}).rooms||[]).find(r=>r.id===res.room_id);
+    const op=((r||{})[res.kind.toLowerCase()+'s']||[])[res.opening_index];
+    key=(op||{}).id||res.template+'.'+res.room_id+'.'+res.kind.toLowerCase()+'_'+res.opening_index; }
   integ.issues.forEach(i=>{
     if(key&&String(i.subject===null?'':i.subject).indexOf(key)===0)
       out.push({category:'MODEL_INTEGRITY',code:i.code,severity:i.severity,

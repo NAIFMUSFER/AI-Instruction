@@ -288,5 +288,14 @@
  "coordination_diff_classes": ["NEW", "PERSISTING", "RESOLVED_BY_CHANGE"],
  "coordination_note": "A preview reports how coordination findings change. It never resolves one. RESOLVED_BY_CHANGE means a finding is no longer produced by the candidate geometry; it does not mean the underlying issue was fixed on purpose or correctly.",
  "compliance_status": "NOT_EVALUATED",
- "compliance_note": "Egress, navigation and distance results shown in a preview are geometric facts about the candidate model. compliance stays NOT_EVALUATED. No rule result is carried forward across a geometry change; a committed change invalidates affected rule-result snapshots by model hash and explicit re-evaluation remains required."
+ "compliance_note": "Egress, navigation and distance results shown in a preview are geometric facts about the candidate model. compliance stays NOT_EVALUATED. No rule result is carried forward across a geometry change; a committed change invalidates affected rule-result snapshots by model hash and explicit re-evaluation remains required.",
+  "opening_identity": {
+    "schema": "acs.opening-identity/1",
+    "source_field": "id",
+    "model_state_field": "_opening_identity",
+    "legacy_policy": "Freeze positional references before the first opening mutation; include migration paths in its revision. Saved history is not rewritten.",
+    "allocation": "Deterministic command hash, source model hash and persisted sequence; no ID reuse after deletion.",
+    "instance_reference": "source ID plus @level index; repeated templates share source identity.",
+    "geometry_changes": false
+  }
 }

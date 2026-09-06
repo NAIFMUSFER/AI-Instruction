@@ -159,7 +159,7 @@ def build_relationships(building, building_id="bld_0"):
                     px, pz = x - DOOR_PROBE, z + off
                 else:
                     px, pz = x + w + DOOR_PROBE, z + off
-                via = "%s.door_%d" % (sid, di)
+                via = dr.get("id") or "%s.door_%d" % (sid, di)
                 cands = []
                 for sid2, rc2, _r2 in recs:
                     if sid2 == sid or _is_container(rc2, rc):

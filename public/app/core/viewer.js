@@ -2216,7 +2216,7 @@ function buildRelationships(building,bid){
         else if(e==='S'){px=x+off; pz=z+d+REL_DOOR_PROBE;}
         else if(e==='W'){px=x-REL_DOOR_PROBE; pz=z+off;}
         else {px=x+w+REL_DOOR_PROBE; pz=z+off;}
-        const via=sid+'.door_'+di, cands=[];
+        const via=dr.id||sid+'.door_'+di, cands=[];
         recs.forEach(r2=>{ if(r2[0]===sid||_relContains(r2[1],rc)) return;
           const b=r2[1];
           if(b[0]-0.01<=px&&px<=b[0]+b[2]+0.01&&b[1]-0.01<=pz&&pz<=b[1]+b[3]+0.01) cands.push(r2[0]); });
@@ -2490,7 +2490,7 @@ function extractExits(building,rels,bid){
     const levels=(building.levels||[]).filter(l=>l.template===tmpl).map(l=>+(l.index||0)).sort((a,b)=>a-b);
     rooms.forEach((room,i)=>{ const rc=_egRect(room); if(!rc) return;
       const sid=_egSid(bid,tmpl,room,i); let hasExt=false;
-      (room.doors||[]).forEach((dr,di)=>{ const via=sid+'.door_'+di;
+      (room.doors||[]).forEach((dr,di)=>{ const via=dr.id||sid+'.door_'+di;
         if(dr.exit===true||dr.destination){
           const d=dr.destination||'exterior';
           levels.forEach(lv=>add(lv,sid,via,EG_DESTINATIONS.indexOf(d)>=0?d:'unknown',
@@ -2553,7 +2553,7 @@ function findEgress(building,rels,origin,bid){
      نقطة الوجهة هي مرساة باب المخرج نفسه من هندسة النموذج، لا مركز الفراغ. */
   const roomsIdx=_dsRooms(building,bid);
   const _egArch=architectureOf(building,bid);      /* مرّة واحدة لكل المرشّحين */
-  cands.forEach(c=>{ const vd=_viaDoor(c.exit.via), sp=vd[0], di=vd[1];
+  cands.forEach(c=>{ const vd=_viaDoor(c.exit.via,roomsIdx), sp=vd[0], di=vd[1];
     const destPt=(sp!==null&&Object.prototype.hasOwnProperty.call(roomsIdx,sp))
       ?doorAnchor(roomsIdx[sp],di,_egArch,sp):null;
     c.measurement=measurePath(building,c.route,bid,null,destPt,_egArch); });
@@ -2685,12 +2685,12 @@ function architectureOf(building,bid){
 function doorAnchor(room,doorIndex,arch,spaceId,levelIndex){
   if(!room||typeof room!=='object') return null;
   const rc=_dsRect(room), doors=room.doors||[];
-  if(rc===null||doorIndex===null||doorIndex===undefined||doorIndex>=doors.length) return null;
+  if(rc===null||doorIndex===null||doorIndex===undefined||doorIndex<0||doorIndex>=doors.length) return null;
   const d=doors[doorIndex];
   // لا نختلق موضع باب: الحافة والإزاحة يجب أن تكونا مصرَّحتين في النموذج
   if(d.edge===null||d.edge===undefined||d.offset===null||d.offset===undefined) return null;
   if(arch&&spaceId!==null&&spaceId!==undefined){
-    const pt=__ACS_LATE.archOpeningAnchor(arch,spaceId+'.door_'+doorIndex,levelIndex);
+    const pt=__ACS_LATE.archOpeningAnchor(arch,d.id||spaceId+'.door_'+doorIndex,levelIndex);
     if(pt!==null&&pt!==undefined) return [Number(pt[0]),Number(pt[1])]; }
   const x=rc[0], z=rc[1], w=rc[2], dep=rc[3];
   const off=Number(d.offset||0), e=String(d.edge||'N').toUpperCase().slice(0,1);
@@ -2698,12 +2698,24 @@ function doorAnchor(room,doorIndex,arch,spaceId,levelIndex){
   if(e==='S') return [x+off,z+dep];
   if(e==='W') return [x,z+off];
   return [x+w,z+off]; }
-function _viaDoor(via){                     // '<space_id>.door_<i>' → [space_id, i]
+function _viaDoor(via,rooms){
+  if(typeof via!=='string'||!via) return [null,null];
+  if(rooms){
+    const matches=[];
+    Object.keys(rooms).forEach(sid=>(rooms[sid].doors||[]).forEach((door,i)=>{
+      if(door.id===via) matches.push([sid,i]);
+    }));
+    if(matches.length===1) return matches[0];
+    if(matches.length) return [null,null];
+  }
   if(!via) return [null,null];
   const s=String(via), p=s.lastIndexOf('.door_');
   if(p<0) return [null,null];
   const tail=s.slice(p+6); if(!/^-?\d+$/.test(tail)) return [null,null];
-  return [s.slice(0,p), parseInt(tail,10)]; }
+  const sid=s.slice(0,p),idx=parseInt(tail,10);
+  if(rooms){const doors=(rooms[sid]||{}).doors||[];
+    if(idx<0||idx>=doors.length||Object.prototype.hasOwnProperty.call(doors[idx],'id')) return [null,null];}
+  return [sid,idx]; }
 function _dsDist(a,b){ const dx=a[0]-b[0], dz=a[1]-b[1]; return Math.sqrt(dx*dx+dz*dz); }
 function _inSpaceLength(room,a,b){
   const rc=_dsRect(room); if(rc===null) return [null,'unmeasured'];
@@ -2772,7 +2784,7 @@ function measurePath(building,pathResult,bid,originPoint,destinationPoint,arch){
   const wallT=Number(building.wall_t||0.0);
   transitions.forEach(t=>{
     if(t.type==='door'){
-      const vd=_viaDoor(t.via), sp=vd[0], di=vd[1];
+      const vd=_viaDoor(t.via,roomsIdx), sp=vd[0], di=vd[1];
       const room=(sp===null)?null:RG(sp);
       if(arch===undefined||arch===null) arch=architectureOf(building,bid);  /* مرّة واحدة لكل قياس */
       const anchor=(room!==null)?doorAnchor(room,di,arch,sp):null;

@@ -93,7 +93,7 @@ def extract_exits(building, relationships, building_id="bld_0"):
             sid = _space_id(building_id, tmpl, room, i)
             space_has_exterior = False
             for di, dr in enumerate(room.get("doors") or []):
-                via = "%s.door_%d" % (sid, di)
+                via = dr.get("id") or "%s.door_%d" % (sid, di)
                 if dr.get("exit") is True or dr.get("destination"):
                     dest = dr.get("destination") or "exterior"
                     for lv in levels:
@@ -203,7 +203,7 @@ def find_egress(building, relationships, origin, building_id="bld_0"):
     rooms_idx = DIST._rooms_index(building, building_id)
     arch = DIST.architecture_of(building, building_id)      # مرّة واحدة لكل المرشّحين
     for c in cands:
-        sp, di = DIST._via_door(c["exit"].get("via"))
+        sp, di = DIST._via_door(c["exit"].get("via"), rooms_idx)
         dest_pt = DIST.door_anchor(rooms_idx.get(sp), di, arch, sp) if sp in rooms_idx else None
         c["measurement"] = DIST.measure_path(building, c["route"], building_id,
                                              destination_point=dest_pt, arch=arch)

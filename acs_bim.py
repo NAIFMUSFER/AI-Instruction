@@ -19,6 +19,7 @@ import math
 import os
 
 import acs_ingest as ING
+from acs_opening_identity import opening_identity_issues
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_HERE, "acs_bim.json"), "r", encoding="utf-8") as _f:
@@ -259,6 +260,10 @@ def build_exchange(project, options=None):
     o = options or {}
     model = project["model"]
     bid = project.get("building_id") or "bld_0"
+    identity_issues = opening_identity_issues(model, bid)
+    if identity_issues:
+        return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
+                i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     mh = project.get("model_hash")
     include_spaces = o.get("include_spaces", True)
     scope = str(o.get("scope") or "ALL").upper()
@@ -415,8 +420,9 @@ def _opening_record(bid, lv, r, op, j, kind, x, z, w, d, elev, rh):
         px, pz, ang = x + w, z + offset, 90.0
     idx = lv.get("index")
     host = "%s.flr_%s.%s.%s.wall_%s" % (bid, idx, lv.get("template"), r.get("id"), edge)
-    return {"canonical_id": "%s.flr_%s.%s.%s.%s_%d" % (bid, idx, lv.get("template"),
-                                                       r.get("id"), kind, j),
+    return {"canonical_id": ("%s@%s" % (op["id"], idx) if op.get("id") else
+                             "%s.flr_%s.%s.%s.%s_%d" % (bid, idx, lv.get("template"),
+                                                       r.get("id"), kind, j)),
             "level_index": lv.get("index"), "elevation": elev,
             "x": _q(px), "z": _q(pz), "rotation_deg": _q(ang),
             "width": _q(width), "height": _q(height) if height is not None else None,

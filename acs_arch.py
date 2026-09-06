@@ -205,7 +205,7 @@ def _openings_of(room, sid, kind):
         w = o.get("width")
         default_w = DEFAULTS["door_width_m"] if kind == "door" else DEFAULTS["window_width_m"]
         default_h = DEFAULTS["door_height_m"] if kind == "door" else DEFAULTS["window_height_m"]
-        el = {"id": "%s.%s_%d" % (sid, kind, i), "type": kind.upper(), "space_id": sid,
+        el = {"id": o.get("id") or "%s.%s_%d" % (sid, kind, i), "type": kind.upper(), "space_id": sid,
               "axis": axis, "fixed": fixed, "u_center": uc,
               "edge": str(o.get("edge") or "N").upper()[:1],
               "offset_stated": o.get("offset") is not None,

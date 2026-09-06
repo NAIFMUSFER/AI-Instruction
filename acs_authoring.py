@@ -21,6 +21,8 @@ import os
 
 # مصدر واحد للترميز الرقمي القانوني — نفس الرمز الذي تنتجه شيفرة المتصفّح.
 import acs_ingest as _ing
+from acs_opening_identity import (OPENING_IDENTITY_SCHEMA, opening_identity_issues,
+                                  stabilise_opening_ids)
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_HERE, "acs_authoring.json"), "r", encoding="utf-8") as _f:
@@ -244,6 +246,27 @@ def _space_key(building_id, template, room_id):
     return "%s.%s.%s" % (building_id, template, room_id)
 
 
+def _new_opening_id(model, command):
+    state = model["_opening_identity"]
+    serial = state["next"]
+    oid = "opening_" + _sha16({"command": command["command_hash"],
+                               "serial": serial, "base": model_hash(model)})
+    existing = {o.get("id") for _, r in _all_rooms(model)
+                for k in ("doors", "windows") for o in (r.get(k) or [])}
+    while oid in existing:
+        serial += 1
+        oid = "opening_" + _sha16({"command": command["command_hash"],
+                                   "serial": serial, "base": model_hash(model)})
+    state["next"] = serial + 1
+    return oid
+
+
+def _opening_reference(model, template, room_id, key, index):
+    room = _find_room(model, template, room_id)
+    op = room[key][index]
+    return op.get("id") or "%s.%s.%s_%d" % (template, room_id, key[:-1], index)
+
+
 def resolve_target(model, target_id, building_id="bld_0"):
     """يحلّ معرّفاً — قانونياً كان أم مشتقّاً — إلى موضعه في النموذج القانوني.
 
@@ -261,6 +284,24 @@ def resolve_target(model, target_id, building_id="bld_0"):
                 "edit the element it was derived from instead" % ns)]}
     # فتحة مشتقّة: bld_0.<template>.<room>.door_<n>[@level]
     body = tid.split("@")[0]
+    hits = []
+    for t, room in _all_rooms(model):
+        for key in ("doors", "windows"):
+            for i, op in enumerate(room.get(key) or []):
+                if isinstance(op, dict) and op.get("id") == body:
+                    hits.append({"kind": "DOOR" if key == "doors" else "WINDOW",
+                                 "template": t, "room_id": room.get("id"),
+                                 "opening_index": i, "opening_key": key, "issues": []})
+    if len(hits) > 1:
+        return {"kind": None, "issues": [_issue("AMBIGUOUS_TARGET", tid,
+                                                "duplicate opening identity")]}
+    if hits:
+        if "@" in tid and not any(str(lv.get("index")) == tid.split("@", 1)[1] and
+                                  lv.get("template") == hits[0]["template"]
+                                  for lv in (model.get("levels") or [])):
+            return {"kind": None, "issues": [_issue("INVALID_TARGET", tid,
+                                                    "opening instance level does not exist")]}
+        return hits[0]
     parts = body.split(".")
     if len(parts) >= 4 and (parts[-1].startswith("door_") or parts[-1].startswith("window_")):
         kind = "DOOR" if parts[-1].startswith("door_") else "WINDOW"
@@ -280,6 +321,9 @@ def resolve_target(model, target_id, building_id="bld_0"):
         if i < 0 or i >= len(lst):
             return {"kind": None, "issues": [_issue("INVALID_TARGET", tid,
                                                     "opening index is out of range")]}
+        if model.get("_opening_identity") is not None or "id" in lst[i]:
+            return {"kind": None, "issues": [_issue("INVALID_TARGET", tid,
+                                                    "opening identity no longer exists")]}
         return {"kind": kind, "template": template, "room_id": room_id,
                 "opening_index": i, "opening_key": key, "issues": []}
     # جدار مشتقّ: bld_0.flr_<i>.wall_<n>
@@ -572,6 +616,7 @@ def _apply(model, cmd, building_id="bld_0"):
     ctype = cmd["type"]
     params = cmd["parameters"]
     target = cmd["target_id"]
+    identity_paths = []
 
     def bad(code, subj, detail):
         issues.append(_issue(code, subj, detail))
@@ -596,11 +641,20 @@ def _apply(model, cmd, building_id="bld_0"):
             return None
         return v
 
+    if ctype in ("ADD_DOOR", "ADD_WINDOW", "DELETE_DOOR", "DELETE_WINDOW",
+                 "MOVE_DOOR", "MOVE_WINDOW", "CHANGE_DOOR_PROPERTIES", "CHANGE_WINDOW_PROPERTIES"):
+        invalid_ids = opening_identity_issues(candidate, building_id)
+        if invalid_ids:
+            return _result(invalid_ids, candidate=None, changed_paths=[], dependencies=[],
+                           dependency_breaking=[])
+        identity_paths = stabilise_opening_ids(candidate, building_id)
+
     # ------------------------------------------------------------ أقفال --
     locks = (candidate.get("_authoring_locks") or {})
-    if ctype not in ("LOCK_ELEMENT", "UNLOCK_ELEMENT") and target and target in locks:
+    lock_target = target.split("@")[0] if isinstance(target, str) else target
+    if ctype not in ("LOCK_ELEMENT", "UNLOCK_ELEMENT") and target and (target in locks or lock_target in locks):
         return bad("TARGET_LOCKED", target,
-                   "the element is locked (%s)" % locks[target].get("reason"))
+                   "the element is locked (%s)" % locks.get(target, locks.get(lock_target)).get("reason"))
 
     # ------------------------------------------------------- مستوى/موقع --
     if ctype == "CHANGE_SITE_DIMENSIONS":
@@ -733,7 +787,7 @@ def _apply(model, cmd, building_id="bld_0"):
                     if off is not None and (off - wid / 2.0 < -1e-9
                                             or off + wid / 2.0 > span + 1e-9):
                         issues.append(_issue("OPENING_OUT_OF_RANGE",
-                                             "%s.%s.%s_%d" % (t, rid, key[:-1], i),
+                                             _opening_reference(candidate, t, rid, key, i),
                                              "the opening no longer fits the resized edge"))
             dep = ["%s.%s" % (t, rid)]
             if old_w != nw or old_d != nd:
@@ -743,7 +797,7 @@ def _apply(model, cmd, building_id="bld_0"):
             deps = []
             for key in ("doors", "windows"):
                 for i, _op in enumerate(room.get(key) or []):
-                    deps.append("%s.%s.%s_%d" % (t, rid, key[:-1], i))
+                    deps.append(_opening_reference(candidate, t, rid, key, i))
             for i, o in enumerate(room.get("objects") or []):
                 deps.append("%s.%s.obj_%d" % (t, rid, i))
             dep = deps
@@ -797,7 +851,7 @@ def _apply(model, cmd, building_id="bld_0"):
         op = room[key][i]
         rect = [_num(v) for v in (room.get("rect") or [0, 0, 0, 0])]
         if ctype.startswith("DELETE"):
-            dep = ["%s.%s.%s_%d" % (t, rid, key[:-1], i)]
+            dep = [_opening_reference(candidate, t, rid, key, i)]
             brk = list(dep)
             room[key] = [o for j, o in enumerate(room[key]) if j != i]
             changed = ["floors.%s.rooms.%s.%s" % (t, rid, key)]
@@ -874,6 +928,8 @@ def _apply(model, cmd, building_id="bld_0"):
             return bad("OPENING_OUT_OF_RANGE", target,
                        "the opening would extend past its host edge")
         new = {"edge": edge, "offset": _q(off), "width": _q(wid)}
+        new["id"] = _new_opening_id(candidate, cmd)
+        identity_paths.append("_opening_identity")
         for k in ("height", "sill"):
             v = _num(params.get(k))
             if v is not None:
@@ -911,7 +967,7 @@ def _apply(model, cmd, building_id="bld_0"):
             if strategy not in HOSTED_STRATEGIES:
                 return bad("INVALID_PARAMETER", strategy, "unknown hosted element strategy")
             if strategy == "CANCEL_IF_HOSTED":
-                dep = ["%s.%s.%s_%d" % (t, rid, key[:-1], i)
+                dep = [_opening_reference(candidate, t, rid, key, i)
                        for (t, rid, key, i, _e) in hosted]
                 return bad("DEPENDENCY_CONFLICT", target,
                            "the wall carries %d hosted openings and the chosen strategy "
@@ -950,12 +1006,12 @@ def _apply(model, cmd, building_id="bld_0"):
                 wid = _num(op.get("width")) or 0.0
                 if new_off - wid / 2.0 < -1e-9 or new_off + wid / 2.0 > span + 1e-9:
                     return bad("OPENING_OUT_OF_RANGE",
-                               "%s.%s.%s_%d" % (t, rid, key[:-1], i),
+                               _opening_reference(candidate, t, rid, key, i),
                                "keeping the world position would push the opening past "
                                "its host edge; choose another strategy or a smaller move")
                 op["offset"] = _q(new_off)
                 changed.append("floors.%s.rooms.%s.%s[%d]" % (t, rid, key, i))
-        dep = ["%s.%s.%s_%d" % (t, rid, key[:-1], i) for (t, rid, key, i, _e) in hosted]
+        dep = [_opening_reference(candidate, t, rid, key, i) for (t, rid, key, i, _e) in hosted]
         brk = list(dep)
 
     elif ctype == "ADD_WALL":
@@ -977,7 +1033,7 @@ def _apply(model, cmd, building_id="bld_0"):
             for key in ("doors", "windows"):
                 for i, op in enumerate(room.get(key) or []):
                     if str(op.get("edge") or "N").upper()[:1] == edge:
-                        deps.append("%s.%s.%s_%d" % (t, rid, key[:-1], i))
+                        deps.append(_opening_reference(candidate, t, rid, key, i))
             deps.append("%s.%s" % (t, rid))
         return bad("DEPENDENCY_CONFLICT", target,
                    "this wall is generated by %d space edge(s) and cannot be deleted on its "
@@ -1190,7 +1246,7 @@ def _apply(model, cmd, building_id="bld_0"):
     else:                                                        # pragma: no cover
         return bad("COMMAND_NOT_IMPLEMENTED", ctype, "no applier for this command type")
 
-    return _result(issues, candidate=candidate, changed_paths=sorted(set(changed)),
+    return _result(issues, candidate=candidate, changed_paths=sorted(set(changed + identity_paths)),
                    dependencies=sorted(set(dep)), dependency_breaking=sorted(set(brk)))
 
 
@@ -1333,6 +1389,7 @@ def validate_model_integrity(model, building_id="bld_0"):
     issues = []
     if not isinstance(model, dict):
         return _result([_issue("MODEL_INTEGRITY_FAILURE", "model", "model must be an object")])
+    issues.extend(opening_identity_issues(model, building_id))
     levels = model.get("levels")
     if not isinstance(levels, list) or not levels:
         issues.append(_issue("MODEL_INTEGRITY_FAILURE", "levels",
@@ -1386,19 +1443,19 @@ def validate_model_integrity(model, building_id="bld_0"):
                     continue
                 edge = str(op.get("edge") or "N").upper()[:1]
                 if edge not in ("N", "S", "E", "W"):
-                    issues.append(_issue("HOST_INVALID", "%s.%s_%d" % (key, k[:-1], i),
+                    issues.append(_issue("HOST_INVALID", (op.get("id") or "%s.%s_%d" % (key, k[:-1], i)),
                                          "the opening names no valid host edge"))
                     continue
                 span = vals[2] if edge in ("N", "S") else vals[3]
                 off = _num(op.get("offset"))
                 wid = _num(op.get("width")) or 0.0
                 if off is None:
-                    issues.append(_issue("HOST_INVALID", "%s.%s_%d" % (key, k[:-1], i),
+                    issues.append(_issue("HOST_INVALID", (op.get("id") or "%s.%s_%d" % (key, k[:-1], i)),
                                          "the opening carries no finite offset"))
                     continue
                 if off - wid / 2.0 < -1e-9 or off + wid / 2.0 > span + 1e-9:
                     issues.append(_issue("OPENING_OUT_OF_RANGE",
-                                         "%s.%s_%d" % (key, k[:-1], i),
+                                         (op.get("id") or "%s.%s_%d" % (key, k[:-1], i)),
                                          "the opening does not fit its host edge"))
         for i, o in enumerate(r.get("objects") or []):
             if not isinstance(o, dict) or not o.get("kind"):
@@ -1447,7 +1504,7 @@ def dependency_impact(command, model, building_id="bld_0"):
         room = _find_room(model, res["template"], res["room_id"])
         for key in ("doors", "windows"):
             for i, _op in enumerate((room or {}).get(key) or []):
-                detail.append("%s.%s.%s_%d" % (res["template"], res["room_id"], key[:-1], i))
+                detail.append(_opening_reference(model, res["template"], res["room_id"], key, i))
         for i, _o in enumerate((room or {}).get("objects") or []):
             detail.append("%s.%s.obj_%d" % (res["template"], res["room_id"], i))
     return _result([], impact={
@@ -1956,7 +2013,9 @@ def editable_properties(model, target_id, building_id="bld_0"):
     elif kind in ("DOOR", "WINDOW"):
         room = _find_room(model, res["template"], res["room_id"])
         op = room[res["opening_key"]][res["opening_index"]]
-        add("opening.id", target_id, EDITABILITY["opening.id"], "derived")
+        add("opening.id", op.get("id") or target_id,
+            "READ_ONLY" if op.get("id") else EDITABILITY["opening.id"],
+            "model" if op.get("id") else "derived")
         add("opening.edge", op.get("edge"), EDITABILITY["opening.edge"], "model")
         add("opening.offset", op.get("offset"), EDITABILITY["opening.offset"], "model")
         add("opening.width_m", op.get("width"), EDITABILITY["opening.width_m"], "model")
@@ -2103,6 +2162,9 @@ def load_project(payload, building_id=None):
         return _result([_issue("MODEL_INTEGRITY_FAILURE", "model",
                                "the payload carries no canonical model")], project=None)
     bid = building_id or payload.get("building_id") or "bld_0"
+    identity_issues = opening_identity_issues(model, bid)
+    if identity_issues:
+        return _result(identity_issues, project=None, runtime_state_restored=False)
     h = model_hash(model, "building", bid)
     if payload.get("model_hash") and payload["model_hash"] != h:
         issues.append(_issue("MODEL_INTEGRITY_FAILURE", "model_hash",
