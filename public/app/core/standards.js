@@ -5534,7 +5534,7 @@ function _aOpeningsOf(room,sid,kind){
     const w=(o.width===undefined)?null:o.width;
     const defaultW=(kind==='door')?ARCH_DEFAULTS.door_width_m:ARCH_DEFAULTS.window_width_m;
     const defaultH=(kind==='door')?ARCH_DEFAULTS.door_height_m:ARCH_DEFAULTS.window_height_m;
-    const el={id:sid+'.'+kind+'_'+i, type:kind.toUpperCase(), space_id:sid,
+    const el={id:o.id||sid+'.'+kind+'_'+i, type:kind.toUpperCase(), space_id:sid,
       axis:seg[0], fixed:seg[1], u_center:uc,
       edge:String(o.edge===null||o.edge===undefined?'N':o.edge).toUpperCase().slice(0,1),
       offset_stated:(o.offset!==null&&o.offset!==undefined),

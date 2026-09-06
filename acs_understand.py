@@ -63,8 +63,8 @@ Room = {
   "wall_color":   "#RRGGBB"?,   // لون/دهان جدران هذه الغرفة وحدها (اختياري)
   "floor_color":  "#RRGGBB"?,   // لون أرضية هذه الغرفة (اختياري)
   "ceiling_color":"#RRGGBB"?,   // لون سقف هذه الغرفة (اختياري)
-  "doors":   [ {"edge":"N|S|E|W","offset":float,"width":float,"height":float,"material":"wood|oak|glass"?,"color":"#RRGGBB"?} ],
-  "windows": [ {"edge":"N|S|E|W","offset":float,"width":float,"sill":float,"height":float} ],
+  "doors":   [ {"id":str?,"edge":"N|S|E|W","offset":float,"width":float,"height":float,"material":"wood|oak|glass"?,"color":"#RRGGBB"?} ],
+  "windows": [ {"id":str?,"edge":"N|S|E|W","offset":float,"width":float,"sill":float,"height":float} ],
   "points":  [ {"type": PointType, "x":float, "z":float, "height":float?} ],  // x,z داخل الغرفة من ركنها
   "furniture":[ {"name":str,"x":float,"z":float,"w":float,"d":float,"h":float,"mat":"furn|furn_soft|counter|tv"} ],
   "objects": [ {"kind":str,"name":str?,"x":float,"z":float,"y":float?,
@@ -1300,6 +1300,10 @@ def validate(building):
         for i in lv_issues:
             if i not in diag:
                 diag.append(i)
+    # Assign identity at admission, before users can reference array positions.
+    # This adds metadata only; no dimension/source is invented or reclassified.
+    from acs_opening_identity import stabilise_opening_ids
+    stabilise_opening_ids(building)
     return building
 
 def call_llm_repair(description, building, issues, model=None,
@@ -1324,6 +1328,11 @@ def call_llm_repair(description, building, issues, model=None,
 def apply_notes(building, notes, model=None):
     """ينفّذ ملاحظات المهندس (تعديل/نقل/أبعاد/حذف/إضافة) على النموذج الحالي."""
     import acs_validate as V
+    from acs_opening_identity import stabilise_opening_ids
+    # Stage a versioned copy before showing an existing model to the provider.
+    # The input and its old revisions remain untouched even if the reply fails.
+    building = json.loads(json.dumps(building))
+    stabilise_opening_ids(building)
     lines = []
     for i, n in enumerate(notes, 1):
         lines.append("%d. [%s] الطبقة: %s · الدور: %s · الغرفة: %s\n   المطلوب: %s"
@@ -1333,6 +1342,8 @@ def apply_notes(building, notes, model=None):
         "هذا نموذج Building JSON قائم. نفّذ طلبات التعديل التالية من المهندس بدقّة، "
         "وأعِد **النموذج الكامل** بصيغة JSON فقط (بلا شرح).\n"
         "لا تغيّر ما لم يُطلب تغييره. حافظ على معرّفات الغرف غير المتأثرة كما هي.\n"
+        "حافظ على id لكل باب ونافذة موجودة وكتلة _opening_identity كما هي. "
+        "للإضافات الجديدة فقط اختر id نصياً فريداً؛ لا تعِد ترقيم العناصر عند حذف أو نقل عنصر.\n"
         "كل ملاحظة تذكر «الغرفة» و«الدور» — طبّقها على تلك الغرفة في ذلك الدور فقط.\n"
         "طلبات الألوان: استخدم wall_color / floor_color / ceiling_color على الغرفة المعنيّة وحدها "
         "(وcolor داخل كائن الباب للأبواب)، بصيغة #RRGGBB حسب جدول الألوان أعلاه. "
@@ -1342,8 +1353,13 @@ def apply_notes(building, notes, model=None):
     )
     mt = int(os.environ.get("ACS_MAX_TOKENS_REPAIR", "48000"))
     bt = str((building.get("meta") or {}).get("type") or "residential")
-    out = validate(extract_json(call_llm(prompt, model=model, max_tokens=mt, truncate=False,
-                                         btype=bt, user_msg="")))
+    raw = extract_json(call_llm(prompt, model=model, max_tokens=mt, truncate=False,
+                               btype=bt, user_msg=""))
+    if raw.get("_opening_identity") != building["_opening_identity"]:
+        raise E.AcsApiError(E.ACS_UPSTREAM_INVALID_JSON,
+                            "تعذر الحفاظ على معرّفات عناصر النموذج؛ لم يُطبّق التعديل.")
+    # validate() rejects missing/duplicate identities in a migrated model.
+    out = validate(raw)
     out.setdefault("meta", {}).setdefault("type", bt)
 
     issues, stats = V.validate_building(out)

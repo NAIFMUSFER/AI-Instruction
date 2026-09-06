@@ -132,7 +132,7 @@ def fix_openings(room, rec=_NULL, ctx=None):
             new_w = round(ow, 2)
             new_off = round(min(max(float(o.get("offset", span / 2)), ow / 2 + 0.05),
                                 span - ow / 2 - 0.05), 2)
-            tid = "%s.%s_%d" % (_tid(ctx, room), kind[:-1], i)
+            tid = o.get("id") or "%s.%s_%d" % (_tid(ctx, room), kind[:-1], i)
             if old_w is None or abs(float(old_w) - new_w) > 0.005:
                 rec.record("LAYOUT_OPENING_WIDTH_FIT", tid, "width",
                            {"width": old_w}, {"width": new_w},

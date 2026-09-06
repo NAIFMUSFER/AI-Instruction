@@ -184,13 +184,13 @@ def project_tree(project, arch=None, coordination=None, lang="en"):
                                     {"template": tmpl, "level_index": idx,
                                      "space_id": rid}))
             for j, op in enumerate(r.get("doors") or []):
-                door_nodes.append(node("%s.%s.%s.door_%d" % (bid, tmpl, rid, j), "DOOR",
+                door_nodes.append(node(op.get("id") or "%s.%s.%s.door_%d" % (bid, tmpl, rid, j), "DOOR",
                                        "%s · %s %d" % (rid, _L("t_door"), j),
                                        "ARCHITECTURE", None,
                                        {"space_id": rid, "level_index": idx,
                                         "edge": op.get("edge")}))
             for j, op in enumerate(r.get("windows") or []):
-                window_nodes.append(node("%s.%s.%s.window_%d" % (bid, tmpl, rid, j),
+                window_nodes.append(node(op.get("id") or "%s.%s.%s.window_%d" % (bid, tmpl, rid, j),
                                          "WINDOW",
                                          "%s · %s %d" % (rid, _L("t_window"), j),
                                          "ARCHITECTURE", None,
@@ -392,7 +392,7 @@ def _relationships(model, res, arch, bid):
                          ("objects", "CONTAINS_OBJECT")):
             for j, _x in enumerate(room.get(key) or []):
                 suffix = key[:-1] if key != "objects" else "obj"
-                nid = ("%s.%s.%s.%s_%d" % (bid, res["template"], res["room_id"],
+                nid = (_x.get("id") or "%s.%s.%s.%s_%d" % (bid, res["template"], res["room_id"],
                                            suffix, j)
                        if key != "objects"
                        else "%s.%s.obj_%d" % (res["template"], res["room_id"], j))
@@ -402,9 +402,13 @@ def _relationships(model, res, arch, bid):
                     "target_id": "%s.%s.%s" % (bid, res["template"], res["room_id"]),
                     "resolved": True})
         host = None
+        room = AU._find_room(model, res["template"], res["room_id"])
+        source = room[res["opening_key"]][res["opening_index"]]
+        oid = source.get("id") or "%s.%s.%s.%s_%d" % (
+            bid, res["template"], res["room_id"], kind.lower(), res["opening_index"])
         if arch is not None:
             for op in (arch.get("openings") or []):
-                if str(op.get("space_id", "")).endswith(res["room_id"]):
+                if op.get("opening_ref") == oid:
                     host = op.get("host_wall_id")
                     break
         out.append({"relation": "HOSTED_BY_WALL", "target_id": host,
@@ -423,8 +427,8 @@ def _element_issues(project, target_id, res, coordination, bid):
     if res.get("kind") == "SPACE":
         key = "%s.%s" % (res["template"], res["room_id"])
     elif res.get("kind") in ("DOOR", "WINDOW"):
-        key = "%s.%s.%s_%d" % (res["template"], res["room_id"],
-                               res["kind"].lower(), res["opening_index"])
+        key = AU._opening_reference(project["model"], res["template"], res["room_id"],
+                                    res["kind"].lower() + "s", res["opening_index"])
     for i in integ["issues"]:
         if key and str(i.get("subject") or "").startswith(key):
             out.append({"category": "MODEL_INTEGRITY", "code": i["code"],

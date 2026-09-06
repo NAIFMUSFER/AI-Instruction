@@ -203,7 +203,7 @@ function _bxOpening(bid,lv,r,op,j,kind,x,z,w,d,elev){
   else { px=x+w; pz=z+offset; ang=90; }
   const idx=lv.index;
   const sill=_bxNum(op.sill);
-  return {canonical_id:bid+'.flr_'+idx+'.'+lv.template+'.'+r.id+'.'+kind+'_'+j,
+  return {canonical_id:op.id?op.id+'@'+idx:bid+'.flr_'+idx+'.'+lv.template+'.'+r.id+'.'+kind+'_'+j,
     level_index:idx,elevation:elev,x:_bxQ(px),z:_bxQ(pz),rotation_deg:_bxQ(ang),
     width:_bxQ(width),height:(height===null)?null:_bxQ(height),
     height_known:height!==null,sill:(sill===null)?null:_bxQ(sill),
@@ -215,6 +215,9 @@ function _bxOpening(bid,lv,r,op,j,kind,x,z,w,d,elev){
 function bxBuildExchange(project,options){
   const o=options||{};
   const model=project.model, bid=project.building_id||'bld_0';
+  const identityIssues=auOpeningIdentityIssues(model,bid);
+  if(identityIssues.length) return {valid:false,issues:identityIssues.map(i=>
+    bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',i.subject,i.detail)),exchange:null};
   const scope=String(o.scope||'ALL').toUpperCase();
   if(ACS_BIM_SPEC.export_scope_options.indexOf(scope)<0)
     return {valid:false,issues:[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',null,

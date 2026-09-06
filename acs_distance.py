@@ -66,7 +66,7 @@ def door_anchor(room, door_index, arch=None, space_id=None, level_index=None):
         return None
     rc = _rect(room)
     doors = room.get("doors") or []
-    if rc is None or door_index is None or door_index >= len(doors):
+    if rc is None or door_index is None or door_index < 0 or door_index >= len(doors):
         return None
     d = doors[door_index]
     # لا نختلق موضع باب: الحافة والإزاحة يجب أن تكونا مصرَّحتين في النموذج
@@ -75,7 +75,7 @@ def door_anchor(room, door_index, arch=None, space_id=None, level_index=None):
     if arch is not None and space_id is not None:
         try:
             import acs_arch as _AR
-            pt = _AR.opening_anchor(arch, "%s.door_%d" % (space_id, door_index), level_index)
+            pt = _AR.opening_anchor(arch, d.get("id") or "%s.door_%d" % (space_id, door_index), level_index)
         except Exception:
             pt = None
         if pt is not None:
@@ -92,13 +92,27 @@ def door_anchor(room, door_index, arch=None, space_id=None, level_index=None):
     return [x + w, z + off]
 
 
-def _via_door(via):
+def _via_door(via, rooms=None):
     """'<space_id>.door_<i>' → (space_id, i)"""
+    if not isinstance(via, str) or not via:
+        return None, None
+    if rooms is not None:
+        matches = [(sid, i) for sid, room in rooms.items()
+                   for i, door in enumerate(room.get("doors") or []) if door.get("id") == via]
+        if len(matches) == 1:
+            return matches[0]
+        if matches:
+            return None, None
     if not via or ".door_" not in str(via):
         return None, None
     sp, _, i = str(via).rpartition(".door_")
     try:
-        return sp, int(i)
+        idx = int(i)
+        if rooms is not None:
+            doors = (rooms.get(sp) or {}).get("doors") or []
+            if idx < 0 or idx >= len(doors) or "id" in doors[idx]:
+                return None, None
+        return sp, idx
     except ValueError:
         return None, None
 
@@ -220,7 +234,7 @@ def measure_path(building, path_result, building_id="bld_0",
 
     for t in transitions:
         if t.get("type") == "door":
-            sp, di = _via_door(t.get("via"))
+            sp, di = _via_door(t.get("via"), rooms)
             room = rooms.get(sp)
             if arch is None:
                 arch = architecture_of(building, building_id)   # مرّة واحدة لكل قياس

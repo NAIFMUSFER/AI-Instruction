@@ -1077,3 +1077,7 @@ validate an arbitrary rule. Other architectural proposals retain the existing
 confirmation/revision path. See
 [`docs/audits/2026-09-06-model-review-remediation.md`](docs/audits/2026-09-06-model-review-remediation.md)
 for scope, regression evidence and remaining unknown-data work.
+
+## Opening identity migration
+
+The versioned door/window identity lifecycle and its compatibility limits are documented in [the 2026-09-06 implementation audit](docs/audits/2026-09-06-opening-identity.md). Legacy opening references are frozen in the first opening-edit revision; migrated models must retain their stored IDs. This change does not resolve unknown engineering dimensions or establish regulatory compliance.
