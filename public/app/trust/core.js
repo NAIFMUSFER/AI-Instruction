@@ -395,10 +395,14 @@ const errorStates={
     'لا يوجد اتصال بالإنترنت على هذا الجهاز. لم يُرسَل الطلب أصلاً.',
     'This device is offline. The request was never sent.',
     true, true, 'RETRY_WHEN_ONLINE'),
+  NETWORK_ERROR: E('NETWORK_ERROR',
+    'تعذّر إكمال الاتصال بالخادم. لا يكشف المتصفح السبب؛ قد يكون الطلب قد نُفّذ. تحقّق قبل تكرار التوليد.',
+    'The connection could not be completed. The browser does not reveal the cause; the request may have been processed. Check before generating again.',
+    true, false, 'CHECK_STATUS_BEFORE_RETRY'),
   NETWORK_DNS: E('NETWORK_DNS',
-    'تعذّر الوصول إلى مضيف الخادم (تعذّر تحليل الاسم، أو رُفض الاتصال، أو منعته سياسة CORS). لم يصل الطلب إلى الخادم.',
-    'The server host could not be reached (name resolution, refused connection, or CORS). The request did not reach the server.',
-    true, true, 'RETRY'),
+    'خطأ اتصال مسجّل بتصنيف قديم. السبب غير مؤكد، وقد يكون الطلب قد نُفّذ؛ تحقّق قبل إعادة التوليد.',
+    'A connection error was recorded under a legacy classification. The cause is unconfirmed and the request may have been processed; check before generating again.',
+    true, false, 'CHECK_STATUS_BEFORE_RETRY'),
   TIMEOUT: E('TIMEOUT',
     'انتهت المهلة قبل ردّ الخادم. قد يكون الطلب قد نُفِّذ على الخادم رغم ذلك.',
     'The request timed out before the server answered. It may still have been processed.',
@@ -512,7 +516,7 @@ const codeMap={
 };
 /* أصناف طبقة النقل في acsFetchJSON → أصناف العرض نفسها */
 const netMap={
-  NETWORK_OFFLINE:'NETWORK_OFFLINE', NETWORK_DNS:'NETWORK_DNS',
+  NETWORK_OFFLINE:'NETWORK_OFFLINE', NETWORK_DNS:'NETWORK_DNS', NETWORK_ERROR:'NETWORK_ERROR',
   TIMEOUT:'TIMEOUT', HTTP_429:'HTTP_429', HTTP_4XX:'HTTP_4XX_VALIDATION',
   HTTP_5XX:'HTTP_5XX', INVALID_JSON:'INVALID_JSON',
   NOT_CONFIGURED:'PROVIDER_UNAVAILABLE', VALID_API_ERROR:'HTTP_5XX'
@@ -532,15 +536,17 @@ function resolveErrorState(res){
   const op=r.operation||'GENERATE';
   const opd=operations[op]||operations.GENERATE;
   const retry_safe_here = base.retry_safe && opd.idempotent===true;
-  const key_makes_safe  = !!(opd.idempotency_key && r.idempotency_key);
+  // Sending a key is not proof of server-side deduplication. The current
+  // backend has no idempotency store/contract; do not promise a safe retry.
+  const key_makes_safe = false;
   return {
     class:cls, code:base.code, ar:base.ar, en:base.en,
     retryable:base.retryable, retry_safe:base.retry_safe,
     action:base.action, operation:op,
     operation_idempotent:opd.idempotent===true,
     retry_safe_for_operation:retry_safe_here,
-    /* الزرّ يظهر فقط حين تكون الإعادة آمنة فعلاً: إمّا العملية متماثلة،
-       أو نُعيد إرسالها بمفتاح تكرار يمنع الازدواج على الخادم. */
+    /* الإعادة الآمنة تتطلب عملية متماثلة. إرسال مفتاح من العميل وحده
+       لا يثبت منع التكرار على الخادم. */
     show_retry_button: base.retryable && (retry_safe_here||key_makes_safe),
     request_id: String(r.request_id||''),
     http: (typeof r.http==='number')?r.http:0,

@@ -42,12 +42,12 @@ console.log('\n== §1 — الجدول معلن مرّة واحدة وكل صن�
   chk('the page declares one error-state table on window.ACS.errorStates',
       page.indexOf('window.ACS.errorStates  = T.errorStates;')>=0
       || page.indexOf('window.ACS.errorStates=T.errorStates')>=0);
-  const REQUIRED=['NETWORK_OFFLINE','NETWORK_DNS','TIMEOUT','HTTP_429',
+  const REQUIRED=['NETWORK_OFFLINE','NETWORK_DNS','NETWORK_ERROR','TIMEOUT','HTTP_429',
     'HTTP_4XX_VALIDATION','HTTP_5XX','INVALID_JSON','PROVIDER_UNAVAILABLE',
     'FILE_REJECTED','WEBGL_UNSUPPORTED','WEBGL_CONTEXT_LOST','BLACK_VIEWPORT',
     'STORAGE_QUOTA','STALE_REVISION'];
   REQUIRED.forEach(k=>chk('the required class '+k+' has a declared user state', !!S[k]));
-  chk('the table declares exactly the fourteen required classes and no filler',
+  chk('the table declares exactly the declared required classes and no filler',
       Object.keys(S).length===REQUIRED.length, Object.keys(S));
   chk('every class is distinguishable — no two share a code',
       new Set(Object.keys(S).map(k=>S[k].code)).size===Object.keys(S).length);
@@ -130,22 +130,22 @@ console.log('\n== §5 — retry_safe يكون false لكل عملية غير م�
   chk('a retry button is never offered for a non-idempotent operation without a key',
       Object.keys(S).every(k=>
         T.resolveErrorState({class:k, operation:'GENERATE'}).show_retry_button===false));
-  chk('with an idempotency key present, a retryable class MAY offer retry safely',
+  chk('a client key alone does NOT prove server deduplication',
       T.resolveErrorState({class:'TIMEOUT', operation:'GENERATE',
-        idempotency_key:'acs-generate-abc'}).show_retry_button===true);
+        idempotency_key:'acs-generate-abc'}).show_retry_button===false);
   chk('an idempotency key does NOT make a non-retryable class retryable',
       T.resolveErrorState({class:'HTTP_4XX_VALIDATION', operation:'GENERATE',
         idempotency_key:'acs-generate-abc'}).show_retry_button===false
       && T.resolveErrorState({class:'STALE_REVISION', operation:'COMMIT',
         idempotency_key:'k'}).show_retry_button===false);
   chk('for an idempotent operation a retry-safe class does offer retry',
-      T.resolveErrorState({class:'NETWORK_DNS', operation:'EXPORT'})
+      T.resolveErrorState({class:'NETWORK_OFFLINE', operation:'EXPORT'})
         .show_retry_button===true);
   /* الأصناف التي قد يكون الطلب فيها قد وصل الخادم ليست آمنة للإعادة أصلاً */
-  ['TIMEOUT','HTTP_5XX','INVALID_JSON','PROVIDER_UNAVAILABLE'].forEach(k=>
+  ['NETWORK_ERROR','NETWORK_DNS','TIMEOUT','HTTP_5XX','INVALID_JSON','PROVIDER_UNAVAILABLE'].forEach(k=>
     chk(k+' is not baseline retry-safe: the request may already have been processed',
         S[k].retry_safe===false));
-  ['NETWORK_OFFLINE','NETWORK_DNS'].forEach(k=>
+  ['NETWORK_OFFLINE'].forEach(k=>
     chk(k+' is baseline retry-safe: the request never reached the server',
         S[k].retry_safe===true));
 })();
@@ -199,6 +199,5 @@ console.log('\n== §8 — مسار عرض واحد لا اثنان ==');
 
 console.log('\n══════════════════════════════════════════════');
 console.log('PRODUCTION ERROR UI: '+pass+' passed, '+fail+' failed');
-console.log('NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: that a LIVE backend actually '
-  +'emits each of these codes needs egress to the deployment (blocked here, 403).');
+console.log('Scope: Node contract tests. Live responses and browser rendering are NOT VERIFIED by this suite.');
 if(fail) process.exit(1);

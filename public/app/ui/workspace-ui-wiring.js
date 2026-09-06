@@ -1291,7 +1291,7 @@ function srvURL(){
 function apiURL(path){ srvURL(); return window.ACS_API.url(path); }
 
 const ACS_NET={
-  SUCCESS:'SUCCESS', OFFLINE:'NETWORK_OFFLINE', DNS:'NETWORK_DNS',
+  SUCCESS:'SUCCESS', OFFLINE:'NETWORK_OFFLINE', DNS:'NETWORK_DNS', ERROR:'NETWORK_ERROR',
   TIMEOUT:'TIMEOUT', NOT_CONFIGURED:'NOT_CONFIGURED',
   HTTP_4XX:'HTTP_4XX', HTTP_429:'HTTP_429', HTTP_5XX:'HTTP_5XX',
   INVALID_JSON:'INVALID_JSON', API_ERROR:'VALID_API_ERROR'
@@ -1317,32 +1317,37 @@ __ACS_SHARED.acsFetchJSON = async function acsFetchJSON(path, opts, timeoutMs){
     return done(out);
   }
   const c=new AbortController();
-  const t=setTimeout(()=>c.abort(), Math.max(1000, timeoutMs||60000));
-  let r;
+  const callerSignal=opts&&opts.signal;
+  const cancel=()=>c.abort();
+  if(callerSignal){
+    if(callerSignal.aborted) cancel();
+    else callerSignal.addEventListener('abort',cancel,{once:true});
+  }
+  let timedOut=false;
+  const t=setTimeout(()=>{ timedOut=true; c.abort(); }, Math.max(1000, timeoutMs||60000));
+  let r, raw='';
   try{
-    r=await fetch(url, Object.assign({signal:c.signal}, opts||{}));
+    r=await fetch(url, Object.assign({}, opts||{}, {signal:c.signal}));
+    out.http=r.status;
+    out.request_id=(r.headers&&r.headers.get&&r.headers.get('X-Request-ID'))||'';
+    const ra=(r.headers&&r.headers.get&&r.headers.get('Retry-After'))||'';
+    out.retry_after=parseInt(ra,10)||0;
+    raw=await r.text(); // The deadline covers headers AND the response body.
   }catch(e){
-    clearTimeout(t);
-    if(e && e.name==='AbortError'){
+    if(timedOut){
       out.status=ACS_NET.TIMEOUT;
       out.message='انتهت المهلة قبل رد الخادم ('+Math.round((timeoutMs||60000)/1000)+' ثانية).';
       out.retryable=true; return done(out);
     }
     /* المتصفّح لا يكشف سبب فشل الشبكة لسكربت الصفحة (TypeError: Failed to fetch
        تغطّي DNS وCORS والرفض). نُعلن ذلك صراحةً بدل ادّعاء سبب بعينه. */
-    out.status=(typeof navigator!=='undefined' && navigator.onLine===false)
-      ? ACS_NET.OFFLINE : ACS_NET.DNS;
-    out.message='تعذّر الوصول إلى الخادم على '+window.ACS_API.host()
-      +' (تعذّر تحديد الاسم، أو رفض الاتصال، أو منع CORS).';
+    out.status=ACS_NET.ERROR;
+    out.message='تعذّر إكمال الاتصال بالخادم. لا يكشف المتصفح السبب، وقد يكون الطلب قد وصل ونُفّذ.';
     out.retryable=true; return done(out);
+  }finally{
+    clearTimeout(t);
+    if(callerSignal) callerSignal.removeEventListener('abort',cancel);
   }
-  clearTimeout(t);
-  out.http=r.status;
-  out.request_id=(r.headers&&r.headers.get&&r.headers.get('X-Request-ID'))||'';
-  const ra=(r.headers&&r.headers.get&&r.headers.get('Retry-After'))||'';
-  out.retry_after=parseInt(ra,10)||0;
-  let raw='';
-  try{ raw=await r.text(); }catch(e){ raw=''; }        /* ← قراءة واحدة فقط */
   let data=null, parsed=false;
   if(raw){ try{ data=JSON.parse(raw); parsed=true; }catch(e){ parsed=false; } }
   out.body=data;
@@ -1443,6 +1448,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 const ACS_ERR_HINT={
   NOT_CONFIGURED:'عنوان محرّك الفهم غير مضبوط في هذه النسخة من الصفحة.',
   NETWORK_OFFLINE:'الجهاز غير متصل بالإنترنت.',
+  NETWORK_ERROR:'تعذّر إكمال الاتصال. السبب غير محدد وقد يكون الطلب قد نُفّذ؛ تحقّق قبل تكرار التوليد.',
   NETWORK_DNS:'تعذّر الوصول إلى مضيف الخادم. قد يكون اسم النطاق لا يُترجَم، أو الخدمة متوقّفة، أو أصل الصفحة غير مسموح في CORS.',
   TIMEOUT:'انتهت المهلة قبل أن يردّ الخادم. الطلبات الكبيرة تحتاج وقتاً أطول — قصّر الوصف أو أعِد المحاولة.',
   HTTP_429:'تجاوزت حدّ الطلبات المسموح. انتظر ثم أعِد المحاولة.',
@@ -1466,7 +1472,7 @@ const ACS_FAIL={
   RENDER_CAMERA_ERROR:'RENDER_CAMERA_ERROR',
   RENDER_POSTPROCESS_ERROR:'RENDER_POSTPROCESS_ERROR',
   RENDER_BLACK_VIEWPORT:'RENDER_BLACK_VIEWPORT'};
-const ACS_TRANSPORT_CLASSES=['NETWORK_DNS','NETWORK_OFFLINE','TIMEOUT','NOT_CONFIGURED',
+const ACS_TRANSPORT_CLASSES=['NETWORK_ERROR','NETWORK_DNS','NETWORK_OFFLINE','TIMEOUT','NOT_CONFIGURED',
   'HTTP_4XX','HTTP_429','HTTP_5XX','INVALID_JSON','VALID_API_ERROR','SUCCESS'];
 let ACS_LAST_FAILURE=null;
 function acsFail(cls,detail){
