@@ -1,0 +1,16 @@
+[
+  {
+    "level": "error",
+    "message": "Invalid attribute value",
+    "type": "schema",
+    "instance": "#103=IfcDoor('1cB86kSgn1bWp3i2Z$qLs5',#5,'bld_0.flr_0.g.one.door_0',$,$,#94,#99,$,2.1000000000000001,1.,$,$)",
+    "attribute": "IfcDoor.UserDefinedOperationType"
+  },
+  {
+    "level": "error",
+    "message": "Invalid attribute value",
+    "type": "schema",
+    "instance": "#115=IfcWindow('3kxY2p0zKjy76Xi7g4MmNV',#5,'bld_0.flr_0.g.one.window_0',$,$,#107,#111,$,1.1000000000000001,1.2,$,$)",
+    "attribute": "IfcWindow.UserDefinedPartitioningType"
+  }
+]

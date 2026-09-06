@@ -240,6 +240,11 @@ class StepFile(object):
         ax = self.axis(x, y, z, rot_deg)
         return self.add("IFCLOCALPLACEMENT", "%s,%s" % (parent or "$", ax))
 
+    def profile_axis(self, x, y):
+        # IfcParameterizedProfileDef.Position is IfcAxis2Placement2D in IFC4.
+        return self.add("IFCAXIS2PLACEMENT2D", "%s,%s" %
+                        (self.point(x, y), self.direction(1.0, 0.0)), True)
+
 
 def _rooms(model):
     out = []
@@ -496,7 +501,7 @@ def serialise_ifc(exchange, generated_at=None):
         x, z, w, d = sp["footprint"]
         pl = f.placement(local(sp["level_index"]), x, z, 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(w / 2.0), _q(d / 2.0), 0.0), step_real(w),
+                     % (f.profile_axis(_q(w / 2.0), _q(d / 2.0)), step_real(w),
                         step_real(d)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -518,7 +523,7 @@ def serialise_ifc(exchange, generated_at=None):
         pl = f.placement(local(wl["level_index"]), x1, z1, 0.0, ang)
         thick = wl["thickness"] if wl["thickness_known"] else 0.2
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(length / 2.0), 0.0, 0.0), step_real(length),
+                     % (f.profile_axis(_q(length / 2.0), 0.0), step_real(length),
                         step_real(thick)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -552,7 +557,7 @@ def serialise_ifc(exchange, generated_at=None):
         x, z, w, d = sl["outline"]
         pl = f.placement(local(sl["level_index"]), x, z, 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(w / 2.0), _q(d / 2.0), 0.0), step_real(w),
+                     % (f.profile_axis(_q(w / 2.0), _q(d / 2.0)), step_real(w),
                         step_real(d)))
         th = sl["thickness"] if sl["thickness_known"] else 0.2
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
@@ -574,7 +579,7 @@ def serialise_ifc(exchange, generated_at=None):
                              op["rotation_deg"])
             oh = op["height"] if op["height_known"] else 2.1
             prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                         % (f.axis(0.0, 0.0, 0.0), step_real(op["width"]),
+                         % (f.profile_axis(0.0, 0.0), step_real(op["width"]),
                             step_real(0.3)))
             solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                           % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -603,7 +608,7 @@ def serialise_ifc(exchange, generated_at=None):
     for st in exchange["stairs"]:
         pl = f.placement(local(st["level_index"]), st["x"], st["z"], 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(0.0, 0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
+                     % (f.profile_axis(0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
                          step_real(3.0)))
@@ -1479,7 +1484,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
         e = ents[eid]
         t = e["type"]
         if t.startswith("IFCREL") or t in (
-                "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D",
+                "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D", "IFCAXIS2PLACEMENT2D",
                 "IFCLOCALPLACEMENT", "IFCEXTRUDEDAREASOLID", "IFCRECTANGLEPROFILEDEF",
                 "IFCSHAPEREPRESENTATION", "IFCPRODUCTDEFINITIONSHAPE", "IFCPOLYLINE",
                 "IFCSIUNIT", "IFCUNITASSIGNMENT", "IFCCONVERSIONBASEDUNIT",

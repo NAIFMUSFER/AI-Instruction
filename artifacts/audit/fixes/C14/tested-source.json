@@ -1,0 +1,20 @@
+[
+  {
+    "path": "acs_bim.py",
+    "source_sha256": "ea8988e2b1a718d61cbdc19d87649fed83145ec017bf30e89387c53411a5cfbc",
+    "tested_sha256": "ea8988e2b1a718d61cbdc19d87649fed83145ec017bf30e89387c53411a5cfbc",
+    "equal": true
+  },
+  {
+    "path": "tests/remediation/test_ifc_profile_positions.py",
+    "source_sha256": "0352b8082fe95bbc21eaa9c4ccf5b89dc1b2a691b728c10cd679d9b673eee395",
+    "tested_sha256": "0352b8082fe95bbc21eaa9c4ccf5b89dc1b2a691b728c10cd679d9b673eee395",
+    "equal": true
+  },
+  {
+    "path": "tests/phase8/test_bim.py",
+    "source_sha256": "82b97e386bc7711cd8d39121427a120715e7a35ff239f4370cb24a7b5ffda60c",
+    "tested_sha256": "82b97e386bc7711cd8d39121427a120715e7a35ff239f4370cb24a7b5ffda60c",
+    "equal": true
+  }
+]

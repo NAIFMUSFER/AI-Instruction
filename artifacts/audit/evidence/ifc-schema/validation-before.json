@@ -1,0 +1,79 @@
+[
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #33=IfcAxis2Placement3D(#32,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#34=IfcRectangleProfileDef(.AREA.,$,#33,6.,6.)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #41=IfcAxis2Placement3D(#40,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#42=IfcRectangleProfileDef(.AREA.,$,#41,6.,0.14999999999999999)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #41=IfcAxis2Placement3D(#40,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#54=IfcRectangleProfileDef(.AREA.,$,#41,6.,0.14999999999999999)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #41=IfcAxis2Placement3D(#40,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#64=IfcRectangleProfileDef(.AREA.,$,#41,6.,0.14999999999999999)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #41=IfcAxis2Placement3D(#40,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#74=IfcRectangleProfileDef(.AREA.,$,#41,6.,0.14999999999999999)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #33=IfcAxis2Placement3D(#32,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#82=IfcRectangleProfileDef(.AREA.,$,#33,6.,6.)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #17=IfcAxis2Placement3D(#14,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#92=IfcRectangleProfileDef(.AREA.,$,#17,1.,0.29999999999999999)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "Invalid attribute value",
+    "type": "schema",
+    "instance": "#99=IfcDoor('1tRJwxaQL7TjW2ALavA3Tm',#5,'bld_0.flr_0.plan.polygon.door_0',$,$,#91,#95,$,2.1000000000000001,1.,$,$)",
+    "attribute": "IfcDoor.UserDefinedOperationType"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #17=IfcAxis2Placement3D(#14,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#104=IfcRectangleProfileDef(.AREA.,$,#17,1.2,0.29999999999999999)",
+    "attribute": "Position"
+  },
+  {
+    "level": "error",
+    "message": "Invalid attribute value",
+    "type": "schema",
+    "instance": "#111=IfcWindow('0OyULn6aDJNKyN02InFTmg',#5,'bld_0.flr_0.plan.polygon.window_0',$,$,#103,#107,$,1.1000000000000001,1.2,$,$)",
+    "attribute": "IfcWindow.UserDefinedPartitioningType"
+  },
+  {
+    "level": "error",
+    "message": "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #17=IfcAxis2Placement3D(#14,#15,#16)\nNot valid\n",
+    "type": "schema",
+    "instance": "#116=IfcRectangleProfileDef(.AREA.,$,#17,1.,1.)",
+    "attribute": "Position"
+  }
+]

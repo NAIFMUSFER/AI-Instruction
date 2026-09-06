@@ -1,0 +1,66 @@
+
+== TEST A — VILLA ==
+  ✓ all IDs unique
+  ✓ validation clean (no dangling/dupe/self)
+  ✓ majlis ↔ corridor adjacency
+  ✓ majlis door resolves to corridor
+  ✓ a confirmed door edge carries its architectural evidence
+  ✓ no DOOR_CONNECTS is confirmed without a named shared wall
+  ✓ unresolved door edges were not upgraded by the architectural layer
+  ✓ stair connects ground → first
+  ✓ LEVEL_CONNECTS derived
+  ✓ no phantom: no edge to a non-existent space
+  ✓ unresolved doors are marked, not invented
+  ✓ no confidence fabricated
+  ✓ every edge has provenance source
+  ✓ no source=rule (no rule engine)
+
+== TEST B — HOTEL ==
+  ✓ validation clean
+  ✓ guest_1 door → corridor
+  ✓ elevator serves 3 levels
+  ✓ stairs vertical edges present
+  ✓ LEVEL_CONNECTS lists both kinds
+  ✓ two level pairs (0-1, 1-2)
+
+== TEST C — CLINIC (no industrial leakage) ==
+  ✓ validation clean
+  ✓ reception ↔ waiting adjacency
+  ✓ reception door → waiting
+  ✓ NO vertical edges (single level, nothing proven)
+  ✓ no industrial-only types leaked
+
+== TEST D — OFFICE ==
+  ✓ validation clean
+  ✓ office_1 door → corridor
+  ✓ elevator + stairs connect 2 levels
+
+== WAREHOUSE (one program among many) ==
+  ✓ envelope excluded from adjacency
+  ✓ zones adjacency present
+
+== TEST E — MULTI-BUILDING (unique IDs, no collisions) ==
+  ✓ globally unique relationship ids
+  ✓ each building refs only its own ids
+  ✓ BUILDING_ON_SITE for each building
+  ✓ project rel ids unique
+  ✓ positions preserved in meta
+
+== PART 15 — GRAPH VALIDATION catches bad edges ==
+  ✓ dangling space ref caught
+  ✓ self-link caught
+  ✓ duplicate id caught
+  ✓ missing via caught
+  ✓ invalid level ref caught
+  ✓ cross-building without permission caught
+  ✓ source=rule rejected (no rule evidence)
+
+== PART 12/13 — export additive + backward compatible ==
+  ✓ Phase 1 fields still at root
+  ✓ project hierarchy present
+  ✓ relationships exported additively
+  ✓ project.relationships exported
+  ✓ empty graph is valid (never fabricated)
+  ✓ summary helper works
+
+RELATIONSHIPS: 48 passed, 0 failed

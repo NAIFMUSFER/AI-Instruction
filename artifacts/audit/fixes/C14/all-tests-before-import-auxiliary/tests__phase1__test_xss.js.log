@@ -1,0 +1,8 @@
+  ✓ notes: no raw <script>
+  ✓ notes: escaped entity present
+  ✓ tooltip: no raw <script>
+  ✓ tooltip: quotes escaped
+  ✓ report req escapes
+  ✓ Arabic intact
+
+XSS: 6 passed, 0 failed

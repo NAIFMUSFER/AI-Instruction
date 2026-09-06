@@ -1,0 +1,157 @@
+test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) ... 
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=36) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=44) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=56) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=66) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=76) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=84) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=94) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=106) ... FAIL
+  test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=118) ... FAIL
+test_profile_offset_is_kept_and_product_placements_remain_3d (__main__.IfcProfilePositions.test_profile_offset_is_kept_and_product_placements_remain_3d) ... FAIL
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=36)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=44)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=56)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=66)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=76)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=84)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=94)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=106)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) (profile=118)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 37, in test_all_nine_rectangular_profiles_have_two_dimensional_positions
+    pos=B._deref(step,B._arg(p,2));self.assertEqual(pos['type'],'IFCAXIS2PLACEMENT2D')
+                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'IFCAXIS2PLACEMENT3D' != 'IFCAXIS2PLACEMENT2D'
+- IFCAXIS2PLACEMENT3D
+?                  ^
++ IFCAXIS2PLACEMENT2D
+?                  ^
+
+
+======================================================================
+FAIL: test_profile_offset_is_kept_and_product_placements_remain_3d (__main__.IfcProfilePositions.test_profile_offset_is_kept_and_product_placements_remain_3d)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_profile_positions.py", line 47, in test_profile_offset_is_kept_and_product_placements_remain_3d
+    self.assertEqual(B._arg(pt,0),[3,3])
+AssertionError: Lists differ: [3.0, 3.0, 0.0] != [3, 3]
+
+First list contains 1 additional elements.
+First extra element 2:
+0.0
+
+- [3.0, 3.0, 0.0]
++ [3, 3]
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.006s
+
+FAILED (failures=10)

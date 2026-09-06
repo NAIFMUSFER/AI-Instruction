@@ -1,0 +1,164 @@
+ACS_TRUSTED_PROXIES='abc' is not an integer; using default 1
+ACS_TRUSTED_PROXIES='NaN' is not an integer; using default 1
+ACS_TRUSTED_PROXIES='1.5' is not an integer; using default 1
+X='zz' is not an integer; using default 5
+rate limit backend failure (closed policy): Error 111 connecting to cache.internal:6380. Connection refused.
+rate limit backend failure (open policy): Error 111 connecting to cache.internal:6380. Connection refused.
+ACS_RATE_LIMIT_BACKEND='memcached' is not recognised; treating it as unset (memory)
+
+== A · THE DEFECT REPRODUCED: A PROCESS-LOCAL QUOTA IS DOUBLED ==
+  ✓ two PROCESS-LOCAL limiters let 16 requests through a limit of 8 — this is exactly the production defect
+  ✓ the two limiters are genuinely independent objects over one store
+  ✓ (a) two API instances over ONE shared store enforce ONE quota of 8
+  ✓ the refusal carries the 429 code, the scope and a Retry-After
+  ✓ the refusal message is Arabic and user-facing
+  ✓ the decision carries the effective limits for the caller to echo
+  ✓ every counter Redis holds carries an expiry — no immortal keys
+
+== B · RESTART RETENTION: A NEW PROCESS DOES NOT REFUND THE QUOTA ==
+  ✓ limiter A spends the whole quota of 3
+  ✓ (b) a brand-new RateLimiter over the same store still refuses — the quota survived the restart
+  ✓ the surviving Retry-After is still bounded by the hour window
+  ✓ by contrast a restarted MEMORY limiter refunds the quota in full — why a restart used to reset every visitor
+
+== C · IDENTITIES ARE ISOLATED ==
+  ✓ (c) memory: each identity gets its own 2, and only its own 3rd is refused
+  ✓ memory: exhausting one identity does not touch another
+  ✓ memory: the gen and edit ledgers are separate scopes
+  ✓ (c) redis: each identity gets its own 2, and only its own 3rd is refused
+  ✓ redis: exhausting one identity does not touch another
+  ✓ redis: the gen and edit ledgers are separate scopes
+
+== D · THE GLOBAL DAILY CAP, CONSUMED LAST ==
+  ✓ (d) the global daily cap refuses the 4th request server-wide
+  ✓ the global refusal names the global scope and the Arabic message
+  ✓ the global Retry-After is bounded by the day window
+  ✓ one accepted request consumed exactly one unit of the global cap
+  ✓ (d) a per-identity refusal does NOT consume the global cap — one abusive visitor cannot switch the service off for everyone
+  ✓ twenty further refusals still leave the global cap at 1
+  ✓ another visitor passing its own checks does consume the global cap
+
+== E · CONCURRENCY: N THREADS AT A LIMIT OF M ALLOW EXACTLY M ==
+  ✓ (e) memory backend: 48 threads, limit 7 ⇒ exactly 7 allowed, no overshoot
+  ✓ (e) FakeRedis backend: 48 threads, limit 7 ⇒ exactly 7 allowed
+  ✓ the atomic primitive never let the counter pass the limit
+  ✓ the decision really went through the single-round-trip EVALSHA path
+  ✓ (e) the global cap also holds exactly under 48 concurrent DISTINCT identities
+
+== F · RETRY-AFTER IS TRUE, BOUNDED, AND SHRINKS ==
+  ✓ (f) memory: after refusal Retry-After is > 0 and ≤ the window
+  ✓ (f) memory: it shrinks monotonically as the clock advances
+  ✓ memory: it never advertises a wait longer than the window
+  ✓ memory: a flood of refusals does not extend the wait (no rolling ban)
+  ✓ (f) redis: after refusal Retry-After is > 0 and ≤ the window
+  ✓ (f) redis: it shrinks monotonically as the clock advances
+  ✓ redis: it never advertises a wait longer than the window
+  ✓ redis: a flood of refusals does not extend the wait (no rolling ban)
+
+== G · COUNTERS EXPIRE — THE QUOTA COMES BACK ==
+  ✓ (g) memory: the window is spent after 2
+  ✓ memory: still refused 10 s before the window ends
+  ✓ (g) memory: once the window elapses the FULL quota is available again
+  ✓ (g) redis: the window is spent after 2
+  ✓ redis: still refused 10 s before the window ends
+  ✓ redis: the counter key genuinely EXPIRED out of the store, it was not merely reset
+  ✓ (g) redis: once the window elapses the FULL quota is available again
+  ✓ the hour window resetting does NOT reset the day window
+
+== H · MALFORMED PROXY HEADERS CANNOT MINT A FRESH BUCKET ==
+  ✓ the trusted hop is read RIGHT-to-left, not left-to-right
+  ✓ (h) all 18 malformed / spoofed header shapes resolve to the PEER address
+  ✓ (h) 500 rotating spoofed XFF prefixes collapse to ONE identity, not 500 buckets
+  ✓ (h) 500 rotating spoofed X-Real-IP values collapse to ONE identity
+  ✓ (h) with NO trusted proxy declared, 500 rotating XFF/X-Real-IP values collapse to ONE identity as well
+  ✓ (h) end to end: 500 header-spoofed requests get exactly 4 through a limit of 4 — the old x-real-ip path would have granted all 500
+  ✓ ACS_TRUSTED_PROXIES=2 reads the second hop from the right
+  ✓ hops=0 means no proxy is trusted: XFF is ignored entirely
+  ✓ more hops declared than present clamps to the leftmost, never past the end of the list
+  ✓ X-Real-IP is honoured ONLY behind the explicit opt-in flag
+  ✓ even opted in, a malformed X-Real-IP falls back to the peer
+  ✓ bare int("") really does raise — this IS the .env.example:17 boot crash
+  ✓ (h) trusted_hops() tolerates "", whitespace, garbage, negatives and absence — no ValueError at import, the server boots
+  ✓ and the empty string specifically yields the documented default of 1
+  ✓ every env int reader is equally tolerant
+  ✓ limits_from_env survives an entirely empty .env
+  ✓ the shipped defaults still are 8 / 25 / 30 / 400 — no limit was weakened by this remediation
+  ✓ IPv6 and bracketed / ported forms normalise to ONE canonical identity
+  ✓ a missing or garbage peer never crashes and never mints a bucket per request
+  ✓ header names are matched case-insensitively
+  ✓ bytes headers do not crash the pure function
+  ✓ client_identity imports no web framework — it is a pure function
+
+== I · MEMORY KEY CARDINALITY IS BOUNDED, EVICTION FAILS CLOSED ==
+  ✓ (i) 5000 rotating identities leave the live store at or under the cap of 64
+  ✓ (i) the tombstone table is bounded by the same cap
+  ✓ (i) the whole structure is bounded by 2 × ACS_RL_MAX_KEYS, as documented
+  ✓ live keys really were evicted — the attack was felt, not absorbed
+  ✓ the documented (and bounded) cost is stated honestly: beyond 2 × MAX_KEYS rotations the OLDEST tombstones are dropped
+  ✓ the old rule by contrast only ever freed EMPTY deques — a live key was never reclaimed, which is why memory grew for a whole window
+  ✓ the oldest-touched identity is tombstoned, not forgotten
+  ✓ (i) an EVICTED live key FAILS CLOSED on its next request — it is refused, NOT handed a fresh quota
+  ✓ and its Retry-After is the remainder of its ORIGINAL window
+  ✓ repeating the request does not wear the tombstone down
+  ✓ (i) once its ORIGINAL window truly elapses the identity is served again — this is fail-closed, not a permanent ban
+  ✓ a resident key stays enforced while the store churns around it — rotation cannot wash a real visitor out of its own limit
+  ✓ (i) the policy layer names an eviction refusal SCOPE_EVICTED so a production log does not read it as an over-quota visitor
+  ✓ its Arabic message blames server pressure, not the visitor
+  ✓ ACS_RL_MAX_KEYS defaults to 20000 and tolerates an empty value
+  ✓ a consume=False probe never creates a key — a health probe cannot inflate the cardinality it is measuring
+
+== J · FAIL POLICY IS EXPLICIT AND WORKS BOTH WAYS ==
+  ✓ (j) fail_policy=closed REFUSES when the backend raises
+  ✓ the refusal is marked degraded and speaks Arabic to the visitor
+  ✓ (j) fail_policy=open ALLOWS when the backend raises
+  ✓ (j) health_status()["healthy"] is False under BOTH policies once the backend has failed
+  ✓ health_status reports the policy actually in force
+  ✓ health_status raises the BACKEND_UNHEALTHY flag and counts the errors
+  ✓ the default policy is closed — the credit is protected unless someone opts out deliberately
+  ✓ a healthy limiter reports healthy=True — the flag is not stuck low
+
+== K · THE FACTORY NEVER FALLS BACK TO MEMORY SILENTLY ==
+  ✓ (k) ACS_RATE_LIMIT_BACKEND=redis with no URL and no client RAISES
+  ✓ (k) redis requested but the library absent RAISES rather than degrading to a process-local limiter
+  ✓ the error names the cause and forbids the silent fallback explicitly
+  ✓ ACS_ENV=production does not turn the hard rule into a soft one
+  ✓ an explicitly injected client IS accepted, with no redis import
+  ✓ acs_rate_limit does not import redis at module import time
+  ✓ the default (unset) backend is memory
+  ✓ an unrecognised value is treated as unset, not as redisrate limit: redis client exposes no EVAL; falling back to the non-atomic GET/INCR sequence — a small overshoot is possible under concurrency
+rate limit backend failure (closed policy): redis hit failed: Error 111 connecting to cache.internal:6380
+rate limit backend failure (closed policy): redis returned an unexpected shape: 'not a list at all'
+
+  ✓ (k) an unset backend in production is flagged: distributed=false plus an explicit warning
+  ✓ the same deployment in development is NOT flagged for production
+  ✓ a redis-backed limiter reports distributed=true and healthy=true
+
+== L · HEALTH OUTPUT LEAKS NO CREDENTIAL ==
+  ✓ (l) the health payload contains no password, host, port or full URL
+  ✓ (l) it surfaces only the scheme and a boolean about the password
+  ✓ a URL without a password reports the boolean as False
+  ✓ the memory backend surfaces no redis fields at all
+  ✓ the payload carries every key the contract promises
+  ✓ (l) a backend error is surfaced as a CLASS NAME, never as its text — redis-py error strings carry the host and port verbatim
+  ✓ the payload is JSON-serialisable as-is (it goes straight into /health)
+
+== M · THE REDIS ADAPTER IS NOT HAND-WAVED ==
+  ✓ the Lua script decides, increments and expires in ONE round trip
+  ✓ PEXPIRE is armed only on the FIRST increment, so a flood cannot extend the window
+  ✓ the non-scripting fallback sequence is declared, not hand-waved
+  ✓ a client exposing only EVAL (no SCRIPT LOAD) still enforces the limit
+  ✓ the documented GET/INCR/PEXPIRE/PTTL fallback enforces the limit too
+  ✓ the fallback still leaves no key without an expiry
+  ✓ the fallback expires its keys too
+  ✓ a client that raises becomes a policy decision, never a 500
+  ✓ and the raw client error text never reaches the visitor message
+  ✓ RedisBackend refuses to be built without a client
+  ✓ a client returning a nonsense shape is a policy decision too, not a crash
+
+──────────────────────────────────────────────
+TEST SUMMARY
+  passed: 120
+  failed: 0
+  total:  120
+RATE LIMIT REGRESSION: 120 passed, 0 failed
+NOT VERIFIED HERE: integration against a REAL Redis server — there is no network in this environment.

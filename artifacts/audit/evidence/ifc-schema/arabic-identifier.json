@@ -1,0 +1,54 @@
+{
+  "valid": false,
+  "issues": [
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    },
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1.wall_N",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    },
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1.wall_S",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    },
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1.wall_W",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    },
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1.wall_E",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    },
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1.door_0",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    },
+    {
+      "code": "BIM_INVALID_IDENTIFIER",
+      "severity": "ERROR",
+      "entity_id": "bld_0.flr_0.g.غرفة_1.window_0",
+      "message": "canonical identifier is not a plausible identifier",
+      "blocking": true
+    }
+  ]
+}

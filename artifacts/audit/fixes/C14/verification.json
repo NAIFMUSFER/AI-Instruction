@@ -1,0 +1,39 @@
+{
+  "issue": "C14",
+  "source_base": "c64bc9a69f3b7211c04f89b691951f0d1928cc30",
+  "red": {
+    "tests": 2,
+    "failures": 10
+  },
+  "additional_import_regression": {
+    "before_spurious_products": 3,
+    "after": 0
+  },
+  "green": {
+    "tests": 3,
+    "failures": 0
+  },
+  "legacy_gate_checks": 526,
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 117,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 132
+  },
+  "http_generation": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "unchanged_from_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "independent_schema": {
+    "before_errors": 11,
+    "after_errors": 2,
+    "remaining_issue": "C15"
+  },
+  "browser_pixels": "not verified"
+}

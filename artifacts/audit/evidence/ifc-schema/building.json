@@ -1,0 +1,58 @@
+{
+  "site": {
+    "w": 20,
+    "d": 25
+  },
+  "wall_h": 3,
+  "wall_t": 0.15,
+  "floor_height": 3.2,
+  "levels": [
+    {
+      "index": 0,
+      "template": "plan",
+      "elevation": 7
+    }
+  ],
+  "floors": {
+    "plan": {
+      "rooms": [
+        {
+          "id": "polygon",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "walls": "full",
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1
+            }
+          ],
+          "windows": [
+            {
+              "edge": "E",
+              "offset": 3,
+              "width": 1.2,
+              "height": 1.1,
+              "sill": 1
+            }
+          ],
+          "objects": [
+            {
+              "kind": "stairs",
+              "x": 1,
+              "z": 4,
+              "w": 1,
+              "d": 1
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,13 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the python implementation ran
+  ✓ the browser implementation ran
+
+== THE TWO RESULTS AGREE ==
+  ✓ the comparator proves it is not blind to a prototype key
+  ✓ the canonical comparison reports no mismatch
+  ✓ every group agrees between the two implementations
+  ✓ the comparison is not vacuous — twenty materials compared
+  ✓ quality, camera and config matrices were really exercised
+
+PBR PARITY SUITE: 7 passed, 0 failed

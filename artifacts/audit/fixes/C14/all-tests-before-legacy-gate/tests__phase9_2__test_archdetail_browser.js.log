@@ -1,0 +1,24 @@
+
+== §1 — THE SPECIFICATION REACHED THE BROWSER UNCHANGED ==
+  ✓ the browser carries the canonical archdetail specification
+  ✓ the mirrored specification has not drifted from the file
+  ✓ the presentation-only rule is present in the browser
+  ✓ the archdetail API is exposed on the window
+
+== §42/§47 — THE SHIPPED APPLICATION CODE ITSELF ==
+  ✓ the archdetail bridge is present exactly once
+  ✓ the archdetail bridge lives in the module main.js imports
+  ✓ the PBR bridge of 9.1 is still present exactly once
+  ✓ the render loop dispatcher of 9.1 is untouched
+  ✓ the architectural layer was extracted for inspection
+  ✓ no network scheme appears anywhere in the architectural layer
+  ✓ no runtime CDN host, remote texture or url-gltf path exists
+  ✓ the bridge refuses a configuration that could write to the model
+  ✓ every bridge group is an AD_* presentation group
+  ✓ added objects carry visual_only and source ids in the source
+  ✓ the texture policy stays local-only with an empty default set
+
+(DOM checks require a real browser — run with run_browser.js)
+
+──────────────────────────────────────────────
+ARCH DETAIL BROWSER: 15 passed, 0 failed

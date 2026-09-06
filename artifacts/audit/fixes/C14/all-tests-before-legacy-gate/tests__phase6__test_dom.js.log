@@ -1,0 +1,5 @@
+  · DOM checks require a page: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+  ✓ the DOM suite declares its requirement instead of faking a pass
+
+──────────────────────────────────────────────
+WORKSPACE DOM: 1 passed, 0 failed

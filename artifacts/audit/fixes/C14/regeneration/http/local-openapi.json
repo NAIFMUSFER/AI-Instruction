@@ -1,0 +1,551 @@
+{
+  "url": "http://127.0.0.1:8001/openapi.json",
+  "method": "GET",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "req_5431fd7eb9fb40f0"
+  },
+  "body": {
+    "openapi": "3.1.0",
+    "info": {
+      "title": "ACS Understanding API",
+      "version": "1.3"
+    },
+    "paths": {
+      "/": {
+        "get": {
+          "summary": "Root",
+          "description": "صفحة حالة بسيطة — حتى لا يظهر Not Found لمن يفتح الجذر.",
+          "operationId": "root__get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "/health": {
+        "get": {
+          "summary": "Health",
+          "description": "حياة العملية + كفاية الضبط. `key` و`model` مُبقيان لتوافق واجهات قديمة.\nلا يظهر هنا أي سرّ: `api_key_configured` منطقيّ لا قيمة.",
+          "operationId": "health_health_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "/version": {
+        "get": {
+          "summary": "Version",
+          "description": "أصل البناء — SHA وطابع زمني ونسخ المخطّطات. لا سرّ ولا مسار ملفّ.\n\nبلا هذا لا يستطيع تحقّقٌ إنتاجيّ أن يقول أيّ نسخة قاسها.",
+          "operationId": "version_version_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "/ready": {
+        "get": {
+          "summary": "Ready",
+          "description": "جاهزية التوليد فعلاً: مفتاح مضبوط + نموذج ضمن المسموح + المكتبة مُثبَّتة.\nالحياة (/health) شيء والجاهزية شيء آخر — الخلط بينهما يخفي خادماً حيّاً عاجزاً.",
+          "operationId": "ready_ready_get",
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/understand": {
+        "post": {
+          "summary": "Understand",
+          "operationId": "understand_v1_understand_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnderstandReq"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/edit": {
+        "post": {
+          "summary": "Edit",
+          "description": "ينفّذ ملاحظات المهندس على النموذج ويعيد الفرق قبل أي استبدال.\n\nF-01: هذا المسار يستبدل النموذج كاملاً بمخرج نموذج لغوي. صار الرد يحمل\nengineering_diff و requires_confirmation، فلا يستبدل العميل نموذجه بلا عرض\nما تغيّر. الخادم لا يودع شيئاً — لا يملك مشروعاً أصلاً.",
+          "operationId": "edit_v1_edit_post",
+          "requestBody": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EditReq"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/understand/image": {
+        "post": {
+          "summary": "Understand Image",
+          "description": "يقرأ مخططاً معمارياً مرسوماً (صورة/صور) بالرؤية ويبني النموذج.",
+          "operationId": "understand_image_v1_understand_image_post",
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "$ref": "#/components/schemas/Body_understand_image_v1_understand_image_post"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/v1/understand/pdf": {
+        "post": {
+          "summary": "Understand Pdf",
+          "operationId": "understand_pdf_v1_understand_pdf_post",
+          "requestBody": {
+            "content": {
+              "multipart/form-data": {
+                "schema": {
+                  "$ref": "#/components/schemas/Body_understand_pdf_v1_understand_pdf_post"
+                }
+              }
+            },
+            "required": true
+          },
+          "responses": {
+            "200": {
+              "description": "Successful Response",
+              "content": {
+                "application/json": {
+                  "schema": {}
+                }
+              }
+            },
+            "422": {
+              "description": "Validation Error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "$ref": "#/components/schemas/HTTPValidationError"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "schemas": {
+        "Body_understand_image_v1_understand_image_post": {
+          "properties": {
+            "files": {
+              "items": {
+                "type": "string",
+                "contentMediaType": "application/octet-stream"
+              },
+              "type": "array",
+              "title": "Files"
+            },
+            "site_w": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100000.0,
+                  "exclusiveMinimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site W"
+            },
+            "site_d": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100000.0,
+                  "exclusiveMinimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site D"
+            },
+            "floors": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 400.0,
+                  "minimum": 1.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Floors"
+            },
+            "notes": {
+              "type": "string",
+              "title": "Notes",
+              "default": ""
+            },
+            "btype": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Btype"
+            },
+            "strict": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strict"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          "type": "object",
+          "required": [
+            "files"
+          ],
+          "title": "Body_understand_image_v1_understand_image_post"
+        },
+        "Body_understand_pdf_v1_understand_pdf_post": {
+          "properties": {
+            "file": {
+              "type": "string",
+              "contentMediaType": "application/octet-stream",
+              "title": "File"
+            },
+            "btype": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Btype"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          "type": "object",
+          "required": [
+            "file"
+          ],
+          "title": "Body_understand_pdf_v1_understand_pdf_post"
+        },
+        "EditReq": {
+          "properties": {
+            "building": {
+              "additionalProperties": true,
+              "type": "object",
+              "title": "Building"
+            },
+            "notes": {
+              "items": {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              "type": "array",
+              "title": "Notes"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            }
+          },
+          "type": "object",
+          "required": [
+            "building",
+            "notes"
+          ],
+          "title": "EditReq"
+        },
+        "HTTPValidationError": {
+          "properties": {
+            "detail": {
+              "items": {
+                "$ref": "#/components/schemas/ValidationError"
+              },
+              "type": "array",
+              "title": "Detail"
+            }
+          },
+          "type": "object",
+          "title": "HTTPValidationError"
+        },
+        "UnderstandReq": {
+          "properties": {
+            "text": {
+              "type": "string",
+              "title": "Text"
+            },
+            "model": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Model"
+            },
+            "btype": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Btype"
+            },
+            "strict": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Strict"
+            },
+            "site_w": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100000.0,
+                  "exclusiveMinimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site W"
+            },
+            "site_d": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 100000.0,
+                  "exclusiveMinimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Site D"
+            },
+            "floors": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 400.0,
+                  "minimum": 1.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Floors"
+            },
+            "deep": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Deep"
+            }
+          },
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "title": "UnderstandReq"
+        },
+        "ValidationError": {
+          "properties": {
+            "loc": {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "integer"
+                  }
+                ]
+              },
+              "type": "array",
+              "title": "Location"
+            },
+            "msg": {
+              "type": "string",
+              "title": "Message"
+            },
+            "type": {
+              "type": "string",
+              "title": "Error Type"
+            },
+            "input": {
+              "title": "Input"
+            },
+            "ctx": {
+              "type": "object",
+              "title": "Context"
+            }
+          },
+          "type": "object",
+          "required": [
+            "loc",
+            "msg",
+            "type"
+          ],
+          "title": "ValidationError"
+        }
+      }
+    }
+  },
+  "seconds": 0.013
+}

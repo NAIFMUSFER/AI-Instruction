@@ -1,0 +1,17 @@
+
+== §1 — SPEC INTEGRITY AND NO-DRIFT ==
+  ✓ browser spec is byte-identical to acs_visual.json
+  ✓ schema and compiler version are pinned
+  ✓ all nine visual modes are declared
+  ✓ every material is classified VISUAL_MATERIAL and nothing else
+  ✓ no material in the library carries an engineering property
+  ✓ material provenance separates SYSTEM_DEFAULT from USER
+  ✓ the spec forbids treating a render as measured or as-built
+  ✓ the spec names no code, standard or authority
+  ✓ the AI may not change any layout feature
+
+== §2 — NO ENGINEERING GEOMETRY MUTATION ==
+  ✓ compiling a scene mutates no source model
+  ✓ every visual mode leaves the model untouched
+  ✓ every discipline model is byte-identical after visualisation
+  ✓ every theme leaves the compiled architecture identical

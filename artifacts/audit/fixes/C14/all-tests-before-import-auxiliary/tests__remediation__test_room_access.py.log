@@ -1,0 +1,27 @@
+test_api_does_not_label_an_unevaluated_access_check_complete (__main__.RoomAccess.test_api_does_not_label_an_unevaluated_access_check_complete) ... /workspace/scratch/3196fa9f65d9/audit-cad-verify/acs_understand_api.py:1024: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  @app.on_event("startup")
+/workspace/scratch/3196fa9f65d9/audit-fixed-venv/lib/python3.12/site-packages/fastapi/applications.py:4681: DeprecationWarning: 
+        on_event is deprecated, use lifespan event handlers instead.
+
+        Read more about it in the
+        [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+        
+  return self.router.on_event(event_type)  # ty: ignore[deprecated]
+ok
+test_connected_pair_without_access_to_any_entry_is_unreachable (__main__.RoomAccess.test_connected_pair_without_access_to_any_entry_is_unreachable) ... ok
+test_enclosed_room_without_door_is_not_hidden_by_strict (__main__.RoomAccess.test_enclosed_room_without_door_is_not_hidden_by_strict) ... ok
+test_explicit_open_areas_do_not_require_doors (__main__.RoomAccess.test_explicit_open_areas_do_not_require_doors) ... ok
+test_neighbor_can_declare_the_shared_door (__main__.RoomAccess.test_neighbor_can_declare_the_shared_door) ... ok
+test_nested_envelope_and_docks_are_not_falsely_declared_isolated (__main__.RoomAccess.test_nested_envelope_and_docks_are_not_falsely_declared_isolated) ... ok
+test_unsupported_shape_and_compiler_failure_are_explicitly_unevaluated (__main__.RoomAccess.test_unsupported_shape_and_compiler_failure_are_explicitly_unevaluated) ... ok
+test_window_is_not_an_access_edge (__main__.RoomAccess.test_window_is_not_an_access_edge) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.222s
+
+OK

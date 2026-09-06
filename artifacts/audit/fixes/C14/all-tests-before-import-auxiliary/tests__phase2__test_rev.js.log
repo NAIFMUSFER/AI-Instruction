@@ -1,0 +1,139 @@
+
+== §42 — NO REGULATORY CONTENT ADDED ==
+  ✓ regulatory rule count still 0
+  ✓ real occupancy classification count still 0
+  ✓ the revision spec encodes no code content
+  ✓ browser spec is byte-identical to acs_revision.json
+  ✓ hash algorithm is sha256, not something invented
+  ✓ nine integrity statuses declared
+
+== TEST A (§26) — SAME MODEL, SAME HASH ==
+  ✓ re-hashing an unchanged model gives the identical hash
+  ✓ hash is a 64-hex sha256 digest
+  ✓ hashing never mutates the model
+  ✓ revision_id derives from the hash, not from a clock
+  ✓ revision declares its canonicalization version
+  ✓ the snapshot records a PASS result
+  ✓ integrity is CURRENT with an unchanged model
+  ✓ CURRENT reports no reasons
+
+== TEST B (§27) — KEY ORDER ==
+  ✓ reversing every object key order gives the same hash
+  ✓ whitespace/formatting cannot matter (hash is over canonical JSON)
+
+== TEST C (§28) — ARRAY ORDER, SENSITIVE AND NOT ==
+  ✓ levels are documented order-INSENSITIVE and reordering keeps the hash
+  ✓ the reason is recorded in the spec
+  ✓ rooms are documented order-SENSITIVE and reordering changes the hash
+  ✓ doors are order-SENSITIVE (door_<i> ids are referenced elsewhere)
+  ✓ every order-sensitive path states its reason
+  ✓ rect order matters (it is [x,z,w,d])
+  ✓ rulepack pins are order-insensitive
+
+== TEST D (§29) — DOOR MOVE ==
+  ✓ moving a door by 0.5 m changes the hash
+  ✓ the old snapshot becomes STALE_MODEL_CHANGED
+  ✓ the reason names the model hash anchor
+  ✓ the stored result value is untouched — no silent recompute
+  ✓ marking integrity does not alter the result
+  ✓ the export refuses to present it as current
+  ✓ a PASS with stale integrity is never a current PASS
+  ✓ resizing a room changes the hash
+  ✓ removing a stair changes the hash
+  ✓ adding a level changes the hash
+  ✓ flagging a door as an exit changes the hash
+  ✓ adding an explicit clear width changes the hash
+  ✓ changing input provenance changes the hash
+
+== TEST E (§30) — NON-ENGINEERING STATE ==
+  ✓ camera, view, selection, debug, fps, session, toast, cache, theme and thumbnail are all excluded
+  ✓ the excluded set is declared, not implicit
+  ✓ a UI-only change leaves the result CURRENT
+
+== TEST F (§31) — OCCUPANCY CHANGE ==
+  ✓ the occupancy-dependent result evaluates PASS
+  ✓ the snapshot records an occupancy hash and its subject refs
+  ✓ unchanged occupancy keeps it CURRENT
+  ✓ changing the verified classification yields STALE_OCCUPANCY_CHANGED
+  ✓ it is distinguished from a model change
+  ✓ the occupancy hash covers only verified classifications
+
+== TEST G (§32) — RULE REVISION ==
+  ✓ a changed rule meaning yields STALE_RULE_CHANGED
+  ✓ it is not reported as a model change
+  ✓ the reason names the rule hash
+  ✓ a wording-only rule edit does not make it stale
+
+== TEST H (§33) — RULEPACK VERSION ==
+  ✓ a new rulepack version yields STALE_RULEPACK_CHANGED
+  ✓ the reason states both the stored and the current pack
+  ✓ the result remains attributed to the pack that produced it
+
+== TEST I (§34) — SOURCE DOCUMENT HASH ==
+  ✓ the snapshot pins the source document hash
+  ✓ unchanged source bytes keep it CURRENT
+  ✓ changed source bytes yield STALE_SOURCE_CHANGED
+  ✓ the reason names the document
+  ✓ ingestion semantics are untouched — the document is still not CONTENT_VERIFIED
+
+== TEST J (§35) — MULTI-BUILDING SCOPE ==
+  ✓ a project hash and per-building hashes are both produced
+  ✓ changing building B leaves building A hash identical
+  ✓ changing building B changes building B hash
+  ✓ the project-scoped hash does change
+  ✓ a building-A scoped result stays CURRENT after building B changes
+  ✓ a project-scoped result becomes STALE_MODEL_CHANGED
+  ✓ reordering buildings does not change the project hash
+
+== §8/§10/§25 — STATUSES, NO SILENT RE-EVALUATION, HISTORY ==
+  ✓ integrity status is separate from the rule result
+  ✓ with nothing supplied to check against ⇒ CURRENT_UNDER_SAME_HASH
+  ✓ it names which anchors went unchecked
+  ✓ an incompatible canonicalization version ⇒ UNVERIFIABLE
+  ✓ hashes from incompatible canonicalization are never compared
+  ✓ two snapshots of different model states coexist
+  ✓ staleResults reports only the outdated one with its reason
+  ✓ nothing was recomputed — the stale entry keeps its original result
+  ✓ status precedence is declared, not ad hoc
+
+== §20 — FLOAT HANDLING ==
+  ✓ full precision is preserved — 24.90548817090728 ≠ 24.905
+  ✓ integral floats normalise so 6.0 and 6 hash alike
+  ✓ the numeric policy is documented
+
+== §21 — ID STABILITY ==
+  ✓ a model hashes identically before and after ensureElementIds
+  ✓ derived ids are materialised on the copy only
+  ✓ the id policy is documented
+  ✓ renaming a room id changes the hash (it defines references)
+
+== §22/§23 — RELATIONSHIPS AND DERIVED DATA ==
+  ✓ relationships are declared derived and excluded
+  ✓ navigation, egress and distance are all declared derived
+  ✓ a geometry edit that changes the relationship graph also changes the hash
+  ✓ attaching a derived relationship list would change the hash — so it is never persisted here
+
+== §18 — DERIVED ANALYSIS SNAPSHOTS ==
+  ✓ a distance analysis can be pinned to the model that produced it
+  ✓ after a door move the distance snapshot is STALE_MODEL_CHANGED
+  ✓ transient queries are not snapshotted automatically — snapshotting is an explicit call
+
+== §37 — REVISION DIFF ==
+  ✓ the diff reports the models are different
+  ✓ it names the changed path factually
+  ✓ it carries both hashes
+  ✓ it draws no engineering conclusion
+  ✓ an identical pair diffs to nothing
+  ✓ an added field is reported as added
+
+== §41 — BACKWARD COMPATIBILITY ==
+  ✓ a Phase 1 model with no revision metadata hashes fine
+  ✓ revision metadata is derived on demand, not stored
+  ✓ the source model is not rewritten
+
+== §38 — SECURITY ==
+  ✓ no cryptography is invented — sha256 only
+  ✓ a stored hash is never trusted without recomputation
+  ✓ no eval/Function in the revision layer
+
+REVISION: 99 passed, 0 failed

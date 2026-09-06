@@ -1,0 +1,142 @@
+
+── أ · THE TWO-FILE DISCIPLINE EXISTS ──
+  ✓ requirements.in exists
+  ✓ requirements.lock exists
+  ✓ requirements.txt exists
+  ✓ requirements.in parses into at least one direct requirement
+  ✓ every parsed line of requirements.in has a package name
+  ✓ requirements.lock parses (7 active pin(s), 20 UNRESOLVED-OFFLINE)
+  ✓ every active line of requirements.lock is an exact == pin
+  ✓ requirements.in declares no version itself (the lock owns versions)
+
+── ب · THE LOCK HEADER IS HONEST ABOUT BEING OFFLINE ──
+  ✓ the header states the lock was generated OFFLINE
+  ✓ the header states that hashes are absent
+  ✓ the header carries the exact regeneration command
+  ✓ no sha256 hash is fabricated anywhere in the lock
+  ✓ every active pin carries a `# via` provenance comment
+
+── ج · EVERY DIRECT REQUIREMENT IS PINNED OR EXPLICITLY UNRESOLVED ──
+  ✓ fastapi is pinned == in requirements.lock (0.141.1)
+  ✓ fastapi keeps its extras in the lock (none)
+  ✓ starlette is pinned == in requirements.lock (1.6.0)
+  ✓ starlette keeps its extras in the lock (none)
+  ✓ uvicorn is pinned == in requirements.lock (0.27)
+  ✓ uvicorn keeps its extras in the lock ([standard])
+  ✓ anthropic is pinned == in requirements.lock (0.40)
+  ✓ anthropic keeps its extras in the lock (none)
+  ✓ pypdf is pinned == in requirements.lock (4.0)
+  ✓ pypdf keeps its extras in the lock (none)
+  ✓ python-multipart is pinned == in requirements.lock (0.0.32)
+  ✓ python-multipart keeps its extras in the lock (none)
+  ✓ Pillow is pinned == in requirements.lock (12.3.0)
+  ✓ Pillow keeps its extras in the lock (none)
+  ✓ no name is both pinned and marked UNRESOLVED-OFFLINE
+  ✓ every UNRESOLVED-OFFLINE entry is inert (commented out, pip never reads it)
+
+── د · requirements.txt CARRIES NO OPEN-ENDED SPECIFIER ──
+  ✓ requirements.txt is either `-r requirements.lock` or only == pins
+  ✓ no open-ended specifier in 'anthropic==0.40'
+  ✓ 'anthropic==0.40' is not a bare package name
+  ✓ no open-ended specifier in 'fastapi==0.141.1'
+  ✓ 'fastapi==0.141.1' is not a bare package name
+  ✓ no open-ended specifier in 'starlette==1.6.0'
+  ✓ 'starlette==1.6.0' is not a bare package name
+  ✓ no open-ended specifier in 'pypdf==4.0'
+  ✓ 'pypdf==4.0' is not a bare package name
+  ✓ no open-ended specifier in 'python-multipart==0.0.32'
+  ✓ 'python-multipart==0.0.32' is not a bare package name
+  ✓ no open-ended specifier in 'uvicorn[standard]==0.27'
+  ✓ 'uvicorn[standard]==0.27' is not a bare package name
+  ✓ no open-ended specifier in 'Pillow==12.3.0'
+  ✓ 'Pillow==12.3.0' is not a bare package name
+
+── هـ · THE DOCKER INSTALL PATH STAYS VALID ──
+  ✓ the Dockerfile still copies requirements.txt
+  ✓ the Dockerfile still installs from requirements.txt
+  ✓ requirements.txt needs no file the image does not copy
+
+── و · requirements.txt AND requirements.lock CANNOT DRIFT ──
+  ✓ anthropic installed by requirements.txt is present in the lock
+  ✓ anthropic: requirements.txt 0.40 == requirements.lock 0.40
+  ✓ anthropic: same extras in both files (none)
+  ✓ fastapi installed by requirements.txt is present in the lock
+  ✓ fastapi: requirements.txt 0.141.1 == requirements.lock 0.141.1
+  ✓ fastapi: same extras in both files (none)
+  ✓ starlette installed by requirements.txt is present in the lock
+  ✓ starlette: requirements.txt 1.6.0 == requirements.lock 1.6.0
+  ✓ starlette: same extras in both files (none)
+  ✓ pypdf installed by requirements.txt is present in the lock
+  ✓ pypdf: requirements.txt 4.0 == requirements.lock 4.0
+  ✓ pypdf: same extras in both files (none)
+  ✓ python-multipart installed by requirements.txt is present in the lock
+  ✓ python-multipart: requirements.txt 0.0.32 == requirements.lock 0.0.32
+  ✓ python-multipart: same extras in both files (none)
+  ✓ uvicorn installed by requirements.txt is present in the lock
+  ✓ uvicorn: requirements.txt 0.27 == requirements.lock 0.27
+  ✓ uvicorn: same extras in both files ([standard])
+  ✓ Pillow installed by requirements.txt is present in the lock
+  ✓ Pillow: requirements.txt 12.3.0 == requirements.lock 12.3.0
+  ✓ Pillow: same extras in both files (none)
+  ✓ every active lock pin is actually installed by requirements.txt
+  ✓ every direct requirement reaches the image
+
+── ز · package-lock.json IS A REAL LOCK ──
+  ✓ package-lock.json exists
+  ✓ package.json exists
+  ✓ lockfileVersion is present (3)
+  ✓ playwright is present in package-lock.json
+  ✓ playwright is pinned to an exact version (1.62.1)
+  ✓ playwright carries an integrity hash and it is sha512
+  ✓ playwright-core is present in package-lock.json
+  ✓ playwright-core is pinned to an exact version (1.62.1)
+  ✓ playwright-core carries an integrity hash and it is sha512
+  ✓ playwright and playwright-core are locked to the SAME exact version (1.62.1)
+  ✓ package.json declares playwright with a range ('^1.62.1')
+  ✓ the locked playwright version 1.62.1 satisfies package.json '^1.62.1'
+  ✓ the locked version is the exact version package.json names ('^1.62.1')
+
+── ح · THE VENDORED FRONTEND VERSIONS AGREE IN EVERY PLACE ──
+  ✓ pdfjs-dist: tools/netlify-build.sh PDFJS= names a version
+  ✓ pdfjs-dist: tools/netlify-build.sh header comment names a version
+  ✓ pdfjs-dist: public/app dynamic import names a version
+  ✓ pdfjs-dist is ONE version across all 3 places: 4.0.379
+  ✓ pdfjs-dist is the version the build script vendors (4.0.379)
+  ✓ three: tools/netlify-build.sh THREE= names a version
+  ✓ three: tools/netlify-build.sh header comment names a version
+  ✓ three: tools/check_index_guard.py IMPORTMAP_THREE names a version
+  ✓ three: tools/check_index_guard.py IMPORTMAP_ADDONS names a version
+  ✓ three: public/index.html importmap names a version
+  ✓ three: netlify.toml build comment names a version
+  ✓ three: tests/deploy/verify_page_boot.js names a version
+  ✓ three: tests/phase9_1/capture_reference.js names a version
+  ✓ three: tests/phase9_2/capture_reference_92.js names a version
+  ✓ three is ONE version across all 9 places: 0.160.0
+  ✓ three is the version the build script vendors (0.160.0)
+  ✓ the shim/pdf/three paths in the page are local, never a CDN
+
+── ح٢ · es-module-shims IS NO LONGER A RUNTIME DEPENDENCY (F-11) ──
+  ✓ nothing in the shipped frontend loads or resolves es-module-shims — no script tag, no vendor path, in the shell, the modules or the stylesheet
+  ✓ the shell carries no <script> pointing at the shim
+  ✓ the import map is native and needs no polyfill: it is the only inline script in the shell and it declares type="importmap"
+  ✓ the build script no longer vendors es-module-shims — an unreferenced vendored library is dead payload on every deploy
+
+── ط · A DEPENDENCY-AUDIT ENTRY POINT EXISTS AND RUNS ──
+  ✓ tools/dependency_audit.py exists
+  ✓ tools/dependency_audit.py is executable (mode 0o755)
+  ✓ tools/dependency_audit.py starts with a shebang so it runs as a command
+  ✓ tools/dependency_audit.py exits non-zero on drift
+  ✓ tools/dependency_audit.py declares NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED instead of claiming the network checks passed
+  ✓ tools/dependency_audit.py names the CVE scan it cannot run
+  ✓ tools/dependency_audit.py names hash verification as the thing it cannot do
+  ✓ DEPENDENCY-POLICY.md documents the update procedure
+  ✓ .gitignore exists
+  ✓ .gitignore ignores node_modules (dependencies are restored by npm ci)
+  ✓ .gitignore documents deterministic dependency restoration
+
+──────────────────────────────────────────────
+NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: artefact hashes, CVE status,
+  the transitive closure (20 name(s) UNRESOLVED-OFFLINE), and whether any
+  pinned version exists on PyPI at all. All four need a package index.
+──────────────────────────────────────────────
+DEPENDENCY LOCK CONTRACT: 115 passed, 0 failed
