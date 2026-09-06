@@ -96,6 +96,7 @@ EXEC_THREAD = "thread"
 
 # الأهداف المسموح تنفيذها في العامل — قائمة معلنة، لا اسم يصل من الشبكة.
 TARGETS = {
+    "validate_building": ("acs_validate", "validate_building"),
     "validate_images": ("acs_upload_security", "validate_images"),
     "validate_image": ("acs_upload_security", "validate_image"),
     "validate_pdf": ("acs_upload_security", "validate_pdf"),

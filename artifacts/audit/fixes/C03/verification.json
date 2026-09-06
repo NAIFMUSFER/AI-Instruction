@@ -1,0 +1,14 @@
+{
+  "regression_before": {"tests": 5, "failures": 5},
+  "regression_after": {"tests": 5, "failures": 0},
+  "full_suite_raw": {"files": 115, "PASS": 98, "FAIL": 9, "NOT_VERIFIED": 8},
+  "after_required_gate_updates": {
+    "event_loop": {"passed_checks": 57, "failed_checks": 0},
+    "privacy_boundary": {"passed_checks": 63, "failed_checks": 0},
+    "remaining_previous_file_failures": 7
+  },
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "both local-generator cases byte-identical to baseline; API count and full findings now come from validation of the outgoing model",
+  "scope": "acs_validate only; this does not claim all 22 checks or regulatory compliance",
+  "pixel_validation": "NOT_VERIFIED"
+}

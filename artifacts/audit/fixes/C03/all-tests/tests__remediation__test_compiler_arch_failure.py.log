@@ -1,0 +1,8 @@
+test_architecture_failure_creates_no_new_export (__main__.ArchitectureFailure.test_architecture_failure_creates_no_new_export) ... ok
+test_architecture_failure_preserves_existing_export (__main__.ArchitectureFailure.test_architecture_failure_preserves_existing_export) ... ok
+test_valid_architecture_still_exports_geometry (__main__.ArchitectureFailure.test_valid_architecture_still_exports_geometry) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.003s
+
+OK

@@ -1,0 +1,90 @@
+test_stale_positive_does_not_invent_issues_on_valid_model (__main__.ValidatorResponse.test_stale_positive_does_not_invent_issues_on_valid_model) ... FAIL
+test_stale_zero_does_not_hide_outside_room (__main__.ValidatorResponse.test_stale_zero_does_not_hide_outside_room) ... FAIL
+test_validator_failure_cannot_be_reported_as_zero (__main__.ValidatorResponse.test_validator_failure_cannot_be_reported_as_zero) ... FAIL
+test_validator_is_an_explicit_cpu_worker_target (__main__.ValidatorResponse.test_validator_is_an_explicit_cpu_worker_target) ... FAIL
+test_validator_sees_normalised_model_without_mutating_source (__main__.ValidatorResponse.test_validator_sees_normalised_model_without_mutating_source) ... FAIL
+
+======================================================================
+FAIL: test_stale_positive_does_not_invent_issues_on_valid_model (__main__.ValidatorResponse.test_stale_positive_does_not_invent_issues_on_valid_model)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 50, in test_stale_positive_does_not_invent_issues_on_valid_model
+    result = await self.payload(building(22), building(22))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 36, in payload
+    self.assertEqual(result["issues"], len(expected))
+AssertionError: 22 != 0
+
+======================================================================
+FAIL: test_stale_zero_does_not_hide_outside_room (__main__.ValidatorResponse.test_stale_zero_does_not_hide_outside_room)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 44, in test_stale_zero_does_not_hide_outside_room
+    result = await self.payload(building(0, True), building(0, True))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 36, in payload
+    self.assertEqual(result["issues"], len(expected))
+AssertionError: 0 != 1
+
+======================================================================
+FAIL: test_validator_failure_cannot_be_reported_as_zero (__main__.ValidatorResponse.test_validator_failure_cannot_be_reported_as_zero)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 66, in test_validator_failure_cannot_be_reported_as_zero
+    with self.assertRaises(E.AcsApiError) as caught:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: AcsApiError not raised
+
+======================================================================
+FAIL: test_validator_is_an_explicit_cpu_worker_target (__main__.ValidatorResponse.test_validator_is_an_explicit_cpu_worker_target)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 71, in test_validator_is_an_explicit_cpu_worker_target
+    self.assertEqual(CPU.TARGETS.get("validate_building"),
+AssertionError: None != ('acs_validate', 'validate_building')
+
+======================================================================
+FAIL: test_validator_sees_normalised_model_without_mutating_source (__main__.ValidatorResponse.test_validator_sees_normalised_model_without_mutating_source)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 57, in test_validator_sees_normalised_model_without_mutating_source
+    result = await self.payload(source, outgoing)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_response.py", line 36, in payload
+    self.assertEqual(result["issues"], len(expected))
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.008s
+
+FAILED (failures=5)

@@ -1,0 +1,484 @@
+
+== §34 — ADVERSARIAL VISUAL SCENES ==
+  ✓ bad_space_rect: compilation returns a result object instead of throwing
+  ✓ bad_space_rect: the result carries an issue list
+  ✓ bad_space_rect: every reported code is declared in the canonical specification
+  ✓ bad_space_rect: every issue carries a declared severity
+  ✓ bad_space_rect: the issue list is deterministically ordered
+  ✓ bad_space_rect: the result is byte-identical when recompiled
+  ✓ bad_space_rect: no non-finite number survives into the compiled scene
+  ✓ bad_space_rect: the scene never claims to write to the model
+  ✓ door_missing_host: compilation returns a result object instead of throwing
+  ✓ door_missing_host: the result carries an issue list
+  ✓ door_missing_host: every reported code is declared in the canonical specification
+  ✓ door_missing_host: every issue carries a declared severity
+  ✓ door_missing_host: the issue list is deterministically ordered
+  ✓ door_missing_host: the result is byte-identical when recompiled
+  ✓ door_missing_host: no non-finite number survives into the compiled scene
+  ✓ door_missing_host: the scene never claims to write to the model
+  ✓ duplicate_object_id: compilation returns a result object instead of throwing
+  ✓ duplicate_object_id: the result carries an issue list
+  ✓ duplicate_object_id: every reported code is declared in the canonical specification
+  ✓ duplicate_object_id: every issue carries a declared severity
+  ✓ duplicate_object_id: the issue list is deterministically ordered
+  ✓ duplicate_object_id: the result is byte-identical when recompiled
+  ✓ duplicate_object_id: no non-finite number survives into the compiled scene
+  ✓ duplicate_object_id: the scene never claims to write to the model
+  ✓ empty_object: compilation returns a result object instead of throwing
+  ✓ empty_object: the result carries an issue list
+  ✓ empty_object: every reported code is declared in the canonical specification
+  ✓ empty_object: every issue carries a declared severity
+  ✓ empty_object: the issue list is deterministically ordered
+  ✓ empty_object: the result is byte-identical when recompiled
+  ✓ empty_object: no non-finite number survives into the compiled scene
+  ✓ empty_object: the scene never claims to write to the model
+  ✓ infinite_geometry: compilation returns a result object instead of throwing
+  ✓ infinite_geometry: the result carries an issue list
+  ✓ infinite_geometry: every reported code is declared in the canonical specification
+  ✓ infinite_geometry: every issue carries a declared severity
+  ✓ infinite_geometry: the issue list is deterministically ordered
+  ✓ infinite_geometry: the result is byte-identical when recompiled
+  ✓ infinite_geometry: no non-finite number survives into the compiled scene
+  ✓ infinite_geometry: the scene never claims to write to the model
+  ✓ missing_scene_id: compilation returns a result object instead of throwing
+  ✓ missing_scene_id: the result carries an issue list
+  ✓ missing_scene_id: every reported code is declared in the canonical specification
+  ✓ missing_scene_id: every issue carries a declared severity
+  ✓ missing_scene_id: the issue list is deterministically ordered
+  ✓ missing_scene_id: the result is byte-identical when recompiled
+  ✓ missing_scene_id: no non-finite number survives into the compiled scene
+  ✓ missing_scene_id: the scene never claims to write to the model
+  ✓ nan_geometry: compilation returns a result object instead of throwing
+  ✓ nan_geometry: the result carries an issue list
+  ✓ nan_geometry: every reported code is declared in the canonical specification
+  ✓ nan_geometry: every issue carries a declared severity
+  ✓ nan_geometry: the issue list is deterministically ordered
+  ✓ nan_geometry: the result is byte-identical when recompiled
+  ✓ nan_geometry: no non-finite number survives into the compiled scene
+  ✓ nan_geometry: the scene never claims to write to the model
+  ✓ nan_rotation: compilation returns a result object instead of throwing
+  ✓ nan_rotation: the result carries an issue list
+  ✓ nan_rotation: every reported code is declared in the canonical specification
+  ✓ nan_rotation: every issue carries a declared severity
+  ✓ nan_rotation: the issue list is deterministically ordered
+  ✓ nan_rotation: the result is byte-identical when recompiled
+  ✓ nan_rotation: no non-finite number survives into the compiled scene
+  ✓ nan_rotation: the scene never claims to write to the model
+  ✓ null_scene: compilation returns a result object instead of throwing
+  ✓ null_scene: the result carries an issue list
+  ✓ null_scene: every reported code is declared in the canonical specification
+  ✓ null_scene: every issue carries a declared severity
+  ✓ null_scene: the issue list is deterministically ordered
+  ✓ null_scene: the result is byte-identical when recompiled
+  ✓ null_scene: no non-finite number survives into the compiled scene
+  ✓ null_scene: the scene never claims to write to the model
+  ✓ object_without_geometry: compilation returns a result object instead of throwing
+  ✓ object_without_geometry: the result carries an issue list
+  ✓ object_without_geometry: every reported code is declared in the canonical specification
+  ✓ object_without_geometry: every issue carries a declared severity
+  ✓ object_without_geometry: the issue list is deterministically ordered
+  ✓ object_without_geometry: the result is byte-identical when recompiled
+  ✓ object_without_geometry: no non-finite number survives into the compiled scene
+  ✓ object_without_geometry: the scene never claims to write to the model
+  ✓ object_without_id: compilation returns a result object instead of throwing
+  ✓ object_without_id: the result carries an issue list
+  ✓ object_without_id: every reported code is declared in the canonical specification
+  ✓ object_without_id: every issue carries a declared severity
+  ✓ object_without_id: the issue list is deterministically ordered
+  ✓ object_without_id: the result is byte-identical when recompiled
+  ✓ object_without_id: no non-finite number survives into the compiled scene
+  ✓ object_without_id: the scene never claims to write to the model
+  ✓ objects_not_array: compilation returns a result object instead of throwing
+  ✓ objects_not_array: the result carries an issue list
+  ✓ objects_not_array: every reported code is declared in the canonical specification
+  ✓ objects_not_array: every issue carries a declared severity
+  ✓ objects_not_array: the issue list is deterministically ordered
+  ✓ objects_not_array: the result is byte-identical when recompiled
+  ✓ objects_not_array: no non-finite number survives into the compiled scene
+  ✓ objects_not_array: the scene never claims to write to the model
+  ✓ space_rect_wrong_length: compilation returns a result object instead of throwing
+  ✓ space_rect_wrong_length: the result carries an issue list
+  ✓ space_rect_wrong_length: every reported code is declared in the canonical specification
+  ✓ space_rect_wrong_length: every issue carries a declared severity
+  ✓ space_rect_wrong_length: the issue list is deterministically ordered
+  ✓ space_rect_wrong_length: the result is byte-identical when recompiled
+  ✓ space_rect_wrong_length: no non-finite number survives into the compiled scene
+  ✓ space_rect_wrong_length: the scene never claims to write to the model
+  ✓ space_without_elevation: compilation returns a result object instead of throwing
+  ✓ space_without_elevation: the result carries an issue list
+  ✓ space_without_elevation: every reported code is declared in the canonical specification
+  ✓ space_without_elevation: every issue carries a declared severity
+  ✓ space_without_elevation: the issue list is deterministically ordered
+  ✓ space_without_elevation: the result is byte-identical when recompiled
+  ✓ space_without_elevation: no non-finite number survives into the compiled scene
+  ✓ space_without_elevation: the scene never claims to write to the model
+  ✓ string_scene: compilation returns a result object instead of throwing
+  ✓ string_scene: the result carries an issue list
+  ✓ string_scene: every reported code is declared in the canonical specification
+  ✓ string_scene: every issue carries a declared severity
+  ✓ string_scene: the issue list is deterministically ordered
+  ✓ string_scene: the result is byte-identical when recompiled
+  ✓ string_scene: no non-finite number survives into the compiled scene
+  ✓ string_scene: the scene never claims to write to the model
+  ✓ write_flag_in_config: compilation returns a result object instead of throwing
+  ✓ write_flag_in_config: the result carries an issue list
+  ✓ write_flag_in_config: every reported code is declared in the canonical specification
+  ✓ write_flag_in_config: every issue carries a declared severity
+  ✓ write_flag_in_config: the issue list is deterministically ordered
+  ✓ write_flag_in_config: the result is byte-identical when recompiled
+  ✓ write_flag_in_config: no non-finite number survives into the compiled scene
+  ✓ write_flag_in_config: the scene never claims to write to the model
+
+== SPECIFIC ADVERSARIAL EXPECTATIONS ==
+  ✓ a null scene is refused, not compiled
+  ✓ a string scene is refused
+  ✓ an objects field that is not an array is refused
+  ✓ a NaN in the geometry is refused, never rounded to zero
+  ✓ the NaN object does not appear in the compiled object list
+  ✓ an infinite extent is refused
+  ✓ a NaN rotation is refused, never treated as zero
+  ✓ a duplicate object identifier is reported
+  ✓ a configuration requesting a model write is refused
+
+== ADVERSARIAL RUNTIME CONFIGURATIONS ==
+  ✓ the configuration a null configuration produces a result without throwing
+  ✓ the configuration a null configuration never yields an undeclared code
+  ✓ the configuration a null configuration still yields a declared decoration policy
+  ✓ the configuration an undefined configuration produces a result without throwing
+  ✓ the configuration an undefined configuration never yields an undeclared code
+  ✓ the configuration an undefined configuration still yields a declared decoration policy
+  ✓ the configuration a string configuration produces a result without throwing
+  ✓ the configuration a string configuration never yields an undeclared code
+  ✓ the configuration a string configuration still yields a declared decoration policy
+  ✓ the configuration a numeric configuration produces a result without throwing
+  ✓ the configuration a numeric configuration never yields an undeclared code
+  ✓ the configuration a numeric configuration still yields a declared decoration policy
+  ✓ the configuration an array configuration produces a result without throwing
+  ✓ the configuration an array configuration never yields an undeclared code
+  ✓ the configuration an array configuration still yields a declared decoration policy
+  ✓ the configuration a boolean configuration produces a result without throwing
+  ✓ the configuration a boolean configuration never yields an undeclared code
+  ✓ the configuration a boolean configuration still yields a declared decoration policy
+  ✓ the configuration an unknown decoration policy produces a result without throwing
+  ✓ the configuration an unknown decoration policy never yields an undeclared code
+  ✓ the configuration an unknown decoration policy still yields a declared decoration policy
+  ✓ the configuration a numeric decoration policy produces a result without throwing
+  ✓ the configuration a numeric decoration policy never yields an undeclared code
+  ✓ the configuration a numeric decoration policy still yields a declared decoration policy
+  ✓ the configuration an array decoration policy produces a result without throwing
+  ✓ the configuration an array decoration policy never yields an undeclared code
+  ✓ the configuration an array decoration policy still yields a declared decoration policy
+  ✓ the configuration a null decoration policy produces a result without throwing
+  ✓ the configuration a null decoration policy never yields an undeclared code
+  ✓ the configuration a null decoration policy still yields a declared decoration policy
+  ✓ the configuration an unknown key produces a result without throwing
+  ✓ the configuration an unknown key never yields an undeclared code
+  ✓ the configuration an unknown key still yields a declared decoration policy
+
+== ADVERSARIAL NAVIGATION AND CAPSULES ==
+  ✓ the navigation mode null is refused with a declared code
+  ✓ the navigation mode undefined is refused with a declared code
+  ✓ the navigation mode "" is refused with a declared code
+  ✓ the navigation mode "TELEPORT" is refused with a declared code
+  ✓ the navigation mode "walk " is refused with a declared code
+  ✓ the navigation mode 42 is refused with a declared code
+  ✓ the navigation mode {"mode":"WALK"} is refused with a declared code
+  ✓ the navigation mode ["WALK"] is refused with a declared code
+  ✓ the navigation mode true is refused with a declared code
+  ✓ the navigation mode "WALK " is refused with a declared code
+  ✓ the capsule null is judged without throwing
+  ✓ the capsule null never yields an undeclared code
+  ✓ the accepted capsule null is finite in every field
+  ✓ the capsule "" is judged without throwing
+  ✓ the capsule "" never yields an undeclared code
+  ✓ the refused capsule "" names the capsule code
+  ✓ the capsule {} is judged without throwing
+  ✓ the capsule {} never yields an undeclared code
+  ✓ the accepted capsule {} is finite in every field
+  ✓ the capsule [] is judged without throwing
+  ✓ the capsule [] never yields an undeclared code
+  ✓ the refused capsule [] names the capsule code
+  ✓ the capsule "capsule" is judged without throwing
+  ✓ the capsule "capsule" never yields an undeclared code
+  ✓ the refused capsule "capsule" names the capsule code
+  ✓ the capsule 42 is judged without throwing
+  ✓ the capsule 42 never yields an undeclared code
+  ✓ the refused capsule 42 names the capsule code
+  ✓ the capsule true is judged without throwing
+  ✓ the capsule true never yields an undeclared code
+  ✓ the refused capsule true names the capsule code
+  ✓ the capsule {"radius_m":0} is judged without throwing
+  ✓ the capsule {"radius_m":0} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":0} names the capsule code
+  ✓ the capsule {"radius_m":-1,"height_m":1.8,"eye_height_m":1.6} is judged without throwing
+  ✓ the capsule {"radius_m":-1,"height_m":1.8,"eye_height_m":1.6} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":-1,"height_m":1.8,"eye_height_m":1.6} names the capsule code
+  ✓ the capsule {"radius_m":null,"height_m":1.8,"eye_height_m":1.6} is judged without throwing
+  ✓ the capsule {"radius_m":null,"height_m":1.8,"eye_height_m":1.6} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":null,"height_m":1.8,"eye_height_m":1.6} names the capsule code
+  ✓ the capsule {"radius_m":null,"height_m":1.8,"eye_height_m":1.6} is judged without throwing
+  ✓ the capsule {"radius_m":null,"height_m":1.8,"eye_height_m":1.6} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":null,"height_m":1.8,"eye_height_m":1.6} names the capsule code
+  ✓ the capsule {"radius_m":0.3,"height_m":0,"eye_height_m":1.6} is judged without throwing
+  ✓ the capsule {"radius_m":0.3,"height_m":0,"eye_height_m":1.6} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":0.3,"height_m":0,"eye_height_m":1.6} names the capsule code
+  ✓ the capsule {"radius_m":0.3,"height_m":1.8,"eye_height_m":99} is judged without throwing
+  ✓ the capsule {"radius_m":0.3,"height_m":1.8,"eye_height_m":99} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":0.3,"height_m":1.8,"eye_height_m":99} names the capsule code
+  ✓ the capsule {"radius_m":1000000000,"height_m":1000000000,"eye_height_m":1000000000} is judged without throwing
+  ✓ the capsule {"radius_m":1000000000,"height_m":1000000000,"eye_height_m":1000000000} never yields an undeclared code
+  ✓ the refused capsule {"radius_m":1000000000,"height_m":1000000000,"eye_height_m":1000000000} names the capsule code
+
+== ADVERSARIAL SPAWNS AND MOVEMENT ==
+  ✓ the spawn null is judged without throwing
+  ✓ the spawn null never yields an undeclared code
+  ✓ the spawn undefined is judged without throwing
+  ✓ the spawn undefined never yields an undeclared code
+  ✓ the spawn "" is judged without throwing
+  ✓ the spawn "" never yields an undeclared code
+  ✓ the spawn [] is judged without throwing
+  ✓ the spawn [] never yields an undeclared code
+  ✓ the spawn [0,0] is judged without throwing
+  ✓ the spawn [0,0] never yields an undeclared code
+  ✓ the spawn [0,0,0,0] is judged without throwing
+  ✓ the spawn [0,0,0,0] never yields an undeclared code
+  ✓ the spawn "0,0,0" is judged without throwing
+  ✓ the spawn "0,0,0" never yields an undeclared code
+  ✓ the spawn {"x":0,"y":0,"z":0} is judged without throwing
+  ✓ the spawn {"x":0,"y":0,"z":0} never yields an undeclared code
+  ✓ the spawn [null,0,0] is judged without throwing
+  ✓ the spawn [null,0,0] never yields an undeclared code
+  ✓ the spawn [0,null,0] is judged without throwing
+  ✓ the spawn [0,null,0] never yields an undeclared code
+  ✓ the spawn [0,0,null] is judged without throwing
+  ✓ the spawn [0,0,null] never yields an undeclared code
+  ✓ the spawn [null,0,0] is judged without throwing
+  ✓ the spawn [null,0,0] never yields an undeclared code
+  ✓ the spawn ["a","b","c"] is judged without throwing
+  ✓ the spawn ["a","b","c"] never yields an undeclared code
+  ✓ the spawn [true,false,true] is judged without throwing
+  ✓ the spawn [true,false,true] never yields an undeclared code
+  ✓ the spawn [1e+308,1e+308,1e+308] is judged without throwing
+  ✓ the spawn [1e+308,1e+308,1e+308] never yields an undeclared code
+  ✓ the move [null,null] is judged without throwing
+  ✓ the move [null,null] never yields an undeclared code
+  ✓ the move [[0,0,0],null] is judged without throwing
+  ✓ the move [[0,0,0],null] never yields an undeclared code
+  ✓ the move [null,[0,0,0]] is judged without throwing
+  ✓ the move [null,[0,0,0]] never yields an undeclared code
+  ✓ the move [[null,0,0],[0,0,0]] is judged without throwing
+  ✓ the move [[null,0,0],[0,0,0]] never yields an undeclared code
+  ✓ the move [[0,0,0],[null,0,0]] is judged without throwing
+  ✓ the move [[0,0,0],[null,0,0]] never yields an undeclared code
+  ✓ the move ["a","b"] is judged without throwing
+  ✓ the move ["a","b"] never yields an undeclared code
+  ✓ the move [[0,0],[0,0,0]] is judged without throwing
+  ✓ the move [[0,0],[0,0,0]] never yields an undeclared code
+  ✓ the move [{},{}] is judged without throwing
+  ✓ the move [{},{}] never yields an undeclared code
+  ✓ the move [[0,0,0],[0,0,0]] is judged without throwing
+  ✓ the move [[0,0,0],[0,0,0]] never yields an undeclared code
+  ✓ the move [[1000000000,1000000000,1000000000],[-1000000000,-1000000000,-1000000000]] is judged without throwing
+  ✓ the move [[1000000000,1000000000,1000000000],[-1000000000,-1000000000,-1000000000]] never yields an undeclared code
+
+== ADVERSARIAL PORTAL TRANSITIONS ==
+  ✓ the portal transition [null,null] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition ["",""] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition ["portal:bld_0.f.bath2.door_0@1","AJAR"] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition ["portal:bld_0.f.bath2.door_0@1",null] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition ["portal:bld_0.f.bath2.door_0@1",42] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition ["portal:bld_0.f.bath2.door_0@1",["OPEN"]] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition ["no_such_portal","OPEN"] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition [42,"OPEN"] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition [{"p":1},"OPEN"] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+  ✓ the portal transition [["p"],"OPEN"] is refused with a declared code
+  ✓ a refused portal transition writes nothing into runtime state
+
+== ADVERSARIAL SIMULATION TIME ==
+  ✓ the time delta null is judged without throwing
+  ✓ the time delta null never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta undefined is judged without throwing
+  ✓ the time delta undefined never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta "" is judged without throwing
+  ✓ the time delta "" never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta -1 is judged without throwing
+  ✓ the time delta -1 never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta -0.001 is judged without throwing
+  ✓ the time delta -0.001 never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta null is judged without throwing
+  ✓ the time delta null never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta null is judged without throwing
+  ✓ the time delta null never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta null is judged without throwing
+  ✓ the time delta null never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta "5" is judged without throwing
+  ✓ the time delta "5" never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ the time delta {"d":1} is judged without throwing
+  ✓ the time delta {"d":1} never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta [1] is judged without throwing
+  ✓ the time delta [1] never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta true is judged without throwing
+  ✓ the time delta true never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+  ✓ a refused time delta leaves the clock exactly where it was
+  ✓ the time delta 1e+308 is judged without throwing
+  ✓ the time delta 1e+308 never yields an undeclared code
+  ✓ the simulation clock is finite after the attempt
+
+== ADVERSARIAL ACTIONS ==
+  ✓ the action [null,null] is refused, never silently accepted
+  ✓ the action ["",""] is refused, never silently accepted
+  ✓ the action ["FLY_AWAY","OBJECT"] is refused, never silently accepted
+  ✓ the action [42,"OBJECT"] is refused, never silently accepted
+  ✓ the action [["SELECT"],"OBJECT"] is refused, never silently accepted
+  ✓ the action [{"a":"SELECT"},"OBJECT"] is refused, never silently accepted
+  ✓ the action ["SELECT","GALAXY"] is refused, never silently accepted
+  ✓ the action ["SELECT",42] is refused, never silently accepted
+  ✓ the action ["SELECT",["OBJECT"]] is refused, never silently accepted
+  ✓ the action ["SELECT",{"k":"OBJECT"}] is refused, never silently accepted
+  ✓ the payload null is judged without throwing
+  ✓ the payload null never yields an undeclared code
+  ✓ the payload "" is judged without throwing
+  ✓ the payload "" never yields an undeclared code
+  ✓ the payload "payload" is judged without throwing
+  ✓ the payload "payload" never yields an undeclared code
+  ✓ the payload 42 is judged without throwing
+  ✓ the payload 42 never yields an undeclared code
+  ✓ the payload [] is judged without throwing
+  ✓ the payload [] never yields an undeclared code
+  ✓ the payload [{"set_geometry":1}] is judged without throwing
+  ✓ the payload [{"set_geometry":1}] never yields an undeclared code
+  ✓ the payload true is judged without throwing
+  ✓ the payload true never yields an undeclared code
+
+== ADVERSARIAL SPATIAL QUERIES ==
+  ✓ the query box null returns a result without throwing
+  ✓ the query box null returns only known identifiers
+  ✓ the query box undefined returns a result without throwing
+  ✓ the query box undefined returns only known identifiers
+  ✓ the query box "" returns a result without throwing
+  ✓ the query box "" returns only known identifiers
+  ✓ the query box [] returns a result without throwing
+  ✓ the query box [] returns only known identifiers
+  ✓ the query box [0,0,0] returns a result without throwing
+  ✓ the query box [0,0,0] returns only known identifiers
+  ✓ the query box [0,0,0,0,0,0,0] returns a result without throwing
+  ✓ the query box [0,0,0,0,0,0,0] returns only known identifiers
+  ✓ the query box "0,0,0,1,1,1" returns a result without throwing
+  ✓ the query box "0,0,0,1,1,1" returns only known identifiers
+  ✓ the query box [null,0,0,1,1,1] returns a result without throwing
+  ✓ the query box [null,0,0,1,1,1] returns only known identifiers
+  ✓ the query box [0,0,0,null,1,1] returns a result without throwing
+  ✓ the query box [0,0,0,null,1,1] returns only known identifiers
+  ✓ the query box [1,1,1,0,0,0] returns a result without throwing
+  ✓ the query box [1,1,1,0,0,0] returns only known identifiers
+  ✓ the query box [1e+308,1e+308,1e+308,1e+308,1e+308,1e+308] returns a result without throwing
+  ✓ the query box [1e+308,1e+308,1e+308,1e+308,1e+308,1e+308] returns only known identifiers
+
+== A HOSTILE SCENE NEVER PRODUCES A CONFIDENT ANSWER ==
+  ✓ bad_space_rect: a runtime state is still constructible and finite
+  ✓ bad_space_rect: the summary answers without throwing and invents no count
+  ✓ bad_space_rect: the connectivity graph answers without inventing an edge
+  ✓ bad_space_rect: validation of the compiled scene answers without throwing
+  ✓ door_missing_host: a runtime state is still constructible and finite
+  ✓ door_missing_host: the summary answers without throwing and invents no count
+  ✓ door_missing_host: the connectivity graph answers without inventing an edge
+  ✓ door_missing_host: validation of the compiled scene answers without throwing
+  ✓ duplicate_object_id: a runtime state is still constructible and finite
+  ✓ duplicate_object_id: the summary answers without throwing and invents no count
+  ✓ duplicate_object_id: the connectivity graph answers without inventing an edge
+  ✓ duplicate_object_id: validation of the compiled scene answers without throwing
+  ✓ empty_object: a runtime state is still constructible and finite
+  ✓ empty_object: the summary answers without throwing and invents no count
+  ✓ empty_object: the connectivity graph answers without inventing an edge
+  ✓ empty_object: validation of the compiled scene answers without throwing
+  ✓ infinite_geometry: a runtime state is still constructible and finite
+  ✓ infinite_geometry: the summary answers without throwing and invents no count
+  ✓ infinite_geometry: the connectivity graph answers without inventing an edge
+  ✓ infinite_geometry: validation of the compiled scene answers without throwing
+  ✓ missing_scene_id: a runtime state is still constructible and finite
+  ✓ missing_scene_id: the summary answers without throwing and invents no count
+  ✓ missing_scene_id: the connectivity graph answers without inventing an edge
+  ✓ missing_scene_id: validation of the compiled scene answers without throwing
+  ✓ nan_geometry: a runtime state is still constructible and finite
+  ✓ nan_geometry: the summary answers without throwing and invents no count
+  ✓ nan_geometry: the connectivity graph answers without inventing an edge
+  ✓ nan_geometry: validation of the compiled scene answers without throwing
+  ✓ nan_rotation: a runtime state is still constructible and finite
+  ✓ nan_rotation: the summary answers without throwing and invents no count
+  ✓ nan_rotation: the connectivity graph answers without inventing an edge
+  ✓ nan_rotation: validation of the compiled scene answers without throwing
+  ✓ null_scene: a runtime state is still constructible and finite
+  ✓ null_scene: the summary answers without throwing and invents no count
+  ✓ null_scene: the connectivity graph answers without inventing an edge
+  ✓ null_scene: validation of the compiled scene answers without throwing
+  ✓ object_without_geometry: a runtime state is still constructible and finite
+  ✓ object_without_geometry: the summary answers without throwing and invents no count
+  ✓ object_without_geometry: the connectivity graph answers without inventing an edge
+  ✓ object_without_geometry: validation of the compiled scene answers without throwing
+  ✓ object_without_id: a runtime state is still constructible and finite
+  ✓ object_without_id: the summary answers without throwing and invents no count
+  ✓ object_without_id: the connectivity graph answers without inventing an edge
+  ✓ object_without_id: validation of the compiled scene answers without throwing
+  ✓ objects_not_array: a runtime state is still constructible and finite
+  ✓ objects_not_array: the summary answers without throwing and invents no count
+  ✓ objects_not_array: the connectivity graph answers without inventing an edge
+  ✓ objects_not_array: validation of the compiled scene answers without throwing
+  ✓ space_rect_wrong_length: a runtime state is still constructible and finite
+  ✓ space_rect_wrong_length: the summary answers without throwing and invents no count
+  ✓ space_rect_wrong_length: the connectivity graph answers without inventing an edge
+  ✓ space_rect_wrong_length: validation of the compiled scene answers without throwing
+  ✓ space_without_elevation: a runtime state is still constructible and finite
+  ✓ space_without_elevation: the summary answers without throwing and invents no count
+  ✓ space_without_elevation: the connectivity graph answers without inventing an edge
+  ✓ space_without_elevation: validation of the compiled scene answers without throwing
+  ✓ string_scene: a runtime state is still constructible and finite
+  ✓ string_scene: the summary answers without throwing and invents no count
+  ✓ string_scene: the connectivity graph answers without inventing an edge
+  ✓ string_scene: validation of the compiled scene answers without throwing
+  ✓ write_flag_in_config: a runtime state is still constructible and finite
+  ✓ write_flag_in_config: the summary answers without throwing and invents no count
+  ✓ write_flag_in_config: the connectivity graph answers without inventing an edge
+  ✓ write_flag_in_config: validation of the compiled scene answers without throwing
+
+== ERROR ORDERING IS STABLE AND SEVERITY-RANKED ==
+  ✓ a scene with several issues was produced for this check
+  ✓ issues are ordered by severity, then code, then subject
+  ✓ every issue names the code, the severity and a subject
+  ✓ the same hostile scene yields the same order every time
+
+== NOTHING HOSTILE REACHES THE ENGINEERING MODEL ==
+  ✓ every fixture model is byte-identical after the whole adversarial sweep
+
+──────────────────────────────────────────────
+ADVERSARIAL: 457 passed, 0 failed

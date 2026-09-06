@@ -1,0 +1,114 @@
+
+── أ · ماسح المطابقة الزائفة ──
+  ✓ the scanner actually walks the user-facing surfaces (page, specs, reports)
+  ✓ the scanner walks the shipped application modules too — the shell alone is no longer the application (F-09)
+  ✓ no user-facing surface asserts regulatory compliance outside an explicit negation or disclaimer context
+
+  القائمة البيضاء المعروضة — كل موضع سُمح به وسببه (27 موضعاً):
+    · public/app/core/disciplines.js:2640  «certified»  ⟵ negated by 'deliberately absent'
+    · public/app/core/disciplines.js:2889  «certified»  ⟵ negated by 'forbidden'
+    · public/app/generated/authoring.js:13  «code compliant»  ⟵ negated by 'does not mean'
+    · public/app/generated/docs.js:13  «code compliant»  ⟵ negated by 'forbidden'
+    · public/app/generated/docs.js:13  «certified»  ⟵ negated by 'restricted_status'
+    · public/app/generated/docs.js:13  «certified»  ⟵ negated by 'forbidden'
+    · public/app/generated/workspace-ui.js:15  «code compliant»  ⟵ negated by 'forbidden'
+    · public/app/generated/workspace-ui.js:15  «certified»  ⟵ negated by 'forbidden'
+    · public/app/generated/workspace-ui.js:15  «certified»  ⟵ negated by 'forbidden'
+    · public/app/generated/workspace-ui.js:15  «مطابق للكود»  ⟵ negated by 'forbidden'
+    · public/app/render/scene.js:2089  «code compliant»  ⟵ negated by 'is not code compliant'
+    · public/app/render/scene.js:2368  «code compliant»  ⟵ negated by 'is not code compliant'
+    · acs_authoring.json:7  «code compliant»  ⟵ negated by 'does not mean'
+    · acs_coord.json:120  «code compliant»  ⟵ negated by 'is not code compliant'
+    · acs_docs.json:438  «code compliant»  ⟵ negated by 'forbidden'
+    · acs_docs.json:325  «certified»  ⟵ negated by 'restricted_status'
+    · acs_docs.json:443  «certified»  ⟵ negated by 'forbidden'
+    · acs_fls.json:27  «certified»  ⟵ negated by 'deliberately absent'
+    · acs_fls.json:276  «certified»  ⟵ negated by 'forbidden'
+    · acs_workspace.json:670  «code compliant»  ⟵ negated by 'forbidden'
+    · acs_workspace.json:530  «certified»  ⟵ negated by 'forbidden'
+    · acs_workspace.json:668  «certified»  ⟵ negated by 'forbidden'
+    · acs_workspace.json:533  «مطابق للكود»  ⟵ negated by 'forbidden'
+    · PHASE2-FOUNDATION.md:1710  «certified»  ⟵ negated by 'deliberately absent'
+    · PHASE5-AUTHORING.md:152  «code compliant»  ⟵ negated by 'does not mean'
+    · PHASE9-DOCUMENTATION.md:128  «code compliant»  ⟵ negated by 'asserted absent'
+    · PHASE9-DOCUMENTATION.md:156  «certified»  ⟵ negated by 'declared restricted'
+  ✓ every whitelisted occurrence names its file, its line and the marker that justified it — the whitelist is visible, not hidden
+  ✓ the negation vocabulary is a short declared list, not an open door
+
+  عدّ المواضع في سطح الواجهة المشحون (قشرة + وحدات + أنماط):
+    · «certified»  now=6  pre-split baseline=6
+    · «code compliant»  now=5  pre-split baseline=5
+    · «مطابق للكود»  now=1  pre-split baseline=1
+  ✓ the split lost NO scanner coverage: every claim token the single-file page carried is still found in the shipped frontend surface
+  ✓ the frontend occurrences now live in the modules, not in the shell — and they are still classified, not skipped
+  ✓ no shipped frontend file asserts compliance outside a negation context
+  ✓ the app stylesheet was scanned too (a claim can be shipped as CSS content)
+  ✓ the scanner is not vacuous — it flags a bare claim with no negation nearby
+
+── ب · حالة المطابقة تبقى NOT_EVALUATED ──
+  ✓ acs_authoring.py emits compliance as NOT_EVALUATED
+  ✓ no other compliance status is emitted anywhere in the authoring layer
+  ✓ acs_authoring.json declares compliance_status NOT_EVALUATED
+  ✓ and says plainly that a valid transaction is not a compliance statement
+  ✓ _understand_payload exists exactly once in the API layer
+  ✓ the understand payload carries a compliance block
+  ✓ every /v1/understand response reports compliance.status = NOT_EVALUATED
+  ✓ and says in the response itself that this is not a code-compliance check
+  ✓ no competing compliance verdict is hard-coded anywhere in the API layer
+
+── ج · حدّ الخصوصية في السجلّ والتليمتري ──
+  ✓ FORBIDDEN_FIELDS covers text, description, prompt, building, api_key and authorization
+  ✓ it also covers the raw reply and the cookie header
+  ✓ the generation telemetry channel declares a closed field list
+  ✓ ACS_RAW_DUMP_ENABLED defaults to OFF when unset
+  ✓ an EMPTY value still means OFF — and does not crash the boot path
+  ✓ an unparsable value means OFF, never ON by accident
+  ✓ it turns on only when the operator sets it explicitly
+  ✓ the raw-dump status is off, restricted, rotated and never exposes a path
+  ✓ the raw dump keeps a bounded number of files, declared in the environment
+  ✓ the new privacy switches are declared in .env.example with empty-safe defaults
+  ✓ the raw dump path is never returned to the client — the API layer never mentions it
+  ✓ with the switch off nothing is written at all — no file, no directory
+{"chars": 40, "event": "raw_dump_written", "kept": 2, "level": "warn", "service": "ACS Understanding Engine", "stage": "extract_json", "ts": "2026-09-06T12:57:25Z"}
+{"chars": 40, "event": "raw_dump_written", "kept": 2, "level": "warn", "service": "ACS Understanding Engine", "stage": "extract_json", "ts": "2026-09-06T12:57:25Z"}
+{"chars": 40, "event": "raw_dump_written", "kept": 2, "level": "warn", "service": "ACS Understanding Engine", "stage": "extract_json", "ts": "2026-09-06T12:57:25Z"}
+{"chars": 40, "event": "raw_dump_written", "kept": 2, "level": "warn", "service": "ACS Understanding Engine", "stage": "extract_json", "ts": "2026-09-06T12:57:25Z"}
+  ✓ with the switch on, at most ACS_RAW_DUMP_KEEP files survive rotation
+  ✓ the dump directory is restricted to the owner (0700)
+  ✓ every dump file is created 0600 — os.open with an explicit mode, not open()
+  ✓ the existing E.redact() filtering still applies to what is written
+  ✓ os.open with an explicit 0o600 mode is the write path in the source
+
+── د · الرفع لا يكتب بايتات المستخدم على القرص ──
+  ✓ acs_upload_security reports writes_temp_files = False
+  ✓ and reports that no filename is ever used as a path
+  ✓ the module creates no temporary file — proven on the syntax tree, not by grepping (the word survives only in the comment explaining the fix)
+  ✓ and its own source says the defect was writing the upload to mkstemp
+
+── هـ · صفحة الخصوصية والاستخدام ──
+  ✓ public/privacy.html exists
+  ✓ it parses as HTML without error
+  ✓ the document declares <html lang="ar" dir="rtl">
+  ✓ it has a non-empty <title>
+  ✓ it has a <meta name="description"> with real content
+  ✓ it declares <meta name="robots" content="index,follow">
+  ✓ it references no http:// resource
+  ✓ it references no external https:// resource
+  ✓ CSP · it carries no inline event handler attribute
+  ✓ CSP · it loads no script at all, inline or external
+  ✓ CSP · it needs no eval
+  ✓ CSP · its styling is an inline <style>, which the site policy allows
+  ✓ the page is bilingual — Arabic primary, English secondary
+  ✓ the page states what is transmitted to the provider
+  ✓ the page states that uploaded images and PDF go to the provider too
+  ✓ the page states that the user must not upload secrets
+  ✓ the page states that project data lives in the browser
+  ✓ the page states that the server does not persist project models
+  ✓ the page states what is NOT stored
+  ✓ the page states that the provider is configured by the operator
+  ✓ the page states that retention depends on the operator contract, with no claim of our own
+  ✓ the page makes no unsupported retention or deletion promise
+  ✓ the page states the compliance limit as well — output is NOT_EVALUATED
+
+──────────────────────────────────────────────────────────────
+PRIVACY BOUNDARY: 63 passed, 0 failed

@@ -366,9 +366,9 @@ def main():
         except KeyError:
             bad = True
         chk("اسم هدف من خارج القائمة المعلنة يُرفض", bad)
-        chk("والقائمة المعلنة محصورة في وحدتين معروفتين لا اسم يصل من الشبكة",
+        chk("والقائمة المعلنة محصورة في ثلاث وحدات معروفة لا اسم يصل من الشبكة",
             set(m for m, _ in CPU.TARGETS.values())
-            == {"acs_upload_security", "acs_engineering_authority"},
+            == {"acs_upload_security", "acs_engineering_authority", "acs_validate"},
             json.dumps(sorted(CPU.TARGETS)))
 
         print("\n== ح · لا مدقّق متزامن باقٍ في أي معالج ==")
@@ -378,9 +378,9 @@ def main():
         sync_calls = re.findall(r"(?<!await )UPLOAD\.validate_\w+\(", api)
         chk("صفر نداء UPLOAD.validate_* متزامن في acs_understand_api",
             not sync_calls, json.dumps(sync_calls))
-        # خمسة: صور · PDF · JSON · مخطّط سلطة التغيير · الفرق المسطَّح.
-        chk("وخمسة نداءات ثقيلة كلّها عبر المجمّع",
-            len(re.findall(r"await _validate\(", api)) == 5,
+        # ستة: صور · PDF · JSON · مخطّط سلطة التغيير · الفرق · تحقق النموذج.
+        chk("وستة نداءات ثقيلة كلّها عبر المجمّع",
+            len(re.findall(r"await _validate\(", api)) == 6,
             str(len(re.findall(r"await _validate\(", api))))
         chk("والإشباع يُترجَم 429 والمهلة 504 لا 500",
             "E.ACS_RATE_LIMITED" in api and "E.ACS_TIMEOUT" in api)

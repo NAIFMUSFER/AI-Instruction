@@ -250,9 +250,20 @@ chk('every /v1/understand response reports compliance.status = NOT_EVALUATED',
 chk('and says in the response itself that this is not a code-compliance check',
     isinstance(_note, str) and 'مطابقة' in _note and len(_note) > 20,
     str(_note)[:120])
-_status_literals = set(re.findall(r'"status"\s*:\s*"([A-Z_]+)"', API_SRC))
+_status_literals = set()
+for _node in ast.walk(API_TREE):
+    if not isinstance(_node, ast.Dict):
+        continue
+    for _key, _value in zip(_node.keys, _node.values):
+        if not (isinstance(_key, ast.Constant) and _key.value == 'compliance'
+                and isinstance(_value, ast.Dict)):
+            continue
+        for _ck, _cv in zip(_value.keys, _value.values):
+            if (isinstance(_ck, ast.Constant) and _ck.value == 'status'
+                    and isinstance(_cv, ast.Constant)):
+                _status_literals.add(_cv.value)
 chk('no competing compliance verdict is hard-coded anywhere in the API layer',
-    _status_literals <= {'NOT_EVALUATED'}, ', '.join(sorted(_status_literals)))
+    _status_literals == {'NOT_EVALUATED'}, ', '.join(sorted(_status_literals)))
 
 # ═════════════════════════ ج) حدّ الخصوصية في التليمتري والسجلّ ═════════════
 print('\n── ج · حدّ الخصوصية في السجلّ والتليمتري ──')

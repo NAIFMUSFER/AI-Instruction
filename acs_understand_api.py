@@ -777,6 +777,9 @@ async def _understand_payload(building):
     authority, normalised = await _engineering_authority(building)
     if isinstance(normalised, dict) and normalised.get("floors") is not None:
         building = normalised
+    # Validate the model actually returned, after normalisation. A stored
+    # generation count is historical metadata, not a result for this model.
+    issues, validation_stats = await _validate("validate_building", building)
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
     return {"ok": True, "building": building, "levels": len(building["levels"]),
@@ -788,7 +791,10 @@ async def _understand_payload(building):
             "compliance": {"status": "NOT_EVALUATED",
                            "note": "لا حزمة أنظمة موثّقة محمّلة — هذا تحقّق نموذج "
                                    "هندسي وليس مطابقة أنظمة."},
-            "issues": meta.get("acs_issues", 0), "report": _report(building)}
+            "issues": len(issues),
+            "model_validation": {"status": "COMPLETED", "scope": "acs_validate",
+                                 "issues": issues, "stats": validation_stats},
+            "report": _report(building)}
 
 
 @app.post("/v1/understand")

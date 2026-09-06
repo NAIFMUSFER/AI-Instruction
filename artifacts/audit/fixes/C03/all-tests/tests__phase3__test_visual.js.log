@@ -1,0 +1,200 @@
+
+== §1 — SPEC INTEGRITY AND NO-DRIFT ==
+  ✓ browser spec is byte-identical to acs_visual.json
+  ✓ schema and compiler version are pinned
+  ✓ all nine visual modes are declared
+  ✓ every material is classified VISUAL_MATERIAL and nothing else
+  ✓ no material in the library carries an engineering property
+  ✓ material provenance separates SYSTEM_DEFAULT from USER
+  ✓ the spec forbids treating a render as measured or as-built
+  ✓ the spec names no code, standard or authority
+  ✓ the AI may not change any layout feature
+
+== §2 — NO ENGINEERING GEOMETRY MUTATION ==
+  ✓ compiling a scene mutates no source model
+  ✓ every visual mode leaves the model untouched
+  ✓ every discipline model is byte-identical after visualisation
+  ✓ every theme leaves the compiled architecture identical
+  ✓ every quality profile leaves the compiled architecture identical
+  ✓ the summary states no engineering geometry was modified
+  ✓ no scene contains a geometry-generation or redesign claim
+
+== §3 — OBJECTS ARE DERIVED, NEVER AUTHORED ==
+  ✓ every non-visual object names the model element it came from
+  ✓ every source element id resolves in the architectural model
+  ✓ wall count in the scene equals the wall count in the model
+  ✓ opening count in the scene equals the opening count in the model
+  ✓ an object sized from a render fallback says so
+  ✓ no display fallback is relabelled as a model dimension
+  ✓ the visual roof cap is visual-only and never a modelled roof
+  ✓ a model that states a roof gets no visual cap
+
+== §4 — VISUAL MODES ==
+  ✓ every declared mode compiles
+  ✓ an unknown mode falls back to PRESENTATION rather than inventing one
+  ✓ ENGINEERING mode shows every discipline
+  ✓ ENGINEERING mode is still available and technically styled
+  ✓ ARCHITECTURAL mode applies finishes rather than technical shading
+  ✓ ARCHITECTURAL mode adds ceilings that ENGINEERING mode omits
+  ✓ PRESENTATION mode carries a sky, exposure and tone mapping
+  ✓ every mode reports the same model hash for the same model
+
+== §5 — MATERIALS AND PROVENANCE ==
+  ✓ every emitted material is VISUAL_MATERIAL
+  ✓ no emitted material carries a fire, thermal or structural property
+  ✓ a material chosen by the system is SYSTEM_DEFAULT, not a user requirement
+  ✓ a material chosen by a theme is VISUAL_THEME, not a user requirement
+  ✓ a material stated by the user is USER
+  ✓ an AI-suggested material stays AI_SUGGESTED
+  ✓ an unknown material never silently becomes a real one
+  ✓ a material name is never treated as an engineering material
+
+== §6 — THEMES CHANGE APPEARANCE ONLY ==
+  ✓ a theme changes the finishes it selects
+  ✓ a theme changes no room dimension, opening or level
+  ✓ an unknown theme falls back to the default rather than inventing one
+  ✓ a theme never changes the building type or level count
+
+== §7 — DECORATION IS NOT ENGINEERING DATA ==
+  ✓ decoration is emitted only when explicitly requested
+  ✓ every decoration object is VISUAL_ONLY and never semantic
+  ✓ no decoration object references a model element
+  ✓ decoration is excluded from the engineering export
+  ✓ decoration appears only in an explicitly requested presentation export
+  ✓ a user-requested object stays engineering data and is never re-labelled
+  ✓ decoration never enters an occupant, coverage or load count
+  ✓ decoration counts are reported separately from semantic objects
+  ✓ entourage is visual-only and never an occupant
+
+== §8 — SITE, LANDSCAPE AND WATER ==
+  ✓ a stated site produces a ground plane at the stated size
+  ✓ a model with no site still renders, and says the extent is not a boundary
+  ✓ the ground plane is always visual-only
+  ✓ landscape objects are visual-only and separately layered
+  ✓ water is emitted only for a represented water feature
+  ✓ no pool is ever invented in any fixture
+  ✓ no road, parking or fence is invented
+
+== §9 — DOLLHOUSE AND CUTAWAY ==
+  ✓ dollhouse hides the roof and ceilings
+  ✓ dollhouse states a clip height rather than shortening a wall
+  ✓ dollhouse generates no second model — the geometry is identical
+  ✓ dollhouse is reversible
+  ✓ every room keeps its exact position and size in dollhouse
+  ✓ cutaway records a clipping plane, not a geometry edit
+  ✓ an unknown cutaway method falls back rather than failing
+  ✓ cutaway leaves the architectural geometry identical
+
+== §10 — 2D FLOOR PLANS ==
+  ✓ the plan projects the real walls of that level
+  ✓ the plan projects the real openings of that level
+  ✓ the plan carries room boundaries, names and labels
+  ✓ the plan carries stairs where a core serves the level
+  ✓ two levels give two different plans
+  ✓ a level that does not exist reports so instead of inventing one
+  ✓ every plan style yields the same geometry
+  ✓ the plan makes no CAD-grade claim
+  ✓ the plan never claims compliance or adequacy
+
+== §11 — DIMENSIONS COME FROM THE MODEL ONLY ==
+  ✓ every stated dimension is sourced model
+  ✓ room widths and depths match the model rectangles
+  ✓ wall lengths match the model
+  ✓ an unknown dimension is null with source unknown, never fabricated
+  ✓ no dimension is invented for a model with no rooms
+
+== §12 — SECTIONS ==
+  ✓ the section reports every level of the model
+  ✓ the section cuts real walls
+  ✓ a section through a door shows the opening
+  ✓ a section outside the building cuts nothing rather than inventing
+  ✓ the section shows the stair core where the plane crosses it
+  ✓ both section axes work and differ
+  ✓ an unknown axis falls back rather than failing
+  ✓ the section draws no structural or code conclusion
+
+== §13 — ELEVATIONS ==
+  ✓ all four faces are produced
+  ✓ an elevation uses real envelope walls
+  ✓ no opening is invented to balance a facade
+  ✓ a model with real windows shows them on the matching facade
+  ✓ a facade with no openings honestly shows none
+  ✓ an unknown face falls back rather than inventing one
+  ✓ four faces are not identical
+
+== §14 — CAMERAS AND FRAMING ==
+  ✓ every camera preset is produced
+  ✓ framing is computed from the model bounds with a stated margin
+  ✓ the exterior camera sits outside the building bounds
+  ✓ the top camera sits above the building
+  ✓ the section and elevation cameras are orthographic
+  ✓ the interior camera stands at eye height inside the model
+  ✓ camera metadata is declared presentation state, not model truth
+  ✓ changing the camera regenerates no geometry
+  ✓ a bigger building is framed from further away
+  ✓ an unknown camera preset returns nothing rather than guessing
+
+== §15 — LIGHTING, DAY/NIGHT AND SHADOWS ==
+  ✓ the light rig carries sun, sky and ambient
+  ✓ every presentation light is declared visual-only
+  ✓ no presentation light is treated as an MEP luminaire
+  ✓ the three lighting presets differ
+  ✓ night places emitters only at represented fixtures
+  ✓ a model with no fixtures gets no interior emitters at night
+  ✓ no lighting adequacy, lux or illuminance is ever claimed
+  ✓ shadows are a quality setting, never a geometry change
+  ✓ an unknown lighting preset falls back to the default
+
+== §16 — QUALITY, LOD AND INSTANCING ==
+  ✓ all four quality profiles are available
+  ✓ quality changes pixel ratio, shadow map and textures but not geometry
+  ✓ an unknown quality profile falls back to the default
+  ✓ LOD drops visual-only detail and never a modelled element
+  ✓ LOD never drops a modelled element even at a tiny budget
+  ✓ instancing groups only visual-only repeated objects
+  ✓ no modelled element is ever merged into an instance group
+
+== §17 — SNAPSHOTS AND RENDER METADATA ==
+  ✓ a snapshot request records size, format and camera
+  ✓ an absurd resolution is clamped and the clamp is reported
+  ✓ an unsupported format is refused rather than silently accepted
+  ✓ render metadata carries the model hash and building id
+  ✓ render metadata carries camera, mode, theme, lighting and quality
+  ✓ a deterministic render is authorised as an engineering view of the model
+  ✓ the render id is deterministic for the same inputs
+  ✓ a different camera gives a different render id
+
+== §18 — REVISION INTEGRITY OF A RENDER ==
+  ✓ a render of the unchanged model is CURRENT
+  ✓ a render of a changed model is STALE, never relabelled current
+  ✓ a render with no hash is UNVERIFIABLE rather than assumed current
+  ✓ presentation state is declared outside the revision hash
+  ✓ the presentation block is additive and separate
+
+== §19 — AI ENHANCEMENT IS DOWNSTREAM AND POWERLESS ==
+  ✓ the pipeline starts at the canonical model and ends at the image
+  ✓ a deterministic base render is required before enhancement
+  ✓ the request cannot write to the model
+  ✓ no image generator is shipped and no network call is made
+  ✓ the request carries the geometry signature the AI must not change
+  ✓ an AI image is authorised as VISUALISATION, never as the model
+  ✓ an AI render is never marked an engineering model
+  ✓ an unknown render kind falls back to deterministic rather than to AI
+  ✓ the AI may change appearance but not layout
+
+== §20 — CONTROL BUFFERS AND DRIFT DETECTION ==
+  ✓ all six control buffers are available
+  ✓ buffers are deterministic passes over the real geometry
+  ✓ the object-id buffer lists only modelled objects
+  ✓ a matching image reports no drift
+  ✓ a wrong door count is flagged VISUAL_GEOMETRY_DRIFT
+  ✓ a wrong floor count is flagged specifically
+  ✓ a wrong footprint is flagged specifically
+  ✓ a footprint within tolerance is not flagged
+  ✓ an image claiming another model hash is flagged
+  ✓ drift never rewrites the model and never accepts the image as geometry
+  ✓ drift findings are ERROR-severity data findings only
+
+== §21 — LAYERS, ENGINEERING VS PRESENTATION ==
+  ✓ all seven presentation-facing layers are toggleable
+  ✓ a presentation view may hide a technical layer

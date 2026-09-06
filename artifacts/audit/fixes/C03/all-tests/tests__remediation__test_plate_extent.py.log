@@ -1,0 +1,178 @@
+
+== أ · THE POLICY IS DECLARED AND PROVENANCED, NOT SILENT ==
+  ✓ the new plate policy is named
+  ✓ the policy it replaces is recorded by name
+  ✓ what pinned the previous policy is recorded
+  ✓ the reason for the change is recorded in the same object
+  ✓ the policy names ONE extent source, so there is no second calculator
+  ✓ the policy declares the site plane separate and site-sized
+  ✓ the policy declares itself presentational: no model, no areas, no quantities, no hash
+  ✓ the policy accessor hands out a copy, so a caller cannot mutate it
+  ✓ the canonical transform contract already declares the same rule
+
+== ب · THE SINGLE EXTENT CONTRACT ==
+  ✓ rooms present ⇒ the extent is the level room union, declared as such
+  ✓ the union is exact, not padded
+  ✓ no rooms ⇒ the site is used, and the fallback is DECLARED not silent
+  ✓ neither rooms nor site ⇒ UNRESOLVED, never an invented rectangle
+  ✓ degenerate room rectangles are dropped, not turned into extent
+
+== ج · THE DEFECT REPRODUCED ON EVERY FIXTURE ==
+  ✓ the regression fixtures ship with the tests
+  ✓ every fixture declares its provenance honestly and none claims to be a captured production model
+  ✓ footprint_equals_site L0: the footprint EQUALS the site, so the plate stays site-sized — the policy shrinks nothing it should not
+  ✓ irregular_multi_room L0: the OLD site-wide rule overhung the footprint by 10.3x — this is the reported floating plate
+  ✓ irregular_multi_room L0: the NEW rule equals the level room union exactly
+  ✓ irregular_multi_room L1: the OLD site-wide rule overhung the footprint by 12.1x — this is the reported floating plate
+  ✓ irregular_multi_room L1: the NEW rule equals the level room union exactly
+  ✓ l_shaped_footprint L0: the OLD site-wide rule overhung the footprint by 2.5x — this is the reported floating plate
+  ✓ l_shaped_footprint L0: the NEW rule equals the level room union exactly
+  ✓ l_shaped_footprint L1: the OLD site-wide rule overhung the footprint by 2.5x — this is the reported floating plate
+  ✓ l_shaped_footprint L1: the NEW rule equals the level room union exactly
+  ✓ stacked_setback_floors L0: the OLD site-wide rule overhung the footprint by 3.7x — this is the reported floating plate
+  ✓ stacked_setback_floors L0: the NEW rule equals the level room union exactly
+  ✓ stacked_setback_floors L1: the OLD site-wide rule overhung the footprint by 5.5x — this is the reported floating plate
+  ✓ stacked_setback_floors L1: the NEW rule equals the level room union exactly
+  ✓ stacked_setback_floors L2: the OLD site-wide rule overhung the footprint by 14.7x — this is the reported floating plate
+  ✓ stacked_setback_floors L2: the NEW rule equals the level room union exactly
+  ✓ stair_void_footprint L0: the OLD site-wide rule overhung the footprint by 6.0x — this is the reported floating plate
+  ✓ stair_void_footprint L0: the NEW rule equals the level room union exactly
+  ✓ stair_void_footprint L1: the OLD site-wide rule overhung the footprint by 6.0x — this is the reported floating plate
+  ✓ stair_void_footprint L1: the NEW rule equals the level room union exactly
+  ✓ villa_small_on_large_plot L0: the OLD site-wide rule overhung the footprint by 7.0x — this is the reported floating plate
+  ✓ villa_small_on_large_plot L0: the NEW rule equals the level room union exactly
+  ✓ villa_small_on_large_plot L1: the OLD site-wide rule overhung the footprint by 7.0x — this is the reported floating plate
+  ✓ villa_small_on_large_plot L1: the NEW rule equals the level room union exactly
+
+== د · WHAT build_level ACTUALLY EMITS ==
+  ✓ footprint_equals_site L0: the level emitted slab geometry at all
+  ✓ footprint_equals_site L0: NO slab geometry extends beyond the level room-footprint union
+  ✓ footprint_equals_site L0: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ footprint_equals_site L0: every slab is tagged FLOOR|F0|slab|k, never SITE
+  ✓ irregular_multi_room L0: the level emitted slab geometry at all
+  ✓ irregular_multi_room L0: NO slab geometry extends beyond the level room-footprint union
+  ✓ irregular_multi_room L0: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ irregular_multi_room L0: every slab is tagged FLOOR|F0|slab|k, never SITE
+  ✓ irregular_multi_room L0: the emitted plate is strictly smaller than the site rectangle
+  ✓ irregular_multi_room L1: the level emitted slab geometry at all
+  ✓ irregular_multi_room L1: NO slab geometry extends beyond the level room-footprint union
+  ✓ irregular_multi_room L1: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ irregular_multi_room L1: every slab is tagged FLOOR|F1|slab|k, never SITE
+  ✓ irregular_multi_room L1: the emitted plate is strictly smaller than the site rectangle
+  ✓ l_shaped_footprint L0: the level emitted slab geometry at all
+  ✓ l_shaped_footprint L0: NO slab geometry extends beyond the level room-footprint union
+  ✓ l_shaped_footprint L0: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ l_shaped_footprint L0: every slab is tagged FLOOR|F0|slab|k, never SITE
+  ✓ l_shaped_footprint L0: the emitted plate is strictly smaller than the site rectangle
+  ✓ l_shaped_footprint L1: the level emitted slab geometry at all
+  ✓ l_shaped_footprint L1: NO slab geometry extends beyond the level room-footprint union
+  ✓ l_shaped_footprint L1: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ l_shaped_footprint L1: every slab is tagged FLOOR|F1|slab|k, never SITE
+  ✓ l_shaped_footprint L1: the emitted plate is strictly smaller than the site rectangle
+  ✓ stacked_setback_floors L0: the level emitted slab geometry at all
+  ✓ stacked_setback_floors L0: NO slab geometry extends beyond the level room-footprint union
+  ✓ stacked_setback_floors L0: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ stacked_setback_floors L0: every slab is tagged FLOOR|F0|slab|k, never SITE
+  ✓ stacked_setback_floors L0: the emitted plate is strictly smaller than the site rectangle
+  ✓ stacked_setback_floors L1: the level emitted slab geometry at all
+  ✓ stacked_setback_floors L1: NO slab geometry extends beyond the level room-footprint union
+  ✓ stacked_setback_floors L1: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ stacked_setback_floors L1: every slab is tagged FLOOR|F1|slab|k, never SITE
+  ✓ stacked_setback_floors L1: the emitted plate is strictly smaller than the site rectangle
+  ✓ stacked_setback_floors L2: the level emitted slab geometry at all
+  ✓ stacked_setback_floors L2: NO slab geometry extends beyond the level room-footprint union
+  ✓ stacked_setback_floors L2: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ stacked_setback_floors L2: every slab is tagged FLOOR|F2|slab|k, never SITE
+  ✓ stacked_setback_floors L2: the emitted plate is strictly smaller than the site rectangle
+  ✓ stair_void_footprint L0: the level emitted slab geometry at all
+  ✓ stair_void_footprint L0: NO slab geometry extends beyond the level room-footprint union
+  ✓ stair_void_footprint L0: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ stair_void_footprint L0: every slab is tagged FLOOR|F0|slab|k, never SITE
+  ✓ stair_void_footprint L0: the emitted plate is strictly smaller than the site rectangle
+  ✓ stair_void_footprint L1: the level emitted slab geometry at all
+  ✓ stair_void_footprint L1: NO slab geometry extends beyond the level room-footprint union
+  ✓ stair_void_footprint L1: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ stair_void_footprint L1: every slab is tagged FLOOR|F1|slab|k, never SITE
+  ✓ stair_void_footprint L1: the emitted plate is strictly smaller than the site rectangle
+  ✓ villa_small_on_large_plot L0: the level emitted slab geometry at all
+  ✓ villa_small_on_large_plot L0: NO slab geometry extends beyond the level room-footprint union
+  ✓ villa_small_on_large_plot L0: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ villa_small_on_large_plot L0: every slab is tagged FLOOR|F0|slab|k, never SITE
+  ✓ villa_small_on_large_plot L0: the emitted plate is strictly smaller than the site rectangle
+  ✓ villa_small_on_large_plot L1: the level emitted slab geometry at all
+  ✓ villa_small_on_large_plot L1: NO slab geometry extends beyond the level room-footprint union
+  ✓ villa_small_on_large_plot L1: every slab keeps the declared 0.15 m thickness and sits at its own level elevation, applied exactly once
+  ✓ villa_small_on_large_plot L1: every slab is tagged FLOOR|F1|slab|k, never SITE
+  ✓ villa_small_on_large_plot L1: the emitted plate is strictly smaller than the site rectangle
+  ✓ the check above is not vacuous: the OLD site-wide plate WOULD have failed it
+
+== هـ · THE SITE PLANE IS SEPARATE AND STILL SITE-SIZED ==
+  ✓ footprint_equals_site: exactly one site/ground presentation plane is emitted
+  ✓ footprint_equals_site: the site plane spans the FULL site rectangle
+  ✓ footprint_equals_site: the site plane is NOT a level slab — separate tag, separate elevation, below every level plate
+  ✓ footprint_equals_site: the level slabs never carry the SITE tag
+  ✓ irregular_multi_room: exactly one site/ground presentation plane is emitted
+  ✓ irregular_multi_room: the site plane spans the FULL site rectangle
+  ✓ irregular_multi_room: the site plane is NOT a level slab — separate tag, separate elevation, below every level plate
+  ✓ irregular_multi_room: the level slabs never carry the SITE tag
+  ✓ l_shaped_footprint: exactly one site/ground presentation plane is emitted
+  ✓ l_shaped_footprint: the site plane spans the FULL site rectangle
+  ✓ l_shaped_footprint: the site plane is NOT a level slab — separate tag, separate elevation, below every level plate
+  ✓ l_shaped_footprint: the level slabs never carry the SITE tag
+  ✓ stacked_setback_floors: exactly one site/ground presentation plane is emitted
+  ✓ stacked_setback_floors: the site plane spans the FULL site rectangle
+  ✓ stacked_setback_floors: the site plane is NOT a level slab — separate tag, separate elevation, below every level plate
+  ✓ stacked_setback_floors: the level slabs never carry the SITE tag
+  ✓ stair_void_footprint: exactly one site/ground presentation plane is emitted
+  ✓ stair_void_footprint: the site plane spans the FULL site rectangle
+  ✓ stair_void_footprint: the site plane is NOT a level slab — separate tag, separate elevation, below every level plate
+  ✓ stair_void_footprint: the level slabs never carry the SITE tag
+  ✓ villa_small_on_large_plot: exactly one site/ground presentation plane is emitted
+  ✓ villa_small_on_large_plot: the site plane spans the FULL site rectangle
+  ✓ villa_small_on_large_plot: the site plane is NOT a level slab — separate tag, separate elevation, below every level plate
+  ✓ villa_small_on_large_plot: the level slabs never carry the SITE tag
+  ✓ a model with no usable site rectangle gets NO invented site plane
+
+== و · VOIDS ARE STILL SUBTRACTED ==
+  ✓ the stair core really produces a void on the upper level
+  ✓ the void forces the plate to be cut into several strips
+  ✓ no slab strip covers the centre of the void — the opening is really open
+  ✓ the slab area equals the footprint area MINUS the void area exactly (174.960 m²)
+  ✓ the ground level, which has no void, is still ONE whole plate
+  ✓ the emitted strips ARE the shared contract output, strip for strip
+  ✓ a hole outside the plate changes nothing
+  ✓ no holes ⇒ exactly one strip covering the whole plate
+
+== ز · THE QUANTITIES STAY CANONICAL ==
+  ✓ footprint_equals_site: every room rectangle is byte-identical after compilation
+  ✓ footprint_equals_site: every room area is byte-identical after compilation
+  ✓ footprint_equals_site: the whole model is byte-identical — compilation reads, never writes
+  ✓ irregular_multi_room: every room rectangle is byte-identical after compilation
+  ✓ irregular_multi_room: every room area is byte-identical after compilation
+  ✓ irregular_multi_room: the whole model is byte-identical — compilation reads, never writes
+  ✓ l_shaped_footprint: every room rectangle is byte-identical after compilation
+  ✓ l_shaped_footprint: every room area is byte-identical after compilation
+  ✓ l_shaped_footprint: the whole model is byte-identical — compilation reads, never writes
+  ✓ stacked_setback_floors: every room rectangle is byte-identical after compilation
+  ✓ stacked_setback_floors: every room area is byte-identical after compilation
+  ✓ stacked_setback_floors: the whole model is byte-identical — compilation reads, never writes
+  ✓ stair_void_footprint: every room rectangle is byte-identical after compilation
+  ✓ stair_void_footprint: every room area is byte-identical after compilation
+  ✓ stair_void_footprint: the whole model is byte-identical — compilation reads, never writes
+  ✓ villa_small_on_large_plot: every room rectangle is byte-identical after compilation
+  ✓ villa_small_on_large_plot: every room area is byte-identical after compilation
+  ✓ villa_small_on_large_plot: the whole model is byte-identical — compilation reads, never writes
+
+== ح · PYTHON AND THE BROWSER SHARE ONE CONTRACT ==
+  ✓ the browser compiler lives in a shipped module, not in the page shell
+  ✓ the Python compiler imports the shared contract instead of computing its own extent
+  ✓ the OLD site-wide plate line is gone from the Python compiler
+  ✓ the OLD site-wide plate call is gone from the shipped page
+  ✓ the shipped page derives the plate from the same contract
+  ✓ the page ships the policy object and its predecessor, so the browser can report the provenance too
+  ✓ the alignment reporter measures the RENDERED plate, not the convention
+  ✓ the browser site plane is declared separate and outside the building group
+  ✓ the browser strip routine still subtracts holes and is not a stub
+
+──────────────────────────────────────────────────────────────
+PLATE EXTENT: 159 passed, 0 failed
