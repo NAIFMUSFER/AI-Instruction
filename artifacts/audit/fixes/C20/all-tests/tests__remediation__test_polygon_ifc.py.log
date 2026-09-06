@@ -1,0 +1,12 @@
+test_actual_space_and_slab_profiles_keep_l_area (__main__.PolygonIfc.test_actual_space_and_slab_profiles_keep_l_area) ... ok
+test_diagonal_shared_wall_and_opening_use_canonical_host (__main__.PolygonIfc.test_diagonal_shared_wall_and_opening_use_canonical_host) ... ok
+test_negative_origin_preserved_with_local_profile_coordinates (__main__.PolygonIfc.test_negative_origin_preserved_with_local_profile_coordinates) ... ok
+test_reverse_edge_offset_is_reported_from_the_canonical_host_start (__main__.PolygonIfc.test_reverse_edge_offset_is_reported_from_the_canonical_host_start) ... ok
+test_self_intersection_is_refused_without_rectangular_substitute (__main__.PolygonIfc.test_self_intersection_is_refused_without_rectangular_substitute) ... ok
+test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated (__main__.PolygonIfc.test_unresolved_or_out_of_edge_opening_is_not_dropped_or_relocated) ... ok
+test_upper_slab_retains_core_hole (__main__.PolygonIfc.test_upper_slab_retains_core_hole) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.017s
+
+OK

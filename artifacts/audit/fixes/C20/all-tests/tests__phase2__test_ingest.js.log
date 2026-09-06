@@ -1,0 +1,238 @@
+
+== §36 — NO REAL REGULATORY CONTENT ==
+  ✓ verified regulatory rules = 0
+  ✓ every fixture document is synthetic and not official
+  ✓ every proposed rule is synthetic TEST_ONLY
+  ✓ no SBC/IBC/NFPA/ADA/Civil-Defense text anywhere in the fixtures
+  ✓ no fabricated regulatory URL
+  ✓ no fixture document carries a page number
+  ✓ only the two intentional defect fixtures are flagged
+
+== §39 — SINGLE CANONICAL FIXTURE SET (drift test) ==
+  ✓ embedded browser fixtures are byte-identical to acs_ingest.json
+  ✓ schema and pipeline version match
+  ✓ state machines come from one source
+  ✓ no hand-maintained duplication of rule content
+
+== §3 — DOCUMENT INTEGRITY (real SHA-256) ==
+  ✓ recorded hash matches the document bytes
+  ✓ hash is a 64-hex digest
+  ✓ a single changed byte changes the hash
+  ✓ editions 1 and 2 are distinct documents with distinct hashes
+  ✓ identity is not the filename
+  ✓ SHA-256 matches the reference vector for the empty string
+
+== §2 — SOURCE VERIFICATION STATES ==
+  ✓ starts UNVERIFIED
+  ✓ UNVERIFIED → CONTENT_VERIFIED is not a legal jump
+  ✓ transition needs a method
+  ✓ transition needs recorded evidence
+  ✓ SOURCE_IDENTIFIED reached with method + evidence
+  ✓ OFFICIAL_SOURCE_VERIFIED refused: title looks official but source is not marked official
+  ✓ OFFICIAL_SOURCE_VERIFIED and CONTENT_VERIFIED are different states
+  ✓ CONTENT_VERIFIED reached from SOURCE_IDENTIFIED
+  ✓ all seven source states exist
+  ✓ REVOKED is terminal
+  ✓ history records the transitions
+
+== §5/§6/§25 — CLAUSE FRAGMENTS, COPYRIGHT-SAFE ==
+  ✓ fragments carry section/clause/kind and a pointer
+  ✓ every excerpt stays inside the permitted limit
+  ✓ an oversized excerpt is rejected (no standard reproduction)
+  ✓ a fragment with neither excerpt nor pointer is rejected
+  ✓ table fragments keep their table identity
+  ✓ definition fragments are a distinct kind
+  ✓ source text, fragment, candidate and rule stay four separate objects
+  ✓ audit export carries no source text
+
+== §27 — UNVERIFIED SOURCE CANNOT YIELD A VERIFIED RULE ==
+  ✓ verification refused while the document is UNVERIFIED
+  ✓ reason names the source status
+  ✓ candidate status unchanged
+  ✓ after explicit content verification the candidate becomes verifiable
+
+== §28 — SOURCE HASH MISMATCH ==
+  ✓ candidate pinned to a stale hash is REJECTED
+  ✓ verification refused with SOURCE_HASH_MISMATCH
+  ✓ candidate verifies against the current bytes
+  ✓ verification is valid right after
+  ✓ changed document bytes invalidate the earlier verification
+  ✓ the stale verification record is not silently updated
+
+== §29 — MISSING CLAUSE / BROKEN REFERENCE ==
+  ✓ missing fragment is reported as BROKEN_SOURCE_REFERENCE
+  ✓ candidate assessed REJECTED
+  ✓ verification refused
+  ✓ no activation possible from it
+
+== §30 — AI-ASSISTED CANDIDATE ==
+  ✓ AI-assisted candidate is structurally valid
+  ✓ it is still only READY_FOR_VERIFICATION, never VERIFIED
+  ✓ AI cannot verify it
+  ✓ an unknown method cannot verify it
+  ✓ explicit manual approval does verify it
+  ✓ ai_assisted is preserved in the verification record
+  ✓ AI assistance did not reduce any evidence requirement
+
+== §33 — EXCEPTIONS AND CROSS REFERENCES ==
+  ✓ open exception ⇒ NEEDS_EXCEPTION_REVIEW
+  ✓ verification refused while the exception is open
+  ✓ the exception is not silently dropped
+  ✓ declaring the exception unsupported is an allowed, recorded resolution
+  ✓ the exception still travels with the verified rule
+  ✓ unresolved cross reference ⇒ NEEDS_CROSS_REFERENCE
+  ✓ verification refused
+  ✓ a "resolved" reference pointing nowhere is still broken
+  ✓ a genuinely resolved reference clears the block
+  ✓ a missing definition fragment blocks verification
+
+== §18 — TABLE CONTEXT PRESERVED ==
+  ✓ table row/column/conditions retained
+  ✓ a flattened table candidate is rejected
+
+== §11/§31 — VERIFIED SYNTHETIC RULE ==
+  ✓ verification succeeds
+  ✓ record pins the document hash
+  ✓ record pins a rule definition hash
+  ✓ record names the verification method
+  ✓ record cites the source fragments
+  ✓ no user identity is fabricated
+  ✓ rule stays synthetic and never code-required
+  ✓ changing the rule meaning changes its hash
+  ✓ the old verification no longer covers the new meaning
+  ✓ restoring the meaning restores the hash
+  ✓ rule meaning hash ignores non-meaning fields
+
+== §34 — RULE PACK ACTIVATION ==
+  ✓ a DRAFT pack cannot be activated
+  ✓ DRAFT → VERIFIED_PARTIAL is not a direct legal transition
+  ✓ DRAFT → UNDER_REVIEW allowed
+  ✓ AI cannot verify a pack
+  ✓ UNDER_REVIEW → VERIFIED_PARTIAL allowed with explicit approval
+  ✓ VERIFIED_FOR_DECLARED_SCOPE refused while completeness is partial
+  ✓ a verified pack is NOT active without an explicit project reference
+  ✓ an explicitly disabled reference does not activate
+  ✓ a wrong version does not activate
+  ✓ explicit reference activates it
+  ✓ activation records scope and completeness
+  ✓ activation is never implied by building type
+
+== §22 — PIPELINE STATE MACHINE ==
+  ✓ nine pipeline stages documented
+  ✓ EXTRACTED → VERIFIED is not a legal candidate transition
+  ✓ READY_FOR_VERIFICATION → VERIFIED is legal
+  ✓ there is no ACTIVE candidate state at all
+  ✓ advanceCandidate moves only to the state the evidence earns
+  ✓ a candidate claiming VERIFIED without a record is rejected
+
+== §32 — EDITION / VERSION ISOLATION ==
+  ✓ each verification pins its own document hash
+  ✓ each rule keeps its own edition
+  ✓ rule definition hashes differ
+  ✓ rule identities differ
+  ✓ edition 1 pack evaluates its own rule only
+  ✓ edition 2 pack gives a different verdict on the same subject
+  ✓ pinning edition 1 never pulls in edition 2
+
+== §16 — UNRESOLVED CONFLICT ⇒ NOT_EVALUATED ==
+  ✓ the conflict is detected
+  ✓ conflicting rules are NOT_EVALUATED, never arbitrarily chosen
+  ✓ no PASS or FAIL is emitted for a conflicted rule
+  ✓ the summary surfaces the conflict
+  ✓ relation types can express precedence without deciding it
+  ✓ the fixture records a supersedes relation without acting on it
+
+== §35 — PARTIAL PACK SEMANTICS ==
+  ✓ summary states how many configured rules were evaluated
+  ✓ summary never claims the building is compliant
+  ✓ overall_compliance stays NOT_DETERMINED
+  ✓ completeness is carried through as partial
+  ✓ coverage scope is reported
+  ✓ activated packs are listed in the summary
+  ✓ regulatory results = 0
+  ✓ CODE_REQUIRED remains impossible
+
+== §21 — APPLICABILITY TRACE ==
+  ✓ the result explains why the rule applies
+  ✓ the trace names the factors, not just "applied"
+  ✓ subject type is one of the traced factors
+
+== §23/§40 — IMPORT VALIDATION & SECURITY ==
+  ✓ duplicate document ids rejected
+  ✓ invalid hash rejected
+  ✓ non-https official url rejected
+  ✓ script content rejected
+  ✓ javascript: string rejected
+  ✓ a document cannot be official and synthetic at once
+  ✓ fragment referencing a missing document rejected
+  ✓ pack without coverage scope rejected
+  ✓ pack containing an unverified candidate rejected
+  ✓ unknown operator rejected through the rule validator
+  ✓ unknown unit rejected
+  ✓ no eval/exec/Function anywhere in the ingestion layer
+  ✓ documents are never executed — only hashed and validated
+
+== §24 — OFFLINE FILE SOURCES ==
+  ✓ uploaded_file origin supported
+  ✓ manual_reference origin supported (no web access required)
+  ✓ uploaded_file requires a filename
+  ✓ an offline file document validates with no URL at all
+
+== §38 — AUDIT EXPORT ==
+  ✓ export carries document id + hash + status
+  ✓ export carries candidate id, rule id/revision and definition hash
+  ✓ export carries the verification record
+  ✓ export carries the rulepack version and activation
+  ✓ export states the copyright position
+  ✓ export contains no excerpt text
+
+== SBC 201 PILOT — REAL SOURCE REGISTER (no clause content) ==
+  ✓ real source register is byte-identical to acs_sources.json
+  ✓ real register validates clean
+  ✓ document present with the supplied file hash
+  ✓ hash is 64-hex and size recorded
+  ✓ standard and edition come from the document itself
+  ✓ jurisdiction is evidenced, not inferred from language
+  ✓ document is marked official but NOT content-verified
+  ✓ the two verification states stayed separate
+  ✓ document type records that it is an excerpt
+  ✓ content inventory records the absence of normative text
+  ✓ verification evidence is recorded at every transition
+  ✓ the origin claim is recorded as a claim, not as proof
+  ✓ withholding CONTENT_VERIFIED is itself recorded
+  ✓ no clause text is stored anywhere in the real register
+  ✓ every real fragment is a locator, not a clause
+  ✓ locators point at Chapter 10 sections with real page numbers
+  ✓ ZERO candidates extracted from a document with no clause text
+  ✓ ZERO rule packs
+  ✓ ZERO verified regulatory rules
+  ✓ nothing is activated
+  ✓ a regulatory candidate on this document would be refused (not CONTENT_VERIFIED)
+  ✓ CODE_REQUIRED remains impossible for any SBC rule id
+
+== SBC 201 PILOT — CHAIN OF CUSTODY (third-party copy) ==
+  ✓ third-party copy is registered with its own hash
+  ✓ it is a different edition and variant from the official file
+  ✓ the newer edition was not silently preferred — both are registered separately
+  ✓ origin_authority records third-party redistribution
+  ✓ it is NOT marked official
+  ✓ it stopped at SOURCE_IDENTIFIED
+  ✓ marking it official would be rejected by validation
+  ✓ promoting it to OFFICIAL_SOURCE_VERIFIED is refused
+  ✓ even if forced official, the origin chain still blocks the transition
+  ✓ the licensing restriction is recorded
+  ✓ the issuing authority is recorded from the document itself
+  ✓ the provenance concern is recorded as transition evidence
+  ✓ no egress clause text was taken from it
+  ✓ still zero candidates after a second document
+  ✓ an official-chain origin is still accepted for the official file
+
+== SBC 201 PILOT — NO CROSS-STANDARD SUBSTITUTION ==
+  ✓ a rule citing IBC cannot lean on an SBC document
+  ✓ a rule citing the wrong edition of the right standard is caught too
+  ✓ matching standard and edition passes that particular check
+  ✓ the base-code relationship is recorded as evidence, not acted on
+  ✓ no IBC document was registered from a URL
+  ✓ no document was registered without a real content hash
+
+INGEST: 188 passed, 0 failed

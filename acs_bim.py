@@ -2320,6 +2320,8 @@ def import_diff(project, staging, options=None):
     ex = built["exchange"]
     diffs = []
     tol = TOL
+    level_elevations = {e["source_entity_id"]: _num((e.get("geometry") or {}).get("elevation"))
+                        for e in _staged(staging, "level")}
 
     def add(kind, target, source, field=None, old=None, new=None,
             basis="UNMATCHED", severity="INFO", loss=None, authoring_id=None):
@@ -2333,7 +2335,7 @@ def import_diff(project, staging, options=None):
     for group, kind in (("walls", "wall"), ("doors", "door"),
                         ("windows", "window"), ("spaces", "space"),
                         ("slabs", "slab")):
-        src = {}
+        src, by_guid, source_keys = {}, {}, {}
         for it in ex[group]:
             if kind == "wall":
                 x1, z1 = it["start"]
@@ -2346,24 +2348,49 @@ def import_diff(project, staging, options=None):
                 key = (round(it["footprint"][0], 3), round(it["footprint"][1], 3))
             else:
                 key = (round(it["outline"][0], 3), round(it["outline"][1], 3))
-            src[key] = it
+            key = (round(it["elevation"], 3),) + key
+            src.setdefault(key, []).append(it)
+            source_keys[it["canonical_id"]] = key
+            by_guid[ifc_guid({"m": ex["model_hash"], "id": it["canonical_id"],
+                              "s": staging["bim_schema"]})] = it
         used = set()
-        for st in _staged(staging, kind):
+        staged = _staged(staging, kind)
+        gid_counts = {}
+        for st in staged:
+            gid = st.get("external_global_id")
+            gid_counts[gid] = gid_counts.get(gid, 0) + 1
+        for st in staged:
             g = st.get("geometry") or {}
+            elevation = level_elevations.get(st.get("level_source_id"))
+            values = [g.get("x"), g.get("z"), elevation]
             if kind == "wall":
+                values += [g.get("rot_deg"), g.get("length")]
+            if any(isinstance(v, bool) or not isinstance(v, (int, float))
+                   or not math.isfinite(v) for v in values):
+                key = None
+            elif kind == "wall":
                 key = _wall_key(g.get("x"), g.get("z"), g.get("rot_deg"),
                                 g.get("length"))
             else:
-                key = (round(float(g.get("x") or 0), 3),
-                       round(float(g.get("z") or 0), 3))
-            match = src.get(key)
+                key = (round(g["x"], 3), round(g["z"], 3))
+            if key is not None:
+                key = (round(elevation, 3),) + key
+            gid = st.get("external_global_id")
+            identified = by_guid.get(gid)
+            if identified is not None:
+                candidates = [identified] if (gid_counts[gid] == 1
+                    and source_keys[identified["canonical_id"]] == key
+                    and identified["canonical_id"] not in used) else []
+                basis = "SOURCE_GLOBAL_ID"
+            else:
+                candidates = [it for it in src.get(key, []) if it["canonical_id"] not in used]
+                basis = "SEMANTIC_AND_GEOMETRY"
+            match = candidates[0] if len(candidates) == 1 else None
             if match is None:
                 add("OBJECT_ADDED", None, st["source_entity_id"],
                     severity="WARNING", basis="UNMATCHED")
                 continue
-            used.add(key)
-            basis = "SOURCE_GLOBAL_ID" if st.get("external_global_id") \
-                else "SEMANTIC_AND_GEOMETRY"
+            used.add(match["canonical_id"])
             if kind == "wall":
                 if not _near(g.get("height"), match["height"],
                              tol["dimension_tolerance_m"]):
@@ -2393,8 +2420,8 @@ def import_diff(project, staging, options=None):
                     add("OBJECT_RESIZED", match["canonical_id"],
                         st["source_entity_id"], "area_m2", match["area_m2"],
                         _q((g.get("w") or 0) * (g.get("d") or 0)), basis, "WARNING")
-        for key, it in sorted(src.items(), key=lambda kv: str(kv[1]["canonical_id"])):
-            if key not in used:
+        for it in sorted(ex[group], key=lambda it: str(it["canonical_id"])):
+            if it["canonical_id"] not in used:
                 add("OBJECT_REMOVED", it["canonical_id"], None,
                     severity="WARNING", basis="UNMATCHED")
 

@@ -1,0 +1,7 @@
+test_explicit_elevation_moves_all_exported_geometry (__main__.LevelElevation.test_explicit_elevation_moves_all_exported_geometry) ... ok
+test_explicit_zero_and_basement_and_legacy_fallback (__main__.LevelElevation.test_explicit_zero_and_basement_and_legacy_fallback) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.011s
+
+OK

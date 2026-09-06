@@ -1,0 +1,54 @@
+FAIL polygon IFC diff identical
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+1 !== 0
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:19:12), <anonymous>:26086:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_bim_diff.js:1:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL polygon IFC diff area
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+
+  [
+    'area_m2',
+    20,
++   36
+-   27
+  ]
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:19:12), <anonymous>:26087:34)
+    at Object.run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_bim_diff.js:1:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL polygon IFC diff shape
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
++ actual - expected
+
++ 'area_m2'
+- 'footprint'
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:19:12), <anonymous>:26088:35)
+    at Object.run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_bim_diff.js:1:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+POLYGON IFC DIFF: 0 passed, 3 failed

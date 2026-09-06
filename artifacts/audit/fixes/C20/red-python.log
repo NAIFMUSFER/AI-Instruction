@@ -1,0 +1,86 @@
+test_ambiguous_geometry_without_identity_cannot_prepare_a_rename (__main__.ImportIdentity.test_ambiguous_geometry_without_identity_cannot_prepare_a_rename) ... FAIL
+test_identical_two_storey_file_has_no_false_edit (__main__.ImportIdentity.test_identical_two_storey_file_has_no_false_edit) ... FAIL
+test_missing_coordinates_are_not_the_origin (__main__.ImportIdentity.test_missing_coordinates_are_not_the_origin) ... FAIL
+test_moved_identity_keeps_the_existing_unmatched_geometry_guard (__main__.ImportIdentity.test_moved_identity_keeps_the_existing_unmatched_geometry_guard) ... ok
+test_opening_edit_uses_its_storey_even_at_the_same_xz (__main__.ImportIdentity.test_opening_edit_uses_its_storey_even_at_the_same_xz) ... FAIL
+test_reexported_name_change_uses_unique_geometry_and_storey (__main__.ImportIdentity.test_reexported_name_change_uses_unique_geometry_and_storey) ... FAIL
+test_retained_global_id_renames_only_its_own_storey (__main__.ImportIdentity.test_retained_global_id_renames_only_its_own_storey) ... FAIL
+
+======================================================================
+FAIL: test_ambiguous_geometry_without_identity_cannot_prepare_a_rename (__main__.ImportIdentity.test_ambiguous_geometry_without_identity_cannot_prepare_a_rename)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.py", line 99, in test_ambiguous_geometry_without_identity_cannot_prepare_a_rename
+    self.assertFalse(any(e['type'] == 'PROPERTY_CHANGED' for e in diff['entries']))
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_identical_two_storey_file_has_no_false_edit (__main__.ImportIdentity.test_identical_two_storey_file_has_no_false_edit)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.py", line 59, in test_identical_two_storey_file_has_no_false_edit
+    self.assertEqual(self.diff(*inputs())['entries'], [])
+AssertionError: Lists differ: [{'type': 'OBJECT_RESIZED', 'canonical_id'[499 chars]one}] != []
+
+First list contains 2 additional elements.
+First extra element 0:
+{'type': 'OBJECT_RESIZED', 'canonical_id': 'bld_0.flr_1.upper.polygon.door_0', 'authoring_id': None, 'source_entity_id': '#149', 'field': 'width', 'old_value': 2.0, 'proposed_value': 1.0, 'mapping_basis': 'SOURCE_GLOBAL_ID', 'severity': 'WARNING', 'loss': None}
+
++ []
+- [{'authoring_id': None,
+-   'canonical_id': 'bld_0.flr_1.upper.polygon.door_0',
+-   'field': 'width',
+-   'loss': None,
+-   'mapping_basis': 'SOURCE_GLOBAL_ID',
+-   'old_value': 2.0,
+-   'proposed_value': 1.0,
+-   'severity': 'WARNING',
+-   'source_entity_id': '#149',
+-   'type': 'OBJECT_RESIZED'},
+-  {'authoring_id': 'upper.polygon',
+-   'canonical_id': 'bld_0.flr_1.upper.polygon',
+-   'field': 'name',
+-   'loss': None,
+-   'mapping_basis': 'SOURCE_GLOBAL_ID',
+-   'old_value': 'Upper room',
+-   'proposed_value': 'Ground room',
+-   'severity': 'INFO',
+-   'source_entity_id': '#43',
+-   'type': 'PROPERTY_CHANGED'}]
+
+======================================================================
+FAIL: test_missing_coordinates_are_not_the_origin (__main__.ImportIdentity.test_missing_coordinates_are_not_the_origin)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.py", line 111, in test_missing_coordinates_are_not_the_origin
+    self.assertFalse(any(e['type'] == 'PROPERTY_CHANGED' for e in entries))
+AssertionError: True is not false
+
+======================================================================
+FAIL: test_opening_edit_uses_its_storey_even_at_the_same_xz (__main__.ImportIdentity.test_opening_edit_uses_its_storey_even_at_the_same_xz)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.py", line 85, in test_opening_edit_uses_its_storey_even_at_the_same_xz
+    self.assertEqual(len(entries), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_reexported_name_change_uses_unique_geometry_and_storey (__main__.ImportIdentity.test_reexported_name_change_uses_unique_geometry_and_storey)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.py", line 77, in test_reexported_name_change_uses_unique_geometry_and_storey
+    self.assertEqual(len(entries), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_retained_global_id_renames_only_its_own_storey (__main__.ImportIdentity.test_retained_global_id_renames_only_its_own_storey)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.py", line 65, in test_retained_global_id_renames_only_its_own_storey
+    self.assertEqual(len(entries), 1)
+AssertionError: 2 != 1
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.041s
+
+FAILED (failures=6)

@@ -1,0 +1,7 @@
+test_reader_resolves_correct_aggregation_to_both_explicit_elevations (__main__.IfcSpatialAggregation.test_reader_resolves_correct_aggregation_to_both_explicit_elevations) ... ok
+test_spaces_are_aggregated_to_each_storey_and_products_stay_contained (__main__.IfcSpatialAggregation.test_spaces_are_aggregated_to_each_storey_and_products_stay_contained) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.008s
+
+OK

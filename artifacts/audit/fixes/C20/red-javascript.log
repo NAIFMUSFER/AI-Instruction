@@ -1,0 +1,46 @@
+FAIL IFC import identity identical
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 0
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:19:12), <anonymous>:26068:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL IFC import identity rename
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 1
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:19:12), <anonymous>:26068:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL IFC import identity external_rename
+AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+2 !== 1
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:19:12), <anonymous>:26068:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_import_identity.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+IFC IMPORT IDENTITY: 0 passed, 3 failed

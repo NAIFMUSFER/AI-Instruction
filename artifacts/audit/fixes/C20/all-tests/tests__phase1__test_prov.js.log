@@ -1,0 +1,66 @@
+
+== TEST A — VILLA FLOORS (user=2, model=3) ==
+  ✓ requestedFloorsFromText("فيلا دورين…") === 2
+  ✓ floors claim NOT under USER_REQUESTED
+  ✓ floors claim reclassified to SYSTEM
+  ✓ states user requested 2
+  ✓ report exposes requested floors = 2
+  ✓ genuine user item (مجلس) stays USER
+
+== TEST B — ROOF (auto) ==
+  ✓ roof → SYSTEM (not USER, not RULE)
+  ✓ no "وفق الكود" in text
+  ✓ source=system_default
+
+== TEST C — SMOKE DETECTOR ==
+  ✓ smoke → SYSTEM/AUTO_ADDED
+  ✓ no "إصلاح:" framing
+  ✓ CODE_REQUIRED count = 0
+
+== TEST D — STAIR CONNECTIVITY ==
+  ✓ no "يربط الطوابق" claim
+  ✓ uses visual-representation wording
+
+== TEST E — PARKING (represented alternatively) ==
+  ✓ cars = 2, dropped = 0
+  ✓ appears under REPRESENTED_ALTERNATIVELY
+  ✓ not reported as unsupported
+
+== TEST F — EXPLICIT EXCLUSION (بدون مصعد) ==
+  ✓ elevator EXCLUDED
+  ✓ elevator NOT in AUTO_ADDED/system
+  ✓ elevator NOT in CODE_REQUIRED
+  ✓ elevator NOT generated as object
+
+== TEST G — AI INFERENCE (number user never stated) ==
+  ✓ unproven number → AI_INFERRED not USER
+  ✓ source=ai_inference
+
+== TEST H — CODE_REQUIRED gated on real evidence ==
+  ✓ no evidence ⇒ hasRuleEvidence=false
+  ✓ partial evidence ⇒ false
+  ✓ CODE_REQUIRED count = 0 in Phase 1
+  ✓ full FIELDS but rule not loaded ⇒ rejected
+  ✓ registry holds zero regulatory rules
+  ✓ synthetic TEST_ONLY rule can never open the gate
+  ✓ loaded + verified regulatory rule ⇒ CODE_REQUIRED accepted
+  ✓ unverified source ⇒ gate closes again
+
+== RENDER — no forbidden phrases + distinct sections ==
+<anonymous_script>:25844
+  const box=document.getElementById('reportBox'); if(!box) return;
+            ^
+
+ReferenceError: document is not defined
+    at showReport (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25844:13)
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:26165:1)
+    at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:26:3)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+
+Node.js v24.19.0

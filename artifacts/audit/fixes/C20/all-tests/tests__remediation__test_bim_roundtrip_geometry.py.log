@@ -1,0 +1,11 @@
+test_changed_shape_with_same_area_name_and_box_is_a_critical_loss (__main__.RoundtripGeometry.test_changed_shape_with_same_area_name_and_box_is_a_critical_loss) ... ok
+test_equivalent_winding_partition_and_external_ids_are_preserved (__main__.RoundtripGeometry.test_equivalent_winding_partition_and_external_ids_are_preserved) ... ok
+test_filled_upper_core_hole_cannot_pass (__main__.RoundtripGeometry.test_filled_upper_core_hole_cannot_pass) ... ok
+test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) ... ok
+test_space_height_and_slab_elevation_are_checked (__main__.RoundtripGeometry.test_space_height_and_slab_elevation_are_checked) ... ok
+test_valid_rectangle_and_polygon_have_no_false_loss (__main__.RoundtripGeometry.test_valid_rectangle_and_polygon_have_no_false_loss) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.071s
+
+OK

@@ -1,0 +1,4 @@
+PASS IFC import identity identical
+PASS IFC import identity rename
+PASS IFC import identity external_rename
+IFC IMPORT IDENTITY: 3 passed, 0 failed

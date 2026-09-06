@@ -94,5 +94,13 @@
     "tree": "f39071dd5a24ed886ae34a03e10b541338c6719b",
     "tree_equal": true,
     "original_commit_object": "tree f39071dd5a24ed886ae34a03e10b541338c6719b\nparent bd6102dff48bb1513f4782baf3f3bb720755cd39\nauthor Codex <codex@openai.com> 1788724972 +0200\ncommitter Codex <codex@openai.com> 1788724972 +0200\n\nfix: preserve imported polygon IFC footprints — acs_bim.py\n"
+  },
+  {
+    "issue": "C19",
+    "original_commit": "d6dc89cc51ecb3af7b1a52b093b1aec27ba5dea4",
+    "published_commit": "7eb13516d47261654bb86a9a9e9b9a40049856cb",
+    "tree": "348a6d254b74ac80723e9a826d5077ef3239bb11",
+    "tree_equal": true,
+    "original_commit_object": "tree 348a6d254b74ac80723e9a826d5077ef3239bb11\nparent 47ac0fe18acc7367df562949f3e7dfcbd569add3\nauthor Codex <codex@openai.com> 1788725503 +0200\ncommitter Codex <codex@openai.com> 1788725503 +0200\n\nfix: report lost space and slab geometry — acs_bim.py\n"
   }
 ]

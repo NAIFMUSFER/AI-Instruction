@@ -1,0 +1,60 @@
+
+== PORTALS DERIVE FROM MODELLED DOORS ==
+  ✓ a portal exists for every modelled door
+  ✓ every portal names its source door
+  ✓ every portal names its host wall and whether it resolved
+  ✓ portal ids are deterministic and unique
+  ✓ the default portal state comes from the specification
+  ✓ a portal never carries an access-control or locking field
+  ✓ the only mention of access control anywhere in a portal is an explicit denial
+  ✓ the runtime specification declares no access-control vocabulary
+  ✓ the specification states the denial explicitly instead of staying silent
+  ✓ the regular expression is not vacuous — it catches a planted access field
+
+== CONNECTIVITY IS DERIVED, NEVER FABRICATED ==
+  ✓ room-to-room connectivity is derived where the model proves it
+  ✓ a resolved room-to-room portal names two different real spaces
+  ✓ a corridor is reachable as an ordinary space
+  ✓ room-to-exterior is derived only on an exterior-exposed host
+  ✓ unresolved connectivity is reported as unresolved, never invented
+  ✓ the unresolved count is published
+  ✓ a portal never connects a space to itself
+  ✓ a door whose host wall does not exist is reported
+  ✓ a duplicate portal id is refused
+  ✓ validation refuses a portal pointing at an unknown space
+  ✓ validation refuses a self-looping portal
+  ✓ validation refuses an unknown default portal state
+
+== ROOM CONNECTIVITY GRAPH ==
+  ✓ the graph lists spaces and portal edges
+  ✓ every edge names a real portal
+  ✓ every edge endpoint is a listed space
+  ✓ unresolved portals are listed separately, not as edges
+  ✓ the graph is deterministic
+  ✓ the graph is a foundation and claims no routing
+  ✓ the graph contains no path, route or cost field
+
+== PORTAL STATE IS EPHEMERAL ==
+  ✓ a portal state change succeeds and is marked runtime-only
+  ✓ the change lands in runtime state only
+  ✓ the compiled portal still carries its default state
+  ✓ the runtime scene is unchanged by state transitions
+  ✓ the door model hash is unchanged across state transitions
+  ✓ an unknown portal state is refused
+  ✓ an unknown portal id is refused
+
+== TRAVERSAL ==
+  ✓ a traversable portal exists in the fixture
+  ✓ an open portal allows passage through its host wall
+  ✓ a closed portal blocks passage
+  ✓ the blocking element is the host wall
+  ✓ reopening restores passage
+
+== VERTICAL CONNECTIONS ==
+  ✓ a modelled stair is recorded as a vertical connection
+  ✓ every vertical connection names its source element
+  ✓ no lift or escalator operation is claimed
+  ✓ a model with no stair reports none
+
+──────────────────────────────────────────────
+PORTALS: 45 passed, 0 failed

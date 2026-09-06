@@ -366,6 +366,8 @@ function bxImportDiff(project,staging,options){
   const built=bxBuildExchange(project,options);
   if(!built.valid) return {valid:false,issues:built.issues,diff:null};
   const ex=built.exchange, diffs=[], tol=BX_TOL;
+  const levelElevations=new Map(_bxStaged(staging,'level').map(e=>
+    [e.source_entity_id,_bxNum((e.geometry||{}).elevation)]));
   const add=(kind,target,source,field,oldV,newV,basis,severity,loss,aid)=>{
     diffs.push({type:kind,canonical_id:(target===undefined)?null:target,
       authoring_id:(aid===undefined)?null:aid,
@@ -377,7 +379,7 @@ function bxImportDiff(project,staging,options){
       loss:(loss===undefined)?null:loss}); };
   [['walls','wall'],['doors','door'],['windows','window'],['spaces','space'],
    ['slabs','slab']].forEach(pair=>{
-    const group=pair[0], kind=pair[1], src={};
+    const group=pair[0], kind=pair[1], src=new Map(), byGuid=new Map(), sourceKeys=new Map();
     ex[group].forEach(it=>{
       let key;
       if(kind==='wall'){
@@ -389,18 +391,36 @@ function bxImportDiff(project,staging,options){
       else if(kind==='space')
         key=[_pyRound(it.footprint[0],3),_pyRound(it.footprint[1],3)].join('|');
       else key=[_pyRound(it.outline[0],3),_pyRound(it.outline[1],3)].join('|');
-      src[key]=it; });
-    const used={};
-    _bxStaged(staging,kind).forEach(st=>{
+      key=_pyRound(it.elevation,3)+'|'+key;
+      if(!src.has(key))src.set(key,[]);
+      src.get(key).push(it);sourceKeys.set(it.canonical_id,key);
+      byGuid.set(bxIfcGuid({m:ex.model_hash,id:it.canonical_id,s:staging.bim_schema}),it); });
+    const used=new Set(), staged=_bxStaged(staging,kind), gidCounts=new Map();
+    staged.forEach(st=>gidCounts.set(st.external_global_id,(gidCounts.get(st.external_global_id)||0)+1));
+    staged.forEach(st=>{
       const g=st.geometry||{};
-      let key;
-      if(kind==='wall') key=_bxWallKey(g.x,g.z,g.rot_deg,g.length);
-      else key=[_pyRound(Number(g.x||0),3),_pyRound(Number(g.z||0),3)].join('|');
-      const match=src[key];
+      const elevation=levelElevations.get(st.level_source_id),values=[g.x,g.z,elevation];
+      if(kind==='wall')values.push(g.rot_deg,g.length);
+      let key=null;
+      if(values.every(v=>typeof v==='number'&&Number.isFinite(v))){
+        key=kind==='wall'?_bxWallKey(g.x,g.z,g.rot_deg,g.length):
+          [_pyRound(g.x,3),_pyRound(g.z,3)].join('|');
+        key=_pyRound(elevation,3)+'|'+key;
+      }
+      const identified=byGuid.get(st.external_global_id);
+      let candidates,basis;
+      if(identified!==undefined){
+        candidates=(gidCounts.get(st.external_global_id)===1&&
+          sourceKeys.get(identified.canonical_id)===key&&!used.has(identified.canonical_id))?[identified]:[];
+        basis='SOURCE_GLOBAL_ID';
+      }else{
+        candidates=(src.get(key)||[]).filter(it=>!used.has(it.canonical_id));
+        basis='SEMANTIC_AND_GEOMETRY';
+      }
+      const match=candidates.length===1?candidates[0]:undefined;
       if(match===undefined){ add('OBJECT_ADDED',null,st.source_entity_id,null,null,null,
         'UNMATCHED','WARNING'); return; }
-      used[key]=true;
-      const basis=st.external_global_id?'SOURCE_GLOBAL_ID':'SEMANTIC_AND_GEOMETRY';
+      used.add(match.canonical_id);
       if(kind==='wall'){
         if(!_bxNear(g.height,match.height,tol.dimension_tolerance_m))
           add('OBJECT_RESIZED',match.canonical_id,st.source_entity_id,'height',
@@ -419,9 +439,9 @@ function bxImportDiff(project,staging,options){
         if(!_bxNear((g.w||0)*(g.d||0),match.area_m2,tol.area_tolerance_m2))
           add('OBJECT_RESIZED',match.canonical_id,st.source_entity_id,'area_m2',
             match.area_m2,_bxQ((g.w||0)*(g.d||0)),basis,'WARNING'); } });
-    Object.keys(src).sort((a,b)=>_scmp(String(src[a].canonical_id),
-      String(src[b].canonical_id))).forEach(key=>{
-      if(!used[key]) add('OBJECT_REMOVED',src[key].canonical_id,null,null,null,null,
+    ex[group].slice().sort((a,b)=>_scmp(String(a.canonical_id),
+      String(b.canonical_id))).forEach(it=>{
+      if(!used.has(it.canonical_id)) add('OBJECT_REMOVED',it.canonical_id,null,null,null,null,
         'UNMATCHED','WARNING'); }); });
   const srcLv={};
   ex.levels.forEach(l=>{ srcLv[_pyRound(_bxQ(l.elevation),3)]=l; });

@@ -1,0 +1,32 @@
+[
+  {
+    "file": "acs_bim.py",
+    "source_sha256": "cb052ac76bc12aa74841d1a44ee27da8f43213fef070c54f4e69f6ebef379b57",
+    "tested_sha256": "cb052ac76bc12aa74841d1a44ee27da8f43213fef070c54f4e69f6ebef379b57",
+    "equal": true
+  },
+  {
+    "file": "tools/build_bim_browser.py",
+    "source_sha256": "0918aebd6e40ae26aeb4f21ac66290a663a3b633769ee51cfba361ddd7e23947",
+    "tested_sha256": "0918aebd6e40ae26aeb4f21ac66290a663a3b633769ee51cfba361ddd7e23947",
+    "equal": true
+  },
+  {
+    "file": "public/app/generated/bim.js",
+    "source_sha256": "a6e1ab16da14f03562cbe53c5cdf57f4116bc1caa1dad60e34cfeeac6ecef540",
+    "tested_sha256": "a6e1ab16da14f03562cbe53c5cdf57f4116bc1caa1dad60e34cfeeac6ecef540",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_bim_import_identity.py",
+    "source_sha256": "4d1c5bb9ae0f757c01e0986b03bc32d3639342f0e55ab73a33dd034f5bc103c7",
+    "tested_sha256": "4d1c5bb9ae0f757c01e0986b03bc32d3639342f0e55ab73a33dd034f5bc103c7",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_bim_import_identity.js",
+    "source_sha256": "cfc6dbd2082f108de879e01bc1f2c35248cc549a7db8ab2e67b2298607544835",
+    "tested_sha256": "cfc6dbd2082f108de879e01bc1f2c35248cc549a7db8ab2e67b2298607544835",
+    "equal": true
+  }
+]
