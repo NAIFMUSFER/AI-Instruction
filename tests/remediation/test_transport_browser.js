@@ -4,7 +4,7 @@
 const assert = require('assert/strict'), http = require('http');
 const fs = require('fs'), path = require('path');
 const {source, ROOT} = require('./_transport_source.js');
-const {chromium} = require('playwright'); // Playwright-managed browser discovery.
+const PW = require(path.join(ROOT, 'tools', 'pw_chromium.js'));
 const csp = /Content-Security-Policy\s*=\s*"([^"]+)"/.exec(
   fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 let passed=0, browser, server;
@@ -33,7 +33,7 @@ async function main(){
     }
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));
-  browser=await chromium.launch({headless:true});
+  browser=await PW.launch({headless:true});
   const page=await browser.newPage({viewport:{width:390,height:844}});
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   await page.goto('http://127.0.0.1:'+server.address().port);
