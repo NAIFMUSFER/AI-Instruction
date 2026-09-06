@@ -305,7 +305,30 @@ def main():
             j, ok = as_json(tx)
             chk("json.loads(response.text) succeeds for the generation response "
                 "(HTTP %s, %.1fs)" % (st, dt), ok, tx[:160])
-            if ok and st == 200:
+            # A correctly classified error proves the error contract, not a
+            # successful paid generation. Count the failed operation even when
+            # its envelope is valid, so the live workflow cannot go green.
+            generated = (ok and isinstance(j, dict) and st == 200
+                         and j.get("ok") is True)
+            chk("the generation succeeded with HTTP 200 and ok=true", generated,
+                "HTTP %s" % st)
+            if generated:
+                diag = j.get("model_validation") or {}
+                diag = diag if isinstance(diag, dict) else {}
+                scopes = diag.get("scopes") or {}
+                scopes = scopes if isinstance(scopes, dict) else {}
+                complete = (diag.get("status") == "COMPLETED"
+                            and all(isinstance(scopes.get(k), dict)
+                                    and scopes[k].get("status") == "COMPLETED"
+                                    and isinstance(scopes[k].get("findings"), list)
+                                    for k in ("semantic", "architecture")))
+                chk("both model diagnostic scopes completed", complete)
+                chk("the generated model has no reported geometry findings",
+                    complete and type(diag.get("issue_count")) is int
+                    and diag["issue_count"] == 0
+                    and all(not scopes[k]["findings"]
+                            for k in ("semantic", "architecture")),
+                    "issue_count=%s" % diag.get("issue_count"))
                 b = j.get("building") or {}
                 chk("HTTP 200 carries a building object", bool(b))
                 chk("the building declares a site", isinstance(b.get("site"), dict))
@@ -358,7 +381,7 @@ def main():
                     isinstance(j.get("report"), dict))
                 print("  levels=%s rooms=%s mode=%s issues=%s"
                       % (j.get("levels"), j.get("rooms"), j.get("mode"), j.get("issues")))
-            elif ok:
+            elif ok and isinstance(j, dict):
                 code = j.get("error", {}).get("code")
                 chk("a failed generation is still a classified envelope",
                     j.get("ok") is False and bool(code), tx[:160])

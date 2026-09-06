@@ -1039,9 +1039,19 @@ What such a run must establish, in this order:
    `ACS.verifyVisibleModel()` and the decoded-RGBA analyser after each
    transition. This is what closes KI-2 and KI-9.
 6. **The live POST contract.** `python3 tests/deploy/verify_backend_live.py`
-   (free, no model call) and, when spending one call is acceptable,
+   (free, no model call) and, when spending on one generation request is acceptable,
    `python3 tests/deploy/verify_backend_live.py --generation`, which prints the
-   full generation telemetry capture. This is what closes KI-4 and KI-6.
+   full generation telemetry capture. The server may perform internal repair
+   according to its configured policy. The requested generation must return
+   HTTP 200 with `ok=true` and satisfy the model checks. A classified error
+   envelope, including a rate limit or provider rejection, still fails the
+   generation verification. Both semantic and architecture diagnostics must
+   complete with zero reported findings; missing diagnostics or a compiler
+   failure cannot pass. This is a geometry gate, not regulatory approval or
+   proof that every dimension has verified provenance.
+   An unavailable network remains unverified; no
+   successful generation is inferred from health/readiness alone.
+   Offline exit-code regression: `python3 tests/remediation/test_live_generation_verdict.py`.
 7. **Rate limiting against a real backend.** With `ACS_RATE_LIMIT_BACKEND=redis`
    and a real `ACS_REDIS_URL`, confirm the per-visitor and global ceilings hold
    across more than one server replica and that the fail-closed policy rejects
@@ -1049,3 +1059,21 @@ What such a run must establish, in this order:
 
 Record the `/version` output alongside the results. A verification run that
 cannot name the commit it measured is not a verification.
+
+The generation API returns `model_validation` for the exact returned model.
+`issues` is its finding count across the semantic and architecture scopes; it
+is `null` when validation did not complete. Each scope retains its own findings,
+and `known_issue_count` preserves partial results. Stale `meta.acs_issues` from
+generation is retained as historical metadata and does not determine the API
+verdict. The check runs inside the existing bounded CPU worker.
+
+Uncited exit, fire-equipment, assembly, camera, aisle and electrical-height
+thresholds are represented as six `review_requirements`. Their required values
+remain `null` / `UNKNOWN` and their evaluation status is `NOT_EVALUATED`.
+Observed counts describe point records in floor templates, not physical
+quantities or adequacy. Eight legacy proposal types are blocked at creation and
+approval, including previously saved proposals; explicit confirmation does not
+validate an arbitrary rule. Other architectural proposals retain the existing
+confirmation/revision path. See
+[`docs/audits/2026-09-06-model-review-remediation.md`](docs/audits/2026-09-06-model-review-remediation.md)
+for scope, regression evidence and remaining unknown-data work.

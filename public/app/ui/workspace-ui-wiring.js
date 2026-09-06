@@ -1869,9 +1869,10 @@ async function acsGenerateFromServer(){
       return;
     }
     statusEl.textContent='✓ بُني من وصفك — '+(data.rooms||'?')+' منطقة · '+(data.levels||'?')+' مستوى'
-      +(n?(' · نُفِّذ '+n+' بنداً من طلبك'):'')
+      +(n?(' · '+n+' بنداً في تقرير التوليد'):'')
       +((data.mode==='deep')?' · (توليد على مرحلتين)':'')
-      +(fr.pixels_verified===false?' · (تعذّر قياس البكسلات في هذا العتاد)':'');
+      +(fr.pixels_verified===false?' · (تعذّر قياس البكسلات في هذا العتاد)':'')
+      +' · '+window.ACS.trust.modelReviewSummary(data,document.documentElement.lang);
   };
   if(typeof requestAnimationFrame==='function')
     requestAnimationFrame(()=>requestAnimationFrame(_finish));
@@ -2526,7 +2527,7 @@ async function planToLLM(blobs, llm, W, D, nF, info){
   const data=res.body;
   setModel(data.building);
   info.textContent='✓ قُرئ المخطط بالرؤية — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى'
-                   +(data.issues?(' · '+data.issues+' ملاحظة'):'');
+                   +' · '+window.ACS.trust.modelReviewSummary(data,document.documentElement.lang);
 }
 function canvasToBlob(c){return new Promise(res=>c.toBlob(res,'image/png'));}
 async function pdfPagesToBlobs(f, maxPages){

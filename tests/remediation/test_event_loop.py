@@ -350,23 +350,27 @@ def main():
 
         heavy_model = big_model(10, 400)          # ٤٠٠٠ غرفة · ٥٢٨ ك.ب · تحت السقف
         t0 = time.perf_counter()
-        EA.plan(heavy_model)
+        EA.plan_with_model(heavy_model)
         ea_ms = (time.perf_counter() - t0) * 1000.0
-        print("     EA.plan على ٤٠٠٠ غرفة (٥٢٨ ك.ب، تحت ACS_MAX_BUILDING): "
+        print("     EA.plan_with_model على ٤٠٠٠ غرفة (٥٢٨ ك.ب، تحت ACS_MAX_BUILDING): "
               "%.0f ms متزامناً" % ea_ms)
         chk("والمخطّط ثقيلٌ فعلاً — كان يعمل على الحلقة في **كل** رد ناجح",
             ea_ms > P.MAX_STALL_MS, "%.0f ms" % ea_ms)
 
         async def ea_sync(_k, _b):
-            return {"n": len(EA.plan(heavy_model)["proposals"])}
+            out = EA.plan_with_model(heavy_model)
+            return {"n": len(out["plan"]["proposals"]),
+                    "validation": out["model_validation"]}
 
         async def ea_pool(_k, _b):
-            return {"n": len((await CPU.run("ea_plan", (heavy_model,)))["proposals"])}
+            out = await CPU.run("ea_plan_model", (heavy_model,))
+            return {"n": len(out["plan"]["proposals"]),
+                    "validation": out["model_validation"]}
 
         async def _ea():
             b = await P.measure(ea_sync, "ea", b"")
             a2 = await P.measure(ea_pool, "ea", b"")
-            print("     ea_plan     قبل: توقّف %8.1f ms · أطول %8.1f ms   |   "
+            print("     ea_plan_model قبل: توقّف %8.1f ms · أطول %8.1f ms   |   "
                   "بعد: توقّف %6.1f ms · أطول %6.1f ms"
                   % (b["stall_ms"], b["max"], a2["stall_ms"], a2["max"]))
             return b, a2

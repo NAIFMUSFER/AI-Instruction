@@ -2,7 +2,8 @@
 # =============================================================================
 # acs_validate.py  --  طبقة التحقّق الهندسي + الإصلاح الذاتي
 # تفحص Building JSON قبل البناء وتُعيد قائمة مخالفات مفهومة، لتُرسَل للنموذج ليصلحها.
-# القواعد مستمدة من الممارسة الشائعة وكود البناء السعودي (SBC) المرجعي.
+# Model geometry and legacy planning hints only. No regulatory evaluation is
+# performed: no authoritative jurisdiction, rule source or version is loaded.
 # =============================================================================
 
 MIN_ROOM_AREA = 1.0        # م² — أصغر من ذلك غالباً خطأ
@@ -118,42 +119,9 @@ def validate_building(b):
             if not strict and area >= 3.0 and not outdoor \
                     and not any(k in ("light", "spot") for k in kinds):
                 issues.append("[%s/%s] بلا إنارة — أضِف light أو spot." % (tmpl, rid))
-            if not strict and area >= 6.0 and not outdoor and "parking" not in low \
-                    and "smoke" not in kinds and "sprinkler" not in kinds:
-                issues.append("[%s/%s] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات)."
-                              % (tmpl, rid))
-
-            # ---- قواعد صناعية ----
-            if industrial:
-                for ln in (r.get("lanes") or []):
-                    k = ln.get("kind", "forklift")
-                    if k in IND_AISLE:
-                        wid = min(float(ln.get("w", 99) or 99), float(ln.get("d", 99) or 99))
-                        if wid < IND_AISLE[k] - 0.01:
-                            issues.append("[%s/%s] عرض ممر %s = %.2f م — يجب ≥ %.1f م."
-                                          % (tmpl, rid, k, wid, IND_AISLE[k]))
-                for rk in (r.get("racks") or []):
-                    ai = float(rk.get("aisle", 0) or 0)
-                    if rk.get("kind") == "pallet" and 0 < ai < 3.2:
-                        issues.append("[%s/%s] ممر بين رفوف البالتات %.2f م — الرافعة تحتاج ≥ 3.2 م."
-                                      % (tmpl, rid, ai))
-
-            # ارتفاعات النقاط المصرّح بها
-            for p in pts:
-                h = p.get("height")
-                if h is None:
-                    continue
-                t = p.get("type")
-                if t == "outlet" and abs(float(h) - OUTLET_H) > 0.15:
-                    issues.append("[%s/%s] فيش على ارتفاع %.2f م — يجب ≈%.2f م." % (tmpl, rid, float(h), OUTLET_H))
-                if t == "switch" and abs(float(h) - SWITCH_H) > 0.15:
-                    issues.append("[%s/%s] مفتاح على ارتفاع %.2f م — يجب ≈%.2f م." % (tmpl, rid, float(h), SWITCH_H))
-
-            # عرض الممر
-            if "corridor" in low or "ممر" in low:
-                if min(w, d) < MIN_CORRIDOR_W - 0.01:
-                    issues.append("[%s/%s] عرض الممر %.2f م — يجب ≥ %.1f م."
-                                  % (tmpl, rid, min(w, d), MIN_CORRIDOR_W))
+            # Required fire equipment, aisle widths and electrical heights are
+            # unresolved review tasks. Uncited thresholds must not enter the
+            # repair prompt as mandatory engineering corrections.
 
             # النقاط داخل حدود الغرفة
             for p in pts:
@@ -188,33 +156,8 @@ def validate_building(b):
             if seen >= 12:
                 break
 
-    # ---- فحوص السلامة على مستوى المبنى الصناعي ----
-    # (تُتخطّى كلياً في الوضع الصارم: العميل طلب التزاماً حرفياً بوصفه)
-    if industrial and not strict:
-        allpts, allrooms = [], []
-        for fdef in (b.get("floors") or {}).values():
-            for r in (fdef.get("rooms") or []):
-                allrooms.append(r)
-                allpts += [p.get("type") for p in (r.get("points") or [])]
-        area = W * D
-        need_ext = max(2, int(area / 1000))          # طفاية لكل ~1000 م²
-        if allpts.count("extinguisher") < need_ext:
-            issues.append("سلامة: عدد الطفايات %d — المطلوب ≥ %d لمساحة %.0f م² (وزّعها على الأعمدة والمخارج)."
-                          % (allpts.count("extinguisher"), need_ext, area))
-        if allpts.count("exit") < 4:
-            issues.append("سلامة: مخارج الطوارئ %d — المطلوب ≥ 4 موزّعة على الواجهات الأربع."
-                          % allpts.count("exit"))
-        if "assembly" not in allpts:
-            issues.append("سلامة: لا توجد نقطة تجمّع (assembly) — أضِف واحدة خارج مسار الحركة.")
-        if allpts.count("camera") < 6:
-            issues.append("أمن: كاميرات المراقبة %d — غطِّ الأرصفة والممرات الرئيسية (≥ 6)."
-                          % allpts.count("camera"))
-        if stats.get("docks", 0) < 2:
-            issues.append("تشغيل: عدد أرصفة التحميل %d — المطلوب أرصفة استقبال وأخرى للشحن."
-                          % stats.get("docks", 0))
-        # ملاحظة مهمّة: لا نفرض أدواراً وظيفية (استلام/التقاط/تغليف…) على المبنى.
-        # ما يطلبه العميل هو المرجع؛ فمن أراد مخزناً بلا منطقة التقاط فله ذلك.
-        # نُبقي فقط ما هو متطلّب سلامة/حياة حقيقي، وهو يُضاف ولا يُنقص من طلبه.
+    # Regulatory and security quantities remain NOT_EVALUATED. They are
+    # disclosed by the authority planner, never manufactured as repair errors.
 
     return issues, stats
 

@@ -10,7 +10,7 @@
 # acs_authoring.commit_transaction — تطبيع، معاينة، تحقّق، تأكيد صريح، مراجعة.
 # =============================================================================
 from acs_engineering_authority import (  # noqa: F401
-    PROPOSAL, SAFE, SCHEMA, VERSION, classify, model_hash, _copy)
+    PROPOSAL, SAFE, SCHEMA, VERSION, UNSOURCED_RULE_CHANGES, classify, model_hash, _copy)
 
 _POINT_DEFAULT_HEIGHT = {"smoke": 2.9, "sprinkler": 2.9, "camera": 2.7,
                          "exit": 2.2, "assembly": 0.0, "extinguisher": 1.1,
@@ -165,6 +165,12 @@ def approve(project, proposals, proposal_ids, actor_id="user",
 
     base = project.get("current_revision")
     for p in chosen:
+        if p.get("type") in UNSOURCED_RULE_CHANGES:
+            return {"committed": False, "project": project,
+                    "issues": [{"code": "RULE_SOURCE_REQUIRED", "severity": "ERROR",
+                                "subject": p["proposal_id"],
+                                "detail": "A confirmation does not establish an "
+                                          "authoritative rule or validate its threshold."}]}
         if p.get("base_revision") is not None and p["base_revision"] != base:
             return {"committed": False, "project": project,
                     "issues": [{"code": "STALE_BASE_REVISION", "severity": "ERROR",
@@ -199,5 +205,4 @@ def approve(project, proposals, proposal_ids, actor_id="user",
             approved.append(q)
         res["proposals"] = approved
     return res
-
 
