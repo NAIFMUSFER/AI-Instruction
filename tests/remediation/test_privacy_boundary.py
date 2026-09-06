@@ -224,32 +224,101 @@ _payload = [n for n in ast.walk(API_TREE)
             and n.name == '_understand_payload']
 chk('_understand_payload exists exactly once in the API layer', len(_payload) == 1)
 
-_compliance_block = None
-if _payload:
-    for node in ast.walk(_payload[0]):
-        if not isinstance(node, ast.Dict):
-            continue
-        for k, v in zip(node.keys, node.values):
-            if isinstance(k, ast.Constant) and k.value == 'compliance':
-                _compliance_block = v
-chk('the understand payload carries a compliance block',
-    isinstance(_compliance_block, ast.Dict))
 
-_status = None
-_note = None
-if isinstance(_compliance_block, ast.Dict):
-    for k, v in zip(_compliance_block.keys, _compliance_block.values):
-        if isinstance(k, ast.Constant) and k.value == 'status' \
-                and isinstance(v, ast.Constant):
-            _status = v.value
-        if isinstance(k, ast.Constant) and k.value == 'note' \
-                and isinstance(v, ast.Constant):
-            _note = v.value
+def literal_field(node, name):
+    """Inspect a closed literal dictionary; ambiguous/dynamic shapes fail closed."""
+    if not isinstance(node, ast.Dict):
+        return None
+    keys = [k.value for k in node.keys
+            if isinstance(k, ast.Constant) and isinstance(k.value, str)]
+    if len(keys) != len(node.keys) or len(keys) != len(set(keys)):
+        return None
+    return dict(zip(keys, node.values)).get(name)
+
+
+def returned_compliance_blocks(function):
+    # ast.walk over all dictionaries also sees model diagnostics and nested
+    # helpers. Only this function's return values define its response contract.
+    # Keep every branch: an earlier invalid return must not be hidden by a
+    # later valid one. Non-literal responses require an explicit test update.
+    blocks = []
+
+    class Returns(ast.NodeVisitor):
+        def visit_Return(self, node):
+            blocks.append(literal_field(node.value, 'compliance'))
+
+        def visit_FunctionDef(self, node):
+            pass
+
+        visit_AsyncFunctionDef = visit_FunctionDef
+        visit_ClassDef = visit_FunctionDef
+
+    visitor = Returns()
+    for statement in function.body:
+        visitor.visit(statement)
+    return blocks
+
+
+def constant_value(node):
+    return node.value if isinstance(node, ast.Constant) else None
+
+
+_compliance_blocks = returned_compliance_blocks(_payload[0]) if _payload else []
+chk('the understand payload carries a compliance block',
+    bool(_compliance_blocks)
+    and all(isinstance(block, ast.Dict) for block in _compliance_blocks))
+
+_statuses = [constant_value(literal_field(block, 'status'))
+             for block in _compliance_blocks]
+_notes = [constant_value(literal_field(block, 'note'))
+          for block in _compliance_blocks]
 chk('every /v1/understand response reports compliance.status = NOT_EVALUATED',
-    _status == 'NOT_EVALUATED', str(_status))
+    bool(_statuses) and all(s == 'NOT_EVALUATED' for s in _statuses), str(_statuses))
 chk('and says in the response itself that this is not a code-compliance check',
-    isinstance(_note, str) and 'مطابقة' in _note and len(_note) > 20,
-    str(_note)[:120])
+    bool(_notes) and all(isinstance(n, str) and 'مطابقة' in n and len(n) > 20
+                        for n in _notes), str(_notes)[:120])
+
+# Negative controls exercise the same extractor, including the exact source
+# of CI #40's false failure: a local diagnostics dictionary sharing the name.
+_good_response = {'compliance': {'status': 'NOT_EVALUATED',
+                               'note': 'هذا تحقق نموذج وليس مطابقة أنظمة.'}}
+
+
+def probe_response(body):
+    function = ast.parse('async def payload():\n' + '\n'.join(
+        '    ' + line for line in body.splitlines())).body[0]
+    return returned_compliance_blocks(function)
+
+
+_good_literal = repr(_good_response)
+_blocks = probe_response("diagnostics = {'compliance': 'NOT_EVALUATED'}\n"
+                         "def helper():\n    return {'compliance': 'INTERNAL'}\n"
+                         "return " + _good_literal)
+chk('response extraction ignores local diagnostics and nested helper returns',
+    len(_blocks) == 1
+    and constant_value(literal_field(_blocks[0], 'status')) == 'NOT_EVALUATED')
+
+for _label, _bad_return in (
+        ('missing compliance', "{'ok': True}"),
+        ('changed status', "{'compliance': {'status': 'APPROVED'}}"),
+        ('non-literal return', 'other_response'),
+        ('duplicate compliance key', _good_literal[:-1] + ", 'compliance': None}"),
+        ('dictionary unpacking', _good_literal[:-1] + ', **other_response}')):
+    _blocks = probe_response('decoy = ' + _good_literal + '\nreturn ' + _bad_return)
+    chk('a valid local dictionary cannot hide ' + _label + ' in the response',
+        len(_blocks) == 1
+        and constant_value(literal_field(_blocks[0], 'status')) != 'NOT_EVALUATED')
+
+_blocks = probe_response("if condition:\n    return {'ok': True}\nreturn " + _good_literal)
+chk('a valid final response cannot hide an invalid earlier return branch',
+    len(_blocks) == 2 and _blocks[0] is None
+    and constant_value(literal_field(_blocks[1], 'status')) == 'NOT_EVALUATED')
+chk('a function with no response does not acquire a local compliance declaration',
+    probe_response('decoy = ' + _good_literal) == [])
+_blocks = probe_response('return ' + repr({'compliance': {'status': 'NOT_EVALUATED'}}))
+chk('the response note must be present independently of its status',
+    len(_blocks) == 1 and literal_field(_blocks[0], 'note') is None)
+
 _status_literals = set(re.findall(r'"status"\s*:\s*"([A-Z_]+)"', API_SRC))
 chk('no competing compliance verdict is hard-coded anywhere in the API layer',
     _status_literals <= {'NOT_EVALUATED'}, ', '.join(sorted(_status_literals)))

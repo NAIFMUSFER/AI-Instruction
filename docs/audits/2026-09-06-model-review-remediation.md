@@ -34,6 +34,7 @@ No new paid generation, production merge or deployment was performed.
 | `tests/remediation/test_model_review_ui.js` | Shipped Arabic/English summary behavior, invalid counters and inert provider text |
 | `tests/remediation/test_engineering_authority.py` | Preserve all eight historical cases with corrected review/approval expectations; no test case disabled |
 | `tests/remediation/test_event_loop.py` | Measure the actual `ea_plan_model` target including diagnostics on 4,000 rooms |
+| `tests/remediation/test_privacy_boundary.py` | Inspect this function's returned compliance blocks in every branch, excluding local diagnostics and nested helpers; add nine positive/negative controls |
 | `.github/workflows/ci.yml` | Add the new tests to existing required jobs |
 | `README.md`, this audit | Document the API contract, gates, compatibility and remaining work |
 
@@ -89,6 +90,7 @@ No browser executable path was hard-coded.
 | `python tests/remediation/test_ci_gate.py` | 78 assertions | 0 |
 | `python tests/phase9_2/test_generation_budget.py` | 74 assertions | 0 |
 | `python tests/remediation/test_event_loop.py` | 63 assertions | 0 |
+| `python tests/remediation/test_privacy_boundary.py` | 72 assertions | 0 |
 | `node tests/lib/run.js tests/remediation/test_model_review_ui.js` | 11 assertions | 0 |
 | `node tests/lib/run.js tests/remediation/test_production_error_ui.js` | 262 assertions | 0 |
 | `node tests/lib/run.js tests/remediation/test_module_graph.js` | 36 assertions | 0 |
@@ -132,6 +134,38 @@ CI #39, run `34014606341`, passed **11/11 jobs** for verifier-only commit
 `0d45479e9e2faaf4620802eae6519988903e0ceb`, including real Chromium. That tree
 matches local verifier commit `4e865f6`; it does not verify these later changes.
 Remote CI for this implementation is **PENDING at document creation**.
+
+CI #40, run `34015628216`, subsequently failed the privacy contract at published
+commit `de94b567589299bfb1575886aca0d4f05ab0ec53`: **29 remediation targets passed,
+1 failed**. The CVE step was skipped as a consequence and is not a pass. The
+failure was reproduced locally: **60 assertions passed, 3 failed**. The AST
+checker iterated over every dictionary in `_understand_payload`; a local
+diagnostics dictionary overwrote the actual response's compliance block during
+traversal. The real ASGI response still reported `NOT_EVALUATED`.
+
+The checker now inspects only returned dictionaries in the function's own
+scope, covers every return branch, and rejects missing, dynamic or ambiguous
+compliance declarations. Nine controls cover internal dictionaries, nested
+helpers, missing/changed response status, duplicate keys, unpacking, an earlier
+invalid return, no response and a missing note. No application code, scanner
+allowlist, workflow gate or security policy was changed to fix this failure.
+
+Regression command after the checker correction:
+
+```sh
+bash tools/ci_run.sh \
+  --log ../evidence/model-review-20260906/privacy-fix-regression.log \
+  --label 'privacy return contract regression' \
+  --runner /workspace/scratch/5b03d54e3a82/acs-build-metadata-venv/bin/python \
+  tests/remediation/test_privacy_boundary.py \
+  tests/remediation/test_model_diagnostics.py \
+  tests/remediation/test_live_generation_verdict.py \
+  tests/remediation/test_ci_gate.py
+```
+
+Result: **4 targets passed, 0 failed**; respectively **72 assertions, 11 tests,
+16 tests and 78 assertions**, all passing. The new published commit still needs
+its own required CI result; earlier green runs are not substituted for it.
 
 **BROWSER NOT VERIFIED locally for this implementation.** The connected cloud
 browser has WebGL disabled. The local `test_csp.js` suite includes checks against
