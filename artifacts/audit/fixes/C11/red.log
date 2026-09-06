@@ -1,0 +1,162 @@
+test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) ... {"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_641192027d694edf", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='nan') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_87eb8062b630454f", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='inf') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_5ab94b9a7e0f4799", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='-inf') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_0a3498dc09f948e7", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='-1') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_f7665591f62342c3", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='0') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_87fa553b302d418a", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='100001') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_e01850b5672441c3", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='nan') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_6b8ae90100ed4c68", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:36Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='inf') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_10c28f5de3484035", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='-inf') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_394e45e8cb2142a3", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='-1') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_0b87036be6004826", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='0') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_d61c11aef3a04d9b", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='100001') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_5d5a7ee419344748", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='floors', value='-1') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_8b6f9f5cfeff4eb3", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='floors', value='0') ... FAIL
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_4d38b95504cd4004", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+  test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='floors', value='401') ... FAIL
+{"endpoint": "/v1/understand/image", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_2b925162db404e8e", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+test_optional_dimensions_remain_optional (__main__.ImageDimensions.test_optional_dimensions_remain_optional) ... {"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_b2fc821e0b4a4afd", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+ok
+test_valid_dimensions_and_hints_reach_provider_unchanged (__main__.ImageDimensions.test_valid_dimensions_and_hints_reach_provider_unchanged) ... {"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_2a4a3605846b45b0", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+{"endpoint": "/v1/understand/image", "event": "upload_accepted", "files": 1, "level": "info", "pixels": 1, "request_id": "req_06b8805880d4481b", "service": "ACS Understanding Engine", "ts": "2026-09-06T12:47:37Z", "version": "1.3"}
+ok
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='nan')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='inf')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='-inf')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_w', value='100001')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='nan')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='inf')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='-inf')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='site_d', value='100001')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='floors', value='-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='floors', value='0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+======================================================================
+FAIL: test_invalid_dimensions_stop_before_decode_or_generation (__main__.ImageDimensions.test_invalid_dimensions_stop_before_decode_or_generation) (field='floors', value='401')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_image_dimensions.py", line 39, in test_invalid_dimensions_stop_before_decode_or_generation
+    self.assertEqual(response.status_code, 422, response.text)
+AssertionError: 200 != 422 : {"ok":true}
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.202s
+
+FAILED (failures=15)

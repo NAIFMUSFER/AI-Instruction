@@ -1,0 +1,146 @@
+
+== A — visual_only WITH a source element must be REJECTED ==
+  ✓ A · generic visual object with a source element is rejected
+  ✓ A · landscape-classed object with a source element is rejected
+  ✓ A · entourage-classed object with a source element is rejected
+  ✓ A · decoration-classed object with a source element is rejected
+  ✓ A · asset-based object with a source element is rejected
+  ✓ A · system-generated roof cap with a source element is rejected
+  ✓ A · theme-generated object with a source element is rejected
+  ✓ A · AI-suggested-material object with a source element is rejected
+  ✓ A · instanced object with a source element is rejected
+  ✓ A · simplified-LOD object with a source element is rejected
+  ✓ A · MEP-layered visual object with a source element is rejected
+  ✓ A · FLS-layered visual object with a source element is rejected
+  ✓ A · site ground plane with a source element is rejected
+  ✓ A · the decoration specialisation is reported IN ADDITION, never instead
+  ✓ A · the rejection code is part of the declared vocabulary
+  ✓ A · an empty-string source is still a source and is rejected
+  ✓ A · validation is deterministic across repeated runs
+
+== B — visual_only=false WITHOUT a source element must be REJECTED ==
+  ✓ B · modelled architecture wall with no source is rejected
+  ✓ B · modelled structure member with no source is rejected
+  ✓ B · modelled MEP segment with no source is rejected
+  ✓ B · modelled FLS device with no source is rejected
+  ✓ B · a modelled object with an absent source key is rejected
+
+== ACCEPTANCE — the two valid shapes must pass cleanly ==
+  ✓ visual_only:true + source_element_id:null is accepted
+  ✓ visual_only:true with the source key absent is accepted
+  ✓ visual_only:false + a valid source element is accepted
+  ✓ a mixed valid scene is accepted
+
+== FULL PATH — the compiler never emits a violating object ==
+  ✓ no compiled scene in any mode violates the source-reference invariant
+  ✓ every compiled visual-only object has a null source across every fixture
+  ✓ every compiled modelled object has a non-null source across every fixture
+  ✓ injecting a violation into a compiled scene is caught by the validator
+  ✓ stripping a source from a compiled modelled object is caught
+
+== C — AI response with a changed geometry signature ==
+  ✓ C · a changed door count raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed window count raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed wall count raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed stair location implied by a changed stair count raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed floor count raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed room count raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed building footprint raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a changed source model hash raises VISUAL_GEOMETRY_DRIFT
+  ✓ C · that drift reports model_modified:false
+  ✓ C · a faithful image raises no drift
+  ✓ C · drift never rewrites the scene it was checked against
+  ✓ C · drift never rewrites the canonical model
+
+== D — an AI request missing its geometry signature is REJECTED ==
+  ✓ D · no signature key is rejected with VISUAL_SIGNATURE_MISSING
+  ✓ D · null signature is rejected with VISUAL_SIGNATURE_MISSING
+  ✓ D · empty signature is rejected with VISUAL_SIGNATURE_MISSING
+  ✓ D · nothing at all is rejected with VISUAL_SIGNATURE_MISSING
+  ✓ D · the missing-signature code is ERROR severity and declared
+  ✓ D · a real request always carries a signature
+
+== CONTROL BUFFER CONTRACT ==
+  ✓ an AI request declares the buffers it requested, in order
+  ✓ every requested buffer travels with a deterministic descriptor
+  ✓ the object-id descriptor carries the real modelled object ids
+  ✓ the room-id descriptor carries real space ids
+  ✓ the semantic-mask descriptor carries real object classes
+  ✓ no descriptor claims to be a rendered pixel buffer
+  ✓ a request for a subset carries only that subset
+  ✓ an unknown buffer name is dropped rather than fabricated
+  ✓ a request with no buffers at all is flagged
+
+== AI SAFETY INVARIANTS REMAIN ==
+  ✓ writes_to_model is false on every request shape
+  ✓ generator_shipped is false
+  ✓ network_call is false
+  ✓ an AI image is authorised VISUALISATION, never the model
+  ✓ the may-not-change list still covers every layout feature
+
+== E — a visual material cannot be made structural ==
+  ✓ E · every library material denies structural, fire and thermal properties
+  ✓ E · a tampered material is rejected by the validator
+  ✓ E · a material claiming a fire rating is rejected
+  ✓ E · a material claiming a thermal property is rejected
+  ✓ E · a material outside the library is rejected on an object
+  ✓ E · an invalid provenance is rejected
+  ✓ E · an AI-suggested finish cannot become an authoritative property
+
+== F — executable asset metadata is refused, never executed ==
+  ✓ F · asset metadata field "script" is refused
+  ✓ F · asset metadata field "code" is refused
+  ✓ F · asset metadata field "eval" is refused
+  ✓ F · asset metadata field "onload" is refused
+  ✓ F · asset metadata field "src" is refused
+  ✓ F · asset metadata field "url" is refused
+  ✓ F · asset metadata field "href" is refused
+  ✓ F · asset metadata field "exec" is refused
+  ✓ F · an unknown-license asset is refused
+  ✓ F · no shipped asset carries an unknown license or a remote source
+  ✓ F · a non-object asset is refused rather than coerced
+
+== G — a theme leaves canonical geometry and hash unchanged ==
+  ✓ G · the compiled architecture is identical across every theme
+  ✓ G · the model hash is identical across every theme
+  ✓ G · modelled object geometry is identical across every theme
+  ✓ G · a theme changes only material and provenance
+
+== H — the engineering view cannot hide a discipline ==
+  ✓ H · hiding ARCHITECTURE in the engineering view is refused
+  ✓ H · ARCHITECTURE remains visible after the refused attempt
+  ✓ H · hiding STRUCTURE in the engineering view is refused
+  ✓ H · STRUCTURE remains visible after the refused attempt
+  ✓ H · hiding MEP in the engineering view is refused
+  ✓ H · MEP remains visible after the refused attempt
+  ✓ H · hiding FLS in the engineering view is refused
+  ✓ H · FLS remains visible after the refused attempt
+  ✓ H · requesting a reduced layer set in the engineering view still shows all four
+  ✓ H · a presentation view may still hide a technical layer
+
+== DECORATION SAFETY (regression) ==
+  ✓ decoration is OFF by default
+  ✓ decoration is visual_only with no canonical source
+  ✓ decoration is excluded from the engineering export
+  ✓ decoration reaches no occupancy, coverage, load or FLS input
+  ✓ decoration never appears in a rule input
+
+== SITE / SNAPSHOT / VR SAFETY (regression) ==
+  ✓ a model with no site states its ground plane is not a boundary
+  ✓ no boundary, setback, road or parking is invented anywhere
+  ✓ water appears only for a represented feature
+  ✓ the snapshot pixel ceiling still clamps
+  ✓ an unsupported snapshot format fails rather than silently switching
+  ✓ the render id stays deterministic and carries the model hash
+  ✓ VR remains 1:1 unless scaling is explicit
+  ✓ a visualisation scale never mutates canonical dimensions
+
+──────────────────────────────────────────────
+VISUAL ADVERSARIAL: 115 passed, 0 failed

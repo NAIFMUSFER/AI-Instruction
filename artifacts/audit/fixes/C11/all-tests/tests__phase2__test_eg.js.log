@@ -1,0 +1,81 @@
+
+== TEST A — VILLA ==
+  ✓ majlis → FOUND
+  ✓ compliance NOT_EVALUATED
+  ✓ distance non-null only when COMPLETE
+  ✓ measured distance carries a stated basis
+  ✓ selection_basis is one of the two documented modes
+  ✓ minimum_hops fallback always records why
+  ✓ first-floor bedroom → FOUND
+  ✓ route uses stairs, crosses 1 level
+  ✓ no unresolved edges in route
+  ✓ exit provenance is geometry_inference/inferred
+  ✓ exit destination=exterior with stated basis
+  ✓ summary has no compliance words
+  ✓ exit validation clean
+
+== TEST B — HOTEL ==
+  ✓ guest level2 → FOUND
+  ✓ crosses 2 levels
+  ✓ vertical transitions recorded
+  ✓ elevator use recorded factually (not judged)
+  ✓ no "safest/best" wording
+
+== TEST C — CLINIC (single floor) ==
+  ✓ exam → FOUND
+  ✓ ZERO vertical transitions
+
+== TEST D — OFFICE ==
+  ✓ office L1 → FOUND
+  ✓ reports uses_stairs & uses_elevator without judging
+
+== TEST E — NO EXIT DEFINED ==
+  ✓ no exits extracted (none invented)
+  ✓ status NO_EXIT_DEFINED
+
+== TEST F — EXIT EXISTS BUT NO PATH ==
+  ✓ exit exists
+  ✓ island → NO_PATH
+  ✓ reason NO_PATH_TO_REPRESENTED_EXIT
+  ✓ distinct from NO_EXIT_DEFINED
+  ✓ connected space still reaches exit
+
+== TEST G — UNRESOLVED EXIT (marker only) ==
+  ✓ marker becomes UNRESOLVED exit
+  ✓ destination unknown (not guessed exterior)
+  ✓ system_generated provenance from auto flag
+  ✓ query → UNRESOLVED_EXIT
+  ✓ never presented as code-required
+
+== TEST H — MULTIPLE EXITS (ranking + unreachable) ==
+  ✓ 3 exits represented
+  ✓ FOUND with primary candidate
+  ✓ primary is minimum hops
+  ✓ alternatives listed
+  ✓ unreachable exit reported separately
+  ✓ selection_basis stated as minimum_hops
+  ✓ no "best/safest" label anywhere
+
+== PART 10/28 — AUDIT ==
+  ✓ audit reports compliance NOT_EVALUATED
+  ✓ audit has reachability counts
+  ✓ audit counts exits by status
+
+== PART 17 — occupants factual only ==
+  ✓ represented_people_count exposed as data
+  ✓ no occupant-load / capacity fields
+
+== PART 29 — validation catches bad exits ==
+  ✓ duplicate id caught
+  ✓ dangling space caught
+  ✓ invalid level caught
+  ✓ invalid destination caught
+  ✓ source=rule rejected
+  ✓ invalid status caught
+  ✓ missing via caught
+  ✓ cross-building exit caught
+
+== PART 32 — inter-building not invented ==
+  ✓ cross-building origin → NOT_SUPPORTED_INTER_BUILDING
+
+EGRESS: 55 passed, 0 failed

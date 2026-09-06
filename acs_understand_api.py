@@ -891,9 +891,9 @@ async def edit(req: EditReq, request: Request):
 async def understand_image(
     request: Request,
     files: list[UploadFile] = File(...),
-    site_w: float | None = Form(None),
-    site_d: float | None = Form(None),
-    floors: int | None = Form(None),
+    site_w: float | None = Form(None, gt=0, le=100000, allow_inf_nan=False),
+    site_d: float | None = Form(None, gt=0, le=100000, allow_inf_nan=False),
+    floors: int | None = Form(None, ge=1, le=400),
     notes: str = Form(""),
     btype: str | None = Form(None),
     strict: str | None = Form(None),

@@ -54,6 +54,7 @@ python3 "$HERE/test_engineering_authority.py"; guard $?
 step "F-05/F-19 · upload security"
 python3 "$HERE/test_upload_security.py"; guard $?
 python3 "$HERE/test_request_body_limits.py"; guard $?
+python3 "$HERE/test_image_dimensions.py"; guard $?
 python3 "$HERE/test_level_elevation.py"; guard $?
 python3 "$HERE/test_compiler_arch_failure.py"; guard $?
 node "$ROOT/tests/lib/run.js" "$HERE/test_level_elevation.js"; guard $?
