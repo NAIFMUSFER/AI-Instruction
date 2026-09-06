@@ -888,6 +888,21 @@ const accessibility={
     en:'The 3D viewport is WebGL and a screen reader cannot interpret its pixels.'}
 };
 
+/* An HTTP success is not a completed model review. Only render fixed messages
+   and validated counts; provider-supplied labels never become HTML here. */
+function modelReviewSummary(data, lang){
+  const en=String(lang||'').toLowerCase().indexOf('en')===0;
+  const v=(data||{}).model_validation||{};
+  const checked=v.status==='COMPLETED'&&Number.isInteger(v.issue_count)&&v.issue_count>=0;
+  let text=checked
+    ? (en?'Geometry findings: ':'ملاحظات هندسة النموذج: ')+v.issue_count
+    : (en?'Model review not evaluated':'لم يكتمل فحص النموذج');
+  const tasks=(data||{}).review_requirements;
+  if(Array.isArray(tasks)&&tasks.length)
+    text+=(en?' · Unresolved reviews: ':' · متطلبات مراجعة معلّقة: ')+tasks.length;
+  return text+(en?' · Regulatory compliance not evaluated':' · مطابقة الأنظمة غير مقيّمة');
+}
+
 return _deepFreeze({
   contract:'acs-production-trust/1.0.0',
   persistence:persistence,
@@ -902,6 +917,7 @@ return _deepFreeze({
   concurrency:concurrency,
   capability:capability,
   accessibility:accessibility,
+  modelReviewSummary:modelReviewSummary,
   hash:_hash64, canonical:_canon, clone:_clone
 });
 }

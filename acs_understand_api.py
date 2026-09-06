@@ -711,6 +711,8 @@ async def _engineering_authority(building):
             "model_hash_after": plan["model_hash_after"],
             "model_unchanged": plan["unchanged"],
             "safe_normalisations": plan["safe_changes"],
+            "model_validation": out.get("model_validation"),
+            "review_requirements": plan.get("review_requirements") or [],
             "proposals": plan["proposals"],
             "registry": plan["registry"]}, normalised
 
@@ -736,16 +738,22 @@ async def _understand_payload(building):
         building = normalised
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
+    validation = authority.get("model_validation") or {
+        "schema": "acs.model-diagnostics/1.0.0", "status": "NOT_EVALUATED",
+        "issue_count": None, "known_issue_count": 0, "scopes": {},
+        "review_required": True, "compliance": "NOT_EVALUATED"}
     return {"ok": True, "building": building, "levels": len(building["levels"]),
             "rooms": nr, "type": meta.get("type"),
             "mode": meta.get("acs_mode", "single"),
             "generation": _generation_summary(meta),
             "engineering_authority": authority,
+            "model_validation": validation,
+            "review_requirements": authority.get("review_requirements") or [],
             "engineering_proposals": authority.get("proposals") or [],
             "compliance": {"status": "NOT_EVALUATED",
                            "note": "لا حزمة أنظمة موثّقة محمّلة — هذا تحقّق نموذج "
                                    "هندسي وليس مطابقة أنظمة."},
-            "issues": meta.get("acs_issues", 0), "report": _report(building)}
+            "issues": validation["issue_count"], "report": _report(building)}
 
 
 @app.post("/v1/understand")

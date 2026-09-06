@@ -313,6 +313,22 @@ def main():
             chk("the generation succeeded with HTTP 200 and ok=true", generated,
                 "HTTP %s" % st)
             if generated:
+                diag = j.get("model_validation") or {}
+                diag = diag if isinstance(diag, dict) else {}
+                scopes = diag.get("scopes") or {}
+                scopes = scopes if isinstance(scopes, dict) else {}
+                complete = (diag.get("status") == "COMPLETED"
+                            and all(isinstance(scopes.get(k), dict)
+                                    and scopes[k].get("status") == "COMPLETED"
+                                    and isinstance(scopes[k].get("findings"), list)
+                                    for k in ("semantic", "architecture")))
+                chk("both model diagnostic scopes completed", complete)
+                chk("the generated model has no reported geometry findings",
+                    complete and type(diag.get("issue_count")) is int
+                    and diag["issue_count"] == 0
+                    and all(not scopes[k]["findings"]
+                            for k in ("semantic", "architecture")),
+                    "issue_count=%s" % diag.get("issue_count"))
                 b = j.get("building") or {}
                 chk("HTTP 200 carries a building object", bool(b))
                 chk("the building declares a site", isinstance(b.get("site"), dict))

@@ -86,6 +86,8 @@ def proposal(change_id, target_ids, before, after, reason=None,
     if rule["class"] != PROPOSAL:
         raise ValueError("'%s' is declared %s — it must not become a proposal"
                          % (change_id, rule["class"]))
+    if change_id in UNSOURCED_RULE_CHANGES:
+        raise ValueError("authoritative rule source required for %s" % change_id)
     body = {
         "type": change_id,
         "target_ids": sorted(str(t) for t in (target_ids or [])),
@@ -183,88 +185,48 @@ def _all_points(building):
     return out
 
 
+# These legacy additions have no versioned authoritative rule source. They
+# cannot become executable proposals, even after an approval click. A future
+# rule adapter must supply applicability and evidence through a new contract.
+UNSOURCED_RULE_CHANGES = frozenset(
+    r["change_id"] for r in SPEC["rules"]
+    if r.get("rule_source_required_before_proposal") is True)
+
+
+
 def code_gap_proposals(building, base_revision=None, building_id="bld_0",
                        hash_before=None):
-    """يحوّل نواقص السلامة والأمن التي يرصدها acs_validate إلى اقتراحات.
+    """Compatibility entry point; uncited code thresholds produce no proposals.
 
-    لا يُطبَّق منها شيء. القرار للمستخدم، والنظام يعرض النقص والبديل فقط.
-    هذه هي الاستجابة الصحيحة لِما كان يُغري بالإصلاح التلقائي."""
-    import acs_validate as V
-    hb = hash_before if hash_before is not None else model_hash(building, building_id)
-    props = []
-    tmpl, rid = _issue_targets(building)
-    if tmpl is None:
-        return props
-    target = "%s.%s" % (tmpl, rid)
-    pts = [p.get("type") for (_t, _r, p) in _all_points(building)]
+    Review tasks are returned separately by code_review_requirements(). They
+    carry no replacement value and cannot be submitted as authoring commands.
+    """
+    return []
 
-    site = building.get("site") or {}
-    try:
-        area = float(site.get("w", 0)) * float(site.get("d", 0))
-    except (TypeError, ValueError):
-        area = 0.0
 
-    def add(change_id, before, after, reason, detail=None):
-        props.append(proposal(change_id, [target], before, after, reason=reason,
-                              base_revision=base_revision, model_hash_before=hb,
-                              detail=detail))
+def code_review_requirements(building):
+    """Expose unevaluated design requirements without inventing a threshold.
 
-    n_exit = pts.count("exit")
-    if n_exit < 4:
-        add("FLS_ADD_EXIT", {"exit_count": n_exit}, {"exit_count": 4},
-            "المخارج المذكورة %d من 4. الإضافة قرار سلامة أرواح ولا تتمّ آلياً."
-            % n_exit,
-            detail={"missing": 4 - n_exit, "point_type": "exit"})
-
-    n_cam = pts.count("camera")
-    if n_cam < 6:
-        add("SEC_ADD_CAMERA", {"camera_count": n_cam}, {"camera_count": 6},
-            "الكاميرات المذكورة %d من 6. تغيير العدد قرار أمني يحتاج موافقة."
-            % n_cam,
-            detail={"missing": 6 - n_cam, "point_type": "camera"})
-
-    need_ext = max(1, int(area / 200) + 1) if area > 0 else 1
-    n_ext = pts.count("extinguisher")
-    if n_ext < need_ext:
-        add("FLS_ADD_EXTINGUISHER", {"extinguisher_count": n_ext},
-            {"extinguisher_count": need_ext},
-            "الطفّايات المذكورة %d والمطلوب %d لمساحة %.0f م²."
-            % (n_ext, need_ext, area),
-            detail={"missing": need_ext - n_ext, "point_type": "extinguisher"})
-
-    if "assembly" not in pts:
-        add("FLS_ADD_ASSEMBLY_POINT", {"assembly_count": 0}, {"assembly_count": 1},
-            "لا توجد نقطة تجمّع (assembly) خارج مسار الحركة.",
-            detail={"missing": 1, "point_type": "assembly"})
-
-    # ممرّات صناعية دون الحدّ الأدنى — تُرصَد ولا تُوسَّع أبداً
-    for tmpl2, fdef in sorted((building.get("floors") or {}).items()):
-        for r in (fdef.get("rooms") or []):
-            rid2 = str(r.get("id") or "")
-            low = rid2.lower()
-            if not any(k in low for k in ("aisle", "corridor", "ممر", "lane")):
-                continue
-            rect = r.get("rect")
-            if not (isinstance(rect, list) and len(rect) == 4):
-                continue
-            try:
-                w, d = float(rect[2]), float(rect[3])
-            except (TypeError, ValueError):
-                continue
-            width = min(w, d)
-            need = float(V.IND_AISLE.get("forklift", 3.4)) \
-                if "forklift" in low or "رافع" in low else float(V.MIN_CORRIDOR_W)
-            if width + 1e-9 < need:
-                t2 = "%s.%s" % (tmpl2, rid2)
-                props.append(proposal(
-                    "LAYOUT_AISLE_WIDTH", [t2],
-                    {"rect": [float(v) for v in rect], "width_m": round(width, 3)},
-                    {"width_m": round(need, 3)},
-                    reason="عرض الممرّ %.2f م دون الحدّ المذكور %.2f م. التوسيع "
-                           "يزيح ما حوله ولا يتمّ آلياً." % (width, need),
-                    base_revision=base_revision, model_hash_before=hb,
-                    detail={"axis": "w" if w <= d else "d", "required_m": need}))
-    return props
+    Observations count raw point records in floor templates, not physical
+    quantities or adequacy. No jurisdiction or rule pack has been established.
+    """
+    kinds = [p.get("type") for (_t, _r, p) in _all_points(building)]
+    topics = (
+        ("fire_exits", "FIRE_LIFE_SAFETY", ("exit",)),
+        ("fire_equipment", "FIRE_LIFE_SAFETY", ("smoke", "sprinkler", "extinguisher")),
+        ("assembly", "FIRE_LIFE_SAFETY", ("assembly",)),
+        ("security", "SECURITY", ("camera",)),
+        ("circulation", "ACCESS_AND_CIRCULATION", ()),
+        ("electrical_heights", "ELECTRICAL", ("outlet", "switch")),
+    )
+    return [{"requirement_id": "review:" + topic, "domain": domain,
+             "status": "NOT_EVALUATED", "source": SOURCE_SYSTEM,
+             "required_value": {"value": None, "status": "UNKNOWN"},
+             "observed_template_records": {k: kinds.count(k) for k in point_types},
+             "rule_sources": [], "requires_review": True,
+             "reason": "No applicable authoritative rule and version are established. "
+                       "The required quantity, dimension and adequacy remain unknown."}
+            for topic, domain, point_types in topics]
 
 
 def site_expansion_proposal(building, base_revision=None, building_id="bld_0",
@@ -330,7 +292,7 @@ def plan(building, base_revision=None, building_id="bld_0", include_code_gaps=Tr
 
     props = []
     for g in rec.grouped():
-        if g["class"] != PROPOSAL:
+        if g["class"] != PROPOSAL or g["change_id"] in UNSOURCED_RULE_CHANGES:
             continue
         props.append(proposal(
             g["change_id"], [g["target_id"]], g["before"], g["after"],
@@ -348,6 +310,7 @@ def plan(building, base_revision=None, building_id="bld_0", include_code_gaps=Tr
     return {"model_hash_before": hb, "model_hash_after": ha,
             "unchanged": ha == hb,
             "proposals": props, "safe_changes": safe,
+            "review_requirements": code_review_requirements(building) if include_code_gaps else [],
             "report": report,
             "registry": {"schema": SCHEMA, "version": VERSION}}
 
@@ -375,7 +338,44 @@ def plan_with_model(building, base_revision=None, building_id="bld_0",
     """
     out = plan(building, base_revision=base_revision, building_id=building_id,
                include_code_gaps=include_code_gaps)
-    return {"plan": out, "building": building}
+    return {"plan": out, "building": building,
+            "model_validation": model_diagnostics(building, building_id)}
+
+
+def model_diagnostics(building, building_id="bld_0"):
+    """Recompute diagnostics for the returned model inside the bounded CPU worker.
+
+    Counts are findings per validator, not a compliance verdict. A failed
+    validator has an unknown count; partial execution must never report zero.
+    No diagnostic repairs geometry or changes its provenance.
+    """
+    import acs_arch as AR
+    import acs_validate as V
+    scopes = {}
+    try:
+        issues, _stats = V.validate_building(building)
+        scopes["semantic"] = {"status": "COMPLETED", "findings": [
+            {"code": "SEMANTIC_MODEL_REVIEW", "detail": text} for text in issues]}
+    except Exception:                                      # no input/trace leakage
+        scopes["semantic"] = {"status": "NOT_EVALUATED", "findings": [],
+                              "reason": "VALIDATOR_FAILED"}
+    try:
+        arch = AR.compile_architecture(building, building_id)
+        scopes["architecture"] = {"status": "COMPLETED",
+                                  "compiler_version": AR.COMPILER_VERSION,
+                                  "findings": arch["issues"]}
+    except Exception:                                      # no false zero count
+        scopes["architecture"] = {"status": "NOT_EVALUATED", "findings": [],
+                                  "reason": "VALIDATOR_FAILED"}
+    complete = all(s["status"] == "COMPLETED" for s in scopes.values())
+    known = sum(len(s["findings"]) for s in scopes.values())
+    return {"schema": "acs.model-diagnostics/1.0.0",
+            "status": "COMPLETED" if complete else "NOT_EVALUATED",
+            "model_hash": model_hash(building, building_id),
+            "issue_count": known if complete else None,
+            "known_issue_count": known, "scopes": scopes,
+            "review_required": bool(known) or not complete,
+            "compliance": "NOT_EVALUATED"}
 
 
 def apply_safe_normalisations(building, building_id="bld_0"):

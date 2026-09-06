@@ -202,6 +202,35 @@ def case(name, model, change_id, approve_types=None, expect_commit=True):
         canon(np_["model"]) != before_canon)
 
 
+def review_case(name, model, change_id, topic):
+    """The legacy requirement remains covered: no uncited numeric proposal,
+    no model mutation, and no approval path for a previously stored proposal."""
+    proj, plan = plan_of(model)
+    before = canon(proj["model"])
+    tasks = [t for t in plan["review_requirements"]
+             if t["requirement_id"] == "review:" + topic]
+    chk('%s · no uncited numeric proposal is generated' % name,
+        not pick(plan, change_id))
+    chk('%s · an unresolved review requirement is exposed' % name,
+        len(tasks) == 1 and tasks[0]["status"] == "NOT_EVALUATED")
+    chk('%s · required value stays unknown' % name,
+        tasks[0]["required_value"] == {"value": None, "status": "UNKNOWN"})
+    chk('%s · no rule source is fabricated' % name, tasks[0]["rule_sources"] == [])
+    chk('%s · planning does not change the model' % name,
+        plan["unchanged"] and EA.model_hash(proj["model"]) == proj["model_hash"])
+    legacy = {"proposal_id": "prop:legacy", "type": change_id,
+              "base_revision": proj["current_revision"],
+              "authoring_command": EA.classify(change_id).get("authoring_command"),
+              "target_ids": ["g.living"], "after": {"exit_count": 4},
+              "detail": {"point_type": "exit", "missing": 4}}
+    result = AP.approve(proj, [legacy], ["prop:legacy"])
+    chk('%s · stored legacy proposals cannot be committed' % name,
+        result["committed"] is False
+        and result["issues"][0]["code"] == "RULE_SOURCE_REQUIRED")
+    chk('%s · rejection preserves the parent model' % name,
+        canon(proj["model"]) == before)
+
+
 # A — توسيع الأرض: مجموع الغرف يتجاوز الأرض فعلاً
 # غرف متجاورة بلا تداخل، ومجموع مساحاتها (81 م²) يتجاوز سعة الأرض (73.6 م²):
 # البديل غير الهدّام هو توسيع الأرض بدل تقليص الغرف.
@@ -214,19 +243,19 @@ case('A site expansion', TIGHT, 'LAYOUT_SITE_EXPANSION')
 AISLE = mk([{"id": "forklift_aisle", "rect": [0.0, 0.0, 20.0, 2.0]},
             {"id": "rack_zone", "rect": [0.0, 4.0, 20.0, 8.0]}],
            w=30.0, d=25.0, btype='warehouse')
-case('B aisle resize', AISLE, 'LAYOUT_AISLE_WIDTH')
+review_case('B aisle resize', AISLE, 'LAYOUT_AISLE_WIDTH', 'circulation')
 
 # C — إضافة مخرج
-case('C exit addition', VALID, 'FLS_ADD_EXIT')
+review_case('C exit addition', VALID, 'FLS_ADD_EXIT', 'fire_exits')
 
 # D — إضافة كاشف دخان
-case('D smoke detector', VALID, 'LAYOUT_ADD_SMOKE_DETECTOR')
+review_case('D smoke detector', VALID, 'LAYOUT_ADD_SMOKE_DETECTOR', 'fire_equipment')
 
 # E — إضافة مرشّة
 SPRINK = mk([{"id": "storage_zone", "rect": [0.0, 0.0, 40.0, 30.0],
               "walls": "none", "role": "storage"}],
             w=60.0, d=40.0, btype='warehouse')
-case('E sprinkler', SPRINK, 'LAYOUT_ADD_SPRINKLER')
+review_case('E sprinkler', SPRINK, 'LAYOUT_ADD_SPRINKLER', 'fire_equipment')
 
 # F — تغيير أبعاد منطقة
 case('F zone resize', OVERLAP, 'LAYOUT_PROPORTIONAL_SHRINK',
@@ -234,7 +263,7 @@ case('F zone resize', OVERLAP, 'LAYOUT_PROPORTIONAL_SHRINK',
                     'LAYOUT_PROPORTIONAL_SHRINK', 'LAYOUT_CLAMP_TO_SITE'])
 
 # G — تغيير عدد الكاميرات
-case('G camera count', VALID, 'SEC_ADD_CAMERA')
+review_case('G camera count', VALID, 'SEC_ADD_CAMERA', 'security')
 
 # H — تصحيح تداخل الغرف
 case('H room overlap', OVERLAP, 'LAYOUT_RESOLVE_OVERLAPS',
@@ -256,13 +285,17 @@ STRAY = mk([{"id": "hall", "rect": [0.0, 0.0, 5.0, 4.0],
 _, plan_pts = plan_of(STRAY)
 chk('points_are_proposed · a point outside its room becomes a proposal',
     len(pick(plan_pts, 'LAYOUT_POINT_CLAMP')) > 0)
-chk('points_are_proposed · overwriting a user-stated height becomes a proposal',
-    len(pick(plan_pts, 'LAYOUT_POINT_HEIGHT_STANDARD')) > 0)
+chk('electrical heights remain unresolved without a rule source',
+    not pick(plan_pts, 'LAYOUT_POINT_HEIGHT_STANDARD')
+    and any(t['requirement_id'] == 'review:electrical_heights'
+            for t in plan_pts['review_requirements']))
 
 _, plan_gap = plan_of(VALID)
-chk('code_gaps_are_proposed · extinguisher and assembly gaps are proposed',
-    len(pick(plan_gap, 'FLS_ADD_EXTINGUISHER')) > 0
-    and len(pick(plan_gap, 'FLS_ADD_ASSEMBLY_POINT')) > 0)
+chk('extinguisher and assembly requirements stay unknown without a rule source',
+    not pick(plan_gap, 'FLS_ADD_EXTINGUISHER')
+    and not pick(plan_gap, 'FLS_ADD_ASSEMBLY_POINT')
+    and {'review:fire_equipment', 'review:assembly'} <=
+        {t['requirement_id'] for t in plan_gap['review_requirements']})
 
 # ══════════════════════════════════════════════ ج) التطبيعات الآمنة ════════
 print('\n── ج · التطبيعات الآمنة وحدها تُكتب ──')

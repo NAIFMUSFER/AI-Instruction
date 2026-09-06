@@ -27,7 +27,9 @@ SUCCESS = {'ok': True, 'building': {'site': {'w': 20, 'd': 15},
                {'id': 'storage', 'rect': [0, 0, 15, 15]},
                {'id': 'receiving', 'rect': [15, 0, 5, 15]}]}}},
            'generation': {'strategy': 'single', 'stop_reasons': ['end_turn']},
-           'report': {}}
+           'report': {}, 'model_validation': {'status': 'COMPLETED', 'issue_count': 0,
+              'scopes': {'semantic': {'status': 'COMPLETED', 'findings': []},
+                         'architecture': {'status': 'COMPLETED', 'findings': []}}}}
 
 
 class LiveGenerationVerdict(unittest.TestCase):
@@ -134,6 +136,40 @@ class LiveGenerationVerdict(unittest.TestCase):
 
     def test_empty_building_is_not_success(self):
         self.assert_generation_fails(payload=dict(SUCCESS, building={}))
+
+    def test_missing_diagnostics_is_not_acceptance(self):
+        payload = copy.deepcopy(SUCCESS)
+        payload.pop('model_validation')
+        self.assert_generation_fails(payload=payload)
+
+    def test_failed_diagnostic_scope_is_not_acceptance(self):
+        payload = copy.deepcopy(SUCCESS)
+        payload['model_validation']['scopes']['architecture']['status'] = 'NOT_EVALUATED'
+        self.assert_generation_fails(payload=payload)
+
+    def test_reported_geometry_findings_fail_acceptance(self):
+        payload = copy.deepcopy(SUCCESS)
+        payload['model_validation']['issue_count'] = 7
+        payload['model_validation']['scopes']['architecture']['findings'] = [
+            {'code': 'WALL_NEGATIVE_THICKNESS', 'subject': 'L0.wall_%d' % i}
+            for i in range(7)]
+        self.assert_generation_fails(payload=payload)
+
+    def test_zero_counter_cannot_hide_nonempty_findings(self):
+        payload = copy.deepcopy(SUCCESS)
+        payload['model_validation']['scopes']['architecture']['findings'] = [
+            {'code': 'WALL_NEGATIVE_THICKNESS', 'subject': 'L0.wall_0'}]
+        self.assert_generation_fails(payload=payload)
+
+    def test_boolean_counter_is_not_zero_findings(self):
+        payload = copy.deepcopy(SUCCESS)
+        payload['model_validation']['issue_count'] = False
+        self.assert_generation_fails(payload=payload)
+
+    def test_malformed_diagnostics_fail_with_a_verdict(self):
+        for diag in ('invalid', {'scopes': ['invalid']}, {'status': 'COMPLETED'}):
+            with self.subTest(diag=diag):
+                self.assert_generation_fails(payload=dict(SUCCESS, model_validation=diag))
 
 
 if __name__ == '__main__':

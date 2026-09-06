@@ -137,6 +137,7 @@ jobs:
           bash tools/ci_run.sh --log logs/js-parity.log \
                --label "remediation (node scope)" --runner "node tests/lib/run.js" \
                    tests/remediation/test_production_error_ui.js \
+                   tests/remediation/test_model_review_ui.js \
                    tests/remediation/test_csp.js \
                    tests/remediation/test_webgl_diagnostics.js \
                    tests/remediation/test_concurrency.js \
@@ -375,6 +376,8 @@ jobs:
                    tests/remediation/test_upload_security.py \
                    tests/remediation/test_rate_limit.py \
                    tests/remediation/test_engineering_authority.py \
+                   tests/remediation/test_model_diagnostics.py \
+                   tests/remediation/test_rule_source_boundary.py \
                    tests/remediation/test_generation_cancel.py \
                    tests/remediation/test_logging.py \
                    tests/remediation/test_privacy_boundary.py \

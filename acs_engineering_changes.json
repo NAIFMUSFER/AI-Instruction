@@ -1,9 +1,12 @@
 {
   "schema": "acs-engineering-changes/1.0.0",
-  "version": "1.0.0",
-  "compiler_version": "acs-engineering-authority-1.0.0",
+  "version": "1.1.0",
+  "compiler_version": "acs-engineering-authority-1.1.0",
   "note": "سجلّ آليّ لكل تغيير يستطيع النظام إحداثه على النموذج الهندسي القانوني. لا يوجد تغيير مسموح خارج هذا السجلّ: كل معرّف هنا إمّا تطبيع ميكانيكي معلن آمن (SAFE_NORMALIZATION) أو اقتراح هندسي يتطلّب موافقة صريحة (ENGINEERING_PROPOSAL). عند الشكّ يُصنَّف التغيير اقتراحاً.",
-  "classes": ["SAFE_NORMALIZATION", "ENGINEERING_PROPOSAL"],
+  "classes": [
+    "SAFE_NORMALIZATION",
+    "ENGINEERING_PROPOSAL"
+  ],
   "class_note": "SAFE_NORMALIZATION يقتصر على التحويلات الميكانيكية: تدوير عددي قانوني، ترتيب حتمي، إزالة ضجيج تسلسل مستحيل، وتطبيع مخطّط لا يغيّر المعنى الهندسي. أي تعديل يمسّ نيّة التصميم — أبعاد أو مواضع أو أعداد أو عناصر سلامة أو أمن — هو ENGINEERING_PROPOSAL بلا استثناء.",
   "canonical_model_boundary": "النموذج القانوني يبدأ عند خرج التوليد المقبول (بعد دمج المراحل وجولة الإصلاح داخل التوليد نفسه). كل ما يجري بعد ذلك — وعلى رأسه المصلِح الحسابي في acs_layout — يقع خارج الحدّ ولا يجوز أن يكتب في النموذج بلا موافقة.",
   "authority_note": "لا يملك النظام سلطة هندسية. engineering_authority=false في كل اقتراح يولّده النظام، ولا يوجد مسار إيداع تلقائي.",
@@ -11,7 +14,9 @@
   "proposal_schema": {
     "proposal_id": "prop:<sha256_16>",
     "type": "<change_id>",
-    "target_ids": ["<canonical element id>"],
+    "target_ids": [
+      "<canonical element id>"
+    ],
     "before": {},
     "after": {},
     "reason": "string",
@@ -126,11 +131,13 @@
       "source_module": "acs_engineering_authority.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "توسيع ممرّ صناعي دون الحدّ الأدنى المذكور. يُرصَد ويُقترَح ولا يُغيَّر تلقائياً أبداً.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "RESIZE_SPACE",
-      "test_suite": "remediation/test_engineering_authority.py::case_b_aisle_resize"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "LAYOUT_OPENING_WIDTH_FIT",
@@ -170,11 +177,13 @@
       "source_module": "acs_layout.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "استبدال ارتفاع نقطة ذكره المستخدم بقيمة جدول قياسية. يمحو قيمة صرّح بها المستخدم.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "CHANGE_POINT_PROPERTIES",
-      "test_suite": "remediation/test_engineering_authority.py::points_are_proposed"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "LAYOUT_FURNITURE_CLAMP",
@@ -225,22 +234,26 @@
       "source_module": "acs_layout.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "إضافة كاشف دخان لم يذكره التصميم. عنصر إنذار حريق وسلامة أرواح.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "ADD_POINT",
-      "test_suite": "remediation/test_engineering_authority.py::case_d_smoke_detector"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "LAYOUT_ADD_SPRINKLER",
       "source_module": "acs_layout.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "إضافة مرشّات إطفاء (حتى 20) في منطقة صناعية مفتوحة. عنصر إطفاء حريق.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "ADD_POINT",
-      "test_suite": "remediation/test_engineering_authority.py::case_e_sprinkler"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "LAYOUT_ADD_OUTLET",
@@ -269,44 +282,52 @@
       "source_module": "acs_engineering_authority.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "إضافة مخرج طوارئ عند نقص العدد المذكور. قرار سلامة أرواح لا يجوز اتخاذه آلياً.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "ADD_POINT",
-      "test_suite": "remediation/test_engineering_authority.py::case_c_exit_addition"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "SEC_ADD_CAMERA",
       "source_module": "acs_engineering_authority.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "زيادة عدد الكاميرات عند نقصه. قرار أمني يغيّر عدداً هندسياً.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "ADD_POINT",
-      "test_suite": "remediation/test_engineering_authority.py::case_g_camera_count"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "FLS_ADD_EXTINGUISHER",
       "source_module": "acs_engineering_authority.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "إضافة طفّايات عند نقص العدد المذكور مقابل المساحة.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "ADD_POINT",
-      "test_suite": "remediation/test_engineering_authority.py::code_gaps_are_proposed"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "FLS_ADD_ASSEMBLY_POINT",
       "source_module": "acs_engineering_authority.py",
       "class": "ENGINEERING_PROPOSAL",
       "changes_canonical_model": true,
-      "reason": "إضافة نقطة تجمّع خارجية عند غيابها.",
+      "reason": "لا مصدر قاعدة موثوق ومحدد الإصدار يثبت هذا العدد أو البعد. يُعرض كمتطلب مراجعة مجهول دون اقتراح قابل للإيداع.",
       "requires_user_confirmation": true,
       "provenance_required": true,
       "authoring_command": "ADD_POINT",
-      "test_suite": "remediation/test_engineering_authority.py::code_gaps_are_proposed"
+      "test_suite": "remediation/test_rule_source_boundary.py",
+      "rule_source_required_before_proposal": true,
+      "availability": "NOT_EVALUATED"
     },
     {
       "change_id": "EDIT_MODEL_REPLACEMENT",
