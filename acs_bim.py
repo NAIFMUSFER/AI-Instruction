@@ -446,7 +446,7 @@ def serialise_ifc(exchange, generated_at=None):
     app = f.add("IFCAPPLICATION", "%s,'%s','ACS BIM Exporter','ACS-BIM'"
                 % (org, SPEC["version"]))
     # الطابع الزمني في المالك ثابت عمداً: الجسم يجب أن يبقى متطابقاً بايتاً ببايت
-    owner = f.add("IFCOWNERHISTORY", "%s,%s,$,.ADDED.,$,$,$,0" % (pao, app))
+    owner = f.add("IFCOWNERHISTORY", "%s,%s,$,.NOTDEFINED.,$,$,$,0" % (pao, app))
 
     dim = f.add("IFCDIMENSIONALEXPONENTS", "0,0,0,0,0,0,0")
     u_len = f.add("IFCSIUNIT", "*,.LENGTHUNIT.,$,.METRE.")

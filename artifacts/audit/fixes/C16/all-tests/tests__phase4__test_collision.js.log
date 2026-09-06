@@ -1,0 +1,94 @@
+
+== PLAYER CAPSULE ==
+  ✓ the default capsule is valid
+  ✓ the default capsule comes from the specification
+  ✓ the player is never a zero-volume point
+  ✓ capsule with negative radius is rejected
+  ✓ capsule with zero radius is rejected
+  ✓ capsule with negative height is rejected
+  ✓ capsule with zero height is rejected
+  ✓ capsule with eye height above the capsule is rejected
+  ✓ capsule with zero eye height is rejected
+  ✓ capsule with negative eye height is rejected
+  ✓ capsule with NaN radius is rejected
+  ✓ capsule with NaN height is rejected
+  ✓ capsule with NaN eye height is rejected
+  ✓ capsule with Infinity radius is rejected
+  ✓ capsule with Infinity height is rejected
+  ✓ capsule with -Infinity height is rejected
+  ✓ capsule with height not exceeding twice the radius is rejected
+  ✓ capsule with radius beyond the declared limit is rejected
+  ✓ capsule with height beyond the declared limit is rejected
+  ✓ a non-object capsule is rejected
+  ✓ a movement query with an invalid capsule is refused
+
+== SPATIAL BROAD PHASE ==
+  ✓ the index is built from obstacles and surfaces
+  ✓ a local query resolves far fewer candidates than the total
+  ✓ a query never claims a full scan
+  ✓ candidates are returned in a deterministic order
+  ✓ an oversized entry is compared against everything rather than lost
+  ✓ a query far outside the building returns no candidates
+
+== COLLISION: WALLS BLOCK ==
+  ✓ a fixture with a doorless wall exists for the test
+  ✓ the player cannot walk through a wall
+  ✓ the blocking obstacle is named
+  ✓ the query reports its candidate count
+
+== COLLISION: STRUCTURE BLOCKS ==
+  ✓ the clash fixture contains a structural column
+  ✓ the player cannot stand inside a structural column
+  ✓ a movement through the column volume is blocked
+  ✓ a column is a declared blocking obstacle
+  ✓ a beam is a declared blocking obstacle when modelled
+
+== COLLISION: FLOOR SUPPORT ==
+  ✓ a destination over a walkable surface is supported
+  ✓ a destination with no walkable surface is refused in WALK
+  ✓ FLY does not require a walkable surface
+  ✓ FLY reports that collision is disabled by its own contract
+
+== COLLISION: ROTATED GEOMETRY ==
+  ✓ a rotated building yields the same obstacle count
+  ✓ rotated obstacles carry a non-zero yaw
+  ✓ a rotated wall still blocks along its own normal
+  ✓ the oriented test is not a plain axis-aligned test
+
+== DECORATION COLLISION IS EXPLICIT ==
+  ✓ the fixture actually contains decoration
+  ✓ decoration is non-blocking by default
+  ✓ decoration becomes blocking only when explicitly declared
+  ✓ the declared decoration policy is recorded on the scene
+  ✓ an unknown decoration policy is refused and falls back
+  ✓ a visual-only non-furniture object is never blocking
+  ✓ decoration never becomes a walkable engineering surface
+  ✓ the collision basis is recorded for every object
+
+== WALKABLE SURFACES AND OBSTACLES ==
+  ✓ walkable surfaces derive from canonical spaces
+  ✓ every surface carries its level and elevation
+  ✓ a surface records its supporting slab or an explicit null
+  ✓ obstacles carry oriented bounds and a blocking flag
+  ✓ an invalid space rectangle is refused
+  ✓ a space with no finite elevation is refused
+
+== THE BROAD PHASE IS BOUNDED, AND SAYS SO WHEN IT FALLS BACK ==
+  ✓ the specification declares a cell cap and a coordinate bound
+  ✓ a local query stays on the cell path and reports no full scan
+  ✓ a local query narrows the candidate set below the entry count
+  ✓ a query wider than the declared cap declares a full scan instead of counting cells
+  ✓ the declared full scan still returns only real identifiers
+  ✓ the declared full scan never reports more candidates than there are entries
+  ✓ a coordinate beyond the declared bound is refused for indexing, not expanded
+  ✓ a malformed query box null falls back to a declared full scan
+  ✓ a malformed query box undefined falls back to a declared full scan
+  ✓ a malformed query box "" falls back to a declared full scan
+  ✓ a malformed query box [] falls back to a declared full scan
+  ✓ a malformed query box [0,0,0] falls back to a declared full scan
+  ✓ a malformed query box [null,0,0,1,1,1] falls back to a declared full scan
+  ✓ a malformed query box [0,0,0,null,1,1] falls back to a declared full scan
+  ✓ a bounded sweep across the whole villa completes and reports finitely
+
+──────────────────────────────────────────────
+COLLISION: 73 passed, 0 failed

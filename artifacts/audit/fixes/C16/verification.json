@@ -1,0 +1,35 @@
+{
+  "issue": "C16",
+  "source_base": "830adcc4c98ac3440cd9f343174a6785d0216857",
+  "red": {
+    "tests": 1,
+    "failures": 2
+  },
+  "green": {
+    "tests": 1,
+    "failures": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 119,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 134
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "IFC4_EXPRESS_fixture_errors_before": 7,
+  "IFC4_EXPRESS_fixture_errors_after": 6,
+  "remaining_EXPRESS_issues": [
+    "C17",
+    "C18"
+  ],
+  "audit_dependency_only": "IfcOpenShell 0.8.5 and pytest; not runtime requirements"
+}

@@ -1,0 +1,81 @@
+
+== §1 — مفتاح التكرار مشتقّ من النيّة لا من المحاولة ==
+  ✓ the same intent yields the same key, every time
+  ✓ the key is namespaced by operation so two operations never collide
+  ✓ a different payload is a different intent
+  ✓ a different base revision is a different intent
+  ✓ a different project is a different intent
+  ✓ a new user intent (next sequence) is a different key
+  ✓ payloadHash is stable across key order — it hashes meaning, not text
+  ✓ payloadHash separates different payloads
+
+== §2 — نقر مزدوج على «توليد»: طلب واحد، فوترة واحدة ==
+  ✓ the first click is allowed
+  ✓ the first click carries an Idempotency-Key header
+  ✓ the operation is now recorded as in flight
+  ✓ THE SECOND CLICK IS REFUSED while the first is in flight
+  ✓ the refusal is explained to the user in Arabic and English
+  ✓ the refusal reports the SAME key — no second billable request exists
+  ✓ a refused second click does not start a second in-flight slot
+  ✓ five further rapid clicks are all refused
+  ✓ after completion the lock is released
+
+== §3 — إعادة المحاولة تحمل نفس المفتاح؛ النيّة الجديدة تحمل مفتاحاً جديداً ==
+  ✓ A RETRY OF THE SAME INTENT REUSES THE KEY — the server can deduplicate it
+  ✓ a NEW click after a completed intent is a NEW key — not a replay
+  ✓ editing the description before clicking is a new intent, hence a new key
+
+== §4 — الإيداع والتصدير يقفلان بنفس الآلية، ولا يخلطان أسلاكهما ==
+  ✓ a commit is not blocked merely because a generate is running
+  ✓ a second commit IS blocked while the first commit is in flight
+  ✓ both operations are tracked independently
+  ✓ ending the commit does not release the generate lock
+  ✓ a double-click on export is refused too — one file, not two
+  ✓ exporting a DIFFERENT artefact is not blocked by the first export
+
+== §5 — تبديل المشروع أثناء التوليد ==
+  ✓ a generate on a different project is a separate slot with a separate key
+  ✓ the first project stays locked while its generation runs
+  ✓ the two projects never share an idempotency key
+
+== §6 — مراجعة قاعدية قديمة تُرفض برمز حتمي واحد ==
+  ✓ committing on the current revision is allowed
+  ✓ committing on a stale base revision is REFUSED
+  ✓ the refusal is deterministic: HTTP 409, every time
+  ✓ the refusal names both revisions so the user can re-base
+  ✓ the refusal speaks Arabic and English
+  ✓ a missing base revision is its own refusal, not a silent pass
+  ✓ a fresh project with no current revision does not falsely refuse
+  ✓ the refusal maps onto the declared STALE_REVISION user state
+
+== §7 — تعدّد الألسنة: مالك واحد محدَّد، لا سباق ==
+  ✓ a single tab owns the project and is told so
+  ✓ when a second tab appears the FIRST claimant still owns the project
+  ✓ the owning tab is told it owns it, and how many others are open
+  ✓ THE OTHER TAB IS TOLD WHICH TAB OWNS THE PROJECT
+  ✓ the non-owning tab is told editing is disabled there
+  ✓ ownership is decided by claim time then id — never by message arrival order
+  ✓ a tab that stopped sending heartbeats is expired, not kept forever
+  ✓ an explicit BYE hands ownership over immediately
+  ✓ a different project has its own ownership, not a shared global lock
+  ✓ the reducer is pure — it does not mutate the state handed to it
+
+== §8 — الصفحة المشحونة توصّل هذا فعلاً ==
+  ✓ the shipped page sends the Idempotency-Key header on the engine calls
+  ✓ the header is added by wrapping the ONE existing transport, not a second one
+  ✓ the wrapper calls through to the captured base transport, so no request bypasses the idempotency layer
+  ✓ the key is only attached to the operations that need it
+  ✓ the generate button is disabled while a request is in flight
+  ✓ the in-flight state is exposed on the element so it is testable
+  ✓ generate, commit and export all go through the same lock
+  ✓ a commit checks the base revision before it is allowed to start
+  ✓ a stale base revision shows the declared user state instead of committing
+  ✓ multi-tab detection uses BroadcastChannel
+  ✓ a heartbeat keeps tab liveness honest
+  ✓ the user is shown which tab owns the project
+  ✓ a tab that does not own the project cannot commit
+  ✓ window.ACS exposes the concurrency surface for verification
+
+══════════════════════════════════════════════
+CONCURRENCY AND DOUBLE-ACTION SAFETY: 61 passed, 0 failed
+NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: that the LIVE backend honours the Idempotency-Key header and returns 409 on a stale base revision needs egress to the deployment (blocked here, 403). This suite proves the page-side contract.

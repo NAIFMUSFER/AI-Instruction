@@ -1,0 +1,207 @@
+{
+  "site": {
+    "w": 20,
+    "d": 25
+  },
+  "floor_height": 3.2,
+  "wall_h": 3,
+  "wall_t": 0.15,
+  "levels": [
+    {
+      "index": 0,
+      "name": "الأرضي",
+      "template": "ground"
+    },
+    {
+      "index": 1,
+      "name": "الأول",
+      "template": "typical"
+    },
+    {
+      "index": 2,
+      "name": "الثاني",
+      "template": "typical"
+    },
+    {
+      "index": 3,
+      "name": "الثالث",
+      "template": "typical"
+    },
+    {
+      "index": 4,
+      "name": "السطح",
+      "template": "roof"
+    }
+  ],
+  "floors": {
+    "ground": {
+      "rooms": [
+        {
+          "id": "lobby",
+          "rect": [
+            6,
+            1,
+            8,
+            7
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 4,
+              "width": 2.5,
+              "height": 2.5,
+              "material": "glass"
+            }
+          ],
+          "windows": [
+            {
+              "edge": "N",
+              "offset": 1.5,
+              "width": 2,
+              "sill": 1,
+              "height": 1.6
+            }
+          ],
+          "points": [
+            {
+              "type": "light",
+              "x": 4,
+              "z": 3.5
+            },
+            {
+              "type": "camera",
+              "x": 0.3,
+              "z": 0.3
+            },
+            {
+              "type": "tv",
+              "x": 7.7,
+              "z": 3.5
+            }
+          ],
+          "furniture": [
+            {
+              "name": "reception",
+              "x": 4,
+              "z": 3.5,
+              "w": 2.4,
+              "d": 0.8,
+              "h": 1.1,
+              "mat": "counter"
+            }
+          ],
+          "objects": [
+            {
+              "kind": "stairs",
+              "count": 4,
+              "dir": "x",
+              "pitch": 2.4,
+              "x": 1.5,
+              "z": 1.4
+            }
+          ]
+        }
+      ]
+    },
+    "typical": {
+      "rooms": [
+        {
+          "id": "م_وحمام_2×",
+          "rect": [
+            1,
+            1,
+            4,
+            4
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 0.9,
+              "height": 2.1,
+              "material": "wood"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "type": "light",
+              "x": 2,
+              "z": 2
+            }
+          ],
+          "furniture": []
+        }
+      ]
+    },
+    "roof": {
+      "rooms": [
+        {
+          "id": "parapet",
+          "rect": [
+            0.2,
+            0.2,
+            19.6,
+            24.6
+          ],
+          "wall_h": 1.4
+        },
+        {
+          "id": "tanks",
+          "rect": [
+            1,
+            1,
+            4,
+            3
+          ],
+          "furniture": [
+            {
+              "name": "tank",
+              "x": 2,
+              "z": 1.5,
+              "w": 1.6,
+              "d": 1.6,
+              "h": 2,
+              "mat": "furn"
+            }
+          ]
+        },
+        {
+          "id": "solar",
+          "rect": [
+            8,
+            17,
+            10,
+            6
+          ],
+          "furniture": [
+            {
+              "name": "panel",
+              "x": 5,
+              "z": 3,
+              "w": 8,
+              "d": 4,
+              "h": 0.15,
+              "mat": "tv"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "type": "residential",
+    "source": "local",
+    "requirements": [
+      {
+        "req": "4 درج",
+        "where": "المشهد",
+        "how": "مُثِّل كمجسّم ثلاثي الأبعاد بأبعاده وعدده",
+        "source": "user"
+      }
+    ],
+    "excluded": [],
+    "added": [],
+    "extras": []
+  }
+}

@@ -1,0 +1,151 @@
+/workspace/scratch/3196fa9f65d9/audit-fixed-venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+  from starlette.testclient import TestClient as TestClient  # noqa
+
+── أ · عقد المغلّف الموحّد ──
+  ✓ the error contract declares a version
+  ✓ every declared code has an HTTP status
+  ✓ every declared code has an Arabic user-facing message
+  ✓ upstream codes are namespaced ACS_UPSTREAM_*
+  ✓ no message leaks a python type, path or traceback marker
+  ✓ every code produces the exact five-field envelope (30 codes)
+  ✓ every envelope survives json.dumps -> json.loads unchanged
+  ✓ an envelope is exactly one top-level JSON object
+  ✓ retryable is true only for transient classes
+  ✓ authentication and model-rejection are never retryable
+  ✓ rate limit, overload, upstream timeout and connection loss are retryable
+  ✓ rate limiting maps to 429 and processing timeout to 504
+  ✓ redact() removes 'sk-ant-api03-A'-shaped material
+  ✓ redact() removes 'Authorization'-shaped material
+  ✓ redact() removes 'x-api-key'-shaped material
+  ✓ a secret pasted into an error message never reaches the envelope
+  ✓ a secret pasted into AcsApiError never reaches the envelope
+  ✓ the upstream block is whitelisted — unknown keys are dropped
+  ✓ request ids are unique and prefixed
+  ✓ AuthenticationError -> ACS_UPSTREAM_AUTH (retryable=False)
+  ✓ PermissionDeniedError -> ACS_UPSTREAM_PERMISSION (retryable=False)
+  ✓ NotFoundError -> ACS_UPSTREAM_MODEL_REJECTED (retryable=False)
+  ✓ RateLimitError -> ACS_UPSTREAM_RATE_LIMIT (retryable=True)
+  ✓ APITimeoutError -> ACS_UPSTREAM_TIMEOUT (retryable=True)
+  ✓ APIConnectionError -> ACS_UPSTREAM_CONNECTION (retryable=True)
+  ✓ BadRequestError -> ACS_UPSTREAM_BAD_REQUEST (retryable=False)
+  ✓ InternalServerError -> ACS_UPSTREAM_UNAVAILABLE (retryable=True)
+  ✓ APIStatusError -> ACS_UPSTREAM_OVERLOADED (retryable=True)
+  ✓ an unmapped exception still classifies, never escapes unclassified
+  ✓ classification never raises for exotic inputs
+  ✓ an already-classified error passes through unchanged
+  ✓ classified upstream errors carry provider and kind, never a key
+
+── ب · محلّل JSON حتمي: كائن واحد أعلى-مستوى ──
+  ✓ the naive find("{")/rfind("}") slice really raises "Extra data" (the reported production message)
+  ✓ a bare object -> OK
+  ✓ a fenced object with prose around it -> OK
+  ✓ prose braces that are not JSON -> OK
+  ✓ a string containing braces -> OK
+  ✓ an orphan closing brace before the object -> OK
+[ACS-JSON] رد فيه 2 كائن أعلى-مستوى؛ الأول 0..29 والتالي عند 39
+  ✓ THE PRODUCTION DEFECT: object + trailing object -> ACS_UPSTREAM_TRAILING_JSON
+[ACS-JSON] رد فيه 2 كائن أعلى-مستوى؛ الأول 8..15 والتالي عند 28
+  ✓ two fenced blocks -> ACS_UPSTREAM_TRAILING_JSON
+  ✓ an empty response -> ACS_UPSTREAM_EMPTY_RESPONSE
+  ✓ a refusal with no JSON at all -> ACS_UPSTREAM_INVALID_JSON
+  ✓ a truncated object is REJECTED, never brace-repaired -> ACS_UPSTREAM_TRUNCATED
+[ACS-JSON] رد فيه 3 كائن أعلى-مستوى؛ الأول 0..7 والتالي عند 7
+  ✓ adversarial input is always classified, never an unhandled exception
+  ✓ the scanner reports depth honestly: a truncated tail is flagged
+  ✓ the scanner never descends into a failed outer object (a truncated object is one truncated object, not two nested ones)
+  ✓ two complete siblings are seen as two, and rejected upstream
+  ✓ the extraction path is free of naive brace slicing
+
+── ج · بنية acs_understand_api.py ──
+  ✓ an exception handler is registered for AcsApiError
+  ✓ an exception handler is registered for RequestValidationError
+  ✓ an exception handler is registered for HTTPException
+  ✓ an exception handler is registered for Exception
+  ✓ the HTTP-exception handler is registered on Starlette's base class too — the router raises that class for 404/405 and handler lookup walks upward, so a subclass-only registration silently returns {'detail': ...} instead
+  ✓ the generic Starlette wording is replaced by the Arabic contract message
+  ✓ a catch-all middleware wraps every request in the envelope
+  ✓ the envelope middleware is registered BEFORE CORS so error responses still carry CORS headers and are readable by the browser
+  ✓ CORS exposes X-Request-ID and Retry-After to the page
+  ✓ CORS is not opened to "*" by default
+  ✓ no endpoint raises a bare HTTPException(500, ...) carrying the exception text
+  ✓ no endpoint returns a traceback or exception string to the client
+  ✓ no raw traceback is printed anywhere in a request path (F-18)
+  ✓ every request-path failure is logged through the structured logger
+  ✓ the structured logger blocks user text and secrets by field name
+  ✓ the structured logger emits one JSON object per event
+  ✓ full stack traces are off by default in production
+  ✓ every documented endpoint is present
+  ✓ /health declares 'ok'
+  ✓ /health declares 'service'
+  ✓ /health declares 'version'
+  ✓ /health declares 'model_configured'
+  ✓ /health declares 'api_key_configured'
+  ✓ /health reports key presence as a boolean, never the key itself
+  ✓ the API key value is never placed in any response or log line
+  ✓ startup validation reports missing configuration by NAME only
+  ✓ generation is bounded by an explicit server deadline that answers 504
+  ✓ rate limiting still raises 429 and now carries Retry-After
+  ✓ the four rate-limit envs are still read — no limit was weakened
+  ✓ the visitor still cannot choose an arbitrary model
+  ✓ the pinned model identifier is untouched
+  ✓ the container binds 0.0.0.0 and honours Render's $PORT
+  ✓ the new error-contract module is shipped in the image
+  ✓ the health check path is declared for the platform
+  ✓ the API key is never committed — it is declared sync:false
+  ✓ the allowed-origin list is pinned to the deployed frontend, not "*"
+  ✓ the allowed-model list is declared explicitly for the deployment
+
+── د · عقد حيّ (FastAPI TestClient) ──
+  ✓ json.loads(response.text) succeeds for GET / (HTTP 200)
+  ✓ json.loads(response.text) succeeds for GET /health (HTTP 200)
+{"endpoint": "/ready", "error_code": "ACS_NOT_CONFIGURED", "event": "request_failed", "level": "error", "request_id": "req_2171437723e94584", "service": "ACS Understanding Engine", "status": 503, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for GET /ready (HTTP 503)
+{"endpoint": "/does-not-exist", "error_code": "ACS_NOT_FOUND", "event": "request_failed", "level": "error", "request_id": "req_ab5707f5f2064e34", "service": "ACS Understanding Engine", "status": 404, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for GET /does-not-exist (HTTP 404)
+{"endpoint": "/health", "error_code": "ACS_METHOD_NOT_ALLOWED", "event": "request_failed", "level": "error", "request_id": "req_b3095201040e4cd7", "service": "ACS Understanding Engine", "status": 405, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for POST /health (HTTP 405)
+{"endpoint": "/v1/understand", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_2c6c6e026d994ff6", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for POST /v1/understand (HTTP 422)
+{"endpoint": "/v1/understand", "error_code": "ACS_BAD_REQUEST", "event": "request_failed", "level": "error", "request_id": "req_645bf816d72444b9", "service": "ACS Understanding Engine", "status": 400, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for POST /v1/understand (HTTP 400)
+{"endpoint": "/v1/understand", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_7421b871b4fe4631", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for POST /v1/understand (HTTP 422)
+{"endpoint": "/v1/edit", "error_code": "ACS_BAD_REQUEST", "event": "request_failed", "level": "error", "request_id": "req_9be26843c62c4124", "service": "ACS Understanding Engine", "status": 400, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ json.loads(response.text) succeeds for POST /v1/edit (HTTP 400)
+  ✓ every failing response carries the five-field envelope
+  ✓ every failing response declares a known code
+  ✓ every response carries an X-Request-ID header
+  ✓ a provided X-Request-ID is echoed back for correlation
+{"endpoint": "/nope", "error_code": "ACS_NOT_FOUND", "event": "request_failed", "level": "error", "request_id": "req_5f3545e7f78c4e97", "service": "ACS Understanding Engine", "status": 404, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+{"endpoint": "/v1/understand", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_72132a9043494079", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ no response body is HTML
+  ✓ /health answers 200 with ok/service/version/model_configured/api_key_configured
+  ✓ /health never returns the key itself
+{"endpoint": "/ready", "error_code": "ACS_NOT_CONFIGURED", "event": "request_failed", "level": "error", "request_id": "req_c21a51f45cd6486b", "service": "ACS Understanding Engine", "status": 503, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ /ready is a real readiness verdict, not an alias of /health
+  ✓ /ready names missing configuration without printing any value
+{"endpoint": "/does-not-exist", "error_code": "ACS_NOT_FOUND", "event": "request_failed", "level": "error", "request_id": "req_a58a6ecafc2d4ab9", "service": "ACS Understanding Engine", "status": 404, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ an unknown path returns the envelope with ACS_NOT_FOUND, not Starlette HTML
+{"endpoint": "/health", "error_code": "ACS_METHOD_NOT_ALLOWED", "event": "request_failed", "level": "error", "request_id": "req_907dc6d6bd2e4304", "service": "ACS Understanding Engine", "status": 405, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ a wrong method returns ACS_METHOD_NOT_ALLOWED as JSON
+{"endpoint": "/v1/understand", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_73e30969a88a4089", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ a schema violation returns ACS_VALIDATION_FAILED as JSON, and does not echo the request body back
+{"endpoint": "/v1/understand", "error_code": "ACS_BAD_REQUEST", "event": "request_failed", "level": "error", "request_id": "req_f054d3ea7b2f4f3a", "service": "ACS Understanding Engine", "status": 400, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ an empty description is rejected before any upstream call is made
+{"endpoint": "/v1/understand", "error_code": "ACS_PAYLOAD_TOO_LARGE", "event": "request_failed", "level": "error", "request_id": "req_887195b55f074eae", "service": "ACS Understanding Engine", "status": 413, "ts": "2026-09-06T18:59:07Z", "version": "1.3"}
+  ✓ an oversized description returns ACS_PAYLOAD_TOO_LARGE as JSON
+  ✓ the deployed frontend origin passes CORS preflight
+  ✓ an unlisted origin is NOT granted CORS
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/phase9_2/test_backend_contract.py", line 473, in <module>
+    API._hits.clear()
+    ^^^^^^^^^
+AttributeError: module 'acs_understand_api' has no attribute '_hits'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/phase9_2/test_backend_contract.py", line 488, in <module>
+    API._hits.clear()
+    ^^^^^^^^^
+AttributeError: module 'acs_understand_api' has no attribute '_hits'

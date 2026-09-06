@@ -1,0 +1,24 @@
+test_missing_modification_history_is_not_claimed_as_added (__main__.IfcOwnerHistory.test_missing_modification_history_is_not_claimed_as_added) ... 
+  test_missing_modification_history_is_not_claimed_as_added (__main__.IfcOwnerHistory.test_missing_modification_history_is_not_claimed_as_added) (export_timestamp=None) ... FAIL
+  test_missing_modification_history_is_not_claimed_as_added (__main__.IfcOwnerHistory.test_missing_modification_history_is_not_claimed_as_added) (export_timestamp='2026-09-06T00:00:00Z') ... FAIL
+
+======================================================================
+FAIL: test_missing_modification_history_is_not_claimed_as_added (__main__.IfcOwnerHistory.test_missing_modification_history_is_not_claimed_as_added) (export_timestamp=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_owner_history.py", line 18, in test_missing_modification_history_is_not_claimed_as_added
+    self.assertIn(B._enum(B._arg(owner,3)),(None,'NOTDEFINED','NOCHANGE'))
+AssertionError: 'ADDED' not found in (None, 'NOTDEFINED', 'NOCHANGE')
+
+======================================================================
+FAIL: test_missing_modification_history_is_not_claimed_as_added (__main__.IfcOwnerHistory.test_missing_modification_history_is_not_claimed_as_added) (export_timestamp='2026-09-06T00:00:00Z')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_ifc_owner_history.py", line 18, in test_missing_modification_history_is_not_claimed_as_added
+    self.assertIn(B._enum(B._arg(owner,3)),(None,'NOTDEFINED','NOCHANGE'))
+AssertionError: 'ADDED' not found in (None, 'NOTDEFINED', 'NOCHANGE')
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+FAILED (failures=2)

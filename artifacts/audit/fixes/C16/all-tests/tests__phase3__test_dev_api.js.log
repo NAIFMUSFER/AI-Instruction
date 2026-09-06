@@ -1,0 +1,35 @@
+  ✓ the visual dev API block exists in public/app/ui/workspace-ui-wiring.js
+  ✓ public/app/main.js imports the module that carries it
+  ✓ the block is defined in exactly one application module
+  ✓ ACS.visualScene() returns a derived scene
+  ✓ ACS.visualModes() lists all nine modes
+  ✓ ACS.visualThemes() lists the themes
+  ✓ ACS.visualMaterials() returns VISUAL_MATERIAL entries only
+  ✓ ACS.visualSummary() declares no engineering mutation
+  ✓ ACS.visualObjects("ARCHITECTURE") filters by layer
+  ✓ ACS.visualObject(id) resolves an object
+  ✓ ACS.visualValidate() reports no integrity issue
+  ✓ ACS.floorPlan2D() derives a plan from the model
+  ✓ ACS.sectionView() derives a section
+  ✓ ACS.elevationView() derives an elevation
+  ✓ ACS.cameraPresets() lists the presets
+  ✓ ACS.frameCamera() reframes without regenerating geometry
+  ✓ ACS.visualInstancing() never merges a modelled element
+  ✓ ACS.visualLod() never drops a modelled element
+  ✓ ACS.snapshotRequest() clamps an absurd resolution
+  ✓ ACS.renderMetadata() carries the model hash
+  ✓ ACS.renderCurrency() reports CURRENT for the live model
+  ✓ ACS.snapshot() reports honestly when no WebGL context exists
+  ✓ ACS.controlBuffers() returns deterministic passes
+  ✓ ACS.geometrySignature() carries the protected features
+  ✓ ACS.aiEnhancementRequest() cannot write to the model and ships no generator
+  ✓ ACS.checkVisualConsistency() flags drift without touching the model
+  ✓ ACS.exportVisualScene(false) excludes visual-only objects
+  ✓ ACS.exportVisualScene(true) is explicitly a presentation export
+  ✓ ACS.presentationBlock() is additive and outside the revision hash
+  ✓ ACS.visualAssets() are all licensed
+  ✓ ACS.validateVisualAsset() refuses metadata carrying code
+  ✓ ACS.visualLayerVisible refuses to hide a discipline in the engineering view
+  ✓ the visual API exposes no geometry-editing entry point
+
+VISUAL DEV API: 33 passed, 0 failed

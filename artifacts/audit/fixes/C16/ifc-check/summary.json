@@ -1,0 +1,13 @@
+[
+  {
+    "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/evidence/ifc-schema/building.json",
+    "export_valid": true,
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "validation_errors": 6,
+    "express_rules_evaluated": true,
+    "checker_version": "0.8.5",
+    "sha256": "0e0979cc349d1ee6610c17ab9ade0933a548c853dd54dcafe2590b45968d6afe",
+    "seconds": 2.6057129469991196
+  }
+]

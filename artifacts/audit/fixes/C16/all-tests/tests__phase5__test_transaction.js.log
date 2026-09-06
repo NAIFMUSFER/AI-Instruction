@@ -1,0 +1,145 @@
+
+== §6 — TRANSACTION LIFECYCLE ==
+  ✓ a fresh project is IDLE
+  ✓ beginning an edit enters DRAFT
+  ✓ the draft pins the base revision
+  ✓ a valid preview reaches PREVIEWED
+  ✓ a valid transaction reaches VALIDATED
+  ✓ the model is still untouched at VALIDATED
+  ✓ an explicit commit reaches COMMITTED
+  ✓ the returned project is a new object, not the old one
+  ✓ the old project object still holds the old revision
+  ✓ an invalid target reaches REJECTED
+  ✓ a stale base revision reaches STALE_BASE_REVISION
+  ✓ a dependency conflict reaches CONFLICT
+  ✓ an unknown command reaches INVALID_COMMAND
+
+== §79 — TEST A: PREVIEW MOVE WALL, THEN CANCEL ==
+  ✓ the preview succeeds
+  ✓ the base model hash is still H1
+  ✓ the candidate is a different hash H2
+  ✓ the preview declares itself a preview and not committed
+  ✓ the canonical model object is untouched after the preview
+  ✓ the project revision did not move
+  ✓ a visual preview built from the candidate differs from the base scene
+  ✓ the preview visual scene compiles from the candidate, never from the canonical model
+  ✓ cancelling returns to IDLE
+  ✓ after cancelling, the current model hash is still H1
+  ✓ cancelling leaves no pending command and no preview
+  ✓ cancelling created no revision
+
+== §80 — TEST B: COMMIT MOVE WALL ==
+  ✓ the commit succeeds
+  ✓ R1 advanced to a new revision R2
+  ✓ the new revision id follows the declared pattern
+  ✓ the model hash changed
+  ✓ a revision history entry was appended
+  ✓ the revision record carries revision_id
+  ✓ the revision record carries parent_revision_id
+  ✓ the revision record carries model_hash
+  ✓ the revision record carries command_id
+  ✓ the revision record carries authoring_source
+  ✓ the revision record carries created_at
+  ✓ the revision record carries summary
+  ✓ the revision record carries changed_paths
+  ✓ the record names its parent revision
+  ✓ the record names the command that produced it
+  ✓ the record lists the changed paths
+  ✓ the commit reports which derived artifacts went stale
+  ✓ coordination, visual and runtime are all marked stale
+  ✓ structure, MEP and FLS are not marked stale by an architectural edit
+  ✓ the downstream layers rebuild from the new revision
+  ✓ the previous model object was not mutated by the commit
+  ✓ the previous revision stays addressable by its own hash
+
+== §67 — AUDIT LOG ==
+  ✓ the audit entry records transaction_id
+  ✓ the audit entry records command_ids
+  ✓ the audit entry records command_hashes
+  ✓ the audit entry records source
+  ✓ the audit entry records actor_id
+  ✓ the audit entry records base_revision
+  ✓ the audit entry records new_revision
+  ✓ the audit entry records model_hash_before
+  ✓ the audit entry records model_hash_after
+  ✓ the audit entry records changed_paths
+  ✓ the audit entry records validation_summary
+  ✓ the audit entry records created_at
+  ✓ the audit entry is appended to the project log
+  ✓ the audit records the before and after model hashes distinctly
+  ✓ the audit records zero errors for a successful commit
+  ✓ the audit carries no secret, token or reasoning trace
+  ✓ the audit note states the exclusion explicitly
+  ✓ the transaction id follows the declared pattern
+
+== §81 — TEST C: STALE BASE REVISION ==
+  ✓ the project advanced to R2
+  ✓ the stale command is refused
+  ✓ the refusal is STALE_BASE_REVISION
+  ✓ the refusal names both revisions
+  ✓ zero mutation followed the refusal
+  ✓ no revision was appended by the refusal
+  ✓ the same command against the current revision is accepted
+  ✓ a command with no base revision is not treated as stale
+
+== §82 — TEST D: DOOR HOST RANGE ==
+  ✓ a door moved beyond its host is rejected
+  ✓ the rejection is an out-of-range opening
+  ✓ the model is untouched after the rejection
+  ✓ a door moved inside its host range previews valid
+  ✓ the valid preview leaves no opening without a host
+
+== §83 — TEST E: DELETE WITH DEPENDENCIES ==
+  ✓ deleting a space that hosts openings requires confirmation
+  ✓ the dependency list is not empty and names exact ids
+  ✓ the commit without a confirmation token is refused
+  ✓ a wrong confirmation token is refused
+  ✓ the commit with the exact confirmation token succeeds
+  ✓ no orphan opening survives the deletion
+  ✓ the model was untouched by both refusals
+  ✓ deleting a wall that generates a space edge is refused outright
+  ✓ a harmless preview needs no confirmation
+
+== §84/§85 — TEST F: BATCH ATOMICITY ==
+  ✓ the batch is rejected as a whole
+  ✓ each command reports its own result
+  ✓ four commands are accepted individually
+  ✓ exactly one command is refused
+  ✓ the refused command is the fourth
+  ✓ the commit changes nothing at all
+  ✓ no revision was created
+  ✓ the transaction declares itself atomic
+  ✓ the same batch without the failing command commits as one revision
+  ✓ all four edits landed in that single revision
+  ✓ a batch beyond the declared cap is refused
+  ✓ an empty transaction is refused
+  ✓ a non-list transaction is refused
+
+== §54 — COMMIT POLICY IS DECLARED, NOT HIDDEN ==
+  ✓ the policy blocks on ERROR
+  ✓ the warning policy is declared explicitly
+  ✓ the default warning policy requires explicit acknowledgement
+  ✓ a silent-allow policy exists only as a deliberate opt-in
+  ✓ a model-integrity error always rejects the commit
+  ✓ the policy is stated in the specification rather than only in code
+
+== §10 — COMMIT SEMANTICS ==
+  ✓ 1 the base revision was verified as current
+  ✓ 2 the candidate was validated before commit
+  ✓ 3 a new canonical model was generated
+  ✓ 4 a new model hash was generated
+  ✓ 5 a revision record was created
+  ✓ 6 the parent revision is preserved
+  ✓ 7 stale derived snapshots are named
+  ✓ 8 no in-place mutation happened
+  ✓ committing twice from the same base yields the same deterministic revision
+
+== §49 — TRANSACTION SIZE AND PAYLOAD LIMITS ==
+  ✓ a command cap is declared
+  ✓ a payload byte cap is declared
+  ✓ a nesting cap is declared
+  ✓ an over-long string is refused before it reaches the model
+  ✓ a memory-exhausting batch is refused rather than attempted
+
+──────────────────────────────────────────────
+TRANSACTIONS: 120 passed, 0 failed
