@@ -5578,7 +5578,7 @@ const _A_LIFT_WORDS=['elevator','lift','مصعد'];
 function _aCoreKind(obj){
   const k=String((_pyT(obj.kind)?obj.kind:(_pyT(obj.name)?obj.name:''))).toLowerCase();
   if(_A_STAIR_WORDS.some(w=>k.indexOf(w)>=0)) return 'STAIR';
-  if(_A_LIFT_WORDS.some(w=>k.indexOf(w)>=0)) return 'ELEVATOR_SHAFT';
+  if(_A_LIFT_WORDS.some(w=>w==='lift'?/(^|[^a-z])lift([^a-z]|$)/.test(k):k.indexOf(w)>=0)) return 'ELEVATOR_SHAFT';
   return null; }
 /* نواة رأسية = عنصر درج/مصعد له موضع مستقر ومستويات يخدمها */
 function _aCores(building,bid,levels){

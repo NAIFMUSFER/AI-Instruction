@@ -59,6 +59,8 @@ python3 "$HERE/test_validator_response.py"; guard $?
 python3 "$HERE/test_validator_openings.py"; guard $?
 python3 "$HERE/test_validator_geometry.py"; guard $?
 python3 "$HERE/test_core_alignment.py"; guard $?
+python3 "$HERE/test_core_classification.py"; guard $?
+node "$ROOT/tests/lib/run.js" "$HERE/test_core_classification.js"; guard $?
 python3 "$HERE/test_repair_proposal.py"; guard $?
 node "$ROOT/tests/lib/run.js" "$HERE/test_repair_report.js"; guard $?
 python3 "$HERE/test_level_elevation.py"; guard $?

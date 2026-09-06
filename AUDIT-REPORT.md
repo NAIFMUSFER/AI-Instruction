@@ -493,4 +493,19 @@ NOT_EVALUATED في هذا النطاق، ولا يُعد ناجحاً في ال�
 خلال تتبع مصنّف النوى ثبتت C12 بمُدخل محفوظ؛ أُدرجت قبل أي تعديل للمصنّف.
 هذا خطأ إضافي في الأصل، وليس عنصراً ملفقاً لاستكمال عدد الـ22.
 
+C12 أُصلح محلياً في مصنّفات المعمار والعلاقات والمسافة ونسخها في الواجهة.
+صار lift يُطابق بحدود الكلمة الإنجليزية، فلا يُلتقط من forklift. اختبارا Python
+وJavaScript يشغلان المصنّفات الفعلية والتصريف: 3 اختبارات Python، 4 فشل قبل الإصلاح
+وصفر بعده؛ 27 تحققاً JavaScript ناجحة بعد فشل قبل الإصلاح. أُبقيت نوى وفراغات وروابط
+stairs/staircase/درج/elevator/lift/service_lift/مصعد. العينة السلبية صارت 0 نوى،
+0 فراغات، 0 روابط رأسية. التشغيل الكامل: 122 ملفات، 107 PASS / 7 FAIL / 8 NOT_VERIFIED.
+الحالتان متطابقتان بايتاً مع C02a؛ لا تحتويان كائن forklift متكرراً رأسياً.
+طلبا المزوّد المحلي 503. الأدلة: [التحقق](artifacts/audit/fixes/C12/verification.json)،
+[العينة بعد الإصلاح](artifacts/audit/fixes/C12/forklift-after.json)،
+[Python قبل](artifacts/audit/fixes/C12/red-python.log)،
+[Python بعد](artifacts/audit/fixes/C12/green-python.log)،
+[JavaScript قبل](artifacts/audit/fixes/C12/red-js.log)،
+[JavaScript بعد](artifacts/audit/fixes/C12/green-js.log)،
+[المقارنة](artifacts/audit/fixes/C12/comparison-previous.json).
+
 بقية البنود مفتوحة. لم تُنشر الإصلاحات. لا يُعلن «مكتمل» قبل تحقق معايير المستخدم الخمسة.

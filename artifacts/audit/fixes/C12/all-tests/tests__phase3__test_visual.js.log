@@ -1,0 +1,75 @@
+
+== §1 — SPEC INTEGRITY AND NO-DRIFT ==
+  ✓ browser spec is byte-identical to acs_visual.json
+  ✓ schema and compiler version are pinned
+  ✓ all nine visual modes are declared
+  ✓ every material is classified VISUAL_MATERIAL and nothing else
+  ✓ no material in the library carries an engineering property
+  ✓ material provenance separates SYSTEM_DEFAULT from USER
+  ✓ the spec forbids treating a render as measured or as-built
+  ✓ the spec names no code, standard or authority
+  ✓ the AI may not change any layout feature
+
+== §2 — NO ENGINEERING GEOMETRY MUTATION ==
+  ✓ compiling a scene mutates no source model
+  ✓ every visual mode leaves the model untouched
+  ✓ every discipline model is byte-identical after visualisation
+  ✓ every theme leaves the compiled architecture identical
+  ✓ every quality profile leaves the compiled architecture identical
+  ✓ the summary states no engineering geometry was modified
+  ✓ no scene contains a geometry-generation or redesign claim
+
+== §3 — OBJECTS ARE DERIVED, NEVER AUTHORED ==
+  ✓ every non-visual object names the model element it came from
+  ✓ every source element id resolves in the architectural model
+  ✓ wall count in the scene equals the wall count in the model
+  ✓ opening count in the scene equals the opening count in the model
+  ✓ an object sized from a render fallback says so
+  ✓ no display fallback is relabelled as a model dimension
+  ✓ the visual roof cap is visual-only and never a modelled roof
+  ✓ a model that states a roof gets no visual cap
+
+== §4 — VISUAL MODES ==
+  ✓ every declared mode compiles
+  ✓ an unknown mode falls back to PRESENTATION rather than inventing one
+  ✓ ENGINEERING mode shows every discipline
+  ✓ ENGINEERING mode is still available and technically styled
+  ✓ ARCHITECTURAL mode applies finishes rather than technical shading
+  ✓ ARCHITECTURAL mode adds ceilings that ENGINEERING mode omits
+  ✓ PRESENTATION mode carries a sky, exposure and tone mapping
+  ✓ every mode reports the same model hash for the same model
+
+== §5 — MATERIALS AND PROVENANCE ==
+  ✓ every emitted material is VISUAL_MATERIAL
+  ✓ no emitted material carries a fire, thermal or structural property
+  ✓ a material chosen by the system is SYSTEM_DEFAULT, not a user requirement
+  ✓ a material chosen by a theme is VISUAL_THEME, not a user requirement
+  ✓ a material stated by the user is USER
+  ✓ an AI-suggested material stays AI_SUGGESTED
+  ✓ an unknown material never silently becomes a real one
+  ✓ a material name is never treated as an engineering material
+
+== §6 — THEMES CHANGE APPEARANCE ONLY ==
+  ✓ a theme changes the finishes it selects
+  ✓ a theme changes no room dimension, opening or level
+  ✓ an unknown theme falls back to the default rather than inventing one
+  ✓ a theme never changes the building type or level count
+
+== §7 — DECORATION IS NOT ENGINEERING DATA ==
+  ✓ decoration is emitted only when explicitly requested
+  ✓ every decoration object is VISUAL_ONLY and never semantic
+  ✓ no decoration object references a model element
+  ✓ decoration is excluded from the engineering export
+  ✓ decoration appears only in an explicitly requested presentation export
+  ✓ a user-requested object stays engineering data and is never re-labelled
+  ✓ decoration never enters an occupant, coverage or load count
+  ✓ decoration counts are reported separately from semantic objects
+  ✓ entourage is visual-only and never an occupant
+
+== §8 — SITE, LANDSCAPE AND WATER ==
+  ✓ a stated site produces a ground plane at the stated size
+  ✓ a model with no site still renders, and says the extent is not a boundary
+  ✓ the ground plane is always visual-only
+  ✓ landscape objects are visual-only and separately layered
+  ✓ water is emitted only for a represented water feature
+  ✓ no pool is ever invented in any fixture

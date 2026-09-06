@@ -14,6 +14,7 @@
 #   • الأشكال غير المستطيلة: لا نقطع خطاً مستقيماً عبر الجدران ⇒ GEOMETRY_NOT_SUPPORTED.
 # =============================================================================
 import math
+import re
 
 STATUSES = ("COMPLETE", "PARTIAL", "NOT_MEASURED", "GEOMETRY_NOT_SUPPORTED", "INVALID_PATH")
 BASES = ("door_geometry", "straight_line_inside_rect", "corridor_centerline",
@@ -153,7 +154,7 @@ def _find_object(room, kind, index_hint=None):
         k = str(o.get("kind") or o.get("name") or "").lower()
         if kind == "stairs" and ("stair" in k or "درج" in k or "سلم" in k):
             return o
-        if kind == "elevator" and ("elevator" in k or "lift" in k or "مصعد" in k):
+        if kind == "elevator" and ("elevator" in k or re.search(r"(^|[^a-z])lift([^a-z]|$)", k) or "مصعد" in k):
             return o
     return None
 

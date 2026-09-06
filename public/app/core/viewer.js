@@ -2140,7 +2140,7 @@ const REL_SOURCES=['user','ai_inference','system_generated','geometry_inference'
 const REL_STATUSES=['confirmed','inferred','unresolved'];
 function _relKind(o){
   const raw=String(o.kind||o.name||'').trim().toLowerCase();
-  if(['elevator','lift','مصعد'].some(w=>raw.indexOf(w)>=0)) return 'elevator';
+  if(['elevator','lift','مصعد'].some(w=>w==='lift'?/(^|[^a-z])lift([^a-z]|$)/.test(raw):raw.indexOf(w)>=0)) return 'elevator';
   if(['stairs','stair','درج','سلم','staircase'].some(w=>raw.indexOf(w)>=0)) return 'stairs';
   return null;
 }
@@ -2722,7 +2722,7 @@ function _dsFindObject(room,kind){
   const objs=(room&&room.objects)||[];
   for(let i=0;i<objs.length;i++){ const k=String(objs[i].kind||objs[i].name||'').toLowerCase();
     if(kind==='stairs'&&(k.indexOf('stair')>=0||k.indexOf('درج')>=0||k.indexOf('سلم')>=0)) return objs[i];
-    if(kind==='elevator'&&(k.indexOf('elevator')>=0||k.indexOf('lift')>=0||k.indexOf('مصعد')>=0)) return objs[i]; }
+    if(kind==='elevator'&&(k.indexOf('elevator')>=0||/(^|[^a-z])lift([^a-z]|$)/.test(k)||k.indexOf('مصعد')>=0)) return objs[i]; }
   return null; }
 /* موضع عنصر (درج/مصعد) بالإحداثيات العامة — فقط إن كان مصرَّحاً في النموذج.
    إحداثيات العناصر نسبية لركن الفراغ. الغياب لا يُعوَّض بمركز الفراغ. */

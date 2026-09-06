@@ -29,11 +29,13 @@ STATUSES = ("confirmed", "inferred", "unresolved")
 _STAIR_WORDS = ("stairs", "stair", "درج", "سلم", "staircase")
 _LIFT_WORDS = ("elevator", "lift", "مصعد")
 
+import re
+
 
 def _kind_of(o):
     raw = str(o.get("kind") or o.get("name") or "").strip().lower()
     for w in _LIFT_WORDS:
-        if w in raw:
+        if re.search(r"(^|[^a-z])lift([^a-z]|$)", raw) if w == "lift" else w in raw:
             return "elevator"
     for w in _STAIR_WORDS:
         if w in raw:

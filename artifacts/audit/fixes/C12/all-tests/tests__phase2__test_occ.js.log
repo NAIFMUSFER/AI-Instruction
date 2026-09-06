@@ -1,0 +1,128 @@
+
+== §37 — NO REAL CLASSIFICATIONS ==
+  ✓ real regulatory verified classifications = 0
+  ✓ every shipped pack is synthetic and non-regulatory
+  ✓ no SBC/IBC occupancy group name in any shipped classification
+  ✓ the disclaimer names those codes only to exclude them
+  ✓ every classification id is namespaced TEST_OCC
+  ✓ packs ship as DRAFT with nothing activated
+  ✓ registry validates clean
+  ✓ browser registry is byte-identical to acs_occupancy.json
+
+== §1 — CODE CONTEXT MODEL ==
+  ✓ jurisdiction starts entirely null
+  ✓ code_context starts with no standard, edition or packs
+  ✓ occupancy starts UNCLASSIFIED
+  ✓ code context validates clean
+  ✓ a pack reference must state enabled explicitly
+  ✓ phase 1/2 building JSON is untouched by the code context
+
+== TEST A (§22) — PROGRAM IS NOT OCCUPANCY ==
+  ✓ building program is hotel
+  ✓ with nothing activated, the subject is UNCLASSIFIED
+  ✓ a program suggestion produces nothing while no pack is activated
+  ✓ an explicit suggestion call yields CANDIDATE only
+  ✓ the suggestion is never VERIFIED
+  ✓ its source is AI_SUGGESTED
+  ✓ the resolved subject status is CANDIDATE, not VERIFIED
+  ✓ the hint records that it is a suggestion only
+  ✓ acs_programs.json was not turned into a classification registry
+
+== TEST B (§23) — AI SUGGESTION CANNOT SATISFY A RULE ==
+  ✓ rule requiring verified occupancy is NOT_EVALUATED
+  ✓ reason is OCCUPANCY_NOT_VERIFIED
+  ✓ no PASS and no FAIL
+  ✓ AI can never verify a classification
+  ✓ verification without evidence is refused
+  ✓ an AI_SUGGESTED record carrying VERIFIED is structurally invalid
+
+== TEST C (§24) — MANUAL VERIFICATION OF A SYNTHETIC CLASSIFICATION ==
+  ✓ explicit manual approval verifies it
+  ✓ status is VERIFIED
+  ✓ source changed to MANUAL_VERIFIED and the origin is retained
+  ✓ no verifier identity is fabricated
+  ✓ the verification pins the pack and its edition
+  ✓ the occupancy-dependent synthetic rule now evaluates
+  ✓ the actual value is the verified group
+  ✓ data quality COMPLETE and applicability APPLICABLE
+  ✓ CODE_REQUIRED stays false — the data is synthetic
+  ✓ occupancy evidence is part of the result chain
+  ✓ input provenance is user (a human verified it), not ai_inference
+  ✓ real regulatory classification count is still 0
+
+== TEST D (§25) — MIXED OCCUPANCY ==
+  ✓ four space-level classifications coexist
+  ✓ two portions are TEST_OCC_A
+  ✓ two portions are TEST_OCC_B
+  ✓ no building-wide collapse — the building itself stays UNCLASSIFIED
+  ✓ differing groups on DIFFERENT subjects are not a conflict
+  ✓ mixed_use as a building program is not a classification
+  ✓ classification subjects span BUILDING, LEVEL, SPACE and ZONE
+  ✓ no separation or rated assembly is claimed anywhere
+  ✓ audit counts verified and unclassified separately
+  ✓ audit makes no compliance statement
+
+== TEST E (§26) — CONFLICT ==
+  ✓ two verified conflicting classifications ⇒ CONFLICT
+  ✓ reason is OCCUPANCY_CLASSIFICATION_CONFLICT
+  ✓ neither group is silently chosen
+  ✓ dependent rule is NOT_EVALUATED
+  ✓ rule reason names the conflict
+  ✓ both classifications remain listed as candidates
+
+== TEST F (§27) — EDITION MISMATCH ==
+  ✓ the classification verifies under edition 9
+  ✓ an edition-0 rule refuses an edition-9 classification
+  ✓ no cross-edition laundering into PASS/FAIL
+  ✓ the mismatch is recorded as evidence
+
+== §18 — JURISDICTION ALIGNMENT ==
+  ✓ a TESTLAND rule refuses an OTHERLAND classification
+  ✓ jurisdiction and occupancy are never silently combined
+
+== TEST G (§28) — UNKNOWN OCCUPANCY ==
+  ✓ no classification at all ⇒ NOT_EVALUATED, reason OCCUPANCY_NOT_CLASSIFIED
+  ✓ a rule without a quality gate ⇒ INSUFFICIENT_DATA
+  ✓ the reason names OCCUPANCY_NOT_VERIFIED
+  ✓ neither PASS nor FAIL
+
+== TEST H (§29) — USER DECLARED ==
+  ✓ a user declaration is recorded
+  ✓ it is CANDIDATE, not VERIFIED
+  ✓ no identity is invented when there is no auth
+  ✓ declaration time is recorded from the caller
+  ✓ a declared-but-unverified occupancy cannot satisfy a rule
+  ✓ explicit verification is what promotes it
+  ✓ a group absent from every active pack cannot be declared
+
+== TEST I (§30) — LANGUAGE INFERS NOTHING ==
+  ✓ Arabic text does not set a jurisdiction
+  ✓ Arabic text does not classify anything
+  ✓ a jurisdiction-gated rule stays NOT_EVALUATED / JURISDICTION_NOT_SET
+  ✓ the word فندق never becomes a verified occupancy
+
+== §14/§34 — CLASSIFICATION PACK LIFECYCLE & SECURITY ==
+  ✓ DRAFT → VERIFIED_PARTIAL directly is refused
+  ✓ AI may not verify a classification pack
+  ✓ DRAFT → UNDER_REVIEW → VERIFIED_PARTIAL works
+  ✓ VERIFIED_FOR_DECLARED_SCOPE needs declared completeness
+  ✓ a verified pack is inert until the project pins it
+  ✓ a disabled reference does not activate
+  ✓ duplicate classification ids in a pack are rejected
+  ✓ unknown pack state rejected
+  ✓ script content rejected
+  ✓ javascript: url rejected
+  ✓ a regulatory pack must cite source documents
+  ✓ a classification citing an unknown group is rejected
+  ✓ EXTRACTED-style jump UNCLASSIFIED → VERIFIED is not a legal transition
+  ✓ READY_FOR_VERIFICATION → VERIFIED is legal
+  ✓ all seven classification states exist
+
+== §33 — EXPORT ==
+  ✓ export preserves status, source, evidence, standard, edition and verification
+  ✓ export marks only VERIFIED rows as authoritative
+  ✓ export states that AI suggestions are never authoritative
+  ✓ export reports zero real regulatory classifications
+  ✓ export lists activated packs explicitly
+
+OCCUPANCY: 98 passed, 0 failed

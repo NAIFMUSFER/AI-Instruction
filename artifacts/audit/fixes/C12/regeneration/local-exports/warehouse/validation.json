@@ -1,0 +1,387 @@
+{
+  "legacy_issues": [
+    "[ops/envelope] بلا إنارة — أضِف light أو spot.",
+    "[ops/envelope] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/inbound_docks] بلا إنارة — أضِف light أو spot.",
+    "[ops/inbound_docks] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/inbound_docks/points/2] POINT_OUTSIDE_ROOM: نقطة scanner خارج حدود الغرفة (x=15.40 z=1.20).",
+    "[ops/inbound_docks/points/5] POINT_OUTSIDE_ROOM: نقطة sign خارج حدود الغرفة (x=16.90 z=0.60).",
+    "[ops/fast_unload] بلا إنارة — أضِف light أو spot.",
+    "[ops/fast_unload/points/0] POINT_OUTSIDE_ROOM: نقطة palletjack خارج حدود الغرفة (x=1.50 z=2.60).",
+    "[ops/fast_unload/points/1] POINT_OUTSIDE_ROOM: نقطة palletjack خارج حدود الغرفة (x=4.50 z=2.60).",
+    "[ops/fast_unload/points/2] POINT_OUTSIDE_ROOM: نقطة palletjack خارج حدود الغرفة (x=7.50 z=2.60).",
+    "[ops/fast_unload/points/5] POINT_OUTSIDE_ROOM: نقطة smoke خارج حدود الغرفة (x=6.30 z=2.00).",
+    "[ops/inbound_staging] بلا إنارة — أضِف light أو spot.",
+    "[ops/inbound_staging/points/3] POINT_OUTSIDE_ROOM: نقطة sign خارج حدود الغرفة (x=22.50 z=0.50).",
+    "[ops/inbound_staging/points/4] POINT_OUTSIDE_ROOM: نقطة sign خارج حدود الغرفة (x=28.90 z=0.50).",
+    "[ops/inbound_staging/points/5] POINT_OUTSIDE_ROOM: نقطة sign خارج حدود الغرفة (x=35.30 z=0.50).",
+    "[ops/qc_inspection] بلا إنارة — أضِف light أو spot.",
+    "[ops/qc_inspection/points/1] POINT_OUTSIDE_ROOM: نقطة printer خارج حدود الغرفة (x=5.70 z=7.00).",
+    "[ops/qc_inspection/points/4] POINT_OUTSIDE_ROOM: نقطة bin خارج حدود الغرفة (x=9.00 z=3.49).",
+    "[ops/qc_inspection/points/5] POINT_OUTSIDE_ROOM: نقطة bin خارج حدود الغرفة (x=15.00 z=3.49).",
+    "[ops/crossdock] بلا إنارة — أضِف light أو spot.",
+    "[ops/crossdock/points/1] POINT_OUTSIDE_ROOM: نقطة diverter خارج حدود الغرفة (x=20.00 z=2.58).",
+    "[ops/crossdock/points/2] POINT_OUTSIDE_ROOM: نقطة diverter خارج حدود الغرفة (x=30.00 z=2.58).",
+    "[ops/replenishment] بلا إنارة — أضِف light أو spot.",
+    "[ops/replenishment] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/bulk_pallet_A] بلا إنارة — أضِف light أو spot.",
+    "[ops/bulk_pallet_A] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/medium_shelf_B] بلا إنارة — أضِف light أو spot.",
+    "[ops/medium_shelf_B] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/bin_storage_C] بلا إنارة — أضِف light أو spot.",
+    "[ops/bin_storage_C] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/flow_racks_fast] بلا إنارة — أضِف light أو spot.",
+    "[ops/flow_racks_fast] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/replen_aisle_main] بلا إنارة — أضِف light أو spot.",
+    "[ops/replen_aisle_main] بلا كاشف دخان — أضِف smoke (أو sprinkler في المستودعات).",
+    "[ops/it_server_room/points/7] POINT_OUTSIDE_ROOM: نقطة server خارج حدود الغرفة (x=6.00 z=1.00).",
+    "[ops/it_server_room/points/8] POINT_OUTSIDE_ROOM: نقطة server خارج حدود الغرفة (x=9.00 z=1.00).",
+    "[ops/rest_area/furniture/1/instance/0] ITEM_OUTSIDE_ROOM: بصمة العنصر خارج الغرفة.",
+    "[ops/batch_picking] بلا إنارة — أضِف light أو spot.",
+    "[ops/wave_picking] بلا إنارة — أضِف light أو spot.",
+    "[ops/zone_picking] بلا إنارة — أضِف light أو spot.",
+    "[ops/amr_field] بلا إنارة — أضِف light أو spot.",
+    "[ops/human_picking] بلا إنارة — أضِف light أو spot.",
+    "[ops/packing] بلا إنارة — أضِف light أو spot.",
+    "[ops/packing/points/3] POINT_OUTSIDE_ROOM: نقطة scale خارج حدود الغرفة (x=10.50 z=0.84).",
+    "[ops/packing/points/7] POINT_OUTSIDE_ROOM: نقطة printer خارج حدود الغرفة (x=10.50 z=2.39).",
+    "[ops/labeling_qa] بلا إنارة — أضِف light أو spot.",
+    "[ops/labeling_qa/points/1] POINT_OUTSIDE_ROOM: نقطة scanner خارج حدود الغرفة (x=7.00 z=0.84).",
+    "[ops/consolidation] بلا إنارة — أضِف light أو spot.",
+    "[ops/auto_sorter] بلا إنارة — أضِف light أو spot.",
+    "[ops/auto_sorter/points/2] POINT_OUTSIDE_ROOM: نقطة diverter خارج حدود الغرفة (x=9.50 z=0.84).",
+    "[ops/auto_sorter/points/3] POINT_OUTSIDE_ROOM: نقطة diverter خارج حدود الغرفة (x=12.50 z=0.84).",
+    "[ops/auto_sorter/points/6] POINT_OUTSIDE_ROOM: نقطة chute خارج حدود الغرفة (x=9.50 z=1.91).",
+    "[ops/auto_sorter/points/7] POINT_OUTSIDE_ROOM: نقطة chute خارج حدود الغرفة (x=12.50 z=1.91).",
+    "[ops/manual_sort/points/1] POINT_OUTSIDE_ROOM: نقطة bin خارج حدود الغرفة (x=7.00 z=1.97).",
+    "[ops/dispatch_dhl] بلا إنارة — أضِف light أو spot.",
+    "[ops/dispatch_aramex] بلا إنارة — أضِف light أو spot.",
+    "[ops/dispatch_smsa] بلا إنارة — أضِف light أو spot.",
+    "[ops/lastmile_lanes] بلا إنارة — أضِف light أو spot.",
+    "[ops/outbound_docks] بلا إنارة — أضِف light أو spot.",
+    "[ops/outbound_docks/points/1] POINT_OUTSIDE_ROOM: نقطة scanner خارج حدود الغرفة (x=7.20 z=1.19).",
+    "[ops/outbound_docks/points/2] POINT_OUTSIDE_ROOM: نقطة scanner خارج حدود الغرفة (x=11.40 z=1.19).",
+    "[ops] تداخل بين 'replen_aisle_main' و'inventory_office' — أزِح إحداهما.",
+    "[ops] تداخل بين 'replen_aisle_main' و'it_server_room' — أزِح إحداهما.",
+    "[ops] تداخل بين 'replen_aisle_main' و'meeting_room' — أزِح إحداهما.",
+    "[ops] تداخل بين 'replen_aisle_main' و'rest_area' — أزِح إحداهما.",
+    "[ops] تداخل بين 'replen_aisle_main' و'lockers' — أزِح إحداهما."
+  ],
+  "stats": {
+    "levels": 1,
+    "rooms": 35,
+    "points": 232,
+    "racks": 10,
+    "lanes": 30,
+    "stations": 16,
+    "docks": 8,
+    "vertical_alignment": {
+      "status": "NOT_APPLICABLE",
+      "checked_groups": 0,
+      "unresolved": [],
+      "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+    }
+  },
+  "architecture_issues": [
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.inbound_docks@0",
+      "overlap_m2": 36.5019
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.fast_unload@0",
+      "overlap_m2": 24.4212
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.inbound_staging@0",
+      "overlap_m2": 42.705
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.qc_inspection@0",
+      "overlap_m2": 30.5319
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.crossdock@0",
+      "overlap_m2": 49.245
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.replenishment@0",
+      "overlap_m2": 14.2569
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.maintenance@0",
+      "overlap_m2": 8.7381
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.bulk_pallet_A@0",
+      "overlap_m2": 84.7
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.medium_shelf_B@0",
+      "overlap_m2": 64.9
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.bin_storage_C@0",
+      "overlap_m2": 50.0
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.flow_racks_fast@0",
+      "overlap_m2": 44.9
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.replen_aisle_main@0",
+      "overlap_m2": 40.0
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.inventory_office@0",
+      "overlap_m2": 9.975
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.it_server_room@0",
+      "overlap_m2": 7.5012
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.meeting_room@0",
+      "overlap_m2": 7.5012
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.rest_area@0",
+      "overlap_m2": 8.7381
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.lockers@0",
+      "overlap_m2": 6.2244
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.batch_picking@0",
+      "overlap_m2": 18.78
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.wave_picking@0",
+      "overlap_m2": 18.78
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.zone_picking@0",
+      "overlap_m2": 20.3763
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.amr_field@0",
+      "overlap_m2": 17.1837
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.human_picking@0",
+      "overlap_m2": 18.78
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.packing@0",
+      "overlap_m2": 22.4238
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.labeling_qa@0",
+      "overlap_m2": 11.2119
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.void_fill@0",
+      "overlap_m2": 8.43
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.consolidation@0",
+      "overlap_m2": 12.645
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.auto_sorter@0",
+      "overlap_m2": 19.6419
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.manual_sort@0",
+      "overlap_m2": 9.8631
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.dispatch_dhl@0",
+      "overlap_m2": 10.9719
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.dispatch_aramex@0",
+      "overlap_m2": 10.9719
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.dispatch_smsa@0",
+      "overlap_m2": 9.855
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.lastmile_lanes@0",
+      "overlap_m2": 12.0231
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.pallet_wrapping@0",
+      "overlap_m2": 6.57
+    },
+    {
+      "code": "SPACE_CONTAINED",
+      "subject": "bld_0.ops.envelope@0",
+      "other": "bld_0.ops.outbound_docks@0",
+      "overlap_m2": 15.3081
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.replen_aisle_main@0",
+      "other": "bld_0.ops.inventory_office@0",
+      "overlap_m2": 6.1
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.replen_aisle_main@0",
+      "other": "bld_0.ops.it_server_room@0",
+      "overlap_m2": 4.5872
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.replen_aisle_main@0",
+      "other": "bld_0.ops.meeting_room@0",
+      "overlap_m2": 4.5872
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.replen_aisle_main@0",
+      "other": "bld_0.ops.rest_area@0",
+      "overlap_m2": 5.3436
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.replen_aisle_main@0",
+      "other": "bld_0.ops.lockers@0",
+      "overlap_m2": 3.8064
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.it_server_room@0",
+      "other": "bld_0.ops.meeting_room@0",
+      "overlap_m2": 0.0399
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.rest_area@0",
+      "other": "bld_0.ops.lockers@0",
+      "overlap_m2": 0.0399
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.batch_picking@0",
+      "other": "bld_0.ops.packing@0",
+      "overlap_m2": 0.06
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.wave_picking@0",
+      "other": "bld_0.ops.packing@0",
+      "overlap_m2": 0.0198
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.wave_picking@0",
+      "other": "bld_0.ops.labeling_qa@0",
+      "overlap_m2": 0.0399
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.zone_picking@0",
+      "other": "bld_0.ops.void_fill@0",
+      "overlap_m2": 0.03
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.zone_picking@0",
+      "other": "bld_0.ops.consolidation@0",
+      "overlap_m2": 0.0351
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.amr_field@0",
+      "other": "bld_0.ops.consolidation@0",
+      "overlap_m2": 0.0099
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.amr_field@0",
+      "other": "bld_0.ops.auto_sorter@0",
+      "overlap_m2": 0.045
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.human_picking@0",
+      "other": "bld_0.ops.auto_sorter@0",
+      "overlap_m2": 0.0249
+    },
+    {
+      "code": "SPACE_OVERLAP",
+      "subject": "bld_0.ops.human_picking@0",
+      "other": "bld_0.ops.manual_sort@0",
+      "overlap_m2": 0.0351
+    }
+  ]
+}

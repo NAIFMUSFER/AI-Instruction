@@ -1,0 +1,59 @@
+test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) ... 
+  test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) (name='forklift') ... FAIL
+  test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) (name='electric forklift') ... FAIL
+  test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) (name='forklift_A') ... FAIL
+test_real_stairs_and_lifts_keep_their_voids_and_connections (__main__.CoreClassification.test_real_stairs_and_lifts_keep_their_voids_and_connections) ... ok
+test_two_storeys_with_forklifts_have_no_false_void_or_vertical_edge (__main__.CoreClassification.test_two_storeys_with_forklifts_have_no_false_void_or_vertical_edge) ... FAIL
+
+======================================================================
+FAIL: test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) (name='forklift')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_classification.py", line 27, in test_forklift_is_not_vertical_transport_in_any_consumer
+    self.assertIsNone(AR._core_kind(obj))
+AssertionError: 'ELEVATOR_SHAFT' is not None
+
+======================================================================
+FAIL: test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) (name='electric forklift')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_classification.py", line 27, in test_forklift_is_not_vertical_transport_in_any_consumer
+    self.assertIsNone(AR._core_kind(obj))
+AssertionError: 'ELEVATOR_SHAFT' is not None
+
+======================================================================
+FAIL: test_forklift_is_not_vertical_transport_in_any_consumer (__main__.CoreClassification.test_forklift_is_not_vertical_transport_in_any_consumer) (name='forklift_A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_classification.py", line 27, in test_forklift_is_not_vertical_transport_in_any_consumer
+    self.assertIsNone(AR._core_kind(obj))
+AssertionError: 'ELEVATOR_SHAFT' is not None
+
+======================================================================
+FAIL: test_two_storeys_with_forklifts_have_no_false_void_or_vertical_edge (__main__.CoreClassification.test_two_storeys_with_forklifts_have_no_false_void_or_vertical_edge)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_core_classification.py", line 34, in test_two_storeys_with_forklifts_have_no_false_void_or_vertical_edge
+    self.assertEqual(arch["cores"], [])
+AssertionError: Lists differ: [{'type': 'ELEVATOR_SHAFT', 'x': 3.0, 'z':[331 chars]_0'}] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+{'type': 'ELEVATOR_SHAFT', 'x': 3.0, 'z': 3.0, 'position_source': 'imported', 'footprint_w_m': {'value': 1.2, 'render_fallback': 2.1, 'source': 'imported'}, 'footprint_d_m': {'value': 2.2, 'render_fallback': 2.3, 'source': 'imported'}, 'served_levels': [0, 1], 'spaces': ['bld_0.g.store'], 'via': ['bld_0.g.store.elevator_0', 'bld_0.g.store.elevator_0'], 'id': 'bld_0.core_0'}
+
++ []
+- [{'footprint_d_m': {'render_fallback': 2.3, 'source': 'imported', 'value': 2.2},
+-   'footprint_w_m': {'render_fallback': 2.1, 'source': 'imported', 'value': 1.2},
+-   'id': 'bld_0.core_0',
+-   'position_source': 'imported',
+-   'served_levels': [0, 1],
+-   'spaces': ['bld_0.g.store'],
+-   'type': 'ELEVATOR_SHAFT',
+-   'via': ['bld_0.g.store.elevator_0', 'bld_0.g.store.elevator_0'],
+-   'x': 3.0,
+-   'z': 3.0}]
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.003s
+
+FAILED (failures=4)

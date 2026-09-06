@@ -18,6 +18,7 @@
 # =============================================================================
 import json
 import os
+import re
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_HERE, "acs_arch.json"), "r", encoding="utf-8") as _f:
@@ -265,7 +266,8 @@ def _core_kind(obj):
     k = str(obj.get("kind") or obj.get("name") or "").lower()
     if any(w in k for w in _STAIR_WORDS):
         return "STAIR"
-    if any(w in k for w in _LIFT_WORDS):
+    if any((re.search(r"(^|[^a-z])lift([^a-z]|$)", k) if w == "lift" else w in k)
+           for w in _LIFT_WORDS):
         return "ELEVATOR_SHAFT"
     return None
 
