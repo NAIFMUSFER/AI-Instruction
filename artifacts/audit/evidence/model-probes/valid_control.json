@@ -1,0 +1,43 @@
+{
+  "site": {
+    "w": 20,
+    "d": 25
+  },
+  "floor_height": 3.2,
+  "wall_h": 3,
+  "wall_t": 0.15,
+  "levels": [
+    {
+      "index": 0,
+      "template": "g"
+    }
+  ],
+  "floors": {
+    "g": {
+      "rooms": [
+        {
+          "id": "room",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "walls": "full",
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 3,
+              "width": 1,
+              "height": 2.1
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "strict": true,
+    "type": "residential"
+  }
+}

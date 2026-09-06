@@ -1,0 +1,43 @@
+[
+  {
+    "case": "warehouse",
+    "source": "recorded actual production HTTP response; compiled using audited branch",
+    "generation_http_s": 74.288,
+    "language_understanding_and_engineering_generation": "combined single/staged provider pipeline; separate timing not exposed",
+    "validation_s": 0.00011477299995021895,
+    "architecture_compilation_s": 0.00020639099966501817,
+    "gltf_export_s": 0.0016951989964582026,
+    "svg_export_s": 0.00523121500009438,
+    "measured_total_s": 74.29524757799616,
+    "gltf_nodes": 9,
+    "gltf_bytes": 8208,
+    "native_dxf_export": "NOT_IMPLEMENTED; audit-room-outlines.dxf is an audit-only room-outline projection",
+    "files": [
+      {
+        "path": "warehouse/audit-room-outlines.dxf",
+        "bytes": 153,
+        "sha256": "32db41ec4319e002512bd83b6d1bdf17e184f1bf2f32c63d7f78fb2d54762894"
+      },
+      {
+        "path": "warehouse/building.gltf",
+        "bytes": 18897,
+        "sha256": "d4273cd507778bf77d441e64ae82697cbc36c408daf85aa7d13c8be992e51f63"
+      },
+      {
+        "path": "warehouse/building.json",
+        "bytes": 2815,
+        "sha256": "978b1867b864a95a287f1410ba075d1d39916b1be5bb3df3f07cdc4a6ebab3e5"
+      },
+      {
+        "path": "warehouse/floor-0.svg",
+        "bytes": 1627,
+        "sha256": "79f626974f06ec3f48238d852793392899ce93a47efbb6aa2e81db272fba42eb"
+      },
+      {
+        "path": "warehouse/validation.json",
+        "bytes": 189,
+        "sha256": "407d8d27405a186a7a2af021b74032db9d2f01d3d7fd21da3a0f4b372b5bdd28"
+      }
+    ]
+  }
+]

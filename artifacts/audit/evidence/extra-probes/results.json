@@ -1,0 +1,52 @@
+[
+  {
+    "case": "image_nonfinite_site",
+    "status": 200,
+    "parsed_nonfile_bytes": 8,
+    "declared_upload_max": 12582912,
+    "seconds": 0.011765602001105435,
+    "generation_calls": [
+      {
+        "target": "acs_understand:understand_images",
+        "fields": {
+          "site_w": "nan",
+          "site_d": -20.0,
+          "floors": -1,
+          "model": null,
+          "notes": "",
+          "strict": false,
+          "btype": null
+        }
+      }
+    ],
+    "scope": "real ASGI/form parsing, real image validation; generation and proposal stage are doubles"
+  },
+  {
+    "case": "oversized_unused_form_field",
+    "status": 200,
+    "parsed_nonfile_bytes": 12583936,
+    "declared_upload_max": 12582912,
+    "seconds": 0.03232988800300518,
+    "generation_calls": [
+      {
+        "target": "acs_understand:understand_images",
+        "fields": {
+          "site_w": null,
+          "site_d": null,
+          "floors": null,
+          "model": null,
+          "notes": "",
+          "strict": false,
+          "btype": null
+        }
+      }
+    ],
+    "scope": "real ASGI/form parsing, real image validation; generation and proposal stage are doubles"
+  },
+  {
+    "case": "exported_floor_elevation",
+    "declared_top_y_m": 7.5,
+    "actual_gltf_y_min_m": 3.049999952316284,
+    "actual_gltf_y_max_m": 3.200000047683716
+  }
+]

@@ -1,0 +1,12 @@
+{
+  "url": "https://acs-engine.onrender.com/v1/understand",
+  "method": "OPTIONS",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "Content-Type": "text/plain; charset=utf-8",
+    "access-control-allow-origin": "https://sprightly-selkie-d906c3.netlify.app"
+  },
+  "body_text": "OK",
+  "seconds": 8.63
+}

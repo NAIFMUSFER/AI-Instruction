@@ -1,0 +1,536 @@
+{
+  "url": "https://acs-engine.onrender.com/v1/understand",
+  "method": "POST",
+  "request": {
+    "text": "مستودع بسيط 20×15 م من دور واحد، مساحة تخزين مفتوحة بباب واحد، بدون فرز وبدون مكاتب.",
+    "site_w": 20,
+    "site_d": 15,
+    "floors": 1,
+    "strict": true,
+    "btype": "warehouse"
+  },
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "x-request-id": "req_dc1195962de64306"
+  },
+  "body": {
+    "ok": true,
+    "building": {
+      "meta": {
+        "name": "مستودع 20x15",
+        "city": "غير محدد",
+        "north": "-Z",
+        "requirements": [
+          {
+            "req": "أبعاد الأرض/مسطح البناء: العرض 20.0 م (محور X) × العمق 15.0 م (محور Z)",
+            "where": "site",
+            "how": "site.w=20.0 و site.d=15.0 مع z=0 كواجهة شمالية"
+          },
+          {
+            "req": "عدد الأدوار: 1",
+            "where": "levels",
+            "how": "مستوى أرضي واحد index=0"
+          },
+          {
+            "req": "مستودع بسيط 20×15 م من دور واحد",
+            "where": "site/levels",
+            "how": "نُفِّذ بمستوى واحد على أرض 20×15"
+          },
+          {
+            "req": "مساحة تخزين مفتوحة بباب واحد",
+            "where": "storage",
+            "how": "غرفة تخزين واحدة بكامل المساحة وجدران خارجية وباب واحد"
+          },
+          {
+            "req": "بدون فرز",
+            "where": "storage",
+            "how": "لا توجد أي منطقة فرز"
+          },
+          {
+            "req": "بدون مكاتب",
+            "where": "storage",
+            "how": "لا توجد أي مناطق مكتبية"
+          }
+        ],
+        "extras": [],
+        "added": [],
+        "type": "warehouse",
+        "strict": true,
+        "acs_issues": 0,
+        "acs_mode": "single",
+        "acs_generation": {
+          "contract": "acs-generation-budget/1.0.0",
+          "strategy": "single",
+          "size_class": "SMALL",
+          "estimated_output_tokens": 3266,
+          "estimated_zones": 4,
+          "max_output_tokens": 32000,
+          "single_stage_threshold_tokens": 19200,
+          "escalations": 0,
+          "stages": [
+            {
+              "stage": "single",
+              "depth": 0,
+              "zones": 4,
+              "stop_reason": "end_turn",
+              "input_tokens": 4518,
+              "output_tokens": 4296,
+              "max_output_tokens": 32000,
+              "completion_chars": 1650,
+              "parsed": true,
+              "error": null
+            }
+          ]
+        }
+      },
+      "site": {
+        "w": 20.0,
+        "d": 15.0
+      },
+      "floor_height": 10.0,
+      "wall_h": 10.0,
+      "wall_t": 0.25,
+      "levels": [
+        {
+          "index": 0,
+          "name": "Ground Floor",
+          "template": "ground",
+          "id": "L0"
+        }
+      ],
+      "floors": {
+        "ground": {
+          "rooms": [
+            {
+              "id": "storage",
+              "rect": [
+                0,
+                0,
+                20,
+                15
+              ],
+              "wall_h": 10.0,
+              "role": "storage",
+              "walls": "full",
+              "doors": [
+                {
+                  "id": "main_door",
+                  "edge": "N",
+                  "offset": 8.5,
+                  "width": 3.0,
+                  "height": 4.5
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "_opening_identity": {
+        "schema": "acs.opening-identity/1",
+        "next": 0
+      }
+    },
+    "levels": 1,
+    "rooms": 1,
+    "type": "warehouse",
+    "mode": "single",
+    "generation": {
+      "strategy": "single",
+      "size_class": "SMALL",
+      "estimated_output_tokens": 3266,
+      "max_output_tokens": 32000,
+      "escalations": 0,
+      "stages": 1,
+      "stop_reasons": [
+        "end_turn"
+      ],
+      "output_tokens_total": 4296,
+      "input_tokens_total": 4518,
+      "stage_detail": [
+        {
+          "stage": "single",
+          "depth": 0,
+          "stop_reason": "end_turn",
+          "output_tokens": 4296,
+          "input_tokens": 4518,
+          "max_output_tokens": 32000,
+          "parsed": true,
+          "error": null
+        }
+      ]
+    },
+    "engineering_authority": {
+      "available": true,
+      "applied": false,
+      "auto_commit_path": false,
+      "engineering_authority": false,
+      "requires_user_confirmation": true,
+      "proposal_count": 1,
+      "model_hash_before": "9b0e9dde76ddcb215d09782a21c81eb49726621cef5fce7d61d01d2e6c2771a5",
+      "model_hash_after": "9b0e9dde76ddcb215d09782a21c81eb49726621cef5fce7d61d01d2e6c2771a5",
+      "model_unchanged": true,
+      "safe_normalisations": [],
+      "model_validation": {
+        "schema": "acs.model-diagnostics/1.0.0",
+        "status": "COMPLETED",
+        "model_hash": "9b0e9dde76ddcb215d09782a21c81eb49726621cef5fce7d61d01d2e6c2771a5",
+        "issue_count": 0,
+        "known_issue_count": 0,
+        "scopes": {
+          "semantic": {
+            "status": "COMPLETED",
+            "findings": []
+          },
+          "architecture": {
+            "status": "COMPLETED",
+            "compiler_version": "acs-arch-compiler/1.0.0",
+            "findings": []
+          }
+        },
+        "review_required": false,
+        "compliance": "NOT_EVALUATED"
+      },
+      "review_requirements": [
+        {
+          "requirement_id": "review:fire_exits",
+          "domain": "FIRE_LIFE_SAFETY",
+          "status": "NOT_EVALUATED",
+          "source": "SYSTEM",
+          "required_value": {
+            "value": null,
+            "status": "UNKNOWN"
+          },
+          "observed_template_records": {
+            "exit": 0
+          },
+          "rule_sources": [],
+          "requires_review": true,
+          "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+        },
+        {
+          "requirement_id": "review:fire_equipment",
+          "domain": "FIRE_LIFE_SAFETY",
+          "status": "NOT_EVALUATED",
+          "source": "SYSTEM",
+          "required_value": {
+            "value": null,
+            "status": "UNKNOWN"
+          },
+          "observed_template_records": {
+            "smoke": 0,
+            "sprinkler": 0,
+            "extinguisher": 0
+          },
+          "rule_sources": [],
+          "requires_review": true,
+          "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+        },
+        {
+          "requirement_id": "review:assembly",
+          "domain": "FIRE_LIFE_SAFETY",
+          "status": "NOT_EVALUATED",
+          "source": "SYSTEM",
+          "required_value": {
+            "value": null,
+            "status": "UNKNOWN"
+          },
+          "observed_template_records": {
+            "assembly": 0
+          },
+          "rule_sources": [],
+          "requires_review": true,
+          "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+        },
+        {
+          "requirement_id": "review:security",
+          "domain": "SECURITY",
+          "status": "NOT_EVALUATED",
+          "source": "SYSTEM",
+          "required_value": {
+            "value": null,
+            "status": "UNKNOWN"
+          },
+          "observed_template_records": {
+            "camera": 0
+          },
+          "rule_sources": [],
+          "requires_review": true,
+          "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+        },
+        {
+          "requirement_id": "review:circulation",
+          "domain": "ACCESS_AND_CIRCULATION",
+          "status": "NOT_EVALUATED",
+          "source": "SYSTEM",
+          "required_value": {
+            "value": null,
+            "status": "UNKNOWN"
+          },
+          "observed_template_records": {},
+          "rule_sources": [],
+          "requires_review": true,
+          "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+        },
+        {
+          "requirement_id": "review:electrical_heights",
+          "domain": "ELECTRICAL",
+          "status": "NOT_EVALUATED",
+          "source": "SYSTEM",
+          "required_value": {
+            "value": null,
+            "status": "UNKNOWN"
+          },
+          "observed_template_records": {
+            "outlet": 0,
+            "switch": 0
+          },
+          "rule_sources": [],
+          "requires_review": true,
+          "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+        }
+      ],
+      "proposals": [
+        {
+          "proposal_id": "prop:170248cc2a14a67d",
+          "type": "LAYOUT_SITE_EXPANSION",
+          "target_ids": [
+            "site"
+          ],
+          "before": {
+            "w": 20.0,
+            "d": 15.0,
+            "area_m2": 300.0
+          },
+          "after": {
+            "w": 20.86,
+            "d": 15.64,
+            "area_m2": 326.25
+          },
+          "reason": "مجموع مساحات القالب ground يبلغ 300 م² والأرض 300 م². التوسيع بديل غير هدّام لتقليص الغرف — كلاهما اقتراح لا يُطبَّق آلياً.",
+          "detail": {
+            "template": "ground",
+            "rooms_area_m2": 300.0,
+            "alternative_to": "LAYOUT_PROPORTIONAL_SHRINK"
+          },
+          "source": "SYSTEM",
+          "engineering_authority": false,
+          "committed": false,
+          "requires_explicit_confirmation": true,
+          "base_revision": null,
+          "model_hash_before": "9b0e9dde76ddcb215d09782a21c81eb49726621cef5fce7d61d01d2e6c2771a5",
+          "authoring_command": "CHANGE_SITE_DIMENSIONS",
+          "provenance": {
+            "registry": "acs-engineering-changes/1.0.0",
+            "change_id": "LAYOUT_SITE_EXPANSION",
+            "source_module": "acs_engineering_authority.py",
+            "class": "ENGINEERING_PROPOSAL"
+          }
+        }
+      ],
+      "registry": {
+        "schema": "acs-engineering-changes/1.0.0",
+        "version": "1.1.0"
+      }
+    },
+    "model_validation": {
+      "schema": "acs.model-diagnostics/1.0.0",
+      "status": "COMPLETED",
+      "model_hash": "9b0e9dde76ddcb215d09782a21c81eb49726621cef5fce7d61d01d2e6c2771a5",
+      "issue_count": 0,
+      "known_issue_count": 0,
+      "scopes": {
+        "semantic": {
+          "status": "COMPLETED",
+          "findings": []
+        },
+        "architecture": {
+          "status": "COMPLETED",
+          "compiler_version": "acs-arch-compiler/1.0.0",
+          "findings": []
+        }
+      },
+      "review_required": false,
+      "compliance": "NOT_EVALUATED"
+    },
+    "review_requirements": [
+      {
+        "requirement_id": "review:fire_exits",
+        "domain": "FIRE_LIFE_SAFETY",
+        "status": "NOT_EVALUATED",
+        "source": "SYSTEM",
+        "required_value": {
+          "value": null,
+          "status": "UNKNOWN"
+        },
+        "observed_template_records": {
+          "exit": 0
+        },
+        "rule_sources": [],
+        "requires_review": true,
+        "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+      },
+      {
+        "requirement_id": "review:fire_equipment",
+        "domain": "FIRE_LIFE_SAFETY",
+        "status": "NOT_EVALUATED",
+        "source": "SYSTEM",
+        "required_value": {
+          "value": null,
+          "status": "UNKNOWN"
+        },
+        "observed_template_records": {
+          "smoke": 0,
+          "sprinkler": 0,
+          "extinguisher": 0
+        },
+        "rule_sources": [],
+        "requires_review": true,
+        "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+      },
+      {
+        "requirement_id": "review:assembly",
+        "domain": "FIRE_LIFE_SAFETY",
+        "status": "NOT_EVALUATED",
+        "source": "SYSTEM",
+        "required_value": {
+          "value": null,
+          "status": "UNKNOWN"
+        },
+        "observed_template_records": {
+          "assembly": 0
+        },
+        "rule_sources": [],
+        "requires_review": true,
+        "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+      },
+      {
+        "requirement_id": "review:security",
+        "domain": "SECURITY",
+        "status": "NOT_EVALUATED",
+        "source": "SYSTEM",
+        "required_value": {
+          "value": null,
+          "status": "UNKNOWN"
+        },
+        "observed_template_records": {
+          "camera": 0
+        },
+        "rule_sources": [],
+        "requires_review": true,
+        "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+      },
+      {
+        "requirement_id": "review:circulation",
+        "domain": "ACCESS_AND_CIRCULATION",
+        "status": "NOT_EVALUATED",
+        "source": "SYSTEM",
+        "required_value": {
+          "value": null,
+          "status": "UNKNOWN"
+        },
+        "observed_template_records": {},
+        "rule_sources": [],
+        "requires_review": true,
+        "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+      },
+      {
+        "requirement_id": "review:electrical_heights",
+        "domain": "ELECTRICAL",
+        "status": "NOT_EVALUATED",
+        "source": "SYSTEM",
+        "required_value": {
+          "value": null,
+          "status": "UNKNOWN"
+        },
+        "observed_template_records": {
+          "outlet": 0,
+          "switch": 0
+        },
+        "rule_sources": [],
+        "requires_review": true,
+        "reason": "No applicable authoritative rule and version are established. The required quantity, dimension and adequacy remain unknown."
+      }
+    ],
+    "engineering_proposals": [
+      {
+        "proposal_id": "prop:170248cc2a14a67d",
+        "type": "LAYOUT_SITE_EXPANSION",
+        "target_ids": [
+          "site"
+        ],
+        "before": {
+          "w": 20.0,
+          "d": 15.0,
+          "area_m2": 300.0
+        },
+        "after": {
+          "w": 20.86,
+          "d": 15.64,
+          "area_m2": 326.25
+        },
+        "reason": "مجموع مساحات القالب ground يبلغ 300 م² والأرض 300 م². التوسيع بديل غير هدّام لتقليص الغرف — كلاهما اقتراح لا يُطبَّق آلياً.",
+        "detail": {
+          "template": "ground",
+          "rooms_area_m2": 300.0,
+          "alternative_to": "LAYOUT_PROPORTIONAL_SHRINK"
+        },
+        "source": "SYSTEM",
+        "engineering_authority": false,
+        "committed": false,
+        "requires_explicit_confirmation": true,
+        "base_revision": null,
+        "model_hash_before": "9b0e9dde76ddcb215d09782a21c81eb49726621cef5fce7d61d01d2e6c2771a5",
+        "authoring_command": "CHANGE_SITE_DIMENSIONS",
+        "provenance": {
+          "registry": "acs-engineering-changes/1.0.0",
+          "change_id": "LAYOUT_SITE_EXPANSION",
+          "source_module": "acs_engineering_authority.py",
+          "class": "ENGINEERING_PROPOSAL"
+        }
+      }
+    ],
+    "compliance": {
+      "status": "NOT_EVALUATED",
+      "note": "لا حزمة أنظمة موثّقة محمّلة — هذا تحقّق نموذج هندسي وليس مطابقة أنظمة."
+    },
+    "issues": 0,
+    "report": {
+      "requirements": [
+        {
+          "req": "أبعاد الأرض/مسطح البناء: العرض 20.0 م (محور X) × العمق 15.0 م (محور Z)",
+          "where": "site",
+          "how": "site.w=20.0 و site.d=15.0 مع z=0 كواجهة شمالية"
+        },
+        {
+          "req": "عدد الأدوار: 1",
+          "where": "levels",
+          "how": "مستوى أرضي واحد index=0"
+        },
+        {
+          "req": "مستودع بسيط 20×15 م من دور واحد",
+          "where": "site/levels",
+          "how": "نُفِّذ بمستوى واحد على أرض 20×15"
+        },
+        {
+          "req": "مساحة تخزين مفتوحة بباب واحد",
+          "where": "storage",
+          "how": "غرفة تخزين واحدة بكامل المساحة وجدران خارجية وباب واحد"
+        },
+        {
+          "req": "بدون فرز",
+          "where": "storage",
+          "how": "لا توجد أي منطقة فرز"
+        },
+        {
+          "req": "بدون مكاتب",
+          "where": "storage",
+          "how": "لا توجد أي مناطق مكتبية"
+        }
+      ],
+      "extras": [],
+      "added": []
+    }
+  },
+  "seconds": 74.288
+}

@@ -1,0 +1,103 @@
+
+── أ · عقد المغلّف الموحّد ──
+  ✓ the error contract declares a version
+  ✓ every declared code has an HTTP status
+  ✓ every declared code has an Arabic user-facing message
+  ✓ upstream codes are namespaced ACS_UPSTREAM_*
+  ✓ no message leaks a python type, path or traceback marker
+  ✓ every code produces the exact five-field envelope (30 codes)
+  ✓ every envelope survives json.dumps -> json.loads unchanged
+  ✓ an envelope is exactly one top-level JSON object
+  ✓ retryable is true only for transient classes
+  ✓ authentication and model-rejection are never retryable
+  ✓ rate limit, overload, upstream timeout and connection loss are retryable
+  ✓ rate limiting maps to 429 and processing timeout to 504
+  ✓ redact() removes 'sk-ant-api03-A'-shaped material
+  ✓ redact() removes 'Authorization'-shaped material
+  ✓ redact() removes 'x-api-key'-shaped material
+  ✓ a secret pasted into an error message never reaches the envelope
+  ✓ a secret pasted into AcsApiError never reaches the envelope
+  ✓ the upstream block is whitelisted — unknown keys are dropped
+  ✓ request ids are unique and prefixed
+  ✓ AuthenticationError -> ACS_UPSTREAM_AUTH (retryable=False)
+  ✓ PermissionDeniedError -> ACS_UPSTREAM_PERMISSION (retryable=False)
+  ✓ NotFoundError -> ACS_UPSTREAM_MODEL_REJECTED (retryable=False)
+  ✓ RateLimitError -> ACS_UPSTREAM_RATE_LIMIT (retryable=True)
+  ✓ APITimeoutError -> ACS_UPSTREAM_TIMEOUT (retryable=True)
+  ✓ APIConnectionError -> ACS_UPSTREAM_CONNECTION (retryable=True)
+  ✓ BadRequestError -> ACS_UPSTREAM_BAD_REQUEST (retryable=False)
+  ✓ InternalServerError -> ACS_UPSTREAM_UNAVAILABLE (retryable=True)
+  ✓ APIStatusError -> ACS_UPSTREAM_OVERLOADED (retryable=True)
+  ✓ an unmapped exception still classifies, never escapes unclassified
+  ✓ classification never raises for exotic inputs
+  ✓ an already-classified error passes through unchanged
+  ✓ classified upstream errors carry provider and kind, never a key
+
+── ب · محلّل JSON حتمي: كائن واحد أعلى-مستوى ──
+  ✓ the naive find("{")/rfind("}") slice really raises "Extra data" (the reported production message)
+  ✓ a bare object -> OK
+  ✓ a fenced object with prose around it -> OK
+  ✓ prose braces that are not JSON -> OK
+  ✓ a string containing braces -> OK
+  ✓ an orphan closing brace before the object -> OK
+[ACS-JSON] رد فيه 2 كائن أعلى-مستوى؛ الأول 0..29 والتالي عند 39
+  ✓ THE PRODUCTION DEFECT: object + trailing object -> ACS_UPSTREAM_TRAILING_JSON
+[ACS-JSON] رد فيه 2 كائن أعلى-مستوى؛ الأول 8..15 والتالي عند 28
+  ✓ two fenced blocks -> ACS_UPSTREAM_TRAILING_JSON
+  ✓ an empty response -> ACS_UPSTREAM_EMPTY_RESPONSE
+  ✓ a refusal with no JSON at all -> ACS_UPSTREAM_INVALID_JSON
+  ✓ a truncated object is REJECTED, never brace-repaired -> ACS_UPSTREAM_TRUNCATED
+[ACS-JSON] رد فيه 3 كائن أعلى-مستوى؛ الأول 0..7 والتالي عند 7
+  ✓ adversarial input is always classified, never an unhandled exception
+  ✓ the scanner reports depth honestly: a truncated tail is flagged
+  ✓ the scanner never descends into a failed outer object (a truncated object is one truncated object, not two nested ones)
+  ✓ two complete siblings are seen as two, and rejected upstream
+  ✓ the extraction path is free of naive brace slicing
+
+── ج · بنية acs_understand_api.py ──
+  ✓ an exception handler is registered for AcsApiError
+  ✓ an exception handler is registered for RequestValidationError
+  ✓ an exception handler is registered for HTTPException
+  ✓ an exception handler is registered for Exception
+  ✓ the HTTP-exception handler is registered on Starlette's base class too — the router raises that class for 404/405 and handler lookup walks upward, so a subclass-only registration silently returns {'detail': ...} instead
+  ✓ the generic Starlette wording is replaced by the Arabic contract message
+  ✓ a catch-all middleware wraps every request in the envelope
+  ✓ the envelope middleware is registered BEFORE CORS so error responses still carry CORS headers and are readable by the browser
+  ✓ CORS exposes X-Request-ID and Retry-After to the page
+  ✓ CORS is not opened to "*" by default
+  ✓ no endpoint raises a bare HTTPException(500, ...) carrying the exception text
+  ✓ no endpoint returns a traceback or exception string to the client
+  ✓ no raw traceback is printed anywhere in a request path (F-18)
+  ✓ every request-path failure is logged through the structured logger
+  ✓ the structured logger blocks user text and secrets by field name
+  ✓ the structured logger emits one JSON object per event
+  ✓ full stack traces are off by default in production
+  ✓ every documented endpoint is present
+  ✓ /health declares 'ok'
+  ✓ /health declares 'service'
+  ✓ /health declares 'version'
+  ✓ /health declares 'model_configured'
+  ✓ /health declares 'api_key_configured'
+  ✓ /health reports key presence as a boolean, never the key itself
+  ✓ the API key value is never placed in any response or log line
+  ✓ startup validation reports missing configuration by NAME only
+  ✓ generation is bounded by an explicit server deadline that answers 504
+  ✓ rate limiting still raises 429 and now carries Retry-After
+  ✓ the four rate-limit envs are still read — no limit was weakened
+  ✓ the visitor still cannot choose an arbitrary model
+  ✓ the pinned model identifier is untouched
+  ✓ the container binds 0.0.0.0 and honours Render's $PORT
+  ✓ the new error-contract module is shipped in the image
+  ✓ the health check path is declared for the platform
+  ✓ the API key is never committed — it is declared sync:false
+  ✓ the allowed-origin list is pinned to the deployed frontend, not "*"
+  ✓ the allowed-model list is declared explicitly for the deployment
+
+── د · عقد حيّ (FastAPI TestClient) ──
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-baseline/tests/phase9_2/test_backend_contract.py", line 371, in <module>
+    client = TestClient(API.app, raise_server_exceptions=False)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/audit-venv/lib/python3.12/site-packages/starlette/testclient.py", line 429, in __init__
+    super().__init__(
+TypeError: Client.__init__() got an unexpected keyword argument 'app'

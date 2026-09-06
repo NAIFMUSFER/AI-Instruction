@@ -1,0 +1,215 @@
+{
+  "url": "https://acs-engine.onrender.com/health",
+  "method": "GET",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "x-request-id": "req_2fc59e3887e9468d"
+  },
+  "body": {
+    "ok": true,
+    "service": "ACS Understanding Engine",
+    "version": "1.3",
+    "error_contract": "acs-error-envelope/1.0.0",
+    "model_configured": "deepseek-v4-pro",
+    "api_key_configured": true,
+    "allowed_models": [
+      "deepseek-v4-flash",
+      "deepseek-v4-pro"
+    ],
+    "allowed_origins_count": 1,
+    "model": "deepseek-v4-pro",
+    "key": true,
+    "limits": {
+      "gen_hour": 8,
+      "gen_day": 25,
+      "edit_hour": 30,
+      "global_day": 400,
+      "max_text": 60000,
+      "max_upload_bytes": 12582912,
+      "max_building_chars": 900000,
+      "request_timeout_s": 840
+    },
+    "rate_limit": {
+      "contract": "acs-rate-limit/1.0",
+      "backend": "memory",
+      "production_invariant": {
+        "contract": "acs-rate-limit/1.0",
+        "ok": true,
+        "state": "single_instance_declared",
+        "distributed": false,
+        "production": true,
+        "single_instance_declared": true,
+        "declared_concurrency": 1,
+        "concurrency_source": null,
+        "detail": "single process, single instance, declared and verified; quotas are exact for this deployment"
+      },
+      "distributed": false,
+      "fail_policy": "closed",
+      "limits": {
+        "gen_hour": 8,
+        "gen_day": 25,
+        "edit_hour": 30,
+        "global_day": 400
+      },
+      "healthy": true,
+      "env": "production",
+      "backend_errors": 0,
+      "warnings": [
+        "PROCESS_LOCAL_RATE_LIMIT",
+        "PRODUCTION_WITHOUT_DISTRIBUTED_BACKEND"
+      ],
+      "stats": {
+        "keys": 5,
+        "tombstones": 0,
+        "max_keys": 20000,
+        "bound_total": 40000,
+        "evicted_live": 0,
+        "evicted_expired": 0,
+        "tombstones_dropped": 0,
+        "refused_evicted": 0
+      }
+    },
+    "uploads": {
+      "module": "acs_upload_security",
+      "contract_version": "1.0",
+      "limits": {
+        "max_image_bytes": 5242880,
+        "max_image_pixels": 40000000,
+        "max_image_side": 12000,
+        "max_image_decoded_bytes": 33554432,
+        "max_images": 6,
+        "max_pdf_bytes": 12582912,
+        "max_pdf_pages": 200,
+        "max_pdf_text_chars": 400000,
+        "max_pdf_decompressed_bytes": 25165824,
+        "max_json_bytes": 900000,
+        "max_json_depth": 40,
+        "max_json_keys": 100000,
+        "max_dxf_bytes": 16777216
+      },
+      "image_allowed": [
+        "png",
+        "jpeg",
+        "webp"
+      ],
+      "image_rejected": [
+        "gif"
+      ],
+      "issue_codes": [
+        "EMPTY_UPLOAD",
+        "TOO_MANY_FILES",
+        "IMAGE_TOO_LARGE",
+        "IMAGE_TYPE_NOT_ALLOWED",
+        "IMAGE_TYPE_MISMATCH",
+        "IMAGE_TOO_MANY_PIXELS",
+        "IMAGE_SIDE_TOO_LARGE",
+        "IMAGE_PIXEL_BUDGET_EXCEEDED",
+        "IMAGE_DECODED_TOO_LARGE",
+        "IMAGE_DECODED_BUDGET_EXCEEDED",
+        "IMAGE_CORRUPT",
+        "IMAGE_REENCODE_FAILED",
+        "PDF_TOO_LARGE",
+        "PDF_BAD_SIGNATURE",
+        "PDF_ENCRYPTED",
+        "PDF_TOO_MANY_PAGES",
+        "PDF_DECOMPRESSION_BOMB",
+        "PDF_UNREADABLE",
+        "JSON_TOO_LARGE",
+        "JSON_MALFORMED",
+        "JSON_TOO_DEEP",
+        "JSON_TOO_MANY_KEYS",
+        "JSON_FORBIDDEN_KEY",
+        "DXF_TOO_LARGE",
+        "DXF_MALFORMED"
+      ],
+      "writes_temp_files": false,
+      "uses_filename_as_path": false
+    },
+    "engineering_changes": {
+      "schema": "acs-engineering-changes/1.0.0",
+      "version": "1.1.0",
+      "rules": 27,
+      "safe_normalisations": 4,
+      "engineering_proposals": 23,
+      "auto_commit_path": false,
+      "default_authority": "PROPOSE"
+    },
+    "logging": {
+      "level": "info",
+      "env": "production",
+      "stack_traces": false,
+      "structured": true,
+      "redacted_fields": 26
+    },
+    "generation_jobs": {
+      "executor": "process",
+      "capacity": 8,
+      "in_flight": 0,
+      "available": 8,
+      "cancellable": true,
+      "start_method": "spawn",
+      "stats": {
+        "submitted": 2,
+        "succeeded": 2,
+        "failed": 0,
+        "timed_out": 0,
+        "rejected": 0,
+        "cancelled": 0
+      },
+      "boundary_note": "terminating the worker frees the server slot and stops local work; a request already accepted by the model provider is not recalled — no provider cancellation API is claimed"
+    },
+    "llm": {
+      "contract": "acs.provider/1.0.0",
+      "llm_provider": "deepseek",
+      "llm_model": "deepseek-v4-pro",
+      "llm_base_host": "api.deepseek.com",
+      "llm_transport": "stream",
+      "llm_state": "resolved",
+      "api_key_configured": true,
+      "fallback_configured": false,
+      "fallback_provider": null,
+      "fallback_model": null,
+      "fallback_base_host": null,
+      "fallback_state": "not_configured",
+      "fallback_on_billing": false,
+      "capabilities": {
+        "output_tokens_are_content_proxy": false,
+        "content_token_multiplier": 2.0
+      }
+    },
+    "cpu_pool": {
+      "contract": "acs.cpu-pool/1.0.0",
+      "executor": "process",
+      "isolated": true,
+      "degraded": false,
+      "degraded_reason": null,
+      "workers": 2,
+      "queue": 8,
+      "capacity": 10,
+      "in_flight": 0,
+      "available": 10,
+      "timeout_s": 45.0,
+      "tasks_per_child": 50,
+      "max_admission_wait_ms": 25.5,
+      "stats": {
+        "submitted": 2,
+        "succeeded": 2,
+        "rejected_input": 0,
+        "saturated": 0,
+        "timed_out": 0,
+        "crashed": 0,
+        "failed": 0
+      },
+      "cancellation_note": "a timed-out validation frees the server slot immediately; the worker finishes work that is already bounded by the upload contract (bytes, pixels, pages, decompression). no in-process task kill is claimed"
+    },
+    "build": {
+      "version": "1.3",
+      "git_sha_short": "9e3e472d6de8",
+      "built_at": "2026-09-06T10:30:39Z",
+      "provenance_verified": true
+    }
+  },
+  "seconds": 12.676
+}

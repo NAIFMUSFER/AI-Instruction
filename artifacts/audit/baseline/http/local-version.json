@@ -1,0 +1,25 @@
+{
+  "url": "http://127.0.0.1:8001/version",
+  "method": "GET",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "content-type": "application/json",
+    "x-request-id": "req_f7c80938bf164952"
+  },
+  "body": {
+    "service": "ACS Understanding Engine",
+    "version": "1.3",
+    "git_sha": "962f8daec2f194957d1a4322ce1ed22fd39086ea",
+    "git_sha_short": "962f8daec2f1",
+    "git_branch": "HEAD",
+    "built_at": "2026-09-06T11:29:12Z",
+    "provenance_verified": true,
+    "schema_versions": {
+      "error_contract": "acs-error-envelope/1.0.0",
+      "engineering_changes": "acs-engineering-changes/1.0.0",
+      "api_base": "acs-api-base/1.0.0"
+    }
+  },
+  "seconds": 0.001
+}

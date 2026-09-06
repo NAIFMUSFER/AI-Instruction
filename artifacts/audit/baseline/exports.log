@@ -1,0 +1,16 @@
+[
+  {
+    "case": "warehouse",
+    "source": "recorded actual production HTTP response; compiled using audited branch",
+    "generation_http_s": 74.288,
+    "language_understanding_and_engineering_generation": "combined single/staged provider pipeline; separate timing not exposed",
+    "validation_s": 0.00011477299995021895,
+    "architecture_compilation_s": 0.00020639099966501817,
+    "gltf_export_s": 0.0016951989964582026,
+    "svg_export_s": 0.00523121500009438,
+    "measured_total_s": 74.29524757799616,
+    "gltf_nodes": 9,
+    "gltf_bytes": 8208,
+    "native_dxf_export": "NOT_IMPLEMENTED; audit-room-outlines.dxf is an audit-only room-outline projection"
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "url": "https://acs-engine.onrender.com/ready",
+  "method": "GET",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "x-request-id": "req_6c343552cf7f44aa"
+  },
+  "body": {
+    "ok": true,
+    "ready": true,
+    "service": "ACS Understanding Engine",
+    "version": "1.3",
+    "model_configured": "deepseek-v4-pro",
+    "api_key_configured": true,
+    "sdk": true
+  },
+  "seconds": 8.475
+}

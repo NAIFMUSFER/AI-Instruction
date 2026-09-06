@@ -1,0 +1,25 @@
+{
+  "url": "https://acs-engine.onrender.com/version",
+  "method": "GET",
+  "request": null,
+  "status": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "x-request-id": "req_651e61a0fbbf45a6"
+  },
+  "body": {
+    "service": "ACS Understanding Engine",
+    "version": "1.3",
+    "git_sha": "9e3e472d6de893c8cad8b72eb870bf5768f20147",
+    "git_sha_short": "9e3e472d6de8",
+    "git_branch": "main",
+    "built_at": "2026-09-06T10:30:39Z",
+    "provenance_verified": true,
+    "schema_versions": {
+      "error_contract": "acs-error-envelope/1.0.0",
+      "engineering_changes": "acs-engineering-changes/1.0.0",
+      "api_base": "acs-api-base/1.0.0"
+    }
+  },
+  "seconds": 8.412
+}

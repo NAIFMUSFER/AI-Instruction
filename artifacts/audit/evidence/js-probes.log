@@ -1,0 +1,29 @@
+[
+  {
+    "case": "dxf_millimetres_and_open_polyline",
+    "declared_units": "millimetres",
+    "declared_closed": false,
+    "source_dimensions_m": [
+      6,
+      4
+    ],
+    "parsed_polygons": 1,
+    "actual_rect": [
+      1,
+      1,
+      18,
+      12
+    ],
+    "actual_levels": 5
+  },
+  {
+    "case": "response_body_deadline_removed",
+    "deadline_already_cleared": true,
+    "call_resolved": false,
+    "scope": "shipped function; controlled timer and body promise; no external network"
+  },
+  {
+    "case": "body_network_failure_misclassified",
+    "actual": "INVALID_JSON"
+  }
+]

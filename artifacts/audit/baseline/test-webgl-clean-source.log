@@ -1,0 +1,138 @@
+
+== §1 — THE DIAGNOSTICS CONTRACT SHIPS IN THE HAND-WRITTEN MODULE ==
+  ✓ the block exists exactly once in the shipped application code
+  ✓ the block carries real code, not a stub
+  ✓ the block lives OUTSIDE every generated block, so a regenerate cannot overwrite it
+  ✓ the block lives in exactly ONE shipped module
+  ✓ that module is imported by public/app/main.js in the boot order — an orphaned file would ship but never run
+  ✓ the shell carries no copy of it: the page is a shell, the code is a module
+
+== §2 — NO NETWORK PATH IN captureRenderFailure (STATIC) ==
+  ✓ the capture function was located in the shipped page
+  ✓ captureRenderFailure contains no `fetch(`
+  ✓ captureRenderFailure contains no `fetch (`
+  ✓ captureRenderFailure contains no `XMLHttpRequest`
+  ✓ captureRenderFailure contains no `sendBeacon`
+  ✓ captureRenderFailure contains no `WebSocket`
+  ✓ captureRenderFailure contains no `EventSource`
+  ✓ captureRenderFailure contains no `navigator.connection`
+  ✓ captureRenderFailure contains no `.submit(`
+  ✓ captureRenderFailure contains no `form.action`
+  ✓ captureRenderFailure contains no `importScripts`
+  ✓ captureRenderFailure contains no `new Worker`
+  ✓ captureRenderFailure contains no absolute URL of any scheme
+  ✓ it produces the file the declared way: Blob + createObjectURL + a local download anchor
+  ✓ it revokes the object URL instead of leaking it
+  ✓ it states in its own output that nothing was transmitted
+  ✓ the static scan is not vacuous: the same scan DOES find network calls elsewhere in the application code
+
+== §3 — THE CONTRACT RETURNS EXACTLY ITS DECLARED KEYS ==
+  ✓ the diagnostics block evaluates in a controlled scope
+  ✓ renderDiagnostics is a function
+  ✓ captureRenderFailure is a function
+  ✓ every required key is present (24)
+  ✓ there is NO key beyond the declared contract
+  ✓ the key set is exactly the declared set
+
+== §4 — EVERY VALUE IS MEASURED, NOT FABRICATED ==
+  ✓ build_sha comes from window.ACS_BUILD_INFO
+  ✓ model_hash and revision_id come from the canonical model, not invented
+  ✓ canvas_size is read from the real canvas backing and CSS size
+  ✓ device_pixel_ratio is the browser value, not 1
+  ✓ webgl_version comes from renderer.capabilities
+  ✓ renderer is the string the GL context reports
+  ✓ object_count counts EVERY scene object, not only meshes
+  ✓ mesh_count counts meshes only
+  ✓ draw_calls comes from renderer.info.render.calls
+  ✓ triangle_count comes from renderer.info.render.triangles
+  ✓ scene_bounds is the real union of the walked mesh boxes
+  ✓ scene_bounds records how many meshes it actually measured
+  ✓ camera_position and camera_target are read from the live camera and orbit target
+  ✓ near and far are the live clip planes
+  ✓ frustum_intersections is counted against a real frustum test
+  ✓ invalid_coordinate_count is zero for a healthy scene
+  ✓ max_coordinate_abs is the true largest absolute bound
+  ✓ render_mode reflects the state actually applied
+  ✓ postprocessing reports the real composer state
+  ✓ xr_state is read from renderer.xr
+  ✓ context_lost is read from the GL context
+  ✓ the scene world matrices were updated BEFORE anything was measured
+
+== §5 — THE PIXEL PROBE READS REAL PIXELS ==
+  ✓ the probe used readPixels on the framebuffer
+  ✓ it sampled the real canvas area (57600)
+  ✓ the non-zero pixel count matches the pattern exactly (one in four)
+  ✓ the non-zero percentage is computed, not assumed
+  ✓ the mean luminance matches the pattern to three decimals
+  ✓ the maximum luminance is the real per-pixel maximum
+  ✓ viewportBlank calls the probe a non-blank viewport at 25% coverage
+
+== §6 — WHAT CANNOT BE MEASURED IS null, NEVER A NUMBER ==
+  ✓ an absent ACS_BUILD_INFO yields build_sha null, not a placeholder
+  ✓ no loaded model yields model_hash and revision_id null
+  ✓ absent renderer capabilities yield webgl_version null, not 1
+  ✓ absent renderer.info yields draw_calls and triangle_count null, not 0
+  ✓ a failing readPixels yields null pixel numbers and a stated reason, never an invented count
+  ✓ the contract key set is unchanged in the degraded case
+  ✓ viewportBlank reports null — not "fine" — when it cannot see pixels
+  ✓ a lost context is reported as lost, and the probe says so
+  ✓ a non-finite mesh bound is COUNTED as invalid, not silently averaged in
+  ✓ and it does not poison the reported bounds
+
+== §7 — captureRenderFailure UPLOADS NOTHING (EXECUTED) ==
+  ✓ the capture ran and produced a report
+  ✓ not one network primitive was called during the capture
+  ✓ the trap is not vacuous: calling the trapped fetch DOES register
+  ✓ the report states no upload happened and names no upload target
+  ✓ a Blob was created and an object URL handed to a local download anchor
+  ✓ the report carries the fixed-key diagnostics
+  ✓ the report carries the camera configuration and the render mode
+  ✓ the report carries the current Building JSON when it is safe to attach
+  ✓ the report carries the build identity
+  ✓ the report says whether the viewport was blank, measured not assumed
+  ✓ with no model loaded the Building JSON is omitted WITH a stated reason
+  ✓ the produced JSON is valid JSON and self-describing
+
+== §8 — THE BUILD IDENTITY IS A PLACEHOLDER, NOT A FAKE ==
+  ✓ the build-identity script ships as a classic boot script file
+  ✓ the exact substitution token __ACS_GIT_SHA__ ships in the build-identity boot script
+  ✓ the exact substitution token __ACS_BUILT_AT__ ships in the build-identity boot script
+  ✓ the exact substitution token __ACS_FRONTEND_VERSION__ ships in the build-identity boot script
+  ✓ window.ACS_BUILD_INFO is defined by a classic <head> script that the shell loads BEFORE the application module
+  ✓ the boot script is classic, not a module — it must run before the module graph, and a deferred module would be too late
+  ✓ an unsubstituted build reports null for every field and declares itself UNPROVENANCED
+  ✓ a substituted build reports the real values and declares itself provenanced
+
+== §9 — THE VISIBLE, KEYBOARD-REACHABLE UI ACTION ==
+  ✓ the download action exists in the hand-written DOM
+  ✓ it is a real <button>, so it is focusable and Enter/Space activate it natively
+  ✓ it is not hidden from the keyboard or the accessibility tree
+  ✓ it carries both labels: تنزيل التشخيص and Download diagnostics
+  ✓ it carries an aria-label
+  ✓ the action lives OUTSIDE every generated DOM block
+  ✓ the build identifier is rendered in a visible system-info area
+  ✓ the status line is announced to assistive technology
+  ✓ the page tells the user the file is not uploaded anywhere
+  ✓ the download action carries NO inline event-handler attribute — the strict CSP would make one dead code
+
+== §10 — F-07 PARITY: ONE PLATE CONTRACT IN BOTH LANGUAGES ==
+  ✓ the browser policy mirror is byte-identical to the Python source
+  ✓ the policy names the new convention and records the old one
+  ✓ pqPlatePolicy is exposed on the browser contract surface
+/workspace/scratch/3196fa9f65d9/audit-baseline/tests/remediation/test_webgl_diagnostics.js:582
+  const j = pqPlateRect(c.rooms, c.site);
+            ^
+
+ReferenceError: pqPlateRect is not defined
+    at /workspace/scratch/3196fa9f65d9/audit-baseline/tests/remediation/test_webgl_diagnostics.js:582:13
+    at Array.forEach (<anonymous>)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/tests/remediation/test_webgl_diagnostics.js:581:7)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.19.0

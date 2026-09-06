@@ -1,0 +1,87 @@
+[
+  {
+    "path": "/",
+    "method": "GET",
+    "function": "root",
+    "line": 538,
+    "request_annotations": {},
+    "response_model_declared": null
+  },
+  {
+    "path": "/health",
+    "method": "GET",
+    "function": "health",
+    "line": 553,
+    "request_annotations": {},
+    "response_model_declared": null
+  },
+  {
+    "path": "/version",
+    "method": "GET",
+    "function": "version",
+    "line": 590,
+    "request_annotations": {},
+    "response_model_declared": null
+  },
+  {
+    "path": "/ready",
+    "method": "GET",
+    "function": "ready",
+    "line": 608,
+    "request_annotations": {},
+    "response_model_declared": null
+  },
+  {
+    "path": "/v1/understand",
+    "method": "POST",
+    "function": "understand",
+    "line": 736,
+    "request_annotations": {
+      "req": "UnderstandReq",
+      "request": "Request"
+    },
+    "response_model_declared": null
+  },
+  {
+    "path": "/v1/edit",
+    "method": "POST",
+    "function": "edit",
+    "line": 777,
+    "request_annotations": {
+      "req": "EditReq",
+      "request": "Request"
+    },
+    "response_model_declared": null
+  },
+  {
+    "path": "/v1/understand/image",
+    "method": "POST",
+    "function": "understand_image",
+    "line": 832,
+    "request_annotations": {
+      "request": "Request",
+      "files": "list[UploadFile]",
+      "site_w": "float | None",
+      "site_d": "float | None",
+      "floors": "int | None",
+      "notes": "str",
+      "btype": "str | None",
+      "strict": "str | None",
+      "model": "str | None"
+    },
+    "response_model_declared": null
+  },
+  {
+    "path": "/v1/understand/pdf",
+    "method": "POST",
+    "function": "understand_pdf",
+    "line": 889,
+    "request_annotations": {
+      "request": "Request",
+      "file": "UploadFile",
+      "btype": "str | None",
+      "model": "str | None"
+    },
+    "response_model_declared": null
+  }
+]

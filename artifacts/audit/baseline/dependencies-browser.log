@@ -1,0 +1,67 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip[22m
+Error: Request to https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip timed out after 30000ms
+    at ClientRequest.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/node_modules/playwright-core/lib/coreBundle.js:8431:15)
+    at Object.onceWrapper (node:events:630:28)
+    at ClientRequest.emit (node:events:509:28)
+    at TLSSocket.emitRequestTimeout (node:_http_client:1099:9)
+    at Object.onceWrapper (node:events:630:28)
+    at TLSSocket.emit (node:events:521:24)
+    at Socket._onTimeout (node:net:740:8)
+    at Timeout.onStreamTimeout (node:internal/stream_base_commons:237:10)
+    at listOnTimeout (node:internal/timers:637:11)
+    at process.processTimers (node:internal/timers:571:7)
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip[22m
+Error: Request to https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip timed out after 30000ms
+    at ClientRequest.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/node_modules/playwright-core/lib/coreBundle.js:8431:15)
+    at Object.onceWrapper (node:events:630:28)
+    at ClientRequest.emit (node:events:509:28)
+    at TLSSocket.emitRequestTimeout (node:_http_client:1099:9)
+    at Object.onceWrapper (node:events:630:28)
+    at TLSSocket.emit (node:events:521:24)
+    at Socket._onTimeout (node:net:740:8)
+    at Timeout.onStreamTimeout (node:internal/stream_base_commons:237:10)
+    at listOnTimeout (node:internal/timers:637:11)
+    at process.processTimers (node:internal/timers:571:7)
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip[22m
+Error: Request to https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip timed out after 30000ms
+    at ClientRequest.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/node_modules/playwright-core/lib/coreBundle.js:8431:15)
+    at Object.onceWrapper (node:events:630:28)
+    at ClientRequest.emit (node:events:509:28)
+    at TLSSocket.emitRequestTimeout (node:_http_client:1099:9)
+    at Object.onceWrapper (node:events:630:28)
+    at TLSSocket.emit (node:events:521:24)
+    at Socket._onTimeout (node:net:740:8)
+    at Timeout.onStreamTimeout (node:internal/stream_base_commons:237:10)
+    at listOnTimeout (node:internal/timers:637:11)
+    at process.processTimers (node:internal/timers:571:7)
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip[22m
+Error: Request to https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip timed out after 30000ms
+    at ClientRequest.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/node_modules/playwright-core/lib/coreBundle.js:8431:15)
+    at Object.onceWrapper (node:events:630:28)
+    at ClientRequest.emit (node:events:509:28)
+    at TLSSocket.emitRequestTimeout (node:_http_client:1099:9)
+    at Object.onceWrapper (node:events:630:28)
+    at TLSSocket.emit (node:events:521:24)
+    at Socket._onTimeout (node:net:740:8)
+    at Timeout.onStreamTimeout (node:internal/stream_base_commons:237:10)
+    at listOnTimeout (node:internal/timers:637:11)
+    at process.processTimers (node:internal/timers:571:7)
+Downloading Chrome for Testing 151.0.7922.34 (playwright chromium v1234)[2m from https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip[22m
+Error: Request to https://cdn.playwright.dev/builds/cft/151.0.7922.34/linux64/chrome-linux64.zip timed out after 30000ms
+    at ClientRequest.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/node_modules/playwright-core/lib/coreBundle.js:8431:15)
+    at Object.onceWrapper (node:events:630:28)
+    at ClientRequest.emit (node:events:509:28)
+    at TLSSocket.emitRequestTimeout (node:_http_client:1099:9)
+    at Object.onceWrapper (node:events:630:28)
+    at TLSSocket.emit (node:events:521:24)
+    at Socket._onTimeout (node:net:740:8)
+    at Timeout.onStreamTimeout (node:internal/stream_base_commons:237:10)
+    at listOnTimeout (node:internal/timers:637:11)
+    at process.processTimers (node:internal/timers:571:7)
+Failed to install browsers
+Error: Failed to download Chrome for Testing 151.0.7922.34 (playwright chromium v1234), caused by
+Error: Download failure, code=1
+    at ChildProcess.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-baseline/node_modules/playwright-core/lib/coreBundle.js:32015:32)
+    at ChildProcess.emit (node:events:509:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:295:12)

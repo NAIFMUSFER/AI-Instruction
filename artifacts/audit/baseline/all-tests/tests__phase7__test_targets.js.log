@@ -1,0 +1,36 @@
+
+== §50 — VILLA PRESENTATION TARGET ==
+  ✓ villa: a front exterior camera is solved from real geometry
+  ✓ villa: a corner exterior camera is solved
+  ✓ villa: a dollhouse view hides the roof only
+  ✓ villa: a ground floor plan is produced with real walls and openings
+  ✓ villa: a first floor plan is produced
+  ✓ villa: the two floor plans are genuinely different
+  ✓ villa: a living room interior camera sits inside the real space
+  ✓ villa: a majlis interior camera sits inside the real space
+  ✓ villa: a night exterior lighting configuration exists
+  ✓ villa: an AI enhanced variant is prepared with full geometry control
+  ✓ villa: the AI variant is not produced here because no provider is reachable
+  ✓ villa: every produced output carries the same model hash
+  ✓ villa: every produced output carries the same revision
+  ✓ villa: producing the whole target set changed nothing
+  ✓ villa: nine of nine target outputs were produced
+
+== §51 — HOTEL TARGET (REPEATED FLOORS PRESERVED) ==
+  ✓ hotel: an exterior camera is solved
+  ✓ hotel: the model really has a lobby space
+  ✓ hotel: a lobby interior camera is solved
+  ✓ hotel: a guest room camera is solved or the space is honestly absent
+  ✓ hotel: a selected-floor dollhouse isolates one level
+  ✓ hotel: a floor plan is produced
+  ✓ hotel: the model really repeats a floor template
+  ✓ hotel: repeated floors keep identical wall geometry
+
+== §52 — WAREHOUSE TARGET (EQUIPMENT PLACEMENT PRESERVED) ==
+  ✓ warehouse: an exterior camera is solved
+  ✓ warehouse: an interior camera is solved for the largest space
+  ✓ warehouse: an engineering overlay scene still compiles
+  ✓ warehouse: presentation rendering preserves every semantic object
+  ✓ warehouse: semantic equipment objects are never tagged visual only
+
+== §53 — CLINIC TARGET (NO INVENTED EQUIPMENT) ==

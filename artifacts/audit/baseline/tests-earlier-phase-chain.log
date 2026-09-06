@@ -1,0 +1,2026 @@
+
+=== 0 · Python syntax and imports ===
+py_compile: OK
+imports: OK (8 modules)
+
+=== 1 · regenerate the visual quality browser layer from the specification ===
+pbr quality:
+  unchanged public/app/styles/app.css  block=1824 bytes  file=53599 bytes
+  unchanged public/index.html  block=629 bytes  file=47424 bytes
+  unchanged public/app/generated/pbr.js  block=72339 bytes  file=74050 bytes
+  unchanged public/app/generated/pbr-bridge.js  block=44692 bytes  file=45991 bytes
+  present   composer switch in the render loop (hand-written module, not generated here)
+
+=== 2 · the generated quality blocks are idempotent ===
+generated quality blocks: exactly one of each (8 markers), dispatcher single, fallback present
+every generated code block is carried by one imported module
+
+=== 3 · the visual quality contract (materials, lighting, shadows, cameras, immutability) ===
+
+== §30 — THE ARROW THAT NEVER REVERSES ==
+  ✓ the layer is presentation only
+  ✓ the pipeline ends at the screen and no reverse arrow exists
+  ✓ model hash inputs are the model alone; config hash is separate
+  ✓ no photorealism, path-tracing or offline-render claim is made
+
+== §3 — THE PBR MATERIAL SYSTEM ==
+  ✓ exactly twenty presentation materials are declared
+  ✓ material plaster is declared and resolves
+  ✓ material painted_wall is declared and resolves
+  ✓ material concrete_exposed is declared and resolves
+  ✓ material concrete_polished is declared and resolves
+  ✓ material ceramic_tile is declared and resolves
+  ✓ material stone is declared and resolves
+  ✓ material wood is declared and resolves
+  ✓ material steel_structural is declared and resolves
+  ✓ material steel_painted is declared and resolves
+  ✓ material aluminum is declared and resolves
+  ✓ material glass_clear is declared and resolves
+  ✓ material glass_tinted is declared and resolves
+  ✓ material roof_membrane is declared and resolves
+  ✓ material asphalt is declared and resolves
+  ✓ material soil is declared and resolves
+  ✓ material fabric is declared and resolves
+  ✓ material plastic is declared and resolves
+  ✓ material rack_steel is declared and resolves
+  ✓ material carton is declared and resolves
+  ✓ material safety_paint is declared and resolves
+  ✓ material plaster carries roughness, metalness and world texture scale
+  ✓ material painted_wall carries roughness, metalness and world texture scale
+  ✓ material concrete_exposed carries roughness, metalness and world texture scale
+  ✓ material concrete_polished carries roughness, metalness and world texture scale
+  ✓ material ceramic_tile carries roughness, metalness and world texture scale
+  ✓ material stone carries roughness, metalness and world texture scale
+  ✓ material wood carries roughness, metalness and world texture scale
+  ✓ material steel_structural carries roughness, metalness and world texture scale
+  ✓ material steel_painted carries roughness, metalness and world texture scale
+  ✓ material aluminum carries roughness, metalness and world texture scale
+  ✓ material glass_clear carries roughness, metalness and world texture scale
+  ✓ material glass_tinted carries roughness, metalness and world texture scale
+  ✓ material roof_membrane carries roughness, metalness and world texture scale
+  ✓ material asphalt carries roughness, metalness and world texture scale
+  ✓ material soil carries roughness, metalness and world texture scale
+  ✓ material fabric carries roughness, metalness and world texture scale
+  ✓ material plastic carries roughness, metalness and world texture scale
+  ✓ material rack_steel carries roughness, metalness and world texture scale
+  ✓ material carton carries roughness, metalness and world texture scale
+  ✓ material safety_paint carries roughness, metalness and world texture scale
+  ✓ every material is visual-only with no engineering authority
+  ✓ no material carries a fire rating, structural grade or U-value
+  ✓ an unknown material is refused
+
+== §3 — PROVENANCE: DEFAULTS, OVERRIDES AND THE LINE NOT CROSSED ==
+  ✓ an untouched field is PRESENTATION_DEFAULT
+  ✓ an overridden field is USER_VISUAL_OVERRIDE and only that field
+  ✓ ENGINEERING_VALUE never originates in this layer
+  ✓ a prototype key in an override is refused, not stored
+  ✓ a non-overridable field is refused
+
+== §5 — GLASS ==
+  ✓ clear glass is a physical material with transmission and IOR
+  ✓ glass stays transparent enough to inspect interiors
+  ✓ tinted glass is separately declared
+  ✓ the window mesh class maps to clear glass; geometry is untouched
+
+== §3 — ENGINEERING MAP AND THE UNMAPPED POLICY ==
+  ✓ mesh class wall maps to painted_wall
+  ✓ mesh class floor maps to ceramic_tile
+  ✓ mesh class door maps to wood
+  ✓ mesh class frame maps to rack_steel
+  ✓ mesh class goods maps to carton
+  ✓ mesh class guard maps to safety_paint
+  ✓ mesh class deck maps to steel_painted
+  ✓ mesh class ac maps to aluminum
+  ✓ an unmapped class keeps its engineering appearance
+  ✓ warehouse rack, carton and safety paint are first-class materials
+
+== §6 — LIGHTING PRESETS ==
+  ✓ preset STUDIO_DAY resolves
+  ✓ preset STUDIO_DAY reuses no MEP fixture and its fills are visual-only
+  ✓ preset CLEAR_NOON resolves
+  ✓ preset CLEAR_NOON reuses no MEP fixture and its fills are visual-only
+  ✓ preset GOLDEN_HOUR resolves
+  ✓ preset GOLDEN_HOUR reuses no MEP fixture and its fills are visual-only
+  ✓ preset OVERCAST resolves
+  ✓ preset OVERCAST reuses no MEP fixture and its fills are visual-only
+  ✓ preset INTERIOR_DAY resolves
+  ✓ preset INTERIOR_DAY reuses no MEP fixture and its fills are visual-only
+  ✓ preset INTERIOR_NIGHT resolves
+  ✓ preset INTERIOR_NIGHT reuses no MEP fixture and its fills are visual-only
+  ✓ preset WAREHOUSE resolves
+  ✓ preset WAREHOUSE reuses no MEP fixture and its fills are visual-only
+  ✓ preset PRESENTATION_SOFT resolves
+  ✓ preset PRESENTATION_SOFT reuses no MEP fixture and its fills are visual-only
+  ✓ an unknown preset is refused
+  ✓ golden hour is a warm low sun
+  ✓ interior night turns the sun off rather than faking one
+  ✓ exposure is clamped into the declared range
+
+== §8 — SHADOWS FROM REAL BOUNDS, NOT A HARD-CODED BUILDING ==
+  ✓ the shadow camera scales with the model bounds
+  ✓ all four tiers are declared with bias and normal bias
+  ✓ tier resolution increases monotonically
+  ✓ soft PCF shadows are the declared type
+
+== §17/§18 — QUALITY PROFILES AND GRACEFUL DEGRADATION ==
+  ✓ ULTRA on a strong GPU stays ULTRA
+  ✓ ULTRA on a weak device degrades down the declared chain
+  ✓ every degradation step is reported, never silent
+  ✓ ULTRA is never selected automatically
+  ✓ a phone-class device auto-selects a runnable profile
+  ✓ a blank viewport is never an allowed outcome
+  ✓ PERFORMANCE caps pixel ratio at one and disables SSAO
+  ✓ an unknown profile is refused
+
+== §13 — CAMERA PRESETS FROM MODEL BOUNDS ==
+  ✓ camera EXTERIOR_HERO frames deterministically from bounds
+  ✓ camera EXTERIOR_HERO has a sane FOV, no fisheye
+  ✓ camera EXTERIOR_CORNER frames deterministically from bounds
+  ✓ camera EXTERIOR_CORNER has a sane FOV, no fisheye
+  ✓ camera EYE_LEVEL frames deterministically from bounds
+  ✓ camera EYE_LEVEL has a sane FOV, no fisheye
+  ✓ camera AERIAL frames deterministically from bounds
+  ✓ camera AERIAL has a sane FOV, no fisheye
+  ✓ camera INTERIOR_WIDE frames deterministically from bounds
+  ✓ camera INTERIOR_WIDE has a sane FOV, no fisheye
+  ✓ camera INTERIOR_EYE_LEVEL frames deterministically from bounds
+  ✓ camera INTERIOR_EYE_LEVEL has a sane FOV, no fisheye
+  ✓ camera WAREHOUSE_OVERVIEW frames deterministically from bounds
+  ✓ camera WAREHOUSE_OVERVIEW has a sane FOV, no fisheye
+  ✓ camera DOLLHOUSE frames deterministically from bounds
+  ✓ camera DOLLHOUSE has a sane FOV, no fisheye
+  ✓ eye level really stands at eye height above the model base
+  ✓ the same preset scales with a ten-times larger model
+  ✓ the same inputs give the identical camera twice
+
+== §7/§14 — ENVIRONMENT AND PRESENTATION CONTEXT ==
+  ✓ environment NEUTRAL resolves locally with no remote fetch
+  ✓ environment SKY resolves locally with no remote fetch
+  ✓ environment STUDIO resolves locally with no remote fetch
+  ✓ an unknown environment is refused
+  ✓ ground context is visual-only and structurally excluded everywhere
+  ✓ no roads, parking, landscaping or neighbours are generated
+
+== §4/§22 — TEXTURE SYSTEM SECURITY ==
+  ✓ textures are local-only from the declared root
+  ✓ the shipped texture set is empty so zero fetches happen
+  ✓ hostile texture path 'https://cdn.evil/x.png' is refused
+  ✓ hostile texture path '//evil/x.png' is refused
+  ✓ hostile texture path 'assets/materials/../../.env' is refused
+  ✓ hostile texture path '../x.png' is refused
+  ✓ hostile texture path '/etc/passwd' is refused
+  ✓ hostile texture path 'assets/materials/ok.png.exe' is refused
+  ✓ hostile texture path 'javascript:alert(1)' is refused
+  ✓ hostile texture path 'assets/other/x.png' is refused
+  ✓ hostile texture path '' is refused
+  ✓ a well-shaped but unlisted path falls back to procedural, not a fetch
+  ✓ world-scale tiling is declared so textures never stretch per mesh
+
+== §20 — CAPTURE IS PRESENTATION OUTPUT, NOT EVIDENCE ==
+  ✓ capture metadata is typed PRESENTATION_OUTPUT
+  ✓ capture explicitly denies being engineering evidence
+  ✓ capture binds both the model hash and the presentation config hash
+  ✓ an oversized capture resolution is refused
+
+== §12 — COLOR MANAGEMENT ==
+  ✓ ACES filmic tone mapping with sRGB output is declared
+  ✓ the exposure range guards against washed-out and crushed output
+
+== §21 — IMMUTABILITY: THE CRITICAL TEST ==
+  ✓ villa_glazed: canonical model bytes identical after every visual operation
+  ✓ villa_glazed: model hash and revision unchanged
+  ✓ warehouse: canonical model bytes identical after every visual operation
+  ✓ warehouse: model hash and revision unchanged
+  ✓ hotel: canonical model bytes identical after every visual operation
+  ✓ hotel: model hash and revision unchanged
+  ✓ clash_mep: canonical model bytes identical after every visual operation
+  ✓ clash_mep: model hash and revision unchanged
+  ✓ object, structural, MEP and FLS counts are untouched by the layer
+
+== §24 — THE OLD ENGINEERING RENDER MODE SURVIVES ==
+  ✓ ENGINEERING remains the default materials mode
+  ✓ an engineering-mode config is valid and marks the mode
+  ✓ the same config twice gives the identical presentation hash
+  ✓ a different lighting preset gives a different presentation hash
+
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+PBR QUALITY: 156 passed, 0 failed
+
+=== 4 · Python <-> JavaScript quality-layer parity ===
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the python implementation ran
+  ✓ the browser implementation ran
+
+== THE TWO RESULTS AGREE ==
+  ✓ the comparator proves it is not blind to a prototype key
+  ✓ the canonical comparison reports no mismatch
+  ✓ every group agrees between the two implementations
+  ✓ the comparison is not vacuous — twenty materials compared
+  ✓ quality, camera and config matrices were really exercised
+
+PBR PARITY SUITE: 7 passed, 0 failed
+
+=== 5 · the quality panel (Node scope) ===
+
+== §1 — THE SPECIFICATION REACHED THE BROWSER UNCHANGED ==
+  ✓ the browser carries the canonical quality specification
+  ✓ the mirrored specification has not drifted from the file
+  ✓ the presentation-only rule is present in the browser
+  ✓ the quality API is exposed on the window
+
+== §11/§22 — THE SHIPPED APPLICATION CODE ITSELF ==
+  ✓ the module-scope bridge is present exactly once
+  ✓ the bridge lives in the generated module that main.js imports
+  ✓ the render loop dispatcher is present exactly once with a fallback
+  ✓ post-processing imports are same-origin addon modules only
+  ✓ the bridge marks every added object visual-only
+  ✓ the quality layer was extracted for inspection
+  ✓ no network scheme appears anywhere in the quality layer
+  ✓ no runtime CDN host appears in the quality layer
+  ✓ the quality layer never opens a fetch to a remote URL
+  ✓ the shipped texture policy is local-only with an empty default set
+
+(DOM checks require a real browser — run with run_browser.js)
+
+──────────────────────────────────────────────
+PBR BROWSER: 14 passed, 0 failed
+
+=== 6 · backend and configuration security, including the presentation layer ===
+  ✓ S1 CORS مقيّد بأصول معلومة (لا *)
+  ✓ S2 حد معدّل الطلبات قائم
+  ✓ S3 لا مفتاح API مكتوب في الشيفرة
+  ✓ S4 المفتاح يُقرأ من البيئة فقط
+  ✓ S5 معرّف النموذج claude-sonnet-5 لم يتغيّر
+  ✓ S6 CSP لا تحتوي script-src * 
+  ✓ S7 رؤوس الأمان الأساسية موجودة
+  ✓ S8 connect-src يقتصر على الخادم المعلوم
+  ✓ S9 الرسائل لا تطبع أسراراً
+  ✓ S6a سياسة أمن المحتوى مُعلَنة وتُحلَّل إلى توجيهات
+  ✓ S6b لا توجيه واحد يحمل 'unsafe-inline' أو 'unsafe-eval'
+  ✓ S6c script-src = 'self' + بصمة sha256 واحدة بالضبط، لا أكثر
+  ✓ S6d البصمة هي بصمة خريطة الاستيراد المضمّنة في الصفحة نفسها
+  ✓ S6e style-src = 'self' وحدها — ورقة الأنماط خارجية فلا نمط مضمّن يُسمَح
+  ✓ S6f object-src/frame-src/frame-ancestors = 'none' و base-uri/form-action = 'self'
+  ✓ S6g لا مصدر بديل عامّ (*) في أي توجيه
+  ✓ S6h الصفحة لا تحمل جافاسكربت تنفيذياً مضمّناً: السكربت المضمّن الوحيد هو خريطة الاستيراد
+  ✓ S6i الصفحة لا تحمل كتلة <style> ولا خاصيّة style=
+  ✓ S6j لا معالج حدث مضمّن في العلامة (onclick/onload/…): السياسة تمنع تنفيذه، فوجوده شيفرة ميّتة لا زينة
+  ✓ S6k ولا معالج مضمّن في العلامة التي تولّدها الشيفرة أيضاً
+  ✓ S6l es-module-shims لم يعد يُحمَّل: لا وسم ولا مسار /vendor/ له
+  ✓ S10 المجال الصناعي (الكلمات الأربع) متطابق في الثلاثة
+  ✓ S10b الفرق الموروث موثّق وغير قابل للوصول (btype إنجليزي فقط)
+  ✓ S11 Dockerfile ينسخ كل وحدات التشغيل
+  ✓ S12 acs_programs.json منسوخ
+  ✓ S13 acs_rules.json منسوخ
+  ✓ S14 محرّك القواعد بلا eval/exec/Function
+  ✓ S15 نسخة المتصفّح من المحرّك بلا eval/new Function
+  ✓ S16 لا قيمة تنظيمية في سجلّ القواعد
+  ✓ S17 كل مصادر السجلّ NOT_LOADED وغير موثّقة
+  ✓ S18 عدد القواعد التنظيمية = 0
+  ✓ S19 acs_ingest.json منسوخ
+  ✓ S20 خط الاستيراد بلا eval/exec/subprocess
+  ✓ S21 نسخة المتصفّح من خط الاستيراد بلا eval/new Function
+  ✓ S29 محرّك القواعد بايثون بلا تنفيذ ديناميكي
+  ✓ S22 لا محتوى تنظيمي في تجهيزات الاستيراد
+  ✓ S23 لا رابط تنظيمي مُختلق في التجهيزات
+  ✓ S24 كل وثائق التجهيزات اصطناعية وغير رسمية
+  ✓ S25 كل الوثائق تبدأ UNVERIFIED
+  ✓ S26 كل الحزم تبدأ DRAFT بلا قواعد
+  ✓ S27 لا مرشّح مشحون بحالة VERIFIED
+  ✓ S30 acs_sources.json منسوخ في الحاوية
+  ✓ S31 سجلّ المصادر الحقيقية بلا نصّ بنود
+  ✓ S32 لا مرشّحين ولا حِزَم في سجلّ المصادر الحقيقية
+  ✓ S33 الوثيقة الحقيقية ليست CONTENT_VERIFIED
+  ✓ S34 كل شذرات السجلّ الحقيقي مواضع فهرس فقط
+  ✓ S35 acs_occupancy.json منسوخ في الحاوية
+  ✓ S36 طبقة الإشغال بلا تنفيذ ديناميكي
+  ✓ S37 نسخة المتصفّح من طبقة الإشغال بلا eval/new Function
+  ✓ S38 لا مجموعة إشغال حقيقية في حزم التصنيف
+  ✓ S39 كل حزم التصنيف اصطناعية وغير تنظيمية
+  ✓ S40 كل حزم التصنيف تُشحن DRAFT
+  ✓ S41 كل معرّفات التصنيف باسم TEST_OCC
+  ✓ S43 acs_revision.json منسوخ في الحاوية
+  ✓ S44 طبقة المراجعة بلا تنفيذ ديناميكي
+  ✓ S45 نسخة المتصفّح من طبقة المراجعة بلا eval/new Function
+  ✓ S46 خوارزمية التجزئة sha256 ولا تشفير مُخترع
+  ✓ S47 لا محتوى تنظيمي في مواصفة المراجعة
+  ✓ S48 حالة العرض مستبعَدة صراحةً
+  ✓ S49 كل مسار حسّاس/غير حسّاس للترتيب موثّق بسبب
+  ✓ S42 سجل البرامج لم يتحوّل إلى سجلّ تصنيف نظامي
+  ✓ S28 كل قاعدة مقترحة اصطناعية
+  ✓ S50 acs_arch.json منسوخ في الحاوية
+  ✓ S51 acs_arch.py منسوخ في الحاوية
+  ✓ S52 مصرّف الهندسة بلا تنفيذ ديناميكي
+  ✓ S53 نسخة المتصفّح من مصرّف الهندسة بلا eval/new Function
+  ✓ S54 لا محتوى تنظيمي في مواصفة الهندسة
+  ✓ S55 الاحتياطات معلنة كاحتياطات عرض لا كقيم هندسية
+  ✓ S56 قائمة الادّعاءات الممنوعة تغطي الإنشاء والحريق والمطابقة
+  ✓ S57 لا ادّعاء إنشائي أو حريقي في شيفرة المصرّف
+  ✓ S58 لا شبكة ولا نظام ملفات داخل المصرّف عدا قراءة مواصفته
+  ✓ S59 المصرّف لا يستورد أي محرّك قواعد أو إشغال
+  ✓ S60 acs_struct.json منسوخ في الحاوية
+  ✓ S61 acs_struct.py منسوخ في الحاوية
+  ✓ S62 طبقة النموذج الإنشائي بلا تنفيذ ديناميكي
+  ✓ S63 نسخة المتصفّح من الطبقة الإنشائية بلا eval/new Function
+  ✓ S64 لا كود إنشائي في المواصفة
+  ✓ S65 DESIGNED/SAFE/COMPLIANT ليست حالات نموذج
+  ✓ S66 UNSAFE/DANGEROUS ليست شدّات
+  ✓ S67 rule ليست مصدر إسناد إنشائي
+  ✓ S68 احتياط العرض معلن كاحتياط لا كتصميم
+  ✓ S69 الادّعاءات الممنوعة تغطي الأحمال والتسليح والكفاية
+  ✓ S70 لا حساب أحمال في شيفرة الطبقة الإنشائية
+  ✓ S71 الطبقة الإنشائية لا تستورد محرّك قواعد أو إشغال
+  ✓ S72 لا شبكة داخل الطبقة الإنشائية
+  ✓ S73 مواصفة المراجعة تستبعد إظهار الطبقات من البصمة
+  ✓ S74 acs_mep.json منسوخ في الحاوية
+  ✓ S75 acs_mep.py منسوخ في الحاوية
+  ✓ S76 طبقة MEP بلا تنفيذ ديناميكي
+  ✓ S77 نسخة المتصفّح من طبقة MEP بلا eval/new Function
+  ✓ S78 لا معيار MEP في المواصفة
+  ✓ S79 DESIGNED/COMPLIANT/ADEQUATE/BALANCED/CALCULATED ليست حالات نموذج
+  ✓ S80 UNSAFE/VIOLATION ليست شدّات
+  ✓ S81 OPTIMIZED ليست حالة توجيه
+  ✓ S82 rule/code_required ليست مصادر إسناد
+  ✓ S83 احتياط العرض معلن كاحتياط لا كقيمة هندسية
+  ✓ S84 الادّعاءات الممنوعة تغطي الأحمال والتدفّق والهيدروليك والمطابقة
+  ✓ S85 لا دوال حساب أحمال/تدفّق/تحجيم في الشيفرة
+  ✓ S86 لا محرّك حريق: المواصفة تنفيه صراحةً
+  ✓ S87 محوّل المرحلة 1 لا يستطيع كتابة code_required
+  ✓ S88 طبقة MEP لا تستورد محرّك قواعد أو إشغال
+  ✓ S89 لا شبكة داخل طبقة MEP
+  ✓ S90 MEP ليست عائقاً للملاحة في هذه المرحلة
+  ✓ S91 acs_fls.json منسوخ في الحاوية
+  ✓ S92 acs_fls.py منسوخ في الحاوية
+  ✓ S93 طبقة الحريق بلا تنفيذ ديناميكي
+  ✓ S94 نسخة المتصفّح من طبقة الحريق بلا eval/new Function
+  ✓ S95 لا قيمة كود حريق في المواصفة (خارج قوائم المنع ونصوص النفي)
+  ✓ S96 COMPLIANT/SAFE/APPROVED/CERTIFIED/DESIGNED ليست حالات نموذج
+  ✓ S97 UNSAFE/VIOLATION ليست شدّات
+  ✓ S98 code_required و rule ليستا مصدري إسناد
+  ✓ S99 code_required معلنة صراحةً كإسناد ممنوع
+  ✓ S100 لا حساب تغطية/تباعد/هيدروليك في الشيفرة
+  ✓ S101 المواصفة تنفي وجود محرّك حريق/سلامة صراحةً
+  ✓ S102 الغياب ليس مخالفة — معلن في المواصفة
+  ✓ S103 طبقة الحريق لا تستورد محرّك قواعد أو إشغال
+  ✓ S104 لا شبكة داخل طبقة الحريق
+  ✓ S105 الحريق ليس عائقاً للملاحة ولا يغيّر الإخلاء
+  ✓ S121 acs_coord.json منسوخ في الحاوية
+  ✓ S122 acs_coord.py منسوخ في الحاوية
+  ✓ S123 طبقة التنسيق بلا تنفيذ ديناميكي
+  ✓ S124 نسخة المتصفّح من طبقة التنسيق بلا eval/new Function
+  ✓ S125 لا قيمة كود في مواصفة التنسيق (خارج قوائم المنع ونصوص النفي)
+  ✓ S126 UNSAFE/FATAL/VIOLATION ليست شدّات
+  ✓ S127 RESOLVED ليست حالة تلقائية
+  ✓ S128 مفردات الإصلاح التلقائي معلنة ممنوعة
+  ✓ S129 لا مولّد حلول ولا توجيه ولا تحجيم في الشيفرة
+  ✓ S130 طبقة التنسيق لا تكتب في أي نموذج تخصّص
+  ✓ S131 التنسيق لا يستورد محرّك قواعد أو إشغال أو إخلاء
+  ✓ S132 لا شبكة داخل طبقة التنسيق
+  ✓ S133 التنسيق لا يغيّر الملاحة ولا الإخلاء في هذه المرحلة
+  ✓ S134 اللقطة تُصدَّر عند الطلب فقط ولا تُدمَج في التصدير العادي
+  ✓ S135 علامة التصحيح لا تُخبز في تصدير GLB
+  ✓ S137 acs_visual.json منسوخ في الحاوية
+  ✓ S138 acs_visual.py منسوخ في الحاوية
+  ✓ S139 طبقة العرض البصري بلا تنفيذ ديناميكي
+  ✓ S140 نسخة المتصفّح من طبقة العرض بلا eval/new Function
+  ✓ S141 لا قيمة كود في مواصفة العرض البصري
+  ✓ S142 المادة البصرية مصنّفة VISUAL_MATERIAL فقط
+  ✓ S143 لا خاصية حريق أو حرارية أو إنشائية في مكتبة المواد
+  ✓ S144 الديكور مصنّف VISUAL_DECORATION ولا يُحتسب هندسياً
+  ✓ S145 صورة الذكاء الاصطناعي لا تُعتمد نموذجاً هندسياً
+  ✓ S146 الذكاء الاصطناعي ممنوع من تغيير أي سمة تخطيط
+  ✓ S147 لا مولّد صور ولا شبكة داخل طبقة العرض
+  ✓ S148 لا مولّد هندسة ولا عملية تصميم في طبقة العرض
+  ✓ S149 لا اعتماد CDN جديد للقوام: المواد وسيطيّة محليّة
+  ✓ S150 بيانات الأصل لا تُنفَّذ: الحقول التي تحمل شيفرة تُرفض
+  ✓ S151 الأصل مجهول الرخصة لا يُبَثّ في أي مشهد
+  ✓ S152 حالة التقديم لا تدخل بصمة المراجعة
+  ✓ S153 الأجسام البصرية خارج مجموعة المبنى فلا تدخل تصدير GLB الهندسي
+  ✓ S154 العرض الهندسي لا يخفي أي تخصّص
+  ✓ S155 مقياس الواقع الافتراضي 1:1 ولا يتغيّر صامتاً
+  ✓ S136 لا مسافة انتقال نظامية
+  ✓ S-A1 طبقة التأليف بايثون بلا تنفيذ ديناميكي
+  ✓ S-A2 نسخة المتصفّح من طبقة التأليف بلا eval/new Function
+  ✓ S-A3 فحص التنفيذ الديناميكي غير عقيم
+  ✓ S-A4 مفاتيح تلويث النموذج الأولي معلنة ومرفوضة
+  ✓ S-A5 لا نوع أمر يكتب بمسار حرّ
+  ✓ S-A6 حدّ الإحداثيات معلن ومنتهٍ
+  ✓ S-A7 حدّ حجم المعاملة معلن
+  ✓ S-A8 التأليف لا يدّعي مطابقة أنظمة
+  ✓ S-A9 سجلّ التدقيق يستبعد الأسرار وسلاسل التفكير
+  ✓ S-A10 لا مسار كتابة من زمن التشغيل إلى النموذج
+  ✓ S-W1 طبقة مساحة العمل بايثون بلا تنفيذ ديناميكي
+  ✓ S-W2 كتلة الواجهة المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-W3 نسخة المتصفّح من مساحة العمل بلا eval/new Function
+  ✓ S-W4 فحص التنفيذ الديناميكي غير عقيم على كتلة الواجهة
+  ✓ S-W5 قائمة أنماط المراجع غير الآمنة معلنة في المواصفة
+  ✓ S-W6 الواجهة لا تكتب في النموذج الهندسي
+  ✓ S-W7 مساحة العمل لا تدّعي مطابقة أنظمة
+  ✓ S-W8 كلمات الحالة الممنوعة معلنة
+  ✓ S-W9 تسميات المصدر الممنوعة معلنة
+  ✓ S-W10 لا حفظ سحابي مُدّعى
+  ✓ S-W11 خطّ العرض الواقعي معلن غير منفَّذ
+  ✓ S-W12 الواجهة لا تُنشئ رابطاً برمجياً خطيراً
+  ✓ S-W13 نصوص الواجهة تُقرأ من المواصفة لا من جدول ثانٍ
+  ✓ S-W14 كل نصّ واجهة معرَّف في اللغتين
+  ✓ S-W15 حالة الواجهة مصنَّفة ولا تدخل بصمة النموذج
+  ✓ S-R1 طبقة العرض بايثون بلا تنفيذ ديناميكي
+  ✓ S-R2 كتلة العرض المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-R3 نسخة المتصفّح من طبقة العرض بلا eval/new Function
+  ✓ S-R4 فحص التنفيذ الديناميكي غير عقيم على كتلة العرض
+  ✓ S-R5 لا كتابة عكسية من صورة إلى نموذج
+  ✓ S-R6 مخرج الذكاء الاصطناعي بلا سلطة هندسية
+  ✓ S-R7 لا مولّد واقعية مشحون
+  ✓ S-R8 مفتاح المزوّد في بيئة الخادم فقط
+  ✓ S-R9 لا حقل بيانات وصفية يحمل سرّاً
+  ✓ S-R10 لا اسم مزوّد مثبَّت في المواصفة
+  ✓ S-R11 قوائم السماح معلنة للمعرّفات والمخطّطات والنصّ
+  ✓ S-R12 حدود الحجم والبكسل معلنة ومنتهية
+  ✓ S-R13 أنواع الصور المسموحة لا تشمل svg ولا html
+  ✓ S-R14 كل مادّة مشحونة إجرائية وبرخصة معلنة
+  ✓ S-R15 لا مادّة تشير إلى مضيف بعيد
+  ✓ S-R16 المادّة البصرية لا تحمل خاصّية هندسية
+  ✓ S-R17 لا نظام بناء مذكور في مواصفة العرض
+  ✓ S-R18 لا تحليل شمسي مُدّعى
+  ✓ S-R19 لا مخطّط تنفيذ مُدّعى
+  ✓ S-R20 لوحة التصوير لا تعرض أي أداة تعديل هندسي
+  ✓ S-R21 طبقة العرض لا تفتح اتصال شبكة
+  ✓ S-R22 مخازن التحكّم تُنقَّط على المعالج فلا تعتمد على بطاقة رسوميات
+  ✓ S-R23 حالات التحقّق الأربع مفصولة
+  ✓ S-B1 طبقة التبادل بايثون بلا تنفيذ ديناميكي
+  ✓ S-B2 كتلة التبادل المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-B3 نسخة المتصفّح من طبقة التبادل بلا eval/new Function
+  ✓ S-B4 فحص التنفيذ الديناميكي غير عقيم على كتلة التبادل
+  ✓ S-B5 الثابت الملزم معلَن ولا يقبل التأويل
+  ✓ S-B6 لا جلب لأي مورد بعيد من ملفّ BIM
+  ✓ S-B7 طبقة التبادل لا تفتح اتصال شبكة
+  ✓ S-B8 طبقة التبادل لا تلمس نظام الملفّات إلا لقراءة مواصفتها
+  ✓ S-B9 لا نظام بناء مذكور في مواصفة التبادل
+  ✓ S-B10 مادّة خارجية لا تُرقّى إلى مادّة هندسية
+  ✓ S-B11 كل حدّ معلَن ومنتهٍ وموجب
+  ✓ S-B12 قائمة سماح للمعرّفات معلَنة
+  ✓ S-B13 مفاتيح النموذج الأوّلي مرفوضة مفاتيحَ خاصّية
+  ✓ S-B14 لوحة التبادل تمنع صراحةً كل طريق يتخطّى المراجعة والإيداع
+  ✓ S-B15 لا أداة تعديل هندسي بين ضوابط لوحة التبادل
+  ✓ S-B22 لا مفتاح ولا سرّ في مواصفة التبادل
+  ✓ S-B16 مصدر أمر الاستيراد من مفردات المرحلة 5 لا اختراعاً
+  ✓ S-B17 حالات التحقّق معلَنة ومفصولة
+  ✓ S-B18 empty file does not crash the parser
+  ✓ S-B19 empty file is refused or typed, never silently accepted
+  ✓ S-B20 empty file writes nothing to any model
+  ✓ S-B21 empty file reports only declared issue codes
+  ✓ S-B18 not a step file at all does not crash the parser
+  ✓ S-B19 not a step file at all is refused or typed, never silently accepted
+  ✓ S-B20 not a step file at all writes nothing to any model
+  ✓ S-B21 not a step file at all reports only declared issue codes
+  ✓ S-B18 json wearing an ifc name does not crash the parser
+  ✓ S-B19 json wearing an ifc name is refused or typed, never silently accepted
+  ✓ S-B20 json wearing an ifc name writes nothing to any model
+  ✓ S-B21 json wearing an ifc name reports only declared issue codes
+  ✓ S-B18 header only, no data section does not crash the parser
+  ✓ S-B19 header only, no data section is refused or typed, never silently accepted
+  ✓ S-B20 header only, no data section writes nothing to any model
+  ✓ S-B21 header only, no data section reports only declared issue codes
+  ✓ S-B18 unterminated string does not crash the parser
+  ✓ S-B19 unterminated string is refused or typed, never silently accepted
+  ✓ S-B20 unterminated string writes nothing to any model
+  ✓ S-B21 unterminated string reports only declared issue codes
+  ✓ S-B18 unterminated argument list does not crash the parser
+  ✓ S-B19 unterminated argument list is refused or typed, never silently accepted
+  ✓ S-B20 unterminated argument list writes nothing to any model
+  ✓ S-B21 unterminated argument list reports only declared issue codes
+  ✓ S-B18 dangling reference does not crash the parser
+  ✓ S-B19 dangling reference is refused or typed, never silently accepted
+  ✓ S-B20 dangling reference writes nothing to any model
+  ✓ S-B21 dangling reference reports only declared issue codes
+  ✓ S-B18 duplicate entity number does not crash the parser
+  ✓ S-B19 duplicate entity number is refused or typed, never silently accepted
+  ✓ S-B20 duplicate entity number writes nothing to any model
+  ✓ S-B21 duplicate entity number reports only declared issue codes
+  ✓ S-B18 non-finite numeric does not crash the parser
+  ✓ S-B19 non-finite numeric is refused or typed, never silently accepted
+  ✓ S-B20 non-finite numeric writes nothing to any model
+  ✓ S-B21 non-finite numeric reports only declared issue codes
+  ✓ S-B18 script in a name does not crash the parser
+  ✓ S-B19 script in a name is refused or typed, never silently accepted
+  ✓ S-B20 script in a name writes nothing to any model
+  ✓ S-B21 script in a name reports only declared issue codes
+  ✓ S-B18 external file reference does not crash the parser
+  ✓ S-B19 external file reference is refused or typed, never silently accepted
+  ✓ S-B20 external file reference writes nothing to any model
+  ✓ S-B21 external file reference reports only declared issue codes
+  ✓ S-B18 deeply nested argument list does not crash the parser
+  ✓ S-B19 deeply nested argument list is refused or typed, never silently accepted
+  ✓ S-B20 deeply nested argument list writes nothing to any model
+  ✓ S-B21 deeply nested argument list reports only declared issue codes
+  ✓ S-B18 over-long line does not crash the parser
+  ✓ S-B19 over-long line is refused or typed, never silently accepted
+  ✓ S-B20 over-long line writes nothing to any model
+  ✓ S-B21 over-long line reports only declared issue codes
+  ✓ S-D1 طبقة التوثيق بايثون بلا تنفيذ ديناميكي
+  ✓ S-D2 كتلة التوثيق المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-D3 نسخة المتصفّح من طبقة التوثيق بلا eval/new Function
+  ✓ S-D4 فحص التنفيذ الديناميكي غير عقيم على كتلة التوثيق
+  ✓ S-D5 التوثيق للقراءة فقط ولا يكتب إلى النموذج
+  ✓ S-D6 طبقة التوثيق لا تفتح اتصال شبكة
+  ✓ S-D7 طبقة التوثيق لا تلمس نظام الملفّات إلا لقراءة مواصفتها
+  ✓ S-D8 لا نظام بناء مذكور في مواصفة التوثيق
+  ✓ S-D9 لا ادّعاء مخطّط تنفيذ ولا تنظيم ولا ختم مهني
+  ✓ S-D10 لا كلفة ولا جدول كمّيات تعاقدي
+  ✓ S-D11 كل حدّ معلَن ومنتهٍ وموجب
+  ✓ S-D12 قائمتا سماح للمعرّفات وأسماء الملفّات معلَنتان
+  ✓ S-D13 مفاتيح النموذج الأوّلي مرفوضة مفاتيحَ خاصّية
+  ✓ S-D14 لوحة التوثيق لا تعرض أي أداة تعديل هندسي
+  ✓ S-D15 لا مفتاح ولا سرّ في مواصفة التوثيق
+  ✓ S-D16 لا خروج من مجلّد التصدير
+  ✓ S-D17 لا إعادة توليد تلقائية ولا كتابة فوق التاريخ
+  ✓ S-D18 الحالات المقيَّدة معلَنة ولا يضعها النظام
+  ✓ S-D19 اتّجاه الواجهة لا يعكس الهندسة
+  ✓ S-D20 لا صور ذكاء اصطناعي في الرسم التقني
+  ✓ S-D21 حدود التوقّف معلَنة وتشمل التصميم والكلفة والاعتماد
+  ✓ S-D23 not a dict does not crash the documentation layer
+  ✓ S-D24 not a dict is refused with a typed issue
+  ✓ S-D25 not a dict reports only declared issue codes
+  ✓ S-D23 unknown view type does not crash the documentation layer
+  ✓ S-D24 unknown view type is refused with a typed issue
+  ✓ S-D25 unknown view type reports only declared issue codes
+  ✓ S-D23 unsupported view type does not crash the documentation layer
+  ✓ S-D24 unsupported view type is refused with a typed issue
+  ✓ S-D25 unsupported view type reports only declared issue codes
+  ✓ S-D23 unknown level does not crash the documentation layer
+  ✓ S-D24 unknown level is refused with a typed issue
+  ✓ S-D25 unknown level reports only declared issue codes
+  ✓ S-D23 unknown scale does not crash the documentation layer
+  ✓ S-D24 unknown scale is refused with a typed issue
+  ✓ S-D25 unknown scale reports only declared issue codes
+  ✓ S-D23 unknown paper implied does not crash the documentation layer
+  ✓ S-D24 unknown paper implied is refused with a typed issue
+  ✓ S-D25 unknown paper implied reports only declared issue codes
+  ✓ S-D23 non-finite cut does not crash the documentation layer
+  ✓ S-D24 non-finite cut is refused with a typed issue
+  ✓ S-D25 non-finite cut reports only declared issue codes
+  ✓ S-D23 infinite cut does not crash the documentation layer
+  ✓ S-D24 infinite cut is refused with a typed issue
+  ✓ S-D25 infinite cut reports only declared issue codes
+  ✓ S-D23 out of bounds cut does not crash the documentation layer
+  ✓ S-D24 out of bounds cut is refused with a typed issue
+  ✓ S-D25 out of bounds cut reports only declared issue codes
+  ✓ S-D23 bad axis does not crash the documentation layer
+  ✓ S-D24 bad axis is refused with a typed issue
+  ✓ S-D25 bad axis reports only declared issue codes
+  ✓ S-D23 malformed crop does not crash the documentation layer
+  ✓ S-D24 malformed crop is refused with a typed issue
+  ✓ S-D25 malformed crop reports only declared issue codes
+  ✓ S-D23 non-finite crop does not crash the documentation layer
+  ✓ S-D24 non-finite crop is refused with a typed issue
+  ✓ S-D25 non-finite crop reports only declared issue codes
+  ✓ S-D23 unknown discipline does not crash the documentation layer
+  ✓ S-D24 unknown discipline is refused with a typed issue
+  ✓ S-D25 unknown discipline reports only declared issue codes
+  ✓ S-D26 لا حمولة مشوّهة غيّرت النموذج
+  ✓ S-D27 paper size 'B7' is refused
+  ✓ S-D27 paper size None is refused
+  ✓ S-D27 paper size 3 is refused
+  ✓ S-D27 paper size 'A3 ' is refused
+  ✓ S-D28 filename '../a.svg' is refused
+  ✓ S-D28 filename '/etc/passwd' is refused
+  ✓ S-D28 filename '..\\a.svg' is refused
+  ✓ S-D28 filename 'a/b.svg' is refused
+  ✓ S-D28 filename 'CON' is refused
+  ✓ S-D28 filename 'xxxxxxxxxxxxxx' is refused
+  ✓ S-D29 لا مفتاح كائن من نصّ خارجي
+  ✓ S-Q1 طبقة الجودة بايثون بلا تنفيذ ديناميكي
+  ✓ S-Q2 كتلة الجودة المولَّدة موجودة مرّة واحدة بالضبط
+  ✓ S-Q3 نسخة المتصفّح من طبقة الجودة بلا eval/new Function
+  ✓ S-Q4 فحص التنفيذ الديناميكي غير عقيم على كتلة الجودة
+  ✓ S-Q5 الطبقة عرضية فقط ولا تكتب إلى النموذج
+  ✓ S-Q6 بصمة النموذج من النموذج وحده وبصمة العرض من الإعداد وحده
+  ✓ S-Q7 لا ترقية خامة عرضية إلى خاصّية هندسية
+  ✓ S-Q8 لا CDN وقت التشغيل في كتلة الجودة ولا في الجسر
+  ✓ S-Q9 نسيج بعيد مرفوض وقائمة المخطّطات فارغة
+  ✓ S-Q10 كل مسار نسيج معادٍ يُرفض
+  ✓ S-Q11 لا ادّعاء واقعية مصوَّرة ولا عرض خارجي
+  ✓ S-Q12 أضواء MEP لا يُعاد استعمالها أضواء عرض
+  ✓ S-Q13 ULTRA لا يُختار تلقائياً
+  ✓ S-Q14 مفاتيح النموذج الأوّلي مرفوضة في تجاوزات الخامات
+  ✓ S-Q15 لوحة الجودة بلا أي أداة تعديل هندسي
+  ✓ S-Q16 حدود التعريض والقياس معلَنة ومنتهية
+  ✓ S-Q17 سياق العرض مستبعَد بنيوياً من BIM والتوثيق والكمّيات
+  ✓ S-R1 طبقة التفصيل المعماري بايثون بلا تنفيذ ديناميكي
+  ✓ S-R2 كتلة التفصيل المولَّدة والجسر موجودان مرّة واحدة بالضبط
+  ✓ S-R3 نسخة المتصفّح من طبقة التفصيل بلا eval/new Function
+  ✓ S-R4 فحص التنفيذ الديناميكي غير عقيم على كتلة التفصيل
+  ✓ S-R5 الطبقة عرضية فقط في اتجاه المصبّ ولا سهم عائد
+  ✓ S-R6 لا ترقية صنف عرضي ولا تغيير عدد الكائنات القانونية
+  ✓ S-R7 لا CDN وقت التشغيل في كتلة التفصيل ولا في جسرها
+  ✓ S-R8 لا نسيج بعيد ولا مسار نظام ملفّات ولا GLTF من URL
+  ✓ S-R9 مفاتيح النموذج الأوّلي مرفوضة في تجاوزات خامات العرض
+  ✓ S-R10 نص معادٍ لا ينتج نيّة ولا يكسر المفسّر
+  ✓ S-R11 كائن معادٍ يُرفض من مكتبة العرض
+  ✓ S-R12 وصف المستخدم ليس إذناً هندسياً أبداً
+  ✓ S-R13 إنارة LED لا تُنشئ أي أثر كهربائي هندسي
+  ✓ S-R14 لوحة العرض المعماري بلا أي أداة تعديل هندسي
+  ✓ S-R15 لا ادّعاء كاذب: لا تتبّع مسارات ولا إضاءة عالمية ولا امتثال
+  ✓ S-R16 الجسر يرفض إعداداً لا يصرّح writes_to_model=false
+  ✓ S-R17 التنويع حتمي البذرة ولا عشوائية وقت التشغيل
+
+BACKEND/CONFIG SECURITY: 377 passed, 0 failed
+
+=== 7 · deployment closure for every canonical file ===
+
+=== 0 · the generated browser blocks are regenerated from the specs ===
+regenerated: 5 injector(s) OK, 0 FAILED
+
+=== 1 · deployment content verification ===
+
+== 0 · THE APPLICATION PAGE GUARD (EMPTY-PAGE REMEDIATION) ==
+  ✓ public/index.html passes the structural guard
+  ✓ the netlify build runs the same guard before publishing
+  ✓ guard self-test harness: an UNMUTATED copy of the published tree passes, so the guard really reads the tree it is pointed at
+  ✓ guard self-test: an EMPTY page is refused
+  ✓ guard self-test: a truncated page is refused
+  ✓ guard self-test: a stub page is refused
+  ✓ guard self-test: and it says WHY the stub is refused, in bytes or structure — not a bare non-zero exit
+  ✓ guard self-test: a missing importmap is refused
+  ✓ guard self-test: an importmap with invalid JSON is refused
+  ✓ guard self-test: an importmap pointing at a CDN is refused
+  ✓ guard self-test: a missing application entry (<script type=module src>) is refused
+  ✓ guard self-test: a deleted application entry MODULE is refused — the page would serve a 404 to its own entry point
+  ✓ guard self-test: missing THREE import is refused (declared engine needle)
+  ✓ guard self-test: missing scene initialization is refused (declared engine needle)
+  ✓ guard self-test: missing renderer initialization is refused (declared engine needle)
+  ✓ guard self-test: missing camera initialization is refused (declared engine needle)
+  ✓ guard self-test: missing render loop is refused (declared engine needle)
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS RUNTIME LAYER ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS RUNTIME LAYER ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS AUTHORING LAYER ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS AUTHORING LAYER ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS WORKSPACE UI ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS WORKSPACE UI ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS RENDER ENGINE ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS RENDER ENGINE ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS BIM EXCHANGE ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS BIM EXCHANGE ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS DOCUMENTATION ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS DOCUMENTATION ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS PBR QUALITY ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS PBR QUALITY ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS PBR BRIDGE ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS PBR BRIDGE ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS ARCH DETAIL ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS ARCH DETAIL ===== */
+  ✓ guard self-test: a missing generated end-marker is refused: /* ===== END ACS ARCH DETAIL BRIDGE ===== */
+  ✓ guard self-test: a DUPLICATED generated end-marker is refused: /* ===== END ACS ARCH DETAIL BRIDGE ===== */
+  ✓ guard self-test: a missing file path is refused
+  ✓ the guard checks every phase layer structurally (10 marker pairs)
+  · the guard self-tests run the guard as the build runs it (python3 tools/check_index_guard.py public/index.html) against a mutated copy of tools/ + public/, covering all 5 engine needles and all 10 marker pairs
+
+== 1 · REQUIRED DEPLOYMENT FILES EXIST ==
+  ✓ Dockerfile is present
+  ✓ render.yaml is present
+  ✓ netlify.toml is present
+  ✓ requirements.txt is present
+  ✓ public/index.html is present
+  ✓ tools/netlify-build.sh is present
+  ✓ tools/vendor.sh is present
+
+== 2 · BROWSER INJECTORS AND THEIR CANONICAL SPECS ==
+  ✓ tools/build_visual_browser.py is present
+  ✓ acs_visual.json is present
+  ✓ tools/build_runtime_browser.py is present
+  ✓ acs_runtime.json is present
+  ✓ tools/build_authoring_browser.py is present
+  ✓ acs_authoring.json is present
+  ✓ tools/build_workspace_ui.py is present
+  ✓ acs_workspace.json is present
+  ✓ tools/build_render_browser.py is present
+  ✓ acs_render.json is present
+  ✓ tools/build_bim_browser.py is present
+  ✓ acs_bim.json is present
+  ✓ tools/build_docs_browser.py is present
+  ✓ acs_docs.json is present
+  ✓ tools/build_pbr_browser.py is present
+  ✓ acs_pbr.json is present
+  ✓ tools/build_archdetail_browser.py is present
+  ✓ acs_archdetail.json is present
+
+== 3 · THE BACKEND IMPORT CLOSURE IS ACTUALLY COPIED BY THE DOCKERFILE ==
+  · the deployed API entrypoint is acs_understand_api.py
+  · its transitive closure is 18 module(s): acs_api_errors.py, acs_build_info.py, acs_cpu_pool.py, acs_engineering_authority.py, acs_generation.py, acs_generation_job.py, acs_ingest.py, acs_layout.py, acs_logging.py, acs_plan_chunks.py, acs_programs.py, acs_provider.py, acs_rate_limit.py, acs_rules.py, acs_understand.py, acs_understand_api.py, acs_upload_security.py, acs_validate.py
+  ✓ the Dockerfile copies acs_api_errors.py (required at runtime)
+  ✓ the Dockerfile copies acs_build_info.py (required at runtime)
+  ✓ the Dockerfile copies acs_cpu_pool.py (required at runtime)
+  ✓ the Dockerfile copies acs_engineering_authority.py (required at runtime)
+  ✓ the Dockerfile copies acs_generation.py (required at runtime)
+  ✓ the Dockerfile copies acs_generation_job.py (required at runtime)
+  ✓ the Dockerfile copies acs_ingest.py (required at runtime)
+  ✓ the Dockerfile copies acs_layout.py (required at runtime)
+  ✓ the Dockerfile copies acs_logging.py (required at runtime)
+  ✓ the Dockerfile copies acs_plan_chunks.py (required at runtime)
+  ✓ the Dockerfile copies acs_programs.py (required at runtime)
+  ✓ the Dockerfile copies acs_provider.py (required at runtime)
+  ✓ the Dockerfile copies acs_rate_limit.py (required at runtime)
+  ✓ the Dockerfile copies acs_rules.py (required at runtime)
+  ✓ the Dockerfile copies acs_understand.py (required at runtime)
+  ✓ the Dockerfile copies acs_understand_api.py (required at runtime)
+  ✓ the Dockerfile copies acs_upload_security.py (required at runtime)
+  ✓ the Dockerfile copies acs_validate.py (required at runtime)
+  ✓ the Dockerfile copies acs_engineering_changes.json (required at runtime)
+  ✓ the Dockerfile copies acs_ingest.json (required at runtime)
+  ✓ the Dockerfile copies acs_programs.json (required at runtime)
+  ✓ the Dockerfile copies acs_rules.json (required at runtime)
+  ✓ the Dockerfile copies acs_sources.json (required at runtime)
+  ✓ the Dockerfile installs the declared dependencies
+  ✓ the Dockerfile launches the real entrypoint
+  ✓ the container port is taken from the platform, not hardcoded
+  · 13 module(s) are in the image but not reachable from the API entrypoint: acs_arch, acs_coord, acs_distance, acs_egress, acs_fls, acs_mep, acs_navigation, acs_occupancy, acs_project, acs_relations, acs_revision, acs_struct, acs_visual
+  · 10 module(s) are browser-mirrored only and intentionally absent from the image: acs_archdetail, acs_authoring, acs_bim, acs_compiler, acs_docs, acs_engineering_approval, acs_pbr, acs_render, acs_runtime, acs_workspace
+  ✓ no module the API needs is missing from the image
+
+== 4 · THE PUBLISHED FRONTEND CARRIES EVERY GENERATED BROWSER BLOCK ==
+  ✓ marker definitions were found in the injectors
+  ✓ the published frontend carries exactly one /* ===== ACS RUNTIME LAYER (generated by tools/build_runti…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS RUNTIME LAYER (generated by tools/build_runti…
+  ✓ the published frontend carries exactly one /* ===== END ACS RUNTIME LAYER ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS RUNTIME LAYER ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS AUTHORING LAYER (generated by tools/build_aut…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS AUTHORING LAYER (generated by tools/build_aut…
+  ✓ the published frontend carries exactly one /* ===== END ACS AUTHORING LAYER ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS AUTHORING LAYER ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS WORKSPACE UI (generated by tools/build_worksp…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS WORKSPACE UI (generated by tools/build_worksp…
+  ✓ the published frontend carries exactly one /* ===== END ACS WORKSPACE UI ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS WORKSPACE UI ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS WORKSPACE STYLES (generated) ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS WORKSPACE STYLES (generated) ===== */
+  ✓ the published frontend carries exactly one /* ===== END ACS WORKSPACE STYLES ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS WORKSPACE STYLES ===== */
+  ✓ the published frontend carries exactly one <!-- ===== ACS WORKSPACE DOM (generated) ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== ACS WORKSPACE DOM (generated) ===== -->
+  ✓ the published frontend carries exactly one <!-- ===== END ACS WORKSPACE DOM ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== END ACS WORKSPACE DOM ===== -->
+  ✓ the published frontend carries exactly one /* ===== ACS RENDER ENGINE (generated by tools/build_rende…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS RENDER ENGINE (generated by tools/build_rende…
+  ✓ the published frontend carries exactly one /* ===== END ACS RENDER ENGINE ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS RENDER ENGINE ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS RENDER STYLES (generated) ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS RENDER STYLES (generated) ===== */
+  ✓ the published frontend carries exactly one /* ===== END ACS RENDER STYLES ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS RENDER STYLES ===== */
+  ✓ the published frontend carries exactly one <!-- ===== ACS RENDER DOM (generated) ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== ACS RENDER DOM (generated) ===== -->
+  ✓ the published frontend carries exactly one <!-- ===== END ACS RENDER DOM ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== END ACS RENDER DOM ===== -->
+  ✓ the published frontend carries exactly one /* ===== ACS BIM EXCHANGE (generated by tools/build_bim_br…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS BIM EXCHANGE (generated by tools/build_bim_br…
+  ✓ the published frontend carries exactly one /* ===== END ACS BIM EXCHANGE ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS BIM EXCHANGE ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS BIM STYLES (generated) ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS BIM STYLES (generated) ===== */
+  ✓ the published frontend carries exactly one /* ===== END ACS BIM STYLES ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS BIM STYLES ===== */
+  ✓ the published frontend carries exactly one <!-- ===== ACS BIM DOM (generated) ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== ACS BIM DOM (generated) ===== -->
+  ✓ the published frontend carries exactly one <!-- ===== END ACS BIM DOM ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== END ACS BIM DOM ===== -->
+  ✓ the published frontend carries exactly one /* ===== ACS DOCUMENTATION (generated by tools/build_docs_…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS DOCUMENTATION (generated by tools/build_docs_…
+  ✓ the published frontend carries exactly one /* ===== END ACS DOCUMENTATION ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS DOCUMENTATION ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS DOCS STYLES (generated) ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS DOCS STYLES (generated) ===== */
+  ✓ the published frontend carries exactly one /* ===== END ACS DOCS STYLES ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS DOCS STYLES ===== */
+  ✓ the published frontend carries exactly one <!-- ===== ACS DOCS DOM (generated) ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== ACS DOCS DOM (generated) ===== -->
+  ✓ the published frontend carries exactly one <!-- ===== END ACS DOCS DOM ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== END ACS DOCS DOM ===== -->
+  ✓ the published frontend carries exactly one /* ===== ACS PBR QUALITY (generated by tools/build_pbr_bro…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS PBR QUALITY (generated by tools/build_pbr_bro…
+  ✓ the published frontend carries exactly one /* ===== END ACS PBR QUALITY ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS PBR QUALITY ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS PBR STYLES (generated) ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS PBR STYLES (generated) ===== */
+  ✓ the published frontend carries exactly one /* ===== END ACS PBR STYLES ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS PBR STYLES ===== */
+  ✓ the published frontend carries exactly one <!-- ===== ACS PBR DOM (generated) ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== ACS PBR DOM (generated) ===== -->
+  ✓ the published frontend carries exactly one <!-- ===== END ACS PBR DOM ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== END ACS PBR DOM ===== -->
+  ✓ the published frontend carries exactly one /* ===== ACS ARCH DETAIL (generated by tools/build_archdet…
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS ARCH DETAIL (generated by tools/build_archdet…
+  ✓ the published frontend carries exactly one /* ===== END ACS ARCH DETAIL ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS ARCH DETAIL ===== */
+  ✓ the published frontend carries exactly one /* ===== ACS ARCH DETAIL STYLES (generated) ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== ACS ARCH DETAIL STYLES (generated) ===== */
+  ✓ the published frontend carries exactly one /* ===== END ACS ARCH DETAIL STYLES ===== */
+  ✓ and it is in a file the browser actually evaluates: /* ===== END ACS ARCH DETAIL STYLES ===== */
+  ✓ the published frontend carries exactly one <!-- ===== ACS ARCH DETAIL DOM (generated) ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== ACS ARCH DETAIL DOM (generated) ===== -->
+  ✓ the published frontend carries exactly one <!-- ===== END ACS ARCH DETAIL DOM ===== -->
+  ✓ and it is in a file the browser actually evaluates: <!-- ===== END ACS ARCH DETAIL DOM ===== -->
+
+== 5 · THE MIRRORED SPECIFICATIONS HAVE NOT DRIFTED FROM THE FILES ==
+  ✓ ACS_VISUAL_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_RUNTIME_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_AUTHORING_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_WORKSPACE_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_RENDER_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_BIM_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_DOCS_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_PBR_SPEC in the shipped modules is byte-equal to the file on disk
+  ✓ ACS_ARCHDETAIL_SPEC in the shipped modules is byte-equal to the file on disk
+
+== 6 · NETLIFY CONFIGURATION IS VALID AND MATCHES REALITY ==
+  ✓ a publish directory is declared
+  ✓ the declared publish directory exists
+  ✓ the published directory contains the application entry
+  ✓ a build command is declared
+  ✓ netlify.toml parses as real TOML
+  · netlify.toml declares no build base in any context; the effective base is the repository root, which is the intended contract
+  ✓ no build base is declared, or every declared base is repository-relative
+  ✓ no declared base escapes the repository with a parent segment
+  · the effective Netlify build base is the repository root (base NOT SET)
+  ✓ the effective base exists and is inside the repository
+  ✓ the publish directory resolves to a real directory under the effective base
+  ✓ the published directory under the effective base carries the app entry
+  ✓ the build command script resolves from the effective base
+  ✓ the build command references no parent directory
+  ✓ no absolute build path is baked into netlify.toml
+  ✓ the netlify configuration names no builder-internal path
+  ✓ no second Netlify configuration file can reintroduce a base
+  ✓ the base guard rejects a parent directory base
+  ✓ the base guard rejects a parent with slash
+  ✓ the base guard rejects a nested escape
+  ✓ the base guard rejects a absolute builder path
+  ✓ the base guard rejects a absolute repo path
+  ✓ the base guard rejects a absolute root
+  ✓ the base guard rejects a missing directory
+  ✓ the base guard rejects a context escape
+  ✓ the base guard rejects a context absolute
+  ✓ the base guard accepts the shipped configuration
+  ✓ the base guard accepts a legitimate committed subdirectory
+  ✓ the build command points at a script that exists in the repository
+  ✓ a Content-Security-Policy header is declared
+  ✓ the CSP does not use a wildcard script source
+  ✓ the CSP pins connect-src rather than allowing anything
+  ✓ framing is denied
+
+== 6b · THE CONTENT SECURITY POLICY IS STRICT, AND THE PAGE EARNS IT ==
+  · the declared CSP has 15 directive(s): base-uri, connect-src, default-src, font-src, form-action, frame-ancestors, frame-src, img-src, manifest-src, media-src, object-src, script-src, style-src, upgrade-insecure-requests, worker-src
+  ✓ the policy parses into named directives at all
+  ✓ NO directive carries 'unsafe-inline' or 'unsafe-eval' — not one
+  ✓ script-src is exactly 'self' plus one sha256 source
+  ✓ script-src carries EXACTLY ONE hash source
+  ✓ that hash is the sha256 of the page's own inline import map — the only inline script left in the shell
+  ✓ the recorded hash file agrees with the page and the policy
+  ✓ style-src is 'self' only — the stylesheet is external, so no inline style needs allowing
+  ✓ default-src is 'self'
+  ✓ base-uri is 'self'
+  ✓ object-src is 'none'
+  ✓ frame-ancestors is 'none'
+  ✓ frame-src is 'none'
+  ✓ form-action is 'self'
+  ✓ worker-src is 'self'
+  ✓ font-src is 'self'
+
+== 7 · RENDER CONFIGURATION IS VALID AND MATCHES REALITY ==
+  ✓ a web service is declared
+  ✓ the runtime is docker, matching the Dockerfile in the repository
+  ✓ a health check path is declared
+  ✓ the health check path is served by the API
+  ✓ the secret is declared without a value
+  ✓ the allowed origin is pinned, not a wildcard
+  ✓ the model identifier is unchanged
+  ✓ rate limits are still declared
+
+== 8 · EVERY ENV VAR THE BACKEND READS IS DECLARED OR DEFAULTED ==
+  · the backend reads 25 environment variable(s)
+  ✓ no environment variable is both undeclared and undefaulted
+
+== 9 · NO SANDBOX PATH LEAKS INTO ANYTHING DEPLOYED ==
+  · 28 published frontend file(s) are scanned for sandbox paths and secrets alongside the page
+  ✓ Dockerfile carries no sandbox path
+  ✓ acs_api_errors.py carries no sandbox path
+  ✓ acs_arch.json carries no sandbox path
+  ✓ acs_arch.py carries no sandbox path
+  ✓ acs_archdetail.json carries no sandbox path
+  ✓ acs_archdetail.py carries no sandbox path
+  ✓ acs_authoring.json carries no sandbox path
+  ✓ acs_authoring.py carries no sandbox path
+  ✓ acs_bim.json carries no sandbox path
+  ✓ acs_bim.py carries no sandbox path
+  ✓ acs_build_info.py carries no sandbox path
+  ✓ acs_compiler.py carries no sandbox path
+  ✓ acs_coord.json carries no sandbox path
+  ✓ acs_coord.py carries no sandbox path
+  ✓ acs_cpu_pool.py carries no sandbox path
+  ✓ acs_distance.py carries no sandbox path
+  ✓ acs_docs.json carries no sandbox path
+  ✓ acs_docs.py carries no sandbox path
+  ✓ acs_egress.py carries no sandbox path
+  ✓ acs_engineering_approval.py carries no sandbox path
+  ✓ acs_engineering_authority.py carries no sandbox path
+  ✓ acs_engineering_changes.json carries no sandbox path
+  ✓ acs_fls.json carries no sandbox path
+  ✓ acs_fls.py carries no sandbox path
+  ✓ acs_generation.py carries no sandbox path
+  ✓ acs_generation_job.py carries no sandbox path
+  ✓ acs_ingest.json carries no sandbox path
+  ✓ acs_ingest.py carries no sandbox path
+  ✓ acs_layout.py carries no sandbox path
+  ✓ acs_logging.py carries no sandbox path
+  ✓ acs_mep.json carries no sandbox path
+  ✓ acs_mep.py carries no sandbox path
+  ✓ acs_navigation.py carries no sandbox path
+  ✓ acs_occupancy.json carries no sandbox path
+  ✓ acs_occupancy.py carries no sandbox path
+  ✓ acs_pbr.json carries no sandbox path
+  ✓ acs_pbr.py carries no sandbox path
+  ✓ acs_plan_chunks.py carries no sandbox path
+  ✓ acs_programs.json carries no sandbox path
+  ✓ acs_programs.py carries no sandbox path
+  ✓ acs_project.py carries no sandbox path
+  ✓ acs_provider.py carries no sandbox path
+  ✓ acs_rate_limit.py carries no sandbox path
+  ✓ acs_relations.py carries no sandbox path
+  ✓ acs_render.json carries no sandbox path
+  ✓ acs_render.py carries no sandbox path
+  ✓ acs_revision.json carries no sandbox path
+  ✓ acs_revision.py carries no sandbox path
+  ✓ acs_rules.json carries no sandbox path
+  ✓ acs_rules.py carries no sandbox path
+  ✓ acs_runtime.json carries no sandbox path
+  ✓ acs_runtime.py carries no sandbox path
+  ✓ acs_sources.json carries no sandbox path
+  ✓ acs_struct.json carries no sandbox path
+  ✓ acs_struct.py carries no sandbox path
+  ✓ acs_understand.py carries no sandbox path
+  ✓ acs_understand_api.py carries no sandbox path
+  ✓ acs_upload_security.py carries no sandbox path
+  ✓ acs_validate.py carries no sandbox path
+  ✓ acs_visual.json carries no sandbox path
+  ✓ acs_visual.py carries no sandbox path
+  ✓ acs_workspace.json carries no sandbox path
+  ✓ acs_workspace.py carries no sandbox path
+  ✓ netlify.toml carries no sandbox path
+  ✓ public/app/boot/a11y-baseline.js carries no sandbox path
+  ✓ public/app/boot/api-base.js carries no sandbox path
+  ✓ public/app/boot/build-info.js carries no sandbox path
+  ✓ public/app/boot/debug-toggle.js carries no sandbox path
+  ✓ public/app/boot/engine-guard.js carries no sandbox path
+  ✓ public/app/boot/style-bridge.js carries no sandbox path
+  ✓ public/app/core/disciplines.js carries no sandbox path
+  ✓ public/app/core/standards.js carries no sandbox path
+  ✓ public/app/core/viewer.js carries no sandbox path
+  ✓ public/app/generated/arch-detail-bridge.js carries no sandbox path
+  ✓ public/app/generated/arch-detail.js carries no sandbox path
+  ✓ public/app/generated/authoring.js carries no sandbox path
+  ✓ public/app/generated/bim.js carries no sandbox path
+  ✓ public/app/generated/docs.js carries no sandbox path
+  ✓ public/app/generated/pbr-bridge.js carries no sandbox path
+  ✓ public/app/generated/pbr.js carries no sandbox path
+  ✓ public/app/generated/render-engine.js carries no sandbox path
+  ✓ public/app/generated/runtime.js carries no sandbox path
+  ✓ public/app/generated/workspace-ui.js carries no sandbox path
+  ✓ public/app/late-bindings.js carries no sandbox path
+  ✓ public/app/main.js carries no sandbox path
+  ✓ public/app/render/scene.js carries no sandbox path
+  ✓ public/app/shared-state.js carries no sandbox path
+  ✓ public/app/styles/app.css carries no sandbox path
+  ✓ public/app/trust/core.js carries no sandbox path
+  ✓ public/app/trust/wiring.js carries no sandbox path
+  ✓ public/app/ui/panels-entry.js carries no sandbox path
+  ✓ public/app/ui/workspace-ui-wiring.js carries no sandbox path
+  ✓ public/index.html carries no sandbox path
+  ✓ render.yaml carries no sandbox path
+  ✓ requirements.txt carries no sandbox path
+  ✓ tools/netlify-build.sh carries no sandbox path
+  ✓ tools/vendor.sh carries no sandbox path
+
+== 10 · NO SECRET IS PACKAGED ==
+  ✓ Dockerfile carries no credential-shaped value
+  ✓ acs_api_errors.py carries no credential-shaped value
+  ✓ acs_arch.json carries no credential-shaped value
+  ✓ acs_arch.py carries no credential-shaped value
+  ✓ acs_archdetail.json carries no credential-shaped value
+  ✓ acs_archdetail.py carries no credential-shaped value
+  ✓ acs_authoring.json carries no credential-shaped value
+  ✓ acs_authoring.py carries no credential-shaped value
+  ✓ acs_bim.json carries no credential-shaped value
+  ✓ acs_bim.py carries no credential-shaped value
+  ✓ acs_build_info.py carries no credential-shaped value
+  ✓ acs_compiler.py carries no credential-shaped value
+  ✓ acs_coord.json carries no credential-shaped value
+  ✓ acs_coord.py carries no credential-shaped value
+  ✓ acs_cpu_pool.py carries no credential-shaped value
+  ✓ acs_distance.py carries no credential-shaped value
+  ✓ acs_docs.json carries no credential-shaped value
+  ✓ acs_docs.py carries no credential-shaped value
+  ✓ acs_egress.py carries no credential-shaped value
+  ✓ acs_engineering_approval.py carries no credential-shaped value
+  ✓ acs_engineering_authority.py carries no credential-shaped value
+  ✓ acs_engineering_changes.json carries no credential-shaped value
+  ✓ acs_fls.json carries no credential-shaped value
+  ✓ acs_fls.py carries no credential-shaped value
+  ✓ acs_generation.py carries no credential-shaped value
+  ✓ acs_generation_job.py carries no credential-shaped value
+  ✓ acs_ingest.json carries no credential-shaped value
+  ✓ acs_ingest.py carries no credential-shaped value
+  ✓ acs_layout.py carries no credential-shaped value
+  ✓ acs_logging.py carries no credential-shaped value
+  ✓ acs_mep.json carries no credential-shaped value
+  ✓ acs_mep.py carries no credential-shaped value
+  ✓ acs_navigation.py carries no credential-shaped value
+  ✓ acs_occupancy.json carries no credential-shaped value
+  ✓ acs_occupancy.py carries no credential-shaped value
+  ✓ acs_pbr.json carries no credential-shaped value
+  ✓ acs_pbr.py carries no credential-shaped value
+  ✓ acs_plan_chunks.py carries no credential-shaped value
+  ✓ acs_programs.json carries no credential-shaped value
+  ✓ acs_programs.py carries no credential-shaped value
+  ✓ acs_project.py carries no credential-shaped value
+  ✓ acs_provider.py carries no credential-shaped value
+  ✓ acs_rate_limit.py carries no credential-shaped value
+  ✓ acs_relations.py carries no credential-shaped value
+  ✓ acs_render.json carries no credential-shaped value
+  ✓ acs_render.py carries no credential-shaped value
+  ✓ acs_revision.json carries no credential-shaped value
+  ✓ acs_revision.py carries no credential-shaped value
+  ✓ acs_rules.json carries no credential-shaped value
+  ✓ acs_rules.py carries no credential-shaped value
+  ✓ acs_runtime.json carries no credential-shaped value
+  ✓ acs_runtime.py carries no credential-shaped value
+  ✓ acs_sources.json carries no credential-shaped value
+  ✓ acs_struct.json carries no credential-shaped value
+  ✓ acs_struct.py carries no credential-shaped value
+  ✓ acs_understand.py carries no credential-shaped value
+  ✓ acs_understand_api.py carries no credential-shaped value
+  ✓ acs_upload_security.py carries no credential-shaped value
+  ✓ acs_validate.py carries no credential-shaped value
+  ✓ acs_visual.json carries no credential-shaped value
+  ✓ acs_visual.py carries no credential-shaped value
+  ✓ acs_workspace.json carries no credential-shaped value
+  ✓ acs_workspace.py carries no credential-shaped value
+  ✓ netlify.toml carries no credential-shaped value
+  ✓ public/app/boot/a11y-baseline.js carries no credential-shaped value
+  ✓ public/app/boot/api-base.js carries no credential-shaped value
+  ✓ public/app/boot/build-info.js carries no credential-shaped value
+  ✓ public/app/boot/debug-toggle.js carries no credential-shaped value
+  ✓ public/app/boot/engine-guard.js carries no credential-shaped value
+  ✓ public/app/boot/style-bridge.js carries no credential-shaped value
+  ✓ public/app/core/disciplines.js carries no credential-shaped value
+  ✓ public/app/core/standards.js carries no credential-shaped value
+  ✓ public/app/core/viewer.js carries no credential-shaped value
+  ✓ public/app/generated/arch-detail-bridge.js carries no credential-shaped value
+  ✓ public/app/generated/arch-detail.js carries no credential-shaped value
+  ✓ public/app/generated/authoring.js carries no credential-shaped value
+  ✓ public/app/generated/bim.js carries no credential-shaped value
+  ✓ public/app/generated/docs.js carries no credential-shaped value
+  ✓ public/app/generated/pbr-bridge.js carries no credential-shaped value
+  ✓ public/app/generated/pbr.js carries no credential-shaped value
+  ✓ public/app/generated/render-engine.js carries no credential-shaped value
+  ✓ public/app/generated/runtime.js carries no credential-shaped value
+  ✓ public/app/generated/workspace-ui.js carries no credential-shaped value
+  ✓ public/app/late-bindings.js carries no credential-shaped value
+  ✓ public/app/main.js carries no credential-shaped value
+  ✓ public/app/render/scene.js carries no credential-shaped value
+  ✓ public/app/shared-state.js carries no credential-shaped value
+  ✓ public/app/styles/app.css carries no credential-shaped value
+  ✓ public/app/trust/core.js carries no credential-shaped value
+  ✓ public/app/trust/wiring.js carries no credential-shaped value
+  ✓ public/app/ui/panels-entry.js carries no credential-shaped value
+  ✓ public/app/ui/workspace-ui-wiring.js carries no credential-shaped value
+  ✓ public/index.html carries no credential-shaped value
+  ✓ render.yaml carries no credential-shaped value
+  ✓ requirements.txt carries no credential-shaped value
+  ✓ tools/netlify-build.sh carries no credential-shaped value
+  ✓ tools/vendor.sh carries no credential-shaped value
+  ✓ no real .env file is present in the repository
+  ✓ an .env.example with placeholders only is provided
+  ✓ the .env.example contains no real value
+  ✓ the .env.example names the secret without setting it
+  ✓ the API reads the key name somewhere (the check is not vacuous)
+  ✓ every mention of the key is existence-only — the value is never returned
+  ✓ the key-presence helper returns a boolean, not the key
+  ✓ no response, log line or f-string carries the key value
+  ✓ the API never returns the key itself, only whether one is set
+
+== 11 · THE PRODUCTION BUNDLE IS INTERNALLY SELF-CONSISTENT ==
+  · shell=47424 B · 27 module(s)=1900421 B · css=53599 B · pre-split single page=1863894 B
+  ✓ the published page is a SHELL, not the application: under 200 KB
+  ✓ and dramatically smaller than the single file it replaced (under a tenth)
+  ✓ the application did not shrink, it moved: shell + modules + stylesheet carry at least what the single page carried
+  ✓ the application is split into separately cacheable modules
+  ✓ the page contains NO executable inline script: the only inline <script> is the import map
+  ✓ the page contains NO <style> block
+  ✓ the page contains NO style= attribute — the .acs-u-NN utility classes replaced every one of them
+  ✓ the utility classes that replaced them ship in the external stylesheet, so nothing lost its styling silently
+  ✓ the page carries NO inline event-handler attribute — under this CSP one would never fire, so its presence is dead code, not style
+  ✓ the page loads no remote script or stylesheet at runtime
+  ✓ the shell declares at least one script and exactly one stylesheet
+  ✓ EVERY <script src> and <link rel=stylesheet> in the shell resolves to a non-empty file that exists in public/
+  ✓ the module entry point the shell names is public/app/main.js
+  ✓ every classic boot script the shell names exists under public/app/boot/
+  ✓ and every boot script that ships is actually referenced by the shell — no orphan boot file
+  ✓ public/app/main.js imports EVERY shipped module except boot/, styles/, main.js and shared-state.js — no orphan file is published
+  ✓ and every module main.js imports really exists — no missing import
+  ✓ the import list has no duplicate: a module evaluated twice is a second copy of its state
+  · main.js imports 20 module(s) in the original evaluation order; shared-state.js carries the 9 bindings written across module boundaries
+  ✓ the cross-module write surface is a single sealed object, not a set of globals
+  ✓ es-module-shims is referenced nowhere in the shipped frontend (shell, modules or stylesheet)
+  ✓ every non-vendored local reference resolves inside public/
+  · the build script declares 2 vendored version(s): PDFJS=4.0.379, THREE=0.160.0
+  ✓ every version placeholder in the vendor list resolves to a declared variable
+  · public/vendor holds 558 file(s); the build script requires 20 and 17 are present. This sandbox has no network, so tools/netlify-build.sh has never run here. Netlify populates this directory at build time. Three.js-dependent 3D runtime behaviour in this checkout is NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.
+  ✓ the missing runtime libraries are fetched by the declared build command, not expected in the repository
+  ✓ the vendor fetch script pins exact versions
+  ✓ the build script vendors NO es-module-shims: nothing in the shipped frontend loads it, so fetching it is dead payload on every deploy
+  ✓ the vendored libraries are exactly the two the frontend actually resolves: three (import map) and pdfjs (dynamic import)
+  ✓ every /vendor/ package the frontend references is fetched by the build script
+  ✓ the vendor fetch script fails the build on a missing file
+  ✓ the model identifier is unchanged in the Dockerfile
+
+== 11b · EVERY CANONICAL SPEC IS CLASSIFIED, NONE IS ORPHANED ==
+  · 19 canonical file(s) are browser-mirrored: acs_archdetail.json, acs_archdetail.py, acs_authoring.json, acs_authoring.py, acs_bim.json, acs_bim.py, acs_docs.json, acs_docs.py, acs_engineering_approval.py, acs_pbr.json, acs_pbr.py, acs_render.json, acs_render.py, acs_runtime.json, acs_runtime.py, acs_visual.json, acs_visual.py, acs_workspace.json, acs_workspace.py
+  · 1 offline command-line tool(s), deployed nowhere by design: acs_compiler.py
+  ✓ every canonical file is classified: image, browser mirror or offline tool
+  ✓ the authoring companion acs_engineering_approval.py is genuinely unreachable from the API
+  ✓ the authoring companion acs_engineering_approval.py is not shipped in the container
+  ✓ the offline tool acs_compiler.py is genuinely unreachable from the API
+  ✓ the offline tool acs_compiler.py is not shipped in the container
+  ✓ the browser-mirrored acs_archdetail.json is covered by the drift check
+  ✓ the browser-mirrored acs_authoring.json is covered by the drift check
+  ✓ the browser-mirrored acs_bim.json is covered by the drift check
+  ✓ the browser-mirrored acs_docs.json is covered by the drift check
+  ✓ the browser-mirrored acs_pbr.json is covered by the drift check
+  ✓ the browser-mirrored acs_render.json is covered by the drift check
+  ✓ the browser-mirrored acs_runtime.json is covered by the drift check
+  ✓ the browser-mirrored acs_visual.json is covered by the drift check
+  ✓ the browser-mirrored acs_workspace.json is covered by the drift check
+  ✓ a browser-only layer is not silently required by the backend
+
+== 11c · THE VISUAL QUALITY BRIDGE AND ITS VENDORED MODULES ==
+  ✓ the PBR bridge is present exactly once
+  ✓ the render loop hook is present exactly once
+  ✓ the original render call survives as the fallback path
+  ✓ post-processing modules import from the local vendor origin only
+  ✓ the vendor build verifies postprocessing/EffectComposer.js
+  ✓ the vendor build verifies postprocessing/RenderPass.js
+  ✓ the vendor build verifies postprocessing/ShaderPass.js
+  ✓ the vendor build verifies postprocessing/OutputPass.js
+  ✓ the vendor build verifies postprocessing/SSAOPass.js
+  ✓ the vendor build verifies shaders/FXAAShader.js
+  ✓ the vendor build verifies shaders/CopyShader.js
+  ✓ the vendor build verifies shaders/SSAOShader.js
+  ✓ the local texture root exists and documents the empty-set default
+  ✓ no remote texture or environment host is referenced by the quality layer
+
+== 11d · THE ARCHITECTURAL DETAIL LAYER (PHASE 9.2) ==
+  ✓ the archdetail bridge is present exactly once
+  ✓ the archdetail generated block is present exactly once
+  ✓ the 9.1 render loop hook is still single — no second dispatcher
+  ✓ the layer extends acs.pbr and never reverses
+  ✓ no network scheme in the architectural layer
+  ✓ no url-based gltf, remote texture or executable asset policy
+  ✓ the bridge adds only AD_* presentation groups
+  ✓ the archdetail layer needs no new vendored module
+
+== 11d2 · ONE VIEWPORT CONTRACT ACROSS EVERY LAYER ==
+  ✓ the integration gate passes on this tree
+  ✓ the contract version is declared in the specification
+  ✓ the python layer declares the same contract at runtime
+  ✓ the netlify build refuses to publish a partially merged tree
+  ✓ the black-viewport test refuses to run on a partial tree instead of raising AttributeError
+  ✓ the boot harness announces its version so a stale copy is visible
+  ✓ every contract symbol is callable in the python layer
+  ✓ every contract symbol is mirrored in the shipped page
+
+== 11e · THE VIEWPORT VISIBILITY APPARATUS (BLACK-SCREEN REMEDIATION) ==
+  ✓ the decoded-pixel analyser ships
+  ✓ the boot harness separates BOOT from VISUAL MODEL
+  ✓ the boot harness loads real canonical fixtures, not an empty workspace
+  ✓ the discredited PNG byte-size heuristic is gone for good
+  ✓ the analyser decodes RGBA and reports luminance statistics
+  ✓ the sky dome and ground plane are canonically excluded from bounds
+  ✓ the page names the sky dome and ground plane so they can be excluded
+  ✓ the camera clip contract is applied by the bridge, not just declared
+  ✓ the render diagnostics bridge is present and presentation-only
+  ✓ presentation material application fails open to the engineering material
+  ✓ the composer is resized with the renderer
+  ✓ the black-viewport regression ships and is wired into the phase gate
+
+== 11f · THE TRANSFORM AND ALIGNMENT CONTRACT ==
+  ✓ the coordinate space chain is declared end to end
+  ✓ the axis convention is declared explicitly
+  ✓ the elevation and host rules say EXACTLY ONCE
+  ✓ the plate and rack rules are declared canonically
+  ✓ the tolerance is small and carries its justification
+  ✓ presentation offsets to hide misalignment are forbidden
+  ✓ the shipped compiler derives its rack block from the contract
+  ✓ the level plate is derived from the room footprint through the single shared extent contract, and the site-wide plate is gone from the compiler
+  ✓ the plate policy change is provenanced, not silent: the new name, the previous name, what pinned it and why it changed all ship
+  ✓ the Python compiler and the page agree on the plate extent contract
+  ✓ alignment diagnostics ship and never move an object
+  ✓ world bounds are measured only after updateMatrixWorld
+  ✓ the seven ALIGN issue codes are declared and none is blocking
+  ✓ the alignment regression ships and is wired into the phase gate
+
+== 11g · THE HARNESS NEVER TOUCHES MODULE SCOPE ==
+  ✓ every page.evaluate body uses public bridges only
+  ✓ the scan is not vacuous — evaluate bodies were actually parsed
+  ✓ gate self-test: a module-scoped access is caught
+  ✓ gate self-test: an explanatory comment naming scene is NOT a violation
+  ✓ the narrow read-only snapshot bridge exists instead of a global
+  ✓ engine state was NOT promoted to the global scope to satisfy a test
+  ✓ the harness asks for the snapshot bridge during boot
+
+== 11h · ONE AUTHORITATIVE API BASE, AND THE API ERROR CONTRACT ==
+  ✓ the shipped page declares exactly one API origin and every /v1 call is classified
+  ✓ the configured origin is https
+  ✓ the CSP connect-src allows exactly that origin — otherwise the browser blocks every call from the deployed page
+  ✓ gate self-test: a second hard-coded origin would be caught
+  ✓ the error-contract module is deployed and copied into the image
+  ✓ the error contract declares a version and the ACS_UPSTREAM_* family
+  ✓ the envelope is the only failure shape: ok/error{code,message,request_id,retryable,upstream}
+  ✓ secrets are redacted before any message leaves the process
+  ✓ the API imports the shared error contract rather than re-inventing one
+  ✓ no failure path returns a traceback or an exception string to the client
+  ✓ the envelope middleware is inside CORS so error responses stay readable
+  ✓ /health and /ready are both declared, and neither returns a credential
+  ✓ startup validation names missing variables only, never values
+  ✓ generation is bounded by a server deadline that answers 504 JSON
+  ✓ rate limits are unchanged and 429 carries Retry-After
+  ✓ the deterministic JSON parser replaced the naive brace slice
+  ✓ the live backend verifier ships and defaults to no model spend
+  ✓ the live verifier reads the base from the page, not a second copy
+
+== 11i · ONE OUTPUT BUDGET AND A COMPLETION CONTRACT ==
+  ✓ the generation budget module is deployed and copied into the image
+  ✓ it declares a contract version
+  ✓ there is exactly ONE authoritative output budget name
+  ✓ every stage budget derives from it — no free token constant remains in the generation path
+  ✓ the deployment declares the budget and the escalation bounds
+  ✓ the stop-reason contract is judged BEFORE parsing
+  ✓ a max_tokens stop raises the truncation code rather than returning text
+  ✓ a full budget spent on non-visible content is not called an empty reply
+  ✓ every ceiling code is mapped to a user-facing state in the shipped page
+  ✓ brace repair of a truncated reply is gone from the codebase
+  ✓ the input-length heuristic that mis-routed the production prompt is gone
+  ✓ truncation never retries the identical request — it changes strategy
+  ✓ the escalation and split limits are finite
+  ✓ stage-1 geometry is authoritative and any override is reported
+  ✓ the compact-output rule reaches the shipped instructions
+  ✓ generation telemetry is aggregate-only in the API response
+  ✓ the production prompt classifies SMALL and takes one stage
+  ✓ a distribution-centre prompt is routed to staged generation
+
+== 11j · THE LIVE MODEL RENDER-RECOVERY CONTRACT ==
+  ✓ the render-recovery contract is declared in the canonical spec
+  ✓ the spec, the python layer and the shipped page all carry it
+  ✓ every declared symbol exists in the python layer
+  ✓ every declared symbol has a browser mirror in the shipped page
+  ✓ the model-load path reconciles the camera through the contract
+  ✓ the model-load path assigns near and far — the defect was that it never did
+  ✓ one recovery cycle only, and it is declared
+  ✓ post-processing fails open to the base renderer, never to black
+  ✓ render failure classes are separate from transport classes in the page
+  ✓ the large live-model regression fixtures ship with the tests
+  ✓ the large fixture declares its provenance honestly
+  ✓ the boot harness loads the large fixtures and the outlier variant
+  ✓ the requirement-coverage and duplication audits ship
+  ✓ one stray coordinate no longer moves the camera: proven here, not asserted
+
+== 12 · TEST-ONLY MATERIAL IS NOT REQUIRED BY PRODUCTION ==
+  ✓ no deployed source imports anything from tests/
+  ✓ the Dockerfile copies nothing from tests/
+  ✓ the Netlify publish directory contains no test fixture
+
+──────────────────────────────────────────────────────────────
+NOTE: the guard self-tests run the guard as the build runs it (python3 tools/check_index_guard.py public/index.html) against a mutated copy of tools/ + public/, covering all 5 engine needles and all 10 marker pairs
+NOTE: the deployed API entrypoint is acs_understand_api.py
+NOTE: its transitive closure is 18 module(s): acs_api_errors.py, acs_build_info.py, acs_cpu_pool.py, acs_engineering_authority.py, acs_generation.py, acs_generation_job.py, acs_ingest.py, acs_layout.py, acs_logging.py, acs_plan_chunks.py, acs_programs.py, acs_provider.py, acs_rate_limit.py, acs_rules.py, acs_understand.py, acs_understand_api.py, acs_upload_security.py, acs_validate.py
+NOTE: 13 module(s) are in the image but not reachable from the API entrypoint: acs_arch, acs_coord, acs_distance, acs_egress, acs_fls, acs_mep, acs_navigation, acs_occupancy, acs_project, acs_relations, acs_revision, acs_struct, acs_visual
+NOTE: 10 module(s) are browser-mirrored only and intentionally absent from the image: acs_archdetail, acs_authoring, acs_bim, acs_compiler, acs_docs, acs_engineering_approval, acs_pbr, acs_render, acs_runtime, acs_workspace
+NOTE: netlify.toml declares no build base in any context; the effective base is the repository root, which is the intended contract
+NOTE: the effective Netlify build base is the repository root (base NOT SET)
+NOTE: the declared CSP has 15 directive(s): base-uri, connect-src, default-src, font-src, form-action, frame-ancestors, frame-src, img-src, manifest-src, media-src, object-src, script-src, style-src, upgrade-insecure-requests, worker-src
+NOTE: the backend reads 25 environment variable(s)
+NOTE: 28 published frontend file(s) are scanned for sandbox paths and secrets alongside the page
+NOTE: shell=47424 B · 27 module(s)=1900421 B · css=53599 B · pre-split single page=1863894 B
+NOTE: main.js imports 20 module(s) in the original evaluation order; shared-state.js carries the 9 bindings written across module boundaries
+NOTE: the build script declares 2 vendored version(s): PDFJS=4.0.379, THREE=0.160.0
+NOTE: public/vendor holds 558 file(s); the build script requires 20 and 17 are present. This sandbox has no network, so tools/netlify-build.sh has never run here. Netlify populates this directory at build time. Three.js-dependent 3D runtime behaviour in this checkout is NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.
+NOTE: 19 canonical file(s) are browser-mirrored: acs_archdetail.json, acs_archdetail.py, acs_authoring.json, acs_authoring.py, acs_bim.json, acs_bim.py, acs_docs.json, acs_docs.py, acs_engineering_approval.py, acs_pbr.json, acs_pbr.py, acs_render.json, acs_render.py, acs_runtime.json, acs_runtime.py, acs_visual.json, acs_visual.py, acs_workspace.json, acs_workspace.py
+NOTE: 1 offline command-line tool(s), deployed nowhere by design: acs_compiler.py
+DEPLOY VERIFICATION: 599 passed, 0 failed
+
+=== 8 · Phase 9 regression (documentation, BIM and every earlier phase) ===
+
+=== 0 · Python syntax and imports ===
+py_compile: OK
+imports: OK (7 modules)
+
+=== 1 · regenerate every browser layer from the canonical specifications ===
+runtime layer:
+  unchanged public/app/generated/runtime.js  block=73804 bytes  file=75987 bytes
+authoring layer:
+  unchanged public/app/generated/authoring.js  block=114626 bytes  file=116758 bytes
+workspace ui:
+  unchanged public/app/styles/app.css  block=11537 bytes  file=53599 bytes
+  unchanged public/index.html  block=4054 bytes  file=47424 bytes
+  unchanged public/app/generated/workspace-ui.js  block=101619 bytes  file=103991 bytes
+render engine:
+  unchanged public/app/styles/app.css  block=3508 bytes  file=53599 bytes
+  unchanged public/index.html  block=935 bytes  file=47424 bytes
+  unchanged public/app/generated/render-engine.js  block=98004 bytes  file=99740 bytes
+bim exchange:
+  unchanged public/app/styles/app.css  block=3362 bytes  file=53599 bytes
+  unchanged public/index.html  block=978 bytes  file=47424 bytes
+  unchanged public/app/generated/bim.js  block=55053 bytes  file=56339 bytes
+documentation:
+  unchanged public/app/styles/app.css  block=4326 bytes  file=53599 bytes
+  unchanged public/index.html  block=1012 bytes  file=47424 bytes
+  unchanged public/app/generated/docs.js  block=114354 bytes  file=115993 bytes
+
+=== 2 · the generated blocks are idempotent ===
+generated documentation blocks: exactly one of each (6 markers)
+every generated code block is carried by one imported module
+
+=== 3 · documentation contract and tests A to N ===
+
+== §0/§1 — THE SPECIFICATION AND THE READ-ONLY RULE ==
+  ✓ the documentation specification loads
+  ✓ documentation is declared read only
+  ✓ the pipeline ends at export and never returns to the model
+  ✓ the model hash inputs are the model alone
+  ✓ every issue code used by the module is declared
+  ✓ an undeclared issue code is refused
+
+== §5/§7 — VIEW TYPES AND EXPLICIT SUPPORT ==
+  ✓ twelve view types are declared
+  ✓ every declared view type carries an explicit support status
+  ✓ support states are declared and separated
+  ✓ a view type is not claimed supported merely because the enum exists
+  ✓ an unsupported view type is refused with a typed issue
+  ✓ an unknown view type is refused
+  ✓ an unknown level is refused rather than defaulted
+  ✓ an unknown scale is refused rather than invented
+  ✓ an elevation without an orientation is refused
+  ✓ a section without a cut plane is refused
+
+== §4 — DETERMINISTIC ARTIFACT IDENTITY ==
+  ✓ the same model and definition give the same view identity
+  ✓ a different definition gives a different identity
+  ✓ identities carry the declared prefix and hash length
+  ✓ no random identifiers are permitted
+
+== §16 — NO FAKE DIMENSION: A RENDER FALLBACK IS NEVER A MEASUREMENT ==
+  ✓ the fixture really has a wall with an unstated thickness and a fallback
+  ✓ the documentation reader reports it UNKNOWN
+  ✓ the render fallback is not returned in its place
+  ✓ a stated value is read as stated
+  ✓ display rounding never modifies the exact value
+  ✓ an unknown value has no display value
+
+== §84 — TEST A: A REAL FLOOR PLAN FROM CANONICAL GEOMETRY ==
+  ✓ a floor plan is produced
+  ✓ every drawn wall exists in the compiled architecture
+  ✓ every architectural wall on the level is drawn
+  ✓ every drawn space exists in the compiled architecture
+  ✓ every drawn door exists in the compiled architecture
+  ✓ every drawn window exists in the compiled architecture
+  ✓ no element is invented that the model does not contain
+  ✓ a stair core is present where the model has one
+  ✓ room labels come from the model
+  ✓ the plan carries real dimensions
+  ✓ the plan is not a rasterised viewport — it is vector element geometry
+
+== §9 — A SHARED WALL IS ONE WALL ==
+  ✓ the fixture contains at least one shared wall
+  ✓ no wall is drawn twice
+  ✓ a shared wall keeps its single canonical identity
+  ✓ the compiled architecture really carries an unresolved exposure
+  ✓ unresolved wall exposure is carried through, never resolved by the drawing
+  ✓ the documentation invents no exposure the compiler did not state
+
+== §10/§11 — DOORS AND WINDOWS ARE NOT BEAUTIFIED ==
+  ✓ no door swing is invented where the model does not specify one
+  ✓ the not-specified swing state is preserved and visible
+  ✓ every documented window corresponds to a represented opening
+  ✓ no facade beautification adds a window
+
+== §12/§13 — ROOM LABELS AND AREAS ==
+  ✓ the room schedule reports every canonical space
+  ✓ no room number is invented
+  ✓ an area states its basis rather than being asserted bare
+  ✓ unknown program stays unknown rather than guessed
+  ✓ a rendered footprint is never called a regulatory floor area
+
+== §85 — TEST B: FOUR ELEVATIONS AND BUILDING ROTATION ==
+  ✓ the north elevation is produced
+  ✓ the south elevation is produced
+  ✓ the east elevation is produced
+  ✓ the west elevation is produced
+  ✓ the four elevations differ from one another
+  ✓ the north elevation shows only represented external openings
+  ✓ the south elevation shows only represented external openings
+  ✓ the east elevation shows only represented external openings
+  ✓ the west elevation shows only represented external openings
+  ✓ the elevation records the building rotation it applied
+  ✓ a rotation is read from the model transform, not assumed zero
+  ✓ level lines come from real level elevations
+  ✓ no photorealistic content enters the engineering elevation
+
+== §86 — TEST C: A TRUE MODEL-DERIVED SECTION ==
+  ✓ a section at x=3.0 is produced
+  ✓ a section at x=7.0 is produced
+  ✓ a section at x=11.0 is produced
+  ✓ the section reports cut, projected, beyond and unresolved separately
+  ✓ the section actually cuts geometry
+  ✓ the section classifies elements beyond the declared depth
+  ✓ different section positions cut different elements
+  ✓ cut wall 0.wall_1 really spans the cut plane
+  ✓ cut wall 0.wall_7 really spans the cut plane
+  ✓ cut wall 1.wall_1 really spans the cut plane
+  ✓ cut wall 1.wall_7 really spans the cut plane
+  ✓ a section is not a floor-plan projection — it carries vertical extents
+
+== §24 — A STAIR VOID REALLY OPENS THE SLAB ==
+  ✓ the section through the void adjusts the slab strip
+  ✓ a section away from the void leaves the slab whole
+
+== §14/§15/§17 — DIMENSION ENGINE AND PROVENANCE ==
+  ✓ every dimension carries every declared field
+  ✓ every dimension names the elements it measured
+  ✓ every provenance is one of the declared kinds
+  ✓ a measured dimension has both an exact and a display value
+  ✓ the display value never changes the exact value
+  ✓ overall building dimensions are produced
+  ✓ the dimension chain policy is declared, not ad hoc
+  ✓ a NONE policy produces no cluttered chain
+
+== §16 — AN UNKNOWN OPENING WIDTH STAYS UNKNOWN IN THE DIMENSIONS ==
+  ✓ every opening in this fixture states its width, so none is guessed
+  ✓ no dimension ever equals a render fallback that has no stated value
+
+== §18 — LEVEL DATUM ==
+  ✓ level elevations are documented from the model
+  ✓ no FFL, SSL, TOS or TOC datum is invented
+  ✓ only the level elevation datum type is declared
+
+== §19 — GRIDS ARE DRAWN ONLY WHERE REPRESENTED ==
+  ✓ the architectural fixture has no structural grid
+  ✓ no grid is generated because a convention expects one
+  ✓ the grid policy is declared as represented-only
+
+== §87 — TEST D: THE ROOM SCHEDULE MATCHES CANONICAL SPACES ==
+  ✓ zero phantom rooms
+  ✓ zero missing represented rooms
+  ✓ every row names the element it reports
+  ✓ every row is bound to the model hash it was read from
+  ✓ a schedule declares it is a view over the model
+  ✓ a level-scoped schedule really narrows the scope
+
+== §88 — TEST E: DOOR AND WINDOW SCHEDULES ==
+  ✓ every door row maps to a canonical opening
+  ✓ every window row maps to a canonical opening
+  ✓ each door tag is deterministic and maps to one canonical door
+  ✓ the same door yields the same tag on a second run
+  ✓ no door type is invented
+  ✓ the fixture states nominal widths
+  ✓ clear width is never filled in from nominal width
+  ✓ an unknown clear width is displayed as NOT_SPECIFIED, not as a number
+  ✓ fire rating is not invented from the door being a door
+  ✓ material is not invented from the element kind
+  ✓ the forbidden schedule inventions are declared and named
+  ✓ the specification states nominal is not clear
+
+== §89 — TEST F: A STRUCTURAL DRAWING FROM REPRESENTED DATA ==
+  ✓ the structural fixture really carries represented structure
+  ✓ a structural plan is produced
+  ✓ represented columns appear
+  ✓ represented beams appear
+  ✓ represented grids appear
+  ✓ grid spacing dimensions come from represented grids
+  ✓ a column schedule is produced
+  ✓ a foundation schedule is produced
+  ✓ unknown material properties stay unknown
+  ✓ no reinforcement appears anywhere in the structural documentation
+  ✓ no structural sizing or adequacy is claimed
+
+== §90 — TEST G: AN MEP DRAWING KEEPS UNROUTED UNROUTED ==
+  ✓ an MEP plan is produced
+  ✓ represented MEP segments appear
+  ✓ a routed segment is drawn from its real endpoints
+  ✓ an unrouted segment is never fabricated into a route
+  ✓ an unrouted segment raises a typed issue rather than being hidden
+  ✓ no duct size, flow, pressure or capacity is generated
+  ✓ an MEP equipment schedule reports represented equipment only
+
+== §91 — TEST H: AN FLS DRAWING MAKES NO COVERAGE CLAIM ==
+  ✓ the FLS fixture really carries represented devices
+  ✓ an FLS plan is produced
+  ✓ represented devices appear on the plan
+  ✓ represented signage appears on the plan
+  ✓ the FLS documentation never says "code compliant"
+  ✓ the FLS documentation never says "coverage compliant"
+  ✓ the FLS documentation never says "adequate"
+  ✓ the FLS documentation never says "protected"
+  ✓ the FLS documentation never says "approved for construction"
+  ✓ the FLS documentation never says "certified"
+  ✓ the FLS documentation never says "meets the code"
+  ✓ the FLS documentation never says "conforms to"
+  ✓ the FLS documentation never says "fire rated as required"
+  ✓ no coverage or protection verdict is produced
+
+== §92 — TEST I: A COORDINATION SHEET FIXES NOTHING ==
+  ✓ a coordination plan is produced
+  ✓ the coordination view can show clash annotations as documentation
+  ✓ no clash is auto-resolved by documentation
+  ✓ documentation declares no remediation capability
+
+== §93 — TEST J: THE QUANTITY REPORT IS FACTUAL ==
+  ✓ the room count matches the canonical spaces
+  ✓ the door count matches the canonical door openings
+  ✓ the window count matches the canonical window openings
+  ✓ the level count matches the canonical levels
+  ✓ the wall length equals the sum of compiled wall lengths
+  ✓ the space area equals the sum of canonical space areas
+  ✓ every quantity states its unit, basis and coverage
+  ✓ a discipline with no represented data reports NOT_AVAILABLE, not zero
+  ✓ a discipline with represented data reports a real count
+  ✓ unrouted MEP segments make the segment length PARTIAL, not complete
+  ✓ the report denies being a bill of quantities
+  ✓ the report denies being a cost estimate
+  ✓ no price field appears in the quantity report
+  ✓ no rate field appears in the quantity report
+  ✓ no cost field appears in the quantity report
+  ✓ no currency field appears in the quantity report
+  ✓ no budget field appears in the quantity report
+  ✓ no labour_rate field appears in the quantity report
+  ✓ no material_price field appears in the quantity report
+  ✓ no unit_cost field appears in the quantity report
+  ✓ no total_cost field appears in the quantity report
+  ✓ no market_price field appears in the quantity report
+  ✓ no currency symbol appears anywhere in the report
+
+== §45/§46/§47/§48 — SHEETS, PAPER, VIEWPORTS AND TITLE BLOCK ==
+  ✓ a sheet is composed
+  ✓ the sheet carries every declared field
+  ✓ the sheet records the model hash it was composed from
+  ✓ all five paper sizes are declared
+  ✓ A1 is not assumed for every project
+  ✓ an unknown paper size is refused
+  ✓ every viewport has deterministic geometry
+  ✓ overlapping viewports are detected
+  ✓ overlapping content is reported, never silently moved
+  ✓ a viewport leaving the sheet is refused
+  ✓ unknown title block fields stay blank
+  ✓ no company, engineer, stamp or approval is generated
+  ✓ a neutral drawing status is used
+  ✓ a restricted status is refused
+  ✓ the restricted status APPROVED_FOR_CONSTRUCTION cannot be set by the system
+  ✓ the restricted status IFC cannot be set by the system
+  ✓ the restricted status CERTIFIED cannot be set by the system
+  ✓ the restricted status AS_BUILT cannot be set by the system
+
+== §58 — SCALE IS REPORTED, NEVER INVENTED ==
+  ✓ a view that does not fit reports FIT_TO_SHEET rather than a false scale
+  ✓ a scale that cannot fit falls back to FIT_TO_SHEET with no true scale
+  ✓ the true and fit modes are separately declared
+
+== §50/§51/§54/§55 — INDEX, REVISIONS, LEGENDS AND STYLE ==
+  ✓ a drawing index is produced
+  ✓ prefixes are configurable
+  ✓ no professional issuance status is inferred
+  ✓ the legend contains only symbols actually used
+  ✓ there is no fake symbol catalogue
+  ✓ the graphic hierarchy distinguishes every declared class
+  ✓ cut is heavier than projected, which is heavier than reference
+  ✓ style does not change engineering meaning
+  ✓ a monochrome engineering mode exists
+  ✓ changing the drawing mode changes no geometry
+  ✓ AI imagery is never mixed into technical vector drawings
+  ✓ a presentation sheet must be labelled as such
+
+== §94 — TEST K: A MODEL CHANGE MAKES DOCUMENTATION STALE ==
+  ✓ a documentation project is built
+  ✓ every artifact is CURRENT before the model moves
+  ✓ a legitimate model change commits through the phase 5 authoring path
+  ✓ the model hash really moved
+  ✓ the old view becomes STALE_MODEL_CHANGED
+  ✓ the old sheet becomes stale
+  ✓ the old schedule becomes stale
+  ✓ the old quantity report becomes stale
+  ✓ nothing was auto-regenerated
+  ✓ nothing was auto-deleted
+  ✓ the impact report names the affected views
+  ✓ the impact report names the affected sheets
+  ✓ the impact report names the affected schedules
+  ✓ the impact report claims no engineering validity
+  ✓ regeneration creates a new documentation revision
+  ✓ the previous documentation revision is preserved
+  ✓ history is never overwritten
+  ✓ the regenerated view carries the new model hash
+  ✓ the regenerated view is CURRENT against the new model
+  ✓ the regenerated view differs from the old one
+  ✓ the room tag reports exactly what the architecture compiler states
+  ✓ a geometric model change commits through the authoring path
+  ✓ the regenerated drawing really reflects the geometric change
+  ✓ the regenerated dimension reports the new measurement
+  ✓ the earlier documentation is still stale and still preserved
+  ✓ revision clouds come from a real diff
+  ✓ a revision cloud carries no engineering interpretation
+  ✓ no cloud is generated without a diff
+
+== §68/§69/§70/§71/§73 — REAL SVG, PDF AND JSON EXPORT ==
+  ✓ the SVG declares itself as SVG
+  ✓ the SVG contains real vector geometry
+  ✓ the SVG embeds no raster image as the drawing content
+  ✓ the SVG states it is not a construction drawing
+  ✓ the SVG is bound to the model hash
+  ✓ the SVG parses as real XML
+  ✓ the parsed SVG really has line and rect elements
+  ✓ no script element exists in the SVG
+  ✓ the PDF carries the real file signature
+  ✓ the PDF declares the specified version
+  ✓ the PDF ends with the end-of-file marker
+  ✓ the PDF has one page per sheet
+  ✓ the PDF declares a real MediaBox in points
+  ✓ the PDF content is not empty
+  ✓ the PDF carries a page tree, a catalogue and an xref
+  ✓ the PDF content stream carries real vector operators
+  ✓ the PDF claims no CAD interoperability
+  ✓ no DXF file is emitted with a renamed extension
+  ✓ a documentation package is exported
+  ✓ the package carries the source model hash
+  ✓ the package lists views, sheets, schedules and quantities
+  ✓ the package lists every artifact identity
+  ✓ the package records provenance and staleness
+  ✓ the package states it did not come from an IFC file
+  ✓ the export manifest carries every declared field
+  ✓ the manifest records a hash for every exported file
+  ✓ the manifest binds every file to the model hash
+  ✓ the package json is valid json
+  ✓ an export set is created
+  ✓ an export set name implies no authority or approval
+
+== §74 — DETERMINISM ==
+  ✓ the same view produces byte-identical SVG
+  ✓ a fresh project object produces the identical drawing
+  ✓ the PDF content streams are identical across runs
+  ✓ the PDF semantic hash is stable
+  ✓ generated_at is excluded from every identity
+  ✓ changing only the timestamp changes no drawing content
+
+== §95 — TEST L: THE ENGINEERING MODEL IS NEVER MUTATED ==
+  ✓ villa: the canonical model bytes are unchanged after full documentation
+  ✓ villa: the model hash is unchanged
+  ✓ villa: the revision pointer is unchanged
+  ✓ villa: real documentation was actually produced
+  ✓ villa_glazed: the canonical model bytes are unchanged after full documentation
+  ✓ villa_glazed: the model hash is unchanged
+  ✓ villa_glazed: the revision pointer is unchanged
+  ✓ villa_glazed: real documentation was actually produced
+  ✓ hotel: the canonical model bytes are unchanged after full documentation
+  ✓ hotel: the model hash is unchanged
+  ✓ hotel: the revision pointer is unchanged
+  ✓ hotel: real documentation was actually produced
+  ✓ clinic: the canonical model bytes are unchanged after full documentation
+  ✓ clinic: the model hash is unchanged
+  ✓ clinic: the revision pointer is unchanged
+  ✓ clinic: real documentation was actually produced
+  ✓ office: the canonical model bytes are unchanged after full documentation
+  ✓ office: the model hash is unchanged
+  ✓ office: the revision pointer is unchanged
+  ✓ office: real documentation was actually produced
+  ✓ warehouse: the canonical model bytes are unchanged after full documentation
+  ✓ warehouse: the model hash is unchanged
+  ✓ warehouse: the revision pointer is unchanged
+  ✓ warehouse: real documentation was actually produced
+  ✓ clash_mep: the canonical model bytes are unchanged after full documentation
+  ✓ clash_mep: the model hash is unchanged
+  ✓ clash_mep: the revision pointer is unchanged
+  ✓ clash_mep: real documentation was actually produced
+  ✓ villa_fls: the canonical model bytes are unchanged after full documentation
+  ✓ villa_fls: the model hash is unchanged
+  ✓ villa_fls: the revision pointer is unchanged
+  ✓ villa_fls: real documentation was actually produced
+
+== §96 — TEST M: ARABIC LABELS AND RTL ==
+  ✓ both languages are declared
+  ✓ every English label has an Arabic counterpart
+  ✓ the Arabic labels are actually Arabic
+  ✓ right-to-left never mirrors geometry
+  ✓ an Arabic model produces a plan
+  ✓ Arabic room names survive into the annotations
+  ✓ Arabic text appears in the SVG unchanged
+  ✓ the drawing geometry is identical whichever language names the rooms
+  ✓ a right-to-left label does not mirror a sheet coordinate
+
+== §32/§81/§97 — TEST N: ADVERSARIAL TEXT, NOTES AND FILENAMES ==
+  ✓ hostile payload #0 is recognised as unsafe
+  ✓ hostile payload #0 is refused in a title block
+  ✓ hostile payload #0 is refused as a sheet name
+  ✓ hostile payload #1 is recognised as unsafe
+  ✓ hostile payload #1 is refused in a title block
+  ✓ hostile payload #1 is refused as a sheet name
+  ✓ hostile payload #2 is recognised as unsafe
+  ✓ hostile payload #2 is refused in a title block
+  ✓ hostile payload #2 is refused as a sheet name
+  ✓ hostile payload #3 is recognised as unsafe
+  ✓ hostile payload #3 is refused in a title block
+  ✓ hostile payload #3 is refused as a sheet name
+  ✓ hostile payload #4 is recognised as unsafe
+  ✓ hostile payload #4 is refused in a title block
+  ✓ hostile payload #4 is refused as a sheet name
+  ✓ hostile payload #5 is recognised as unsafe
+  ✓ hostile payload #5 is refused in a title block
+  ✓ hostile payload #5 is refused as a sheet name
+  ✓ hostile payload #6 is recognised as unsafe
+  ✓ hostile payload #6 is refused in a title block
+  ✓ hostile payload #6 is refused as a sheet name
+  ✓ inert label #0 is carried as text, not refused
+  ✓ inert label #0 reaches the note as inert text
+  ✓ inert label #0 is marked user-authored, never model-derived
+  ✓ inert label #0 never becomes an object key
+  ✓ inert label #1 is carried as text, not refused
+  ✓ inert label #1 reaches the note as inert text
+  ✓ inert label #1 is marked user-authored, never model-derived
+  ✓ inert label #1 never becomes an object key
+  ✓ inert label #2 is carried as text, not refused
+  ✓ inert label #2 reaches the note as inert text
+  ✓ inert label #2 is marked user-authored, never model-derived
+  ✓ inert label #2 never becomes an object key
+  ✓ inert label #3 is carried as text, not refused
+  ✓ inert label #3 reaches the note as inert text
+  ✓ inert label #3 is marked user-authored, never model-derived
+  ✓ inert label #3 never becomes an object key
+  ✓ inert label #4 is carried as text, not refused
+  ✓ inert label #4 reaches the note as inert text
+  ✓ inert label #4 is marked user-authored, never model-derived
+  ✓ inert label #4 never becomes an object key
+  ✓ inert label #5 is carried as text, not refused
+  ✓ inert label #5 reaches the note as inert text
+  ✓ inert label #5 is marked user-authored, never model-derived
+  ✓ inert label #5 never becomes an object key
+  ✓ inert label #6 is carried as text, not refused
+  ✓ inert label #6 reaches the note as inert text
+  ✓ inert label #6 is marked user-authored, never model-derived
+  ✓ inert label #6 never becomes an object key
+  ✓ inert label #7 is carried as text, not refused
+  ✓ inert label #7 reaches the note as inert text
+  ✓ inert label #7 is marked user-authored, never model-derived
+  ✓ inert label #7 never becomes an object key
+  ✓ inert label #8 is carried as text, not refused
+  ✓ inert label #8 reaches the note as inert text
+  ✓ inert label #8 is marked user-authored, never model-derived
+  ✓ inert label #8 never becomes an object key
+  ✓ inert label #9 is carried as text, not refused
+  ✓ inert label #9 reaches the note as inert text
+  ✓ inert label #9 is marked user-authored, never model-derived
+  ✓ inert label #9 never becomes an object key
+  ✓ the prototype keys are refused as property keys
+  ✓ a plain property key is accepted
+  ✓ Object.prototype is untouched
+  ✓ hostile filename #0 is refused
+  ✓ hostile filename #1 is refused
+  ✓ hostile filename #2 is refused
+  ✓ hostile filename #3 is refused
+  ✓ hostile filename #4 is refused
+  ✓ hostile filename #5 is refused
+  ✓ hostile filename #6 is refused
+  ✓ hostile filename #7 is refused
+  ✓ hostile filename #8 is refused
+  ✓ hostile filename #9 is refused
+  ✓ hostile filename #10 is refused
+  ✓ a plain filename is accepted
+  ✓ a traversing export name is refused with a typed issue
+  ✓ no export may escape its directory
+  ✓ an oversized note is refused with a resource issue
+  ✓ a non-finite or out-of-bounds cut plane inf is refused
+  ✓ a non-finite or out-of-bounds cut plane nan is refused
+  ✓ a non-finite or out-of-bounds cut plane 1e+30 is refused
+  ✓ a malformed documentation definition is refused
+  ✓ a duplicate viewport identity is refused
+  ✓ a forged model hash is detected as stale rather than trusted
+  ✓ an unsupported view type cannot be forced through
+  ✓ the documentation module contains no dynamic execution
+  ✓ the documentation module opens nothing but its own specification
+
+== §115 — EXPLICIT PROHIBITIONS ARE DECLARED AND ENFORCED ==
+  ✓ STRUCTURAL_DESIGN is declared out of bounds
+  ✓ REINFORCEMENT_DESIGN is declared out of bounds
+  ✓ MEP_DESIGN is declared out of bounds
+  ✓ FIRE_ENGINEERING is declared out of bounds
+  ✓ REGULATORY_COMPLIANCE is declared out of bounds
+  ✓ COST_ESTIMATION is declared out of bounds
+  ✓ AUTOMATIC_CLASH_RESOLUTION is declared out of bounds
+  ✓ AUTONOMOUS_DESIGN is declared out of bounds
+  ✓ AI_DRAWING_GEOMETRY_MODIFICATION is declared out of bounds
+  ✓ PROFESSIONAL_APPROVAL is declared out of bounds
+  ✓ CONSTRUCTION_DETAILING is declared out of bounds
+  ✓ SHOP_DRAWINGS is declared out of bounds
+  ✓ FABRICATION_DRAWINGS is declared out of bounds
+  ✓ OCCUPANCY_DETERMINATION is declared out of bounds
+  ✓ MATERIAL_PROPERTY_INVENTION is declared out of bounds
+  ✓ AUTOMATIC_MEP_ROUTING is declared out of bounds
+  ✓ CLOUD_COLLABORATION is declared out of bounds
+  ✓ LIVE_REVIT_SYNC is declared out of bounds
+  ✓ the panel exposes no engineering mutation control
+  ✓ the panel controls are documentation actions only
+  ✓ no construction drawing, regulatory or stamp claim is made
+  ✓ documentation consumes the canonical model, never an exported IFC file
+  ✓ the detail view invents no construction assembly
+
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+DOCUMENTATION: 421 passed, 0 failed
+
+=== 4 · Python <-> JavaScript documentation parity ===
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the python implementation ran and wrote its result
+  ✓ the browser implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
+  ✓ the comparator proves it is not blind to a prototype key
+  ✓ the canonical comparison reports no mismatch
+  ✓ a real comparison was performed for top-level key
+  ✓ every top-level key agrees between the two implementations
+  ✓ a real comparison was performed for view definition set
+  ✓ every view definition set agrees between the two implementations
+  ✓ a real comparison was performed for view validity verdict
+  ✓ every view validity verdict agrees between the two implementations
+  ✓ a real comparison was performed for plan geometry
+  ✓ every plan geometry agrees between the two implementations
+  ✓ a real comparison was performed for elevation geometry
+  ✓ every elevation geometry agrees between the two implementations
+  ✓ a real comparison was performed for section geometry
+  ✓ every section geometry agrees between the two implementations
+  ✓ a real comparison was performed for dimension set
+  ✓ every dimension set agrees between the two implementations
+  ✓ a real comparison was performed for annotation set
+  ✓ every annotation set agrees between the two implementations
+  ✓ a real comparison was performed for draw operation set
+  ✓ every draw operation set agrees between the two implementations
+  ✓ a real comparison was performed for vector output
+  ✓ every vector output agrees between the two implementations
+  ✓ a real comparison was performed for vector output hash
+  ✓ every vector output hash agrees between the two implementations
+  ✓ a real comparison was performed for schedule
+  ✓ every schedule agrees between the two implementations
+  ✓ a real comparison was performed for quantity report
+  ✓ every quantity report agrees between the two implementations
+  ✓ a real comparison was performed for sheet descriptor
+  ✓ every sheet descriptor agrees between the two implementations
+  ✓ a real comparison was performed for title block refusal
+  ✓ every title block refusal agrees between the two implementations
+  ✓ a real comparison was performed for document descriptor
+  ✓ every document descriptor agrees between the two implementations
+  ✓ a real comparison was performed for PDF content stream
+  ✓ every PDF content stream agrees between the two implementations
+  ✓ a real comparison was performed for export manifest
+  ✓ every export manifest agrees between the two implementations
+  ✓ a real comparison was performed for export set
+  ✓ every export set agrees between the two implementations
+  ✓ a real comparison was performed for staleness verdict
+  ✓ every staleness verdict agrees between the two implementations
+  ✓ a real comparison was performed for model hash
+  ✓ every model hash agrees between the two implementations
+  ✓ a real comparison was performed for model immutability verdict
+  ✓ every model immutability verdict agrees between the two implementations
+  ✓ a real comparison was performed for specification view
+  ✓ every specification view agrees between the two implementations
+  ✓ a real comparison was performed for safety verdict set
+  ✓ every safety verdict set agrees between the two implementations
+  ✓ a real comparison was performed for stated value reading
+  ✓ every stated value reading agrees between the two implementations
+
+== THE COMPARISON IS NOT VACUOUS ==
+  ✓ the comparison covers every shipped fixture model
+  ✓ every model produced a real floor plan
+  ✓ every model produced a real elevation and section
+  ✓ a section really classifies cut geometry somewhere
+  ✓ real SVG bytes were compared, not empty strings
+  ✓ real PDF content streams were compared
+  ✓ real schedules with rows were compared
+  ✓ real quantities were compared
+  ✓ both implementations agree the model is untouched
+  ✓ the unsupported view is refused identically on both sides
+  ✓ a traversing filename is refused on both sides
+  ✓ a plain filename is accepted on both sides
+  ✓ a hostile string is unsafe on both sides
+  ✓ an inert label is not refused on either side
+  ✓ but a prototype key is refused as a key on both sides
+  ✓ the render fallback is never read as a value on either side
+  ✓ a restricted drawing status is refused on both sides
+  ✓ the safety tables are pairs, never object keys
+
+DOCS PARITY SUITE: 72 passed, 0 failed
+
+=== 5 · the documentation panel (Node scope) ===
+
+== §1 — THE SPECIFICATION REACHED THE BROWSER UNCHANGED ==
+  ✓ the browser carries the canonical documentation specification
+  ✓ the mirrored specification has not drifted from the file
+  ✓ the read-only rule is present and correct in the browser
+  ✓ the documentation API is exposed on the window
+
+(DOM checks require a real browser — run with run_browser.js)
+
+──────────────────────────────────────────────
+DOCS BROWSER: 4 passed, 0 failed
+
+=== 6 · backend and configuration security, including malformed documentation ===

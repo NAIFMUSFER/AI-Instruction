@@ -1,0 +1,115 @@
+{
+  "_opening_identity": {
+    "next": 0,
+    "schema": "acs.opening-identity/1"
+  },
+  "floor_height": 10.0,
+  "floors": {
+    "ground": {
+      "rooms": [
+        {
+          "doors": [
+            {
+              "edge": "N",
+              "height": 4.5,
+              "id": "main_door",
+              "offset": 8.5,
+              "width": 3.0
+            }
+          ],
+          "id": "storage",
+          "rect": [
+            0,
+            0,
+            20,
+            15
+          ],
+          "role": "storage",
+          "wall_h": 10.0,
+          "walls": "full"
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "id": "L0",
+      "index": 0,
+      "name": "Ground Floor",
+      "template": "ground"
+    }
+  ],
+  "meta": {
+    "acs_generation": {
+      "contract": "acs-generation-budget/1.0.0",
+      "escalations": 0,
+      "estimated_output_tokens": 3266,
+      "estimated_zones": 4,
+      "max_output_tokens": 32000,
+      "single_stage_threshold_tokens": 19200,
+      "size_class": "SMALL",
+      "stages": [
+        {
+          "completion_chars": 1650,
+          "depth": 0,
+          "error": null,
+          "input_tokens": 4518,
+          "max_output_tokens": 32000,
+          "output_tokens": 4296,
+          "parsed": true,
+          "stage": "single",
+          "stop_reason": "end_turn",
+          "zones": 4
+        }
+      ],
+      "strategy": "single"
+    },
+    "acs_issues": 0,
+    "acs_mode": "single",
+    "added": [],
+    "city": "غير محدد",
+    "extras": [],
+    "name": "مستودع 20x15",
+    "north": "-Z",
+    "requirements": [
+      {
+        "how": "site.w=20.0 و site.d=15.0 مع z=0 كواجهة شمالية",
+        "req": "أبعاد الأرض/مسطح البناء: العرض 20.0 م (محور X) × العمق 15.0 م (محور Z)",
+        "where": "site"
+      },
+      {
+        "how": "مستوى أرضي واحد index=0",
+        "req": "عدد الأدوار: 1",
+        "where": "levels"
+      },
+      {
+        "how": "نُفِّذ بمستوى واحد على أرض 20×15",
+        "req": "مستودع بسيط 20×15 م من دور واحد",
+        "where": "site/levels"
+      },
+      {
+        "how": "غرفة تخزين واحدة بكامل المساحة وجدران خارجية وباب واحد",
+        "req": "مساحة تخزين مفتوحة بباب واحد",
+        "where": "storage"
+      },
+      {
+        "how": "لا توجد أي منطقة فرز",
+        "req": "بدون فرز",
+        "where": "storage"
+      },
+      {
+        "how": "لا توجد أي مناطق مكتبية",
+        "req": "بدون مكاتب",
+        "where": "storage"
+      }
+    ],
+    "strict": true,
+    "type": "warehouse"
+  },
+  "site": {
+    "d": 15.0,
+    "w": 20.0
+  },
+  "wall_h": 10.0,
+  "wall_t": 0.25
+}

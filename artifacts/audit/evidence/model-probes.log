@@ -1,0 +1,15 @@
+valid_control {"legacy_issues": [], "exception": null}
+closed_room_without_access {"legacy_issues": [], "exception": null}
+furniture_outside_room {"legacy_issues": [], "exception": null}
+object_outside_room {"legacy_issues": [], "exception": null}
+negative_dimensions {"legacy_issues": [], "exception": null}
+nonfinite_position {"legacy_issues": [], "exception": null}
+invalid_opening_edge {"legacy_issues": [], "exception": null, "compiler_exception": "KeyError: 'Q'"}
+door_above_wall {"legacy_issues": [], "exception": null}
+window_above_wall {"legacy_issues": [], "exception": null}
+duplicate_room_identity {"legacy_issues": [], "exception": null}
+stair_vertical_misalignment {"legacy_issues": [], "exception": null}
+elevator_vertical_misalignment {"legacy_issues": [], "exception": null}
+explicit_elevation_export_drift {}
+silent_repair_replaces_requested_geometry {"returned_rect": [0, 0, 5, 5]}
+stale_count_report {"api_issues": 0}

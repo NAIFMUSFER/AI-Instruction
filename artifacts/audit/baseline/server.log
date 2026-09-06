@@ -1,0 +1,12 @@
+INFO:     Started server process [7]
+INFO:     Waiting for application startup.
+[ACS-BOOT] ACS Understanding Engine v1.3 · error-contract=acs-error-envelope/1.0.0
+[ACS-BOOT] port=8000 host=0.0.0.0 timeout=840s origins=1 models=2
+[ACS-BOOT] configured: ACS_ALLOWED_ORIGINS, ACS_LLM_MODEL
+[ACS-BOOT] llm provider=anthropic model=claude-sonnet-5 host=sdk-default transport=stream state=missing_key
+[ACS-BOOT] llm fallback=none [not_configured] (on_billing=False)
+[ACS-BOOT] MISSING (names only): ACS_LLM_API_KEY/ANTHROPIC_API_KEY
+[ACS-BOOT] الخدمة حيّة لكن /ready سيردّ 503 حتى يكتمل الضبط.
+[ACS-BOOT] rate-limit invariant: development (distributed=False, concurrency=1)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)

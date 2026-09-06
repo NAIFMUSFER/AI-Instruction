@@ -1,0 +1,727 @@
+PHASE7-FINAL-REPORT.md:1:# PHASE 7 — PHOTOREALISTIC VISUALIZATION & AI PRESENTATION ENGINE
+PHASE7-FINAL-REPORT.md:2:## FINAL REPORT
+PHASE7-FINAL-REPORT.md:13:### 1. Rendering architecture
+PHASE7-FINAL-REPORT.md:25:### 2. Files created or changed
+PHASE7-FINAL-REPORT.md:36:### 3. RenderRequest schema
+PHASE7-FINAL-REPORT.md:44:### 4. Base deterministic renderer
+PHASE7-FINAL-REPORT.md:52:### 5. Material system
+PHASE7-FINAL-REPORT.md:60:### 6. Texture system
+PHASE7-FINAL-REPORT.md:67:### 7. Lighting
+PHASE7-FINAL-REPORT.md:74:### 8. Environment
+PHASE7-FINAL-REPORT.md:80:### 9. Shadows and post-processing
+PHASE7-FINAL-REPORT.md:87:### 10. Exterior rendering
+PHASE7-FINAL-REPORT.md:93:### 11. Interior rendering
+PHASE7-FINAL-REPORT.md:100:### 12. Dollhouse
+PHASE7-FINAL-REPORT.md:107:### 13. Cutaway
+PHASE7-FINAL-REPORT.md:112:### 14. Floor plans
+PHASE7-FINAL-REPORT.md:120:### 15. Sections
+PHASE7-FINAL-REPORT.md:126:### 16. Elevations
+PHASE7-FINAL-REPORT.md:131:### 17. Cameras
+PHASE7-FINAL-REPORT.md:137:### 18. Reference-image integration
+PHASE7-FINAL-REPORT.md:144:### 19. Visual intent
+PHASE7-FINAL-REPORT.md:149:### 20. AI provider boundary
+PHASE7-FINAL-REPORT.md:157:### 21. Control buffers
+PHASE7-FINAL-REPORT.md:166:### 22. AI prompt constraints
+PHASE7-FINAL-REPORT.md:174:### 23. Geometry drift detector
+PHASE7-FINAL-REPORT.md:181:### 24. Fidelity statuses
+PHASE7-FINAL-REPORT.md:187:### 25. Visual variants
+PHASE7-FINAL-REPORT.md:192:### 26. Furniture and decoration separation
+PHASE7-FINAL-REPORT.md:199:### 27. Landscape and entourage
+PHASE7-FINAL-REPORT.md:205:### 28. Villa results
+PHASE7-FINAL-REPORT.md:213:### 29. Hotel results
+PHASE7-FINAL-REPORT.md:219:### 30. Warehouse results
+PHASE7-FINAL-REPORT.md:225:### 31. Clinic results
+PHASE7-FINAL-REPORT.md:231:### 32. Render gallery
+PHASE7-FINAL-REPORT.md:236:### 33. Workspace integration
+PHASE7-FINAL-REPORT.md:243:### 34. Metadata and traceability
+PHASE7-FINAL-REPORT.md:249:### 35. Revision staleness
+PHASE7-FINAL-REPORT.md:257:### 36. Security
+PHASE7-FINAL-REPORT.md:276:### 37. Performance
+PHASE7-FINAL-REPORT.md:289:### 38. Mobile
+PHASE7-FINAL-REPORT.md:295:### 39. VR compatibility
+PHASE7-FINAL-REPORT.md:301:### 40. Runtime verification
+PHASE7-FINAL-REPORT.md:316:### 41. AI verification
+PHASE7-FINAL-REPORT.md:322:### 42. Phase 1–6 regression
+PHASE7-FINAL-REPORT.md:339:### 43. Known limitations
+PHASE7-FINAL-REPORT.md:353:## EXPLICIT CONFIRMATIONS
+PHASE7-FINAL-REPORT.md:383:## HARD STOP
+PHASE9.1-DEPLOYMENT-MANIFEST.md:1:# Phase 9.1 — Deployment Manifest
+PHASE9.1-DEPLOYMENT-MANIFEST.md:15:## 1. Deploy targets (unchanged)
+PHASE9.1-DEPLOYMENT-MANIFEST.md:22:## 2. What Phase 9.1 adds to the shipped frontend
+PHASE9.1-DEPLOYMENT-MANIFEST.md:33:## 3. Backend
+PHASE9.1-DEPLOYMENT-MANIFEST.md:39:## 4. Canonical file closure
+PHASE9.1-DEPLOYMENT-MANIFEST.md:47:## 5. Deploy steps (unchanged from Phase 9 hotfix)
+VERIFICATION-RUNBOOK.md:1:# AI Construction Studio — External Verification Runbook (Phase 1 Gate)
+VERIFICATION-RUNBOOK.md:21:## A. LOCAL VENDORING PROCEDURE (networked machine)
+VERIFICATION-RUNBOOK.md:26:### A.1 Run the vendoring script
+VERIFICATION-RUNBOOK.md:45:### A.2 Verify versions & addon completeness
+VERIFICATION-RUNBOOK.md:47:# Three.js version MUST be 0.160.0
+VERIFICATION-RUNBOOK.md:49:# expect: ... const REVISION = '0.160.0';
+VERIFICATION-RUNBOOK.md:51:# All six imported addons present (must print 6)
+VERIFICATION-RUNBOOK.md:54:# es-module-shims present
+VERIFICATION-RUNBOOK.md:61:### A.3 Activate the LOCAL importmap, disable the CDN one
+VERIFICATION-RUNBOOK.md:94:### A.4 Serve + block CDNs + verify load — automated
+VERIFICATION-RUNBOOK.md:105:### A.4-alt Manual browser check (if you prefer DevTools)
+VERIFICATION-RUNBOOK.md:118:## B. PRODUCTION VERIFICATION PROCEDURE
+VERIFICATION-RUNBOOK.md:125:### B.1 Netlify production URL loads
+VERIFICATION-RUNBOOK.md:131:### B.2 Render `/health`
+VERIFICATION-RUNBOOK.md:141:### B.3 Render `/v1/understand` — AI generation (multiple building types)
+VERIFICATION-RUNBOOK.md:161:### B.4 CORS preflight (only the Netlify origin allowed)
+VERIFICATION-RUNBOOK.md:178:### B.5 CSP (headers on the live site)
+VERIFICATION-RUNBOOK.md:191:### B.6 AI generation in the browser (end-to-end)
+VERIFICATION-RUNBOOK.md:197:### B.7 Object preservation — BOTH paths (fixture)
+VERIFICATION-RUNBOOK.md:212:### B.8 JSON export
+VERIFICATION-RUNBOOK.md:219:### B.9 GLB export
+VERIFICATION-RUNBOOK.md:227:### B.10 PDF import
+VERIFICATION-RUNBOOK.md:236:### B.11 WebXR / VR
+VERIFICATION-RUNBOOK.md:244:### B.12 Mobile
+VERIFICATION-RUNBOOK.md:251:### B.13 CDN failure resilience (live)
+VERIFICATION-RUNBOOK.md:262:## B-COORD. Multidisciplinary coordination & clash foundation (executed offline)
+VERIFICATION-RUNBOOK.md:301:## B-VISUAL. Visual rendering & presentation foundation (executed offline)
+VERIFICATION-RUNBOOK.md:312:# everything except the real browser
+VERIFICATION-RUNBOOK.md:315:# add the real-browser pass
+VERIFICATION-RUNBOOK.md:387:## B-RUNTIME. Interactive walkthrough & deterministic simulation runtime foundation (executed offline)
+VERIFICATION-RUNBOOK.md:406:# everything except the real browser
+VERIFICATION-RUNBOOK.md:409:# add the real-browser pass (Chromium via Playwright)
+VERIFICATION-RUNBOOK.md:446:### What this phase does NOT verify
+VERIFICATION-RUNBOOK.md:455:### Out of scope by contract, not by omission
+VERIFICATION-RUNBOOK.md:467:## B-AUTHORING. Project authoring & controlled editing foundation (executed offline)
+VERIFICATION-RUNBOOK.md:482:# everything except the real browser
+VERIFICATION-RUNBOOK.md:485:# add the real-browser pass (Chromium via Playwright)
+VERIFICATION-RUNBOOK.md:521:### Restoring or re-taking the geometry baseline
+VERIFICATION-RUNBOOK.md:532:### What this phase does NOT verify
+VERIFICATION-RUNBOOK.md:541:### Out of scope by contract
+VERIFICATION-RUNBOOK.md:551:## B-WORKSPACE. Product workspace & professional authoring UI (executed offline)
+VERIFICATION-RUNBOOK.md:567:# everything except the real browser
+VERIFICATION-RUNBOOK.md:570:# add the real-browser pass (Chromium via Playwright)
+VERIFICATION-RUNBOOK.md:611:### What this phase does NOT verify
+VERIFICATION-RUNBOOK.md:622:### Known limitation carried forward
+VERIFICATION-RUNBOOK.md:629:### Production verification checklist for the workspace (real hardware)
+VERIFICATION-RUNBOOK.md:642:### Out of scope by contract
+VERIFICATION-RUNBOOK.md:650:## B-RENDER. Photorealistic visualization & AI presentation engine (executed offline)
+VERIFICATION-RUNBOOK.md:688:### Verification classes used in this phase
+VERIFICATION-RUNBOOK.md:697:### What this phase does NOT verify
+VERIFICATION-RUNBOOK.md:711:### Production verification checklist for rendering (real hardware)
+VERIFICATION-RUNBOOK.md:724:### Out of scope by contract
+VERIFICATION-RUNBOOK.md:731:## B-BIM. BIM interoperability & exchange foundation (executed offline)
+VERIFICATION-RUNBOOK.md:771:### Verification classes used in this phase
+VERIFICATION-RUNBOOK.md:783:### What this phase does NOT verify
+VERIFICATION-RUNBOOK.md:795:### Production verification checklist for exchange (real tools)
+VERIFICATION-RUNBOOK.md:809:### Out of scope by contract
+VERIFICATION-RUNBOOK.md:817:## B-VISUAL-PROD. Production verification checklist (must be run on real hardware)
+VERIFICATION-RUNBOOK.md:864:## C. Result recording template
+PHASE6-FINAL-REPORT.md:1:# PHASE 6 — PRODUCT WORKSPACE & PROFESSIONAL AUTHORING UI
+PHASE6-FINAL-REPORT.md:2:## FINAL REPORT
+PHASE6-FINAL-REPORT.md:13:### 1. Scope executed
+PHASE6-FINAL-REPORT.md:21:### 2. What was NOT done
+PHASE6-FINAL-REPORT.md:27:### 3. Files added or changed
+PHASE6-FINAL-REPORT.md:41:### 4. Single source of truth
+PHASE6-FINAL-REPORT.md:49:### 5. State boundary
+PHASE6-FINAL-REPORT.md:58:### 6. The single edit path
+PHASE6-FINAL-REPORT.md:66:### 7. Project tree
+PHASE6-FINAL-REPORT.md:74:### 8. Inspector
+PHASE6-FINAL-REPORT.md:80:### 9. Unknown, derived and display-only
+PHASE6-FINAL-REPORT.md:87:### 10. Provenance
+PHASE6-FINAL-REPORT.md:93:### 11. Edit mode
+PHASE6-FINAL-REPORT.md:99:### 12. Preview
+PHASE6-FINAL-REPORT.md:106:### 13. Commit and cancel
+PHASE6-FINAL-REPORT.md:112:### 14. Undo and redo
+PHASE6-FINAL-REPORT.md:117:### 15. Revision history and diff
+PHASE6-FINAL-REPORT.md:123:### 16. Issue centre
+PHASE6-FINAL-REPORT.md:130:### 17. Issue → model navigation
+PHASE6-FINAL-REPORT.md:135:### 18. Requirements
+PHASE6-FINAL-REPORT.md:141:### 19. Assistant
+PHASE6-FINAL-REPORT.md:149:### 20. Visual references and visual intent
+PHASE6-FINAL-REPORT.md:156:### 21. Export
+PHASE6-FINAL-REPORT.md:162:### 22. Persistence
+PHASE6-FINAL-REPORT.md:167:### 23. Bilingual behaviour — a real defect found and fixed
+PHASE6-FINAL-REPORT.md:186:### 24. Known bilingual limitation
+PHASE6-FINAL-REPORT.md:194:### 25. Responsive layout
+PHASE6-FINAL-REPORT.md:201:### 26. Mobile toolbar
+PHASE6-FINAL-REPORT.md:208:### 27. Arabic RTL
+PHASE6-FINAL-REPORT.md:214:### 28. Screenshots
+PHASE6-FINAL-REPORT.md:220:### 29. Python ↔ JavaScript parity — new layer
+PHASE6-FINAL-REPORT.md:227:### 30. Parity defects found and fixed
+PHASE6-FINAL-REPORT.md:242:### 31. Security — workspace
+PHASE6-FINAL-REPORT.md:252:### 32. Security — reference metadata
+PHASE6-FINAL-REPORT.md:259:### 33. Security — generated interface block
+PHASE6-FINAL-REPORT.md:267:### 34. Security — backend and configuration
+PHASE6-FINAL-REPORT.md:275:### 35. Secrets
+PHASE6-FINAL-REPORT.md:282:### 36. Performance
+PHASE6-FINAL-REPORT.md:297:### 37. Phase 1–5 regression
+PHASE6-FINAL-REPORT.md:313:### 38. The seventeen-step product walkthrough (§98)
+PHASE6-FINAL-REPORT.md:338:### 39. Not verified — external environment required
+PHASE6-FINAL-REPORT.md:349:### 40. Explicit confirmations
+PHASE6-FINAL-REPORT.md:378:## VERDICT
+PHASE6-FINAL-REPORT.md:388:## HARD STOP
+PHASE9.2-PRODUCTION-VERIFICATION.md:1:# Phase 9.2 — Production Verification Checklist (§52)
+PHASE9.2-PRODUCTION-VERIFICATION.md:10:## A. Deploy landed
+PHASE9.2-PRODUCTION-VERIFICATION.md:17:## B. Architectural mode
+PHASE9.2-PRODUCTION-VERIFICATION.md:29:## C. PBR + models
+PHASE9.2-PRODUCTION-VERIFICATION.md:39:## D. Integrity
+PHASE9.2-PRODUCTION-VERIFICATION.md:48:## E. Reference captures (§48)
+PHASE6-WORKSPACE.md:1:# Phase 6 — Product Workspace & Professional Authoring UI
+PHASE6-WORKSPACE.md:8:## 0. What this phase is, and what it is not
+PHASE6-WORKSPACE.md:30:## 1. The state boundary this phase depends on
+PHASE6-WORKSPACE.md:49:## 2. Files
+PHASE6-WORKSPACE.md:65:## 3. The editing path — there is only one
+PHASE6-WORKSPACE.md:87:## 4. Honesty rules the interface holds
+PHASE6-WORKSPACE.md:105:## 5. Bilingual and responsive behaviour
+PHASE6-WORKSPACE.md:127:## 6. Verification
+PHASE6-WORKSPACE.md:148:## 7. What is not verified here
+PHASE6-WORKSPACE.md:161:## 8. Hard stop
+PHASE9-FINAL-REPORT.md:1:# Phase 9 — Final Report
+PHASE9-FINAL-REPORT.md:9:## 1. Architecture
+PHASE9-FINAL-REPORT.md:23:## 2. Files created or changed
+PHASE9-FINAL-REPORT.md:44:## 3. Documentation schema
+PHASE9-FINAL-REPORT.md:53:## 4. View engine
+PHASE9-FINAL-REPORT.md:62:## 5. Floor plans (TEST A)
+PHASE9-FINAL-REPORT.md:72:## 6. Elevations (TEST B)
+PHASE9-FINAL-REPORT.md:81:## 7. Sections (TEST C)
+PHASE9-FINAL-REPORT.md:93:## 8. Dimensions
+PHASE9-FINAL-REPORT.md:103:## 9. Annotations
+PHASE9-FINAL-REPORT.md:110:## 10. Schedules (TESTS D, E, F, G, H)
+PHASE9-FINAL-REPORT.md:124:## 11. Quantities (TEST J)
+PHASE9-FINAL-REPORT.md:134:## 12. Sheets
+PHASE9-FINAL-REPORT.md:144:## 13. Revisions and staleness (TEST K)
+PHASE9-FINAL-REPORT.md:154:## 14. Export
+PHASE9-FINAL-REPORT.md:167:## 15. Security (TEST N)
+PHASE9-FINAL-REPORT.md:180:## 16. Performance
+PHASE9-FINAL-REPORT.md:200:## 17. Python ↔ JavaScript parity
+PHASE9-FINAL-REPORT.md:222:## 18. Chromium verification
+PHASE9-FINAL-REPORT.md:239:## 19. Regression
+PHASE9-FINAL-REPORT.md:266:## 20. Deployment verification
+PHASE9-FINAL-REPORT.md:280:## 21. Generated artifact inventory
+PHASE9-FINAL-REPORT.md:306:## 22. Known limitations
+PHASE9-FINAL-REPORT.md:326:## 23. Explicit confirmations
+PHASE9-FINAL-REPORT.md:345:## 24. DEPLOYMENT DELIVERABLES
+PHASE9-FINAL-REPORT.md:373:## HARD STOP
+PHASE9.2-DEPLOYMENT-MANIFEST.md:1:# Phase 9.2 — Deployment Manifest
+PHASE9.2-DEPLOYMENT-MANIFEST.md:12:## 1. Deploy targets (unchanged)
+PHASE9.2-DEPLOYMENT-MANIFEST.md:19:## 2. What Phase 9.2 adds to the shipped frontend
+PHASE9.2-DEPLOYMENT-MANIFEST.md:29:## 3. Backend
+PHASE9.2-DEPLOYMENT-MANIFEST.md:35:## 4. Deploy steps
+PHASE9-DOCUMENTATION.md:1:# Phase 9 — Construction Documentation & Professional Drawing Output Engine
+PHASE9-DOCUMENTATION.md:8:## 0. The arrow that does not exist
+PHASE9-DOCUMENTATION.md:31:## 1. Files
+PHASE9-DOCUMENTATION.md:41:## 2. The rule that shapes every number: a render fallback is not a measurement
+PHASE9-DOCUMENTATION.md:60:## 3. Views
+PHASE9-DOCUMENTATION.md:95:## 4. Dimensions
+PHASE9-DOCUMENTATION.md:108:## 5. Annotations
+PHASE9-DOCUMENTATION.md:115:## 6. Discipline drawings
+PHASE9-DOCUMENTATION.md:135:## 7. Quantities
+PHASE9-DOCUMENTATION.md:146:## 8. Sheets, title blocks and export
+PHASE9-DOCUMENTATION.md:170:## 9. Staleness and regeneration
+PHASE9-DOCUMENTATION.md:179:## 10. Security
+PHASE9-DOCUMENTATION.md:200:## 11. Python ↔ JavaScript parity
+PHASE9-DOCUMENTATION.md:219:## 12. The workspace panel
+PHASE9-DOCUMENTATION.md:237:## 13. Verification classes
+PHASE9-DOCUMENTATION.md:245:## 14. Known limitations
+PHASE9-DOCUMENTATION.md:265:## 15. Hard stop
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:1:# Phase 9.2 — Architectural Visual Fidelity, Façade Detailing & Presentation Context
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:16:## 1. Authority boundary (§1)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:26:## 2. Presentation-detail classes (§4)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:36:## 3. Façade system (§5, §6, §23–§26)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:49:## 4. Windows, doors, balconies, roofline (§7–§10)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:61:## 5. LED / architectural lighting (§11)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:68:## 6. Interior, staging, kitchens, bathrooms (§12–§16)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:79:## 7. The general presentation object library (14A–14J)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:101:## 8. Context, parking, landscape, entrance, cores, FLS (§17–§22)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:113:## 9. Environments, cameras, auto mode (§27–§32)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:125:## 10. Request interpretation and diagnostics (§33–§35)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:136:## 11. UI, comparison, capture (§36–§38)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:147:## 12. Performance, mobile, security (§39–§42)
+PHASE9.2-ARCHITECTURAL-FIDELITY.md:157:## 13. Limitations
+PHASE9-DEPLOYMENT-MANIFEST.md:1:# Phase 9 — Deployment Manifest
+PHASE9-DEPLOYMENT-MANIFEST.md:13:## 1. Deploy targets
+PHASE9-DEPLOYMENT-MANIFEST.md:20:## 2. Frontend
+PHASE9-DEPLOYMENT-MANIFEST.md:34:## 3. Backend
+PHASE9-DEPLOYMENT-MANIFEST.md:48:### Backend runtime import closure (computed from the AST, not a hand list)
+PHASE9-DEPLOYMENT-MANIFEST.md:57:## 4. Phase 9 runtime files — and where each belongs
+PHASE9-DEPLOYMENT-MANIFEST.md:72:## 5. Environment variables — names only, no values
+PHASE9-DEPLOYMENT-MANIFEST.md:91:## 6. Files expected in the deployed **site** (Netlify)
+PHASE9-DEPLOYMENT-MANIFEST.md:100:### Generated blocks that must be present in `index.html`
+PHASE9-DEPLOYMENT-MANIFEST.md:116:## 7. Files expected in the deployed **container** (Render)
+PHASE9-DEPLOYMENT-MANIFEST.md:131:## 8. Deliberately **not** in the container
+PHASE9-DEPLOYMENT-MANIFEST.md:140:## 9. Optional files
+PHASE9-DEPLOYMENT-MANIFEST.md:146:## 10. Test-only, **not required in production**
+PHASE9-DEPLOYMENT-MANIFEST.md:162:## 11. Verification
+PHASE9.1-VISUAL-QUALITY.md:1:# Phase 9.1 — Professional Visual Quality & Real-Time PBR Presentation Layer
+PHASE9.1-VISUAL-QUALITY.md:19:## 1. What already existed (inspected first, §1)
+PHASE9.1-VISUAL-QUALITY.md:28:## 2. New canonical pieces
+PHASE9.1-VISUAL-QUALITY.md:39:## 3. Material system (§3–§5)
+PHASE9.1-VISUAL-QUALITY.md:54:## 4. Textures (§4, §22)
+PHASE9.1-VISUAL-QUALITY.md:63:## 5. Lighting, environment, shadows (§6–§8)
+PHASE9.1-VISUAL-QUALITY.md:73:## 6. Quality, degradation, cameras (§13, §17, §18)
+PHASE9.1-VISUAL-QUALITY.md:87:## 7. Post-processing and color (§9–§12)
+PHASE9.1-VISUAL-QUALITY.md:94:## 8. Ground context (§14)
+PHASE9.1-VISUAL-QUALITY.md:100:## 9. Settings panel and capture (§19–§20)
+PHASE9.1-VISUAL-QUALITY.md:108:## 10. Immutability (§21) and security (§22)
+PHASE9.1-VISUAL-QUALITY.md:118:## 11. Build and deploy (§23)
+PHASE9.1-VISUAL-QUALITY.md:126:## 12. What this phase does NOT claim (§26, §30)
+PHASE8-FINAL-REPORT.md:1:# Phase 8 — Final Report
+PHASE8-FINAL-REPORT.md:9:## 1. Scope delivered
+PHASE8-FINAL-REPORT.md:21:## 2. The mandatory invariant
+PHASE8-FINAL-REPORT.md:37:## 3. Files added or changed
+PHASE8-FINAL-REPORT.md:58:## 4. Test execution — exact counts
+PHASE8-FINAL-REPORT.md:87:## 5. Real IFC artifacts produced
+PHASE8-FINAL-REPORT.md:113:## 6. Real IFC file structure (§57)
+PHASE8-FINAL-REPORT.md:122:## 7. NO FAKE IFC (§66)
+PHASE8-FINAL-REPORT.md:130:## 8. Import staging
+PHASE8-FINAL-REPORT.md:138:## 9. Units
+PHASE8-FINAL-REPORT.md:146:## 10. Coordinates, placements and recursion defence
+PHASE8-FINAL-REPORT.md:156:## 11. Georeferencing
+PHASE8-FINAL-REPORT.md:163:## 12. Missing dimensions
+PHASE8-FINAL-REPORT.md:172:## 13. Properties, materials, classifications
+PHASE8-FINAL-REPORT.md:180:## 14. Round-trip fidelity
+PHASE8-FINAL-REPORT.md:188:## 15. Diff engine
+PHASE8-FINAL-REPORT.md:196:## 16. Conflicts
+PHASE8-FINAL-REPORT.md:203:## 17. Proposals and the commit path
+PHASE8-FINAL-REPORT.md:220:## 18. Staleness
+PHASE8-FINAL-REPORT.md:228:## 19. Parser security and resource limits
+PHASE8-FINAL-REPORT.md:239:## 20. Untrusted strings
+PHASE8-FINAL-REPORT.md:258:## 21. Two real defects found and closed
+PHASE8-FINAL-REPORT.md:271:## 22. External references
+PHASE8-FINAL-REPORT.md:279:## 23. Model hash invariance
+PHASE8-FINAL-REPORT.md:288:## 24. Python ↔ JavaScript parity
+PHASE8-FINAL-REPORT.md:301:## 25. Real browser verification
+PHASE8-FINAL-REPORT.md:319:## 26. Performance
+PHASE8-FINAL-REPORT.md:336:## 27. Large model fixture
+PHASE8-FINAL-REPORT.md:346:## 28. Auditability
+PHASE8-FINAL-REPORT.md:354:## 29. Verification classification
+PHASE8-FINAL-REPORT.md:363:### `INTEROP_VERIFIED: none`
+PHASE8-FINAL-REPORT.md:371:## 30. PASS / FAIL / NOT_VERIFIED, separated
+PHASE8-FINAL-REPORT.md:406:## 31. Explicit final confirmations
+PHASE8-FINAL-REPORT.md:427:## 32. DEPLOYMENT DELIVERABLES
+PHASE8-FINAL-REPORT.md:460:### Archive integrity
+PHASE8-FINAL-REPORT.md:477:### Deployment audit findings
+PHASE8-FINAL-REPORT.md:505:## HARD STOP
+PHASE9.2-FINAL-REPORT.md:1:# Phase 9.2 — Final Report
+PHASE9.2-FINAL-REPORT.md:7:## 1. Architecture
+PHASE9.2-FINAL-REPORT.md:20:## 2. Files created or changed
+PHASE9.2-FINAL-REPORT.md:44:## 3. ARCHITECTURAL DETAIL SYSTEM
+PHASE9.2-FINAL-REPORT.md:51:## 4. FAÇADE SYSTEM
+PHASE9.2-FINAL-REPORT.md:58:## 5. WINDOW / GLASS SYSTEM
+PHASE9.2-FINAL-REPORT.md:64:## 6. INTERIOR DETAIL
+PHASE9.2-FINAL-REPORT.md:71:## 7. CONTEXT / PARKING / LANDSCAPE
+PHASE9.2-FINAL-REPORT.md:80:## 8. VISUAL REQUEST DIAGNOSTIC
+PHASE9.2-FINAL-REPORT.md:89:## 9. IMMUTABILITY RESULT
+PHASE9.2-FINAL-REPORT.md:98:## 10. SECURITY RESULT
+PHASE9.2-FINAL-REPORT.md:107:## 11. TESTS RUN · ASSERTIONS PASSED / FAILED
+PHASE9.2-FINAL-REPORT.md:118:## 12. BROWSER VERIFIED
+PHASE9.2-FINAL-REPORT.md:127:## 13. WEBGL RASTER VERIFIED
+PHASE9.2-FINAL-REPORT.md:135:## 14. NETLIFY BUILD VERIFIED / LIVE PRODUCTION VERIFIED
+PHASE9.2-FINAL-REPORT.md:143:## 15. KNOWN LIMITATIONS
+PHASE9.2-FINAL-REPORT.md:155:## 16. HARD STOP
+PHASE9-PRODUCTION-VERIFICATION.md:1:# Phase 9 — Production Verification Checklist
+PHASE9-PRODUCTION-VERIFICATION.md:11:## A. Deploy landed
+PHASE9-PRODUCTION-VERIFICATION.md:22:## B. Runtime libraries actually served
+PHASE9-PRODUCTION-VERIFICATION.md:32:## C. Backend API
+PHASE9-PRODUCTION-VERIFICATION.md:44:## D. Existing workspace and authoring (Phases 4–6)
+PHASE9-PRODUCTION-VERIFICATION.md:54:## E. Visualization (Phase 7)
+PHASE9-PRODUCTION-VERIFICATION.md:63:## F. BIM exchange (Phase 8)
+PHASE9-PRODUCTION-VERIFICATION.md:74:## G. Documentation workspace (Phase 9)
+PHASE9-PRODUCTION-VERIFICATION.md:82:## H. Floor plans, elevations, sections
+PHASE9-PRODUCTION-VERIFICATION.md:95:## I. Dimensions and annotations
+PHASE9-PRODUCTION-VERIFICATION.md:106:## J. Schedules
+PHASE9-PRODUCTION-VERIFICATION.md:118:## K. Quantity report
+PHASE9-PRODUCTION-VERIFICATION.md:128:## L. Sheets and export
+PHASE9-PRODUCTION-VERIFICATION.md:141:## M. Staleness and regeneration
+PHASE9-PRODUCTION-VERIFICATION.md:150:## N. Cross-cutting
+PHASE9-PRODUCTION-VERIFICATION.md:163:## O. Recording template
+PHASE8-BIM-INTEROPERABILITY.md:1:# Phase 8 — BIM Interoperability & Exchange Foundation
+PHASE8-BIM-INTEROPERABILITY.md:9:## 0. The rule that shapes everything else
+PHASE8-BIM-INTEROPERABILITY.md:49:## 1. Files
+PHASE8-BIM-INTEROPERABILITY.md:59:## 2. Real IFC, and the line that was not crossed
+PHASE8-BIM-INTEROPERABILITY.md:72:## 3. Support is declared, never implied
+PHASE8-BIM-INTEROPERABILITY.md:85:## 4. Nothing is guessed
+PHASE8-BIM-INTEROPERABILITY.md:113:## 5. Round-trip fidelity, measured on sixteen things
+PHASE8-BIM-INTEROPERABILITY.md:125:## 6. Diff, proposals and the commit
+PHASE8-BIM-INTEROPERABILITY.md:145:## 7. Security: allow-lists, and an honest distinction
+PHASE8-BIM-INTEROPERABILITY.md:190:## 8. Python ↔ JavaScript parity, with the boundary stated
+PHASE8-BIM-INTEROPERABILITY.md:207:## 9. The workspace panel
+PHASE8-BIM-INTEROPERABILITY.md:226:## 10. Verification classes
+PHASE8-BIM-INTEROPERABILITY.md:241:## 11. Known limitations
+PHASE8-BIM-INTEROPERABILITY.md:260:## 12. Hard stop
+PHASE9.1-PRODUCTION-VERIFICATION.md:1:# Phase 9.1 — Production Verification Checklist (§28)
+PHASE9.1-PRODUCTION-VERIFICATION.md:11:## A. Deploy landed
+PHASE9.1-PRODUCTION-VERIFICATION.md:19:## B. Visual quality layer
+PHASE9.1-PRODUCTION-VERIFICATION.md:33:## C. Immutability & capture
+PHASE9.1-PRODUCTION-VERIFICATION.md:41:## D. Degradation
+PHASE9.1-PRODUCTION-VERIFICATION.md:48:## E. Reference captures (§25)
+PHASE9.1-PRODUCTION-VERIFICATION.md:54:## F. Backend untouched
+PHASE1-FREEZE.md:1:# PHASE 1 — CODE FREEZE
+PHASE1-FREEZE.md:15:## 1. Current project status
+PHASE1-FREEZE.md:23:### Files changed during Phase 1 (frozen as-is)
+PHASE1-FREEZE.md:39:## 2. Locally verified areas (all EXECUTED this session)
+PHASE1-FREEZE.md:57:## 12. Arabic feminine-dual extraction defect (fixed & reverified)
+PHASE1-FREEZE.md:74:## 13. Remaining NOT VERIFIED runtime items
+PHASE1-FREEZE.md:83:## 14. Exact reason each item cannot be verified in this sandbox
+PHASE1-FREEZE.md:99:## 15. Exact commands to run on a networked machine
+PHASE1-FREEZE.md:101:# PART A — vendor Three.js/addons/shims (+ optional pdf.js) locally
+PHASE1-FREEZE.md:106:# Then edit public/index.html: comment the CDN importmap, uncomment the /vendor importmap.
+PHASE1-FREEZE.md:111:# PART B / Q — offline load with all CDNs blocked
+PHASE1-FREEZE.md:115:# PART C / H / O — real browser (see VERIFICATION-RUNBOOK.md Parts C/H/O):
+PHASE1-FREEZE.md:116:#   generate villa/hotel/clinic/office/warehouse; verify render, orbit, clip, measure,
+PHASE1-FREEZE.md:117:#   sun/shadow, object rendering; export GLB and open in an independent glTF viewer;
+PHASE1-FREEZE.md:118:#   test at 360/390/430 px including 3D-canvas usability.
+PHASE1-FREEZE.md:121:## 16. Exact production endpoints to test
+PHASE1-FREEZE.md:123:# PART J — health + generation (villa/hotel/clinic prompts from the runbook)
+PHASE1-FREEZE.md:128:# PART L — CORS preflight (allowed vs disallowed origin)
+PHASE1-FREEZE.md:136:# PART M — live security headers
+PHASE1-FREEZE.md:144:## 17. Exact acceptance criteria to close each remaining row
+PHASE1-FREEZE.md:161:## Declarations
+PHASE9.1-FINAL-REPORT.md:1:# Phase 9.1 — Final Report
+PHASE9.1-FINAL-REPORT.md:9:## 1. Architecture
+PHASE9.1-FINAL-REPORT.md:22:## 2. Files created or changed
+PHASE9.1-FINAL-REPORT.md:48:## 3. TESTS RUN — full chain, this sandbox
+PHASE9.1-FINAL-REPORT.md:67:## 4. ASSERTIONS PASSED / FAILED
+PHASE9.1-FINAL-REPORT.md:74:## 5. BROWSER VERIFIED
+PHASE9.1-FINAL-REPORT.md:86:## 6. NETLIFY BUILD VERIFIED
+PHASE9.1-FINAL-REPORT.md:94:## 7. PRODUCTION VERIFIED
+PHASE9.1-FINAL-REPORT.md:100:## 8. Benchmarks (no invented FPS)
+PHASE9.1-FINAL-REPORT.md:109:## 9. KNOWN LIMITATIONS
+PHASE9.1-FINAL-REPORT.md:123:## 10. HARD STOP
+PHASE7-PHOTOREALISTIC.md:1:# Phase 7 — Photorealistic Visualization & AI Presentation Engine
+PHASE7-PHOTOREALISTIC.md:8:## 0. The pipeline, and the arrow that does not exist
+PHASE7-PHOTOREALISTIC.md:37:## 1. Files
+PHASE7-PHOTOREALISTIC.md:50:## 2. The render request
+PHASE7-PHOTOREALISTIC.md:62:## 3. Materials
+PHASE7-PHOTOREALISTIC.md:76:## 4. Lighting, environment, shadows and quality
+PHASE7-PHOTOREALISTIC.md:88:## 5. Cameras
+PHASE7-PHOTOREALISTIC.md:96:## 6. Dollhouse, exploded and cutaway
+PHASE7-PHOTOREALISTIC.md:104:## 7. Plans, sections and elevations
+PHASE7-PHOTOREALISTIC.md:119:## 8. Control buffers
+PHASE7-PHOTOREALISTIC.md:139:## 9. The AI boundary
+PHASE7-PHOTOREALISTIC.md:159:## 10. Geometry drift detection
+PHASE7-PHOTOREALISTIC.md:175:## 11. Traceability and staleness
+PHASE7-PHOTOREALISTIC.md:183:## 12. Security
+PHASE7-PHOTOREALISTIC.md:203:## 13. Workspace integration
+PHASE7-PHOTOREALISTIC.md:215:## 14. Verification classes
+PHASE7-PHOTOREALISTIC.md:226:## 15. Known limitations
+PHASE7-PHOTOREALISTIC.md:243:## 16. Hard stop
+PHASE4-FOUNDATION.md:1:# Phase 4 — Interactive Walkthrough & Deterministic Simulation Runtime Foundation
+PHASE4-FOUNDATION.md:7:## 0. The invariant this phase exists to protect
+PHASE4-FOUNDATION.md:36:## 1. What was added
+PHASE4-FOUNDATION.md:51:## 2. The runtime scene
+PHASE4-FOUNDATION.md:85:## 3. Navigation
+PHASE4-FOUNDATION.md:108:## 4. The player capsule
+PHASE4-FOUNDATION.md:119:## 5. Collision
+PHASE4-FOUNDATION.md:136:### The spatial index is bounded and honest
+PHASE4-FOUNDATION.md:153:## 6. Portals
+PHASE4-FOUNDATION.md:176:## 7. Selection and inspection
+PHASE4-FOUNDATION.md:190:## 8. Visibility
+PHASE4-FOUNDATION.md:202:## 9. Measurement
+PHASE4-FOUNDATION.md:217:## 10. Model write protection
+PHASE4-FOUNDATION.md:232:## 11. Errors
+PHASE4-FOUNDATION.md:241:## 12. Python ↔ JavaScript parity
+PHASE4-FOUNDATION.md:264:## 13. Verification results
+PHASE4-FOUNDATION.md:299:## 14. What is deliberately NOT here
+PHASE4-FOUNDATION.md:311:## 15. What is NOT verified here
+PHASE4-FOUNDATION.md:326:## 16. How to reproduce
+PHASE5-AUTHORING.md:1:# Phase 5 — Project Authoring & Controlled Editing Foundation
+PHASE5-AUTHORING.md:8:## 0. The two invariants this phase holds at once
+PHASE5-AUTHORING.md:39:## 1. Files
+PHASE5-AUTHORING.md:53:## 2. The authoring command
+PHASE5-AUTHORING.md:77:### Command identity is deterministic
+PHASE5-AUTHORING.md:85:## 3. Supported commands
+PHASE5-AUTHORING.md:106:### Discipline ownership
+PHASE5-AUTHORING.md:115:## 4. Transaction lifecycle
+PHASE5-AUTHORING.md:128:## 5. Preview
+PHASE5-AUTHORING.md:144:## 6. Validation
+PHASE5-AUTHORING.md:160:## 7. Commit
+PHASE5-AUTHORING.md:178:## 8. Revisions, undo, redo, diff
+PHASE5-AUTHORING.md:195:## 9. Dependency invalidation and selective rebuild
+PHASE5-AUTHORING.md:208:## 10. Wall, opening, space, level, stair and site editing
+PHASE5-AUTHORING.md:236:## 11. Property editability
+PHASE5-AUTHORING.md:251:## 12. Visual-only promotion
+PHASE5-AUTHORING.md:259:## 13. AI boundary
+PHASE5-AUTHORING.md:279:## 14. Batch transactions
+PHASE5-AUTHORING.md:291:## 15. Locks
+PHASE5-AUTHORING.md:300:## 16. Save and load
+PHASE5-AUTHORING.md:310:## 17. Security
+PHASE5-AUTHORING.md:321:## 18. Parity and browser verification
+PHASE5-AUTHORING.md:345:## 19. Verification results
+PHASE5-AUTHORING.md:372:## 20. Known limitations
+PHASE5-AUTHORING.md:388:## 21. What is NOT verified here
+PHASE5-AUTHORING.md:397:## 22. How to reproduce
+PHASE2-FOUNDATION.md:1:# PHASE 2 — FOUNDATION (Project Hierarchy + Building Program Registry)
+PHASE2-FOUNDATION.md:12:## 1. Core model (unchanged) vs Program (new, optional)
+PHASE2-FOUNDATION.md:24:## 2. Project hierarchy
+PHASE2-FOUNDATION.md:51:## 3. Backward compatibility (no breaking change)
+PHASE2-FOUNDATION.md:63:## 4. Program registry — single source of truth
+PHASE2-FOUNDATION.md:82:## 5. Type detection — unified
+PHASE2-FOUNDATION.md:96:## 6. Space categories (classification only — not rules)
+PHASE2-FOUNDATION.md:101:## 7. Programs must not invent requirements
+PHASE2-FOUNDATION.md:109:## 8. Coordinate system (documented, unchanged from Phase 1)
+PHASE2-FOUNDATION.md:117:## 9. Stable IDs
+PHASE2-FOUNDATION.md:123:## 10. Migration strategy
+PHASE2-FOUNDATION.md:128:## 11. Files
+PHASE2-FOUNDATION.md:135:## 12. Remaining future layers (NOT implemented)
+PHASE2-FOUNDATION.md:143:# PHASE 2 — RELATIONSHIPS & VERTICAL CONNECTIVITY FOUNDATION
+PHASE2-FOUNDATION.md:148:## R1. Data model
+PHASE2-FOUNDATION.md:164:## R2. Types (6, deliberately few)
+PHASE2-FOUNDATION.md:169:## R3. Provenance & resolution
+PHASE2-FOUNDATION.md:177:## R4. Inference rules (evidence-gated)
+PHASE2-FOUNDATION.md:191:## R5. Validation (structural only)
+PHASE2-FOUNDATION.md:197:## R6. Parity
+PHASE2-FOUNDATION.md:202:## R7. Developer inspector (no production UI change)
+PHASE2-FOUNDATION.md:207:## R8. Measured graphs (executed)
+PHASE2-FOUNDATION.md:217:## R9. Not implemented (later phases)
+PHASE2-FOUNDATION.md:224:# PHASE 2 — CIRCULATION & PATHFINDING FOUNDATION
+PHASE2-FOUNDATION.md:230:## N1. Architecture
+PHASE2-FOUNDATION.md:240:## N2. Edge eligibility (mandatory distinctions)
+PHASE2-FOUNDATION.md:251:## N3. Path result schema
+PHASE2-FOUNDATION.md:265:## N4. Search & distance
+PHASE2-FOUNDATION.md:273:## N5. Transitions
+PHASE2-FOUNDATION.md:279:## N6. Provenance & unresolved handling
+PHASE2-FOUNDATION.md:286:## N7. Ambiguity is refused, not guessed
+PHASE2-FOUNDATION.md:291:## N8. Multi-building
+PHASE2-FOUNDATION.md:296:## N9. Developer API (no production UI)
+PHASE2-FOUNDATION.md:300:## N10. Performance (executed)
+PHASE2-FOUNDATION.md:311:## N11. Not implemented
+PHASE2-FOUNDATION.md:318:# PHASE 2 — EGRESS & EVACUATION FOUNDATION (topology only)
+PHASE2-FOUNDATION.md:324:## E1. Exit data model
+PHASE2-FOUNDATION.md:334:## E2. Extraction rules (evidence-ordered, never invented)
+PHASE2-FOUNDATION.md:345:## E3. Architecture
+PHASE2-FOUNDATION.md:349:## E4. Query & selection
+PHASE2-FOUNDATION.md:357:## E5. Characteristics (facts, not conclusions)
+PHASE2-FOUNDATION.md:363:## E6. Distance
+PHASE2-FOUNDATION.md:370:## E7. Audit schema
+PHASE2-FOUNDATION.md:375:## E8. Conditions kept distinct
+PHASE2-FOUNDATION.md:380:## E9. Performance (executed)
+PHASE2-FOUNDATION.md:388:## E10. Developer API
+PHASE2-FOUNDATION.md:392:## E11. Not implemented
+PHASE2-FOUNDATION.md:399:# PHASE 2 — REAL WALKING DISTANCE GEOMETRY FOUNDATION
+PHASE2-FOUNDATION.md:406:## W1. Architecture (one direction, no shortcuts)
+PHASE2-FOUNDATION.md:412:## W2. Segment types and measurement bases
+PHASE2-FOUNDATION.md:425:## W3. Anchors — no invented positions
+PHASE2-FOUNDATION.md:434:## W4. What `walking_distance_m` means
+PHASE2-FOUNDATION.md:439:## W5. Status vocabulary
+PHASE2-FOUNDATION.md:448:## W6. Vertical movement
+PHASE2-FOUNDATION.md:454:## W7. Egress integration (guarded ranking)
+PHASE2-FOUNDATION.md:463:## W8. Structural validation (not compliance)
+PHASE2-FOUNDATION.md:468:## W9. Parity (executed)
+PHASE2-FOUNDATION.md:475:## W10. Performance (executed — 41 spaces, 119 relationships)
+PHASE2-FOUNDATION.md:484:## W11. Developer API (no production UI change)
+PHASE2-FOUNDATION.md:489:## W12. Not implemented (still absent, deliberately)
+PHASE2-FOUNDATION.md:497:# PHASE 2 — CODE RULE ENGINE FOUNDATION (evidence-gated architecture only)
+PHASE2-FOUNDATION.md:504:## C1. Architecture
+PHASE2-FOUNDATION.md:511:## C2. RuleDefinition schema
+PHASE2-FOUNDATION.md:519:## C3. Mandatory evidence
+PHASE2-FOUNDATION.md:526:## C4. RuleSource registry
+PHASE2-FOUNDATION.md:531:## C5. Jurisdiction
+PHASE2-FOUNDATION.md:537:## C6. Versioning & edition isolation
+PHASE2-FOUNDATION.md:543:## C7. Applicability ≠ existence
+PHASE2-FOUNDATION.md:548:## C8. Input contract
+PHASE2-FOUNDATION.md:554:## C9. Data-quality gate
+PHASE2-FOUNDATION.md:561:## C10. Result schema & states
+PHASE2-FOUNDATION.md:571:## C11. PASS/FAIL semantics
+PHASE2-FOUNDATION.md:576:## C12. Evidence chain
+PHASE2-FOUNDATION.md:582:## C13. Provenance
+PHASE2-FOUNDATION.md:587:## C14. Units & precision
+PHASE2-FOUNDATION.md:594:## C15. Expression safety & import security
+PHASE2-FOUNDATION.md:602:## C16. CODE_REQUIRED gate
+PHASE2-FOUNDATION.md:608:## C17. Aggregation semantics
+PHASE2-FOUNDATION.md:616:## C18. Storage
+PHASE2-FOUNDATION.md:623:## C19. AI boundary
+PHASE2-FOUNDATION.md:629:## C20. Parity & tests (executed)
+PHASE2-FOUNDATION.md:635:## C21. Performance (executed — villa model, 5 subjects incl. route geometry)
+PHASE2-FOUNDATION.md:643:## C22. Developer API (no production UI)
+PHASE2-FOUNDATION.md:651:## C23. Known limitations
+PHASE2-FOUNDATION.md:661:# PHASE 2 — AUTHORITATIVE RULE PACK INGESTION & VERIFICATION FOUNDATION
+PHASE2-FOUNDATION.md:668:## I1. Pipeline
+PHASE2-FOUNDATION.md:675:## I2. SourceDocument
+PHASE2-FOUNDATION.md:681:## I3. Source states
+PHASE2-FOUNDATION.md:689:## I4. Integrity
+PHASE2-FOUNDATION.md:696:## I5. Clause fragments
+PHASE2-FOUNDATION.md:703:## I6. Copyright-safe storage
+PHASE2-FOUNDATION.md:709:## I7. CandidateRule
+PHASE2-FOUNDATION.md:717:## I8. Assessment
+PHASE2-FOUNDATION.md:723:## I9. AI boundary
+PHASE2-FOUNDATION.md:730:## I10. Verification gate
+PHASE2-FOUNDATION.md:736:## I11. Rule definition hash
+PHASE2-FOUNDATION.md:742:## I12. RulePack
+PHASE2-FOUNDATION.md:751:## I13. Activation
+PHASE2-FOUNDATION.md:757:## I14. Conflicts
+PHASE2-FOUNDATION.md:763:## I15. Applicability trace
+PHASE2-FOUNDATION.md:768:## I16. Import security
+PHASE2-FOUNDATION.md:778:## I17. Tests & parity (executed)
+PHASE2-FOUNDATION.md:785:## I18. Performance (executed)
+PHASE2-FOUNDATION.md:794:## I19. Developer API
+PHASE2-FOUNDATION.md:802:## I20. Known limitations
+PHASE2-FOUNDATION.md:812:# PHASE 2 — SBC 201 PILOT, INGESTION RUN #1 (source authentication only)
+PHASE2-FOUNDATION.md:817:## S1. Document registered
+PHASE2-FOUNDATION.md:834:## S2. Why CONTENT_VERIFIED was withheld
+PHASE2-FOUNDATION.md:840:## S3. Evidence retained
+PHASE2-FOUNDATION.md:845:## S4. Locators, not clauses
+PHASE2-FOUNDATION.md:852:## S5. Zero candidates, by design
+PHASE2-FOUNDATION.md:858:## S6. Tests
+PHASE2-FOUNDATION.md:865:## S7. Ingestion run #2 — second file, chain of custody enforced
+PHASE2-FOUNDATION.md:894:## S8. Ingestion run #3 — IBC 2024 link refused, and the guard it produced
+PHASE2-FOUNDATION.md:920:# PHASE 2 — REGULATORY OCCUPANCY & CODE CONTEXT FOUNDATION
+PHASE2-FOUNDATION.md:926:## O1. The separation this layer exists to enforce
+PHASE2-FOUNDATION.md:933:## O2. CodeContext (additive)
+PHASE2-FOUNDATION.md:939:## O3. OccupancyClassification
+PHASE2-FOUNDATION.md:944:## O4. States and provenance
+PHASE2-FOUNDATION.md:950:## O5. Verification gate
+PHASE2-FOUNDATION.md:957:## O6. Mixed occupancy
+PHASE2-FOUNDATION.md:964:## O7. Classification pack
+PHASE2-FOUNDATION.md:971:## O8. Rule-engine integration
+PHASE2-FOUNDATION.md:986:## O9. Conflict
+PHASE2-FOUNDATION.md:991:## O10. AI boundary
+PHASE2-FOUNDATION.md:997:## O11. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1008:## O12. Developer API
+PHASE2-FOUNDATION.md:1015:## O13. Known limitations
+PHASE2-FOUNDATION.md:1025:# PHASE 2 — MODEL REVISION & COMPLIANCE SNAPSHOT INTEGRITY FOUNDATION
+PHASE2-FOUNDATION.md:1031:## V1. Architecture
+PHASE2-FOUNDATION.md:1036:## V2. Canonicalization — `acs-model-canonical/1`
+PHASE2-FOUNDATION.md:1063:## V3. Numbers
+PHASE2-FOUNDATION.md:1073:## V4. ID stability (audited, not assumed)
+PHASE2-FOUNDATION.md:1080:## V5. Scope
+PHASE2-FOUNDATION.md:1086:## V6. Result snapshot
+PHASE2-FOUNDATION.md:1092:## V7. Integrity statuses
+PHASE2-FOUNDATION.md:1103:## V8. No silent re-evaluation
+PHASE2-FOUNDATION.md:1108:## V9. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1123:## V10. Developer API
+PHASE2-FOUNDATION.md:1129:## V11. Known limitations
+PHASE2-FOUNDATION.md:1139:# W. ARCHITECTURAL GEOMETRY & BUILDING ENVELOPE FOUNDATION
+PHASE2-FOUNDATION.md:1146:## W1. What was added
+PHASE2-FOUNDATION.md:1157:## W2. The element vocabulary is one vocabulary
+PHASE2-FOUNDATION.md:1164:## W3. A shared wall is defined once
+PHASE2-FOUNDATION.md:1174:## W4. Exterior is inferred, and says so
+PHASE2-FOUNDATION.md:1191:## W5. A render fallback is never an engineering value
+PHASE2-FOUNDATION.md:1198:## W6. Openings are hosted, not floating
+PHASE2-FOUNDATION.md:1205:## W7. Slabs, voids and vertical cores
+PHASE2-FOUNDATION.md:1222:## W8. Element identity
+PHASE2-FOUNDATION.md:1230:## W9. Integration with the existing layers — additive only
+PHASE2-FOUNDATION.md:1247:## W10. Validation is geometric, never regulatory
+PHASE2-FOUNDATION.md:1255:## W11. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1274:## W12. Developer API
+PHASE2-FOUNDATION.md:1280:## W13. Known limitations — stated, not hidden
+PHASE2-FOUNDATION.md:1294:# X. STRUCTURAL MODEL FOUNDATION
+PHASE2-FOUNDATION.md:1302:## X1. Architecture
+PHASE2-FOUNDATION.md:1315:## X2. Files changed
+PHASE2-FOUNDATION.md:1323:## X3. Schema and status
+PHASE2-FOUNDATION.md:1330:## X4. Provenance
+PHASE2-FOUNDATION.md:1337:## X5. Grid
+PHASE2-FOUNDATION.md:1349:## X6. Columns, beams, slabs, walls, cores, foundations
+PHASE2-FOUNDATION.md:1363:## X7. Materials
+PHASE2-FOUNDATION.md:1369:## X8. Display fallbacks
+PHASE2-FOUNDATION.md:1377:## X9. Relationships — connectivity, not load path
+PHASE2-FOUNDATION.md:1385:## X10. Stacking, offset and alignment break
+PHASE2-FOUNDATION.md:1392:## X11. Structural ↔ architectural interference
+PHASE2-FOUNDATION.md:1401:## X12. Integrity validation
+PHASE2-FOUNDATION.md:1410:## X13. Fixtures (synthetic only)
+PHASE2-FOUNDATION.md:1418:## X14. Renderer, GLB and JSON
+PHASE2-FOUNDATION.md:1429:## X15. Revision hashing
+PHASE2-FOUNDATION.md:1435:## X16. No architectural / navigation / egress / distance regression
+PHASE2-FOUNDATION.md:1442:## X17. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1459:## X18. Developer API
+PHASE2-FOUNDATION.md:1466:## X19. Future rule contract
+PHASE2-FOUNDATION.md:1473:## X20. Known limitations — stated, not hidden
+PHASE2-FOUNDATION.md:1490:# Y. MEP SYSTEMS MODEL FOUNDATION
+PHASE2-FOUNDATION.md:1500:## Y1. Architecture
+PHASE2-FOUNDATION.md:1512:## Y2. Files changed
+PHASE2-FOUNDATION.md:1518:## Y3. Schema, status and provenance
+PHASE2-FOUNDATION.md:1526:## Y4. System vocabulary
+PHASE2-FOUNDATION.md:1533:## Y5. Nodes, segments and routing
+PHASE2-FOUNDATION.md:1542:## Y6. Equipment, terminals, ports
+PHASE2-FOUNDATION.md:1549:## Y7. The Phase 1 adapter preserves provenance
+PHASE2-FOUNDATION.md:1557:## Y8. Risers and shaft association
+PHASE2-FOUNDATION.md:1562:## Y9. Relationships — topology, never adequacy
+PHASE2-FOUNDATION.md:1571:## Y10. Interference and penetrations
+PHASE2-FOUNDATION.md:1581:## Y11. Display fallbacks
+PHASE2-FOUNDATION.md:1588:## Y12. Validation
+PHASE2-FOUNDATION.md:1597:## Y13. Fixtures (synthetic only)
+PHASE2-FOUNDATION.md:1606:## Y14. Renderer, GLB and JSON
+PHASE2-FOUNDATION.md:1616:## Y15. Revision hashing
+PHASE2-FOUNDATION.md:1621:## Y16. No architectural / structural / navigation / egress / distance regression
+PHASE2-FOUNDATION.md:1628:## Y17. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1648:## Y18. Developer API
+PHASE2-FOUNDATION.md:1655:## Y19. Future rule contract
+PHASE2-FOUNDATION.md:1662:## Y20. Known limitations — stated, not hidden
+PHASE2-FOUNDATION.md:1680:# Z. FIRE & LIFE-SAFETY DATA MODEL FOUNDATION
+PHASE2-FOUNDATION.md:1689:## Z1. Architecture
+PHASE2-FOUNDATION.md:1702:## Z2. Files changed
+PHASE2-FOUNDATION.md:1708:## Z3. Status and provenance
+PHASE2-FOUNDATION.md:1720:## Z4. Adapters do not duplicate
+PHASE2-FOUNDATION.md:1728:## Z5. Device present is not coverage
+PHASE2-FOUNDATION.md:1736:## Z6. Nothing is classified automatically
+PHASE2-FOUNDATION.md:1744:## Z7. Absence is not a violation
+PHASE2-FOUNDATION.md:1751:## Z8. Relationships and integrity
+PHASE2-FOUNDATION.md:1758:## Z9. Egress, distance and occupancy
+PHASE2-FOUNDATION.md:1764:## Z10. Audit
+PHASE2-FOUNDATION.md:1768:## Z11. Renderer, GLB and JSON
+PHASE2-FOUNDATION.md:1776:## Z12. Revision hashing
+PHASE2-FOUNDATION.md:1782:## Z13. No regression anywhere
+PHASE2-FOUNDATION.md:1788:## Z14. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1807:## Z15. Developer API
+PHASE2-FOUNDATION.md:1815:## Z16. Future rule contract
+PHASE2-FOUNDATION.md:1822:## Z17. Known limitations — stated, not hidden
+PHASE2-FOUNDATION.md:1838:# AA. MULTIDISCIPLINARY COORDINATION & CLASH FOUNDATION
+PHASE2-FOUNDATION.md:1847:## AA1. Architecture
+PHASE2-FOUNDATION.md:1857:## AA2. Files changed
+PHASE2-FOUNDATION.md:1863:## AA3. One world frame, no axis shortcut
+PHASE2-FOUNDATION.md:1870:## AA4. Broad phase, honestly measured
+PHASE2-FOUNDATION.md:1879:## AA5. Narrow phase
+PHASE2-FOUNDATION.md:1885:## AA6. Negative space is not matter
+PHASE2-FOUNDATION.md:1892:## AA7. Exemptions are semantic, never type-blind
+PHASE2-FOUNDATION.md:1903:## AA8. Penetrations
+PHASE2-FOUNDATION.md:1911:## AA9. Geometry confidence
+PHASE2-FOUNDATION.md:1921:## AA10. Clearance only where stated
+PHASE2-FOUNDATION.md:1927:## AA11. Identity, statuses and reconciliation
+PHASE2-FOUNDATION.md:1937:## AA12. Snapshot integrity
+PHASE2-FOUNDATION.md:1944:## AA13. Project scope
+PHASE2-FOUNDATION.md:1951:## AA14. Semantic conflicts are re-classified, never invented
+PHASE2-FOUNDATION.md:1956:## AA15. Renderer, export and revision
+PHASE2-FOUNDATION.md:1966:## AA16. Navigation and egress are untouched
+PHASE2-FOUNDATION.md:1972:## AA17. Tests, parity, performance (executed)
+PHASE2-FOUNDATION.md:1998:## AA18. Developer API
+PHASE2-FOUNDATION.md:2010:## AA19. Future rule contract
+PHASE2-FOUNDATION.md:2016:## AA20. Known limitations — stated, not hidden
+PHASE2-FOUNDATION.md:2032:# AB. VISUAL RENDERING & PRESENTATION FOUNDATION (PHASE 3)
+PHASE2-FOUNDATION.md:2041:## AB1. Visual architecture
+PHASE2-FOUNDATION.md:2059:## AB2. Files changed
+PHASE2-FOUNDATION.md:2065:## AB3. VisualScene schema
+PHASE2-FOUNDATION.md:2079:## AB4. Visual modes
+PHASE2-FOUNDATION.md:2085:## AB5. Engineering mode
+PHASE2-FOUNDATION.md:2092:## AB6. Architectural mode
+PHASE2-FOUNDATION.md:2099:## AB7. Presentation mode
+PHASE2-FOUNDATION.md:2104:## AB8. Materials
+PHASE2-FOUNDATION.md:2112:## AB9. Material provenance
+PHASE2-FOUNDATION.md:2117:## AB10. Themes
+PHASE2-FOUNDATION.md:2122:## AB11. Decoration and furniture
+PHASE2-FOUNDATION.md:2129:## AB12. No decoration laundering
+PHASE2-FOUNDATION.md:2134:## AB13. Exterior and interior visualisation
+PHASE2-FOUNDATION.md:2142:## AB14. Dollhouse
+PHASE2-FOUNDATION.md:2148:## AB15. Cutaway
+PHASE2-FOUNDATION.md:2153:## AB16. 2D floor plans
+PHASE2-FOUNDATION.md:2160:## AB17. Dimensions
+PHASE2-FOUNDATION.md:2165:## AB18. Sections
+PHASE2-FOUNDATION.md:2171:## AB19. Elevations
+PHASE2-FOUNDATION.md:2176:## AB20. Cameras
+PHASE2-FOUNDATION.md:2184:## AB21. Lighting, day/night and shadows
+PHASE2-FOUNDATION.md:2192:## AB22. Quality profiles, LOD and instancing
+PHASE2-FOUNDATION.md:2200:## AB23. Snapshot export
+PHASE2-FOUNDATION.md:2207:## AB24. Render metadata
+PHASE2-FOUNDATION.md:2215:## AB25. Revision integrity of a render
+PHASE2-FOUNDATION.md:2221:## AB26. AI enhancement architecture
+PHASE2-FOUNDATION.md:2233:## AB27. Geometry guard
+PHASE2-FOUNDATION.md:2240:## AB28. Control buffers and visual drift detection
+PHASE2-FOUNDATION.md:2254:## AB29. VR
+PHASE2-FOUNDATION.md:2260:## AB30. Walkthrough
+PHASE2-FOUNDATION.md:2266:## AB31. Asset library
+PHASE2-FOUNDATION.md:2274:## AB32. Licensing
+PHASE2-FOUNDATION.md:2279:## AB33–AB37. Target results (all executed)
+PHASE2-FOUNDATION.md:2295:## AB38. Performance (executed, this machine)
+PHASE2-FOUNDATION.md:2309:## AB39. Regression
+PHASE2-FOUNDATION.md:2319:## AB40. Tests, parity (executed)
+PHASE2-FOUNDATION.md:2329:## AB41. Known limitations — stated, not hidden
+PHASE2-FOUNDATION.md:2347:# AC. PHASE 3 AUDIT REMEDIATION & HARDENING
+PHASE2-FOUNDATION.md:2353:## AC1. Finding 1 — the visual-only source rule was not universal
+PHASE2-FOUNDATION.md:2368:## AC2. Finding 2 — the AI control-buffer contract was ambiguous
+PHASE2-FOUNDATION.md:2386:## AC3. Finding 3 — verification was not reproducible from a clean checkout
+PHASE2-FOUNDATION.md:2419:## AC4. New permanent regression coverage
+PHASE2-FOUNDATION.md:2434:## AC5. Verification after remediation (all executed here)
+PHASE2-FOUNDATION.md:2454:## AC6. What did not change

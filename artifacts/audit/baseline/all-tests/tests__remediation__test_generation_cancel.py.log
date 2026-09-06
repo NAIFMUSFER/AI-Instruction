@@ -1,0 +1,44 @@
+
+── أ · المسار السعيد ومسار الفشل ──
+  ✓ _echo returns its value through a real child process
+  ✓ the succeeded job declares state SUCCEEDED
+  ✓ the succeeded job carries the request id
+  ✓ stats().succeeded incremented by exactly one
+  ✓ the slot is released after success
+  ✓ _boom raises JobError, not a bare exception
+  ✓ the JobError carries error_class == "RuntimeError"
+  ✓ the child exception message survives the process boundary
+  ✓ the failed job declares state FAILED
+  ✓ stats().failed == 1 and succeeded unchanged
+  ✓ the slot is released after failure
+
+── ب · المزوّد المعلّق: مهلة حقيقية وعملية ابن ميّتة ──
+  ✓ the hanging target raises TimeoutError
+  ✓ the timeout is NOT downgraded to a JobError (OSError subclass trap)
+  ✓ the timeout message names termination of the worker
+  ✓ elapsed is close to the 1.5 s timeout, not the 600 s sleep
+  ✓ the child recorded its own pid in the marker file
+  ✓ the child pid is no longer alive after the timeout
+  ✓ stats().timed_out == 1
+  ✓ the timeout is not double-counted as a failure
+  ✓ the job declares state TIMED_OUT
+  ✓ the job records a finish time
+  ✓ in_flight() == 0 after the timeout
+  ✓ available() == capacity — the worker slot is recovered
+
+── ج · لا عملية يتيمة ولا زومبي غير محصود ──
+  ✓ no /proc entry survives for the abandoned job
+  ✓ the child is not left as an un-reaped zombie
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/audit-baseline/tests/remediation/test_generation_cancel.py", line 575, in <module>
+    main()
+  File "/workspace/scratch/3196fa9f65d9/audit-baseline/tests/remediation/test_generation_cancel.py", line 542, in main
+    section_hanging_provider(s)
+  File "/workspace/scratch/3196fa9f65d9/audit-baseline/tests/remediation/test_generation_cancel.py", line 281, in section_hanging_provider
+    kids = psutil.Process().children(recursive=True)
+           ^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/audit-venv/lib/python3.12/site-packages/psutil/__init__.py", line 314, in __init__
+    self._init(pid)
+  File "/workspace/scratch/3196fa9f65d9/audit-venv/lib/python3.12/site-packages/psutil/__init__.py", line 360, in _init
+    raise NoSuchProcess(pid, msg=msg) from None
+psutil.NoSuchProcess: process PID not found (pid=1442)

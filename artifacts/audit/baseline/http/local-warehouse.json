@@ -1,0 +1,29 @@
+{
+  "url": "http://127.0.0.1:8001/v1/understand",
+  "method": "POST",
+  "request": {
+    "text": "مستودع بسيط 20×15 م من دور واحد، مساحة تخزين مفتوحة بباب واحد، بدون فرز وبدون مكاتب.",
+    "site_w": 20,
+    "site_d": 15,
+    "floors": 1,
+    "strict": true,
+    "btype": "warehouse"
+  },
+  "status": 503,
+  "headers": {
+    "x-request-id": "req_83f3c02d647c411f",
+    "content-type": "application/json"
+  },
+  "body": {
+    "ok": false,
+    "error": {
+      "code": "ACS_UPSTREAM_NOT_CONFIGURED",
+      "message": "مفتاح المحرّك غير مضبوط على الخادم.",
+      "request_id": "req_83f3c02d647c411f",
+      "retryable": false,
+      "upstream": null
+    },
+    "contract": "acs-error-envelope/1.0.0"
+  },
+  "seconds": 0.223
+}

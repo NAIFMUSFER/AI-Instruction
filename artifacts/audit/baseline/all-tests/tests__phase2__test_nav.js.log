@@ -1,0 +1,65 @@
+
+== TEST A — VILLA ==
+  ✓ same-floor FOUND
+  ✓ path validates
+  ✓ no vertical transition on same floor
+  ✓ every node exists in nav graph
+  ✓ cross-floor FOUND
+  ✓ exactly 1 vertical transition
+  ✓ vertical explicit: kind+levels+via
+  ✓ vertical marked not measurable
+  ✓ distance is null (never fabricated)
+  ✓ distance_status PARTIAL
+  ✓ resolution reflects inferred edges
+  ✓ path validates
+  ✓ bed2 → bath1 FOUND
+  ✓ summary is factual (no safety/code words)
+
+== TEST B — HOTEL ==
+  ✓ guest@1 → lobby@0 FOUND
+  ✓ vertical transitions explicit
+  ✓ guest@1 → guest@2 FOUND
+  ✓ vertical uses serviced levels only
+  ✓ path validates
+  ✓ ambiguous level rejected (not guessed)
+
+== TEST C — CLINIC (single floor) ==
+  ✓ reception → exam FOUND
+  ✓ NO vertical transitions
+  ✓ path validates
+
+== TEST D — OFFICE ==
+  ✓ office → meeting FOUND (same level)
+  ✓ bare id on multi-level template is rejected, not guessed
+  ✓ level 1 → ground FOUND via core
+
+== TEST E — NO PATH (disconnected space) ==
+  ✓ disconnected lab → NO_PATH
+  ✓ reason states no eligible edges
+  ✓ adjacency did NOT create a route
+
+== TEST F — UNRESOLVED DOOR never traversed ==
+  ✓ both doors are unresolved
+  ✓ primary query NO_PATH (unresolved not traversed)
+  ✓ no edge in result
+  ✓ debug include-unresolved is separate & not primary
+
+== PART 2 — EDGE ELIGIBILITY ==
+  ✓ SPACE_ADJACENT never becomes an edge
+  ✓ no unresolved edge in nav graph
+  ✓ BUILDING_ON_SITE not walkable
+  ✓ adjacent-but-no-door pair exists as relationship
+  ✓ …but is NOT traversable
+
+== PART 13 — MULTI-BUILDING ==
+  ✓ inter-building → NOT_SUPPORTED_INTER_BUILDING
+  ✓ reason states not implemented
+
+== PART 5 — INVALID refs ==
+  ✓ unknown source → INVALID_SOURCE
+  ✓ unknown target → INVALID_TARGET
+
+== PART 25 — no code/safety claims anywhere ==
+  ✓ no compliance vocabulary in output
+
+NAVIGATION: 43 passed, 0 failed

@@ -1,0 +1,125 @@
+{
+  "site": {
+    "w": 20,
+    "d": 25
+  },
+  "floor_height": 3.2,
+  "wall_h": 3,
+  "wall_t": 0.15,
+  "levels": [
+    {
+      "index": 0,
+      "template": "f0"
+    },
+    {
+      "index": 1,
+      "template": "f1"
+    },
+    {
+      "index": 2,
+      "template": "f2"
+    }
+  ],
+  "floors": {
+    "f0": {
+      "rooms": [
+        {
+          "id": "room",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "walls": "full",
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 3,
+              "width": 1,
+              "height": 2.1
+            }
+          ],
+          "objects": [
+            {
+              "id": "core-A",
+              "kind": "elevator",
+              "x": 2,
+              "z": 3,
+              "w": 2,
+              "d": 2
+            }
+          ]
+        }
+      ]
+    },
+    "f1": {
+      "rooms": [
+        {
+          "id": "room",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "walls": "full",
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 3,
+              "width": 1,
+              "height": 2.1
+            }
+          ],
+          "objects": [
+            {
+              "id": "core-A",
+              "kind": "elevator",
+              "x": 3,
+              "z": 3,
+              "w": 2,
+              "d": 2
+            }
+          ]
+        }
+      ]
+    },
+    "f2": {
+      "rooms": [
+        {
+          "id": "room",
+          "rect": [
+            0,
+            0,
+            6,
+            6
+          ],
+          "walls": "full",
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 3,
+              "width": 1,
+              "height": 2.1
+            }
+          ],
+          "objects": [
+            {
+              "id": "core-A",
+              "kind": "elevator",
+              "x": 2,
+              "z": 3,
+              "w": 2,
+              "d": 2
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "meta": {
+    "strict": true,
+    "type": "residential"
+  }
+}
