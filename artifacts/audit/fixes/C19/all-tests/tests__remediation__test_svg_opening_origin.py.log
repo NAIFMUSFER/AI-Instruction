@@ -1,0 +1,10 @@
+test_elevation_and_section_use_the_correct_door_projection (__main__.SvgOpeningOrigin.test_elevation_and_section_use_the_correct_door_projection) ... ok
+test_four_edges_keep_canonical_opening_centres (__main__.SvgOpeningOrigin.test_four_edges_keep_canonical_opening_centres) ... ok
+test_oblique_host_and_unknown_width_point (__main__.SvgOpeningOrigin.test_oblique_host_and_unknown_width_point) ... ok
+test_split_wall_start_is_subtracted_instead_of_room_origin (__main__.SvgOpeningOrigin.test_split_wall_start_is_subtracted_instead_of_room_origin) ... ok
+test_svg_door_remains_centred_in_its_host (__main__.SvgOpeningOrigin.test_svg_door_remains_centred_in_its_host) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.067s
+
+OK

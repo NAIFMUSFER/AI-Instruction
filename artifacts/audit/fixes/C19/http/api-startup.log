@@ -1,0 +1,34 @@
+INFO:     Started server process [8]
+INFO:     Waiting for application startup.
+[ACS-BOOT] ACS Understanding Engine v1.3 · error-contract=acs-error-envelope/1.0.0
+[ACS-BOOT] port=8000 host=0.0.0.0 timeout=840s origins=1 models=2
+[ACS-BOOT] configured: ACS_ALLOWED_ORIGINS, ACS_LLM_MODEL
+[ACS-BOOT] llm provider=anthropic model=claude-sonnet-5 host=sdk-default transport=stream state=missing_key
+[ACS-BOOT] llm fallback=none [not_configured] (on_billing=False)
+[ACS-BOOT] MISSING (names only): ACS_LLM_API_KEY/ANTHROPIC_API_KEY
+[ACS-BOOT] الخدمة حيّة لكن /ready سيردّ 503 حتى يكتمل الضبط.
+[ACS-BOOT] rate-limit invariant: development (distributed=False, concurrency=1)
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+[ACS-BOOT] cpu pool: executor=process isolated=True workers=2 queue=8
+INFO:     127.0.0.1:39732 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39748 - "GET /health HTTP/1.1" 200 OK
+{"endpoint": "/ready", "error_code": "ACS_NOT_CONFIGURED", "event": "request_failed", "level": "error", "request_id": "req_265fab11961249d6", "service": "ACS Understanding Engine", "status": 503, "ts": "2026-09-06T20:07:13Z", "version": "1.3"}
+INFO:     127.0.0.1:39750 - "GET /ready HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:39762 - "GET /version HTTP/1.1" 200 OK
+INFO:     127.0.0.1:39766 - "GET /openapi.json HTTP/1.1" 200 OK
+[ACS-PLAN] class=SMALL est_out=3266 zones=4 budget=32000 -> single (estimate_fits)
+{"duration_ms": 176, "error_code": "ACS_UPSTREAM_NOT_CONFIGURED", "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "level": "info", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "strategy": "single", "success": false, "truncated": false, "ts": "2026-09-06T20:07:13Z"}
+{"duration_ms": 233, "error_class": "AcsApiError", "error_code": "ACS_UPSTREAM_NOT_CONFIGURED", "event": "generation_job", "job_id": "job_227d6670bdc34dca", "level": "info", "request_id": "req_fb624e41ecbe40c4", "service": "ACS Understanding Engine", "state": "FAILED", "target": "acs_understand:understand", "ts": "2026-09-06T20:07:13Z", "version": "1.3"}
+{"endpoint": "/v1/understand", "error_code": "ACS_UPSTREAM_NOT_CONFIGURED", "event": "request_failed", "level": "error", "request_id": "req_fb624e41ecbe40c4", "service": "ACS Understanding Engine", "status": 503, "ts": "2026-09-06T20:07:13Z", "version": "1.3"}
+INFO:     127.0.0.1:39770 - "POST /v1/understand HTTP/1.1" 503 Service Unavailable
+[ACS-PLAN] class=MEDIUM est_out=17320 zones=25 budget=32000 -> single (estimate_fits)
+{"duration_ms": 165, "error_code": "ACS_UPSTREAM_NOT_CONFIGURED", "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "level": "info", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "strategy": "single", "success": false, "truncated": false, "ts": "2026-09-06T20:07:13Z"}
+{"duration_ms": 227, "error_class": "AcsApiError", "error_code": "ACS_UPSTREAM_NOT_CONFIGURED", "event": "generation_job", "job_id": "job_8bd6a3ce1e514494", "level": "info", "request_id": "req_d92feb0c669d40cc", "service": "ACS Understanding Engine", "state": "FAILED", "target": "acs_understand:understand", "ts": "2026-09-06T20:07:13Z", "version": "1.3"}
+{"endpoint": "/v1/understand", "error_code": "ACS_UPSTREAM_NOT_CONFIGURED", "event": "request_failed", "level": "error", "request_id": "req_d92feb0c669d40cc", "service": "ACS Understanding Engine", "status": 503, "ts": "2026-09-06T20:07:13Z", "version": "1.3"}
+INFO:     127.0.0.1:39774 - "POST /v1/understand HTTP/1.1" 503 Service Unavailable
+INFO:     127.0.0.1:39776 - "OPTIONS /v1/understand HTTP/1.1" 200 OK
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [8]

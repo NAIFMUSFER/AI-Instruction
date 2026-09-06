@@ -1,0 +1,140 @@
+{
+  "valid": true,
+  "issues": [],
+  "report": {
+    "schema": "acs.bim/1",
+    "report_id": "bimrt_da4ce48f9be387c5",
+    "status": "PASS",
+    "model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+    "revision_id": "rev:a4a96005b7346e28",
+    "source_file_hash": "7093012e8deff3afc65baa7efb6b1b85d329134ccab70099543e4202a5679e86",
+    "semantic_fidelity": 1.0,
+    "geometry_fidelity": 1.0,
+    "relationship_fidelity": 1.0,
+    "property_fidelity": 1.0,
+    "compared": {
+      "building_count": {
+        "source": 1,
+        "roundtrip": 1,
+        "equal": true
+      },
+      "level_count": {
+        "source": 1,
+        "roundtrip": 1,
+        "equal": true
+      },
+      "wall_count": {
+        "source": 6,
+        "roundtrip": 6,
+        "equal": true
+      },
+      "door_count": {
+        "source": 0,
+        "roundtrip": 0,
+        "equal": true
+      },
+      "window_count": {
+        "source": 0,
+        "roundtrip": 0,
+        "equal": true
+      },
+      "slab_count": {
+        "source": 1,
+        "roundtrip": 1,
+        "equal": true
+      },
+      "space_count": {
+        "source": 1,
+        "roundtrip": 1,
+        "equal": true
+      },
+      "stair_count": {
+        "source": 0,
+        "roundtrip": 0,
+        "equal": true
+      },
+      "level_elevations": {
+        "source": [
+          7.0
+        ],
+        "roundtrip": [
+          7.0
+        ],
+        "equal": true
+      },
+      "space_footprints": {
+        "matched": 1,
+        "unmatched": 0,
+        "mismatched": 0,
+        "equal": true
+      },
+      "space_elevations": {
+        "mismatched": 0,
+        "equal": true
+      },
+      "space_dimensions": {
+        "mismatched": 0,
+        "equal": true
+      },
+      "slab_footprints": {
+        "matched": 1,
+        "unmatched": 0,
+        "mismatched": 0,
+        "equal": true
+      },
+      "slab_elevations": {
+        "mismatched": 0,
+        "equal": true
+      },
+      "slab_dimensions": {
+        "mismatched": 0,
+        "equal": true
+      },
+      "wall_positions": {
+        "matched": 6,
+        "unmatched": 0,
+        "equal": true
+      },
+      "wall_dimensions": {
+        "mismatched": 0,
+        "equal": true
+      },
+      "door_positions": {
+        "matched": 0,
+        "unmatched": 0,
+        "equal": true
+      },
+      "window_positions": {
+        "matched": 0,
+        "unmatched": 0,
+        "equal": true
+      },
+      "space_names": {
+        "equal": true,
+        "source": 1,
+        "roundtrip": 1
+      },
+      "containment": {
+        "resolved": 8,
+        "equal": true
+      },
+      "host_relationships": {
+        "resolved": 0,
+        "expected": 0,
+        "equal": true
+      }
+    },
+    "losses": [],
+    "warnings": [],
+    "critical_loss_count": 0,
+    "tolerances": {
+      "position_tolerance_m": 0.001,
+      "dimension_tolerance_m": 0.001,
+      "angle_tolerance_deg": 0.01,
+      "area_tolerance_m2": 0.01,
+      "elevation_tolerance_m": 0.001
+    },
+    "writes_to_model": false,
+    "note": "a critical geometry loss can never report PASS."
+  }
+}

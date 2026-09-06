@@ -1,0 +1,14 @@
+[
+  {
+    "file": "acs_bim.py",
+    "source_sha256": "82fde71da656f282d843d88555c10bfdd8fd31b98bf42f8b619e6bccf835c37e",
+    "tested_sha256": "82fde71da656f282d843d88555c10bfdd8fd31b98bf42f8b619e6bccf835c37e",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_bim_roundtrip_geometry.py",
+    "source_sha256": "5319b4bdac69dd158c023f1b0741a95492804fda69507637384e93233fa84887",
+    "tested_sha256": "5319b4bdac69dd158c023f1b0741a95492804fda69507637384e93233fa84887",
+    "equal": true
+  }
+]

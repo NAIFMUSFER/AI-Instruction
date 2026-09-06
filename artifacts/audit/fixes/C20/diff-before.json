@@ -1,0 +1,41 @@
+{
+  "valid": true,
+  "issues": [],
+  "diff": {
+    "schema": "acs.bim/1",
+    "import_id": "bimimp_8223c7bece45f369",
+    "target_model_hash": "c9bd6c8b563ba415b23e08009f28978e7797888de80f33335415a4033aa76ba2",
+    "target_revision_id": "rev:4db78d7fc4ddc61f",
+    "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+    "entries": [
+      {
+        "type": "PROPERTY_CHANGED",
+        "canonical_id": "bld_0.flr_1.upper.polygon",
+        "authoring_id": "upper.polygon",
+        "source_entity_id": "#43",
+        "field": "name",
+        "old_value": "Upper room",
+        "proposed_value": "Ground room",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "severity": "INFO",
+        "loss": null
+      }
+    ],
+    "count": 1,
+    "by_type": {
+      "OBJECT_ADDED": 0,
+      "OBJECT_REMOVED": 0,
+      "OBJECT_MOVED": 0,
+      "OBJECT_RESIZED": 0,
+      "PROPERTY_CHANGED": 1,
+      "LEVEL_CHANGED": 0,
+      "HOST_CHANGED": 0,
+      "RELATIONSHIP_CHANGED": 0,
+      "TYPE_CHANGED": 0,
+      "UNSUPPORTED_EXTERNAL_OBJECT": 0
+    },
+    "conflicts": [],
+    "blocking_conflicts": [],
+    "writes_to_model": false
+  }
+}

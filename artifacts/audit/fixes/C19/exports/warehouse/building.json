@@ -1,0 +1,2410 @@
+{
+  "floor_height": 13,
+  "floors": {
+    "ops": {
+      "rooms": [
+        {
+          "id": "envelope",
+          "points": [
+            {
+              "type": "camera",
+              "x": 3,
+              "z": 1
+            },
+            {
+              "type": "camera",
+              "x": 3,
+              "z": 24
+            },
+            {
+              "type": "camera",
+              "x": 9,
+              "z": 1
+            },
+            {
+              "type": "camera",
+              "x": 9,
+              "z": 24
+            },
+            {
+              "type": "camera",
+              "x": 15,
+              "z": 1
+            },
+            {
+              "type": "camera",
+              "x": 15,
+              "z": 24
+            },
+            {
+              "type": "camera",
+              "x": 21,
+              "z": 1
+            },
+            {
+              "type": "camera",
+              "x": 21,
+              "z": 24
+            },
+            {
+              "type": "camera",
+              "x": 27,
+              "z": 1
+            },
+            {
+              "type": "camera",
+              "x": 27,
+              "z": 24
+            },
+            {
+              "type": "extinguisher",
+              "x": 1.88,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 1.88,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 5.63,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 5.63,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 9.38,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 9.38,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 13.13,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 13.13,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 16.88,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 16.88,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 20.63,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 20.63,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 24.38,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 24.38,
+              "z": 24.4
+            },
+            {
+              "type": "extinguisher",
+              "x": 28.13,
+              "z": 0.6
+            },
+            {
+              "type": "extinguisher",
+              "x": 28.13,
+              "z": 24.4
+            },
+            {
+              "height": 2.4,
+              "type": "exit",
+              "x": 2,
+              "z": 0.4
+            },
+            {
+              "height": 2.4,
+              "type": "exit",
+              "x": 28,
+              "z": 0.4
+            },
+            {
+              "height": 2.4,
+              "type": "exit",
+              "x": 2,
+              "z": 24.6
+            },
+            {
+              "height": 2.4,
+              "type": "exit",
+              "x": 28,
+              "z": 24.6
+            },
+            {
+              "height": 2.4,
+              "type": "exit",
+              "x": 0.4,
+              "z": 12.5
+            },
+            {
+              "height": 2.4,
+              "type": "exit",
+              "x": 29.6,
+              "z": 12.5
+            },
+            {
+              "type": "gate",
+              "x": 1,
+              "z": 12.5
+            },
+            {
+              "type": "gate",
+              "x": 29,
+              "z": 12.5
+            },
+            {
+              "type": "camera",
+              "x": 1,
+              "z": 6.25
+            },
+            {
+              "type": "camera",
+              "x": 1,
+              "z": 18.75
+            },
+            {
+              "type": "camera",
+              "x": 29,
+              "z": 6.25
+            },
+            {
+              "type": "camera",
+              "x": 29,
+              "z": 18.75
+            },
+            {
+              "type": "hydrant",
+              "x": 0.6,
+              "z": 3.75
+            },
+            {
+              "type": "hydrant",
+              "x": 0.6,
+              "z": 12.5
+            },
+            {
+              "type": "hydrant",
+              "x": 0.6,
+              "z": 21.25
+            },
+            {
+              "type": "hydrant",
+              "x": 29.4,
+              "z": 3.75
+            },
+            {
+              "type": "hydrant",
+              "x": 29.4,
+              "z": 12.5
+            },
+            {
+              "type": "hydrant",
+              "x": 29.4,
+              "z": 21.25
+            }
+          ],
+          "rect": [
+            0,
+            0,
+            30,
+            25
+          ],
+          "wall_h": 12,
+          "walls": "full"
+        },
+        {
+          "docks": [
+            {
+              "count": 3,
+              "edge": "N",
+              "height": 4.2,
+              "offset": 4.5,
+              "pitch": 6.2,
+              "width": 3.6
+            }
+          ],
+          "id": "inbound_docks",
+          "lanes": [
+            {
+              "d": 3.4,
+              "dir": "x",
+              "kind": "forklift",
+              "w": 11.99,
+              "x": 0.5,
+              "z": -0.9874999999999998
+            }
+          ],
+          "points": [
+            {
+              "type": "scanner",
+              "x": 3,
+              "z": 1.2
+            },
+            {
+              "type": "scanner",
+              "x": 9.2,
+              "z": 1.2
+            },
+            {
+              "type": "scanner",
+              "x": 15.4,
+              "z": 1.2
+            },
+            {
+              "height": 3.2,
+              "type": "sign",
+              "x": 4.5,
+              "z": 0.6
+            },
+            {
+              "height": 3.2,
+              "type": "sign",
+              "x": 10.7,
+              "z": 0.6
+            },
+            {
+              "height": 3.2,
+              "type": "sign",
+              "x": 16.9,
+              "z": 0.6
+            },
+            {
+              "type": "camera",
+              "x": 6.3,
+              "z": 1
+            },
+            {
+              "type": "extinguisher",
+              "x": 12.6,
+              "z": 2.21
+            },
+            {
+              "type": "estop",
+              "x": 3,
+              "z": 2.21
+            }
+          ],
+          "rect": [
+            0,
+            0,
+            12.99,
+            2.81
+          ],
+          "role": "receiving",
+          "walls": "none"
+        },
+        {
+          "id": "fast_unload",
+          "lanes": [
+            {
+              "d": 0.9,
+              "dir": "x",
+              "h": 0.85,
+              "kind": "conveyor",
+              "w": 11.4,
+              "x": 2,
+              "z": 1.4
+            },
+            {
+              "d": 1.4,
+              "dir": "x",
+              "kind": "pedestrian",
+              "w": 12.6,
+              "x": 0.5,
+              "z": -0.02499999999999991
+            }
+          ],
+          "points": [
+            {
+              "type": "palletjack",
+              "x": 1.5,
+              "z": 2.6
+            },
+            {
+              "type": "palletjack",
+              "x": 4.5,
+              "z": 2.6
+            },
+            {
+              "type": "palletjack",
+              "x": 7.5,
+              "z": 2.6
+            },
+            {
+              "type": "forklift",
+              "x": 3,
+              "z": 1
+            },
+            {
+              "type": "forklift",
+              "x": 9,
+              "z": 1
+            },
+            {
+              "type": "smoke",
+              "x": 6.3,
+              "z": 2
+            }
+          ],
+          "rect": [
+            0,
+            2.81,
+            12.99,
+            1.88
+          ],
+          "role": "receiving",
+          "walls": "none"
+        },
+        {
+          "id": "inbound_staging",
+          "lanes": [
+            {
+              "arrow": false,
+              "d": 1.5875000000000008,
+              "dir": "z",
+              "kind": "zone",
+              "w": 6,
+              "x": 0.3,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875000000000008,
+              "dir": "z",
+              "kind": "zone",
+              "w": 6,
+              "x": 6.7,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875000000000008,
+              "dir": "z",
+              "kind": "zone",
+              "w": 6,
+              "x": 13.100000000000001,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875000000000008,
+              "dir": "z",
+              "kind": "zone",
+              "w": 6,
+              "x": 19.500000000000004,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875000000000008,
+              "dir": "z",
+              "kind": "zone",
+              "w": 6,
+              "x": 25.900000000000002,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875000000000008,
+              "dir": "z",
+              "kind": "zone",
+              "w": 6,
+              "x": 32.3,
+              "z": 0.3
+            }
+          ],
+          "points": [
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 3.3,
+              "z": 0.5
+            },
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 9.7,
+              "z": 0.5
+            },
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 16.1,
+              "z": 0.5
+            },
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 22.5,
+              "z": 0.5
+            },
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 28.9,
+              "z": 0.5
+            },
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 35.3,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 9.6,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 9.6,
+              "z": 1.09
+            }
+          ],
+          "rect": [
+            0,
+            4.69,
+            19.5,
+            2.19
+          ],
+          "role": "receiving",
+          "walls": "none"
+        },
+        {
+          "id": "qc_inspection",
+          "points": [
+            {
+              "type": "scale",
+              "x": 5.7,
+              "z": 3
+            },
+            {
+              "type": "printer",
+              "x": 5.7,
+              "z": 7
+            },
+            {
+              "type": "monitor",
+              "x": 3,
+              "z": 0.6
+            },
+            {
+              "type": "bin",
+              "x": 3,
+              "z": 3.49
+            },
+            {
+              "type": "bin",
+              "x": 9,
+              "z": 3.49
+            },
+            {
+              "type": "bin",
+              "x": 15,
+              "z": 3.49
+            },
+            {
+              "type": "camera",
+              "x": 3,
+              "z": 1
+            },
+            {
+              "type": "smoke",
+              "x": 3,
+              "z": 2.34
+            },
+            {
+              "type": "extinguisher",
+              "x": 6,
+              "z": 3.89
+            }
+          ],
+          "rect": [
+            12.99,
+            0,
+            6.51,
+            4.69
+          ],
+          "role": "qc",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "inspect",
+              "pitch": 4,
+              "x": 1.5,
+              "z": 1.5
+            },
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "qa",
+              "pitch": 4.6,
+              "x": 1.5,
+              "z": 2.8125
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "docks": [
+            {
+              "count": 2,
+              "edge": "N",
+              "height": 4.2,
+              "offset": 4,
+              "pitch": 7.5,
+              "width": 3.6
+            }
+          ],
+          "id": "crossdock",
+          "lanes": [
+            {
+              "d": 0.9,
+              "dir": "x",
+              "h": 0.9,
+              "kind": "conveyor",
+              "w": 6.5,
+              "x": 2,
+              "z": 2.34375
+            },
+            {
+              "d": 3.6,
+              "dir": "x",
+              "kind": "forklift",
+              "w": 8.5,
+              "x": 1,
+              "z": 0.4874999999999998
+            }
+          ],
+          "points": [
+            {
+              "type": "diverter",
+              "x": 10,
+              "z": 2.58
+            },
+            {
+              "type": "diverter",
+              "x": 20,
+              "z": 2.58
+            },
+            {
+              "type": "diverter",
+              "x": 30,
+              "z": 2.58
+            },
+            {
+              "type": "camera",
+              "x": 5.25,
+              "z": 1
+            },
+            {
+              "type": "smoke",
+              "x": 5.25,
+              "z": 2.34
+            }
+          ],
+          "rect": [
+            19.5,
+            0,
+            10.5,
+            4.69
+          ],
+          "role": "crossdock",
+          "walls": "none"
+        },
+        {
+          "id": "replenishment",
+          "lanes": [
+            {
+              "d": 3.2,
+              "dir": "x",
+              "kind": "one_way",
+              "w": 5.71,
+              "x": 0.4,
+              "z": 0.6
+            }
+          ],
+          "points": [
+            {
+              "height": 2.8,
+              "type": "sign",
+              "x": 3.25,
+              "z": 0.5
+            }
+          ],
+          "rect": [
+            19.5,
+            4.69,
+            6.51,
+            2.19
+          ],
+          "role": "circulation",
+          "walls": "none"
+        },
+        {
+          "doors": [
+            {
+              "edge": "W",
+              "height": 2.4,
+              "material": "wood",
+              "offset": 1.0937500000000004,
+              "width": 1.2
+            }
+          ],
+          "id": "maintenance",
+          "points": [
+            {
+              "type": "light",
+              "x": 1.98,
+              "z": 1.09
+            },
+            {
+              "type": "smoke",
+              "x": 1.98,
+              "z": 1.09
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 2,
+              "z": 1.79
+            },
+            {
+              "height": 1.2,
+              "type": "switch",
+              "x": 3.6,
+              "z": 1.19
+            },
+            {
+              "type": "extinguisher",
+              "x": 3.6,
+              "z": 1
+            },
+            {
+              "type": "eyewash",
+              "x": 1,
+              "z": 1.19
+            }
+          ],
+          "rect": [
+            26.01,
+            4.69,
+            3.99,
+            2.19
+          ],
+          "role": "maintenance",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "desk",
+              "pitch": 2.4,
+              "x": 1,
+              "z": 1
+            }
+          ],
+          "wall_h": 4,
+          "walls": "full"
+        },
+        {
+          "id": "bulk_pallet_A",
+          "points": [
+            {
+              "height": 3.6,
+              "type": "sign",
+              "x": 4.23,
+              "z": 0.8
+            },
+            {
+              "type": "camera",
+              "x": 4.23,
+              "z": 0.8
+            },
+            {
+              "type": "extinguisher",
+              "x": 1,
+              "z": 9
+            },
+            {
+              "type": "extinguisher",
+              "x": 7.47,
+              "z": 9
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 3.4,
+              "d": 8.8,
+              "dir": "x",
+              "h": 9,
+              "kind": "pallet",
+              "levels": 4,
+              "w": 7.2690088127294965,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            0,
+            6.88,
+            8.47,
+            10
+          ],
+          "role": "storage",
+          "walls": "none"
+        },
+        {
+          "id": "medium_shelf_B",
+          "points": [
+            {
+              "height": 3.6,
+              "type": "sign",
+              "x": 3.25,
+              "z": 0.8
+            },
+            {
+              "type": "camera",
+              "x": 3.25,
+              "z": 0.8
+            },
+            {
+              "type": "extinguisher",
+              "x": 1,
+              "z": 9
+            },
+            {
+              "type": "extinguisher",
+              "x": 5.49,
+              "z": 9
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.6,
+              "d": 8.8,
+              "dir": "x",
+              "h": 2.6,
+              "kind": "shelf",
+              "levels": 5,
+              "w": 5.293904283965728,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            8.47,
+            6.88,
+            6.49,
+            10
+          ],
+          "role": "shelf",
+          "walls": "none"
+        },
+        {
+          "id": "bin_storage_C",
+          "points": [
+            {
+              "height": 3.6,
+              "type": "sign",
+              "x": 2.5,
+              "z": 0.8
+            },
+            {
+              "type": "camera",
+              "x": 2.5,
+              "z": 0.8
+            },
+            {
+              "type": "extinguisher",
+              "x": 1,
+              "z": 9
+            },
+            {
+              "type": "extinguisher",
+              "x": 4,
+              "z": 9
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.2,
+              "d": 8.8,
+              "dir": "x",
+              "h": 2.2,
+              "kind": "bin",
+              "levels": 6,
+              "w": 3.7976129742962046,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            14.96,
+            6.88,
+            5,
+            10
+          ],
+          "role": "bin",
+          "walls": "none"
+        },
+        {
+          "id": "flow_racks_fast",
+          "points": [
+            {
+              "height": 3.6,
+              "type": "sign",
+              "x": 2.24,
+              "z": 0.8
+            },
+            {
+              "type": "camera",
+              "x": 2.24,
+              "z": 0.8
+            },
+            {
+              "type": "extinguisher",
+              "x": 1,
+              "z": 9
+            },
+            {
+              "type": "extinguisher",
+              "x": 3.49,
+              "z": 9
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.8,
+              "d": 8.8,
+              "dir": "x",
+              "h": 2.4,
+              "kind": "flow",
+              "levels": 4,
+              "w": 3.2888739290085676,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            19.96,
+            6.88,
+            4.49,
+            10
+          ],
+          "role": "storage",
+          "walls": "none"
+        },
+        {
+          "id": "replen_aisle_main",
+          "lanes": [
+            {
+              "d": 9,
+              "dir": "z",
+              "kind": "one_way",
+              "w": 3.2,
+              "x": 0.6,
+              "z": 0.5
+            }
+          ],
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 2,
+              "z": 1
+            }
+          ],
+          "rect": [
+            24.45,
+            6.88,
+            4,
+            10
+          ],
+          "role": "circulation",
+          "walls": "none"
+        },
+        {
+          "doors": [
+            {
+              "edge": "W",
+              "height": 2.1,
+              "material": "glass",
+              "offset": 1.25,
+              "width": 1
+            }
+          ],
+          "id": "inventory_office",
+          "points": [
+            {
+              "type": "light",
+              "x": 2,
+              "z": 1.25
+            },
+            {
+              "type": "smoke",
+              "x": 2,
+              "z": 1.25
+            },
+            {
+              "type": "ac",
+              "x": 2,
+              "z": 0.4
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 2,
+              "z": 2.1
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 1.99,
+              "z": 2.1
+            },
+            {
+              "height": 1.2,
+              "type": "switch",
+              "x": 1.12,
+              "z": 2
+            },
+            {
+              "type": "monitor",
+              "x": 2,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            26.01,
+            6.88,
+            3.99,
+            2.5
+          ],
+          "role": "office",
+          "stations": [
+            {
+              "count": 4,
+              "dir": "x",
+              "kind": "desk",
+              "pitch": 2.6,
+              "x": 1,
+              "z": 1
+            }
+          ],
+          "wall_h": 3.2,
+          "walls": "glass",
+          "windows": [
+            {
+              "edge": "W",
+              "height": 1.8,
+              "offset": 2,
+              "sill": 0.9,
+              "width": 1
+            }
+          ]
+        },
+        {
+          "doors": [
+            {
+              "edge": "W",
+              "height": 2.1,
+              "material": "wood",
+              "offset": 0.9375,
+              "width": 1
+            }
+          ],
+          "id": "it_server_room",
+          "points": [
+            {
+              "type": "light",
+              "x": 2,
+              "z": 0.94
+            },
+            {
+              "type": "smoke",
+              "x": 2,
+              "z": 0.94
+            },
+            {
+              "type": "ac",
+              "x": 2,
+              "z": 0.4
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 2,
+              "z": 1.48
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 1.99,
+              "z": 1.48
+            },
+            {
+              "height": 1.2,
+              "type": "switch",
+              "x": 1.12,
+              "z": 1.38
+            },
+            {
+              "type": "server",
+              "x": 3,
+              "z": 1
+            },
+            {
+              "type": "server",
+              "x": 6,
+              "z": 1
+            },
+            {
+              "type": "server",
+              "x": 9,
+              "z": 1
+            },
+            {
+              "height": 0.4,
+              "type": "network",
+              "x": 1,
+              "z": 0.94
+            }
+          ],
+          "rect": [
+            26.01,
+            9.38,
+            3.99,
+            1.88
+          ],
+          "role": "it",
+          "wall_h": 3.2,
+          "walls": "full"
+        },
+        {
+          "doors": [
+            {
+              "edge": "W",
+              "height": 2.1,
+              "material": "wood",
+              "offset": 0.9375,
+              "width": 1
+            }
+          ],
+          "furniture": [
+            {
+              "d": 1.4,
+              "h": 0.75,
+              "mat": "furn",
+              "name": "table",
+              "w": 1.995,
+              "x": 1.995,
+              "z": 0.9375
+            }
+          ],
+          "id": "meeting_room",
+          "points": [
+            {
+              "type": "light",
+              "x": 2,
+              "z": 0.94
+            },
+            {
+              "type": "smoke",
+              "x": 2,
+              "z": 0.94
+            },
+            {
+              "type": "ac",
+              "x": 2,
+              "z": 0.4
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 2,
+              "z": 1.48
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 1.99,
+              "z": 1.48
+            },
+            {
+              "height": 1.2,
+              "type": "switch",
+              "x": 1.12,
+              "z": 1.38
+            }
+          ],
+          "rect": [
+            26.01,
+            11.25,
+            3.99,
+            1.88
+          ],
+          "role": "admin",
+          "wall_h": 3.2,
+          "walls": "full"
+        },
+        {
+          "doors": [
+            {
+              "edge": "W",
+              "height": 2.1,
+              "material": "wood",
+              "offset": 1.09375,
+              "width": 1
+            }
+          ],
+          "furniture": [
+            {
+              "d": 0.7,
+              "h": 0.9,
+              "mat": "counter",
+              "name": "counter",
+              "w": 1.995,
+              "x": 1.995,
+              "z": 0.7
+            },
+            {
+              "d": 0.8,
+              "h": 0.8,
+              "mat": "furn_soft",
+              "name": "sofa",
+              "w": 2.4,
+              "x": 2.793,
+              "z": 1.1875
+            }
+          ],
+          "id": "rest_area",
+          "points": [
+            {
+              "type": "light",
+              "x": 2,
+              "z": 1.09
+            },
+            {
+              "type": "smoke",
+              "x": 2,
+              "z": 1.09
+            },
+            {
+              "type": "ac",
+              "x": 2,
+              "z": 0.4
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 2,
+              "z": 1.79
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 1.99,
+              "z": 1.79
+            },
+            {
+              "height": 1.2,
+              "type": "switch",
+              "x": 1.12,
+              "z": 1.69
+            }
+          ],
+          "rect": [
+            26.01,
+            13.13,
+            3.99,
+            2.19
+          ],
+          "role": "staff",
+          "wall_h": 3.2,
+          "walls": "full"
+        },
+        {
+          "doors": [
+            {
+              "edge": "W",
+              "height": 2.1,
+              "material": "wood",
+              "offset": 0.78125,
+              "width": 1
+            }
+          ],
+          "id": "lockers",
+          "points": [
+            {
+              "type": "light",
+              "x": 2,
+              "z": 0.78
+            },
+            {
+              "type": "smoke",
+              "x": 2,
+              "z": 0.78
+            },
+            {
+              "type": "ac",
+              "x": 2,
+              "z": 0.4
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 2,
+              "z": 1.16
+            },
+            {
+              "height": 0.4,
+              "type": "outlet",
+              "x": 1.99,
+              "z": 1.16
+            },
+            {
+              "height": 1.2,
+              "type": "switch",
+              "x": 1.12,
+              "z": 1.06
+            }
+          ],
+          "rect": [
+            26.01,
+            15.31,
+            3.99,
+            1.56
+          ],
+          "role": "staff",
+          "stations": [
+            {
+              "count": 4,
+              "dir": "x",
+              "kind": "locker",
+              "pitch": 0.98,
+              "x": 0.6,
+              "z": 0.4
+            }
+          ],
+          "wall_h": 3.2,
+          "walls": "full"
+        },
+        {
+          "id": "batch_picking",
+          "lanes": [
+            {
+              "d": 1.2,
+              "dir": "x",
+              "kind": "pedestrian",
+              "w": 5.2,
+              "x": 0.4,
+              "z": 2.0625
+            }
+          ],
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 3,
+              "z": 0.6
+            },
+            {
+              "type": "camera",
+              "x": 3,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 3,
+              "z": 1.56
+            },
+            {
+              "type": "extinguisher",
+              "x": 5,
+              "z": 2.33
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.5,
+              "d": 1.7187500000000002,
+              "dir": "x",
+              "h": 2.2,
+              "kind": "shelf",
+              "levels": 4,
+              "w": 4.8,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            0,
+            16.88,
+            6,
+            3.13
+          ],
+          "role": "picking",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "desk",
+              "pitch": 3.6,
+              "x": 1,
+              "z": 2.65625
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "wave_picking",
+          "lanes": [
+            {
+              "d": 1.2,
+              "dir": "x",
+              "kind": "pedestrian",
+              "w": 5.2,
+              "x": 0.4,
+              "z": 2.0625
+            }
+          ],
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 3,
+              "z": 0.6
+            },
+            {
+              "type": "camera",
+              "x": 3,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 3,
+              "z": 1.56
+            },
+            {
+              "type": "extinguisher",
+              "x": 5,
+              "z": 2.33
+            },
+            {
+              "type": "ptl",
+              "x": 1,
+              "z": 1.2
+            },
+            {
+              "type": "ptl",
+              "x": 2.6,
+              "z": 1.2
+            },
+            {
+              "type": "ptl",
+              "x": 4.2,
+              "z": 1.2
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.6,
+              "d": 1.7187500000000002,
+              "dir": "x",
+              "h": 2.2,
+              "kind": "flow",
+              "levels": 4,
+              "w": 4.8,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            6,
+            16.88,
+            6,
+            3.13
+          ],
+          "role": "wave",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "desk",
+              "pitch": 3.6,
+              "x": 1,
+              "z": 2.65625
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "zone_picking",
+          "lanes": [
+            {
+              "d": 1.2,
+              "dir": "x",
+              "kind": "pedestrian",
+              "w": 5.71,
+              "x": 0.4,
+              "z": 2.0625
+            }
+          ],
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 3.25,
+              "z": 0.6
+            },
+            {
+              "type": "camera",
+              "x": 3.25,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 3.25,
+              "z": 1.56
+            },
+            {
+              "type": "extinguisher",
+              "x": 5.51,
+              "z": 2.33
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.5,
+              "d": 1.7187500000000002,
+              "dir": "x",
+              "h": 2.4,
+              "kind": "shelf",
+              "levels": 5,
+              "w": 5.31,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            12,
+            16.88,
+            6.51,
+            3.13
+          ],
+          "role": "zone_pick",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "desk",
+              "pitch": 3.6,
+              "x": 1,
+              "z": 2.65625
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "amr_field",
+          "lanes": [
+            {
+              "d": 1.4,
+              "dir": "x",
+              "kind": "amr",
+              "w": 4.49,
+              "x": 0.5,
+              "z": 0.3125
+            },
+            {
+              "d": 1.4,
+              "dir": "x",
+              "kind": "amr",
+              "reverse": true,
+              "w": 4.49,
+              "x": 0.5,
+              "z": 1.25
+            },
+            {
+              "d": 1.4,
+              "dir": "x",
+              "kind": "amr",
+              "w": 4.49,
+              "x": 0.5,
+              "z": 2.1875
+            }
+          ],
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 2.75,
+              "z": 0.6
+            },
+            {
+              "type": "camera",
+              "x": 2.75,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 2.75,
+              "z": 1.56
+            },
+            {
+              "type": "extinguisher",
+              "x": 4.49,
+              "z": 2.33
+            },
+            {
+              "type": "robot",
+              "x": 1.1,
+              "z": 0.53
+            },
+            {
+              "type": "robot",
+              "x": 2.75,
+              "z": 0.53
+            },
+            {
+              "type": "robot",
+              "x": 4.39,
+              "z": 1.47
+            },
+            {
+              "type": "estop",
+              "x": 4.89,
+              "z": 1.56
+            }
+          ],
+          "rect": [
+            18.51,
+            16.88,
+            5.49,
+            3.13
+          ],
+          "role": "robot",
+          "stations": [
+            {
+              "count": 4,
+              "dir": "x",
+              "kind": "charger",
+              "pitch": 2,
+              "x": 1,
+              "z": 2.75
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "human_picking",
+          "lanes": [
+            {
+              "d": 1.2,
+              "dir": "x",
+              "kind": "pedestrian",
+              "w": 5.2,
+              "x": 0.4,
+              "z": 2.0625
+            }
+          ],
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 3,
+              "z": 0.6
+            },
+            {
+              "type": "camera",
+              "x": 3,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 3,
+              "z": 1.56
+            },
+            {
+              "type": "extinguisher",
+              "x": 5,
+              "z": 2.33
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.3,
+              "d": 1.7187500000000002,
+              "dir": "x",
+              "h": 2,
+              "kind": "bin",
+              "levels": 5,
+              "w": 4.8,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            24,
+            16.88,
+            6,
+            3.13
+          ],
+          "role": "picking",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "desk",
+              "pitch": 3.6,
+              "x": 1,
+              "z": 2.65625
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "packing",
+          "points": [
+            {
+              "type": "scale",
+              "x": 2.4,
+              "z": 0.84
+            },
+            {
+              "type": "scale",
+              "x": 5.1,
+              "z": 0.84
+            },
+            {
+              "type": "scale",
+              "x": 7.8,
+              "z": 0.84
+            },
+            {
+              "type": "scale",
+              "x": 10.5,
+              "z": 0.84
+            },
+            {
+              "type": "printer",
+              "x": 2.4,
+              "z": 2.39
+            },
+            {
+              "type": "printer",
+              "x": 5.1,
+              "z": 2.39
+            },
+            {
+              "type": "printer",
+              "x": 7.8,
+              "z": 2.39
+            },
+            {
+              "type": "printer",
+              "x": 10.5,
+              "z": 2.39
+            },
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 3.99,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 3.99,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 3.99,
+              "z": 1.41
+            },
+            {
+              "type": "extinguisher",
+              "x": 7.8,
+              "z": 2.21
+            }
+          ],
+          "rect": [
+            0,
+            20,
+            7.98,
+            2.81
+          ],
+          "role": "packing",
+          "stations": [
+            {
+              "count": 4,
+              "dir": "x",
+              "kind": "pack",
+              "pitch": 2.7,
+              "x": 1,
+              "z": 1
+            },
+            {
+              "count": 4,
+              "dir": "x",
+              "kind": "pack",
+              "pitch": 2.7,
+              "x": 1,
+              "z": 1.6875
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "labeling_qa",
+          "points": [
+            {
+              "type": "scanner",
+              "x": 3,
+              "z": 0.84
+            },
+            {
+              "type": "scanner",
+              "x": 7,
+              "z": 0.84
+            },
+            {
+              "type": "monitor",
+              "x": 1.98,
+              "z": 2.11
+            },
+            {
+              "type": "printer",
+              "x": 3.3,
+              "z": 2.11
+            },
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 1.98,
+              "z": 0.5
+            },
+            {
+              "type": "smoke",
+              "x": 1.98,
+              "z": 1.41
+            }
+          ],
+          "rect": [
+            7.98,
+            20,
+            3.99,
+            2.81
+          ],
+          "role": "labeling",
+          "stations": [
+            {
+              "count": 3,
+              "dir": "x",
+              "kind": "label",
+              "pitch": 2,
+              "x": 1,
+              "z": 1
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "void_fill",
+          "points": [
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 1.5,
+              "z": 0.5
+            },
+            {
+              "type": "smoke",
+              "x": 1.5,
+              "z": 1.41
+            },
+            {
+              "type": "light",
+              "x": 1.5,
+              "z": 1.41
+            }
+          ],
+          "rect": [
+            12,
+            20,
+            3,
+            2.81
+          ],
+          "role": "packing",
+          "stations": [
+            {
+              "count": 2,
+              "dir": "x",
+              "kind": "void",
+              "pitch": 2.2,
+              "x": 1,
+              "z": 1
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "consolidation",
+          "points": [
+            {
+              "height": 2.6,
+              "type": "sign",
+              "x": 2.25,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 2.25,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 2.25,
+              "z": 1.41
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.2,
+              "d": 1.6125,
+              "dir": "x",
+              "h": 2,
+              "kind": "cage",
+              "levels": 2,
+              "w": 3.3,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            15,
+            20,
+            4.5,
+            2.81
+          ],
+          "role": "consolidation",
+          "walls": "none"
+        },
+        {
+          "id": "auto_sorter",
+          "lanes": [
+            {
+              "d": 1,
+              "dir": "x",
+              "h": 0.95,
+              "kind": "conveyor",
+              "w": 4.99,
+              "x": 1,
+              "z": 0.39375000000000004
+            },
+            {
+              "d": 1,
+              "dir": "x",
+              "h": 0.85,
+              "kind": "conveyor",
+              "w": 4.99,
+              "x": 1,
+              "z": 1.40625
+            },
+            {
+              "d": 1.4,
+              "dir": "x",
+              "kind": "pedestrian",
+              "w": 5.99,
+              "x": 0.5,
+              "z": 2.25
+            }
+          ],
+          "points": [
+            {
+              "type": "diverter",
+              "x": 3.5,
+              "z": 0.84
+            },
+            {
+              "type": "diverter",
+              "x": 6.5,
+              "z": 0.84
+            },
+            {
+              "type": "diverter",
+              "x": 9.5,
+              "z": 0.84
+            },
+            {
+              "type": "diverter",
+              "x": 12.5,
+              "z": 0.84
+            },
+            {
+              "type": "chute",
+              "x": 3.5,
+              "z": 1.91
+            },
+            {
+              "type": "chute",
+              "x": 6.5,
+              "z": 1.91
+            },
+            {
+              "type": "chute",
+              "x": 9.5,
+              "z": 1.91
+            },
+            {
+              "type": "chute",
+              "x": 12.5,
+              "z": 1.91
+            },
+            {
+              "type": "estop",
+              "x": 5,
+              "z": 0.34
+            },
+            {
+              "type": "estop",
+              "x": 3.6,
+              "z": 0.34
+            },
+            {
+              "height": 3.2,
+              "type": "sign",
+              "x": 3.48,
+              "z": 0.4
+            },
+            {
+              "type": "camera",
+              "x": 3.48,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 3.48,
+              "z": 1.41
+            },
+            {
+              "type": "extinguisher",
+              "x": 6.6,
+              "z": 2.21
+            }
+          ],
+          "rect": [
+            19.5,
+            20,
+            6.99,
+            2.81
+          ],
+          "role": "sorting",
+          "walls": "none"
+        },
+        {
+          "id": "manual_sort",
+          "points": [
+            {
+              "type": "bin",
+              "x": 3,
+              "z": 1.97
+            },
+            {
+              "type": "bin",
+              "x": 7,
+              "z": 1.97
+            },
+            {
+              "height": 3,
+              "type": "sign",
+              "x": 1.74,
+              "z": 0.5
+            },
+            {
+              "type": "light",
+              "x": 1.74,
+              "z": 1.41
+            },
+            {
+              "type": "smoke",
+              "x": 1.74,
+              "z": 1.41
+            }
+          ],
+          "rect": [
+            26.49,
+            20,
+            3.51,
+            2.81
+          ],
+          "role": "sorting",
+          "stations": [
+            {
+              "count": 2,
+              "dir": "x",
+              "kind": "sort",
+              "pitch": 3.1,
+              "x": 1,
+              "z": 1
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "id": "dispatch_dhl",
+          "lanes": [
+            {
+              "arrow": false,
+              "d": 1.5875,
+              "dir": "z",
+              "kind": "zone",
+              "w": 4.2,
+              "x": 0.3,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875,
+              "dir": "z",
+              "kind": "zone",
+              "w": 4.2,
+              "x": 4.8999999999999995,
+              "z": 0.3
+            }
+          ],
+          "points": [
+            {
+              "height": 2.8,
+              "type": "sign",
+              "x": 2.51,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 2.51,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 2.51,
+              "z": 1.09
+            }
+          ],
+          "rect": [
+            0,
+            22.81,
+            5.01,
+            2.19
+          ],
+          "role": "dispatch",
+          "walls": "none"
+        },
+        {
+          "id": "dispatch_aramex",
+          "lanes": [
+            {
+              "arrow": false,
+              "d": 1.5875,
+              "dir": "z",
+              "kind": "zone",
+              "w": 4.2,
+              "x": 0.3,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875,
+              "dir": "z",
+              "kind": "zone",
+              "w": 4.2,
+              "x": 4.8999999999999995,
+              "z": 0.3
+            }
+          ],
+          "points": [
+            {
+              "height": 2.8,
+              "type": "sign",
+              "x": 2.51,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 2.51,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 2.51,
+              "z": 1.09
+            }
+          ],
+          "rect": [
+            5.01,
+            22.81,
+            5.01,
+            2.19
+          ],
+          "role": "dispatch",
+          "walls": "none"
+        },
+        {
+          "id": "dispatch_smsa",
+          "lanes": [
+            {
+              "arrow": false,
+              "d": 1.5875,
+              "dir": "z",
+              "kind": "zone",
+              "w": 4.2,
+              "x": 0.3,
+              "z": 0.3
+            },
+            {
+              "arrow": false,
+              "d": 1.5875,
+              "dir": "z",
+              "kind": "zone",
+              "w": 4.2,
+              "x": 4.8999999999999995,
+              "z": 0.3
+            }
+          ],
+          "points": [
+            {
+              "height": 2.8,
+              "type": "sign",
+              "x": 2.25,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 2.25,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 2.25,
+              "z": 1.09
+            }
+          ],
+          "rect": [
+            10.02,
+            22.81,
+            4.5,
+            2.19
+          ],
+          "role": "dispatch",
+          "walls": "none"
+        },
+        {
+          "id": "lastmile_lanes",
+          "points": [
+            {
+              "height": 2.8,
+              "type": "sign",
+              "x": 2.7,
+              "z": 0.5
+            },
+            {
+              "type": "camera",
+              "x": 2.7,
+              "z": 0.8
+            },
+            {
+              "type": "smoke",
+              "x": 2.7,
+              "z": 1.09
+            }
+          ],
+          "racks": [
+            {
+              "aisle": 1.2,
+              "d": 0.9875,
+              "dir": "x",
+              "h": 1.8,
+              "kind": "cage",
+              "levels": 1,
+              "w": 4.29,
+              "x": 0.6,
+              "z": 0.6
+            }
+          ],
+          "rect": [
+            14.52,
+            22.81,
+            5.49,
+            2.19
+          ],
+          "role": "shipping",
+          "walls": "none"
+        },
+        {
+          "id": "pallet_wrapping",
+          "points": [
+            {
+              "height": 2.8,
+              "type": "sign",
+              "x": 1.5,
+              "z": 0.5
+            },
+            {
+              "type": "smoke",
+              "x": 1.5,
+              "z": 1.09
+            },
+            {
+              "type": "light",
+              "x": 1.5,
+              "z": 1.09
+            }
+          ],
+          "rect": [
+            20.01,
+            22.81,
+            3,
+            2.19
+          ],
+          "role": "shipping",
+          "stations": [
+            {
+              "count": 2,
+              "dir": "x",
+              "kind": "wrap",
+              "pitch": 3.4,
+              "x": 1,
+              "z": 1
+            }
+          ],
+          "walls": "none"
+        },
+        {
+          "docks": [
+            {
+              "count": 3,
+              "edge": "S",
+              "height": 4.2,
+              "offset": 3.5,
+              "pitch": 4.2,
+              "width": 3.6
+            }
+          ],
+          "id": "outbound_docks",
+          "lanes": [
+            {
+              "d": 3.4,
+              "dir": "x",
+              "kind": "forklift",
+              "w": 5.99,
+              "x": 0.5,
+              "z": 0.6
+            }
+          ],
+          "points": [
+            {
+              "type": "scanner",
+              "x": 3,
+              "z": 1.19
+            },
+            {
+              "type": "scanner",
+              "x": 7.2,
+              "z": 1.19
+            },
+            {
+              "type": "scanner",
+              "x": 11.4,
+              "z": 1.19
+            },
+            {
+              "type": "camera",
+              "x": 3.48,
+              "z": 1.39
+            },
+            {
+              "type": "smoke",
+              "x": 3.48,
+              "z": 1.09
+            },
+            {
+              "type": "assembly",
+              "x": 3.48,
+              "z": 1.53
+            },
+            {
+              "type": "extinguisher",
+              "x": 6.6,
+              "z": 1
+            }
+          ],
+          "rect": [
+            23.01,
+            22.81,
+            6.99,
+            2.19
+          ],
+          "role": "shipping",
+          "walls": "none"
+        }
+      ]
+    }
+  },
+  "levels": [
+    {
+      "index": 0,
+      "name": "صالة التشغيل",
+      "template": "ops"
+    }
+  ],
+  "meta": {
+    "added": [],
+    "city": "الرياض",
+    "excluded": [
+      "مكاتب"
+    ],
+    "extras": [],
+    "name": "مستودع تجارة إلكترونية 30×25",
+    "north": "-Z",
+    "requirements": [],
+    "source": "local",
+    "type": "warehouse"
+  },
+  "site": {
+    "d": 25,
+    "w": 30
+  },
+  "wall_h": 12,
+  "wall_t": 0.25
+}

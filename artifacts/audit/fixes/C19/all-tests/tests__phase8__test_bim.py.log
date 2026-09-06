@@ -1,0 +1,622 @@
+
+== §1/§5 — THE SPEC AND THE NON-NEGOTIABLE RULE ==
+  ✓ external BIM is never model truth
+  ✓ no direct import write is allowed
+  ✓ an explicit commit is required
+  ✓ commits route through the authoring path
+  ✓ no remote dependency is declared
+  ✓ the import pipeline ends at the canonical model through authoring
+  ✓ all five support levels are declared
+  ✓ every declared entity carries a support level
+  ✓ every required issue code is declared
+  ✓ every tolerance is declared centrally and is tight
+  ✓ every resource limit is finite and positive
+  ✓ the four verification classes are declared
+  ✓ a round trip is explicitly not interoperability verification
+  ✓ the panel forbids a replace-model control
+  ✓ the hard stop boundaries name the excluded integrations
+
+== §46 — TEST A: A REAL IFC FILE IS PRODUCED FOR EVERY MODEL ==
+  ✓ villa: the export succeeds
+  ✓ villa: the file is an ISO-10303-21 STEP file
+  ✓ villa: the file declares the IFC4 schema
+  ✓ villa: the file has a HEADER and a DATA section
+  ✓ villa: the produced file parses back
+  ✓ villa: the parsed hierarchy holds one project, site and building
+  ✓ villa: every level is a real IfcBuildingStorey
+  ✓ villa: every wall is a real IfcWall without an invented material layer usage
+  ✓ villa: every door is a real IfcDoor
+  ✓ villa: every window is a real IfcWindow
+  ✓ villa: every space is a real IfcSpace
+  ✓ villa: no object is invented beyond the declared mapping
+  ✓ villa: every GlobalId is 22 characters
+  ✓ villa: the model hash is unchanged by the export
+  ✓ villa: the revision is unchanged by the export
+  ✓ villa: the canonical model is byte-identical after the export
+  ✓ hotel: the export succeeds
+  ✓ hotel: the file is an ISO-10303-21 STEP file
+  ✓ hotel: the file declares the IFC4 schema
+  ✓ hotel: the file has a HEADER and a DATA section
+  ✓ hotel: the produced file parses back
+  ✓ hotel: the parsed hierarchy holds one project, site and building
+  ✓ hotel: every level is a real IfcBuildingStorey
+  ✓ hotel: every wall is a real IfcWall without an invented material layer usage
+  ✓ hotel: every door is a real IfcDoor
+  ✓ hotel: every window is a real IfcWindow
+  ✓ hotel: every space is a real IfcSpace
+  ✓ hotel: no object is invented beyond the declared mapping
+  ✓ hotel: every GlobalId is 22 characters
+  ✓ hotel: the model hash is unchanged by the export
+  ✓ hotel: the revision is unchanged by the export
+  ✓ hotel: the canonical model is byte-identical after the export
+  ✓ clinic: the export succeeds
+  ✓ clinic: the file is an ISO-10303-21 STEP file
+  ✓ clinic: the file declares the IFC4 schema
+  ✓ clinic: the file has a HEADER and a DATA section
+  ✓ clinic: the produced file parses back
+  ✓ clinic: the parsed hierarchy holds one project, site and building
+  ✓ clinic: every level is a real IfcBuildingStorey
+  ✓ clinic: every wall is a real IfcWall without an invented material layer usage
+  ✓ clinic: every door is a real IfcDoor
+  ✓ clinic: every window is a real IfcWindow
+  ✓ clinic: every space is a real IfcSpace
+  ✓ clinic: no object is invented beyond the declared mapping
+  ✓ clinic: every GlobalId is 22 characters
+  ✓ clinic: the model hash is unchanged by the export
+  ✓ clinic: the revision is unchanged by the export
+  ✓ clinic: the canonical model is byte-identical after the export
+  ✓ warehouse: the export succeeds
+  ✓ warehouse: the file is an ISO-10303-21 STEP file
+  ✓ warehouse: the file declares the IFC4 schema
+  ✓ warehouse: the file has a HEADER and a DATA section
+  ✓ warehouse: the produced file parses back
+  ✓ warehouse: the parsed hierarchy holds one project, site and building
+  ✓ warehouse: every level is a real IfcBuildingStorey
+  ✓ warehouse: every wall is a real IfcWall without an invented material layer usage
+  ✓ warehouse: every door is a real IfcDoor
+  ✓ warehouse: every window is a real IfcWindow
+  ✓ warehouse: every space is a real IfcSpace
+  ✓ warehouse: no object is invented beyond the declared mapping
+  ✓ warehouse: every GlobalId is 22 characters
+  ✓ warehouse: the model hash is unchanged by the export
+  ✓ warehouse: the revision is unchanged by the export
+  ✓ warehouse: the canonical model is byte-identical after the export
+  ✓ villa_glazed: the export succeeds
+  ✓ villa_glazed: the file is an ISO-10303-21 STEP file
+  ✓ villa_glazed: the file declares the IFC4 schema
+  ✓ villa_glazed: the file has a HEADER and a DATA section
+  ✓ villa_glazed: the produced file parses back
+  ✓ villa_glazed: the parsed hierarchy holds one project, site and building
+  ✓ villa_glazed: every level is a real IfcBuildingStorey
+  ✓ villa_glazed: every wall is a real IfcWall without an invented material layer usage
+  ✓ villa_glazed: every door is a real IfcDoor
+  ✓ villa_glazed: every window is a real IfcWindow
+  ✓ villa_glazed: every space is a real IfcSpace
+  ✓ villa_glazed: no object is invented beyond the declared mapping
+  ✓ villa_glazed: every GlobalId is 22 characters
+  ✓ villa_glazed: the model hash is unchanged by the export
+  ✓ villa_glazed: the revision is unchanged by the export
+  ✓ villa_glazed: the canonical model is byte-identical after the export
+  ✓ hotel_glazed: the export succeeds
+  ✓ hotel_glazed: the file is an ISO-10303-21 STEP file
+  ✓ hotel_glazed: the file declares the IFC4 schema
+  ✓ hotel_glazed: the file has a HEADER and a DATA section
+  ✓ hotel_glazed: the produced file parses back
+  ✓ hotel_glazed: the parsed hierarchy holds one project, site and building
+  ✓ hotel_glazed: every level is a real IfcBuildingStorey
+  ✓ hotel_glazed: every wall is a real IfcWall without an invented material layer usage
+  ✓ hotel_glazed: every door is a real IfcDoor
+  ✓ hotel_glazed: every window is a real IfcWindow
+  ✓ hotel_glazed: every space is a real IfcSpace
+  ✓ hotel_glazed: no object is invented beyond the declared mapping
+  ✓ hotel_glazed: every GlobalId is 22 characters
+  ✓ hotel_glazed: the model hash is unchanged by the export
+  ✓ hotel_glazed: the revision is unchanged by the export
+  ✓ hotel_glazed: the canonical model is byte-identical after the export
+  ✓ clinic_glazed: the export succeeds
+  ✓ clinic_glazed: the file is an ISO-10303-21 STEP file
+  ✓ clinic_glazed: the file declares the IFC4 schema
+  ✓ clinic_glazed: the file has a HEADER and a DATA section
+  ✓ clinic_glazed: the produced file parses back
+  ✓ clinic_glazed: the parsed hierarchy holds one project, site and building
+  ✓ clinic_glazed: every level is a real IfcBuildingStorey
+  ✓ clinic_glazed: every wall is a real IfcWall without an invented material layer usage
+  ✓ clinic_glazed: every door is a real IfcDoor
+  ✓ clinic_glazed: every window is a real IfcWindow
+  ✓ clinic_glazed: every space is a real IfcSpace
+  ✓ clinic_glazed: no object is invented beyond the declared mapping
+  ✓ clinic_glazed: every GlobalId is 22 characters
+  ✓ clinic_glazed: the model hash is unchanged by the export
+  ✓ clinic_glazed: the revision is unchanged by the export
+  ✓ clinic_glazed: the canonical model is byte-identical after the export
+  ✓ warehouse_glazed: the export succeeds
+  ✓ warehouse_glazed: the file is an ISO-10303-21 STEP file
+  ✓ warehouse_glazed: the file declares the IFC4 schema
+  ✓ warehouse_glazed: the file has a HEADER and a DATA section
+  ✓ warehouse_glazed: the produced file parses back
+  ✓ warehouse_glazed: the parsed hierarchy holds one project, site and building
+  ✓ warehouse_glazed: every level is a real IfcBuildingStorey
+  ✓ warehouse_glazed: every wall is a real IfcWall without an invented material layer usage
+  ✓ warehouse_glazed: every door is a real IfcDoor
+  ✓ warehouse_glazed: every window is a real IfcWindow
+  ✓ warehouse_glazed: every space is a real IfcSpace
+  ✓ warehouse_glazed: no object is invented beyond the declared mapping
+  ✓ warehouse_glazed: every GlobalId is 22 characters
+  ✓ warehouse_glazed: the model hash is unchanged by the export
+  ✓ warehouse_glazed: the revision is unchanged by the export
+  ✓ warehouse_glazed: the canonical model is byte-identical after the export
+
+== §47 — TEST B: EXPORT DETERMINISM ==
+  ✓ villa: two exports produce byte-identical files
+  ✓ villa: two exports produce the same export id
+  ✓ villa: two exports produce the same body hash
+  ✓ villa: only the declared timestamp differs, never the body
+  ✓ villa: the manifest names the timestamp as the only variable field
+  ✓ villa: a fresh project of the same model exports identically
+  ✓ hotel: two exports produce byte-identical files
+  ✓ hotel: two exports produce the same export id
+  ✓ hotel: two exports produce the same body hash
+  ✓ hotel: only the declared timestamp differs, never the body
+  ✓ hotel: the manifest names the timestamp as the only variable field
+  ✓ hotel: a fresh project of the same model exports identically
+  ✓ clinic: two exports produce byte-identical files
+  ✓ clinic: two exports produce the same export id
+  ✓ clinic: two exports produce the same body hash
+  ✓ clinic: only the declared timestamp differs, never the body
+  ✓ clinic: the manifest names the timestamp as the only variable field
+  ✓ clinic: a fresh project of the same model exports identically
+  ✓ warehouse: two exports produce byte-identical files
+  ✓ warehouse: two exports produce the same export id
+  ✓ warehouse: two exports produce the same body hash
+  ✓ warehouse: only the declared timestamp differs, never the body
+  ✓ warehouse: the manifest names the timestamp as the only variable field
+  ✓ warehouse: a fresh project of the same model exports identically
+
+== §48 — TEST C: IMPORT THE OWN EXPORT AND REPORT FIDELITY ==
+  ✓ villa: the exported file stages cleanly
+  ✓ villa: the staging model never writes to the model
+  ✓ villa: a fidelity report is produced
+  ✓ villa: geometry fidelity is complete
+  ✓ villa: no critical geometry loss
+  ✓ villa: the status is PASS or WARNING, never a false PASS
+  ✓ villa: geometry is compared, not only counted
+  ✓ villa: containment and host relationships are compared
+  ✓ villa: the report carries the declared tolerances
+  ✓ villa: the report writes nothing to the model
+  ✓ hotel: the exported file stages cleanly
+  ✓ hotel: the staging model never writes to the model
+  ✓ hotel: a fidelity report is produced
+  ✓ hotel: geometry fidelity is complete
+  ✓ hotel: no critical geometry loss
+  ✓ hotel: the status is PASS or WARNING, never a false PASS
+  ✓ hotel: geometry is compared, not only counted
+  ✓ hotel: containment and host relationships are compared
+  ✓ hotel: the report carries the declared tolerances
+  ✓ hotel: the report writes nothing to the model
+  ✓ clinic: the exported file stages cleanly
+  ✓ clinic: the staging model never writes to the model
+  ✓ clinic: a fidelity report is produced
+  ✓ clinic: geometry fidelity is complete
+  ✓ clinic: no critical geometry loss
+  ✓ clinic: the status is PASS or WARNING, never a false PASS
+  ✓ clinic: geometry is compared, not only counted
+  ✓ clinic: containment and host relationships are compared
+  ✓ clinic: the report carries the declared tolerances
+  ✓ clinic: the report writes nothing to the model
+  ✓ warehouse: the exported file stages cleanly
+  ✓ warehouse: the staging model never writes to the model
+  ✓ warehouse: a fidelity report is produced
+  ✓ warehouse: geometry fidelity is complete
+  ✓ warehouse: no critical geometry loss
+  ✓ warehouse: the status is PASS or WARNING, never a false PASS
+  ✓ warehouse: geometry is compared, not only counted
+  ✓ warehouse: containment and host relationships are compared
+  ✓ warehouse: the report carries the declared tolerances
+  ✓ warehouse: the report writes nothing to the model
+  ✓ villa_glazed: the exported file stages cleanly
+  ✓ villa_glazed: the staging model never writes to the model
+  ✓ villa_glazed: a fidelity report is produced
+  ✓ villa_glazed: geometry fidelity is complete
+  ✓ villa_glazed: no critical geometry loss
+  ✓ villa_glazed: the status is PASS or WARNING, never a false PASS
+  ✓ villa_glazed: geometry is compared, not only counted
+  ✓ villa_glazed: containment and host relationships are compared
+  ✓ villa_glazed: the report carries the declared tolerances
+  ✓ villa_glazed: the report writes nothing to the model
+  ✓ hotel_glazed: the exported file stages cleanly
+  ✓ hotel_glazed: the staging model never writes to the model
+  ✓ hotel_glazed: a fidelity report is produced
+  ✓ hotel_glazed: geometry fidelity is complete
+  ✓ hotel_glazed: no critical geometry loss
+  ✓ hotel_glazed: the status is PASS or WARNING, never a false PASS
+  ✓ hotel_glazed: geometry is compared, not only counted
+  ✓ hotel_glazed: containment and host relationships are compared
+  ✓ hotel_glazed: the report carries the declared tolerances
+  ✓ hotel_glazed: the report writes nothing to the model
+  ✓ clinic_glazed: the exported file stages cleanly
+  ✓ clinic_glazed: the staging model never writes to the model
+  ✓ clinic_glazed: a fidelity report is produced
+  ✓ clinic_glazed: geometry fidelity is complete
+  ✓ clinic_glazed: no critical geometry loss
+  ✓ clinic_glazed: the status is PASS or WARNING, never a false PASS
+  ✓ clinic_glazed: geometry is compared, not only counted
+  ✓ clinic_glazed: containment and host relationships are compared
+  ✓ clinic_glazed: the report carries the declared tolerances
+  ✓ clinic_glazed: the report writes nothing to the model
+  ✓ warehouse_glazed: the exported file stages cleanly
+  ✓ warehouse_glazed: the staging model never writes to the model
+  ✓ warehouse_glazed: a fidelity report is produced
+  ✓ warehouse_glazed: geometry fidelity is complete
+  ✓ warehouse_glazed: no critical geometry loss
+  ✓ warehouse_glazed: the status is PASS or WARNING, never a false PASS
+  ✓ warehouse_glazed: geometry is compared, not only counted
+  ✓ warehouse_glazed: containment and host relationships are compared
+  ✓ warehouse_glazed: the report carries the declared tolerances
+  ✓ warehouse_glazed: the report writes nothing to the model
+
+== §49 — TEST D: UNITS ARE NORMALISED, NEVER GUESSED ==
+  ✓ a file in metre is staged
+  ✓ the metre file records its declared factor
+  ✓ the metre file normalises to the canonical metre
+  ✓ a file in millimetre is staged
+  ✓ the millimetre file records its declared factor
+  ✓ the millimetre file normalises to the canonical metre
+  ✓ a file in centimetre is staged
+  ✓ the centimetre file records its declared factor
+  ✓ the centimetre file normalises to the canonical metre
+  ✓ a foot-based file resolves its conversion factor
+  ✓ a file with no declared unit is refused, never defaulted
+  ✓ the unit policy is declared as declared-only
+  ✓ the same geometry in two units agrees after normalisation
+
+== §50 — TEST E: NESTED PLACEMENT RESOLVES TO WORLD ==
+  ✓ a nested placement file stages
+  ✓ the nested space resolves to project world coordinates
+  ✓ the nested rotation accumulates
+  ✓ a storey elevation is read from the model attribute
+  ✓ large negative coordinates resolve without loss
+
+== §51 — TEST F: OPENINGS KEEP THEIR HOST ==
+  ✓ the staged model really carries openings
+  ✓ every opening resolved a host wall through an IFC relationship
+  ✓ no opening floats without a host
+  ✓ the void and fill relationships are both present
+  ✓ a door with no void or fill relationship is reported unresolved
+  ✓ no host is inferred from overlapping coordinates
+
+== §52 — TEST G: AN UNSUPPORTED ENTITY IS NEVER INVENTED ==
+  ✓ a file with unsupported entities still stages
+  ✓ a preserved-opaque entity is kept with its identity
+  ✓ an unsupported entity is kept and reported, never deleted silently
+  ✓ an issue is emitted for the unsupported entity
+  ✓ no unsupported entity is given a canonical kind
+  ✓ the counts expose unsupported entities rather than hiding them
+
+== §53 — TEST H: PROPERTY AND STRING SAFETY ==
+  ✓ executable payload #0 never reaches a canonical name
+  ✓ executable payload #0 is refused with a typed issue
+  ✓ executable payload #1 never reaches a canonical name
+  ✓ executable payload #1 is refused with a typed issue
+  ✓ executable payload #2 never reaches a canonical name
+  ✓ executable payload #2 is refused with a typed issue
+  ✓ executable payload #3 never reaches a canonical name
+  ✓ executable payload #3 is refused with a typed issue
+  ✓ executable payload #4 never reaches a canonical name
+  ✓ executable payload #4 is refused with a typed issue
+  ✓ executable payload #5 never reaches a canonical name
+  ✓ executable payload #5 is refused with a typed issue
+  ✓ executable payload #6 never reaches a canonical name
+  ✓ executable payload #6 is refused with a typed issue
+  ✓ inert label #0 stages without refusing a valid file
+  ✓ inert label #0 is never an object key at any depth
+  ✓ inert label #0 appears only in a declared text field
+  ✓ inert label #0 creates no canonical field
+  ✓ inert label #1 stages without refusing a valid file
+  ✓ inert label #1 is never an object key at any depth
+  ✓ inert label #1 appears only in a declared text field
+  ✓ inert label #1 creates no canonical field
+  ✓ inert label #2 stages without refusing a valid file
+  ✓ inert label #2 is never an object key at any depth
+  ✓ inert label #2 appears only in a declared text field
+  ✓ inert label #2 creates no canonical field
+  ✓ inert label #3 stages without refusing a valid file
+  ✓ inert label #3 is never an object key at any depth
+  ✓ inert label #3 appears only in a declared text field
+  ✓ inert label #3 creates no canonical field
+  ✓ hostile property key #0 is refused before it becomes a key
+  ✓ hostile property key #0 appears as no key in staging
+  ✓ hostile property key #1 is refused before it becomes a key
+  ✓ hostile property key #1 appears as no key in staging
+  ✓ hostile property key #2 is refused before it becomes a key
+  ✓ hostile property key #2 appears as no key in staging
+  ✓ hostile property key #3 is refused before it becomes a key
+  ✓ hostile property key #3 appears as no key in staging
+  ✓ a prototype key is refused as a property key
+  ✓ a plain property key is accepted
+  ✓ Object.prototype is untouched after every payload
+  ✓ only declared property mappings may enter canonical semantics
+  ✓ an external material is never promoted to an engineering material
+  ✓ a classification carries no engineering authority
+  ✓ a space name never authorises equipment
+
+== §68 — ARABIC AND SYMBOL ROUND TRIP ==
+  ✓ a model with Arabic and symbol names exports
+  ✓ the Arabic file parses back
+  ✓ every Arabic and symbol name survives the round trip unchanged
+  ✓ an apostrophe survives STEP escaping
+
+== §27/§28 — DIFF, PROPOSALS AND THE COMMIT PATH ==
+  ✓ a diff is produced
+  ✓ the diff writes nothing to the model
+  ✓ an identical file produces no object difference
+  ✓ every proposal starts pending or blocked
+  ✓ no proposal writes to the model
+  ✓ a commit with nothing accepted commits nothing
+  ✓ the model is untouched by diffing and proposing
+  ✓ a renamed space produces a name proposal
+  ✓ a pending proposal can be accepted
+  ✓ accepting alone still changes nothing
+  ✓ the import command source is one phase 5 already declares
+  ✓ every mapped import command is a phase 5 command type
+  ✓ the generated command carries no invented field
+  ✓ the accepted change commits through the authoring path
+  ✓ the commit produced a new revision
+  ✓ the commit records the previous and new hashes
+  ✓ the commit lists the changed objects
+  ✓ the commit appears in normal revision history
+  ✓ the source project object is not mutated in place
+
+== §54 — TEST I: A STALE IMPORT IS REFUSED ==
+  ✓ the fresh proposal set is current
+  ✓ after the model moves the import is stale
+  ✓ a stale import is never rebased or committed automatically
+  ✓ committing a stale import is refused
+
+== §33 — EXPORT STALENESS ==
+  ✓ a fresh export is current
+  ✓ an export is marked stale once the model moves
+  ✓ a stale export is never deleted or re-pointed
+
+== §55 — TEST J: CONFLICTS ARE CLASSIFIED ==
+  ✓ a duplicate GlobalId is refused
+  ✓ an unknown schema is refused, never reinterpreted
+  ✓ IFC2X3 is readable and reported as partially supported
+  ✓ IFC2X3 is never written
+  ✓ a clean file raises no blocking conflict
+  ✓ every declared conflict class has a blocking decision
+  ✓ an unresolved host raises a host conflict
+
+== §56 — TEST K: ADVERSARIAL GRAPHS FAIL SAFELY ==
+  ✓ a cyclic placement is detected and refused
+  ✓ a cyclic aggregation is detected and refused
+  ✓ a deep but legal placement chain still resolves
+  ✓ a placement chain beyond the declared depth is refused
+  ✓ a dangling reference is refused
+  ✓ a malformed numeric literal is refused
+  ✓ an unterminated file is refused
+  ✓ a file that is not STEP at all is refused
+  ✓ an empty file is refused
+  ✓ a non-finite coordinate is refused
+  ✓ an oversized string is refused
+  ✓ a file beyond the declared size is refused
+  ✓ a duplicate entity number is refused
+
+== §37 — NO REMOTE RESOURCE IS EVER FETCHED ==
+  ✓ the BIM module imports no network library
+  ✓ the BIM module contains no dynamic execution
+  ✓ no external reference scheme is allowed
+  ✓ a remote URL in a name is carried as inert text, never fetched
+
+== §9/§10 — PROVENANCE AND IDENTIFIERS ==
+  ✓ every provenance field is recorded
+  ✓ provenance names the source file hash and the entity
+  ✓ provenance survives mapping
+  ✓ the external identifier is kept apart from any canonical identifier
+  ✓ the identifier policy says an external id is never the canonical id
+  ✓ an exported GlobalId is derived from the model, the object and the schema
+  ✓ every generated GlobalId is 22 characters from the IFC alphabet
+
+== §13 — GEOREFERENCING STAYS SEPARATE ==
+  ✓ a file with no georeference is reported local only
+  ✓ georeference is never equated with local coordinates
+  ✓ no geospatial accuracy is claimed
+
+== §69 — THE MODEL HASH INVARIANT AT EVERY STAGE ==
+  ✓ villa: export leaves the hash unchanged
+  ✓ villa: staging leaves the hash unchanged
+  ✓ villa: validation leaves the hash unchanged
+  ✓ villa: diffing leaves the hash unchanged
+  ✓ villa: proposing leaves the hash unchanged
+  ✓ villa: every stage declares it writes nothing
+  ✓ hotel: export leaves the hash unchanged
+  ✓ hotel: staging leaves the hash unchanged
+  ✓ hotel: validation leaves the hash unchanged
+  ✓ hotel: diffing leaves the hash unchanged
+  ✓ hotel: proposing leaves the hash unchanged
+  ✓ hotel: every stage declares it writes nothing
+  ✓ clinic: export leaves the hash unchanged
+  ✓ clinic: staging leaves the hash unchanged
+  ✓ clinic: validation leaves the hash unchanged
+  ✓ clinic: diffing leaves the hash unchanged
+  ✓ clinic: proposing leaves the hash unchanged
+  ✓ clinic: every stage declares it writes nothing
+  ✓ warehouse: export leaves the hash unchanged
+  ✓ warehouse: staging leaves the hash unchanged
+  ✓ warehouse: validation leaves the hash unchanged
+  ✓ warehouse: diffing leaves the hash unchanged
+  ✓ warehouse: proposing leaves the hash unchanged
+  ✓ warehouse: every stage declares it writes nothing
+
+== §73 — AUDIT RECORDS HASHES, NEVER PAYLOADS ==
+  ✓ a declared audit event is recorded
+  ✓ an unsafe payload is stored as a hash, not raw
+  ✓ the audit declares it records no raw payload and no secret
+  ✓ an undeclared event is not recorded
+  ✓ a prototype key is dropped from the audit
+
+== §42 — EXPORT OPTIONS ARE REFUSED, NEVER DEFAULTED ==
+  ✓ an unknown export scope is refused
+  ✓ a spaces-only export really omits walls
+  ✓ a level filter really limits the export
+  ✓ excluding spaces really omits them
+  ✓ a different configuration yields a different config hash
+
+== §43 — THE EXPORT MANIFEST ==
+  ✓ every declared manifest field is present
+  ✓ the manifest names the model hash and revision
+  ✓ the manifest reports losses rather than hiding them
+  ✓ the manifest declares that it writes nothing
+
+== §45 — A LARGE MODEL IS PROCESSED WITHIN THE DECLARED LIMITS ==
+  ✓ a large synthetic model exports to a real IFC file
+  ✓ the large file carries thousands of entities
+  ✓ the large file has many levels and many spaces
+  ✓ the large file stays inside every declared limit
+  ✓ the large file parses back without a resource refusal
+  ✓ every entity in the large file was read
+  ✓ the large model survives a real round trip
+  ✓ no critical geometry was lost at scale
+  ✓ the large model was never mutated by any of this
+  ✓ a file beyond the declared byte limit is refused before parsing
+
+== §57 — THE PRODUCED FILE IS A REAL STEP PHYSICAL FILE ==
+  ✓ real IFC artifacts were produced on disk
+  ✓ clinic.ifc opens and closes as ISO-10303-21
+  ✓ clinic.ifc carries a HEADER and a DATA section
+  ✓ clinic.ifc declares its schema in FILE_SCHEMA
+  ✓ clinic.ifc is not JSON wearing an IFC name
+  ✓ clinic.ifc parses back with the real parser
+  ✓ clinic.ifc ships with an export manifest
+  ✓ clinic.ifc manifest hash matches the file on disk
+  ✓ clinic_glazed.ifc opens and closes as ISO-10303-21
+  ✓ clinic_glazed.ifc carries a HEADER and a DATA section
+  ✓ clinic_glazed.ifc declares its schema in FILE_SCHEMA
+  ✓ clinic_glazed.ifc is not JSON wearing an IFC name
+  ✓ clinic_glazed.ifc parses back with the real parser
+  ✓ clinic_glazed.ifc ships with an export manifest
+  ✓ clinic_glazed.ifc manifest hash matches the file on disk
+  ✓ hotel.ifc opens and closes as ISO-10303-21
+  ✓ hotel.ifc carries a HEADER and a DATA section
+  ✓ hotel.ifc declares its schema in FILE_SCHEMA
+  ✓ hotel.ifc is not JSON wearing an IFC name
+  ✓ hotel.ifc parses back with the real parser
+  ✓ hotel.ifc ships with an export manifest
+  ✓ hotel.ifc manifest hash matches the file on disk
+  ✓ hotel_glazed.ifc opens and closes as ISO-10303-21
+  ✓ hotel_glazed.ifc carries a HEADER and a DATA section
+  ✓ hotel_glazed.ifc declares its schema in FILE_SCHEMA
+  ✓ hotel_glazed.ifc is not JSON wearing an IFC name
+  ✓ hotel_glazed.ifc parses back with the real parser
+  ✓ hotel_glazed.ifc ships with an export manifest
+  ✓ hotel_glazed.ifc manifest hash matches the file on disk
+  ✓ office.ifc opens and closes as ISO-10303-21
+  ✓ office.ifc carries a HEADER and a DATA section
+  ✓ office.ifc declares its schema in FILE_SCHEMA
+  ✓ office.ifc is not JSON wearing an IFC name
+  ✓ office.ifc parses back with the real parser
+  ✓ office.ifc ships with an export manifest
+  ✓ office.ifc manifest hash matches the file on disk
+  ✓ synthetic_grid.ifc opens and closes as ISO-10303-21
+  ✓ synthetic_grid.ifc carries a HEADER and a DATA section
+  ✓ synthetic_grid.ifc declares its schema in FILE_SCHEMA
+  ✓ synthetic_grid.ifc is not JSON wearing an IFC name
+  ✓ synthetic_grid.ifc parses back with the real parser
+  ✓ synthetic_grid.ifc ships with an export manifest
+  ✓ synthetic_grid.ifc manifest hash matches the file on disk
+  ✓ synthetic_grid_large.ifc opens and closes as ISO-10303-21
+  ✓ synthetic_grid_large.ifc carries a HEADER and a DATA section
+  ✓ synthetic_grid_large.ifc declares its schema in FILE_SCHEMA
+  ✓ synthetic_grid_large.ifc is not JSON wearing an IFC name
+  ✓ synthetic_grid_large.ifc parses back with the real parser
+  ✓ synthetic_grid_large.ifc ships with an export manifest
+  ✓ synthetic_grid_large.ifc manifest hash matches the file on disk
+  ✓ villa.ifc opens and closes as ISO-10303-21
+  ✓ villa.ifc carries a HEADER and a DATA section
+  ✓ villa.ifc declares its schema in FILE_SCHEMA
+  ✓ villa.ifc is not JSON wearing an IFC name
+  ✓ villa.ifc parses back with the real parser
+  ✓ villa.ifc ships with an export manifest
+  ✓ villa.ifc manifest hash matches the file on disk
+  ✓ villa_glazed.ifc opens and closes as ISO-10303-21
+  ✓ villa_glazed.ifc carries a HEADER and a DATA section
+  ✓ villa_glazed.ifc declares its schema in FILE_SCHEMA
+  ✓ villa_glazed.ifc is not JSON wearing an IFC name
+  ✓ villa_glazed.ifc parses back with the real parser
+  ✓ villa_glazed.ifc ships with an export manifest
+  ✓ villa_glazed.ifc manifest hash matches the file on disk
+  ✓ villa_glazed_edited.ifc opens and closes as ISO-10303-21
+  ✓ villa_glazed_edited.ifc carries a HEADER and a DATA section
+  ✓ villa_glazed_edited.ifc declares its schema in FILE_SCHEMA
+  ✓ villa_glazed_edited.ifc is not JSON wearing an IFC name
+  ✓ villa_glazed_edited.ifc parses back with the real parser
+  ✓ villa_glazed_edited.ifc ships with an export manifest
+  ✓ villa_glazed_edited.ifc manifest hash matches the file on disk
+  ✓ villa_single_level.ifc opens and closes as ISO-10303-21
+  ✓ villa_single_level.ifc carries a HEADER and a DATA section
+  ✓ villa_single_level.ifc declares its schema in FILE_SCHEMA
+  ✓ villa_single_level.ifc is not JSON wearing an IFC name
+  ✓ villa_single_level.ifc parses back with the real parser
+  ✓ villa_single_level.ifc ships with an export manifest
+  ✓ villa_single_level.ifc manifest hash matches the file on disk
+  ✓ warehouse.ifc opens and closes as ISO-10303-21
+  ✓ warehouse.ifc carries a HEADER and a DATA section
+  ✓ warehouse.ifc declares its schema in FILE_SCHEMA
+  ✓ warehouse.ifc is not JSON wearing an IFC name
+  ✓ warehouse.ifc parses back with the real parser
+  ✓ warehouse.ifc ships with an export manifest
+  ✓ warehouse.ifc manifest hash matches the file on disk
+  ✓ warehouse_glazed.ifc opens and closes as ISO-10303-21
+  ✓ warehouse_glazed.ifc carries a HEADER and a DATA section
+  ✓ warehouse_glazed.ifc declares its schema in FILE_SCHEMA
+  ✓ warehouse_glazed.ifc is not JSON wearing an IFC name
+  ✓ warehouse_glazed.ifc parses back with the real parser
+  ✓ warehouse_glazed.ifc ships with an export manifest
+  ✓ warehouse_glazed.ifc manifest hash matches the file on disk
+
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+BIM EXCHANGE: 526 passed, 0 failed

@@ -1,0 +1,33 @@
+{
+  "schema": "acs.bim/1",
+  "import_id": "bimimp_8223c7bece45f369",
+  "target_model_hash": "c9bd6c8b563ba415b23e08009f28978e7797888de80f33335415a4033aa76ba2",
+  "target_revision_id": "rev:4db78d7fc4ddc61f",
+  "proposals": [
+    {
+      "proposal_id": "bimprop_2b08fba90383c2d4",
+      "state": "PENDING",
+      "change_type": "PROPERTY_CHANGED",
+      "canonical_id": "bld_0.flr_1.upper.polygon",
+      "authoring_id": "upper.polygon",
+      "source_entity_id": "#43",
+      "field": "name",
+      "old_value": "Upper room",
+      "proposed_value": "Ground room",
+      "mapping_basis": "SOURCE_GLOBAL_ID",
+      "severity": "INFO",
+      "loss": null,
+      "writes_to_model": false,
+      "blocked_reason": null
+    }
+  ],
+  "count": 1,
+  "by_state": {
+    "PENDING": 1,
+    "ACCEPTED": 0,
+    "REJECTED": 0,
+    "BLOCKED": 0
+  },
+  "writes_to_model": false,
+  "note": "no pending proposal writes to the model; acceptance only prepares an authoring command."
+}

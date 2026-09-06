@@ -1,0 +1,231 @@
+
+== §1 — NO DESIGN, NO CALCULATION, NO CODE ==
+  ✓ the MEP spec names no MEP standard
+  ✓ regulatory rule count is still zero
+  ✓ real occupancy classification count is still zero
+  ✓ browser spec is byte-identical to acs_mep.json
+  ✓ seven MEP element types declared
+  ✓ twenty-five system types declared
+  ✓ DESIGNED / COMPLIANT / ADEQUATE / BALANCED / CALCULATED are not model statuses
+  ✓ UNSAFE / CODE_VIOLATION / FIRE_VIOLATION are not severities
+  ✓ OPTIMIZED is not a routing status
+  ✓ rule and code_required are not provenance values
+  ✓ no compiled MEP element carries a load, flow, size-calc or compliance field
+  ✓ no compiled output uses MEP-compliance language
+  ✓ the language actually used is representational
+
+== §2 — NO SYSTEM IS INFERRED FROM BUILDING TYPE ==
+  ✓ a villa gets no sprinkler system it did not declare
+  ✓ a hotel gets no emergency power it did not declare
+  ✓ a warehouse gets no fire-water system it did not declare
+  ✓ a model with no MEP block produces no MEP element
+  ✓ and that model is still perfectly valid
+  ✓ every system present is present because the fixture declared it
+  ✓ the same compiler serves every programme
+
+== §3 — PROVENANCE AND STATUS ==
+  ✓ every element records a provenance from the declared vocabulary
+  ✓ test_fixture and system_default are not verified sources
+  ✓ an undeclared status is derived, never assumed
+  ✓ the model is never marked regulatory
+  ✓ synthetic fixtures declare themselves synthetic
+
+== §4 — SYSTEMS, DISCIPLINES AND MEDIA ==
+  ✓ five villa systems compile
+  ✓ each system maps to a declared discipline
+  ✓ lighting is separated from general power for display
+  ✓ a medium is carried as a factual label
+  ✓ a medium attaches no pressure or flow assumption
+  ✓ an unknown system type is reported and mapped to OTHER
+  ✓ an unknown medium is reported, not invented
+
+== §5 — NODES, SEGMENTS AND ROUTING ==
+  ✓ seven villa nodes compile
+  ✓ a node takes its elevation from the architectural level table
+  ✓ a node carries no capacity
+  ✓ a routed segment keeps its supplied polyline
+  ✓ its length is measured from the polyline, not assumed
+  ✓ a segment with endpoints but no geometry stays UNROUTED
+  ✓ and NO path is fabricated for it
+  ✓ the unrouted state is reported as INFO with an explicit reason
+  ✓ the relationship layer says UNROUTED rather than inventing a connection
+  ✓ a vertical riser segment is representable in real XYZ
+
+== §6 — DISPLAY FALLBACK IS NEVER AN ENGINEERING VALUE ==
+  ✓ a segment with no stated size keeps size=null
+  ✓ but still yields render geometry
+  ✓ and that geometry is labelled display_fallback
+  ✓ the fallback never reaches the rule inputs
+  ✓ a sized segment is model-sourced instead
+  ✓ equipment with no dimensions draws from a fallback, flagged as such
+  ✓ the spec states the fallback policy in writing
+  ✓ compiling does not write a fallback back into the model
+  ✓ no invented voltage, breaker, flow, head or capacity appears in any field
+
+== §7 — EQUIPMENT, TERMINALS AND PORTS ==
+  ✓ equipment types come from the declared list
+  ✓ no rating, capacity or duty is produced
+  ✓ a stated property is kept with its own provenance
+  ✓ ports are recorded only where declared
+  ✓ an unrecognised port type is reported, not accepted
+  ✓ plumbing fixtures are represented as terminals, not a parallel model
+  ✓ air devices are represented as terminals too
+  ✓ no CFM, L/s, throw or neck size is fabricated for an air device
+  ✓ an unrecognised terminal type is reported
+
+== §8 — PHASE 1 ADAPTER PRESERVES PROVENANCE ==
+  ✓ Phase 1 points are adapted into represented terminals
+  ✓ the adapter creates no duplicate semantic object — each names its origin point
+  ✓ a system-generated smoke detector stays system_default
+  ✓ a user-supplied point keeps its user provenance
+  ✓ NO adapted terminal is ever raised to a code requirement
+  ✓ code_required is not even a value the adapter could write
+  ✓ a light point becomes a light fixture, not a lighting design
+  ✓ the adapter can be turned off and changes nothing else
+  ✓ the original model is not modified by adaptation
+
+== §9 — RISERS AND SHAFT ASSOCIATION ==
+  ✓ four risers compile across three levels
+  ✓ a riser spanning levels emits RISER_CONNECTS_LEVELS
+  ✓ an architectural core is NOT an MEP riser by itself
+  ✓ the one declared association records its evidence source
+  ✓ the spec states the rule in writing
+  ✓ a riser outside the core it names is reported
+  ✓ an unresolvable riser level is an ERROR
+
+== §10 — RELATIONSHIPS ARE NOT SERVICE ADEQUACY ==
+  ✓ every relationship type is in the declared vocabulary
+  ✓ every relationship carries the no-adequacy note
+  ✓ a terminal in a room yields SYSTEM_HAS_TERMINAL_IN with an explicit disclaimer
+  ✓ SYSTEM_SERVES_SPACE says representation only
+  ✓ no relationship claims a room receives adequate anything
+  ✓ circuits are never grouped automatically
+  ✓ a declared circuit IS represented when the model supplies one
+  ✓ relationship ids are unique and namespaced
+
+== §11 — ARCHITECTURAL AND STRUCTURAL INTERFERENCE ==
+  ✓ a duct crossing a wall with no penetration is reported
+  ✓ a pipe crossing a slab with no penetration is reported
+  ✓ a segment crossing a structural beam is reported
+  ✓ a segment crossing a structural column is reported
+  ✓ equipment outside its assigned space is reported
+  ✓ a terminal outside its assigned space is reported
+  ✓ a route leaving the building footprint is reported
+  ✓ an MEP element inside a stair void is reported
+  ✓ every interference is a model-quality severity, never a code verdict
+  ✓ a beam clash says the member is not cut and the route is not redesigned
+  ✓ no clash modifies the architectural model
+  ✓ no clash modifies the structural model
+  ✓ a declared penetration suppresses the crossing report at that host
+
+== §12 — PENETRATIONS INFER NOTHING ==
+  ✓ a declared penetration compiles and resolves its host
+  ✓ it infers no fire stopping, sleeve or reinforcement
+  ✓ the spec repeats the rule
+  ✓ an unresolvable penetration host is reported
+  ✓ an unresolvable penetration segment is an ERROR
+  ✓ PENETRATION_THROUGH is a factual edge only
+
+== §13 — FIRE SYSTEMS ARE DATA ONLY ==
+  ✓ a fire alarm system is representable
+  ✓ smoke detectors are represented as terminals
+  ✓ no coverage, spacing, zoning or hydraulic field exists anywhere
+  ✓ the spec states there is no fire/life-safety engine
+  ✓ the compiled model repeats it
+  ✓ sprinkler and fire-water are declarable but never auto-created
+  ✓ no fire element carries a compliance or evaluation verdict
+
+== §14 — LOW CURRENT / ICT ==
+  ✓ a data network system is representable
+  ✓ a data outlet is a represented terminal
+  ✓ no coverage or network design is produced
+  ✓ CCTV, Wi-Fi, access control, intercom and BMS are all representable types
+
+== §15 — CLINIC MEDICAL GAS IS EXPLICITLY SYNTHETIC ==
+  ✓ the medical gas system is present only because the fixture declares it
+  ✓ it is clearly labelled test-only and synthetic
+  ✓ no healthcare compliance is implied anywhere
+  ✓ the only mentions of compliance are explicit denials
+
+== §16 — INTEGRITY VALIDATION ==
+  ✓ the deliberately broken fixture triggers every integrity check
+  ✓ every issue code is declared in the spec with a severity
+  ✓ issues are ordered ERROR first, then WARNING, then INFO
+  ✓ no issue is a code-compliance verdict
+  ✓ an unknown MEP collection is reported and NOT interpreted
+  ✓ a foreign building id is caught rather than silently re-namespaced
+  ✓ a NaN coordinate is rejected rather than propagated
+
+== §17 — DETERMINISM, NAMESPACING AND TRANSFORMS ==
+  ✓ compiling twice gives byte-identical output
+  ✓ the compiler never mutates the model it reads
+  ✓ a second building namespaces every MEP id
+  ✓ two buildings can never collide on an id
+  ✓ a space reference belonging to another building is caught, not silently accepted
+  ✓ a transform never changes the compiled geometry
+  ✓ the building transform is applied on read
+  ✓ rotation is applied about the building origin
+  ✓ no second coordinate convention is introduced
+
+== §18 — REVISION HASH ==
+  ✓ moving equipment changes the model hash
+  ✓ changing a pipe route changes the model hash
+  ✓ adding duct route geometry changes the model hash
+  ✓ removing a terminal changes the model hash
+  ✓ changing a system property changes the model hash
+  ✓ adding a riser changes the model hash
+  ✓ toggling layer visibility does NOT change the model hash
+  ✓ moving the camera still does not change the hash
+  ✓ compiling the MEP model does not change the hash
+
+== §19 — RENDER AND EXPORT ==
+  ✓ render items use the MEP| naming convention
+  ✓ each discipline requested by the phase has its own display layer
+  ✓ the fire layer name says data only, with no safety engine
+  ✓ every render item declares where its geometry came from
+  ✓ render items never carry an engineering verdict
+  ✓ colour marks the discipline only, never a state
+  ✓ an unrouted segment produces no render geometry
+
+== §20 — RULE ENGINE CONTRACT (INPUTS ONLY) ==
+  ✓ system existence is exposed as a factual input
+  ✓ terminal and equipment counts are exposed
+  ✓ segment size is exposed only when it is real
+  ✓ serves_space is exposed as a factual relation
+  ✓ no regulatory rule was added anywhere
+  ✓ the rule inputs contain no threshold, limit or verdict
+
+== §21 — NO ARCHITECTURAL / STRUCTURAL / NAV / EGRESS REGRESSION ==
+  ✓ adding an MEP block changes no architectural element
+  ✓ adding an MEP block changes no structural element
+  ✓ relationships are identical with and without the MEP block
+  ✓ navigation is identical with and without the MEP block
+  ✓ egress is identical with and without the MEP block
+  ✓ walking distance is unchanged — a duct is not an obstacle in this phase
+  ✓ and the model says so in writing
+
+== §22 — PROGRAMME NEUTRALITY ==
+  ✓ villa_mep: compiles through the same element vocabulary
+  ✓ villa_mep: every issue code is declared
+  ✓ villa_mep: no element claims adequacy or compliance
+  ✓ hotel_mep: compiles through the same element vocabulary
+  ✓ hotel_mep: every issue code is declared
+  ✓ hotel_mep: no element claims adequacy or compliance
+  ✓ clinic_mep: compiles through the same element vocabulary
+  ✓ clinic_mep: every issue code is declared
+  ✓ clinic_mep: no element claims adequacy or compliance
+  ✓ warehouse_mep: compiles through the same element vocabulary
+  ✓ warehouse_mep: every issue code is declared
+  ✓ warehouse_mep: no element claims adequacy or compliance
+  ✓ mixed_mep: compiles through the same element vocabulary
+  ✓ mixed_mep: every issue code is declared
+  ✓ mixed_mep: no element claims adequacy or compliance
+  ✓ three different programmes share one unchanged MEP model
+  ✓ no MEP property changed with the occupancy or programme
+
+== §23 — SECURITY ==
+  ✓ no eval / Function in the MEP layer
+  ✓ no network call in the MEP layer
+  ✓ a hostile element id cannot escape into markup
+
+MEP: 183 passed, 0 failed

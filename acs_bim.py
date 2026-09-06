@@ -2041,6 +2041,38 @@ def _wall_key(x, z, rot, length):
             round(float(rot or 0) % 180.0, 2), round(float(length or 0), 3))
 
 
+def _exchange_footprint(record, rectangle, kind):
+    """Actual plan regions; absent or invalid geometry is never an empty match."""
+    try:
+        if kind == "space" and "polygon" in record:
+            rings = [record["polygon"]]
+        elif "cells" in record:
+            rings = record["cells"]
+        elif "polygon" in record:
+            rings = [record["polygon"]]
+        else:
+            if (not isinstance(rectangle, (list, tuple)) or len(rectangle) != 4
+                    or any(isinstance(v, bool) or not isinstance(v, (int, float))
+                           or not math.isfinite(v) for v in rectangle)
+                    or rectangle[2] <= 0 or rectangle[3] <= 0):
+                return None
+            rings = [POLY.rect_ring(rectangle)]
+        if not isinstance(rings, (list, tuple)) or not rings:
+            return None
+        if sum(len(r) for r in rings) > int(LIMITS["max_geometry_vertices"]):
+            return None
+        return [POLY.ring_validated(r) for r in rings]
+    except (ValueError, TypeError):
+        return None
+
+
+def _same_footprint(a, b):
+    if a is None or b is None:
+        return False
+    difference = POLY.cells(a, b) + POLY.cells(b, a)
+    return sum(abs(POLY.signed_area(c)) for c in difference) <= TOL["area_tolerance_m2"]
+
+
 def roundtrip_report(project, staging, options=None):
     """تقرير أمانة الذهاب والإياب. الفقد يُصنَّف ولا يُخفى، والحرج لا يمرّ."""
     built = build_exchange(project, options)
@@ -2089,6 +2121,66 @@ def roundtrip_report(project, staging, options=None):
     if not ok:
         loss("CRITICAL_GEOMETRY_LOSS", "ERROR", None,
              "level elevations differ beyond the declared tolerance")
+
+    # حدود الفراغات والبلاطات: مطابقة أحادية ثم فرق المساحات الحقيقي، لا الصندوق.
+    for kind, sources, staged in (("space", ex["spaces"], s_spaces),
+                                  ("slab", ex["slabs"], s_slabs)):
+        available = set(range(len(staged)))
+        footprints, elevations = {}, {}
+        for i, product in enumerate(staged):
+            g = product.get("geometry") or {}
+            footprints[i] = (_exchange_footprint(g, [g.get(k) for k in ("x", "z", "w", "d")], kind)
+                             if product.get("mapping_class") == "PARAMETRIC_MAPPED" else None)
+            elevation = g.get("elevation")
+            if elevation is None and kind == "space":
+                xyz = (product.get("world") or {}).get("xyz") or []
+                elevation = xyz[2] if len(xyz) == 3 else None
+            elevations[i] = _num(elevation)
+        matched, missing, shape_errors, elevation_errors, dimension_errors = 0, 0, 0, 0, 0
+        for source in sources:
+            outline = _exchange_footprint(source, source.get("footprint" if kind == "space" else "outline"), kind)
+            gid = ifc_guid({"m": ex["model_hash"], "id": source["canonical_id"],
+                            "s": staging["bim_schema"]})
+            candidates = [i for i in available if staged[i].get("external_global_id") == gid]
+            if not candidates:
+                candidates = [i for i in available
+                              if elevations[i] is not None
+                              and _near(source["elevation"], elevations[i], tol["elevation_tolerance_m"])
+                              and _same_footprint(outline, footprints[i])]
+            if len(candidates) != 1:
+                missing += 1
+                loss("CRITICAL_GEOMETRY_LOSS", "ERROR", source["canonical_id"],
+                     "%s geometry has no unique round-trip match" % kind)
+                continue
+            i = candidates[0]
+            available.remove(i)
+            matched += 1
+            product = staged[i]
+            g = product.get("geometry") or {}
+            if not _same_footprint(outline, footprints[i]):
+                shape_errors += 1
+                loss("CRITICAL_GEOMETRY_LOSS", "ERROR", product["source_entity_id"],
+                     "%s footprint is missing, approximated or differs beyond the declared area tolerance" % kind)
+            if elevations[i] is None or not _near(source["elevation"], elevations[i], tol["elevation_tolerance_m"]):
+                elevation_errors += 1
+                loss("CRITICAL_GEOMETRY_LOSS", "ERROR", product["source_entity_id"],
+                     "%s elevation is missing or differs beyond the declared tolerance" % kind)
+            field = "height" if kind == "space" else "thickness"
+            if (kind == "space" or source.get("thickness_known")) and (
+                    _num(g.get(field)) is None or not _near(source[field], g.get(field), tol["dimension_tolerance_m"])):
+                dimension_errors += 1
+                loss("CRITICAL_GEOMETRY_LOSS", "ERROR", product["source_entity_id"],
+                     "%s %s is missing or differs beyond the declared tolerance" % (kind, field))
+        for i in sorted(available):
+            loss("CRITICAL_GEOMETRY_LOSS", "ERROR", staged[i]["source_entity_id"],
+                 "%s geometry has no unique source match" % kind)
+        unmatched = missing + len(available)
+        compared[kind + "_footprints"] = {"matched": matched, "unmatched": unmatched,
+                                          "mismatched": shape_errors, "equal": not (unmatched or shape_errors)}
+        compared[kind + "_elevations"] = {"mismatched": elevation_errors,
+                                          "equal": not (unmatched or elevation_errors)}
+        compared[kind + "_dimensions"] = {"mismatched": dimension_errors,
+                                          "equal": not (unmatched or dimension_errors)}
 
     # الجدران: موضع وطول وسماكة وارتفاع
     src_walls = {}
@@ -2183,7 +2275,7 @@ def roundtrip_report(project, staging, options=None):
     total = len(compared)
     equal = len([k for k in compared if compared[k].get("equal")])
     geom_keys = [k for k in compared if "position" in k or "elevation" in k
-                 or "dimension" in k or k.endswith("_count")]
+                 or "dimension" in k or k.endswith(("_count", "_footprints"))]
     geom_equal = len([k for k in geom_keys if compared[k].get("equal")])
     rel_keys = ["containment", "host_relationships"]
     rel_equal = len([k for k in rel_keys if compared.get(k, {}).get("equal")])

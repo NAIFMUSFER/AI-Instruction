@@ -1,0 +1,174 @@
+
+== §1 — SPEC INTEGRITY AND NO-DRIFT ==
+  ✓ browser spec is byte-identical to acs_coord.json
+  ✓ schema and detector version are pinned
+  ✓ severities are INFO/WARNING/ERROR only — no UNSAFE, no FATAL, no VIOLATION
+  ✓ every clash type has a declared severity
+  ✓ an unknown clash type never silently becomes an ERROR
+  ✓ RESOLVED is not an automatic status
+  ✓ only cross-discipline pairs are declared
+  ✓ the spec names no code, standard or authority
+  ✓ no auto-fix vocabulary is offered as an outcome
+
+== §2 — TEST A: SERVICE THROUGH STRUCTURE ==
+  ✓ a duct crossing a beam is reported as a HARD_CLASH
+  ✓ the clash pairs MEP with STRUCTURE
+  ✓ the clash carries a positive intersection volume
+  ✓ the clash carries both world AABBs as evidence
+  ✓ a clash from stated dimensions is labelled stated
+  ✓ the clash id is deterministic across two runs
+  ✓ the clash never claims the duct was moved or the beam resized
+
+== §3 — TEST B/C: PENETRATIONS ==
+  ✓ a pipe crossing a wall with no penetration reports OPENING_REQUIRED
+  ✓ OPENING_REQUIRED is a finding, never an instruction
+  ✓ no opening was actually created in the model
+  ✓ a declared penetration that covers the crossing suppresses the finding
+  ✓ the suppression is recorded, never silent
+  ✓ the suppression names both elements and the penetration
+  ✓ a penetration that does not cover the crossing reports PENETRATION_UNRESOLVED
+  ✓ a represented penetration never claims approval or firestopping
+  ✓ no sleeve size is ever produced
+
+== §4 — TEST D/E: HOSTS AND DUPLICATES ==
+  ✓ a column standing in a declared door opening is reported
+  ✓ the same column is also reported against the host wall
+  ✓ nothing claims the door is blocked, unsafe or non-compliant
+  ✓ two FLS devices sharing one source element report DUPLICATE_OCCUPANCY
+  ✓ DUPLICATE_OCCUPANCY is INFO, never an error
+  ✓ an FLS device never clashes with the MEP element it references
+
+== §5 — TEST F: WORLD COORDINATES, NOT LOCAL ==
+  ✓ a rotated building finds the same conflicts
+  ✓ a translated and rotated building finds the same conflicts
+  ✓ rotation actually moved the geometry (no world-axis shortcut)
+  ✓ rotated coordinates stay finite and quantised
+  ✓ a rotated box uses the separating-axis test, not its AABB
+
+== §6 — TEST G: PROJECT SCOPE ==
+  ✓ two distant buildings produce no cross-building clash
+  ✓ two overlapping buildings do produce cross-building clashes
+  ✓ every clash names the building of each side
+  ✓ two buildings with identical local coordinates are not merged
+  ✓ placement is part of the snapshot identity
+  ✓ a project snapshot has no single revision hash
+  ✓ a project snapshot still has a deterministic project hash
+
+== §7 — TEST H: SNAPSHOT INTEGRITY AND RECONCILIATION ==
+  ✓ an unchanged model reports CURRENT
+  ✓ a changed model reports STALE_MODEL_CHANGED, never a silent re-run
+  ✓ a stale snapshot is never presented as current
+  ✓ a snapshot with no hash is UNVERIFIABLE, never assumed current
+  ✓ a clash whose geometry vanished is RESOLVED_BY_MODEL_CHANGE
+  ✓ reconciliation never claims the change was correct
+  ✓ a clash present in both snapshots is PERSISTING
+  ✓ a clash appearing only in the newer snapshot is NEW
+  ✓ an acknowledged clash that disappears becomes OBSOLETE, not resolved
+  ✓ reconciliation states are exactly the declared four
+
+== §8 — TEST I: SEMANTIC AND REFERENCE INTEGRITY ==
+  ✓ a dangling cross-discipline reference is reported
+  ✓ an unresolved penetration host is a semantic conflict
+  ✓ reference findings are ERROR severity
+  ✓ a reference finding carries the reporting discipline and its source code
+  ✓ reference findings are re-classified, never invented here
+  ✓ a reference finding is not dressed as a safety judgement
+
+== §9 — EXEMPTIONS ARE SEMANTIC, NEVER TYPE-BLIND ==
+  ✓ every applied exemption is a declared kind
+  ✓ a column crossing the slab of its own levels is exempt
+  ✓ a column crossing a slab outside its own levels is NOT exempt
+  ✓ an opening is exempt only inside its declared host wall
+  ✓ a declared void or core has no matter to collide with
+  ✓ a void suppression is recorded on the pair it suppressed
+  ✓ no exemption is granted on element kind alone
+
+== §10 — CLEARANCE ONLY WHERE STATED ==
+  ✓ a stated clearance produces a CLEARANCE_CLASH
+  ✓ the clash carries the stated clearance and nothing invented
+  ✓ CLEARANCE_CLASH is INFO, never an error
+  ✓ no clearance is invented where none is stated
+  ✓ a stated clearance widens the broad phase so the pair is not missed
+  ✓ no maintenance, service or code clearance appears anywhere
+
+== §11 — NO AUTO-FIX, NO REDESIGN, NO MUTATION ==
+  ✓ no snapshot contains an auto-fix, reroute or resize claim
+  ✓ no snapshot claims compliance, safety or adequacy
+  ✓ every snapshot declares compliance NOT_EVALUATED
+  ✓ the detector mutates no source model
+  ✓ the detector mutates no compiled discipline model
+  ✓ a status change is only ever an explicit human decision
+  ✓ an accepted decision records who decided and on what basis
+  ✓ a status change on an unknown clash is refused
+
+== §12 — NAVIGATION AND EGRESS ARE UNTOUCHED ==
+  ✓ the spec states coordination does not affect navigation
+  ✓ no snapshot emits a route, path or reroute
+  ✓ a column blocking a door does not alter the door relationship
+
+== §13 — EVIDENCE AND GEOMETRY CONFIDENCE ==
+  ✓ every geometric clash carries an intersection with positive volume
+  ✓ every clash carries the detector version
+  ✓ every geometric clash declares its geometry confidence
+  ✓ a fallback-sized clash names which side fell back
+  ✓ a display fallback is never promoted to a stated dimension
+  ✓ proximity alone never produces a hard clash
+  ✓ a shared face is contact, not intersection
+
+== §14 — BROAD PHASE AND SCALE ==
+  ✓ an empty model yields no pairs and no cells
+  ✓ the grid cell size comes from the spec, not from code
+  ✓ same-discipline pairs are never candidates
+  ✓ cross-discipline pairs sharing a cell are candidates
+  ✓ an oversized element is still compared against everything
+  ✓ the statistics report the real candidate-pair count, never a rounded claim
+  ✓ the busiest cell occupancy is reported rather than hidden
+
+== §15 — DEBUG VIEW AND EXPORT ==
+  ✓ the debug view highlights exactly the two elements
+  ✓ the debug view provides an intersection marker box
+  ✓ the debug view states it changes nothing in the normal model
+  ✓ an unknown clash has no debug view
+  ✓ the export is marked derived
+  ✓ the export says it is never persisted as model truth
+  ✓ the export carries the snapshot and model hashes
+  ✓ the export carries every clash with its evidence
+
+== §16 — RULE INPUTS ARE FACTS, NOT RULES ==
+  ✓ rule inputs are counts and existence flags only
+  ✓ every declared rule input family is present
+  ✓ a count is never compared to a threshold
+  ✓ a model with no clashes reports zero, not missing
+  ✓ every clash type has a count, including the zero ones
+
+== §17 — EMPTY AND DEGENERATE MODELS ==
+  ✓ a model with no structure, MEP or fire data still compiles
+  ✓ an empty model is not reported as coordinated or clear
+  ✓ a model with MEP but no structure produces no structural clash
+  ✓ the broken MEP fixture still yields a snapshot, not a crash
+  ✓ a model with no MEP at all yields no MEP clash
+
+== §18 — SORTING, IDS AND DETERMINISM ==
+  ✓ the clash id is a sha256-derived deterministic token
+  ✓ the same conflict in the same elements always has the same id
+  ✓ a different conflict type produces a different id
+  ✓ clash ids are unique inside a snapshot
+  ✓ clashes are sorted deterministically by severity then type then element
+  ✓ two runs of the whole fixture set are byte-identical
+
+== §19 — FILTERS AND LOOKUP ==
+  ✓ filtering by discipline pair returns only that pair
+  ✓ filtering by severity returns only that severity
+  ✓ filtering by an unknown building returns nothing
+  ✓ filtering by the real building returns everything
+  ✓ lookup by id returns the clash and nothing for an unknown id
+
+== §20 — SUMMARY HONESTY ==
+  ✓ the summary never claims the model is coordinated or clear
+  ✓ the summary states detection and traceability only
+  ✓ the summary counts match the clash list
+  ✓ the summary reports exemptions rather than hiding them
+  ✓ the summary reports geometry confidence
+
+──────────────────────────────────────────────
+COORDINATION FOUNDATION: 131 passed, 0 failed

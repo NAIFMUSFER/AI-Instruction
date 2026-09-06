@@ -1,0 +1,831 @@
+{
+  "valid": true,
+  "issues": [],
+  "staging": {
+    "schema": "acs.bim/1",
+    "import_id": "bimimp_8223c7bece45f369",
+    "status": "STAGED",
+    "source": {
+      "file_name": null,
+      "file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+      "byte_length": 7474,
+      "format": "IFC_SPF"
+    },
+    "bim_schema": "IFC4",
+    "schema_support": "SUPPORTED",
+    "units": {
+      "length": {
+        "name": "METRE",
+        "to_metre": 1.0
+      },
+      "angle": {
+        "name": "DEGREE",
+        "to_radian": 0.017453
+      },
+      "canonical_length": "METRE",
+      "issues": []
+    },
+    "coordinate_system": {
+      "policy": "RESOLVE_TO_PROJECT_WORLD",
+      "resolved_to": "PROJECT_WORLD",
+      "length_unit_to_metre": 1.0
+    },
+    "georeference": {
+      "state": "LOCAL_ONLY",
+      "latitude_dms": null,
+      "longitude_dms": null,
+      "map_conversion_present": false,
+      "equivalent_to_local_coordinates": false,
+      "geospatial_accuracy_claimed": false
+    },
+    "entities": [
+      {
+        "source_entity_id": "#19",
+        "entity_type": "IFCPROJECT",
+        "support": "SUPPORTED",
+        "name": "Project",
+        "external_global_id": "01Gxpg_0ElCV6x7UFClcsS",
+        "canonical_kind": "project",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": null,
+        "geometry": {},
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "01Gxpg_0ElCV6x7UFClcsS",
+          "entity_type": "IFCPROJECT",
+          "source_entity_id": "#19",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": null,
+        "containment_basis": "UNRESOLVED"
+      },
+      {
+        "source_entity_id": "#21",
+        "entity_type": "IFCSITE",
+        "support": "SUPPORTED",
+        "name": "Site",
+        "external_global_id": "25m0MUjFgKwnfmLgFzhTBA",
+        "canonical_kind": "site",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 1,
+          "chain": 1
+        },
+        "geometry": {},
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "25m0MUjFgKwnfmLgFzhTBA",
+          "entity_type": "IFCSITE",
+          "source_entity_id": "#21",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": null,
+        "containment_basis": "UNRESOLVED"
+      },
+      {
+        "source_entity_id": "#23",
+        "entity_type": "IFCBUILDING",
+        "support": "SUPPORTED",
+        "name": "bld_0",
+        "external_global_id": "2axmLWCf$QBzgfNpgHWos4",
+        "canonical_kind": "building",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 2,
+          "chain": 2
+        },
+        "geometry": {},
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "2axmLWCf$QBzgfNpgHWos4",
+          "entity_type": "IFCBUILDING",
+          "source_entity_id": "#23",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": null,
+        "containment_basis": "UNRESOLVED"
+      },
+      {
+        "source_entity_id": "#29",
+        "entity_type": "IFCBUILDINGSTOREY",
+        "support": "SUPPORTED",
+        "name": "Level 0",
+        "external_global_id": "028uy9Emxpq3635ECe5xTR",
+        "canonical_kind": "level",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            7.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 3,
+          "chain": 3
+        },
+        "geometry": {
+          "elevation": 7.0,
+          "elevation_source": "MODEL"
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "028uy9Emxpq3635ECe5xTR",
+          "entity_type": "IFCBUILDINGSTOREY",
+          "source_entity_id": "#29",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": null,
+        "containment_basis": "UNRESOLVED"
+      },
+      {
+        "source_entity_id": "#33",
+        "entity_type": "IFCBUILDINGSTOREY",
+        "support": "SUPPORTED",
+        "name": "Level 1",
+        "external_global_id": "0eFebWRjB0wzge_$RgC9Sa",
+        "canonical_kind": "level",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            10.2
+          ],
+          "rot_deg": 0.0,
+          "depth": 3,
+          "chain": 3
+        },
+        "geometry": {
+          "elevation": 10.2,
+          "elevation_source": "MODEL"
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "0eFebWRjB0wzge_$RgC9Sa",
+          "entity_type": "IFCBUILDINGSTOREY",
+          "source_entity_id": "#33",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": null,
+        "containment_basis": "UNRESOLVED"
+      },
+      {
+        "source_entity_id": "#43",
+        "entity_type": "IFCSPACE",
+        "support": "SUPPORTED",
+        "name": "Ground room",
+        "external_global_id": "2t4U1F0JnnLlnCy9$T5A8g",
+        "canonical_kind": "space",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            7.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "w": 6.0,
+          "d": 6.0,
+          "height": 3.0
+        },
+        "properties": {
+          "number": "polygon"
+        },
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "2t4U1F0JnnLlnCy9$T5A8g",
+          "entity_type": "IFCSPACE",
+          "source_entity_id": "#43",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#29",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#49",
+        "entity_type": "IFCSPACE",
+        "support": "SUPPORTED",
+        "name": "Upper room",
+        "external_global_id": "109bs6KGRbmxG2wshf7fMZ",
+        "canonical_kind": "space",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            10.2
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "w": 6.0,
+          "d": 6.0,
+          "height": 3.0
+        },
+        "properties": {
+          "number": "polygon"
+        },
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "109bs6KGRbmxG2wshf7fMZ",
+          "entity_type": "IFCSPACE",
+          "source_entity_id": "#49",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#33",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#61",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_0.plan.polygon.wall_N",
+        "external_global_id": "3X1XaBrlfp650qkpCKiUAn",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            7.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "rot_deg": 0.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "3X1XaBrlfp650qkpCKiUAn",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#61",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#29",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#71",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_0.plan.polygon.wall_S",
+        "external_global_id": "1oENrI1f7o5qtF7GU_zR04",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            6.0,
+            7.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 6.0,
+          "rot_deg": 0.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "1oENrI1f7o5qtF7GU_zR04",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#71",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#29",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#81",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_0.plan.polygon.wall_W",
+        "external_global_id": "0I89KOnsV3OhQJnNiaFgEz",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            7.0
+          ],
+          "rot_deg": 90.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "rot_deg": 90.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "0I89KOnsV3OhQJnNiaFgEz",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#81",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#29",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#91",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_0.plan.polygon.wall_E",
+        "external_global_id": "2vDKsKtG1tx3Oy06L3XnQN",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            6.0,
+            0.0,
+            7.0
+          ],
+          "rot_deg": 90.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 6.0,
+          "z": 0.0,
+          "rot_deg": 90.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "2vDKsKtG1tx3Oy06L3XnQN",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#91",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#29",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#99",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_1.upper.polygon.wall_N",
+        "external_global_id": "2GjKzHFZjFz4YY$7gCmhkQ",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            10.2
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "rot_deg": 0.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "2GjKzHFZjFz4YY$7gCmhkQ",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#99",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#33",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#107",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_1.upper.polygon.wall_S",
+        "external_global_id": "2hJJ5AI4FLVokSuc5vN5JO",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            6.0,
+            10.2
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 6.0,
+          "rot_deg": 0.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "2hJJ5AI4FLVokSuc5vN5JO",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#107",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#33",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#115",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_1.upper.polygon.wall_W",
+        "external_global_id": "0HFrchdqGCmclPBzVHDqAo",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            10.2
+          ],
+          "rot_deg": 90.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "rot_deg": 90.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "0HFrchdqGCmclPBzVHDqAo",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#115",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#33",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#123",
+        "entity_type": "IFCWALL",
+        "support": "PARTIALLY_SUPPORTED",
+        "name": "bld_0.flr_1.upper.polygon.wall_E",
+        "external_global_id": "3N467LVn$GfbrJ_219o4r9",
+        "canonical_kind": "wall",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            6.0,
+            0.0,
+            10.2
+          ],
+          "rot_deg": 90.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 6.0,
+          "z": 0.0,
+          "rot_deg": 90.0,
+          "length": 6.0,
+          "thickness": 0.15,
+          "thickness_known": true,
+          "height": 3.0
+        },
+        "properties": {},
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "3N467LVn$GfbrJ_219o4r9",
+          "entity_type": "IFCWALL",
+          "source_entity_id": "#123",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#33",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#131",
+        "entity_type": "IFCSLAB",
+        "support": "SUPPORTED",
+        "name": "bld_0.flr_0.slab",
+        "external_global_id": "0cQcq8gQVPYkrsquDgc34g",
+        "canonical_kind": "slab",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            7.0
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "w": 6.0,
+          "d": 6.0,
+          "thickness": 0.2,
+          "thickness_known": true,
+          "elevation": 7.0
+        },
+        "properties": {
+          "predefined_type": "FLOOR"
+        },
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "0cQcq8gQVPYkrsquDgc34g",
+          "entity_type": "IFCSLAB",
+          "source_entity_id": "#131",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#29",
+        "containment_basis": "IFC_RELATIONSHIP"
+      },
+      {
+        "source_entity_id": "#137",
+        "entity_type": "IFCSLAB",
+        "support": "SUPPORTED",
+        "name": "bld_0.flr_1.slab",
+        "external_global_id": "1MMoTwf7I6K_0rSD5d2LcZ",
+        "canonical_kind": "slab",
+        "mapping_class": "PARAMETRIC_MAPPED",
+        "mapping_basis": "SOURCE_GLOBAL_ID",
+        "world": {
+          "xyz": [
+            0.0,
+            0.0,
+            10.2
+          ],
+          "rot_deg": 0.0,
+          "depth": 4,
+          "chain": 4
+        },
+        "geometry": {
+          "x": 0.0,
+          "z": 0.0,
+          "w": 6.0,
+          "d": 6.0,
+          "thickness": 0.2,
+          "thickness_known": true,
+          "elevation": 10.2
+        },
+        "properties": {
+          "predefined_type": "FLOOR"
+        },
+        "provenance": {
+          "format": "IFC",
+          "schema": "IFC4",
+          "global_id": "1MMoTwf7I6K_0rSD5d2LcZ",
+          "entity_type": "IFCSLAB",
+          "source_entity_id": "#137",
+          "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1",
+          "source_file_name": null,
+          "import_id": "bimimp_8223c7bece45f369",
+          "imported_at": null,
+          "parser_version": "acs-bim-step/1.0.0",
+          "mapper_version": "acs-bim-map/1.0.0"
+        },
+        "level_source_id": "#33",
+        "containment_basis": "IFC_RELATIONSHIP"
+      }
+    ],
+    "relationships": {
+      "aggregates": {
+        "19": [
+          21
+        ],
+        "21": [
+          23
+        ],
+        "23": [
+          29,
+          33
+        ],
+        "29": [
+          43
+        ],
+        "33": [
+          49
+        ]
+      },
+      "contains": {
+        "29": [
+          61,
+          71,
+          81,
+          91,
+          131
+        ],
+        "33": [
+          99,
+          107,
+          115,
+          123,
+          137
+        ]
+      },
+      "voids": {},
+      "fills": {},
+      "count": 16
+    },
+    "counts": {
+      "entities": 17,
+      "parsed_entities": 141,
+      "supported": 9,
+      "partial": 8,
+      "opaque": 0,
+      "unsupported": 0,
+      "refused": 0,
+      "levels": 2,
+      "spaces": 2
+    },
+    "issues": [],
+    "provenance": {
+      "parser_version": "acs-bim-step/1.0.0",
+      "mapper_version": "acs-bim-map/1.0.0",
+      "imported_at": null,
+      "source_file_hash": "35c48b6d0f5e2c5af211b885ff0feb5f0126b1af1922478eeb91084983caace1"
+    },
+    "writes_to_model": false,
+    "is_model_truth": false,
+    "note": "an import staging model is external input. It is never the canonical engineering model and never writes to it.",
+    "staging_id": "bimstg_9af9b6fd06d162da"
+  }
+}

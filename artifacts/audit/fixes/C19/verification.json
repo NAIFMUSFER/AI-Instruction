@@ -1,0 +1,41 @@
+{
+  "issue": "C19",
+  "source_base": "47ac0fe18acc7367df562949f3e7dfcbd569add3",
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 125,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 140
+  },
+  "existing_test_status_changes": {},
+  "new_test_results": {
+    "tests/remediation/test_bim_roundtrip_geometry.py": "PASS"
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "local_generation_and_export_seconds": {
+    "warehouse": 0.1482285090014068,
+    "chalet": 0.045936765998919556
+  },
+  "ifc_independent_validation": [
+    {
+      "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/evidence/ifc-schema/building.json",
+      "export_valid": true,
+      "schema": "IFC4",
+      "schema_errors": 0,
+      "validation_errors": 0,
+      "express_rules_evaluated": true,
+      "checker_version": "0.8.5",
+      "sha256": "8ba998c6eda5451b0a251641d100f95381650bffa5fa5026a00a3c7a7cb64e16",
+      "seconds": 2.4846933179942425
+    }
+  ]
+}

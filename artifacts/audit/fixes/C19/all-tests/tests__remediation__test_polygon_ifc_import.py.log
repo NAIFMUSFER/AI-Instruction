@@ -1,0 +1,10 @@
+test_all_upper_slab_cells_and_the_core_hole_are_retained (__main__.PolygonIfcImport.test_all_upper_slab_cells_and_the_core_hole_are_retained) ... ok
+test_l_boundary_and_height_are_mapped_without_spurious_products (__main__.PolygonIfcImport.test_l_boundary_and_height_are_mapped_without_spurious_products) ... ok
+test_millimetres_product_yaw_and_solid_offset_are_composed_once (__main__.PolygonIfcImport.test_millimetres_product_yaw_and_solid_offset_are_composed_once) ... ok
+test_non_reference_body_item_does_not_crash_the_reader (__main__.PolygonIfcImport.test_non_reference_body_item_does_not_crash_the_reader) ... ok
+test_tilted_polygon_stays_explicitly_outside_the_horizontal_mapping (__main__.PolygonIfcImport.test_tilted_polygon_stays_explicitly_outside_the_horizontal_mapping) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.030s
+
+OK

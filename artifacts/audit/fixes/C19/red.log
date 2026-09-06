@@ -1,0 +1,121 @@
+test_changed_shape_with_same_area_name_and_box_is_a_critical_loss (__main__.RoundtripGeometry.test_changed_shape_with_same_area_name_and_box_is_a_critical_loss) ... FAIL
+test_equivalent_winding_partition_and_external_ids_are_preserved (__main__.RoundtripGeometry.test_equivalent_winding_partition_and_external_ids_are_preserved) ... ok
+test_filled_upper_core_hole_cannot_pass (__main__.RoundtripGeometry.test_filled_upper_core_hole_cannot_pass) ... FAIL
+test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) ... 
+  test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='space', missing=True) ... FAIL
+  test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='space', missing=False) ... FAIL
+  test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='slab', missing=True) ... FAIL
+  test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='slab', missing=False) ... FAIL
+test_space_height_and_slab_elevation_are_checked (__main__.RoundtripGeometry.test_space_height_and_slab_elevation_are_checked) ... 
+  test_space_height_and_slab_elevation_are_checked (__main__.RoundtripGeometry.test_space_height_and_slab_elevation_are_checked) (kind='space') ... FAIL
+  test_space_height_and_slab_elevation_are_checked (__main__.RoundtripGeometry.test_space_height_and_slab_elevation_are_checked) (kind='slab') ... FAIL
+test_valid_rectangle_and_polygon_have_no_false_loss (__main__.RoundtripGeometry.test_valid_rectangle_and_polygon_have_no_false_loss) ... ok
+
+======================================================================
+FAIL: test_changed_shape_with_same_area_name_and_box_is_a_critical_loss (__main__.RoundtripGeometry.test_changed_shape_with_same_area_name_and_box_is_a_critical_loss)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 65, in test_changed_shape_with_same_area_name_and_box_is_a_critical_loss
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_filled_upper_core_hole_cannot_pass (__main__.RoundtripGeometry.test_filled_upper_core_hole_cannot_pass)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 75, in test_filled_upper_core_hole_cannot_pass
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='space', missing=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 56, in test_missing_or_only_bounding_space_and_slab_cannot_pass
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='space', missing=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 56, in test_missing_or_only_bounding_space_and_slab_cannot_pass
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='slab', missing=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 56, in test_missing_or_only_bounding_space_and_slab_cannot_pass
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_missing_or_only_bounding_space_and_slab_cannot_pass (__main__.RoundtripGeometry.test_missing_or_only_bounding_space_and_slab_cannot_pass) (kind='slab', missing=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 56, in test_missing_or_only_bounding_space_and_slab_cannot_pass
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_space_height_and_slab_elevation_are_checked (__main__.RoundtripGeometry.test_space_height_and_slab_elevation_are_checked) (kind='space')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 82, in test_space_height_and_slab_elevation_are_checked
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+======================================================================
+FAIL: test_space_height_and_slab_elevation_are_checked (__main__.RoundtripGeometry.test_space_height_and_slab_elevation_are_checked) (kind='slab')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 82, in test_space_height_and_slab_elevation_are_checked
+    self.failed_geometry(self.report(project, staging))
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_bim_roundtrip_geometry.py", line 32, in failed_geometry
+    self.assertEqual(report['status'], 'FAIL')
+AssertionError: 'PASS' != 'FAIL'
+- PASS
++ FAIL
+
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.061s
+
+FAILED (failures=8)

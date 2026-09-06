@@ -86,5 +86,13 @@
     "tree": "80ecbd108b1f3ff8421d80d762bfda4852ee8473",
     "tree_equal": true,
     "original_commit_object": "tree 80ecbd108b1f3ff8421d80d762bfda4852ee8473\nparent ad4c0e067321c2c657a1673e2453033df2b72348\nauthor Codex <codex@openai.com> 1788723349 +0200\ncommitter Codex <codex@openai.com> 1788723349 +0200\n\nfix: حفظ حدود المضلعات وفتحاتها في IFC — acs_bim.py\n"
+  },
+  {
+    "issue": "C09f",
+    "original_commit": "9922b111845dfe0da9804f3f0a8c980b37548815",
+    "published_commit": "47ac0fe18acc7367df562949f3e7dfcbd569add3",
+    "tree": "f39071dd5a24ed886ae34a03e10b541338c6719b",
+    "tree_equal": true,
+    "original_commit_object": "tree f39071dd5a24ed886ae34a03e10b541338c6719b\nparent bd6102dff48bb1513f4782baf3f3bb720755cd39\nauthor Codex <codex@openai.com> 1788724972 +0200\ncommitter Codex <codex@openai.com> 1788724972 +0200\n\nfix: preserve imported polygon IFC footprints — acs_bim.py\n"
   }
 ]

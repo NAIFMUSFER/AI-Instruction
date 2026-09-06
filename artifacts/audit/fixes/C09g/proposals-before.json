@@ -1,0 +1,33 @@
+{
+  "schema": "acs.bim/1",
+  "import_id": "bimimp_e728f0cd0652d11a",
+  "target_model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+  "target_revision_id": "rev:a4a96005b7346e28",
+  "proposals": [
+    {
+      "proposal_id": "bimprop_3b233d45c777df23",
+      "state": "PENDING",
+      "change_type": "OBJECT_RESIZED",
+      "canonical_id": "bld_0.flr_0.plan.polygon",
+      "authoring_id": null,
+      "source_entity_id": "#43",
+      "field": "area_m2",
+      "old_value": 20.0,
+      "proposed_value": 36.0,
+      "mapping_basis": "SOURCE_GLOBAL_ID",
+      "severity": "WARNING",
+      "loss": null,
+      "writes_to_model": false,
+      "blocked_reason": null
+    }
+  ],
+  "count": 1,
+  "by_state": {
+    "PENDING": 1,
+    "ACCEPTED": 0,
+    "REJECTED": 0,
+    "BLOCKED": 0
+  },
+  "writes_to_model": false,
+  "note": "no pending proposal writes to the model; acceptance only prepares an authoring command."
+}

@@ -1,0 +1,6 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the python implementation ran and wrote its result
+  ✓ the browser implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
