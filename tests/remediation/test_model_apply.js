@@ -409,9 +409,11 @@ console.log('\n== ك · العقود القائمة لم تُمَسّ ==');
 chk('KI-3 قائم: عقد الحدود ما زال يستبعد التالف لا يقبله',
     /NON_FINITE/.test(String(pqElementValid)));
 const _tc = (src.match(/const ACS_TRANSPORT_CLASSES=\[([\s\S]*?)\];/) || [])[1] || '';
-chk('وحاجز التطبيق لا يمسّ تصنيفات النقل العشرة',
-    (_tc.match(/'/g) || []).length / 2 === 10 && /'SUCCESS'/.test(_tc),
-    String((_tc.match(/'/g) || []).length / 2));
+const expectedTransport=['NETWORK_ERROR','NETWORK_DNS','NETWORK_OFFLINE','TIMEOUT',
+    'NOT_CONFIGURED','HTTP_4XX','HTTP_429','HTTP_5XX','INVALID_JSON','VALID_API_ERROR','SUCCESS'];
+chk('حاجز التطبيق يحفظ فئات النقل وفشل الاتصال غير المحدد',
+    JSON.stringify((_tc.match(/'[^']+'/g)||[]).map(x=>x.slice(1,-1)).sort())
+      ===JSON.stringify(expectedTransport.slice().sort()), _tc);
 chk('و 200 بلا building يبقى فشلاً كما كان',
     /if\(!data\.building\)/.test(src) && /MODEL_VALIDATION_ERROR/.test(src));
 chk('ولوحة عطل الخادم بقيت منفصلة عن لوحة عطل التطبيق',

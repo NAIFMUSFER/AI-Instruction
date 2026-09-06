@@ -288,7 +288,7 @@ function showErrorState(res, onRetry, onLocal){
         +(st.http?(' · HTTP '+escT(String(st.http))):'')
         +escT(wait)
         +(rid?(' · request id <code id="acsReqId">'+escT(rid)+'</code>')
-             :' · <span data-acs-noreqid="1">no request id (the request never reached the server)</span>')
+             :' · <span data-acs-noreqid="1">معرّف الطلب غير متاح / request id unavailable; delivery status unknown</span>')
       +'</div>'
       +'<div class="acs-err-act">'
         +(st.show_retry_button

@@ -153,6 +153,7 @@ jobs:
           bash tools/ci_run.sh --log logs/js-parity.log \
                --label "bundle extractor (no node_modules)" --runner "node" \
                    tests/remediation/test_bundle_extractor.js \
+                   tests/remediation/test_transport_errors.js \
                    tests/remediation/test_opening_identity_parity.js
       - uses: actions/upload-artifact@v4
         if: always()
@@ -211,6 +212,7 @@ jobs:
           # ما يكتب outputs/csp_probe.json الذي يمنح test_csp.js ~15 تأكيداً.
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "browser suites (direct)" --runner "node" \
+                   tests/remediation/test_transport_browser.js \
                    tests/remediation/test_gl_probe_contract.mjs \
                    tests/remediation/test_pdf_runtime.mjs \
                    tests/deploy/test_viewport_pixels.js \
