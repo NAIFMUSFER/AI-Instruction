@@ -1,0 +1,8 @@
+{
+  "regression_before": {"tests": 3, "failures": 2},
+  "regression_after": {"tests": 3, "failures": 0},
+  "full_suite": {"files": 113, "PASS": 98, "FAIL": 7, "NOT_VERIFIED": 8},
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "both local-generator cases byte-identical to baseline; architectural failures now propagate before writing an export",
+  "pixel_validation": "NOT_VERIFIED"
+}

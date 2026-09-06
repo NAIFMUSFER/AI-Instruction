@@ -910,11 +910,9 @@ def compile_building(data, out_path):
     # مستوى الموقع العرضي أولاً، ثم ألواح الأدوار ببصمة غرف كل دور فوقه
     build_site_plane(bld, defaults)
     # فراغات النوى من المصرِّف المعماري — نفس مصدر الحقيقة الذي تقرأه الصفحة
-    try:
-        import acs_arch
-        _arch = acs_arch.compile_architecture(data, "bld_0", None, 0)
-    except Exception:
-        _arch = None
+    # Losing this result loses slab voids. Propagate failure before exporting.
+    import acs_arch
+    _arch = acs_arch.compile_architecture(data, "bld_0", None, 0)
     for lvl in data.get("levels", []):
         idx = lvl["index"]
         tmpl = lvl["template"]

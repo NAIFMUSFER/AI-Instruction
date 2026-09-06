@@ -1,0 +1,26 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the browser implementation ran and wrote its result
+  ✓ the python implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
+  ✓ the canonical comparison reports no mismatch
+  ✓ a real comparison was performed over every scenario
+  ✓ every scenario is byte-identical between the two implementations
+  ✓ every adversarial scene is accepted or refused identically by both
+  ✓ every runtime operation yields the same issue-code sequence in both
+
+== THE COMPARISON IS NOT VACUOUS ==
+  ✓ both files carry the same scenario keys
+  ✓ the comparison covers more than a handful of scenarios
+  ✓ every compared scenario carries a compiled runtime scene
+  ✓ at least one compared scenario carries real geometry
+  ✓ at least one compared scenario carries portals
+  ✓ at least one compared scenario is rotated and translated
+  ✓ the adversarial block is populated on both sides
+  ✓ a planted difference would be detected
+  ✓ measurement identifiers agree — the numeric encoding is shared
+  ✓ scene signatures agree — the canonical hash is shared
+
+──────────────────────────────────────────────
+PARITY: 17 passed, 0 failed

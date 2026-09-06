@@ -1,0 +1,61 @@
+
+== DRIFT — frontend registry must equal acs_programs.json (single source of truth) ==
+  ✓ same program ids/order
+  ✓ same industrial domain
+  ✓ no keyword/domain drift
+  ✓ space categories identical
+
+== PART 8 — building type detection (10 types) ==
+  ✓ Villa → villa
+  ✓ Hotel → hotel
+  ✓ Clinic → clinic
+  ✓ Office → office
+  ✓ Restaurant → restaurant
+  ✓ School → school
+  ✓ Hospital → hospital
+  ✓ Warehouse → warehouse
+  ✓ Factory → factory
+  ✓ Mixed-use → mixed_use
+
+== PART 8 — no cross-domain contamination ==
+  ✓ clinic is NOT industrial
+  ✓ hotel is NOT industrial
+  ✓ warehouse IS industrial
+  ✓ factory IS industrial (program preserved)
+  ✓ clinic categories = healthcare (not hospitality)
+  ✓ office categories ≠ healthcare
+
+== PART 18 — project hierarchy (data level) ==
+  ✓ A villa: 1 building
+  ✓ A villa: 2 levels
+  ✓ A villa: site has id/units/origin
+  ✓ A villa: floor ids + elevations
+  ✓ A villa: space_id assigned
+  ✓ B hotel: 8 levels, type=hotel
+  ✓ C compound: 3 buildings
+  ✓ C compound: distinct ids
+  ✓ C compound: positions distinct
+  ✓ C compound: active building still first
+  ✓ C compound: mixed types coexist
+  ✓ D resort: 3 buildings, no industrial fields
+  ✓ E mixed-use: multiple programs on one building
+  ✓ E mixed-use: building_type stays mixed_use
+  ✓ F warehouse: industrial program preserved
+
+== PART 19 — backward compatibility (Phase 1 JSON) ==
+  ✓ Phase 1 building recognized
+  ✓ wrapped: no data loss (same building object)
+  ✓ same room count (2)
+  ✓ same object count (3)
+  ✓ same level count (2)
+  ✓ export envelope keeps Phase 1 fields at root
+  ✓ export envelope adds project hierarchy
+  ✓ export carries building_type + space_categories
+  ✓ setModel-compatible: activeBuilding(project) works
+  ✓ idempotent: toProject(project) === project
+
+== PART 9 — programs must not invent user requirements ==
+  ✓ suggested spaces are NOT auto-injected into building
+  ✓ registry marks suggestions as guidance only
+
+PHASE2: 47 passed, 0 failed

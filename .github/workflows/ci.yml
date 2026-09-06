@@ -80,6 +80,7 @@ jobs:
                    tests/phase9_2/test_backend_contract.py \
                    tests/remediation/test_request_body_limits.py \
                    tests/remediation/test_level_elevation.py \
+                   tests/remediation/test_compiler_arch_failure.py \
                    tests/phase9_2/test_black_viewport.py \
                    tests/phase9_2/test_generation_budget.py \
                    tests/phase9_2/test_live_render.py

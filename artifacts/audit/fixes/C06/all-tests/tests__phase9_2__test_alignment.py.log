@@ -1,0 +1,119 @@
+
+== A · AXIS CONVENTION IS DECLARED AND UNCHANGED (§11) ==
+  ✓ x is horizontal width, y is vertical elevation, z is horizontal depth
+  ✓ the space chain is declared end to end (§3)
+  ✓ every declared space has a declared parent
+  ✓ the forbidden transform faults are named, including both defect classes
+  ✓ the tolerance is small and justified (0.05 m)
+
+== B · DEFECT 1 REPRODUCED — THE SITE-WIDE PLATE (§4) ==
+  ✓ the old rule spread the plate over the whole site (60x40 m)
+  ✓ the corrected plate follows the level rooms, not the site
+  ✓ the old plate overhung the building by 12.1x its footprint — that overhang is what reads as a floating slab
+  ✓ a level with no rooms still gets a plate, declared as the site fallback
+  ✓ a level with neither rooms nor a site is UNRESOLVED, never invented
+  ✓ the plate never extends beyond the union of its own rooms
+
+== C · DEFECT 2 REPRODUCED — THE RACK OVERRUN (§5) ==
+  ✓ offset (5.0, 0.0): the old rule overran the room by 5.0 m, the corrected block stays inside
+  ✓ offset (0.0, 4.0): the old rule overran the room by 0.0 m, the corrected block stays inside
+  ✓ offset (3.0, 2.5): the old rule overran the room by 3.0 m, the corrected block stays inside
+  ✓ offset (25.0, 0.0): the old rule overran the room by 25.0 m, the corrected block stays inside
+  ✓ the room origin is applied exactly once
+  ✓ an explicit rack extent is clamped to what the room actually has left
+  ✓ an offset that consumes the room is reported, not silently zero-sized
+  ✓ a missing host rectangle is refused instead of guessed
+
+== D · LEVEL ELEVATION IS APPLIED EXACTLY ONCE (§10) ==
+  ✓ level 0 sits at exactly one level offset (0.0 m)
+  ✓ level 1 sits at exactly one level offset (3.2 m)
+  ✓ level 2 sits at exactly one level offset (6.4 m)
+  ✓ level 3 sits at exactly one level offset (9.6 m)
+  ✓ a host origin that already carries the elevation does NOT get it twice
+  ✓ a host origin without the elevation receives exactly one level offset
+  ✓ floor 0 elements stay at floor 0
+  ✓ a three-level stack keeps one offset per level, never two
+  ✓ a negative or non-finite floor height is refused
+
+== E · ROOF ELEVATION INVARIANT (§4) ==
+  ✓ a 1-level building puts its roof at exactly 3.2 m
+  ✓ a 2-level building puts its roof at exactly 6.4 m
+  ✓ a 3-level building puts its roof at exactly 9.6 m
+  ✓ a 6-level building puts its roof at exactly 19.2 m
+  ✓ a full extra level of elevation is caught as a detached roof
+  ✓ the roof is reported, never lowered by a presentation offset
+  ✓ a rounding-scale difference stays inside the justified tolerance
+  ✓ a difference just above tolerance is not tolerated
+
+== F · CONTAINMENT CLASSIFICATION, NEVER RELOCATION (§6) ==
+  ✓ a box that is inside is classified INSIDE
+  ✓ a box that is intersecting_boundary is classified INTERSECTING_BOUNDARY
+  ✓ a box that is outside is classified OUTSIDE
+  ✓ a box that is inside is classified INSIDE
+  ✓ an outside object is reported and explicitly not moved
+  ✓ a missing box is UNRESOLVED rather than assumed inside
+  ✓ the four containment classes are the declared ones
+
+== G · UNRESOLVED IS NEVER THE ORIGIN (§3/§17) ==
+  ✓ an unresolvable transform returns ALIGN_HOST_NOT_FOUND with no world position
+  ✓ an unresolvable transform returns ALIGN_TRANSFORM_UNRESOLVED with no world position
+  ✓ an unresolvable transform returns ALIGN_TRANSFORM_UNRESOLVED with no world position
+  ✓ an unresolvable transform returns ALIGN_TRANSFORM_UNRESOLVED with no world position
+  ✓ an unresolvable transform returns ALIGN_TRANSFORM_UNRESOLVED with no world position
+
+== H · AXIS AND ROUND-TRIP INVARIANTS (§11/§14) ==
+  ✓ worldToLocal(localToWorld([0, 0, 0])) round-trips exactly
+  ✓ worldToLocal(localToWorld([3.5, 1.25, -7.75])) round-trips exactly
+  ✓ worldToLocal(localToWorld([123.456, 0.001, 98.7])) round-trips exactly
+  ✓ an x offset never lands on z and a z offset never lands on x
+  ✓ a horizontal offset never becomes an elevation
+  ✓ a plate footprint keeps width on x and depth on z
+  ✓ a rack block keeps width on x and depth on z
+
+== I · THE FIXTURES, END TO END (§1/§10) ==
+  ✓ warehouse: every level plate is derived from that level and covers its rooms
+  ✓ warehouse: every level applies its elevation exactly once
+  ✓ warehouse: every rack block stays inside its hosting room
+  ✓ warehouse: the top level sits at its canonical elevation (0.00 m)
+  ✓ villa_glazed: every level plate is derived from that level and covers its rooms
+  ✓ villa_glazed: every level applies its elevation exactly once
+  ✓ villa_glazed: every rack block stays inside its hosting room
+  ✓ villa_glazed: the top level sits at its canonical elevation (3.20 m)
+  ✓ hotel: every level plate is derived from that level and covers its rooms
+  ✓ hotel: every level applies its elevation exactly once
+  ✓ hotel: every rack block stays inside its hosting room
+  ✓ hotel: the top level sits at its canonical elevation (6.60 m)
+  ✓ apartment_balconies: every level plate is derived from that level and covers its rooms
+  ✓ apartment_balconies: every level applies its elevation exactly once
+  ✓ apartment_balconies: every rack block stays inside its hosting room
+  ✓ apartment_balconies: the top level sits at its canonical elevation (3.20 m)
+
+== J · A THREE-LEVEL STACK (§10) ==
+  ✓ three levels are 0.0, 3.2 and 6.4 — one offset each
+  ✓ no level receives a second offset
+  ✓ a rack on any level keeps the same footprint — elevation is not mixed into the footprint
+  ✓ level 0 rack world position is (6.0, 0.0, 5.0)
+  ✓ level 1 rack world position is (6.0, 3.2, 5.0)
+  ✓ level 2 rack world position is (6.0, 6.4, 5.0)
+
+== K · IMMUTABILITY THROUGH THE WHOLE ALIGNMENT BATTERY (§16) ==
+  ✓ warehouse: canonical bytes, hash, revision and counts unchanged
+  ✓ villa_glazed: canonical bytes, hash, revision and counts unchanged
+  ✓ apartment_balconies: canonical bytes, hash, revision and counts unchanged
+
+== L · WHAT THE SHIPPED COMPILER ACTUALLY DOES ==
+  ✓ the rack block is derived through the shared contract (fix applied)
+  ✓ the old unclamped rack extent is gone from the compiler
+  ✓ the site-wide plate is APPLIED-AND-GONE: the compiler no longer builds a plate on the site rectangle
+  ✓ the plate extent is computed by the shared contract, not by a second extent calculator
+  ✓ the plate policy records its predecessor and the reason for the change, so the convention did not move silently
+  ✓ the plate overhang is still reported by the alignment diagnostics, now measured against the rendered plate, not hidden by a presentation offset
+  ✓ the contract quantifies the overhang for a villa-scale building (site 30x24 over a 14x13 footprint = 4.0x)
+  ✓ the alignment diagnostics bridge is shipped and presentation-only
+  ✓ world bounds are only measured after updateMatrixWorld (§8)
+  ✓ the seven ALIGN issue codes are declared canonically (§17)
+  ✓ no ALIGN code is blocking — a misalignment is reported, never fatal
+  ✓ the Phase 4 golden baseline still passes with the rack fix in place
+
+──────────────────────────────────────────────
+ALIGNMENT REGRESSION: 92 passed, 0 failed
