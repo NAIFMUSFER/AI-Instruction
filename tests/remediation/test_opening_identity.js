@@ -1,7 +1,7 @@
 /* Runs against the shipped JS in Node and in Playwright-managed Chromium. */
+let pass=0,fail=0;
 (function(){
-  let passed=0,failed=0;
-  const check=(name,ok)=>{if(ok){passed++;console.log('  ✓ '+name);}else{failed++;console.log('  ✗ '+name);}};
+  const check=(name,ok)=>{if(ok){pass++;console.log('  ✓ '+name);}else{fail++;console.log('  ✗ '+name);}};
   const fixture=()=>({site:{w:10,d:10},floor_height:4,wall_h:4,wall_t:0.2,
     levels:[{index:0,template:'g'},{index:1,template:'g'}],floors:{g:{rooms:[
       {id:'r',rect:[0,0,10,10],doors:[{edge:'N',offset:2,width:1,height:2.1},
@@ -76,7 +76,7 @@
     surviving:auResolveTarget(loaded.model,'bld_0.g.r.door_1'),new_id:aid};
   if(typeof document==='undefined'&&process.env.ACS_OPENING_IDENTITY_PARITY)
     require('fs').writeFileSync(process.env.ACS_OPENING_IDENTITY_PARITY,JSON.stringify(out));
-  console.log('OPENING IDENTITY: '+passed+' passed, '+failed+' failed');
+  console.log('OPENING IDENTITY: '+pass+' passed, '+fail+' failed');
   if(typeof document!=='undefined') console.log('OPENING IDENTITY: executed in browser');
-  if(failed) process.exit(1);
+  if(fail) process.exit(1);
 })();
