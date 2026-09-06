@@ -1,0 +1,66 @@
+test_api_returns_review_diff_outside_the_canonical_model (__main__.RepairProposal.test_api_returns_review_diff_outside_the_canonical_model) ... FAIL
+test_better_issue_count_does_not_authorise_dimension_change (__main__.RepairProposal.test_better_issue_count_does_not_authorise_dimension_change) ... FAIL
+test_clean_model_does_not_request_repair (__main__.RepairProposal.test_clean_model_does_not_request_repair) ... ok
+test_repair_prompt_contains_the_original_request (__main__.RepairProposal.test_repair_prompt_contains_the_original_request) ... FAIL
+
+======================================================================
+FAIL: test_api_returns_review_diff_outside_the_canonical_model (__main__.RepairProposal.test_api_returns_review_diff_outside_the_canonical_model)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_repair_proposal.py", line 78, in test_api_returns_review_diff_outside_the_canonical_model
+    self.assertEqual(payload["building"]["floors"], original["floors"])
+AssertionError: {'g':[37 chars], 0, 5, 5], 'doors': [{'edge': 'N', 'offset': [96 chars]]}]}} != {'g':[37 chars], 0, 6, 6], 'doors': [{'edge': 'N', 'offset': [14 chars]]}]}}
+  {'g': {'rooms': [{'doors': [{'edge': 'N', 'offset': 3, 'width': 1}],
+                    'id': 'room',
+-                   'points': [{'type': 'light', 'x': 2, 'z': 2},
+-                              {'type': 'smoke', 'x': 2, 'z': 2}],
+-                   'rect': [0, 0, 5, 5]}]}}
+?                                  ^  ^
+
++                   'rect': [0, 0, 6, 6]}]}}
+?                                  ^  ^
+
+
+======================================================================
+FAIL: test_better_issue_count_does_not_authorise_dimension_change (__main__.RepairProposal.test_better_issue_count_does_not_authorise_dimension_change)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_repair_proposal.py", line 40, in test_better_issue_count_does_not_authorise_dimension_change
+    self.assertEqual(result["floors"], original["floors"])
+AssertionError: {'g':[37 chars], 0, 5, 5], 'doors': [{'edge': 'N', 'offset': [96 chars]]}]}} != {'g':[37 chars], 0, 6, 6], 'doors': [{'edge': 'N', 'offset': [14 chars]]}]}}
+  {'g': {'rooms': [{'doors': [{'edge': 'N', 'offset': 3, 'width': 1}],
+                    'id': 'room',
+-                   'points': [{'type': 'light', 'x': 2, 'z': 2},
+-                              {'type': 'smoke', 'x': 2, 'z': 2}],
+-                   'rect': [0, 0, 5, 5]}]}}
+?                                  ^  ^
+
++                   'rect': [0, 0, 6, 6]}]}}
+?                                  ^  ^
+
+
+======================================================================
+FAIL: test_repair_prompt_contains_the_original_request (__main__.RepairProposal.test_repair_prompt_contains_the_original_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_repair_proposal.py", line 62, in test_repair_prompt_contains_the_original_request
+    self.assertIn(description, call.call_args.args[0])
+AssertionError: 'احتفظ بالمقاس المطلوب ولا تضف غرفة فرز' not found in 'هذا نموذج Building JSON أنتجته سابقاً، وبه مخالفات هندسية.\nأصلحها كلها وأعِد **النموذج الكامل** بصيغة JSON فقط (بلا شرح).\nحافظ على ما هو صحيح، وعالج الآتي:\n\n- test issue\n\nالنموذج الحالي:\n{"site": {"w": 20, "d": 25}, "meta": {"type": "residential"}, "levels": [{"index": 0, "template": "g"}], "floors": {"g": {"rooms": [{"id": "room", "rect": [0, 0, 6, 6], "doors": [{"edge": "N", "offset": 3, "width": 1}]}]}}}'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.005s
+
+FAILED (failures=3)
+[ACS-PLAN] class=SMALL est_out=1815 zones=2 budget=32000 -> single (forced)
+[ACS-CHECK] جولة 0 (residential): 2 مخالفة · {'levels': 1, 'rooms': 1, 'points': 0}
+[ACS-CHECK] إرسال 2 مخالفة للإصلاح (جولة 1)…
+[ACS-CHECK] جولة 1: 0 مخالفة · {'levels': 1, 'rooms': 1, 'points': 2}
+[ACS-CHECK] لا إصلاح تلقائي: 0 مخالفة تُعرَض ولا تُصلَّح صامتاً
+[ACS-PLAN] class=SMALL est_out=1815 zones=2 budget=32000 -> single (forced)
+[ACS-CHECK] جولة 0 (residential): 2 مخالفة · {'levels': 1, 'rooms': 1, 'points': 0}
+[ACS-CHECK] إرسال 2 مخالفة للإصلاح (جولة 1)…
+[ACS-CHECK] جولة 1: 0 مخالفة · {'levels': 1, 'rooms': 1, 'points': 2}
+[ACS-CHECK] لا إصلاح تلقائي: 0 مخالفة تُعرَض ولا تُصلَّح صامتاً
+[ACS-PLAN] class=SMALL est_out=1725 zones=2 budget=32000 -> single (forced)
+[ACS-CHECK] جولة 0 (residential): 0 مخالفة · {'levels': 1, 'rooms': 1, 'points': 2}
+[ACS-CHECK] لا إصلاح تلقائي: 0 مخالفة تُعرَض ولا تُصلَّح صامتاً

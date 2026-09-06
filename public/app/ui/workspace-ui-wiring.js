@@ -1380,10 +1380,11 @@ async function checkServer(quiet){
    طُلب ونُفِّذ · مُثِّل بطريقة بديلة (غير مدعوم مباشرةً) · مُستبعَد بنفيك · أُضيف تلقائياً */
 function showReport(rep, userText){
   const box=document.getElementById('reportBox'); if(!box) return;
+  const repair=rep&&rep.repair_proposal&&rep.repair_proposal.building ? rep.repair_proposal : null;
   const c=classifyReport(rep, userText!=null?userText:__ACS_SHARED.LAST_REQUEST_TEXT);
   const n=c.user.length+c.ai.length+c.system.length+c.rule.length
          +c.alt.length+c.unsupported.length+c.excluded.length;
-  if(!n){ box.className='report'; box.innerHTML=''; return; }
+  if(!n&&!repair){ box.className='report'; box.innerHTML=''; return; }
   const full=(r,cls)=>'<div class="rq '+cls+'"><b>'+esc(r.req||'')+'</b>'
       +(r.where?'<br><span class="w">↳ في: '+esc(r.where)+'</span>':'')
       +(r.how?'<br><span class="w">'+esc(r.how)+'</span>':'')+'</div>';
@@ -1411,7 +1412,19 @@ function showReport(rep, userText){
   if(!c.rule.length && (c.system.length||c.ai.length))
     h+='<div class="rqnote">ملاحظة: العناصر التلقائية إعدادات افتراضية للنظام — '
       +'لم يُنفَّذ تحقّق مطابقة لأي كود أو معيار في هذه المرحلة.</div>';
+  if(repair){
+    h+='<div class="rq warn"><b>إصلاح مقترح — لم يُطبّق</b><br>'
+      +'راجع الفروق، ثم نزّل المقترح واستورده إذا أردت اعتماده. النموذج الأصلي محفوظ.'
+      +'<details><summary>عرض الفروق</summary><pre>'
+      +esc(JSON.stringify(repair.engineering_diff||{available:false},null,2))
+      +'</pre></details><button id="acsRepairDownload" type="button">تنزيل المقترح JSON</button></div>';
+  }
   box.innerHTML=h; box.className='report on';
+  if(repair){
+    const button=box.querySelector('#acsRepairDownload');
+    if(button) button.onclick=()=>dl(new Blob([JSON.stringify(repair.building,null,2)],
+      {type:'application/json'}),'ACS-repair-proposal.json');
+  }
 }
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
@@ -2504,6 +2517,7 @@ async function planToLLM(blobs, llm, W, D, nF, info){
     throw new Error(res.message+(res.request_id?(' · معرّف الطلب '+res.request_id):''));
   const data=res.body;
   setModel(data.building);
+  if(data.report&&data.report.repair_proposal) showReport(data.report);
   info.textContent='✓ قُرئ المخطط بالرؤية — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى'
                    +(data.issues?(' · '+data.issues+' ملاحظة'):'');
 }
@@ -2555,6 +2569,7 @@ async function handleImport(f){
             throw new Error(res.message+(res.request_id?(' · معرّف الطلب '+res.request_id):''));
           const data=res.body;
           setModel(data.building);
+          if(data.report&&data.report.repair_proposal) showReport(data.report);
           info.textContent='✓ تولّد بالذكاء من الـPDF — '+(data.rooms||'?')+' غرفة · '+(data.levels||'?')+' مستوى';
           return;
         }catch(e){ info.textContent='تعذّر عبر LLM ('+e.message+') — نجرّب القراءة المحلية…'; }

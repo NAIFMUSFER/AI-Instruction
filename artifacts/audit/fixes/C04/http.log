@@ -1,0 +1,7 @@
+local-health 200  0.004
+local-ready 503  0.079
+local-version 200  0.004
+local-openapi 200  0.014
+local-warehouse 503  0.283
+local-chalet 503  0.238
+local-cors 200  0.001

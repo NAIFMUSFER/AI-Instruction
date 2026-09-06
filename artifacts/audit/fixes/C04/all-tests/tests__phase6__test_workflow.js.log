@@ -1,0 +1,188 @@
+
+== §13/§14 — VIEW AND EDIT MODES ==
+  ✓ two modes are declared and VIEW is the default
+  ✓ a fresh workspace starts in VIEW
+  ✓ entering EDIT mode creates no transaction and no revision
+  ✓ the mode is UI state, not model state
+  ✓ every declared view capability is a read-only capability
+  ✓ the specification states that entering edit mode creates nothing
+
+== §14 — ONLY POSSIBLE OPERATIONS ARE OFFERED ==
+  ✓ a space offers resize, rename and delete
+  ✓ a door offers move, properties and delete
+  ✓ a door is not offered a space resize
+  ✓ a derived wall offers only the source-boundary move
+  ✓ a coordination finding offers inspection only
+  ✓ a runtime obstacle offers inspection only
+  ✓ a locked element offers nothing that would mutate it
+  ✓ every offered operation maps to a real command type
+  ✓ an unimplemented command is offered as disabled with its reason
+
+== §80 — TEST C: EDIT THROUGH THE AUTHORING PATH ==
+  ✓ the UI edit produces a preview through the authoring engine
+  ✓ the preview declares itself a preview and not committed
+  ✓ the canonical hash is unchanged after the preview
+  ✓ no revision was created by the preview
+  ✓ the explicit commit succeeds
+  ✓ a new revision was created
+  ✓ the committed hash equals the previewed candidate hash
+  ✓ the previous project object is still at the old hash
+  ✓ the tree rebuilds from the new revision
+  ✓ the inspector shows the edited geometry
+
+== §81 — TEST D: CANCEL LEAVES EVERYTHING UNCHANGED ==
+  ✓ the wall move previews
+  ✓ cancelling returns the transaction to IDLE
+  ✓ the canonical model hash is unchanged
+  ✓ the revision pointer is unchanged
+  ✓ no revision was appended
+  ✓ the tree still reflects the original model
+
+== §82 — TEST E: DELETE SHOWS EXACT DEPENDENCIES ==
+  ✓ the delete is dependency-breaking
+  ✓ every broken dependency is a named identifier, not a vague count
+  ✓ the dialog can state exactly what is affected
+  ✓ the delete requires an explicit confirmation
+  ✓ cancelling by not confirming changes nothing
+  ✓ the refusal names the confirmation requirement
+  ✓ confirming explicitly performs the delete
+  ✓ no orphan survives the delete
+
+== §19 — HOSTED ELEMENT STRATEGY IS ASKED, NEVER ASSUMED ==
+  ✓ moving a hosting wall without a strategy is refused
+  ✓ the specification declares no default strategy
+  ✓ the strategy KEEP_RELATIVE_POSITION is offered and judged
+  ✓ the strategy KEEP_WORLD_POSITION is offered and judged
+  ✓ the strategy CANCEL_IF_HOSTED is offered and judged
+  ✓ all three strategies are presented to the user
+
+== §83 — TEST F: UNDO AND REDO THROUGH PHASE 5 ==
+  ✓ two edits committed
+  ✓ undo produces a new forward revision
+  ✓ undo restores the previous hash
+  ✓ redo produces another new forward revision
+  ✓ redo restores the later hash
+  ✓ no history entry was ever removed
+  ✓ the UI has no independent undo stack that could disagree
+
+== §21/§22 — REVISION HISTORY AND DIFF ==
+  ✓ every revision record carries the fields the panel shows
+  ✓ the history panel data is append-only
+  ✓ a human-readable diff is available
+  ✓ each change names a path with a before and an after
+  ✓ the diff names the changed element
+  ✓ inspecting a revision does not switch the canonical revision
+  ✓ the diff writes nothing
+
+== §89 — TEST L: SAVE AND LOAD ==
+  ✓ the export carries no runtime state
+  ✓ the export carries no UI state
+  ✓ the project reloads
+  ✓ the canonical hash is identical after reload
+  ✓ the current revision is identical after reload
+  ✓ runtime state starts fresh
+  ✓ the reloaded tree rebuilds identically
+  ✓ a corrupted payload is reported explicitly
+  ✓ an incompatible payload is refused
+
+== §48/§49/§50 — EXPORT CENTER ==
+  ✓ the export kind PROJECT_JSON produces a descriptor
+  ✓ PROJECT_JSON is taken from the committed revision by default
+  ✓ PROJECT_JSON embeds the revision and model hash
+  ✓ PROJECT_JSON certifies nothing
+  ✓ the export kind GLB produces a descriptor
+  ✓ GLB is taken from the committed revision by default
+  ✓ GLB embeds the revision and model hash
+  ✓ GLB certifies nothing
+  ✓ the export kind SNAPSHOT_PNG produces a descriptor
+  ✓ SNAPSHOT_PNG is taken from the committed revision by default
+  ✓ SNAPSHOT_PNG embeds the revision and model hash
+  ✓ SNAPSHOT_PNG certifies nothing
+  ✓ the export kind REVISION_HISTORY_JSON produces a descriptor
+  ✓ REVISION_HISTORY_JSON is taken from the committed revision by default
+  ✓ REVISION_HISTORY_JSON embeds the revision and model hash
+  ✓ REVISION_HISTORY_JSON certifies nothing
+  ✓ the export kind ISSUE_REPORT_JSON produces a descriptor
+  ✓ ISSUE_REPORT_JSON is taken from the committed revision by default
+  ✓ ISSUE_REPORT_JSON embeds the revision and model hash
+  ✓ ISSUE_REPORT_JSON certifies nothing
+  ✓ a preview export is labelled PREVIEW in the filename
+  ✓ a preview export is labelled PREVIEW in the metadata
+  ✓ an unknown export kind is refused
+  ✓ an unknown export source is refused
+  ✓ the snapshot metadata carries every declared field
+  ✓ no export implies certification
+
+== §85 — TEST H: AI PROPOSES, NEVER COMMITS ==
+  ✓ the assistant produces a proposal
+  ✓ the proposal is explicitly not committed
+  ✓ the proposal is marked PROPOSED_AUTHORING_COMMAND
+  ✓ the proposal requires explicit confirmation
+  ✓ producing the proposal changed no model
+  ✓ applying without an explicit token is refused
+  ✓ the refusal changed nothing
+  ✓ applying with an explicit user action goes through the full validation
+  ✓ the committed revision records the AI source honestly
+  ✓ the assistant has no capability that writes
+
+== §53/§54 — AI AMBIGUITY AND CLAIM CLASSES ==
+  ✓ an ambiguous phrase is refused
+  ✓ the candidates are returned for the user to choose
+  ✓ nothing is guessed and nothing is committed
+  ✓ the refusal names AMBIGUOUS_TARGET
+  ✓ the claim class MODEL_FACT is preserved
+  ✓ the claim class DERIVED_FACT is preserved
+  ✓ the claim class INFERENCE is preserved
+  ✓ the claim class UNKNOWN is preserved
+  ✓ the claim class RULE_RESULT is preserved
+  ✓ an unknown claim class falls back to UNKNOWN, never to MODEL_FACT
+  ✓ no claim carries engineering authority
+
+== §92 — TEST O: VISUAL REFERENCES DO NOT TOUCH GEOMETRY ==
+  ✓ the presentation context is separate from the model
+  ✓ a reference attaches
+  ✓ the reference records its kind, scope and target
+  ✓ the reference declares it is not engineering data
+  ✓ the engineering model is byte-identical after attaching
+  ✓ no revision was created
+  ✓ the model carries no reference field
+  ✓ an unknown reference kind is refused
+  ✓ an unknown reference scope is refused
+  ✓ a script payload in a reference is refused
+  ✓ a script payload in a caption is refused
+  ✓ visual intent is accepted as presentation context
+  ✓ setting visual intent changes no model
+  ✓ an unknown intent field is refused
+  ✓ every declared intent field is accepted
+  ✓ no dimension is inferred from an image
+  ✓ the exported project carries no visual reference as engineering data
+
+== §59 — THE PHOTOREALISTIC PATH IS DECLARED, NOT BUILT ==
+  ✓ the pipeline is declared in order
+  ✓ it is explicitly not implemented in this phase
+  ✓ the boundary states an image may never alter geometry
+  ✓ no renderer or image generator was added to the workspace layer
+  ✓ the pipeline starts at the engineering model and ends at an image
+
+== §40/§41 — REQUIREMENTS AND COVERAGE ==
+  ✓ every declared class is present
+  ✓ user requests are counted separately
+  ✓ excluded items are counted separately
+  ✓ an unknown status becomes UNRESOLVED, never USER_REQUESTED
+  ✓ unresolved and excluded are reported together as outstanding
+  ✓ the report never claims full coverage
+  ✓ no wording implies everything requested was implemented
+  ✓ the coverage probe is not vacuous
+  ✓ reading coverage writes nothing
+
+== §33/§34 — MEASUREMENT HONESTY ==
+  ✓ the three measurement kinds are distinguished
+  ✓ a viewport measurement is labelled as such in both languages
+  ✓ a viewport measurement is never presented as a walking distance
+  ✓ a partial distance is never shown as complete
+  ✓ a path overlay is never called safe or approved
+  ✓ a canonical geometry measurement comes from the runtime engine
+  ✓ that measurement declares it is not a code check
+
+──────────────────────────────────────────────
+WORKFLOW: 153 passed, 0 failed

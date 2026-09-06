@@ -1,0 +1,9 @@
+{
+  "regression_before": {"python_tests": 4, "python_failures": 3, "javascript_exit": 1},
+  "regression_after": {"python_tests": 4, "python_failures": 0, "javascript_checks": 11, "javascript_exit": 0},
+  "full_suite": {"files": 119, "PASS": 104, "FAIL": 7, "NOT_VERIFIED": 8},
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "both local-generator cases byte-identical to C01; validation-only difference from baseline belongs to C01",
+  "behavior": "original dimensions retained; LLM repair preserved as separate review proposal with diff and explicit JSON download",
+  "pixel_validation": "NOT_VERIFIED; report DOM and download doubles only"
+}

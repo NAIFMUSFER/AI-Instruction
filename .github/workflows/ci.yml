@@ -83,6 +83,7 @@ jobs:
                    tests/remediation/test_validator_response.py \
                    tests/remediation/test_validator_openings.py \
                    tests/remediation/test_validator_geometry.py \
+                   tests/remediation/test_repair_proposal.py \
                    tests/remediation/test_level_elevation.py \
                    tests/remediation/test_compiler_arch_failure.py \
                    tests/phase9_2/test_black_viewport.py \
@@ -218,6 +219,7 @@ jobs:
                --label "node-scope scene suites" --runner "node tests/lib/run.js" \
                    tests/remediation/test_model_apply.js \
                    tests/remediation/test_level_elevation.js \
+                   tests/remediation/test_repair_report.js \
                    tests/remediation/test_scene_limits.js || rc=1
           exit $rc
       - uses: actions/upload-artifact@v4

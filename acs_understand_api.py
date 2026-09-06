@@ -770,6 +770,13 @@ async def _edit_diff(before, after):
 
 
 async def _understand_payload(building):
+    # A generated repair travels as review data, outside the canonical model
+    # before authority hashes or validation are calculated.
+    repair = (building.get("meta") or {}).get("acs_repair_proposal")
+    if isinstance(repair, dict):
+        building = dict(building)
+        building["meta"] = dict(building.get("meta") or {})
+        building["meta"].pop("acs_repair_proposal", None)
     # W1-B: التطبيع أوّلاً، ثم العدّ والردّ — على النموذج نفسه الذي سيخرج.
     # كان العدّ يسبق `_engineering_authority`، فحتى لو عاد نموذجٌ مُطبَّع لكانت
     # الأعداد والبصمات تصف كائناً آخر. إن لم يعمل المخطّط (`None`) يبقى
@@ -782,7 +789,7 @@ async def _understand_payload(building):
     issues, validation_stats = await _validate("validate_building", building)
     nr = sum(len(f.get("rooms", [])) for f in building["floors"].values())
     meta = building.get("meta", {})
-    return {"ok": True, "building": building, "levels": len(building["levels"]),
+    payload = {"ok": True, "building": building, "levels": len(building["levels"]),
             "rooms": nr, "type": meta.get("type"),
             "mode": meta.get("acs_mode", "single"),
             "generation": _generation_summary(meta),
@@ -795,6 +802,13 @@ async def _understand_payload(building):
             "model_validation": {"status": "COMPLETED", "scope": "acs_validate",
                                  "issues": issues, "stats": validation_stats},
             "report": _report(building)}
+    if isinstance(repair, dict) and isinstance(repair.get("building"), dict):
+        payload["report"]["repair_proposal"] = {
+            "building": repair["building"], "applied": False,
+            "requires_confirmation": True,
+            "issues_before": issues, "issues_after": repair.get("issues_after") or [],
+            "engineering_diff": await _edit_diff(building, repair["building"])}
+    return payload
 
 
 @app.post("/v1/understand")

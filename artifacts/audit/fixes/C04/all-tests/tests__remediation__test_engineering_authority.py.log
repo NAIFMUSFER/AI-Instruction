@@ -1,0 +1,150 @@
+
+── أ · السجلّ الآليّ للتغييرات ──
+  ✓ the registry declares a schema and a version
+  ✓ the registry declares exactly the two allowed classes
+  ✓ every rule carries the six mandatory fields
+  ✓ every rule requires provenance
+  ✓ every engineering proposal requires user confirmation
+  ✓ no safe normalisation asks for confirmation, by construction
+  ✓ every declared change id is unique
+  ✓ an unregistered change id raises rather than passing silently
+  ✓ a safe rule can never be turned into a proposal object
+  ✓ the layout engine emits at least one recorded change on a broken model
+  ✓ every recorded change carries a registered change id
+  ✓ the safety and security additions are classified as proposals, never safe
+
+── ب · الحالات الثماني ──
+  ✓ A site expansion · a proposal of type LAYOUT_SITE_EXPANSION exists
+  ✓ A site expansion · the proposal claims no engineering authority
+  ✓ A site expansion · the proposal records provenance and a base revision
+  ✓ A site expansion · the proposal carries a before and an after state
+  ✓ A site expansion · planning left the canonical model byte-identical
+  ✓ A site expansion · rejecting leaves the model identical
+  ✓ A site expansion · approving commits through the authoring path
+  ✓ A site expansion · approving created exactly one new revision
+  ✓ A site expansion · the parent project is untouched after the commit
+  ✓ A site expansion · the commit is audited
+  ✓ A site expansion · the committed model actually differs from the parent
+  ✓ B aisle resize · a proposal of type LAYOUT_AISLE_WIDTH exists
+  ✓ B aisle resize · the proposal claims no engineering authority
+  ✓ B aisle resize · the proposal records provenance and a base revision
+  ✓ B aisle resize · the proposal carries a before and an after state
+  ✓ B aisle resize · planning left the canonical model byte-identical
+  ✓ B aisle resize · rejecting leaves the model identical
+  ✓ B aisle resize · approving commits through the authoring path
+  ✓ B aisle resize · approving created exactly one new revision
+  ✓ B aisle resize · the parent project is untouched after the commit
+  ✓ B aisle resize · the commit is audited
+  ✓ B aisle resize · the committed model actually differs from the parent
+  ✓ C exit addition · a proposal of type FLS_ADD_EXIT exists
+  ✓ C exit addition · the proposal claims no engineering authority
+  ✓ C exit addition · the proposal records provenance and a base revision
+  ✓ C exit addition · the proposal carries a before and an after state
+  ✓ C exit addition · planning left the canonical model byte-identical
+  ✓ C exit addition · rejecting leaves the model identical
+  ✓ C exit addition · approving commits through the authoring path
+  ✓ C exit addition · approving created exactly one new revision
+  ✓ C exit addition · the parent project is untouched after the commit
+  ✓ C exit addition · the commit is audited
+  ✓ C exit addition · the committed model actually differs from the parent
+  ✓ D smoke detector · a proposal of type LAYOUT_ADD_SMOKE_DETECTOR exists
+  ✓ D smoke detector · the proposal claims no engineering authority
+  ✓ D smoke detector · the proposal records provenance and a base revision
+  ✓ D smoke detector · the proposal carries a before and an after state
+  ✓ D smoke detector · planning left the canonical model byte-identical
+  ✓ D smoke detector · rejecting leaves the model identical
+  ✓ D smoke detector · approving commits through the authoring path
+  ✓ D smoke detector · approving created exactly one new revision
+  ✓ D smoke detector · the parent project is untouched after the commit
+  ✓ D smoke detector · the commit is audited
+  ✓ D smoke detector · the committed model actually differs from the parent
+  ✓ E sprinkler · a proposal of type LAYOUT_ADD_SPRINKLER exists
+  ✓ E sprinkler · the proposal claims no engineering authority
+  ✓ E sprinkler · the proposal records provenance and a base revision
+  ✓ E sprinkler · the proposal carries a before and an after state
+  ✓ E sprinkler · planning left the canonical model byte-identical
+  ✓ E sprinkler · rejecting leaves the model identical
+  ✓ E sprinkler · approving commits through the authoring path
+  ✓ E sprinkler · approving created exactly one new revision
+  ✓ E sprinkler · the parent project is untouched after the commit
+  ✓ E sprinkler · the commit is audited
+  ✓ E sprinkler · the committed model actually differs from the parent
+  ✓ F zone resize · a proposal of type LAYOUT_PROPORTIONAL_SHRINK exists
+  ✓ F zone resize · the proposal claims no engineering authority
+  ✓ F zone resize · the proposal records provenance and a base revision
+  ✓ F zone resize · the proposal carries a before and an after state
+  ✓ F zone resize · planning left the canonical model byte-identical
+  ✓ F zone resize · rejecting leaves the model identical
+  ✓ F zone resize · approving commits through the authoring path
+  ✓ F zone resize · approving created exactly one new revision
+  ✓ F zone resize · the parent project is untouched after the commit
+  ✓ F zone resize · the commit is audited
+  ✓ F zone resize · the committed model actually differs from the parent
+  ✓ G camera count · a proposal of type SEC_ADD_CAMERA exists
+  ✓ G camera count · the proposal claims no engineering authority
+  ✓ G camera count · the proposal records provenance and a base revision
+  ✓ G camera count · the proposal carries a before and an after state
+  ✓ G camera count · planning left the canonical model byte-identical
+  ✓ G camera count · rejecting leaves the model identical
+  ✓ G camera count · approving commits through the authoring path
+  ✓ G camera count · approving created exactly one new revision
+  ✓ G camera count · the parent project is untouched after the commit
+  ✓ G camera count · the commit is audited
+  ✓ G camera count · the committed model actually differs from the parent
+  ✓ H room overlap · a proposal of type LAYOUT_RESOLVE_OVERLAPS exists
+  ✓ H room overlap · the proposal claims no engineering authority
+  ✓ H room overlap · the proposal records provenance and a base revision
+  ✓ H room overlap · the proposal carries a before and an after state
+  ✓ H room overlap · planning left the canonical model byte-identical
+  ✓ H room overlap · rejecting leaves the model identical
+  ✓ H room overlap · approving commits through the authoring path
+  ✓ H room overlap · approving created exactly one new revision
+  ✓ H room overlap · the parent project is untouched after the commit
+  ✓ H room overlap · the commit is audited
+  ✓ H room overlap · the committed model actually differs from the parent
+
+── ب2 · الفتحات والنقاط تُقترَح ولا تُطبَّق ──
+  ✓ openings_are_proposed · a door too wide for its edge becomes a proposal
+  ✓ points_are_proposed · a point outside its room becomes a proposal
+  ✓ points_are_proposed · overwriting a user-stated height becomes a proposal
+  ✓ code_gaps_are_proposed · extinguisher and assembly gaps are proposed
+
+── ج · التطبيعات الآمنة وحدها تُكتب ──
+  ✓ defaults_never_overwrite · an absent structural constant is filled
+  ✓ defaults_never_overwrite · the fill records its provenance
+  ✓ defaults_never_overwrite · a user-stated value is never replaced
+  ✓ defaults_never_overwrite · nothing is recorded when nothing was filled
+  ✓ safe_rounding_is_bounded · a sub-tolerance value is canonicalised
+  ✓ safe_rounding_is_bounded · a value beyond the tolerance is left alone
+  ✓ safe_rounding_is_bounded · the declared tolerance is half a centimetre
+  ✓ model_hash_unchanged_before_approval · planning is hash-neutral
+  ✓ model_hash_unchanged_before_approval · autofix defaults to PROPOSE
+  ✓ model_hash_unchanged_before_approval · the default authority is declared
+  ✓ model_hash_unchanged_before_approval · a default autofix call writes nothing
+
+── د · لا مسار كتابة ثانٍ ولا إيداع تلقائي ──
+  ✓ no generation path calls the layout autofixer any more
+  ✓ the generation pipeline does not import the layout engine at all
+  ✓ autofix declares an explicit authority argument
+  ✓ the default authority argument is PROPOSE
+  ✓ an unknown authority mode is refused rather than assumed
+  ✓ the planning layer never imports the authoring layer
+  ✓ approval routes through commit_transaction and nothing else
+  ✓ there is no implicit approve-all
+  ✓ an unknown proposal id is refused
+  ✓ a proposal computed against another revision is refused as stale
+  ✓ the registry states the single mutation path explicitly
+  ✓ the registry states that the system holds no engineering authority
+  ✓ the health status reports no auto-commit path
+
+── هـ · تكافؤ البصمة والإفصاح ──
+  ✓ the planning hash equals the authoring gate hash (valid)
+  ✓ the planning hash equals the authoring gate hash (overlap)
+  ✓ the planning hash equals the authoring gate hash (aisle)
+  ✓ disclosure_is_never_wiped · strict mode preserves what the generator added
+  ✓ disclosure_is_never_wiped · the list survives in an explicit field
+  ✓ ids_never_mutate_input · to_project does not mutate the caller model
+  ✓ stage_merge_is_pre_canonical · the stage merge is declared pre-canonical
+
+──────────────────────────────────────────────────────────────
+ENGINEERING AUTHORITY: 135 passed, 0 failed

@@ -58,6 +58,8 @@ python3 "$HERE/test_image_dimensions.py"; guard $?
 python3 "$HERE/test_validator_response.py"; guard $?
 python3 "$HERE/test_validator_openings.py"; guard $?
 python3 "$HERE/test_validator_geometry.py"; guard $?
+python3 "$HERE/test_repair_proposal.py"; guard $?
+node "$ROOT/tests/lib/run.js" "$HERE/test_repair_report.js"; guard $?
 python3 "$HERE/test_level_elevation.py"; guard $?
 python3 "$HERE/test_compiler_arch_failure.py"; guard $?
 node "$ROOT/tests/lib/run.js" "$HERE/test_level_elevation.js"; guard $?

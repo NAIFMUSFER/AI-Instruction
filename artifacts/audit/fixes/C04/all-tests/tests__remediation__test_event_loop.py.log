@@ -1,0 +1,97 @@
+
+== أ · أثقل مدخل مقبول — مبنيّ من حدود العقد نفسها ==
+  ✓ الصورة تحت سقف البايتات المرفوعة
+  ✓ وعند سقف البايتات المفكوكة تقريباً
+  ✓ والـPDF عند سقف الصفحات بالضبط
+
+== ب · المجمّع المحدود ==
+  ✓ العمّال في **عمليات** لا خيوط (فكّ القفل العامّ كاملاً)
+  ✓ والسعة محدودة ومُعلنة
+  ✓ وحدّ الإلغاء مُعلَن نصّاً لا مُدَّعى
+
+== ج · قياس التوقّف: قبل وبعد، على نفس الحمل ==
+     العتبات: توقّف ≤ 250 ms · p95 ≤ 500 ms · أطول طلب ≤ 500 ms
+     json         قبل: توقّف      1.3 ms · أطول      0.4 ms   |   بعد: توقّف    1.0 ms · أطول    0.6 ms · p95   0.5 ms
+     pdf          قبل: توقّف    164.4 ms · أطول    160.0 ms   |   بعد: توقّف    1.0 ms · أطول    1.2 ms · p95   0.4 ms
+     image        قبل: توقّف    354.1 ms · أطول    355.0 ms   |   بعد: توقّف    1.2 ms · أطول    1.3 ms · p95   0.5 ms
+     image_batch  قبل: توقّف   1259.0 ms · أطول   1267.4 ms   |   بعد: توقّف    1.2 ms · أطول    2.8 ms · p95   0.5 ms
+  ✓ json         → لا توقّف يتجاوز 250 ms
+  ✓ json         → p95 للطلب الخفيف تحت 500 ms
+  ✓ json         → وأطول طلب خفيف تحت 500 ms
+  ✓ json         → النتيجة نفسها قبل وبعد (لا سلوك تغيّر)
+  ✓ pdf          → لا توقّف يتجاوز 250 ms
+  ✓ pdf          → p95 للطلب الخفيف تحت 500 ms
+  ✓ pdf          → وأطول طلب خفيف تحت 500 ms
+  ✓ pdf          → النتيجة نفسها قبل وبعد (لا سلوك تغيّر)
+  ✓ image        → لا توقّف يتجاوز 250 ms
+  ✓ image        → p95 للطلب الخفيف تحت 500 ms
+  ✓ image        → وأطول طلب خفيف تحت 500 ms
+  ✓ image        → النتيجة نفسها قبل وبعد (لا سلوك تغيّر)
+  ✓ image_batch  → لا توقّف يتجاوز 250 ms
+  ✓ image_batch  → p95 للطلب الخفيف تحت 500 ms
+  ✓ image_batch  → وأطول طلب خفيف تحت 500 ms
+  ✓ image_batch  → النتيجة نفسها قبل وبعد (لا سلوك تغيّر)
+  ✓ والقياس ذو معنى: الحمل المتزامن كان يوقف الحلقة فعلاً قبل الإصلاح
+  ✓ وعدد الطلبات المخدومة أثناء الحمل ارتفع فعلاً
+
+== د · الإشباع رفضٌ صريح لا طابور بلا سقف ==
+  ✓ مجمّع مشبع يرفض فوراً بـPoolSaturated
+  ✓ والرفض محسوب في القياسات
+  ✓ والمقعد يعود بعد الانتهاء
+
+== هـ · المهلة تحرّر المقعد ولا تدّعي قتلاً ==
+ACS_ENV=production with no ACS_RATE_LIMIT_BACKEND: the rate limiter is PROCESS-LOCAL. Two instances = two quotas, and a restart clears them. health_status() reports distributed=false.
+ACS_ENV=production with no ACS_RATE_LIMIT_BACKEND: the rate limiter is PROCESS-LOCAL. Two instances = two quotas, and a restart clears them. health_status() reports distributed=false.
+ACS_ENV=production with no ACS_RATE_LIMIT_BACKEND: the rate limiter is PROCESS-LOCAL. Two instances = two quotas, and a restart clears them. health_status() reports distributed=false.
+ACS_ENV=production with no ACS_RATE_LIMIT_BACKEND: the rate limiter is PROCESS-LOCAL. Two instances = two quotas, and a restart clears them. health_status() reports distributed=false.
+ACS_ENV=production with no ACS_RATE_LIMIT_BACKEND: the rate limiter is PROCESS-LOCAL. Two instances = two quotas, and a restart clears them. health_status() reports distributed=false.
+  ✓ تجاوز المهلة يرفع PoolTimeout
+  ✓ والمقعد يعود فوراً
+  ✓ والمهلة محسوبة
+
+== و · الرفض يعبر حدّ العملية بلا تشويه ==
+  ✓ UploadRejected يصل الأب كما هو
+  ✓ ورسالته العربية محفوظة
+  ✓ والصنف صار قابلاً للتخليص فعلاً (كان يرفع TypeError)
+
+== ز٠ · مخطّط سلطة التغيير خارج الحلقة أيضاً ==
+     EA.plan على ٤٠٠٠ غرفة (٥٢٨ ك.ب، تحت ACS_MAX_BUILDING): 1134 ms متزامناً
+  ✓ والمخطّط ثقيلٌ فعلاً — كان يعمل على الحلقة في **كل** رد ناجح
+     ea_plan     قبل: توقّف   1202.1 ms · أطول   1205.8 ms   |   بعد: توقّف   38.8 ms · أطول   50.8 ms
+  ✓ قبل: توقّفٌ يتجاوز العتبة
+  ✓ بعد: لا توقّف يتجاوز 250 ms
+  ✓ وأطول طلب خفيف تحت 500 ms
+  ✓ والنتيجة نفسها
+  ✓ ولا نداء EA.plan متزامن باقٍ في أي معالج
+  ✓ ولا EA.flat_diff متزامن
+  ✓ و_understand_payload صار كوروتين يُنتظَر في كل معالج
+
+== ز · هدفٌ غير معلن لا يُنفَّذ ==
+  ✓ اسم هدف من خارج القائمة المعلنة يُرفض
+  ✓ والقائمة المعلنة محصورة في ثلاث وحدات معروفة لا اسم يصل من الشبكة
+
+== ح · لا مدقّق متزامن باقٍ في أي معالج ==
+  ✓ صفر نداء UPLOAD.validate_* متزامن في acs_understand_api
+  ✓ وستة نداءات ثقيلة كلّها عبر المجمّع
+  ✓ والإشباع يُترجَم 429 والمهلة 504 لا 500
+  ✓ وحالة المجمّع مُعلنة في /health
+
+== ط · F-47: قرارٌ صريح بدل تحذير بلا أثر ==
+  ✓ خارج الإنتاج                 → development
+  ✓ إنتاج بلا مخزن ولا إقرار     → UNDECLARED_SINGLE_INSTANCE
+  ✓ إقرارٌ صريح بنسخة واحدة      → single_instance_declared
+  ✓ إقرارٌ تنقضه المنصّة         → SINGLE_INSTANCE_INVARIANT_VIOLATED
+  ✓ عمّال uvicorn أكثر من واحد   → SINGLE_INSTANCE_INVARIANT_VIOLATED
+  ✓ والفرض يرفع استثناءً يمنع الإقلاع
+  ✓ والخادم يستدعيه في مسار الإقلاع
+  ✓ وملفّ النشر يُعلن الثابت صراحةً
+  ✓ ولا --workers في أمر التشغيل (عمليّة واحدة فعلاً)
+  ✓ والقرار مُعلَن في /health
+
+== ي · المسار الموزّع على خادم Redis حقيقيّ ==
+  ! redis-server غير موجود — المسار الموزّع: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+
+──────────────────────────────────────────────────────────────
+SCOPE: real asyncio loop · real shipped validators · real redis-server.
+       FastAPI/uvicorn routing is NOT exercised (PyPI 403 here).
+EVENT LOOP AND RATE-LIMIT DECISION: 57 passed, 0 failed

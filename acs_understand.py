@@ -1304,13 +1304,14 @@ def validate(building):
 
 def call_llm_repair(description, building, issues, model=None,
                     request_id=None, strategy=None):
-    """يُعيد النموذج لإصلاح المخالفات المكتشفة (حلقة التحقّق والإصلاح)."""
+    """يولد نموذج إصلاح مقترحاً للمراجعة؛ لا يمنحه سلطة استبدال الأصل."""
     import acs_validate as V
     fix_prompt = (
         "هذا نموذج Building JSON أنتجته سابقاً، وبه مخالفات هندسية.\n"
         "أصلحها كلها وأعِد **النموذج الكامل** بصيغة JSON فقط (بلا شرح).\n"
         "حافظ على ما هو صحيح، وعالج الآتي:\n\n"
         + V.format_issues(issues) +
+        "\n\nطلب العميل الأصلي (احفظ بنوده ومقاساته ونفيه):\n" + description +
         "\n\nالنموذج الحالي:\n" + json.dumps(building, ensure_ascii=False)
     )
     # سقف أعلى: المخرج المُصلَح بحجم النموذج كاملاً
@@ -1966,24 +1967,31 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
     issues, stats = V.validate_building(building)
     print("[ACS-CHECK] جولة 0 (%s): %d مخالفة · %s" % (btype, len(issues), stats))
 
+    candidate, candidate_issues = building, issues
     for i in range(rounds):
-        if not issues:
+        if not candidate_issues:
             break
-        print("[ACS-CHECK] إرسال %d مخالفة للإصلاح (جولة %d)…" % (len(issues), i + 1))
+        print("[ACS-CHECK] إرسال %d مخالفة لاقتراح إصلاح (جولة %d)…" % (len(candidate_issues), i + 1))
         try:
             fixed = validate(extract_json(call_llm_repair(
-                description, building, issues, model=model,
+                description, candidate, candidate_issues, model=model,
                 request_id=request_id, strategy=plan["strategy"])))
         except Exception as e:
             print("[ACS-CHECK] فشل الإصلاح (%s) — نُبقي النموذج السابق." % str(e)[:200])
             break
         new_issues, new_stats = V.validate_building(fixed)
         print("[ACS-CHECK] جولة %d: %d مخالفة · %s" % (i + 1, len(new_issues), new_stats))
-        if len(new_issues) <= len(issues):      # تحسّن أو تعادل → اعتمده
-            building, issues = fixed, new_issues
+        if len(new_issues) <= len(candidate_issues):
+            candidate, candidate_issues = fixed, new_issues
         else:
             print("[ACS-CHECK] النتيجة أسوأ — نُبقي السابق.")
             break
+
+    if candidate is not building:
+        building.setdefault("meta", {})["acs_repair_proposal"] = {
+            "building": candidate, "issues_before": issues,
+            "issues_after": candidate_issues, "applied": False,
+            "requires_confirmation": True}
 
     # ── لا إصلاح حسابي صامت (F-01) ──
         # F-01: المصلِح الحسابي لم يعد يكتب في النموذج. ما كان يغيّره صار
