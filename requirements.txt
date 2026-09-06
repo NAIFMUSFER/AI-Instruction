@@ -19,9 +19,12 @@
 #       pip-compile --generate-hashes --output-file requirements.lock requirements.in
 #   التفاصيل والتحذيرات كاملة في requirements.lock و DEPENDENCY-POLICY.md.
 # =============================================================================
+# C08: FastAPI/Starlette/multipart were verified and upgraded together on
+# 2026-09-06 for parser resource limits. Other historical lock caveats remain.
 anthropic==0.40
-fastapi==0.110
+fastapi==0.141.1
+starlette==1.6.0
 pypdf==4.0
-python-multipart==0.0.9
+python-multipart==0.0.32
 uvicorn[standard]==0.27
 Pillow==12.3.0

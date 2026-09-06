@@ -1,0 +1,142 @@
+
+== §1 — THE BUDGETS ARE DECLARED, AND DECLARED AS TARGETS ==
+  ✓ tests/performance/budgets.json exists
+  ✓ it parses as JSON
+  ✓ it declares a schema
+  ✓ its status says the budgets are TARGETS ONLY and NOT MEASURED
+  ✓ measured === false at the top level
+  ✓ it explains in words that a budget with no measurement is a promise, not a result
+  ✓ it states NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+  ✓ it names the real reason (empty public/vendor, no network)
+  ✓ at least 12 individual budgets are declared
+  ✓ every budget has an id, a metric, an operator, a numeric target and a unit
+  ✓ EVERY budget is individually flagged measured:false — not one is presented as an achieved number
+  ✓ every operator is a real comparison
+  ✓ the required desktop budget exists: >= 45 fps on a MEDIUM fixture
+  ✓ the required mid-range mobile navigation budget exists: >= 24 fps
+  ✓ budget FRAME_TIME_P95_DESKTOP_MEDIUM is declared
+  ✓ budget FRAME_TIME_P95_MOBILE is declared
+  ✓ budget FIRST_VISIBLE_FRAME_MEDIUM is declared
+  ✓ budget MODEL_BUILD_MEDIUM is declared
+  ✓ budget THREE_INIT_DESKTOP is declared
+  ✓ budget JS_PARSE_INIT_DESKTOP is declared
+  ✓ budget FIRST_CONTENT_LOAD_DESKTOP is declared
+  ✓ budget DRAW_CALLS_MEDIUM is declared
+  ✓ budget TRIANGLES_MEDIUM is declared
+  ✓ budget WEBGL_CONTEXT_COUNT is declared
+  ✓ budget CONTEXT_LOSS_EVENTS is declared
+  ✓ budget RENDER_LOOP_COUNT is declared
+  ✓ budget DUPLICATE_EVENT_LISTENERS is declared
+  ✓ budget GEOMETRIES_RETURN_TO_BASELINE is declared
+  ✓ budget TEXTURES_RETURN_TO_BASELINE is declared
+  ✓ budget HEAP_AFTER_20_PROJECT_SWITCHES is declared
+  ✓ a p95 frame-time budget accompanies each fps budget, so an average cannot be reached by alternating fast and stalled frames
+  ✓ context loss is budgeted at exactly zero
+  ✓ the fixture classes name the required fixtures
+  ✓ every budget offers a justification or is a self-evident zero
+
+== §2 — THE QUALITY GOVERNOR CAN NEVER DROP SEMANTIC GEOMETRY ==
+  ✓ tests/performance/quality_governor.json exists
+  ✓ it parses as JSON
+  ✓ the governor declares itself a specification, not an implementation
+  ✓ it states plainly that it is not wired into public/index.html
+  ✓ a MID_RANGE_MOBILE tier exists
+  ✓ MID_RANGE_MOBILE declares an exact reduced shadow resolution
+  ✓ MID_RANGE_MOBILE declares an exact reduced SSAO quality
+  ✓ MID_RANGE_MOBILE declares an exact lower device-pixel-ratio cap
+  ✓ MID_RANGE_MOBILE declares an exact reduced context LOD
+  ✓ every mobile parameter delta is written down with its reasoning
+  ✓ the reduced context LOD is explicitly scoped to DECORATIVE, non-canonical dressing only — never to model geometry
+  ✓ the invariant is stated in words a reviewer can hold the code to
+  ✓ the protected element classes cover the load-bearing and life-safety elements
+  ✓ every tier declares removes_semantic_geometry:false
+  ✓ every tier declares writes_to_model:false
+  ✓ THE SPEC PASSES ITS OWN VALIDATION CONTRACT — no tier permits dropping semantic geometry
+  ✓ even the MINIMUM_SAFE last-resort tier removes no geometry
+  ✓ tier switching declares hysteresis, so the governor cannot oscillate
+  ✓ the governor states that no tier was measured here
+
+  -- the validator is not vacuous: hostile specs must fail --
+  ✓ the validator rejects a tier that admits it removes semantic geometry
+  ✓ the validator rejects a tier that writes to the model
+  ✓ the validator rejects a parameter that culls walls
+  ✓ the validator rejects a parameter that drops rooms
+  ✓ the validator rejects a parameter that decimates geometry
+  ✓ the validator rejects a parameter that hides MEP
+  ✓ the validator rejects a parameter that skips element classes
+  ✓ the validator rejects an innocuous-looking parameter outside the allowlist
+  ✓ the validator rejects a weakened top-level invariant
+  ✓ the validator rejects a governor that may change the model hash
+  ✓ the validator rejects a tier-level removal switch
+
+== §3 — THE HARNESS EXITS 2, NOT 0, WHEN IT CANNOT MEASURE ==
+  ✓ tests/performance/run_perf.js exists
+  ✓ it declares NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED in the source
+  ✓ it can never exit 0 on the not-verified path (process.exit(2) is the only exit in notVerified)
+  ✓ the harness implements a measurement for first content load
+  ✓ the harness implements a measurement for JS parse/init
+  ✓ the harness implements a measurement for Three init
+  ✓ the harness implements a measurement for model build
+  ✓ the harness implements a measurement for first visible frame
+  ✓ the harness implements a measurement for FPS average
+  ✓ the harness implements a measurement for frame-time p5
+  ✓ the harness implements a measurement for frame-time p95
+  ✓ the harness implements a measurement for draw calls
+  ✓ the harness implements a measurement for triangles
+  ✓ the harness implements a measurement for JS heap
+  ✓ the harness implements a measurement for memory after repeated loads
+  ✓ the harness implements a measurement for memory after dispose
+  ✓ the harness implements a measurement for WebGL context count
+  ✓ the harness implements a measurement for context loss events
+  ✓ the harness implements a measurement for geometry disposal via renderer.info.memory
+  ✓ the harness implements a measurement for texture disposal
+  ✓ the harness implements a measurement for duplicate render loops
+  ✓ the harness implements a measurement for duplicate event listeners
+  ✓ leak scenario SWITCH_20_PROJECTS is implemented
+  ✓ leak scenario PBR_ENTER_EXIT is implemented
+  ✓ leak scenario CONTEXT_LANDSCAPE_TOGGLE is implemented
+  ✓ leak scenario SCREENSHOT_CREATE_DISPOSE is implemented
+  ✓ leak scenario VR_ENTER_EXIT is implemented
+  ✓ fixture villa is present in the harness
+  ✓ fixture apartment is present in the harness
+  ✓ fixture hotel is present in the harness
+  ✓ fixture clinic is present in the harness
+  ✓ fixture warehouse is present in the harness
+  ✓ fixture spaces_100 is present in the harness
+  ✓ fixture spaces_500 is present in the harness
+  ✓ fixture spaces_1000 is present in the harness
+  ✓ fixture live_large_generated is present in the harness
+  ✓ the real fixtures are read from the repository, not re-typed
+  (running the harness for real — this takes ~30 s)
+  ✓ the harness exits 2 (NOT VERIFIED), not 0 (pass) and not 1 (crash)
+  ✓ it prints NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+  ✓ it says in words that exit 2 must not be counted as a pass
+  ✓ it wrote tests/performance/outputs/perf.json
+  ✓ the output records that nothing about the application was measured
+  ✓ the output records exit_code 2
+  ✗ the reason names the empty public/vendor and the absent network no Chromium binary is available in this sandbox and there is no network to download one
+  ✓ the output contains no fps/frame-time number attributed to the application
+  ✓ the fixture matrix is listed with provenance so nothing is silently invented
+  ✓ every synthetic fixture declares that it was generated, not real
+  ✓ the leak scenarios are listed and all marked unmeasured
+  ✓ the budgets are referenced by file, and their TARGET status is carried into the output
+
+== §4 — THE VACUITY PROOF: THE HARNESS DID MEASURE SOMETHING ==
+  ✓ a minimal WebGL page exists and is written here, not borrowed
+  ✓ it uses a plain canvas + getContext('webgl2')
+  ✓ it runs a requestAnimationFrame loop
+  ✓ it contains no Three.js and no framework at all
+  ✗ the harness output carries a vacuity proof 
+
+== §5 — WHAT THE FIRST REQUEST ACTUALLY COSTS (MEASURED HERE) ==
+  MEASURED: shell=47424 B · modules=27 file(s)/1900413 B · css=53599 B · pre-split single page=1863894 B
+  ✓ the shipped page is a SHELL: it is under 200 KB, and under a tenth of the single file it replaced
+  ✓ the application itself did not shrink — it moved: the modules carry at least as much code as the old page did
+  ✓ the code is split into separately cacheable files, not one bundle
+  ✓ the styles left the page too — an external stylesheet is cacheable, a <style> block is not
+  ✓ no module is empty — an empty file is a shipped request that buys nothing
+
+  NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: no ACS frame was rendered and no application performance number exists. F-14 budgets are TARGETS; the quality governor is a SPECIFICATION and is NOT implemented in the shipped frontend (public/index.html + public/app/). The §5 numbers above are measured bytes on this tree, not a rendering measurement, and transfer size after compression is NOT VERIFIED here.
+
+──────────────────────────────────────────────
+PERFORMANCE CONTRACT: 121 passed, 2 failed

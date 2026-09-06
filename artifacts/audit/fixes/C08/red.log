@@ -1,0 +1,78 @@
+test_chunked_file_stops_before_consuming_tail (__main__.RequestBodyLimits.test_chunked_file_stops_before_consuming_tail) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_PAYLOAD_TOO_LARGE", "event": "request_failed", "level": "error", "request_id": "req_0d152cbc04ef4b44", "service": "ACS Understanding Engine", "status": 413, "ts": "2026-09-06T12:19:51Z", "version": "1.3"}
+FAIL
+test_declared_oversize_rejected_before_body_read (__main__.RequestBodyLimits.test_declared_oversize_rejected_before_body_read) ... Did not find CR at end of boundary (3)
+{"endpoint": "/v1/understand/pdf", "error_code": "ACS_BAD_REQUEST", "event": "request_failed", "level": "error", "request_id": "req_a4212c123a5b4c9d", "service": "ACS Understanding Engine", "status": 400, "ts": "2026-09-06T12:19:51Z", "version": "1.3"}
+FAIL
+test_nonfile_part_limit_runs_before_endpoint_validation (__main__.RequestBodyLimits.test_nonfile_part_limit_runs_before_endpoint_validation) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_UNPROCESSABLE", "event": "request_failed", "level": "error", "request_id": "req_5d790945f1144b40", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T12:19:51Z", "version": "1.3"}
+FAIL
+test_small_file_keeps_existing_validation_and_error_contract (__main__.RequestBodyLimits.test_small_file_keeps_existing_validation_and_error_contract) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_UNPROCESSABLE", "event": "request_failed", "level": "error", "request_id": "req_1e9dd14146ca4489", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T12:19:51Z", "version": "1.3"}
+ok
+test_urlencoded_field_limit_runs_before_endpoint (__main__.RequestBodyLimits.test_urlencoded_field_limit_runs_before_endpoint) ... {"endpoint": "/v1/understand/pdf", "error_code": "ACS_VALIDATION_FAILED", "event": "request_failed", "level": "error", "request_id": "req_6192a384b20342df", "service": "ACS Understanding Engine", "status": 422, "ts": "2026-09-06T12:19:51Z", "version": "1.3"}
+FAIL
+
+======================================================================
+FAIL: test_chunked_file_stops_before_consuming_tail (__main__.RequestBodyLimits.test_chunked_file_stops_before_consuming_tail)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 54, in test_chunked_file_stops_before_consuming_tail
+    self.assertLess(len(reads), chunks, "the parser must not spool the complete upload")
+AssertionError: 202 not less than 202 : the parser must not spool the complete upload
+
+======================================================================
+FAIL: test_declared_oversize_rejected_before_body_read (__main__.RequestBodyLimits.test_declared_oversize_rejected_before_body_read)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 38, in test_declared_oversize_rejected_before_body_read
+    self.check_error(res, 413)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 25, in check_error
+    self.assertEqual(response.status_code, status, response.text[:300])
+AssertionError: 400 != 413 : {"ok":false,"error":{"code":"ACS_BAD_REQUEST","message":"There was an error parsing the body","request_id":"req_a4212c123a5b4c9d","retryable":false,"upstream":null},"contract":"acs-error-envelope/1.0.0"}
+
+======================================================================
+FAIL: test_nonfile_part_limit_runs_before_endpoint_validation (__main__.RequestBodyLimits.test_nonfile_part_limit_runs_before_endpoint_validation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 63, in test_nonfile_part_limit_runs_before_endpoint_validation
+    self.check_error(res, 400)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 25, in check_error
+    self.assertEqual(response.status_code, status, response.text[:300])
+AssertionError: 422 != 400 : {"ok":false,"error":{"code":"ACS_UNPROCESSABLE","message":"تعذّر تنفيذ الطلب بمحتواه الحالي.","request_id":"req_5d790945f1144b40","retryable":false,"upstream":null},"contract":"acs-error-envelope/1.0.0"}
+
+======================================================================
+FAIL: test_urlencoded_field_limit_runs_before_endpoint (__main__.RequestBodyLimits.test_urlencoded_field_limit_runs_before_endpoint)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 70, in test_urlencoded_field_limit_runs_before_endpoint
+    self.check_error(res, 400)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_request_body_limits.py", line 25, in check_error
+    self.assertEqual(response.status_code, status, response.text[:300])
+AssertionError: 422 != 400 : {"ok":false,"error":{"code":"ACS_VALIDATION_FAILED","message":"بيانات الطلب لا تطابق العقد المطلوب (body.file).","request_id":"req_6192a384b20342df","retryable":false,"upstream":null},"contract":"acs-error-envelope/1.0.0"}
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.584s
+
+FAILED (failures=4)

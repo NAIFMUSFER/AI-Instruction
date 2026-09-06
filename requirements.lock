@@ -63,9 +63,12 @@ anthropic==0.40
     # via -r requirements.in
     # FLOOR-DERIVED from `anthropic>=0.40`; not resolved against PyPI.
 
-fastapi==0.110
+fastapi==0.141.1
     # via -r requirements.in
-    # FLOOR-DERIVED from `fastapi>=0.110`; not resolved against PyPI.
+    # C08: verified PyPI metadata permits Starlette 1.6.0.
+
+starlette==1.6.0
+    # C08: fixes multipart and urlencoded parser resource limits.
 
 pypdf==4.0
     # via -r requirements.in
@@ -78,11 +81,9 @@ Pillow==12.3.0
 # It was verified to import successfully in the local remediation environment.
 # Artefact integrity is still NOT VERIFIED here because this offline lock carries no hashes.
 
-python-multipart==0.0.9
+python-multipart==0.0.32
     # via -r requirements.in
-    # FLOOR-DERIVED from `python-multipart>=0.0.9`; not resolved against PyPI.
-    # ⚠ this floor is old enough that a CVE review is mandatory before the next
-    #   production deploy. That review needs a network — see tools/dependency_audit.py.
+    # C08: patched parser header limits; verified on PyPI 2026-09-06.
 
 uvicorn[standard]==0.27
     # via -r requirements.in
@@ -112,7 +113,6 @@ uvicorn[standard]==0.27
 # UNRESOLVED-OFFLINE  python-dotenv          # via uvicorn[standard]
 # UNRESOLVED-OFFLINE  pyyaml                 # via uvicorn[standard]
 # UNRESOLVED-OFFLINE  sniffio                # via anyio, anthropic
-# UNRESOLVED-OFFLINE  starlette              # via fastapi
 # UNRESOLVED-OFFLINE  typing-extensions      # via anthropic, fastapi, pydantic, pypdf
 # UNRESOLVED-OFFLINE  uvloop                 # via uvicorn[standard]
 # UNRESOLVED-OFFLINE  watchfiles             # via uvicorn[standard]

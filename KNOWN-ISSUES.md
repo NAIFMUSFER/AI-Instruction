@@ -1662,3 +1662,15 @@ no DeepSeek key here and PyPI is blocked, so the real SDK cannot be installed.
 What is proven is resolution, endpoint targeting, classification, the fallback
 bound and secret isolation — measured against a double carrying the real
 v0.40.0 signature that records what the client was built with.
+# Audit 2026-09-06 — حالة فرع audit/fix-2026-09-06
+
+هذا التحديث يخص الأصل remediation/production-trust@962f8da، ولا يصف تلقائياً main أو النشر الحالي.
+السجل الجامع: [AUDIT-REPORT.md](AUDIT-REPORT.md). الإغلاقات التاريخية أدناه لا تتجاوز نطاق اختبارها.
+
+| البند | الحالة | الدليل/الحد |
+|---|---|---|
+| AUDIT-C08: جسم multipart غير محدود قبل تحليل الطلب | أُصلح محلياً، لم يُنشر | test_request_body_limits.py: فشلت 4/5 قبل الإصلاح ونجحت 5/5 بعده؛ حد الجسم يسبق parsing/spooling، مع تحديث FastAPI/Starlette/python-multipart لإغلاق ثغرات المحللات المثبتة |
+| تحقق النشر والحالتين بعد C08 | غير متحقق بالكامل | التوليد المحلي بالمزوّد يعيد 503 لغياب الاعتماد؛ نتائج المولد المحلي والتصدير للحالتين تطابق الأصل بايتاً؛ لا يثبت ذلك صحة وصفهما أو رسم البكسلات |
+
+أدلة الإصلاح في artifacts/audit/fixes/C08/. بقية مشاكل التدقيق في AUDIT-REPORT.md ما زالت مفتوحة؛
+خصوصاً هندسة المدقّق، حلقة الإصلاح الصامت، المناسيب والقالب المحلي. لم تُحذف ميزة لمعالجة الرفع.

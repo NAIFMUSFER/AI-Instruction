@@ -1,0 +1,26 @@
+{
+  "baseline_commit": "962f8daec2f194957d1a4322ce1ed22fd39086ea",
+  "regression_before": {
+    "tests": 5,
+    "failures": 4
+  },
+  "regression_after": {
+    "tests": 5,
+    "failures": 0
+  },
+  "full_suite_raw": {
+    "files": 110,
+    "PASS": 94,
+    "FAIL": 8,
+    "NOT_VERIFIED": 8
+  },
+  "new_raw_failures": [
+    "tests/remediation/test_dependency_lock.py"
+  ],
+  "targeted_reruns_passed": [
+    "test_dependency_lock.py",
+    "test_ci_gate.py"
+  ],
+  "real_local_generation": "503 provider credential missing for both cases",
+  "model_and_export_comparison": "both local-generator cases byte-identical; no real AI or pixel claim"
+}

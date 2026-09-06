@@ -81,6 +81,65 @@ def _error_response(request, err: "E.AcsApiError"):
     return JSONResponse(status_code=err.status, content=body, headers=headers)
 
 
+class UploadBodyLimit:
+    """Bound the complete upload before Starlette parses or spools any part.
+
+    MAX_UPLOAD remains the aggregate file-byte limit. The envelope also allows
+    UTF-8 notes and bounded multipart headers/boundaries; neither is a file.
+    Buffering is bounded and ends before parser allocation, so rejection cannot
+    leave a partially spooled UploadFile open.
+    """
+    MAX_UTF8_BYTES_PER_CHARACTER = 4
+    MULTIPART_ENVELOPE_BYTES = 64 * 1024
+    PATHS = frozenset(("/v1/understand/image", "/v1/understand/pdf"))
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if (scope["type"] != "http" or scope.get("method") != "POST"
+                or scope.get("path") not in self.PATHS):
+            return await self.app(scope, receive, send)
+        request = Request(scope)
+        budget = (MAX_UPLOAD + self.MAX_UTF8_BYTES_PER_CHARACTER * MAX_NOTES
+                  + self.MULTIPART_ENVELOPE_BYTES)
+        length = request.headers.get("content-length")
+        if length is not None:
+            try:
+                declared = int(length)
+                if declared < 0:
+                    raise ValueError
+            except ValueError:
+                response = _error_response(request, E.AcsApiError(E.ACS_BAD_REQUEST))
+                return await response(scope, receive, send)
+            if declared > budget:
+                response = _error_response(request, E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE))
+                return await response(scope, receive, send)
+        buffered = bytearray()
+        while True:
+            message = await receive()
+            if message["type"] == "http.disconnect":
+                return
+            chunk = message.get("body", b"")
+            if len(buffered) + len(chunk) > budget:
+                response = _error_response(request, E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE))
+                return await response(scope, receive, send)
+            buffered.extend(chunk)
+            if not message.get("more_body", False):
+                break
+        pending = [{"type": "http.request", "body": bytes(buffered), "more_body": False}]
+        buffered.clear()
+
+        async def bounded_receive():
+            return pending.pop() if pending else await receive()
+
+        await self.app(scope, bounded_receive, send)
+
+
+# Inside the envelope and CORS middleware, outside request/form parsing.
+app.add_middleware(UploadBodyLimit)
+
+
 @app.middleware("http")
 async def acs_envelope_middleware(request: Request, call_next):
     """يمنح كل طلب معرّفاً، ويضمن أن أي انفلات يخرج مغلّفاً JSON.

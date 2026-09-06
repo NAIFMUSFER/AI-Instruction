@@ -30,6 +30,8 @@
 
 # إطار الواجهة الخلفية HTTP — نقطة الدخول acs_understand_api.py
 fastapi
+# C08: patched multipart and urlencoded parsers (verified on PyPI 2026-09-06).
+starlette
 
 # خادم ASGI الذي يشغّل التطبيق في الحاوية (سطر CMD في Dockerfile).
 # الإضافة [standard] لازمة: منها httptools/uvloop/websockets وأداء الإنتاج.

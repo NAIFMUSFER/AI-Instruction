@@ -1,0 +1,112 @@
+
+── أ · سطر JSON واحد لكل حدث ──
+  ✓ one event writes exactly one line
+  ✓ that line is valid JSON
+  ✓ every event carries ts, level, event and service
+  ✓ the declared fields survive intact
+  ✓ the timestamp is UTC ISO-8601 to the second
+  ✓ three events write three separate lines, one JSON object each
+  ✓ a newline inside a value can never split the record into two lines
+  ✓ an embedded newline is escaped, not emitted raw
+
+── ب · ترشيح المستوى ──
+  ✓ a debug event is suppressed at min_level=info
+  ✓ an info event passes at min_level=info
+  ✓ the same debug event passes at min_level=debug
+  ✓ a warn is suppressed at min_level=error while an error passes
+  ✓ an unknown level name never opens the gate — the module falls back to info
+
+── ج · الحجب بالاسم ──
+  ✓ the event is still emitted, with the safe fields kept
+  ✓ not one forbidden KEY survives into the record
+  ✓ not one forbidden VALUE appears anywhere in the emitted line
+  ✓ nor does any fragment of the visitor description
+  ✓ EVERY declared forbidden field is dropped when passed explicitly (26 fields swept)
+  ✓ the block list is case-insensitive — TEXT and Api_Key are dropped too
+
+── ج2 · تعقيم شكل السرّ داخل قيمة مسموح بها ──
+  ✓ a key shape inside an ALLOWED value is redacted
+  ✓ a bearer token inside an ALLOWED value is redacted
+  ✓ the redaction marker proves acs_api_errors.redact actually ran
+  ✓ the emitted value equals exactly what E.redact produces — same function, not a private copy
+  ✓ the logger reaches redaction through acs_api_errors, not a local regex
+  ✓ a key shape nested one level deep is redacted too
+
+── ج3 · الاقتطاع والحدود البنيوية ──
+  ✓ a long value is truncated to the declared cap
+  ✓ the cap is a declared constant, not a magic number in the emitter
+  ✓ a forbidden key nested inside a dict is dropped
+  ✓ recursion does not stop at depth one — a forbidden key three levels down is dropped as well
+  ✓ a forbidden key inside a list of dicts is dropped
+  ✓ the harmless nested values survive — sanitising is not deleting
+  ✓ a long list is bounded, not emitted whole
+  ✓ a wide dict is bounded, not emitted whole
+  ✓ a None field is omitted rather than logged as null
+  ✓ an unknown object is stringified through the same sanitiser, not repr-ed raw
+
+── د · الاستثناء: صنف وموضع، لا نصّ ──
+  ✓ with ACS_LOG_STACK_TRACES disabled the module flag is off
+  ✓ an exception event still emits exactly one JSON line
+  ✓ it names the exception CLASS
+  ✓ it names the position as file:line
+  ✓ it carries NO stack field in production
+  ✓ and NO raw exception text — the traceback bypass is closed
+  ✓ the request id still ties the event to the request
+  ✓ with ACS_LOG_STACK_TRACES enabled the module flag is on
+  ✓ a stack field appears only when stack traces are explicitly enabled
+  ✓ no key shape survives into the development stack either
+  ✓ the development stack is bounded by the same declared cap — a deep traceback cannot flood the log
+  ✓ the development stack itself is redacted before it is written
+  ✓ the two modes differ ONLY by the stack field
+  ✓ the module restores its declared default after the probe (development on, production off)
+
+── هـ · تليمتري التوليد ──
+  ✓ the telemetry event is a single JSON line named llm_generation
+  ✓ every declared telemetry field is present
+  ✓ a passed text= NEVER appears in the telemetry output
+  ✓ neither does a description, a prompt, a key or a raw completion
+  ✓ an undeclared field is dropped silently rather than logged
+
+── و · حالة الصحّة ──
+  ✓ health_status reports the environment
+  ✓ health_status reports the minimum level
+  ✓ health_status reports the stack-trace flag
+  ✓ health_status declares the structured contract and the block-list size
+  ✓ health_status carries no secret, no key and no path
+
+── ز · الوصل الثابت: لا traceback في مسار الطلب ──
+  ✓ the request layer calls traceback.print_exc() ZERO times
+  ✓ the request layer calls format_exc() ZERO times
+  ✓ every failure path logs through LOG.exception (at least four call sites)
+  ✓ each LOG.exception passes the exception object itself, not its text
+  ✓ the single error responder exists exactly once
+  ✓ _error_response logs through the structured logger
+  ✓ _error_response does not print
+  ✓ the structured logger is the one instantiated in the API layer
+
+── ح · لا طباعة لوصف الزائر في محرّك الفهم ──
+  ✓ no print() in the understanding engine interpolates the visitor text, description, prompt or notes
+  ✓ the only permitted mention of those names inside print is their LENGTH
+  ✓ no f-string inside a print carries those names either
+
+── ط · تليمتري التوليد موصول في محرّك الفهم ──
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=end_turn out_chars=9 out_tokens=900 in_tokens=1200 blocks=1 types=_B:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.01
+  ✓ a successful generation call emits exactly one telemetry event
+  ✓ it records the request id passed by the caller, and invents none
+  ✓ it records strategy, model, stage, tokens, stop reason and budget
+  ✓ it records duration, retries, truncation and success
+  ✓ NO cost is guessed when pricing is not configured
+  ✓ the visitor description never reaches the telemetry line
+  ✓ nor does the API key or the raw completion
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=end_turn out_chars=9 out_tokens=900 in_tokens=1200 blocks=1 types=_B:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.01
+  ✓ a cost appears ONLY once the operator declares the pricing
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=end_turn out_chars=9 out_tokens=900 in_tokens=1200 blocks=1 types=_B:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.01
+  ✓ an EMPTY pricing variable means unset — it neither crashes nor prices at zero
+[ACS-LLM] stage=detail provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=max_tokens out_chars=9 out_tokens=900 in_tokens=1200 blocks=1 types=_B:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.01
+[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.
+  ✓ a FAILED generation is recorded too, with its classified code and the truncation flag
+  ✓ the failure telemetry still carries no description and no raw reply
+  ✓ the understanding engine emits through StructuredLogger.generation, not through print
+
+──────────────────────────────────────────────────────────────
+LOGGING: 82 passed, 0 failed

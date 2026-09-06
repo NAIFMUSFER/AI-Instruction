@@ -1,0 +1,234 @@
+
+== §30 — THE ARROW THAT NEVER REVERSES ==
+  ✓ the layer is presentation only
+  ✓ the pipeline ends at the screen and no reverse arrow exists
+  ✓ model hash inputs are the model alone; config hash is separate
+  ✓ no photorealism, path-tracing or offline-render claim is made
+
+== §3 — THE PBR MATERIAL SYSTEM ==
+  ✓ exactly twenty presentation materials are declared
+  ✓ material plaster is declared and resolves
+  ✓ material painted_wall is declared and resolves
+  ✓ material concrete_exposed is declared and resolves
+  ✓ material concrete_polished is declared and resolves
+  ✓ material ceramic_tile is declared and resolves
+  ✓ material stone is declared and resolves
+  ✓ material wood is declared and resolves
+  ✓ material steel_structural is declared and resolves
+  ✓ material steel_painted is declared and resolves
+  ✓ material aluminum is declared and resolves
+  ✓ material glass_clear is declared and resolves
+  ✓ material glass_tinted is declared and resolves
+  ✓ material roof_membrane is declared and resolves
+  ✓ material asphalt is declared and resolves
+  ✓ material soil is declared and resolves
+  ✓ material fabric is declared and resolves
+  ✓ material plastic is declared and resolves
+  ✓ material rack_steel is declared and resolves
+  ✓ material carton is declared and resolves
+  ✓ material safety_paint is declared and resolves
+  ✓ material plaster carries roughness, metalness and world texture scale
+  ✓ material painted_wall carries roughness, metalness and world texture scale
+  ✓ material concrete_exposed carries roughness, metalness and world texture scale
+  ✓ material concrete_polished carries roughness, metalness and world texture scale
+  ✓ material ceramic_tile carries roughness, metalness and world texture scale
+  ✓ material stone carries roughness, metalness and world texture scale
+  ✓ material wood carries roughness, metalness and world texture scale
+  ✓ material steel_structural carries roughness, metalness and world texture scale
+  ✓ material steel_painted carries roughness, metalness and world texture scale
+  ✓ material aluminum carries roughness, metalness and world texture scale
+  ✓ material glass_clear carries roughness, metalness and world texture scale
+  ✓ material glass_tinted carries roughness, metalness and world texture scale
+  ✓ material roof_membrane carries roughness, metalness and world texture scale
+  ✓ material asphalt carries roughness, metalness and world texture scale
+  ✓ material soil carries roughness, metalness and world texture scale
+  ✓ material fabric carries roughness, metalness and world texture scale
+  ✓ material plastic carries roughness, metalness and world texture scale
+  ✓ material rack_steel carries roughness, metalness and world texture scale
+  ✓ material carton carries roughness, metalness and world texture scale
+  ✓ material safety_paint carries roughness, metalness and world texture scale
+  ✓ every material is visual-only with no engineering authority
+  ✓ no material carries a fire rating, structural grade or U-value
+  ✓ an unknown material is refused
+
+== §3 — PROVENANCE: DEFAULTS, OVERRIDES AND THE LINE NOT CROSSED ==
+  ✓ an untouched field is PRESENTATION_DEFAULT
+  ✓ an overridden field is USER_VISUAL_OVERRIDE and only that field
+  ✓ ENGINEERING_VALUE never originates in this layer
+  ✓ a prototype key in an override is refused, not stored
+  ✓ a non-overridable field is refused
+
+== §5 — GLASS ==
+  ✓ clear glass is a physical material with transmission and IOR
+  ✓ glass stays transparent enough to inspect interiors
+  ✓ tinted glass is separately declared
+  ✓ the window mesh class maps to clear glass; geometry is untouched
+
+== §3 — ENGINEERING MAP AND THE UNMAPPED POLICY ==
+  ✓ mesh class wall maps to painted_wall
+  ✓ mesh class floor maps to ceramic_tile
+  ✓ mesh class door maps to wood
+  ✓ mesh class frame maps to rack_steel
+  ✓ mesh class goods maps to carton
+  ✓ mesh class guard maps to safety_paint
+  ✓ mesh class deck maps to steel_painted
+  ✓ mesh class ac maps to aluminum
+  ✓ an unmapped class keeps its engineering appearance
+  ✓ warehouse rack, carton and safety paint are first-class materials
+
+== §6 — LIGHTING PRESETS ==
+  ✓ preset STUDIO_DAY resolves
+  ✓ preset STUDIO_DAY reuses no MEP fixture and its fills are visual-only
+  ✓ preset CLEAR_NOON resolves
+  ✓ preset CLEAR_NOON reuses no MEP fixture and its fills are visual-only
+  ✓ preset GOLDEN_HOUR resolves
+  ✓ preset GOLDEN_HOUR reuses no MEP fixture and its fills are visual-only
+  ✓ preset OVERCAST resolves
+  ✓ preset OVERCAST reuses no MEP fixture and its fills are visual-only
+  ✓ preset INTERIOR_DAY resolves
+  ✓ preset INTERIOR_DAY reuses no MEP fixture and its fills are visual-only
+  ✓ preset INTERIOR_NIGHT resolves
+  ✓ preset INTERIOR_NIGHT reuses no MEP fixture and its fills are visual-only
+  ✓ preset WAREHOUSE resolves
+  ✓ preset WAREHOUSE reuses no MEP fixture and its fills are visual-only
+  ✓ preset PRESENTATION_SOFT resolves
+  ✓ preset PRESENTATION_SOFT reuses no MEP fixture and its fills are visual-only
+  ✓ an unknown preset is refused
+  ✓ golden hour is a warm low sun
+  ✓ interior night turns the sun off rather than faking one
+  ✓ exposure is clamped into the declared range
+
+== §8 — SHADOWS FROM REAL BOUNDS, NOT A HARD-CODED BUILDING ==
+  ✓ the shadow camera scales with the model bounds
+  ✓ all four tiers are declared with bias and normal bias
+  ✓ tier resolution increases monotonically
+  ✓ soft PCF shadows are the declared type
+
+== §17/§18 — QUALITY PROFILES AND GRACEFUL DEGRADATION ==
+  ✓ ULTRA on a strong GPU stays ULTRA
+  ✓ ULTRA on a weak device degrades down the declared chain
+  ✓ every degradation step is reported, never silent
+  ✓ ULTRA is never selected automatically
+  ✓ a phone-class device auto-selects a runnable profile
+  ✓ a blank viewport is never an allowed outcome
+  ✓ PERFORMANCE caps pixel ratio at one and disables SSAO
+  ✓ an unknown profile is refused
+
+== §13 — CAMERA PRESETS FROM MODEL BOUNDS ==
+  ✓ camera EXTERIOR_HERO frames deterministically from bounds
+  ✓ camera EXTERIOR_HERO has a sane FOV, no fisheye
+  ✓ camera EXTERIOR_CORNER frames deterministically from bounds
+  ✓ camera EXTERIOR_CORNER has a sane FOV, no fisheye
+  ✓ camera EYE_LEVEL frames deterministically from bounds
+  ✓ camera EYE_LEVEL has a sane FOV, no fisheye
+  ✓ camera AERIAL frames deterministically from bounds
+  ✓ camera AERIAL has a sane FOV, no fisheye
+  ✓ camera INTERIOR_WIDE frames deterministically from bounds
+  ✓ camera INTERIOR_WIDE has a sane FOV, no fisheye
+  ✓ camera INTERIOR_EYE_LEVEL frames deterministically from bounds
+  ✓ camera INTERIOR_EYE_LEVEL has a sane FOV, no fisheye
+  ✓ camera WAREHOUSE_OVERVIEW frames deterministically from bounds
+  ✓ camera WAREHOUSE_OVERVIEW has a sane FOV, no fisheye
+  ✓ camera DOLLHOUSE frames deterministically from bounds
+  ✓ camera DOLLHOUSE has a sane FOV, no fisheye
+  ✓ eye level really stands at eye height above the model base
+  ✓ the same preset scales with a ten-times larger model
+  ✓ the same inputs give the identical camera twice
+
+== §7/§14 — ENVIRONMENT AND PRESENTATION CONTEXT ==
+  ✓ environment NEUTRAL resolves locally with no remote fetch
+  ✓ environment SKY resolves locally with no remote fetch
+  ✓ environment STUDIO resolves locally with no remote fetch
+  ✓ an unknown environment is refused
+  ✓ ground context is visual-only and structurally excluded everywhere
+  ✓ no roads, parking, landscaping or neighbours are generated
+
+== §4/§22 — TEXTURE SYSTEM SECURITY ==
+  ✓ textures are local-only from the declared root
+  ✓ the shipped texture set is empty so zero fetches happen
+  ✓ hostile texture path 'https://cdn.evil/x.png' is refused
+  ✓ hostile texture path '//evil/x.png' is refused
+  ✓ hostile texture path 'assets/materials/../../.env' is refused
+  ✓ hostile texture path '../x.png' is refused
+  ✓ hostile texture path '/etc/passwd' is refused
+  ✓ hostile texture path 'assets/materials/ok.png.exe' is refused
+  ✓ hostile texture path 'javascript:alert(1)' is refused
+  ✓ hostile texture path 'assets/other/x.png' is refused
+  ✓ hostile texture path '' is refused
+  ✓ a well-shaped but unlisted path falls back to procedural, not a fetch
+  ✓ world-scale tiling is declared so textures never stretch per mesh
+
+== §20 — CAPTURE IS PRESENTATION OUTPUT, NOT EVIDENCE ==
+  ✓ capture metadata is typed PRESENTATION_OUTPUT
+  ✓ capture explicitly denies being engineering evidence
+  ✓ capture binds both the model hash and the presentation config hash
+  ✓ an oversized capture resolution is refused
+
+== §12 — COLOR MANAGEMENT ==
+  ✓ ACES filmic tone mapping with sRGB output is declared
+  ✓ the exposure range guards against washed-out and crushed output
+
+== §21 — IMMUTABILITY: THE CRITICAL TEST ==
+  ✓ villa_glazed: canonical model bytes identical after every visual operation
+  ✓ villa_glazed: model hash and revision unchanged
+  ✓ warehouse: canonical model bytes identical after every visual operation
+  ✓ warehouse: model hash and revision unchanged
+  ✓ hotel: canonical model bytes identical after every visual operation
+  ✓ hotel: model hash and revision unchanged
+  ✓ clash_mep: canonical model bytes identical after every visual operation
+  ✓ clash_mep: model hash and revision unchanged
+  ✓ object, structural, MEP and FLS counts are untouched by the layer
+
+== §24 — THE OLD ENGINEERING RENDER MODE SURVIVES ==
+  ✓ ENGINEERING remains the default materials mode
+  ✓ an engineering-mode config is valid and marks the mode
+  ✓ the same config twice gives the identical presentation hash
+  ✓ a different lighting preset gives a different presentation hash
+
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+─
+PBR QUALITY: 156 passed, 0 failed
