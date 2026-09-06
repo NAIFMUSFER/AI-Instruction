@@ -82,6 +82,7 @@ jobs:
                    tests/remediation/test_image_dimensions.py \
                    tests/remediation/test_validator_response.py \
                    tests/remediation/test_validator_openings.py \
+                   tests/remediation/test_validator_geometry.py \
                    tests/remediation/test_level_elevation.py \
                    tests/remediation/test_compiler_arch_failure.py \
                    tests/phase9_2/test_black_viewport.py \

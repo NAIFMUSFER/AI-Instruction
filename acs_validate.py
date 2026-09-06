@@ -104,14 +104,78 @@ def _opening_issues(room, template, width, depth, wall_height):
     return issues
 
 
+def _item_geometry_issues(room, template, width, depth, stats):
+    issues = []
+    for kind in ("furniture", "objects"):
+        for index, item in enumerate(room.get(kind) or []):
+            label = "[%s/%s/%s/%d]" % (template, room.get("id", "?"), kind, index)
+            if not isinstance(item, dict):
+                issues.append(label + " ITEM_INVALID: تعريف العنصر ليس كائناً.")
+                continue
+            dimensions = {key: _finite_number(item[key]) for key in ("w", "d", "h") if key in item}
+            if any(value is None or value <= 0 for value in dimensions.values()):
+                issues.append(label + " ITEM_DIMENSION_INVALID: أبعاد العنصر يجب أن تكون موجبة ومنتهية.")
+                continue
+            x = _finite_number(item.get("x", width / 2 if kind == "objects" else None))
+            z = _finite_number(item.get("z", depth / 2 if kind == "objects" else None))
+            count = _finite_number(item.get("count", 1)) if kind == "objects" else 1
+            pitch = _finite_number(item.get("pitch", 1.2)) if kind == "objects" else 0
+            rot = _finite_number(item.get("rot", 0)) if kind == "objects" else 0
+            if x is None or z is None or pitch is None or rot is None:
+                issues.append(label + " ITEM_NUMBER_INVALID: إحداثيات العنصر وتكراره يجب أن تكون منتهية.")
+                continue
+            if count is None or count < 1 or count != int(count):
+                issues.append(label + " ITEM_COUNT_INVALID: عدد النسخ يجب أن يكون عدداً صحيحاً موجباً.")
+                continue
+            if kind == "furniture":
+                # build_room renders the legacy furniture box with these defaults.
+                fw, fd = dimensions.get("w", 0.8), dimensions.get("d", 0.8)
+            else:
+                # No invented catalogue size: when a footprint is unstated,
+                # check the centre and disclose the incomplete footprint scope.
+                fw, fd = dimensions.get("w", 0), dimensions.get("d", 0)
+                if "w" not in dimensions or "d" not in dimensions:
+                    stats["object_footprints_unstated"] = stats.get("object_footprints_unstated", 0) + 1
+            angle = math.radians(rot)
+            half_x = (abs(math.cos(angle)) * fw + abs(math.sin(angle)) * fd) / 2
+            half_z = (abs(math.sin(angle)) * fw + abs(math.cos(angle)) * fd) / 2
+            # Linear repetition has constant footprint. Its union is contained
+            # iff both endpoints are contained; no unbounded count-sized loop.
+            for instance in sorted({0, int(count) - 1}):
+                px = x + (pitch * instance if item.get("dir") != "z" else 0)
+                pz = z + (pitch * instance if item.get("dir") == "z" else 0)
+                if (px - half_x < -GEOMETRY_EPSILON_M or pz - half_z < -GEOMETRY_EPSILON_M
+                        or px + half_x > width + GEOMETRY_EPSILON_M
+                        or pz + half_z > depth + GEOMETRY_EPSILON_M):
+                    issues.append(label[:-1] + "/instance/%d] ITEM_OUTSIDE_ROOM: بصمة العنصر خارج الغرفة." % instance)
+    return issues
+
+
 def validate_building(b):
     """يعيد (issues, stats). issues = قائمة نصوص عربية موجّهة للنموذج."""
     issues = []
     site = b.get("site", {})
-    W = float(site.get("w", 0)); D = float(site.get("d", 0))
-    if W <= 0 or D <= 0:
-        issues.append("site.w و site.d يجب أن يكونا أكبر من صفر.")
+    W = _finite_number(site.get("w")); D = _finite_number(site.get("d"))
+    if W is None or D is None or W <= 0 or D <= 0:
+        issues.append("SITE_DIMENSIONS_INVALID: site.w و site.d يجب أن يكونا موجبين ومنتهيين.")
         return issues, {}
+
+    for field in ("wall_h", "wall_t", "floor_height"):
+        if field in b:
+            value = _finite_number(b[field])
+            if value is None or value <= 0:
+                issues.append("BUILDING_NUMBER_INVALID: %s يجب أن يكون موجباً ومنتهياً." % field)
+    level_indexes = set()
+    for position, level in enumerate(b.get("levels") or []):
+        index = _finite_number(level.get("index"))
+        if index is None or index != int(index):
+            issues.append("[levels/%d] LEVEL_INDEX_INVALID: فهرس الدور يجب أن يكون عدداً صحيحاً." % position)
+        elif index in level_indexes:
+            issues.append("[levels/%d] LEVEL_INDEX_DUPLICATE: فهرس دور مكرر." % position)
+        else:
+            level_indexes.add(index)
+        if level.get("elevation") is not None and _finite_number(level["elevation"]) is None:
+            issues.append("[levels/%d] LEVEL_ELEVATION_INVALID: المنسوب يجب أن يكون منتهياً." % position)
 
     btype = building_type(b)
     industrial = btype in ("warehouse", "industrial", "factory", "logistics", "مستودع")
@@ -130,12 +194,21 @@ def validate_building(b):
             continue
 
         rects = []
+        room_ids = set()
         for r in rooms:
             rid = r.get("id", "?")
+            if str(rid) in room_ids:
+                issues.append("[%s/%s] ROOM_ID_DUPLICATE: معرّف غرفة مكرر في القالب." % (tmpl, rid))
+            room_ids.add(str(rid))
             rect = r.get("rect")
-            if not rect or len(rect) != 4:
-                issues.append("[%s/%s] rect غير صالح." % (tmpl, rid)); continue
-            x, z, w, d = [float(v) for v in rect]
+            if not isinstance(rect, (list, tuple)) or len(rect) != 4:
+                issues.append("[%s/%s] ROOM_RECT_INVALID: rect غير صالح." % (tmpl, rid)); continue
+            coordinates = [_finite_number(v) for v in rect]
+            if any(value is None for value in coordinates):
+                issues.append("[%s/%s] ROOM_RECT_NONFINITE: إحداثيات الغرفة يجب أن تكون منتهية." % (tmpl, rid)); continue
+            x, z, w, d = coordinates
+            if w <= 0 or d <= 0:
+                issues.append("[%s/%s] ROOM_DIMENSIONS_INVALID: العرض والعمق يجب أن يكونا موجبين." % (tmpl, rid)); continue
             area = w * d
 
             # داخل حدود الأرض
@@ -196,9 +269,13 @@ def validate_building(b):
                                       % (tmpl, rid, ai))
 
             # ارتفاعات النقاط المصرّح بها
-            for p in pts:
+            for pi, p in enumerate(pts):
                 h = p.get("height")
                 if h is None:
+                    continue
+                h = _finite_number(h)
+                if h is None:
+                    issues.append("[%s/%s/points/%d] POINT_NUMBER_INVALID: ارتفاع النقطة غير منتهٍ." % (tmpl, rid, pi))
                     continue
                 t = p.get("type")
                 if t == "outlet" and abs(float(h) - OUTLET_H) > 0.15:
@@ -213,13 +290,16 @@ def validate_building(b):
                                   % (tmpl, rid, min(w, d), MIN_CORRIDOR_W))
 
             # النقاط داخل حدود الغرفة
-            for p in pts:
-                px, pz = float(p.get("x", w / 2)), float(p.get("z", d / 2))
+            for pi, p in enumerate(pts):
+                px, pz = _finite_number(p.get("x", w / 2)), _finite_number(p.get("z", d / 2))
+                if px is None or pz is None:
+                    issues.append("[%s/%s/points/%d] POINT_NUMBER_INVALID: إحداثيات النقطة غير منتهية." % (tmpl, rid, pi))
+                    continue
                 if px < -0.05 or pz < -0.05 or px > w + 0.05 or pz > d + 0.05:
-                    issues.append("[%s/%s] نقطة %s خارج حدود الغرفة (x=%.2f z=%.2f)."
-                                  % (tmpl, rid, p.get("type"), px, pz))
-                    break
+                    issues.append("[%s/%s/points/%d] POINT_OUTSIDE_ROOM: نقطة %s خارج حدود الغرفة (x=%.2f z=%.2f)."
+                                  % (tmpl, rid, pi, p.get("type"), px, pz))
 
+            issues.extend(_item_geometry_issues(r, tmpl, w, d, stats))
             issues.extend(_opening_issues(r, tmpl, w, d, b.get("wall_h", 3.0)))
 
             rects.append((rid, (x, z, w, d)))

@@ -1,0 +1,14 @@
+[
+  {
+    "case": "warehouse",
+    "before_issue_count": 50,
+    "after_issue_count": 66,
+    "note": "point identifiers changed; new counts also include previously hidden later points and item extents"
+  },
+  {
+    "case": "chalet",
+    "before_issue_count": 2,
+    "after_issue_count": 3,
+    "note": "point identifiers changed; new counts also include previously hidden later points and item extents"
+  }
+]

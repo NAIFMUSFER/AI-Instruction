@@ -1,0 +1,8 @@
+test_each_invalid_opening_is_reported_with_its_identity (__main__.ValidatorOpenings.test_each_invalid_opening_is_reported_with_its_identity) ... ok
+test_uses_room_wall_height_and_reports_every_opening (__main__.ValidatorOpenings.test_uses_room_wall_height_and_reports_every_opening) ... ok
+test_valid_edges_defaults_and_exact_boundaries_have_no_false_alerts (__main__.ValidatorOpenings.test_valid_edges_defaults_and_exact_boundaries_have_no_false_alerts) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.001s
+
+OK

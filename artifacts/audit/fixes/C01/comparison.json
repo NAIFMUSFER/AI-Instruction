@@ -1,0 +1,96 @@
+[
+  {
+    "case": "warehouse",
+    "files": [
+      {
+        "file": "audit-room-outlines.dxf",
+        "equal_bytes": true,
+        "before_sha256": "103a194a97c7a9b3d0a43e7303d64eed0c36d79e806b7117ccfbe1730772c237",
+        "after_sha256": "103a194a97c7a9b3d0a43e7303d64eed0c36d79e806b7117ccfbe1730772c237"
+      },
+      {
+        "file": "building.gltf",
+        "equal_bytes": true,
+        "before_sha256": "5c567d29c9cfac367864713c8e9ba1d1d57ae98da034f6abb756cfcf0d68406f",
+        "after_sha256": "5c567d29c9cfac367864713c8e9ba1d1d57ae98da034f6abb756cfcf0d68406f"
+      },
+      {
+        "file": "building.json",
+        "equal_bytes": true,
+        "before_sha256": "b637d4f716f3cc2ac276498adb9de021374c9294bff6b80de2738eda0d3663c8",
+        "after_sha256": "b637d4f716f3cc2ac276498adb9de021374c9294bff6b80de2738eda0d3663c8"
+      },
+      {
+        "file": "floor-0.svg",
+        "equal_bytes": true,
+        "before_sha256": "ccf07d5494f6cb945af61a4b6cdb1207437208461616ee095ecf172b285e748e",
+        "after_sha256": "ccf07d5494f6cb945af61a4b6cdb1207437208461616ee095ecf172b285e748e"
+      },
+      {
+        "file": "validation.json",
+        "equal_bytes": false,
+        "before_sha256": "7385c075f293f6c530ef4edb936995d8e8a28e3ed94edc09a93d886a600d990b",
+        "after_sha256": "834f0b21f46f620e84e7e638881c39f2652fdfc51aeba7a4517b1b6b69b75ab6"
+      }
+    ]
+  },
+  {
+    "case": "chalet",
+    "files": [
+      {
+        "file": "audit-room-outlines.dxf",
+        "equal_bytes": true,
+        "before_sha256": "902f5b40e814905978cc993005b7d6d23b7a92a7620222b24d1e406dc3123953",
+        "after_sha256": "902f5b40e814905978cc993005b7d6d23b7a92a7620222b24d1e406dc3123953"
+      },
+      {
+        "file": "building.gltf",
+        "equal_bytes": true,
+        "before_sha256": "4d7d68d2c865f1eda3848b5625ed732eb6822a04db6e27a2544b63f1ed11137b",
+        "after_sha256": "4d7d68d2c865f1eda3848b5625ed732eb6822a04db6e27a2544b63f1ed11137b"
+      },
+      {
+        "file": "building.json",
+        "equal_bytes": true,
+        "before_sha256": "6fec5983a81ec98622d0474ed225c329606eea0d11c67edf8b2d34f3bcc2a8bc",
+        "after_sha256": "6fec5983a81ec98622d0474ed225c329606eea0d11c67edf8b2d34f3bcc2a8bc"
+      },
+      {
+        "file": "floor-0.svg",
+        "equal_bytes": true,
+        "before_sha256": "fe2e3bf69c6a45ee6007f775771b496014f240395f70adff974af02518e0d759",
+        "after_sha256": "fe2e3bf69c6a45ee6007f775771b496014f240395f70adff974af02518e0d759"
+      },
+      {
+        "file": "floor-1.svg",
+        "equal_bytes": true,
+        "before_sha256": "c6ef10fa3f8e33582575426e7af2b6317eb0ffe5876778eb7fd308c00d3612ca",
+        "after_sha256": "c6ef10fa3f8e33582575426e7af2b6317eb0ffe5876778eb7fd308c00d3612ca"
+      },
+      {
+        "file": "floor-2.svg",
+        "equal_bytes": true,
+        "before_sha256": "3a9ca5fd9a670c23b6eeb8874199336c90f5dc5263e9ddc15aaffcab24d6eb19",
+        "after_sha256": "3a9ca5fd9a670c23b6eeb8874199336c90f5dc5263e9ddc15aaffcab24d6eb19"
+      },
+      {
+        "file": "floor-3.svg",
+        "equal_bytes": true,
+        "before_sha256": "decb9815eac4fd48fcbe526be9ca76723a18b46cda61570352a4633dd3db45fd",
+        "after_sha256": "decb9815eac4fd48fcbe526be9ca76723a18b46cda61570352a4633dd3db45fd"
+      },
+      {
+        "file": "floor-4.svg",
+        "equal_bytes": true,
+        "before_sha256": "18def734c19f7fd10fe6ce48aec5bc8f8c347439918b8614c0f3e7d57e5b1b00",
+        "after_sha256": "18def734c19f7fd10fe6ce48aec5bc8f8c347439918b8614c0f3e7d57e5b1b00"
+      },
+      {
+        "file": "validation.json",
+        "equal_bytes": false,
+        "before_sha256": "59657b7f8f7495978a3630ab6d7d3f740eff2befbec6fead8e0448880ea273e6",
+        "after_sha256": "ac5bdba32ce67e46602b0bd4fb4a3c1c2da03fae8e31d44dee9b0bbe0dd93410"
+      }
+    ]
+  }
+]

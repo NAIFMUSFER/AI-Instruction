@@ -1,0 +1,284 @@
+
+== §0 — عقد الأخطاء قُرئ من المصدر ==
+  ✓ acs_api_errors.CODES was read from the python source
+  ✓ every code resolved to a real string constant
+  ✓ RETRYABLE was read from the python source
+
+== §1 — الجدول معلن مرّة واحدة وكل صنف مطلوب موجود ==
+  ✓ the page declares one error-state table on window.ACS.errorStates
+  ✓ the required class NETWORK_OFFLINE has a declared user state
+  ✓ the required class NETWORK_DNS has a declared user state
+  ✓ the required class TIMEOUT has a declared user state
+  ✓ the required class HTTP_429 has a declared user state
+  ✓ the required class HTTP_4XX_VALIDATION has a declared user state
+  ✓ the required class HTTP_5XX has a declared user state
+  ✓ the required class INVALID_JSON has a declared user state
+  ✓ the required class PROVIDER_UNAVAILABLE has a declared user state
+  ✓ the required class FILE_REJECTED has a declared user state
+  ✓ the required class WEBGL_UNSUPPORTED has a declared user state
+  ✓ the required class WEBGL_CONTEXT_LOST has a declared user state
+  ✓ the required class BLACK_VIEWPORT has a declared user state
+  ✓ the required class STORAGE_QUOTA has a declared user state
+  ✓ the required class STALE_REVISION has a declared user state
+  ✓ the table declares exactly the fourteen required classes and no filler
+  ✓ every class is distinguishable — no two share a code
+  ✓ every class is distinguishable — no two share an Arabic message
+  ✓ the table is frozen against accidental mutation at runtime
+
+== §2 — كل صنف يحمل عربية وإنجليزية وقابلية إعادة معلنة ==
+  ✓ NETWORK_OFFLINE has Arabic text
+  ✓ NETWORK_OFFLINE has English text
+  ✓ NETWORK_OFFLINE states retryability as a boolean
+  ✓ NETWORK_OFFLINE states retry safety as a boolean
+  ✓ NETWORK_OFFLINE declares an action for the user
+  ✓ NETWORK_OFFLINE declares that a request id is carried for support
+  ✓ NETWORK_OFFLINE never carries a stack trace
+  ✓ NETWORK_DNS has Arabic text
+  ✓ NETWORK_DNS has English text
+  ✓ NETWORK_DNS states retryability as a boolean
+  ✓ NETWORK_DNS states retry safety as a boolean
+  ✓ NETWORK_DNS declares an action for the user
+  ✓ NETWORK_DNS declares that a request id is carried for support
+  ✓ NETWORK_DNS never carries a stack trace
+  ✓ TIMEOUT has Arabic text
+  ✓ TIMEOUT has English text
+  ✓ TIMEOUT states retryability as a boolean
+  ✓ TIMEOUT states retry safety as a boolean
+  ✓ TIMEOUT declares an action for the user
+  ✓ TIMEOUT declares that a request id is carried for support
+  ✓ TIMEOUT never carries a stack trace
+  ✓ HTTP_429 has Arabic text
+  ✓ HTTP_429 has English text
+  ✓ HTTP_429 states retryability as a boolean
+  ✓ HTTP_429 states retry safety as a boolean
+  ✓ HTTP_429 declares an action for the user
+  ✓ HTTP_429 declares that a request id is carried for support
+  ✓ HTTP_429 never carries a stack trace
+  ✓ HTTP_4XX_VALIDATION has Arabic text
+  ✓ HTTP_4XX_VALIDATION has English text
+  ✓ HTTP_4XX_VALIDATION states retryability as a boolean
+  ✓ HTTP_4XX_VALIDATION states retry safety as a boolean
+  ✓ HTTP_4XX_VALIDATION declares an action for the user
+  ✓ HTTP_4XX_VALIDATION declares that a request id is carried for support
+  ✓ HTTP_4XX_VALIDATION never carries a stack trace
+  ✓ HTTP_5XX has Arabic text
+  ✓ HTTP_5XX has English text
+  ✓ HTTP_5XX states retryability as a boolean
+  ✓ HTTP_5XX states retry safety as a boolean
+  ✓ HTTP_5XX declares an action for the user
+  ✓ HTTP_5XX declares that a request id is carried for support
+  ✓ HTTP_5XX never carries a stack trace
+  ✓ INVALID_JSON has Arabic text
+  ✓ INVALID_JSON has English text
+  ✓ INVALID_JSON states retryability as a boolean
+  ✓ INVALID_JSON states retry safety as a boolean
+  ✓ INVALID_JSON declares an action for the user
+  ✓ INVALID_JSON declares that a request id is carried for support
+  ✓ INVALID_JSON never carries a stack trace
+  ✓ PROVIDER_UNAVAILABLE has Arabic text
+  ✓ PROVIDER_UNAVAILABLE has English text
+  ✓ PROVIDER_UNAVAILABLE states retryability as a boolean
+  ✓ PROVIDER_UNAVAILABLE states retry safety as a boolean
+  ✓ PROVIDER_UNAVAILABLE declares an action for the user
+  ✓ PROVIDER_UNAVAILABLE declares that a request id is carried for support
+  ✓ PROVIDER_UNAVAILABLE never carries a stack trace
+  ✓ FILE_REJECTED has Arabic text
+  ✓ FILE_REJECTED has English text
+  ✓ FILE_REJECTED states retryability as a boolean
+  ✓ FILE_REJECTED states retry safety as a boolean
+  ✓ FILE_REJECTED declares an action for the user
+  ✓ FILE_REJECTED declares that a request id is carried for support
+  ✓ FILE_REJECTED never carries a stack trace
+  ✓ WEBGL_UNSUPPORTED has Arabic text
+  ✓ WEBGL_UNSUPPORTED has English text
+  ✓ WEBGL_UNSUPPORTED states retryability as a boolean
+  ✓ WEBGL_UNSUPPORTED states retry safety as a boolean
+  ✓ WEBGL_UNSUPPORTED declares an action for the user
+  ✓ WEBGL_UNSUPPORTED declares that a request id is carried for support
+  ✓ WEBGL_UNSUPPORTED never carries a stack trace
+  ✓ WEBGL_CONTEXT_LOST has Arabic text
+  ✓ WEBGL_CONTEXT_LOST has English text
+  ✓ WEBGL_CONTEXT_LOST states retryability as a boolean
+  ✓ WEBGL_CONTEXT_LOST states retry safety as a boolean
+  ✓ WEBGL_CONTEXT_LOST declares an action for the user
+  ✓ WEBGL_CONTEXT_LOST declares that a request id is carried for support
+  ✓ WEBGL_CONTEXT_LOST never carries a stack trace
+  ✓ BLACK_VIEWPORT has Arabic text
+  ✓ BLACK_VIEWPORT has English text
+  ✓ BLACK_VIEWPORT states retryability as a boolean
+  ✓ BLACK_VIEWPORT states retry safety as a boolean
+  ✓ BLACK_VIEWPORT declares an action for the user
+  ✓ BLACK_VIEWPORT declares that a request id is carried for support
+  ✓ BLACK_VIEWPORT never carries a stack trace
+  ✓ STORAGE_QUOTA has Arabic text
+  ✓ STORAGE_QUOTA has English text
+  ✓ STORAGE_QUOTA states retryability as a boolean
+  ✓ STORAGE_QUOTA states retry safety as a boolean
+  ✓ STORAGE_QUOTA declares an action for the user
+  ✓ STORAGE_QUOTA declares that a request id is carried for support
+  ✓ STORAGE_QUOTA never carries a stack trace
+  ✓ STALE_REVISION has Arabic text
+  ✓ STALE_REVISION has English text
+  ✓ STALE_REVISION states retryability as a boolean
+  ✓ STALE_REVISION states retry safety as a boolean
+  ✓ STALE_REVISION declares an action for the user
+  ✓ STALE_REVISION declares that a request id is carried for support
+  ✓ STALE_REVISION never carries a stack trace
+
+== §3 — لا أثر مكدّس في أي نصّ يراه المستخدم ==
+  ✓ no entry contains a stack-trace marker
+  ✓ the stack-trace detector is not vacuous — it fires on a real JS trace
+  ✓ the stack-trace detector fires on a real python traceback
+  ✓ the resolved state for every class also carries no stack trace
+
+== §4 — الخريطة كلّية على acs_api_errors.CODES ==
+  ✓ every backend code resolves to a user state — the map is TOTAL
+  ✓ the coverage check actually counted all 30 codes
+  ✓ ACS_BAD_REQUEST → a named user class with Arabic and English
+  ✓ ACS_VALIDATION_FAILED → a named user class with Arabic and English
+  ✓ ACS_PAYLOAD_TOO_LARGE → a named user class with Arabic and English
+  ✓ ACS_UNPROCESSABLE → a named user class with Arabic and English
+  ✓ ACS_NOT_FOUND → a named user class with Arabic and English
+  ✓ ACS_METHOD_NOT_ALLOWED → a named user class with Arabic and English
+  ✓ ACS_RATE_LIMITED → a named user class with Arabic and English
+  ✓ ACS_TIMEOUT → a named user class with Arabic and English
+  ✓ ACS_NOT_CONFIGURED → a named user class with Arabic and English
+  ✓ ACS_INTERNAL → a named user class with Arabic and English
+  ✓ ACS_INTEGRATION_ERROR → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_NOT_CONFIGURED → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_AUTH → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_PERMISSION → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_MODEL_REJECTED → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_BAD_REQUEST → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_MAX_TOKENS → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_BILLING → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_RATE_LIMIT → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_OVERLOADED → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_UNAVAILABLE → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_TIMEOUT → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_CONNECTION → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_EMPTY_RESPONSE → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_NO_VISIBLE_OUTPUT → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_INVALID_JSON → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_TRAILING_JSON → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_TRUNCATED → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_REFUSED → a named user class with Arabic and English
+  ✓ ACS_UPSTREAM_UNKNOWN → a named user class with Arabic and English
+  ✓ the coverage check is not vacuous — an unmapped code is reported missing
+  ✓ an unknown code still resolves to a visible state rather than silence
+  ✓ resolveErrorState never returns null for any input
+
+== §5 — retry_safe يكون false لكل عملية غير متماثلة ==
+  ✓ the operation table declares non-idempotent operations
+  ✓ retry is NOT declared safe for NETWORK_OFFLINE on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for NETWORK_DNS on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for TIMEOUT on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for HTTP_429 on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for HTTP_4XX_VALIDATION on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for HTTP_5XX on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for INVALID_JSON on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for PROVIDER_UNAVAILABLE on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for FILE_REJECTED on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for WEBGL_UNSUPPORTED on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for WEBGL_CONTEXT_LOST on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for BLACK_VIEWPORT on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for STORAGE_QUOTA on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for STALE_REVISION on the non-idempotent GENERATE
+  ✓ retry is NOT declared safe for NETWORK_OFFLINE on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for NETWORK_DNS on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for TIMEOUT on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for HTTP_429 on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for HTTP_4XX_VALIDATION on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for HTTP_5XX on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for INVALID_JSON on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for PROVIDER_UNAVAILABLE on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for FILE_REJECTED on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for WEBGL_UNSUPPORTED on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for WEBGL_CONTEXT_LOST on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for BLACK_VIEWPORT on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for STORAGE_QUOTA on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for STALE_REVISION on the non-idempotent EDIT
+  ✓ retry is NOT declared safe for NETWORK_OFFLINE on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for NETWORK_DNS on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for TIMEOUT on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for HTTP_429 on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for HTTP_4XX_VALIDATION on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for HTTP_5XX on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for INVALID_JSON on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for PROVIDER_UNAVAILABLE on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for FILE_REJECTED on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for WEBGL_UNSUPPORTED on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for WEBGL_CONTEXT_LOST on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for BLACK_VIEWPORT on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for STORAGE_QUOTA on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for STALE_REVISION on the non-idempotent UNDERSTAND_IMAGE
+  ✓ retry is NOT declared safe for NETWORK_OFFLINE on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for NETWORK_DNS on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for TIMEOUT on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for HTTP_429 on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for HTTP_4XX_VALIDATION on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for HTTP_5XX on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for INVALID_JSON on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for PROVIDER_UNAVAILABLE on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for FILE_REJECTED on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for WEBGL_UNSUPPORTED on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for WEBGL_CONTEXT_LOST on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for BLACK_VIEWPORT on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for STORAGE_QUOTA on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for STALE_REVISION on the non-idempotent UNDERSTAND_PDF
+  ✓ retry is NOT declared safe for NETWORK_OFFLINE on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for NETWORK_DNS on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for TIMEOUT on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for HTTP_429 on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for HTTP_4XX_VALIDATION on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for HTTP_5XX on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for INVALID_JSON on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for PROVIDER_UNAVAILABLE on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for FILE_REJECTED on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for WEBGL_UNSUPPORTED on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for WEBGL_CONTEXT_LOST on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for BLACK_VIEWPORT on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for STORAGE_QUOTA on the non-idempotent COMMIT
+  ✓ retry is NOT declared safe for STALE_REVISION on the non-idempotent COMMIT
+  ✓ a retry button is never offered for a non-idempotent operation without a key
+  ✓ with an idempotency key present, a retryable class MAY offer retry safely
+  ✓ an idempotency key does NOT make a non-retryable class retryable
+  ✓ for an idempotent operation a retry-safe class does offer retry
+  ✓ TIMEOUT is not baseline retry-safe: the request may already have been processed
+  ✓ HTTP_5XX is not baseline retry-safe: the request may already have been processed
+  ✓ INVALID_JSON is not baseline retry-safe: the request may already have been processed
+  ✓ PROVIDER_UNAVAILABLE is not baseline retry-safe: the request may already have been processed
+  ✓ NETWORK_OFFLINE is baseline retry-safe: the request never reached the server
+  ✓ NETWORK_DNS is baseline retry-safe: the request never reached the server
+
+== §6 — قابلية الإعادة تحترم ما يقوله الخادم ==
+  ✓ ACS_UPSTREAM_RATE_LIMIT is declared retryable by the backend and by the UI table
+  ✓ ACS_UPSTREAM_OVERLOADED is declared retryable by the backend and by the UI table
+  ✓ ACS_UPSTREAM_UNAVAILABLE is declared retryable by the backend and by the UI table
+  ✓ ACS_UPSTREAM_TIMEOUT is declared retryable by the backend and by the UI table
+  ✓ ACS_UPSTREAM_CONNECTION is declared retryable by the backend and by the UI table
+  ✓ ACS_UPSTREAM_EMPTY_RESPONSE is declared retryable by the backend and by the UI table
+  ✓ ACS_TIMEOUT is declared retryable by the backend and by the UI table
+  ✓ ACS_UPSTREAM_AUTH maps to a class that states the fault is configuration, not the user
+  ✓ ACS_UPSTREAM_PERMISSION maps to a class that states the fault is configuration, not the user
+  ✓ ACS_UPSTREAM_MODEL_REJECTED maps to a class that states the fault is configuration, not the user
+  ✓ a validation failure is NOT presented as retryable
+  ✓ a stale revision is refused deterministically with HTTP 409
+
+== §7 — معرّف الطلب يُعرَض للدعم، وغيابه يُصرَّح به ==
+  ✓ a request id survives into the resolved state
+  ✓ a missing request id is an empty string, never a fabricated one
+  ✓ the page renders the request id when present, and says so when absent
+
+== §8 — مسار عرض واحد لا اثنان ==
+  ✓ the existing error panel is REPLACED, not duplicated
+  ✓ the replacement renders into the existing #reportBox, not a new surface
+  ✓ the replacement keeps the existing retry/local button ids
+  ✓ the replacement also updates the existing #status element
+  ✓ the replacement announces on the existing aria-live region
+  ✓ no second toast or notification system was introduced
+  ✓ the shipped page carries the class attribute so the UI is testable
+
+══════════════════════════════════════════════
+PRODUCTION ERROR UI: 262 passed, 0 failed
+NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: that a LIVE backend actually emits each of these codes needs egress to the deployment (blocked here, 403).

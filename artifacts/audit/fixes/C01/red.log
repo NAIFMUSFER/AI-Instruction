@@ -1,0 +1,182 @@
+test_duplicate_room_and_level_identity (__main__.ValidatorGeometry.test_duplicate_room_and_level_identity) ... FAIL
+test_each_point_and_repeated_object_is_checked (__main__.ValidatorGeometry.test_each_point_and_repeated_object_is_checked) ... FAIL
+test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) ... 
+  test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) (kind='furniture', item={'x': 14, 'z': 14, 'w': 2, 'd': 1}) ... FAIL
+  test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) (kind='furniture', item={'x': 5.5, 'z': 3, 'w': 2, 'd': 1}) ... FAIL
+test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) ... FAIL
+test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) ... 
+  test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[3, 3, -2, -2]) ... FAIL
+  test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[0, 0, 0, 2]) ... FAIL
+  test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[nan, 0, 6, 6]) ... FAIL
+  test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=['bad', 0, 6, 6]) ... ERROR
+  test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[0, 0, 6]) ... FAIL
+test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) ... 
+  test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='w', value=nan) ... FAIL
+  test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='d', value=inf) ... FAIL
+  test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='w', value=-1) ... FAIL
+  test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='d', value='bad') ... ERROR
+test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) ... FAIL
+test_valid_control_is_unchanged_with_no_false_alerts (__main__.ValidatorGeometry.test_valid_control_is_unchanged_with_no_false_alerts) ... ok
+
+======================================================================
+ERROR: test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=['bad', 0, 6, 6])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 45, in test_invalid_room_rectangles
+    self.check_code(model, code, "g/room")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 21, in check_code
+    issues, _ = V.validate_building(model)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 138, in validate_building
+    x, z, w, d = [float(v) for v in rect]
+                  ^^^^^^^^
+ValueError: could not convert string to float: 'bad'
+
+======================================================================
+ERROR: test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='d', value='bad')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 30, in test_nonfinite_site_and_floor_values
+    self.check_code(model, "SITE_DIMENSIONS_INVALID")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 21, in check_code
+    issues, _ = V.validate_building(model)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/acs_validate.py", line 111, in validate_building
+    W = float(site.get("w", 0)); D = float(site.get("d", 0))
+                                     ^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: could not convert string to float: 'bad'
+
+======================================================================
+FAIL: test_duplicate_room_and_level_identity (__main__.ValidatorGeometry.test_duplicate_room_and_level_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 50, in test_duplicate_room_and_level_identity
+    self.check_code(model, "ROOM_ID_DUPLICATE", "g/room")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_each_point_and_repeated_object_is_checked (__main__.ValidatorGeometry.test_each_point_and_repeated_object_is_checked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 73, in test_each_point_and_repeated_object_is_checked
+    self.check_code(model, "POINT_OUTSIDE_ROOM", "points/%d" % i)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : ['[g/room] نقطة light خارج حدود الغرفة (x=20.00 z=1.00).']
+
+======================================================================
+FAIL: test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) (kind='furniture', item={'x': 14, 'z': 14, 'w': 2, 'd': 1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 60, in test_furniture_and_objects_check_footprints_not_just_centres
+    self.check_code(model, "ITEM_OUTSIDE_ROOM", "g/room/%s/0" % kind)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) (kind='furniture', item={'x': 5.5, 'z': 3, 'w': 2, 'd': 1})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 60, in test_furniture_and_objects_check_footprints_not_just_centres
+    self.check_code(model, "ITEM_OUTSIDE_ROOM", "g/room/%s/0" % kind)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 63, in test_furniture_and_objects_check_footprints_not_just_centres
+    self.check_code(model, "ITEM_DIMENSION_INVALID", "g/room/%s/0" % kind)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[3, 3, -2, -2])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 45, in test_invalid_room_rectangles
+    self.check_code(model, code, "g/room")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : ['[g/room/doors/0] OPENING_OUTSIDE_WALL: الفتحة خارج طول الجدار المضيف.']
+
+======================================================================
+FAIL: test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[0, 0, 0, 2])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 45, in test_invalid_room_rectangles
+    self.check_code(model, code, "g/room")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : ['[g/room] مساحتها 0.0 م² صغيرة جداً.', '[g/room/doors/0] OPENING_OUTSIDE_WALL: الفتحة خارج طول الجدار المضيف.']
+
+======================================================================
+FAIL: test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[nan, 0, 6, 6])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 45, in test_invalid_room_rectangles
+    self.check_code(model, code, "g/room")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) (rect=[0, 0, 6])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 45, in test_invalid_room_rectangles
+    self.check_code(model, code, "g/room")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : ['[g/room] rect غير صالح.']
+
+======================================================================
+FAIL: test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='w', value=nan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 30, in test_nonfinite_site_and_floor_values
+    self.check_code(model, "SITE_DIMENSIONS_INVALID")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='d', value=inf)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 30, in test_nonfinite_site_and_floor_values
+    self.check_code(model, "SITE_DIMENSIONS_INVALID")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) (field='w', value=-1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 30, in test_nonfinite_site_and_floor_values
+    self.check_code(model, "SITE_DIMENSIONS_INVALID")
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : ['site.w و site.d يجب أن يكونا أكبر من صفر.']
+
+======================================================================
+FAIL: test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 33, in test_nonfinite_site_and_floor_values
+    self.check_code(model, "BUILDING_NUMBER_INVALID", field)
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_validator_geometry.py", line 22, in check_code
+    self.assertTrue(any(code in issue and identity in issue for issue in issues), issues)
+AssertionError: False is not true : ['[g/room/doors/0] OPENING_HOST_HEIGHT_INVALID: ارتفاع الجدار المضيف غير صالح.']
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.002s
+
+FAILED (failures=13, errors=2)

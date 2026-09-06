@@ -1,0 +1,9 @@
+{
+  "regression_before": {"tests": 6, "failures_including_subtests": 13, "errors": 2},
+  "regression_after": {"tests": 6, "failures": 0, "errors": 0},
+  "full_suite": {"files": 117, "PASS": 102, "FAIL": 7, "NOT_VERIFIED": 8},
+  "real_local_generation": "503 provider credential missing for both cases",
+  "comparison": "Building JSON/glTF/SVG/audit DXF remain byte-identical; validation alone changes: warehouse 50 to 66 issues, chalet 2 to 3",
+  "scope": "proven geometry counterexamples; unstated object footprints are disclosed as unevaluated dimensions; original 22 fixture remains unavailable",
+  "pixel_validation": "NOT_VERIFIED"
+}

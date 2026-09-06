@@ -1,0 +1,128 @@
+
+── أ · تقدير حجم المخرج قبل النداء ──
+  ✓ the budget contract is declared
+  ✓ there is ONE authoritative output budget, read from one name
+  ✓ every stage budget is derived from that one number, none is a free constant
+  ✓ no stage budget falls below the declared floor
+  ✓ raising the single budget raises every stage together
+  ✓ the legacy ACS_MAX_TOKENS name still works as an alias, not a second source
+  ✓ with no env set the default is restored
+  ✓ the estimator is deterministic — same input, same number
+  ✓ every class name is one of the four declared
+  ✓ classification is monotonic in size
+  ✓ A · THE PRODUCTION PROMPT classifies SMALL
+  ✓ A · it is routed to a single stage — no needless staging for a small model
+  ✓ A · its estimate sits far below the single-stage threshold
+  ✓ A · site dimensions are never misread as a zone count («20×15م» is a plot, not fifteen zones)
+  ✓ A · an explicit count attached to a zone word IS read («12 رصيف»)
+  ✓ F · a large distribution centre classifies LARGE or VERY_LARGE
+  ✓ F · and is routed to staged generation without anyone asking
+  ✓ F · the old input-length rule would have sent BOTH down the single path — that is the defect this replaces
+  ✓ the deprecated input-length heuristic is neither defined nor called (its name survives only in the comment explaining why it went)
+  ✓ the replacement decision function is the one actually wired in
+  ✓ ACS_DEEP still forces the strategy when a human sets it
+  ✓ the estimator never raises on hostile or empty input
+
+── ب · سبب التوقّف يُفحص قبل التحليل ──
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=max_tokens out_chars=398 out_tokens=132 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0152
+[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.
+{"chars_per_output_token": 3.0152, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 24, "error_code": "ACS_UPSTREAM_TRUNCATED", "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "input_tokens": 1200, "level": "info", "max_output_tokens": 32000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 398, "output_tokens": 132, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 32000, "response_semantic": "truncated", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "stop_reason": "max_tokens", "success": false, "text_block_chars": "398", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": true, "ts": "2026-09-06T13:10:23Z", "upstream_class": "max_tokens"}
+  ✓ B · a max_tokens stop raises ACS_UPSTREAM_TRUNCATED even when the text that arrived happens to be complete JSON — the stop reason is the proof
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=refusal out_chars=10 out_tokens=3 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.3333
+{"chars_per_output_token": 3.3333, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "error_code": "ACS_UPSTREAM_REFUSED", "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "input_tokens": 1200, "level": "info", "max_output_tokens": 32000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 10, "output_tokens": 3, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 32000, "response_semantic": "refused", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "stop_reason": "refusal", "success": false, "text_block_chars": "10", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z", "upstream_class": "refusal"}
+  ✓ B · a refusal stop is its own classified code, not a parse failure
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=end_turn out_chars=398 out_tokens=132 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0152
+{"chars_per_output_token": 3.0152, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 32000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 398, "output_tokens": 132, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 32000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "stop_reason": "end_turn", "success": true, "text_block_chars": "398", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z"}
+  ✓ an end_turn stop returns the text for parsing
+  ✓ C · truncated output is never brace-repaired — the repair helper is gone
+  ✓ C · a truncated JSON body reaching the parser is rejected, not salvaged
+  ✓ C · nothing truncated can reach the canonical compiler: the only paths out of extract_json are one complete object or a classified error
+  ✓ D · a malformed (non-JSON) reply is a structured error, never an exception
+  ✓ the truncation message shown to a user names the cause in Arabic and suggests the action, without printing ACS_MAX_TOKENS at them
+
+── ج · لا تكرار للطلب نفسه بعد الانقطاع ──
+  ✓ the attempt ladder no longer retries with a SMALLER budget — retrying a truncation with less room truncates sooner, not later
+  ✓ the ladder that remains exists only for an empty reply, and is bounded
+[ACS-PLAN] class=SMALL est_out=3669 zones=5 budget=32000 -> single (estimate_fits)
+[ACS-LLM] stage=single provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=32000 stop=max_tokens out_chars=398 out_tokens=132 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0152
+[ACS-LLM] انقطع المخرج عند سقف الرموز — يُطرَح ولا يُحلَّل ولا يُرمَّم.
+{"chars_per_output_token": 3.0152, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "error_code": "ACS_UPSTREAM_TRUNCATED", "event": "llm_generation", "fallback_attempted": false, "fallback_reason": "no_fallback_configured", "input_tokens": 1200, "level": "info", "max_output_tokens": 32000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 398, "output_tokens": 132, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 32000, "response_semantic": "truncated", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "single", "stop_reason": "max_tokens", "strategy": "single", "success": false, "text_block_chars": "398", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": true, "ts": "2026-09-06T13:10:23Z", "upstream_class": "max_tokens"}
+[ACS-PLAN] بلغ النداء الواحد سقفه (ACS_UPSTREAM_TRUNCATED) — تصعيد إلى التوليد على مراحل.
+[ACS-DEEP] نوع المبنى: warehouse
+[ACS-PLAN] تقدير مخرج الخطّة 2640 رمزاً · سقف آمن 9600 · المسار: خطّة واحدة
+[ACS-LLM] stage=plan provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=16000 stop=end_turn out_chars=398 out_tokens=132 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0152
+{"chars_per_output_token": 3.0152, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 16000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 398, "output_tokens": 132, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 16000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "plan", "stop_reason": "end_turn", "strategy": "staged", "success": true, "text_block_chars": "398", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z"}
+[ACS-DEEP] الخطة: 2 منطقة في 1 قالب
+[ACS-DEEP] تفصيل 1 مجموعة بالتوازي (4 عامل)…
+[ACS-LLM] stage=detail provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=24000 stop=end_turn out_chars=359 out_tokens=119 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0168
+{"chars_per_output_token": 3.0168, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 24000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 359, "output_tokens": 119, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 24000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "detail", "stop_reason": "end_turn", "strategy": "staged", "success": true, "text_block_chars": "359", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z"}
+[ACS-DEEP] مجموعة 1/1 ✓ (2 منطقة)
+[ACS-DEEP] تقرير التغطية: 0 بند من طلب العميل
+[ACS-DEEP] بعد الدمج: 8 مخالفة · {'levels': 1, 'rooms': 2, 'points': 0, 'racks': 1, 'lanes': 0, 'stations': 0, 'docks': 2}
+[ACS-DEEP] لا إصلاح تلقائي: 8 مخالفة تُعرَض ولا تُصلَّح صامتاً
+  ✓ a truncated single stage escalates to staged generation automatically
+  ✓ the escalation is recorded, not silent
+  ✓ the escalation is bounded — one strategy change, not a loop
+  ✓ the escalated request is genuinely DIFFERENT, not the same call repeated
+  ✓ the recovered model carries real rooms
+  ✓ G · every stage ran under its own declared budget, none unbounded
+  ✓ the plan stage ran on the plan budget and the detail stage on the detail budget
+  ✓ J · telemetry records each stage with its stop reason and token counts
+  ✓ telemetry carries no prompt text and no credential
+  ✓ a group that truncates is split in half, deterministically
+  ✓ a single-room group cannot be split further — the recursion has a floor
+  ✓ the split depth is bounded and declared
+  ✓ E · one compact rack row describing 24 rows costs well under 200 tokens
+  ✓ E · enumerating those rows individually would cost an order of magnitude more
+  ✓ E · the compact-output rule is actually injected into the model instructions
+  ✓ E · the compact rule speaks only about output shape — it never removes a requirement, changes a dimension or touches automatic engineering (KI-1)
+  ✓ §14 · meta lines are constrained to one short sentence each
+
+── د · هندسة المرحلة الأولى مرجع لا يُنقض ──
+[ACS-PLAN] class=LARGE est_out=34476 zones=54 budget=32000 -> staged (forced)
+[ACS-DEEP] نوع المبنى: warehouse
+[ACS-PLAN] تقدير مخرج الخطّة 10284 رمزاً · سقف آمن 9600 · المسار: شرائح محدودة
+[ACS-LLM] stage=outline provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=17701 stop=end_turn out_chars=316 out_tokens=105 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0095
+{"chars_per_output_token": 3.0095, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 17701, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 316, "output_tokens": 105, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 17701, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "outline", "stop_reason": "end_turn", "strategy": "staged", "success": true, "text_block_chars": "316", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z"}
+[ACS-PLAN] بيان 2 منطقة → 1 شريحة × 60 منطقة مبدئياً (سقف الشريحة 16000 رمزاً؛ الحجم يُعاد اشتقاقه من القياس)
+[ACS-LLM] stage=plan_chunk provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=16000 stop=end_turn out_chars=188 out_tokens=62 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0323
+{"chars_per_output_token": 3.0323, "chunk_count": 1, "chunk_index": 0, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 16000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 188, "output_tokens": 62, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 16000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "plan_chunk", "stop_reason": "end_turn", "strategy": "staged", "success": true, "text_block_chars": "188", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z"}
+[ACS-DEEP] الخطة: 2 منطقة في 1 قالب
+[ACS-DEEP] تفصيل 1 مجموعة بالتوازي (4 عامل)…
+[ACS-LLM] stage=detail provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=24000 stop=end_turn out_chars=215 out_tokens=71 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=3.0282
+{"chars_per_output_token": 3.0282, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 24000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 215, "output_tokens": 71, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 24000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "detail", "stop_reason": "end_turn", "strategy": "staged", "success": true, "text_block_chars": "215", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-09-06T13:10:23Z"}
+[ACS-DEEP] مجموعة 1/1 ✓ (3 منطقة)
+[ACS-DEEP] ⚠ التفصيل أضاف 1 منطقة خارج الخطة: ghost_zone
+[ACS-DEEP] تقرير التغطية: 0 بند من طلب العميل
+[ACS-DEEP] بعد الدمج: 12 مخالفة · {'levels': 1, 'rooms': 3, 'points': 0, 'racks': 0, 'lanes': 0, 'stations': 0, 'docks': 0}
+[ACS-DEEP] لا إصلاح تلقائي: 12 مخالفة تُعرَض ولا تُصلَّح صامتاً
+  ✓ H · the detail stage's rewritten rect did NOT win the merge
+  ✓ H · the zone keeps stage-1 width and depth exactly
+  ✓ I · the rejected geometry rewrite is reported, not silently dropped
+  ✓ I · a zone invented by the detail stage is reported as a diagnostic
+  ✓ I · but it is not deleted either — it may carry something the client asked for, so it is surfaced rather than judged
+  ✓ H · the site rectangle comes from stage 1 and no later stage rewrote it
+  ✓ H · the level count comes from stage 1
+  ✓ H · wall and floor heights come from stage 1
+  ✓ the staged path stamps its strategy on the model
+
+── هـ · عقد الرد يبقى متوافقاً ──
+  ✓ the success payload still carries 'building'
+  ✓ the success payload still carries 'levels'
+  ✓ the success payload still carries 'rooms'
+  ✓ the success payload still carries 'type'
+  ✓ the success payload still carries 'mode'
+  ✓ the success payload still carries 'issues'
+  ✓ the success payload still carries 'report'
+  ✓ the success payload adds ok and the generation summary without removing anything the frontend already reads
+  ✓ the generation summary exposes only aggregates — no prompt, no raw reply
+  ✓ site dimensions and floor count reach the estimator from the request
+  ✓ §18 · the page shows the server's Arabic truncation message and a retry, never a raw SDK code
+  ✓ §18 · a failed generation still never loads a model
+  ✓ K · the live verifier checks expose-headers on the ACTUAL response, because the CORS spec never puts expose-headers on a preflight
+  ✓ K · and it asserts the preflight correctly does NOT carry expose-headers
+  ✓ K · the server declares both headers as exposed
+  ✓ K · Retry-After exposure is verified too, not just X-Request-ID
+
+──────────────────────────────────────────────
+GENERATION BUDGET: 74 passed, 0 failed

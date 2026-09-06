@@ -1,0 +1,1665 @@
+[
+  {
+    "path": "tests/deploy/test_viewport_pixels.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/deploy/test_viewport_pixels.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.315,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__deploy__test_viewport_pixels.js.log",
+    "summary": [
+      "VIEWPORT PIXEL TEST: 8 passed, 1 failed"
+    ]
+  },
+  {
+    "path": "tests/phase1/test_gate.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_gate.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.321,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase1__test_gate.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase1/test_p0.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_p0.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.365,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase1__test_p0.js.log",
+    "summary": [
+      "RESULT: 17 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase1/test_phase2.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_phase2.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase1__test_phase2.js.log",
+    "summary": [
+      "PHASE2: 47 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase1/test_prov.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_prov.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.318,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase1__test_prov.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase1/test_types.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_types.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase1__test_types.js.log",
+    "summary": [
+      "TYPES RESULT: 33 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase1/test_xss.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase1/test_xss.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase1__test_xss.js.log",
+    "summary": [
+      "XSS: 6 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_arch.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_arch.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.324,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_arch.js.log",
+    "summary": [
+      "ARCHITECTURE: 147 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_coord.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_coord.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.417,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_coord.js.log",
+    "summary": [
+      "COORDINATION FOUNDATION: 131 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_dist.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_dist.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.318,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_dist.js.log",
+    "summary": [
+      "DISTANCE: 80 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_eg.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_eg.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.265,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_eg.js.log",
+    "summary": [
+      "EGRESS: 55 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_fls.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_fls.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.467,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_fls.js.log",
+    "summary": [
+      "FLS: 169 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_ingest.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_ingest.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.316,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_ingest.js.log",
+    "summary": [
+      "INGEST: 188 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_mep.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_mep.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.416,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_mep.js.log",
+    "summary": [
+      "MEP: 183 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_nav.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_nav.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.317,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_nav.js.log",
+    "summary": [
+      "NAVIGATION: 43 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_occ.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_occ.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.316,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_occ.js.log",
+    "summary": [
+      "OCCUPANCY: 98 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_rel.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_rel.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.267,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_rel.js.log",
+    "summary": [
+      "RELATIONSHIPS: 48 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_render.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_render.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_render.js.log",
+    "summary": [
+      "RENDER: 53 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_rev.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_rev.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.365,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_rev.js.log",
+    "summary": [
+      "REVISION: 99 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_rules.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_rules.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_rules.js.log",
+    "summary": [
+      "RULES: 129 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase2/test_struct.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase2/test_struct.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.416,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase2__test_struct.js.log",
+    "summary": [
+      "STRUCTURE: 177 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase3/test_dev_api.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase3/test_dev_api.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase3__test_dev_api.js.log",
+    "summary": [
+      "VISUAL DEV API: 33 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase3/test_visual.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase3/test_visual.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.819,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase3__test_visual.js.log",
+    "summary": [
+      "VISUAL FOUNDATION: 211 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase3/test_visual_adversarial.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase3/test_visual_adversarial.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.617,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase3__test_visual_adversarial.js.log",
+    "summary": [
+      "VISUAL ADVERSARIAL: 115 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_adversarial.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_adversarial.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.416,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_adversarial.js.log",
+    "summary": [
+      "ADVERSARIAL: 457 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_browser_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_browser_parity.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.315,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_browser_parity.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase4/test_collision.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_collision.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.318,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_collision.js.log",
+    "summary": [
+      "COLLISION: 73 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_immutability.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_immutability.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.569,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_immutability.js.log",
+    "summary": [
+      "IMMUTABILITY: 135 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_measurement.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_measurement.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.366,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_measurement.js.log",
+    "summary": [
+      "MEASUREMENT: 131 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_model_regression.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_model_regression.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.871,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_model_regression.js.log",
+    "summary": [
+      "MODEL REGRESSION: 23 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_navigation.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_navigation.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.321,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_navigation.js.log",
+    "summary": [
+      "  ✓ unknown mode 42 fails deterministically",
+      "NAVIGATION: 39 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.974,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_parity.js.log",
+    "summary": [
+      "PARITY: 17 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_portals.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_portals.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.365,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_portals.js.log",
+    "summary": [
+      "PORTALS: 45 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_runtime.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_runtime.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.516,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_runtime.js.log",
+    "summary": [
+      "RUNTIME SCENE: 49 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_selection.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_selection.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.368,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_selection.js.log",
+    "summary": [
+      "SELECTION: 113 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase4/test_visibility.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase4/test_visibility.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.365,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase4__test_visibility.js.log",
+    "summary": [
+      "VISIBILITY: 145 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_adversarial.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_adversarial.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.37,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_adversarial.js.log",
+    "summary": [
+      "AUTHORING ADVERSARIAL: 519 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_ai_boundary.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_ai_boundary.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_ai_boundary.js.log",
+    "summary": [
+      "AI BOUNDARY: 67 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_authoring.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_authoring.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.265,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_authoring.js.log",
+    "summary": [
+      "AUTHORING CONTRACT: 127 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_browser.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_browser.js.log",
+    "summary": [
+      "AUTHORING BROWSER: 55 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_browser_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_browser_parity.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.315,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_browser_parity.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase5/test_commands.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_commands.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.369,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_commands.js.log",
+    "summary": [
+      "COMMANDS: 188 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_immutability.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_immutability.js"
+    ],
+    "exit_code": 0,
+    "seconds": 1.272,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_immutability.js.log",
+    "summary": [
+      "IMMUTABILITY: 107 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_integration.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_integration.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.415,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_integration.js.log",
+    "summary": [
+      "INTEGRATION: 70 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.916,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_parity.js.log",
+    "summary": [
+      "AUTHORING PARITY: 35 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_revision.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_revision.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.366,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_revision.js.log",
+    "summary": [
+      "REVISIONS: 89 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase5/test_transaction.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase5/test_transaction.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase5__test_transaction.js.log",
+    "summary": [
+      "TRANSACTIONS: 120 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase6/test_dom.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_dom.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.267,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase6__test_dom.js.log",
+    "summary": [
+      "WORKSPACE DOM: 1 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase6/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.718,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase6__test_parity.js.log",
+    "summary": [
+      "WORKSPACE PARITY: 47 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase6/test_responsive.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_responsive.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.716,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase6__test_responsive.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase6/test_security.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_security.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase6__test_security.js.log",
+    "summary": [
+      "WORKSPACE SECURITY: 168 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase6/test_workflow.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_workflow.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase6__test_workflow.js.log",
+    "summary": [
+      "WORKFLOW: 153 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase6/test_workspace.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase6/test_workspace.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.368,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase6__test_workspace.js.log",
+    "summary": [
+      "WORKSPACE CONTRACT: 113 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase7/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase7/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 1.722,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase7__test_parity.js.log",
+    "summary": [
+      "RENDER PARITY: 49 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase7/test_render.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase7/test_render.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.569,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase7__test_render.js.log",
+    "summary": [
+      "RENDER CONTRACT: 272 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase7/test_security.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase7/test_security.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.365,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase7__test_security.js.log",
+    "summary": [
+      "RENDER SECURITY: 164 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase7/test_targets.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase7/test_targets.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.468,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase7__test_targets.js.log",
+    "summary": [
+      "RENDER TARGETS: 93 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase8/test_bim.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase8/test_bim.py"
+    ],
+    "exit_code": 0,
+    "seconds": 2.673,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase8__test_bim.py.log",
+    "summary": [
+      "BIM EXCHANGE: 526 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase8/test_bim_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase8/test_bim_browser.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.269,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase8__test_bim_browser.js.log",
+    "summary": [
+      "BIM BROWSER: 4 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase8/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase8/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.723,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase8__test_parity.js.log",
+    "summary": [
+      "BIM PARITY SUITE: 54 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9/test_docs.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9/test_docs.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.216,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9__test_docs.py.log",
+    "summary": [
+      "DOCUMENTATION: 421 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9/test_docs_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9/test_docs_browser.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.265,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9__test_docs_browser.js.log",
+    "summary": [
+      "DOCS BROWSER: 4 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 1.167,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9__test_parity.js.log",
+    "summary": [
+      "DOCS PARITY SUITE: 72 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_1/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_1/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.421,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_1__test_parity.js.log",
+    "summary": [
+      "PBR PARITY SUITE: 7 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_1/test_pbr.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_1/test_pbr.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.065,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_1__test_pbr.py.log",
+    "summary": [
+      "PBR QUALITY: 156 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_1/test_pbr_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_1/test_pbr_browser.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.319,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_1__test_pbr_browser.js.log",
+    "summary": [
+      "PBR BROWSER: 14 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_alignment.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_alignment.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.064,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_alignment.py.log",
+    "summary": [
+      "ALIGNMENT REGRESSION: 92 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_archdetail.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_archdetail.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.065,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_archdetail.py.log",
+    "summary": [
+      "ARCH DETAIL: 168 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_archdetail_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_archdetail_browser.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_archdetail_browser.js.log",
+    "summary": [
+      "ARCH DETAIL BROWSER: 15 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_backend_contract.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_backend_contract.py"
+    ],
+    "exit_code": 1,
+    "seconds": 0.566,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_backend_contract.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/phase9_2/test_black_viewport.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_black_viewport.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.115,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_black_viewport.py.log",
+    "summary": [
+      "BLACK VIEWPORT REGRESSION: 87 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_generation_budget.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_generation_budget.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.115,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_generation_budget.py.log",
+    "summary": [
+      "GENERATION BUDGET: 74 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_live_render.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_live_render.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.165,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_live_render.py.log",
+    "summary": [
+      "LIVE RENDER RECOVERY: 75 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/phase9_2/test_parity.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/phase9_2/test_parity.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.417,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__phase9_2__test_parity.js.log",
+    "summary": [
+      "AD PARITY SUITE: 7 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_accessibility.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_accessibility.js"
+    ],
+    "exit_code": 2,
+    "seconds": 0.319,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_accessibility.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_api_wiring.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_api_wiring.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.165,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_api_wiring.py.log",
+    "summary": [
+      "API WIRING: 62 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_apply_render_browser.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_apply_render_browser.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.319,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_apply_render_browser.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_build_metadata.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_build_metadata.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.115,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_build_metadata.py.log",
+    "summary": [
+      "BUILD METADATA: 93 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_bundle_report.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_bundle_report.py"
+    ],
+    "exit_code": 1,
+    "seconds": 0.566,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_bundle_report.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_ci_gate.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_ci_gate.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.265,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_ci_gate.py.log",
+    "summary": [
+      "CI GATE: 52 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_compiler_arch_failure.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_compiler_arch_failure.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.164,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_compiler_arch_failure.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_concurrency.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_concurrency.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_concurrency.js.log",
+    "summary": [
+      "CONCURRENCY AND DOUBLE-ACTION SAFETY: 61 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_csp.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_csp.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_csp.js.log",
+    "summary": [
+      "CSP: 142 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_csp_style_architecture.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_csp_style_architecture.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.668,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_csp_style_architecture.js.log",
+    "summary": [
+      "CSP STYLE ARCHITECTURE: 20 passed, 0 failed  (الطبقة الحيّة: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED)"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_dependency_lock.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_dependency_lock.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.064,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_dependency_lock.py.log",
+    "summary": [
+      "DEPENDENCY LOCK CONTRACT: 115 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_engineering_authority.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_engineering_authority.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.115,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_engineering_authority.py.log",
+    "summary": [
+      "ENGINEERING AUTHORITY: 135 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_event_loop.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_event_loop.py"
+    ],
+    "exit_code": 0,
+    "seconds": 17.229,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_event_loop.py.log",
+    "summary": [
+      "EVENT LOOP AND RATE-LIMIT DECISION: 57 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_generation_cancel.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_generation_cancel.py"
+    ],
+    "exit_code": 1,
+    "seconds": 1.72,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_generation_cancel.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_image_dimensions.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_image_dimensions.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.723,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_image_dimensions.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_level_elevation.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_level_elevation.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.315,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_level_elevation.js.log",
+    "summary": [
+      "LEVEL ELEVATION: 312 passed, 0 failed (actual meshes, no pixels)"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_level_elevation.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_level_elevation.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.167,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_level_elevation.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_logging.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_logging.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.165,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_logging.py.log",
+    "summary": [
+      "LOGGING: 82 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_model_apply.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_model_apply.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.468,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_model_apply.js.log",
+    "summary": [
+      "MODEL APPLY: 85 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_module_graph.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_module_graph.js"
+    ],
+    "exit_code": 0,
+    "seconds": 1.423,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_module_graph.js.log",
+    "summary": [
+      "F-09 MODULE GRAPH: 32 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_multi_provider.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_multi_provider.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.065,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_multi_provider.py.log",
+    "summary": [
+      "MULTI-PROVIDER: 111 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_p0_hardening.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_p0_hardening.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.767,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_p0_hardening.py.log",
+    "summary": [
+      "P0 HARDENING: 57 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_panel_entry.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_panel_entry.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.318,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_panel_entry.js.log",
+    "summary": [
+      "PANEL ENTRY: 13 passed, 0 failed  (الطبقة الحيّة: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED)"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_performance.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_performance.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.419,
+    "status": "FAIL",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_performance.js.log",
+    "summary": [
+      "PERFORMANCE CONTRACT: 121 passed, 2 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_persistence.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_persistence.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.316,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_persistence.js.log",
+    "summary": [
+      "F-15 LOCAL PERSISTENCE: 105 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_plan_chunking.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_plan_chunking.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.277,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_plan_chunking.py.log",
+    "summary": [
+      "PLAN CHUNKING: 72 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_plate_extent.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_plate_extent.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.169,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_plate_extent.py.log",
+    "summary": [
+      "PLATE EXTENT: 159 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_privacy_boundary.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_privacy_boundary.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.215,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_privacy_boundary.py.log",
+    "summary": [
+      "PRIVACY BOUNDARY: 63 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_production_error_ui.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_production_error_ui.js"
+    ],
+    "exit_code": 0,
+    "seconds": 0.316,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_production_error_ui.js.log",
+    "summary": [
+      "PRODUCTION ERROR UI: 262 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_provider_accounting.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_provider_accounting.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.065,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_provider_accounting.py.log",
+    "summary": [
+      "PROVIDER ACCOUNTING: 51 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_provider_capability.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_provider_capability.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.115,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_provider_capability.py.log",
+    "summary": [
+      "PROVIDER CAPABILITY / ROUTING / RESPONSE SEMANTICS: 92 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_provider_integration.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_provider_integration.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.215,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_provider_integration.py.log",
+    "summary": [
+      "PROVIDER INTEGRATION: 56 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_provider_reject.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_provider_reject.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.064,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_provider_reject.py.log",
+    "summary": [
+      "PROVIDER REJECTION DIAGNOSTICS: 57 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_rate_limit.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_rate_limit.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.215,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_rate_limit.py.log",
+    "summary": [
+      "RATE LIMIT REGRESSION: 120 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_request_body_limits.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_request_body_limits.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.616,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_request_body_limits.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_scene_benchmark.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_scene_benchmark.js"
+    ],
+    "exit_code": 1,
+    "seconds": 0.316,
+    "status": "NOT_VERIFIED",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_scene_benchmark.js.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_scene_limits.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_scene_limits.js"
+    ],
+    "exit_code": 0,
+    "seconds": 6.387,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_scene_limits.js.log",
+    "summary": [
+      "SCENE LIMITS: 171 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_upload_security.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_upload_security.py"
+    ],
+    "exit_code": 0,
+    "seconds": 4.559,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_upload_security.py.log",
+    "summary": [
+      "TEST SUMMARY: 200 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_validator_geometry.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_validator_geometry.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.065,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_validator_geometry.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_validator_openings.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_validator_openings.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.064,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_validator_openings.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_validator_response.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_validator_response.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.366,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_validator_response.py.log",
+    "summary": []
+  },
+  {
+    "path": "tests/remediation/test_webgl_diagnostics.js",
+    "command": [
+      "node",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/lib/run.js",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/remediation/test_webgl_diagnostics.js"
+    ],
+    "exit_code": 0,
+    "seconds": 120.531,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__remediation__test_webgl_diagnostics.js.log",
+    "summary": [
+      "WEBGL DIAGNOSTICS: 128 passed, 0 failed"
+    ]
+  },
+  {
+    "path": "tests/security/test_security.py",
+    "command": [
+      "python3",
+      "/workspace/scratch/3196fa9f65d9/audit-verify/tests/security/test_security.py"
+    ],
+    "exit_code": 0,
+    "seconds": 0.618,
+    "status": "PASS",
+    "log": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/fixes/C01/all-tests/tests__security__test_security.py.log",
+    "summary": [
+      "BACKEND/CONFIG SECURITY: 377 passed, 0 failed"
+    ]
+  }
+]
