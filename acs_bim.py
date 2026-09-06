@@ -2415,11 +2415,25 @@ def import_diff(project, staging, options=None):
                         st["source_entity_id"], "name", match["name"],
                         st.get("name"), basis, "INFO",
                         authoring_id=match.get("authoring_id"))
-                if not _near((g.get("w") or 0) * (g.get("d") or 0), match["area_m2"],
-                             tol["area_tolerance_m2"]):
+                footprint = (_exchange_footprint(g, [g.get(k) for k in ("x", "z", "w", "d")], kind)
+                             if st.get("mapping_class") == "PARAMETRIC_MAPPED" else None)
+                source_footprint = _exchange_footprint(match, match["footprint"], kind)
+                area = (_q(sum(abs(POLY.signed_area(c)) for c in POLY.cells(footprint)))
+                        if footprint is not None else None)
+                if area is None or not _near(area, match["area_m2"], tol["area_tolerance_m2"]):
                     add("OBJECT_RESIZED", match["canonical_id"],
                         st["source_entity_id"], "area_m2", match["area_m2"],
-                        _q((g.get("w") or 0) * (g.get("d") or 0)), basis, "WARNING")
+                        area, basis, "WARNING")
+                elif not _same_footprint(source_footprint, footprint):
+                    add("OBJECT_RESIZED", match["canonical_id"], st["source_entity_id"],
+                        "footprint", source_footprint, footprint, basis, "WARNING")
+            elif kind == "slab":
+                footprint = (_exchange_footprint(g, [g.get(k) for k in ("x", "z", "w", "d")], kind)
+                             if st.get("mapping_class") == "PARAMETRIC_MAPPED" else None)
+                source_footprint = _exchange_footprint(match, match["outline"], kind)
+                if not _same_footprint(source_footprint, footprint):
+                    add("OBJECT_RESIZED", match["canonical_id"], st["source_entity_id"],
+                        "footprint", source_footprint, footprint, basis, "WARNING")
         for it in sorted(ex[group], key=lambda it: str(it["canonical_id"])):
             if it["canonical_id"] not in used:
                 add("OBJECT_REMOVED", it["canonical_id"], None,

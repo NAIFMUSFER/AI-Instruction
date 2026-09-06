@@ -1,0 +1,106 @@
+test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) ... 
+  test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) (code='POLYGON_INVALID') ... FAIL
+  test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) (code='POLYGON_RECT_MISMATCH') ... FAIL
+test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) ... 
+  test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) (windows=[]) ... FAIL
+  test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) (windows=[{'edge_index': 0, 'offset': 2, 'width': 1, 'height': 1, 'sill': 1}]) ... FAIL
+test_point_in_the_missing_l_notch_is_outside (__main__.PolygonValidator.test_point_in_the_missing_l_notch_is_outside) ... ERROR
+test_real_polygon_overlap_is_still_detected (__main__.PolygonValidator.test_real_polygon_overlap_is_still_detected) ... ok
+test_shared_diagonal_is_not_an_overlap_and_transmits_access (__main__.PolygonValidator.test_shared_diagonal_is_not_an_overlap_and_transmits_access) ... FAIL
+test_short_oblique_edge_bounds_the_opening_width (__main__.PolygonValidator.test_short_oblique_edge_bounds_the_opening_width) ... FAIL
+test_valid_polygon_door_has_no_false_alert_and_is_reachable (__main__.PolygonValidator.test_valid_polygon_door_has_no_false_alert_and_is_reachable) ... FAIL
+
+======================================================================
+ERROR: test_point_in_the_missing_l_notch_is_outside (__main__.PolygonValidator.test_point_in_the_missing_l_notch_is_outside)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 38, in test_point_in_the_missing_l_notch_is_outside
+    b = building(walls='none', points=[{'type': 'light', 'x': 4, 'z': 4}])
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 10, in building
+    b = model(**fields)
+        ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_gltf.py", line 19, in model
+    xs, zs = zip(*points)
+    ^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+======================================================================
+FAIL: test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) (code='POLYGON_INVALID')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 35, in test_invalid_ring_and_conflicting_box_are_explicit
+    self.assertTrue(any(code in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_invalid_ring_and_conflicting_box_are_explicit (__main__.PolygonValidator.test_invalid_ring_and_conflicting_box_are_explicit) (code='POLYGON_RECT_MISMATCH')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 35, in test_invalid_ring_and_conflicting_box_are_explicit
+    self.assertTrue(any(code in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) (windows=[])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 63, in test_isolated_polygon_and_window_only_are_not_unevaluated
+    self.assertTrue(any('ROOM_UNREACHABLE' in issue for issue in issues), issues)
+AssertionError: False is not true : []
+
+======================================================================
+FAIL: test_isolated_polygon_and_window_only_are_not_unevaluated (__main__.PolygonValidator.test_isolated_polygon_and_window_only_are_not_unevaluated) (windows=[{'edge_index': 0, 'offset': 2, 'width': 1, 'height': 1, 'sill': 1}])
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 63, in test_isolated_polygon_and_window_only_are_not_unevaluated
+    self.assertTrue(any('ROOM_UNREACHABLE' in issue for issue in issues), issues)
+AssertionError: False is not true : ['[plan/polygon/windows/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E أو W.']
+
+======================================================================
+FAIL: test_shared_diagonal_is_not_an_overlap_and_transmits_access (__main__.PolygonValidator.test_shared_diagonal_is_not_an_overlap_and_transmits_access)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 47, in test_shared_diagonal_is_not_an_overlap_and_transmits_access
+    self.assertEqual(issues, [])
+AssertionError: Lists differ: ['[plan/polygon/doors/0] OPENING_EDGE_INVA[178 chars]ما."] != []
+
+First list contains 3 additional elements.
+First extra element 0:
+'[plan/polygon/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E أو W.'
+
++ []
+- ['[plan/polygon/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E '
+-  'أو W.',
+-  '[plan/polygon/doors/1] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E '
+-  'أو W.',
+-  "[plan] تداخل بين 'polygon' و'other' — أزِح إحداهما."]
+
+======================================================================
+FAIL: test_short_oblique_edge_bounds_the_opening_width (__main__.PolygonValidator.test_short_oblique_edge_bounds_the_opening_width)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 70, in test_short_oblique_edge_bounds_the_opening_width
+    self.assertTrue(any('OPENING_OUTSIDE_WALL' in issue for issue in issues), issues)
+AssertionError: False is not true : ['[plan/polygon/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E أو W.']
+
+======================================================================
+FAIL: test_valid_polygon_door_has_no_false_alert_and_is_reachable (__main__.PolygonValidator.test_valid_polygon_door_has_no_false_alert_and_is_reachable)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_validator.py", line 24, in test_valid_polygon_door_has_no_false_alert_and_is_reachable
+    self.assertEqual(issues, [])
+AssertionError: Lists differ: ['[plan/polygon/doors/0] OPENING_EDGE_INVA[38 chars] W.'] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+'[plan/polygon/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E أو W.'
+
++ []
+- ['[plan/polygon/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E '
+-  'أو W.']
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.011s
+
+FAILED (failures=7, errors=1)

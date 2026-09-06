@@ -1,0 +1,76 @@
+
+== أ · سبب الرفض يُستخرَج مصنَّفاً لا نصّاً حرّاً ==
+  ✓ max_tokens: 32000 > 8192, which is the max → MAX_TOKENS · param=max_tokens · limit=8192
+  ✓ max_tokens: 17701 > 16384, which is the ma → MAX_TOKENS · param=max_tokens · limit=16384
+  ✓ thinking.budget_tokens: Field required     → BAD_REQUEST · param=thinking
+  ✓ messages: at least one message is required → BAD_REQUEST · param=messages
+  ✓ messages.0.content.0.text: Field required  → BAD_REQUEST · param=messages
+  ✓ system: text content blocks must be non-em → BAD_REQUEST · param=system
+  ✓ temperature: may not be used with top_p    → BAD_REQUEST · param=temperature
+  ✓ stream: must be true when max_tokens is gr → BAD_REQUEST · param=stream
+  ✓ anthropic-beta: unrecognized beta header   → BAD_REQUEST · param=anthropic-beta
+  ✓ وذكر max_tokens في شرح عطلٍ آخر لا يُصنَّف عطل سقف
+  ✓ ومعرّف طلب المزوّد محفوظ للمراسلة
+
+== ب · لا مفتاح ولا نصّ زائر ولا جسد خام ==
+  ✓ لا مفتاح في الحمولة
+  ✓ ولا حرف عربيّ واحد (المصفاة تُسقط غير ASCII)
+  ✓ ولا الجسد الخام
+  ✓ والحقول المصنَّفة نجت رغم التنقية
+  ✓ والرسالة مقصوصة بحدّ معلن
+  ✓ واسم الوسيط من القائمة المعلنة وحدها
+  ✓ ونوع خطأ غير معروف يُسجَّل other لا حرفياً
+
+== ج · التصنيفات القائمة لم تتغيّر ==
+  ✓ 404 يبقى ACS_UPSTREAM_MODEL_REJECTED لا max_tokens
+  ✓ و400 بلا ذكر سقف يبقى ACS_UPSTREAM_BAD_REQUEST
+  ✓ وكلاهما 502 في عقد HTTP
+  ✓ والرمز الجديد مُعلَن في جدول الرموز
+  ✓ ورسالته تدلّ المشغّل على إجراء لا على وصف
+
+== د · قناة السجلّ لم تعد تُسقط ما يلزم للتشخيص ==
+  ✓ قائمة السماح تُعلن sdk_version
+  ✓ قائمة السماح تُعلن transport
+  ✓ قائمة السماح تُعلن thinking_sent
+  ✓ قائمة السماح تُعلن provider_error_type
+  ✓ قائمة السماح تُعلن provider_param
+  ✓ قائمة السماح تُعلن provider_limit
+  ✓ قائمة السماح تُعلن provider_detail
+  ✓ قائمة السماح تُعلن requested_max_tokens
+  ✓ والمُصدِر يملأها كلّها
+  ✓ والسقف المطلوب يُسجَّل **قبل** النداء لا بعد نجاحه
+  ✓ والحدث الفعليّ يحمل sdk_version
+  ✓ والحدث الفعليّ يحمل transport
+  ✓ والحدث الفعليّ يحمل thinking_sent
+  ✓ والحدث الفعليّ يحمل provider_error_type
+  ✓ والحدث الفعليّ يحمل provider_param
+  ✓ والحدث الفعليّ يحمل provider_limit
+  ✓ والحدث الفعليّ يحمل provider_detail
+  ✓ والحدث الفعليّ يحمل requested_max_tokens
+  ✓ ولا يحمل حقلاً غير معلن (api_key أُسقط)
+  ✓ ولا قيمة المفتاح
+
+== هـ · F-50: سقف واحد مُعلَن يقصّ كل مسار ==
+  ✓ بلا إعلان: السلوك كما كان تماماً (لا رقم مخترَع)
+  ✓ و model_max_output() تعيد None لا تخميناً
+  ✓ وبإعلانه: **كل** مسار مقصوص بلا استثناء
+  ✓ ولا يُرفَع سقفٌ كان أدنى
+  ✓ والقصّ مُعلَن لا صامت
+  ✓ والتجاوز القديم ACS_MAX_TOKENS_PLAN مقصوص
+  ✓ والتجاوز ACS_MAX_TOKENS_OUTLINE مقصوص
+  ✓ وعند سقفٍ منخفض جداً لا يتجاوزه أيّ سقف مُنتَج
+  ✓ ولا ينزل أيٌّ منها تحت أرضية المرحلة المعلنة
+
+== و · KI-23 و KI-24 و العقد المحلّي لم تُمَسّ ==
+  ✓ KI-23 قائم: thinking مشروط بدعم النسخة
+  ✓ و AttributeError وحده يفتح الرجوع إلى create()
+  ✓ وعطل الوسائط المحلّي يبقى ACS_INTEGRATION_ERROR لا عطل مزوّد
+  ✓ و KI-24 قائم: حصّة plan نصف الميزانية
+  ✓ ولم تُرفَع أي حصّة مرحلة
+
+──────────────────────────────────────────────────────────────
+LIVE PROVIDER CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+  (no ANTHROPIC_API_KEY and no egress here; what is measured is the
+   extraction, classification, clamping and logging — the parts that
+   were missing and that make the next live 400 self-describing.)
+PROVIDER REJECTION DIAGNOSTICS: 57 passed, 0 failed

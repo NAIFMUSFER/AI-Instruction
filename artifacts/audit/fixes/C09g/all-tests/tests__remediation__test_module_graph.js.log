@@ -1,0 +1,41 @@
+
+== §1 — MAIN.JS IS THE ONE ENTRY, AND IT IMPORTS EVERY MODULE EXACTLY ONCE ==
+  ✓ the entry module exists
+  ✓ the module set is not empty — this suite would otherwise be vacuous
+  ✓ main.js carries no logic: every top-level statement is an import
+  ✓ every main.js import is a bare side-effect import of a relative module
+  ✓ the reader agrees with the parser on the import order
+  ✓ no module is imported twice by main.js
+  ✓ every module main.js imports really exists on disk
+  ✓ not one module under public/app is orphaned — every non-boot, non-style module is imported by main.js
+  ✓ main.js imports nothing beyond those modules
+  ✓ the two leaf registries are imported first, in the declared order
+
+== §2 — THE FIRST-PARTY IMPORT GRAPH IS ACYCLIC ==
+  ✓ every module parsed
+  ✓ the graph is not empty — this suite would otherwise be vacuous
+  ✓ every import target resolves to a real module under public/app
+  ✓ the only bare specifiers are the three renderer entries declared in the import map
+  ✓ there is no import cycle anywhere in public/app
+  ✓ the traversal really reached every module (it did not stop early)
+
+== §3 — EVERY EDGE POINTS BACKWARDS IN MAIN.JS IMPORT ORDER ==
+  ✓ no module imports one that main.js evaluates later or at the same rank
+  ✓ main.js itself imports nothing but graph modules (its own edges are the entry edges, not intra-graph edges)
+  ✓ main.js import order is a valid topological order of the whole graph
+
+== §4 — NO UNRESOLVED FREE IDENTIFIER IN ANY MODULE ==
+  ✓ every file under public/app was scanned
+  ✓ not one module reaches for a name that is neither imported, nor declared, nor a declared browser global
+  ✓ the declared-globals list is the real one and is not empty
+  ✓ the two named exemptions stay exactly two — no quiet growth
+
+== §5 — __ACS_LATE IS READ EARLY AND WRITTEN ONCE, BY ITS OWNER ==
+  ✓ the registry is a sealed object literal, so an unregistered name cannot be published by accident
+  ✓ the registry declares the twenty forward references it is documented to
+  ✓ no module writes into __ACS_LATE by any route other than its one Object.assign publish line
+  ✓ every registry key is published by exactly one module
+  ✓ the published names are exactly the registry keys — no key is dead and no name is published without a slot
+  ✓ the registry is actually used — this section would otherwise be vacuous
+  ✓ every __ACS_LATE name a module reads is really published somewhere
+  ✓ a module only ever reads a __ACS_LATE name whose owner main.js evaluates strictly later — which is exactly why the edge was moved into the registry instead of becoming a forward import

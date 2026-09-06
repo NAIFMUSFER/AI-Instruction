@@ -1,0 +1,28 @@
+{
+  "valid": true,
+  "issues": [],
+  "diff": {
+    "schema": "acs.bim/1",
+    "import_id": "bimimp_e728f0cd0652d11a",
+    "target_model_hash": "92b2b70c8db5bac83420ba0456a6c1cce3a1c88be29336ede49a332344913470",
+    "target_revision_id": "rev:a4a96005b7346e28",
+    "source_file_hash": "7093012e8deff3afc65baa7efb6b1b85d329134ccab70099543e4202a5679e86",
+    "entries": [],
+    "count": 0,
+    "by_type": {
+      "OBJECT_ADDED": 0,
+      "OBJECT_REMOVED": 0,
+      "OBJECT_MOVED": 0,
+      "OBJECT_RESIZED": 0,
+      "PROPERTY_CHANGED": 0,
+      "LEVEL_CHANGED": 0,
+      "HOST_CHANGED": 0,
+      "RELATIONSHIP_CHANGED": 0,
+      "TYPE_CHANGED": 0,
+      "UNSUPPORTED_EXTERNAL_OBJECT": 0
+    },
+    "conflicts": [],
+    "blocking_conflicts": [],
+    "writes_to_model": false
+  }
+}

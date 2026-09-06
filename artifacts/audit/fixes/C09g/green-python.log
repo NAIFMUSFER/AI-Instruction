@@ -1,0 +1,10 @@
+test_changed_area_is_measured_from_the_profile_not_the_box_or_metadata (__main__.PolygonBimDiff.test_changed_area_is_measured_from_the_profile_not_the_box_or_metadata) ... ok
+test_equal_area_different_shape_is_still_a_geometry_change (__main__.PolygonBimDiff.test_equal_area_different_shape_is_still_a_geometry_change) ... ok
+test_equivalent_winding_and_cell_partition_do_not_create_a_change (__main__.PolygonBimDiff.test_equivalent_winding_and_cell_partition_do_not_create_a_change) ... ok
+test_filled_upper_core_void_targets_its_slab (__main__.PolygonBimDiff.test_filled_upper_core_void_targets_its_slab) ... ok
+test_identical_rectangle_l_and_negative_origin_have_no_proposal (__main__.PolygonBimDiff.test_identical_rectangle_l_and_negative_origin_have_no_proposal) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.089s
+
+OK

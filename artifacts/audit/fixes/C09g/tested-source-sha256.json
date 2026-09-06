@@ -1,0 +1,32 @@
+[
+  {
+    "file": "acs_bim.py",
+    "source_sha256": "a40e50b5afe5abbb2120c825ab52128727339e6540b37c63d480f60f19a7a2b8",
+    "tested_sha256": "a40e50b5afe5abbb2120c825ab52128727339e6540b37c63d480f60f19a7a2b8",
+    "equal": true
+  },
+  {
+    "file": "tools/build_bim_browser.py",
+    "source_sha256": "c1ccec0db62b9f0093126b1778b3589ef5b1d645c100e16acb63c1e468a71f59",
+    "tested_sha256": "c1ccec0db62b9f0093126b1778b3589ef5b1d645c100e16acb63c1e468a71f59",
+    "equal": true
+  },
+  {
+    "file": "public/app/generated/bim.js",
+    "source_sha256": "a70076bb1076664cfc3c738c3fa5d197d9af419fddd09daf8cccc5b6502439cf",
+    "tested_sha256": "a70076bb1076664cfc3c738c3fa5d197d9af419fddd09daf8cccc5b6502439cf",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_polygon_bim_diff.py",
+    "source_sha256": "e3efa60d2adc944e86d83ea7ad8d6e2187bf30cea7048d01f7d0243d040c8036",
+    "tested_sha256": "e3efa60d2adc944e86d83ea7ad8d6e2187bf30cea7048d01f7d0243d040c8036",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_polygon_bim_diff.js",
+    "source_sha256": "b993c813c2547d61124396945500888b52c06c04d4a51d9da475072a2c8ae7a7",
+    "tested_sha256": "b993c813c2547d61124396945500888b52c06c04d4a51d9da475072a2c8ae7a7",
+    "equal": true
+  }
+]

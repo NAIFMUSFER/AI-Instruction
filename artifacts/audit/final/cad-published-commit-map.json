@@ -102,5 +102,13 @@
     "tree": "348a6d254b74ac80723e9a826d5077ef3239bb11",
     "tree_equal": true,
     "original_commit_object": "tree 348a6d254b74ac80723e9a826d5077ef3239bb11\nparent 47ac0fe18acc7367df562949f3e7dfcbd569add3\nauthor Codex <codex@openai.com> 1788725503 +0200\ncommitter Codex <codex@openai.com> 1788725503 +0200\n\nfix: report lost space and slab geometry — acs_bim.py\n"
+  },
+  {
+    "issue": "C20",
+    "original_commit": "11c5d22c78bdb537c6a1d2c683227a8d5a43ec61",
+    "published_commit": "cfbb2c90dcd92ece858d29ae88bcea14bc9e87d0",
+    "tree": "bf6ebcc9a4d9c1d85841eb77d5a649d553c17f62",
+    "tree_equal": true,
+    "original_commit_object": "tree bf6ebcc9a4d9c1d85841eb77d5a649d553c17f62\nparent 7eb13516d47261654bb86a9a9e9b9a40049856cb\nauthor Codex <codex@openai.com> 1788726124 +0200\ncommitter Codex <codex@openai.com> 1788726124 +0200\n\nfix: match IFC import edits to the correct storey — acs_bim.py\n"
   }
 ]

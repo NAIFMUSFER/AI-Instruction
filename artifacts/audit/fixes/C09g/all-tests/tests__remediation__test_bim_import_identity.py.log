@@ -1,0 +1,12 @@
+test_ambiguous_geometry_without_identity_cannot_prepare_a_rename (__main__.ImportIdentity.test_ambiguous_geometry_without_identity_cannot_prepare_a_rename) ... ok
+test_identical_two_storey_file_has_no_false_edit (__main__.ImportIdentity.test_identical_two_storey_file_has_no_false_edit) ... ok
+test_missing_coordinates_are_not_the_origin (__main__.ImportIdentity.test_missing_coordinates_are_not_the_origin) ... ok
+test_moved_identity_keeps_the_existing_unmatched_geometry_guard (__main__.ImportIdentity.test_moved_identity_keeps_the_existing_unmatched_geometry_guard) ... ok
+test_opening_edit_uses_its_storey_even_at_the_same_xz (__main__.ImportIdentity.test_opening_edit_uses_its_storey_even_at_the_same_xz) ... ok
+test_reexported_name_change_uses_unique_geometry_and_storey (__main__.ImportIdentity.test_reexported_name_change_uses_unique_geometry_and_storey) ... ok
+test_retained_global_id_renames_only_its_own_storey (__main__.ImportIdentity.test_retained_global_id_renames_only_its_own_storey) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.043s
+
+OK

@@ -361,6 +361,29 @@ function _bxWallKey(x,z,rot,len){
 function _bxStaged(staging,kind){
   return (staging.entities||[]).filter(e=>e.canonical_kind===kind); }
 
+function _bxFootprint(record,rectangle,kind){
+  try{
+    let rings;
+    if(kind==='space'&&'polygon' in record)rings=[record.polygon];
+    else if('cells' in record)rings=record.cells;
+    else if('polygon' in record)rings=[record.polygon];
+    else{
+      if(!Array.isArray(rectangle)||rectangle.length!==4||
+         !rectangle.every(v=>typeof v==='number'&&Number.isFinite(v))||
+         rectangle[2]<=0||rectangle[3]<=0)return null;
+      rings=[ACS_POLYGON.rect_ring(rectangle)];
+    }
+    if(!Array.isArray(rings)||!rings.length||!rings.every(Array.isArray))return null;
+    if(rings.reduce((n,r)=>n+r.length,0)>BX_LIMITS.max_geometry_vertices)return null;
+    return rings.map(r=>ACS_POLYGON.ring_validated(r));
+  }catch(e){if(e&&String(e.message).startsWith('POLYGON_INVALID:'))return null;throw e;}
+}
+function _bxSameFootprint(a,b){
+  if(a===null||b===null)return false;
+  const difference=ACS_POLYGON.cells(a,b).concat(ACS_POLYGON.cells(b,a));
+  return difference.reduce((n,c)=>n+Math.abs(ACS_POLYGON.signed_area(c)),0)<=BX_TOL.area_tolerance_m2;
+}
+
 function bxImportDiff(project,staging,options){
   const before=project.model_hash;
   const built=bxBuildExchange(project,options);
@@ -436,9 +459,25 @@ function bxImportDiff(project,staging,options){
         if(String(st.name)!==String(match.name))
           add('PROPERTY_CHANGED',match.canonical_id,st.source_entity_id,'name',
             match.name,st.name,basis,'INFO',null,match.authoring_id);
-        if(!_bxNear((g.w||0)*(g.d||0),match.area_m2,tol.area_tolerance_m2))
+        const footprint=st.mapping_class==='PARAMETRIC_MAPPED'?
+          _bxFootprint(g,[g.x,g.z,g.w,g.d],kind):null;
+        const sourceFootprint=_bxFootprint(match,match.footprint,kind);
+        const area=footprint===null?null:_bxQ(ACS_POLYGON.cells(footprint).reduce(
+          (n,c)=>n+Math.abs(ACS_POLYGON.signed_area(c)),0));
+        if(area===null||!_bxNear(area,match.area_m2,tol.area_tolerance_m2))
           add('OBJECT_RESIZED',match.canonical_id,st.source_entity_id,'area_m2',
-            match.area_m2,_bxQ((g.w||0)*(g.d||0)),basis,'WARNING'); } });
+            match.area_m2,area,basis,'WARNING');
+        else if(!_bxSameFootprint(sourceFootprint,footprint))
+          add('OBJECT_RESIZED',match.canonical_id,st.source_entity_id,'footprint',
+            sourceFootprint,footprint,basis,'WARNING');
+      }else if(kind==='slab'){
+        const footprint=st.mapping_class==='PARAMETRIC_MAPPED'?
+          _bxFootprint(g,[g.x,g.z,g.w,g.d],kind):null;
+        const sourceFootprint=_bxFootprint(match,match.outline,kind);
+        if(!_bxSameFootprint(sourceFootprint,footprint))
+          add('OBJECT_RESIZED',match.canonical_id,st.source_entity_id,'footprint',
+            sourceFootprint,footprint,basis,'WARNING');
+      } });
     ex[group].slice().sort((a,b)=>_scmp(String(a.canonical_id),
       String(b.canonical_id))).forEach(it=>{
       if(!used.has(it.canonical_id)) add('OBJECT_REMOVED',it.canonical_id,null,null,null,null,

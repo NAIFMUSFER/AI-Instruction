@@ -1,0 +1,42 @@
+{
+  "issue": "C09g",
+  "source_base": "cfbb2c90dcd92ece858d29ae88bcea14bc9e87d0",
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 129,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 144
+  },
+  "existing_test_status_changes": {},
+  "new_test_results": {
+    "tests/remediation/test_polygon_bim_diff.js": "PASS",
+    "tests/remediation/test_polygon_bim_diff.py": "PASS"
+  },
+  "real_provider_http": {
+    "warehouse": 503,
+    "chalet": 503
+  },
+  "same_as_previous": {
+    "warehouse": true,
+    "chalet": true
+  },
+  "local_generation_and_export_seconds": {
+    "warehouse": 0.15836223399091637,
+    "chalet": 0.0375706689821136
+  },
+  "ifc_independent_validation": [
+    {
+      "source": "/workspace/scratch/3196fa9f65d9/AI-Instruction/artifacts/audit/evidence/ifc-schema/building.json",
+      "export_valid": true,
+      "schema": "IFC4",
+      "schema_errors": 0,
+      "validation_errors": 0,
+      "express_rules_evaluated": true,
+      "checker_version": "0.8.5",
+      "sha256": "8ba998c6eda5451b0a251641d100f95381650bffa5fa5026a00a3c7a7cb64e16",
+      "seconds": 2.357387234995258
+    }
+  ]
+}

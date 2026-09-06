@@ -1,0 +1,84 @@
+
+== أ · التوقيع الحقيقي لـanthropic==0.40 (المثبّتة في requirements.txt) ==
+  ✓ requirements.txt ما زال يثبّت النسخة التي كُتب لها هذا الاختبار
+  ✓ البديل يرفض thinking كما ترفضه النسخة الحقيقية (الاختبار غير عبثيّ)
+  ✓ والرفض من ربط الوسائط في بايثون لا من منطق مكتوب في البديل
+[ACS-LLM] stage=plan provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=16000 stop=end_turn out_chars=8 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0089
+  ✓ نداء /v1/understand ينجح على النسخة المثبّتة (كان يفشل TypeError)
+  ✓ ولم يُرسَل thinking إلى نسخة لا تعرفه
+  ✓ والنداء سلك مسار البثّ (stream) لا الرجوع الاحتياطي
+  ✓ واسم النموذج وصل كما هو بلا ترجمة
+  ✓ وميزانية المرحلة وصلت كما طُلبت
+
+== ب · على نسخة تعرف thinking يُرسَل صراحةً (لا فقدان سلوك) ==
+[ACS-LLM] stage=plan provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=16000 stop=end_turn out_chars=8 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0089
+  ✓ النداء ينجح على النسخة الأحدث أيضاً
+  ✓ و thinking أُرسل بقيمة disabled صراحةً
+  ✓ الاستبطان يميّز النسختين فعلاً
+  ✓ ويقول لا عن النسخة القديمة
+
+== ج · مكتبة قديمة بلا stream(): الرجوع إلى create() ما زال يعمل ==
+[ACS-LLM] stage=plan provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=16000 stop=end_turn out_chars=8 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0089
+  ✓ AttributeError وحده يفتح مسار create() الاحتياطي
+  ✓ والنداء وصل create() فعلاً
+
+== د · وسيط لا تعرفه المكتبة ⇒ ACS_INTEGRATION_ERROR لا عطل مزوّد ==
+[ACS-LLM] call failed (stage=plan provider=anthropic host=default model=claude-sonnet-5 max_tokens=16000 thinking=off sdk=0.40.0 transport=stream) -> ACS_INTEGRATION_ERROR param=thinking
+  ✓ العطل مصنَّف AcsApiError لا استثناء خام
+  ✓ الرمز ACS_INTEGRATION_ERROR
+  ✓ وليس أي رمز من عائلة ACS_UPSTREAM_* — العطل ليس عند المزوّد
+  ✓ والحالة 500 لا 502
+  ✓ وغير قابل لإعادة المحاولة — التكرار لا يصلح خطأ برمجيّاً
+  ✓ والتليمتري يسمّي الجهة: fault=local_integration
+  ✓ ويسمّي الوسيط المخالف بالضبط
+  ✓ ويسجّل نسخة الـSDK المثبّتة
+  ✓ ورسالة العميل تقول إن العطل ليس لديه ولا عند المزوّد
+
+   ضابط سالب — عطل مزوّد حقيقيّ يبقى مصنَّفاً عطل مزوّد:
+  ✓    _RateLimitError 429 rate limited   ⇒ ACS_UPSTREAM_RATE_LIMIT
+  ✓    _APITimeoutError request timed out ⇒ ACS_UPSTREAM_TIMEOUT
+  ✓    TypeError unsupported operan       ⇒ ACS_UPSTREAM_UNKNOWN
+
+== هـ · حدّ العملية لا يسحق التصنيف (F-34) ==
+  ✓ الابنة تشحن رمز التصنيف مع الخطأ
+  ✓ ولا تشحن شيئاً لخطأ غير مصنَّف
+  ✓ والأب يقبل الشكل القديم (اسم، نصّ) بلا انكسار
+  ✓ الأب يعيد رفع نفس الرمز لا JobError
+  ✓ ويحفظ مغلّف upstream الوصفيّ
+  ✓ ورمزٌ غير معلن يُهمَل بدل أن يُحقَن
+  ✓ عبر عملية ابنة حقيقية (spawn): الرمز يصل الأب كما هو
+  ✓ ولم يتحوّل إلى JobError
+  ✓ ومغلّف upstream عبر الأنبوب سليم
+  ✓ وسجلّ المهمّة يحمل الرمز لا اسم الصنف وحده
+  ✓ ومنفّذ الخيط يحفظ التصنيف أيضاً (لا مسار يتخلّف)
+  ✓ والعطل غير المصنَّف يبقى JobError كما كان (لا سلوك تغيّر بلا داعٍ)
+  ✓ الطريق القديم كان يعطي ACS_UPSTREAM_UNKNOWN — الفارق مقيس
+
+== و · المسار المرحلي — نفس التصنيف الذي أنتج العطل الإنتاجي ==
+  ✓ الطلب الإنتاجي ما زال يُصنَّف مساراً مرحلياً
+[ACS-LLM] stage=plan provider=anthropic host=default model=claude-sonnet-5 thinking=off max_tokens=16000 stop=end_turn out_chars=8 out_tokens=900 in_tokens=1200 blocks=1 types=_Block:1 text_blocks=1 nontext_blocks=0 chars_per_out_token=0.0089
+{"chars_per_output_token": 0.0089, "content_block_types": "_Block:1", "content_blocks": 1, "duration_ms": 0, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 1200, "level": "info", "max_output_tokens": 16000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 8, "output_tokens": 900, "provider": "anthropic", "provider_model": "claude-sonnet-5", "requested_max_tokens": 16000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "plan", "stop_reason": "end_turn", "success": true, "text_block_chars": "8", "text_blocks": 1, "thinking_sent": false, "transport": "stream", "truncated": false, "ts": "2026-09-06T20:25:44Z"}
+  ✓ مرحلة الخطّة تصل المزوّد بلا TypeError
+  ✓ وسُجّلت باسم المرحلة الصحيح
+
+== ز · التليمتري والسجلّ: صفر تسريب ==
+  ✓ لا مفتاح في المخرجات المطبوعة
+  ✓ ولا جزء منه
+  ✓ لا نصّ توجيه المستخدم في المخرجات
+  ✓ لا مفتاح في التليمتري
+  ✓ ولا نصّ توجيه ولا رد خام في التليمتري
+  ✓ التليمتري يحمل ما هو آمن ومفيد فقط
+  ✓ مغلّف العطل المحلّي بلا مفتاح وبلا توجيه
+  ✓ ولا يحمل أثر استدعاء
+  ✓ ويحمل اسم الوسيط وحده كمعرّف برمجيّ
+
+== ح · حارس ساكن على شيفرة المسار ==
+  ✓ الرجوع إلى create() لم يعد يبتلع TypeError
+  ✓ و AttributeError وحده هو ما يفتحه
+  ✓ و thinking مشروط بدعم النسخة المثبّتة
+  ✓ والاستبطان يُسأل مرّة واحدة قبل الحلقة لا داخل كل محاولة
+  ✓ ولا يزال التصنيف يمرّ عبر _classify_call_error لا classify_upstream مباشرةً
+
+──────────────────────────────────────────────────────────────
+LIVE PROVIDER CALL: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (no network, no ANTHROPIC_API_KEY in this sandbox)
+PROVIDER INTEGRATION: 56 passed, 0 failed

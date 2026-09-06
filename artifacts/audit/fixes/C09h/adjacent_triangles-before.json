@@ -1,0 +1,111 @@
+{
+  "case": "adjacent_triangles",
+  "building": {
+    "site": {
+      "w": 20,
+      "d": 25
+    },
+    "wall_h": 3,
+    "wall_t": 0.15,
+    "floor_height": 3.2,
+    "levels": [
+      {
+        "index": 0,
+        "template": "plan",
+        "elevation": 7
+      }
+    ],
+    "floors": {
+      "plan": {
+        "rooms": [
+          {
+            "id": "polygon",
+            "rect": [
+              0,
+              0,
+              6,
+              6
+            ],
+            "polygon": [
+              [
+                0,
+                0
+              ],
+              [
+                6,
+                0
+              ],
+              [
+                0,
+                6
+              ]
+            ],
+            "walls": "full",
+            "doors": [
+              {
+                "edge_index": 1,
+                "offset": 4.242640687119285,
+                "width": 1,
+                "height": 2.1
+              }
+            ]
+          },
+          {
+            "id": "other",
+            "rect": [
+              0,
+              0,
+              6,
+              6
+            ],
+            "polygon": [
+              [
+                6,
+                0
+              ],
+              [
+                6,
+                6
+              ],
+              [
+                0,
+                6
+              ]
+            ],
+            "walls": "full"
+          }
+        ]
+      }
+    },
+    "meta": {
+      "strict": true
+    }
+  },
+  "issues": [
+    "[plan/polygon/doors/0] OPENING_EDGE_INVALID: الحافة يجب أن تكون N أو S أو E أو W.",
+    "[plan] تداخل بين 'polygon' و'other' — أزِح إحداهما."
+  ],
+  "stats": {
+    "levels": 1,
+    "rooms": 2,
+    "points": 0,
+    "vertical_alignment": {
+      "status": "NOT_APPLICABLE",
+      "checked_groups": 0,
+      "unresolved": [],
+      "scope": "stated identity and horizontal footprint; not structural or stair-flight design"
+    },
+    "access": {
+      "status": "NOT_EVALUATED",
+      "rooms": 2,
+      "door_edges": 0,
+      "reachable_rooms": 0,
+      "unreachable_rooms": [],
+      "unresolved_rooms": [
+        "bld_0.plan.other@0",
+        "bld_0.plan.polygon@0"
+      ],
+      "scope": "door/open-area paths to exterior on the same level; interlevel and code egress not evaluated"
+    }
+  }
+}

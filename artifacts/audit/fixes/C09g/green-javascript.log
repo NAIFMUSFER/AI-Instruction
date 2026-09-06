@@ -1,0 +1,4 @@
+PASS polygon IFC diff identical
+PASS polygon IFC diff area
+PASS polygon IFC diff shape
+POLYGON IFC DIFF: 3 passed, 0 failed

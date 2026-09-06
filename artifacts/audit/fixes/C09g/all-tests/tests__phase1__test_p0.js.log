@@ -1,0 +1,34 @@
+
+== TEST 5: object preservation (local fallback) ==
+  objects: [{"kind":"forklift","count":1,"dir":"x","pitch":2.4},{"kind":"worker","count":6,"dir":"x","pitch":1.72},{"kind":"amr","count":2,"dir":"x","pitch":2}]
+  ✓ 6 workers preserved
+  ✓ 2 AMR robots (merged, not 2+1)
+  ✓ 1 forklift preserved
+  ✓ nothing silently dropped (3 kinds)
+
+== coverage report is populated (not silent) ==
+  coverage: [{"req":"رافعات شوكية","where":"المشهد","how":"مُثِّل كمجسّم ثلاثي الأبعاد بأبعاده وعدده","source":"user"},{"req":"6 عمّال","where":"المشهد","how":"مُثِّل كمجسّم ثلاثي الأبعاد بأبعاده وعدده","source":"user"},{"req":"2 روبوتات AMR","where":"المشهد","how":"مُثِّل كمجسّم ثلاثي الأبعاد بأبعاده وعدده","source":"user"}]
+  ✓ coverage has 3 lines
+  ✓ coverage labels counts
+
+== TEST 4: negative instruction respected ==
+  objects: [{"kind":"car","count":3,"dir":"x","pitch":3.05}]  excluded: ["رافعة شوكية"]
+  ✓ 3 cars generated
+  ✓ forklift NOT generated
+  ✓ forklift reported as excluded
+
+== attachObjects populates room.objects (renderer contract) ==
+  ✓ room.objects created
+  ✓ each has kind+count+x+z
+
+== dual/number word variety ==
+  ✓ "عاملان" → worker=2
+  ✓ "خمسة روبوتات" → robot=5
+  ✓ "3 مصاعد" → elevator=3
+  ✓ "رافعة" → forklift=1
+
+== English kinds still work ==
+  ✓ 4 forklift
+  ✓ 2 amr
+
+RESULT: 17 passed, 0 failed
