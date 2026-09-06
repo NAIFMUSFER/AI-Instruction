@@ -1,0 +1,16 @@
+test_all_upper_slab_cells_and_the_core_hole_are_retained (__main__.PolygonIfcImport.test_all_upper_slab_cells_and_the_core_hole_are_retained) ... FAIL
+test_l_boundary_and_height_are_mapped_without_spurious_products (__main__.PolygonIfcImport.test_l_boundary_and_height_are_mapped_without_spurious_products) ... ok
+test_millimetres_product_yaw_and_solid_offset_are_composed_once (__main__.PolygonIfcImport.test_millimetres_product_yaw_and_solid_offset_are_composed_once) ... ok
+
+======================================================================
+FAIL: test_all_upper_slab_cells_and_the_core_hole_are_retained (__main__.PolygonIfcImport.test_all_upper_slab_cells_and_the_core_hole_are_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_ifc_import.py", line 63, in test_all_upper_slab_cells_and_the_core_hole_are_retained
+    self.assertFalse(any(G.contains_point(c,[1.5,3.5]) for c in geometries[1]['cells']))
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.017s
+
+FAILED (failures=1)

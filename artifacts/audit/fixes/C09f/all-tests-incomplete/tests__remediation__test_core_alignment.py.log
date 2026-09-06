@@ -1,0 +1,10 @@
+test_aligned_control_has_no_false_alerts_and_reports_scope (__main__.CoreAlignment.test_aligned_control_has_no_false_alerts_and_reports_scope) ... ok
+test_changed_stated_footprint_is_detected (__main__.CoreAlignment.test_changed_stated_footprint_is_detected) ... ok
+test_coordinates_are_compared_in_building_not_room_space (__main__.CoreAlignment.test_coordinates_are_compared_in_building_not_room_space) ... ok
+test_shifted_stair_and_elevator_are_each_detected (__main__.CoreAlignment.test_shifted_stair_and_elevator_are_each_detected) ... ok
+test_unknown_core_identity_is_disclosed_without_inventing_a_match (__main__.CoreAlignment.test_unknown_core_identity_is_disclosed_without_inventing_a_match) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.007s
+
+OK

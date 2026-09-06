@@ -1,0 +1,49 @@
+
+== §88 — TEST J: COORDINATION DIFF ON A MEP-ADJACENT WALL ==
+  ✓ the MEP-adjacent wall move previews
+  ✓ coordination runs on the base model
+  ✓ coordination runs on the candidate model
+  ✓ the three declared diff classes are computable
+  ✓ the classes are exactly the ones the specification declares
+  ✓ every finding is accounted for in exactly one class
+  ✓ the MEP model is not touched by the architectural edit
+  ✓ no MEP element was rerouted
+  ✓ no coordination finding was auto-resolved by the engine
+  ✓ the specification forbids auto-fix in its own words
+  ✓ a preview never reports a coordination change as a blocking error
+
+== §53/§55 — POLICY DISTINGUISHES INTEGRITY FROM COORDINATION ==
+  ✓ a model-integrity failure is an ERROR
+  ✓ a coordination change is only a WARNING
+  ✓ a navigation change is only a WARNING
+  ✓ stale derived data is merely INFO
+  ✓ not all coordination changes are blocked outright
+  ✓ warnings still require an explicit acknowledgement by default
+
+== §56 — NAVIGATION IMPACT IS FACTUAL, NOT A JUDGEMENT ==
+  ✓ deleting a door previews
+  ✓ the runtime portal count actually changes
+  ✓ the connectivity graph is recomputed from the candidate
+  ✓ a lost connection is reportable as a fact
+  ✓ the connectivity report makes no compliance judgement
+  ✓ the dependency graph marks navigation stale for a door delete
+  ✓ no navigation result claims a code outcome
+
+== §57/§58 — EGRESS AND DISTANCE STAY NOT_EVALUATED ==
+  ✓ egress is marked stale by a door delete
+  ✓ distance is marked stale by a geometry change
+  ✓ the specification keeps compliance NOT_EVALUATED for these
+  ✓ no authoring result carries a PASS or FAIL verdict
+  ✓ a committed geometry change reports the transaction compliance as NOT_EVALUATED
+  ✓ a geometric distance may be recomputed on the candidate without a rule comparison
+  ✓ no rule result is carried forward across the change
+
+== §59/§60/§61 — STRUCTURE, MEP AND FLS ARE NEVER MUTATED ==
+  ✓ MOVE_WALL: no structural column, beam or foundation is moved by the engine
+  ✓ MOVE_WALL: no duct, pipe or cable is rerouted by the engine
+  ✓ MOVE_WALL: no fire or life-safety record is retargeted by the engine
+  ✓ MOVE_WALL: the dependency report states no discipline was mutated
+  ✓ RESIZE_SPACE: no structural column, beam or foundation is moved by the engine
+  ✓ RESIZE_SPACE: no duct, pipe or cable is rerouted by the engine
+  ✓ RESIZE_SPACE: no fire or life-safety record is retargeted by the engine
+  ✓ RESIZE_SPACE: the dependency report states no discipline was mutated

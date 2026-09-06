@@ -1,0 +1,11 @@
+test_duplicate_room_and_level_identity (__main__.ValidatorGeometry.test_duplicate_room_and_level_identity) ... ok
+test_each_point_and_repeated_object_is_checked (__main__.ValidatorGeometry.test_each_point_and_repeated_object_is_checked) ... ok
+test_furniture_and_objects_check_footprints_not_just_centres (__main__.ValidatorGeometry.test_furniture_and_objects_check_footprints_not_just_centres) ... ok
+test_invalid_room_rectangles (__main__.ValidatorGeometry.test_invalid_room_rectangles) ... ok
+test_nonfinite_site_and_floor_values (__main__.ValidatorGeometry.test_nonfinite_site_and_floor_values) ... ok
+test_valid_control_is_unchanged_with_no_false_alerts (__main__.ValidatorGeometry.test_valid_control_is_unchanged_with_no_false_alerts) ... ok
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.005s
+
+OK

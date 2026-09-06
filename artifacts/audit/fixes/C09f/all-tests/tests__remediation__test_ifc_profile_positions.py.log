@@ -1,0 +1,8 @@
+test_all_nine_rectangular_profiles_have_two_dimensional_positions (__main__.IfcProfilePositions.test_all_nine_rectangular_profiles_have_two_dimensional_positions) ... ok
+test_profile_axes_are_geometry_references_not_imported_products (__main__.IfcProfilePositions.test_profile_axes_are_geometry_references_not_imported_products) ... ok
+test_profile_offset_is_kept_and_product_placements_remain_3d (__main__.IfcProfilePositions.test_profile_offset_is_kept_and_product_placements_remain_3d) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.012s
+
+OK

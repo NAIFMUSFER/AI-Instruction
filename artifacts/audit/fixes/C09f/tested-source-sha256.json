@@ -1,0 +1,14 @@
+[
+  {
+    "file": "acs_bim.py",
+    "source_sha256": "0a1ba057c6e52a4992845199fdcd780a900eac91d54d4957cdeca7191186e69f",
+    "tested_sha256": "0a1ba057c6e52a4992845199fdcd780a900eac91d54d4957cdeca7191186e69f",
+    "equal": true
+  },
+  {
+    "file": "tests/remediation/test_polygon_ifc_import.py",
+    "source_sha256": "641beecd52d2301a7e57c1e18fb3cd1ea3a34078cf5fd1cf78eec3719b9a37b2",
+    "tested_sha256": "641beecd52d2301a7e57c1e18fb3cd1ea3a34078cf5fd1cf78eec3719b9a37b2",
+    "equal": true
+  }
+]

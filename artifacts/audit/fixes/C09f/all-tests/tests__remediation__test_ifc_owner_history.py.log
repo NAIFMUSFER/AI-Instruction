@@ -1,0 +1,6 @@
+test_missing_modification_history_is_not_claimed_as_added (__main__.IfcOwnerHistory.test_missing_modification_history_is_not_claimed_as_added) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+OK

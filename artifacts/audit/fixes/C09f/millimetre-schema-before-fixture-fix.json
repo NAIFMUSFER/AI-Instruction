@@ -1,0 +1,9 @@
+[
+  {
+    "level": "error",
+    "message": "(not exists(axis) ^ exists(refdirection))\n\nViolated by:\n    not (True ^ False)\n     +  where True = exists(#126=IfcDirection((0.,0.,1.)))\n     +  and   False = exists(<indeterminate_type object at 0x7f3a07e93080>)\n\nOn instance:\n    #131=IfcAxis2Placement3D(#130,#126,$)\n",
+    "type": "entity_rule",
+    "instance": "#131=IfcAxis2Placement3D(#130,#126,$)",
+    "attribute": "IfcAxis2Placement3D.AxisAndRefDirProvision"
+  }
+]

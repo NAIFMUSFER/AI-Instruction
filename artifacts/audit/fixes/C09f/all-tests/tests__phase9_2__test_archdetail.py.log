@@ -1,0 +1,217 @@
+
+== §1 — THE AUTHORITY BOUNDARY NEVER REVERSES ==
+  ✓ the layer is presentation only and downstream
+  ✓ the pipeline starts at the canonical model and ends at the viewport
+  ✓ it extends the 9.1 layer instead of replacing it
+  ✓ no false implementation claim exists (§45)
+  ✓ two-point perspective is honestly NOT IMPLEMENTED (§31)
+
+== §4 — DETAIL CLASSIFICATION ==
+  ✓ class CANONICAL_GEOMETRY is declared and classifies
+  ✓ class DERIVED_PRESENTATION_DETAIL is declared and classifies
+  ✓ class REQUESTED_PRESENTATION_DETAIL is declared and classifies
+  ✓ class DEFAULT_PRESENTATION_CONTEXT is declared and classifies
+  ✓ class UNRESOLVED is declared and classifies
+  ✓ an undeclared class falls to UNRESOLVED, never promoted
+  ✓ object authority classes are the declared four (14B)
+  ✓ ambiguity resolves to UNRESOLVED_OBJECT, not to invention
+
+== 14F — PRESENTATION MATERIALS ==
+  ✓ twenty-seven presentation materials are declared
+  ✓ material automotive_paint resolves with provenance
+  ✓ material vehicle_glass resolves with provenance
+  ✓ material tire_rubber resolves with provenance
+  ✓ material chrome resolves with provenance
+  ✓ material forklift_body resolves with provenance
+  ✓ material road_asphalt resolves with provenance
+  ✓ material parking_paint resolves with provenance
+  ✓ material grass resolves with provenance
+  ✓ material foliage resolves with provenance
+  ✓ material tree_bark resolves with provenance
+  ✓ material stone_beige resolves with provenance
+  ✓ material led_strip resolves with provenance
+  ✓ an override changes provenance to USER_VISUAL_OVERRIDE
+  ✓ a prototype-pollution override key is refused
+  ✓ an out-of-range override is refused
+  ✓ vehicle glass is physical with transmission
+
+== §23 — DETERMINISTIC MATERIAL VARIATION ==
+  ✓ same model, element and material → identical variation
+  ✓ a different element varies differently
+  ✓ variation is bounded by the declared maxima
+  ✓ seed inputs are model_hash + element_id + material_id
+
+== §40/§41 — DETAIL PROFILES AND MOBILE ==
+  ✓ profile DETAIL_OFF resolves
+  ✓ profile DETAIL_STANDARD resolves
+  ✓ profile DETAIL_HIGH resolves
+  ✓ DETAIL_OFF is exactly the Phase 9.1 appearance
+  ✓ an undeclared profile is refused
+  ✓ mobile degrades HIGH → STANDARD with a reported issue
+  ✓ canonical objects are never removed and no blank viewport
+
+== §5/§6 — FAÇADE ZONING AND BOUNDED OFFSETS ==
+  ✓ the requested primary maps onto represented exterior walls only
+  ✓ an accent with no safe zone is UNRESOLVED, not fabricated
+  ✓ an accent resolves on a represented band
+  ✓ no wall is invented and no thickness changes
+  ✓ an undeclared zone material is refused
+  ✓ every visual offset is bounded by the spec (§6)
+  ✓ zoning assignments carry the mandatory flags
+
+== §7 — WINDOW FRAME + GLASS ASSEMBLY ==
+  ✓ a frame derives proportionally from the represented opening
+  ✓ tiny and huge openings clamp to the declared bounds
+  ✓ the opening itself is never changed
+  ✓ the glass pane uses the physical glass of Phase 9.1
+  ✓ the assembly is a DERIVED_PRESENTATION_DETAIL with source id
+  ✓ three frame finishes exist and an unknown one is refused
+  ✓ a degenerate opening is refused, not guessed
+
+== §8 — DOORS ==
+  ✓ a represented glass door maps to alu_glass
+  ✓ a represented dock door maps to warehouse_dock_door
+  ✓ the main entrance gets entrance emphasis
+  ✓ an unknown type falls to the generic presentation door
+  ✓ no fire or security rating is ever inferred
+
+== §9 — BALCONIES ==
+  ✓ a represented balcony is ENHANCED when requested
+  ✓ a requested unrepresented balcony is classified, never created
+  ✓ the UI note exists in both languages
+
+== §11 — LED IS VISUAL ONLY, NEVER MEP ==
+  ✓ a strip on a represented host is visual only
+  ✓ it creates no circuit, load, panel, route or schedule entry
+  ✓ an unrepresented host refuses with a typed warning
+  ✓ an undeclared light type is refused
+  ✓ all six declared types resolve on represented hosts
+
+== §13 — STAGING ==
+  ✓ the default staging mode is REQUESTED_ONLY
+  ✓ requested-only improves requested and canonical objects, adds none
+  ✓ presentation-default additions are context objects outside BIM
+  ✓ no staging mode ever changes the canonical object count
+  ✓ an undeclared staging mode is refused
+
+== 14A/14C/14D/14E — THE PRESENTATION OBJECT LIBRARY ==
+  ✓ every declared library kind resolves to a recipe (63 kinds)
+  ✓ a car reads as a car: body, cabin, four wheels, glazing, lights
+  ✓ no make, model, plate, engine or VIN is invented
+  ✓ a forklift has chassis, guard, mast, forks and counterweight
+  ✓ no capacity, mast rating, battery or manufacturer is inferred
+  ✓ an unknown forklift variant falls to the generic presentation
+  ✓ furniture reads as its category: bed, sofa, wardrobe, rack
+  ✓ landscape assets are parametric: tree canopy clusters, palm fronds
+  ✓ landscape LODs are declared LOW/STANDARD/HIGH
+  ✓ an unknown object kind is refused, not faked
+  ✓ repeated context classes are marked for instancing (14G)
+
+== 14H — SCALE AND PLACEMENT PRIORITY ==
+  ✓ canonical dimensions win over user and defaults
+  ✓ default dimensions are flagged as presentation fallback
+  ✓ placement priority: canonical → user → zone → UNRESOLVED
+  ✓ no zone, no coordinates → UNRESOLVED, never auto-placed
+
+== 14I — SITE EXAMPLES ==
+  ✓ «ضع 10 سيارات في المواقف» fills ten represented bays
+  ✓ with six bays only six cars land and the gap is reported
+  ✓ parking requested with no bays is geometrically unresolved (§18)
+  ✓ represented parking renders professionally
+
+== §15/§16 — KITCHEN AND BATHROOM ==
+  ✓ an ambiguous kitchen phrase is UNRESOLVED, never guessed
+  ✓ a canonical layout is honoured
+  ✓ bathroom fixtures are never placed if absent
+
+== §27 — GLASS REFLECTION ENVIRONMENTS ==
+  ✓ environment NEUTRAL_STUDIO resolves through the existing PMREM path
+  ✓ environment CLEAR_SKY resolves through the existing PMREM path
+  ✓ environment OVERCAST_SKY resolves through the existing PMREM path
+  ✓ environment SUNSET_SKY resolves through the existing PMREM path
+  ✓ an undeclared environment is refused
+
+== §30 — PROFESSIONAL CAMERA COMPOSITION ==
+  ✓ camera DOLLHOUSE_HERO frames deterministically without fisheye
+  ✓ camera EXTERIOR_AERIAL frames deterministically without fisheye
+  ✓ camera EXTERIOR_HERO_CORNER frames deterministically without fisheye
+  ✓ camera EXTERIOR_HERO_FRONT frames deterministically without fisheye
+  ✓ camera EXTERIOR_STREET_LEVEL frames deterministically without fisheye
+  ✓ camera INTERIOR_BEDROOM frames deterministically without fisheye
+  ✓ camera INTERIOR_CORRIDOR frames deterministically without fisheye
+  ✓ camera INTERIOR_KITCHEN frames deterministically without fisheye
+  ✓ camera INTERIOR_LIVING frames deterministically without fisheye
+  ✓ camera WAREHOUSE_AISLE frames deterministically without fisheye
+  ✓ camera WAREHOUSE_OVERVIEW_92 frames deterministically without fisheye
+  ✓ street level sits at human eye height
+  ✓ the Phase 9.1 presets still resolve through the same resolver
+  ✓ an undeclared preset is refused
+  ✓ the exterior hero favours a three-quarter view
+
+== §32 — AUTO PRESENTATION ==
+  ✓ auto mode for warehouse picks presentation settings only
+  ✓ auto mode for villa picks presentation settings only
+  ✓ auto mode for clinic picks presentation settings only
+  ✓ auto mode for hotel picks presentation settings only
+  ✓ auto never selects ULTRA
+  ✓ an interior scene picks the interior mode
+
+== §33 — VISUAL REQUEST INTERPRETATION ==
+  ✓ «حجر طبيعي بيج» is a SAFE_VISUAL_OVERRIDE facade preference
+  ✓ «زجاج عاكس» is a safe glass appearance preference
+  ✓ «بلكونات أكبر» REQUIRES_ENGINEERING_CHANGE — not presentation-safe
+  ✓ «إنارة LED مخفية» is a presentation-light request
+  ✓ «دور إضافي» is an engineering massing change
+  ✓ descriptive language never grants engineering permission
+  ✓ hostile text yields no intents and no crash
+
+== §34/§35 — DIAGNOSTIC AND COVERAGE OVER THE FIXTURES ==
+  ✓ A_villa_stone: diagnostic accounts for every request, none dropped
+  ✓ B_apartment_balconies: diagnostic accounts for every request, none dropped
+  ✓ C_warehouse: diagnostic accounts for every request, none dropped
+  ✓ D_clinic: diagnostic accounts for every request, none dropped
+  ✓ E_hotel: diagnostic accounts for every request, none dropped
+  ✓ F_office: diagnostic accounts for every request, none dropped
+  ✓ G_unresolved_balcony: diagnostic accounts for every request, none dropped
+  ✓ H_unresolved_parking: diagnostic accounts for every request, none dropped
+  ✓ I_led_request: diagnostic accounts for every request, none dropped
+  ✓ J_ambiguous_kitchen: diagnostic accounts for every request, none dropped
+  ✓ K_mixed_facade: diagnostic accounts for every request, none dropped
+  ✓ L_malicious: diagnostic accounts for every request, none dropped
+  ✓ G: the balcony request surfaces as not represented
+  ✓ H: parking is REQUESTED_NOT_GEOMETRICALLY_RESOLVED
+  ✓ I: concealed LED is VISUAL_ONLY_APPLIED
+  ✓ J: the ambiguous kitchen stays UNRESOLVED
+  ✓ B: represented balconies are enhanced, LED applies
+  ✓ L: hostile object kinds resolve to UNRESOLVED_OBJECT, no crash
+  ✓ coverage counts requested/represented/unresolved honestly
+
+== §38 — CAPTURE METADATA EXTENSION ==
+  ✓ the capture carries the architectural extension fields
+  ✓ a capture is never engineering evidence
+
+== §43/§44 — IMMUTABILITY: THE CRITICAL TEST ==
+  ✓ villa_glazed: canonical bytes identical after the full visual battery
+  ✓ villa_glazed: hash, revision, discipline counts and quantities unchanged
+  ✓ villa_glazed: canonical object identity preserved (§44)
+  ✓ hotel: canonical bytes identical after the full visual battery
+  ✓ hotel: hash, revision, discipline counts and quantities unchanged
+  ✓ hotel: canonical object identity preserved (§44)
+  ✓ clinic: canonical bytes identical after the full visual battery
+  ✓ clinic: hash, revision, discipline counts and quantities unchanged
+  ✓ clinic: canonical object identity preserved (§44)
+  ✓ warehouse: canonical bytes identical after the full visual battery
+  ✓ warehouse: hash, revision, discipline counts and quantities unchanged
+  ✓ warehouse: canonical object identity preserved (§44)
+  ✓ apartment_balconies: canonical bytes identical after the full visual battery
+  ✓ apartment_balconies: hash, revision, discipline counts and quantities unchanged
+  ✓ apartment_balconies: canonical object identity preserved (§44)
+
+== §24 — DEFAULTS: ENGINEERING MODE FIRST ==
+  ✓ the default configuration is DETAIL_OFF engineering appearance
+  ✓ the configuration hash is deterministic and model-independent
+  ✓ different settings hash differently
+  ✓ invalid modes are refused with typed errors
+
+──────────────────────────────────────────────
+ARCH DETAIL: 168 passed, 0 failed

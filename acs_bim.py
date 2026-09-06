@@ -1466,11 +1466,119 @@ def _unstated_flags(step):
     return {"flags": flags, "refused_keys": refused}
 
 
+def _polygon_plan_frame(step, reference):
+    axis = _deref(step, reference)
+    if not axis or axis["type"] != "IFCAXIS2PLACEMENT3D":
+        raise ValueError("polygon placement has no supported 3D axis")
+
+    def vector(ref, kind, default=None):
+        if ref is None and default is not None:
+            return default
+        entity = _deref(step, ref)
+        values = _arg(entity, 0) if entity and entity["type"] == kind else None
+        if (not isinstance(values, list) or len(values) != 3 or
+                any(isinstance(v, bool) or not isinstance(v, (int, float))
+                    or not math.isfinite(v) for v in values)):
+            raise ValueError("polygon placement has an invalid coordinate or direction")
+        return values
+
+    xyz = vector(_arg(axis, 0), "IFCCARTESIANPOINT")
+    up = vector(_arg(axis, 1), "IFCDIRECTION", [0, 0, 1])
+    xdir = vector(_arg(axis, 2), "IFCDIRECTION", [1, 0, 0])
+    if (abs(up[0]) > POLY.EPS or abs(up[1]) > POLY.EPS or up[2] <= 0
+            or abs(xdir[2]) > POLY.EPS or math.hypot(*xdir[:2]) <= POLY.EPS):
+        raise ValueError("tilted polygon extrusion is outside the horizontal footprint mapping")
+    return xyz, math.atan2(xdir[1], xdir[0])
+
+
+def _polygon_profile_parts(step, items):
+    parts, vertices = [], 0
+    try:
+        for item in items:
+            solid = _deref(step, item)
+            if not solid or solid["type"] != "IFCEXTRUDEDAREASOLID":
+                raise ValueError("a polygon body contains a non-extruded representation item")
+            profile = _deref(step, _arg(solid, 0))
+            curve = _deref(step, _arg(profile, 2)) if profile else None
+            if (not profile or profile["type"] != "IFCARBITRARYCLOSEDPROFILEDEF"
+                    or not curve or curve["type"] != "IFCPOLYLINE"):
+                raise ValueError("polygon body requires closed straight profile curves")
+            points = []
+            for ref in _arg(curve, 0) or []:
+                point = _deref(step, ref)
+                points.append(_arg(point, 0) if point and point["type"] == "IFCCARTESIANPOINT" else None)
+            vertices += len(points)
+            if vertices > int(LIMITS["max_geometry_vertices"]):
+                raise ValueError("polygon profile exceeds the declared geometry vertex limit")
+            if len(points) < 4 or points[0] != points[-1]:
+                raise ValueError("polygon profile curve is not explicitly closed")
+            ring = POLY.ring_validated(points)
+            depth = _num(_arg(solid, 3))
+            direction = _deref(step, _arg(solid, 2))
+            values = _arg(direction, 0) if direction and direction["type"] == "IFCDIRECTION" else None
+            if (depth is None or depth <= 0 or not isinstance(values, list) or len(values) != 3
+                    or any(isinstance(v, bool) or not isinstance(v, (int, float))
+                           or not math.isfinite(v) for v in values) or abs(values[0]) > POLY.EPS
+                    or abs(values[1]) > POLY.EPS or values[2] <= 0):
+                raise ValueError("polygon extrusion requires a positive vertical depth and direction")
+            xyz, angle = _polygon_plan_frame(step, _arg(solid, 1))
+            co, si = math.cos(angle), math.sin(angle)
+            parts.append({"ring": [[xyz[0]+x*co-z*si, xyz[1]+x*si+z*co] for x,z in ring],
+                          "base_z": xyz[2], "depth": depth})
+        if not parts or any(abs(p["base_z"]-parts[0]["base_z"]) > POLY.EPS
+                            or abs(p["depth"]-parts[0]["depth"]) > POLY.EPS for p in parts):
+            raise ValueError("polygon body parts have no common base and extrusion depth")
+        return {"kind": "POLYGON_MAPPED", "parts": parts}
+    except ValueError as error:
+        return {"kind": "OPAQUE_GEOMETRY", "polygon_error": str(error)}
+
+
+def _polygon_import_geometry(step, product, profile, world, length_factor):
+    if world is None:
+        raise ValueError("polygon product placement is unresolved")
+    ref, seen = _arg(product, 5), set()
+    while isinstance(ref, _Ref):
+        if ref.n in seen or len(seen) >= int(LIMITS["max_placement_depth"]):
+            raise ValueError("polygon placement chain is cyclic or exceeds its declared limit")
+        seen.add(ref.n)
+        placement = _deref(step, ref)
+        if not placement or placement["type"] != "IFCLOCALPLACEMENT":
+            raise ValueError("polygon product uses an unsupported placement")
+        _polygon_plan_frame(step, _arg(placement, 1))
+        ref = _arg(placement, 0)
+    if ref is not None:
+        raise ValueError("polygon placement has an invalid parent reference")
+    angle = math.radians(world["rot_deg"])
+    co, si = math.cos(angle), math.sin(angle)
+    rings = [[[_q(world["xyz"][0]+length_factor*(x*co-z*si)),
+               _q(world["xyz"][1]+length_factor*(x*si+z*co))] for x,z in p["ring"]]
+             for p in profile["parts"]]
+    xs, zs = zip(*(point for ring in rings for point in ring))
+    first = profile["parts"][0]
+    cells = POLY.cells(rings)
+    geometry = {"x": min(xs), "z": min(zs), "w": _q(max(xs)-min(xs)),
+                "d": _q(max(zs)-min(zs)), "cells": cells,
+                "height": _q(first["depth"]*length_factor),
+                "elevation": _q(world["xyz"][2]+first["base_z"]*length_factor),
+                "area_m2": _q(sum(abs(POLY.signed_area(c)) for c in cells))}
+    if len(rings) == 1:
+        geometry["polygon"] = rings[0]
+    return geometry
+
+
 def _profile_of(step, product):
     """أبعاد المقطع المستطيل وعمق البثق إن وُجدا — لا استنتاج من غيرهما."""
     rep = _deref(step, _arg(product, 6))
     if not rep or rep["type"] != "IFCPRODUCTDEFINITIONSHAPE":
         return None
+    bodies = [_deref(step, r) for r in (_arg(rep, 2) or [])]
+    bodies = [b for b in bodies if b and b["type"] == "IFCSHAPEREPRESENTATION"
+              and _arg(b, 1) == "Body"]
+    if any((_deref(step, _arg(_deref(step, it) or {}, 0)) or {}).get("type")
+           == "IFCARBITRARYCLOSEDPROFILEDEF" for b in bodies for it in (_arg(b, 3) or [])):
+        if len(bodies) != 1:
+            return {"kind": "OPAQUE_GEOMETRY", "polygon_error": "multiple polygon body representations"}
+        return _polygon_profile_parts(step, _arg(bodies[0], 3) or [])
     for r in (_arg(rep, 2) or []):
         shp = _deref(step, r)
         if not shp or shp["type"] != "IFCSHAPEREPRESENTATION":
@@ -1623,6 +1731,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
         if t.startswith("IFCREL") or t in (
                 "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D", "IFCAXIS2PLACEMENT2D",
                 "IFCLOCALPLACEMENT", "IFCEXTRUDEDAREASOLID", "IFCRECTANGLEPROFILEDEF",
+                "IFCARBITRARYCLOSEDPROFILEDEF",
                 "IFCSHAPEREPRESENTATION", "IFCPRODUCTDEFINITIONSHAPE", "IFCPOLYLINE",
                 "IFCSIUNIT", "IFCUNITASSIGNMENT", "IFCCONVERSIONBASEDUNIT",
                 "IFCMEASUREWITHUNIT", "IFCDIMENSIONALEXPONENTS", "IFCPERSON",
@@ -1676,6 +1785,12 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
 
         prof = _profile_of(step, e)
         w = rec["world"]
+        polygon_geometry = None
+        if t in ("IFCSPACE", "IFCSLAB", "IFCROOF") and prof and prof.get("kind") == "POLYGON_MAPPED":
+            try:
+                polygon_geometry = _polygon_import_geometry(step, e, prof, w, lf)
+            except ValueError as error:
+                prof = {"kind": "OPAQUE_GEOMETRY", "polygon_error": str(error)}
         if t == "IFCPROJECT":
             rec["canonical_kind"] = "project"
             rec["mapping_class"] = "PARAMETRIC_MAPPED"
@@ -1700,14 +1815,16 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             rec["mapping_class"] = "PARAMETRIC_MAPPED"
             long_name = _arg(e, 7)
             g = {"x": w["xyz"][0] if w else None, "z": w["xyz"][1] if w else None}
-            if prof and prof.get("kind") == "PARAMETRIC_MAPPED":
+            if polygon_geometry is not None:
+                g = polygon_geometry
+            elif prof and prof.get("kind") == "PARAMETRIC_MAPPED":
                 g["w"] = _q((prof["x_dim"] or 0.0) * lf)
                 g["d"] = _q((prof["y_dim"] or 0.0) * lf)
                 g["height"] = _q((prof["depth"] or 0.0) * lf)
             else:
                 rec["mapping_class"] = "BOUNDING_GEOMETRY_ONLY"
                 issues.append(issue("BIM_GEOMETRY_LOSS", "WARNING", "#%d" % eid,
-                                    "space geometry is not a mappable rectangle"))
+                                    (prof or {}).get("polygon_error") or "space geometry is not a mappable rectangle"))
             rec["geometry"] = g
             rec["properties"]["number"] = long_name if isinstance(long_name, str) else None
         elif t in ("IFCWALL", "IFCWALLSTANDARDCASE"):
@@ -1752,7 +1869,13 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             rec["canonical_kind"] = "slab"
             pdt = _enum(_arg(e, 8)) or "UNKNOWN"
             rec["properties"]["predefined_type"] = pdt
-            if prof and prof.get("kind") == "PARAMETRIC_MAPPED":
+            if polygon_geometry is not None:
+                rec["geometry"] = polygon_geometry
+                depth = polygon_geometry.pop("height")
+                polygon_geometry.update(thickness=depth, thickness_known=True,
+                                        elevation=_q(polygon_geometry["elevation"]+depth))
+                rec["mapping_class"] = "PARAMETRIC_MAPPED"
+            elif prof and prof.get("kind") == "PARAMETRIC_MAPPED":
                 rec["geometry"] = {
                     "x": w["xyz"][0] if w else None, "z": w["xyz"][1] if w else None,
                     "w": _q((prof["x_dim"] or 0.0) * lf),
@@ -1764,7 +1887,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
             else:
                 rec["mapping_class"] = "BOUNDING_GEOMETRY_ONLY"
                 issues.append(issue("BIM_GEOMETRY_LOSS", "WARNING", "#%d" % eid,
-                                    "slab geometry is not a mappable rectangle"))
+                                    (prof or {}).get("polygon_error") or "slab geometry is not a mappable rectangle"))
         elif t in ("IFCDOOR", "IFCWINDOW"):
             rec["canonical_kind"] = "door" if t == "IFCDOOR" else "window"
             h = _num(_arg(e, 8))

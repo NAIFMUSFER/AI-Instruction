@@ -1,0 +1,40 @@
+test_all_upper_slab_cells_and_the_core_hole_are_retained (__main__.PolygonIfcImport.test_all_upper_slab_cells_and_the_core_hole_are_retained) ... FAIL
+test_l_boundary_and_height_are_mapped_without_spurious_products (__main__.PolygonIfcImport.test_l_boundary_and_height_are_mapped_without_spurious_products) ... FAIL
+test_millimetres_product_yaw_and_solid_offset_are_composed_once (__main__.PolygonIfcImport.test_millimetres_product_yaw_and_solid_offset_are_composed_once) ... FAIL
+test_non_reference_body_item_does_not_crash_the_reader (__main__.PolygonIfcImport.test_non_reference_body_item_does_not_crash_the_reader) ... ok
+test_tilted_polygon_stays_explicitly_outside_the_horizontal_mapping (__main__.PolygonIfcImport.test_tilted_polygon_stays_explicitly_outside_the_horizontal_mapping) ... ok
+
+======================================================================
+FAIL: test_all_upper_slab_cells_and_the_core_hole_are_retained (__main__.PolygonIfcImport.test_all_upper_slab_cells_and_the_core_hole_are_retained)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "tests/remediation/test_polygon_ifc_import.py", line 57, in test_all_upper_slab_cells_and_the_core_hole_are_retained
+    self.assertTrue(all(e['mapping_class']=='PARAMETRIC_MAPPED' for e in slabs))
+AssertionError: False is not true
+
+======================================================================
+FAIL: test_l_boundary_and_height_are_mapped_without_spurious_products (__main__.PolygonIfcImport.test_l_boundary_and_height_are_mapped_without_spurious_products)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "tests/remediation/test_polygon_ifc_import.py", line 44, in test_l_boundary_and_height_are_mapped_without_spurious_products
+    self.assertEqual(space['mapping_class'],'PARAMETRIC_MAPPED')
+AssertionError: 'BOUNDING_GEOMETRY_ONLY' != 'PARAMETRIC_MAPPED'
+- BOUNDING_GEOMETRY_ONLY
++ PARAMETRIC_MAPPED
+
+
+======================================================================
+FAIL: test_millimetres_product_yaw_and_solid_offset_are_composed_once (__main__.PolygonIfcImport.test_millimetres_product_yaw_and_solid_offset_are_composed_once)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "tests/remediation/test_polygon_ifc_import.py", line 66, in test_millimetres_product_yaw_and_solid_offset_are_composed_once
+    self.assertEqual(space['mapping_class'],'PARAMETRIC_MAPPED')
+AssertionError: 'BOUNDING_GEOMETRY_ONLY' != 'PARAMETRIC_MAPPED'
+- BOUNDING_GEOMETRY_ONLY
++ PARAMETRIC_MAPPED
+
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.033s
+
+FAILED (failures=3)
