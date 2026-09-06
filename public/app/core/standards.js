@@ -5,6 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { ACS_POLYGON } from './polygon.js';
 import { _dsRooms, _pyRound, ensureElementIds, extractExits, findEgress, findPath, measurePath, usableExits } from './viewer.js';
 
 const ACS_RULES_REGISTRY = {
@@ -5411,6 +5412,10 @@ function _aRect(room){ const rc=room.rect;
   if(!rc||rc.length<4) return null;
   return [Number(rc[0]),Number(rc[1]),Number(rc[2]),Number(rc[3])]; }
 function _aShapeSupported(room){
+  if(Object.hasOwn(room,'polygon')){
+    try{ACS_POLYGON.room_ring(room);return !(_pyT(room.shape)||_pyT(room.vertices));}
+    catch(e){if(String(e.message).startsWith('POLYGON'))return false;throw e;}
+  }
   return !(_pyT(room.polygon)||_pyT(room.shape)||_pyT(room.vertices)); }
 function _aSpaceId(bid,tmpl,room,i){
   return room.space_id || (bid+'.'+tmpl+'.'+(room.id||('sp_'+i))); }
@@ -5460,7 +5465,47 @@ function _aRoomsOf(building,tmpl,bid){
   return rooms; }
 /* ------------------------------------------------------------ الجدران --- */
 /* كل حدّ مشترك يُقسَّم عند كل نقطة انكسار، فيُعرَّف الجدار المشترك مرّة واحدة */
+function _aPolygonWallSegments(rooms){
+  const P=ACS_POLYGON,groups=new Map();
+  rooms.forEach(([sid,room])=>{
+    if(!_aShapeSupported(room)||_aRect(room)===null)return;
+    const ring=P.room_ring(room),winding=P.signed_area(ring)>0?1:-1;
+    P.edges(ring).forEach(([a,b],index)=>{
+      const f=P.segment_frame(a,b),sortKey=[f.axis,_aq(f.fixed),...f.direction.map(_aq)],key=JSON.stringify(sortKey);
+      const interior=[-(b[1]-a[1])*winding,(b[0]-a[0])*winding],side=interior[0]*f.normal[0]+interior[1]*f.normal[1]>0?1:-1;
+      if(!groups.has(key))groups.set(key,{sortKey,frame:f,items:[]});
+      groups.get(key).items.push({u0:f.u0,u1:f.u1,space:sid,edge:index,side,height:room.wall_h==null?null:room.wall_h});
+    });
+  });
+  const sorted=Array.from(groups.values()).sort((a,b)=>_scmp(a.sortKey[0],b.sortKey[0])||a.sortKey[1]-b.sortKey[1]||a.sortKey[2]-b.sortKey[2]||a.sortKey[3]-b.sortKey[3]);
+  const walls=[];
+  sorted.forEach(({frame:f,items})=>{
+    const cuts=Array.from(new Set(items.flatMap(it=>[_aq(it.u0),_aq(it.u1)]))).sort((a,b)=>a-b);
+    for(let i=0;i+1<cuts.length;i++){
+      const a=cuts[i],b=cuts[i+1];if(b-a<=_A_EPS)continue;
+      const owners=items.filter(it=>it.u0<=a+_A_EPS&&it.u1>=b-_A_EPS);if(!owners.length)continue;
+      const heights=owners.map(it=>it.height).filter(h=>h!==null);
+      walls.push({axis:f.axis,fixed:f.fixed,u0:a,u1:b,direction:f.direction,normal:f.normal,
+        spaces:Array.from(new Set(owners.map(it=>it.space))).sort(_scmp),
+        sides:Object.fromEntries(owners.map(it=>[it.space,it.side])),edges:Object.fromEntries(owners.map(it=>[it.space,it.edge])),
+        height_stated:heights.length?Math.max(...heights):null});
+    }
+  });return walls;
+}
+function _aPolygonExposure(wall,rooms,unsupported){
+  if(wall.spaces.length>1)return ['interior','confirmed','bounded_by_two_spaces'];
+  const side=wall.sides[wall.spaces[0]],p=ACS_POLYGON.frame_point(wall,(wall.u0+wall.u1)/2);
+  const probe=p.map((v,i)=>v-side*_A_PROBE*wall.normal[i]);
+  if(rooms.some(([,r])=>_aShapeSupported(r)&&_aRect(r)!==null&&ACS_POLYGON.contains_point(ACS_POLYGON.room_ring(r),probe)))
+    return ['interior','inferred','opposite_side_inside_another_space'];
+  if(_aPointInRects(...probe,unsupported))return ['unresolved','unresolved','opposite_side_near_a_space_with_unsupported_outline'];
+  const bbox=_aBbox(rooms.map(([,r])=>_aRect(r)).filter(r=>r!==null));
+  if(bbox&&probe[0]>=bbox[0]-_A_EPS&&probe[0]<=bbox[2]+_A_EPS&&probe[1]>=bbox[1]-_A_EPS&&probe[1]<=bbox[3]+_A_EPS)
+    return ['unresolved','unresolved','opposite_side_is_void_inside_the_footprint'];
+  return ['exterior','inferred','opposite_side_outside_declared_polygon_union'];
+}
 function _aWallSegments(rooms){
+  if(rooms.some(tr=>Object.hasOwn(tr[1],'polygon')))return _aPolygonWallSegments(rooms);
   const groups=new Map();
   rooms.forEach(tr=>{ const sid=tr[0], room=tr[1];
     const rc=_aRect(room);
@@ -5529,8 +5574,13 @@ function _aOpeningsOf(room,sid,kind){
   src.forEach((o,i)=>{
     const rc=_aRect(room);
     if(rc===null) return;
-    const seg=_aEdgeSegment(o.edge,rc);
-    const uc=_aOpenU(o.edge,rc,_pyT(o.offset)?o.offset:0);
+    let frame=null,edgeIndex=null;
+    if(Object.hasOwn(room,'polygon')&&_aShapeSupported(room)){
+      try{edgeIndex=ACS_POLYGON.edge_index(room,o);}catch(e){if(!String(e.message).startsWith('POLYGON'))throw e;}
+      if(edgeIndex!==null)frame=ACS_POLYGON.segment_frame(...ACS_POLYGON.edges(ACS_POLYGON.room_ring(room))[edgeIndex]);
+    }
+    const seg=frame?[frame.axis,frame.fixed]:_aEdgeSegment(o.edge,rc);
+    const uc=frame?frame.first_u+frame.sense*Number(o.offset||0):_aOpenU(o.edge,rc,_pyT(o.offset)?o.offset:0);
     const w=(o.width===undefined)?null:o.width;
     const defaultW=(kind==='door')?ARCH_DEFAULTS.door_width_m:ARCH_DEFAULTS.window_width_m;
     const defaultH=(kind==='door')?ARCH_DEFAULTS.door_height_m:ARCH_DEFAULTS.window_height_m;
@@ -5555,14 +5605,20 @@ function _aOpeningsOf(room,sid,kind){
     else {
       el.sill_m=_aVal((o.sill===undefined)?null:o.sill,ARCH_DEFAULTS.window_sill_m); }
     el.source=_pyT(o.source)?o.source:'unknown';
+    if(Object.hasOwn(room,'polygon')){
+      el.edge=null;el.edge_index=edgeIndex;el.boundary_basis='polygon_edges';el.position_resolved=frame!==null;
+      if(frame){el.direction=frame.direction;el.normal=frame.normal;el.center=ACS_POLYGON.frame_point(frame,uc).map(_aq);}
+    }
     out.push(el); });
   return out; }
 function _aHost(opening,walls){
+  if(opening.position_resolved===false)return [null,"unresolved","polygon opening has no valid edge_index"];
   let w=opening.width_m.value;
   if(w===null||w===undefined) w=opening.width_m.render_fallback;
   const a=opening.u_center-w/2.0, b=opening.u_center+w/2.0;
   const cands=walls.filter(x=>x.axis===opening.axis
     &&Math.abs(x.fixed-opening.fixed)<=_A_EPS
+    &&(!opening.direction||opening.direction.every((v,i)=>Math.abs((x.direction||opening.direction)[i]-v)<=_A_EPS))
     &&x.u1>a+_A_EPS&&x.u0<b-_A_EPS);
   if(!cands.length) return [null,'unresolved','no wall segment hosts this opening'];
   let host=null;
@@ -5624,4 +5680,4 @@ function _aCores(building,bid,levels){
 Object.assign(__ACS_LATE, { codeRequiredAllowed });
 
 
-export { ACS_ARCH_SPEC, ACS_INGEST_FIXTURES, ACS_OCCUPANCY_REGISTRY, ACS_REAL_SOURCES, ACS_REVISION_SPEC, ACS_RULES_REGISTRY, ARCH_COMPILER_VERSION, ARCH_DEFAULTS, ARCH_ELEMENT_TYPES, ARCH_EVIDENCE, ARCH_EXPOSURE, ARCH_HOST_STATUS, ARCH_ISSUE_CODES, ARCH_LEVEL_KINDS, ARCH_PROVENANCE, ARCH_SCHEMA, CANONICALIZATION_VERSION, EXCERPT_MAX_CHARS, INGEST_PIPELINE_VERSION, INGEST_SCHEMA, ING_CANDIDATE_STATES, ING_CANDIDATE_TRANSITIONS, ING_DOC_STATES, ING_DOC_TRANSITIONS, ING_EXCEPTION_RESOLUTIONS, ING_EXTRACTION_METHODS, ING_FORBIDDEN, ING_FORBIDDEN_KEYS, ING_FRAGMENT_KINDS, ING_FRAGMENT_STATES, ING_MEANING_FIELDS, ING_OFFICIAL_CHAIN, ING_ORIGIN_AUTHORITIES, ING_ORIGIN_TYPES, ING_PACK_ACTIVE_STATES, ING_PACK_STATES, ING_PACK_TRANSITIONS, ING_PIPELINE_STAGES, ING_RELATION_TYPES, ING_VERIFICATION_METHODS, OCC_FACTS, OCC_LAYER_VERSION, OCC_NEVER_AUTO_VERIFIED, OCC_PACK_ACTIVE_STATES, OCC_PACK_STATES, OCC_PACK_TRANSITIONS, OCC_SCHEMA, OCC_SOURCES, OCC_STATES, OCC_SUBJECT_TYPES, OCC_TRANSITIONS, OCC_VERIFICATION_METHODS, REV_HASH_ALGORITHM, REV_ORDER_INSENSITIVE, REV_PRECEDENCE, REV_SCHEMA, REV_SCOPES, REV_STATUSES, REV_VOLATILE_KEYS, RULE_COMPLETENESS, RULE_CONTRACTS, RULE_ENGINE_VERSION, RULE_FORBIDDEN_KEYS, RULE_OPERATORS, RULE_SEVERITIES, RULE_STATES, RULE_SUBJECT_TYPES, RULE_UNITS, _A_EPS, _A_LIFT_WORDS, _A_PROBE, _A_STAIR_WORDS, _OCC_C, _REV_C, _SHA_K, _aBbox, _aClassifyExposure, _aCoreKind, _aCores, _aEdgeSegment, _aHost, _aInt, _aLevels, _aOpenU, _aOpeningsOf, _aPointInRects, _aRect, _aRoomsOf, _aShapeSupported, _aSpaceId, _aVal, _aWallSegments, _aq, _buildingsContainer, _checkExpected, _cmpNumeric, _contextInput, _entryModel, _evalPrimitive, _ingBy, _ingCanon, _ingExecutable, _ingMissingDefs, _ingNumToken, _ingOpenExceptions, _ingSci, _ingUnresolvedRefs, _isHex64, _isNum, _ncmp, _occMove, _orderInsensitive, _pyList, _pyT, _revCmp, _revDiff, _revPick, _revSortKey, _revSourceHashes, _rotr32, _routeProvenance, _ruleField, _ruleForbidden, _ruleMissing, _ruleRoomOf, _scmp, _stripVolatile, _utf8Bytes, activeOccupancyPacks, addOccupancyClassification, advanceCandidate, aggregateRuleResults, allRules, applyIntegrity, assessCandidate, auditOccupancy, buildingHashes, canTransitionCandidate, canTransitionDocument, canTransitionOccPack, canTransitionOccupancy, canTransitionPack, canonicalBuilding, canonicalCodeContext, canonicalOccupancy, canonicalProject, checkResultIntegrity, codeContextHash, codeRequiredAllowed, declareOccupancy, documentUsable, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, fromBase, ingCandidate, ingDocument, ingFragment, ingRulePack, ingestAuditExport, ingestCanonicalJson, ingestEmptyStore, ingestFixtureStore, ingestRealStore, ingestRegulatoryRuleCount, ingestStoreIssues, modelHash, modelRevision, newCodeContext, newOccupancyClassification, occClassification, occClassificationsFor, occPack, occPackClassification, occPacks, occRealClassificationCount, occupancyEmptyStore, occupancyFixtureStore, occupancyHash, occupancyIndex, occupancyIssues, packToRuleSet, regulatoryRuleCount, resolveActiveRules, resolveInput, resolveOccupancy, resolveSubject, revHashOf, revisionDiff, ruleById, ruleDefinitionHash, ruleDisplay, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSourceById, ruleSources, ruleUid, sha256Hex, snapshotResult, staleResults, suggestOccupancyFromProgram, toBase, transitionDocument, unitDim, validateCandidate, validateCodeContext, validateDocument, validateFragment, validateImport, validateOccupancyClassification, validateOccupancyPack, validatePack, validateRule, validateRuleSet, verificationStillValid, verifyCandidate, verifyDocumentBytes, verifyOccupancy, verifyOccupancyPack, verifyPack };
+export { _aPolygonExposure, _aPolygonWallSegments, ACS_ARCH_SPEC, ACS_INGEST_FIXTURES, ACS_OCCUPANCY_REGISTRY, ACS_REAL_SOURCES, ACS_REVISION_SPEC, ACS_RULES_REGISTRY, ARCH_COMPILER_VERSION, ARCH_DEFAULTS, ARCH_ELEMENT_TYPES, ARCH_EVIDENCE, ARCH_EXPOSURE, ARCH_HOST_STATUS, ARCH_ISSUE_CODES, ARCH_LEVEL_KINDS, ARCH_PROVENANCE, ARCH_SCHEMA, CANONICALIZATION_VERSION, EXCERPT_MAX_CHARS, INGEST_PIPELINE_VERSION, INGEST_SCHEMA, ING_CANDIDATE_STATES, ING_CANDIDATE_TRANSITIONS, ING_DOC_STATES, ING_DOC_TRANSITIONS, ING_EXCEPTION_RESOLUTIONS, ING_EXTRACTION_METHODS, ING_FORBIDDEN, ING_FORBIDDEN_KEYS, ING_FRAGMENT_KINDS, ING_FRAGMENT_STATES, ING_MEANING_FIELDS, ING_OFFICIAL_CHAIN, ING_ORIGIN_AUTHORITIES, ING_ORIGIN_TYPES, ING_PACK_ACTIVE_STATES, ING_PACK_STATES, ING_PACK_TRANSITIONS, ING_PIPELINE_STAGES, ING_RELATION_TYPES, ING_VERIFICATION_METHODS, OCC_FACTS, OCC_LAYER_VERSION, OCC_NEVER_AUTO_VERIFIED, OCC_PACK_ACTIVE_STATES, OCC_PACK_STATES, OCC_PACK_TRANSITIONS, OCC_SCHEMA, OCC_SOURCES, OCC_STATES, OCC_SUBJECT_TYPES, OCC_TRANSITIONS, OCC_VERIFICATION_METHODS, REV_HASH_ALGORITHM, REV_ORDER_INSENSITIVE, REV_PRECEDENCE, REV_SCHEMA, REV_SCOPES, REV_STATUSES, REV_VOLATILE_KEYS, RULE_COMPLETENESS, RULE_CONTRACTS, RULE_ENGINE_VERSION, RULE_FORBIDDEN_KEYS, RULE_OPERATORS, RULE_SEVERITIES, RULE_STATES, RULE_SUBJECT_TYPES, RULE_UNITS, _A_EPS, _A_LIFT_WORDS, _A_PROBE, _A_STAIR_WORDS, _OCC_C, _REV_C, _SHA_K, _aBbox, _aClassifyExposure, _aCoreKind, _aCores, _aEdgeSegment, _aHost, _aInt, _aLevels, _aOpenU, _aOpeningsOf, _aPointInRects, _aRect, _aRoomsOf, _aShapeSupported, _aSpaceId, _aVal, _aWallSegments, _aq, _buildingsContainer, _checkExpected, _cmpNumeric, _contextInput, _entryModel, _evalPrimitive, _ingBy, _ingCanon, _ingExecutable, _ingMissingDefs, _ingNumToken, _ingOpenExceptions, _ingSci, _ingUnresolvedRefs, _isHex64, _isNum, _ncmp, _occMove, _orderInsensitive, _pyList, _pyT, _revCmp, _revDiff, _revPick, _revSortKey, _revSourceHashes, _rotr32, _routeProvenance, _ruleField, _ruleForbidden, _ruleMissing, _ruleRoomOf, _scmp, _stripVolatile, _utf8Bytes, activeOccupancyPacks, addOccupancyClassification, advanceCandidate, aggregateRuleResults, allRules, applyIntegrity, assessCandidate, auditOccupancy, buildingHashes, canTransitionCandidate, canTransitionDocument, canTransitionOccPack, canTransitionOccupancy, canTransitionPack, canonicalBuilding, canonicalCodeContext, canonicalOccupancy, canonicalProject, checkResultIntegrity, codeContextHash, codeRequiredAllowed, declareOccupancy, documentUsable, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, fromBase, ingCandidate, ingDocument, ingFragment, ingRulePack, ingestAuditExport, ingestCanonicalJson, ingestEmptyStore, ingestFixtureStore, ingestRealStore, ingestRegulatoryRuleCount, ingestStoreIssues, modelHash, modelRevision, newCodeContext, newOccupancyClassification, occClassification, occClassificationsFor, occPack, occPackClassification, occPacks, occRealClassificationCount, occupancyEmptyStore, occupancyFixtureStore, occupancyHash, occupancyIndex, occupancyIssues, packToRuleSet, regulatoryRuleCount, resolveActiveRules, resolveInput, resolveOccupancy, resolveSubject, revHashOf, revisionDiff, ruleById, ruleDefinitionHash, ruleDisplay, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSourceById, ruleSources, ruleUid, sha256Hex, snapshotResult, staleResults, suggestOccupancyFromProgram, toBase, transitionDocument, unitDim, validateCandidate, validateCodeContext, validateDocument, validateFragment, validateImport, validateOccupancyClassification, validateOccupancyPack, validatePack, validateRule, validateRuleSet, verificationStillValid, verifyCandidate, verifyDocumentBytes, verifyOccupancy, verifyOccupancyPack, verifyPack };

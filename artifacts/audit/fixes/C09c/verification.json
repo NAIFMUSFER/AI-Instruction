@@ -1,0 +1,41 @@
+{
+  "regression_before": {
+    "python_tests": 5,
+    "failures": 4,
+    "errors": 1,
+    "javascript_passed": 0,
+    "javascript_failed": 3
+  },
+  "regression_after": {
+    "python_tests": 6,
+    "python_failed": 0,
+    "javascript_passed": 4,
+    "javascript_failed": 0,
+    "legacy_arch_checks": 148,
+    "legacy_arch_failed": 0
+  },
+  "full_suite": {
+    "counts_test_files": {
+      "PASS": 112,
+      "FAIL": 7,
+      "NOT_VERIFIED": 8
+    },
+    "tests": 127
+  },
+  "source_manifest": "tested-source.json",
+  "courtyard_correction": "counterexample saved; preserved prior uncertainty; full suite and both cases rerun afterwards",
+  "test_gate_finding": "phase2 test_arch prints nonzero failed with exit 0; audit runner now classifies positive failed counters; product H07 remains open",
+  "esm_import": "PASS: actual shipped ESM modules, six walls and 20 square metre area",
+  "real_local_generation": "503 missing provider credential for both cases",
+  "comparison": "all output bytes equal to C09b; prior validator differences from original baseline",
+  "pixel_verification": "NOT_VERIFIED",
+  "remaining_C09": [
+    "SVG",
+    "IFC",
+    "validator",
+    "relationships/distance",
+    "DXF import"
+  ],
+  "new_issue": "C13 SVG opening double origin: proven, still open",
+  "original_22": "NOT_AVAILABLE"
+}

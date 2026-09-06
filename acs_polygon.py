@@ -113,6 +113,31 @@ def edge_index(room, opening):
     return index
 
 
+def segment_frame(a, b):
+    """Canonical edge coordinates, preserving legacy X/Z frames for orthogonal walls."""
+    dx, dz = b[0]-a[0], b[1]-a[1]
+    length = math.hypot(dx, dz)
+    if length <= EPS:
+        raise ValueError("POLYGON_INVALID: zero-length edge")
+    tx, tz = dx/length, dz/length
+    if tx < -EPS or (abs(tx) <= EPS and tz < 0):
+        tx, tz = -tx, -tz
+    if abs(tz) <= EPS:
+        axis, tx, tz, nx, nz = "x", 1., 0., 0., 1.
+    elif abs(tx) <= EPS:
+        axis, tx, tz, nx, nz = "z", 0., 1., 1., 0.
+    else:
+        axis, nx, nz = "oblique", -tz, tx
+    au, bu = a[0]*tx+a[1]*tz, b[0]*tx+b[1]*tz
+    return {"axis": axis, "direction": [tx, tz], "normal": [nx, nz],
+            "fixed": a[0]*nx+a[1]*nz, "u0": min(au, bu), "u1": max(au, bu),
+            "first_u": au, "sense": 1 if bu > au else -1}
+
+
+def frame_point(frame, u):
+    return [u*frame["direction"][i]+frame["fixed"]*frame["normal"][i] for i in (0, 1)]
+
+
 def _z_at(edge, x):
     a, b = edge
     return a[1]+(x-a[0])*(b[1]-a[1])/(b[0]-a[0])

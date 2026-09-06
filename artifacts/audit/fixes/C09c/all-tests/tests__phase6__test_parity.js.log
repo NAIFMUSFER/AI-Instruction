@@ -1,0 +1,56 @@
+
+== BOTH IMPLEMENTATIONS ARE ACTUALLY EXECUTED ==
+  ✓ the browser implementation ran and wrote its result
+  ✓ the python implementation ran and wrote its result
+
+== THE TWO RESULTS AGREE ==
+  ✓ the canonical comparison reports no mismatch
+  ✓ a real comparison was performed for top-level key
+  ✓ every top-level key agrees between the two implementations
+  ✓ a real comparison was performed for project tree
+  ✓ every project tree agrees between the two implementations
+  ✓ a real comparison was performed for inspector view model
+  ✓ every inspector view model agrees between the two implementations
+  ✓ a real comparison was performed for issue-centre count
+  ✓ every issue-centre count agrees between the two implementations
+  ✓ a real comparison was performed for export descriptor
+  ✓ every export descriptor agrees between the two implementations
+  ✓ a real comparison was performed for model hash
+  ✓ every model hash agrees between the two implementations
+  ✓ a real comparison was performed for provenance label
+  ✓ every provenance label agrees between the two implementations
+  ✓ a real comparison was performed for interface label
+  ✓ every interface label agrees between the two implementations
+  ✓ a real comparison was performed for displayed value
+  ✓ every displayed value agrees between the two implementations
+  ✓ a real comparison was performed for visual-reference verdict
+  ✓ every visual-reference verdict agrees between the two implementations
+  ✓ a real comparison was performed for available-operation set
+  ✓ every available-operation set agrees between the two implementations
+
+== THE COMPARISON IS NOT VACUOUS ==
+  ✓ both files carry the same keys
+  ✓ the comparison covers every shipped fixture model
+  ✓ every model produced a tree with real nodes
+  ✓ every model produced a populated inspector for a real space
+  ✓ an unresolvable identifier is refused identically in both
+  ✓ the Arabic tree really differs from the English one
+  ✓ the Arabic and English trees carry identical node identifiers
+  ✓ no view model claims it writes to the engineering model
+  ✓ every interface label is covered in both languages
+  ✓ an unrecognised provenance key falls back to unknown, never to a claim
+  ✓ no provenance label is one of the forbidden compliance words
+  ✓ an unknown value reads as unknown in both languages and both implementations
+  ✓ a very large number is formatted identically, not in exponent form
+  ✓ a unit conversion never claims to write to the model
+  ✓ a malicious visual reference is refused by both implementations
+  ✓ a legitimate visual reference is accepted by both implementations
+  ✓ the assistant never reports a commit
+  ✓ the assistant refuses to guess an unresolved target
+  ✓ interface state is proven to sit outside the engineering model
+  ✓ requirement coverage never claims full coverage
+  ✓ unresolved requirements are counted, not hidden
+  ✓ a planted difference would be detected
+
+──────────────────────────────────────────────
+WORKSPACE PARITY: 47 passed, 0 failed

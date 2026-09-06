@@ -62,6 +62,19 @@ const ACS_POLYGON = (()=>{
       throw Error('POLYGON_OPENING_EDGE_INVALID: edge_index must identify a boundary edge');
     return i;
   }
+  function segment_frame(a,b){
+    const dx=b[0]-a[0],dz=b[1]-a[1],length=Math.hypot(dx,dz);
+    if(length<=EPS)throw Error('POLYGON_INVALID: zero-length edge');
+    let tx=dx/length,tz=dz/length,axis,nx,nz;
+    if(tx < -EPS||(Math.abs(tx)<=EPS&&tz<0)){tx=-tx;tz=-tz;}
+    if(Math.abs(tz)<=EPS){axis='x';tx=1;tz=0;nx=0;nz=1;}
+    else if(Math.abs(tx)<=EPS){axis='z';tx=0;tz=1;nx=1;nz=0;}
+    else{axis='oblique';nx=-tz;nz=tx;}
+    const au=a[0]*tx+a[1]*tz,bu=b[0]*tx+b[1]*tz;
+    return {axis,direction:[tx,tz],normal:[nx,nz],fixed:a[0]*nx+a[1]*nz,
+      u0:Math.min(au,bu),u1:Math.max(au,bu),first_u:au,sense:bu>au?1:-1};
+  }
+  const frame_point=(f,u)=>[0,1].map(i=>u*f.direction[i]+f.fixed*f.normal[i]);
   const zAt=([a,b],x)=>a[1]+(x-a[0])*(b[1]-a[1])/(b[0]-a[0]);
   function intervals(rings,x){
     const spans=[];
@@ -106,6 +119,6 @@ const ACS_POLYGON = (()=>{
       }
     }return out;
   }
-  return {EPS,edges,cross,signed_area,on_segment,intersection,ring_validated,rect_ring,room_ring,contains_point,edge_index,cells};
+  return {EPS,edges,cross,signed_area,on_segment,intersection,ring_validated,rect_ring,room_ring,contains_point,edge_index,segment_frame,frame_point,cells};
 })();
 export { ACS_POLYGON };

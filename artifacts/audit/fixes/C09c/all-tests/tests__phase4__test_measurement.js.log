@@ -1,0 +1,162 @@
+
+== §27 — THE FIVE MEASUREMENT TYPES ARE DECLARED ==
+  ✓ the canonical specification declares the measurement types
+  ✓ the browser mirror and the canonical file agree on the type list
+  ✓ the type POINT_TO_POINT is declared
+  ✓ the type OBJECT_WIDTH is declared
+  ✓ the type OBJECT_HEIGHT is declared
+  ✓ the type ROOM_DIMENSION is declared
+  ✓ the type CLEARANCE is declared
+  ✓ the action MEASURE is declared
+
+== POINT TO POINT ==
+  ✓ a point-to-point measurement succeeds
+  ✓ the distance is the euclidean distance, computed not trusted
+  ✓ a three-dimensional distance is computed over all three axes
+  ✓ a zero-length measurement is legal and reports zero
+  ✓ the measurement echoes the verified endpoints
+  ✓ a caller-supplied distance is never trusted
+  ✓ negative coordinates are handled
+
+== OBJECT WIDTH AND HEIGHT COME FROM THE COMPILED BOX ==
+  ✓ an object width measurement succeeds
+  ✓ the width equals twice the compiled half-extent exactly
+  ✓ the height equals twice the compiled half-extent exactly
+  ✓ a width measurement declares its axis
+  ✓ a height measurement declares its axis
+  ✓ the measurement names the source element behind the object
+  ✓ the measurement names the runtime object it measured
+  ✓ every object in the fixture measures to a finite non-negative width
+  ✓ an object resolves for measurement by its source element id too
+
+== ROTATED GEOMETRY MEASURES ITS OWN EXTENT, NOT ITS SHADOW ==
+  ✓ the rotated fixture actually carries yawed boxes
+  ✓ a yawed object still measures its own local width
+  ✓ the yawed width is not the axis-aligned bounding width
+  ✓ rotating the whole building does not change a member width
+  ✓ every measurement on the rotated scene is finite
+
+== ROOM DIMENSION COMES FROM THE CANONICAL RECTANGLE ==
+  ✓ a room dimension measurement succeeds
+  ✓ the width and depth equal the canonical rectangle exactly
+  ✓ the reported distance is the longer of the two sides
+  ✓ the measurement names the canonical space instance
+  ✓ every room in the fixture measures finite and non-negative
+  ✓ a room resolves for measurement by its space id too
+  ✓ a room dimension never claims an occupancy or an egress width
+
+== CLEARANCE IS A MEASURED GAP, NEVER A REQUIREMENT ==
+  ✓ two distinct objects exist to measure between
+  ✓ a clearance measurement succeeds
+  ✓ the clearance is finite and non-negative
+  ✓ the clearance names both runtime objects and both source elements
+  ✓ the clearance between an object and itself is zero
+  ✓ two overlapping objects report a zero gap, never a negative one
+  ✓ clearance is symmetric
+  ✓ a clearance measurement states that it is not a code check
+  ✓ a clearance measurement declares no required or minimum value
+
+== MULTI-LEVEL MEASUREMENT ==
+  ✓ the fixture spans more than one level
+  ✓ a clearance across two levels is computed
+  ✓ a vertical point-to-point measurement crosses levels correctly
+  ✓ a measurement never claims which level it belongs to as a fact
+
+== MALFORMED VECTORS AND UNKNOWN SOURCES ARE REFUSED ==
+  ✓ point-to-point refuses a missing start
+  ✓ point-to-point refuses a missing end
+  ✓ point-to-point refuses a two-component vector
+  ✓ point-to-point refuses a four-component vector
+  ✓ point-to-point refuses a string vector
+  ✓ point-to-point refuses an object vector
+  ✓ point-to-point refuses a null vector
+  ✓ point-to-point refuses a vector of strings
+  ✓ point-to-point refuses a vector carrying null
+  ✓ point-to-point refuses a vector carrying NaN
+  ✓ point-to-point refuses a vector carrying Infinity
+  ✓ point-to-point refuses a vector carrying negative Infinity
+  ✓ point-to-point refuses a nested vector
+  ✓ point-to-point refuses a boolean vector
+  ✓ an unknown measurement type null is refused
+  ✓ an unknown measurement type "" is refused
+  ✓ an unknown measurement type "AREA" is refused
+  ✓ an unknown measurement type "VOLUME" is refused
+  ✓ an unknown measurement type "ANGLE" is refused
+  ✓ an unknown measurement type 42 is refused
+  ✓ an unknown measurement type {"t":"OBJECT_WIDTH"} is refused
+  ✓ an unknown measurement type ["OBJECT_WIDTH"] is refused
+  ✓ an unknown measurement type true is refused
+  ✓ OBJECT_WIDTH refuses an unknown source {"target_id":"no_such_object"}
+  ✓ OBJECT_HEIGHT refuses an unknown source {"target_id":null}
+  ✓ OBJECT_WIDTH refuses an unknown source {"target_id":{"a":1}}
+  ✓ ROOM_DIMENSION refuses an unknown source {"target_id":"no_such_room"}
+  ✓ ROOM_DIMENSION refuses an unknown source {"target_id":null}
+  ✓ ROOM_DIMENSION refuses an unknown source {"target_id":"runtime:obj:MEP|DRAINAGE|bld_0.mep.seg_san_1|0"}
+  ✓ OBJECT_WIDTH refuses an unknown source {"target_id":"runtime:room:bld_0.f.bath2@1"}
+  ✓ CLEARANCE refuses an unknown source {"target_id":"nope","other_id":"runtime:obj:MEP|DRAINAGE|bld_0.mep.seg_san_1|0"}
+  ✓ CLEARANCE refuses an unknown source {"target_id":"runtime:obj:MEP|DRAINAGE|bld_0.mep.seg_san_1|0","other_id":"nope"}
+  ✓ CLEARANCE refuses an unknown source {"target_id":null,"other_id":null}
+  ✓ CLEARANCE refuses an unknown source {"target_id":"runtime:obj:MEP|DRAINAGE|bld_0.mep.seg_san_1|0"}
+
+== EVERY ACCEPTED RESULT IS FINITE AND NON-NEGATIVE ==
+  ✓ a broad sweep of measurements was actually executed
+  ✓ every accepted measurement is finite
+  ✓ no accepted measurement is negative
+  ✓ every accepted measurement validates against its own validator
+  ✓ every accepted measurement declares runtime_only
+  ✓ every accepted measurement names the scene it came from
+
+== THE VALIDATOR REFUSES A FORGED MEASUREMENT ==
+  ✓ the validator refuses a non-object
+  ✓ the validator refuses a string
+  ✓ the validator refuses an array
+  ✓ the validator refuses an unknown type
+  ✓ the validator refuses a missing runtime_only flag
+  ✓ the validator refuses runtime_only set to false
+  ✓ the validator refuses runtime_only set to a truthy string
+  ✓ the validator refuses a negative distance
+  ✓ the validator refuses a NaN distance
+  ✓ the validator refuses an infinite distance
+  ✓ the validator refuses a string distance
+  ✓ the validator refuses a missing distance
+
+== MEASUREMENT IDENTITY IS DETERMINISTIC ==
+  ✓ the same measurement twice yields the same identifier
+  ✓ the whole measurement is byte-identical across repeated calls
+  ✓ a different type yields a different identifier
+  ✓ a different target yields a different identifier
+  ✓ the identifier follows the declared runtime identifier shape
+  ✓ the identifier carries no timestamp and no random component
+
+== MEASUREMENTS ACCUMULATE IN RUNTIME STATE ONLY ==
+  ✓ a fresh runtime state carries no measurement
+  ✓ adding a measurement succeeds
+  ✓ the measurement lands in runtime state
+  ✓ a second measurement accumulates
+  ✓ a refused measurement is not stored
+  ✓ the runtime scene is byte-identical after every measurement
+  ✓ the visual scene is byte-identical after every measurement
+  ✓ the source model is byte-identical after every measurement
+  ✓ no runtime object grew a measurement field
+  ✓ the stored measurement is a copy, not a live reference
+  ✓ the runtime state still declares that it writes nothing to the model
+
+== A MEASUREMENT IS NEVER A COMPLIANCE STATEMENT ==
+  ✓ no measurement anywhere carries a code or compliance value
+  ✓ the forbidden pattern is not vacuous
+  ✓ every measurement denies being a code check in its own words
+  ✓ a measure payload asking to set a dimension is refused
+
+── multiple models ──
+  ✓ villa: an object and a room both measure finite and non-negative
+  ✓ hotel: an object and a room both measure finite and non-negative
+  ✓ clinic: an object and a room both measure finite and non-negative
+  ✓ warehouse: an object and a room both measure finite and non-negative
+  ✓ office: an object and a room both measure finite and non-negative
+  ✓ mixed_use: an object and a room both measure finite and non-negative
+  ✓ villa_windows: an object and a room both measure finite and non-negative
+  ✓ a degenerate model refuses a measurement instead of inventing one
+  ✓ a degenerate model still measures between two literal points
+
+──────────────────────────────────────────────
+MEASUREMENT: 131 passed, 0 failed

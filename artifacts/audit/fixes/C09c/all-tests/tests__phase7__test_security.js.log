@@ -1,0 +1,185 @@
+
+== §64 — UNTRUSTED VISUAL INPUT IS REFUSED, NEVER SANITISED AWAY ==
+  ✓ the unsafe pattern list is declared in the canonical specification
+  ✓ the list covers script, markup, executable schemes and entities
+  ✓ an ordinary string is not falsely flagged
+  ✓ markup payload #0 is recognised as unsafe
+  ✓ markup payload #1 is recognised as unsafe
+  ✓ markup payload #2 is recognised as unsafe
+  ✓ markup payload #3 is recognised as unsafe
+  ✓ markup payload #4 is recognised as unsafe
+  ✓ markup payload #5 is recognised as unsafe
+  ✓ markup payload #6 is recognised as unsafe
+  ✓ markup payload #7 is recognised as unsafe
+  ✓ an allow-list pattern for identifiers is declared
+  ✓ an allow-list of reference schemes is declared
+  ✓ payload #0 is not a plausible identifier
+  ✓ payload #0 is not an allowed reference source
+  ✓ payload #1 is not a plausible identifier
+  ✓ payload #1 is not an allowed reference source
+  ✓ payload #2 is not a plausible identifier
+  ✓ payload #2 is not an allowed reference source
+  ✓ payload #3 is not a plausible identifier
+  ✓ payload #3 is not an allowed reference source
+  ✓ payload #4 is not a plausible identifier
+  ✓ payload #4 is not an allowed reference source
+  ✓ payload #5 is not a plausible identifier
+  ✓ payload #5 is not an allowed reference source
+  ✓ payload #6 is not a plausible identifier
+  ✓ payload #6 is not an allowed reference source
+  ✓ payload #7 is not a plausible identifier
+  ✓ payload #7 is not an allowed reference source
+  ✓ payload #8 is not a plausible identifier
+  ✓ payload #8 is not an allowed reference source
+  ✓ payload #9 is not a plausible identifier
+  ✓ payload #9 is not an allowed reference source
+  ✓ a real identifier is accepted
+  ✓ a real https source is accepted
+  ✓ a base64 png data source is accepted
+  ✓ an svg data source is refused even though it is a data image
+  ✓ an unknown scheme is refused by default, not by pattern guessing
+  ✓ an allow-list guard for visual intent is declared
+  ✓ payload #0 is not a plausible style description
+  ✓ payload #1 is not a plausible style description
+  ✓ payload #2 is not a plausible style description
+  ✓ payload #3 is not a plausible style description
+  ✓ payload #4 is not a plausible style description
+  ✓ payload #5 is not a plausible style description
+  ✓ payload #6 is not a plausible style description
+  ✓ payload #7 is not a plausible style description
+  ✓ payload #8 is not a plausible style description
+  ✓ payload #9 is not a plausible style description
+  ✓ a real style description is accepted
+  ✓ an over-long style description is refused
+
+== §64 — A HOSTILE REFERENCE NEVER REACHES THE PROMPT ==
+  ✓ a hostile reference #0 is dropped from the prompt
+  ✓ a hostile visual intent #0 is dropped from the prompt
+  ✓ the prompt for #0 still declares the preservation contract
+  ✓ a hostile reference #1 is dropped from the prompt
+  ✓ a hostile visual intent #1 is dropped from the prompt
+  ✓ the prompt for #1 still declares the preservation contract
+  ✓ a hostile reference #2 is dropped from the prompt
+  ✓ a hostile visual intent #2 is dropped from the prompt
+  ✓ the prompt for #2 still declares the preservation contract
+  ✓ a hostile reference #3 is dropped from the prompt
+  ✓ a hostile visual intent #3 is dropped from the prompt
+  ✓ the prompt for #3 still declares the preservation contract
+  ✓ a hostile reference #4 is dropped from the prompt
+  ✓ a hostile visual intent #4 is dropped from the prompt
+  ✓ the prompt for #4 still declares the preservation contract
+  ✓ a hostile reference #5 is dropped from the prompt
+  ✓ a hostile visual intent #5 is dropped from the prompt
+  ✓ the prompt for #5 still declares the preservation contract
+  ✓ a hostile reference #6 is dropped from the prompt
+  ✓ a hostile visual intent #6 is dropped from the prompt
+  ✓ the prompt for #6 still declares the preservation contract
+  ✓ a hostile reference #7 is dropped from the prompt
+  ✓ a hostile visual intent #7 is dropped from the prompt
+  ✓ the prompt for #7 still declares the preservation contract
+  ✓ a hostile reference #8 is dropped from the prompt
+  ✓ a hostile visual intent #8 is dropped from the prompt
+  ✓ the prompt for #8 still declares the preservation contract
+  ✓ a hostile reference #9 is dropped from the prompt
+  ✓ a hostile visual intent #9 is dropped from the prompt
+  ✓ the prompt for #9 still declares the preservation contract
+  ✓ a legitimate reference does reach the prompt
+
+== §64 — A HOSTILE REFERENCE IDENTIFIER NEVER ENTERS A REQUEST ==
+  ✓ a request carrying hostile reference id #0 is refused
+  ✓ the refused request produced no request object #0
+  ✓ a request carrying hostile reference id #1 is refused
+  ✓ the refused request produced no request object #1
+  ✓ a request carrying hostile reference id #2 is refused
+  ✓ the refused request produced no request object #2
+  ✓ a request carrying hostile reference id #3 is refused
+  ✓ the refused request produced no request object #3
+  ✓ a request carrying hostile reference id #4 is refused
+  ✓ the refused request produced no request object #4
+  ✓ a request carrying hostile reference id #5 is refused
+  ✓ the refused request produced no request object #5
+  ✓ a request carrying hostile reference id #6 is refused
+  ✓ the refused request produced no request object #6
+  ✓ a request carrying hostile reference id #7 is refused
+  ✓ the refused request produced no request object #7
+  ✓ a request carrying hostile reference id #8 is refused
+  ✓ the refused request produced no request object #8
+  ✓ a request carrying hostile reference id #9 is refused
+  ✓ the refused request produced no request object #9
+
+== §64 — GENERATED VECTOR OUTPUT ESCAPES EVERY UNTRUSTED VALUE ==
+  ✓ a hostile space name #0 opens no element in the SVG
+  ✓ a hostile value #0 arrives entity-escaped
+  ✓ a hostile space name #1 opens no element in the SVG
+  ✓ a hostile value #1 arrives entity-escaped
+  ✓ a hostile space name #2 opens no element in the SVG
+  ✓ a hostile value #2 arrives entity-escaped
+  ✓ a hostile space name #3 opens no element in the SVG
+  ✓ a hostile value #3 arrives entity-escaped
+  ✓ a hostile space name #4 opens no element in the SVG
+  ✓ a hostile value #4 carries no quote that could close an attribute
+  ✓ a hostile space name #5 opens no element in the SVG
+  ✓ a hostile value #5 carries no quote that could close an attribute
+  ✓ a hostile space name #6 opens no element in the SVG
+  ✓ a hostile value #6 carries no quote that could close an attribute
+  ✓ a hostile space name #7 opens no element in the SVG
+  ✓ a hostile value #7 arrives entity-escaped
+  ✓ a hostile space name #8 opens no element in the SVG
+  ✓ a hostile value #8 carries no quote that could close an attribute
+  ✓ a hostile space name #9 opens no element in the SVG
+  ✓ a hostile value #9 carries no quote that could close an attribute
+  ✓ a hostile elevation face label cannot open a tag
+  ✓ a hostile section axis label cannot open a tag
+
+== §64 — SIZE AND TYPE LIMITS ARE DECLARED AND FINITE ==
+  ✓ an allowed image type list is declared
+  ✓ no executable or markup type is allowed
+  ✓ a maximum reference size is declared and finite
+  ✓ a maximum reference pixel count is declared, bounding decompression
+  ✓ a maximum render pixel count is declared and finite
+  ✓ a maximum control buffer size is declared and finite
+  ✓ a buffer request beyond the limit is refused
+  ✓ a zero-sized buffer request is refused, not silently defaulted
+  ✓ a render resolution beyond the limit is refused
+  ✓ a negative resolution is refused
+  ✓ a non-numeric resolution is refused
+
+== §65 — EVERY BUNDLED ASSET DECLARES SOURCE AND LICENCE ==
+  ✓ every material declares a source
+  ✓ every material declares a licence from the allowed set
+  ✓ no material ships with an unknown licence
+  ✓ every bundled material is procedural, so nothing copyrighted is shipped
+  ✓ no material references a remote host
+  ✓ the texture sources are all local or procedural
+  ✓ the specification states no render depends on an uncontrolled host
+
+== §89 — NO SECRET IS EVER EXPOSED ==
+  ✓ the adapter states the secret lives in the server environment
+  ✓ the adapter states the secret is never in the client
+  ✓ the adapter states the secret is never in render metadata
+  ✓ the adapter states the secret is never in a log
+  ✓ no adapter field carries a secret value
+  ✓ no request or descriptor contains an API key pattern
+  ✓ no metadata field name suggests a credential
+  ✓ a provider response leaking a key does not carry it into the output
+
+== §64 — THE GENERATED ENGINE CARRIES NO DYNAMIC EXECUTION ==
+  ✓ the generated render block appears exactly once in the whole application
+  ✓ it lives in public/app/generated/render-engine.js, and public/app/main.js imports it
+  ✓ the canonical spec is injected as one data assignment, not code
+  ✓ removing the spec assignment leaves the real implementation behind
+  ✓ the render block contains no eval
+  ✓ the render block constructs no function from a string
+  ✓ the render block never assigns a javascript url
+  ✓ the render block never writes into the document stream
+  ✓ the render block never fetches from the network
+  ✓ the dynamic-execution scan is not vacuous
+  ✓ an escaping helper covers every dangerous character
+  ✓ the python render layer contains no dynamic execution
+  ✓ the python render layer opens no network connection
+
+  · DOM checks require a page: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+  ✓ the DOM section declares its requirement instead of faking a pass
+
+──────────────────────────────────────────────
+RENDER SECURITY: 164 passed, 0 failed

@@ -1,0 +1,180 @@
+
+== §1 — NO CODE / NO STRUCTURE / NO MEP CONTENT ==
+  ✓ the architecture spec names no code standard
+  ✓ regulatory rule count is still zero
+  ✓ real occupancy classification count is still zero
+  ✓ browser spec is byte-identical to acs_arch.json
+  ✓ twelve element types declared
+  ✓ nineteen geometry issue codes declared
+  ✓ no compiled element claims a structural / fire / compliance property
+  ✓ the only mention of a forbidden property is an explicit denial
+  ✓ every slab declares itself non-structural
+  ✓ every void declares that no framing is implied
+
+== §2 — SHARED WALLS ARE DEFINED ONCE ==
+  ✓ the boundary between two spaces yields exactly one wall
+  ✓ that wall names both spaces and nothing else
+  ✓ the shared wall is interior and confirmed, not inferred
+  ✓ total walls = 6 perimeter + 1 shared, not 8 duplicated
+  ✓ sharedWallBetween finds it from either direction
+  ✓ an unrelated pair has no shared wall
+  ✓ a partially shared boundary breaks into segments at every breakpoint
+  ✓ the unshared remainder of that boundary stays separate
+  ✓ no two walls occupy the same geometry on the same level
+
+== §3 — DETERMINISM AND IDENTITY ==
+  ✓ reversing room order changes no wall id and no wall geometry
+  ✓ compiling twice gives byte-identical output
+  ✓ the compiler never mutates the model it reads
+  ✓ every element id is unique inside a building
+  ✓ a second building namespaces every id
+  ✓ space instance ids carry the building and the level
+  ✓ one floor template used twice yields two physical space instances
+  ✓ those instances keep the semantic space id for the other layers
+
+== §4 — EXTERIOR IS INFERRED, NEVER ASSUMED ==
+  ✓ villa has real exterior walls
+  ✓ every exterior wall states the basis of that claim
+  ✓ exposure never takes a value outside the declared vocabulary
+  ✓ a wall facing an internal courtyard is NOT claimed exterior
+  ✓ the courtyard walls say why they are unresolved
+  ✓ no courtyard wall was silently called interior either
+  ✗ a wall opposite an unsupported outline stays unresolved 
+  ✓ a room-level exterior flag does NOT override a wall between two spaces
+  ✓ the flag does apply to that room’s single-space walls
+
+== §5 — OPENINGS ARE HOSTED, NOT FLOATING ==
+  ✓ a door resolves to a host wall
+  ✓ a window resolves to a host wall
+  ✓ the host wall lists the opening back
+  ✓ the door sits on the shared wall between the two spaces
+  ✓ door and window are distinct element types
+  ✓ an opening wider than its host is reported
+  ✓ a door taller than its wall is reported
+  ✓ a window below the floor is reported
+  ✓ a window above the wall height is reported
+  ✓ none of these are silently corrected
+  ✓ an opening hanging off the end of its host is OUTSIDE, not WIDER
+  ✓ its host note describes the real situation
+
+== §6 — A RENDER FALLBACK IS NEVER AN ENGINEERING VALUE ==
+  ✓ an unstated door width stays null
+  ✓ the drawing fallback is exposed separately
+  ✓ and its provenance is unknown, not imported
+  ✓ an unstated clear width is never derived from the nominal width
+  ✓ an unspecified swing is reported as unspecified, not assumed
+  ✓ an unstated wall thickness stays null with a separate fallback
+  ✓ an unstated wall height stays null too
+  ✓ every provenance value is inside the declared vocabulary
+  ✓ a stated width IS a semantic value with imported provenance
+  ✓ a stated wall thickness is carried, not defaulted
+
+== §7 — SLABS, VOIDS AND VERTICAL CORES ==
+  ✓ one slab per level
+  ✓ a slab never claims to be structural
+  ✓ two vertical cores are found
+  ✓ a stair crossing three levels cuts the slabs it passes through
+  ✓ no void is cut at the lowest level the core serves
+  ✓ a core whose position is not stated says so
+  ✓ a multi-level core always has a void
+  ✓ void geometry is a real rect derived from the core footprint
+  ✓ the villa stair cuts the first floor slab
+  ✓ the rendered slab strips cover the plate minus exactly the void area
+  ✓ no strip overlaps a void
+  ✓ a level with no void still renders exactly one slab strip
+  ✓ the hotel core serves the levels the model actually shows
+  ✓ every void points back at a real core
+
+== §8 — LEVELS AND ROOFS ==
+  ✓ levels are ordered and elevations derived from floor_height
+  ✓ a derived elevation is marked system_default, not imported
+  ✓ a roof level produces a ROOF and is never an occupied floor
+  ✓ an auto-added roof says its source is a system default
+  ✓ no ceilings are emitted for the roof level
+  ✓ inconsistent level elevations are reported, not reordered
+  ✓ a stated elevation would be marked imported
+  ✓ ceiling elevation = level elevation + wall height when both are known
+
+== §9 — SPACES, SHAPES AND OVERLAPS ==
+  ✗ a non-rectangular outline is NOT approximated as a rectangle 
+  ✗ it is reported as an approximation with a reason 
+  ✗ no walls are fabricated for the unsupported shape 
+  ✓ two genuinely overlapping spaces are reported as an overlap
+  ✓ a space fully inside another is reported as containment, not overlap
+  ✓ the reported overlap area is a real number
+  ✓ the warehouse envelope-inside-zones layout reads as containment, not error
+  ✓ an empty level compiles to nothing rather than to a fabricated box
+
+== §10 — ENVELOPE ==
+  ✓ the envelope lists exactly the exterior walls
+  ✓ the envelope lists unresolved walls separately, never as exterior
+  ✓ external openings are only those hosted on exterior walls
+  ✓ the envelope performs no analysis and says so
+  ✓ ground interface comes from the lowest slab
+
+== §11 — TRANSFORMS ==
+  ✓ segments keep local coordinates and declare it
+  ✓ the origin maps to the stated position
+  ✓ rotation is applied about the building origin
+  ✓ a transform never changes the compiled geometry itself
+  ✓ rotating by 90° preserves segment lengths
+
+== §12 — JOIN WITH THE EXISTING LAYERS ==
+  ✓ a door on a wall shared by exactly two spaces upgrades the edge to confirmed
+  ✓ every upgraded edge names the wall that proves it
+  ✓ the proving wall really is shared by exactly the two linked spaces
+  ✓ unresolved door edges were not upgraded
+  ✓ no relationship edge was added or removed by the architectural layer
+  ✓ an opening with no proof yields no evidence object
+  ✓ compiled opening anchors equal the rectangle-derived anchors on every model
+  ✓ an unstated offset still refuses to produce an anchor, compiler or not
+  ✓ measuring with and without the compiler gives identical results
+  ✓ compiling architecture does not change the model revision hash
+  ✓ a real geometry change does change the hash
+  ✓ and the compiled geometry changes with it
+
+== §13 — GENERIC ACROSS BUILDING TYPES ==
+  ✓ villa: compiles with the same element vocabulary
+  ✓ villa: every wall belongs to at least one space and one level
+  ✓ villa: every opening resolves or explains itself
+  ✓ villa: validation issues are all inside the declared code list
+  ✓ villa: no element carries a compliance verdict
+  ✓ hotel: compiles with the same element vocabulary
+  ✓ hotel: every wall belongs to at least one space and one level
+  ✓ hotel: every opening resolves or explains itself
+  ✓ hotel: validation issues are all inside the declared code list
+  ✓ hotel: no element carries a compliance verdict
+  ✓ clinic: compiles with the same element vocabulary
+  ✓ clinic: every wall belongs to at least one space and one level
+  ✓ clinic: every opening resolves or explains itself
+  ✓ clinic: validation issues are all inside the declared code list
+  ✓ clinic: no element carries a compliance verdict
+  ✓ office: compiles with the same element vocabulary
+  ✓ office: every wall belongs to at least one space and one level
+  ✓ office: every opening resolves or explains itself
+  ✓ office: validation issues are all inside the declared code list
+  ✓ office: no element carries a compliance verdict
+  ✓ warehouse: compiles with the same element vocabulary
+  ✓ warehouse: every wall belongs to at least one space and one level
+  ✓ warehouse: every opening resolves or explains itself
+  ✓ warehouse: validation issues are all inside the declared code list
+  ✓ warehouse: no element carries a compliance verdict
+   [["villa",38,11,2],["hotel",37,8,3],["clinic",15,4,1],["office",23,5,2],["warehouse",15,2,1]]
+  ✓ non-ASCII space names survive intact
+  ✓ astral-plane names are handled without corruption
+  ✓ wall space lists are sorted by code point, matching Python
+
+== §14 — BACKWARD COMPATIBILITY ==
+  ✓ a Phase 1 model with no architectural metadata compiles
+  ✓ and nothing was invented for it
+  ✓ the compiler tolerates a model with no levels at all
+  ✓ the compiler tolerates rooms with no rect
+  ✓ Phase 1 relationship count is unchanged by the new layer
+  ✓ Phase 1 egress still resolves
+
+== §15 — SECURITY OF THE NEW LAYER ==
+  ✓ no eval / Function in the architecture layer
+  ✓ no network call in the architecture layer
+  ✓ a hostile space name cannot escape into markup
+
+ARCHITECTURE: 143 passed, 4 failed

@@ -1,0 +1,19 @@
+test_actual_overlap_area (__main__.PolygonArchitecture.test_actual_overlap_area) ... ok
+test_concave_boundary_walls_area_and_slab (__main__.PolygonArchitecture.test_concave_boundary_walls_area_and_slab) ... ok
+test_diagonal_shared_wall_door_and_no_false_overlap (__main__.PolygonArchitecture.test_diagonal_shared_wall_door_and_no_false_overlap) ... ok
+test_partial_shared_wall_mixed_rectangle_and_polygon (__main__.PolygonArchitecture.test_partial_shared_wall_mixed_rectangle_and_polygon) ... ok
+test_polygon_does_not_promote_uncertain_courtyard_exposure (__main__.PolygonArchitecture.test_polygon_does_not_promote_uncertain_courtyard_exposure) ... FAIL
+test_void_updates_canonical_slab_area (__main__.PolygonArchitecture.test_void_updates_canonical_slab_area) ... ok
+
+======================================================================
+FAIL: test_polygon_does_not_promote_uncertain_courtyard_exposure (__main__.PolygonArchitecture.test_polygon_does_not_promote_uncertain_courtyard_exposure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/3196fa9f65d9/AI-Instruction/tests/remediation/test_polygon_architecture.py", line 79, in test_polygon_does_not_promote_uncertain_courtyard_exposure
+    self.assertEqual(len(uncertain),4)
+AssertionError: 0 != 4
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.009s
+
+FAILED (failures=1)

@@ -18,7 +18,7 @@ COPY acs_occupancy.py acs_occupancy.json ./
 # تثبيت النتائج على مراجعة النموذج (تقنين + SHA-256)
 COPY acs_revision.py acs_revision.json ./
 # مصرِّف الهندسة المعمارية وغلاف المبنى (هندسة فقط — لا إنشاء ولا كود)
-COPY acs_arch.py acs_arch.json ./
+COPY acs_arch.py acs_arch.json acs_polygon.py ./
 # النموذج الإنشائي (تمثيل فقط — لا تصميم ولا أحمال ولا مطابقة كود)
 COPY acs_struct.py acs_struct.json ./
 # أنظمة الكهروميكانيك (تمثيل فقط — لا تصميم ولا حسابات ولا مطابقة كود)

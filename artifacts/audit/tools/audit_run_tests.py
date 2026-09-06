@@ -54,9 +54,12 @@ for p in tests:
         'browserType.launch: Executable', 'CHROMIUM ENVIRONMENT UNAVAILABLE'))
     # Final summary counts are evidence; do not sum individual check output again.
     summaries = [l for l in txt.splitlines() if re.search(r'\d+\s*(?:passed|PASS|checks|assertions|failed|FAIL)', l, re.I)]
+    reported_failure = any(int(n) > 0 for line in summaries
+                           for n in re.findall(r'\b(\d+)\s+failed\b', line, re.I))
     rec = dict(path=rel, command=cmd, exit_code=rc,
                seconds=round(time.monotonic()-started,3),
-               status=('NOT_VERIFIED' if infrastructure or rc==2 else 'PASS' if rc==0 else 'FAIL'),
+               reported_failure=reported_failure,
+               status=('NOT_VERIFIED' if infrastructure or rc==2 else 'PASS' if rc==0 and not reported_failure else 'FAIL'),
                log=str(log), summary=summaries[-4:])
     results.append(rec)
     (out/'results.json').write_text(json.dumps(results, ensure_ascii=False, indent=2)+'\n')

@@ -1,0 +1,30 @@
+
+== THE 3D SCENE THE APPLICATION BUILDS IS UNCHANGED ==
+  ✓ the geometry dump produced a result
+  ✓ the vendored baseline lives in the repository, not in a temporary directory
+  ✓ the baseline is not empty and covers several models
+  ✓ the baseline carries real geometry, so the comparison is not vacuous
+  ✓ the same models are built now as when the baseline was taken
+  ✓ the mesh count of every model is unchanged
+  ✓ clash_mep: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ clinic: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ hotel: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ hotel_mep: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ office: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ villa: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ villa_mep: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ warehouse: every mesh keeps its name, visibility, position, size and rotation exactly
+  ✓ every model in the baseline was actually compared
+  ✓ no mesh acquired a non-finite coordinate
+  ✓ the dump script refuses to overwrite a JavaScript source file
+
+== THE ENGINEERING MODEL HASHES ARE UNCHANGED ==
+  ✓ the model hashes were actually computed
+  ✓ clinic: the engineering model hash equals the Phase 4 pre-implementation baseline
+  ✓ hotel: the engineering model hash equals the Phase 4 pre-implementation baseline
+  ✓ office: the engineering model hash equals the Phase 4 pre-implementation baseline
+  ✓ villa: the engineering model hash equals the Phase 4 pre-implementation baseline
+  ✓ warehouse: the engineering model hash equals the Phase 4 pre-implementation baseline
+
+──────────────────────────────────────────────
+MODEL REGRESSION: 23 passed, 0 failed

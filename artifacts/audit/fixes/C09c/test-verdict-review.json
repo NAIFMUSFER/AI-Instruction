@@ -1,0 +1,78 @@
+[
+  {
+    "result_file": "artifacts/audit/baseline/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/evidence/extra-probes/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/evidence/js-probes/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/evidence/model-probes/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C01/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C02a/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C02b/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C02b/all-tests-confirmed/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C02b/all-tests-final/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C03/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C04/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C05/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C06/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C07/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C08/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C09a/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C09b/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C11/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  },
+  {
+    "result_file": "artifacts/audit/fixes/C12/all-tests/results.json",
+    "pass_with_nonzero_failed": []
+  }
+]

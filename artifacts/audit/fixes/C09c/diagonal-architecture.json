@@ -1,0 +1,659 @@
+{
+  "schema": "acs.arch/1",
+  "compiler_version": "acs-arch-compiler/1.0.0",
+  "building_id": "bld_0",
+  "transform": {
+    "position": {
+      "x": 0.0,
+      "z": 0.0
+    },
+    "rotation_deg": 0.0,
+    "applied": "local coordinates; world transform is applied on read"
+  },
+  "levels": [
+    {
+      "id": "bld_0.flr_0",
+      "index": 0,
+      "template": "plan",
+      "name": null,
+      "kind": "occupied",
+      "elevation_m": 7.0,
+      "elevation_source": "imported",
+      "auto_added": false
+    }
+  ],
+  "walls": [
+    {
+      "id": "bld_0.flr_0.wall_0",
+      "type": "WALL",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "axis": "oblique",
+      "fixed": 4.242640687119286,
+      "u0": -4.242641,
+      "u1": 4.242641,
+      "length_m": 8.485282,
+      "start": {
+        "x": 0.0,
+        "z": 6.0
+      },
+      "end": {
+        "x": 6.0,
+        "z": 0.0
+      },
+      "height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "thickness_m": {
+        "value": 0.15,
+        "render_fallback": 0.15,
+        "source": "system_default"
+      },
+      "spaces": [
+        "bld_0.plan.other",
+        "bld_0.plan.polygon"
+      ],
+      "shared": true,
+      "exposure": "interior",
+      "exposure_status": "confirmed",
+      "exposure_basis": "bounded_by_two_spaces",
+      "openings": [
+        "bld_0.plan.polygon.door_0@0"
+      ],
+      "direction": [
+        0.7071067811865476,
+        -0.7071067811865476
+      ],
+      "normal": [
+        0.7071067811865476,
+        0.7071067811865476
+      ]
+    },
+    {
+      "id": "bld_0.flr_0.wall_1",
+      "type": "WALL",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "axis": "x",
+      "fixed": 0.0,
+      "u0": 0.0,
+      "u1": 6.0,
+      "length_m": 6.0,
+      "start": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "end": {
+        "x": 6.0,
+        "z": 0.0
+      },
+      "height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "thickness_m": {
+        "value": 0.15,
+        "render_fallback": 0.15,
+        "source": "system_default"
+      },
+      "spaces": [
+        "bld_0.plan.polygon"
+      ],
+      "shared": false,
+      "exposure": "exterior",
+      "exposure_status": "inferred",
+      "exposure_basis": "opposite_side_outside_declared_polygon_union",
+      "openings": [],
+      "direction": [
+        1.0,
+        0.0
+      ],
+      "normal": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "id": "bld_0.flr_0.wall_2",
+      "type": "WALL",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "axis": "x",
+      "fixed": 6.0,
+      "u0": 0.0,
+      "u1": 6.0,
+      "length_m": 6.0,
+      "start": {
+        "x": 0.0,
+        "z": 6.0
+      },
+      "end": {
+        "x": 6.0,
+        "z": 6.0
+      },
+      "height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "thickness_m": {
+        "value": 0.15,
+        "render_fallback": 0.15,
+        "source": "system_default"
+      },
+      "spaces": [
+        "bld_0.plan.other"
+      ],
+      "shared": false,
+      "exposure": "exterior",
+      "exposure_status": "inferred",
+      "exposure_basis": "opposite_side_outside_declared_polygon_union",
+      "openings": [],
+      "direction": [
+        1.0,
+        0.0
+      ],
+      "normal": [
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "id": "bld_0.flr_0.wall_3",
+      "type": "WALL",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "axis": "z",
+      "fixed": 0.0,
+      "u0": 0.0,
+      "u1": 6.0,
+      "length_m": 6.0,
+      "start": {
+        "x": 0.0,
+        "z": 0.0
+      },
+      "end": {
+        "x": 0.0,
+        "z": 6.0
+      },
+      "height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "thickness_m": {
+        "value": 0.15,
+        "render_fallback": 0.15,
+        "source": "system_default"
+      },
+      "spaces": [
+        "bld_0.plan.polygon"
+      ],
+      "shared": false,
+      "exposure": "exterior",
+      "exposure_status": "inferred",
+      "exposure_basis": "opposite_side_outside_declared_polygon_union",
+      "openings": [],
+      "direction": [
+        0.0,
+        1.0
+      ],
+      "normal": [
+        1.0,
+        0.0
+      ]
+    },
+    {
+      "id": "bld_0.flr_0.wall_4",
+      "type": "WALL",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "axis": "z",
+      "fixed": 6.0,
+      "u0": 0.0,
+      "u1": 6.0,
+      "length_m": 6.0,
+      "start": {
+        "x": 6.0,
+        "z": 0.0
+      },
+      "end": {
+        "x": 6.0,
+        "z": 6.0
+      },
+      "height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "thickness_m": {
+        "value": 0.15,
+        "render_fallback": 0.15,
+        "source": "system_default"
+      },
+      "spaces": [
+        "bld_0.plan.other"
+      ],
+      "shared": false,
+      "exposure": "exterior",
+      "exposure_status": "inferred",
+      "exposure_basis": "opposite_side_outside_declared_polygon_union",
+      "openings": [],
+      "direction": [
+        0.0,
+        1.0
+      ],
+      "normal": [
+        1.0,
+        0.0
+      ]
+    }
+  ],
+  "openings": [
+    {
+      "id": "bld_0.plan.polygon.door_0@0",
+      "type": "DOOR",
+      "space_id": "bld_0.plan.polygon",
+      "axis": "oblique",
+      "fixed": 4.242640687119286,
+      "u_center": 8.881784197001252e-16,
+      "edge": null,
+      "offset_stated": true,
+      "width_m": {
+        "value": 1.0,
+        "render_fallback": 0.9,
+        "source": "imported"
+      },
+      "height_m": {
+        "value": 2.1,
+        "render_fallback": 2.1,
+        "source": "imported"
+      },
+      "host_wall_id": "bld_0.flr_0.wall_0",
+      "host_status": "resolved",
+      "host_note": null,
+      "clear_width_m": {
+        "value": null,
+        "render_fallback": null,
+        "source": "unknown"
+      },
+      "hinge_side": null,
+      "swing_direction": null,
+      "swing_angle_deg": null,
+      "swing_status": "not_specified",
+      "exit_flag": false,
+      "destination": null,
+      "source": "unknown",
+      "edge_index": 1,
+      "boundary_basis": "polygon_edges",
+      "position_resolved": true,
+      "direction": [
+        0.7071067811865476,
+        -0.7071067811865476
+      ],
+      "normal": [
+        0.7071067811865476,
+        0.7071067811865476
+      ],
+      "center": [
+        3.0,
+        3.0
+      ],
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "opening_ref": "bld_0.plan.polygon.door_0"
+    }
+  ],
+  "slabs": [
+    {
+      "id": "bld_0.flr_0.slab",
+      "type": "FLOOR_SLAB",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "outline": [
+        0.0,
+        0.0,
+        6.0,
+        6.0
+      ],
+      "outline_basis": "polygon_union",
+      "elevation_m": 7.0,
+      "elevation_source": "imported",
+      "thickness_m": {
+        "value": null,
+        "render_fallback": 0.15,
+        "source": "unknown"
+      },
+      "structural": false,
+      "note": "architectural slab only — not a structural design",
+      "polygons": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            6.0,
+            0.0
+          ],
+          [
+            0.0,
+            6.0
+          ]
+        ],
+        [
+          [
+            6.0,
+            0.0
+          ],
+          [
+            6.0,
+            6.0
+          ],
+          [
+            0.0,
+            6.0
+          ]
+        ]
+      ],
+      "cells": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            6.0,
+            0.0
+          ],
+          [
+            6.0,
+            6.0
+          ],
+          [
+            0.0,
+            6.0
+          ]
+        ]
+      ],
+      "area_m2": 36.0
+    }
+  ],
+  "voids": [],
+  "ceilings": [
+    {
+      "id": "bld_0.flr_0.ceiling_polygon",
+      "type": "CEILING",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "space_id": "bld_0.plan.polygon",
+      "outline": [
+        0.0,
+        0.0,
+        6.0,
+        6.0
+      ],
+      "elevation_m": 10.0,
+      "thickness_m": {
+        "value": null,
+        "render_fallback": 0.05,
+        "source": "unknown"
+      },
+      "polygons": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            6.0,
+            0.0
+          ],
+          [
+            0.0,
+            6.0
+          ]
+        ]
+      ],
+      "cells": [
+        [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            6.0,
+            0.0
+          ],
+          [
+            0.0,
+            6.0
+          ]
+        ]
+      ],
+      "outline_basis": "polygon_union"
+    },
+    {
+      "id": "bld_0.flr_0.ceiling_other",
+      "type": "CEILING",
+      "building_id": "bld_0",
+      "level_id": "bld_0.flr_0",
+      "space_id": "bld_0.plan.other",
+      "outline": [
+        0.0,
+        0.0,
+        6.0,
+        6.0
+      ],
+      "elevation_m": 10.0,
+      "thickness_m": {
+        "value": null,
+        "render_fallback": 0.05,
+        "source": "unknown"
+      },
+      "polygons": [
+        [
+          [
+            6.0,
+            0.0
+          ],
+          [
+            6.0,
+            6.0
+          ],
+          [
+            0.0,
+            6.0
+          ]
+        ]
+      ],
+      "cells": [
+        [
+          [
+            0.0,
+            6.0
+          ],
+          [
+            6.0,
+            0.0
+          ],
+          [
+            6.0,
+            6.0
+          ]
+        ]
+      ],
+      "outline_basis": "polygon_union"
+    }
+  ],
+  "roofs": [],
+  "cores": [],
+  "spaces": [
+    {
+      "id": "bld_0.plan.polygon@0",
+      "space_id": "bld_0.plan.polygon",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "name": "polygon",
+      "rect": [
+        0.0,
+        0.0,
+        6.0,
+        6.0
+      ],
+      "boundary_basis": "polygon_edges",
+      "area_m2": 18.0,
+      "wall_height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "polygon": [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          6.0,
+          0.0
+        ],
+        [
+          0.0,
+          6.0
+        ]
+      ]
+    },
+    {
+      "id": "bld_0.plan.other@0",
+      "space_id": "bld_0.plan.other",
+      "level_id": "bld_0.flr_0",
+      "level_index": 0,
+      "name": "other",
+      "rect": [
+        0.0,
+        0.0,
+        6.0,
+        6.0
+      ],
+      "boundary_basis": "polygon_edges",
+      "area_m2": 18.0,
+      "wall_height_m": {
+        "value": 3.0,
+        "render_fallback": 3.0,
+        "source": "imported"
+      },
+      "polygon": [
+        [
+          6.0,
+          0.0
+        ],
+        [
+          6.0,
+          6.0
+        ],
+        [
+          0.0,
+          6.0
+        ]
+      ]
+    }
+  ],
+  "envelope": {
+    "id": "bld_0.envelope",
+    "type": "ENVELOPE",
+    "building_id": "bld_0",
+    "exterior_walls": [
+      "bld_0.flr_0.wall_1",
+      "bld_0.flr_0.wall_2",
+      "bld_0.flr_0.wall_3",
+      "bld_0.flr_0.wall_4"
+    ],
+    "unresolved_walls": [],
+    "external_openings": [],
+    "roof_boundary": [
+      0.0,
+      0.0,
+      6.0,
+      6.0
+    ],
+    "ground_interface": [
+      0.0,
+      0.0,
+      6.0,
+      6.0
+    ],
+    "note": "derived envelope for later facade/exposure work — no analysis is performed here",
+    "ground_polygons": [
+      [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          6.0,
+          0.0
+        ],
+        [
+          0.0,
+          6.0
+        ]
+      ],
+      [
+        [
+          6.0,
+          0.0
+        ],
+        [
+          6.0,
+          6.0
+        ],
+        [
+          0.0,
+          6.0
+        ]
+      ]
+    ],
+    "roof_polygons": [
+      [
+        [
+          0.0,
+          0.0
+        ],
+        [
+          6.0,
+          0.0
+        ],
+        [
+          0.0,
+          6.0
+        ]
+      ],
+      [
+        [
+          6.0,
+          0.0
+        ],
+        [
+          6.0,
+          6.0
+        ],
+        [
+          0.0,
+          6.0
+        ]
+      ]
+    ]
+  },
+  "approximations": [],
+  "issues": []
+}

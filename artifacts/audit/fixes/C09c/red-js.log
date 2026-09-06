@@ -1,0 +1,2512 @@
+POLYGON ARCHITECTURE: 0 passed, 3 failed
+FAIL polygon architecture 0
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
++   approximations: [
++     {
++       detail: 'a non-rectangular outline is present; it was NOT approximated as a rectangle',
++       reason: 'SPACE_SHAPE_UNSUPPORTED',
++       space_id: 'bld_0.plan.polygon'
++     },
++     {
++       detail: 'spaces do not tile the level footprint; the slab outline is their bounding box and is reported as an approximation',
++       level_id: 'bld_0.flr_0',
++       reason: 'SLAB_OUTLINE_IS_BOUNDING_BOX'
++     }
++   ],
+-   approximations: [],
+    building_id: 'bld_0',
+    ceilings: [
+      {
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ]
+-         ]
+-       ],
+        elevation_m: 10,
+        id: 'bld_0.flr_0.ceiling_polygon',
+        level_id: 'bld_0.flr_0',
+        outline: [
+          0,
+...
+        ],
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        space_id: 'bld_0.plan.polygon',
+        thickness_m: {
+          render_fallback: 0.05,
+          source: 'unknown',
+          value: null
+...
+      building_id: 'bld_0',
++     exterior_walls: [],
+-     exterior_walls: [
+-       'bld_0.flr_0.wall_0',
+-       'bld_0.flr_0.wall_1',
+-       'bld_0.flr_0.wall_2',
+-       'bld_0.flr_0.wall_3',
+-       'bld_0.flr_0.wall_4',
+-       'bld_0.flr_0.wall_5'
+-     ],
+      external_openings: [],
+      ground_interface: [
+        0,
+        0,
+        6,
+        6
+      ],
+-     ground_polygons: [
+-       [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ]
+-     ],
+      id: 'bld_0.envelope',
+      note: 'derived envelope for later facade/exposure work — no analysis is performed here',
+      roof_boundary: [
+        0,
+        0,
+...
+      ],
+-     roof_polygons: [
+-       [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ]
+-     ],
+      type: 'ENVELOPE',
+      unresolved_walls: []
+    },
++   issues: [
++     {
++       code: 'SPACE_SHAPE_UNSUPPORTED',
++       subject: 'bld_0.plan.polygon'
++     }
++   ],
+-   issues: [],
+    levels: [
+      {
+        auto_added: false,
+        elevation_m: 7,
+        elevation_source: 'imported',
+...
+      {
+-       area_m2: 20,
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ]
+-         ]
+-       ],
+        elevation_m: 7,
+        elevation_source: 'imported',
+        id: 'bld_0.flr_0.slab',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+...
+        ],
++       outline_basis: 'bounding_box_of_spaces',
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        structural: false,
+        thickness_m: {
+          render_fallback: 0.15,
+          source: 'unknown',
+          value: null
+...
+      {
++       area_m2: 36,
++       boundary_basis: 'unsupported_shape',
+-       area_m2: 20,
+-       boundary_basis: 'polygon_edges',
+        id: 'bld_0.plan.polygon@0',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+        name: 'polygon',
+-       polygon: [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+        rect: [
+          0,
+          0,
+          6,
+          6
+...
+    voids: [],
++   walls: []
+-   walls: [
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 0
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_0',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 2
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 2,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_1',
+-       length_m: 4,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 2,
+-         z: 2
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 2,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 2,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_2',
+-       length_m: 2,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 6
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 2
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 0,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_3',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 2,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 2,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_4',
+-       length_m: 4,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 2,
+-         z: 2
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 2,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 6,
+-         z: 2
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_5',
+-       length_m: 2,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 6,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 2
+-     }
+-   ]
+  }
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25813:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_architecture.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL polygon architecture 1
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
++   approximations: [
++     {
++       detail: 'a non-rectangular outline is present; it was NOT approximated as a rectangle',
++       reason: 'SPACE_SHAPE_UNSUPPORTED',
++       space_id: 'bld_0.plan.polygon'
++     },
++     {
++       detail: 'a non-rectangular outline is present; it was NOT approximated as a rectangle',
++       reason: 'SPACE_SHAPE_UNSUPPORTED',
++       space_id: 'bld_0.plan.other'
++     },
++     {
++       detail: 'spaces do not tile the level footprint; the slab outline is their bounding box and is reported as an approximation',
++       level_id: 'bld_0.flr_0',
++       reason: 'SLAB_OUTLINE_IS_BOUNDING_BOX'
++     }
++   ],
+-   approximations: [],
+    building_id: 'bld_0',
+    ceilings: [
+      {
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        elevation_m: 10,
+        id: 'bld_0.flr_0.ceiling_polygon',
+        level_id: 'bld_0.flr_0',
+        outline: [
+          0,
+...
+        ],
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        space_id: 'bld_0.plan.polygon',
+        thickness_m: {
+          render_fallback: 0.05,
+          source: 'unknown',
+          value: null
+...
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             6
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             6
+-           ]
+-         ]
+-       ],
+        elevation_m: 10,
+        id: 'bld_0.flr_0.ceiling_other',
+        level_id: 'bld_0.flr_0',
+        outline: [
+          0,
+...
+        ],
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        space_id: 'bld_0.plan.other',
+        thickness_m: {
+          render_fallback: 0.05,
+          source: 'unknown',
+          value: null
+...
+      building_id: 'bld_0',
++     exterior_walls: [],
+-     exterior_walls: [
+-       'bld_0.flr_0.wall_1',
+-       'bld_0.flr_0.wall_2',
+-       'bld_0.flr_0.wall_3',
+-       'bld_0.flr_0.wall_4'
+-     ],
+      external_openings: [],
+      ground_interface: [
+        0,
+        0,
+        6,
+        6
+      ],
+-     ground_polygons: [
+-       [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+-       [
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ]
+-     ],
+      id: 'bld_0.envelope',
+      note: 'derived envelope for later facade/exposure work — no analysis is performed here',
+      roof_boundary: [
+        0,
+        0,
+...
+      ],
+-     roof_polygons: [
+-       [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+-       [
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ]
+-     ],
+      type: 'ENVELOPE',
+      unresolved_walls: []
+    },
++   issues: [
++     {
++       code: 'SPACE_SHAPE_UNSUPPORTED',
++       subject: 'bld_0.plan.polygon'
++     },
++     {
++       code: 'SPACE_SHAPE_UNSUPPORTED',
++       subject: 'bld_0.plan.other'
++     },
++     {
++       code: 'OPENING_HOST_UNRESOLVED',
++       subject: 'bld_0.plan.polygon.door_0@0'
++     },
++     {
++       code: 'SPACE_CONTAINED',
++       other: 'bld_0.plan.other@0',
++       overlap_m2: 36,
++       subject: 'bld_0.plan.polygon@0'
++     }
++   ],
+-   issues: [],
+    levels: [
+      {
+        auto_added: false,
+        elevation_m: 7,
+        elevation_source: 'imported',
+...
+      {
++       axis: 'x',
+-       axis: 'oblique',
+-       boundary_basis: 'polygon_edges',
+        building_id: 'bld_0',
+-       center: [
+-         3,
+-         3
+-       ],
+        clear_width_m: {
+          render_fallback: null,
+          source: 'unknown',
+          value: null
+        },
+        destination: null,
++       edge: 'N',
+-       direction: [
+-         0.707107,
+-         -0.707107
+-       ],
+-       edge: null,
+-       edge_index: 1,
+        exit_flag: false,
++       fixed: 0,
+-       fixed: 4.242641,
+        height_m: {
+          render_fallback: 2.1,
+          source: 'imported',
+          value: 2.1
+        },
+        hinge_side: null,
++       host_note: 'no wall segment hosts this opening',
++       host_status: 'unresolved',
++       host_wall_id: null,
+-       host_note: null,
+-       host_status: 'resolved',
+-       host_wall_id: 'bld_0.flr_0.wall_0',
+        id: 'bld_0.plan.polygon.door_0@0',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+-       normal: [
+-         0.707107,
+-         0.707107
+-       ],
+        offset_stated: true,
+        opening_ref: 'bld_0.plan.polygon.door_0',
+-       position_resolved: true,
+        source: 'unknown',
+        space_id: 'bld_0.plan.polygon',
+        swing_angle_deg: null,
+        swing_direction: null,
+        swing_status: 'not_specified',
+        type: 'DOOR',
++       u_center: 4.242641,
+-       u_center: 0,
+        width_m: {
+          render_fallback: 0.9,
+          source: 'imported',
+          value: 1
+        }
+...
+      {
+-       area_m2: 36,
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        elevation_m: 7,
+        elevation_source: 'imported',
+        id: 'bld_0.flr_0.slab',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+...
+        ],
++       outline_basis: 'bounding_box_of_spaces',
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        structural: false,
+        thickness_m: {
+          render_fallback: 0.15,
+          source: 'unknown',
+          value: null
+...
+      {
++       area_m2: 36,
++       boundary_basis: 'unsupported_shape',
+-       area_m2: 18,
+-       boundary_basis: 'polygon_edges',
+        id: 'bld_0.plan.polygon@0',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+        name: 'polygon',
+-       polygon: [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+        rect: [
+          0,
+          0,
+          6,
+          6
+...
+      {
++       area_m2: 36,
++       boundary_basis: 'unsupported_shape',
+-       area_m2: 18,
+-       boundary_basis: 'polygon_edges',
+        id: 'bld_0.plan.other@0',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+        name: 'other',
+-       polygon: [
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+        rect: [
+          0,
+          0,
+          6,
+          6
+...
+    voids: [],
++   walls: []
+-   walls: [
+-     {
+-       axis: 'oblique',
+-       building_id: 'bld_0',
+-       direction: [
+-         0.707107,
+-         -0.707107
+-       ],
+-       end: {
+-         x: 6,
+-         z: 0
+-       },
+-       exposure: 'interior',
+-       exposure_basis: 'bounded_by_two_spaces',
+-       exposure_status: 'confirmed',
+-       fixed: 4.242641,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_0',
+-       length_m: 8.485282,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0.707107,
+-         0.707107
+-       ],
+-       openings: [
+-         'bld_0.plan.polygon.door_0@0'
+-       ],
+-       shared: true,
+-       spaces: [
+-         'bld_0.plan.other',
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 6
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: -4.242641,
+-       u1: 4.242641
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 0
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_1',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_2',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.other'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 6
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 0,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_3',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 6,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_4',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.other'
+-       ],
+-       start: {
+-         x: 6,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     }
+-   ]
+  }
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25813:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_architecture.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+FAIL polygon architecture 2
+AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
++ actual - expected
+... Skipped lines
+
+  {
++   approximations: [
++     {
++       detail: 'a non-rectangular outline is present; it was NOT approximated as a rectangle',
++       reason: 'SPACE_SHAPE_UNSUPPORTED',
++       space_id: 'bld_0.plan.polygon'
++     },
++     {
++       detail: 'spaces do not tile the level footprint; the slab outline is their bounding box and is reported as an approximation',
++       level_id: 'bld_0.flr_0',
++       reason: 'SLAB_OUTLINE_IS_BOUNDING_BOX'
++     },
++     {
++       detail: 'a non-rectangular outline is present; it was NOT approximated as a rectangle',
++       reason: 'SPACE_SHAPE_UNSUPPORTED',
++       space_id: 'bld_0.plan.polygon'
++     },
++     {
++       detail: 'spaces do not tile the level footprint; the slab outline is their bounding box and is reported as an approximation',
++       level_id: 'bld_0.flr_1',
++       reason: 'SLAB_OUTLINE_IS_BOUNDING_BOX'
++     }
++   ],
+-   approximations: [],
+    building_id: 'bld_0',
+    ceilings: [
+      {
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ]
+-         ]
+-       ],
+        elevation_m: 10,
+        id: 'bld_0.flr_0.ceiling_polygon',
+        level_id: 'bld_0.flr_0',
+        outline: [
+          0,
+...
+        ],
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        space_id: 'bld_0.plan.polygon',
+        thickness_m: {
+          render_fallback: 0.05,
+          source: 'unknown',
+          value: null
+...
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             0.5,
+-             0
+-           ],
+-           [
+-             0.5,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             0.5,
+-             0
+-           ],
+-           [
+-             1.5,
+-             0
+-           ],
+-           [
+-             1.5,
+-             2.5
+-           ],
+-           [
+-             0.5,
+-             2.5
+-           ]
+-         ],
+-         [
+-           [
+-             0.5,
+-             3.5
+-           ],
+-           [
+-             1.5,
+-             3.5
+-           ],
+-           [
+-             1.5,
+-             6
+-           ],
+-           [
+-             0.5,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             1.5,
+-             0
+-           ],
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             1.5,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ]
+-         ]
+-       ],
+        elevation_m: 13.2,
+        id: 'bld_0.flr_1.ceiling_polygon',
+        level_id: 'bld_0.flr_1',
+        outline: [
+          0,
+...
+        ],
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        space_id: 'bld_0.plan.polygon',
+        thickness_m: {
+          render_fallback: 0.05,
+          source: 'unknown',
+          value: null
+...
+      building_id: 'bld_0',
++     exterior_walls: [],
+-     exterior_walls: [
+-       'bld_0.flr_0.wall_0',
+-       'bld_0.flr_0.wall_1',
+-       'bld_0.flr_0.wall_2',
+-       'bld_0.flr_0.wall_3',
+-       'bld_0.flr_0.wall_4',
+-       'bld_0.flr_0.wall_5',
+-       'bld_0.flr_1.wall_0',
+-       'bld_0.flr_1.wall_1',
+-       'bld_0.flr_1.wall_2',
+-       'bld_0.flr_1.wall_3',
+-       'bld_0.flr_1.wall_4',
+-       'bld_0.flr_1.wall_5'
+-     ],
+      external_openings: [],
+      ground_interface: [
+        0,
+        0,
+        6,
+        6
+      ],
+-     ground_polygons: [
+-       [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ]
+-     ],
+      id: 'bld_0.envelope',
+      note: 'derived envelope for later facade/exposure work — no analysis is performed here',
+      roof_boundary: [
+        0,
+        0,
+...
+      ],
+-     roof_polygons: [
+-       [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ]
+-     ],
+      type: 'ENVELOPE',
+      unresolved_walls: []
+    },
++   issues: [
++     {
++       code: 'SPACE_SHAPE_UNSUPPORTED',
++       subject: 'bld_0.plan.polygon'
++     },
++     {
++       code: 'SPACE_SHAPE_UNSUPPORTED',
++       subject: 'bld_0.plan.polygon'
++     }
++   ],
+-   issues: [],
+    levels: [
+      {
+        auto_added: false,
+        elevation_m: 7,
+        elevation_source: 'imported',
+...
+      {
+-       area_m2: 20,
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ]
+-         ]
+-       ],
+        elevation_m: 7,
+        elevation_source: 'imported',
+        id: 'bld_0.flr_0.slab',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+...
+        ],
++       outline_basis: 'bounding_box_of_spaces',
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        structural: false,
+        thickness_m: {
+          render_fallback: 0.15,
+          source: 'unknown',
+          value: null
+...
+      {
+-       area_m2: 19,
+        building_id: 'bld_0',
+-       cells: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             0.5,
+-             0
+-           ],
+-           [
+-             0.5,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             0.5,
+-             0
+-           ],
+-           [
+-             1.5,
+-             0
+-           ],
+-           [
+-             1.5,
+-             2.5
+-           ],
+-           [
+-             0.5,
+-             2.5
+-           ]
+-         ],
+-         [
+-           [
+-             0.5,
+-             3.5
+-           ],
+-           [
+-             1.5,
+-             3.5
+-           ],
+-           [
+-             1.5,
+-             6
+-           ],
+-           [
+-             0.5,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             1.5,
+-             0
+-           ],
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             1.5,
+-             6
+-           ]
+-         ],
+-         [
+-           [
+-             2,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ]
+-         ]
+-       ],
+        elevation_m: 10.2,
+        elevation_source: 'imported',
+        id: 'bld_0.flr_1.slab',
+        level_id: 'bld_0.flr_1',
+        level_index: 1,
+...
+        ],
++       outline_basis: 'bounding_box_of_spaces',
+-       outline_basis: 'polygon_union',
+-       polygons: [
+-         [
+-           [
+-             0,
+-             0
+-           ],
+-           [
+-             6,
+-             0
+-           ],
+-           [
+-             6,
+-             2
+-           ],
+-           [
+-             2,
+-             2
+-           ],
+-           [
+-             2,
+-             6
+-           ],
+-           [
+-             0,
+-             6
+-           ]
+-         ]
+-       ],
+        structural: false,
+        thickness_m: {
+          render_fallback: 0.15,
+          source: 'unknown',
+          value: null
+...
+      {
++       area_m2: 36,
++       boundary_basis: 'unsupported_shape',
+-       area_m2: 20,
+-       boundary_basis: 'polygon_edges',
+        id: 'bld_0.plan.polygon@0',
+        level_id: 'bld_0.flr_0',
+        level_index: 0,
+        name: 'polygon',
+-       polygon: [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+        rect: [
+          0,
+          0,
+          6,
+          6
+...
+      {
++       area_m2: 36,
++       boundary_basis: 'unsupported_shape',
+-       area_m2: 20,
+-       boundary_basis: 'polygon_edges',
+        id: 'bld_0.plan.polygon@1',
+        level_id: 'bld_0.flr_1',
+        level_index: 1,
+        name: 'polygon',
+-       polygon: [
+-         [
+-           0,
+-           0
+-         ],
+-         [
+-           6,
+-           0
+-         ],
+-         [
+-           6,
+-           2
+-         ],
+-         [
+-           2,
+-           2
+-         ],
+-         [
+-           2,
+-           6
+-         ],
+-         [
+-           0,
+-           6
+-         ]
+-       ],
+        rect: [
+          0,
+          0,
+          6,
+          6
+...
+    ],
++   walls: []
+-   walls: [
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 0
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_0',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 2
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 2,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_1',
+-       length_m: 4,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 2,
+-         z: 2
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 2,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 2,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_2',
+-       length_m: 2,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 6
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 2
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 0,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_3',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 2,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 2,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_4',
+-       length_m: 4,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 2,
+-         z: 2
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 2,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 6,
+-         z: 2
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_0.wall_5',
+-       length_m: 2,
+-       level_id: 'bld_0.flr_0',
+-       level_index: 0,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 6,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 2
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 0
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_1.wall_0',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_1',
+-       level_index: 1,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 6,
+-         z: 2
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 2,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_1.wall_1',
+-       length_m: 4,
+-       level_id: 'bld_0.flr_1',
+-       level_index: 1,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 2,
+-         z: 2
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 2,
+-       u1: 6
+-     },
+-     {
+-       axis: 'x',
+-       building_id: 'bld_0',
+-       direction: [
+-         1,
+-         0
+-       ],
+-       end: {
+-         x: 2,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_1.wall_2',
+-       length_m: 2,
+-       level_id: 'bld_0.flr_1',
+-       level_index: 1,
+-       normal: [
+-         0,
+-         1
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 6
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 2
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 0,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 0,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_1.wall_3',
+-       length_m: 6,
+-       level_id: 'bld_0.flr_1',
+-       level_index: 1,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 0,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 2,
+-         z: 6
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 2,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_1.wall_4',
+-       length_m: 4,
+-       level_id: 'bld_0.flr_1',
+-       level_index: 1,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 2,
+-         z: 2
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 2,
+-       u1: 6
+-     },
+-     {
+-       axis: 'z',
+-       building_id: 'bld_0',
+-       direction: [
+-         0,
+-         1
+-       ],
+-       end: {
+-         x: 6,
+-         z: 2
+-       },
+-       exposure: 'exterior',
+-       exposure_basis: 'opposite_side_outside_declared_polygon_union',
+-       exposure_status: 'inferred',
+-       fixed: 6,
+-       height_m: {
+-         render_fallback: 3,
+-         source: 'imported',
+-         value: 3
+-       },
+-       id: 'bld_0.flr_1.wall_5',
+-       length_m: 2,
+-       level_id: 'bld_0.flr_1',
+-       level_index: 1,
+-       normal: [
+-         1,
+-         0
+-       ],
+-       openings: [],
+-       shared: false,
+-       spaces: [
+-         'bld_0.plan.polygon'
+-       ],
+-       start: {
+-         x: 6,
+-         z: 0
+-       },
+-       thickness_m: {
+-         render_fallback: 0.15,
+-         source: 'system_default',
+-         value: 0.15
+-       },
+-       type: 'WALL',
+-       u0: 0,
+-       u1: 2
+-     }
+-   ]
+  }
+
+    at eval (eval at run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:19:12), <anonymous>:25813:14)
+    at Object.run (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/lib/run.js:21:3)
+    at Object.<anonymous> (/workspace/scratch/3196fa9f65d9/audit-cad-verify/tests/remediation/test_polygon_architecture.js:2:52)
+    at Module._compile (node:internal/modules/cjs/loader:1872:14)
+    at Object..js (node:internal/modules/cjs/loader:2003:10)
+    at Module.load (node:internal/modules/cjs/loader:1594:32)
+    at Module._load (node:internal/modules/cjs/loader:1396:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:255:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47

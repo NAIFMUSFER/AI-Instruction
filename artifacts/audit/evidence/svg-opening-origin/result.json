@@ -1,0 +1,65 @@
+{
+  "model": {
+    "wall_h": 3,
+    "wall_t": 0.15,
+    "levels": [
+      {
+        "index": 0,
+        "template": "g"
+      }
+    ],
+    "floors": {
+      "g": {
+        "rooms": [
+          {
+            "id": "offset-room",
+            "rect": [
+              10,
+              5,
+              6,
+              6
+            ],
+            "doors": [
+              {
+                "edge": "N",
+                "offset": 3,
+                "width": 1,
+                "height": 2.1
+              }
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "canonical_anchor": [
+    13.0,
+    5.0
+  ],
+  "expected_svg_segment": {
+    "start": [
+      12.5,
+      5
+    ],
+    "end": [
+      13.5,
+      5
+    ]
+  },
+  "actual_svg_segment": {
+    "shape": "segment",
+    "start": [
+      22.5,
+      5.0
+    ],
+    "end": [
+      23.5,
+      5.0
+    ],
+    "width": 1.0,
+    "width_status": "STATED",
+    "axis": "x"
+  },
+  "source": "acs_docs.py:432",
+  "reason": "u_center already includes room origin; _opening_plan adds host start again"
+}

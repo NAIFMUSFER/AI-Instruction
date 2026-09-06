@@ -120,7 +120,8 @@ console.log('\n== §4 — EXTERIOR IS INFERRED, NEVER ASSUMED ==');
       un.every(w=>w.exposure_basis==='opposite_side_is_void_inside_the_footprint'));
   chk('no courtyard wall was silently called interior either',
       un.every(w=>w.exposure!=='interior')); }
-{ const a=A('poly');
+{ const curved=C(SC.models.poly); curved.floors.g.rooms[0].shape={type:'arc'};
+  const a=compileArchitecture(curved,'bld_0');
   chk('a wall opposite an unsupported outline stays unresolved',
       a.walls.some(w=>w.exposure_basis==='opposite_side_near_a_space_with_unsupported_outline')); }
 { const a=A('declared');
@@ -239,11 +240,18 @@ chk('inconsistent level elevations are reported, not reordered',
 console.log('\n== §9 — SPACES, SHAPES AND OVERLAPS ==');
 { const a=A('poly');
   chk('a non-rectangular outline is NOT approximated as a rectangle',
-      a.spaces.filter(s=>s.boundary_basis==='unsupported_shape').length===1);
-  chk('it is reported as an approximation with a reason',
-      a.approximations.some(x=>x.reason==='SPACE_SHAPE_UNSUPPORTED'));
-  chk('no walls are fabricated for the unsupported shape',
-      a.walls.every(w=>w.spaces.indexOf('bld_0.g.L')<0)); }
+      a.spaces.filter(s=>s.boundary_basis==='polygon_edges').length===1);
+  chk('the L retains its actual 27 square metre area',
+      a.spaces.find(s=>s.space_id==='bld_0.g.L').area_m2===27
+      &&!a.approximations.some(x=>x.reason==='SPACE_SHAPE_UNSUPPORTED'));
+  chk('all six real L edges exist, including its shared edge',
+      a.walls.filter(w=>w.spaces.indexOf('bld_0.g.L')>=0).length===6); }
+{ const curved=C(SC.models.poly);curved.floors.g.rooms[0].shape={type:'arc'};
+  const a=compileArchitecture(curved,'bld_0');
+  chk('an unsupported curved boundary remains explicit, without fabricated walls or area',
+      a.approximations.some(x=>x.reason==='SPACE_SHAPE_UNSUPPORTED')
+      &&a.walls.every(w=>w.spaces.indexOf('bld_0.g.L')<0)
+      &&a.spaces.find(s=>s.space_id==='bld_0.g.L').area_m2===null); }
 { const a=A('overlap');
   const codes=a.issues.map(i=>i.code);
   chk('two genuinely overlapping spaces are reported as an overlap',

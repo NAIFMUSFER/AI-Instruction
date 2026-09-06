@@ -1,0 +1,47 @@
+[
+  {
+    "file": "acs_polygon.py",
+    "source_sha256": "df7460ea89cd4ad9680347f2450caa1b1db35569ec4e0dd60d3255042a6cf1c9",
+    "tested_sha256": "df7460ea89cd4ad9680347f2450caa1b1db35569ec4e0dd60d3255042a6cf1c9"
+  },
+  {
+    "file": "acs_arch.py",
+    "source_sha256": "894e5b05fb4cef6ac5adb968e214ab0656e12a9961bc672d9fbe8a1815f832a2",
+    "tested_sha256": "894e5b05fb4cef6ac5adb968e214ab0656e12a9961bc672d9fbe8a1815f832a2"
+  },
+  {
+    "file": "Dockerfile",
+    "source_sha256": "e320fabbfa6daaffd6d85c671b790cb957fbc11821138bfd252b355465cbf353",
+    "tested_sha256": "e320fabbfa6daaffd6d85c671b790cb957fbc11821138bfd252b355465cbf353"
+  },
+  {
+    "file": "public/app/core/polygon.js",
+    "source_sha256": "41e092135b6dfdfc82e87222743ddaf75dbabb04f954e9118739c9fa8b0bfc43",
+    "tested_sha256": "41e092135b6dfdfc82e87222743ddaf75dbabb04f954e9118739c9fa8b0bfc43"
+  },
+  {
+    "file": "public/app/core/standards.js",
+    "source_sha256": "9cf2f50018ff00dda87175f02d894a735f17b3088a765a3a455bf011c1356e1f",
+    "tested_sha256": "9cf2f50018ff00dda87175f02d894a735f17b3088a765a3a455bf011c1356e1f"
+  },
+  {
+    "file": "public/app/core/disciplines.js",
+    "source_sha256": "4a1c47976425093b3c9f6366dc30d803f26bf0d462278a39722f12430fdc15db",
+    "tested_sha256": "4a1c47976425093b3c9f6366dc30d803f26bf0d462278a39722f12430fdc15db"
+  },
+  {
+    "file": "tests/phase2/test_arch.js",
+    "source_sha256": "35e5bcb10a2842f8abae71f31520400c69de8d9fd468b79f91c323b02f6719af",
+    "tested_sha256": "35e5bcb10a2842f8abae71f31520400c69de8d9fd468b79f91c323b02f6719af"
+  },
+  {
+    "file": "tests/remediation/test_polygon_architecture.py",
+    "source_sha256": "0219e0f72929c5f586c0b1c02ca9466d9028e51b0a2ad9bf63f5a9b7280017f6",
+    "tested_sha256": "0219e0f72929c5f586c0b1c02ca9466d9028e51b0a2ad9bf63f5a9b7280017f6"
+  },
+  {
+    "file": "tests/remediation/test_polygon_architecture.js",
+    "source_sha256": "b23ed9bfd2b96ba159a6e6edd3ce70db20dbdd983a9f79706b95738d40361ad7",
+    "tested_sha256": "b23ed9bfd2b96ba159a6e6edd3ce70db20dbdd983a9f79706b95738d40361ad7"
+  }
+]

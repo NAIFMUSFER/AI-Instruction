@@ -19,6 +19,7 @@
 import json
 import os
 import re
+import acs_polygon as POLY
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 with open(os.path.join(_HERE, "acs_arch.json"), "r", encoding="utf-8") as _f:
@@ -52,6 +53,12 @@ def _rect(room):
 
 
 def _shape_supported(room):
+    if "polygon" in room:
+        try:
+            POLY.room_ring(room)
+            return not (room.get("shape") or room.get("vertices"))
+        except ValueError:
+            return False
     return not (room.get("polygon") or room.get("shape") or room.get("vertices"))
 
 
@@ -118,9 +125,63 @@ def _rooms_of(building, tmpl, bid):
 
 
 # ------------------------------------------------------------- الجدران --
+def _polygon_wall_segments(rooms):
+    groups = {}
+    for sid, room, _ in rooms:
+        if not _shape_supported(room) or _rect(room) is None:
+            continue
+        ring = POLY.room_ring(room)
+        winding = 1 if POLY.signed_area(ring) > 0 else -1
+        for index, (a, b) in enumerate(POLY.edges(ring)):
+            f = POLY.segment_frame(a, b)
+            key = (f["axis"], _q(f["fixed"]), *map(_q, f["direction"]))
+            interior = [-(b[1]-a[1])*winding, (b[0]-a[0])*winding]
+            side = 1 if sum(interior[i]*f["normal"][i] for i in (0,1)) > 0 else -1
+            entry = {"u0": f["u0"], "u1": f["u1"], "space": sid,
+                     "edge": index, "side": side, "height": room.get("wall_h")}
+            groups.setdefault(key, {"frame": f, "items": []})["items"].append(entry)
+    walls = []
+    for key in sorted(groups):
+        group = groups[key]; f, items = group["frame"], group["items"]
+        cuts = sorted({_q(u) for it in items for u in (it["u0"],it["u1"])})
+        for a,b in zip(cuts,cuts[1:]):
+            if b-a <= _EPS:
+                continue
+            owners = [it for it in items if it["u0"] <= a+_EPS and it["u1"] >= b-_EPS]
+            if not owners:
+                continue
+            heights = [it["height"] for it in owners if it["height"] is not None]
+            walls.append({"axis": f["axis"], "fixed": f["fixed"], "u0": a, "u1": b,
+                          "direction": f["direction"], "normal": f["normal"],
+                          "spaces": sorted({it["space"] for it in owners}),
+                          "sides": {it["space"]:it["side"] for it in owners},
+                          "edges": {it["space"]:it["edge"] for it in owners},
+                          "height_stated": max(heights) if heights else None})
+    return walls
+
+
+def _polygon_exposure(wall, rooms, unsupported):
+    if len(wall["spaces"]) > 1:
+        return "interior", "confirmed", "bounded_by_two_spaces"
+    side = wall["sides"][wall["spaces"][0]]
+    point = POLY.frame_point(wall, (wall["u0"]+wall["u1"])/2)
+    probe = [point[i]-side*_PROBE*wall["normal"][i] for i in (0,1)]
+    if any(_shape_supported(r) and _rect(r) is not None
+           and POLY.contains_point(POLY.room_ring(r),probe) for _,r,_ in rooms):
+        return "interior", "inferred", "opposite_side_inside_another_space"
+    if _point_in_rects(*probe, unsupported):
+        return "unresolved", "unresolved", "opposite_side_near_a_space_with_unsupported_outline"
+    bbox = _bbox([_rect(r) for _,r,_ in rooms if _rect(r) is not None])
+    if bbox and bbox[0]-_EPS <= probe[0] <= bbox[2]+_EPS and bbox[1]-_EPS <= probe[1] <= bbox[3]+_EPS:
+        return "unresolved", "unresolved", "opposite_side_is_void_inside_the_footprint"
+    return "exterior", "inferred", "opposite_side_outside_declared_polygon_union"
+
+
 def _wall_segments(rooms, wall_h_default, thickness):
     """يبني مقاطع جدران أوّلية: كل حدّ مشترك يُقسَّم عند كل نقطة انكسار،
     فيُعرَّف الجدار المشترك مرّة واحدة ويشير إليه الفراغان."""
+    if any("polygon" in r for _, r, _ in rooms):
+        return _polygon_wall_segments(rooms)
     groups = {}
     for sid, room, _ in rooms:
         rc = _rect(room)
@@ -201,8 +262,21 @@ def _openings_of(room, sid, kind):
         rc = _rect(room)
         if rc is None:
             continue
+        frame = None
+        if "polygon" in room:
+            edge_index = None
+            if _shape_supported(room):
+                try:
+                    edge_index = POLY.edge_index(room, o)
+                except ValueError:
+                    pass  # retained below as an unresolved opening, never hosted on a guessed edge
+            if edge_index is not None:
+                frame = POLY.segment_frame(*POLY.edges(POLY.room_ring(room))[edge_index])
         axis, fixed, u0, u1, side = _edge_segment(o.get("edge"), rc)
         uc = _open_u(o.get("edge"), rc, o.get("offset") or 0)
+        if frame is not None:
+            axis, fixed = frame["axis"],frame["fixed"]
+            uc = frame["first_u"]+frame["sense"]*float(o.get("offset") or 0)
         w = o.get("width")
         default_w = DEFAULTS["door_width_m"] if kind == "door" else DEFAULTS["window_width_m"]
         default_h = DEFAULTS["door_height_m"] if kind == "door" else DEFAULTS["window_height_m"]
@@ -230,17 +304,29 @@ def _openings_of(room, sid, kind):
             sill = o.get("sill")
             el["sill_m"] = _val(sill, DEFAULTS["window_sill_m"])
         el["source"] = o.get("source") or "unknown"
+        if "polygon" in room:
+            el["edge"] = None
+            el["edge_index"] = edge_index
+            el["boundary_basis"] = "polygon_edges"
+            el["position_resolved"] = frame is not None
+            if frame is not None:
+                el["direction"],el["normal"] = frame["direction"],frame["normal"]
+                el["center"] = [_q(v) for v in POLY.frame_point(frame,uc)]
         out.append(el)
     return out
 
 
 def _host(opening, walls):
+    if opening.get("position_resolved") is False:
+        return None, "unresolved", "polygon opening has no valid edge_index"
     w = opening["width_m"]["value"]
     if w is None:
         w = opening["width_m"]["render_fallback"]
     a, b = opening["u_center"] - w / 2.0, opening["u_center"] + w / 2.0
     cands = [x for x in walls if x["axis"] == opening["axis"]
              and abs(x["fixed"] - opening["fixed"]) <= _EPS
+             and (opening.get("direction") is None or
+                  all(abs(x.get("direction", opening["direction"])[i]-opening["direction"][i]) <= _EPS for i in (0,1)))
              and x["u1"] > a + _EPS and x["u0"] < b - _EPS]
     if not cands:
         return None, "unresolved", "no wall segment hosts this opening"
@@ -331,6 +417,8 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
     for lvl in levels:
         rooms = _rooms_of(building, lvl["template"], bid)
         rects, unsupported, all_rects = [], [], []
+        polygon_level = any("polygon" in room for _,room,_ in rooms)
+        polygons = []
         for sid, room, i in rooms:
             rc = _rect(room)
             supported = rc is not None and _shape_supported(room)
@@ -340,12 +428,16 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                 "id": "%s@%s" % (sid, lvl["index"]), "space_id": sid,
                 "level_id": lvl["id"], "level_index": lvl["index"],
                 "name": room.get("id"), "rect": rc,
-                "boundary_basis": "rectangle_edges" if supported else "unsupported_shape",
-                "area_m2": (rc[2] * rc[3]) if rc else None,
+                "boundary_basis": ("polygon_edges" if "polygon" in room else "rectangle_edges") if supported else "unsupported_shape",
+                "area_m2": (abs(POLY.signed_area(POLY.room_ring(room))) if "polygon" in room else rc[2]*rc[3]) if supported else None,
                 "wall_height_m": _val(room.get("wall_h") if room.get("wall_h") is not None
                                       else wall_h_default, DEFAULTS["wall_height_m"],
                                       "imported" if room.get("wall_h") is not None else
                                       ("imported" if wall_h_default is not None else "unknown"))})
+            if supported and "polygon" in room:
+                out["spaces"][-1]["polygon"] = POLY.room_ring(room)
+            if supported and polygon_level:
+                polygons.append(POLY.room_ring(room))
             if rc is not None:
                 all_rects.append(rc)
                 if supported:
@@ -362,7 +454,8 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
         segs = _wall_segments(rooms, wall_h_default, thickness)
         lvl_walls = []
         for n, s in enumerate(segs):
-            exposure, status, basis = _classify_exposure(s, rects, unsupported, bbox)
+            exposure, status, basis = (_polygon_exposure(s, rooms, unsupported) if polygon_level
+                                       else _classify_exposure(s, rects, unsupported, bbox))
             # إعلان الفراغ الخارجي لا يُبطل جداراً يفصل فراغين — الحقيقة الهندسية أقوى
             if len(s["spaces"]) == 1:
                 room = next((r for (i2, r, _) in rooms if i2 == s["spaces"][0]), None)
@@ -383,6 +476,10 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                  "spaces": s["spaces"], "shared": len(s["spaces"]) > 1,
                  "exposure": exposure, "exposure_status": status, "exposure_basis": basis,
                  "openings": []}
+            if polygon_level:
+                w["direction"], w["normal"] = s["direction"],s["normal"]
+                w["start"] = dict(zip(("x","z"), map(_q,POLY.frame_point(s,s["u0"]))))
+                w["end"] = dict(zip(("x","z"), map(_q,POLY.frame_point(s,s["u1"]))))
             lvl_walls.append(w)
             out["walls"].append(w)
 
@@ -413,9 +510,12 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                                         "imported" if building.get("slab_t") is not None
                                         else "system_default"),
                     "structural": False, "note": "architectural slab only — not a structural design"}
+            if polygon_level:
+                slab["polygons"] = polygons
+                slab["outline_basis"] = "polygon_union" if not unsupported else "partial_polygon_union"
             out["slabs"].append(slab)
             covered = sum(r[2] * r[3] for r in rects)
-            if covered < (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) - 1e-6:
+            if not polygon_level and covered < (bbox[2] - bbox[0]) * (bbox[3] - bbox[1]) - 1e-6:
                 out["approximations"].append(
                     {"level_id": lvl["id"], "reason": "SLAB_OUTLINE_IS_BOUNDING_BOX",
                      "detail": "spaces do not tile the level footprint; the slab outline is their "
@@ -468,6 +568,26 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
         if core["position_source"] != "imported":
             out["issues"].append({"code": "CORE_POSITION_NOT_STATED", "subject": core["id"]})
 
+    # After cores: canonical polygon plates and finishes retain their real voids.
+    for slab in out["slabs"]:
+        if "polygons" not in slab:
+            continue
+        holes = [POLY.rect_ring(v["rect"]) for v in out["voids"] if v["level_id"] == slab["level_id"]]
+        slab["cells"] = POLY.cells(slab["polygons"],holes)
+        slab["area_m2"] = sum(abs(POLY.signed_area(c)) for c in slab["cells"])
+        for roof in out["roofs"]:
+            if roof["level_id"] == slab["level_id"]:
+                roof["polygons"],roof["cells"] = slab["polygons"],slab["cells"]
+                roof["outline_basis"] = slab["outline_basis"]
+        for ceiling in out["ceilings"]:
+            if ceiling["level_id"] != slab["level_id"]:
+                continue
+            space = next(s for s in out["spaces"] if s["space_id"] == ceiling["space_id"] and s["level_id"] == slab["level_id"])
+            if space["boundary_basis"] == "unsupported_shape":
+                continue
+            ring = space.get("polygon") or POLY.rect_ring(space["rect"])
+            ceiling["polygons"],ceiling["cells"] = [ring],POLY.cells([ring],holes)
+            ceiling["outline_basis"] = "polygon_union"
     ext = [w for w in out["walls"] if w["exposure"] == "exterior"]
     ext_open = [o for o in out["openings"]
                 if any(o["id"] in w["openings"] for w in ext)]
@@ -480,6 +600,10 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                          (out["slabs"][-1]["outline"] if out["slabs"] else None),
         "ground_interface": out["slabs"][0]["outline"] if out["slabs"] else None,
         "note": "derived envelope for later facade/exposure work — no analysis is performed here"}
+    if out["slabs"] and "polygons" in out["slabs"][0]:
+        out["envelope"]["ground_polygons"] = out["slabs"][0]["polygons"]
+    if out["slabs"] and "polygons" in out["slabs"][-1]:
+        out["envelope"]["roof_polygons"] = out["slabs"][-1]["polygons"]
     out["issues"].extend(validate_architecture(out))
     return out
 
@@ -497,6 +621,8 @@ def validate_architecture(arch):
     seen = {}
     for w in arch.get("walls") or []:
         k = (w["level_id"], w["axis"], _q(w["fixed"]), _q(w["u0"]), _q(w["u1"]))
+        if w.get("direction") is not None:
+            k += tuple(map(_q,w["direction"]))
         if k in seen:
             issues.append({"code": "WALL_DUPLICATE_OVERLAP", "subject": w["id"], "other": seen[k]})
         seen[k] = w["id"]
@@ -534,6 +660,17 @@ def validate_architecture(arch):
             for j in range(i + 1, len(spaces)):
                 a, b = spaces[i].get("rect"), spaces[j].get("rect")
                 if not a or not b:
+                    continue
+                if spaces[i].get("polygon") or spaces[j].get("polygon"):
+                    pa,pb = spaces[i].get("polygon") or POLY.rect_ring(a), spaces[j].get("polygon") or POLY.rect_ring(b)
+                    aa,ab = abs(POLY.signed_area(pa)),abs(POLY.signed_area(pb))
+                    union = sum(abs(POLY.signed_area(c)) for c in POLY.cells([pa,pb]))
+                    overlap = max(0,aa+ab-union)
+                    if overlap > 1e-6:
+                        inside = abs(overlap-min(aa,ab)) <= 1e-6
+                        issues.append({"code":"SPACE_CONTAINED" if inside else "SPACE_OVERLAP",
+                                       "subject":spaces[i]["id"],"other":spaces[j]["id"],
+                                       "overlap_m2":round(overlap,6)})
                     continue
                 ox = min(a[0] + a[2], b[0] + b[2]) - max(a[0], b[0])
                 oz = min(a[1] + a[3], b[1] + b[3]) - max(a[1], b[1])
@@ -593,6 +730,10 @@ def opening_anchor(arch, opening_id, level_index=None):
     op = opening_by_ref(arch, opening_id, level_index)
     if op is None or op.get("type") not in ("DOOR", "WINDOW"):
         return None
+    if op.get("position_resolved") is False:
+        return None
+    if op.get("center") is not None:
+        return list(op["center"])
     if op["axis"] == "x":
         return [op["u_center"], op["fixed"]]
     return [op["fixed"], op["u_center"]]

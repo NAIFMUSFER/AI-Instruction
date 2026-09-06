@@ -4,6 +4,8 @@
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
 import { __ACS_LATE } from '../late-bindings.js';
+import { ACS_POLYGON } from './polygon.js';
+import { _aPolygonExposure } from './standards.js';
 import { ARCH_COMPILER_VERSION, ARCH_DEFAULTS, ARCH_SCHEMA, _A_EPS, _aBbox, _aClassifyExposure, _aCores, _aHost, _aLevels, _aOpeningsOf, _aRect, _aRoomsOf, _aShapeSupported, _aVal, _aWallSegments, _aq, _pyT, _scmp } from './standards.js';
 import { _pyRound, buildRelationships, extractExits, findEgress } from './viewer.js';
 
@@ -24,6 +26,7 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
   levels.forEach(lvl=>{
     const rooms=_aRoomsOf(building,lvl.template,bid);
     const rects=[], unsupported=[], allRects=[];
+    const polygonLevel=rooms.some(([,r])=>Object.hasOwn(r,"polygon")),polygons=[];
     rooms.forEach(tr=>{ const sid=tr[0], room=tr[1];
       const rc=_aRect(room);
       const supported=(rc!==null)&&_aShapeSupported(room);
@@ -33,11 +36,13 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
       out.spaces.push({id:sid+'@'+lvl.index, space_id:sid,
         level_id:lvl.id, level_index:lvl.index,
         name:(room.id===undefined)?null:room.id, rect:rc,
-        boundary_basis:supported?'rectangle_edges':'unsupported_shape',
-        area_m2:rc?(rc[2]*rc[3]):null,
+        boundary_basis:supported?(Object.hasOwn(room,'polygon')?'polygon_edges':'rectangle_edges'):'unsupported_shape',
+        area_m2:supported?(Object.hasOwn(room,'polygon')?Math.abs(ACS_POLYGON.signed_area(ACS_POLYGON.room_ring(room))):rc[2]*rc[3]):null,
         wall_height_m:_aVal(statedH!==null?statedH:wallHDefault,ARCH_DEFAULTS.wall_height_m,
           statedH!==null?'imported'
           :((wallHDefault!==null&&wallHDefault!==undefined)?'imported':'unknown'))});
+      if(supported&&Object.hasOwn(room,'polygon'))out.spaces[out.spaces.length-1].polygon=ACS_POLYGON.room_ring(room);
+      if(supported&&polygonLevel)polygons.push(ACS_POLYGON.room_ring(room));
       if(rc!==null){ allRects.push(rc); if(supported) rects.push(rc); else unsupported.push(rc); }
       if(!supported&&rc!==null){
         out.approximations.push({space_id:sid, reason:'SPACE_SHAPE_UNSUPPORTED',
@@ -47,7 +52,7 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
     const segs=_aWallSegments(rooms);
     const lvlWalls=[];
     segs.forEach((s,n)=>{
-      let cls=_aClassifyExposure(s,rects,unsupported,bbox);
+      let cls=polygonLevel?_aPolygonExposure(s,rooms,unsupported):_aClassifyExposure(s,rects,unsupported,bbox);
       let exposure=cls[0], status=cls[1], basis=cls[2];
       /* إعلان الفراغ الخارجي لا يُبطل جداراً يفصل فراغين — الحقيقة الهندسية أقوى */
       if(s.spaces.length===1){
@@ -68,6 +73,11 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
         spaces:s.spaces, shared:s.spaces.length>1,
         exposure:exposure, exposure_status:status, exposure_basis:basis,
         openings:[]};
+      if(polygonLevel){
+        w.direction=s.direction;w.normal=s.normal;
+        const start=ACS_POLYGON.frame_point(s,s.u0).map(_aq),end=ACS_POLYGON.frame_point(s,s.u1).map(_aq);
+        w.start={x:start[0],z:start[1]};w.end={x:end[0],z:end[1]};
+      }
       lvlWalls.push(w); out.walls.push(w); });
     rooms.forEach(tr=>{ const sid=tr[0], room=tr[1];
       ['door','window'].forEach(kind=>{
@@ -90,8 +100,10 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
         thickness_m:_aVal(slabT,ARCH_DEFAULTS.slab_thickness_m,
           (slabT!==null&&slabT!==undefined)?'imported':'system_default'),
         structural:false, note:'architectural slab only — not a structural design'});
+      if(polygonLevel){const slab=out.slabs[out.slabs.length-1];slab.polygons=polygons;
+        slab.outline_basis=unsupported.length?'partial_polygon_union':'polygon_union';}
       const covered=rects.reduce((s,r)=>s+r[2]*r[3],0);
-      if(covered<(bbox[2]-bbox[0])*(bbox[3]-bbox[1])-1e-6)
+      if(!polygonLevel&&covered<(bbox[2]-bbox[0])*(bbox[3]-bbox[1])-1e-6)
         out.approximations.push({level_id:lvl.id, reason:'SLAB_OUTLINE_IS_BOUNDING_BOX',
           detail:'spaces do not tile the level footprint; the slab outline is their '
                 +'bounding box and is reported as an approximation'}); }
@@ -134,6 +146,20 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
       vn+=1; });
     if(core.position_source!=='imported')
       out.issues.push({code:'CORE_POSITION_NOT_STATED', subject:core.id}); });
+  out.slabs.forEach(slab=>{
+    if(!slab.polygons)return;
+    const holes=out.voids.filter(v=>v.level_id===slab.level_id).map(v=>ACS_POLYGON.rect_ring(v.rect));
+    slab.cells=ACS_POLYGON.cells(slab.polygons,holes);slab.area_m2=slab.cells.reduce((s,c)=>s+Math.abs(ACS_POLYGON.signed_area(c)),0);
+    out.roofs.filter(r=>r.level_id===slab.level_id).forEach(roof=>{
+      roof.polygons=slab.polygons;roof.cells=slab.cells;roof.outline_basis=slab.outline_basis;
+    });
+    out.ceilings.filter(c=>c.level_id===slab.level_id).forEach(ceiling=>{
+      const space=out.spaces.find(s=>s.space_id===ceiling.space_id&&s.level_id===slab.level_id);
+      if(space.boundary_basis==='unsupported_shape')return;
+      const ring=space.polygon||ACS_POLYGON.rect_ring(space.rect);
+      ceiling.polygons=[ring];ceiling.cells=ACS_POLYGON.cells([ring],holes);ceiling.outline_basis='polygon_union';
+    });
+  });
   const ext=out.walls.filter(w=>w.exposure==='exterior');
   const extOpen=out.openings.filter(o=>ext.some(w=>w.openings.indexOf(o.id)>=0));
   out.envelope={id:bid+'.envelope', type:'ENVELOPE', building_id:bid,
@@ -144,6 +170,8 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
       :(out.slabs.length?out.slabs[out.slabs.length-1].outline:null),
     ground_interface:out.slabs.length?out.slabs[0].outline:null,
     note:'derived envelope for later facade/exposure work — no analysis is performed here'};
+  if(out.slabs.length&&out.slabs[0].polygons)out.envelope.ground_polygons=out.slabs[0].polygons;
+  if(out.slabs.length&&out.slabs[out.slabs.length-1].polygons)out.envelope.roof_polygons=out.slabs[out.slabs.length-1].polygons;
   validateArchitecture(out).forEach(i=>out.issues.push(i));
   return out; }
 /* ------------------------------------------------------------ التحقّق --- */
@@ -157,7 +185,7 @@ function validateArchitecture(arch){
       issues.push({code:'WALL_NEGATIVE_THICKNESS', subject:w.id}); });
   const seen=new Map();
   (arch.walls||[]).forEach(w=>{
-    const k=[w.level_id,w.axis,_aq(w.fixed),_aq(w.u0),_aq(w.u1)].join('|');
+    const k=[w.level_id,w.axis,_aq(w.fixed),_aq(w.u0),_aq(w.u1),...(w.direction||[]).map(_aq)].join('|');
     if(seen.has(k)) issues.push({code:'WALL_DUPLICATE_OVERLAP', subject:w.id, other:seen.get(k)});
     seen.set(k,w.id); });
   const walls={}; (arch.walls||[]).forEach(w=>{walls[w.id]=w;});
@@ -191,6 +219,14 @@ function validateArchitecture(arch){
       for(let j=i+1;j<spaces.length;j++){
         const a=spaces[i].rect, b=spaces[j].rect;
         if(!a||!b) continue;
+        if(spaces[i].polygon||spaces[j].polygon){
+          const pa=spaces[i].polygon||ACS_POLYGON.rect_ring(a),pb=spaces[j].polygon||ACS_POLYGON.rect_ring(b);
+          const aa=Math.abs(ACS_POLYGON.signed_area(pa)),ab=Math.abs(ACS_POLYGON.signed_area(pb));
+          const union=ACS_POLYGON.cells([pa,pb]).reduce((s,c)=>s+Math.abs(ACS_POLYGON.signed_area(c)),0),overlap=Math.max(0,aa+ab-union);
+          if(overlap>1e-6)issues.push({code:Math.abs(overlap-Math.min(aa,ab))<=1e-6?'SPACE_CONTAINED':'SPACE_OVERLAP',
+            subject:spaces[i].id,other:spaces[j].id,overlap_m2:_aq(overlap)});
+          continue;
+        }
         const ox=Math.min(a[0]+a[2],b[0]+b[2])-Math.max(a[0],b[0]);
         const oz=Math.min(a[1]+a[3],b[1]+b[3])-Math.max(a[1],b[1]);
         if(ox>1e-3&&oz>1e-3){
@@ -234,6 +270,8 @@ function archOpeningByRef(arch,ref,levelIndex){
 function archOpeningAnchor(arch,openingId,levelIndex){
   const op=archOpeningByRef(arch,openingId,levelIndex);
   if(op===null||(op.type!=='DOOR'&&op.type!=='WINDOW')) return null;
+  if(op.position_resolved===false)return null;
+  if(op.center)return op.center.slice();
   if(op.axis==='x') return [op.u_center,op.fixed];
   return [op.fixed,op.u_center]; }
 function archSharedWallBetween(arch,a,b){

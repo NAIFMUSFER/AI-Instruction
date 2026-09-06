@@ -1,0 +1,52 @@
+
+== NAVIGATION MODES AND CONTRACTS ==
+  ✓ mode ORBIT is accepted with a declared contract
+  ✓ mode FIRST_PERSON is accepted with a declared contract
+  ✓ mode WALK is accepted with a declared contract
+  ✓ mode FLY is accepted with a declared contract
+  ✓ mode PLAN is accepted with a declared contract
+  ✓ mode DOLLHOUSE is accepted with a declared contract
+  ✓ unknown mode "TELEPORT_MODE" fails deterministically
+  ✓ unknown mode "walk " fails deterministically
+  ✓ unknown mode "" fails deterministically
+  ✓ unknown mode "GOD" fails deterministically
+  ✓ unknown mode null fails deterministically
+  ✓ unknown mode undefined fails deterministically
+  ✓ unknown mode 42 fails deterministically
+  ✓ an unknown mode never silently falls back to a valid one
+
+== WALK CONTRACT ==
+  ✓ WALK declares gravity true
+  ✓ WALK declares collision true
+  ✓ WALK requires a walkable surface
+  ✓ WALK requires a capsule
+  ✓ WALK is not vertically free
+  ✓ WALK takes no orbit target
+
+== FLY CONTRACT ==
+  ✓ FLY declares gravity false
+  ✓ FLY allows vertical movement
+  ✓ FLY declares its own collision policy explicitly
+  ✓ FLY does not silently inherit WALK behaviour
+  ✓ FIRST_PERSON keeps collision but not gravity
+
+== ORBIT TARGETS ==
+  ✓ ORBIT is targeted
+  ✓ BUILDING is a valid orbit target
+  ✓ a real room is a valid orbit target
+  ✓ a real object is a valid orbit target
+  ✓ a real floor is a valid orbit target
+  ✓ an unknown target kind is refused
+  ✓ an unknown room id is refused
+  ✓ an unknown object id is refused
+  ✓ an unknown floor is refused
+  ✓ PLAN and DOLLHOUSE are targeted modes
+
+== NAVIGATION IN RUNTIME STATE ==
+  ✓ the state records the requested mode
+  ✓ an invalid mode falls back to the declared default and reports it
+  ✓ the default mode comes from the specification
+  ✓ changing navigation mode never touches the scene
+
+──────────────────────────────────────────────
+NAVIGATION: 39 passed, 0 failed
