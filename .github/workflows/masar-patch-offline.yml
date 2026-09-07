@@ -1,0 +1,56 @@
+name: MASAR exact offline-test patch
+on:
+  push:
+    branches: ['masar/production-v4']
+    paths: ['.github/workflows/masar-patch-offline.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 1
+      - name: Replace browser-offline emulator with real origin outage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          f=Path('masar-studio/tests/browser_http.py')
+          s=f.read_text()
+          old="""            def offline():
+                # A fresh same-context navigation is a stronger PWA check than calling
+                # Page.reload while offline and avoids a Playwright/WebKit reload bug.
+                context.set_offline(True);offline_page=context.new_page();offline_page.set_default_timeout(15000);observe(offline_page)
+                try:
+                    offline_page.goto(base,wait_until='domcontentloaded');ready(offline_page);expect(offline_page.locator('#project-title')).to_have_text(current_title);action(offline_page,'account');expect(offline_page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(offline_page)
+                finally:
+                    offline_page.close();context.set_offline(False)
+            check('offline PWA fresh navigation restores local project without claiming cloud connectivity',offline)
+"""
+          new="""            def offline():
+                # Stop the actual origin instead of relying on Playwright's offline
+                # emulator, which raises an internal WebKit error before the service
+                # worker can answer. This exercises the real PWA outage path equally
+                # in Chromium, Firefox and WebKit.
+                server.terminate();server.wait(timeout=8)
+                offline_page=context.new_page();offline_page.set_default_timeout(15000);observe(offline_page)
+                try:
+                    offline_page.goto(base,wait_until='domcontentloaded');ready(offline_page);expect(offline_page.locator('#project-title')).to_have_text(current_title);action(offline_page,'account');expect(offline_page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(offline_page)
+                finally:
+                    offline_page.close()
+            check('PWA survives real origin outage and restores local project without claiming cloud connectivity',offline)
+"""
+          assert s.count(old)==1, 'exact expected offline test block not found once'
+          f.write_text(s.replace(old,new))
+          PY
+          git diff --check
+          git diff -- masar-studio/tests/browser_http.py
+      - name: Commit exact test-harness fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/tests/browser_http.py
+          git commit -m 'test(masar): validate PWA under real origin outage'
+          git push origin HEAD:masar/production-v4
