@@ -1,0 +1,22 @@
+{
+  "format": "masar-source-recovery-1",
+  "version": "4.1.0",
+  "compressedSha256": "494ec7b35323cc6c44efb8e2371df85fb24a6eb6c75504c170743d1954f3599b",
+  "compressedBytes": 92736,
+  "decodedJsonBytes": 371749,
+  "parts": {
+    "part-000": "06de6a1f1dae873e330e59542824c89c82c5fd386531402a5883811b50ccf075",
+    "part-001": "b56611b3b95eb5fe35fabf0aa3a7d754c49a94bdda239f71e95ae6b577ffbb85",
+    "part-002": "bdc711e3406a7a26212cc6e56dbddafcbd0d927bea8bcbe0f984c2f4651cf089",
+    "part-003": "3e6ccb968b69d026d3b6ac31f1cd10d2a6a915b04b68dc21c9c0385b8f0dcf74",
+    "part-004": "b5a8784baea6d83952bfd7a40d755efdc2a9a41dd1a3b5a67e6513631f5f5a63",
+    "part-005": "725cf124a8f3b0b31ad7125ad37766e95b036c230344b24c2872f0cf07db5ca2",
+    "part-006": "37a208d078a276084d4f97c1756213ce442b8c435f1115d28ed7dca86ef6eeb6",
+    "part-007": "05f2ecccf16e9b0892400e8370f693e408bc2857ce882d1a73987314cffd11c9",
+    "part-008": "0e7c4722477a26a5bf15bb704e0203328023aa1fa4a74595affb7c06f4de2acc",
+    "part-009": "9aeeca8707509d5efc4b215e48ee3253e9c578ed2302ab0c8bcbaee372af7cea",
+    "part-010": "a5306d02653c6cf474f20e77c4c1cb8df507a65ece73c522984094b0c8d5db62"
+  },
+  "sourceFileCount": 56,
+  "sourceTreeSha256": "ebfca586857362bbd52fcdf59af81b425a618d21fce9bea17fa62744d0cdaf92"
+}
