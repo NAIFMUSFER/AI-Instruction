@@ -1,0 +1,26 @@
+name: MASAR source recovery
+on:
+  push:
+    branches: ['masar/production-v4']
+    paths: ['.github/workflows/masar-recovery.yml']
+permissions:
+  contents: read
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Inventory uploaded bundle
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/masar/production-v4'
+          find masar-deploy -type f -print0 | sort -z | xargs -0 sha256sum > masar-recovery-inventory.txt
+          cat masar-recovery-inventory.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-source-recovery
+          path: |
+            masar-deploy/
+            masar-recovery-inventory.txt
+          retention-days: 7
+          if-no-files-found: error
