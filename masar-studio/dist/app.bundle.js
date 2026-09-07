@@ -1,0 +1,2582 @@
+'use strict';
+globalThis.MASAR_STANDALONE=true;
+const MASAR_Module_0=(()=>{
+
+/**
+ * MASAR Authoring Core metadata and hosted-opening helpers.
+ * This module contains no rendering or compliance assumptions. Wall build-ups are
+ * editable concept metadata and must be reviewed by project disciplines before use.
+ */
+const AUTHORING_SCHEMA = 'masar-authoring-1';
+
+const DEFAULT_WALL_TYPES = Object.freeze([
+  Object.freeze({
+    id:'wall-ext-concept-240', name:'جدار خارجي مفاهيمي 240 مم', classification:'external', totalThickness:0.24,
+    layers:Object.freeze([
+      Object.freeze({id:'ext-finish',name:'تشطيب خارجي افتراضي',function:'finish',thickness:0.02,provenance:'display-assumption'}),
+      Object.freeze({id:'ext-core',name:'طبقة أساسية غير مصممة',function:'core',thickness:0.20,provenance:'concept-assumption'}),
+      Object.freeze({id:'int-finish',name:'تشطيب داخلي افتراضي',function:'finish',thickness:0.02,provenance:'display-assumption'})
+    ]),
+    provenance:'concept-type-not-engineering-spec'
+  }),
+  Object.freeze({
+    id:'wall-int-concept-120', name:'جدار داخلي مفاهيمي 120 مم', classification:'internal', totalThickness:0.12,
+    layers:Object.freeze([
+      Object.freeze({id:'int-finish-a',name:'تشطيب داخلي افتراضي',function:'finish',thickness:0.015,provenance:'display-assumption'}),
+      Object.freeze({id:'int-core',name:'طبقة أساسية غير مصممة',function:'core',thickness:0.09,provenance:'concept-assumption'}),
+      Object.freeze({id:'int-finish-b',name:'تشطيب داخلي افتراضي',function:'finish',thickness:0.015,provenance:'display-assumption'})
+    ]),
+    provenance:'concept-type-not-engineering-spec'
+  })
+]);
+
+const DEFAULT_WINDOW_TYPES = Object.freeze([
+  Object.freeze({id:'window-concept-1200',name:'نافذة مفاهيمية 1.20 م',width:1.2,height:1.2,sill:0.9,provenance:'concept-type-not-product-spec'}),
+  Object.freeze({id:'window-concept-1800',name:'نافذة مفاهيمية 1.80 م',width:1.8,height:1.35,sill:0.75,provenance:'concept-type-not-product-spec'})
+]);
+
+const clone = v => structuredClone(v);
+function authoringDefaults() {
+  return {
+    schema:AUTHORING_SCHEMA,
+    wallTypes:clone(DEFAULT_WALL_TYPES),
+    windowTypes:clone(DEFAULT_WINDOW_TYPES),
+    defaults:{externalWallTypeId:'wall-ext-concept-240',internalWallTypeId:'wall-int-concept-120',windowTypeId:'window-concept-1200'},
+    disciplineStatus:{architecture:'concept-authoring',structure:'unchecked',mep:'unchecked',fire:'unchecked',accessibility:'unchecked',regulatory:'unchecked'},
+    disclaimer:'Wall layers, windows and hosted openings are authoring metadata for coordination; they are not approved construction specifications.'
+  };
+}
+
+function effectiveAuthoring(model) {
+  const base=authoringDefaults(), a=model?.authoring;
+  if (!a) return base;
+  return {
+    ...base,...a,
+    wallTypes:Array.isArray(a.wallTypes)&&a.wallTypes.length?a.wallTypes:base.wallTypes,
+    windowTypes:Array.isArray(a.windowTypes)&&a.windowTypes.length?a.windowTypes:base.windowTypes,
+    defaults:{...base.defaults,...(a.defaults||{})},
+    disciplineStatus:{...base.disciplineStatus,...(a.disciplineStatus||{})}
+  };
+}
+
+function wallTypeFor(model, external) {
+  const a=effectiveAuthoring(model), id=external?a.defaults.externalWallTypeId:a.defaults.internalWallTypeId;
+  return a.wallTypes.find(t=>t.id===id) || a.wallTypes.find(t=>t.classification===(external?'external':'internal')) || a.wallTypes[0];
+}
+
+function windowTypeFor(model, id) {
+  const a=effectiveAuthoring(model), wanted=id||a.defaults.windowTypeId;
+  return a.windowTypes.find(t=>t.id===wanted) || a.windowTypes[0];
+}
+
+function openingPoint(room, opening) {
+  const q=Number(opening.offset);
+  return opening.side==='east'?[room.x+room.w,room.y+room.d*q]
+    :opening.side==='west'?[room.x,room.y+room.d*q]
+    :opening.side==='north'?[room.x+room.w*q,room.y+room.d]
+    :[room.x+room.w*q,room.y];
+}
+
+function sideSpan(room, side) { return ['east','west'].includes(side)?room.d:room.w; }
+
+return {AUTHORING_SCHEMA,DEFAULT_WALL_TYPES,DEFAULT_WINDOW_TYPES,authoringDefaults,effectiveAuthoring,wallTypeFor,windowTypeFor,openingPoint,sideSpan};
+})();
+const MASAR_Module_1=(()=>{
+const { authoringDefaults, effectiveAuthoring, openingPoint, sideSpan, windowTypeFor }=MASAR_Module_0;
+
+/** Canonical conceptual geometry. Metres; x=east, y=north, z=up. Never implies code compliance. */
+const VERSION = 1;
+const clone = value => structuredClone(value);
+const round = v => Math.round(v * 1000) / 1000;
+const uid = () => { if (globalThis.crypto.randomUUID)
+    return globalThis.crypto.randomUUID(); const a = globalThis.crypto.getRandomValues(new Uint8Array(16)); a[6] = (a[6] & 15) | 64; a[8] = (a[8] & 63) | 128; const h = [...a].map(x => x.toString(16).padStart(2, '0')).join(''); return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`; };
+const KINDS = { living: 'معيشة', majlis: 'مجلس', bedroom: 'غرفة نوم', kitchen: 'مطبخ', bath: 'دورة مياه', stairs: 'درج', elevator: 'مصعد', hall: 'ممر', dining: 'طعام', office: 'مكتب', meeting: 'اجتماعات', reception: 'استقبال', warehouse: 'مستودع', loading: 'استلام وتحميل', retail: 'تجزئة', laundry: 'غسيل', storage: 'تخزين', garage: 'مواقف', service: 'خدمات' };
+const COLORS = { living: '#dfbf94', majlis: '#c3d4c6', bedroom: '#c2cce1', kitchen: '#d4c5b5', bath: '#b5d6db', stairs: '#c9c3b9', elevator: '#b9c2c7', hall: '#e6e1d8', dining: '#dfc6c3', office: '#c8c2da', meeting: '#c9c0d7', reception: '#d9c9ae', warehouse: '#c9cfbf', loading: '#c8d1cc', retail: '#dec9b1', laundry: '#c5d7d7', storage: '#d2d1c2', garage: '#c9c9c4', service: '#ced4c0' };
+function normalizeText(value = '') {
+    return String(value).replace(/[٠-٩]/g, c => String('٠١٢٣٤٥٦٧٨٩'.indexOf(c))).replace(/[۰-۹]/g, c => String('۰۱۲۳۴۵۶۷۸۹'.indexOf(c))).replace(/٫/g, '.').replace(/٬/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/[ًٌٍَُِّْـ]/g, '').toLowerCase().trim();
+}
+const wordNumbers = { 'واحد': 1, 'واحده': 1, 'اثنين': 2, 'اثنان': 2, 'اثنتين': 2, 'ثلاث': 3, 'ثلاثه': 3, 'اربع': 4, 'اربعه': 4, 'خمس': 5, 'خمسه': 5, 'ست': 6, 'سته': 6, 'سبع': 7, 'سبعه': 7, 'ثمان': 8, 'ثمانيه': 8, 'تسع': 9, 'تسعه': 9, 'عشر': 10, 'عشره': 10 };
+function amount(text, re, fallback) { const m = text.match(re); if (!m)
+    return { value: fallback, source: 'assumed' }; const n = /^[-+]?\d+(?:\.\d+)?$/.test(m[1]) ? Number(m[1]) : wordNumbers[m[1]]; return Number.isFinite(n) ? { value: n, source: 'requested' } : { value: fallback, source: 'assumed' }; }
+function understand(prompt) {
+    const t = normalizeText(prompt);
+    if (t.length > 12000)
+        throw Error('الوصف أطول من الحد المسموح (12,000 حرف).');
+    const dim = t.match(/([-+]?\d+(?:\.\d+)?)\s*(?:×|x|\*|في|بـ?)\s*([-+]?\d+(?:\.\d+)?)/);
+    const projectType = /(?:مستودع|مخزن|warehouse)/.test(t) ? 'warehouse' : /(?:مكاتب|مكتب اداري|office)/.test(t) ? 'office' : /(?:متجر|محل تجاري|تجز[يئ]ه|retail)/.test(t) ? 'retail' : /شاليه/.test(t) ? 'chalet' : 'villa';
+    const residential = ['villa', 'chalet'].includes(projectType);
+    const defaultFloors = projectType === 'villa' || projectType === 'office' ? 2 : 1;
+    let floors = amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?|واحده?)\s*(?:ادوار|طوابق|دور|طابق)/, defaultFloors);
+    if (/دورين|طابقين/.test(t)) floors = { value: 2, source: 'requested' };
+    if (/دور واحد|طابق واحد/.test(t)) floors = { value: 1, source: 'requested' };
+    const beds = residential ? amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?|تسعه?|عشره?)\s*(?:غرف(?:ه)?\s*(?:نوم)?)/, projectType === 'chalet' ? 3 : 4) : { value: 0, source: 'derived' };
+    const offices = projectType === 'office' ? amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?)\s*(?:مكاتب|مكتب)/, 4) : { value: 0, source: 'derived' };
+    const parking = amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?|تسعه?|عشره?)\s*(?:مواقف|موقف)/, projectType === 'warehouse' ? 2 : 1);
+    const street = ['شمال', 'جنوب', 'شرق', 'غرب'].find(d => new RegExp(`(?:شارع|مدخل)[^،.\n]{0,16}${d}`).test(t));
+    const priority = /خصوصي/.test(t) ? 'privacy' : /(?:حديق|مسبح|اطلال|خارجي)/.test(t) ? 'outdoor' : /(?:مدمج|اقتصادي|اصغر|اقل مساح)/.test(t) ? 'compact' : 'balanced';
+    const style = /كلاسيك/.test(t) ? 'classic' : /(?:مودرن|حديث)/.test(t) ? 'modern' : /صناعي/.test(t) ? 'industrial' : 'unspecified';
+    const titles = { villa: 'فيلا الفناء', chalet: 'شاليه الفناء', office: 'مكاتب مسار', warehouse: 'مستودع مسار', retail: 'مساحة تجارية' };
+    const brief = {
+        prompt: String(prompt), width: dim ? Number(dim[1]) : projectType === 'warehouse' ? 30 : 20, depth: dim ? Number(dim[2]) : projectType === 'warehouse' ? 40 : 25,
+        floors: floors.value, bedrooms: beds.value, offices: offices.value, parking: parking.value, street: street || 'جنوب',
+        elevator: /مصعد/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مصعد/.test(t), pool: /مسبح/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مسبح/.test(t),
+        projectType, priority, style, title: titles[projectType],
+        sources: { width: dim ? 'requested' : 'assumed', depth: dim ? 'requested' : 'assumed', floors: floors.source, bedrooms: beds.source, offices: offices.source, parking: parking.source, street: street ? 'requested' : 'assumed', projectType: projectType === 'villa' && !/(?:فيلا|منزل)/.test(t) ? 'assumed' : 'requested' },
+        intents: [], unresolved: []
+    };
+    if (brief.width < 12 || brief.width > 120 || brief.depth < 15 || brief.depth > 160)
+        brief.unresolved.push('مولّد التوزيع الحالي يدعم أرضًا مستطيلة بعرض 12–120 م وعمق 15–160 م. عدّل الأبعاد أو استورد مشروع JSON.');
+    if (!Number.isInteger(brief.floors) || brief.floors < 1 || brief.floors > 8)
+        brief.unresolved.push('هذه النسخة تدعم من دور واحد إلى ثمانية أدوار مفاهيمية.');
+    if (residential && (!Number.isInteger(brief.bedrooms) || brief.bedrooms < 1 || brief.bedrooms > 16))
+        brief.unresolved.push('المشاريع السكنية تدعم من غرفة نوم واحدة إلى 16 غرفة نوم.');
+    if (projectType === 'office' && (!Number.isInteger(brief.offices) || brief.offices < 1 || brief.offices > 20))
+        brief.unresolved.push('مشاريع المكاتب تدعم من مكتب واحد إلى 20 مكتبًا في البرنامج المفاهيمي.');
+    if (/(?:مجلس)[^،.\n]{0,28}(?:قريب|قرب)[^،.\n]{0,18}(?:مدخل)/.test(t) || /(?:قرب|قريب)[^،.\n]{0,18}(?:مدخل)[^،.\n]{0,28}(?:مجلس)/.test(t))
+        brief.intents.push({ type: 'near-entry', subjectKind: 'majlis', label: 'المجلس قريب من المدخل', source: 'requested' });
+    if (/(?:مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/.test(t))
+        brief.intents.push({ type: 'garden-edge', subjectKind: /مطبخ/.test(t) ? 'kitchen' : 'living', label: /مطبخ/.test(t) ? 'المطبخ مرتبط بالجهة الخارجية' : 'المعيشة مرتبطة بالجهة الخارجية', source: 'requested' });
+    return brief;
+}
+function briefIssues(b) { return b.unresolved.filter(x => !x.startsWith('المصعد') && !x.startsWith('المسبح')); }
+function room(id, name, kind, x, y, w, d, doorSide = 'east', entry = false) { return { id, name, kind, x: round(x), y: round(y), w: round(w), d: round(d), height: 3, locked: false, doors: [{ id: `${id}-door`, side: doorSide, offset: .5, width: Math.min(.9, Math.min(w, d) * .7), entry }], windows: [], note: '', provenance: 'generated-concept' }; }
+function generate(brief, variant = 0) {
+    if (briefIssues(brief).length) throw Error(briefIssues(brief)[0]);
+    const residential = ['villa', 'chalet'].includes(brief.projectType || 'villa');
+    if (![brief.width, brief.depth].every(Number.isFinite) || brief.width < 12 || brief.width > 120 || brief.depth < 15 || brief.depth > 160 || !Number.isInteger(brief.floors) || brief.floors < 1 || brief.floors > 8 || (residential && (!Number.isInteger(brief.bedrooms) || brief.bedrooms < 1 || brief.bedrooms > 16)) || !['شمال', 'جنوب', 'شرق', 'غرب'].includes(brief.street))
+        throw Error('الأبعاد أو أعداد الأدوار والغرف خارج النطاق المدعوم.');
+    const sideways = ['شرق', 'غرب'].includes(brief.street), W = sideways ? brief.depth : brief.width, D = sideways ? brief.width : brief.depth;
+    const sideSetback = Math.max(2, Math.min(4, W * .08)), endSetback = Math.max(3, Math.min(5, D * .10));
+    const bx = round(sideSetback), by = round(endSetback), bw = round(W - sideSetback * 2), bd = round(D - endSetback * 2), hw = Math.max(1.5, Math.min(2.2, bw * .08));
+    const bias = variant === 1 ? .06 : variant === 2 ? -.06 : 0, lw = round((bw - hw) * (.50 + bias)), rw = round(bw - lw - hw);
+    const levels = [];
+    let remainingBeds = brief.bedrooms || 0, remainingOffices = brief.offices || 0;
+    const projectType = brief.projectType || 'villa';
+    const cfgFor = f => {
+        if (projectType === 'warehouse') return f === 0 ? [{ name: 'منطقة التخزين الرئيسية', kind: 'warehouse' }, { name: 'الاستلام والتحميل', kind: 'loading' }, { name: 'مكتب التشغيل', kind: 'office' }, { name: 'خدمات العاملين', kind: 'service' }, { name: 'دورة مياه', kind: 'bath' }] : [{ name: `مكتب إدارة الدور ${f}`, kind: 'office' }, { name: 'غرفة اجتماع', kind: 'meeting' }, { name: 'خدمات', kind: 'service' }];
+        if (projectType === 'retail') return f === 0 ? [{ name: 'صالة العرض', kind: 'retail' }, { name: 'مخزن خلفي', kind: 'storage' }, { name: 'مكتب الإدارة', kind: 'office' }, { name: 'خدمات', kind: 'service' }, { name: 'دورة مياه', kind: 'bath' }] : [{ name: `صالة عرض ${f + 1}`, kind: 'retail' }, { name: 'مخزن', kind: 'storage' }, { name: 'خدمات', kind: 'service' }];
+        if (projectType === 'office') {
+            const floorsLeft = brief.floors - f, officesHere = Math.max(0, Math.ceil(remainingOffices / floorsLeft)); remainingOffices -= officesHere;
+            const start = Math.max(1, (brief.offices || 4) - remainingOffices - officesHere + 1), list = Array.from({ length: officesHere }, (_, i) => ({ name: `مكتب ${start + i}`, kind: 'office' }));
+            if (f === 0) list.unshift({ name: 'الاستقبال', kind: 'reception' });
+            list.push({ name: 'غرفة اجتماع', kind: 'meeting' }, { name: 'استراحة وتحضير', kind: 'kitchen' }, { name: 'خدمات', kind: 'bath' }); return list;
+        }
+        if (f === 0 && brief.floors > 1) return [{ name: 'مجلس الضيوف', kind: 'majlis' }, { name: 'غرفة الطعام', kind: 'dining' }, { name: 'المعيشة العائلية', kind: 'living' }, { name: 'المدخل والخدمات', kind: 'service' }, { name: 'مطبخ مفتوح', kind: 'kitchen' }, { name: 'دورة مياه الضيوف', kind: 'bath' }];
+        const floorsLeft = brief.floors - f, bedsHere = Math.ceil(remainingBeds / floorsLeft), start = (brief.bedrooms || 1) - remainingBeds + 1;
+        const list = Array.from({ length: bedsHere }, (_, i) => ({ name: `غرفة نوم ${start + i}`, kind: 'bedroom' })); remainingBeds -= bedsHere;
+        if (f === 0) list.push({ name: projectType === 'chalet' ? 'المعيشة والمجلس' : 'المعيشة العائلية', kind: 'living' }, { name: 'المطبخ', kind: 'kitchen' }, { name: 'مجلس الضيوف', kind: 'majlis' });
+        else list.push({ name: 'صالة عائلية', kind: 'living' });
+        list.push({ name: 'دورة مياه', kind: 'bath' }); return list;
+    };
+    for (let f = 0; f < brief.floors; f++) {
+        const r = [], prefix = `l${f}`, configs = cfgFor(f), leftCfg = configs.filter((_, i) => i % 2 === 0), rightCfg = configs.filter((_, i) => i % 2 === 1);
+        const coreD = Math.min(4.8, Math.max(3.6, bd * .28)), flip = variant === 2, rightUsableD = bd - coreD;
+        leftCfg.forEach((c, i) => { const y1 = round(by + i * bd / leftCfg.length), y2 = round(by + (i + 1) * bd / leftCfg.length); r.push(room(`${prefix}-room-${configs.indexOf(c)}`, c.name, c.kind, bx, y1, lw, round(y2 - y1), 'east')); });
+        rightCfg.forEach((c, i) => { const y1 = round(by + i * rightUsableD / Math.max(rightCfg.length, 1)), y2 = round(by + (i + 1) * rightUsableD / Math.max(rightCfg.length, 1)); r.push(room(`${prefix}-room-${configs.indexOf(c)}`, c.name, c.kind, bx + lw + hw, y1, rw, round(y2 - y1), 'west')); });
+        r.push(room(`${prefix}-hall`, projectType === 'warehouse' ? 'ممر التشغيل' : 'ممر التوزيع', 'hall', bx + lw, by, hw, bd, 'south', f === 0));
+        if (f === 0) r.find(x => x.kind === 'hall').doors.push({ id: `${prefix}-rear-door`, side: 'north', offset: .5, width: 1, entry: true });
+        const coreX = bx + lw + hw, coreY = by + bd - coreD;
+        if (brief.elevator) {
+            const liftD = Math.min(1.9, coreD * .42), stairD = round(coreD - liftD - .18);
+            const stair = room(`${prefix}-stairs`, 'الدرج الرئيسي', 'stairs', coreX, coreY, rw, stairD, 'west'); stair.locked = true; r.push(stair);
+            const lift = room(`${prefix}-elevator`, 'المصعد', 'elevator', coreX, round(coreY + stairD + .18), Math.min(2.2, rw), liftD, 'west'); lift.locked = true; lift.provenance = 'requested-concept-core'; r.push(lift);
+        } else { const stair = room(`${prefix}-stairs`, 'الدرج الرئيسي', 'stairs', coreX, coreY, rw, coreD, 'west'); stair.locked = true; r.push(stair); }
+        if (flip) for (const s of r) { s.x = round(W - s.x - s.w); s.doors.forEach(d => { if (d.side === 'east') d.side = 'west'; else if (d.side === 'west') d.side = 'east'; else d.offset = 1 - d.offset; }); }
+        levels.push({ id: prefix, name: f === 0 ? 'الدور الأرضي' : `الدور ${f}`, elevation: round(f * 3.3), height: 3.3, rooms: r });
+    }
+    if (brief.street !== 'جنوب') for (const l of levels) for (const r of l.rooms) {
+        const { x, y, w, d } = r, direction = brief.street;
+        if (direction === 'شمال') { r.x = round(brief.width - x - w); r.y = round(brief.depth - y - d); }
+        if (direction === 'شرق') { r.x = round(brief.width - y - d); r.y = x; r.w = d; r.d = w; }
+        if (direction === 'غرب') { r.x = y; r.y = round(brief.depth - x - w); r.w = d; r.d = w; }
+        for (const door of r.doors) { const old = door.side, maps = { شمال: { south: 'north', north: 'south', east: 'west', west: 'east' }, شرق: { south: 'east', north: 'west', east: 'north', west: 'south' }, غرب: { south: 'west', north: 'east', east: 'south', west: 'north' } }; door.side = maps[direction]?.[old] || old; if (direction === 'شمال' || direction === 'شرق' && ['east', 'west'].includes(old) || direction === 'غرب' && ['north', 'south'].includes(old)) door.offset = round(1 - door.offset); }
+    }
+    const featureRect = (type, name) => {
+        const pad = .45, rear = brief.street === 'جنوب' ? 'north' : brief.street === 'شمال' ? 'south' : brief.street === 'شرق' ? 'west' : 'east';
+        if (['north', 'south'].includes(rear)) { const w = Math.min(6, brief.width - 2), d = Math.min(2.1, Math.max(1.4, endSetback - .8)); return { id: `${type}-1`, type, name, x: round((brief.width - w) / 2), y: rear === 'north' ? round(brief.depth - d - pad) : pad, w: round(w), d: round(d), locked: true, provenance: 'requested-concept-feature' }; }
+        const w = Math.min(2.1, Math.max(1.4, sideSetback - .55)), d = Math.min(6, brief.depth - 2); return { id: `${type}-1`, type, name, x: rear === 'east' ? round(brief.width - w - pad) : pad, y: round((brief.depth - d) / 2), w: round(w), d: round(d), locked: true, provenance: 'requested-concept-feature' };
+    };
+    const features = []; if (brief.pool) features.push(featureRect('pool', 'مسبح خارجي مفاهيمي'));
+    const authoring = authoringDefaults();
+    // Add one deterministic hosted window to eligible exterior rooms. This is a concept
+    // authoring element, not a daylight/code calculation or a product specification.
+    for (const level of levels) {
+        const minX=Math.min(...level.rooms.map(r=>r.x)), maxX=Math.max(...level.rooms.map(r=>r.x+r.w)), minY=Math.min(...level.rooms.map(r=>r.y)), maxY=Math.max(...level.rooms.map(r=>r.y+r.d));
+        for (const r of level.rooms) {
+            if (['hall','stairs','elevator','bath','service','storage','loading','garage'].includes(r.kind)) continue;
+            const candidates=[];
+            if (Math.abs(r.x-minX)<.01) candidates.push('west'); if (Math.abs(r.x+r.w-maxX)<.01) candidates.push('east');
+            if (Math.abs(r.y-minY)<.01) candidates.push('south'); if (Math.abs(r.y+r.d-maxY)<.01) candidates.push('north');
+            const side=candidates.find(x=>!(r.doors||[]).some(d=>d.side===x)) || candidates[0]; if(!side) continue;
+            const span=sideSpan(r,side), type=windowTypeFor({authoring},authoring.defaults.windowTypeId), width=round(Math.min(type.width,Math.max(.6,span*.45)));
+            if(width>span-.12) continue;
+            r.windows=[{id:`${r.id}-window-1`,side,offset:.5,width,height:Math.min(type.height,r.height-.25),sill:Math.min(type.sill,Math.max(.2,r.height-type.height-.2)),typeId:type.id,locked:false,provenance:'generated-concept-window'}];
+        }
+    }
+    const requirements = [
+        { id: 'r-floors', label: `${brief.floors} أدوار إجمالًا`, type: 'floors', value: brief.floors, locked: true, source: brief.sources.floors },
+        ...(residential ? [{ id: 'r-beds', label: `${brief.bedrooms} غرف نوم`, type: 'bedrooms', value: brief.bedrooms, locked: true, source: brief.sources.bedrooms }] : []),
+        { id: 'r-site', label: `أرض ${brief.width} × ${brief.depth} م`, type: 'site', value: [brief.width, brief.depth], locked: true, source: brief.sources.width },
+        ...(brief.elevator ? [{ id: 'r-elevator', label: 'وجود مصعد ضمن النواة الرأسية', type: 'feature', value: 'elevator', locked: true, source: 'requested' }] : []),
+        ...(brief.pool ? [{ id: 'r-pool', label: 'مسبح خارجي مفاهيمي', type: 'feature', value: 'pool', locked: true, source: 'requested' }] : []),
+        ...(brief.intents || []).map((x, i) => ({ id: `r-intent-${i}`, label: x.label, type: 'adjacency', value: clone(x), locked: true, source: x.source || 'requested' })),
+        ...brief.unresolved.map((label, i) => ({ id: `r-u${i}`, label, type: 'unresolved', locked: true, source: 'requested' }))
+    ];
+    return { schemaVersion: VERSION, id: uid(), title: brief.title, authoring, site: { width: brief.width, depth: brief.depth, street: brief.street, north: 'up', setback: { front: endSetback, back: endSetback, left: sideSetback, right: sideSetback }, setbackSource: 'concept-assumption-not-code', features }, brief: clone(brief), requirements, levels, comments: [], references: [], design: { stage: 'concept', projectType, priority: brief.priority || 'balanced', style: brief.style || 'unspecified', generatedVariant: variant }, createdAt: new Date().toISOString() };
+}
+const finite = n => typeof n === 'number' && Number.isFinite(n);
+const safeString = (s, max = 500) => typeof s === 'string' && s.length <= max;
+function roomPolygon(r) { return Array.isArray(r.footprint) && r.footprint.length >= 3 ? r.footprint.map(p=>[Number(p[0]),Number(p[1])]) : [[r.x,r.y],[r.x+r.w,r.y],[r.x+r.w,r.y+r.d],[r.x,r.y+r.d]]; }
+function signedPolygonArea(poly) { let a=0; for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length];a+=p[0]*q[1]-q[0]*p[1];} return a/2; }
+function polygonArea(poly) { return Math.abs(signedPolygonArea(poly)); }
+const cross=(a,b,c)=>(b[0]-a[0])*(c[1]-a[1])-(b[1]-a[1])*(c[0]-a[0]);
+function onSegment(p,a,b,tol=.002){const length=Math.hypot(b[0]-a[0],b[1]-a[1]);return length>0&&Math.abs(cross(a,b,p))/length<=tol&&p[0]>=Math.min(a[0],b[0])-tol&&p[0]<=Math.max(a[0],b[0])+tol&&p[1]>=Math.min(a[1],b[1])-tol&&p[1]<=Math.max(a[1],b[1])+tol;}
+function pointInPolygon(point,poly,includeBoundary=true){if(poly.some((a,i)=>onSegment(point,a,poly[(i+1)%poly.length])))return includeBoundary;let inside=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if(((a[1]>point[1])!==(b[1]>point[1]))&&(point[0]<(b[0]-a[0])*(point[1]-a[1])/(b[1]-a[1])+a[0]))inside=!inside;}return inside;}
+function segmentsProperlyIntersect(a,b,c,d){const ab1=cross(a,b,c),ab2=cross(a,b,d),cd1=cross(c,d,a),cd2=cross(c,d,b);return ((ab1>0&&ab2<0)||(ab1<0&&ab2>0))&&((cd1>0&&cd2<0)||(cd1<0&&cd2>0));}
+function polygonSimple(poly){
+ for(let i=0;i<poly.length;i++)for(let j=i+1;j<poly.length;j++)if(Math.hypot(poly[i][0]-poly[j][0],poly[i][1]-poly[j][1])<.001)return false;
+ for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],c=poly[(i+2)%poly.length];if(Math.abs(cross(a,b,c))<1e-8&&(b[0]-a[0])*(c[0]-b[0])+(b[1]-a[1])*(c[1]-b[1])<0)return false;
+  for(let j=i+1;j<poly.length;j++){if(j===(i+1)%poly.length||i===(j+1)%poly.length)continue;const c=poly[j],d=poly[(j+1)%poly.length];if(segmentsProperlyIntersect(a,b,c,d)||onSegment(c,a,b)||onSegment(d,a,b)||onSegment(a,c,d)||onSegment(b,c,d))return false;}
+ }return true;
+}
+function polygonOrthogonal(poly){return poly.every((p,i)=>{const q=poly[(i+1)%poly.length];return Math.abs(p[0]-q[0])<=.002||Math.abs(p[1]-q[1])<=.002;});}
+function footprintBounds(poly){const xs=poly.map(p=>p[0]),ys=poly.map(p=>p[1]);return{x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),d:Math.max(...ys)-Math.min(...ys)};}
+function pointStrictlyInside(point,poly){return pointInPolygon(point,poly,false);}
+/** Reject hostile/unbounded documents before rendering or saving. */
+function assertModel(m) {
+    if (!m || m.schemaVersion !== VERSION || !safeString(m.id, 100) || !safeString(m.title, 120))
+        throw Error('ملف المشروع غير صالح أو إصداره غير مدعوم.');
+    if (!m.site || ![m.site.width, m.site.depth].every(n => finite(n) && n >= 4 && n <= 240))
+        throw Error('أبعاد الأرض غير صالحة.');
+    if (m.authoring !== undefined) {
+        const a=m.authoring, typeIds=new Set();
+        if (m.authoring?.schema !== 'masar-authoring-1' || !Array.isArray(a.wallTypes) || a.wallTypes.length<1 || a.wallTypes.length>20 || !Array.isArray(a.windowTypes) || a.windowTypes.length<1 || a.windowTypes.length>20 || !a.defaults) throw Error('بيانات التأليف المعماري غير صالحة.');
+        for(const wt of a.wallTypes){ if(!safeString(wt.id,100)||typeIds.has(wt.id)||!safeString(wt.name,160)||!['external','internal'].includes(wt.classification)||!finite(wt.totalThickness)||wt.totalThickness<=0||wt.totalThickness>1||!Array.isArray(wt.layers)||wt.layers.length<1||wt.layers.length>12) throw Error('نوع جدار غير صالح.'); typeIds.add(wt.id); let sum=0; const layerIds=new Set();for(const layer of wt.layers){if(!safeString(layer.id,100)||layerIds.has(layer.id)||!safeString(layer.name,160)||!['finish','core','insulation','air','membrane','other'].includes(layer.function)||!finite(layer.thickness)||layer.thickness<=0||layer.thickness>.8)throw Error('طبقة جدار غير صالحة.');layerIds.add(layer.id);sum+=layer.thickness;} if(Math.abs(sum-wt.totalThickness)>.002)throw Error('مجموع طبقات الجدار لا يساوي السماكة الكلية.'); }
+        for(const w of a.windowTypes){if(!safeString(w.id,100)||typeIds.has(w.id)||!safeString(w.name,160)||![w.width,w.height,w.sill].every(finite)||w.width<=0||w.height<=0||w.sill<0||w.width>8||w.height>5)throw Error('نوع نافذة غير صالح.');typeIds.add(w.id);}
+        if(!a.wallTypes.some(x=>x.id===a.defaults.externalWallTypeId&&x.classification==='external')||!a.wallTypes.some(x=>x.id===a.defaults.internalWallTypeId&&x.classification==='internal')||!a.windowTypes.some(x=>x.id===a.defaults.windowTypeId)) throw Error('النوع الافتراضي في التأليف غير موجود أو تصنيفه لا يطابق الاستخدام.');
+        for(const k of ['structure','mep','fire','accessibility','regulatory'])if(a.disciplineStatus?.[k]!=='unchecked')throw Error('لا يمكن لبيانات التأليف ادعاء فحص التخصصات غير المدعومة.');
+    }
+    if (!Array.isArray(m.levels) || m.levels.length < 1 || m.levels.length > 8)
+        throw Error('عدد الأدوار غير صالح.');
+    const ids = new Set();
+    let count = 0;
+    for (const l of m.levels) {
+        if (!safeString(l.id, 100) || ids.has(l.id) || !safeString(l.name, 120) || !finite(l.elevation) || l.elevation < 0 || l.elevation > 100 || !finite(l.height) || l.height < 2 || l.height > 6 || !Array.isArray(l.rooms) || l.rooms.length===0)
+            throw Error('بيانات الدور غير صالحة.');
+        ids.add(l.id);
+        for (const r of l.rooms) {
+            if (++count > 200 || !safeString(r.id, 100) || ids.has(r.id) || !safeString(r.name, 120) || !Object.hasOwn(KINDS, r.kind))
+                throw Error('معرّف غرفة أو نوعها غير صالح.');
+            ids.add(r.id);
+            if (![r.x, r.y, r.w, r.d, r.height].every(finite) || r.w <= 0 || r.d <= 0 || r.w > 200 || r.d > 200 || r.height < 1 || r.height > 6 || Math.abs(r.x) > 300 || Math.abs(r.y) > 300)
+                throw Error('هندسة الغرفة غير صالحة.');
+            if (r.footprint !== undefined) {
+                if(!Array.isArray(r.footprint)||r.footprint.length<4||r.footprint.length>24||!r.footprint.every(p=>Array.isArray(p)&&p.length===2&&p.every(finite))) throw Error('حدود المساحة غير المستطيلة غير صالحة.');
+                if(!polygonOrthogonal(r.footprint)||!polygonSimple(r.footprint)||polygonArea(r.footprint)<.05) throw Error('الحدود غير المستطيلة يجب أن تكون مضلعًا متعامدًا بسيطًا موجب المساحة.');
+                const b=footprintBounds(r.footprint); if([b.x-r.x,b.y-r.y,b.w-r.w,b.d-r.d].some(v=>Math.abs(v)>.003)) throw Error('صندوق حدود المساحة لا يطابق مضلعها.');
+            }
+            if (typeof r.locked !== 'boolean' || !Array.isArray(r.doors) || r.doors.length > 10 || (r.windows!==undefined&&!Array.isArray(r.windows)) || (r.windows?.length||0)>12 || !safeString(r.note ?? '', 2000))
+                throw Error('خصائص الغرفة غير صالحة.');
+            for (const d of r.doors) {
+                if (!safeString(d.id, 130) || ids.has(d.id) || !['east', 'west', 'north', 'south'].includes(d.side) || !finite(d.offset) || d.offset < 0 || d.offset > 1 || !finite(d.width) || d.width <= 0 || d.width > 5 || typeof d.entry !== 'boolean' || (d.height!==undefined&&(!finite(d.height)||d.height<=0||d.height>r.height)))
+                    throw Error('بيانات الباب غير صالحة.');
+                ids.add(d.id);
+            }
+            for (const w of r.windows || []) {
+                if(!safeString(w.id,130)||ids.has(w.id)||!effectiveAuthoring(m).windowTypes.some(t=>t.id===w.typeId)||!['east','west','north','south'].includes(w.side)||!finite(w.offset)||w.offset<0||w.offset>1||![w.width,w.height,w.sill].every(finite)||w.width<=0||w.width>8||w.height<=0||w.height>5||w.sill<0||w.sill+w.height>r.height+.002||!safeString(w.typeId||'',100)||typeof w.locked!=='boolean') throw Error('بيانات النافذة غير صالحة.');
+                ids.add(w.id);
+            }
+        }
+    }
+    if (!m.brief || !safeString(m.brief.prompt, 12000) || !Array.isArray(m.requirements) || m.requirements.length > 80)
+        throw Error('متطلبات المشروع غير صالحة.');
+    for (const r of m.requirements) {
+        if (!safeString(r.id, 100) || !safeString(r.label, 1000) || !['floors', 'bedrooms', 'site', 'feature', 'adjacency', 'unresolved', 'custom'].includes(r.type) || typeof r.locked !== 'boolean')
+            throw Error('بند متطلب غير صالح.');
+    }
+    if (m.site.features !== undefined) {
+        if (!Array.isArray(m.site.features) || m.site.features.length > 30)
+            throw Error('عناصر الموقع غير صالحة.');
+        for (const f of m.site.features) {
+            if (!safeString(f.id, 100) || !safeString(f.name, 150) || !['pool', 'parking', 'garden', 'terrace'].includes(f.type) || ![f.x, f.y, f.w, f.d].every(finite) || f.w <= 0 || f.d <= 0 || f.w > 200 || f.d > 200 || typeof f.locked !== 'boolean')
+                throw Error('عنصر موقع غير صالح.');
+        }
+    }
+    if (m.design !== undefined) {
+        if (!m.design || !['concept', 'development', 'review'].includes(m.design.stage) || !['villa', 'chalet', 'office', 'warehouse', 'retail'].includes(m.design.projectType || 'villa') || !['balanced', 'privacy', 'outdoor', 'compact'].includes(m.design.priority || 'balanced') || !safeString(m.design.style || 'unspecified', 40))
+            throw Error('إعدادات التصميم غير صالحة.');
+    }
+    if (!Array.isArray(m.comments) || m.comments.length > 200)
+        throw Error('تعليقات المشروع غير صالحة.');
+    for (const c of m.comments)
+        if (!safeString(c.id, 100) || !safeString(c.roomId, 100) || !safeString(c.text, 2000) || !safeString(c.author, 120) || !safeString(c.at, 80) || typeof c.resolved !== 'boolean')
+            throw Error('تعليق غير صالح.');
+    if (!Array.isArray(m.references) || m.references.length > 5)
+        throw Error('مراجع المشروع غير صالحة.');
+    for (const ref of m.references) {
+        if (ref.type !== 'dxf' || !safeString(ref.name, 150) || !Array.isArray(ref.lines) || ref.lines.length > 3000 || !finite(ref.scale) || ref.scale <= 0 || ref.scale > 1000)
+            throw Error('مرجع رسم غير صالح.');
+        for (const line of ref.lines)
+            if (!Array.isArray(line) || line.length !== 4 || !line.every(n => finite(n) && Math.abs(n) < 1e7))
+                throw Error('خط مرجعي غير صالح.');
+    }
+    return m;
+}
+const rawArea = r => Array.isArray(r.footprint)&&r.footprint.length>=3 ? polygonArea(r.footprint) : r.w * r.d;
+const area = r => round(rawArea(r));
+function totals(m) { const rooms = m.levels.flatMap(l => l.rooms), landArea = round(m.site.width * m.site.depth), floorArea = round(rooms.reduce((a, r) => a + rawArea(r), 0)), footprint = round(m.levels[0].rooms.reduce((a, r) => a + rawArea(r), 0)), circulation = round(rooms.filter(r => ['hall', 'stairs', 'elevator'].includes(r.kind)).reduce((a, r) => a + rawArea(r), 0)); return { floorArea, footprint, landArea, outdoorArea: round(Math.max(0, landArea - footprint)), bedrooms: rooms.filter(r => r.kind === 'bedroom').length, offices: rooms.filter(r => r.kind === 'office').length, rooms: rooms.filter(r => !['hall', 'stairs', 'elevator'].includes(r.kind)).length, circulation, circulationPct: floorArea ? round(circulation / floorArea * 100) : 0, coveragePct: landArea ? round(footprint / landArea * 100) : 0, features: (m.site.features || []).length }; }
+const clamp = (v, lo = 0, hi = 100) => Math.max(lo, Math.min(hi, v));
+const centroid = r => { const poly=roomPolygon(r); if(!r.footprint)return [r.x+r.w/2,r.y+r.d/2]; const signed=signedPolygonArea(poly); if(Math.abs(signed)<1e-9)return [r.x+r.w/2,r.y+r.d/2]; let cx=0,cy=0; for(let i=0;i<poly.length;i++){const a=poly[i],b=poly[(i+1)%poly.length],f=a[0]*b[1]-b[0]*a[1];cx+=(a[0]+b[0])*f;cy+=(a[1]+b[1])*f;} return [cx/(6*signed),cy/(6*signed)]; };
+function gardenSide(m) { return m.site.street === 'جنوب' ? 'north' : m.site.street === 'شمال' ? 'south' : m.site.street === 'شرق' ? 'west' : 'east'; }
+function entryPoint(m) { const l = m.levels[0], entries = l.rooms.flatMap(r => r.doors.filter(d => d.entry).map(d => doorPoint(r, d))); if (entries.length) return entries[0]; return m.site.street === 'جنوب' ? [m.site.width / 2, 0] : m.site.street === 'شمال' ? [m.site.width / 2, m.site.depth] : m.site.street === 'شرق' ? [m.site.width, m.site.depth / 2] : [0, m.site.depth / 2]; }
+function distanceToEntry(m, r) { const a = entryPoint(m), b = centroid(r); return Math.hypot(a[0] - b[0], a[1] - b[1]); }
+function touchesGardenEdge(m, r, tolerance = .15) { const side = gardenSide(m), l = m.levels.find(l => l.rooms.includes(r)) || m.levels[0], xs = l.rooms.map(x => [x.x, x.x + x.w]).flat(), ys = l.rooms.map(x => [x.y, x.y + x.d]).flat(), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys); return side === 'north' ? Math.abs(r.y + r.d - maxY) <= tolerance : side === 'south' ? Math.abs(r.y - minY) <= tolerance : side === 'east' ? Math.abs(r.x + r.w - maxX) <= tolerance : Math.abs(r.x - minX) <= tolerance; }
+function requirementStatus(m, req) {
+    if (req.type === 'feature') { const present = req.value === 'elevator' ? m.levels.every(l => l.rooms.some(r => r.kind === 'elevator')) : req.value === 'pool' ? (m.site.features || []).some(f => f.type === 'pool') : false; return { measurable: true, satisfied: present, detail: present ? 'موجود في النموذج' : 'غير موجود في النموذج' }; }
+    if (req.type !== 'adjacency' || !req.value) return { measurable: false, satisfied: null, detail: 'غير قابل للقياس آليًا' };
+    const subjects = m.levels.flatMap(l => l.rooms).filter(r => r.kind === req.value.subjectKind); if (!subjects.length) return { measurable: true, satisfied: false, detail: 'العنصر المطلوب غير موجود' };
+    if (req.value.type === 'near-entry') { const ground = m.levels[0].rooms.filter(r => !['hall', 'stairs', 'elevator'].includes(r.kind)), sorted = [...ground].sort((a,b)=>distanceToEntry(m,a)-distanceToEntry(m,b)), cutoff = Math.max(1, Math.ceil(sorted.length * .45)), ids = new Set(sorted.slice(0, cutoff).map(r=>r.id)), ok = subjects.some(r => ids.has(r.id)); return { measurable: true, satisfied: ok, detail: ok ? 'ضمن أقرب مساحات للمدخل' : 'بعيد نسبيًا عن المدخل' }; }
+    if (req.value.type === 'garden-edge') { const ok = subjects.some(r => touchesGardenEdge(m, r)); return { measurable: true, satisfied: ok, detail: ok ? 'على واجهة الجهة الخارجية' : 'ليس على واجهة الجهة الخارجية' }; }
+    return { measurable: false, satisfied: null, detail: 'علاقة غير مدعومة في القياس' };
+}
+function designMetrics(m) {
+    assertModel(m); const t = totals(m), rooms = m.levels.flatMap(l => l.rooms), diag = Math.hypot(m.site.width, m.site.depth) || 1;
+    const bedrooms = rooms.filter(r => r.kind === 'bedroom'), publicRooms = rooms.filter(r => ['majlis', 'reception', 'retail', 'living'].includes(r.kind)), usable = rooms.filter(r => !['hall','stairs','elevator','bath','service'].includes(r.kind));
+    const avg = xs => xs.length ? xs.reduce((a,x)=>a+x,0)/xs.length : 0;
+    const privateDistance = bedrooms.length ? avg(bedrooms.map(r=>distanceToEntry(m,r))) / diag * 100 : 65;
+    const publicNear = publicRooms.length ? 100 - avg(publicRooms.map(r=>distanceToEntry(m,r))) / diag * 100 : 70;
+    const privacy = clamp(privateDistance * .62 + publicNear * .38);
+    const movement = clamp(100 - t.circulationPct * 1.8 - avg(usable.map(r=>distanceToEntry(m,r))) / diag * 28 + 25);
+    let edgeCount = 0, eligible = 0; for (const l of m.levels) { const xs=l.rooms.map(r=>[r.x,r.x+r.w]).flat(), ys=l.rooms.map(r=>[r.y,r.y+r.d]).flat(), minX=Math.min(...xs),maxX=Math.max(...xs),minY=Math.min(...ys),maxY=Math.max(...ys); for (const r of l.rooms.filter(r=>!['hall','stairs','elevator','bath','service'].includes(r.kind))) { eligible++; if (Math.abs(r.x-minX)<.15||Math.abs(r.x+r.w-maxX)<.15||Math.abs(r.y-minY)<.15||Math.abs(r.y+r.d-maxY)<.15) edgeCount++; } }
+    const daylightProxy = eligible ? clamp(edgeCount / eligible * 100) : 0, outdoor = clamp((t.outdoorArea / t.landArea) * 100 * 1.7), efficiency = clamp(100 - t.circulationPct * 2.2);
+    const measurable = m.requirements.map(r=>requirementStatus(m,r)).filter(x=>x.measurable), requirements = measurable.length ? measurable.filter(x=>x.satisfied).length / measurable.length * 100 : 100;
+    const priority = m.design?.priority || 'balanced', weights = priority === 'privacy' ? [0.34,.19,.12,.10,.25] : priority === 'outdoor' ? [.17,.18,.30,.10,.25] : priority === 'compact' ? [.13,.27,.10,.30,.20] : [.22,.23,.18,.17,.20];
+    const overall = clamp(privacy*weights[0] + movement*weights[1] + outdoor*weights[2] + efficiency*weights[3] + requirements*weights[4]);
+    return { privacy: round(privacy), movement: round(movement), outdoor: round(outdoor), efficiency: round(efficiency), daylightProxy: round(daylightProxy), requirements: round(requirements), overall: round(overall), priority, note: 'مؤشرات مفاهيمية للمقارنة داخل مسار؛ ليست فحص كود أو اعتمادًا هندسيًا.' };
+}
+function impactSummary(before, after) { const bt=totals(before), at=totals(after), bi=validate(before), ai=validate(after), bset=new Set(bi.map(i=>i.id)), aset=new Set(ai.map(i=>i.id)), changes=diffModels(before,after); return { changes, affectedIds: changes.map(c=>c.id), floorAreaDelta: round(at.floorArea-bt.floorArea), footprintDelta: round(at.footprint-bt.footprint), circulationDelta: round(at.circulation-bt.circulation), scoreDelta: round(designMetrics(after).overall-designMetrics(before).overall), newIssues: ai.filter(i=>!bset.has(i.id)), resolvedIssues: bi.filter(i=>!aset.has(i.id)), beforeMetrics: designMetrics(before), afterMetrics: designMetrics(after) }; }
+function createAlternatives(base) {
+    assertModel(base); const make = (label, description, strategy) => { let alt=clone(base); for (const l of alt.levels) { const free=l.rooms.filter(r=>!r.locked&&!['hall','stairs','elevator'].includes(r.kind)); if (free.length<2) continue; let subject, target; if (strategy==='privacy') { subject=free.find(r=>r.kind==='bedroom'); const candidates=free.filter(r=>r.id!==subject?.id).sort((a,b)=>distanceToEntry(alt,b)-distanceToEntry(alt,a)); target=candidates[0]; } else if (strategy==='entry') { subject=free.find(r=>['majlis','reception','retail'].includes(r.kind)); const candidates=free.filter(r=>r.id!==subject?.id).sort((a,b)=>distanceToEntry(alt,a)-distanceToEntry(alt,b)); target=candidates[0]; } else { subject=free.find(r=>['living','kitchen'].includes(r.kind)); const candidates=free.filter(r=>r.id!==subject?.id).sort((a,b)=>Number(touchesGardenEdge(alt,b))-Number(touchesGardenEdge(alt,a))); target=candidates.at(-1); } if (subject&&target&&subject.id!==target.id) { try { const p=propose(alt,{type:'swap',roomId:subject.id,targetId:target.id}); if(!p.blockers.length) alt=p.candidate; } catch {} } } return { label, description, strategy, model:alt, metrics:designMetrics(alt) }; };
+    return [{ label:'التوزيع الحالي',description:'مرجع المقارنة كما هو الآن.',strategy:'current',model:clone(base),metrics:designMetrics(base)}, make('خصوصية أعلى','يحاول إبعاد غرف النوم وتحسين فصل الخاص عن الوصول العام.','privacy'), make('استقبال أقرب','يحاول تقريب المجلس/الاستقبال من المدخل مع إبقاء العناصر المثبتة.','entry'), make('ارتباط خارجي','يحاول تقريب المعيشة أو المطبخ من جهة الحديقة/الخارج.','outdoor')];
+}
+/** Exact positive-area overlap for supported orthogonal polygons (not centroid guessing). */
+function overlap(a,b){
+ const left=Math.max(a.x,b.x),right=Math.min(a.x+a.w,b.x+b.w),bottom=Math.max(a.y,b.y),top=Math.min(a.y+a.d,b.y+b.d);if(right-left<=.002||top-bottom<=.002)return false;
+ if(!a.footprint&&!b.footprint)return true;
+ const A=roomPolygon(a),B=roomPolygon(b),xs=[...new Set([left,right,...A.map(p=>p[0]),...B.map(p=>p[0])].filter(x=>x>=left&&x<=right))].sort((x,y)=>x-y);
+ const intervals=(poly,x)=>{const ys=[];for(let i=0;i<poly.length;i++){const p=poly[i],q=poly[(i+1)%poly.length];if((p[0]<=x&&q[0]>x)||(q[0]<=x&&p[0]>x))ys.push(p[1]+(q[1]-p[1])*(x-p[0])/(q[0]-p[0]));}ys.sort((a,b)=>a-b);return ys;};
+ for(let i=1;i<xs.length;i++){if(xs[i]-xs[i-1]<=.002)continue;const x=(xs[i]+xs[i-1])/2,aa=intervals(A,x),bb=intervals(B,x);for(let j=0;j<aa.length;j+=2)for(let k=0;k<bb.length;k+=2)if(Math.min(aa[j+1],bb[k+1])-Math.max(aa[j],bb[k])>.002)return true;}
+ return false;
+}
+function doorPoint(r, d) { return openingPoint(r,d); }
+function windowPoint(r,w){ return openingPoint(r,w); }
+function openingFitsBoundary(r,o){const [x,y]=openingPoint(r,o),v=['east','west'].includes(o.side),a=v?[x,y-o.width/2]:[x-o.width/2,y],b=v?[x,y+o.width/2]:[x+o.width/2,y],poly=roomPolygon(r);return poly.some((p,i)=>onSegment(a,p,poly[(i+1)%poly.length],.004)&&onSegment(b,p,poly[(i+1)%poly.length],.004));}
+function openingFitsHost(room,opening,rooms){
+ const [x,y]=openingPoint(room,opening),v=['east','west'].includes(opening.side),coord=v?x:y,center=v?y:x,points=[];
+ for(const r of rooms){const p=roomPolygon(r);for(let i=0;i<p.length;i++){const a=p[i],b=p[(i+1)%p.length];if(v?Math.abs(a[0]-b[0])<.002&&Math.abs(a[0]-coord)<.002:Math.abs(a[1]-b[1])<.002&&Math.abs(a[1]-coord)<.002)points.push(v?a[1]:a[0],v?b[1]:b[0]);}}
+ const stops=[...new Set(points.map(round))].sort((a,b)=>a-b);return stops.some((n,i)=>i>0&&center-opening.width/2>=stops[i-1]-.002&&center+opening.width/2<=n+.002);
+}
+function neighbours(r, d, rooms) { const [x, y] = doorPoint(r, d), n = d.side === 'east' ? [.02, 0] : d.side === 'west' ? [-.02, 0] : d.side === 'north' ? [0, .02] : [0, -.02]; const p=[x+n[0],y+n[1]]; return rooms.filter(s => s.id !== r.id && pointInPolygon(p,roomPolygon(s),true)); }
+function validate(m) {
+    assertModel(m);
+    const issues = [];
+    const add = (id, status, message, targets = [], category = 'geometry') => issues.push({ id, status, message, targets, category });
+    const all = m.levels.flatMap(l => l.rooms), reachableGlobal = new Set();
+    for (const l of m.levels) {
+        const graph = new Map(l.rooms.map(r => [r.id, new Set()])), starts = [];
+        for (const r of l.rooms) {
+            if (r.x < -.002 || r.y < -.002 || r.x + r.w > m.site.width + .002 || r.y + r.d > m.site.depth + .002)
+                add(`bounds-${r.id}`, 'error', `${r.name}: جزء من الغرفة خارج الأرض.`, [r.id]);
+            if(r.height>l.height+.002)add(`height-${r.id}`,'error',`${r.name}: ارتفاع الغرفة يتجاوز ارتفاع الدور.`,[r.id]);
+            if (r.w < 1 || r.d < 1)
+                add(`narrow-${r.id}`, 'warning', `${r.name}: أحد الأبعاد أصغر من متر؛ راجع قابلية الاستخدام.`, [r.id]);
+            for (const d of r.doors) {
+                const span = ['east', 'west'].includes(d.side) ? r.d : r.w;
+                if (d.offset * span - d.width / 2 < -.002 || d.offset * span + d.width / 2 > span + .002) {
+                    add(`door-fit-${d.id}`, 'error', `${r.name}: الباب لا يتسع داخل الجدار.`, [r.id]);
+                    continue;
+                }
+                if(!openingFitsHost(r,d,l.rooms))add(`host-span-${d.id}`,'error',`${r.name}: عرض الباب يعبر نهاية قطاع الجدار المضيف.`,[r.id,d.id],'openings');
+                if(r.footprint && !openingFitsBoundary(r,d)) { add(`door-boundary-${d.id}`,'error',`${r.name}: موضع الباب لا يقع على حدود المساحة غير المستطيلة.`,[r.id,d.id]); continue; }
+                const ns = neighbours(r, d, l.rooms);
+                ns.forEach(s => { graph.get(r.id).add(s.id); graph.get(s.id).add(r.id); });
+                if (d.entry && l.elevation === 0 && ns.length === 0)
+                    starts.push(r.id);
+                if (!d.entry && ns.length === 0)
+                    add(`door-outside-${d.id}`, 'warning', `${r.name}: باب لا يتصل بغرفة مجاورة؛ تحقّق من كونه مدخلًا خارجيًا.`, [r.id], 'connectivity');
+            }
+            const apertures=[...r.doors.map(d=>({...d,sill:0,height:d.height??2.15})),...(r.windows||[])];
+            for(let ai=0;ai<apertures.length;ai++)for(let bi=ai+1;bi<apertures.length;bi++){const a=apertures[ai],b=apertures[bi];if(a.side!==b.side)continue;const span=sideSpan(r,a.side),distance=Math.abs(a.offset-b.offset)*span;if(distance<(a.width+b.width)/2-.002&&Math.min(a.sill+a.height,b.sill+b.height)>Math.max(a.sill,b.sill)+.002)add(`opening-overlap-${a.id}-${b.id}`,'error',`${r.name}: تداخل بين فتحتين على الجدار نفسه.`,[r.id,a.id,b.id],'openings');}
+            for(const w of r.windows||[]){
+                const span=sideSpan(r,w.side);
+                if(!openingFitsHost(r,w,l.rooms))add(`host-span-${w.id}`,'error',`${r.name}: عرض النافذة يعبر نهاية قطاع الجدار المضيف.`,[r.id,w.id],'openings');
+                if(w.offset*span-w.width/2<-.002||w.offset*span+w.width/2>span+.002) add(`window-fit-${w.id}`,'error',`${r.name}: النافذة لا تتسع داخل ضلع الاستضافة.`,[r.id,w.id],'openings');
+                if(r.footprint&&!openingFitsBoundary(r,w)) add(`window-boundary-${w.id}`,'error',`${r.name}: النافذة لا تقع على حد فعلي للمساحة غير المستطيلة.`,[r.id,w.id],'openings');
+                const probe={...w,entry:false}, ns=neighbours(r,probe,l.rooms);
+                if(ns.length) add(`window-interior-${w.id}`,'warning',`${r.name}: النافذة تقع على حد مجاور لمساحة داخلية؛ راجع نوع الفتحة.`,[r.id,w.id,...ns.map(x=>x.id)],'openings');
+            }
+        }
+        for (let i = 0; i < l.rooms.length; i++)
+            for (let j = i + 1; j < l.rooms.length; j++)
+                if (overlap(l.rooms[i], l.rooms[j]))
+                    add(`overlap-${l.rooms[i].id}-${l.rooms[j].id}`, 'error', `تداخل بين ${l.rooms[i].name} و${l.rooms[j].name}.`, [l.rooms[i].id, l.rooms[j].id]);
+        if (l.elevation > 0) {
+            const below = m.levels.filter(p => p.elevation < l.elevation).sort((a, b) => b.elevation - a.elevation)[0];
+            for (const r of l.rooms.filter(s => s.kind === 'stairs')) {
+                const linked = below?.rooms.find(s => s.kind === 'stairs' && Math.abs(r.x - s.x) < .01 && Math.abs(r.y - s.y) < .01 && Math.abs(r.w - s.w) < .01 && Math.abs(r.d - s.d) < .01 && reachableGlobal.has(s.id));
+                if (linked)
+                    starts.push(r.id);
+                else
+                    add(`stair-${r.id}`, 'error', 'موضع الدرج غير متصل بالدور السابق المتاح.', [r.id], 'connectivity');
+            }
+        }
+        const seen = new Set(starts), queue = [...starts];
+        for (let k = 0; k < queue.length; k++)
+            for (const n of graph.get(queue[k]) || [])
+                if (!seen.has(n)) {
+                    seen.add(n);
+                    queue.push(n);
+                }
+        seen.forEach(id => reachableGlobal.add(id));
+        for (const r of l.rooms)
+            if (!seen.has(r.id))
+                add(`access-${r.id}`, 'error', `${r.name}: لا يوجد مسار متصل من مدخل الأرضي إلى الغرفة.`, [r.id], 'connectivity');
+    }
+    for (const f of m.site.features || []) {
+        if (f.x < -.002 || f.y < -.002 || f.x + f.w > m.site.width + .002 || f.y + f.d > m.site.depth + .002)
+            add(`feature-bounds-${f.id}`, 'error', `${f.name}: جزء من العنصر خارج الأرض.`, [], 'site');
+        for (const r of m.levels[0].rooms)
+            if (overlap(f, r)) add(`feature-overlap-${f.id}-${r.id}`, 'error', `${f.name} يتداخل مع ${r.name}.`, [r.id], 'site');
+    }
+    const ts = totals(m);
+    for (const req of m.requirements) {
+        if (req.type === 'bedrooms' && ts.bedrooms !== req.value)
+            add(req.id, 'error', `المطلوب ${req.value} غرف نوم؛ الموجود ${ts.bedrooms}.`, [], 'requirements');
+        if (req.type === 'floors' && m.levels.length !== req.value)
+            add(req.id, 'error', 'عدد الأدوار لا يطابق المتطلب.', [], 'requirements');
+        if (req.type === 'site' && (m.site.width !== req.value?.[0] || m.site.depth !== req.value?.[1]))
+            add(req.id, 'error', 'أبعاد الأرض لا تطابق المتطلب.', [], 'requirements');
+        if (req.type === 'feature' || req.type === 'adjacency') {
+            const status = requirementStatus(m, req);
+            if (status.measurable && !status.satisfied) add(req.id, 'warning', `${req.label}: ${status.detail}.`, [], 'requirements');
+            if (status.measurable && status.satisfied) add(`checked-${req.id}`, 'checked', `${req.label}: ${status.detail}.`, [], 'requirements');
+        }
+        if (req.type === 'unresolved' || req.type === 'custom')
+            add(req.id, 'unchecked', req.label, [], 'requirements');
+    }
+    const errorTargets = new Set(issues.filter(i => i.status === 'error').flatMap(i => i.targets));
+    for (const r of all) if (!errorTargets.has(r.id)) add(`checked-room-${r.id}`, 'checked', `${r.name}: فُحص التداخل وحدود الأرض والاتصال الهندسي في نموذج مسار ولم يظهر خطأ مانع.`, [r.id], 'model-check');
+    add('structure', 'unchecked', 'السلامة الإنشائية والأساسات والأحمال لم تُفحص.', [], 'engineering');
+    add('regulatory', 'unchecked', 'الاشتراطات البلدية والارتدادات النظامية لم تُفحص.', [], 'engineering');
+    add('fire-life-safety', 'unchecked', 'الحريق والإخلاء وأعداد المخارج ومسافات الهروب لم تُفحص هندسيًا.', [], 'engineering');
+    add('accessibility', 'unchecked', 'متطلبات الإتاحة لم تُفحص.', [], 'engineering');
+    add('mep', 'unchecked', 'أنظمة الكهرباء والميكانيكا والصحي والتنسيق بينها لم تُصمّم أو تُفحص.', [], 'engineering');
+    add('stairs-design', 'unchecked', 'السلم ممثل بحيّز ودرجات عرضية؛ النائمة والقائمة والبسطات والخلوص لم تُصمّم.', all.filter(r => r.kind === 'stairs').map(r => r.id), 'engineering');
+    if (all.some(r => r.kind === 'elevator')) add('elevator-design', 'unchecked', 'المصعد ممثل ببئر مفاهيمي؛ الأبعاد الفنية والحفرة والرأس والمعدات ومتطلبات الإنقاذ لم تُصمّم.', all.filter(r => r.kind === 'elevator').map(r => r.id), 'engineering');
+    if ((m.site.features || []).some(f => f.type === 'pool')) add('pool-design', 'unchecked', 'المسبح تموضع مفاهيمي فقط؛ الإنشاء والعزل والتصفية والأمان لم تُصمّم.', [], 'engineering');
+    return issues;
+}
+function diffModels(before, after) { const a = new Map(before.levels.flatMap(l => l.rooms).map(r => [r.id, r])), b = new Map(after.levels.flatMap(l => l.rooms).map(r => [r.id, r])); const changes = []; for (const [id, r] of b) {
+    const prev = a.get(id);
+    if (!prev) {
+        changes.push({ id, name: r.name, kind: 'added' });
+        continue;
+    }
+    const fields = ['name', 'kind', 'x', 'y', 'w', 'd', 'height', 'locked', 'footprint', 'doors', 'windows', 'note'].filter(k => JSON.stringify(prev[k]) !== JSON.stringify(r[k]));
+    if (fields.length)
+        changes.push({ id, name: r.name, kind: 'changed', fields, before: prev, after: r });
+} for (const [id, r] of a)
+    if (!b.has(id))
+        changes.push({ id, name: r.name, kind: 'removed' });
+    for (const [field,name] of [['authoring','نواة التأليف'],['design','إعدادات التصميم'],['site','الموقع']]) if (JSON.stringify(before[field]) !== JSON.stringify(after[field])) changes.push({id:`project:${field}`,name,kind:'changed',fields:[field],before:before[field],after:after[field]});
+    return changes; }
+function checkLocks(before, after) {
+    for(const r of before.levels.flatMap(l=>l.rooms)){
+      const now=after.levels.flatMap(l=>l.rooms).find(x=>x.id===r.id);
+      for(const kind of ['windows','doors'])for(const opening of (r[kind]||[]).filter(x=>x.locked)){
+        const currentOpening=now?.[kind]?.find(x=>x.id===opening.id);
+        if(!currentOpening||JSON.stringify(opening)!==JSON.stringify(currentOpening)||r.x!==now.x||r.y!==now.y||r.w!==now.w||r.d!==now.d||JSON.stringify(r.footprint)!==JSON.stringify(now.footprint))throw Error(kind==='windows'?'نافذة مثبتة تتأثر بهذا التعديل.':'باب مثبت يتأثر بهذا التعديل.');
+      }
+    }
+    for (const old of before.levels.flatMap(l => l.rooms).filter(r => r.locked)) {
+        const now = after.levels.flatMap(l => l.rooms).find(r => r.id === old.id);
+        if (!now || ['x', 'y', 'w', 'd', 'height', 'kind', 'footprint', 'doors', 'windows'].some(k => JSON.stringify(old[k]) !== JSON.stringify(now[k])))
+            throw Error(`العنصر «${old.name}» مثبّت؛ ألغِ تثبيته صراحة قبل تغيير هندسته.`);
+    }
+    for (const req of before.requirements.filter(r => r.locked)) {
+        const now = after.requirements.find(r => r.id === req.id);
+        if (!now || JSON.stringify({ ...now, locked: true }) !== JSON.stringify({ ...req, locked: true }))
+            throw Error('لا يجوز تغيير متطلب مثبت داخل تعديل هندسي.');
+    }
+}
+function propose(model, command) {
+    const candidate = clone(model), rooms = candidate.levels.flatMap(l => l.rooms), r = rooms.find(r => r.id === command.roomId);
+    if (!r) throw Error('اختر الغرفة التي تريد تعديلها.');
+    const allowed = ['resize', 'expand', 'move', 'near', 'rename', 'door', 'remove-door', 'window', 'remove-window', 'swap', 'note', 'notch'];
+    if (!allowed.includes(command.type)) throw Error('هذا النوع من الأوامر غير مدعوم.');
+    if (r.footprint && ['resize','expand','near','swap'].includes(command.type)) throw Error('هذه المساحة غير مستطيلة؛ استخدم تحريك المساحة أو تحرير حدودها بدل تغيير صندوقها بصمت.');
+    if (command.type === 'resize') for (const k of ['w', 'd', 'height']) if (command[k] !== undefined) { if (!finite(command[k]) || command[k] <= 0) throw Error('أدخل بُعدًا موجبًا صالحًا.'); r[k] = round(command[k]); }
+    if (command.type === 'expand') {
+        const n = Number(command.amount); if (!finite(n) || n <= 0 || n > 20) throw Error('مقدار التوسعة يجب أن يكون أكبر من صفر وأقل من 20 مترًا.');
+        let direction = command.direction; if (direction === 'garden') direction = gardenSide(candidate); if (direction === 'street') direction = candidate.site.street === 'جنوب' ? 'south' : candidate.site.street === 'شمال' ? 'north' : candidate.site.street === 'شرق' ? 'east' : 'west';
+        if (!['east','west','north','south'].includes(direction)) throw Error('اتجاه التوسعة غير واضح.');
+        if (direction === 'east') r.w = round(r.w + n); if (direction === 'west') { r.x = round(r.x - n); r.w = round(r.w + n); } if (direction === 'north') r.d = round(r.d + n); if (direction === 'south') { r.y = round(r.y - n); r.d = round(r.d + n); }
+    }
+    if (command.type === 'move') {
+        const nx=command.x===undefined?r.x:Number(command.x), ny=command.y===undefined?r.y:Number(command.y); if(!finite(nx)||!finite(ny)) throw Error('أدخل موقعًا صالحًا.');
+        const dx=round(nx-r.x),dy=round(ny-r.y); r.x=round(nx);r.y=round(ny); if(r.footprint) r.footprint=r.footprint.map(p=>[round(p[0]+dx),round(p[1]+dy)]);
+    }
+    if (command.type === 'rename') { if (!safeString(command.name, 120) || !command.name.trim()) throw Error('اسم الغرفة مطلوب.'); r.name = command.name.trim(); }
+    if (command.type === 'note') { if (!safeString(command.note, 2000)) throw Error('الملاحظة طويلة جدًا.'); r.note = command.note; }
+    if (command.type === 'door') {
+        if(!['east','west','north','south'].includes(command.side))throw Error('جهة الباب غير صالحة.');
+        const existing=command.doorId?r.doors.find(d=>d.id===command.doorId):(command.create===true?null:r.doors[0]);
+        if(command.doorId&&!existing)throw Error('الباب المحدد غير موجود.');if(existing?.locked)throw Error('الباب مثبت.');
+        const next={...(existing||{}),id:existing?.id||uid(),side:command.side,offset:command.offset??existing?.offset??.5,width:command.width??existing?.width??.9,height:command.height??existing?.height??2.15,entry:command.entry??existing?.entry??false};
+        if(![next.offset,next.width,next.height].every(finite)||next.offset<0||next.offset>1||next.width<=0||next.height<=0||typeof next.entry!=='boolean')throw Error('أبعاد الباب غير صالحة.');
+        if(existing)r.doors=r.doors.map(d=>d.id===existing.id?next:d);else r.doors.push(next);
+    }
+    if(command.type==='remove-door'){
+        const d=r.doors.find(d=>d.id===command.doorId);if(!d)throw Error('الباب غير موجود.');if(d.locked)throw Error('الباب مثبت.');r.doors=r.doors.filter(x=>x.id!==d.id);
+    }
+    if (command.type === 'window') {
+        if(!['east','west','north','south'].includes(command.side)) throw Error('جهة النافذة غير صالحة.'); if(command.typeId&&!effectiveAuthoring(candidate).windowTypes.some(t=>t.id===command.typeId))throw Error('نوع النافذة المحدد غير موجود.'); const type=windowTypeFor(candidate,command.typeId), width=Number(command.width??type.width),height=Number(command.height??type.height),sill=Number(command.sill??type.sill),offset=Number(command.offset??.5);
+        if(![width,height,sill,offset].every(finite)||width<=0||height<=0||sill<0||offset<0||offset>1) throw Error('أبعاد النافذة غير صالحة.');
+        const existing=(r.windows||[]).find(w=>w.id===command.windowId); if(command.windowId&&!existing)throw Error('النافذة المحددة غير موجودة.'); if(existing?.locked)throw Error('النافذة مثبتة.'); const id=existing?.id||uid(); const next={id,side:command.side,offset:round(offset),width:round(width),height:round(height),sill:round(sill),typeId:type.id,locked:existing?.locked||false,provenance:existing?.provenance||'user-authored-concept-window'};
+        r.windows=(r.windows||[]).filter(w=>w.id!==id); r.windows.push(next);
+    }
+    if (command.type === 'remove-window') { const w=(r.windows||[]).find(w=>w.id===command.windowId); if(!w)throw Error('النافذة غير موجودة.'); if(w.locked)throw Error('النافذة مثبتة.'); r.windows=r.windows.filter(x=>x.id!==w.id); }
+    if (command.type === 'notch') {
+        if(r.footprint) throw Error('المساحة غير مستطيلة أصلًا؛ حرر حدودها بدل إضافة تجويف ثانٍ تلقائيًا.'); const nw=Number(command.width),nd=Number(command.depth),corner=command.corner;
+        if(!finite(nw)||!finite(nd)||nw<=0||nd<=0||nw>=r.w-.5||nd>=r.d-.5||!['ne','nw','se','sw'].includes(corner)) throw Error('أبعاد أو زاوية التجويف غير صالحة.');
+        const x=r.x,y=r.y,X=r.x+r.w,Y=r.y+r.d;
+        const poly=corner==='ne'?[[x,y],[X,y],[X,Y-nd],[X-nw,Y-nd],[X-nw,Y],[x,Y]]:corner==='nw'?[[x,y],[X,y],[X,Y],[x+nw,Y],[x+nw,Y-nd],[x,Y-nd]]:corner==='sw'?[[x,y+nd],[x+nw,y+nd],[x+nw,y],[X,y],[X,Y],[x,Y]]:[[x,y],[X-nw,y],[X-nw,y+nd],[X,y+nd],[X,Y],[x,Y]];
+        r.footprint=poly.map(p=>p.map(round));
+    }
+    const swapGeometry = target => { if (!target || target.id === r.id) throw Error('اختر غرفة ثانية للمبادلة.'); if(r.footprint||target.footprint) throw Error('المبادلة التلقائية لا تغيّر هندسة مساحة غير مستطيلة.'); if (!candidate.levels.some(l => l.rooms.includes(r) && l.rooms.includes(target))) throw Error('المبادلة متاحة داخل الدور نفسه فقط.'); const ra = { x:r.x,y:r.y,w:r.w,d:r.d,doors:clone(r.doors),windows:clone(r.windows||[]) }, ta = { x:target.x,y:target.y,w:target.w,d:target.d,doors:clone(target.doors),windows:clone(target.windows||[]) }; Object.assign(r, ta, { doors: ta.doors.map((d,i)=>({ ...d,id:`${r.id}-door-${i}` })), windows:ta.windows.map((w,i)=>({...w,id:`${r.id}-window-${i+1}`})) }); Object.assign(target, ra, { doors: ra.doors.map((d,i)=>({ ...d,id:`${target.id}-door-${i}` })), windows:ra.windows.map((w,i)=>({...w,id:`${target.id}-window-${i+1}`})) }); };
+    if (command.type === 'swap') swapGeometry(rooms.find(s => s.id === command.targetId));
+    if (command.type === 'near') {
+        const level = candidate.levels.find(l => l.rooms.includes(r)), free = level.rooms.filter(x => x.id !== r.id && !x.locked && !['hall','stairs','elevator'].includes(x.kind)); let target;
+        if (command.target === 'entry') target = [...free].sort((a,b)=>distanceToEntry(candidate,a)-distanceToEntry(candidate,b))[0];
+        else if (command.target === 'garden') target = [...free].sort((a,b)=>Number(touchesGardenEdge(candidate,b))-Number(touchesGardenEdge(candidate,a)))[0];
+        else if (command.targetId) target = free.find(x=>x.id===command.targetId);
+        if (!target) throw Error('لم أجد موضعًا مناسبًا غير مثبت لتنفيذ علاقة القرب.'); swapGeometry(target);
+    }
+    checkLocks(model, candidate);
+    const issues = validate(candidate), blockers = issues.filter(i => i.status === 'error');
+    return { candidate, changes: diffModels(model, candidate), issues, blockers, impact: impactSummary(model, candidate), base: JSON.stringify(model), command };
+}
+/**
+ * Turn a blocked geometry preview into a second, explicit proposal when a
+ * conservative deterministic solution exists. Locked geometry is never moved.
+ * The solver first tries to transfer the conflicting strip from an adjacent,
+ * unlocked room so the requested room keeps its requested size. Only if that
+ * is impossible does it consider trimming the changed room. It returns null
+ * rather than guessing when it cannot produce a zero-error model.
+ */
+function resolvePreview(model, preview) {
+    assertModel(model);
+    if (!preview || preview.base !== JSON.stringify(model)) throw Error('تغيّر المشروع بعد المعاينة؛ أنشئ معاينة جديدة.');
+    const requested = clone(preview.candidate), candidate = clone(preview.candidate), changed = new Set(preview.changes.map(c => c.id));
+    const notes = [];
+    const roomById = (m, id) => m.levels.flatMap(l => l.rooms).find(r => r.id === id);
+    const levelOf = (m,id) => m.levels.find(l=>l.rooms.some(r=>r.id===id));
+    const errorCount = m => validate(m).filter(i => i.status === 'error').length;
+    const geometryKey = r => `${round(r.x)}|${round(r.y)}|${round(r.w)}|${round(r.d)}`;
+    if ([...changed].some(id=>roomById(candidate,id)?.footprint)) return null;
+    const overlapSpan = (a1,a2,b1,b2) => Math.min(a2,b2)-Math.max(a1,b1);
+    const clampBounds = (m, id) => {
+        const r = roomById(m, id); if (!r || r.locked || !changed.has(id)) return false;
+        const before = geometryKey(r);
+        r.w = round(Math.min(r.w, m.site.width)); r.d = round(Math.min(r.d, m.site.depth));
+        r.x = round(Math.max(0, Math.min(r.x, m.site.width - r.w)));
+        r.y = round(Math.max(0, Math.min(r.y, m.site.depth - r.d)));
+        return geometryKey(r) !== before;
+    };
+    const scoreOption = (t, victimId, donorId=null, kind='trim') => {
+        const r=roomById(t,victimId), req=roomById(requested,victimId); if(!r||!req) return null;
+        try { checkLocks(model,t); assertModel(t); } catch { return null; }
+        const errors=errorCount(t), reqArea=req.w*req.d, keepArea=r.w*r.d;
+        const drift=Math.abs(r.x-req.x)+Math.abs(r.y-req.y)+Math.abs(r.w-req.w)+Math.abs(r.d-req.d);
+        return {t,errors,loss:Math.max(0,reqArea-keepArea),drift,donorId,kind};
+    };
+    for (let pass = 0; pass < 20; pass++) {
+        const blockers = validate(candidate).filter(i => i.status === 'error');
+        if (!blockers.length) {
+            checkLocks(model, candidate); assertModel(candidate);
+            const issues = validate(candidate);
+            return { candidate, changes: diffModels(model, candidate), issues, blockers: [], impact: impactSummary(model, candidate), base: JSON.stringify(model), command: preview.command, autoResolved: true, resolutionNotes: notes };
+        }
+        let progressed = false;
+        const bounds = blockers.find(i => i.id.startsWith('bounds-') && i.targets.some(id => changed.has(id)));
+        if (bounds) {
+            const id = bounds.targets.find(id => changed.has(id));
+            if (clampBounds(candidate, id)) { notes.push(`أُعيد ${roomById(candidate,id)?.name || 'العنصر'} داخل حدود الأرض مع الحفاظ على أكبر أبعاد ممكنة.`); progressed = true; }
+        }
+        if (progressed) continue;
+        const ov = blockers.find(i => i.id.startsWith('overlap-') && i.targets.some(id => changed.has(id)));
+        if (!ov) return null;
+        const ids = ov.targets, editableIds = ids.filter(id => { const r=roomById(candidate,id); return changed.has(id) && r && !r.locked; });
+        if (!editableIds.length) return null;
+        const victimId = editableIds[0], obstacleId = ids.find(id => id !== victimId), v = roomById(candidate,victimId), o = roomById(candidate,obstacleId), baseV=roomById(model,victimId);
+        if (!v || !o || !baseV) return null;
+        const requestedRoom = roomById(requested, victimId) || v, options = [], level=levelOf(candidate,victimId), baseLevel=levelOf(model,victimId);
+        const addOption = (t, donorId=null, kind='trim') => { const scored=scoreOption(t,victimId,donorId,kind); if(scored) options.push(scored); };
+
+        // 1) Space transfer: preserve the requested room dimensions by borrowing
+        // exactly the conflicting strip from the unlocked room on the opposite side.
+        const xOverlap=overlapSpan(v.x,v.x+v.w,o.x,o.x+o.w), yOverlap=overlapSpan(v.y,v.y+v.d,o.y,o.y+o.d), tol=.02;
+        if (xOverlap > .002 && yOverlap > .002 && level && baseLevel) {
+            const transfer = (side, amount) => {
+                if (!(amount > .002)) return;
+                const baseCandidates=baseLevel.rooms.filter(d=>d.id!==victimId&&d.id!==obstacleId&&!d.locked&&!changed.has(d.id));
+                let donor;
+                if(side==='south') donor=baseCandidates.filter(d=>Math.abs(d.y+d.d-baseV.y)<=tol && overlapSpan(d.x,d.x+d.w,baseV.x,baseV.x+baseV.w)>.5).sort((a,b)=>overlapSpan(b.x,b.x+b.w,baseV.x,baseV.x+baseV.w)-overlapSpan(a.x,a.x+a.w,baseV.x,baseV.x+baseV.w))[0];
+                if(side==='north') donor=baseCandidates.filter(d=>Math.abs(d.y-(baseV.y+baseV.d))<=tol && overlapSpan(d.x,d.x+d.w,baseV.x,baseV.x+baseV.w)>.5).sort((a,b)=>overlapSpan(b.x,b.x+b.w,baseV.x,baseV.x+baseV.w)-overlapSpan(a.x,a.x+a.w,baseV.x,baseV.x+baseV.w))[0];
+                if(side==='west') donor=baseCandidates.filter(d=>Math.abs(d.x+d.w-baseV.x)<=tol && overlapSpan(d.y,d.y+d.d,baseV.y,baseV.y+baseV.d)>.5).sort((a,b)=>overlapSpan(b.y,b.y+b.d,baseV.y,baseV.y+baseV.d)-overlapSpan(a.y,a.y+a.d,baseV.y,baseV.y+baseV.d))[0];
+                if(side==='east') donor=baseCandidates.filter(d=>Math.abs(d.x-(baseV.x+baseV.w))<=tol && overlapSpan(d.y,d.y+d.d,baseV.y,baseV.y+baseV.d)>.5).sort((a,b)=>overlapSpan(b.y,b.y+b.d,baseV.y,baseV.y+baseV.d)-overlapSpan(a.y,a.y+a.d,baseV.y,baseV.y+baseV.d))[0];
+                if(!donor) return;
+                const t=clone(candidate), rv=roomById(t,victimId), rd=roomById(t,donor.id); if(!rv||!rd) return;
+                if(side==='south'){ if(rd.d-amount<1) return; rd.d=round(rd.d-amount); rv.y=round(rv.y-amount); }
+                if(side==='north'){ if(rd.d-amount<1) return; rd.y=round(rd.y+amount); rd.d=round(rd.d-amount); rv.y=round(rv.y+amount); }
+                if(side==='west'){ if(rd.w-amount<1) return; rd.w=round(rd.w-amount); rv.x=round(rv.x-amount); }
+                if(side==='east'){ if(rd.w-amount<1) return; rd.x=round(rd.x+amount); rd.w=round(rd.w-amount); rv.x=round(rv.x+amount); }
+                addOption(t,donor.id,'transfer');
+            };
+            if (v.y < o.y && v.y+v.d > o.y) transfer('south', round(v.y+v.d-o.y));
+            if (v.y < o.y+o.d && v.y+v.d > o.y+o.d) transfer('north', round(o.y+o.d-v.y));
+            if (v.x < o.x && v.x+v.w > o.x) transfer('west', round(v.x+v.w-o.x));
+            if (v.x < o.x+o.w && v.x+v.w > o.x+o.w) transfer('east', round(o.x+o.w-v.x));
+        }
+
+        // 2) Conservative trim fallback. It may reduce the requested gain, but
+        // never moves locked neighbours and is only offered if the model validates.
+        const pushTrim = patch => {
+            const t=clone(candidate), r=roomById(t,victimId); Object.assign(r,patch);
+            r.x=round(r.x);r.y=round(r.y);r.w=round(r.w);r.d=round(r.d);
+            if(r.w<1||r.d<1||r.x<0||r.y<0||r.x+r.w>t.site.width+.002||r.y+r.d>t.site.depth+.002) return;
+            addOption(t,null,'trim');
+        };
+        const vRight=v.x+v.w, vTop=v.y+v.d, oRight=o.x+o.w, oTop=o.y+o.d;
+        if (v.x < o.x) pushTrim({ w:o.x-v.x });
+        if (vRight > oRight) pushTrim({ x:oRight, w:vRight-oRight });
+        if (v.y < o.y) pushTrim({ d:o.y-v.y });
+        if (vTop > oTop) pushTrim({ y:oTop, d:vTop-oTop });
+        if (!options.length) return null;
+        options.sort((a,b)=>a.errors-b.errors || (a.kind==='transfer'?-1:0)-(b.kind==='transfer'?-1:0) || a.loss-b.loss || a.drift-b.drift);
+        const best=options[0];
+        if (best.errors >= blockers.length) return null;
+        const beforeArea=round(v.w*v.d), afterRoom=roomById(best.t,victimId), afterArea=round(afterRoom.w*afterRoom.d);
+        candidate.levels = best.t.levels;
+        if(best.kind==='transfer' && best.donorId){
+            const donorBefore=roomById(candidate,best.donorId), donorBase=roomById(model,best.donorId), transferred=round(Math.abs((donorBase?.w*donorBase?.d||0)-(donorBefore?.w*donorBefore?.d||0)));
+            notes.push(`حُفظ ${o.locked ? 'العنصر المثبّت ' : ''}${o.name} دون تحريك، ونُقلت ${transferred} م² تقريبًا من ${donorBefore?.name || 'مساحة مجاورة'} إلى ${afterRoom.name} لإزالة التداخل مع إبقاء أبعاد الطلب الجديد.`);
+        } else {
+            notes.push(`حُفظ ${o.locked ? 'العنصر المثبّت ' : ''}${o.name} دون تحريك، وعُدّلت حدود ${afterRoom.name} لإزالة التداخل (${beforeArea} → ${afterArea} م² في المعاينة).`);
+        }
+    }
+    return null;
+}
+
+function commitPreview(model, preview) { if (preview.base !== JSON.stringify(model))
+    throw Error('تغيّر المشروع بعد المعاينة؛ أنشئ معاينة جديدة.'); if (validate(preview.candidate).some(i => i.status === 'error'))
+    throw Error('لا يمكن اعتماد تعديل به تعارض هندسي.'); checkLocks(model, preview.candidate); assertModel(preview.candidate); return clone(preview.candidate); }
+/** Deterministic, openly-labelled Arabic command parser. Never silently treats unknown prose as success. */
+function parseCommand(text, model, selectedId) {
+    const t = normalizeText(text), rooms = model.levels.flatMap(l => l.rooms); let roomId = selectedId;
+    const explicit = rooms.filter(r => t.includes(normalizeText(r.name))); if (explicit.length === 1) roomId = explicit[0].id;
+    const aliases = [['majlis', /(?:المجلس|مجلس)/], ['kitchen', /(?:المطبخ|مطبخ)/], ['living', /(?:المعيشه|معيشه|الصاله|صاله)/], ['bedroom', /(?:غرفه النوم|غرف نوم)/], ['office', /(?:المكتب|مكتب)/]];
+    for (const [kind,re] of aliases) if (re.test(t)) { const ms=rooms.filter(r=>r.kind===kind); if (ms.length===1) roomId=ms[0].id; }
+    const r = rooms.find(r => r.id === roomId); if (!r) throw Error('حدّد غرفة من المخطط أولًا، ثم اكتب تعديلها.');
+    const name = text.match(/(?:سمّ|سمي|سم|اسمها|غيّر الاسم إلى|غير الاسم الى)\s+(.+)/); if (name) return { type:'rename',roomId,name:name[1].trim() };
+    const nearEntry = /(?:انقل|حرك|خلي|اجعل)?[^،.]{0,55}(?:قريب|قرب)\s*(?:من\s*)?(?:المدخل|مدخل)/.test(t); if (nearEntry) return { type:'near',roomId,target:'entry' };
+    const nearGarden = /(?:انقل|حرك|خلي|اجعل)?[^،.]{0,55}(?:قريب|قرب)\s*(?:من\s*)?(?:الحديقه|حديقه|الخارج|المسبح)/.test(t); if (nearGarden) return { type:'near',roomId,target:'garden' };
+    const nearRoom = t.match(/(?:قريب|قرب)\s*(?:من\s*)?(.+)$/); if (nearRoom) { const q=nearRoom[1].trim(), ms=rooms.filter(x=>x.id!==roomId && normalizeText(x.name).includes(q)); if (ms.length===1) return { type:'near',roomId,targetId:ms[0].id }; }
+    const token=String.raw`(\d+(?:\.\d+)?|واحد|واحده|اثنين|اثنان|ثلاثه?|اربعه?|خمسه?)`; const ex=t.match(new RegExp(String.raw`(?:وسع|كبر|زيد)[^\d]{0,22}${token}?\s*(?:متر|م)?[^،.]{0,20}(?:باتجاه|نحو|جهة|جهه)?\s*(شرق|غرب|شمال|جنوب|الحديقه|حديقه|الشارع)`));
+    if (ex) { const n = ex[1] ? (/^\d/.test(ex[1]) ? Number(ex[1]) : wordNumbers[ex[1]]) : 1, d=ex[2]; return { type:'expand',roomId,amount:n||1,direction:d.includes('حديق')?'garden':d==='الشارع'?'street':{شرق:'east',غرب:'west',شمال:'north',جنوب:'south'}[d] }; }
+    if (/(?:وسعها|كبرها|وسع|كبر)\s*(?:متر|1\s*متر)?/.test(t) && /حديق/.test(t)) return { type:'expand',roomId,amount:1,direction:'garden' };
+    const dimensions = t.match(/(?:ابعاد|مقاس|خليها|اجعلها)\s*(\d+(?:\.\d+)?)\s*(?:×|x|في|\*)\s*(\d+(?:\.\d+)?)/); if (dimensions) return { type:'resize',roomId,w:+dimensions[1],d:+dimensions[2] };
+    const width = t.match(/(?:عرضها|العرض|عرض)\s*(?:الي|الى|=)?\s*(\d+(?:\.\d+)?)/); if (width) return { type:'resize',roomId,w:+width[1] };
+    const depth = t.match(/(?:عمقها|العمق|عمق|طولها|الطول)\s*(?:الي|الى|=)?\s*(\d+(?:\.\d+)?)/); if (depth) return { type:'resize',roomId,d:+depth[1] };
+    const move = t.match(/(?:انقل|حرك)[^\d]{0,30}(\d+(?:\.\d+)?)\s*(?:متر|م)?\s*(?:باتجاه|نحو|الي|الى)?\s*(شرق|غرب|شمال|جنوب)/); if (move) { const n=+move[1]; return { type:'move',roomId,x:r.x+(move[2]==='شرق'?n:move[2]==='غرب'?-n:0),y:r.y+(move[2]==='شمال'?n:move[2]==='جنوب'?-n:0) }; }
+    const door = t.match(/(?:الباب|باب).*(شرق|غرب|شمال|جنوب)/); if (door) return { type:'door',roomId,side:{شرق:'east',غرب:'west',شمال:'north',جنوب:'south'}[door[1]],entry:r.doors[0]?.entry||false };
+    const win=t.match(/(?:نافذه|شباك)[^،.]{0,30}(شرق|غرب|شمال|جنوب)(?:[^\d]{0,18}(\d+(?:\.\d+)?)\s*(?:متر|م))?/); if(win) return {type:'window',roomId,side:{شرق:'east',غرب:'west',شمال:'north',جنوب:'south'}[win[1]],...(win[2]?{width:Number(win[2])}:{})};
+    const notch=t.match(/(?:تجويف|نقره|قص)[^\d]{0,18}(\d+(?:\.\d+)?)\s*(?:×|x|في|\*)\s*(\d+(?:\.\d+)?)[^،.]{0,30}(شمال\s*شرق|شمال\s*غرب|جنوب\s*شرق|جنوب\s*غرب)/); if(notch){const c=notch[3].replace(/\s+/g,' '),corner={'شمال شرق':'ne','شمال غرب':'nw','جنوب شرق':'se','جنوب غرب':'sw'}[c];return{type:'notch',roomId,width:Number(notch[1]),depth:Number(notch[2]),corner};}
+    const swap = t.match(/(?:بادل|بدل|بدّل).*?(?:مع)\s*(.+)/); if (swap) { const ms=rooms.filter(s=>normalizeText(s.name)===swap[1].trim()); if (ms.length!==1) throw Error('اسم الغرفة الثانية غير واضح أو مكرر؛ استخدم قائمة المبادلة.'); return { type:'swap',roomId,targetId:ms[0].id }; }
+    throw Error('الأمر غير واضح للمحلل المحلي. أمثلة: «انقل المجلس قرب المدخل»، «وسعها متر باتجاه الحديقة»، «العرض 5»، «أبعاد 5×4»، «انقل 1 متر شمال»، «الباب جنوب»، «نافذة شمال 1.5 متر»، «تجويف 1×1 شمال شرق».');
+}
+function createHistory(m) { return { schemaVersion: VERSION, projectId: m.id, revisions: [{ id: uid(), label: 'البداية', at: new Date().toISOString(), model: clone(m), parentIndex: null }], cursor: 0, audit: [{ type: 'create', at: new Date().toISOString() }] }; }
+function current(h) { return h.revisions[h.cursor].model; }
+function pushHistory(h, m, label) { assertModel(m); if (m.id !== h.projectId)
+    throw Error('هوية المشروع غير متطابقة.'); const next = clone(h); next.revisions.push({ id: uid(), label: String(label).slice(0, 120), at: new Date().toISOString(), model: clone(m), parentIndex: h.cursor }); next.cursor = next.revisions.length - 1; next.audit.push({ type: 'edit', at: new Date().toISOString(), revisionId: next.revisions[next.cursor].id }); return next; }
+function assertHistory(h) { if (!h || h.schemaVersion !== VERSION || !Array.isArray(h.revisions) || h.revisions.length < 1 || h.revisions.length > 100 || !Number.isInteger(h.cursor) || h.cursor < 0 || h.cursor >= h.revisions.length || !Array.isArray(h.audit) || h.audit.length > 2000)
+    throw Error('سجل النسخ غير صالح (الحد 100 نسخة).'); const revisionIds = new Set(); for (const [index, r] of h.revisions.entries()) {
+    if (revisionIds.has(r.id) || r.parentIndex !== undefined && r.parentIndex !== null && (!Number.isInteger(r.parentIndex) || r.parentIndex < 0 || r.parentIndex >= index))
+        throw Error('رابط النسخة السابقة غير صالح.');
+    revisionIds.add(r.id);
+    if (!safeString(r.id, 100) || !safeString(r.label, 120) || !safeString(r.at, 80))
+        throw Error('نسخة غير صالحة.');
+    assertModel(r.model);
+    if (r.model.id !== h.projectId)
+        throw Error('هوية المشروع غير متطابقة.');
+} return h; }
+function exportEnvelope(h) { return { format: 'masar-project', version: VERSION, exportedAt: new Date().toISOString(), disclaimer: 'تصميم مفاهيمي، لا يصلح للبناء دون مراجعة واعتماد المختصين. جميع الأبعاد بالمتر.', history: clone(h) }; }
+function importEnvelope(text) { if (text.length > 8000000)
+    throw Error('الملف يتجاوز 8 ميجابايت.'); const d = JSON.parse(text); if (d?.format !== 'masar-project' || d.version !== VERSION)
+    throw Error('هذا ليس ملف مشروع مسار.'); return assertHistory(d.history); }
+function parseDXF(text, scale = 1) { if (text.length > 2000000)
+    throw Error('ملف DXF يتجاوز 2 ميجابايت.'); const raw = text.replace(/\r/g, '').split('\n'); const pairs = []; for (let i = 0; i + 1 < raw.length; i += 2)
+    pairs.push([raw[i].trim(), raw[i + 1].trim()]); const lines = []; let entity = null, points = [], v = {}; const flush = () => { if (entity === 'LINE' && [v.x, v.y, v.x2, v.y2].every(finite))
+    lines.push([v.x, v.y, v.x2, v.y2]); if (entity === 'LWPOLYLINE') {
+    for (let i = 1; i < points.length; i++)
+        if (points[i - 1].every(finite) && points[i].every(finite))
+            lines.push([...points[i - 1], ...points[i]]);
+    if (v.closed && points.length > 2)
+        lines.push([...points.at(-1), ...points[0]]);
+} v = {}; points = []; }; for (const [code, value] of pairs) {
+    if (code === '0') {
+        flush();
+        entity = value;
+    }
+    else if (entity === 'LINE') {
+        const k = { '10': 'x', '20': 'y', '11': 'x2', '21': 'y2' }[code];
+        if (k)
+            v[k] = Number(value);
+    }
+    else if (entity === 'LWPOLYLINE') {
+        if (code === '10')
+            points.push([Number(value), NaN]);
+        if (code === '20' && points.length)
+            points.at(-1)[1] = Number(value);
+        if (code === '70')
+            v.closed = !!(Number(value) & 1);
+    }
+} flush(); if (!lines.length)
+    throw Error('لم تُعثر على LINE أو LWPOLYLINE ثنائية الأبعاد. DWG وIFC غير مدعومين في هذا المستورد.'); if (lines.length > 3000)
+    throw Error('الرسم يتجاوز 3000 خط.'); if (!finite(scale) || scale <= 0 || scale > 1000)
+    throw Error('مقياس الرسم غير صالح.'); const clean = lines.map(l => l.map(v => round(v * scale))); if (clean.some(l => l.some(v => !finite(v) || Math.abs(v) > 1e7)))
+    throw Error('إحداثيات الرسم غير صالحة.'); return clean; }
+function exportDXF(m, levelId) { const l = m.levels.find(l => l.id === levelId) || m.levels[0]; let out = '0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n6\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n'; for (const r of l.rooms) {
+    const points = roomPolygon(r);
+    out += `0\nLWPOLYLINE\n8\n${r.kind}\n90\n${points.length}\n70\n1\n`;
+    for (const [x, y] of points)
+        out += `10\n${round(x)}\n20\n${round(y)}\n`;
+} return out + '0\nENDSEC\n0\nEOF\n'; }
+
+return {VERSION,clone,round,uid,KINDS,COLORS,normalizeText,understand,briefIssues,generate,roomPolygon,polygonArea,pointInPolygon,assertModel,area,totals,centroid,gardenSide,entryPoint,distanceToEntry,touchesGardenEdge,requirementStatus,designMetrics,impactSummary,createAlternatives,overlap,doorPoint,windowPoint,validate,diffModels,checkLocks,propose,resolvePreview,commitPreview,parseCommand,createHistory,current,pushHistory,assertHistory,exportEnvelope,importEnvelope,parseDXF,exportDXF};
+})();
+const MASAR_Module_2=(()=>{
+const { area, centroid, doorPoint, roomPolygon, windowPoint, requirementStatus, round, totals, validate }=MASAR_Module_1;
+const { effectiveAuthoring, wallTypeFor, windowTypeFor }=MASAR_Module_0;
+/**
+ * MASAR derived building graph and exchange helpers.
+ * These functions derive coordination/BIM-lite elements from the canonical room model.
+ * The canonical model remains the source of truth; derived elements never write back.
+ */
+
+
+const EPS = 0.002;
+const q = n => round(Number(n));
+const keyNum = n => q(n).toFixed(3);
+// STEP uses UCS-2 for BMP and UCS-4 for supplementary characters, never UTF-16 surrogate pairs.
+const escStep = value => "'"+Array.from(String(value??'').replace(/[\r\n]/g,' ')).map(c=>{
+  if(c==="'")return "''";if(c==='\\')return '\\\\';const point=c.codePointAt(0);
+  if(point>0xffff)return '\\X4\\'+point.toString(16).toUpperCase().padStart(8,'0')+'\\X0\\';
+  return point>126||point<32?'\\X2\\'+point.toString(16).toUpperCase().padStart(4,'0')+'\\X0\\':c;
+}).join('')+"'";
+function csvCell(value) {
+  let text=String(value??'');
+  // User labels are data, never spreadsheet formulas. Numeric geometry remains numeric.
+  if(typeof value==='string'&&/^[\s\u0000-\u001f]*[=+@-]/.test(text))text="'"+text;
+  return '"'+text.replaceAll('"','""')+'"';
+}
+const csv=csvCell;
+
+function roomEdges(room) {
+  if (!room.footprint) return [
+    { side:'south', axis:'h', coord:q(room.y), start:q(room.x), end:q(room.x + room.w) },
+    { side:'north', axis:'h', coord:q(room.y + room.d), start:q(room.x), end:q(room.x + room.w) },
+    { side:'west', axis:'v', coord:q(room.x), start:q(room.y), end:q(room.y + room.d) },
+    { side:'east', axis:'v', coord:q(room.x + room.w), start:q(room.y), end:q(room.y + room.d) }
+  ];
+  const poly=roomPolygon(room), out=[];
+  for(let i=0;i<poly.length;i++){
+    const a=poly[i],b=poly[(i+1)%poly.length];
+    if(Math.abs(a[1]-b[1])<=EPS) out.push({side:`edge-${i}`,axis:'h',coord:q(a[1]),start:q(Math.min(a[0],b[0])),end:q(Math.max(a[0],b[0]))});
+    else out.push({side:`edge-${i}`,axis:'v',coord:q(a[0]),start:q(Math.min(a[1],b[1])),end:q(Math.max(a[1],b[1]))});
+  }
+  return out;
+}
+
+function edgeContains(edge, axis, coord, start, end) {
+  return edge.axis === axis && Math.abs(edge.coord - coord) <= EPS && start >= edge.start - EPS && end <= edge.end + EPS;
+}
+
+/**
+ * Atomize room edges into non-overlapping wall segments. A segment knows every adjacent room.
+ * Stable IDs are geometry-derived; they remain stable while the underlying wall geometry is unchanged.
+ */
+function deriveWalls(model) {
+  const walls = [];
+  for (const level of model.levels) {
+    const edges = level.rooms.flatMap(room => roomEdges(room).map(edge => ({ ...edge, roomId:room.id, roomName:room.name })));
+    const grouped = new Map();
+    for (const e of edges) {
+      const k = `${e.axis}:${keyNum(e.coord)}`;
+      if (!grouped.has(k)) grouped.set(k, []);
+      grouped.get(k).push(e);
+    }
+    for (const [lineKey, lineEdges] of grouped) {
+      const points = [...new Set(lineEdges.flatMap(e => [keyNum(e.start), keyNum(e.end)]))].map(Number).sort((a,b)=>a-b);
+      for (let i=1;i<points.length;i++) {
+        const start=q(points[i-1]), end=q(points[i]);
+        if (end-start <= EPS) continue;
+        const mid=(start+end)/2;
+        const touching=lineEdges.filter(e=>mid >= e.start-EPS && mid <= e.end+EPS);
+        if (!touching.length) continue;
+        const [axis,coordText]=lineKey.split(':'), coord=Number(coordText);
+        const roomIds=[...new Set(touching.map(e=>e.roomId))].sort();
+        const sideByRoom=Object.fromEntries(touching.map(e=>[e.roomId,e.side]));
+        const id=`wall:${level.id}:${axis}:${keyNum(coord)}:${keyNum(start)}:${keyNum(end)}`;
+        const external=roomIds.length===1, wallType=wallTypeFor(model,external);
+        walls.push({
+          id, levelId:level.id, axis, coord:q(coord), start, end, length:q(end-start), height:q(level.height || 3), thickness:q(wallType.totalThickness), wallTypeId:wallType.id, wallTypeName:wallType.name, layers:structuredClone(wallType.layers),
+          external, adjacentRoomIds:roomIds, sideByRoom, provenance:'derived-from-space-boundaries+authoring-wall-type'
+        });
+      }
+    }
+  }
+  return walls.sort((a,b)=>a.levelId.localeCompare(b.levelId)||a.id.localeCompare(b.id));
+}
+
+function deriveOpenings(model, walls = deriveWalls(model)) {
+  const byLevel = new Map();
+  for (const w of walls) { if (!byLevel.has(w.levelId)) byLevel.set(w.levelId, []); byLevel.get(w.levelId).push(w); }
+  const openings=[];
+  const addOpening=(level,room,item,type)=>{
+    const point=type==='door'?doorPoint(room,item):windowPoint(room,item), [px,py]=point, vertical=['west','east'].includes(item.side), axis=vertical?'v':'h', coord=vertical?px:py, along=vertical?py:px;
+    const host=(byLevel.get(level.id)||[]).find(w=>w.axis===axis&&Math.abs(w.coord-coord)<=EPS&&along-item.width/2>=w.start-EPS&&along+item.width/2<=w.end+EPS&&w.adjacentRoomIds.includes(room.id));
+    const base={id:item.id,type,levelId:level.id,roomId:room.id,hostWallId:host?.id||null,side:item.side,width:q(item.width),height:q(item.height??(type==='door'?2.15:windowTypeFor(model,item.typeId)?.height||1.2)),offset:q(item.offset),x:q(px),y:q(py),z:q(level.elevation),provenance:item.provenance||room.provenance||'generated-concept'};
+    if(type==='door') Object.assign(base,{entry:!!item.entry,sill:0}); else Object.assign(base,{entry:false,sill:q(item.sill??0.9),typeId:item.typeId||effectiveAuthoring(model).defaults.windowTypeId});
+    openings.push(base);
+  };
+  for(const level of model.levels) for(const room of level.rooms){ for(const door of room.doors||[])addOpening(level,room,door,'door'); for(const win of room.windows||[])addOpening(level,room,win,'window'); }
+  return openings.sort((a,b)=>a.levelId.localeCompare(b.levelId)||a.id.localeCompare(b.id));
+}
+function levelBounds(level) {
+  const xs=level.rooms.flatMap(r=>[r.x,r.x+r.w]), ys=level.rooms.flatMap(r=>[r.y,r.y+r.d]);
+  return { x:q(Math.min(...xs)), y:q(Math.min(...ys)), w:q(Math.max(...xs)-Math.min(...xs)), d:q(Math.max(...ys)-Math.min(...ys)) };
+}
+
+function deriveBuildingGraph(model) {
+  const walls=deriveWalls(model), openings=deriveOpenings(model,walls);
+  const spaces=model.levels.flatMap(level=>level.rooms.map(room=>({ id:room.id, levelId:level.id, type:'space', name:room.name, kind:room.kind, x:room.x,y:room.y,z:level.elevation,w:room.w,d:room.d,h:room.height,area:area(room),footprint:room.footprint?structuredClone(room.footprint):null,locked:!!room.locked,provenance:room.provenance || 'unknown' })));
+  const slabs=model.levels.map(level=>({ id:`slab:${level.id}`, levelId:level.id, type:'slab', name:`بلاطة ${level.name}`, ...levelBounds(level), z:q(level.elevation-.16), h:.16, provenance:'derived-envelope' }));
+  const top=model.levels.at(-1), roofBounds=levelBounds(top), roofs=[{ id:`roof:${top.id}`, levelId:top.id, type:'roof', name:'سطح/سقف علوي مفاهيمي', ...roofBounds, z:q(top.elevation+(top.height||3)), h:.16, provenance:'derived-envelope' }];
+  const siteFeatures=(model.site.features || []).map(f=>({ ...f, id:f.id || `feature:${f.type}:${f.x}:${f.y}`, type:f.type, levelId:null, provenance:f.provenance || 'generated-concept' }));
+  const elements={ walls, openings, spaces, slabs, roofs, siteFeatures };
+  const counts=Object.fromEntries(Object.entries(elements).map(([k,v])=>[k,v.length])); counts.doors=openings.filter(o=>o.type==='door').length; counts.windows=openings.filter(o=>o.type==='window').length;
+  return { schema:'masar-derived-building-2', modelId:model.id, title:model.title, generatedAt:new Date().toISOString(), sourceSchemaVersion:model.schemaVersion, units:'m', counts, elements, disclaimer:'Derived coordination model. Not a construction or code-compliance model.' };
+}
+
+function elementSchedule(model) {
+  const g=deriveBuildingGraph(model), levels=new Map(model.levels.map(l=>[l.id,l.name]));
+  const rows=[];
+  for (const r of g.elements.spaces) rows.push({category:'Space',id:r.id,level:levels.get(r.levelId),name:r.name,type:r.kind,length:'',width:r.w,height:r.h,area:r.area,external:'',host:'',provenance:r.provenance});
+  for (const w of g.elements.walls) rows.push({category:'Wall',id:w.id,level:levels.get(w.levelId),name:w.external?'جدار خارجي مشتق':'جدار داخلي مشتق',type:w.axis==='h'?'horizontal':'vertical',length:w.length,width:w.thickness,height:w.height,area:q(w.length*w.height),external:w.external?'yes':'no',host:w.adjacentRoomIds.join('|'),provenance:w.provenance});
+  for (const o of g.elements.openings) rows.push({category:o.type==='window'?'Window':'Door',id:o.id,level:levels.get(o.levelId),name:o.type==='window'?'نافذة':(o.entry?'باب دخول':'باب'),type:o.type,length:'',width:o.width,height:o.height,area:q(o.width*o.height),external:o.type==='window'||o.entry?'yes':'',host:o.hostWallId || '',provenance:o.provenance});
+  for (const s of g.elements.slabs) rows.push({category:'Slab',id:s.id,level:levels.get(s.levelId),name:s.name,type:'slab',length:s.d,width:s.w,height:s.h,area:q(s.w*s.d),external:'',host:'',provenance:s.provenance});
+  for (const r of g.elements.roofs) rows.push({category:'Roof',id:r.id,level:levels.get(r.levelId),name:r.name,type:'roof',length:r.d,width:r.w,height:r.h,area:q(r.w*r.d),external:'yes',host:'',provenance:r.provenance});
+  return rows;
+}
+
+function elementScheduleCSV(model) {
+  const headers=['Category','ID','Level','Name','Type','Length_m','Width_m','Height_m','Area_m2','External','Host_or_Adjacent','Provenance'];
+  const rows=elementSchedule(model).map(r=>[r.category,r.id,r.level,r.name,r.type,r.length,r.width,r.height,r.area,r.external,r.host,r.provenance]);
+  return '\uFEFF'+[headers,...rows].map(row=>row.map(csv).join(',')).join('\r\n');
+}
+
+function requirementMatrix(model) {
+  return (model.requirements || []).map(req=>{
+    const status=requirementStatus(model,req);
+    return { id:req.id, label:req.label, type:req.type, source:req.source || 'unknown', locked:!!req.locked, measurable:!!status.measurable, satisfied:status.measurable ? !!status.satisfied : null, detail:status.detail || '', review:status.measurable ? (status.satisfied?'satisfied':'needs-improvement') : 'human-review' };
+  });
+}
+
+function requirementMatrixCSV(model) {
+  const rows=[['Requirement_ID','Label','Type','Source','Locked','Measurable','Satisfied','Review','Detail'],...requirementMatrix(model).map(r=>[r.id,r.label,r.type,r.source,r.locked,r.measurable,r.satisfied===null?'':r.satisfied,r.review,r.detail])];
+  return '\uFEFF'+rows.map(row=>row.map(csv).join(',')).join('\r\n');
+}
+
+const MASAR_RULE_PACK = Object.freeze({
+  id:'masar-authoring-quality-2026.2', version:'2026.2', name:'MASAR Authoring Quality',
+  authority:'product-heuristic', compliance:false,
+  disclaimer:'قواعد جودة مفاهيمية داخل MASAR وليست اشتراطات SBC أو اعتمادًا هندسيًا.',
+  rules:[
+    {id:'space-positive',label:'المساحات موجبة',scope:'space',severity:'error'},
+    {id:'door-host',label:'كل باب مرتبط بجدار مشتق',scope:'door',severity:'error'},
+    {id:'door-concept-width',label:'عرض الباب المفاهيمي 0.80م أو أكثر',scope:'door',severity:'warning'},
+    {id:'window-host',label:'كل نافذة مرتبطة بجدار مشتق',scope:'window',severity:'error'},
+    {id:'window-external',label:'النافذة المفاهيمية على جدار خارجي',scope:'window',severity:'warning'},
+    {id:'wall-layer-sum',label:'مجموع طبقات نوع الجدار يطابق سماكته',scope:'wall-type',severity:'error'},
+    {id:'small-room',label:'تنبيه للمساحات الأصغر من حد الراحة المفاهيمي',scope:'space',severity:'warning'},
+    {id:'circulation-share',label:'نسبة الحركة لا تتجاوز 25% كمؤشر كفاءة مفاهيمي',scope:'project',severity:'warning'},
+    {id:'requirements',label:'المتطلبات القابلة للقياس محققة',scope:'requirement',severity:'warning'}
+  ]
+});
+
+const minimumConceptArea={ bedroom:7, majlis:10, living:9, kitchen:5, dining:6, office:5, meeting:7, bath:2, retail:8, warehouse:20, reception:5 };
+function evaluateRulePack(model, pack=MASAR_RULE_PACK) {
+  if (!pack || pack.compliance !== false || pack.authority !== 'product-heuristic') throw Error('حزمة القواعد غير مصرح بها كمؤشرات مفاهيمية.');
+  const g=deriveBuildingGraph(model), results=[];
+  for (const space of g.elements.spaces) {
+    results.push({ruleId:'space-positive',status:space.area>0?'pass':'fail',severity:'error',targets:[space.id],message:space.area>0?`${space.name}: مساحة موجبة.`:`${space.name}: مساحة غير صالحة.`});
+    const min=minimumConceptArea[space.kind];
+    if (min) results.push({ruleId:'small-room',status:space.area>=min?'pass':'review',severity:'warning',targets:[space.id],message:space.area>=min?`${space.name}: ${space.area} م² ضمن حد الراحة المفاهيمي الداخلي.`:`${space.name}: ${space.area} م² أقل من ${min} م² كتنبيه جودة مفاهيمي، وليس مخالفة كود.`});
+  }
+  for (const opening of g.elements.openings) {
+    if(opening.type==='door'){
+      results.push({ruleId:'door-host',status:opening.hostWallId?'pass':'fail',severity:'error',targets:[opening.id,opening.roomId],message:opening.hostWallId?'الباب مرتبط بجدار مشتق.':'الباب بلا جدار مضيف مشتق.'});
+      results.push({ruleId:'door-concept-width',status:opening.width>=.8?'pass':'review',severity:'warning',targets:[opening.id,opening.roomId],message:opening.width>=.8?`عرض الباب ${opening.width}م.`:`عرض الباب ${opening.width}م أقل من 0.80م كتنبيه مفاهيمي فقط.`});
+    } else {
+      const host=g.elements.walls.find(w=>w.id===opening.hostWallId);
+      results.push({ruleId:'window-host',status:opening.hostWallId?'pass':'fail',severity:'error',targets:[opening.id,opening.roomId],message:opening.hostWallId?'النافذة مرتبطة بجدار مشتق.':'النافذة بلا جدار مضيف مشتق.'});
+      results.push({ruleId:'window-external',status:host?.external?'pass':'review',severity:'warning',targets:[opening.id,opening.roomId],message:host?.external?'النافذة على حد خارجي مشتق.':'النافذة ليست على جدار خارجي في النموذج الحالي؛ راجعها.'});
+    }
+  }
+  for(const wt of effectiveAuthoring(model).wallTypes){const sum=wt.layers.reduce((n,l)=>n+Number(l.thickness),0),ok=Math.abs(sum-wt.totalThickness)<=.002;results.push({ruleId:'wall-layer-sum',status:ok?'pass':'fail',severity:'error',targets:[wt.id],message:ok?`${wt.name}: مجموع الطبقات ${q(sum)}م يطابق السماكة.`:`${wt.name}: مجموع الطبقات لا يطابق السماكة الكلية.`});}
+  const t=totals(model);
+  results.push({ruleId:'circulation-share',status:t.circulationPct<=25?'pass':'review',severity:'warning',targets:[],message:`نسبة الحركة ${t.circulationPct}%؛ حد المقارنة الداخلي 25% وليس اشتراطًا تنظيميًا.`});
+  for (const req of requirementMatrix(model).filter(r=>r.measurable)) results.push({ruleId:'requirements',status:req.satisfied?'pass':'review',severity:'warning',targets:[req.id],message:`${req.label}: ${req.satisfied?'محقق في النموذج الحالي':'يحتاج تحسينًا في النموذج الحالي'}.`});
+  const structural=validate(model).filter(i=>i.status==='error').map(i=>({ruleId:'canonical-validation',status:'fail',severity:'error',targets:i.targets,message:i.message}));
+  results.push(...structural);
+  const summary={pass:results.filter(r=>r.status==='pass').length,review:results.filter(r=>r.status==='review').length,fail:results.filter(r=>r.status==='fail').length,unchecked:validate(model).filter(i=>i.status==='unchecked').length};
+  return { pack:{id:pack.id,version:pack.version,name:pack.name,authority:pack.authority,compliance:false,disclaimer:pack.disclaimer}, summary, results, evaluatedAt:new Date().toISOString(), modelId:model.id };
+}
+
+function hash128(text) {
+  const bytes=new Uint8Array(16);
+  let a=0x811c9dc5>>>0,b=0x9e3779b9>>>0,c=0x85ebca6b>>>0,d=0xc2b2ae35>>>0;
+  for (let i=0;i<text.length;i++) { const x=text.charCodeAt(i); a=Math.imul(a^x,0x01000193)>>>0; b=Math.imul(b+(x^i),0x85ebca6b)>>>0; c=Math.imul(c^(x+a),0xc2b2ae35)>>>0; d=Math.imul(d+(x^b),0x27d4eb2d)>>>0; }
+  for (const [j,n] of [a,b,c,d].entries()) { bytes[j*4]=(n>>>24)&255; bytes[j*4+1]=(n>>>16)&255; bytes[j*4+2]=(n>>>8)&255; bytes[j*4+3]=n&255; }
+  return bytes;
+}
+const IFC64='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_$';
+function ifcGuid(seed) {
+  const bytes=hash128(String(seed)); let n=0n; for (const b of bytes) n=(n<<8n)|BigInt(b); let out=''; for (let i=0;i<22;i++) { out=IFC64[Number(n&63n)]+out; n>>=6n; } return out;
+}
+
+/**
+ * IFC4 coordination export. It intentionally exports conceptual spaces/walls/slabs/roof geometry.
+ * It is not advertised as an IFC authoring round-trip or code-compliant BIM model.
+ */
+function exportIFC(model) {
+  const g=deriveBuildingGraph(model);
+  if(g.elements.openings.some(o=>!o.hostWallId))throw Error('IFC: فتحة تعبر نهاية جدار مضيف؛ راجع موضعها قبل التصدير.');
+  const lines=[], add=x=>{lines.push(`#${lines.length+1}=${x};`);return lines.length;};
+  const origin=add("IFCCARTESIANPOINT((0.,0.,0.))"), axis=add(`IFCAXIS2PLACEMENT3D(#${origin},$,$)`), person=add(`IFCPERSON($,$,'MASAR',$,$,$,$,$)`), org=add(`IFCORGANIZATION($,'MASAR Studio',$,$,$)`), pao=add(`IFCPERSONANDORGANIZATION(#${person},#${org},$)`), app=add(`IFCAPPLICATION(#${org},'4.1.0','MASAR Studio','MASAR')`), owner=add(`IFCOWNERHISTORY(#${pao},#${app},$,.ADDED.,${Math.floor(Date.now()/1000)},#${pao},#${app},${Math.floor(Date.now()/1000)})`);
+  const lengthUnit=add("IFCSIUNIT(*,.LENGTHUNIT.,$,.METRE.)"), areaUnit=add("IFCSIUNIT(*,.AREAUNIT.,$,.SQUARE_METRE.)"), volumeUnit=add("IFCSIUNIT(*,.VOLUMEUNIT.,$,.CUBIC_METRE.)"), units=add(`IFCUNITASSIGNMENT((#${lengthUnit},#${areaUnit},#${volumeUnit}))`), context=add(`IFCGEOMETRICREPRESENTATIONCONTEXT($,'Model',3,1.E-05,#${axis},$)`);
+  const project=add(`IFCPROJECT(${escStep(ifcGuid('project:'+model.id))},#${owner},${escStep(model.title)},'MASAR authoring coordination export',$,$,$,(#${context}),#${units})`), sitePlacement=add(`IFCLOCALPLACEMENT($,#${axis})`), site=add(`IFCSITE(${escStep(ifcGuid('site:'+model.id))},#${owner},'Site',$,$,#${sitePlacement},$,$,.ELEMENT.,$,$,$,$,$)`), buildingPlacement=add(`IFCLOCALPLACEMENT(#${sitePlacement},#${axis})`), building=add(`IFCBUILDING(${escStep(ifcGuid('building:'+model.id))},#${owner},${escStep(model.title)},$,$,#${buildingPlacement},$,$,.ELEMENT.,$,$,$)`);
+  add(`IFCRELAGGREGATES(${escStep(ifcGuid('rel:project-site:'+model.id))},#${owner},$,$,#${project},(#${site}))`); add(`IFCRELAGGREGATES(${escStep(ifcGuid('rel:site-building:'+model.id))},#${owner},$,$,#${site},(#${building}))`);
+  const storeyRefs=new Map(), storeyChildren=new Map(), storeySpaces=new Map();
+  const upDirection=add('IFCDIRECTION((0.,0.,1.))');
+  for(const level of model.levels){const p=add(`IFCCARTESIANPOINT((0.,0.,${Number(level.elevation).toFixed(3)}))`),a=add(`IFCAXIS2PLACEMENT3D(#${p},$,$)`),lp=add(`IFCLOCALPLACEMENT(#${buildingPlacement},#${a})`),st=add(`IFCBUILDINGSTOREY(${escStep(ifcGuid('storey:'+level.id))},#${owner},${escStep(level.name)},$,$,#${lp},$,$,.ELEMENT.,${Number(level.elevation).toFixed(3)})`);storeyRefs.set(level.id,{ref:st,placement:lp});storeyChildren.set(level.id,[]);storeySpaces.set(level.id,[]);}
+  add(`IFCRELAGGREGATES(${escStep(ifcGuid('rel:building-storeys:'+model.id))},#${owner},$,$,#${building},(${[...storeyRefs.values()].map(x=>'#'+x.ref).join(',')}))`);
+  const rectShape=(w,d,h)=>{const p2=add(`IFCCARTESIANPOINT((0.,0.))`),ax2=add(`IFCAXIS2PLACEMENT2D(#${p2},$)`),prof=add(`IFCRECTANGLEPROFILEDEF(.AREA.,$,#${ax2},${Number(w).toFixed(3)},${Number(d).toFixed(3)})`);return solidShape(prof,h);};
+  const polyShape=(points,h)=>{const pts=points.map(p=>add(`IFCCARTESIANPOINT((${Number(p[0]).toFixed(3)},${Number(p[1]).toFixed(3)}))`)),pline=add(`IFCPOLYLINE((${[...pts,pts[0]].map(x=>'#'+x).join(',')}))`),prof=add(`IFCARBITRARYCLOSEDPROFILEDEF(.AREA.,$,#${pline})`);return solidShape(prof,h);};
+  const shapeRectProduct=(placementRef,w,d,h,name,type='IFCBUILDINGELEMENTPROXY',predefined='.NOTDEFINED.',identity=null)=>{const pds=rectShape(w,d,h);return add(`${type}(${escStep(ifcGuid(identity||name+':'+placementRef))},#${owner},${escStep(name)},$,$,#${placementRef},#${pds},$,${predefined})`);};
+  function solidShape(profile,h){const dir=add(`IFCDIRECTION((0.,0.,1.))`),pos=add(`IFCAXIS2PLACEMENT3D(#${origin},$,$)`),solid=add(`IFCEXTRUDEDAREASOLID(#${profile},#${pos},#${dir},${Number(h).toFixed(3)})`),rep=add(`IFCSHAPEREPRESENTATION(#${context},'Body','SweptSolid',(#${solid}))`);return add(`IFCPRODUCTDEFINITIONSHAPE($,$,(#${rep}))`);}
+  for(const space of g.elements.spaces){const st=storeyRefs.get(space.levelId);let lp,pds;if(space.footprint){const cp=add(`IFCCARTESIANPOINT((0.,0.,0.))`),ax=add(`IFCAXIS2PLACEMENT3D(#${cp},$,$)`);lp=add(`IFCLOCALPLACEMENT(#${st.placement},#${ax})`);pds=polyShape(space.footprint,space.h);}else{const cp=add(`IFCCARTESIANPOINT((${Number(space.x+space.w/2).toFixed(3)},${Number(space.y+space.d/2).toFixed(3)},0.))`),ax=add(`IFCAXIS2PLACEMENT3D(#${cp},$,$)`);lp=add(`IFCLOCALPLACEMENT(#${st.placement},#${ax})`);pds=rectShape(space.w,space.d,space.h);}const ref=add(`IFCSPACE(${escStep(ifcGuid('space:'+space.id))},#${owner},${escStep(space.name)},$,$,#${lp},#${pds},${escStep('MASAR_ROOM:'+space.id)},.ELEMENT.,.INTERNAL.,$)`);storeySpaces.get(space.levelId).push(ref);}
+  const wallRefs=new Map(),wallsByType=new Map();
+  for(const wall of g.elements.walls){const st=storeyRefs.get(wall.levelId),x=wall.axis==='v'?wall.coord:wall.start+wall.length/2,y=wall.axis==='v'?wall.start+wall.length/2:wall.coord,cp=add(`IFCCARTESIANPOINT((${Number(x).toFixed(3)},${Number(y).toFixed(3)},0.))`),dir=wall.axis==='v'?add(`IFCDIRECTION((0.,1.,0.))`):add(`IFCDIRECTION((1.,0.,0.))`),ax=add(`IFCAXIS2PLACEMENT3D(#${cp},#${upDirection},#${dir})`),lp=add(`IFCLOCALPLACEMENT(#${st.placement},#${ax})`),ref=shapeRectProduct(lp,wall.length,wall.thickness,wall.height,wall.wallTypeName||'Wall','IFCWALL','.NOTDEFINED.',wall.id);wallRefs.set(wall.id,ref);storeyChildren.get(wall.levelId).push(ref);if(!wallsByType.has(wall.wallTypeId))wallsByType.set(wall.wallTypeId,[]);wallsByType.get(wall.wallTypeId).push(ref);}
+  for(const wt of effectiveAuthoring(model).wallTypes){const refs=wallsByType.get(wt.id)||[];if(!refs.length)continue;const layerRefs=wt.layers.map(layer=>{const mat=add(`IFCMATERIAL(${escStep(layer.name)},$,$)`);return add(`IFCMATERIALLAYER(#${mat},${Number(layer.thickness).toFixed(3)},$,$,${escStep(layer.name)},$,$)`);}),set=add(`IFCMATERIALLAYERSET((${layerRefs.map(x=>'#'+x).join(',')}),${escStep(wt.name)},$)`),usage=add(`IFCMATERIALLAYERSETUSAGE(#${set},.AXIS2.,.POSITIVE.,0.,$)`);add(`IFCRELASSOCIATESMATERIAL(${escStep(ifcGuid('material:'+wt.id))},#${owner},${escStep(wt.name)},$,( ${refs.map(x=>'#'+x).join(',')} ),#${usage})`);}
+  for(const slab of g.elements.slabs){const st=storeyRefs.get(slab.levelId),cp=add(`IFCCARTESIANPOINT((${Number(slab.x+slab.w/2).toFixed(3)},${Number(slab.y+slab.d/2).toFixed(3)},${Number(-slab.h).toFixed(3)}))`),ax=add(`IFCAXIS2PLACEMENT3D(#${cp},$,$)`),lp=add(`IFCLOCALPLACEMENT(#${st.placement},#${ax})`),ref=shapeRectProduct(lp,slab.w,slab.d,slab.h,slab.name,'IFCSLAB','.FLOOR.',slab.id);storeyChildren.get(slab.levelId).push(ref);}
+  for(const roof of g.elements.roofs){const st=storeyRefs.get(roof.levelId),cp=add(`IFCCARTESIANPOINT((${Number(roof.x+roof.w/2).toFixed(3)},${Number(roof.y+roof.d/2).toFixed(3)},${Number((model.levels.find(l=>l.id===roof.levelId)?.height||3)).toFixed(3)}))`),ax=add(`IFCAXIS2PLACEMENT3D(#${cp},$,$)`),lp=add(`IFCLOCALPLACEMENT(#${st.placement},#${ax})`),ref=shapeRectProduct(lp,roof.w,roof.d,roof.h,roof.name,'IFCSLAB','.ROOF.',roof.id);storeyChildren.get(roof.levelId).push(ref);}
+  for(const opening of g.elements.openings){const st=storeyRefs.get(opening.levelId),vertical=['west','east'].includes(opening.side),z=opening.type==='window'?opening.sill:0,cp=add(`IFCCARTESIANPOINT((${Number(opening.x).toFixed(3)},${Number(opening.y).toFixed(3)},${Number(z).toFixed(3)}))`),dir=vertical?add(`IFCDIRECTION((0.,1.,0.))`):add(`IFCDIRECTION((1.,0.,0.))`),ax=add(`IFCAXIS2PLACEMENT3D(#${cp},#${upDirection},#${dir})`),lp=add(`IFCLOCALPLACEMENT(#${st.placement},#${ax})`),pds=rectShape(opening.width,.08,opening.height),voidPds=rectShape(opening.width,(g.elements.walls.find(w=>w.id===opening.hostWallId)?.thickness||.24)+.02,opening.height),op=add(`IFCOPENINGELEMENT(${escStep(ifcGuid('void:'+opening.id))},#${owner},${escStep('Opening '+opening.id)},$,$,#${lp},#${voidPds},${escStep(opening.id)},.OPENING.)`),wallRef=wallRefs.get(opening.hostWallId);if(wallRef)add(`IFCRELVOIDSELEMENT(${escStep(ifcGuid('void-rel:'+opening.id))},#${owner},$,$,#${wallRef},#${op})`);let ref;if(opening.type==='window')ref=add(`IFCWINDOW(${escStep(ifcGuid('window:'+opening.id))},#${owner},'Window',$,$,#${lp},#${pds},${escStep('MASAR_ROOM:'+opening.roomId+'|'+opening.id)},${Number(opening.height).toFixed(3)},${Number(opening.width).toFixed(3)},.WINDOW.,.SINGLE_PANEL.,$)`);else ref=add(`IFCDOOR(${escStep(ifcGuid('door:'+opening.id))},#${owner},${escStep(opening.entry?'Entrance door':'Door')},$,$,#${lp},#${pds},${escStep('MASAR_ROOM:'+opening.roomId+'|'+opening.id)},${Number(opening.height).toFixed(3)},${Number(opening.width).toFixed(3)},.DOOR.,.SINGLE_SWING_LEFT.,$)`);add(`IFCRELFILLSELEMENT(${escStep(ifcGuid('fill-rel:'+opening.id))},#${owner},$,$,#${op},#${ref})`);storeyChildren.get(opening.levelId).push(ref);}
+  for(const [levelId,spaces] of storeySpaces)if(spaces.length)add(`IFCRELAGGREGATES(${escStep(ifcGuid('spaces:'+levelId))},#${owner},$,$,#${storeyRefs.get(levelId).ref},(${spaces.map(x=>'#'+x).join(',')}))`);
+  for(const [levelId,children] of storeyChildren)if(children.length)add(`IFCRELCONTAINEDINSPATIALSTRUCTURE(${escStep(ifcGuid('contain:'+levelId))},#${owner},$,$,(${children.map(x=>'#'+x).join(',')}),#${storeyRefs.get(levelId).ref})`);
+  const now=new Date().toISOString(), meta=`/* MASAR_SITE ${Number(model.site.width).toFixed(3)} ${Number(model.site.depth).toFixed(3)} ${model.site.street}; MASAR_MODEL ${model.id}; AUTHORING ${effectiveAuthoring(model).schema}; NOT FOR CONSTRUCTION */`;
+  return `ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION(('MASAR IFC4 architectural subset (not MVD-certified)','MASAR authoring coordination export; NOT FOR CONSTRUCTION'),'2;1');\nFILE_NAME(${escStep((model.title||'MASAR')+'.ifc')},${escStep(now)},('MASAR User'),('MASAR Studio'),'MASAR Studio 4.1.0','MASAR Studio','');\nFILE_SCHEMA(('IFC4'));\nENDSEC;\nDATA;\n${meta}\n${lines.join('\n')}\nENDSEC;\nEND-ISO-10303-21;\n`;
+}
+
+function projectReadiness(model) {
+  const rules=evaluateRulePack(model), requirements=requirementMatrix(model), graph=deriveBuildingGraph(model), checks=validate(model);
+  const measurable=requirements.filter(r=>r.measurable), satisfied=measurable.filter(r=>r.satisfied).length;
+  return {
+    model:{spaces:graph.counts.spaces,walls:graph.counts.walls,doors:graph.counts.doors,windows:graph.counts.windows,openings:graph.counts.openings,slabs:graph.counts.slabs,roofs:graph.counts.roofs},
+    requirements:{total:requirements.length,measurable:measurable.length,satisfied,needsImprovement:measurable.length-satisfied,humanReview:requirements.filter(r=>!r.measurable).length},
+    validation:{errors:checks.filter(i=>i.status==='error').length,warnings:checks.filter(i=>i.status==='warning').length,checked:checks.filter(i=>i.status==='checked').length,unchecked:checks.filter(i=>i.status==='unchecked').length},
+    rules:rules.summary,
+    deliveryReady:checks.every(i=>i.status!=='error') && rules.summary.fail===0,
+    complianceReady:false,
+    note:'جاهزية التسليم هنا تعني اتساق نموذج MASAR المفاهيمي فقط؛ الاعتماد الهندسي والتنظيمي خارج النطاق.'
+  };
+}
+
+return {csvCell,deriveWalls,deriveOpenings,deriveBuildingGraph,elementSchedule,elementScheduleCSV,requirementMatrix,requirementMatrixCSV,MASAR_RULE_PACK,evaluateRulePack,ifcGuid,exportIFC,projectReadiness};
+})();
+const MASAR_Module_3=(()=>{
+const { VERSION, uid, round, assertModel, normalizeText }=MASAR_Module_1;
+const { authoringDefaults }=MASAR_Module_0;
+/** Bounded IFC4 architectural-space exchange, not a general BIM round-trip.
+ * Unsupported space representations and transformations fail explicitly.
+ * Other disciplines are not imported and are disclosed in the import review.
+ */
+
+
+const reject=message=>{throw Error('IFC: '+message);};
+const num=v=>{const s=String(v??'').trim();if(!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:[Ee][+-]?\d+)?$/.test(s))return null;const n=Number(s);return Number.isFinite(n)?n:null;};
+const ref=v=>{const m=String(v??'').trim().match(/^#(\d+)$/);return m?Number(m[1]):null;};
+const refs=v=>[...String(v??'').matchAll(/#(\d+)/g)].map(m=>Number(m[1]));
+function unquote(v=''){
+ const text=String(v).trim();if(!text.startsWith("'")||!text.endsWith("'"))return '';
+ const s=text.slice(1,-1).replaceAll("''", "'");let out='';
+ for(let i=0;i<s.length;i++){
+  if(s[i]!=='\\'){out+=s[i];continue;}
+  if(s[i+1]==='\\'){out+='\\';i++;continue;}
+  const marker=s.slice(i,i+4).toUpperCase(),step=marker==='\\X2\\'?4:marker==='\\X4\\'?8:0;
+  if(!step)reject('ترميز نص STEP غير مدعوم.');
+  const end=s.toUpperCase().indexOf('\\X0\\',i+4),hex=s.slice(i+4,end);
+  if(end<0||!hex.length||hex.length%step||!/^[0-9A-F]+$/i.test(hex))reject('ترميز Unicode غير صالح.');
+  for(let j=0;j<hex.length;j+=step){const point=parseInt(hex.slice(j,j+step),16);if(step===8&&(point>0x10ffff||(point>=0xd800&&point<=0xdfff)))reject('قيمة Unicode غير صالحة.');out+=step===8?String.fromCodePoint(point):String.fromCharCode(point);}
+  i=end+3;
+ }
+ return out;
+}
+function splitTop(text){const out=[];let start=0,depth=0,quote=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==="'"){if(quote&&text[i+1]==="'"){i++;continue;}quote=!quote;continue;}if(quote)continue;if(c==='('){if(++depth>64)reject('التداخل يتجاوز الحد المسموح.');}else if(c===')'){if(--depth<0)reject('أقواس STEP غير متوازنة.');}else if(c===','&&depth===0){out.push(text.slice(start,i).trim());start=i+1;}}if(quote||depth)reject('قيمة STEP غير مكتملة.');out.push(text.slice(start).trim());return out;}
+function stripComments(text){let out='',quote=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==="'"){out+=c;if(quote&&text[i+1]==="'"){out+=text[++i];continue;}quote=!quote;continue;}if(!quote&&c==='/'&&text[i+1]==='*'){const end=text.indexOf('*/',i+2);if(end<0)reject('تعليق STEP غير مكتمل.');i=end+1;out+=' ';}else out+=c;}if(quote)reject('نص STEP غير مكتمل.');return out;}
+function entities(text){const map=new Map();let start=0,quote=false;for(let i=0;i<text.length;i++){const c=text[i];if(c==="'"){if(quote&&text[i+1]==="'"){i++;continue;}quote=!quote;}else if(c===';'&&!quote){const s=text.slice(start,i).trim();start=i+1;if(!s.startsWith('#'))continue;const m=s.match(/^#(\d+)\s*=\s*([A-Z0-9_]+)\s*\(([\s\S]*)\)$/i);if(!m)reject('كيان STEP غير مدعوم.');const id=Number(m[1]);if(map.has(id)||map.size>=60000)reject('معرف كيان مكرر أو عدد كيانات يتجاوز الحد.');map.set(id,{id,type:m[2].toUpperCase(),args:splitTop(m[3])});}}return map;}
+function get(map,id,type){const e=map.get(id);if(!e||(type&&e.type!==type))reject(`مرجع مفقود أو نوع غير مدعوم: #${id} (${type||'entity'}).`);return e;}
+function vector(map,id,type,dimension=3){const e=get(map,id,type),s=e.args[0];if(!s?.startsWith('(')||!s.endsWith(')'))reject('إحداثيات غير صالحة.');const a=splitTop(s.slice(1,-1)).map(num);if(a.length<2||a.length>dimension||a.some(v=>v===null))reject('إحداثيات غير صالحة.');return dimension===3?[a[0],a[1],a[2]??0]:a;}
+const near=(a,b)=>a.length===b.length&&a.every((v,i)=>Math.abs(v-b[i])<1e-8);
+function axis(map,id,dimension=3,allowQuarterTurn=false){
+ const e=get(map,id,dimension===3?'IFCAXIS2PLACEMENT3D':'IFCAXIS2PLACEMENT2D'),p=vector(map,ref(e.args[0]),'IFCCARTESIANPOINT',dimension);
+ if(dimension===3&&e.args[1]!=='$'&&!near(vector(map,ref(e.args[1]),'IFCDIRECTION'),[0,0,1]))reject('المحور المائل غير مدعوم.');
+ const direction=e.args[dimension===3?2:1];
+ if(direction&&direction!=='$'){const d=vector(map,ref(direction),'IFCDIRECTION',dimension),x=dimension===3?[1,0,0]:[1,0],y=dimension===3?[0,1,0]:[0,1];if(!near(d,x)&&!(allowQuarterTurn&&near(d,y)))reject('دوران هذا العنصر غير مدعوم؛ لم تُغيّر إحداثياته بصمت.');}
+ return p;
+}
+function placement(map,id,allowQuarterTurn=false,seen=new Set()){
+ if(id===null)return{x:0,y:0,z:0,parent:null};if(seen.has(id)||seen.size>24)reject('دورة أو عمق زائد في مواضع العناصر.');seen.add(id);
+ const e=get(map,id,'IFCLOCALPLACEMENT'),parent=ref(e.args[0]);if(parent===null&&e.args[0]!=='$')reject('موضع أب غير صالح.');
+ const p=axis(map,ref(e.args[1]),3,allowQuarterTurn),base=placement(map,parent,false,seen);
+ return{x:p[0]+base.x,y:p[1]+base.y,z:p[2]+base.z,parent};
+}
+function shape(map,id){
+ const pds=get(map,id,'IFCPRODUCTDEFINITIONSHAPE'),rs=refs(pds.args[2]);
+ const bodies=rs.map(r=>get(map,r,'IFCSHAPEREPRESENTATION')).filter(r=>unquote(r.args[1])==='Body');
+ if(bodies.length!==1)reject('يجب أن تحتوي المساحة على تمثيل Body واحد مدعوم.');
+ const items=refs(bodies[0].args[3]);if(items.length!==1)reject('تعدد مجسمات المساحة غير مدعوم.');
+ const solid=get(map,items[0],'IFCEXTRUDEDAREASOLID'),h=num(solid.args[3]);if(!h||h<=0)reject('ارتفاع extrusion غير صالح.');
+ if(!near(vector(map,ref(solid.args[2]),'IFCDIRECTION'),[0,0,1]))reject('اتجاه extrusion غير عمودي.');
+ const p=solid.args[1]==='$'?[0,0,0]:axis(map,ref(solid.args[1])),profile=get(map,ref(solid.args[0]));
+ if(profile.type==='IFCRECTANGLEPROFILEDEF'){
+  const w=num(profile.args[3]),d=num(profile.args[4]);if(!w||!d||w<=0||d<=0)reject('أبعاد profile غير صالحة.');
+  const c=profile.args[2]==='$'?[0,0]:axis(map,ref(profile.args[2]),2);
+  return{kind:'rect',w,d,height:h,x:p[0]+c[0],y:p[1]+c[1],z:p[2]};
+ }
+ if(profile.type==='IFCARBITRARYCLOSEDPROFILEDEF'){
+  const pl=get(map,ref(profile.args[2]),'IFCPOLYLINE'),ids=refs(pl.args[0]);if(ids.length<5||ids.length>25)reject('عدد نقاط المضلع غير مدعوم.');
+  let points=ids.map(id=>vector(map,id,'IFCCARTESIANPOINT'));
+  if(!near(points[0],points.at(-1)))reject('منحنى profile ليس مغلقًا.');points=points.slice(0,-1);
+  if(points.some(pt=>Math.abs(pt[2])>1e-8))reject('profile غير مستوٍ.');
+  return{kind:'poly',points:points.map(pt=>[pt[0]+p[0],pt[1]+p[1]]),height:h,z:p[2]};
+ }
+ reject(`profile غير مدعوم: ${profile.type}.`);
+}
+function lengthScale(map){
+ const projects=[...map.values()].filter(e=>e.type==='IFCPROJECT');if(projects.length!==1)reject('يتطلب المستورد مشروع IFC واحدًا.');
+ const units=get(map,ref(projects[0].args[8]),'IFCUNITASSIGNMENT'),lengths=refs(units.args[0]).map(id=>get(map,id)).filter(u=>u.args[1]==='.LENGTHUNIT.');
+ if(lengths.length!==1||lengths[0].type!=='IFCSIUNIT'||lengths[0].args[3]!=='.METRE.')reject('وحدة طول SI بالمتر ومضاعفاته مطلوبة.');
+ const factor={'$':1,'.MILLI.':.001,'.CENTI.':.01,'.DECI.':.1}[lengths[0].args[2]];if(!factor)reject('بادئة وحدة الطول غير مدعومة.');return factor;
+}
+function inferKind(name){const t=normalizeText(name);const cases=[['bedroom',/غرفه نوم|bedroom/],['majlis',/مجلس|majlis/],['living',/معيش|living|family/],['kitchen',/مطبخ|kitchen/],['bath',/دوره مياه|حمام|bath|toilet|wc/],['stairs',/درج|stair/],['elevator',/مصعد|lift|elevator/],['hall',/ممر|مدخل|hall|corridor/],['dining',/طعام|dining/],['meeting',/اجتماع|meeting/],['reception',/استقبال|reception/],['warehouse',/مستودع|warehouse/],['loading',/تحميل|loading/],['retail',/تجزئ|صاله العرض|retail|shop/],['office',/مكتب|office/],['storage',/مخزن|storage/]];return cases.find(([,re])=>re.test(t))?.[0]||'service';}
+function sideFor(room,p){const candidates=[['west',Math.abs(p.x-room.x)],['east',Math.abs(p.x-room.x-room.w)],['south',Math.abs(p.y-room.y)],['north',Math.abs(p.y-room.y-room.d)]].sort((a,b)=>a[1]-b[1]);if(candidates[0][1]>.003)reject('فتحة موسومة لا تقع على ضلع غرفة مدعوم.');return candidates[0][0];}
+function parseIFC(text){
+ if(typeof text!=='string'||text.length>8000000)reject('الملف غير صالح أو يتجاوز 8 ميجابايت.');
+ const meta=text.match(/\/\*\s*MASAR_SITE\s+([\d.+-]+)\s+([\d.+-]+)\s+(شمال|جنوب|شرق|غرب)/),clean=stripComments(text);
+ if(!/^\s*ISO-10303-21;/i.test(clean)||!/FILE_SCHEMA\s*\(\s*\(\s*'IFC4'\s*\)\s*\)/i.test(clean)||!/END-ISO-10303-21;\s*$/i.test(clean))reject('يتطلب ملف IFC4 STEP كاملًا.');
+ const map=entities(clean),scale=lengthScale(map),storeys=[],levelByPlacement=new Map(),rooms=new Map();
+ for(const e of map.values())if(e.type==='IFCBUILDINGSTOREY'){
+  const lp=ref(e.args[5]),p=placement(map,lp),level={id:`ifc-level-${e.id}`,name:unquote(e.args[2])||`Storey ${e.id}`,elevation:round(p.z*scale),height:3.3,rooms:[]};
+  storeys.push(level);levelByPlacement.set(lp,level);
+ }
+ if(!storeys.length||storeys.length>8)reject('عدد الأدوار غير مدعوم.');storeys.sort((a,b)=>a.elevation-b.elevation);
+ for(const e of map.values())if(e.type==='IFCSPACE'){
+  const lp=placement(map,ref(e.args[5])),level=levelByPlacement.get(lp.parent);if(!level)reject('المساحة ليست مرتبطة مباشرة بدور مدعوم.');
+  const s=shape(map,ref(e.args[6]));if(Math.abs((lp.z+s.z)*scale-level.elevation)>.003)reject('المساحة لها إزاحة رأسية عن الدور غير مدعومة.');
+  const tag=unquote(e.args[7]),tagId=tag.startsWith('MASAR_ROOM:')?tag.slice(11):null,id=tagId&&tagId.length<100?tagId:`ifc-space-${e.id}`;
+  if(rooms.has(id)||rooms.size>=200)reject('معرف مساحة مكرر أو عدد مساحات زائد.');
+  const name=unquote(e.args[2])||`Space ${e.id}`,r={id,name,kind:inferKind(name),height:round(s.height*scale),locked:false,doors:[],windows:[],note:'',provenance:'imported-ifc4-space'};
+  if(s.kind==='rect')Object.assign(r,{x:round((lp.x+s.x-s.w/2)*scale),y:round((lp.y+s.y-s.d/2)*scale),w:round(s.w*scale),d:round(s.d*scale)});
+  else{r.footprint=s.points.map(p=>[round((p[0]+lp.x)*scale),round((p[1]+lp.y)*scale)]);const xs=r.footprint.map(p=>p[0]),ys=r.footprint.map(p=>p[1]);Object.assign(r,{x:Math.min(...xs),y:Math.min(...ys),w:round(Math.max(...xs)-Math.min(...xs)),d:round(Math.max(...ys)-Math.min(...ys))});}
+  level.rooms.push(r);rooms.set(id,{room:r,level});
+ }
+ if(!rooms.size)reject('لا توجد مساحات IfcSpace مدعومة.');const levels=storeys.filter(l=>l.rooms.length);
+ for(let i=0;i<levels.length;i++){const h=Math.max(...levels[i].rooms.map(r=>r.height)),gap=levels[i+1]?.elevation-levels[i].elevation;levels[i].height=round(Number.isFinite(gap)?gap:Math.max(2,h));if(levels[i].height<h-.003)reject('ارتفاع المساحة يتجاوز منسوب الدور التالي.');}
+ let skippedOpenings=0;
+ for(const e of map.values())if(e.type==='IFCDOOR'||e.type==='IFCWINDOW'){
+  const tag=unquote(e.args[7]);if(!tag.startsWith('MASAR_ROOM:')){skippedOpenings++;continue;}
+  const [roomId,itemId]=tag.slice(11).split('|'),target=rooms.get(roomId);if(!target)reject('غرفة الفتحة الموسومة غير موجودة.');
+  const {room:r,level}=target,lp=placement(map,ref(e.args[5]),true),p={x:lp.x*scale,y:lp.y*scale,z:lp.z*scale},side=sideFor(r,p),offset=round(['east','west'].includes(side)?(p.y-r.y)/r.d:(p.x-r.x)/r.w),width=num(e.args[9]),height=num(e.args[8]);
+  if(!width||!height||offset<0||offset>1)reject('أبعاد الفتحة الموسومة غير صالحة.');
+  const base={id:itemId||`${r.id}-opening-${e.id}`,side,offset,width:round(width*scale),height:round(height*scale),provenance:'imported-ifc4-opening'};
+  if(e.type==='IFCDOOR'){if(Math.abs(p.z-level.elevation)>.003)reject('عتبة الباب غير مدعومة.');r.doors.push({...base,entry:/entrance/i.test(unquote(e.args[2]))});}
+  else r.windows.push({...base,sill:round(p.z-level.elevation),typeId:'window-concept-1200',locked:false});
+ }
+ const all=levels.flatMap(l=>l.rooms),minX=Math.min(...all.map(r=>r.x)),minY=Math.min(...all.map(r=>r.y)),dx=minX<0?round(1-minX):0,dy=minY<0?round(1-minY):0;
+ if(dx||dy)for(const r of all){r.x=round(r.x+dx);r.y=round(r.y+dy);if(r.footprint)r.footprint=r.footprint.map(p=>[round(p[0]+dx),round(p[1]+dy)]);}
+ const maxX=Math.max(...all.map(r=>r.x+r.w)),maxY=Math.max(...all.map(r=>r.y+r.d)),mw=meta?num(meta[1]):null,md=meta?num(meta[2]):null,width=mw&&mw>=maxX?mw:Math.max(4,Math.ceil(maxX+1)),depth=md&&md>=maxY?md:Math.max(4,Math.ceil(maxY+1)),street=meta?.[3]||'جنوب';
+ const notes=['استُوردت المساحات والفتحات الموسومة المدعومة فقط. الجدران أُعيد اشتقاقها بأنواع مفاهيمية وليست طبقات IFC الأصلية. تاريخ المشروع ومتطلباته والتخصصات الأخرى لم تُستورد.',`فتحات غير موسومة لم تُستورد: ${skippedOpenings}.`];
+ if(dx||dy)notes.push(`نُقل الأصل المرجعي بمقدار ${dx} م شرقًا و${dy} م شمالًا لإدخاله في مجال الموقع؛ راجع الإحداثيات.`);
+ const m={schemaVersion:VERSION,id:uid(),title:'مشروع IFC مستورد',authoring:authoringDefaults(),site:{width,depth,street,north:'up',setback:{front:0,back:0,left:0,right:0},setbackSource:'unknown-from-ifc-import',features:[]},brief:{prompt:'Imported IFC4 subset; original client brief unavailable.',width,depth,floors:levels.length,bedrooms:all.filter(r=>r.kind==='bedroom').length,offices:all.filter(r=>r.kind==='office').length,parking:0,street,projectType:'villa',sources:{width:meta?'imported':'assumed-envelope',depth:meta?'imported':'assumed-envelope',floors:'imported',bedrooms:'inferred-from-name',offices:'inferred-from-name',parking:'unknown',street:meta?'imported':'assumed',projectType:'unknown'},intents:[],unresolved:notes},requirements:[{id:'r-ifc-import',label:'مراجعة الهندسة والأنواع المستنتجة والوحدات وعلاقات IFC قبل الاعتماد',type:'custom',locked:true,source:'imported'}],levels,comments:[],references:[],design:{stage:'development',projectType:'villa',priority:'balanced',style:'unspecified',generatedVariant:0,importMode:'ifc4-space-authoring',importTransform:{scaleToMetres:scale,dx,dy,skippedOpenings}},createdAt:new Date().toISOString()};
+ return assertModel(m);
+}
+
+return {parseIFC};
+})();
+const MASAR_Module_4=(()=>{
+const { COLORS, area, doorPoint, windowPoint, roomPolygon, pointInPolygon, centroid, round }=MASAR_Module_1;
+const { deriveWalls, deriveOpenings }=MASAR_Module_2;
+
+
+const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 });
+const qkey=n=>String(round(n));
+function floorCells(r){
+    if(!r.footprint) return [{x:r.x,y:r.y,w:r.w,d:r.d}];
+    const poly=roomPolygon(r), xs=[...new Set(poly.map(p=>qkey(p[0])))].map(Number).sort((a,b)=>a-b), ys=[...new Set(poly.map(p=>qkey(p[1])))].map(Number).sort((a,b)=>a-b), cells=[];
+    for(let xi=1;xi<xs.length;xi++) for(let yi=1;yi<ys.length;yi++) { const x=xs[xi-1],y=ys[yi-1],w=xs[xi]-x,d=ys[yi]-y; if(w>.001&&d>.001&&pointInPolygon([x+w/2,y+d/2],poly,false)) cells.push({x,y,w,d}); }
+    return cells;
+}
+function openingInterval(o,w){ const along=w.axis==='v'?o.y:o.x; return [along-o.width/2,along+o.width/2]; }
+function boxForWall(w,a,b,z,h){ const t=w.thickness||.12; return {x:w.axis==='v'?w.coord-t/2:a,y:w.axis==='v'?a:w.coord-t/2,z,w:w.axis==='v'?t:b-a,d:w.axis==='v'?b-a:t,h,color:w.external?'#ded9cf':'#ebe7de',kind:'wall',wallId:w.id,displayOnly:true}; }
+/** Presentation geometry derived from authoring walls/openings. It never mutates model facts. */
+function wallBoxes(model, levelId, displayHeight=2.75){
+    const level=model.levels.find(l=>l.id===levelId)||model.levels[0], walls=deriveWalls(model).filter(w=>w.levelId===level.id), openings=deriveOpenings(model).filter(o=>o.levelId===level.id&&o.hostWallId), boxes=[];
+    for(const w of walls){ const hosted=openings.filter(o=>o.hostWallId===w.id), points=[w.start,w.end]; for(const o of hosted){const [a,b]=openingInterval(o,w);points.push(Math.max(w.start,a),Math.min(w.end,b));} const cuts=[...new Set(points.map(qkey))].map(Number).sort((a,b)=>a-b);
+        for(let i=1;i<cuts.length;i++){const a=cuts[i-1],b=cuts[i],mid=(a+b)/2;if(b-a<=.001)continue;const o=hosted.find(x=>{const [s,e]=openingInterval(x,w);return mid>s+.001&&mid<e-.001;});
+            if(!o){boxes.push(boxForWall(w,a,b,level.elevation,displayHeight));continue;}
+            if(o.type==='door'){const bottom=Math.min(displayHeight,o.height||2.15),h=displayHeight-bottom;if(h>.001)boxes.push(boxForWall(w,a,b,level.elevation+bottom,h));}
+            else {const sill=Math.max(0,Math.min(displayHeight,o.sill||0)),top=Math.max(sill,Math.min(displayHeight,sill+(o.height||1.2)));if(sill>.001)boxes.push(boxForWall(w,a,b,level.elevation,sill));if(displayHeight-top>.001)boxes.push(boxForWall(w,a,b,level.elevation+top,displayHeight-top));}
+        }
+    }
+    return boxes;
+}
+function sceneBoxes(model,{levelId=model.levels[0].id,all=false,selectedId=null,furniture=true,cutaway=true,issues=[]}={}){
+    const W=model.site.width,D=model.site.depth,bad=new Set(issues.filter(i=>i.status==='error').flatMap(i=>i.targets)),warn=new Set(issues.filter(i=>i.status==='warning').flatMap(i=>i.targets)),boxes=[{x:-.7,y:-.7,z:-.28,w:W+1.4,d:D+1.4,h:.25,color:'#b9c7aa',kind:'ground',displayOnly:true},{x:1.5,y:2.5,z:-.035,w:W-3,d:D-5,h:.04,color:'#e5e0d4',kind:'paving',displayOnly:true}];
+    for(const f of model.site.features||[]){if(f.type==='pool')boxes.push({x:f.x,y:f.y,z:-.09,w:f.w,d:f.d,h:.08,color:'#78b8c3',kind:'pool',displayOnly:true});else boxes.push({x:f.x,y:f.y,z:-.01,w:f.w,d:f.d,h:.04,color:'#c8d2be',kind:f.type,displayOnly:true});}
+    const levels=all?model.levels:model.levels.filter(l=>l.id===levelId), derivedOpenings=deriveOpenings(model);
+    for(const level of levels){const elev=all?level.elevation:0,delta=elev-level.elevation;
+        for(const r of level.rooms){const color=r.id===selectedId?'#68c8ad':bad.has(r.id)?'#cf7f70':warn.has(r.id)?'#d6b26e':COLORS[r.kind];for(const c of floorCells(r))boxes.push({...c,z:elev,h:.075,color,kind:'floor',roomId:r.id});
+            if(furniture&&!r.footprint){const ox=r.x+.5,oy=r.y+.45,ww=Math.min(r.w-1,2),dd=Math.min(r.d-1,2.1);if(r.kind==='bedroom'&&ww>.8&&dd>1){boxes.push({x:ox,y:oy,z:elev+.1,w:ww,d:dd,h:.38,color:'#f4f0e7',displayOnly:true},{x:ox,y:oy,z:elev+.5,w:ww,d:.2,h:.35,color:'#a49a89',displayOnly:true});}if(['living','majlis'].includes(r.kind)&&r.w>2&&r.d>2)boxes.push({x:ox,y:oy,z:elev+.1,w:Math.min(3,r.w-1),d:.8,h:.55,color:'#f3eee4',displayOnly:true},{x:ox+.45,y:oy+1.3,z:elev+.1,w:Math.min(1.5,r.w-1),d:.8,h:.32,color:'#987e60',displayOnly:true});if(['dining','kitchen','office'].includes(r.kind)&&r.w>2&&r.d>2)boxes.push({x:r.x+r.w*.28,y:r.y+r.d*.3,z:elev+.08,w:r.w*.42,d:Math.min(1.6,r.d*.4),h:.85,color:r.kind==='kitchen'?'#ddd6c9':'#9c8264',displayOnly:true});if(r.kind==='stairs')for(let i=0;i<12;i++)boxes.push({x:r.x+.15,y:r.y+.2+i*(r.d-.4)/12,z:elev,w:r.w-.3,d:(r.d-.4)/12,h:.08+i*.19,color:'#b3a895',displayOnly:true});}
+        }
+        const h=cutaway?(all?1.1:1.35):2.75;for(const b of wallBoxes(model,level.id,h))boxes.push({...b,z:b.z+delta});
+        for(const o of derivedOpenings.filter(o=>o.levelId===level.id&&o.type==='window')){const vertical=['east','west'].includes(o.side),t=.025;boxes.push({x:vertical?o.x-t:o.x-o.width/2,y:vertical?o.y-o.width/2:o.y-t,z:elev+(o.sill||0),w:vertical?t*2:o.width,d:vertical?o.width:t*2,h:o.height||1.2,color:'#8fcbd0',kind:'window',openingId:o.id,displayOnly:true});}
+    }
+    for(let i=0;i<Math.min(7,Math.floor(D/3));i++){boxes.push({x:.25,y:1+i*3,z:0,w:.9,d:.9,h:.7,color:'#7f9a71',displayOnly:true});boxes.push({x:W-1.1,y:1+i*3,z:0,w:.8,d:.8,h:.6,color:'#8ca57e',displayOnly:true});}
+    return boxes;
+}
+function furnitureSVG(r){if(r.footprint)return '';const x=r.x,y=r.y,w=r.w,d=r.d;if(w<2||d<2)return '';let s='';if(r.kind==='bedroom'){const bw=Math.min(1.8,w-.8),bd=Math.min(2,d-.8);s=`<rect x="${x+.45}" y="${y+.45}" width="${bw}" height="${bd}" rx=".09"/><path d="M${x+.45} ${y+.9}h${bw}"/>`;}else if(['living','majlis'].includes(r.kind))s=`<rect x="${x+.4}" y="${y+.4}" width="${Math.min(3,w-.8)}" height=".8" rx=".15"/><rect x="${x+.9}" y="${y+1.5}" width="${Math.min(1.5,w-1.4)}" height=".8" rx=".1"/>`;else if(r.kind==='stairs'){for(let i=0;i<12;i++)s+=`<path d="M${x+.25} ${y+.2+i*(d-.4)/12}h${w-.5}"/>`;}else if(r.kind==='kitchen')s=`<path d="M${x+.3} ${y+d-.3}h${w-.6}v-.7H${x+1}V${y+.3}h-.7Z"/>`;else if(r.kind==='dining')s=`<rect x="${x+w*.25}" y="${y+d*.3}" width="${w*.5}" height="${d*.4}" rx=".2"/>`;return `<g fill="none" stroke="#777367" stroke-width=".045" opacity=".55" pointer-events="none">${s}</g>`;}
+function roomShape(r,attrs){if(!r.footprint)return `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.d}" ${attrs}/>`;return `<polygon points="${roomPolygon(r).map(p=>p.join(',')).join(' ')}" ${attrs}/>`;}
+function planSVG(model,levelId,{selectedId=null,issues=[],dimensions=true,furniture=true,preview=null,measurement=null,interactive=true}={}){
+    const l=model.levels.find(l=>l.id===levelId)||model.levels[0],W=model.site.width,D=model.site.depth,bad=new Set(issues.filter(i=>i.status==='error').flatMap(i=>i.targets)),warn=new Set(issues.filter(i=>i.status==='warning').flatMap(i=>i.targets)),checked=new Set(issues.filter(i=>i.status==='checked'&&i.category==='model-check').flatMap(i=>i.targets));let svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2.5 -2.5 ${W+5} ${D+5}" class="floorplan" role="img" aria-label="مخطط ${escapeHTML(l.name)}. أبعاد بالمتر. تصميم مفاهيمي." preserveAspectRatio="xMidYMid meet"><defs><pattern id="plan-grid" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#d6ddd5" stroke-width=".02"/></pattern></defs><rect x="-2.5" y="-2.5" width="${W+5}" height="${D+5}" fill="#f4f6f0"/><g transform="translate(0 ${D}) scale(1 -1)"><rect width="${W}" height="${D}" fill="#e2e8d9" rx=".2"/><rect width="${W}" height="${D}" fill="url(#plan-grid)"/><rect width="${W}" height="${D}" fill="none" stroke="#879785" stroke-width=".08" stroke-dasharray=".3 .18"/>`;
+    for(const f of model.site.features||[]){const fill=f.type==='pool'?'#78b8c3':'#c8d2be',stroke=f.type==='pool'?'#3f7f88':'#71836c';svg+=`<g aria-label="${escapeHTML(f.name)}"><rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.d}" rx=".12" fill="${fill}" fill-opacity=".78" stroke="${stroke}" stroke-width=".07"/></g>`;}
+    for(const ref of model.references||[])for(const line of ref.lines)svg+=`<path d="M${line[0]} ${line[1]}L${line[2]} ${line[3]}" stroke="#54a2a1" stroke-width=".055" fill="none" opacity=".6"/>`;
+    for(const r of l.rooms){const issue=bad.has(r.id),warning=warn.has(r.id),ok=checked.has(r.id),sel=r.id===selectedId,fill=sel?'#b0d9ca':issue?'#eed0c9':warning?'#eee0bc':COLORS[r.kind],[cx,cy]=centroid(r),status=issue?'، توجد مشكلة':warning?'، يوجد تنبيه':ok?'، فُحص ضمن نموذج مسار':'';const dot=issue?'#b74d3c':warning?'#b4873f':ok?'#4e9167':null;const attrs=`fill="${fill}" stroke="${issue?'#bd624d':warning?'#a98445':sel?'#176653':'#676c62'}" stroke-width="${sel?.16:.09}"`;
+        svg+=`<g ${interactive?`data-room-id="${escapeHTML(r.id)}" tabindex="0" role="button"`:''} aria-label="${escapeHTML(r.name)}، ${fmt(area(r))} متر مربع${status}${r.locked?'، مثبت':''}" class="room">${roomShape(r,attrs)}${furniture?furnitureSVG(r):''}<g transform="translate(${cx} ${cy}) scale(1 -1)" text-anchor="middle" pointer-events="none"><text y="-.08" font-size="${Math.min(.52,r.w*.16)}" font-family="Tahoma,Arial,sans-serif" fill="#253c35" font-weight="600">${escapeHTML(r.name)}</text><text y=".48" font-size=".38" fill="#58675e" font-family="Arial,sans-serif" direction="ltr">${fmt(area(r))} m²${r.locked?' •':''}</text>${dimensions&&!['stairs','elevator'].includes(r.kind)?`<text y=".9" font-size=".33" fill="#617065" font-family="Arial,sans-serif" direction="ltr">${r.footprint?'غير مستطيل · bbox ':''}${fmt(r.w)} × ${fmt(r.d)} m</text>`:''}</g>${dot?`<circle cx="${r.x+r.w-.3}" cy="${r.y+r.d-.3}" r=".16" fill="${dot}"/>`:''}</g>`;}
+    for(const r of l.rooms){for(const d of r.doors){const[x,y]=doorPoint(r,d),vertical=['east','west'].includes(d.side),w=d.width;svg+=`<path d="M${vertical?x:x-w/2} ${vertical?y-w/2:y}${vertical?'v':'h'}${w}" fill="none" stroke="#f5f4e9" stroke-width=".15"/><path d="M${vertical?x:x-w/2} ${vertical?y-w/2:y}l${vertical?w:0} ${vertical?0:w}" stroke="#718171" stroke-width=".035" fill="none"/>`;}
+        for(const w of r.windows||[]){const[x,y]=windowPoint(r,w),vertical=['east','west'].includes(w.side),half=w.width/2;svg+=`<path d="M${vertical?x:x-half} ${vertical?y-half:y}${vertical?'v':'h'}${w.width}" stroke="#2b8790" stroke-width=".09" fill="none"/><path d="M${vertical?x+(w.side==='east'?-.07:.07):x-half} ${vertical?y-half:y+(w.side==='north'?-.07:.07)}${vertical?'v':'h'}${w.width}" stroke="#91cbd0" stroke-width=".045" fill="none"/>`;}}
+    if(preview)for(const c of preview.changes){const r=c.before;if(!r||![r.x,r.y,r.w,r.d].every(Number.isFinite))continue;svg+=roomShape(r,'fill="none" stroke="#b77642" stroke-width=".10" stroke-dasharray=".25 .16" pointer-events="none"');}
+    svg+='</g>';
+    if(measurement?.a){const a=measurement.a,b=measurement.b||measurement.a,ay=D-a.y,by=D-b.y,distance=Math.hypot(b.x-a.x,b.y-a.y),mx=(a.x+b.x)/2,my=(ay+by)/2;svg+=`<g class="measure-overlay" pointer-events="none"><line x1="${a.x}" y1="${ay}" x2="${b.x}" y2="${by}" stroke="#176653" stroke-width=".11" stroke-dasharray=".2 .12"/><circle cx="${a.x}" cy="${ay}" r=".16" fill="#176653"/><circle cx="${b.x}" cy="${by}" r=".16" fill="#176653"/>${measurement.b?`<g transform="translate(${mx} ${my})"><rect x="-1.05" y="-.34" width="2.1" height=".68" rx=".18" fill="#fffdf7" stroke="#176653" stroke-width=".04"/><text y=".15" text-anchor="middle" font-size=".4" font-family="Arial,sans-serif" fill="#174f42" direction="ltr">${fmt(distance)} m</text></g>`:''}</g>`;}
+    svg+=`<g stroke="#7a887f" stroke-width=".04" fill="none"><path d="M0 -1H${W} M0 -1.25v.5 M${W} -1.25v.5"/><path d="M${W+1} 0V${D} M${W+.75} 0h.5 M${W+.75} ${D}h.5"/></g><g fill="#5a6c61" font-size=".42" font-family="Arial,sans-serif" direction="ltr" text-anchor="middle"><text x="${W/2}" y="-1.3">${fmt(W)} m</text><text transform="translate(${W+1.65} ${D/2}) rotate(90)">${fmt(D)} m</text><text x="${W/2}" y="${D+1.3}" font-family="Tahoma,Arial,sans-serif">الشارع: ${escapeHTML(model.site.street)} · ارتدادات افتراضية تحتاج مراجعة</text></g><g transform="translate(-1.4 .4)"><path d="M0 1V-1M-.2-.6 0-1l.2.4" fill="none" stroke="#3b6452" stroke-width=".06"/><text y="-1.25" text-anchor="middle" fill="#3b6452" font-size=".45">N</text></g></svg>`;return svg;
+}
+function exportOBJ(model){const boxes=model.levels.flatMap(l=>[...l.rooms.flatMap(r=>floorCells(r).map(c=>({...c,z:l.elevation,h:.08}))),...wallBoxes(model,l.id)]);let o='# MASAR authoring coordination model. Metres, Z up. NOT FOR CONSTRUCTION.\n# DISPLAY assumptions: wall boxes use declared conceptual authoring wall thickness; polygon floors are cell-decomposed presentation geometry.\n',index=1;for(const b of boxes){const{x,y,z,w,d,h}=b;for(const[dx,dy,dz]of[[0,0,0],[w,0,0],[w,d,0],[0,d,0],[0,0,h],[w,0,h],[w,d,h],[0,d,h]])o+=`v ${round(x+dx)} ${round(y+dy)} ${round(z+dz)}\n`;for(const f of[[0,3,2,1],[4,5,6,7],[0,1,5,4],[1,2,6,5],[2,3,7,6],[3,0,4,7]])o+=`f ${f.map(v=>v+index).join(' ')}\n`;index+=8;}return o;}
+
+return {escapeHTML,wallBoxes,sceneBoxes,planSVG,exportOBJ};
+})();
+const MASAR_Module_5=(()=>{
+const { sceneBoxes }=MASAR_Module_4;
+
+// A small dependency-free WebGL renderer. No runtime CDN, eval, external assets, or hidden model mutation.
+const vsub = (a, b) => a.map((x, i) => x - b[i]), dot = (a, b) => a.reduce((s, x, i) => s + x * b[i], 0), cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]], norm = a => { const n = Math.hypot(...a) || 1; return a.map(x => x / n); };
+const mul = (a, b) => { const c = new Float32Array(16); for (let j = 0; j < 4; j++)
+    for (let i = 0; i < 4; i++)
+        for (let k = 0; k < 4; k++)
+            c[j * 4 + i] += a[k * 4 + i] * b[j * 4 + k]; return c; };
+function perspective(fov, aspect, near, far) { const f = 1 / Math.tan(fov / 2), nf = 1 / (near - far); return new Float32Array([f / aspect, 0, 0, 0, 0, f, 0, 0, 0, 0, (far + near) * nf, -1, 0, 0, 2 * far * near * nf, 0]); }
+function lookAt(eye, target) { const z = norm(vsub(eye, target)), x = norm(cross([0, 1, 0], z)), y = cross(z, x); return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -dot(x, eye), -dot(y, eye), -dot(z, eye), 1]); }
+function rayBox(origin, dir, min, max) { let lo = -Infinity, hi = Infinity; for (let i = 0; i < 3; i++) {
+    if (Math.abs(dir[i]) < 1e-9) {
+        if (origin[i] < min[i] || origin[i] > max[i])
+            return null;
+        continue;
+    }
+    const a = (min[i] - origin[i]) / dir[i], b = (max[i] - origin[i]) / dir[i];
+    lo = Math.max(lo, Math.min(a, b));
+    hi = Math.min(hi, Math.max(a, b));
+    if (hi < lo)
+        return null;
+} return hi >= Math.max(0, lo) ? Math.max(0, lo) : null; }
+class StudioRenderer {
+    constructor(canvas, onSelect, onError = () => { }) {
+        this.canvas = canvas;
+        this.onSelect = onSelect;
+        this.onError = onError;
+        this.theta = .64;
+        this.phi = .80;
+        this.radius = 36;
+        this.target = [10, 0, -12.5];
+        this.options = {};
+        this.disposed = false;
+        this.autoFit = true;
+        this.lastAspect = null;
+        const gl = canvas.getContext('webgl', { antialias: true, alpha: false, preserveDrawingBuffer: true });
+        this.gl = gl;
+        this.ctx = gl ? null : canvas.getContext('2d');
+        if (!gl && !this.ctx)
+            throw Error('تعذّر فتح مساحة الرسم. المخطط ثنائي الأبعاد يظل متاحًا.');
+        this.software = !gl;
+        canvas.dataset.renderer = gl ? 'webgl' : 'canvas3d';
+        if (gl) {
+            const shader = (type, source) => { const s = gl.createShader(type); gl.shaderSource(s, source); gl.compileShader(s); if (!gl.getShaderParameter(s, gl.COMPILE_STATUS))
+                throw Error('تعذّر إعداد العرض ثلاثي الأبعاد.'); return s; };
+            const vs = shader(gl.VERTEX_SHADER, 'attribute vec3 aPosition;attribute vec3 aColor;attribute vec3 aNormal;uniform mat4 uMatrix;varying vec3 vColor;void main(){float light=.65+.35*max(dot(normalize(aNormal),normalize(vec3(.6,1.,.45))),0.);vColor=aColor*light;gl_Position=uMatrix*vec4(aPosition,1.);}');
+            const fs = shader(gl.FRAGMENT_SHADER, 'precision mediump float;varying vec3 vColor;void main(){gl_FragColor=vec4(vColor,1.);}');
+            const p = gl.createProgram();
+            gl.attachShader(p, vs);
+            gl.attachShader(p, fs);
+            gl.linkProgram(p);
+            gl.deleteShader(vs);
+            gl.deleteShader(fs);
+            if (!gl.getProgramParameter(p, gl.LINK_STATUS))
+                throw Error('تعذّر تشغيل العرض ثلاثي الأبعاد.');
+            this.program = p;
+            this.buffer = gl.createBuffer();
+            this.uMatrix = gl.getUniformLocation(p, 'uMatrix');
+            this.attrs = ['aPosition', 'aColor', 'aNormal'].map(n => gl.getAttribLocation(p, n));
+            gl.enable(gl.DEPTH_TEST);
+            gl.clearColor(.92, .94, .90, 1);
+        }
+        this.down = e => { if (e.button !== 0)
+            return; canvas.setPointerCapture(e.pointerId); this.pointer = { x: e.clientX, y: e.clientY, ox: e.clientX, oy: e.clientY, moved: false }; };
+        this.move = e => { if (!this.pointer)
+            return; const p = this.pointer, dx = e.clientX - p.x, dy = e.clientY - p.y; if (Math.hypot(e.clientX - p.ox, e.clientY - p.oy) > 5)
+            p.moved = true; if (p.moved) {
+            this.theta -= dx * .008;
+            this.phi = Math.max(.15, Math.min(1.48, this.phi + dy * .006));
+            this.draw();
+        } p.x = e.clientX; p.y = e.clientY; };
+        this.up = e => { if (this.pointer && !this.pointer.moved)
+            this.pick(e.clientX, e.clientY); this.pointer = null; };
+        this.cancel = () => { this.pointer = null; };
+        this.wheel = e => { e.preventDefault(); this.zoom(Math.exp(e.deltaY * .001)); };
+        this.key = e => { if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', '+', '-', 'Home'].includes(e.key)) {
+            e.preventDefault();
+            if (e.key === 'ArrowLeft')
+                this.theta += .12;
+            if (e.key === 'ArrowRight')
+                this.theta -= .12;
+            if (e.key === 'ArrowUp')
+                this.phi = Math.max(.15, this.phi - .08);
+            if (e.key === 'ArrowDown')
+                this.phi = Math.min(1.48, this.phi + .08);
+            if (e.key === '+')
+                this.radius *= .9;
+            if (e.key === '-')
+                this.radius *= 1.1;
+            if (e.key === 'Home')
+                this.reset();
+            this.draw();
+        } };
+        this.lost = e => { e.preventDefault(); this.onError('توقف سياق العرض ثلاثي الأبعاد. استخدم المخطط أو أعد تحميل الصفحة.'); };
+        canvas.addEventListener('pointerdown', this.down);
+        canvas.addEventListener('pointermove', this.move);
+        canvas.addEventListener('pointerup', this.up);
+        canvas.addEventListener('pointercancel', this.cancel);
+        canvas.addEventListener('wheel', this.wheel, { passive: false });
+        canvas.addEventListener('keydown', this.key);
+        canvas.addEventListener('webglcontextlost', this.lost);
+        this.observer = new ResizeObserver(() => this.draw());
+        this.observer.observe(canvas);
+        canvas.dataset.ready = 'true';
+    }
+    setModel(model, options = {}) { const isNew = this.model?.id !== model.id; this.model = model; this.options = options; if (isNew)
+        this.reset(false); this.rebuild(); this.draw(); }
+    reset(draw = true) { if (this.model) {
+        const { width: w, depth: d } = this.model.site;
+        const aspect = this.canvas.clientWidth / Math.max(1, this.canvas.clientHeight) || 1;
+        this.radius = Math.hypot(w, d) * .56 / Math.sin(Math.min(.67, 2 * Math.atan(Math.tan(.67 / 2) * aspect)) / 2);
+        this.lastAspect = aspect;
+        this.autoFit = true;
+        this.target = [w / 2, this.options.all ? this.model.levels.length * 1.0 : 0, -d / 2];
+    } this.theta = .64; this.phi = .80; if (draw)
+        this.draw(); }
+    zoom(scale) { this.autoFit = false; this.radius = Math.max(5, Math.min(500, this.radius * scale)); this.draw(); }
+    rebuild() {
+        const data = [], boxes = sceneBoxes(this.model, this.options);
+        this.boxes = boxes;
+        if (this.software)
+            return;
+        const faces = [{ p: [0, 1, 2, 0, 2, 3], n: [0, 0, 1] }, { p: [5, 4, 7, 5, 7, 6], n: [0, 0, -1] }, { p: [4, 0, 3, 4, 3, 7], n: [-1, 0, 0] }, { p: [1, 5, 6, 1, 6, 2], n: [1, 0, 0] }, { p: [3, 2, 6, 3, 6, 7], n: [0, 1, 0] }, { p: [4, 5, 1, 4, 1, 0], n: [0, -1, 0] }];
+        for (const b of boxes) {
+            const { x, y, z, w, d, h } = b;
+            const pos = [[x, z, -y], [x + w, z, -y], [x + w, z + h, -y], [x, z + h, -y], [x, z, -y - d], [x + w, z, -y - d], [x + w, z + h, -y - d], [x, z + h, -y - d]];
+            const hex = b.color || '#ddd5c6', col = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+            for (const f of faces)
+                for (const i of f.p)
+                    data.push(...pos[i], ...col, ...f.n);
+        }
+        this.count = data.length / 9;
+        this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffer);
+        this.gl.bufferData(this.gl.ARRAY_BUFFER, new Float32Array(data), this.gl.STATIC_DRAW);
+    }
+    draw() { if (this.disposed || !this.model)
+        return; const { canvas: c, gl } = this, w = c.clientWidth, h = c.clientHeight; if (!w || !h)
+        return; if (this.autoFit && Math.abs(w / h - (this.lastAspect || 0)) > .01)
+        this.reset(false); const ratio = Math.min(globalThis.devicePixelRatio || 1, 2), pw = Math.round(w * ratio), ph = Math.round(h * ratio); if (c.width !== pw || c.height !== ph) {
+        c.width = pw;
+        c.height = ph;
+    } if (gl) {
+        gl.viewport(0, 0, pw, ph);
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    } this.eye = [this.target[0] + this.radius * Math.sin(this.phi) * Math.cos(this.theta), this.target[1] + this.radius * Math.cos(this.phi), this.target[2] + this.radius * Math.sin(this.phi) * Math.sin(this.theta)]; this.matrix = mul(perspective(.67, w / h, .1, 2000), lookAt(this.eye, this.target)); if (this.software) {
+        this.drawSoftware(w, h, ratio);
+        return;
+    } gl.useProgram(this.program); gl.uniformMatrix4fv(this.uMatrix, false, this.matrix); gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer); for (let i = 0; i < 3; i++) {
+        gl.enableVertexAttribArray(this.attrs[i]);
+        gl.vertexAttribPointer(this.attrs[i], 3, gl.FLOAT, false, 36, i * 12);
+    } gl.drawArrays(gl.TRIANGLES, 0, this.count); }
+    drawSoftware(width, height, ratio) {
+        const ctx = this.ctx;
+        ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+        ctx.fillStyle = '#ebf0e5';
+        ctx.fillRect(0, 0, width, height);
+        const project = p => { const m = this.matrix, x = p[0], y = p[1], z = p[2], w = m[3] * x + m[7] * y + m[11] * z + m[15]; if (w <= 0)
+            return null; return [(m[0] * x + m[4] * y + m[8] * z + m[12]) / w * width / 2 + width / 2, height / 2 - (m[1] * x + m[5] * y + m[9] * z + m[13]) / w * height / 2]; };
+        const definitions = [{ p: [0, 1, 2, 3], n: [0, 0, 1] }, { p: [5, 4, 7, 6], n: [0, 0, -1] }, { p: [4, 0, 3, 7], n: [-1, 0, 0] }, { p: [1, 5, 6, 2], n: [1, 0, 0] }, { p: [3, 2, 6, 7], n: [0, 1, 0] }, { p: [4, 5, 1, 0], n: [0, -1, 0] }], faces = [], forward = norm(vsub(this.target, this.eye)), light = norm([.6, 1, .45]);
+        for (const box of this.boxes) {
+            const { x, y, z, w, d, h } = box, vertices = [[x, z, -y], [x + w, z, -y], [x + w, z + h, -y], [x, z + h, -y], [x, z, -y - d], [x + w, z, -y - d], [x + w, z + h, -y - d], [x, z + h, -y - d]], hex = box.color || '#ddd5c6', color = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+            for (const face of definitions) {
+                const points = face.p.map(i => vertices[i]), center = [0, 1, 2].map(i => points.reduce((sum, p) => sum + p[i], 0) / 4);
+                if (dot(face.n, vsub(this.eye, center)) <= 0)
+                    continue;
+                const projected = points.map(project);
+                if (projected.some(p => !p))
+                    continue;
+                const intensity = .65 + .35 * Math.max(0, dot(face.n, light));
+                faces.push({ priority: box.kind === 'ground' ? -2 : box.kind === 'paving' ? -1 : 0, points: projected, depth: dot(vsub(center, this.eye), forward), color: `rgb(${color.map(v => Math.round(v * intensity)).join(',')})` });
+            }
+        }
+        faces.sort((a, b) => a.priority - b.priority || b.depth - a.depth);
+        for (const face of faces) {
+            ctx.beginPath();
+            ctx.moveTo(...face.points[0]);
+            for (const p of face.points.slice(1))
+                ctx.lineTo(...p);
+            ctx.closePath();
+            ctx.fillStyle = face.color;
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(41,61,38,0.08)';
+            ctx.lineWidth = .35;
+            ctx.stroke();
+        }
+    }
+    pick(clientX, clientY) { if (!this.model)
+        return; const rect = this.canvas.getBoundingClientRect(), nx = (clientX - rect.left) / rect.width * 2 - 1, ny = 1 - (clientY - rect.top) / rect.height * 2; const f = norm(vsub(this.target, this.eye)), r = norm(cross(f, [0, 1, 0])), u = cross(r, f), tan = Math.tan(.67 / 2), aspect = rect.width / rect.height, dir = norm(f.map((v, i) => v + r[i] * nx * tan * aspect + u[i] * ny * tan)); let best = null, dist = Infinity; for (const l of this.model.levels) {
+        if (!this.options.all && l.id !== this.options.levelId)
+            continue;
+        const elevation = this.options.all ? l.elevation : 0;
+        for (const room of l.rooms) {
+            const t = rayBox(this.eye, dir, [room.x, elevation, -room.y - room.d], [room.x + room.w, elevation + 1.1, -room.y]);
+            if (t !== null && t < dist) {
+                dist = t;
+                best = room.id;
+            }
+        }
+    } if (best)
+        this.onSelect(best); }
+    dispose() { this.disposed = true; this.observer.disconnect(); const c = this.canvas; for (const [name, fn] of [['pointerdown', this.down], ['pointermove', this.move], ['pointerup', this.up], ['pointercancel', this.cancel], ['wheel', this.wheel], ['keydown', this.key], ['webglcontextlost', this.lost]])
+        c.removeEventListener(name, fn); if (this.gl) {
+        this.gl.deleteBuffer(this.buffer);
+        this.gl.deleteProgram(this.program);
+    } }
+}
+
+return {StudioRenderer};
+})();
+const MASAR_Module_6=(()=>{
+const { assertHistory, current }=MASAR_Module_1;
+
+let dbPromise;
+function database() { if (!('indexedDB' in globalThis))
+    return Promise.reject(Error('الحفظ المحلي غير متاح في هذا المتصفح. نزّل ملف المشروع لحفظه.')); if (!dbPromise)
+    dbPromise = new Promise((resolve, reject) => { let req; try {
+        req = indexedDB.open('masar-studio', 1);
+    }
+    catch {
+        reject(Error('الحفظ المحلي غير متاح في وضع المعاينة الحالي. نزّل JSON للاحتفاظ بمشروعك.'));
+        return;
+    } req.onupgradeneeded = () => req.result.createObjectStore('projects', { keyPath: 'id' }); req.onsuccess = () => resolve(req.result); req.onerror = () => reject(Error('تعذّر فتح مخزن المشاريع المحلي.')); }); return dbPromise; }
+async function saveLocal(history, cloudVersions = {}) { assertHistory(history); const db = await database(); const row = { id: history.projectId, title: current(history).title, updated: new Date().toISOString(), history, cloudVersions }; return new Promise((resolve, reject) => { const tx = db.transaction('projects', 'readwrite'); tx.objectStore('projects').put(row); tx.oncomplete = () => resolve(row); tx.onerror = () => reject(Error('تعذّر الحفظ المحلي. قد تكون مساحة الجهاز ممتلئة؛ نزّل ملف المشروع.')); tx.onabort = () => reject(Error('لم يكتمل الحفظ المحلي. نزّل ملف المشروع.')); }); }
+async function listLocal() { const db = await database(); return new Promise((resolve, reject) => { const req = db.transaction('projects').objectStore('projects').getAll(); req.onsuccess = () => resolve(req.result.sort((a, b) => b.updated.localeCompare(a.updated))); req.onerror = () => reject(Error('تعذّر قراءة المشاريع.')); }); }
+async function loadLocal(id) { const db = await database(); return new Promise((resolve, reject) => { const req = db.transaction('projects').objectStore('projects').get(id); req.onsuccess = () => { try {
+    if (!req.result)
+        throw Error('المشروع غير موجود.');
+    resolve(assertHistory(req.result.history));
+}
+catch (e) {
+    reject(e);
+} }; req.onerror = () => reject(Error('تعذّر استعادة المشروع.')); }); }
+async function loadLocalVersions(id) {
+ const db=await database();return new Promise((resolve,reject)=>{
+  const req=db.transaction('projects').objectStore('projects').get(id);
+  req.onsuccess=()=>resolve(Object.fromEntries(Object.entries(req.result?.cloudVersions||{}).filter(([key,v])=>key.endsWith(':'+id)&&Number.isSafeInteger(v)&&v>=0)));
+  req.onerror=()=>reject(Error('تعذرت قراءة بيانات مزامنة المشروع المحلي.'));
+ });
+}
+async function deleteLocal(id) { const db = await database(); return new Promise((resolve, reject) => { const tx = db.transaction('projects', 'readwrite'); tx.objectStore('projects').delete(id); tx.oncomplete = () => resolve(); tx.onerror = () => reject(Error('تعذّر حذف المشروع.')); }); }
+class Api {
+    constructor() { this.csrf = null; this.user = null; this.available = false; this.aiConfigured = false; this.registration = false; this.persistenceClass='unavailable'; }
+    async request(url, { method = 'GET', body, timeout = 35000 } = {}) { if (location.protocol === 'file:')
+        throw Error('هذه نسخة محلية مستقلة؛ الحسابات والمشاركة تحتاج تشغيل الخادم.'); const res = await fetch(url, { method, credentials: 'same-origin', headers: { ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(this.csrf ? { 'X-CSRF-Token': this.csrf } : {}) }, body: body !== undefined ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(timeout) }); let data; try {
+        data = await res.json();
+    }
+    catch {
+        throw Error('الخادم لم يرجع ردًا صالحًا.');
+    } if (!res.ok) {
+        const error = Error(data.error || 'تعذّرت العملية.');
+        error.status = res.status;
+        throw error;
+    } return data; }
+    async init() { if (location.protocol === 'file:' || globalThis.MASAR_STANDALONE)
+        return; try {
+        const health = await this.request('/api/health');
+        this.available = health.ok;
+        this.aiConfigured = health.aiConfigured;
+        this.registration = health.registration;
+        this.persistenceClass = health.persistenceClass || 'operator-managed';
+        const me = await this.request('/api/auth/me');
+        this.user = me.user;
+        this.csrf = me.csrf;
+    }
+    catch {
+        this.available = false;
+    } }
+    async authenticate(type, body) { const result = await this.request('/api/auth/' + type, { method: 'POST', body }); this.user = result.user; this.csrf = result.csrf; return result; }
+    async logout() { await this.request('/api/auth/logout', { method: 'POST', body: {} }); this.user = null; this.csrf = null; }
+}
+
+return {saveLocal,listLocal,loadLocal,loadLocalVersions,deleteLocal,Api};
+})();
+const MASAR_Module_7=(()=>{
+const { KINDS, COLORS, clone, uid, round, understand, briefIssues, generate, assertModel, validate, totals, area, propose, resolvePreview, commitPreview, parseCommand, checkLocks, diffModels, createHistory, current, pushHistory, assertHistory, exportEnvelope, importEnvelope, parseDXF, exportDXF, designMetrics, createAlternatives, impactSummary, requirementStatus, distanceToEntry, touchesGardenEdge }=MASAR_Module_1;
+const { escapeHTML:E, planSVG, exportOBJ }=MASAR_Module_4;
+const { deriveBuildingGraph, elementScheduleCSV, requirementMatrix, requirementMatrixCSV, evaluateRulePack, exportIFC, projectReadiness, csvCell }=MASAR_Module_2;
+const { parseIFC }=MASAR_Module_3;
+const { effectiveAuthoring }=MASAR_Module_0;
+const { StudioRenderer }=MASAR_Module_5;
+const { saveLocal, listLocal, loadLocal, loadLocalVersions, deleteLocal, Api }=MASAR_Module_6;
+
+
+
+
+
+
+
+const iconPaths = { folder: 'M3 6h7l2 2h9v11H3z', history: 'M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2', share: 'M15 8 9 11m0 2 6 3M19 5a2 2 0 1 1-4 0 2 2 0 0 1 4 0ZM9 12a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm10 7a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z', download: 'M12 3v12m-5-5 5 5 5-5M4 16v4h16v-4', plus: 'M12 5v14M5 12h14', layers: 'm12 3 10 5-10 5L2 8zm-10 9 10 5 10-5M2 16l10 5 10-5', cube: 'm3 6 9-4 9 4v12l-9 4-9-4Zm0 0 9 5 9-5M12 11v11', split: 'M3 4h18v16H3ZM12 4v16', undo: 'M8 4 3 9l5 5M3 9h11a6 6 0 0 1 0 12', redo: 'm16 4 5 5-5 5M21 9H10a6 6 0 0 0 0 12', fit: 'M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5', ruler: 'm3 16 13-13 5 5L8 21Zm4-4 2 2m2-6 2 2m2-6 2 2', sofa: 'M5 11V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4M3 10h3v5h12v-5h3v9H3ZM5 19v2m14-2v2', rotate: 'M5 8a8 8 0 0 1 14-2l2 3m0-5v5h-5M19 16a8 8 0 0 1-14 2l-2-3m0 5v-5h5', link: 'm8 16 8-8M9 5l2-2a5 5 0 0 1 7 7l-2 2M8 12l-2 2a5 5 0 0 0 7 7l2-2', sparkles: 'm12 2 2.6 7.4L22 12l-7.4 2.6L12 22l-2.6-7.4L2 12l7.4-2.6ZM20 1v5m-2.5-2.5h5', shield: 'm12 2 8 4v6c0 6-8 10-8 10S4 18 4 12V6Zm-4 10 3 3 5-6', arrow: 'M19 12H5m7-7-7 7 7 7', close: 'm6 6 12 12M6 18 18 6', lock: 'M6 11h12v10H6ZM8 11V6a4 4 0 0 1 8 0v5m-4 4v3', unlock: 'M6 11h12v10H6ZM8 11V6a4 4 0 0 1 8 0m-4 9v3', chevron: 'm8 5 7 7-7 7', check: 'm4 12 5 5L20 6', alert: 'm12 3 10 18H2Zm0 6v5m0 3v.2', sliders: 'M5 3v5m0 4v9M12 3v11m0 4v3m7-18v3m0 4v11M2 8h6M9 14h6M16 6h6', variants: 'M3 3h7v7H3Zm11 0h7v7h-7ZM3 14h7v7H3Zm11 0h7v7h-7Z', trash: 'M3 6h18M9 6V3h6v3M6 6l1 15h10l1-15M10 10v7m4-7v7', upload: 'M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6', file: 'M5 2h9l5 5v15H5Zm9 0v5h5M9 12h6m-6 4h6', message: 'M3 4h18v13H9l-6 4Z', home: 'm2 11 10-9 10 9M5 9v13h14V9M10 22v-7h4v7', image: 'M3 3h18v18H3Zm0 13 6-6 5 5 3-3 4 4M16 7h.01', cloud: 'M6 18a5 5 0 1 1 1-10 6 6 0 0 1 11 2 4 4 0 0 1 0 8Z', door: 'M5 22V2h14v20M5 2l10 3v17M11 12v1' };
+const icon = (name) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${iconPaths[name] || iconPaths.cube}"/></svg>`;
+function icons(root = document) { root.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon); el.removeAttribute('data-icon'); }); }
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)], fmt = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 });
+const api = new Api();
+const state = { history: null, selectedId: null, levelId: 'l0', view: window.innerWidth < 720 ? '2d' : 'split', dimensions: true, furniture: true, all: false, cutaway: true, preview: null, demo: true, readOnly: false, dirty: false, saveError: null, undoStack: [], versions: new Map(), ai: false, pendingBrief: null, alternatives: [], authMode: 'login', imageRef: null, shareToken: null, measurement: { active: false, a: null, b: null }, ifcCandidate: null };
+let renderer = null, saveQueue = Promise.resolve(), drag = null, ignoreClickUntil = 0, lastFocus = null, toastNumber = 0;
+const model = () => current(state.history), shown = () => state.preview?.candidate || model(), selected = () => shown().levels.flatMap(l => l.rooms).find(r => r.id === state.selectedId);
+function toast(message, error = false) { const existing = [...document.querySelectorAll('.toast')].find(x => x.dataset.message === message); if (existing)
+    return; while (document.querySelectorAll('.toast').length >= 3)
+    document.querySelector('.toast').remove(); const el = document.createElement('div'); el.dataset.message = message; el.className = 'toast' + (error ? ' error' : ''); el.id = `toast-${++toastNumber}`; el.innerHTML = `<button data-action="dismiss-toast" aria-label="إغلاق الإشعار">×</button>${E(message)}`; $('#toasts').append(el); setTimeout(() => el.remove(), error ? 14000 : 6500); }
+function reportError(e) { console.warn('[MASAR]', e.message); toast(e.message || 'تعذّرت العملية؛ لم نطبق تغييرًا.', true); }
+function showModal(title, html, kicker = 'MASAR STUDIO') { lastFocus = document.activeElement; $('#modal-title').textContent = title; $('#modal-content').innerHTML = html; $('#modal-kicker').textContent = kicker; icons($('#modal')); if (!$('#modal').open)
+    $('#modal').showModal(); }
+function closeModal() { $('#modal').close(); lastFocus?.focus?.(); }
+function mutable() { if (state.readOnly)
+    throw Error('هذا رابط مراجعة للقراءة فقط.'); if (state.preview)
+    throw Error('اعتمد المعاينة الحالية أو ألغها قبل إجراء تعديل آخر.'); }
+function saveStatus(text) { $('#save-status').textContent = text; }
+function persist() { if (state.readOnly)
+    return Promise.resolve(); const snapshot = clone(state.history); state.dirty = true; state.saveError = null; saveStatus('جارٍ الحفظ على هذا الجهاز…'); saveQueue = saveQueue.catch(() => { }).then(() => saveLocal(snapshot,Object.fromEntries([...state.versions].filter(([key])=>key.endsWith(':'+snapshot.projectId))))).then(() => { if (JSON.stringify(state.history) === JSON.stringify(snapshot)) {
+    state.dirty = false;
+    saveStatus('محفوظ على هذا الجهاز · ليس نسخة سحابية');
+} }).catch(e => { state.saveError = e.message; state.dirty = true; saveStatus('لم يكتمل الحفظ · نزّل نسخة احتياطية'); reportError(e); }); return saveQueue; }
+function edit(next, label) { mutable(); if (state.history.revisions.length >= 100)
+    throw Error('بلغ المشروع 100 نسخة. صدّره ثم أنشئ نسخة مستقلة لمتابعة العمل دون حذف التاريخ.'); state.history = pushHistory(state.history, next, label); state.undoStack = []; state.demo = false; render(); persist(); }
+function selectRoom(id) { const level = shown().levels.find(l => l.rooms.some(r => r.id === id)); if (!level)
+    return; state.selectedId = id; state.levelId = level.id; render(); }
+function stage(command, label = 'تعديل المساحة') {
+    if (state.readOnly)
+        throw Error('رابط المراجعة لا يسمح بالتعديل.');
+    if (state.preview)
+        throw Error('ألغِ المعاينة الحالية قبل طلب تعديل آخر.');
+    state.preview = { ...propose(model(), command), label };
+    if (!state.preview.changes.length) {
+        state.preview = null;
+        toast('لم تتغيّر أي قيمة.');
+        return;
+    }
+    render();
+    $('#assistant-message').textContent = 'المعاينة لا تغيّر النسخة المحفوظة. افحص العناصر المتأثرة ثم اعتمد أو ألغِ.';
+}
+function render() {
+    if (!state.history)
+        return;
+    const m = shown(), base = model(), r = selected(), issues = validate(m), t = totals(m), dm = designMetrics(m);
+    $('#project-title').textContent = base.title;
+    $('#brief-name').textContent = base.title;
+    $('#project-type').textContent = state.readOnly ? 'رابط مراجعة · للقراءة فقط' : ({villa:'فيلا',chalet:'شاليه',office:'مكاتب',warehouse:'مستودع',retail:'تجاري'}[base.design?.projectType || 'villa'] || 'تصميم') + ' · ' + ({concept:'فكرة',development:'تطوير',review:'مراجعة'}[base.design?.stage || 'concept']);
+    $('#demo-badge').hidden = !state.demo;
+    $('#account-button').textContent = api.user?.name?.slice(0, 1) || 'م';
+    $$('.design-stage button').forEach(b => { const active=b.dataset.stage === (base.design?.stage || 'concept'); b.classList.toggle('active',active); b.setAttribute('aria-pressed',String(active)); b.disabled=state.readOnly; });
+    const primaryCount = ['villa','chalet'].includes(m.design?.projectType || 'villa') ? `${t.bedrooms.toString().padStart(2,'0')} غرف نوم` : m.design?.projectType === 'office' ? `${t.offices.toString().padStart(2,'0')} مكاتب` : `${t.rooms} مساحات`;
+    $('#brief-content').innerHTML = `<div class="brief-grid"><div class="brief-stat"><span>مساحة الأرض</span><strong>${fmt(t.landArea)}</strong><small>م²</small></div><div class="brief-stat"><span>الأدوار إجمالًا</span><strong>${m.levels.length.toString().padStart(2, '0')}</strong><small>أدوار</small></div><div class="brief-stat"><span>أبعاد الأرض</span><strong>${fmt(m.site.width)} × ${fmt(m.site.depth)}</strong></div><div class="brief-stat"><span>البرنامج</span><strong class="brief-text-value">${E(primaryCount)}</strong></div></div><div class="design-score-mini"><span>مؤشر المفهوم</span><strong>${fmt(dm.overall)}</strong><small>/100 · للمقارنة فقط</small></div><div class="req-list">${m.requirements.slice(0, 6).map(req => { const rs=requirementStatus(m,req), stateLabel=rs.measurable ? (rs.satisfied ? 'محقق' : 'يحتاج تحسين') : (req.source==='assumed'?'افتراض':'طلبك'); return `<div class="req-item"><button class="req-icon" data-action="toggle-requirement" data-id="${E(req.id)}" aria-label="${req.locked ? 'إلغاء تثبيت' : 'تثبيت'} ${E(req.label)}" ${state.readOnly ? 'disabled' : ''}>${icon(req.locked ? 'lock' : 'unlock')}</button><span>${E(req.label)}</span><span class="source-tag ${rs.measurable && !rs.satisfied ? 'warn' : req.source === 'assumed' ? 'assumed' : ''}">${stateLabel}</span></div>`; }).join('')}<div class="req-item"><span class="req-icon">${icon('home')}</span><span>جهة الشارع: ${E(m.site.street)}</span><span class="source-tag ${m.brief.sources?.street === 'assumed' ? 'assumed' : ''}">${m.brief.sources?.street === 'assumed' ? 'افتراض' : 'طلبك'}</span></div></div><div class="brief-links"><button class="description-link text-button" data-action="brief">${icon('file')} الطلب الكامل</button><button class="description-link text-button green" data-action="design-settings">${icon('sliders')} إعدادات التصميم</button></div>`;
+    $('#level-tree').innerHTML = m.levels.map(l => `<div class="tree-level"><button class="tree-level-label" data-action="level" data-id="${E(l.id)}">${icon('layers')}${E(l.name)}<span class="count">${l.rooms.length} عناصر</span></button>${l.id === state.levelId ? `<div class="tree-rooms">${l.rooms.map(room => `<button class="tree-room ${room.id === state.selectedId ? 'selected' : ''}" data-action="select" data-id="${E(room.id)}" aria-pressed="${room.id === state.selectedId}"><span class="room-color" style="background:${COLORS[room.kind]}"></span>${E(room.name)}<span class="room-area">${fmt(area(room))} م²</span>${room.locked ? icon('lock') : ''}</button>`).join('')}</div>` : ''}</div>`).join('');
+    const level = m.levels.find(l => l.id === state.levelId) || m.levels[0];
+    state.levelId = level.id;
+    $('#level-label').textContent = level.name;
+    $('#floor-tabs').innerHTML = m.levels.map(l => `<button data-action="level" data-id="${E(l.id)}" class="${l.id === level.id ? 'active' : ''}" aria-pressed="${l.id === level.id}">${E(l.name)}</button>`).join('');
+    $('#view-deck').dataset.view = state.view;
+    $$('[data-action="view"]').forEach(b => { b.classList.toggle('active', b.dataset.view === state.view); b.setAttribute('aria-pressed', String(b.dataset.view === state.view)); });
+    for (const [action, key] of [['dimensions', 'dimensions'], ['furniture', 'furniture'], ['all-floors', 'all'], ['cutaway', 'cutaway']])
+        $(`[data-action="${action}"]`).setAttribute('aria-pressed', String(state[key]));
+    $('[data-action="measure"]').setAttribute('aria-pressed', String(state.measurement.active));
+    $('#measure-status').textContent = state.measurement.active ? (state.measurement.b ? `القياس: ${fmt(Math.hypot(state.measurement.b.x-state.measurement.a.x,state.measurement.b.y-state.measurement.a.y))} م · انقر لبدء قياس جديد` : state.measurement.a ? 'اختر النقطة الثانية' : 'اختر النقطة الأولى') : 'الوحدة: متر';
+    $('#plan-host').classList.toggle('measuring', state.measurement.active);
+    $('#plan-host').innerHTML = planSVG(m, state.levelId, { selectedId: state.selectedId, issues, dimensions: state.dimensions, furniture: state.furniture, preview: state.preview, measurement: state.measurement });
+    if (!renderer && !$('#scene-error').textContent) {
+        try {
+            renderer = new StudioRenderer($('#scene'), selectRoom, e => { $('#scene-error').textContent = e; $('#scene-error').hidden = false; });
+        }
+        catch (e) {
+            $('#scene-error').textContent = e.message;
+            $('#scene-error').hidden = false;
+        }
+    }
+    renderer?.setModel(m, { levelId: state.levelId, selectedId: state.selectedId, all: state.all, furniture: state.furniture, cutaway: state.cutaway, issues });
+    $('#metrics-bar').innerHTML = `<div class="metric"><p>المسطحات الإجمالية</p><strong>${fmt(t.floorArea)}</strong><small>م²</small></div><div class="metric"><p>الخارجية المفاهيمية</p><strong>${fmt(t.outdoorArea)}</strong><small>م²</small></div><div class="metric"><p>كفاءة الحركة</p><strong>${fmt(dm.movement)}</strong><small>/100</small><span class="tiny-up">مؤشر مفاهيمي</span></div><div class="metric score-metric"><p>جودة المفهوم</p><strong>${fmt(dm.overall)}</strong><small>/100</small><span class="tiny-up">ليست اعتمادًا هندسيًا</span></div>`;
+    const errors = issues.filter(i => i.status === 'error'), warnings = issues.filter(i => i.status === 'warning'), unchecked = issues.filter(i => i.status === 'unchecked'), checked = issues.filter(i => i.status === 'checked');
+    const issueHeadline = errors.length ? (state.preview ? `${errors.length} تعارض في المعاينة — النسخة المحفوظة سليمة` : `${errors.length} مشكلة في النموذج`) : 'فُحص التداخل والوصول وحدود الأرض';
+    $('#issues-strip').innerHTML = `${icon(errors.length ? 'alert' : 'shield')}<span class="${errors.length ? '' : 'issue-good'}">${issueHeadline}</span><span class="issue-count">${warnings.length ? `${warnings.length} تنبيه · ` : ''}${checked.length} فحص موثق · ${unchecked.length} لم تُفحص ${icon('chevron')}</span>`;
+    renderInspector(r);
+    renderPreview();
+    $('[data-action="undo"]').disabled = state.readOnly || !!state.preview || state.history.cursor === 0;
+    $('[data-action="redo"]').disabled = state.readOnly || !!state.preview || state.undoStack.length === 0;
+    $('#command-input').disabled = state.readOnly;
+    $('#command-form button[type="submit"]').disabled = state.readOnly;
+    $('#assistant-mode').textContent = state.ai ? 'ذكاء سحابي · معاينة فقط' : 'مساعد الأوامر المحلي';
+    $('#ai-mode-toggle').textContent = state.ai ? 'سحابي · يرسل بيانات محدودة' : 'محلي · بلا إرسال بيانات';
+    if (state.readOnly)
+        saveStatus('نسخة مشتركة ثابتة · للقراءة فقط');
+    icons();
+}
+function renderInspector(r) {
+    if (!r) {
+        $('#inspector-content').innerHTML = '<div class="empty-selection">اختر مساحة من المخطط أو المجسم لعرض خصائصها وعلاقاتها وتعديلها.</div>';
+        return;
+    }
+    const disabled = state.readOnly ? 'disabled' : '', locked = r.locked ? 'disabled' : '', geometryLocked = (r.locked || r.footprint) ? 'disabled' : '', m = shown();
+    const dist = distanceToEntry(m, r), garden = touchesGardenEdge(m, r), commentsCount = model().comments.filter(c => c.roomId === r.id && !c.resolved).length;
+    $('#inspector-content').innerHTML = `<div class="inspector-selected"><span class="selected-symbol">${icon(['stairs','elevator'].includes(r.kind) ? 'layers' : 'cube')}</span><div><h3>${E(r.name)}</h3><p>${E(KINDS[r.kind])} · ${fmt(area(r))} متر مربع</p></div><button class="icon-button lock-button" data-action="lock" aria-label="${r.locked ? 'إلغاء تثبيت' : 'تثبيت'} العنصر" title="${r.locked ? 'مثبّت: لا تعديل هندسي قبل إلغاء التثبيت' : 'تثبيت هندسة العنصر'}" ${disabled}>${icon(r.locked ? 'lock' : 'unlock')}</button></div>
+    <div class="relationship-card"><strong>العلاقات المكانية</strong><div class="relationship-facts"><span>${icon('home')} ${fmt(dist)} م تقريبًا من المدخل</span><span>${icon('image')} ${garden ? 'على جهة الحديقة/الخارج' : 'ليست على الجهة الخارجية'}</span></div>${['stairs','elevator','hall'].includes(r.kind) ? '' : `<div class="quick-relations"><button class="btn light small" data-action="near-entry" ${disabled || locked}>قرب المدخل</button><button class="btn light small" data-action="near-garden" ${disabled || locked}>قرب الحديقة</button></div>`}</div>
+    <form id="properties-form"><div class="properties-grid"><label class="field full"><span>اسم المساحة</span><input name="name" maxlength="120" required value="${E(r.name)}" ${disabled}></label>${[['w', 'العرض', r.w], ['d', 'العمق', r.d], ['x', 'الموقع شرقًا', r.x], ['y', 'الموقع شمالًا', r.y]].map(([key, label, value]) => `<label class="field"><span>${label}</span><span class="input-unit"><input aria-label="${label}" name="${key}" type="number" step="0.001" min="${key === 'x' || key === 'y' ? 0 : .5}" max="240" value="${value}" required ${disabled || geometryLocked}><small>م</small></span></label>`).join('')}</div><p class="property-note">${r.locked ? 'هندسة هذا العنصر مثبّتة. ألغِ القفل لتعديلها.' : r.footprint ? 'هذه مساحة غير مستطيلة. حرّكها بالسحب أو عدّلها بأوامر الحدود؛ العرض/العمق المباشران صندوق إحاطة للعرض فقط.' : 'أي تعديل هندسي يمر بمعاينة أثر. التداخل أو تجاوز الأرض يمنع الاعتماد.'}</p><div class="property-actions"><button class="btn primary" type="submit" ${disabled}>${icon('check')}معاينة التعديل</button><button class="btn light" type="button" data-action="door" ${disabled || locked}>${icon('door')}الباب</button><button class="btn light" type="button" data-action="window" ${disabled || locked}>${icon('image')}نافذة</button>${r.footprint?'':`<button class="btn light" type="button" data-action="notch" ${disabled || locked}>${icon('sliders')}تجويف L</button>`}</div></form><div class="detail-row"><span>علاقة المساحة بما حولها</span><button class="text-button" data-action="swap" ${disabled || locked}>مبادلة مساحة ${icon('chevron')}</button></div><div class="detail-row"><span>${icon('message')} ملاحظات المراجعة</span><button class="text-button" data-action="comments">${commentsCount} تعليقات ${icon('chevron')}</button></div>`;
+}
+function renderPreview() {
+    const el = $('#preview-banner'), p = state.preview;
+    if (!p) { el.hidden = true; return; }
+    el.hidden = false;
+    el.className = 'preview-banner' + (p.blockers.length ? ' blocked' : '');
+    const impact = p.impact || impactSummary(model(), p.candidate), names = [...new Set(p.changes.map(c => c.name))].join('، '), beforeIssues = validate(model()), newWarnings = p.issues.filter(i => i.status === 'warning' && !beforeIssues.some(j => j.id === i.id));
+    p.impact = impact; p.newWarnings = newWarnings;
+    const delta = n => `${n > 0 ? '+' : ''}${fmt(n)}`;
+    const canResolve = p.blockers.length && p.blockers.some(i => (i.id.startsWith('overlap-') || i.id.startsWith('bounds-')) && i.targets?.some(id => p.changes.some(c => c.id === id)));
+    el.innerHTML = `<div class="preview-heading"><div><h3>${p.blockers.length ? 'المعاينة كشفت تعارضًا — لم يتغير المشروع المحفوظ' : p.autoResolved ? 'حل مقترح للتعارض — راجعه قبل الاعتماد' : 'معاينة الأثر — لم يُحفظ بعد'}</h3><p>${p.changes.length} تغييرات · ${impact.affectedIds.length} عناصر متأثرة مباشرة</p></div><div class="preview-actions"><button class="btn light" data-action="cancel-preview">إلغاء</button>${canResolve ? `<button class="btn light" data-action="resolve-preview">${icon('sparkles')} اقتراح حل آمن</button>` : ''}<button class="btn primary" data-action="commit-preview" ${p.blockers.length ? 'disabled' : ''}>اعتماد التعديل</button></div></div><div class="impact-grid"><span><small>المسطحات</small><strong>${delta(impact.floorAreaDelta)} م²</strong></span><span><small>البصمة</small><strong>${delta(impact.footprintDelta)} م²</strong></span><span><small>الحركة</small><strong>${delta(impact.circulationDelta)} م²</strong></span><span><small>مؤشر المفهوم</small><strong>${delta(impact.scoreDelta)} نقطة</strong></span></div><div class="preview-details"><span>المتأثر: ${E(names || 'خصائص المشروع')}. الإطار المتقطع يوضح الوضع السابق.</span>${p.autoResolved ? `<p class="resolved-impact"><strong>اقتراح مسار:</strong> لم نحرّك أي عنصر مثبّت. راجع الحل ثم اعتمده فقط إذا يناسب قصدك.</p>${(p.resolutionNotes||[]).map(n=>`<p class="resolved-impact">✓ ${E(n)}</p>`).join('')}` : ''}${impact.resolvedIssues.filter(i => ['error','warning'].includes(i.status)).map(i => `<p class="resolved-impact">✓ حُلّ: ${E(i.message)}</p>`).join('')}${p.blockers.map(i => `<p>• ${E(i.message)}</p>`).join('')}${newWarnings.length ? `<label><input type="checkbox" id="ack-warnings"> راجعت التنبيهات الجديدة: ${newWarnings.map(i => E(i.message)).join('؛ ')}</label>` : ''}</div>`;
+}
+function newProject() {
+    mutable();
+    showModal('صف المشروع كما تتخيله', `<p class="modal-lead">اكتب هدفك بلغة طبيعية. سنستخرج البرنامج والأبعاد والقرارات القابلة للقياس، ثم نعرضها لك قبل إنشاء أي هندسة.</p><form id="new-form"><textarea class="new-prompt" id="new-prompt" name="prompt" maxlength="12000" required placeholder="مثال: أرض 20×25، فيلا 3 أدوار، 5 غرف نوم، مصعد ومسبح، المجلس قرب المدخل والمعيشة على الحديقة. الشارع جنوب."></textarea><div class="template-grid product-templates"><button class="template-card" type="button" data-action="template" data-template="villa">${icon('home')}<span>فيلا عائلية</span><small>3 أدوار · 5 نوم · مصعد</small></button><button class="template-card" type="button" data-action="template" data-template="chalet">${icon('cube')}<span>شاليه</span><small>حديقة · مسبح · جلسات</small></button><button class="template-card" type="button" data-action="template" data-template="office">${icon('layers')}<span>مكاتب</span><small>استقبال · مكاتب · اجتماعات</small></button><button class="template-card" type="button" data-action="template" data-template="warehouse">${icon('cube')}<span>مستودع</span><small>تخزين · تحميل · تشغيل</small></button><button class="template-card" type="button" data-action="template" data-template="retail">${icon('home')}<span>مساحة تجارية</span><small>عرض · تخزين · إدارة</small></button></div><button class="upload-button" type="button" data-action="import">${icon('upload')} استيراد MASAR أو IFC4 أو DXF أو مرجع صورة</button><div class="modal-footer"><p class="upload-hint">المحلل المحلي لا يرسل وصفك إلى الشبكة.<br>الذكاء السحابي اختياري للتعديلات بعد إنشاء المشروع.</p><button class="btn primary" type="submit">تحليل الطلب ${icon('arrow')}</button></div></form>`, '01 — برنامج المشروع');
+}
+function confirmBrief(brief) {
+    state.pendingBrief = brief;
+    const source = key => `<small class="source-label">${brief.sources?.[key] === 'requested' ? 'من وصفك' : brief.sources?.[key] === 'derived' ? 'مشتق من نوع المشروع' : 'افتراض — أكّده أو عدّله'}</small>`;
+    const projectNames = { villa:'فيلا', chalet:'شاليه', office:'مكاتب', warehouse:'مستودع', retail:'تجاري' };
+    showModal('راجع ما فهمه مسار', `<p class="modal-lead">المدخلات التالية هي مصدر الحقيقة لإنشاء النموذج الأول. البنود المعلّمة «من وصفك» تبقى كمتطلبات، والافتراضات لا تتحول إلى حقائق بصمت.</p><form id="brief-form"><div class="brief-confirm-grid"><label class="field"><span>نوع المشروع</span><select name="projectType">${Object.entries(projectNames).map(([v,l])=>`<option value="${v}" ${brief.projectType===v?'selected':''}>${l}</option>`).join('')}</select>${source('projectType')}</label><label class="field"><span>اسم المشروع</span><input name="title" value="${E(brief.title)}" maxlength="120" required></label><label class="field"><span>عرض الأرض</span><input type="number" name="width" value="${brief.width}" min="12" max="120" step="0.1" required>${source('width')}</label><label class="field"><span>عمق الأرض</span><input type="number" name="depth" value="${brief.depth}" min="15" max="160" step="0.1" required>${source('depth')}</label><label class="field"><span>الأدوار إجمالًا</span><input type="number" name="floors" value="${brief.floors}" min="1" max="8" step="1" required>${source('floors')}</label><label class="field"><span>غرف النوم (للسكن)</span><input type="number" name="bedrooms" value="${brief.bedrooms || 0}" min="0" max="16" step="1" required>${source('bedrooms')}</label><label class="field"><span>عدد المكاتب (للمكاتب)</span><input type="number" name="offices" value="${brief.offices || 0}" min="0" max="20" step="1" required>${source('offices')}</label><label class="field"><span>مواقف مطلوبة</span><input type="number" name="parking" value="${brief.parking || 0}" min="0" max="30" step="1" required>${source('parking')}</label><label class="field"><span>جهة الشارع</span><select name="street">${['جنوب','شمال','شرق','غرب'].map(x=>`<option ${x===brief.street?'selected':''}>${x}</option>`).join('')}</select>${source('street')}</label><label class="field"><span>أولوية التوزيع</span><select name="priority">${[['balanced','متوازن'],['privacy','خصوصية'],['outdoor','مساحات خارجية'],['compact','كفاءة ودمج']].map(([v,l])=>`<option value="${v}" ${brief.priority===v?'selected':''}>${l}</option>`).join('')}</select></label><label class="field"><span>طابع العرض</span><select name="style">${[['unspecified','غير محدد'],['modern','حديث'],['classic','كلاسيكي'],['industrial','صناعي']].map(([v,l])=>`<option value="${v}" ${brief.style===v?'selected':''}>${l}</option>`).join('')}</select></label></div><div class="feature-checks"><label class="check-line"><input type="checkbox" name="elevator" ${brief.elevator?'checked':''}><span>مصعد مفاهيمي متكرر بين الأدوار</span></label><label class="check-line"><input type="checkbox" name="pool" ${brief.pool?'checked':''}><span>مسبح مفاهيمي ضمن الموقع الخارجي</span></label></div>${brief.intents?.length ? `<div class="notice"><strong>علاقات فهمها النظام:</strong><br>${brief.intents.map(x=>`• ${E(x.label)}`).join('<br>')}</div>`:''}<div class="notice warn">الارتدادات المستخدمة في التوليد **استراتيجية توزيع مفاهيمية** وليست اشتراطات رسمية. لا تُجرى هنا حسابات إنشائية أو تحقق تنظيمي.</div>${brief.unresolved.map(s=>`<p class="notice warn">${E(s)}</p>`).join('')}<label class="check-line"><input type="checkbox" required name="confirm"><span>راجعت البرنامج والأبعاد والافتراضات وأريد إنشاء النموذج المفاهيمي بهذه القيم.</span></label><div class="modal-footer"><button class="btn light" type="button" data-action="new">رجوع</button><button class="btn primary" type="submit">إنشاء المخطط الأول ${icon('arrow')}</button></div></form>`, '02 — تثبيت الفهم');
+}
+function openBrief() {
+    const m = model(), dm = designMetrics(m);
+    showModal('طلبك، متطلباتك، وما تحقق منها', `<p class="modal-lead">النص الأصلي محفوظ كما كتبته. المتطلب القابل للقياس يعرض حالته من النموذج الحالي؛ البنود الحرة تبقى للمراجعة البشرية.</p><div class="original-prompt">${E(m.brief.prompt || 'لم يُدخل وصف نصي.')}</div><div class="label-row"><strong>بنود المشروع</strong><button class="text-button green" data-action="add-requirement" ${state.readOnly ? 'disabled' : ''}>إضافة بند</button></div>${m.requirements.map(r=>{const rs=requirementStatus(m,r);return `<div class="req-item"><span class="req-icon">${icon(r.locked?'lock':'unlock')}</span><span><strong>${E(r.label)}</strong>${rs.measurable?`<small class="req-detail">${E(rs.detail)}</small>`:''}</span><span class="source-tag ${rs.measurable&&!rs.satisfied?'warn':rs.measurable&&rs.satisfied?'checked':r.source==='assumed'?'assumed':''}">${rs.measurable?(rs.satisfied?'محقق':'يحتاج تحسين'):(r.source==='assumed'?'افتراض':'مراجعة بشرية')}</span></div>`;}).join('')}<div class="score-summary"><strong>مؤشرات المقارنة المفاهيمية</strong>${[['الخصوصية',dm.privacy],['الحركة',dm.movement],['الخارجية',dm.outdoor],['الكفاءة',dm.efficiency],['المتطلبات القابلة للقياس',dm.requirements]].map(([l,v])=>`<div class="score-row"><span>${l}</span><progress max="100" value="${v}"></progress><b>${fmt(v)}</b></div>`).join('')}<small>${E(dm.note)}</small></div><div class="notice warn">سماكة الجدران وارتفاعاتها في العرض قيم توضيحية. الدرج والمصعد والمسبح هنا كتل/مساحات مفاهيمية وليست تصميمًا تخصصيًا. الهيكل وMEP والحريق والإتاحة والاشتراطات التنظيمية تبقى «لم تُفحص» حتى ربط أدوات تحقق متخصصة واعتماد مختص.</div>`);
+}
+async function projects() {
+    await saveQueue;
+    let rows = [];
+    try {
+        rows = await listLocal();
+    }
+    catch (e) {
+        reportError(e);
+    }
+    const local = `<div class="label-row"><strong>على هذا الجهاز</strong><span class="muted">${rows.length} مشاريع</span></div><div class="projects-list">${rows.length ? rows.map(p => `<div class="project-card">${icon('folder')}<div class="info"><h3>${E(p.title)}</h3><p>${E(new Date(p.updated).toLocaleString('ar-SA'))} · ${p.history.revisions.length} نسخ</p></div><button class="btn light" data-action="open-local" data-id="${E(p.id)}">فتح</button><button class="icon-button" data-action="delete-local" data-id="${E(p.id)}" aria-label="حذف المشروع المحلي">${icon('trash')}</button></div>`).join('') : '<p class="notice">لا توجد مشاريع محفوظة على هذا الجهاز بعد.</p>'}</div>`;
+    let cloud = '';
+    if (api.user) {
+        try {
+            const data = await api.request('/api/projects');
+            cloud = `<div class="label-row"><strong>حسابك على الخادم</strong><button class="text-button green" data-action="save-cloud">حفظ المشروع الحالي هنا</button></div><div class="projects-list">${data.projects.map(p => `<div class="project-card">${icon('cloud')}<div class="info"><h3>${E(p.title)}</h3><p>نسخة الخادم ${p.version}</p></div><button class="btn light" data-action="open-cloud" data-id="${E(p.id)}">فتح</button></div>`).join('') || '<p class="notice">لم تحفظ مشروعًا على الخادم بعد.</p>'}</div>`;
+        }
+        catch (e) {
+            cloud = `<p class="notice error">${E(e.message)}</p>`;
+        }
+    }
+    showModal('مساحة مشاريعك', `<p class="modal-lead">الحفظ المحلي داخل هذا المتصفح فقط. نزّل نسخة JSON احتياطية؛ مسح بيانات المتصفح يزيل المشاريع المحلية.</p>${local}${cloud}<div class="modal-footer"><button class="btn light" data-action="import">${icon('upload')}استيراد مشروع</button><button class="btn primary" data-action="new">${icon('plus')}مشروع جديد</button></div>`);
+}
+function openHistory() {
+    showModal('كل قرار له نسخة', `<p class="modal-lead">استعادة نسخة قديمة تنشئ نسخة جديدة، ولا تكتب فوق الأصل. تستطيع أيضًا مقارنة نسختين دون تغيير المشروع.</p><div class="history-list">${state.history.revisions.map((r, i) => ({ r, i })).reverse().map(({ r, i }) => `<div class="revision-item ${i === state.history.cursor ? 'current' : ''}"><span class="revision-dot"></span><div><h3>${E(r.label)}</h3><p>${E(new Date(r.at).toLocaleString('ar-SA'))}${i === state.history.cursor ? ' · النسخة الحالية' : ''}</p></div><button class="btn light" data-action="restore" data-index="${i}" ${state.readOnly || i === state.history.cursor ? 'disabled' : ''}>استعادة</button></div>`).join('')}</div><div class="modal-footer"><span class="upload-hint">${state.history.revisions.length} / 100 نسخة محفوظة</span><button class="btn light" data-action="compare-revisions" ${state.history.revisions.length < 2 ? 'disabled' : ''}>مقارنة نسختين</button><button class="btn primary" data-action="name-revision" ${state.readOnly ? 'disabled' : ''}>حفظ نسخة مسماة</button></div>`);
+}
+function revisionCompareForm() {
+    const currentIndex=state.history.cursor, prev=currentIndex>0?currentIndex-1:Math.min(1,state.history.revisions.length-1);
+    const options=selectedIndex=>state.history.revisions.map((r,i)=>`<option value="${i}" ${i===selectedIndex?'selected':''}>${E(r.label)} · ${E(new Date(r.at).toLocaleString('ar-SA'))}</option>`).join('');
+    showModal('مقارنة نسختين', `<p class="modal-lead">المقارنة للقراءة فقط؛ لا تنشئ نسخة ولا تغيّر الهندسة.</p><form id="compare-form"><div class="brief-confirm-grid"><label class="field"><span>النسخة السابقة</span><select name="before">${options(prev)}</select></label><label class="field"><span>النسخة اللاحقة</span><select name="after">${options(currentIndex)}</select></label></div><div class="modal-footer"><button class="btn primary" type="submit">إظهار الفروق</button></div></form>`);
+}
+function revisionComparison(beforeIndex, afterIndex) {
+    const a=state.history.revisions[beforeIndex], b=state.history.revisions[afterIndex];
+    if(!a||!b||beforeIndex===afterIndex) throw Error('اختر نسختين مختلفتين للمقارنة.');
+    const changes=diffModels(a.model,b.model), ta=totals(a.model), tb=totals(b.model), ma=designMetrics(a.model), mb=designMetrics(b.model), ga=deriveBuildingGraph(a.model).counts, gb=deriveBuildingGraph(b.model).counts;
+    const delta=n=>`${n>0?'+':''}${fmt(n)}`;
+    const fieldNames={name:'الاسم',kind:'النوع',x:'الموقع شرقًا',y:'الموقع شمالًا',w:'العرض',d:'العمق',height:'الارتفاع',locked:'التثبيت',footprint:'المضلع',doors:'الأبواب',windows:'النوافذ',authoring:'أنواع الجدران',note:'الملاحظة'};
+    showModal('فروق النسختين', `<p class="modal-lead"><strong>${E(a.label)}</strong> ← <strong>${E(b.label)}</strong>. هذه قراءة مقارنة فقط.</p><div class="impact-grid"><div><span>المسطحات</span><strong>${delta(tb.floorArea-ta.floorArea)} م²</strong></div><div><span>المساحات</span><strong>${delta(gb.spaces-ga.spaces)}</strong></div><div><span>الجدران المشتقة</span><strong>${delta(gb.walls-ga.walls)}</strong></div><div><span>الأبواب والنوافذ</span><strong>${delta(gb.openings-ga.openings)}</strong></div><div><span>مؤشر المفهوم</span><strong>${delta(mb.overall-ma.overall)}</strong></div><div><span>الحركة</span><strong>${delta(mb.movement-ma.movement)}</strong></div></div><div class="label-row"><strong>${changes.length} عناصر تغيّرت</strong></div>${changes.length?`<div class="history-list">${changes.map(c=>`<div class="revision-item"><span class="revision-dot"></span><div><h3>${E(c.name)}</h3><p>${c.kind==='added'?'أضيف':c.kind==='removed'?'حُذف':`تغيّر: ${c.fields.map(f=>fieldNames[f]||f).join('، ')}`}</p></div></div>`).join('')}</div>`:'<div class="notice">لا توجد فروق على مستوى المساحات بين النسختين.</div>'}<div class="notice">مؤشرات الجودة هنا للمقارنة المفاهيمية فقط. المقارنة لا تعني تحققًا إنشائيًا أو تنظيميًا.</div><div class="modal-footer"><button class="btn light" data-action="compare-revisions">اختيار نسختين أخريين</button><button class="btn primary" data-action="history">العودة للتاريخ</button></div>`);
+}
+
+function openIssues() {
+    const items = validate(shown()), errors = items.filter(i=>i.status==='error'), warnings = items.filter(i=>i.status==='warning'), checked=items.filter(i=>i.status==='checked'), unchecked=items.filter(i=>i.status==='unchecked');
+    const label={error:'به مشكلة',warning:'تنبيه',checked:'فُحص',unchecked:'لم يُفحص'};
+    showModal('مركز الفحص والحدود', `<p class="modal-lead">نفرّق صراحة بين ما فحصه المحرك وما لم يفحصه. «فُحص» يعني تحققًا داخل نموذج MASAR فقط، ولا يعني اعتماد كود أو سلامة إنشائية.</p><div class="issue-summary-grid"><span class="error"><b>${errors.length}</b> مشكلة</span><span class="warning"><b>${warnings.length}</b> تنبيه</span><span class="checked"><b>${checked.length}</b> فُحص</span><span class="unchecked"><b>${unchecked.length}</b> لم يُفحص</span></div>${items.map(i=>`<button class="issue-item ${i.status}" data-action="focus-issue" data-id="${E(i.targets[0]||'')}"><span class="issue-status">${label[i.status]||i.status}</span><p>${E(i.message)}</p>${i.targets.length?`<small>${icon('chevron')}</small>`:''}</button>`).join('')}`);
+}
+function openModelHealth() {
+    const m=shown(), graph=deriveBuildingGraph(m), ready=projectReadiness(m), ruleEval=evaluateRulePack(m), requirements=requirementMatrix(m);
+    const attention=ruleEval.results.filter(r=>r.status!=='pass');
+    const reqDone=requirements.filter(r=>r.measurable&&r.satisfied).length, reqMeasurable=requirements.filter(r=>r.measurable).length;
+    showModal('نموذج المبنى وجودة التسليم', `<p class="modal-lead">هذه طبقة مشتقة من نموذج المشروع نفسه: المساحات → الجدران → الفتحات → البلاطات والسقف. لا تتحول الطبقة المشتقة إلى مصدر حقيقة عكسي، ولا تعني اعتماد BIM تنفيذي أو كود بناء.</p><div class="issue-summary-grid"><span class="checked"><b>${graph.counts.spaces}</b> مساحة</span><span class="checked"><b>${graph.counts.walls}</b> جدارًا مشتقًا</span><span class="checked"><b>${graph.counts.doors}</b> أبواب · ${graph.counts.windows} نوافذ</span><span class="checked"><b>${graph.counts.slabs + graph.counts.roofs}</b> بلاطات/سقف</span></div><div class="score-summary"><strong>جاهزية النموذج المفاهيمي</strong><div class="score-row"><span>أخطاء النموذج</span><progress max="10" value="${Math.min(10,ready.validation.errors)}"></progress><b>${ready.validation.errors}</b></div><div class="score-row"><span>متطلبات قابلة للقياس</span><progress max="${Math.max(1,reqMeasurable)}" value="${reqDone}"></progress><b>${reqDone}/${reqMeasurable}</b></div><div class="score-row"><span>قواعد جودة تحتاج مراجعة</span><progress max="${Math.max(1,ruleEval.summary.pass+ruleEval.summary.review+ruleEval.summary.fail)}" value="${ruleEval.summary.review+ruleEval.summary.fail}"></progress><b>${ruleEval.summary.review+ruleEval.summary.fail}</b></div></div><div class="notice ${ready.deliveryReady?'':'warn'}"><strong>${ready.deliveryReady?'النموذج متسق للتسليم المفاهيمي.':'النموذج يحتاج معالجة قبل التسليم المفاهيمي.'}</strong><br>${E(ready.note)}</div><div class="label-row"><strong>حزمة الجودة: ${E(ruleEval.pack.name)} / ${E(ruleEval.pack.version)}</strong><span class="muted">ليست حزمة امتثال</span></div>${attention.length?attention.slice(0,30).map(r=>`<div class="issue-item ${r.status==='fail'?'error':'warning'}"><span class="issue-status">${r.status==='fail'?'تعذر':'مراجعة'}</span><p>${E(r.message)}</p></div>`).join(''):'<p class="notice">لا توجد عناصر مراجعة في حزمة الجودة المفاهيمية الحالية.</p>'}<div class="notice warn"><strong>غير مفحوص هندسيًا/تنظيميًا:</strong> ${ready.validation.unchecked} بندًا ظاهرًا في مركز الفحص. حالة «جاهز للتسليم المفاهيمي» لا تغيّرها إلى PASS ولا تعني صلاحية البناء.</div><div class="modal-footer"><button class="btn light" data-action="building-elements">جدول العناصر</button><button class="btn light" data-action="requirements-center">مصفوفة المتطلبات</button><button class="btn light" data-action="export">${icon('download')} ملفات التسليم</button><button class="btn primary" data-action="issues">${icon('shield')} مركز الفحص</button></div>`, 'BUILDING MODEL / QA');
+}
+
+function buildingElements() {
+    const g=deriveBuildingGraph(shown()), labels={window:'نافذة',space:'مساحة',wall:'جدار',door:'باب',slab:'بلاطة',roof:'سقف',siteFeature:'عنصر موقع'};
+    const rows=[...g.elements.spaces.map(x=>({...x,_category:'space'})),...g.elements.walls.map(x=>({...x,_category:'wall'})),...g.elements.openings.map(x=>({...x,_category:x.type==='window'?'window':'door'})),...g.elements.slabs.map(x=>({...x,_category:'slab'})),...g.elements.roofs.map(x=>({...x,_category:'roof'})),...(g.elements.siteFeatures||[]).map(x=>({...x,_category:'siteFeature'}))];
+    showModal('جدول عناصر نموذج المبنى', `<p class="modal-lead">هوية العناصر المشتقة تُحسب من النموذج الحالي. الجدران والبلاطات والسقف مشتقات للتنسيق وليست عناصر BIM تنفيذية مستقلة.</p><div class="history-list">${rows.slice(0,250).map(x=>`<div class="revision-item"><span class="revision-dot"></span><div><h3>${E(x.name||labels[x._category]||'عنصر')}</h3><p>${E(labels[x._category]||'عنصر')} · ${E(x.id)}${x.length?` · ${fmt(x.length)} م`:''}${x.area?` · ${fmt(x.area)} م²`:''}${x.levelId?` · ${E(x.levelId)}`:''}</p></div></div>`).join('')}</div>${rows.length>250?`<div class="notice">يعرض المركز أول 250 عنصرًا من ${rows.length}. نزّل CSV للحصول على القائمة الكاملة.</div>`:''}<div class="modal-footer"><button class="btn light" data-action="model-health">العودة</button><button class="btn primary" data-action="download" data-kind="elements">تنزيل CSV</button></div>`, 'DERIVED ELEMENT SCHEDULE');
+}
+function requirementsCenter() {
+    const rows=requirementMatrix(shown());
+    showModal('مصفوفة متطلبات المشروع', `<p class="modal-lead">يفصل المركز بين المتطلب القابل للقياس والبند الذي يحتاج قرارًا أو مراجعة بشرية. لا تُرقّى البنود غير المقاسة إلى «محقق».</p><div class="history-list">${rows.map(r=>`<div class="revision-item"><span class="revision-dot"></span><div><h3>${E(r.label)}</h3><p>${r.measurable?(r.satisfied?'محقق داخل نموذج مسار':'يحتاج تحسين'):'مراجعة بشرية'} · المصدر: ${E(r.source)} · ${r.locked?'مثبّت':'غير مثبّت'}</p></div></div>`).join('')}</div><div class="modal-footer"><button class="btn light" data-action="model-health">العودة</button><button class="btn primary" data-action="download" data-kind="requirements">تنزيل CSV</button></div>`, 'REQUIREMENTS TRACEABILITY');
+}
+function openAlternatives() {
+    mutable();
+    state.alternatives = createAlternatives(model());
+    const baseScore=state.alternatives[0].metrics.overall;
+    showModal('بدائل محسوبة مع بقاء قراراتك المثبتة', `<p class="modal-lead">يولّد مسار أربع قراءات حتمية للمساحات الحالية، ويقارنها بمؤشرات معلنة. المؤشرات أدوات قرار داخلية وليست تقييمًا معماريًا مهنيًا أو فحص كود.</p><div class="alternate-grid">${state.alternatives.map((a,i)=>{const t=totals(a.model),d=a.metrics.overall-baseScore;return `<div class="alternate-card"><div class="alternate-plan">${planSVG(a.model,state.levelId,{dimensions:false,furniture:false,interactive:false,issues:validate(a.model)})}</div><div class="alternate-info"><h3>${E(a.label)}</h3><p>${E(a.description)}</p><div class="alt-metrics"><span>المفهوم <b>${fmt(a.metrics.overall)}</b></span><span>الخصوصية <b>${fmt(a.metrics.privacy)}</b></span><span>الحركة <b>${fmt(a.metrics.movement)}</b></span><span>الخارجية <b>${fmt(a.metrics.outdoor)}</b></span></div><p>${fmt(t.floorArea)} م² مسطحات · ${fmt(t.outdoorArea)} م² خارجية<br>فرق المؤشر عن الحالي: ${d>0?'+':''}${fmt(d)}</p><button class="btn ${i?'primary':'light'} full" data-action="use-alternative" data-index="${i}" ${i===0?'disabled':''}>معاينة هذا البديل</button></div></div>`;}).join('')}</div><div class="notice">العناصر المثبتة لا تتحرك. أي بديل ينتج تعارضًا هندسيًا سيُمنع عند المعاينة، وكل اعتماد يُنشئ نسخة جديدة قابلة للتراجع.</div>`, '03 — مقارنة البدائل');
+}
+function download(filename, content, type) { const blob = content instanceof Blob ? content : new Blob([content], { type }); const href = URL.createObjectURL(blob), a = document.createElement('a'); a.href = href; a.download = filename; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 30000); toast('جُهّز الملف للتنزيل.'); }
+function exportMenu() {
+    showModal('تسليم المشروع', `<p class="modal-lead">كل ملف يحمل معنى واضحًا. ملفات DXF/OBJ/SVG مخرجات هندسية مفاهيمية وليست BIM تنفيذيًا.</p><div class="export-grid">${[['json','file','مشروع MASAR JSON','النموذج والمتطلبات والتعليقات وسجل النسخ للاستعادة.'],['svg','image','مخطط SVG','مخطط متجهي للدور الحالي.'],['dxf','ruler','DXF مفاهيمي','حدود الغرف بالمتر كمرجع CAD.'],['ifc','cube','IFC4 مع فتحات مستضافة','مساحات وجدران بطبقات وبلاطات وأبواب ونوافذ وفتحات للتنسيق. يدعم المستورد مجموعة فرعية فقط.'],['obj','cube','OBJ ثلاثي الأبعاد','كتل العرض المفاهيمي ثلاثية الأبعاد.'],['csv','file','جدول المساحات CSV','جدول الغرف والأبعاد والمساحات لكل الأدوار.'],['elements','file','جدول عناصر المبنى CSV','مساحات وجدران وأبواب وبلاطات وسقف مع الهوية والمنشأ.'],['requirements','file','مصفوفة المتطلبات CSV','المصدر والتثبيت وقابلية القياس والحالة لكل متطلب.'],['rules','shield','نتيجة حزمة الجودة JSON','نتائج حزمة MASAR المفاهيمية وإثبات أنها ليست حزمة امتثال.'],['report','file','تقرير تسليم HTML','المتطلبات، المؤشرات، الفحوص والمخططات والجداول.'],['png','image','لقطة PNG','لقطة العرض الحالي بعلامة غير صالح للبناء.']].map(([kind,ic,title,desc])=>`<button class="export-option" data-action="download" data-kind="${kind}">${icon(ic)}<strong>${title}</strong><p>${desc}</p></button>`).join('')}</div>`);
+}
+function roomScheduleCSV() {
+    const rows=[['Level','Room','Kind','Width_m','Depth_m','Area_m2','X_m','Y_m','Locked']];
+    for(const l of model().levels) for(const r of l.rooms) rows.push([l.name,r.name,KINDS[r.kind],r.w,r.d,area(r),r.x,r.y,r.locked?'yes':'no']);
+    const esc=csvCell;
+    return '\uFEFF'+rows.map(row=>row.map(esc).join(',')).join('\r\n');
+}
+function reportHTML() {
+    const m=model(),t=totals(m),issues=validate(m),dm=designMetrics(m), graph=deriveBuildingGraph(m), rules=evaluateRulePack(m), ready=projectReadiness(m), reqMatrix=requirementMatrix(m), status={error:'به مشكلة',warning:'تنبيه',checked:'فُحص داخل النموذج',unchecked:'لم يُفحص'};
+    return `<!doctype html><html lang="ar" dir="rtl"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>تسليم ${E(m.title)}</title><style>body{font:15px Tahoma,Arial;line-height:1.9;max-width:1080px;margin:40px auto;padding:25px;color:#244332}h1{font-size:30px}h2{font-size:20px;border-bottom:1px solid #ddd;padding-bottom:10px}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:9px;text-align:right}.notice{padding:18px;background:#f6f1e6}.score{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.score span{border:1px solid #ddd;padding:10px}svg{max-height:700px;width:100%}pre{white-space:pre-wrap}small{color:#667}@media print{body{margin:0;padding:0}section{break-inside:avoid}}</style><h1>مسار | ${E(m.title)}</h1><small>نسخة ${E(state.history.revisions[state.history.cursor].id)} · ${E(new Date().toISOString())} · جميع الأبعاد بالمتر</small><p class="notice"><strong>تصميم مفاهيمي — NOT FOR CONSTRUCTION.</strong> لا يثبت هذا التقرير مطابقة كود البناء أو سلامة المنشأ أو كفاية أنظمة الحريق/MEP/الإتاحة. يلزم اعتماد المختصين قبل التنفيذ.</p><h2>الطلب الأصلي</h2><pre>${E(m.brief.prompt)}</pre><h2>إعدادات المفهوم</h2><p>النوع: ${E(m.design?.projectType||'villa')} · المرحلة: ${E(m.design?.stage||'concept')} · الأولوية: ${E(m.design?.priority||'balanced')} · الطابع: ${E(m.design?.style||'unspecified')}</p><h2>ملخص المساحات</h2><p>الأرض ${fmt(t.landArea)} م² · المسطحات ${fmt(t.floorArea)} م² · بصمة الأرضي ${fmt(t.footprint)} م² · الخارجية ${fmt(t.outdoorArea)} م² · الحركة ${fmt(t.circulation)} م² (${fmt(t.circulationPct)}%)</p><div class="score"><span>المفهوم<br><b>${fmt(dm.overall)}/100</b></span><span>الخصوصية<br><b>${fmt(dm.privacy)}</b></span><span>الحركة<br><b>${fmt(dm.movement)}</b></span><span>الخارجية<br><b>${fmt(dm.outdoor)}</b></span><span>الكفاءة<br><b>${fmt(dm.efficiency)}</b></span></div><small>${E(dm.note)}</small><h2>المتطلبات</h2><table><tr><th>البند</th><th>المصدر</th><th>الحالة</th><th>التفصيل</th></tr>${m.requirements.map(r=>{const rs=requirementStatus(m,r);return `<tr><td>${E(r.label)}</td><td>${E(r.source||'requested')}</td><td>${rs.measurable?(rs.satisfied?'محقق':'يحتاج تحسين'):'مراجعة بشرية'}</td><td>${E(rs.detail)}</td></tr>`;}).join('')}</table><h2>نموذج المبنى المشتق</h2><p>${graph.counts.spaces} مساحة · ${graph.counts.walls} جدارًا مشتقًا · ${graph.counts.doors} أبواب · ${graph.counts.windows} نوافذ · ${graph.counts.slabs} بلاطات · ${graph.counts.roofs} سقف. هذه مشتقات تنسيق من نموذج المساحات وليست عناصر BIM تنفيذية مستقلة.</p><h2>جاهزية التسليم المفاهيمي</h2><p>${ready.deliveryReady?'متسق داخل نطاق مسار المفاهيمي':'يحتاج معالجة داخل نموذج مسار'} · المتطلبات القابلة للقياس ${ready.requirements.satisfied}/${ready.requirements.measurable} · نتائج الجودة: ${rules.summary.pass} اجتازت، ${rules.summary.review} مراجعة، ${rules.summary.fail} تعذّر، ${rules.summary.unchecked} غير مفحوص.</p><p><strong>${E(rules.pack.name)} ${E(rules.pack.version)}</strong> — ${E(rules.pack.disclaimer)}</p>${m.levels.map(l=>`<section><h2>${E(l.name)}</h2>${planSVG(m,l.id,{interactive:false,issues})}<table><thead><tr><th>المساحة</th><th>النوع</th><th>العرض</th><th>العمق</th><th>المساحة</th><th>الحالة</th></tr></thead><tbody>${l.rooms.map(r=>`<tr><td>${E(r.name)}</td><td>${E(KINDS[r.kind])}</td><td>${fmt(r.w)}</td><td>${fmt(r.d)}</td><td>${fmt(area(r))}</td><td>${r.locked?'مثبت':'قابل للتعديل'}</td></tr>`).join('')}</tbody></table></section>`).join('')}<h2>الفحص وحدوده</h2>${issues.map(i=>`<p><strong>${status[i.status]||E(i.status)}:</strong> ${E(i.message)}</p>`).join('')}<h2>تعليقات المراجعة</h2>${m.comments.map(c=>`<p>${E(c.text)} — ${E(c.author)} (${c.resolved?'مغلق':'مفتوح'})</p>`).join('')||'<p>لا توجد تعليقات.</p>'}<h2>قبل التنفيذ</h2><p>تثبيت متطلبات المالك والموقع؛ التحقق من الأنظمة والارتدادات الفعلية؛ تطوير معماري تفصيلي؛ تصميم واعتماد الإنشاء وMEP والحريق والإتاحة؛ تنسيق التخصصات؛ إصدار رسومات مختومة من الجهات المختصة.</p></html>`;
+}
+async function account(mode = 'login') {
+    state.authMode = mode;
+    if (!api.available) {
+        showModal('الحسابات تحتاج تشغيل الخادم', `<p class="modal-lead">أنت تستخدم النسخة المحلية من الاستوديو. الرسم والتعديل والحفظ على الجهاز والتصدير متاحة.</p><div class="notice">لتفعيل الحسابات والحفظ على الخادم وروابط المراجعة، شغّل النسخة الكاملة بالأمر <code dir="ltr">npm start</code> وافتح العنوان المحلي الذي يظهر. لا تُرسل مفاتيح API عبر الواجهة.</div>`);
+        return;
+    }
+    if (api.user) {
+        showModal('حسابك ومساحة التخزين', `<p class="modal-lead">مرحبًا ${E(api.user.name)}. ${E(api.user.email)}</p><div class="notice">الحفظ المحلي لا يعني حفظًا على حسابك. الحفظ السحابي هنا هو على خادم MASAR الذي تشغّله أو تنشره.</div><div class="account-actions"><button class="btn primary" data-action="save-cloud">حفظ المشروع على حسابي</button><button class="btn light" data-action="change-password">تغيير كلمة المرور</button><button class="btn light" data-action="logout">تسجيل الخروج</button><button class="btn danger" data-action="delete-account">حذف الحساب وبياناته</button></div>`);
+        return;
+    }
+    showModal(mode === 'register' ? 'إنشاء حساب' : 'تسجيل الدخول', `<p class="modal-lead">الحساب اختياري للعمل المحلي، ومطلوب للحفظ على الخادم والمشاركة. تفعيل البريد واستعادة كلمة المرور عبر البريد غير متاحين في هذه النسخة.</p><form id="auth-form" class="auth-form">${mode === 'register' ? '<label class="field"><span>الاسم</span><input name="name" maxlength="120" required autocomplete="name"></label>' : ''}<label class="field"><span>البريد الإلكتروني</span><input name="email" type="email" maxlength="200" required autocomplete="email" dir="ltr"></label><label class="field"><span>كلمة المرور ${mode === 'register' ? '(12 حرفًا على الأقل)' : ''}</span><input name="password" type="password" minlength="${mode === 'register' ? 12 : 1}" maxlength="200" required autocomplete="${mode === 'register' ? 'new-password' : 'current-password'}" dir="ltr"></label><button class="btn primary" type="submit">${mode === 'register' ? 'إنشاء الحساب' : 'دخول'}</button><div id="auth-error" role="alert"></div></form>${api.registration ? `<div class="auth-toggle"><button class="text-button green" data-action="auth-mode" data-mode="${mode === 'register' ? 'login' : 'register'}">${mode === 'register' ? 'لدي حساب بالفعل' : 'إنشاء حساب جديد'}</button></div>` : ''}`);
+}
+async function saveCloud() {
+ if(state.readOnly)throw Error('رابط المراجعة للقراءة فقط.');
+ if(!api.user){await account();return;}
+ if(state.preview)throw Error('اعتمد المعاينة أو ألغها قبل الحفظ على الخادم.');
+ const snapshot=clone(state.history),key=api.user.id+':'+snapshot.projectId,version=state.versions.get(key)||0;
+ let result;
+ try{result=await api.request('/api/projects/'+encodeURIComponent(snapshot.projectId),{method:'PUT',body:{history:snapshot,version}});}
+ catch(error){
+  if(error.status===409)showModal('توجد نسخة أحدث على الخادم',`<p class="notice warn">لم تُستبدل النسخة الأحدث، ولم يتغير عملك المفتوح. نزّل نسخة JSON من عملك أولًا. يمكنك فتح نسخة الخادم، أو حفظ العمل الحالي كمشروع مستقل دون حذف المشروع السابق.</p><div class="modal-footer"><button class="btn light" data-action="download" data-kind="json">تنزيل عملي الحالي</button><button class="btn light" data-action="open-cloud" data-id="${E(snapshot.projectId)}">فتح نسخة الخادم</button><button class="btn primary" data-action="fork-project">إنشاء نسخة مستقلة</button></div>`);
+  throw error;
+ }
+ state.versions.set(key,result.version);await persist();if(JSON.stringify(state.history)===JSON.stringify(snapshot)){saveStatus(`محفوظ على الخادم · نسخة ${result.version}`);toast('حُفظت نسخة المشروع على حسابك.');}else toast('حُفظت النسخة المرسلة؛ التعديلات اللاحقة ما زالت محلية وتحتاج حفظًا آخر.');return result;
+}
+async function share() { if (state.readOnly) {
+    toast('هذا بالفعل رابط مراجعة للقراءة فقط.');
+    return;
+} if (!api.user) {
+    await account();
+    return;
+} const list = await api.request('/api/shares'); showModal('مشاركة نسخة للمراجعة', `<p class="modal-lead">الرابط يعرض لقطة ثابتة للقراءة فقط. أي شخص يملك الرابط يستطيع الاطلاع على المحتوى الذي تختاره، ويمكنك إلغاء الرابط في أي وقت.</p><form id="share-form"><label class="field"><span>مدة صلاحية الرابط</span><select name="days"><option value="1">يوم واحد</option><option value="7" selected>7 أيام</option><option value="30">30 يومًا</option></select></label><label class="check-line"><input type="checkbox" name="includeComments"><span>تضمين تعليقات المراجعة وأسماء أصحابها. تُستبعد افتراضيًا.</span></label><label class="check-line"><input type="checkbox" name="includePrompt"><span>تضمين وصف المشروع الأصلي. يُستبعد افتراضيًا.</span></label><label class="check-line"><input type="checkbox" name="consent" required><span>أوافق على مشاركة نموذج هذا المشروع عبر رابط قابل للتداول.</span></label><button class="btn primary" type="submit">حفظ المشروع وإنشاء الرابط</button></form><div id="share-result"></div><div class="label-row"><strong>روابط هذا المشروع</strong><button class="text-button green" data-action="review-center">تعليقات المراجعين</button></div>${list.shares.filter(s => s.project_id === model().id).map(s => `<div class="project-card"><div class="info"><h3>${s.expires > Date.now() ? 'رابط نشط' : 'رابط منتهي'}</h3><p>الانتهاء: ${E(new Date(s.expires).toLocaleDateString('ar-SA'))}</p></div><button class="btn danger" data-action="revoke-share" data-id="${E(s.id)}">إلغاء الرابط</button></div>`).join('') || '<p class="notice">لم تنشئ رابط مراجعة لهذا المشروع.</p>'}`); }
+async function comments() {
+    const r = selected(); if (!r) throw Error('اختر مساحة لإضافة تعليق مرتبط بها.');
+    if (state.readOnly && state.shareToken && api.available) {
+        const data=await api.request('/api/shares/'+encodeURIComponent(state.shareToken)+'/comments'), list=data.comments.filter(c=>c.targetId===r.id);
+        showModal('مراجعة مشتركة: '+r.name, `<p class="modal-lead">تعليقات المراجعين منفصلة عن لقطة المشروع ولا تغيّر هندسته. يستطيع مالك المشروع قراءتها وإغلاقها من مركز المراجعات.</p><div class="comments-list">${list.map(c=>`<div class="comment-item"><p>${E(c.text)}</p><div class="comment-meta"><span>${E(c.author)} · ${E(new Date(c.created).toLocaleDateString('ar-SA'))}</span></div><small>${c.resolved?'مغلق بواسطة المالك':'مفتوح'}</small></div>`).join('')||'<p class="notice">لا توجد تعليقات مراجعين على هذه المساحة بعد.</p>'}</div><form id="review-comment-form"><input type="hidden" name="targetId" value="${E(r.id)}"><label class="field"><span>اسم المراجع</span><input name="author" maxlength="80" required autocomplete="name"></label><label class="field full"><span>الملاحظة</span><textarea name="text" rows="3" maxlength="1200" required placeholder="اكتب ملاحظتك على هذه المساحة"></textarea></label><div class="notice">لن يطبق التعليق أي تعديل. هو طلب مراجعة فقط.</div><div class="modal-footer"><button class="btn primary" type="submit">إرسال الملاحظة</button></div></form>`,'REVIEW LINK');
+        return;
+    }
+    const list = model().comments.filter(c => c.roomId === r.id);
+    showModal('مراجعة: ' + r.name, `<p class="modal-lead">التعليقات مرتبطة بهوية المساحة، وتبقى معها عند تغيير موضعها.</p><div class="comments-list">${list.map(c => `<div class="comment-item"><p>${E(c.text)}</p><div class="comment-meta"><span>${E(c.author)} · ${E(new Date(c.at).toLocaleDateString('ar-SA'))}</span><button class="text-button" data-action="resolve-comment" data-id="${E(c.id)}">${c.resolved ? 'إعادة فتح' : 'إغلاق التعليق'}</button></div><small>${c.resolved ? 'مغلق' : 'مفتوح'}</small></div>`).join('') || '<p class="notice">لا توجد تعليقات على هذه المساحة.</p>'}</div><form id="comment-form"><label class="field full" style="margin-top:20px"><span>ملاحظتك</span><textarea name="text" rows="3" maxlength="2000" required></textarea></label><div class="modal-footer"><span class="upload-hint">الكاتب: ${E(api.user?.name || 'مالك المشروع')}</span><button class="btn primary" type="submit">إضافة تعليق</button></div></form>`);
+}
+async function reviewCenter() {
+    if (!api.user) { await account(); return; }
+    const data=await api.request('/api/projects/'+encodeURIComponent(model().id)+'/review-comments'), roomNames=new Map(model().levels.flatMap(l=>l.rooms).map(r=>[r.id,r.name]));
+    showModal('تعليقات روابط المراجعة', `<p class="modal-lead">هذه ملاحظات أرسلها أشخاص عبر روابط المراجعة. لا تُدمج تلقائيًا في النموذج ولا تنشئ تعديلات.</p>${data.comments.length?`<div class="comments-list">${data.comments.map(c=>`<div class="comment-item"><p>${E(c.text)}</p><div class="comment-meta"><span>${E(c.author)} · ${E(new Date(c.created).toLocaleString('ar-SA'))}${c.targetId?` · ${E(roomNames.get(c.targetId)||'عنصر من نسخة مشاركة')}`:''}</span><button class="text-button" data-action="resolve-review-comment" data-id="${E(c.id)}" data-resolved="${c.resolved?'false':'true'}">${c.resolved?'إعادة فتح':'إغلاق'}</button></div><small>${c.resolved?'مغلق':'مفتوح'} · ${c.expires>Date.now()?'الرابط ما زال صالحًا':'الرابط منتهي'}</small></div>`).join('')}</div>`:'<p class="notice">لا توجد ملاحظات واردة من روابط المراجعة.</p>'}`, 'REVIEW INBOX');
+}
+function switchMobile(panel) { $('.studio-layout').classList.toggle('show-project', panel === 'project'); $('.studio-layout').classList.toggle('show-inspector', panel === 'inspector'); $$('[data-action="mobile"]').forEach(b => b.classList.toggle('active', b.dataset.panel === panel)); requestAnimationFrame(() => renderer?.draw()); }
+function setProject(history, { demo = false, readOnly = false, shareToken = null } = {}) { assertHistory(history); state.history = history; state.demo = demo; state.readOnly = readOnly; state.shareToken = shareToken; state.preview = null; state.undoStack = []; state.measurement = { active:false, a:null, b:null }; state.levelId = model().levels[0].id; state.selectedId = model().levels[0].rooms.find(r => r.kind === 'majlis')?.id || model().levels[0].rooms[0]?.id; state.dirty = false; state.saveError = null; if (!readOnly && location.search)
+    historyAPI.replaceState({}, '', location.pathname); render(); }
+const historyAPI = window.history;
+async function handleAction(b) {
+    const action = b.dataset.action;
+    switch (action) {
+        case 'dismiss-toast':
+            b.closest('.toast').remove();
+            break;
+        case 'close-modal':
+            closeModal();
+            break;
+        case 'new':
+            newProject();
+            break;
+        case 'template':
+            $('#new-prompt').value = { villa: 'أرض 20×25 متر، فيلا ثلاثة أدوار إجمالًا، خمس غرف نوم، مصعد، مجلس قريب من المدخل، والمعيشة على الحديقة. الشارع جنوب. تصميم حديث وخصوصية عالية.', chalet: 'شاليه 18×25 متر، دور واحد، ثلاث غرف نوم، مسبح وحديقة، المعيشة مرتبطة بالجهة الخارجية. الشارع جنوب.', office: 'مكاتب إدارية على أرض 24×30 متر، دورين، 8 مكاتب، استقبال قريب من المدخل، غرف اجتماعات وخدمات. الشارع شرق.', warehouse: 'مستودع 40×60 متر، دور واحد، منطقة تخزين رئيسية، منطقة استلام وتحميل، مكتب تشغيل وخدمات، 6 مواقف. الشارع جنوب.', retail: 'محل تجاري 20×30 متر، دور واحد، صالة عرض، مخزن خلفي، مكتب إدارة وخدمات. الشارع غرب.' }[b.dataset.template];
+            $('#new-prompt').focus();
+            break;
+        case 'brief':
+            openBrief();
+            break;
+        case 'design-settings': {
+            const m=model(), d=m.design || {stage:'concept',projectType:'villa',priority:'balanced',style:'unspecified'};
+            showModal('إعدادات التصميم المفاهيمي', `<p class="modal-lead">هذه الخيارات تغيّر طريقة المقارنة والتوصيف، ولا تعني انتقال المشروع إلى مستوى اعتماد هندسي.</p><form id="design-settings-form"><div class="brief-confirm-grid"><label class="field"><span>مرحلة العمل</span><select name="stage">${[['concept','الفكرة'],['development','تطوير المفهوم'],['review','مراجعة']].map(([v,l])=>`<option value="${v}" ${d.stage===v?'selected':''}>${l}</option>`).join('')}</select></label><label class="field"><span>أولوية المقارنة</span><select name="priority">${[['balanced','متوازن'],['privacy','خصوصية'],['outdoor','مساحات خارجية'],['compact','كفاءة ودمج']].map(([v,l])=>`<option value="${v}" ${d.priority===v?'selected':''}>${l}</option>`).join('')}</select></label><label class="field"><span>طابع العرض</span><select name="style">${[['unspecified','غير محدد'],['modern','حديث'],['classic','كلاسيكي'],['industrial','صناعي']].map(([v,l])=>`<option value="${v}" ${d.style===v?'selected':''}>${l}</option>`).join('')}</select></label></div><div class="stage-explainer"><b>الفكرة:</b> توزيع وبرنامج أولي · <b>التطوير:</b> قرارات أكثر تثبيتًا · <b>المراجعة:</b> تجهيز للتسليم والملاحظات. لا تغيّر المرحلة تلقائيًا حالة الفحوص غير المنفذة.</div><div class="modal-footer"><button class="btn primary" type="submit">حفظ الإعدادات</button></div></form>`);
+            break;
+        }
+        case 'design-stage': {
+            mutable();
+            const stageName=b.dataset.stage;
+            if(!['concept','development','review'].includes(stageName)) throw Error('مرحلة التصميم غير صالحة.');
+            if((model().design?.stage||'concept')===stageName) break;
+            const m=clone(model()); m.design={...(m.design||{}),stage:stageName}; edit(m,'مرحلة التصميم: '+({concept:'الفكرة',development:'التطوير',review:'المراجعة'}[stageName]));
+            break;
+        }
+        case 'select':
+            selectRoom(b.dataset.id);
+            break;
+        case 'level':
+            state.levelId = b.dataset.id;
+            if (!shown().levels.find(l => l.id === state.levelId)?.rooms.some(r => r.id === state.selectedId))
+                state.selectedId = null;
+            render();
+            break;
+        case 'view':
+            state.view = b.dataset.view;
+            render();
+            break;
+        case 'dimensions':
+            state.dimensions = !state.dimensions;
+            render();
+            break;
+        case 'furniture':
+            state.furniture = !state.furniture;
+            render();
+            break;
+        case 'all-floors':
+            state.all = !state.all;
+            render();
+            break;
+        case 'cutaway':
+            state.cutaway = !state.cutaway;
+            render();
+            break;
+        case 'fit':
+            renderer?.reset();
+            $('#plan-host').scrollTo(0, 0);
+            break;
+        case 'zoom-in':
+            renderer?.zoom(.85);
+            break;
+        case 'zoom-out':
+            renderer?.zoom(1.15);
+            break;
+        case 'mobile':
+            switchMobile(b.dataset.panel);
+            break;
+        case 'cancel-preview':
+            state.preview = null;
+            render();
+            $('#assistant-message').textContent = 'أُلغي الاقتراح؛ النسخة المحفوظة لم تتغير.';
+            break;
+        case 'resolve-preview': {
+            const p = state.preview;
+            if (!p) break;
+            const resolved = resolvePreview(model(), p);
+            if (!resolved) throw Error('لم أجد حلًا آليًا آمنًا يحافظ على العناصر المثبتة. قلّل التوسعة أو غيّر اتجاهها أو ألغِ تثبيت العنصر الذي تريد تحريكه.');
+            state.preview = { ...resolved, label: p.label + ' · حل تعارض مقترح' };
+            render();
+            $('#assistant-message').textContent = 'اقترح مسار حلًا لا يحرّك العناصر المثبتة. ما زال التعديل معاينة فقط حتى تضغط «اعتماد التعديل».';
+            break;
+        }
+        case 'commit-preview': {
+            const p = state.preview;
+            if (!p)
+                break;
+            if (p.newWarnings?.length && !$('#ack-warnings')?.checked)
+                throw Error('راجع التنبيهات الجديدة وأكّد الاطلاع قبل الاعتماد.');
+            const next = commitPreview(model(), p);
+            state.preview = null;
+            edit(next, p.label);
+            toast('اعتُمد التعديل وحُفظت نسخة جديدة.');
+            break;
+        }
+        case 'undo': {
+            mutable();
+            if (state.history.cursor === 0)
+                break;
+            state.undoStack.push(state.history.cursor);
+            const parent = state.history.revisions[state.history.cursor].parentIndex;
+            state.history.cursor = Number.isInteger(parent) ? parent : state.history.cursor - 1;
+            state.history.audit.push({ type: 'undo', at: new Date().toISOString() });
+            render();
+            persist();
+            break;
+        }
+        case 'redo': {
+            mutable();
+            if (!state.undoStack.length)
+                break;
+            state.history.cursor = state.undoStack.pop();
+            state.history.audit.push({ type: 'redo', at: new Date().toISOString() });
+            render();
+            persist();
+            break;
+        }
+        case 'lock': {
+            mutable();
+            const r = selected();
+            if (!r)
+                break;
+            const m = clone(model()), target = m.levels.flatMap(l => l.rooms).find(x => x.id === r.id);
+            target.locked = !target.locked;
+            edit(m, target.locked ? 'تثبيت ' + r.name : 'إلغاء تثبيت ' + r.name);
+            break;
+        }
+        case 'toggle-requirement': {
+            mutable();
+            const m = clone(model()), req = m.requirements.find(r => r.id === b.dataset.id);
+            req.locked = !req.locked;
+            edit(m, (req.locked ? 'تثبيت بند: ' : 'إلغاء تثبيت بند: ') + req.label);
+            break;
+        }
+        case 'add-requirement':
+            mutable();
+            showModal('أضف بندًا لا يجب أن يُنسى', '<form id="requirement-form"><label class="field"><span>المتطلب</span><textarea name="text" rows="3" maxlength="1000" required placeholder="مثلًا: لا تطل نوافذ المجلس على الحديقة العائلية."></textarea></label><div class="notice">يُحفظ كبند يحتاج مراجعة، ولا يُوصف بأنه منفّذ أو مفحوص آليًا.</div><div class="modal-footer"><button class="btn primary" type="submit">إضافة وتثبيت البند</button></div></form>');
+            break;
+
+        case 'window': {
+            mutable(); const r=selected(); if (!r) break;
+            const a=effectiveAuthoring(model()), w=(r.windows||[]).find(w=>w.id===b.dataset.windowId);
+            const types=a.windowTypes.map(t=>`<option value="${E(t.id)}" ${w?.typeId===t.id?'selected':''}>${E(t.name)}</option>`).join('');
+            showModal('النوافذ — '+r.name, `<p class="modal-lead">تُربط النافذة بحد الغرفة والجدار المشتق. لم تُفحص متطلبات الإنارة أو التهوية أو المنتج المصنع.</p>${(r.windows||[]).map(x=>`<div class="detail-row"><span>${E(x.id)} · ${fmt(x.width)} × ${fmt(x.height)} م</span><button class="text-button" data-action="window" data-window-id="${E(x.id)}">تعديل</button><button class="text-button" data-action="remove-window" data-window-id="${E(x.id)}">حذف بمعاينة</button></div>`).join('')}<form id="window-form"><input type="hidden" name="windowId" value="${E(w?.id||'')}"><div class="properties-grid"><label class="field full"><span>النوع المفاهيمي</span><select name="typeId">${types}</select></label><label class="field"><span>جهة الاستضافة</span><select name="side">${[['north','شمال'],['south','جنوب'],['east','شرق'],['west','غرب']].map(([v,n])=>`<option value="${v}" ${w?.side===v?'selected':''}>${n}</option>`).join('')}</select></label>${[['width','العرض بالمتر',w?.width??1.2,.1,5],['height','الارتفاع بالمتر',w?.height??1.2,.1,5],['sill','ارتفاع الجلسة بالمتر',w?.sill??.9,0,5],['offset','الموضع النسبي 0–1',w?.offset??.5,0,1]].map(([k,n,v,min,max])=>`<label class="field"><span>${n}</span><input type="number" name="${k}" value="${v}" min="${min}" max="${max}" step=".01" required></label>`).join('')}</div><div class="modal-footer"><button class="btn primary" type="submit">${w?'معاينة التعديل':'معاينة إضافة نافذة'}</button></div></form>`); break;
+        }
+        case 'remove-window':
+            mutable(); closeModal(); stage({type:'remove-window',roomId:state.selectedId,windowId:b.dataset.windowId},'حذف نافذة'); switchMobile('workspace'); break;
+        case 'notch': {
+            mutable();const r=selected();if(!r)break;
+            showModal('تجويف زاوية — '+r.name,`<p class="modal-lead">تقص هذه العملية مساحة من زاوية محددة لتكوين مضلع L. لا يُملأ الفراغ تلقائيًا. أي باب أو نافذة يتأثر سيظهر في الفحص.</p><form id="notch-form"><div class="properties-grid"><label class="field"><span>عرض الجزء المقصوص (م)</span><input type="number" name="width" min=".1" max="${Math.max(.1,r.w-.51)}" step=".01" value=".75" required></label><label class="field"><span>عمق الجزء المقصوص (م)</span><input type="number" name="depth" min=".1" max="${Math.max(.1,r.d-.51)}" step=".01" value=".75" required></label><label class="field full"><span>زاوية القص</span><select name="corner"><option value="ne">شمال شرق</option><option value="nw">شمال غرب</option><option value="se">جنوب شرق</option><option value="sw">جنوب غرب</option></select></label></div><div class="modal-footer"><button type="submit" class="btn primary">معاينة المضلع الجديد</button></div></form>`);break;
+        }
+        case 'wall-types': {
+            const a=effectiveAuthoring(model());
+            showModal('أنواع الجدران وطبقاتها',`<p class="modal-lead">طبقات مفاهيمية مشتقة حول محور حدود المساحات؛ ليست مواصفة إنشائية. المساحات المعروضة محسوبة من الحدود وليست صافيًا مصدقًا بعد التشطيب.</p><form id="wall-types-form">${a.wallTypes.map((t,i)=>`<section class="notice"><h3>${E(t.name)}</h3><p>${t.classification==='external'?'خارجي':'داخلي'} · المجموع الحالي ${fmt(t.totalThickness*1000)} مم</p>${t.layers.map((l,j)=>`<label class="field"><span>${E(l.name)} — ${E(l.provenance||'unknown')}</span><span class="input-unit"><input name="layer-${i}-${j}" type="number" min="1" max="500" step="1" value="${round(l.thickness*1000)}" required ${state.readOnly?'disabled':''}><small>مم</small></span></label>`).join('')}</section>`).join('')}<div class="notice warn">ستتأثر جميع الجدران المرتبطة بهذه الأنواع. لا تتغير حدود الغرف أو أبوابها؛ يلزم تقييم صافي المساحات والتخصصات لاحقًا.</div><div class="modal-footer"><button class="btn primary" type="submit" ${state.readOnly?'disabled':''}>معاينة طبقات الجدران</button></div></form>`);break;
+        }
+        case 'confirm-ifc': {
+            mutable(); if(!state.ifcCandidate) throw Error('لا توجد معاينة IFC صالحة.');
+            if(state.ifcBase!==JSON.stringify(model())) throw Error('تغيّر المشروع أثناء الاستيراد؛ أعد قراءة الملف.');
+            if(!$('#ifc-ack')?.checked) throw Error('أكد مراجعة حدود الاستيراد أولًا.');
+            const candidate=state.ifcCandidate;state.ifcCandidate=null;
+            await saveQueue;setProject(createHistory(candidate));closeModal();persist();toast('استُورد مشروع مستقل؛ لم تُحذف النسخة السابقة.');break;
+        }
+        case 'remove-door':
+            mutable();closeModal();stage({type:'remove-door',roomId:state.selectedId,doorId:b.dataset.id},'حذف الباب المحدد فقط');break;
+        case 'door': {
+            mutable();const r=selected();if(!r)break;
+            const d=b.dataset.new==='true'?null:(r.doors.find(x=>x.id===b.dataset.id)||r.doors[0]);
+            showModal('الأبواب — '+r.name,`<p class="modal-lead">تعديل باب محدد أو إضافة باب مستقل. تبقى بقية الأبواب وهوياتها محفوظة؛ كل تغيير يُراجع قبل الاعتماد.</p><div class="suggestion-chips">${r.doors.map((x,i)=>`<button data-action="door" data-id="${E(x.id)}">باب ${i+1}${x.entry?' · مدخل':''}</button>`).join('')}<button data-action="door" data-new="true">إضافة باب</button></div><form id="door-form"><input type="hidden" name="doorId" value="${E(d?.id||'')}"><input type="hidden" name="create" value="${d?'false':'true'}"><div class="properties-grid"><label class="field full"><span>جهة الباب</span><select name="side">${[['south','جنوب'],['north','شمال'],['east','شرق'],['west','غرب']].map(([v,label])=>`<option value="${v}" ${d?.side===v?'selected':''}>${label}</option>`).join('')}</select></label><label class="field"><span>عرض الباب (م)</span><input name="width" type="number" min=".3" max="5" step=".05" value="${d?.width??.9}" required></label><label class="field"><span>ارتفاع الباب (م)</span><input name="height" type="number" min=".3" max="${r.height}" step=".05" value="${d?.height??2.15}" required></label><label class="field full"><span>موضعه النسبي (0–1)</span><input name="offset" type="number" min="0" max="1" step=".05" value="${d?.offset??.5}" required></label></div><label class="check-line"><input name="entry" type="checkbox" ${d?.entry?'checked':''}><span>مدخل خارجي؛ سيُفحص وجوده على حد مفتوح.</span></label><div class="notice warn">الفتحات يجب أن تلائم جدارًا مضيفًا واحدًا. فحص الوصول مفاهيمي، وليس اعتماد حريق أو إتاحة.</div><div class="modal-footer">${d?`<button class="btn danger" type="button" data-action="remove-door" data-id="${E(d.id)}">معاينة حذف هذا الباب</button>`:''}<button class="btn primary" type="submit">معاينة موضع الباب</button></div></form>`);break;
+        }
+        case 'near-entry':
+            mutable();
+            stage({type:'near',roomId:state.selectedId,target:'entry'},'تقريب '+selected().name+' من المدخل');
+            switchMobile('workspace');
+            break;
+        case 'near-garden':
+            mutable();
+            stage({type:'near',roomId:state.selectedId,target:'garden'},'تقريب '+selected().name+' من الجهة الخارجية');
+            switchMobile('workspace');
+            break;
+        case 'swap': {
+            mutable();
+            const r = selected();
+            if (!r)
+                break;
+            const l = model().levels.find(l => l.rooms.some(s => s.id === r.id));
+            showModal('مبادلة موقع ' + r.name, `<form id="swap-form"><label class="field"><span>المساحة الثانية</span><select name="targetId">${l.rooms.filter(s => s.id !== r.id && !s.locked && !['hall', 'stairs'].includes(s.kind)).map(s => `<option value="${E(s.id)}">${E(s.name)} — ${fmt(area(s))} م²</option>`).join('')}</select></label><div class="notice">تُبدّل المساحتان مواضعهما وأبعادهما، وتحافظ كل منهما على اسمها وتعليقاتها. تُعاين فروق الأبعاد قبل الاعتماد.</div><div class="modal-footer"><button class="btn primary" type="submit">معاينة المبادلة</button></div></form>`);
+            break;
+        }
+        case 'suggest':
+            $('#command-input').value = b.dataset.text;
+            $('#command-input').focus();
+            break;
+        case 'command-help':
+            showModal('أوامر تعديل موضعية ومفهومة', `<p class="modal-lead">يمكنك ذكر اسم المساحة أو تحديدها من المخطط. كل أمر ينتج معاينة أثر قبل أي اعتماد.</p><div class="original-prompt">انقل المجلس قرب المدخل
+وسع المعيشة متر باتجاه الحديقة
+خلي المطبخ قرب الحديقة
+العرض 5
+العمق 4
+أبعاد 5×4
+انقل 1 متر شمال
+الباب جنوب
+سم المعيشة العائلية
+بادل مع غرفة الطعام</div><div class="notice">المحلل المحلي حتمي ومحدود النطاق: إن لم يفهم الأمر يرفضه. الذكاء السحابي اختياري، وحتى عند استخدامه لا يملك صلاحية الاعتماد أو تجاوز الأقفال.</div>`);
+            break;
+        case 'ai-mode':
+            if (state.ai) {
+                state.ai = false;
+                render();
+                break;
+            }
+            if (!api.aiConfigured) {
+                showModal('المحلل المحلي جاهز؛ الذكاء السحابي غير مربوط', `<p class="modal-lead">هذه النسخة لا تدّعي فهمًا حرًا بالذكاء الاصطناعي دون مزوّد فعلي. الأوامر المحلية والحقول المباشرة تعمل دون مفتاح.</p><div class="notice">يدعم الخادم ربط Claude بإعدادَي <code>ANTHROPIC_API_KEY</code> و<code>ANTHROPIC_MODEL</code>. تُحفظ الأسرار على الخادم فقط. الربط الفعلي يحتاج مفتاحًا صالحًا، ولم يُختبر هنا باستدعاء مدفوع.</div>`);
+                break;
+            }
+            if (!api.user) {
+                await account();
+                break;
+            }
+            showModal('تفعيل اقتراحات الذكاء السحابي', `<p class="modal-lead">عند الإرسال، سيُرسل الأمر وبيانات الغرفة المحددة وأسماء ومعرّفات المساحات إلى Anthropic. لن يُرسل سجل النسخ أو تعليقاتك. قد تنطبق رسوم المزود وسياسة احتفاظه.</p><div class="notice">كل اقتراح يمر بالفحص والمعاينة. لا يستطيع المزود حفظ التعديل تلقائيًا أو تجاوز القفل.</div><div class="modal-footer"><button class="btn light" data-action="close-modal">إلغاء</button><button class="btn primary" data-action="enable-ai">أوافق على تفعيل الإرسال</button></div>`);
+            break;
+        case 'enable-ai':
+            state.ai = true;
+            closeModal();
+            render();
+            break;
+        case 'projects':
+            await projects();
+            break;
+        case 'fork-project': {
+            mutable();await saveQueue;const copy=clone(model());copy.id=uid();copy.title=(copy.title+' — نسخة مستقلة').slice(0,120);setProject(createHistory(copy));closeModal();await persist();toast('أنشئت نسخة مستقلة؛ بقي المشروع السابق محفوظًا.');break;
+        }
+        case 'open-local': {
+            await saveQueue;
+            const h = await loadLocal(b.dataset.id);
+            for(const [k,v] of Object.entries(await loadLocalVersions(b.dataset.id)))state.versions.set(k,v);
+            setProject(h);
+            closeModal();
+            saveStatus('مشروع مستعاد من هذا الجهاز');
+            switchMobile('workspace');
+            break;
+        }
+        case 'delete-local':
+            showModal('حذف المشروع من هذا الجهاز؟', `<p class="modal-lead">سيُحذف سجل المشروع المحلي. النسخة على الخادم، إن وجدت، لن تُحذف. صدّر ملف JSON قبل الحذف للاحتفاظ بنسخة.</p><div class="modal-footer"><button class="btn light" data-action="close-modal">إلغاء</button><button class="btn danger" data-action="confirm-delete-local" data-id="${E(b.dataset.id)}">حذف النسخة المحلية</button></div>`);
+            break;
+        case 'confirm-delete-local':
+            if (b.dataset.id === model().id)
+                throw Error('افتح مشروعًا آخر أولًا حتى لا يعاد حفظ المشروع المفتوح بعد حذفه.');
+            await deleteLocal(b.dataset.id);
+            await projects();
+            break;
+        case 'save-cloud':
+            await saveCloud();
+            if (api.user)
+                closeModal();
+            break;
+        case 'open-cloud': {
+            await saveQueue;
+            const data = await api.request('/api/projects/' + encodeURIComponent(b.dataset.id));
+            setProject(assertHistory(data.history));
+            state.versions.set(api.user.id + ':' + b.dataset.id, data.version);
+            closeModal();
+            persist();
+            toast('استُعيد المشروع من حسابك، وحُفظ محليًا.');
+            break;
+        }
+        case 'account':
+            await account();
+            break;
+        case 'auth-mode':
+            await account(b.dataset.mode);
+            break;
+        case 'change-password':
+            showModal('تغيير كلمة المرور', `<form id="password-form"><label class="field"><span>كلمة المرور الحالية</span><input name="currentPassword" type="password" required maxlength="200" autocomplete="current-password"></label><label class="field"><span>كلمة المرور الجديدة</span><input name="newPassword" type="password" required minlength="12" maxlength="200" autocomplete="new-password"></label><div class="modal-footer"><button class="btn primary" type="submit">تغيير كلمة المرور</button></div></form>`);
+            break;
+        case 'delete-account':
+            showModal('حذف الحساب نهائيًا', `<p class="notice error">سيُحذف حسابك ومشاريعك وروابط المشاركة المحفوظة على هذا الخادم. المشاريع المحلية في هذا المتصفح لا تُحذف تلقائيًا.</p><form id="delete-account-form"><label class="field"><span>أدخل كلمة المرور للتأكيد</span><input name="password" type="password" required maxlength="200" autocomplete="current-password"></label><label class="check-line"><input name="confirmDelete" type="checkbox" required><span>أفهم أن حذف بيانات الحساب على الخادم نهائي.</span></label><div class="modal-footer"><button class="btn danger" type="submit">حذف الحساب والبيانات</button></div></form>`);
+            break;
+        case 'logout':
+            await api.logout();
+            state.versions.clear();
+            state.ai = false;
+            closeModal();
+            render();
+            toast('سُجّل الخروج. الملفات المحلية تظل على هذا المتصفح.');
+            break;
+        case 'share':
+            await share();
+            break;
+        case 'revoke-share':
+            await api.request('/api/shares/' + encodeURIComponent(b.dataset.id), { method: 'DELETE', body: {} });
+            toast('أُلغي رابط المراجعة.');
+            await share();
+            break;
+        case 'copy-share':
+            await navigator.clipboard.writeText($('#shared-url').value);
+            toast('نُسخ الرابط.');
+            break;
+        case 'measure':
+            state.measurement.active = !state.measurement.active;
+            if (!state.measurement.active) state.measurement = {active:false,a:null,b:null};
+            else state.measurement = {active:true,a:null,b:null};
+            render();
+            break;
+        case 'history':
+            openHistory();
+            break;
+        case 'compare-revisions':
+            revisionCompareForm();
+            break;
+        case 'restore': {
+            mutable();
+            const index = Number(b.dataset.index), past = state.history.revisions[index];
+            if (!past)
+                break;
+            edit(clone(past.model), 'استعادة: ' + past.label);
+            closeModal();
+            toast('استُعيدت النسخة في إصدار جديد.');
+            break;
+        }
+        case 'name-revision':
+            mutable();
+            showModal('نسخة تحمل اسم قرارك', '<form id="revision-form"><label class="field"><span>اسم النسخة</span><input name="label" maxlength="100" required placeholder="مثلًا: توزيع معتمد للمراجعة الأولى"></label><div class="modal-footer"><button class="btn primary" type="submit">حفظ نسخة مسماة</button></div></form>');
+            break;
+        case 'rename-project':
+            mutable();
+            showModal('اسم المشروع', `<form id="rename-form"><label class="field"><span>اسم المشروع</span><input name="title" value="${E(model().title)}" maxlength="120" required></label><div class="modal-footer"><button class="btn primary" type="submit">حفظ الاسم</button></div></form>`);
+            break;
+        case 'issues':
+            openIssues();
+            break;
+        case 'model-health':
+            openModelHealth();
+            break;
+        case 'building-elements':
+            buildingElements();
+            break;
+        case 'requirements-center':
+            requirementsCenter();
+            break;
+        case 'focus-issue':
+            if (b.dataset.id) {
+                selectRoom(b.dataset.id);
+                closeModal();
+                switchMobile('workspace');
+            }
+            break;
+        case 'alternatives':
+            openAlternatives();
+            break;
+        case 'use-alternative': {
+            const a = state.alternatives[Number(b.dataset.index)];
+            if (!a)
+                break;
+            const issues = validate(a.model), existing = new Set(validate(model()).filter(i => i.status === 'error').map(i => i.id));
+            state.preview = { candidate: clone(a.model), changes: diffModels(model(), a.model), issues, blockers: issues.filter(i => i.status === 'error'), impact: impactSummary(model(), a.model), base: JSON.stringify(model()), label: a.label };
+            closeModal();
+            render();
+            switchMobile('workspace');
+            break;
+        }
+        case 'comments':
+            await comments();
+            break;
+        case 'review-center':
+            await reviewCenter();
+            break;
+        case 'resolve-review-comment':
+            await api.request('/api/review-comments/'+encodeURIComponent(b.dataset.id),{method:'POST',body:{resolved:b.dataset.resolved==='true'}});
+            await reviewCenter();
+            break;
+        case 'resolve-comment': {
+            mutable();
+            const m = clone(model()), c = m.comments.find(c => c.id === b.dataset.id);
+            c.resolved = !c.resolved;
+            edit(m, c.resolved ? 'إغلاق تعليق' : 'إعادة فتح تعليق');
+            comments();
+            break;
+        }
+        case 'export':
+            exportMenu();
+            break;
+        case 'download': {
+            const kind = b.dataset.kind, name = 'masar-' + model().id.slice(0, 8);
+            if (state.preview && kind === 'png')
+                throw Error('ألغِ المعاينة أو اعتمدها قبل تنزيل لقطة المجسم.');
+            if (kind === 'json')
+                download(name + '.json', JSON.stringify(exportEnvelope(state.history), null, 2), 'application/json');
+            if (kind === 'svg')
+                download(name + '-' + state.levelId + '.svg', planSVG(model(), state.levelId, { dimensions: true, furniture: state.furniture, interactive: false }), 'image/svg+xml');
+            if (kind === 'dxf')
+                download(name + '-' + state.levelId + '.dxf', exportDXF(model(), state.levelId), 'application/dxf');
+            if (kind === 'ifc')
+                download(name + '.ifc', exportIFC(model()), 'application/x-step');
+            if (kind === 'obj')
+                download(name + '.obj', exportOBJ(model()), 'text/plain');
+            if (kind === 'csv')
+                download(name + '-rooms.csv', roomScheduleCSV(), 'text/csv;charset=utf-8');
+            if (kind === 'elements')
+                download(name + '-building-elements.csv', elementScheduleCSV(model()), 'text/csv;charset=utf-8');
+            if (kind === 'requirements')
+                download(name + '-requirements.csv', requirementMatrixCSV(model()), 'text/csv;charset=utf-8');
+            if (kind === 'rules')
+                download(name + '-concept-quality.json', JSON.stringify(evaluateRulePack(model()), null, 2), 'application/json');
+            if (kind === 'report')
+                download(name + '-report.html', reportHTML(), 'text/html');
+            if (kind === 'png') {
+                if (!renderer)
+                    throw Error('العرض ثلاثي الأبعاد غير متاح.');
+                renderer.draw();
+                const source = $('#scene'), canvas = document.createElement('canvas');
+                canvas.width = source.width;
+                canvas.height = source.height + 65;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = '#f2f5eb';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(source, 0, 0);
+                ctx.fillStyle = '#64745a';
+                ctx.font = '15px Tahoma';
+                ctx.textAlign = 'center';
+                ctx.fillText('MASAR — CONCEPTUAL VISUALIZATION / NOT FOR CONSTRUCTION', canvas.width / 2, canvas.height - 24);
+                canvas.toBlob(blob => { if (blob)
+                    download(name + '.png', blob, 'image/png');
+                else
+                    reportError(Error('تعذّر تجهيز اللقطة.')); });
+            }
+            break;
+        }
+        case 'import':
+            mutable();
+            $('#import-input').value = '';
+            $('#import-input').click();
+            break;
+        case 'confirm-dxf': break;
+        case 'about':
+            showModal('قدرات مسار وحدوده الصريحة', `<p class="modal-lead">MASAR 3 يبني نموذجًا مفاهيميًا موحدًا، ثم يشتق منه طبقة عناصر مبنى قابلة للتسليم والتنسيق دون تغيير مصدر الحقيقة.</p><div class="notice"><strong>متاح الآن:</strong> فيلا وشاليه ومكاتب ومستودع وتجزئة؛ 1–8 أدوار؛ مصعد ومسبح كعناصر مفاهيمية؛ متطلبات قابلة للقياس مثل قرب المجلس من المدخل؛ تعديل علائقي واتجاهي؛ معاينة أثر؛ أقفال؛ بدائل محسوبة؛ تراجع/إعادة؛ تعليقات داخلية وملاحظات مراجعين عبر الرابط؛ قياس مباشر؛ مقارنة نسختين؛ حفظ محلي وخادمي؛ مشاركة ثابتة؛ استيراد DXF مرجعي؛ طبقة مبنى مشتقة للجدران/الأبواب/البلاطات/السقف مع جداول عناصر ومتطلبات؛ حزمة جودة مفاهيمية قابلة للإصدار؛ وتصدير JSON/SVG/DXF/IFC4 التنسيقي/OBJ/CSV/PNG/HTML.</div><div class="notice warn"><strong>ليست مكتملة كقدرات تنفيذية:</strong> تحويل صورة أو PDF/DWG إلى BIM موثوق، استيراد IFC وround-trip BIM كامل، تصميم تفصيلي للسلالم والمصاعد والمسابح، إنشائي، MEP، حريق، إتاحة، أو اعتماد أنظمة البناء. هذه تظهر «لم تُفحص» ولا تُخفى خلف درجة جودة.</div><div class="notice">المحرك المحلي يعمل بلا CDN. الذكاء السحابي اختياري ومقيد بالاقتراح فقط. الحفظ المحلي ليس Backup سحابيًا، والحفظ/المشاركة على الحساب يحتاجان الخادم.</div><p class="modal-lead">نطاق المولّد: أرض 12–120 م عرضًا و15–160 م عمقًا، حتى 8 أدوار، حتى 16 غرفة نوم سكنية أو 20 مكتبًا في برنامج المكاتب، بحد أقصى 200 مساحة و100 نسخة للمشروع.</p>`);
+            break;
+        default: break;
+    }
+}
+async function handleForm(form) {
+    const data = new FormData(form), get = k => String(data.get(k) || '').trim();
+    switch (form.id) {
+        case 'new-form':
+            confirmBrief(understand(get('prompt') || $('#new-prompt').value));
+            break;
+        case 'brief-form': {
+            mutable();
+            const brief = clone(state.pendingBrief);
+            for (const k of ['width','depth','floors','bedrooms','offices','parking']) { brief[k]=Number(data.get(k)); brief.sources[k]='confirmed'; }
+            brief.title=get('title'); brief.street=get('street'); brief.projectType=get('projectType'); brief.priority=get('priority'); brief.style=get('style'); brief.elevator=data.has('elevator'); brief.pool=data.has('pool');
+            brief.sources.street='confirmed'; brief.sources.projectType='confirmed';
+            if(!brief.title) throw Error('اسم المشروع مطلوب.');
+            if(!['villa','chalet','office','warehouse','retail'].includes(brief.projectType)) throw Error('نوع المشروع غير مدعوم.');
+            if(!Number.isInteger(brief.floors)||brief.floors<1||brief.floors>8) throw Error('عدد الأدوار يجب أن يكون بين 1 و8.');
+            if(['villa','chalet'].includes(brief.projectType)&&(!Number.isInteger(brief.bedrooms)||brief.bedrooms<1||brief.bedrooms>16)) throw Error('المشروع السكني يحتاج من 1 إلى 16 غرفة نوم ضمن نطاق المولّد.');
+            if(brief.projectType==='office'&&(!Number.isInteger(brief.offices)||brief.offices<1||brief.offices>20)) throw Error('برنامج المكاتب يدعم من مكتب واحد إلى 20 مكتبًا.');
+            if(!Number.isInteger(brief.parking)||brief.parking<0||brief.parking>30) throw Error('عدد المواقف يجب أن يكون بين 0 و30.');
+            if(!Number.isFinite(brief.width)||brief.width<12||brief.width>120||!Number.isFinite(brief.depth)||brief.depth<15||brief.depth>160) throw Error('نطاق الأرض المدعوم: عرض 12–120 م وعمق 15–160 م.');
+            brief.unresolved=[];
+            const m=generate(brief);
+            m.requirements.push({id:uid(),label:'أي تفاصيل نصية لم تتحول إلى متطلب قابل للقياس تبقى ضمن الطلب الأصلي وتحتاج مراجعة معمارية بشرية.',type:'custom',source:'requested',locked:true});
+            const errors=validate(m).filter(i=>i.status==='error');
+            if(errors.length) throw Error('لم ينتج توزيع متصل وصالح هندسيًا داخل نموذج مسار: '+errors[0].message);
+            await saveQueue; setProject(createHistory(m)); closeModal(); switchMobile('workspace'); persist();
+            toast('أُنشئ المفهوم الأول. راجع العلاقات والمؤشرات ثم ثبّت القرارات المهمة.');
+            break;
+        }
+        case 'design-settings-form': {
+            mutable();
+            const stageName=get('stage'), priority=get('priority'), style=get('style');
+            if(!['concept','development','review'].includes(stageName)||!['balanced','privacy','outdoor','compact'].includes(priority)||!['unspecified','modern','classic','industrial'].includes(style)) throw Error('إعدادات التصميم غير صالحة.');
+            const m=clone(model()); m.design={...(m.design||{}),stage:stageName,priority,style};
+            if(JSON.stringify(m.design)===JSON.stringify(model().design)) { closeModal(); toast('لم تتغير إعدادات التصميم.'); break; }
+            edit(m,'تحديث إعدادات التصميم'); closeModal();
+            break;
+        }
+        case 'properties-form': {
+            mutable();
+            const r = selected();
+            if (!r)
+                throw Error('اختر مساحة.');
+            const name = get('name'), m = clone(model()), target = m.levels.flatMap(l => l.rooms).find(x => x.id === r.id);
+            if (!name)
+                throw Error('اسم المساحة مطلوب.');
+            target.name = name;
+            for (const k of ['w', 'd', 'x', 'y'])
+                if (data.has(k)) {
+                    const v = Number(data.get(k));
+                    if (!Number.isFinite(v))
+                        throw Error('أدخل رقمًا صالحًا.');
+                    target[k] = round(v);
+                }
+            assertModel(m);
+            checkLocks(model(), m);
+            const changes = diffModels(model(), m);
+            if (!changes.length) {
+                toast('لم تتغيّر أي قيمة.');
+                break;
+            }
+            const issues = validate(m);
+            state.preview = { candidate: m, changes, issues, blockers: issues.filter(i => i.status === 'error'), base: JSON.stringify(model()), label: 'تعديل ' + r.name };
+            render();
+            switchMobile('workspace');
+            break;
+        }
+        case 'command-form': {
+            mutable();
+            const text = $('#command-input').value.trim();
+            if (!text)
+                throw Error('اكتب أمر التعديل أولًا.');
+            $('#assistant-message').classList.remove('error');
+            $('#assistant-message').textContent = state.ai ? 'جارٍ طلب اقتراح من المزود…' : 'جارٍ تحليل الأمر محليًا…';
+            let command;
+            if (state.ai) {
+                const base = JSON.stringify(model());
+                const result = await api.request('/api/ai/propose', { method: 'POST', body: { model: model(), roomId: state.selectedId, text, consent: true } });
+                if (base !== JSON.stringify(model()))
+                    throw Error('تغيّر المشروع أثناء الطلب؛ أعد المحاولة على النسخة الجديدة.');
+                command = result.command;
+            }
+            else
+                command = parseCommand(text, model(), state.selectedId);
+            stage(command, 'أمر: ' + text.slice(0, 80));
+            switchMobile('workspace');
+            break;
+        }
+
+        case 'window-form': {
+            mutable();const cmd={type:'window',roomId:state.selectedId,side:get('side'),typeId:get('typeId'),width:Number(data.get('width')),height:Number(data.get('height')),sill:Number(data.get('sill')),offset:Number(data.get('offset'))};
+            if(get('windowId'))cmd.windowId=get('windowId');closeModal();stage(cmd,'تعديل نافذة');switchMobile('workspace');break;
+        }
+        case 'notch-form': {
+            mutable();const cmd={type:'notch',roomId:state.selectedId,width:Number(data.get('width')),depth:Number(data.get('depth')),corner:get('corner')};closeModal();stage(cmd,'تجويف زاوية');switchMobile('workspace');break;
+        }
+        case 'wall-types-form': {
+            mutable();const m=clone(model());m.authoring=clone(effectiveAuthoring(m));
+            for(const [i,t] of m.authoring.wallTypes.entries()) {for(const [j,l] of t.layers.entries()){const mm=Number(data.get(`layer-${i}-${j}`));if(!Number.isFinite(mm)||mm<1||mm>500)throw Error('أدخل سمكًا صالحًا بالملليمتر.');l.thickness=round(mm/1000);l.provenance='user-concept-assumption';}t.totalThickness=round(t.layers.reduce((n,l)=>n+l.thickness,0));t.provenance='user-concept-type-not-engineering-spec';}
+            assertModel(m);checkLocks(model(),m);const changes=diffModels(model(),m);if(!changes.length){toast('لم تتغير الطبقات.');break;}const issues=validate(m);
+            state.preview={candidate:m,changes,issues,blockers:issues.filter(i=>i.status==='error'),base:JSON.stringify(model()),label:'تغيير طبقات الجدران — كل الجدران المشتقة متأثرة'};closeModal();render();break;
+        }
+        case 'door-form': {
+            const command = { type: 'door', roomId: state.selectedId, side: get('side'), width: Number(data.get('width')), height:Number(data.get('height')),offset: Number(data.get('offset')), entry: data.has('entry'),doorId:get('doorId')||undefined,create:get('create')==='true' };
+            closeModal();
+            stage(command, 'تغيير باب ' + selected().name);
+            switchMobile('workspace');
+            break;
+        }
+        case 'swap-form': {
+            const command = { type: 'swap', roomId: state.selectedId, targetId: get('targetId') };
+            closeModal();
+            stage(command, 'مبادلة المساحات');
+            switchMobile('workspace');
+            break;
+        }
+        case 'rename-form': {
+            const m = clone(model());
+            m.title = get('title');
+            edit(m, 'تسمية المشروع');
+            closeModal();
+            break;
+        }
+        case 'compare-form': {
+            revisionComparison(Number(data.get('before')), Number(data.get('after')));
+            break;
+        }
+        case 'revision-form': {
+            edit(clone(model()), get('label'));
+            closeModal();
+            toast('حُفظت النسخة المسماة.');
+            break;
+        }
+        case 'requirement-form': {
+            const m = clone(model());
+            m.requirements.push({ id: uid(), type: 'custom', label: get('text'), source: 'requested', locked: true });
+            edit(m, 'إضافة متطلب');
+            closeModal();
+            break;
+        }
+        case 'comment-form': {
+            const m = clone(model());
+            if (!get('text'))
+                throw Error('اكتب تعليقًا.');
+            m.comments.push({ id: uid(), roomId: state.selectedId, text: get('text'), author: api.user?.name || 'مالك المشروع', at: new Date().toISOString(), resolved: false });
+            edit(m, 'تعليق على ' + selected().name);
+            await comments();
+            break;
+        }
+        case 'review-comment-form': {
+            if(!state.readOnly||!state.shareToken) throw Error('هذا النموذج متاح داخل رابط مراجعة فقط.');
+            await api.request('/api/shares/'+encodeURIComponent(state.shareToken)+'/comments',{method:'POST',body:{author:get('author'),text:get('text'),targetId:get('targetId')}});
+            toast('أُرسلت ملاحظتك إلى مالك المشروع دون تغيير التصميم.');
+            await comments();
+            break;
+        }
+        case 'password-form': {
+            await api.request('/api/auth/change-password', {method:'POST',body:{currentPassword:String(data.get('currentPassword')||''),newPassword:String(data.get('newPassword')||'')}});
+            closeModal(); toast('تغيّرت كلمة المرور. أُغلقت الجلسات الأخرى للحساب.');
+            break;
+        }
+        case 'delete-account-form': {
+            if(!data.has('confirmDelete')) throw Error('تأكيد الحذف مطلوب.');
+            await api.request('/api/auth/account', {method:'DELETE',body:{password:String(data.get('password')||'')}});
+            api.user=null; api.csrf=null; state.versions.clear(); state.ai=false; closeModal(); render(); toast('حُذف الحساب وبياناته من الخادم. المشاريع المحلية بقيت على هذا المتصفح.');
+            break;
+        }
+        case 'auth-form': {
+            try {
+                await api.authenticate(state.authMode, { name: get('name'), email: get('email'), password: String(data.get('password') || '') });
+                state.versions.clear();
+                try{for(const [k,v] of Object.entries(await loadLocalVersions(model().id)))state.versions.set(k,v);}catch{/* A failed local store must not prevent authentication. */}
+                closeModal();
+                render();
+                toast('أهلًا بك. الحفظ على الخادم يتم بطلبك من «مشاريعي».');
+            }
+            catch (e) {
+                $('#auth-error').className = 'notice error';
+                $('#auth-error').textContent = e.message;
+            }
+            break;
+        }
+        case 'share-form': {
+            mutable();
+            if (!data.has('consent'))
+                throw Error('الموافقة على المشاركة مطلوبة.');
+            const source = clone(model());
+            await saveCloud();
+            const m = clone(source);
+            if (!data.has('includeComments'))
+                m.comments = [];
+            if (!data.has('includePrompt')) {
+                m.brief.prompt = 'الوصف الأصلي غير مشمول في رابط المراجعة.';
+                m.requirements = m.requirements.filter(r => !['custom', 'unresolved'].includes(r.type));
+                m.brief.unresolved = [];
+            }
+            m.references = [];
+            const result = await api.request('/api/shares', { method: 'POST', body: { model: m, days: Number(data.get('days') || 7) } });
+            $('#share-result').innerHTML = `<div class="notice">الرابط صالح حتى ${E(new Date(result.expires).toLocaleString('ar-SA'))}. يعرض هذه النسخة فقط.</div><input id="shared-url" class="share-url" readonly value="${E(result.url)}" aria-label="رابط المراجعة"><div class="modal-footer"><button class="btn primary" data-action="copy-share">نسخ الرابط</button></div>`;
+            break;
+        }
+        case 'dxf-form': {
+            mutable();
+            const scale = Number(data.get('scale'));
+            const lines = parseDXF(state.dxfText, scale), m = clone(model());
+            if (m.references.length >= 5)
+                throw Error('الحد الأقصى خمسة مراجع رسم.');
+            m.references.push({ type: 'dxf', name: state.dxfName, scale: 1, lines });
+            edit(m, 'إضافة مرجع DXF');
+            state.dxfText = null;
+            closeModal();
+            toast('أُضيف الرسم كمرجع خطوط؛ لم يتحول إلى جدران أو غرف.');
+            break;
+        }
+        default: break;
+    }
+}
+if ('serviceWorker' in navigator && !globalThis.MASAR_STANDALONE && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register('/public/sw.js',{scope:'/'}).catch(() => {});
+// Delegated handlers keep interactions stable after rendering and avoid inline JavaScript.
+document.addEventListener('click', async (e) => { const b = e.target.closest('button[data-action]'); if (b) {
+    if (b.disabled)
+        return;
+    try {
+        await handleAction(b);
+    }
+    catch (err) {
+        reportError(err);
+    }
+    return;
+} const room = e.target.closest('[data-room-id]'); if (room && !state.measurement.active && Date.now() > ignoreClickUntil)
+    selectRoom(room.dataset.roomId); });
+document.addEventListener('submit', async (e) => { e.preventDefault(); const form = e.target; if (!(form instanceof HTMLFormElement))
+    return; const submit = form.querySelector('[type="submit"]'); if (submit?.disabled)
+    return; if (submit)
+    submit.disabled = true; try {
+    await handleForm(form);
+}
+catch (err) {
+    if (form.id === 'command-form') {
+        $('#assistant-message').textContent = err.message;
+        $('#assistant-message').classList.add('error');
+    }
+    reportError(err);
+}
+finally {
+    if (submit?.isConnected)
+        submit.disabled = false;
+} });
+document.addEventListener('keydown', e => { if (e.target.closest('input,textarea,select'))
+    return; if (e.target.closest('[data-room-id]') && ['Enter', ' '].includes(e.key)) {
+    e.preventDefault();
+    selectRoom(e.target.closest('[data-room-id]').dataset.roomId);
+} if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !$('#modal').open) {
+    e.preventDefault();
+    const b = $(`[data-action="${e.shiftKey ? 'redo' : 'undo'}"]`);
+    if (!b.disabled)
+        handleAction(b).catch(reportError);
+} });
+window.addEventListener('beforeunload', e => { if (state.dirty && !state.readOnly) {
+    e.preventDefault();
+    e.returnValue = '';
+} });
+window.addEventListener('resize', () => renderer?.draw());
+$('#modal').addEventListener('click', e => { if (e.target === $('#modal')) {
+    const r = $('#modal').getBoundingClientRect();
+    if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom)
+        closeModal();
+} });
+$('#import-input').addEventListener('change', async (e) => { const file = e.target.files?.[0]; if (!file)
+    return; try {
+    mutable();
+    if (file.size > 8000000)
+        throw Error('الحد الأقصى للملف 8 ميجابايت.');
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.json')) {
+        const h = importEnvelope(await file.text());
+        await saveQueue;
+        setProject(h);
+        closeModal();
+        persist();
+        toast('استُعيد المشروع وسجل نسخه من الملف.');
+    }
+    else if (name.endsWith('.ifc')) {
+        if(file.size>8000000)throw Error('الحد الأقصى 8 ميجابايت.');
+        const candidate=parseIFC(await file.text());state.ifcCandidate=candidate;state.ifcBase=JSON.stringify(model());
+        const counts=deriveBuildingGraph(candidate).counts,issues=validate(candidate),errors=issues.filter(x=>x.status==='error');
+        showModal('معاينة IFC — لم يُستبدل مشروعك',`<p class="modal-lead">استيراد مجموعة IFC4 مدعومة إلى مشروع مستقل. سيتم الاحتفاظ بالأصل المحفوظ. لا يُستعاد منه تاريخ MASAR أو المتطلبات أو التشطيبات غير المدعومة.</p><div class="impact-grid"><div><span>الأدوار</span><strong>${candidate.levels.length}</strong></div><div><span>المساحات</span><strong>${counts.spaces}</strong></div><div><span>فتحات مدعومة</span><strong>${counts.openings}</strong></div></div><div class="notice warn">${E(candidate.brief.unresolved.join(' '))}</div><div class="notice">${errors.length?`يوجد ${errors.length} خطأ مفاهيمي يحتاج إصلاحًا. الاستيراد لا يعني قبوله هندسيًا.`:'لم يظهر خطأ مانع في فحص النموذج المفاهيمي؛ التخصصات لم تُفحص.'}</div><label class="check-line"><input id="ifc-ack" type="checkbox"><span>راجعت نطاق الاستيراد وسأتحقق من الهندسة والأبعاد والعلاقات.</span></label><div class="modal-footer"><button class="btn light" data-action="close-modal">إلغاء</button><button class="btn primary" data-action="confirm-ifc">إنشاء المشروع المستورد</button></div>`);
+    }
+    else if (name.endsWith('.dxf')) {
+        if (file.size > 2000000)
+            throw Error('الحد الأقصى لمرجع DXF هو 2 ميجابايت.');
+        state.dxfText = await file.text();
+        state.dxfName = file.name.slice(0, 150);
+        showModal('تحديد وحدة ملف DXF', `<p class="modal-lead">استيراد خطوط LINE وLWPOLYLINE فقط كمرجع مسقط. لا تُستخرج غرف أو جدران BIM من الرسم، ولا يُفترض مقياس تلقائي.</p><form id="dxf-form"><label class="field"><span>كم مترًا تمثل وحدة واحدة في الملف؟</span><select name="scale"><option value="1">1 متر — ملف بوحدة المتر</option><option value="0.001">0.001 متر — ملف بالملليمتر</option><option value="0.01">0.01 متر — ملف بالسنتيمتر</option><option value="0.3048">0.3048 متر — ملف بالقدم</option></select></label><label class="check-line"><input type="checkbox" required><span>تحققت من وحدة ملفي. الرسم مرجع فقط، وليس هندسة معتمدة.</span></label><div class="modal-footer"><button class="btn primary" type="submit">إضافة المرجع</button></div></form>`);
+    }
+    else if (['image/png', 'image/jpeg'].includes(file.type)) {
+        const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+        const png = head[0] === 137 && head[1] === 80 && head[2] === 78 && head[3] === 71, jpg = head[0] === 255 && head[1] === 216;
+        if (!(png || jpg))
+            throw Error('محتوى الصورة لا يطابق PNG أو JPEG.');
+        if (state.imageRef)
+            URL.revokeObjectURL(state.imageRef);
+        state.imageRef = URL.createObjectURL(file);
+        showModal('مرجع بصري — لا استخراج هندسي', `<p class="modal-lead">الصورة مرجع أثناء هذه الجلسة فقط. لم نُنشئ منها غرفًا أو أبعادًا، ولا تُرسل إلى مزوّد أو تُحفظ داخل مشروع JSON.</p><img class="photo-reference" src="${E(state.imageRef)}" alt="مرجع المخطط المرفوع"><div class="notice">أدخل الأبعاد بنفسك أو استورد مشروع JSON. التحويل التلقائي من الصور إلى BIM غير مدعوم؛ استيراد IFC4 متاح ضمن النطاق المعلن.</div>`);
+    }
+    else
+        throw Error('الملفات المدعومة: مشروع JSON أو IFC4 مدعوم، مرجع DXF، وصور PNG/JPEG.');
+}
+catch (err) {
+    reportError(err);
+} });
+// Measurement is transient session state. It never changes the canonical model or history.
+$('#plan-host').addEventListener('click', e => {
+    if (!state.measurement.active) return;
+    e.preventDefault(); e.stopPropagation();
+    const svg=$('#plan-host svg'); if(!svg) return;
+    const pt=svg.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const p=pt.matrixTransform(svg.getScreenCTM().inverse()), m=shown();
+    const point={x:round(Math.max(0,Math.min(m.site.width,p.x))),y:round(Math.max(0,Math.min(m.site.depth,m.site.depth-p.y)))};
+    if (!state.measurement.a || state.measurement.b) state.measurement={active:true,a:point,b:null};
+    else state.measurement={active:true,a:state.measurement.a,b:point};
+    render();
+});
+// Direct dragging is snapped to 0.25 m and only creates a preview, never an implicit commit.
+$('#plan-host').addEventListener('pointerdown', e => { if (e.button !== 0 || state.readOnly || state.preview || state.measurement.active)
+    return; const group = e.target.closest('[data-room-id]'); if (!group)
+    return; const r = model().levels.flatMap(l => l.rooms).find(r => r.id === group.dataset.roomId); if (!r || r.locked)
+    return; const svg = group.ownerSVGElement, pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(svg.getScreenCTM().inverse()); drag = { id: r.id, x: r.x, y: r.y, clientX: e.clientX, clientY: e.clientY, start: p, svg, group, moved: false }; });
+document.addEventListener('pointermove', e => { if (!drag)
+    return; if (Math.hypot(e.clientX - drag.clientX, e.clientY - drag.clientY) > 7) {
+    drag.moved = true;
+    drag.group.style.opacity = '.65';
+} });
+document.addEventListener('pointerup', e => { if (!drag)
+    return; const d = drag; drag = null; d.group.style.opacity = ''; if (!d.moved)
+    return; ignoreClickUntil = Date.now() + 500; const pt = d.svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY; const p = pt.matrixTransform(d.svg.getScreenCTM().inverse()), dx = Math.round((p.x - d.start.x) * 4) / 4, dy = -Math.round((p.y - d.start.y) * 4) / 4; state.selectedId = d.id; try {
+    stage({ type: 'move', roomId: d.id, x: round(d.x + dx), y: round(d.y + dy) }, 'نقل مساحة بالسحب');
+}
+catch (err) {
+    reportError(err);
+} });
+document.addEventListener('pointercancel', () => { if (drag)
+    drag.group.style.opacity = ''; drag = null; });
+async function boot() {
+    icons();
+    await api.init();
+    let loaded = false;
+    const shareToken = new URLSearchParams(location.search).get('share');
+    if (shareToken) {
+        try {
+            if (!api.available)
+                throw Error('فتح رابط المراجعة يحتاج الخادم المتصل.');
+            const data = await api.request('/api/shares/' + encodeURIComponent(shareToken));
+            setProject(createHistory(assertModel(data.model)), { readOnly: true, shareToken });
+            loaded = true;
+        }
+        catch (e) {
+            // Fail closed: an invalid review link must never fall back to another private local project.
+            $('#app').hidden=true;
+            showModal('رابط المراجعة غير متاح',`<p class="notice error">${E(e.message)}</p><p>لم نفتح مشروعًا آخر بدل هذا الرابط.</p><div class="modal-footer"><a href="/" class="btn primary">فتح استوديو مسار</a></div>`);
+            return;
+        }
+    }
+    if (!loaded) {
+        try {
+            const projects = await listLocal();
+            if (projects.length) {
+                setProject(assertHistory(projects[0].history));
+                for(const [k,v] of Object.entries(await loadLocalVersions(projects[0].id)))state.versions.set(k,v);
+                saveStatus('استُعيد آخر مشروع محفوظ على هذا الجهاز');
+                loaded = true;
+            }
+        }
+        catch (e) {
+            toast(e.message, true);
+        }
+    }
+    if (!loaded) {
+        const brief = understand('أرض 20×25 متر. فيلا ثلاثة أدوار إجمالًا، خمس غرف نوم، مجلس ضيوف ومعيشة عائلية، وحديقة خلفية. الشارع جنوب.');
+        const m = generate(brief);
+        m.requirements.push({ id: 'r-detail-review', label: 'الخصوصية وتفاصيل الطلب الأصلي تحتاج مراجعة معمارية؛ لم تُفحص آليًا.', type: 'custom', source: 'requested', locked: true });
+        setProject(createHistory(m), { demo: true });
+        saveStatus('مثال توضيحي · ابدأ مشروعًا جديدًا لحفظ فكرتك');
+    }
+    $('#system-status').textContent = api.available ? 'المحرك المحلي والخادم متصلان' : 'المحرك المحلي جاهز · بلا خادم';
+    if(api.available&&api.persistenceClass==='ephemeral'){const banner=document.createElement('div');banner.id='persistence-warning';banner.className='storage-banner';banner.setAttribute('role','status');banner.textContent='بيئة معاينة: تخزين الحسابات والمشاريع على الخادم مؤقت وقد يُفقد عند إعادة التشغيل. احفظ نسخة JSON على جهازك؛ هذه ليست استضافة إنتاجية دائمة.';const bar=document.querySelector('.topbar');if(bar)bar.after(banner);else document.body.prepend(banner);}
+}
+boot().catch(e => { reportError(e); $('#system-status').textContent = 'تعذّر بدء المشروع. راجع الرسالة وأعد المحاولة.'; });
+
+return {};
+})();

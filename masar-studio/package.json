@@ -1,0 +1,17 @@
+{
+  "name": "masar-design-studio",
+  "version": "4.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MASAR Studio 4: Arabic-first interactive architectural authoring studio with composite walls, hosted openings, orthogonal non-rectangular spaces, transactional edits, IFC4 exchange, revisions and secure persistence.",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env server/server.mjs",
+    "dev": "node --env-file-if-exists=.env --watch server/server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "build": "node tools/build.mjs",
+    "check": "node tools/check.mjs"
+  }
+}

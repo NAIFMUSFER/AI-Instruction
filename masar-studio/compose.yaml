@@ -1,0 +1,23 @@
+# Persistent single-instance deployment. Terminate HTTPS at a reverse proxy.
+services:
+  masar:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    ports: ['127.0.0.1:3000:3000']
+    environment:
+      NODE_ENV: production
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:?Set PUBLIC_ORIGIN to the exact HTTPS origin}
+      PERSISTENCE_CLASS: persistent
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      BOOTSTRAP_EMAIL: ${BOOTSTRAP_EMAIL:-}
+      BOOTSTRAP_PASSWORD: ${BOOTSTRAP_PASSWORD:-}
+    volumes:
+      - masar-data:/app/data
+    tmpfs: ['/tmp:size=32m,mode=1777']
+volumes:
+  masar-data:

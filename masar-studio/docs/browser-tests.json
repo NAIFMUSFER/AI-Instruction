@@ -1,0 +1,234 @@
+{
+  "harness": "Chromium set_content of exact standalone build; navigation blocked by environment policy",
+  "renderer": "Canvas2D software 3D; WebGL unverified",
+  "indexedDB": "Unavailable in about:blank; failure state verified; browser-origin persistence NOT VERIFIED",
+  "results": [
+    {
+      "name": "desktop: 2D and real software 3D render",
+      "status": "PASS"
+    },
+    {
+      "name": "desktop: no horizontal overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "storage: unavailable IndexedDB is disclosed",
+      "status": "PASS"
+    },
+    {
+      "name": "3D ray selection synchronizes inspector, 2D highlight and tree",
+      "status": "PASS"
+    },
+    {
+      "name": "room rename creates an explicit preview",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel restores canonical name",
+      "status": "PASS"
+    },
+    {
+      "name": "commit applies room rename",
+      "status": "PASS"
+    },
+    {
+      "name": "undo and redo restore exact room names",
+      "status": "PASS"
+    },
+    {
+      "name": "overlap preview is blocked",
+      "status": "PASS"
+    },
+    {
+      "name": "blocked resize offers safe reflow and keeps locked stair fixed",
+      "status": "PASS"
+    },
+    {
+      "name": "2D selection updates inspector",
+      "status": "PASS"
+    },
+    {
+      "name": "transient 2D measurement reports distance without creating a revision",
+      "status": "PASS"
+    },
+    {
+      "name": "lock disables geometry and explicit unlock restores it",
+      "status": "PASS"
+    },
+    {
+      "name": "local Arabic command proposes then commits",
+      "status": "PASS"
+    },
+    {
+      "name": "unsupported language is refused without mutations",
+      "status": "PASS"
+    },
+    {
+      "name": "room comments add and resolve",
+      "status": "PASS"
+    },
+    {
+      "name": "named revision preserves history",
+      "status": "PASS"
+    },
+    {
+      "name": "restoring a version appends instead of deleting",
+      "status": "PASS"
+    },
+    {
+      "name": "revision comparison is read-only and exposes geometry and concept deltas",
+      "status": "PASS"
+    },
+    {
+      "name": "alternative comparison produces preview",
+      "status": "PASS"
+    },
+    {
+      "name": "unperformed engineering checks never display PASS",
+      "status": "PASS"
+    },
+    {
+      "name": "derived building model and non-compliance quality center are visible",
+      "status": "PASS"
+    },
+    {
+      "name": "derived element schedule is inspectable in the UI",
+      "status": "PASS"
+    },
+    {
+      "name": "requirement traceability matrix is inspectable in the UI",
+      "status": "PASS"
+    },
+    {
+      "name": "hosted window authoring previews, commits and renders in 2D/model health",
+      "status": "PASS"
+    },
+    {
+      "name": "orthogonal L-space authoring uses a polygon and disables unsafe bbox resizing",
+      "status": "PASS"
+    },
+    {
+      "name": "composite wall/window authoring types are revisioned through preview",
+      "status": "PASS"
+    },
+    {
+      "name": "exported IFC4 reimports through the declared limited authoring path",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads JSON export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads SVG export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads DXF export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads IFC export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads OBJ export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads CSV export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads ELEMENTS export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads REQUIREMENTS export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads RULES export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads REPORT export",
+      "status": "PASS"
+    },
+    {
+      "name": "browser actually downloads PNG export",
+      "status": "PASS"
+    },
+    {
+      "name": "exported JSON reimports with all revisions intact",
+      "status": "PASS"
+    },
+    {
+      "name": "malformed JSON import preserves project",
+      "status": "PASS"
+    },
+    {
+      "name": "Arabic project wizard confirms dimensions/floors/beds/street",
+      "status": "PASS"
+    },
+    {
+      "name": "verbatim original brief survives generation",
+      "status": "PASS"
+    },
+    {
+      "name": "design stage and priority are first-class revisioned settings",
+      "status": "PASS"
+    },
+    {
+      "name": "floor switching synchronizes plan and room tree",
+      "status": "PASS"
+    },
+    {
+      "name": "2D/3D modes, multi-floor and cutaway controls",
+      "status": "PASS"
+    },
+    {
+      "name": "keyboard rotates real 3D geometry",
+      "status": "PASS"
+    },
+    {
+      "name": "standalone does not claim cloud/AI connectivity",
+      "status": "PASS"
+    },
+    {
+      "name": "390px: no document overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "390px: all mobile panels reachable",
+      "status": "PASS"
+    },
+    {
+      "name": "390px: plan renders",
+      "status": "PASS"
+    },
+    {
+      "name": "320px: no document overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "320px: all mobile panels reachable",
+      "status": "PASS"
+    },
+    {
+      "name": "320px: plan renders",
+      "status": "PASS"
+    },
+    {
+      "name": "768px: no document overflow",
+      "status": "PASS"
+    },
+    {
+      "name": "all UI flows: no uncaught JavaScript exceptions",
+      "status": "PASS"
+    }
+  ],
+  "passed": 56,
+  "failed": 0,
+  "pageErrors": []
+}

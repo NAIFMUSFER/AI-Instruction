@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><meta name="theme-color" content="#183e32"><meta name="description" content="مسار 4.1: استوديو تصميم معماري تفاعلي من البرنامج إلى المخطط والمجسم، مع تعديل علائقي، معاينة أثر، بدائل محسوبة وإصدارات قابلة للمراجعة.">
+<title>مسار — استوديو التصميم المعماري</title>
+<link rel="icon" type="image/svg+xml" href="/public/favicon.svg"><link rel="manifest" href="/public/manifest.webmanifest"><link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+<a class="skip-link" href="#workspace">انتقل إلى مساحة التصميم</a>
+<div id="app">
+<header class="topbar">
+ <a class="brand" href="/" aria-label="مسار، الصفحة الرئيسية"><svg width="33" height="38" viewBox="0 0 33 38" fill="none" aria-hidden="true"><path d="M2 28V9L16 2l14 7v19l-14 8L2 28Z" stroke="currentColor" stroke-width="1.7"/><path d="m2 9 14 8 14-8M16 17v19M9 13v11l7 4 7-4V13" stroke="currentColor" stroke-width="1.5"/></svg><span>مسار<small>MASAR STUDIO</small></span></a>
+ <span class="top-divider"></span><div class="project-heading"><button data-action="rename-project" class="text-button project-title" id="project-title">فيلا الفناء</button><div id="save-status" class="save-status" aria-live="polite">مساحة التصميم المعماري</div></div>
+ <nav class="top-actions" aria-label="أدوات المشروع"><button class="btn light" data-action="projects"><span data-icon="folder"></span><span class="hide-small">مشاريعي</span></button><button class="btn light" data-action="history"><span data-icon="history"></span><span class="hide-small">النسخ</span></button><button class="btn light" data-action="share"><span data-icon="share"></span><span class="hide-small">مشاركة</span></button><button class="btn primary" data-action="export"><span data-icon="download"></span><span>تصدير</span></button><button class="avatar" data-action="account" aria-label="الحساب" id="account-button">م</button></nav>
+</header>
+<div class="subbar"><div class="breadcrumb"><span class="live-dot"></span><span>استوديو التصميم</span><span class="crumb-slash">/</span><span id="project-type">تصميم مفاهيمي</span><span class="tiny-badge" id="demo-badge">مشروع تجريبي</span></div><div class="design-stage" role="group" aria-label="مرحلة التصميم"><button data-action="design-stage" data-stage="concept" class="active" aria-pressed="true">الفكرة</button><button data-action="design-stage" data-stage="development" aria-pressed="false">التطوير</button><button data-action="design-stage" data-stage="review" aria-pressed="false">المراجعة</button></div><div class="sub-actions"><button class="text-button" data-action="wall-types">الجدران والطبقات</button><button class="text-button" data-action="model-health">نموذج المبنى</button><button class="text-button" data-action="about">القدرات والحدود</button><button class="text-button green" data-action="new"><span data-icon="plus"></span>مشروع جديد</button></div></div>
+<main class="studio-layout">
+<aside class="project-panel" id="project-panel" aria-label="متطلبات المشروع والغرف">
+ <div class="panel-title"><h2>مشروعك، كما تريده</h2><span class="eyebrow">01 / BRIEF</span></div>
+ <div class="project-intro"><span class="icon-tile" data-icon="layers"></span><div><h3 id="brief-name">فيلا سكنية</h3><p>من الفكرة إلى مساحة تعيشها</p></div></div>
+ <div id="brief-content"></div>
+ <div class="panel-section-heading"><h3>عناصر المشروع</h3><button class="icon-button" data-action="add-requirement" aria-label="إضافة متطلب" title="إضافة متطلب"><span data-icon="plus"></span></button></div>
+ <div id="level-tree" class="level-tree"></div>
+ <div class="panel-bottom"><button class="btn full light" data-action="alternatives"><span data-icon="variants"></span>استكشف بدائل التوزيع</button><p>بنودك المثبّتة تبقى محفوظة.</p></div>
+</aside>
+<section class="workspace" id="workspace" tabindex="-1" aria-label="مساحة الرسم">
+ <div class="workspace-toolbar"><div class="segmented" role="group" aria-label="طريقة العرض"><button data-action="view" data-view="2d" aria-pressed="false">مخطط <span>2D</span></button><button data-action="view" data-view="split" class="active" aria-pressed="true"><span data-icon="split"></span>متزامن</button><button data-action="view" data-view="3d" aria-pressed="false">مجسم <span>3D</span></button></div><div class="toolbar-right"><button class="icon-button" data-action="undo" title="تراجع Ctrl+Z" aria-label="تراجع"><span data-icon="undo"></span></button><button class="icon-button" data-action="redo" title="إعادة Ctrl+Shift+Z" aria-label="إعادة"><span data-icon="redo"></span></button><span class="tool-divider"></span><button class="icon-button" data-action="fit" aria-label="ملاءمة العرض" title="ملاءمة العرض"><span data-icon="fit"></span></button></div></div>
+ <div id="preview-banner" class="preview-banner" hidden></div>
+ <div class="view-deck" data-view="split" id="view-deck">
+  <div class="view-pane plan-pane"><div class="pane-label"><span class="pane-dot"></span>المخطط المعماري <span class="label-detail" id="level-label"></span></div><div class="plan-host" id="plan-host"></div><div class="plan-controls"><button class="small-control" data-action="measure" aria-pressed="false" title="انقر نقطتين على المخطط"><span data-icon="ruler"></span>قياس مباشر</button><button class="small-control" data-action="dimensions" aria-pressed="true"><span data-icon="ruler"></span>الأبعاد</button><button class="small-control" data-action="furniture" aria-pressed="true"><span data-icon="sofa"></span>الأثاث التوضيحي</button><span class="unit-label" id="measure-status">الوحدة: متر</span></div></div>
+  <div class="view-pane model-pane"><div class="pane-label"><span class="pane-dot warm"></span>المشهد ثلاثي الأبعاد <span class="tiny-badge soft">عرض مفاهيمي</span></div><canvas id="scene" tabindex="0" role="img" aria-label="مجسم ثلاثي الأبعاد. اسحب للدوران، عجلة الفأرة للتقريب. أسهم لوحة المفاتيح للدوران وعلامتا زائد وناقص للتقريب. تحديد الغرف متاح كذلك من قائمة العناصر."></canvas><div id="scene-error" class="scene-error" hidden></div><div class="model-controls"><button class="small-control" data-action="all-floors" aria-pressed="false"><span data-icon="layers"></span>كل الأدوار</button><button class="small-control" data-action="cutaway" aria-pressed="true"><span data-icon="cube"></span>مقطع مفتوح</button></div><div class="orbit-hint"><span data-icon="rotate"></span>اسحب للدوران · انقر لتحديد غرفة</div><div class="zoom-controls"><button class="icon-button" data-action="zoom-in" aria-label="تقريب">+</button><button class="icon-button" data-action="zoom-out" aria-label="إبعاد">−</button></div></div>
+ </div>
+ <div class="floor-bar"><div id="floor-tabs" class="floor-tabs" role="group" aria-label="الأدوار"></div><span class="synced-label"><span data-icon="link"></span>تحديد متزامن</span></div>
+ <div class="metrics-bar" id="metrics-bar"></div>
+ <button class="issues-strip" data-action="issues" id="issues-strip"></button>
+</section>
+<aside class="inspector-panel" id="inspector-panel" aria-label="خصائص العنصر ومساعد التعديل">
+ <div class="panel-title"><h2>تفاصيل المساحة</h2><span class="eyebrow">02 / DESIGN</span></div>
+ <div id="inspector-content"></div>
+ <div class="assistant-card"><div class="assistant-head"><span class="assistant-symbol" data-icon="sparkles"></span><div><h3>غيّرها بكلماتك</h3><span id="assistant-mode">مساعد الأوامر المحلي</span></div><span class="online-dot"></span></div><p>حدد مساحة، ثم أخبرني بما تريد تغييره. سترى أثر التعديل أولًا.</p><form id="command-form"><label class="sr-only" for="command-input">أمر التعديل</label><textarea id="command-input" rows="3" maxlength="1500" placeholder="مثلًا: انقل المجلس قرب المدخل"></textarea><div class="command-bottom"><button type="button" class="text-button muted" data-action="ai-mode" id="ai-mode-toggle">محلي · بلا إرسال بيانات</button><button class="send-button" type="submit" aria-label="معاينة أمر التعديل"><span data-icon="arrow"></span></button></div></form><div class="suggestion-chips"><button data-action="suggest" data-text="انقل المجلس قرب المدخل">قرب المدخل</button><button data-action="suggest" data-text="وسعها متر باتجاه الحديقة">وسّع للحديقة</button><button data-action="command-help">أمثلة أخرى</button></div><div id="assistant-message" class="assistant-message" aria-live="polite"></div></div>
+ <div class="inspector-footer"><span data-icon="shield"></span>لا تعديل بلا معاينة. القرار لك دائمًا.</div>
+</aside>
+</main>
+<footer class="statusbar"><span><span class="live-dot"></span><span id="system-status">المحرك المحلي جاهز</span></span><span>تصميم مفاهيمي · ليس مخططًا معتمدًا للبناء</span><span class="version-label">MASAR / 4.1.0</span></footer>
+<nav class="mobile-nav" aria-label="التنقل على الجوال"><button data-action="mobile" data-panel="project"><span data-icon="folder"></span>المشروع</button><button data-action="mobile" data-panel="workspace" class="active"><span data-icon="cube"></span>التصميم</button><button data-action="mobile" data-panel="inspector"><span data-icon="sliders"></span>التعديل</button></nav>
+</div>
+<dialog id="modal" aria-labelledby="modal-title"><div class="modal-heading"><div><span class="eyebrow" id="modal-kicker">MASAR STUDIO</span><h2 id="modal-title"></h2></div><button class="icon-button" data-action="close-modal" aria-label="إغلاق"><span data-icon="close"></span></button></div><div id="modal-content"></div></dialog>
+<div class="toast-region" id="toasts" aria-live="polite" aria-atomic="true"></div>
+<input type="file" id="import-input" accept=".json,.ifc,.dxf,image/png,image/jpeg" hidden>
+<script type="module" src="/src/app.js"></script>
+</body></html>

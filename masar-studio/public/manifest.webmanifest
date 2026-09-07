@@ -1,0 +1,11 @@
+{
+  "name": "مسار — MASAR Studio",
+  "short_name": "مسار",
+  "description": "استوديو تصميم معماري تفاعلي مفاهيمي",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f2f5eb",
+  "theme_color": "#183e32",
+  "icons": [{"src":"/public/favicon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

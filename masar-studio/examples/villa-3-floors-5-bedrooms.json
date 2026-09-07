@@ -1,0 +1,589 @@
+{
+  "format": "masar-project",
+  "version": 1,
+  "exportedAt": "2026-09-07T17:43:59.913Z",
+  "disclaimer": "تصميم مفاهيمي، لا يصلح للبناء دون مراجعة واعتماد المختصين. جميع الأبعاد بالمتر.",
+  "history": {
+    "schemaVersion": 1,
+    "projectId": "a62767bd-d99c-463c-92f7-e1bb11e1d1c6",
+    "revisions": [
+      {
+        "id": "81a9804d-44ed-47e9-ba2b-eb363f548f8e",
+        "label": "البداية",
+        "at": "2026-09-07T17:43:59.913Z",
+        "model": {
+          "schemaVersion": 1,
+          "id": "a62767bd-d99c-463c-92f7-e1bb11e1d1c6",
+          "title": "فيلا تجريبية — ثلاثة أدوار وخمس غرف",
+          "site": {
+            "width": 20,
+            "depth": 25,
+            "street": "جنوب",
+            "north": "up",
+            "setback": {
+              "front": 3,
+              "back": 3,
+              "left": 2,
+              "right": 2
+            },
+            "setbackSource": "concept-assumption-not-code"
+          },
+          "brief": {
+            "prompt": "أرض 20×25 متر، فيلا ثلاثة أدوار إجمالًا، خمس غرف نوم. الشارع جنوب.",
+            "width": 20,
+            "depth": 25,
+            "floors": 3,
+            "bedrooms": 5,
+            "street": "جنوب",
+            "elevator": false,
+            "pool": false,
+            "title": "فيلا الفناء",
+            "sources": {
+              "width": "requested",
+              "depth": "requested",
+              "floors": "requested",
+              "bedrooms": "requested",
+              "street": "requested"
+            },
+            "unresolved": []
+          },
+          "requirements": [
+            {
+              "id": "r-floors",
+              "label": "3 أدوار إجمالًا",
+              "type": "floors",
+              "value": 3,
+              "locked": true,
+              "source": "requested"
+            },
+            {
+              "id": "r-beds",
+              "label": "5 غرف نوم",
+              "type": "bedrooms",
+              "value": 5,
+              "locked": true,
+              "source": "requested"
+            },
+            {
+              "id": "r-site",
+              "label": "أرض 20 × 25 م",
+              "type": "site",
+              "value": [
+                20,
+                25
+              ],
+              "locked": true,
+              "source": "requested"
+            }
+          ],
+          "levels": [
+            {
+              "id": "l0",
+              "name": "الدور الأرضي",
+              "elevation": 0,
+              "height": 3.3,
+              "rooms": [
+                {
+                  "id": "l0-room-0",
+                  "name": "مجلس الضيوف",
+                  "kind": "majlis",
+                  "x": 2,
+                  "y": 3,
+                  "w": 7.2,
+                  "d": 6.333,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-room-0-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-room-2",
+                  "name": "المعيشة العائلية",
+                  "kind": "living",
+                  "x": 2,
+                  "y": 9.333,
+                  "w": 7.2,
+                  "d": 6.334,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-room-2-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-room-4",
+                  "name": "مطبخ مفتوح",
+                  "kind": "kitchen",
+                  "x": 2,
+                  "y": 15.667,
+                  "w": 7.2,
+                  "d": 6.333,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-room-4-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-room-1",
+                  "name": "غرفة الطعام",
+                  "kind": "dining",
+                  "x": 10.8,
+                  "y": 3,
+                  "w": 7.2,
+                  "d": 4.933,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-room-1-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-room-3",
+                  "name": "المدخل والخدمات",
+                  "kind": "service",
+                  "x": 10.8,
+                  "y": 7.933,
+                  "w": 7.2,
+                  "d": 4.934,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-room-3-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-room-5",
+                  "name": "دورة مياه الضيوف",
+                  "kind": "bath",
+                  "x": 10.8,
+                  "y": 12.867,
+                  "w": 7.2,
+                  "d": 4.933,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-room-5-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-hall",
+                  "name": "ممر التوزيع",
+                  "kind": "hall",
+                  "x": 9.2,
+                  "y": 3,
+                  "w": 1.6,
+                  "d": 19,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l0-hall-door",
+                      "side": "south",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": true
+                    },
+                    {
+                      "id": "l0-garden-door",
+                      "side": "north",
+                      "offset": 0.5,
+                      "width": 1,
+                      "entry": true
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l0-stairs",
+                  "name": "الدرج الرئيسي",
+                  "kind": "stairs",
+                  "x": 10.8,
+                  "y": 17.8,
+                  "w": 7.2,
+                  "d": 4.2,
+                  "height": 3,
+                  "locked": true,
+                  "doors": [
+                    {
+                      "id": "l0-stairs-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                }
+              ]
+            },
+            {
+              "id": "l1",
+              "name": "الدور 1",
+              "elevation": 3.3,
+              "height": 3.3,
+              "rooms": [
+                {
+                  "id": "l1-room-0",
+                  "name": "غرفة نوم 1",
+                  "kind": "bedroom",
+                  "x": 2,
+                  "y": 3,
+                  "w": 7.2,
+                  "d": 6.333,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l1-room-0-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l1-room-2",
+                  "name": "غرفة نوم 3",
+                  "kind": "bedroom",
+                  "x": 2,
+                  "y": 9.333,
+                  "w": 7.2,
+                  "d": 6.334,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l1-room-2-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l1-room-4",
+                  "name": "دورة مياه",
+                  "kind": "bath",
+                  "x": 2,
+                  "y": 15.667,
+                  "w": 7.2,
+                  "d": 6.333,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l1-room-4-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l1-room-1",
+                  "name": "غرفة نوم 2",
+                  "kind": "bedroom",
+                  "x": 10.8,
+                  "y": 3,
+                  "w": 7.2,
+                  "d": 7.4,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l1-room-1-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l1-room-3",
+                  "name": "صالة عائلية",
+                  "kind": "living",
+                  "x": 10.8,
+                  "y": 10.4,
+                  "w": 7.2,
+                  "d": 7.4,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l1-room-3-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l1-hall",
+                  "name": "ممر التوزيع",
+                  "kind": "hall",
+                  "x": 9.2,
+                  "y": 3,
+                  "w": 1.6,
+                  "d": 19,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l1-hall-door",
+                      "side": "south",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l1-stairs",
+                  "name": "الدرج الرئيسي",
+                  "kind": "stairs",
+                  "x": 10.8,
+                  "y": 17.8,
+                  "w": 7.2,
+                  "d": 4.2,
+                  "height": 3,
+                  "locked": true,
+                  "doors": [
+                    {
+                      "id": "l1-stairs-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                }
+              ]
+            },
+            {
+              "id": "l2",
+              "name": "الدور 2",
+              "elevation": 6.6,
+              "height": 3.3,
+              "rooms": [
+                {
+                  "id": "l2-room-0",
+                  "name": "غرفة نوم 4",
+                  "kind": "bedroom",
+                  "x": 2,
+                  "y": 3,
+                  "w": 7.2,
+                  "d": 9.5,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l2-room-0-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l2-room-2",
+                  "name": "صالة عائلية",
+                  "kind": "living",
+                  "x": 2,
+                  "y": 12.5,
+                  "w": 7.2,
+                  "d": 9.5,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l2-room-2-door",
+                      "side": "east",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l2-room-1",
+                  "name": "غرفة نوم 5",
+                  "kind": "bedroom",
+                  "x": 10.8,
+                  "y": 3,
+                  "w": 7.2,
+                  "d": 7.4,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l2-room-1-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l2-room-3",
+                  "name": "دورة مياه",
+                  "kind": "bath",
+                  "x": 10.8,
+                  "y": 10.4,
+                  "w": 7.2,
+                  "d": 7.4,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l2-room-3-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l2-hall",
+                  "name": "ممر التوزيع",
+                  "kind": "hall",
+                  "x": 9.2,
+                  "y": 3,
+                  "w": 1.6,
+                  "d": 19,
+                  "height": 3,
+                  "locked": false,
+                  "doors": [
+                    {
+                      "id": "l2-hall-door",
+                      "side": "south",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                },
+                {
+                  "id": "l2-stairs",
+                  "name": "الدرج الرئيسي",
+                  "kind": "stairs",
+                  "x": 10.8,
+                  "y": 17.8,
+                  "w": 7.2,
+                  "d": 4.2,
+                  "height": 3,
+                  "locked": true,
+                  "doors": [
+                    {
+                      "id": "l2-stairs-door",
+                      "side": "west",
+                      "offset": 0.5,
+                      "width": 0.9,
+                      "entry": false
+                    }
+                  ],
+                  "note": "",
+                  "provenance": "generated-concept"
+                }
+              ]
+            }
+          ],
+          "comments": [],
+          "references": [],
+          "createdAt": "2026-09-07T17:43:59.913Z"
+        },
+        "parentIndex": null
+      }
+    ],
+    "cursor": 0,
+    "audit": [
+      {
+        "type": "create",
+        "at": "2026-09-07T17:43:59.913Z"
+      }
+    ]
+  }
+}

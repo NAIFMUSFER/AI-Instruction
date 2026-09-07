@@ -1,0 +1,104 @@
+{
+  "validator": "IfcOpenShell 0.8.5",
+  "scope": "IFC4 EXPRESS + tessellation + world-space volumes + hosted void subtraction. Not regulatory/engineering approval or Revit certification.",
+  "fixtures": [
+    {
+      "fixture": "villa",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 157,
+      "checkedWallVolumes": 66,
+      "checkedSpaceVolumes": 21
+    },
+    {
+      "fixture": "eight-storeys",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 385,
+      "checkedWallVolumes": 164,
+      "checkedSpaceVolumes": 52
+    },
+    {
+      "fixture": "kind-2",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 141,
+      "checkedWallVolumes": 60,
+      "checkedSpaceVolumes": 19
+    },
+    {
+      "fixture": "kind-3",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 151,
+      "checkedWallVolumes": 63,
+      "checkedSpaceVolumes": 20
+    },
+    {
+      "fixture": "kind-4",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 123,
+      "checkedWallVolumes": 54,
+      "checkedSpaceVolumes": 17
+    },
+    {
+      "fixture": "kind-5",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 119,
+      "checkedWallVolumes": 54,
+      "checkedSpaceVolumes": 17
+    },
+    {
+      "fixture": "notch-ne",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 11,
+      "checkedWallVolumes": 6,
+      "checkedSpaceVolumes": 1
+    },
+    {
+      "fixture": "notch-nw",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 11,
+      "checkedWallVolumes": 6,
+      "checkedSpaceVolumes": 1
+    },
+    {
+      "fixture": "notch-se",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 11,
+      "checkedWallVolumes": 6,
+      "checkedSpaceVolumes": 1
+    },
+    {
+      "fixture": "notch-sw",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 11,
+      "checkedWallVolumes": 6,
+      "checkedSpaceVolumes": 1
+    },
+    {
+      "fixture": "hosted-windows",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 13,
+      "checkedWallVolumes": 4,
+      "checkedSpaceVolumes": 1
+    },
+    {
+      "fixture": "thick-wall",
+      "status": "PASS",
+      "errors": [],
+      "representedProducts": 13,
+      "checkedWallVolumes": 4,
+      "checkedSpaceVolumes": 1
+    }
+  ],
+  "passed": 12,
+  "failed": 0
+}
