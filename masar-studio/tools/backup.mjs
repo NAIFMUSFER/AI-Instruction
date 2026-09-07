@@ -65,7 +65,7 @@ export async function restoreBackup(snapshot,target) {
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)) {
   const [operation,source,target]=process.argv.slice(2);
-  if(!['create','restore'].includes(operation)||!source||!target||process.argv.length!==6){console.error('Usage: node tools/backup.mjs create|restore SOURCE.sqlite NEW_TARGET.sqlite');process.exitCode=2;}
+  if(!['create','restore'].includes(operation)||!source||!target||process.argv.length!==5){console.error('Usage: node tools/backup.mjs create|restore SOURCE.sqlite NEW_TARGET.sqlite');process.exitCode=2;}
   else try {console.log(JSON.stringify(await (operation==='create'?createBackup(source,target):restoreBackup(source,target)),null,2));}
   catch(e){console.error(e.message);process.exitCode=1;}
 }
