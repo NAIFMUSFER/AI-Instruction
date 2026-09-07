@@ -144,8 +144,14 @@ with tempfile.TemporaryDirectory(prefix='masar-http-') as tmp:
                 page.goto(base,wait_until='networkidle');ready(page);expect(page.locator('#project-title')).to_have_text(current_title)
             check('IndexedDB project survives complete browser/profile restart',reopen)
             def offline():
-                context.set_offline(True);page.reload(wait_until='domcontentloaded');ready(page);expect(page.locator('#project-title')).to_have_text(current_title);action(page,'account');expect(page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(page);context.set_offline(False)
-            check('offline PWA reload restores local project without claiming cloud connectivity',offline)
+                # A fresh same-context navigation is a stronger PWA check than calling
+                # Page.reload while offline and avoids a Playwright/WebKit reload bug.
+                context.set_offline(True);offline_page=context.new_page();offline_page.set_default_timeout(15000);observe(offline_page)
+                try:
+                    offline_page.goto(base,wait_until='domcontentloaded');ready(offline_page);expect(offline_page.locator('#project-title')).to_have_text(current_title);action(offline_page,'account');expect(offline_page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(offline_page)
+                finally:
+                    offline_page.close();context.set_offline(False)
+            check('offline PWA fresh navigation restores local project without claiming cloud connectivity',offline)
             context.close();check('all network UI scenarios have no uncaught JavaScript errors',lambda:assert_true(not errors,str(errors)))
     except Exception:
         if not results or results[-1]['status']!='FAIL':results.append({'name':'harness','status':'FAIL','error':traceback.format_exc()})
