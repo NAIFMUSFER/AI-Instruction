@@ -1,0 +1,82 @@
+name: MASAR IFC diagnostic
+on:
+  push:
+    branches: ['masar/production-v4']
+    paths: ['.github/workflows/masar-ifc-diagnostic.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Recover complete source members only
+        run: |
+          python - <<'PY'
+          import base64, zlib, tarfile, io
+          from pathlib import Path
+          root=Path('ifc-diagnostic');root.mkdir()
+          raw=zlib.decompressobj(31).decompress(base64.b64decode(''.join(p.read_text() for p in sorted(Path('masar-deploy/payload').glob('part-*')))))
+          dest=root/'source';dest.mkdir()
+          with tarfile.open(fileobj=io.BytesIO(raw),mode='r:') as tar:
+            try:
+              for member in tar:
+                if member.isfile() and member.offset_data+member.size<=len(raw):
+                  target=(dest/member.name).resolve()
+                  assert target.is_relative_to(dest.resolve())
+                  target.parent.mkdir(parents=True,exist_ok=True)
+                  target.write_bytes(tar.extractfile(member).read())
+            except tarfile.ReadError:
+              pass
+          PY
+      - name: Export recovered fixture
+        working-directory: ifc-diagnostic/source
+        run: |
+          node --input-type=module <<'JS'
+          import {generate,understand} from './shared/model.js';
+          import {exportIFC} from './shared/building.js';
+          import {writeFileSync} from 'node:fs';
+          writeFileSync('../sample.ifc',exportIFC(generate(understand('أرض 20×25 ثلاثة أدوار خمس غرف نوم'))));
+          JS
+      - name: Obtain independent validator
+        run: |
+          python -m pip download --only-binary=:all: --dest ifc-wheels ifcopenshell==0.8.5
+          python -m pip install --no-index --find-links ifc-wheels ifcopenshell==0.8.5
+      - name: Record independent IFC schema and geometry diagnostics
+        run: |
+          python - <<'PY'
+          import json, ifcopenshell, ifcopenshell.validate, ifcopenshell.geom
+          from pathlib import Path
+          model=ifcopenshell.open('ifc-diagnostic/sample.ifc')
+          logger=ifcopenshell.validate.json_logger()
+          ifcopenshell.validate.validate(model,logger,express_rules=True)
+          settings=ifcopenshell.geom.settings(); shapes=[]; failures=[]
+          for obj in model.by_type('IfcProduct'):
+            if not obj.Representation: continue
+            try:
+              shape=ifcopenshell.geom.create_shape(settings,obj)
+              shapes.append({'id':obj.id(),'type':obj.is_a(),'vertices':len(shape.geometry.verts)//3})
+            except Exception as e:
+              failures.append({'id':obj.id(),'type':obj.is_a(),'error':str(e)})
+          result={'validator':ifcopenshell.version,'schema':model.schema,'schema_issues':logger.statements,'geometry_success':len(shapes),'geometry_failures':failures,'scope':'Recovered exporter diagnostic, not production acceptance or code compliance'}
+          Path('ifc-diagnostic/diagnostic.json').write_text(json.dumps(result,default=str,ensure_ascii=False,indent=2))
+          print(json.dumps(result,default=str,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-ifc-diagnostic
+          path: |
+            ifc-diagnostic/diagnostic.json
+            ifc-diagnostic/sample.ifc
+          retention-days: 7
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-ifc-validator-wheels
+          path: ifc-wheels/
+          retention-days: 2
+          if-no-files-found: error
