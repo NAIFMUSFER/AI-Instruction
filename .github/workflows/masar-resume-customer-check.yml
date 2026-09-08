@@ -1,0 +1,93 @@
+name: MASAR resumed customer verification
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-resume-customer-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 887aea9b999af3aecca0d6dae08920df4e06e0f8
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify live version and every changed public module before customer tests
+        run: |
+          python - <<'PY'
+          import urllib.request,json,hashlib
+          from pathlib import Path
+          base='https://masar-customer-preview.onrender.com'
+          expected='887aea9b999af3aecca0d6dae08920df4e06e0f8'
+          out=Path('masar-studio/test-output/resume');out.mkdir(parents=True,exist_ok=True)
+          def get(path):
+              with urllib.request.urlopen(base+path,timeout=120) as r:
+                  assert r.status==200
+                  return r.read()
+          report={'origin':base,'expectedCommit':expected,'endpoints':{},'sourceHashes':{}}
+          for name in ['health','ready','version']:
+              report['endpoints'][name]=json.loads(get('/api/'+name))
+          assert report['endpoints']['version']['commit']==expected
+          assert report['endpoints']['health']['persistenceClass']=='ephemeral'
+          assert report['endpoints']['ready']['ready'] is True
+          for path in ['/src/app.js','/src/style.css','/shared/model.js','/shared/building.js','/shared/render-scene.js']:
+              data=get(path);assert data==Path('masar-studio'+path).read_bytes(),path
+              report['sourceHashes'][path]=hashlib.sha256(data).hexdigest()
+          (out/'live-source.json').write_text(json.dumps(report,indent=2));print(json.dumps(report,ensure_ascii=False),flush=True)
+          PY
+      - name: Existing regression suite without changing application source
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts && npm run check && npm run build
+          npm test > test-output/resume/node.log 2>&1 || { tail -100 test-output/resume/node.log; exit 1; }
+          tail -12 test-output/resume/node.log
+      - name: Install pinned customer browsers
+        run: |
+          python -m pip install playwright==1.62.0 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit > /tmp/masar-browsers.log 2>&1 || { tail -80 /tmp/masar-browsers.log; exit 1; }
+      - name: Re-enter exact original text on live mobile Chromium and WebKit
+        working-directory: masar-studio
+        env:
+          MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+        run: |
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+      - name: Validate actual downloaded projects and preserve a usable customer file
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync,copyFileSync} from 'node:fs';
+          import {importEnvelope,current,assertModel,validate,totals,conceptEnvelopeArea,area} from './shared/model.js';
+          const prompt=readFileSync('tests/fixtures/customer-chalet-ar.txt','utf8');
+          const results=[];
+          for(const engine of ['chromium','webkit']){
+            const path=`test-output/customer-ui/${engine}-customer-project.json`;
+            const model=assertModel(current(importEnvelope(readFileSync(path,'utf8'))));
+            if(model.brief.prompt!==prompt)throw Error('Original text changed');
+            const rooms=model.levels.flatMap(l=>l.rooms),issues=validate(model),envelope=conceptEnvelopeArea(model);
+            if(issues.some(i=>i.status==='error'))throw Error(JSON.stringify(issues));
+            if(envelope<120||envelope>160)throw Error('Envelope outside requested range');
+            if(rooms.filter(r=>r.kind==='bedroom').length!==3)throw Error('Bedrooms changed');
+            results.push({engine,originalCharacters:prompt.length,originalPreserved:true,projectType:model.design.projectType,site:model.site,totals:totals(model),conservativeEnvelopeM2:envelope,unbuiltRemainderM2:model.site.width*model.site.depth-envelope,rooms:rooms.map(r=>({id:r.id,name:r.name,kind:r.kind,w:r.w,d:r.d,area:area(r)})),validation:issues,scope:'Conceptual layout and client requirement regression; no building-code, structural, privacy or daylight certification.'});
+          }
+          writeFileSync('test-output/resume/customer-result.json',JSON.stringify(results,null,2));
+          copyFileSync('test-output/customer-ui/chromium-customer-project.json','test-output/resume/MASAR-Chalet-20x25.json');
+          console.log('ACTUAL_CUSTOMER_RESULTS '+JSON.stringify(results));
+          JS
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-resumed-customer-evidence
+          path: |
+            masar-studio/test-output/resume/
+            masar-studio/test-output/customer-ui/
+          if-no-files-found: error
+          retention-days: 14
