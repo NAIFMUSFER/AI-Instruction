@@ -105,7 +105,13 @@ with tempfile.TemporaryDirectory(prefix='masar-http-') as tmp:
                 assert context.request.get(base+'/api/projects/'+pid).json()['version']==v_before
             check('owner resolves review without modifying project version',owner_review)
             def revoke():
-                action(page,'share');action(page,'revoke-share');close(page);review.reload(wait_until='networkidle');expect(review.locator('#modal-title')).to_have_text('رابط المراجعة غير متاح');expect(review.locator('#app')).not_to_be_visible()
+                action(page,'share');action(page,'revoke-share')
+                # revoke-share awaits DELETE then asynchronously re-renders the share modal.
+                # Wait for that completed state before closing it, otherwise the old modal can
+                # close first and the refreshed modal can race the next real UI action.
+                expect(page.locator('#modal-title')).to_have_text('مشاركة نسخة للمراجعة')
+                expect(page.locator('[data-action="revoke-share"]')).to_have_count(0)
+                close(page);review.reload(wait_until='networkidle');expect(review.locator('#modal-title')).to_have_text('رابط المراجعة غير متاح');expect(review.locator('#app')).not_to_be_visible()
             check('revoked review fails closed instead of showing another local project',revoke)
             guest.close();visitor.close()
             # Separate account and separate browser profile, not a simulated auth mock.
