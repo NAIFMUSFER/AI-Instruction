@@ -10,7 +10,7 @@ export function createViewer(canvas, onSelect=()=>{}) {
     const scene=new THREE.Scene();scene.background=new THREE.Color('#e4e7e8');
     const camera=new THREE.PerspectiveCamera(45,1,.05,3000), controls=new OrbitControls(camera,canvas);
     const hemisphere=new THREE.HemisphereLight('#ecf4ff','#8c806b',2.3);scene.add(hemisphere);
-    const sun=new THREE.DirectionalLight('#fff4df',3);sun.position.set(20,35,15);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;sun.shadow.camera.far=400;scene.add(sun);
+    const sun=new THREE.DirectionalLight('#fff4df',3);sun.position.set(20,35,15);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;sun.shadow.camera.far=400;sun.shadow.bias=-.0003;sun.shadow.normalBias=.02;scene.add(sun,sun.target);
     let root=null,disposed=false,selection=null,originals=new Map();
     const draw=()=>{if(!disposed)renderer.render(scene,camera);};
     const resize=()=>{if(disposed)return;const r=canvas.getBoundingClientRect();if(r.width<1||r.height<1)return;renderer.setSize(r.width,r.height,false);camera.aspect=r.width/r.height;camera.updateProjectionMatrix();draw();};
@@ -19,6 +19,8 @@ export function createViewer(canvas, onSelect=()=>{}) {
     function install(group) {
         cleanup();root=group;scene.add(group);
         const bounds=new THREE.Box3().setFromObject(group),center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()),radius=size.length();
+        // Fit shadow precision to this model, not a fixed 200-metre-wide map.
+        const span=Math.max(radius*.6,5);sun.position.copy(center).add(new THREE.Vector3(.5,1,.4).normalize().multiplyScalar(radius*1.5));sun.target.position.copy(center);Object.assign(sun.shadow.camera,{left:-span,right:span,top:span,bottom:-span,near:.1,far:Math.max(radius*4,50)});sun.shadow.camera.updateProjectionMatrix();
         controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(radius*.6,radius*.52,radius*.7));camera.far=Math.max(300,radius*12);camera.updateProjectionMatrix();controls.update();controls.saveState();
         root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;originals.set(o,o.material);}});
         canvas.dataset.ready='true';canvas.dataset.renderer='three-pbr';canvas.dataset.objects=String(originals.size);resize();
