@@ -13,12 +13,26 @@ export function normalizeText(value = '') {
 const wordNumbers = { 'واحد': 1, 'واحده': 1, 'اثنين': 2, 'اثنان': 2, 'اثنتين': 2, 'ثلاث': 3, 'ثلاثه': 3, 'اربع': 4, 'اربعه': 4, 'خمس': 5, 'خمسه': 5, 'ست': 6, 'سته': 6, 'سبع': 7, 'سبعه': 7, 'ثمان': 8, 'ثمانيه': 8, 'تسع': 9, 'تسعه': 9, 'عشر': 10, 'عشره': 10 };
 function amount(text, re, fallback) { const m = text.match(re); if (!m)
     return { value: fallback, source: 'assumed' }; const n = /^[-+]?\d+(?:\.\d+)?$/.test(m[1]) ? Number(m[1]) : wordNumbers[m[1]]; return Number.isFinite(n) ? { value: n, source: 'requested' } : { value: fallback, source: 'assumed' }; }
+// Project identity comes from the requested building, not a pantry mentioned later.
+function requestedProjectType(t) {
+    const heading=t.split(/[،.\n]/)[0];
+    const classify=x=>/شاليه/.test(x)?'chalet':/(?:فيلا|فله|منزل|\bvilla\b)/.test(x)?'villa':/(?:مستودع|مخزن|warehouse)/.test(x)?'warehouse':/(?:مكاتب|مكتب اداري|office)/.test(x)?'office':/(?:متجر|محل تجاري|تجز[يئ]ه|retail)/.test(x)?'retail':null;
+    return classify(heading)||classify(t)||'villa';
+}
+function requestedBuildingArea(t) {
+    const n='(\\d+(?:\\.\\d+)?)', sep='\\s*(?:–|—|-|الي|الى)\\s*';
+    const pair=t.match(new RegExp(n+sep+n+'\\s*(?:م(?:تر)?\\s*(?:²|2|مربع)|m2)\\s*(?:مباني|بناء|مسطح)'))
+      ||t.match(new RegExp('مساحه\\s*(?:ال)?(?:بناء|مبني|مباني)[^\\d\\n]{0,25}'+n+sep+n));
+    if(pair)return {min:Number(pair[1]),max:Number(pair[2])};
+    const one=t.match(/مساحه\s*(?:ال)?(?:بناء|مبني|مباني)[^\d\n]{0,25}(\d+(?:\.\d+)?)\s*(?:م|m)/);
+    return one?{min:Number(one[1]),max:Number(one[1])}:null;
+}
 export function understand(prompt) {
     const t = normalizeText(prompt);
     if (t.length > 12000)
         throw Error('الوصف أطول من الحد المسموح (12,000 حرف).');
-    const dim = t.match(/([-+]?\d+(?:\.\d+)?)\s*(?:×|x|\*|في|بـ?)\s*([-+]?\d+(?:\.\d+)?)/);
-    const projectType = /(?:مستودع|مخزن|warehouse)/.test(t) ? 'warehouse' : /(?:مكاتب|مكتب اداري|office)/.test(t) ? 'office' : /(?:متجر|محل تجاري|تجز[يئ]ه|retail)/.test(t) ? 'retail' : /شاليه/.test(t) ? 'chalet' : 'villa';
+    const dim = t.match(/([-+]?\d+(?:\.\d+)?)\s*(?:متر|م)?\s*(?:واجهه|عرض)?\s*(?:×|x|\*|في|بـ?)\s*([-+]?\d+(?:\.\d+)?)/);
+    const projectType = requestedProjectType(t), requestedArea=requestedBuildingArea(t);
     const residential = ['villa', 'chalet'].includes(projectType);
     const defaultFloors = projectType === 'villa' || projectType === 'office' ? 2 : 1;
     let floors = amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?|واحده?)\s*(?:ادوار|طوابق|دور|طابق)/, defaultFloors);
@@ -36,9 +50,13 @@ export function understand(prompt) {
         floors: floors.value, bedrooms: beds.value, offices: offices.value, parking: parking.value, street: street || 'جنوب',
         elevator: /مصعد/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مصعد/.test(t), pool: /مسبح/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مسبح/.test(t),
         projectType, priority, style, title: titles[projectType],
+        buildingAreaMin: requestedArea?.min ?? null, buildingAreaMax: requestedArea?.max ?? null,
+        requestedDetails: String(prompt).split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55),
         sources: { width: dim ? 'requested' : 'assumed', depth: dim ? 'requested' : 'assumed', floors: floors.source, bedrooms: beds.source, offices: offices.source, parking: parking.source, street: street ? 'requested' : 'assumed', projectType: projectType === 'villa' && !/(?:فيلا|منزل)/.test(t) ? 'assumed' : 'requested' },
         intents: [], unresolved: []
     };
+    brief.sources.buildingArea = requestedArea ? 'requested' : 'unspecified';
+    if (/(?:^|[ ،\n])موقف سيارات/.test(t) && parking.source === 'assumed') {brief.parking=1;brief.sources.parking='requested';}
     if (brief.width < 12 || brief.width > 120 || brief.depth < 15 || brief.depth > 160)
         brief.unresolved.push('مولّد التوزيع الحالي يدعم أرضًا مستطيلة بعرض 12–120 م وعمق 15–160 م. عدّل الأبعاد أو استورد مشروع JSON.');
     if (!Number.isInteger(brief.floors) || brief.floors < 1 || brief.floors > 8)
@@ -49,8 +67,10 @@ export function understand(prompt) {
         brief.unresolved.push('مشاريع المكاتب تدعم من مكتب واحد إلى 20 مكتبًا في البرنامج المفاهيمي.');
     if (/(?:مجلس)[^،.\n]{0,28}(?:قريب|قرب)[^،.\n]{0,18}(?:مدخل)/.test(t) || /(?:قرب|قريب)[^،.\n]{0,18}(?:مدخل)[^،.\n]{0,28}(?:مجلس)/.test(t))
         brief.intents.push({ type: 'near-entry', subjectKind: 'majlis', label: 'المجلس قريب من المدخل', source: 'requested' });
-    if (/(?:مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/.test(t))
-        brief.intents.push({ type: 'garden-edge', subjectKind: /مطبخ/.test(t) ? 'kitchen' : 'living', label: /مطبخ/.test(t) ? 'المطبخ مرتبط بالجهة الخارجية' : 'المعيشة مرتبطة بالجهة الخارجية', source: 'requested' });
+    for(const [re,kind,label] of [
+        [/(?:معيشه|الصاله)[^،.\n]{0,65}(?:حديق|مسبح|اطلال)/,'living','المعيشة مرتبطة بالجهة الخارجية'],
+        [/مطبخ[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/,'kitchen','المطبخ مرتبط بالجهة الخارجية']
+    ]) if(re.test(t)) brief.intents.push({type:'garden-edge',subjectKind:kind,label,source:'requested'});
     return brief;
 }
 export function briefIssues(b) { return b.unresolved.filter(x => !x.startsWith('المصعد') && !x.startsWith('المسبح')); }
@@ -62,7 +82,20 @@ export function generate(brief, variant = 0) {
         throw Error('الأبعاد أو أعداد الأدوار والغرف خارج النطاق المدعوم.');
     const sideways = ['شرق', 'غرب'].includes(brief.street), W = sideways ? brief.depth : brief.width, D = sideways ? brief.width : brief.depth;
     const sideSetback = Math.max(2, Math.min(4, W * .08)), endSetback = Math.max(3, Math.min(5, D * .10));
-    const bx = round(sideSetback), by = round(endSetback), bw = round(W - sideSetback * 2), bd = round(D - endSetback * 2), hw = Math.max(1.5, Math.min(2.2, bw * .08));
+    const bx = round(sideSetback), by = round(endSetback);
+    let bw=round(W-sideSetback*2), bd=round(D-endSetback*2);
+    const boundedArea=brief.buildingAreaMin!=null||brief.buildingAreaMax!=null;
+    if(boundedArea){
+        const lo=brief.buildingAreaMin,hi=brief.buildingAreaMax;
+        if(![lo,hi].every(Number.isFinite)||lo<40||hi<lo||hi>50000)throw Error('راجع نطاق مساحة البناء: الحد الأدنى 40 م²، والحد الأعلى يجب ألا يقل عن الأدنى.');
+        const available=bw*bd*brief.floors;
+        if(lo>available+.05)throw Error('مساحة البناء المطلوبة لا تتسع داخل توزيع الموقع المفاهيمي. عدّل نطاق المساحة أو الأبعاد.');
+        const target=Math.min((lo+hi)/2,available)/brief.floors,scale=Math.sqrt(target/(bw*bd));
+        bw=round(bw*scale);bd=round(bd*scale);
+    }
+    const hw=Math.max(boundedArea?1.2:1.5,Math.min(2.2,bw*.08)),compactResidential=boundedArea&&residential&&brief.floors===1;
+    const explicitStair=/(?:درج|سلم|سلالم)/.test(normalizeText(brief.prompt))&&!/(?:بدون|دون|لا اريد)\s*(?:درج|سلم|سلالم)/.test(normalizeText(brief.prompt));
+    const hasCore=brief.floors>1||brief.elevator||explicitStair;
     const bias = variant === 1 ? .06 : variant === 2 ? -.06 : 0, lw = round((bw - hw) * (.50 + bias)), rw = round(bw - lw - hw);
     const levels = [];
     let remainingBeds = brief.bedrooms || 0, remainingOffices = brief.offices || 0;
@@ -84,10 +117,24 @@ export function generate(brief, variant = 0) {
         list.push({ name: 'دورة مياه', kind: 'bath' }); return list;
     };
     for (let f = 0; f < brief.floors; f++) {
-        const r = [], prefix = `l${f}`, configs = cfgFor(f), leftCfg = configs.filter((_, i) => i % 2 === 0), rightCfg = configs.filter((_, i) => i % 2 === 1);
-        const coreD = Math.min(4.8, Math.max(3.6, bd * .28)), flip = variant === 2, rightUsableD = bd - coreD;
-        leftCfg.forEach((c, i) => { const y1 = round(by + i * bd / leftCfg.length), y2 = round(by + (i + 1) * bd / leftCfg.length); r.push(room(`${prefix}-room-${configs.indexOf(c)}`, c.name, c.kind, bx, y1, lw, round(y2 - y1), 'east')); });
-        rightCfg.forEach((c, i) => { const y1 = round(by + i * rightUsableD / Math.max(rightCfg.length, 1)), y2 = round(by + (i + 1) * rightUsableD / Math.max(rightCfg.length, 1)); r.push(room(`${prefix}-room-${configs.indexOf(c)}`, c.name, c.kind, bx + lw + hw, y1, rw, round(y2 - y1), 'west')); });
+        const r = [], prefix = `l${f}`, configs = cfgFor(f);
+        let leftCfg=configs.filter((_,i)=>i%2===0),rightCfg=configs.filter((_,i)=>i%2===1);
+        if(compactResidential){
+            const bedrooms=configs.filter(c=>c.kind==='bedroom');
+            leftCfg=['majlis','kitchen','living'].map(kind=>configs.find(c=>c.kind===kind)).filter(Boolean);
+            if(/(?:ضيوف|الضيوف)/.test(brief.prompt)&&/(?:مياه|حمام)/.test(brief.prompt)){
+                const guest={name:'دورة مياه الضيوف',kind:'bath'};configs.push(guest);leftCfg.splice(1,0,guest);
+            }
+            rightCfg=[...bedrooms,configs.find(c=>c.kind==='bath')].filter(Boolean);
+            if(bedrooms.length>1){rightCfg.splice(rightCfg.indexOf(bedrooms[0]),1);rightCfg.push(bedrooms[0]);}
+            const master=bedrooms[0];if(master&&/(?:master|رئيسيه|ماستر)/.test(normalizeText(brief.prompt)))master.name='غرفة النوم الرئيسية';
+            const living=leftCfg.find(c=>c.kind==='living');if(living&&/طعام/.test(brief.prompt))living.name='المعيشة ومنطقة الطعام';
+        }
+        const weight=c=>!compactResidential?1:({bedroom:14,majlis:18,living:26,kitchen:12,bath:6}[c.kind]||8);
+        const bounds=(cfg,i,depth)=>{const total=cfg.reduce((n,c)=>n+weight(c),0),before=cfg.slice(0,i).reduce((n,c)=>n+weight(c),0);return [round(by+depth*before/total),round(by+depth*(before+weight(cfg[i]))/total)];};
+        const coreD = hasCore ? Math.min(4.8, Math.max(3.6, bd * .28)) : 0, flip = variant === 2, rightUsableD = bd - coreD;
+        leftCfg.forEach((c, i) => { const [y1,y2] = bounds(leftCfg,i,bd); r.push(room(`${prefix}-room-${configs.indexOf(c)}`, c.name, c.kind, bx, y1, lw, round(y2 - y1), 'east')); });
+        rightCfg.forEach((c, i) => { const [y1,y2] = bounds(rightCfg,i,rightUsableD); r.push(room(`${prefix}-room-${configs.indexOf(c)}`, c.name, c.kind, bx + lw + hw, y1, rw, round(y2 - y1), 'west')); });
         r.push(room(`${prefix}-hall`, projectType === 'warehouse' ? 'ممر التشغيل' : 'ممر التوزيع', 'hall', bx + lw, by, hw, bd, 'south', f === 0));
         if (f === 0) r.find(x => x.kind === 'hall').doors.push({ id: `${prefix}-rear-door`, side: 'north', offset: .5, width: 1, entry: true });
         const coreX = bx + lw + hw, coreY = by + bd - coreD;
@@ -95,7 +142,7 @@ export function generate(brief, variant = 0) {
             const liftD = Math.min(1.9, coreD * .42), stairD = round(coreD - liftD - .18);
             const stair = room(`${prefix}-stairs`, 'الدرج الرئيسي', 'stairs', coreX, coreY, rw, stairD, 'west'); stair.locked = true; r.push(stair);
             const lift = room(`${prefix}-elevator`, 'المصعد', 'elevator', coreX, round(coreY + stairD + .18), Math.min(2.2, rw), liftD, 'west'); lift.locked = true; lift.provenance = 'requested-concept-core'; r.push(lift);
-        } else { const stair = room(`${prefix}-stairs`, 'الدرج الرئيسي', 'stairs', coreX, coreY, rw, coreD, 'west'); stair.locked = true; r.push(stair); }
+        } else if(hasCore) { const stair = room(`${prefix}-stairs`, 'الدرج الرئيسي', 'stairs', coreX, coreY, rw, coreD, 'west'); stair.locked = true; r.push(stair); }
         if (flip) for (const s of r) { s.x = round(W - s.x - s.w); s.doors.forEach(d => { if (d.side === 'east') d.side = 'west'; else if (d.side === 'west') d.side = 'east'; else d.offset = 1 - d.offset; }); }
         levels.push({ id: prefix, name: f === 0 ? 'الدور الأرضي' : `الدور ${f}`, elevation: round(f * 3.3), height: 3.3, rooms: r });
     }
@@ -132,6 +179,8 @@ export function generate(brief, variant = 0) {
         { id: 'r-floors', label: `${brief.floors} أدوار إجمالًا`, type: 'floors', value: brief.floors, locked: true, source: brief.sources.floors },
         ...(residential ? [{ id: 'r-beds', label: `${brief.bedrooms} غرف نوم`, type: 'bedrooms', value: brief.bedrooms, locked: true, source: brief.sources.bedrooms }] : []),
         { id: 'r-site', label: `أرض ${brief.width} × ${brief.depth} م`, type: 'site', value: [brief.width, brief.depth], locked: true, source: brief.sources.width },
+        ...(boundedArea ? [{id:'r-building-area',label:`مساحة بناء مفاهيمية ${brief.buildingAreaMin}–${brief.buildingAreaMax} م²`,type:'custom',metric:'floor-area',range:[brief.buildingAreaMin,brief.buildingAreaMax],source:brief.sources.buildingArea||'requested',locked:true}] : []),
+        ...(brief.requestedDetails||[]).map((label,i)=>({id:`r-detail-${i}`,label,type:'custom',source:'requested',locked:true})),
         ...(brief.elevator ? [{ id: 'r-elevator', label: 'وجود مصعد ضمن النواة الرأسية', type: 'feature', value: 'elevator', locked: true, source: 'requested' }] : []),
         ...(brief.pool ? [{ id: 'r-pool', label: 'مسبح خارجي مفاهيمي', type: 'feature', value: 'pool', locked: true, source: 'requested' }] : []),
         ...(brief.intents || []).map((x, i) => ({ id: `r-intent-${i}`, label: x.label, type: 'adjacency', value: clone(x), locked: true, source: x.source || 'requested' })),
@@ -247,6 +296,12 @@ export function entryPoint(m) { const l = m.levels[0], entries = l.rooms.flatMap
 export function distanceToEntry(m, r) { const a = entryPoint(m), b = centroid(r); return Math.hypot(a[0] - b[0], a[1] - b[1]); }
 export function touchesGardenEdge(m, r, tolerance = .15) { const side = gardenSide(m), l = m.levels.find(l => l.rooms.includes(r)) || m.levels[0], xs = l.rooms.map(x => [x.x, x.x + x.w]).flat(), ys = l.rooms.map(x => [x.y, x.y + x.d]).flat(), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys); return side === 'north' ? Math.abs(r.y + r.d - maxY) <= tolerance : side === 'south' ? Math.abs(r.y - minY) <= tolerance : side === 'east' ? Math.abs(r.x + r.w - maxX) <= tolerance : Math.abs(r.x - minX) <= tolerance; }
 export function requirementStatus(m, req) {
+    if(req.type==='floors')return {measurable:true,satisfied:m.levels.length===req.value,detail:`${m.levels.length} أدوار في النموذج`};
+    if(req.type==='bedrooms'){const count=m.levels.flatMap(l=>l.rooms).filter(r=>r.kind==='bedroom').length;return {measurable:true,satisfied:count===req.value,detail:`${count} غرف نوم في النموذج`};}
+    if(req.type==='site')return {measurable:true,satisfied:m.site.width===req.value?.[0]&&m.site.depth===req.value?.[1],detail:`${m.site.width} × ${m.site.depth} م`};
+    if(req.type==='custom'&&req.metric==='floor-area'&&req.range?.length===2&&req.range.every(Number.isFinite)){
+        const actual=totals(m).floorArea;return {measurable:true,satisfied:actual>=req.range[0]-.05&&actual<=req.range[1]+.05,detail:`${actual} م² حسب حدود الغرف المفاهيمية؛ ليست حصرًا تنفيذيًا شاملاً لسماكات الجدران`};
+    }
     if (req.type === 'feature') { const present = req.value === 'elevator' ? m.levels.every(l => l.rooms.some(r => r.kind === 'elevator')) : req.value === 'pool' ? (m.site.features || []).some(f => f.type === 'pool') : false; return { measurable: true, satisfied: present, detail: present ? 'موجود في النموذج' : 'غير موجود في النموذج' }; }
     if (req.type !== 'adjacency' || !req.value) return { measurable: false, satisfied: null, detail: 'غير قابل للقياس آليًا' };
     const subjects = m.levels.flatMap(l => l.rooms).filter(r => r.kind === req.value.subjectKind); if (!subjects.length) return { measurable: true, satisfied: false, detail: 'العنصر المطلوب غير موجود' };
@@ -376,7 +431,8 @@ export function validate(m) {
             if (status.measurable && !status.satisfied) add(req.id, 'warning', `${req.label}: ${status.detail}.`, [], 'requirements');
             if (status.measurable && status.satisfied) add(`checked-${req.id}`, 'checked', `${req.label}: ${status.detail}.`, [], 'requirements');
         }
-        if (req.type === 'unresolved' || req.type === 'custom')
+        if(req.metric==='floor-area'){const status=requirementStatus(m,req);add(req.id,status.satisfied?'checked':'error',`${req.label}: ${status.detail}`,[],'requirements');}
+        if (req.type === 'unresolved' || req.type === 'custom' && req.metric!=='floor-area')
             add(req.id, 'unchecked', req.label, [], 'requirements');
     }
     const errorTargets = new Set(issues.filter(i => i.status === 'error').flatMap(i => i.targets));
