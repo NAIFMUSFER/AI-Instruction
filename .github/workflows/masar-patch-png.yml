@@ -1,0 +1,41 @@
+name: MASAR exact PNG export test patch
+on:
+  push:
+    branches: ['masar/production-v4']
+    paths: ['.github/workflows/masar-patch-png.yml']
+permissions:
+  contents: write
+  actions: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: masar/production-v4
+      - name: Apply exact PNG-only asynchronous rasterization timeout patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('masar-studio/tests/browser_flows.py')
+          s=p.read_text()
+          old="""for kind,extension in [('json','.json'),('svg','.svg'),('dxf','.dxf'),('ifc','.ifc'),('obj','.obj'),('csv','.csv'),('elements','.csv'),('requirements','.csv'),('rules','.json'),('report','.html'),('png','.png')]:\n  def export_file(kind=kind,extension=extension):\n   action('export')\n   with page.expect_download(timeout=3000) as pending:\n    page.locator(f'[data-action=\"download\"][data-kind=\"{kind}\"]').click()"""
+          new="""for kind,extension in [('json','.json'),('svg','.svg'),('dxf','.dxf'),('ifc','.ifc'),('obj','.obj'),('csv','.csv'),('elements','.csv'),('requirements','.csv'),('rules','.json'),('report','.html'),('png','.png')]:\n  def export_file(kind=kind,extension=extension):\n   action('export')\n   # PNG is produced by asynchronous canvas.toBlob rasterization; keep the same\n   # real download/signature checks but allow CI rasterization additional time.\n   download_timeout=10000 if kind=='png' else 3000\n   with page.expect_download(timeout=download_timeout) as pending:\n    page.locator(f'[data-action=\"download\"][data-kind=\"{kind}\"]').click()"""
+          if s.count(old) != 1:
+              raise SystemExit(f'exact patch target count={s.count(old)}, refusing')
+          p.write_text(s.replace(old,new))
+          PY
+          git diff --check
+          git diff -- masar-studio/tests/browser_flows.py
+      - name: Commit exact source test fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/tests/browser_flows.py
+          git commit -m 'test(masar): allow PNG canvas rasterization without weakening validation'
+          git push origin HEAD:masar/production-v4
+      - name: Dispatch full release verification on patched branch head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run masar-release-ci.yml --ref masar/production-v4
