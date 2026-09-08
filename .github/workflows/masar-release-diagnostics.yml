@@ -29,49 +29,55 @@ jobs:
           python -m pip install playwright==${{ matrix.playwright }} > /tmp/masar-pip.log 2>&1 || { cat /tmp/masar-pip.log; exit 1; }
           python -m playwright install --with-deps webkit > /tmp/masar-browser-install.log 2>&1 || { tail -100 /tmp/masar-browser-install.log; exit 1; }
           cd masar-studio && npm ci --ignore-scripts && npm run build
-      - name: Insert independent native storage preflight in disposable profile
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          import subprocess
-          probe="""async () => {
-              const name = 'native-cache-diagnostic';
-              const cache = await caches.open(name);
-              const results = [];
-              for (const kind of ['relative', 'absolute', 'request', 'network']) {
-                  const path = '/native-probe-' + kind;
-                  const absolute = new URL(path, location.origin).href;
-                  const key = kind === 'relative' ? path : kind === 'request' ? new Request(absolute) : absolute;
-                  const response = kind === 'network' ? await fetch('/src/style.css') : new Response('native-cache-probe', {headers: {'Content-Type': 'text/plain'}});
-                  await cache.put(key, response);
-                  const same = await cache.match(key);
-                  const reopened = await (await caches.open(name)).match(key);
-                  results.push({kind, same: !!same, reopened: !!reopened, keys: (await cache.keys()).map(r => r.url)});
-              }
-              await caches.delete(name);
-              const shell = [];
-              for (const cacheName of await caches.keys()) {
-                  shell.push({name: cacheName, keys: (await (await caches.open(cacheName)).keys()).map(r => r.url)});
-              }
-              return {results, estimate: await navigator.storage.estimate(), shell};
-          }"""
-          subprocess.run(['node','--check'],input=probe,text=True,check=True)
-          p=Path('masar-studio/tests/browser_http.py');s=p.read_text()
-          old="            observe(page);page.goto(base,wait_until='networkidle');ready(page)"
-          new=old+"\n            page.evaluate('navigator.serviceWorker.ready')\n            native=page.evaluate("+repr(probe)+")\n            (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)"
-          assert s.count(old)==1
-          s=s.replace(old,new)
-          p.write_text(s);compile(s,str(p),'exec')
-          PY
-      - name: Run original full-stack assertions without application changes
+      - name: Compare native storage and unchanged application on loopback origins
         working-directory: masar-studio
         env:
           MASAR_BROWSER: webkit
-        run: python tests/browser_http.py
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess, shutil, json
+          probe="""async () => {
+              const name = 'native-cache-diagnostic';
+              const cache = await caches.open(name), results = [];
+              for (const kind of ['relative', 'absolute', 'request', 'network']) {
+                  const path = '/native-probe-' + kind, absolute = new URL(path, location.origin).href;
+                  const key = kind === 'relative' ? path : kind === 'request' ? new Request(absolute) : absolute;
+                  const response = kind === 'network' ? await fetch('/src/style.css') : new Response('native-cache-probe');
+                  try {
+                      await cache.put(key, response);
+                      const same = await cache.match(key), reopened = await (await caches.open(name)).match(key);
+                      results.push({kind, same: !!same, reopened: !!reopened, keys: (await cache.keys()).map(r => r.url)});
+                  } catch (error) { results.push({kind, error: String(error)}); }
+              }
+              await caches.delete(name);
+              const shell = [];
+              for (const cacheName of await caches.keys()) shell.push({name: cacheName, keys: (await (await caches.open(cacheName)).keys()).map(r => r.url)});
+              return {results, secureContext: globalThis.isSecureContext, origin: location.origin, shell};
+          }"""
+          subprocess.run(['node','--check'],input=probe,text=True,check=True)
+          p=Path('tests/browser_http.py');original=p.read_text()
+          old="            observe(page);page.goto(base,wait_until='networkidle');ready(page)"
+          new=old+"\n            page.evaluate('navigator.serviceWorker.ready')\n            native=page.evaluate("+repr(probe)+")\n            (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)"
+          assert original.count(old)==1
+          observed=original.replace(old,new)
+          summaries=[]
+          for host in ['127.0.0.1','localhost']:
+              s=observed.replace("base=f'http://127.0.0.1:{port}'","base=f'http://"+host+":{port}'")
+              compile(s,str(p),'exec');p.write_text(s)
+              print('LOOPBACK_CASE',host,flush=True)
+              result=subprocess.run(['python','tests/browser_http.py'])
+              src=Path('test-output/browser-http-webkit');dest=Path('test-output/native-cache-evidence')/host
+              shutil.copytree(src,dest,dirs_exist_ok=True)
+              summaries.append({'host':host,'exitCode':result.returncode})
+          p.write_text(original)
+          print('NATIVE_MATRIX_SUMMARY '+json.dumps(summaries),flush=True)
+          raise SystemExit(1 if any(r['exitCode'] for r in summaries) else 0)
+          PY
       - name: Preserve native-storage and app evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: masar-native-cache-${{ matrix.playwright }}
-          path: masar-studio/test-output/browser-http-webkit/
+          path: masar-studio/test-output/native-cache-evidence/
           retention-days: 7
