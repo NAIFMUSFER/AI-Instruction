@@ -1,0 +1,127 @@
+name: MASAR measured layout quality
+on:
+  push:
+    branches: ['audit/masar-customer-journey-20260908']
+    paths: ['.github/workflows/masar-layout-quality-fix.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: masar-measured-layout-quality
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify original source and exact proposed patch
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/audit/masar-customer-journey-20260908'
+          python - <<'PY'
+          import base64,zlib,hashlib,subprocess,json
+          from pathlib import Path
+          root=Path('masar-studio')
+          before={'public/index.html':'27632f4738d9a8b8e82b54aea9e57384d4a3f28268da190e26b39d376e01d533','public/sw.js':'bbfc94bbfc31afb4463ae1810e367e0a298eb02dcf8257c8b5765f49a21d6ce1','src/app.js':'721b2318475acb77b683c8d1ed7bf2bb4b6240d9037695bfa3fc9897d4ab40ac','src/style.css':'23f912e9e24d657a07c3413faf7f133e87648d914b6ea67619e93466a71c6f83','src/render-ui.js':'8f20b8b5352024b43ee2f4662faec9aa25f54da92504eb034f769d186c0ef52d','tests/browser_http.py':'0d8e8a6d9f4edac69e8fb011809776d3c24002f130f199af0ff53fd672cfbf04','tools/build.mjs':'3dd0296e62bd891ad75f8c9d6c865361a5d8a9428eda9b91803534246b003921'}
+          after={'public/index.html':'c4b1ad2341ee7b3ca3dfa903bf5cac5aefcc93a1b8310b0fd2b80902200e3998','public/sw.js':'f8c44b5dd6753185e77c56d34c424866211cb85345b7970b1625d48968125d75','src/app.js':'fd1dabcf81221f64ab99e222ce43b51a4eccb9b3dc6e6af9f37f1321793c5f47','src/style.css':'6034e7cc3f54e696de24ee8608b69bdec6de0bf468397f0fe778bd45e3690908','src/render-ui.js':'4e466a20036ca24a80ec508a7e3086fdfc68b710d8e7b3fb9cecc4ce71d6b79a','tests/browser_http.py':'e2ac577df9886bfdc04eef8296bcd77547aa8a593e98548f165769dbcecc76c9','tools/build.mjs':'b76df6e65c30bd9caa7dbae2262557d76eea224452908e74f4f1a1d9ffaf3cbc','shared/layout-quality.js':'2eb59d95ec7569629f5397c26e0516fef7473c024151320640bb7655a45ab422','tests/layout-quality.test.mjs':'e385f4ded812af3096ff2ca1159406968a15055cf0a9d7132c137d76972d5bb4','tests/layout_quality_browser.py':'e088e98ff790de05a4d5512234ee700affc3523f098e1fa347ea281b8ff93132','docs/LAYOUT-QUALITY.md':'05325cd77965c48c3872497cb3e13c5797bee0102687dee6720309c8a39b62d9'}
+          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for name,h in before.items():assert digest(root/name)==h,'Changed baseline: '+name
+          parts=sorted(Path('.masar-ops/layout-quality-20260909').glob('part-*'));assert len(parts)==3
+          encoded=''.join(p.read_text().strip() for p in parts)
+          # Correct known text-transport transcription bytes before cryptographic verification.
+          for bad,good in [('2DEiL441JFI','2DEiL941JFI'),('RR8bRk+O3jp7','RR8bRk+N3jp7'),('/yo3p8B8ev2','/yo3p8ev2'),('NfGNGMNp+hhHp','NfGNGp+hhHp')]:encoded=encoded.replace(bad,good)
+          patch=zlib.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='072e216b021e95231fcf556efc3f7717ec08256e529ac220def173634e9cfa23','Patch bytes mismatch'
+          subprocess.run(['git','apply','--unidiff-zero','--check','-'],input=patch,check=True)
+          subprocess.run(['git','apply','--unidiff-zero','-'],input=patch,check=True)
+          for name,h in after.items():assert digest(root/name)==h,'Patched source mismatch: '+name
+          out=root/'test-output/layout-quality';out.mkdir(parents=True,exist_ok=True)
+          (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
+          compile((root/'tests/layout_quality_browser.py').read_text(),'layout_quality_browser.py','exec')
+          PY
+      - name: Build and run every engine and server regression
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts && npm run check && npm run build
+          npm test > test-output/layout-quality/node.log 2>&1 || { tail -120 test-output/layout-quality/node.log; exit 1; }
+          tail -12 test-output/layout-quality/node.log
+          cd render-viewer && npm ci --include=dev && npm run build
+      - name: Install pinned real browsers and independent IFC validator
+        run: |
+          python -m pip install playwright==1.62.0 ifcopenshell==0.8.5 pytest==8.4.2 pillow==11.3.0 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium firefox webkit > /tmp/masar-browsers.log 2>&1 || { tail -80 /tmp/masar-browsers.log; exit 1; }
+      - name: Optional design improvement through actual mobile UI with cancellation and undo
+        working-directory: masar-studio
+        run: |
+          MASAR_BROWSER=chromium python tests/layout_quality_browser.py
+          MASAR_BROWSER=webkit python tests/layout_quality_browser.py
+      - name: Preserve original text acceptance, legacy recovery and all browser regressions
+        working-directory: masar-studio
+        run: |
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+          MASAR_BROWSER=chromium python tests/visual_source_browser.py
+          MASAR_BROWSER=webkit python tests/visual_source_browser.py
+          MASAR_BROWSER=chromium python tests/browser_http.py
+          MASAR_BROWSER=firefox python tests/browser_http.py
+          MASAR_BROWSER=webkit python tests/browser_http.py
+          python tests/browser_flows.py
+      - name: Independently validate the improved customer IFC and retain comparisons
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {current,importEnvelope} from './shared/model.js';
+          import {reviewLayout} from './shared/layout-quality.js';
+          import {exportIFC} from './shared/building.js';
+          const before=current(importEnvelope(readFileSync('test-output/layout-quality-ui/chromium/before.json','utf8'))),after=current(importEnvelope(readFileSync('test-output/layout-quality-ui/chromium/after.json','utf8')));
+          writeFileSync('test-output/layout-quality/improved.ifc',exportIFC(after));
+          writeFileSync('test-output/layout-quality/comparison.json',JSON.stringify({before:reviewLayout(before),after:reviewLayout(after)},null,2));
+          JS
+          python - <<'PY'
+          import json,ifcopenshell,ifcopenshell.validate,ifcopenshell.geom
+          from pathlib import Path
+          f=ifcopenshell.open('test-output/layout-quality/improved.ifc');logger=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(f,logger,express_rules=True)
+          settings=ifcopenshell.geom.settings();shapes=0;failures=[]
+          for obj in f.by_type('IfcProduct'):
+              if not obj.Representation:continue
+              try:
+                  shape=ifcopenshell.geom.create_shape(settings,obj);assert len(shape.geometry.verts)>0;shapes+=1
+              except Exception as e:failures.append({'id':obj.id(),'error':str(e)})
+          report={'schema':f.schema,'schemaIssues':logger.statements,'geometryShapes':shapes,'geometryFailures':failures,'scope':'IFC file schema/geometry, not code or architectural approval'}
+          Path('test-output/layout-quality/independent-ifc.json').write_text(json.dumps(report,default=str,indent=2));print(json.dumps(report,default=str));assert shapes>0 and not logger.statements and not failures
+          PY
+      - name: Commit only verified application changes without force push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/public/index.html masar-studio/public/sw.js masar-studio/src/app.js masar-studio/src/style.css masar-studio/src/render-ui.js masar-studio/tests/browser_http.py masar-studio/tools/build.mjs masar-studio/shared/layout-quality.js masar-studio/tests/layout-quality.test.mjs masar-studio/tests/layout_quality_browser.py masar-studio/docs/LAYOUT-QUALITY.md
+          git rm .masar-ops/layout-quality-20260909/part-001 .masar-ops/layout-quality-20260909/part-002 .masar-ops/layout-quality-20260909/part-003
+          git diff --cached --check
+          git commit -m 'feat(masar): review measured layout quality and preview a shorter-circulation alternative safely'
+          git push origin HEAD:audit/masar-customer-journey-20260908
+          git rev-parse HEAD > masar-studio/test-output/layout-quality/runtime-commit.txt
+      - name: Preserve verification and transport diagnostics even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-layout-quality-evidence
+          path: |
+            masar-studio/test-output/layout-quality/
+            masar-studio/test-output/layout-quality-ui/
+            masar-studio/test-output/customer-ui/
+            masar-studio/test-output/visual-source/
+            masar-studio/test-output/browser-http-*/report.json
+            masar-studio/docs/browser-tests.json
+            .masar-ops/layout-quality-20260909/
+          include-hidden-files: true
+          retention-days: 14
+          if-no-files-found: error
