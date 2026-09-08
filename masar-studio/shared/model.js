@@ -15,9 +15,13 @@ function amount(text, re, fallback) { const m = text.match(re); if (!m)
     return { value: fallback, source: 'assumed' }; const n = /^[-+]?\d+(?:\.\d+)?$/.test(m[1]) ? Number(m[1]) : wordNumbers[m[1]]; return Number.isFinite(n) ? { value: n, source: 'requested' } : { value: fallback, source: 'assumed' }; }
 // Project identity comes from the requested building, not a pantry mentioned later.
 function requestedProjectType(t) {
-    const heading=t.split(/[،.\n]/)[0];
-    const classify=x=>/شاليه/.test(x)?'chalet':/(?:فيلا|فله|منزل|\bvilla\b)/.test(x)?'villa':/(?:مستودع|مخزن|warehouse)/.test(x)?'warehouse':/(?:مكاتب|مكتب اداري|office)/.test(x)?'office':/(?:متجر|محل تجاري|تجز[يئ]ه|retail)/.test(x)?'retail':null;
-    return classify(heading)||classify(t)||'villa';
+    const classify=x=>{
+        if (/(?:فيلا|فله|منزل)\s*(?:بنظام|بطابع|باسلوب)\s*شاليه/.test(x)) return 'chalet';
+        const candidates=[[/شاليه/,'chalet'],[/(?:فيلا|فله|منزل|\bvilla\b)/,'villa'],[/(?:مستودع|مخزن|warehouse)/,'warehouse'],[/(?:مكاتب|مكتب اداري|office)/,'office'],[/(?:متجر|محل تجاري|تجز[يئ]ه|retail)/,'retail']]
+            .map(([re,type])=>({index:x.search(re),type})).filter(c=>c.index>=0).sort((a,b)=>a.index-b.index);
+        return candidates[0]?.type;
+    };
+    return classify(t.split(/[،.\n]/)[0])||classify(t)||'villa';
 }
 function requestedBuildingArea(t) {
     const n='(\\d+(?:\\.\\d+)?)', sep='\\s*(?:–|—|-|الي|الى)\\s*';
@@ -42,7 +46,7 @@ export function understand(prompt) {
     const offices = projectType === 'office' ? amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?)\s*(?:مكاتب|مكتب)/, 4) : { value: 0, source: 'derived' };
     const parking = amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?|تسعه?|عشره?)\s*(?:مواقف|موقف)/, projectType === 'warehouse' ? 2 : 1);
     const street = ['شمال', 'جنوب', 'شرق', 'غرب'].find(d => new RegExp(`(?:شارع|مدخل)[^،.\n]{0,16}${d}`).test(t));
-    const priority = /خصوصي/.test(t) ? 'privacy' : /(?:حديق|مسبح|اطلال|خارجي)/.test(t) ? 'outdoor' : /(?:مدمج|اقتصادي|اصغر|اقل مساح)/.test(t) ? 'compact' : 'balanced';
+    const priority = /(?:ال)?اولويه[^،.\n]{0,100}(?:حديق|مسبح|منتجع|شاليه|حوش)/.test(t) ? 'outdoor' : /خصوصي/.test(t) ? 'privacy' : /(?:حديق|مسبح|اطلال|خارجي)/.test(t) ? 'outdoor' : /(?:مدمج|اقتصادي|اصغر|اقل مساح)/.test(t) ? 'compact' : 'balanced';
     const style = /كلاسيك/.test(t) ? 'classic' : /(?:مودرن|حديث)/.test(t) ? 'modern' : /صناعي/.test(t) ? 'industrial' : 'unspecified';
     const titles = { villa: 'فيلا الفناء', chalet: 'شاليه الفناء', office: 'مكاتب مسار', warehouse: 'مستودع مسار', retail: 'مساحة تجارية' };
     const brief = {
@@ -51,7 +55,6 @@ export function understand(prompt) {
         elevator: /مصعد/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مصعد/.test(t), pool: /مسبح/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مسبح/.test(t),
         projectType, priority, style, title: titles[projectType],
         buildingAreaMin: requestedArea?.min ?? null, buildingAreaMax: requestedArea?.max ?? null,
-        requestedDetails: String(prompt).split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55),
         sources: { width: dim ? 'requested' : 'assumed', depth: dim ? 'requested' : 'assumed', floors: floors.source, bedrooms: beds.source, offices: offices.source, parking: parking.source, street: street ? 'requested' : 'assumed', projectType: projectType === 'villa' && !/(?:فيلا|منزل)/.test(t) ? 'assumed' : 'requested' },
         intents: [], unresolved: []
     };
@@ -180,7 +183,7 @@ export function generate(brief, variant = 0) {
         ...(residential ? [{ id: 'r-beds', label: `${brief.bedrooms} غرف نوم`, type: 'bedrooms', value: brief.bedrooms, locked: true, source: brief.sources.bedrooms }] : []),
         { id: 'r-site', label: `أرض ${brief.width} × ${brief.depth} م`, type: 'site', value: [brief.width, brief.depth], locked: true, source: brief.sources.width },
         ...(boundedArea ? [{id:'r-building-area',label:`مساحة بناء مفاهيمية ${brief.buildingAreaMin}–${brief.buildingAreaMax} م²`,type:'custom',metric:'floor-area',range:[brief.buildingAreaMin,brief.buildingAreaMax],source:brief.sources.buildingArea||'requested',locked:true}] : []),
-        ...(brief.requestedDetails||[]).map((label,i)=>({id:`r-detail-${i}`,label,type:'custom',source:'requested',locked:true})),
+        ...String(brief.prompt||'').split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55).map((label,i)=>({id:`r-detail-${i}`,label,type:'custom',source:'requested',locked:true})),
         ...(brief.elevator ? [{ id: 'r-elevator', label: 'وجود مصعد ضمن النواة الرأسية', type: 'feature', value: 'elevator', locked: true, source: 'requested' }] : []),
         ...(brief.pool ? [{ id: 'r-pool', label: 'مسبح خارجي مفاهيمي', type: 'feature', value: 'pool', locked: true, source: 'requested' }] : []),
         ...(brief.intents || []).map((x, i) => ({ id: `r-intent-${i}`, label: x.label, type: 'adjacency', value: clone(x), locked: true, source: x.source || 'requested' })),
