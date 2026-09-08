@@ -22,7 +22,8 @@ Before -> after measurements:
 - Principal bedroom polygon area: 13.032 -> 14.855 m².
 - Principal bedroom: old L-shaped polygon with largest contained rectangle 2.412x4.245 m -> new rectangular room 4.052x3.666 m.
 - Secondary bedrooms: 14.892 -> 12.658 m² each, explicitly disclosed as a tradeoff.
-- Dining: approximately 11.466 -> 9.196 m², explicitly disclosed as a tradeoff.
+- Dining: 11.466 -> 9.194 m², explicitly disclosed as a tradeoff.
+- Living: 20.478 -> 26.170 m².
 - Conservative conceptual building envelope: 150.732 -> 150.736 m², still within 120–160. The millimetre-rounding difference is not a meaningful area saving or increase.
 - Outside the candidate envelope: 349.264 m², including pool, parking, paving and circulation, not all planting.
 
