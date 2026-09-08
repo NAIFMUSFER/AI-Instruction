@@ -33,3 +33,15 @@
 
 /* Operational disclosure is persistent rather than a disappearing toast. */
 .storage-banner{padding:12px 22px;background:#fff1da;color:#694510;border-bottom:1px solid #e6c89a;font-size:13px;line-height:1.7;text-align:center}
+
+/* Optional Blender visualization panel. Core workspace remains unchanged. */
+#render-studio { min-width:0; }
+.render-actions { display:flex; flex-wrap:wrap; gap:.5rem; margin:.8rem 0; }
+.render-job { padding:1rem; border:1px solid #d6ddd5; border-radius:.7rem; margin:.7rem 0; overflow-wrap:anywhere; }
+#render-canvas-host { width:100%; min-width:0; }
+#render-canvas { display:block; width:100%; height:360px; touch-action:none; border-radius:.8rem; }
+#render-gallery figure { margin:1rem 0; }
+#render-gallery img { display:block; width:100%; border-radius:.7rem; }
+#render-gallery figcaption { margin:.4rem 0; }
+@media(max-width:600px){ #render-canvas {height:270px;} .render-actions .btn {flex:1 1 120px;} }
+@media(max-width:720px){.subbar{gap:10px;min-width:0}.breadcrumb{flex-shrink:0}.sub-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}.sub-actions button{flex-shrink:0;white-space:nowrap}}
