@@ -23,55 +23,71 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Install exact browsers and build self-hosted viewer
+      - name: Record remaining failures before refining the audited source
         run: |
-          python -m pip install playwright==1.62.0 > /tmp/pip.log 2>&1
-          python -m playwright install --with-deps chromium webkit > /tmp/browsers.log 2>&1 || { tail -80 /tmp/browsers.log; exit 1; }
-          cd masar-studio && npm ci --ignore-scripts && npm run build
-          cd render-viewer && npm ci --include=dev && npm run build
-      - name: Prove client regression is red and collect blocked type-correction path
-        working-directory: masar-studio
-        run: |
+          cd masar-studio
           mkdir -p test-output/chalet-acceptance
-          if node --test tests/chalet-quality.test.mjs > test-output/chalet-acceptance/before-node.log 2>&1; then echo 'Expected the unchanged release to fail the new client contract'; exit 1; fi
-          MASAR_CHALET_ENGINES=chromium python tests/browser_chalet.py --baseline --base https://masar-blender-preview.onrender.com
-          tail -12 test-output/chalet-acceptance/before-node.log
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: masar-chalet-blocked-before
-          path: masar-studio/test-output/chalet-acceptance/
-          retention-days: 14
-      - name: Apply audited repair and check syntax before committing candidate
+          node --test tests/chalet-quality.test.mjs tests/chalet-provenance.test.mjs > test-output/chalet-acceptance/refinement-before.log 2>&1 || true
+          python - <<'PY'
+          from pathlib import Path
+          lines=Path('test-output/chalet-acceptance/refinement-before.log').read_text().splitlines()
+          for i,line in enumerate(lines):
+              if line.startswith('not ok'):print('\n'.join(lines[i:i+26]))
+          print('\n'.join(lines[-10:]))
+          PY
+      - name: Refine primary building identity and prevent raw-prompt duplication
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('.masar-ops/fix-chalet-quality.py')
-          source=p.read_text().replace("const CACHE='masar-4.1.0-shell-v3';", "const CACHE='masar-4.1.0-shell-v4-blender';")
-          compile(source,str(p),'exec');exec(compile(source,str(p),'exec'))
+          import subprocess
+          p=Path('masar-studio/shared/model.js');assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='41048d4d7dc3c2902bd23858d82f0a6aa54788e5'
+          s=p.read_text();start=s.index('function requestedProjectType(t) {');end=s.index('function requestedBuildingArea(t)',start)
+          s=s[:start]+r'''function requestedProjectType(t) {
+              const classify=x=>{
+                  if (/(?:فيلا|فله|منزل)\s*(?:بنظام|بطابع|باسلوب)\s*شاليه/.test(x)) return 'chalet';
+                  const candidates=[[/شاليه/,'chalet'],[/(?:فيلا|فله|منزل|\bvilla\b)/,'villa'],[/(?:مستودع|مخزن|warehouse)/,'warehouse'],[/(?:مكاتب|مكتب اداري|office)/,'office'],[/(?:متجر|محل تجاري|تجز[يئ]ه|retail)/,'retail']]
+                      .map(([re,type])=>({index:x.search(re),type})).filter(c=>c.index>=0).sort((a,b)=>a.index-b.index);
+                  return candidates[0]?.type;
+              };
+              return classify(t.split(/[،.\n]/)[0])||classify(t)||'villa';
+          }
+          '''+s[end:]
+          old=r"        requestedDetails: String(prompt).split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55),"
+          assert s.count(old)==1;s=s.replace(old+'\n','')
+          old='...(brief.requestedDetails||[]).map((label,i)=>'
+          new=r"...String(brief.prompt||'').split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55).map((label,i)=>"
+          assert s.count(old)==1;s=s.replace(old,new)
+          old="const priority = /خصوصي/.test(t) ? 'privacy'"
+          new=r"const priority = /(?:ال)?اولويه[^،.\n]{0,100}(?:حديق|مسبح|منتجع|شاليه|حوش)/.test(t) ? 'outdoor' : /خصوصي/.test(t) ? 'privacy'"
+          assert s.count(old)==1;s=s.replace(old,new);p.write_text(s)
           PY
           cd masar-studio && npm run check && npm run build
-          python -m py_compile tests/browser_chalet.py
-      - name: Store only the three reviewed application paths on the audit branch
+      - name: Commit only reviewed model refinement
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/shared/model.js masar-studio/src/app.js masar-studio/public/sw.js
+          git add masar-studio/shared/model.js
           git diff --cached --check
-          git diff --cached --stat
-          git commit -m 'fix(masar): preserve chalet intent and bounded area, expose validation in dialog'
+          git commit -m 'fix(masar): prefer primary building use and preserve description-sharing privacy'
           git push origin HEAD:audit/masar-chalet-generation-20260908
           git rev-parse HEAD
-      - name: Run all old and new engine/server/security tests
+      - name: Run every engine, server and security regression
         working-directory: masar-studio
         run: |
-          npm test > test-output/chalet-all-node.log 2>&1 || { tail -150 test-output/chalet-all-node.log; exit 1; }
+          npm test > test-output/chalet-all-node.log 2>&1 || { grep -A 40 '^not ok' test-output/chalet-all-node.log; tail -12 test-output/chalet-all-node.log; exit 1; }
           tail -12 test-output/chalet-all-node.log
-      - name: Run original and corrected customer journey in real browsers
-        working-directory: masar-studio
+      - name: Install exact browsers and compile local viewer
         run: |
-          python tests/browser_chalet.py
-          python tests/browser_flows.py
-      - name: Dispatch full Blender/IFC/Docker/three-browser integration gates on fixed source
+          python -m pip install playwright==1.62.0 > /tmp/pip.log 2>&1
+          python -m playwright install --with-deps chromium webkit > /tmp/browsers.log 2>&1 || { tail -80 /tmp/browsers.log; exit 1; }
+          cd masar-studio/render-viewer && npm ci --include=dev && npm run build
+      - name: Exercise exact customer description, error recovery and exported geometry
+        working-directory: masar-studio
+        run: python tests/browser_chalet.py
+      - name: Verify existing standalone interactions
+        working-directory: masar-studio
+        run: python tests/browser_flows.py
+      - name: Dispatch full Blender IFC Docker and three-browser gates
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh api --method POST repos/NAIFMUSFER/AI-Instruction/actions/workflows/masar-blender-ci.yml/dispatches -f ref=audit/masar-chalet-generation-20260908
