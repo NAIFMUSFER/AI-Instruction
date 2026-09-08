@@ -1,0 +1,36 @@
+name: MASAR published Blender preview A
+on:
+  push:
+    branches: ['ops/masar-blender-preview-a-20260908']
+    paths: ['.masar-ops/blender-preview-a.py', '.github/workflows/masar-blender-preview-a.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: masar-blender-preview-a-smoke
+  cancel-in-progress: false
+jobs:
+  verify-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install pinned browser and image verifier
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 > /tmp/install-python.log 2>&1 || { tail -100 /tmp/install-python.log; exit 1; }
+          python -m playwright install --with-deps chromium > /tmp/install-browser.log 2>&1 || { tail -100 /tmp/install-browser.log; exit 1; }
+      - name: Test actual HTTPS preview without activating any worker
+        run: python .masar-ops/blender-preview-a.py
+      - name: Preserve live preview acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-blender-preview-a-live-evidence
+          path: preview-a-evidence/
+          retention-days: 14
+          if-no-files-found: error
