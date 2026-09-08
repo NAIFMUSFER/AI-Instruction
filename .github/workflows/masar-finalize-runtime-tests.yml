@@ -1,0 +1,75 @@
+name: MASAR finalize tested runtime
+on:
+  push:
+    branches: ['masar/production-v4']
+    paths: ['.github/workflows/masar-finalize-runtime-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: write
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: masar/production-v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - name: Recover only validated patch literals and apply application files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import ast, hashlib, subprocess, textwrap
+          root = Path('masar-studio')
+          workflow = Path('.github/workflows/masar-release-diagnostics.yml').read_text()
+          marker = "          python - <<'PY'\n"
+          start = workflow.index(marker) + len(marker)
+          end = workflow.index('\n          PY\n', start)
+          module = ast.parse(textwrap.dedent(workflow[start:end]))
+          values = {}
+          for node in module.body:
+              if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
+                  name = node.targets[0].id
+                  if name in {'before', 'after', 'patch'}:
+                      values[name] = ast.literal_eval(node.value)
+          assert set(values) == {'before', 'after', 'patch'}
+          assert hashlib.sha256(values['patch'].encode()).hexdigest() == '4c9a8ca7b7f36a8bd1c96d76fc144a8d9bca77e2e5a8b61d1bb3a89f337f53fd'
+          assert Path('.github/workflows/masar-release-ci.yml').read_text().count('playwright==1.62.0') == 2
+          for name, digest in values['before'].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == digest, 'Changed source: ' + name
+          assert not (root / 'tests/pwa.test.mjs').exists()
+          subprocess.run(['git', 'apply', '--check', '-'], input=values['patch'], text=True, check=True)
+          subprocess.run(['git', 'apply', '-'], input=values['patch'], text=True, check=True)
+          for name, digest in values['after'].items():
+              assert hashlib.sha256((root / name).read_bytes()).hexdigest() == digest, 'Patch mismatch: ' + name
+          inner = root / '.github/workflows/ci.yml'
+          source = inner.read_text()
+          assert source.count('playwright==1.55.0') == 2
+          inner.write_text(source.replace('playwright==1.55.0', 'playwright==1.62.0'))
+          for name in ['tests/browser_http.py', 'tests/browser_flows.py']:
+              compile((root / name).read_text(), name, 'exec')
+          PY
+      - name: Verify all application regressions
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts
+          npm run check
+          npm run build
+          npm test > /tmp/masar-node-tests.log 2>&1 || { tail -100 /tmp/masar-node-tests.log; exit 1; }
+          tail -12 /tmp/masar-node-tests.log
+      - name: Commit application files only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/.github/workflows/ci.yml masar-studio/public/sw.js masar-studio/tests/browser_flows.py masar-studio/tests/browser_http.py masar-studio/tests/pwa.test.mjs masar-studio/tools/check.mjs
+          git diff --cached --check
+          git diff --cached --name-only | grep -q '^.github/workflows/' && { echo 'Unexpected root workflow change'; exit 1; } || true
+          git commit -m 'fix(masar): exclude private PWA URLs and verify complete native cache persistence'
+          git push origin HEAD:masar/production-v4
+      - name: Run all release and delivery gates on the committed source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/NAIFMUSFER/AI-Instruction/actions/workflows/masar-release-ci.yml/dispatches -f ref=masar/production-v4
