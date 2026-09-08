@@ -1,0 +1,67 @@
+name: MASAR client chalet quality audit
+on:
+  push:
+    branches: ['audit/masar-chalet-generation-20260908']
+    paths: ['.github/workflows/masar-chalet-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reproduce:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Preserve engine diagnostics without altering application code
+        working-directory: masar-studio
+        run: |
+          mkdir -p test-output/chalet-audit
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {understand,generate,validate,totals,assertModel,requirementStatus} from './shared/model.js';
+          const prompt=readFileSync('tests/fixtures/chalet-client-20x25.txt','utf8'), brief=understand(prompt), result={promptLength:prompt.length,brief,cases:[]};
+          for(const variant of [{name:'unchanged',patch:{}},{name:'chalet-three-beds',patch:{projectType:'chalet',bedrooms:3}},{name:'villa-three-beds',patch:{projectType:'villa',bedrooms:3}}]){
+            try{const m=generate({...structuredClone(brief),...variant.patch});assertModel(m);result.cases.push({name:variant.name,totals:totals(m),errors:validate(m).filter(i=>i.status==='error'),rooms:m.levels.flatMap(l=>l.rooms.map(r=>({name:r.name,kind:r.kind,area:r.w*r.d}))),requirements:m.requirements.map(r=>({label:r.label,status:requirementStatus(m,r)}))});}catch(e){result.cases.push({name:variant.name,error:e.message,stack:e.stack});}
+          }
+          writeFileSync('test-output/chalet-audit/engine-before.json',JSON.stringify(result,null,2));
+          console.log('ENGINE_DIAG '+JSON.stringify(result));
+          JS
+      - name: Install exact test browser
+        run: |
+          python -m pip install playwright==1.62.0 > /tmp/pip-install.log 2>&1 || { tail -80 /tmp/pip-install.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit > /tmp/browser-install.log 2>&1 || { tail -80 /tmp/browser-install.log; exit 1; }
+      - name: Use the real published client journey without accounts or data mutation
+        working-directory: masar-studio
+        run: |
+          python - <<'PY'
+          import json,time
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright
+          out=Path('test-output/chalet-audit');prompt=Path('tests/fixtures/chalet-client-20x25.txt').read_text();reports=[]
+          with sync_playwright() as p:
+            for engine,width,height in [('chromium',390,844),('webkit',390,844),('chromium',1440,1000)]:
+              browser=getattr(p,engine).launch();context=browser.new_context(viewport={'width':width,'height':height},is_mobile=width<500,has_touch=width<500);page=context.new_page();page.set_default_timeout(25000);messages=[];errors=[];result={'engine':engine,'width':width,'messages':messages,'pageErrors':errors};case=f'{engine}-{width}'
+              page.on('console',lambda m:messages.append({'type':m.type,'text':m.text}));page.on('pageerror',lambda e:errors.append(str(e)))
+              try:
+                page.goto('https://masar-blender-preview.onrender.com',wait_until='domcontentloaded',timeout=120000);page.locator('#scene[data-ready="true"]').wait_for(state='attached',timeout=45000)
+                page.locator('button[data-action="new"]:visible').first.click();page.locator('#new-prompt').fill(prompt);page.locator('#new-form button[type="submit"]').click();page.locator('#brief-form').wait_for()
+                result['fields']=page.locator('#brief-form').evaluate('(f)=>[...f.elements].filter(e=>e.name).map(e=>({name:e.name,value:e.value,valid:e.validity.valid,message:e.validationMessage}))');result['titleBefore']=page.locator('#project-title').inner_text()
+                page.locator('#brief-form input[name="confirm"]').check();page.locator('#brief-form button[type="submit"]').click();page.wait_for_timeout(1800)
+                result['modalOpen']=page.locator('#modal').evaluate('(e)=>e.open');result['modalText']=page.locator('#modal-content').inner_text() if result['modalOpen'] else '';result['toasts']=page.locator('#toasts').inner_text();result['titleAfter']=page.locator('#project-title').inner_text();result['formInvalid']=page.locator('#brief-form :invalid').evaluate_all('(els)=>els.map(e=>({name:e.name,message:e.validationMessage}))') if result['modalOpen'] else []
+                page.screenshot(path=str(out/(case+'.png')),full_page=True)
+              except Exception as e:result['failure']=str(e);page.screenshot(path=str(out/(case+'-failure.png')),full_page=True)
+              reports.append(result);print('BROWSER_DIAG '+json.dumps(result,ensure_ascii=False),flush=True);context.close();browser.close()
+          (out/'browser-before.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2))
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-chalet-before-evidence
+          path: masar-studio/test-output/chalet-audit/
+          retention-days: 14
