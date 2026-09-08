@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { renderService } from './render-service.mjs';
 import { readFile, stat, mkdir, chmod } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -73,6 +74,9 @@ export async function createApp(options = {}) {
         if (!db.prepare('SELECT id FROM users WHERE email=?').get(email))
             db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(randomBytes(16).toString('hex'), email, 'مدير الاستوديو', await makePassword(process.env.BOOTSTRAP_PASSWORD), new Date().toISOString());
     }
+    let renders;
+    try { renders = await renderService({db,root:ROOT,auth,body,json,config:{storageClass:persistenceClass,...(options.render || {})}}); }
+    catch (e) { db.close(); throw e; }
     const server = http.createServer(async (req, res) => {
         const requestId = randomBytes(8).toString('hex');
         res.setHeader('X-Request-Id', requestId);
@@ -88,6 +92,7 @@ export async function createApp(options = {}) {
             const ip = req.socket.remoteAddress || 'unknown'; // Deliberately ignores untrusted forwarded headers.
             if (write && req.headers.origin !== origin)
                 fail(403, 'مصدر الطلب غير مسموح.');
+            if (await renders.handle(req,res,p,method)) return;
             if (p === '/api/health' && method === 'GET')
                 return json(res, 200, { ok: true, version: '4.1.0', schemaVersion: VERSION, storage: 'sqlite', persistenceClass, aiConfigured: !!(process.env.ANTHROPIC_API_KEY && process.env.ANTHROPIC_MODEL), registration: allowedRegistration });
             if (p === '/api/ready' && method === 'GET') {
@@ -148,7 +153,7 @@ export async function createApp(options = {}) {
             if (p === '/api/auth/account' && method === 'DELETE') {
                 const s = auth(req, true); limit('delete-account:' + s.user_id, 5, 3600000); const b = await body(req);
                 const u = db.prepare('SELECT password FROM users WHERE id=?').get(s.user_id); if (!await verifyPassword(u?.password, b.password)) fail(401, 'كلمة المرور غير صحيحة؛ لم يُحذف الحساب.');
-                db.prepare('DELETE FROM users WHERE id=?').run(s.user_id); res.setHeader('Set-Cookie', cookie('', 0));
+                db.prepare('DELETE FROM users WHERE id=?').run(s.user_id); await renders.prune(); res.setHeader('Set-Cookie', cookie('', 0));
                 return json(res, 200, { ok: true, deleted: true });
             }
             if (p === '/api/projects' && method === 'GET') {
@@ -196,6 +201,7 @@ export async function createApp(options = {}) {
                     try {
                         db.prepare('DELETE FROM shares WHERE user_id=? AND project_id=?').run(s.user_id, id);
                         db.prepare('DELETE FROM projects WHERE user_id=? AND id=?').run(s.user_id, id);
+                        await renders.prune();
                         db.exec('COMMIT');
                     }
                     catch (e) {

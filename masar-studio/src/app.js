@@ -1,3 +1,4 @@
+import { openRenderStudio } from './render-ui.js';
 import { KINDS, COLORS, clone, uid, round, understand, briefIssues, generate, assertModel, validate, totals, area, propose, resolvePreview, commitPreview, parseCommand, checkLocks, diffModels, createHistory, current, pushHistory, assertHistory, exportEnvelope, importEnvelope, parseDXF, exportDXF, designMetrics, createAlternatives, impactSummary, requirementStatus, distanceToEntry, touchesGardenEdge } from '../shared/model.js';
 import { escapeHTML as E, planSVG, exportOBJ } from '../shared/geometry.js';
 import { deriveBuildingGraph, elementScheduleCSV, requirementMatrix, requirementMatrixCSV, evaluateRulePack, exportIFC, projectReadiness, csvCell } from '../shared/building.js';
@@ -536,6 +537,9 @@ async function handleAction(b) {
             toast('استُعيد المشروع من حسابك، وحُفظ محليًا.');
             break;
         }
+        case 'render-center':
+            await openRenderStudio({api,getModel:model,getRevision:()=>state.history.revisions[state.history.cursor].id,getCloudVersion:()=>state.versions.get(api.user.id+':'+model().id),isPending:()=>!!state.preview,isReadOnly:()=>state.readOnly,saveCloud,showModal,onSelect:selectRoom,reportError});
+            break;
         case 'account':
             await account();
             break;
