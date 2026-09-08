@@ -8,12 +8,18 @@ permissions:
   contents: read
 jobs:
   diagnose:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
-        variant: [baseline, await-write]
+        include:
+          - os: ubuntu-latest
+            playwright: '1.55.0'
+          - os: macos-15
+            playwright: '1.55.0'
+          - os: ubuntu-latest
+            playwright: '1.56.1'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -24,60 +30,34 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Install pinned WebKit quietly
+      - name: Install exact browser environment
         run: |
-          python -m pip install playwright==1.55.0 > /tmp/masar-pip.log 2>&1 || { cat /tmp/masar-pip.log; exit 1; }
+          python -m pip install playwright==${{ matrix.playwright }} > /tmp/masar-pip.log 2>&1 || { cat /tmp/masar-pip.log; exit 1; }
           python -m playwright install --with-deps webkit > /tmp/masar-browser-install.log 2>&1 || { tail -100 /tmp/masar-browser-install.log; exit 1; }
           cd masar-studio && npm ci --ignore-scripts && npm run build
-      - name: Observe real cache writes and evaluate ordered-write candidate in temporary checkout
-        env:
-          MASAR_VARIANT: ${{ matrix.variant }}
+      - name: Insert independent native storage preflight in disposable profile
         run: |
           python - <<'PY'
           from pathlib import Path
-          import os
-          root=Path('masar-studio')
-          sw=root/'public/sw.js'
-          s=sw.read_text()
-          intro="""const writes=[];
-          self.addEventListener('message',e=>{if(e.data!=='MASAR_CACHE_DIAG')return;e.waitUntil((async()=>{const names=await caches.keys();const stores=await Promise.all(names.map(async name=>({name,urls:(await(await caches.open(name)).keys()).map(r=>new URL(r.url).pathname)})));e.ports[0].postMessage({writes,stores});})());});
-          """
-          s=intro+s
-          needle=".then(c=>c.put(key,copy))"
-          replacement=".then(async c=>{try{await c.put(key,copy);writes.push({key,status:'stored'});}catch(err){writes.push({key,status:'failed',error:String(err)});throw err;}})"
-          assert s.count(needle)==1
-          s=s.replace(needle,replacement)
-          if os.environ['MASAR_VARIANT']=='await-write':
-              old="fetch(e.request).then(r=>{if(r.ok){const copy=r.clone();e.waitUntil(caches.open(CACHE).then(async c=>{try{await c.put(key,copy);writes.push({key,status:'stored'});}catch(err){writes.push({key,status:'failed',error:String(err)});throw err;}}));}return r;})"
-              new="fetch(e.request).then(async r=>{if(r.ok){const copy=r.clone();try{const c=await caches.open(CACHE);await c.put(key,copy);writes.push({key,status:'stored'});}catch(err){writes.push({key,status:'failed',error:String(err)});}}return r;})"
-              assert s.count(old)==1
-              s=s.replace(old,new)
-          sw.write_text(s)
-          p=root/'tests/browser_http.py'
-          s=p.read_text()
-          fn='''def cache_checkpoint(label):
-              try:
-                  p=globals().get('page')
-                  if p is None or p.is_closed():return
-                  d=p.evaluate("""async()=>({body:document.body.innerText.slice(0,180),stores:await Promise.all((await caches.keys()).map(async name=>({name,urls:(await(await caches.open(name)).keys()).map(r=>new URL(r.url).pathname)}))),worker:await new Promise(resolve=>{if(!navigator.serviceWorker.controller)return resolve(null);const c=new MessageChannel();const timer=setTimeout(()=>resolve('worker diagnostic timed out'),2000);c.port1.onmessage=e=>{clearTimeout(timer);c.port1.close();resolve(e.data);};navigator.serviceWorker.controller.postMessage('MASAR_CACHE_DIAG',[c.port2]);})})""")
-                  with open(OUT/'cache-checkpoints.jsonl','a') as f:f.write(json.dumps({'label':label,**d},ensure_ascii=False)+'\\n')
-                  print('CACHE_CHECKPOINT '+json.dumps({'label':label,**d},ensure_ascii=False),flush=True)
-              except Exception as e:print('CACHE_CAPTURE_ERROR',str(e),flush=True)
-          '''
-          s=s.replace('def assert_true',fn+'def assert_true',1)
-          s=s.replace('    finally:print(json.dumps(results[-1],ensure_ascii=False),flush=True)',"    finally:\n        cache_checkpoint(name)\n        print(json.dumps(results[-1],ensure_ascii=False),flush=True)",1)
-          p.write_text(s)
-          compile(s,str(p),'exec')
+          p=Path('masar-studio/tests/browser_http.py');s=p.read_text()
+          old="            observe(page);page.goto(base,wait_until='networkidle');ready(page)"
+          new=old+'''
+                      page.evaluate('navigator.serviceWorker.ready');page.wait_for_function('navigator.serviceWorker.controller!==null')
+                      native=page.evaluate("""async()=>{const name='native-cache-diagnostic';const c=await caches.open(name);const results=[];for(const [kind,response] of [['synthetic',new Response('native-cache-probe',{headers:{'Content-Type':'text/plain'}})],['network',await fetch('/src/style.css')]]){const key='/native-probe-'+kind;await c.put(key,response);const same=await c.match(key);const reopened=await(await caches.open(name)).match(key);results.push({kind,same:!!same,reopened:!!reopened,keys:(await c.keys()).map(r=>r.url)});}await caches.delete(name);return{results,estimate:await navigator.storage.estimate(),shell:await Promise.all((await caches.keys()).map(async name=>({name,keys:(await(await caches.open(name)).keys()).map(r=>r.url)}))}}""")
+                      (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)'''
+          assert s.count(old)==1
+          s=s.replace(old,new)
+          p.write_text(s);compile(s,str(p),'exec')
           PY
-      - name: Run unchanged HTTP assertions with real cache observations
+      - name: Run original full-stack assertions without application changes
         working-directory: masar-studio
         env:
           MASAR_BROWSER: webkit
         run: python tests/browser_http.py
-      - name: Preserve cache lifecycle evidence
+      - name: Preserve native-storage and app evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: masar-cache-${{ matrix.variant }}
+          name: masar-native-cache-${{ matrix.os }}-${{ matrix.playwright }}
           path: masar-studio/test-output/browser-http-webkit/
           retention-days: 7
