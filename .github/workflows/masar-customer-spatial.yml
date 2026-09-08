@@ -31,6 +31,7 @@ jobs:
           p=root/'shared/model.js';s=p.read_text()
           start=s.index("    if (/(?:مطبخ|معيش)");end=s.index("    if (/(?:الاولو",start)
           s=s[:start]+r'''    for (const hit of t.matchAll(/(مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/g)) {
+                  if(!/(?:قرب|قريب|مرتبط|مطله?|اطلال|علي|على)/.test(hit[0])) continue;
                   const subjectKind=hit[1]==='مطبخ'?'kitchen':'living';
                   if(!brief.intents.some(x=>x.type==='garden-edge'&&x.subjectKind===subjectKind))
                       brief.intents.push({type:'garden-edge',subjectKind,label:subjectKind==='kitchen'?'المطبخ مرتبط بالجهة الخارجية':'المعيشة مرتبطة بالجهة الخارجية',source:'requested'});
@@ -44,7 +45,6 @@ jobs:
           part=rep(part,"xs = l.rooms.map", "cohort = r.buildingGroup ? l.rooms.filter(x=>x.buildingGroup===r.buildingGroup) : l.rooms, xs = cohort.map")
           part=rep(part,"ys = l.rooms.map", "ys = cohort.map")
           s=s[:start]+part+s[end:]
-          # Do not claim there is a staircase when the model has none.
           s=rep(s,"    add('stairs-design', 'unchecked',", "    if(all.some(r=>r.kind==='stairs')) add('stairs-design', 'unchecked',")
           p.write_text(s)
           p=root/'shared/building.js';s=p.read_text()
