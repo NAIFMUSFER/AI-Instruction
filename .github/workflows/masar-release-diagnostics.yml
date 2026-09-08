@@ -13,7 +13,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine: [webkit, chromium]
+        variant: [baseline, await-write]
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -24,79 +24,60 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Preserve exact diagnostic input source
-        if: matrix.engine == 'chromium'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: masar-diagnostic-input-4e394b9
-          path: masar-studio/
-          include-hidden-files: true
-          retention-days: 7
-      - name: Install pinned browser quietly
+      - name: Install pinned WebKit quietly
         run: |
           python -m pip install playwright==1.55.0 > /tmp/masar-pip.log 2>&1 || { cat /tmp/masar-pip.log; exit 1; }
-          python -m playwright install --with-deps ${{ matrix.engine }} > /tmp/masar-browser-install.log 2>&1 || { tail -100 /tmp/masar-browser-install.log; exit 1; }
+          python -m playwright install --with-deps webkit > /tmp/masar-browser-install.log 2>&1 || { tail -100 /tmp/masar-browser-install.log; exit 1; }
           cd masar-studio && npm ci --ignore-scripts && npm run build
-      - name: Add observation only to temporary test checkout
-        if: matrix.engine == 'webkit'
+      - name: Observe real cache writes and evaluate ordered-write candidate in temporary checkout
+        env:
+          MASAR_VARIANT: ${{ matrix.variant }}
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('masar-studio/tests/browser_http.py')
-          text=p.read_text()
-          text=text.replace('results=[];errors=[];requests_failed=[]','results=[];errors=[];requests_failed=[];console_records=[];responses=[]')
-          old='    page.locator(\'#scene[data-ready="true"]\').wait_for(state=\'attached\',timeout=20000)'
-          new='''    try:
-                  page.locator('#scene[data-ready="true"]').wait_for(state='attached',timeout=20000)
-              except Exception:
-                  diagnostic={'engine':ENGINE,'url':page.url,'console':console_records[-60:],'failedRequests':requests_failed[-60:],'responses':responses[-80:]}
-                  try:
-                      diagnostic['dom']=page.evaluate("""async()=>({title:document.title,body:document.body.innerText.slice(0,2500),readyState:document.readyState,scene:document.querySelector('#scene')?.outerHTML,system:document.querySelector('#system-status')?.textContent,controller:navigator.serviceWorker.controller?.scriptURL,scripts:[...document.scripts].map(s=>({src:s.src,type:s.type})),caches:await Promise.all((await caches.keys()).map(async n=>({name:n,entries:await Promise.all((await(await caches.open(n)).keys()).map(async q=>{const r=await caches.match(q);return{url:q.url,responseUrl:r.url,status:r.status,headers:[...r.headers],length:(await r.text()).length}}))})))})""")
-                      page.screenshot(path=str(OUT/'offline-failure.png'),full_page=True)
-                  except Exception as e:
-                      diagnostic['captureError']=str(e)
-                  (OUT/'offline-diagnostic.json').write_text(json.dumps(diagnostic,ensure_ascii=False,indent=2))
-                  print('OFFLINE_DIAGNOSTIC '+json.dumps(diagnostic,ensure_ascii=False),flush=True)
-                  raise'''
-          assert text.count(old)==1
-          text=text.replace(old,new)
-          old="            def observe(p):p.on('pageerror',lambda e:errors.append(str(e)))"
-          new="""            def observe(p):
-                          p.on('pageerror',lambda e:errors.append(str(e)))
-                          p.on('console',lambda m:console_records.append({'type':m.type,'text':m.text}))
-                          p.on('requestfailed',lambda r:requests_failed.append({'url':r.url,'type':r.resource_type,'failure':r.failure}))
-                          p.on('response',lambda r:responses.append({'url':r.url,'status':r.status,'fromSW':r.from_service_worker}))"""
-          assert text.count(old)==1
-          p.write_text(text.replace(old,new))
-          compile(p.read_text(),str(p),'exec')
+          import os
+          root=Path('masar-studio')
+          sw=root/'public/sw.js'
+          s=sw.read_text()
+          intro="""const writes=[];
+          self.addEventListener('message',e=>{if(e.data!=='MASAR_CACHE_DIAG')return;e.waitUntil((async()=>{const names=await caches.keys();const stores=await Promise.all(names.map(async name=>({name,urls:(await(await caches.open(name)).keys()).map(r=>new URL(r.url).pathname)})));e.ports[0].postMessage({writes,stores});})());});
+          """
+          s=intro+s
+          needle=".then(c=>c.put(key,copy))"
+          replacement=".then(async c=>{try{await c.put(key,copy);writes.push({key,status:'stored'});}catch(err){writes.push({key,status:'failed',error:String(err)});throw err;}})"
+          assert s.count(needle)==1
+          s=s.replace(needle,replacement)
+          if os.environ['MASAR_VARIANT']=='await-write':
+              old="fetch(e.request).then(r=>{if(r.ok){const copy=r.clone();e.waitUntil(caches.open(CACHE).then(async c=>{try{await c.put(key,copy);writes.push({key,status:'stored'});}catch(err){writes.push({key,status:'failed',error:String(err)});throw err;}}));}return r;})"
+              new="fetch(e.request).then(async r=>{if(r.ok){const copy=r.clone();try{const c=await caches.open(CACHE);await c.put(key,copy);writes.push({key,status:'stored'});}catch(err){writes.push({key,status:'failed',error:String(err)});}}return r;})"
+              assert s.count(old)==1
+              s=s.replace(old,new)
+          sw.write_text(s)
+          p=root/'tests/browser_http.py'
+          s=p.read_text()
+          fn='''def cache_checkpoint(label):
+              try:
+                  p=globals().get('page')
+                  if p is None or p.is_closed():return
+                  d=p.evaluate("""async()=>({body:document.body.innerText.slice(0,180),stores:await Promise.all((await caches.keys()).map(async name=>({name,urls:(await(await caches.open(name)).keys()).map(r=>new URL(r.url).pathname)}))),worker:await new Promise(resolve=>{if(!navigator.serviceWorker.controller)return resolve(null);const c=new MessageChannel();const timer=setTimeout(()=>resolve('worker diagnostic timed out'),2000);c.port1.onmessage=e=>{clearTimeout(timer);c.port1.close();resolve(e.data);};navigator.serviceWorker.controller.postMessage('MASAR_CACHE_DIAG',[c.port2]);})})""")
+                  with open(OUT/'cache-checkpoints.jsonl','a') as f:f.write(json.dumps({'label':label,**d},ensure_ascii=False)+'\\n')
+                  print('CACHE_CHECKPOINT '+json.dumps({'label':label,**d},ensure_ascii=False),flush=True)
+              except Exception as e:print('CACHE_CAPTURE_ERROR',str(e),flush=True)
+          '''
+          s=s.replace('def assert_true',fn+'def assert_true',1)
+          s=s.replace('    finally:print(json.dumps(results[-1],ensure_ascii=False),flush=True)',"    finally:\n        cache_checkpoint(name)\n        print(json.dumps(results[-1],ensure_ascii=False),flush=True)",1)
+          p.write_text(s)
+          compile(s,str(p),'exec')
           PY
-      - name: Reproduce original WebKit HTTP suite with observations
-        if: matrix.engine == 'webkit'
+      - name: Run unchanged HTTP assertions with real cache observations
         working-directory: masar-studio
         env:
           MASAR_BROWSER: webkit
         run: python tests/browser_http.py
-      - name: Reproduce original standalone initialization three times
-        if: matrix.engine == 'chromium'
-        working-directory: masar-studio
-        run: |
-          python - <<'PY'
-          import subprocess,shutil
-          from playwright.sync_api import sync_playwright
-          with sync_playwright() as p:
-              print('system chromium:',shutil.which('chromium'),'playwright chromium:',p.chromium.executable_path,flush=True)
-          failures=0
-          for attempt in range(3):
-              print('STANDALONE_ATTEMPT',attempt+1,flush=True)
-              failures+=subprocess.run(['python','tests/browser_flows.py']).returncode!=0
-          raise SystemExit(1 if failures else 0)
-          PY
-      - name: Preserve diagnosis artifacts
+      - name: Preserve cache lifecycle evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: masar-diagnostic-${{ matrix.engine }}
-          path: |
-            masar-studio/test-output/browser-http-*/
-            masar-studio/docs/browser-tests.json
+          name: masar-cache-${{ matrix.variant }}
+          path: masar-studio/test-output/browser-http-webkit/
           retention-days: 7
