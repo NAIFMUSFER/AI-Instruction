@@ -39,12 +39,32 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import subprocess
+          probe="""async () => {
+              const name = 'native-cache-diagnostic';
+              const cache = await caches.open(name);
+              const results = [];
+              for (const [kind, response] of [
+                  ['synthetic', new Response('native-cache-probe', {headers: {'Content-Type': 'text/plain'}})],
+                  ['network', await fetch('/src/style.css')]
+              ]) {
+                  const key = '/native-probe-' + kind;
+                  await cache.put(key, response);
+                  const same = await cache.match(key);
+                  const reopened = await (await caches.open(name)).match(key);
+                  results.push({kind, same: !!same, reopened: !!reopened, keys: (await cache.keys()).map(r => r.url)});
+              }
+              await caches.delete(name);
+              const shell = [];
+              for (const cacheName of await caches.keys()) {
+                  shell.push({name: cacheName, keys: (await (await caches.open(cacheName)).keys()).map(r => r.url)});
+              }
+              return {results, estimate: await navigator.storage.estimate(), shell};
+          }"""
+          subprocess.run(['node','--check'],input=probe,text=True,check=True)
           p=Path('masar-studio/tests/browser_http.py');s=p.read_text()
           old="            observe(page);page.goto(base,wait_until='networkidle');ready(page)"
-          new=old+'''
-                      page.evaluate('navigator.serviceWorker.ready');page.wait_for_function('navigator.serviceWorker.controller!==null')
-                      native=page.evaluate("""async()=>{const name='native-cache-diagnostic';const c=await caches.open(name);const results=[];for(const [kind,response] of [['synthetic',new Response('native-cache-probe',{headers:{'Content-Type':'text/plain'}})],['network',await fetch('/src/style.css')]]){const key='/native-probe-'+kind;await c.put(key,response);const same=await c.match(key);const reopened=await(await caches.open(name)).match(key);results.push({kind,same:!!same,reopened:!!reopened,keys:(await c.keys()).map(r=>r.url)});}await caches.delete(name);return{results,estimate:await navigator.storage.estimate(),shell:await Promise.all((await caches.keys()).map(async name=>({name,keys:(await(await caches.open(name)).keys()).map(r=>r.url)}))}}""")
-                      (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)'''
+          new=old+"\n            page.evaluate('navigator.serviceWorker.ready');page.wait_for_function('navigator.serviceWorker.controller!==null')\n            native=page.evaluate("+repr(probe)+")\n            (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)"
           assert s.count(old)==1
           s=s.replace(old,new)
           p.write_text(s);compile(s,str(p),'exec')
