@@ -1,0 +1,187 @@
+name: MASAR published preview verification
+on:
+  push:
+    branches: ['ops/masar-preview-check-20260908']
+    paths: ['.github/workflows/masar-preview-smoke.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  published-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 580e0e11434adf9ff9e08cc5d9bf867dd0f4443b
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Install pinned browser
+        run: |
+          python -m pip install playwright==1.62.0 > /tmp/pip.log 2>&1 || { tail -60 /tmp/pip.log; exit 1; }
+          python -m playwright install --with-deps chromium > /tmp/browser.log 2>&1 || { tail -60 /tmp/browser.log; exit 1; }
+      - name: Exercise real HTTPS service with disposable accounts only
+        run: |
+          python - <<'PY'
+          import hashlib,json,secrets,time,traceback
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          from playwright.sync_api import sync_playwright,expect
+          BASE='https://masar-studio-preview.onrender.com'
+          SHA='580e0e11434adf9ff9e08cc5d9bf867dd0f4443b'
+          ROOT=Path('masar-studio');OUT=Path('preview-evidence');OUT.mkdir(exist_ok=True)
+          results=[];errors=[];created=[];metadata={};browsers=[]
+          password=secrets.token_urlsafe(28);email='deploy-smoke-'+secrets.token_hex(6)+'@example.test'
+          def require(value,message='Assertion failed'):
+              if not value:raise AssertionError(message)
+          def check(name,fn):
+              try:fn();results.append({'name':name,'status':'PASS'})
+              except Exception:results.append({'name':name,'status':'FAIL','error':traceback.format_exc()});raise
+              finally:print(json.dumps(results[-1],ensure_ascii=False),flush=True)
+          def action(page,name):page.locator('button[data-action="'+name+'"]').first.click()
+          def close(page):
+              if page.locator('#modal').evaluate('(e)=>e.open'):action(page,'close-modal')
+          def ready(page):page.locator('#scene[data-ready="true"]').wait_for(state='attached',timeout=30000)
+          def observe(page):page.on('pageerror',lambda e:errors.append(str(e)))
+          with sync_playwright() as pw:
+              public=pw.request.new_context(base_url=BASE,timeout=30000)
+              try:
+                  def readiness():
+                      r=None
+                      for attempt in range(8):
+                          try:
+                              r=public.get('/api/ready')
+                              if r.status==200 and r.json().get('ready'):break
+                          except Exception:
+                              if attempt==7:raise
+                          time.sleep(3)
+                      require(r is not None and r.status==200 and r.json().get('ready'),'HTTPS readiness failed');metadata['readiness']=r.json()
+                  check('HTTPS endpoint confirms database readiness',readiness)
+                  def identity():
+                      r=public.get('/api/version');require(r.status==200);metadata['version']=r.json()
+                      require(r.json()['version']=='4.1.0' and r.json()['commit']==SHA,'Unexpected deployed commit')
+                      h=public.get('/api/health');require(h.status==200);metadata['health']=h.json()
+                      require(h.json()['persistenceClass']=='ephemeral' and h.json()['registration'] is True and h.json()['aiConfigured'] is False)
+                  check('Version, commit and disclosed preview capabilities match',identity)
+                  def headers():
+                      r=public.get('/');require(r.status==200)
+                      selected={k:r.headers.get(k) for k in ['content-security-policy','strict-transport-security','x-frame-options','x-content-type-options','referrer-policy']};metadata['headers']=selected
+                      require("script-src 'self'" in selected['content-security-policy'] and 'unsafe-eval' not in selected['content-security-policy'])
+                      require(selected['x-frame-options']=='DENY' and selected['x-content-type-options']=='nosniff' and selected['referrer-policy']=='no-referrer')
+                      require('max-age=' in (selected['strict-transport-security'] or ''))
+                  check('Published app retains CSP, HSTS and security headers',headers)
+                  def integrity():
+                      digests={}
+                      for name in ['src/app.js','src/renderer.js','shared/model.js','public/sw.js']:
+                          r=public.get('/'+name);require(r.status==200);require(r.body()==(ROOT/name).read_bytes(),'Published source mismatch: '+name)
+                          digests[name]=hashlib.sha256(r.body()).hexdigest()
+                      metadata['assetSha256']=digests
+                  check('Published application and worker bytes match the verified checkout',integrity)
+                  def access():
+                      r=public.get('/api/projects');require(r.status==401 and r.headers.get('cache-control')=='no-store')
+                      for path in ['/.env','/server/server.mjs','/data/masar.sqlite']:require(public.get(path).status==404,'Private file served')
+                  check('Private projects and server files are inaccessible anonymously',access)
+                  browser=pw.chromium.launch(headless=True,args=['--no-sandbox']);browsers.append(browser)
+                  ctx=browser.new_context(viewport={'width':1512,'height':982},accept_downloads=True)
+                  page=ctx.new_page();page.set_default_timeout(20000);observe(page)
+                  def boot():
+                      page.goto(BASE,wait_until='networkidle',timeout=90000);ready(page)
+                      expect(page.locator('#plan-host svg')).to_be_visible();expect(page.locator('#persistence-warning')).to_be_visible()
+                      expect(page.locator('#persistence-warning')).to_contain_text('مؤقت');require(page.evaluate('isSecureContext'))
+                      metadata['renderer']=page.locator('#scene').get_attribute('data-renderer')
+                  check('Published 2D/3D interface boots with temporary-storage warning',boot)
+                  def register():
+                      action(page,'account');page.locator('[data-action="auth-mode"][data-mode="register"]').click()
+                      page.locator('#auth-form [name="name"]').fill('اختبار نشر مؤقت');page.locator('#auth-form [name="email"]').fill(email)
+                      page.locator('#auth-form [name="password"]').fill(password);page.locator('#auth-form [type="submit"]').click();created.append(ctx.request)
+                      expect(page.locator('#modal')).not_to_be_visible();require(ctx.request.get(BASE+'/api/auth/me').json().get('user',{}).get('email')==email)
+                  check('Disposable account registration succeeds through the live UI',register)
+                  check('Production cookie is Secure, HttpOnly and SameSite Strict',lambda:require(any(c['name']=='masar_session' and c['secure'] and c['httpOnly'] and c['sameSite']=='Strict' for c in ctx.cookies())))
+                  title='فحص نشر MASAR — '+secrets.token_hex(3)
+                  def save():
+                      action(page,'rename-project');page.locator('#rename-form [name="title"]').fill(title);page.locator('#rename-form [type="submit"]').click()
+                      expect(page.locator('#project-title')).to_have_text(title);action(page,'account');action(page,'save-cloud')
+                      expect(page.locator('#modal')).not_to_be_visible();expect(page.locator('#save-status')).to_contain_text('محفوظ على الخادم')
+                  check('An edited local project saves to the authenticated server account',save)
+                  project=ctx.request.get(BASE+'/api/projects').json()['projects'][0];pid=project['id']
+                  def reload():
+                      page.reload(wait_until='networkidle');ready(page);expect(page.locator('#project-title')).to_have_text(title)
+                      r=ctx.request.get(BASE+'/api/projects/'+pid);require(r.status==200 and r.json()['history']['projectId']==pid)
+                  check('Reload retains the project and server history',reload)
+                  def login_again():
+                      me=ctx.request.get(BASE+'/api/auth/me').json()
+                      r=ctx.request.post(BASE+'/api/auth/logout',headers={'Origin':BASE,'X-CSRF-Token':me['csrf']},data={});require(r.status==200)
+                      page.reload(wait_until='networkidle');ready(page);action(page,'account')
+                      page.locator('#auth-form [name="email"]').fill(email);page.locator('#auth-form [name="password"]').fill(password)
+                      page.locator('#auth-form [type="submit"]').click();expect(page.locator('#modal')).not_to_be_visible()
+                      require(ctx.request.get(BASE+'/api/projects/'+pid).status==200)
+                  check('Logout and subsequent UI login restore authorized access',login_again)
+                  def isolation():
+                      other=pw.request.new_context(base_url=BASE,timeout=30000)
+                      r=other.post('/api/auth/register',headers={'Origin':BASE},data={'name':'فحص عزل مؤقت','email':'isolation-'+secrets.token_hex(6)+'@example.test','password':password})
+                      require(r.status==201);created.append(other)
+                      require(other.get('/api/projects').json()['projects']==[] and other.get('/api/projects/'+pid).status==404)
+                  check('A second disposable account cannot read the owner project',isolation)
+                  def share():
+                      action(page,'share');page.locator('#share-form [name="consent"]').check();page.locator('#share-form [type="submit"]').click()
+                      page.locator('#shared-url').wait_for(state='visible');url=page.locator('#shared-url').input_value();close(page)
+                      require(urlsplit(url).netloc==urlsplit(BASE).netloc,'Incorrect share public origin')
+                      guest=browser.new_context();review=guest.new_page();review.set_default_timeout(20000);observe(review)
+                      review.goto(url,wait_until='networkidle');ready(review);expect(review.locator('#project-type')).to_contain_text('للقراءة فقط')
+                      expect(review.locator('#properties-form [name="w"]')).to_be_disabled()
+                      action(page,'share');action(page,'revoke-share');expect(page.locator('[data-action="revoke-share"]')).to_have_count(0);close(page)
+                      review.reload(wait_until='networkidle');expect(review.locator('#modal-title')).to_have_text('رابط المراجعة غير متاح')
+                      expect(review.locator('#app')).not_to_be_visible();guest.close()
+                  check('Consent-based review is read-only and revocation blocks the view',share)
+                  def export_ifc():
+                      action(page,'export')
+                      with page.expect_download() as event:page.locator('[data-action="download"][data-kind="ifc"]').click()
+                      file=OUT/'published-export.ifc';event.value.save_as(str(file));require(file.read_text().startswith('ISO-10303-21;'));close(page)
+                  check('IFC export downloads a real STEP file from the live UI',export_ifc)
+                  def responsive():
+                      page.screenshot(path=str(OUT/'desktop.png'),full_page=True)
+                      for width in [390,320,768]:
+                          page.set_viewport_size({'width':width,'height':844});require(page.evaluate('document.documentElement.scrollWidth<=innerWidth'),str(width)+'px overflow')
+                          if width<720:
+                              for panel in ['project','inspector','workspace']:page.locator('[data-action="mobile"][data-panel="'+panel+'"]').click()
+                          if width==390:page.screenshot(path=str(OUT/'mobile.png'),full_page=True)
+                      page.set_viewport_size({'width':1512,'height':982})
+                  check('Mobile panels work at 320, 390 and 768 pixel widths without overflow',responsive)
+                  def pwa():
+                      page.evaluate('navigator.serviceWorker.ready');require(page.evaluate('navigator.serviceWorker.controller!==null'))
+                      page.evaluate("fetch('/?share=PUBLIC_SMOKE_NOT_A_REAL_TOKEN').then(r=>r.text())")
+                      stores=page.evaluate('''async()=>{const stores=[];for(const name of await caches.keys()){const c=await caches.open(name),entries=[];for(const q of await c.keys()){const r=await c.match(q);entries.push({requestURL:q.url,responseURL:r.url,status:r.status,bytes:(await r.arrayBuffer()).byteLength});}stores.push({name,entries});}return stores;}''')
+                      current=[s for s in stores if s['name']=='masar-4.1.0-shell-v3'];require(len(current)==1 and len(current[0]['entries'])==12,'Incomplete public cache')
+                      for store in stores:
+                          for entry in store['entries']:
+                              require(entry['status']==200 and entry['bytes']>0)
+                              for key in ['requestURL','responseURL']:
+                                  u=urlsplit(entry[key]);require(not u.query and not u.path.startswith('/api/'),'Private cache metadata')
+                      (OUT/'public-cache.json').write_text(json.dumps(stores,indent=2))
+                  check('PWA caches all 12 public files and excludes private URL metadata',pwa)
+                  check('Live UI scenarios produce no uncaught JavaScript errors',lambda:require(not errors,str(errors)))
+              except Exception:
+                  if not results or results[-1]['status']!='FAIL':results.append({'name':'smoke harness','status':'FAIL','error':traceback.format_exc()})
+              finally:
+                  for api in created:
+                      try:
+                          me=api.get(BASE+'/api/auth/me').json();require(me.get('user'),'Cleanup needs the test session')
+                          r=api.delete(BASE+'/api/auth/account',headers={'Origin':BASE,'X-CSRF-Token':me['csrf']},data={'password':password});require(r.status==200)
+                          require(api.get(BASE+'/api/projects').status==401);results.append({'name':'Disposable account and its project/share data removed','status':'PASS'})
+                      except Exception:results.append({'name':'Disposable account cleanup','status':'FAIL','error':traceback.format_exc()})
+                  for browser in browsers:browser.close()
+                  public.dispose()
+                  report={'url':BASE,'expectedCommit':SHA,'transport':'Published Render HTTPS; real browser; disposable accounts only','metadata':metadata,'passed':sum(r['status']=='PASS' for r in results),'failed':sum(r['status']=='FAIL' for r in results),'pageErrors':errors,'results':results,'limits':['No physical iPhone test','No durable-hosting claim','AI provider unconfigured; no AI charges','No hosted server restart or outage triggered']}
+                  (OUT/'report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print(json.dumps(report,ensure_ascii=False),flush=True)
+                  raise SystemExit(1 if report['failed'] else 0)
+          PY
+      - name: Preserve published preview evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-published-preview-evidence
+          path: preview-evidence/
+          retention-days: 14
+          if-no-files-found: error
