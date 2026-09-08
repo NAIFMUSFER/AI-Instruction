@@ -17,8 +17,8 @@ export function understand(prompt) {
     const t = normalizeText(prompt);
     if (t.length > 12000)
         throw Error('الوصف أطول من الحد المسموح (12,000 حرف).');
-    const dim = t.match(/([-+]?\d+(?:\.\d+)?)\s*(?:×|x|\*|في|بـ?)\s*([-+]?\d+(?:\.\d+)?)/);
-    const projectType = /(?:مستودع|مخزن|warehouse)/.test(t) ? 'warehouse' : /(?:مكاتب|مكتب اداري|office)/.test(t) ? 'office' : /(?:متجر|محل تجاري|تجز[يئ]ه|retail)/.test(t) ? 'retail' : /شاليه/.test(t) ? 'chalet' : 'villa';
+    const dim = t.match(/([-+]?\d+(?:\.\d+)?)\s*(?:متر\s*(?:واجهه|عرض)?\s*)?(?:×|x|\*|في|بـ?)\s*([-+]?\d+(?:\.\d+)?)/);
+    const projectType = customerProjectType(t);
     const residential = ['villa', 'chalet'].includes(projectType);
     const defaultFloors = projectType === 'villa' || projectType === 'office' ? 2 : 1;
     let floors = amount(t, /([-+]?\d+(?:\.\d+)?|ثلاثه?|اربعه?|خمسه?|سته?|سبعه?|ثمانيه?|واحده?)\s*(?:ادوار|طوابق|دور|طابق)/, defaultFloors);
@@ -35,7 +35,7 @@ export function understand(prompt) {
         prompt: String(prompt), width: dim ? Number(dim[1]) : projectType === 'warehouse' ? 30 : 20, depth: dim ? Number(dim[2]) : projectType === 'warehouse' ? 40 : 25,
         floors: floors.value, bedrooms: beds.value, offices: offices.value, parking: parking.value, street: street || 'جنوب',
         elevator: /مصعد/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مصعد/.test(t), pool: /مسبح/.test(t) && !/(?:بدون|دون|لا يوجد)\s*مسبح/.test(t),
-        projectType, priority, style, title: titles[projectType],
+        projectType, priority, style, title: titles[projectType], buildingArea: customerAreaBudget(t),
         sources: { width: dim ? 'requested' : 'assumed', depth: dim ? 'requested' : 'assumed', floors: floors.source, bedrooms: beds.source, offices: offices.source, parking: parking.source, street: street ? 'requested' : 'assumed', projectType: projectType === 'villa' && !/(?:فيلا|منزل)/.test(t) ? 'assumed' : 'requested' },
         intents: [], unresolved: []
     };
@@ -51,6 +51,7 @@ export function understand(prompt) {
         brief.intents.push({ type: 'near-entry', subjectKind: 'majlis', label: 'المجلس قريب من المدخل', source: 'requested' });
     if (/(?:مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/.test(t))
         brief.intents.push({ type: 'garden-edge', subjectKind: /مطبخ/.test(t) ? 'kitchen' : 'living', label: /مطبخ/.test(t) ? 'المطبخ مرتبط بالجهة الخارجية' : 'المعيشة مرتبطة بالجهة الخارجية', source: 'requested' });
+    if (/(?:الاولو[يه]+|اولوي[هت])[^.\n]{0,100}(?:شاليه|حديق|مسبح|حوش)/.test(t)) brief.priority='outdoor';
     return brief;
 }
 export function briefIssues(b) { return b.unresolved.filter(x => !x.startsWith('المصعد') && !x.startsWith('المسبح')); }
@@ -137,7 +138,8 @@ export function generate(brief, variant = 0) {
         ...(brief.intents || []).map((x, i) => ({ id: `r-intent-${i}`, label: x.label, type: 'adjacency', value: clone(x), locked: true, source: x.source || 'requested' })),
         ...brief.unresolved.map((label, i) => ({ id: `r-u${i}`, label, type: 'unresolved', locked: true, source: 'requested' }))
     ];
-    return { schemaVersion: VERSION, id: uid(), title: brief.title, authoring, site: { width: brief.width, depth: brief.depth, street: brief.street, north: 'up', setback: { front: endSetback, back: endSetback, left: sideSetback, right: sideSetback }, setbackSource: 'concept-assumption-not-code', features }, brief: clone(brief), requirements, levels, comments: [], references: [], design: { stage: 'concept', projectType, priority: brief.priority || 'balanced', style: brief.style || 'unspecified', generatedVariant: variant }, createdAt: new Date().toISOString() };
+    const generated = { schemaVersion: VERSION, id: uid(), title: brief.title, authoring, site: { width: brief.width, depth: brief.depth, street: brief.street, north: 'up', setback: { front: endSetback, back: endSetback, left: sideSetback, right: sideSetback }, setbackSource: 'concept-assumption-not-code', features }, brief: clone(brief), requirements, levels, comments: [], references: [], design: { stage: 'concept', projectType, priority: brief.priority || 'balanced', style: brief.style || 'unspecified', generatedVariant: variant }, createdAt: new Date().toISOString() };
+    return applyCustomerBudget(generated, brief);
 }
 const finite = n => typeof n === 'number' && Number.isFinite(n);
 const safeString = (s, max = 500) => typeof s === 'string' && s.length <= max;
@@ -206,7 +208,7 @@ export function assertModel(m) {
     if (!m.brief || !safeString(m.brief.prompt, 12000) || !Array.isArray(m.requirements) || m.requirements.length > 80)
         throw Error('متطلبات المشروع غير صالحة.');
     for (const r of m.requirements) {
-        if (!safeString(r.id, 100) || !safeString(r.label, 1000) || !['floors', 'bedrooms', 'site', 'feature', 'adjacency', 'unresolved', 'custom'].includes(r.type) || typeof r.locked !== 'boolean')
+        if (!safeString(r.id, 100) || !safeString(r.label, 1000) || !['floors', 'bedrooms', 'site', 'feature', 'adjacency', 'unresolved', 'custom', 'building-area'].includes(r.type) || typeof r.locked !== 'boolean')
             throw Error('بند متطلب غير صالح.');
     }
     if (m.site.features !== undefined) {
@@ -247,6 +249,7 @@ export function entryPoint(m) { const l = m.levels[0], entries = l.rooms.flatMap
 export function distanceToEntry(m, r) { const a = entryPoint(m), b = centroid(r); return Math.hypot(a[0] - b[0], a[1] - b[1]); }
 export function touchesGardenEdge(m, r, tolerance = .15) { const side = gardenSide(m), l = m.levels.find(l => l.rooms.includes(r)) || m.levels[0], xs = l.rooms.map(x => [x.x, x.x + x.w]).flat(), ys = l.rooms.map(x => [x.y, x.y + x.d]).flat(), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys); return side === 'north' ? Math.abs(r.y + r.d - maxY) <= tolerance : side === 'south' ? Math.abs(r.y - minY) <= tolerance : side === 'east' ? Math.abs(r.x + r.w - maxX) <= tolerance : Math.abs(r.x - minX) <= tolerance; }
 export function requirementStatus(m, req) {
+    if(req.type==='building-area'){const a=conceptEnvelopeArea(m),bounds=req.value;const valid=Array.isArray(bounds)&&bounds.length===2&&bounds.every(Number.isFinite)&&bounds[0]>0&&bounds[1]>=bounds[0];return {measurable:true,satisfied:valid&&a>=bounds[0]-.05&&a<=bounds[1]+.05,detail:`غلاف مفاهيمي محافظ يشمل سماكات الجدران: ${a} م²؛ ليس مسطح رخصة.`};}
     if (req.type === 'feature') { const present = req.value === 'elevator' ? m.levels.every(l => l.rooms.some(r => r.kind === 'elevator')) : req.value === 'pool' ? (m.site.features || []).some(f => f.type === 'pool') : false; return { measurable: true, satisfied: present, detail: present ? 'موجود في النموذج' : 'غير موجود في النموذج' }; }
     if (req.type !== 'adjacency' || !req.value) return { measurable: false, satisfied: null, detail: 'غير قابل للقياس آليًا' };
     const subjects = m.levels.flatMap(l => l.rooms).filter(r => r.kind === req.value.subjectKind); if (!subjects.length) return { measurable: true, satisfied: false, detail: 'العنصر المطلوب غير موجود' };
@@ -371,6 +374,7 @@ export function validate(m) {
             add(req.id, 'error', 'عدد الأدوار لا يطابق المتطلب.', [], 'requirements');
         if (req.type === 'site' && (m.site.width !== req.value?.[0] || m.site.depth !== req.value?.[1]))
             add(req.id, 'error', 'أبعاد الأرض لا تطابق المتطلب.', [], 'requirements');
+        if (req.type === 'building-area') {const status=requirementStatus(m,req);add(req.id,status.satisfied?'checked':'error',req.label+': '+status.detail,[],'requirements');}
         if (req.type === 'feature' || req.type === 'adjacency') {
             const status = requirementStatus(m, req);
             if (status.measurable && !status.satisfied) add(req.id, 'warning', `${req.label}: ${status.detail}.`, [], 'requirements');
@@ -677,3 +681,101 @@ export function exportDXF(m, levelId) { const l = m.levels.find(l => l.id === le
     for (const [x, y] of points)
         out += `10\n${round(x)}\n20\n${round(y)}\n`;
 } return out + '0\nENDSEC\n0\nEOF\n'; }
+
+// Added by the customer regression patch. These functions use the canonical model helpers.
+function customerProjectType(text) {
+    const lead = text.split(/[\n.!؟،]/)[0];
+    const classify = s => {
+        if (/فيلا\s+(?:بنظام|على\s+نظام|بطابع)\s+شاليه/.test(s)) return 'chalet';
+        const match = s.match(/شاليه|فيلا|منزل|مستودع|مخزن|warehouse|مكاتب|مكتب اداري|office|متجر|محل تجاري|تجز[يئ]ه|retail/);
+        if (!match) return null;
+        return /شاليه/.test(match[0]) ? 'chalet' : /فيلا|منزل/.test(match[0]) ? 'villa' : /مستودع|مخزن|warehouse/.test(match[0]) ? 'warehouse' : /مكاتب|مكتب اداري|office/.test(match[0]) ? 'office' : 'retail';
+    };
+    return classify(lead) || classify(text) || 'villa';
+}
+function customerAreaBudget(text) {
+    const unit='(?:م(?:²|2)|متر(?:ا)?\\s*مربع(?:ا)?)', number='(\\d+(?:\\.\\d+)?)';
+    const range=new RegExp(number+'\\s*(?:–|—|-|الى|إلى)\\s*'+number+'\\s*'+unit+'\\s*(?:مباني|مبان|بناء|بنا|مبنيه)');
+    const before=new RegExp('(?:مساحه\\s*(?:البناء|المبني|المباني)|مساحه\\s*بناء)[^\\d\\n]{0,20}'+number+'(?:\\s*(?:–|—|-|الى)\\s*'+number+')?\\s*'+unit);
+    const exactAfter=new RegExp(number+'\\s*'+unit+'\\s*(?:مباني|مبان|بناء|بنا|مبنيه)');
+    const m=text.match(range)||text.match(before)||text.match(exactAfter);
+    if (!m) return null;
+    const a=Number(m[1]),b=Number(m[2]||m[1]);
+    return {min:a,max:b,source:'requested',metric:'conservative-concept-ground-envelope'};
+}
+// Conservative plan-area envelope including the maximum conceptual wall half-thickness.
+// Rectangle bounds make this an upper bound for notched spaces, not a permit area calculation.
+export function conceptEnvelopeArea(m) {
+    const thickness=Math.max(...effectiveAuthoring(m).wallTypes.map(t=>t.totalThickness),.2), pad=thickness/2;
+    const rs=m.levels[0].rooms.map(r=>({x:r.x-pad,y:r.y-pad,w:r.w+2*pad,d:r.d+2*pad}));
+    const xs=[...new Set(rs.flatMap(r=>[r.x,r.x+r.w]))].sort((a,b)=>a-b);
+    let area=0;
+    for(let i=0;i<xs.length-1;i++){
+        const mid=(xs[i]+xs[i+1])/2, intervals=rs.filter(r=>mid>r.x&&mid<r.x+r.w).map(r=>[r.y,r.y+r.d]).sort((a,b)=>a[0]-b[0]);
+        let lo=null,hi=null,total=0;
+        for(const [a,b] of intervals){if(lo===null){lo=a;hi=b;}else if(a<=hi)hi=Math.max(hi,b);else{total+=hi-lo;lo=a;hi=b;}}
+        if(lo!==null)total+=hi-lo;
+        area+=(xs[i+1]-xs[i])*total;
+    }
+    return round(area);
+}
+function applyCustomerBudget(m,b) {
+    if(!b.buildingArea) return m;
+    const budget=b.buildingArea;
+    if(!Number.isFinite(budget.min)||!Number.isFinite(budget.max)||budget.min<=0||budget.max<budget.min)throw Error('نطاق مساحة المباني غير صالح. أدخل حدًا أدنى موجبًا وحدًا أعلى لا يقل عنه.');
+    if(!['villa','chalet'].includes(b.projectType)||b.floors!==1||b.bedrooms!==3||b.elevator)throw Error('المخطط المدمج محدود المساحة يدعم حاليًا فيلا أو شاليه من دور واحد وثلاث غرف نوم دون مصعد. لم نغيّر طلبك أو نتجاوز المساحة؛ راجع هذه القيم أو أزل قيد المساحة صراحة.');
+    const rotated=['شرق','غرب'].includes(b.street), W=rotated?b.depth:b.width,D=rotated?b.width:b.depth;
+    if(W<17||D<23||budget.max<140||b.parking>1)throw Error('البرنامج المدمج الحالي يحتاج عرضًا مواجهًا للشارع 17 م وعمقًا 23 م على الأقل، وحد مساحة مباني 140 م² أو أكثر وموقفًا واحدًا كحد أقصى. لم يتم توليد بديل مخالف؛ راجع القيم أو البرنامج.');
+    const cap=Math.min(budget.max,180), k=Math.sqrt((cap-16)/154.72), bw=14*k,bd=10.8*k,bx=(W-bw)/2,by=5.8;
+    if(budget.min>cap||by+bd+6>D)throw Error('قيد المساحة أو مساحة الحوش لا يلائمان هذا البرنامج المدمج. لم يتم توسيع المبنى أو تغيير الأرض تلقائيًا.');
+    const rooms=[];
+    const add=(id,name,kind,x,y,w,d,side='east',offset=.5,entry=false)=>{const r=room('l0-'+id,name,kind,bx+x*k,by+y*k,w*k,d*k,side,entry);r.doors[0].offset=offset; r.provenance='generated-compact-concept-v1';rooms.push(r);return r;};
+    const bed2=add('bed2','غرفة نوم 2','bedroom',0,0,5,3.2);
+    const bed3=add('bed3','غرفة نوم 3','bedroom',0,3.2,5,3.2);
+    const master=add('master','غرفة النوم الرئيسية','bedroom',0,6.4,5,4.4);
+    master.footprint=[[2.5,6.4],[5,6.4],[5,10.8],[0,10.8],[0,9.6],[2.5,9.6]].map(([x,y])=>[round(bx+x*k),round(by+y*k)]);
+    add('ensuite','حمام الغرفة الرئيسية','bath',0,6.4,2.5,1.7);
+    add('wardrobe','غرفة ملابس الرئيسية','storage',0,8.1,2.5,1.5);
+    const hall=add('hall','توزيع العائلة','hall',5,0,1.2,10.8,'south',.5,true);
+    hall.doors.push({id:'l0-hall-rear',side:'north',offset:.5,width:.85,entry:true});
+    const lobby=add('guest-entry','مدخل الضيوف المستقل','reception',6.2,0,1.6,3.2,'south',.5,true);
+    // A controllable door, not an open passage, separates guests from family circulation.
+    lobby.doors.push({id:'l0-guest-family-door',side:'west',offset:.7,width:.85,entry:false});
+    add('guest-bath','حمام ومغاسل الضيوف','bath',7.8,0,1.8,1.6,'west');
+    const majlis=add('majlis','مجلس الضيوف','majlis',7.8,0,6.2,3.2,'west',.75);
+    majlis.footprint=[[9.6,0],[14,0],[14,3.2],[7.8,3.2],[7.8,1.6],[9.6,1.6]].map(([x,y])=>[round(bx+x*k),round(by+y*k)]);
+    add('shared-bath','الحمام المشترك','bath',6.2,3.2,2.2,2.2,'west');
+    add('pantry','بانتري','storage',8.4,3.2,1.8,1.6,'east');
+    add('laundry','غرفة الغسيل','laundry',8.4,4.8,1.8,1.6,'east');
+    const kitchen=add('kitchen','المطبخ الرئيسي','kitchen',10.2,3.2,3.8,3.2,'north');
+    add('transition','توزيع الخدمات','hall',6.2,5.4,2.2,1,'west');
+    const living=add('living','المعيشة العائلية','living',6.2,6.4,5,4.4,'west');
+    living.doors.push({id:'l0-living-garden-door',side:'north',offset:.5,width:2.2,entry:true});
+    living.note='فتحة خارجية واسعة إلى الحديقة؛ نوع الباب المنزلق وتفاصيله الإنشائية لم تعتمد.';
+    const dining=add('dining','منطقة الطعام','dining',11.2,6.4,2.8,4.4,'west');
+    const externalBath=room('l0-pool-bath','دورة مياه المسبح','bath',W-3.3,by+bd+.9,1.6*k,2.2*k,'east',true);rooms.push(externalBath);
+    const window=(r,side,offset=.5,width=1.2)=>r.windows=[{id:r.id+'-window',side,offset,width:Math.min(width,sideSpan(r,side)-.3),height:1.2,sill:.9,typeId:m.authoring.defaults.windowTypeId,locked:false,provenance:'generated-concept-window'}];
+    window(bed2,'west');window(bed3,'west');window(master,'north');window(majlis,'south',.68);window(kitchen,'east');window(dining,'north');
+    m.levels=[{id:'l0',name:'الدور الأرضي',elevation:0,height:3.3,rooms}];
+    m.site.setback={front:by,back:1,left:1,right:1};
+    m.site.features=[{id:'parking-1',type:'parking',name:'موقف سيارة مفاهيمي',x:W-3.7,y:.3,w:2.7,d:5,locked:true,provenance:'requested-concept-feature'},
+      {id:'terrace-1',type:'terrace',name:'جلسة مغطاة وبرجولة — موضع مبدئي',x:bx,y:by+bd+1.1,w:4,d:3.5,locked:true,provenance:'requested-concept-feature'},
+      {id:'bbq-1',type:'terrace',name:'شواء وتحضير — موضع مبدئي',x:bx,y:by+bd+4.9,w:2.8,d:1.4,locked:true,provenance:'requested-concept-feature'}];
+    if(b.parking===0)m.site.features=m.site.features.filter(f=>f.type!=='parking');
+    if(b.pool)m.site.features.push({id:'pool-1',type:'pool',name:'مسبح مستطيل مفاهيمي',x:bx+6.1*k,y:by+bd+2.1,w:6,d:3,locked:true,provenance:'requested-concept-feature'});
+    m.site.features.push({id:'garden-1',type:'garden',name:'حديقة خلفية — الباقي ساحات وحركة',x:1,y:D-2.1,w:W-2,d:1.6,locked:false,provenance:'concept-landscape-allocation'});
+    const turn=(r)=>{const {x,y,w,d}=r;const maps={شمال:{south:'north',north:'south',east:'west',west:'east'},شرق:{south:'east',north:'west',east:'north',west:'south'},غرب:{south:'west',north:'east',east:'south',west:'north'}};
+      const pt=([a,c])=>b.street==='شمال'?[b.width-a,b.depth-c]:b.street==='شرق'?[b.width-c,a]:[c,b.depth-a];
+      if(b.street==='جنوب')return;
+      if(b.street==='شمال'){r.x=round(b.width-x-w);r.y=round(b.depth-y-d);}else if(b.street==='شرق'){r.x=round(b.width-y-d);r.y=x;r.w=d;r.d=w;}else{r.x=y;r.y=round(b.depth-x-w);r.w=d;r.d=w;}
+      if(r.footprint)r.footprint=r.footprint.map(p=>pt(p).map(round));
+      for(const o of [...r.doors||[],...r.windows||[]]){const old=o.side;o.side=maps[b.street][old];if(b.street==='شمال'||b.street==='شرق'&&['east','west'].includes(old)||b.street==='غرب'&&['north','south'].includes(old))o.offset=round(1-o.offset);}
+    };
+    [...rooms,...m.site.features].forEach(turn);
+    m.requirements.push({id:'r-building-area',label:`مساحة المباني المطلوبة ${budget.min}–${budget.max} م²`,type:'building-area',value:[budget.min,budget.max],source:'requested',locked:true});
+    m.requirements.push({id:'r-compact-review',label:'البرنامج المدمج اقتراح مبدئي: راجع عرض الممرات وخصوصية الزجاج وصوت المسبح، والجزيرة والأثاث ومغاسل الضيوف وتفاصيل الشواء والبرجولة مع المصمم. وجود المساحة لا يثبت كفايتها.',type:'custom',source:'requested',locked:true});
+    m.design.layoutStrategy='compact-three-bedroom-v1';
+    const envelope=conceptEnvelopeArea(m);
+    if(envelope>budget.max+.05||envelope<budget.min-.05)throw Error(`المقترح داخل المحرك يحتاج غلافًا مساحته ${envelope} م² مقابل نطاقك ${budget.min}–${budget.max}. لم نتجاوز قيدك تلقائيًا.`);
+    return m;
+}

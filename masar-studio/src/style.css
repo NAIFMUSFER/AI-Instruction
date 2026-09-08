@@ -45,3 +45,10 @@
 #render-gallery figcaption { margin:.4rem 0; }
 @media(max-width:600px){ #render-canvas {height:270px;} .render-actions .btn {flex:1 1 120px;} }
 @media(max-width:720px){.subbar{gap:10px;min-width:0}.breadcrumb{flex-shrink:0}.sub-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}.sub-actions button{flex-shrink:0;white-space:nowrap}}
+
+/* Customer generation: errors stay in the modal top layer and mobile fields do not zoom. */
+#modal-error { scroll-margin: 16px; border: 2px solid #9b3c32; background: #fff2ef; color: #80291f; }
+#modal-error[hidden] { display: none; }
+#brief-form input, #brief-form select { font-size: 16px; min-width: 0; }
+#brief-form .area-budget { margin-block: 16px; }
+#brief-form details summary { cursor: pointer; font-weight: 700; }
