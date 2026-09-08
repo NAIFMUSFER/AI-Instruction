@@ -1,0 +1,147 @@
+name: MASAR stale preview live acceptance
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-stale-live.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 4d89e70843e78f2e89cc6b519745c39239020242
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify exact live modules and preview-only capabilities
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import urllib.request,json,hashlib
+          base='https://masar-customer-preview.onrender.com'
+          expected='4d89e70843e78f2e89cc6b519745c39239020242'
+          out=Path('masar-studio/test-output/stale-live');out.mkdir(parents=True,exist_ok=True)
+          def get(path):
+              with urllib.request.urlopen(base+path,timeout=120) as r:
+                  assert r.status==200
+                  return r.read(),{k.lower():v for k,v in r.headers.items()}
+          report={'origin':base,'expectedCommit':expected,'endpoints':{},'sourceHashes':{}}
+          for path in ['/api/health','/api/ready','/api/version','/api/renders/capabilities']:
+              raw,_=get(path);report['endpoints'][path]=json.loads(raw)
+          assert report['endpoints']['/api/version']['commit']==expected
+          assert report['endpoints']['/api/ready']['ready'] is True
+          assert report['endpoints']['/api/health']['persistenceClass']=='ephemeral'
+          assert report['endpoints']['/api/renders/capabilities']['enabled'] is False
+          assert report['endpoints']['/api/renders/capabilities']['workerOnline'] is False
+          for path in ['/src/app.js','/src/render-ui.js','/src/style.css','/shared/model.js','/shared/building.js','/shared/render-scene.js','/public/sw.js']:
+              raw,_=get(path);assert raw==Path('masar-studio'+path).read_bytes(),path
+              report['sourceHashes'][path]=hashlib.sha256(raw).hexdigest()
+          _,headers=get('/');assert "script-src 'self'" in headers.get('content-security-policy','');assert 'max-age=' in headers.get('strict-transport-security','')
+          report['security']={'csp':headers['content-security-policy'],'hsts':headers['strict-transport-security']}
+          (out/'deployment.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print('LIVE_SOURCE '+json.dumps(report),flush=True)
+          PY
+      - name: Install pinned real browsers
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit > /tmp/masar-pw.log 2>&1 || { tail -80 /tmp/masar-pw.log; exit 1; }
+      - name: Restored old geometry, built-in template and same-project viewer verification
+        working-directory: masar-studio
+        env:
+          MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+        run: |
+          MASAR_BROWSER=chromium python tests/visual_source_browser.py
+          MASAR_BROWSER=webkit python tests/visual_source_browser.py
+      - name: Exact original request and invalid-input recovery on the live mobile interface
+        working-directory: masar-studio
+        env:
+          MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+        run: |
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+      - name: Capture the actual 20x25 client model in the material viewer, not a stock example
+        working-directory: masar-studio
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright,expect
+          from PIL import Image,ImageStat
+          base='https://masar-customer-preview.onrender.com';out=Path('test-output/stale-live')
+          prompt=Path('tests/fixtures/customer-chalet-ar.txt').read_text();errors=[];external=[];checks=[]
+          with sync_playwright() as pw:
+              browser=pw.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
+              context=browser.new_context(viewport={'width':1440,'height':1050},accept_downloads=True)
+              page=context.new_page();page.set_default_timeout(20000)
+              page.on('pageerror',lambda e:errors.append(str(e)))
+              page.on('request',lambda r:external.append(r.url) if r.url.startswith(('https:','http:')) and not r.url.startswith(base+'/') else None)
+              def action(name):page.locator('button[data-action="'+name+'"]').first.click()
+              page.goto(base,wait_until='domcontentloaded',timeout=120000);page.locator('#scene[data-ready="true"]').wait_for(state='attached',timeout=60000)
+              action('new');page.locator('#new-prompt').fill(prompt);page.locator('#new-form [type="submit"]').click();page.locator('#brief-form [name="confirm"]').check();page.locator('#brief-form [type="submit"]').click();expect(page.locator('#modal')).not_to_be_visible()
+              action('export')
+              with page.expect_download() as dl:page.locator('#modal [data-kind="json"]').click()
+              project=out/'MASAR-Chalet-20x25.json';dl.value.save_as(str(project));h=json.loads(project.read_text())['history'];revision=h['revisions'][h['cursor']];model=revision['model']
+              assert model['brief']['prompt']==prompt and model['site']['width']==20 and model['site']['depth']==25
+              assert len(model['levels'][0]['rooms'])==17
+              checks.append('downloaded actual client project preserves all 2191 characters and 17 spaces')
+              action('close-modal');action('render-center')
+              expect(page.locator('#render-source')).to_contain_text(revision['id']);expect(page.locator('#render-source')).to_contain_text('150.73');expect(page.locator('#render-source-warning')).to_have_count(0)
+              page.locator('#render-pbr').click();canvas=page.locator('#render-canvas');expect(canvas).to_have_attribute('data-ready','true');expect(canvas).to_have_attribute('data-renderer','three-pbr');expect(canvas).to_have_attribute('data-source-model',model['id']);expect(canvas).to_have_attribute('data-source-revision',revision['id'])
+              page.locator('#render-cutaway').check();canvas.screenshot(path=str(out/'actual-20x25-material.png'))
+              image=Image.open(out/'actual-20x25-material.png').convert('RGB');assert max(ImageStat.Stat(image).stddev)>8
+              checks.append('nonblank PBR geometry and visible source card match the downloaded client revision')
+              with page.expect_download() as dl:page.locator('#render-local').click()
+              scene_file=out/'MASAR-Chalet-Blender-Scene.json';dl.value.save_as(str(scene_file));scene=json.loads(scene_file.read_text())
+              assert scene['source']['modelId']==model['id'] and scene['source']['revisionId']==revision['id'] and len(scene['proofs']['rooms'])==17
+              checks.append('Blender scene contains the same model ID, revision and room set')
+              expect(page.locator('#render-start')).to_be_disabled();expect(page.locator('#render-capability')).to_contain_text('تسجيل الدخول لا يفعّله')
+              checks.append('cloud rendering remains disabled under option A')
+              page.set_viewport_size({'width':390,'height':844});page.locator('#render-source').scroll_into_view_if_needed();page.screenshot(path=str(out/'source-identity-mobile.png'),full_page=True)
+              assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.locator('#modal').evaluate('e=>e.scrollWidth<=e.clientWidth+1')
+              checks.append('source identity remains readable on mobile without horizontal overflow')
+              assert not errors and not external;checks.append('no unhandled JavaScript errors or third-party runtime requests')
+              report={'origin':base,'modelId':model['id'],'revisionId':revision['id'],'passed':len(checks),'failed':0,'checks':checks,'pageErrors':errors,'externalRequests':external,'scope':'actual HTTPS model and software Chromium PBR; no cloud render, no physical iPhone verification'}
+              (out/'actual-model-viewer-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print('ACTUAL_MODEL '+json.dumps(report),flush=True)
+              browser.close()
+          PY
+      - name: Independently measure the downloaded geometry and prepare hash-indexed evidence
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {importEnvelope,current,assertModel,validate,totals,conceptEnvelopeArea} from './shared/model.js';
+          const path='test-output/stale-live/MASAR-Chalet-20x25.json';
+          const model=assertModel(current(importEnvelope(readFileSync(path,'utf8'))));
+          const issues=validate(model),envelope=conceptEnvelopeArea(model);
+          if(issues.some(x=>x.status==='error')||envelope<120||envelope>160)throw Error(JSON.stringify(issues));
+          if(model.brief.prompt!==readFileSync('tests/fixtures/customer-chalet-ar.txt','utf8'))throw Error('Original text changed');
+          writeFileSync('test-output/stale-live/geometry-report.json',JSON.stringify({totals:totals(model),conceptEnvelopeArea:envelope,issues,scope:'conceptual consistency, not architectural or engineering approval'},null,2));
+          JS
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,shutil
+          out=Path('../stale-preview-delivery');out.mkdir(exist_ok=True)
+          for name,source in [('live','test-output/stale-live'),('source-recovery','test-output/visual-source'),('original-request','test-output/customer-ui')]:
+              shutil.copytree(source,out/name,dirs_exist_ok=True)
+          for path in out.rglob('*'):
+              if path.is_file() and path.suffix in ['.log']:path.unlink()
+          (out/'SOURCE-COMMIT.txt').write_text('4d89e70843e78f2e89cc6b519745c39239020242\n')
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file())+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-stale-preview-live-evidence
+          path: |
+            stale-preview-delivery/
+            masar-studio/test-output/stale-live/
+            masar-studio/test-output/visual-source/
+            masar-studio/test-output/customer-ui/
+          retention-days: 30
+          if-no-files-found: error
