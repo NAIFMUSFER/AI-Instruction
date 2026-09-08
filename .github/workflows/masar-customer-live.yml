@@ -27,7 +27,7 @@ jobs:
           base='https://masar-customer-preview.onrender.com'
           out=Path('masar-studio/test-output/customer-live');out.mkdir(parents=True,exist_ok=True)
           def request(path):
-              with urllib.request.urlopen(base+path,timeout=120) as r:return r.status,dict(r.headers),r.read()
+              with urllib.request.urlopen(base+path,timeout=120) as r:return r.status,{k.lower():v for k,v in r.headers.items()},r.read()
           report={'base':base,'expectedCommit':'887aea9b999af3aecca0d6dae08920df4e06e0f8','endpoints':{},'sourceHashes':{}}
           for path in ['/api/health','/api/ready','/api/version']:
               status,headers,body=request(path);value=json.loads(body);assert status==200
@@ -37,9 +37,10 @@ jobs:
           for path in ['/src/app.js','/src/style.css','/shared/model.js','/shared/building.js','/shared/render-scene.js']:
               status,headers,body=request(path);assert body==Path('masar-studio'+path).read_bytes(),path
               report['sourceHashes'][path]=hashlib.sha256(body).hexdigest()
-          status,headers,body=request('/');assert "script-src 'self'" in headers.get('Content-Security-Policy','')
-          report['security']={'csp':headers.get('Content-Security-Policy'),'hsts':headers.get('Strict-Transport-Security')}
+          status,headers,body=request('/');report['security']={'csp':headers.get('content-security-policy'),'hsts':headers.get('strict-transport-security')}
           (out/'deployment.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
+          assert "script-src 'self'" in headers.get('content-security-policy','')
+          assert 'max-age=' in headers.get('strict-transport-security','')
           PY
       - name: Install independent customer browsers
         run: |
@@ -92,7 +93,6 @@ jobs:
               report={'checks':checks,'passed':len(checks),'errors':errors,'externalRequests':external,'scope':'real HTTPS client preview, software WebGL2, cloud Blender worker remains disabled'}
               (out/'material-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print('MATERIAL_REPORT '+json.dumps(report,ensure_ascii=False),flush=True)
               context.close()
-              # Diagnostic only: old release remains untouched and may have been separately updated.
               old=browser.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True);page=old.new_page();page.set_default_timeout(15000)
               diagnostic={}
               try:
