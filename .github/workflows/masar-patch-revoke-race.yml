@@ -1,0 +1,42 @@
+name: MASAR exact share-revoke race patch
+on:
+  push:
+    branches: ['masar/production-v4']
+    paths: ['.github/workflows/masar-patch-revoke-race.yml']
+permissions:
+  contents: write
+  actions: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: masar/production-v4
+      - name: Apply exact asynchronous revoke completion wait
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('masar-studio/tests/browser_http.py')
+          s=p.read_text()
+          old="""            def revoke():\n                action(page,'share');action(page,'revoke-share');close(page);review.reload(wait_until='networkidle');expect(review.locator('#modal-title')).to_have_text('رابط المراجعة غير متاح');expect(review.locator('#app')).not_to_be_visible()"""
+          new="""            def revoke():\n                action(page,'share');action(page,'revoke-share')\n                # revoke-share awaits DELETE then asynchronously re-renders the share modal.\n                # Wait for that completed state before closing it, otherwise the old modal can\n                # close first and the refreshed modal can race the next real UI action.\n                expect(page.locator('#modal-title')).to_have_text('مشاركة نسخة للمراجعة')\n                expect(page.locator('[data-action=\"revoke-share\"]')).to_have_count(0)\n                close(page);review.reload(wait_until='networkidle');expect(review.locator('#modal-title')).to_have_text('رابط المراجعة غير متاح');expect(review.locator('#app')).not_to_be_visible()"""
+          if s.count(old) != 1:
+              raise SystemExit(f'exact patch target count={s.count(old)}, refusing')
+          p.write_text(s.replace(old,new))
+          PY
+          python -m py_compile masar-studio/tests/browser_http.py
+          git diff --check
+          git diff -- masar-studio/tests/browser_http.py
+      - name: Commit exact browser harness fix
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/tests/browser_http.py
+          git commit -m 'test(masar): wait for completed share revocation before next UI action'
+          git push origin HEAD:masar/production-v4
+      - name: Dispatch full release verification on patched branch head
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run masar-release-ci.yml --ref masar/production-v4
