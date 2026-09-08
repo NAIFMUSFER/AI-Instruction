@@ -45,3 +45,7 @@
 #render-gallery figcaption { margin:.4rem 0; }
 @media(max-width:600px){ #render-canvas {height:270px;} .render-actions .btn {flex:1 1 120px;} }
 @media(max-width:720px){.subbar{gap:10px;min-width:0}.breadcrumb{flex-shrink:0}.sub-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}.sub-actions button{flex-shrink:0;white-space:nowrap}}
+
+/* Client brief quality: preserve original paragraphs in the confirmation dialog. */
+#brief-form .original-prompt{white-space:pre-wrap;overflow-wrap:anywhere;text-align:start}
+#modal-error{scroll-margin-block-start:12px}
