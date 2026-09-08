@@ -23,57 +23,39 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Record remaining failures before refining the audited source
-        run: |
-          cd masar-studio
-          mkdir -p test-output/chalet-acceptance
-          node --test tests/chalet-quality.test.mjs tests/chalet-provenance.test.mjs > test-output/chalet-acceptance/refinement-before.log 2>&1 || true
-          python - <<'PY'
-          from pathlib import Path
-          lines=Path('test-output/chalet-acceptance/refinement-before.log').read_text().splitlines()
-          for i,line in enumerate(lines):
-              if line.startswith('not ok'):print('\n'.join(lines[i:i+26]))
-          print('\n'.join(lines[-10:]))
-          PY
-      - name: Refine primary building identity and prevent raw-prompt duplication
+      - name: Preserve readable original paragraphs and verify actual text rather than hidden rendering
         run: |
           python - <<'PY'
           from pathlib import Path
-          import subprocess
-          p=Path('masar-studio/shared/model.js');assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='41048d4d7dc3c2902bd23858d82f0a6aa54788e5'
-          s=p.read_text();start=s.index('function requestedProjectType(t) {');end=s.index('function requestedBuildingArea(t)',start)
-          s=s[:start]+r'''function requestedProjectType(t) {
-              const classify=x=>{
-                  if (/(?:فيلا|فله|منزل)\s*(?:بنظام|بطابع|باسلوب)\s*شاليه/.test(x)) return 'chalet';
-                  const candidates=[[/شاليه/,'chalet'],[/(?:فيلا|فله|منزل|\bvilla\b)/,'villa'],[/(?:مستودع|مخزن|warehouse)/,'warehouse'],[/(?:مكاتب|مكتب اداري|office)/,'office'],[/(?:متجر|محل تجاري|تجز[يئ]ه|retail)/,'retail']]
-                      .map(([re,type])=>({index:x.search(re),type})).filter(c=>c.index>=0).sort((a,b)=>a.index-b.index);
-                  return candidates[0]?.type;
-              };
-              return classify(t.split(/[،.\n]/)[0])||classify(t)||'villa';
-          }
-          '''+s[end:]
-          old=r"        requestedDetails: String(prompt).split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55),"
-          assert s.count(old)==1;s=s.replace(old+'\n','')
-          old='...(brief.requestedDetails||[]).map((label,i)=>'
-          new=r"...String(brief.prompt||'').split(/\n\s*\n/).filter(Boolean).flatMap(x=>x.match(/[\s\S]{1,800}/g)||[]).slice(0,55).map((label,i)=>"
+          p=Path('masar-studio/tests/browser_chalet.py');s=p.read_text()
+          old="check('failed generation retains original long description',page.locator('#brief-form .original-prompt').inner_text()==prompt)"
+          new="original=page.locator('#brief-form .original-prompt');raw=original.text_content();case['originalReadback']={'expectedLength':len(prompt),'rawLength':len(raw),'rawEqual':raw==prompt};check('failed generation preserves exact original text bytes',raw==prompt);page.locator('#brief-form details summary').click();expect(original).to_be_visible();check('expanded original description preserves readable paragraphs',original.inner_text()==prompt)"
           assert s.count(old)==1;s=s.replace(old,new)
-          old="const priority = /خصوصي/.test(t) ? 'privacy'"
-          new=r"const priority = /(?:ال)?اولويه[^،.\n]{0,100}(?:حديق|مسبح|منتجع|شاليه|حوش)/.test(t) ? 'outdoor' : /خصوصي/.test(t) ? 'privacy'"
-          assert s.count(old)==1;s=s.replace(old,new);p.write_text(s)
+          old="box=page.locator('#modal-error');check("
+          new="box=page.locator('#modal-error');box.scroll_into_view_if_needed();check("
+          assert s.count(old)==1;s=s.replace(old,new)
+          old="payload=json.loads(Path(info.value.path()).read_text());h=history_from(payload);"
+          new="payload=json.loads(Path(info.value.path()).read_text());(OUT/(tag+'-project.json')).write_text(json.dumps(payload,ensure_ascii=False,indent=2));h=history_from(payload);"
+          assert s.count(old)==1;s=s.replace(old,new)
+          p.write_text(s);compile(s,str(p),'exec')
+          css=Path('masar-studio/src/style.css');text=css.read_text();marker='/* Client brief quality: preserve original paragraphs in the confirmation dialog. */'
+          assert marker not in text
+          css.write_text(text+'\n'+marker+'\n#brief-form .original-prompt{white-space:pre-wrap;overflow-wrap:anywhere;text-align:start}\n#modal-error{scroll-margin-block-start:12px}\n')
           PY
           cd masar-studio && npm run check && npm run build
-      - name: Commit only reviewed model refinement
+      - name: Commit only the UI and customer acceptance refinement
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/shared/model.js
+          git add masar-studio/src/style.css masar-studio/tests/browser_chalet.py
           git diff --cached --check
-          git commit -m 'fix(masar): prefer primary building use and preserve description-sharing privacy'
+          git commit -m 'fix(masar): keep client brief readable inside the generation review'
           git push origin HEAD:audit/masar-chalet-generation-20260908
           git rev-parse HEAD
-      - name: Run every engine, server and security regression
+      - name: Verify complete Node regression suite
         working-directory: masar-studio
         run: |
+          mkdir -p test-output
           npm test > test-output/chalet-all-node.log 2>&1 || { grep -A 40 '^not ok' test-output/chalet-all-node.log; tail -12 test-output/chalet-all-node.log; exit 1; }
           tail -12 test-output/chalet-all-node.log
       - name: Install exact browsers and compile local viewer
@@ -81,10 +63,10 @@ jobs:
           python -m pip install playwright==1.62.0 > /tmp/pip.log 2>&1
           python -m playwright install --with-deps chromium webkit > /tmp/browsers.log 2>&1 || { tail -80 /tmp/browsers.log; exit 1; }
           cd masar-studio/render-viewer && npm ci --include=dev && npm run build
-      - name: Exercise exact customer description, error recovery and exported geometry
+      - name: Full original-description customer journey on mobile and desktop
         working-directory: masar-studio
         run: python tests/browser_chalet.py
-      - name: Verify existing standalone interactions
+      - name: All existing standalone interactions
         working-directory: masar-studio
         run: python tests/browser_flows.py
       - name: Dispatch full Blender IFC Docker and three-browser gates
