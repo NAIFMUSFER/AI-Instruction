@@ -8,18 +8,12 @@ permissions:
   contents: read
 jobs:
   diagnose:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 12
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            playwright: '1.55.0'
-          - os: macos-15
-            playwright: '1.55.0'
-          - os: ubuntu-latest
-            playwright: '1.56.1'
+        playwright: ['1.55.0', '1.62.0']
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
@@ -44,11 +38,11 @@ jobs:
               const name = 'native-cache-diagnostic';
               const cache = await caches.open(name);
               const results = [];
-              for (const [kind, response] of [
-                  ['synthetic', new Response('native-cache-probe', {headers: {'Content-Type': 'text/plain'}})],
-                  ['network', await fetch('/src/style.css')]
-              ]) {
-                  const key = '/native-probe-' + kind;
+              for (const kind of ['relative', 'absolute', 'request', 'network']) {
+                  const path = '/native-probe-' + kind;
+                  const absolute = new URL(path, location.origin).href;
+                  const key = kind === 'relative' ? path : kind === 'request' ? new Request(absolute) : absolute;
+                  const response = kind === 'network' ? await fetch('/src/style.css') : new Response('native-cache-probe', {headers: {'Content-Type': 'text/plain'}});
                   await cache.put(key, response);
                   const same = await cache.match(key);
                   const reopened = await (await caches.open(name)).match(key);
@@ -64,7 +58,7 @@ jobs:
           subprocess.run(['node','--check'],input=probe,text=True,check=True)
           p=Path('masar-studio/tests/browser_http.py');s=p.read_text()
           old="            observe(page);page.goto(base,wait_until='networkidle');ready(page)"
-          new=old+"\n            page.evaluate('navigator.serviceWorker.ready');page.wait_for_function('navigator.serviceWorker.controller!==null')\n            native=page.evaluate("+repr(probe)+")\n            (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)"
+          new=old+"\n            page.evaluate('navigator.serviceWorker.ready')\n            native=page.evaluate("+repr(probe)+")\n            (OUT/'native-cache-preflight.json').write_text(json.dumps(native,indent=2));print('NATIVE_CACHE_PREFLIGHT '+json.dumps(native),flush=True)"
           assert s.count(old)==1
           s=s.replace(old,new)
           p.write_text(s);compile(s,str(p),'exec')
@@ -78,6 +72,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: masar-native-cache-${{ matrix.os }}-${{ matrix.playwright }}
+          name: masar-native-cache-${{ matrix.playwright }}
           path: masar-studio/test-output/browser-http-webkit/
           retention-days: 7
