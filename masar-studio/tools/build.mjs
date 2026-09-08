@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const read=p=>readFile(path.join(root,p),'utf8');
-const order=['shared/authoring.js','shared/model.js','shared/building.js','shared/ifc.js','shared/geometry.js','src/renderer.js','src/storage.js','shared/render-scene.js','src/render-ui.js','src/app.js'];
+const order=['shared/authoring.js','shared/model.js','shared/building.js','shared/layout-quality.js','shared/ifc.js','shared/geometry.js','src/renderer.js','src/storage.js','shared/render-scene.js','src/render-ui.js','src/app.js'];
 const modules=new Map();let script="'use strict';\nglobalThis.MASAR_STANDALONE=true;\n";
 for(const [i,file] of order.entries()){
  const code=await read(file), moduleName='MASAR_Module_'+i, bindings=[];

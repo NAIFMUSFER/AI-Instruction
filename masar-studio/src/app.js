@@ -1,3 +1,4 @@
+import { reviewLayout, compactCirculationAlternative } from '../shared/layout-quality.js';
 import { openRenderStudio } from './render-ui.js';
 import { KINDS, COLORS, clone, uid, round, understand, briefIssues, generate, assertModel, validate, totals, area, propose, resolvePreview, commitPreview, parseCommand, checkLocks, diffModels, createHistory, current, pushHistory, assertHistory, exportEnvelope, importEnvelope, parseDXF, exportDXF, designMetrics, createAlternatives, impactSummary, requirementStatus, distanceToEntry, touchesGardenEdge } from '../shared/model.js';
 import { escapeHTML as E, planSVG, exportOBJ } from '../shared/geometry.js';
@@ -127,7 +128,7 @@ function renderPreview() {
     p.impact = impact; p.newWarnings = newWarnings;
     const delta = n => `${n > 0 ? '+' : ''}${fmt(n)}`;
     const canResolve = p.blockers.length && p.blockers.some(i => (i.id.startsWith('overlap-') || i.id.startsWith('bounds-')) && i.targets?.some(id => p.changes.some(c => c.id === id)));
-    el.innerHTML = `<div class="preview-heading"><div><h3>${p.blockers.length ? 'المعاينة كشفت تعارضًا — لم يتغير المشروع المحفوظ' : p.autoResolved ? 'حل مقترح للتعارض — راجعه قبل الاعتماد' : 'معاينة الأثر — لم يُحفظ بعد'}</h3><p>${p.changes.length} تغييرات · ${impact.affectedIds.length} عناصر متأثرة مباشرة</p></div><div class="preview-actions"><button class="btn light" data-action="cancel-preview">إلغاء</button>${canResolve ? `<button class="btn light" data-action="resolve-preview">${icon('sparkles')} اقتراح حل آمن</button>` : ''}<button class="btn primary" data-action="commit-preview" ${p.blockers.length ? 'disabled' : ''}>اعتماد التعديل</button></div></div><div class="impact-grid"><span><small>المسطحات</small><strong>${delta(impact.floorAreaDelta)} م²</strong></span><span><small>البصمة</small><strong>${delta(impact.footprintDelta)} م²</strong></span><span><small>الحركة</small><strong>${delta(impact.circulationDelta)} م²</strong></span><span><small>مؤشر المفهوم</small><strong>${delta(impact.scoreDelta)} نقطة</strong></span></div><div class="preview-details"><span>المتأثر: ${E(names || 'خصائص المشروع')}. الإطار المتقطع يوضح الوضع السابق.</span>${p.autoResolved ? `<p class="resolved-impact"><strong>اقتراح مسار:</strong> لم نحرّك أي عنصر مثبّت. راجع الحل ثم اعتمده فقط إذا يناسب قصدك.</p>${(p.resolutionNotes||[]).map(n=>`<p class="resolved-impact">✓ ${E(n)}</p>`).join('')}` : ''}${impact.resolvedIssues.filter(i => ['error','warning'].includes(i.status)).map(i => `<p class="resolved-impact">✓ حُلّ: ${E(i.message)}</p>`).join('')}${p.blockers.map(i => `<p>• ${E(i.message)}</p>`).join('')}${newWarnings.length ? `<label><input type="checkbox" id="ack-warnings"> راجعت التنبيهات الجديدة: ${newWarnings.map(i => E(i.message)).join('؛ ')}</label>` : ''}</div>`;
+    el.innerHTML = `<div class="preview-heading"><div><h3>${p.blockers.length ? 'المعاينة كشفت تعارضًا — لم يتغير المشروع المحفوظ' : p.autoResolved ? 'حل مقترح للتعارض — راجعه قبل الاعتماد' : 'معاينة الأثر — لم يُحفظ بعد'}</h3><p>${p.changes.length} تغييرات · ${impact.affectedIds.length} عناصر متأثرة مباشرة</p></div><div class="preview-actions"><button class="btn light" data-action="cancel-preview">إلغاء</button>${canResolve ? `<button class="btn light" data-action="resolve-preview">${icon('sparkles')} اقتراح حل آمن</button>` : ''}<button class="btn primary" data-action="commit-preview" ${p.blockers.length ? 'disabled' : ''}>اعتماد التعديل</button></div></div><div class="impact-grid"><span><small>المسطحات</small><strong>${delta(impact.floorAreaDelta)} م²</strong></span><span><small>البصمة</small><strong>${delta(impact.footprintDelta)} م²</strong></span><span><small>الحركة</small><strong>${delta(impact.circulationDelta)} م²</strong></span><span><small>مؤشر المفهوم</small><strong>${delta(impact.scoreDelta)} نقطة</strong></span></div><div class="preview-details">${p.designTradeoffs?'<p class="quality-preview-notice">إعادة توزيع شاملة قيد المعاينة: مدخل العائلة جانبي، وبعض الغرف أصغر. المسبح والمواقف ثابتان. الإلغاء لا يحفظ التغييرات؛ الاعتماد ينشئ نسخة يمكن التراجع عنها.</p>':''}<span>المتأثر: ${E(names || 'خصائص المشروع')}. الإطار المتقطع يوضح الوضع السابق.</span>${p.autoResolved ? `<p class="resolved-impact"><strong>اقتراح مسار:</strong> لم نحرّك أي عنصر مثبّت. راجع الحل ثم اعتمده فقط إذا يناسب قصدك.</p>${(p.resolutionNotes||[]).map(n=>`<p class="resolved-impact">✓ ${E(n)}</p>`).join('')}` : ''}${impact.resolvedIssues.filter(i => ['error','warning'].includes(i.status)).map(i => `<p class="resolved-impact">✓ حُلّ: ${E(i.message)}</p>`).join('')}${p.blockers.map(i => `<p>• ${E(i.message)}</p>`).join('')}${newWarnings.length ? `<label><input type="checkbox" id="ack-warnings"> راجعت التنبيهات الجديدة: ${newWarnings.map(i => E(i.message)).join('؛ ')}</label>` : ''}</div>`;
 }
 function newProject() {
     mutable();
@@ -206,8 +207,25 @@ function requirementsCenter() {
 function openAlternatives() {
     mutable();
     state.alternatives = createAlternatives(model());
+    const improved=compactCirculationAlternative(model());
+    if(improved.alternative) state.alternatives.splice(1,0,{...improved.alternative,metrics:designMetrics(improved.alternative.model)});
     const baseScore=state.alternatives[0].metrics.overall;
-    showModal('بدائل محسوبة مع بقاء قراراتك المثبتة', `<p class="modal-lead">يولّد مسار أربع قراءات حتمية للمساحات الحالية، ويقارنها بمؤشرات معلنة. المؤشرات أدوات قرار داخلية وليست تقييمًا معماريًا مهنيًا أو فحص كود.</p><div class="alternate-grid">${state.alternatives.map((a,i)=>{const t=totals(a.model),d=a.metrics.overall-baseScore;return `<div class="alternate-card"><div class="alternate-plan">${planSVG(a.model,state.levelId,{dimensions:false,furniture:false,interactive:false,issues:validate(a.model)})}</div><div class="alternate-info"><h3>${E(a.label)}</h3><p>${E(a.description)}</p><div class="alt-metrics"><span>المفهوم <b>${fmt(a.metrics.overall)}</b></span><span>الخصوصية <b>${fmt(a.metrics.privacy)}</b></span><span>الحركة <b>${fmt(a.metrics.movement)}</b></span><span>الخارجية <b>${fmt(a.metrics.outdoor)}</b></span></div><p>${fmt(t.floorArea)} م² مسطحات · ${fmt(t.outdoorArea)} م² خارجية<br>فرق المؤشر عن الحالي: ${d>0?'+':''}${fmt(d)}</p><button class="btn ${i?'primary':'light'} full" data-action="use-alternative" data-index="${i}" ${i===0?'disabled':''}>معاينة هذا البديل</button></div></div>`;}).join('')}</div><div class="notice">العناصر المثبتة لا تتحرك. أي بديل ينتج تعارضًا هندسيًا سيُمنع عند المعاينة، وكل اعتماد يُنشئ نسخة جديدة قابلة للتراجع.</div>`, '03 — مقارنة البدائل');
+    showModal('بدائل محسوبة مع بقاء قراراتك المثبتة', `<p class="modal-lead">يعرض مسار مقترحات قابلة للمقارنة، ويُميّز البديل الذي لا يغيّر الهندسة فعلًا. تغيير اسم البطاقة وحده لا يُعد تحسينًا. المؤشرات أدوات قرار داخلية وليست تقييمًا معماريًا مهنيًا أو فحص كود.</p><div class="alternate-grid">${state.alternatives.map((a,i)=>{const t=totals(a.model),d=a.metrics.overall-baseScore,changed=diffModels(model(),a.model).length>0,blocked=validate(a.model).some(x=>x.status==='error'),q=reviewLayout(a.model);return `<div class="alternate-card"><div class="alternate-plan">${planSVG(a.model,state.levelId,{dimensions:false,furniture:false,interactive:false,issues:validate(a.model)})}</div><div class="alternate-info"><h3>${E(a.label)}</h3><p>${E(a.description)}</p><div class="alt-metrics"><span>المفهوم <b>${fmt(a.metrics.overall)}</b></span><span>الخصوصية <b>${fmt(a.metrics.privacy)}</b></span><span>الحركة <b>${fmt(a.metrics.movement)}</b></span><span>الخارجية <b>${fmt(a.metrics.outdoor)}</b></span></div><p>${fmt(q.envelopeM2)} م² غلاف مبانٍ مفاهيمي · ${fmt(q.outsideEnvelopeM2)} م² خارجه<br>أطول امتداد للممر: ${fmt(q.longestHallExtentM)} م · مساحة الممرات: ${fmt(q.hallAreaM2)} م²<br>فرق المؤشر عن الحالي: ${d>0?'+':''}${fmt(d)}</p>${!changed&&i?'<p class="notice">لا تغيير هندسي فعلي مع القيود الحالية.</p>':blocked?'<p class="notice warn">به تعارض هندسي؛ غير قابل للاعتماد.</p>':''}<button class="btn ${i?'primary':'light'} full" data-action="use-alternative" data-index="${i}" ${i===0||!changed||blocked?'disabled':''}>معاينة هذا البديل</button></div></div>`;}).join('')}</div><div class="notice">العناصر المثبتة لا تتحرك. أي بديل ينتج تعارضًا هندسيًا سيُمنع عند المعاينة، وكل اعتماد يُنشئ نسخة جديدة قابلة للتراجع.</div>`, '03 — مقارنة البدائل');
+}
+function qualityComparison(before, after=null) {
+    const fields=[['غلاف المباني المفاهيمي','envelopeM2','م²'],['الأرض خارج الغلاف','outsideEnvelopeM2','م²'],['مساحة الممرات','hallAreaM2','م²'],['الممرات والاستقبال معًا','circulationAndReceptionM2','م²'],['أطول امتداد مستقيم لحيز الممر','longestHallExtentM','م']];
+    return `<div class="quality-table-wrap"><table class="quality-table"><thead><tr><th>المقياس</th><th>الحالي</th>${after?'<th>المقترح</th>':''}</tr></thead><tbody>${fields.map(([label,key,unit])=>`<tr><th>${E(label)}</th><td data-quality-current="${key}">${fmt(before[key])} ${unit}</td>${after?`<td data-quality-next="${key}">${fmt(after[key])} ${unit}</td>`:''}</tr>`).join('')}</tbody></table></div>`;
+}
+function openQualityReview() {
+    const m=shown(),q=reviewLayout(m),result=state.preview?{alternative:null,reason:'اعتمد المعاينة الحالية أو ألغها قبل اقتراح إعادة توزيع.'}:compactCirculationAlternative(m),a=result.alternative;
+    const limitations='هذه فحوص مساحية توضيحية، وليست اعتمادًا معماريًا. امتداد الممر ليس مسافة حركة أو إخلاء. مستطيل السرير لا يفحص فتح الأبواب أو الخزائن أو الإتاحة. الخصوصية والتهوية والإضاءة والإنشاء والسلامة لم تُعتمد.';
+    showModal('جودة التوزيع والمقايضات', `<p class="modal-lead">مقاييس من نموذجك الفعلي، لا من الصورة. ${state.preview?'تراجع هنا المعاينة غير المحفوظة.':'فتح هذه اللوحة لا يغيّر مشروعك.'}</p>${qualityComparison(q,a?.review)}
+    ${q.longestHallExtentM>8?'<div class="notice warn">يوجد امتداد ممر يزيد على 8 م. هذا تنبيه تصميمي داخلي قابل للمراجعة، وليس حدًا نظاميًا.</div>':''}
+    <h3>هل شكل غرفة النوم قابل للاستفادة؟</h3><p>نبحث عن مستطيل داخل المضلع نفسه؛ الصندوق المحيط بالغرفة لا يكفي. اختبار توضيحي لمنطقة سرير 3 × 2.8 م مع بدل الجدران، وليس توزيع أثاث معتمدًا.</p>
+    <div class="quality-room-list">${q.bedrooms.map(r=>`<div class="quality-room"><strong>${E(r.name)}</strong><span>${fmt(r.areaM2)} م² · مستطيل داخلي ${fmt(r.largestRectangle.w)} × ${fmt(r.largestRectangle.d)} م</span><span class="source-tag ${r.bedZoneFits?'':'warn'}">${r.bedZoneFits?'يتسع هندسيًا للاختبار التوضيحي':'يحتاج مراجعة شكل الغرفة'}</span></div>`).join('')}</div>
+    ${a?`<h3>${E(a.label)}</h3><div class="notice warn" id="quality-tradeoffs">هذا إعادة توزيع للمبنى، لا مجرد نقل جدار. مدخل العائلة يصبح من الجانب. تصغر غرفتا النوم الإضافيتان ومنطقة الطعام، وتتغير مواضع الأبواب والخدمات. يبقى الموقع والمسبح والمواقف والتعليقات ومعرّفات الغرف والطلب الأصلي. لا نطبّقه على مخطط عُدّلت هندسته يدويًا أو ثُبّتت غرفه.</div>
+    <details class="quality-room-changes"><summary>مساحة كل غرفة قبل المقترح وبعده</summary><div class="quality-table-wrap"><table class="quality-table"><thead><tr><th>المساحة</th><th>الحالي م²</th><th>المقترح م²</th></tr></thead><tbody>${m.levels[0].rooms.map(r=>{const next=a.model.levels[0].rooms.find(n=>n.id===r.id);return `<tr><th>${E(r.name)}</th><td>${fmt(area(r))}</td><td>${next?fmt(area(next)):'غير موجود'}</td></tr>`;}).join('')}</tbody></table></div></details>`:`<p class="notice">${E(result.reason||'لا يوجد مقترح إعادة توزيع متاح لهذه الحالة.')}</p>`}
+    <div class="notice warn">${limitations}</div><div class="modal-footer"><button class="btn light" data-action="download-quality">تنزيل فحص التوزيع JSON</button>${a&&!state.readOnly?'<button class="btn primary" id="quality-preview" data-action="quality-preview">معاينة الحركة الأقصر</button>':''}</div>`, 'DESIGN REVIEW — NOT CODE APPROVAL');
 }
 function download(filename, content, type) { const blob = content instanceof Blob ? content : new Blob([content], { type }); const href = URL.createObjectURL(blob), a = document.createElement('a'); a.href = href; a.download = filename; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 30000); toast('جُهّز الملف للتنزيل.'); }
 function exportMenu() {
@@ -642,6 +660,23 @@ async function handleAction(b) {
                 switchMobile('workspace');
             }
             break;
+        case 'quality-review':
+            openQualityReview();
+            break;
+        case 'download-quality': {
+            const value={source:{modelId:shown().id,revisionId:state.history.revisions[state.history.cursor].id,uncommittedPreview:!!state.preview},review:reviewLayout(shown())};
+            download('MASAR-Layout-Review.json',JSON.stringify(value,null,2),'application/json');
+            break;
+        }
+        case 'quality-preview': {
+            mutable();
+            const result=compactCirculationAlternative(model());
+            if(!result.alternative)throw Error(result.reason);
+            const a=result.alternative,issues=validate(a.model);
+            state.preview={candidate:clone(a.model),changes:diffModels(model(),a.model),issues,blockers:issues.filter(i=>i.status==='error'),impact:impactSummary(model(),a.model),base:JSON.stringify(model()),label:a.label,designTradeoffs:true};
+            closeModal();render();switchMobile('workspace');
+            break;
+        }
         case 'alternatives':
             openAlternatives();
             break;
@@ -650,7 +685,7 @@ async function handleAction(b) {
             if (!a)
                 break;
             const issues = validate(a.model), existing = new Set(validate(model()).filter(i => i.status === 'error').map(i => i.id));
-            state.preview = { candidate: clone(a.model), changes: diffModels(model(), a.model), issues, blockers: issues.filter(i => i.status === 'error'), impact: impactSummary(model(), a.model), base: JSON.stringify(model()), label: a.label };
+            state.preview = { candidate: clone(a.model), changes: diffModels(model(), a.model), issues, blockers: issues.filter(i => i.status === 'error'), impact: impactSummary(model(), a.model), base: JSON.stringify(model()), label: a.label, designTradeoffs:a.strategy==='short-circulation' };
             closeModal();
             render();
             switchMobile('workspace');

@@ -74,3 +74,15 @@
 #render-studio .properties-grid .field{min-width:0}
 #render-studio .properties-grid select{max-width:100%;box-sizing:border-box}
 @media(max-width:600px){#render-studio .properties-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Measured layout review: content reflows instead of clipping at phone widths. */
+.quality-table-wrap{max-width:100%;overflow-x:auto;margin-block:12px}
+.quality-table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
+.quality-table th,.quality-table td{padding:10px 7px;text-align:start;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.quality-table th:first-child{width:44%}.quality-table td{font-variant-numeric:tabular-nums}
+.quality-room-list{display:grid;gap:10px;margin-block:12px}
+.quality-room{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.quality-room .source-tag{justify-self:start;white-space:normal}
+.quality-room-changes summary{cursor:pointer;font-weight:700;padding-block:10px}
+.quality-preview-notice{padding:10px;background:rgba(255,255,255,.16);border-radius:8px}
+@media(max-width:500px){.quality-table{font-size:12px}.quality-table th,.quality-table td{padding:8px 4px}#quality-preview{width:100%;white-space:normal}}

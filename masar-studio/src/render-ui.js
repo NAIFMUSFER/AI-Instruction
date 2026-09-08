@@ -34,7 +34,7 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
         <div class="render-source-metrics"><span>غلاف المباني التقريبي <b>${num(source.envelope)} م²</b></span><span>خارج المباني <b>${num(source.unbuilt)} م²</b></span></div>
         <small>يشمل الخارج المسبح والمواقف والجلسات، وليس كله حديقة. الغلاف المفاهيمي ليس مسطح رخصة.</small>
         <small>نسخة التصميم: <b dir="ltr">${E(sourceRevision)}</b></small>
-        <p>هذه معاينة للنموذج المفتوح نفسه؛ ليست إعادة تصميم ولا صورة ناتجة من Blender.</p>
+        <p>هذه معاينة للنموذج المفتوح نفسه؛ ليست إعادة تصميم ولا صورة ناتجة من Blender.</p><button type="button" class="btn light" data-action="quality-review">فحص جودة التوزيع قبل الخامات</button>
         ${source.demo?'<button type="button" class="btn primary" data-action="new">ابدأ مشروعك بدل المثال</button>':''}
         ${!source.demo&&getModel().brief?.prompt?`<details><summary>الوصف المحفوظ لهذا المجسم</summary><p class="render-original">${E(getModel().brief.prompt)}</p></details>`:''}
         ${source.warnings.length?`<div id="render-source-warning" class="notice warn" role="status">${source.warnings.map(s=>`<p>${E(s)}</p>`).join('')}${source.needsRebuild&&!isReadOnly()?'<button type="button" class="btn light" data-action="regenerate-brief">مراجعة الوصف وإنشاء توزيع مستقل</button><small>لا نحذف المشروع الحالي أو نعدّل أبعاده تلقائيًا.</small>':''}</div>`:''}
