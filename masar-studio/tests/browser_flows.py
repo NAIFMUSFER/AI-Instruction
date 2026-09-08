@@ -150,7 +150,10 @@ with sync_playwright() as p:
  for kind,extension in [('json','.json'),('svg','.svg'),('dxf','.dxf'),('ifc','.ifc'),('obj','.obj'),('csv','.csv'),('elements','.csv'),('requirements','.csv'),('rules','.json'),('report','.html'),('png','.png')]:
   def export_file(kind=kind,extension=extension):
    action('export')
-   with page.expect_download(timeout=3000) as pending:
+   # PNG is produced by asynchronous canvas.toBlob rasterization; keep the same
+   # real download/signature checks but allow CI rasterization additional time.
+   download_timeout=10000 if kind=='png' else 3000
+   with page.expect_download(timeout=download_timeout) as pending:
     page.locator(f'[data-action="download"][data-kind="{kind}"]').click()
    download=pending.value
    ok(download.suggested_filename.endswith(extension))
