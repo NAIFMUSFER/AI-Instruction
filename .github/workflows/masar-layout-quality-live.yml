@@ -1,0 +1,131 @@
+name: MASAR published layout quality acceptance
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-layout-quality-live.yml']
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: fe368d102dc417b79f861f448e7d9a8feec456df
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify live revision and every changed public module
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import urllib.request,json,hashlib
+          base='https://masar-customer-preview.onrender.com';expected='fe368d102dc417b79f861f448e7d9a8feec456df'
+          out=Path('masar-studio/test-output/layout-quality-live');out.mkdir(parents=True,exist_ok=True)
+          def get(path):
+              with urllib.request.urlopen(base+path,timeout=120) as r:
+                  assert r.status==200
+                  return r.read(),{k.lower():v for k,v in r.headers.items()}
+          report={'origin':base,'expectedCommit':expected,'endpoints':{},'sourceHashes':{}}
+          for name in ['health','ready','version']:
+              raw,_=get('/api/'+name);report['endpoints'][name]=json.loads(raw)
+          assert report['endpoints']['version']['commit']==expected
+          assert report['endpoints']['ready']['ready'] is True
+          assert report['endpoints']['health']['persistenceClass']=='ephemeral'
+          for path in ['/shared/layout-quality.js','/src/app.js','/src/render-ui.js','/src/style.css','/public/sw.js','/shared/model.js','/shared/building.js']:
+              raw,_=get(path);assert raw==Path('masar-studio'+path).read_bytes(),path;report['sourceHashes'][path]=hashlib.sha256(raw).hexdigest()
+          raw,headers=get('/');assert raw==Path('masar-studio/public/index.html').read_bytes()
+          assert "script-src 'self'" in headers.get('content-security-policy','') and 'max-age=' in headers.get('strict-transport-security','')
+          (out/'deployment.json').write_text(json.dumps(report,indent=2));print(json.dumps(report))
+          PY
+      - name: Install pinned customer browsers and independent geometry validator
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 >/tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit >/tmp/masar-browser.log 2>&1 || { tail -80 /tmp/masar-browser.log; exit 1; }
+      - name: Real client quality-review and original-request flows on the published URL
+        working-directory: masar-studio
+        env:
+          MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+        run: |
+          MASAR_BROWSER=chromium python tests/layout_quality_browser.py
+          MASAR_BROWSER=webkit python tests/layout_quality_browser.py
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+      - name: Measure actual downloaded revisions and export their IFC
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {current,importEnvelope,validate} from './shared/model.js';
+          import {reviewLayout} from './shared/layout-quality.js';
+          import {exportIFC} from './shared/building.js';
+          const load=(e,t)=>current(importEnvelope(readFileSync(`test-output/layout-quality-ui/${e}/${t}.json`,'utf8')));
+          const comparisons=[];
+          for(const engine of ['chromium','webkit']){
+              const before=load(engine,'before'),after=load(engine,'after'),b=reviewLayout(before),a=reviewLayout(after);
+              if(validate(after).some(x=>x.status==='error'))throw Error('Actual downloaded geometry has blockers');
+              if(a.longestHallExtentM>=b.longestHallExtentM||a.circulationAndReceptionM2>=b.circulationAndReceptionM2||a.envelopeM2>160||a.envelopeM2<120)throw Error('Measured criteria failed');
+              if(JSON.stringify(before.site)!==JSON.stringify(after.site)||before.brief.prompt!==after.brief.prompt)throw Error('Client source changed');
+              comparisons.push({engine,before:b,after:a,originalTextPreserved:true,outdoorFeaturesUnchanged:true,sourceModelId:after.id});
+          }
+          writeFileSync('test-output/layout-quality-live/comparison.json',JSON.stringify(comparisons,null,2));
+          writeFileSync('test-output/layout-quality-live/improved.ifc',exportIFC(load('chromium','after')));
+          console.log(JSON.stringify(comparisons));
+          JS
+          python - <<'PY'
+          from pathlib import Path
+          import json,ifcopenshell,ifcopenshell.validate,ifcopenshell.geom
+          f=ifcopenshell.open('test-output/layout-quality-live/improved.ifc');log=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(f,log,express_rules=True)
+          settings=ifcopenshell.geom.settings();count=0;errors=[]
+          for obj in f.by_type('IfcProduct'):
+              if not obj.Representation:continue
+              try:
+                  s=ifcopenshell.geom.create_shape(settings,obj);assert len(s.geometry.verts)>0;count+=1
+              except Exception as e:errors.append({'id':obj.id(),'error':str(e)})
+          report={'schema':f.schema,'schemaIssues':log.statements,'geometryShapes':count,'geometryFailures':errors,'scope':'IFC structure and geometry, not architectural/code approval'}
+          Path('test-output/layout-quality-live/independent-ifc.json').write_text(json.dumps(report,default=str,indent=2));print(json.dumps(report,default=str));assert count and not log.statements and not errors
+          PY
+      - name: Assemble exact source and tested client files without fonts or secrets
+        run: |
+          cd masar-studio
+          npm ci --ignore-scripts && npm run check && npm run build
+          npm test > test-output/layout-quality-live/node.log 2>&1 || { tail -100 test-output/layout-quality-live/node.log; exit 1; }
+          tail -12 test-output/layout-quality-live/node.log
+          cd render-viewer && npm ci --include=dev && npm run build && cd ..
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib,zipfile,shutil
+          out=Path('../layout-quality-delivery');out.mkdir(exist_ok=True)
+          files=[]
+          for parent in ['src','shared','server','public','tools','render-worker','render-viewer','tests','docs']:
+              for p in Path(parent).rglob('*'):
+                  if not p.is_file() or any(x in p.parts for x in ['node_modules','__pycache__','test-output']):continue
+                  if p.suffix.lower() in ['.ttf','.otf','.woff','.woff2','.db','.sqlite','.pyc']:continue
+                  files.append(p)
+          for name in ['package.json','package-lock.json','README.md','Dockerfile','compose.yaml','render.yaml','start-windows.cmd','start.sh','.env.example']:
+              if Path(name).is_file():files.append(Path(name))
+          with zipfile.ZipFile(out/'MASAR-Layout-Quality-Source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in sorted(set(files)):z.write(p,'masar-studio/'+str(p))
+              z.writestr('masar-studio/LAYOUT-QUALITY-MANIFEST.json',json.dumps({'sourceCommit':'fe368d102dc417b79f861f448e7d9a8feec456df','files':{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(set(files))}},indent=2))
+          shutil.copy('test-output/layout-quality-ui/chromium/after.json',out/'MASAR-Chalet-Improved.json')
+          shutil.copy('test-output/layout-quality-ui/chromium/improved-blender-scene.json',out/'MASAR-Chalet-Improved-Blender-Scene.json')
+          shutil.copy('docs/LAYOUT-QUALITY.md',out/'LAYOUT-QUALITY.md')
+          for name in ['layout-quality-ui','layout-quality-live','customer-ui']:shutil.copytree('test-output/'+name,out/name,dirs_exist_ok=True)
+          shutil.copy('dist/index.html',out/'MASAR-Layout-Quality.html')
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file())+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-layout-quality-live-evidence
+          path: |
+            layout-quality-delivery/
+            masar-studio/test-output/layout-quality-live/
+            masar-studio/test-output/layout-quality-ui/
+            masar-studio/test-output/customer-ui/
+          retention-days: 30
+          if-no-files-found: error
