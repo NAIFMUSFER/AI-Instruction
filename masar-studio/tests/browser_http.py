@@ -9,6 +9,73 @@ ROOT=Path(__file__).resolve().parents[1]
 ENGINE=os.environ.get('MASAR_BROWSER','chromium')
 OUT=ROOT/'test-output'/('browser-http-'+ENGINE);OUT.mkdir(parents=True,exist_ok=True)
 results=[];errors=[];requests_failed=[]
+# This fixed inventory is an independent contract for the served ES-module shell.
+SHELL_PATHS = ['/', '/src/style.css', '/src/app.js', '/src/renderer.js', '/src/storage.js',
+               '/shared/authoring.js', '/shared/model.js', '/shared/building.js',
+               '/shared/ifc.js', '/shared/geometry.js', '/public/favicon.svg',
+               '/public/manifest.webmanifest']
+def service_worker_controlled(page):
+    # Native events avoid the injected Function/eval polling path under strict CSP.
+    page.evaluate("""() => new Promise((resolve, reject) => {
+        if (navigator.serviceWorker.controller) return resolve(true);
+        const changed = () => {
+            if (!navigator.serviceWorker.controller) return;
+            clearTimeout(timer);
+            navigator.serviceWorker.removeEventListener('controllerchange', changed);
+            resolve(true);
+        };
+        const timer = setTimeout(() => {
+            navigator.serviceWorker.removeEventListener('controllerchange', changed);
+            reject(new Error('Service worker did not control this page within 15 seconds'));
+        }, 15000);
+        navigator.serviceWorker.addEventListener('controllerchange', changed);
+        changed();
+    })""")
+def cache_inventory(page, label):
+    value = page.evaluate("""async () => {
+        const stores = [];
+        for (const name of await caches.keys()) {
+            const cache = await caches.open(name), entries = [];
+            for (const request of await cache.keys()) {
+                const response = await cache.match(request);
+                entries.push({requestURL: request.url, responseURL: response.url,
+                    status: response.status, bytes: (await response.arrayBuffer()).byteLength});
+            }
+            stores.push({name, entries});
+        }
+        return stores;
+    }""")
+    (OUT / ('cache-' + label + '.json')).write_text(json.dumps(value, indent=2))
+    return value
+
+def assert_cached_shell(page, label):
+    from urllib.parse import urlsplit
+    stores = cache_inventory(page, label)
+    current = [store for store in stores if store['name'].startswith('masar-4.1.0-shell-')]
+    assert len(current) == 1, 'Expected exactly one active versioned public shell cache'
+    entries = current[0]['entries']
+    assert {urlsplit(row['requestURL']).path for row in entries} == set(SHELL_PATHS), 'Public shell is incomplete or empty: ' + json.dumps(stores)
+    assert all(row['status'] == 200 and row['bytes'] > 0 for row in entries), 'Shell has an empty or unsuccessful response'
+    for store in stores:
+        for row in store['entries']:
+            for key in ['requestURL', 'responseURL']:
+                url = urlsplit(row[key])
+                assert not url.query and not url.path.startswith('/api/'), 'Private URL metadata found in CacheStorage'
+
+def native_cache_readback(page):
+    result = page.evaluate("""async () => {
+        const name = 'cache-api-readback-check', key = new URL('/cache-readback-check', location.origin).href;
+        try {
+            const cache = await caches.open(name);
+            await cache.put(key, new Response('native-cache-readback'));
+            const restored = await (await caches.open(name)).match(key);
+            return {restored: !!restored, text: restored ? await restored.text() : null,
+                    keys: (await cache.keys()).map(request => request.url)};
+        } finally { await caches.delete(name); }
+    }""")
+    (OUT / 'native-cache-readback.json').write_text(json.dumps(result, indent=2))
+    assert result['restored'] and result['text'] == 'native-cache-readback', 'Native CacheStorage readback failed independently of MASAR: ' + json.dumps(result)
+
 def assert_true(value,detail="assertion failed"):
     if not value:raise AssertionError(detail)
 def check(name,fn):
@@ -66,6 +133,7 @@ with tempfile.TemporaryDirectory(prefix='masar-http-') as tmp:
             observe(page);page.goto(base,wait_until='networkidle');ready(page)
             check('real HTTP shell, database capability and persistent staging warning',lambda:(expect(page.locator('#persistence-warning')).to_be_visible(),expect(page.locator('#persistence-warning')).to_contain_text('مؤقت'),expect(page.locator('#plan-host svg')).to_be_visible()))
             check('real browser has no horizontal overflow',lambda:assert_true(page.evaluate('document.documentElement.scrollWidth<=innerWidth')))
+            check('native CacheStorage commits and rereads a Response',lambda:native_cache_readback(page))
             # Real renderer is recorded, never assumed to be hardware accelerated.
             renderer=page.locator('#scene').get_attribute('data-renderer')
             email='owner-'+ENGINE+'@example.test';check('register account through UI with server session',lambda:register(page,email))
@@ -141,19 +209,21 @@ with tempfile.TemporaryDirectory(prefix='masar-http-') as tmp:
             page.set_viewport_size({'width':1512,'height':982})
             # Service worker and offline persistence are verified on a real secure localhost origin.
             def sw_scope():
-                page.evaluate('navigator.serviceWorker.ready');page.wait_for_function('navigator.serviceWorker.controller!==null');assert page.evaluate('(async()=>{const r=await navigator.serviceWorker.ready;return r.scope})()')==base+'/'
-                keys=page.evaluate('(async()=>{const names=await caches.keys();let urls=[];for(const n of names)urls.push(...(await (await caches.open(n)).keys()).map(r=>r.url));return urls})()');assert all('/api/' not in k and '?share=' not in k for k in keys)
-            check('root-scoped PWA excludes private APIs and review-token URLs from caches',sw_scope)
+                page.evaluate('navigator.serviceWorker.ready');service_worker_controlled(page);assert page.evaluate('(async()=>{const r=await navigator.serviceWorker.ready;return r.scope})()')==base+'/'
+                page.evaluate("fetch('/?share=PUBLIC_TEST_TOKEN_NOT_A_REAL_REVIEW').then(response => response.text())")
+                assert_cached_shell(page, 'before-restart')
+            check('root-scoped PWA caches the complete shell without private requests or response URLs',sw_scope)
             current_title=page.locator('#project-title').inner_text();context.close()
             context=bt.launch_persistent_context(profile,viewport={'width':1512,'height':982},accept_downloads=True,**launch);page=context.pages[0];page.set_default_timeout(15000);observe(page)
             def reopen():
                 page.goto(base,wait_until='networkidle');ready(page);expect(page.locator('#project-title')).to_have_text(current_title)
             check('IndexedDB project survives complete browser/profile restart',reopen)
+            check('complete public shell survives browser/profile restart',lambda:assert_cached_shell(page, 'after-restart'))
             def offline():
                 # Verify this persisted client is actively controlled before removing the origin.
                 # Reloading the controlled document under a real server outage tests the service
                 # worker navigation fallback without depending on engine-specific new-page races.
-                page.wait_for_function('navigator.serviceWorker.controller!==null')
+                service_worker_controlled(page)
                 server.terminate();server.wait(timeout=8)
                 page.reload(wait_until='domcontentloaded');ready(page);expect(page.locator('#project-title')).to_have_text(current_title);action(page,'account');expect(page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(page)
             check('PWA survives real origin outage and restores local project without claiming cloud connectivity',offline)

@@ -27,8 +27,9 @@ with sync_playwright() as p:
   page=browser.new_page(viewport=viewport)
   page.on('pageerror',lambda e:errors.append(str(e)))
   page.set_default_timeout(2500)
-  page.set_content((ROOT/'dist/index.html').read_text(),wait_until='domcontentloaded')
-  page.wait_for_selector('#scene[data-ready="true"]',state='attached')
+  # Initial document parsing/boot has its own bound, not the 2.5 s UI-action budget.
+  page.set_content((ROOT/'dist/index.html').read_text(),wait_until='domcontentloaded',timeout=20000)
+  page.wait_for_selector('#scene[data-ready="true"]',state='attached',timeout=20000)
  def action(name,scope=None):
   (scope or page).locator(f'button[data-action="{name}"]').first.click()
  def close():
