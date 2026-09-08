@@ -40,6 +40,10 @@ jobs:
           subprocess.run(['git','apply','--check','-'],input=patch,check=True)
           subprocess.run(['git','apply','-'],input=patch,check=True)
           for name,value in after.items():assert digest(root/name)==value,'Patched bytes differ: '+name
+          css='\n\n/* WebKit 320px regression: native select content overflowed two narrow grid tracks.\n   Reflow controls instead of clipping the dialog or hiding any option. */\n#render-studio .properties-grid{grid-template-columns:repeat(2,minmax(0,1fr))}\n#render-studio .properties-grid .field{min-width:0}\n#render-studio .properties-grid select{max-width:100%;box-sizing:border-box}\n@media(max-width:600px){#render-studio .properties-grid{grid-template-columns:minmax(0,1fr)}}\n'
+          style=root/'src/style.css';style.write_text(style.read_text()+css)
+          after['src/style.css']='23f912e9e24d657a07c3413faf7f133e87648d914b6ea67619e93466a71c6f83'
+          assert digest(style)==after['src/style.css']
           out=root/'test-output/visual-source';out.mkdir(parents=True,exist_ok=True)
           (out/'verified-source-hashes.json').write_text(json.dumps(after,indent=2))
           compile((root/'tests/visual_source_browser.py').read_text(),'visual_source_browser.py','exec')
