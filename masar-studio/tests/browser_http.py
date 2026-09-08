@@ -150,13 +150,12 @@ with tempfile.TemporaryDirectory(prefix='masar-http-') as tmp:
                 page.goto(base,wait_until='networkidle');ready(page);expect(page.locator('#project-title')).to_have_text(current_title)
             check('IndexedDB project survives complete browser/profile restart',reopen)
             def offline():
-                # Stop the actual origin instead of relying on Playwright's offline emulator.
-                # This exercises the real PWA outage path equally in all three engines.
-                server.terminate();server.wait(timeout=8);offline_page=context.new_page();offline_page.set_default_timeout(15000);observe(offline_page)
-                try:
-                    offline_page.goto(base,wait_until='domcontentloaded');ready(offline_page);expect(offline_page.locator('#project-title')).to_have_text(current_title);action(offline_page,'account');expect(offline_page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(offline_page)
-                finally:
-                    offline_page.close()
+                # Verify this persisted client is actively controlled before removing the origin.
+                # Reloading the controlled document under a real server outage tests the service
+                # worker navigation fallback without depending on engine-specific new-page races.
+                page.wait_for_function('navigator.serviceWorker.controller!==null')
+                server.terminate();server.wait(timeout=8)
+                page.reload(wait_until='domcontentloaded');ready(page);expect(page.locator('#project-title')).to_have_text(current_title);action(page,'account');expect(page.locator('#modal-title')).to_contain_text('تحتاج تشغيل الخادم');close(page)
             check('PWA survives real origin outage and restores local project without claiming cloud connectivity',offline)
             context.close();check('all network UI scenarios have no uncaught JavaScript errors',lambda:assert_true(not errors,str(errors)))
     except Exception:
