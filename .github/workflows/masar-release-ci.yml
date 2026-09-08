@@ -54,7 +54,7 @@ jobs:
         with:
           python-version: '3.13'
       - run: npm ci --ignore-scripts && npm run build
-      - run: python -m pip install playwright==1.55.0
+      - run: python -m pip install playwright==1.62.0
       - run: python -m playwright install --with-deps ${{ matrix.engine }}
       - run: python tests/browser_http.py
         env:
@@ -166,7 +166,7 @@ jobs:
           npm run build
           cmp dist/index.html ../../release/Masar-Studio-4.1.0.html
           npm test
-      - run: python -m pip install playwright==1.55.0 ifcopenshell==0.8.5 pytest==8.4.2
+      - run: python -m pip install playwright==1.62.0 ifcopenshell==0.8.5 pytest==8.4.2
       - run: python -m playwright install --with-deps chromium
       - run: |
           cd recheck/masar-studio
