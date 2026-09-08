@@ -1,78 +1,54 @@
-name: MASAR chalet fix and client acceptance
+name: MASAR chalet client acceptance
 on:
   push:
     branches: ['audit/masar-chalet-generation-20260908']
-    paths: ['.github/workflows/masar-quality-fix.yml']
+    paths: ['masar-studio/**', '.github/workflows/masar-quality-fix.yml']
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: masar-chalet-quality-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
-  fix:
+  acceptance:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
-      contents: write
+      contents: read
       actions: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-        with:
-          ref: audit/masar-chalet-generation-20260908
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22.23.2'
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Preserve readable original paragraphs and verify actual text rather than hidden rendering
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('masar-studio/tests/browser_chalet.py');s=p.read_text()
-          old="check('failed generation retains original long description',page.locator('#brief-form .original-prompt').inner_text()==prompt)"
-          new="original=page.locator('#brief-form .original-prompt');raw=original.text_content();case['originalReadback']={'expectedLength':len(prompt),'rawLength':len(raw),'rawEqual':raw==prompt};check('failed generation preserves exact original text bytes',raw==prompt);page.locator('#brief-form details summary').click();expect(original).to_be_visible();check('expanded original description preserves readable paragraphs',original.inner_text()==prompt)"
-          assert s.count(old)==1;s=s.replace(old,new)
-          old="box=page.locator('#modal-error');check("
-          new="box=page.locator('#modal-error');box.scroll_into_view_if_needed();check("
-          assert s.count(old)==1;s=s.replace(old,new)
-          old="payload=json.loads(Path(info.value.path()).read_text());h=history_from(payload);"
-          new="payload=json.loads(Path(info.value.path()).read_text());(OUT/(tag+'-project.json')).write_text(json.dumps(payload,ensure_ascii=False,indent=2));h=history_from(payload);"
-          assert s.count(old)==1;s=s.replace(old,new)
-          p.write_text(s);compile(s,str(p),'exec')
-          css=Path('masar-studio/src/style.css');text=css.read_text();marker='/* Client brief quality: preserve original paragraphs in the confirmation dialog. */'
-          assert marker not in text
-          css.write_text(text+'\n'+marker+'\n#brief-form .original-prompt{white-space:pre-wrap;overflow-wrap:anywhere;text-align:start}\n#modal-error{scroll-margin-block-start:12px}\n')
-          PY
-          cd masar-studio && npm run check && npm run build
-      - name: Commit only the UI and customer acceptance refinement
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/src/style.css masar-studio/tests/browser_chalet.py
-          git diff --cached --check
-          git commit -m 'fix(masar): keep client brief readable inside the generation review'
-          git push origin HEAD:audit/masar-chalet-generation-20260908
-          git rev-parse HEAD
-      - name: Verify complete Node regression suite
+      - name: Check syntax build and every engine server and security regression
         working-directory: masar-studio
         run: |
           mkdir -p test-output
+          npm ci --ignore-scripts && npm run check && npm run build
           npm test > test-output/chalet-all-node.log 2>&1 || { grep -A 40 '^not ok' test-output/chalet-all-node.log; tail -12 test-output/chalet-all-node.log; exit 1; }
           tail -12 test-output/chalet-all-node.log
-      - name: Install exact browsers and compile local viewer
+      - name: Install exact browsers and compile self-hosted material viewer
         run: |
           python -m pip install playwright==1.62.0 > /tmp/pip.log 2>&1
           python -m playwright install --with-deps chromium webkit > /tmp/browsers.log 2>&1 || { tail -80 /tmp/browsers.log; exit 1; }
           cd masar-studio/render-viewer && npm ci --include=dev && npm run build
-      - name: Full original-description customer journey on mobile and desktop
+      - name: Original customer description on mobile and desktop including invalid input recovery
         working-directory: masar-studio
         run: python tests/browser_chalet.py
-      - name: All existing standalone interactions
+      - name: Existing 56 standalone user journeys
         working-directory: masar-studio
         run: python tests/browser_flows.py
-      - name: Dispatch full Blender IFC Docker and three-browser gates
+      - name: Dispatch independent full Blender IFC Docker and three-browser gates
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api --method POST repos/NAIFMUSFER/AI-Instruction/actions/workflows/masar-blender-ci.yml/dispatches -f ref=audit/masar-chalet-generation-20260908
+        run: |
+          current=$(gh api repos/NAIFMUSFER/AI-Instruction/git/ref/heads/audit/masar-chalet-generation-20260908 --jq '.object.sha')
+          test "$current" = "$GITHUB_SHA"
+          gh api --method POST repos/NAIFMUSFER/AI-Instruction/actions/workflows/masar-blender-ci.yml/dispatches -f ref=audit/masar-chalet-generation-20260908
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
