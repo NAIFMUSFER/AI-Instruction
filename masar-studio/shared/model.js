@@ -56,6 +56,16 @@ export function understand(prompt) {
             brief.intents.push({type:'garden-edge',subjectKind,label:subjectKind==='kitchen'?'المطبخ مرتبط بالجهة الخارجية':'المعيشة مرتبطة بالجهة الخارجية',source:'requested'});
     }
     if (/(?:الاولو[يه]+|اولوي[هت])[^.\n]{0,100}(?:شاليه|حديق|مسبح|حوش)/.test(t)) brief.priority='outdoor';
+    // A visible, editable design assumption; never infer a construction area from plot area.
+    // Only the supported single-storey chalet programme gets this suggested interval.
+    const frontage=['شرق','غرب'].includes(brief.street)?brief.depth:brief.width;
+    const plotDepth=['شرق','غرب'].includes(brief.street)?brief.width:brief.depth;
+    if(!brief.buildingArea && projectType==='chalet' && brief.floors===1 && brief.bedrooms===3 &&
+       !brief.elevator && brief.pool && brief.parking<=1 && frontage>=17 && plotDepth>=23 &&
+       frontage<=30 && plotDepth<=40) {
+        brief.buildingArea={min:120,max:160,source:'assumed',metric:'conservative-concept-ground-envelope'};
+        brief.sources.buildingArea='assumed';
+    } else if(brief.buildingArea) brief.sources.buildingArea='requested';
     return brief;
 }
 export function briefIssues(b) { return b.unresolved.filter(x => !x.startsWith('المصعد') && !x.startsWith('المسبح')); }
@@ -776,7 +786,7 @@ function applyCustomerBudget(m,b) {
       for(const o of [...r.doors||[],...r.windows||[]]){const old=o.side;o.side=maps[b.street][old];if(b.street==='شمال'||b.street==='شرق'&&['east','west'].includes(old)||b.street==='غرب'&&['north','south'].includes(old))o.offset=round(1-o.offset);}
     };
     [...rooms,...m.site.features].forEach(turn);
-    m.requirements.push({id:'r-building-area',label:`مساحة المباني المطلوبة ${budget.min}–${budget.max} م²`,type:'building-area',value:[budget.min,budget.max],source:'requested',locked:true});
+    m.requirements.push({id:'r-building-area',label:`مساحة المباني المطلوبة ${budget.min}–${budget.max} م²`,type:'building-area',value:[budget.min,budget.max],source:budget.source||'requested',locked:true});
     m.requirements.push({id:'r-compact-review',label:'البرنامج المدمج اقتراح مبدئي: راجع عرض الممرات وخصوصية الزجاج وصوت المسبح، والجزيرة والأثاث ومغاسل الضيوف وتفاصيل الشواء والبرجولة مع المصمم. وجود المساحة لا يثبت كفايتها.',type:'custom',source:'requested',locked:true});
     m.design.layoutStrategy='compact-three-bedroom-v1';
     const envelope=conceptEnvelopeArea(m);

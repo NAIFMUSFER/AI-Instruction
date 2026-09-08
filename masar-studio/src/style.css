@@ -52,3 +52,25 @@
 #brief-form input, #brief-form select { font-size: 16px; min-width: 0; }
 #brief-form .area-budget { margin-block: 16px; }
 #brief-form details summary { cursor: pointer; font-weight: 700; }
+
+/* The material preview must identify the project it displays, including on narrow phones. */
+.render-source{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;overflow-wrap:anywhere}
+.render-source>strong{font-size:17px;display:block}
+.render-source p,.render-source small{line-height:1.75}
+.render-source small{display:block;margin-block:6px}
+.render-source-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.render-source-metrics span{padding:8px;background:#f3f5ed;border-radius:8px}
+.render-source-metrics b{display:block;font-size:18px}
+.render-source details summary{cursor:pointer;font-weight:700}
+.render-original{white-space:pre-wrap;max-height:220px;overflow:auto;font-size:14px}
+#render-source-warning .btn{white-space:normal;max-width:100%}
+#render-source-warning{scroll-margin-block-start:16px}
+#render-studio .properties-grid select{font-size:16px;min-width:0}
+@media(max-width:400px){.render-source{padding:10px}.render-source-metrics{grid-template-columns:1fr}}
+
+/* WebKit 320px regression: native select content overflowed two narrow grid tracks.
+   Reflow controls instead of clipping the dialog or hiding any option. */
+#render-studio .properties-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#render-studio .properties-grid .field{min-width:0}
+#render-studio .properties-grid select{max-width:100%;box-sizing:border-box}
+@media(max-width:600px){#render-studio .properties-grid{grid-template-columns:minmax(0,1fr)}}
