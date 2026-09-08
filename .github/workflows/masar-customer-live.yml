@@ -1,0 +1,170 @@
+name: MASAR customer published acceptance
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-customer-live.yml']
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 887aea9b999af3aecca0d6dae08920df4e06e0f8
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify deployed source and free preview capabilities
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import urllib.request,json,hashlib,time
+          base='https://masar-customer-preview.onrender.com'
+          out=Path('masar-studio/test-output/customer-live');out.mkdir(parents=True,exist_ok=True)
+          def request(path):
+              with urllib.request.urlopen(base+path,timeout=120) as r:return r.status,dict(r.headers),r.read()
+          report={'base':base,'expectedCommit':'887aea9b999af3aecca0d6dae08920df4e06e0f8','endpoints':{},'sourceHashes':{}}
+          for path in ['/api/health','/api/ready','/api/version']:
+              status,headers,body=request(path);value=json.loads(body);assert status==200
+              report['endpoints'][path]=value
+          assert report['endpoints']['/api/version']['commit']==report['expectedCommit']
+          assert report['endpoints']['/api/health']['persistenceClass']=='ephemeral'
+          for path in ['/src/app.js','/src/style.css','/shared/model.js','/shared/building.js','/shared/render-scene.js']:
+              status,headers,body=request(path);assert body==Path('masar-studio'+path).read_bytes(),path
+              report['sourceHashes'][path]=hashlib.sha256(body).hexdigest()
+          status,headers,body=request('/');assert "script-src 'self'" in headers.get('Content-Security-Policy','')
+          report['security']={'csp':headers.get('Content-Security-Policy'),'hsts':headers.get('Strict-Transport-Security')}
+          (out/'deployment.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
+          PY
+      - name: Install independent customer browsers
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 >/tmp/pip.log 2>&1 || { tail -80 /tmp/pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit >/tmp/pw.log 2>&1 || { tail -80 /tmp/pw.log; exit 1; }
+      - name: Original long brief and error recovery through the published mobile UI
+        working-directory: masar-studio
+        env:
+          MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+        run: |
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+      - name: Customer material preview and original-site error diagnosis
+        working-directory: masar-studio
+        run: |
+          python - <<'PY'
+          import json,traceback
+          from pathlib import Path
+          from playwright.sync_api import sync_playwright,expect
+          from PIL import Image,ImageStat
+          out=Path('test-output/customer-live');prompt=Path('tests/fixtures/customer-chalet-ar.txt').read_text()
+          base='https://masar-customer-preview.onrender.com';errors=[];external=[];checks=[];report={}
+          with sync_playwright() as pw:
+              browser=pw.chromium.launch(headless=True,args=['--use-angle=swiftshader','--enable-unsafe-swiftshader'])
+              context=browser.new_context(viewport={'width':1440,'height':1000},accept_downloads=True)
+              page=context.new_page();page.set_default_timeout(20000)
+              page.on('pageerror',lambda e:errors.append(str(e)))
+              page.on('request',lambda r:external.append(r.url) if r.url.startswith(('http:','https:')) and not r.url.startswith(base+'/') else None)
+              def action(name):page.locator('button[data-action="'+name+'"]').first.click()
+              page.goto(base,wait_until='domcontentloaded',timeout=120000);page.locator('#scene[data-ready="true"]').wait_for(state='attached',timeout=60000)
+              action('new');page.locator('#new-prompt').fill(prompt);page.locator('#new-form button[type="submit"]').click();page.locator('#brief-form [name="confirm"]').check();page.locator('#brief-form button[type="submit"]').click();expect(page.locator('#modal')).not_to_be_visible()
+              page.locator('#plan-host').screenshot(path=str(out/'customer-plan.png'));checks.append('actual generated customer plan captured')
+              action('render-center');page.locator('#render-pbr').click();canvas=page.locator('#render-canvas');expect(canvas).to_have_attribute('data-ready','true');expect(canvas).to_have_attribute('data-renderer','three-pbr');assert int(canvas.get_attribute('data-objects'))>100;checks.append('customer plan renders in the real Three.js viewer')
+              page.locator('#render-cutaway').check();canvas.screenshot(path=str(out/'customer-material-view.png'))
+              image=Image.open(out/'customer-material-view.png').convert('RGB');assert max(ImageStat.Stat(image).stddev)>8;checks.append('material viewer produced nonblank pixels')
+              box=canvas.bounding_box()
+              for fy in [.5,.6,.4,.7,.3,.8]:
+                  for fx in [.5,.4,.6,.3,.7,.2,.8]:
+                      canvas.click(position={'x':box['width']*fx,'y':box['height']*fy})
+                      if 'تم تحديد' in page.locator('#render-selection').inner_text():break
+                  if 'تم تحديد' in page.locator('#render-selection').inner_text():break
+              expect(page.locator('#render-selection')).to_contain_text('تم تحديد المساحة');checks.append('material picking selects a canonical customer room')
+              with page.expect_download() as dl:page.locator('#render-local').click()
+              dl.value.save_as(str(out/'customer-blender-scene.json'));scene=json.loads((out/'customer-blender-scene.json').read_text());assert scene['schema']=='masar-render-scene-1';assert len(scene['proofs']['rooms'])==17;checks.append('downloaded Blender contract contains all 17 authored spaces')
+              for width in [390,320,768]:
+                  page.set_viewport_size({'width':width,'height':900});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');assert page.locator('#modal').evaluate('el=>el.scrollWidth<=el.clientWidth+1')
+              page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(out/'customer-blender-mobile.png'),full_page=True);checks.append('customer material dialog fits 320/390/768-pixel layouts')
+              action('close-modal');action('render-center');page.locator('#render-pbr').click();expect(page.locator('#render-canvas')).to_have_attribute('data-ready','true');checks.append('material dialog can reopen without freezing')
+              assert not errors and not external;checks.extend(['no unhandled page errors','no third-party runtime requests'])
+              report={'checks':checks,'passed':len(checks),'errors':errors,'externalRequests':external,'scope':'real HTTPS client preview, software WebGL2, cloud Blender worker remains disabled'}
+              (out/'material-report.json').write_text(json.dumps(report,ensure_ascii=False,indent=2));print('MATERIAL_REPORT '+json.dumps(report,ensure_ascii=False),flush=True)
+              context.close()
+              # Diagnostic only: old release remains untouched and may have been separately updated.
+              old=browser.new_context(viewport={'width':390,'height':844},has_touch=True,is_mobile=True);page=old.new_page();page.set_default_timeout(15000)
+              diagnostic={}
+              try:
+                  page.goto('https://masar-blender-preview.onrender.com',wait_until='domcontentloaded',timeout=120000);page.locator('#scene[data-ready="true"]').wait_for(state='attached',timeout=60000)
+                  page.locator('[data-action="new"]').first.click();page.locator('#new-prompt').fill(prompt);page.locator('#new-form button[type="submit"]').click()
+                  diagnostic['parsedType']=page.locator('#brief-form [name="projectType"]').input_value();diagnostic['parsedBedrooms']=page.locator('#brief-form [name="bedrooms"]').input_value()
+                  page.locator('#brief-form [name="projectType"]').select_option('chalet');page.locator('#brief-form [name="confirm"]').check();page.locator('#brief-form button[type="submit"]').click();page.wait_for_timeout(400)
+                  diagnostic.update(page.evaluate("()=>({modalOpen:document.querySelector('#modal').open,bedrooms:document.querySelector('#brief-form [name=bedrooms]')?.value,toastText:document.querySelector('#toasts')?.innerText,toastInsideDialog:document.querySelector('#modal').contains(document.querySelector('#toasts')),inlineError:document.querySelector('#modal-error')?.textContent||null})"))
+                  page.screenshot(path=str(out/'old-release-hidden-error.png'),full_page=True)
+              except Exception as e:diagnostic['observationError']=str(e)
+              (out/'before-correction-diagnostic.json').write_text(json.dumps(diagnostic,ensure_ascii=False,indent=2));print('BEFORE_DIAGNOSTIC '+json.dumps(diagnostic,ensure_ascii=False),flush=True)
+              browser.close()
+          PY
+      - name: Verify final geometry and IFC using the downloaded customer file
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {importEnvelope,current,assertModel,validate,totals,conceptEnvelopeArea,area} from './shared/model.js';
+          import {exportIFC} from './shared/building.js';
+          const model=assertModel(current(importEnvelope(readFileSync('test-output/customer-ui/chromium-customer-project.json','utf8'))));
+          const prompt=readFileSync('tests/fixtures/customer-chalet-ar.txt','utf8');
+          if(model.brief.prompt!==prompt)throw Error('Original brief changed');
+          const issues=validate(model),blockers=issues.filter(x=>x.status==='error');if(blockers.length)throw Error(JSON.stringify(blockers));
+          const envelope=conceptEnvelopeArea(model);if(envelope>160||envelope<120)throw Error('Area outside request');
+          const report={originalCharacters:prompt.length,originalPreserved:true,totals:totals(model),conservativeBuildingEnvelopeM2:envelope,unbuiltRemainderM2:model.site.width*model.site.depth-envelope,blockers,unverified:issues.filter(x=>x.status==='unchecked'),warnings:issues.filter(x=>x.status==='warning'),rooms:model.levels[0].rooms.map(r=>({id:r.id,name:r.name,kind:r.kind,width:r.w,depth:r.d,area:area(r),nonRectangular:!!r.footprint})),scope:'concept geometry and source preservation, not engineering or code approval'};
+          writeFileSync('test-output/customer-live/customer-quality-report.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+          writeFileSync('test-output/customer-live/customer.ifc',exportIFC(model));
+          JS
+          python - <<'PY'
+          import json,ifcopenshell,ifcopenshell.validate,ifcopenshell.geom
+          from pathlib import Path
+          f=ifcopenshell.open('test-output/customer-live/customer.ifc');log=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(f,log,express_rules=True);settings=ifcopenshell.geom.settings();count=0;errors=[]
+          for obj in f.by_type('IfcProduct'):
+              if not obj.Representation:continue
+              try:
+                  shape=ifcopenshell.geom.create_shape(settings,obj);assert len(shape.geometry.verts)>0;count+=1
+              except Exception as e:errors.append({'id':obj.id(),'error':str(e)})
+          result={'schema':'IFC4','schemaIssues':log.statements,'geometryShapes':count,'geometryFailures':errors};Path('test-output/customer-live/customer-ifc-report.json').write_text(json.dumps(result,default=str,indent=2));print(json.dumps(result,default=str));assert count>0 and not log.statements and not errors
+          PY
+      - name: Package exact tested source and usable client output
+        run: |
+          cd masar-studio
+          npm run check && npm run build
+          cd render-viewer && npm ci --include=dev && npm run build && cd ..
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib,zipfile,shutil
+          out=Path('../customer-delivery');out.mkdir(exist_ok=True)
+          root=Path('.');files=[]
+          for parent in ['src','shared','server','public','tools','render-worker','render-viewer','tests','docs']:
+              for path in Path(parent).rglob('*'):
+                  if not path.is_file() or any(x in path.parts for x in ['node_modules','__pycache__','test-output']):continue
+                  if path.suffix.lower() in ['.ttf','.otf','.woff','.woff2','.sqlite','.db','.pyc']:continue
+                  files.append(path)
+          for name in ['package.json','package-lock.json','README.md','Dockerfile','compose.yaml','render.yaml','start-windows.cmd','start.sh','.env.example']:
+              if Path(name).is_file():files.append(Path(name))
+          with zipfile.ZipFile(out/'MASAR-Customer-QA-Source.zip','w',zipfile.ZIP_DEFLATED) as archive:
+              for path in sorted(set(files)):archive.write(path,'masar-studio/'+str(path))
+              manifest={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(set(files))};archive.writestr('masar-studio/CUSTOMER-QA-MANIFEST.json',json.dumps({'sourceCommit':'887aea9b999af3aecca0d6dae08920df4e06e0f8','files':manifest},indent=2))
+          shutil.copy('test-output/customer-ui/chromium-customer-project.json',out/'MASAR-Chalet-20x25.json')
+          shutil.copytree('test-output/customer-live',out/'live-evidence',dirs_exist_ok=True)
+          shutil.copytree('test-output/customer-ui',out/'customer-ui',dirs_exist_ok=True)
+          shutil.copy('dist/index.html',out/'MASAR-Customer-QA.html')
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file())+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-customer-live-verified
+          path: |
+            customer-delivery/
+            masar-studio/test-output/customer-live/
+            masar-studio/test-output/customer-ui/
+          retention-days: 30
