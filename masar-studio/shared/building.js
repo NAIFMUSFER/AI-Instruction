@@ -99,11 +99,16 @@ function levelBounds(level) {
   return { x:q(Math.min(...xs)), y:q(Math.min(...ys)), w:q(Math.max(...xs)-Math.min(...xs)), d:q(Math.max(...ys)-Math.min(...ys)) };
 }
 
+function levelEnvelopes(level) {
+  const groups=new Map();
+  for(const room of level.rooms){const key=room.buildingGroup||'main';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(room);}
+  return [...groups.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([group,rooms])=>({...levelBounds({rooms}),buildingGroup:group}));
+}
 export function deriveBuildingGraph(model) {
   const walls=deriveWalls(model), openings=deriveOpenings(model,walls);
   const spaces=model.levels.flatMap(level=>level.rooms.map(room=>({ id:room.id, levelId:level.id, type:'space', name:room.name, kind:room.kind, x:room.x,y:room.y,z:level.elevation,w:room.w,d:room.d,h:room.height,area:area(room),footprint:room.footprint?structuredClone(room.footprint):null,locked:!!room.locked,provenance:room.provenance || 'unknown' })));
-  const slabs=model.levels.map(level=>({ id:`slab:${level.id}`, levelId:level.id, type:'slab', name:`بلاطة ${level.name}`, ...levelBounds(level), z:q(level.elevation-.16), h:.16, provenance:'derived-envelope' }));
-  const top=model.levels.at(-1), roofBounds=levelBounds(top), roofs=[{ id:`roof:${top.id}`, levelId:top.id, type:'roof', name:'سطح/سقف علوي مفاهيمي', ...roofBounds, z:q(top.elevation+(top.height||3)), h:.16, provenance:'derived-envelope' }];
+  const slabs=model.levels.flatMap(level=>levelEnvelopes(level).map((bounds,i)=>({id:`slab:${level.id}${i?':part-'+i:''}`,levelId:level.id,type:'slab',name:`بلاطة ${level.name}`, ...bounds,z:q(level.elevation-.16),h:.16,provenance:'derived-building-group-envelope'})));
+  const top=model.levels.at(-1),roofs=levelEnvelopes(top).map((bounds,i)=>({id:`roof:${top.id}${i?':part-'+i:''}`,levelId:top.id,type:'roof',name:'سطح/سقف علوي مفاهيمي',...bounds,z:q(top.elevation+(top.height||3)),h:.16,provenance:'derived-building-group-envelope'}));
   const siteFeatures=(model.site.features || []).map(f=>({ ...f, id:f.id || `feature:${f.type}:${f.x}:${f.y}`, type:f.type, levelId:null, provenance:f.provenance || 'generated-concept' }));
   const elements={ walls, openings, spaces, slabs, roofs, siteFeatures };
   const counts=Object.fromEntries(Object.entries(elements).map(([k,v])=>[k,v.length])); counts.doors=openings.filter(o=>o.type==='door').length; counts.windows=openings.filter(o=>o.type==='window').length;

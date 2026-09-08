@@ -49,8 +49,12 @@ export function understand(prompt) {
         brief.unresolved.push('مشاريع المكاتب تدعم من مكتب واحد إلى 20 مكتبًا في البرنامج المفاهيمي.');
     if (/(?:مجلس)[^،.\n]{0,28}(?:قريب|قرب)[^،.\n]{0,18}(?:مدخل)/.test(t) || /(?:قرب|قريب)[^،.\n]{0,18}(?:مدخل)[^،.\n]{0,28}(?:مجلس)/.test(t))
         brief.intents.push({ type: 'near-entry', subjectKind: 'majlis', label: 'المجلس قريب من المدخل', source: 'requested' });
-    if (/(?:مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/.test(t))
-        brief.intents.push({ type: 'garden-edge', subjectKind: /مطبخ/.test(t) ? 'kitchen' : 'living', label: /مطبخ/.test(t) ? 'المطبخ مرتبط بالجهة الخارجية' : 'المعيشة مرتبطة بالجهة الخارجية', source: 'requested' });
+    for (const hit of t.matchAll(/(مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/g)) {
+        if(!/(?:قرب|قريب|مرتبط|مطله?|اطلال|علي|على)/.test(hit[0])) continue;
+        const subjectKind=hit[1]==='مطبخ'?'kitchen':'living';
+        if(!brief.intents.some(x=>x.type==='garden-edge'&&x.subjectKind===subjectKind))
+            brief.intents.push({type:'garden-edge',subjectKind,label:subjectKind==='kitchen'?'المطبخ مرتبط بالجهة الخارجية':'المعيشة مرتبطة بالجهة الخارجية',source:'requested'});
+    }
     if (/(?:الاولو[يه]+|اولوي[هت])[^.\n]{0,100}(?:شاليه|حديق|مسبح|حوش)/.test(t)) brief.priority='outdoor';
     return brief;
 }
@@ -247,7 +251,7 @@ export const centroid = r => { const poly=roomPolygon(r); if(!r.footprint)return
 export function gardenSide(m) { return m.site.street === 'جنوب' ? 'north' : m.site.street === 'شمال' ? 'south' : m.site.street === 'شرق' ? 'west' : 'east'; }
 export function entryPoint(m) { const l = m.levels[0], entries = l.rooms.flatMap(r => r.doors.filter(d => d.entry).map(d => doorPoint(r, d))); if (entries.length) return entries[0]; return m.site.street === 'جنوب' ? [m.site.width / 2, 0] : m.site.street === 'شمال' ? [m.site.width / 2, m.site.depth] : m.site.street === 'شرق' ? [m.site.width, m.site.depth / 2] : [0, m.site.depth / 2]; }
 export function distanceToEntry(m, r) { const a = entryPoint(m), b = centroid(r); return Math.hypot(a[0] - b[0], a[1] - b[1]); }
-export function touchesGardenEdge(m, r, tolerance = .15) { const side = gardenSide(m), l = m.levels.find(l => l.rooms.includes(r)) || m.levels[0], xs = l.rooms.map(x => [x.x, x.x + x.w]).flat(), ys = l.rooms.map(x => [x.y, x.y + x.d]).flat(), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys); return side === 'north' ? Math.abs(r.y + r.d - maxY) <= tolerance : side === 'south' ? Math.abs(r.y - minY) <= tolerance : side === 'east' ? Math.abs(r.x + r.w - maxX) <= tolerance : Math.abs(r.x - minX) <= tolerance; }
+export function touchesGardenEdge(m, r, tolerance = .15) { const side = gardenSide(m), l = m.levels.find(l => l.rooms.includes(r)) || m.levels[0], cohort = r.buildingGroup ? l.rooms.filter(x=>x.buildingGroup===r.buildingGroup) : l.rooms, xs = cohort.map(x => [x.x, x.x + x.w]).flat(), ys = cohort.map(x => [x.y, x.y + x.d]).flat(), minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys); return side === 'north' ? Math.abs(r.y + r.d - maxY) <= tolerance : side === 'south' ? Math.abs(r.y - minY) <= tolerance : side === 'east' ? Math.abs(r.x + r.w - maxX) <= tolerance : Math.abs(r.x - minX) <= tolerance; }
 export function requirementStatus(m, req) {
     if(req.type==='building-area'){const a=conceptEnvelopeArea(m),bounds=req.value;const valid=Array.isArray(bounds)&&bounds.length===2&&bounds.every(Number.isFinite)&&bounds[0]>0&&bounds[1]>=bounds[0];return {measurable:true,satisfied:valid&&a>=bounds[0]-.05&&a<=bounds[1]+.05,detail:`غلاف مفاهيمي محافظ يشمل سماكات الجدران: ${a} م²؛ ليس مسطح رخصة.`};}
     if (req.type === 'feature') { const present = req.value === 'elevator' ? m.levels.every(l => l.rooms.some(r => r.kind === 'elevator')) : req.value === 'pool' ? (m.site.features || []).some(f => f.type === 'pool') : false; return { measurable: true, satisfied: present, detail: present ? 'موجود في النموذج' : 'غير موجود في النموذج' }; }
@@ -390,7 +394,7 @@ export function validate(m) {
     add('fire-life-safety', 'unchecked', 'الحريق والإخلاء وأعداد المخارج ومسافات الهروب لم تُفحص هندسيًا.', [], 'engineering');
     add('accessibility', 'unchecked', 'متطلبات الإتاحة لم تُفحص.', [], 'engineering');
     add('mep', 'unchecked', 'أنظمة الكهرباء والميكانيكا والصحي والتنسيق بينها لم تُصمّم أو تُفحص.', [], 'engineering');
-    add('stairs-design', 'unchecked', 'السلم ممثل بحيّز ودرجات عرضية؛ النائمة والقائمة والبسطات والخلوص لم تُصمّم.', all.filter(r => r.kind === 'stairs').map(r => r.id), 'engineering');
+    if(all.some(r=>r.kind==='stairs')) add('stairs-design', 'unchecked', 'السلم ممثل بحيّز ودرجات عرضية؛ النائمة والقائمة والبسطات والخلوص لم تُصمّم.', all.filter(r => r.kind === 'stairs').map(r => r.id), 'engineering');
     if (all.some(r => r.kind === 'elevator')) add('elevator-design', 'unchecked', 'المصعد ممثل ببئر مفاهيمي؛ الأبعاد الفنية والحفرة والرأس والمعدات ومتطلبات الإنقاذ لم تُصمّم.', all.filter(r => r.kind === 'elevator').map(r => r.id), 'engineering');
     if ((m.site.features || []).some(f => f.type === 'pool')) add('pool-design', 'unchecked', 'المسبح تموضع مفاهيمي فقط؛ الإنشاء والعزل والتصفية والأمان لم تُصمّم.', [], 'engineering');
     return issues;
@@ -729,7 +733,7 @@ function applyCustomerBudget(m,b) {
     const cap=Math.min(budget.max,180), k=Math.sqrt((cap-16)/154.72), bw=14*k,bd=10.8*k,bx=(W-bw)/2,by=5.8;
     if(budget.min>cap||by+bd+6>D)throw Error('قيد المساحة أو مساحة الحوش لا يلائمان هذا البرنامج المدمج. لم يتم توسيع المبنى أو تغيير الأرض تلقائيًا.');
     const rooms=[];
-    const add=(id,name,kind,x,y,w,d,side='east',offset=.5,entry=false)=>{const r=room('l0-'+id,name,kind,bx+x*k,by+y*k,w*k,d*k,side,entry);r.doors[0].offset=offset; r.provenance='generated-compact-concept-v1';rooms.push(r);return r;};
+    const add=(id,name,kind,x,y,w,d,side='east',offset=.5,entry=false)=>{const r=room('l0-'+id,name,kind,bx+x*k,by+y*k,w*k,d*k,side,entry);r.buildingGroup='main';r.doors[0].offset=offset; r.provenance='generated-compact-concept-v1';rooms.push(r);return r;};
     const bed2=add('bed2','غرفة نوم 2','bedroom',0,0,5,3.2);
     const bed3=add('bed3','غرفة نوم 3','bedroom',0,3.2,5,3.2);
     const master=add('master','غرفة النوم الرئيسية','bedroom',0,6.4,5,4.4);
@@ -744,16 +748,16 @@ function applyCustomerBudget(m,b) {
     add('guest-bath','حمام ومغاسل الضيوف','bath',7.8,0,1.8,1.6,'west');
     const majlis=add('majlis','مجلس الضيوف','majlis',7.8,0,6.2,3.2,'west',.75);
     majlis.footprint=[[9.6,0],[14,0],[14,3.2],[7.8,3.2],[7.8,1.6],[9.6,1.6]].map(([x,y])=>[round(bx+x*k),round(by+y*k)]);
-    add('shared-bath','الحمام المشترك','bath',6.2,3.2,2.2,2.2,'west');
+    add('shared-bath','الحمام المشترك','bath',6.2,3.2,2.2,2,'west');
     add('pantry','بانتري','storage',8.4,3.2,1.8,1.6,'east');
     add('laundry','غرفة الغسيل','laundry',8.4,4.8,1.8,1.6,'east');
     const kitchen=add('kitchen','المطبخ الرئيسي','kitchen',10.2,3.2,3.8,3.2,'north');
-    add('transition','توزيع الخدمات','hall',6.2,5.4,2.2,1,'west');
+    add('transition','توزيع الخدمات','hall',6.2,5.2,2.2,1.2,'west');
     const living=add('living','المعيشة العائلية','living',6.2,6.4,5,4.4,'west');
     living.doors.push({id:'l0-living-garden-door',side:'north',offset:.5,width:2.2,entry:true});
     living.note='فتحة خارجية واسعة إلى الحديقة؛ نوع الباب المنزلق وتفاصيله الإنشائية لم تعتمد.';
     const dining=add('dining','منطقة الطعام','dining',11.2,6.4,2.8,4.4,'west');
-    const externalBath=room('l0-pool-bath','دورة مياه المسبح','bath',W-3.3,by+bd+.9,1.6*k,2.2*k,'east',true);rooms.push(externalBath);
+    const externalBath=room('l0-pool-bath','دورة مياه المسبح','bath',W-3.3,by+bd+.9,1.6*k,2.2*k,'east',true);externalBath.buildingGroup='pool-service';rooms.push(externalBath);
     const window=(r,side,offset=.5,width=1.2)=>r.windows=[{id:r.id+'-window',side,offset,width:Math.min(width,sideSpan(r,side)-.3),height:1.2,sill:.9,typeId:m.authoring.defaults.windowTypeId,locked:false,provenance:'generated-concept-window'}];
     window(bed2,'west');window(bed3,'west');window(master,'north');window(majlis,'south',.68);window(kitchen,'east');window(dining,'north');
     m.levels=[{id:'l0',name:'الدور الأرضي',elevation:0,height:3.3,rooms}];
