@@ -9,7 +9,9 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
     const settings=()=>({finish:$('#render-finish').value,quality:$('#render-quality').value,roomId:$('#render-room').value||null,furniture:$('#render-furniture').checked});
     const snapshot=()=>{if(isPending())throw Error('اعتمد التعديل أو ألغِ المعاينة أولًا.');return createRenderScene(getModel(),revision(),settings());};
     const execute=fn=>async e=>{if(e?.currentTarget?.tagName==='BUTTON')e.preventDefault();try{await fn(e);}catch(err){reportError(err);}};
-    const dispose=()=>{disposed=true;clearTimeout(poll);viewer?.dispose();};dialog.addEventListener('close',dispose,{once:true});
+    // The shared dialog can reopen before its previous queued close event arrives.
+    const closed=()=>{if(!dialog.open||!host.isConnected)dispose();};
+    const dispose=()=>{if(disposed)return;disposed=true;clearTimeout(poll);viewer?.dispose();dialog.removeEventListener('close',closed);};dialog.addEventListener('close',closed);
     async function ensureViewer(){
         if(globalThis.MASAR_STANDALONE)throw Error('عرض الخامات يحتاج تشغيل الخادم؛ ملف HTML المستقل يبقي العارض الأساسي.');
         $('#render-canvas-host').hidden=false;
