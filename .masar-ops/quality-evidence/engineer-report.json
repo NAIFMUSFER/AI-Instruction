@@ -1,0 +1,28 @@
+{
+  "url": "https://masar-quality-preview.onrender.com",
+  "expectedCommit": "deeebae4b548c46b446692e57a20c3818fe645a5",
+  "scope": "Visible engineering review of conceptual geometry; not regulatory approval",
+  "status": "PASS",
+  "passed": 16,
+  "failed": 0,
+  "checks": [
+    "Verified published application commit",
+    "Original client description produces the inspected three-bedroom project",
+    "Visible width and depth agree with actual exported room coordinates",
+    "Local room edit shows its explicit preview before commit",
+    "Cancelling preview keeps the original room unchanged",
+    "Explicit commit applies the room edit",
+    "Undo restores the original room name",
+    "Redo restores the approved edit",
+    "An overlapping and oversized room cannot be committed",
+    "Rejected resize and cancelled edits preserve original exported geometry",
+    "Unimplemented detailed programme is retained for human review, not marked automatically fulfilled",
+    "Option A never enables paid cloud Blender processing",
+    "Generated client chalet also opens in the material viewer",
+    "Client Blender scene is metre-based and excludes the private original description",
+    "Material inspection does not mutate architectural geometry",
+    "No uncaught JavaScript errors in engineer journey"
+  ],
+  "pageErrors": [],
+  "conceptualFloorArea": 140.003052
+}
