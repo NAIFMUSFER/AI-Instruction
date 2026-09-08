@@ -8,7 +8,7 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
     const revision=()=>getRevision();
     const settings=()=>({finish:$('#render-finish').value,quality:$('#render-quality').value,roomId:$('#render-room').value||null,furniture:$('#render-furniture').checked});
     const snapshot=()=>{if(isPending())throw Error('اعتمد التعديل أو ألغِ المعاينة أولًا.');return createRenderScene(getModel(),revision(),settings());};
-    const execute=fn=>async e=>{e?.preventDefault();try{await fn(e);}catch(err){reportError(err);}};
+    const execute=fn=>async e=>{if(e?.currentTarget?.tagName==='BUTTON')e.preventDefault();try{await fn(e);}catch(err){reportError(err);}};
     const dispose=()=>{disposed=true;clearTimeout(poll);viewer?.dispose();};dialog.addEventListener('close',dispose,{once:true});
     async function ensureViewer(){
         if(globalThis.MASAR_STANDALONE)throw Error('عرض الخامات يحتاج تشغيل الخادم؛ ملف HTML المستقل يبقي العارض الأساسي.');
@@ -42,11 +42,11 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
         try {await saveCloud();if(!alive())return;if(revision()!==s.source.revisionId)throw Error('تغيرت نسخة المشروع أثناء الحفظ؛ أعد الطلب.');await api.request('/api/renders',{method:'POST',body:{projectId:s.source.modelId,revisionId:s.source.revisionId,version:getCloudVersion(),settings:s.settings}});clearTimeout(poll);await refresh();}finally{busy=false;}
     }));
     $('#render-jobs').addEventListener('click',execute(async e=>{
-        const button=e.target.closest('[data-render-job-action]');if(!button)return;const id=button.closest('[data-job]').dataset.job,job=host.renderJobs?.find(j=>j.id===id);if(!job)return;
+        const button=e.target.closest('[data-render-job-action]');if(!button)return;e.preventDefault();const id=button.closest('[data-job]').dataset.job,job=host.renderJobs?.find(j=>j.id===id);if(!job)return;
         const action=button.dataset.renderJobAction;
         if(['cancel','retry'].includes(action)){await api.request(`/api/renders/${id}/${action}`,{method:'POST',body:{}});clearTimeout(poll);await refresh();}
-        if(action==='view'){$('#render-gallery').innerHTML=`<p class="notice">صور النسخة ${E(job.revisionId)} — ${job.revisionId===revision()&&job.projectId===getModel().id?'الحالية':'ليست النسخة الحالية'}</p>${job.files.filter(f=>f.name.endsWith('.png')).map(f=>`<figure><img src="${E(f.url)}" alt="${f.name==='exterior.png'?'إخراج خارجي':'إخراج داخلي'} من Blender" loading="lazy"><figcaption>${f.name==='exterior.png'?'منظور خارجي':'منظور داخلي'}</figcaption></figure>`).join('')}`;}
-        if(action==='glb'){if(job.revisionId!==revision()||job.projectId!==getModel().id)throw Error('لا يمكن عرض نسخة قديمة كأنها التصميم الحالي.');const v=await ensureViewer(),file=job.files.find(f=>f.name==='model.glb');const response=await fetch(file.url,{credentials:'same-origin',redirect:'error'});if(!response.ok)throw Error('تعذر تحميل المجسم.');await v?.loadGLB(await response.arrayBuffer());v?.cutaway($('#render-cutaway').checked);}
+        if(action==='view'){$('#render-gallery').innerHTML=`<p class="notice">صور النسخة ${E(job.revisionId)} — ${!job.stale&&job.revisionId===revision()&&job.projectId===getModel().id?'الحالية':'ليست النسخة الحالية'}</p>${job.files.filter(f=>f.name.endsWith('.png')).map(f=>`<figure><img src="${E(f.url)}" alt="${f.name==='exterior.png'?'إخراج خارجي':'إخراج داخلي'} من Blender" loading="lazy"><figcaption>${f.name==='exterior.png'?'منظور خارجي':'منظور داخلي'}</figcaption></figure>`).join('')}`;}
+        if(action==='glb'){if(job.stale||isPending()||job.revisionId!==revision()||job.projectId!==getModel().id)throw Error('لا يمكن عرض نسخة قديمة كأنها التصميم الحالي.');const v=await ensureViewer(),file=job.files.find(f=>f.name==='model.glb');const response=await fetch(file.url,{credentials:'same-origin',redirect:'error'});if(!response.ok)throw Error('تعذر تحميل المجسم.');await v?.loadGLB(await response.arrayBuffer());v?.cutaway($('#render-cutaway').checked);}
     }));
     await refresh();
 }
