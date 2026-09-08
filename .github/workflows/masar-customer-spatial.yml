@@ -1,0 +1,133 @@
+name: MASAR spatial QA follow-through
+on:
+  push:
+    branches: ['audit/masar-customer-journey-20260908']
+    paths: ['.github/workflows/masar-customer-spatial.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Patch only defects measured in customer acceptance
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess
+          root=Path('masar-studio')
+          for name,sha in {'shared/model.js':'7e299f9e346c4441b1dcbe14bfbc4b04558cde19','shared/building.js':'2de8ff354a258ec51adbd3a73a569b361e75eae7'}.items():
+              assert subprocess.check_output(['git','hash-object',str(root/name)],text=True).strip()==sha
+          def rep(s,a,b):
+              assert s.count(a)==1,(s.count(a),a[:100])
+              return s.replace(a,b,1)
+          p=root/'shared/model.js';s=p.read_text()
+          start=s.index("    if (/(?:مطبخ|معيش)");end=s.index("    if (/(?:الاولو",start)
+          s=s[:start]+r'''    for (const hit of t.matchAll(/(مطبخ|معيش)[^،.\n]{0,34}(?:حديق|مسبح|خارجي|اطلال)/g)) {
+                  const subjectKind=hit[1]==='مطبخ'?'kitchen':'living';
+                  if(!brief.intents.some(x=>x.type==='garden-edge'&&x.subjectKind===subjectKind))
+                      brief.intents.push({type:'garden-edge',subjectKind,label:subjectKind==='kitchen'?'المطبخ مرتبط بالجهة الخارجية':'المعيشة مرتبطة بالجهة الخارجية',source:'requested'});
+              }
+          '''+s[end:]
+          s=rep(s,"const r=room('l0-'+id,name,kind,bx+x*k,by+y*k,w*k,d*k,side,entry);r.doors", "const r=room('l0-'+id,name,kind,bx+x*k,by+y*k,w*k,d*k,side,entry);r.buildingGroup='main';r.doors")
+          s=rep(s,"add('shared-bath','الحمام المشترك','bath',6.2,3.2,2.2,2.2,'west');","add('shared-bath','الحمام المشترك','bath',6.2,3.2,2.2,2,'west');")
+          s=rep(s,"add('transition','توزيع الخدمات','hall',6.2,5.4,2.2,1,'west');","add('transition','توزيع الخدمات','hall',6.2,5.2,2.2,1.2,'west');")
+          s=rep(s,"2.2*k,'east',true);rooms.push(externalBath);","2.2*k,'east',true);externalBath.buildingGroup='pool-service';rooms.push(externalBath);")
+          start=s.index('export function touchesGardenEdge(');end=s.index('\nexport function requirementStatus',start);part=s[start:end]
+          part=rep(part,"xs = l.rooms.map", "cohort = r.buildingGroup ? l.rooms.filter(x=>x.buildingGroup===r.buildingGroup) : l.rooms, xs = cohort.map")
+          part=rep(part,"ys = l.rooms.map", "ys = cohort.map")
+          s=s[:start]+part+s[end:]
+          # Do not claim there is a staircase when the model has none.
+          s=rep(s,"    add('stairs-design', 'unchecked',", "    if(all.some(r=>r.kind==='stairs')) add('stairs-design', 'unchecked',")
+          p.write_text(s)
+          p=root/'shared/building.js';s=p.read_text()
+          marker='export function deriveBuildingGraph(model) {'
+          helper='''function levelEnvelopes(level) {
+            const groups=new Map();
+            for(const room of level.rooms){const key=room.buildingGroup||'main';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(room);}
+            return [...groups.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([group,rooms])=>({...levelBounds({rooms}),buildingGroup:group}));
+          }
+          '''
+          s=rep(s,marker,helper+marker)
+          a=s.index('  const slabs=model.levels.map(');b=s.index('  const siteFeatures=',a)
+          s=s[:a]+'''  const slabs=model.levels.flatMap(level=>levelEnvelopes(level).map((bounds,i)=>({id:`slab:${level.id}${i?':part-'+i:''}`,levelId:level.id,type:'slab',name:`بلاطة ${level.name}`, ...bounds,z:q(level.elevation-.16),h:.16,provenance:'derived-building-group-envelope'})));
+            const top=model.levels.at(-1),roofs=levelEnvelopes(top).map((bounds,i)=>({id:`roof:${top.id}${i?':part-'+i:''}`,levelId:top.id,type:'roof',name:'سطح/سقف علوي مفاهيمي',...bounds,z:q(top.elevation+(top.height||3)),h:.16,provenance:'derived-building-group-envelope'}));
+          '''+s[b:]
+          p.write_text(s)
+          (root/'tests/qa-spatial.test.mjs').write_text('''import test from 'node:test';
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {understand,generate,validate,conceptEnvelopeArea,touchesGardenEdge} from '../shared/model.js';
+          import {deriveBuildingGraph} from '../shared/building.js';
+          import {createRenderScene} from '../shared/render-scene.js';
+          const prompt=readFileSync(new URL('./fixtures/customer-chalet-ar.txt',import.meta.url),'utf8');
+          test('garden relationship stays attached to its textual subject, not a kitchen elsewhere',()=>{
+            const b=understand(prompt);assert.ok(b.intents.some(i=>i.type==='garden-edge'&&i.subjectKind==='living'));
+            assert.ok(!b.intents.some(i=>i.type==='garden-edge'&&i.subjectKind==='kitchen'));
+          });
+          test('detached pool bathroom cannot move the main living room away from its garden facade',()=>{
+            const m=generate(understand(prompt));assert.equal(touchesGardenEdge(m,m.levels[0].rooms.find(r=>r.kind==='living')),true);
+            assert.ok(!validate(m).some(i=>i.status==='warning'));
+            assert.ok(!validate(m).some(i=>i.id==='stairs-design'));
+          });
+          test('slab and roof envelopes do not bridge the open yard to a detached service',()=>{
+            const m=generate(understand(prompt)),g=deriveBuildingGraph(m);
+            assert.equal(g.elements.slabs.length,2);assert.equal(g.elements.roofs.length,2);
+            for(const kind of ['slabs','roofs'])assert.ok(g.elements[kind].reduce((a,r)=>a+r.w*r.d,0)<160);
+            assert.ok(conceptEnvelopeArea(m)<=160);
+          });
+          test('actual Blender scene export accepts the revised customer programme without changing it',()=>{
+            const m=generate(understand(prompt)),before=JSON.stringify(m),scene=createRenderScene(m,'customer-review');
+            assert.equal(JSON.stringify(m),before);assert.equal(scene.proofs.rooms.length,m.levels[0].rooms.length);
+            assert.ok(scene.objects.some(o=>o.category==='roof'));assert.ok(!scene.objects.some(o=>o.category==='stairs'));
+          });
+          ''')
+          PY
+      - name: Recheck all assertions and canonical IFC fixture output
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts && npm run check && npm run build
+          mkdir -p test-output/customer-after
+          npm test > test-output/customer-after/node.log 2>&1 || { grep -A 45 -B 3 'not ok' test-output/customer-after/node.log; exit 1; }
+          tail -12 test-output/customer-after/node.log
+          cd render-viewer && npm ci --include=dev && npm run build
+      - name: Install independent acceptance tools
+        run: |
+          python -m pip install playwright==1.62.0 ifcopenshell==0.8.5 pytest==8.4.2 > /tmp/pip.log 2>&1
+          python -m playwright install --with-deps chromium webkit > /tmp/pw.log 2>&1 || { tail -80 /tmp/pw.log; exit 1; }
+      - name: Complete original and exact customer UI regressions
+        working-directory: masar-studio
+        run: |
+          MASAR_BROWSER=chromium python tests/browser_http.py
+          MASAR_BROWSER=webkit python tests/browser_http.py
+          python tests/browser_flows.py
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+          node tests/ifc-fixtures.mjs && python tests/ifc_external.py
+      - name: Commit only verified model, envelope and regression changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/shared/model.js masar-studio/shared/building.js masar-studio/tests/qa-spatial.test.mjs
+          git diff --cached --check
+          git commit -m 'fix(masar): preserve relationship subjects and separate detached building envelopes'
+          git push origin HEAD:audit/masar-customer-journey-20260908
+          git rev-parse HEAD > masar-studio/test-output/customer-after/source-commit.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: masar-customer-spatial-verified
+          path: |
+            masar-studio/test-output/customer-after/
+            masar-studio/test-output/customer-ui/
+            masar-studio/test-output/browser-http-*/
+            masar-studio/test-output/ifc/independent-report.json
+            masar-studio/docs/browser-tests.json
+          retention-days: 14
