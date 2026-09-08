@@ -42,12 +42,14 @@ export class Api {
     } return data; }
     async init() { if (location.protocol === 'file:' || globalThis.MASAR_STANDALONE)
         return; try {
-        const health = await this.request('/api/health');
+        // Startup must never make the local-first studio wait on a long network timeout.
+        // Cloud/account calls retain their normal 35 s budget; only the boot probe is bounded.
+        const health = await this.request('/api/health', { timeout: 5000 });
         this.available = health.ok;
         this.aiConfigured = health.aiConfigured;
         this.registration = health.registration;
         this.persistenceClass = health.persistenceClass || 'operator-managed';
-        const me = await this.request('/api/auth/me');
+        const me = await this.request('/api/auth/me', { timeout: 5000 });
         this.user = me.user;
         this.csrf = me.csrf;
     }
