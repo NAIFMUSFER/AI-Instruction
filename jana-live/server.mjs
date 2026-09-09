@@ -20,14 +20,14 @@ async function proxy(req,res,u){
 const server=http.createServer(async(req,res)=>{
   try{
     const u=new URL(req.url,'http://localhost');
-    if(u.pathname==='/edge-health'){return proxy(req,res,new URL('/health','http://localhost'));}
-    if(u.pathname==='/health'){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});return res.end(JSON.stringify({ok:true,service:'jana-live',edge:EDGE}));}
+    if(u.pathname==='/edge-health')return proxy(req,res,new URL('/health','http://localhost'));
+    if(u.pathname==='/health'){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});return res.end(JSON.stringify({ok:true,service:'jana-live'}));}
     if(u.pathname==='/ready'){res.writeHead(200,{'content-type':'application/json','cache-control':'no-store'});return res.end(JSON.stringify({ok:true,service:'jana-live'}));}
     if(u.pathname.startsWith('/api/')) return proxy(req,res,u);
     let path=u.pathname==='/'?'index.html':u.pathname.replace(/^\//,'');
     path=normalize(path).replace(/^\.\.(\/|\\|$)/,'');
     const data=await readFile(new URL(path,ROOT));
     res.writeHead(200,{'content-type':mime[extname(path)]||'application/octet-stream','x-content-type-options':'nosniff','referrer-policy':'strict-origin-when-cross-origin','content-security-policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; object-src 'none'"});res.end(data);
-  }catch(e){console.error(e);res.writeHead(502,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify({error:'gateway_error'}));}
+  }catch(e){console.error('gateway',e?.message||e);res.writeHead(502,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});res.end(JSON.stringify({error:'gateway_error'}));}
 });
-server.listen(PORT,'0.0.0.0',()=>console.log('JANA live on',PORT,'edge',EDGE));
+server.listen(PORT,'0.0.0.0',async()=>{console.log('JANA live on',PORT);try{const c=await fetch(EDGE+'/api/config',{cache:'no-store'});const cfg=await c.json();const r=await fetch(EDGE+'/api/catalog?limit=100',{cache:'no-store'});const data=await r.json();console.log('JANA_EDGE_SELFTEST',JSON.stringify({config_status:c.status,catalog_status:r.status,brand:cfg.brand||null,catalog_count:Array.isArray(data.items)?data.items.length:null}));}catch(e){console.error('JANA_EDGE_SELFTEST_FAIL',e?.message||e);}});
