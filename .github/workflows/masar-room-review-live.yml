@@ -1,0 +1,171 @@
+name: MASAR room review published acceptance
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-room-review-live.yml']
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: e6f3daadfcd82a44cbe246968d9a3300735736ac
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify the exact deployed source and unchanged preview capabilities
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import urllib.request,json,hashlib,time
+          base='https://masar-customer-preview.onrender.com';expected='e6f3daadfcd82a44cbe246968d9a3300735736ac'
+          out=Path('masar-studio/test-output/room-review-live');out.mkdir(parents=True,exist_ok=True)
+          def get(path):
+              with urllib.request.urlopen(base+path,timeout=120) as r:
+                  assert r.status==200
+                  return {k.lower():v for k,v in r.headers.items()},r.read()
+          for attempt in range(20):
+              version=json.loads(get('/api/version')[1])
+              if version['commit']==expected:break
+              time.sleep(5)
+          else:raise AssertionError('Approved source is not deployed')
+          report={'origin':base,'expectedCommit':expected,'version':version,'sourceHashes':{}}
+          report['health']=json.loads(get('/api/health')[1]);report['ready']=json.loads(get('/api/ready')[1]);report['render']=json.loads(get('/api/renders/capabilities')[1])
+          assert report['health']['persistenceClass']=='ephemeral' and report['health']['aiConfigured'] is False
+          assert report['ready']['ready'] is True and report['render']['enabled'] is False and report['render']['workerOnline'] is False
+          for path in ['/src/room-review.js','/src/plan-inspection.js','/src/style.css','/src/app.js','/shared/model.js','/shared/layout-quality.js','/shared/geometry.js','/shared/building.js','/public/sw.js']:
+              headers,data=get(path);assert data==Path('masar-studio'+path).read_bytes(),path
+              report['sourceHashes'][path]=hashlib.sha256(data).hexdigest()
+          headers,data=get('/');assert "script-src 'self'" in headers.get('content-security-policy','');assert 'max-age=' in headers.get('strict-transport-security','')
+          report['security']={'csp':headers['content-security-policy'],'hsts':headers['strict-transport-security']}
+          (out/'deployment.json').write_text(json.dumps(report,indent=2));print('LIVE_SOURCE '+json.dumps(report),flush=True)
+          PY
+      - name: Build exact source and independently repeat all Node regressions
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts && npm run check && npm run build
+          npm test > test-output/room-review-live/node.log 2>&1 || { tail -100 test-output/room-review-live/node.log; exit 1; }
+          tail -12 test-output/room-review-live/node.log
+          cd render-viewer && npm ci --include=dev && npm run build
+      - name: Install pinned mobile-browser test environments
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit > /tmp/masar-browser.log 2>&1 || { tail -80 /tmp/masar-browser.log; exit 1; }
+      - name: Live room review and all affected customer journeys without account or server data writes
+        working-directory: masar-studio
+        env:
+          MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+        run: |
+          MASAR_BROWSER=chromium python tests/room_review_browser.py
+          MASAR_BROWSER=webkit python tests/room_review_browser.py
+          MASAR_BROWSER=chromium python tests/plan_inspection_browser.py
+          MASAR_BROWSER=webkit python tests/plan_inspection_browser.py
+          MASAR_BROWSER=chromium python tests/layout_quality_browser.py
+          MASAR_BROWSER=webkit python tests/layout_quality_browser.py
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+      - name: Package source and actual downloads with a source manifest and no font files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import subprocess,zipfile,json,hashlib,shutil
+          root=Path('masar-studio');out=Path('room-review-delivery');out.mkdir(exist_ok=True)
+          files=[Path(x) for x in subprocess.check_output(['git','ls-files','masar-studio'],text=True).splitlines()]
+          blocked={'.ttf','.otf','.woff','.woff2','.db','.sqlite','.pyc'}
+          files=[p for p in files if p.is_file() and p.suffix.lower() not in blocked and 'test-output' not in p.parts and 'node_modules' not in p.parts and p.name!='.env']
+          files+=list((root/'public').glob('render-*.js'))
+          files=sorted(set(files));manifest={'sourceCommit':'e6f3daadfcd82a44cbe246968d9a3300735736ac','files':{str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+          with zipfile.ZipFile(out/'MASAR-Room-Review-Source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in files:z.write(p,str(p))
+              z.writestr('masar-studio/ROOM-REVIEW-MANIFEST.json',json.dumps(manifest,indent=2))
+          shutil.copy(root/'dist/index.html',out/'MASAR-Room-Review-Standalone.html')
+          for name,destination in [('original-project.json','MASAR-Project-20x25.json'),('room-schedule.json','MASAR-Room-Schedule.json'),('all-rooms-filtered.csv','MASAR-Room-Schedule.csv'),('rooms-mobile.png','MASAR-Room-Review-Mobile.png')]:
+              shutil.copy(root/'test-output/room-review/chromium'/name,out/destination)
+          for folder in ['room-review-live','room-review','plan-inspection','layout-quality-ui','customer-ui']:
+              shutil.copytree(root/'test-output'/folder,out/'evidence'/folder,dirs_exist_ok=True)
+          (out/'README-ar.txt').write_text('المصدر مرتبط بالنسخة e6f3daa. تقرير المساحات JSON للقراءة وليس للاستيراد كمشروع. للاستيراد استخدم MASAR-Project-20x25.json. CSV يحتوي جميع المساحات والأدوار. المساحات مفاهيمية وليست اعتمادًا هندسيًا. HTML المستقل لا يشغل الخادم أو عارض الخامات الخارجي. خيار A لا يتضمن رندرًا سحابيًا، والتخزين الخادمي مؤقت.\n')
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file())+'\n')
+          PY
+      - name: Unpack the delivered ZIP and verify every file then rebuild and retest it
+        run: |
+          cd room-review-delivery && sha256sum -c SHA256SUMS > /tmp/checksums.log
+          python -m zipfile -e MASAR-Room-Review-Source.zip ../clean-room-review
+          cd ../clean-room-review/masar-studio
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          m=json.loads(Path('ROOM-REVIEW-MANIFEST.json').read_text())
+          for path,digest in m['files'].items():assert hashlib.sha256(Path(path).read_bytes()).hexdigest()==digest,path
+          print('Every source file matched its manifest:',len(m['files']))
+          PY
+          npm ci --ignore-scripts && npm run check && npm run build
+          cmp dist/index.html ../../room-review-delivery/MASAR-Room-Review-Standalone.html
+          npm test > ../../room-review-delivery/clean-package-node.log 2>&1 || { tail -100 ../../room-review-delivery/clean-package-node.log; exit 1; }
+          tail -12 ../../room-review-delivery/clean-package-node.log
+      - name: Produce machine-derived acceptance summary after every preceding gate succeeds
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,re,os,hashlib
+          root=Path('masar-studio/test-output');out=Path('room-review-delivery');results=[]
+          for engine in ['chromium','webkit']:
+              for folder in ['room-review','plan-inspection','layout-quality-ui']:
+                  p=root/folder/engine/'report.json';r=json.loads(p.read_text());assert r['failed']==0
+                  results.append({'suite':folder,'engine':engine,'passed':r['passed'],'failed':r['failed'],'pageErrors':r.get('pageErrors',[])})
+              r=json.loads((root/'customer-ui'/(engine+'-report.json')).read_text());assert r['failed']==0
+              results.append({'suite':'exact-customer-request','engine':engine,'passed':r['passed'],'failed':r['failed'],'pageErrors':r.get('pageErrors',[])})
+          def counts(path):
+              text=Path(path).read_text();data={k:int(v) for k,v in re.findall(r'^# (tests|pass|fail|skipped) (\d+)$',text,re.M)}
+              assert data['fail']==0 and data['skipped']==0 and data['pass']==data['tests'];return data
+          summary={'sourceCommit':'e6f3daadfcd82a44cbe246968d9a3300735736ac','workflowRun':int(os.environ['GITHUB_RUN_ID']),'origin':'https://masar-customer-preview.onrender.com','deployment':json.loads((root/'room-review-live/deployment.json').read_text()),'node':counts(root/'room-review-live/node.log'),'cleanPackageNode':counts(out/'clean-package-node.log'),'cleanPackageHTMLByteMatch':True,'browserResults':results,'liveChecksPassed':sum(r['passed'] for r in results),'liveChecksFailed':sum(r['failed'] for r in results),'sourceZipSHA256':hashlib.sha256((out/'MASAR-Room-Review-Source.zip').read_bytes()).hexdigest(),'scope':'Read-only room and floor review, source-bound report exports and existing user journeys. No physical iPhone test, no cloud Blender worker, no architectural or regulatory approval. Existing canonical projects are not modified by room review.'}
+          assert all(not r['pageErrors'] for r in results)
+          (out/'LIVE-SUMMARY.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2));print('FINAL_SUMMARY '+json.dumps(summary,ensure_ascii=False),flush=True)
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file() and p.name!='SHA256SUMS')+'\n')
+          PY
+      - name: Preserve actual delivered source, reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-room-review-live
+          path: |
+            room-review-delivery/
+            masar-studio/test-output/room-review-live/
+            masar-studio/test-output/room-review/
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-room-review-summary
+          path: room-review-delivery/LIVE-SUMMARY.json
+          retention-days: 30
+          if-no-files-found: error
+  record:
+    needs: live
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: masar-room-review-summary
+          path: evidence
+      - name: Record immutable results only on the operations branch, never application source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,base64,os
+          raw=Path('evidence/LIVE-SUMMARY.json').read_bytes();s=json.loads(raw)
+          assert s['workflowRun']==int(os.environ['GITHUB_RUN_ID']) and s['liveChecksFailed']==0 and s['cleanPackageHTMLByteMatch']
+          body={'message':'docs(masar): record verified room-review live and clean-package evidence','branch':'ops/masar-customer-live-20260908','content':base64.b64encode(raw).decode()}
+          Path('/tmp/record.json').write_text(json.dumps(body))
+          PY
+          gh api --method PUT repos/NAIFMUSFER/AI-Instruction/contents/.masar-ops/room-review-e6f3daa/LIVE-${GITHUB_RUN_ID}.json --input /tmp/record.json --jq '.commit.sha'
