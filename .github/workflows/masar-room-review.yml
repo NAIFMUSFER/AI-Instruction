@@ -2,7 +2,7 @@ name: MASAR read-only rooms and schedules
 on:
   push:
     branches: ['audit/masar-customer-journey-20260908']
-    paths: ['.github/workflows/masar-room-review.yml']
+    paths: ['masar-studio/**', '.github/workflows/masar-room-review.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,8 +13,6 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -23,13 +21,11 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Apply guarded proposed integration to the inspected baseline
-        run: |
-          test "$GITHUB_REF" = 'refs/heads/audit/masar-customer-journey-20260908'
-          python .masar-ops/room-review-20260909/apply.py
-      - name: Build complete standalone and all engine server and security tests
+      - name: Build committed standalone and all engine server and security tests
         working-directory: masar-studio
         run: |
+          mkdir -p test-output/room-review
+          git rev-parse HEAD > test-output/room-review/tested-commit.txt
           npm ci --ignore-scripts && npm run check && npm run build
           npm test > test-output/room-review/node.log 2>&1 || { grep -A 45 '^not ok' test-output/room-review/node.log; tail -15 test-output/room-review/node.log; exit 1; }
           tail -12 test-output/room-review/node.log
@@ -63,17 +59,7 @@ jobs:
           python tests/browser_flows.py
           node tests/ifc-fixtures.mjs
           python tests/ifc_external.py
-      - name: Commit only tested application paths without force push or deployment
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/src/room-review.js masar-studio/src/plan-inspection.js masar-studio/src/style.css masar-studio/public/sw.js masar-studio/tools/build.mjs masar-studio/tests/browser_http.py masar-studio/tests/room-review.test.mjs masar-studio/tests/room_review_browser.py
-          git rm .masar-ops/room-review-20260909/apply.py .masar-ops/room-review-20260909/room-review.js .masar-ops/room-review-20260909/room-review.test.mjs .masar-ops/room-review-20260909/room_review_browser.py
-          git diff --cached --check
-          git commit -m 'feat(masar): inspect every room and floor with accurate private-by-default space reports'
-          git push origin HEAD:audit/masar-customer-journey-20260908
-          git rev-parse HEAD > masar-studio/test-output/room-review/runtime-commit.txt
-      - name: Preserve actual acceptance evidence even on failure
+      - name: Preserve actual results only; this job never commits or deploys
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
