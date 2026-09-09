@@ -1,0 +1,151 @@
+name: MASAR plan inspection published acceptance
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-plan-inspection-live.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      EXPECTED_COMMIT: c05554fda1d03e29063494115c72c0db5687d09d
+      MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: c05554fda1d03e29063494115c72c0db5687d09d
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Check actual deployed source and free preview capabilities
+        run: |
+          python - <<'PY'
+          import urllib.request,json,hashlib,os
+          from pathlib import Path
+          base=os.environ['MASAR_ACCEPTANCE_URL'];expected=os.environ['EXPECTED_COMMIT']
+          root=Path('masar-studio');out=root/'test-output/inspection-live';out.mkdir(parents=True,exist_ok=True)
+          def get(path):
+              with urllib.request.urlopen(base+path,timeout=120) as r:
+                  assert r.status==200
+                  return {k.lower():v for k,v in r.headers.items()},r.read()
+          report={'origin':base,'expectedCommit':expected,'endpoints':{},'sourceHashes':{}}
+          for path in ['/api/health','/api/ready','/api/version','/api/renders/capabilities']:
+              _,data=get(path);report['endpoints'][path]=json.loads(data)
+          assert report['endpoints']['/api/version']['commit']==expected
+          assert report['endpoints']['/api/health']['persistenceClass']=='ephemeral'
+          assert report['endpoints']['/api/ready']['ready'] is True
+          caps=report['endpoints']['/api/renders/capabilities'];assert caps['enabled'] is False and caps['workerOnline'] is False
+          for path in ['/src/app.js','/src/plan-inspection.js','/src/style.css','/src/render-ui.js','/shared/geometry.js','/shared/layout-quality.js','/shared/model.js','/shared/building.js','/shared/render-scene.js','/public/sw.js']:
+              _,data=get(path);assert data==(root/path.lstrip('/')).read_bytes(),path
+              report['sourceHashes'][path]=hashlib.sha256(data).hexdigest()
+          headers,_=get('/');assert "script-src 'self'" in headers['content-security-policy'] and 'max-age=' in headers['strict-transport-security']
+          report['security']={'csp':headers['content-security-policy'],'hsts':headers['strict-transport-security']}
+          (out/'deployment.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
+          PY
+      - name: Build exact source and rerun all Node assertions
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts && npm run check && npm run build
+          npm test > test-output/inspection-live/node.log 2>&1 || { tail -100 test-output/inspection-live/node.log; exit 1; }
+          tail -12 test-output/inspection-live/node.log
+          cd render-viewer && npm ci --include=dev && npm run build
+      - name: Install pinned browsers and independent IFC validator
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 >/tmp/masar-live-pip.log 2>&1 || { tail -80 /tmp/masar-live-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit >/tmp/masar-live-browser.log 2>&1 || { tail -80 /tmp/masar-live-browser.log; exit 1; }
+      - name: Live inspection and nondestructive editing journeys with no server account changes
+        working-directory: masar-studio
+        run: |
+          MASAR_BROWSER=chromium python tests/plan_inspection_browser.py
+          MASAR_BROWSER=webkit python tests/plan_inspection_browser.py
+          MASAR_BROWSER=chromium python tests/layout_quality_browser.py
+          MASAR_BROWSER=webkit python tests/layout_quality_browser.py
+          MASAR_BROWSER=chromium python tests/acceptance_chalet.py
+          MASAR_BROWSER=webkit python tests/acceptance_chalet.py
+      - name: Independently inspect the actual improved project exported by the live interface
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {importEnvelope,current,assertModel,validate,area} from './shared/model.js';
+          import {reviewLayout} from './shared/layout-quality.js';
+          import {planSVG} from './shared/geometry.js';
+          import {exportIFC} from './shared/building.js';
+          const prompt=readFileSync('tests/fixtures/customer-chalet-ar.txt','utf8'),reports=[];
+          for(const engine of ['chromium','webkit']){
+            const root=`test-output/layout-quality-ui/${engine}/`,before=assertModel(current(importEnvelope(readFileSync(root+'before.json','utf8')))),after=assertModel(current(importEnvelope(readFileSync(root+'after.json','utf8'))));
+            assert.equal(after.brief.prompt,prompt);assert.deepEqual(after.brief,before.brief);assert.deepEqual(after.requirements,before.requirements);assert.deepEqual(after.site,before.site);assert.equal(after.id,before.id);
+            assert.equal(after.levels[0].rooms.length,17);assert.equal(after.levels[0].rooms.filter(r=>r.kind==='bedroom').length,3);assert.equal(validate(after).filter(i=>i.status==='error').length,0);
+            const a=reviewLayout(before),b=reviewLayout(after);assert.ok(b.longestHallExtentM<a.longestHallExtentM&&b.hallAreaM2<a.hallAreaM2&&b.envelopeM2>=120&&b.envelopeM2<=160);
+            reports.push({engine,before:a,after:b,sourceModelId:after.id,originalTextPreserved:true,outdoorFeaturesUnchanged:true,roomChanges:after.levels[0].rooms.map(r=>({id:r.id,name:r.name,beforeAreaM2:area(before.levels[0].rooms.find(s=>s.id===r.id)),afterAreaM2:area(r)}))});
+            if(engine==='chromium'){
+              writeFileSync('test-output/inspection-live/improved-plan.svg',planSVG(after,after.levels[0].id,{interactive:false,dimensions:true,furniture:true}));
+              writeFileSync('test-output/inspection-live/improved.ifc',exportIFC(after));
+            }
+          }
+          writeFileSync('test-output/inspection-live/comparison.json',JSON.stringify(reports,null,2));console.log(JSON.stringify(reports));
+          JS
+          python - <<'PY'
+          import json,ifcopenshell,ifcopenshell.validate,ifcopenshell.geom
+          from pathlib import Path
+          root=Path('test-output/inspection-live');f=ifcopenshell.open(str(root/'improved.ifc'))
+          logger=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(f,logger,express_rules=True)
+          settings=ifcopenshell.geom.settings();shapes=0;failures=[]
+          for obj in f.by_type('IfcProduct'):
+              if not obj.Representation:continue
+              try:
+                  shape=ifcopenshell.geom.create_shape(settings,obj);assert len(shape.geometry.verts)>0;shapes+=1
+              except Exception as e:failures.append({'id':obj.id(),'type':obj.is_a(),'error':str(e)})
+          result={'schema':f.schema,'schemaIssues':logger.statements,'geometryShapes':shapes,'geometryFailures':failures,'scope':'Independent file validation only; not architectural or regulatory approval'}
+          (root/'independent-ifc.json').write_text(json.dumps(result,default=str,indent=2));print(json.dumps(result,default=str));assert shapes>0 and not logger.statements and not failures
+          PY
+      - name: Package exact tested source and usable project with evidence manifest
+        working-directory: masar-studio
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,hashlib,zipfile,shutil,os
+          out=Path('../inspection-delivery');out.mkdir(exist_ok=True);files=[]
+          for folder in ['src','shared','server','public','tools','render-worker','render-viewer','tests','docs']:
+              for p in Path(folder).rglob('*'):
+                  if not p.is_file() or any(x in p.parts for x in ['node_modules','__pycache__','test-output']):continue
+                  if p.suffix.lower() in ['.ttf','.otf','.woff','.woff2','.sqlite','.db','.pyc']:continue
+                  files.append(p)
+          for name in ['package.json','package-lock.json','README.md','Dockerfile','compose.yaml','render.yaml','start-windows.cmd','start.sh','.env.example']:
+              if Path(name).is_file():files.append(Path(name))
+          files=sorted(set(files));manifest={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
+          with zipfile.ZipFile(out/'MASAR-Improved-Source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in files:z.write(p,'masar-studio/'+str(p))
+              z.writestr('masar-studio/INSPECTION-MANIFEST.json',json.dumps({'sourceCommit':os.environ['EXPECTED_COMMIT'],'files':manifest},indent=2))
+          shutil.copy('test-output/layout-quality-ui/chromium/after.json',out/'MASAR-Chalet-Improved.json')
+          shutil.copy('test-output/layout-quality-ui/chromium/improved-blender-scene.json',out/'MASAR-Chalet-Improved-Blender-Scene.json')
+          shutil.copy('dist/index.html',out/'MASAR-Improved-Standalone.html')
+          for src,name in [('test-output/inspection-live','live-evidence'),('test-output/plan-inspection','inspection-tests'),('test-output/layout-quality-ui','layout-quality-tests'),('test-output/customer-ui','original-request-tests')]:shutil.copytree(src,out/name,dirs_exist_ok=True)
+          reports=[]
+          for folder in ['inspection-tests','layout-quality-tests','original-request-tests']:
+              for p in (out/folder).rglob('*report.json'):
+                  r=json.loads(p.read_text());assert r['failed']==0
+                  reports.append({'path':str(p.relative_to(out)),'passed':r['passed'],'failed':r['failed']})
+          (out/'LIVE-SUMMARY.json').write_text(json.dumps({'sourceCommit':os.environ['EXPECTED_COMMIT'],'origin':os.environ['MASAR_ACCEPTANCE_URL'],'suites':reports,'passed':sum(r['passed'] for r in reports),'failed':sum(r['failed'] for r in reports),'scope':'Automated browser journeys; touch pinch events synthetic; no physical iPhone or code approval'},indent=2))
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file())+'\n')
+          PY
+      - name: Preserve observed results even when a live assertion fails
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-inspection-live-evidence
+          path: |
+            inspection-delivery/
+            masar-studio/test-output/inspection-live/
+            masar-studio/test-output/plan-inspection/
+            masar-studio/test-output/layout-quality-ui/
+            masar-studio/test-output/customer-ui/
+          if-no-files-found: error
+          retention-days: 30
