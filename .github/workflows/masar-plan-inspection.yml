@@ -42,14 +42,22 @@ jobs:
               assert not (root/dst).exists()
               text=(staged/src).read_text()
               if src=='plan-inspection.js':
-                  # Correct the identified staging-only property transcription before hash verification.
                   assert text.count('fitPlanView(snapshot.siteWidth,snapshot.siteDepth)')==1
                   text=text.replace('fitPlanView(snapshot.siteWidth,snapshot.siteDepth)','fitPlanView(snapshot.site.width,snapshot.site.depth)')
               (root/dst).write_text(text)
           for p,h in after.items():assert digest(root/p)==h,'Candidate differs: '+p+' got '+digest(root/p)
+          # Run 34353696119 selected an inert background duplicate while the quality
+          # dialog was open. Scope the locator to the active dialog; no force clicks,
+          # runtime changes or removal of source/history assertions.
+          p=root/'tests/plan_inspection_browser.py';text=p.read_text()
+          old='            def action(name):page.locator(f\'button[data-action="{name}"]:visible\').first.click()'
+          new='            def action(name):\n                scope=page.locator(\'#modal\') if page.locator(\'#modal\').evaluate(\'e=>e.open\') else page\n                scope.locator(f\'button[data-action="{name}"]:visible\').first.click()'
+          assert text.count(old)==1;p.write_text(text.replace(old,new))
+          after['tests/plan_inspection_browser.py']='117e5eb47cc7f8f7a752eb152addd6b8d976b2c92519c39bd7454b0d7e913d0a'
+          assert digest(p)==after['tests/plan_inspection_browser.py']
           out=root/'test-output/plan-inspection';out.mkdir(parents=True,exist_ok=True)
           (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
-          compile((root/'tests/plan_inspection_browser.py').read_text(),'plan_inspection_browser.py','exec')
+          compile(p.read_text(),'plan_inspection_browser.py','exec')
           PY
       - name: Syntax standalone build and all Node regressions
         working-directory: masar-studio
