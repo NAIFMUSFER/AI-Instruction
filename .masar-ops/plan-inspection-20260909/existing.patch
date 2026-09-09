@@ -1,0 +1,75 @@
+diff --git a/masar-studio/public/index.html b/masar-studio/public/index.html
+index 9dd79fb..8ac1186 100644
+--- a/masar-studio/public/index.html
++++ b/masar-studio/public/index.html
+@@ -30 +30 @@
+-  <div class="view-pane plan-pane"><div class="pane-label"><span class="pane-dot"></span>المخطط المعماري <span class="label-detail" id="level-label"></span></div><div class="plan-host" id="plan-host"></div><div class="plan-controls"><button class="small-control" data-action="measure" aria-pressed="false" title="انقر نقطتين على المخطط"><span data-icon="ruler"></span>قياس مباشر</button><button class="small-control" data-action="dimensions" aria-pressed="true"><span data-icon="ruler"></span>الأبعاد</button><button class="small-control" data-action="furniture" aria-pressed="true"><span data-icon="sofa"></span>الأثاث التوضيحي</button><span class="unit-label" id="measure-status">الوحدة: متر</span></div></div>
++  <div class="view-pane plan-pane"><div class="pane-label"><span class="pane-dot"></span>المخطط المعماري <span class="label-detail" id="level-label"></span></div><div class="plan-host" id="plan-host"></div><div class="plan-controls"><button class="small-control" data-action="plan-inspect" aria-label="فتح مخطط مكبّر للقراءة فقط"><span data-icon="fit"></span>تكبير وفحص</button><button class="small-control" data-action="measure" aria-pressed="false" title="انقر نقطتين على المخطط"><span data-icon="ruler"></span>قياس مباشر</button><button class="small-control" data-action="dimensions" aria-pressed="true"><span data-icon="ruler"></span>الأبعاد</button><button class="small-control" data-action="furniture" aria-pressed="true"><span data-icon="sofa"></span>الأثاث التوضيحي</button><span class="unit-label" id="measure-status">الوحدة: متر</span></div></div>
+diff --git a/masar-studio/public/sw.js b/masar-studio/public/sw.js
+index 6a4b869..9f7b1f1 100644
+--- a/masar-studio/public/sw.js
++++ b/masar-studio/public/sw.js
+@@ -1,2 +1,2 @@
+-const CACHE='masar-4.1.0-shell-v6-layout-quality';
+-const SHELL=['/','/src/style.css','/src/app.js','/src/renderer.js','/src/storage.js','/src/render-ui.js','/shared/render-scene.js','/shared/authoring.js','/shared/model.js','/shared/layout-quality.js','/shared/building.js','/shared/ifc.js','/shared/geometry.js','/public/favicon.svg','/public/manifest.webmanifest'];
++const CACHE='masar-4.1.0-shell-v7-plan-inspection';
++const SHELL=['/','/src/style.css','/src/app.js','/src/renderer.js','/src/storage.js','/src/render-ui.js','/src/plan-inspection.js','/shared/render-scene.js','/shared/authoring.js','/shared/model.js','/shared/layout-quality.js','/shared/building.js','/shared/ifc.js','/shared/geometry.js','/public/favicon.svg','/public/manifest.webmanifest'];
+diff --git a/masar-studio/shared/geometry.js b/masar-studio/shared/geometry.js
+index bec58ec..99ede9f 100644
+--- a/masar-studio/shared/geometry.js
++++ b/masar-studio/shared/geometry.js
+@@ -41,0 +42,4 @@ function roomShape(r,attrs){if(!r.footprint)return `<rect x="${r.x}" y="${r.y}"
++export function siteFeatureLabel(feature) {
++    if (feature.type === 'terrace' && /شواء|bbq/i.test(feature.name)) return 'شواء';
++    return { pool: 'مسبح', parking: 'موقف', garden: 'حديقة', terrace: 'جلسة' }[feature.type] || 'عنصر موقع';
++}
+@@ -44 +48,5 @@ export function planSVG(model,levelId,{selectedId=null,issues=[],dimensions=true
+-    for(const f of model.site.features||[]){const fill=f.type==='pool'?'#78b8c3':'#c8d2be',stroke=f.type==='pool'?'#3f7f88':'#71836c';svg+=`<g aria-label="${escapeHTML(f.name)}"><rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.d}" rx=".12" fill="${fill}" fill-opacity=".78" stroke="${stroke}" stroke-width=".07"/></g>`;}
++    for(const f of model.site.features||[]){
++        const fill=f.type==='pool'?'#78b8c3':'#c8d2be',stroke=f.type==='pool'?'#3f7f88':'#71836c',label=siteFeatureLabel(f);
++        const size=Math.min(.44,f.w/Math.max(4,label.length*.68),f.d*.24),cx=f.x+f.w/2,cy=f.y+f.d/2;
++        svg+=`<g class="site-feature" data-site-feature="${escapeHTML(f.id)}" aria-label="${escapeHTML(f.name)}"><title>${escapeHTML(f.name)} · ${fmt(f.w)} × ${fmt(f.d)} m</title><rect x="${f.x}" y="${f.y}" width="${f.w}" height="${f.d}" rx=".12" fill="${fill}" fill-opacity=".78" stroke="${stroke}" stroke-width=".07"/><g transform="translate(${cx} ${cy}) scale(1 -1)" text-anchor="middle" pointer-events="none"><text y="${-size*.2}" font-size="${size}" fill="#253c35" font-family="Tahoma,Arial,sans-serif" direction="rtl">${escapeHTML(label)}</text>${dimensions?`<text y="${size*1.1}" font-size="${size*.78}" font-family="Arial,sans-serif" fill="#3b5448" direction="ltr">${fmt(f.w)} × ${fmt(f.d)} m</text>`:''}</g></g>`;
++    }
+diff --git a/masar-studio/src/app.js b/masar-studio/src/app.js
+index 1d68d13..a341e49 100644
+--- a/masar-studio/src/app.js
++++ b/masar-studio/src/app.js
+@@ -0,0 +1 @@
++import { openPlanInspection } from './plan-inspection.js';
+@@ -228 +229 @@ function openQualityReview() {
+-    <div class="notice warn">${limitations}</div><div class="modal-footer"><button class="btn light" data-action="download-quality">تنزيل فحص التوزيع JSON</button>${a&&!state.readOnly?'<button class="btn primary" id="quality-preview" data-action="quality-preview">معاينة الحركة الأقصر</button>':''}</div>`, 'DESIGN REVIEW — NOT CODE APPROVAL');
++    <div class="notice warn">${limitations}</div><div class="modal-footer"><button class="btn light" data-action="plan-inspect">فتح مخطط مكبّر</button><button class="btn light" data-action="download-quality">تنزيل فحص التوزيع JSON</button>${a&&!state.readOnly?'<button class="btn primary" id="quality-preview" data-action="quality-preview">معاينة الحركة الأقصر</button>':''}</div>`, 'DESIGN REVIEW — NOT CODE APPROVAL');
+@@ -662,0 +664,3 @@ async function handleAction(b) {
++        case 'plan-inspect':
++            openPlanInspection({model:shown(),levelId:state.levelId,revisionLabel:(state.preview?'معاينة غير محفوظة · ':'نسخة محفوظة · ')+state.history.revisions[state.history.cursor].id,showModal,download});
++            break;
+diff --git a/masar-studio/src/style.css b/masar-studio/src/style.css
+index 011e2cd..c269aee 100644
+--- a/masar-studio/src/style.css
++++ b/masar-studio/src/style.css
+@@ -88,0 +89,11 @@
++
++/* Dedicated inspection camera: never the geometry editor's drag target. */
++#plan-inspection-frame{height:min(55dvh,620px);min-height:260px;width:100%;max-width:100%;overflow:hidden;touch-action:none;direction:ltr;cursor:grab;background:#f4f6f0;border:1px solid #ccd5c6;border-radius:10px}
++#plan-inspection-frame:active{cursor:grabbing}#plan-inspection-frame:focus-visible{outline:3px solid #30594c;outline-offset:2px}
++#plan-inspection-frame svg{width:100%;height:100%;max-width:none;max-height:none;display:block;user-select:none}
++.plan-inspection-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block:10px}
++.plan-inspection-controls button{min-height:44px;min-width:44px}.plan-inspection-controls output{min-width:50px;text-align:center;font-variant-numeric:tabular-nums}
++.plan-inspection-hint{font-size:12px;color:#607364;line-height:1.8}.plan-site-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
++.plan-site-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border:1px solid #d8dfd1;border-radius:10px;text-align:start;min-width:0;overflow-wrap:anywhere;background:#f7f8f3;min-height:64px}
++.plan-site-item span{font-size:12px}.plan-site-item:focus-visible{outline:3px solid #30594c}#plan-inspection .modal-footer{flex-wrap:wrap}
++@media(max-width:560px){.plan-site-list{grid-template-columns:minmax(0,1fr)}.plan-controls{flex-wrap:wrap!important;gap:5px}.plan-controls .unit-label{flex-basis:100%;text-align:end}.plan-inspection-controls .btn{font-size:12px;padding:10px}#plan-inspection .modal-footer .btn{flex:1 1 180px}#plan-inspection-frame{height:52dvh}}
+diff --git a/masar-studio/tests/browser_http.py b/masar-studio/tests/browser_http.py
+index ff8cc75..c149e04 100644
+--- a/masar-studio/tests/browser_http.py
++++ b/masar-studio/tests/browser_http.py
+@@ -13 +13 @@ results=[];errors=[];requests_failed=[]
+-SHELL_PATHS = ['/', '/src/style.css', '/src/app.js', '/src/renderer.js', '/src/storage.js', '/src/render-ui.js', '/shared/render-scene.js',
++SHELL_PATHS = ['/', '/src/style.css', '/src/app.js', '/src/renderer.js', '/src/storage.js', '/src/render-ui.js', '/src/plan-inspection.js', '/shared/render-scene.js',
+diff --git a/masar-studio/tools/build.mjs b/masar-studio/tools/build.mjs
+index 8e2c84b..49c7b70 100644
+--- a/masar-studio/tools/build.mjs
++++ b/masar-studio/tools/build.mjs
+@@ -7 +7 @@ const read=p=>readFile(path.join(root,p),'utf8');
+-const order=['shared/authoring.js','shared/model.js','shared/building.js','shared/layout-quality.js','shared/ifc.js','shared/geometry.js','src/renderer.js','src/storage.js','shared/render-scene.js','src/render-ui.js','src/app.js'];
++const order=['shared/authoring.js','shared/model.js','shared/building.js','shared/layout-quality.js','shared/ifc.js','shared/geometry.js','src/renderer.js','src/storage.js','shared/render-scene.js','src/render-ui.js','src/plan-inspection.js','src/app.js'];
