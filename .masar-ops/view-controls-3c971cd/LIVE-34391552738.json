@@ -1,0 +1,53 @@
+{
+  "sourceCommit": "3c971cddc52e1fbe00275f0c5be627b82b81c74a",
+  "workflowRun": 34391552738,
+  "deployment": {
+    "origin": "https://masar-customer-preview.onrender.com",
+    "expectedCommit": "3c971cddc52e1fbe00275f0c5be627b82b81c74a",
+    "version": {"product":"MASAR Studio","version":"4.1.0","schemaVersion":1,"commit":"3c971cddc52e1fbe00275f0c5be627b82b81c74a","authoring":"4.0","ifcExchange":"IFC4-supported-subset"},
+    "health": {"ok":true,"version":"4.1.0","schemaVersion":1,"storage":"sqlite","persistenceClass":"ephemeral","aiConfigured":false,"registration":true},
+    "ready": {"ready":true,"version":"4.1.0","storage":"sqlite","persistenceClass":"ephemeral","scope":"database availability, not proof of durable hosting"},
+    "render": {"enabled":false,"workerOnline":false,"pipeline":"blender-bridge-1.0.0","formats":["model.blend","model.glb","exterior.png","interior.png","manifest.json"],"retentionDays":7,"storage":"ephemeral","maxAttempts":2},
+    "moduleHashes": {
+      "shared/view-navigation.js":"55f130f52a1620358491f8750353376591b3028e8200f87b1829b337be0dd47d",
+      "src/render-ui.js":"82e477ad4a9b1284bf716cfe6ad501fed08458f2e9005cfb71c925587c77a598",
+      "src/material-downloads.js":"16f38e60a65ee4579f9cf65452cd4a99e232609c009a0e6822f42cf605cb68de",
+      "src/app.js":"c70d5a1e13ab86acf506d0f1375445be07d94ab3d407047d4677c4805e13ab4b",
+      "src/room-review.js":"c7d7c6df176a4fddccacb045c2badf6c8e34e809c1f8cc566536a14a0b6a3f56",
+      "src/plan-inspection.js":"3b3ab46b2b5fca55adad29e9f423a40dfa8c9e7af51e86e705f5532428663947",
+      "shared/model.js":"6f56d57fa56f56719ee260ed59e875aa00e6cc841f51381811e1ded6a29bc716",
+      "src/style.css":"5a2bf2b2487b0d8d594b5cc03c54468b10bb7c934f374349c5b1cc0583450f50",
+      "public/sw.js":"52c6a1d7ca5f0c1ab3260c5b3eee6d19b73e66683ad837361792866ca2e88fee",
+      "public/render-viewer.js":"39462e2973c1ed6a6f0bf1a0d14b84a30adbc8f7d2b9b9cb145245be928cbef9",
+      "public/render-engine.js":"f45807144ca9bb10adc5e75d9ba8f6afa4c1a9a60dd973603407464a9a85c1a2"
+    },
+    "security": {"csp":"default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'","hsts":"max-age=31536000"}
+  },
+  "node":{"tests":546,"pass":546,"fail":0,"skipped":0},
+  "cleanPackageNode":{"tests":546,"pass":546,"fail":0,"skipped":0},
+  "cleanPackageHTMLByteMatch":true,
+  "cleanPackageBrowser":{"engine":"chromium","passed":17,"failed":0},
+  "browserResults":[
+    {"suite":"view-controls","engine":"chromium","passed":17,"failed":0},
+    {"suite":"material-downloads","engine":"chromium","passed":15,"failed":0},
+    {"suite":"room-review","engine":"chromium","passed":16,"failed":0},
+    {"suite":"plan-inspection","engine":"chromium","passed":17,"failed":0},
+    {"suite":"layout-quality-ui","engine":"chromium","passed":15,"failed":0},
+    {"suite":"view-controls","engine":"webkit","passed":8,"failed":0},
+    {"suite":"material-downloads","engine":"webkit","passed":8,"failed":0},
+    {"suite":"room-review","engine":"webkit","passed":16,"failed":0},
+    {"suite":"plan-inspection","engine":"webkit","passed":17,"failed":0},
+    {"suite":"layout-quality-ui","engine":"webkit","passed":14,"failed":0},
+    {"suite":"exact-customer-request","engine":"chromium","passed":14,"failed":0},
+    {"suite":"exact-customer-request","engine":"webkit","passed":14,"failed":0}
+  ],
+  "liveChecksPassed":171,
+  "liveChecksFailed":0,
+  "khronosGLB":[
+    {"file":"all-floors-model.glb.validation.json","errors":0,"warnings":0,"infos":490},
+    {"file":"isolated-full-model.glb.validation.json","errors":0,"warnings":0,"infos":490}
+  ],
+  "sourceFileCount":111,
+  "sourceZipSHA256":"74d8cccbce33b425d40d9570ef7ec939c1c4152ef4debb8f0ab86e522ecb87d2",
+  "scope":"Display-only 3D floor isolation, aspect-safe perspective presets, hidden-object picking and complete GLB preservation. Chromium software WebGL tested; WebKit covers UI/source/history, not its GPU rendering or physical iPhone. No architectural redesign, orthographic elevations, survey compass verification, cloud rendering or paid storage."
+}
