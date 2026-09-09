@@ -3,7 +3,7 @@
             const spec=structuredClone(currentSpec);
             if(spec.objects.length>4000)throw Error('المشهد يتجاوز حد التنزيل المحلي (4,000 عنصر).');
             if(descriptor.modelId!==spec.source.modelId||descriptor.revisionId!==spec.source.revisionId)throw Error('مرجع تصدير GLB لا يطابق المعاينة.');
-            // A separate, complete group cannot inherit cutaway visibility or selection colour.
+            // A separate complete group excludes cutaway state and selection colour.
             const group=new THREE.Group();group.name='MASAR concept visual';group.userData={...descriptor};
             try {
                 for(const o of spec.objects){
@@ -34,7 +34,7 @@
             try {
                 root.traverse(o=>{if(o.isMesh){selectedMaterials.set(o,o.material);o.material=originals.get(o)||o.material;}});
                 renderer.setPixelRatio(1);renderer.setSize(width,height-footer,false);camera.aspect=width/(height-footer);camera.updateProjectionMatrix();renderer.render(scene,camera);
-                // Copy pixels synchronously before WebGL clears the drawing buffer; no persistent buffer.
+                // Copy pixels before WebGL clears the buffer, without preserveDrawingBuffer.
                 ctx.drawImage(canvas,0,0,width,height-footer);
                 ctx.fillStyle='#ffffff';ctx.fillRect(0,height-footer,width,footer);ctx.fillStyle='#233f35';
                 ctx.font=`${width===640?11:17}px sans-serif`;ctx.fillText('MASAR | CONCEPT PREVIEW - NOT A BLENDER RENDER',12,height-footer+18);
@@ -47,3 +47,5 @@
                 const timer=setTimeout(()=>reject(Error('انتهت مهلة تجهيز الصورة؛ جرّب دقة تجريبية.')),10000);
                 output.toBlob(blob=>{clearTimeout(timer);if(blob)resolve(blob);else reject(Error('تعذر ترميز الصورة.'));},'image/png');
             });
+        },
+        // End of staged export methods; the existing selection API follows.
