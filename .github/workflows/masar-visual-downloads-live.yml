@@ -1,0 +1,221 @@
+name: MASAR visual downloads published acceptance
+on:
+  push:
+    branches: ['ops/masar-customer-live-20260908']
+    paths: ['.github/workflows/masar-visual-downloads-live.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  MASAR_SOURCE_COMMIT: 56c48c2db177878b44932feea195ff10f7aee7d5
+  MASAR_ACCEPTANCE_URL: https://masar-customer-preview.onrender.com
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          ref: 56c48c2db177878b44932feea195ff10f7aee7d5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Build exact accepted source and repeat Node regressions
+        working-directory: masar-studio
+        run: |
+          mkdir -p test-output/visual-live
+          npm ci --ignore-scripts
+          npm run check
+          npm run build
+          npm test > test-output/visual-live/node.log 2>&1 || { tail -120 test-output/visual-live/node.log; exit 1; }
+          tail -12 test-output/visual-live/node.log
+          cd render-viewer
+          npm ci --include=dev
+          npm run build
+      - name: Verify deployed source byte-for-byte and unchanged preview capabilities
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os,json,urllib.request,hashlib,time
+          base=os.environ['MASAR_ACCEPTANCE_URL'];expected=os.environ['MASAR_SOURCE_COMMIT'];root=Path('masar-studio')
+          def get(path):
+              with urllib.request.urlopen(base+path,timeout=120) as response:
+                  assert response.status==200
+                  return response.read(),{k.lower():v for k,v in response.headers.items()}
+          for attempt in range(12):
+              version=json.loads(get('/api/version')[0])
+              if version.get('commit')==expected:break
+              time.sleep(10)
+          else:raise AssertionError('Published commit does not match accepted source')
+          health=json.loads(get('/api/health')[0]);ready=json.loads(get('/api/ready')[0]);caps=json.loads(get('/api/renders/capabilities')[0])
+          assert health['persistenceClass']=='ephemeral' and health['aiConfigured'] is False and ready['ready'] is True
+          assert caps['enabled'] is False and caps['workerOnline'] is False
+          hashes={}
+          for name in ['src/material-downloads.js','src/render-ui.js','src/room-review.js','src/plan-inspection.js','src/app.js','src/style.css','shared/model.js','shared/render-scene.js','public/sw.js','public/render-viewer.js','public/render-engine.js']:
+              data=get('/'+name)[0];assert data==(root/name).read_bytes(),name;hashes[name]=hashlib.sha256(data).hexdigest()
+          headers=get('/')[1];assert "script-src 'self'" in headers.get('content-security-policy','');assert 'max-age=' in headers.get('strict-transport-security','')
+          report={'origin':base,'sourceCommit':expected,'version':version,'health':health,'ready':ready,'render':caps,'moduleHashes':hashes,'security':{'csp':headers['content-security-policy'],'hsts':headers['strict-transport-security']}}
+          (root/'test-output/visual-live/deployment.json').write_text(json.dumps(report,indent=2));print(json.dumps(report),flush=True)
+          PY
+      - name: Install pinned browsers without the unrelated system Chrome index
+        run: |
+          sudo python3 - <<'PY'
+          from pathlib import Path
+          for p in Path('/etc/apt/sources.list.d').glob('*.list'):
+              s=p.read_text()
+              if 'dl.google.com/linux/chrome' in s:p.write_text('\n'.join('# Unused Chrome index: '+line if 'dl.google.com/linux/chrome' in line and not line.lstrip().startswith('#') else line for line in s.splitlines())+'\n')
+          for p in Path('/etc/apt/sources.list.d').glob('*.sources'):
+              s=p.read_text()
+              if 'dl.google.com/linux/chrome' not in s:continue
+              parts=[]
+              for part in s.split('\n\n'):
+                  if 'dl.google.com/linux/chrome' in part:part='\n'.join(line for line in part.splitlines() if not line.startswith('Enabled:'))+'\nEnabled: no'
+                  parts.append(part)
+              p.write_text('\n\n'.join(parts))
+          PY
+          python -m pip install playwright==1.62.0 pillow==11.3.0 >/tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium webkit >/tmp/masar-browser.log 2>&1 || { tail -80 /tmp/masar-browser.log; exit 1; }
+          npm install --prefix /tmp/masar-gltf-validator --ignore-scripts --no-audit --no-fund gltf-validator@2.0.0-dev.3.10
+      - name: Actual published downloads and retained customer journeys without account writes
+        working-directory: masar-studio
+        run: |
+          for engine in chromium webkit; do
+            MASAR_BROWSER=$engine python tests/material_downloads_browser.py
+            MASAR_BROWSER=$engine python tests/room_review_browser.py
+            MASAR_BROWSER=$engine python tests/plan_inspection_browser.py
+            MASAR_BROWSER=$engine python tests/layout_quality_browser.py
+            MASAR_BROWSER=$engine python tests/acceptance_chalet.py
+          done
+      - name: Khronos validation of the actual live-site GLB files
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import{createRequire}from'node:module';import{readFileSync,writeFileSync,readdirSync}from'node:fs';
+          const require=createRequire('/tmp/masar-gltf-validator/package.json'),validator=require('gltf-validator'),dir='test-output/material-downloads/chromium';
+          const files=readdirSync(dir).filter(n=>n.endsWith('.glb'));if(files.length!==3)throw Error('Three real downloads required');
+          for(const name of files){const r=await validator.validateBytes(new Uint8Array(readFileSync(dir+'/'+name)),{uri:name});writeFileSync(dir+'/'+name+'.validation.json',JSON.stringify(r,null,2));console.log(name,JSON.stringify({errors:r.issues.numErrors,warnings:r.issues.numWarnings,infos:r.issues.numInfos}));if(r.issues.numErrors)throw Error('GLB validation failed');}
+          JS
+      - name: Independently import the live downloads inside network-isolated Blender
+        working-directory: masar-studio
+        run: |
+          docker build -f render-worker/Dockerfile -t masar-live-glb-check . >/tmp/masar-blender.log 2>&1 || { tail -100 /tmp/masar-blender.log; exit 1; }
+          docker run --rm --network none --read-only --cpus 2 --memory 2g --pids-limit 256 --tmpfs /tmp:rw,size=512m --user "$(id -u):$(id -g)" -v "$PWD/tests/material_glb_blender.py:/verify.py:ro" -v "$PWD/test-output/material-downloads/chromium:/out:rw" masar-live-glb-check --background --factory-startup --python-exit-code 1 --python /verify.py -- /out
+          test -s test-output/material-downloads/chromium/blender-import-report.json
+      - name: Package source and actual client outputs without fonts or private server data
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os,subprocess,zipfile,hashlib,json,shutil
+          root=Path('masar-studio');out=Path('visual-delivery');out.mkdir(exist_ok=True)
+          files=[Path(p) for p in subprocess.check_output(['git','ls-files','masar-studio'],text=True).splitlines()]
+          files += [root/'public'/n for n in ['render-engine.js','render-viewer.js','render-viewer-integrity.json']]
+          files=sorted({p for p in files if p.is_file() and not p.is_symlink() and not any(x in p.parts for x in ['node_modules','__pycache__','test-output','data']) and p.suffix.lower() not in ['.ttf','.otf','.woff','.woff2','.db','.sqlite','.sqlite3','.pyc','.zip'] and p.name!='.env'})
+          manifest={'sourceCommit':os.environ['MASAR_SOURCE_COMMIT'],'files':{str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in files}}
+          with zipfile.ZipFile(out/'MASAR-Visual-Downloads-Source.zip','w',zipfile.ZIP_DEFLATED) as z:
+              for p in files:z.write(p,str(p))
+              z.writestr('masar-studio/VISUAL-EXPORT-MANIFEST.json',json.dumps(manifest,indent=2))
+          shutil.copy(root/'dist/index.html',out/'MASAR-Visual-Downloads.html')
+          for name in ['material-downloads','visual-live','room-review','plan-inspection','layout-quality-ui','customer-ui']:
+              source=root/'test-output'/name
+              if source.exists():shutil.copytree(source,out/'evidence'/name,dirs_exist_ok=True)
+          for p in (out/'evidence').rglob('*.log'):
+              if p.name=='server.log':p.unlink()
+          source=root/'test-output/material-downloads/chromium'
+          for a,b in [('preview.png','MASAR-Preview-640.png'),('standard.png','MASAR-Preview-1280.png'),('warm-model.glb','MASAR-Chalet-Warm.glb'),('slate-model.glb','MASAR-Chalet-Slate.glb'),('before-project.json','MASAR-Chalet-Source.json'),('warm-scene.json','MASAR-Blender-Scene.json')]:shutil.copy(source/a,out/b)
+          (out/'README-ar.txt').write_text('مسار — تنزيل PNG وGLB محلياً\nافتح معاينة المشروع والخامات ثم معاينة بالخامات. استخدم تنزيل صورة المعاينة أو تنزيل مجسم GLB كامل.\nPNG لقطة من المتصفح وليست Cycles. GLB مجسم بصري بالسقف والخامات وليس ملف مشروع مسار أو BIM قابل للاسترجاع.\nفي Blender اختر File > Import > glTF 2.0.\nالرندر السحابي غير مفعّل ولا تحتاج هذه الميزة حساباً. احتفظ بملف MASAR JSON للمشروع.\nالأمثلة المرفقة من وصف الشاليه الذي اختبرناه وليست ملفات مشروع آخر محفوظ على جهازك.\n')
+          PY
+      - name: Re-extract the deliverable and verify every byte then build and test again
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import zipfile,json,hashlib,shutil
+          source=Path('visual-delivery/MASAR-Visual-Downloads-Source.zip');dest=Path('clean-visual-check');dest.mkdir()
+          with zipfile.ZipFile(source) as z:
+              assert z.testzip() is None
+              for name in z.namelist():assert (dest/name).resolve().is_relative_to(dest.resolve())
+              z.extractall(dest)
+          root=dest/'masar-studio';manifest=json.loads((root/'VISUAL-EXPORT-MANIFEST.json').read_text())
+          for name,digest in manifest['files'].items():assert hashlib.sha256((root/name).read_bytes()).hexdigest()==digest,name
+          print('Verified source files',len(manifest['files']))
+          PY
+          cd clean-visual-check/masar-studio
+          npm ci --ignore-scripts
+          npm run check
+          npm run build
+          cmp dist/index.html ../../visual-delivery/MASAR-Visual-Downloads.html
+          npm test > ../../visual-delivery/clean-package-node.log 2>&1 || { tail -100 ../../visual-delivery/clean-package-node.log; exit 1; }
+          env -u MASAR_ACCEPTANCE_URL MASAR_BROWSER=chromium python tests/material_downloads_browser.py
+      - name: Derive final acceptance summary from real reports only
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os,json,re,hashlib
+          root=Path('masar-studio/test-output');out=Path('visual-delivery')
+          def counts(path):
+              text=path.read_text();return {k:int(re.search(r'^# '+k+r' (\d+)$',text,re.M).group(1)) for k in ['tests','pass','fail','skipped']}
+          reports=[]
+          for engine in ['chromium','webkit']:
+              for suite in ['material-downloads','room-review','plan-inspection','layout-quality-ui']:
+                  r=json.loads((root/suite/engine/'report.json').read_text());assert r['failed']==0 and not r.get('pageErrors');reports.append({'suite':suite,'engine':engine,'passed':r['passed'],'failed':r['failed']})
+              r=json.loads((root/'customer-ui'/(engine+'-report.json')).read_text());assert r['failed']==0;reports.append({'suite':'exact-customer-request','engine':engine,'passed':r['passed'],'failed':r['failed']})
+          validators=[]
+          for p in (root/'material-downloads/chromium').glob('*.validation.json'):
+              d=json.loads(p.read_text());assert d['issues']['numErrors']==0;validators.append({'file':p.name,'errors':d['issues']['numErrors'],'warnings':d['issues']['numWarnings'],'infos':d['issues']['numInfos']})
+          assert len(validators)==3
+          blender=json.loads((root/'material-downloads/chromium/blender-import-report.json').read_text());assert len(blender['results'])==2 and all(x['status']=='pass' for x in blender['results'])
+          clean=json.loads(Path('clean-visual-check/masar-studio/test-output/material-downloads/chromium/report.json').read_text());assert clean['failed']==0
+          summary={'sourceCommit':os.environ['MASAR_SOURCE_COMMIT'],'workflowRun':int(os.environ['GITHUB_RUN_ID']),'deployment':json.loads((root/'visual-live/deployment.json').read_text()),'node':counts(root/'visual-live/node.log'),'cleanPackageNode':counts(out/'clean-package-node.log'),'cleanPackageHTMLByteMatch':True,'cleanPackageBrowser':{'engine':'chromium','passed':clean['passed'],'failed':clean['failed']},'browserResults':reports,'liveChecksPassed':sum(x['passed'] for x in reports),'liveChecksFailed':0,'khronosGLB':validators,'independentBlenderImport':blender,'sourceZipSHA256':hashlib.sha256((out/'MASAR-Visual-Downloads-Source.zip').read_bytes()).hexdigest(),'scope':'Browser PNG and full visual GLB, not Cycles, native .blend generation, editable MASAR/BIM round-trip or architectural approval. Chromium software WebGL exports tested; WebKit UI/JSON/history only, no physical iPhone validation. No paid worker or durable storage enabled.'}
+          assert summary['node']['fail']==0 and summary['cleanPackageNode']['fail']==0
+          (out/'VERIFIED-SUMMARY.json').write_text(json.dumps(summary,ensure_ascii=False,indent=2));print(json.dumps(summary,ensure_ascii=False),flush=True)
+          (out/'SHA256SUMS').write_text('\n'.join(hashlib.sha256(p.read_bytes()).hexdigest()+'  '+str(p.relative_to(out)) for p in sorted(out.rglob('*')) if p.is_file() and p.name!='SHA256SUMS')+'\n')
+          Path('visual-summary').mkdir(exist_ok=True);Path('visual-summary/VERIFIED-SUMMARY.json').write_bytes((out/'VERIFIED-SUMMARY.json').read_bytes())
+          PY
+      - name: Preserve verified delivery and evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-visual-downloads-live
+          path: |
+            visual-delivery/
+            masar-studio/test-output/material-downloads/
+            masar-studio/test-output/visual-live/
+          retention-days: 30
+          if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-visual-downloads-summary
+          path: visual-summary/
+          retention-days: 30
+          if-no-files-found: error
+  record:
+    needs: live
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: masar-visual-downloads-summary
+          path: summary
+      - name: Record immutable results on operations branch only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import os,json,base64,urllib.request
+          from pathlib import Path
+          data=Path('summary/VERIFIED-SUMMARY.json').read_bytes();summary=json.loads(data)
+          assert summary['sourceCommit']==os.environ['MASAR_SOURCE_COMMIT'] and summary['liveChecksFailed']==0
+          path='.masar-ops/visual-downloads-'+summary['sourceCommit'][:7]+'/LIVE-'+os.environ['GITHUB_RUN_ID']+'.json'
+          body={'message':'docs(masar): record verified live browser PNG and GLB delivery','branch':'ops/masar-customer-live-20260908','content':base64.b64encode(data).decode()}
+          req=urllib.request.Request('https://api.github.com/repos/NAIFMUSFER/AI-Instruction/contents/'+path,data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','Content-Type':'application/json'},method='PUT')
+          with urllib.request.urlopen(req,timeout=30) as r:assert r.status==201
+          print(path)
+          PY
