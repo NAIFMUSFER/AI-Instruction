@@ -1,0 +1,138 @@
+{
+  "sourceCommit": "e6f3daadfcd82a44cbe246968d9a3300735736ac",
+  "workflowRun": 34378413683,
+  "origin": "https://masar-customer-preview.onrender.com",
+  "deployment": {
+    "origin": "https://masar-customer-preview.onrender.com",
+    "expectedCommit": "e6f3daadfcd82a44cbe246968d9a3300735736ac",
+    "version": {
+      "product": "MASAR Studio",
+      "version": "4.1.0",
+      "schemaVersion": 1,
+      "commit": "e6f3daadfcd82a44cbe246968d9a3300735736ac",
+      "authoring": "4.0",
+      "ifcExchange": "IFC4-supported-subset"
+    },
+    "sourceHashes": {
+      "/src/room-review.js": "c7d7c6df176a4fddccacb045c2badf6c8e34e809c1f8cc566536a14a0b6a3f56",
+      "/src/plan-inspection.js": "3b3ab46b2b5fca55adad29e9f423a40dfa8c9e7af51e86e705f5532428663947",
+      "/src/style.css": "5a2bf2b2487b0d8d594b5cc03c54468b10bb7c934f374349c5b1cc0583450f50",
+      "/src/app.js": "c70d5a1e13ab86acf506d0f1375445be07d94ab3d407047d4677c4805e13ab4b",
+      "/shared/model.js": "6f56d57fa56f56719ee260ed59e875aa00e6cc841f51381811e1ded6a29bc716",
+      "/shared/layout-quality.js": "2eb59d95ec7569629f5397c26e0516fef7473c024151320640bb7655a45ab422",
+      "/shared/geometry.js": "8bcadbd330dc9e71c49a60ff2001cd01f82fb3492f82aedfc4e6f0368e6f9c43",
+      "/shared/building.js": "31a861be0b0c25ef381b883ec603deccf183c8af5fd7d167a0a9796c6c27313b",
+      "/public/sw.js": "390f62bf7926fd0cc463cf6d2dc29aa70f901485906eda3a16f3bca6c0ee27f4"
+    },
+    "health": {
+      "ok": true,
+      "version": "4.1.0",
+      "schemaVersion": 1,
+      "storage": "sqlite",
+      "persistenceClass": "ephemeral",
+      "aiConfigured": false,
+      "registration": true
+    },
+    "ready": {
+      "ready": true,
+      "version": "4.1.0",
+      "storage": "sqlite",
+      "persistenceClass": "ephemeral",
+      "scope": "database availability, not proof of durable hosting"
+    },
+    "render": {
+      "enabled": false,
+      "workerOnline": false,
+      "pipeline": "blender-bridge-1.0.0",
+      "formats": [
+        "model.blend",
+        "model.glb",
+        "exterior.png",
+        "interior.png",
+        "manifest.json"
+      ],
+      "retentionDays": 7,
+      "storage": "ephemeral",
+      "maxAttempts": 2
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+      "hsts": "max-age=31536000"
+    }
+  },
+  "node": {
+    "tests": 534,
+    "pass": 534,
+    "fail": 0,
+    "skipped": 0
+  },
+  "cleanPackageNode": {
+    "tests": 534,
+    "pass": 534,
+    "fail": 0,
+    "skipped": 0
+  },
+  "cleanPackageHTMLByteMatch": true,
+  "browserResults": [
+    {
+      "suite": "room-review",
+      "engine": "chromium",
+      "passed": 16,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "plan-inspection",
+      "engine": "chromium",
+      "passed": 17,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "layout-quality-ui",
+      "engine": "chromium",
+      "passed": 15,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "exact-customer-request",
+      "engine": "chromium",
+      "passed": 14,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "room-review",
+      "engine": "webkit",
+      "passed": 16,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "plan-inspection",
+      "engine": "webkit",
+      "passed": 17,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "layout-quality-ui",
+      "engine": "webkit",
+      "passed": 14,
+      "failed": 0,
+      "pageErrors": []
+    },
+    {
+      "suite": "exact-customer-request",
+      "engine": "webkit",
+      "passed": 14,
+      "failed": 0,
+      "pageErrors": []
+    }
+  ],
+  "liveChecksPassed": 123,
+  "liveChecksFailed": 0,
+  "sourceZipSHA256": "63bca5fc43643fc9c585d4884f3118fa0073851e3b83a29ad1c7a307809859db",
+  "scope": "Read-only room and floor review, source-bound report exports and existing user journeys. No physical iPhone test, no cloud Blender worker, no architectural or regulatory approval. Existing canonical projects are not modified by room review."
+}
