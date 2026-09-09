@@ -36,8 +36,7 @@ jobs:
           assert s.count(old)==1;p.write_text(s.replace(old,new));compile(p.read_text(),str(p),'exec')
           p=Path('masar-studio/tests/render-ui.test.mjs')
           assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='b27c9666062963b956e01e86dff52eabe65ccdc4'
-          s=p.read_text()
-          old='return {tagName,isConnected:true'
+          s=p.read_text();old='return {tagName,isConnected:true'
           assert s.count(old)==1;s=s.replace(old,'return {dataset:{},append(){},tagName,isConnected:true')
           old="globalThis.document={getElementById:id=>id==='modal'?dialog:host};"
           new="globalThis.document={createElement:tag=>Object.assign(element(tag.toUpperCase()),{querySelector:node}),getElementById:id=>id==='modal'?dialog:host};"
@@ -55,8 +54,23 @@ jobs:
           cd render-viewer
           npm ci --include=dev
           npm run build
-      - name: Install pinned browsers and independent validators
+      - name: Install pinned browsers without the unrelated broken system Chrome index
         run: |
+          sudo python3 - <<'PY'
+          from pathlib import Path
+          for p in Path('/etc/apt/sources.list.d').glob('*.list'):
+              s=p.read_text()
+              if 'dl.google.com/linux/chrome' in s:
+                  p.write_text('\n'.join('# Unused system Chrome index: '+line if 'dl.google.com/linux/chrome' in line and not line.lstrip().startswith('#') else line for line in s.splitlines())+'\n')
+          for p in Path('/etc/apt/sources.list.d').glob('*.sources'):
+              s=p.read_text()
+              if 'dl.google.com/linux/chrome' in s:
+                  parts=[]
+                  for part in s.split('\n\n'):
+                      if 'dl.google.com/linux/chrome' in part:part='\n'.join(line for line in part.splitlines() if not line.startswith('Enabled:'))+'\nEnabled: no'
+                      parts.append(part)
+                  p.write_text('\n\n'.join(parts))
+          PY
           python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
           python -m playwright install --with-deps chromium firefox webkit > /tmp/masar-browsers.log 2>&1 || { tail -80 /tmp/masar-browsers.log; exit 1; }
           npm install --prefix /tmp/masar-gltf-validator --ignore-scripts --no-audit --no-fund gltf-validator@2.0.0-dev.3.10
@@ -78,7 +92,8 @@ jobs:
         working-directory: masar-studio
         run: |
           docker build -f render-worker/Dockerfile -t masar-blender-visual-test . > /tmp/masar-blender-build.log 2>&1 || { tail -100 /tmp/masar-blender-build.log; exit 1; }
-          docker run --rm --network none --read-only --cpus 2 --memory 2g --pids-limit 256 --tmpfs /tmp:rw,size=512m --user "$(id -u):$(id -g)" -v "$PWD/tests/material_glb_blender.py:/verify.py:ro" -v "$PWD/test-output/material-downloads/chromium:/out:rw" masar-blender-visual-test --background --factory-startup --python /verify.py -- /out
+          docker run --rm --network none --read-only --cpus 2 --memory 2g --pids-limit 256 --tmpfs /tmp:rw,size=512m --user "$(id -u):$(id -g)" -v "$PWD/tests/material_glb_blender.py:/verify.py:ro" -v "$PWD/test-output/material-downloads/chromium:/out:rw" masar-blender-visual-test --background --factory-startup --python-exit-code 1 --python /verify.py -- /out
+          test -s test-output/material-downloads/chromium/blender-import-report.json
       - name: Preserve complete customer room inspection quality and legacy journeys
         working-directory: masar-studio
         run: |
