@@ -86,3 +86,14 @@
 .quality-room-changes summary{cursor:pointer;font-weight:700;padding-block:10px}
 .quality-preview-notice{padding:10px;background:rgba(255,255,255,.16);border-radius:8px}
 @media(max-width:500px){.quality-table{font-size:12px}.quality-table th,.quality-table td{padding:8px 4px}#quality-preview{width:100%;white-space:normal}}
+
+/* Dedicated inspection camera: never the geometry editor's drag target. */
+#plan-inspection-frame{height:min(55dvh,620px);min-height:260px;width:100%;max-width:100%;overflow:hidden;touch-action:none;direction:ltr;cursor:grab;background:#f4f6f0;border:1px solid #ccd5c6;border-radius:10px}
+#plan-inspection-frame:active{cursor:grabbing}#plan-inspection-frame:focus-visible{outline:3px solid #30594c;outline-offset:2px}
+#plan-inspection-frame svg{width:100%;height:100%;max-width:none;max-height:none;display:block;user-select:none}
+.plan-inspection-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block:10px}
+.plan-inspection-controls button{min-height:44px;min-width:44px}.plan-inspection-controls output{min-width:50px;text-align:center;font-variant-numeric:tabular-nums}
+.plan-inspection-hint{font-size:12px;color:#607364;line-height:1.8}.plan-site-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.plan-site-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border:1px solid #d8dfd1;border-radius:10px;text-align:start;min-width:0;overflow-wrap:anywhere;background:#f7f8f3;min-height:64px}
+.plan-site-item span{font-size:12px}.plan-site-item:focus-visible{outline:3px solid #30594c}#plan-inspection .modal-footer{flex-wrap:wrap}
+@media(max-width:560px){.plan-site-list{grid-template-columns:minmax(0,1fr)}.plan-controls{flex-wrap:wrap!important;gap:5px}.plan-controls .unit-label{flex-basis:100%;text-align:end}.plan-inspection-controls .btn{font-size:12px;padding:10px}#plan-inspection .modal-footer .btn{flex:1 1 180px}#plan-inspection-frame{height:52dvh}}

@@ -73,7 +73,7 @@ export function openPlanInspection({ model, levelId, revisionLabel, showModal, d
     for(const event of ['pointerup','pointercancel','lostpointercapture'])frame.addEventListener(event,e=>pointers.delete(e.pointerId));
     frame.addEventListener('keydown', e => {
         const options={ArrowLeft:{dx:-view.w*.15},ArrowRight:{dx:view.w*.15},ArrowUp:{dy:-view.d*.15},ArrowDown:{dy:view.d*.15},'+':{zoom:view.zoom*1.4},'=':{zoom:view.zoom*1.4},'-':{zoom:view.zoom/1.4}};
-        if(e.key==='0'){e.preventDefault();view=fitPlanView(snapshot.siteWidth,snapshot.siteDepth);paint();}
+        if(e.key==='0'){e.preventDefault();view=fitPlanView(snapshot.site.width,snapshot.site.depth);paint();}
         else if(options[e.key]){e.preventDefault();move(options[e.key]);}
     });
     frame.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();move({zoom:view.zoom*Math.exp(-limit(e.deltaY,-200,200)*.005),...anchor(e.clientX,e.clientY)});},{passive:false});

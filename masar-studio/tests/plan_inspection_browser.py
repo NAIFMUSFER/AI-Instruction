@@ -30,7 +30,9 @@ with tempfile.TemporaryDirectory(prefix='masar-inspection-') as tmp:
             page=context.new_page();page.set_default_timeout(20000)
             page.on('pageerror',lambda e:errors.append(str(e)))
             page.on('request',lambda r:external.append(r.url) if r.url.startswith(('http:','https:')) and not r.url.startswith(BASE+'/') else None)
-            def action(name):page.locator(f'button[data-action="{name}"]:visible').first.click()
+            def action(name):
+                scope=page.locator('#modal') if page.locator('#modal').evaluate('e=>e.open') else page
+                scope.locator(f'button[data-action="{name}"]:visible').first.click()
             def close():page.locator('#modal button[data-action="close-modal"]').first.click()
             def export(tag):
                 action('export')

@@ -1,3 +1,4 @@
+import { openPlanInspection } from './plan-inspection.js';
 import { reviewLayout, compactCirculationAlternative } from '../shared/layout-quality.js';
 import { openRenderStudio } from './render-ui.js';
 import { KINDS, COLORS, clone, uid, round, understand, briefIssues, generate, assertModel, validate, totals, area, propose, resolvePreview, commitPreview, parseCommand, checkLocks, diffModels, createHistory, current, pushHistory, assertHistory, exportEnvelope, importEnvelope, parseDXF, exportDXF, designMetrics, createAlternatives, impactSummary, requirementStatus, distanceToEntry, touchesGardenEdge } from '../shared/model.js';
@@ -225,7 +226,7 @@ function openQualityReview() {
     <div class="quality-room-list">${q.bedrooms.map(r=>`<div class="quality-room"><strong>${E(r.name)}</strong><span>${fmt(r.areaM2)} م² · مستطيل داخلي ${fmt(r.largestRectangle.w)} × ${fmt(r.largestRectangle.d)} م</span><span class="source-tag ${r.bedZoneFits?'':'warn'}">${r.bedZoneFits?'يتسع هندسيًا للاختبار التوضيحي':'يحتاج مراجعة شكل الغرفة'}</span></div>`).join('')}</div>
     ${a?`<h3>${E(a.label)}</h3><div class="notice warn" id="quality-tradeoffs">هذا إعادة توزيع للمبنى، لا مجرد نقل جدار. مدخل العائلة يصبح من الجانب. تصغر غرفتا النوم الإضافيتان ومنطقة الطعام، وتتغير مواضع الأبواب والخدمات. يبقى الموقع والمسبح والمواقف والتعليقات ومعرّفات الغرف والطلب الأصلي. لا نطبّقه على مخطط عُدّلت هندسته يدويًا أو ثُبّتت غرفه.</div>
     <details class="quality-room-changes"><summary>مساحة كل غرفة قبل المقترح وبعده</summary><div class="quality-table-wrap"><table class="quality-table"><thead><tr><th>المساحة</th><th>الحالي م²</th><th>المقترح م²</th></tr></thead><tbody>${m.levels[0].rooms.map(r=>{const next=a.model.levels[0].rooms.find(n=>n.id===r.id);return `<tr><th>${E(r.name)}</th><td>${fmt(area(r))}</td><td>${next?fmt(area(next)):'غير موجود'}</td></tr>`;}).join('')}</tbody></table></div></details>`:`<p class="notice">${E(result.reason||'لا يوجد مقترح إعادة توزيع متاح لهذه الحالة.')}</p>`}
-    <div class="notice warn">${limitations}</div><div class="modal-footer"><button class="btn light" data-action="download-quality">تنزيل فحص التوزيع JSON</button>${a&&!state.readOnly?'<button class="btn primary" id="quality-preview" data-action="quality-preview">معاينة الحركة الأقصر</button>':''}</div>`, 'DESIGN REVIEW — NOT CODE APPROVAL');
+    <div class="notice warn">${limitations}</div><div class="modal-footer"><button class="btn light" data-action="plan-inspect">فتح مخطط مكبّر</button><button class="btn light" data-action="download-quality">تنزيل فحص التوزيع JSON</button>${a&&!state.readOnly?'<button class="btn primary" id="quality-preview" data-action="quality-preview">معاينة الحركة الأقصر</button>':''}</div>`, 'DESIGN REVIEW — NOT CODE APPROVAL');
 }
 function download(filename, content, type) { const blob = content instanceof Blob ? content : new Blob([content], { type }); const href = URL.createObjectURL(blob), a = document.createElement('a'); a.href = href; a.download = filename; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(href), 30000); toast('جُهّز الملف للتنزيل.'); }
 function exportMenu() {
@@ -659,6 +660,9 @@ async function handleAction(b) {
                 closeModal();
                 switchMobile('workspace');
             }
+            break;
+        case 'plan-inspect':
+            openPlanInspection({model:shown(),levelId:state.levelId,revisionLabel:(state.preview?'معاينة غير محفوظة · ':'نسخة محفوظة · ')+state.history.revisions[state.history.cursor].id,showModal,download});
             break;
         case 'quality-review':
             openQualityReview();
