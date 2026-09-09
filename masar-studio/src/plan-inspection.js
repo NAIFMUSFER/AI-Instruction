@@ -1,6 +1,7 @@
 /** Read-only plan navigation. All geometry and downloads use a captured model.
  * Camera gestures never call the author's move/resize/history/persistence paths.
  */
+import { attachRoomReview } from './room-review.js';
 import { clone, assertModel } from '../shared/model.js';
 import { planSVG, escapeHTML } from '../shared/geometry.js';
 const limit = (n, lo, hi) => Math.min(hi, Math.max(lo, n));
@@ -18,18 +19,20 @@ export function navigatePlanView(view, { zoom = view.zoom, dx = 0, dy = 0, ancho
 }
 export function openPlanInspection({ model, levelId, revisionLabel, showModal, download }) {
     const snapshot = clone(assertModel(model));
-    const level = snapshot.levels.find(l => l.id === levelId) || snapshot.levels[0];
+    let level = snapshot.levels.find(l => l.id === levelId) || snapshot.levels[0];
     const features = snapshot.site.features || [], E = escapeHTML, num = n => Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
-    const svgText = planSVG(snapshot, level.id, { interactive: false, dimensions: true, furniture: true });
-    showModal('فحص المخطط والموقع', `<section id="plan-inspection" data-model-id="${E(snapshot.id)}"><p class="modal-lead">${E(snapshot.title)} · ${E(level.name)} · ${E(revisionLabel)}<br>عرض للقراءة فقط؛ التكبير والسحب لا ينقلان الغرف ولا ينشئان نسخة.</p>
+    let svgText = planSVG(snapshot, level.id, { interactive: false, dimensions: true, furniture: true });
+    showModal('فحص المخطط والموقع', `<section id="plan-inspection" data-model-id="${E(snapshot.id)}"><p class="modal-lead">${E(snapshot.title)} · <span data-inspection-level>${E(level.name)}</span> · ${E(revisionLabel)}<br>عرض للقراءة فقط؛ التكبير والسحب لا ينقلان الغرف ولا ينشئان نسخة.</p>
     <div class="plan-inspection-controls" role="group" aria-label="تنقل المخطط للقراءة فقط"><button type="button" class="btn light" data-plan-nav="in" aria-label="تكبير المخطط">+</button><output id="plan-inspection-scale" aria-live="polite">100%</output><button type="button" class="btn light" data-plan-nav="out" aria-label="تصغير المخطط">−</button><button type="button" class="btn light" data-plan-nav="fit">إظهار الأرض كاملة</button></div>
     <p class="plan-inspection-hint" id="plan-inspection-help">اسحب المخطط أو قرّب بإصبعين داخل الإطار. لوحة المفاتيح: الأسهم للتحريك، + و− للتكبير، و0 لإظهار الأرض.</p>
     <div id="plan-inspection-frame" tabindex="0" role="region" aria-label="مخطط قابل للتكبير للقراءة فقط" aria-describedby="plan-inspection-help">${svgText}</div>
+    <div id="plan-room-review"></div>
     <h3>عناصر الموقع الخارجي</h3><p>الأبعاد من مواضع النموذج المفاهيمي، وليست مخططات تنفيذ. اضغط اسم العنصر للوصول إلى موضعه.</p>
     <div class="plan-site-list">${features.length ? features.map((f,i)=>`<button class="plan-site-item" type="button" data-plan-feature="${i}"><strong>${E(f.name)}</strong><span dir="ltr">${num(f.w)} × ${num(f.d)} m · ${num(f.w*f.d)} m²</span></button>`).join('') : '<p class="notice">لا توجد عناصر موقع ممثلة في هذا المشروع؛ الفراغ الخارجي لا يعني وجود حديقة مصممة.</p>'}</div>
     <div class="notice warn">مساحة كل عنصر هي مستطيله المفاهيمي؛ قد تتداخل تخصيصات الموقع، فلا تجمعها باعتبارها مساحات أرض مستقلة. أما أبعاد الغرفة غير المستطيلة فهي أبعاد صندوقها المحيط، وليست مستطيلًا صالحًا للأثاث. لا يوجد اعتماد إنشائي أو تنظيمي.</div>
     <div class="modal-footer"><button class="btn light" type="button" data-plan-save>تنزيل المخطط الكامل SVG</button><button class="btn primary" type="button" data-action="close-modal">العودة للتصميم</button></div></section>`, 'READ-ONLY PLAN / METRES');
-    const root = document.querySelector('#plan-inspection'), frame = root.querySelector('#plan-inspection-frame'), svg = frame.querySelector('svg'), output = root.querySelector('#plan-inspection-scale');
+    const root = document.querySelector('#plan-inspection'), frame = root.querySelector('#plan-inspection-frame'), output = root.querySelector('#plan-inspection-scale');
+    let svg = frame.querySelector('svg');
     let view = fitPlanView(snapshot.site.width, snapshot.site.depth);
     const pointers = new Map();
     function paint() {
@@ -49,6 +52,25 @@ export function openPlanInspection({ model, levelId, revisionLabel, showModal, d
         if(op==='fit') { view=fitPlanView(snapshot.site.width,snapshot.site.depth);paint(); }
         else move({zoom:view.zoom*(op==='in'?1.4:1/1.4)});
     }));
+    root.dataset.levelId=level.id;
+    const showLevel = id => {
+        const next=snapshot.levels.find(l=>l.id===id);if(!next)return;
+        level=next;svgText=planSVG(snapshot,level.id,{interactive:false,dimensions:true,furniture:true});
+        frame.innerHTML=svgText;svg=frame.querySelector('svg');pointers.clear();
+        root.dataset.levelId=level.id;root.querySelector('[data-inspection-level]').textContent=level.name;
+        view=fitPlanView(snapshot.site.width,snapshot.site.depth);paint();
+    };
+    attachRoomReview({ root:root.querySelector('#plan-room-review'),model:snapshot,levelId:level.id,revisionLabel,showLevel,download,
+        focusRoom:(id,floorId)=>{
+            if(level.id!==floorId)showLevel(floorId);
+            const index=level.rooms.findIndex(r=>r.id===id),room=level.rooms[index];if(!room)return;
+            const z=Math.max(1,Math.min(6,(snapshot.site.width+5)/(room.w*1.7),(snapshot.site.depth+5)/(room.d*1.7)));
+            view=fitPlanView(snapshot.site.width,snapshot.site.depth);move({zoom:z});
+            move({dx:room.x+room.w/2-(view.x+view.w/2),dy:snapshot.site.depth-room.y-room.d/2-(view.y+view.d/2)});
+            svg.querySelectorAll('g.room').forEach((group,i)=>group.classList.toggle('inspection-room-selected',i===index));
+            frame.focus({preventScroll:true});frame.scrollIntoView({block:'nearest'});
+        }
+    });
     root.querySelectorAll('[data-plan-feature]').forEach(button => button.addEventListener('click', () => {
         const feature=features[Number(button.dataset.planFeature)], z=Math.min(6,Math.max(2,(snapshot.site.width+5)/(feature.w*2)));
         view=fitPlanView(snapshot.site.width,snapshot.site.depth);move({zoom:z});

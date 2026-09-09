@@ -97,3 +97,20 @@
 .plan-site-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border:1px solid #d8dfd1;border-radius:10px;text-align:start;min-width:0;overflow-wrap:anywhere;background:#f7f8f3;min-height:64px}
 .plan-site-item span{font-size:12px}.plan-site-item:focus-visible{outline:3px solid #30594c}#plan-inspection .modal-footer{flex-wrap:wrap}
 @media(max-width:560px){.plan-site-list{grid-template-columns:minmax(0,1fr)}.plan-controls{flex-wrap:wrap!important;gap:5px}.plan-controls .unit-label{flex-basis:100%;text-align:end}.plan-inspection-controls .btn{font-size:12px;padding:10px}#plan-inspection .modal-footer .btn{flex:1 1 180px}#plan-inspection-frame{height:52dvh}}
+
+/* Read-only room review: controls reflow instead of clipping native inputs. */
+#plan-room-review{min-width:0;margin-block:1.2rem}
+.room-review-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.room-review-fields .field,.room-review-fields input,.room-review-fields select{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+.room-review-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:260px;overflow:auto;overscroll-behavior:contain;padding:4px}
+.room-review-row{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;min-height:48px;width:100%;padding:10px 12px;border:1px solid #d9dfd5;border-radius:9px;background:#fff;text-align:start;font:inherit;color:inherit;overflow-wrap:anywhere;cursor:pointer}
+.room-review-row[aria-pressed="true"]{border-color:#285b4b;background:#e4f0e8}
+.room-review-row:focus-visible{outline:3px solid #285b4b;outline-offset:1px}
+.room-review-row span{font-size:.86rem}
+#room-review-count{display:block;margin-block:8px}
+#room-review-detail{overflow-wrap:anywhere;margin-block:12px}
+#room-review-detail h4{margin-block:0 8px}
+.room-review-downloads{display:flex;flex-wrap:wrap;gap:8px;margin-block:12px}
+.room-review-downloads .btn{white-space:normal;max-width:100%}
+#plan-inspection-frame .inspection-room-selected>rect:first-child,#plan-inspection-frame .inspection-room-selected>polygon:first-child{stroke:#125d45;stroke-width:.18;stroke-dasharray:.2 .1;fill:#a9d6c4}
+@media(max-width:560px){.room-review-fields,.room-review-list{grid-template-columns:minmax(0,1fr)}}
