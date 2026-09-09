@@ -2,7 +2,7 @@ name: MASAR floor and camera acceptance
 on:
   push:
     branches: ['audit/masar-customer-journey-20260908']
-    paths: ['.github/workflows/masar-view-controls.yml']
+    paths: ['masar-studio/**', '.github/workflows/masar-view-controls.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,8 +13,6 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
     defaults:
       run:
         shell: bash
@@ -26,59 +24,11 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Verify inspected baseline and byte-exact patch before any changes
-        run: |
-          test "$GITHUB_REF" = 'refs/heads/audit/masar-customer-journey-20260908'
-          python - <<'PY'
-          from pathlib import Path
-          import base64,zlib,hashlib,subprocess,json
-          root=Path('masar-studio')
-          before={'src/three-viewer.mjs':'80d7bce32e7e4d04074d77bfe11cdbe7d4da198b4463f717cacff559f8805267','src/render-ui.js':'12ae2ec40c729885864a1c90eb9042e8ae81173d6071f7bacc87c7d55e90cbcb','src/material-downloads.js':'418fa5c4d73ee593aa2f8fd0ea088558fd0d2b90eee986d4e583862479f42c94','public/sw.js':'b6776c6d4f7b85f7398d836d91a565e7faabb1c00e95a3b04e2ab964563688c8','tests/browser_http.py':'2498a683e83f0a0a93cd82194312e099b434fbef829b9d05b5cb51b14de146e1'}
-          after={'shared/view-navigation.js':'55f130f52a1620358491f8750353376591b3028e8200f87b1829b337be0dd47d','src/three-viewer.mjs':'b1c0cb2902c8ea1f62165f50b97ffa936c000238e20f13953132b3a97a3f8b3e','src/render-ui.js':'82e477ad4a9b1284bf716cfe6ad501fed08458f2e9005cfb71c925587c77a598','src/material-downloads.js':'16f38e60a65ee4579f9cf65452cd4a99e232609c009a0e6822f42cf605cb68de','public/sw.js':'3ff61049564455b28bc5f5f761858589cc2cf65f11130bcefd7733ee4ce717cb','tests/browser_http.py':'3a0153b29f8e6870972688f700cab7f83e8e9c091b89e777bfd465233f0dcb7c','tests/view-navigation.test.mjs':'4b12d7160ea7d0367c534d2fc302e8a8104ed5b2258880410a0f715c204f0c3d','tests/view_controls_browser.py':'1e2f51fb46360f8725444d5a531c1f6a24475d19e1fa5d452492bfa972188237','docs/VIEW-CONTROLS.md':'3f52d0921cf8039be2740d1a8c197808aa7f1da874af230e1fced9434db5a2a1'}
-          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-          for name,h in before.items():assert digest(root/name)==h,'Changed baseline: '+name
-          for name in set(after)-set(before):assert not (root/name).exists(),'New file already exists: '+name
-          parts=sorted(Path('.masar-ops/view-controls-20260909').glob('part-*'));assert len(parts)==4
-          encoded=''.join(p.read_text().strip() for p in parts)
-          patch=zlib.decompress(base64.b64decode(encoded,validate=True))
-          assert hashlib.sha256(patch).hexdigest()=='1cf2c987d43b070e0f929967f9b9d2639dfe5ff670a60f3e9be3ebe2cd59771a','Patch bytes differ'
-          subprocess.run(['git','apply','--unidiff-zero','--check','-'],input=patch,check=True)
-          subprocess.run(['git','apply','--unidiff-zero','-'],input=patch,check=True)
-          for name,h in after.items():assert digest(root/name)==h,'Patched bytes differ: '+name
-          # Correct test observation only: rounded DOM corners and sticky dialog
-          # chrome are not model pixels. All original non-cropping assertions stay.
-          p=root/'tests/view_controls_browser.py';s=p.read_text()
-          changes=[
-              ('from PIL import Image,ImageChops,ImageStat\n','from PIL import Image,ImageChops,ImageStat,ImageDraw\nimport math\n'),
-              ('def check_image_framing(path):','def check_image_framing(path, radius):'),
-              ("background=Image.new('RGB',image.size,image.getpixel((0,0)))","background=Image.new('RGB',image.size,max(image.getcolors(image.width*image.height),key=lambda item:item[0])[1])"),
-              ("    box=mask.getbbox();", "    # Element screenshots contain CSS-rounded white corners and up to one pixel\n    # of subpixel capture padding; these are not objects in the WebGL scene.\n    aperture=Image.new('L',image.size,0)\n    ImageDraw.Draw(aperture).rounded_rectangle((1,1,image.width-2,image.height-2),radius=math.ceil(radius)+1,fill=255)\n    mask=ImageChops.multiply(mask,aperture)\n    box=mask.getbbox();")
-          ]
-          for old,new in changes:
-              assert s.count(old)==1,(old,s.count(old));s=s.replace(old,new)
-          old='check_image_framing(image)';assert s.count(old)==2
-          s=s.replace(old,"check_image_framing(image,float(canvas.evaluate('e=>parseFloat(getComputedStyle(e).borderTopLeftRadius)||0')))")
-          assert hashlib.sha256(s.encode()).hexdigest()=='b022b2db73407336acd01b79d9f2b3af61a61f84c75d9fa8459d57bf48c0cb83'
-          needle="with tempfile.TemporaryDirectory(prefix='masar-view-controls-') as tmp:"
-          addition='''def capture_frame(canvas, path):
-              # Native sticky dialog headers may overlap a locator screenshot when the
-              # previous preset/select scrolled only its own control into view.
-              canvas.evaluate("""async e=>{e.scrollIntoView({block:'center',inline:'nearest'});
-                  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}""")
-              canvas.screenshot(path=str(path))
-          '''
-          assert s.count(needle)==1;s=s.replace(needle,addition+needle)
-          assert s.count('canvas.screenshot(path=str(image));')==2
-          s=s.replace('canvas.screenshot(path=str(image));','capture_frame(canvas,image);')
-          p.write_text(s);compile(s,str(p),'exec')
-          after['tests/view_controls_browser.py']='a90c89200de2ed99f733ce33a65708fb1b5a217e9f666ba82d435691c6bb38fe'
-          assert digest(p)==after['tests/view_controls_browser.py'],'Observation correction differs'
-          out=root/'test-output/view-controls';out.mkdir(parents=True,exist_ok=True)
-          (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
-          PY
-      - name: Build application and self-hosted viewer and run every Node regression
+      - name: Build committed source and run every Node regression
         working-directory: masar-studio
         run: |
+          mkdir -p test-output/view-controls
+          git rev-parse HEAD > test-output/view-controls/tested-commit.txt
           npm ci --ignore-scripts
           npm run check
           npm run build
@@ -133,17 +83,7 @@ jobs:
           python tests/browser_flows.py
           node tests/ifc-fixtures.mjs
           python tests/ifc_external.py
-      - name: Commit only verified source without force or deployment
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/shared/view-navigation.js masar-studio/src/three-viewer.mjs masar-studio/src/render-ui.js masar-studio/src/material-downloads.js masar-studio/public/sw.js masar-studio/tests/browser_http.py masar-studio/tests/view-navigation.test.mjs masar-studio/tests/view_controls_browser.py masar-studio/docs/VIEW-CONTROLS.md
-          git rm .masar-ops/view-controls-20260909/part-001 .masar-ops/view-controls-20260909/part-002 .masar-ops/view-controls-20260909/part-003 .masar-ops/view-controls-20260909/part-004
-          git diff --cached --check
-          git commit -m 'feat(masar): inspect individual 3D floors with aspect-safe camera presets and correct hidden picking'
-          git push origin HEAD:audit/masar-customer-journey-20260908
-          git rev-parse HEAD > masar-studio/test-output/view-controls/runtime-commit.txt
-      - name: Preserve actual results even on failure
+      - name: Preserve actual results; this job never commits or deploys
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
