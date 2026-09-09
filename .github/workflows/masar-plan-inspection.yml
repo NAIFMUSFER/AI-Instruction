@@ -2,19 +2,17 @@ name: MASAR safe plan inspection
 on:
   push:
     branches: ['audit/masar-customer-journey-20260908']
-    paths: ['.github/workflows/masar-plan-inspection.yml']
+    paths: ['masar-studio/**', '.github/workflows/masar-plan-inspection.yml']
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: masar-plan-inspection-repair
+  group: masar-plan-inspection-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -23,45 +21,11 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Apply only the measured changes to verified baseline files
-        run: |
-          test "$GITHUB_REF" = 'refs/heads/audit/masar-customer-journey-20260908'
-          python - <<'PY'
-          from pathlib import Path
-          import hashlib,json,subprocess
-          root=Path('masar-studio');staged=Path('.masar-ops/plan-inspection-20260909')
-          before={"public/index.html":"c4b1ad2341ee7b3ca3dfa903bf5cac5aefcc93a1b8310b0fd2b80902200e3998","public/sw.js":"f8c44b5dd6753185e77c56d34c424866211cb85345b7970b1625d48968125d75","shared/geometry.js":"9b781445cf0f138a907e935b06fd99978032f445770b2a51ecf422431a628c35","src/app.js":"fd1dabcf81221f64ab99e222ce43b51a4eccb9b3dc6e6af9f37f1321793c5f47","src/style.css":"6034e7cc3f54e696de24ee8608b69bdec6de0bf468397f0fe778bd45e3690908","tests/browser_http.py":"e2ac577df9886bfdc04eef8296bcd77547aa8a593e98548f165769dbcecc76c9","tools/build.mjs":"b76df6e65c30bd9caa7dbae2262557d76eea224452908e74f4f1a1d9ffaf3cbc"}
-          after={"public/index.html":"f3a52b1513bc0a07d567727c2c14882e2704c422e8959b9116c97e71c24b5f49","public/sw.js":"267eeb1ff5b90b3537ab2df10fc0af5d45e8000818aeb57f995e7fc15b20fc19","shared/geometry.js":"8bcadbd330dc9e71c49a60ff2001cd01f82fb3492f82aedfc4e6f0368e6f9c43","src/app.js":"c70d5a1e13ab86acf506d0f1375445be07d94ab3d407047d4677c4805e13ab4b","src/style.css":"07cbd0bb1305eefab54f5c9b07a554402215f10944876dc1c2c9b4ff8231359e","tests/browser_http.py":"f44589fdcce4f36324169eb07f0d7deef028bed7a15695ed3c71f5eda9f4c27f","tools/build.mjs":"bf54545c2d4edb4d48fcdd1aa5fb18440e51db741df5cafd291c8391ab94a9fb","src/plan-inspection.js":"2989d2baf87619f172146ecadee0ddf79c26c530d0d9c0002a7b61e13141a6df","tests/plan-inspection.test.mjs":"42af12bf09d90a5722b34fea64db2bf0e76b611921722de69fb685290affe9a4","tests/plan_inspection_browser.py":"694c3d9a73abdc0be5680658e60c87f8d96aebb0c9024ded295dc3d5fce0e04d"}
-          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
-          for p,h in before.items():assert digest(root/p)==h,'Baseline changed: '+p
-          patch=(staged/'existing.patch').read_bytes()
-          assert hashlib.sha256(patch).hexdigest()=='c2772c028500fb63ed41a8220fb409bdd2ddbdf4cb51c2876e176febc54a2515','Patch mismatch'
-          subprocess.run(['git','apply','--unidiff-zero','--check','-'],input=patch,check=True)
-          subprocess.run(['git','apply','--unidiff-zero','-'],input=patch,check=True)
-          for src,dst in [('plan-inspection.js','src/plan-inspection.js'),('plan-inspection.test.mjs','tests/plan-inspection.test.mjs'),('plan_inspection_browser.py','tests/plan_inspection_browser.py')]:
-              assert not (root/dst).exists()
-              text=(staged/src).read_text()
-              if src=='plan-inspection.js':
-                  assert text.count('fitPlanView(snapshot.siteWidth,snapshot.siteDepth)')==1
-                  text=text.replace('fitPlanView(snapshot.siteWidth,snapshot.siteDepth)','fitPlanView(snapshot.site.width,snapshot.site.depth)')
-              (root/dst).write_text(text)
-          for p,h in after.items():assert digest(root/p)==h,'Candidate differs: '+p+' got '+digest(root/p)
-          # Run 34353696119 selected an inert background duplicate while the quality
-          # dialog was open. Scope the locator to the active dialog; no force clicks,
-          # runtime changes or removal of source/history assertions.
-          p=root/'tests/plan_inspection_browser.py';text=p.read_text()
-          old='            def action(name):page.locator(f\'button[data-action="{name}"]:visible\').first.click()'
-          new='            def action(name):\n                scope=page.locator(\'#modal\') if page.locator(\'#modal\').evaluate(\'e=>e.open\') else page\n                scope.locator(f\'button[data-action="{name}"]:visible\').first.click()'
-          assert text.count(old)==1;p.write_text(text.replace(old,new))
-          after['tests/plan_inspection_browser.py']='117e5eb47cc7f8f7a752eb152addd6b8d976b2c92519c39bd7454b0d7e913d0a'
-          assert digest(p)==after['tests/plan_inspection_browser.py']
-          out=root/'test-output/plan-inspection';out.mkdir(parents=True,exist_ok=True)
-          (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
-          compile(p.read_text(),'plan_inspection_browser.py','exec')
-          PY
-      - name: Syntax standalone build and all Node regressions
+      - name: Syntax standalone build and all Node regressions on committed source
         working-directory: masar-studio
         run: |
+          mkdir -p test-output/plan-inspection
+          git rev-parse HEAD > test-output/plan-inspection/tested-commit.txt
           npm ci --ignore-scripts && npm run check && npm run build
           npm test > test-output/plan-inspection/node.log 2>&1 || { tail -100 test-output/plan-inspection/node.log; exit 1; }
           tail -12 test-output/plan-inspection/node.log
@@ -93,17 +57,7 @@ jobs:
           python tests/browser_flows.py
           node tests/ifc-fixtures.mjs
           python tests/ifc_external.py
-      - name: Commit tested application only without overwriting concurrent work
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/public/index.html masar-studio/public/sw.js masar-studio/shared/geometry.js masar-studio/src/app.js masar-studio/src/style.css masar-studio/src/plan-inspection.js masar-studio/tests/browser_http.py masar-studio/tests/plan-inspection.test.mjs masar-studio/tests/plan_inspection_browser.py masar-studio/tools/build.mjs
-          git rm .masar-ops/plan-inspection-20260909/plan-inspection.js .masar-ops/plan-inspection-20260909/plan-inspection.test.mjs .masar-ops/plan-inspection-20260909/plan_inspection_browser.py .masar-ops/plan-inspection-20260909/existing.patch
-          git diff --cached --check
-          git commit -m 'feat(masar): inspect readable plans and labelled outdoor spaces without editing geometry'
-          git push origin HEAD:audit/masar-customer-journey-20260908
-          git rev-parse HEAD > masar-studio/test-output/plan-inspection/runtime-commit.txt
-      - name: Preserve exact results even on failure
+      - name: Preserve actual test results; this job never commits or deploys
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
