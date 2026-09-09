@@ -122,9 +122,16 @@ export function createViewer(canvas, onSelect=()=>{}) {
             const floorLabel=viewLevel===null?'ALL FLOORS':'FLOOR '+(visualLevelIds(currentSpec).indexOf(viewLevel)+1);
             try {
                 root.traverse(o=>{if(o.isMesh){selectedMaterials.set(o,o.material);o.material=originals.get(o)||o.material;}});
-                renderer.setPixelRatio(1);renderer.setSize(width,height-footer,false);camera.aspect=width/(height-footer);camera.updateProjectionMatrix();renderer.render(scene,camera);
+                // Preserve the on-screen framing when a fixed PNG has a different aspect.
+                // Letterboxing avoids narrowing a wide fitted view or stretching the model.
+                const available=height-footer;
+                let captureWidth=width,captureHeight=Math.max(1,Math.round(width/oldAspect));
+                if(captureHeight>available){captureHeight=available;captureWidth=Math.max(1,Math.round(available*oldAspect));}
+                const left=Math.floor((width-captureWidth)/2),top=Math.floor((available-captureHeight)/2);
+                renderer.setPixelRatio(1);renderer.setSize(captureWidth,captureHeight,false);camera.aspect=captureWidth/captureHeight;camera.updateProjectionMatrix();renderer.render(scene,camera);
+                ctx.fillStyle='#e4e7e8';ctx.fillRect(0,0,width,available);
                 // Copy pixels before WebGL clears the buffer, without preserveDrawingBuffer.
-                ctx.drawImage(canvas,0,0,width,height-footer);
+                ctx.drawImage(canvas,left,top,captureWidth,captureHeight);
                 ctx.fillStyle='#ffffff';ctx.fillRect(0,height-footer,width,footer);ctx.fillStyle='#233f35';
                 ctx.font=`${width===640?11:17}px sans-serif`;ctx.fillText('MASAR | CONCEPT PREVIEW - NOT A BLENDER RENDER',12,height-footer+18);
                 ctx.font=`${width===640?10:14}px monospace`;ctx.fillText('View: '+floorLabel+' | Roof/ceilings '+(cutawayEnabled?'hidden':'shown'),12,height-footer+(width===640?34:44));

@@ -34,6 +34,13 @@ def capture_frame(canvas, path):
     canvas.evaluate("""async e=>{e.scrollIntoView({block:'center',inline:'nearest'});
         await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}""")
     canvas.screenshot(path=str(path))
+def check_export_framing(path):
+    image=Image.open(path).convert('RGB');footer=60 if image.height==480 else 84
+    content=image.crop((0,0,image.width,image.height-footer))
+    background=Image.new('RGB',content.size,max(content.getcolors(content.width*content.height),key=lambda item:item[0])[1])
+    mask=ImageChops.difference(content,background).convert('L').point(lambda v:255 if v>12 else 0)
+    box=mask.getbbox();assert box and box[2]-box[0]>20 and box[3]-box[1]>20,('empty PNG',box)
+    assert box[0]>1 and box[1]>1 and box[2]<content.width-1 and box[3]<content.height-1,('wide-camera PNG crops the fitted visible scene',box,content.size)
 with tempfile.TemporaryDirectory(prefix='masar-view-controls-') as tmp:
     try:
         if not BASE:
@@ -91,6 +98,9 @@ with tempfile.TemporaryDirectory(prefix='masar-view-controls-') as tmp:
                         page.locator('#render-view-angle').select_option(preset)
                         expect(canvas).to_have_attribute('data-view-preset',preset)
                         image=OUT/f'chalet-{width}-{preset}.png';capture_frame(canvas,image);check_image_framing(image,float(canvas.evaluate('e=>parseFloat(getComputedStyle(e).borderTopLeftRadius)||0')))
+                        if width==1280 and preset=='east':
+                            wide=download('#render-save-png','wide-camera.png');check_export_framing(wide)
+                            passed('fixed-size PNG preserves a wide fitted view without cropping or stretching it')
                     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
                     assert page.locator('#modal').evaluate('e=>e.scrollWidth<=e.clientWidth+1')
                 passed('all six real camera presets frame the whole visible scene at 320 390 768 and 1280 pixels without clipping')
