@@ -1,0 +1,135 @@
+name: MASAR floor and camera acceptance
+on:
+  push:
+    branches: ['audit/masar-customer-journey-20260908']
+    paths: ['.github/workflows/masar-view-controls.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: masar-view-controls
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22.23.2'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.13'
+      - name: Verify inspected baseline and byte-exact patch before any changes
+        run: |
+          test "$GITHUB_REF" = 'refs/heads/audit/masar-customer-journey-20260908'
+          python - <<'PY'
+          from pathlib import Path
+          import base64,zlib,hashlib,subprocess,json
+          root=Path('masar-studio')
+          before={'src/three-viewer.mjs':'80d7bce32e7e4d04074d77bfe11cdbe7d4da198b4463f717cacff559f8805267','src/render-ui.js':'12ae2ec40c729885864a1c90eb9042e8ae81173d6071f7bacc87c7d55e90cbcb','src/material-downloads.js':'418fa5c4d73ee593aa2f8fd0ea088558fd0d2b90eee986d4e583862479f42c94','public/sw.js':'b6776c6d4f7b85f7398d836d91a565e7faabb1c00e95a3b04e2ab964563688c8','tests/browser_http.py':'2498a683e83f0a0a93cd82194312e099b434fbef829b9d05b5cb51b14de146e1'}
+          after={'shared/view-navigation.js':'55f130f52a1620358491f8750353376591b3028e8200f87b1829b337be0dd47d','src/three-viewer.mjs':'b1c0cb2902c8ea1f62165f50b97ffa936c000238e20f13953132b3a97a3f8b3e','src/render-ui.js':'82e477ad4a9b1284bf716cfe6ad501fed08458f2e9005cfb71c925587c77a598','src/material-downloads.js':'16f38e60a65ee4579f9cf65452cd4a99e232609c009a0e6822f42cf605cb68de','public/sw.js':'3ff61049564455b28bc5f5f761858589cc2cf65f11130bcefd7733ee4ce717cb','tests/browser_http.py':'3a0153b29f8e6870972688f700cab7f83e8e9c091b89e777bfd465233f0dcb7c','tests/view-navigation.test.mjs':'4b12d7160ea7d0367c534d2fc302e8a8104ed5b2258880410a0f715c204f0c3d','tests/view_controls_browser.py':'1e2f51fb46360f8725444d5a531c1f6a24475d19e1fa5d452492bfa972188237','docs/VIEW-CONTROLS.md':'3f52d0921cf8039be2740d1a8c197808aa7f1da874af230e1fced9434db5a2a1'}
+          digest=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+          for name,h in before.items():assert digest(root/name)==h,'Changed baseline: '+name
+          for name in set(after)-set(before):assert not (root/name).exists(),'New file already exists: '+name
+          parts=sorted(Path('.masar-ops/view-controls-20260909').glob('part-*'));assert len(parts)==4
+          encoded=''.join(p.read_text().strip() for p in parts)
+          patch=zlib.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='1cf2c987d43b070e0f929967f9b9d2639dfe5ff670a60f3e9be3ebe2cd59771a','Patch bytes differ'
+          subprocess.run(['git','apply','--unidiff-zero','--check','-'],input=patch,check=True)
+          subprocess.run(['git','apply','--unidiff-zero','-'],input=patch,check=True)
+          for name,h in after.items():assert digest(root/name)==h,'Patched bytes differ: '+name
+          out=root/'test-output/view-controls';out.mkdir(parents=True,exist_ok=True)
+          (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
+          PY
+      - name: Build application and self-hosted viewer and run every Node regression
+        working-directory: masar-studio
+        run: |
+          npm ci --ignore-scripts
+          npm run check
+          npm run build
+          npm test > test-output/view-controls/node.log 2>&1 || { tail -100 test-output/view-controls/node.log; exit 1; }
+          tail -12 test-output/view-controls/node.log
+          cd render-viewer
+          npm ci --include=dev
+          npm run build
+      - name: Install pinned browsers and validators without the unused system Chrome index
+        run: |
+          python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          sudo mkdir -p /tmp/masar-unused-apt
+          for f in /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources; do
+            if test -f "$f"; then sudo mv "$f" /tmp/masar-unused-apt/; fi
+          done
+          python -m playwright install --with-deps chromium firefox webkit > /tmp/masar-pw.log 2>&1 || { tail -100 /tmp/masar-pw.log; exit 1; }
+          npm install --prefix /tmp/masar-gltf-validator --ignore-scripts --no-audit --no-fund gltf-validator@2.0.0-dev.3.10
+      - name: Actual camera framing isolated floors immutable histories and invisible ray picking
+        working-directory: masar-studio
+        run: |
+          MASAR_BROWSER=chromium python tests/view_controls_browser.py
+          MASAR_BROWSER=webkit python tests/view_controls_browser.py
+      - name: Independent full-multifloor GLB validation from actual isolated-view downloads
+        working-directory: masar-studio
+        run: |
+          node --input-type=module <<'JS'
+          import validator from '/tmp/masar-gltf-validator/node_modules/gltf-validator/index.js';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          for (const name of ['isolated-full-model.glb','all-floors-model.glb']) {
+            const path='test-output/view-controls/chromium/'+name;
+            const result=await validator.validateBytes(new Uint8Array(readFileSync(path)),{maxIssues:10000});
+            writeFileSync(path+'.validation.json',JSON.stringify(result,null,2));
+            console.log(name,JSON.stringify(result.issues));
+            if(result.issues.numErrors||result.issues.numWarnings)process.exit(1);
+          }
+          JS
+      - name: Retain local exports room inspection quality recovery and original brief journeys
+        working-directory: masar-studio
+        run: |
+          for engine in chromium webkit; do
+            MASAR_BROWSER=$engine python tests/material_downloads_browser.py
+            MASAR_BROWSER=$engine python tests/room_review_browser.py
+            MASAR_BROWSER=$engine python tests/plan_inspection_browser.py
+            MASAR_BROWSER=$engine python tests/layout_quality_browser.py
+            MASAR_BROWSER=$engine python tests/visual_source_browser.py
+            MASAR_BROWSER=$engine python tests/acceptance_chalet.py
+          done
+      - name: Original three-browser account offline standalone and IFC gates
+        working-directory: masar-studio
+        run: |
+          for engine in chromium firefox webkit; do MASAR_BROWSER=$engine python tests/browser_http.py; done
+          python tests/browser_flows.py
+          node tests/ifc-fixtures.mjs
+          python tests/ifc_external.py
+      - name: Commit only verified source without force or deployment
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add masar-studio/shared/view-navigation.js masar-studio/src/three-viewer.mjs masar-studio/src/render-ui.js masar-studio/src/material-downloads.js masar-studio/public/sw.js masar-studio/tests/browser_http.py masar-studio/tests/view-navigation.test.mjs masar-studio/tests/view_controls_browser.py masar-studio/docs/VIEW-CONTROLS.md
+          git rm .masar-ops/view-controls-20260909/part-001 .masar-ops/view-controls-20260909/part-002 .masar-ops/view-controls-20260909/part-003 .masar-ops/view-controls-20260909/part-004
+          git diff --cached --check
+          git commit -m 'feat(masar): inspect individual 3D floors with aspect-safe camera presets and correct hidden picking'
+          git push origin HEAD:audit/masar-customer-journey-20260908
+          git rev-parse HEAD > masar-studio/test-output/view-controls/runtime-commit.txt
+      - name: Preserve actual results even on failure
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: masar-view-controls-ci
+          path: |
+            masar-studio/test-output/view-controls/
+            masar-studio/test-output/material-downloads/*/report.json
+            masar-studio/test-output/room-review/*/report.json
+            masar-studio/test-output/plan-inspection/*/report.json
+            masar-studio/test-output/layout-quality-ui/*/report.json
+            masar-studio/test-output/visual-source/*/report.json
+            masar-studio/test-output/customer-ui/*report.json
+            masar-studio/test-output/browser-http-*/report.json
+            masar-studio/test-output/ifc/independent-report.json
+            masar-studio/docs/browser-tests.json
+          retention-days: 14
+          if-no-files-found: error
