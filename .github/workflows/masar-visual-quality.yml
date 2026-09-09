@@ -33,9 +33,9 @@ jobs:
         run: |
           python -m pip install playwright==1.62.0 pillow==11.3.0
           python -m playwright install chromium webkit
-      - name: Verify material downloads and floor controls in real browsers
+      - name: Verify material downloads floor controls and exact chalet journey
         working-directory: masar-studio
         run: |
           python tests/material_downloads_browser.py
           python tests/view_controls_browser.py
-          python tests/customer_ui_browser.py
+          python tests/acceptance_chalet.py
