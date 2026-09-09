@@ -45,9 +45,8 @@ jobs:
           subprocess.run(['git','apply','--unidiff-zero','--check','-'],input=patch,check=True)
           subprocess.run(['git','apply','--unidiff-zero','-'],input=patch,check=True)
           for name,h in after.items():assert digest(root/name)==h,'Patched bytes differ: '+name
-          # First run proved CSS-rounded white corners were counted as model pixels.
-          # Measure the actual WebGL aperture without changing application styling,
-          # camera geometry, or the original non-cropping assertions.
+          # Correct test observation only: rounded DOM corners and sticky dialog
+          # chrome are not model pixels. All original non-cropping assertions stay.
           p=root/'tests/view_controls_browser.py';s=p.read_text()
           changes=[
               ('from PIL import Image,ImageChops,ImageStat\n','from PIL import Image,ImageChops,ImageStat,ImageDraw\nimport math\n'),
@@ -59,8 +58,20 @@ jobs:
               assert s.count(old)==1,(old,s.count(old));s=s.replace(old,new)
           old='check_image_framing(image)';assert s.count(old)==2
           s=s.replace(old,"check_image_framing(image,float(canvas.evaluate('e=>parseFloat(getComputedStyle(e).borderTopLeftRadius)||0')))")
+          assert hashlib.sha256(s.encode()).hexdigest()=='b022b2db73407336acd01b79d9f2b3af61a61f84c75d9fa8459d57bf48c0cb83'
+          needle="with tempfile.TemporaryDirectory(prefix='masar-view-controls-') as tmp:"
+          addition='''def capture_frame(canvas, path):
+              # Native sticky dialog headers may overlap a locator screenshot when the
+              # previous preset/select scrolled only its own control into view.
+              canvas.evaluate("""async e=>{e.scrollIntoView({block:'center',inline:'nearest'});
+                  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));}""")
+              canvas.screenshot(path=str(path))
+          '''
+          assert s.count(needle)==1;s=s.replace(needle,addition+needle)
+          assert s.count('canvas.screenshot(path=str(image));')==2
+          s=s.replace('canvas.screenshot(path=str(image));','capture_frame(canvas,image);')
           p.write_text(s);compile(s,str(p),'exec')
-          after['tests/view_controls_browser.py']='b022b2db73407336acd01b79d9f2b3af61a61f84c75d9fa8459d57bf48c0cb83'
+          after['tests/view_controls_browser.py']='a90c89200de2ed99f733ce33a65708fb1b5a217e9f666ba82d435691c6bb38fe'
           assert digest(p)==after['tests/view_controls_browser.py'],'Observation correction differs'
           out=root/'test-output/view-controls';out.mkdir(parents=True,exist_ok=True)
           (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
