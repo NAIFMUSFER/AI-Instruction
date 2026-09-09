@@ -2,7 +2,7 @@ name: MASAR browser visual downloads
 on:
   push:
     branches: ['audit/masar-customer-journey-20260908']
-    paths: ['.github/workflows/masar-visual-downloads.yml']
+    paths: ['masar-studio/**', '.github/workflows/masar-visual-downloads.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -13,8 +13,9 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -23,28 +24,11 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.13'
-      - name: Apply candidate only to the inspected baseline
-        run: |
-          test "$GITHUB_REF" = 'refs/heads/audit/masar-customer-journey-20260908'
-          python .masar-ops/material-downloads-20260909/apply.py
-          python - <<'PY'
-          from pathlib import Path
-          import subprocess
-          p=Path('masar-studio/tests/material_downloads_browser.py');s=p.read_text()
-          old="assert page.locator('#render-canvas').bounding_box()==box_before"
-          new="assert all(page.locator('#render-canvas').bounding_box()[k]==box_before[k] for k in ['width','height'])"
-          assert s.count(old)==1;p.write_text(s.replace(old,new));compile(p.read_text(),str(p),'exec')
-          p=Path('masar-studio/tests/render-ui.test.mjs')
-          assert subprocess.check_output(['git','hash-object',str(p)],text=True).strip()=='b27c9666062963b956e01e86dff52eabe65ccdc4'
-          s=p.read_text();old='return {tagName,isConnected:true'
-          assert s.count(old)==1;s=s.replace(old,'return {dataset:{},append(){},tagName,isConnected:true')
-          old="globalThis.document={getElementById:id=>id==='modal'?dialog:host};"
-          new="globalThis.document={createElement:tag=>Object.assign(element(tag.toUpperCase()),{querySelector:node}),getElementById:id=>id==='modal'?dialog:host};"
-          assert s.count(old)==1;p.write_text(s.replace(old,new))
-          PY
-      - name: Build and existing Node security model and server tests
+      - name: Build committed source and run existing model server and security tests
         working-directory: masar-studio
         run: |
+          mkdir -p test-output/material-downloads
+          git rev-parse HEAD > test-output/material-downloads/tested-commit.txt
           node --check src/three-viewer.mjs
           npm ci --ignore-scripts
           npm run check
@@ -54,44 +38,43 @@ jobs:
           cd render-viewer
           npm ci --include=dev
           npm run build
-      - name: Install pinned browsers without the unrelated broken system Chrome index
+      - name: Install pinned browsers without the unrelated system Chrome index
         run: |
           sudo python3 - <<'PY'
           from pathlib import Path
           for p in Path('/etc/apt/sources.list.d').glob('*.list'):
               s=p.read_text()
-              if 'dl.google.com/linux/chrome' in s:
-                  p.write_text('\n'.join('# Unused system Chrome index: '+line if 'dl.google.com/linux/chrome' in line and not line.lstrip().startswith('#') else line for line in s.splitlines())+'\n')
+              if 'dl.google.com/linux/chrome' in s:p.write_text('\n'.join('# Unused Chrome index: '+line if 'dl.google.com/linux/chrome' in line and not line.lstrip().startswith('#') else line for line in s.splitlines())+'\n')
           for p in Path('/etc/apt/sources.list.d').glob('*.sources'):
               s=p.read_text()
-              if 'dl.google.com/linux/chrome' in s:
-                  parts=[]
-                  for part in s.split('\n\n'):
-                      if 'dl.google.com/linux/chrome' in part:part='\n'.join(line for line in part.splitlines() if not line.startswith('Enabled:'))+'\nEnabled: no'
-                      parts.append(part)
-                  p.write_text('\n\n'.join(parts))
+              if 'dl.google.com/linux/chrome' not in s:continue
+              parts=[]
+              for part in s.split('\n\n'):
+                  if 'dl.google.com/linux/chrome' in part:part='\n'.join(line for line in part.splitlines() if not line.startswith('Enabled:'))+'\nEnabled: no'
+                  parts.append(part)
+              p.write_text('\n\n'.join(parts))
           PY
-          python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 > /tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
-          python -m playwright install --with-deps chromium firefox webkit > /tmp/masar-browsers.log 2>&1 || { tail -80 /tmp/masar-browsers.log; exit 1; }
+          python -m pip install playwright==1.62.0 pillow==11.3.0 ifcopenshell==0.8.5 pytest==8.4.2 >/tmp/masar-pip.log 2>&1 || { tail -80 /tmp/masar-pip.log; exit 1; }
+          python -m playwright install --with-deps chromium firefox webkit >/tmp/masar-browsers.log 2>&1 || { tail -80 /tmp/masar-browsers.log; exit 1; }
           npm install --prefix /tmp/masar-gltf-validator --ignore-scripts --no-audit --no-fund gltf-validator@2.0.0-dev.3.10
       - name: Real browser output source identity geometry material and history checks
         working-directory: masar-studio
         run: |
           MASAR_BROWSER=chromium python tests/material_downloads_browser.py
           MASAR_BROWSER=webkit python tests/material_downloads_browser.py
-      - name: Independently validate every exported GLB with Khronos validator
+      - name: Independently validate the actual GLB files with Khronos validator
         working-directory: masar-studio
         run: |
           node --input-type=module <<'JS'
-          import {createRequire} from 'node:module';import{readFileSync,writeFileSync,readdirSync}from'node:fs';
-          const require=createRequire('/tmp/masar-gltf-validator/package.json'),validator=require('gltf-validator');
-          const dir='test-output/material-downloads/chromium',files=readdirSync(dir).filter(n=>n.endsWith('.glb'));if(files.length!==3)throw Error('Expected three actual browser downloads');
-          for(const name of files){const r=await validator.validateBytes(new Uint8Array(readFileSync(dir+'/'+name)),{uri:name});writeFileSync(dir+'/'+name+'.validation.json',JSON.stringify(r,null,2));console.log(name,JSON.stringify(r.issues));if(r.issues.numErrors)throw Error('Invalid GLB '+name);}
+          import{createRequire}from'node:module';import{readFileSync,writeFileSync,readdirSync}from'node:fs';
+          const require=createRequire('/tmp/masar-gltf-validator/package.json'),validator=require('gltf-validator'),dir='test-output/material-downloads/chromium';
+          const files=readdirSync(dir).filter(n=>n.endsWith('.glb'));if(files.length!==3)throw Error('Expected three actual downloads');
+          for(const name of files){const r=await validator.validateBytes(new Uint8Array(readFileSync(dir+'/'+name)),{uri:name});writeFileSync(dir+'/'+name+'.validation.json',JSON.stringify(r,null,2));console.log(name,JSON.stringify({errors:r.issues.numErrors,warnings:r.issues.numWarnings,infos:r.issues.numInfos}));if(r.issues.numErrors)throw Error('Invalid GLB '+name);}
           JS
       - name: Import browser files in isolated Blender and measure every mesh
         working-directory: masar-studio
         run: |
-          docker build -f render-worker/Dockerfile -t masar-blender-visual-test . > /tmp/masar-blender-build.log 2>&1 || { tail -100 /tmp/masar-blender-build.log; exit 1; }
+          docker build -f render-worker/Dockerfile -t masar-blender-visual-test . >/tmp/masar-blender-build.log 2>&1 || { tail -100 /tmp/masar-blender-build.log; exit 1; }
           docker run --rm --network none --read-only --cpus 2 --memory 2g --pids-limit 256 --tmpfs /tmp:rw,size=512m --user "$(id -u):$(id -g)" -v "$PWD/tests/material_glb_blender.py:/verify.py:ro" -v "$PWD/test-output/material-downloads/chromium:/out:rw" masar-blender-visual-test --background --factory-startup --python-exit-code 1 --python /verify.py -- /out
           test -s test-output/material-downloads/chromium/blender-import-report.json
       - name: Preserve complete customer room inspection quality and legacy journeys
@@ -111,17 +94,7 @@ jobs:
           python tests/browser_flows.py
           node tests/ifc-fixtures.mjs
           python tests/ifc_external.py
-      - name: Commit only verified runtime paths with a non-force push
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add masar-studio/src/material-downloads.js masar-studio/src/render-ui.js masar-studio/src/three-viewer.mjs masar-studio/render-viewer/runtime-entry.mjs masar-studio/render-viewer/package-viewer.mjs masar-studio/tools/build.mjs masar-studio/public/sw.js masar-studio/tests/browser_http.py masar-studio/tests/render-ui.test.mjs masar-studio/tests/material-downloads.test.mjs masar-studio/tests/material_downloads_browser.py masar-studio/tests/material_glb_blender.py
-          git rm .masar-ops/material-downloads-20260909/apply.py .masar-ops/material-downloads-20260909/viewer-methods.txt .masar-ops/material-downloads-20260909/material-downloads.js .masar-ops/material-downloads-20260909/material-downloads.test.mjs .masar-ops/material-downloads-20260909/material_downloads_browser.py .masar-ops/material-downloads-20260909/material_glb_blender.py
-          git diff --cached --check
-          git commit -m 'feat(masar): download source-bound PNG and complete GLB locally without a cloud renderer'
-          git push origin HEAD:audit/masar-customer-journey-20260908
-          git rev-parse HEAD > masar-studio/test-output/material-downloads/runtime-commit.txt
-      - name: Preserve actual results on success or failure
+      - name: Preserve actual results; this job never modifies source or deployment
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
