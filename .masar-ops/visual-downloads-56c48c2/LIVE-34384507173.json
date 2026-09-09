@@ -1,0 +1,193 @@
+{
+  "sourceCommit": "56c48c2db177878b44932feea195ff10f7aee7d5",
+  "workflowRun": 34384507173,
+  "deployment": {
+    "origin": "https://masar-customer-preview.onrender.com",
+    "sourceCommit": "56c48c2db177878b44932feea195ff10f7aee7d5",
+    "version": {
+      "product": "MASAR Studio",
+      "version": "4.1.0",
+      "schemaVersion": 1,
+      "commit": "56c48c2db177878b44932feea195ff10f7aee7d5",
+      "authoring": "4.0",
+      "ifcExchange": "IFC4-supported-subset"
+    },
+    "health": {
+      "ok": true,
+      "version": "4.1.0",
+      "schemaVersion": 1,
+      "storage": "sqlite",
+      "persistenceClass": "ephemeral",
+      "aiConfigured": false,
+      "registration": true
+    },
+    "ready": {
+      "ready": true,
+      "version": "4.1.0",
+      "storage": "sqlite",
+      "persistenceClass": "ephemeral",
+      "scope": "database availability, not proof of durable hosting"
+    },
+    "render": {
+      "enabled": false,
+      "workerOnline": false,
+      "pipeline": "blender-bridge-1.0.0",
+      "formats": [
+        "model.blend",
+        "model.glb",
+        "exterior.png",
+        "interior.png",
+        "manifest.json"
+      ],
+      "retentionDays": 7,
+      "storage": "ephemeral",
+      "maxAttempts": 2
+    },
+    "moduleHashes": {
+      "src/material-downloads.js": "418fa5c4d73ee593aa2f8fd0ea088558fd0d2b90eee986d4e583862479f42c94",
+      "src/render-ui.js": "12ae2ec40c729885864a1c90eb9042e8ae81173d6071f7bacc87c7d55e90cbcb",
+      "src/room-review.js": "c7d7c6df176a4fddccacb045c2badf6c8e34e809c1f8cc566536a14a0b6a3f56",
+      "src/plan-inspection.js": "3b3ab46b2b5fca55adad29e9f423a40dfa8c9e7af51e86e705f5532428663947",
+      "src/app.js": "c70d5a1e13ab86acf506d0f1375445be07d94ab3d407047d4677c4805e13ab4b",
+      "src/style.css": "5a2bf2b2487b0d8d594b5cc03c54468b10bb7c934f374349c5b1cc0583450f50",
+      "shared/model.js": "6f56d57fa56f56719ee260ed59e875aa00e6cc841f51381811e1ded6a29bc716",
+      "shared/render-scene.js": "48c9a9c3f91c1f9eb97635bd1c24e8ac67e4e2a3707fa457ea0fcbe87a72f524",
+      "public/sw.js": "b6776c6d4f7b85f7398d836d91a565e7faabb1c00e95a3b04e2ab964563688c8",
+      "public/render-viewer.js": "0a756b25dc426dc700fab220c0e8444944149ab3a9ca1f7f99af56322d9720c7",
+      "public/render-engine.js": "f45807144ca9bb10adc5e75d9ba8f6afa4c1a9a60dd973603407464a9a85c1a2"
+    },
+    "security": {
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+      "hsts": "max-age=31536000"
+    }
+  },
+  "node": {
+    "tests": 540,
+    "pass": 540,
+    "fail": 0,
+    "skipped": 0
+  },
+  "cleanPackageNode": {
+    "tests": 540,
+    "pass": 540,
+    "fail": 0,
+    "skipped": 0
+  },
+  "cleanPackageHTMLByteMatch": true,
+  "cleanPackageBrowser": {
+    "engine": "chromium",
+    "passed": 15,
+    "failed": 0
+  },
+  "browserResults": [
+    {
+      "suite": "material-downloads",
+      "engine": "chromium",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "suite": "room-review",
+      "engine": "chromium",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "suite": "plan-inspection",
+      "engine": "chromium",
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "suite": "layout-quality-ui",
+      "engine": "chromium",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "suite": "exact-customer-request",
+      "engine": "chromium",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "suite": "material-downloads",
+      "engine": "webkit",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "suite": "room-review",
+      "engine": "webkit",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "suite": "plan-inspection",
+      "engine": "webkit",
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "suite": "layout-quality-ui",
+      "engine": "webkit",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "suite": "exact-customer-request",
+      "engine": "webkit",
+      "passed": 14,
+      "failed": 0
+    }
+  ],
+  "liveChecksPassed": 146,
+  "liveChecksFailed": 0,
+  "khronosGLB": [
+    {
+      "file": "slate-model.glb.validation.json",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 383
+    },
+    {
+      "file": "selected-model.glb.validation.json",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 399
+    },
+    {
+      "file": "warm-model.glb.validation.json",
+      "errors": 0,
+      "warnings": 0,
+      "infos": 399
+    }
+  ],
+  "independentBlenderImport": {
+    "results": [
+      {
+        "case": "warm",
+        "blender": "4.5.13 LTS",
+        "meshes": 399,
+        "roofs": 21,
+        "maxBoundsErrorM": 1.6174316392891797e-06,
+        "sourceModel": "f40cd4ea-e66d-4f0d-ac7d-3ca2c8aee095",
+        "sourceRevision": "4fad3160-d8bd-4100-ab28-ff3948c3c17e",
+        "status": "pass"
+      },
+      {
+        "case": "slate",
+        "blender": "4.5.13 LTS",
+        "meshes": 383,
+        "roofs": 21,
+        "maxBoundsErrorM": 1.6174316392891797e-06,
+        "sourceModel": "f40cd4ea-e66d-4f0d-ac7d-3ca2c8aee095",
+        "sourceRevision": "4fad3160-d8bd-4100-ab28-ff3948c3c17e",
+        "status": "pass"
+      }
+    ],
+    "scope": "Independent glTF import and object geometry/metadata; not architectural/BIM round-trip or rendered-image quality approval"
+  },
+  "sourceZipSHA256": "d859cc4c551aeb9afd1a4f8fff6d114244c70605265b88e0477e3ce0b298ccda",
+  "scope": "Browser PNG and full visual GLB, not Cycles, native .blend generation, editable MASAR/BIM round-trip or architectural approval. Chromium software WebGL exports tested; WebKit UI/JSON/history only, no physical iPhone validation. No paid worker or durable storage enabled."
+}
