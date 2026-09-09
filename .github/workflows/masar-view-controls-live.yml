@@ -10,7 +10,7 @@ concurrency:
   group: masar-view-controls-live
   cancel-in-progress: false
 env:
-  MASAR_EXPECTED_COMMIT: 29da1e575a365fea5b7665633f8094a9ff5675d0
+  MASAR_EXPECTED_COMMIT: 3c971cddc52e1fbe00275f0c5be627b82b81c74a
 jobs:
   live:
     runs-on: ubuntu-latest
@@ -21,7 +21,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          ref: 29da1e575a365fea5b7665633f8094a9ff5675d0
+          ref: 3c971cddc52e1fbe00275f0c5be627b82b81c74a
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           ref: 3a6c4ce1cf3254f8650d24d114e052653d9c1a4f
