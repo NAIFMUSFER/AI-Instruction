@@ -45,6 +45,23 @@ jobs:
           subprocess.run(['git','apply','--unidiff-zero','--check','-'],input=patch,check=True)
           subprocess.run(['git','apply','--unidiff-zero','-'],input=patch,check=True)
           for name,h in after.items():assert digest(root/name)==h,'Patched bytes differ: '+name
+          # First run proved CSS-rounded white corners were counted as model pixels.
+          # Measure the actual WebGL aperture without changing application styling,
+          # camera geometry, or the original non-cropping assertions.
+          p=root/'tests/view_controls_browser.py';s=p.read_text()
+          changes=[
+              ('from PIL import Image,ImageChops,ImageStat\n','from PIL import Image,ImageChops,ImageStat,ImageDraw\nimport math\n'),
+              ('def check_image_framing(path):','def check_image_framing(path, radius):'),
+              ("background=Image.new('RGB',image.size,image.getpixel((0,0)))","background=Image.new('RGB',image.size,max(image.getcolors(image.width*image.height),key=lambda item:item[0])[1])"),
+              ("    box=mask.getbbox();", "    # Element screenshots contain CSS-rounded white corners and up to one pixel\n    # of subpixel capture padding; these are not objects in the WebGL scene.\n    aperture=Image.new('L',image.size,0)\n    ImageDraw.Draw(aperture).rounded_rectangle((1,1,image.width-2,image.height-2),radius=math.ceil(radius)+1,fill=255)\n    mask=ImageChops.multiply(mask,aperture)\n    box=mask.getbbox();")
+          ]
+          for old,new in changes:
+              assert s.count(old)==1,(old,s.count(old));s=s.replace(old,new)
+          old='check_image_framing(image)';assert s.count(old)==2
+          s=s.replace(old,"check_image_framing(image,float(canvas.evaluate('e=>parseFloat(getComputedStyle(e).borderTopLeftRadius)||0')))")
+          p.write_text(s);compile(s,str(p),'exec')
+          after['tests/view_controls_browser.py']='b022b2db73407336acd01b79d9f2b3af61a61f84c75d9fa8459d57bf48c0cb83'
+          assert digest(p)==after['tests/view_controls_browser.py'],'Observation correction differs'
           out=root/'test-output/view-controls';out.mkdir(parents=True,exist_ok=True)
           (out/'source-hashes.json').write_text(json.dumps({'before':before,'after':after},indent=2))
           PY
