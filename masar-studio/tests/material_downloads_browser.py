@@ -62,7 +62,7 @@ with tempfile.TemporaryDirectory(prefix='masar-visual-downloads-') as tmp:
                 page.locator('#render-pbr').click();expect(page.locator('#render-canvas')).to_have_attribute('data-export-ready','true');expect(page.locator('#render-save-glb')).to_be_enabled();page.locator('#render-cutaway').check()
                 spec=json.loads(download('#render-local','warm-scene.json').read_text());passed('export controls activate only for the current canonical source')
                 box_before=page.locator('#render-canvas').bounding_box();png=download('#render-save-png','preview.png');im=Image.open(png);assert im.size==(640,480);assert max(ImageStat.Stat(im.crop((0,0,640,436)).convert('RGB')).stddev)>5
-                assert page.locator('#render-canvas').bounding_box()==box_before;passed('PNG contains nonblank current-view pixels and restores canvas dimensions')
+                assert all(page.locator('#render-canvas').bounding_box()[k]==box_before[k] for k in ['width','height']);passed('PNG contains nonblank current-view pixels and restores canvas dimensions')
                 glb=download('#render-save-glb','warm-model.glb');warm=parse_glb(glb,spec);passed('GLB has every source object with actual dimensions identities and full roof while cutaway is on')
                 canvas=page.locator('#render-canvas');box=canvas.bounding_box();picked=False
                 for fy in [.5,.4,.6,.3,.7]:

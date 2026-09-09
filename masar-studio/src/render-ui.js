@@ -1,3 +1,4 @@
+import { attachMaterialDownloads } from './material-downloads.js';
 import { createRenderScene, stableJSON, RENDER_FINISHES } from '../shared/render-scene.js';
 import { escapeHTML as E } from '../shared/geometry.js';
 import { totals, conceptEnvelopeArea, understand } from '../shared/model.js';
@@ -40,7 +41,7 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
         ${source.warnings.length?`<div id="render-source-warning" class="notice warn" role="status">${source.warnings.map(s=>`<p>${E(s)}</p>`).join('')}${source.needsRebuild&&!isReadOnly()?'<button type="button" class="btn light" data-action="regenerate-brief">مراجعة الوصف وإنشاء توزيع مستقل</button><small>لا نحذف المشروع الحالي أو نعدّل أبعاده تلقائيًا.</small>':''}</div>`:''}
     </section>`;
     showModal('معاينة المشروع والخامات', `<section id="render-studio">${contextHTML}<p class="notice">التشطيبات والأثاث للعرض فقط. الإخراج لا يغيّر أبعاد التصميم ولا يعني اعتمادًا هندسيًا.</p><div class="properties-grid"><label class="field"><span>التشطيب</span><select id="render-finish">${Object.entries(RENDER_FINISHES).map(([id,f])=>`<option value="${id}">${E(f.label)}</option>`).join('')}</select></label><label class="field"><span>جودة الصور</span><select id="render-quality"><option value="preview">تجريبية · 640 × 480</option><option value="standard">أعلى · 1280 × 960</option></select></label><label class="field"><span>المساحة للمنظور الداخلي</span><select id="render-room"><option value="">اختيار تلقائي</option>${getModel().levels.map(l=>l.rooms.map(r=>`<option value="${E(r.id)}">${E(l.name)} · ${E(r.name)}</option>`).join('')).join('')}</select></label></div><label class="check-line"><input type="checkbox" id="render-furniture" checked>أثاث توضيحي غير هندسي</label><div class="render-actions"><button class="btn light" id="render-pbr">معاينة بالخامات</button><button class="btn light" id="render-local">تنزيل مشهد Blender</button><button class="btn primary" id="render-start" disabled>إنشاء صور وملف Blender</button></div><p id="render-capability" class="notice" aria-live="polite">جارٍ التحقق من عامل الإخراج…</p><div id="render-canvas-host" hidden><canvas id="render-canvas" tabindex="0" aria-label="المجسم بالخامات؛ اسحب للدوران وانقر غرفة للتحديد"></canvas><label class="check-line"><input id="render-cutaway" type="checkbox">إخفاء سقف العرض فقط</label><p id="render-selection">اختر مساحة لتحديدها في مخطط مسار.</p></div><div id="render-gallery"></div><h3>مهام حسابك</h3><div id="render-jobs" aria-live="polite"></div><p class="property-note">تحتاج خدمة الصور إلى عامل Blender مستقل وتخزين مهيأ. مشهد JSON يُفتح بالسكربت المرفق بالمشروع، وليس مباشرةً بقائمة فتح Blender. لا نرفع وصفك أو التعليقات إلى عامل الإخراج.</p></section>`,'MASAR / VISUALIZATION');
-    const host=document.getElementById('render-studio'),dialog=document.getElementById('modal');let disposed=false,busy=false,viewer=null,poll=null,capabilities={enabled:false,workerOnline:false};
+    const host=document.getElementById('render-studio'),dialog=document.getElementById('modal');let downloads=null,previewBusy=false;let disposed=false,busy=false,viewer=null,poll=null,capabilities={enabled:false,workerOnline:false};
     const $=s=>host.querySelector(s),alive=()=>!disposed&&host.isConnected;
     const revision=()=>getRevision();
     const settings=()=>({finish:$('#render-finish').value,quality:$('#render-quality').value,roomId:$('#render-room').value||null,furniture:$('#render-furniture').checked});
@@ -48,15 +49,20 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
     const execute=fn=>async e=>{if(e?.currentTarget?.tagName==='BUTTON')e.preventDefault();try{await fn(e);}catch(err){reportError(err);}};
     // The shared dialog can reopen before its previous queued close event arrives.
     const closed=()=>{if(!dialog.open||!host.isConnected)dispose();};
-    const dispose=()=>{if(disposed)return;disposed=true;clearTimeout(poll);viewer?.dispose();dialog.removeEventListener('close',closed);};dialog.addEventListener('close',closed);
+    const dispose=()=>{if(disposed)return;disposed=true;clearTimeout(poll);downloads?.dispose();viewer?.dispose();dialog.removeEventListener('close',closed);};dialog.addEventListener('close',closed);
+    downloads=attachMaterialDownloads({host,getViewer:()=>viewer,getSnapshot:snapshot,isAlive:alive,reportError});
     async function ensureViewer(){
         if(globalThis.MASAR_STANDALONE)throw Error('عرض الخامات يحتاج تشغيل الخادم؛ ملف HTML المستقل يبقي العارض الأساسي.');
         $('#render-canvas-host').hidden=false;
         if(!viewer){let module;try{module=await import('/public/render-viewer.js');}catch{throw Error('عارض الخامات غير مبني بعد. شغّل build داخل render-viewer؛ بقي العارض الأساسي متاحًا.');}if(!alive())return null;try{viewer=module.createViewer($('#render-canvas'),(roomId)=>{if(roomId){onSelect(roomId);$('#render-selection').textContent='تم تحديد المساحة في المخطط: '+(getModel().levels.flatMap(l=>l.rooms).find(r=>r.id===roomId)?.name||roomId);}});}catch{throw Error('الجهاز لا يدعم عارض الخامات WebGL2؛ العارض الأساسي والمخطط متاحان.');}}
         return viewer;
     }
-    $('#render-pbr').addEventListener('click',execute(async()=>{const s=snapshot(),v=await ensureViewer();v?.setScene(s);v?.cutaway($('#render-cutaway').checked);
-        if(alive()){$('#render-canvas').dataset.sourceModel=s.source.modelId;$('#render-canvas').dataset.sourceRevision=s.source.revisionId;}}));
+    $('#render-pbr').addEventListener('click',execute(async()=>{
+        if(previewBusy)return;previewBusy=true;$('#render-pbr').disabled=true;downloads.invalidate();
+        try {const s=snapshot(),v=await ensureViewer();if(!v||!alive())return;v.setScene(s);v.cutaway($('#render-cutaway').checked);
+            $('#render-canvas').dataset.sourceModel=s.source.modelId;$('#render-canvas').dataset.sourceRevision=s.source.revisionId;downloads.setSource(s);
+        } finally {previewBusy=false;if(alive())$('#render-pbr').disabled=false;}
+    }));
     $('#render-cutaway').addEventListener('change',()=>viewer?.cutaway($('#render-cutaway').checked));
     $('#render-local').addEventListener('click',execute(()=>{const raw=stableJSON(snapshot());const url=URL.createObjectURL(new Blob([raw],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='MASAR-Blender-Scene.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}));
     const stateLabels={queued:'في الطابور',running:'جارٍ الإخراج',succeeded:'مكتملة',failed:'فشلت — لم يتغير المشروع',cancelled:'أُلغيت'};
@@ -87,7 +93,7 @@ export async function openRenderStudio({api,getModel,getRevision,getCloudVersion
         const action=button.dataset.renderJobAction;
         if(['cancel','retry'].includes(action)){await api.request(`/api/renders/${id}/${action}`,{method:'POST',body:{}});clearTimeout(poll);await refresh();}
         if(action==='view'){$('#render-gallery').innerHTML=`<p class="notice">صور النسخة ${E(job.revisionId)} — ${!job.stale&&job.revisionId===revision()&&job.projectId===getModel().id?'الحالية':'ليست النسخة الحالية'}</p>${job.files.filter(f=>f.name.endsWith('.png')).map(f=>`<figure><img src="${E(f.url)}" alt="${f.name==='exterior.png'?'إخراج خارجي':'إخراج داخلي'} من Blender" loading="lazy"><figcaption>${f.name==='exterior.png'?'منظور خارجي':'منظور داخلي'}</figcaption></figure>`).join('')}`;}
-        if(action==='glb'){if(job.stale||isPending()||job.revisionId!==revision()||job.projectId!==getModel().id)throw Error('لا يمكن عرض نسخة قديمة كأنها التصميم الحالي.');const v=await ensureViewer(),file=job.files.find(f=>f.name==='model.glb');const response=await fetch(file.url,{credentials:'same-origin',redirect:'error'});if(!response.ok)throw Error('تعذر تحميل المجسم.');await v?.loadGLB(await response.arrayBuffer());v?.cutaway($('#render-cutaway').checked);}
+        if(action==='glb'){downloads.invalidate();if(job.stale||isPending()||job.revisionId!==revision()||job.projectId!==getModel().id)throw Error('لا يمكن عرض نسخة قديمة كأنها التصميم الحالي.');const v=await ensureViewer(),file=job.files.find(f=>f.name==='model.glb');const response=await fetch(file.url,{credentials:'same-origin',redirect:'error'});if(!response.ok)throw Error('تعذر تحميل المجسم.');await v?.loadGLB(await response.arrayBuffer());v?.cutaway($('#render-cutaway').checked);}
     }));
     await refresh();
 }
