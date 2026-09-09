@@ -11,8 +11,14 @@ export function createViewer(canvas, onSelect=()=>{}) {
     renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     const scene=new THREE.Scene();scene.background=new THREE.Color('#e4e7e8');
     const camera=new THREE.PerspectiveCamera(45,1,.05,3000), controls=new OrbitControls(camera,canvas);
-    const hemisphere=new THREE.HemisphereLight('#ecf4ff','#8c806b',2.3);scene.add(hemisphere);
-    const sun=new THREE.DirectionalLight('#fff4df',3);sun.position.set(20,35,15);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;sun.shadow.camera.far=400;sun.shadow.bias=-.0003;sun.shadow.normalBias=.02;scene.add(sun,sun.target);
+    const hemisphere=new THREE.HemisphereLight('#edf5ff','#7f725f',2.05);scene.add(hemisphere);
+    const sun=new THREE.DirectionalLight('#fff1d7',3.15);sun.position.set(20,35,15);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-100;sun.shadow.camera.right=100;sun.shadow.camera.top=100;sun.shadow.camera.bottom=-100;sun.shadow.camera.far=400;sun.shadow.bias=-.0003;sun.shadow.normalBias=.02;scene.add(sun,sun.target);
+    const fill=new THREE.DirectionalLight('#dce9ff',.7);fill.position.set(-18,14,-22);scene.add(fill);
+    function makeMaterial(m){
+        const base={color:m.color,roughness:m.roughness,metalness:m.metallic,transparent:m.alpha!==undefined||!!m.transmission,opacity:m.alpha??1,depthWrite:m.alpha===undefined&&!m.transmission};
+        if(m.transmission!==undefined||m.ior!==undefined||m.clearcoat!==undefined)return new THREE.MeshPhysicalMaterial({...base,transmission:m.transmission??0,ior:m.ior??1.5,clearcoat:m.clearcoat??0,clearcoatRoughness:m.clearcoatRoughness??.15,thickness:m.thickness??.01});
+        return new THREE.MeshStandardMaterial(base);
+    }
     let root=null,disposed=false,selection=null,currentSpec=null,originals=new Map();
     let viewLevel=null,viewPreset='iso',cutawayEnabled=false,autoFit=true,programmatic=false;
     const draw=()=>{if(!disposed)renderer.render(scene,camera);};
@@ -73,7 +79,7 @@ export function createViewer(canvas, onSelect=()=>{}) {
             if(disposed)throw Error('المعاينة مغلقة.');
             currentSpec=structuredClone(spec);
             const group=new THREE.Group();
-            for(const o of spec.objects){const m=spec.materials[o.material],material=new THREE.MeshStandardMaterial({color:m.color,roughness:m.roughness,metalness:m.metallic,transparent:m.alpha!==undefined,opacity:m.alpha??1,depthWrite:m.alpha===undefined});const mesh=new THREE.Mesh(new THREE.BoxGeometry(o.size[0],o.size[2],o.size[1]),material);mesh.position.set(o.min[0]+o.size[0]/2,o.min[2]+o.size[2]/2,-o.min[1]-o.size[1]/2);mesh.userData={...o,objectId:o.id};group.add(mesh);}
+            for(const o of spec.objects){const m=spec.materials[o.material],material=makeMaterial(m);const mesh=new THREE.Mesh(new THREE.BoxGeometry(o.size[0],o.size[2],o.size[1]),material);mesh.position.set(o.min[0]+o.size[0]/2,o.min[2]+o.size[2]/2,-o.min[1]-o.size[1]/2);mesh.userData={...o,objectId:o.id};group.add(mesh);}
             install(group);canvas.dataset.source='masar-snapshot';
         },
         async loadGLB(buffer){
@@ -96,7 +102,7 @@ export function createViewer(canvas, onSelect=()=>{}) {
             try {
                 for(const o of spec.objects){
                     const m=spec.materials[o.material];
-                    const material=new THREE.MeshStandardMaterial({color:m.color,roughness:m.roughness,metalness:m.metallic,transparent:m.alpha!==undefined,opacity:m.alpha??1,depthWrite:m.alpha===undefined});
+                    const material=makeMaterial(m);
                     const mesh=new THREE.Mesh(new THREE.BoxGeometry(o.size[0],o.size[2],o.size[1]),material);
                     mesh.name=o.id;mesh.position.set(o.min[0]+o.size[0]/2,o.min[2]+o.size[2]/2,-o.min[1]-o.size[1]/2);
                     const metadata={objectId:o.id};

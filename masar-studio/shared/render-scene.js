@@ -42,11 +42,12 @@ export function createRenderScene(model, revisionId, input = {}) {
     const settings = renderSettings(input), finish=RENDER_FINISHES[settings.finish], graph=deriveBuildingGraph(model);
     if (graph.elements.openings.some(o=>!o.hostWallId)) throw Error('توجد فتحة بلا جدار مضيف صالح.');
     const materials = {
-        exterior: { color:finish.wall, roughness:.78, metallic:0 }, interior: {color:finish.interior,roughness:.82,metallic:0},
-        floor: {color:finish.floor,roughness:.55,metallic:0}, frame: {color:finish.frame,roughness:.32,metallic:.65},
-        glass: {color:'#b0d0d5',roughness:.12,metallic:0,alpha:.28}, wood: {color:'#98724d',roughness:.48,metallic:0},
-        fabric: {color:'#e2d7c7',roughness:.92,metallic:0}, site: {color:'#82946f',roughness:1,metallic:0},
-        paving: {color:'#c6c2b7',roughness:.9,metallic:0}, water:{color:'#478e9f',roughness:.18,metallic:.1}
+        exterior: { color:finish.wall, roughness:.7, metallic:0 }, interior: {color:finish.interior,roughness:.8,metallic:0},
+        floor: {color:finish.floor,roughness:.42,metallic:0,clearcoat:.08}, frame: {color:finish.frame,roughness:.26,metallic:.72},
+        glass: {color:'#c4e2e6',roughness:.07,metallic:0,alpha:.38,transmission:.58,ior:1.45,clearcoat:.35,thickness:.015},
+        wood: {color:'#98724d',roughness:.4,metallic:0,clearcoat:.12}, fabric: {color:'#e2d7c7',roughness:.95,metallic:0},
+        site: {color:'#7f966d',roughness:1,metallic:0}, paving: {color:'#c6c2b7',roughness:.82,metallic:0},
+        coping: {color:'#d9d4c9',roughness:.72,metallic:0}, water:{color:'#4b9bad',roughness:.08,metallic:0,alpha:.88,transmission:.12,ior:1.333,clearcoat:1,clearcoatRoughness:.06,thickness:.08}
     };
     const objects=[], proofs={ rooms:[], walls:[], openings:[] };
     function box(id, xyz, whd, mat, meta={}) {
@@ -112,7 +113,19 @@ export function createRenderScene(model, revisionId, input = {}) {
     // Polygon-aware roof plates, not a rectangular cover across an L-shaped void.
     for(const r of top.rooms) cells(r).forEach((c,i)=>box(`roof:${r.id}:${i}`,[c.x,c.y,top.elevation+top.height],[c.w,c.d,.16],'exterior',{elementId:`roof:${top.id}`,levelId:top.id,category:'roof',displayOnly:true}));
     box('presentation:site',[0,0,-.32],[model.site.width,model.site.depth,.15],'site',{elementId:'presentation:site',category:'site',displayOnly:true});
-    for(const f of graph.elements.siteFeatures) box(`presentation:${f.id}`,[f.x,f.y,-.155],[f.w,f.d,.035],f.type==='pool'?'water':'paving',{elementId:f.id,category:'site-feature',displayOnly:true});
+    for(const f of graph.elements.siteFeatures) {
+        const meta={elementId:f.id,category:'site-feature',displayOnly:true};
+        if(f.type==='pool') {
+            const edge=Math.min(.18,f.w*.12,f.d*.12);
+            box(`presentation:${f.id}:water`,[f.x+edge,f.y+edge,-.152],[Math.max(.05,f.w-edge*2),Math.max(.05,f.d-edge*2),.028],'water',{...meta,category:'pool-water'});
+            box(`presentation:${f.id}:coping:n`,[f.x,f.y+f.d-edge,-.153],[f.w,edge,.03],'coping',{...meta,category:'pool-coping'});
+            box(`presentation:${f.id}:coping:s`,[f.x,f.y,-.153],[f.w,edge,.03],'coping',{...meta,category:'pool-coping'});
+            if(f.d>edge*2){
+                box(`presentation:${f.id}:coping:e`,[f.x+f.w-edge,f.y+edge,-.153],[edge,f.d-edge*2,.03],'coping',{...meta,category:'pool-coping'});
+                box(`presentation:${f.id}:coping:w`,[f.x,f.y+edge,-.153],[edge,f.d-edge*2,.03],'coping',{...meta,category:'pool-coping'});
+            }
+        } else box(`presentation:${f.id}`,[f.x,f.y,-.155],[f.w,f.d,.035],'paving',meta);
+    }
     if(objects.length>16000) throw Error('المشهد يتجاوز حد عناصر الإخراج لهذه النسخة.');
     const allRooms=model.levels.flatMap(l=>l.rooms.map(r=>({...r,elevation:l.elevation,levelId:l.id})));
     const interiorRoom=settings.roomId?allRooms.find(r=>r.id===settings.roomId):allRooms.filter(r=>['living','majlis','bedroom','office'].includes(r.kind)).sort((a,b)=>['living','majlis','bedroom','office'].indexOf(a.kind)-['living','majlis','bedroom','office'].indexOf(b.kind)||a.elevation-b.elevation||area(b)-area(a))[0]||allRooms[0];
