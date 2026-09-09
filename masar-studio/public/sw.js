@@ -1,5 +1,5 @@
-const CACHE='masar-4.1.0-shell-v4-blender';
-const SHELL=['/','/src/style.css','/src/app.js','/src/renderer.js','/src/storage.js','/src/render-ui.js','/shared/render-scene.js','/shared/authoring.js','/shared/model.js','/shared/building.js','/shared/ifc.js','/shared/geometry.js','/public/favicon.svg','/public/manifest.webmanifest'];
+const CACHE='masar-4.1.0-shell-v11-png-framing';
+const SHELL=['/','/src/style.css','/src/app.js','/src/renderer.js','/src/storage.js','/src/material-downloads.js','/src/render-ui.js','/src/room-review.js','/src/plan-inspection.js','/shared/view-navigation.js','/shared/render-scene.js','/shared/authoring.js','/shared/model.js','/shared/layout-quality.js','/shared/building.js','/shared/ifc.js','/shared/geometry.js','/public/favicon.svg','/public/manifest.webmanifest'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('masar-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{

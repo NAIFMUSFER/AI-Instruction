@@ -5,7 +5,7 @@ import {openRenderStudio} from '../src/render-ui.js';
 import {generate,understand} from '../shared/model.js';
 function element(tagName='DIV') {
     const listeners=new Map();
-    return {tagName,isConnected:true,open:true,disabled:true,value:'',checked:false,textContent:'',innerHTML:'',
+    return {dataset:{},append(){},tagName,isConnected:true,open:true,disabled:true,value:'',checked:false,textContent:'',innerHTML:'',
         addEventListener(name,fn,options){const list=listeners.get(name)||[];list.push({fn,once:options?.once});listeners.set(name,list);},
         removeEventListener(name,fn){listeners.set(name,(listeners.get(name)||[]).filter(row=>row.fn!==fn));},
         async emit(name,event={}){for(const row of [...(listeners.get(name)||[])]){if(row.once)this.removeEventListener(name,row.fn);await row.fn({currentTarget:this,preventDefault(){},...event});}}
@@ -14,7 +14,7 @@ function element(tagName='DIV') {
 async function fixture(run) {
     const previous=globalThis.document,host=element(),dialog=element(),nodes=new Map();
     const node=selector=>{if(!nodes.has(selector))nodes.set(selector,element(selector==='#render-start'?'BUTTON':'DIV'));return nodes.get(selector);};
-    host.querySelector=node;globalThis.document={getElementById:id=>id==='modal'?dialog:host};
+    host.querySelector=node;globalThis.document={createElement:tag=>Object.assign(element(tag.toUpperCase()),{querySelector:node}),getElementById:id=>id==='modal'?dialog:host};
     let resolveCapability,requests=[];const model=generate(understand('أرض 20×25 ثلاثة أدوار خمس غرف نوم'));
     const api={available:true,user:{id:'unit-owner'},request:route=>{requests.push(route);return route.endsWith('/capabilities')?new Promise(resolve=>{resolveCapability=resolve;}):Promise.resolve({jobs:[]});}};
     try {

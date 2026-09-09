@@ -45,3 +45,72 @@
 #render-gallery figcaption { margin:.4rem 0; }
 @media(max-width:600px){ #render-canvas {height:270px;} .render-actions .btn {flex:1 1 120px;} }
 @media(max-width:720px){.subbar{gap:10px;min-width:0}.breadcrumb{flex-shrink:0}.sub-actions{min-width:0;overflow-x:auto;scrollbar-width:thin}.sub-actions button{flex-shrink:0;white-space:nowrap}}
+
+/* Customer generation: errors stay in the modal top layer and mobile fields do not zoom. */
+#modal-error { scroll-margin: 16px; border: 2px solid #9b3c32; background: #fff2ef; color: #80291f; }
+#modal-error[hidden] { display: none; }
+#brief-form input, #brief-form select { font-size: 16px; min-width: 0; }
+#brief-form .area-budget { margin-block: 16px; }
+#brief-form details summary { cursor: pointer; font-weight: 700; }
+
+/* The material preview must identify the project it displays, including on narrow phones. */
+.render-source{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:16px;overflow-wrap:anywhere}
+.render-source>strong{font-size:17px;display:block}
+.render-source p,.render-source small{line-height:1.75}
+.render-source small{display:block;margin-block:6px}
+.render-source-metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.render-source-metrics span{padding:8px;background:#f3f5ed;border-radius:8px}
+.render-source-metrics b{display:block;font-size:18px}
+.render-source details summary{cursor:pointer;font-weight:700}
+.render-original{white-space:pre-wrap;max-height:220px;overflow:auto;font-size:14px}
+#render-source-warning .btn{white-space:normal;max-width:100%}
+#render-source-warning{scroll-margin-block-start:16px}
+#render-studio .properties-grid select{font-size:16px;min-width:0}
+@media(max-width:400px){.render-source{padding:10px}.render-source-metrics{grid-template-columns:1fr}}
+
+/* WebKit 320px regression: native select content overflowed two narrow grid tracks.
+   Reflow controls instead of clipping the dialog or hiding any option. */
+#render-studio .properties-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+#render-studio .properties-grid .field{min-width:0}
+#render-studio .properties-grid select{max-width:100%;box-sizing:border-box}
+@media(max-width:600px){#render-studio .properties-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Measured layout review: content reflows instead of clipping at phone widths. */
+.quality-table-wrap{max-width:100%;overflow-x:auto;margin-block:12px}
+.quality-table{width:100%;border-collapse:collapse;font-size:14px;table-layout:fixed}
+.quality-table th,.quality-table td{padding:10px 7px;text-align:start;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+.quality-table th:first-child{width:44%}.quality-table td{font-variant-numeric:tabular-nums}
+.quality-room-list{display:grid;gap:10px;margin-block:12px}
+.quality-room{display:grid;gap:5px;padding:12px;border:1px solid var(--line);border-radius:10px}
+.quality-room .source-tag{justify-self:start;white-space:normal}
+.quality-room-changes summary{cursor:pointer;font-weight:700;padding-block:10px}
+.quality-preview-notice{padding:10px;background:rgba(255,255,255,.16);border-radius:8px}
+@media(max-width:500px){.quality-table{font-size:12px}.quality-table th,.quality-table td{padding:8px 4px}#quality-preview{width:100%;white-space:normal}}
+
+/* Dedicated inspection camera: never the geometry editor's drag target. */
+#plan-inspection-frame{height:min(55dvh,620px);min-height:260px;width:100%;max-width:100%;overflow:hidden;touch-action:none;direction:ltr;cursor:grab;background:#f4f6f0;border:1px solid #ccd5c6;border-radius:10px}
+#plan-inspection-frame:active{cursor:grabbing}#plan-inspection-frame:focus-visible{outline:3px solid #30594c;outline-offset:2px}
+#plan-inspection-frame svg{width:100%;height:100%;max-width:none;max-height:none;display:block;user-select:none}
+.plan-inspection-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-block:10px}
+.plan-inspection-controls button{min-height:44px;min-width:44px}.plan-inspection-controls output{min-width:50px;text-align:center;font-variant-numeric:tabular-nums}
+.plan-inspection-hint{font-size:12px;color:#607364;line-height:1.8}.plan-site-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.plan-site-item{display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:12px;border:1px solid #d8dfd1;border-radius:10px;text-align:start;min-width:0;overflow-wrap:anywhere;background:#f7f8f3;min-height:64px}
+.plan-site-item span{font-size:12px}.plan-site-item:focus-visible{outline:3px solid #30594c}#plan-inspection .modal-footer{flex-wrap:wrap}
+@media(max-width:560px){.plan-site-list{grid-template-columns:minmax(0,1fr)}.plan-controls{flex-wrap:wrap!important;gap:5px}.plan-controls .unit-label{flex-basis:100%;text-align:end}.plan-inspection-controls .btn{font-size:12px;padding:10px}#plan-inspection .modal-footer .btn{flex:1 1 180px}#plan-inspection-frame{height:52dvh}}
+
+/* Read-only room review: controls reflow instead of clipping native inputs. */
+#plan-room-review{min-width:0;margin-block:1.2rem}
+.room-review-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.room-review-fields .field,.room-review-fields input,.room-review-fields select{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+.room-review-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:260px;overflow:auto;overscroll-behavior:contain;padding:4px}
+.room-review-row{display:flex;flex-direction:column;align-items:flex-start;gap:4px;min-width:0;min-height:48px;width:100%;padding:10px 12px;border:1px solid #d9dfd5;border-radius:9px;background:#fff;text-align:start;font:inherit;color:inherit;overflow-wrap:anywhere;cursor:pointer}
+.room-review-row[aria-pressed="true"]{border-color:#285b4b;background:#e4f0e8}
+.room-review-row:focus-visible{outline:3px solid #285b4b;outline-offset:1px}
+.room-review-row span{font-size:.86rem}
+#room-review-count{display:block;margin-block:8px}
+#room-review-detail{overflow-wrap:anywhere;margin-block:12px}
+#room-review-detail h4{margin-block:0 8px}
+.room-review-downloads{display:flex;flex-wrap:wrap;gap:8px;margin-block:12px}
+.room-review-downloads .btn{white-space:normal;max-width:100%}
+#plan-inspection-frame .inspection-room-selected>rect:first-child,#plan-inspection-frame .inspection-room-selected>polygon:first-child{stroke:#125d45;stroke-width:.18;stroke-dasharray:.2 .1;fill:#a9d6c4}
+@media(max-width:560px){.room-review-fields,.room-review-list{grid-template-columns:minmax(0,1fr)}}

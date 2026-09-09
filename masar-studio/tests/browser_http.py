@@ -10,8 +10,8 @@ ENGINE=os.environ.get('MASAR_BROWSER','chromium')
 OUT=ROOT/'test-output'/('browser-http-'+ENGINE);OUT.mkdir(parents=True,exist_ok=True)
 results=[];errors=[];requests_failed=[]
 # This fixed inventory is an independent contract for the served ES-module shell.
-SHELL_PATHS = ['/', '/src/style.css', '/src/app.js', '/src/renderer.js', '/src/storage.js', '/src/render-ui.js', '/shared/render-scene.js',
-               '/shared/authoring.js', '/shared/model.js', '/shared/building.js',
+SHELL_PATHS = ['/', '/src/style.css', '/src/app.js', '/src/renderer.js', '/src/storage.js', '/src/material-downloads.js', '/src/render-ui.js', '/src/room-review.js', '/src/plan-inspection.js', '/shared/view-navigation.js', '/shared/render-scene.js',
+               '/shared/authoring.js', '/shared/model.js', '/shared/layout-quality.js', '/shared/building.js',
                '/shared/ifc.js', '/shared/geometry.js', '/public/favicon.svg',
                '/public/manifest.webmanifest']
 def service_worker_controlled(page):
