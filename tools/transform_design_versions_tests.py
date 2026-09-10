@@ -7,6 +7,7 @@ if 'design versions use a dedicated IndexedDB store' not in s:
     block=r'''
 console.log('\n== §13b — نسخ التصميم المعتمدة مستقلة عن AUTOSAVE ==');
 (function(){
+  const indexHtml=require('fs').readFileSync(_np.join(__dirname,'../../public/index.html'),'utf8');
   chk('design versions use a dedicated IndexedDB store',
       page.indexOf("ST_VER='design_versions'")>=0);
   chk('design versions are not part of rolling autosave pruning',
