@@ -1,0 +1,21 @@
+name: Async generation audit
+on:
+  push:
+    branches: ['fix/async-generation-20260911']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Export the tracked source at the exact audit commit
+        run: |
+          mkdir -p /tmp/acs-audit
+          git archive --format=tar.gz HEAD > /tmp/acs-audit/source.tar.gz
+          git rev-parse HEAD > /tmp/acs-audit/COMMIT.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: async-generation-source
+          path: /tmp/acs-audit/
+          retention-days: 1
