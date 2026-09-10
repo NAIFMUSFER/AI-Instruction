@@ -13,6 +13,16 @@ const files={};
 
 const keyPath=(p)=>String(p).split(path.sep).join('/');
 
+// The browser-side source helper reads the same lazy manifest as Node.
+// Keep it in the virtual filesystem with the shipped module tree.
+{
+  const rel='tools/frontend_lazy.txt';
+  const full=path.join(REPO,rel);
+  const text=fs.readFileSync(full,'utf8');
+  files[keyPath(full)]=text;
+  files[rel]=text;
+}
+
 /* تجهيزات كل مرحلة تُقدَّم بمسارها الحقيقي وباسمها المجرّد معاً، كي يعمل
    أي اختبار أياً كان المجلّد الذي يقرأ منه */
 const TESTS=path.resolve(REPO,'tests');

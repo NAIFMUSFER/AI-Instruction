@@ -26,13 +26,18 @@ function order() {
     .map(l => (/^import '\.\/(.+?)';$/.exec(l) || [])[1])
     .filter(Boolean);
 }
+function lazyOrder() {
+  return fs.readFileSync(path.join(ROOT, 'tools', 'frontend_lazy.txt'), 'utf8')
+    .split(/\r?\n/).map(l => l.trim()).filter(l => l && l[0] !== '#');
+}
+function fullOrder() { return order().concat(lazyOrder()); }
 function mod(rel) { return fs.readFileSync(path.join(APPDIR, rel), 'utf8'); }
 
 function has(rel) { return fs.existsSync(path.join(APPDIR, rel)); }
 
 /* كل شيفرة التطبيق موصولة بترتيب التحميل — بديل ما كان البحث في نصّ الصفحة */
 function appText() {
-  return order().map(f => '/* ==== public/app/' + f + ' ==== */\n' + mod(f))
+  return fullOrder().map(f => '/* ==== public/app/' + f + ' ==== */\n' + mod(f))
                 .join('\n');
 }
 
@@ -46,7 +51,7 @@ function css() {
 
 /* الوحدة الوحيدة التي تحتوي علامةً ما — يفشل إن لم تكن واحدة بالضبط */
 function moduleCarrying(marker) {
-  const hits = order().filter(f => mod(f).indexOf(marker) >= 0);
+  const hits = fullOrder().filter(f => mod(f).indexOf(marker) >= 0);
   if (hits.length !== 1)
     throw new Error('expected exactly one application module to carry '
                     + JSON.stringify(marker) + ', found ' + hits.length
@@ -56,7 +61,7 @@ function moduleCarrying(marker) {
 
 /* عدد مرّات ظهور علامة في كل شيفرة التطبيق */
 function countInApp(marker) {
-  return order().reduce((n, f) => n + mod(f).split(marker).length - 1, 0);
+  return fullOrder().reduce((n, f) => n + mod(f).split(marker).length - 1, 0);
 }
 
 /* المقطع بين علامتي بداية ونهاية داخل وحدة واحدة، شاملاً العلامتين */
@@ -69,5 +74,5 @@ function block(rel, open, close) {
   return t.slice(a, b + close.length);
 }
 
-module.exports = { ROOT, APPDIR, mainJs, order, mod, has, appText, shell, css,
+module.exports = { ROOT, APPDIR, mainJs, order, lazyOrder, fullOrder, mod, has, appText, shell, css,
                    moduleCarrying, countInApp, block };
