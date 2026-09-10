@@ -1799,6 +1799,7 @@ async function acsGenerateFromServer(){
   const big=txt.length>2200||(txt.match(/(?:^|\n)\s*(?:[-*•]|\d+[.)])\s+/g)||[]).length>=12;
   statusEl.textContent='🤖 محرّك الفهم يقرأ وصفك بنداً بنداً ويبني المبنى'
     +(big?' — طلبك كبير، يُبنى على مرحلتين وقد يأخذ عدّة دقائق…':'… لحظات.');
+  srvPill('','… جارٍ التوليد — انتظر اكتمال الطلب.');
   document.getElementById('reportBox').className='report';
 
   const res=await __ACS_SHARED.acsFetchJSON('/v1/understand',{method:'POST',
@@ -1810,10 +1811,12 @@ async function acsGenerateFromServer(){
       site_d:(+document.getElementById('siteD').value||null),
       floors:(+document.getElementById('nFloors').value||null)})}, 900000);
 
+  // A superseded response must not repaint the current request's status.
+  if(_seq!==ACS_APPLY_SEQ) return;
   if(res.status!==ACS_NET.SUCCESS){
     /* لا setModel هنا إطلاقاً: نموذج من رد فاشل ادّعاءُ نجاح. */
     SRV_OK=false;
-    srvPill('bad','محرّك الفهم لم يستجب — '+esc(res.status));
+    srvPill('bad','تعذّر إكمال طلب التوليد — '+esc(res.status));
     statusEl.textContent='✕ فشل التوليد على الخادم ('+res.status+')'
       +(res.request_id?(' · معرّف الطلب '+res.request_id):'');
     __ACS_SHARED.acsErrorPanel(res, acsGenerateFromServer, localOnDemand);
@@ -1823,6 +1826,7 @@ async function acsGenerateFromServer(){
     console.error('[ACS-API]', res.status, res.code||'', res.request_id||'', res.message);
     return;
   }
+  SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
   const data=res.body||{};
   if(!data.building){                 /* 200 بلا نموذج = فشل، لا نجاح صامت */
     __ACS_SHARED.acsErrorPanel({status:ACS_NET.INVALID_JSON, http:res.http, request_id:res.request_id,
@@ -1839,8 +1843,6 @@ async function acsGenerateFromServer(){
     return;
   }
   if(!ap.ok){
-    SRV_OK=true;                       /* الخادم سليم: لا تُطفَأ شارته بعطلنا */
-    srvPill('ok','✓ محرّك الفهم متصل');
     acsFail(ap.class, ap.reached+(ap.at?(' @'+ap.at):''));
     statusEl.textContent='✕ وصل النموذج من الخادم ولم يُعرَض — '+ap.class;
     __ACS_SHARED.acsApplyErrorPanel(ap, res, acsGenerateFromServer, localOnDemand);
@@ -1848,7 +1850,6 @@ async function acsGenerateFromServer(){
                   ap.stack||'');
     return;
   }
-  SRV_OK=true; srvPill('ok','✓ محرّك الفهم متصل');
   __ACS_SHARED.LAST_REQUEST_TEXT = txt;            // نص العميل الأصلي مرجع التحقّق
   showReport(data.report, txt);       // يُصنَّف حسب المصدر ولا يُرفَع بلا إثبات
   const n=((data.report||{}).requirements||[]).length;
