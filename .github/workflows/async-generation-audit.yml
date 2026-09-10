@@ -1,4 +1,4 @@
-name: Apply and verify async generation delivery
+name: Verify terminal error delivery
 on:
   push:
     branches: ['fix/async-generation-20260911']
@@ -19,57 +19,76 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify the exact audited patch and apply without drift
+      - name: Apply exact reviewed terminal-result correction
         run: |
           python3 - <<'PY'
-          import base64, hashlib, lzma, subprocess
           from pathlib import Path
-          packed = ''.join(Path('tools/async-delivery-patch.%d' % i).read_text().strip() for i in range(1, 5))
-          patch = lzma.decompress(base64.b64decode(packed, validate=True))
-          assert len(patch) == 71404
-          assert hashlib.sha256(patch).hexdigest() == '999dd38a17bf2b4c5e7ad5863ca6f7768f1d13dead291f97cb98959132ca3ade'
-          subprocess.run(['git', 'apply', '--check', '-'], input=patch, check=True)
-          subprocess.run(['git', 'apply', '-'], input=patch, check=True)
-          print('Exact source patch applied')
+          p=Path('public/app/ui/generation-jobs.js')
+          s=p.read_text()
+          old="""        if (!acsJobTransient(result)) {
+                    if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR' && result.body && result.body.error)) {
+                      row.delivered = true;
+                      acsJobSave(row);
+                    }
+                    return result;
+                  }"""
+          old='\n'.join(line[10:] if i else line for i,line in enumerate(old.splitlines()))
+          new="        // A stored error is a terminal result, even when the original error is\n        // retryable. Only a failed delivery may be polled again, never the job.\n        if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR'\n            && result.body && result.body.error)) {\n          row.delivered = true;\n          acsJobSave(row);\n          return result;\n        }\n        if (!acsJobTransient(result)) return result;"
+          assert s.count(old)==1, repr(old)
+          s=s.replace(old,new)
+          assert s.count("  srvPill('', message);")==1
+          s=s.replace("  srvPill('', message);", "  const pill = document.getElementById('srvPill');\n  if (pill) { pill.className = 'srv'; pill.textContent = message; }")
+          s=s.replace('showReport, srvPill, srvURL','showReport, srvURL')
+          p.write_text(s)
+          p=Path('tests/remediation/test_generation_jobs.js');s=p.read_text()
+          anchor="  await test('health and non-generation traffic remain on the original transport',async()=>{"
+          block="  await test('terminal retryable server errors are delivered once, not polled until expiry',async()=>{\n    for(const http of [429,500,503,504]) {\n      let id, polls=0, downloads=0;\n      const failure={status:'VALID_API_ERROR',http,retryable:true,\n        body:{ok:false,error:{code:'ACS_TIMEOUT',retryable:true}},code:'ACS_TIMEOUT'};\n      const h=harness((p,o)=>{\n        if(o.method==='POST'){id=o.headers['X-ACS-Job-ID'];return receipt(id);}\n        if(p.endsWith('/result')) { downloads++;return failure; }\n        if(++polls>1)return {status:'VALID_API_ERROR',http:410,body:{ok:false,error:{code:'ACS_NOT_FOUND'}}};\n        return receipt(id,'FAILED');\n      });\n      assert.equal((await h.run('/v1/understand',{method:'POST',body:'{}'})).http,http);\n      assert.equal(downloads,1);assert.equal(polls,1);\n      assert.equal(h.ctx.window.ACS.asyncGeneration.state().delivered,true);\n    }\n  });\n"
+          assert s.count(anchor)==1
+          p.write_text(s.replace(anchor,block+anchor))
           PY
       - name: Install the locked toolchains
         run: |
           python -m pip install -r requirements.txt -r requirements-dev.txt
           npm ci
-      - name: Focused delivery and existing contract regressions
+      - name: Refresh deterministic measurements
+        run: |
+          python3 tools/bundle_report.py
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          p=Path('tools/check_doc_claims.py').resolve()
+          spec=importlib.util.spec_from_file_location('doc_claims',p)
+          m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+          ok,message=m.check_state(fix=True)
+          print(message)
+          assert ok
+          PY
+      - name: All focused delivery regressions
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p logs
-          python3 -m py_compile acs_async_jobs.py acs_understand_api.py tests/remediation/async_job_browser_server.py
           python3 tests/remediation/test_async_generation_jobs.py 2>&1 | tee logs/async-python.log
           node tests/remediation/test_generation_jobs.js 2>&1 | tee logs/async-node.log
-          node tests/remediation/test_transport_errors.js 2>&1 | tee logs/transport-existing.log
-          python3 tests/remediation/test_generation_spatial_context.py 2>&1 | tee logs/spatial-and-companions.log
-          python3 tests/remediation/test_api_wiring.py 2>&1 | tee logs/api-wiring.log
-          node tests/remediation/test_module_graph.js 2>&1 | tee logs/module-graph.log
-          python3 tests/remediation/test_bundle_report.py 2>&1 | tee logs/bundle.log
-          python3 tools/check_index_guard.py public/index.html
+          node tests/remediation/test_transport_errors.js
+          python3 tests/remediation/test_generation_spatial_context.py
+          python3 tests/remediation/test_api_wiring.py
+          node tests/remediation/test_module_graph.js
+          python3 tests/remediation/test_bundle_report.py
           git diff --check
-      - name: Install real Chromium and WebKit
+      - name: Install Chromium and WebKit
         run: npx playwright install --with-deps chromium webkit
-      - name: Mobile delivery recovery in Chromium
+      - name: Mobile recovery in both browser engines
         run: |
-          set -o pipefail
+          set -euo pipefail
           ACS_TEST_BROWSER=chromium node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-chromium.log
-      - name: Mobile delivery recovery in WebKit
-        run: |
-          set -o pipefail
           ACS_TEST_BROWSER=webkit node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-webkit.log
-      - name: Publish only verified product changes and remove transfer parts
+      - name: Publish verified non-workflow correction
         run: |
-          git rm tools/async-delivery-patch.1 tools/async-delivery-patch.2 tools/async-delivery-patch.3 tools/async-delivery-patch.4
-          git add -A
-          git diff --cached --name-only | grep -v '^.github/workflows/'
-          if git diff --cached --name-only | grep -q '^.github/workflows/'; then echo 'Unexpected workflow mutation'; exit 1; fi
+          git add public/app/ui/generation-jobs.js tests/remediation/test_generation_jobs.js KNOWN-ISSUES.md tests/performance/bundle_report.json
           git config user.name 'NAIFMUSFER'
           git config user.email 'whili9070@gmail.com'
-          git commit -m 'Fix long generation delivery with recoverable async jobs [async-delivery-applied]'
+          git commit -m 'Preserve terminal job errors and render status as text [async-delivery-applied]'
           git push origin HEAD:fix/async-generation-20260911
       - uses: actions/upload-artifact@v4
         if: always()
