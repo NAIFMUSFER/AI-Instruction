@@ -1,0 +1,67 @@
+name: Apply residential quality transformation
+
+on:
+  push:
+    branches: ['fix/residential-quality-pass']
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[residential-quality-applied]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/residential-quality-pass
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply exact guarded transformations
+        run: python3 tools/apply_residential_quality.py
+
+      - name: Install locked frontend tooling
+        run: npm ci
+
+      - name: Run focused residential regressions
+        run: |
+          python3 -m py_compile acs_understand.py
+          python3 tests/remediation/test_residential_quality.py
+          node tests/remediation/test_residential_presentation.js
+
+      - name: Regenerate measured frontend state
+        run: |
+          python3 tools/bundle_report.py
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          p = Path('tools/check_doc_claims.py').resolve()
+          spec = importlib.util.spec_from_file_location('doc_claims', p)
+          mod = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(mod)
+          ok, msg = mod.check_state(fix=True)
+          print(msg)
+          raise SystemExit(0 if ok else 1)
+          PY
+
+      - name: Prove module graph and measured bundle
+        run: |
+          node tests/remediation/test_module_graph.js
+          python3 tests/remediation/test_bundle_report.py
+          python3 tools/check_index_guard.py public/index.html
+          git diff --check
+
+      - name: Commit product changes and remove one-shot tooling
+        run: |
+          git rm tools/apply_residential_quality.py .github/workflows/apply-residential-quality.yml
+          git add -A
+          git config user.name 'NAIFMUSFER'
+          git config user.email 'whili9070@gmail.com'
+          git commit -m 'Improve residential massing and visual quality [residential-quality-applied]'
+          git push origin HEAD:fix/residential-quality-pass
