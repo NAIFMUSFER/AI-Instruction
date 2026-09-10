@@ -134,8 +134,13 @@ chk('لا وحدة مشحونة أخرى تستدعي WS.init أو panel.open �
    تنشر شيئاً يقرؤه مدخل اللوحات. ui/workspace-ui-wiring.js يُستبدَل بكعب
    يكشف window.ACS.exportModel والأسماء الأربعة التي يستوردها trust/wiring.js
    وحدها — وهي حدود ما يحتاجه المدخل من تلك الوحدة. */
+/* The delivery recovery layer uses real model/first-frame exports absent
+   from this isolated panel stub. Run 34542836057 proved the missing export;
+   test_generation_jobs_shipped_page.js separately measures this layer with
+   the actual shipped UI, Three.js and verified model pixels. Panel assertions
+   below remain unchanged. */
 const THREE_DEPENDENT = new Set(['render/scene.js', 'generated/pbr-bridge.js',
-  'generated/arch-detail-bridge.js', 'trust/wiring.js']);
+  'generated/arch-detail-bridge.js', 'trust/wiring.js', 'ui/generation-jobs.js']);
 const GRAPH = ORDER.filter((f) => !THREE_DEPENDENT.has(f));
 
 /* كعب three.js — أدنى ما يجعل رسم الوحدات **يُقيَّم**.
