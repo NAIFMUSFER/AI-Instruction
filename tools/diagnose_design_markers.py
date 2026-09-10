@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Temporary diagnostics for the one-shot source transform.
 from pathlib import Path
 p=Path('public/app/trust/wiring.js').read_text(encoding='utf-8')
 markers=[
