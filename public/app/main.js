@@ -30,3 +30,6 @@ import './trust/wiring.js';
 import './ui/panels-entry.js';
 /* Residential visual-quality policy. It runs after the panel lazy-loader exists. */
 import './ui/residential-quality.js';
+/* Explicit engineer-controlled saved design versions. Local-only until authenticated
+   project persistence is introduced; never overwrites prior snapshots automatically. */
+import './ui/design-versions.js';
