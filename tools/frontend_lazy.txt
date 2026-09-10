@@ -1,0 +1,60 @@
+# =============================================================================
+# tools/frontend_lazy.txt — مجموعة الوحدات المؤجَّلة، مُعلَنة في مكان واحد.
+#
+# لماذا يوجد هذا الملفّ (KI-12 · مُغلَق)
+# ------------------------------------
+# قبل هذا الملفّ كان public/app/main.js يستورد كل وحدة تحت public/app استيراداً
+# ساكناً، فكانت طبقات تبادل BIM والتوثيق والتفصيل المعماري تُجلَب وتُقيَّم عند
+# كل إقلاع — حتى للزائر الذي لا يفتح أياً من لوحاتها أبداً.
+# tests/performance/bundle_report.json كان يسجّل lazy_bytes: 0، ويقول ذلك
+# صراحةً بدل التظاهر بتقسيم لم يحدث.
+#
+# العقد الآن صريح ومقفول باختبار:
+#   • وحدة مذكورة هنا **لا** يستوردها main.js ولا أي وحدة أخرى استيراداً ساكناً.
+#   • تُجلَب بنداء import() واحد من public/app/ui/panels-entry.js وحده، عند
+#     أوّل ضغطة على زرّ لوحتها، ثم تُخزَّن فلا تُجلَب مرّتين.
+#   • تسجيلها في window.ACS يبقى كما هو حرفاً بحرف؛ لم يتغيّر سطر واحد داخل
+#     الوحدات نفسها. المؤجَّل هو **متى** تُقيَّم، لا **ماذا** تفعل.
+#   • تُرفَض أي وحدة هنا يستوردها أحدٌ استيراداً ساكناً: ذلك يُبطل التأجيل
+#     صامتاً، ويصطاده tests/remediation/test_module_graph.js §1.
+#
+# لماذا هذه الأربع بالذات، ولا واحدة غيرها
+# ---------------------------------------
+# فُحص الرسم كاملاً. هذه الوحدات وحدها لا يستوردها إلا main.js، ولا يقرأ أحد
+# رموزها، ولا تنشر اسماً في __ACS_LATE يقرؤه غيرها:
+#
+#   generated/workspace-ui.js     لا يستوردها إلا main.js · تسجّل window.ACS.workspace
+#                                 و٢٢ مساعداً لا يقرأ أحدٌ منها شيئاً داخل
+#                                 public/app · تقرأ __ACS_LATE ولا تنشر فيه
+#   generated/render-engine.js    لا يستوردها إلا main.js · تسجّل window.ACS.render
+#                                 وحده · لا تقرأ __ACS_LATE ولا تنشر فيه، ولا
+#                                 تستورد إلا core/standards.js و core/viewer.js
+#   generated/bim.js              لا يستوردها إلا main.js · لا قارئ لرموزها
+#   generated/docs.js             لا يستوردها إلا main.js · لا قارئ لرموزها
+#   generated/arch-detail.js      يستوردها الجسر أدناه وحده
+#   generated/arch-detail-bridge.js  لا يستوردها إلا main.js · لا قارئ لرموزها
+#
+# القارئ الوحيد الظاهر لـwindow.ACS.workspace خارج مدخل اللوحات هو
+# generated/pbr-bridge.js:329، وهو شيفرة ميّتة:
+#   const mh=(window.ACS&&window.ACS.workspace&&window.ACS.workspace.project)?null:null;
+# القيمة null في الفرعين، فغياب الطبقة لا أثر له. الحاجز الحقيقي كان عقداً
+# آخر: مسار رفض openWorkspace عند غياب النموذج مُوكَّد **تزامنياً**. حُلَّ
+# بترتيب الفحص لا بتغييره — requireProject لا يحتاج الطبقة أصلاً (createProject
+# في generated/authoring.js و exportModel في ui/workspace-ui-wiring.js، وكلاهما
+# مشحون)، فصار الفحص أوّلاً والجلب بعده.
+#
+# ولماذا **لا** تُؤجَّل generated/pbr.js رغم أن لها لوحة مثلها: هي ليست طبقة
+# لوحة. generated/pbr-bridge.js يستورد منها عشرين رمزاً، و
+# ui/workspace-ui-wiring.js يستورد الجسر، و core/viewer.js يقرأ
+# __ACS_LATE.pqPlateRect و __ACS_LATE.pqRackBlock اللذين تنشرهما pbr.js في آخر
+# تقييمها — وهما في مسار رسم الأرضيّات والأرفف نفسه. تأجيلها يترك المسجّل
+# فارغاً حتى تُفتَح لوحة الجودة، فترسم الأدوار بلا بلاطات. لا تُنقل إلى هنا.
+#
+# الترتيب أدناه ترتيب تقييم صالح: كل وحدة بعد ما تستورده.
+# =============================================================================
+generated/workspace-ui.js
+generated/render-engine.js
+generated/bim.js
+generated/docs.js
+generated/arch-detail.js
+generated/arch-detail-bridge.js

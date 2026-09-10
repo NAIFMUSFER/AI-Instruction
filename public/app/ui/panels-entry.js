@@ -50,6 +50,41 @@ function panelOf(ns) {
   return (api && api.panel) ? api.panel : null;
 }
 
+/* ------------------------------------------------- الطبقات المؤجَّلة - */
+/* KI-12: الطبقات المُعلَنة في tools/frontend_lazy.txt لا يستوردها main.js.
+   هذه هي نداءات import() الوحيدة التي تجلبها، وهي هنا لا في مكان آخر لأن
+   هذا الملفّ هو المدخل الوحيد المُعلَن إلى تلك اللوحات (F-27): من يفتح
+   اللوحة هو من يدفع ثمن تحميلها، ولا أحد سواه.
+
+   التخزين بالوعد لا بالراية: ضغطتان سريعتان على الزرّ نفسه قبل اكتمال الجلب
+   تعطيان الوعد نفسه، فلا تُقيَّم الوحدة مرّتين. وفشل الجلب يمسح المدخل حتى
+   تُعيد ضغطةٌ لاحقة المحاولة بدل أن تُقفَل اللوحة إلى الأبد على خطأ شبكة. */
+const LAZY_LAYERS = {
+  workspace: () => import('../generated/workspace-ui.js'),
+  render: () => import('../generated/render-engine.js'),
+  bim: () => import('../generated/bim.js'),
+  docs: () => import('../generated/docs.js'),
+  /* الطبقة وجسرها معاً: الجسر يستورد الطبقة استيراداً ساكناً، فجلبه وحده
+     يكفي — لكنّ طلبهما معاً يجعل الاعتماد مرئياً في الشيفرة لا مستنتَجاً. */
+  archdetail: () => Promise.all([
+    import('../generated/arch-detail.js'),
+    import('../generated/arch-detail-bridge.js'),
+  ]),
+};
+
+const layerPromise = Object.create(null);
+
+function loadLayer(ns) {
+  if (!LAZY_LAYERS[ns]) return Promise.resolve(false);   // طبقة مشحونة سلفاً
+  if (!layerPromise[ns]) {
+    layerPromise[ns] = LAZY_LAYERS[ns]().then(
+      () => true,
+      (err) => { layerPromise[ns] = null; throw err; },
+    );
+  }
+  return layerPromise[ns];
+}
+
 /* المشروع الذي تعمل عليه اللوحات. المبنى المعروض حالياً هو المصدر: لا نموذج
    ثانٍ ولا نسخة موازية — auCreateProject هي الطريق الوحيد المعلن لبناء مشروع. */
 function currentProject() {
@@ -85,12 +120,11 @@ function announce(text) {
 /* ------------------------------------------------------- مساحة العمل - */
 let workspaceReady = false;
 
-function openWorkspace() {
+/* الفتح نفسه — متزامن حرفاً بحرف كما كان، بمجرّد حضور الطبقة. */
+function openWorkspaceWith(project) {
   const ACS = (typeof window !== 'undefined') ? window.ACS : null;
   const WS = ACS ? ACS.workspace : null;
   if (!WS) { announce('طبقة مساحة العمل غير محمّلة.'); return false; }
-  const project = requireProject('مساحة العمل');
-  if (!project) return false;
   try {
     if (!workspaceReady) {
       // init يركّب أزرار الشريط واختصارات المفاتيح وحارس beforeUnload مرّة واحدة.
@@ -108,10 +142,41 @@ function openWorkspace() {
   }
 }
 
+/* KI-12: مساحة العمل مؤجَّلة أيضاً، لكن **ترتيب** الفحص هو ما جعل ذلك ممكناً
+   بلا تغيير سلوك. قبل هذا كان الفحص: الطبقة أوّلاً ثم النموذج. بعد التأجيل
+   تصير الطبقة غائبة دائماً عند أوّل نقرة، فكان رفضُ «لا نموذج» — وهو مسار
+   يوكّده tests/remediation/test_panel_entry.js في الدورة نفسها للنقرة — سيصير
+   غير متزامن.
+
+   والحلّ ليس تخفيف التوكيد بل ملاحظة أن الفحص لا يحتاج الطبقة أصلاً:
+   currentProject() يقرأ window.ACS.exportModel (من ui/workspace-ui-wiring.js)
+   و window.ACS.createProject (من generated/authoring.js)، وكلاهما مشحون. فقُدِّم
+   الفحص على الجلب: «لا نموذج» يبقى متزامناً حرفاً بحرف، والجلب لا يحدث إلا
+   حين يوجد ما يُفتَح عليه فعلاً — وهو أيضاً توفير حقيقي: نقرة بلا نموذج لم
+   تعد تجلب ١٠٤ كيلوبايت لترفض بعدها. */
+function openWorkspace() {
+  const project = requireProject('مساحة العمل');
+  if (!project) return false;
+  if ((window.ACS || {}).workspace) return openWorkspaceWith(project);
+  announce('جارٍ تحميل مساحة العمل…');
+  return loadLayer('workspace').then(
+    () => openWorkspaceWith(project),
+    (err) => {
+      announce('تعذّر تحميل مساحة العمل: '
+        + String((err && err.message) || err).slice(0, 80));
+      return false;
+    },
+  );
+}
+
 /* ------------------------------------------------------ اللوحات الخمس - */
 const inited = Object.create(null);
 
-function openGenerated(entry) {
+/* الفتح نفسه — متزامن حرفاً بحرف كما كان قبل KI-12. لا await هنا: إدخال
+   دورة مهامّ دقيقة واحدة على مسارٍ لا يحتاج جلباً يجعل اللوحة تُفتح بعد
+   الضغطة لا معها، وهو تغيّر سلوك حقيقي رصده tests/remediation/test_panel_entry.js
+   حين نقر ثم قرأ الـDOM في اللحظة نفسها. */
+function openLoaded(entry) {
   const panel = panelOf(entry.ns);
   if (!panel) { announce('طبقة «' + entry.label + '» غير محمّلة.'); return false; }
   const project = requireProject(entry.label);
@@ -135,6 +200,25 @@ function openGenerated(entry) {
       + String((e && e.message) || e).slice(0, 80));
     return false;
   }
+}
+
+/* المُرسِل: إن كانت الطبقة حاضرة — مشحونةً أو مجلوبةً سابقاً — فُتِحت فوراً
+   ومتزامنةً، فلا يدفع أحدٌ ثمن التأجيل مرّتين. وإلا جُلبت أوّلاً ثم فُتِحت،
+   والقيمة المعادة عندئذ وعدٌ لا منطقيّ — وهو الفرق الوحيد المرئي. */
+function openGenerated(entry) {
+  if (panelOf(entry.ns)) return openLoaded(entry);
+  if (!LAZY_LAYERS[entry.ns]) return openLoaded(entry);   // غير مؤجَّلة وغائبة
+  /* الرسالة أثناء الجلب ليست تجميلاً: بلا سطر يعلن الانتظار تبدو الضغطة
+     الأولى بلا أثر على وصلة بطيئة. */
+  announce('جارٍ تحميل «' + entry.label + '»…');
+  return loadLayer(entry.ns).then(
+    () => openLoaded(entry),
+    (err) => {
+      announce('تعذّر تحميل طبقة «' + entry.label + '»: '
+        + String((err && err.message) || err).slice(0, 80));
+      return false;
+    },
+  );
 }
 
 /* ------------------------------------------------------------- التوصيل - */
@@ -174,18 +258,28 @@ try {
   /* لا شيء هنا يبرّر إسقاط بقيّة التطبيق. */
 }
 
-/* واجهة مطوّر صريحة — نفس المسارات التي تسلكها الأزرار، بلا طريق ثانٍ. */
+/* واجهة مطوّر صريحة — نفس المسارات التي تسلكها الأزرار، بلا طريق ثانٍ.
+   openPanel يعيد **وعداً** بمنطقيّ منذ KI-12، لأن الطبقة قد تحتاج جلباً —
+   ويبقى الفتح نفسه متزامناً متى كانت الطبقة حاضرة سلفاً.
+   openWorkspace يعيد منطقيّاً متزامناً عند الرفض أو عند حضور الطبقة، ووعداً
+   حين يلزم جلبها. */
 if (typeof window !== 'undefined') {
   window.ACS = window.ACS || {};
-  window.ACS.openWorkspace = openWorkspace;
+  window.ACS.openWorkspace = openWorkspace;   /* منطقيّ، أو وعدٌ به عند الجلب */
   window.ACS.openPanel = (ns) => {
     const entry = GENERATED_PANELS.filter((p) => p.ns === ns)[0];
-    return entry ? openGenerated(entry) : false;
+    return Promise.resolve(entry ? openGenerated(entry) : false);
   };
   window.ACS.panelEntryPoints = () => ({
     workspace: 'acsOpenWorkspace',
     panels: GENERATED_PANELS.map((p) => ({ ns: p.ns, button: p.button })),
   });
+  /* حالة التأجيل مقروءة من الخارج — لا يُستنتَج التحميل من وجود اللوحة. */
+  window.ACS.lazyLayers = () => Object.keys(LAZY_LAYERS).map((ns) => ({
+    ns, requested: !!layerPromise[ns], loaded: !!panelOf(ns),
+  }));
 }
 
-export { openWorkspace, openGenerated, currentProject, GENERATED_PANELS, wire };
+export { openWorkspace, openWorkspaceWith, openGenerated, openLoaded,
+         loadLayer, LAZY_LAYERS,
+         currentProject, GENERATED_PANELS, wire };

@@ -8,8 +8,10 @@
    تحفظ التكافؤ مع الصفحة قبل التفكيك دقيقة وغير مرئية في أي اختبار آخر، ولذلك
    تُقفَل هنا صراحة، بمحلّل نحويّ حقيقي لا بتعبير نمطي:
 
-     §1  كل وحدة تحت public/app (عدا boot/ و styles/) يستوردها main.js مرّة
-         واحدة بالضبط، وmain.js لا يحمل منطقاً — سطور استيراد فقط.
+     §1  كل وحدة تحت public/app (عدا boot/ و styles/) إمّا يستوردها main.js
+         مرّة واحدة بالضبط، وإمّا هي مُعلَنة مؤجَّلة في tools/frontend_lazy.txt
+         ولا يستوردها أحدٌ استيراداً ساكناً البتّة — بل تُجلَب بنداء import()
+         واحد من ui/panels-entry.js وحده. وmain.js لا يحمل منطقاً: استيراد فقط.
      §2  رسم الاستيراد الطرفيّ الأوّل لا دوري.
      §3  كل حافّة تشير إلى الوراء في ترتيب استيراد main.js.
      §4  لا معرّف حرّ غير محلول في أي وحدة خارج قائمة tools/frontend_globals.txt.
@@ -35,7 +37,11 @@ const chk = (n, c, d) => { c ? (pass++, console.log('  ✓', n))
                                                     d === undefined ? '' : d)); };
 
 const mods = APP.modules();
-const order = APP.order();
+const order = APP.order();          /* المشحون: ترتيب main.js */
+const lazy = APP.lazyOrder();       /* المؤجَّل: tools/frontend_lazy.txt */
+const fullOrder = APP.fullOrder();  /* ترتيب التقييم الكامل */
+const LAZY = new Set(lazy);
+const LAZY_ENTRY = 'ui/panels-entry.js';
 const ENTRY = 'main.js';
 /* boot/ سكربتات كلاسيكية يحمّلها <script> في القشرة قبل خريطة الاستيراد،
    وstyles/ ورقة أنماط — لا واحد منهما وحدة ES يستوردها main.js. */
@@ -91,13 +97,22 @@ chk('the module set is not empty — this suite would otherwise be vacuous',
   chk('every module main.js imports really exists on disk',
       order.every(f => !!mods[f]),
       JSON.stringify(order.filter(f => !mods[f])));
-  const missing = graphModules.filter(f => order.indexOf(f) < 0);
+  const missing = graphModules.filter(f => fullOrder.indexOf(f) < 0);
   chk('not one module under public/app is orphaned — every non-boot, '
-      + 'non-style module is imported by main.js',
+      + 'non-style module is either imported by main.js or declared lazy',
       missing.length === 0, JSON.stringify(missing));
   chk('main.js imports nothing beyond those modules',
       order.every(f => graphModules.indexOf(f) >= 0),
       JSON.stringify(order.filter(f => graphModules.indexOf(f) < 0)));
+  chk('the declared lazy set and the eager order are disjoint — no module is '
+      + 'both shipped and deferred',
+      lazy.every(f => order.indexOf(f) < 0),
+      JSON.stringify(lazy.filter(f => order.indexOf(f) >= 0)));
+  chk('every declared lazy module really exists on disk',
+      lazy.every(f => !!mods[f]),
+      JSON.stringify(lazy.filter(f => !mods[f])));
+  chk('the lazy declaration is not vacuous — it defers real modules',
+      lazy.length >= 1, String(lazy.length));
   chk('the two leaf registries are imported first, in the declared order',
       JSON.stringify(order.slice(0, APP.REGISTRIES.length))
       === JSON.stringify(APP.REGISTRIES),
@@ -168,19 +183,29 @@ chk('the only bare specifiers are the three renderer entries declared in the '
 console.log('\n== §3 — EVERY EDGE POINTS BACKWARDS IN MAIN.JS IMPORT ORDER ==');
 {
   const forward = firstParty.filter(([a, b]) => {
-    const ia = order.indexOf(a), ib = order.indexOf(b);
+    const ia = fullOrder.indexOf(a), ib = fullOrder.indexOf(b);
     return ia < 0 || ib < 0 || ib >= ia;
   });
-  chk('no module imports one that main.js evaluates later or at the same rank',
+  chk('no module imports one that is evaluated later or at the same rank in '
+      + 'the combined (eager then lazy) evaluation order',
       forward.length === 0,
       JSON.stringify(forward.map(e => e[0] + ' -> ' + e[1]).slice(0, 8)));
+  /* الخاصّية التي تجعل التأجيل تأجيلاً فعلاً: لا وحدة مشحونة تستورد وحدة
+     مؤجَّلة استيراداً ساكناً. حافّة واحدة كهذه تُعيد الوحدة إلى إغلاق الإقلاع
+     صامتةً، فتبقى الأرقام في bundle_report.json تدّعي تأجيلاً لا وجود له. */
+  const leaked = edges.filter(([a, b]) => LAZY.has(b) && !LAZY.has(a));
+  chk('not one eager module — main.js included — statically imports a declared '
+      + 'lazy module; otherwise the deferral is undone without a trace',
+      leaked.length === 0,
+      JSON.stringify(leaked.map(e => e[0] + ' -> ' + e[1])));
   chk('main.js itself imports nothing but graph modules (its own edges are the '
       + 'entry edges, not intra-graph edges)',
       edges.filter(e => e[0] === ENTRY).every(e => order.indexOf(e[1]) >= 0));
   /* الترتيب المستقرّ: ترتيب main.js هو ترتيب طوبولوجي صالح للرسم. لو كان
      صالحاً لكن غير الترتيب المشحون لتغيّر زمن التقييم بلا أن يظهر أعلاه. */
-  const rank = {}; order.forEach((f, i) => { rank[f] = i; });
-  chk('main.js import order is a valid topological order of the whole graph',
+  const rank = {}; fullOrder.forEach((f, i) => { rank[f] = i; });
+  chk('the combined evaluation order is a valid topological order of the whole '
+      + 'graph',
       firstParty.every(([a, b]) => rank[b] < rank[a]));
 }
 
@@ -345,17 +370,30 @@ console.log('\n== §5 — __ACS_LATE IS READ EARLY AND WRITTEN ONCE, BY ITS OWNE
       JSON.stringify(readers.map(f => f + '=' + reads[f].size)));
   const late = [];
   const orphan = [];
+  const eagerSet = new Set(order);
   readers.forEach(f => reads[f].forEach(n => {
     if (!publishedBy[n]) { orphan.push(f + ' reads ' + n + ' — nobody publishes it');
       return; }
     const owner = publishedBy[n][0];
-    if (order.indexOf(f) >= order.indexOf(owner))
-      late.push(f + ' reads ' + n + ' owned by the not-earlier ' + owner);
+    if (fullOrder.indexOf(f) < fullOrder.indexOf(owner)) return;   /* إحالة أمامية */
+    /* KI-12 — الحالة الثانية المشروعة. القاعدة أعلاه تقول: لا تستعمل السجلّ
+       حيث يصلح استيراد ساكن؛ فإن كان المالك أسبق فاستورده مباشرةً. وحدةٌ
+       مؤجَّلة تكسر هذه القاعدة شكلاً لا معنى: كانت مشحونة قبل مالكها فكُتبت
+       بالسجلّ بحقّ، وتأجيلها نقلها إلى ما بعده. الاسم عندئذ منشورٌ حتماً قبل
+       أن تُجلَب الوحدة أصلاً — أي أضمن مما كان، لا أقلّ. وتحرير استيرادات
+       وحدة مولَّدة يدوياً ممنوع بترويستها، فالسجلّ يبقى.
+       الشرط الذي يُبقي هذا صحيحاً ولا يفتح باباً: المالك نفسه **مشحون**.
+       مؤجَّلٌ يقرأ اسماً يملكه مؤجَّلٌ آخر لا ضمان له، ويُبلَّغ كما كان. */
+    if (LAZY.has(f) && eagerSet.has(owner)) return;
+    late.push(f + ' reads ' + n + ' owned by ' + owner
+      + (LAZY.has(f) ? ' — a lazy module may only read names owned by eager ones'
+                     : ' — the owner is not evaluated later, so a static import '
+                       + 'belongs here instead of the registry'));
   }));
   chk('every __ACS_LATE name a module reads is really published somewhere',
       orphan.length === 0, JSON.stringify(orphan.slice(0, 6)));
-  chk('a module only ever reads a __ACS_LATE name whose owner main.js '
-      + 'evaluates strictly later — which is exactly why the edge was moved '
+  chk('a module only ever reads a __ACS_LATE name whose owner the combined '
+      + 'order evaluates strictly earlier — which is exactly why the edge was moved '
       + 'into the registry instead of becoming a forward import',
       late.length === 0, JSON.stringify(late.slice(0, 6)));
   /* الشرط الآخر الذي يجعل السجلّ آمناً: القراءة داخل دالّة، لا وقت التقييم */
@@ -376,6 +414,58 @@ console.log('\n== §5 — __ACS_LATE IS READ EARLY AND WRITTEN ONCE, BY ITS OWNE
   chk('no __ACS_LATE name is read while a module is being evaluated — every '
       + 'read sits inside a function, so the registry is full by call time',
       evalTime.length === 0, JSON.stringify(evalTime.slice(0, 6)));
+}
+
+/* ── §6 — كل وحدة مؤجَّلة تُجلَب بنداء import() واحد من المدخل وحده ───────── */
+console.log('\n== §6 — EVERY DECLARED LAZY MODULE IS FETCHED BY EXACTLY ONE '
+            + 'DYNAMIC IMPORT, FROM THE PANEL ENTRY ALONE ==');
+{
+  /* نُحصي نداءات import('…') بالمحلّل لا بتعبير نمطي: نصّ يشبه النداء داخل
+     تعليق أو سلسلة كان سيُحتسَب، فيبدو العقد محفوظاً وهو ليس كذلك. */
+  const dynamic = [];                       /* [module, resolvedTarget] */
+  for (const f of Object.keys(astOf)) {
+    if (isBoot(f)) continue;
+    B.traverse(astOf[f], {
+      Import(p2) {
+        const call = p2.parentPath && p2.parentPath.node;
+        if (!call || call.type !== 'CallExpression') return;
+        const arg = call.arguments[0];
+        if (!arg || arg.type !== 'StringLiteral') {
+          dynamic.push([f, null]);          /* محدِّد غير ساكن — يُبلَّغ */
+          return;
+        }
+        const spec = arg.value;
+        dynamic.push([f, spec[0] === '.'
+          ? path.posix.normalize(path.posix.join(path.posix.dirname(f), spec))
+          : spec]);
+      },
+    });
+  }
+  const toLazy = dynamic.filter(([, t]) => t && LAZY.has(t));
+  chk('every dynamic import specifier is a static string — nothing is computed '
+      + 'at runtime, so this graph is knowable at build time',
+      dynamic.every(([, t]) => t !== null),
+      JSON.stringify(dynamic.filter(([, t]) => t === null).map(e => e[0])));
+  chk('every declared lazy module is the target of at least one dynamic import',
+      lazy.every(f => toLazy.some(([, t]) => t === f)),
+      JSON.stringify(lazy.filter(f => !toLazy.some(([, t]) => t === f))));
+  {
+    const counts = {};
+    toLazy.forEach(([, t]) => { counts[t] = (counts[t] || 0) + 1; });
+    chk('no lazy module is fetched from two places — one call site, one owner',
+        Object.keys(counts).every(k => counts[k] === 1),
+        JSON.stringify(Object.keys(counts).filter(k => counts[k] > 1)));
+  }
+  chk('the panel entry is the only module that fetches a lazy layer',
+      toLazy.every(([f]) => f === LAZY_ENTRY),
+      JSON.stringify(Array.from(new Set(toLazy.map(e => e[0])))
+        .filter(f => f !== LAZY_ENTRY)));
+  chk('the panel entry fetches nothing but declared lazy modules — it is an '
+      + 'entry point, not a general loader',
+      dynamic.filter(([f]) => f === LAZY_ENTRY)
+        .every(([, t]) => t && LAZY.has(t)),
+      JSON.stringify(dynamic.filter(([f, t]) => f === LAZY_ENTRY
+        && !(t && LAZY.has(t))).map(e => String(e[1]))));
 }
 
 console.log('\n──────────────────────────────────────────────');

@@ -39,6 +39,18 @@ def order():
     return re.findall(r"^import '\./(.+?)';$", main, re.M)
 
 
+def lazy_order():
+    """الوحدات المؤجَّلة كما يعلنها tools/frontend_lazy.txt (KI-12)."""
+    txt = _read(os.path.join(HERE, "frontend_lazy.txt"))
+    return [ln.strip() for ln in txt.split("\n")
+            if ln.strip() and not ln.strip().startswith("#")]
+
+
+def full_order():
+    """ترتيب التقييم الكامل: المشحون بترتيب main.js ثم المؤجَّل بترتيبه."""
+    return order() + lazy_order()
+
+
 def modules():
     out = {}
     for base, _dirs, files in os.walk(APP):

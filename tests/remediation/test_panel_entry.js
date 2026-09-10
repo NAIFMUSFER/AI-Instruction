@@ -77,9 +77,19 @@ chk('المدخل يأتي بعد كل وحدة ينشر عليها اعتماد
   ORDER.indexOf('ui/panels-entry.js')
     > Math.max(ORDER.indexOf('generated/workspace-ui.js'),
       ORDER.indexOf('generated/render-engine.js'),
-      ORDER.indexOf('generated/bim.js'), ORDER.indexOf('generated/docs.js'),
-      ORDER.indexOf('generated/pbr.js'), ORDER.indexOf('generated/arch-detail.js'),
+      ORDER.indexOf('generated/pbr.js'),
       ORDER.indexOf('ui/workspace-ui-wiring.js')));
+/* KI-12: الطبقات المؤجَّلة يجب ألّا تكون في ترتيب main.js إطلاقاً — لو عادت
+   واحدة إليه بقيت اللوحة تعمل فيمرّ الانحدار صامتاً، ويضيع ربع ميغابايت من
+   مسار الإقلاع بلا أن يفشل شيء. */
+{
+  const LAZY_DECL = fs.readFileSync(
+    path.join(ROOT, 'tools', 'frontend_lazy.txt'), 'utf8')
+    .split('\n').map((x) => x.trim()).filter((x) => x && x[0] !== '#');
+  chk('كل طبقة مُعلَنة مؤجَّلة غائبة عن ترتيب استيراد main.js',
+    LAZY_DECL.length >= 1 && LAZY_DECL.every((f) => ORDER.indexOf(f) < 0),
+    JSON.stringify(LAZY_DECL.filter((f) => ORDER.indexOf(f) >= 0)));
+}
 
 const ENTRY = fs.readFileSync(path.join(APP, 'ui', 'panels-entry.js'), 'utf8');
 chk('المدخل لا يحوي eval ولا new Function (سياسة script-src)',
@@ -315,7 +325,7 @@ async function live() {
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'load' });
   await page.waitForTimeout(1200);
 
-  const result = await page.evaluate(() => {
+  const result = await page.evaluate(async () => {
     const ids = ['acsOpenWorkspace', 'acsOpenRender', 'acsOpenBim',
       'acsOpenDocs', 'acsOpenPbr', 'acsOpenDetail'];
     const panels = ['acsWorkspace', 'rvPanel', 'bxPanel', 'dcPanel',
@@ -338,6 +348,8 @@ async function live() {
     R.noModelThrew = threw;
     R.noModelMessage = (document.getElementById('acsPanelsState') || {}).textContent || '';
     R.afterNoModel = openState();
+    R.lazyBeforeModel = (window.ACS && window.ACS.lazyLayers)
+      ? window.ACS.lazyLayers() : null;
 
     // (ب) نموذج حاضر: كل زرّ يفتح لوحته
     window.__ACS_TEST_MODEL = {
@@ -349,10 +361,21 @@ async function live() {
       meta: { requirements: [], excluded: [] },
     };
     R.clickErrors = {};
+    /* KI-12: طبقات bim/docs/archdetail لم تعد مشحونة — النقرة تطلب جلبها.
+       تُقاس الحالة قبل النقر وبعده، فالتأجيل يُثبَت لا يُفترَض. */
+    R.lazyBefore = (window.ACS && window.ACS.lazyLayers)
+      ? window.ACS.lazyLayers() : null;
+    R.afterSyncClick = null;
     for (const id of ids) {
       try { document.getElementById(id).click(); }
       catch (e) { R.clickErrors[id] = String(e.message || e); }
     }
+    /* اللقطة الفورية: ما يُفتح بلا انتظار أصلاً — الطبقات المشحونة وحدها. */
+    R.afterSyncClick = openState();
+    /* ثم مهلة للجلب الديناميكي؛ الطبقات النقيّة تُقيَّم وتفتح بعدها. */
+    await new Promise((r) => setTimeout(r, 1500));
+    R.lazyAfter = (window.ACS && window.ACS.lazyLayers)
+      ? window.ACS.lazyLayers() : null;
     R.after = openState();
     R.stateMessage = (document.getElementById('acsPanelsState') || {}).textContent || '';
 
@@ -399,6 +422,14 @@ async function live() {
     R.noModelThrow);
   chk('النقر بلا نموذج يشرح ما ينقص بدل فتح لوحة فارغة',
     /نموذج/.test(R.noModelMessage), JSON.stringify(R.noModelMessage));
+  /* KI-12: هذا التوكيد يقرأ الرسالة في دورة النقرة نفسها. تأجيل طبقة مساحة
+     العمل كان سيجعله غير متزامن لولا تقديم فحص النموذج على الجلب — فهو
+     الشاهد الوحيد على أن الترتيب لم ينقلب. */
+  chk('ورفضُ «لا نموذج» بقي متزامناً: لم تُجلب طبقة مساحة العمل أصلاً',
+    Array.isArray(R.lazyBeforeModel)
+      && (R.lazyBeforeModel.filter((l) => l.ns === 'workspace')[0] || {})
+        .requested === false,
+    JSON.stringify(R.lazyBeforeModel));
   chk('ولا يفتح أي لوحة',
     Object.keys(R.afterNoModel).every((k) => R.afterNoModel[k] === false),
     JSON.stringify(R.afterNoModel));
@@ -406,32 +437,58 @@ async function live() {
   chk('لا استثناء من أي زرّ بعد وجود النموذج',
     Object.keys(R.clickErrors).length === 0, JSON.stringify(R.clickErrors));
 
-  const OPENED = { acsWorkspace: 'مساحة العمل', rvPanel: 'العرض',
-    bxPanel: 'تبادل BIM', dcPanel: 'التوثيق', pqPanel: 'جودة العرض',
-    adPanel: 'التفصيل المعماري' };
-  for (const id of Object.keys(OPENED)) {
-    chk('النقر يفتح ' + OPENED[id] + ' فعلاً (#' + id + '.on)',
-      R.after[id] === true, JSON.stringify(R.after));
+  /* الطبقات المشحونة: تُفتح في اللحظة نفسها، بلا دورة مهامّ واحدة. هذا ما
+     كان قبل KI-12 ويجب أن يبقى — التأجيل لا يجوز أن يبطّئ ما لم يُؤجَّل. */
+  const EAGER_PANELS = { pqPanel: 'جودة العرض' };
+  for (const id of Object.keys(EAGER_PANELS)) {
+    chk('النقر يفتح ' + EAGER_PANELS[id] + ' فوراً ومتزامناً (#' + id + '.on)',
+      R.afterSyncClick[id] === true, JSON.stringify(R.afterSyncClick));
   }
+  /* الطبقات المؤجَّلة النقيّة: bim و docs لا تلمسان three، فتُجلبان وتُقيَّمان
+     وتُفتحان في هذه البيئة فعلاً — وهو الدليل الحيّ أن التأجيل لم يكسر الفتح. */
+  const LAZY_PURE = { acsWorkspace: 'مساحة العمل', rvPanel: 'العرض',
+    bxPanel: 'تبادل BIM', dcPanel: 'التوثيق' };
+  for (const id of Object.keys(LAZY_PURE)) {
+    chk('النقر يجلب ' + LAZY_PURE[id] + ' ثم يفتحها (#' + id + '.on)',
+      R.after[id] === true, JSON.stringify(R.after));
+    chk('ولم تكن مفتوحة قبل اكتمال الجلب — التأجيل حقيقي لا اسميّ',
+      R.afterSyncClick[id] === false, JSON.stringify(R.afterSyncClick));
+  }
+  /* التفصيل المعماري: جسره من طبقات three المستبعَدة من هذا الرسم (انظر أعلى
+     الملفّ)، فلا يُقيَّم هنا. ما يُقاس: أن النقرة **طلبت** الجلب فعلاً. فتحه
+     الحيّ يبقى NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED، كسائر طبقات three. */
+  {
+    const req = (R.lazyAfter || []).filter((l) => l.ns === 'archdetail')[0];
+    chk('النقر على التفصيل المعماري يطلب جلب طبقته المؤجَّلة',
+      !!(req && req.requested === true), JSON.stringify(R.lazyAfter));
+  }
+  /* الخاصّية المركزية: لا طبقة مؤجَّلة موجودة قبل أن يطلبها أحد. */
+  chk('لا طبقة مؤجَّلة محمّلة ولا مطلوبة قبل أي نقرة — وإلا فالتأجيل وهم',
+    Array.isArray(R.lazyBefore) && R.lazyBefore.length === 5
+      && R.lazyBefore.every((l) => l.requested === false && l.loaded === false),
+    JSON.stringify(R.lazyBefore));
   chk('init ركّبت معالِجات أزرار شريط مساحة العمل العشرة',
     R.wsToolbarWired.length === 10, R.wsToolbarWired.join(','));
-  chk('Escape يغلق اللوحات المولَّدة الخمس',
+  chk('Escape يغلق كل لوحة فُتحت فعلاً (والطبقة غير المحمّلة لا ترفع استثناءً)',
     ['rvPanel', 'bxPanel', 'dcPanel', 'pqPanel', 'adPanel']
       .every((k) => R.afterEscape[k] === false),
     JSON.stringify(R.afterEscape));
-  /* KI-13 — قياسٌ لا ادّعاء: فتح اللوحات يكشف أن `style-src 'self'` يُسقط
-     سمات style التي تحقنها الطبقات المولَّدة عبر innerHTML. هذا عطلٌ قائم
-     سابقٌ على F-27 (لم يكن يظهر لأن اللوحات لم تكن تُفتح أصلاً)، وهو مسجَّل
-     في KNOWN-ISSUES.md. ما يُثبَّت هنا: لا خرق من أي توجيه آخر — لا script-src
-     ولا connect-src ولا غيرهما — أي أن المدخل الجديد نفسه نظيف. */
+  /* KI-13 — أُغلق بـF-30، وهذا القياس هو ما يُبقي الإغلاق صادقاً. كان فتح
+     اللوحات يكشف أن `style-src 'self'` يُسقط سمات style التي تحقنها الطبقات
+     المولَّدة عبر innerHTML؛ العدد المطبوع أدناه صفر منذ F-30، وقد بقي صفراً
+     بعد تأجيل ست طبقات في F-50. النصّ هنا كان ما يزال يصف العطل بأنه «قائم»
+     بعد إغلاقه — وهو نفس التناقض المسجَّل في KI-14 (عنوانٌ يقول OPEN وإدخالٌ
+     لاحق يقول CLOSED). صُحّح. ما يُثبَّت أدناه: لا خرق من أي توجيه — لا
+     style-src ولا script-src ولا connect-src — أي أن المدخل واللوحات نظيفة. */
   const styleAttr = live_.violations.filter(
     (v) => String(v.directive).indexOf('style-src') === 0);
   const other = live_.violations.filter(
     (v) => String(v.directive).indexOf('style-src') !== 0);
   chk('لا خرق لأي توجيه غير style-src-attr (المدخل الجديد لا يخرق شيئاً)',
     other.length === 0, JSON.stringify(other.slice(0, 3)));
-  console.log('  · KI-13 (قائم، مقيس هنا): %d خرقاً لـstyle-src-attr من سمات '
-    + 'style تحقنها الطبقات المولَّدة عبر innerHTML.', styleAttr.length);
+  chk('KI-13 يبقى مغلقاً: صفر خرق لـstyle-src-attr من سمات style تحقنها '
+    + 'الطبقات المولَّدة عبر innerHTML — مقيسٌ بعد فتح كل لوحة، لا مفترَض',
+  styleAttr.length === 0, JSON.stringify(styleAttr.slice(0, 3)));
   const real = live_.errors.filter((t) => !/favicon|404/i.test(t)
     && !/Refused to apply inline style/i.test(t));
   chk('لا خطأ صفحة غير متوقَّع', real.length === 0,

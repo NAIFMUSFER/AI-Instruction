@@ -305,7 +305,12 @@ for tool, _ in INJECTORS:
         MARKERS.append((tool, m))
 chk('marker definitions were found in the injectors', len(MARKERS) >= 10,
     str(len(MARKERS)))
-_IMPORTED = set(AS.order())
+# KI-12: «الملفّ الذي يقيّمه المتصفّح» صار مجموعتين — ما يُقيَّم عند الإقلاع،
+# وما يُقيَّم عند فتح لوحته. الاثنان يُقيَّمان فعلاً؛ الفرق هو **متى**. وحدة
+# ليست في أيّهما لا تُقيَّم أبداً، وذلك ما يبقى هذا الفحص يصطاده.
+_EAGER = set(AS.order())
+_LAZY = set(AS.lazy_order())
+_IMPORTED = _EAGER | _LAZY
 _carrier = {}                     # علامة → الملفّات المنشورة التي تحملها
 _frontend_files = dict(modules)
 _frontend_files['index.html(shell)'] = shell
@@ -323,7 +328,8 @@ for tool, m in MARKERS:
         and (hits[0] in _IMPORTED or hits[0] in ('index.html(shell)',
                                                  'styles/app.css')
              or hits[0].startswith('boot/')),
-        '%s (main.js imports %d module(s))' % (hits, len(_IMPORTED)))
+        '%s (main.js imports %d module(s); %d more are declared lazy)'
+        % (hits, len(_EAGER), len(_LAZY)))
 
 print('\n== 5 · THE MIRRORED SPECIFICATIONS HAVE NOT DRIFTED FROM THE FILES ==')
 SPEC_VARS = [
@@ -739,15 +745,19 @@ chk('and every boot script that ships is actually referenced by the shell — '
     'referenced=%s shipped=%s' % (_boot_referenced, sorted(boot_scripts)))
 
 # ── رسم الاستيراد مغلق: لا وحدة يتيمة ولا استيراد مفقود ─────────────────
-_IMPORTED = AS.order()
+# KI-12: الرسم ما زال مغلقاً، لكنّ له مدخلين معلنَين لا مدخلاً واحداً:
+# main.js للمشحون، وui/panels-entry.js للمؤجَّل المُعلَن في
+# tools/frontend_lazy.txt. وحدة خارج المجموعتين يتيمة كما كانت.
+_IMPORTED = list(AS.order()) + list(AS.lazy_order())
 _EXEMPT = {'main.js', 'shared-state.js'}
 _expected = sorted(k for k in modules
                    if k not in _EXEMPT and not k.startswith('boot/')
                    and not k.startswith('styles/'))
 _orphans = [k for k in _expected if k not in _IMPORTED]
 _missing_imports = [k for k in _IMPORTED if k not in modules]
-chk('public/app/main.js imports EVERY shipped module except boot/, styles/, '
-    'main.js and shared-state.js — no orphan file is published',
+chk('every shipped module is reached by one of the two declared entries — '
+    'main.js eagerly, or ui/panels-entry.js lazily — no orphan file is '
+    'published',
     _orphans == [], ', '.join(_orphans))
 chk('and every module main.js imports really exists — no missing import',
     _missing_imports == [], ', '.join(_missing_imports))

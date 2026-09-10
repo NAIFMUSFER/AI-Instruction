@@ -95,5 +95,22 @@ if [ "$failed" -ne 0 ]; then
   emit "::error::$failed target(s) in '$LABEL' failed — this job cannot pass"
   exit 1
 fi
+# F-53 — ادّعاءات التوثيق تُقاس بتشغيل حزمها.
+#
+# لماذا هنا لا في بناء الواجهة: الحارس يشغّل كل حزمة مذكورة في التوثيق ليقرأ
+# العدد الذي تعلنه **هي** عن نفسها — لا عدّاً ساكناً لأنماط نصّية، لأن حزماً
+# هنا توكّد داخل حلقات فالعدّ الساكن يعطي رقماً لا يطابق التشغيل. وهو لذلك
+# بطيء، والحزم تُشغَّل في هذا المسار أصلاً فلا يُدفع إلا الفارق.
+#
+# ويُشغَّل بعد اجتياز الأهداف: ادّعاءٌ عن حزمةٍ ساقطة لا معنى لقياسه، والرسالة
+# المفيدة عندئذ هي سقوط الحزمة لا بلى الرقم.
+if command -v python3 >/dev/null 2>&1 && [ -f tools/check_doc_claims.py ]; then
+  emit "▶ verifying documented assertion counts against the suites themselves"
+  if ! python3 tools/check_doc_claims.py; then
+    emit "::error::documented assertion counts have drifted from the suites"
+    exit 1
+  fi
+fi
+
 emit "ci_run · $LABEL: every target passed"
 exit 0
