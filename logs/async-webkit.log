@@ -1,3 +1,0 @@
-PASS webkit mobile refresh restores the previous job through GET, exactly one generation
-PASS webkit offline/reconnect and interrupted result download do not duplicate generation
-PASS webkit no page errors
