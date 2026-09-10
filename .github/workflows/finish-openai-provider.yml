@@ -1,0 +1,115 @@
+name: Final OpenAI provider boundary checks
+
+on:
+  push:
+    branches: ['feature/openai-provider']
+    paths: ['.github/workflows/finish-openai-provider.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  finish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned test environment
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Apply guarded transport and model catalogue fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if text.count(old) != 1:
+                  raise SystemExit('anchor drift: ' + path)
+              p.write_text(text.replace(old, new), encoding='utf-8')
+          replace('acs_openai.py',
+              '            code = E.ACS_UPSTREAM_TRUNCATED if received else E.ACS_UPSTREAM_CONNECTION\n',
+              '            # Only an explicit connect failure proves that no request was sent.\n'
+              '            # Pre-header Read/Write/Protocol errors are ambiguous accepted work.\n'
+              '            unsent = isinstance(exc, httpx.ConnectError) and not received\n'
+              '            code = E.ACS_UPSTREAM_CONNECTION if unsent else E.ACS_UPSTREAM_TRUNCATED\n')
+          replace('acs_openai.py', '        except httpx.TransportError:\n',
+                  '        except httpx.TransportError as exc:\n')
+          replace('acs_provider.py', '        "models": ("gpt-5.4", "gpt-5.4-mini"),\n',
+                  '        "models": ("gpt-5.6-sol", "gpt-5.4", "gpt-5.4-mini"),\n')
+          replace('acs_provider.py', '    # https://developers.openai.com/api/docs/models/gpt-5.4\n',
+                  '    # https://developers.openai.com/api/docs/models/gpt-5.6-sol\n'
+                  '    # https://developers.openai.com/api/docs/models/gpt-5.4\n')
+          extra = '\n'.join([
+              '', '', 'class TransportAmbiguityTests(unittest.TestCase):',
+              '    def test_pre_header_ambiguous_failures_do_not_enable_fallback(self):',
+              '        for cls in (httpx.ReadError, httpx.WriteError, httpx.RemoteProtocolError):',
+              '            calls, tel = [], {}',
+              '            def handle(request):',
+              '                calls.append(request)',
+              '                raise cls("synthetic transport failure")',
+              '            env = dict(ENV, ACS_LLM_FALLBACK_PROVIDER="deepseek", ACS_LLM_FALLBACK_API_KEY="unit-ds")',
+              '            with self.subTest(cls=cls.__name__), patch.dict(os.environ, env, clear=True), patch.object(O.httpx, "Client", side_effect=factory(handle)), contextlib.redirect_stdout(io.StringIO()), self.assertRaises(E.AcsApiError) as caught:',
+              '                U.call_llm("test", max_tokens=256, telemetry=tel)',
+              '            self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_TRUNCATED)',
+              '            self.assertFalse(tel["fallback_attempted"])',
+              '            self.assertEqual(len(calls), 1)', '',
+              '    def test_connect_failure_retains_existing_fallback_classification(self):',
+              '        def handle(request):',
+              '            raise httpx.ConnectError("synthetic connect failure")',
+              '        with patch.dict(os.environ, ENV, clear=True), self.assertRaises(E.AcsApiError) as caught:',
+              '            O.ResponsesClient(P.primary(), 10, factory(handle)).create(model="gpt-5.4", max_tokens=256, system="JSON", messages=[{"role":"user","content":"test"}])',
+              '        self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_CONNECTION)', '',
+              '    def test_documented_sol_catalogue_does_not_prove_account_access(self):',
+              '        env = dict(ENV, ACS_LLM_MODEL="gpt-5.6-sol")',
+              '        with patch.dict(os.environ, env, clear=True):',
+              '            self.assertIn("gpt-5.6-sol", P.allowed_models())',
+              '            self.assertEqual(P.documented_max_output(), 128000)', '',
+          ])
+          replace('tests/remediation/test_openai_provider.py', '\n\nclass PipelineTests(unittest.TestCase):\n',
+                  extra + '\nclass PipelineTests(unittest.TestCase):\n')
+          p = Path('docs/operations/openai-provider.md')
+          text = p.read_text(encoding='utf-8')
+          text = text.replace('ACS_LLM_MODEL=gpt-5.4\n', 'ACS_LLM_MODEL=gpt-5.6-sol\n')
+          text = text.replace('ACS_ALLOWED_MODELS=gpt-5.4,gpt-5.4-mini\n', 'ACS_ALLOWED_MODELS=gpt-5.6-sol\n')
+          text = text.replace('for `gpt-5.4` and\n`gpt-5.4-mini`', 'for `gpt-5.6-sol`, `gpt-5.4` and\n`gpt-5.4-mini`')
+          text = text.replace('- https://developers.openai.com/api/docs/models/gpt-5.4\n', '- https://developers.openai.com/api/docs/models/gpt-5.6-sol\n- https://developers.openai.com/api/docs/models/gpt-5.4\n')
+          text += '\nThe documented evaluation target is `gpt-5.6-sol`. The registry also keeps\n`gpt-5.4` and `gpt-5.4-mini` for explicit compatibility tests. A documented model\nidentifier does not establish that the deployed key has access to that model.\nBefore-response-header ReadError, WriteError and RemoteProtocolError are treated\nas ambiguous/incomplete requests, not as permission to spend on a fallback.\nOnly ConnectError before acceptance retains the connection-failure classification.\n'
+          p.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify all focused provider regression targets
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          python -m py_compile acs_openai.py acs_provider.py acs_understand.py
+          bash tools/ci_run.sh --log logs/openai-final.log --label 'final OpenAI boundaries' --runner python3 \
+            tests/remediation/test_openai_provider.py \
+            tests/remediation/test_generation_spatial_context.py \
+            tests/remediation/test_multi_provider.py \
+            tests/remediation/test_provider_integration.py \
+            tests/remediation/test_thinking_wire.py \
+            tests/remediation/test_provider_accounting.py \
+            tests/remediation/test_provider_capability.py \
+            tests/remediation/test_plan_chunking.py \
+            tests/phase9_2/test_generation_budget.py
+          git diff --check
+      - name: Publish only tested product changes
+        run: |
+          set -euo pipefail
+          git add acs_openai.py acs_provider.py tests/remediation/test_openai_provider.py docs/operations/openai-provider.md
+          git config user.name 'NAIFMUSFER'
+          git config user.email 'whili9070@gmail.com'
+          git commit -m 'Close OpenAI transport ambiguity and document Sol evaluation target'
+          git push origin HEAD:feature/openai-provider
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openai-final-boundary-logs
+          path: logs/
