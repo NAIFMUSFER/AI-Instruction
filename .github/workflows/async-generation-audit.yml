@@ -23,19 +23,13 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p=Path('public/app/ui/generation-jobs.js')
-          s=p.read_text()
-          old="""        if (!acsJobTransient(result)) {
-                    if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR' && result.body && result.body.error)) {
-                      row.delivered = true;
-                      acsJobSave(row);
-                    }
-                    return result;
-                  }"""
-          old='\n'.join(line[10:] if i else line for i,line in enumerate(old.splitlines()))
-          new="        // A stored error is a terminal result, even when the original error is\n        // retryable. Only a failed delivery may be polled again, never the job.\n        if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR'\n            && result.body && result.body.error)) {\n          row.delivered = true;\n          acsJobSave(row);\n          return result;\n        }\n        if (!acsJobTransient(result)) return result;"
-          assert s.count(old)==1, repr(old)
-          s=s.replace(old,new)
+          p=Path('public/app/ui/generation-jobs.js');s=p.read_text()
+          anchor='        if (!acsJobTransient(result)) {'
+          assert s.count(anchor)==1
+          start=s.index(anchor)
+          end=s.index('        acsJobProgress(',start)
+          new="        // A stored error is a terminal result, even when the original error is\n        // retryable. Only a failed delivery may be polled again, never the job.\n        if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR'\n            && result.body && result.body.error)) {\n          row.delivered = true;\n          acsJobSave(row);\n          return result;\n        }\n        if (!acsJobTransient(result)) return result;\n"
+          s=s[:start]+new+s[end:]
           assert s.count("  srvPill('', message);")==1
           s=s.replace("  srvPill('', message);", "  const pill = document.getElementById('srvPill');\n  if (pill) { pill.className = 'srv'; pill.textContent = message; }")
           s=s.replace('showReport, srvPill, srvURL','showReport, srvURL')
