@@ -317,6 +317,33 @@ class ResponseShapeTests(unittest.TestCase):
         self.assertEqual(captured[0].connect, 30)
 
 
+class TransportAmbiguityTests(unittest.TestCase):
+    def test_pre_header_ambiguous_failures_do_not_enable_fallback(self):
+        for cls in (httpx.ReadError, httpx.WriteError, httpx.RemoteProtocolError):
+            calls, tel = [], {}
+            def handle(request):
+                calls.append(request)
+                raise cls("synthetic transport failure")
+            env = dict(ENV, ACS_LLM_FALLBACK_PROVIDER="deepseek", ACS_LLM_FALLBACK_API_KEY="unit-ds")
+            with self.subTest(cls=cls.__name__), patch.dict(os.environ, env, clear=True), patch.object(O.httpx, "Client", side_effect=factory(handle)), contextlib.redirect_stdout(io.StringIO()), self.assertRaises(E.AcsApiError) as caught:
+                U.call_llm("test", max_tokens=256, telemetry=tel)
+            self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_TRUNCATED)
+            self.assertFalse(tel["fallback_attempted"])
+            self.assertEqual(len(calls), 1)
+
+    def test_connect_failure_retains_existing_fallback_classification(self):
+        def handle(request):
+            raise httpx.ConnectError("synthetic connect failure")
+        with patch.dict(os.environ, ENV, clear=True), self.assertRaises(E.AcsApiError) as caught:
+            O.ResponsesClient(P.primary(), 10, factory(handle)).create(model="gpt-5.4", max_tokens=256, system="JSON", messages=[{"role":"user","content":"test"}])
+        self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_CONNECTION)
+
+    def test_documented_sol_catalogue_does_not_prove_account_access(self):
+        env = dict(ENV, ACS_LLM_MODEL="gpt-5.6-sol")
+        with patch.dict(os.environ, env, clear=True):
+            self.assertIn("gpt-5.6-sol", P.allowed_models())
+            self.assertEqual(P.documented_max_output(), 128000)
+
 class PipelineTests(unittest.TestCase):
     def test_actual_call_path_native_transport_and_safe_telemetry(self):
         calls, tel, logs = [], {}, io.StringIO()

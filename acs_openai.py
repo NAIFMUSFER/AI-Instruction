@@ -315,9 +315,12 @@ class ResponsesClient:
                     raise _error(E.ACS_UPSTREAM_TRUNCATED, "stream_without_terminal_event")
         except httpx.TimeoutException:
             raise _error(E.ACS_UPSTREAM_TIMEOUT, "timeout") from None
-        except httpx.TransportError:
+        except httpx.TransportError as exc:
             # A connection lost after a response began is not safe to duplicate.
-            code = E.ACS_UPSTREAM_TRUNCATED if received else E.ACS_UPSTREAM_CONNECTION
+            # Only an explicit connect failure proves that no request was sent.
+            # Pre-header Read/Write/Protocol errors are ambiguous accepted work.
+            unsent = isinstance(exc, httpx.ConnectError) and not received
+            code = E.ACS_UPSTREAM_CONNECTION if unsent else E.ACS_UPSTREAM_TRUNCATED
             raise _error(code, "transport_interrupted") from None
 
     @contextmanager

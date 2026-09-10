@@ -47,8 +47,8 @@ environment. Preserve the existing secret values and CORS allowlist.
 ACS_LLM_PROVIDER=openai
 ACS_LLM_API_KEY_ENV=OPENAI_API_KEY
 ACS_LLM_BASE_URL=https://api.openai.com/v1
-ACS_LLM_MODEL=gpt-5.4
-ACS_ALLOWED_MODELS=gpt-5.4,gpt-5.4-mini
+ACS_LLM_MODEL=gpt-5.6-sol
+ACS_ALLOWED_MODELS=gpt-5.6-sol
 ACS_OPENAI_REASONING_EFFORT=low
 ACS_LLM_TRANSPORT=stream
 ACS_LLM_FALLBACK_PROVIDER=deepseek
@@ -60,7 +60,7 @@ ACS_LLM_FALLBACK_ON_BILLING=0
 
 Leave `OPENAI_API_KEY` and the existing `ACS_LLM_API_KEY` untouched. Preserve the
 existing global/per-user quotas, request timeouts and output-token budget.
-The known model ceiling is 128,000 output tokens for `gpt-5.4` and
+The known model ceiling is 128,000 output tokens for `gpt-5.6-sol`, `gpt-5.4` and
 `gpt-5.4-mini`; unknown model identifiers get no invented ceiling. The current
 ACS request budget is not automatically raised to that ceiling.
 
@@ -138,9 +138,17 @@ nine targets. Temporary transformation scripts/workflows are removed before PR.
 ## Official reference material
 
 Checked 2026-09-11:
+- https://developers.openai.com/api/docs/models/gpt-5.6-sol
 - https://developers.openai.com/api/docs/models/gpt-5.4
 - https://developers.openai.com/api/docs/models/gpt-5.4-mini
 - https://developers.openai.com/api/docs/guides/streaming-responses
 - https://developers.openai.com/api/docs/guides/structured-outputs
 - https://developers.openai.com/api/docs/guides/error-codes
 - https://developers.openai.com/api/reference/python/resources/responses/methods/create
+
+The documented evaluation target is `gpt-5.6-sol`. The registry also keeps
+`gpt-5.4` and `gpt-5.4-mini` for explicit compatibility tests. A documented model
+identifier does not establish that the deployed key has access to that model.
+Before-response-header ReadError, WriteError and RemoteProtocolError are treated
+as ambiguous/incomplete requests, not as permission to spend on a fallback.
+Only ConnectError before acceptance retains the connection-failure classification.

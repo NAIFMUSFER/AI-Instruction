@@ -52,12 +52,13 @@ PROVIDERS = ("anthropic", "deepseek", "openai")
 # سقف مخرجات anthropic غير موثّق في هذا المستودع، فيبقى None — ولا يُخترع رقم.
 PROVIDER_SPEC = {
     # Native Responses API. Known model ceilings, checked 2026-09-11:
+    # https://developers.openai.com/api/docs/models/gpt-5.6-sol
     # https://developers.openai.com/api/docs/models/gpt-5.4
     # https://developers.openai.com/api/docs/models/gpt-5.4-mini
     "openai": {
         "base_url": "https://api.openai.com/v1",
         "requires_base_url": True,
-        "models": ("gpt-5.4", "gpt-5.4-mini"),
+        "models": ("gpt-5.6-sol", "gpt-5.4", "gpt-5.4-mini"),
         "documented_max_output": 128000,
         "legacy_key_env": "OPENAI_API_KEY",
         "key_prefix": None,
