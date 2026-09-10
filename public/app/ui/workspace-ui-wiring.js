@@ -1801,6 +1801,7 @@ async function acsGenerateFromServer(){
     +(big?' — طلبك كبير، يُبنى على مرحلتين وقد يأخذ عدّة دقائق…':'… لحظات.');
   srvPill('','… جارٍ التوليد — انتظر اكتمال الطلب.');
   document.getElementById('reportBox').className='report';
+  document.dispatchEvent(new CustomEvent('acs:generation-started'));
 
   const res=await __ACS_SHARED.acsFetchJSON('/v1/understand',{method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -1880,6 +1881,8 @@ async function acsGenerateFromServer(){
       +((data.mode==='deep')?' · (توليد على مرحلتين)':'')
       +(fr.pixels_verified===false?' · (تعذّر قياس البكسلات في هذا العتاد)':'')
       +' · '+window.ACS.trust.modelReviewSummary(data,document.documentElement.lang);
+    document.dispatchEvent(new CustomEvent('acs:generation-succeeded',{detail:{
+      rooms:data.rooms||null,levels:data.levels||null,mode:data.mode||null,request_id:res.request_id||''}}));
   };
   if(typeof requestAnimationFrame==='function')
     requestAnimationFrame(()=>requestAnimationFrame(_finish));

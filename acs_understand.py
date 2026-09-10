@@ -193,6 +193,9 @@ RESIDENTIAL_MASSING_RULE = r"""
 - عند تعدد الأدوار حافظ على نواة الدرج/المصعد رأسياً، ولا توسّع الدور العلوي تلقائياً لمجرّد وجود أرض فارغة أسفله.
 - اجعل المدخل الرئيسي مقروءاً من واجهة خارجية، وغرف المجلس/المعيشة والنوم ذات واجهات ونوافذ خارجية مناسبة عندما لم يحدد العميل خلاف ذلك.
 - الهدف كتلة منزل/فيلا قابلة للقراءة، لا صندوقاً بحجم قطعة الأرض.
+- في العمائر: اجعل كتلة الأدوار المتكررة مصطفّة منطقياً فوق الكتلة التي تحتها. لا تنشئ بلاطات أو غرفاً علوية معلّقة خارج المسقط السفلي إلا إذا طلب العميل بروزاً/كابولياً صراحةً.
+- لا تجعل الواجهة صفاً عشوائياً من فتحات صغيرة: اجمع فتحات الغرف الخارجية بإيقاع واضح، واجعل باب المدخل الرئيسي مميزاً عن أبواب الغرف الداخلية.
+- الشرفات/التراسات لا تُضاف لمجرد تحسين الشكل؛ إن طلبها العميل فاجعلها متصلة بفراغ داخلي ومحمولة ضمن كتلة مقروءة.
 
 """
 
@@ -1818,6 +1821,56 @@ def _preserve_added_disclosure(building):
     meta["added"] = []
     return building
 
+
+def _residential_plan_quality_issues(building, description):
+    # Geometry-only gate: no regulatory values and no guessed code requirements.
+    import acs_validate as V
+    bt=str((building.get("meta") or {}).get("type") or "residential")
+    if not _is_residential(bt): return []
+    all_issues,_=V.validate_building(building)
+    keys=("تتداخل", "خارج حدود", "معلّق", "غير متطابق رأسياً", "rect غير صالح",
+          "عرض أو عمق غير موجب", "بلا غرف")
+    out=[x for x in all_issues if any(k in x for k in keys)]
+    text=str(description or "").lower()
+    explicit=any(k in text for k in ("cantilever","overhang","كابولي","كابول","بروز معلّق","بروز علوي"))
+    if explicit: return out[:16]
+    floors=building.get("floors") or {}; levels=building.get("levels") or []
+    ordered=sorted([lv for lv in levels if lv.get("template") in floors],
+                   key=lambda lv: float(lv.get("index",0) or 0))
+    def bbox(t):
+        rects=[r.get("rect") for r in (floors.get(t,{}).get("rooms") or [])
+               if isinstance(r.get("rect"),list) and len(r.get("rect"))==4]
+        if not rects: return None
+        xs=[float(r[0]) for r in rects]; zs=[float(r[1]) for r in rects]
+        xe=[float(r[0])+float(r[2]) for r in rects]; ze=[float(r[1])+float(r[3]) for r in rects]
+        return (min(xs),min(zs),max(xe),max(ze))
+    for lo,up in zip(ordered,ordered[1:]):
+        if lo.get("template")==up.get("template"): continue
+        a,b=bbox(lo.get("template")),bbox(up.get("template"))
+        if not a or not b: continue
+        excursion=max(a[0]-b[0],a[1]-b[1],b[2]-a[2],b[3]-a[3],0.0)
+        if excursion>1.20:
+            out.append("الكتلة السكنية العلوية في القالب '%s' تتجاوز مسقط القالب '%s' أسفلها حتى %.2f م بلا طلب صريح لبروز/كابولي — أعد محاذاة الغرف العلوية فوق الكتلة المبنية مع الحفاظ على البرنامج." %
+                       (up.get("template"),lo.get("template"),excursion))
+    return out[:16]
+
+
+def _repair_residential_plan(description, building, issues, model=None, request_id=None,
+                             strategy=None):
+    prompt=(
+      "هذه خطة مناطق سكنية قبل مرحلة التفصيل. أصلح هندسة الخطة فقط وأعد Building JSON كاملاً فقط.\n"
+      "لا تحذف غرفة طلبها العميل، لا تضف برنامجاً جديداً، ولا تغيّر أسماء/أعداد المتطلبات. "
+      "حافظ على site وlevels وعدد الأدوار. عدّل rect وتوزيع الغرف/الممرات والنواة فقط بقدر حل المشاكل. "
+      "لا تنشئ بروزاً أو كابولياً لم يطلبه العميل.\nالمشاكل:\n"
+      + "\n".join("- "+x for x in issues)
+      + "\n\nطلب العميل:\n"+description
+      + "\n\nالخطة الحالية:\n"+json.dumps(building,ensure_ascii=False))
+    raw=call_llm(prompt,model=model,max_tokens=G.stage_budget("plan"),truncate=False,
+                 btype=str((building.get("meta") or {}).get("type") or "residential"),
+                 user_msg="",stage="plan",request_id=request_id,strategy=strategy)
+    return validate(extract_json(raw))
+
+
 def understand_deep(description, model=None, group_size=None, workers=None,
                     strict=False, btype=None, stages=None, request_id=None,
                     strategy_plan=None):
@@ -1866,6 +1919,32 @@ def understand_deep(description, model=None, group_size=None, workers=None,
             building = _plan_bounded(desc, model=model, btype=btype,
                                      stages=stages, request_id=request_id,
                                      strategy_plan=_sp)
+    # Staged residential requests used to log plan defects only after all detail
+    # calls had already run. Repair the compact spatial plan first; warehouses are
+    # deliberately outside this policy.
+    if _is_residential(btype):
+        q0=_residential_plan_quality_issues(building, description)
+        if q0:
+            print("[ACS-RES-Q] plan quality: %d spatial issue(s) — repair before detail." % len(q0))
+            try:
+                fixed=_repair_residential_plan(desc, building, q0, model=model,
+                                               request_id=request_id,
+                                               strategy=(strategy_plan or {}).get("strategy"))
+                q1=_residential_plan_quality_issues(fixed, description)
+                if len(q1)<len(q0):
+                    building=fixed
+                    building.setdefault("meta",{}).setdefault("acs_stage_diagnostics",[]).append(
+                        {"code":"RESIDENTIAL_PLAN_REPAIRED","before":len(q0),"after":len(q1)})
+                    print("[ACS-RES-Q] plan repair accepted: %d -> %d." % (len(q0),len(q1)))
+                else:
+                    building.setdefault("meta",{}).setdefault("acs_stage_diagnostics",[]).append(
+                        {"code":"RESIDENTIAL_PLAN_REPAIR_REJECTED","before":len(q0),"after":len(q1)})
+                    print("[ACS-RES-Q] plan repair rejected: no measured improvement.")
+            except Exception as exc:
+                building.setdefault("meta",{}).setdefault("acs_stage_diagnostics",[]).append(
+                    {"code":"RESIDENTIAL_PLAN_REPAIR_FAILED","error":type(exc).__name__})
+                print("[ACS-RES-Q] plan repair failed — original plan retained: %s" % type(exc).__name__)
+
     plan_rooms = []
     for tmpl, fdef in (building.get("floors") or {}).items():
         for r in (fdef.get("rooms") or []):

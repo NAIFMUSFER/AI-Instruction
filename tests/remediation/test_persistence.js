@@ -327,6 +327,26 @@ console.log('\n== §13 — لا يُقال «سحابة» ولا «نسخة اح
       P.assertNoCloudClaim('your project is backed up to the cloud').ok===false);
 })();
 
+
+console.log('\n== §13b — نسخ التصميم المعتمدة مستقلة عن AUTOSAVE ==');
+(function(){
+  const indexHtml=require('fs').readFileSync(_np.join(__dirname,'../../public/index.html'),'utf8');
+  chk('design versions use a dedicated IndexedDB store',
+      page.indexOf("ST_VER='design_versions'")>=0);
+  chk('design versions are not part of rolling autosave pruning',
+      page.indexOf("idbTx(db,[ST_VER],'readwrite'")>=0
+      && page.indexOf("origin:'DESIGN_VERSION'")>=0);
+  chk('a successful generation exposes an explicit save-design action',
+      indexHtml.indexOf('id="acsSaveDesign"')>=0
+      && indexHtml.indexOf('حفظ هذه النسخة')>=0);
+  chk('saved versions can be restored and one can be marked accepted',
+      page.indexOf('async function vRestore(id)')>=0
+      && page.indexOf('async function vAccept(id)')>=0);
+  chk('save action is revealed only after the generation success event',
+      page.indexOf("acs:generation-succeeded")>=0
+      && page.indexOf('vShowBar(true)')>=0);
+})();
+
 console.log('\n== §14 — الصفحة المشحونة تُعلن الحفظ المحلي ولا تدّعي سحابة ==');
 (function(){
   chk('the shipped page exposes window.ACS.persistence',
