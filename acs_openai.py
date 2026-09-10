@@ -60,6 +60,12 @@ def _provider_error(status, data):
     raw = data.get("error", data) if isinstance(data, dict) else {}
     raw = raw if isinstance(raw, dict) else {}
     code = raw.get("code") or raw.get("type")
+    # Terminal SSE failures have no independent HTTP status. Classify only
+    # known codes; an unknown terminal failure must not spend on a fallback.
+    if status == 0:
+        status = {"invalid_api_key": 401, "permission_denied": 403,
+                  "model_not_found": 404, "rate_limit_exceeded": 429,
+                  "insufficient_quota": 429, "server_error": 503}.get(code, 400)
     if code in ("insufficient_quota", "billing_hard_limit_reached", "billing_not_active") or status == 402:
         return _error(E.ACS_UPSTREAM_BILLING, "billing", status)
     if code in ("content_filter", "safety_violation"):
@@ -133,7 +139,7 @@ def normalise(response):
         raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_response_object")
     status = response.get("status")
     if status == "failed":
-        raise _provider_error(502, response)
+        raise _provider_error(0, response)
     if status not in ("completed", "incomplete"):
         raise _error(E.ACS_UPSTREAM_TRUNCATED, "missing_terminal_status")
     output = response.get("output", [])
@@ -273,6 +279,7 @@ class ResponsesClient:
                         except (ValueError, UnicodeError):
                             body = {}
                         raise _provider_error(response.status_code, body)
+                    received = True  # HTTP 200 is evidence the provider accepted the request.
                     if not streaming:
                         return normalise(_json(b"".join(self._bytes(response, deadline, MAX_RESPONSE_BYTES))))
                     if "text/event-stream" not in response.headers.get("content-type", ""):
@@ -281,7 +288,7 @@ class ResponsesClient:
                         received = True
                         kind = event.get("type")
                         if kind == "error":
-                            raise _provider_error(400, event)
+                            raise _provider_error(0, event)
                         if kind in TERMINAL:
                             data = event.get("response")
                             if not isinstance(data, dict) or data.get("status") != TERMINAL[kind]:

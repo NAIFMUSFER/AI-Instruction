@@ -807,6 +807,9 @@ def _sdk_accepts_base_url():
 
 def _build_client(cfg, timeout_s):
     """عميلٌ مضبوطٌ على نقطة نهاية المزوّد المحلول. لا يخمّن ولا يتساهل."""
+    if cfg.provider == "openai":
+        from acs_openai import ResponsesClient
+        return ResponsesClient(cfg, timeout_s)
     import anthropic
     if not cfg.ok:
         # ضبطٌ ناقص: عطل مشغّل معلن باسم المتغيّر، لا عطل منبع.
@@ -884,8 +887,11 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         المحاولتين، وعقد سبب التوقّف، والتليمتري. المتغيّر الوحيد أن المفتاح
         والنموذج ونقطة النهاية تأتي من `cfg` بدل قراءة المحيط هنا.
         """
-        model = model_override or cfg.model
+        # A caller's primary-model override must not be sent to another provider.
+        model = (model_override if cfg.role == "primary" else None) or cfg.model
         client = _build_client(cfg, timeout_s)
+        sdk_ver = getattr(client, "acs_sdk_version", None) or _sdk_version()
+        tel["sdk_version"] = sdk_ver
         # ما سيُسجَّل: أيّ مزوّد ونموذج ومضيف خدم هذا النداء فعلاً.
         tel["model"] = model
         tel["provider"] = cfg.provider
