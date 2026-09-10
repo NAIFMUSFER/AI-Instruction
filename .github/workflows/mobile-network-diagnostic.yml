@@ -1,0 +1,90 @@
+name: Mobile API transport diagnosis (no generation)
+on:
+  push:
+    branches: [audit/mobile-network-20260911]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked browser tooling
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium webkit
+      - name: Real browser CORS and response-body checks
+        shell: bash
+        run: |
+          mkdir -p outputs/mobile-network
+          node <<'JS'
+          const {chromium, webkit} = require('playwright');
+          const fs = require('node:fs');
+          const origins = [
+            'https://sprightly-selkie-d906c3.netlify.app',
+            'https://deploy-preview-15--sprightly-selkie-d906c3.netlify.app',
+            'https://main--sprightly-selkie-d906c3.netlify.app'
+          ];
+          const results = [];
+          (async()=>{
+            for(const [name, engine] of [['chromium',chromium],['webkit',webkit]]){
+              const browser = await engine.launch({headless:true});
+              for(const origin of origins){
+                const context = await browser.newContext({viewport:{width:393,height:852}});
+                const page = await context.newPage();
+                const errors=[];
+                page.on('console', m=>{if(m.type()==='error'&&/cors|fetch|access.control|network/i.test(m.text())) errors.push(m.text().slice(0,240));});
+                const result = {engine:name, origin};
+                try{
+                  await page.goto(origin,{waitUntil:'domcontentloaded',timeout:25000});
+                  result.probes=await page.evaluate(async()=>{
+                    const base='https://acs-engine.onrender.com';
+                    const out=[];
+                    // Empty JSON fails Pydantic validation before guard/run_job.
+                    // No real description, provider key, or generation is sent.
+                    for(const [path,opts] of [
+                      ['/health',{method:'GET'}],
+                      ['/v1/understand',{method:'POST',headers:{'Content-Type':'application/json','X-Request-ID':'diag-mobile-no-generation'},body:'{}'}]
+                    ]){
+                      const start=Date.now();
+                      try{
+                        const response=await fetch(base+path,{...opts,signal:AbortSignal.timeout(20000)});
+                        const text=await response.text();
+                        const body=JSON.parse(text);
+                        out.push({path,status:response.status,ms:Date.now()-start,
+                          request_id:response.headers.get('X-Request-ID'),
+                          code:body.error?.code||null,ok:body.ok,
+                          build:body.build?.git_sha_short||null,
+                          jobs:path==='/health'?body.generation_jobs?.stats:undefined});
+                      }catch(e){out.push({path,error:String(e),ms:Date.now()-start});}
+                    }
+                    return out;
+                  });
+                }catch(e){result.error=String(e).slice(0,300);}
+                result.console_errors=errors.slice(0,8);
+                results.push(result);
+                console.log(JSON.stringify(result));
+                await context.close();
+              }
+              await browser.close();
+            }
+            fs.writeFileSync('outputs/mobile-network/browser.json',JSON.stringify(results,null,2));
+            const success=results.length===6&&results.every(r=>r.probes?.length===2&&r.probes[0].status===200&&r.probes[1].code==='ACS_VALIDATION_FAILED');
+            console.log('BROWSER_CONNECTIVITY_CHECKS='+ (success?'PASS':'FAIL'));
+            if(!success) process.exitCode=1;
+          })().catch(e=>{console.error(String(e));process.exitCode=1;});
+          JS
+      - name: Package source for offline analysis (no environment files)
+        if: always()
+        run: |
+          git archive HEAD -o outputs/mobile-network/source.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-network-diagnostic
+          path: outputs/mobile-network/
+          retention-days: 7
