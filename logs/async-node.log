@@ -1,0 +1,10 @@
+PASS one POST, failed polls and failed result download never generate again
+PASS lost submission receipt recovered by known client job id, not another POST
+PASS refresh recovery uses only GET and retains no description or image
+PASS a pending prior job blocks a second paid request after refresh
+PASS capability never follows a changed backend address
+PASS expired or restarted job is not automatically submitted again
+PASS backend errors retain original HTTP code for existing error and PDF handling
+PASS health and non-generation traffic remain on the original transport
+PASS old backend rejection at new job endpoint never falls back to a long POST
+GENERATION JOB CLIENT: 9 passed, 0 failed

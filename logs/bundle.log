@@ -1,0 +1,125 @@
+
+== أ · THE REPORT EXISTS AND IS REGENERATED DETERMINISTICALLY ==
+  ✓ tools/bundle_report.py exists
+  ✓ the tool still declares itself measurement-only
+  ✓ the tool runs cleanly (twice)
+  ✓ two consecutive runs produce byte-identical output — the report is a usable baseline, not a moving target
+  ✓ the output carries no timestamp field (the usual source of false diffs)
+  ✓ the output embeds no absolute sandbox path
+  ✓ the tool writes tests/performance/bundle_report.json
+  ✓ the written file equals what the tool prints
+  ✓ the report declares itself deterministic
+  ✓ the report announces the post-split schema (acs.bundle/2)
+
+== ب · EVERY NUMBER MATCHES A FRESH INDEPENDENT MEASUREMENT ==
+  ✓ this test imports neither the tool it checks nor the shared app_source helper (otherwise it would be comparing them with themselves)
+  ✓ shell raw bytes match
+  ✓ shell raw bytes match os.path.getsize as a third witness
+  ✓ shell sha256 matches
+  ✓ shell line count matches
+  ✓ shell gzip size matches an independently computed gzip
+  ✓ gzip is a real reduction, so it was really computed (not copied from raw)
+  ✓ script element count matches (8)
+  ✓ external script count matches (7)
+
+  -- the CSP-relevant zeroes, measured not asserted --
+  ✓ ZERO executable inline scripts in the shell — this is what lets script-src drop 'unsafe-inline'
+  ✓ ZERO <style> blocks in the shell (independently counted)
+  ✓ ZERO style="…" attributes in the shell (independently counted)
+  ✓ exactly one inline element remains and it is the import map
+
+  -- the module tree --
+  ✓ first-party module count matches an independent walk (29)
+  ✓ total first-party JS bytes match (1944452)
+  ✓ the per-module list covers every module on disk, once each
+  ✓ the per-module byte counts sum to the declared total
+  ✓ the per-module list is sorted largest first
+  ✓ module core/standards.js                   228701 bytes matches getsize
+  ✓ module core/disciplines.js                 205018 bytes matches getsize
+  ✓ module ui/workspace-ui-wiring.js           203799 bytes matches getsize
+  ✓ module core/viewer.js                      198744 bytes matches getsize
+  ✓ module render/scene.js                     166057 bytes matches getsize
+  ✓ the largest module is the one an independent measurement finds (core/standards.js)
+  ✓ core initial JS matches the independently computed static closure (1450689 bytes in 17 modules)
+  ✓ boot scripts are counted separately and match (27894 bytes in 6 files)
+  ✓ core + boot equals the declared first-load JavaScript
+
+  -- lazy JS: reported honestly, not invented --
+  ✓ lazy first-party JS is reported as the real number (465869 bytes, 6 modules)
+  ✓ the declared lazy set and the set measured from the import graph are the same — a declaration without deferral, or deferral without a declaration, would show here
+  ✓ the report agrees with that independent comparison
+  ✓ lazy first-party JS is a real, non-zero saving and the note says IMPLEMENTED rather than claiming a split that never happened
+  ✓ the deferred bytes really left the first-load path: core + boot + lazy equals the whole first-party total, with nothing unaccounted for
+  ✓ every dynamic import() found is accounted for, and the first-party ones are exactly the calls that fetch the declared lazy layers
+
+  -- stylesheet and generated markers --
+  ✓ the stylesheet byte count matches getsize (59650)
+  ✓ the stylesheet gzip size matches an independent gzip
+  ✓ all 10 generated JS marker pairs survived the split into public/app/
+  ✓ all 6 generated CSS pairs are in the extracted stylesheet
+  ✓ all 6 generated DOM pairs stayed in the shell (independently counted)
+
+  -- brotli and vendored assets: null-with-reason, never estimated --
+  ✓ brotli is reported as a number if and only if a brotli module is importable; otherwise null WITH a reason
+  ✓ no estimated or rounded brotli number is smuggled in as a string
+  ✓ vendored asset sizes are reported as null with a reason while public/vendor is unpopulated
+  ✓ the vendor reason names the real cause and does not claim a measurement
+  ✓ the vendor reason no longer counts es-module-shims among the vendored assets — F-11 removed it from the page and from the build
+
+== ج · THE BUDGET IS DECLARED *AND* MET, BOTH COMPUTED ==
+  ✓ the shell budget is the declared 200 KB (204800)
+  ✓ a stricter preferred target of 150 KB (153600) is declared too
+  ✓ the shell is UNDER budget, measured independently (48777 ≤ 204800)
+  ✓ budget_met is TRUE and agrees with the independent measurement
+  ✓ the stricter preferred target is met too, and is reported separately
+  ✓ the stated headroom is arithmetically correct
+  ✓ the shell is at least 8× smaller than the pre-split page (1,863,894 B) — the split moved real bytes, not labels
+  ✓ the largest module is UNDER the 300 KB warning threshold (228701 ≤ 307200), measured independently
+  ✓ module_size_warnings is an array and is EMPTY today
+  ✓ the warning threshold is the declared 300 KB (307200)
+  ✓ the warnings array agrees with an independent scan of the tree
+
+== د · THE REPORT DOES NOT CLAIM A MODULARISATION THAT DID NOT HAPPEN ==
+  ✓ reality check: public/app/ exists and holds JavaScript modules
+  ✓ reality check: the shell really does load an external application module
+  ✓ reality check: no inline module of application code is left in the shell
+  ✓ reality check: every <script src> and the stylesheet resolve to a real file on disk
+
+  -- the anti-gaming assertion: a file count is not a split --
+  ✓ there are at least 15 first-party modules (today: 29)
+  ✓ NO single module holds more than 20% of total first-party JS — the largest, core/standards.js, holds 11.76% (228701 of 1944452 bytes)
+  ✓ the report itself states that share, and it matches the independent computation
+  ✓ the top three modules together are still a minority of first-party JS
+  ✓ the status names the measurement for what it is and does not claim the application was verified to run
+  ✓ the report never says 'performance improved'
+  ✓ the report never says 'faster load'
+  ✓ the report never says 'load time reduced'
+  ✓ the report never says 'lazy loading implemented'
+  ✓ the report never says 'code splitting implemented'
+  ✓ the report never says 'verified in production'
+  ✓ the report never says 'brotli measured'
+  ✓ the report warns it must not be read as evidence that the app works
+  ✓ the report lists what it does NOT measure
+  ✓ it names the runtime behaviour as NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED
+
+== هـ · THE COMPARISON WOULD ACTUALLY CATCH A WRONG NUMBER ==
+  ✓ the comparison passes the real report
+  ✓ the comparison rejects a shell size that is off by one byte
+  ✓ the comparison rejects a fabricated gzip size
+  ✓ the comparison rejects an inline executable script sneaking back into the shell
+  ✓ the comparison rejects a fabricated first-party total
+  ✓ the comparison rejects a module count that is really one big file plus scraps
+  ✓ the comparison rejects one module holding 90% of the code (a rename, not a split)
+  ✓ the comparison rejects a shell that has grown past the 200 KB budget
+  ✓ the comparison rejects budget_met asserted rather than computed
+  ✓ the comparison rejects invented lazy-loaded bytes
+  ✓ the comparison rejects a status that claims more than measurement
+
+────────────────────────────────────────────────────────────────────
+  shell 48777 B (gzip 13474 B, brotli None) · budget 204800 B · 23.8% used
+  first-party JS 1944452 B in 29 modules · core 1450689 B in 17 · boot 27894 B in 6 · lazy 465869 B
+  largest module public/app/core/standards.js — 228701 B = 11.76% of first-party JS (cap 20%, warn at 307200 B)
+  css 59650 B (gzip 14250 B) · module_size_warnings: 0
+  STATUS: F-09 IMPLEMENTED — MEASUREMENT ONLY
+────────────────────────────────────────────────────────────────────
+BUNDLE REPORT: 94 passed, 0 failed

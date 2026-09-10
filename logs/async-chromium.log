@@ -1,0 +1,3 @@
+PASS chromium mobile refresh restores the previous job through GET, exactly one generation
+PASS chromium offline/reconnect and interrupted result download do not duplicate generation
+PASS chromium no page errors

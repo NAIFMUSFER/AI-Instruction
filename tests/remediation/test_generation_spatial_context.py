@@ -252,5 +252,17 @@ class ResidentialQualityCompanionGates(unittest.TestCase):
         self._run(["node", "tests/remediation/test_residential_presentation.js"])
 
 
+class GenerationDeliveryCompanionGates(unittest.TestCase):
+    """Keep asynchronous delivery inside an existing mandatory generation gate."""
+
+    def test_async_delivery_contracts(self):
+        import subprocess
+        root = Path(__file__).resolve().parents[2]
+        for command in ([sys.executable, 'tests/remediation/test_async_generation_jobs.py'],
+                        ['node', 'tests/remediation/test_generation_jobs.js']):
+            run = subprocess.run(command, cwd=root, capture_output=True, text=True, timeout=90)
+            self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

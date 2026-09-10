@@ -35,7 +35,7 @@ COPY acs_visual.py acs_visual.json ./
 COPY acs_engineering_authority.py acs_engineering_changes.json ./
 # أمن الرفع (F-05/F-19)، الحدّ الموزّع (F-04)، إلغاء التوليد (F-06)
 # KI-14/F-46: مجمّع العمل الحاسوبيّ — بلا هذا الملفّ لا يقلع الخادم.
-COPY acs_upload_security.py acs_rate_limit.py acs_generation_job.py acs_cpu_pool.py ./
+COPY acs_upload_security.py acs_rate_limit.py acs_generation_job.py acs_cpu_pool.py acs_async_jobs.py ./
 # السجلّ المنظَّم (F-18) وأصل البناء (provenance)
 COPY acs_logging.py acs_build_info.py ./
 

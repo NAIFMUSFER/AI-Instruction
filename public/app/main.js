@@ -30,3 +30,5 @@ import './trust/wiring.js';
 import './ui/panels-entry.js';
 /* Residential visual-quality policy. It runs after the panel lazy-loader exists. */
 import './ui/residential-quality.js';
+/* Recover long generation through short authenticated job requests. */
+import './ui/generation-jobs.js';
