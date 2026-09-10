@@ -219,6 +219,7 @@ jobs:
           bash tools/ci_run.sh --log logs/chromium-browser.log \
                --label "browser suites (direct)" --runner "node" \
                    tests/remediation/test_transport_browser.js \
+                   tests/remediation/test_mobile_project_layout.js \
                    tests/remediation/test_gl_probe_contract.mjs \
                    tests/remediation/test_pdf_runtime.mjs \
                    tests/deploy/test_viewport_pixels.js \

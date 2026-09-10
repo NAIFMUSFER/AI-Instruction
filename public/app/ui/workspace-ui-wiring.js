@@ -1893,8 +1893,8 @@ document.getElementById('loadWarehouse').onclick=()=>{
 
 /* لوحة الجوال: زر إظهار/إخفاء */
 (function(){
-  const t=document.getElementById('panelToggle'), p=document.getElementById('left');
-  t.onclick=()=>{ p.classList.toggle('open'); t.textContent=p.classList.contains('open')?'✕':'☰'; };
+  const p=document.getElementById('left');
+  // The boot script owns mobile navigation, including its ARIA state.
   // أغلق اللوحة تلقائياً بعد التوليد على الجوال
   window.ACS=window.ACS||{};
   /* ===== تشخيص الواجهة ↔ الخادم — قراءة فقط، بلا أي نداء شبكة =====
@@ -2415,7 +2415,10 @@ document.getElementById('loadWarehouse').onclick=()=>{
     _coordOverlay.targets=[];
     if(_coordOverlay.marker&&window.__ACS_DEL_MARKER__) window.__ACS_DEL_MARKER__(_coordOverlay.marker);
     _coordOverlay.marker=null; _coordOverlay.active=null; }
-  window.ACS.closePanel=()=>{ if(innerWidth<=820){p.classList.remove('open');t.textContent='☰';} };
+  window.ACS.closePanel=()=>{ if(innerWidth<=820){
+    if(window.ACS.setProjectPanelOpen) window.ACS.setProjectPanelOpen(false);
+    else p.classList.remove('open');
+  } };
 })();
 
 /* حفظ رابط الخادم بين الجلسات */
