@@ -2159,10 +2159,12 @@ figures at once — fails until the block is regenerated. `--fix` regenerates it
 
 <!-- ACS:CURRENT-STATE:BEGIN — مولَّدة بـtools/check_doc_claims.py، لا تُحرَّر يدوياً -->
 
-### Current measured state
+### Current measured source state
 
 Generated from `tests/performance/bundle_report.json` and the files
-themselves. Every size figure that describes **today** lives here and
+themselves before build provenance stamping. Deployment-specific
+identity values are outside this source snapshot. Every size figure
+that describes **today** lives here and
 nowhere else; a number in the prose above is the record of its own pass
 and is not expected to track the present.
 
