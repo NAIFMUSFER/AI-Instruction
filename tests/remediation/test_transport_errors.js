@@ -1,6 +1,7 @@
 'use strict';
 const assert = require('assert/strict'), vm = require('vm');
-const {source} = require('./_transport_source.js');
+const fs = require('fs'), path = require('path');
+const {source, ROOT} = require('./_transport_source.js');
 const {T} = require('./_trust_core.js').load();
 let passed = 0;
 async function test(name, fn) { await fn(); passed++; console.log('PASS ' + name); }
@@ -16,6 +17,33 @@ function harness(fetcher, online = true) {
 }
 const reply = (body, status=200) => ({status, ok:status<400,
   headers:{get:k=>k==='X-Request-ID'?'req_test':''}, text:async()=>body});
+// Exercise the shipped generation handler with deferred responses. Rendering is
+// outside this test; no real request, credentials, or provider charge is used.
+function generationHarness() {
+  const src=fs.readFileSync(path.join(ROOT,'public/app/ui/workspace-ui-wiring.js'),'utf8');
+  const start=src.indexOf('async function acsGenerateFromServer(){');
+  const end=src.indexOf("\ndocument.getElementById('genLLM').onclick=",start);
+  const pillStart=src.indexOf('function srvPill(');
+  const pillEnd=src.indexOf('\nasync function checkServer(',pillStart);
+  assert.ok(start>=0 && end>start && pillStart>=0 && pillEnd>pillStart);
+  const pending=[], errors=[];
+  const elements={descText:{value:'One room on one floor'},siteW:{value:20},
+    siteD:{value:25},nFloors:{value:1},reportBox:{className:'report'},
+    srvPill:{className:'srv bad',innerHTML:'Previous NETWORK_ERROR'}};
+  const ctx={console:{error(){},warn(){}}, document:{getElementById:id=>elements[id]},
+    statusEl:{textContent:''}, SRV_OK:false, ACS_APPLY_SEQ:0,
+    ACS_NET:{SUCCESS:'SUCCESS',INVALID_JSON:'INVALID_JSON'},
+    ACS_FAIL:{API_HTTP_ERROR:'API_HTTP_ERROR',API_NETWORK_ERROR:'API_NETWORK_ERROR',
+      MODEL_VALIDATION_ERROR:'MODEL_VALIDATION_ERROR'},
+    esc:s=>String(s), acsFail(){}, showReport(){}, requestAnimationFrame(){},
+    __ACS_SHARED:{acsFetchJSON:()=>new Promise(resolve=>pending.push(resolve)),
+      acsErrorPanel:r=>errors.push(r),acsApplyErrorPanel:r=>errors.push(r)}};
+  ctx.acsApplyTicket=()=>++ctx.ACS_APPLY_SEQ;
+  ctx.acsApplyBuilding=(_building,opts)=>({ok:true,stale:opts.seq!==ctx.ACS_APPLY_SEQ});
+  vm.runInNewContext(src.slice(pillStart,pillEnd)+'\n'+src.slice(start,end),ctx);
+  return {ctx,pill:elements.srvPill,pending,errors,call:ctx.acsGenerateFromServer};
+}
+const networkFailure={status:'NETWORK_ERROR',message:'Unknown delivery status'};
 async function main() {
   for (const message of ['Load failed','Failed to fetch','NetworkError when attempting to fetch resource.']) {
     await test(message+' is UNKNOWN network cause, never DNS', async()=>{
@@ -80,6 +108,44 @@ async function main() {
       assert.equal(s.retry_safe,false); assert.ok(!/never reached|did not reach/.test(s.en));
     });
   }
+  await test('a new generation replaces the previous failure with pending status',async()=>{
+    const h=generationHarness(), first=h.call();
+    h.pending[0](networkFailure); await first;
+    assert.equal(h.pill.className,'srv bad');
+    const next=h.call();
+    assert.equal(h.pill.className,'srv');
+    assert.ok(!h.pill.innerHTML.includes('NETWORK_ERROR'));
+    assert.equal(h.ctx.SRV_OK,false,'pending is not proof of connectivity');
+    h.pending[1](networkFailure); await next;
+  });
+  await test('an older failure cannot replace a newer pending generation',async()=>{
+    const h=generationHarness(), first=h.call(), next=h.call();
+    const pendingText=h.ctx.statusEl.textContent;
+    h.pending[0](networkFailure); await first;
+    assert.equal(h.pill.className,'srv');
+    assert.equal(h.ctx.statusEl.textContent,pendingText);
+    assert.equal(h.errors.length,0);
+    h.pending[1](networkFailure); await next;
+    assert.equal(h.pill.className,'srv bad');
+    assert.equal(h.errors.length,1,'the current failure must still be displayed');
+  });
+  await test('an older failure cannot overwrite a newer successful server response',async()=>{
+    const h=generationHarness(), first=h.call(), next=h.call();
+    h.pending[1]({status:'SUCCESS',body:{building:{},report:{}}}); await next;
+    const currentText=h.ctx.statusEl.textContent;
+    assert.equal(h.pill.className,'srv ok');
+    h.pending[0](networkFailure); await first;
+    assert.equal(h.pill.className,'srv ok');
+    assert.equal(h.ctx.statusEl.textContent,currentText);
+    assert.equal(h.errors.length,0);
+  });
+  await test('a parsed server response without a model ends the pending indicator',async()=>{
+    const h=generationHarness(), request=h.call();
+    h.pending[0]({status:'SUCCESS',http:200,body:{}}); await request;
+    assert.equal(h.pill.className,'srv ok','the server responded, but the model is invalid');
+    assert.equal(h.errors[0].status,'INVALID_JSON');
+    assert.ok(h.ctx.statusEl.textContent.includes('غير مكتمل'));
+  });
   console.log(`TRANSPORT UNIT: ${passed} passed, 0 failed (Node, no browser or paid calls)`);
 }
 main().catch(e=>{console.error(e);console.error(`TRANSPORT UNIT: ${passed} passed, 1 failed`);process.exitCode=1;});

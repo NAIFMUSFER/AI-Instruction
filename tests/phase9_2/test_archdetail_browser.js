@@ -40,9 +40,9 @@ console.log('\n== §42/§47 — THE SHIPPED APPLICATION CODE ITSELF ==');
   const _pb='/* ===== ACS PBR BRIDGE (module scope) ===== */';
   chk('the archdetail bridge is present exactly once',
       APPSRC.countInApp(_bb)===1, APPSRC.countInApp(_bb));
-  chk('the archdetail bridge lives in the module main.js imports',
+  chk('the archdetail bridge lives in a module the browser loads',
       APPSRC.moduleCarrying(_bb)==='generated/arch-detail-bridge.js'
-      &&APPSRC.order().indexOf('generated/arch-detail-bridge.js')>=0);
+      &&APPSRC.fullOrder().indexOf('generated/arch-detail-bridge.js')>=0);
   chk('the PBR bridge of 9.1 is still present exactly once',
       APPSRC.countInApp(_pb)===1, APPSRC.countInApp(_pb));
   chk('the render loop dispatcher of 9.1 is untouched',

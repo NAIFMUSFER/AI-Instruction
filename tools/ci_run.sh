@@ -32,12 +32,14 @@ set -u
 LOG=""
 RUNNER=""
 LABEL="suite"
+CHECK_DOC_CLAIMS=0
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --log)    LOG="$2";    shift 2 ;;
     --runner) RUNNER="$2"; shift 2 ;;
     --label)  LABEL="$2";  shift 2 ;;
+    --check-doc-claims) CHECK_DOC_CLAIMS=1; shift ;;
     --)       shift; break ;;
     *)        break ;;
   esac
@@ -95,5 +97,17 @@ if [ "$failed" -ne 0 ]; then
   emit "::error::$failed target(s) in '$LABEL' failed — this job cannot pass"
   exit 1
 fi
+# F-53: run once, explicitly, in the Chromium job after both dependency sets
+# and browser assets are installed. Ordinary runner calls (including its own
+# contract tests) must keep their target-only exit semantics. Missing tooling
+# or an unmeasurable suite fails this gate; neither is silently skipped.
+if [ "$CHECK_DOC_CLAIMS" -eq 1 ]; then
+  emit "▶ verifying documented assertion counts against the suites themselves"
+  if ! python3 tools/check_doc_claims.py; then
+    emit "::error::documented assertion counts have drifted from the suites"
+    exit 1
+  fi
+fi
+
 emit "ci_run · $LABEL: every target passed"
 exit 0

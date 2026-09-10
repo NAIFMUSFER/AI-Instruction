@@ -48,6 +48,9 @@ OVERSIZE_ALLOWLIST = {}             # اسم الوحدة → سبب موثّق
 #   main.js       هو المستورِد نفسه
 #   shared-state.js  تستورده الوحدات لا نقطة الدخول
 NOT_IMPORTED_BY_MAIN = ("main.js", "shared-state.js")
+# مدخل اللوحات: الموضع الوحيد المسموح فيه بجلب وحدة مؤجَّلة (KI-12).
+LAZY_ENTRY = "ui/panels-entry.js"
+DYNAMIC_IMPORT_RE = r'''import\s*\(\s*['"]([^'"]+)['"]\s*\)'''
 
 PAIRS = [
     ('/* ===== ACS RUNTIME LAYER', '/* ===== END ACS RUNTIME LAYER ===== */'),
@@ -276,7 +279,44 @@ def check_app_tree(app_dir, modules, load_order):
                    if not f.startswith('boot/') and not f.startswith('styles/')
                    and f not in NOT_IMPORTED_BY_MAIN)
     declared = set(load_order)
-    for orphan in sorted(expected - declared):
+
+    # KI-12: وحدة مؤجَّلة ليست يتيمة — لكنّ الإعلان وحده لا يكفي. غرض هذا
+    # الحارس أن «وحدة لا يحمّلها أحد وزنٌ ميّت يمرّ من كل فحص آخر»، والغرض
+    # يبقى حرفياً: تُستثنى الوحدة فقط إن كانت مُعلَنة في tools/frontend_lazy.txt
+    # **و** يجلبها نداء import() فعليّ في مدخل اللوحات. إعلانٌ بلا نداء = وحدة
+    # لا يحمّلها أحد، ويُبلَّغ عنها كما كان قبل التأجيل تماماً.
+    lazy_declared, lazy_loaded = set(), set()
+    try:
+        lazy_declared = set(A.lazy_order())
+    except Exception as e:                       # noqa: BLE001 — يُبلَّغ لا يُبتلع
+        fails.append('tools/frontend_lazy.txt could not be read (%s) — the '
+                     'lazy set is unknown, so no module can be exempted' % e)
+    if lazy_declared:
+        entry_src = modules.get(LAZY_ENTRY, '')
+        if not entry_src:
+            fails.append('public/app/%s is missing, yet %d module(s) are '
+                         'declared lazy — nothing would ever fetch them'
+                         % (LAZY_ENTRY, len(lazy_declared)))
+        for spec in re.findall(DYNAMIC_IMPORT_RE, entry_src):
+            if not spec.startswith('.'):
+                continue
+            tgt = os.path.normpath(os.path.join(
+                os.path.dirname(LAZY_ENTRY), spec)).replace(os.sep, '/')
+            lazy_loaded.add(tgt)
+        for name in sorted(lazy_declared - lazy_loaded):
+            fails.append('public/app/%s is declared lazy in '
+                         'tools/frontend_lazy.txt but public/app/%s carries no '
+                         'import() for it — a module nothing loads is dead '
+                         'weight that still passes every other check'
+                         % (name, LAZY_ENTRY))
+        for name in sorted(lazy_loaded - lazy_declared):
+            fails.append('public/app/%s dynamically imports ./%s, which is not '
+                         'declared in tools/frontend_lazy.txt — every deferred '
+                         'module must be declared in one place'
+                         % (LAZY_ENTRY, name))
+
+    exempt = declared | (lazy_declared & lazy_loaded)
+    for orphan in sorted(expected - exempt):
         fails.append('public/app/%s exists but public/app/main.js never '
                      'imports it — a module nothing loads is dead weight that '
                      'still passes every other check' % orphan)

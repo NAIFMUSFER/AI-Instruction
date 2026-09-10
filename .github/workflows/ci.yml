@@ -79,7 +79,11 @@ jobs:
                    tests/phase9_2/test_backend_contract.py \
                    tests/phase9_2/test_black_viewport.py \
                    tests/phase9_2/test_generation_budget.py \
-                   tests/phase9_2/test_live_render.py
+                   tests/phase9_2/test_live_render.py \
+                   tests/remediation/test_validate_topology.py \
+                   tests/remediation/test_validate_against_real_models.py \
+                   tests/remediation/test_autofix_propose_boundary.py \
+                   tests/remediation/test_doc_claims.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -181,10 +185,21 @@ jobs:
         run: |
           npm ci
           npx playwright install --with-deps chromium
+      - name: Measure the source bundle before build provenance stamping
+        run: python3 tools/bundle_report.py
       - name: Vendor the frontend runtime libraries (three · shims · pdf.js)
         # public/vendor/ is git-ignored and populated at build time. Without it
         # the page cannot boot, so the browser suites would be meaningless.
         run: bash tools/netlify-build.sh
+      - name: Install pinned Python dependencies for documentation measurements
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Mobile project layout and measured documentation claims
+        run: |
+          mkdir -p logs
+          bash tools/ci_run.sh --log logs/mobile-project-layout.log \
+               --label "mobile layout and documentation" --check-doc-claims \
+               --runner "node" \
+               tests/remediation/test_mobile_project_layout.js
       - name: Browser suites against the shipped page
         shell: bash
         run: |
@@ -225,7 +240,8 @@ jobs:
                    tests/remediation/test_accessibility.js \
                    tests/remediation/csp_browser_probe.js || rc=1
           bash tools/ci_run.sh --log logs/chromium-browser.log \
-               --label "node-scope scene suites" --runner "node tests/lib/run.js" \
+               --label "node-scope scene suites" \
+               --runner "node tests/lib/run.js" \
                    tests/remediation/test_model_apply.js \
                    tests/remediation/test_scene_limits.js \
                    tests/remediation/test_alignment_diagnostics.js || rc=1

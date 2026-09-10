@@ -39,7 +39,8 @@
 <div id="engineWarn" role="alert" aria-live="assertive">تعذّر تحميل محرّك العرض ثلاثي الأبعاد — قد يكون أحد مزوّدي المكتبات (CDN) غير متاح.
   <button class="acs-u-01" id="engineWarnReload" type="button" aria-label="إعادة تحميل الصفحة — Reload the page" title="إعادة تحميل الصفحة / Reload the page">إعادة التحميل</button>
   <span class="acs-u-02">(المتصفحات القديمة جداً قد لا تدعم العرض ثلاثي الأبعاد.)</span></div>
-<button id="panelToggle" type="button" title="إظهار أو إخفاء لوحة المشروع / Show or hide the project panel" aria-label="إظهار أو إخفاء لوحة المشروع — Show or hide the project panel" aria-expanded="false" aria-controls="left"><span aria-hidden="true">☰</span></button>
+<button id="panelToggle" type="button" title="إظهار أو إخفاء لوحة المشروع / Show or hide the project panel" aria-label="إظهار أو إخفاء لوحة المشروع — Show or hide the project panel" aria-expanded="false" aria-controls="left"><span aria-hidden="true">☰</span><span class="mobile-label">المشروع</span></button>
+<button id="mobileToolsToggle" type="button" title="أدوات العرض والقياس / View and measurement tools" aria-label="أدوات العرض والقياس — View and measurement tools" aria-expanded="false" aria-controls="camBar"><span aria-hidden="true">◈</span><span>أدوات العرض</span></button>
 
 <!-- شاشة الدخول -->
 <div id="login">
@@ -57,8 +58,11 @@
 <!-- اللوحة -->
 <div class="acs-hidden" id="left">
   <header>
-    <h1>ACS — استوديو المشروع <span class="pill" id="who"></span></h1>
-    <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
+    <div class="project-heading">
+      <h1>ACS — استوديو المشروع <span class="pill" id="who"></span></h1>
+      <div class="sub">اكتب بيانات مبناك ثم «توليد» — يظهر النموذج فوراً.</div>
+    </div>
+    <button id="projectPanelClose" type="button" title="العودة إلى المبنى / Return to the building" aria-label="إغلاق لوحة المشروع والعودة إلى المبنى — Close the project panel and return to the building">✕</button>
   </header>
 
     <div class="tabs" role="tablist" aria-label="أقسام لوحة المشروع — Project panel sections">
@@ -72,6 +76,7 @@
     <div data-panel="make" id="acsPanelMake" role="tabpanel" aria-labelledby="acsTabMake" tabindex="0">
       <div class="note">اكتب وصف مبناك بلغتك، أو ارفع مخططاً — المحرّك يقرأ ويبني بنداً بنداً.</div>
 
+      <label class="description-label" for="descText">وصف المشروع</label>
       <textarea id="descText" aria-label="وصف المبنى بالكلمات — Describe the building in your own words" placeholder="مثال:
 عمارة سكنية 22×16 م، ٣ أدوار، شقتان بكل دور.
 غرفة معيشة 5×4، مطبخ 4×3، غرفة نوم رئيسية 4.5×4 بحمام خاص، غرفة نوم ثانية 4×3.5.
@@ -426,19 +431,20 @@
 </div>
 
 <div id="camBar" role="toolbar" aria-label="مناظير الكاميرا وأدوات القياس — Camera views and measurement tools">
-  <button type="button" data-view="orbit" class="on" aria-label="منظور مداري حول المبنى — Orbit view" title="منظور مداري حول المبنى / Orbit view" aria-pressed="true"><span aria-hidden="true">🔄</span></button>
-  <button type="button" data-view="arch"  aria-label="لقطة معمارية — Architectural view" title="لقطة معمارية / Architectural view" aria-pressed="false"><span aria-hidden="true">🏛️</span></button>
-  <button type="button" data-view="bird"  aria-label="عين الطائر — Bird’s-eye view" title="عين الطائر / Bird’s-eye view" aria-pressed="false"><span aria-hidden="true">🦅</span></button>
-  <button type="button" data-view="top"   aria-label="مسقط علوي — Top view" title="مسقط علوي / Top view" aria-pressed="false"><span aria-hidden="true">⬛</span></button>
-  <button type="button" data-view="tour"  aria-label="جولة تلقائية — Automatic tour" title="جولة تلقائية / Automatic tour" aria-pressed="false"><span aria-hidden="true">🎬</span></button>
-  <button type="button" data-view="walk"  aria-label="منظور شخصي — مشي — Walk-through view" title="منظور شخصي — مشي / Walk-through view" aria-pressed="false"><span aria-hidden="true">🚶</span></button>
+  <div class="cam-heading">العرض والقياس</div>
+  <button type="button" data-view="orbit" class="on" aria-label="منظور مداري حول المبنى — Orbit view" title="منظور مداري حول المبنى / Orbit view" aria-pressed="true"><span aria-hidden="true">🔄</span><span class="cam-label">تدوير</span></button>
+  <button type="button" data-view="arch"  aria-label="لقطة معمارية — Architectural view" title="لقطة معمارية / Architectural view" aria-pressed="false"><span aria-hidden="true">🏛️</span><span class="cam-label">منظور معماري</span></button>
+  <button type="button" data-view="bird"  aria-label="عين الطائر — Bird’s-eye view" title="عين الطائر / Bird’s-eye view" aria-pressed="false"><span aria-hidden="true">🦅</span><span class="cam-label">عين الطائر</span></button>
+  <button type="button" data-view="top"   aria-label="مسقط علوي — Top view" title="مسقط علوي / Top view" aria-pressed="false"><span aria-hidden="true">⬛</span><span class="cam-label">مسقط علوي</span></button>
+  <button type="button" data-view="tour"  aria-label="جولة تلقائية — Automatic tour" title="جولة تلقائية / Automatic tour" aria-pressed="false"><span aria-hidden="true">🎬</span><span class="cam-label">جولة تلقائية</span></button>
+  <button type="button" data-view="walk"  aria-label="منظور شخصي — مشي — Walk-through view" title="منظور شخصي — مشي / Walk-through view" aria-pressed="false"><span aria-hidden="true">🚶</span><span class="cam-label">مشي</span></button>
   <span class="sep" aria-hidden="true"></span>
-  <button type="button" data-tool="measure" aria-label="قياس مسافة — Measure distance" title="قياس مسافة / Measure distance" aria-pressed="false"><span aria-hidden="true">📏</span></button>
-  <button type="button" data-tool="area" aria-label="قياس مساحة — Measure area" title="قياس مساحة / Measure area" aria-pressed="false"><span aria-hidden="true">▱</span></button>
-  <button type="button" id="cbClip" aria-label="أدوات المقطع — Section tools" title="أدوات المقطع / Section tools" aria-pressed="false"><span aria-hidden="true">✂️</span></button>
+  <button type="button" data-tool="measure" aria-label="قياس مسافة — Measure distance" title="قياس مسافة / Measure distance" aria-pressed="false"><span aria-hidden="true">📏</span><span class="cam-label">قياس مسافة</span></button>
+  <button type="button" data-tool="area" aria-label="قياس مساحة — Measure area" title="قياس مساحة / Measure area" aria-pressed="false"><span aria-hidden="true">▱</span><span class="cam-label">قياس مساحة</span></button>
+  <button type="button" id="cbClip" aria-label="أدوات المقطع — Section tools" title="أدوات المقطع / Section tools" aria-pressed="false"><span aria-hidden="true">✂️</span><span class="cam-label">مقطع المبنى</span></button>
   <span class="sep" aria-hidden="true"></span>
-  <button type="button" id="cbNote" aria-label="وضع التحديد والتعليق — Select and comment mode" title="وضع التحديد والتعليق / Select and comment mode" aria-pressed="false"><span aria-hidden="true">✏️</span></button>
-  <button type="button" id="cbShot" aria-label="حفظ صورة من العرض — Save a snapshot of the view" title="حفظ صورة من العرض / Save a snapshot of the view" aria-pressed="false"><span aria-hidden="true">📷</span></button>
+  <button type="button" id="cbNote" aria-label="وضع التحديد والتعليق — Select and comment mode" title="وضع التحديد والتعليق / Select and comment mode" aria-pressed="false"><span aria-hidden="true">✏️</span><span class="cam-label">تعليق</span></button>
+  <button type="button" id="cbShot" aria-label="حفظ صورة من العرض — Save a snapshot of the view" title="حفظ صورة من العرض / Save a snapshot of the view" aria-pressed="false"><span aria-hidden="true">📷</span><span class="cam-label">حفظ صورة</span></button>
 </div>
 <div id="measHUD"></div>
 <div id="info"></div>

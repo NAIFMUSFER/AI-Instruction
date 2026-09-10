@@ -287,16 +287,41 @@ chk('lazy first-party JS is reported as the real number (%d bytes, %d modules)'
     and J['lazy_module_count'] == len(IND_LAZY),
     '%s/%s vs %s/%s' % (J['lazy_bytes'], J['lazy_module_count'],
                         sum(IND_MODULES[k] for k in IND_LAZY), len(IND_LAZY)))
-chk('there is no lazy first-party JS today and the report SAYS SO instead of '
-    'implying code-splitting that was never done',
-    J['lazy_bytes'] == 0 and J['lazy_module_count'] == 0
-    and 'NOT IMPLEMENTED' in J['lazy_note'],
+# KI-12: التأجيل صار حقيقياً. الشاهد المستقلّ يقرأ الإعلان من ملفّه ويقارنه
+# بما حسبه من الرسم بنفسه — لا يأخذ أياً منهما من الأداة.
+IND_DECLARED_LAZY = sorted(
+    ln.strip() for ln in io.open(
+        os.path.join(ROOT, 'tools', 'frontend_lazy.txt'), encoding='utf-8')
+    if ln.strip() and not ln.strip().startswith('#'))
+chk('the declared lazy set and the set measured from the import graph are the '
+    'same — a declaration without deferral, or deferral without a declaration, '
+    'would show here',
+    IND_DECLARED_LAZY == IND_LAZY,
+    '%s vs %s' % (IND_DECLARED_LAZY, IND_LAZY))
+chk('the report agrees with that independent comparison',
+    J.get('lazy_declaration_matches_graph') is True
+    and sorted(J.get('lazy_declared') or []) == ['public/app/' + k
+                                                  for k in IND_DECLARED_LAZY],
+    str(J.get('lazy_declared')))
+chk('lazy first-party JS is a real, non-zero saving and the note says '
+    'IMPLEMENTED rather than claiming a split that never happened',
+    J['lazy_bytes'] > 0 and J['lazy_module_count'] == len(IND_DECLARED_LAZY)
+    and 'IMPLEMENTED' in J['lazy_note']
+    and 'NOT IMPLEMENTED' not in J['lazy_note'],
     J['lazy_note'][:120])
-chk('every dynamic import() found is accounted for, and none of them is '
-    'first-party (so none of them defers first-party bytes)',
+chk('the deferred bytes really left the first-load path: core + boot + lazy '
+    'equals the whole first-party total, with nothing unaccounted for',
+    J['initial_javascript_bytes'] + J['lazy_bytes'] == IND_TOTAL_JS,
+    '%s + %s vs %s' % (J['initial_javascript_bytes'], J['lazy_bytes'],
+                       IND_TOTAL_JS))
+chk('every dynamic import() found is accounted for, and the first-party ones '
+    'are exactly the calls that fetch the declared lazy layers',
     J['dynamic_import_count'] == len(J['dynamic_imports'])
     and J['first_party_dynamic_import_count']
-    == len([d for d in J['dynamic_imports'] if d['first_party']]) == 0,
+    == len([d for d in J['dynamic_imports'] if d['first_party']])
+    and J['first_party_dynamic_import_count'] >= len(IND_DECLARED_LAZY)
+    and all(d['in_module'] == 'public/app/ui/panels-entry.js'
+            for d in J['dynamic_imports'] if d['first_party']),
     str(J['first_party_dynamic_import_count']))
 
 print('\n  -- stylesheet and generated markers --')

@@ -33,6 +33,22 @@ function order() {
   return out;
 }
 
+/* الوحدات المؤجَّلة (KI-12): مُعلَنة في tools/frontend_lazy.txt، لا يستوردها
+   main.js، وتُجلَب بـimport() من ui/panels-entry.js. تُقرأ من الملفّ المُعلَن
+   لا من قائمة هنا، فلا يتفرّع مصدران للحقيقة. */
+function lazyOrder() {
+  const txt = fs.readFileSync(path.join(ROOT, 'tools', 'frontend_lazy.txt'),
+                              'utf8');
+  return txt.split('\n').map(s => s.trim())
+    .filter(s => s && s[0] !== '#');
+}
+
+/* ترتيب التقييم الكامل: المشحون أوّلاً بترتيب main.js، ثم المؤجَّل بترتيبه
+   المُعلَن. أي حافّة استيراد صالحة تشير إلى الوراء في هذا الترتيب. */
+function fullOrder() {
+  return order().concat(lazyOrder());
+}
+
 /* الطبقات النقيّة: لا DOM ولا Three ولا window — تعمل في Node كما كانت تعمل
    حين استخرجها tests/phase3/lib/extract_browser_bundle.js من الصفحة. */
 const PURE = ['core/viewer.js', 'core/standards.js', 'core/disciplines.js'];
@@ -118,6 +134,7 @@ function nodeBundle(files) {
   return parts.join('\n\n');
 }
 
-module.exports = { ROOT, PUB, APP, PURE, REGISTRIES, order, shell, modules,
+module.exports = { ROOT, PUB, APP, PURE, REGISTRIES, order, lazyOrder,
+                   fullOrder, shell, modules,
                    appText, pageText, nodeBundle, registryPrelude,
                    stripModuleSyntax };

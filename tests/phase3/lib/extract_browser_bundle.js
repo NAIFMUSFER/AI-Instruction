@@ -48,13 +48,16 @@ const FULL = [
   'core/disciplines.js',
   'generated/runtime.js',
   'generated/authoring.js',
-  'generated/workspace-ui.js',
-  'generated/render-engine.js',
-  'generated/bim.js',
-  'generated/docs.js',
-  'generated/pbr.js',
-  'generated/arch-detail.js'
+  'generated/pbr.js'
 ];
+
+/* KI-12: الطبقات المؤجَّلة. نقيّة كسابقاتها وتدخل الحزمة كاملةً — لكن في
+   مؤخّرتها، لأن ترتيبها في التقييم الحقيقي بعد كل وحدة مشحونة (المتصفّح
+   يجلبها عند فتح لوحتها، لا قبله). جسر التفصيل المعماري ليس هنا: يلمس THREE،
+   شأنه شأن generated/pbr-bridge.js. المصدر واحد — tools/frontend_lazy.txt —
+   والترتيب مصفّى منه، فإضافة طبقة مؤجَّلة جديدة لا تحتاج تعديل هذا الملفّ. */
+const LAZY_FULL = APP.lazyOrder()
+  .filter(f => f.indexOf('-bridge.js') < 0);
 
 /* وحدة مختلطة: تبدأ بطبقة العرض البصري وطبقة التنسيق وكاشف نوع المبنى (نقيّ
    كلّه)، ثم تنتقل عند «المشهد والعرض» إلى renderer/scene/camera. */
@@ -191,7 +194,12 @@ const declared = new Set();
 const stats = [];
 
 const mods = APP.modules();
-const loadOrder = APP.order();
+/* KI-12: الحزمة تمثّل التطبيق **كاملاً** في نطاق Node واحد، لا مسار الإقلاع
+   وحده. الطبقات المؤجَّلة تُقيَّم في المتصفّح متى فُتحت لوحتها، فحذفها من هنا
+   يترك رموزها (ACS_ARCHDETAIL_SPEC وإخوتها) غير معرّفة في كل اختبار تكافؤ
+   يعتمد على الحزمة. الترتيب الكامل = المشحون ثم المؤجَّل، وهو ترتيب تقييم
+   صالح يقفله tests/remediation/test_module_graph.js §3. */
+const loadOrder = APP.fullOrder();
 
 /* سجلّا الأوراق يتصدّران الحزمة كما يتصدّران public/app/main.js: __ACS_SHARED
    (الأسماء التي تُكتب عبر حدود الوحدات) و __ACS_LATE (الإحالات الأمامية).
@@ -210,11 +218,12 @@ stats.push(APP.REGISTRIES.join(' + ') + ' — leaf registries');
 
 /* تحقّق: كل وحدة مُدرَجة موجودة، وترتيب الإدراج هو ترتيب التحميل الحقيقي */
 {
-  const listed = FULL.concat(PREFIX);
+  const listed = FULL.concat(PREFIX).concat(LAZY_FULL);
   const at = listed.map(f => {
     if (!mods[f]) throw new Error('module not found: public/app/' + f);
     const i = loadOrder.indexOf(f);
-    if (i < 0) throw new Error('module is not imported by public/app/main.js: ' + f);
+    if (i < 0) throw new Error('module is in neither the eager order nor the '
+                               + 'declared lazy set: ' + f);
     return i;
   });
   for (let i = 1; i < at.length; i++)
@@ -263,6 +272,16 @@ for (const f of PREFIX) {
   stats.push(f + ' — publishes ' + (pub.join(', ') || '(none)')
              + (skipped.length ? '; beyond the boundary: ' + skipped.join(', ')
                                : ''));
+}
+
+/* الطبقات المؤجَّلة كاملةً، بعد كل ما سبق — نفس معاملة FULL، وترتيبٌ يطابق
+   التقييم الحقيقي في المتصفّح. */
+for (const f of LAZY_FULL) {
+  const src = APP.stripModuleSyntax(mods[f], f);
+  topLevelNames(src).forEach(n => declared.add(n));
+  parts.push('/* ==== public/app/' + f + ' (whole module, lazily loaded in the '
+             + 'browser) ==== */\n' + src);
+  stats.push(f + ' — whole module (lazy)');
 }
 
 for (const f of Object.keys(PICK)) {

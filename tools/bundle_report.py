@@ -18,7 +18,7 @@
 ما لا يُقاس لا يُقدَّر:
   • brotli يُبلَّغ عنه فقط إذا كانت الوحدة مستوردة، وإلّا null مع سبب.
   • public/vendor فارغ في هذا الصندوق، فأحجام المكتبات null مع سبب.
-  • «الشيفرة المؤجَّلة» صفرٌ اليوم — يُقال صفراً صراحةً مع تعداد نداءات import()
+  • «الشيفرة المؤجَّلة» تُقاس من الرسم الفعلي لا من نيّة — مع تعداد نداءات import()
     الديناميكية التي وُجدت فعلاً وسببِ عدم احتسابها.
 
 الحتمية شرط: لا طابع زمني ولا مسار مطلق في المخرَج، وgzip يُضغط بـmtime=0.
@@ -219,6 +219,10 @@ def build():
     # إقلاع. اليوم لا توجد واحدة — يُقال صفراً، ولا يُتظاهَر بتقسيم كسول.
     lazy = sorted(k for k in modules
                   if k not in eager and not k.startswith("boot/"))
+    # المُعلَن في tools/frontend_lazy.txt مقابل المقيس من الرسم. تطابقهما ليس
+    # مفترضاً: إعلانٌ بلا تنفيذ، أو تأجيلٌ بلا إعلان، كلاهما يظهر هنا رقماً.
+    declared_lazy = A.lazy_order()
+    lazy_declared_matches = sorted(declared_lazy) == lazy
     dyn = dynamic_specifiers(modules)
     dyn_first_party = [d for d in dyn if d["first_party"]]
 
@@ -231,7 +235,8 @@ def build():
           "gzip_bytes": gzip_bytes(modules[k]),
           "group": (k.split("/")[0] if "/" in k else "(root)"),
           "loaded": ("boot-classic" if k.startswith("boot/")
-                     else "eager" if k in eager else "unreferenced"),
+                     else "eager" if k in eager
+                     else "lazy" if k in declared_lazy else "unreferenced"),
           "pct_of_first_party_js": round(
               100.0 * sizes[k] / first_party_total, 2)}
          for k in modules),
@@ -317,15 +322,21 @@ def build():
             "lazy_bytes": sum(sizes[k] for k in lazy),
             "lazy_module_count": len(lazy),
             "lazy_modules": ["public/app/" + k for k in lazy],
+            "lazy_declared": ["public/app/" + k for k in declared_lazy],
+            "lazy_declaration_matches_graph": lazy_declared_matches,
             "lazy_note": (
-                "ZERO first-party JavaScript is code-split behind a dynamic "
-                "import today, and that is reported as 0 rather than dressed "
-                "up. %d dynamic import() call(s) do exist in the modules, but "
-                "every one targets a vendored library specifier "
-                "(three/addons/*, /vendor/pdfjs@*) — %d of them are "
-                "first-party — so none defers first-party bytes. Route-level "
-                "or panel-level lazy loading of first-party code is NOT "
-                "IMPLEMENTED." % (len(dyn), len(dyn_first_party))),
+                "Panel-level lazy loading of first-party code is IMPLEMENTED. "
+                "%d module(s) totalling %d B are reached by no static import "
+                "from main.js; each is declared in tools/frontend_lazy.txt and "
+                "fetched by exactly one dynamic import() in "
+                "public/app/ui/panels-entry.js when its panel is first opened. "
+                "The measured set and the declared set %s. %d dynamic import() "
+                "call(s) exist in total, %d of them first-party; the rest "
+                "target vendored library specifiers (three/addons/*, "
+                "/vendor/pdfjs@*)."
+                % (len(lazy), sum(sizes[k] for k in lazy),
+                   "agree" if lazy_declared_matches else "DISAGREE",
+                   len(dyn), len(dyn_first_party))),
             "dynamic_imports": dyn,
             "dynamic_import_count": len(dyn),
             "first_party_dynamic_import_count": len(dyn_first_party),
@@ -432,8 +443,9 @@ def main():
           % (j["core_initial_bytes"], j["core_initial_module_count"],
              j["boot_bytes"], j["boot_script_count"],
              j["initial_javascript_bytes"]))
-    print("  lazy first-party JS : %d B in %d modules — honestly zero"
-          % (j["lazy_bytes"], j["lazy_module_count"]))
+    print("  lazy first-party JS : %d B in %d modules — declaration %s graph"
+          % (j["lazy_bytes"], j["lazy_module_count"],
+             "matches" if j["lazy_declaration_matches_graph"] else "DISAGREES WITH"))
     print("  css                 : %d B raw, %d B gzip"
           % (rep["css"]["raw_bytes"], rep["css"]["gzip_bytes"]))
     print("  largest module      : %s — %d B (%.2f%% of first-party JS)"

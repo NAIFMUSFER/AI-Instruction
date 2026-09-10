@@ -11,6 +11,9 @@
 > |---|---|---|
 > | | **KI-15 … KI-21** | **KI-13, KI-14** |
 >
+> *(Both of the two opened here were closed later: KI-13 by F-30, KI-14 by F-46.
+> Read this table as the record of that pass, not as current status.)*
+>
 > Full text of KI-13 … KI-21 is at the bottom of this file; each carries the
 > measurement that proves it, not an inspection note.
 
@@ -49,7 +52,7 @@
 > with chunk size derived from the budget and **re-derived from measured
 > output**; a chunk that reaches its ceiling is halved rather than re-sent or
 > given a bigger ceiling, and no stage ceiling was raised. See **KI-24**, pinned
-> by `tests/remediation/test_plan_chunking.py` (59 assertions against a provider
+> by tests/remediation/test_plan_chunking.py (72 assertions against a provider
 > double that enforces `max_tokens`). `LIVE LARGE GENERATION: NOT VERIFIED —
 > EXTERNAL ENVIRONMENT REQUIRED`. **KI-14 remains OPEN and untouched.**
 
@@ -63,7 +66,7 @@
 
 > **CSP remediation pass (F-30).** **KI-13 is now CLOSED** and **KI-22** was
 > found and closed with it. Both are proved by
-> `tests/remediation/test_csp_style_architecture.js` — 61 assertions in real
+> tests/remediation/test_csp_style_architecture.js — 64 assertions in real
 > Chromium under the production policy read from `netlify.toml` and served as a
 > genuine response header: zero style violations across boot, login, model load,
 > the workspace, all five panels and a composed A3 documentation sheet, with the
@@ -183,7 +186,7 @@ unchanged. The pre-change baseline is archived at
 confinement is re-proved on every run by
 `tests/remediation/test_webgl_diagnostics.js` §11.
 
-**Regression:** `tests/remediation/test_plate_extent.py` (158 assertions) over
+**Regression:** tests/remediation/test_plate_extent.py (159 assertions) over
 six fixtures in `tests/remediation/fixtures/plate/`.
 
 </details>
@@ -427,7 +430,7 @@ tested, because there is no vendored tree here.
    a class). Fixed; measured `none` before login and `flex` after.
 
 
-## KI-12 · Optional feature panels are not lazy-loaded (OPEN — performance only)
+## KI-12 · Optional feature panels are not lazy-loaded (**CLOSED** — F-50)
 
 `tests/performance/bundle_report.json` records `lazy_bytes: 0`. The BIM, Documentation,
 PBR and Architectural-Detail layers (≈ 361 KB together) are imported eagerly by
@@ -440,6 +443,196 @@ registration behind it — a behavioural change that must be proven not to alter
 no security or correctness consequence, and it was deliberately not attempted in the same
 pass as the split: mixing a mechanical, parser-verified refactor with a behavioural one
 would have made both unreviewable.
+
+### Closed by F-50 — measured, not asserted
+
+**What changed.** Six modules left `public/app/main.js` and are now fetched by
+`import()` from `public/app/ui/panels-entry.js` the first time their panel is
+opened: `generated/workspace-ui.js`, `generated/render-engine.js`,
+`generated/bim.js`, `generated/docs.js`, `generated/arch-detail.js` and
+`generated/arch-detail-bridge.js`. The set is declared in one place —
+`tools/frontend_lazy.txt` — with the reason each module qualifies.
+
+**Not one line inside those modules changed.** The paragraph above worried that
+deferring them means "giving each an explicit `init()` and deferring the
+`window.ACS` registration behind it — a behavioural change". That turned out to
+be unnecessary, and the reason is in `public/app/ui/panels-entry.js` itself:
+since F-27 the only reader of those layers is `panelOf(ns)`, which resolves
+`window.ACS[ns].panel` **at click time**, inside a function. An ES module that
+has not been fetched has simply not registered yet — which is the state the entry
+already handles (`'طبقة … غير محمّلة.'`). So the deferral needed a fetch in front
+of the existing call path, and nothing else. Registration order, the
+`window.ACS` surface and the render loop are untouched.
+
+| | before | after |
+|---|---|---|
+| first-load first-party JS | 1,893,963 B | **1,431,069 B** |
+| deferred first-party JS | 0 B in 0 modules | **465,869 B in 6 modules** |
+| share of first-party JS deferred | 0 % | **24.3 %** |
+
+`generated/render-engine.js` (100 KB) joined the set in a second pass, once the
+first four proved the pattern. It qualifies on the same evidence: nothing but
+`main.js` imported it, it registers only `window.ACS.render`, it neither reads
+nor publishes a `__ACS_LATE` name, and its own imports reach no further than
+`core/standards.js` and `core/viewer.js`. Its panel is reached through exactly
+the same click path as the others.
+
+`generated/workspace-ui.js` (104 KB) followed in a third pass, and the way it
+was unblocked is the more useful part of this entry.
+
+It qualified on the import graph immediately — nothing outside `main.js` imports
+it, and the one apparent runtime reader of `window.ACS.workspace`,
+`generated/pbr-bridge.js:329`, turns out to be dead code:
+`const mh = (window.ACS && window.ACS.workspace && window.ACS.workspace.project)
+? null : null` — null on both branches, so the layer's absence has no effect at
+all. What blocked it was a different contract: `openWorkspace()` checked for the
+layer **first** and the model second, and its no-model rejection is asserted
+synchronously by `tests/remediation/test_panel_entry.js` — click, then read
+`#acsPanelsState` in the same tick. Once the layer is deferred it is always
+absent on the first click, so that rejection would have become asynchronous.
+
+The fix was to reorder the check, not to weaken the assertion. The rejection
+never needed the layer: `currentProject()` reads `window.ACS.exportModel` (from
+`ui/workspace-ui-wiring.js`) and `window.ACS.createProject` (from
+`generated/authoring.js`), both eager. Checking the model **before** fetching
+keeps the no-model path synchronous byte for byte, and is a real saving in its
+own right — a click with no model no longer pulls 104 KB in order to refuse.
+A new assertion pins exactly that: after the no-model click,
+`window.ACS.lazyLayers()` must still report the workspace layer as unrequested.
+
+**The deferral also exposed a stale invariant in §5, and a mistake of mine in
+its wording.** §5 requires a module reading a `__ACS_LATE` name to be evaluated
+*strictly earlier* than that name's owner — the registry exists for forward
+references, so where the owner is already evaluated a static import belongs
+instead. `generated/workspace-ui.js` reads `compileCoordination` and
+`compileVisualScene`, owned by `render/scene.js`, and used to sit before it;
+deferring moved it after, and §5 failed. The name is now published *earlier*
+than the reader rather than later, which is strictly safer, not less safe — and
+editing a generated module's imports is forbidden by its own header. §5 now
+states both legitimate cases: an eager reader must precede its owner, and a
+declared lazy reader may read any name owned by an **eager** module, because it
+is fetched long after every eager module has published. A lazy module reading a
+name owned by another lazy module has no such guarantee and is still reported —
+verified by mutation (three failures). While fixing this I also corrected the
+assertion's message text, which an earlier pass of mine had inverted to say
+"strictly earlier" where the code requires the owner to be later; the code was
+right and the sentence describing it was wrong.
+
+**Why `generated/pbr.js` is NOT in that set**, though it has a panel like the
+others: it is not a panel layer. `generated/pbr-bridge.js` imports twenty
+symbols from it, `ui/workspace-ui-wiring.js` imports that bridge, and
+`core/viewer.js` reads `__ACS_LATE.pqPlateRect` and `__ACS_LATE.pqRackBlock`,
+which `pbr.js` publishes as it finishes evaluating — both on the floor-plate and
+rack drawing path. Deferring it leaves that registry empty until the quality
+panel happens to be opened, and storeys render without slabs. The reasoning is
+recorded in `tools/frontend_lazy.txt` so the next person does not have to
+rediscover it.
+
+**Proof, in three independent places.**
+
+* `tests/remediation/test_module_graph.js` — 43 assertions, up from 38. §1 now
+  requires every module to be *either* imported once by `main.js` *or* declared
+  lazy, and the two sets to be disjoint. §3 adds the property that makes the
+  deferral real: **no eager module may statically import a declared lazy
+  module** — one such edge would pull it back into the boot closure silently
+  while every other test still passed. §6 is new: the parser (not a regex)
+  confirms each lazy module is the target of exactly one dynamic `import()`,
+  that every specifier is a static string, and that `panels-entry.js` is the
+  only module that fetches one.
+* `tests/remediation/test_bundle_report.py` — 94 assertions. An independent
+  witness recomputes the static closure from `main.js`, reads
+  `tools/frontend_lazy.txt` itself, and fails if the declared set and the
+  measured set disagree in either direction. It also checks
+  `core + boot + lazy == total`, so deferred bytes cannot simply go missing.
+* tests/remediation/test_panel_entry.js — 37 assertions, up from 29, in real
+  Chromium. It records panel state **immediately** after the click and again
+  after the fetch settles. The eager panels (`rvPanel`, `pqPanel`, the
+  workspace) must open in the same tick as before — the deferral is not allowed
+  to slow down what was not deferred — while `bxPanel` and `dcPanel` must be
+  *closed* in the first snapshot and *open* in the second. That pair of
+  assertions is what distinguishes real deferral from a renamed eager import.
+  34 assertions after the render layer joined the deferred set: `rvPanel` moved
+  from the synchronous group to the fetched group, and the count of layers that
+  must be absent before any click rose from three to four.
+
+**One regression was found and fixed during the change, not after it.** The
+first implementation made `openGenerated` `async` outright, which pushed *every*
+panel — including the two that were never deferred — one microtask past the
+click. `test_panel_entry.js` caught it (29 → 24 passing). The entry now opens
+synchronously whenever the layer is already present and only returns a promise
+when a fetch is genuinely required.
+
+**Also updated:** `tests/phase3/lib/extract_browser_bundle.js` builds the
+single-scope Node bundle from the *full* evaluation order (eager, then lazy),
+not from `main.js` alone. Without that, `ACS_ARCHDETAIL_SPEC` and its siblings
+vanish from the bundle and every parity suite that depends on it fails —
+`tests/phase9_2/test_parity.js` and `tests/remediation/test_bundle_extractor.js`
+both caught this immediately.
+
+### Two deployment gates F-50 had to teach, not bypass
+
+Neither was caught by any test suite. Both were caught by running the actual
+Netlify build script's gates against the patched tree, which is the only place
+they run:
+
+**`tools/check_index_guard.py` would have failed the build.** Its orphan rule
+is *"a module `main.js` never imports is dead weight that still passes every
+other check"* — and after F-50 four modules matched that description exactly.
+`bash tools/netlify-build.sh` calls it with `|| exit 1`, so the frontend would
+simply have stopped deploying, with the last good publish left in place and a
+red build. The guard now exempts a module only when it is **both** declared in
+`tools/frontend_lazy.txt` **and** the target of a real `import()` in
+`ui/panels-entry.js`. Declared-but-never-fetched is still dead weight and is
+still reported, and a module fetched but not declared is reported too, so the
+declaration cannot drift from the code. Verified by mutation: removing the
+`import()` while leaving the declaration fails; adding an undeclared module
+fails; a genuine orphan file fails; the sound tree passes. The guard is
+stricter after this change than before it.
+
+**`tests/deploy/verify_deploy.py` failed on two assertions.** One requires each
+generated marker pair to live in "a file the browser actually evaluates"; the
+other requires the import graph to be closed with no orphan. Both read
+`AS.order()` — `main.js` alone. "Evaluated by the browser" is now two sets, not
+one: evaluated at boot, and evaluated when its panel opens. Both are evaluated;
+only *when* differs. A module in neither set is never evaluated at all, and that
+is what both assertions still catch. 605 assertions, 0 failures.
+
+`tests/deploy/verify_backend_live.py` reports HTTP 403 in this sandbox: the
+egress proxy does not allow `onrender.com`. That is the environment, not the
+service — the live service was checked directly through the Render API instead
+(see below).
+
+### The live service, measured
+
+`acs-engine` (`srv-d9qtsv3m8hqs73967680`, Oregon, starter, Docker) is **live**
+on commit `9e3e472` — PR #8, deployed 6 September. Over the six hours measured:
+
+| | |
+|---|---|
+| memory | 124.7 MB of 512 MB — 23 %, flat to the kilobyte |
+| CPU | 0.0016 of 0.5 — **0.3 %** |
+| instances | 1, constant |
+| HTTP requests | **0** |
+
+`autoDeploy` is `yes` on `main`, triggered by commit: merging F-50/F-51 to
+`main` deploys the backend automatically, and Netlify rebuilds the frontend from
+the same branch. That is precisely why both gates above had to be fixed before
+the merge rather than after it.
+
+**This measurement retires a planned work item.** `ACS_SINGLE_INSTANCE=1` was
+listed as a scaling ceiling worth removing. At 0.3 % CPU and zero traffic it is
+not a ceiling; it is an accurate description of what the service needs. The
+Redis limiter is *already implemented and tested* in `acs_rate_limit.py`
+(distributed backend, atomic counters, `test_rate_limit.py` exercising both
+backends), and `render.yaml` already documents the two variables that switch it
+on. The single missing piece is the `redis` package, which is in neither
+`requirements.in` nor `requirements.lock`, so selecting the backend today raises
+at startup by design rather than falling back silently. Adding a hash-pinned
+dependency to the production image for a path with no measured demand is cost
+without benefit. The work is a one-package change on the day traffic makes it
+real, and this paragraph is here so that day starts from measurement rather than
+from a stale TODO.
+
 
 ---
 
@@ -625,7 +818,9 @@ in `public/app/ui/panels-entry.js`. **Proof:**
 `Escape` closes it, and only then opens the remaining five panels — the same
 sequence a user performs.
 
-## KI-14 · Upload validation and layout run on the asyncio event loop (OPEN — architectural)
+## KI-14 · Upload validation and layout run on the asyncio event loop (**CLOSED** — F-46 · see the final hardening pass below)
+
+> **Status note.** This entry is the *original* KI-14 report, kept verbatim for the record. It was written while the item was open and its heading said so, which left this file asserting OPEN here and CLOSED at the F-46 entry further down — two contradictory answers to the same question in one document. The heading is corrected; the body below is unchanged, and the measurement that closes it (event-loop stall 1591 ms → 17.9 ms) is under *KI-14 · … (**CLOSED** — F-46)* in the final hardening pass.
 
 **Where:** `acs_understand_api.py` — `UPLOAD.validate_images`,
 `UPLOAD.validate_pdf`, the two `json.dumps` + `validate_json_bytes` calls on
@@ -804,7 +999,8 @@ page and has never run (`NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED`).
 six-button launcher group in the shell wired with `addEventListener` only, and
 `window.ACS.exportModel()` exposed from `ui/workspace-ui-wiring.js` so the
 panels can be handed the active model. *Proof:*
-`tests/remediation/test_panel_entry.js` — 29 assertions in real Chromium under
+`tests/remediation/test_panel_entry.js` — 29 assertions as of F-27, in real
+Chromium under
 the production CSP: all six panels actually acquire `.on`, `init()` really wires
 the ten workspace-toolbar buttons, clicking with no model explains what is
 missing instead of opening an empty panel, and a negative control asserts no
@@ -1662,3 +1858,333 @@ no DeepSeek key here and PyPI is blocked, so the real SDK cannot be installed.
 What is proven is resolution, endpoint targeting, classification, the fallback
 bound and secret isolation — measured against a double carrying the real
 v0.40.0 signature that records what the client was built with.
+
+---
+
+# F-51 — the validator could not see anything vertical or topological
+
+## KI-26 · `acs_validate` graded every floor template in isolation (**CLOSED** — F-51)
+
+**Where:** `acs_validate.validate_building` iterated `b["floors"]` template by
+template and **never read `b["levels"]` at all**. Everything it knew about a
+building was one floor plate at a time.
+
+**Consequence — measured, not suspected.** An independent review of an ACS
+output for a three-storey chalet on a 20×25 plot found **22 problems while the
+validator reported 0**. The two most serious — a stair/lift core that did not
+line up between storeys, and spaces with no way in — were not missed by
+accident. They were *structurally invisible*: no amount of care inside a
+single-template loop can see a core drift between two templates, or trace a door
+graph, because neither fact exists inside one template.
+
+Worse than a silent miss: `acs_understand` calls `validate_building` at **five**
+sites, and its repair loop treats an empty issue list as "the model is fine".
+A clean bill of health from a validator that cannot see the defect is stronger
+than no validator, because it ends the repair loop.
+
+**Closed by F-51.** The scope is unchanged — **geometry and topology only**.
+Not one regulatory threshold, required quantity or code citation enters from
+here; those remain `NOT_EVALUATED` review tasks owned by
+`acs_engineering_authority`, and `tests/remediation/test_rule_source_boundary.py`
+still passes untouched. What was added:
+
+*Vertical — impossible before because `levels` was never read:*
+
+1. A level pointing at a template that is not defined in `floors`.
+2. A template defined that no level references.
+3. A duplicate level `index`.
+4. **Vertical core alignment.** Rooms whose id or role marks a stair, lift,
+   shaft, riser or light-well are grouped across templates by a canonical key
+   (`stair_1`, `STAIR_1`, `stair_1_l2` → one core) and their footprints
+   compared. The tolerance is 0.10 m — wide enough that a 2 cm representational
+   drift is not an error, narrow enough that the 0.90 m drift in the reported
+   defect is. The issue text carries the measured offset, not an adjective.
+5. **Structural support.** A room on an upper level whose footprint sits less
+   than half over any room on the level below is reported as suspended.
+   Outdoor ids (terrace, balcony) are exempt: a cantilever is a design, not a
+   defect.
+
+*Topological — impossible before because no door graph was ever built:*
+
+6. **Reachability.** Entrances are identified (a door on the plot boundary, a
+   loading dock, an open operational zone), rooms are linked by shared walls of
+   at least 0.60 m, and a breadth-first search reports rooms that have doors yet
+   sit in a component no entrance reaches. **If no entrance can be identified at
+   all, the check is skipped rather than reported** — absence of evidence is not
+   evidence of isolation.
+7. A door on an interior edge with no neighbouring room across it and no plot
+   boundary under it — a door onto open air.
+8. A window on an interior wall, named with the room on the other side of it.
+9. Two openings overlapping on the same edge.
+
+*Input integrity:*
+
+10. A non-finite or non-numeric coordinate — reported, never raised.
+11. A non-positive extent.
+12. A room id duplicated inside one template.
+
+**The property that matters as much as the detections: no false positives.**
+A validator that shouts at a sound model is switched off within a week, which
+makes it worse than none. Every check in
+`tests/remediation/test_validate_topology.py` is therefore asserted twice — a
+broken model that must be caught, and the sound model beside it that must pass
+in silence. §0 asserts the clean two-storey fixture produces **zero** issues of
+any kind, so every later assertion is a real detection and not noise.
+
+### The checks were then run against 165 real models, and three of them were wrong
+
+`test_validate_topology.py` grades the logic on models **built to fail**, which
+is necessary and not sufficient: a model made to be caught is always caught. It
+cannot answer the question that decides whether a validator survives contact
+with users — *how often does it shout at a sound model?* A validator that
+shouts is switched off within a week, which makes it worse than none.
+
+So every building model in the repository was fed through it: **165 models**
+across the phase fixtures, including live generated outputs. The first run
+produced **108 reports from the new checks**. Each was examined. The
+overwhelming majority were defects in the *checks*, not in the models:
+
+| check | first run | verdict | action |
+|---|---|---|---|
+| door opens onto nothing | 33 reports | **all false** | **check removed** |
+| room is unsupported | 48 reports, 24 models | **all false** | 60 % coverage guard added |
+| window on an internal wall | 22 reports | **21 false** | edge convention corrected |
+
+*Door onto nothing* assumed every space is modelled as a room. In a live
+generated warehouse the rooms occupy 86 % of their bounding box and the
+remaining 14 % is aisle and envelope that is deliberately not modelled as
+rooms — so the door opens onto a real corridor. The signal it was thought to
+carry ("this space is isolated") is carried by the reachability check without
+that assumption: **one report in 165 models**. The check was deleted, and
+`test_validate_topology.py` now asserts it has not come back.
+
+*Unsupported room* assumed each template is a complete floor plate. Many models
+represent a partial lower storey — the hotel fixture has a 60 m² ground under a
+110 m² typical floor. Below 60 % coverage nothing distinguishes "partial model"
+from "intentional cantilever" from "defect", and silence is more honest than
+picking one. Above it, the genuine case still reports.
+
+*Window on an internal wall* was the most instructive. `_edge_neighbours`
+accepted a neighbour on **either** side of the room, hedging against an edge
+convention assumed to be undeclared. It is declared — `acs_bim.py` line 330
+defines `N` at `z`, `S` at `z+d`, `W` at `x`, `E` at `x+w`, and it is the only
+authority in the system. The hedge reported windows on genuine exterior
+façades because some room happened to touch the *opposite* wall. Reading the
+convention instead of guessing at it removed 21 of the 22 reports and cost no
+real detection.
+
+**After the three corrections: 6 reports across 6 of 165 models — 4 %.** Each
+of the six was checked by hand and each is a correct detection: four templates
+that no level references (one fixture is literally named `spare_template`), one
+window between a majlis and a guest room in a fixture named `windowed`, and one
+isolated space in a fixture deliberately built with a room 1e+21 m wide.
+
+`tests/remediation/test_validate_against_real_models.py` pins that ceiling — 8
+assertions that re-run the whole corpus, fail if the flagged-model count rises,
+fail if any single check starts to dominate the remainder (the exact signature
+of the three bugs above), fail if the retired door check returns, and fail if
+the corpus goes silent or the validator raises on any real model. A validator
+that raises would be worse than a noisy one: `acs_understand` calls it at five
+sites inside the repair loop.
+
+**Proof:** `tests/remediation/test_validate_topology.py` — 28 assertions across
+seven sections: no-false-positives, vertical integrity, topology, malformed
+input, bounded output (no single check may emit more than `PER_CHECK_CAP`
+issues), determinism and non-mutation of the caller's model, and §7, which fails
+if the words «الكود», `SBC`, `IBC`, `NFPA`, `compliant` or their siblings appear
+in any issue text — the boundary, enforced rather than promised.
+
+---
+
+# F-52 — the default repair entry point documented a contract it does not keep
+
+## KI-27 · `acs_layout.autofix` in PROPOSE mode writes to the caller's model (**CLOSED** — F-52)
+
+**Found by** running the same corpus sweep that corrected three of F-51's own
+checks — 165 real building models — against every module entry point that takes
+a model. Nothing crashed: `acs_bim.opening_identity_issues`,
+`acs_layout.autofix`, `acs_visual.compile_visual_scene` and
+`acs_validate.validate_building` each ran all 165 without a single exception,
+and applying `autofix` in APPLY mode improved the validator's issue count on 147
+models, left 18 unchanged and **made none worse**, deterministically.
+
+The defect was in the prose. `acs_layout.autofix` defaults to
+`AUTHORITY_PROPOSE`, and its docstring said:
+
+> «لا يُكتَب حرف في النموذج الهندسي. يُحسَب ما كان سيتغيّر على نسخة.»
+
+It writes to **108 of the 165**.
+
+**The implementation is not at fault.** `autofix` calls
+`acs_engineering_authority.plan`, whose own contract states plainly that
+SAFE_NORMALIZATION is applied *to the object passed in* — deliberately, so that
+the reference hash is the hash of the canonical model rather than of something
+before it, which is what makes `unchanged` mean literally unchanged.
+`plan_with_model`'s W1-B note documents the consequence when that computation
+moved into a separate worker. `plan`'s docstring was accurate; `autofix`'s was
+not, and the two contradicted each other **on the default entry point** — the
+worst place for it, because a caller reading there believes their model is
+untouched and is wrong two times in three.
+
+**What is actually written, measured across the whole corpus:**
+
+| field | models | what happens |
+|---|---|---|
+| `wall_t` | 106 | missing system value filled from the declared default |
+| `meta.acs_provenance` | 93 | the record of which value came from where |
+| `meta` | 15 | the provenance container itself created |
+| `floor_height` | 12 | missing system value filled |
+| `wall_h` | 2 | missing system value filled |
+| `rect` | 2 | **rounded to two decimals** — `24.90548817…` → `24.91` |
+
+Nothing else. No wall is moved, no id changed, no opening added. The two `rect`
+cases are both in a deliberately adversarial fixture (a room 1e+21 m wide, a
+room 5e-07 m deep) and are rounding, not relocation.
+
+**Closed by correcting the docstring and, more importantly, by turning the
+promise into an enforced bound.**
+`tests/remediation/test_autofix_propose_boundary.py` re-runs PROPOSE mode over
+the entire corpus and fails if it touches any field outside that measured set,
+if any `rect` coordinate moves by more than 0.005 m rather than being rounded,
+if the length of any list changes, or if the docstring drifts back — the old
+sentence may remain quoted inside the correction note, but the test fails if it
+ever appears again as a live claim. Verified by mutation: making PROPOSE shift
+every room 0.5 m fails `test_rect_is_only_ever_rounded_never_moved`
+immediately.
+
+**This is the fourth instance of one pattern in this repository**, after KI-13
+(a test still narrating an issue as «قائم» a full fix after it closed), KI-14
+(OPEN in one heading and CLOSED in another, in the same file) and KI-12 (an
+entry describing a refactor as behaviourally risky that turned out to need no
+behavioural change at all). The code here is held to an unusually high standard
+and is corrected continuously by its tests. The prose describing it is held to
+nothing. Every instance found so far has been closed by giving the sentence a
+test rather than by rewriting the sentence alone.
+
+---
+
+# F-53 — the prose is now held to the same standard as the code
+
+## KI-28 · Documented assertion counts drift silently (**CLOSED** — F-53)
+
+Four separate defects in this repository have now been of one kind: a sentence
+describing a state that had ended — KI-12, KI-13, KI-14, KI-27. Each was closed
+by giving the sentence a test rather than by rewriting it. F-53 generalises that
+to the one class of documentation claim that is measurable without ambiguity:
+*"suite X has N assertions."*
+
+**Why that class.** It decays silently and fast. The first run of
+`tools/check_doc_claims.py` found **5 of 11 claims already stale**:
+
+| suite | documented | actual |
+|---|---|---|
+| `test_csp_style_architecture.js` | 61 | **64** |
+| `test_panel_entry.js` | 33 | **37** |
+| `test_plan_chunking.py` | 59 | **72** |
+| `test_plate_extent.py` | 158 | **159** |
+| `test_multi_provider.py` | 111 | 111 ✓ |
+
+Nobody wrote a wrong number. Every one was correct the day it was written, and
+then an assertion was added. One of them — `test_panel_entry.js` at 33 — had
+been written two hours earlier **in the session that found this**, and was
+already wrong before that session ended. That is the whole argument for the
+gate: the error here is not carelessness, it is elapsed time.
+
+**Measurement, not estimation.** The tool runs each named suite and reads the
+count *the suite reports about itself*. A static count of `chk(` and
+`self.assert` patterns was rejected: several suites assert inside loops, so a
+static number would not match runtime, and the gate would itself become an
+unmeasured claim. It is therefore slow, and lives in `tools/ci_run.sh` — where
+the suites already run, so only the marginal cost is paid — not in the Netlify
+build. It runs after the targets pass, because a claim about a failing suite is
+not worth measuring and the useful message in that case is the failure.
+
+**Four bugs were found in the gate itself, by mutation, before it was trusted.**
+Recording them because each is the same error the gate exists to prevent,
+committed by the gate:
+
+1. It flagged *historical* claims. "37 assertions, up from 29" and "29
+   assertions as of F-27" are both correct and must never be updated. Markers
+   before the number now exempt it.
+2. `--fix` then **overwrote a historical number**, erasing the record of an
+   earlier pass — the exact failure this work exists to prevent, committed by
+   the fixer.
+3. `--fix` rebuilt the sentence from the pattern's groups and stripped the
+   backticks around the suite path. It now replaces the digits alone, in place.
+4. The history markers were checked in one direction only, then in both with
+   one shared list — which silently excluded three live claims, because "was"
+   follows numbers in ordinary prose. Direction is part of a marker's meaning:
+   "up from" precedes, "as of" follows, and they are now separate lists.
+
+Every one of the four was caught by mutating the input and checking the gate
+reacted — the same discipline applied to `check_index_guard.py` in F-50 and to
+the propose boundary in F-52. A gate that has not been mutation-tested is a
+claim about correctness with no measurement behind it, which is the thing being
+fixed.
+
+**Result:** 10 live claims, all verified; 1 historical claim, correctly exempt.
+`python3 tools/check_doc_claims.py --fix` writes measured values for the rest.
+
+---
+
+## KI-29 · Size figures in the prose cannot be told apart from history (**CLOSED** — F-53b)
+
+F-53 pinned one class of documentation claim. The obvious next class — byte
+counts and module counts — turned out to be **not measurable as written**, and
+that is the finding.
+
+Two sentences in this file:
+
+* «first-party JavaScript is 1,819,588 B across 25 now-cacheable files»
+* «first-load first-party JS … 1,431,069 B»
+
+Both are in the present tense. The first is the record of the F-09 pass and must
+stay 1,819,588 forever; the second describes today and is wrong the moment a
+module is added. Nothing in the grammar separates them. A gate that guessed
+would corrupt one of the two — which is not hypothetical: `--fix` did exactly
+that to a historical assertion count on its first run, an hour earlier.
+
+**So the ambiguity was removed rather than guessed at.** Every figure describing
+the present now lives in one generated block, between `ACS:CURRENT-STATE`
+markers, built from `tests/performance/bundle_report.json` and the files
+themselves. Inside it, numbers are measured on every CI run. Outside it, a
+number is read as the record of its own pass and is never asked to track the
+present — which is what those sentences always were.
+
+Mutation-tested from three directions: editing a figure inside the block fails;
+deleting the block fails; and deferring a further module — which moves five
+figures at once — fails until the block is regenerated. `--fix` regenerates it.
+
+---
+
+<!-- ACS:CURRENT-STATE:BEGIN — مولَّدة بـtools/check_doc_claims.py، لا تُحرَّر يدوياً -->
+
+### Current measured source state
+
+Generated from `tests/performance/bundle_report.json` and the files
+themselves before build provenance stamping. Deployment-specific
+identity values are outside this source snapshot. Every size figure
+that describes **today** lives here and
+nowhere else; a number in the prose above is the record of its own pass
+and is not expected to track the present.
+
+| | |
+|---|---|
+| index shell (`public/index.html`) | **48,777 B** |
+| first-party JavaScript, all modules | **1,924,861 B in 27 modules** |
+| evaluated on first load (core + boot) | **1,458,992 B** |
+|   of which core modules | **1,431,098 B in 15 modules** |
+| deferred until a panel is opened | **465,869 B in 6 modules** |
+| share of first-party JS deferred | **24.2 %** |
+| largest single module | **228,701 B of a 307,200 B cap** |
+
+Deferred modules, in load order:
+
+* `public/app/generated/workspace-ui.js`
+* `public/app/generated/render-engine.js`
+* `public/app/generated/bim.js`
+* `public/app/generated/docs.js`
+* `public/app/generated/arch-detail.js`
+* `public/app/generated/arch-detail-bridge.js`
+
+<!-- ACS:CURRENT-STATE:END -->
