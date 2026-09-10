@@ -1,4 +1,4 @@
-name: Apply residential quality transformation
+name: Wire residential quality regressions
 
 on:
   push:
@@ -8,8 +8,8 @@ permissions:
   contents: write
 
 jobs:
-  apply:
-    if: ${{ !contains(github.event.head_commit.message, '[residential-quality-applied]') }}
+  wire:
+    if: ${{ !contains(github.event.head_commit.message, '[residential-quality-wired]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,50 +23,46 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Apply exact guarded transformations
-        run: python3 tools/apply_residential_quality.py
-
-      - name: Install locked frontend tooling
-        run: npm ci
-
-      - name: Run focused residential regressions
+      - name: Add companion gates to an existing mandatory CI target
         run: |
-          python3 -m py_compile acs_understand.py
-          python3 tests/remediation/test_residential_quality.py
-          node tests/remediation/test_residential_presentation.js
-
-      - name: Regenerate measured frontend state
-        run: |
-          python3 tools/bundle_report.py
           python3 - <<'PY'
-          import importlib.util
           from pathlib import Path
-          p = Path('tools/check_doc_claims.py').resolve()
-          spec = importlib.util.spec_from_file_location('doc_claims', p)
-          mod = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(mod)
-          ok, msg = mod.check_state(fix=True)
-          print(msg)
-          raise SystemExit(0 if ok else 1)
+          path = Path('tests/remediation/test_generation_spatial_context.py')
+          text = path.read_text(encoding='utf-8')
+          anchor = '\n\nif __name__ == "__main__":\n    unittest.main(verbosity=2)\n'
+          if text.count(anchor) != 1:
+              raise SystemExit('mandatory test entry anchor drifted')
+          block = r'''
+
+class ResidentialQualityCompanionGates(unittest.TestCase):
+    """Keep the residential fix inside a CI target that is already mandatory."""
+
+    def _run(self, cmd):
+        import subprocess
+        root = Path(__file__).resolve().parents[2]
+        proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True,
+                              timeout=60)
+        self.assertEqual(proc.returncode, 0,
+                         (proc.stdout or '') + '\n' + (proc.stderr or ''))
+
+    def test_residential_massing_contract_remains_green(self):
+        self._run([sys.executable,
+                   'tests/remediation/test_residential_quality.py'])
+
+    def test_residential_presentation_contract_remains_green(self):
+        self._run(['node',
+                   'tests/remediation/test_residential_presentation.js'])
+'''
+          path.write_text(text.replace(anchor, block + anchor), encoding='utf-8')
           PY
 
-      - name: Prove module graph and measured bundle
-        run: |
-          node tests/remediation/test_module_graph.js
-          python3 tests/remediation/test_bundle_report.py
-          python3 tools/check_index_guard.py public/index.html
-          git diff --check
+      - name: Prove the mandatory target runs both companions
+        run: python3 tests/remediation/test_generation_spatial_context.py
 
-      - name: Commit product changes without modifying workflow files
+      - name: Commit only the non-workflow CI gate
         run: |
-          # The transformer also prepares CI wiring, but the ephemeral
-          # GITHUB_TOKEN may not update workflow files. Publish only the tested
-          # product changes here; CI wiring and workflow cleanup are applied by
-          # the repository connector after this commit lands.
-          git checkout -- .github/workflows/ci.yml
-          git rm tools/apply_residential_quality.py
-          git add -A
+          git add tests/remediation/test_generation_spatial_context.py
           git config user.name 'NAIFMUSFER'
           git config user.email 'whili9070@gmail.com'
-          git commit -m 'Improve residential massing and visual quality [residential-quality-applied]'
+          git commit -m 'Gate residential quality through spatial CI [residential-quality-wired]'
           git push origin HEAD:fix/residential-quality-pass
