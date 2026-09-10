@@ -4,6 +4,7 @@ on:
   push:
     branches: [feature/residential-v2-save-revisions]
     paths:
+      - tools/patch_design_transform.py
       - tools/diagnose_design_markers.py
       - tools/transform_design_versions.py
       - tools/transform_design_versions_tests.py
@@ -27,8 +28,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Diagnose source markers
-        run: python tools/diagnose_design_markers.py
+      - name: Correct and diagnose source markers
+        run: |
+          python tools/patch_design_transform.py
+          python tools/diagnose_design_markers.py
       - name: Apply deterministic transforms
         run: |
           python tools/transform_design_versions.py
