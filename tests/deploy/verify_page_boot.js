@@ -225,13 +225,15 @@ function notVerified(why) {
   boot('the production CSP raised NO violation during boot',
     shape.csp.length === 0, JSON.stringify(shape.csp));
   if (!TARGET) {
+    const lazy = new Set(APPSRC.lazyOrder());
     const want = Object.keys(APPSRC.modules())
-      .filter(k => k.indexOf('boot/') !== 0);
+      .filter(k => k.indexOf('boot/') !== 0 && !lazy.has(k));
     const missing = want.filter(k => !served.has('/app/' + k));
-    boot('EVERY shipped module under public/app/ was fetched by the browser — '
-      + 'no module ships without being reached, none 404s',
+    boot('EVERY eager module under public/app/ was fetched during boot',
       missing.length === 0,
       missing.length + ' not fetched: ' + missing.slice(0, 5).join(', '));
+    boot('declared lazy modules are not fetched before a panel is opened',
+      lazy.size > 0 && [...lazy].every(k => !served.has('/app/' + k)));
   }
 
   let ready = false;
@@ -263,7 +265,8 @@ function notVerified(why) {
   boot('the canonical transform snapshot bridge is available — the harness '
     + 'never touches module-scoped engine state', api.snap);
   boot('the model loading entry point is available', api.setModel);
-  boot('the 9.1 and 9.2 presentation bridges are live', api.pbr && api.ad);
+  boot('the eager 9.1 bridge is live and the 9.2 bridge remains deferred',
+    api.pbr && !api.ad);
   boot('no page errors during boot', errs.length === 0, errs.join(' | '));
   boot('no failed asset requests', bad.length === 0, bad.slice(0, 4).join(' | '));
 
@@ -282,12 +285,49 @@ function notVerified(why) {
       canonical: emptyDiag.canonical_meshes }));
 
   const FIX = fixtures();
+  let panelsLoaded = false;
   for (const [fname, fmodel] of FIX) {
     console.log('\n== VISUAL MODEL — ' + fname + ' ==');
     await pg.evaluate(m => { window.ACS.setModel(m); }, fmodel);
     await pg.waitForTimeout(1200);
     await pg.evaluate(() => new Promise(r =>
       requestAnimationFrame(() => requestAnimationFrame(r))));
+    if (!panelsLoaded) {
+      // Exercise the published entry points used by the UI. Importing modules
+      // directly here would hide a broken lazy loader in the shipped app.
+      const entries = await pg.evaluate(() => window.ACS.panelEntryPoints());
+      const namespaces = ['workspace'].concat(entries.panels.map(p => p.ns));
+      for (const ns of namespaces) {
+        const opened = await pg.evaluate(ns => ns === 'workspace'
+          ? window.ACS.openWorkspace() : window.ACS.openPanel(ns), ns);
+        boot('the ' + ns + ' panel opens through its shipped entry point',
+          opened === true);
+        await pg.keyboard.press('Escape');
+      }
+      const loaded = await pg.evaluate(() => ({
+        layers: window.ACS.lazyLayers().map(x => ({
+          requested: x.requested, available: !!window.ACS[x.ns],
+        })),
+        pbr: typeof window.ACS.pbrApply === 'function',
+        ad: typeof window.ACS.adApply === 'function',
+      }));
+      boot('every declared lazy layer was requested and loaded by panel entry',
+        loaded.layers.length > 0
+        && loaded.layers.every(x => x.requested && x.available));
+      boot('the 9.1 and 9.2 presentation bridges are live after panel loading',
+        loaded.pbr && loaded.ad);
+      if (!TARGET) {
+        const missing = Object.keys(APPSRC.modules())
+          .filter(k => k.indexOf('boot/') !== 0 && !served.has('/app/' + k));
+        boot('EVERY shipped module was fetched after opening its panel',
+          missing.length === 0, missing.join(', '));
+      }
+      if (!loaded.pbr || !loaded.ad) {
+        await b.close(); if (srv) srv.close();
+        summarise(); return;
+      }
+      panelsLoaded = true;
+    }
     const d = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
     visual(fname + ': canonical bounds are finite and building-scale',
       !!d.model_bounds && isFinite(d.model_bounds.radius)
