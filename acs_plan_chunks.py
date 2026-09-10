@@ -114,6 +114,7 @@ ISSUE_CODES = (
     "PLAN_CHUNK_UNKNOWN_ZONE",
     "PLAN_CHUNK_DUPLICATE_ID",
     "PLAN_CHUNK_BAD_RECT",
+    "PLAN_CHUNK_BAD_WALL_HEIGHT",
     "PLAN_CHUNK_BRIEF_TRUNCATED",
     "PLAN_CHUNK_FAILED",
     "PLAN_CHUNK_SPLIT",
@@ -545,8 +546,18 @@ def validate_chunk(chunk, payload):
                            "chars": len(brief)})
             brief = brief[:BRIEF_MAX_CHARS]
         out = {"id": rid, "rect": [round(v, 4) for v in vals],
-               "role": str(r.get("role") or "")[:40],
-               "walls": r.get("walls", "none")}
+               "role": str(r.get("role") or "")[:40]}
+        # Omission is not an instruction to remove walls. Keep the compiler's
+        # existing residential/industrial defaults, and explicit open zones.
+        if "walls" in r:
+            out["walls"] = r["walls"]
+        if "wall_h" in r:
+            height = _num(r["wall_h"])
+            if height is not None and height > 0:
+                out["wall_h"] = height
+            else:
+                issues.append({"code": "PLAN_CHUNK_BAD_WALL_HEIGHT",
+                               "chunk": chunk.get("index"), "id": rid})
         if isinstance(brief, str) and brief:
             out["brief"] = brief
         got[rid] = out
