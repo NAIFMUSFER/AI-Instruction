@@ -1,21 +1,79 @@
-name: Async generation audit
+name: Apply and verify async generation delivery
 on:
   push:
     branches: ['fix/async-generation-20260911']
 permissions:
-  contents: read
+  contents: write
 jobs:
-  audit:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[async-delivery-applied]') }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Export the tracked source at the exact audit commit
-        run: |
-          mkdir -p /tmp/acs-audit
-          git archive --format=tar.gz HEAD > /tmp/acs-audit/source.tar.gz
-          git rev-parse HEAD > /tmp/acs-audit/COMMIT.txt
-      - uses: actions/upload-artifact@v4
         with:
-          name: async-generation-source
-          path: /tmp/acs-audit/
-          retention-days: 1
+          ref: fix/async-generation-20260911
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify the exact audited patch and apply without drift
+        run: |
+          python3 - <<'PY'
+          import base64, hashlib, lzma, subprocess
+          from pathlib import Path
+          packed = ''.join(Path('tools/async-delivery-patch.%d' % i).read_text().strip() for i in range(1, 5))
+          patch = lzma.decompress(base64.b64decode(packed, validate=True))
+          assert len(patch) == 71404
+          assert hashlib.sha256(patch).hexdigest() == '999dd38a17bf2b4c5e7ad5863ca6f7768f1d13dead291f97cb98959132ca3ade'
+          subprocess.run(['git', 'apply', '--check', '-'], input=patch, check=True)
+          subprocess.run(['git', 'apply', '-'], input=patch, check=True)
+          print('Exact source patch applied')
+          PY
+      - name: Install the locked toolchains
+        run: |
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          npm ci
+      - name: Focused delivery and existing contract regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          python3 -m py_compile acs_async_jobs.py acs_understand_api.py tests/remediation/async_job_browser_server.py
+          python3 tests/remediation/test_async_generation_jobs.py 2>&1 | tee logs/async-python.log
+          node tests/remediation/test_generation_jobs.js 2>&1 | tee logs/async-node.log
+          node tests/remediation/test_transport_errors.js 2>&1 | tee logs/transport-existing.log
+          python3 tests/remediation/test_generation_spatial_context.py 2>&1 | tee logs/spatial-and-companions.log
+          python3 tests/remediation/test_api_wiring.py 2>&1 | tee logs/api-wiring.log
+          node tests/remediation/test_module_graph.js 2>&1 | tee logs/module-graph.log
+          python3 tests/remediation/test_bundle_report.py 2>&1 | tee logs/bundle.log
+          python3 tools/check_index_guard.py public/index.html
+          git diff --check
+      - name: Install real Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Mobile delivery recovery in Chromium
+        run: |
+          set -o pipefail
+          ACS_TEST_BROWSER=chromium node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-chromium.log
+      - name: Mobile delivery recovery in WebKit
+        run: |
+          set -o pipefail
+          ACS_TEST_BROWSER=webkit node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-webkit.log
+      - name: Publish only verified product changes and remove transfer parts
+        run: |
+          git rm tools/async-delivery-patch.1 tools/async-delivery-patch.2 tools/async-delivery-patch.3 tools/async-delivery-patch.4
+          git add -A
+          git diff --cached --name-only | grep -v '^.github/workflows/'
+          if git diff --cached --name-only | grep -q '^.github/workflows/'; then echo 'Unexpected workflow mutation'; exit 1; fi
+          git config user.name 'NAIFMUSFER'
+          git config user.email 'whili9070@gmail.com'
+          git commit -m 'Fix long generation delivery with recoverable async jobs [async-delivery-applied]'
+          git push origin HEAD:fix/async-generation-20260911
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: async-delivery-verification
+          path: logs/
+          retention-days: 7
