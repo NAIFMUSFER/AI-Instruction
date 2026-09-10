@@ -26,6 +26,8 @@ per request). A lost submission receipt is recovered by the pre-generated job
 id. A lost status or result response is retried as a GET, never as another paid
 POST. Reloading the same tab offers a recovery button. A server-side failed job
 returns its original error envelope/status/Retry-After through the result route.
+Stored terminal errors are delivered once even when the error is marked retryable;
+only interrupted result delivery is retried. Error text is rendered as text.
 
 Results and status require a random 256-bit capability in X-ACS-Job-Token;
 knowing a job id alone is insufficient. Capabilities are not in URLs, response
@@ -55,16 +57,26 @@ invented after reload. OpenAI integration and provider settings are unchanged.
 
 ## Verification
 
-- Python controlled-handler tests exercise quick acceptance, receipt loss,
+- 13 Python controlled-handler tests exercise quick acceptance, receipt loss,
   capability checks, replay conflicts, expiry, capacity, deadlines, result bounds,
   original route/guard reuse and CORS.
-- Node tests execute the shipped job client and exercise receipt loss, offline
+- 10 Node tests execute the shipped job client and exercise receipt loss, offline
   polling, interrupted result downloads, GET-only reload recovery, backend-origin
-  scoping, old-backend rejection and preservation of error responses.
-- Local HTTP browser fixtures exercise refresh and offline/reconnect in Chromium
-  and WebKit. These are transport tests, not real LLM or 3D-quality claims.
+  scoping, old-backend rejection and terminal HTTP 429/500/503/504 preservation.
+- Local HTTP browser fixtures passed refresh and offline/reconnect in real
+  Chromium and WebKit in Actions runs 34542359781 and 34542836057. These are
+  transport tests, not live LLM or physical-iPhone claims.
+- Run 34542836057 also passed the complete shipped mobile page under production
+  CSP with actual Three.js: one POST, reload recovery, 123 canonical meshes,
+  application state VISIBLE, and pixels_verified=true. Generation was a
+  controlled six-second fixture, not a live provider call.
+- That run exposed an isolated panel-test stub without acsApplyBuilding exports.
+  The panel-only test now excludes the rendering-dependent recovery module, as
+  it already excludes the rendering bridges. Its 37 assertions are unchanged;
+  the separate shipped-page test covers the real recovery/render integration.
 - The new Python and Node contracts are invoked by an existing mandatory CI
-  generation target. Browser verification is also a separate workflow.
+  generation target. Browser verification is a separate fail-closed workflow.
+  Full CI and post-deployment checks must complete before release is reported.
 
 No claim is made that an old synchronous result, created before this patch, can
 be recovered: that old route did not retain a retrievable delivery record.
