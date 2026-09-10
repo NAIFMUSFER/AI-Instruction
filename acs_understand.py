@@ -866,6 +866,8 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         tel["provider_base_host"] = cfg.base_host
 
         supports_thinking = _sdk_supports(client, "thinking")
+        supports_thinking_body = (cfg.provider == "deepseek"
+                                  and _sdk_supports(client, "extra_body"))
 
         def _build_kw(mt, thinking):
             """وسائط الطلب — تُبنى مرّةً، فتُبصَم ويُنادى بها الشيءُ نفسه.
@@ -873,16 +875,27 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             W2-D: كانت تُبنى داخل `_call` فلا يمكن مقارنة طلبين قبل إرسالهما.
             فصلُها يجعل «هل هذا الطلب مطابقٌ لطلبٍ أُرسل؟» سؤالاً يُجاب قبل الدفع.
 
-            F-31: `thinking` يُرسَل **فقط** إذا كانت النسخة المثبّتة تعرفه.
-            anthropic==0.40 المثبّتة في requirements.txt لا تعرفه إطلاقاً — أُضيف
-            لاحقاً — وتوقيعها keyword-only صريح بلا **kwargs، فكان إرساله يرفع
-            TypeError من ربط الوسائط في بايثون قبل أي اتصال بالشبكة. على نسخة لا
-            تعرف «التفكير الموسّع» أصلاً، إغفالُ الوسيط هو بالضبط ما يعنيه
-            `{"type": "disabled"}`: لا سلوك يُفقَد.
+            F-31: لا نمرر وسيط thinking مسمّى إلى SDK لا يقبله.
+            DeepSeek يفعّل التفكير افتراضياً، لذلك إغفال الوسيط ليس تعطيله.
+            SDK 0.40 يقبل extra_body ويدمجه في JSON المرسل؛ نستخدم هذا المسار
+            المتوافق لـDeepSeek وحده، ونحافظ على مسار Anthropic القديم.
+            https://api-docs.deepseek.com/guides/thinking_mode/
+            https://api-docs.deepseek.com/guides/anthropic_api/
             """
             kw = dict(model=model, max_tokens=mt, system=sys_p, messages=msgs)
             if thinking is not None and supports_thinking:
                 kw["thinking"] = thinking
+            elif thinking is not None and cfg.provider == "deepseek":
+                if not supports_thinking_body:
+                    raise E.AcsApiError(
+                        E.ACS_INTEGRATION_ERROR,
+                        "المكتبة المثبّتة لا تستطيع إرسال إعداد التفكير للمزوّد.",
+                        upstream={"provider": cfg.provider,
+                                  "fault": "local_integration",
+                                  "kind": "unsupported_thinking_control",
+                                  "parameter": "thinking",
+                                  "sdk_version": sdk_ver})
+                kw["extra_body"] = {"thinking": thinking}
             return kw
 
         def _call(kw):
@@ -914,8 +927,9 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         text = ""; stop = "?"; last_err = None; tried = 0
         backoff = float(os.environ.get("ACS_UPSTREAM_BACKOFF_S", "2"))
         # W2-D: بصمات الطلبات المُرسَلة فعلاً في هذا النداء. سلّم المحاولات وُضع
-        # ليغيّر **إعداد التفكير** وحده؛ ومع anthropic==0.40 لا يُرسَل `thinking`
-        # إطلاقاً (KI-23/F-31)، فالمحاولتان تبنيان الوسائط نفسها حرفياً. إعادةُ
+        # ليغيّر **إعداد التفكير** وحده؛ إذا تعذّر إرساله في مسار Anthropic القديم
+        # فالمحاولتان تبنيان الوسائط نفسها حرفياً. أما DeepSeek فيرسله عبر
+        # extra_body حتى مع SDK 0.40، فتختلف المحاولتان فعلاً. إعادةُ
         # إرسال طلبٍ مطابقٍ بايتاً لطلبٍ فشل هي دفعُ ميزانيةٍ كاملةٍ ثانيةً على
         # نتيجةٍ معروفة سلفاً — مقيس حيّاً: 16000 ثم 16000 رمزاً، ونفس
         # `stop=max_tokens` ونفس `out_chars=0`.
@@ -929,9 +943,10 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             # أهمّ رقمٍ في تشخيص رفض 400 كان يغيب عن كل نداء فاشل بالضبط.
             tel["requested_max_tokens"] = int(mt)
             tel.setdefault("max_output_tokens", int(mt))
-            tel["thinking_sent"] = bool(think is not None and supports_thinking)
             tel["transport"] = cfg.transport
             kw = _build_kw(mt, think)
+            tel["thinking_sent"] = ("thinking" in kw
+                                    or "thinking" in kw.get("extra_body", {}))
             fp = _request_fingerprint(kw)
             if fp in sent_fingerprints:
                 tel["retry_skipped_reason"] = "identical_request"
@@ -940,7 +955,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                       "one already sent (stage=%s max_tokens=%s thinking=%s "
                       "sdk=%s) — it cannot produce a different result and would "
                       "cost another full budget" % (stage, mt,
-                                                    "off" if think else "default",
+                                                    "off" if tel["thinking_sent"] else "default",
                                                     sdk_ver))
                 tried -= 1                    # لم يُرسَل شيء: لا تُحتسَب محاولة
                 continue
@@ -964,7 +979,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                       "model=%s max_tokens=%s thinking=%s sdk=%s transport=%s)"
                       " -> %s%s%s%s"
                       % (stage, cfg.provider, cfg.base_host or "default", model,
-                         mt, "off" if think else "default", sdk_ver,
+                         mt, "off" if tel["thinking_sent"] else "default", sdk_ver,
                          tel.get("transport"), err.code,
                          (" param=%s" % tel["provider_param"])
                          if tel.get("provider_param") else "",
@@ -992,7 +1007,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                         "completion_chars": len(text),
                         "output_chars": len(text),
                         "attempts": tried,
-                        "thinking": "off" if think else "default"})
+                        "thinking": "off" if tel["thinking_sent"] else "default"})
             tel.update(acct)
             tel.update(_usage_extras(usage))
             # النسبة الحاسمة في W2: كم حرفاً مرئياً مقابل كل رمز مخرج. هي التي
@@ -1006,7 +1021,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                   "blocks=%d types=%s text_blocks=%d nontext_blocks=%d "
                   "chars_per_out_token=%s%s"
                   % (stage, cfg.provider, cfg.base_host or "default", model,
-                     "off" if think else "default", mt, stop, len(text),
+                     "off" if tel["thinking_sent"] else "default", mt, stop, len(text),
                      tel["output_tokens"], tel["input_tokens"],
                      acct["content_blocks"], acct["content_block_types"],
                      acct["text_blocks"], acct["nontext_blocks"],

@@ -136,14 +136,18 @@ def install(behaviour):
                    temperature=None, tool_choice=None, tools=None,
                    top_k=None, top_p=None, extra_headers=None,
                    extra_query=None, extra_body=None, timeout=None):
-            return self._serve({"model": model, "max_tokens": max_tokens})
+            return self._serve({"model": model, "max_tokens": max_tokens,
+                                "system": system, "messages": messages,
+                                "extra_body": extra_body})
 
         def stream(self, *, max_tokens, messages, model, metadata=None,
                    stop_sequences=None, system=None, temperature=None,
                    top_k=None, top_p=None, tool_choice=None, tools=None,
                    extra_headers=None, extra_query=None, extra_body=None,
                    timeout=None):
-            return _Ctx(self._serve({"model": model, "max_tokens": max_tokens}))
+            return _Ctx(self._serve({"model": model, "max_tokens": max_tokens,
+                                     "system": system, "messages": messages,
+                                     "extra_body": extra_body}))
 
     class _Client(object):
         def __init__(self, *, api_key=None, base_url=None, timeout=None):
@@ -564,9 +568,14 @@ def main():
     chk("والمحاسبة تقول أين ذهبت الميزانية: كتلةٌ واحدة غير نصّية",
         tel.get("nontext_blocks") == 1 and tel.get("text_blocks") == 0
         and tel.get("output_chars") == 0)
-    chk("وW2-D ما زال يمنع الطلب المطابق بايتاً — نداءٌ واحد لا اثنان (المطلب 8)",
-        len(sent) == 1 and tel.get("retry_skipped_reason")
-        == "identical_request", len(sent))
+    # DeepSeek's first request now carries the disabled control via extra_body.
+    # Its default-mode retry is genuinely distinct. The remaining identical
+    # legacy Anthropic requests must still be skipped (test_provider_accounting).
+    chk("W2-D: DeepSeek retries only when the transmitted thinking control differs",
+        len(sent) == 2 and sent[0]["extra_body"] == {"thinking": {"type": "disabled"}}
+        and sent[1]["extra_body"] is None
+        and U._request_fingerprint(sent[0]) != U._request_fingerprint(sent[1])
+        and tel.get("retry_skipped_reason") is None, len(sent))
     rec = [r for r in sink if r.get("event") == "llm_generation"]
     chk("والدلالة تعبر قائمة السماح إلى سجلّ الإنتاج بدل أن تُسقَط صامتةً",
         rec and rec[-1].get("response_semantic") == E.RESP_NO_VISIBLE_OUTPUT,
