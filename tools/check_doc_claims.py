@@ -86,12 +86,11 @@ BEFORE_MARKERS = ('up from', 'previously', 'rather than', 'instead of',
 AFTER_MARKERS = ('as of ', 'at the time of', 'حينها', 'آنذاك', 'في تلك الجولة')
 AFTER_WINDOW = 18
 
-# ما تعلنه كل صيغة عن نفسها. الترتيب مقصود: pytest أوّلاً لأن حزم unittest
-# تُشغَّل به هنا، ثم الصيغة المحلّية «N passed, M failed» لحزم node والحزم
-# التي تطبع تقريرها بنفسها.
+# Read each suite's own terminal summary. Python suites are executable scripts
+# or stdlib unittest entry points; measuring them must not require pytest.
 COUNT_PATTERNS = (
     re.compile(r'(\d+)\s+passed(?:,\s*\d+\s+failed)?'),
-    re.compile(r'(\d+)\s+passed,\s*\d+\s+failed'),
+    re.compile(r'Ran\s+(\d+)\s+tests?\b'),
 )
 
 
@@ -128,24 +127,18 @@ def measure(suite, timeout=600):
         return None, 'الملفّ غير موجود'
     env = dict(os.environ, ACS_ENV='test',
                ANTHROPIC_API_KEY=os.environ.get('ANTHROPIC_API_KEY', 'dummy'))
-    # حزم .py هنا صنفان: حزم unittest تُشغَّل بـpytest، وحزمٌ سكربتات تطبع
-    # تقريرها بنفسها ويقول pytest عنها «no tests ran». تُجرَّب الصيغتان.
-    if suite.endswith('.js'):
-        attempts = [['node', full]]
-    else:
-        attempts = [[sys.executable, '-m', 'pytest', full, '-q'],
-                    [sys.executable, full]]
-    text = ''
-    for cmd in attempts:
-        try:
-            proc = subprocess.run(cmd, cwd=ROOT, env=env, timeout=timeout,
-                                  stdout=subprocess.PIPE,
-                                  stderr=subprocess.STDOUT)
-        except subprocess.TimeoutExpired:
-            return None, 'تجاوز المهلة (%ds)' % timeout
-        text = proc.stdout.decode('utf-8', 'replace')
-        if 'no tests ran' not in text:
-            break
+    cmd = ['node' if suite.endswith('.js') else sys.executable, full]
+    try:
+        proc = subprocess.run(cmd, cwd=ROOT, env=env, timeout=timeout,
+                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    except subprocess.TimeoutExpired:
+        return None, 'تجاوز المهلة (%ds)' % timeout
+    except OSError as exc:
+        return None, 'تعذّر تشغيل الحزمة: %s' % type(exc).__name__
+    text = proc.stdout.decode('utf-8', 'replace')
+    if proc.returncode != 0:
+        tail = ' | '.join(text.strip().splitlines()[-3:])[:240]
+        return None, 'suite exited %d: %s' % (proc.returncode, tail)
     best = None
     for pat in COUNT_PATTERNS:
         found = pat.findall(text)
@@ -328,7 +321,7 @@ def main(argv):
     if not state_ok:
         print('DOC CLAIMS FAILED: ' + state_msg)
         return 1
-    if not stale and not broken:
+    if not stale and not broken and not skipped:
         note = ('' if not skipped
                 else ' (و%d تخطّاها لأن حزمتها تحتاج بيئة خارجية)' % len(skipped))
         print('✓ كل ادّعاء قابل للقياس يطابق ما تعلنه حزمته: %d من %d%s.'
@@ -339,24 +332,14 @@ def main(argv):
         print('العدد صحيح يوم كُتب ثم أُضيف توكيد — هذا هو النمط بعينه.')
         print('شغّل: python3 tools/check_doc_claims.py --fix')
     if broken:
-        # تعذُّر القياس ليس بلىً في التوثيق. حزمةٌ لا تُقلع هنا (node_modules
-        # غير مثبَّتة، متصفّح ناقص) عطلٌ في البيئة، وسقوطها يُبلَّغ في مساره
-        # الصحيح: ci_run.sh يفشل على الهدف نفسه قبل أن يصل الأمر إلى هنا.
-        # إعلانها عطلاً في الوثيقة يحوّل نقصاً في البيئة إلى خطأ في النثر —
-        # وهو الخلط الذي وقعتُ فيه مرّتين وأنا أبني هذا الحارس. غيابُ الملفّ
-        # وحده يبقى عطلاً حقيقياً، لأن ادّعاءً عن حزمة غير موجودة لا يُصلحه
-        # أي تثبيت.
-        missing = [b for b in broken if b[3] == 'الملفّ غير موجود']
-        for doc, suite, claimed, _e in missing:
-            print('DOC CLAIMS FAILED: %s يذكر %s (%d توكيداً) وهي غير موجودة.'
-                  % (doc, suite, claimed))
-        others = len(broken) - len(missing)
-        if others:
-            print('تنبيه: %d ادّعاءً تعذّر قياسه في هذه البيئة (الحزمة لم '
-                  'تُقلع). سقوطها يُبلَّغ في ci_run.sh لا هنا.' % others)
-        if missing:
-            return 1
-    return 1 if (stale or not state_ok) else 0
+        # An unavailable or failed suite is not evidence of a stale number,
+        # but it is still a failed verification. CI must prove every claim.
+        print('DOC CLAIMS FAILED: %d suite(s) could not be measured successfully.'
+              % len(broken))
+    if skipped:
+        print('DOC CLAIMS FAILED: %d suite(s) require an unavailable environment.'
+              % len(skipped))
+    return 1 if (stale or broken or skipped or not state_ok) else 0
 
 
 if __name__ == '__main__':
