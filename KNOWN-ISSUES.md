@@ -2168,10 +2168,10 @@ and is not expected to track the present.
 
 | | |
 |---|---|
-| index shell (`public/index.html`) | **47,424 B** |
-| first-party JavaScript, all modules | **1,922,487 B in 27 modules** |
-| evaluated on first load (core + boot) | **1,456,618 B** |
-|   of which core modules | **1,431,069 B in 15 modules** |
+| index shell (`public/index.html`) | **48,777 B** |
+| first-party JavaScript, all modules | **1,924,827 B in 27 modules** |
+| evaluated on first load (core + boot) | **1,458,958 B** |
+|   of which core modules | **1,431,064 B in 15 modules** |
 | deferred until a panel is opened | **465,869 B in 6 modules** |
 | share of first-party JS deferred | **24.2 %** |
 | largest single module | **228,701 B of a 307,200 B cap** |

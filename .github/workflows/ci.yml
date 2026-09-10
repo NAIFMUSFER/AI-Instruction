@@ -191,6 +191,12 @@ jobs:
         run: bash tools/netlify-build.sh
       - name: Install pinned Python dependencies for documentation measurements
         run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Measured documentation claims
+        run: |
+          mkdir -p logs
+          bash tools/ci_run.sh --log logs/documentation-claims.log \
+               --label "bundle report and documentation" --check-doc-claims \
+               --runner "python3" tools/bundle_report.py
       - name: Mobile project layout and navigation
         run: |
           mkdir -p logs
@@ -237,7 +243,7 @@ jobs:
                    tests/remediation/test_accessibility.js \
                    tests/remediation/csp_browser_probe.js || rc=1
           bash tools/ci_run.sh --log logs/chromium-browser.log \
-               --label "node-scope scene suites" --check-doc-claims \
+               --label "node-scope scene suites" \
                --runner "node tests/lib/run.js" \
                    tests/remediation/test_model_apply.js \
                    tests/remediation/test_scene_limits.js \
