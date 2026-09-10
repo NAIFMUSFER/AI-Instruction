@@ -57,9 +57,14 @@ jobs:
           python3 tools/check_index_guard.py public/index.html
           git diff --check
 
-      - name: Commit product changes and remove one-shot tooling
+      - name: Commit product changes without modifying workflow files
         run: |
-          git rm tools/apply_residential_quality.py .github/workflows/apply-residential-quality.yml
+          # The transformer also prepares CI wiring, but the ephemeral
+          # GITHUB_TOKEN may not update workflow files. Publish only the tested
+          # product changes here; CI wiring and workflow cleanup are applied by
+          # the repository connector after this commit lands.
+          git checkout -- .github/workflows/ci.yml
+          git rm tools/apply_residential_quality.py
           git add -A
           git config user.name 'NAIFMUSFER'
           git config user.email 'whili9070@gmail.com'
