@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# Correct the one-shot transform against the canonical IndexedDB upgrade closure.
 from pathlib import Path
 p=Path('tools/transform_design_versions.py')
 s=p.read_text(encoding='utf-8')
