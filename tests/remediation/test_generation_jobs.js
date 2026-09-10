@@ -101,6 +101,22 @@ async function test(name,fn){await fn();console.log('PASS '+name);passed++;}
     assert.equal(h.calls[0].p,'/v1/jobs/understand/pdf');
     assert.equal(h.calls[0].o.body,'synthetic multipart');
   });
+  await test('terminal retryable server errors are delivered once, not polled until expiry',async()=>{
+    for(const http of [429,500,503,504]) {
+      let id, polls=0, downloads=0;
+      const failure={status:'VALID_API_ERROR',http,retryable:true,
+        body:{ok:false,error:{code:'ACS_TIMEOUT',retryable:true}},code:'ACS_TIMEOUT'};
+      const h=harness((p,o)=>{
+        if(o.method==='POST'){id=o.headers['X-ACS-Job-ID'];return receipt(id);}
+        if(p.endsWith('/result')) { downloads++;return failure; }
+        if(++polls>1)return {status:'VALID_API_ERROR',http:410,body:{ok:false,error:{code:'ACS_NOT_FOUND'}}};
+        return receipt(id,'FAILED');
+      });
+      assert.equal((await h.run('/v1/understand',{method:'POST',body:'{}'})).http,http);
+      assert.equal(downloads,1);assert.equal(polls,1);
+      assert.equal(h.ctx.window.ACS.asyncGeneration.state().delivered,true);
+    }
+  });
   await test('health and non-generation traffic remain on the original transport',async()=>{
     const h=harness(()=>ok({ok:true}));
     await h.run('/health',{method:'GET'},12000);

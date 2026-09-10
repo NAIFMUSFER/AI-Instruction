@@ -3,7 +3,7 @@
    Recovery is GET-only: a lost receipt NEVER submits another paid generation. */
 import { __ACS_SHARED } from '../shared-state.js';
 import { statusEl } from '../render/scene.js';
-import { acsApplyTicket, acsApplyBuilding, acsApplyFirstFrame, showReport, srvPill, srvURL } from './workspace-ui-wiring.js';
+import { acsApplyTicket, acsApplyBuilding, acsApplyFirstFrame, showReport, srvURL } from './workspace-ui-wiring.js';
 
 const ACS_ASYNC_PATHS = {
   '/v1/understand': '/v1/jobs/understand',
@@ -71,7 +71,8 @@ function acsJobSleep(ms) {
 }
 function acsJobProgress(message) {
   if (statusEl) statusEl.textContent = message;
-  srvPill('', message);
+  const pill = document.getElementById('srvPill');
+  if (pill) { pill.className = 'srv'; pill.textContent = message; }
   const live = document.getElementById('acsLiveRegion');
   if (live && live.textContent !== message) live.textContent = message;
 }
@@ -94,13 +95,15 @@ async function acsJobWait(row, signal) {
       if (job.state === 'SUCCEEDED' || job.state === 'FAILED') {
         const result = await ACS_ASYNC_BASE_FETCH(path + '/result',
           {method: 'GET', headers, cache: 'no-store'}, 20000);
-        if (!acsJobTransient(result)) {
-          if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR' && result.body && result.body.error)) {
-            row.delivered = true;
-            acsJobSave(row);
-          }
+        // A stored error is a terminal result, even when the original error is
+        // retryable. Only a failed delivery may be polled again, never the job.
+        if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR'
+            && result.body && result.body.error)) {
+          row.delivered = true;
+          acsJobSave(row);
           return result;
         }
+        if (!acsJobTransient(result)) return result;
         acsJobProgress('⏳ النتيجة جاهزة؛ تعذّر تنزيلها مؤقتاً. تُستعاد نفس النتيجة بلا توليد جديد.');
       } else if (job.state === 'QUEUED' || job.state === 'RUNNING') {
         acsJobProgress(job.state === 'QUEUED'
