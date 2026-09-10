@@ -236,5 +236,21 @@ class GenerationSpatialTests(unittest.TestCase):
                              ("bedroom", "full", 2.8))
 
 
+class ResidentialQualityCompanionGates(unittest.TestCase):
+    """Keep the residential fix inside an already mandatory CI target."""
+
+    def _run(self, cmd):
+        import subprocess
+        root = Path(__file__).resolve().parents[2]
+        proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 0, (proc.stdout or "") + "\n" + (proc.stderr or ""))
+
+    def test_residential_massing_contract_remains_green(self):
+        self._run([sys.executable, "tests/remediation/test_residential_quality.py"])
+
+    def test_residential_presentation_contract_remains_green(self):
+        self._run(["node", "tests/remediation/test_residential_presentation.js"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

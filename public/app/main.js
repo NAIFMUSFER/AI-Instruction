@@ -28,3 +28,5 @@ import './trust/wiring.js';
    التي تنشرها الوحدات أعلاه، و window.ACS.exportModel التي ينشرها
    ui/workspace-ui-wiring.js. */
 import './ui/panels-entry.js';
+/* Residential visual-quality policy. It runs after the panel lazy-loader exists. */
+import './ui/residential-quality.js';

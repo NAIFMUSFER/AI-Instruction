@@ -274,6 +274,9 @@ if (typeof window !== 'undefined') {
     workspace: 'acsOpenWorkspace',
     panels: GENERATED_PANELS.map((p) => ({ ns: p.ns, button: p.button })),
   });
+  /* تحميلٌ بلا فتح لوحة: يستخدم نفس المالك الوحيد لنداءات import()، كي تستطيع
+     جودة السكن تهيئة طبقة العرض بعد التوليد من غير وميض واجهة أو مدخل ثانٍ. */
+  window.ACS.ensureLayer = (ns) => loadLayer(ns);
   /* حالة التأجيل مقروءة من الخارج — لا يُستنتَج التحميل من وجود اللوحة. */
   window.ACS.lazyLayers = () => Object.keys(LAZY_LAYERS).map((ns) => ({
     ns, requested: !!layerPromise[ns], loaded: !!panelOf(ns),
