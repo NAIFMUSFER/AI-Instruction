@@ -60,6 +60,7 @@ def _provider_error(status, data):
     raw = data.get("error", data) if isinstance(data, dict) else {}
     raw = raw if isinstance(raw, dict) else {}
     code = raw.get("code") or raw.get("type")
+    code = code if isinstance(code, str) else None
     # Terminal SSE failures have no independent HTTP status. Classify only
     # known codes; an unknown terminal failure must not spend on a fallback.
     if status == 0:
@@ -145,7 +146,11 @@ def normalise(response):
     output = response.get("output", [])
     if not isinstance(output, list):
         raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_output_list")
-    blocks, refused = [], False
+    details = response.get("incomplete_details")
+    if details is not None and not isinstance(details, dict):
+        raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_incomplete_details")
+    reason = (details or {}).get("reason")
+    blocks, refused, unfinished = [], False, False
     for item in output:
         if not isinstance(item, dict):
             raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_output_item")
@@ -153,9 +158,14 @@ def normalise(response):
             # Never retain or expose reasoning content; count its presence only.
             blocks.append(SimpleNamespace(type="reasoning"))
         elif item.get("type") == "message":
-            if item.get("status", "completed") not in ("completed", "incomplete"):
-                raise _error(E.ACS_UPSTREAM_TRUNCATED, "unfinished_message")
-            for part in item.get("content", []):
+            if item.get("role", "assistant") != "assistant":
+                raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_output_role")
+            if item.get("status", "completed") != "completed":
+                unfinished = True
+            parts = item.get("content", [])
+            if not isinstance(parts, list):
+                raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_output_content")
+            for part in parts:
                 if not isinstance(part, dict):
                     raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_output_block")
                 if part.get("type") == "refusal":
@@ -167,7 +177,6 @@ def normalise(response):
         else:
             # ACS does not request tools. Never silently accept an unexpected call.
             raise _error(E.ACS_UPSTREAM_BAD_REQUEST, "unexpected_output_item")
-    reason = (response.get("incomplete_details") or {}).get("reason")
     stop = "end_turn"
     if refused or reason == "content_filter":
         stop = "refusal"
@@ -177,6 +186,8 @@ def normalise(response):
         stop = "max_tokens"
         if not blocks:
             blocks.append(SimpleNamespace(type="output_limit"))
+    elif unfinished:
+        raise _error(E.ACS_UPSTREAM_TRUNCATED, "unfinished_message")
     usage = response.get("usage") or {}
     usage = usage if isinstance(usage, dict) else {}
     ins, outs = usage.get("input_tokens_details") or {}, usage.get("output_tokens_details") or {}
@@ -266,7 +277,12 @@ class ResponsesClient:
         payload = self._payload(model, max_tokens, system, messages, streaming)
         deadline, received = time.monotonic() + self.timeout, False
         try:
-            with self._factory(timeout=httpx.Timeout(min(self.timeout, 30.0)),
+            # Keep the configured read budget: a reasoning model may pause
+            # before visible output. Connection/pool waits remain short, and
+            # the ACS worker is the hard wall-clock request boundary.
+            with self._factory(timeout=httpx.Timeout(self.timeout,
+                                                     connect=min(self.timeout, 30.0),
+                                                     pool=min(self.timeout, 30.0)),
                                follow_redirects=False, trust_env=False) as client:
                 with client.stream("POST", self.url,
                                    headers={"Authorization": "Bearer " + self._key,
@@ -287,6 +303,8 @@ class ResponsesClient:
                     for event in self._events(response, deadline):
                         received = True
                         kind = event.get("type")
+                        if not isinstance(kind, str):
+                            raise _error(E.ACS_UPSTREAM_INVALID_JSON, "invalid_event_type")
                         if kind == "error":
                             raise _provider_error(0, event)
                         if kind in TERMINAL:

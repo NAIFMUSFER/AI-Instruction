@@ -14,11 +14,14 @@
 تفتح اتصالاً، ولا تطبع سرّاً، ولا ترمي استثناءً غير معلن.
 
 المتغيّرات:
-    ACS_LLM_PROVIDER            deepseek | anthropic          (افتراضي anthropic)
+    ACS_LLM_PROVIDER            deepseek | anthropic | openai (افتراضي anthropic)
     ACS_LLM_BASE_URL            عنوان نقطة النهاية            (افتراضي حسب المزوّد)
     ACS_LLM_API_KEY             المفتاح                       (لا افتراضي)
     ACS_LLM_MODEL               معرّف النموذج                  (افتراضي حسب المزوّد)
     ACS_LLM_TRANSPORT           stream | create               (افتراضي stream)
+    OPENAI_API_KEY              مفتاح OpenAI فقط؛ لا يُستعار المفتاح العام له
+    ACS_LLM_API_KEY_ENV         اسم متغير المفتاح من قائمة محددة، لا قيمته
+    ACS_LLM_FALLBACK_API_KEY_ENV اسم متغير مفتاح البديل، لا قيمته
 
     ACS_LLM_FALLBACK_PROVIDER   المزوّد البديل — غيابه يعني «لا بديل»
     ACS_LLM_FALLBACK_BASE_URL

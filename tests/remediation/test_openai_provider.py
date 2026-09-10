@@ -267,6 +267,56 @@ class WireTests(unittest.TestCase):
         self.assertTrue(clients[0].is_closed)
 
 
+class ResponseShapeTests(unittest.TestCase):
+    def test_bad_nested_fields_are_classified(self):
+        for details in (["bad"], "bad", 1):
+            data = reply(); data["incomplete_details"] = details
+            with self.subTest(details=details), self.assertRaises(E.AcsApiError) as caught:
+                O.normalise(data)
+            self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_INVALID_JSON)
+        for content in (None, "bad", 1, {}):
+            data = reply(); data["output"][0]["content"] = content
+            with self.subTest(content=content), self.assertRaises(E.AcsApiError) as caught:
+                O.normalise(data)
+            self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_INVALID_JSON)
+
+    def test_completed_response_cannot_hide_unfinished_message(self):
+        for status in ("incomplete", "in_progress", "unknown"):
+            data = reply(); data["output"][0]["status"] = status
+            with self.subTest(status=status), self.assertRaises(E.AcsApiError) as caught:
+                O.normalise(data)
+            self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_TRUNCATED)
+
+    def test_malformed_terminal_never_retries_or_uses_fallback(self):
+        calls, tel = [], {}
+        data = reply(); data["incomplete_details"] = ["bad"]
+        def handle(request):
+            calls.append(request)
+            return httpx.Response(200, headers={"content-type": "text/event-stream"}, content=event(data))
+        env = dict(ENV, ACS_LLM_FALLBACK_PROVIDER="deepseek", ACS_LLM_FALLBACK_API_KEY="unit-ds")
+        with patch.dict(os.environ, env, clear=True), patch.object(O.httpx, "Client", side_effect=factory(handle)), \
+             contextlib.redirect_stdout(io.StringIO()), self.assertRaises(E.AcsApiError) as caught:
+            U.call_llm("test", max_tokens=256, telemetry=tel)
+        self.assertEqual(caught.exception.code, E.ACS_UPSTREAM_INVALID_JSON)
+        self.assertEqual(len(calls), 1)
+        self.assertFalse(tel["fallback_attempted"])
+
+    def test_malformed_error_code_does_not_raise_python_exception(self):
+        err = O._provider_error(0, {"error": {"code": ["bad"]}})
+        self.assertEqual(err.code, E.ACS_UPSTREAM_BAD_REQUEST)
+
+    def test_reasoning_read_timeout_uses_configured_budget(self):
+        captured = []
+        def make(**kw):
+            captured.append(kw["timeout"])
+            return factory(lambda req: httpx.Response(200, json=reply()))(**kw)
+        with patch.dict(os.environ, ENV, clear=True):
+            O.ResponsesClient(P.primary(), 120, make).create(model="gpt-5.4", max_tokens=256,
+                system="JSON", messages=[{"role": "user", "content": "test"}])
+        self.assertEqual(captured[0].read, 120)
+        self.assertEqual(captured[0].connect, 30)
+
+
 class PipelineTests(unittest.TestCase):
     def test_actual_call_path_native_transport_and_safe_telemetry(self):
         calls, tel, logs = [], {}, io.StringIO()
