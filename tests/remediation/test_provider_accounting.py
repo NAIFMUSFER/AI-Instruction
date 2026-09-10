@@ -130,7 +130,8 @@ def install(behaviour, thinking_capable=False):
                        top_k=None, top_p=None, extra_headers=None,
                        extra_query=None, extra_body=None, timeout=None):
                 return self._serve({"model": model, "max_tokens": max_tokens,
-                                    "system": system, "messages": messages})
+                                    "system": system, "messages": messages,
+                                    "extra_body": extra_body})
 
             def stream(self, *, max_tokens, messages, model, metadata=None,
                        stop_sequences=None, system=None, temperature=None,
@@ -138,7 +139,8 @@ def install(behaviour, thinking_capable=False):
                        extra_headers=None, extra_query=None, extra_body=None,
                        timeout=None):
                 return _Ctx(self._serve({"model": model, "max_tokens": max_tokens,
-                                         "system": system, "messages": messages}))
+                                         "system": system, "messages": messages,
+                                         "extra_body": extra_body}))
 
     class _Client(object):
         def __init__(self, *, api_key=None, base_url=None, timeout=None):
@@ -206,6 +208,13 @@ def main():
     # ═══ أ · W2-D: التكافؤ يُثبَت بالتقاط الوسائط، لا بالقراءة ════════════════
     print("\n== أ · W2-D — هل المحاولتان متطابقتان فعلاً؟ يُقاس، لا يُفترَض ==")
     deepseek_env()
+    # The old Anthropic path still omits unsupported thinking controls. It is
+    # the identical-request case now that DeepSeek uses SDK 0.40 extra_body.
+    # DeepSeek's distinct HTTP bodies are covered with the real pinned SDK in
+    # test_thinking_wire.py, not a double that discards extension arguments.
+    os.environ["ACS_LLM_PROVIDER"] = "anthropic"
+    os.environ["ACS_LLM_BASE_URL"] = ""
+    os.environ["ACS_LLM_MODEL"] = "claude-sonnet-5"
     # ردٌّ بلا نصّ إطلاقاً: الشكل الحيّ الذي كان يستدعي إعادة المحاولة.
     empty = _Msg([_Blk("thinking")], stop="max_tokens",
                  usage=_Usage(i=5692, o=16000))
@@ -224,10 +233,10 @@ def main():
         tel.get("retries_skipped"))
 
     # التكافؤ نفسه: تُبنى الوسائط للمحاولتين وتُقارَن بايتاً.
-    kw_off = {"model": "deepseek-v4-pro", "max_tokens": 16000,
+    kw_off = {"model": "claude-sonnet-5", "max_tokens": 16000,
               "system": "S", "messages": [{"role": "user", "content": "X"}]}
     kw_default = dict(kw_off)
-    chk("PROOF OF EQUIVALENCE — with sdk 0.40 the two attempts build the same "
+    chk("PROOF OF EQUIVALENCE — on the old Anthropic path the attempts build the same "
         "request, so the second cannot produce a different result",
         U._request_fingerprint(kw_off) == U._request_fingerprint(kw_default))
     chk("and a genuinely different request has a different fingerprint",
@@ -265,6 +274,7 @@ def main():
     chk("a first-attempt success sends exactly one request",
         len(sent3) == 1 and out3.strip() == '{"ok":1}', len(sent3))
     chk("and records no skip", tel3.get("retry_skipped_reason") is None)
+    deepseek_env()
 
     # ═══ ب · W2-A: محاسبة الكتل ══════════════════════════════════════════════
     print("\n== ب · W2-A — أين ذهبت رموز المخرجات ==")
