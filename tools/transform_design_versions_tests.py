@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# One-shot branch transform trigger: product files are committed by the workflow.
 from pathlib import Path
 p=Path('tests/remediation/test_persistence.js')
 s=p.read_text(encoding='utf-8')
