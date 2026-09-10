@@ -32,27 +32,19 @@ jobs:
           anchor = '\n\nif __name__ == "__main__":\n    unittest.main(verbosity=2)\n'
           if text.count(anchor) != 1:
               raise SystemExit('mandatory test entry anchor drifted')
-          block = r'''
-
-class ResidentialQualityCompanionGates(unittest.TestCase):
-    """Keep the residential fix inside a CI target that is already mandatory."""
-
-    def _run(self, cmd):
-        import subprocess
-        root = Path(__file__).resolve().parents[2]
-        proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True,
-                              timeout=60)
-        self.assertEqual(proc.returncode, 0,
-                         (proc.stdout or '') + '\n' + (proc.stderr or ''))
-
-    def test_residential_massing_contract_remains_green(self):
-        self._run([sys.executable,
-                   'tests/remediation/test_residential_quality.py'])
-
-    def test_residential_presentation_contract_remains_green(self):
-        self._run(['node',
-                   'tests/remediation/test_residential_presentation.js'])
-'''
+          block = (
+              '\n\nclass ResidentialQualityCompanionGates(unittest.TestCase):\n'
+              '    """Keep the residential fix inside an already mandatory CI target."""\n\n'
+              '    def _run(self, cmd):\n'
+              '        import subprocess\n'
+              '        root = Path(__file__).resolve().parents[2]\n'
+              '        proc = subprocess.run(cmd, cwd=root, capture_output=True, text=True, timeout=60)\n'
+              '        self.assertEqual(proc.returncode, 0, (proc.stdout or "") + "\\n" + (proc.stderr or ""))\n\n'
+              '    def test_residential_massing_contract_remains_green(self):\n'
+              '        self._run([sys.executable, "tests/remediation/test_residential_quality.py"])\n\n'
+              '    def test_residential_presentation_contract_remains_green(self):\n'
+              '        self._run(["node", "tests/remediation/test_residential_presentation.js"])\n'
+          )
           path.write_text(text.replace(anchor, block + anchor), encoding='utf-8')
           PY
 
