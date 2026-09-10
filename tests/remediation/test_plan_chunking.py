@@ -178,12 +178,11 @@ class Provider(object):
             stage, payload = "plan", self._legacy_plan_body()
         elif "تفصيل المناطق المذكورة" in body:
             stage = "detail"
-            ids = []
-            for tok_ in body.split('"id"'):
-                if ":" in tok_:
-                    v = tok_.split(":", 1)[1].strip()
-                    if v.startswith('"'):
-                        ids.append(v[1:].split('"', 1)[0])
+            # The context also contains level IDs and rooms from other groups.
+            # A detail reply must address only the explicitly requested rooms.
+            section = body.split("المناطق المطلوب تفصيلها الآن:\n", 1)[1]
+            requested = json.JSONDecoder().raw_decode(section.lstrip())[0]
+            ids = [r["id"] for r in requested]
             payload = {"rooms": [{"id": i, "rect": [0, 0, 1.8, 7.0],
                                   "role": "storage", "walls": "none",
                                   "points": [], "furniture": []}

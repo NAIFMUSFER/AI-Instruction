@@ -376,6 +376,7 @@ jobs:
                    tests/remediation/test_provider_integration.py \
                    tests/remediation/test_thinking_wire.py \
                    tests/remediation/test_plan_chunking.py \
+                   tests/remediation/test_generation_spatial_context.py \
                    tests/remediation/test_event_loop.py \
                    tests/remediation/test_provider_reject.py \
                    tests/remediation/test_multi_provider.py \

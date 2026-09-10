@@ -1417,6 +1417,12 @@ DETAIL_MSG = (
     "٦ مستويات رفّ) فالتزمه بالضبط لا تقريباً.\n"
     "لا تُخرج مناطق أخرى ولا شرحاً.\n\n")
 
+DETAIL_MSG += (
+    "target_template يحدد قالب الدور المطلوب؛ قد يتكرر id نفسه في قالب آخر. "
+    "استخدم template مع id لتمييز الغرف، والجيران من القالب نفسه لتحديد "
+    "الأبواب والنوافذ. احتفظ بـrole وwalls وwall_h إذا وردت في الخطة، "
+    "ولا تغيّر الغلاف أو ارتفاعات الأدوار.\n\n")
+
 
 OUTLINE_MSG = (
     "اقرأ طلب العميل التالي كاملاً ثم أعِد **بيان المناطق** فقط بصيغة JSON.\n"
@@ -1441,13 +1447,20 @@ OUTLINE_MSG = (
 PLAN_CHUNK_MSG = (
     "هذا بيان معتمد لمبنى، ومطلوب منك الآن **هندسة المناطق المذكورة أدناه فقط**.\n"
     "أعِد JSON بهذا الشكل حصراً: {\"rooms\":[ {\"id\",\"rect\":[x,y,w,d],"
-    "\"role\",\"walls\",\"brief\"} ]}\n"
+    "\"role\",\"walls\",\"wall_h\"?,\"brief\"} ]}\n"
     "احتفظ بنفس id بالضبط لكل منطقة مطلوبة، ولا تُخرج منطقة غير مذكورة.\n"
     "الحقل brief سطر واحد لا يتجاوز %d حرفاً: ينقل أعداد العميل وأسماءه لهذا "
     "الحيّز وحده (مثال: «١٢ محطة تغليف، ٦ مستويات رفّ»). لا تُعِد كتابة الطلب "
     "فيه، ولا تكتب تفاصيل داخلية (لا racks ولا points ولا furniture) — تلك "
     "مرحلة تالية.\n"
-    "المستطيلات داخل حدود الأرض ولا تتداخل.\n\n" % PC.BRIEF_MAX_CHARS)
+    "المستطيلات داخل حدود الأرض ولا تتداخل.\n"
+    "سياق التخطيط يضم الغلاف والأدوار وzones لكل المناطق وplanned_rooms التي "
+    "خُطّطت بالفعل. target_template هو قالب الدور الحالي. لا تغيّر الغرف "
+    "المخططة، ولا تتداخل معها في القالب نفسه، واحجز مساحة للمناطق المتبقية. "
+    "اجعل الغرف المتجاورة متلامسة مع مسار حركة متصل حسب الطلب، ونسّق مواضع "
+    "الدرج والمصعد بين الأدوار إذا كانا مطلوبين. تراكب الإحداثيات بين قالبين "
+    "مختلفين جائز؛ لا تعامل غرف الدور الآخر كعوائق في هذا الدور.\n\n"
+    % PC.BRIEF_MAX_CHARS)
 
 
 def _outline(description, model=None, btype="residential", telemetry=None,
@@ -1474,14 +1487,46 @@ def _outline(description, model=None, btype="residential", telemetry=None,
     return zones, envelope, issues
 
 
+def _plan_spatial_context(envelope, zones_by_id, results, template):
+    """Read-only context: only accepted rooms, never failed-chunk placeholders.
+
+    Rebuilt before each call, including recursive split halves, so later calls
+    see earlier accepted geometry. Template identity distinguishes stacked floors.
+    No room is moved, resized, or invented here.
+    """
+    context = {k: envelope[k] for k in
+               ("site", "levels", "floor_height", "wall_h", "wall_t")
+               if k in (envelope or {})}
+    context["target_template"] = template
+    context["zones"] = [{k: z[k] for k in ("id", "template", "role") if k in z}
+                        for z in zones_by_id.values()]
+    planned, seen = [], set()
+    for chunk, rooms, _ in results or []:
+        for room in rooms or []:
+            rid = room.get("id")
+            if rid in seen:
+                continue  # same first-result authority as merge_plan
+            seen.add(rid)
+            item = {k: room[k] for k in
+                    ("id", "rect", "role", "walls", "wall_h") if k in room}
+            item["template"] = (zones_by_id.get(rid) or {}).get(
+                "template", chunk.get("template"))
+            planned.append(item)
+    context["planned_rooms"] = planned
+    return context
+
+
 def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
-                telemetry=None, request_id=None):
+                telemetry=None, request_id=None, spatial_context=None):
     """شريحة واحدة من الخطّة — مخرجها محدود سلفاً بحجم الشريحة (F-36)."""
-    ask = [{"id": z, "role": (zones_by_id.get(z) or {}).get("role", "")}
+    ask = [{"id": z, "role": (zones_by_id.get(z) or {}).get("role", ""),
+            "template": chunk.get("template")}
            for z in chunk["zone_ids"]]
     body = (PLAN_CHUNK_MSG
             + "المناطق المطلوب هندستها الآن (%d منطقة):\n" % len(ask)
             + json.dumps(ask, ensure_ascii=False)
+            + "\n\nسياق التخطيط المشترك:\n"
+            + json.dumps(spatial_context or {}, ensure_ascii=False, separators=(",", ":"))
             + "\n\nالطلب الأصلي كاملاً (خذ منه ما يخصّ هذه المناطق):\n"
             + description)
     txt = call_llm(body, model=model, max_tokens=chunk["budget"], truncate=False,
@@ -1493,7 +1538,7 @@ def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
 
 
 def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
-                      stages, request_id=None, depth=0, rate=None):
+                      stages, request_id=None, depth=0, rate=None, envelope=None):
     """شريحة خطّة واحدة، وإن بلغت سقفها شُطرت وأُعيدت — لا رُفع سقفها (F-39).
 
     يعيد كلفة المنطقة المقيسة بعد هذه الشريحة، لتُشتقّ منها أحجام ما بعدها.
@@ -1523,7 +1568,9 @@ def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
     try:
         rooms, iss = _plan_chunk(description, chunk, zones_by_id, model=model,
                                  btype=btype, telemetry=ctel,
-                                 request_id=request_id)
+                                 request_id=request_id,
+                                 spatial_context=_plan_spatial_context(
+                                     envelope, zones_by_id, results, chunk.get("template")))
         stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
                                   chunk["index"]))
         results.append((chunk, rooms, iss))
@@ -1578,7 +1625,7 @@ def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
     for half in halves:
         rate = _plan_chunk_split(description, half, zones_by_id, model, btype,
                                  results, stages, request_id=request_id,
-                                 depth=depth + 1, rate=rate)
+                                 depth=depth + 1, rate=rate, envelope=envelope)
     return rate
 
 
@@ -1641,7 +1688,7 @@ def _plan_bounded(description, model=None, btype="residential", stages=None,
         rate = _plan_chunk_split(
             description, dict(chunk, chunk_count=projected),
             zones_by_id, model, btype, results, stages,
-            request_id=request_id, depth=0, rate=rate)
+            request_id=request_id, depth=0, rate=rate, envelope=envelope)
 
     building, merge_issues = PC.merge_plan(zones, results, envelope)
     building.setdefault("meta", {})["acs_plan_report"] = PC.plan_report(
@@ -1801,10 +1848,11 @@ def understand_deep(description, model=None, group_size=None, workers=None,
 
     gs = int(group_size or os.environ.get("ACS_GROUP_SIZE", "5"))
     wk = int(workers or os.environ.get("ACS_WORKERS", "4"))
-    ctx = json.dumps({"site": building.get("site"), "wall_h": building.get("wall_h"),
-                      "zones": [{"id": r.get("id"), "rect": r.get("rect"),
-                                 "role": r.get("role")} for _, r in plan_rooms]},
-                     ensure_ascii=False)
+    ctx = {k: building[k] for k in
+           ("site", "levels", "floor_height", "wall_h", "wall_t") if k in building}
+    ctx["zones"] = [dict({k: r[k] for k in
+                         ("id", "rect", "role", "walls", "wall_h") if k in r},
+                         template=tmpl) for tmpl, r in plan_rooms]
 
     groups = []
     for tmpl in (building.get("floors") or {}):
@@ -1827,7 +1875,9 @@ def understand_deep(description, model=None, group_size=None, workers=None,
         tmpl, rs = groups[k]
         local = []
         try:
-            det = _detail_group_split(desc, ctx, rs, model, btype, 0, local,
+            group_ctx = json.dumps(dict(ctx, target_template=tmpl),
+                                   ensure_ascii=False, separators=(",", ":"))
+            det = _detail_group_split(desc, group_ctx, rs, model, btype, 0, local,
                                       request_id=request_id)
             print("[ACS-DEEP] مجموعة %d/%d ✓ (%d منطقة)" % (k + 1, len(groups), len(det)))
             return tmpl, det
@@ -1852,6 +1902,11 @@ def understand_deep(description, model=None, group_size=None, workers=None,
             rid = str(r.get("id"))
             new = by_id.pop(rid, None)
             if new:
+                # A detail response may omit plan metadata. Merge onto the plan
+                # instead of replacing the room; protect its spatial properties.
+                detail = dict(new)
+                new = dict(r)
+                new.update(detail)
                 # §7: هندسة المرحلة الأولى مرجع. أي rect مخالف من مرحلة التفصيل
                 # يُطرَح ويُسجَّل، ولا يُعاد كتابة موضع منطقة في الخفاء.
                 if new.get("rect") and list(new["rect"]) != list(r.get("rect") or []):
@@ -1860,6 +1915,14 @@ def understand_deep(description, model=None, group_size=None, workers=None,
                         {"code": "STAGE_RECT_OVERRIDE_REJECTED",
                          "template": tmpl, "id": rid})
                 new["rect"] = r.get("rect", new.get("rect"))     # الخطة تحكم المواضع
+                for field in ("role", "walls", "wall_h"):
+                    if field in r and r[field] is not None and r[field] != "":
+                        if field in detail and detail[field] != r[field]:
+                            building.setdefault("meta", {}).setdefault(
+                                "acs_stage_diagnostics", []).append(
+                                {"code": "STAGE_FIELD_OVERRIDE_REJECTED",
+                                 "template": tmpl, "id": rid, "field": field})
+                        new[field] = r[field]
                 new.pop("brief", None)
                 merged.append(new)
             else:
