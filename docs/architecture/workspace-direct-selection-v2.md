@@ -25,3 +25,7 @@ ACS already owns reversible DOLLHOUSE/CUTAWAY/FLOOR_PLAN/SECTION presentation mo
 ## Product boundary
 
 Direct selection is not direct model mutation. A future drag/property edit must become an ordinary canonical authoring proposal/revision and pass locks, validation and measured scorecards before approval. Frozen Baseline semantics remain unchanged: downstream BIM/3D/export derives from the exact approved canonical revision only.
+
+## CI synchronization evidence
+
+The first full-CI attempt after the selection bridge reached the real Chromium mobile/documentation gate with all 65 mobile-layout assertions passing, then failed because the generated repository measurement block had drifted after the new frontend modules were added. The repair regenerated `tests/performance/bundle_report.json` and the matching `KNOWN-ISSUES.md` state using the repository's own measurement tools; no assertion or browser gate was removed. A fresh workflow run on the final human-authored head is still required before this slice can be considered green or mergeable into the RC.
