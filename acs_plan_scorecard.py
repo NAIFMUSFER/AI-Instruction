@@ -352,8 +352,8 @@ def measure_plan(model: dict) -> dict:
 
     if typology == "warehouse":
         metrics.update({
-            "zone_area_by_role_m2": {k: round(v, 6) for k, v in sorted(zone_area.items())},
-            "unclassified_zone_area_m2": round(unclassified_zone_area, 6),
+            "zone_area_by_role_m2": metrics["space_area_by_role_m2"],
+            "unclassified_zone_area_m2": metrics["unclassified_space_area_m2"],
             "dock_count": dock_count if dock_count_known else None,
             "dock_count_by_edge": dict(sorted(dock_by_edge.items())) if dock_count_known else None,
             "rack_group_count": rack_groups if rack_groups_known else None,
