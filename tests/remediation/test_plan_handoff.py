@@ -142,16 +142,26 @@ class Approved3DHandoffTests(unittest.TestCase):
             self.assertFalse(any('evidence' in ref for ref in linked))
             self.assertTrue(H.verify_compiled_artifact(out)['ok'])
 
-    def test_unlinked_warehouse_elements_are_not_given_invented_requirement_links(self):
+    def test_unlinked_warehouse_elements_keep_identity_without_invented_requirement_links(self):
         ws, rev = workspace_with(warehouse_model())
         def fake(_building, path):
             Path(path).write_text('{"asset":{"version":"2.0"}}', encoding="utf-8")
             return 1, 12
         with tempfile.TemporaryDirectory() as td:
             receipt = H.compile_approved_baseline(ws, rev.id, Path(td) / 'warehouse.gltf', compiler=fake)
-        self.assertEqual(len(receipt['source_map']), 1)
-        self.assertEqual(receipt['source_map'][0]['source']['kind'], 'space')
-        self.assertEqual(receipt['source_map'][0]['requirement_refs'], [])
+        entries = receipt['source_map']
+        self.assertEqual(len(entries), 4)
+        by_identity = {
+            (e['source'].get('kind'), e['source'].get('collection'), e['source'].get('element_id')): e
+            for e in entries
+        }
+        self.assertIn(('space', None, None), by_identity)
+        self.assertIn(('element', 'racks', 'rack_a'), by_identity)
+        self.assertIn(('element', 'docks', 'dock_n1'), by_identity)
+        self.assertIn(('element', 'lanes', 'aisle_main'), by_identity)
+        self.assertTrue(all(e['requirement_refs'] == [] for e in entries))
+        self.assertTrue(all(isinstance(e['source_id'], str) and e['source_id'].startswith('plan_')
+                            for e in entries))
 
     def test_linked_nested_element_without_stable_id_fails_before_compiler(self):
         m = warehouse_model()

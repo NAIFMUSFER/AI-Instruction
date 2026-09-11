@@ -6,8 +6,11 @@ DXF requires optional ezdxf; native AutoCAD/DWG compatibility is not certified.
 
 The provenance map is deliberately requirement-aware but never guesses links.
 An entity is connected to a Program-of-Requirements item only through an explicit
-``requirement_ids`` array stored on that canonical entity.  Missing links remain
-empty; unknown/malformed links fail closed at projection/handoff time.
+``requirement_ids`` array stored on that canonical entity. Missing links remain
+empty; unknown/malformed links fail closed at projection/handoff time. Canonical
+nested elements with a stable explicit ``id`` still receive a plan provenance
+identity even when no requirement link exists, so downstream 3D/export receipts
+can preserve plan identity without fabricating requirement evidence.
 """
 from __future__ import annotations
 import hashlib
@@ -90,7 +93,7 @@ def _requirement_refs(entity: dict, requirement_index: dict[str, dict]) -> list[
         ref = {
             'requirement_id': rid,
             'source': req['source'],
-            # External source/document identity is preserved when supplied.  It
+            # External source/document identity is preserved when supplied. It
             # is never fabricated from free text or from a standard registry.
             'source_id': req.get('source_id'),
         }
@@ -108,13 +111,17 @@ def provenance_map(revision: Revision) -> dict:
     """Return deterministic plan→requirement provenance without inference.
 
     Space instances are always listed so CAD/3D can retain a stable identity.
-    Nested elements are listed only when they carry explicit ``requirement_ids``;
-    this avoids pretending that an unlinked rack, dock, door, or other object was
-    requested by any particular requirement.
+    Nested elements are listed whenever they carry a stable explicit canonical
+    ``id``. Their requirement refs remain empty unless explicit ``requirement_ids``
+    prove a link. Unidentified presentation-only nested elements are not promoted
+    into engineering identities; a linked nested element without a stable id fails
+    closed rather than receiving an invented identity. Duplicate explicit nested
+    identities also fail closed; array position is never used to disambiguate them.
     """
     model = revision.model
     requirements, requirement_index = _requirements(revision)
     entries = []
+    seen_element_identities = set()
     levels = model.get('levels')
     floors = model.get('floors')
     if not isinstance(levels, list) or not isinstance(floors, dict):
@@ -147,17 +154,21 @@ def provenance_map(revision: Revision) -> dict:
                 for item in items:
                     if not isinstance(item, dict):
                         raise PlanError('INVALID_PROVENANCE', 'Canonical nested element is malformed')
-                    if item.get('requirement_ids') is None:
-                        continue
                     refs = _requirement_refs(item, requirement_index)
-                    if not refs:
+                    item_id = item.get('id')
+                    if not _stable_id(item_id):
+                        if refs:
+                            raise PlanError('AMBIGUOUS_PROVENANCE_TARGET',
+                                            'Linked nested element requires a stable explicit id')
                         continue
-                    if not _stable_id(item.get('id')):
-                        raise PlanError('AMBIGUOUS_PROVENANCE_TARGET',
-                                        'Linked nested element requires a stable explicit id')
                     identity = {'kind': 'element', 'level_index': level['index'],
                                 'template': template, 'room_id': room['id'],
-                                'collection': collection, 'element_id': item['id']}
+                                'collection': collection, 'element_id': item_id}
+                    identity_key = canonical(identity)
+                    if identity_key in seen_element_identities:
+                        raise PlanError('AMBIGUOUS_PROVENANCE_TARGET',
+                                        'Duplicate nested canonical element identity')
+                    seen_element_identities.add(identity_key)
                     entries.append({'source_id': _source_id(identity), 'source': identity,
                                     'requirement_refs': refs})
     payload = {
