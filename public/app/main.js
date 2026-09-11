@@ -28,6 +28,9 @@ import './trust/wiring.js';
    التي تنشرها الوحدات أعلاه، و window.ACS.exportModel التي ينشرها
    ui/workspace-ui-wiring.js. */
 import './ui/panels-entry.js';
+/* Viewport selection reuses the existing renderer + lazy Phase 6 workspace.
+   It adds presentation-only hit/highlight wiring and never writes model JSON. */
+import './ui/workspace-viewport-selection-runtime.js';
 /* Residential visual-quality policy. It runs after the panel lazy-loader exists. */
 import './ui/residential-quality.js';
 /* Recover long generation through short authenticated job requests. */
