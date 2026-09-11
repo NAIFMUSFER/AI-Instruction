@@ -282,6 +282,20 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
         seen.add(rid)
         source, expected = r.get("source"), r.get("expected")
         evidence = r.get("evidence")
+        source_span = r.get("source_span", _MISSING)
+        if source_span is not _MISSING:
+            span_valid = (
+                isinstance(source_span, dict)
+                and set(source_span) == {"start", "end"}
+                and type(source_span.get("start")) is int
+                and type(source_span.get("end")) is int
+                and 0 <= source_span["start"] < source_span["end"] <= len(text)
+            )
+            if not span_valid:
+                issue("INVALID_SOURCE_SPAN", rid)
+            elif (not isinstance(evidence, str)
+                  or text[source_span["start"]:source_span["end"]] != evidence):
+                issue("SOURCE_SPAN_MISMATCH", rid)
         if source not in ("requested", "inferred", "unknown"):
             issue("INVALID_PROVENANCE", rid)
         elif source == "requested" and (not isinstance(evidence, str) or not evidence.strip() or evidence not in text):
