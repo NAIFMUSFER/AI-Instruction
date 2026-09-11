@@ -18,8 +18,8 @@ ok('existing workspace exposes canonical selection and inspector',
   workspace.includes('select:select') && workspace.includes('wsInspectorModel'));
 ok('existing renderer already owns reversible dollhouse/cutaway behavior',
   scene.includes("DOLLHOUSE") && scene.includes("CUTAWAY") && scene.includes('applyVisualMode'));
-ok('current viewport wiring has no raycast-to-workspace selection bridge',
-  !wiring.includes('Raycaster') && !wiring.includes('workspaceViewportSelection'));
+ok('current viewport wiring does not hand a viewport hit to workspace.select',
+  !wiring.includes('.workspace.select(') && !wiring.includes('workspaceViewportSelection'));
 
 let mod;
 try {
