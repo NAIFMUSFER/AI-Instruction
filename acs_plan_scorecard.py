@@ -1,0 +1,276 @@
+"""Deterministic, non-regulatory scorecard for ACS plan-first canonical models.
+
+This module only measures geometry and explicit operational data already present in
+canonical Building JSON. It does not infer code compliance, required clearances,
+storage capacity, throughput, safety, or daylight. Missing inputs remain unknown.
+No provider, network, CAD, compiler, or production route is imported here.
+"""
+from __future__ import annotations
+
+import math
+from collections import defaultdict
+from typing import Any
+
+SCHEMA = "acs.plan-scorecard/1.0"
+EPS = 1e-9
+_INDUSTRIAL = {"warehouse", "industrial", "factory", "logistics", "مستودع"}
+
+
+def _finite(value: Any) -> bool:
+    return type(value) in (int, float) and math.isfinite(value)
+
+
+def _positive(value: Any) -> bool:
+    return _finite(value) and value > 0
+
+
+def _count(value: Any, *, default: int = 1) -> int | None:
+    if value is None:
+        return default
+    if type(value) is int and value >= 0:
+        return value
+    return None
+
+
+def _typology(model: dict) -> str:
+    meta = model.get("meta") if isinstance(model.get("meta"), dict) else {}
+    raw = str(meta.get("type") or meta.get("building_type") or "").strip().lower()
+    if raw in _INDUSTRIAL:
+        return "warehouse"
+    # Do not classify a non-industrial model from a single generic room role.
+    if raw:
+        return raw
+    return "unknown"
+
+
+def _level_templates(model: dict) -> tuple[list[str], list[str]]:
+    """Return valid template instances and disclosure warnings.
+
+    Repeated templates are repeated intentionally because measured areas/counts are
+    building-instance metrics, not template-library metrics.
+    """
+    floors = model.get("floors") if isinstance(model.get("floors"), dict) else {}
+    levels = model.get("levels")
+    warnings: list[str] = []
+    if not isinstance(levels, list) or not levels:
+        return [], ["LEVELS_NOT_MEASURABLE"]
+    templates: list[str] = []
+    seen_indices: set[int] = set()
+    for level in levels:
+        if not isinstance(level, dict) or type(level.get("index")) is not int:
+            warnings.append("INVALID_LEVEL_IDENTITY")
+            continue
+        if level["index"] in seen_indices:
+            warnings.append("DUPLICATE_LEVEL_INDEX")
+            continue
+        seen_indices.add(level["index"])
+        template = level.get("template")
+        if not isinstance(template, str) or template not in floors:
+            warnings.append("LEVEL_TEMPLATE_NOT_MEASURABLE")
+            continue
+        templates.append(template)
+    return templates, warnings
+
+
+def _rect_area(rect: Any) -> float | None:
+    if (not isinstance(rect, list) or len(rect) != 4
+            or not all(_finite(v) for v in rect)
+            or rect[2] <= 0 or rect[3] <= 0):
+        return None
+    area = rect[2] * rect[3]
+    return area if math.isfinite(area) else None
+
+
+def _lane_area(lane: Any) -> float | None:
+    if not isinstance(lane, dict):
+        return None
+    w, d = lane.get("w"), lane.get("d")
+    if not (_positive(w) and _positive(d)):
+        return None
+    area = w * d
+    return area if math.isfinite(area) else None
+
+
+def measure_plan(model: dict) -> dict:
+    """Measure a canonical plan without inventing missing engineering facts.
+
+    Returned values are descriptive measurements only. In particular:
+    - `space_rect_area_m2` is not GFA/NFA.
+    - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
+      clearance or safety-compliance result.
+    - `rack_group_count` counts declared rack groups, not pallet positions.
+    - storage capacity and throughput stay unavailable unless a future canonical
+      contract defines sufficient source data and its calculation semantics.
+    """
+    if not isinstance(model, dict):
+        raise TypeError("model must be a dict")
+
+    typology = _typology(model)
+    floors = model.get("floors") if isinstance(model.get("floors"), dict) else {}
+    templates, warnings = _level_templates(model)
+
+    site = model.get("site") if isinstance(model.get("site"), dict) else {}
+    sw, sd = site.get("w"), site.get("d")
+    site_area = sw * sd if _positive(sw) and _positive(sd) else None
+    if site_area is not None and not math.isfinite(site_area):
+        site_area = None
+    if site_area is None:
+        warnings.append("SITE_AREA_NOT_MEASURABLE")
+
+    space_area = 0.0
+    space_area_known = bool(templates)
+    zone_area: defaultdict[str, float] = defaultdict(float)
+    unclassified_zone_area = 0.0
+
+    dock_count = 0
+    dock_count_known = bool(templates)
+    dock_by_edge: defaultdict[str, int] = defaultdict(int)
+    rack_groups = 0
+    rack_groups_known = bool(templates)
+    rack_declared_levels = 0
+    rack_levels_complete = bool(templates)
+    station_count = 0
+    station_count_known = bool(templates)
+    lane_area: defaultdict[str, float] = defaultdict(float)
+    lane_area_complete = bool(templates)
+
+    for template in templates:
+        floor = floors.get(template)
+        rooms = floor.get("rooms") if isinstance(floor, dict) else None
+        if not isinstance(rooms, list):
+            warnings.append("ROOMS_NOT_MEASURABLE")
+            space_area_known = False
+            dock_count_known = rack_groups_known = station_count_known = False
+            rack_levels_complete = lane_area_complete = False
+            continue
+        for room in rooms:
+            if not isinstance(room, dict):
+                warnings.append("ROOM_NOT_MEASURABLE")
+                space_area_known = False
+                continue
+            area = _rect_area(room.get("rect"))
+            if area is None:
+                warnings.append("SPACE_AREA_NOT_MEASURABLE")
+                space_area_known = False
+            else:
+                space_area += area
+                role = room.get("role")
+                if isinstance(role, str) and role.strip():
+                    zone_area[role.strip().lower()] += area
+                else:
+                    unclassified_zone_area += area
+
+            docks = room.get("docks") or []
+            if not isinstance(docks, list):
+                dock_count_known = False
+            else:
+                for dock in docks:
+                    if not isinstance(dock, dict):
+                        dock_count_known = False
+                        continue
+                    count = _count(dock.get("count"))
+                    edge = str(dock.get("edge") or "").upper()
+                    if count is None:
+                        dock_count_known = False
+                        continue
+                    dock_count += count
+                    if edge in {"N", "S", "E", "W"}:
+                        dock_by_edge[edge] += count
+                    elif count:
+                        warnings.append("DOCK_EDGE_NOT_CLASSIFIED")
+
+            racks = room.get("racks") or []
+            if not isinstance(racks, list):
+                rack_groups_known = False
+                rack_levels_complete = False
+            else:
+                for rack in racks:
+                    if not isinstance(rack, dict):
+                        rack_groups_known = False
+                        rack_levels_complete = False
+                        continue
+                    rack_groups += 1
+                    levels = rack.get("levels")
+                    if type(levels) is int and levels > 0:
+                        rack_declared_levels += levels
+                    else:
+                        rack_levels_complete = False
+
+            stations = room.get("stations") or []
+            if not isinstance(stations, list):
+                station_count_known = False
+            else:
+                for station in stations:
+                    if not isinstance(station, dict):
+                        station_count_known = False
+                        continue
+                    count = _count(station.get("count"))
+                    if count is None:
+                        station_count_known = False
+                    else:
+                        station_count += count
+
+            lanes = room.get("lanes") or []
+            if not isinstance(lanes, list):
+                lane_area_complete = False
+            else:
+                for lane in lanes:
+                    area = _lane_area(lane)
+                    kind = (str(lane.get("kind") or "unknown").strip().lower()
+                            if isinstance(lane, dict) else "unknown")
+                    if area is None:
+                        lane_area_complete = False
+                    else:
+                        lane_area[kind] += area
+
+    metrics: dict[str, Any] = {
+        "site_area_m2": round(site_area, 6) if site_area is not None else None,
+        "level_count": len(templates) if templates else None,
+        "space_rect_area_m2": round(space_area, 6) if space_area_known else None,
+        "gross_floor_area_m2": None,
+        "net_floor_area_m2": None,
+        "efficiency": None,
+    }
+
+    unavailable = {
+        "gross_floor_area_m2": "No canonical gross-envelope calculation is defined here.",
+        "net_floor_area_m2": "No canonical net-area classification is defined here.",
+        "efficiency": "GFA/NFA are not established, so efficiency is not computed.",
+    }
+
+    if typology == "warehouse":
+        metrics.update({
+            "zone_area_by_role_m2": {k: round(v, 6) for k, v in sorted(zone_area.items())},
+            "unclassified_zone_area_m2": round(unclassified_zone_area, 6),
+            "dock_count": dock_count if dock_count_known else None,
+            "dock_count_by_edge": dict(sorted(dock_by_edge.items())) if dock_count_known else None,
+            "rack_group_count": rack_groups if rack_groups_known else None,
+            "rack_declared_level_sum": rack_declared_levels if rack_levels_complete else None,
+            "station_count": station_count if station_count_known else None,
+            "lane_area_by_kind_m2": ({k: round(v, 6) for k, v in sorted(lane_area.items())}
+                                     if lane_area_complete else None),
+            "storage_capacity_positions": None,
+            "throughput_per_hour": None,
+            "travel_distance_m": None,
+            "pedestrian_vehicle_separation_compliance": None,
+            "fire_life_safety_compliance": None,
+        })
+        unavailable.update({
+            "storage_capacity_positions": "Rack group geometry does not define a canonical slot/capacity contract.",
+            "throughput_per_hour": "No measured flow/time model is present in canonical Building JSON.",
+            "travel_distance_m": "No routed origin/destination path set is supplied to this scorecard.",
+            "pedestrian_vehicle_separation_compliance": "Lane rectangles alone cannot prove safety compliance.",
+            "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
+        })
+
+    # Deduplicate disclosure codes while keeping deterministic order.
+    warnings = sorted(set(warnings))
+    return {
+        "schema": SCHEMA,
+        "typology": typology,
+        "metrics": metrics,
+        "unavailable": unavailable,
+        "warnings": warnings,
+        "claims_regulatory_compliance": False,
+        "claims_structural_safety": False,
+    }
