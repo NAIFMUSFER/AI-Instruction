@@ -20,7 +20,7 @@ on:
       - 'tests/remediation/test_plan_options.py'
       - 'tests/remediation/test_plan_semantic_locks.py'
       - 'tests/remediation/test_plan_lock_binding.py'
-      - 'tests/remediation/test_plan_store.py'
+      - 'tests/remediation/test_plan_store*.py'
       - 'tests/remediation/test_plan_handoff.py'
       - 'tests/remediation/test_plan_handoff_large.py'
       - '.github/workflows/plan-first-contracts.yml'
@@ -51,6 +51,11 @@ jobs:
           assert 'acs_compiler' not in sys.modules
           assert 'ezdxf' not in sys.modules
           PYTHON
+      - name: Persisted receipt row-binding regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_store_row_binding.py 2>&1 | tee logs/plan-store-row-binding.log
       - name: Install existing locks and optional CAD test dependency
         run: |
           python -m pip install -r requirements.txt -r requirements-dev.txt
