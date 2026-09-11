@@ -14,6 +14,7 @@ function ok(name, value) { assert.ok(value, name); checks++; console.log('PASS '
 const wiring = read('public/app/ui/workspace-ui-wiring.js');
 const workspace = read('public/app/generated/workspace-ui.js');
 const scene = read('public/app/render/scene.js');
+const main = read('public/app/main.js');
 ok('existing workspace exposes canonical selection and inspector',
   workspace.includes('select:select') && workspace.includes('wsInspectorModel'));
 ok('existing renderer already owns reversible dollhouse/cutaway behavior',
@@ -29,6 +30,10 @@ try {
   process.exitCode = 1;
   process.exit();
 }
+
+ok('main entry graph declares both side-effect-free selection logic and runtime wiring',
+  main.includes("import './ui/workspace-viewport-selection.js';")
+  && main.includes("import './ui/workspace-viewport-selection-runtime.js';"));
 
 const building = {
   meta:{name:'Selection fixture'},
