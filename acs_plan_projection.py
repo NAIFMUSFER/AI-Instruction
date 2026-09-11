@@ -3,15 +3,25 @@
 SVG/DXF share the same primitive list. These are not complete working drawings:
 no wall thickness offset, opening geometry, structural grids, or MEP is invented.
 DXF requires optional ezdxf; native AutoCAD/DWG compatibility is not certified.
+
+The provenance map is deliberately requirement-aware but never guesses links.
+An entity is connected to a Program-of-Requirements item only through an explicit
+``requirement_ids`` array stored on that canonical entity.  Missing links remain
+empty; unknown/malformed links fail closed at projection/handoff time.
 """
 from __future__ import annotations
 import hashlib
 import io
 import json
 import xml.etree.ElementTree as ET
-from acs_plan_review import Revision, PlanError, _geometry, canonical
+from acs_plan_review import Revision, PlanError, _geometry, canonical, digest
 
 SCOPE = 'SPACE_BOUNDARIES_ONLY'
+PROVENANCE_SCHEMA = 'acs.plan-provenance/1.0'
+_LINKED_ELEMENT_COLLECTIONS = (
+    'racks', 'docks', 'lanes', 'stations', 'doors', 'windows',
+    'objects', 'points', 'furniture',
+)
 
 
 def _text(value):
@@ -19,6 +29,126 @@ def _text(value):
     return ''.join(ch for ch in str(value) if ord(ch) in (9, 10, 13)
                    or 0x20 <= ord(ch) <= 0xD7FF or 0xE000 <= ord(ch) <= 0xFFFD
                    or 0x10000 <= ord(ch) <= 0x10FFFF)
+
+
+def _stable_id(value):
+    return isinstance(value, str) and bool(value.strip()) and len(value) <= 160
+
+
+def _requirements(revision: Revision) -> tuple[list[dict], dict[str, dict]]:
+    try:
+        rows = json.loads(revision.requirements_json)
+    except (AttributeError, json.JSONDecodeError) as exc:
+        raise PlanError('INVALID_PROVENANCE', 'Revision requirements are unavailable') from exc
+    if not isinstance(rows, list):
+        raise PlanError('INVALID_PROVENANCE', 'Revision requirements must be an array')
+    index = {}
+    for row in rows:
+        rid = row.get('id') if isinstance(row, dict) else None
+        if not _stable_id(rid) or rid in index:
+            raise PlanError('INVALID_PROVENANCE', 'Requirement identities must be unique and stable')
+        source = row.get('source')
+        if source not in ('requested', 'inferred', 'unknown'):
+            raise PlanError('INVALID_PROVENANCE', 'Requirement provenance source is invalid')
+        external_source = row.get('source_id')
+        if external_source is not None and not _stable_id(external_source):
+            raise PlanError('INVALID_PROVENANCE', 'Requirement source_id must be a bounded stable string')
+        index[rid] = row
+    return rows, index
+
+
+def _requirement_refs(entity: dict, requirement_index: dict[str, dict]) -> list[dict]:
+    raw = entity.get('requirement_ids')
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        raise PlanError('INVALID_PROVENANCE_LINK', 'requirement_ids must be an explicit array')
+    if any(not _stable_id(rid) for rid in raw) or len(set(raw)) != len(raw):
+        raise PlanError('INVALID_PROVENANCE_LINK', 'Requirement links must be unique stable ids')
+    out = []
+    for rid in raw:
+        req = requirement_index.get(rid)
+        if req is None:
+            raise PlanError('INVALID_PROVENANCE_LINK', 'Canonical entity references an unknown requirement')
+        out.append({
+            'requirement_id': rid,
+            'source': req['source'],
+            # External source/document identity is preserved when supplied.  It
+            # is never fabricated from free text or from a standard registry.
+            'source_id': req.get('source_id'),
+        })
+    return out
+
+
+def _source_id(identity: dict) -> str:
+    return 'plan_' + hashlib.sha256(canonical(identity).encode('utf-8')).hexdigest()
+
+
+def provenance_map(revision: Revision) -> dict:
+    """Return deterministic plan→requirement provenance without inference.
+
+    Space instances are always listed so CAD/3D can retain a stable identity.
+    Nested elements are listed only when they carry explicit ``requirement_ids``;
+    this avoids pretending that an unlinked rack, dock, door, or other object was
+    requested by any particular requirement.
+    """
+    model = revision.model
+    requirements, requirement_index = _requirements(revision)
+    entries = []
+    levels = model.get('levels')
+    floors = model.get('floors')
+    if not isinstance(levels, list) or not isinstance(floors, dict):
+        raise PlanError('INVALID_PROVENANCE', 'Canonical level/floor identity is unavailable')
+    for level in levels:
+        if (not isinstance(level, dict) or type(level.get('index')) is not int
+                or not _stable_id(level.get('template'))):
+            raise PlanError('INVALID_PROVENANCE', 'Canonical level identity is malformed')
+        template = level['template']
+        floor = floors.get(template)
+        rooms = floor.get('rooms') if isinstance(floor, dict) else None
+        if not isinstance(rooms, list):
+            raise PlanError('INVALID_PROVENANCE', 'Canonical level template has no rooms array')
+        for room in rooms:
+            if not isinstance(room, dict) or not _stable_id(room.get('id')):
+                raise PlanError('INVALID_PROVENANCE', 'Canonical room identity is malformed')
+            base = {'kind': 'space', 'level_index': level['index'],
+                    'template': template, 'room_id': room['id']}
+            entries.append({
+                'source_id': _source_id(base),
+                'source': base,
+                'requirement_refs': _requirement_refs(room, requirement_index),
+            })
+            for collection in _LINKED_ELEMENT_COLLECTIONS:
+                items = room.get(collection)
+                if items is None:
+                    continue
+                if not isinstance(items, list):
+                    raise PlanError('INVALID_PROVENANCE', 'Canonical nested element collection is malformed')
+                for item in items:
+                    if not isinstance(item, dict):
+                        raise PlanError('INVALID_PROVENANCE', 'Canonical nested element is malformed')
+                    if item.get('requirement_ids') is None:
+                        continue
+                    refs = _requirement_refs(item, requirement_index)
+                    if not refs:
+                        continue
+                    if not _stable_id(item.get('id')):
+                        raise PlanError('AMBIGUOUS_PROVENANCE_TARGET',
+                                        'Linked nested element requires a stable explicit id')
+                    identity = {'kind': 'element', 'level_index': level['index'],
+                                'template': template, 'room_id': room['id'],
+                                'collection': collection, 'element_id': item['id']}
+                    entries.append({'source_id': _source_id(identity), 'source': identity,
+                                    'requirement_refs': refs})
+    payload = {
+        'schema': PROVENANCE_SCHEMA,
+        'revision_id': revision.id,
+        'model_hash': revision.model_hash,
+        'requirements_hash': digest(requirements),
+        'entries': entries,
+    }
+    payload['provenance_hash'] = digest(payload)
+    return json.loads(canonical(payload))
 
 
 def project(revision: Revision, level_index: int) -> dict:
@@ -31,12 +161,21 @@ def project(revision: Revision, level_index: int) -> dict:
     level = next((v for v in model['levels'] if v['index'] == level_index), None)
     if level is None:
         raise PlanError('LEVEL_NOT_FOUND', 'Requested level is absent')
+    provenance = provenance_map(revision)
+    space_sources = {
+        (e['source']['level_index'], e['source']['template'], e['source']['room_id']): e
+        for e in provenance['entries'] if e['source']['kind'] == 'space'
+    }
     primitives = []
     for room in model['floors'][level['template']]['rooms']:
-        source = {'level_index': level_index, 'template': level['template'], 'room_id': room['id']}
-        sid = 'space_' + hashlib.sha256(canonical(source).encode('utf-8')).hexdigest()
+        key = (level_index, level['template'], room['id'])
+        source_record = space_sources.get(key)
+        if source_record is None:
+            raise PlanError('PROVENANCE_MISMATCH', 'Projected space is missing its canonical provenance identity')
         x, z, w, d = room['rect']
-        primitives.append({'source_id': sid, 'source': source,
+        primitives.append({'source_id': source_record['source_id'],
+            'source': source_record['source'],
+            'requirement_refs': source_record['requirement_refs'],
             'rect_xz_m': list(room['rect']),
             # CAD Y points north; ACS Z increases south. Inverse is z=-y.
             'cad_polygon_xy_m': [[x, -z], [x + w, -z], [x + w, -(z + d)], [x, -(z + d)]],
@@ -45,6 +184,10 @@ def project(revision: Revision, level_index: int) -> dict:
     return {'scope': SCOPE, 'units': 'm', 'revision_id': revision.id,
             'model_hash': revision.model_hash, 'level_index': level_index,
             'site': model['site'], 'primitives': primitives,
+            'provenance_schema': provenance['schema'],
+            'requirements_hash': provenance['requirements_hash'],
+            'provenance_hash': provenance['provenance_hash'],
+            'source_map': provenance['entries'],
             'not_projected': ['wall_thickness', 'doors', 'windows', 'structural_grid', 'MEP'],
             'construction_approved': False}
 
@@ -93,7 +236,7 @@ def to_dxf(revision: Revision, level_index: int) -> dict:
         entity = space.add_lwpolyline(item['cad_polygon_xy_m'], close=True,
                                      dxfattribs={'layer': 'ACS_SPACE_BOUNDARIES'})
         entity.set_xdata('ACS_PLAN', [(1000, item['source_id']), (1000, p['revision_id']),
-                                     (1000, p['model_hash'])])
+                                     (1000, p['model_hash']), (1000, p['requirements_hash'])])
         x, z, w, d = item['rect_xz_m']
         space.add_text(item['label'].replace('\n', ' ').replace('\r', ' '),
             dxfattribs={'insert': (x + .1 * w, -(z + .5 * d)), 'height': min(w, d) * .1,
