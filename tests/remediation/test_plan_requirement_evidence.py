@@ -139,7 +139,7 @@ class RequirementEvidenceTests(unittest.TestCase):
         with self.assertRaises(P.PlanError) as caught:
             ws.approve(rev.id, expected_head=rev.id, actor_label="Engineer",
                        confirmed=True, acknowledge_concept_only=True)
-        self.assertEqual(caught.exception.code, "APPROVAL_BLOCKED")
+        self.assertEqual(caught.exception.code, "PLAN_NOT_READY")
 
 
 if __name__ == "__main__":
