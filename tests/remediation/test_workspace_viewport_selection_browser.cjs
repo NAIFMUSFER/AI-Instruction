@@ -64,7 +64,9 @@ window.__bridge=installWorkspaceViewportSelection({THREE,renderer:{domElement:ca
         // WebKit/Chromium then supply the same primary-pointer/button semantics a user click has.
         await page.mouse.click(box.x+100,box.y+100);
         await page.waitForFunction(()=>window.ACS.workspace&&window.ACS.workspace.selected==='door_guest');
-        ok(name+' exact door click opens existing workspace and selects canonical door',await page.evaluate(()=>window.__openCount===1&&window.ACS.workspace.opened&&window.ACS.workspace.selected==='door_guest'));
+        const doorState=await page.evaluate(()=>({openCount:window.__openCount,opened:window.ACS.workspace&&window.ACS.workspace.opened,selected:window.ACS.workspace&&window.ACS.workspace.selected}));
+        console.log('DOOR_STATE '+name+' '+JSON.stringify(doorState));
+        ok(name+' exact door click opens existing workspace and selects canonical door',doorState.openCount===1&&doorState.opened===true&&doorState.selected==='door_guest');
         ok(name+' selection writes an accessible status without changing model',await page.evaluate(()=>document.getElementById('acsLiveRegion').textContent.includes('door_guest')&&JSON.stringify(window.__fixture.building)===window.__fixture.before));
         ok(name+' selection highlight is presentation-only outside canonical model',await page.evaluate(()=>window.__scene.items.length===1&&window.__scene.items[0].userData.presentation_context===true&&window.__scene.items[0].source===window.__fixture.door));
 
