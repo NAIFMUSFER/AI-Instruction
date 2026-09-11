@@ -4,6 +4,11 @@ on:
     branches: [feature/plan-first-pipeline-v2, feature/plan-first-durable-store]
   pull_request:
     paths:
+      - 'public/plan-review/**'
+      - 'tools/acs_plan_review_packet.py'
+      - 'tests/remediation/test_plan_review_packet.*'
+      - 'tests/remediation/test_plan_review_ui.cjs'
+      - '.github/workflows/plan-review-ui.yml'
       - 'acs_plan_review.py'
       - 'acs_plan_bridge.py'
       - 'acs_plan_projection.py'

@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>ACS | مراجعة المخطط 2D</title>
+<link rel="stylesheet" href="./review.css">
+<script type="module" src="./review.mjs"></script>
+</head>
+<body>
+<a class="skip" href="#workspace">انتقل إلى المخطط</a>
+<header><div><span class="eyebrow">AI CONSTRUCTION STUDIO · DESIGN PIPELINE V2</span><h1>مراجعة المخطط <bdi>2D</bdi></h1><p>افهم النسخة، راجع مساحاتها، وتتبّع مصادر متطلباتها قبل الاعتماد.</p></div><a href="/">الاستوديو الحالي ←</a></header>
+<main>
+<div class="notice"><strong>عرض ملف محلي فقط — ليس اعتمادًا هندسيًا</strong><p>الملفات لا تُرفع إلى الخادم ولا تُحفظ في المتصفح. فحص البصمة يكشف تلف الملف، ولا يثبت هوية مُصدره. التعديل والأقفال والاعتماد و3D تتطلب الربط الموثق بالخادم ولم تُفعّل في هذه الواجهة.</p></div>
+<section class="import-bar" aria-label="استيراد نسخ المراجعة">
+<label class="file-label" for="files">فتح ملفات المراجعة <span>حتى 8 نسخ، وبحد 5 MB للملف</span><input id="files" type="file" accept=".json,application/json" multiple></label>
+<button id="clear" type="button">إزالة الملفات من العرض</button>
+</section>
+<p id="status" role="status" aria-live="polite">لا توجد ملفات محمّلة.</p>
+<p id="error" role="alert" hidden></p>
+<section id="empty" class="empty"><span class="empty-symbol" aria-hidden="true">▤</span><h2>ابدأ بنسخة فعلية من مشروعك</h2><p>افتح ملف <bdi>.acs-review.json</bdi> الصادر من Canonical ACS Model. لا توجد مخططات تجريبية أو بيانات جاهزة في هذه الصفحة.</p><details><summary>كيف يُنشأ ملف المراجعة حاليًا؟</summary><p>من أدوات المشروع، استخدم ملفًا يحتوي على <bdi>building / brief / requirements</bdi>:</p><code dir="ltr">python tools/acs_plan_review_packet.py input.json output.acs-review.json</code><p>هذا المسار لا يولّد تصميمًا ولا يعتمد مسودة؛ يعرض المخطط المقدم ونتائج مراجعته فقط.</p></details></section>
+<section id="workspace" tabindex="-1" hidden>
+<div class="controls"><label for="revision">النسخة<select id="revision"></select></label><label for="level">الدور<select id="level"></select></label><div class="zoom"><button id="zoomIn" aria-label="تكبير المخطط" type="button">+</button><button id="zoomOut" aria-label="تصغير المخطط" type="button">−</button><button id="fit" type="button">ملاءمة العرض</button></div></div>
+<div class="workspace-grid"><section class="drawing"><h2>حدود الفراغات بالمتر</h2><p class="subtle">عرض تخطيطي فقط. الجدران بسماكاتها والفتحات والرفوف والأرصفة ومسارات السلامة ليست مرسومة في هذه المرحلة؛ بياناتها وروابطها لا تُحذف من النموذج الأصلي.</p><svg id="plan" xmlns="http://www.w3.org/2000/svg" role="group" aria-label="مخطط الفراغات القابلة للاختيار"><title>مخطط الفراغات</title></svg><p id="extent" class="subtle"></p></section><aside><section class="card"><h2>تفاصيل الفراغ المحدد</h2><div id="selection" aria-live="polite">اختر فراغًا من المخطط أو القائمة.</div></section><section class="card"><h2>الفراغات</h2><div id="spaces" class="space-list"></div></section></aside></div>
+<div class="review-grid"><section class="card"><h2>قياسات النسخة</h2><p class="subtle">من Scorecard المصدر؛ ليست إعادة قياس مستقلة في المتصفح.</p><dl id="metrics"></dl></section><section class="card"><h2>فحوصات الملف</h2><p class="subtle">نتائج مرفقة بالملف؛ غير موثقة من خادم في هذه الجلسة.</p><dl id="scopes"></dl><ul id="issues"></ul></section><section class="card"><h2>الأقفال المسجلة</h2><p class="subtle">عرض فقط؛ تغيير القفل يجب أن ينشئ Revision على الخادم.</p><ul id="locks"></ul></section></div>
+<section class="card"><h2>المتطلبات ومصادرها</h2><div id="requirements" class="requirements"></div></section>
+<section class="card"><h2>هوية النسخة</h2><dl id="identity"></dl><p class="subtle">Canonical ACS Model هو مصدر الحقيقة. هذه الصفحة ليست CAD مستقلًا ولا مسار اعتماد أو إعادة تخطيط 3D.</p></section>
+</section>
+</main><footer>ACS Design Pipeline v2 · واجهة مراجعة للقراءة فقط · لا ادعاء بامتثال تنظيمي أو اعتماد إنشائي</footer>
+</body></html>
