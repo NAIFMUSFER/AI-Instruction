@@ -2170,12 +2170,12 @@ and is not expected to track the present.
 
 | | |
 |---|---|
-| index shell (`public/index.html`) | **48,777 B** |
-| first-party JavaScript, all modules | **1,967,746 B in 32 modules** |
-| evaluated on first load (core + boot) | **1,501,877 B** |
-|   of which core modules | **1,473,983 B in 20 modules** |
+| index shell (`public/index.html`) | **49,428 B** |
+| first-party JavaScript, all modules | **1,973,480 B in 32 modules** |
+| evaluated on first load (core + boot) | **1,507,611 B** |
+|   of which core modules | **1,479,717 B in 20 modules** |
 | deferred until a panel is opened | **465,869 B in 6 modules** |
-| share of first-party JS deferred | **23.7 %** |
+| share of first-party JS deferred | **23.6 %** |
 | largest single module | **228,701 B of a 307,200 B cap** |
 
 Deferred modules, in load order:

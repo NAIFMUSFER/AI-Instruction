@@ -103,6 +103,12 @@
       <button class="btn" id="genLLM">🤖 توليد المبنى</button>
       <div id="srvPill" class="srv" role="status" aria-live="polite">…</div>
       <div id="reportBox" class="report" role="region" aria-label="تقرير التغطية وحالات الخطأ — Coverage report and error states"></div>
+      <div id="acsDesignVersionBar" class="row acs-hidden" role="group" aria-label="حفظ وإدارة نسخ التصميم — Save and manage design versions">
+        <button class="btn" id="acsSaveDesign" type="button">💾 حفظ هذه النسخة</button>
+        <button class="ghost acs-u-11" id="acsShowVersions" type="button">🗂 نسخ التصميم</button>
+      </div>
+      <div id="acsDesignVersionState" class="note acs-hidden" role="status" aria-live="polite"></div>
+      <div id="acsDesignVersionList" class="note acs-hidden" role="region" aria-label="نسخ التصميم المحفوظة — Saved design versions"></div>
 
       <div class="cards">
         <button class="card" id="loadExample"><b>عمارة سكنية</b><span>مثال جاهز — الرياض</span></button>
