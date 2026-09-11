@@ -39,6 +39,41 @@ class ProjectionTests(unittest.TestCase):
         self.assertNotEqual(first[0]['source_id'], second[0]['source_id'])
         self.assertEqual(first, C.project(self.rev, 0)['primitives'])
 
+    def test_explicit_requirement_links_are_carried_without_guessing(self):
+        m = model()
+        m['floors']['g']['rooms'][0]['requirement_ids'] = ['beds']
+        reqs = program()
+        rev = self.ws.propose(m, brief=BRIEF, requirements=reqs,
+                              expected_head=self.ws.head, note='link bedroom requirement')
+        projected = C.project(rev, 0)
+        bed, hall = projected['primitives']
+        self.assertEqual(bed['requirement_refs'], [
+            {'requirement_id': 'beds', 'source': 'requested', 'source_id': None}])
+        self.assertEqual(hall['requirement_refs'], [])
+        self.assertEqual(projected['requirements_hash'], C.digest(reqs))
+        self.assertEqual(projected['provenance_schema'], C.PROVENANCE_SCHEMA)
+        self.assertFalse(any('evidence' in ref for ref in bed['requirement_refs']))
+
+    def test_external_requirement_source_id_is_preserved_not_fabricated(self):
+        m = model()
+        m['floors']['g']['rooms'][0]['requirement_ids'] = ['beds']
+        reqs = program()
+        reqs[2]['source_id'] = 'brief:user:span-3'
+        rev = self.ws.propose(m, brief=BRIEF, requirements=reqs,
+                              expected_head=self.ws.head, note='source identity')
+        ref = C.project(rev, 0)['primitives'][0]['requirement_refs'][0]
+        self.assertEqual(ref['source_id'], 'brief:user:span-3')
+
+    def test_unknown_or_ambiguous_requirement_links_fail_closed(self):
+        for links in (['missing'], ['beds', 'beds'], 'beds'):
+            with self.subTest(links=links):
+                m = model(); m['floors']['g']['rooms'][0]['requirement_ids'] = links
+                rev = self.ws.propose(m, brief=BRIEF, requirements=program(),
+                                      expected_head=self.ws.head, note='bad provenance fixture')
+                with self.assertRaises(PlanError) as got:
+                    C.project(rev, 0)
+                self.assertEqual(got.exception.code, 'INVALID_PROVENANCE_LINK')
+
     def test_svg_contains_actual_dimensions_and_scope(self):
         text = C.to_svg(self.rev, 0)
         svg = ET.fromstring(text)
@@ -76,6 +111,8 @@ class ProjectionTests(unittest.TestCase):
             self.assertEqual([list(v) for v in entity.get_points('xy')], primitive['cad_polygon_xy_m'])
             self.assertEqual(entity.get_xdata('ACS_PLAN')[0].value, primitive['source_id'])
             self.assertEqual(entity.get_xdata('ACS_PLAN')[2].value, self.rev.model_hash)
+            self.assertEqual(entity.get_xdata('ACS_PLAN')[3].value,
+                             result['manifest']['requirements_hash'])
 
     def test_dxf_labels_preserve_arabic(self):
         m = model(); m['floors']['g']['rooms'][0]['name'] = 'غرفة النوم'
