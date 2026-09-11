@@ -17,6 +17,7 @@ on:
       - 'acs_plan_scorecard.py'
       - 'acs_plan_options.py'
       - 'acs_plan_semantic_locks.py'
+      - 'acs_plan_semantic_diff.py'
       - 'acs_plan_lock_binding.py'
       - 'acs_plan_store.py'
       - 'acs_plan_store_reload.py'
@@ -32,6 +33,8 @@ on:
       - 'tests/remediation/test_plan_ifc_export.py'
       - 'tests/remediation/test_plan_commands.py'
       - 'tests/remediation/test_plan_persisted_commands.py'
+      - 'tests/remediation/test_plan_semantic_diff.py'
+      - 'tests/remediation/test_plan_semantic_diff_commands.py'
       - 'tests/remediation/test_plan_bridge*.py'
       - 'tests/remediation/test_plan_projection.py'
       - 'tests/remediation/test_plan_scorecard.py'
@@ -43,6 +46,7 @@ on:
       - 'tests/remediation/test_plan_handoff_large.py'
       - '.github/workflows/plan-first-contracts.yml'
       - '.github/workflows/plan-persisted-commands.yml'
+      - '.github/workflows/plan-semantic-diff.yml'
       - 'Dockerfile'
 permissions:
   contents: read
@@ -64,7 +68,7 @@ jobs:
         run: |
           python -S - <<'PYTHON'
           import sys
-          import acs_plan_review, acs_plan_bridge, acs_plan_commands, acs_plan_persisted_commands, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks, acs_plan_lock_binding, acs_plan_store, acs_plan_store_reload
+          import acs_plan_review, acs_plan_bridge, acs_plan_commands, acs_plan_persisted_commands, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks, acs_plan_semantic_diff, acs_plan_lock_binding, acs_plan_store, acs_plan_store_reload
           from tools import acs_plan_handoff, acs_plan_ifc_export
           assert 'acs_understand' not in sys.modules
           assert 'acs_compiler' not in sys.modules
@@ -126,23 +130,31 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_persisted_commands.py 2>&1 | tee logs/plan-persisted-commands.log
+      - name: Semantic revision diff regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_semantic_diff.py 2>&1 | tee logs/plan-semantic-diff.log
+          python -S tests/remediation/test_plan_semantic_diff_commands.py 2>&1 | tee logs/plan-semantic-diff-commands.log
       - name: Install existing locks and optional CAD test dependency
         run: |
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python -m pip install --only-binary=:all: ezdxf==1.4.4 pyparsing==3.3.2 fonttools==4.65.0
           python -m pip check
-      - name: Revision, approval, CAD, scorecard, options, semantic-lock, durable-store, 3D-handoff and real-validator contracts
+      - name: Revision, approval, CAD, scorecard, options, semantic-diff, semantic-lock, durable-store, 3D-handoff and real-validator contracts
         env:
           ACS_ENV: test
           ANTHROPIC_API_KEY: dummy
         run: |
           mkdir -p logs
-          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py tools/acs_plan_handoff.py tools/acs_plan_ifc_export.py
+          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py tools/acs_plan_handoff.py tools/acs_plan_ifc_export.py
           set -o pipefail
           python tests/remediation/test_plan_review.py 2>&1 | tee logs/plan-review.log
           python tests/remediation/test_plan_bridge.py 2>&1 | tee logs/plan-bridge.log
           python tests/remediation/test_plan_commands.py 2>&1 | tee logs/plan-commands-full.log
           python tests/remediation/test_plan_persisted_commands.py 2>&1 | tee logs/plan-persisted-commands-full.log
+          python tests/remediation/test_plan_semantic_diff.py 2>&1 | tee logs/plan-semantic-diff-full.log
+          python tests/remediation/test_plan_semantic_diff_commands.py 2>&1 | tee logs/plan-semantic-diff-commands-full.log
           python tests/remediation/test_plan_projection.py 2>&1 | tee logs/plan-cad.log
           python tests/remediation/test_plan_scorecard.py 2>&1 | tee logs/plan-scorecard.log
           python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
