@@ -62,9 +62,9 @@ def program():
              "source": "requested", "evidence": "20"}]
 
 
-def workspace_with(model, approve=True):
+def workspace_with(model, approve=True, requirements=None):
     ws = PlanWorkspace(verified)
-    rev = ws.propose(model, brief=BRIEF, requirements=program(), expected_head=None,
+    rev = ws.propose(model, brief=BRIEF, requirements=requirements or program(), expected_head=None,
                      note="initial reviewed plan")
     if approve:
         ws.approve(rev.id, expected_head=rev.id, actor_label="test-engineer",
@@ -103,13 +103,69 @@ class Approved3DHandoffTests(unittest.TestCase):
             self.assertEqual(seen, [residential_model()])
             self.assertEqual(receipt["revision_id"], rev.id)
             self.assertEqual(receipt["model_hash"], rev.model_hash)
+            self.assertEqual(receipt["requirements_hash"], H.digest(program()))
             self.assertEqual(receipt["provider_calls"], 0)
             self.assertEqual(receipt["regulatory_compliance"], "NOT_VERIFIED")
             self.assertEqual(receipt["structural_safety"], "NOT_VERIFIED")
             self.assertTrue(Path(str(out) + ".baseline.json").exists())
             marker = json.loads(out.read_text(encoding="utf-8"))["extras"]["acs_plan_baseline"]
             self.assertEqual(marker["model_hash"], rev.model_hash)
+            self.assertEqual(marker["requirements_hash"], receipt["requirements_hash"])
             self.assertTrue(H.verify_compiled_artifact(out)["ok"])
+
+    def test_explicit_warehouse_rack_dock_requirement_links_reach_3d_receipt(self):
+        m = warehouse_model()
+        storage = m['floors']['ground']['rooms'][0]
+        storage['requirement_ids'] = ['width']
+        storage['racks'][0]['requirement_ids'] = ['width']
+        storage['docks'][0]['requirement_ids'] = ['width']
+        reqs = program(); reqs[0]['source_id'] = 'brief:user:site-width'
+        ws, rev = workspace_with(m, requirements=reqs)
+        def fake(_building, path):
+            Path(path).write_text('{"asset":{"version":"2.0"}}', encoding="utf-8")
+            return 1, 12
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / 'warehouse-provenance.gltf'
+            receipt = H.compile_approved_baseline(ws, rev.id, out, compiler=fake)
+            entries = receipt['source_map']
+            sources = [e['source'] for e in entries]
+            self.assertTrue(any(s.get('kind') == 'space' and s.get('room_id') == 'storage'
+                                for s in sources))
+            self.assertTrue(any(s.get('kind') == 'element' and s.get('collection') == 'racks'
+                                and s.get('element_id') == 'rack_a' for s in sources))
+            self.assertTrue(any(s.get('kind') == 'element' and s.get('collection') == 'docks'
+                                and s.get('element_id') == 'dock_n1' for s in sources))
+            linked = [ref for e in entries for ref in e['requirement_refs']]
+            self.assertTrue(linked)
+            self.assertTrue(all(ref == {'requirement_id': 'width', 'source': 'requested',
+                                        'source_id': 'brief:user:site-width'} for ref in linked))
+            self.assertFalse(any('evidence' in ref for ref in linked))
+            self.assertTrue(H.verify_compiled_artifact(out)['ok'])
+
+    def test_unlinked_warehouse_elements_are_not_given_invented_requirement_links(self):
+        ws, rev = workspace_with(warehouse_model())
+        def fake(_building, path):
+            Path(path).write_text('{"asset":{"version":"2.0"}}', encoding="utf-8")
+            return 1, 12
+        with tempfile.TemporaryDirectory() as td:
+            receipt = H.compile_approved_baseline(ws, rev.id, Path(td) / 'warehouse.gltf', compiler=fake)
+        self.assertEqual(len(receipt['source_map']), 1)
+        self.assertEqual(receipt['source_map'][0]['source']['kind'], 'space')
+        self.assertEqual(receipt['source_map'][0]['requirement_refs'], [])
+
+    def test_linked_nested_element_without_stable_id_fails_before_compiler(self):
+        m = warehouse_model()
+        m['floors']['ground']['rooms'][0]['racks'][0].pop('id')
+        m['floors']['ground']['rooms'][0]['racks'][0]['requirement_ids'] = ['width']
+        ws, rev = workspace_with(m)
+        called = []
+        def fake(_building, _path):
+            called.append(True)
+            return 1, 1
+        with tempfile.TemporaryDirectory() as td:
+            self.assertCode('AMBIGUOUS_PROVENANCE_TARGET', lambda: H.compile_approved_baseline(
+                ws, rev.id, Path(td) / 'bad.gltf', compiler=fake))
+        self.assertEqual(called, [])
 
     def test_compiler_mutation_fails_closed_and_publishes_nothing(self):
         ws, rev = workspace_with(residential_model())
