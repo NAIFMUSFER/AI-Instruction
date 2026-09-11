@@ -69,7 +69,7 @@ class RequirementEvidenceTests(unittest.TestCase):
         self.assertNotIn("MISSING_SOURCE_EVIDENCE", self.codes(out))
 
     def test_exact_arabic_brief_span_is_accepted_by_character_offsets(self):
-        row = requested("floors", "دورين", "level_count", 1)
+        row = requested("floors", "دورين", "level_count", 2)
         # Metric mismatch is expected because this warehouse fixture has one level;
         # the source-evidence contract itself must still validate independently.
         _ws, _rev, out = review([row])
