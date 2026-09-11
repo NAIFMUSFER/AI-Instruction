@@ -99,11 +99,16 @@ function check(name, value) {
 
       if(width===393){
         await page.setViewportSize({width:1280,height:900});
+        // setViewportSize can resolve before the native resize listener clears
+        // mobile inert state. Wait for the original contract, not a fixed delay;
+        // missing/broken resize handling still fails within this bounded wait.
+        const desktopReady = () => !document.getElementById('left').inert
+          && !document.getElementById('camBar').inert
+          && getComputedStyle(document.getElementById('camBar')).display==='flex'
+          && getComputedStyle(document.getElementById('mobileToolsToggle')).display==='none';
+        await page.waitForFunction(desktopReady, null, {timeout:5000});
         check('desktop: toolbar and project panel remain accessible after resizing',
-          await page.evaluate(() => !document.getElementById('left').inert
-            && !document.getElementById('camBar').inert
-            && getComputedStyle(document.getElementById('camBar')).display==='flex'
-            && getComputedStyle(document.getElementById('mobileToolsToggle')).display==='none'));
+          await page.evaluate(desktopReady));
       }
       await page.close();
     }
