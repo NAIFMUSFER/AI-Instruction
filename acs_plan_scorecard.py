@@ -81,6 +81,15 @@ def _rect_area(rect: Any) -> float | None:
     return area if math.isfinite(area) else None
 
 
+def _lane_rect(lane: Any) -> tuple[float, float, float, float] | None:
+    if not isinstance(lane, dict):
+        return None
+    x, z, w, d = lane.get("x"), lane.get("z"), lane.get("w"), lane.get("d")
+    if not (_finite(x) and _finite(z) and _positive(w) and _positive(d)):
+        return None
+    return float(x), float(z), float(w), float(d)
+
+
 def _lane_area(lane: Any) -> float | None:
     if not isinstance(lane, dict):
         return None
@@ -91,6 +100,15 @@ def _lane_area(lane: Any) -> float | None:
     return area if math.isfinite(area) else None
 
 
+def _rect_overlap_area(a: tuple[float, float, float, float],
+                       b: tuple[float, float, float, float]) -> float:
+    ax, az, aw, ad = a
+    bx, bz, bw, bd = b
+    w = max(0.0, min(ax + aw, bx + bw) - max(ax, bx))
+    d = max(0.0, min(az + ad, bz + bd) - max(az, bz))
+    return w * d
+
+
 def measure_plan(model: dict) -> dict:
     """Measure a canonical plan without inventing missing engineering facts.
 
@@ -98,6 +116,9 @@ def measure_plan(model: dict) -> dict:
     - `space_rect_area_m2` is not GFA/NFA.
     - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
       clearance or safety-compliance result.
+    - `lane_overlap_area_by_kind_pair_m2` is the sum of pairwise rectangle
+      intersections between distinct explicit lane kinds inside the same room.
+      It is a geometric conflict indicator only, not a safety/compliance result.
     - `rack_group_count` counts declared rack groups, not pallet positions.
     - storage capacity and throughput stay unavailable unless a future canonical
       contract defines sufficient source data and its calculation semantics.
@@ -133,6 +154,8 @@ def measure_plan(model: dict) -> dict:
     station_count_known = bool(templates)
     lane_area: defaultdict[str, float] = defaultdict(float)
     lane_area_complete = bool(templates)
+    lane_overlap: defaultdict[str, float] = defaultdict(float)
+    lane_overlap_complete = bool(templates)
 
     for template in templates:
         floor = floors.get(template)
@@ -141,12 +164,13 @@ def measure_plan(model: dict) -> dict:
             warnings.append("ROOMS_NOT_MEASURABLE")
             space_area_known = False
             dock_count_known = rack_groups_known = station_count_known = False
-            rack_levels_complete = lane_area_complete = False
+            rack_levels_complete = lane_area_complete = lane_overlap_complete = False
             continue
         for room in rooms:
             if not isinstance(room, dict):
                 warnings.append("ROOM_NOT_MEASURABLE")
                 space_area_known = False
+                lane_overlap_complete = False
                 continue
             area = _rect_area(room.get("rect"))
             if area is None:
@@ -213,15 +237,33 @@ def measure_plan(model: dict) -> dict:
             lanes = room.get("lanes") or []
             if not isinstance(lanes, list):
                 lane_area_complete = False
+                lane_overlap_complete = False
             else:
+                normalized_lanes: list[tuple[str, tuple[float, float, float, float]]] = []
                 for lane in lanes:
                     area = _lane_area(lane)
-                    kind = (str(lane.get("kind") or "unknown").strip().lower()
-                            if isinstance(lane, dict) else "unknown")
+                    kind = (str(lane.get("kind") or "").strip().lower()
+                            if isinstance(lane, dict) else "")
+                    rect = _lane_rect(lane)
                     if area is None:
                         lane_area_complete = False
                     else:
-                        lane_area[kind] += area
+                        lane_area[kind or "unknown"] += area
+                    if not kind or rect is None:
+                        lane_overlap_complete = False
+                    else:
+                        normalized_lanes.append((kind, rect))
+                if lane_overlap_complete:
+                    for i in range(len(normalized_lanes)):
+                        kind_a, rect_a = normalized_lanes[i]
+                        for j in range(i + 1, len(normalized_lanes)):
+                            kind_b, rect_b = normalized_lanes[j]
+                            if kind_a == kind_b:
+                                continue
+                            overlap = _rect_overlap_area(rect_a, rect_b)
+                            if overlap > EPS:
+                                key = "|".join(sorted((kind_a, kind_b)))
+                                lane_overlap[key] += overlap
 
     metrics: dict[str, Any] = {
         "site_area_m2": round(site_area, 6) if site_area is not None else None,
@@ -249,6 +291,9 @@ def measure_plan(model: dict) -> dict:
             "station_count": station_count if station_count_known else None,
             "lane_area_by_kind_m2": ({k: round(v, 6) for k, v in sorted(lane_area.items())}
                                      if lane_area_complete else None),
+            "lane_overlap_area_by_kind_pair_m2": (
+                {k: round(v, 6) for k, v in sorted(lane_overlap.items())}
+                if lane_overlap_complete else None),
             "storage_capacity_positions": None,
             "throughput_per_hour": None,
             "travel_distance_m": None,
@@ -259,7 +304,7 @@ def measure_plan(model: dict) -> dict:
             "storage_capacity_positions": "Rack group geometry does not define a canonical slot/capacity contract.",
             "throughput_per_hour": "No measured flow/time model is present in canonical Building JSON.",
             "travel_distance_m": "No routed origin/destination path set is supplied to this scorecard.",
-            "pedestrian_vehicle_separation_compliance": "Lane rectangles alone cannot prove safety compliance.",
+            "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
 
