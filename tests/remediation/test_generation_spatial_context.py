@@ -251,6 +251,9 @@ class ResidentialQualityCompanionGates(unittest.TestCase):
     def test_residential_presentation_contract_remains_green(self):
         self._run(["node", "tests/remediation/test_residential_presentation.js"])
 
+    def test_native_openai_provider_contract_remains_green(self):
+        self._run([sys.executable, "tests/remediation/test_openai_provider.py"])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -14,11 +14,14 @@
 تفتح اتصالاً، ولا تطبع سرّاً، ولا ترمي استثناءً غير معلن.
 
 المتغيّرات:
-    ACS_LLM_PROVIDER            deepseek | anthropic          (افتراضي anthropic)
+    ACS_LLM_PROVIDER            deepseek | anthropic | openai (افتراضي anthropic)
     ACS_LLM_BASE_URL            عنوان نقطة النهاية            (افتراضي حسب المزوّد)
     ACS_LLM_API_KEY             المفتاح                       (لا افتراضي)
     ACS_LLM_MODEL               معرّف النموذج                  (افتراضي حسب المزوّد)
     ACS_LLM_TRANSPORT           stream | create               (افتراضي stream)
+    OPENAI_API_KEY              مفتاح OpenAI فقط؛ لا يُستعار المفتاح العام له
+    ACS_LLM_API_KEY_ENV         اسم متغير المفتاح من قائمة محددة، لا قيمته
+    ACS_LLM_FALLBACK_API_KEY_ENV اسم متغير مفتاح البديل، لا قيمته
 
     ACS_LLM_FALLBACK_PROVIDER   المزوّد البديل — غيابه يعني «لا بديل»
     ACS_LLM_FALLBACK_BASE_URL
@@ -37,7 +40,7 @@ import re
 CONTRACT_VERSION = "acs.provider/1.0.0"
 
 #: المزوّدون المعروفون. اسمٌ خارج هذه القائمة عطلُ ضبطٍ لا عطلُ منبع.
-PROVIDERS = ("anthropic", "deepseek")
+PROVIDERS = ("anthropic", "deepseek", "openai")
 
 # ملاحظة مصدر — الأرقام والعناوين هنا موثّقة عند المزوّد، لا مُستنتجة:
 #   deepseek base_url و«واجهة Anthropic المتوافقة»:
@@ -48,6 +51,24 @@ PROVIDERS = ("anthropic", "deepseek")
 #       https://api-docs.deepseek.com/quick_start/error_codes
 # سقف مخرجات anthropic غير موثّق في هذا المستودع، فيبقى None — ولا يُخترع رقم.
 PROVIDER_SPEC = {
+    # Native Responses API. Known model ceilings, checked 2026-09-11:
+    # https://developers.openai.com/api/docs/models/gpt-5.6-sol
+    # https://developers.openai.com/api/docs/models/gpt-5.4
+    # https://developers.openai.com/api/docs/models/gpt-5.4-mini
+    "openai": {
+        "base_url": "https://api.openai.com/v1",
+        "requires_base_url": True,
+        "models": ("gpt-5.6-sol", "gpt-5.4", "gpt-5.4-mini"),
+        "documented_max_output": 128000,
+        "legacy_key_env": "OPENAI_API_KEY",
+        "key_prefix": None,
+        "capabilities": {
+            "output_tokens_are_content_proxy": False,
+            # Conservative scheduling allowance, NOT a measured efficiency ratio.
+            # Never increases the request budget or the declared model ceiling.
+            "content_token_multiplier": 2.0,
+        },
+    },
     "anthropic": {
         "base_url": None,                 # نقطة النهاية الافتراضية للمكتبة
         "requires_base_url": False,
@@ -218,7 +239,23 @@ def _resolve(role, prefix, legacy_key_allowed):
     if transport not in TRANSPORTS:
         transport = "stream"
 
-    key = clean_key(_env(prefix + "API_KEY"), name)
+    # An existing ACS_LLM_API_KEY may belong to DeepSeek. OpenAI never
+    # consumes it implicitly. Selectors contain NAMES only, never secret values.
+    key_env = _env(prefix + "API_KEY_ENV")
+    if name == "openai":
+        if key_env and key_env != "OPENAI_API_KEY":
+            return ProviderConfig(role, name, state=MISSING_KEY,
+                                  missing=(prefix + "API_KEY_ENV",))
+        key = clean_key(_env("OPENAI_API_KEY"), name)
+    elif key_env:
+        permitted = {"ACS_LLM_API_KEY", "ACS_LLM_FALLBACK_API_KEY"}
+        permitted.add("DEEPSEEK_API_KEY" if name == "deepseek" else "ANTHROPIC_API_KEY")
+        if key_env not in permitted:
+            return ProviderConfig(role, name, state=MISSING_KEY,
+                                  missing=(prefix + "API_KEY_ENV",))
+        key = clean_key(_env(key_env), name)
+    else:
+        key = clean_key(_env(prefix + "API_KEY"), name)
     if not key and legacy_key_allowed and spec["legacy_key_env"]:
         # التوافق الخلفي: نشرٌ قائم لا يعرف ACS_LLM_API_KEY يظلّ يعمل.
         # مقصورٌ على المزوّد صاحب المفتاح — لا يُعار مفتاح anthropic لـdeepseek.
@@ -237,7 +274,8 @@ def _resolve(role, prefix, legacy_key_allowed):
 
     return ProviderConfig(role, name, api_key=key or None, base_url=base_url,
                           model=model, transport=transport,
-                          documented_max_output=spec["documented_max_output"],
+                          documented_max_output=(None if name == "openai" and model not in spec["models"]
+                                                 else spec["documented_max_output"]),
                           state=state, missing=missing)
 
 
@@ -317,6 +355,8 @@ def documented_max_output(cfg=None):
     لا تنافسه: تُستشار حين يغيب وحده، فلا يُخترع رقم ولا يُرفع سقف قائم.
     """
     cfg = cfg or primary()
+    if cfg.provider == "openai":
+        return cfg.documented_max_output
     return (PROVIDER_SPEC.get(cfg.provider or "") or {}).get(
         "documented_max_output")
 
@@ -384,6 +424,7 @@ def health_status():
             "llm_transport": p.transport,
             "llm_state": p.state,
             "api_key_configured": bool(p.api_key),
+            "openai_key_configured": bool(clean_key(_env("OPENAI_API_KEY"), "openai")),
             "fallback_configured": bool(f.ok),
             "fallback_provider": f.provider if f.state != NOT_CONFIGURED else None,
             "fallback_model": f.model if f.ok else None,
