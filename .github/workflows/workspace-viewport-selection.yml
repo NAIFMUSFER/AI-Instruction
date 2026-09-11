@@ -4,8 +4,10 @@ on:
     paths:
       - 'public/app/ui/workspace-viewport-selection.js'
       - 'public/app/ui/workspace-viewport-selection-runtime.js'
+      - 'public/app/render/warehouse-canonical-identity.js'
       - 'public/app/main.js'
       - 'tests/remediation/test_workspace_viewport_selection.mjs'
+      - 'tests/remediation/test_workspace_warehouse_exact_selection.mjs'
       - 'tests/remediation/test_workspace_viewport_selection_browser.cjs'
       - '.github/workflows/workspace-viewport-selection.yml'
   workflow_dispatch:
@@ -31,6 +33,7 @@ jobs:
           set -euo pipefail
           mkdir -p logs
           node tests/remediation/test_workspace_viewport_selection.mjs 2>&1 | tee logs/workspace-viewport-selection.log
+          node tests/remediation/test_workspace_warehouse_exact_selection.mjs 2>&1 | tee logs/workspace-warehouse-exact-selection.log
       - name: Install locked real-browser dependency
         run: |
           npm ci

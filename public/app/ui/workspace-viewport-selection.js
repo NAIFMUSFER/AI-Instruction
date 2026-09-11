@@ -7,6 +7,11 @@
    never enters model hashes, revisions, BIM or exports.
    ========================================================================== */
 
+import {
+  canonicalWarehouseIdentityForMesh,
+  parseWarehouseMeshAddress,
+} from '../render/warehouse-canonical-identity.js';
+
 const OWNER_TYPES = new Set([
   'WALL','FLOOR','ROOF','CEILING','SLAB','RACK','LANE','STATION','CONVEYOR','DOCK'
 ]);
@@ -45,10 +50,71 @@ function parseMeshTag(mesh) {
   return {name, hit_kind:String(p[0] || '').toUpperCase(), level_token:p[1], room_id:p[2], tail:p.slice(3)};
 }
 
+function ownerSpaceSelection(tag, level, room, buildingId) {
+  if (!tag || !level || !room || !asId(level.template) || !asId(room.id)) return null;
+  const levelIndex = Number(level.index);
+  if (!Number.isSafeInteger(levelIndex)) return null;
+  const bid = asId(buildingId) || 'bld_0';
+  return {
+    target_id: `${bid}.${level.template}.${room.id}`,
+    target_kind: 'SPACE',
+    hit_kind: tag.hit_kind,
+    identity_strength: 'OWNER_SPACE',
+    level_index: levelIndex,
+    template: level.template,
+    room_id: room.id,
+    mesh_name: tag.name,
+    writes_to_model: false
+  };
+}
+
+function exactWarehouseSelection(mesh, tag, building, buildingId) {
+  const address = parseWarehouseMeshAddress(tag && tag.name);
+  if (!address) return {handled:false, selection:null};
+
+  const exact = canonicalWarehouseIdentityForMesh(mesh, building, buildingId);
+  if (exact) {
+    const selection = {
+      target_id: exact.target_id,
+      target_kind: exact.target_kind,
+      hit_kind: tag.hit_kind,
+      identity_strength: exact.identity_strength,
+      level_index: exact.renderer_locator.level_index,
+      template: exact.template,
+      room_id: exact.room_id,
+      space_id: exact.space_id,
+      collection: exact.collection,
+      canonical_selector: exact.canonical_selector,
+      source_id: exact.source_id,
+      mesh_name: tag.name,
+      writes_to_model: false
+    };
+    if (Object.prototype.hasOwnProperty.call(exact, 'provenance'))
+      selection.provenance = exact.provenance;
+    return {handled:true, selection};
+  }
+
+  // Known warehouse renderer address, but exact nested identity is not provable.
+  // Preserve the pre-existing safe boundary: select only the proven owning space.
+  // Never promote the renderer array position into rack/dock/lane/station identity.
+  const level = levelForToken(building, tag.level_token);
+  const room = level && asId(level.template) ? roomAt(building, level.template, tag.room_id) : null;
+  return {handled:true, selection:ownerSpaceSelection(tag, level, room, buildingId)};
+}
+
 export function canonicalSelectionForMesh(mesh, building, buildingId='bld_0') {
   if (!mesh || !building || effectivelyPresentationOnly(mesh)) return null;
   const tag = parseMeshTag(mesh);
   if (!tag) return null;
+
+  // Warehouse renderers fan one canonical rack/dock/lane/station record into
+  // several meshes and often use presentation layer prefixes such as FURN,
+  // SAFETY or ELEC. Resolve those known addresses before the generic hit-kind
+  // whitelist. Exact selection is allowed only when the canonical record has a
+  // unique explicit stable id; otherwise this path falls back to owner SPACE.
+  const warehouse = exactWarehouseSelection(mesh, tag, building, buildingId);
+  if (warehouse.handled) return warehouse.selection;
+
   if (!OWNER_TYPES.has(tag.hit_kind) && !OPENING_TYPES.has(tag.hit_kind)) return null;
 
   const level = levelForToken(building, tag.level_token);
@@ -85,17 +151,7 @@ export function canonicalSelectionForMesh(mesh, building, buildingId='bld_0') {
   // WALL/FLOOR/ROOF/etc. meshes. Those segments are not independent canonical
   // authoring identities. Selecting one therefore selects only the proven owner
   // SPACE and says so explicitly instead of fabricating a wall/rack/dock id.
-  return {
-    target_id: `${bid}.${template}.${room.id}`,
-    target_kind: 'SPACE',
-    hit_kind: tag.hit_kind,
-    identity_strength: 'OWNER_SPACE',
-    level_index: levelIndex,
-    template,
-    room_id: room.id,
-    mesh_name: tag.name,
-    writes_to_model: false
-  };
+  return ownerSpaceSelection(tag, level, room, buildingId);
 }
 
 export function meshesForCanonicalSelection(meshes, targetId, building, buildingId='bld_0') {
