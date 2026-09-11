@@ -314,6 +314,7 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
         kind = r.get("metric")
         actual = _MISSING
         minimum = False
+        maximum = False
         if kind in ("site_width_m", "site_depth_m"):
             site = model.get("site") or {}
             actual = site.get("w" if kind == "site_width_m" else "d") if isinstance(site, dict) else None
@@ -336,7 +337,8 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             valid_expected = _number(expected) and expected > 0 and room is not None
             minimum = True
         elif kind in {"min_zone_area_m2", "dock_count", "min_dock_count",
-                      "min_rack_group_count", "min_station_count", "min_lane_area_m2"}:
+                      "min_rack_group_count", "min_station_count", "min_lane_area_m2",
+                      "max_lane_overlap_area_m2"}:
             if warehouse_metrics is None:
                 issue("REQUIREMENT_METRIC_NOT_APPLICABLE", rid)
                 continue
@@ -372,6 +374,17 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 actual = warehouse_metrics.get("station_count")
                 valid_expected = type(expected) is int and expected >= 0
                 minimum = True
+            elif kind == "max_lane_overlap_area_m2":
+                kind_a, kind_b = r.get("kind_a"), r.get("kind_b")
+                if (not _id(kind_a) or not _id(kind_b)
+                        or kind_a.strip().lower() == kind_b.strip().lower()):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                pair = "|".join(sorted((kind_a.strip().lower(), kind_b.strip().lower())))
+                by_pair = warehouse_metrics.get("lane_overlap_area_by_kind_pair_m2")
+                actual = by_pair.get(pair, 0.0) if isinstance(by_pair, dict) else None
+                valid_expected = _number(expected) and expected >= 0
+                maximum = True
             else:
                 lane_kind = r.get("kind")
                 if not _id(lane_kind):
@@ -388,7 +401,11 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             issue("INVALID_EXPECTATION", rid)
         elif actual is _MISSING or actual is None or not _number(actual):
             issue("REQUIREMENT_NOT_MEASURABLE", rid)
-        elif (actual + EPS < expected if minimum else abs(actual - expected) > EPS):
+        elif minimum and actual + EPS < expected:
+            issue("REQUIREMENT_MISMATCH", rid)
+        elif maximum and actual - EPS > expected:
+            issue("REQUIREMENT_MISMATCH", rid)
+        elif not minimum and not maximum and abs(actual - expected) > EPS:
             issue("REQUIREMENT_MISMATCH", rid)
     return issues
 
