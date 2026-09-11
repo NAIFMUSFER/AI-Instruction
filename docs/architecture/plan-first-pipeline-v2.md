@@ -38,6 +38,9 @@ production route, warehouse policy, or deployment setting is enabled by this PR.
   primitives and carry revision/model provenance. DXF has metre units and a
   reversible ACS (x,z) → CAD (x,-z) mapping. `ezdxf` is an optional exporter
   dependency, not added to the production runtime in this PR.
+* The three backend companions are explicitly copied into the container, but
+  no route imports or enables them. Importing them with `python -S` requires no
+  third-party package and must not import a provider or the optional CAD library.
 
 ## Deliberate limits — not a finished user-facing feature
 
@@ -113,3 +116,15 @@ The existing full CI remains a separate gate.
   https://ezdxf.readthedocs.io/en/stable/concepts/units.html
 
 These describe exchange mechanics, not architectural quality or certification.
+
+## Current execution evidence
+
+PR #21, initial commit `2eeaf7d64511e1519bfa5d19fe7fda20ed58a193`:
+Actions run `34558309379` passed 40 review, 10 adapter, 12 CAD round-trip and
+3 real-validator integration tests (65 total). This is not a live LLM test.
+The existing full CI initially found the three new root modules unclassified
+by the deployment-content gate (617 assertions passed, one failed). They are
+now explicitly packaged as inactive backend companions rather than bypassing
+or relabeling the gate. Full CI must pass again on the final PR head.
+
+Product continuation/release checklist: GitHub issue #22.
