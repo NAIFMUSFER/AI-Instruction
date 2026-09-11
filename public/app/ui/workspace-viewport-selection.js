@@ -29,7 +29,7 @@ function levelForToken(building, token) {
 function roomAt(building, template, roomId) {
   const floor = building && building.floors && building.floors[template];
   const rooms = floor && Array.isArray(floor.rooms) ? floor.rooms : [];
-  return rooms.find(r => r && String(r.id) === String(roomId)) || null;
+  return rooms.find(r => r && asId(r.id) && r.id === roomId) || null;
 }
 
 function effectivelyPresentationOnly(mesh) {
@@ -53,9 +53,11 @@ export function canonicalSelectionForMesh(mesh, building, buildingId='bld_0') {
 
   const level = levelForToken(building, tag.level_token);
   if (!level || !asId(level.template)) return null;
-  const template = String(level.template);
+  const levelIndex = Number(level.index);
+  if (!Number.isSafeInteger(levelIndex)) return null;
+  const template = level.template;
   const room = roomAt(building, template, tag.room_id);
-  if (!room || !asId(String(room.id))) return null;
+  if (!room || !asId(room.id)) return null;
   const bid = asId(buildingId) || 'bld_0';
 
   if (OPENING_TYPES.has(tag.hit_kind)) {
@@ -71,9 +73,9 @@ export function canonicalSelectionForMesh(mesh, building, buildingId='bld_0') {
       target_kind: tag.hit_kind,
       hit_kind: tag.hit_kind,
       identity_strength: 'EXACT',
-      level_index: Number(level.index),
+      level_index: levelIndex,
       template,
-      room_id: String(room.id),
+      room_id: room.id,
       mesh_name: tag.name,
       writes_to_model: false
     };
@@ -88,9 +90,9 @@ export function canonicalSelectionForMesh(mesh, building, buildingId='bld_0') {
     target_kind: 'SPACE',
     hit_kind: tag.hit_kind,
     identity_strength: 'OWNER_SPACE',
-    level_index: Number(level.index),
+    level_index: levelIndex,
     template,
-    room_id: String(room.id),
+    room_id: room.id,
     mesh_name: tag.name,
     writes_to_model: false
   };
