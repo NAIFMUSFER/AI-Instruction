@@ -14,6 +14,7 @@ from typing import Any
 
 from acs_plan_lock_binding import PlanLockWorkspace
 from acs_plan_review import PlanError, canonical
+from acs_plan_semantic_diff import diff_models
 from tools.acs_plan_review_packet import build_review_packet
 
 SCHEMA = "acs.plan-command-result/1.0"
@@ -71,9 +72,20 @@ def _head(value: Any) -> str:
     return value
 
 
-def _view_result(workspace: PlanLockWorkspace, action: str, revision_id: str) -> dict:
+def _semantic_diff(workspace: PlanLockWorkspace, reference_revision_id: str,
+                   target_revision_id: str) -> dict:
+    reference = workspace.get(reference_revision_id)
+    target = workspace.get(target_revision_id)
+    result = diff_models(reference.model, target.model)
+    result["reference_revision_id"] = reference.id
+    result["target_revision_id"] = target.id
+    return result
+
+
+def _view_result(workspace: PlanLockWorkspace, action: str, revision_id: str,
+                 *, reference_revision_id: str | None = None) -> dict:
     report = workspace.review(revision_id)
-    return {
+    result = {
         "schema": SCHEMA,
         "action": action,
         "head": workspace.head,
@@ -88,6 +100,11 @@ def _view_result(workspace: PlanLockWorkspace, action: str, revision_id: str) ->
         },
         "review_packet": build_review_packet(workspace, revision_id),
     }
+    if reference_revision_id is not None:
+        result["semantic_diff"] = _semantic_diff(
+            workspace, reference_revision_id, revision_id,
+        )
+    return result
 
 
 def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
@@ -117,7 +134,9 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
             workspace, command.get("notes"), expected_head=expected,
             model=provider_model,
         )
-        return _view_result(workspace, action, revision.id)
+        return _view_result(
+            workspace, action, revision.id, reference_revision_id=expected,
+        )
 
     if action == "replace_semantic_locks":
         expected = _head(command.get("expected_head"))
@@ -125,7 +144,9 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
             command.get("selectors"), expected_head=expected,
             note=command.get("note"),
         )
-        return _view_result(workspace, action, revision.id)
+        return _view_result(
+            workspace, action, revision.id, reference_revision_id=expected,
+        )
 
     if action == "set_room_lock":
         expected = _head(command.get("expected_head"))
@@ -136,12 +157,16 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
         revision = workspace.set_room_lock(
             tuple(ref), locked=command.get("locked"), expected_head=expected,
         )
-        return _view_result(workspace, action, revision.id)
+        return _view_result(
+            workspace, action, revision.id, reference_revision_id=expected,
+        )
 
     if action == "compare":
+        reference_revision_id = command.get("reference_revision_id")
+        target_revision_id = command.get("target_revision_id")
         comparison = workspace.compare_revisions(
-            command.get("reference_revision_id"),
-            command.get("target_revision_id"),
+            reference_revision_id,
+            target_revision_id,
         )
         return {
             "schema": SCHEMA,
@@ -149,6 +174,9 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
             "head": workspace.head,
             "baseline": workspace.baseline,
             "comparison": comparison,
+            "semantic_diff": _semantic_diff(
+                workspace, reference_revision_id, target_revision_id,
+            ),
         }
 
     if action == "restore":
@@ -157,7 +185,9 @@ def execute_plan_command(workspace: PlanLockWorkspace, command: dict, *,
             command.get("source_revision_id"), expected_head=expected,
             note=command.get("note"),
         )
-        return _view_result(workspace, action, revision.id)
+        return _view_result(
+            workspace, action, revision.id, reference_revision_id=expected,
+        )
 
     if action == "approve":
         expected = _head(command.get("expected_head"))
