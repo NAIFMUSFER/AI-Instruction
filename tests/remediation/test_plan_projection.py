@@ -68,11 +68,12 @@ class ProjectionTests(unittest.TestCase):
         for links in (['missing'], ['beds', 'beds'], 'beds'):
             with self.subTest(links=links):
                 m = model(); m['floors']['g']['rooms'][0]['requirement_ids'] = links
-                rev = self.ws.propose(m, brief=BRIEF, requirements=program(),
-                                      expected_head=self.ws.head, note='bad provenance fixture')
+                before = self.ws.head
                 with self.assertRaises(PlanError) as got:
-                    C.project(rev, 0)
+                    self.ws.propose(m, brief=BRIEF, requirements=program(),
+                                    expected_head=before, note='bad provenance fixture')
                 self.assertEqual(got.exception.code, 'INVALID_PROVENANCE_LINK')
+                self.assertEqual(self.ws.head, before)
 
     def test_svg_contains_actual_dimensions_and_scope(self):
         text = C.to_svg(self.rev, 0)
