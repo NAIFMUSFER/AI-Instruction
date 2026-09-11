@@ -10,6 +10,7 @@ on:
       - 'acs_plan_scorecard.py'
       - 'acs_plan_options.py'
       - 'acs_plan_semantic_locks.py'
+      - 'acs_plan_lock_binding.py'
       - 'tools/acs_plan_handoff.py'
       - 'tests/remediation/test_plan_review.py'
       - 'tests/remediation/test_plan_bridge*.py'
@@ -17,6 +18,7 @@ on:
       - 'tests/remediation/test_plan_scorecard.py'
       - 'tests/remediation/test_plan_options.py'
       - 'tests/remediation/test_plan_semantic_locks.py'
+      - 'tests/remediation/test_plan_lock_binding.py'
       - 'tests/remediation/test_plan_handoff.py'
       - 'tests/remediation/test_plan_handoff_large.py'
       - '.github/workflows/plan-first-contracts.yml'
@@ -41,7 +43,7 @@ jobs:
         run: |
           python -S - <<'PYTHON'
           import sys
-          import acs_plan_review, acs_plan_bridge, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks
+          import acs_plan_review, acs_plan_bridge, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks, acs_plan_lock_binding
           from tools import acs_plan_handoff
           assert 'acs_understand' not in sys.modules
           assert 'acs_compiler' not in sys.modules
@@ -52,13 +54,13 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python -m pip install --only-binary=:all: ezdxf==1.4.4 pyparsing==3.3.2 fonttools==4.65.0
           python -m pip check
-      - name: Revision, approval, CAD, scorecard, options, semantic-lock, 3D-handoff and real-validator contracts
+      - name: Revision, approval, CAD, scorecard, options, semantic-lock, lock-binding, 3D-handoff and real-validator contracts
         env:
           ACS_ENV: test
           ANTHROPIC_API_KEY: dummy
         run: |
           mkdir -p logs
-          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py tools/acs_plan_handoff.py
+          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_lock_binding.py tools/acs_plan_handoff.py
           set -o pipefail
           python tests/remediation/test_plan_review.py 2>&1 | tee logs/plan-review.log
           python tests/remediation/test_plan_bridge.py 2>&1 | tee logs/plan-bridge.log
@@ -66,6 +68,7 @@ jobs:
           python tests/remediation/test_plan_scorecard.py 2>&1 | tee logs/plan-scorecard.log
           python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
+          python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
           python tests/remediation/test_plan_handoff.py 2>&1 | tee logs/plan-3d-handoff.log
           python tests/remediation/test_plan_handoff_large.py 2>&1 | tee logs/plan-3d-handoff-large.log
           python tests/remediation/test_plan_bridge_integration.py 2>&1 | tee logs/plan-real-validator.log
