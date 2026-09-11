@@ -203,6 +203,16 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
         self.assertEqual(state["baseline_revision_id"], locked.id)
         self.assertEqual(loaded.handoff(locked.id)["building"], locked.model)
 
+    def test_viewer_keeps_read_access_but_cannot_reload_writable_workspace(self):
+        _original, _first, locked, _ = self.saved_warehouse()
+        self.store.grant_role("p1", by_actor_id="owner-1", actor_id="viewer-1", role="viewer")
+        # Existing read-only persistence APIs remain available to a viewer.
+        viewed = self.store.load_revision("p1", actor_id="viewer-1", revision_id=locked.id)
+        self.assertEqual(viewed["revision_id"], locked.id)
+        # A live PlanLockWorkspace can propose revisions, so it is owner/editor only.
+        self.assertCode("PROJECT_ACCESS_DENIED", lambda: load_workspace(
+            SQLitePlanStore(self.db), "p1", actor_id="viewer-1", verifier=verifier))
+
     def test_reload_fails_closed_on_tampered_persisted_lock_receipt(self):
         _original, _first, locked, _ = self.saved_warehouse()
         con = sqlite3.connect(self.db)
