@@ -19,6 +19,11 @@ from test_plan_lock_binding import (
 )
 
 
+def residential_reqs():
+    return [{"id": "site-width", "source": "requested", "evidence": "20",
+             "metric": "site_width_m", "expected": 20.0}]
+
+
 class BridgeTests(unittest.TestCase):
     def setUp(self):
         self.u = SimpleNamespace(detect_type=Mock(return_value='residential'),
@@ -83,7 +88,7 @@ class BridgeTests(unittest.TestCase):
     def test_bound_edit_rejects_stale_or_empty_before_provider(self):
         ws = PlanLockWorkspace(verifier=lock_verifier)
         first = ws.propose(lock_residential(), brief='site width 20 residential',
-                           requirements=lock_reqs(20.0), expected_head=None, note='initial')
+                           requirements=residential_reqs(), expected_head=None, note='initial')
         for head, notes in [('stale', [{'text': 'edit'}]), (first.id, []),
                             (first.id, [{'text': ''}])]:
             with self.assertRaises(PlanError):
@@ -93,7 +98,7 @@ class BridgeTests(unittest.TestCase):
     def test_bound_residential_chat_edit_preserves_elevator_and_approved_baseline(self):
         ws = PlanLockWorkspace(verifier=lock_verifier)
         first = ws.propose(lock_residential(), brief='site width 20 residential',
-                           requirements=lock_reqs(20.0), expected_head=None, note='initial')
+                           requirements=residential_reqs(), expected_head=None, note='initial')
         locked = ws.replace_semantic_locks(
             [lock_element('objects', 'lift_1', 'core')], expected_head=first.id,
             note='lock elevator')
