@@ -1,0 +1,94 @@
+name: Integrate PR19 after async delivery
+
+on:
+  push:
+    branches:
+      - audit/live-async-smoke-20260911
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Merge PR19 head onto current main with conflict allowlist
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin feature/residential-v2-save-revisions
+          git checkout -B integration/pr19-on-main-20260911 origin/main
+          set +e
+          git merge --no-ff --no-commit origin/feature/residential-v2-save-revisions
+          merge_rc=$?
+          set -e
+          conflicts="$(git diff --name-only --diff-filter=U || true)"
+          if [ -n "$conflicts" ]; then
+            printf 'merge conflicts:\n%s\n' "$conflicts"
+            while IFS= read -r f; do
+              [ -z "$f" ] && continue
+              case "$f" in
+                KNOWN-ISSUES.md|tests/performance/bundle_report.json)
+                  git checkout --ours -- "$f"
+                  git add "$f"
+                  ;;
+                *)
+                  echo "UNEXPECTED_FUNCTIONAL_CONFLICT=$f"
+                  exit 20
+                  ;;
+              esac
+            done <<< "$conflicts"
+          fi
+          if git diff --name-only --diff-filter=U | grep -q .; then
+            echo 'unresolved conflicts remain'
+            exit 21
+          fi
+          # A nonzero merge exit is acceptable only when every conflict was in the generated-doc allowlist above.
+          if [ "$merge_rc" -ne 0 ] && [ -z "$conflicts" ]; then
+            echo "merge failed without resolvable conflicts rc=$merge_rc"
+            exit 22
+          fi
+      - name: Install locked dependencies and browser used by documentation measurements
+        run: |
+          set -euo pipefail
+          npm ci
+          npx playwright install --with-deps chromium
+          python -m pip install -q -r requirements.txt -r requirements-dev.txt
+      - name: Regenerate measured source documentation
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          set -euo pipefail
+          python3 tools/bundle_report.py
+          python3 tools/check_doc_claims.py --fix
+          python3 tools/check_doc_claims.py
+      - name: Focused residential and persistence regression
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          set -euo pipefail
+          python3 -m py_compile acs_understand.py
+          python3 tests/remediation/test_residential_quality.py
+          node tests/remediation/test_persistence.js
+          node tests/remediation/test_transport_errors.js
+          git diff --check
+      - name: Commit integrated tree and push review branch
+        run: |
+          set -euo pipefail
+          git add -A
+          git commit -m "Integrate residential quality and saved versions after async delivery"
+          git push --force-with-lease origin HEAD:integration/pr19-on-main-20260911
