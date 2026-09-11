@@ -23,6 +23,7 @@ on:
       - 'tests/remediation/test_plan_requirement_evidence.py'
       - 'tests/remediation/test_plan_source_span_artifacts.py'
       - 'tests/remediation/test_plan_warehouse_program.py'
+      - 'tests/remediation/test_plan_revision_compare_restore.py'
       - 'tests/remediation/test_plan_bridge*.py'
       - 'tests/remediation/test_plan_projection.py'
       - 'tests/remediation/test_plan_scorecard.py'
@@ -85,6 +86,11 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_warehouse_program.py 2>&1 | tee logs/plan-warehouse-program.log
+      - name: Revision compare and historical restore regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_revision_compare_restore.py 2>&1 | tee logs/plan-revision-compare-restore.log
       - name: Install existing locks and optional CAD test dependency
         run: |
           python -m pip install -r requirements.txt -r requirements-dev.txt
