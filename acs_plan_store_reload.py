@@ -27,12 +27,14 @@ from acs_plan_review import (
     canonical,
 )
 from acs_plan_store import (
-    ROLES,
     SQLitePlanStore,
     _approval_from_row,
     _id,
     _revision_from_row,
 )
+
+
+WRITABLE_ROLES = {"owner", "editor"}
 
 
 def _validate_locked_rooms(doc: dict) -> tuple[tuple[str, str], ...]:
@@ -56,12 +58,13 @@ def _validate_locked_rooms(doc: dict) -> tuple[tuple[str, str], ...]:
 
 def load_workspace(store: SQLitePlanStore, project_id: str, *, actor_id: str,
                    verifier: Callable[[dict], dict] | None = None) -> PlanLockWorkspace:
-    """Reconstruct one persisted project without minting replacement identities.
+    """Reconstruct one *writable* persisted project without minting new identities.
 
     Exact persisted revision IDs, timestamps, parent links, model/program content,
     room/semantic locks, approval receipts and Frozen Baseline identity are kept.
     Any broken chain, stale project head, orphan approval, altered lock receipt or
-    receipt mismatch fails before the workspace is returned.
+    receipt mismatch fails before the workspace is returned.  Viewers deliberately
+    use the read-only store APIs instead of receiving a mutable aggregate.
     """
     if not isinstance(store, SQLitePlanStore):
         raise PlanError("INVALID_STORE", "Workspace reload requires SQLitePlanStore")
@@ -69,7 +72,9 @@ def load_workspace(store: SQLitePlanStore, project_id: str, *, actor_id: str,
 
     with store._connect() as con:
         project = store._project(con, project_id)
-        store._role(con, project_id, actor_id, ROLES)
+        # A live PlanLockWorkspace can propose revisions.  Do not hand one to a
+        # viewer and rely on a later save to enforce authorization.
+        store._role(con, project_id, actor_id, WRITABLE_ROLES)
         revision_rows = con.execute(
             "SELECT * FROM plan_revisions WHERE project_id=? ORDER BY number",
             (project_id,),
