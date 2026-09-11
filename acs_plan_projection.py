@@ -42,6 +42,9 @@ def _requirements(revision: Revision) -> tuple[list[dict], dict[str, dict]]:
         raise PlanError('INVALID_PROVENANCE', 'Revision requirements are unavailable') from exc
     if not isinstance(rows, list):
         raise PlanError('INVALID_PROVENANCE', 'Revision requirements must be an array')
+    brief = getattr(revision, 'brief', None)
+    if not isinstance(brief, str):
+        raise PlanError('INVALID_PROVENANCE', 'Revision brief is unavailable')
     index = {}
     for row in rows:
         rid = row.get('id') if isinstance(row, dict) else None
@@ -53,6 +56,20 @@ def _requirements(revision: Revision) -> tuple[list[dict], dict[str, dict]]:
         external_source = row.get('source_id')
         if external_source is not None and not _stable_id(external_source):
             raise PlanError('INVALID_PROVENANCE', 'Requirement source_id must be a bounded stable string')
+        if 'source_span' in row:
+            span = row['source_span']
+            valid_span = (
+                isinstance(span, dict)
+                and set(span) == {'start', 'end'}
+                and type(span.get('start')) is int
+                and type(span.get('end')) is int
+                and 0 <= span['start'] < span['end'] <= len(brief)
+            )
+            if not valid_span:
+                raise PlanError('INVALID_PROVENANCE', 'Requirement source_span is malformed')
+            evidence = row.get('evidence')
+            if not isinstance(evidence, str) or brief[span['start']:span['end']] != evidence:
+                raise PlanError('INVALID_PROVENANCE', 'Requirement source_span no longer matches its brief evidence')
         index[rid] = row
     return rows, index
 
@@ -70,13 +87,16 @@ def _requirement_refs(entity: dict, requirement_index: dict[str, dict]) -> list[
         req = requirement_index.get(rid)
         if req is None:
             raise PlanError('INVALID_PROVENANCE_LINK', 'Canonical entity references an unknown requirement')
-        out.append({
+        ref = {
             'requirement_id': rid,
             'source': req['source'],
             # External source/document identity is preserved when supplied.  It
             # is never fabricated from free text or from a standard registry.
             'source_id': req.get('source_id'),
-        })
+        }
+        if 'source_span' in req:
+            ref['source_span'] = dict(req['source_span'])
+        out.append(ref)
     return out
 
 
