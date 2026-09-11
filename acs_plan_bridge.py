@@ -57,6 +57,43 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
         note='\n'.join(n['text'] for n in notes))
 
 
+def propose_bound_chat_edit(workspace, notes: list[dict], *,
+                            expected_head: str, model=None):
+    """Propose one chat edit against server-held revision-bound locks.
+
+    This is the safer bridge for a host using ``PlanLockWorkspace``.  The caller
+    supplies only the expected revision and engineer notes; it cannot substitute
+    a detached semantic-lock manifest.  The exact manifest already bound to the
+    head revision is loaded and verified by ``workspace.get`` and is enforced
+    again by ``workspace.propose`` before immutable history is extended.
+
+    The provider therefore proposes geometry, but the canonical workspace owns
+    admission.  A successful edit is always a new draft revision.  Any earlier
+    approved baseline remains frozen and no 3D/compiler path is invoked here.
+    """
+    from acs_plan_lock_binding import PlanLockWorkspace
+    if not isinstance(workspace, PlanLockWorkspace):
+        raise PlanError('INVALID_WORKSPACE', 'Bound chat edits require PlanLockWorkspace')
+    if expected_head != workspace.head:
+        raise PlanError('STALE_REVISION', 'The reviewed plan has changed')
+    if not isinstance(notes, list) or not notes or any(
+            not isinstance(n, dict) or not isinstance(n.get('text'), str)
+            or not n['text'].strip() for n in notes):
+        raise PlanError('INVALID_EDIT', 'Explicit engineer notes are required')
+    notes_json = canonical(notes)
+    # get() validates the stored bound manifest before any provider work begins.
+    before = workspace.get(expected_head)
+    import acs_understand as U
+    candidate = U.apply_notes(before.model, json.loads(notes_json), model=model)
+    # PlanLockWorkspace.propose verifies inherited room/semantic locks before
+    # admission, then rebinds the exact lock set to the new immutable revision.
+    return workspace.propose(
+        candidate, brief=before.brief,
+        requirements=json.loads(before.requirements_json),
+        expected_head=expected_head,
+        note='\n'.join(n['text'] for n in notes))
+
+
 def existing_geometry_verifier(building: dict) -> dict:
     """Conservative bridge to ACS's existing validator, not code certification.
 
