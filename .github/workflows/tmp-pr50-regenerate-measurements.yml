@@ -1,0 +1,43 @@
+name: PR50 regenerate measured frontend state
+on:
+  push:
+    branches:
+      - feature/warehouse-viewport-exact-selection-v2
+    paths:
+      - '.github/workflows/tmp-pr50-regenerate-measurements.yml'
+permissions:
+  contents: write
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/warehouse-viewport-exact-selection-v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Regenerate deterministic bundle measurements
+        run: python3 tools/bundle_report.py
+      - name: Regenerate only the measured current-state documentation block
+        run: |
+          python3 - <<'PY'
+          from tools.check_doc_claims import check_state
+          ok, msg = check_state(fix=True)
+          print(msg)
+          if not ok:
+              raise SystemExit(1)
+          PY
+      - name: Commit measured outputs if changed
+        run: |
+          set -euo pipefail
+          git add tests/performance/bundle_report.json KNOWN-ISSUES.md
+          if git diff --cached --quiet; then
+            echo 'No measured drift to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: regenerate measured frontend state for warehouse viewport bridge'
+          git push origin HEAD:feature/warehouse-viewport-exact-selection-v2
