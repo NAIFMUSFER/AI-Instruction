@@ -9,11 +9,13 @@ on:
       - 'acs_plan_projection.py'
       - 'acs_plan_scorecard.py'
       - 'acs_plan_options.py'
+      - 'acs_plan_semantic_locks.py'
       - 'tests/remediation/test_plan_review.py'
       - 'tests/remediation/test_plan_bridge*.py'
       - 'tests/remediation/test_plan_projection.py'
       - 'tests/remediation/test_plan_scorecard.py'
       - 'tests/remediation/test_plan_options.py'
+      - 'tests/remediation/test_plan_semantic_locks.py'
       - '.github/workflows/plan-first-contracts.yml'
       - 'Dockerfile'
 permissions:
@@ -36,7 +38,7 @@ jobs:
         run: |
           python -S - <<'PYTHON'
           import sys
-          import acs_plan_review, acs_plan_bridge, acs_plan_projection, acs_plan_scorecard, acs_plan_options
+          import acs_plan_review, acs_plan_bridge, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks
           assert 'acs_understand' not in sys.modules
           assert 'ezdxf' not in sys.modules
           PYTHON
@@ -45,19 +47,20 @@ jobs:
           python -m pip install -r requirements.txt -r requirements-dev.txt
           python -m pip install --only-binary=:all: ezdxf==1.4.4 pyparsing==3.3.2 fonttools==4.65.0
           python -m pip check
-      - name: Revision, approval, CAD, scorecard, options and real-validator contracts
+      - name: Revision, approval, CAD, scorecard, options, semantic-lock and real-validator contracts
         env:
           ACS_ENV: test
           ANTHROPIC_API_KEY: dummy
         run: |
           mkdir -p logs
-          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py
+          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py
           set -o pipefail
           python tests/remediation/test_plan_review.py 2>&1 | tee logs/plan-review.log
           python tests/remediation/test_plan_bridge.py 2>&1 | tee logs/plan-bridge.log
           python tests/remediation/test_plan_projection.py 2>&1 | tee logs/plan-cad.log
           python tests/remediation/test_plan_scorecard.py 2>&1 | tee logs/plan-scorecard.log
           python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
+          python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_bridge_integration.py 2>&1 | tee logs/plan-real-validator.log
           git diff --exit-code
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
