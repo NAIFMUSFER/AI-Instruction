@@ -7,13 +7,14 @@ verifier is used. These contracts prove plan identity only; an empty
 """
 from __future__ import annotations
 
+import copy
 from pathlib import Path
 import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_projection as C
-from acs_plan_review import PlanWorkspace
+from acs_plan_review import PlanError, PlanWorkspace
 
 BRIEF = "warehouse with receiving and storage"
 REQUIREMENTS = [
@@ -102,6 +103,27 @@ class ExplicitElementProvenanceTests(unittest.TestCase):
             if row["source"]["collection"] == "docks"
         }
         self.assertEqual(dock_ids, {"dock_n1"})
+
+    def test_duplicate_explicit_id_cannot_create_two_identical_source_ids(self):
+        # Revision admission currently permits two unlinked nested elements with
+        # the same explicit id. Once PR #51 gives every explicit nested element a
+        # provenance identity, silently emitting the same plan_<sha256> twice
+        # would make downstream 3D/export selection ambiguous. Projection must
+        # fail closed rather than choose by array position or collapse the rows.
+        model = copy.deepcopy(warehouse())
+        model["floors"]["ground"]["rooms"][1]["racks"].append({
+            "id": "rack_a", "kind": "pallet", "x": 16.0, "z": 1.0,
+            "w": 7.0, "d": 28.0, "dir": "z", "rows": 1,
+            "levels": 4, "h": 8.0,
+        })
+        ws = PlanWorkspace()
+        rev = ws.propose(
+            model, brief=BRIEF, requirements=REQUIREMENTS,
+            expected_head=None, note="duplicate nested provenance identity fixture",
+        )
+        with self.assertRaises(PlanError) as ctx:
+            C.provenance_map(rev)
+        self.assertEqual(ctx.exception.code, "AMBIGUOUS_PROVENANCE_TARGET")
 
 
 if __name__ == "__main__":
