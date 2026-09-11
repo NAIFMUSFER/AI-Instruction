@@ -69,6 +69,21 @@ ok('window mesh resolves to the exact workspace fallback id when model id is abs
 
 ok('unknown level fails closed instead of guessing a template',
   mod.canonicalSelectionForMesh({name:'WALL|F9|majlis|0',userData:{}}, building, 'bld_0')===null);
+
+const invalidRoomIdentity = {
+  levels:[{index:0,template:'ground'}],
+  floors:{ground:{rooms:[{id:null,rect:[0,0,2,2],doors:[],windows:[]}]}}
+};
+ok('room without a valid canonical id fails closed instead of fabricating null identity',
+  mod.canonicalSelectionForMesh({name:'WALL|F0|null|0',userData:{}}, invalidRoomIdentity, 'bld_0')===null);
+
+const invalidLevelIdentity = {
+  levels:[{template:'ground'}],
+  floors:{ground:{rooms:[{id:'majlis',rect:[0,0,2,2],doors:[],windows:[]}]}}
+};
+ok('level without a canonical integer index fails closed',
+  mod.canonicalSelectionForMesh({name:'WALL|ground|majlis|0',userData:{}}, invalidLevelIdentity, 'bld_0')===null);
+
 ok('visual-only mesh is never promoted to engineering selection',
   mod.canonicalSelectionForMesh({name:'VISUAL|ARCHITECTURE|x',userData:{acs_visual_only:true}}, building, 'bld_0')===null);
 ok('presentation/site mesh is never promoted to engineering selection',
