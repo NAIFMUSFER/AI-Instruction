@@ -1,0 +1,49 @@
+name: Plan-first persisted command contracts
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_persisted_commands.py'
+      - 'acs_plan_commands.py'
+      - 'acs_plan_store.py'
+      - 'acs_plan_store_reload.py'
+      - 'acs_plan_lock_binding.py'
+      - 'tests/remediation/test_plan_persisted_commands.py'
+      - '.github/workflows/plan-persisted-commands.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plan-persisted-commands-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  persisted-commands:
+    name: Durable trusted-host Plan-first commands
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Import boundary stays stdlib-only and compiler-free
+        run: |
+          python -S - <<'PYTHON'
+          import sys
+          import acs_plan_persisted_commands
+          assert 'acs_understand' not in sys.modules
+          assert 'acs_compiler' not in sys.modules
+          assert 'acs_bim' not in sys.modules
+          PYTHON
+      - name: Durable project-command regressions
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_persisted_commands.py 2>&1 | tee logs/plan-persisted-commands.log
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: plan-persisted-command-logs
+          path: logs/
+          retention-days: 7
