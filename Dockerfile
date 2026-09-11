@@ -12,14 +12,13 @@ COPY acs_opening_identity.py ./
 # DXF remains optional: importing these modules needs no CAD/provider client.
 # acs_plan_store uses only stdlib SQLite; acs_plan_store_reload reconstructs
 # validated lock-bound workspaces after restart without enabling a public route.
-# acs_plan_commands is a closed trusted-host command companion: it has no
-# FastAPI registration and remains unreachable from acs_understand_api until a
-# separately audited authenticated project/session host explicitly integrates it.
-COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py ./
+# acs_plan_commands and acs_plan_persisted_commands are closed trusted-host
+# companions: neither registers FastAPI routes nor discovers authentication.
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py ./
 # The command companion returns the same privacy-limited read-only review packet
 # used by the browser reviewer. Package that helper explicitly without adding a route.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py
-RUN python -S -c "import sys, acs_plan_commands; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
+RUN python -S -c "import sys, acs_plan_commands, acs_plan_persisted_commands; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
 # سجل البرامج (المصدر الوحيد للحقيقة) وطبقة المشروع — لازمة للتشغيل
 COPY acs_programs.py acs_programs.json acs_project.py acs_relations.py acs_navigation.py acs_egress.py acs_distance.py ./
 # سجلّ محرّك القواعد (بلا محتوى تنظيمي) — بيانات لا شيفرة
