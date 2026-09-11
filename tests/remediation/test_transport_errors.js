@@ -30,7 +30,10 @@ function generationHarness() {
   const elements={descText:{value:'One room on one floor'},siteW:{value:20},
     siteD:{value:25},nFloors:{value:1},reportBox:{className:'report'},
     srvPill:{className:'srv bad',innerHTML:'Previous NETWORK_ERROR'}};
-  const ctx={console:{error(){},warn(){}}, document:{getElementById:id=>elements[id]},
+  const events=[];
+  const ctx={console:{error(){},warn(){}},
+    CustomEvent:function(type,init){this.type=type;this.detail=(init&&init.detail)||null;},
+    document:{getElementById:id=>elements[id],dispatchEvent:event=>{events.push(event);return true;}},
     statusEl:{textContent:''}, SRV_OK:false, ACS_APPLY_SEQ:0,
     ACS_NET:{SUCCESS:'SUCCESS',INVALID_JSON:'INVALID_JSON'},
     ACS_FAIL:{API_HTTP_ERROR:'API_HTTP_ERROR',API_NETWORK_ERROR:'API_NETWORK_ERROR',
@@ -41,7 +44,7 @@ function generationHarness() {
   ctx.acsApplyTicket=()=>++ctx.ACS_APPLY_SEQ;
   ctx.acsApplyBuilding=(_building,opts)=>({ok:true,stale:opts.seq!==ctx.ACS_APPLY_SEQ});
   vm.runInNewContext(src.slice(pillStart,pillEnd)+'\n'+src.slice(start,end),ctx);
-  return {ctx,pill:elements.srvPill,pending,errors,call:ctx.acsGenerateFromServer};
+  return {ctx,pill:elements.srvPill,pending,errors,events,call:ctx.acsGenerateFromServer};
 }
 const networkFailure={status:'NETWORK_ERROR',message:'Unknown delivery status'};
 async function main() {
@@ -110,9 +113,11 @@ async function main() {
   }
   await test('a new generation replaces the previous failure with pending status',async()=>{
     const h=generationHarness(), first=h.call();
+    assert.equal(h.events[0].type,'acs:generation-started');
     h.pending[0](networkFailure); await first;
     assert.equal(h.pill.className,'srv bad');
     const next=h.call();
+    assert.equal(h.events[1].type,'acs:generation-started');
     assert.equal(h.pill.className,'srv');
     assert.ok(!h.pill.innerHTML.includes('NETWORK_ERROR'));
     assert.equal(h.ctx.SRV_OK,false,'pending is not proof of connectivity');

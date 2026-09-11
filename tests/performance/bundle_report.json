@@ -2,16 +2,16 @@
   "budget": {
     "budget_met": true,
     "budget_note": "index_shell_budget_bytes is the same constant as MAX_BYTES in tools/check_index_guard.py, which fails the build above it. budget_met and preferred_met are COMPUTED from the measured size here, never asserted.",
-    "current_index_bytes": 48777,
-    "headroom_bytes": 156023,
+    "current_index_bytes": 49428,
+    "headroom_bytes": 155372,
     "index_shell_budget_bytes": 204800,
     "index_shell_preferred_bytes": 153600,
     "largest_module_bytes": 228701,
     "largest_module_headroom_bytes": 78499,
     "max_single_module_budget_bytes": 307200,
-    "preferred_headroom_bytes": 104823,
+    "preferred_headroom_bytes": 104172,
     "preferred_met": true,
-    "ratio_of_budget_used": 0.2382,
+    "ratio_of_budget_used": 0.2413,
     "target": "The deployed index.html is an index SHELL — markup, <link rel=stylesheet>, five classic boot scripts and <script type=module src=/app/main.js> — and every line of application logic lives in cacheable files under public/app/."
   },
   "css": {
@@ -62,7 +62,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1450943,
+    "core_initial_bytes": 1456677,
     "core_initial_module_count": 17,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 13,
@@ -135,17 +135,17 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 29,
-    "first_party_total_bytes": 1944706,
-    "initial_javascript_bytes": 1478837,
+    "first_party_total_bytes": 1950440,
+    "initial_javascript_bytes": 1484571,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
       "gzip_bytes": 48735,
       "loaded": "eager",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 11.76
+      "pct_of_first_party_js": 11.73
     },
-    "largest_module_pct_of_first_party_js": 11.76,
+    "largest_module_pct_of_first_party_js": 11.73,
     "lazy_bytes": 465869,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
@@ -173,7 +173,7 @@
         "gzip_bytes": 48735,
         "loaded": "eager",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 11.76
+        "pct_of_first_party_js": 11.73
       },
       {
         "bytes": 205018,
@@ -181,15 +181,15 @@
         "gzip_bytes": 56862,
         "loaded": "eager",
         "path": "public/app/core/disciplines.js",
-        "pct_of_first_party_js": 10.54
+        "pct_of_first_party_js": 10.51
       },
       {
-        "bytes": 203799,
+        "bytes": 204058,
         "group": "ui",
-        "gzip_bytes": 62247,
+        "gzip_bytes": 62327,
         "loaded": "eager",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 10.48
+        "pct_of_first_party_js": 10.46
       },
       {
         "bytes": 198744,
@@ -197,7 +197,7 @@
         "gzip_bytes": 64081,
         "loaded": "eager",
         "path": "public/app/core/viewer.js",
-        "pct_of_first_party_js": 10.22
+        "pct_of_first_party_js": 10.19
       },
       {
         "bytes": 166057,
@@ -205,7 +205,7 @@
         "gzip_bytes": 50111,
         "loaded": "eager",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 8.54
+        "pct_of_first_party_js": 8.51
       },
       {
         "bytes": 122705,
@@ -213,7 +213,7 @@
         "gzip_bytes": 30357,
         "loaded": "eager",
         "path": "public/app/generated/authoring.js",
-        "pct_of_first_party_js": 6.31
+        "pct_of_first_party_js": 6.29
       },
       {
         "bytes": 115993,
@@ -221,7 +221,7 @@
         "gzip_bytes": 33152,
         "loaded": "lazy",
         "path": "public/app/generated/docs.js",
-        "pct_of_first_party_js": 5.96
+        "pct_of_first_party_js": 5.95
       },
       {
         "bytes": 104379,
@@ -229,7 +229,7 @@
         "gzip_bytes": 30687,
         "loaded": "lazy",
         "path": "public/app/generated/workspace-ui.js",
-        "pct_of_first_party_js": 5.37
+        "pct_of_first_party_js": 5.35
       },
       {
         "bytes": 99740,
@@ -237,7 +237,7 @@
         "gzip_bytes": 29046,
         "loaded": "lazy",
         "path": "public/app/generated/render-engine.js",
-        "pct_of_first_party_js": 5.13
+        "pct_of_first_party_js": 5.11
       },
       {
         "bytes": 75987,
@@ -245,7 +245,7 @@
         "gzip_bytes": 20929,
         "loaded": "eager",
         "path": "public/app/generated/runtime.js",
-        "pct_of_first_party_js": 3.91
+        "pct_of_first_party_js": 3.9
       },
       {
         "bytes": 74050,
@@ -253,7 +253,7 @@
         "gzip_bytes": 22928,
         "loaded": "eager",
         "path": "public/app/generated/pbr.js",
-        "pct_of_first_party_js": 3.81
+        "pct_of_first_party_js": 3.8
       },
       {
         "bytes": 70950,
@@ -261,7 +261,7 @@
         "gzip_bytes": 20057,
         "loaded": "lazy",
         "path": "public/app/generated/arch-detail.js",
-        "pct_of_first_party_js": 3.65
+        "pct_of_first_party_js": 3.64
       },
       {
         "bytes": 56609,
@@ -269,7 +269,7 @@
         "gzip_bytes": 17734,
         "loaded": "lazy",
         "path": "public/app/generated/bim.js",
-        "pct_of_first_party_js": 2.91
+        "pct_of_first_party_js": 2.9
       },
       {
         "bytes": 51553,
@@ -277,7 +277,7 @@
         "gzip_bytes": 16742,
         "loaded": "eager",
         "path": "public/app/trust/core.js",
-        "pct_of_first_party_js": 2.65
+        "pct_of_first_party_js": 2.64
       },
       {
         "bytes": 47363,
@@ -285,15 +285,15 @@
         "gzip_bytes": 14629,
         "loaded": "eager",
         "path": "public/app/generated/pbr-bridge.js",
-        "pct_of_first_party_js": 2.44
+        "pct_of_first_party_js": 2.43
       },
       {
-        "bytes": 36101,
+        "bytes": 41576,
         "group": "trust",
-        "gzip_bytes": 12100,
+        "gzip_bytes": 13462,
         "loaded": "eager",
         "path": "public/app/trust/wiring.js",
-        "pct_of_first_party_js": 1.86
+        "pct_of_first_party_js": 2.13
       },
       {
         "bytes": 18198,
@@ -301,7 +301,7 @@
         "gzip_bytes": 6506,
         "loaded": "lazy",
         "path": "public/app/generated/arch-detail-bridge.js",
-        "pct_of_first_party_js": 0.94
+        "pct_of_first_party_js": 0.93
       },
       {
         "bytes": 15478,
@@ -309,7 +309,7 @@
         "gzip_bytes": 5339,
         "loaded": "eager",
         "path": "public/app/ui/panels-entry.js",
-        "pct_of_first_party_js": 0.8
+        "pct_of_first_party_js": 0.79
       },
       {
         "bytes": 12947,
@@ -317,7 +317,7 @@
         "gzip_bytes": 4672,
         "loaded": "eager",
         "path": "public/app/ui/generation-jobs.js",
-        "pct_of_first_party_js": 0.67
+        "pct_of_first_party_js": 0.66
       },
       {
         "bytes": 9360,
@@ -333,7 +333,7 @@
         "gzip_bytes": 2044,
         "loaded": "eager",
         "path": "public/app/ui/residential-quality.js",
-        "pct_of_first_party_js": 0.33
+        "pct_of_first_party_js": 0.32
       },
       {
         "bytes": 5429,
@@ -414,17 +414,17 @@
   "shell": {
     "brotli_bytes": null,
     "brotli_reason": "brotli is not importable in this environment (no `brotli` / `brotlicffi` module, and the standard library ships no brotli compressor); reported as null rather than estimated",
-    "characters": 41423,
+    "characters": 42005,
     "external_script_count": 7,
-    "gzip_bytes": 13474,
+    "gzip_bytes": 13615,
     "gzip_level": 9,
     "inline_executable_script_count": 0,
     "inline_importmap_bytes": 131,
     "inline_style_attribute_count": 0,
-    "lines": 672,
+    "lines": 678,
     "note": "inline_executable_script_count, style_element_count and inline_style_attribute_count are all 0 by design after F-11 — that is exactly what lets the CSP drop 'unsafe-inline' from script-src and style-src. The one remaining inline element is the import map, allowed by the sha256 pinned in netlify.toml.",
     "path": "public/index.html",
-    "raw_bytes": 48777,
+    "raw_bytes": 49428,
     "script_element_count": 8,
     "scripts": [
       {
@@ -456,7 +456,7 @@
         "index": 4,
         "inline_body_bytes": 0,
         "kind": "classic",
-        "line": 209,
+        "line": 215,
         "src": "/app/boot/debug-toggle.js"
       },
       {
@@ -464,7 +464,7 @@
         "index": 5,
         "inline_body_bytes": 131,
         "kind": "importmap",
-        "line": 478,
+        "line": 484,
         "src": null
       },
       {
@@ -472,7 +472,7 @@
         "index": 6,
         "inline_body_bytes": 0,
         "kind": "classic",
-        "line": 487,
+        "line": 493,
         "src": "/app/boot/engine-guard.js"
       },
       {
@@ -480,7 +480,7 @@
         "index": 7,
         "inline_body_bytes": 0,
         "kind": "module",
-        "line": 489,
+        "line": 495,
         "src": "/app/main.js"
       },
       {
@@ -488,14 +488,14 @@
         "index": 8,
         "inline_body_bytes": 0,
         "kind": "classic",
-        "line": 666,
+        "line": 672,
         "src": "/app/boot/a11y-baseline.js"
       }
     ],
-    "sha256": "1500f4b92199593f8edc615155487afffd021a2a0df42fe9ff3d5854c8e1daee",
+    "sha256": "765b7e58ab6c017f73947e2c7ee6be39e592f3690e34a836d390311751573ab1",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 48777 byte shell and every byte of application JavaScript (1944706 bytes) lives in 29 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 49428 byte shell and every byte of application JavaScript (1950440 bytes) lives in 29 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,

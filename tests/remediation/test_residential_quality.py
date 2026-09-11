@@ -47,3 +47,20 @@ chk("program classifier excludes warehouse",
     not U._is_residential("warehouse"))
 
 print(f"RESIDENTIAL QUALITY CONTRACT: {passed} passed, 0 failed")
+
+chk("residential rule forbids unrequested upper-floor cantilevers",
+    "لا تنشئ بلاطات أو غرفاً علوية معلّقة" in rule)
+chk("staged residential generation has a pre-detail plan quality gate",
+    hasattr(U, "_residential_plan_quality_issues") and hasattr(U, "_repair_residential_plan"))
+
+# A shifted upper floor is flagged unless the user explicitly requested a cantilever.
+_b={"meta":{"type":"apartment"},"site":{"w":30,"d":30},"levels":[
+ {"index":0,"template":"g"},{"index":1,"template":"u"}],"floors":{
+ "g":{"rooms":[{"id":"living","rect":[5,5,10,10],"doors":[]}]},
+ "u":{"rooms":[{"id":"bed","rect":[8,5,10,10],"doors":[]}]}}}
+_q=U._residential_plan_quality_issues(_b,"عمارة سكنية دورين")
+chk("large unrequested upper-floor excursion is detected",
+    any("بلا طلب صريح" in x for x in _q))
+_q2=U._residential_plan_quality_issues(_b,"عمارة سكنية مع بروز كابولي 3 متر")
+chk("explicit cantilever intent suppresses the added massing complaint",
+    not any("بلا طلب صريح" in x for x in _q2))
