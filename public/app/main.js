@@ -19,6 +19,9 @@ import './generated/runtime.js';
 import './generated/authoring.js';
 import './generated/pbr.js';
 import './render/scene.js';
+/* Warehouse Pipeline v2 exact sub-element identity contract. The module is
+   side-effect free; exact identity is admitted only from explicit canonical ids. */
+import './render/warehouse-canonical-identity.js';
 import './generated/pbr-bridge.js';
 import './ui/workspace-ui-wiring.js';
 import './trust/core.js';
