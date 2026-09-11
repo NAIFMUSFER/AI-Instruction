@@ -11,6 +11,59 @@ const FIX=path.resolve(__dirname,'../../logs/review-fixtures');
 let assertions=0;
 function check(name,value){assert.ok(value,name);assertions++;console.log('PASS '+name);}
 function encoded(p){const payload_json=JSON.stringify(p);return JSON.stringify({schema:'acs.plan-review-file/1.0',payload_json,payload_sha256:crypto.createHash('sha256').update(payload_json).digest('hex')});}
+// Playwright 1.62.1 injects a temporary `body {}` stylesheet when preparing
+// WebKit screenshots. Keep that tooling side effect out of the interaction page;
+// do not weaken CSP or discard violations from the page under test.
+async function captureReviewEvidence(browser,name,width,base) {
+  const page=await browser.newPage({viewport:{width,height:900}});
+  const errors=[],external=[];
+  page.on('pageerror',e=>errors.push(String(e)));
+  try {
+    await page.route('**/*',route=>{if(route.request().url().startsWith(base+'/'))return route.continue();external.push(route.request().url());return route.abort();});
+    await page.addInitScript(()=>{
+      window.__captureViolations=[];window.__captureStyles=[];
+      document.addEventListener('securitypolicyviolation',e=>window.__captureViolations.push({directive:e.violatedDirective,blockedURI:e.blockedURI,sourceFile:e.sourceFile,disposition:e.disposition}));
+      new MutationObserver(records=>{
+        for(const r of records)for(const n of r.addedNodes)
+          if(n.nodeName==='STYLE')window.__captureStyles.push(n.textContent);
+      }).observe(document,{childList:true,subtree:true});
+    });
+    await page.goto(base+'/plan-review/');
+    await page.locator('#files').setInputFiles(path.join(FIX,'warehouse.acs-review.json'));
+    await page.waitForSelector('#workspace:not([hidden])');
+    await page.locator('#plan .space').nth(1).focus();await page.keyboard.press('Enter');
+    check(name+width+' isolated screenshot starts CSP-clean',await page.evaluate(()=>window.__captureViolations.length===0&&window.__captureStyles.length===0));
+    const drawing=await page.locator('#plan').evaluate(e=>e.outerHTML);
+    await page.screenshot({path:`logs/review-screenshots/${name}-${width}.png`,fullPage:true,caret:'initial'});
+    const evidence=await page.evaluate(()=>({violations:window.__captureViolations,insertedStyles:window.__captureStyles}));
+    fs.writeFileSync(`logs/review-screenshots/${name}-${width}-capture.json`,JSON.stringify(evidence,null,2));
+    const knownWebKitInjector=name==='webkit'&&evidence.violations.length===1
+      &&evidence.insertedStyles.length===1&&evidence.insertedStyles[0]==='body {}'
+      &&evidence.violations.every(e=>e.directive==='style-src-elem'&&e.blockedURI==='inline'&&e.sourceFile===''&&e.disposition==='enforce');
+    check(name+width+' screenshot diagnostic is empty or the exact Playwright injector',evidence.violations.length===0||knownWebKitInjector);
+    console.log('SCREENSHOT_TOOLING '+name+width+' '+JSON.stringify(evidence));
+    check(name+width+' screenshot preserves exact SVG',drawing===await page.locator('#plan').evaluate(e=>e.outerHTML));
+    check(name+width+' screenshot has no script errors or external requests',errors.length===0&&external.length===0);
+  } finally { await page.close(); }
+}
+async function verifyCspNegativeControl(browser,name,base) {
+  // A separate local page proves that a genuine injected inline stylesheet is
+  // still denied and observed. No violations are erased from interaction pages.
+  const page=await browser.newPage();
+  try {
+    await page.addInitScript(()=>{
+      window.__controlViolations=[];
+      document.addEventListener('securitypolicyviolation',e=>window.__controlViolations.push({directive:e.violatedDirective,blockedURI:e.blockedURI}));
+    });
+    await page.goto(base+'/plan-review/');
+    check(name+' CSP negative control starts clean',await page.evaluate(()=>window.__controlViolations.length===0));
+    const before=await page.evaluate(()=>getComputedStyle(document.body).color);
+    await page.evaluate(()=>{const s=document.createElement('style');s.textContent='body { color: rgb(1, 2, 3) !important; }';document.head.append(s);});
+    await page.waitForFunction(()=>window.__controlViolations.length>0,null,{timeout:5000});
+    check(name+' CSP still rejects actual inline styles',await page.evaluate(()=>window.__controlViolations.some(e=>e.directive.startsWith('style-src')&&e.blockedURI==='inline')));
+    check(name+' blocked style cannot change page appearance',before===await page.evaluate(()=>getComputedStyle(document.body).color));
+  } finally { await page.close(); }
+}
 (async()=>{
   const server=http.createServer((req,res)=>{
     try{
@@ -55,8 +108,7 @@ function encoded(p){const payload_json=JSON.stringify(p);return JSON.stringify({
           check(name+width+' zoom only affects viewBox',before!==await page.locator('#plan').getAttribute('viewBox'));
           await page.locator('#fit').click();check(name+width+' fit restores exact viewport',before===await page.locator('#plan').getAttribute('viewBox'));
           check(name+width+' no page horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-          await phase('screenshot');
-          if(width===393||width===1280)await page.screenshot({path:`logs/review-screenshots/${name}-${width}.png`,fullPage:true});
+          if(width===393||width===1280)await captureReviewEvidence(browser,name,width,base);
           await phase('revision-import');
           await page.locator('#files').setInputFiles([path.join(FIX,'warehouse.acs-review.json'),path.join(FIX,'residential.acs-review.json')]);
           await page.waitForFunction(()=>document.querySelector('#revision').options.length===2);
@@ -88,6 +140,7 @@ function encoded(p){const payload_json=JSON.stringify(p);return JSON.stringify({
           check(name+width+' no browser persistence',await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0));
           await page.close();
         }
+        await verifyCspNegativeControl(browser,name,base);
       }finally{await browser.close();}
     }
     console.log(`PLAN REVIEW UI: ${assertions} assertions passed; 2 engines, 4 viewport widths. Synthetic input, no production/provider claim.`);
