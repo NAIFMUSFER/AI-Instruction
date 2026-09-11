@@ -1,0 +1,111 @@
+name: Live async generation smoke 2026-09-11
+
+on:
+  push:
+    branches:
+      - audit/live-async-smoke-20260911
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    steps:
+      - name: Verify production identity and recoverable async generation
+        env:
+          ACS_BASE: https://acs-engine.onrender.com
+          EXPECTED_SHA: 1aac7d6970c24e8ea47703652beb2973bc0d98ca
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+          with urllib.request.urlopen(os.environ['ACS_BASE'] + '/health', timeout=30) as r:
+              d=json.load(r)
+          assert r.status == 200
+          assert d.get('ok') is True
+          assert d.get('build',{}).get('git_sha_short') == os.environ['EXPECTED_SHA'][:12]
+          assert d.get('async_generation',{}).get('enabled') is True
+          print('health identity ok:', d['build']['git_sha_short'])
+          PY
+
+          JOB_ID="job_$(openssl rand -hex 16)"
+          TOKEN="$(openssl rand -hex 32)"
+          BODY='{"text":"اختبار إنتاج محدود بعد إصلاح الاتصال: مبنى سكني بسيط جداً بطابق واحد، غرفة واحدة مع باب ونافذة داخل أرض 8×8 م.","strict":false,"site_w":8,"site_d":8,"floors":1}'
+
+          code=$(curl -sS --max-time 30 -o submit.json -w '%{http_code}' \
+            -X POST "$ACS_BASE/v1/jobs/understand" \
+            -H 'Content-Type: application/json' \
+            -H "X-ACS-Job-ID: $JOB_ID" \
+            -H "X-ACS-Job-Token: $TOKEN" \
+            --data "$BODY")
+          test "$code" = "202"
+          python3 - "$JOB_ID" <<'PY'
+          import json,sys
+          d=json.load(open('submit.json',encoding='utf-8'))
+          assert d.get('ok') is True
+          assert d.get('contract') == 'acs.async-generation/1.0'
+          j=d.get('job') or {}
+          assert j.get('id') == sys.argv[1]
+          assert j.get('state') in ('QUEUED','RUNNING')
+          print('submit accepted:', j.get('state'))
+          PY
+
+          ready=0
+          for i in $(seq 1 260); do
+            code=$(curl -sS --max-time 20 -o status.json -w '%{http_code}' \
+              "$ACS_BASE/v1/jobs/$JOB_ID" \
+              -H "X-ACS-Job-Token: $TOKEN")
+            test "$code" = "202" -o "$code" = "200"
+            state=$(python3 - <<'PY'
+          import json
+          d=json.load(open('status.json',encoding='utf-8'))
+          j=d.get('job') or {}
+          print(j.get('state',''))
+          PY
+          )
+            available=$(python3 - <<'PY'
+          import json
+          d=json.load(open('status.json',encoding='utf-8'))
+          print('1' if (d.get('job') or {}).get('result_available') else '0')
+          PY
+          )
+            echo "poll $i state=$state"
+            if [ "$available" = "1" ]; then ready=1; break; fi
+            sleep 3
+          done
+          test "$ready" = "1"
+
+          code=$(curl -sS --max-time 30 -o result.json -w '%{http_code}' \
+            "$ACS_BASE/v1/jobs/$JOB_ID/result" \
+            -H "X-ACS-Job-Token: $TOKEN")
+          test "$code" = "200"
+          python3 - <<'PY'
+          import json
+          d=json.load(open('result.json',encoding='utf-8'))
+          assert d.get('ok') is True
+          b=d.get('building')
+          assert isinstance(b,dict) and b.get('floors') is not None
+          assert isinstance(d.get('levels'),int) and d['levels'] >= 1
+          assert isinstance(d.get('rooms'),int) and d['rooms'] >= 1
+          print('result delivered: levels=%s rooms=%s type=%s' % (d.get('levels'),d.get('rooms'),d.get('type')))
+          PY
+
+          # Same id+capability+body must replay the existing job, not create paid work twice.
+          code=$(curl -sS --max-time 30 -o replay.json -w '%{http_code}' \
+            -X POST "$ACS_BASE/v1/jobs/understand" \
+            -H 'Content-Type: application/json' \
+            -H "X-ACS-Job-ID: $JOB_ID" \
+            -H "X-ACS-Job-Token: $TOKEN" \
+            --data "$BODY")
+          test "$code" = "202"
+          python3 - "$JOB_ID" <<'PY'
+          import json,sys
+          d=json.load(open('replay.json',encoding='utf-8'))
+          j=d.get('job') or {}
+          assert j.get('id') == sys.argv[1]
+          assert j.get('state') == 'SUCCEEDED'
+          assert j.get('result_available') is True
+          print('idempotent replay preserved completed job')
+          PY
