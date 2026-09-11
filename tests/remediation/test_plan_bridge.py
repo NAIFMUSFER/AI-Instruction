@@ -8,7 +8,15 @@ from unittest.mock import Mock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_bridge as B
 from acs_plan_review import PlanError, PlanWorkspace
+from acs_plan_lock_binding import PlanLockWorkspace
 from test_plan_review import model, program, BRIEF, verified
+from test_plan_lock_binding import (
+    residential as lock_residential,
+    warehouse as lock_warehouse,
+    reqs as lock_reqs,
+    element as lock_element,
+    verifier as lock_verifier,
+)
 
 
 class BridgeTests(unittest.TestCase):
@@ -70,6 +78,82 @@ class BridgeTests(unittest.TestCase):
             B.propose_chat_edit(self.ws, [{'text': 'only change hall'}], expected_head=head)
         self.assertEqual(got.exception.code, 'LOCK_VIOLATION')
         self.assertEqual(self.ws.head, head)
+        self.u.apply_notes.assert_called_once()
+
+    def test_bound_edit_rejects_stale_or_empty_before_provider(self):
+        ws = PlanLockWorkspace(verifier=lock_verifier)
+        first = ws.propose(lock_residential(), brief='site width 20 residential',
+                           requirements=lock_reqs(20.0), expected_head=None, note='initial')
+        for head, notes in [('stale', [{'text': 'edit'}]), (first.id, []),
+                            (first.id, [{'text': ''}])]:
+            with self.assertRaises(PlanError):
+                B.propose_bound_chat_edit(ws, notes, expected_head=head)
+        self.u.apply_notes.assert_not_called()
+
+    def test_bound_residential_chat_edit_preserves_elevator_and_approved_baseline(self):
+        ws = PlanLockWorkspace(verifier=lock_verifier)
+        first = ws.propose(lock_residential(), brief='site width 20 residential',
+                           requirements=lock_reqs(20.0), expected_head=None, note='initial')
+        locked = ws.replace_semantic_locks(
+            [lock_element('objects', 'lift_1', 'core')], expected_head=first.id,
+            note='lock elevator')
+        ws.approve(locked.id, expected_head=locked.id, actor_label='engineer',
+                   confirmed=True, acknowledge_concept_only=True)
+        changed = copy.deepcopy(locked.model)
+        rooms = changed['floors']['ground']['rooms']
+        rooms[0]['rect'] = [0.0, 0.0, 8.0, 12.0]
+        rooms[3]['rect'] = [0.0, 12.0, 20.0, 8.0]
+        self.u.apply_notes.return_value = changed
+        revised = B.propose_bound_chat_edit(
+            ws, [{'text': 'كبّر المجلس مع إبقاء المصعد مقفلاً'}], expected_head=locked.id)
+        self.assertEqual(revised.semantic_lock_count, 1)
+        self.assertEqual(revised.model['floors']['ground']['rooms'][1]['objects'][0],
+                         locked.model['floors']['ground']['rooms'][1]['objects'][0])
+        self.assertEqual(ws.baseline, locked.id)
+        with self.assertRaises(PlanError):
+            ws.handoff(revised.id)
+        self.u.apply_notes.assert_called_once()
+
+    def test_bound_warehouse_chat_edit_expands_staging_with_dock_and_rack_locked(self):
+        ws = PlanLockWorkspace(verifier=lock_verifier)
+        first = ws.propose(lock_warehouse(), brief='site width 30 warehouse',
+                           requirements=lock_reqs(), expected_head=None, note='initial')
+        locked = ws.replace_semantic_locks([
+            lock_element('racks', 'rack_a', 'storage'),
+            lock_element('docks', 'dock_n1', 'receiving')],
+            expected_head=first.id, note='lock dock and rack')
+        changed = copy.deepcopy(locked.model)
+        rooms = changed['floors']['ground']['rooms']
+        rooms[2]['rect'] = [20.0, 0.0, 10.0, 17.0]
+        rooms[3]['rect'] = [20.0, 17.0, 10.0, 13.0]
+        self.u.apply_notes.return_value = changed
+        revised = B.propose_bound_chat_edit(
+            ws, [{'text': 'وسّع staging مع قفل docks والرفوف المحددة'}],
+            expected_head=locked.id)
+        self.assertEqual(revised.semantic_lock_count, 2)
+        self.assertEqual(revised.model['floors']['ground']['rooms'][0]['docks'],
+                         locked.model['floors']['ground']['rooms'][0]['docks'])
+        self.assertEqual(revised.model['floors']['ground']['rooms'][1]['racks'],
+                         locked.model['floors']['ground']['rooms'][1]['racks'])
+        self.assertEqual(revised.model['floors']['ground']['rooms'][2]['rect'][3], 17.0)
+
+    def test_bound_chat_edit_locked_element_violation_does_not_extend_history(self):
+        ws = PlanLockWorkspace(verifier=lock_verifier)
+        first = ws.propose(lock_warehouse(), brief='site width 30 warehouse',
+                           requirements=lock_reqs(), expected_head=None, note='initial')
+        locked = ws.replace_semantic_locks(
+            [lock_element('racks', 'rack_a', 'storage')], expected_head=first.id,
+            note='lock rack')
+        changed = copy.deepcopy(locked.model)
+        changed['floors']['ground']['rooms'][1]['racks'][0]['levels'] = 5
+        self.u.apply_notes.return_value = changed
+        count = len(ws.history())
+        with self.assertRaises(PlanError) as got:
+            B.propose_bound_chat_edit(ws, [{'text': 'غيّر التخطيط فقط'}],
+                                      expected_head=locked.id)
+        self.assertEqual(got.exception.code, 'LOCK_VIOLATION')
+        self.assertEqual(len(ws.history()), count)
+        self.assertEqual(ws.head, locked.id)
         self.u.apply_notes.assert_called_once()
 
     def test_verifier_does_not_claim_missing_opening_or_core_intent(self):
