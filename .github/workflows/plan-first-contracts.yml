@@ -70,6 +70,11 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_store_row_binding.py 2>&1 | tee logs/plan-store-row-binding.log
+      - name: Persisted workspace restart/reload regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_store_reload.py 2>&1 | tee logs/plan-store-reload.log
       - name: Admission-time requirement provenance regressions (stdlib-only)
         run: |
           set -o pipefail
@@ -127,6 +132,7 @@ jobs:
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
           python tests/remediation/test_plan_store.py 2>&1 | tee logs/plan-store.log
+          python tests/remediation/test_plan_store_reload.py 2>&1 | tee logs/plan-store-reload-full.log
           python tests/remediation/test_plan_handoff.py 2>&1 | tee logs/plan-3d-handoff.log
           python tests/remediation/test_plan_handoff_large.py 2>&1 | tee logs/plan-3d-handoff-large.log
           python tests/remediation/test_plan_bridge_integration.py 2>&1 | tee logs/plan-real-validator.log
