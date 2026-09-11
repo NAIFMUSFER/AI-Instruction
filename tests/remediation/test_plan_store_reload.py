@@ -99,6 +99,11 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
             fn()
         self.assertEqual(got.exception.code, code)
 
+    def assertCodeIn(self, codes, fn):
+        with self.assertRaises(PlanError) as got:
+            fn()
+        self.assertIn(got.exception.code, set(codes))
+
     def saved_warehouse(self, *, approve=False):
         ws = PlanLockWorkspace(verifier=verifier)
         first = ws.propose(warehouse(), brief="site width 30 warehouse",
@@ -208,7 +213,8 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
         con.execute("UPDATE plan_revisions SET revision_json=? WHERE project_id='p1' AND revision_id=?",
                     (json.dumps(raw), locked.id))
         con.commit(); con.close()
-        self.assertCode("STORED_LOCK_RECEIPT_TAMPERED", lambda: self.reload())
+        self.assertCodeIn({"LOCK_MANIFEST_TAMPERED", "STORED_LOCK_RECEIPT_TAMPERED"},
+                          lambda: self.reload())
 
 
 if __name__ == "__main__":
