@@ -29,11 +29,15 @@ def generate_candidate(description: str, *, model=None, btype=None,
 
 
 def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
-                      expected_head: str, model=None):
+                      expected_head: str, model=None,
+                      semantic_lock_manifest: dict | None = None):
     """One paid edit proposal, not a replacement of an approved 3D model.
 
-    Locks are enforced after the provider reply, before revision admission. A
-    rejected lock violation is NOT retried or switched to another provider here.
+    Workspace room locks and optional stable semantic locks are enforced after
+    the provider reply, before revision admission. A rejected lock violation is
+    NOT retried or switched to another provider here. The semantic manifest is a
+    headless foundation artifact; the future authenticated host must persist and
+    bind it to the project/revision before exposing cross-device editing.
     """
     if expected_head != workspace.head:
         raise PlanError('STALE_REVISION', 'The reviewed plan has changed')
@@ -45,6 +49,9 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     before = workspace.get(expected_head)
     import acs_understand as U
     candidate = U.apply_notes(before.model, json.loads(canonical(notes)), model=model)
+    if semantic_lock_manifest is not None:
+        from acs_plan_semantic_locks import verify_lock_manifest
+        verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
     return workspace.propose(candidate, brief=before.brief,
         requirements=json.loads(before.requirements_json), expected_head=expected_head,
         note='\n'.join(n['text'] for n in notes))
