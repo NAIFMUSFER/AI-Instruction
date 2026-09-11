@@ -32,7 +32,15 @@ function encoded(p){const payload_json=JSON.stringify(p);return JSON.stringify({
           const page=await browser.newPage({viewport:{width,height:900}});const external=[];const errors=[];
           page.on('pageerror',e=>errors.push(String(e)));
           await page.route('**/*',route=>{if(route.request().url().startsWith(base+'/'))return route.continue();external.push(route.request().url());return route.abort();});
-          await page.addInitScript(()=>{window.__violations=[];document.addEventListener('securitypolicyviolation',e=>window.__violations.push(e.violatedDirective));});
+          page.on('console',m=>{if(m.text().startsWith('REVIEW_CSP_DIAGNOSTIC '))console.log(name+width+' '+m.text());});
+          await page.addInitScript(()=>{
+            window.__violations=[];window.__testPhase='startup';
+            document.addEventListener('securitypolicyviolation',e=>{
+              const detail={phase:window.__testPhase,directive:e.violatedDirective,effectiveDirective:e.effectiveDirective,blockedURI:e.blockedURI,sourceFile:e.sourceFile,line:e.lineNumber,disposition:e.disposition};
+              window.__violations.push(detail);console.error('REVIEW_CSP_DIAGNOSTIC '+JSON.stringify(detail));
+            });
+          });
+          const phase=async stage=>page.evaluate(stage=>{window.__testPhase=stage;},stage);
           await page.goto(base+'/plan-review/');
           check(name+width+' empty without sample data',await page.locator('#empty').isVisible()&&await page.locator('#plan .space').count()===0);
           await page.locator('#files').setInputFiles(path.join(FIX,'warehouse.acs-review.json'));
@@ -47,27 +55,34 @@ function encoded(p){const payload_json=JSON.stringify(p);return JSON.stringify({
           check(name+width+' zoom only affects viewBox',before!==await page.locator('#plan').getAttribute('viewBox'));
           await page.locator('#fit').click();check(name+width+' fit restores exact viewport',before===await page.locator('#plan').getAttribute('viewBox'));
           check(name+width+' no page horizontal overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+          await phase('screenshot');
           if(width===393||width===1280)await page.screenshot({path:`logs/review-screenshots/${name}-${width}.png`,fullPage:true});
+          await phase('revision-import');
           await page.locator('#files').setInputFiles([path.join(FIX,'warehouse.acs-review.json'),path.join(FIX,'residential.acs-review.json')]);
           await page.waitForFunction(()=>document.querySelector('#revision').options.length===2);
           await page.locator('#revision').selectOption('1');
           check(name+width+' residential version selection',(await page.locator('#spaces').textContent()).includes('المجلس')&&await page.locator('#plan .space').count()===2);
+          await phase('corrupt-file');
           const f=JSON.parse(fs.readFileSync(path.join(FIX,'residential.acs-review.json'),'utf8'));f.payload_json+=' ';
           await page.locator('#files').setInputFiles({name:'invalid.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(f))});
           await page.waitForSelector('#error:not([hidden])');
           check(name+width+' corrupt file clears stale drawing',await page.locator('#plan .space').count()===0&&await page.locator('#workspace').isHidden());
           if(width===393){
+            await phase('plain-text-label');
             const p=JSON.parse(JSON.parse(fs.readFileSync(path.join(FIX,'residential.acs-review.json'),'utf8')).payload_json);
             p.projections[0].primitives[0].label='<img src=x onerror="window.PWNED=true">';
             await page.locator('#files').setInputFiles({name:'text.json',mimeType:'application/json',buffer:Buffer.from(encoded(p))});
             await page.waitForSelector('#workspace:not([hidden])');
             check(name+' model labels are text, not markup',await page.locator('#plan img').count()===0&&!await page.evaluate(()=>window.PWNED));
+            await phase('dynamic-import-race-harness');
             const raw=encoded(p);
             await page.evaluate(async raw=>{const m=await import('/plan-review/review.mjs');window.__pending=m.importFiles([{size:raw.length,text:()=>new Promise(resolve=>{window.__release=()=>resolve(raw);})}]);},raw);
             await page.locator('#clear').click();await page.evaluate(async()=>{window.__release();await window.__pending;});
             check(name+' late import cannot resurrect cleared data',await page.locator('#workspace').isHidden());
           }
           check(name+width+' no API uploads or outside requests',external.length===0);
+          const cspEvidence=await page.evaluate(()=>window.__violations);
+          fs.writeFileSync(`logs/review-screenshots/${name}-${width}-csp.json`,JSON.stringify(cspEvidence,null,2));
           check(name+width+' no CSP violations',await page.evaluate(()=>window.__violations.length===0));
           check(name+width+' no script errors',errors.length===0);
           check(name+width+' no browser persistence',await page.evaluate(()=>localStorage.length===0&&sessionStorage.length===0));
