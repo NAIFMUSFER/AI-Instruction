@@ -31,7 +31,8 @@ class PlanStoreRowBindingTests(unittest.TestCase):
         self.store.create_project('p1', owner_id='owner-1')
         self.ws = PlanLockWorkspace(verifier=verifier)
         initial = self.ws.propose(warehouse(), brief='site width 30 warehouse',
-                                  requirements=reqs(), expected_head=None)
+                                  requirements=reqs(), expected_head=None,
+                                  note='initial warehouse plan')
         self.store.save_revision('p1', actor_id='owner-1', revision=initial,
                                  expected_head=None)
         self.first = self.ws.replace_semantic_locks(
@@ -172,7 +173,8 @@ class PlanStoreRowBindingTests(unittest.TestCase):
 
     def test_malformed_parent_json_is_rejected_before_revision_write(self):
         child = self.ws.propose(self.second.model, brief=self.second.brief,
-                                requirements=reqs(), expected_head=self.second.id)
+                                requirements=reqs(), expected_head=self.second.id,
+                                note='next review draft')
         self.replace_revision_json(self.second, '{invalid-json')
         self.assertCode('STORED_REVISION_TAMPERED', lambda: self.store.save_revision(
             'p1', actor_id='owner-1', revision=child, expected_head=self.second.id))
