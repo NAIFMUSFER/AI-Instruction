@@ -21,6 +21,7 @@ import tempfile
 from typing import Callable
 
 from acs_plan_review import PlanError, PlanWorkspace, canonical, digest
+from acs_plan_projection import PROVENANCE_SCHEMA, provenance_map
 
 SCHEMA = "acs.plan-3d-handoff/1.0"
 
@@ -75,6 +76,27 @@ def _embed_baseline_marker(gltf_path: Path, marker: dict) -> None:
     gltf_path.write_text(encoded, encoding="utf-8")
 
 
+def _verify_space_map_matches_handoff(handoff_map: object, provenance: dict) -> None:
+    """Prove provenance enrichment did not add/drop/relabel canonical spaces."""
+    if not isinstance(handoff_map, list):
+        raise PlanError("PROVENANCE_MISMATCH", "Approved handoff source map is malformed")
+    legacy = []
+    for row in handoff_map:
+        if not isinstance(row, dict):
+            raise PlanError("PROVENANCE_MISMATCH", "Approved handoff source identity is malformed")
+        legacy.append((row.get("level_index"), row.get("template"), row.get("room_id")))
+    enriched = [
+        (entry["source"].get("level_index"), entry["source"].get("template"),
+         entry["source"].get("room_id"))
+        for entry in provenance.get("entries", [])
+        if isinstance(entry, dict) and isinstance(entry.get("source"), dict)
+        and entry["source"].get("kind") == "space"
+    ]
+    if legacy != enriched:
+        raise PlanError("PROVENANCE_MISMATCH",
+                        "Requirement provenance does not match approved canonical space identities")
+
+
 def compile_approved_baseline(
     workspace: PlanWorkspace,
     revision_id: str,
@@ -97,12 +119,15 @@ def compile_approved_baseline(
         raise PlanError("OUTPUT_EXISTS", "Refusing to overwrite an existing 3D artifact or receipt")
 
     handoff = workspace.handoff(revision_id)
+    revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
     baseline = json.loads(canonical(handoff.get("baseline")))
-    source_map = json.loads(canonical(handoff.get("source_map")))
+    provenance = provenance_map(revision)
+    _verify_space_map_matches_handoff(handoff.get("source_map"), provenance)
+    source_map = json.loads(canonical(provenance["entries"]))
     before_json = canonical(building)
     before_hash = digest(building)
-    if baseline.get("model_hash") != before_hash:
+    if baseline.get("model_hash") != before_hash or revision.model_hash != before_hash:
         raise PlanError("BASELINE_CHANGED", "Approved handoff model hash does not match its receipt")
     source_map_hash = digest(source_map)
 
@@ -137,6 +162,9 @@ def compile_approved_baseline(
             "model_hash": before_hash,
             "content_hash": baseline.get("content_hash"),
             "approval_scope": baseline.get("approval_scope"),
+            "provenance_schema": provenance["schema"],
+            "requirements_hash": provenance["requirements_hash"],
+            "provenance_hash": provenance["provenance_hash"],
             "source_map_hash": source_map_hash,
         }
         _embed_baseline_marker(temp_artifact, marker)
@@ -148,6 +176,9 @@ def compile_approved_baseline(
             "model_hash": before_hash,
             "content_hash": marker["content_hash"],
             "approval_scope": marker["approval_scope"],
+            "provenance_schema": provenance["schema"],
+            "requirements_hash": provenance["requirements_hash"],
+            "provenance_hash": provenance["provenance_hash"],
             "source_map_hash": source_map_hash,
             "source_map": source_map,
             "compiler": compiler_id,
@@ -202,10 +233,23 @@ def verify_compiled_artifact(out_path: str | os.PathLike[str], receipt: dict | N
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise PlanError("INVALID_3D_ARTIFACT", "3D artifact is not readable glTF JSON") from exc
     expected = {k: receipt.get(k) for k in (
-        "schema", "revision_id", "model_hash", "content_hash", "approval_scope", "source_map_hash")}
+        "schema", "revision_id", "model_hash", "content_hash", "approval_scope",
+        "provenance_schema", "requirements_hash", "provenance_hash", "source_map_hash")}
     if not isinstance(marker, dict) or canonical(marker) != canonical(expected):
         raise PlanError("PROVENANCE_MISMATCH", "Embedded 3D baseline provenance does not match the receipt")
     if digest(receipt.get("source_map")) != receipt.get("source_map_hash"):
         raise PlanError("PROVENANCE_MISMATCH", "Source map hash does not match the receipt")
+    if receipt.get("provenance_schema") != PROVENANCE_SCHEMA:
+        raise PlanError("PROVENANCE_MISMATCH", "Unknown plan provenance schema")
+    reconstructed = {
+        "schema": receipt["provenance_schema"],
+        "revision_id": receipt.get("revision_id"),
+        "model_hash": receipt.get("model_hash"),
+        "requirements_hash": receipt.get("requirements_hash"),
+        "entries": receipt.get("source_map"),
+    }
+    if digest(reconstructed) != receipt.get("provenance_hash"):
+        raise PlanError("PROVENANCE_MISMATCH", "Plan provenance hash does not match its source map")
     return {"ok": True, "artifact_sha256": actual_sha,
-            "revision_id": receipt.get("revision_id"), "model_hash": receipt.get("model_hash")}
+            "revision_id": receipt.get("revision_id"), "model_hash": receipt.get("model_hash"),
+            "requirements_hash": receipt.get("requirements_hash")}
