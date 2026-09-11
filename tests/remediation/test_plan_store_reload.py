@@ -20,6 +20,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from acs_plan_lock_binding import PlanLockWorkspace
 from acs_plan_review import PlanError
 from acs_plan_store import SQLitePlanStore
+from acs_plan_store_reload import load_workspace
 
 
 def verifier(_model):
@@ -119,10 +120,13 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
                                      expected_head=locked.id)
         return ws, first, locked, approval
 
+    def reload(self, store=None):
+        return load_workspace(store or SQLitePlanStore(self.db), "p1",
+                              actor_id="owner-1", verifier=verifier)
+
     def test_restart_reloads_exact_revision_ids_history_and_frozen_baseline(self):
         original, _first, locked, approval = self.saved_warehouse(approve=True)
-        reopened = SQLitePlanStore(self.db)
-        loaded = reopened.load_workspace("p1", actor_id="owner-1", verifier=verifier)
+        loaded = self.reload()
         self.assertEqual(loaded.head, original.head)
         self.assertEqual(loaded.baseline, original.baseline)
         self.assertEqual(loaded.history(), original.history())
@@ -133,8 +137,7 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
 
     def test_reloaded_warehouse_semantic_locks_still_block_anchor_mutation(self):
         _original, _first, locked, _ = self.saved_warehouse()
-        loaded = SQLitePlanStore(self.db).load_workspace(
-            "p1", actor_id="owner-1", verifier=verifier)
+        loaded = self.reload()
         changed = copy.deepcopy(locked.model)
         changed["floors"]["ground"]["rooms"][1]["racks"][0]["levels"] = 5
         count = len(loaded.history())
@@ -146,7 +149,7 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
     def test_reloaded_workspace_can_extend_history_and_persist_new_draft(self):
         _original, _first, locked, _ = self.saved_warehouse()
         reopened = SQLitePlanStore(self.db)
-        loaded = reopened.load_workspace("p1", actor_id="owner-1", verifier=verifier)
+        loaded = self.reload(reopened)
         changed = copy.deepcopy(locked.model)
         rooms = changed["floors"]["ground"]["rooms"]
         rooms[2]["rect"] = [20.0, 0.0, 10.0, 17.0]
@@ -171,8 +174,7 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
             note="lock elevator")
         self.store.save_revision("p1", actor_id="owner-1", revision=locked,
                                  expected_head=first.id)
-        loaded = SQLitePlanStore(self.db).load_workspace(
-            "p1", actor_id="owner-1", verifier=verifier)
+        loaded = self.reload()
         changed = copy.deepcopy(locked.model)
         changed["floors"]["ground"]["rooms"][1]["objects"][0]["x"] = 1.5
         self.assertCode("LOCK_VIOLATION", lambda: loaded.propose(
@@ -182,7 +184,7 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
     def test_later_draft_after_reload_does_not_replace_frozen_baseline(self):
         _original, _first, locked, _ = self.saved_warehouse(approve=True)
         reopened = SQLitePlanStore(self.db)
-        loaded = reopened.load_workspace("p1", actor_id="owner-1", verifier=verifier)
+        loaded = self.reload(reopened)
         changed = copy.deepcopy(locked.model)
         rooms = changed["floors"]["ground"]["rooms"]
         rooms[2]["rect"] = [20.0, 0.0, 10.0, 17.0]
@@ -206,8 +208,7 @@ class PersistedWorkspaceReloadTests(unittest.TestCase):
         con.execute("UPDATE plan_revisions SET revision_json=? WHERE project_id='p1' AND revision_id=?",
                     (json.dumps(raw), locked.id))
         con.commit(); con.close()
-        self.assertCode("STORED_LOCK_RECEIPT_TAMPERED", lambda: SQLitePlanStore(
-            self.db).load_workspace("p1", actor_id="owner-1", verifier=verifier))
+        self.assertCode("STORED_LOCK_RECEIPT_TAMPERED", lambda: self.reload())
 
 
 if __name__ == "__main__":
