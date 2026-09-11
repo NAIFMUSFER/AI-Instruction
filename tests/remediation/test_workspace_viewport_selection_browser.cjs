@@ -29,7 +29,7 @@ window.__fixture={building,meshes,wall,floor,door,upper,visual,before:JSON.strin
 window.__scene={items:[],add(x){this.items.push(x)},remove(x){this.items=this.items.filter(y=>y!==x)}};
 window.__openCount=0;
 window.ACS={};
-async function openWorkspace(){window.__openCount++; if(!window.ACS.workspace){window.ACS.workspace={selected:null,opened:false,select(id){this.selected=id;if(window.__ACS_ON_SELECT)window.__ACS_ON_SELECT(id);return id;},open(){this.opened=true;},project(){return {building_id:'bld_0'}}};} else { window.ACS.workspace.open(); } return true;}
+async function openWorkspace(){window.__openCount++; if(!window.ACS.workspace){window.ACS.workspace={selected:null,opened:false,select(id){this.selected=id;if(window.__ACS_ON_SELECT)window.__ACS_ON_SELECT(id);return id;},open(){this.opened=true;},project(){return {building_id:'bld_0'}}};} window.ACS.workspace.open(); return true;}
 window.__hitMesh=door;
 window.__bridge=installWorkspaceViewportSelection({THREE,renderer:{domElement:canvas},scene:window.__scene,late:{model:root,camera:{},lastBuilding:building},openWorkspace});
 `;
