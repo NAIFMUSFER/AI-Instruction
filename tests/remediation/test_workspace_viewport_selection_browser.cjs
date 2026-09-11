@@ -29,7 +29,7 @@ window.__fixture={building,meshes,wall,floor,door,upper,visual,before:JSON.strin
 window.__scene={items:[],add(x){this.items.push(x)},remove(x){this.items=this.items.filter(y=>y!==x)}};
 window.__openCount=0;
 window.ACS={};
-async function openWorkspace(){window.__openCount++; if(!window.ACS.workspace){window.ACS.workspace={selected:null,opened:false,select(id){this.selected=id;if(window.__ACS_ON_SELECT)window.__ACS_ON_SELECT(id);return id;},open(){this.opened=true;},project(){return {building_id:'bld_0'}}};} return true;}
+async function openWorkspace(){window.__openCount++; if(!window.ACS.workspace){window.ACS.workspace={selected:null,opened:false,select(id){this.selected=id;if(window.__ACS_ON_SELECT)window.__ACS_ON_SELECT(id);return id;},open(){this.opened=true;},project(){return {building_id:'bld_0'}}};} else { window.ACS.workspace.open(); } return true;}
 window.__hitMesh=door;
 window.__bridge=installWorkspaceViewportSelection({THREE,renderer:{domElement:canvas},scene:window.__scene,late:{model:root,camera:{},lastBuilding:building},openWorkspace});
 `;
@@ -57,20 +57,25 @@ window.__bridge=installWorkspaceViewportSelection({THREE,renderer:{domElement:ca
         await page.goto(base+'/');
         await page.waitForFunction(()=>window.__bridge&&window.__bridge.installed===true);
         ok(name+' bridge installs on mobile viewport',await page.evaluate(()=>window.__bridge.installed===true));
-        await page.locator('#c').dispatchEvent('pointerdown',{clientX:100,clientY:100,pointerId:1,button:0,isPrimary:true});
-        await page.locator('#c').dispatchEvent('pointerup',{clientX:100,clientY:100,pointerId:1,button:0,isPrimary:true});
+        const box=await page.locator('#c').boundingBox();
+        ok(name+' canvas has a real hit target',!!box&&box.width>100&&box.height>100);
+
+        // Use Playwright's real input pipeline instead of synthetic PointerEvents.
+        // WebKit/Chromium then supply the same primary-pointer/button semantics a user click has.
+        await page.mouse.click(box.x+100,box.y+100);
         await page.waitForFunction(()=>window.ACS.workspace&&window.ACS.workspace.selected==='door_guest');
         ok(name+' exact door click opens existing workspace and selects canonical door',await page.evaluate(()=>window.__openCount===1&&window.ACS.workspace.opened&&window.ACS.workspace.selected==='door_guest'));
         ok(name+' selection writes an accessible status without changing model',await page.evaluate(()=>document.getElementById('acsLiveRegion').textContent.includes('door_guest')&&JSON.stringify(window.__fixture.building)===window.__fixture.before));
         ok(name+' selection highlight is presentation-only outside canonical model',await page.evaluate(()=>window.__scene.items.length===1&&window.__scene.items[0].userData.presentation_context===true&&window.__scene.items[0].source===window.__fixture.door));
 
         await page.evaluate(()=>{window.__hitMesh=window.__fixture.wall;});
-        await page.locator('#c').dispatchEvent('pointerdown',{clientX:100,clientY:100,pointerId:2,button:0,isPrimary:true});
-        await page.locator('#c').dispatchEvent('pointerup',{clientX:140,clientY:130,pointerId:2,button:0,isPrimary:true});
+        await page.mouse.move(box.x+100,box.y+100);
+        await page.mouse.down();
+        await page.mouse.move(box.x+140,box.y+130,{steps:3});
+        await page.mouse.up();
         ok(name+' orbit-like drag does not become an engineering selection',await page.evaluate(()=>window.ACS.workspace.selected==='door_guest'));
 
-        await page.locator('#c').dispatchEvent('pointerdown',{clientX:120,clientY:120,pointerId:3,button:0,isPrimary:true});
-        await page.locator('#c').dispatchEvent('pointerup',{clientX:121,clientY:121,pointerId:3,button:0,isPrimary:true});
+        await page.mouse.click(box.x+120,box.y+120);
         await page.waitForFunction(()=>window.ACS.workspace.selected==='bld_0.ground.majlis');
         ok(name+' derived wall click selects owning canonical space honestly',await page.evaluate(()=>window.ACS.workspace.selected==='bld_0.ground.majlis'&&document.getElementById('acsLiveRegion').textContent.includes('جزء مشتق')));
         ok(name+' owning-space highlight finds wall/floor only, not opening',await page.evaluate(()=>window.__scene.items.length===2&&window.__scene.items.every(h=>/^(WALL|FLOOR)\|F0\|majlis/.test(h.source.name))));
