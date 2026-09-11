@@ -1,0 +1,56 @@
+name: Async generation delivery
+on:
+  pull_request:
+  push:
+    branches: [main, 'fix/async-generation-20260911']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: async-delivery-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  delivery:
+    name: Async delivery and mobile recovery
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install locked dependencies and real browser engines
+        run: |
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          npm ci
+          npx playwright install --with-deps chromium webkit
+      - name: Capability, replay and delivery contracts
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          python3 tests/remediation/test_async_generation_jobs.py 2>&1 | tee logs/async-python.log
+          node tests/remediation/test_generation_jobs.js 2>&1 | tee logs/async-node.log
+      - name: Short-request recovery in Chromium and WebKit
+        run: |
+          set -euo pipefail
+          ACS_TEST_BROWSER=chromium node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-chromium.log
+          ACS_TEST_BROWSER=webkit node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-webkit.log
+      - name: Build the real shipped frontend
+        run: bash tools/netlify-build.sh
+      - name: Complete mobile UI to model recovery under production CSP
+        run: |
+          set -o pipefail
+          node tests/remediation/test_generation_jobs_shipped_page.js 2>&1 | tee logs/async-shipped-page.log
+      - name: Existing lazy-panel integration remains intact
+        run: |
+          set -o pipefail
+          node tests/remediation/test_panel_entry.js 2>&1 | tee logs/panel-entry.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: async-delivery-logs-${{ github.run_id }}
+          path: logs/
+          retention-days: 14

@@ -720,7 +720,7 @@ function wireAll(){
         try{ if(typeof statusEl!=='undefined'&&statusEl)
           statusEl.textContent='✓ استُعيد آخر عمل محفوظ محلياً على هذا الجهاز'
             +(r.project.generation_in_flight
-              ?' — كان التوليد جارياً وقت الإغلاق ولم يكتمل؛ أعِد الضغط على «توليد».'
+              ?' — كان التوليد جارياً وقت الإغلاق؛ استخدم متابعة المهمة السابقة قبل بدء توليد جديد.'
               :'.'); }catch(e){}
       }
     }

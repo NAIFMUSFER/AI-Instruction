@@ -38,6 +38,7 @@ import acs_engineering_authority as EA
 import acs_cpu_pool as CPU
 import acs_generation_job as JOBS
 import acs_provider as PROV
+import acs_async_jobs as ASYNC_JOBS
 
 LOG = LOGGING.StructuredLogger(service="ACS Understanding Engine",
                                version=BUILD.SERVICE_VERSION)
@@ -115,6 +116,7 @@ _DEFAULT_ORIGIN = "https://sprightly-selkie-d906c3.netlify.app"
 _origins = [o.strip() for o in os.environ.get("ACS_ALLOWED_ORIGINS", _DEFAULT_ORIGIN).split(",") if o.strip()]
 if not _origins:
     _origins = [_DEFAULT_ORIGIN]
+app.add_middleware(ASYNC_JOBS.AsyncGenerationMiddleware)
 app.add_middleware(
     CORSMiddleware, allow_origins=_origins, allow_methods=["*"], allow_headers=["*"],
     expose_headers=[REQUEST_ID_HEADER, "Retry-After"],
@@ -591,6 +593,7 @@ def health():
             "engineering_changes": EA.health_status(),
             "logging": LOGGING.health_status(),
             "generation_jobs": JOBS.health_status(),
+            "async_generation": ASYNC_JOBS.health_status(),
             # حالة مزوّد النموذج — أسماء ومضيف فقط. لا مفتاح، ولا عنوان كامل
             # (قد يحمل اعتماداً مضمَّناً)، ولا رصيد حساب ولا أي حالة فوترة.
             "llm": PROV.health_status(),
