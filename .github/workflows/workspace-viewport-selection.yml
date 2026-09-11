@@ -1,0 +1,48 @@
+name: Workspace viewport canonical selection
+on:
+  pull_request:
+    paths:
+      - 'public/app/ui/workspace-viewport-selection.js'
+      - 'public/app/ui/workspace-viewport-selection-runtime.js'
+      - 'public/app/main.js'
+      - 'tests/remediation/test_workspace_viewport_selection.mjs'
+      - 'tests/remediation/test_workspace_viewport_selection_browser.cjs'
+      - '.github/workflows/workspace-viewport-selection.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: workspace-viewport-selection-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    name: Canonical 3D selection bridge
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Mapping, fail-closed identity and no-mutation contracts
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          node tests/remediation/test_workspace_viewport_selection.mjs 2>&1 | tee logs/workspace-viewport-selection.log
+      - name: Install locked real-browser dependency
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium webkit
+      - name: Real Chromium and WebKit pointer-selection contract
+        run: |
+          set -euo pipefail
+          node tests/remediation/test_workspace_viewport_selection_browser.cjs 2>&1 | tee logs/workspace-viewport-selection-browser.log
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: workspace-viewport-selection-evidence
+          path: logs/
+          retention-days: 7
