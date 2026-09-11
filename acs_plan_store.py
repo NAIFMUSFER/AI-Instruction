@@ -195,6 +195,47 @@ def _validate_approval_shape(doc: dict) -> None:
     _json(doc)
 
 
+def _stored_object(raw: Any, *, code: str) -> dict:
+    """Read a bounded receipt without leaking a JSON decoder exception to callers."""
+    try:
+        if not isinstance(raw, str) or len(raw.encode("utf-8")) > MAX_STORE_BYTES:
+            raise ValueError("Invalid persisted receipt size or type")
+        doc = json.loads(raw)
+        if not isinstance(doc, dict):
+            raise ValueError("Persisted receipt must be an object")
+    except (TypeError, ValueError, RecursionError) as exc:
+        raise PlanError(code, "Persisted receipt JSON is invalid") from exc
+    return doc
+
+
+def _revision_from_row(row: sqlite3.Row, *, project_id: str, revision_id: str) -> dict:
+    """Bind the self-consistent document to the row the caller actually selected."""
+    code = "STORED_REVISION_TAMPERED"
+    doc = _stored_object(row["revision_json"], code=code)
+    if row["project_id"] != project_id or row["revision_id"] != revision_id:
+        raise PlanError(code, "Stored revision row identity does not match the request")
+    for key in ("revision_id", "number", "parent_id", "model_hash", "content_hash",
+                "bound_content_hash", "semantic_lock_manifest_hash", "created_at"):
+        if key not in doc or doc[key] != row[key]:
+            raise PlanError(code, "Stored revision receipt does not match its row metadata")
+    # Keep the existing model/content/semantic-lock integrity checks authoritative.
+    _validate_revision_document(doc)
+    return doc
+
+
+def _approval_from_row(row: sqlite3.Row, *, project_id: str, revision_id: str) -> dict:
+    """Approval identity and time must agree with the persisted baseline row."""
+    code = "STORED_APPROVAL_TAMPERED"
+    doc = _stored_object(row["approval_json"], code=code)
+    if row["project_id"] != project_id or row["revision_id"] != revision_id:
+        raise PlanError(code, "Stored approval row identity does not match the request")
+    for key in ("revision_id", "approved_at"):
+        if key not in doc or doc[key] != row[key]:
+            raise PlanError(code, "Stored approval receipt does not match its row metadata")
+    _validate_approval_shape(doc)
+    return doc
+
+
 class SQLitePlanStore:
     """Durable SQLite aggregate with host-supplied authenticated actor identity."""
 
@@ -330,11 +371,13 @@ class SQLitePlanStore:
                     raise PlanError("INVALID_REVISION_CHAIN", "Revision parent does not match persisted head")
                 previous_number = 0
                 if expected_head is not None:
-                    parent = con.execute("SELECT number FROM plan_revisions WHERE project_id=? AND revision_id=?",
+                    parent = con.execute("SELECT * FROM plan_revisions WHERE project_id=? AND revision_id=?",
                                          (project_id, expected_head)).fetchone()
                     if parent is None:
                         raise PlanError("INVALID_REVISION_CHAIN", "Persisted parent revision is missing")
-                    previous_number = parent["number"]
+                    parent_doc = _revision_from_row(parent, project_id=project_id,
+                                                    revision_id=expected_head)
+                    previous_number = parent_doc["number"]
                 if doc["number"] != previous_number + 1:
                     raise PlanError("INVALID_REVISION_CHAIN", "Revision number is not monotonic")
                 try:
@@ -369,12 +412,11 @@ class SQLitePlanStore:
                 self._role(con, project_id, actor_id, {"owner", "editor"})
                 if project["head_revision_id"] != expected_head or doc["revision_id"] != expected_head:
                     raise PlanError("STALE_REVISION", "Approval must bind the persisted current head")
-                row = con.execute("SELECT revision_json FROM plan_revisions WHERE project_id=? AND revision_id=?",
+                row = con.execute("SELECT * FROM plan_revisions WHERE project_id=? AND revision_id=?",
                                   (project_id, expected_head)).fetchone()
                 if row is None:
                     raise PlanError("REVISION_NOT_FOUND", "Approval revision is not persisted")
-                rev = json.loads(row["revision_json"])
-                _validate_revision_document(rev)
+                rev = _revision_from_row(row, project_id=project_id, revision_id=expected_head)
                 expected = (rev["content_hash"], rev["bound_content_hash"], rev["model_hash"],
                             rev["semantic_lock_manifest_hash"], rev["semantic_lock_count"])
                 actual = (doc["revision_content_hash"], doc["bound_content_hash"], doc["model_hash"],
@@ -402,15 +444,11 @@ class SQLitePlanStore:
         with self._connect() as con:
             self._project(con, project_id)
             self._role(con, project_id, actor_id, ROLES)
-            row = con.execute("SELECT revision_json FROM plan_revisions WHERE project_id=? AND revision_id=?",
+            row = con.execute("SELECT * FROM plan_revisions WHERE project_id=? AND revision_id=?",
                               (project_id, revision_id)).fetchone()
         if row is None:
             raise PlanError("REVISION_NOT_FOUND", "Revision does not exist in this project")
-        try:
-            doc = json.loads(row["revision_json"])
-        except json.JSONDecodeError as exc:
-            raise PlanError("STORED_REVISION_TAMPERED", "Stored revision JSON is invalid") from exc
-        _validate_revision_document(doc)
+        doc = _revision_from_row(row, project_id=project_id, revision_id=revision_id)
         return json.loads(_json(doc))
 
     def approved_handoff(self, project_id: str, *, actor_id: str,
@@ -423,19 +461,14 @@ class SQLitePlanStore:
             if rid is None:
                 raise PlanError("APPROVAL_REQUIRED", "Project has no persisted approved baseline")
             rid = _id(rid, "revision_id")
-            rev_row = con.execute("SELECT revision_json FROM plan_revisions WHERE project_id=? AND revision_id=?",
+            rev_row = con.execute("SELECT * FROM plan_revisions WHERE project_id=? AND revision_id=?",
                                   (project_id, rid)).fetchone()
-            app_row = con.execute("SELECT approval_json,approved_by FROM plan_approvals "
+            app_row = con.execute("SELECT * FROM plan_approvals "
                                   "WHERE project_id=? AND revision_id=?", (project_id, rid)).fetchone()
         if rev_row is None or app_row is None:
             raise PlanError("APPROVAL_REQUIRED", "Persisted approval/revision pair is incomplete")
-        try:
-            rev = json.loads(rev_row["revision_json"])
-            app = json.loads(app_row["approval_json"])
-        except json.JSONDecodeError as exc:
-            raise PlanError("STORED_RECEIPT_TAMPERED", "Persisted baseline JSON is invalid") from exc
-        _validate_revision_document(rev)
-        _validate_approval_shape(app)
+        rev = _revision_from_row(rev_row, project_id=project_id, revision_id=rid)
+        app = _approval_from_row(app_row, project_id=project_id, revision_id=rid)
         expected = (rev["content_hash"], rev["bound_content_hash"], rev["model_hash"],
                     rev["semantic_lock_manifest_hash"], rev["semantic_lock_count"])
         actual = (app["revision_content_hash"], app["bound_content_hash"], app["model_hash"],
