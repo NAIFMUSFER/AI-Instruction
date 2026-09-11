@@ -91,9 +91,35 @@ def _lane_rect(lane: Any) -> tuple[float, float, float, float] | None:
 
 
 def _lane_area(lane: Any) -> float | None:
-    if not isinstance(lane, dict):
+    rect = _lane_rect(lane)
+    if rect is None:
         return None
-    w, d = lane.get("w"), lane.get("d")
+    area = rect[2] * rect[3]
+    return area if math.isfinite(area) else None
+
+
+def _lane_centerline_length(lane: Any) -> float | None:
+    """Measure only an explicitly oriented lane rectangle's longitudinal axis.
+
+    This is declared lane geometry, not an origin/destination route, travel path,
+    egress distance, throughput model, or safety-compliance result.
+    """
+    rect = _lane_rect(lane)
+    if rect is None or not isinstance(lane, dict):
+        return None
+    direction = str(lane.get("dir") or "").strip().lower()
+    if direction == "x":
+        return rect[2]
+    if direction == "z":
+        return rect[3]
+    return None
+
+
+def _rack_footprint_area(rack: Any) -> float | None:
+    """Return the explicit rack-group rectangle area when both dimensions exist."""
+    if not isinstance(rack, dict):
+        return None
+    w, d = rack.get("w"), rack.get("d")
     if not (_positive(w) and _positive(d)):
         return None
     area = w * d
@@ -116,9 +142,13 @@ def measure_plan(model: dict) -> dict:
     - `space_rect_area_m2` is not GFA/NFA.
     - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
       clearance or safety-compliance result.
+    - `lane_centerline_length_by_kind_m` measures only the longitudinal dimension
+      of explicit lane rectangles whose `dir` is known. It is not routed travel.
     - `lane_overlap_area_by_kind_pair_m2` is the sum of pairwise rectangle
       intersections between distinct explicit lane kinds inside the same room.
       It is a geometric conflict indicator only, not a safety/compliance result.
+    - `rack_declared_footprint_area_m2` sums explicit rack-group rectangles; it is
+      not storage capacity, pallet positions, or proof of usable clearances.
     - `rack_group_count` counts declared rack groups, not pallet positions.
     - storage capacity and throughput stay unavailable unless a future canonical
       contract defines sufficient source data and its calculation semantics.
@@ -150,10 +180,14 @@ def measure_plan(model: dict) -> dict:
     rack_groups_known = bool(templates)
     rack_declared_levels = 0
     rack_levels_complete = bool(templates)
+    rack_footprint_area = 0.0
+    rack_footprint_complete = bool(templates)
     station_count = 0
     station_count_known = bool(templates)
     lane_area: defaultdict[str, float] = defaultdict(float)
     lane_area_complete = bool(templates)
+    lane_centerline: defaultdict[str, float] = defaultdict(float)
+    lane_centerline_complete = bool(templates)
     lane_overlap: defaultdict[str, float] = defaultdict(float)
     lane_overlap_complete = bool(templates)
 
@@ -164,13 +198,15 @@ def measure_plan(model: dict) -> dict:
             warnings.append("ROOMS_NOT_MEASURABLE")
             space_area_known = False
             dock_count_known = rack_groups_known = station_count_known = False
-            rack_levels_complete = lane_area_complete = lane_overlap_complete = False
+            rack_levels_complete = rack_footprint_complete = False
+            lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
             continue
         for room in rooms:
             if not isinstance(room, dict):
                 warnings.append("ROOM_NOT_MEASURABLE")
                 space_area_known = False
-                lane_overlap_complete = False
+                rack_footprint_complete = False
+                lane_centerline_complete = lane_overlap_complete = False
                 continue
             area = _rect_area(room.get("rect"))
             if area is None:
@@ -207,11 +243,13 @@ def measure_plan(model: dict) -> dict:
             if not isinstance(racks, list):
                 rack_groups_known = False
                 rack_levels_complete = False
+                rack_footprint_complete = False
             else:
                 for rack in racks:
                     if not isinstance(rack, dict):
                         rack_groups_known = False
                         rack_levels_complete = False
+                        rack_footprint_complete = False
                         continue
                     rack_groups += 1
                     levels = rack.get("levels")
@@ -219,6 +257,11 @@ def measure_plan(model: dict) -> dict:
                         rack_declared_levels += levels
                     else:
                         rack_levels_complete = False
+                    rack_area = _rack_footprint_area(rack)
+                    if rack_area is None:
+                        rack_footprint_complete = False
+                    else:
+                        rack_footprint_area += rack_area
 
             stations = room.get("stations") or []
             if not isinstance(stations, list):
@@ -237,11 +280,13 @@ def measure_plan(model: dict) -> dict:
             lanes = room.get("lanes") or []
             if not isinstance(lanes, list):
                 lane_area_complete = False
+                lane_centerline_complete = False
                 lane_overlap_complete = False
             else:
                 normalized_lanes: list[tuple[str, tuple[float, float, float, float]]] = []
                 for lane in lanes:
                     area = _lane_area(lane)
+                    length = _lane_centerline_length(lane)
                     kind = (str(lane.get("kind") or "").strip().lower()
                             if isinstance(lane, dict) else "")
                     rect = _lane_rect(lane)
@@ -249,6 +294,10 @@ def measure_plan(model: dict) -> dict:
                         lane_area_complete = False
                     else:
                         lane_area[kind or "unknown"] += area
+                    if length is None or not kind:
+                        lane_centerline_complete = False
+                    else:
+                        lane_centerline[kind] += length
                     if not kind or rect is None:
                         lane_overlap_complete = False
                     else:
@@ -288,9 +337,14 @@ def measure_plan(model: dict) -> dict:
             "dock_count_by_edge": dict(sorted(dock_by_edge.items())) if dock_count_known else None,
             "rack_group_count": rack_groups if rack_groups_known else None,
             "rack_declared_level_sum": rack_declared_levels if rack_levels_complete else None,
+            "rack_declared_footprint_area_m2": (
+                round(rack_footprint_area, 6) if rack_footprint_complete else None),
             "station_count": station_count if station_count_known else None,
             "lane_area_by_kind_m2": ({k: round(v, 6) for k, v in sorted(lane_area.items())}
                                      if lane_area_complete else None),
+            "lane_centerline_length_by_kind_m": (
+                {k: round(v, 6) for k, v in sorted(lane_centerline.items())}
+                if lane_centerline_complete else None),
             "lane_overlap_area_by_kind_pair_m2": (
                 {k: round(v, 6) for k, v in sorted(lane_overlap.items())}
                 if lane_overlap_complete else None),
@@ -303,7 +357,7 @@ def measure_plan(model: dict) -> dict:
         unavailable.update({
             "storage_capacity_positions": "Rack group geometry does not define a canonical slot/capacity contract.",
             "throughput_per_hour": "No measured flow/time model is present in canonical Building JSON.",
-            "travel_distance_m": "No routed origin/destination path set is supplied to this scorecard.",
+            "travel_distance_m": "Declared lane centerlines are not routed origin/destination travel paths.",
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })

@@ -3,7 +3,8 @@
 This module compares canonical design options without ranking them or inventing an
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
-option. Regulatory/structural compliance, storage capacity, throughput and travel
+option. Explicit rack footprints and oriented lane centerlines may be compared;
+regulatory/structural compliance, storage capacity, throughput and routed travel
 remain outside this contract unless a future authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
@@ -26,12 +27,14 @@ _SCALAR_METRICS = (
     "dock_count",
     "rack_group_count",
     "rack_declared_level_sum",
+    "rack_declared_footprint_area_m2",
     "station_count",
 )
 _MAP_METRICS = (
     "zone_area_by_role_m2",
     "dock_count_by_edge",
     "lane_area_by_kind_m2",
+    "lane_centerline_length_by_kind_m",
     "lane_overlap_area_by_kind_pair_m2",
 )
 
