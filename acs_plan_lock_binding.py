@@ -16,10 +16,12 @@ import threading
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from acs_plan_options import compare_options
 from acs_plan_review import Approval, PlanError, PlanWorkspace, Revision, canonical, digest
 from acs_plan_semantic_locks import build_lock_manifest, verify_lock_manifest
 
 SCHEMA = "acs.plan-lock-binding/1.0"
+REVISION_COMPARE_SCHEMA = "acs.plan-revision-comparison/1.0"
 
 
 def _selectors(manifest: dict | None) -> list[dict]:
@@ -218,6 +220,74 @@ class PlanLockWorkspace:
                        if source is not None else None)
             self._store_manifest(revision, rebound)
             return self._bound(revision)
+
+    def compare_revisions(self, reference_revision_id: str,
+                          target_revision_id: str) -> dict:
+        """Compare two immutable revisions using only existing measured facts.
+
+        This does not rank revisions or authenticate program equivalence.  If the
+        exact stored brief and requirements are byte-equivalent after canonical
+        storage, an opaque content receipt labels that fact; it is still reported
+        as unauthenticated by the underlying comparison contract.
+        """
+        with self._mutex:
+            reference = self.get(reference_revision_id)
+            target = self.get(target_revision_id)
+            same_program = (reference.brief == target.brief
+                            and reference.requirements_json == target.requirements_json)
+            program_receipt = (digest({
+                "brief": reference.brief,
+                "requirements": json.loads(reference.requirements_json),
+            }) if same_program else None)
+            measured = compare_options([
+                {"id": "reference", "revision_id": reference.id,
+                 "model": reference.model},
+                {"id": "target", "revision_id": target.id,
+                 "model": target.model},
+            ], declared_program_receipt=program_receipt)
+            return {
+                "schema": REVISION_COMPARE_SCHEMA,
+                "reference_revision_id": reference.id,
+                "target_revision_id": target.id,
+                "same_program_content": same_program,
+                "reference_bound_content_hash": reference.bound_content_hash,
+                "target_bound_content_hash": target.bound_content_hash,
+                "reference_semantic_lock_manifest_hash": reference.semantic_lock_manifest_hash,
+                "target_semantic_lock_manifest_hash": target.semantic_lock_manifest_hash,
+                "reference_semantic_lock_count": reference.semantic_lock_count,
+                "target_semantic_lock_count": target.semantic_lock_count,
+                "reference_is_frozen_baseline": reference.id == self.baseline,
+                "target_is_frozen_baseline": target.id == self.baseline,
+                "measured": measured,
+                "claims_best_option": False,
+                "claims_regulatory_compliance": False,
+                "claims_structural_safety": False,
+            }
+
+    def restore_revision(self, source_revision_id: str, *, expected_head: str,
+                         note: str) -> BoundRevision:
+        """Restore historical content as a new draft child of the current head.
+
+        Restore never moves the head pointer backwards and never copies approval
+        authority from the historical revision.  The *current* head's room and
+        semantic locks remain authoritative because admission is delegated to
+        :meth:`propose`, which verifies those locks before extending history.
+        """
+        with self._mutex:
+            if expected_head != self.head:
+                raise PlanError("STALE_REVISION", "The plan changed before restore")
+            if not isinstance(note, str) or not note.strip():
+                raise PlanError("DESCRIPTION_REQUIRED", "Revision restore needs an explicit note")
+            source = self.get(source_revision_id)
+            if source.id == self.head:
+                raise PlanError("RESTORE_NOT_NEEDED", "The selected revision is already current")
+            return self.propose(
+                source.model,
+                brief=source.brief,
+                requirements=json.loads(source.requirements_json),
+                expected_head=expected_head,
+                note=note,
+            )
 
     def replace_semantic_locks(self, selectors: list[dict], *, expected_head: str,
                                note: str) -> BoundRevision:
