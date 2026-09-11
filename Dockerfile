@@ -14,7 +14,8 @@ COPY acs_opening_identity.py ./
 # validated lock-bound workspaces after restart without enabling a public route.
 # acs_plan_commands and acs_plan_persisted_commands are closed trusted-host
 # companions: neither registers FastAPI routes nor discovers authentication.
-COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py ./
+# acs_plan_semantic_diff is deterministic canonical-model comparison only.
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py ./
 # The command companion returns the same privacy-limited read-only review packet
 # used by the browser reviewer. Package that helper explicitly without adding a route.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py
