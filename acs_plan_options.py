@@ -32,6 +32,7 @@ _MAP_METRICS = (
     "zone_area_by_role_m2",
     "dock_count_by_edge",
     "lane_area_by_kind_m2",
+    "lane_overlap_area_by_kind_pair_m2",
 )
 
 

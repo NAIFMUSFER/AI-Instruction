@@ -24,6 +24,7 @@ on:
       - 'tests/remediation/test_plan_requirement_evidence.py'
       - 'tests/remediation/test_plan_source_span_artifacts.py'
       - 'tests/remediation/test_plan_warehouse_program.py'
+      - 'tests/remediation/test_plan_warehouse_lane_conflicts.py'
       - 'tests/remediation/test_plan_revision_compare_restore.py'
       - 'tests/remediation/test_plan_ifc_export.py'
       - 'tests/remediation/test_plan_bridge*.py'
@@ -89,6 +90,11 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_warehouse_program.py 2>&1 | tee logs/plan-warehouse-program.log
+      - name: Warehouse explicit lane-conflict regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_warehouse_lane_conflicts.py 2>&1 | tee logs/plan-warehouse-lane-conflicts.log
       - name: Revision compare and historical restore regressions (stdlib-only)
         run: |
           set -o pipefail
@@ -117,6 +123,7 @@ jobs:
           python tests/remediation/test_plan_projection.py 2>&1 | tee logs/plan-cad.log
           python tests/remediation/test_plan_scorecard.py 2>&1 | tee logs/plan-scorecard.log
           python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
+          python tests/remediation/test_plan_warehouse_lane_conflicts.py 2>&1 | tee logs/plan-warehouse-lane-conflicts-full.log
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
           python tests/remediation/test_plan_store.py 2>&1 | tee logs/plan-store.log
