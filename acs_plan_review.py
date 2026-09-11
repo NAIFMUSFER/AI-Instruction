@@ -17,6 +17,8 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Any, Callable
 
+from acs_plan_scorecard import measure_plan
+
 SCHEMA = "acs.plan-review/1.0"
 MAX_BYTES = 900_000
 MAX_NODES = 50_000
@@ -265,6 +267,10 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
     levels = model.get("levels") if isinstance(model.get("levels"), list) else []
     instances = Counter(lv.get("template") for lv in levels
                         if isinstance(lv, dict) and isinstance(lv.get("template"), str))
+    # The scorecard is deterministic and reads only canonical geometry/explicit
+    # operational data. Unknown measurements stay None rather than being guessed.
+    scorecard = measure_plan(model)
+    warehouse_metrics = scorecard["metrics"] if scorecard["typology"] == "warehouse" else None
     # One pass per template/role, not requirements × levels × all room objects.
     counts = Counter()
     for (template, _), room in rooms.items():
@@ -307,6 +313,7 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             continue
         kind = r.get("metric")
         actual = _MISSING
+        minimum = False
         if kind in ("site_width_m", "site_depth_m"):
             site = model.get("site") or {}
             actual = site.get("w" if kind == "site_width_m" else "d") if isinstance(site, dict) else None
@@ -327,6 +334,53 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
                 actual = rect[2] * rect[3]
             valid_expected = _number(expected) and expected > 0 and room is not None
+            minimum = True
+        elif kind in {"min_zone_area_m2", "dock_count", "min_dock_count",
+                      "min_rack_group_count", "min_station_count", "min_lane_area_m2"}:
+            if warehouse_metrics is None:
+                issue("REQUIREMENT_METRIC_NOT_APPLICABLE", rid)
+                continue
+            if kind == "min_zone_area_m2":
+                role = r.get("role")
+                if not _id(role):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_role = warehouse_metrics.get("zone_area_by_role_m2")
+                # A partial/invalid plan must not be converted into a partial area.
+                actual = (by_role.get(role.strip().lower(), 0.0)
+                          if isinstance(by_role, dict)
+                          and warehouse_metrics.get("space_rect_area_m2") is not None else None)
+                valid_expected = _number(expected) and expected > 0
+                minimum = True
+            elif kind in {"dock_count", "min_dock_count"}:
+                edge = r.get("edge")
+                if edge is not None and (not _id(edge) or edge.upper() not in {"N", "S", "E", "W"}):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                if edge is None:
+                    actual = warehouse_metrics.get("dock_count")
+                else:
+                    by_edge = warehouse_metrics.get("dock_count_by_edge")
+                    actual = by_edge.get(edge.upper(), 0) if isinstance(by_edge, dict) else None
+                valid_expected = type(expected) is int and expected >= 0
+                minimum = kind == "min_dock_count"
+            elif kind == "min_rack_group_count":
+                actual = warehouse_metrics.get("rack_group_count")
+                valid_expected = type(expected) is int and expected >= 0
+                minimum = True
+            elif kind == "min_station_count":
+                actual = warehouse_metrics.get("station_count")
+                valid_expected = type(expected) is int and expected >= 0
+                minimum = True
+            else:
+                lane_kind = r.get("kind")
+                if not _id(lane_kind):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_kind = warehouse_metrics.get("lane_area_by_kind_m2")
+                actual = by_kind.get(lane_kind.strip().lower(), 0.0) if isinstance(by_kind, dict) else None
+                valid_expected = _number(expected) and expected > 0
+                minimum = True
         else:
             issue("REQUIREMENT_METRIC_NOT_SUPPORTED", rid)
             continue
@@ -334,7 +388,7 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             issue("INVALID_EXPECTATION", rid)
         elif actual is _MISSING or actual is None or not _number(actual):
             issue("REQUIREMENT_NOT_MEASURABLE", rid)
-        elif (actual + EPS < expected if kind == "min_room_area_m2" else abs(actual - expected) > EPS):
+        elif (actual + EPS < expected if minimum else abs(actual - expected) > EPS):
             issue("REQUIREMENT_MISMATCH", rid)
     return issues
 
