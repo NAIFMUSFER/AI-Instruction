@@ -1828,7 +1828,7 @@ def _residential_plan_quality_issues(building, description):
     bt=str((building.get("meta") or {}).get("type") or "residential")
     if not _is_residential(bt): return []
     all_issues,_=V.validate_building(building)
-    keys=("تتداخل", "خارج حدود", "معلّق", "غير متطابق رأسياً", "rect غير صالح",
+    keys=("تداخل بين", "تتداخل", "خارج حدود", "معلّق", "غير متطابق رأسياً", "rect غير صالح",
           "عرض أو عمق غير موجب", "بلا غرف")
     out=[x for x in all_issues if any(k in x for k in keys)]
     text=str(description or "").lower()
