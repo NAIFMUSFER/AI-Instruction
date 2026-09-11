@@ -27,6 +27,10 @@ MAX_REQUIREMENTS = 512
 MAX_REVISIONS = 100
 EPS = 1e-7  # numerical tolerance, not a construction/regulatory allowance
 _MISSING = object()
+_PROVENANCE_ELEMENT_COLLECTIONS = (
+    "racks", "docks", "lanes", "stations", "doors", "windows",
+    "objects", "points", "furniture",
+)
 
 
 class PlanError(ValueError):
@@ -111,6 +115,60 @@ def _structure(model: Any) -> None:
             seen.add(room["id"])
     if total > MAX_ROOMS:
         raise PlanError("INPUT_LIMIT", "Too many rooms for this review boundary")
+
+
+def _provenance_requirement_ids(requirements: list[dict]) -> set[str]:
+    """Return only unambiguous requirement ids and validate optional external ids.
+
+    General Program defects remain review findings.  This admission helper is
+    deliberately narrower: it rejects only provenance metadata that would make
+    an explicit canonical entity→requirement link ambiguous or untraceable.
+    """
+    counts = Counter(
+        row.get("id") for row in requirements
+        if isinstance(row, dict) and _id(row.get("id"))
+    )
+    valid = set()
+    for row in requirements:
+        if not isinstance(row, dict):
+            continue
+        rid = row.get("id")
+        if not _id(rid) or counts[rid] != 1:
+            continue
+        source_id = row.get("source_id", _MISSING)
+        if source_id is not _MISSING and not _id(source_id):
+            raise PlanError("INVALID_PROVENANCE_SOURCE_ID",
+                            "Requirement source_id must be a non-empty bounded identity")
+        valid.add(rid)
+    return valid
+
+
+def _validate_requirement_links(entity: dict, requirement_ids: set[str], *, nested: bool) -> None:
+    raw = entity.get("requirement_ids", _MISSING)
+    if raw is _MISSING:
+        return
+    if (not isinstance(raw, list) or any(not _id(rid) for rid in raw)
+            or len(raw) != len(set(raw)) or any(rid not in requirement_ids for rid in raw)):
+        raise PlanError("INVALID_PROVENANCE_LINK",
+                        "requirement_ids must be unique stable ids of unambiguous requirements")
+    if nested and raw and not _id(entity.get("id")):
+        raise PlanError("AMBIGUOUS_PROVENANCE_TARGET",
+                        "Linked nested canonical elements require a stable explicit id")
+
+
+def _validate_provenance_links(model: dict, requirements: list[dict]) -> None:
+    """Fail closed before history records malformed explicit provenance links."""
+    requirement_ids = _provenance_requirement_ids(requirements)
+    for floor in model["floors"].values():
+        for room in floor["rooms"]:
+            _validate_requirement_links(room, requirement_ids, nested=False)
+            for collection in _PROVENANCE_ELEMENT_COLLECTIONS:
+                items = room.get(collection)
+                if not isinstance(items, list):
+                    continue
+                for item in items:
+                    if isinstance(item, dict):
+                        _validate_requirement_links(item, requirement_ids, nested=True)
 
 
 def _geometry(model: dict) -> tuple[list[dict], dict]:
@@ -349,7 +407,9 @@ class PlanWorkspace:
             requirements_json = canonical(requirements)
             canonical({"brief": brief, "note": note})
             model = json.loads(model_json)
+            requirements = json.loads(requirements_json)
             _structure(model)
+            _validate_provenance_links(model, requirements)
             canonical({"model": model, "requirements": requirements, "brief": brief, "note": note})
             locked = ()
             if self._head:
