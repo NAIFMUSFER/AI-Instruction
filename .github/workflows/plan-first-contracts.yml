@@ -10,7 +10,7 @@ on:
       - 'acs_plan_scorecard.py'
       - 'acs_plan_options.py'
       - 'acs_plan_semantic_locks.py'
-      - 'acs_plan_handoff.py'
+      - 'tools/acs_plan_handoff.py'
       - 'tests/remediation/test_plan_review.py'
       - 'tests/remediation/test_plan_bridge*.py'
       - 'tests/remediation/test_plan_projection.py'
@@ -41,7 +41,8 @@ jobs:
         run: |
           python -S - <<'PYTHON'
           import sys
-          import acs_plan_review, acs_plan_bridge, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks, acs_plan_handoff
+          import acs_plan_review, acs_plan_bridge, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks
+          from tools import acs_plan_handoff
           assert 'acs_understand' not in sys.modules
           assert 'acs_compiler' not in sys.modules
           assert 'ezdxf' not in sys.modules
@@ -57,7 +58,7 @@ jobs:
           ANTHROPIC_API_KEY: dummy
         run: |
           mkdir -p logs
-          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_handoff.py
+          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py tools/acs_plan_handoff.py
           set -o pipefail
           python tests/remediation/test_plan_review.py 2>&1 | tee logs/plan-review.log
           python tests/remediation/test_plan_bridge.py 2>&1 | tee logs/plan-bridge.log
