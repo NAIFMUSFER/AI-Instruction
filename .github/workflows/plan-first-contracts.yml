@@ -18,6 +18,7 @@ on:
       - 'tests/remediation/test_plan_options.py'
       - 'tests/remediation/test_plan_semantic_locks.py'
       - 'tests/remediation/test_plan_handoff.py'
+      - 'tests/remediation/test_plan_handoff_large.py'
       - '.github/workflows/plan-first-contracts.yml'
       - 'Dockerfile'
 permissions:
@@ -65,6 +66,7 @@ jobs:
           python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_handoff.py 2>&1 | tee logs/plan-3d-handoff.log
+          python tests/remediation/test_plan_handoff_large.py 2>&1 | tee logs/plan-3d-handoff-large.log
           python tests/remediation/test_plan_bridge_integration.py 2>&1 | tee logs/plan-real-validator.log
           git diff --exit-code
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
