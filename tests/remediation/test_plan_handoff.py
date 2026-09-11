@@ -157,14 +157,15 @@ class Approved3DHandoffTests(unittest.TestCase):
         m = warehouse_model()
         m['floors']['ground']['rooms'][0]['racks'][0].pop('id')
         m['floors']['ground']['rooms'][0]['racks'][0]['requirement_ids'] = ['width']
-        ws, rev = workspace_with(m)
+        ws = PlanWorkspace(verified)
         called = []
         def fake(_building, _path):
             called.append(True)
             return 1, 1
-        with tempfile.TemporaryDirectory() as td:
-            self.assertCode('AMBIGUOUS_PROVENANCE_TARGET', lambda: H.compile_approved_baseline(
-                ws, rev.id, Path(td) / 'bad.gltf', compiler=fake))
+        self.assertCode('AMBIGUOUS_PROVENANCE_TARGET', lambda: ws.propose(
+            m, brief=BRIEF, requirements=program(), expected_head=None,
+            note='invalid linked rack must not enter history'))
+        self.assertEqual(ws.history(), [])
         self.assertEqual(called, [])
 
     def test_compiler_mutation_fails_closed_and_publishes_nothing(self):
