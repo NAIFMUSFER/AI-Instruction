@@ -116,7 +116,7 @@ adding sprinklers/smoke detectors, changing camera counts, resizing zones.
 resolution rules), not in the presentation layers. Phases 9.1/9.2 are provably
 read-only downstream (byte-immutability suites), so this is a separate authority
 question: which automatic adjustments are legitimate deterministic normalizations
-with declared provenance, and which should instead surface as
+with declared provenance + issue code, and which should instead surface as
 `REQUIRES_ENGINEERING_CHANGE` / unresolved diagnostics awaiting explicit user
 consent.
 
@@ -1833,9 +1833,9 @@ stays a generic 400 — asserted.
 
 Fallback is an **allow-list of three codes** (`UNAVAILABLE`, `OVERLOADED`,
 `CONNECTION`), one attempt, one alternate provider, no recursion. Timeout is
-deliberately *not* eligible: a timeout does not prove the provider declined
-the work, and a second copy doubles the spend on generation that may already
-be running. Billing is eligible only behind an explicit
+deliberately *not* eligible: a timeout does not prove the provider declined the
+work, and a second copy doubles the spend on generation that may already be
+running. Billing is eligible only behind an explicit
 `ACS_LLM_FALLBACK_ON_BILLING=1` — an automatic switch would move spending to
 another vendor with no human decision.
 
@@ -1936,8 +1936,8 @@ any kind, so every later assertion is a real detection and not noise.
 `test_validate_topology.py` grades the logic on models **built to fail**, which
 is necessary and not sufficient: a model made to be caught is always caught. It
 cannot answer the question that decides whether a validator survives contact
-with users — *how often does it shout at a sound model?* A validator that
-shouts is switched off within a week, which makes it worse than none.
+with users — *how often does it shout at a sound model?* A validator that shouts
+is switched off within a week, which makes it worse than none.
 
 So every building model in the repository was fed through it: **165 models**
 across the phase fixtures, including live generated outputs. The first run
@@ -2170,7 +2170,7 @@ and is not expected to track the present.
 
 | | |
 |---|---|
-| index shell (`public/index.html`) | **48,777 B** |
+| index shell (`public/index.html`) | **49,428 B** |
 | first-party JavaScript, all modules | **1,931,625 B in 28 modules** |
 | evaluated on first load (core + boot) | **1,465,756 B** |
 |   of which core modules | **1,437,862 B in 16 modules** |
