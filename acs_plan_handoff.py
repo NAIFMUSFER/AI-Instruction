@@ -60,7 +60,17 @@ def _embed_baseline_marker(gltf_path: Path, marker: dict) -> None:
     if not isinstance(extras, dict) or "acs_plan_baseline" in extras:
         raise PlanError("INVALID_3D_ARTIFACT", "glTF extras cannot safely carry ACS baseline provenance")
     extras["acs_plan_baseline"] = marker
-    gltf_path.write_text(canonical(raw), encoding="utf-8")
+    # The canonical plan/receipt envelope is deliberately bounded to 900 kB,
+    # but a real glTF can be much larger. Do not route artifact JSON through
+    # ``canonical`` merely to serialize it: that would reject valid large
+    # geometry after a successful compile. We still reject NaN/Infinity and
+    # hash the final bytes below; baseline metadata itself remains canonical.
+    try:
+        encoded = json.dumps(raw, sort_keys=True, ensure_ascii=False,
+                             separators=(",", ":"), allow_nan=False)
+    except (TypeError, ValueError, OverflowError) as exc:
+        raise PlanError("INVALID_3D_ARTIFACT", "glTF JSON contains unsupported values") from exc
+    gltf_path.write_text(encoded, encoding="utf-8")
 
 
 def compile_approved_baseline(
