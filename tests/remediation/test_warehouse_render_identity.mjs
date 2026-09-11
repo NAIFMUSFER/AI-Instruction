@@ -29,6 +29,22 @@ function fixture() {
 const building = fixture();
 const before = JSON.stringify(building);
 
+// Canonical Plan-first identity accepts bounded IDs up to 160 characters in the
+// Python review/provenance contracts. The browser resolver must use the same
+// boundary; otherwise a valid explicit canonical element can receive plan
+// provenance but silently lose exact 3D identity. 161 remains rejected.
+ok('browser stable-id bound accepts the canonical 160-character maximum',
+  mod.stableId('x'.repeat(160)) === true);
+ok('browser stable-id bound rejects 161 characters',
+  mod.stableId('x'.repeat(161)) === false);
+const maxIdBuilding = fixture();
+maxIdBuilding.floors.ops.rooms[0].racks[0].id = 'r'.repeat(160);
+const maxIdIdentity = mod.canonicalWarehouseIdentityForMesh(
+  {name:'FURN|F0|storage_A|rack0r0L0',userData:{}}, maxIdBuilding, 'bld_0');
+ok('160-character canonical rack id keeps exact 3D identity',
+  maxIdIdentity && maxIdIdentity.target_id === 'r'.repeat(160)
+  && maxIdIdentity.canonical_selector.element_id === 'r'.repeat(160));
+
 for (const name of [
   'FURN|F0|storage_A|rack0r0L0',
   'FURN|F0|storage_A|goods0r0L0s1',
