@@ -8,6 +8,9 @@ COPY acs_understand.py acs_understand_api.py acs_validate.py acs_layout.py ./
 # وacs_plan_chunks عقد الخطّة المحدود (KI-24): يستورده acs_understand مباشرةً.
 COPY acs_api_errors.py acs_generation.py acs_plan_chunks.py acs_provider.py ./
 COPY acs_opening_identity.py ./
+# Plan-first backend companions are packaged but NOT mounted on public routes.
+# DXF remains optional: importing these modules needs no CAD/provider client.
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_projection.py ./
 # سجل البرامج (المصدر الوحيد للحقيقة) وطبقة المشروع — لازمة للتشغيل
 COPY acs_programs.py acs_programs.json acs_project.py acs_relations.py acs_navigation.py acs_egress.py acs_distance.py ./
 # سجلّ محرّك القواعد (بلا محتوى تنظيمي) — بيانات لا شيفرة
