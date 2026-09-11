@@ -1,0 +1,61 @@
+name: Refresh PR19 measured documentation
+on:
+  push:
+    branches: [feature/residential-v2-save-revisions]
+    paths: [.github/workflows/refresh-pr19-source-measurements.yml]
+permissions:
+  contents: write
+concurrency:
+  group: refresh-pr19-source-measurements
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.repository == 'NAIFMUSFER/AI-Instruction'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install the existing locked dependencies
+        run: |
+          python -m pip install -q -r requirements.txt -r requirements-dev.txt
+          npm ci --ignore-scripts
+      - name: Measure source and regenerate documentation without changing any gate
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          mkdir -p logs
+          set -o pipefail
+          python3 tools/bundle_report.py | tee logs/pr19-bundle-measurement.log
+          python3 tools/check_doc_claims.py --fix | tee logs/pr19-doc-regeneration.log
+          python3 tools/check_doc_claims.py | tee logs/pr19-doc-verification.log
+          git diff --check
+          git diff --stat
+          git diff --exit-code -- tools/check_doc_claims.py tools/ci_run.sh .github/workflows/ci.yml
+      - name: Commit only the two measured documentation files without overwriting concurrent work
+        run: |
+          set -euo pipefail
+          expected='${{ github.sha }}'
+          current="$(git ls-remote origin refs/heads/feature/residential-v2-save-revisions | cut -f1)"
+          test "$current" = "$expected" || { echo 'Branch moved; refusing to overwrite concurrent work.'; exit 1; }
+          git add KNOWN-ISSUES.md tests/performance/bundle_report.json
+          if git diff --cached --quiet; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: refresh measured source state after design-version changes'
+          git push origin HEAD:refs/heads/feature/residential-v2-save-revisions
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: pr19-measured-source-evidence
+          path: logs/
+          retention-days: 7
