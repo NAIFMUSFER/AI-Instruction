@@ -27,6 +27,7 @@ jobs:
         run: |
           npm ci
           python -m pip install -r requirements.txt -r requirements-dev.txt
+          npx playwright install --with-deps chromium
       - name: Regenerate measured state with repository tools
         run: |
           python3 tools/bundle_report.py
