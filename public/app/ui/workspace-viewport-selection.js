@@ -186,11 +186,14 @@ export function installWorkspaceViewportSelection(deps={}) {
   async function selectInWorkspace(selection) {
     if (!selection) return false;
     let acs = window.ACS;
-    if (!(acs && acs.workspace)) {
-      if (typeof openWorkspace !== 'function') return false;
+    // Reuse the existing panel entry on every viewport selection when available.
+    // If the workspace was already loaded, openWorkspace() re-attaches the current
+    // exported canonical project before selection; this prevents a new model from
+    // being inspected through a stale previous workspace project.
+    if (typeof openWorkspace === 'function') {
       try { await Promise.resolve(openWorkspace()); } catch (e) { return false; }
       acs = window.ACS;
-    } else {
+    } else if (acs && acs.workspace) {
       try { if (typeof acs.workspace.open === 'function') acs.workspace.open(); } catch (e) {}
     }
     if (!(acs && acs.workspace && typeof acs.workspace.select === 'function')) return false;
