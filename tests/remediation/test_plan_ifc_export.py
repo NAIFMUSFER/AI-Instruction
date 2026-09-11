@@ -124,6 +124,20 @@ class ApprovedIfcExportTests(unittest.TestCase):
             self.assertTrue(Path(str(out) + ".baseline.json").exists())
             self.assertTrue(X.verify_ifc_export(out)["ok"])
 
+    def test_plan_ifc_stays_spaces_only_until_non_space_geometry_is_exact(self):
+        """Do not turn exporter placeholders into approved Plan-first geometry."""
+        ws, rev = approved_workspace(residential_model())
+        with tempfile.TemporaryDirectory() as td:
+            out = Path(td) / "spaces-only.ifc"
+            receipt = X.export_approved_ifc(ws, rev.id, out)
+            text = out.read_text(encoding="utf-8")
+            self.assertEqual(receipt["ifc_scope"], "SPACES_ONLY")
+            self.assertIn("IFCSPACE", text)
+            self.assertNotIn("IFCWALLSTANDARDCASE", text)
+            self.assertNotIn("IFCSLAB", text)
+            self.assertEqual(receipt["ifc_manifest"]["wall_count"], 0)
+            self.assertEqual(receipt["ifc_manifest"]["slab_count"], 0)
+
     def test_warehouse_rack_dock_provenance_and_locks_reach_export_receipt(self):
         selectors = [
             {"kind": "element", "template": "ground", "room_id": "storage",
