@@ -62,6 +62,18 @@ class ResidentialMeasuredScorecardTests(unittest.TestCase):
         self.assertIsNone(metrics["unclassified_space_area_m2"])
         self.assertEqual(metrics["space_count_by_role"], {"bedroom": 1, "majlis": 1})
 
+    def test_warehouse_role_area_alias_never_publishes_partial_measurement(self):
+        # The warehouse alias and the generic role-area metric describe the same
+        # explicit room rectangles. If one room is unmeasurable, publishing only
+        # the other role would let option comparison mistake unknown area for zero.
+        model = residential()
+        model["meta"]["type"] = "warehouse"
+        del model["floors"]["ground"]["rooms"][0]["rect"]
+        metrics = S.measure_plan(model)["metrics"]
+        self.assertIsNone(metrics["space_area_by_role_m2"])
+        self.assertIsNone(metrics["zone_area_by_role_m2"])
+        self.assertIsNone(metrics["unclassified_zone_area_m2"])
+
     def test_option_comparison_exposes_majlis_reallocation_with_same_total_area(self):
         # A = 20 m² majlis + 20 m² bedroom; B = 24 + 16. Total measured area
         # remains 40 m², so a total-only scorecard would hide this user-visible edit.
