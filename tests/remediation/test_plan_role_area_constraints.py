@@ -108,6 +108,14 @@ class RoleAreaConstraintTests(unittest.TestCase):
                 ])
                 self.assertIn("INVALID_EXPECTATION", self.codes(out))
 
+    def test_measured_role_area_constraint_does_not_create_compliance_claims(self):
+        out = review(residential(), [
+            req("majlis-min", "min_space_area_by_role_m2", 20.0, "majlis", "majlis 20 m2"),
+        ])
+        self.assertTrue(out["can_approve"])
+        self.assertEqual(out["scopes"]["regulatory_compliance"], "NOT_VERIFIED")
+        self.assertEqual(out["scopes"]["structural_safety"], "NOT_VERIFIED")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
