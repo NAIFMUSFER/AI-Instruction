@@ -9,7 +9,12 @@ adapter.  A future Supabase adapter can implement the port directly.
 from pathlib import Path
 import importlib
 import inspect
+import sys
 import tempfile
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 port = importlib.import_module('acs_plan_store_port')
 assert hasattr(port, 'PlanStorePort')
