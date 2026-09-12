@@ -1,0 +1,85 @@
+name: Apply warehouse lane-length constraint repair
+on:
+  push:
+    branches: [feature/warehouse-lane-length-constraints-v2]
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[lane-length-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply exact bounded Program repair
+        run: |
+          python - <<'PYTHON'
+          from pathlib import Path
+          path = Path('acs_plan_review.py')
+          text = path.read_text()
+          old_set = '''        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
+                      "dock_count", "min_dock_count", "min_rack_group_count",
+                      "min_station_count", "min_lane_area_m2", "max_lane_overlap_area_m2",
+                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
+'''
+          new_set = '''        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
+                      "dock_count", "min_dock_count", "min_rack_group_count",
+                      "min_station_count", "min_lane_area_m2", "min_lane_centerline_length_m",
+                      "max_lane_centerline_length_m", "max_lane_overlap_area_m2",
+                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
+'''
+          old_branch = '''            elif kind == "max_rack_overlap_area_m2":
+                actual = warehouse_metrics.get("rack_overlap_area_m2")
+                valid_expected = _number(expected) and expected >= 0
+                maximum = True
+            else:
+                lane_kind = r.get("kind")
+'''
+          new_branch = '''            elif kind == "max_rack_overlap_area_m2":
+                actual = warehouse_metrics.get("rack_overlap_area_m2")
+                valid_expected = _number(expected) and expected >= 0
+                maximum = True
+            elif kind in {"min_lane_centerline_length_m", "max_lane_centerline_length_m"}:
+                lane_kind = r.get("kind")
+                if not _id(lane_kind):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_kind = warehouse_metrics.get("lane_centerline_length_by_kind_m")
+                # An absent lane kind is a measured zero only when every declared
+                # lane has complete explicit orientation/geometry. Partial totals
+                # remain unknown rather than being treated as zero.
+                actual = by_kind.get(lane_kind.strip().lower(), 0.0) if isinstance(by_kind, dict) else None
+                valid_expected = _number(expected) and expected >= 0
+                minimum = kind == "min_lane_centerline_length_m"
+                maximum = kind == "max_lane_centerline_length_m"
+            else:
+                lane_kind = r.get("kind")
+'''
+          if text.count(old_set) != 1:
+              raise SystemExit(f'expected exactly one metric-set anchor, found {text.count(old_set)}')
+          if text.count(old_branch) != 1:
+              raise SystemExit(f'expected exactly one branch anchor, found {text.count(old_branch)}')
+          text = text.replace(old_set, new_set).replace(old_branch, new_branch)
+          path.write_text(text)
+          PYTHON
+      - name: Validate focused repair before commit
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          python -m py_compile acs_plan_review.py acs_plan_scorecard.py tests/remediation/test_plan_warehouse_lane_length_constraints.py
+          python -S tests/remediation/test_plan_warehouse_lane_length_constraints.py
+          git diff --check
+      - name: Commit repair
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add acs_plan_review.py
+          git commit -m "feat: constrain measured warehouse lane centerlines [lane-length-applied]"
+          git push origin HEAD:feature/warehouse-lane-length-constraints-v2
