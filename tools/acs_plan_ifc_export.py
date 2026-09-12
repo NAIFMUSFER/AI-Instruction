@@ -30,7 +30,7 @@ from acs_plan_lock_binding import PlanLockWorkspace
 from acs_plan_projection import PROVENANCE_SCHEMA, provenance_map
 from acs_plan_review import PlanError, canonical, digest
 
-SCHEMA = "acs.plan-ifc-export/1.0"
+SCHEMA = "acs.plan-ifc-export/1.1"
 MODE = "DETERMINISTIC_APPROVED_FROZEN_BASELINE_ONLY"
 IFC_SCOPE = "SPACES_ONLY"
 
@@ -178,6 +178,8 @@ def export_approved_ifc(
         "ifc_manifest_hash": digest(manifest),
         "provider_calls": 0,
         "replanning_calls": 0,
+        "canonical_model_is_source_of_truth": True,
+        "ifc_is_source_of_truth": False,
         "regulatory_compliance": "NOT_VERIFIED",
         "structural_safety": "NOT_VERIFIED",
     }
@@ -225,6 +227,11 @@ def verify_ifc_export(out_path: str | os.PathLike[str], receipt: dict | None = N
         raise PlanError("INVALID_BASELINE_RECEIPT", "Unknown IFC baseline receipt")
     if receipt.get("ifc_scope") != IFC_SCOPE:
         raise PlanError("INVALID_BASELINE_RECEIPT", "IFC receipt does not declare the exact Plan-first scope")
+    if (receipt.get("canonical_model_is_source_of_truth") is not True
+            or receipt.get("ifc_is_source_of_truth") is not False
+            or receipt.get("replanning_calls") != 0):
+        raise PlanError("INVALID_BASELINE_RECEIPT",
+                        "IFC receipt overstates derived-artifact authority or downstream replanning")
     actual_sha = _artifact_sha(out)
     if receipt.get("artifact_sha256") != actual_sha or receipt.get("artifact_bytes") != out.stat().st_size:
         raise PlanError("ARTIFACT_CHANGED", "IFC artifact bytes no longer match the approved receipt")
