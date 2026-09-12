@@ -13,6 +13,7 @@ same identity after sign-out.
 from __future__ import annotations
 
 import os
+import uuid
 from urllib.parse import urlsplit
 
 import acs_api_errors as E
@@ -61,14 +62,30 @@ def _bearer(authorization: str | None) -> str:
 def _actor_id(payload) -> str:
     if not isinstance(payload, dict):
         raise E.AcsApiError(E.ACS_AUTH_UNAVAILABLE, retryable=True)
+
+    # Durable-project authority requires positive proof of a permanent session.
+    # Missing/malformed evidence is not equivalent to `false`.
+    anonymous = payload.get("is_anonymous")
+    if anonymous is True:
+        raise E.AcsApiError(E.ACS_AUTH_PERMANENT_IDENTITY_REQUIRED)
+    if anonymous is not False:
+        raise E.AcsApiError(E.ACS_AUTH_UNAVAILABLE, retryable=True)
+
     value = payload.get("id")
     if (not isinstance(value, str) or not value
             or value != value.strip()
             or len(value) > MAX_ACTOR_ID_CHARS):
         raise E.AcsApiError(E.ACS_AUTH_UNAVAILABLE, retryable=True)
-    if payload.get("is_anonymous") is True:
-        raise E.AcsApiError(E.ACS_AUTH_PERMANENT_IDENTITY_REQUIRED)
-    return value
+    try:
+        parsed = uuid.UUID(value)
+    except (ValueError, AttributeError, TypeError) as exc:
+        raise E.AcsApiError(E.ACS_AUTH_UNAVAILABLE, retryable=True) from exc
+    canonical_id = str(parsed)
+    # Reject alternative spellings such as braces/URNs rather than allowing the
+    # same Supabase identity to acquire multiple persisted actor identifiers.
+    if value.lower() != canonical_id:
+        raise E.AcsApiError(E.ACS_AUTH_UNAVAILABLE, retryable=True)
+    return canonical_id
 
 
 class SupabaseAuthVerifier:
