@@ -1,0 +1,56 @@
+name: Repair IFC derived authority once
+on:
+  push:
+    branches:
+      - audit/ifc-derived-authority-receipt-v2
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+          ref: audit/ifc-derived-authority-receipt-v2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply minimal authority repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/acs_plan_ifc_export.py')
+          s = p.read_text(encoding='utf-8')
+          old = 'SCHEMA = "acs.plan-ifc-export/1.0"'
+          new = 'SCHEMA = "acs.plan-ifc-export/1.1"'
+          assert old in s
+          s = s.replace(old, new, 1)
+          old = '''        "provider_calls": 0,\n        "replanning_calls": 0,\n        "regulatory_compliance": "NOT_VERIFIED",'''
+          if old not in s:
+              old = '''        "provider_calls": 0,\n        "regulatory_compliance": "NOT_VERIFIED",'''
+          new = '''        "provider_calls": 0,\n        "replanning_calls": 0,\n        "canonical_model_is_source_of_truth": True,\n        "ifc_is_source_of_truth": False,\n        "regulatory_compliance": "NOT_VERIFIED",'''
+          assert old in s
+          s = s.replace(old, new, 1)
+          old = '''    if receipt.get("ifc_scope") != IFC_SCOPE:\n        raise PlanError("INVALID_BASELINE_RECEIPT", "IFC receipt does not declare the exact Plan-first scope")\n    actual_sha = _artifact_sha(out)'''
+          new = '''    if receipt.get("ifc_scope") != IFC_SCOPE:\n        raise PlanError("INVALID_BASELINE_RECEIPT", "IFC receipt does not declare the exact Plan-first scope")\n    if (receipt.get("canonical_model_is_source_of_truth") is not True\n            or receipt.get("ifc_is_source_of_truth") is not False\n            or receipt.get("replanning_calls") != 0):\n        raise PlanError("INVALID_BASELINE_RECEIPT",\n                        "IFC receipt overstates derived-artifact authority or downstream replanning")\n    actual_sha = _artifact_sha(out)'''
+          assert old in s
+          s = s.replace(old, new, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+          rm .github/workflows/repair-ifc-derived-authority-once.yml
+      - name: Verify focused regression
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          python -m py_compile tools/acs_plan_ifc_export.py tests/remediation/test_plan_ifc_derived_authority.py
+          python -S tests/remediation/test_plan_ifc_derived_authority.py
+      - name: Commit repair and self-removal
+        run: |
+          git config user.name "NAIFMUSFER"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/acs_plan_ifc_export.py .github/workflows/repair-ifc-derived-authority-once.yml
+          git commit -m "fix(acs-v2): bind IFC receipt to canonical authority"
+          git push origin HEAD:audit/ifc-derived-authority-receipt-v2
