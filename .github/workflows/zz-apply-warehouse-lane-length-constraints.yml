@@ -1,12 +1,12 @@
 name: Apply warehouse lane-length constraint repair
 on:
   push:
-    branches: [feature/warehouse-lane-length-constraints-v2]
+    branches:
+      - feature/warehouse-lane-length-constraints-v2
 permissions:
   contents: write
 jobs:
   apply:
-    if: ${{ !contains(github.event.head_commit.message, '[lane-length-applied]') }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -23,6 +23,9 @@ jobs:
           from pathlib import Path
           path = Path('acs_plan_review.py')
           text = path.read_text()
+          if 'min_lane_centerline_length_m' in text:
+              print('lane-length Program repair already present; no rewrite needed')
+              raise SystemExit(0)
           old_set = '''        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
                       "dock_count", "min_dock_count", "min_rack_group_count",
                       "min_station_count", "min_lane_area_m2", "max_lane_overlap_area_m2",
@@ -65,8 +68,7 @@ jobs:
               raise SystemExit(f'expected exactly one metric-set anchor, found {text.count(old_set)}')
           if text.count(old_branch) != 1:
               raise SystemExit(f'expected exactly one branch anchor, found {text.count(old_branch)}')
-          text = text.replace(old_set, new_set).replace(old_branch, new_branch)
-          path.write_text(text)
+          path.write_text(text.replace(old_set, new_set).replace(old_branch, new_branch))
           PYTHON
       - name: Validate focused repair before commit
         env:
@@ -76,8 +78,12 @@ jobs:
           python -m py_compile acs_plan_review.py acs_plan_scorecard.py tests/remediation/test_plan_warehouse_lane_length_constraints.py
           python -S tests/remediation/test_plan_warehouse_lane_length_constraints.py
           git diff --check
-      - name: Commit repair
+      - name: Commit repair when changed
         run: |
+          if git diff --quiet -- acs_plan_review.py; then
+            echo "No repair diff to commit"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add acs_plan_review.py
