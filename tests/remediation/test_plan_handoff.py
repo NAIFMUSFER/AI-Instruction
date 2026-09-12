@@ -254,5 +254,8 @@ class Approved3DHandoffTests(unittest.TestCase):
             self.assertTrue(H.verify_compiled_artifact(out)["ok"])
 
 
+from test_plan_handoff_warehouse_dock_geometry import ApprovedWarehouseDockGeometryTests
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

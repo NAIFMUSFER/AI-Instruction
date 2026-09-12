@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import tempfile
@@ -97,6 +98,60 @@ def _verify_space_map_matches_handoff(handoff_map: object, provenance: dict) -> 
                         "Requirement provenance does not match approved canonical space identities")
 
 
+
+def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
+    """Prevent approved warehouse 3D from filling dock geometry with compiler defaults."""
+    meta = building.get("meta")
+    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":
+        return
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace structure validation owns the top-level model contract.
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict) or "docks" not in room:
+                continue
+            docks = room.get("docks")
+            if not isinstance(docks, list):
+                raise PlanError(
+                    "DOWNSTREAM_GEOMETRY_INVALID",
+                    f"Approved warehouse docks must be a list at {template}/{room.get('id')}",
+                )
+            for index, dock in enumerate(docks):
+                where = f"{template}/{room.get('id')}/docks/{index}"
+                if not isinstance(dock, dict):
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock geometry is invalid at {where}")
+                required = ("edge", "offset", "width", "height", "count", "pitch")
+                missing = [key for key in required if key not in dock]
+                if missing:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                        f"Approved dock geometry is missing {','.join(missing)} at {where}",
+                    )
+                if dock["edge"] not in {"N", "S", "E", "W"}:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock edge is invalid at {where}")
+                count = dock["count"]
+                if type(count) is not int or not 1 <= count <= 24:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved dock count would be changed by the 3D compiler at {where}",
+                    )
+                for key in ("width", "height", "pitch"):
+                    value = dock[key]
+                    if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Dock {key} must be an explicit positive finite number at {where}",
+                        )
+                offset = dock["offset"]
+                if type(offset) not in (int, float) or not math.isfinite(offset) or offset < 0:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Dock offset must be an explicit non-negative finite number at {where}",
+                    )
+
 def compile_approved_baseline(
     workspace: PlanWorkspace,
     revision_id: str,
@@ -121,6 +176,7 @@ def compile_approved_baseline(
     handoff = workspace.handoff(revision_id)
     revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
+    _require_explicit_warehouse_dock_geometry(building)
     baseline = json.loads(canonical(handoff.get("baseline")))
     provenance = provenance_map(revision)
     _verify_space_map_matches_handoff(handoff.get("source_map"), provenance)
