@@ -1,14 +1,23 @@
 #!/usr/bin/env python3
 """Red-first production authentication boundary for cost-bearing ACS API routes.
 
-The public production service holds the provider credential server-side.  Before release,
+The public production service holds the provider credential server-side. Before release,
 unauthenticated callers must be rejected before rate-limit/provider/upload work begins.
 This test never calls a provider: ``guard`` is replaced with a sentinel response path.
 """
 from __future__ import annotations
 
 import os
+import sys
 import unittest
+from pathlib import Path
+
+# The workflow executes this file directly from tests/remediation. Ensure the repository
+# root is importable so the test proves the auth boundary itself rather than failing on
+# Python's script-directory import semantics.
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 os.environ.setdefault("ANTHROPIC_API_KEY", "dummy-test-key")
 os.environ.setdefault("ACS_ENV", "test")
