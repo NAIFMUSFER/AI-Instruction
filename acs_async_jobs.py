@@ -2,8 +2,10 @@
 
 The original handlers still own validation, quotas, process isolation, timeouts,
 and engineering review. This ASGI adapter only detaches delivery from the HTTP
-connection. Anonymous jobs use a client-generated 256-bit capability, never a
-job id or an IP address as authorization. Neither capability nor input is logged.
+connection. Production job submission is admitted through the same authentication
+boundary as direct generation; result retrieval remains protected by a client-
+generated 256-bit capability so a mobile reconnect does not depend on source IP.
+Neither capability, bearer token, nor input is logged.
 
 Storage is BOUNDED PROCESS MEMORY, not a durable queue. Results expire after
 30 minutes; idempotency tombstones live for 24 hours. A server restart loses
@@ -20,6 +22,7 @@ import time
 from dataclasses import dataclass, field
 
 import acs_api_errors as E
+import acs_auth as AUTH
 import acs_rate_limit as RL
 
 CONTRACT = 'acs.async-generation/1.0'
@@ -170,7 +173,9 @@ STORE = JobStore(capacity=min(8, _positive('ACS_ASYNC_JOB_CAPACITY', 8)))
 
 
 def health_status():
-    return STORE.health()
+    out = STORE.health()
+    out['authentication'] = AUTH.health_status()
+    return out
 
 
 class AsyncGenerationMiddleware:
@@ -231,8 +236,18 @@ class AsyncGenerationMiddleware:
             return await self.app(scope, shutdown_receive, send)
         if scope['type'] != 'http':
             return await self.app(scope, receive, send)
+
         path, method = scope['path'], scope['method']
         match = JOB_PATH.fullmatch(path)
+        # The admission check runs before reading request bytes, before job
+        # reservation, and before the original handler/rate-limit/provider path.
+        if path in AUTH.DIRECT_PROTECTED_PATHS or path in SUBMIT_PATHS:
+            if not await AUTH.authorize_asgi(scope, send):
+                return
+        # Direct cost-bearing routes are not async-job routes; after admission
+        # they pass through untouched to the original handlers.
+        if path in AUTH.DIRECT_PROTECTED_PATHS:
+            return await self.app(scope, receive, send)
         if path not in SUBMIT_PATHS and match is None:
             return await self.app(scope, receive, send)
         try:
@@ -278,7 +293,8 @@ class AsyncGenerationMiddleware:
                 inner['path'] = SUBMIT_PATHS[path]
                 inner['raw_path'] = inner['path'].encode('ascii')
                 inner['query_string'] = b''
-                inner['state'] = {'request_id': row.request_id}
+                inner['state'] = dict(scope.get('state') or {})
+                inner['state']['request_id'] = row.request_id
                 inner['headers'] = [(k, v) for k, v in scope.get('headers', [])
                     if k not in (b'x-acs-job-token', b'x-acs-job-id', b'x-request-id')]
                 inner['headers'].append((b'x-request-id', row.request_id.encode('ascii')))
