@@ -5,6 +5,7 @@ on:
     paths:
       - 'acs_supabase_plan_store.py'
       - 'supabase/migrations/20260913_acs_plan_store_rpc_v2.sql'
+      - 'supabase/migrations/20260913_acs_plan_store_rpc_v2_lockdown.sql'
       - 'tests/remediation/test_supabase_plan_store_adapter.py'
       - 'tests/remediation/test_supabase_plan_store_rpc_schema.py'
       - '.github/workflows/production-supabase-plan-store-adapter.yml'
