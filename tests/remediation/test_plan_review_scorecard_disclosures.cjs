@@ -15,6 +15,7 @@ const requiredMetricKeys = [
   'unclassified_space_count',
   'zone_area_by_role_m2',
   'unclassified_zone_area_m2',
+  'dock_count_by_zone_role',
   'rack_declared_level_sum',
   'rack_declared_footprint_area_m2',
   'lane_centerline_length_by_kind_m',

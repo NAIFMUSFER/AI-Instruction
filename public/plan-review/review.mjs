@@ -21,6 +21,7 @@ const metricNames = {
   unclassified_zone_area_m2:'مساحة مناطق التشغيل غير المصنفة (م²)',
   dock_count:'عدد الأرصفة',
   dock_count_by_edge:'الأرصفة حسب الواجهة',
+  dock_count_by_zone_role:'الأرصفة حسب منطقة التشغيل',
   rack_group_count:'مجموعات الرفوف',
   rack_declared_level_sum:'مجموع مستويات الرفوف المعلنة',
   rack_declared_footprint_area_m2:'مساحة بصمة الرفوف المعلنة (م²)',
