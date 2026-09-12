@@ -30,6 +30,9 @@ create table if not exists public.acs_plan_revisions (
   created_at timestamptz not null default now(),
   primary key (project_id, revision_id),
   unique (project_id, revision_number),
+  foreign key (project_id, parent_revision_id)
+    references public.acs_plan_revisions(project_id, revision_id) on delete restrict,
+  check (parent_revision_id is null or parent_revision_id <> revision_id),
   check (semantic_lock_manifest_hash is null or char_length(semantic_lock_manifest_hash) = 64)
 );
 
@@ -55,8 +58,11 @@ create table if not exists public.acs_plan_handoffs (
   provenance_hash text not null check (char_length(provenance_hash) = 64),
   created_at timestamptz not null default now(),
   primary key (project_id, revision_id, artifact_kind),
+  -- Derived BIM/3D/CAD/export receipts are publishable only after an engineer
+  -- approval row exists for the exact revision. This is the durable Frozen
+  -- Baseline boundary; a draft revision alone is not sufficient.
   foreign key (project_id, revision_id)
-    references public.acs_plan_revisions(project_id, revision_id) on delete restrict
+    references public.acs_plan_approvals(project_id, revision_id) on delete restrict
 );
 
 create index if not exists acs_project_members_user_idx on public.acs_project_members(user_id, project_id);
@@ -87,6 +93,95 @@ $$;
 revoke all on function public.acs_has_project_role(uuid,text[]) from public;
 grant execute on function public.acs_has_project_role(uuid,text[]) to authenticated;
 
+-- Project ownership is anchored to acs_projects.owner_id, not a mutable role row.
+-- This helper avoids recursive RLS while exposing only a boolean predicate.
+create or replace function public.acs_is_project_owner(p_project uuid, p_user uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public, pg_temp
+as $$
+  select exists (
+    select 1 from public.acs_projects p
+    where p.id = p_project and p.owner_id = p_user
+  );
+$$;
+revoke all on function public.acs_is_project_owner(uuid,uuid) from public;
+grant execute on function public.acs_is_project_owner(uuid,uuid) to authenticated;
+
+-- A project insert must bootstrap its owner membership atomically. Without this
+-- trigger, the project's SELECT policy would require a membership row that the
+-- owner could not yet see/create through RLS.
+create or replace function public.acs_seed_owner_membership()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+begin
+  insert into public.acs_project_members(project_id, user_id, role)
+  values (new.id, new.owner_id, 'owner')
+  on conflict (project_id, user_id) do update set role = 'owner';
+  return new;
+end;
+$$;
+revoke all on function public.acs_seed_owner_membership() from public;
+
+create trigger acs_projects_seed_owner_membership
+after insert on public.acs_projects
+for each row execute function public.acs_seed_owner_membership();
+
+-- Preserve the single-owner invariant even if a privileged path bypasses RLS.
+-- Membership identity is immutable; the project owner cannot be demoted/deleted;
+-- and non-owner members cannot be promoted to owner through the membership row.
+create or replace function public.acs_guard_membership_mutation()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, pg_temp
+as $$
+declare
+  project_owner uuid;
+begin
+  if tg_op = 'DELETE' then
+    select p.owner_id into project_owner
+    from public.acs_projects p
+    where p.id = old.project_id;
+    if project_owner is null then
+      raise exception 'ACS project owner is missing';
+    end if;
+    if old.user_id = project_owner then
+      raise exception 'ACS project owner membership is immutable';
+    end if;
+    return old;
+  end if;
+
+  if new.project_id <> old.project_id or new.user_id <> old.user_id then
+    raise exception 'ACS membership identity is immutable';
+  end if;
+
+  select p.owner_id into project_owner
+  from public.acs_projects p
+  where p.id = new.project_id;
+  if project_owner is null then
+    raise exception 'ACS project owner is missing';
+  end if;
+  if new.user_id = project_owner and new.role <> 'owner' then
+    raise exception 'ACS project owner role is immutable';
+  end if;
+  if new.user_id <> project_owner and new.role = 'owner' then
+    raise exception 'ACS owner role cannot be delegated by membership update';
+  end if;
+  return new;
+end;
+$$;
+revoke all on function public.acs_guard_membership_mutation() from public;
+
+create trigger acs_members_guard_mutation
+before update or delete on public.acs_project_members
+for each row execute function public.acs_guard_membership_mutation();
+
 create policy acs_projects_select_member on public.acs_projects
 for select to authenticated using (public.acs_has_project_role(id, array['owner','editor','viewer']));
 create policy acs_projects_insert_owner on public.acs_projects
@@ -98,15 +193,19 @@ create policy acs_members_select_member on public.acs_project_members
 for select to authenticated using (public.acs_has_project_role(project_id, array['owner','editor','viewer']));
 create policy acs_members_insert_owner on public.acs_project_members
 for insert to authenticated with check (
-  user_id = auth.uid() and role = 'owner' and
-  exists (select 1 from public.acs_projects p where p.id = project_id and p.owner_id = auth.uid())
-  or public.acs_has_project_role(project_id, array['owner'])
+  public.acs_is_project_owner(project_id, auth.uid())
+  and user_id <> auth.uid()
+  and role in ('editor','viewer')
 );
 create policy acs_members_update_owner on public.acs_project_members
-for update to authenticated using (public.acs_has_project_role(project_id, array['owner']))
-with check (public.acs_has_project_role(project_id, array['owner']));
+for update to authenticated using (public.acs_is_project_owner(project_id, auth.uid()))
+with check (public.acs_is_project_owner(project_id, auth.uid()));
 create policy acs_members_delete_owner on public.acs_project_members
-for delete to authenticated using (public.acs_has_project_role(project_id, array['owner']) and role <> 'owner');
+for delete to authenticated using (
+  public.acs_is_project_owner(project_id, auth.uid())
+  and user_id <> auth.uid()
+  and role <> 'owner'
+);
 
 create policy acs_revisions_select_member on public.acs_plan_revisions
 for select to authenticated using (public.acs_has_project_role(project_id, array['owner','editor','viewer']));
@@ -127,3 +226,19 @@ for select to authenticated using (public.acs_has_project_role(project_id, array
 create policy acs_handoffs_insert_editor on public.acs_plan_handoffs
 for insert to authenticated with check (public.acs_has_project_role(project_id, array['owner','editor']));
 -- Derived artifact receipts are immutable and remain downstream of approved revisions.
+
+-- Supabase grants broad public-schema table privileges by default. Narrow them
+-- explicitly so RLS is defense in depth, not the only immutable-receipt barrier.
+revoke all on table public.acs_projects from anon, authenticated;
+revoke all on table public.acs_project_members from anon, authenticated;
+revoke all on table public.acs_plan_revisions from anon, authenticated;
+revoke all on table public.acs_plan_approvals from anon, authenticated;
+revoke all on table public.acs_plan_handoffs from anon, authenticated;
+
+grant select, insert on table public.acs_projects to authenticated;
+grant update (name) on table public.acs_projects to authenticated;
+grant select, insert, delete on table public.acs_project_members to authenticated;
+grant update (role) on table public.acs_project_members to authenticated;
+grant select, insert on table public.acs_plan_revisions to authenticated;
+grant select, insert on table public.acs_plan_approvals to authenticated;
+grant select, insert on table public.acs_plan_handoffs to authenticated;
