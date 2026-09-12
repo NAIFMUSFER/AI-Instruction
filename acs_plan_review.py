@@ -353,7 +353,8 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             maximum = kind == "max_space_area_by_role_m2"
         elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
                       "dock_count", "min_dock_count", "min_rack_group_count",
-                      "min_station_count", "min_lane_area_m2", "max_lane_overlap_area_m2",
+                      "min_station_count", "min_lane_area_m2", "min_lane_centerline_length_m",
+                      "max_lane_centerline_length_m", "max_lane_overlap_area_m2",
                       "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
             if warehouse_metrics is None:
                 issue("REQUIREMENT_METRIC_NOT_APPLICABLE", rid)
@@ -428,6 +429,19 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 actual = warehouse_metrics.get("rack_overlap_area_m2")
                 valid_expected = _number(expected) and expected >= 0
                 maximum = True
+            elif kind in {"min_lane_centerline_length_m", "max_lane_centerline_length_m"}:
+                lane_kind = r.get("kind")
+                if not _id(lane_kind):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_kind = warehouse_metrics.get("lane_centerline_length_by_kind_m")
+                # An absent lane kind is a measured zero only when every declared
+                # lane has complete explicit orientation/geometry. Partial totals
+                # remain unknown rather than being treated as zero.
+                actual = by_kind.get(lane_kind.strip().lower(), 0.0) if isinstance(by_kind, dict) else None
+                valid_expected = _number(expected) and expected >= 0
+                minimum = kind == "min_lane_centerline_length_m"
+                maximum = kind == "max_lane_centerline_length_m"
             else:
                 lane_kind = r.get("kind")
                 if not _id(lane_kind):
