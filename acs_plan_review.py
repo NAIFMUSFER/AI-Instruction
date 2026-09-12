@@ -338,7 +338,8 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             minimum = True
         elif kind in {"min_zone_area_m2", "dock_count", "min_dock_count",
                       "min_rack_group_count", "min_station_count", "min_lane_area_m2",
-                      "max_lane_overlap_area_m2"}:
+                      "max_lane_overlap_area_m2", "max_rack_lane_overlap_area_m2",
+                      "max_rack_overlap_area_m2"}:
             if warehouse_metrics is None:
                 issue("REQUIREMENT_METRIC_NOT_APPLICABLE", rid)
                 continue
@@ -383,6 +384,19 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 pair = "|".join(sorted((kind_a.strip().lower(), kind_b.strip().lower())))
                 by_pair = warehouse_metrics.get("lane_overlap_area_by_kind_pair_m2")
                 actual = by_pair.get(pair, 0.0) if isinstance(by_pair, dict) else None
+                valid_expected = _number(expected) and expected >= 0
+                maximum = True
+            elif kind == "max_rack_lane_overlap_area_m2":
+                lane_kind = r.get("kind")
+                if not _id(lane_kind):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_kind = warehouse_metrics.get("rack_lane_overlap_area_by_lane_kind_m2")
+                actual = by_kind.get(lane_kind.strip().lower(), 0.0) if isinstance(by_kind, dict) else None
+                valid_expected = _number(expected) and expected >= 0
+                maximum = True
+            elif kind == "max_rack_overlap_area_m2":
+                actual = warehouse_metrics.get("rack_overlap_area_m2")
                 valid_expected = _number(expected) and expected >= 0
                 maximum = True
             else:
