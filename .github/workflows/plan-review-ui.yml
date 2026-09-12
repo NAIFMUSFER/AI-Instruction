@@ -1,0 +1,46 @@
+name: Plan-first 2D review UI
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plan-review-ui-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  review-ui:
+    name: Read-only 2D packets and Chromium-WebKit UI
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Actual canonical packet and untrusted-file contracts
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_review_packet.py 2>&1 | tee logs/review-packet-python.log
+          node --test tests/remediation/test_plan_review_packet.mjs 2>&1 | tee logs/review-packet-node.log
+          python tests/remediation/test_plan_review_packet.py --fixtures logs/review-fixtures
+      - name: Install repository-locked browser dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium webkit
+      - name: Real browser review, selection, privacy, layout and stale-import regressions
+        run: |
+          set -euo pipefail
+          node tests/remediation/test_plan_review_ui.cjs 2>&1 | tee logs/review-ui-browser.log
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: plan-review-ui-evidence
+          path: logs/
+          retention-days: 7
