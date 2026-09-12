@@ -49,6 +49,10 @@ class ApprovedNestedProvenanceTests(unittest.TestCase):
         before = copy.deepcopy(model)
         H._require_traceable_approved_nested_elements(model)
         self.assertEqual(model, before)
+        for collection in COLLECTIONS:
+            item = model["floors"]["ground"]["rooms"][0][collection][0]
+            self.assertNotIn("source_id", item)
+            self.assertNotIn("requirement_ids", item)
 
     def test_every_renderable_nested_collection_requires_explicit_identity(self):
         for collection in COLLECTIONS:
