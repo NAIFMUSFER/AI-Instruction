@@ -98,10 +98,6 @@ jobs:
                                       f"Conveyor lane h must be an explicit positive finite number at {where}",
                                   )
           '''
-          function = '\n' + '\n'.join(
-              line[10:] if line.startswith('          ') else line
-              for line in function.splitlines()
-          ) + '\n'
           text = text.replace(marker, function + marker, 1)
 
           calls = (
