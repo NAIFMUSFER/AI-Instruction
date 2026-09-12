@@ -331,6 +331,54 @@ class SQLitePlanStore:
         return {"schema": SCHEMA, "project_id": project_id, "owner_id": owner_id,
                 "head_revision_id": None, "baseline_revision_id": None}
 
+    def create_project_with_revision(self, project_id: str, *, owner_id: str,
+                                     revision: Any) -> dict:
+        """Atomically create a project, owner membership and immutable revision #1.
+
+        Revision admission is validated before the transaction begins. The project
+        row, owner membership, first revision and head pointer then commit together,
+        so callers can never observe a durable empty project caused by a partial
+        bootstrap. This does not generate geometry or authenticate the owner; those
+        remain host responsibilities.
+        """
+        project_id, owner_id = _id(project_id, "project_id"), _id(owner_id, "owner_id")
+        doc = revision_document(revision)
+        if doc["number"] != 1 or doc["parent_id"] is not None:
+            raise PlanError("INVALID_REVISION_CHAIN",
+                            "Project bootstrap requires revision 1 with no parent")
+        with self._connect() as con:
+            con.execute("BEGIN IMMEDIATE")
+            try:
+                con.execute("INSERT INTO projects(project_id,owner_id) VALUES(?,?)",
+                            (project_id, owner_id))
+                con.execute("INSERT INTO project_members(project_id,actor_id,role) "
+                            "VALUES(?,?, 'owner')", (project_id, owner_id))
+                con.execute("""INSERT INTO plan_revisions(
+                    project_id,revision_id,number,parent_id,revision_json,model_hash,
+                    content_hash,bound_content_hash,semantic_lock_manifest_hash,
+                    created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+                    (project_id, doc["revision_id"], doc["number"], doc["parent_id"],
+                     _json(doc), doc["model_hash"], doc["content_hash"],
+                     doc["bound_content_hash"], doc["semantic_lock_manifest_hash"],
+                     owner_id, doc["created_at"]))
+                con.execute("UPDATE projects SET head_revision_id=?,updated_at=CURRENT_TIMESTAMP "
+                            "WHERE project_id=?", (doc["revision_id"], project_id))
+                con.execute("COMMIT")
+            except sqlite3.IntegrityError as exc:
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
+                raise PlanError("PROJECT_EXISTS",
+                                "Project identity already exists") from exc
+            except Exception:
+                if con.in_transaction:
+                    con.execute("ROLLBACK")
+                raise
+        return {
+            "schema": SCHEMA, "project_id": project_id, "owner_id": owner_id,
+            "head_revision_id": doc["revision_id"], "baseline_revision_id": None,
+            "revision_id": doc["revision_id"],
+        }
+
     def grant_role(self, project_id: str, *, by_actor_id: str,
                    actor_id: str, role: str) -> dict:
         project_id = _id(project_id, "project_id")
