@@ -28,8 +28,8 @@ jobs:
             tests/remediation/test_supabase_plan_store_adapter.py \
             tests/remediation/test_supabase_plan_store_rpc_schema.py
       - name: Verify authenticated Supabase adapter
-        run: python tests/remediation/test_supabase_plan_store_adapter.py
+        run: PYTHONPATH=. python tests/remediation/test_supabase_plan_store_adapter.py
       - name: Verify atomic RPC schema
-        run: python tests/remediation/test_supabase_plan_store_rpc_schema.py
+        run: PYTHONPATH=. python tests/remediation/test_supabase_plan_store_rpc_schema.py
       - name: No generated diff
         run: git diff --exit-code
