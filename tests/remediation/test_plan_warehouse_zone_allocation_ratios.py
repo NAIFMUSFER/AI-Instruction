@@ -113,14 +113,14 @@ class WarehouseZoneAllocationRatioTests(unittest.TestCase):
         a = warehouse_model()
         b = warehouse_model()
         b["floors"]["ground"]["rooms"][1]["rect"] = [10.0, 0.0, 15.0, 20.0]
-        b["floors"]["ground"]["rooms"][2]["rect"] = [25.0, 0.0, 15.0, 20.0]
+        b["floors"]["ground"]["rooms"][2]["rect"] = [25.0, 0.0, 10.0, 20.0]
         result = O.compare_options([
             {"id": "A", "model": a},
             {"id": "B", "model": b},
         ], declared_program_receipt="warehouse-program-v1")
         delta = result["options"][1]["delta_from_reference"]["mapping"]
         self.assertAlmostEqual(delta["zone_area_ratio_by_role"]["storage"], -0.166667, places=6)
-        self.assertAlmostEqual(delta["zone_area_ratio_by_role"]["shipping"], 0.333333, places=6)
+        self.assertAlmostEqual(delta["zone_area_ratio_by_role"]["shipping"], 0.166666, places=6)
         self.assertFalse(result["claims_best_option"])
 
     def test_residential_typology_does_not_gain_warehouse_allocation_ratio_metric(self):
