@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Red-first IFC derived-authority receipt regressions."""
+"""IFC derived-authority receipt regressions.
+
+These tests verify authority metadata only; they do not expand the SPACES_ONLY IFC
+geometry scope or treat the exchange artifact as an authoring model.
+"""
 from __future__ import annotations
 
 from pathlib import Path
