@@ -5,12 +5,48 @@ let versions = [], active = null, projection = null, zoom = 1, generation = 0;
 const format = value => value === null || value === undefined ? 'غير متاح / غير قابل للقياس' :
   typeof value === 'object' ? JSON.stringify(value) : String(value);
 const sourceNames = {requested:'مطلوب صراحة', inferred:'مستنتج — راجع التأكيد', unknown:'غير محدد'};
-const metricNames = {site_area_m2:'مساحة الموقع (م²)',level_count:'عدد الأدوار',space_instance_count:'عدد الفراغات',space_rect_area_m2:'مجموع مساحات حدود الفراغات (م²)',zone_area_by_role_m2:'مساحة مناطق التشغيل حسب الدور الوظيفي (م²)',dock_count:'عدد الأرصفة',dock_count_by_edge:'الأرصفة حسب الواجهة',rack_group_count:'مجموعات الرفوف',station_count:'محطات العمل',lane_area_by_kind_m2:'مساحات الممرات حسب النوع (م²)',storage_capacity:'السعة التخزينية',travel_distance_m:'مسافة الحركة (م)',throughput:'معدل التشغيل'};
+const metricNames = {
+  site_area_m2:'مساحة الموقع (م²)',
+  level_count:'عدد الأدوار',
+  space_instance_count:'عدد الفراغات',
+  space_rect_area_m2:'مجموع مساحات حدود الفراغات (م²)',
+  space_area_by_role_m2:'مساحات الفراغات حسب الدور الوظيفي (م²)',
+  unclassified_space_area_m2:'مساحة الفراغات غير المصنفة (م²)',
+  space_count_by_role:'عدد الفراغات حسب الدور الوظيفي',
+  unclassified_space_count:'عدد الفراغات غير المصنفة',
+  gross_floor_area_m2:'إجمالي مساحة الأرضيات GFA (م²)',
+  net_floor_area_m2:'صافي مساحة الأرضيات NFA (م²)',
+  efficiency:'كفاءة المساحة',
+  zone_area_by_role_m2:'مساحة مناطق التشغيل حسب الدور الوظيفي (م²)',
+  unclassified_zone_area_m2:'مساحة مناطق التشغيل غير المصنفة (م²)',
+  dock_count:'عدد الأرصفة',
+  dock_count_by_edge:'الأرصفة حسب الواجهة',
+  rack_group_count:'مجموعات الرفوف',
+  rack_declared_level_sum:'مجموع مستويات الرفوف المعلنة',
+  rack_declared_footprint_area_m2:'مساحة بصمة الرفوف المعلنة (م²)',
+  station_count:'محطات العمل',
+  lane_area_by_kind_m2:'مساحات الممرات حسب النوع (م²)',
+  lane_centerline_length_by_kind_m:'أطوال محاور الممرات المعلنة حسب النوع (م)',
+  lane_overlap_area_by_kind_pair_m2:'مساحات تداخل أنواع الممرات (م²)',
+  storage_capacity_positions:'السعة التخزينية المحسوبة (مواضع)',
+  throughput_per_hour:'معدل التشغيل المحسوب في الساعة',
+  travel_distance_m:'مسافة الحركة المحسوبة (م)',
+  pedestrian_vehicle_separation_compliance:'التحقق من فصل المشاة والمركبات',
+  fire_life_safety_compliance:'التحقق من متطلبات الحريق وسلامة الأرواح'
+};
 const scopeNames = {rectangular_geometry:'هندسة حدود الفراغات',program:'برنامج المتطلبات',topology:'الترابط',vertical_circulation:'الحركة الرأسية',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
 const states = {PASS:'اجتاز وفق الملف',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق'};
-function node(tag, text, parent, cls) { const e=document.createElement(tag); if(text!==null)e.textContent=text; if(cls)e.className=cls; if(parent)parent.append(e);return e; }
+function node(tag, text, parent, cls) { const e=document.createElement(tag); if(text!==null)e.textContent=text; if(cls)e.className=cls;if(parent)parent.append(e);return e; }
 function svg(tag, attrs, parent, text) { const e=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;parent.append(e);return e; }
 function pair(parent, label, value) { node('dt',label,parent);node('dd',format(value),parent); }
+function metricValue(key, value) {
+  if (value !== null && value !== undefined) return value;
+  const unavailable = active && active.scorecard && active.scorecard.unavailable;
+  const reason = unavailable && unavailable[key];
+  return typeof reason === 'string' && reason.trim()
+    ? `غير متاح / غير قابل للقياس — ${reason}`
+    : value;
+}
 function resetView() {
   active=projection=null;versions=[];$('workspace').hidden=true;$('empty').hidden=false;
   for(const id of ['plan','selection','spaces','metrics','scopes','issues','locks','requirements','identity','revision','level'])$(id).replaceChildren();
@@ -48,7 +84,7 @@ function showVersion() {
   active=versions[Number($('revision').value)];$('level').replaceChildren();
   active.projections.forEach((p,i)=>{const o=node('option',`الدور ${p.level_index}`,$('level'));o.value=String(i);});
   for(const id of ['metrics','scopes','issues','locks','requirements','identity'])$(id).replaceChildren();
-  for(const[k,v]of Object.entries(active.scorecard.metrics))pair($('metrics'),metricNames[k]||k,v);
+  for(const[k,v]of Object.entries(active.scorecard.metrics))pair($('metrics'),metricNames[k]||k,metricValue(k,v));
   for(const[k,v]of Object.entries(active.review.scopes))pair($('scopes'),scopeNames[k]||k,states[v]);
   if(!active.review.issues.length)node('li','لا توجد ملاحظات مسجلة في الملف. لا يُعد ذلك اعتمادًا.', $('issues'));
   for(const i of active.review.issues)node('li',`${i.code}${i.requirement_id?' · '+i.requirement_id:''}`,$('issues'));
