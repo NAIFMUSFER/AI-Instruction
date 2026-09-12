@@ -101,14 +101,17 @@ class SupabasePlanStore:
                 "Store actor must match the authenticated Supabase subject",
             )
 
-    def _headers(self) -> dict[str, str]:
-        return {
+    def _headers(self, *, prefer: str | None = None) -> dict[str, str]:
+        headers = {
             "Authorization": "Bearer " + self._access_token,
             "apikey": self._publishable_key,
             "Accept": "application/json",
             "Content-Type": "application/json",
             "User-Agent": "acs-plan-store/2.0",
         }
+        if prefer is not None:
+            headers["Prefer"] = prefer
+        return headers
 
     @staticmethod
     def _urllib_transport(*, method: str, url: str, headers: dict[str, str],
@@ -124,7 +127,8 @@ class SupabasePlanStore:
         except (urllib.error.URLError, TimeoutError, OSError) as exc:
             raise PlanError("STORE_UNAVAILABLE", "Supabase plan store is unavailable") from exc
 
-    def _request(self, method: str, path: str, payload: dict | None = None) -> Any:
+    def _request(self, method: str, path: str, payload: dict | None = None,
+                 *, prefer: str | None = None) -> Any:
         body = None
         if payload is not None:
             try:
@@ -135,7 +139,7 @@ class SupabasePlanStore:
         status, raw = self._transport(
             method=method,
             url=self._base + path,
-            headers=self._headers(),
+            headers=self._headers(prefer=prefer),
             body=body,
             timeout=self._timeout_s,
         )
@@ -179,6 +183,7 @@ class SupabasePlanStore:
             "POST",
             "/rest/v1/acs_projects?select=id,owner_id,name,head_revision_id,baseline_revision_id",
             {"owner_id": self._actor_id, "name": name},
+            prefer="return=representation",
         )
         if not isinstance(result, list) or len(result) != 1 or not isinstance(result[0], dict):
             raise PlanError("STORE_UNAVAILABLE", "Supabase project creation returned an invalid receipt")
