@@ -17,9 +17,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from acs_plan_lock_binding import PlanLockWorkspace, SCHEMA as LOCK_SCHEMA
 from tools.acs_plan_handoff import compile_approved_baseline, verify_compiled_artifact
 
+BRIEF = "مستودع بعرض 30 متر مع رف مثبت"
+
 
 def verified(_model):
     return {"scopes": {"topology": "PASS", "vertical_circulation": "PASS"}, "issues": []}
+
+
+def program():
+    start = BRIEF.index("30")
+    return [{
+        "id": "site-width", "metric": "site_width_m", "expected": 30.0,
+        "source": "requested", "evidence": "30",
+        "source_id": "brief:user:site-width",
+        "source_span": {"start": start, "end": start + 2},
+    }]
 
 
 def warehouse():
@@ -50,8 +62,8 @@ def compiler(_building, out_path):
 class Approved3DLockBindingTests(unittest.TestCase):
     def test_lock_bound_workspace_reaches_3d_with_exact_lock_receipt(self):
         ws = PlanLockWorkspace(verified)
-        rev = ws.propose(warehouse(), brief="مستودع مع رف مثبت",
-                         requirements=[], expected_head=None, note="initial")
+        rev = ws.propose(warehouse(), brief=BRIEF, requirements=program(),
+                         expected_head=None, note="initial")
         rev = ws.replace_semantic_locks([{
             "kind": "element", "template": "ground", "room_id": "storage",
             "collection": "racks", "element_id": "rack_a",
