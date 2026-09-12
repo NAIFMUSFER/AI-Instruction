@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""Red-first proof for approved-baseline room presentation geometry.
+"""Approved-baseline room presentation geometry regressions.
 
 The legacy compiler defaults door/window dimensions, point placement/type/height,
 and furniture dimensions/material/name. After engineer approval those values must
-not be invented by downstream 3D. This test intentionally fails until the handoff
-boundary rejects such implicit geometry/semantics before compiler invocation.
+not be invented by downstream 3D. The handoff therefore fails closed on fields
+that would otherwise be defaulted or reclassified by the compiler.
 """
 from __future__ import annotations
 
 import copy
+import inspect
 from pathlib import Path
 import sys
 import unittest
@@ -61,6 +62,12 @@ class ApprovedRoomPresentationGeometryTests(unittest.TestCase):
         model = residential(); model["floors"]["ground"]["rooms"][0]["points"][0]["type"] = "mystery"
         with self.assertRaises(PlanError):
             H._require_explicit_approved_room_presentation_geometry(model)
+
+    def test_guard_is_wired_before_compiler_selection(self):
+        source = inspect.getsource(H.compile_approved_baseline)
+        guard = source.index("_require_explicit_approved_room_presentation_geometry(building)")
+        compiler = source.index("if compiler is None:")
+        self.assertLess(guard, compiler)
 
 
 if __name__ == "__main__":
