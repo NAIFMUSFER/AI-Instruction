@@ -1,3 +1,4 @@
+# temporary self-removing transformer
 from pathlib import Path
 
 p = Path('tools/acs_plan_handoff.py')
