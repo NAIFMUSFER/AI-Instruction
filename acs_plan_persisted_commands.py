@@ -1,7 +1,7 @@
 """Persist trusted Plan-first commands against the durable project store.
 
 This module composes the already-audited command boundary, lock-bound workspace
-reload, and optimistic SQLite persistence.  It is intentionally not an HTTP route
+reload, and optimistic durable persistence.  It is intentionally not an HTTP route
 and does not authenticate callers.  A host must resolve ``project_id`` and
 ``actor_id`` from an authenticated project session and provide the real verifier
 and provider configuration.
@@ -16,7 +16,7 @@ from typing import Any
 from acs_plan_commands import execute_plan_command
 from acs_plan_lock_binding import BoundApproval
 from acs_plan_review import PlanError, canonical
-from acs_plan_store import SQLitePlanStore
+from acs_plan_store_port import PlanStorePort, as_plan_store_port
 from acs_plan_store_reload import load_workspace
 
 
@@ -75,7 +75,7 @@ def _approval_from_result(workspace, result: dict, actor_id: str) -> BoundApprov
 
 
 def execute_persisted_plan_command(
-    store: SQLitePlanStore,
+    store: PlanStorePort,
     project_id: str,
     command: dict,
     *,
@@ -91,19 +91,19 @@ def execute_persisted_plan_command(
     concurrency token, so a concurrent winner causes ``STALE_REVISION`` rather
     than a silent rebase or lost update.
 
-    This boundary is deliberately writable-only: viewers continue to use the
-    store's read-only APIs and are not handed a mutable workspace.
+    Existing SQLite callers are wrapped at this boundary; new durable backends
+    implement ``PlanStorePort`` directly.  Viewers continue to use read-only store
+    APIs and are not handed a mutable workspace.
     """
-    if not isinstance(store, SQLitePlanStore):
-        raise PlanError("INVALID_STORE", "Persisted commands require SQLitePlanStore")
+    backend = as_plan_store_port(store)
     command = _trusted_command(command)
 
-    before = store.project_state(project_id, actor_id=actor_id)
+    before = backend.project_state(project_id, actor_id=actor_id)
     expected_head = before["head_revision_id"]
     expected_baseline = before["baseline_revision_id"]
 
     workspace = load_workspace(
-        store, project_id, actor_id=actor_id, verifier=verifier,
+        backend, project_id, actor_id=actor_id, verifier=verifier,
     )
     if workspace.head != expected_head or workspace.baseline != expected_baseline:
         raise PlanError("STORED_PROJECT_TAMPERED", "Reloaded project pointers changed before command execution")
@@ -121,7 +121,7 @@ def execute_persisted_plan_command(
     if workspace.head != expected_head:
         if workspace.head is None:
             raise PlanError("INVALID_REVISION_CHAIN", "Command removed the project head")
-        store.save_revision(
+        backend.save_revision(
             project_id,
             actor_id=actor_id,
             revision=workspace.get(workspace.head),
@@ -131,7 +131,7 @@ def execute_persisted_plan_command(
 
     if workspace.baseline != expected_baseline:
         approval = _approval_from_result(workspace, result, actor_id)
-        store.save_approval(
+        backend.save_approval(
             project_id,
             actor_id=actor_id,
             approval=approval,
@@ -139,7 +139,7 @@ def execute_persisted_plan_command(
         )
         approval_persisted = True
 
-    after = store.project_state(project_id, actor_id=actor_id)
+    after = backend.project_state(project_id, actor_id=actor_id)
     if not revision_persisted and not approval_persisted:
         # Read-only commands must not return a stale snapshot as though it were
         # current when another writer won while this command was executing.
