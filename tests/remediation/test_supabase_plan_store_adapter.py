@@ -25,13 +25,29 @@ store = SupabasePlanStore(
     actor_id=ACTOR, transport=transport,
 )
 
+# PostgREST inserts default to a minimal response. Project creation depends on
+# reading the inserted row back, so the adapter must explicitly request a
+# representation rather than assuming the server will return one.
+responses.append((201, [{
+    "id": PROJECT, "owner_id": ACTOR, "name": "Warehouse Alpha",
+    "head_revision_id": None, "baseline_revision_id": None,
+}]))
+created = store.create_project(name="Warehouse Alpha")
+assert created["project_id"] == PROJECT
+create_req = calls[-1]
+assert create_req["url"].endswith(
+    "/rest/v1/acs_projects?select=id,owner_id,name,head_revision_id,baseline_revision_id"
+)
+assert create_req["headers"].get("Prefer") == "return=representation"
+assert json.loads(create_req["body"])["owner_id"] == ACTOR
+
 # Actor authority is bound to the verified session subject, never caller input.
 try:
     store.project_state(PROJECT, actor_id="33333333-3333-4333-8333-333333333333")
     raise AssertionError("actor mismatch accepted")
 except PlanError as exc:
     assert exc.code == "PROJECT_ACCESS_DENIED"
-assert not calls
+assert len(calls) == 1
 
 responses.append((200, {
     "schema": "acs.plan-store/1.0", "project_id": PROJECT, "role": "owner",
