@@ -352,7 +352,8 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             minimum = kind == "min_space_area_by_role_m2"
             maximum = kind == "max_space_area_by_role_m2"
         elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
-                      "dock_count", "min_dock_count", "min_rack_group_count",
+                      "dock_count", "min_dock_count", "min_dock_count_by_zone_role",
+                      "max_dock_count_by_zone_role", "min_rack_group_count",
                       "min_station_count", "min_lane_area_m2", "min_lane_centerline_length_m",
                       "max_lane_centerline_length_m", "max_lane_overlap_area_m2",
                       "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
@@ -397,6 +398,18 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                     actual = by_edge.get(edge.upper(), 0) if isinstance(by_edge, dict) else None
                 valid_expected = type(expected) is int and expected >= 0
                 minimum = kind == "min_dock_count"
+            elif kind in {"min_dock_count_by_zone_role", "max_dock_count_by_zone_role"}:
+                role = r.get("role")
+                if not _id(role):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_role = warehouse_metrics.get("dock_count_by_zone_role")
+                # An absent role is a measured zero only when every explicit non-zero
+                # dock count has an unambiguous canonical owning zone role.
+                actual = by_role.get(role.strip().lower(), 0) if isinstance(by_role, dict) else None
+                valid_expected = type(expected) is int and expected >= 0
+                minimum = kind == "min_dock_count_by_zone_role"
+                maximum = kind == "max_dock_count_by_zone_role"
             elif kind == "min_rack_group_count":
                 actual = warehouse_metrics.get("rack_group_count")
                 valid_expected = type(expected) is int and expected >= 0
