@@ -25,44 +25,28 @@ jobs:
           from pathlib import Path
           path = Path('acs_plan_review.py')
           text = path.read_text()
-          old = '''        elif kind == "min_room_area_m2":
-              target = r.get("room")
-              room = rooms.get(tuple(target)) if isinstance(target, list) and len(target) == 2 and all(isinstance(x, str) for x in target) else None
-              rect = room.get("rect") if room else None
-              if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
-                  actual = rect[2] * rect[3]
-              valid_expected = _number(expected) and expected > 0 and room is not None
-              minimum = True
-          elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
-          '''
-          new = '''        elif kind == "min_room_area_m2":
-              target = r.get("room")
-              room = rooms.get(tuple(target)) if isinstance(target, list) and len(target) == 2 and all(isinstance(x, str) for x in target) else None
-              rect = room.get("rect") if room else None
-              if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
-                  actual = rect[2] * rect[3]
-              valid_expected = _number(expected) and expected > 0 and room is not None
-              minimum = True
-          elif kind in {"min_space_area_by_role_m2", "max_space_area_by_role_m2"}:
-              role = r.get("role")
-              if not _id(role):
-                  issue("INVALID_REQUIREMENT_SELECTOR", rid)
-                  continue
-              measured = scorecard.get("metrics") if isinstance(scorecard, dict) else None
-              by_role = measured.get("space_area_by_role_m2") if isinstance(measured, dict) else None
-              complete_area = measured.get("space_rect_area_m2") if isinstance(measured, dict) else None
-              # An absent role is a measured zero only when the complete canonical
-              # room-rectangle denominator is measurable. Partial geometry stays unknown.
-              actual = (by_role.get(role.strip().lower(), 0.0)
-                        if isinstance(by_role, dict) and complete_area is not None else None)
-              valid_expected = _number(expected) and expected >= 0
-              minimum = kind == "min_space_area_by_role_m2"
-              maximum = kind == "max_space_area_by_role_m2"
-          elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
-          '''
-          if old not in text:
-              raise SystemExit('expected review boundary not found exactly; refusing broad rewrite')
-          path.write_text(text.replace(old, new, 1))
+          needle = '        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",\n'
+          if text.count(needle) != 1:
+              raise SystemExit('expected unique warehouse Program boundary not found; refusing broad rewrite')
+          block = "\n".join([
+              '        elif kind in {"min_space_area_by_role_m2", "max_space_area_by_role_m2"}:',
+              '            role = r.get("role")',
+              '            if not _id(role):',
+              '                issue("INVALID_REQUIREMENT_SELECTOR", rid)',
+              '                continue',
+              '            measured = scorecard.get("metrics") if isinstance(scorecard, dict) else None',
+              '            by_role = measured.get("space_area_by_role_m2") if isinstance(measured, dict) else None',
+              '            complete_area = measured.get("space_rect_area_m2") if isinstance(measured, dict) else None',
+              '            # An absent role is a measured zero only when the complete canonical',
+              '            # room-rectangle denominator is measurable. Partial geometry stays unknown.',
+              '            actual = (by_role.get(role.strip().lower(), 0.0)',
+              '                      if isinstance(by_role, dict) and complete_area is not None else None)',
+              '            valid_expected = _number(expected) and expected >= 0',
+              '            minimum = kind == "min_space_area_by_role_m2"',
+              '            maximum = kind == "max_space_area_by_role_m2"',
+              '',
+          ])
+          path.write_text(text.replace(needle, block + needle, 1))
           PY
       - name: Verify dedicated regression
         env:
