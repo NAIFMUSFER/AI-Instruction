@@ -336,10 +336,10 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 actual = rect[2] * rect[3]
             valid_expected = _number(expected) and expected > 0 and room is not None
             minimum = True
-        elif kind in {"min_zone_area_m2", "dock_count", "min_dock_count",
-                      "min_rack_group_count", "min_station_count", "min_lane_area_m2",
-                      "max_lane_overlap_area_m2", "max_rack_lane_overlap_area_m2",
-                      "max_rack_overlap_area_m2"}:
+        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
+                      "dock_count", "min_dock_count", "min_rack_group_count",
+                      "min_station_count", "min_lane_area_m2", "max_lane_overlap_area_m2",
+                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
             if warehouse_metrics is None:
                 issue("REQUIREMENT_METRIC_NOT_APPLICABLE", rid)
                 continue
@@ -355,6 +355,20 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                           and warehouse_metrics.get("space_rect_area_m2") is not None else None)
                 valid_expected = _number(expected) and expected > 0
                 minimum = True
+            elif kind in {"min_zone_area_ratio", "max_zone_area_ratio"}:
+                role = r.get("role")
+                if not _id(role):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_role = warehouse_metrics.get("zone_area_ratio_by_role")
+                # Zero for an absent role is valid only when the complete measured
+                # denominator exists; incomplete geometry must remain unmeasurable.
+                actual = (by_role.get(role.strip().lower(), 0.0)
+                          if isinstance(by_role, dict)
+                          and warehouse_metrics.get("space_rect_area_m2") is not None else None)
+                valid_expected = _number(expected) and 0.0 <= expected <= 1.0
+                minimum = kind == "min_zone_area_ratio"
+                maximum = kind == "max_zone_area_ratio"
             elif kind in {"dock_count", "min_dock_count"}:
                 edge = r.get("edge")
                 if edge is not None and (not _id(edge) or edge.upper() not in {"N", "S", "E", "W"}):
