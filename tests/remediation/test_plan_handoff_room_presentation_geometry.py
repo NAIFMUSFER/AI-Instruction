@@ -69,6 +69,14 @@ class ApprovedRoomPresentationGeometryTests(unittest.TestCase):
         compiler = source.index("if compiler is None:")
         self.assertLess(guard, compiler)
 
+    def test_generic_object_and_room_guards_both_precede_compiler(self):
+        source = inspect.getsource(H.compile_approved_baseline)
+        object_guard = source.index("_require_explicit_object_geometry(building)")
+        room_guard = source.index("_require_explicit_approved_room_presentation_geometry(building)")
+        compiler = source.index("if compiler is None:")
+        self.assertLess(object_guard, compiler)
+        self.assertLess(room_guard, compiler)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
