@@ -1,0 +1,32 @@
+name: Plan-first approved 3D lock binding
+on:
+  pull_request:
+    paths:
+      - 'tools/acs_plan_handoff.py'
+      - 'tests/remediation/test_plan_handoff_lock_binding.py'
+      - '.github/workflows/plan-approved-3d-lock-binding.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plan-approved-3d-lock-binding-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile approved 3D lock-binding contracts
+        run: python -m py_compile tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_lock_binding.py
+      - name: Exact semantic-lock binding reaches approved 3D
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: python -S tests/remediation/test_plan_handoff_lock_binding.py
+      - name: No generated diff
+        run: git diff --exit-code
