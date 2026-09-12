@@ -1,15 +1,14 @@
 """Fail-closed reconstruction of persisted ACS Plan-first workspaces.
 
-This companion closes a deliberate boundary between :mod:`acs_plan_store`, which
-persists immutable receipts, and :class:`acs_plan_lock_binding.PlanLockWorkspace`,
-which owns live revision/lock/approval behavior.  It reconstructs only receipts
-that have already passed the store's row/document integrity checks and then
-revalidates the canonical model/provenance/lock binding before exposing a live
-workspace.
+This companion reconstructs only integrity-checked persistence snapshots and then
+revalidates canonical model/provenance/lock binding before exposing a live
+workspace.  It does not depend on SQLite rows or connections; local SQLite callers
+are adapted behind :mod:`acs_plan_store_port`, while production backends can
+implement the same narrow snapshot contract directly.
 
 It performs no provider, compiler, network, authentication, or geometry-repair
-work.  SQLite remains filesystem durability; callers still need a durable host
-volume or a production datastore port for real cross-device/cloud persistence.
+work.  The Canonical ACS Model and immutable revision/approval receipts remain the
+authority regardless of the backing datastore.
 """
 from __future__ import annotations
 
@@ -26,15 +25,8 @@ from acs_plan_review import (
     _validate_provenance_links,
     canonical,
 )
-from acs_plan_store import (
-    SQLitePlanStore,
-    _approval_from_row,
-    _id,
-    _revision_from_row,
-)
-
-
-WRITABLE_ROLES = {"owner", "editor"}
+from acs_plan_store import _id, _validate_approval_shape, _validate_revision_document
+from acs_plan_store_port import PlanStorePort, SNAPSHOT_SCHEMA, as_plan_store_port
 
 
 def _validate_locked_rooms(doc: dict) -> tuple[tuple[str, str], ...]:
@@ -56,65 +48,67 @@ def _validate_locked_rooms(doc: dict) -> tuple[tuple[str, str], ...]:
     return tuple(sorted(refs))
 
 
-def load_workspace(store: SQLitePlanStore, project_id: str, *, actor_id: str,
+def load_workspace(store: PlanStorePort, project_id: str, *, actor_id: str,
                    verifier: Callable[[dict], dict] | None = None) -> PlanLockWorkspace:
     """Reconstruct one *writable* persisted project without minting new identities.
 
     Exact persisted revision IDs, timestamps, parent links, model/program content,
     room/semantic locks, approval receipts and Frozen Baseline identity are kept.
-    Any broken chain, stale project head, orphan approval, altered lock receipt or
-    receipt mismatch fails before the workspace is returned.  Viewers deliberately
-    use the read-only store APIs instead of receiving a mutable aggregate.
+    Any broken chain, stale project head, orphan/duplicate approval, altered lock
+    receipt or snapshot mismatch fails before the workspace is returned.  Viewers
+    deliberately use read-only store APIs instead of receiving a mutable aggregate.
     """
-    if not isinstance(store, SQLitePlanStore):
-        raise PlanError("INVALID_STORE", "Workspace reload requires SQLitePlanStore")
+    backend = as_plan_store_port(store)
     project_id, actor_id = _id(project_id, "project_id"), _id(actor_id, "actor_id")
+    snapshot = backend.workspace_snapshot(project_id, actor_id=actor_id)
+    if not isinstance(snapshot, dict) or snapshot.get("schema") != SNAPSHOT_SCHEMA:
+        raise PlanError("INVALID_STORE_SNAPSHOT", "Persistence backend returned an unknown workspace snapshot")
+    if snapshot.get("project_id") != project_id:
+        raise PlanError("STORED_PROJECT_TAMPERED", "Persistence snapshot project identity changed")
 
-    with store._connect() as con:
-        project = store._project(con, project_id)
-        # A live PlanLockWorkspace can propose revisions.  Do not hand one to a
-        # viewer and rely on a later save to enforce authorization.
-        store._role(con, project_id, actor_id, WRITABLE_ROLES)
-        revision_rows = con.execute(
-            "SELECT * FROM plan_revisions WHERE project_id=? ORDER BY number",
-            (project_id,),
-        ).fetchall()
-        approval_rows = con.execute(
-            "SELECT * FROM plan_approvals WHERE project_id=? ORDER BY approved_at,revision_id",
-            (project_id,),
-        ).fetchall()
-
-    if len(revision_rows) > MAX_REVISIONS:
+    revision_docs = snapshot.get("revisions")
+    approval_rows = snapshot.get("approvals")
+    if not isinstance(revision_docs, list) or not isinstance(approval_rows, list):
+        raise PlanError("INVALID_STORE_SNAPSHOT", "Persistence snapshot history is malformed")
+    if len(revision_docs) > MAX_REVISIONS:
         raise PlanError("HISTORY_LIMIT", "Persisted workspace exceeds the revision boundary")
 
-    revision_docs: list[dict] = []
     by_id: dict[str, dict] = {}
     previous_id: str | None = None
-    for expected_number, row in enumerate(revision_rows, start=1):
-        rid = row["revision_id"]
-        doc = _revision_from_row(row, project_id=project_id, revision_id=rid)
+    for expected_number, doc in enumerate(revision_docs, start=1):
+        if not isinstance(doc, dict):
+            raise PlanError("INVALID_STORED_REVISION", "Stored revision receipt is malformed")
+        _validate_revision_document(doc)
+        rid = _id(doc.get("revision_id"), "revision_id")
+        if rid in by_id:
+            raise PlanError("INVALID_REVISION_CHAIN", "Persisted revision identity is duplicated")
         if doc["number"] != expected_number or doc["parent_id"] != previous_id:
             raise PlanError("INVALID_REVISION_CHAIN", "Persisted revision history is not a single monotonic chain")
-        # Persisted hashes prove byte/content identity; these checks additionally
-        # prove the content still satisfies the canonical admission contract.
+        # Persisted hashes prove content identity; these checks additionally prove
+        # the content still satisfies the canonical admission/provenance contract.
         _structure(doc["model"])
         _validate_provenance_links(doc["model"], doc["requirements"])
         canonical({"brief": doc["brief"], "note": doc["note"]})
         _validate_locked_rooms(doc)
-        revision_docs.append(doc)
         by_id[rid] = doc
         previous_id = rid
 
-    persisted_head = project["head_revision_id"]
+    persisted_head = snapshot.get("head_revision_id")
+    if persisted_head is not None:
+        persisted_head = _id(persisted_head, "head_revision_id")
     if persisted_head != previous_id:
         raise PlanError("STORED_PROJECT_TAMPERED", "Persisted project head does not match revision history")
 
     approval_docs: dict[str, dict] = {}
-    for row in approval_rows:
-        rid = row["revision_id"]
+    for doc in approval_rows:
+        if not isinstance(doc, dict):
+            raise PlanError("INVALID_STORED_APPROVAL", "Stored approval receipt is malformed")
+        _validate_approval_shape(doc)
+        rid = _id(doc.get("revision_id"), "revision_id")
+        if rid in approval_docs:
+            raise PlanError("STORED_APPROVAL_TAMPERED", "Persisted approval identity is duplicated")
         if rid not in by_id:
             raise PlanError("STORED_APPROVAL_TAMPERED", "Persisted approval references no revision")
-        doc = _approval_from_row(row, project_id=project_id, revision_id=rid)
         rev = by_id[rid]
         expected = (
             rev["content_hash"], rev["bound_content_hash"], rev["model_hash"],
@@ -128,7 +122,7 @@ def load_workspace(store: SQLitePlanStore, project_id: str, *, actor_id: str,
             raise PlanError("STORED_APPROVAL_TAMPERED", "Persisted approval does not match its revision")
         approval_docs[rid] = doc
 
-    baseline = project["baseline_revision_id"]
+    baseline = snapshot.get("baseline_revision_id")
     if baseline is not None:
         baseline = _id(baseline, "baseline_revision_id")
         if baseline not in approval_docs:
@@ -136,8 +130,8 @@ def load_workspace(store: SQLitePlanStore, project_id: str, *, actor_id: str,
 
     workspace = PlanLockWorkspace(verifier=verifier)
 
-    # This is restoration of already validated immutable receipts, not an
-    # admission bypass for new content.  New changes still go through propose().
+    # This restores already validated immutable receipts, not an admission bypass
+    # for new content.  New changes still go through propose().
     for doc in revision_docs:
         locks = _validate_locked_rooms(doc)
         revision = Revision(
