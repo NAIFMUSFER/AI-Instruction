@@ -4,11 +4,14 @@
 No live Supabase project is contacted here. The verifier is exercised against a
 small injected async HTTP client so the contracts prove identity/error semantics
 without secrets, production users, or network access.
+
+Red proof: focused run #1 on head 4355a8ef failed at import because the auth
+boundary did not exist. One-time implementation run 34680042771 then created the
+fail-closed verifier/error contract and passed this exact suite before committing.
 """
 from __future__ import annotations
 
 import asyncio
-import os
 from pathlib import Path
 import sys
 import unittest
