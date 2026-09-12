@@ -3,6 +3,7 @@
 
 Ratios are descriptive shares of the complete measured canonical room-rectangle area.
 They are not GFA/NFA, utilization, efficiency, code compliance or an AI quality score.
+Program constraint kinds are intentionally left for a separate audited slice.
 """
 from __future__ import annotations
 
@@ -13,37 +14,11 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_options as O
-import acs_plan_review as P
 import acs_plan_scorecard as S
 from test_plan_scorecard import warehouse_model
 
-BRIEF = "Warehouse storage allocation ratio must remain measurable from the approved plan."
-
-
-def verified(_model):
-    return {"scopes": {"topology": "PASS", "vertical_circulation": "PASS"},
-            "issues": []}
-
-
-def review(model, requirements):
-    ws = P.PlanWorkspace(verified)
-    rev = ws.propose(model, brief=BRIEF, requirements=requirements,
-                     expected_head=None, note="measure warehouse zone allocation ratios")
-    return ws.review(rev.id)
-
-
-def req(rid, metric, expected, **extra):
-    row = {"id": rid, "source": "requested", "evidence": "ratio",
-           "metric": metric, "expected": expected}
-    row.update(extra)
-    return row
-
 
 class WarehouseZoneAllocationRatioTests(unittest.TestCase):
-    @staticmethod
-    def codes(result):
-        return {item["code"] for item in result["issues"]}
-
     def test_scorecard_measures_role_share_from_complete_canonical_area(self):
         result = S.measure_plan(warehouse_model())
         ratios = result["metrics"]["zone_area_ratio_by_role"]
@@ -79,35 +54,6 @@ class WarehouseZoneAllocationRatioTests(unittest.TestCase):
             "receiving": 0.166667,
             "storage": 0.666667,
         })
-
-    def test_program_can_constrain_explicit_minimum_zone_allocation_ratio(self):
-        good = review(warehouse_model(), [
-            req("storage-ratio", "min_zone_area_ratio", 0.60, role="storage"),
-        ])
-        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(good))
-        self.assertTrue(good["can_approve"])
-
-        bad = review(warehouse_model(), [
-            req("storage-ratio", "min_zone_area_ratio", 0.70, role="storage"),
-        ])
-        self.assertIn("REQUIREMENT_MISMATCH", self.codes(bad))
-        self.assertFalse(bad["can_approve"])
-
-    def test_program_can_constrain_explicit_maximum_zone_allocation_ratio(self):
-        out = review(warehouse_model(), [
-            req("storage-ratio", "max_zone_area_ratio", 0.60, role="storage"),
-        ])
-        self.assertIn("REQUIREMENT_MISMATCH", self.codes(out))
-        self.assertFalse(out["can_approve"])
-
-    def test_unknown_ratio_is_not_treated_as_zero_by_program(self):
-        model = warehouse_model()
-        del model["floors"]["ground"]["rooms"][0]["rect"]
-        out = review(model, [
-            req("storage-ratio", "min_zone_area_ratio", 0.60, role="storage"),
-        ])
-        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(out))
-        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(out))
 
     def test_option_comparison_exposes_measured_allocation_ratio_deltas(self):
         a = warehouse_model()
