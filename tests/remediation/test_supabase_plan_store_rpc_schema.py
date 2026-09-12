@@ -17,6 +17,13 @@ assert "revoke update (head_revision_id, baseline_revision_id, updated_at)" in S
 assert "acs_created_by_backfill_required" in SQL
 assert "alter column created_by set not null" in SQL
 
+# Once the atomic RPC write boundary exists, authenticated clients must not be
+# able to bypass it with legacy direct INSERT privileges from the base schema.
+# Otherwise an editor could create orphan/malformed revision or approval rows
+# that never passed the canonical receipt validators or project-head lock.
+assert "revoke insert on table public.acs_plan_revisions from authenticated" in SQL
+assert "revoke insert on table public.acs_plan_approvals from authenticated" in SQL
+
 # Privileged mutation logic stays outside the exposed public schema; public RPCs
 # are invoker wrappers only, callable with authenticated user JWTs.
 private_functions = [
