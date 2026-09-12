@@ -4,6 +4,10 @@
 These contracts count only explicitly declared dock quantities grouped by the
 canonical role of their owning warehouse zone. They do not infer dock capacity,
 throughput, queuing, apron geometry, traffic safety, or regulatory compliance.
+
+Red proof retained in GitHub history: test-only head bbcb3f56 made dedicated
+dock-allocation run #8 fail because malformed ``docks={}`` was published as a
+measured zero. The product repair must keep that case fail-closed.
 """
 from __future__ import annotations
 
