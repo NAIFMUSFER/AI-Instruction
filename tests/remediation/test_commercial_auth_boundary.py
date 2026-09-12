@@ -7,7 +7,7 @@ without secrets, production users, or network access.
 
 Red proof: focused run #1 on head 4355a8ef failed at import because the auth
 boundary did not exist. One-time implementation run 34680042771 then created the
-fail-closed verifier/error contract and passed this exact suite before committing.
+fail-closed verifier/error contract and passed the initial suite before committing.
 """
 from __future__ import annotations
 
@@ -97,13 +97,32 @@ class CommercialAuthBoundaryTests(unittest.TestCase):
 
     def test_anonymous_session_cannot_authorize_durable_project(self):
         client = FakeClient(FakeResponse(200, {
-            "id": "anon-user-id",
+            "id": "35970b6c-f670-44cf-bfc4-2387dfbdb24c",
             "is_anonymous": True,
         }))
         err = self.assert_error(
             E.ACS_AUTH_PERMANENT_IDENTITY_REQUIRED,
             lambda: run(self.verifier(client).actor_id("Bearer aaa.bbb.ccc")))
         self.assertEqual(err.status, 403)
+
+    def test_missing_anonymous_claim_fails_closed(self):
+        client = FakeClient(FakeResponse(200, {
+            "id": "6df7873c-bcd0-4cd3-910d-3c516da697e2",
+        }))
+        err = self.assert_error(
+            E.ACS_AUTH_UNAVAILABLE,
+            lambda: run(self.verifier(client).actor_id("Bearer aaa.bbb.ccc")))
+        self.assertEqual(err.status, 503)
+
+    def test_non_uuid_user_id_fails_closed(self):
+        client = FakeClient(FakeResponse(200, {
+            "id": "not-a-supabase-uuid",
+            "is_anonymous": False,
+        }))
+        err = self.assert_error(
+            E.ACS_AUTH_UNAVAILABLE,
+            lambda: run(self.verifier(client).actor_id("Bearer aaa.bbb.ccc")))
+        self.assertEqual(err.status, 503)
 
     def test_rejected_or_expired_token_is_401(self):
         client = FakeClient(FakeResponse(401, {"message": "invalid token"}))
