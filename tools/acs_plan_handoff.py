@@ -117,10 +117,10 @@ def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
             if not isinstance(docks, list):
                 raise PlanError(
                     "DOWNSTREAM_GEOMETRY_INVALID",
-                    f"Approved warehouse docks must be a list at {template}/{room.get(chr(39) + 'id' + chr(39))}",
+                    f"Approved warehouse docks must be a list at {template}/{room.get('id')}",
                 )
             for index, dock in enumerate(docks):
-                where = f"{template}/{room.get(chr(39) + 'id' + chr(39))}/docks/{index}"
+                where = f"{template}/{room.get('id')}/docks/{index}"
                 if not isinstance(dock, dict):
                     raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock geometry is invalid at {where}")
                 required = ("edge", "offset", "width", "height", "count", "pitch")
@@ -128,7 +128,7 @@ def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
                 if missing:
                     raise PlanError(
                         "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
-                        f"Approved dock geometry is missing {chr(44).join(missing)} at {where}",
+                        f"Approved dock geometry is missing {','.join(missing)} at {where}",
                     )
                 if dock["edge"] not in {"N", "S", "E", "W"}:
                     raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock edge is invalid at {where}")

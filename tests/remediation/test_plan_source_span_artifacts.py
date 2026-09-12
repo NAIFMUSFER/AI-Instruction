@@ -60,7 +60,7 @@ def warehouse():
              "rect": [0.0, 0.0, 5.0, 30.0],
              "requirement_ids": ["receiving-zone"],
              "docks": [{"id": "dock_n1", "edge": "N", "offset": 2.0,
-                         "width": 3.6, "height": 4.2,
+                         "width": 3.6, "height": 4.2, "count": 1, "pitch": 5.4,
                          "requirement_ids": ["dock-anchor"]}]},
             {"id": "storage", "role": "storage", "walls": "none",
              "rect": [5.0, 0.0, 25.0, 30.0],
