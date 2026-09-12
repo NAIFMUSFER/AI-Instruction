@@ -1,0 +1,33 @@
+name: Production Supabase authentication integration
+on:
+  pull_request:
+    paths:
+      - 'acs_auth.py'
+      - '.env.example'
+      - 'tests/remediation/test_supabase_auth_integration.py'
+      - '.github/workflows/production-supabase-auth-integration.yml'
+permissions:
+  contents: read
+concurrency:
+  group: production-supabase-auth-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  supabase-auth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile Supabase auth contract
+        run: python -m py_compile acs_auth.py tests/remediation/test_supabase_auth_integration.py
+      - name: Supabase user-token integration
+        env:
+          ACS_ENV: test
+          ACS_AUTH_MODE: oidc
+        run: python tests/remediation/test_supabase_auth_integration.py
+      - name: No generated diff
+        run: git diff --exit-code
