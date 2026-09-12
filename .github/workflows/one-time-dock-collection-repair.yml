@@ -1,0 +1,51 @@
+name: One-time dock collection fail-closed repair
+on:
+  push:
+    branches:
+      - 'feature/warehouse-docks-by-zone-v2'
+    paths:
+      - '.github/workflows/one-time-dock-collection-repair.yml'
+permissions:
+  contents: write
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 'feature/warehouse-docks-by-zone-v2'
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply exact fail-closed repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('acs_plan_scorecard.py')
+          text = path.read_text()
+          old = '            docks = room.get("docks") or []\n'
+          new = ('            raw_docks = room.get("docks")\n'
+                 '            docks = [] if raw_docks is None else raw_docks\n')
+          count = text.count(old)
+          if count != 1:
+              raise SystemExit(f'expected exactly one dock collection expression, found {count}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Compile and prove regression
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          python -m py_compile acs_plan_scorecard.py acs_plan_options.py tests/remediation/test_plan_warehouse_docks_by_zone.py
+          python -S tests/remediation/test_plan_warehouse_docks_by_zone.py
+          git diff --check
+      - name: Commit repair and remove one-time workflow
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/one-time-dock-collection-repair.yml
+          git add acs_plan_scorecard.py
+          git commit -m 'fix(plan-first): fail closed on malformed dock collections'
+          git push origin HEAD:feature/warehouse-docks-by-zone-v2
