@@ -181,6 +181,64 @@ def _require_explicit_warehouse_rack_geometry(building: dict) -> None:
                     )
 
 
+def _require_explicit_warehouse_station_geometry(building: dict) -> None:
+    """Prevent approved warehouse 3D from filling station geometry with compiler defaults."""
+    meta = building.get("meta")
+    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":
+        return
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace structure validation owns the top-level model contract.
+    station_kinds = {
+        "pack", "inspect", "label", "qa", "sort",
+        "void", "desk", "charger", "locker", "wrap",
+    }
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict) or "stations" not in room:
+                continue
+            stations = room.get("stations")
+            if not isinstance(stations, list):
+                continue  # Existing provenance admission owns malformed collection shapes.
+            for index, station in enumerate(stations):
+                where = f"{template}/{room.get('id')}/stations/{index}"
+                if not isinstance(station, dict):
+                    continue  # Existing provenance admission owns malformed entries.
+                required = ("kind", "x", "z", "w", "d", "h", "pitch", "dir", "count")
+                missing = [key for key in required if key not in station]
+                if missing:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                        f"Approved station geometry is missing {','.join(missing)} at {where}",
+                    )
+                if station["kind"] not in station_kinds:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Station kind is invalid at {where}")
+                if station["dir"] not in {"x", "z"}:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Station direction is invalid at {where}")
+                for key in ("x", "z"):
+                    value = station[key]
+                    if not _is_finite_number(value):
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Station {key} must be an explicit finite number at {where}",
+                        )
+                for key in ("w", "d", "h", "pitch"):
+                    value = station[key]
+                    if not _is_finite_number(value) or value <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Station {key} must be an explicit positive finite number at {where}",
+                        )
+                count = station["count"]
+                if type(count) is not int or not 1 <= count <= 60:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved station count would be changed by the 3D compiler at {where}",
+                    )
+
+
 def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
     """Prevent approved warehouse 3D from filling dock geometry with compiler defaults."""
     meta = building.get("meta")
@@ -260,6 +318,7 @@ def compile_approved_baseline(
     revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
     _require_explicit_warehouse_rack_geometry(building)
+    _require_explicit_warehouse_station_geometry(building)
     _require_explicit_warehouse_dock_geometry(building)
     baseline = json.loads(canonical(handoff.get("baseline")))
     provenance = provenance_map(revision)
