@@ -156,6 +156,8 @@ def measure_plan(model: dict) -> dict:
     - `zone_area_ratio_by_role` is each declared warehouse role area divided by
       complete measured canonical room-rectangle area. Unclassified area remains
       in the denominator. It is not utilization, efficiency or an AI quality score.
+    - `dock_count_by_zone_role` groups explicit dock counts by the canonical role
+      of their owning warehouse zone. It is allocation only, not capacity or throughput.
     - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
       clearance or safety-compliance result.
     - `lane_centerline_length_by_kind_m` measures only the longitudinal dimension
@@ -198,6 +200,8 @@ def measure_plan(model: dict) -> dict:
     dock_count = 0
     dock_count_known = bool(templates)
     dock_by_edge: defaultdict[str, int] = defaultdict(int)
+    dock_by_zone_role: defaultdict[str, int] = defaultdict(int)
+    dock_zone_role_complete = bool(templates)
     rack_groups = 0
     rack_groups_known = bool(templates)
     rack_declared_levels = 0
@@ -225,6 +229,7 @@ def measure_plan(model: dict) -> dict:
             space_area_known = False
             space_count_known = False
             dock_count_known = rack_groups_known = station_count_known = False
+            dock_zone_role_complete = False
             rack_levels_complete = rack_footprint_complete = False
             rack_overlap_complete = rack_lane_overlap_complete = False
             lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
@@ -234,6 +239,7 @@ def measure_plan(model: dict) -> dict:
                 warnings.append("ROOM_NOT_MEASURABLE")
                 space_area_known = False
                 space_count_known = False
+                dock_zone_role_complete = False
                 rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
                 lane_centerline_complete = lane_overlap_complete = False
@@ -258,17 +264,25 @@ def measure_plan(model: dict) -> dict:
             docks = room.get("docks") or []
             if not isinstance(docks, list):
                 dock_count_known = False
+                dock_zone_role_complete = False
             else:
                 for dock in docks:
                     if not isinstance(dock, dict):
                         dock_count_known = False
+                        dock_zone_role_complete = False
                         continue
                     count = _count(dock.get("count"))
                     edge = str(dock.get("edge") or "").upper()
                     if count is None:
                         dock_count_known = False
+                        dock_zone_role_complete = False
                         continue
                     dock_count += count
+                    if normalized_role:
+                        dock_by_zone_role[normalized_role] += count
+                    elif count:
+                        dock_zone_role_complete = False
+                        warnings.append("DOCK_ZONE_ROLE_NOT_CLASSIFIED")
                     if edge in {"N", "S", "E", "W"}:
                         dock_by_edge[edge] += count
                     elif count:
@@ -411,6 +425,9 @@ def measure_plan(model: dict) -> dict:
             "unclassified_zone_area_m2": metrics["unclassified_space_area_m2"],
             "dock_count": dock_count if dock_count_known else None,
             "dock_count_by_edge": dict(sorted(dock_by_edge.items())) if dock_count_known else None,
+            "dock_count_by_zone_role": (
+                dict(sorted(dock_by_zone_role.items()))
+                if dock_count_known and dock_zone_role_complete else None),
             "rack_group_count": rack_groups if rack_groups_known else None,
             "rack_declared_level_sum": rack_declared_levels if rack_levels_complete else None,
             "rack_declared_footprint_area_m2": (
@@ -442,6 +459,10 @@ def measure_plan(model: dict) -> dict:
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
+        if not dock_count_known or not dock_zone_role_complete:
+            unavailable["dock_count_by_zone_role"] = (
+                "Dock allocation by owning zone role needs valid explicit counts and a canonical "
+                "owning zone role for every non-zero dock count.")
         if zone_ratios is None:
             unavailable["zone_area_ratio_by_role"] = (
                 "Zone allocation ratios need complete positive measured canonical room-rectangle area.")
