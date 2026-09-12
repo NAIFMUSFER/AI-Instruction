@@ -30,3 +30,4 @@ jobs:
         run: python -S tests/remediation/test_plan_handoff_lock_binding.py
       - name: No generated diff
         run: git diff --exit-code
+# Final-head reruns are required before RC merge.
