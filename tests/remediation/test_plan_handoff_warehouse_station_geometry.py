@@ -143,18 +143,20 @@ class ApprovedWarehouseStationGeometryTests(unittest.TestCase):
                 self.station(model)["count"] = value
                 self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
 
-    def test_unknown_station_kind_and_implicit_direction_are_not_allowed(self):
+    def test_unknown_station_kind_is_not_allowed(self):
         model = warehouse_model()
         self.station(model)["kind"] = "future-unknown-kind"
         self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
+
+    def test_implicit_station_direction_is_not_allowed(self):
         model = warehouse_model()
         self.station(model)["dir"] = "north"
         self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
 
-    def test_invalid_station_collection_fails_before_compiler(self):
+    def test_malformed_station_collection_is_already_rejected_by_provenance_admission(self):
         model = warehouse_model()
         model["floors"]["ground"]["rooms"][0]["stations"] = {"station-a": self.station(model)}
-        self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
+        self.assertFailsBeforeCompiler(model, expected="INVALID_PROVENANCE")
 
 
 if __name__ == "__main__":
