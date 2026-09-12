@@ -4,6 +4,12 @@
 The first durable project state must never expose an empty project between project
 creation and revision #1 persistence. These tests use only local SQLite and
 synthetic canonical geometry; no provider, network, auth service or production data.
+
+Red proof: focused run #1 (34680354717) compiled successfully and all four new
+contracts failed because `SQLitePlanStore.create_project_with_revision` did not
+exist. One-time implementation run 34680396852 then added the transaction boundary
+and passed these contracts plus the complete pre-existing plan-store suite before
+committing the implementation.
 """
 from __future__ import annotations
 
