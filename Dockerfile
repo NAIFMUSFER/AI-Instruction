@@ -12,10 +12,13 @@ COPY acs_opening_identity.py ./
 # DXF remains optional: importing these modules needs no CAD/provider client.
 # acs_plan_store uses only stdlib SQLite; acs_plan_store_reload reconstructs
 # validated lock-bound workspaces after restart without enabling a public route.
+# acs_plan_store_port is the backend-neutral persistence contract shared by the
+# SQLite compatibility adapter and future durable backends; package it beside
+# the persisted command/reload companions so their import boundary is complete.
 # acs_plan_commands and acs_plan_persisted_commands are closed trusted-host
 # companions: neither registers FastAPI routes nor discovers authentication.
 # acs_plan_semantic_diff is deterministic canonical-model comparison only.
-COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py ./
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py ./
 # The command companion returns the same privacy-limited read-only review packet
 # used by the browser reviewer. Package that helper explicitly without adding a route.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py
