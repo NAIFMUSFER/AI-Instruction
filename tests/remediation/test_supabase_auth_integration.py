@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Red-first contract for ACS ↔ Supabase Auth integration.
+"""Regression contract for ACS ↔ Supabase Auth integration.
 
-No network call and no real user are used.  The fake User endpoint models
-Supabase ``/auth/v1/user``: it requires the browser-safe publishable ``apikey``
-header, receives the user's Bearer access token, and returns the stable user
-``id``.  Generic OIDC ``sub`` behavior must remain intact.
+No network call and no real user are used. The fake User endpoint models
+Supabase ``/auth/v1/user``: ACS derives that endpoint from the configured project
+base URL, requires the browser-safe publishable ``apikey`` header, forwards the
+user's Bearer access token, and returns the stable User ``id``. Generic OIDC
+``sub`` behavior must remain intact.
 """
 from __future__ import annotations
 
@@ -57,7 +58,7 @@ class SupabaseAuthIntegrationTests(unittest.TestCase):
             "ACS_ENV": "test",
             "ACS_AUTH_MODE": "oidc",
             "ACS_AUTH_PROVIDER": "supabase",
-            "ACS_AUTH_USERINFO_URL": "https://example.supabase.co/auth/v1/user",
+            "ACS_AUTH_SUPABASE_URL": "https://example.supabase.co",
             "ACS_AUTH_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_ci_only",
         }, clear=False)
         self.env.start()
@@ -73,6 +74,7 @@ class SupabaseAuthIntegrationTests(unittest.TestCase):
             subject = AUTH._verify_oidc_userinfo("user-access-token")
 
         self.assertEqual(subject, "11111111-2222-3333-4444-555555555555")
+        self.assertEqual(opener.request.full_url, "https://example.supabase.co/auth/v1/user")
         headers = {k.lower(): v for k, v in opener.request.header_items()}
         self.assertEqual(headers.get("apikey"), "sb_publishable_ci_only")
         self.assertEqual(headers.get("authorization"), "Bearer user-access-token")
@@ -81,11 +83,20 @@ class SupabaseAuthIntegrationTests(unittest.TestCase):
         with mock.patch.dict(os.environ, {"ACS_AUTH_SUPABASE_PUBLISHABLE_KEY": ""}, clear=False):
             self.assertIn("ACS_AUTH_SUPABASE_PUBLISHABLE_KEY", AUTH.readiness_missing())
 
+    def test_supabase_mode_is_not_ready_without_project_url(self):
+        with mock.patch.dict(os.environ, {"ACS_AUTH_SUPABASE_URL": ""}, clear=False):
+            self.assertIn("ACS_AUTH_SUPABASE_URL", AUTH.readiness_missing())
+
+    def test_supabase_rejects_project_url_with_path(self):
+        with mock.patch.dict(os.environ, {"ACS_AUTH_SUPABASE_URL": "https://example.supabase.co/not-allowed"}, clear=False):
+            self.assertIn("ACS_AUTH_SUPABASE_URL", AUTH.readiness_missing())
+
     def test_generic_oidc_still_uses_sub_without_supabase_header(self):
         opener = _Opener({"sub": "oidc-user"})
         with mock.patch.dict(os.environ, {
             "ACS_AUTH_PROVIDER": "oidc",
             "ACS_AUTH_USERINFO_URL": "https://identity.example.test/userinfo",
+            "ACS_AUTH_SUPABASE_URL": "",
             "ACS_AUTH_SUPABASE_PUBLISHABLE_KEY": "",
         }, clear=False), mock.patch.object(
             AUTH.urllib.request, "build_opener", return_value=opener
