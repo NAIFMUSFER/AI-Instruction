@@ -1,0 +1,35 @@
+name: Sync room presentation slice with latest RC
+on:
+  push:
+    paths:
+      - '.github/workflows/_sync-room-presentation-with-rc.yml'
+permissions:
+  contents: write
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit/approved-room-presentation-geometry-v2
+          fetch-depth: 0
+      - name: Merge latest RC preserving RC on conflicts
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin release/acs-design-pipeline-v2-rc1
+          git merge -X theirs --no-edit origin/release/acs-design-pipeline-v2-rc1
+      - name: Reapply proven room-presentation guard
+        run: python tools/_sync_room_guard_with_rc.py
+      - name: Verify both shared 3D guards
+        run: |
+          python -m py_compile tools/acs_plan_handoff.py
+          python -S tests/remediation/test_plan_handoff_room_presentation_geometry.py
+          python tests/remediation/test_plan_handoff_object_geometry.py
+      - name: Remove temporary sync tooling and push
+        run: |
+          rm tools/_sync_room_guard_with_rc.py .github/workflows/_sync-room-presentation-with-rc.yml
+          git add tools/acs_plan_handoff.py tools/_sync_room_guard_with_rc.py .github/workflows/_sync-room-presentation-with-rc.yml
+          git commit -m 'merge(rc): carry room presentation guard over generic object geometry'
+          git push origin HEAD:audit/approved-room-presentation-geometry-v2
