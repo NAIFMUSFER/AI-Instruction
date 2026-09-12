@@ -1,0 +1,82 @@
+name: Apply role-area constraints once
+on:
+  push:
+    branches:
+      - feature/plan-role-area-constraints-v2
+    paths:
+      - '.github/workflows/apply-role-area-constraints-once.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feature/plan-role-area-constraints-v2
+          fetch-depth: 1
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply exact bounded repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('acs_plan_review.py')
+          text = path.read_text()
+          old = '''        elif kind == "min_room_area_m2":
+              target = r.get("room")
+              room = rooms.get(tuple(target)) if isinstance(target, list) and len(target) == 2 and all(isinstance(x, str) for x in target) else None
+              rect = room.get("rect") if room else None
+              if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
+                  actual = rect[2] * rect[3]
+              valid_expected = _number(expected) and expected > 0 and room is not None
+              minimum = True
+          elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
+          '''
+          new = '''        elif kind == "min_room_area_m2":
+              target = r.get("room")
+              room = rooms.get(tuple(target)) if isinstance(target, list) and len(target) == 2 and all(isinstance(x, str) for x in target) else None
+              rect = room.get("rect") if room else None
+              if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
+                  actual = rect[2] * rect[3]
+              valid_expected = _number(expected) and expected > 0 and room is not None
+              minimum = True
+          elif kind in {"min_space_area_by_role_m2", "max_space_area_by_role_m2"}:
+              role = r.get("role")
+              if not _id(role):
+                  issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                  continue
+              measured = scorecard.get("metrics") if isinstance(scorecard, dict) else None
+              by_role = measured.get("space_area_by_role_m2") if isinstance(measured, dict) else None
+              complete_area = measured.get("space_rect_area_m2") if isinstance(measured, dict) else None
+              # An absent role is a measured zero only when the complete canonical
+              # room-rectangle denominator is measurable. Partial geometry stays unknown.
+              actual = (by_role.get(role.strip().lower(), 0.0)
+                        if isinstance(by_role, dict) and complete_area is not None else None)
+              valid_expected = _number(expected) and expected >= 0
+              minimum = kind == "min_space_area_by_role_m2"
+              maximum = kind == "max_space_area_by_role_m2"
+          elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
+          '''
+          if old not in text:
+              raise SystemExit('expected review boundary not found exactly; refusing broad rewrite')
+          path.write_text(text.replace(old, new, 1))
+          PY
+      - name: Verify dedicated regression
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          python -m py_compile acs_plan_review.py acs_plan_scorecard.py tests/remediation/test_plan_role_area_constraints.py
+          python -S tests/remediation/test_plan_role_area_constraints.py
+          git diff --check
+      - name: Commit bounded repair and remove one-time transformer
+        run: |
+          rm .github/workflows/apply-role-area-constraints-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add acs_plan_review.py .github/workflows/apply-role-area-constraints-once.yml
+          git commit -m "feat: add measured role-area Program constraints"
+          git push origin HEAD:feature/plan-role-area-constraints-v2
