@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Red-first authority contracts for approved Frozen-Baseline 3D artifacts."""
+"""Red-first authority contracts for approved Frozen-Baseline 3D artifacts.
+
+Final-head verification intentionally runs on top of the separately proven engineer
+lock-binding slice so authority semantics cannot regress lock provenance.
+"""
 from __future__ import annotations
 
 import copy
