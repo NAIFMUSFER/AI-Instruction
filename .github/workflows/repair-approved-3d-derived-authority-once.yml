@@ -1,0 +1,74 @@
+name: Repair approved 3D derived authority once
+
+on:
+  push:
+    branches:
+      - audit/approved-3d-derived-authority-v2
+    paths:
+      - .github/workflows/repair-approved-3d-derived-authority-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: audit/approved-3d-derived-authority-v2
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Synchronize proven lock-binding slice first
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin audit/approved-3d-lock-binding-v2
+          git merge --no-edit origin/audit/approved-3d-lock-binding-v2
+      - name: Apply minimal derived-authority receipt repair
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('tools/acs_plan_handoff.py')
+          s = p.read_text(encoding='utf-8')
+
+          old = '''            "source_map_hash": source_map_hash,\n            **lock_binding,\n'''
+          new = '''            "source_map_hash": source_map_hash,\n            "canonical_model_is_source_of_truth": True,\n            "three_d_is_source_of_truth": False,\n            "replanning_calls": 0,\n            **lock_binding,\n'''
+          if s.count(old) != 1:
+              raise SystemExit(f'marker anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+
+          old = '''            "source_map": source_map,\n            **lock_binding,\n'''
+          new = '''            "source_map": source_map,\n            "canonical_model_is_source_of_truth": True,\n            "three_d_is_source_of_truth": False,\n            "replanning_calls": 0,\n            **lock_binding,\n'''
+          if s.count(old) != 1:
+              raise SystemExit(f'receipt anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+
+          old = '''    if receipt.get("schema") != SCHEMA or receipt.get("mode") != "DETERMINISTIC_APPROVED_BASELINE_ONLY":\n        raise PlanError("INVALID_BASELINE_RECEIPT", "Unknown 3D baseline receipt")\n    actual_sha = _artifact_sha(out)\n'''
+          new = '''    if receipt.get("schema") != SCHEMA or receipt.get("mode") != "DETERMINISTIC_APPROVED_BASELINE_ONLY":\n        raise PlanError("INVALID_BASELINE_RECEIPT", "Unknown 3D baseline receipt")\n    if (receipt.get("canonical_model_is_source_of_truth") is not True\n            or receipt.get("three_d_is_source_of_truth") is not False\n            or receipt.get("replanning_calls") != 0):\n        raise PlanError("INVALID_BASELINE_RECEIPT", "3D receipt overstates derived-artifact authority")\n    actual_sha = _artifact_sha(out)\n'''
+          if s.count(old) != 1:
+              raise SystemExit(f'verifier anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+
+          old = '''        "provenance_schema", "requirements_hash", "provenance_hash", "source_map_hash",\n    ]\n'''
+          new = '''        "provenance_schema", "requirements_hash", "provenance_hash", "source_map_hash",\n        "canonical_model_is_source_of_truth", "three_d_is_source_of_truth", "replanning_calls",\n    ]\n'''
+          if s.count(old) != 1:
+              raise SystemExit(f'marker-keys anchor count={s.count(old)}')
+          s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+      - name: Verify focused contracts
+        run: |
+          python -m py_compile tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_derived_authority.py tests/remediation/test_plan_handoff_lock_binding.py
+          python tests/remediation/test_plan_handoff_derived_authority.py
+          python tests/remediation/test_plan_handoff_lock_binding.py
+      - name: Commit repair and self-removal
+        run: |
+          rm .github/workflows/repair-approved-3d-derived-authority-once.yml
+          git add tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_lock_binding.py .github/workflows/plan-approved-3d-lock-binding.yml .github/workflows/repair-approved-3d-derived-authority-once.yml
+          git add -A
+          git commit -m "fix(acs-v2): bind approved 3D derived authority after lock receipt"
+          git push origin HEAD:audit/approved-3d-derived-authority-v2
