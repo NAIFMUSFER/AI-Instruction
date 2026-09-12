@@ -1,0 +1,131 @@
+name: Apply approved warehouse lane geometry repair
+on:
+  push:
+    branches:
+      - audit/warehouse-approved-lane-geometry-v2
+    paths:
+      - '.github/workflows/apply-approved-lane-geometry-repair.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: audit/warehouse-approved-lane-geometry-v2
+          fetch-depth: 0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply the proven no-default lane boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('tools/acs_plan_handoff.py')
+          text = path.read_text(encoding='utf-8')
+          if 'def _require_explicit_warehouse_lane_geometry' in text:
+              raise SystemExit('lane geometry guard already exists; refusing duplicate transformation')
+
+          marker = '\ndef _require_explicit_warehouse_station_geometry(building: dict) -> None:\n'
+          if marker not in text:
+              raise SystemExit('station guard marker not found')
+
+          function = r'''
+
+def _require_explicit_warehouse_lane_geometry(building: dict) -> None:
+    """Prevent approved warehouse 3D from filling lane geometry with compiler defaults."""
+    meta = building.get("meta")
+    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":
+        return
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace structure validation owns the top-level model contract.
+    lane_kinds = {
+        "forklift", "pedestrian", "amr", "robot", "one_way",
+        "zone", "fire", "safety", "conveyor",
+    }
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict) or "lanes" not in room:
+                continue
+            lanes = room.get("lanes")
+            if not isinstance(lanes, list):
+                continue  # Existing provenance admission owns malformed collection shapes.
+            for index, lane in enumerate(lanes):
+                where = f"{template}/{room.get('id')}/lanes/{index}"
+                if not isinstance(lane, dict):
+                    continue  # Existing provenance admission owns malformed entries.
+                required = ("kind", "x", "z", "w", "d", "dir")
+                missing = [key for key in required if key not in lane]
+                if missing:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                        f"Approved lane geometry is missing {','.join(missing)} at {where}",
+                    )
+                if lane["kind"] not in lane_kinds:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Lane kind is invalid at {where}")
+                if lane["dir"] not in {"x", "z"}:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Lane direction is invalid at {where}")
+                for key in ("x", "z"):
+                    value = lane[key]
+                    if not _is_finite_number(value):
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Lane {key} must be an explicit finite number at {where}",
+                        )
+                for key in ("w", "d"):
+                    value = lane[key]
+                    if not _is_finite_number(value) or value <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Lane {key} must be an explicit positive finite number at {where}",
+                        )
+                if lane["kind"] == "conveyor":
+                    if "h" not in lane:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                            f"Approved conveyor lane geometry is missing h at {where}",
+                        )
+                    height = lane["h"]
+                    if not _is_finite_number(height) or height <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Conveyor lane h must be an explicit positive finite number at {where}",
+                        )
+'''
+          text = text.replace(marker, function + marker, 1)
+
+          calls = (
+              '    _require_explicit_warehouse_rack_geometry(building)\n'
+              '    _require_explicit_warehouse_station_geometry(building)\n'
+          )
+          replacement = (
+              '    _require_explicit_warehouse_rack_geometry(building)\n'
+              '    _require_explicit_warehouse_lane_geometry(building)\n'
+              '    _require_explicit_warehouse_station_geometry(building)\n'
+          )
+          if calls not in text:
+              raise SystemExit('approved geometry guard call marker not found')
+          text = text.replace(calls, replacement, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Verify focused regression before committing
+        run: |
+          python -m py_compile tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_warehouse_lane_geometry.py
+          python tests/remediation/test_plan_handoff_warehouse_lane_geometry.py
+      - name: Remove one-time transformation and commit repair
+        shell: bash
+        run: |
+          rm .github/workflows/apply-approved-lane-geometry-repair.yml
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/acs_plan_handoff.py .github/workflows/apply-approved-lane-geometry-repair.yml
+          git commit -m 'fix: fail closed on implicit approved warehouse lane geometry'
+          git push origin HEAD:audit/warehouse-approved-lane-geometry-v2
