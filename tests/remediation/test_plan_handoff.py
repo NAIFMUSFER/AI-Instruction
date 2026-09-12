@@ -255,6 +255,7 @@ class Approved3DHandoffTests(unittest.TestCase):
 
 
 from test_plan_handoff_warehouse_dock_geometry import ApprovedWarehouseDockGeometryTests
+from test_plan_handoff_warehouse_rack_geometry import ApprovedWarehouseRackGeometryTests
 
 
 if __name__ == "__main__":
