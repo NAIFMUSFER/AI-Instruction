@@ -676,6 +676,9 @@ def compile_approved_baseline(
             "requirements_hash": provenance["requirements_hash"],
             "provenance_hash": provenance["provenance_hash"],
             "source_map_hash": source_map_hash,
+            "canonical_model_is_source_of_truth": True,
+            "three_d_is_source_of_truth": False,
+            "replanning_calls": 0,
             **lock_binding,
         }
         _embed_baseline_marker(temp_artifact, marker)
@@ -692,6 +695,9 @@ def compile_approved_baseline(
             "provenance_hash": provenance["provenance_hash"],
             "source_map_hash": source_map_hash,
             "source_map": source_map,
+            "canonical_model_is_source_of_truth": True,
+            "three_d_is_source_of_truth": False,
+            "replanning_calls": 0,
             **lock_binding,
             "compiler": compiler_id,
             "compiler_node_count": result[0],
@@ -736,6 +742,10 @@ def verify_compiled_artifact(out_path: str | os.PathLike[str], receipt: dict | N
     receipt = json.loads(canonical(receipt))
     if receipt.get("schema") != SCHEMA or receipt.get("mode") != "DETERMINISTIC_APPROVED_BASELINE_ONLY":
         raise PlanError("INVALID_BASELINE_RECEIPT", "Unknown 3D baseline receipt")
+    if (receipt.get("canonical_model_is_source_of_truth") is not True
+            or receipt.get("three_d_is_source_of_truth") is not False
+            or receipt.get("replanning_calls") != 0):
+        raise PlanError("INVALID_BASELINE_RECEIPT", "3D receipt overstates derived-artifact authority")
     actual_sha = _artifact_sha(out)
     if receipt.get("artifact_sha256") != actual_sha or receipt.get("artifact_bytes") != out.stat().st_size:
         raise PlanError("ARTIFACT_CHANGED", "3D artifact bytes no longer match the approved receipt")
@@ -747,6 +757,7 @@ def verify_compiled_artifact(out_path: str | os.PathLike[str], receipt: dict | N
     marker_keys = [
         "schema", "revision_id", "model_hash", "content_hash", "approval_scope",
         "provenance_schema", "requirements_hash", "provenance_hash", "source_map_hash",
+        "canonical_model_is_source_of_truth", "three_d_is_source_of_truth", "replanning_calls",
     ]
     lock_keys = ("lock_binding_schema", "bound_content_hash",
                  "semantic_lock_manifest_hash", "semantic_lock_count")
