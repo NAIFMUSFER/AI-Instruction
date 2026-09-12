@@ -4,6 +4,7 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 SQL = (ROOT / 'supabase/migrations/20260912_acs_plan_store_v2.sql').read_text(encoding='utf-8').lower()
+HARDEN = (ROOT / 'supabase/migrations/20260912_acs_plan_store_v2_harden_functions.sql').read_text(encoding='utf-8').lower()
 
 required_tables = [
     'acs_projects','acs_project_members','acs_plan_revisions',
@@ -46,6 +47,23 @@ assert 'security definer' in SQL
 assert 'set search_path = public, pg_temp' in SQL
 assert 'revoke all on function public.acs_has_project_role(uuid,text[]) from public' in SQL
 assert 'revoke all on function public.acs_is_project_owner(uuid,uuid) from public' in SQL
+
+# SECURITY DEFINER helpers are moved out of the exposed public API schema.
+assert 'create schema if not exists acs_private' in HARDEN
+for sig in [
+    'acs_has_project_role(uuid,text[])',
+    'acs_is_project_owner(uuid,uuid)',
+    'acs_seed_owner_membership()',
+    'acs_guard_membership_mutation()'
+]:
+    assert f'alter function public.{sig} set schema acs_private' in HARDEN, sig
+assert 'revoke all on schema acs_private from public, anon' in HARDEN
+assert 'grant usage on schema acs_private to authenticated' in HARDEN
+assert 'revoke all on function acs_private.acs_seed_owner_membership() from public, anon, authenticated' in HARDEN
+assert 'revoke all on function acs_private.acs_guard_membership_mutation() from public, anon, authenticated' in HARDEN
+assert 'grant execute on function acs_private.acs_has_project_role(uuid,text[]) to authenticated' in HARDEN
+assert 'grant execute on function acs_private.acs_is_project_owner(uuid,uuid) to authenticated' in HARDEN
+assert 'service_role' not in HARDEN
 
 # Project creation must atomically seed the owner membership, otherwise the owner
 # would be unable to satisfy the membership-based SELECT policy for a new project.
