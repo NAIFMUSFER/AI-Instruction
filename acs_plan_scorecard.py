@@ -153,6 +153,9 @@ def measure_plan(model: dict) -> dict:
     - `space_area_by_role_m2` is the sum of explicit room rectangles grouped by
       their declared canonical role. It is descriptive area allocation, not a
       minimum-area, code-compliance, usability, daylight, or adjacency score.
+    - `zone_area_ratio_by_role` is each declared warehouse role area divided by
+      complete measured canonical room-rectangle area. Unclassified area remains
+      in the denominator. It is not utilization, efficiency or an AI quality score.
     - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
       clearance or safety-compliance result.
     - `lane_centerline_length_by_kind_m` measures only the longitudinal dimension
@@ -398,8 +401,13 @@ def measure_plan(model: dict) -> dict:
     }
 
     if typology == "warehouse":
+        zone_ratios = (
+            {k: round(v / space_area, 6) for k, v in sorted(zone_area.items())}
+            if space_area_known and space_area > EPS else None
+        )
         metrics.update({
             "zone_area_by_role_m2": metrics["space_area_by_role_m2"],
+            "zone_area_ratio_by_role": zone_ratios,
             "unclassified_zone_area_m2": metrics["unclassified_space_area_m2"],
             "dock_count": dock_count if dock_count_known else None,
             "dock_count_by_edge": dict(sorted(dock_by_edge.items())) if dock_count_known else None,
@@ -434,6 +442,9 @@ def measure_plan(model: dict) -> dict:
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
+        if zone_ratios is None:
+            unavailable["zone_area_ratio_by_role"] = (
+                "Zone allocation ratios need complete positive measured canonical room-rectangle area.")
         if not rack_overlap_complete:
             unavailable["rack_overlap_area_m2"] = (
                 "Rack overlap needs explicit room-relative x/z/w/d geometry for every rack group.")
