@@ -23,6 +23,6 @@ jobs:
         with:
           python-version: '3.11'
       - name: Compile persistence boundary
-        run: python -m py_compile acs_plan_store.py acs_plan_store_reload.py acs_plan_persisted_commands.py tests/remediation/test_plan_store_port.py
+        run: python -m py_compile acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_plan_persisted_commands.py tests/remediation/test_plan_store_port.py
       - name: Backend-neutral store contract
         run: python tests/remediation/test_plan_store_port.py
