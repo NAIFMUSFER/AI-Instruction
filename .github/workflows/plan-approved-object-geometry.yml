@@ -1,3 +1,4 @@
+# Audited generic-object Frozen Baseline gate.
 name: Plan-first approved generic object geometry
 on:
   pull_request:
