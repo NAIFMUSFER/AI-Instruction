@@ -102,6 +102,73 @@ def _is_finite_number(value: object) -> bool:
     return type(value) in (int, float) and math.isfinite(value)
 
 
+def _require_explicit_object_geometry(building: dict) -> None:
+    """Prevent approved 3D from inventing shared room.objects geometry."""
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace owns the top-level model contract.
+    panel_kinds = {
+        "tv", "rug", "curtain", "sign",
+        "شاشة", "تلفزيون", "سجادة", "ستارة", "لوحة",
+    }
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict) or "objects" not in room:
+                continue
+            objects = room.get("objects")
+            if not isinstance(objects, list):
+                continue  # Existing provenance admission owns malformed collection shapes.
+            for index, obj in enumerate(objects):
+                where = f"{template}/{room.get('id')}/objects/{index}"
+                if not isinstance(obj, dict):
+                    continue  # Existing provenance admission owns malformed entries.
+                required = ("kind", "x", "z", "y", "w", "d", "h", "count", "pitch", "dir")
+                missing = [key for key in required if key not in obj]
+                if missing:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                        f"Approved object geometry is missing {','.join(missing)} at {where}",
+                    )
+                kind = obj["kind"]
+                if not isinstance(kind, str) or not kind.strip():
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Object kind is invalid at {where}")
+                if obj["dir"] not in {"x", "z"}:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Object direction is invalid at {where}")
+                for key in ("x", "z", "y"):
+                    if not _is_finite_number(obj[key]):
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Object {key} must be an explicit finite number at {where}",
+                        )
+                for key in ("w", "d", "h", "pitch"):
+                    value = obj[key]
+                    if not _is_finite_number(value) or value <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Object {key} must be an explicit positive finite number at {where}",
+                        )
+                count = obj["count"]
+                if type(count) is not int or not 1 <= count <= 200:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved object count would be changed by the 3D compiler at {where}",
+                    )
+                if kind.strip().lower() in panel_kinds:
+                    if "height" not in obj:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                            f"Approved panel object vertical position is missing height at {where}",
+                        )
+                    height = obj["height"]
+                    if not _is_finite_number(height) or height < 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Panel object height must be an explicit non-negative finite number at {where}",
+                        )
+
+
 def _require_explicit_warehouse_rack_geometry(building: dict) -> None:
     """Prevent approved warehouse 3D from defaulting or clamping rack geometry."""
     meta = building.get("meta")
@@ -380,6 +447,7 @@ def compile_approved_baseline(
     handoff = workspace.handoff(revision_id)
     revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
+    _require_explicit_object_geometry(building)
     _require_explicit_warehouse_rack_geometry(building)
     _require_explicit_warehouse_lane_geometry(building)
     _require_explicit_warehouse_station_geometry(building)
