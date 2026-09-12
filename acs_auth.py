@@ -5,6 +5,11 @@ Production defaults to OIDC UserInfo verification. Development may run with auth
 turned off, but production may not. Test-token mode is accepted only when
 ``ACS_ENV=test``. Raw bearer tokens are never logged, returned, or stored; the
 short cache is keyed only by SHA-256(token) and stores the verified subject.
+
+``ACS_AUTH_PROVIDER=supabase`` is an explicit adapter for Supabase Auth session
+access tokens.  It calls the project's ``/auth/v1/user`` endpoint with the
+browser-safe publishable key and derives identity from the returned User ``id``.
+The publishable key is configuration, never an ACS server secret or user token.
 """
 from __future__ import annotations
 
@@ -66,6 +71,12 @@ def auth_mode():
     return raw
 
 
+def auth_provider():
+    """Return the verifier adapter without silently accepting unknown values."""
+    raw = _env("ACS_AUTH_PROVIDER", "oidc").lower()
+    return raw if raw in {"oidc", "supabase"} else "invalid"
+
+
 def _timeout_s():
     try:
         value = float(_env("ACS_AUTH_TIMEOUT_S", "5"))
@@ -82,8 +93,7 @@ def _cache_ttl_s():
     return min(300, max(0, value))
 
 
-def _userinfo_url():
-    raw = _env("ACS_AUTH_USERINFO_URL")
+def _https_url(raw, *, allow_path=True):
     if not raw:
         return None
     try:
@@ -92,17 +102,40 @@ def _userinfo_url():
         return None
     if parsed.scheme.lower() != "https" or not parsed.hostname:
         return None
-    if parsed.username or parsed.password or parsed.fragment:
+    if parsed.username or parsed.password or parsed.fragment or parsed.query:
         return None
-    return raw
+    if not allow_path and parsed.path not in ("", "/"):
+        return None
+    return raw.rstrip("/")
+
+
+def _userinfo_url():
+    provider = auth_provider()
+    if provider == "supabase":
+        base = _https_url(_env("ACS_AUTH_SUPABASE_URL"), allow_path=False)
+        return (base + "/auth/v1/user") if base else None
+    if provider == "oidc":
+        return _https_url(_env("ACS_AUTH_USERINFO_URL"))
+    return None
 
 
 def readiness_missing():
     mode = auth_mode()
     if mode == "invalid":
         return ["ACS_AUTH_MODE"]
-    if mode == "oidc" and not _userinfo_url():
-        return ["ACS_AUTH_USERINFO_URL"]
+    if mode == "oidc":
+        provider = auth_provider()
+        if provider == "invalid":
+            return ["ACS_AUTH_PROVIDER"]
+        if provider == "supabase":
+            missing = []
+            if not _https_url(_env("ACS_AUTH_SUPABASE_URL"), allow_path=False):
+                missing.append("ACS_AUTH_SUPABASE_URL")
+            if not _env("ACS_AUTH_SUPABASE_PUBLISHABLE_KEY"):
+                missing.append("ACS_AUTH_SUPABASE_PUBLISHABLE_KEY")
+            return missing
+        if not _userinfo_url():
+            return ["ACS_AUTH_USERINFO_URL"]
     if mode == "test" and not _env("ACS_AUTH_TEST_TOKEN"):
         return ["ACS_AUTH_TEST_TOKEN"]
     return []
@@ -110,12 +143,15 @@ def readiness_missing():
 
 def health_status():
     mode = auth_mode()
+    provider = auth_provider() if mode == "oidc" else None
     missing = readiness_missing()
     return {
         "mode": mode,
+        "provider": provider,
         "required": mode != "off",
         "configured": not missing,
-        "verifier": ("oidc_userinfo" if mode == "oidc" else
+        "verifier": ("supabase_user" if mode == "oidc" and provider == "supabase" else
+                     "oidc_userinfo" if mode == "oidc" and provider == "oidc" else
                      "test_only" if mode == "test" else
                      "disabled" if mode == "off" else "invalid"),
         "protected_routes": len(DIRECT_PROTECTED_PATHS),
@@ -206,16 +242,23 @@ def _verify_test_token(token):
 
 
 def _verify_oidc_userinfo(token):
+    provider = auth_provider()
     url = _userinfo_url()
-    if not url:
+    if provider == "invalid" or not url:
         raise AuthUnavailable()
-    req = urllib.request.Request(
-        url,
-        headers={"Authorization": "Bearer " + token,
-                 "Accept": "application/json",
-                 "User-Agent": "acs-auth/1.0"},
-        method="GET",
-    )
+    headers = {
+        "Authorization": "Bearer " + token,
+        "Accept": "application/json",
+        "User-Agent": "acs-auth/1.1",
+    }
+    subject_field = "sub"
+    if provider == "supabase":
+        publishable = _env("ACS_AUTH_SUPABASE_PUBLISHABLE_KEY")
+        if not publishable:
+            raise AuthUnavailable()
+        headers["apikey"] = publishable
+        subject_field = "id"
+    req = urllib.request.Request(url, headers=headers, method="GET")
     opener = urllib.request.build_opener(_NoRedirect())
     try:
         with opener.open(req, timeout=_timeout_s()) as response:
@@ -237,7 +280,7 @@ def _verify_oidc_userinfo(token):
         payload = json.loads(raw.decode("utf-8"))
     except Exception:
         raise AuthUnavailable() from None
-    subject = payload.get("sub") if isinstance(payload, dict) else None
+    subject = payload.get(subject_field) if isinstance(payload, dict) else None
     if not isinstance(subject, str) or not subject.strip() or len(subject) > 256:
         raise AuthRejected()
     return subject.strip()
@@ -266,7 +309,7 @@ async def authorize_asgi(scope, send):
     mode = auth_mode()
     if mode == "off":
         return True
-    if mode == "invalid":
+    if mode == "invalid" or readiness_missing():
         await _send_error(scope, send, 503, AUTH_UNAVAILABLE_CODE,
                           "خدمة التحقق من الهوية غير جاهزة حالياً.")
         return False
