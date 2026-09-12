@@ -3,7 +3,10 @@ from pathlib import Path
 import re
 
 ROOT = Path(__file__).resolve().parents[2]
-SQL = (ROOT / "supabase/migrations/20260913_acs_plan_store_rpc_v2.sql").read_text(encoding="utf-8").lower()
+SQL = "\n".join([
+    (ROOT / "supabase/migrations/20260913_acs_plan_store_rpc_v2.sql").read_text(encoding="utf-8"),
+    (ROOT / "supabase/migrations/20260913_acs_plan_store_rpc_v2_lockdown.sql").read_text(encoding="utf-8"),
+]).lower()
 
 # Durable project pointers are relational receipts, not client-controlled fields.
 for column in ["head_revision_id text", "baseline_revision_id text", "updated_at timestamptz"]:
