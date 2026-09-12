@@ -51,6 +51,16 @@ class WarehouseDockByZoneTests(unittest.TestCase):
         self.assertIn("DOCK_ZONE_ROLE_NOT_CLASSIFIED", result["warnings"])
         self.assertIn("owning zone role", result["unavailable"]["dock_count_by_zone_role"])
 
+    def test_malformed_falsey_dock_collection_fails_all_dock_measurements_closed(self):
+        model = warehouse()
+        model["floors"]["ground"]["rooms"][0]["docks"] = {}
+        result = S.measure_plan(model)
+        metrics = result["metrics"]
+        self.assertIsNone(metrics["dock_count"])
+        self.assertIsNone(metrics["dock_count_by_edge"])
+        self.assertIsNone(metrics["dock_count_by_zone_role"])
+        self.assertIn("dock_count_by_zone_role", result["unavailable"])
+
     def test_design_options_compare_measured_dock_allocation(self):
         a = warehouse()
         b = with_shipping_docks(warehouse())
