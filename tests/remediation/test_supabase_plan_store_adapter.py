@@ -43,7 +43,14 @@ req = calls[-1]
 assert req["url"].endswith("/rest/v1/rpc/acs_plan_project_state")
 assert req["headers"]["Authorization"] == "Bearer user-access-token"
 assert req["headers"]["apikey"] == "sb_publishable_test"
-assert "service_role" not in json.dumps(req).lower()
+# The transport body is bytes by contract, so inspect only the serializable
+# wire fields rather than attempting to JSON-encode the raw request object.
+wire = json.dumps({
+    "url": req["url"],
+    "headers": req["headers"],
+    "body": req["body"].decode("utf-8"),
+}, separators=(",", ":"))
+assert "service_role" not in wire.lower()
 
 # Build a real self-consistent canonical revision receipt, not a fixture that
 # bypasses receipt validation.
