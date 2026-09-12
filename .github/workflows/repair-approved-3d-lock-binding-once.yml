@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: write
-  issues: write
 
 jobs:
   repair:
@@ -62,53 +61,13 @@ jobs:
           p.write_text(s, encoding='utf-8')
           PY
       - name: Verify focused regression
-        id: focused
-        continue-on-error: true
         env:
           ACS_ENV: test
           ANTHROPIC_API_KEY: dummy
         run: |
-          set +e
-          python -m py_compile tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_lock_binding.py > /tmp/focused.log 2>&1
-          status=$?
-          if [ "$status" -eq 0 ]; then
-            python -S tests/remediation/test_plan_handoff_lock_binding.py >> /tmp/focused.log 2>&1
-            status=$?
-          fi
-          cat /tmp/focused.log
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          exit "$status"
-      - name: Report focused failure
-        if: steps.focused.outcome == 'failure'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          { echo 'Focused approved-3D lock-binding repair failed:'; echo '```'; tail -c 12000 /tmp/focused.log; echo '```'; } > /tmp/comment.md
-          gh pr comment 73 --repo NAIFMUSFER/AI-Instruction --body-file /tmp/comment.md
-          exit 1
-      - name: Verify legacy handoff regressions
-        id: legacy
-        continue-on-error: true
-        env:
-          ACS_ENV: test
-          ANTHROPIC_API_KEY: dummy
-        run: |
-          set +e
-          python -S tests/remediation/test_plan_handoff.py > /tmp/legacy.log 2>&1
-          status=$?
-          cat /tmp/legacy.log
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          exit "$status"
-      - name: Report legacy failure
-        if: steps.legacy.outcome == 'failure'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          { echo 'Legacy approved-3D regression failed after lock-binding repair:'; echo '```'; tail -c 12000 /tmp/legacy.log; echo '```'; } > /tmp/comment.md
-          gh pr comment 73 --repo NAIFMUSFER/AI-Instruction --body-file /tmp/comment.md
-          exit 1
+          python -m py_compile tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_lock_binding.py
+          python -S tests/remediation/test_plan_handoff_lock_binding.py
       - name: Commit repair and self-removal
-        if: steps.focused.outcome == 'success' && steps.legacy.outcome == 'success'
         run: |
           rm .github/workflows/repair-approved-3d-lock-binding-once.yml
           git config user.name 'NAIFMUSFER'
