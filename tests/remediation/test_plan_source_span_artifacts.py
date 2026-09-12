@@ -66,6 +66,7 @@ def warehouse():
              "rect": [5.0, 0.0, 25.0, 30.0],
              "racks": [{"id": "rack_a", "kind": "pallet", "x": 1.0, "z": 1.0,
                          "w": 20.0, "d": 28.0, "dir": "z", "rows": 2,
+                         "depth": 1.10, "bay": 2.70, "aisle": 3.40,
                          "levels": 4, "h": 8.0,
                          "requirement_ids": ["rack-anchor"]}]},
         ]}},

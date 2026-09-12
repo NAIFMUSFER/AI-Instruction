@@ -47,7 +47,8 @@ def warehouse_model():
              "doors": [], "windows": [],
              "racks": [{"id": "rack_a", "kind": "pallet", "x": 1.0, "z": 1.0,
                         "w": 8.0, "d": 18.0, "dir": "z", "rows": 2,
-                        "aisle": 3.4, "levels": 4, "h": 8.0}],
+                        "depth": 1.10, "bay": 2.70, "aisle": 3.4,
+                        "levels": 4, "h": 8.0}],
              "docks": [{"id": "dock_n1", "edge": "N", "offset": 4.0,
                         "width": 3.6, "height": 4.2, "count": 1, "pitch": 5.4}],
              "lanes": [{"id": "aisle_main", "kind": "forklift", "x": 8.5,
@@ -255,6 +256,7 @@ class Approved3DHandoffTests(unittest.TestCase):
 
 
 from test_plan_handoff_warehouse_dock_geometry import ApprovedWarehouseDockGeometryTests
+from test_plan_handoff_warehouse_rack_geometry import ApprovedWarehouseRackGeometryTests
 
 
 if __name__ == "__main__":
