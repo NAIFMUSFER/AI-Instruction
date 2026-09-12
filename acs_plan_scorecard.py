@@ -261,7 +261,8 @@ def measure_plan(model: dict) -> dict:
                 else:
                     unclassified_zone_area += area
 
-            docks = room.get("docks") or []
+            raw_docks = room.get("docks")
+            docks = [] if raw_docks is None else raw_docks
             if not isinstance(docks, list):
                 dock_count_known = False
                 dock_zone_role_complete = False
