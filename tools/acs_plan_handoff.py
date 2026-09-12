@@ -181,6 +181,69 @@ def _require_explicit_warehouse_rack_geometry(building: dict) -> None:
                     )
 
 
+def _require_explicit_warehouse_lane_geometry(building: dict) -> None:
+    """Prevent approved warehouse 3D from filling lane geometry with compiler defaults."""
+    meta = building.get("meta")
+    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":
+        return
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace structure validation owns the top-level model contract.
+    lane_kinds = {
+        "forklift", "pedestrian", "amr", "robot", "one_way",
+        "zone", "fire", "safety", "conveyor",
+    }
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict) or "lanes" not in room:
+                continue
+            lanes = room.get("lanes")
+            if not isinstance(lanes, list):
+                continue  # Existing provenance admission owns malformed collection shapes.
+            for index, lane in enumerate(lanes):
+                where = f"{template}/{room.get('id')}/lanes/{index}"
+                if not isinstance(lane, dict):
+                    continue  # Existing provenance admission owns malformed entries.
+                required = ("kind", "x", "z", "w", "d", "dir")
+                missing = [key for key in required if key not in lane]
+                if missing:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                        f"Approved lane geometry is missing {','.join(missing)} at {where}",
+                    )
+                if lane["kind"] not in lane_kinds:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Lane kind is invalid at {where}")
+                if lane["dir"] not in {"x", "z"}:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Lane direction is invalid at {where}")
+                for key in ("x", "z"):
+                    value = lane[key]
+                    if not _is_finite_number(value):
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Lane {key} must be an explicit finite number at {where}",
+                        )
+                for key in ("w", "d"):
+                    value = lane[key]
+                    if not _is_finite_number(value) or value <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Lane {key} must be an explicit positive finite number at {where}",
+                        )
+                if lane["kind"] == "conveyor":
+                    if "h" not in lane:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                            f"Approved conveyor lane geometry is missing h at {where}",
+                        )
+                    height = lane["h"]
+                    if not _is_finite_number(height) or height <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Conveyor lane h must be an explicit positive finite number at {where}",
+                        )
+
 def _require_explicit_warehouse_station_geometry(building: dict) -> None:
     """Prevent approved warehouse 3D from filling station geometry with compiler defaults."""
     meta = building.get("meta")
@@ -318,6 +381,7 @@ def compile_approved_baseline(
     revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
     _require_explicit_warehouse_rack_geometry(building)
+    _require_explicit_warehouse_lane_geometry(building)
     _require_explicit_warehouse_station_geometry(building)
     _require_explicit_warehouse_dock_geometry(building)
     baseline = json.loads(canonical(handoff.get("baseline")))
