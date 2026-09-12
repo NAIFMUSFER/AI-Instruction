@@ -32,6 +32,10 @@ ACS_RATE_LIMITED       = "ACS_RATE_LIMITED"
 ACS_TIMEOUT            = "ACS_TIMEOUT"
 ACS_NOT_CONFIGURED     = "ACS_NOT_CONFIGURED"
 ACS_INTERNAL           = "ACS_INTERNAL"
+ACS_AUTH_REQUIRED      = "ACS_AUTH_REQUIRED"
+ACS_AUTH_INVALID       = "ACS_AUTH_INVALID"
+ACS_AUTH_PERMANENT_IDENTITY_REQUIRED = "ACS_AUTH_PERMANENT_IDENTITY_REQUIRED"
+ACS_AUTH_UNAVAILABLE   = "ACS_AUTH_UNAVAILABLE"
 # F-33: عطلٌ في تكامل هذا الخادم مع مكتبة المزوّد — لا في المزوّد نفسه. مثاله
 # المقيس: إرسال وسيط لا تعرفه النسخة المثبّتة، فترفع بايثون TypeError عند ربط
 # الوسائط قبل أي بايت شبكة. كان يُصنَّف ACS_UPSTREAM_UNKNOWN، فيقرأ المستخدم
@@ -78,6 +82,8 @@ CODES = (
     ACS_BAD_REQUEST, ACS_VALIDATION_FAILED, ACS_PAYLOAD_TOO_LARGE,
     ACS_UNPROCESSABLE, ACS_NOT_FOUND, ACS_METHOD_NOT_ALLOWED,
     ACS_RATE_LIMITED, ACS_TIMEOUT, ACS_NOT_CONFIGURED, ACS_INTERNAL,
+    ACS_AUTH_REQUIRED, ACS_AUTH_INVALID,
+    ACS_AUTH_PERMANENT_IDENTITY_REQUIRED, ACS_AUTH_UNAVAILABLE,
     ACS_INTEGRATION_ERROR,
     ACS_UPSTREAM_NOT_CONFIGURED, ACS_UPSTREAM_AUTH, ACS_UPSTREAM_PERMISSION,
     ACS_UPSTREAM_MODEL_REJECTED, ACS_UPSTREAM_BAD_REQUEST,
@@ -98,7 +104,7 @@ RETRYABLE = frozenset({
     ACS_UPSTREAM_RATE_LIMIT, ACS_UPSTREAM_OVERLOADED,
     ACS_UPSTREAM_UNAVAILABLE, ACS_UPSTREAM_TIMEOUT,
     ACS_UPSTREAM_CONNECTION, ACS_UPSTREAM_EMPTY_RESPONSE,
-    ACS_TIMEOUT,
+    ACS_TIMEOUT, ACS_AUTH_UNAVAILABLE,
 })
 
 # التحويل إلى مزوّد بديل مسموح لهذه وحدها — قائمة سماح، والافتراض المنع.
@@ -197,6 +203,10 @@ HTTP_STATUS = {
     ACS_TIMEOUT: 504,
     ACS_NOT_CONFIGURED: 503,
     ACS_INTERNAL: 500,
+    ACS_AUTH_REQUIRED: 401,
+    ACS_AUTH_INVALID: 401,
+    ACS_AUTH_PERMANENT_IDENTITY_REQUIRED: 403,
+    ACS_AUTH_UNAVAILABLE: 503,
     # 500 لا 502: العطل هنا، والمستخدم لا يملك ما يفعله سوى إبلاغ المشغّل.
     ACS_INTEGRATION_ERROR: 500,
     ACS_UPSTREAM_NOT_CONFIGURED: 503,
@@ -234,6 +244,10 @@ MESSAGE_AR = {
     ACS_TIMEOUT: "انتهت مهلة المعالجة على الخادم قبل اكتمال التوليد.",
     ACS_NOT_CONFIGURED: "الخادم غير مكتمل الضبط.",
     ACS_INTERNAL: "عطل داخلي غير متوقّع في الخادم.",
+    ACS_AUTH_REQUIRED: "يلزم تسجيل الدخول للوصول إلى هذا المورد.",
+    ACS_AUTH_INVALID: "جلسة تسجيل الدخول غير صالحة أو منتهية.",
+    ACS_AUTH_PERMANENT_IDENTITY_REQUIRED: "يلزم حساب دائم لحفظ المشاريع ومزامنتها.",
+    ACS_AUTH_UNAVAILABLE: "تعذّر التحقق من جلسة المستخدم حالياً. أعِد المحاولة لاحقاً.",
     ACS_INTEGRATION_ERROR: ("عطل في تكامل الخادم مع مكتبة مزوّد النموذج — "
                             "ليس عطلاً في طلبك ولا لدى المزوّد. أُبلِغ المشغّل، "
                             "ولا يفيد تكرار المحاولة."),
