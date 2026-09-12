@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 from acs_plan_review import PlanError, PlanWorkspace
 from tools import acs_plan_handoff as H
 
-BRIEF = "مستودع برفوف محددة هندسياً قبل اعتماد المخطط"
+BRIEF = "مستودع بعرض 20 متر وبرفوف محددة هندسياً قبل اعتماد المخطط"
 
 
 def verified(_model):
