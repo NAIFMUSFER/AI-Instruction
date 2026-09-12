@@ -140,6 +140,9 @@ def measure_plan(model: dict) -> dict:
 
     Returned values are descriptive measurements only. In particular:
     - `space_rect_area_m2` is not GFA/NFA.
+    - `space_area_by_role_m2` is the sum of explicit room rectangles grouped by
+      their declared canonical role. It is descriptive area allocation, not a
+      minimum-area, code-compliance, usability, daylight, or adjacency score.
     - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
       clearance or safety-compliance result.
     - `lane_centerline_length_by_kind_m` measures only the longitudinal dimension
@@ -170,8 +173,11 @@ def measure_plan(model: dict) -> dict:
 
     space_area = 0.0
     space_area_known = bool(templates)
+    space_count_known = bool(templates)
     zone_area: defaultdict[str, float] = defaultdict(float)
     unclassified_zone_area = 0.0
+    space_count_by_role: defaultdict[str, int] = defaultdict(int)
+    unclassified_space_count = 0
 
     dock_count = 0
     dock_count_known = bool(templates)
@@ -197,6 +203,7 @@ def measure_plan(model: dict) -> dict:
         if not isinstance(rooms, list):
             warnings.append("ROOMS_NOT_MEASURABLE")
             space_area_known = False
+            space_count_known = False
             dock_count_known = rack_groups_known = station_count_known = False
             rack_levels_complete = rack_footprint_complete = False
             lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
@@ -205,18 +212,24 @@ def measure_plan(model: dict) -> dict:
             if not isinstance(room, dict):
                 warnings.append("ROOM_NOT_MEASURABLE")
                 space_area_known = False
+                space_count_known = False
                 rack_footprint_complete = False
                 lane_centerline_complete = lane_overlap_complete = False
                 continue
+            role = room.get("role")
+            normalized_role = role.strip().lower() if isinstance(role, str) and role.strip() else None
+            if normalized_role:
+                space_count_by_role[normalized_role] += 1
+            else:
+                unclassified_space_count += 1
             area = _rect_area(room.get("rect"))
             if area is None:
                 warnings.append("SPACE_AREA_NOT_MEASURABLE")
                 space_area_known = False
             else:
                 space_area += area
-                role = room.get("role")
-                if isinstance(role, str) and role.strip():
-                    zone_area[role.strip().lower()] += area
+                if normalized_role:
+                    zone_area[normalized_role] += area
                 else:
                     unclassified_zone_area += area
 
@@ -318,6 +331,14 @@ def measure_plan(model: dict) -> dict:
         "site_area_m2": round(site_area, 6) if site_area is not None else None,
         "level_count": len(templates) if templates else None,
         "space_rect_area_m2": round(space_area, 6) if space_area_known else None,
+        "space_area_by_role_m2": (
+            {k: round(v, 6) for k, v in sorted(zone_area.items())}
+            if space_area_known else None),
+        "unclassified_space_area_m2": (
+            round(unclassified_zone_area, 6) if space_area_known else None),
+        "space_count_by_role": (
+            dict(sorted(space_count_by_role.items())) if space_count_known else None),
+        "unclassified_space_count": unclassified_space_count if space_count_known else None,
         "gross_floor_area_m2": None,
         "net_floor_area_m2": None,
         "efficiency": None,
@@ -331,8 +352,8 @@ def measure_plan(model: dict) -> dict:
 
     if typology == "warehouse":
         metrics.update({
-            "zone_area_by_role_m2": {k: round(v, 6) for k, v in sorted(zone_area.items())},
-            "unclassified_zone_area_m2": round(unclassified_zone_area, 6),
+            "zone_area_by_role_m2": metrics["space_area_by_role_m2"],
+            "unclassified_zone_area_m2": metrics["unclassified_space_area_m2"],
             "dock_count": dock_count if dock_count_known else None,
             "dock_count_by_edge": dict(sorted(dock_by_edge.items())) if dock_count_known else None,
             "rack_group_count": rack_groups if rack_groups_known else None,

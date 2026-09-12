@@ -31,6 +31,8 @@ _SCALAR_METRICS = (
     "station_count",
 )
 _MAP_METRICS = (
+    "space_area_by_role_m2",
+    "space_count_by_role",
     "zone_area_by_role_m2",
     "dock_count_by_edge",
     "lane_area_by_kind_m2",
