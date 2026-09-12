@@ -7,7 +7,7 @@ on:
       - 'tests/remediation/test_plan_warehouse_lane_length_constraints.py'
       - '.github/workflows/plan-warehouse-lane-length-constraints.yml'
 permissions:
-  contents: write
+  contents: read
 concurrency:
   group: plan-warehouse-lane-length-constraints-${{ github.ref }}
   cancel-in-progress: true
@@ -18,82 +18,16 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: feature/warehouse-lane-length-constraints-v2
-          persist-credentials: true
+          persist-credentials: false
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
-      - name: Apply exact bounded Program repair when absent
-        run: |
-          python - <<'PYTHON'
-          from pathlib import Path
-          path = Path('acs_plan_review.py')
-          text = path.read_text()
-          if 'min_lane_centerline_length_m' in text:
-              print('lane-length Program repair already present')
-              raise SystemExit(0)
-          old_set = '''        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
-                      "dock_count", "min_dock_count", "min_rack_group_count",
-                      "min_station_count", "min_lane_area_m2", "max_lane_overlap_area_m2",
-                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
-'''
-          new_set = '''        elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
-                      "dock_count", "min_dock_count", "min_rack_group_count",
-                      "min_station_count", "min_lane_area_m2", "min_lane_centerline_length_m",
-                      "max_lane_centerline_length_m", "max_lane_overlap_area_m2",
-                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
-'''
-          old_branch = '''            elif kind == "max_rack_overlap_area_m2":
-                actual = warehouse_metrics.get("rack_overlap_area_m2")
-                valid_expected = _number(expected) and expected >= 0
-                maximum = True
-            else:
-                lane_kind = r.get("kind")
-'''
-          new_branch = '''            elif kind == "max_rack_overlap_area_m2":
-                actual = warehouse_metrics.get("rack_overlap_area_m2")
-                valid_expected = _number(expected) and expected >= 0
-                maximum = True
-            elif kind in {"min_lane_centerline_length_m", "max_lane_centerline_length_m"}:
-                lane_kind = r.get("kind")
-                if not _id(lane_kind):
-                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
-                    continue
-                by_kind = warehouse_metrics.get("lane_centerline_length_by_kind_m")
-                # An absent lane kind is a measured zero only when every declared
-                # lane has complete explicit orientation/geometry. Partial totals
-                # remain unknown rather than being treated as zero.
-                actual = by_kind.get(lane_kind.strip().lower(), 0.0) if isinstance(by_kind, dict) else None
-                valid_expected = _number(expected) and expected >= 0
-                minimum = kind == "min_lane_centerline_length_m"
-                maximum = kind == "max_lane_centerline_length_m"
-            else:
-                lane_kind = r.get("kind")
-'''
-          if text.count(old_set) != 1:
-              raise SystemExit(f'expected exactly one metric-set anchor, found {text.count(old_set)}')
-          if text.count(old_branch) != 1:
-              raise SystemExit(f'expected exactly one branch anchor, found {text.count(old_branch)}')
-          path.write_text(text.replace(old_set, new_set).replace(old_branch, new_branch))
-          PYTHON
-      - name: Compile and verify lane-length Program contracts
+      - name: Compile warehouse lane-length Program contracts
+        run: python -m py_compile acs_plan_review.py acs_plan_scorecard.py tests/remediation/test_plan_warehouse_lane_length_constraints.py
+      - name: Explicit warehouse lane-length constraint regressions
         env:
           ACS_ENV: test
           ANTHROPIC_API_KEY: dummy
-        run: |
-          python -m py_compile acs_plan_review.py acs_plan_scorecard.py tests/remediation/test_plan_warehouse_lane_length_constraints.py
-          python -S tests/remediation/test_plan_warehouse_lane_length_constraints.py
-          git diff --check
-      - name: Commit bounded repair when changed
-        run: |
-          if git diff --quiet -- acs_plan_review.py; then
-            echo "No product diff to commit"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add acs_plan_review.py
-          git commit -m "feat: constrain measured warehouse lane centerlines [lane-length-applied]"
-          git push origin HEAD:feature/warehouse-lane-length-constraints-v2
-      - name: No uncommitted product diff
+        run: python -S tests/remediation/test_plan_warehouse_lane_length_constraints.py
+      - name: No generated diff
         run: git diff --exit-code
