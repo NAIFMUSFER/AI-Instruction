@@ -1,0 +1,45 @@
+name: Authenticated PlanStore session boundary
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_session.py'
+      - 'acs_auth.py'
+      - 'acs_supabase_plan_store.py'
+      - 'Dockerfile'
+      - 'tests/remediation/test_plan_store_authenticated_session.py'
+      - '.github/workflows/plan-store-authenticated-session.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  plan-store-authenticated-session:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile the trust bridge and regression
+        run: |
+          python -m py_compile \
+            acs_plan_session.py \
+            acs_supabase_plan_store.py \
+            tests/remediation/test_plan_store_authenticated_session.py
+      - name: Verify request-scoped authenticated PlanStore binding
+        run: PYTHONPATH=. python tests/remediation/test_plan_store_authenticated_session.py
+      - name: Verify import isolation
+        run: |
+          python -S - <<'PY'
+          import sys
+          import acs_plan_session
+          assert 'acs_understand' not in sys.modules
+          assert 'acs_compiler' not in sys.modules
+          assert 'acs_bim' not in sys.modules
+          print('authenticated PlanStore session import isolation: PASS')
+          PY
+      - name: No generated diff
+        run: git diff --exit-code
