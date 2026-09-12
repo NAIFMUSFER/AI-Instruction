@@ -1,14 +1,11 @@
-"""Approved Frozen-Baseline-only SVG plan export for ACS Design Pipeline v2.
+"""Approved Frozen-Baseline-only SVG export for ACS Design Pipeline v2.
 
-The existing :func:`acs_plan_projection.to_svg` renderer is intentionally usable for
-review previews of any revision. This module adds the authority boundary required
-for release/export: only an engineer-approved ``PlanLockWorkspace`` revision may be
-published, and the artifact is hash-bound to the exact canonical revision, level,
-semantic-lock receipt, requirements and provenance map.
-
-SVG is a derived review artifact. The Canonical ACS Model remains Source of Truth;
-this path makes no provider calls, performs no replanning or geometry repair, and
-makes no construction, regulatory, structural or fire/life-safety claim.
+Preview SVGs may be rendered from any revision by ``acs_plan_projection.to_svg``.
+This module is the stricter release/export boundary: only an engineer-approved
+``PlanLockWorkspace`` revision can be published. The output and sidecar remain
+bound to the exact canonical revision, level, semantic-lock receipt and
+requirement/source provenance. SVG is derived; the Canonical ACS Model remains
+Source of Truth. No provider, replanning, regulation or safety claim is involved.
 """
 from __future__ import annotations
 
@@ -17,7 +14,6 @@ import json
 import os
 from pathlib import Path
 import tempfile
-from typing import Any
 import xml.etree.ElementTree as ET
 
 from acs_plan_lock_binding import PlanLockWorkspace
@@ -122,9 +118,7 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
     if not overwrite and (out.exists() or sidecar.exists()):
         raise PlanError("OUTPUT_EXISTS", "Refusing to overwrite an existing SVG artifact or receipt")
 
-    # Authority boundary first. PlanLockWorkspace.handoff() rejects drafts and
-    # supplies the server-held approval/semantic-lock binding receipt.
-    handoff = workspace.handoff(revision_id)
+    handoff = workspace.handoff(revision_id)  # rejects drafts before projection
     bound = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
     baseline = json.loads(canonical(handoff.get("baseline")))
@@ -138,8 +132,6 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
     provenance = provenance_map(bound.revision)
     _verify_space_map_matches_handoff(handoff.get("source_map"), provenance)
     source_map = json.loads(canonical(provenance["entries"]))
-    source_map_hash = digest(source_map)
-
     projected = project(bound.revision, level_index)
     if (projected.get("revision_id") != revision_id
             or projected.get("model_hash") != before_hash
@@ -148,25 +140,20 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
             or projected.get("scope") != SVG_SCOPE):
         raise PlanError("BASELINE_CHANGED", "SVG projection detached from Frozen Baseline")
 
-    svg_text = to_svg(bound.revision, level_index)
-    svg_bytes = svg_text.encode("utf-8")
+    svg_bytes = to_svg(bound.revision, level_index).encode("utf-8")
     metadata = _svg_metadata(svg_bytes)
     expected_metadata = {k: v for k, v in projected.items() if k != "primitives"}
     if canonical(metadata) != canonical(expected_metadata):
         raise PlanError("PROVENANCE_MISMATCH", "SVG embedded metadata detached from canonical projection")
     if canonical(building) != before_json or digest(building) != before_hash:
         raise PlanError("EXPORT_MUTATED_BASELINE", "SVG export changed the approved canonical plan")
-
     primitives = projected.get("primitives")
     if not isinstance(primitives, list):
         raise PlanError("INVALID_SVG_ARTIFACT", "SVG projection has no primitive list")
+
     receipt = {
-        "schema": SCHEMA,
-        "mode": MODE,
-        "svg_scope": SVG_SCOPE,
-        "revision_id": revision_id,
-        "model_hash": before_hash,
-        "level_index": level_index,
+        "schema": SCHEMA, "mode": MODE, "svg_scope": SVG_SCOPE,
+        "revision_id": revision_id, "model_hash": before_hash, "level_index": level_index,
         "content_hash": baseline.get("content_hash"),
         "approval_scope": baseline.get("approval_scope"),
         "lock_binding_schema": baseline.get("lock_binding_schema"),
@@ -176,22 +163,18 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
         "provenance_schema": provenance["schema"],
         "requirements_hash": provenance["requirements_hash"],
         "provenance_hash": provenance["provenance_hash"],
-        "source_map_hash": source_map_hash,
-        "source_map": source_map,
-        "projection_hash": digest(projected),
-        "projected_space_count": len(primitives),
+        "source_map_hash": digest(source_map), "source_map": source_map,
+        "projection_hash": digest(projected), "projected_space_count": len(primitives),
         "canonical_model_is_source_of_truth": True,
         "svg_is_source_of_truth": False,
-        "provider_calls": 0,
-        "replanning_calls": 0,
+        "provider_calls": 0, "replanning_calls": 0,
         "construction_approved": False,
         "regulatory_compliance": "NOT_VERIFIED",
         "structural_safety": "NOT_VERIFIED",
         "fire_life_safety_compliance": "NOT_VERIFIED",
     }
 
-    temp_svg = None
-    temp_receipt = None
+    temp_svg = temp_receipt = None
     try:
         temp_svg = _publish_bytes_atomic(out, svg_bytes, suffix=".svg")
         receipt["artifact_sha256"] = _artifact_sha(temp_svg)
@@ -200,10 +183,8 @@ def export_approved_svg(workspace: PlanLockWorkspace, revision_id: str, level_in
         temp_receipt = _publish_text_atomic(sidecar, canonical(receipt), suffix=".baseline.json")
         if not overwrite and (out.exists() or sidecar.exists()):
             raise PlanError("OUTPUT_EXISTS", "SVG output appeared before atomic publication")
-        os.replace(temp_svg, out)
-        temp_svg = None
-        os.replace(temp_receipt, sidecar)
-        temp_receipt = None
+        os.replace(temp_svg, out); temp_svg = None
+        os.replace(temp_receipt, sidecar); temp_receipt = None
         return json.loads(canonical(receipt))
     finally:
         for path in (temp_svg, temp_receipt):
@@ -218,8 +199,14 @@ def _valid_lock_receipt(receipt: dict) -> bool:
     count = receipt.get("semantic_lock_count")
     if type(count) is not int or count < 0:
         return False
-    required = ("lock_binding_schema", "bound_content_hash", "semantic_lock_manifest_hash")
-    return all(isinstance(receipt.get(key), str) and bool(receipt[key]) for key in required)
+    if not isinstance(receipt.get("lock_binding_schema"), str) or not receipt["lock_binding_schema"]:
+        return False
+    if not isinstance(receipt.get("bound_content_hash"), str) or not receipt["bound_content_hash"]:
+        return False
+    manifest_hash = receipt.get("semantic_lock_manifest_hash")
+    if count == 0:
+        return manifest_hash is None
+    return isinstance(manifest_hash, str) and bool(manifest_hash)
 
 
 def verify_svg_export(out_path: str | os.PathLike[str], receipt: dict | None = None) -> dict:
@@ -239,8 +226,7 @@ def verify_svg_export(out_path: str | os.PathLike[str], receipt: dict | None = N
         raise PlanError("INVALID_BASELINE_RECEIPT", "SVG receipt does not declare the exact Plan-first scope/level")
     if (receipt.get("canonical_model_is_source_of_truth") is not True
             or receipt.get("svg_is_source_of_truth") is not False
-            or receipt.get("provider_calls") != 0
-            or receipt.get("replanning_calls") != 0):
+            or receipt.get("provider_calls") != 0 or receipt.get("replanning_calls") != 0):
         raise PlanError("INVALID_BASELINE_RECEIPT", "SVG receipt violates derived-artifact authority semantics")
     if not _valid_lock_receipt(receipt):
         raise PlanError("INVALID_BASELINE_RECEIPT", "SVG receipt has incomplete semantic-lock binding")
@@ -253,37 +239,27 @@ def verify_svg_export(out_path: str | os.PathLike[str], receipt: dict | None = N
     actual_sha = _artifact_sha(out)
     if receipt.get("artifact_sha256") != actual_sha or receipt.get("artifact_bytes") != out.stat().st_size:
         raise PlanError("ARTIFACT_CHANGED", "SVG artifact bytes no longer match the approved receipt")
-    payload = out.read_bytes()
-    metadata = _svg_metadata(payload)
+    metadata = _svg_metadata(out.read_bytes())
     for key in ("revision_id", "model_hash", "level_index", "provenance_schema",
                 "requirements_hash", "provenance_hash", "source_map"):
-        expected = receipt.get("source_map") if key == "source_map" else receipt.get(key)
-        if canonical(metadata.get(key)) != canonical(expected):
+        if canonical(metadata.get(key)) != canonical(receipt.get(key)):
             raise PlanError("PROVENANCE_MISMATCH", f"SVG metadata field {key} is detached from its receipt")
-
     if digest(receipt.get("source_map")) != receipt.get("source_map_hash"):
         raise PlanError("PROVENANCE_MISMATCH", "SVG source map hash does not match the receipt")
     if receipt.get("provenance_schema") != PROVENANCE_SCHEMA:
         raise PlanError("PROVENANCE_MISMATCH", "Unknown plan provenance schema in SVG receipt")
     reconstructed = {
-        "schema": receipt["provenance_schema"],
-        "revision_id": receipt.get("revision_id"),
-        "model_hash": receipt.get("model_hash"),
-        "requirements_hash": receipt.get("requirements_hash"),
+        "schema": receipt["provenance_schema"], "revision_id": receipt.get("revision_id"),
+        "model_hash": receipt.get("model_hash"), "requirements_hash": receipt.get("requirements_hash"),
         "entries": receipt.get("source_map"),
     }
     if digest(reconstructed) != receipt.get("provenance_hash"):
         raise PlanError("PROVENANCE_MISMATCH", "SVG plan provenance hash does not match its source map")
     if type(receipt.get("projected_space_count")) is not int or receipt["projected_space_count"] < 0:
         raise PlanError("INVALID_BASELINE_RECEIPT", "SVG projected space count is invalid")
-
     return {
-        "ok": True,
-        "artifact_sha256": actual_sha,
-        "revision_id": receipt.get("revision_id"),
-        "model_hash": receipt.get("model_hash"),
-        "level_index": receipt.get("level_index"),
-        "requirements_hash": receipt.get("requirements_hash"),
-        "svg_scope": receipt.get("svg_scope"),
-        "projected_space_count": receipt.get("projected_space_count"),
+        "ok": True, "artifact_sha256": actual_sha,
+        "revision_id": receipt.get("revision_id"), "model_hash": receipt.get("model_hash"),
+        "level_index": receipt.get("level_index"), "requirements_hash": receipt.get("requirements_hash"),
+        "svg_scope": receipt.get("svg_scope"), "projected_space_count": receipt.get("projected_space_count"),
     }
