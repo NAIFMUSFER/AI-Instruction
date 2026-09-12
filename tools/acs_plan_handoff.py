@@ -102,6 +102,51 @@ def _is_finite_number(value: object) -> bool:
     return type(value) in (int, float) and math.isfinite(value)
 
 
+_APPROVED_NESTED_COLLECTIONS = (
+    "racks", "docks", "lanes", "stations", "doors", "windows",
+    "objects", "points", "furniture",
+)
+
+
+def _stable_nested_identity(value: object) -> bool:
+    return isinstance(value, str) and bool(value.strip()) and len(value) <= 160
+
+
+def _require_traceable_approved_nested_elements(building: dict) -> None:
+    """Require stable canonical identity for geometry that can reach approved 3D.
+
+    ``provenance_map`` derives nested-element ``source_id`` only from a stable
+    explicit canonical ``id``.  Final approved 3D therefore refuses anonymous
+    nested geometry instead of promoting renderer array position to engineering
+    identity.  Requirement links/source ids are never invented here.
+    """
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace owns the top-level model contract.
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict):
+                continue
+            room_id = room.get("id")
+            for collection in _APPROVED_NESTED_COLLECTIONS:
+                items = room.get(collection)
+                if items is None:
+                    continue
+                if not isinstance(items, list):
+                    continue  # Existing provenance admission owns malformed shapes.
+                for index, item in enumerate(items):
+                    if not isinstance(item, dict):
+                        continue  # Existing provenance admission owns malformed entries.
+                    if not _stable_nested_identity(item.get("id")):
+                        where = f"{template}/{room_id}/{collection}/{index}"
+                        raise PlanError(
+                            "DOWNSTREAM_PROVENANCE_NOT_SPECIFIED",
+                            f"Approved nested geometry requires a stable explicit id at {where}",
+                        )
+
+
 def _require_explicit_object_geometry(building: dict) -> None:
     """Prevent approved 3D from inventing shared room.objects geometry."""
     floors = building.get("floors")
@@ -564,6 +609,7 @@ def compile_approved_baseline(
     handoff = workspace.handoff(revision_id)
     revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
+    _require_traceable_approved_nested_elements(building)
     _require_explicit_object_geometry(building)
     _require_explicit_warehouse_rack_geometry(building)
     _require_explicit_warehouse_lane_geometry(building)
