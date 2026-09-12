@@ -1,0 +1,49 @@
+name: Apply station geometry repair once
+on:
+  push:
+    branches: [audit/warehouse-approved-station-geometry-v2]
+    paths:
+      - '.github/workflows/apply-station-geometry-once.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, '[station-geometry-applied]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply exact audited boundary repair
+        run: |
+          python - <<'PYTHON'
+          from pathlib import Path
+
+          path = Path('tools/acs_plan_handoff.py')
+          text = path.read_text(encoding='utf-8')
+          anchor = '''\n\ndef _require_explicit_warehouse_dock_geometry(building: dict) -> None:\n'''
+          if text.count(anchor) != 1:
+              raise SystemExit('dock validator anchor changed; refusing transformation')
+          station_validator = '''\n\ndef _require_explicit_warehouse_station_geometry(building: dict) -> None:\n    \"\"\"Prevent approved warehouse 3D from filling station geometry with compiler defaults.\"\"\"\n    meta = building.get(\"meta\")\n    if not isinstance(meta, dict) or str(meta.get(\"type\", \"\")).strip().lower() != \"warehouse\":\n        return\n    floors = building.get(\"floors\")\n    if not isinstance(floors, dict):\n        return  # PlanWorkspace structure validation owns the top-level model contract.\n    station_kinds = {\n        \"pack\", \"inspect\", \"label\", \"qa\", \"sort\",\n        \"void\", \"desk\", \"charger\", \"locker\", \"wrap\",\n    }\n    for template, floor in floors.items():\n        if not isinstance(floor, dict) or not isinstance(floor.get(\"rooms\"), list):\n            continue\n        for room in floor[\"rooms\"]:\n            if not isinstance(room, dict) or \"stations\" not in room:\n                continue\n            stations = room.get(\"stations\")\n            if not isinstance(stations, list):\n                raise PlanError(\n                    \"DOWNSTREAM_GEOMETRY_INVALID\",\n                    f\"Approved warehouse stations must be a list at {template}/{room.get('id')}\",\n                )\n            for index, station in enumerate(stations):\n                where = f\"{template}/{room.get('id')}/stations/{index}\"\n                if not isinstance(station, dict):\n                    raise PlanError(\"DOWNSTREAM_GEOMETRY_INVALID\", f\"Station geometry is invalid at {where}\")\n                required = (\"kind\", \"x\", \"z\", \"w\", \"d\", \"h\", \"pitch\", \"dir\", \"count\")\n                missing = [key for key in required if key not in station]\n                if missing:\n                    raise PlanError(\n                        \"DOWNSTREAM_GEOMETRY_NOT_SPECIFIED\",\n                        f\"Approved station geometry is missing {','.join(missing)} at {where}\",\n                    )\n                if station[\"kind\"] not in station_kinds:\n                    raise PlanError(\"DOWNSTREAM_GEOMETRY_INVALID\", f\"Station kind is invalid at {where}\")\n                if station[\"dir\"] not in {\"x\", \"z\"}:\n                    raise PlanError(\"DOWNSTREAM_GEOMETRY_INVALID\", f\"Station direction is invalid at {where}\")\n                for key in (\"x\", \"z\"):\n                    value = station[key]\n                    if not _is_finite_number(value):\n                        raise PlanError(\n                            \"DOWNSTREAM_GEOMETRY_INVALID\",\n                            f\"Station {key} must be an explicit finite number at {where}\",\n                        )\n                for key in (\"w\", \"d\", \"h\", \"pitch\"):\n                    value = station[key]\n                    if not _is_finite_number(value) or value <= 0:\n                        raise PlanError(\n                            \"DOWNSTREAM_GEOMETRY_INVALID\",\n                            f\"Station {key} must be an explicit positive finite number at {where}\",\n                        )\n                count = station[\"count\"]\n                if type(count) is not int or not 1 <= count <= 60:\n                    raise PlanError(\n                        \"DOWNSTREAM_GEOMETRY_INVALID\",\n                        f\"Approved station count would be changed by the 3D compiler at {where}\",\n                    )\n'''
+          text = text.replace(anchor, station_validator + anchor, 1)
+          calls = '''    _require_explicit_warehouse_rack_geometry(building)\n    _require_explicit_warehouse_dock_geometry(building)\n'''
+          replacement = '''    _require_explicit_warehouse_rack_geometry(building)\n    _require_explicit_warehouse_station_geometry(building)\n    _require_explicit_warehouse_dock_geometry(building)\n'''
+          if text.count(calls) != 1:
+              raise SystemExit('handoff validator call boundary changed; refusing transformation')
+          path.write_text(text.replace(calls, replacement, 1), encoding='utf-8')
+          PYTHON
+          python -m py_compile tools/acs_plan_handoff.py tests/remediation/test_plan_handoff_warehouse_station_geometry.py
+          python tests/remediation/test_plan_handoff_warehouse_station_geometry.py
+          git diff --check
+      - name: Commit verified repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/acs_plan_handoff.py
+          git diff --cached --quiet && exit 1
+          git commit -m 'Fix approved warehouse station geometry handoff [station-geometry-applied]'
+          git push origin HEAD:audit/warehouse-approved-station-geometry-v2
