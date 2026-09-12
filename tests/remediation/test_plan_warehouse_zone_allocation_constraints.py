@@ -15,7 +15,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_review as P
 from test_plan_scorecard import warehouse_model
 
-BRIEF = "Storage must be at least 60% and shipping at most 20% of measured warehouse space."
+BRIEF = (
+    "Warehouse allocation targets under review: storage 70%, storage 60%, "
+    "shipping 15%, shipping 20%, expansion 1%. invalid-target"
+)
 
 
 def verified(_model):
@@ -24,7 +27,10 @@ def verified(_model):
 
 
 def req(rid, metric, expected, role):
-    evidence = "60%" if metric == "min_zone_area_ratio" else "20%"
+    if type(expected) in (int, float) and 0.0 <= expected <= 1.0:
+        evidence = f"{expected * 100:g}%"
+    else:
+        evidence = "invalid-target"
     return {"id": rid, "source": "requested", "evidence": evidence,
             "metric": metric, "expected": expected, "role": role}
 
