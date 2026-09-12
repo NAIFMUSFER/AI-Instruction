@@ -48,6 +48,7 @@ class WarehouseDockByZoneTests(unittest.TestCase):
         metrics = result["metrics"]
         self.assertEqual(metrics["dock_count"], 2)
         self.assertIsNone(metrics["dock_count_by_zone_role"])
+        self.assertIn("DOCK_ZONE_ROLE_NOT_CLASSIFIED", result["warnings"])
         self.assertIn("owning zone role", result["unavailable"]["dock_count_by_zone_role"])
 
     def test_design_options_compare_measured_dock_allocation(self):
