@@ -1,0 +1,167 @@
+#!/usr/bin/env python3
+"""Approved-baseline warehouse lane geometry must never be invented downstream."""
+from __future__ import annotations
+
+import copy
+from pathlib import Path
+import sys
+import tempfile
+import unittest
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from acs_plan_review import PlanError, PlanWorkspace
+from tools import acs_plan_handoff as H
+
+BRIEF = "مستودع بعرض 20 متر ومسار ناقل محدد هندسياً قبل اعتماد المخطط"
+
+
+def verified(_model):
+    return {"scopes": {"topology": "PASS", "vertical_circulation": "PASS"}, "issues": []}
+
+
+def warehouse_model():
+    return {
+        "meta": {"type": "warehouse", "name": "explicit-lane-baseline"},
+        "site": {"w": 20.0, "d": 20.0},
+        "floor_height": 8.0,
+        "wall_h": 7.5,
+        "wall_t": 0.2,
+        "levels": [{"index": 0, "template": "ground"}],
+        "floors": {"ground": {"rooms": [{
+            "id": "operations",
+            "role": "circulation",
+            "walls": "none",
+            "rect": [0.0, 0.0, 20.0, 20.0],
+            "doors": [],
+            "windows": [],
+            "racks": [],
+            "lanes": [{
+                "id": "lane-a",
+                "kind": "conveyor",
+                "x": 2.0,
+                "z": 3.0,
+                "w": 8.0,
+                "d": 1.2,
+                "h": 0.9,
+                "dir": "x",
+            }],
+            "stations": [],
+            "docks": [],
+        }]}},
+    }
+
+
+def workspace(model):
+    ws = PlanWorkspace(verified)
+    rev = ws.propose(
+        model,
+        brief=BRIEF,
+        requirements=[{
+            "id": "site-width",
+            "metric": "site_width_m",
+            "expected": 20.0,
+            "source": "requested",
+            "evidence": "20 متر",
+        }],
+        expected_head=None,
+        note="approved explicit lane geometry",
+    )
+    ws.approve(
+        rev.id,
+        expected_head=rev.id,
+        actor_label="test-engineer",
+        confirmed=True,
+        acknowledge_concept_only=True,
+    )
+    return ws, rev
+
+
+def fake_compiler(calls):
+    def compile_(building, path):
+        calls.append(copy.deepcopy(building))
+        Path(path).write_text('{"asset":{"version":"2.0"}}', encoding="utf-8")
+        return 1, 12
+    return compile_
+
+
+class ApprovedWarehouseLaneGeometryTests(unittest.TestCase):
+    def assertCode(self, expected, fn):
+        with self.assertRaises(PlanError) as got:
+            fn()
+        self.assertEqual(got.exception.code, expected)
+
+    def compile(self, model):
+        ws, rev = workspace(model)
+        calls = []
+        with tempfile.TemporaryDirectory() as td:
+            receipt = H.compile_approved_baseline(
+                ws,
+                rev.id,
+                Path(td) / "warehouse.gltf",
+                compiler=fake_compiler(calls),
+            )
+        return receipt, calls
+
+    def assertFailsBeforeCompiler(self, model, expected="DOWNSTREAM_GEOMETRY_NOT_SPECIFIED"):
+        ws, rev = workspace(model)
+        calls = []
+        with tempfile.TemporaryDirectory() as td:
+            self.assertCode(
+                expected,
+                lambda: H.compile_approved_baseline(
+                    ws,
+                    rev.id,
+                    Path(td) / "warehouse.gltf",
+                    compiler=fake_compiler(calls),
+                ),
+            )
+        self.assertEqual(calls, [])
+
+    def lane(self, model):
+        return model["floors"]["ground"]["rooms"][0]["lanes"][0]
+
+    def test_complete_explicit_conveyor_lane_geometry_passes_unchanged(self):
+        model = warehouse_model()
+        receipt, calls = self.compile(model)
+        self.assertEqual(calls, [model])
+        self.assertEqual(receipt["provider_calls"], 0)
+        self.assertEqual(receipt["regulatory_compliance"], "NOT_VERIFIED")
+
+    def test_missing_lane_defaults_fail_before_compiler(self):
+        for key in ("kind", "x", "z", "w", "d", "dir"):
+            with self.subTest(key=key):
+                model = warehouse_model()
+                del self.lane(model)[key]
+                self.assertFailsBeforeCompiler(model)
+
+    def test_missing_conveyor_height_fails_before_compiler(self):
+        model = warehouse_model()
+        del self.lane(model)["h"]
+        self.assertFailsBeforeCompiler(model)
+
+    def test_unknown_lane_kind_is_not_allowed(self):
+        model = warehouse_model()
+        self.lane(model)["kind"] = "future-unknown-kind"
+        self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
+
+    def test_implicit_lane_direction_is_not_allowed(self):
+        model = warehouse_model()
+        self.lane(model)["dir"] = "north"
+        self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
+
+    def test_non_conveyor_lane_does_not_require_unused_height(self):
+        model = warehouse_model()
+        lane = self.lane(model)
+        lane["kind"] = "pedestrian"
+        del lane["h"]
+        _receipt, calls = self.compile(model)
+        self.assertEqual(calls, [model])
+
+    def test_malformed_lane_collection_is_already_rejected_by_provenance_admission(self):
+        model = warehouse_model()
+        model["floors"]["ground"]["rooms"][0]["lanes"] = {"lane-a": self.lane(model)}
+        self.assertFailsBeforeCompiler(model, expected="INVALID_PROVENANCE")
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
