@@ -1,0 +1,32 @@
+name: Production Supabase auth deployment readiness
+
+on:
+  pull_request:
+    paths:
+      - 'acs_auth.py'
+      - 'render.yaml'
+      - '.env.example'
+      - 'tests/remediation/test_supabase_auth_deployment_readiness.py'
+      - '.github/workflows/production-supabase-auth-deployment-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  auth-deployment-readiness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile deployment auth contract
+        run: python -m py_compile acs_auth.py tests/remediation/test_supabase_auth_deployment_readiness.py
+      - name: Production Supabase deployment readiness regression
+        run: python tests/remediation/test_supabase_auth_deployment_readiness.py
+      - name: No generated diff
+        run: git diff --exit-code
