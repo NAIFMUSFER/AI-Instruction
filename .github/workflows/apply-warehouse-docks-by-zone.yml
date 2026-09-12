@@ -1,0 +1,43 @@
+name: Apply bounded warehouse dock-zone repair
+on:
+  push:
+    branches:
+      - feature/warehouse-docks-by-zone-v2
+    paths:
+      - 'tools/apply_warehouse_docks_by_zone.py'
+      - '.github/workflows/apply-warehouse-docks-by-zone.yml'
+permissions:
+  contents: write
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feature/warehouse-docks-by-zone-v2
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Apply asserted source transformation
+        run: python tools/apply_warehouse_docks_by_zone.py
+      - name: Compile repaired contracts
+        run: python -m py_compile acs_plan_scorecard.py acs_plan_options.py tests/remediation/test_plan_warehouse_docks_by_zone.py
+      - name: Run focused regressions before commit
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: python -S tests/remediation/test_plan_warehouse_docks_by_zone.py
+      - name: Validate patch and remove one-time tooling
+        run: |
+          git diff --check
+          rm tools/apply_warehouse_docks_by_zone.py
+          rm .github/workflows/apply-warehouse-docks-by-zone.yml
+          git diff --check
+      - name: Commit verified repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: measure warehouse docks by operating zone [dock-zone-applied]'
+          git push origin HEAD:feature/warehouse-docks-by-zone-v2
