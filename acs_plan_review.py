@@ -336,6 +336,21 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 actual = rect[2] * rect[3]
             valid_expected = _number(expected) and expected > 0 and room is not None
             minimum = True
+        elif kind in {"min_space_area_by_role_m2", "max_space_area_by_role_m2"}:
+            role = r.get("role")
+            if not _id(role):
+                issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                continue
+            measured = scorecard.get("metrics") if isinstance(scorecard, dict) else None
+            by_role = measured.get("space_area_by_role_m2") if isinstance(measured, dict) else None
+            complete_area = measured.get("space_rect_area_m2") if isinstance(measured, dict) else None
+            # An absent role is a measured zero only when the complete canonical
+            # room-rectangle denominator is measurable. Partial geometry stays unknown.
+            actual = (by_role.get(role.strip().lower(), 0.0)
+                      if isinstance(by_role, dict) and complete_area is not None else None)
+            valid_expected = _number(expected) and expected >= 0
+            minimum = kind == "min_space_area_by_role_m2"
+            maximum = kind == "max_space_area_by_role_m2"
         elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
                       "dock_count", "min_dock_count", "min_rack_group_count",
                       "min_station_count", "min_lane_area_m2", "max_lane_overlap_area_m2",
