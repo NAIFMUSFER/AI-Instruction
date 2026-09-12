@@ -98,6 +98,88 @@ def _verify_space_map_matches_handoff(handoff_map: object, provenance: dict) -> 
                         "Requirement provenance does not match approved canonical space identities")
 
 
+def _is_finite_number(value: object) -> bool:
+    return type(value) in (int, float) and math.isfinite(value)
+
+
+def _require_explicit_warehouse_rack_geometry(building: dict) -> None:
+    """Prevent approved warehouse 3D from defaulting or clamping rack geometry."""
+    meta = building.get("meta")
+    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":
+        return
+    floors = building.get("floors")
+    if not isinstance(floors, dict):
+        return  # PlanWorkspace structure validation owns the top-level model contract.
+    for template, floor in floors.items():
+        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
+            continue
+        for room in floor["rooms"]:
+            if not isinstance(room, dict) or "racks" not in room:
+                continue
+            racks = room.get("racks")
+            if not isinstance(racks, list):
+                raise PlanError(
+                    "DOWNSTREAM_GEOMETRY_INVALID",
+                    f"Approved warehouse racks must be a list at {template}/{room.get('id')}",
+                )
+            rect = room.get("rect")
+            room_w = room_d = None
+            if isinstance(rect, list) and len(rect) == 4:
+                room_w, room_d = rect[2], rect[3]
+            for index, rack in enumerate(racks):
+                where = f"{template}/{room.get('id')}/racks/{index}"
+                if not isinstance(rack, dict):
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Rack geometry is invalid at {where}")
+                required = (
+                    "x", "z", "w", "d", "dir", "rows",
+                    "depth", "bay", "aisle", "levels", "h",
+                )
+                missing = [key for key in required if key not in rack]
+                if missing:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
+                        f"Approved rack geometry is missing {','.join(missing)} at {where}",
+                    )
+                if rack["dir"] not in {"x", "z"}:
+                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Rack direction is invalid at {where}")
+                for key in ("x", "z"):
+                    value = rack[key]
+                    if not _is_finite_number(value):
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Rack {key} must be an explicit finite number at {where}",
+                        )
+                for key in ("w", "d", "depth", "bay", "aisle", "h"):
+                    value = rack[key]
+                    if not _is_finite_number(value) or value <= 0:
+                        raise PlanError(
+                            "DOWNSTREAM_GEOMETRY_INVALID",
+                            f"Rack {key} must be an explicit positive finite number at {where}",
+                        )
+                rows = rack["rows"]
+                levels = rack["levels"]
+                if type(rows) is not int or not 1 <= rows <= 40:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved rack rows would be changed by the 3D compiler at {where}",
+                    )
+                if type(levels) is not int or not 1 <= levels <= 10:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved rack levels would be changed by the 3D compiler at {where}",
+                    )
+                if (not _is_finite_number(room_w) or not _is_finite_number(room_d)
+                        or room_w <= 0 or room_d <= 0):
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Rack owning-room extent is invalid at {where}",
+                    )
+                if rack["w"] > room_w or rack["d"] > room_d:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved rack extent would be clamped by the 3D compiler at {where}",
+                    )
+
 
 def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
     """Prevent approved warehouse 3D from filling dock geometry with compiler defaults."""
@@ -152,6 +234,7 @@ def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
                         f"Dock offset must be an explicit non-negative finite number at {where}",
                     )
 
+
 def compile_approved_baseline(
     workspace: PlanWorkspace,
     revision_id: str,
@@ -176,6 +259,7 @@ def compile_approved_baseline(
     handoff = workspace.handoff(revision_id)
     revision = workspace.get(revision_id)
     building = json.loads(canonical(handoff.get("building")))
+    _require_explicit_warehouse_rack_geometry(building)
     _require_explicit_warehouse_dock_geometry(building)
     baseline = json.loads(canonical(handoff.get("baseline")))
     provenance = provenance_map(revision)
