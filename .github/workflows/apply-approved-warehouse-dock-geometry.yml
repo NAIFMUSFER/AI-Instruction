@@ -24,63 +24,65 @@ jobs:
           assert '_require_explicit_warehouse_dock_geometry' not in text
           text = text.replace('import json\nimport os\n', 'import json\nimport math\nimport os\n', 1)
 
+          helper_lines = [
+              '',
+              '',
+              'def _require_explicit_warehouse_dock_geometry(building: dict) -> None:',
+              '    """Prevent approved warehouse 3D from filling dock geometry with compiler defaults."""',
+              '    meta = building.get("meta")',
+              '    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":',
+              '        return',
+              '    floors = building.get("floors")',
+              '    if not isinstance(floors, dict):',
+              '        return  # PlanWorkspace structure validation owns the top-level model contract.',
+              '    for template, floor in floors.items():',
+              '        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):',
+              '            continue',
+              '        for room in floor["rooms"]:',
+              '            if not isinstance(room, dict) or "docks" not in room:',
+              '                continue',
+              '            docks = room.get("docks")',
+              '            if not isinstance(docks, list):',
+              '                raise PlanError(',
+              '                    "DOWNSTREAM_GEOMETRY_INVALID",',
+              '                    f"Approved warehouse docks must be a list at {template}/{room.get(chr(39) + \'id\' + chr(39))}",',
+              '                )',
+              '            for index, dock in enumerate(docks):',
+              '                where = f"{template}/{room.get(chr(39) + \'id\' + chr(39))}/docks/{index}"',
+              '                if not isinstance(dock, dict):',
+              '                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock geometry is invalid at {where}")',
+              '                required = ("edge", "offset", "width", "height", "count", "pitch")',
+              '                missing = [key for key in required if key not in dock]',
+              '                if missing:',
+              '                    raise PlanError(',
+              '                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",',
+              '                        f"Approved dock geometry is missing {chr(44).join(missing)} at {where}",',
+              '                    )',
+              '                if dock["edge"] not in {"N", "S", "E", "W"}:',
+              '                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock edge is invalid at {where}")',
+              '                count = dock["count"]',
+              '                if type(count) is not int or not 1 <= count <= 24:',
+              '                    raise PlanError(',
+              '                        "DOWNSTREAM_GEOMETRY_INVALID",',
+              '                        f"Approved dock count would be changed by the 3D compiler at {where}",',
+              '                    )',
+              '                for key in ("width", "height", "pitch"):',
+              '                    value = dock[key]',
+              '                    if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:',
+              '                        raise PlanError(',
+              '                            "DOWNSTREAM_GEOMETRY_INVALID",',
+              '                            f"Dock {key} must be an explicit positive finite number at {where}",',
+              '                        )',
+              '                offset = dock["offset"]',
+              '                if type(offset) not in (int, float) or not math.isfinite(offset) or offset < 0:',
+              '                    raise PlanError(',
+              '                        "DOWNSTREAM_GEOMETRY_INVALID",',
+              '                        f"Dock offset must be an explicit non-negative finite number at {where}",',
+              '                    )',
+          ]
+          helper = '\n'.join(helper_lines) + '\n'
           anchor = '\ndef compile_approved_baseline(\n'
           assert text.count(anchor) == 1
-          helper = r'''
-
-def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
-    """Prevent approved warehouse 3D from filling dock geometry with compiler defaults."""
-    meta = building.get("meta")
-    if not isinstance(meta, dict) or str(meta.get("type", "")).strip().lower() != "warehouse":
-        return
-    floors = building.get("floors")
-    if not isinstance(floors, dict):
-        return  # PlanWorkspace structure validation owns the top-level model contract.
-    for template, floor in floors.items():
-        if not isinstance(floor, dict) or not isinstance(floor.get("rooms"), list):
-            continue
-        for room in floor["rooms"]:
-            if not isinstance(room, dict) or "docks" not in room:
-                continue
-            docks = room.get("docks")
-            if not isinstance(docks, list):
-                raise PlanError(
-                    "DOWNSTREAM_GEOMETRY_INVALID",
-                    f"Approved warehouse docks must be a list at {template}/{room.get('id')}",
-                )
-            for index, dock in enumerate(docks):
-                where = f"{template}/{room.get('id')}/docks/{index}"
-                if not isinstance(dock, dict):
-                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock geometry is invalid at {where}")
-                required = ("edge", "offset", "width", "height", "count", "pitch")
-                missing = [key for key in required if key not in dock]
-                if missing:
-                    raise PlanError(
-                        "DOWNSTREAM_GEOMETRY_NOT_SPECIFIED",
-                        f"Approved dock geometry is missing {','.join(missing)} at {where}",
-                    )
-                if dock["edge"] not in {"N", "S", "E", "W"}:
-                    raise PlanError("DOWNSTREAM_GEOMETRY_INVALID", f"Dock edge is invalid at {where}")
-                count = dock["count"]
-                if type(count) is not int or not 1 <= count <= 24:
-                    raise PlanError(
-                        "DOWNSTREAM_GEOMETRY_INVALID",
-                        f"Approved dock count would be changed by the 3D compiler at {where}",
-                    )
-                for key in ("width", "height", "pitch"):
-                    value = dock[key]
-                    if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
-                        raise PlanError(
-                            "DOWNSTREAM_GEOMETRY_INVALID",
-                            f"Dock {key} must be an explicit positive finite number at {where}",
-                        )
-                offset = dock["offset"]
-                if type(offset) not in (int, float) or not math.isfinite(offset) or offset < 0:
-                    raise PlanError(
-                        "DOWNSTREAM_GEOMETRY_INVALID",
-                        f"Dock offset must be an explicit non-negative finite number at {where}",
-                    )
-'''
           text = text.replace(anchor, helper + anchor, 1)
 
           needle = '    building = json.loads(canonical(handoff.get("building")))\n    baseline = json.loads(canonical(handoff.get("baseline")))\n'
@@ -88,7 +90,6 @@ def _require_explicit_warehouse_dock_geometry(building: dict) -> None:
           assert text.count(needle) == 1
           text = text.replace(needle, replacement, 1)
           path.write_text(text, encoding='utf-8')
-
           Path('.github/workflows/apply-approved-warehouse-dock-geometry.yml').unlink()
           PYTHON
       - name: Verify focused regression before commit
