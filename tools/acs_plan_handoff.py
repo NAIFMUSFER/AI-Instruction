@@ -22,6 +22,7 @@ import tempfile
 from typing import Callable
 
 from acs_plan_review import PlanError, PlanWorkspace, canonical, digest
+from acs_plan_lock_binding import PlanLockWorkspace, SCHEMA as LOCK_BINDING_SCHEMA
 from acs_plan_projection import PROVENANCE_SCHEMA, provenance_map
 
 SCHEMA = "acs.plan-3d-handoff/1.0"
@@ -600,8 +601,8 @@ def compile_approved_baseline(
     before compilation; mutation by the compiler fails closed. The final file is
     written atomically only after those checks pass.
     """
-    if not isinstance(workspace, PlanWorkspace):
-        raise PlanError("INVALID_WORKSPACE", "Approved 3D handoff requires a PlanWorkspace")
+    if not isinstance(workspace, (PlanWorkspace, PlanLockWorkspace)):
+        raise PlanError("INVALID_WORKSPACE", "Approved 3D handoff requires a PlanWorkspace-compatible approved workspace")
     out, sidecar = _output_paths(out_path)
     if not overwrite and (out.exists() or sidecar.exists()):
         raise PlanError("OUTPUT_EXISTS", "Refusing to overwrite an existing 3D artifact or receipt")
@@ -624,6 +625,20 @@ def compile_approved_baseline(
     before_hash = digest(building)
     if baseline.get("model_hash") != before_hash or revision.model_hash != before_hash:
         raise PlanError("BASELINE_CHANGED", "Approved handoff model hash does not match its receipt")
+
+    lock_binding = {}
+    if isinstance(workspace, PlanLockWorkspace):
+        if baseline.get("lock_binding_schema") != LOCK_BINDING_SCHEMA:
+            raise PlanError("LOCK_RECEIPT_CHANGED", "Approved 3D handoff has an unknown semantic-lock binding schema")
+        expected_lock = {
+            "lock_binding_schema": LOCK_BINDING_SCHEMA,
+            "bound_content_hash": revision.bound_content_hash,
+            "semantic_lock_manifest_hash": revision.semantic_lock_manifest_hash,
+            "semantic_lock_count": revision.semantic_lock_count,
+        }
+        if any(baseline.get(key) != value for key, value in expected_lock.items()):
+            raise PlanError("LOCK_RECEIPT_CHANGED", "Approved semantic-lock binding is detached from the Frozen Baseline")
+        lock_binding = expected_lock
     source_map_hash = digest(source_map)
 
     if compiler is None:
@@ -661,6 +676,7 @@ def compile_approved_baseline(
             "requirements_hash": provenance["requirements_hash"],
             "provenance_hash": provenance["provenance_hash"],
             "source_map_hash": source_map_hash,
+            **lock_binding,
         }
         _embed_baseline_marker(temp_artifact, marker)
         artifact_sha = _artifact_sha(temp_artifact)
@@ -676,6 +692,7 @@ def compile_approved_baseline(
             "provenance_hash": provenance["provenance_hash"],
             "source_map_hash": source_map_hash,
             "source_map": source_map,
+            **lock_binding,
             "compiler": compiler_id,
             "compiler_node_count": result[0],
             "compiler_buffer_bytes": result[1],
@@ -727,9 +744,26 @@ def verify_compiled_artifact(out_path: str | os.PathLike[str], receipt: dict | N
         marker = (gltf.get("extras") or {}).get("acs_plan_baseline") if isinstance(gltf, dict) else None
     except (OSError, UnicodeError, json.JSONDecodeError) as exc:
         raise PlanError("INVALID_3D_ARTIFACT", "3D artifact is not readable glTF JSON") from exc
-    expected = {k: receipt.get(k) for k in (
+    marker_keys = [
         "schema", "revision_id", "model_hash", "content_hash", "approval_scope",
-        "provenance_schema", "requirements_hash", "provenance_hash", "source_map_hash")}
+        "provenance_schema", "requirements_hash", "provenance_hash", "source_map_hash",
+    ]
+    lock_keys = ("lock_binding_schema", "bound_content_hash",
+                 "semantic_lock_manifest_hash", "semantic_lock_count")
+    present_lock_keys = [key for key in lock_keys if key in receipt]
+    if present_lock_keys:
+        if len(present_lock_keys) != len(lock_keys) or receipt.get("lock_binding_schema") != LOCK_BINDING_SCHEMA:
+            raise PlanError("INVALID_BASELINE_RECEIPT", "3D semantic-lock receipt is incomplete or unknown")
+        if type(receipt.get("semantic_lock_count")) is not int or receipt["semantic_lock_count"] < 0:
+            raise PlanError("INVALID_BASELINE_RECEIPT", "3D semantic-lock count is invalid")
+        bound_hash = receipt.get("bound_content_hash")
+        lock_hash = receipt.get("semantic_lock_manifest_hash")
+        if not isinstance(bound_hash, str) or len(bound_hash) != 64:
+            raise PlanError("INVALID_BASELINE_RECEIPT", "3D bound-content hash is invalid")
+        if lock_hash is not None and (not isinstance(lock_hash, str) or len(lock_hash) != 64):
+            raise PlanError("INVALID_BASELINE_RECEIPT", "3D semantic-lock manifest hash is invalid")
+        marker_keys.extend(lock_keys)
+    expected = {k: receipt.get(k) for k in marker_keys}
     if not isinstance(marker, dict) or canonical(marker) != canonical(expected):
         raise PlanError("PROVENANCE_MISMATCH", "Embedded 3D baseline provenance does not match the receipt")
     if digest(receipt.get("source_map")) != receipt.get("source_map_hash"):
