@@ -294,6 +294,9 @@ def measure_plan(model: dict) -> dict:
       It is a geometric conflict indicator only, not a safety/compliance result.
     - `rack_declared_footprint_area_m2` sums explicit rack-group rectangles; it is
       not storage capacity, pallet positions, or proof of usable clearances.
+    - `rack_declared_height_max_m` is the maximum explicit positive rack `h` when
+      every declared rack group has one. It is not clear height, ceiling/obstruction
+      clearance, sprinkler clearance, load rating, or a regulatory-compliance result.
     - `rack_geometric_bay_count` and `rack_geometric_bay_level_positions` count
       only explicit run/bay/row/level geometry; they are not usable/load-rated
       storage capacity or proof of clearances/load units.
@@ -344,6 +347,9 @@ def measure_plan(model: dict) -> dict:
     rack_groups_known = bool(templates)
     rack_declared_levels = 0
     rack_levels_complete = bool(templates)
+    rack_declared_height_max = 0.0
+    rack_height_complete = bool(templates)
+    rack_height_seen = False
     rack_geometric_bays = 0
     rack_geometric_bay_levels = 0
     rack_geometric_complete = bool(templates)
@@ -383,7 +389,8 @@ def measure_plan(model: dict) -> dict:
             space_count_known = False
             dock_count_known = rack_groups_known = station_count_known = False
             dock_zone_role_complete = False
-            rack_levels_complete = rack_geometric_complete = rack_footprint_complete = False
+            rack_levels_complete = rack_height_complete = False
+            rack_geometric_complete = rack_footprint_complete = False
             rack_overlap_complete = rack_lane_overlap_complete = False
             lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
             expansion_reserve_presence_known = False
@@ -443,6 +450,7 @@ def measure_plan(model: dict) -> dict:
                 space_area_known = False
                 space_count_known = False
                 dock_zone_role_complete = False
+                rack_height_complete = False
                 rack_geometric_complete = rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
                 lane_centerline_complete = lane_overlap_complete = False
@@ -502,6 +510,7 @@ def measure_plan(model: dict) -> dict:
             if not isinstance(racks, list):
                 rack_groups_known = False
                 rack_levels_complete = False
+                rack_height_complete = False
                 rack_geometric_complete = False
                 rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
@@ -513,6 +522,7 @@ def measure_plan(model: dict) -> dict:
                     if not isinstance(rack, dict):
                         rack_groups_known = False
                         rack_levels_complete = False
+                        rack_height_complete = False
                         rack_geometric_complete = False
                         rack_footprint_complete = False
                         rack_overlap_complete = rack_lane_overlap_complete = False
@@ -526,6 +536,12 @@ def measure_plan(model: dict) -> dict:
                         rack_declared_levels += levels
                     else:
                         rack_levels_complete = False
+                    rack_height = rack.get("h")
+                    if _positive(rack_height):
+                        rack_height_seen = True
+                        rack_declared_height_max = max(rack_declared_height_max, float(rack_height))
+                    else:
+                        rack_height_complete = False
                     geometric_counts = _rack_geometric_counts(rack)
                     if geometric_counts is None:
                         rack_geometric_complete = False
@@ -722,6 +738,9 @@ def measure_plan(model: dict) -> dict:
                 if dock_count_known and dock_zone_role_complete else None),
             "rack_group_count": rack_groups if rack_groups_known else None,
             "rack_declared_level_sum": rack_declared_levels if rack_levels_complete else None,
+            "rack_declared_height_max_m": (
+                round(rack_declared_height_max, 6)
+                if rack_height_complete and rack_height_seen else None),
             "rack_geometric_bay_count": (
                 rack_geometric_bays if rack_geometric_complete else None),
             "rack_geometric_bay_level_positions": (
@@ -779,6 +798,12 @@ def measure_plan(model: dict) -> dict:
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
+        if not rack_height_complete or not rack_height_seen:
+            unavailable["rack_declared_height_max_m"] = (
+                "Declared rack-height maximum needs a finite positive explicit `h` for every "
+                "declared rack group; it does not infer clear height or any required clearance."
+                if rack_groups else
+                "No declared rack groups are present, so no rack-height maximum exists.")
         if not expansion_reserve_presence_known:
             presence_message = (
                 "Expansion reserve presence cannot be verified until every referenced warehouse "
