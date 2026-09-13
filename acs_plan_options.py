@@ -3,12 +3,12 @@
 This module compares canonical design options without ranking them or inventing an
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
-option. Explicit rack footprints, geometric rack bay counts, rack conflicts, zone
-allocation ratios, expansion-reserve rectangles, oriented lane geometry, explicit
-configured route polylines and deterministic validation-status transitions may be
-compared; regulatory/structural compliance, usable/load-rated storage capacity,
-throughput and inferred routing remain outside this contract unless a future
-authoritative engine supplies them.
+option. Explicit rack footprints, declared rack heights, geometric rack bay counts,
+rack conflicts, zone allocation ratios, expansion-reserve rectangles, oriented lane
+geometry, explicit configured route polylines and deterministic validation-status
+transitions may be compared; regulatory/structural compliance, usable/load-rated
+storage capacity, throughput and inferred routing remain outside this contract unless
+a future authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -31,6 +31,7 @@ _SCALAR_METRICS = (
     "dock_count",
     "rack_group_count",
     "rack_declared_level_sum",
+    "rack_declared_height_max_m",
     "rack_geometric_bay_count",
     "rack_geometric_bay_level_positions",
     "rack_declared_footprint_area_m2",
