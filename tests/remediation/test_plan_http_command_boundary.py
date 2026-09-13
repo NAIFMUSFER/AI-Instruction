@@ -212,24 +212,26 @@ class PlanHttpCommandBoundaryTests(unittest.TestCase):
         self.assertEqual(body["error"]["code"], "CLIENT_PROJECT_AUTHORITY")
 
     def test_route_requires_canonical_uuid_project_identity(self):
-        touched = []
+        for bad_project in ("not-a-uuid", PROJECT_ID.replace("-", "")):
+            with self.subTest(project=bad_project):
+                touched = []
 
-        async def authorize(scope, send):
-            touched.append("auth")
-            return True
+                async def authorize(scope, send):
+                    touched.append("auth")
+                    return True
 
-        HTTP.AUTH.authorize_asgi = authorize
-        middleware = self._middleware([])
-        messages = []
-        asyncio.run(middleware(
-            _scope("/v1/projects/not-a-uuid/plan/commands"),
-            _receive_for({"action": "review", "revision_id": "r1"}),
-            asyncio.run(_capture_send(messages)),
-        ))
-        status, body = _json_response(messages)
-        self.assertEqual(status, 404)
-        self.assertEqual(body["error"]["code"], "PLAN_PROJECT_ROUTE_NOT_FOUND")
-        self.assertEqual(touched, [])
+                HTTP.AUTH.authorize_asgi = authorize
+                middleware = self._middleware([])
+                messages = []
+                asyncio.run(middleware(
+                    _scope(f"/v1/projects/{bad_project}/plan/commands"),
+                    _receive_for({"action": "review", "revision_id": "r1"}),
+                    asyncio.run(_capture_send(messages)),
+                ))
+                status, body = _json_response(messages)
+                self.assertEqual(status, 404)
+                self.assertEqual(body["error"]["code"], "PLAN_PROJECT_ROUTE_NOT_FOUND")
+                self.assertEqual(touched, [])
 
     def test_body_limit_fails_before_store_construction(self):
         async def authorize(scope, send):
