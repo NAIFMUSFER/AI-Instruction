@@ -2,35 +2,10 @@
 # ==============================================================================
 # tests/remediation/test_ci_dependencies.py
 #
-# العقد: **كل تبعية خارجية مطلوبة يبلغها هدفُ اختبارٍ في CI، تُركِّبها الوظيفة
-#         التي تشغّل ذلك الهدف.**
-#
-# لماذا يوجد
-# ----------
-# سقطت وظيفة `7 · Dependency audit and lock contract` مرّتين متتاليتين لنفس
-# السبب البنيويّ، وبعطلين مختلفين في الاسم:
-#
-#     ١) ٦ أهداف — psutil وغيره غير مركَّب: الوظيفة كانت بلا `pip install`.
-#     ٢) هدفٌ واحد — numpy:
-#            tests/remediation/test_plate_extent.py
-#              → import acs_compiler
-#                  acs_compiler.py:20  import numpy as np
-#            ModuleNotFoundError: No module named 'numpy'
-#
-# والثاني يكشف ما لا يكشفه الأوّل: التبعية **متعدّية**. الاختبار لا يستورد
-# numpy، بل يستورد وحدةً من المستودع تستوردها. ففحصُ سطور الاستيراد في ملفّ
-# الاختبار وحده كان سيمرّ، ويسقط CI.
-#
-# لذلك يمشي هذا الفحص إغلاقَ الاستيراد داخل المستودع: من الهدف إلى كل وحدة
-# محلّية يبلغها، ثم يجمع ما تستورده تلك الوحدات من خارج المستودع ومن خارج
-# المكتبة القياسية.
-#
-# «مطلوبة» تعني: استيرادٌ غير محروس. ما كان داخل try/except ImportError فهو
-# اختياريّ بإعلان الشفرة نفسها، ولا يُطالَب بتركيبه. ولا يُجعَل استيرادٌ
-# اختيارياً هنا ولا هناك لتمرير فحص: هذا الملفّ يقرأ ولا يعدّل.
-#
-# ولا يستورد هذا الفحص شيئاً ممّا يفحصه: يعمل على الشجرة النحوية وحدها، فيصحّ
-# تشغيله في مفسّرٍ عارٍ — أي في البيئة التي أخفت العطلين.
+# Contract: every required third-party dependency reachable from a Python target
+# run by CI must be installed by that CI job. Repository-local modules,
+# including PEP 420 namespace packages such as ``tools.*``, are traversed as
+# local source and must never be mistaken for PyPI distributions.
 # ==============================================================================
 import ast
 import os
@@ -59,9 +34,7 @@ def rd(path):
         return fh.read()
 
 
-# ── خريطة معلَنة: اسم الوحدة عند الاستيراد → اسم التوزيعة عند التثبيت ──────
-# مُعلَنة عمداً: اسمٌ خارجيّ لا يرد فيها يُرفَع عطلاً بدل أن يُخمَّن، فإضافة
-# تبعية جديدة قرارٌ مرئيّ في المراجعة لا انزلاقٌ صامت.
+# import-name -> install-distribution
 DIST = {
     "numpy": "numpy",
     "psutil": "psutil",
@@ -77,34 +50,20 @@ DIST = {
     "yaml": "PyYAML",
 }
 
-# ── تبعيات يضمنها تثبيتٌ آخر، بنصّ إعلانه لا بحسن الظنّ ───────────────────
-# ليست إعفاءً: كلٌّ منها مصحوبٌ بالقيد الذي يعلنه المزوِّد حرفياً، ويُشترط أن
-# يكون المزوِّد نفسه مثبَّتاً بـ== في الملفّ الذي تُركِّبه الوظيفة. فإن خرج
-# المزوِّد من مجموعة التثبيت سقط الفحص.
+# Dependencies intentionally supplied by another exact-pinned distribution.
 PROVIDED_BY = {
-    # fastapi 0.110.0 · pyproject.toml حرفياً:
-    #   "pydantic>=1.7.4,!=1.8,!=1.8.1,!=2.0.0,!=2.0.1,!=2.1.0,<3.0.0"
-    # يستوردها acs_understand_api.py مباشرةً (`from pydantic import BaseModel`)
-    # وهي على مسار الإنتاج. غير مثبّتة باسمها: مخاطرة انجرافٍ مسجَّلة في
-    # requirements.lock ضمن UNRESOLVED-OFFLINE، لا مكتومة هنا.
     "pydantic": "fastapi",
 }
 
 STDLIB = set(sys.stdlib_module_names)
+_SKIP_DIRS = {"node_modules", ".git", "public", "__pycache__"}
 
 
 def local_modules():
-    """كل وحدة .py في المستودع، باسمها المجرّد.
-
-    الاختبارات تضيف مجلّداتٍ إلى sys.path (tests/lib، tests/phase9/…) فتستورد
-    جيراناً بأسماء مجرّدة: app_source، lib_docs_fixtures، lib_ad_fixtures.
-    هذه ملفّات المستودع نفسها لا حزماً خارجية، فلا تُطالَب بتثبيت. البحث
-    بالاسم عبر الشجرة كلّها هو ما يميّزها.
-    """
+    """Index bare-name repository modules used by tests that edit ``sys.path``."""
     out = {}
-    skip = {"node_modules", ".git", "public"}
     for dirpath, dirnames, files in os.walk(ROOT):
-        dirnames[:] = [d for d in dirnames if d not in skip]
+        dirnames[:] = [d for d in dirnames if d not in _SKIP_DIRS]
         for fn in files:
             if fn.endswith(".py"):
                 out.setdefault(fn[:-3], os.path.join(dirpath, fn))
@@ -114,48 +73,129 @@ def local_modules():
 ROOT_MODS = local_modules()
 
 
-def imports_of(path):
-    """(required, optional) — أسماء الوحدات العليا التي يستوردها ملفّ.
+def _package_init_paths(parts):
+    """Return existing ``__init__.py`` files executed before a dotted module."""
+    paths = []
+    cur = ROOT
+    for part in parts:
+        cur = os.path.join(cur, part)
+        init = os.path.join(cur, "__init__.py")
+        if os.path.isfile(init):
+            paths.append(init)
+    return paths
 
-    المحروس داخل try/except ImportError اختياريّ بإعلان الشفرة؛ ما عداه مطلوب.
+
+def resolve_local(name, sibling):
+    """Return ``(is_local, source_paths)`` for one absolute import name.
+
+    The old audit reduced ``from tools.foo import x`` to the bare name
+    ``tools`` and then looked only for ``tools.py``. ``tools/`` is a valid
+    repository namespace package without ``__init__.py``, so that logic
+    misclassified first-party code as a third-party distribution. Resolution
+    here follows the repository path before falling back to the historical
+    bare-module index.
     """
+    if not isinstance(name, str) or not name:
+        return False, []
+
+    parts = name.split(".")
+    root_name = parts[0]
+    if root_name in STDLIB:
+        return False, []
+
+    # Exact dotted module/package under the repository root.
+    rel = os.path.join(*parts)
+    py = os.path.join(ROOT, rel + ".py")
+    pkg = os.path.join(ROOT, rel)
+    paths = _package_init_paths(parts[:-1])
+    if os.path.isfile(py):
+        return True, paths + [py]
+    init = os.path.join(pkg, "__init__.py")
+    if os.path.isfile(init):
+        return True, paths + [init]
+    if os.path.isdir(pkg):
+        # PEP 420 namespace package. It is local even without __init__.py.
+        return True, paths
+
+    # Historical flat/sibling imports used by test harnesses that prepend a
+    # directory to sys.path.
+    if len(parts) == 1:
+        cand = os.path.join(sibling, name + ".py")
+        if os.path.isfile(cand):
+            return True, [cand]
+        nxt = ROOT_MODS.get(name)
+        if nxt:
+            return True, [nxt]
+
+    return False, []
+
+
+def _names_for_import_node(node, path):
+    """Absolute import names represented by one AST import node.
+
+    For ``from pkg import child`` we also traverse ``pkg.child`` when that is
+    an actual repository module/package. If ``child`` is merely an attribute,
+    the base module remains the only local path and no external dependency is
+    fabricated.
+    """
+    sibling = os.path.dirname(path)
+    names = set()
+    if isinstance(node, ast.Import):
+        names.update(a.name for a in node.names)
+    elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+        names.add(node.module)
+        for alias in node.names:
+            if alias.name == "*":
+                continue
+            candidate = node.module + "." + alias.name
+            local, _ = resolve_local(candidate, sibling)
+            if local:
+                names.add(candidate)
+    return names
+
+
+def imports_of(path):
+    """Return ``(required, optional)`` absolute module names imported by path."""
     try:
         tree = ast.parse(rd(path), path)
-    except Exception:                                          # noqa: BLE001
+    except Exception:  # noqa: BLE001
         return set(), set()
+
     guarded = set()
     for node in ast.walk(tree):
         if not isinstance(node, ast.Try):
             continue
         handles_import = any(
             (h.type is None)
-            or (isinstance(h.type, ast.Name)
-                and h.type.id in ("ImportError", "ModuleNotFoundError", "Exception"))
-            or (isinstance(h.type, ast.Tuple)
-                and any(isinstance(e, ast.Name)
-                        and e.id in ("ImportError", "ModuleNotFoundError", "Exception")
-                        for e in h.type.elts))
-            for h in node.handlers)
+            or (
+                isinstance(h.type, ast.Name)
+                and h.type.id in ("ImportError", "ModuleNotFoundError", "Exception")
+            )
+            or (
+                isinstance(h.type, ast.Tuple)
+                and any(
+                    isinstance(e, ast.Name)
+                    and e.id in ("ImportError", "ModuleNotFoundError", "Exception")
+                    for e in h.type.elts
+                )
+            )
+            for h in node.handlers
+        )
         if not handles_import:
             continue
         for sub in ast.walk(node):
-            if isinstance(sub, ast.Import):
-                for a in sub.names:
-                    guarded.add(a.name.split(".")[0])
-            elif isinstance(sub, ast.ImportFrom) and sub.level == 0 and sub.module:
-                guarded.add(sub.module.split(".")[0])
+            if isinstance(sub, (ast.Import, ast.ImportFrom)):
+                guarded |= _names_for_import_node(sub, path)
+
     every = set()
     for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for a in node.names:
-                every.add(a.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-            every.add(node.module.split(".")[0])
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            every |= _names_for_import_node(node, path)
     return every - guarded, guarded
 
 
 def closure(target):
-    """الإغلاق: الهدف + كل وحدة مستودعٍ يبلغها، وما تطلبه كلّها من الخارج."""
+    """Traverse repository imports and return required/optional external roots."""
     seen, stack = set(), [target]
     required, optional = set(), set()
     while stack:
@@ -166,21 +206,24 @@ def closure(target):
         req, opt = imports_of(path)
         sibling = os.path.dirname(path)
         for name in req | opt:
-            if name in STDLIB:
+            root_name = name.split(".", 1)[0]
+            if root_name in STDLIB:
                 continue
-            cand = os.path.join(sibling, name + ".py")
-            nxt = cand if os.path.exists(cand) else ROOT_MODS.get(name)
-            if nxt:
-                stack.append(nxt)
-            elif name in req:
-                required.add(name)
+            is_local, paths = resolve_local(name, sibling)
+            if is_local:
+                for nxt in paths:
+                    if nxt not in seen:
+                        stack.append(nxt)
+                continue
+            if name in req:
+                required.add(root_name)
             else:
-                optional.add(name)
+                optional.add(root_name)
     return required, optional - required
 
 
-# ── قراءة سير العمل: أي وظيفة تشغّل أي هدف، وماذا تُركِّب ──────────────────
 def ci_jobs():
+    """Read Python targets and requirement files installed by each CI job."""
     ci = rd(CI)
     out = {}
     for blk in re.split(r"\n  (?=[a-z][a-z0-9-]*:\n)", ci)[1:]:
@@ -198,7 +241,6 @@ def ci_jobs():
 
 
 def pinned_in(files):
-    """أسماء التوزيعات المثبّتة في مجموعة ملفّات تثبيت."""
     names = set()
     for rel in files:
         p = os.path.join(ROOT, rel)
@@ -212,84 +254,119 @@ def pinned_in(files):
     return names
 
 
-print("== أ · سير العمل يُقرأ، والوظائف التي تشغّل أهدافاً معروفة ==")
+print("== أ · CI jobs install pinned dependency sets ==")
 JOBS = ci_jobs()
 chk("ci.yml names at least two jobs that run Python targets", len(JOBS) >= 2,
     str(sorted(JOBS)))
-for name, j in sorted(JOBS.items()):
-    chk("job '%s' runs %d target(s) and installs %s"
-        % (name, len(j["targets"]), j["installs"] or "NOTHING"),
-        bool(j["installs"]),
-        "a job that runs Python targets must install the pinned requirements")
+for name, job in sorted(JOBS.items()):
+    chk(
+        "job '%s' runs %d target(s) and installs %s"
+        % (name, len(job["targets"]), job["installs"] or "NOTHING"),
+        bool(job["installs"]),
+        "a job that runs Python targets must install pinned requirements",
+    )
 
-print("\n== ب · كل اسمٍ خارجيّ يبلغه هدفٌ معروفٌ في خريطة التوزيعات ==")
+print("\n== ب · repository namespace packages stay first-party ==")
+tools_app_source = os.path.join(ROOT, "tools", "app_source.py")
+local_tools, tool_paths = resolve_local("tools.app_source", ROOT)
+chk("tools/app_source.py exists as first-party evidence",
+    os.path.isfile(tools_app_source), tools_app_source)
+chk("dotted tools.app_source resolves locally without a PyPI mapping",
+    local_tools and tools_app_source in tool_paths, str(tool_paths))
+local_tools_root, _ = resolve_local("tools", ROOT)
+chk("bare tools resolves as a local PEP 420 namespace package",
+    local_tools_root)
+fake_local, _ = resolve_local("definitely_not_an_acs_repo_module.child", ROOT)
+chk("an unknown dotted name is still external", not fake_local)
+
+for rel in (
+    "tests/remediation/test_model_diagnostics.py",
+    "tests/phase9_2/test_backend_contract.py",
+):
+    path = os.path.join(ROOT, rel)
+    if os.path.exists(path):
+        deep, _ = closure(path)
+        chk("%s does not misclassify local tools as third-party" % rel,
+            "tools" not in deep, str(sorted(deep)))
+
+print("\n== ج · every external import is declared and installed ==")
 unmapped = {}
-for name, j in sorted(JOBS.items()):
-    for t in j["targets"]:
-        req, _ = closure(os.path.join(ROOT, t))
-        for mod in req:
-            if mod not in DIST and mod not in PROVIDED_BY:
-                unmapped.setdefault(mod, []).append(t)
-chk("no third-party module is missing from the declared DIST map", not unmapped,
-    str({k: v[:2] for k, v in unmapped.items()}))
-
-print("\n== ج · كل تبعية مطلوبة تُركِّبها الوظيفة التي تشغّل هدفها ==")
 missing = []
 checked = 0
-for name, j in sorted(JOBS.items()):
-    have = pinned_in(j["installs"])
-    for t in j["targets"]:
-        req, _ = closure(os.path.join(ROOT, t))
+for job_name, job in sorted(JOBS.items()):
+    have = pinned_in(job["installs"])
+    for target in job["targets"]:
+        req, _ = closure(os.path.join(ROOT, target))
         for mod in sorted(req):
             checked += 1
-            if mod in PROVIDED_BY:
-                # مضمونةٌ بتثبيت مزوِّدها — ويُشترط أن يكون هو مثبَّتاً هنا.
-                provider = PROVIDED_BY[mod].lower()
-                if provider not in have:
-                    missing.append((name, t, mod, provider + " (provides "
-                                    + mod + ")"))
+            if mod not in DIST and mod not in PROVIDED_BY:
+                unmapped.setdefault(mod, []).append(target)
                 continue
-            dist = DIST.get(mod, mod).lower().replace("_", "-")
+            if mod in PROVIDED_BY:
+                provider = PROVIDED_BY[mod].lower().replace("_", "-")
+                if provider not in have:
+                    missing.append((job_name, target, mod, provider + " (provides " + mod + ")"))
+                continue
+            dist = DIST[mod].lower().replace("_", "-")
             if dist not in have:
-                missing.append((name, t, mod, dist))
-for name, t, mod, dist in missing:
-    chk("job '%s' installs %s for %s (imports %s)" % (name, dist, t, mod),
-        False, "not pinned in " + str(JOBS[name]["installs"]))
-chk("every required third-party import of every CI target is installed by its "
-    "job (%d import edge(s) checked)" % checked, not missing,
-    "\n      ".join("%s → %s needs %s" % (n, t, d) for n, t, _, d in missing))
+                missing.append((job_name, target, mod, dist))
+
+chk("no third-party module is missing from the declared DIST map",
+    not unmapped, str({k: v[:2] for k, v in unmapped.items()}))
+for job_name, target, mod, dist in missing:
+    chk(
+        "job '%s' installs %s for %s (imports %s)"
+        % (job_name, dist, target, mod),
+        False,
+        "not pinned in " + str(JOBS[job_name]["installs"]),
+    )
+chk(
+    "every required third-party import of every CI target is installed by its "
+    "job (%d import edge(s) checked)" % checked,
+    not missing,
+    "\n      ".join(
+        "%s → %s needs %s" % (name, target, dist)
+        for name, target, _, dist in missing
+    ),
+)
 
 for mod, provider in sorted(PROVIDED_BY.items()):
-    chk("'%s' is declared as provided by '%s', and that provider is itself "
-        "pinned with == in requirements.txt" % (mod, provider),
-        re.search(r"^%s==" % re.escape(provider),
-                  rd(os.path.join(ROOT, "requirements.txt")), re.M) is not None)
+    chk(
+        "'%s' is declared as provided by '%s', and that provider is exact-pinned"
+        % (mod, provider),
+        re.search(
+            r"^%s==" % re.escape(provider),
+            rd(os.path.join(ROOT, "requirements.txt")),
+            re.M,
+        )
+        is not None,
+    )
 
-print("\n== د · شاهد سالب: الفحص يمشي الاستيراد المتعدّي، لا السطر الأوّل ==")
-# numpy لا يظهر في tests/remediation/test_plate_extent.py إطلاقاً — يظهر في
-# acs_compiler.py التي يستوردها. لو كان الفحص سطحياً لَما رآه.
-pe = os.path.join(ROOT, "tests", "remediation", "test_plate_extent.py")
-if os.path.exists(pe):
-    direct, _ = imports_of(pe)
-    deep, _ = closure(pe)
+print("\n== د · negative witness: transitive imports are still traversed ==")
+plate = os.path.join(ROOT, "tests", "remediation", "test_plate_extent.py")
+if os.path.exists(plate):
+    direct, _ = imports_of(plate)
+    deep, _ = closure(plate)
     chk("test_plate_extent.py does NOT import numpy directly",
-        "numpy" not in direct, str(sorted(direct)))
-    chk("but the closure reaches it through acs_compiler", "numpy" in deep,
-        str(sorted(deep)))
-    chk("and acs_compiler.py is the only file that imports numpy",
-        "numpy" in imports_of(os.path.join(ROOT, "acs_compiler.py"))[0])
+        all(name.split(".", 1)[0] != "numpy" for name in direct),
+        str(sorted(direct)))
+    chk("but the closure reaches numpy through acs_compiler",
+        "numpy" in deep, str(sorted(deep)))
+    compiler = os.path.join(ROOT, "acs_compiler.py")
+    compiler_imports, _ = imports_of(compiler)
+    chk("acs_compiler.py imports numpy",
+        any(name.split(".", 1)[0] == "numpy" for name in compiler_imports))
 
-print("\n== هـ · numpy في المجموعة الصحيحة دلالياً، لا في صورة الإنتاج ==")
+print("\n== هـ · numpy remains dev-only because the compiler is offline ==")
 prod = rd(os.path.join(ROOT, "requirements.txt"))
-dev = rd(os.path.join(ROOT, "requirements-dev.txt")) \
-    if os.path.exists(os.path.join(ROOT, "requirements-dev.txt")) else ""
-chk("numpy is pinned with == in requirements-dev.txt",
+dev_path = os.path.join(ROOT, "requirements-dev.txt")
+dev = rd(dev_path) if os.path.exists(dev_path) else ""
+chk("numpy is exact-pinned in requirements-dev.txt",
     re.search(r"^numpy==\d+\.\d+", dev, re.M) is not None)
-chk("numpy is NOT in requirements.txt — acs_compiler.py is an offline tool, "
-    "deployed nowhere by design", "numpy" not in prod)
+chk("numpy is NOT in requirements.txt",
+    re.search(r"^numpy==", prod, re.M) is None)
 docker = rd(os.path.join(ROOT, "Dockerfile"))
-chk("and the Dockerfile really does not COPY acs_compiler.py — the audit that "
-    "put numpy in the dev set, verified here",
+chk("Dockerfile does not COPY acs_compiler.py",
     "acs_compiler.py" not in docker)
 
 print("\n" + "─" * 62)

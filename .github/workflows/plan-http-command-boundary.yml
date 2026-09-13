@@ -1,0 +1,54 @@
+name: Authenticated Plan-first HTTP command boundary
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_http.py'
+      - 'acs_plan_session.py'
+      - 'acs_plan_persisted_commands.py'
+      - 'acs_plan_bridge.py'
+      - 'acs_understand_api.py'
+      - 'Dockerfile'
+      - 'tests/remediation/test_plan_http_command_boundary.py'
+      - '.github/workflows/plan-http-command-boundary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  plan-http-command-boundary:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile the HTTP trust boundary and regression
+        run: |
+          python -m py_compile \
+            acs_plan_http.py \
+            tests/remediation/test_plan_http_command_boundary.py
+      - name: Verify authenticated durable command routing
+        run: PYTHONPATH=. python tests/remediation/test_plan_http_command_boundary.py
+      - name: Verify production app registration is explicit
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          text = Path('acs_understand_api.py').read_text(encoding='utf-8')
+          assert 'import acs_plan_http as PLAN_HTTP' in text
+          assert 'app.add_middleware(PLAN_HTTP.PlanCommandMiddleware)' in text
+          print('production Plan-first HTTP registration: PASS')
+          PY
+      - name: Verify import isolation
+        run: |
+          python -S - <<'PY'
+          import sys
+          import acs_plan_http
+          assert 'acs_compiler' not in sys.modules
+          assert 'acs_bim' not in sys.modules
+          print('Plan-first HTTP boundary import isolation: PASS')
+          PY
+      - name: No generated diff
+        run: git diff --exit-code
