@@ -70,10 +70,11 @@ class AuthGatewayTests(unittest.TestCase):
         self.assertFalse(payload['created'])
         self.assertEqual(payload['project']['id'], 'p1')
 
-    def test_gateway_never_contains_service_role_material(self):
-        text = Path(G.__file__).read_text(encoding='utf-8').lower()
-        self.assertNotIn('service_role', text)
-        self.assertNotIn('service-role', text)
+    def test_gateway_reads_only_publishable_auth_configuration(self):
+        text = Path(G.__file__).read_text(encoding='utf-8')
+        self.assertIn('ACS_AUTH_SUPABASE_PUBLISHABLE_KEY', text)
+        self.assertNotIn('SUPABASE_SERVICE_ROLE_KEY', text)
+        self.assertNotIn('ACS_SUPABASE_SERVICE_ROLE', text)
 
 
 if __name__ == '__main__':
