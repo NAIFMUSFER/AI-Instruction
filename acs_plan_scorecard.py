@@ -2,8 +2,9 @@
 
 This module only measures geometry and explicit operational data already present in
 canonical Building JSON. It does not infer code compliance, required clearances,
-storage capacity, throughput, safety, or daylight. Missing inputs remain unknown.
-No provider, network, CAD, compiler, or production route is imported here.
+usable/load-rated storage capacity, throughput, safety, or daylight. Missing inputs
+remain unknown. No provider, network, CAD, compiler, or production route is imported
+here.
 """
 from __future__ import annotations
 
@@ -136,6 +137,33 @@ def _rack_rect(rack: Any) -> tuple[float, float, float, float] | None:
     return float(x), float(z), float(w), float(d)
 
 
+def _rack_geometric_counts(rack: Any) -> tuple[int, int] | None:
+    """Return modeled bay and bay-level counts from explicit rack geometry only.
+
+    A bay is one declared ``bay`` pitch along the rack run for each explicit row.
+    A bay-level position is that geometric bay count multiplied by explicit rack
+    levels. These are geometric layout counts, not pallet positions, usable/load-
+    rated storage capacity, clearance proof or throughput. Missing/invalid inputs
+    fail closed instead of borrowing the 3D compiler's presentation defaults.
+    """
+    if not isinstance(rack, dict):
+        return None
+    direction = rack.get("dir")
+    w, d = rack.get("w"), rack.get("d")
+    bay, rows, levels = rack.get("bay"), rack.get("rows"), rack.get("levels")
+    if (direction not in {"x", "z"}
+            or not _positive(w) or not _positive(d) or not _positive(bay)
+            or type(rows) is not int or rows <= 0
+            or type(levels) is not int or levels <= 0):
+        return None
+    run = w if direction == "x" else d
+    bays_per_row = math.floor(run / bay)
+    if bays_per_row < 1:
+        return None
+    bays = bays_per_row * rows
+    return bays, bays * levels
+
+
 def _rect_overlap_area(a: tuple[float, float, float, float],
                        b: tuple[float, float, float, float]) -> float:
     ax, az, aw, ad = a
@@ -167,12 +195,15 @@ def measure_plan(model: dict) -> dict:
       It is a geometric conflict indicator only, not a safety/compliance result.
     - `rack_declared_footprint_area_m2` sums explicit rack-group rectangles; it is
       not storage capacity, pallet positions, or proof of usable clearances.
+    - `rack_geometric_bay_count` and `rack_geometric_bay_level_positions` count
+      only explicit run/bay/row/level geometry; they are not usable/load-rated
+      storage capacity or proof of clearances/load units.
     - `rack_overlap_area_m2` and `rack_lane_overlap_area_by_lane_kind_m2` measure
       only explicit room-relative rectangle intersections. They are geometric
       conflict indicators, not clearance, traffic-safety or code-compliance proof.
     - `rack_group_count` counts declared rack groups, not pallet positions.
-    - storage capacity and throughput stay unavailable unless a future canonical
-      contract defines sufficient source data and its calculation semantics.
+    - usable storage capacity and throughput stay unavailable unless a future
+      canonical contract defines sufficient source data and calculation semantics.
     """
     if not isinstance(model, dict):
         raise TypeError("model must be a dict")
@@ -206,6 +237,9 @@ def measure_plan(model: dict) -> dict:
     rack_groups_known = bool(templates)
     rack_declared_levels = 0
     rack_levels_complete = bool(templates)
+    rack_geometric_bays = 0
+    rack_geometric_bay_levels = 0
+    rack_geometric_complete = bool(templates)
     rack_footprint_area = 0.0
     rack_footprint_complete = bool(templates)
     rack_overlap_area = 0.0
@@ -230,7 +264,7 @@ def measure_plan(model: dict) -> dict:
             space_count_known = False
             dock_count_known = rack_groups_known = station_count_known = False
             dock_zone_role_complete = False
-            rack_levels_complete = rack_footprint_complete = False
+            rack_levels_complete = rack_geometric_complete = rack_footprint_complete = False
             rack_overlap_complete = rack_lane_overlap_complete = False
             lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
             continue
@@ -240,7 +274,7 @@ def measure_plan(model: dict) -> dict:
                 space_area_known = False
                 space_count_known = False
                 dock_zone_role_complete = False
-                rack_footprint_complete = False
+                rack_geometric_complete = rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
                 lane_centerline_complete = lane_overlap_complete = False
                 continue
@@ -295,6 +329,7 @@ def measure_plan(model: dict) -> dict:
             if not isinstance(racks, list):
                 rack_groups_known = False
                 rack_levels_complete = False
+                rack_geometric_complete = False
                 rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
                 room_racks_complete = False
@@ -303,6 +338,7 @@ def measure_plan(model: dict) -> dict:
                     if not isinstance(rack, dict):
                         rack_groups_known = False
                         rack_levels_complete = False
+                        rack_geometric_complete = False
                         rack_footprint_complete = False
                         rack_overlap_complete = rack_lane_overlap_complete = False
                         room_racks_complete = False
@@ -313,6 +349,13 @@ def measure_plan(model: dict) -> dict:
                         rack_declared_levels += levels
                     else:
                         rack_levels_complete = False
+                    geometric_counts = _rack_geometric_counts(rack)
+                    if geometric_counts is None:
+                        rack_geometric_complete = False
+                    else:
+                        bays, bay_levels = geometric_counts
+                        rack_geometric_bays += bays
+                        rack_geometric_bay_levels += bay_levels
                     rack_area = _rack_footprint_area(rack)
                     if rack_area is None:
                         rack_footprint_complete = False
@@ -431,6 +474,10 @@ def measure_plan(model: dict) -> dict:
                 if dock_count_known and dock_zone_role_complete else None),
             "rack_group_count": rack_groups if rack_groups_known else None,
             "rack_declared_level_sum": rack_declared_levels if rack_levels_complete else None,
+            "rack_geometric_bay_count": (
+                rack_geometric_bays if rack_geometric_complete else None),
+            "rack_geometric_bay_level_positions": (
+                rack_geometric_bay_levels if rack_geometric_complete else None),
             "rack_declared_footprint_area_m2": (
                 round(rack_footprint_area, 6) if rack_footprint_complete else None),
             "rack_overlap_area_m2": (
@@ -454,7 +501,9 @@ def measure_plan(model: dict) -> dict:
             "fire_life_safety_compliance": None,
         })
         unavailable.update({
-            "storage_capacity_positions": "Rack group geometry does not define a canonical slot/capacity contract.",
+            "storage_capacity_positions": (
+                "Geometric rack bay/level counts are not usable or load-rated storage capacity; "
+                "no canonical load-unit, clearance, occupancy or load-rating contract is present."),
             "throughput_per_hour": "No measured flow/time model is present in canonical Building JSON.",
             "travel_distance_m": "Declared lane centerlines are not routed origin/destination travel paths.",
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
@@ -467,6 +516,12 @@ def measure_plan(model: dict) -> dict:
         if zone_ratios is None:
             unavailable["zone_area_ratio_by_role"] = (
                 "Zone allocation ratios need complete positive measured canonical room-rectangle area.")
+        if not rack_geometric_complete:
+            message = (
+                "Geometric rack bay counts need explicit positive w/d/bay geometry, x/z run "
+                "direction, integer rows and integer levels for every declared rack group.")
+            unavailable["rack_geometric_bay_count"] = message
+            unavailable["rack_geometric_bay_level_positions"] = message
         if not rack_overlap_complete:
             unavailable["rack_overlap_area_m2"] = (
                 "Rack overlap needs explicit room-relative x/z/w/d geometry for every rack group.")
