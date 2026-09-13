@@ -253,7 +253,7 @@ if (typeof window !== 'undefined') {
   window.ACS.asyncGeneration = {
     recover: acsJobRecover,
     state: () => { const row = acsJobRead(); return row ? {id: row.id, state: row.state,
-      delivered: !!row.delivered, path: row.path} : null;
+      delivered: !!row.delivered, path: row.path} : null; },
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', acsJobRecoveryBanner);
   else acsJobRecoveryBanner();
