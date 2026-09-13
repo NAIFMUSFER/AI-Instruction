@@ -76,6 +76,15 @@ ENGINE_NEEDLES = (
     ('renderer.setAnimationLoop', 'render loop'),
 )
 
+# The optional approved-baseline viewer must not mask a missing primary engine.
+ENGINE_FILES = {
+    'THREE import': 'core/viewer.js',
+    'scene initialization': 'render/scene.js',
+    'renderer initialization': 'render/scene.js',
+    'camera initialization': 'ui/workspace-ui-wiring.js',
+    'render loop': 'ui/workspace-ui-wiring.js',
+}
+
 IMPORTMAP_THREE = '/vendor/three@0.160.0/build/three.module.js'
 IMPORTMAP_ADDONS = '/vendor/three@0.160.0/examples/jsm/'
 
@@ -353,6 +362,10 @@ def check_file(path):
     fails = check_page_text(page, size)
     fails += check_references(page, public_dir)
     fails += check_app_text(A.app_text())
+    for needle, what in ENGINE_NEEDLES:
+        if needle not in A.modules().get(ENGINE_FILES[what], ''):
+            fails.append('the primary engine lacks %s in %s' %
+                         (what, ENGINE_FILES[what]))
     fails += check_app_tree(A.APP, A.modules(), A.order())
     return fails
 

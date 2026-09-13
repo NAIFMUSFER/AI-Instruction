@@ -252,19 +252,32 @@ def build():
                    if not s["external"] and s["kind"] != "importmap"]
     app_text = A.app_text()
 
+    # The authenticated workspace is a separate HTML module entry. Preserve the
+    # historical .js graph series, and measure every new .mjs/CSS byte explicitly.
+    connected_assets = [
+        ('public/app/ui/connected-workspace.mjs', 'initial-module'),
+        ('public/plan-review/packet.mjs', 'initial-module'),
+        ('public/app/ui/approved-viewer.mjs', 'lazy-module'),
+        ('public/app/styles/connected-workspace.css', 'initial-css'),
+    ]
+    connected = [{'path': path, 'loaded': loaded, 'bytes': b(read(path)),
+                  'gzip_bytes': gzip_bytes(read(path))}
+                 for path, loaded in connected_assets]
+
     report = {
         "report": "acs.bundle/2",
         "status": (
             "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a %d "
-            "byte shell and every byte of application JavaScript (%d bytes) "
+            "byte shell and the legacy studio JavaScript (%d bytes) "
             "lives in %d files under public/app/. This file records where the "
             "bytes are; it does NOT prove the application still runs. Runtime "
             "behaviour is the browser tests' job, not this tool's."
             % (shell_bytes, first_party_total, len(modules))),
         "what_this_is": (
             "A measurement of the frontend that is actually shipped today: the "
-            "index shell, every first-party module under public/app/, the "
-            "stylesheet and the boot scripts. It does NOT modify anything and "
+            "index shell, the studio .js graph, stylesheets and boot scripts. "
+            "The connected_workspace section measures its separate .mjs entry "
+            "and exact approved viewer. It does NOT modify anything and "
             "must not be read as evidence that the application works — only "
             "that the bytes are where this report says they are. Its second "
             "job is anti-gaming: each module's share of total first-party "
@@ -353,6 +366,14 @@ def build():
             "note": ("this file is the former inline <style> block plus the "
                      "generated .acs-u-NN utility classes that replaced every "
                      "style=\"…\" attribute in the markup."),
+        },
+
+        "connected_workspace": {
+            "assets": connected,
+            "initial_javascript_bytes": sum(a['bytes'] for a in connected if a['loaded'] == 'initial-module'),
+            "lazy_javascript_bytes": sum(a['bytes'] for a in connected if a['loaded'] == 'lazy-module'),
+            "additional_css_bytes": sum(a['bytes'] for a in connected if a['loaded'] == 'initial-css'),
+            "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again.",
         },
 
         "generated_blocks": {

@@ -48,12 +48,12 @@
 <section class="card">
   <h2>٣ · أين تُخزَّن بيانات مشروعك</h2>
   <ul>
-    <li><strong>في متصفّحك.</strong> النموذج المولَّد وحالة مساحة العمل يبقيان في
-        تخزين المتصفّح على جهازك. مسحُ بيانات الموقع من المتصفّح يمسحها.</li>
+    <li><strong>في متصفّحك.</strong> تُحفظ مسودة الوصف غير المرسلة، وبيانات متابعة المهمة، والنسخ المحلية القديمة في تخزين المتصفّح على جهازك. مسحُ بيانات الموقع يمسح هذه النسخ المحلية.</li>
     <li><strong>الحساب واسم المشروع.</strong> يُحفظ حسابك واسم مشروعك في Supabase، وتُتحقق صلاحية الدخول عبر خادم ACS. يمر البريد وكلمة المرور إلى خدمة المصادقة عند الدخول؛ لا تسجّل ACS كلمة المرور ولا ترسلها إلى مزوّد توليد المباني.</li>
     <li><strong>جلسة الدخول.</strong> يُحفظ رمز الجلسة وتجديدها في متصفّحك حتى تتمكن من العودة إلى حسابك. الخروج يزيلهما، ويُعزل الحفظ المحلي حسب الحساب والمشروع. استخدم الخروج على الأجهزة المشتركة.</li>
-    <li><strong>حفظ النسخ.</strong> زر حفظ النسخ في الاستوديو يحفظ نموذجك محليًا على هذا الجهاز، ولا يُعد نسخة احتياطية سحابية. توجد قاعدة بيانات منفصلة لنسخ المخططات المحفوظة عبر خدمة المشاريع، لكن الاستوديو لا يرفع نماذجك إليها تلقائيًا.</li>
-    <li><strong>نتيجة التوليد المؤقتة.</strong> يحتفظ خادم التوليد بالنتيجة في الذاكرة لمدة 30 دقيقة لتسهيل استعادتها عند انقطاع الاتصال. إعادة تشغيل الخادم قد تفقدها؛ صدّر نسخة من الأعمال التي تريد الاحتفاظ بها.</li>
+    <li><strong>حفظ نسخ المشروع.</strong> مساحة التصميم المتصلة تحفظ وصف المشروع ومتطلباته والمخططات والأقفال والاعتمادات في Supabase عند اكتمال التوليد أو التعديل أو الاعتماد. يمكنك إعادة فتحها من الحساب نفسه وعلى جهاز آخر. النسخ المحلية القديمة في الاستوديو تظل نسخة على جهازك ولا تتحول تلقائيًا إلى نسخ سحابية.</li>
+    <li><strong>متابعة التوليد.</strong> تُحفظ سجلات مهام مساحة التصميم في قاعدة البيانات. إذا توقف الخادم أثناء طلب غير مكتمل، تُعرض المهمة كمقاطعة ولا يُعاد طلب المزود تلقائيًا؛ أي نسخة اكتمل حفظها تبقى محفوظة. مسارات التوليد القديمة تحتفظ بالنتيجة في الذاكرة لمدة 30 دقيقة فقط.</li>
+    <li><strong>ملفات التسليم.</strong> تُشتق من النسخة المعتمدة، وتُجهز في ملفات مؤقتة على الخادم ثم تُحذف بعد إتمام الطلب. تُنزّل الملفات وبيان مصدرها إلى جهازك.</li>
     <li><strong>الملفّات المرفوعة لا تُكتب على قرص الخادم.</strong> تُقرأ في الذاكرة
         وتُفحص ثم تُرسل إلى المزوّد، ولا يُنشئ الخادم ملفّاً مؤقتاً منها.</li>
   </ul>
@@ -122,12 +122,12 @@
 
   <h3>Where project data lives</h3>
   <ul>
-    <li>In your browser. The generated model and workspace state are kept in
-        browser storage on your own device; clearing site data removes them.</li>
+    <li>Unsent brief drafts, job recovery identifiers and older device-local backups are kept in browser storage; clearing site data removes these local copies.</li>
     <li>Your account and project name are stored in Supabase. ACS forwards your email and password to its authentication service during sign-in, without logging the password or sending it to the building-generation provider.</li>
     <li>Session and refresh tokens are kept in browser storage until sign-out. Local model backups are separated by account and project. Sign out on shared devices.</li>
-    <li>The studio's saved design versions are device-local backups. A separate database supports durable plan revisions through the project service, but the studio does not automatically upload models to it.</li>
-    <li>Generation results are held in server memory for 30 minutes to support reconnection. They can be lost when the server restarts and are not a permanent archive.</li>
+    <li>The connected workspace saves durable plan revisions, briefs, requirements, locks and approvals in Supabase when generation, edits or approval complete. These versions can be reopened by the same account on another device. Older local studio backups are not automatically uploaded.</li>
+    <li>Connected workspace job receipts are durable. Work interrupted by a server restart is reported without automatic provider resubmission; completed saved revisions remain available. Legacy generation results remain in server memory for 30 minutes, can be lost when the server restarts, and are not a permanent archive.</li>
+    <li>Approved artifacts are generated in temporary server files, removed after delivery, and downloaded with a provenance manifest to your device.</li>
     <li>Uploaded files are not written to the server's disk; they are read in
         memory, validated, and forwarded to the provider.</li>
   </ul>

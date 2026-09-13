@@ -32,6 +32,8 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
             if(!firstProject&&!input.name){status=400;body={error:{code:'PROJECT_NAME_REQUIRED',message:'اسم المشروع مطلوب.'}};}
             else {firstProject=firstProject||{id:'fixture-project',name:input.name};body={project:firstProject,user:{id:'fixture-user'}};}
           }else if(url.pathname==='/v1/auth/signout')body={ok:true};
+          else if(url.pathname==='/v1/auth/projects')body={ok:true,projects:firstProject?[firstProject]:[]};
+          else if(url.pathname==='/v1/projects/fixture-project/workspace')body={ok:true,head:null,baseline:null,history:[],revision_id:null};
           else return route.abort();
           return route.fulfill({status,headers,body:JSON.stringify(body)});
         }
@@ -67,7 +69,7 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await page.reload();await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before,'reload reuses a verified session');
       assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_local_project:fixture-user:fixture-project');
-      await page.locator('#acsLogout').click();
+      await page.locator('#cwLogout').click();
       await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#lgEmail')&&!document.querySelector('#acsAuthCredentials').hidden);
       assert.equal(await page.locator('#camBar').isVisible(),false);
       assert.deepEqual(errors,[]);

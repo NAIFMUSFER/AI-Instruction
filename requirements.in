@@ -11,3 +11,5 @@ pypdf==6.16.1
 python-multipart==0.0.31
 uvicorn[standard]==0.27.0
 Pillow==12.3.0
+numpy==2.4.4
+ezdxf==1.4.4

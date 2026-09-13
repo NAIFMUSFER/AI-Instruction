@@ -823,6 +823,10 @@ def _build_client(cfg, timeout_s):
         raise E.AcsApiError(E.ACS_UPSTREAM_NOT_CONFIGURED)
 
     kw = {"api_key": cfg.api_key}
+    import acs_provider_budget as REQUEST_BUDGET
+    if REQUEST_BUDGET.active():
+        # Count each network attempt explicitly in the isolated plan worker.
+        kw["max_retries"] = 0
     if cfg.base_url:
         if not _sdk_accepts_base_url():
             # لا رجوع صامت إلى نقطة النهاية الافتراضية: انظر _sdk_accepts_base_url.
@@ -930,6 +934,8 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
 
         def _call(kw):
             """ينفّذ وسائط مبنيّة سلفاً. البثّ أوّلاً، وcreate لمكتبة بلا stream."""
+            import acs_provider_budget as REQUEST_BUDGET
+            REQUEST_BUDGET.consume()
             try:
                 with client.messages.stream(**kw) as s:
                     return s.get_final_message()
@@ -940,6 +946,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                 # يُعاد إرساله حرفياً إلى create() فيفشل الفشل نفسه — تكرارٌ مضمون
                 # الفشل يمحو أثر السبب. خطأ الوسائط ليس «مكتبة قديمة بلا بثّ»:
                 # يُترك ليصنَّف عطلاً محلياً في _classify_call_error.
+                REQUEST_BUDGET.consume()
                 return client.messages.create(**kw)
 
         # سلّم محاولات مقصور على حالة واحدة: رد **بلا نصّ إطلاقاً**، وسببها المعروف

@@ -13,6 +13,37 @@ import acs_auth_gateway as G
 
 
 class AuthGatewayTests(unittest.TestCase):
+    def test_recovery_and_confirmation_are_fixed_origin_and_email_only(self):
+        for confirmation, path in [(False, '/auth/v1/recover?'), (True, '/auth/v1/resend?')]:
+            with patch.object(G, '_request', return_value=(200, {})) as request:
+                status, result = G._email_action({'email': ' a@example.test ', 'redirect_to': 'https://untrusted.invalid/', 'password': 'unused'}, confirmation=confirmation)
+                self.assertEqual(status, 200)
+                self.assertTrue(result['ok'])
+                self.assertTrue(request.call_args.args[1].startswith(path))
+                self.assertNotIn('untrusted', request.call_args.args[1])
+                self.assertEqual(request.call_args.kwargs['payload'], {'email': 'a@example.test', **({'type': 'signup'} if confirmation else {})})
+
+    def test_password_update_cannot_select_another_user(self):
+        with patch.object(G, '_request', return_value=(200, {'id': 'verified-user'})) as request:
+            status, result = G._update_password('verified-session', {'password': 'new-fixture-password', 'user_id': 'other', 'email': 'other@example.test'})
+            self.assertEqual((status, result), (200, {'ok': True}))
+            self.assertEqual(request.call_args.args, ('PUT', '/auth/v1/user'))
+            self.assertEqual(request.call_args.kwargs, {'token': 'verified-session', 'payload': {'password': 'new-fixture-password'}})
+        with patch.object(G, '_request') as request:
+            self.assertEqual(G._update_password('', {'password': 'new-fixture-password'})[0], 401)
+            request.assert_not_called()
+
+    def test_selected_project_denial_never_creates_a_replacement(self):
+        with patch.object(G, '_request', side_effect=[(200, {'id': 'u'}), (200, [])]) as request:
+            result = G._bootstrap_project('session', {'project_id': '11111111-1111-4111-8111-111111111111', 'name': 'do not create'})
+            self.assertEqual(result[0], 404)
+            self.assertEqual(request.call_count, 2)
+
+    def test_additional_project_uses_verified_owner(self):
+        with patch.object(G, '_request', side_effect=[(200, {'id': 'verified'}), (201, [{'id': 'p'}])]) as request:
+            self.assertEqual(G._projects('session', {'action': 'create', 'name': 'Second', 'owner_id': 'other'})[0], 200)
+            self.assertEqual(request.call_args.kwargs['payload'], {'owner_id': 'verified', 'name': 'Second'})
+
     def test_only_declared_auth_routes_are_intercepted(self):
         self.assertTrue(G.matches('/v1/auth/signup'))
         self.assertTrue(G.matches('/v1/auth/signin'))

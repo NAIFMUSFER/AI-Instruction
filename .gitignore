@@ -61,3 +61,4 @@ Thumbs.db
 # vendored separately by tools/netlify-build.sh. Never commit node_modules.
 node_modules/
 npm-debug.log*
+supabase/.temp/

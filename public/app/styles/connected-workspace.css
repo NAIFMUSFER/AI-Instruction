@@ -1,0 +1,66 @@
+body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):not(style) { visibility:hidden!important; pointer-events:none!important; }
+#designWorkspace { position:fixed; inset:0; z-index:100; overflow:auto; background:#081322; color:#edf3fe; font:16px/1.65 system-ui,sans-serif; padding:24px max(20px,calc((100vw - 1220px)/2)); box-sizing:border-box; text-align:start; }
+#designWorkspace[hidden], #designWorkspace [hidden] { display:none!important; }
+#designWorkspace * { box-sizing:border-box; }
+#designWorkspace button,#designWorkspace input,#designWorkspace textarea,#designWorkspace select { font:inherit; }
+#designWorkspace button { cursor:pointer; min-height:44px; padding:9px 16px; border:1px solid #30475f; border-radius:10px; background:#14283c; color:#e7f4ff; white-space:normal; }
+#designWorkspace button:disabled { cursor:default; opacity:.45; }
+#designWorkspace button:focus-visible,#designWorkspace input:focus-visible,#designWorkspace select:focus-visible,#designWorkspace textarea:focus-visible,#designWorkspace svg [role=button]:focus-visible { outline:3px solid #79d7ff; outline-offset:3px; }
+#designWorkspace .cw-primary { background:#42c5ef; border-color:#42c5ef; color:#071a27; font-weight:700; }
+#designWorkspace .cw-top { display:flex; justify-content:space-between; align-items:center; gap:16px; padding-bottom:20px; border-bottom:1px solid #20364a; }
+#designWorkspace .cw-brand { color:#68d3fa; font-weight:800; font-size:26px; letter-spacing:4px; }
+#designWorkspace h1 { font-size:clamp(25px,3vw,38px); margin:4px 0 8px; letter-spacing:-.6px; }
+#designWorkspace h2 { margin:0 0 12px; font-size:22px; }
+#designWorkspace h3 { margin:0 0 8px; font-size:17px; }
+#designWorkspace p { margin:8px 0 16px; }
+#designWorkspace .cw-muted { color:#a8bbcd; }
+#designWorkspace .cw-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+#designWorkspace .cw-steps { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:24px 0; }
+#designWorkspace .cw-steps button { text-align:start; border:0; border-bottom:3px solid #263d51; border-radius:4px; background:transparent; color:#93aabd; }
+#designWorkspace .cw-steps button[aria-current=step] { color:#71dbff; border-color:#45c7ee; background:#132c40; }
+#designWorkspace .cw-card { background:#102136; border:1px solid #263c52; border-radius:16px; padding:24px; min-width:0; }
+#designWorkspace .cw-grid { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:20px; align-items:start; }
+#designWorkspace label { display:block; color:#c0d1e1; margin:12px 0 5px; }
+#designWorkspace input:not([type=checkbox]),#designWorkspace select,#designWorkspace textarea { display:block; width:100%; padding:11px 12px; min-height:46px; background:#091828; border:1px solid #324b64; border-radius:9px; color:#eff6ff; }
+#designWorkspace textarea { resize:vertical; }
+#designWorkspace input[type=checkbox] { width:20px; height:20px; accent-color:#51cdef; vertical-align:middle; margin-inline-end:8px; }
+#designWorkspace .cw-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+#designWorkspace .cw-check { padding:14px 0; }
+#designWorkspace .cw-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:20px; }
+#designWorkspace .cw-option-code { display:block; font-size:34px; font-weight:800; color:#66d1f7; }
+#designWorkspace .cw-status { min-height:32px; padding:8px 0; color:#bfe9fb; }
+#designWorkspace .cw-status.bad { color:#ffb8a6; }
+#designWorkspace .cw-table-wrap { overflow:auto; }
+#designWorkspace table { width:100%; border-collapse:collapse; font-size:14px; }
+#designWorkspace th,#designWorkspace td { text-align:start; padding:10px; border-bottom:1px solid #2b4258; overflow-wrap:anywhere; }
+#designWorkspace th { color:#a8bfd1; }
+#designWorkspace .cw-review { display:grid; grid-template-columns:minmax(0,1fr) 285px; gap:18px; }
+#designWorkspace .cw-drawing { background:#e9eef3; color:#162739; border-radius:12px; padding:14px; }
+#designWorkspace #cwPlan { display:block; width:100%; height:460px; touch-action:manipulation; }
+#designWorkspace #cwPlan .cw-room { fill:#b4d9e5; fill-opacity:.72; stroke:#446a7e; stroke-width:.08; cursor:pointer; }
+#designWorkspace #cwPlan .cw-room[aria-pressed=true] { fill:#78d3eb; stroke:#096e97; stroke-width:.16; }
+#designWorkspace #cwPlan text { fill:#183247; text-anchor:middle; pointer-events:none; }
+#designWorkspace .cw-space-list { display:flex; flex-direction:column; max-height:240px; overflow:auto; gap:6px; margin-top:16px; }
+#designWorkspace .cw-space-list button { text-align:start; }
+#designWorkspace .cw-results { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:18px; }
+#designWorkspace .cw-badge { display:inline-block; padding:3px 9px; border:1px solid #3a6377; border-radius:20px; color:#9ee2f7; font-size:13px; }
+#designWorkspace .cw-actions { display:flex; flex-wrap:wrap; gap:10px; margin-top:20px; }
+#designWorkspace details { margin:16px 0; }
+#designWorkspace summary { cursor:pointer; min-height:40px; color:#a6dfff; }
+#designWorkspace pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:400px; overflow:auto; direction:ltr; text-align:left; }
+#designWorkspace #cwViewer { position:relative; height:520px; background:#101d2c; border-radius:12px; overflow:hidden; margin-top:20px; }
+#designWorkspace #cwViewer canvas { display:block; width:100%; height:100%; }
+#designWorkspace footer { border-top:1px solid #233d53; padding-top:18px; margin-top:32px; font-size:13px; color:#9db6ca; }
+@media(max-width:820px) {
+ #designWorkspace { padding:16px; padding-bottom:max(24px,env(safe-area-inset-bottom)); }
+ #designWorkspace .cw-top { align-items:flex-start; flex-direction:column; }
+ #designWorkspace .cw-grid,#designWorkspace .cw-review,#designWorkspace .cw-results { grid-template-columns:1fr; }
+ #designWorkspace .cw-card { padding:18px; }
+ #designWorkspace .cw-options { grid-template-columns:1fr; }
+ #designWorkspace .cw-steps { gap:4px; margin:16px 0; }
+ #designWorkspace .cw-steps button { padding:8px 5px; font-size:13px; }
+ #designWorkspace #cwPlan { height:340px; }
+ #designWorkspace .cw-fields { grid-template-columns:1fr; }
+ #designWorkspace .cw-toolbar { width:100%; }
+ #designWorkspace #cwViewer { height:380px; }
+}

@@ -1,0 +1,259 @@
+"""Connect the authenticated UI to the existing canonical revision aggregate.
+
+Only the trusted parent admits provider geometry. Browser commands contain user
+requirements or narrow element changes, never a replacement model or approval
+receipt. Derived artifacts always cross the existing frozen-baseline gate.
+"""
+from __future__ import annotations
+
+import base64
+import json
+import math
+from pathlib import Path
+import tempfile
+
+from acs_plan_review import PlanError, canonical, digest
+from acs_plan_store_reload import load_workspace
+from acs_plan_commands import _command, _view_result
+from acs_plan_bridge import existing_geometry_verifier
+
+SCHEMA = "acs.connected-workspace/1.0"
+OPTIONS = {
+    "A": "اقتراح يركز على استثمار المساحة ضمن المتطلبات المؤكدة.",
+    "B": "اقتراح يركز على وضوح الحركة وقرب الأنشطة المرتبطة، بلا ادعاء قياس الإنتاجية.",
+    "C": "اقتراح يركز على فصل الاستخدامات ومرونة التوسع ضمن القيود المؤكدة.",
+}
+
+
+def checked_command(command, allowed):
+    _command(command)
+    if set(command) - (set(allowed) | {"action"}):
+        raise PlanError("INVALID_PLAN_COMMAND", "الطلب يحتوي حقولاً غير مدعومة.")
+    return json.loads(canonical(command))
+
+
+def workspace(store, project_id, actor_id):
+    return load_workspace(store, project_id, actor_id=actor_id, verifier=existing_geometry_verifier)
+
+
+def view(store, project_id, actor_id, revision_id=None):
+    ws = workspace(store, project_id, actor_id)
+    rid = revision_id or ws.head
+    if rid is None:
+        return {"schema": SCHEMA, "ok": True, "head": None, "baseline": None, "history": [], "revision_id": None}
+    result = _view_result(ws, "state", rid)
+    revision = ws.get(rid)
+    result.update({"schema": SCHEMA, "ok": True, "brief": revision.brief,
+                   "requirements": json.loads(revision.requirements_json)})
+    return result
+
+
+def generation_command(command):
+    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls"})
+    if out.get("confirmed") is not True:
+        raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "راجع المتطلبات وأكدها قبل التوليد.")
+    brief, requirements = out.get("brief"), out.get("requirements")
+    if not isinstance(brief, str) or not 1 <= len(brief.strip()) <= 60000:
+        raise PlanError("DESCRIPTION_REQUIRED", "اكتب وصف المشروع ضمن الحد المسموح.")
+    if not isinstance(requirements, list) or not requirements or len(requirements) > 100:
+        raise PlanError("INVALID_PROGRAM", "أضف متطلبات مؤكدة للمشروع.")
+    if out.get("option") not in OPTIONS:
+        raise PlanError("INVALID_OPTION", "اختر البديل A أو B أو C.")
+    if type(out.get("max_provider_calls")) is not int or not 1 <= out["max_provider_calls"] <= 12:
+        raise PlanError("INVALID_BUDGET", "اختر سقف استدعاءات من 1 إلى 12.")
+    expected = out.get("expected_head")
+    if expected is not None and (not isinstance(expected, str) or len(expected) > 160):
+        raise PlanError("STALE_REVISION", "معرّف النسخة غير صالح.")
+    from acs_plan_projection import _requirements
+    from types import SimpleNamespace
+    _requirements(SimpleNamespace(requirements_json=canonical(requirements), brief=brief))
+    return out
+
+
+def chat_command(command):
+    out = checked_command(command, {"job_id", "expected_head", "notes", "confirmed", "max_provider_calls"})
+    if out.get("confirmed") is not True or type(out.get("max_provider_calls")) is not int or not 1 <= out["max_provider_calls"] <= 12:
+        raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "أكد طلب التعديل وحد الاستدعاءات.")
+    notes = out.get("notes")
+    if not isinstance(notes, list) or not 1 <= len(notes) <= 30 or any(
+        not isinstance(n, dict) or set(n) != {"text"} or not isinstance(n["text"], str)
+        or not n["text"].strip() or len(n["text"]) > 6000 for n in notes
+    ):
+        raise PlanError("INVALID_EDIT", "اكتب طلب تعديل واضحًا ضمن الحد المسموح.")
+    from acs_plan_commands import validate_plan_chat_command
+    validate_plan_chat_command({"action": "chat_edit", "expected_head": out.get("expected_head"), "notes": out.get("notes")}, actor_id="preflight")
+    return out
+
+
+def job_command(command):
+    return chat_command(command) if command.get("action") == "chat_edit" else generation_command(command)
+
+
+def budgeted_chat_candidate(building, notes, max_provider_calls):
+    from acs_plan_chat_job import generate_chat_candidate
+    from acs_provider_budget import limited
+    with limited(max_provider_calls):
+        return generate_chat_candidate(building, notes)
+
+
+def chat_and_save(store, project_id, actor_id, command):
+    command = chat_command(command)
+    from acs_plan_chat_orchestration import execute_isolated_persisted_chat_edit
+    from acs_generation_job import default_runner
+    runner = default_runner()
+
+    class BudgetRunner:
+        def run(self, target, kwargs, **controls):
+            return runner.run("acs_workspace_service:budgeted_chat_candidate", {
+                "building": kwargs["building"], "notes": kwargs["notes"],
+                "max_provider_calls": command["max_provider_calls"],
+            }, **controls)
+
+    notes = json.loads(canonical(command["notes"]))
+    notes[-1]["text"] += "\nمعرّف متابعة التعديل: task:" + command["job_id"]
+    result = execute_isolated_persisted_chat_edit(store, project_id, {
+        "action": "chat_edit", "expected_head": command["expected_head"], "notes": notes,
+    }, actor_id=actor_id, verifier=existing_geometry_verifier, runner=BudgetRunner())
+    return result["revision_id"]
+
+
+def generate_plan_candidate(brief, requirements, option, max_provider_calls):
+    """Isolated worker: has no actor, bearer, project, store or approval input."""
+    from acs_plan_bridge import generate_candidate, _reject_provider_authority_changes
+    from acs_provider_budget import limited
+    prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
+    prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    with limited(max_provider_calls) as budget:
+        result = generate_candidate(prompt)
+    candidate = result["building"]
+    _reject_provider_authority_changes({}, candidate)
+    return {"building": candidate, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
+
+
+def generate_and_save(store, project_id, actor_id, command, *, runner=None):
+    command = generation_command(command)
+    expected = command.get("expected_head")
+    before = workspace(store, project_id, actor_id)
+    if before.head != expected:
+        raise PlanError("STALE_REVISION", "تغيّرت النسخة. افتح آخر نسخة قبل التوليد.")
+    if runner is None:
+        from acs_generation_job import default_runner
+        runner = default_runner()
+    result = runner.run("acs_workspace_service:generate_plan_candidate", {
+        k: command[k] for k in ("brief", "requirements", "option", "max_provider_calls")
+    }, request_id=command["job_id"])
+    if not isinstance(result, dict) or not isinstance(result.get("building"), dict):
+        raise PlanError("INVALID_PLAN", "لم يعد المزود بمخطط صالح.")
+    # Re-read after provider work, then append with compare-and-swap. Existing
+    # locks apply to every new option, and an approved baseline remains unchanged.
+    ws = workspace(store, project_id, actor_id)
+    if ws.head != expected:
+        raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
+    revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
+                          expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
+    _view_result(ws, "generate", revision.id)  # projection admission before write
+    store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
+    return revision.id
+
+
+def edit_geometry(store, project_id, actor_id, command):
+    command = checked_command(command, {"expected_head", "room_ref", "rect"})
+    ws = workspace(store, project_id, actor_id)
+    expected = command.get("expected_head")
+    if not expected or ws.head != expected:
+        raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التعديل.")
+    ref, rect = command.get("room_ref"), command.get("rect")
+    if not isinstance(ref, list) or len(ref) != 2 or any(not isinstance(v, str) for v in ref):
+        raise PlanError("ROOM_NOT_FOUND", "اختر فراغًا من المخطط.")
+    if not isinstance(rect, list) or len(rect) != 4 or any(type(v) not in (int, float) or not math.isfinite(v) for v in rect) or min(rect[2:]) <= 0:
+        raise PlanError("INVALID_GEOMETRY", "أدخل موضعًا وأبعادًا صالحة بالمتر.")
+    before = ws.get(expected)
+    candidate = before.model
+    floor = candidate["floors"].get(ref[0])
+    room = next((r for r in floor["rooms"] if r["id"] == ref[1]), None) if floor else None
+    if room is None:
+        raise PlanError("ROOM_NOT_FOUND", "الفراغ غير موجود في هذه النسخة.")
+    room["rect"] = rect
+    revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
+                          expected_head=expected, note="تعديل أبعاد وموضع " + ref[1])
+    result = _view_result(ws, "edit_geometry", revision.id, reference_revision_id=expected)
+    store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
+    return result
+
+
+def artifact(store, project_id, actor_id, command):
+    command = checked_command(command, {"revision_id", "format", "level_index"})
+    ws = workspace(store, project_id, actor_id)
+    rid, fmt = command.get("revision_id"), command.get("format")
+    if fmt not in {"svg", "dxf", "pdf", "ifc", "gltf", "review"}:
+        raise PlanError("INVALID_FORMAT", "صيغة التصدير غير مدعومة.")
+    if fmt == "review":
+        from tools.acs_plan_review_packet import build_review_packet
+        raw = canonical(build_review_packet(ws, rid)).encode("utf-8")
+        return {"ok": True, "filename": "acs-review.json", "mime": "application/json", "data_base64": base64.b64encode(raw).decode("ascii")}
+    # All other formats must first resolve the exact stored approval receipt.
+    ws.handoff(rid)
+    with tempfile.TemporaryDirectory(prefix="acs-approved-") as directory:
+        path = Path(directory) / ("acs-approved." + fmt)
+        level = command.get("level_index")
+        if fmt in {"svg", "dxf"}:
+            from tools.acs_plan_cad_export import export_approved_cad
+            receipt = export_approved_cad(ws, rid, level, path)
+        elif fmt == "pdf":
+            from tools.acs_plan_pdf_export import export_approved_pdf
+            receipt = export_approved_pdf(ws, rid, path)
+        elif fmt == "ifc":
+            from tools.acs_plan_ifc_export import export_approved_ifc
+            receipt = export_approved_ifc(ws, rid, path)
+        else:
+            from tools.acs_plan_handoff import compile_approved_baseline
+            receipt = compile_approved_baseline(ws, rid, path)
+        if path.stat().st_size > 12 * 1024 * 1024:
+            raise PlanError("INPUT_LIMIT", "ملف التصدير أكبر من حد التسليم المباشر.")
+        raw = path.read_bytes()
+    return {"ok": True, "revision_id": rid, "filename": path.name, "mime": {
+        "svg": "image/svg+xml", "dxf": "application/dxf", "pdf": "application/pdf", "ifc": "application/x-step", "gltf": "model/gltf+json"
+    }[fmt], "data_base64": base64.b64encode(raw).decode("ascii"), "receipt": receipt}
+
+
+class _SnapshotStore:
+    """Immutable server-read snapshot for the isolated artifact compiler."""
+    def __init__(self, snapshot):
+        self.snapshot = snapshot
+
+    def project_state(self, *args, **kwargs):
+        raise PlanError("READ_ONLY", "Artifact workers cannot read mutable project state")
+
+    def workspace_snapshot(self, project_id, *, actor_id):
+        if project_id != self.snapshot.get("project_id"):
+            raise PlanError("PROJECT_ACCESS_DENIED", "Artifact project changed")
+        return self.snapshot
+
+    def save_revision(self, *args, **kwargs):
+        raise PlanError("READ_ONLY", "Artifact workers cannot write revisions")
+
+    def save_approval(self, *args, **kwargs):
+        raise PlanError("READ_ONLY", "Artifact workers cannot approve")
+
+
+def artifact_from_snapshot(snapshot, command):
+    """No access token, provider or database client crosses this worker boundary."""
+    try:
+        return artifact(_SnapshotStore(snapshot), snapshot["project_id"], "artifact-worker", command)
+    except PlanError as exc:
+        # Domain validation must survive process isolation. Generic worker errors
+        # remain private and are handled by the runner, never copied here.
+        return {"ok": False, "artifact_error": {"code": exc.code, "message": str(exc)}}
+
+
+def isolated_artifact(store, project_id, actor_id, command):
+    checked_command(command, {"revision_id", "format", "level_index"})
+    snapshot = store.workspace_snapshot(project_id, actor_id=actor_id)
+    from acs_generation_job import default_runner
+    result = default_runner().run("acs_workspace_service:artifact_from_snapshot", {
+        "snapshot": snapshot, "command": command,
+    }, timeout_s=60)
+    if isinstance(result, dict) and isinstance(result.get("artifact_error"), dict):
+        error = result["artifact_error"]
+        raise PlanError(error["code"], error["message"])
+    return result

@@ -1,6 +1,7 @@
 # AI Construction Studio (ACS)
 
-> Current product acceptance: [2026-09-13 release review](docs/audits/2026-09-13-product-readiness.md).
+> Current connected workspace: [release and acceptance notes](docs/audits/2026-09-13-connected-workspace.md).
+> Earlier auth release: [PR94 review](docs/audits/2026-09-13-product-readiness.md).
 > The phase measurements below are historical evidence; they do not establish
 > completion of every item in Design Pipeline v2.
 
@@ -56,8 +57,8 @@ by the test suites, not merely a statement of intent:
 | Branch | `main`; releases must pass CI before deployment. |
 | Backend | FastAPI service, deployed as a Docker image (Render blueprint present). |
 | Frontend | Single static page published by Netlify. |
-| Authentication | Production uses the Supabase Auth gateway, session refresh and verified first-project bootstrap. Name-only development entry is restricted to localhost. |
-| Persistence | Accounts and project metadata use Supabase. Durable PlanStore commands exist. The current studio's model autosave and named design versions remain device-local, isolated by account/project. This is not automatic cross-device model sync. |
+| Authentication | Supabase Auth gateway, session refresh, verified project selection, confirmation resend and password recovery/update. Name-only development entry is restricted to localhost. |
+| Persistence | The authenticated connected workspace saves canonical revisions, requirements, locks and approval receipts in Supabase. An unsent brief draft stays on the current device. Legacy studio backups remain separate. |
 | Test material | 10 phase/remediation suite runners, plus deployment and security verifiers (§14). |
 | Known open issues | 9 tracked items in `KNOWN-ISSUES.md`, summarised in §19. |
 

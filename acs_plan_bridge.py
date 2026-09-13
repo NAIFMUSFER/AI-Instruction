@@ -179,9 +179,17 @@ def existing_geometry_verifier(building: dict) -> dict:
             return True
         if not isinstance(room.get('doors'), list) or not isinstance(room.get('windows'), list):
             return False
-        return all(isinstance(o, dict) and all(_number(o.get(k)) and o[k] > 0 for k in ('w', 'h'))
-                   and o.get('edge') in ('N', 'S', 'E', 'W') and _number(o.get('offset'))
-                   for o in room['doors'] + room['windows'])
+        def explicit(opening):
+            if not isinstance(opening, dict):
+                return False
+            for short, long in (('w', 'width'), ('h', 'height')):
+                value = opening.get(long, opening.get(short))
+                if not _number(value) or value <= 0:
+                    return False
+                if short in opening and long in opening and opening[short] != opening[long]:
+                    return False
+            return opening.get('edge') in ('N', 'S', 'E', 'W') and _number(opening.get('offset'))
+        return all(explicit(o) for o in room['doors'] + room['windows'])
     topology_known = all(openings_explicit(r) for r in rooms)
     vertical_known = len(levels) == 1
     core_issue = False

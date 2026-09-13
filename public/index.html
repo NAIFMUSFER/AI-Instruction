@@ -52,14 +52,18 @@
     <form id="acsAuthForm" novalidate>
       <div id="acsAuthNameField" hidden><label for="lgName">الاسم <span lang="en" dir="ltr">· Name</span></label><input id="lgName" autocomplete="name" maxlength="160" placeholder="اسمك أو اسم المنشأة" /></div>
       <div id="acsAuthCredentials">
-        <label for="lgEmail">البريد الإلكتروني <span lang="en" dir="ltr">· Email</span></label><input id="lgEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="320" dir="ltr" placeholder="you@example.com" />
+        <div id="acsAuthEmailField"><label for="lgEmail">البريد الإلكتروني <span lang="en" dir="ltr">· Email</span></label><input id="lgEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="320" dir="ltr" placeholder="you@example.com" /></div>
+        <div id="acsAuthPasswordField">
         <label for="lgPassword">كلمة المرور <span lang="en" dir="ltr">· Password</span></label>
         <div class="auth-password"><input id="lgPassword" type="password" autocomplete="current-password" maxlength="256" aria-describedby="acsAuthStatus" placeholder="كلمة المرور" /><button id="acsPasswordToggle" class="auth-text-button" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">إظهار</button></div>
+        </div>
+        <div id="acsAuthConfirmField" hidden><label for="lgPasswordConfirm">تأكيد كلمة المرور الجديدة</label><input id="lgPasswordConfirm" type="password" autocomplete="new-password" maxlength="256" /></div>
       </div>
       <div id="acsAuthProjectField" hidden><label for="lgProject">اسم المشروع <span lang="en" dir="ltr">· Project name</span></label><input id="lgProject" maxlength="200" placeholder="مثال: عمارة سكنية بالرياض" /></div>
       <div id="acsAuthStatus" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
       <button id="lgGo" type="submit">تسجيل الدخول ▸</button>
       <button id="lgSignup" class="auth-secondary" type="button">إنشاء حساب جديد</button>
+      <div class="auth-help"><button id="acsAuthRecover" class="auth-text-button" type="button">نسيت كلمة المرور؟</button><button id="acsAuthResend" class="auth-text-button" type="button">إعادة إرسال تأكيد البريد</button></div>
     </form>
     <p class="hint auth-privacy">مساحة خاصة لمشاريعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></p>
     <noscript><p role="alert">فعّل JavaScript لاستخدام تسجيل الدخول والاستوديو.</p></noscript>
@@ -502,6 +506,8 @@
 
 <!-- الدخول والواجهة الأساسية: سكربت عادي يعمل دائماً حتى لو فشل تحميل محرّك 3D -->
 <script src="/app/boot/engine-guard.js"></script>
+<link rel="stylesheet" href="/app/styles/connected-workspace.css">
+<script type="module" src="/app/ui/connected-workspace.mjs"></script>
 
 <script type="module" src="/app/main.js"></script>
 <!-- ===== ACS WORKSPACE DOM (generated) ===== -->

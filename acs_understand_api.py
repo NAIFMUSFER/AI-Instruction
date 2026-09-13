@@ -118,6 +118,8 @@ _origins = [o.strip() for o in os.environ.get("ACS_ALLOWED_ORIGINS", _DEFAULT_OR
 if not _origins:
     _origins = [_DEFAULT_ORIGIN]
 app.add_middleware(PLAN_HTTP.PlanCommandMiddleware)
+import acs_workspace_http as WORKSPACE_HTTP
+app.add_middleware(WORKSPACE_HTTP.WorkspaceMiddleware)
 app.add_middleware(ASYNC_JOBS.AsyncGenerationMiddleware)
 app.add_middleware(
     CORSMiddleware, allow_origins=_origins, allow_methods=["*"], allow_headers=["*"],
