@@ -88,7 +88,10 @@ const cases = [
     const kitchen=reordered.requirements.find(r=>r.role==='kitchen');
     assert.ok(kitchen&&!new Set(firstIds.values()).has(kitchen.id),'new requirement needs a fresh non-colliding identity');
 
-    const changed=buildBriefProgram(form(first.brief,{savedRequirements:first.requirements,rows:[
+    // If the engineer rewrites the brief and retires the old evidence, a changed
+    // requirement must not inherit that retired identity merely because the
+    // local fresh-id counter reaches the same brief-N slot.
+    const changed=buildBriefProgram(form('طلب بناء',{savedRequirements:first.requirements,rows:[
       {metric:'room_count',role:'bedroom',expected:'3'},
       initialRows[1],
     ]}));
