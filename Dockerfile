@@ -21,12 +21,15 @@ COPY acs_opening_identity.py ./
 # authority from request data.
 # acs_plan_commands and acs_plan_persisted_commands remain trusted-host command
 # companions; acs_plan_http is the narrow production admission/routing layer.
+# acs_plan_chat_job is proposal-only: its import performs no provider call and
+# accepts no request/session/persistence authority; the worker target imports the
+# provider only after canonical input validation.
 # acs_plan_semantic_diff is deterministic canonical-model comparison only.
-COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_supabase_plan_store.py acs_plan_session.py acs_plan_http.py ./
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_supabase_plan_store.py acs_plan_session.py acs_plan_http.py acs_plan_chat_job.py ./
 # The command companion returns the same privacy-limited read-only review packet
 # used by the browser reviewer. Package that helper explicitly without adding a route.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py
-RUN python -S -c "import sys, acs_plan_commands, acs_plan_persisted_commands, acs_supabase_plan_store, acs_plan_session, acs_plan_http; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
+RUN python -S -c "import sys, acs_plan_commands, acs_plan_persisted_commands, acs_supabase_plan_store, acs_plan_session, acs_plan_http, acs_plan_chat_job; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
 # سجل البرامج (المصدر الوحيد للحقيقة) وطبقة المشروع — لازمة للتشغيل
 COPY acs_programs.py acs_programs.json acs_project.py acs_relations.py acs_navigation.py acs_egress.py acs_distance.py ./
 # سجلّ محرّك القواعد (بلا محتوى تنظيمي) — بيانات لا شيفرة

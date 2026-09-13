@@ -57,20 +57,8 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
         note='\n'.join(n['text'] for n in notes))
 
 
-def propose_bound_chat_edit(workspace, notes: list[dict], *,
-                            expected_head: str, model=None):
-    """Propose one chat edit against server-held revision-bound locks.
-
-    This is the safer bridge for a host using ``PlanLockWorkspace``.  The caller
-    supplies only the expected revision and engineer notes; it cannot substitute
-    a detached semantic-lock manifest.  The exact manifest already bound to the
-    head revision is loaded and verified by ``workspace.get`` and is enforced
-    again by ``workspace.propose`` before immutable history is extended.
-
-    The provider therefore proposes geometry, but the canonical workspace owns
-    admission.  A successful edit is always a new draft revision.  Any earlier
-    approved baseline remains frozen and no 3D/compiler path is invoked here.
-    """
+def _bound_chat_edit_context(workspace, notes: list[dict], expected_head: str):
+    """Validate immutable Plan-first edit context without invoking a provider."""
     from acs_plan_lock_binding import PlanLockWorkspace
     if not isinstance(workspace, PlanLockWorkspace):
         raise PlanError('INVALID_WORKSPACE', 'Bound chat edits require PlanLockWorkspace')
@@ -80,18 +68,59 @@ def propose_bound_chat_edit(workspace, notes: list[dict], *,
             not isinstance(n, dict) or not isinstance(n.get('text'), str)
             or not n['text'].strip() for n in notes):
         raise PlanError('INVALID_EDIT', 'Explicit engineer notes are required')
-    notes_json = canonical(notes)
-    # get() validates the stored bound manifest before any provider work begins.
+    parsed_notes = json.loads(canonical(notes))
+    # get() validates the stored revision-bound manifest before any candidate is
+    # admitted or any provider work is started by the synchronous compatibility path.
     before = workspace.get(expected_head)
-    import acs_understand as U
-    candidate = U.apply_notes(before.model, json.loads(notes_json), model=model)
-    # PlanLockWorkspace.propose verifies inherited room/semantic locks before
-    # admission, then rebinds the exact lock set to the new immutable revision.
+    return before, parsed_notes
+
+
+def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
+                                    expected_head: str, candidate: dict):
+    """Admit a precomputed chat candidate through canonical revision authority.
+
+    This function intentionally performs **no provider work**. It is the parent-
+    process seam needed by an isolated job runner: a worker may return proposed
+    geometry, but only the authenticated host can re-check the expected head and
+    ask ``PlanLockWorkspace`` to enforce inherited room/semantic locks before an
+    immutable draft revision is created.
+
+    Approval is never copied to the new revision, an existing Frozen Baseline is
+    never moved, and no CAD/BIM/3D/compiler path is invoked here.
+    """
+    before, parsed_notes = _bound_chat_edit_context(workspace, notes, expected_head)
+    if not isinstance(candidate, dict):
+        raise PlanError('INVALID_EDIT', 'Provider candidate must be a building object')
+    detached_candidate = json.loads(canonical(candidate))
     return workspace.propose(
-        candidate, brief=before.brief,
+        detached_candidate,
+        brief=before.brief,
         requirements=json.loads(before.requirements_json),
         expected_head=expected_head,
-        note='\n'.join(n['text'] for n in notes))
+        note='\n'.join(n['text'] for n in parsed_notes),
+    )
+
+
+def propose_bound_chat_edit(workspace, notes: list[dict], *,
+                            expected_head: str, model=None):
+    """Propose one synchronous chat edit against server-held revision-bound locks.
+
+    This compatibility bridge still performs the provider call synchronously and
+    therefore must not be wired directly to a production request loop. The
+    provider only proposes geometry. Final admission is delegated to
+    :func:`admit_bound_chat_edit_candidate`, which re-checks the current head and
+    makes the canonical workspace enforce all inherited locks before history is
+    extended. A successful edit is always a new draft revision; any approved
+    baseline remains frozen and no 3D/compiler path is invoked here.
+    """
+    before, parsed_notes = _bound_chat_edit_context(workspace, notes, expected_head)
+    import acs_understand as U
+    candidate = U.apply_notes(before.model, parsed_notes, model=model)
+    # Re-enter the provider-free admission seam after provider execution. This
+    # intentionally re-checks expected_head so concurrent edits cannot be
+    # admitted merely because provider work began against an older revision.
+    return admit_bound_chat_edit_candidate(
+        workspace, parsed_notes, expected_head=expected_head, candidate=candidate)
 
 
 def existing_geometry_verifier(building: dict) -> dict:

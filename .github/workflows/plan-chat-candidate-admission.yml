@@ -1,0 +1,27 @@
+name: Plan chat candidate admission
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_bridge.py'
+      - 'tests/remediation/test_plan_chat_candidate_admission.py'
+      - '.github/workflows/plan-chat-candidate-admission.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  candidate-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile boundary and regression
+        run: |
+          python -m py_compile acs_plan_bridge.py tests/remediation/test_plan_chat_candidate_admission.py
+          python tests/remediation/test_plan_chat_candidate_admission.py
+      - name: Tests leave repository clean
+        run: git diff --exit-code
