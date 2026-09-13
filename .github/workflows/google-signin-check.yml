@@ -34,6 +34,16 @@ jobs:
           python3 tests/remediation/test_auth_gateway.py
       - name: Build shipped frontend
         run: bash tools/netlify-build.sh
+      - name: Generate deterministic measurement artifacts
+        run: |
+          python3 tools/bundle_report.py
+          python3 tools/check_doc_claims.py --fix
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: measured-frontend-artifacts
+          path: |
+            tests/performance/bundle_report.json
+            KNOWN-ISSUES.md
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Google redirect and existing account UI on desktop and mobile
