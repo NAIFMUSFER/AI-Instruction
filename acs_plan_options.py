@@ -4,10 +4,11 @@ This module compares canonical design options without ranking them or inventing 
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
 option. Explicit rack footprints, geometric rack bay counts, rack conflicts, zone
-allocation ratios, expansion-reserve rectangles, oriented lane geometry and explicit
-configured route polylines may be compared; regulatory/structural compliance,
-usable/load-rated storage capacity, throughput and inferred routing remain outside
-this contract unless a future authoritative engine supplies them.
+allocation ratios, expansion-reserve rectangles, oriented lane geometry, explicit
+configured route polylines and deterministic validation-status transitions may be
+compared; regulatory/structural compliance, usable/load-rated storage capacity,
+throughput and inferred routing remain outside this contract unless a future
+authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -21,6 +22,7 @@ from acs_plan_scorecard import measure_plan
 
 SCHEMA = "acs.plan-options/1.0"
 MAX_OPTIONS = 8
+_CHECK_STATUSES = frozenset({"PASS", "FAIL", "NOT_VERIFIED", "NOT_APPLICABLE"})
 
 _SCALAR_METRICS = (
     "site_area_m2",
@@ -91,6 +93,31 @@ def _map_delta(reference: Any, value: Any) -> dict[str, float | int] | None:
     return out
 
 
+def _check_status_changes(reference: Any, value: Any) -> dict[str, dict[str, str]] | None:
+    """Expose deterministic check transitions without turning them into a score.
+
+    The comparison is fail-closed: both scorecards must expose the same check keys,
+    each with one of the four plan-review statuses. A missing/malformed check makes
+    the whole check-transition comparison unavailable rather than silently treating
+    absence as PASS, FAIL or NOT_APPLICABLE.
+    """
+    if not isinstance(reference, dict) or not isinstance(value, dict):
+        return None
+    if set(reference) != set(value):
+        return None
+    out: dict[str, dict[str, str]] = {}
+    for key in sorted(reference):
+        left, right = reference.get(key), value.get(key)
+        if not isinstance(left, dict) or not isinstance(right, dict):
+            return None
+        before, after = left.get("status"), right.get("status")
+        if before not in _CHECK_STATUSES or after not in _CHECK_STATUSES:
+            return None
+        if before != after:
+            out[str(key)] = {"reference": before, "target": after}
+    return out
+
+
 def compare_options(options: list[dict], *, declared_program_receipt: str | None = None) -> dict:
     """Compare 2..8 alternatives against the first option as the reference.
 
@@ -147,6 +174,7 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
 
     reference = measured[0]
     ref_metrics = reference["scorecard"]["metrics"]
+    ref_checks = reference["scorecard"].get("checks")
     rows: list[dict] = []
     for item in measured:
         metrics = item["scorecard"]["metrics"]
@@ -154,12 +182,17 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
                   for key in _SCALAR_METRICS if key in ref_metrics or key in metrics}
         mappings = {key: _map_delta(ref_metrics.get(key), metrics.get(key))
                     for key in _MAP_METRICS if key in ref_metrics or key in metrics}
+        check_changes = _check_status_changes(ref_checks, item["scorecard"].get("checks"))
         rows.append({
             "option_id": item["option_id"],
             "revision_id": item["revision_id"],
             "model_hash": item["model_hash"],
             "scorecard": item["scorecard"],
-            "delta_from_reference": {"scalar": scalar, "mapping": mappings},
+            "delta_from_reference": {
+                "scalar": scalar,
+                "mapping": mappings,
+                "checks": check_changes,
+            },
         })
 
     same_site = all(canonical(item["site"]) == canonical(reference["site"]) for item in measured[1:])
