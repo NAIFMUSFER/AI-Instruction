@@ -12,10 +12,15 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
   try{
     for(const width of [393,1280]){
       const context=await browser.newContext({viewport:{width,height:852}}), page=await context.newPage();
-      const errors=[], calls=[];let firstProject=null, failSignin=true;
+      const errors=[], calls=[];let firstProject=null, failSignin=true, googleChallenge=null;
       page.on('pageerror',e=>errors.push(e.message));
       await page.route('**/*',async route=>{
         const req=route.request(),url=new URL(req.url());
+        if(url.hostname==='auth.example.test'){
+          assert.equal(url.pathname,'/auth/v1/authorize');
+          assert.equal(url.searchParams.get('code_challenge'),googleChallenge);
+          return route.fulfill({status:302,headers:{location:'https://acs-ui.test/?code=11111111-1111-4111-8111-111111111111'}});
+        }
         if(url.hostname==='acs-engine.onrender.com'){
           const headers={'content-type':'application/json','access-control-allow-origin':'https://acs-ui.test',
             'access-control-allow-headers':'content-type,accept,authorization','access-control-allow-methods':'GET,POST,OPTIONS'};
@@ -23,6 +28,16 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
           calls.push(url.pathname);
           let body={},status=200;
           if(url.pathname==='/health')body={ok:true,api_key_configured:true};
+          else if(url.pathname==='/v1/auth/google/start'){
+            const input=req.postDataJSON();googleChallenge=input.code_challenge;
+            assert.equal(input.code_verifier,undefined);
+            body={redirect_to:'https://acs-ui.test/',url:'https://auth.example.test/auth/v1/authorize?'+new URLSearchParams({
+              provider:'google',redirect_to:'https://acs-ui.test/',code_challenge:googleChallenge,code_challenge_method:'s256'})};
+          }else if(url.pathname==='/v1/auth/google/exchange'){
+            const input=req.postDataJSON();assert.equal(input.auth_code,'11111111-1111-4111-8111-111111111111');
+            assert.equal(require('node:crypto').createHash('sha256').update(input.code_verifier).digest('base64url'),googleChallenge);
+            body=session();
+          }
           else if(url.pathname==='/v1/auth/signin'){
             if(failSignin){status=503;body={error:{code:'AUTH_UPSTREAM_UNAVAILABLE',message:'خدمة الدخول غير متاحة مؤقتًا.'}};}
             else body=session();
@@ -50,9 +65,11 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       assert.equal(await page.locator('#camBar').isVisible(),false);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
       assert.ok((await page.locator('#login .card').boundingBox()).width<=448,'shared card styles must not stretch the sign-in form');
+      assert.equal(await page.locator('#acsAuthGoogle').isVisible(),true);
       await page.locator('#acsAuthRecover').click();
       assert.equal(await page.locator('#lgGo').textContent(),'إرسال رابط الاستعادة');
       assert.equal(await page.locator('#lgPassword').isVisible(),false);
+      assert.equal(await page.locator('#acsAuthGoogle').isVisible(),false);
       await page.locator('#lgSignup').click();
       await page.locator('#acsAuthResend').click();
       assert.equal(await page.locator('#lgGo').textContent(),'إرسال رسالة التأكيد');
@@ -76,13 +93,26 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await page.reload();await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before,'reload reuses a verified session');
       assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_local_project:fixture-user:fixture-project');
-      await page.locator('#cwLogout').click();
+      // Logout owns a full reload. Wait for that navigation before starting a new
+      // auth flow so the stale logout handler cannot overtake the Google redirect.
+      await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
       await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#lgEmail')&&!document.querySelector('#acsAuthCredentials').hidden);
       assert.equal(await page.locator('#camBar').isVisible(),false);
+      // A real browser redirect round trip must preserve this tab's PKCE proof,
+      // restore the same Supabase project, and keep auth codes out of the URL.
+      await page.locator('#acsAuthGoogle').click();
+      await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      assert.equal(page.url(),'https://acs-ui.test/');
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('acs_google_pkce_v1')),null);
+      assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
+      assert.equal(calls.filter(p=>p==='/v1/auth/google/exchange').length,1);
+      assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before);
+      await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
+      await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#acsAuthGoogle')&&!document.querySelector('#acsAuthGoogle').disabled);
       assert.deepEqual(errors,[]);
       fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
       await page.screenshot({path:path.join(ROOT,'logs','auth-'+width+'.png')});
-      console.log('PASS shipped auth '+width+': first opening, service error, project onboarding, reload and logout');
+      console.log('PASS shipped auth '+width+': email entry, project onboarding, Google PKCE redirect, reload and logout');
       await context.close();
     }
   }finally{await browser.close();}
