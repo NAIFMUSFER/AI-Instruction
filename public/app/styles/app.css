@@ -35,6 +35,12 @@
   #login .auth-password input{padding-inline-end:70px}
   #login .auth-text-button{position:absolute;inset-inline-end:4px;top:2px;min-height:44px;width:60px;margin:0;padding:5px;background:transparent;color:#9fdcff;font-size:12px}
   #login .auth-secondary{background:transparent;color:#a5ddf7;border:1px solid #86b4dd4d;margin-top:10px;min-height:46px}
+  #login .auth-google{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#1f1f1f;border:1px solid #747775;border-radius:6px;min-height:48px;margin-top:0;font-size:16px}
+  #login .auth-google svg{flex-shrink:0}
+  #login .auth-google:hover{background:#f2f2f2}
+  #login .auth-google:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+  #login .auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0 8px;color:var(--muted);font-size:12px}
+  #login .auth-divider::before,#login .auth-divider::after{content:"";height:1px;background:var(--line);flex:1}
   #login .hint{font-size:13px;line-height:1.65}
   #login .hint:empty{display:none}
   #login .hint.bad{color:#ffb9ad;text-align:start;background:#dc543315;padding:10px;border-radius:8px}
