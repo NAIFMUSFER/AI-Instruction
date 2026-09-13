@@ -16,7 +16,9 @@ import sys
 import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+import acs_plan_lock_binding as L
 import acs_plan_options as O
+import acs_plan_review as P
 import acs_plan_scorecard as S
 from test_plan_warehouse_operational_metrics import warehouse
 
@@ -45,6 +47,31 @@ def add_intrusions(model):
         "x": 24.0, "z": 16.0, "w": 5.0, "d": 2.0, "dir": "x",
     }]
     return model
+
+
+def verified(_model):
+    return {
+        "scopes": {"topology": "PASS", "vertical_circulation": "PASS"},
+        "issues": [],
+    }
+
+
+def reviewable(model):
+    ws = L.PlanLockWorkspace(verifier=verified)
+    rev = ws.propose(
+        model,
+        brief="Warehouse site width is 50 m.",
+        requirements=[{
+            "id": "req_site_width",
+            "source": "requested",
+            "evidence": "50",
+            "metric": "site_width_m",
+            "expected": 50,
+        }],
+        expected_head=None,
+        note="warehouse expansion approval regression",
+    )
+    return ws, rev
 
 
 class WarehouseExpansionReserveTests(unittest.TestCase):
@@ -143,6 +170,35 @@ class WarehouseExpansionReserveTests(unittest.TestCase):
         before = copy.deepcopy(model)
         S.measure_plan(model)
         self.assertEqual(model, before)
+
+    def test_review_blocks_declared_reserve_intrusion_before_engineer_approval(self):
+        ws, rev = reviewable(add_intrusions(with_reserve()))
+        report = ws.review(rev.id)
+        self.assertEqual(report["scopes"]["warehouse_expansion_reserve"], "FAIL")
+        self.assertFalse(report["can_approve"])
+        self.assertIn("WAREHOUSE_EXPANSION_RESERVE_INTRUSION",
+                      {row.get("code") for row in report["issues"]})
+        with self.assertRaises(P.PlanError) as caught:
+            ws.approve(rev.id, expected_head=rev.id, actor_label="engineer",
+                       confirmed=True, acknowledge_concept_only=True)
+        self.assertEqual(caught.exception.code, "PLAN_NOT_READY")
+
+    def test_review_blocks_unverified_declared_reserve_measurement(self):
+        model = with_reserve()
+        del model["floors"]["ground"]["rooms"][1]["racks"][0]["x"]
+        ws, rev = reviewable(model)
+        report = ws.review(rev.id)
+        self.assertEqual(report["scopes"]["warehouse_expansion_reserve"], "NOT_VERIFIED")
+        self.assertFalse(report["can_approve"])
+        self.assertIn("WAREHOUSE_EXPANSION_RESERVE_NOT_VERIFIED",
+                      {row.get("code") for row in report["issues"]})
+
+    def test_review_allows_clean_reserve_without_claiming_regulatory_compliance(self):
+        ws, rev = reviewable(with_reserve())
+        report = ws.review(rev.id)
+        self.assertEqual(report["scopes"]["warehouse_expansion_reserve"], "PASS")
+        self.assertTrue(report["can_approve"])
+        self.assertEqual(report["scopes"]["regulatory_compliance"], "NOT_VERIFIED")
 
 
 if __name__ == "__main__":

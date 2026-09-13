@@ -18,6 +18,7 @@ from typing import Any, Callable
 
 from acs_plan_options import compare_options
 from acs_plan_review import Approval, PlanError, PlanWorkspace, Revision, canonical, digest
+from acs_plan_scorecard import measure_plan
 from acs_plan_semantic_locks import build_lock_manifest, verify_lock_manifest
 
 SCHEMA = "acs.plan-lock-binding/1.0"
@@ -328,6 +329,33 @@ class PlanLockWorkspace:
         with self._mutex:
             result = dict(self._workspace.review(revision_id))
             bound = self.get(revision_id)
+            scorecard = measure_plan(bound.model)
+            if scorecard.get("typology") == "warehouse":
+                checks = scorecard.get("checks") if isinstance(scorecard, dict) else None
+                reserve = (checks.get("expansion_reserve_preservation")
+                           if isinstance(checks, dict) else None)
+                state = reserve.get("status") if isinstance(reserve, dict) else None
+                if state not in {"PASS", "FAIL", "NOT_VERIFIED", "NOT_APPLICABLE"}:
+                    state = "NOT_VERIFIED"
+                scopes = dict(result.get("scopes") or {})
+                scopes["warehouse_expansion_reserve"] = state
+                result["scopes"] = scopes
+                issues = list(result.get("issues") or [])
+                if state == "FAIL":
+                    issues.append({
+                        "code": "WAREHOUSE_EXPANSION_RESERVE_INTRUSION",
+                        "scope": "warehouse_expansion_reserve",
+                        "severity": "error",
+                    })
+                    result["can_approve"] = False
+                elif state == "NOT_VERIFIED":
+                    issues.append({
+                        "code": "WAREHOUSE_EXPANSION_RESERVE_NOT_VERIFIED",
+                        "scope": "warehouse_expansion_reserve",
+                        "severity": "error",
+                    })
+                    result["can_approve"] = False
+                result["issues"] = issues
             result["semantic_lock_manifest_hash"] = bound.semantic_lock_manifest_hash
             result["semantic_lock_count"] = bound.semantic_lock_count
             result["bound_content_hash"] = bound.bound_content_hash
@@ -336,6 +364,10 @@ class PlanLockWorkspace:
     def approve(self, revision_id: str, *, expected_head: str, actor_label: str,
                 confirmed: bool, acknowledge_concept_only: bool) -> BoundApproval:
         with self._mutex:
+            if expected_head != self.head or revision_id != self.head:
+                raise PlanError("STALE_REVISION", "Approval must refer to the currently reviewed revision")
+            if not self.review(revision_id)["can_approve"]:
+                raise PlanError("PLAN_NOT_READY", "Resolve failed or unverified plan checks first")
             base: Approval = self._workspace.approve(
                 revision_id, expected_head=expected_head, actor_label=actor_label,
                 confirmed=confirmed, acknowledge_concept_only=acknowledge_concept_only)

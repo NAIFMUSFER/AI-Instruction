@@ -34,7 +34,7 @@ export function validateView(p) {
   require(obj(r) && id(r.id) && Number.isSafeInteger(r.version) && r.version > 0 && hash(r.model_hash) && hash(r.content_hash));
   require(obj(p.review) && p.review.revision_id === r.id && p.review.model_hash === r.model_hash && p.review.content_hash === r.content_hash, 'REVISION_MISMATCH');
   require(obj(p.review.scopes) && Array.isArray(p.review.issues) && p.review.issues.every(i => obj(i) && id(i.code)));
-  require(Object.values(p.review.scopes).every(v => ['PASS', 'FAIL', 'NOT_VERIFIED'].includes(v)));
+  require(Object.values(p.review.scopes).every(v => ['PASS', 'FAIL', 'NOT_VERIFIED', 'NOT_APPLICABLE'].includes(v)));
   require(obj(p.scorecard) && obj(p.scorecard.metrics));
   require(Array.isArray(p.requirements) && p.requirements.length <= 2000);
   const requirements = new Map();
