@@ -4,6 +4,7 @@ from __future__ import annotations
 from pathlib import Path
 import sys
 import asyncio
+import json
 import unittest
 from unittest.mock import patch
 
@@ -13,6 +14,51 @@ import acs_auth_gateway as G
 
 
 class AuthGatewayTests(unittest.TestCase):
+    def test_signup_normalizes_raw_and_obfuscated_rest_users_without_a_session(self):
+        # GoTrue REST returns the User itself while confirmation is pending,
+        # including its indistinguishable repeated-signup response.
+        for identities in [[{'id': 'email-identity', 'provider': 'email'}], []]:
+            user = {'id': '11111111-1111-4111-8111-111111111111',
+                    'aud': 'authenticated', 'email': 'fixture@example.test',
+                    'identities': identities}
+            with self.subTest(identities=identities), patch.object(G, '_request', return_value=(200, user)):
+                status, result = G._signup({'email': 'fixture@example.test', 'password': 'fixture-password'})
+            self.assertEqual(status, 200)
+            self.assertEqual(result, {'user': user, 'session': None})
+            self.assertNotIn('access_token', result)
+            self.assertNotIn('refresh_token', result)
+
+    def test_signup_receipt_does_not_normalize_partial_tokens_or_signin(self):
+        for partial in [{'access_token': 'incomplete'}, {'refresh_token': 'incomplete'}]:
+            upstream = {'id': 'fixture-user', **partial}
+            with patch.object(G, '_request', return_value=(200, upstream)):
+                self.assertEqual(G._signup({'email': 'a@example.test', 'password': 'fixture-password'})[1], upstream)
+        user = {'id': 'fixture-user', 'email': 'a@example.test'}
+        with patch.object(G, '_request', return_value=(200, user)):
+            self.assertEqual(G._signin({'email': 'a@example.test', 'password': 'fixture-password'})[1], user)
+
+    def test_raw_signup_receipt_crosses_http_gateway_without_project_creation(self):
+        user = {'id': '11111111-1111-4111-8111-111111111111', 'email': 'fixture@example.test'}
+        messages = []
+        async def receive():
+            return {'type': 'http.request', 'body': json.dumps({'email': 'fixture@example.test',
+                    'password': 'fixture-password'}).encode()}
+        async def send(message):
+            messages.append(message)
+        with patch.object(G, '_request', return_value=(200, user)) as request:
+            handled = asyncio.run(G.maybe_handle({'type': 'http', 'method': 'POST',
+                'path': '/v1/auth/signup', 'headers': []}, receive, send))
+        self.assertTrue(handled)
+        self.assertEqual(messages[0]['status'], 200)
+        self.assertEqual(json.loads(messages[1]['body']), {'user': user, 'session': None})
+        self.assertEqual(request.call_count, 1)
+        self.assertTrue(request.call_args.args[1].startswith('/auth/v1/signup?'))
+
+    def test_default_email_callback_is_the_exact_production_root(self):
+        with patch.dict(G.os.environ, {'ACS_AUTH_SITE_URL': ''}):
+            query = G.urllib.parse.parse_qs(G._email_redirect()[1:])
+        self.assertEqual(query, {'redirect_to': ['https://sprightly-selkie-d906c3.netlify.app/']})
+
     def test_recovery_and_confirmation_are_fixed_origin_and_email_only(self):
         for confirmation, path in [(False, '/auth/v1/recover?'), (True, '/auth/v1/resend?')]:
             with patch.object(G, '_request', return_value=(200, {})) as request:

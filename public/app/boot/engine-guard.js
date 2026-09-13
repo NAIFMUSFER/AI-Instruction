@@ -183,8 +183,8 @@
       if(epoch!==sessionEpoch)return;
       var session=saveSession(raw);
       if(!session){
-        if(mode!=="signup"||!raw.user)throw error("لم تُرجع خدمة الدخول جلسة صالحة.","AUTH_INVALID_RESPONSE",502);
-        clearPassword();setMode("signin");setStatus("تحقق من رسالة التأكيد في بريد إنشاء الحساب، ثم ادخل بالبريد نفسه. يمكنك إعادة إرسال التأكيد من الزر أدناه.",false);return;
+        if(mode!=="signup"||!raw.user||typeof raw.user.id!=="string"||!raw.user.id||raw.session!==null||"access_token" in raw||"refresh_token" in raw)throw error("لم تُرجع خدمة الدخول جلسة صالحة.","AUTH_INVALID_RESPONSE",502);
+        clearPassword();setMode("signin");setStatus("إذا كان الحساب يحتاج تأكيدًا، افتح رسالة التأكيد في البريد نفسه. إذا كان لديك حساب، سجّل الدخول أو استخدم استعادة كلمة المرور.",false);return;
       }
       clearPassword();await finishSession(session,v.project,v.name);
     }catch(e){if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");setStatus((e.message||"تعذّر تسجيل الدخول.")+(e.code==="invalid_credentials"?" استخدم بريد إنشاء الحساب نفسه، أو اختر استعادة كلمة المرور.":""),true);}finally{setBusy(false);}
