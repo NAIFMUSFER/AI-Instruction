@@ -70,6 +70,13 @@ class AuthGatewayTests(unittest.TestCase):
         self.assertFalse(payload['created'])
         self.assertEqual(payload['project']['id'], 'p1')
 
+    def test_duplicate_authorization_headers_are_rejected_fail_closed(self):
+        scope = {'headers': [
+            (b'authorization', b'Bearer first-token'),
+            (b'authorization', b'Bearer second-token'),
+        ]}
+        self.assertEqual(G._bearer(scope), '')
+
     def test_gateway_reads_only_publishable_auth_configuration(self):
         text = Path(G.__file__).read_text(encoding='utf-8')
         self.assertIn('ACS_AUTH_SUPABASE_PUBLISHABLE_KEY', text)
