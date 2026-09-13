@@ -363,6 +363,7 @@ def measure_plan(model: dict) -> dict:
     lane_overlap_complete = bool(templates)
 
     expansion_reserve_declared = False
+    expansion_reserve_presence_known = bool(templates)
     expansion_reserve_geometry_complete = bool(templates)
     expansion_zone_overlap_complete = bool(templates)
     expansion_rack_overlap_complete = bool(templates)
@@ -385,6 +386,7 @@ def measure_plan(model: dict) -> dict:
             rack_levels_complete = rack_geometric_complete = rack_footprint_complete = False
             rack_overlap_complete = rack_lane_overlap_complete = False
             lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
+            expansion_reserve_presence_known = False
             expansion_reserve_geometry_complete = False
             expansion_zone_overlap_complete = False
             expansion_rack_overlap_complete = False
@@ -394,6 +396,7 @@ def measure_plan(model: dict) -> dict:
         reserve_rects: list[tuple[str | None, tuple[float, float, float, float]]] = []
         for reserve_room in rooms:
             if not isinstance(reserve_room, dict):
+                expansion_reserve_presence_known = False
                 expansion_reserve_geometry_complete = False
                 expansion_zone_overlap_complete = False
                 continue
@@ -677,11 +680,18 @@ def measure_plan(model: dict) -> dict:
             _measure_configured_routes(model))
 
         if not expansion_reserve_declared:
-            expansion_area_metric: float | None = 0.0
-            expansion_zone_metric: float | None = 0.0
-            expansion_rack_metric: float | None = 0.0
-            expansion_lane_metric: dict[str, float] | None = {}
-            expansion_status = "NOT_APPLICABLE"
+            if expansion_reserve_presence_known:
+                expansion_area_metric: float | None = 0.0
+                expansion_zone_metric: float | None = 0.0
+                expansion_rack_metric: float | None = 0.0
+                expansion_lane_metric: dict[str, float] | None = {}
+                expansion_status = "NOT_APPLICABLE"
+            else:
+                expansion_area_metric = None
+                expansion_zone_metric = None
+                expansion_rack_metric = None
+                expansion_lane_metric = None
+                expansion_status = "NOT_VERIFIED"
         else:
             expansion_area_metric = (round(expansion_reserve_area, 6)
                                      if expansion_reserve_geometry_complete else None)
@@ -769,18 +779,26 @@ def measure_plan(model: dict) -> dict:
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
-        if expansion_reserve_declared and not expansion_reserve_geometry_complete:
+        if not expansion_reserve_presence_known:
+            presence_message = (
+                "Expansion reserve presence cannot be verified until every referenced warehouse "
+                "room collection is inspectable.")
+            unavailable["expansion_reserve_area_m2"] = presence_message
+            unavailable["expansion_reserve_zone_overlap_area_m2"] = presence_message
+            unavailable["expansion_reserve_rack_overlap_area_m2"] = presence_message
+            unavailable["expansion_reserve_lane_overlap_area_by_kind_m2"] = presence_message
+        elif expansion_reserve_declared and not expansion_reserve_geometry_complete:
             unavailable["expansion_reserve_area_m2"] = (
                 "Expansion reserve area needs finite positive rectangles for every canonical room "
                 "whose role is exactly 'expansion'.")
-        if expansion_reserve_declared and not expansion_zone_overlap_complete:
+        if expansion_reserve_presence_known and expansion_reserve_declared and not expansion_zone_overlap_complete:
             unavailable["expansion_reserve_zone_overlap_area_m2"] = (
                 "Expansion reserve zone-overlap measurement needs explicit finite room rectangles.")
-        if expansion_reserve_declared and not expansion_rack_overlap_complete:
+        if expansion_reserve_presence_known and expansion_reserve_declared and not expansion_rack_overlap_complete:
             unavailable["expansion_reserve_rack_overlap_area_m2"] = (
                 "Expansion reserve rack-overlap measurement needs explicit room-relative rack "
                 "x/z/w/d geometry and an explicit owning-room rectangle.")
-        if expansion_reserve_declared and not expansion_lane_overlap_complete:
+        if expansion_reserve_presence_known and expansion_reserve_declared and not expansion_lane_overlap_complete:
             unavailable["expansion_reserve_lane_overlap_area_by_kind_m2"] = (
                 "Expansion reserve lane-overlap measurement needs explicit room-relative lane "
                 "kind/x/z/w/d geometry and an explicit owning-room rectangle.")
