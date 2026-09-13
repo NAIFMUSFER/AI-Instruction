@@ -133,7 +133,9 @@ export function buildBriefProgram(input) {
     return {...p,source_span:{start:cp(text.slice(0,first)),end:cp(text.slice(0,first+p.evidence.length))}};
   };
   const reusable=saved.map(recoverSource).filter(p=>p&&typeof p.id==='string'&&p.id.trim()&&p.id.length<=160&&savedIdCounts.get(p.id)===1);
-  const reservedIds=new Set(reusable.map(p=>p.id)), usedIds=new Set();
+  // Every previously valid provenance id is retired from fresh allocation even
+  // when its evidence is edited away. Only `reusable` ids may be preserved.
+  const reservedIds=new Set(savedIdCounts.keys()), usedIds=new Set();
   let nextId=0;
   const freshId=()=>{
     let id;
