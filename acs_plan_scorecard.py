@@ -89,6 +89,16 @@ def _rect_area(rect: Any) -> float | None:
     return area if math.isfinite(area) else None
 
 
+def _site_rect(local_rect: tuple[float, float, float, float] | None,
+               owner_rect: tuple[float, float, float, float] | None
+               ) -> tuple[float, float, float, float] | None:
+    """Project canonical room-relative nested geometry into site coordinates."""
+    if local_rect is None or owner_rect is None:
+        return None
+    return (owner_rect[0] + local_rect[0], owner_rect[1] + local_rect[1],
+            local_rect[2], local_rect[3])
+
+
 def _lane_rect(lane: Any) -> tuple[float, float, float, float] | None:
     if not isinstance(lane, dict):
         return None
@@ -294,8 +304,10 @@ def measure_plan(model: dict) -> dict:
       only explicit room-relative rectangle intersections. They are geometric
       conflict indicators, not clearance, traffic-safety or code-compliance proof.
     - `expansion_reserve_*` metrics use only rooms explicitly assigned canonical
-      role `expansion` and explicit zone/rack/lane rectangles. They do not predict
-      future demand, certify a reserve as sufficient, or infer clearance/safety.
+      role `expansion` and explicit zone/rack/lane rectangles. Nested racks/lanes
+      are projected from their canonical room-relative coordinates into site
+      coordinates before reserve overlap is tested. These metrics do not predict
+      future demand, certify reserve sufficiency, or infer clearance/safety.
     - `rack_group_count` counts declared rack groups, not pallet positions.
     - usable storage capacity and throughput stay unavailable unless a future
       canonical contract defines sufficient source data and calculation semantics.
@@ -441,6 +453,7 @@ def measure_plan(model: dict) -> dict:
                 space_count_by_role[normalized_role] += 1
             else:
                 unclassified_space_count += 1
+            owner_rect = _rect_tuple(room.get("rect"))
             area = _rect_area(room.get("rect"))
             if area is None:
                 warnings.append("SPACE_AREA_NOT_MEASURABLE")
@@ -530,16 +543,20 @@ def measure_plan(model: dict) -> dict:
                             expansion_rack_overlap_complete = False
                     else:
                         normalized_racks.append(rack_rect)
-                        for reserve_id, reserve_rect in reserve_rects:
-                            overlap = _rect_overlap_area(rack_rect, reserve_rect)
-                            if overlap > EPS:
-                                expansion_rack_overlap += overlap
-                                expansion_intrusions.append({
-                                    "reserve_room_id": reserve_id,
-                                    "element_kind": "rack",
-                                    "element_id": _element_id(rack),
-                                    "overlap_area_m2": round(overlap, 6),
-                                })
+                        site_rack_rect = _site_rect(rack_rect, owner_rect)
+                        if reserve_rects and site_rack_rect is None:
+                            expansion_rack_overlap_complete = False
+                        elif site_rack_rect is not None:
+                            for reserve_id, reserve_rect in reserve_rects:
+                                overlap = _rect_overlap_area(site_rack_rect, reserve_rect)
+                                if overlap > EPS:
+                                    expansion_rack_overlap += overlap
+                                    expansion_intrusions.append({
+                                        "reserve_room_id": reserve_id,
+                                        "element_kind": "rack",
+                                        "element_id": _element_id(rack),
+                                        "overlap_area_m2": round(overlap, 6),
+                                    })
                 if room_racks_complete:
                     for i in range(len(normalized_racks)):
                         for j in range(i + 1, len(normalized_racks)):
@@ -594,16 +611,20 @@ def measure_plan(model: dict) -> dict:
                             expansion_lane_overlap_complete = False
                     else:
                         normalized_lanes.append((kind, rect))
-                        for reserve_id, reserve_rect in reserve_rects:
-                            overlap = _rect_overlap_area(rect, reserve_rect)
-                            if overlap > EPS:
-                                expansion_lane_overlap[kind] += overlap
-                                expansion_intrusions.append({
-                                    "reserve_room_id": reserve_id,
-                                    "element_kind": f"lane:{kind}",
-                                    "element_id": _element_id(lane),
-                                    "overlap_area_m2": round(overlap, 6),
-                                })
+                        site_lane_rect = _site_rect(rect, owner_rect)
+                        if reserve_rects and site_lane_rect is None:
+                            expansion_lane_overlap_complete = False
+                        elif site_lane_rect is not None:
+                            for reserve_id, reserve_rect in reserve_rects:
+                                overlap = _rect_overlap_area(site_lane_rect, reserve_rect)
+                                if overlap > EPS:
+                                    expansion_lane_overlap[kind] += overlap
+                                    expansion_intrusions.append({
+                                        "reserve_room_id": reserve_id,
+                                        "element_kind": f"lane:{kind}",
+                                        "element_id": _element_id(lane),
+                                        "overlap_area_m2": round(overlap, 6),
+                                    })
                 if room_lanes_complete:
                     for i in range(len(normalized_lanes)):
                         kind_a, rect_a = normalized_lanes[i]
@@ -757,10 +778,12 @@ def measure_plan(model: dict) -> dict:
                 "Expansion reserve zone-overlap measurement needs explicit finite room rectangles.")
         if expansion_reserve_declared and not expansion_rack_overlap_complete:
             unavailable["expansion_reserve_rack_overlap_area_m2"] = (
-                "Expansion reserve rack-overlap measurement needs explicit rack x/z/w/d geometry.")
+                "Expansion reserve rack-overlap measurement needs explicit room-relative rack "
+                "x/z/w/d geometry and an explicit owning-room rectangle.")
         if expansion_reserve_declared and not expansion_lane_overlap_complete:
             unavailable["expansion_reserve_lane_overlap_area_by_kind_m2"] = (
-                "Expansion reserve lane-overlap measurement needs explicit lane kind/x/z/w/d geometry.")
+                "Expansion reserve lane-overlap measurement needs explicit room-relative lane "
+                "kind/x/z/w/d geometry and an explicit owning-room rectangle.")
         if route_error is not None:
             unavailable["configured_route_length_by_id_m"] = route_error
             unavailable["configured_route_length_by_flow_m"] = route_error
