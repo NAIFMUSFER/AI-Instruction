@@ -107,6 +107,18 @@ def _view_result(workspace: PlanLockWorkspace, action: str, revision_id: str,
     return result
 
 
+def validate_plan_chat_command(command: dict, *, actor_id: str) -> tuple[dict, str]:
+    """Preflight a chat command before any provider runner is allowed to start."""
+    _authenticated_actor(actor_id)
+    command = _command(command)
+    if command["action"].strip() != "chat_edit":
+        raise PlanError(
+            "PLAN_COMMAND_NOT_SUPPORTED",
+            "Plan chat candidate flow accepts chat_edit only",
+        )
+    return command, _head(command.get("expected_head"))
+
+
 def admit_plan_chat_candidate(workspace: PlanLockWorkspace, command: dict, *,
                               actor_id: str, candidate: dict) -> dict:
     """Admit one precomputed provider candidate through canonical Plan authority.
@@ -117,15 +129,8 @@ def admit_plan_chat_candidate(workspace: PlanLockWorkspace, command: dict, *,
     room/semantic locks. A successful candidate is a new draft only; an existing
     engineer-approved Frozen Baseline is never moved here.
     """
-    _authenticated_actor(actor_id)
     workspace = _workspace(workspace)
-    command = _command(command)
-    if command["action"].strip() != "chat_edit":
-        raise PlanError(
-            "PLAN_COMMAND_NOT_SUPPORTED",
-            "Precomputed candidate admission accepts chat_edit only",
-        )
-    expected = _head(command.get("expected_head"))
+    command, expected = validate_plan_chat_command(command, actor_id=actor_id)
     from acs_plan_bridge import admit_bound_chat_edit_candidate
     revision = admit_bound_chat_edit_candidate(
         workspace,
