@@ -112,22 +112,51 @@ export function buildBriefProgram(input) {
     if(!r)throw new Error('ورد متطلب '+requirementLabel(c)+' في الوصف. أضفه إلى البرنامج قبل التأكيد.');
     if(Math.abs(r.expected-c.expected)>1e-8)throw new Error('تعارض بين الوصف والحقول في '+requirementLabel(c)+'. صحّح الوصف أو القيمة قبل التوليد.');
   }
+
+  // Requirement ids are provenance identities, not row positions. Preserve an
+  // unambiguous stored id when the same requirement/value and exact evidence
+  // survive a revision. Older connected-workspace revisions did not store a
+  // source_span, so migrate them only when their evidence occurs exactly once.
+  const saved=Array.isArray(input.savedRequirements)?input.savedRequirements:[];
+  const savedIdCounts=new Map();
+  for(const p of saved){
+    if(p&&typeof p.id==='string'&&p.id.trim()&&p.id.length<=160)
+      savedIdCounts.set(p.id,(savedIdCounts.get(p.id)||0)+1);
+  }
+  const recoverSource=p=>{
+    if(!p||typeof p!=='object'||typeof p.evidence!=='string'||!p.evidence)return null;
+    const span=p.source_span;
+    if(span&&Number.isInteger(span.start)&&Number.isInteger(span.end)&&span.start>=0&&span.end>span.start&&span.end<=cp(text)
+        &&Array.from(text).slice(span.start,span.end).join('')===p.evidence)return {...p,source_span:{start:span.start,end:span.end}};
+    const first=text.indexOf(p.evidence);
+    if(first<0||text.indexOf(p.evidence,first+p.evidence.length)>=0)return null;
+    return {...p,source_span:{start:cp(text.slice(0,first)),end:cp(text.slice(0,first+p.evidence.length))}};
+  };
+  const reusable=saved.map(recoverSource).filter(p=>p&&typeof p.id==='string'&&p.id.trim()&&p.id.length<=160&&savedIdCounts.get(p.id)===1);
+  const reservedIds=new Set(reusable.map(p=>p.id)), usedIds=new Set();
+  let nextId=0;
+  const freshId=()=>{
+    let id;
+    do{id='brief-'+nextId++;}while(usedIds.has(id)||reservedIds.has(id));
+    usedIds.add(id);return id;
+  };
+
   const typeLine='نوع المشروع: '+(input.type==='warehouse'?'مستودع / صناعي':'سكني / عمارة / فيلا');
   let brief=text.split('\n').includes(typeLine)?text:text+'\n\n'+typeLine;
   const requirements=[];
-  for(const [i,r] of values.entries()){
+  for(const r of values){
+    const matches=reusable.filter(p=>requirementKey(p)===requirementKey(r)&&Number(p.expected)===r.expected);
+    const prior=matches.length===1?matches[0]:null;
     const extracted=grouped.get(requirementKey(r));
-    const prior=(input.savedRequirements||[]).find(p=>requirementKey(p)===requirementKey(r)&&p.expected===r.expected
-      &&p.source_span&&Number.isInteger(p.source_span.start)&&Number.isInteger(p.source_span.end)
-      &&p.source_span.start>=0&&p.source_span.end>p.source_span.start&&p.source_span.end<=cp(text)
-      &&Array.from(text).slice(p.source_span.start,p.source_span.end).join('')===p.evidence);
     let source=prior || extracted;
     if(!source){
       const evidence=requirementLabel(r)+(r.role?' ('+r.role+')':'')+': '+r.expected;
       const start=cp(brief)+1;brief+='\n'+evidence;
       source={source:'requested',source_id:'brief:form',evidence,source_span:{start,end:cp(brief)}};
     }
-    requirements.push({id:'brief-'+i,metric:r.metric,expected:r.expected,...(r.role?{role:r.role}:{}),
+    let id=prior?.id;
+    if(!id||usedIds.has(id))id=freshId();else usedIds.add(id);
+    requirements.push({id,metric:r.metric,expected:r.expected,...(r.role?{role:r.role}:{}),
       source:source.source,source_id:source.source_id,evidence:source.evidence,source_span:{...source.source_span},confirmed:true});
   }
   if(cp(brief)>60000)throw new Error('الوصف مع المتطلبات يتجاوز الحد المسموح.');
