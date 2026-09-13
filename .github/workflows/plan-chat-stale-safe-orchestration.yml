@@ -8,6 +8,7 @@ on:
       - 'acs_plan_commands.py'
       - 'acs_plan_http.py'
       - 'tests/remediation/test_plan_chat_stale_safe_orchestration.py'
+      - 'tests/remediation/test_plan_chat_preflight_authority.py'
       - 'Dockerfile'
       - '.github/workflows/plan-chat-stale-safe-orchestration.yml'
 
@@ -25,13 +26,16 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Compile trusted orchestration and regression
+      - name: Compile trusted orchestration and regressions
         run: |
           python -m py_compile \
             acs_plan_chat_orchestration.py \
-            tests/remediation/test_plan_chat_stale_safe_orchestration.py
+            tests/remediation/test_plan_chat_stale_safe_orchestration.py \
+            tests/remediation/test_plan_chat_preflight_authority.py
       - name: Verify reload-before-admission and stale-head rejection
         run: PYTHONPATH=. python tests/remediation/test_plan_chat_stale_safe_orchestration.py
+      - name: Verify server authority is rejected before provider work
+        run: PYTHONPATH=. python tests/remediation/test_plan_chat_preflight_authority.py
       - name: Verify trusted boundary import isolation
         run: |
           python -S - <<'PY'
