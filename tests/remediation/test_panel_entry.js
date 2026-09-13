@@ -117,7 +117,7 @@ function walk(dir, acc) {
   for (const f of fs.readdirSync(dir).sort()) {
     const p = path.join(dir, f);
     if (fs.statSync(p).isDirectory()) walk(p, acc);
-    else if (p.endsWith('.js')) acc.push(p);
+    else if (/\.m?js$/.test(p)) acc.push(p);
   }
   return acc;
 }
@@ -221,6 +221,9 @@ export const MathUtils={degToRad:(d)=>d*Math.PI/180,radToDeg:(r)=>r*180/Math.PI,
 export const REVISION='160';
 `;
 const ADDON_STUBS = {
+  // The approved viewer is importable, but this fixture cannot claim to render it.
+  'loaders/GLTFLoader.js':
+    'export class GLTFLoader{parseAsync(){throw new Error("GLTF rendering is outside the panel fixture");}}',
   'controls/OrbitControls.js':
     'export class OrbitControls{constructor(){this.target={set(){},copy(){}};'
     + 'this.enableDamping=false;}update(){}addEventListener(){}dispose(){}}',

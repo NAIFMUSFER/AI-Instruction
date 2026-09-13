@@ -354,6 +354,11 @@ try { window.__ACS_THREE_EVALUATED__ = true; } catch (e) {}
 `;
 
 const ADDON_STUBS = {
+  'loaders/GLTFLoader.js': STUB_BANNER + `
+export class GLTFLoader {
+  parseAsync() { throw new Error('GLTF rendering is outside the CSP fixture'); }
+}
+`,
   'controls/OrbitControls.js': STUB_BANNER + `
 import { Vector3 } from 'three';
 export class OrbitControls {
