@@ -104,6 +104,34 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     h.el('lgSignup').emit('click');assert.equal(h.el('acsAuthNameField').hidden,false);
     assert.equal(h.el('lgPassword').autocomplete,'new-password');assert.equal(h.calls.length,0);
   });
+  await test('confirmation receipt clears the password without authenticating or opening a project',async()=>{
+    const h=harness(()=>response({user:{id:'pending-user',email:'a@example.test'},session:null}));h.init();
+    h.el('lgSignup').emit('click');h.el('lgEmail').value='a@example.test';h.el('lgPassword').value='fixture-password';
+    h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.calls.length,1);assert.ok(h.calls[0].url.endsWith('/signup'));
+    assert.equal(h.auth.loadSession(),null);assert.equal(h.map.has(KEY),false);assert.equal(h.entered.length,0);
+    assert.equal(h.el('lgPassword').value,'');assert.equal(h.el('acsAuthTitle').textContent,'تسجيل الدخول');
+    assert.equal(h.el('acsAuthStatus').attrs.role,'status');assert.equal(h.el('acsAuthResend').hidden,false);
+    assert.match(h.el('acsAuthStatus').textContent,/إذا كان الحساب يحتاج تأكيدًا/);
+  });
+  await test('partial sessions and malformed users cannot become confirmation receipts',async()=>{
+    for(const raw of [{user:{id:'pending-user'},access_token:'incomplete'},
+      {user:{id:'pending-user'},refresh_token:'incomplete'}, {user:'unexpected',session:null},
+      {user:{},session:null}, {user:{id:'pending-user'}}]){
+      const h=harness(()=>response(raw));h.init();h.el('lgSignup').emit('click');
+      h.el('lgEmail').value='a@example.test';h.el('lgPassword').value='fixture-password';
+      h.el('acsAuthForm').emit('submit');await settle();
+      assert.equal(h.el('acsAuthStatus').attrs.role,'alert');assert.equal(h.auth.loadSession(),null);
+      assert.equal(h.entered.length,0);assert.equal(h.calls.length,1);
+    }
+  });
+  await test('a user-only signin response cannot authenticate or show signup confirmation',async()=>{
+    const h=harness(()=>response({user:{id:'pending-user'},session:null}));h.init();
+    h.el('lgEmail').value='a@example.test';h.el('lgPassword').value='fixture-password';
+    h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.el('acsAuthStatus').attrs.role,'alert');assert.equal(h.auth.loadSession(),null);
+    assert.equal(h.entered.length,0);assert.equal(h.calls.length,1);
+  });
   await test('new account onboarding reuses the session without another password submission',async()=>{
     let bootstrap=0;
     const h=harness(path=>path.endsWith('signin')?response(session()):++bootstrap===1?
