@@ -69,7 +69,7 @@ function walk(dir, acc, base) {
   for (const f of fs.readdirSync(dir).sort()) {
     const p = path.join(dir, f);
     if (fs.statSync(p).isDirectory()) walk(p, acc, base);
-    else if (p.endsWith('.js')) acc[path.relative(base, p).replace(/\\/g, '/')] =
+    else if (/\.m?js$/.test(p)) acc[path.relative(base, p).replace(/\\/g, '/')] =
       fs.readFileSync(p, 'utf8');
   }
   return acc;

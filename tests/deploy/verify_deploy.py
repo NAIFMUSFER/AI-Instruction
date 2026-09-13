@@ -125,6 +125,14 @@ def _edit(root, needle, repl, append=False):
     raise AssertionError('the needle is not in the published tree: %r' % needle)
 
 
+def _edit_engine(root, needle, what):
+    target = os.path.join(root, 'public', 'app', IG.ENGINE_FILES[what])
+    text = open(target, encoding='utf-8').read()
+    assert needle in text, (target, needle)
+    with open(target, 'w', encoding='utf-8') as output:
+        output.write(text.replace(needle, '/* removed by self-test */', 1))
+
+
 _base_rc, _base_out = _guard_run(None)
 # لولا هذه، لكانت كل الفحوص السلبية أدناه عقيمة: لو كان الحارس يقرأ شجرة
 # المستودع بدل النسخة، لسقطت النسخة السليمة أيضاً ولمرّ كل تحوير «بنجاح».
@@ -167,11 +175,16 @@ _refused('a missing application entry (<script type=module src>) is refused',
 _refused('a deleted application entry MODULE is refused — the page would '
          'serve a 404 to its own entry point',
          lambda r: os.remove(os.path.join(r, 'public', 'app', 'main.js')))
+_refused('a second shell module entry is refused',
+         lambda r: _edit(r, '</body>',
+                         '<script type="module" src="/app/ui/connected-workspace.mjs"></script></body>'))
+_refused('a missing imported .mjs module is refused',
+         lambda r: os.remove(os.path.join(r, 'public', 'app', 'ui',
+                                         'connected-workspace.mjs')))
 # كل خيط محرّك معلَن، وكل زوج علامات معلَن — لا ثلاثة منها فقط كما كان.
 for _needle, _what in IG.ENGINE_NEEDLES:
     _refused('missing %s is refused (declared engine needle)' % _what,
-             (lambda n: (lambda r: _edit(r, n, '/* removed by self-test */')))(
-                 _needle))
+             (lambda n, w: (lambda r: _edit_engine(r, n, w)))(_needle, _what))
 for _a, _b in IG.PAIRS:
     _refused('a missing generated end-marker is refused: %s' % _b[:46],
              (lambda b: (lambda r: _edit(r, b, '')))(_b))
@@ -714,8 +727,9 @@ remote = [u for u in srcs + all_links
           or (u.startswith('https://') and 'acs-engine.onrender.com' not in u)]
 chk('the page loads no remote script or stylesheet at runtime', remote == [],
     ', '.join(remote[:3]))
-chk('the shell declares at least one script and exactly one stylesheet',
-    len(srcs) >= 2 and len(links) == 1, 'scripts=%r css=%r' % (srcs, links))
+chk('the shell declares scripts and exactly the studio and connected workspace stylesheets',
+    len(srcs) >= 2 and sorted(links) == ['/app/styles/app.css', '/app/styles/connected-workspace.css'],
+    'scripts=%r css=%r' % (srcs, links))
 _ref_missing = []
 for u in srcs + links:
     if re.match(r'^[a-z]+:', u):                      # data: / https: — ليست ملفّاً
@@ -871,7 +885,15 @@ backend_files = set(m + '.py' for m in closure) | set(needed_json)
 image_files = set(copied)
 # أدوات سطر أوامر تعمل خارج الخادوم وخارج الصفحة: تُصنَّف صراحةً بدل أن تبقى
 # يتيمة. الشرط أن يثبت الفحص أن الخادوم لا يصل إليها فعلاً.
-OFFLINE_TOOLS = ['acs_compiler.py']
+OFFLINE_TOOLS = []
+# The compiler is now an approved-artifact worker. It is intentionally lazy:
+# loading the Plan command boundary still imports no compiler or provider.
+ARTIFACT_WORKERS = ['acs_compiler.py', 'acs_pbr.py', 'acs_bim.py']
+for t in ARTIFACT_WORKERS:
+    chk('the approved-artifact worker %s is packaged' % t, t in image_files)
+chk('artifact compilation resolves an exact stored approval before deriving files',
+    'ws.handoff(rid)' in rd('acs_workspace_service.py')
+    and 'compile_approved_baseline(ws, rid, path)' in rd('acs_workspace_service.py'))
 # رفقاء طبقة التأليف: شيفرة مرجعية تعيش حيث تعيش مرآة التأليف في المتصفّح، ولا
 # تُشحَن في صورة الخادوم. تُصنَّف صراحةً، ويُثبَت أدناه أن الخادوم لا يصل إليها.
 AUTHORING_COMPANIONS = ['acs_engineering_approval.py']

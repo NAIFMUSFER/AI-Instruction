@@ -449,7 +449,7 @@ chk('the pure trust core is served as a module, with its markers intact',
     built.found===true && built.bytes>4000, built);
 chk('and it is exported, so the module graph can reach it', built.exported===true,
     built);
-chk('the shell reaches it through the single module entry point',
+chk('the shell reaches the trust core through the legacy studio module entry',
     AS.shell().indexOf('<script type="module" src="/app/main.js">')>=0
     && AS.order().indexOf('trust/core.js')>=0, AS.order().join(','));
 

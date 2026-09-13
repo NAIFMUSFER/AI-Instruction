@@ -105,7 +105,7 @@ for s in IND_SCRIPTS:
 IND_MODULES = {}
 for _base, _dirs, _names in os.walk(APP):
     for _n in sorted(_names):
-        if not _n.endswith('.js'):
+        if not _n.endswith(('.js', '.mjs')):
             continue
         _p = os.path.join(_base, _n)
         IND_MODULES[os.path.relpath(_p, APP).replace(os.sep, '/')] = \

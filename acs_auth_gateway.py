@@ -14,6 +14,7 @@ import os
 import urllib.error
 import urllib.parse
 import urllib.request
+import uuid
 from typing import Any
 
 _MAX_BODY = 32 * 1024
@@ -24,6 +25,10 @@ _AUTH_PATHS = frozenset({
     "/v1/auth/refresh",
     "/v1/auth/signout",
     "/v1/auth/bootstrap-project",
+    "/v1/auth/recover",
+    "/v1/auth/resend-confirmation",
+    "/v1/auth/update-password",
+    "/v1/auth/projects",
 })
 
 
@@ -176,6 +181,10 @@ def _safe_auth_error(status: int, payload: Any) -> tuple[int, dict]:
     messages = {
         "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
         "email_not_confirmed": "أكد بريدك الإلكتروني من الرسالة المرسلة إليك، ثم سجّل الدخول.",
+        "email_address_not_authorized": "تعذّر إرسال البريد لهذا العنوان. خدمة البريد تحتاج إعدادًا من إدارة الموقع.",
+        "same_password": "اختر كلمة مرور جديدة تختلف عن الحالية.",
+        "otp_expired": "انتهت صلاحية رابط التأكيد أو الاستعادة. اطلب رسالة جديدة.",
+        "reauthentication_needed": "انتهت صلاحية جلسة تغيير كلمة المرور. اطلب رابط استعادة جديدًا.",
         "user_already_exists": "يوجد حساب بهذا البريد. استخدم تسجيل الدخول.",
         "weak_password": "اختر كلمة مرور أقوى من 8 أحرف على الأقل.",
         "over_email_send_rate_limit": "أُرسلت رسائل كثيرة مؤخرًا. انتظر قليلًا ثم حاول مجددًا.",
@@ -194,12 +203,52 @@ def _signup(body: dict) -> tuple[int, dict]:
     email, password = _email_password(body, signup=True)
     name = body.get("name")
     data = {"name": name.strip()[:160]} if isinstance(name, str) and name.strip() else {}
-    status, payload = _request("POST", "/auth/v1/signup", payload={
+    status, payload = _request("POST", "/auth/v1/signup" + _email_redirect(), payload={
         "email": email,
         "password": password,
         "data": data,
     })
     return _safe_auth_error(status, payload)
+
+
+def _email_redirect() -> str:
+    # Server configuration only: never accept a browser-selected email redirect.
+    url = _env("ACS_AUTH_SITE_URL") or "https://sprightly-selkie-d906c3.netlify.app/"
+    parsed = urllib.parse.urlsplit(url)
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.fragment:
+        raise ValueError("invalid configured auth callback")
+    return "?" + urllib.parse.urlencode({"redirect_to": url})
+
+
+def _email_action(body: dict, *, confirmation: bool = False) -> tuple[int, dict]:
+    email = body.get("email")
+    if not isinstance(email, str) or "@" not in email.strip() or len(email) > 320:
+        raise ValueError("invalid email")
+    payload = {"email": email.strip()}
+    if confirmation:
+        payload["type"] = "signup"
+    path = "/auth/v1/resend" if confirmation else "/auth/v1/recover"
+    status, result = _request("POST", path + _email_redirect(), payload=payload)
+    if status >= 400:
+        return _safe_auth_error(status, result)
+    # Keep the same receipt whether an address exists or needs confirmation.
+    return 200, {"ok": True, "message": "إذا كان البريد مسجلاً ويحتاج هذه الخطوة، ستصلك رسالة. تحقق أيضًا من البريد غير المرغوب فيه."}
+
+
+def _update_password(token: str, body: dict) -> tuple[int, dict]:
+    password = body.get("password")
+    if not token:
+        return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "افتح رابط الاستعادة من بريدك أولاً."}}
+    if not isinstance(password, str) or not 8 <= len(password) <= 256:
+        raise ValueError("invalid password")
+    # GoTrue verifies the bearer and changes only its user's password. Never
+    # accept an email, user id, role or metadata in this update payload.
+    status, result = _request("PUT", "/auth/v1/user", token=token, payload={"password": password})
+    if status >= 400:
+        return _safe_auth_error(status, result)
+    if not isinstance(result, dict) or not isinstance(result.get("id"), str):
+        return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
+    return 200, {"ok": True}
 
 
 def _signin(body: dict) -> tuple[int, dict]:
@@ -240,7 +289,12 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
     if status != 200 or not isinstance(user, dict) or not isinstance(user.get("id"), str):
         return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "جلسة الدخول غير صالحة."}}
     uid = user["id"]
+    selected = body.get("project_id")
     q = "/rest/v1/acs_projects?select=id,name,owner_id,created_at&order=created_at.asc&limit=1"
+    if selected is not None:
+        if not isinstance(selected, str) or str(uuid.UUID(selected)) != selected:
+            raise ValueError("invalid project selection")
+        q += "&id=eq." + selected
     p_status, projects = _request("GET", q, token=token)
     if p_status >= 400:
         return _safe_auth_error(p_status, projects)
@@ -248,6 +302,8 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
         return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
     if isinstance(projects, list) and projects:
         return 200, {"ok": True, "project": projects[0], "created": False, "user": {"id": uid, "email": user.get("email")}}
+    if selected is not None:
+        return 404, {"ok": False, "error": {"code": "PROJECT_NOT_AVAILABLE", "message": "المشروع المحدد غير متاح لهذا الحساب."}}
     name = body.get("name")
     if not isinstance(name, str) or not name.strip() or len(name.strip()) > 200:
         return 400, {"ok": False, "error": {"code": "PROJECT_NAME_REQUIRED", "message": "اكتب اسم المشروع الأول."}}
@@ -262,6 +318,34 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
     if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
         return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
     return 200, {"ok": True, "project": row, "created": True, "user": {"id": uid, "email": user.get("email")}}
+
+
+def _projects(token: str, body: dict) -> tuple[int, dict]:
+    if not token:
+        return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "يلزم تسجيل الدخول."}}
+    status, user = _request("GET", "/auth/v1/user", token=token)
+    if status >= 400:
+        return _safe_auth_error(status, user)
+    if not isinstance(user, dict) or not isinstance(user.get("id"), str):
+        return _safe_auth_error(502, {})
+    action = body.get("action", "list")
+    if action == "list":
+        status, rows = _request("GET", "/rest/v1/acs_projects?select=id,name,created_at&order=created_at.desc&limit=200", token=token)
+    elif action == "create":
+        name = body.get("name")
+        if not isinstance(name, str) or not 1 <= len(name.strip()) <= 200:
+            raise ValueError("project name required")
+        status, rows = _request("POST", "/rest/v1/acs_projects", token=token,
+                                payload={"owner_id": user["id"], "name": name.strip()}, prefer="return=representation")
+    else:
+        raise ValueError("unsupported project action")
+    if status >= 400:
+        return _safe_auth_error(status, rows)
+    if not isinstance(rows, list) or any(not isinstance(r, dict) or not isinstance(r.get("id"), str) for r in rows):
+        return _safe_auth_error(502, {})
+    if action == "create" and len(rows) != 1:
+        return _safe_auth_error(502, {})
+    return 200, {"ok": True, "projects": rows}
 
 
 async def maybe_handle(scope, receive, send) -> bool:
@@ -283,6 +367,14 @@ async def maybe_handle(scope, receive, send) -> bool:
             status, payload = await asyncio.to_thread(_refresh, body)
         elif path == "/v1/auth/signout":
             status, payload = await asyncio.to_thread(_signout, token)
+        elif path == "/v1/auth/recover":
+            status, payload = await asyncio.to_thread(_email_action, body)
+        elif path == "/v1/auth/resend-confirmation":
+            status, payload = await asyncio.to_thread(_email_action, body, confirmation=True)
+        elif path == "/v1/auth/update-password":
+            status, payload = await asyncio.to_thread(_update_password, token, body)
+        elif path == "/v1/auth/projects":
+            status, payload = await asyncio.to_thread(_projects, token, body)
         else:
             status, payload = await asyncio.to_thread(_bootstrap_project, token, body)
     except OverflowError:

@@ -12,6 +12,11 @@
    ============================================================ */
 import './shared-state.js';
 import './late-bindings.js';
+/* Register the 2D project lifecycle before legacy WebGL initialization.
+   A device without WebGL must retain review, approval and file export. */
+import './core/plan-review-packet.mjs';
+import './ui/approved-viewer.mjs';
+import './ui/connected-workspace.mjs';
 import './core/viewer.js';
 import './core/standards.js';
 import './core/disciplines.js';

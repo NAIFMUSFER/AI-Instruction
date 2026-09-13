@@ -11,7 +11,7 @@ const session = (overrides = {}) => ({access_token:'access-a', refresh_token:'re
 const response = (data, status=200) => ({ok:status<400, status, text:async()=>JSON.stringify(data)});
 const problem = (code, status=503) => response({error:{code,message:'message-'+code}},status);
 const settle = () => new Promise(resolve=>setImmediate(resolve));
-function harness(handler, initial=null, hostname='acs.example.test') {
+function harness(handler, initial=null, hostname='acs.example.test', hash='') {
   const map=new Map(initial?[[KEY,JSON.stringify(initial)]]:[]), calls=[], entered=[], nodes=new Map(), listeners={};
   function element(id){
     if(nodes.has(id))return nodes.get(id);
@@ -24,8 +24,8 @@ function harness(handler, initial=null, hostname='acs.example.test') {
   }
   const document={readyState:'loading',getElementById:element,querySelector:()=>null,
     addEventListener(){},createElement:()=>element('new'),body:{classList:{remove(){}}}};
-  const location={hostname,reload(){h.reloads++;}};
-  const ctx={document,location,console,setTimeout,clearTimeout,AbortController,URL,CustomEvent:class{},
+  const location={hostname,hash,pathname:'/',search:'',reload(){h.reloads++;}};
+  const ctx={document,location,history:{replaceState(){location.hash='';}},console,setTimeout,clearTimeout,AbortController,URL,URLSearchParams,CustomEvent:class{},
     localStorage:{getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)},
     fetch:async(url,opts)=>{calls.push({url,opts});return handler(new URL(url).pathname,opts,calls);},
     window:{ACS_API:{configured:'https://api.example.test',url:p=>'https://override.example.test'+p},
@@ -39,6 +39,29 @@ function harness(handler, initial=null, hostname='acs.example.test') {
 let passed=0;
 async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
 (async()=>{
+  await test('recovery sends only the selected email and never a saved password',async()=>{
+    const h=harness(()=>response({ok:true,message:'Check email'}));h.init();
+    h.el('lgEmail').value='a@example.test';h.el('lgPassword').value='old-fixture-password';
+    h.el('acsAuthRecover').emit('click');assert.equal(h.el('lgPassword').value,'');
+    assert.equal(h.el('acsAuthPasswordField').hidden,true);
+    h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.calls[0].url,'https://api.example.test/v1/auth/recover');
+    assert.deepEqual(JSON.parse(h.calls[0].opts.body),{email:'a@example.test'});assert.equal(h.entered.length,0);
+  });
+  await test('recovery callback is verified and stripped before the password form opens',async()=>{
+    let h;h=harness(path=>{assert.equal(h.ctx.location.hash,'');return path.endsWith('refresh')?response(session()):response({ok:true});},null,'acs.example.test','#type=recovery&refresh_token=fixture-link-refresh');
+    assert.equal(h.ctx.location.hash,'');h.init();await settle();
+    assert.equal(h.el('acsAuthTitle').textContent,'اختر كلمة مرور جديدة');assert.equal(h.entered.length,0);
+    h.el('lgPassword').value='replacement-fixture';h.el('lgPasswordConfirm').value='different';
+    h.el('acsAuthForm').emit('submit');await settle();assert.equal(h.calls.length,1);
+    h.el('lgPasswordConfirm').value='replacement-fixture';h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.calls[1].url,'https://api.example.test/v1/auth/update-password');assert.equal(h.calls[1].opts.headers.authorization,'Bearer access-a');
+    assert.equal(h.auth.loadSession(),null);assert.equal(h.el('lgPassword').value,'');assert.equal(h.el('lgPasswordConfirm').value,'');assert.equal(h.entered.length,0);
+  });
+  await test('invalid email link cannot retain a previously signed-in account',async()=>{
+    const h=harness(()=>{throw Error('no network');},session(),'acs.example.test','#error=access_denied&error_description=private');h.init();await settle();
+    assert.equal(h.auth.loadSession(),null);assert.equal(h.entered.length,0);assert.ok(!h.el('acsAuthStatus').textContent.includes('private'));
+  });
   await test('existing session stays usable without a refresh request',async()=>{
     const h=harness(()=>{throw Error('unexpected network');},session());
     assert.equal((await h.auth.freshSession()).user.id,'user-a');assert.equal(h.calls.length,0);

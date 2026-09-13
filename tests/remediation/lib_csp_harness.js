@@ -228,6 +228,10 @@ export const REVISION='160';
 `;
 
 const ADDON_STUBS = {
+  // Layout/CSP tests only evaluate the module graph. Any attempt to render an
+  // approved artifact must fail here; the real-vendor lifecycle tests own it.
+  'loaders/GLTFLoader.js':
+    'export class GLTFLoader{parseAsync(){throw new Error("GLTF rendering is outside the layout fixture");}}',
   'controls/OrbitControls.js':
     'export class OrbitControls{constructor(){'
     + 'this.target={set(){},copy(){},clone(){return this;},x:0,y:0,z:0};'

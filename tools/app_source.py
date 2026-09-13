@@ -55,7 +55,7 @@ def modules():
     out = {}
     for base, _dirs, files in os.walk(APP):
         for f in sorted(files):
-            if not f.endswith(".js"):
+            if not f.endswith((".js", ".mjs")):
                 continue
             p = os.path.join(base, f)
             out[os.path.relpath(p, APP).replace("\\", "/")] = _read(p)
