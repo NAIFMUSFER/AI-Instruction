@@ -55,6 +55,17 @@ test('selector keys cannot alias two canonical identities that contain delimiter
   assert.equal(targets.length, 2);
 });
 
+test('UI selector bounds exactly match the server 120-character stable-id contract', () => {
+  const tooLong = {
+    kind:'element', template:'ground', room_id:'storage', collection:'racks',
+    element_id:'r'.repeat(121),
+  };
+  assert.equal(selectorKey(tooLong), '');
+  assert.deepEqual(collectSemanticLockTargets({
+    projections:[{source_map:[{source:tooLong}]}], locks:{semantic:[]},
+  }), []);
+});
+
 test('toggling one nested lock preserves every unrelated server-held selector', () => {
   const current = [{kind:'site'}, {kind:'room', template:'ground', room_id:'office'}, rack, dock];
   const afterAdd = toggleSemanticSelector(current, lane, true);
