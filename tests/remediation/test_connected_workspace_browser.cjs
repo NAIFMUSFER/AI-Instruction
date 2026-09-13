@@ -70,7 +70,8 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
    // The nested-lock panel was mounted while this project was empty. It must
    // follow the newly generated revision without asking the owner to reload.
-   await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length===2);
+   await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length>=2);
+   await page.locator('#cwSemanticLockTarget').selectOption(JSON.stringify(['element','ground','a','points','light-a']));
    await page.locator('#cwSemanticLockToggle').click();
    await page.waitForFunction(()=>document.querySelector('#cwSemanticLockToggle')?.textContent==='إلغاء قفل العنصر'&&!document.querySelector('#cwSemanticLockToggle').disabled);
    assert.equal(await page.locator('#cwApprove').isEnabled(),false);
