@@ -1,0 +1,35 @@
+name: Production authentication boundary
+on:
+  pull_request:
+    paths:
+      - 'acs_understand_api.py'
+      - 'acs_auth.py'
+      - 'tests/remediation/test_production_auth_boundary.py'
+      - '.github/workflows/production-auth-boundary.yml'
+permissions:
+  contents: read
+concurrency:
+  group: production-auth-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  auth-boundary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Install API contract dependencies
+        run: pip install -r requirements.txt
+      - name: Compile authentication contract
+        run: python -m py_compile tests/remediation/test_production_auth_boundary.py acs_understand_api.py
+      - name: Unauthenticated cost-bearing routes fail closed
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy-test-key
+        run: python tests/remediation/test_production_auth_boundary.py
+      - name: No generated diff
+        run: git diff --exit-code

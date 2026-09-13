@@ -1,0 +1,37 @@
+name: Plan-first semantic revision diff
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_semantic_diff.py'
+      - 'acs_plan_commands.py'
+      - 'acs_plan_lock_binding.py'
+      - 'Dockerfile'
+      - 'tests/remediation/test_plan_semantic_diff.py'
+      - 'tests/remediation/test_plan_semantic_diff_commands.py'
+      - '.github/workflows/plan-semantic-diff.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plan-semantic-diff-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile deterministic semantic diff modules
+        run: python -m py_compile acs_plan_semantic_diff.py acs_plan_commands.py tests/remediation/test_plan_semantic_diff.py tests/remediation/test_plan_semantic_diff_commands.py
+      - name: Semantic model diff regressions
+        run: python -S tests/remediation/test_plan_semantic_diff.py
+      - name: Trusted command semantic diff regressions
+        run: python -S tests/remediation/test_plan_semantic_diff_commands.py
+      - name: Inert import boundary
+        run: python -S -c "import sys, acs_plan_commands; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
+      - name: No generated diff
+        run: git diff --exit-code

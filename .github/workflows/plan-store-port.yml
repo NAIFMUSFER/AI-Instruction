@@ -1,0 +1,28 @@
+name: Plan store backend port
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_store.py'
+      - 'acs_plan_store_port.py'
+      - 'acs_plan_store_reload.py'
+      - 'acs_plan_persisted_commands.py'
+      - 'tests/remediation/test_plan_store_port.py'
+      - '.github/workflows/plan-store-port.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  plan-store-port:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile persistence boundary
+        run: python -m py_compile acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_plan_persisted_commands.py tests/remediation/test_plan_store_port.py
+      - name: Backend-neutral store contract
+        run: python tests/remediation/test_plan_store_port.py

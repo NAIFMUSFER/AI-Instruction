@@ -1,0 +1,175 @@
+name: Plan-first foundation contracts
+on:
+  push:
+    branches: [feature/plan-first-pipeline-v2, feature/plan-first-durable-store]
+  pull_request:
+    paths:
+      - 'public/plan-review/**'
+      - 'tools/acs_plan_review_packet.py'
+      - 'tests/remediation/test_plan_review_packet.*'
+      - 'tests/remediation/test_plan_review_ui.cjs'
+      - '.github/workflows/plan-review-ui.yml'
+      - 'acs_plan_review.py'
+      - 'acs_plan_bridge.py'
+      - 'acs_plan_commands.py'
+      - 'acs_plan_persisted_commands.py'
+      - 'acs_plan_projection.py'
+      - 'acs_plan_scorecard.py'
+      - 'acs_plan_options.py'
+      - 'acs_plan_semantic_locks.py'
+      - 'acs_plan_semantic_diff.py'
+      - 'acs_plan_lock_binding.py'
+      - 'acs_plan_store.py'
+      - 'acs_plan_store_reload.py'
+      - 'tools/acs_plan_handoff.py'
+      - 'tools/acs_plan_ifc_export.py'
+      - 'tests/remediation/test_plan_review.py'
+      - 'tests/remediation/test_plan_provenance_admission.py'
+      - 'tests/remediation/test_plan_requirement_evidence.py'
+      - 'tests/remediation/test_plan_source_span_artifacts.py'
+      - 'tests/remediation/test_plan_warehouse_program.py'
+      - 'tests/remediation/test_plan_warehouse_lane_conflicts.py'
+      - 'tests/remediation/test_plan_revision_compare_restore.py'
+      - 'tests/remediation/test_plan_ifc_export.py'
+      - 'tests/remediation/test_plan_commands.py'
+      - 'tests/remediation/test_plan_persisted_commands.py'
+      - 'tests/remediation/test_plan_semantic_diff.py'
+      - 'tests/remediation/test_plan_semantic_diff_commands.py'
+      - 'tests/remediation/test_plan_bridge*.py'
+      - 'tests/remediation/test_plan_projection.py'
+      - 'tests/remediation/test_plan_scorecard.py'
+      - 'tests/remediation/test_plan_options.py'
+      - 'tests/remediation/test_plan_semantic_locks.py'
+      - 'tests/remediation/test_plan_lock_binding.py'
+      - 'tests/remediation/test_plan_store*.py'
+      - 'tests/remediation/test_plan_handoff.py'
+      - 'tests/remediation/test_plan_handoff_large.py'
+      - '.github/workflows/plan-first-contracts.yml'
+      - '.github/workflows/plan-persisted-commands.yml'
+      - '.github/workflows/plan-semantic-diff.yml'
+      - 'Dockerfile'
+permissions:
+  contents: read
+concurrency:
+  group: plan-first-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Import remains inert without third-party packages
+        run: |
+          python -S - <<'PYTHON'
+          import sys
+          import acs_plan_review, acs_plan_bridge, acs_plan_commands, acs_plan_persisted_commands, acs_plan_projection, acs_plan_scorecard, acs_plan_options, acs_plan_semantic_locks, acs_plan_semantic_diff, acs_plan_lock_binding, acs_plan_store, acs_plan_store_reload
+          from tools import acs_plan_handoff, acs_plan_ifc_export
+          assert 'acs_understand' not in sys.modules
+          assert 'acs_compiler' not in sys.modules
+          assert 'acs_bim' not in sys.modules
+          assert 'ezdxf' not in sys.modules
+          PYTHON
+      - name: Persisted receipt row-binding regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_store_row_binding.py 2>&1 | tee logs/plan-store-row-binding.log
+      - name: Persisted workspace restart/reload regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_store_reload.py 2>&1 | tee logs/plan-store-reload.log
+      - name: Admission-time requirement provenance regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_provenance_admission.py 2>&1 | tee logs/plan-provenance-admission.log
+      - name: Brief source-span evidence regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_requirement_evidence.py 2>&1 | tee logs/plan-requirement-evidence.log
+      - name: Source-span artifact provenance regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_source_span_artifacts.py 2>&1 | tee logs/plan-source-span-artifacts.log
+      - name: Warehouse Program-of-Requirements metrics (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_warehouse_program.py 2>&1 | tee logs/plan-warehouse-program.log
+      - name: Warehouse explicit lane-conflict regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_warehouse_lane_conflicts.py 2>&1 | tee logs/plan-warehouse-lane-conflicts.log
+      - name: Revision compare and historical restore regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_revision_compare_restore.py 2>&1 | tee logs/plan-revision-compare-restore.log
+      - name: Approved-baseline IFC export regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_ifc_export.py 2>&1 | tee logs/plan-ifc-export.log
+      - name: Authenticated-host Plan-first command regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_commands.py 2>&1 | tee logs/plan-commands.log
+      - name: Durable project Plan-first command regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_persisted_commands.py 2>&1 | tee logs/plan-persisted-commands.log
+      - name: Semantic revision diff regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_semantic_diff.py 2>&1 | tee logs/plan-semantic-diff.log
+          python -S tests/remediation/test_plan_semantic_diff_commands.py 2>&1 | tee logs/plan-semantic-diff-commands.log
+      - name: Install existing locks and optional CAD test dependency
+        run: |
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          python -m pip install --only-binary=:all: ezdxf==1.4.4 pyparsing==3.3.2 fonttools==4.65.0
+          python -m pip check
+      - name: Revision, approval, CAD, scorecard, options, semantic-diff, semantic-lock, durable-store, 3D-handoff and real-validator contracts
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: |
+          mkdir -p logs
+          python -m py_compile acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_reload.py tools/acs_plan_handoff.py tools/acs_plan_ifc_export.py
+          set -o pipefail
+          python tests/remediation/test_plan_review.py 2>&1 | tee logs/plan-review.log
+          python tests/remediation/test_plan_bridge.py 2>&1 | tee logs/plan-bridge.log
+          python tests/remediation/test_plan_commands.py 2>&1 | tee logs/plan-commands-full.log
+          python tests/remediation/test_plan_persisted_commands.py 2>&1 | tee logs/plan-persisted-commands-full.log
+          python tests/remediation/test_plan_semantic_diff.py 2>&1 | tee logs/plan-semantic-diff-full.log
+          python tests/remediation/test_plan_semantic_diff_commands.py 2>&1 | tee logs/plan-semantic-diff-commands-full.log
+          python tests/remediation/test_plan_projection.py 2>&1 | tee logs/plan-cad.log
+          python tests/remediation/test_plan_scorecard.py 2>&1 | tee logs/plan-scorecard.log
+          python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
+          python tests/remediation/test_plan_warehouse_lane_conflicts.py 2>&1 | tee logs/plan-warehouse-lane-conflicts-full.log
+          python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
+          python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
+          python tests/remediation/test_plan_store.py 2>&1 | tee logs/plan-store.log
+          python tests/remediation/test_plan_store_reload.py 2>&1 | tee logs/plan-store-reload-full.log
+          python tests/remediation/test_plan_handoff.py 2>&1 | tee logs/plan-3d-handoff.log
+          python tests/remediation/test_plan_handoff_large.py 2>&1 | tee logs/plan-3d-handoff-large.log
+          python tests/remediation/test_plan_bridge_integration.py 2>&1 | tee logs/plan-real-validator.log
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: plan-first-contract-logs
+          path: logs/
+          retention-days: 7

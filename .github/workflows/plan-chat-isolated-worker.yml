@@ -1,0 +1,28 @@
+name: Plan chat isolated provider worker
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_chat_job.py'
+      - 'tests/remediation/test_plan_chat_isolated_worker.py'
+      - 'Dockerfile'
+      - '.github/workflows/plan-chat-isolated-worker.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-plan-chat-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile boundary and regression
+        run: |
+          python -m py_compile tests/remediation/test_plan_chat_isolated_worker.py
+          python tests/remediation/test_plan_chat_isolated_worker.py
+      - name: Tests leave repository clean
+        run: git diff --exit-code

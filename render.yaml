@@ -20,6 +20,19 @@ services:
       - key: ACS_ENV
         value: production
 
+      # ── المصادقة الإنتاجية: Supabase Auth ───────────────────────────────
+      # وضع OIDC يبقى هو عقد دخول ACS؛ المزوّد supabase يحقّق Access Token عبر
+      # /auth/v1/user فقط. عنوان المشروع والمفتاح القابل للنشر يُضبطان من لوحة
+      # Render ولا تُحفظ قيمتهما في Git. غيابهما يجعل readiness/auth fail closed.
+      - key: ACS_AUTH_MODE
+        value: oidc
+      - key: ACS_AUTH_PROVIDER
+        value: supabase
+      - key: ACS_AUTH_SUPABASE_URL
+        sync: false
+      - key: ACS_AUTH_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+
       # F-47 · ثابتٌ إنتاجيّ مُعلَن، لا تحذير.
       # هذا النشر عمليّة واحدة (uvicorn بلا --workers) على نسخة واحدة
       # (plan: starter بلا توسيع تلقائي)، فحدّ المعدّل المحليّ للعملية دقيق.

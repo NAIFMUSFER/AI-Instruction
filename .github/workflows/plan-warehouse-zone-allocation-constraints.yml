@@ -1,0 +1,33 @@
+name: Plan-first warehouse zone allocation constraints
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_review.py'
+      - 'acs_plan_scorecard.py'
+      - 'tests/remediation/test_plan_warehouse_zone_allocation_constraints.py'
+      - '.github/workflows/plan-warehouse-zone-allocation-constraints.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plan-warehouse-zone-constraints-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile warehouse allocation Program contracts
+        run: python -m py_compile acs_plan_review.py acs_plan_scorecard.py tests/remediation/test_plan_warehouse_zone_allocation_constraints.py
+      - name: Explicit warehouse allocation constraint regressions
+        env:
+          ACS_ENV: test
+          ANTHROPIC_API_KEY: dummy
+        run: python -S tests/remediation/test_plan_warehouse_zone_allocation_constraints.py
+      - name: No generated diff
+        run: git diff --exit-code

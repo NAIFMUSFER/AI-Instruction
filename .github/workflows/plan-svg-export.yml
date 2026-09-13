@@ -1,0 +1,50 @@
+name: Plan-first frozen-baseline SVG export
+on:
+  pull_request:
+    paths:
+      - 'tools/acs_plan_svg_export.py'
+      - 'tests/remediation/test_plan_svg_export.py'
+      - '.github/workflows/plan-svg-export.yml'
+      - 'acs_plan_review.py'
+      - 'acs_plan_lock_binding.py'
+      - 'acs_plan_projection.py'
+permissions:
+  contents: read
+concurrency:
+  group: plan-svg-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  svg-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Standard-library import and compile gate
+        run: |
+          python -S -m py_compile tools/acs_plan_svg_export.py tests/remediation/test_plan_svg_export.py
+          python -S - <<'PYTHON'
+          import sys
+          from tools import acs_plan_svg_export
+          assert 'acs_understand' not in sys.modules
+          assert 'acs_compiler' not in sys.modules
+          assert 'acs_bim' not in sys.modules
+          assert 'ezdxf' not in sys.modules
+          PYTHON
+      - name: Frozen-baseline SVG regression suite
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_svg_export.py 2>&1 | tee logs/plan-svg-export.log
+      - name: Ensure tests did not mutate the repository
+        run: git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: plan-svg-export-logs
+          path: logs/
+          retention-days: 7
