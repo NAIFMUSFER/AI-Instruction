@@ -93,7 +93,9 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await page.reload();await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before,'reload reuses a verified session');
       assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_local_project:fixture-user:fixture-project');
-      await page.locator('#cwLogout').click();
+      // Logout owns a full reload. Wait for that navigation before starting a new
+      // auth flow so the stale logout handler cannot overtake the Google redirect.
+      await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
       await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#lgEmail')&&!document.querySelector('#acsAuthCredentials').hidden);
       assert.equal(await page.locator('#camBar').isVisible(),false);
       // A real browser redirect round trip must preserve this tab's PKCE proof,
@@ -105,7 +107,7 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
       assert.equal(calls.filter(p=>p==='/v1/auth/google/exchange').length,1);
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before);
-      await page.locator('#cwLogout').click();
+      await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
       await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#acsAuthGoogle')&&!document.querySelector('#acsAuthGoogle').disabled);
       assert.deepEqual(errors,[]);
       fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
