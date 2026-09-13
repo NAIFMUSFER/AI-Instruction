@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import subprocess
 import unittest
 from unittest.mock import patch
 
@@ -109,6 +110,36 @@ class WorkspaceLifecycle(unittest.TestCase):
             S.generate_and_save(self.store,PROJECT,ACTOR,next_command,runner=RacingRunner(model()))
         self.assertEqual(caught.exception.code,'STALE_REVISION')
         self.assertEqual(len(S.view(self.store,PROJECT,ACTOR)['history']),2)
+
+    def test_browser_program_unicode_evidence_survives_cloud_reload_and_review(self):
+        # Real shipped producer + real Python consumer: JS offsets must count
+        # Unicode code points, including emoji, rather than UTF-16 code units.
+        source = """
+          import {buildBriefProgram} from './public/app/core/brief-program.mjs';
+          console.log(JSON.stringify(buildBriefProgram({
+            brief:'🏡 موقع سكني؛ عرض الموقع ٢٠ متر؛ عمق الموقع ٢٠ متر؛ عدد الأدوار ١؛ 1 bedroom',
+            type:'residential',width:'20',depth:'20',levels:'1',
+            rows:[{metric:'room_count',role:'bedroom',expected:'1'}]
+          })));
+        """
+        program=json.loads(subprocess.check_output(['node','--input-type=module','-e',source],cwd=Path(__file__).resolve().parents[2],text=True))
+        runner=Runner(model())
+        rid=S.generate_and_save(self.store,PROJECT,ACTOR,{**command(),**program},runner=runner)
+        reopened=SQLitePlanStoreAdapter(SQLitePlanStore(Path(self.temp.name)/'plans.sqlite3'))
+        view=S.view(reopened,PROJECT,ACTOR)
+        self.assertEqual(view['revision_id'],rid)
+        self.assertEqual(view['requirements'],program['requirements'])
+        self.assertTrue(view['authority']['can_approve_concept'])
+        for r in view['requirements']:
+            self.assertEqual(view['brief'][r['source_span']['start']:r['source_span']['end']],r['evidence'])
+
+    def test_stale_source_span_is_rejected_before_provider_execution(self):
+        cmd=command();cmd['requirements'][0]['source_span']={'start':0,'end':2}
+        runner=Runner(model())
+        with self.assertRaises(PlanError) as caught:
+            S.generate_and_save(self.store,PROJECT,ACTOR,cmd,runner=runner)
+        self.assertEqual(caught.exception.code,'INVALID_PROVENANCE')
+        self.assertEqual(runner.calls,[])
 
     def test_other_actor_cannot_read_or_export(self):
         rid=self.generate()

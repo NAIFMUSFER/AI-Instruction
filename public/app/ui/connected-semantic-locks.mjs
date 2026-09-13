@@ -102,6 +102,7 @@ let selectedState = null;
 let selectedPacket = null;
 let targets = [];
 let syncing = false;
+let refreshRequested = false;
 let observer = null;
 let scheduled = null;
 
@@ -163,16 +164,17 @@ function render() {
   if (previous && targets.some(row => selectorKey(row) === previous)) select.value = previous;
   const head = selectedState?.head;
   const current = selectedState?.revision_id;
-  const onHead = stable(head) && head === current;
+  const visibleRevision = document.getElementById('cwRevision')?.value;
+  const onHead = stable(head) && head === current && current === visibleRevision;
   const target = targets.find(row => selectorKey(row) === select.value) || targets[0] || null;
   if (target && !select.value) select.value = selectorKey(target);
   const isLocked = target ? targetLocked(target) : false;
   button.textContent = isLocked ? 'إلغاء قفل العنصر' : 'قفل العنصر';
-  button.disabled = syncing || nativeBusy() || !target || !onHead;
+  button.disabled = syncing || refreshRequested || nativeBusy() || !target || !onHead;
   select.disabled = syncing || !targets.length;
   const count = lockedSelectors().length;
   if (!selectedPacket) message.textContent = 'لا توجد نسخة مخطط قابلة لقراءة الأقفال.';
-  else if (!targets.length) message.textContent = 'لا توجد عناصر داخلية ذات هوية Canonical صريحة في هذه النسخة.';
+  else if (!targets.length) message.textContent = 'لا توجد عناصر داخلية محددة يمكن قفلها في هذه النسخة.';
   else if (!onHead) message.textContent = `هذه نسخة تاريخية للقراءة فقط. الأقفال الدقيقة المحفوظة فيها: ${count}. استعدها كمسودة جديدة قبل التعديل.`;
   else message.textContent = `الأقفال الدقيقة المحفوظة في النسخة الحالية: ${count}. القفل يحمي العنصر وهندسته وسياق موضعه عبر الخادم.`;
 }
@@ -188,10 +190,10 @@ function ensurePanel() {
   title.textContent = 'أقفال العناصر الدقيقة';
   const help = document.createElement('p');
   help.className = 'cw-muted';
-  help.textContent = 'اقفل رفًا أو رصيفًا أو ممرًا أو نواة ذات هوية صريحة. لا تُنشأ هوية من ترتيب العناصر، ولا يتجاوز القفل الـCanonical Model.';
+  help.textContent = 'اختر رفًا أو رصيفًا أو ممرًا أو عنصرًا محفوظًا في المخطط لحمايته من التغيير في المقترحات التالية.';
   const label = document.createElement('label');
   label.htmlFor = 'cwSemanticLockTarget';
-  label.textContent = 'العنصر Canonical';
+  label.textContent = 'العنصر في المخطط';
   select = document.createElement('select');
   select.id = 'cwSemanticLockTarget';
   select.setAttribute('aria-label', 'العنصر المطلوب قفله');
@@ -218,7 +220,10 @@ function showError(error) {
 }
 
 async function sync() {
-  if (syncing || !ensurePanel()) return;
+  if (syncing) { refreshRequested = true; return; }
+  if (!ensurePanel()) return;
+  if (nativeBusy()) { render(); return; }
+  refreshRequested = false;
   syncing = true;
   render();
   try {
@@ -235,6 +240,7 @@ async function sync() {
   } finally {
     syncing = false;
     render();
+    if (refreshRequested) scheduleSync(0);
   }
 }
 
@@ -245,8 +251,10 @@ function scheduleSync(delay = 0) {
 
 async function toggleSelected() {
   if (syncing) return;
+  if (nativeBusy() || refreshRequested) throw new Error('انتظر اكتمال عملية المشروع الحالية قبل تغيير القفل.');
   const target = targets.find(row => selectorKey(row) === select?.value);
-  if (!target || !selectedState || selectedState.revision_id !== selectedState.head) {
+  if (!target || !selectedState || selectedState.revision_id !== selectedState.head
+      || selectedState.revision_id !== document.getElementById('cwRevision')?.value) {
     throw new Error('الأقفال تُعدّل على أحدث مسودة فقط.');
   }
   syncing = true;
@@ -278,13 +286,22 @@ function install() {
     if (event.target?.id === 'cwReload') scheduleSync(150);
   });
   if (typeof MutationObserver !== 'undefined' && document.body) {
-    // Observe only workspace mount/unmount. Rendering the select mutates child nodes,
-    // so calling render() from this observer would recursively trigger itself.
-    observer = new MutationObserver(() => {
+    // The native workspace renders new revisions without a DOM change event.
+    // Ignore mutations inside this panel so rendering cannot trigger a fetch loop.
+    observer = new MutationObserver(records => {
       if (!panel?.isConnected && document.getElementById('cwReviewContent')) scheduleSync(0);
+      else if (semanticWorkspaceChanged(records)) {
+        render();
+        if (!nativeBusy()) scheduleSync(0);
+      }
     });
-    observer.observe(document.body, {childList: true, subtree: true});
+    observer.observe(document.body, {childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy']});
   }
+}
+
+export function semanticWorkspaceChanged(records) {
+  return records.some(record => (record.type === 'childList' && record.target?.id === 'cwRevision')
+    || (record.type === 'attributes' && record.attributeName === 'aria-busy' && record.target?.id === 'designWorkspace'));
 }
 
 install();

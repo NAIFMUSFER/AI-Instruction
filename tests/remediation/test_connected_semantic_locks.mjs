@@ -6,7 +6,16 @@ const {
   collectSemanticLockTargets,
   selectorKey,
   toggleSemanticSelector,
+  semanticWorkspaceChanged,
 } = await import('../../public/app/ui/connected-semantic-locks.mjs');
+
+test('native revision and busy transitions refresh locks without observing the lock panel itself', () => {
+  assert.equal(semanticWorkspaceChanged([{type:'childList',target:{id:'cwRevision'}}]),true);
+  assert.equal(semanticWorkspaceChanged([{type:'attributes',attributeName:'aria-busy',target:{id:'designWorkspace'}}]),true);
+  assert.equal(semanticWorkspaceChanged([{type:'childList',target:{id:'cwSemanticLockTarget'}}]),false);
+  assert.equal(semanticWorkspaceChanged([{type:'childList',target:{id:'cwSemanticLockStatus'}}]),false);
+  assert.equal(semanticWorkspaceChanged([{type:'attributes',attributeName:'aria-current',target:{id:'designWorkspace'}}]),false);
+});
 
 const rack = {kind:'element', template:'ground', room_id:'storage', collection:'racks', element_id:'rack_a'};
 const dock = {kind:'element', template:'ground', room_id:'receiving', collection:'docks', element_id:'dock_n1'};
