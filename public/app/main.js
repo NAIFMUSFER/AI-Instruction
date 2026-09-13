@@ -17,6 +17,9 @@ import './late-bindings.js';
 import './core/plan-review-packet.mjs';
 import './ui/approved-viewer.mjs';
 import './ui/connected-workspace.mjs';
+/* Expose server-held stable nested locks (racks/docks/lanes/cores/etc.) through
+   the same single entry; lock authority remains in the canonical command path. */
+import './ui/connected-semantic-locks.mjs';
 import './core/viewer.js';
 import './core/standards.js';
 import './core/disciplines.js';
