@@ -11,6 +11,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+import re
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -29,6 +30,8 @@ _AUTH_PATHS = frozenset({
     "/v1/auth/resend-confirmation",
     "/v1/auth/update-password",
     "/v1/auth/projects",
+    "/v1/auth/google/start",
+    "/v1/auth/google/exchange",
 })
 
 
@@ -190,6 +193,10 @@ def _safe_auth_error(status: int, payload: Any) -> tuple[int, dict]:
         "over_email_send_rate_limit": "أُرسلت رسائل كثيرة مؤخرًا. انتظر قليلًا ثم حاول مجددًا.",
         "AUTH_NOT_CONFIGURED": "خدمة الدخول غير جاهزة حاليًا. حاول لاحقًا.",
         "AUTH_UPSTREAM_UNAVAILABLE": "تعذّر الاتصال بخدمة الدخول. حاول مجددًا بعد قليل.",
+        "GOOGLE_NOT_CONFIGURED": "الدخول باستخدام Google غير متاح حاليًا. يمكنك استخدام البريد الإلكتروني.",
+        "flow_state_expired": "انتهت مهلة الدخول باستخدام Google. ابدأ المحاولة من جديد.",
+        "flow_state_not_found": "لم تكتمل محاولة الدخول باستخدام Google. ابدأ من جديد.",
+        "bad_code_verifier": "تعذّر تأكيد محاولة الدخول باستخدام Google. ابدأ من جديد.",
     }
     if status >= 500:
         message = "خدمة الدخول غير متاحة مؤقتًا. حاول مجددًا؛ لا تحتاج إلى تغيير كلمة المرور."
@@ -218,13 +225,68 @@ def _signup(body: dict) -> tuple[int, dict]:
     return _safe_auth_error(status, payload)
 
 
-def _email_redirect() -> str:
+def _auth_site_url() -> str:
     # Server configuration only: never accept a browser-selected email redirect.
     url = _env("ACS_AUTH_SITE_URL") or "https://sprightly-selkie-d906c3.netlify.app/"
     parsed = urllib.parse.urlsplit(url)
-    if parsed.scheme != "https" or not parsed.netloc or parsed.username or parsed.fragment:
+    if parsed.scheme != "https" or not parsed.netloc or parsed.username is not None or parsed.fragment:
         raise ValueError("invalid configured auth callback")
-    return "?" + urllib.parse.urlencode({"redirect_to": url})
+    return urllib.parse.urlunsplit((parsed.scheme, parsed.netloc, parsed.path or "/", parsed.query, ""))
+
+
+def _email_redirect() -> str:
+    return "?" + urllib.parse.urlencode({"redirect_to": _auth_site_url()})
+
+
+def _google_start(body: dict) -> tuple[int, dict]:
+    # Only a PKCE challenge crosses this boundary. The verifier remains in the
+    # initiating browser tab until the one-time code exchange.
+    challenge = body.get("code_challenge")
+    if not isinstance(challenge, str) or not re.fullmatch(r"[A-Za-z0-9_-]{43}", challenge):
+        raise ValueError("invalid PKCE challenge")
+    base, callback = _base(), _auth_site_url()
+    parsed = urllib.parse.urlsplit(base)
+    if (not parsed.hostname or parsed.scheme != "https" or parsed.username is not None
+            or parsed.path or parsed.query or parsed.fragment
+            or urllib.parse.urlsplit(callback).query):
+        return _safe_auth_error(503, {"error": "AUTH_NOT_CONFIGURED"})
+    status, settings = _request("GET", "/auth/v1/settings")
+    if status >= 400:
+        return _safe_auth_error(status, settings)
+    external = settings.get("external") if isinstance(settings, dict) else None
+    if not isinstance(external, dict) or external.get("google") is not True:
+        return _safe_auth_error(503, {"error": "GOOGLE_NOT_CONFIGURED"})
+    query = urllib.parse.urlencode({
+        "provider": "google", "redirect_to": callback,
+        "code_challenge": challenge, "code_challenge_method": "s256",
+        "scopes": "openid email profile", "prompt": "select_account",
+    })
+    return 200, {"url": base + "/auth/v1/authorize?" + query, "redirect_to": callback}
+
+
+def _google_exchange(body: dict) -> tuple[int, dict]:
+    code, verifier = body.get("auth_code"), body.get("code_verifier")
+    if not isinstance(code, str) or len(code) != 36:
+        raise ValueError("invalid auth code")
+    code = str(uuid.UUID(code))
+    if not isinstance(verifier, str) or not re.fullmatch(r"[A-Za-z0-9._~-]{43,128}", verifier):
+        raise ValueError("invalid PKCE verifier")
+    status, payload = _request("POST", "/auth/v1/token?grant_type=pkce", payload={
+        "auth_code": code, "code_verifier": verifier,
+    })
+    if status >= 400:
+        return _safe_auth_error(status, payload)
+    if (not isinstance(payload, dict)
+            or any(not isinstance(payload.get(k), str) or not payload[k]
+                   for k in ("access_token", "refresh_token"))
+            or not isinstance(payload.get("user"), dict)
+            or not isinstance(payload["user"].get("id"), str) or not payload["user"]["id"]):
+        return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
+    # ACS consumes only the Supabase session. Google API tokens have no purpose
+    # here and must not be returned to, or stored by, this application.
+    return status, {k: payload[k] for k in
+                    ("access_token", "refresh_token", "expires_in", "expires_at", "token_type", "user")
+                    if k in payload}
 
 
 def _email_action(body: dict, *, confirmation: bool = False) -> tuple[int, dict]:
@@ -382,6 +444,10 @@ async def maybe_handle(scope, receive, send) -> bool:
             status, payload = await asyncio.to_thread(_update_password, token, body)
         elif path == "/v1/auth/projects":
             status, payload = await asyncio.to_thread(_projects, token, body)
+        elif path == "/v1/auth/google/start":
+            status, payload = await asyncio.to_thread(_google_start, body)
+        elif path == "/v1/auth/google/exchange":
+            status, payload = await asyncio.to_thread(_google_exchange, body)
         else:
             status, payload = await asyncio.to_thread(_bootstrap_project, token, body)
     except OverflowError:

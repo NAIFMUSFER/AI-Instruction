@@ -6,9 +6,17 @@
 (function(){
   "use strict";
   var SESSION_KEY="acs_supabase_session_v1", PROJECT_KEY="acs_project_v1", RECOVERY_KEY="acs_password_recovery_v1";
+  var GOOGLE_KEY="acs_google_pkce_v1", GOOGLE_MAX_AGE=10*60*1000, googleNavigation=false;
   var memorySession=null, refreshFlight=null, sessionEpoch=0, busy=false, mode="signin";
   var onEntry=null, restoredSession=null;
   var callbackHash=typeof location.hash==="string"?new URLSearchParams(location.hash.slice(1)):null;
+  var callbackQuery=new URLSearchParams(location.search||""), googleCallback=null;
+  if(callbackQuery.has("code")||callbackQuery.has("error")){
+    googleCallback={code:callbackQuery.get("code"),failed:callbackQuery.has("error")||callbackQuery.getAll("code").length!==1};
+    ["code","error","error_code","error_description"].forEach(function(k){callbackQuery.delete(k);});
+    var cleanQuery=callbackQuery.toString();
+    history.replaceState(null,"",location.pathname+(cleanQuery?"?"+cleanQuery:"")+location.hash);
+  }
   // Remove credential-bearing fragments before any asynchronous operation.
   if(callbackHash&&(callbackHash.has("refresh_token")||callbackHash.has("error"))){
     history.replaceState(null,"",location.pathname+location.search);
@@ -25,11 +33,12 @@
   function setStatus(text,bad){var e=byId("acsAuthStatus");if(!e)return;e.textContent=text||"";e.setAttribute("role",bad?"alert":"status");e.classList.toggle("bad",!!bad);}
   function setBusy(value){
     busy=!!value;
-    ["lgGo","lgSignup","acsAuthRecover","acsAuthResend"].forEach(function(id){var e=byId(id);if(e)e.disabled=busy;});
+    ["lgGo","lgSignup","acsAuthGoogle","acsAuthRecover","acsAuthResend"].forEach(function(id){var e=byId(id);if(e)e.disabled=busy;});
     var form=byId("acsAuthForm");if(form)form.setAttribute("aria-busy",String(busy));
   }
   function setMode(next){
     mode=next;
+    var google=byId("acsAuthGoogleField");if(google)google.hidden=next!=="signin"&&next!=="signup";
     var local=localHost(), signup=next==="signup", project=next==="project", resume=next==="resume";
     var recover=next==="recover", confirm=next==="confirm", update=next==="update";
     var name=byId("acsAuthNameField"), p=byId("acsAuthProjectField"), cred=byId("acsAuthCredentials");
@@ -82,13 +91,14 @@
     var expires=Number(s.expires_at||0);
     if(!expires&&Number(s.expires_in)>0)expires=Math.floor(Date.now()/1000)+Number(s.expires_in);
     var slim={access_token:s.access_token,refresh_token:s.refresh_token,expires_at:Number.isFinite(expires)?expires:0,
-      user:{id:s.user.id,email:s.user.email||"",user_metadata:{name:s.user.user_metadata&&s.user.user_metadata.name||""}}};
+      user:{id:s.user.id,email:s.user.email||"",user_metadata:{name:s.user.user_metadata&&(s.user.user_metadata.name||s.user.user_metadata.full_name)||""}}};
     memorySession=slim;
     try{localStorage.setItem(SESSION_KEY,JSON.stringify(slim));}catch(e){}
     return slim;
   }
   function clearSession(){
     sessionEpoch++;memorySession=null;restoredSession=null;
+    forgetGoogle();
     if(window.ACS){delete window.ACS.authSession;delete window.ACS.project;window.ACS.projectId=null;}
     try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(PROJECT_KEY);localStorage.removeItem(RECOVERY_KEY);localStorage.removeItem("acs_user");}catch(e){}
   }
@@ -131,6 +141,73 @@
   }
   function values(){return {name:byId("lgName").value.trim(),email:byId("lgEmail").value.trim(),password:byId("lgPassword").value,project:byId("lgProject").value.trim()};}
   function clearPassword(){var pw=byId("lgPassword");if(pw){pw.value="";pw.type="password";}var t=byId("acsPasswordToggle");if(t){t.textContent="إظهار";t.setAttribute("aria-label","إظهار كلمة المرور");t.setAttribute("aria-pressed","false");}}
+  function forgetGoogle(){try{sessionStorage.removeItem(GOOGLE_KEY);}catch(e){}}
+  function pendingGoogle(){try{return JSON.parse(sessionStorage.getItem(GOOGLE_KEY)||"null");}catch(e){return null;}}
+  async function startGoogle(){
+    if(busy||(mode!=="signin"&&mode!=="signup"))return;
+    clearPassword();setBusy(true);setStatus("جارٍ فتح تسجيل الدخول باستخدام Google…",false);
+    var epoch=++sessionEpoch;
+    try{
+      if(typeof crypto==="undefined"||!crypto.subtle)throw error("افتح الموقع في متصفح حديث لإكمال الدخول باستخدام Google.","GOOGLE_BROWSER_UNSUPPORTED");
+      var bytes=crypto.getRandomValues(new Uint8Array(32));
+      var verifier=Array.from(bytes,function(b){return b.toString(16).padStart(2,"0");}).join("");
+      var digest=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(verifier));
+      if(epoch!==sessionEpoch)return;
+      var challenge=btoa(String.fromCharCode.apply(null,new Uint8Array(digest))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+      // Fail before navigating if this browser cannot retain the proof in this tab.
+      var current=loadSession(), pending={verifier:verifier,created_at:Date.now(),user_id:current?current.user.id:null};
+      sessionStorage.setItem(GOOGLE_KEY,JSON.stringify(pending));
+      if(!pendingGoogle())throw error("اسمح بتخزين بيانات الموقع ثم حاول مرة أخرى.","GOOGLE_STORAGE_UNAVAILABLE");
+      var out=await acsFetchJSON("/v1/auth/google/start",{code_challenge:challenge});
+      if(epoch!==sessionEpoch){forgetGoogle();return;}
+      var callback=new URL(out.redirect_to), dest=new URL(out.url);
+      if(callback.protocol!=="https:"||callback.origin!==location.origin||callback.search||callback.hash){
+        throw error("افتح الموقع الرسمي لـ acsAI لإكمال الدخول باستخدام Google.","GOOGLE_CALLBACK_ORIGIN");
+      }
+      if(dest.protocol!=="https:"||dest.username||dest.password||dest.pathname!=="/auth/v1/authorize"||dest.hash||
+        dest.searchParams.get("provider")!=="google"||dest.searchParams.get("code_challenge")!==challenge||
+        dest.searchParams.get("code_challenge_method")!=="s256"||dest.searchParams.get("redirect_to")!==callback.href){
+        throw error("تعذّر بدء الدخول باستخدام Google. حاول لاحقًا.","AUTH_INVALID_RESPONSE",502);
+      }
+      pending.redirect_to=callback.href;sessionStorage.setItem(GOOGLE_KEY,JSON.stringify(pending));
+      location.assign(dest.href);googleNavigation=true;
+    }catch(e){
+      forgetGoogle();setStatus(typeof e.code==="string"?e.message:"تعذّر بدء الدخول باستخدام Google. اسمح بتخزين بيانات الموقع وحاول مجددًا.",true);
+    }finally{if(!googleNavigation)setBusy(false);}
+  }
+  function acceptGoogleCallback(){
+    var pending=pendingGoogle(), incoming=googleCallback;googleCallback=null;
+    // Supabase may return an OAuth cancellation in the URL fragment.
+    if(!incoming&&pending&&callbackHash&&callbackHash.has("error")){
+      incoming={failed:true};callbackHash=null;
+    }
+    forgetGoogle();
+    if(!incoming)return false;
+    callbackHash=null;clearPassword();setMode("signin");
+    var current=loadSession(), age=pending&&Date.now()-Number(pending.created_at);
+    if(incoming.failed){setStatus("لم يكتمل الدخول باستخدام Google. يمكنك المحاولة مرة أخرى.",true);return true;}
+    if(!pending||!Number.isFinite(age)||age<0||age>GOOGLE_MAX_AGE||
+      typeof pending.verifier!=="string"||!/^[a-f0-9]{64}$/.test(pending.verifier)||
+      pending.redirect_to!==location.origin+location.pathname||pending.user_id!==(current?current.user.id:null)||
+      typeof incoming.code!=="string"||!/^[a-f0-9-]{36}$/i.test(incoming.code)){
+      setStatus("انتهت محاولة الدخول أو فُتحت في تبويب آخر. اضغط المتابعة باستخدام Google من جديد.",true);return true;
+    }
+    setBusy(true);setStatus("جارٍ إكمال الدخول باستخدام Google…",false);
+    var epoch=++sessionEpoch;
+    return (async function(){try{
+      var raw=await acsFetchJSON("/v1/auth/google/exchange",{auth_code:incoming.code,code_verifier:pending.verifier});
+      if(epoch!==sessionEpoch)return true;
+      var session=saveSession(raw);
+      if(!session)throw error("لم تكتمل جلسة الدخول. حاول باستخدام Google من جديد.","AUTH_INVALID_RESPONSE",502);
+      try{localStorage.removeItem(RECOVERY_KEY);}catch(e){}
+      await finishSession(session,"");
+    }catch(e){
+      if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");
+      setStatus(e.message||"تعذّر إكمال الدخول باستخدام Google. ابدأ المحاولة من جديد.",true);
+    }finally{setBusy(false);}
+    return true;
+    })();
+  }
   async function accountAction(v){
     if(mode==="update"){
       if(v.password.length<8||v.password!==byId("lgPasswordConfirm").value){setStatus("اكتب كلمة مرور من 8 أحرف على الأقل، واجعل حقل التأكيد مطابقًا لها.",true);return;}
@@ -190,6 +267,7 @@
     }catch(e){if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");setStatus((e.message||"تعذّر تسجيل الدخول.")+(e.code==="invalid_credentials"?" استخدم بريد إنشاء الحساب نفسه، أو اختر استعادة كلمة المرور.":""),true);}finally{setBusy(false);}
   }
   async function acceptEmailCallback(){
+    var googleResult=acceptGoogleCallback();if(googleResult){await googleResult;return;}
     var incoming=callbackHash;callbackHash=null;
     if(incoming){
       clearSession();clearPassword();
@@ -244,6 +322,10 @@
     var form=byId("acsAuthForm");
     if(form)form.addEventListener("submit",function(e){e.preventDefault();submit();});
     else byId("lgGo").addEventListener("click",submit);
+    var google=byId("acsAuthGoogle");if(google)google.addEventListener("click",startGoogle);
+    window.addEventListener("pageshow",function(e){
+      if(e.persisted&&googleNavigation){googleNavigation=false;forgetGoogle();setBusy(false);setStatus("يمكنك المحاولة باستخدام Google مرة أخرى.",false);}
+    });
     byId("lgSignup").addEventListener("click",function(){if(busy)return;if(mode==="project"||mode==="resume"||mode==="update"){clearSession();clearPassword();}setStatus("",false);setMode(mode==="signin"?"signup":"signin");});
     [["acsAuthRecover","recover"],["acsAuthResend","confirm"]].forEach(function(pair){var b=byId(pair[0]);if(b)b.addEventListener("click",function(){if(busy)return;clearPassword();setMode(pair[1]);setStatus("استخدم البريد نفسه الذي أنشأت به حسابك.",false);byId("lgEmail").focus();});});
     var toggle=byId("acsPasswordToggle");if(toggle)toggle.addEventListener("click",function(){var pw=byId("lgPassword"),show=pw.type==="password";pw.type=show?"text":"password";toggle.textContent=show?"إخفاء":"إظهار";toggle.setAttribute("aria-label",show?"إخفاء كلمة المرور":"إظهار كلمة المرور");toggle.setAttribute("aria-pressed",String(show));});

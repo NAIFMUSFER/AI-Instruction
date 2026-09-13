@@ -14,6 +14,66 @@ import acs_auth_gateway as G
 
 
 class AuthGatewayTests(unittest.TestCase):
+    def test_google_start_uses_the_configured_project_and_callback(self):
+        env = {'ACS_AUTH_SUPABASE_URL': 'https://fixture.supabase.co',
+               'ACS_AUTH_SITE_URL': 'https://acs.example.test'}
+        with patch.dict(G.os.environ, env), patch.object(G, '_request', return_value=(200, {'external': {'google': True}})) as request:
+            status, result = G._google_start({'code_challenge': 'a' * 43,
+                'provider': 'other', 'redirect_to': 'https://untrusted.invalid/', 'code_verifier': 'ignored'})
+        self.assertEqual(status, 200)
+        request.assert_called_once_with('GET', '/auth/v1/settings')
+        url = G.urllib.parse.urlsplit(result['url'])
+        self.assertEqual((url.scheme, url.netloc, url.path), ('https', 'fixture.supabase.co', '/auth/v1/authorize'))
+        self.assertEqual(G.urllib.parse.parse_qs(url.query), {
+            'provider': ['google'], 'redirect_to': ['https://acs.example.test/'],
+            'code_challenge': ['a' * 43], 'code_challenge_method': ['s256'],
+            'scopes': ['openid email profile'], 'prompt': ['select_account']})
+        self.assertNotIn('code_verifier', result['url'])
+
+    def test_google_start_handles_unavailable_provider_without_redirecting(self):
+        with patch.dict(G.os.environ, {'ACS_AUTH_SUPABASE_URL': 'https://fixture.supabase.co'}):
+            for settings in [{}, {'external': {'google': False}}]:
+                with patch.object(G, '_request', return_value=(200, settings)):
+                    status, result = G._google_start({'code_challenge': 'a' * 43})
+                self.assertEqual(status, 503)
+                self.assertEqual(result['error']['code'], 'GOOGLE_NOT_CONFIGURED')
+                self.assertNotIn('url', result)
+            with patch.object(G, '_request', return_value=(503, {'error': 'AUTH_UPSTREAM_UNAVAILABLE'})):
+                self.assertEqual(G._google_start({'code_challenge': 'a' * 43})[1]['error']['code'], 'AUTH_UPSTREAM_UNAVAILABLE')
+
+    def test_google_exchange_forwards_only_code_and_proof_and_returns_supabase_session(self):
+        code = '11111111-1111-4111-8111-111111111111'
+        session = {'access_token': 'supabase-access', 'refresh_token': 'supabase-refresh',
+                   'expires_in': 3600, 'user': {'id': 'existing-user'},
+                   'provider_token': 'google-access', 'provider_refresh_token': 'google-refresh'}
+        with patch.object(G, '_request', return_value=(200, session)) as request:
+            status, result = G._google_exchange({'auth_code': code, 'code_verifier': 'b' * 64,
+                'user_id': 'other', 'project_id': 'other', 'provider': 'other'})
+        self.assertEqual(status, 200)
+        self.assertEqual(result['user']['id'], 'existing-user')
+        self.assertNotIn('provider_token', result)
+        self.assertNotIn('provider_refresh_token', result)
+        request.assert_called_once_with('POST', '/auth/v1/token?grant_type=pkce',
+            payload={'auth_code': code, 'code_verifier': 'b' * 64})
+
+    def test_google_invalid_or_expired_proof_cannot_return_a_session(self):
+        code = '11111111-1111-4111-8111-111111111111'
+        with patch.object(G, '_request') as request:
+            for bad in ['', 'a' * 42, '+' * 43, None]:
+                with self.assertRaises(ValueError):
+                    G._google_start({'code_challenge': bad})
+            for body in [{'auth_code': code, 'code_verifier': 'short'},
+                         {'auth_code': 'invalid-code', 'code_verifier': 'b' * 64}]:
+                with self.assertRaises(ValueError):
+                    G._google_exchange(body)
+            request.assert_not_called()
+        with patch.object(G, '_request', return_value=(400, {'code': 'flow_state_expired', 'message': 'private'})):
+            status, result = G._google_exchange({'auth_code': code, 'code_verifier': 'b' * 64})
+            self.assertEqual(status, 400)
+            self.assertNotIn('private', str(result))
+        with patch.object(G, '_request', return_value=(200, {'access_token': 'partial'})):
+            self.assertEqual(G._google_exchange({'auth_code': code, 'code_verifier': 'b' * 64})[0], 502)
+
     def test_signup_normalizes_raw_and_obfuscated_rest_users_without_a_session(self):
         # GoTrue REST returns the User itself while confirmation is pending,
         # including its indistinguishable repeated-signup response.
