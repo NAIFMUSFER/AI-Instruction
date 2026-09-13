@@ -1,0 +1,45 @@
+name: Plan-first connected semantic locks
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: plan-connected-semantic-locks-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  semantic-locks:
+    name: Connected nested lock UI and authority boundary
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Connected nested-lock regression
+        run: |
+          set -euo pipefail
+          mkdir -p logs
+          node --test tests/remediation/test_connected_semantic_locks.mjs 2>&1 | tee logs/connected-semantic-locks.log
+      - name: Existing server lock and command contracts
+        run: |
+          set -euo pipefail
+          python -S tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/lock-binding.log
+          python -S tests/remediation/test_plan_commands.py 2>&1 | tee logs/plan-commands.log
+      - name: Single-entry and module-tree guard
+        run: |
+          set -euo pipefail
+          python tools/check_index_guard.py public/index.html 2>&1 | tee logs/index-guard.log
+          git diff --exit-code
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: connected-semantic-lock-evidence
+          path: logs/
+          retention-days: 7

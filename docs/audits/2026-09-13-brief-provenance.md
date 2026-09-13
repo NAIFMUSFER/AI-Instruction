@@ -51,6 +51,22 @@ The local runtime has no Chromium binary. Browser/CSP and full documentation
 measurement gates must pass in CI on the final branch head before merging.
 Record final CI, preview and production deployment identities in the PR.
 
+## Nested lock integration
+
+The combined candidate also includes the reviewed nested-lock implementation from
+PR98 head `c7bcbcd1e0abde2187e24761755e386a5084b861`. That branch is not rewritten.
+Review found that it only refreshed after manual reload/revision-change events,
+while native generation redraws the revision selector without dispatching such an
+event. Its previously mounted empty panel could consequently remain empty, and
+its button could retain a stale enabled state during a native generation.
+
+The integration observes native revision-list and busy-state changes, refreshes
+once after in-flight reads settle, ignores its own panel mutations to avoid a
+request loop, and checks the currently displayed revision and native busy state
+again before any lock command. The browser lifecycle now exercises first-generation
+target discovery without manual reload, nested lock persistence, disabling lock
+writes during chat generation, and read-only historical revision selection.
+
 Full architectural walls/openings/shared-wall CAD, professional CAD/IFC tool
 acceptance, office Design DNA, full semantic brief extraction and real owner
 residential/warehouse acceptance remain open. No compliance or construction-ready

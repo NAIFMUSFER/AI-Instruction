@@ -68,6 +68,11 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    assert.ok(program.every(r=>r.source_span&&r.confirmed));
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
+   // The nested-lock panel was mounted while this project was empty. It must
+   // follow the newly generated revision without asking the owner to reload.
+   await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length===2);
+   await page.locator('#cwSemanticLockToggle').click();
+   await page.waitForFunction(()=>document.querySelector('#cwSemanticLockToggle')?.textContent==='إلغاء قفل العنصر'&&!document.querySelector('#cwSemanticLockToggle').disabled);
    assert.equal(await page.locator('#cwApprove').isEnabled(),false);
    await page.locator('#cwSpaces button').first().click();await page.locator('#cwLock').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('القفل'));
@@ -87,11 +92,16 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
    const revisionsBeforeChat=await page.locator('#cwRevision option').count();
    await page.locator('[data-step="3"]').click();await page.locator('#cwChat').fill('غيّر عرض الفراغ B مع تثبيت الفراغ المقفل.');await page.locator('#cwChatSubmit').click();
+   assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'pending generation disables nested lock writes');
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('تم حفظ المخطط'),{},{timeout:45000});
    assert.equal(await page.locator('#cwRevision option').count(),revisionsBeforeChat+1,'one chat edit must append one revision; approval itself preserves the selected version');
    assert.ok((await page.locator('#cwRevision option').allTextContents()).some(t=>t.includes('معتمدة')),'the previous approval remains in history');
    await page.locator('#cwCompare').click();await page.locator('#cwComparison').waitFor({state:'visible'});
    assert.ok(await page.locator('#cwComparisonRows tr').count()>2);
+   const firstRevision=await page.locator('#cwRevision option').first().getAttribute('value');
+   await page.locator('#cwRevision').selectOption(firstRevision);
+   await page.waitForFunction(()=>document.querySelector('#cwSemanticLockStatus')?.textContent.includes('تاريخية'));
+   assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'a historical revision must stay read only');
    await page.locator('#cwLogout').click();await page.locator('#lgEmail').waitFor({state:'visible'});
    if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
    else assert.deepEqual(errors,[]);
