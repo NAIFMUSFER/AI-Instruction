@@ -20,6 +20,7 @@ from acs_plan_persisted_commands import execute_persisted_plan_command
 from acs_plan_review import PlanError
 from acs_plan_store import SQLitePlanStore
 from acs_plan_store_reload import load_workspace
+from test_plan_bridge import residential_reqs
 from test_plan_lock_binding import element, reqs, residential, verifier, warehouse
 
 
@@ -43,14 +44,14 @@ class StaleSafeChatOrchestrationTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
 
-    def seed(self, project_id, model, *, width, brief):
+    def seed(self, project_id, model, *, requirements, brief):
         store = SQLitePlanStore(Path(self.tmp.name) / f"{project_id}.sqlite3")
         store.create_project(project_id, owner_id="owner-1")
         ws = PlanLockWorkspace(verifier=verifier)
         first = ws.propose(
             model,
             brief=brief,
-            requirements=reqs(width),
+            requirements=requirements,
             expected_head=None,
             note="initial",
         )
@@ -92,7 +93,7 @@ class StaleSafeChatOrchestrationTests(unittest.TestCase):
 
     def test_warehouse_edit_reloads_then_persists_with_dock_and_rack_locks(self):
         store, first = self.seed(
-            "warehouse-iso", warehouse(), width=30.0,
+            "warehouse-iso", warehouse(), requirements=reqs(),
             brief="site width 30 warehouse",
         )
         locked = self.persisted(store, "warehouse-iso", {
@@ -150,13 +151,8 @@ class StaleSafeChatOrchestrationTests(unittest.TestCase):
 
     def test_provider_race_reloads_current_head_and_rejects_stale_candidate(self):
         store, first = self.seed(
-            "warehouse-race", warehouse(), width=30.0,
+            "warehouse-race", warehouse(), requirements=reqs(),
             brief="site width 30 warehouse",
-        )
-        seed = PlanLockWorkspace(verifier=verifier)
-        local_first = seed.propose(
-            warehouse(), brief="site width 30 warehouse", requirements=reqs(),
-            expected_head=None, note="initial",
         )
         # Reconstruct from the real persisted identity so the competing revision
         # has the exact parent/hash chain accepted by the store.
@@ -197,7 +193,7 @@ class StaleSafeChatOrchestrationTests(unittest.TestCase):
 
     def test_residential_edit_keeps_approved_baseline_frozen_and_elevator_locked(self):
         store, first = self.seed(
-            "residential-iso", residential(), width=20.0,
+            "residential-iso", residential(), requirements=residential_reqs(),
             brief="site width 20 residential",
         )
         locked = self.persisted(store, "residential-iso", {
@@ -246,7 +242,7 @@ class StaleSafeChatOrchestrationTests(unittest.TestCase):
 
     def test_stale_expected_head_is_rejected_before_worker_runs(self):
         store, first = self.seed(
-            "warehouse-preflight", warehouse(), width=30.0,
+            "warehouse-preflight", warehouse(), requirements=reqs(),
             brief="site width 30 warehouse",
         )
         newer = self.persisted(store, "warehouse-preflight", {
