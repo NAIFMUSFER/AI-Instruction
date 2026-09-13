@@ -1,0 +1,96 @@
+name: PR89 one-shot doc measurement repair
+
+on:
+  push:
+    branches:
+      - release/production-supabase-auth-ui
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release/production-supabase-auth-ui
+          fetch-depth: 0
+      - name: Repair measured-doc guard and corrupted claims
+        shell: python
+        run: |
+          from pathlib import Path
+
+          guard = Path('tools/check_doc_claims.py')
+          text = guard.read_text(encoding='utf-8')
+          old = """    text = proc.stdout.decode('utf-8', 'replace')
+    if proc.returncode != 0:
+        tail = ' | '.join(text.strip().splitlines()[-3:])[:240]
+        return None, 'suite exited %d: %s' % (proc.returncode, tail)
+    best = None
+"""
+          new = """    text = proc.stdout.decode('utf-8', 'replace')
+    if proc.returncode != 0:
+        tail = ' | '.join(text.strip().splitlines()[-3:])[:240]
+        return None, 'suite exited %d: %s' % (proc.returncode, tail)
+    # A suite that explicitly reports an external-environment gap is only a
+    # partial measurement even when its static assertions exit 0. Never let
+    # --fix turn that partial count into a documented claim about the full
+    # browser suite (PR #89 reproduced 14 static assertions vs 37 in Chromium).
+    if 'NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED' in text:
+        return None, 'SKIP: الحزمة تعلن أن القياس الكامل يحتاج بيئة خارجية'
+    best = None
+"""
+          assert text.count(old) == 1, 'guard insertion point drifted'
+          text = text.replace(old, new)
+          old_late = """    # لا عدد. إن كانت الحزمة تعلن أن جزءاً من تغطيتها يحتاج بيئة خارجية،
+    # فالنقص في البيئة لا في التوثيق، ولا يجوز إعلان الادّعاء بالياً.
+    #
+    # الترتيب هنا مقصود وقد أخطأتُ فيه أوّلاً: كان هذا الفحص قبل استخراج
+    # العدد، فتخطّى حزماً تطبع تلك الجملة كملاحظة نطاق **وتنجح وتعلن عددها**
+    # في السطر التالي — أي أنه أسكت قياساً ممكناً. الشرط الصحيح: تخطَّ فقط
+    # حين لا يوجد عدد أصلاً.
+    if 'NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED' in text:
+        return None, 'SKIP: الحزمة لم تعلن عدداً وتحتاج بيئة خارجية'
+"""
+          assert text.count(old_late) == 1, 'obsolete late-skip block drifted'
+          text = text.replace(old_late, '')
+          guard.write_text(text, encoding='utf-8')
+
+          test = Path('tests/remediation/test_doc_claims.py')
+          text = test.read_text(encoding='utf-8')
+          anchor = """    def test_unparseable_success_is_not_a_measurement(self):
+"""
+          addition = """    def test_partial_external_environment_success_cannot_supply_count(self):
+        count, error = self.measure_script(
+            \"print('14 passed, 0 failed')\\n\"
+            \"print('PANEL ENTRY: 14 passed, 0 failed  (الطبقة الحيّة: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED)')\\n\")
+        self.assertIsNone(count)
+        self.assertIn('SKIP:', error)
+
+"""
+          assert text.count(anchor) == 1, 'test insertion point drifted'
+          text = text.replace(anchor, addition + anchor)
+          test.write_text(text, encoding='utf-8')
+
+          doc = Path('KNOWN-ISSUES.md')
+          text = doc.read_text(encoding='utf-8')
+          live_old = 'tests/remediation/test_panel_entry.js — 14 assertions, up from 29, in real'
+          live_new = 'tests/remediation/test_panel_entry.js — 37 assertions, up from 29, in real'
+          hist_old = '`tests/remediation/test_panel_entry.js` — 14 assertions as of F-27, in real'
+          hist_new = '`tests/remediation/test_panel_entry.js` — 29 assertions as of F-27, in real'
+          assert text.count(live_old) == 1, 'live panel claim drifted'
+          assert text.count(hist_old) == 1, 'historical panel claim drifted'
+          text = text.replace(live_old, live_new).replace(hist_old, hist_new)
+          doc.write_text(text, encoding='utf-8')
+      - name: Run focused regression
+        run: python3 -m unittest tests.remediation.test_doc_claims -v
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tools/check_doc_claims.py tests/remediation/test_doc_claims.py KNOWN-ISSUES.md
+          git diff --cached --check
+          git commit -m 'CI: reject partial browser counts in doc claims'
+          git push origin HEAD:release/production-supabase-auth-ui
