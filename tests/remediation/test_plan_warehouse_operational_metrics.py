@@ -102,8 +102,11 @@ class WarehouseOperationalMetricTests(unittest.TestCase):
         self.assertIsNone(metrics["storage_capacity_positions"])
         self.assertIn("not usable or load-rated storage capacity",
                       result["unavailable"]["storage_capacity_positions"])
+        self.assertIsNone(metrics["configured_route_length_by_id_m"])
+        self.assertIsNone(metrics["configured_route_length_by_flow_m"])
+        self.assertIn("configured_route_length_by_id_m", result["unavailable"])
         self.assertIsNone(metrics["travel_distance_m"])
-        self.assertIn("not routed origin/destination travel paths",
+        self.assertIn("No single selected/weighted movement model",
                       result["unavailable"]["travel_distance_m"])
         self.assertFalse(result["claims_regulatory_compliance"])
         self.assertFalse(result["claims_structural_safety"])
