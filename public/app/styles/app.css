@@ -938,5 +938,5 @@ a:focus,button:focus,input:focus,select:focus,textarea:focus{outline-color:#7dd3
 .acs-errrow{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
 /* Account recovery remains readable with Safari's saved-password autofill. */
 #login .auth-help { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; margin-top:12px; }
-#login .auth-help button { min-height:44px; padding:8px 0; color:#9bdcff; background:transparent; border:0; font:inherit; cursor:pointer; }
+#login .auth-help button { position:static; width:auto; flex:1; min-height:44px; padding:8px 0; color:#9bdcff; background:transparent; border:0; font:inherit; cursor:pointer; }
 #login input:-webkit-autofill { -webkit-text-fill-color:#e9f0fc; -webkit-box-shadow:0 0 0 1000px #0c1b2b inset; caret-color:#e9f0fc; }

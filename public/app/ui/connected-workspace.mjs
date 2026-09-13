@@ -19,7 +19,12 @@ async function api(body, commands=false) {
   const session=await window.ACS_AUTH.freshSession();
   if(!session)throw new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.');
   const path='/v1/projects/'+projectId+(commands?'/plan/commands':'/workspace');
-  return window.ACS_AUTH.request(path,body,session.access_token,body.action==='artifact'?90000:20000);
+  const response=await window.ACS_AUTH.request(path,body,session.access_token,body.action==='artifact'?90000:20000);
+  if(commands){
+    if(!response.result||typeof response.result!=='object')throw new Error('لم يصل تأكيد مكتمل من خدمة المراجعة. افتح آخر نسخة محفوظة.');
+    return response.result;
+  }
+  return response;
 }
 async function run(fn) { if(busy)return;setBusy(true);try{await fn();}catch(e){safeError(e);}finally{setBusy(false);} }
 function step(n) {
@@ -107,7 +112,7 @@ async function renderState(data, {keepStep=false}={}) {
     $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option','الدور '+p.level_index,$('cwLevel'));o.value=String(i);});
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,value(v)]));
     table($('cwChecks'),Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق'}[v]||v]));
-    $('cwIssues').replaceChildren();for(const issue of packet.review.issues)el('li',(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+issue.requirement_id:''),$('cwIssues'));
+    $('cwIssues').replaceChildren();for(const issue of data.review_findings||packet.review.issues)el('li',(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+issue.requirement_id:'')+(issue.message?' — '+issue.message:''),$('cwIssues'));
     if(!packet.review.issues.length)el('li','لا توجد ملاحظات في الفحوصات المنفذة.', $('cwIssues'));
     $('cwApprovalNote').textContent=data.authority?.can_approve_concept?'الفحوصات التخطيطية جاهزة للمراجعة والاعتماد المبدئي.':'عالِج الفحوصات غير المكتملة أو المتطلبات المخالفة قبل الاعتماد.';
     $('cwRequirementEvidence').textContent=JSON.stringify(data.requirements||packet.requirements,null,2);

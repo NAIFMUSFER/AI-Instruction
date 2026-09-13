@@ -18,8 +18,8 @@
     "additional_css_bytes": 6288,
     "assets": [
       {
-        "bytes": 38517,
-        "gzip_bytes": 11791,
+        "bytes": 38845,
+        "gzip_bytes": 11883,
         "loaded": "initial-module",
         "path": "public/app/ui/connected-workspace.mjs"
       },
@@ -42,15 +42,15 @@
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 44502,
+    "initial_javascript_bytes": 44830,
     "lazy_javascript_bytes": 3846,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
   "css": {
-    "gzip_bytes": 14923,
+    "gzip_bytes": 14938,
     "note": "this file is the former inline <style> block plus the generated .acs-u-NN utility classes that replaced every style=\"…\" attribute in the markup.",
     "path": "public/app/styles/app.css",
-    "raw_bytes": 62108
+    "raw_bytes": 62145
   },
   "determinism_note": "No timestamp and no absolute path is written. gzip uses mtime=0. Two consecutive runs produce byte-identical output; tests/remediation/test_bundle_report.py asserts exactly that.",
   "deterministic": true,

@@ -44,7 +44,11 @@ def view(store, project_id, actor_id, revision_id=None):
     result = _view_result(ws, "state", rid)
     revision = ws.get(rid)
     result.update({"schema": SCHEMA, "ok": True, "brief": revision.brief,
-                   "requirements": json.loads(revision.requirements_json)})
+                   "requirements": json.loads(revision.requirements_json),
+                   "review_findings": [{"code": issue.get("code"),
+                       "message": str(issue.get("message") or "")[:1000],
+                       "requirement_id": issue.get("requirement_id")}
+                       for issue in ws.review(rid).get("issues", [])[:512]]})
     return result
 
 

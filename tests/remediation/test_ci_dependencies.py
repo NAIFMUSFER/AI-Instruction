@@ -357,17 +357,17 @@ if os.path.exists(plate):
     chk("acs_compiler.py imports numpy",
         any(name.split(".", 1)[0] == "numpy" for name in compiler_imports))
 
-print("\n== هـ · numpy remains dev-only because the compiler is offline ==")
+print("\n== هـ · approved-artifact compiler dependencies are installed in production ==")
 prod = rd(os.path.join(ROOT, "requirements.txt"))
 dev_path = os.path.join(ROOT, "requirements-dev.txt")
 dev = rd(dev_path) if os.path.exists(dev_path) else ""
 chk("numpy is exact-pinned in requirements-dev.txt",
     re.search(r"^numpy==\d+\.\d+", dev, re.M) is not None)
-chk("numpy is NOT in requirements.txt",
-    re.search(r"^numpy==", prod, re.M) is None)
+chk("numpy is exact-pinned in requirements.txt for the approved compiler",
+    re.search(r"^numpy==\d+\.\d+\.\d+", prod, re.M) is not None)
 docker = rd(os.path.join(ROOT, "Dockerfile"))
-chk("Dockerfile does not COPY acs_compiler.py",
-    "acs_compiler.py" not in docker)
+chk("Dockerfile explicitly packages the approved-artifact compiler",
+    re.search(r"^COPY\s+acs_compiler\.py\s", docker, re.M) is not None)
 
 print("\n" + "─" * 62)
 print("CI DEPENDENCY CONTRACT: %d passed, %d failed" % (_p, _f))
