@@ -32,6 +32,16 @@ def warehouse(storage_width=20.0, dock_count=2, rack_levels=4):
     }
 
 
+def warehouse_with_expansion(*, intruding=False):
+    model = warehouse()
+    model["floors"]["ground"]["rooms"].append({
+        "id": "expansion",
+        "role": "expansion",
+        "rect": [5.0, 5.0, 8.0, 8.0] if intruding else [0.0, 12.0, 8.0, 8.0],
+    })
+    return model
+
+
 def residential():
     model = warehouse()
     model["meta"]["type"] = "residential"
@@ -54,6 +64,19 @@ class PlanOptionTests(unittest.TestCase):
         self.assertEqual(b["scalar"]["rack_declared_level_sum"], 1)
         self.assertEqual(b["mapping"]["zone_area_by_role_m2"]["storage"], 40.0)
         self.assertEqual(b["mapping"]["dock_count_by_edge"]["N"], 1)
+
+    def test_check_status_transitions_are_exposed_without_quality_ranking(self):
+        result = O.compare_options([
+            {"id": "A", "model": warehouse_with_expansion(intruding=False)},
+            {"id": "B", "model": warehouse_with_expansion(intruding=True)},
+        ], declared_program_receipt="program:warehouse:expansion")
+        self.assertEqual(result["options"][0]["delta_from_reference"]["checks"], {})
+        self.assertEqual(
+            result["options"][1]["delta_from_reference"]["checks"],
+            {"expansion_reserve_preservation": {"reference": "PASS", "target": "FAIL"}},
+        )
+        self.assertFalse(result["claims_best_option"])
+        self.assertFalse(result["claims_regulatory_compliance"])
 
     def test_unavailable_metrics_are_not_converted_into_scores(self):
         result = O.compare_options([
