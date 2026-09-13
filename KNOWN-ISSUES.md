@@ -544,7 +544,7 @@ rediscover it.
   `tools/frontend_lazy.txt` itself, and fails if the declared set and the
   measured set disagree in either direction. It also checks
   `core + boot + lazy == total`, so deferred bytes cannot simply go missing.
-* tests/remediation/test_panel_entry.js — 14 assertions, up from 29, in real
+* tests/remediation/test_panel_entry.js — 37 assertions, up from 29, in real
   Chromium. It records panel state **immediately** after the click and again
   after the fetch settles. The eager panels (`rvPanel`, `pqPanel`, the
   workspace) must open in the same tick as before — the deferral is not allowed
@@ -999,7 +999,7 @@ page and has never run (`NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED`).
 six-button launcher group in the shell wired with `addEventListener` only, and
 `window.ACS.exportModel()` exposed from `ui/workspace-ui-wiring.js` so the
 panels can be handed the active model. *Proof:*
-`tests/remediation/test_panel_entry.js` — 14 assertions as of F-27, in real
+`tests/remediation/test_panel_entry.js` — 29 assertions as of F-27, in real
 Chromium under
 the production CSP: all six panels actually acquire `.on`, `init()` really wires
 the ten workspace-toolbar buttons, clicking with no model explains what is

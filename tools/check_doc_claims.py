@@ -139,6 +139,15 @@ def measure(suite, timeout=600):
     if proc.returncode != 0:
         tail = ' | '.join(text.strip().splitlines()[-3:])[:240]
         return None, 'suite exited %d: %s' % (proc.returncode, tail)
+    # A summary that explicitly marks its live layer NOT VERIFIED is a
+    # partial measurement. Do not let --fix promote its static count to
+    # a claim about the full browser suite. Separate scope notes remain
+    # allowed; only a measurement summary carrying the qualifier skips.
+    partial = re.search(
+        r'(?m)^[^\n]*(?:passed|failed)[^\n]*NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED[^\n]*$',
+        text)
+    if partial:
+        return None, 'SKIP: الحزمة أعلنت قياساً جزئياً بلا طبقتها الحيّة'
     best = None
     for pat in COUNT_PATTERNS:
         found = pat.findall(text)
