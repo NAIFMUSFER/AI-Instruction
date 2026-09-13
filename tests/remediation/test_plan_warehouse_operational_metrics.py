@@ -2,7 +2,9 @@
 """Warehouse-only measured operational scorecard/option regressions.
 
 These contracts use explicit canonical geometry only. They do not claim routed
-travel, storage capacity, throughput, regulatory compliance, or safety approval.
+travel, usable/load-rated storage capacity, throughput, regulatory compliance,
+or safety approval. Rack bay metrics below are geometric counts derived only from
+explicit canonical rack run/bay/row/level geometry.
 """
 from __future__ import annotations
 
@@ -16,7 +18,8 @@ import acs_plan_options as O
 import acs_plan_scorecard as S
 
 
-def warehouse(*, rack_width=8.0, forklift_length=20.0, include_lane_dir=True):
+def warehouse(*, rack_width=8.0, rack_bay=2.7, forklift_length=20.0,
+              include_lane_dir=True):
     forklift = {
         "id": "forklift_main", "kind": "forklift",
         "x": 0.0, "z": 0.0, "w": forklift_length, "d": 3.0,
@@ -48,10 +51,12 @@ def warehouse(*, rack_width=8.0, forklift_length=20.0, include_lane_dir=True):
                 "racks": [
                     {"id": "rack_a", "kind": "pallet", "x": 16.0, "z": 1.0,
                      "w": rack_width, "d": 18.0, "dir": "z", "rows": 2,
-                     "aisle": 3.4, "levels": 4, "h": 8.0},
+                     "depth": 1.1, "bay": rack_bay, "aisle": 3.4,
+                     "levels": 4, "h": 8.0},
                     {"id": "rack_b", "kind": "shelf", "x": 27.0, "z": 1.0,
                      "w": 4.0, "d": 10.0, "dir": "z", "rows": 1,
-                     "aisle": 1.4, "levels": 5, "h": 2.4},
+                     "depth": 0.45, "bay": 1.0, "aisle": 1.4,
+                     "levels": 5, "h": 2.4},
                 ],
             },
             {"id": "shipping", "role": "shipping", "rect": [40.0, 0.0, 10.0, 12.0]},
@@ -60,16 +65,21 @@ def warehouse(*, rack_width=8.0, forklift_length=20.0, include_lane_dir=True):
 
 
 class WarehouseOperationalMetricTests(unittest.TestCase):
-    def test_declared_rack_footprint_and_lane_centerline_are_measured(self):
+    def test_declared_rack_footprint_lane_and_geometric_bays_are_measured(self):
         result = S.measure_plan(warehouse())
         metrics = result["metrics"]
         self.assertEqual(metrics["rack_declared_footprint_area_m2"], 184.0)
+        self.assertEqual(metrics["rack_geometric_bay_count"], 22)
+        self.assertEqual(metrics["rack_geometric_bay_level_positions"], 98)
         self.assertEqual(metrics["lane_centerline_length_by_kind_m"], {
             "forklift": 20.0, "pedestrian": 18.0,
         })
         self.assertEqual(metrics["lane_area_by_kind_m2"], {
             "forklift": 60.0, "pedestrian": 21.6,
         })
+        self.assertIsNone(metrics["storage_capacity_positions"])
+        self.assertIn("not usable or load-rated storage capacity",
+                      result["unavailable"]["storage_capacity_positions"])
         self.assertIsNone(metrics["travel_distance_m"])
         self.assertIn("not routed origin/destination travel paths",
                       result["unavailable"]["travel_distance_m"])
@@ -88,17 +98,31 @@ class WarehouseOperationalMetricTests(unittest.TestCase):
         metrics = S.measure_plan(model)["metrics"]
         self.assertEqual(metrics["rack_group_count"], 2)
         self.assertIsNone(metrics["rack_declared_footprint_area_m2"])
+        self.assertIsNone(metrics["rack_geometric_bay_count"])
+        self.assertIsNone(metrics["rack_geometric_bay_level_positions"])
         self.assertIsNone(metrics["storage_capacity_positions"])
 
+    def test_missing_explicit_bay_fails_geometric_counts_closed(self):
+        model = warehouse()
+        del model["floors"]["ground"]["rooms"][1]["racks"][0]["bay"]
+        result = S.measure_plan(model)
+        metrics = result["metrics"]
+        self.assertIsNone(metrics["rack_geometric_bay_count"])
+        self.assertIsNone(metrics["rack_geometric_bay_level_positions"])
+        self.assertIsNone(metrics["storage_capacity_positions"])
+        self.assertIn("explicit", result["unavailable"]["rack_geometric_bay_count"])
+
     def test_options_compare_only_measured_operational_geometry(self):
-        a = warehouse(rack_width=8.0, forklift_length=20.0)
-        b = warehouse(rack_width=10.0, forklift_length=25.0)
+        a = warehouse(rack_width=8.0, rack_bay=2.7, forklift_length=20.0)
+        b = warehouse(rack_width=10.0, rack_bay=2.25, forklift_length=25.0)
         result = O.compare_options([
             {"id": "A", "model": a},
             {"id": "B", "model": b},
         ], declared_program_receipt="program:warehouse:measured")
         delta = result["options"][1]["delta_from_reference"]
         self.assertEqual(delta["scalar"]["rack_declared_footprint_area_m2"], 36.0)
+        self.assertEqual(delta["scalar"]["rack_geometric_bay_count"], 4)
+        self.assertEqual(delta["scalar"]["rack_geometric_bay_level_positions"], 16)
         self.assertEqual(delta["mapping"]["lane_centerline_length_by_kind_m"]["forklift"], 5.0)
         self.assertEqual(delta["mapping"]["lane_centerline_length_by_kind_m"]["pedestrian"], 0.0)
         self.assertFalse(result["claims_best_option"])
@@ -109,6 +133,8 @@ class WarehouseOperationalMetricTests(unittest.TestCase):
         model["meta"]["type"] = "residential"
         metrics = S.measure_plan(model)["metrics"]
         self.assertNotIn("rack_declared_footprint_area_m2", metrics)
+        self.assertNotIn("rack_geometric_bay_count", metrics)
+        self.assertNotIn("rack_geometric_bay_level_positions", metrics)
         self.assertNotIn("lane_centerline_length_by_kind_m", metrics)
 
     def test_measurement_does_not_mutate_canonical_model(self):
