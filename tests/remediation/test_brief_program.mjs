@@ -69,6 +69,39 @@ const cases = [
     assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows:[{metric:'unknown',expected:2}]})),/متطلب/);
     assert.throws(()=>buildBriefProgram(form('x'.repeat(60001))),/الحد/);
   }],
+  ['Requirement identities survive row reordering and legacy reopen when evidence is unchanged', () => {
+    const initialRows=[
+      {metric:'room_count',role:'bedroom',expected:'2'},
+      {metric:'min_space_area_by_role_m2',role:'bedroom',expected:'18'},
+    ];
+    const first=buildBriefProgram(form('طلب بناء',{rows:initialRows}));
+    const firstIds=new Map(first.requirements.map(r=>[JSON.stringify([r.metric,r.role||'']),r.id]));
+    const reordered=buildBriefProgram(form(first.brief,{savedRequirements:first.requirements,rows:[
+      {metric:'room_count',role:'kitchen',expected:'1'},
+      initialRows[1],initialRows[0],
+    ]}));
+    evidence(reordered);
+    for(const r of first.requirements){
+      const current=reordered.requirements.find(x=>x.metric===r.metric&&(x.role||'')===(r.role||''));
+      assert.equal(current.id,r.id,'unchanged requirement identity must survive form row reordering');
+    }
+    const kitchen=reordered.requirements.find(r=>r.role==='kitchen');
+    assert.ok(kitchen&&!new Set(firstIds.values()).has(kitchen.id),'new requirement needs a fresh non-colliding identity');
+
+    const legacyBrief='طلب بناء\nالعرض: 20\nالعمق: 25\nعدد الأدوار: 3\nroom_count bedroom: 2';
+    const legacySaved=[
+      {id:'brief-site_width_m',metric:'site_width_m',expected:20,source:'requested',evidence:'العرض: 20',confirmed:true},
+      {id:'brief-site_depth_m',metric:'site_depth_m',expected:25,source:'requested',evidence:'العمق: 25',confirmed:true},
+      {id:'brief-level_count',metric:'level_count',expected:3,source:'requested',evidence:'عدد الأدوار: 3',confirmed:true},
+      {id:'program-0',metric:'room_count',role:'bedroom',expected:2,source:'requested',evidence:'room_count bedroom: 2',confirmed:true},
+    ];
+    const migrated=buildBriefProgram(form(legacyBrief,{savedRequirements:legacySaved,rows:[{metric:'room_count',role:'bedroom',expected:'2'}]}));
+    evidence(migrated);
+    for(const prior of legacySaved){
+      const current=migrated.requirements.find(r=>r.metric===prior.metric&&(r.role||'')===(prior.role||''));
+      assert.equal(current.id,prior.id,'legacy requirement identity must survive provenance-span migration');
+    }
+  }],
   ['Reopening retains the original evidence and never upgrades unknown input to a measured value', () => {
     const p=buildBriefProgram(form('طلب بناء'));
     const restored=buildBriefProgram(form(p.brief,{savedRequirements:p.requirements}));
