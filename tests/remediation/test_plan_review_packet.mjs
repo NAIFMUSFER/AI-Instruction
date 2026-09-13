@@ -14,6 +14,7 @@ function view() {
 }
 function encode(p) {const raw=JSON.stringify(p);return JSON.stringify({schema:'acs.plan-review-file/1.0',payload_json:raw,payload_sha256:createHash('sha256').update(raw).digest('hex')});}
 test('exact UTF8 packet preserves geometry and unknown metrics',async()=>{const p=await parseReviewFile(encode(view()));assert.equal(p.projections[0].primitives[0].label,'المجلس');assert.equal(p.scorecard.metrics.storage_capacity,null);});
+test('NOT_APPLICABLE review scope remains a valid measured non-claim',async()=>{const p=view();p.review.scopes.warehouse_expansion_reserve='NOT_APPLICABLE';const parsed=await parseReviewFile(encode(p));assert.equal(parsed.review.scopes.warehouse_expansion_reserve,'NOT_APPLICABLE');});
 test('altered payload without new hash fails',async()=>{const f=JSON.parse(encode(view()));f.payload_json+=' ';await assert.rejects(()=>parseReviewFile(JSON.stringify(f)),/REVIEW_HASH_MISMATCH/);});
 test('revision/geometry receipt mismatch fails',()=>{const p=view();p.projections[0].revision_id='other';assert.throws(()=>validateView(p),/REVISION_MISMATCH/);});
 test('no imported writable view',()=>{const p=view();p.read_only=false;assert.throws(()=>validateView(p));});
