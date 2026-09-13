@@ -8,21 +8,28 @@ COPY acs_understand.py acs_understand_api.py acs_validate.py acs_layout.py ./
 # وacs_plan_chunks عقد الخطّة المحدود (KI-24): يستورده acs_understand مباشرةً.
 COPY acs_api_errors.py acs_auth.py acs_generation.py acs_plan_chunks.py acs_provider.py ./
 COPY acs_opening_identity.py ./
-# Plan-first backend companions are packaged but NOT mounted on public routes.
-# DXF remains optional: importing these modules needs no CAD/provider client.
+# Plan-first backend companions are packaged with an explicit authenticated HTTP
+# command boundary. DXF remains optional: importing these modules needs no
+# CAD/provider client. The HTTP boundary exposes only durable canonical-plan
+# commands and deliberately has no BIM/3D/export authoring route.
 # acs_plan_store uses only stdlib SQLite; acs_plan_store_reload reconstructs
 # validated lock-bound workspaces after restart without enabling a public route.
 # acs_plan_store_port is the backend-neutral persistence contract shared by the
-# SQLite compatibility adapter and future durable backends; package it beside
-# the persisted command/reload companions so their import boundary is complete.
-# acs_plan_commands and acs_plan_persisted_commands are closed trusted-host
-# companions: neither registers FastAPI routes nor discovers authentication.
+# SQLite compatibility adapter and the authenticated Supabase durable backend.
+# The Supabase adapter and request-scoped session bridge bind the already-verified
+# auth subject to the same request bearer without storing it or accepting actor
+# authority from request data.
+# acs_plan_commands and acs_plan_persisted_commands remain trusted-host command
+# companions; acs_plan_http is the narrow production admission/routing layer.
+# acs_plan_chat_job is proposal-only: its import performs no provider call and
+# accepts no request/session/persistence authority; the worker target imports the
+# provider only after canonical input validation.
 # acs_plan_semantic_diff is deterministic canonical-model comparison only.
-COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py ./
+COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persisted_commands.py acs_plan_projection.py acs_plan_scorecard.py acs_plan_options.py acs_plan_semantic_locks.py acs_plan_semantic_diff.py acs_plan_lock_binding.py acs_plan_store.py acs_plan_store_port.py acs_plan_store_reload.py acs_supabase_plan_store.py acs_plan_session.py acs_plan_http.py acs_plan_chat_job.py ./
 # The command companion returns the same privacy-limited read-only review packet
 # used by the browser reviewer. Package that helper explicitly without adding a route.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py
-RUN python -S -c "import sys, acs_plan_commands, acs_plan_persisted_commands; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
+RUN python -S -c "import sys, acs_plan_commands, acs_plan_persisted_commands, acs_supabase_plan_store, acs_plan_session, acs_plan_http, acs_plan_chat_job; assert 'acs_understand' not in sys.modules; assert 'acs_compiler' not in sys.modules; assert 'acs_bim' not in sys.modules"
 # سجل البرامج (المصدر الوحيد للحقيقة) وطبقة المشروع — لازمة للتشغيل
 COPY acs_programs.py acs_programs.json acs_project.py acs_relations.py acs_navigation.py acs_egress.py acs_distance.py ./
 # سجلّ محرّك القواعد (بلا محتوى تنظيمي) — بيانات لا شيفرة
