@@ -274,11 +274,12 @@ function install() {
     if (event.target?.id === 'cwReload') scheduleSync(150);
   });
   if (typeof MutationObserver !== 'undefined' && document.body) {
+    // Observe only workspace mount/unmount. Rendering the select mutates child nodes,
+    // so calling render() from this observer would recursively trigger itself.
     observer = new MutationObserver(() => {
       if (!panel?.isConnected && document.getElementById('cwReviewContent')) scheduleSync(0);
-      else if (panel?.isConnected) render();
     });
-    observer.observe(document.body, {childList: true, subtree: true, attributes: true, attributeFilter: ['aria-busy', 'hidden']});
+    observer.observe(document.body, {childList: true, subtree: true});
   }
 }
 
