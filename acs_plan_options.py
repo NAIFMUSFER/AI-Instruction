@@ -4,10 +4,10 @@ This module compares canonical design options without ranking them or inventing 
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
 option. Explicit rack footprints, geometric rack bay counts, rack conflicts, zone
-allocation ratios, oriented lane geometry and explicit configured route polylines
-may be compared; regulatory/structural compliance, usable/load-rated storage
-capacity, throughput and inferred routing remain outside this contract unless a
-future authoritative engine supplies them.
+allocation ratios, expansion-reserve rectangles, oriented lane geometry and explicit
+configured route polylines may be compared; regulatory/structural compliance,
+usable/load-rated storage capacity, throughput and inferred routing remain outside
+this contract unless a future authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -33,6 +33,9 @@ _SCALAR_METRICS = (
     "rack_geometric_bay_level_positions",
     "rack_declared_footprint_area_m2",
     "rack_overlap_area_m2",
+    "expansion_reserve_area_m2",
+    "expansion_reserve_zone_overlap_area_m2",
+    "expansion_reserve_rack_overlap_area_m2",
     "station_count",
 )
 _MAP_METRICS = (
@@ -46,6 +49,7 @@ _MAP_METRICS = (
     "lane_centerline_length_by_kind_m",
     "lane_overlap_area_by_kind_pair_m2",
     "rack_lane_overlap_area_by_lane_kind_m2",
+    "expansion_reserve_lane_overlap_area_by_kind_m2",
     "configured_route_length_by_id_m",
     "configured_route_length_by_flow_m",
 )
