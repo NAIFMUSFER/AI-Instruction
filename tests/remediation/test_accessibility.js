@@ -78,6 +78,21 @@ function findAxe(){
 
 async function launch(){ return await PW.launch(); }
 
+async function enterLocalStudio(page){
+  if(new URL(page.url()).hostname!=='127.0.0.1')
+    throw new Error('DOM accessibility fixture entry is restricted to its local server');
+  await page.locator('#lgGo').click();
+  await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+  // Start keyboard traversal at the document, after the real entry action.
+  // The now-hidden submit control must not remain the sequential focus origin.
+  await page.evaluate(()=>{
+    const prior=document.body.getAttribute('tabindex');
+    document.body.setAttribute('tabindex','-1');document.body.focus({preventScroll:true});
+    if(prior===null)document.body.removeAttribute('tabindex');
+    else document.body.setAttribute('tabindex',prior);
+  });
+}
+
 (async()=>{
 console.log('HARNESS: accessibility DOM/ARIA layer, real Chromium, '
   +'http:// load of public/ under the production CSP');
@@ -315,6 +330,7 @@ chk('every form control in the hand-written panels has an associated label',
     labels.length===0, labels);
 
 console.log('\n== §5 — التركيز مرئي وترتيب Tab منطقي وبلا مصيدة ==');
+await enterLocalStudio(page);
 await page.evaluate(()=>{ const l=document.getElementById('login');
   if(l) l.style.display='none'; const lf=document.getElementById('left');
   if(lf) lf.style.display='';
@@ -346,6 +362,7 @@ chk('the focus-outline check is not vacuous — an unfocused control has no outl
    فعلاً حتى يكون «أوّل موضع Tab» أوّلَ موضع حقيقي لا بقيّة اجتياز سابق. */
 await page.reload({waitUntil:'domcontentloaded'});
 await page.waitForTimeout(400);
+await enterLocalStudio(page);
 /* F-11 — بالآليّة المشحونة نفسها (boot/engine-guard.js): الصنف لا style. */
 const railUp=await page.evaluate(()=>{ const l=document.getElementById('login');
   if(l) l.classList.add('acs-hidden');
@@ -669,6 +686,7 @@ console.log('\n== §9 — أهداف اللمس ≥44 بكسل عند عرض 375
 const mobile=await ctx.newPage();
 await mobile.goto(PAGE,{waitUntil:'domcontentloaded'});
 await mobile.setViewportSize({width:375,height:812});
+await enterLocalStudio(mobile);
 await mobile.evaluate(()=>{ const l=document.getElementById('login');
   if(l) l.style.display='none';
   const lf=document.getElementById('left'); if(lf) lf.classList.add('open');

@@ -284,6 +284,20 @@ function notVerified(why) {
     JSON.stringify({ bounds: emptyDiag.model_bounds,
       canonical: emptyDiag.canonical_meshes }));
 
+  // Rendering fixtures requires entry into the studio. Exercise the shipped
+  // loopback-only entry on our own server, after measuring the empty scene.
+  // A public production boot does not establish an authenticated user session.
+  if (!TARGET) {
+    await pg.locator('#lgGo').click();
+    await pg.waitForFunction(() => document.body.classList.contains('acs-entered'));
+  } else if (!await pg.evaluate(() => document.body.classList.contains('acs-entered'))) {
+    console.log('\nVISUAL MODEL: NOT VERIFIED — AUTHENTICATED SESSION REQUIRED');
+    console.log('Public boot was observed; no production account was signed in and no fixture was applied.');
+    await b.close();
+    process.exitCode = 2;
+    return;
+  }
+
   const FIX = fixtures();
   let panelsLoaded = false;
   for (const [fname, fmodel] of FIX) {

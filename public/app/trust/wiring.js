@@ -41,10 +41,18 @@ let pState={pointer:null, records:[], last_good:null, last_error:null,
             last_saved_at_ms:null};
 let pStatusKey='IDLE', pLastCode='', pDbError=null, pRecovered=null;
 
+function storageScope(){
+  const auth=window.ACS_AUTH;
+  if(auth&&typeof auth.storageScope==='function')return auth.storageScope();
+  return ['localhost','127.0.0.1','::1','[::1]'].includes(location.hostname)?DB_NAME:null;
+}
+
 function idbOpen(){
   return new Promise((res,rej)=>{
+    const scope=storageScope();
+    if(!scope){rej(new Error('Authenticated project required for local storage'));return;}
     let rq;
-    try{ rq=indexedDB.open(DB_NAME,DB_VER); }
+    try{ rq=indexedDB.open(scope,DB_VER); }
     catch(e){ rej(e); return; }
     rq.onupgradeneeded=()=>{ const db=rq.result;
       if(!db.objectStoreNames.contains(ST_REC))
@@ -144,10 +152,13 @@ function pSetStatus(key){
       :'');
 }
 async function pRecover(){
+  const scope=storageScope();
+  if(!scope)return {ok:false,code:'AUTH_REQUIRED'};
   let all;
   try{ all=await pReadAll(); }
   catch(e){ pDbError=P.classifyStorageError(e); pSetStatus('FAILED');
             return {ok:false, code:pDbError}; }
+  if(scope!==storageScope())return {ok:false,code:'PROJECT_CHANGED'};
   const pick=P.chooseRecovery(all.records);
   pState={pointer:all.pointer, records:all.records.map(r=>r&&r.record_id),
           last_good:pick.chosen_id, last_error:null,
@@ -782,6 +793,7 @@ function wireAll(){
 
   let lastHash='';
   const tick=()=>{
+    if(!storageScope())return;
     let m=null;
     try{ m=(typeof lastBuilding!=='undefined')?lastBuilding:null; }catch(e){ m=null; }
     if(!m) return;
@@ -794,8 +806,12 @@ function wireAll(){
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='hidden') tick(); });
 
+  function recoverCurrentProject(){
+  const scope=storageScope();
+  if(!scope)return;
   vRender().catch(()=>{});
   pRecover().then(r=>{
+    if(scope!==storageScope())return;
     window.ACS.recoveryResult=()=>r;
     if(r.ok&&r.project&&r.project.model){
       let has=false;
@@ -811,6 +827,9 @@ function wireAll(){
       }
     }
   }).catch(()=>{});
+  }
+  document.addEventListener('acs:authenticated',recoverCurrentProject);
+  recoverCurrentProject();
 }
 let ACS_EDIT_BASE_REVISION=null;
 

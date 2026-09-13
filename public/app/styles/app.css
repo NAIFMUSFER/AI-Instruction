@@ -20,6 +20,30 @@
   #login button{width:100%;margin-top:18px;background:var(--acc);color:#04283b;border:none;
     border-radius:10px;padding:12px;font-size:15px;font-weight:800;cursor:pointer}
   #login .hint{font-size:11px;color:var(--muted);margin-top:12px;text-align:center}
+  #login{overflow-y:auto;overscroll-behavior:contain;padding:28px 16px;align-items:safe center;
+    background:radial-gradient(ellipse at 75% 15%,#16416770,transparent 65%),linear-gradient(145deg,#091321,#12243b)}
+  #login .card{flex:0 1 448px;max-width:448px;width:100%;padding:32px;box-shadow:0 24px 80px #0005;background:#112137f5}
+  #login [hidden]{display:none!important}
+  #login .auth-brand{color:#6bd3ff;font-size:23px;font-weight:850;letter-spacing:2px;direction:ltr;text-align:right;margin-bottom:30px}
+  #login .auth-brand span{font-size:10px;color:var(--muted);letter-spacing:2px;margin-left:10px}
+  #login h1{font-size:22px;line-height:1.4}
+  #login h2{font-size:18px;color:var(--txt);border:0;margin:22px 0 14px;padding:0}
+  #login .tag{font-size:14px;line-height:1.7}
+  #login input{min-height:48px;font-size:16px;background:#0c1a2d}
+  #login input:focus{outline:2px solid var(--acc);outline-offset:2px}
+  #login .auth-password{position:relative}
+  #login .auth-password input{padding-inline-end:70px}
+  #login .auth-text-button{position:absolute;inset-inline-end:4px;top:2px;min-height:44px;width:60px;margin:0;padding:5px;background:transparent;color:#9fdcff;font-size:12px}
+  #login .auth-secondary{background:transparent;color:#a5ddf7;border:1px solid #86b4dd4d;margin-top:10px;min-height:46px}
+  #login .hint{font-size:13px;line-height:1.65}
+  #login .hint:empty{display:none}
+  #login .hint.bad{color:#ffb9ad;text-align:start;background:#dc543315;padding:10px;border-radius:8px}
+  #login .auth-privacy{padding-top:16px;margin-top:24px;border-top:1px solid var(--line);font-size:12px}
+  #login a{color:#9fdcff;text-underline-offset:3px}
+  #login button:disabled{opacity:.6;cursor:wait}
+  body:not(.acs-entered)>:not(#login):not(script):not(link):not(#acsLiveRegion){visibility:hidden}
+  body:not(.acs-entered)>.acs-skip{display:none}
+  @media(max-width:480px){#login{padding:18px 12px}#login .card{padding:25px 21px;border-radius:16px}#login .auth-brand{margin-bottom:22px}}
   /* ---- الواجهة ---- */
   #left{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);
     backdrop-filter:blur(10px);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:10}

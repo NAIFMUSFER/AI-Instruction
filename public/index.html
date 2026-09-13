@@ -45,13 +45,24 @@
 <!-- شاشة الدخول -->
 <div id="login">
   <div class="card">
+    <div class="auth-brand" aria-hidden="true">ACS <span>DESIGN STUDIO</span></div>
     <h1>AI Construction Studio</h1>
-    <div class="tag">استوديو توليد المباني ثلاثية الأبعاد — بوابة العميل</div>
-    <label for="lgName">الاسم <span lang="en" dir="ltr">· Name</span></label><input id="lgName" placeholder="اسمك أو اسم المنشأة" />
-    <label for="lgEmail">البريد الإلكتروني <span lang="en" dir="ltr">· Email</span></label><input id="lgEmail" type="email" placeholder="you@example.com" />
-    <label for="lgProject">اسم المشروع <span lang="en" dir="ltr">· Project name</span></label><input id="lgProject" placeholder="مثال: عمارة سكنية بالرياض" />
-    <button id="lgGo">دخول ▸</button>
-    <div class="hint">نموذج تجريبي — الدخول محلي (يُربط لاحقاً بمصادقة حقيقية).</div>
+    <div class="tag" id="acsAuthSubtitle">فكرتك، مخططك، ومساحة عمل واحدة.</div>
+    <h2 id="acsAuthTitle">تسجيل الدخول</h2>
+    <form id="acsAuthForm" novalidate>
+      <div id="acsAuthNameField" hidden><label for="lgName">الاسم <span lang="en" dir="ltr">· Name</span></label><input id="lgName" autocomplete="name" maxlength="160" placeholder="اسمك أو اسم المنشأة" /></div>
+      <div id="acsAuthCredentials">
+        <label for="lgEmail">البريد الإلكتروني <span lang="en" dir="ltr">· Email</span></label><input id="lgEmail" type="email" autocomplete="username" inputmode="email" autocapitalize="none" spellcheck="false" maxlength="320" dir="ltr" placeholder="you@example.com" />
+        <label for="lgPassword">كلمة المرور <span lang="en" dir="ltr">· Password</span></label>
+        <div class="auth-password"><input id="lgPassword" type="password" autocomplete="current-password" maxlength="256" aria-describedby="acsAuthStatus" placeholder="كلمة المرور" /><button id="acsPasswordToggle" class="auth-text-button" type="button" aria-label="إظهار كلمة المرور" aria-pressed="false">إظهار</button></div>
+      </div>
+      <div id="acsAuthProjectField" hidden><label for="lgProject">اسم المشروع <span lang="en" dir="ltr">· Project name</span></label><input id="lgProject" maxlength="200" placeholder="مثال: عمارة سكنية بالرياض" /></div>
+      <div id="acsAuthStatus" class="hint" role="status" aria-live="polite" aria-atomic="true"></div>
+      <button id="lgGo" type="submit">تسجيل الدخول ▸</button>
+      <button id="lgSignup" class="auth-secondary" type="button">إنشاء حساب جديد</button>
+    </form>
+    <p class="hint auth-privacy">مساحة خاصة لمشاريعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></p>
+    <noscript><p role="alert">فعّل JavaScript لاستخدام تسجيل الدخول والاستوديو.</p></noscript>
   </div>
 </div>
 

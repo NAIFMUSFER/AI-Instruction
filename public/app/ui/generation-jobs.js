@@ -19,16 +19,27 @@ let ACS_ASYNC_MEMORY = null;
 function acsJobBase() {
   return String(srvURL() || '').replace(/\/$/, '');
 }
+function acsJobScope() {
+  const auth=window.ACS_AUTH;
+  return auth&&typeof auth.storageScope==='function'?auth.storageScope():null;
+}
+function acsJobScopeMatches(row) {
+  const auth=window.ACS_AUTH;
+  if(!auth||typeof auth.storageScope!=='function'||acsJobLocalAuthBypass())return true;
+  const scope=acsJobScope();
+  return !!scope&&row.scope===scope;
+}
 function acsJobRead() {
   let row = ACS_ASYNC_MEMORY;
   try { row = JSON.parse(window.sessionStorage.getItem(ACS_ASYNC_STORAGE)) || row; }
   catch (e) { /* storage unavailable: same-page recovery still works */ }
   if (!row || !/^job_[a-f0-9]{32}$/.test(row.id)
       || !/^[a-f0-9]{64}$/.test(row.token) || !ACS_ASYNC_PATHS[row.path]
-      || typeof row.base !== 'string' || !Number.isFinite(row.created)) return null;
+      || typeof row.base !== 'string' || !Number.isFinite(row.created) || !acsJobScopeMatches(row)) return null;
   return row;
 }
 function acsJobSave(row) {
+  if(!row.scope&&acsJobScope())row.scope=acsJobScope();
   ACS_ASYNC_MEMORY = row;
   try { window.sessionStorage.setItem(ACS_ASYNC_STORAGE, JSON.stringify(row)); }
   catch (e) { /* No input is persisted; never fail generation on storage quota. */ }
@@ -102,6 +113,7 @@ async function acsJobWait(row, signal) {
   const path = '/v1/jobs/' + row.id;
   let absent = 0;
   for (;;) {
+    if(!acsJobScopeMatches(row))return acsJobFailure('تغيّر الحساب أو المشروع. توقفت متابعة المهمة في هذه الجلسة.',401,'ACS_AUTH_REQUIRED');
     if (acsJobBase() !== row.base)
       return acsJobFailure('تغيّر عنوان الخادم؛ لم تُرسل بيانات الاستعادة إلى خادم آخر.');
     if (signal && signal.aborted)
@@ -257,4 +269,5 @@ if (typeof window !== 'undefined') {
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', acsJobRecoveryBanner);
   else acsJobRecoveryBanner();
+  document.addEventListener('acs:authenticated',acsJobRecoveryBanner);
 }

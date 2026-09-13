@@ -1,5 +1,9 @@
 # AI Construction Studio (ACS)
 
+> Current product acceptance: [2026-09-13 release review](docs/audits/2026-09-13-product-readiness.md).
+> The phase measurements below are historical evidence; they do not establish
+> completion of every item in Design Pipeline v2.
+
 > Every claim in this file was checked against the code in this repository on the
 > branch `remediation/production-trust`. Anything that cannot be executed inside
 > this sandbox is marked **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED** rather
@@ -49,11 +53,11 @@ by the test suites, not merely a statement of intent:
 | Aspect | State |
 | --- | --- |
 | Stage | Working system under active remediation, not a released product. |
-| Branch | `remediation/production-trust`. |
+| Branch | `main`; releases must pass CI before deployment. |
 | Backend | FastAPI service, deployed as a Docker image (Render blueprint present). |
 | Frontend | Single static page published by Netlify. |
-| Authentication | **None.** The login card in `public/index.html` is local only — it stores a name in `localStorage` and hides itself. Its own hint text says a real authentication backend is not connected yet. Treat every deployment as public. |
-| Persistence | None on the server. There is no database; projects live in the browser session. |
+| Authentication | Production uses the Supabase Auth gateway, session refresh and verified first-project bootstrap. Name-only development entry is restricted to localhost. |
+| Persistence | Accounts and project metadata use Supabase. Durable PlanStore commands exist. The current studio's model autosave and named design versions remain device-local, isolated by account/project. This is not automatic cross-device model sync. |
 | Test material | 10 phase/remediation suite runners, plus deployment and security verifiers (§14). |
 | Known open issues | 9 tracked items in `KNOWN-ISSUES.md`, summarised in §19. |
 

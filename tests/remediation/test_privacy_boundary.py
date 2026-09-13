@@ -536,8 +536,15 @@ chk('CSP · it carries no inline event handler attribute', doc.handlers == [],
 chk('CSP · it loads no script at all, inline or external',
     'script' not in doc.tags and '<script' not in PRIV.lower())
 chk('CSP · it needs no eval', 'eval(' not in PRIV)
-chk('CSP · its styling is an inline <style>, which the site policy allows',
-    'style' in doc.tags and 'stylesheet' not in PRIV)
+_privacy_css = rd('public/privacy.css') if os.path.isfile(os.path.join(ROOT, 'public/privacy.css')) else ''
+_site_csp = re.search(r'^\s*Content-Security-Policy\s*=\s*"([^\"]+)"', rd('netlify.toml'), re.M)
+_style_policy = re.search(r"style-src\s+([^;]+)", _site_csp.group(1)) if _site_csp else None
+chk('CSP · the page uses an existing same-origin stylesheet under the strict site policy',
+    'style' not in doc.tags and '/privacy.css' in doc.srcs
+    and 'rel="stylesheet"' in PRIV and len(_privacy_css) > 100
+    and not re.search(r'@import|https?://|url\(\s*[\'\"]?//', _privacy_css, re.I)
+    and _style_policy is not None and "'self'" in _style_policy.group(1)
+    and "'unsafe-inline'" not in _style_policy.group(1))
 
 _bilingual = ('lang="en"' in PRIV and 'dir="ltr"' in PRIV)
 chk('the page is bilingual — Arabic primary, English secondary', _bilingual)
@@ -552,9 +559,17 @@ _say = {
         and 'Do not upload secrets' in PRIV,
     'that project data lives in the browser':
         'متصفّح' in PRIV and 'browser storage' in PRIV,
-    'that the server does not persist project models':
-        'الخادم لا يحتفظ' in PRIV
-        and 'does not persist project models' in PRIV,
+    'that accounts and project metadata persist while studio versions are local':
+        'Supabase' in PRIV and 'الحساب واسم المشروع' in PRIV
+        and 'device-local backups' in PRIV and 'durable plan revisions' in PRIV
+        and 'does not persist project models' not in PRIV,
+    'that sessions and local backups are scoped to the account and project':
+        'الجلسة' in PRIV and 'حسب الحساب والمشروع' in PRIV
+        and 'Session and refresh tokens' in PRIV
+        and 'separated by account and project' in PRIV,
+    'that temporary generation results can be lost on restart':
+        '30 دقيقة' in PRIV and 'server memory for 30 minutes' in PRIV
+        and 'lost when the server restarts' in PRIV,
     'what is NOT stored':
         'ما لا يُخزَّن' in PRIV and 'What is NOT stored' in PRIV,
     'that the provider is configured by the operator':
