@@ -40,6 +40,21 @@ test('nested lock targets come only from stable canonical provenance identities'
   assert.equal(new Set(targets.map(selectorKey)).size, 4);
 });
 
+test('selector keys cannot alias two canonical identities that contain delimiters', () => {
+  // Server stable ids are bounded strings, not a delimiter-restricted grammar.
+  // These are distinct canonical selectors and must remain distinct in the UI Map.
+  const first = {kind:'element', template:'ground|west', room_id:'storage', collection:'racks', element_id:'rack_a'};
+  const second = {kind:'element', template:'ground', room_id:'west|storage', collection:'racks', element_id:'rack_a'};
+  assert.notDeepEqual(first, second);
+  assert.notEqual(selectorKey(first), selectorKey(second));
+
+  const targets = collectSemanticLockTargets({
+    projections:[{source_map:[{source:first}, {source:second}]}],
+    locks:{semantic:[]},
+  });
+  assert.equal(targets.length, 2);
+});
+
 test('toggling one nested lock preserves every unrelated server-held selector', () => {
   const current = [{kind:'site'}, {kind:'room', template:'ground', room_id:'office'}, rack, dock];
   const afterAdd = toggleSemanticSelector(current, lane, true);
