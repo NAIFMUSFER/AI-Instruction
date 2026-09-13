@@ -35,8 +35,8 @@ const metricNames = {
   pedestrian_vehicle_separation_compliance:'التحقق من فصل المشاة والمركبات',
   fire_life_safety_compliance:'التحقق من متطلبات الحريق وسلامة الأرواح'
 };
-const scopeNames = {rectangular_geometry:'هندسة حدود الفراغات',program:'برنامج المتطلبات',topology:'الترابط',vertical_circulation:'الحركة الرأسية',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
-const states = {PASS:'اجتاز وفق الملف',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق'};
+const scopeNames = {rectangular_geometry:'هندسة حدود الفراغات',program:'برنامج المتطلبات',topology:'الترابط',vertical_circulation:'الحركة الرأسية',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية',warehouse_expansion_reserve:'حماية مساحة التوسع المعلنة'};
+const states = {PASS:'اجتاز وفق الملف',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'غير منطبق على هذه النسخة'};
 function node(tag, text, parent, cls) { const e=document.createElement(tag); if(text!==null)e.textContent=text; if(cls)e.className=cls;if(parent)parent.append(e);return e; }
 function svg(tag, attrs, parent, text) { const e=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;parent.append(e);return e; }
 function pair(parent, label, value) { node('dt',label,parent);node('dd',format(value),parent); }
