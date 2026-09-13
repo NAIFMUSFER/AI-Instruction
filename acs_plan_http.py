@@ -122,6 +122,11 @@ def _project_from_path(path: Any) -> tuple[bool, str | None]:
         project_id = str(uuid.UUID(raw))
     except (ValueError, AttributeError, TypeError):
         return True, None
+    # Do not admit alternate textual identities (hyphenless, braced, uppercase).
+    # The route is an authorization selector, so one canonical spelling avoids
+    # cache/log/audit ambiguity before membership/RPC authorization runs.
+    if raw != project_id:
+        return True, None
     return True, project_id
 
 
