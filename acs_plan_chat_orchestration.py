@@ -16,8 +16,8 @@ from __future__ import annotations
 from typing import Any
 
 from acs_plan_chat_job import run_isolated_chat_candidate
-from acs_plan_commands import admit_plan_chat_candidate
-from acs_plan_review import PlanError, canonical
+from acs_plan_commands import admit_plan_chat_candidate, validate_plan_chat_command
+from acs_plan_review import PlanError
 from acs_plan_store_port import PlanStorePort, as_plan_store_port
 from acs_plan_store_reload import load_workspace
 
@@ -28,24 +28,17 @@ _FORBIDDEN_PROJECT_FIELDS = frozenset({
 })
 
 
-def _chat_command(value: Any) -> tuple[dict, str]:
+def _chat_command(value: Any, *, actor_id: str) -> tuple[dict, str]:
     if not isinstance(value, dict):
         raise PlanError("INVALID_PLAN_COMMAND", "Plan-first command must be an object")
-    canonical(value)
     if _FORBIDDEN_PROJECT_FIELDS.intersection(value):
         raise PlanError(
             "CLIENT_PROJECT_AUTHORITY",
             "Project/workspace authority must come from the authenticated host session",
         )
-    if value.get("action") != "chat_edit":
-        raise PlanError(
-            "PLAN_COMMAND_NOT_SUPPORTED",
-            "Isolated chat orchestration accepts chat_edit only",
-        )
-    expected_head = value.get("expected_head")
-    if not isinstance(expected_head, str) or not expected_head.strip():
-        raise PlanError("STALE_REVISION", "A current expected revision is required")
-    return value, expected_head.strip()
+    # Reuse the canonical command boundary before any provider runner starts so
+    # actor/model/lock/approval authority fields fail closed without paid work.
+    return validate_plan_chat_command(value, actor_id=actor_id)
 
 
 def _assert_loaded_state(workspace, state: dict, *, expected_head: str | None = None) -> None:
@@ -86,7 +79,7 @@ def execute_isolated_persisted_chat_edit(
     reload/admission and persistence.
     """
     backend = as_plan_store_port(store)
-    command, expected_head = _chat_command(command)
+    command, expected_head = _chat_command(command, actor_id=actor_id)
 
     before_state = backend.project_state(project_id, actor_id=actor_id)
     if before_state.get("head_revision_id") != expected_head:
