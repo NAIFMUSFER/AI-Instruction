@@ -76,6 +76,27 @@ function acsJobProgress(message) {
   const live = document.getElementById('acsLiveRegion');
   if (live && live.textContent !== message) live.textContent = message;
 }
+function acsJobLocalAuthBypass() {
+  const auth = window.ACS_AUTH;
+  return !!(auth && typeof auth.isLocalTestHost === 'function' && auth.isLocalTestHost());
+}
+async function acsJobSubmissionHeaders(baseHeaders) {
+  const headers = Object.assign({}, baseHeaders || {});
+  Object.keys(headers).forEach(key => {
+    if (String(key).toLowerCase() === 'authorization') delete headers[key];
+  });
+  if (acsJobLocalAuthBypass()) return headers;
+  const auth = window.ACS_AUTH;
+  if (!auth || typeof auth.freshSession !== 'function') return null;
+  let session = null;
+  try { session = await auth.freshSession(); }
+  catch (e) { return null; }
+  const token = session && typeof session.access_token === 'string'
+    ? session.access_token.trim() : '';
+  if (!token || token.length > 8192) return null;
+  headers.Authorization = 'Bearer ' + token;
+  return headers;
+}
 async function acsJobWait(row, signal) {
   const headers = {'X-ACS-Job-Token': row.token};
   const path = '/v1/jobs/' + row.id;
@@ -95,8 +116,6 @@ async function acsJobWait(row, signal) {
       if (job.state === 'SUCCEEDED' || job.state === 'FAILED') {
         const result = await ACS_ASYNC_BASE_FETCH(path + '/result',
           {method: 'GET', headers, cache: 'no-store'}, 20000);
-        // A stored error is a terminal result, even when the original error is
-        // retryable. Only a failed delivery may be polled again, never the job.
         if (result.status === 'SUCCESS' || (result.status === 'VALID_API_ERROR'
             && result.body && result.body.error)) {
           row.delivered = true;
@@ -130,10 +149,15 @@ async function acsJobSubmit(path, opts) {
     acsJobRecoveryBanner();
     return acsJobFailure('يوجد طلب سابق لم تُستلم نتيجته. تابع المهمة السابقة أولاً.', 409, 'ACS_BAD_REQUEST');
   }
+  const authHeaders = await acsJobSubmissionHeaders(opts.headers);
+  if (!authHeaders) {
+    return acsJobFailure('انتهت جلسة الدخول أو لم تعد صالحة. سجّل الدخول قبل بدء التوليد.',
+      401, 'ACS_AUTH_REQUIRED');
+  }
   const row = {id: 'job_' + acsJobRandom(16), token: acsJobRandom(32), path,
     base: acsJobBase(), created: Date.now(), state: 'SUBMITTING', delivered: false};
-  acsJobSave(row); // Before POST: even loss of the receipt can be recovered by GET.
-  const headers = Object.assign({}, opts.headers || {},
+  acsJobSave(row);
+  const headers = Object.assign(authHeaders,
     {'X-ACS-Job-ID': row.id, 'X-ACS-Job-Token': row.token});
   const receipt = await ACS_ASYNC_BASE_FETCH(ACS_ASYNC_PATHS[path],
     Object.assign({}, opts, {headers}), 20000);
@@ -142,9 +166,7 @@ async function acsJobSubmit(path, opts) {
     row.acknowledged = true;
     acsJobSave(row);
   } else if (!acsJobTransient(receipt)) {
-    // A definite rejection at the new endpoint, not an ambiguous network error.
-    // An old backend returns 404 here without calling a generation handler.
-    if ([400, 404, 405, 413, 422, 429].includes(receipt.http)) acsJobClear();
+    if ([400, 401, 403, 404, 405, 413, 422, 429].includes(receipt.http)) acsJobClear();
     return receipt;
   }
   const result = await acsJobWait(row, opts.signal);
@@ -178,7 +200,6 @@ async function acsJobRecover() {
   }
   const data = result.body;
   if (row.path === '/v1/edit') {
-    // Recovery cannot bypass the existing engineering replacement approval.
     const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}));
     const link = document.createElement('a'); link.href = url; link.download = 'acs-edit-proposal.json';
     link.click(); setTimeout(() => URL.revokeObjectURL(url), 30000);
@@ -197,7 +218,6 @@ async function acsJobRecover() {
     __ACS_SHARED.acsApplyErrorPanel(ap, result, acsJobRecover, null);
     return;
   }
-  // The original description isn't reconstructed or guessed after a reload.
   __ACS_SHARED.LAST_REQUEST_TEXT = '';
   showReport(data.report, '');
   requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -233,7 +253,7 @@ if (typeof window !== 'undefined') {
   window.ACS.asyncGeneration = {
     recover: acsJobRecover,
     state: () => { const row = acsJobRead(); return row ? {id: row.id, state: row.state,
-      delivered: !!row.delivered, path: row.path} : null; }, // Never expose capability.
+      delivered: !!row.delivered, path: row.path} : null;
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', acsJobRecoveryBanner);
   else acsJobRecoveryBanner();
