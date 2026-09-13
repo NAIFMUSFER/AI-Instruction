@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1559286,
+    "core_initial_bytes": 1560699,
     "core_initial_module_count": 26,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 13,
@@ -167,17 +167,17 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 38,
-    "first_party_total_bytes": 2071457,
-    "initial_javascript_bytes": 1605588,
+    "first_party_total_bytes": 2072870,
+    "initial_javascript_bytes": 1607001,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
       "gzip_bytes": 48735,
       "loaded": "eager",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 11.04
+      "pct_of_first_party_js": 11.03
     },
-    "largest_module_pct_of_first_party_js": 11.04,
+    "largest_module_pct_of_first_party_js": 11.03,
     "lazy_bytes": 465869,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
@@ -205,7 +205,7 @@
         "gzip_bytes": 48735,
         "loaded": "eager",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 11.04
+        "pct_of_first_party_js": 11.03
       },
       {
         "bytes": 205018,
@@ -213,7 +213,7 @@
         "gzip_bytes": 56862,
         "loaded": "eager",
         "path": "public/app/core/disciplines.js",
-        "pct_of_first_party_js": 9.9
+        "pct_of_first_party_js": 9.89
       },
       {
         "bytes": 204058,
@@ -221,7 +221,7 @@
         "gzip_bytes": 62327,
         "loaded": "eager",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 9.85
+        "pct_of_first_party_js": 9.84
       },
       {
         "bytes": 198744,
@@ -237,7 +237,7 @@
         "gzip_bytes": 50111,
         "loaded": "eager",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 8.02
+        "pct_of_first_party_js": 8.01
       },
       {
         "bytes": 122705,
@@ -293,7 +293,7 @@
         "gzip_bytes": 20057,
         "loaded": "lazy",
         "path": "public/app/generated/arch-detail.js",
-        "pct_of_first_party_js": 3.43
+        "pct_of_first_party_js": 3.42
       },
       {
         "bytes": 56609,
@@ -317,7 +317,7 @@
         "gzip_bytes": 14629,
         "loaded": "eager",
         "path": "public/app/generated/pbr-bridge.js",
-        "pct_of_first_party_js": 2.29
+        "pct_of_first_party_js": 2.28
       },
       {
         "bytes": 42333,
@@ -384,12 +384,12 @@
         "pct_of_first_party_js": 0.63
       },
       {
-        "bytes": 10421,
+        "bytes": 11834,
         "group": "core",
-        "gzip_bytes": 3767,
+        "gzip_bytes": 4283,
         "loaded": "eager",
         "path": "public/app/core/brief-program.mjs",
-        "pct_of_first_party_js": 0.5
+        "pct_of_first_party_js": 0.57
       },
       {
         "bytes": 9360,
@@ -421,7 +421,7 @@
         "gzip_bytes": 2044,
         "loaded": "eager",
         "path": "public/app/ui/residential-quality.js",
-        "pct_of_first_party_js": 0.31
+        "pct_of_first_party_js": 0.3
       },
       {
         "bytes": 6002,
@@ -599,7 +599,7 @@
     "sha256": "bfd2c3c5e6fa27b5fd21f20e8d51a81e5f3748cd2c89991fc0dac6fe165d97b1",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 51422 byte shell and the application JavaScript (2071457 bytes) lives in 38 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 51422 byte shell and the application JavaScript (2072870 bytes) lives in 38 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "empty": false,
     "file_count": 558,
