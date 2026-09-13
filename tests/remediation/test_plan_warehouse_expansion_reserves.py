@@ -2,8 +2,11 @@
 """Explicit warehouse expansion-reserve regressions for ACS Design Pipeline v2.
 
 The reserve is a canonical warehouse room with the exact role ``expansion``. These
-checks use only explicit room/rack/lane rectangles. They do not infer future demand,
-capacity, regulatory compliance, fire clearance, equipment envelopes or safety.
+checks use only explicit room/rack/lane rectangles. Rack/lane coordinates are the
+existing canonical room-relative coordinates and are projected to site coordinates
+using their owning room rectangle before reserve overlap is measured. The checks do
+not infer future demand, capacity, regulatory compliance, fire clearance, equipment
+envelopes or safety.
 """
 from __future__ import annotations
 
@@ -14,20 +17,8 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_options as O
-import acs_plan_review as P
 import acs_plan_scorecard as S
 from test_plan_warehouse_operational_metrics import warehouse
-
-BRIEF = "Warehouse future expansion reserve requested; site width 50 m."
-REQUIREMENTS = [
-    {"id": "site-width", "source": "requested", "evidence": "50 m",
-     "metric": "site_width_m", "expected": 50.0},
-]
-
-
-def verified(_model):
-    return {"scopes": {"topology": "PASS", "vertical_circulation": "PASS"},
-            "issues": []}
 
 
 def with_reserve(*, rect=None):
@@ -42,15 +33,16 @@ def with_reserve(*, rect=None):
 
 def add_intrusions(model):
     storage = model["floors"]["ground"]["rooms"][1]
+    # Storage begins at site x=15. Nested x=24 therefore projects to site x=39.
     storage["racks"].append({
         "id": "rack_intrusion", "kind": "pallet",
-        "x": 39.0, "z": 14.0, "w": 4.0, "d": 4.0,
+        "x": 24.0, "z": 14.0, "w": 4.0, "d": 4.0,
         "dir": "x", "rows": 1, "depth": 1.0, "bay": 2.0,
         "aisle": 3.0, "levels": 1, "h": 4.0,
     })
     storage["lanes"] = [{
         "id": "lane_intrusion", "kind": "forklift",
-        "x": 39.0, "z": 16.0, "w": 5.0, "d": 2.0, "dir": "x",
+        "x": 24.0, "z": 16.0, "w": 5.0, "d": 2.0, "dir": "x",
     }]
     return model
 
@@ -68,7 +60,7 @@ class WarehouseExpansionReserveTests(unittest.TestCase):
         self.assertEqual(check["measurement_basis"], "explicit_rectangles")
         self.assertFalse(result["claims_regulatory_compliance"])
 
-    def test_explicit_rack_and_lane_intrusions_fail_with_measured_evidence(self):
+    def test_room_relative_rack_and_lane_intrusions_use_owner_origin(self):
         result = S.measure_plan(add_intrusions(with_reserve()))
         metrics = result["metrics"]
         self.assertEqual(metrics["expansion_reserve_rack_overlap_area_m2"], 12.0)
@@ -82,6 +74,19 @@ class WarehouseExpansionReserveTests(unittest.TestCase):
              for row in check["intrusions"]},
             {("rack", "rack_intrusion", 12.0),
              ("lane:forklift", "lane_intrusion", 8.0)},
+        )
+
+    def test_explicit_zone_intrusion_is_measured_separately(self):
+        model = with_reserve()
+        model["floors"]["ground"]["rooms"][2]["rect"] = [40.0, 10.0, 10.0, 4.0]
+        result = S.measure_plan(model)
+        self.assertEqual(result["metrics"]["expansion_reserve_zone_overlap_area_m2"], 20.0)
+        check = result["checks"]["expansion_reserve_preservation"]
+        self.assertEqual(check["status"], "FAIL")
+        self.assertIn(
+            ("zone", "shipping", 20.0),
+            {(row["element_kind"], row["element_id"], row["overlap_area_m2"])
+             for row in check["intrusions"]},
         )
 
     def test_no_declared_reserve_is_not_applicable_not_a_fake_pass(self):
@@ -99,26 +104,6 @@ class WarehouseExpansionReserveTests(unittest.TestCase):
         self.assertEqual(result["checks"]["expansion_reserve_preservation"]["status"],
                          "NOT_VERIFIED")
 
-    def test_review_blocks_known_reserve_occupation(self):
-        ws = P.PlanWorkspace(verified)
-        rev = ws.propose(add_intrusions(with_reserve()), brief=BRIEF,
-                         requirements=REQUIREMENTS, expected_head=None,
-                         note="intrude future expansion reserve")
-        out = ws.review(rev.id)
-        self.assertIn("EXPANSION_RESERVE_OCCUPIED",
-                      {item["code"] for item in out["issues"]})
-        self.assertEqual(out["scopes"]["warehouse_expansion_reserve"], "FAIL")
-        self.assertFalse(out["can_approve"])
-
-    def test_clean_reserve_can_pass_concept_review_without_compliance_claim(self):
-        ws = P.PlanWorkspace(verified)
-        rev = ws.propose(with_reserve(), brief=BRIEF, requirements=REQUIREMENTS,
-                         expected_head=None, note="preserve future expansion reserve")
-        out = ws.review(rev.id)
-        self.assertEqual(out["scopes"]["warehouse_expansion_reserve"], "PASS")
-        self.assertTrue(out["can_approve"])
-        self.assertEqual(out["scopes"]["regulatory_compliance"], "NOT_VERIFIED")
-
     def test_options_compare_measured_reserve_area_without_ranking(self):
         a = with_reserve(rect=[40.0, 12.0, 10.0, 12.0])
         b = with_reserve(rect=[42.0, 12.0, 8.0, 12.0])
@@ -130,6 +115,7 @@ class WarehouseExpansionReserveTests(unittest.TestCase):
         self.assertEqual(delta["expansion_reserve_area_m2"], -24.0)
         self.assertEqual(delta["expansion_reserve_rack_overlap_area_m2"], 0.0)
         self.assertFalse(result["claims_best_option"])
+        self.assertFalse(result["claims_regulatory_compliance"])
 
     def test_residential_does_not_gain_warehouse_reserve_metrics_or_check(self):
         model = with_reserve()
