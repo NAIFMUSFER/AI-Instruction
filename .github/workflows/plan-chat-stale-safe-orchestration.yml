@@ -1,0 +1,46 @@
+name: Plan chat stale-safe orchestration
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_chat_orchestration.py'
+      - 'acs_plan_chat_job.py'
+      - 'acs_plan_commands.py'
+      - 'acs_plan_http.py'
+      - 'tests/remediation/test_plan_chat_stale_safe_orchestration.py'
+      - 'Dockerfile'
+      - '.github/workflows/plan-chat-stale-safe-orchestration.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  stale-safe-chat-orchestration:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Compile trusted orchestration and regression
+        run: |
+          python -m py_compile \
+            acs_plan_chat_orchestration.py \
+            tests/remediation/test_plan_chat_stale_safe_orchestration.py
+      - name: Verify reload-before-admission and stale-head rejection
+        run: PYTHONPATH=. python tests/remediation/test_plan_chat_stale_safe_orchestration.py
+      - name: Verify trusted boundary import isolation
+        run: |
+          python -S - <<'PY'
+          import sys
+          import acs_plan_chat_orchestration
+          assert 'acs_understand' not in sys.modules
+          assert 'acs_compiler' not in sys.modules
+          assert 'acs_bim' not in sys.modules
+          print('stale-safe chat orchestration import isolation: PASS')
+          PY
+      - name: Tests leave repository clean
+        run: git diff --exit-code
