@@ -173,6 +173,81 @@ def _rect_overlap_area(a: tuple[float, float, float, float],
     return w * d
 
 
+def _measure_configured_routes(model: dict) -> tuple[dict[str, float] | None,
+                                                       dict[str, float] | None,
+                                                       list[dict], str | None]:
+    """Measure explicit warehouse route polylines, failing the set closed.
+
+    Nothing is routed or optimized here: each route length is the Euclidean sum of
+    its supplied site-coordinate polyline segments. One malformed route invalidates
+    the whole configured-route measurement so a partial aggregate cannot look
+    authoritative.
+    """
+    raw = model.get("routes")
+    if raw is None:
+        return None, None, [], "No explicit configured warehouse route polylines are present."
+    if not isinstance(raw, list) or not raw:
+        return None, None, [], "Configured routes must be a non-empty list of explicit route definitions."
+
+    by_id: dict[str, float] = {}
+    by_flow: defaultdict[str, float] = defaultdict(float)
+    definitions: list[dict] = []
+    seen_ids: set[str] = set()
+
+    for route in raw:
+        if not isinstance(route, dict):
+            return None, None, [], "Every configured route must be an explicit route object."
+        route_id = route.get("id")
+        kind = route.get("kind")
+        from_role = route.get("from_role")
+        to_role = route.get("to_role")
+        if (not isinstance(route_id, str) or not route_id.strip() or len(route_id) > 80
+                or not isinstance(kind, str) or not kind.strip() or len(kind) > 80
+                or not isinstance(from_role, str) or not from_role.strip() or len(from_role) > 80
+                or not isinstance(to_role, str) or not to_role.strip() or len(to_role) > 80):
+            return None, None, [], "Configured routes need bounded id, kind, from_role and to_role strings."
+        route_id = route_id.strip()
+        if route_id in seen_ids:
+            return None, None, [], "Configured route ids must be unique."
+        seen_ids.add(route_id)
+        kind = kind.strip().lower()
+        from_role = from_role.strip().lower()
+        to_role = to_role.strip().lower()
+
+        points = route.get("points")
+        if not isinstance(points, list) or len(points) < 2:
+            return None, None, [], "Each configured route needs at least two explicit polyline points."
+        normalized: list[tuple[float, float]] = []
+        for point in points:
+            if (not isinstance(point, (list, tuple)) or len(point) != 2
+                    or not _finite(point[0]) or not _finite(point[1])):
+                return None, None, [], "Configured route points must be finite [x, z] coordinate pairs."
+            normalized.append((float(point[0]), float(point[1])))
+
+        length = 0.0
+        for index in range(1, len(normalized)):
+            ax, az = normalized[index - 1]
+            bx, bz = normalized[index]
+            length += math.hypot(bx - ax, bz - az)
+        if not math.isfinite(length):
+            return None, None, [], "Configured route polyline length is not finite."
+        length = round(length, 6)
+        by_id[route_id] = length
+        by_flow[f"{from_role}->{to_role}"] += length
+        definitions.append({
+            "id": route_id,
+            "kind": kind,
+            "from_role": from_role,
+            "to_role": to_role,
+            "point_count": len(normalized),
+            "measurement_basis": "explicit_polyline",
+        })
+
+    return (dict(sorted(by_id.items())),
+            {key: round(value, 6) for key, value in sorted(by_flow.items())},
+            definitions, None)
+
+
 def measure_plan(model: dict) -> dict:
     """Measure a canonical plan without inventing missing engineering facts.
 
@@ -198,6 +273,9 @@ def measure_plan(model: dict) -> dict:
     - `rack_geometric_bay_count` and `rack_geometric_bay_level_positions` count
       only explicit run/bay/row/level geometry; they are not usable/load-rated
       storage capacity or proof of clearances/load units.
+    - `configured_route_length_by_id_m` and `configured_route_length_by_flow_m`
+      measure only explicit configured polylines and their named role endpoints;
+      they do not choose, infer, optimize or weight a movement route.
     - `rack_overlap_area_m2` and `rack_lane_overlap_area_by_lane_kind_m2` measure
       only explicit room-relative rectangle intersections. They are geometric
       conflict indicators, not clearance, traffic-safety or code-compliance proof.
@@ -457,12 +535,15 @@ def measure_plan(model: dict) -> dict:
         "net_floor_area_m2": "No canonical net-area classification is defined here.",
         "efficiency": "GFA/NFA are not established, so efficiency is not computed.",
     }
+    configured_route_definitions: list[dict] = []
 
     if typology == "warehouse":
         zone_ratios = (
             {k: round(v / space_area, 6) for k, v in sorted(zone_area.items())}
             if space_area_known and space_area > EPS else None
         )
+        route_by_id, route_by_flow, configured_route_definitions, route_error = (
+            _measure_configured_routes(model))
         metrics.update({
             "zone_area_by_role_m2": metrics["space_area_by_role_m2"],
             "zone_area_ratio_by_role": zone_ratios,
@@ -494,6 +575,8 @@ def measure_plan(model: dict) -> dict:
             "lane_overlap_area_by_kind_pair_m2": (
                 {k: round(v, 6) for k, v in sorted(lane_overlap.items())}
                 if lane_overlap_complete else None),
+            "configured_route_length_by_id_m": route_by_id,
+            "configured_route_length_by_flow_m": route_by_flow,
             "storage_capacity_positions": None,
             "throughput_per_hour": None,
             "travel_distance_m": None,
@@ -505,10 +588,15 @@ def measure_plan(model: dict) -> dict:
                 "Geometric rack bay/level counts are not usable or load-rated storage capacity; "
                 "no canonical load-unit, clearance, occupancy or load-rating contract is present."),
             "throughput_per_hour": "No measured flow/time model is present in canonical Building JSON.",
-            "travel_distance_m": "Declared lane centerlines are not routed origin/destination travel paths.",
+            "travel_distance_m": (
+                "No single selected/weighted movement model is defined; explicit configured route "
+                "polylines are reported separately and are not collapsed into one travel distance."),
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
+        if route_error is not None:
+            unavailable["configured_route_length_by_id_m"] = route_error
+            unavailable["configured_route_length_by_flow_m"] = route_error
         if not dock_count_known or not dock_zone_role_complete:
             unavailable["dock_count_by_zone_role"] = (
                 "Dock allocation by owning zone role needs valid explicit counts and a canonical "
@@ -535,6 +623,7 @@ def measure_plan(model: dict) -> dict:
         "schema": SCHEMA,
         "typology": typology,
         "metrics": metrics,
+        "configured_route_definitions": configured_route_definitions,
         "unavailable": unavailable,
         "warnings": warnings,
         "claims_regulatory_compliance": False,

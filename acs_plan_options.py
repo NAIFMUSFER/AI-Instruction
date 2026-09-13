@@ -4,9 +4,10 @@ This module compares canonical design options without ranking them or inventing 
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
 option. Explicit rack footprints, geometric rack bay counts, rack conflicts, zone
-allocation ratios and oriented lane geometry may be compared; regulatory/structural
-compliance, usable/load-rated storage capacity, throughput and routed travel remain
-outside this contract unless a future authoritative engine supplies them.
+allocation ratios, oriented lane geometry and explicit configured route polylines
+may be compared; regulatory/structural compliance, usable/load-rated storage
+capacity, throughput and inferred routing remain outside this contract unless a
+future authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -45,6 +46,8 @@ _MAP_METRICS = (
     "lane_centerline_length_by_kind_m",
     "lane_overlap_area_by_kind_pair_m2",
     "rack_lane_overlap_area_by_lane_kind_m2",
+    "configured_route_length_by_id_m",
+    "configured_route_length_by_flow_m",
 )
 
 
