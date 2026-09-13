@@ -11,7 +11,7 @@ const COLLECTION_LABELS = {
 };
 
 function stable(value) {
-  return typeof value === 'string' && value.trim().length > 0 && value.trim().length <= 160;
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= 120;
 }
 
 function normalizeSelector(raw) {
@@ -33,9 +33,13 @@ function normalizeSelector(raw) {
 export function selectorKey(raw) {
   const selector = normalizeSelector(raw);
   if (!selector) return '';
-  if (selector.kind === 'site') return 'site';
-  if (selector.kind === 'room') return `room|${selector.template}|${selector.room_id}`;
-  return `element|${selector.template}|${selector.room_id}|${selector.collection}|${selector.element_id}`;
+  // A JSON tuple is injective for these normalized string components. Do not use a
+  // delimiter-joined key: stable canonical ids may themselves contain delimiters.
+  if (selector.kind === 'site') return JSON.stringify(['site']);
+  if (selector.kind === 'room') return JSON.stringify(['room', selector.template, selector.room_id]);
+  return JSON.stringify([
+    'element', selector.template, selector.room_id, selector.collection, selector.element_id,
+  ]);
 }
 
 export function collectSemanticLockTargets(packet) {
