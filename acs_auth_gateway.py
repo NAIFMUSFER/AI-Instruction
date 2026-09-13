@@ -154,12 +154,12 @@ def _bearer(scope: dict) -> str:
     return token if token and len(token) <= 8192 else ""
 
 
-def _email_password(body: dict) -> tuple[str, str]:
+def _email_password(body: dict, *, signup: bool = False) -> tuple[str, str]:
     email = body.get("email")
     password = body.get("password")
-    if not isinstance(email, str) or "@" not in email or len(email) > 320:
+    if not isinstance(email, str) or "@" not in email.strip() or len(email) > 320:
         raise ValueError("invalid email")
-    if not isinstance(password, str) or len(password) < 8 or len(password) > 256:
+    if not isinstance(password, str) or len(password) < (8 if signup else 1) or len(password) > 256:
         raise ValueError("invalid password")
     return email.strip(), password
 
@@ -170,17 +170,28 @@ def _safe_auth_error(status: int, payload: Any) -> tuple[int, dict]:
     code = "AUTH_FAILED"
     message = "تعذّر إكمال تسجيل الدخول. تحقّق من البيانات وحاول مجدداً."
     if isinstance(payload, dict):
-        upstream_code = payload.get("error_code") or payload.get("code")
+        upstream_code = payload.get("error_code") or payload.get("code") or payload.get("error")
         if isinstance(upstream_code, str) and len(upstream_code) <= 80:
             code = upstream_code
-        raw = payload.get("msg") or payload.get("message") or payload.get("error_description")
-        if isinstance(raw, str) and raw.strip() and len(raw) <= 300:
-            message = raw.strip()
+    messages = {
+        "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+        "email_not_confirmed": "أكد بريدك الإلكتروني من الرسالة المرسلة إليك، ثم سجّل الدخول.",
+        "user_already_exists": "يوجد حساب بهذا البريد. استخدم تسجيل الدخول.",
+        "weak_password": "اختر كلمة مرور أقوى من 8 أحرف على الأقل.",
+        "over_email_send_rate_limit": "أُرسلت رسائل كثيرة مؤخرًا. انتظر قليلًا ثم حاول مجددًا.",
+        "AUTH_NOT_CONFIGURED": "خدمة الدخول غير جاهزة حاليًا. حاول لاحقًا.",
+        "AUTH_UPSTREAM_UNAVAILABLE": "تعذّر الاتصال بخدمة الدخول. حاول مجددًا بعد قليل.",
+    }
+    if status >= 500:
+        message = "خدمة الدخول غير متاحة مؤقتًا. حاول مجددًا؛ لا تحتاج إلى تغيير كلمة المرور."
+    elif status == 429:
+        message = "محاولات كثيرة خلال وقت قصير. انتظر قليلًا ثم حاول مجددًا."
+    message = messages.get(code, message)
     return status, {"ok": False, "error": {"code": code, "message": message}}
 
 
 def _signup(body: dict) -> tuple[int, dict]:
-    email, password = _email_password(body)
+    email, password = _email_password(body, signup=True)
     name = body.get("name")
     data = {"name": name.strip()[:160]} if isinstance(name, str) and name.strip() else {}
     status, payload = _request("POST", "/auth/v1/signup", payload={
@@ -224,6 +235,8 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
     if not token:
         return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "يلزم تسجيل الدخول."}}
     status, user = _request("GET", "/auth/v1/user", token=token)
+    if status >= 500 or status == 429:
+        return _safe_auth_error(status, user)
     if status != 200 or not isinstance(user, dict) or not isinstance(user.get("id"), str):
         return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "جلسة الدخول غير صالحة."}}
     uid = user["id"]
@@ -231,6 +244,8 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
     p_status, projects = _request("GET", q, token=token)
     if p_status >= 400:
         return _safe_auth_error(p_status, projects)
+    if not isinstance(projects, list):
+        return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
     if isinstance(projects, list) and projects:
         return 200, {"ok": True, "project": projects[0], "created": False, "user": {"id": uid, "email": user.get("email")}}
     name = body.get("name")
@@ -244,6 +259,8 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
     if c_status >= 400:
         return _safe_auth_error(c_status, created)
     row = created[0] if isinstance(created, list) and created else created
+    if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
+        return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
     return 200, {"ok": True, "project": row, "created": True, "user": {"id": uid, "email": user.get("email")}}
 
 
@@ -272,5 +289,8 @@ async def maybe_handle(scope, receive, send) -> bool:
         status, payload = 413, {"ok": False, "error": {"code": "INPUT_LIMIT", "message": "الطلب أكبر من الحد المسموح."}}
     except ValueError:
         status, payload = 400, {"ok": False, "error": {"code": "INVALID_AUTH_REQUEST", "message": "بيانات الدخول غير مكتملة أو غير صالحة."}}
+    except Exception:
+        # Preserve the JSON error contract without reflecting provider/SQL details.
+        status, payload = _safe_auth_error(502, {"error": "AUTH_UPSTREAM_UNAVAILABLE"})
     await _send(send, status, payload if isinstance(payload, dict) else {"ok": False})
     return True

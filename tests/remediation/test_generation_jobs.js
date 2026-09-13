@@ -36,6 +36,18 @@ function receipt(id,state='RUNNING') {
 }
 async function test(name,fn){await fn();console.log('PASS '+name);passed++;}
 (async()=>{
+  await test('recovery belongs to its authenticated account and project',async()=>{
+    const h=harness(()=>{throw new Error('a different project must not read the job');});
+    let scope='user-a/project-a';
+    h.ctx.window.ACS_AUTH.storageScope=()=>scope;
+    h.ctx.acsJobSave({id:'job_'+'1'.repeat(32),token:'a'.repeat(64),path:'/v1/understand',
+      base:'https://acs.example',created:Date.now(),delivered:false});
+    assert.ok(h.ctx.acsJobRead());
+    scope='user-a/project-b';assert.equal(h.ctx.acsJobRead(),null);
+    scope='user-b/project-a';assert.equal(h.ctx.acsJobRead(),null);
+    scope=null;assert.equal(h.ctx.acsJobRead(),null);assert.equal(h.calls.length,0);
+    scope='user-a/project-a';assert.ok(h.ctx.acsJobRead());
+  });
   await test('production paid submission forwards the refreshed Supabase bearer only on POST',async()=>{
     let id;
     const h=harness((p,o)=>{

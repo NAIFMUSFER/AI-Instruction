@@ -2,23 +2,23 @@
   "budget": {
     "budget_met": true,
     "budget_note": "index_shell_budget_bytes is the same constant as MAX_BYTES in tools/check_index_guard.py, which fails the build above it. budget_met and preferred_met are COMPUTED from the measured size here, never asserted.",
-    "current_index_bytes": 49428,
-    "headroom_bytes": 155372,
+    "current_index_bytes": 50772,
+    "headroom_bytes": 154028,
     "index_shell_budget_bytes": 204800,
     "index_shell_preferred_bytes": 153600,
     "largest_module_bytes": 228701,
     "largest_module_headroom_bytes": 78499,
     "max_single_module_budget_bytes": 307200,
-    "preferred_headroom_bytes": 104172,
+    "preferred_headroom_bytes": 102828,
     "preferred_met": true,
-    "ratio_of_budget_used": 0.2413,
+    "ratio_of_budget_used": 0.2479,
     "target": "The deployed index.html is an index SHELL — markup, <link rel=stylesheet>, five classic boot scripts and <script type=module src=/app/main.js> — and every line of application logic lives in cacheable files under public/app/."
   },
   "css": {
-    "gzip_bytes": 14250,
+    "gzip_bytes": 14741,
     "note": "this file is the former inline <style> block plus the generated .acs-u-NN utility classes that replaced every style=\"…\" attribute in the markup.",
     "path": "public/app/styles/app.css",
-    "raw_bytes": 59650
+    "raw_bytes": 61625
   },
   "determinism_note": "No timestamp and no absolute path is written. gzip uses mtime=0. Two consecutive runs produce byte-identical output; tests/remediation/test_bundle_report.py asserts exactly that.",
   "deterministic": true,
@@ -34,7 +34,7 @@
     "note": "the generated markers survived the split intact: the JS pairs moved into public/app/generated/*.js, the CSS pairs into public/app/styles/app.css, and the DOM pairs stayed in the shell, where markup belongs."
   },
   "javascript": {
-    "boot_bytes": 36546,
+    "boot_bytes": 40826,
     "boot_script_count": 6,
     "boot_scripts": [
       {
@@ -54,7 +54,7 @@
         "path": "public/app/boot/debug-toggle.js"
       },
       {
-        "bytes": 13647,
+        "bytes": 17927,
         "path": "public/app/boot/engine-guard.js"
       },
       {
@@ -62,7 +62,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1480278,
+    "core_initial_bytes": 1481736,
     "core_initial_module_count": 20,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 13,
@@ -135,17 +135,17 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 32,
-    "first_party_total_bytes": 1982693,
-    "initial_javascript_bytes": 1516824,
+    "first_party_total_bytes": 1988431,
+    "initial_javascript_bytes": 1522562,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
       "gzip_bytes": 48735,
       "loaded": "eager",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 11.53
+      "pct_of_first_party_js": 11.5
     },
-    "largest_module_pct_of_first_party_js": 11.53,
+    "largest_module_pct_of_first_party_js": 11.5,
     "lazy_bytes": 465869,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
@@ -173,7 +173,7 @@
         "gzip_bytes": 48735,
         "loaded": "eager",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 11.53
+        "pct_of_first_party_js": 11.5
       },
       {
         "bytes": 205018,
@@ -181,7 +181,7 @@
         "gzip_bytes": 56862,
         "loaded": "eager",
         "path": "public/app/core/disciplines.js",
-        "pct_of_first_party_js": 10.34
+        "pct_of_first_party_js": 10.31
       },
       {
         "bytes": 204058,
@@ -189,7 +189,7 @@
         "gzip_bytes": 62327,
         "loaded": "eager",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 10.29
+        "pct_of_first_party_js": 10.26
       },
       {
         "bytes": 198744,
@@ -197,7 +197,7 @@
         "gzip_bytes": 64081,
         "loaded": "eager",
         "path": "public/app/core/viewer.js",
-        "pct_of_first_party_js": 10.02
+        "pct_of_first_party_js": 10.0
       },
       {
         "bytes": 166057,
@@ -205,7 +205,7 @@
         "gzip_bytes": 50111,
         "loaded": "eager",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 8.38
+        "pct_of_first_party_js": 8.35
       },
       {
         "bytes": 122705,
@@ -213,7 +213,7 @@
         "gzip_bytes": 30357,
         "loaded": "eager",
         "path": "public/app/generated/authoring.js",
-        "pct_of_first_party_js": 6.19
+        "pct_of_first_party_js": 6.17
       },
       {
         "bytes": 115993,
@@ -221,7 +221,7 @@
         "gzip_bytes": 33152,
         "loaded": "lazy",
         "path": "public/app/generated/docs.js",
-        "pct_of_first_party_js": 5.85
+        "pct_of_first_party_js": 5.83
       },
       {
         "bytes": 104379,
@@ -229,7 +229,7 @@
         "gzip_bytes": 30687,
         "loaded": "lazy",
         "path": "public/app/generated/workspace-ui.js",
-        "pct_of_first_party_js": 5.26
+        "pct_of_first_party_js": 5.25
       },
       {
         "bytes": 99740,
@@ -237,7 +237,7 @@
         "gzip_bytes": 29046,
         "loaded": "lazy",
         "path": "public/app/generated/render-engine.js",
-        "pct_of_first_party_js": 5.03
+        "pct_of_first_party_js": 5.02
       },
       {
         "bytes": 75987,
@@ -245,7 +245,7 @@
         "gzip_bytes": 20929,
         "loaded": "eager",
         "path": "public/app/generated/runtime.js",
-        "pct_of_first_party_js": 3.83
+        "pct_of_first_party_js": 3.82
       },
       {
         "bytes": 74050,
@@ -253,7 +253,7 @@
         "gzip_bytes": 22928,
         "loaded": "eager",
         "path": "public/app/generated/pbr.js",
-        "pct_of_first_party_js": 3.73
+        "pct_of_first_party_js": 3.72
       },
       {
         "bytes": 70950,
@@ -261,7 +261,7 @@
         "gzip_bytes": 20057,
         "loaded": "lazy",
         "path": "public/app/generated/arch-detail.js",
-        "pct_of_first_party_js": 3.58
+        "pct_of_first_party_js": 3.57
       },
       {
         "bytes": 56609,
@@ -269,7 +269,7 @@
         "gzip_bytes": 17734,
         "loaded": "lazy",
         "path": "public/app/generated/bim.js",
-        "pct_of_first_party_js": 2.86
+        "pct_of_first_party_js": 2.85
       },
       {
         "bytes": 51553,
@@ -277,7 +277,7 @@
         "gzip_bytes": 16742,
         "loaded": "eager",
         "path": "public/app/trust/core.js",
-        "pct_of_first_party_js": 2.6
+        "pct_of_first_party_js": 2.59
       },
       {
         "bytes": 47363,
@@ -285,15 +285,15 @@
         "gzip_bytes": 14629,
         "loaded": "eager",
         "path": "public/app/generated/pbr-bridge.js",
-        "pct_of_first_party_js": 2.39
+        "pct_of_first_party_js": 2.38
       },
       {
-        "bytes": 41576,
+        "bytes": 42333,
         "group": "trust",
-        "gzip_bytes": 13462,
+        "gzip_bytes": 13716,
         "loaded": "eager",
         "path": "public/app/trust/wiring.js",
-        "pct_of_first_party_js": 2.1
+        "pct_of_first_party_js": 2.13
       },
       {
         "bytes": 18198,
@@ -304,6 +304,14 @@
         "pct_of_first_party_js": 0.92
       },
       {
+        "bytes": 17927,
+        "group": "boot",
+        "gzip_bytes": 5568,
+        "loaded": "boot-classic",
+        "path": "public/app/boot/engine-guard.js",
+        "pct_of_first_party_js": 0.9
+      },
+      {
         "bytes": 15478,
         "group": "ui",
         "gzip_bytes": 5339,
@@ -312,20 +320,12 @@
         "pct_of_first_party_js": 0.78
       },
       {
-        "bytes": 13647,
-        "group": "boot",
-        "gzip_bytes": 4067,
-        "loaded": "boot-classic",
-        "path": "public/app/boot/engine-guard.js",
-        "pct_of_first_party_js": 0.69
-      },
-      {
-        "bytes": 13508,
+        "bytes": 14209,
         "group": "ui",
-        "gzip_bytes": 4717,
+        "gzip_bytes": 4892,
         "loaded": "eager",
         "path": "public/app/ui/generation-jobs.js",
-        "pct_of_first_party_js": 0.68
+        "pct_of_first_party_js": 0.71
       },
       {
         "bytes": 13137,
@@ -349,7 +349,7 @@
         "gzip_bytes": 2857,
         "loaded": "eager",
         "path": "public/app/render/warehouse-canonical-identity.js",
-        "pct_of_first_party_js": 0.44
+        "pct_of_first_party_js": 0.43
       },
       {
         "bytes": 6322,
@@ -438,17 +438,17 @@
   "shell": {
     "brotli_bytes": null,
     "brotli_reason": "brotli is not importable in this environment (no `brotli` / `brotlicffi` module, and the standard library ships no brotli compressor); reported as null rather than estimated",
-    "characters": 42005,
+    "characters": 43273,
     "external_script_count": 7,
-    "gzip_bytes": 13615,
+    "gzip_bytes": 14035,
     "gzip_level": 9,
     "inline_executable_script_count": 0,
     "inline_importmap_bytes": 131,
     "inline_style_attribute_count": 0,
-    "lines": 678,
+    "lines": 689,
     "note": "inline_executable_script_count, style_element_count and inline_style_attribute_count are all 0 by design after F-11 — that is exactly what lets the CSP drop 'unsafe-inline' from script-src and style-src. The one remaining inline element is the import map, allowed by the sha256 pinned in netlify.toml.",
     "path": "public/index.html",
-    "raw_bytes": 49428,
+    "raw_bytes": 50772,
     "script_element_count": 8,
     "scripts": [
       {
@@ -480,7 +480,7 @@
         "index": 4,
         "inline_body_bytes": 0,
         "kind": "classic",
-        "line": 215,
+        "line": 226,
         "src": "/app/boot/debug-toggle.js"
       },
       {
@@ -488,7 +488,7 @@
         "index": 5,
         "inline_body_bytes": 131,
         "kind": "importmap",
-        "line": 484,
+        "line": 495,
         "src": null
       },
       {
@@ -496,7 +496,7 @@
         "index": 6,
         "inline_body_bytes": 0,
         "kind": "classic",
-        "line": 493,
+        "line": 504,
         "src": "/app/boot/engine-guard.js"
       },
       {
@@ -504,7 +504,7 @@
         "index": 7,
         "inline_body_bytes": 0,
         "kind": "module",
-        "line": 495,
+        "line": 506,
         "src": "/app/main.js"
       },
       {
@@ -512,19 +512,2254 @@
         "index": 8,
         "inline_body_bytes": 0,
         "kind": "classic",
-        "line": 672,
+        "line": 683,
         "src": "/app/boot/a11y-baseline.js"
       }
     ],
-    "sha256": "765b7e58ab6c017f73947e2c7ee6be39e592f3690e34a836d390311751573ab1",
+    "sha256": "f9558617bd3384a29d0f58d86ea195ccfa4fcaaa070b3b370ce777bd8c5f67f9",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 49428 byte shell and every byte of application JavaScript (1982693 bytes) lives in 32 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 50772 byte shell and every byte of application JavaScript (1988431 bytes) lives in 32 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
-    "files": null,
-    "present": false,
-    "reason": "public/vendor does not exist in this checkout; Netlify populates it at build time via tools/netlify-build.sh. NOT MEASURED — no estimate is substituted. (es-module-shims is no longer vendored at all: F-11 removed it from the page and from tools/netlify-build.sh.)",
-    "total_bytes": null
+    "empty": false,
+    "file_count": 558,
+    "files": [
+      {
+        "bytes": 352645,
+        "path": "public/vendor/pdfjs@4.10.38/pdf.min.mjs"
+      },
+      {
+        "bytes": 1375838,
+        "path": "public/vendor/pdfjs@4.10.38/pdf.worker.min.mjs"
+      },
+      {
+        "bytes": 1272972,
+        "path": "public/vendor/three@0.160.0/build/three.module.js"
+      },
+      {
+        "bytes": 12028,
+        "path": "public/vendor/three@0.160.0/examples/jsm/Addons.js"
+      },
+      {
+        "bytes": 2556,
+        "path": "public/vendor/three@0.160.0/examples/jsm/animation/AnimationClipCreator.js"
+      },
+      {
+        "bytes": 9855,
+        "path": "public/vendor/three@0.160.0/examples/jsm/animation/CCDIKSolver.js"
+      },
+      {
+        "bytes": 25130,
+        "path": "public/vendor/three@0.160.0/examples/jsm/animation/MMDAnimationHelper.js"
+      },
+      {
+        "bytes": 28135,
+        "path": "public/vendor/three@0.160.0/examples/jsm/animation/MMDPhysics.js"
+      },
+      {
+        "bytes": 6061,
+        "path": "public/vendor/three@0.160.0/examples/jsm/cameras/CinematicCamera.js"
+      },
+      {
+        "bytes": 2081,
+        "path": "public/vendor/three@0.160.0/examples/jsm/capabilities/WebGL.js"
+      },
+      {
+        "bytes": 1017,
+        "path": "public/vendor/three@0.160.0/examples/jsm/capabilities/WebGPU.js"
+      },
+      {
+        "bytes": 80073,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/ArcballControls.js"
+      },
+      {
+        "bytes": 4639,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/DragControls.js"
+      },
+      {
+        "bytes": 6764,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/FirstPersonControls.js"
+      },
+      {
+        "bytes": 8036,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/FlyControls.js"
+      },
+      {
+        "bytes": 863,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/MapControls.js"
+      },
+      {
+        "bytes": 29868,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/OrbitControls.js"
+      },
+      {
+        "bytes": 3347,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/PointerLockControls.js"
+      },
+      {
+        "bytes": 17409,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/TrackballControls.js"
+      },
+      {
+        "bytes": 40573,
+        "path": "public/vendor/three@0.160.0/examples/jsm/controls/TransformControls.js"
+      },
+      {
+        "bytes": 9269,
+        "path": "public/vendor/three@0.160.0/examples/jsm/csm/CSM.js"
+      },
+      {
+        "bytes": 2741,
+        "path": "public/vendor/three@0.160.0/examples/jsm/csm/CSMFrustum.js"
+      },
+      {
+        "bytes": 5832,
+        "path": "public/vendor/three@0.160.0/examples/jsm/csm/CSMHelper.js"
+      },
+      {
+        "bytes": 10573,
+        "path": "public/vendor/three@0.160.0/examples/jsm/csm/CSMShader.js"
+      },
+      {
+        "bytes": 7326,
+        "path": "public/vendor/three@0.160.0/examples/jsm/curves/CurveExtras.js"
+      },
+      {
+        "bytes": 1878,
+        "path": "public/vendor/three@0.160.0/examples/jsm/curves/NURBSCurve.js"
+      },
+      {
+        "bytes": 1296,
+        "path": "public/vendor/three@0.160.0/examples/jsm/curves/NURBSSurface.js"
+      },
+      {
+        "bytes": 7861,
+        "path": "public/vendor/three@0.160.0/examples/jsm/curves/NURBSUtils.js"
+      },
+      {
+        "bytes": 3527,
+        "path": "public/vendor/three@0.160.0/examples/jsm/effects/AnaglyphEffect.js"
+      },
+      {
+        "bytes": 6077,
+        "path": "public/vendor/three@0.160.0/examples/jsm/effects/AsciiEffect.js"
+      },
+      {
+        "bytes": 12954,
+        "path": "public/vendor/three@0.160.0/examples/jsm/effects/OutlineEffect.js"
+      },
+      {
+        "bytes": 2428,
+        "path": "public/vendor/three@0.160.0/examples/jsm/effects/ParallaxBarrierEffect.js"
+      },
+      {
+        "bytes": 3549,
+        "path": "public/vendor/three@0.160.0/examples/jsm/effects/PeppersGhostEffect.js"
+      },
+      {
+        "bytes": 1179,
+        "path": "public/vendor/three@0.160.0/examples/jsm/effects/StereoEffect.js"
+      },
+      {
+        "bytes": 1335,
+        "path": "public/vendor/three@0.160.0/examples/jsm/environments/DebugEnvironment.js"
+      },
+      {
+        "bytes": 3735,
+        "path": "public/vendor/three@0.160.0/examples/jsm/environments/RoomEnvironment.js"
+      },
+      {
+        "bytes": 6594,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/DRACOExporter.js"
+      },
+      {
+        "bytes": 12827,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/EXRExporter.js"
+      },
+      {
+        "bytes": 77714,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/GLTFExporter.js"
+      },
+      {
+        "bytes": 6633,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/KTX2Exporter.js"
+      },
+      {
+        "bytes": 4052,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/MMDExporter.js"
+      },
+      {
+        "bytes": 5370,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/OBJExporter.js"
+      },
+      {
+        "bytes": 12001,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/PLYExporter.js"
+      },
+      {
+        "bytes": 3890,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/STLExporter.js"
+      },
+      {
+        "bytes": 16994,
+        "path": "public/vendor/three@0.160.0/examples/jsm/exporters/USDZExporter.js"
+      },
+      {
+        "bytes": 1968,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/BoxLineGeometry.js"
+      },
+      {
+        "bytes": 1035,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/ConvexGeometry.js"
+      },
+      {
+        "bytes": 8506,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/DecalGeometry.js"
+      },
+      {
+        "bytes": 2859,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/InstancedPointsGeometry.js"
+      },
+      {
+        "bytes": 5472,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/ParametricGeometries.js"
+      },
+      {
+        "bytes": 2478,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/ParametricGeometry.js"
+      },
+      {
+        "bytes": 4625,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/RoundedBoxGeometry.js"
+      },
+      {
+        "bytes": 4210,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/SDFGeometryGenerator.js"
+      },
+      {
+        "bytes": 19498,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/TeapotGeometry.js"
+      },
+      {
+        "bytes": 1308,
+        "path": "public/vendor/three@0.160.0/examples/jsm/geometries/TextGeometry.js"
+      },
+      {
+        "bytes": 2818,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/LightProbeHelper.js"
+      },
+      {
+        "bytes": 1976,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/OctreeHelper.js"
+      },
+      {
+        "bytes": 2712,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/PositionalAudioHelper.js"
+      },
+      {
+        "bytes": 2051,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/RectAreaLightHelper.js"
+      },
+      {
+        "bytes": 4435,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/TextureHelper.js"
+      },
+      {
+        "bytes": 1811,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/VertexNormalsHelper.js"
+      },
+      {
+        "bytes": 1659,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/VertexTangentsHelper.js"
+      },
+      {
+        "bytes": 8059,
+        "path": "public/vendor/three@0.160.0/examples/jsm/helpers/ViewHelper.js"
+      },
+      {
+        "bytes": 12845,
+        "path": "public/vendor/three@0.160.0/examples/jsm/interactive/HTMLMesh.js"
+      },
+      {
+        "bytes": 2996,
+        "path": "public/vendor/three@0.160.0/examples/jsm/interactive/InteractiveGroup.js"
+      },
+      {
+        "bytes": 6139,
+        "path": "public/vendor/three@0.160.0/examples/jsm/interactive/SelectionBox.js"
+      },
+      {
+        "bytes": 2579,
+        "path": "public/vendor/three@0.160.0/examples/jsm/interactive/SelectionHelper.js"
+      },
+      {
+        "bytes": 393768,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/ammo.wasm.js"
+      },
+      {
+        "bytes": 651386,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/ammo.wasm.wasm"
+      },
+      {
+        "bytes": 1448,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/basis/README.md"
+      },
+      {
+        "bytes": 62337,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/basis/basis_transcoder.js"
+      },
+      {
+        "bytes": 499935,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/basis/basis_transcoder.wasm"
+      },
+      {
+        "bytes": 157440,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/chevrotain.module.min.js"
+      },
+      {
+        "bytes": 1501,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/README.md"
+      },
+      {
+        "bytes": 719410,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/draco_decoder.js"
+      },
+      {
+        "bytes": 285747,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/draco_decoder.wasm"
+      },
+      {
+        "bytes": 928718,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/draco_encoder.js"
+      },
+      {
+        "bytes": 58763,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/draco_wasm_wrapper.js"
+      },
+      {
+        "bytes": 512465,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/gltf/draco_decoder.js"
+      },
+      {
+        "bytes": 192420,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/gltf/draco_decoder.wasm"
+      },
+      {
+        "bytes": 954360,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/gltf/draco_encoder.js"
+      },
+      {
+        "bytes": 58456,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/draco/gltf/draco_wasm_wrapper.js"
+      },
+      {
+        "bytes": 45516,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/ecsy.module.js"
+      },
+      {
+        "bytes": 83291,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/fflate.module.js"
+      },
+      {
+        "bytes": 18676,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/ktx-parse.module.js"
+      },
+      {
+        "bytes": 29526,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/lil-gui.module.min.js"
+      },
+      {
+        "bytes": 476971,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/lottie_canvas.module.js"
+      },
+      {
+        "bytes": 24850,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/meshopt_decoder.module.js"
+      },
+      {
+        "bytes": 48525,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/mikktspace.module.js"
+      },
+      {
+        "bytes": 158598,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/mmdparser.module.js"
+      },
+      {
+        "bytes": 13492,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/motion-controllers.module.js"
+      },
+      {
+        "bytes": 467478,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/opentype.module.js"
+      },
+      {
+        "bytes": 3951,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/potpack.module.js"
+      },
+      {
+        "bytes": 321049,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/rhino3dm/rhino3dm.js"
+      },
+      {
+        "bytes": 321253,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/rhino3dm/rhino3dm.module.js"
+      },
+      {
+        "bytes": 10091572,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/rhino3dm/rhino3dm.wasm"
+      },
+      {
+        "bytes": 3514,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/stats.module.js"
+      },
+      {
+        "bytes": 5545,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/surfaceNet.js"
+      },
+      {
+        "bytes": 31302,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/tween.module.js"
+      },
+      {
+        "bytes": 100835,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/utif.module.js"
+      },
+      {
+        "bytes": 39754,
+        "path": "public/vendor/three@0.160.0/examples/jsm/libs/zstddec.module.js"
+      },
+      {
+        "bytes": 387,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lights/IESSpotLight.js"
+      },
+      {
+        "bytes": 6107,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lights/LightProbeGenerator.js"
+      },
+      {
+        "bytes": 313854,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lights/RectAreaLightUniformsLib.js"
+      },
+      {
+        "bytes": 433,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/Line2.js"
+      },
+      {
+        "bytes": 1458,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/LineGeometry.js"
+      },
+      {
+        "bytes": 11281,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/LineMaterial.js"
+      },
+      {
+        "bytes": 9330,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/LineSegments2.js"
+      },
+      {
+        "bytes": 4632,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/LineSegmentsGeometry.js"
+      },
+      {
+        "bytes": 1577,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/Wireframe.js"
+      },
+      {
+        "bytes": 419,
+        "path": "public/vendor/three@0.160.0/examples/jsm/lines/WireframeGeometry2.js"
+      },
+      {
+        "bytes": 37568,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/3DMLoader.js"
+      },
+      {
+        "bytes": 34529,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/3MFLoader.js"
+      },
+      {
+        "bytes": 10668,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/AMFLoader.js"
+      },
+      {
+        "bytes": 9019,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/BVHLoader.js"
+      },
+      {
+        "bytes": 83845,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/ColladaLoader.js"
+      },
+      {
+        "bytes": 7160,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/DDSLoader.js"
+      },
+      {
+        "bytes": 13628,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/DRACOLoader.js"
+      },
+      {
+        "bytes": 54981,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/EXRLoader.js"
+      },
+      {
+        "bytes": 101466,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/FBXLoader.js"
+      },
+      {
+        "bytes": 3204,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/FontLoader.js"
+      },
+      {
+        "bytes": 5409,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/GCodeLoader.js"
+      },
+      {
+        "bytes": 108522,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/GLTFLoader.js"
+      },
+      {
+        "bytes": 2183,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/HDRCubeTextureLoader.js"
+      },
+      {
+        "bytes": 7096,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/IESLoader.js"
+      },
+      {
+        "bytes": 2211,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/KMZLoader.js"
+      },
+      {
+        "bytes": 22589,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/KTX2Loader.js"
+      },
+      {
+        "bytes": 6450,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/KTXLoader.js"
+      },
+      {
+        "bytes": 57206,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LDrawLoader.js"
+      },
+      {
+        "bytes": 3907,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LUT3dlLoader.js"
+      },
+      {
+        "bytes": 3441,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LUTCubeLoader.js"
+      },
+      {
+        "bytes": 3337,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LUTImageLoader.js"
+      },
+      {
+        "bytes": 23543,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LWOLoader.js"
+      },
+      {
+        "bytes": 19433,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LogLuvLoader.js"
+      },
+      {
+        "bytes": 1486,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/LottieLoader.js"
+      },
+      {
+        "bytes": 12372,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/MD2Loader.js"
+      },
+      {
+        "bytes": 2304,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/MDDLoader.js"
+      },
+      {
+        "bytes": 51887,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/MMDLoader.js"
+      },
+      {
+        "bytes": 10580,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/MTLLoader.js"
+      },
+      {
+        "bytes": 15316,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/MaterialXLoader.js"
+      },
+      {
+        "bytes": 13481,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/NRRDLoader.js"
+      },
+      {
+        "bytes": 21175,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/OBJLoader.js"
+      },
+      {
+        "bytes": 12318,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/PCDLoader.js"
+      },
+      {
+        "bytes": 6867,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/PDBLoader.js"
+      },
+      {
+        "bytes": 16622,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/PLYLoader.js"
+      },
+      {
+        "bytes": 4718,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/PVRLoader.js"
+      },
+      {
+        "bytes": 11377,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/RGBELoader.js"
+      },
+      {
+        "bytes": 28278,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/RGBMLoader.js"
+      },
+      {
+        "bytes": 10029,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/STLLoader.js"
+      },
+      {
+        "bytes": 69558,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/SVGLoader.js"
+      },
+      {
+        "bytes": 24660,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/TDSLoader.js"
+      },
+      {
+        "bytes": 11150,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/TGALoader.js"
+      },
+      {
+        "bytes": 572,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/TIFFLoader.js"
+      },
+      {
+        "bytes": 4212,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/TTFLoader.js"
+      },
+      {
+        "bytes": 14505,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/TiltLoader.js"
+      },
+      {
+        "bytes": 17528,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/USDZLoader.js"
+      },
+      {
+        "bytes": 8785,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/VOXLoader.js"
+      },
+      {
+        "bytes": 73233,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/VRMLLoader.js"
+      },
+      {
+        "bytes": 27515,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/VTKLoader.js"
+      },
+      {
+        "bytes": 1913,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/XYZLoader.js"
+      },
+      {
+        "bytes": 26284,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/lwo/IFFParser.js"
+      },
+      {
+        "bytes": 10137,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/lwo/LWO2Parser.js"
+      },
+      {
+        "bytes": 9269,
+        "path": "public/vendor/three@0.160.0/examples/jsm/loaders/lwo/LWO3Parser.js"
+      },
+      {
+        "bytes": 9736,
+        "path": "public/vendor/three@0.160.0/examples/jsm/materials/MeshGouraudMaterial.js"
+      },
+      {
+        "bytes": 1524,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/Capsule.js"
+      },
+      {
+        "bytes": 723,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/ColorConverter.js"
+      },
+      {
+        "bytes": 21832,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/ConvexHull.js"
+      },
+      {
+        "bytes": 2564,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/ImprovedNoise.js"
+      },
+      {
+        "bytes": 3765,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/Lut.js"
+      },
+      {
+        "bytes": 5690,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/MeshSurfaceSampler.js"
+      },
+      {
+        "bytes": 10227,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/OBB.js"
+      },
+      {
+        "bytes": 10445,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/Octree.js"
+      },
+      {
+        "bytes": 14351,
+        "path": "public/vendor/three@0.160.0/examples/jsm/math/SimplexNoise.js"
+      },
+      {
+        "bytes": 13577,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/ConvexObjectBreaker.js"
+      },
+      {
+        "bytes": 11821,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/GPUComputationRenderer.js"
+      },
+      {
+        "bytes": 1188,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/Gyroscope.js"
+      },
+      {
+        "bytes": 5216,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/MD2Character.js"
+      },
+      {
+        "bytes": 11980,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/MD2CharacterComplex.js"
+      },
+      {
+        "bytes": 1107,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/MorphAnimMesh.js"
+      },
+      {
+        "bytes": 5459,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/MorphBlendMesh.js"
+      },
+      {
+        "bytes": 11076,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/ProgressiveLightMap.js"
+      },
+      {
+        "bytes": 13795,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/RollerCoaster.js"
+      },
+      {
+        "bytes": 1866,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/Timer.js"
+      },
+      {
+        "bytes": 4573,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/TubePainter.js"
+      },
+      {
+        "bytes": 13488,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/Volume.js"
+      },
+      {
+        "bytes": 6235,
+        "path": "public/vendor/three@0.160.0/examples/jsm/misc/VolumeSlice.js"
+      },
+      {
+        "bytes": 9438,
+        "path": "public/vendor/three@0.160.0/examples/jsm/modifiers/CurveModifier.js"
+      },
+      {
+        "bytes": 5296,
+        "path": "public/vendor/three@0.160.0/examples/jsm/modifiers/EdgeSplitModifier.js"
+      },
+      {
+        "bytes": 12226,
+        "path": "public/vendor/three@0.160.0/examples/jsm/modifiers/SimplifyModifier.js"
+      },
+      {
+        "bytes": 6159,
+        "path": "public/vendor/three@0.160.0/examples/jsm/modifiers/TessellateModifier.js"
+      },
+      {
+        "bytes": 14135,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/Nodes.js"
+      },
+      {
+        "bytes": 2382,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/BitangentNode.js"
+      },
+      {
+        "bytes": 3126,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/BufferAttributeNode.js"
+      },
+      {
+        "bytes": 612,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/BufferNode.js"
+      },
+      {
+        "bytes": 2852,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/CameraNode.js"
+      },
+      {
+        "bytes": 959,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/CubeTextureNode.js"
+      },
+      {
+        "bytes": 1987,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/InstanceNode.js"
+      },
+      {
+        "bytes": 585,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/InstancedPointsMaterialNode.js"
+      },
+      {
+        "bytes": 8766,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/MaterialNode.js"
+      },
+      {
+        "bytes": 1159,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/MaterialReferenceNode.js"
+      },
+      {
+        "bytes": 1040,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/ModelNode.js"
+      },
+      {
+        "bytes": 944,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/ModelViewProjectionNode.js"
+      },
+      {
+        "bytes": 6313,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/MorphNode.js"
+      },
+      {
+        "bytes": 2414,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/NormalNode.js"
+      },
+      {
+        "bytes": 3792,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/Object3DNode.js"
+      },
+      {
+        "bytes": 444,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/PointUVNode.js"
+      },
+      {
+        "bytes": 2621,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/PositionNode.js"
+      },
+      {
+        "bytes": 1660,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/ReferenceNode.js"
+      },
+      {
+        "bytes": 750,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/ReflectVectorNode.js"
+      },
+      {
+        "bytes": 1216,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/SceneNode.js"
+      },
+      {
+        "bytes": 2680,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/SkinningNode.js"
+      },
+      {
+        "bytes": 599,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/StorageBufferNode.js"
+      },
+      {
+        "bytes": 2293,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/TangentNode.js"
+      },
+      {
+        "bytes": 3016,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/TextureBicubicNode.js"
+      },
+      {
+        "bytes": 7345,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/TextureNode.js"
+      },
+      {
+        "bytes": 880,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/TextureSizeNode.js"
+      },
+      {
+        "bytes": 548,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/TextureStoreNode.js"
+      },
+      {
+        "bytes": 724,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/UVNode.js"
+      },
+      {
+        "bytes": 663,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/accessors/UserDataNode.js"
+      },
+      {
+        "bytes": 1309,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/code/CodeNode.js"
+      },
+      {
+        "bytes": 655,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/code/ExpressionNode.js"
+      },
+      {
+        "bytes": 1832,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/code/FunctionCallNode.js"
+      },
+      {
+        "bytes": 2743,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/code/FunctionNode.js"
+      },
+      {
+        "bytes": 7803,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/code/ScriptableNode.js"
+      },
+      {
+        "bytes": 3246,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/code/ScriptableValueNode.js"
+      },
+      {
+        "bytes": 409,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/ArrayUniformNode.js"
+      },
+      {
+        "bytes": 1285,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/AssignNode.js"
+      },
+      {
+        "bytes": 2030,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/AttributeNode.js"
+      },
+      {
+        "bytes": 743,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/BypassNode.js"
+      },
+      {
+        "bytes": 933,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/CacheNode.js"
+      },
+      {
+        "bytes": 556,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/ConstNode.js"
+      },
+      {
+        "bytes": 1143,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/ContextNode.js"
+      },
+      {
+        "bytes": 1220,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/IndexNode.js"
+      },
+      {
+        "bytes": 1460,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/InputNode.js"
+      },
+      {
+        "bytes": 336,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/LightingModel.js"
+      },
+      {
+        "bytes": 7829,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/Node.js"
+      },
+      {
+        "bytes": 196,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeAttribute.js"
+      },
+      {
+        "bytes": 23405,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeBuilder.js"
+      },
+      {
+        "bytes": 274,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeCache.js"
+      },
+      {
+        "bytes": 217,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeCode.js"
+      },
+      {
+        "bytes": 2362,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeFrame.js"
+      },
+      {
+        "bytes": 330,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeFunction.js"
+      },
+      {
+        "bytes": 311,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeFunctionInput.js"
+      },
+      {
+        "bytes": 1161,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeKeywords.js"
+      },
+      {
+        "bytes": 127,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeParser.js"
+      },
+      {
+        "bytes": 446,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeUniform.js"
+      },
+      {
+        "bytes": 3772,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeUtils.js"
+      },
+      {
+        "bytes": 145,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeVar.js"
+      },
+      {
+        "bytes": 229,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/NodeVarying.js"
+      },
+      {
+        "bytes": 1251,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/OutputStructNode.js"
+      },
+      {
+        "bytes": 548,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/ParameterNode.js"
+      },
+      {
+        "bytes": 2315,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/PropertyNode.js"
+      },
+      {
+        "bytes": 1510,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/StackNode.js"
+      },
+      {
+        "bytes": 314,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/StructTypeNode.js"
+      },
+      {
+        "bytes": 1291,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/TempNode.js"
+      },
+      {
+        "bytes": 134,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/UniformGroup.js"
+      },
+      {
+        "bytes": 764,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/UniformGroupNode.js"
+      },
+      {
+        "bytes": 1638,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/UniformNode.js"
+      },
+      {
+        "bytes": 1083,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/VarNode.js"
+      },
+      {
+        "bytes": 1345,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/VaryingNode.js"
+      },
+      {
+        "bytes": 608,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/core/constants.js"
+      },
+      {
+        "bytes": 2538,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/BlendModeNode.js"
+      },
+      {
+        "bytes": 2599,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/BumpMapNode.js"
+      },
+      {
+        "bytes": 2549,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ColorAdjustmentNode.js"
+      },
+      {
+        "bytes": 2707,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ColorSpaceNode.js"
+      },
+      {
+        "bytes": 524,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/FrontFacingNode.js"
+      },
+      {
+        "bytes": 4128,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/GaussianBlurNode.js"
+      },
+      {
+        "bytes": 2651,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/NormalMapNode.js"
+      },
+      {
+        "bytes": 3988,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/PassNode.js"
+      },
+      {
+        "bytes": 628,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/PosterizeNode.js"
+      },
+      {
+        "bytes": 3632,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ToneMappingNode.js"
+      },
+      {
+        "bytes": 2795,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ViewportDepthNode.js"
+      },
+      {
+        "bytes": 1033,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ViewportDepthTextureNode.js"
+      },
+      {
+        "bytes": 3048,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ViewportNode.js"
+      },
+      {
+        "bytes": 846,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ViewportSharedTextureNode.js"
+      },
+      {
+        "bytes": 2016,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/display/ViewportTextureNode.js"
+      },
+      {
+        "bytes": 756,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/fog/FogExp2Node.js"
+      },
+      {
+        "bytes": 575,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/fog/FogNode.js"
+      },
+      {
+        "bytes": 734,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/fog/FogRangeNode.js"
+      },
+      {
+        "bytes": 1338,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/BRDF_GGX.js"
+      },
+      {
+        "bytes": 217,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/BRDF_Lambert.js"
+      },
+      {
+        "bytes": 1877,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/BRDF_Sheen.js"
+      },
+      {
+        "bytes": 861,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/DFGApprox.js"
+      },
+      {
+        "bytes": 668,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/D_GGX.js"
+      },
+      {
+        "bytes": 367,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/EnvironmentBRDF.js"
+      },
+      {
+        "bytes": 549,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/F_Schlick.js"
+      },
+      {
+        "bytes": 500,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/Schlick_to_F0.js"
+      },
+      {
+        "bytes": 898,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/BSDF/V_GGX_SmithCorrelated.js"
+      },
+      {
+        "bytes": 1964,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/PhongLightingModel.js"
+      },
+      {
+        "bytes": 12498,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/PhysicalLightingModel.js"
+      },
+      {
+        "bytes": 375,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/material/getGeometryRoughness.js"
+      },
+      {
+        "bytes": 522,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/functions/material/getRoughness.js"
+      },
+      {
+        "bytes": 2659,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/geometry/RangeNode.js"
+      },
+      {
+        "bytes": 1511,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/gpgpu/ComputeNode.js"
+      },
+      {
+        "bytes": 448,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/AONode.js"
+      },
+      {
+        "bytes": 518,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/AmbientLightNode.js"
+      },
+      {
+        "bytes": 6872,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/AnalyticLightNode.js"
+      },
+      {
+        "bytes": 896,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/DirectionalLightNode.js"
+      },
+      {
+        "bytes": 4222,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/EnvironmentNode.js"
+      },
+      {
+        "bytes": 1395,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/HemisphereLightNode.js"
+      },
+      {
+        "bytes": 886,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/IESSpotLightNode.js"
+      },
+      {
+        "bytes": 1034,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/LightNode.js"
+      },
+      {
+        "bytes": 649,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/LightUtils.js"
+      },
+      {
+        "bytes": 1661,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/LightingContextNode.js"
+      },
+      {
+        "bytes": 284,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/LightingNode.js"
+      },
+      {
+        "bytes": 3745,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/LightsNode.js"
+      },
+      {
+        "bytes": 1645,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/PointLightNode.js"
+      },
+      {
+        "bytes": 2297,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/lighting/SpotLightNode.js"
+      },
+      {
+        "bytes": 1732,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/loaders/NodeLoader.js"
+      },
+      {
+        "bytes": 918,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/loaders/NodeMaterialLoader.js"
+      },
+      {
+        "bytes": 1097,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/loaders/NodeObjectLoader.js"
+      },
+      {
+        "bytes": 3685,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/InstancedPointsNodeMaterial.js"
+      },
+      {
+        "bytes": 12184,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/Line2NodeMaterial.js"
+      },
+      {
+        "bytes": 531,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/LineBasicNodeMaterial.js"
+      },
+      {
+        "bytes": 1653,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/LineDashedNodeMaterial.js"
+      },
+      {
+        "bytes": 1217,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/Materials.js"
+      },
+      {
+        "bytes": 565,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/MeshBasicNodeMaterial.js"
+      },
+      {
+        "bytes": 707,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/MeshLambertNodeMaterial.js"
+      },
+      {
+        "bytes": 1031,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/MeshNormalNodeMaterial.js"
+      },
+      {
+        "bytes": 1414,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/MeshPhongNodeMaterial.js"
+      },
+      {
+        "bytes": 4447,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/MeshPhysicalNodeMaterial.js"
+      },
+      {
+        "bytes": 1944,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/MeshStandardNodeMaterial.js"
+      },
+      {
+        "bytes": 11802,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/NodeMaterial.js"
+      },
+      {
+        "bytes": 653,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/PointsNodeMaterial.js"
+      },
+      {
+        "bytes": 2396,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materials/SpriteNodeMaterial.js"
+      },
+      {
+        "bytes": 10562,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materialx/DISCLAIMER.md"
+      },
+      {
+        "bytes": 4266,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materialx/MaterialXNodes.js"
+      },
+      {
+        "bytes": 2702,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materialx/lib/mx_hsv.js"
+      },
+      {
+        "bytes": 41612,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materialx/lib/mx_noise.js"
+      },
+      {
+        "bytes": 944,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/materialx/lib/mx_transform_color.js"
+      },
+      {
+        "bytes": 2125,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/math/CondNode.js"
+      },
+      {
+        "bytes": 794,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/math/HashNode.js"
+      },
+      {
+        "bytes": 10735,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/math/MathNode.js"
+      },
+      {
+        "bytes": 6292,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/math/OperatorNode.js"
+      },
+      {
+        "bytes": 2894,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/parsers/GLSLNodeFunction.js"
+      },
+      {
+        "bytes": 254,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/parsers/GLSLNodeParser.js"
+      },
+      {
+        "bytes": 781,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/procedural/CheckerNode.js"
+      },
+      {
+        "bytes": 14687,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/shadernode/ShaderNode.js"
+      },
+      {
+        "bytes": 649,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/ArrayElementNode.js"
+      },
+      {
+        "bytes": 1019,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/ConvertNode.js"
+      },
+      {
+        "bytes": 739,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/DiscardNode.js"
+      },
+      {
+        "bytes": 797,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/EquirectUVNode.js"
+      },
+      {
+        "bytes": 1766,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/FunctionOverloadingNode.js"
+      },
+      {
+        "bytes": 1247,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/JoinNode.js"
+      },
+      {
+        "bytes": 4394,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/LoopNode.js"
+      },
+      {
+        "bytes": 783,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/MatcapUVNode.js"
+      },
+      {
+        "bytes": 938,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/MaxMipLevelNode.js"
+      },
+      {
+        "bytes": 1576,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/OscNode.js"
+      },
+      {
+        "bytes": 1133,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/PackingNode.js"
+      },
+      {
+        "bytes": 1009,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/RemapNode.js"
+      },
+      {
+        "bytes": 1026,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/RotateUVNode.js"
+      },
+      {
+        "bytes": 1285,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/SetNode.js"
+      },
+      {
+        "bytes": 982,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/SpecularMIPLevelNode.js"
+      },
+      {
+        "bytes": 2060,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/SplitNode.js"
+      },
+      {
+        "bytes": 961,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/SpriteSheetUVNode.js"
+      },
+      {
+        "bytes": 1878,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/TimerNode.js"
+      },
+      {
+        "bytes": 1952,
+        "path": "public/vendor/three@0.160.0/examples/jsm/nodes/utils/TriplanarTexturesNode.js"
+      },
+      {
+        "bytes": 3421,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/GroundProjectedSkybox.js"
+      },
+      {
+        "bytes": 488,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/InstancedPoints.js"
+      },
+      {
+        "bytes": 8810,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/Lensflare.js"
+      },
+      {
+        "bytes": 38025,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/MarchingCubes.js"
+      },
+      {
+        "bytes": 1040,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/QuadMesh.js"
+      },
+      {
+        "bytes": 7043,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/Reflector.js"
+      },
+      {
+        "bytes": 10416,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/ReflectorForSSRPass.js"
+      },
+      {
+        "bytes": 8168,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/Refractor.js"
+      },
+      {
+        "bytes": 2030,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/ShadowMesh.js"
+      },
+      {
+        "bytes": 6819,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/Sky.js"
+      },
+      {
+        "bytes": 11216,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/Water.js"
+      },
+      {
+        "bytes": 8441,
+        "path": "public/vendor/three@0.160.0/examples/jsm/objects/Water2.js"
+      },
+      {
+        "bytes": 645,
+        "path": "public/vendor/three@0.160.0/examples/jsm/offscreen/jank.js"
+      },
+      {
+        "bytes": 188,
+        "path": "public/vendor/three@0.160.0/examples/jsm/offscreen/offscreen.js"
+      },
+      {
+        "bytes": 2078,
+        "path": "public/vendor/three@0.160.0/examples/jsm/offscreen/scene.js"
+      },
+      {
+        "bytes": 7018,
+        "path": "public/vendor/three@0.160.0/examples/jsm/physics/AmmoPhysics.js"
+      },
+      {
+        "bytes": 4188,
+        "path": "public/vendor/three@0.160.0/examples/jsm/physics/RapierPhysics.js"
+      },
+      {
+        "bytes": 2248,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/AfterimagePass.js"
+      },
+      {
+        "bytes": 4001,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/BloomPass.js"
+      },
+      {
+        "bytes": 3394,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/BokehPass.js"
+      },
+      {
+        "bytes": 875,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/ClearPass.js"
+      },
+      {
+        "bytes": 1940,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/CubeTexturePass.js"
+      },
+      {
+        "bytes": 1368,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/DotScreenPass.js"
+      },
+      {
+        "bytes": 4651,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/EffectComposer.js"
+      },
+      {
+        "bytes": 1236,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/FilmPass.js"
+      },
+      {
+        "bytes": 16466,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/GTAOPass.js"
+      },
+      {
+        "bytes": 3076,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/GlitchPass.js"
+      },
+      {
+        "bytes": 1522,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/HalftonePass.js"
+      },
+      {
+        "bytes": 3229,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/LUTPass.js"
+      },
+      {
+        "bytes": 2231,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/MaskPass.js"
+      },
+      {
+        "bytes": 20329,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/OutlinePass.js"
+      },
+      {
+        "bytes": 2398,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/OutputPass.js"
+      },
+      {
+        "bytes": 1706,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/Pass.js"
+      },
+      {
+        "bytes": 1915,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/RenderPass.js"
+      },
+      {
+        "bytes": 6228,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/RenderPixelatedPass.js"
+      },
+      {
+        "bytes": 11389,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/SAOPass.js"
+      },
+      {
+        "bytes": 49467,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/SMAAPass.js"
+      },
+      {
+        "bytes": 6047,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/SSAARenderPass.js"
+      },
+      {
+        "bytes": 11421,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/SSAOPass.js"
+      },
+      {
+        "bytes": 18545,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/SSRPass.js"
+      },
+      {
+        "bytes": 1440,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/SavePass.js"
+      },
+      {
+        "bytes": 1576,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/ShaderPass.js"
+      },
+      {
+        "bytes": 4878,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/TAARenderPass.js"
+      },
+      {
+        "bytes": 1345,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/TexturePass.js"
+      },
+      {
+        "bytes": 12406,
+        "path": "public/vendor/three@0.160.0/examples/jsm/postprocessing/UnrealBloomPass.js"
+      },
+      {
+        "bytes": 4407,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/CSS2DRenderer.js"
+      },
+      {
+        "bytes": 7804,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/CSS3DRenderer.js"
+      },
+      {
+        "bytes": 19380,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/Projector.js"
+      },
+      {
+        "bytes": 12669,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/SVGRenderer.js"
+      },
+      {
+        "bytes": 629,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Animation.js"
+      },
+      {
+        "bytes": 1339,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Attributes.js"
+      },
+      {
+        "bytes": 2924,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Backend.js"
+      },
+      {
+        "bytes": 3612,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Background.js"
+      },
+      {
+        "bytes": 265,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Binding.js"
+      },
+      {
+        "bytes": 3118,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Bindings.js"
+      },
+      {
+        "bytes": 472,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Buffer.js"
+      },
+      {
+        "bytes": 677,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/BufferUtils.js"
+      },
+      {
+        "bytes": 1131,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/ChainMap.js"
+      },
+      {
+        "bytes": 424,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Color4.js"
+      },
+      {
+        "bytes": 261,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/ComputePipeline.js"
+      },
+      {
+        "bytes": 269,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Constants.js"
+      },
+      {
+        "bytes": 1933,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/CubeRenderTarget.js"
+      },
+      {
+        "bytes": 510,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/DataMap.js"
+      },
+      {
+        "bytes": 4074,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Geometries.js"
+      },
+      {
+        "bytes": 1137,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Info.js"
+      },
+      {
+        "bytes": 130,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Pipeline.js"
+      },
+      {
+        "bytes": 6944,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Pipelines.js"
+      },
+      {
+        "bytes": 473,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/PostProcessing.js"
+      },
+      {
+        "bytes": 198,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/ProgrammableStage.js"
+      },
+      {
+        "bytes": 672,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderContext.js"
+      },
+      {
+        "bytes": 1317,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderContexts.js"
+      },
+      {
+        "bytes": 3539,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderList.js"
+      },
+      {
+        "bytes": 471,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderLists.js"
+      },
+      {
+        "bytes": 3417,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderObject.js"
+      },
+      {
+        "bytes": 2018,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderObjects.js"
+      },
+      {
+        "bytes": 281,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/RenderPipeline.js"
+      },
+      {
+        "bytes": 21993,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Renderer.js"
+      },
+      {
+        "bytes": 1257,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/SampledTexture.js"
+      },
+      {
+        "bytes": 253,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Sampler.js"
+      },
+      {
+        "bytes": 262,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/StorageBuffer.js"
+      },
+      {
+        "bytes": 314,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/StorageTexture.js"
+      },
+      {
+        "bytes": 7012,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Textures.js"
+      },
+      {
+        "bytes": 1972,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/Uniform.js"
+      },
+      {
+        "bytes": 207,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/UniformBuffer.js"
+      },
+      {
+        "bytes": 5384,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/UniformsGroup.js"
+      },
+      {
+        "bytes": 772,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/nodes/NodeBuilderState.js"
+      },
+      {
+        "bytes": 767,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/nodes/NodeSampledTexture.js"
+      },
+      {
+        "bytes": 240,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/nodes/NodeSampler.js"
+      },
+      {
+        "bytes": 1866,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/nodes/NodeUniform.js"
+      },
+      {
+        "bytes": 599,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/nodes/NodeUniformsGroup.js"
+      },
+      {
+        "bytes": 10793,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/common/nodes/Nodes.js"
+      },
+      {
+        "bytes": 5481,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl-legacy/nodes/GLSL1NodeBuilder.js"
+      },
+      {
+        "bytes": 395,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl-legacy/nodes/SlotNode.js"
+      },
+      {
+        "bytes": 17465,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl-legacy/nodes/WebGLNodeBuilder.js"
+      },
+      {
+        "bytes": 1061,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl-legacy/nodes/WebGLNodes.js"
+      },
+      {
+        "bytes": 21128,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/WebGLBackend.js"
+      },
+      {
+        "bytes": 12492,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/nodes/GLSLNodeBuilder.js"
+      },
+      {
+        "bytes": 3770,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/utils/WebGLAttributeUtils.js"
+      },
+      {
+        "bytes": 628,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/utils/WebGLCapabilities.js"
+      },
+      {
+        "bytes": 481,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/utils/WebGLExtensions.js"
+      },
+      {
+        "bytes": 11301,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/utils/WebGLState.js"
+      },
+      {
+        "bytes": 7887,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/utils/WebGLTextureUtils.js"
+      },
+      {
+        "bytes": 9966,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgl/utils/WebGLUtils.js"
+      },
+      {
+        "bytes": 27372,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/WebGPUBackend.js"
+      },
+      {
+        "bytes": 914,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/WebGPURenderer.js"
+      },
+      {
+        "bytes": 22817,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/nodes/WGSLNodeBuilder.js"
+      },
+      {
+        "bytes": 1960,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/nodes/WGSLNodeFunction.js"
+      },
+      {
+        "bytes": 266,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/nodes/WGSLNodeParser.js"
+      },
+      {
+        "bytes": 6216,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUAttributeUtils.js"
+      },
+      {
+        "bytes": 5524,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUBindingUtils.js"
+      },
+      {
+        "bytes": 7581,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUConstants.js"
+      },
+      {
+        "bytes": 13385,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUPipelineUtils.js"
+      },
+      {
+        "bytes": 6574,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUTexturePassUtils.js"
+      },
+      {
+        "bytes": 27646,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUTextureUtils.js"
+      },
+      {
+        "bytes": 1716,
+        "path": "public/vendor/three@0.160.0/examples/jsm/renderers/webgpu/utils/WebGPUUtils.js"
+      },
+      {
+        "bytes": 1910,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/ACESFilmicToneMappingShader.js"
+      },
+      {
+        "bytes": 903,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/AfterimageShader.js"
+      },
+      {
+        "bytes": 351,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/BasicShader.js"
+      },
+      {
+        "bytes": 1212,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/BleachBypassShader.js"
+      },
+      {
+        "bytes": 754,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/BlendShader.js"
+      },
+      {
+        "bytes": 5769,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/BokehShader.js"
+      },
+      {
+        "bytes": 9678,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/BokehShader2.js"
+      },
+      {
+        "bytes": 1066,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/BrightnessContrastShader.js"
+      },
+      {
+        "bytes": 822,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/ColorCorrectionShader.js"
+      },
+      {
+        "bytes": 704,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/ColorifyShader.js"
+      },
+      {
+        "bytes": 1809,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/ConvolutionShader.js"
+      },
+      {
+        "bytes": 571,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/CopyShader.js"
+      },
+      {
+        "bytes": 918,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/DOFMipMapShader.js"
+      },
+      {
+        "bytes": 3707,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/DepthLimitedBlurShader.js"
+      },
+      {
+        "bytes": 2574,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/DigitalGlitch.js"
+      },
+      {
+        "bytes": 1204,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/DotScreenShader.js"
+      },
+      {
+        "bytes": 567,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/ExposureShader.js"
+      },
+      {
+        "bytes": 8477,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/FXAAShader.js"
+      },
+      {
+        "bytes": 923,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/FilmShader.js"
+      },
+      {
+        "bytes": 2305,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/FocusShader.js"
+      },
+      {
+        "bytes": 2970,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/FreiChenShader.js"
+      },
+      {
+        "bytes": 13009,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/GTAOShader.js"
+      },
+      {
+        "bytes": 595,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/GammaCorrectionShader.js"
+      },
+      {
+        "bytes": 6826,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/GodRaysShader.js"
+      },
+      {
+        "bytes": 8584,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/HalftoneShader.js"
+      },
+      {
+        "bytes": 1452,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/HorizontalBlurShader.js"
+      },
+      {
+        "bytes": 1585,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/HorizontalTiltShiftShader.js"
+      },
+      {
+        "bytes": 1480,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/HueSaturationShader.js"
+      },
+      {
+        "bytes": 1014,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/KaleidoShader.js"
+      },
+      {
+        "bytes": 1192,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/LuminosityHighPassShader.js"
+      },
+      {
+        "bytes": 624,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/LuminosityShader.js"
+      },
+      {
+        "bytes": 3466,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/MMDToonShader.js"
+      },
+      {
+        "bytes": 914,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/MirrorShader.js"
+      },
+      {
+        "bytes": 995,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/NormalMapShader.js"
+      },
+      {
+        "bytes": 1393,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/OutputShader.js"
+      },
+      {
+        "bytes": 6614,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/PoissonDenoiseShader.js"
+      },
+      {
+        "bytes": 1115,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/RGBShiftShader.js"
+      },
+      {
+        "bytes": 4879,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SAOShader.js"
+      },
+      {
+        "bytes": 14628,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SMAAShader.js"
+      },
+      {
+        "bytes": 6478,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SSAOShader.js"
+      },
+      {
+        "bytes": 9405,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SSRShader.js"
+      },
+      {
+        "bytes": 936,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SepiaShader.js"
+      },
+      {
+        "bytes": 2352,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SobelOperatorShader.js"
+      },
+      {
+        "bytes": 3238,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/SubsurfaceScatteringShader.js"
+      },
+      {
+        "bytes": 864,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/TechnicolorShader.js"
+      },
+      {
+        "bytes": 6779,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/ToonShader.js"
+      },
+      {
+        "bytes": 1278,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/TriangleBlurShader.js"
+      },
+      {
+        "bytes": 709,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/UnpackDepthRGBAShader.js"
+      },
+      {
+        "bytes": 2996,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/VelocityShader.js"
+      },
+      {
+        "bytes": 1446,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/VerticalBlurShader.js"
+      },
+      {
+        "bytes": 1579,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/VerticalTiltShiftShader.js"
+      },
+      {
+        "bytes": 893,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/VignetteShader.js"
+      },
+      {
+        "bytes": 9745,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/VolumeShader.js"
+      },
+      {
+        "bytes": 1809,
+        "path": "public/vendor/three@0.160.0/examples/jsm/shaders/WaterRefractionShader.js"
+      },
+      {
+        "bytes": 876,
+        "path": "public/vendor/three@0.160.0/examples/jsm/textures/FlakesTexture.js"
+      },
+      {
+        "bytes": 3115,
+        "path": "public/vendor/three@0.160.0/examples/jsm/transpiler/AST.js"
+      },
+      {
+        "bytes": 17144,
+        "path": "public/vendor/three@0.160.0/examples/jsm/transpiler/GLSLDecoder.js"
+      },
+      {
+        "bytes": 1018,
+        "path": "public/vendor/three@0.160.0/examples/jsm/transpiler/ShaderToyDecoder.js"
+      },
+      {
+        "bytes": 13782,
+        "path": "public/vendor/three@0.160.0/examples/jsm/transpiler/TSLEncoder.js"
+      },
+      {
+        "bytes": 228,
+        "path": "public/vendor/three@0.160.0/examples/jsm/transpiler/Transpiler.js"
+      },
+      {
+        "bytes": 31906,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/BufferGeometryUtils.js"
+      },
+      {
+        "bytes": 2850,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/CameraUtils.js"
+      },
+      {
+        "bytes": 2470,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/GPUStatsPanel.js"
+      },
+      {
+        "bytes": 14687,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/GeometryCompressionUtils.js"
+      },
+      {
+        "bytes": 5113,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/GeometryUtils.js"
+      },
+      {
+        "bytes": 5808,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/LDrawUtils.js"
+      },
+      {
+        "bytes": 3950,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/PackedPhongMaterial.js"
+      },
+      {
+        "bytes": 5511,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/SceneUtils.js"
+      },
+      {
+        "bytes": 5595,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/ShadowMapViewer.js"
+      },
+      {
+        "bytes": 8007,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/SkeletonUtils.js"
+      },
+      {
+        "bytes": 3049,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/SortUtils.js"
+      },
+      {
+        "bytes": 2367,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/TextureUtils.js"
+      },
+      {
+        "bytes": 3097,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/UVsDebug.js"
+      },
+      {
+        "bytes": 1712,
+        "path": "public/vendor/three@0.160.0/examples/jsm/utils/WorkerPool.js"
+      },
+      {
+        "bytes": 4666,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/ARButton.js"
+      },
+      {
+        "bytes": 1756,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/OculusHandModel.js"
+      },
+      {
+        "bytes": 10102,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/OculusHandPointerModel.js"
+      },
+      {
+        "bytes": 1018,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/Text2D.js"
+      },
+      {
+        "bytes": 4559,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/VRButton.js"
+      },
+      {
+        "bytes": 3962,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XRButton.js"
+      },
+      {
+        "bytes": 6990,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XRControllerModelFactory.js"
+      },
+      {
+        "bytes": 5308,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XREstimatedLight.js"
+      },
+      {
+        "bytes": 2398,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XRHandMeshModel.js"
+      },
+      {
+        "bytes": 1841,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XRHandModelFactory.js"
+      },
+      {
+        "bytes": 2316,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XRHandPrimitiveModel.js"
+      },
+      {
+        "bytes": 1937,
+        "path": "public/vendor/three@0.160.0/examples/jsm/webxr/XRPlanes.js"
+      }
+    ],
+    "present": true,
+    "reason": null,
+    "total_bytes": 24520288
   },
   "what_this_is": "A measurement of the frontend that is actually shipped today: the index shell, every first-party module under public/app/, the stylesheet and the boot scripts. It does NOT modify anything and must not be read as evidence that the application works — only that the bytes are where this report says they are. Its second job is anti-gaming: each module's share of total first-party JavaScript is reported, so a 'split' that leaves one file holding most of the code cannot hide behind a file count."
 }

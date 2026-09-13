@@ -352,7 +352,9 @@ console.log('\n== §14 — الصفحة المشحونة تُعلن الحفظ �
   chk('the shipped page exposes window.ACS.persistence',
       page.indexOf('window.ACS.persistence={')>=0);
   chk('the shipped page uses IndexedDB, not localStorage, for the project record',
-      page.indexOf("indexedDB.open(DB_NAME,DB_VER)")>=0);
+      page.indexOf("indexedDB.open(scope,DB_VER)")>=0
+      && page.indexOf('const scope=storageScope()')>=0
+      && page.indexOf('Authenticated project required for local storage')>=0);
   chk('the visible Arabic status string ships in the page',
       page.indexOf('محفوظ محلياً على هذا الجهاز')>=0);
   chk('the visible English status string ships in the page',

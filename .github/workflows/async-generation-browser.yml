@@ -33,6 +33,8 @@ jobs:
           mkdir -p logs
           python3 tests/remediation/test_async_generation_jobs.py 2>&1 | tee logs/async-python.log
           node tests/remediation/test_generation_jobs.js 2>&1 | tee logs/async-node.log
+          node tests/remediation/test_auth_session.js 2>&1 | tee logs/auth-session.log
+          python3 tests/remediation/test_auth_gateway.py 2>&1 | tee logs/auth-gateway.log
       - name: Short-request recovery in Chromium and WebKit
         run: |
           set -euo pipefail
@@ -40,6 +42,10 @@ jobs:
           ACS_TEST_BROWSER=webkit node tests/remediation/test_generation_jobs_browser.js 2>&1 | tee logs/async-webkit.log
       - name: Build the real shipped frontend
         run: bash tools/netlify-build.sh
+      - name: Real production auth UI lifecycle on desktop and mobile
+        run: |
+          set -o pipefail
+          node tests/remediation/test_auth_shipped_page.cjs 2>&1 | tee logs/auth-shipped.log
       - name: Complete mobile UI to model recovery under production CSP
         run: |
           set -o pipefail

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import sys
+import asyncio
 import unittest
 from unittest.mock import patch
 
@@ -93,6 +94,46 @@ class AuthGatewayTests(unittest.TestCase):
         self.assertIn('ACS_AUTH_SUPABASE_PUBLISHABLE_KEY', text)
         self.assertNotIn('SUPABASE_SERVICE_ROLE_KEY', text)
         self.assertNotIn('ACS_SUPABASE_SERVICE_ROLE', text)
+
+    def test_signin_accepts_existing_short_password_but_signup_keeps_minimum(self):
+        with patch.object(G, '_request', return_value=(200, {})) as request:
+            self.assertEqual(G._signin({'email': 'n@example.com', 'password': 'legacy'})[0], 200)
+            self.assertEqual(request.call_args.kwargs['payload']['password'], 'legacy')
+        with self.assertRaises(ValueError):
+            G._signup({'email': 'n@example.com', 'password': 'legacy'})
+
+    def test_user_service_outage_is_not_reported_as_invalid_session(self):
+        with patch.object(G, '_request', return_value=(503, {'error': 'AUTH_UPSTREAM_UNAVAILABLE'})):
+            status, payload = G._bootstrap_project('real-token', {'name': 'First'})
+        self.assertEqual(status, 503)
+        self.assertEqual(payload['error']['code'], 'AUTH_UPSTREAM_UNAVAILABLE')
+
+    def test_malformed_project_list_does_not_create_a_duplicate(self):
+        with patch.object(G, '_request', side_effect=[(200, {'id': 'u'}), (200, {})]) as request:
+            status, _ = G._bootstrap_project('real-token', {'name': 'First'})
+        self.assertEqual(status, 502)
+        self.assertEqual(request.call_count, 2)
+
+    def test_errors_use_arabic_messages_and_do_not_reflect_sql_or_provider_details(self):
+        status, payload = G._safe_auth_error(500, {'message': 'private database details'})
+        self.assertEqual(status, 500)
+        self.assertNotIn('private', str(payload))
+        self.assertIn('مؤقتًا', payload['error']['message'])
+        self.assertEqual(G._safe_auth_error(400, {'error_code': 'invalid_credentials'})[1]['error']['message'],
+                         'البريد الإلكتروني أو كلمة المرور غير صحيحة.')
+
+    def test_unexpected_transport_failure_keeps_json_error_contract(self):
+        messages = []
+        async def receive():
+            return {'type': 'http.request', 'body': b'{"email":"n@example.com","password":"12345678"}'}
+        async def send(message):
+            messages.append(message)
+        with patch.object(G, '_request', side_effect=RuntimeError('private detail')):
+            handled = asyncio.run(G.maybe_handle({'type': 'http', 'method': 'POST',
+                'path': '/v1/auth/signin', 'headers': []}, receive, send))
+        self.assertTrue(handled)
+        self.assertEqual(messages[0]['status'], 502)
+        self.assertNotIn(b'private detail', messages[1]['body'])
 
 
 if __name__ == '__main__':
