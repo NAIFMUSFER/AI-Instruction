@@ -77,6 +77,17 @@ class AuthGatewayTests(unittest.TestCase):
         ]}
         self.assertEqual(G._bearer(scope), '')
 
+    def test_single_authorization_header_remains_case_insensitive(self):
+        scope = {'headers': [
+            (b'x-request-id', b'example'),
+            (b'Authorization', b'Bearer real-token'),
+        ]}
+        self.assertEqual(G._bearer(scope), 'real-token')
+
+    def test_malformed_asgi_header_sequence_fails_closed(self):
+        scope = {'headers': [(b'authorization', 'Bearer not-bytes')]}
+        self.assertEqual(G._bearer(scope), '')
+
     def test_gateway_reads_only_publishable_auth_configuration(self):
         text = Path(G.__file__).read_text(encoding='utf-8')
         self.assertIn('ACS_AUTH_SUPABASE_PUBLISHABLE_KEY', text)
