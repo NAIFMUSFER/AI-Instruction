@@ -10,7 +10,7 @@ let passed = 0;
 const ok = (body, http=200) => ({status:'SUCCESS', http, body, request_id:'req_test'});
 const network = {status:'NETWORK_ERROR', http:0, body:null, retryable:true};
 const model = {ok:true, building:{meta:{type:'villa'}, levels:[], floors:{}}};
-function harness(handler, values = new Map()) {
+function harness(handler, values = new Map(), authSession = {access_token:'session-token'}) {
   const calls=[];
   const events=new EventTarget();
   const document={readyState:'loading', visibilityState:'visible',
@@ -22,7 +22,9 @@ function harness(handler, values = new Map()) {
     srvURL:()=>ctx.window.ACS_API.base(), document, statusEl:{textContent:''}, srvPill(){},
     acsApplyTicket(){return 1;}, acsApplyBuilding(){throw new Error('not a transport concern');},
     acsApplyFirstFrame(){}, showReport(){},
-    window:{crypto:webcrypto, ACS:{}, ACS_API:{base:()=> 'https://acs.example'},
+    window:{crypto:webcrypto, ACS:{},
+      ACS_AUTH:{isLocalTestHost:()=>false, freshSession:async()=>authSession},
+      ACS_API:{base:()=> 'https://acs.example'},
       sessionStorage:{getItem:k=>values.get(k)||null, setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)},
       addEventListener:events.addEventListener.bind(events),removeEventListener:events.removeEventListener.bind(events)},
     __ACS_SHARED:{acsFetchJSON:async(p,o,t)=>{calls.push({p,o,t});return handler(p,o,t);}}};
@@ -34,6 +36,29 @@ function receipt(id,state='RUNNING') {
 }
 async function test(name,fn){await fn();console.log('PASS '+name);passed++;}
 (async()=>{
+  await test('production paid submission forwards the refreshed Supabase bearer only on POST',async()=>{
+    let id;
+    const h=harness((p,o)=>{
+      if(o.method==='POST'){id=o.headers['X-ACS-Job-ID'];return receipt(id,'QUEUED');}
+      return p.endsWith('/result')?ok(model):receipt(id,'SUCCEEDED');
+    });
+    const res=await h.run('/v1/understand',{method:'POST',headers:{Authorization:'Bearer caller-forged'},body:'{}'});
+    assert.equal(res.status,'SUCCESS');
+    const post=h.calls.find(c=>c.o.method==='POST');
+    assert.equal(post.p,'/v1/jobs/understand');
+    assert.equal(post.o.headers.Authorization,'Bearer session-token');
+    assert.ok(!Object.keys(post.o.headers).some(k=>k.toLowerCase()==='authorization' && k!=='Authorization'));
+    assert.ok(h.calls.filter(c=>c.o.method==='GET').every(c=>!Object.keys(c.o.headers||{}).some(k=>k.toLowerCase()==='authorization')));
+    const stored=JSON.stringify([...h.values.values()]);
+    assert.ok(!stored.includes('session-token'));
+    assert.ok(!stored.includes('caller-forged'));
+  });
+  await test('production paid submission fails closed before POST when no verified auth session exists',async()=>{
+    const h=harness(()=>{throw new Error('must not send without verified auth');},new Map(),null);
+    const res=await h.run('/v1/understand',{method:'POST',body:'{}'});
+    assert.equal(res.code,'ACS_AUTH_REQUIRED');
+    assert.equal(h.calls.length,0);
+  });
   await test('one POST, failed polls and failed result download never generate again',async()=>{
     let id, polls=0, downloads=0;
     const h=harness((p,o)=>{

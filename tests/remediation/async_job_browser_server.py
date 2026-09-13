@@ -40,6 +40,7 @@ function srvPill(cls, text) {statusEl.textContent=text;}
 function srvURL() {return location.origin;}
 function apiURL(path) {return location.origin+path;}
 window.ACS_API = {base:()=>location.origin};
+window.ACS_AUTH = {isLocalTestHost:()=>true};
 let current=null;
 window.ACS = {exportModel:()=>current, trust:{modelReviewSummary:()=> 'fixture - no engineering claim'}};
 function acsApplyTicket(){return 1;}
