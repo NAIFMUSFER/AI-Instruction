@@ -18,8 +18,9 @@ jobs:
           ref: release/production-supabase-auth-ui
           fetch-depth: 0
       - name: Repair measured-doc guard and corrupted claims
-        shell: python
+        shell: bash
         run: |
+          python3 - <<'PY'
           from pathlib import Path
 
           guard = Path('tools/check_doc_claims.py')
@@ -84,6 +85,7 @@ jobs:
           assert text.count(hist_old) == 1, 'historical panel claim drifted'
           text = text.replace(live_old, live_new).replace(hist_old, hist_new)
           doc.write_text(text, encoding='utf-8')
+          PY
       - name: Run focused regression
         run: python3 -m unittest tests.remediation.test_doc_claims -v
       - name: Commit repair
