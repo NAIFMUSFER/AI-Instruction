@@ -20,6 +20,7 @@ from typing import Any
 
 import acs_api_errors as E
 import acs_auth as AUTH
+import acs_auth_gateway as AUTH_GATEWAY
 import acs_plan_bridge as BRIDGE
 import acs_plan_chat_orchestration as CHAT
 import acs_plan_persisted_commands as PERSIST
@@ -161,11 +162,12 @@ async def _read_json(receive) -> dict:
 
 
 class PlanCommandMiddleware:
-    """Intercept exactly one authenticated project command route.
+    """Intercept ACS auth routes plus the authenticated project command route.
 
-    Authentication runs before ``receive`` is touched. The project UUID is route
-    selection only; effective authorization remains the actor-bound Supabase
-    membership/RPC contract. Client JSON cannot supply project or actor authority.
+    Authentication runs before plan-command ``receive`` is touched. The project
+    UUID is route selection only; effective authorization remains the actor-bound
+    Supabase membership/RPC contract. Client JSON cannot supply project or actor
+    authority.
     """
 
     def __init__(self, app):
@@ -174,6 +176,12 @@ class PlanCommandMiddleware:
     async def __call__(self, scope, receive, send):
         if scope.get("type") != "http":
             return await self.app(scope, receive, send)
+
+        # Browser auth is deliberately served through the already-pinned ACS
+        # backend origin, so the frontend CSP needs no new remote connect-src.
+        if AUTH_GATEWAY.matches(scope.get("path")):
+            await AUTH_GATEWAY.maybe_handle(scope, receive, send)
+            return None
 
         matched, project_id = _project_from_path(scope.get("path"))
         if not matched:
