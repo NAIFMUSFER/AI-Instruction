@@ -260,7 +260,7 @@
     var a=window.ACS, uid=a&&a.authSession&&a.authSession.user&&a.authSession.user.id, pid=a&&a.projectId;
     return typeof uid==="string"&&uid&&typeof pid==="string"&&pid ? "acs_local_project:"+uid+":"+pid : null;
   }
-  window.ACS_AUTH={contract:"acs-production-auth/1.2",init:authInit,loadSession:loadSession,freshSession:freshSession,storageScope:storageScope,request:acsFetchJSON,
+  window.ACS_AUTH={contract:"acs-production-auth/1.2",init:authInit,loadSession:loadSession,freshSession:freshSession,storageScope:storageScope,acsFetchJSON:acsFetchJSON,
     bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost};
 })();
 

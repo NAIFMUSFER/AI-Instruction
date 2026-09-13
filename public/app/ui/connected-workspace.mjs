@@ -1,9 +1,10 @@
-import {parseReviewFile} from '../../plan-review/packet.mjs';
+import {parseReviewFile} from '../core/plan-review-packet.mjs';
+import {showApprovedGLTF} from './approved-viewer.mjs';
 
 const $ = id => document.getElementById(id);
-const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'الحركة بين الأدوار',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
+const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'الحركة بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
 const metricNames = {site_area_m2:'مساحة الموقع (م²)',level_count:'الأدوار',space_instance_count:'الفراغات',space_rect_area_m2:'مساحة حدود الفراغات (م²)',space_count_by_role:'عدد الفراغات حسب الاستخدام',space_area_by_role_m2:'المساحة حسب الاستخدام',zone_area_by_role_m2:'مساحات التشغيل (م²)',dock_count:'الأرصفة',rack_group_count:'مجموعات الرفوف',storage_capacity_positions:'مواضع التخزين',travel_distance_m:'مسافة الحركة (م)',throughput_per_hour:'معدل التشغيل في الساعة',rack_modeled_bay_count:'خلايا الرفوف المقاسة',rack_geometric_position_count:'المواضع الهندسية',configured_route_length_m:'أطوال المسارات (م)'};
-const issueNames = {PROGRAM_NOT_CONFIRMED:'لم يؤكد برنامج المتطلبات',REQUIREMENT_MISMATCH:'المخطط لا يحقق متطلبًا مؤكدًا',REQUIREMENT_NOT_SPECIFIED:'يوجد متطلب لم تحدد قيمته',INFERENCE_NOT_CONFIRMED:'متطلب مقترح يحتاج التأكيد',PLAN_ZONE_UNRESOLVED:'منطقة تحتاج استكمال هندستها',VERIFICATION_UNAVAILABLE:'تعذّر إكمال التحقق',ACS_GEOMETRY_FINDING:'ملاحظة في الأبعاد أو الفتحات تحتاج المراجعة'};
+const issueNames = {PROGRAM_NOT_CONFIRMED:'لم يؤكد برنامج المتطلبات',REQUIREMENT_MISMATCH:'المخطط لا يحقق متطلبًا مؤكدًا',REQUIREMENT_NOT_SPECIFIED:'يوجد متطلب لم تحدد قيمته',INFERENCE_NOT_CONFIRMED:'متطلب مقترح يحتاج التأكيد',PLAN_ZONE_UNRESOLVED:'منطقة تحتاج استكمال هندستها',VERIFICATION_UNAVAILABLE:'تعذّر إكمال التحقق',ACS_GEOMETRY_FINDING:'ملاحظة في الأبعاد أو الفتحات تحتاج المراجعة',WAREHOUSE_EXPANSION_RESERVE_INTRUSION:'التخطيط يشغل جزءًا من مساحة التوسّع المعلنة',WAREHOUSE_EXPANSION_RESERVE_NOT_VERIFIED:'تحتاج مساحة التوسّع المعلنة إلى هندسة قابلة للتحقق'};
 const value = v => v == null ? 'غير متحقق' : typeof v === 'object' ? JSON.stringify(v) : String(v);
 let root, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerDispose = null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
@@ -19,7 +20,7 @@ async function api(body, commands=false) {
   const session=await window.ACS_AUTH.freshSession();
   if(!session)throw new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.');
   const path='/v1/projects/'+projectId+(commands?'/plan/commands':'/workspace');
-  const response=await window.ACS_AUTH.request(path,body,session.access_token,body.action==='artifact'?90000:20000);
+  const response=await window.ACS_AUTH.acsFetchJSON(path,body,session.access_token,body.action==='artifact'?90000:20000);
   if(commands){
     if(!response.result||typeof response.result!=='object')throw new Error('لم يصل تأكيد مكتمل من خدمة المراجعة. افتح آخر نسخة محفوظة.');
     return response.result;
@@ -111,7 +112,7 @@ async function renderState(data, {keepStep=false}={}) {
   if(packet){
     $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option','الدور '+p.level_index,$('cwLevel'));o.value=String(i);});
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,value(v)]));
-    table($('cwChecks'),Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق'}[v]||v]));
+    table($('cwChecks'),Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]));
     $('cwIssues').replaceChildren();for(const issue of data.review_findings||packet.review.issues)el('li',(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+issue.requirement_id:'')+(issue.message?' — '+issue.message:''),$('cwIssues'));
     if(!packet.review.issues.length)el('li','لا توجد ملاحظات في الفحوصات المنفذة.', $('cwIssues'));
     $('cwApprovalNote').textContent=data.authority?.can_approve_concept?'الفحوصات التخطيطية جاهزة للمراجعة والاعتماد المبدئي.':'عالِج الفحوصات غير المكتملة أو المتطلبات المخالفة قبل الاعتماد.';
@@ -190,7 +191,6 @@ async function exportFile(format, display=false){
   const data=await api({action:'artifact',format,revision_id:state.revision_id,level_index:packet.projections[Number($('cwLevel').value)||0].level_index});
   const bytes=bytes64(data.data_base64);
   if(display){
-    const {showApprovedGLTF}=await import('./approved-viewer.mjs');
     if(viewerDispose)viewerDispose();$('cwViewer').hidden=false;
     viewerDispose=await showApprovedGLTF($('cwViewer'),bytes,state.revision_id);status('يعرض 3D النسخة المعتمدة نفسها، دون إعادة توليد المخطط.');
   }else{
@@ -201,7 +201,7 @@ async function exportFile(format, display=false){
 }
 async function projectList(){
   const s=await window.ACS_AUTH.freshSession();if(!s)return;
-  const data=await window.ACS_AUTH.request('/v1/auth/projects',{action:'list'},s.access_token);
+  const data=await window.ACS_AUTH.acsFetchJSON('/v1/auth/projects',{action:'list'},s.access_token);
   $('cwProject').replaceChildren();for(const p of data.projects){const o=el('option',p.name,$('cwProject'));o.value=p.id;}$('cwProject').value=projectId;
 }
 function mount(){
@@ -255,7 +255,7 @@ function mount(){
   $('cwNewProject').addEventListener('click',()=>{$('cwNewProjectForm').hidden=false;$('cwProjectName').focus();});
   $('cwCancelProject').addEventListener('click',()=>{$('cwNewProjectForm').hidden=true;});
   $('cwProject').addEventListener('change',()=>{try{localStorage.setItem('acs_project_v1',JSON.stringify({id:$('cwProject').value}));}catch(e){}location.reload();});
-  $('cwNewProjectForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const s=await window.ACS_AUTH.freshSession();const data=await window.ACS_AUTH.request('/v1/auth/projects',{action:'create',name:$('cwProjectName').value},s.access_token);localStorage.setItem('acs_project_v1',JSON.stringify(data.projects[0]));location.reload();});});
+  $('cwNewProjectForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const s=await window.ACS_AUTH.freshSession();const data=await window.ACS_AUTH.acsFetchJSON('/v1/auth/projects',{action:'create',name:$('cwProjectName').value},s.access_token);localStorage.setItem('acs_project_v1',JSON.stringify(data.projects[0]));location.reload();});});
 }
 async function start(){
   if(!window.ACS?.projectId||!window.ACS?.authSession)return;

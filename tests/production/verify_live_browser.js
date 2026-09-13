@@ -396,9 +396,10 @@ async function checkShippedShape(pg) {
       + ' bytes, entry /app/main.js, one inline import map');
   ok('H', 'H2', 'the classic boot scripts and the EXTERNAL stylesheet are '
     + 'loaded and applied by the deployed page',
-    shape.boot_scripts.length >= 1 && shape.stylesheets.length === 1
-    && /^\/app\/styles\//.test(shape.stylesheets[0] || '')
-    && shape.sheet_count >= 1 && shape.css_rules > 200,
+    shape.boot_scripts.length === 6
+    && JSON.stringify(shape.stylesheets.slice().sort()) === JSON.stringify([
+      '/app/styles/app.css', '/app/styles/connected-workspace.css'])
+    && shape.sheet_count >= 2 && shape.css_rules > 200,
     JSON.stringify({ boot: shape.boot_scripts, css: shape.stylesheets,
       sheets: shape.sheet_count, rules: shape.css_rules }));
   ok('H', 'H3', 'the deployed document carries no <style> block, no style= '

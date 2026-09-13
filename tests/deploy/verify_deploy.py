@@ -175,6 +175,12 @@ _refused('a missing application entry (<script type=module src>) is refused',
 _refused('a deleted application entry MODULE is refused — the page would '
          'serve a 404 to its own entry point',
          lambda r: os.remove(os.path.join(r, 'public', 'app', 'main.js')))
+_refused('a second shell module entry is refused',
+         lambda r: _edit(r, '</body>',
+                         '<script type="module" src="/app/ui/connected-workspace.mjs"></script></body>'))
+_refused('a missing imported .mjs module is refused',
+         lambda r: os.remove(os.path.join(r, 'public', 'app', 'ui',
+                                         'connected-workspace.mjs')))
 # كل خيط محرّك معلَن، وكل زوج علامات معلَن — لا ثلاثة منها فقط كما كان.
 for _needle, _what in IG.ENGINE_NEEDLES:
     _refused('missing %s is refused (declared engine needle)' % _what,

@@ -130,8 +130,10 @@ of it is read-only.
 
 ## 4. Frontend architecture
 
-`public/index.html` is a **44 KB shell**: markup, one inline import map, a stylesheet
-link, five classic boot scripts and one module entry. It contains no executable inline
+`public/index.html` is a shell: markup, one inline import map, two stylesheet
+links, six classic boot scripts and one module entry. The connected cloud
+workspace, shared packet validator and approved viewer load through `app/main.js`
+and follow the same dependency-graph checks as the studio. It contains no executable inline
 JavaScript, no `<style>` block and no `style=` attribute — that is what allows the
 strict CSP in §16.
 
@@ -142,6 +144,7 @@ HTML shell  →  boot scripts (classic, run before modules)
                  boot/engine-guard.js   window.ACS init, login gate, 12 s engine warning
                  boot/debug-toggle.js   ?debug=1 counter
                  boot/a11y-baseline.js  ARIA sync, focus trap — deliberately not a module
+                 boot/style-bridge.js   CSP-compatible dynamic geometry styling
             →  app/main.js  (module entry — imports in evaluation order)
                  shared-state.js   __ACS_SHARED · 8 bindings written across modules
                  late-bindings.js  __ACS_LATE  · 20 forward references
@@ -153,6 +156,9 @@ HTML shell  →  boot scripts (classic, run before modules)
                  ui/workspace-ui-wiring.js
                  trust/core.js         pure: persistence, error table, idempotency
                  trust/wiring.js       DOM, IndexedDB, network
+                 core/plan-review-packet.mjs   one shared review validator
+                 ui/approved-viewer.mjs       exact approved glTF, on user request
+                 ui/connected-workspace.mjs   authenticated project lifecycle
 ```
 
 **Two rules make the split safe, and both are tested** (`tests/remediation/test_module_graph.js`):

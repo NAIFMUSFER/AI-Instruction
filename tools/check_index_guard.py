@@ -32,7 +32,7 @@ import app_source as A                                            # noqa: E402
 
 # ── الحدود المعلَنة ─────────────────────────────────────────────────────────
 # سقف القشرة. الصفحة لا تحمل تطبيقاً: ترويسة + كتل DOM المولَّدة + <link> +
-# خمسة <script src> + وسم وحدة واحد. 200 KB سقف كريم لذلك، والقشرة اليوم
+# ستة <script src> + وسم وحدة واحد. 200 KB سقف كريم لذلك، والقشرة اليوم
 # ‏44 KB — أي ارتفاع نحو السقف يعني أن شيئاً عاد ليُلصق في الصفحة.
 MAX_BYTES = 200 * 1024              # 204800 — كان MIN_BYTES = 1000000
 # أكبر ملفّ JS واحد. تقسيمٌ لا ينتج عنه قطعة أصغر من ذلك ليس تقسيماً.
@@ -177,6 +177,15 @@ def check_page_text(page, size=None):
         fails.append('the module entry point <script type="module" '
                      'src="/app/main.js"> is missing — the shell would load '
                      'no application code at all')
+    module_entries = []
+    for script in script_elements(page):
+        script_type = TYPE_RX.search(script['attrs'])
+        if script_type and script_type.group(1) == 'module':
+            src = SRC_RX.search(script['attrs'])
+            module_entries.append(src.group(1) if src else None)
+    if module_entries != ['/app/main.js']:
+        fails.append('the shell must declare exactly one module entry, '
+                     '/app/main.js: %r' % module_entries)
     if not STYLESHEET_RX.search(page):
         fails.append('the <link rel="stylesheet"> to the application '
                      'stylesheet is missing')

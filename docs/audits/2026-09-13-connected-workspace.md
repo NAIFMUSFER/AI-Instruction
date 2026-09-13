@@ -1,7 +1,7 @@
 # ACS connected project workspace
 
-Continuation from PR94, integrated with PR93 on main
-`638053271273f8c2f929e7f3f236d9e7b46d4843`.
+Continuation from PR94, integrated with PR93, PR96 and PR95 on main
+`35558adda90795ef0df8fe5db62b60bdaf408757`.
 The previous acceptance report records that earlier release, not this change.
 
 ## Delivered implementation
@@ -47,6 +47,14 @@ complete shipped page under the production CSP in Chromium at 393 and 1280 px,
 including reload without duplicate generation, lock, approval, SVG download,
 exact 3D, chat revision, comparison and logout. These fixtures are never deployed.
 CI status and deployed commit identity must be recorded before release approval.
+
+The first full Chromium run reached 31/32 boot checks and 326/326 visual
+checks. The single-entry guard rejected the additional shell module. The fix
+keeps that guard unchanged: the connected workspace, shared packet validator
+and approved viewer now enter through `app/main.js`. Both source readers include
+`.mjs` in the same dependency graph, so missing files, cycles, free identifiers,
+module sizes and evaluation order remain checked rather than exempted. The
+standalone review page re-exports the same packet validator; there is no fork.
 
 The `acs_workspace_jobs` migration was applied to the ACS Supabase project on
 13 September 2026. Metadata inspection verified RLS, three policies, no anonymous

@@ -252,12 +252,12 @@ def build():
                    if not s["external"] and s["kind"] != "importmap"]
     app_text = A.app_text()
 
-    # The authenticated workspace is a separate HTML module entry. Preserve the
-    # historical .js graph series, and measure every new .mjs/CSS byte explicitly.
+    # This feature breakdown is a subset of the full app JS graph plus its CSS.
+    # The standalone packet import re-exports the same shared validator.
     connected_assets = [
         ('public/app/ui/connected-workspace.mjs', 'initial-module'),
-        ('public/plan-review/packet.mjs', 'initial-module'),
-        ('public/app/ui/approved-viewer.mjs', 'lazy-module'),
+        ('public/app/core/plan-review-packet.mjs', 'initial-module'),
+        ('public/app/ui/approved-viewer.mjs', 'initial-module'),
         ('public/app/styles/connected-workspace.css', 'initial-css'),
     ]
     connected = [{'path': path, 'loaded': loaded, 'bytes': b(read(path)),
@@ -268,15 +268,15 @@ def build():
         "report": "acs.bundle/2",
         "status": (
             "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a %d "
-            "byte shell and the legacy studio JavaScript (%d bytes) "
+            "byte shell and the application JavaScript (%d bytes) "
             "lives in %d files under public/app/. This file records where the "
             "bytes are; it does NOT prove the application still runs. Runtime "
             "behaviour is the browser tests' job, not this tool's."
             % (shell_bytes, first_party_total, len(modules))),
         "what_this_is": (
             "A measurement of the frontend that is actually shipped today: the "
-            "index shell, the studio .js graph, stylesheets and boot scripts. "
-            "The connected_workspace section measures its separate .mjs entry "
+            "index shell, the complete .js/.mjs graph, stylesheets and boot scripts. "
+            "The connected_workspace section breaks out its subset of the graph "
             "and exact approved viewer. It does NOT modify anything and "
             "must not be read as evidence that the application works — only "
             "that the bytes are where this report says they are. Its second "
