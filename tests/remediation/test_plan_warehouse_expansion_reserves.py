@@ -95,6 +95,20 @@ class WarehouseExpansionReserveTests(unittest.TestCase):
         self.assertEqual(result["checks"]["expansion_reserve_preservation"]["status"],
                          "NOT_APPLICABLE")
 
+    def test_uninspectable_room_set_is_not_verified_not_not_applicable(self):
+        model = warehouse()
+        # The canonical warehouse claims a level/template, but its room collection is
+        # not inspectable. Absence of a discovered reserve is therefore not evidence
+        # that no expansion reserve was declared.
+        model["floors"]["ground"]["rooms"] = None
+        result = S.measure_plan(model)
+        self.assertIsNone(result["metrics"]["expansion_reserve_area_m2"])
+        self.assertIsNone(result["metrics"]["expansion_reserve_zone_overlap_area_m2"])
+        self.assertIsNone(result["metrics"]["expansion_reserve_rack_overlap_area_m2"])
+        self.assertIsNone(result["metrics"]["expansion_reserve_lane_overlap_area_by_kind_m2"])
+        self.assertEqual(result["checks"]["expansion_reserve_preservation"]["status"],
+                         "NOT_VERIFIED")
+
     def test_incomplete_intruder_geometry_fails_reserve_check_closed(self):
         model = with_reserve()
         rack = model["floors"]["ground"]["rooms"][1]["racks"][0]
