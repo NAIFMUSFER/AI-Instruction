@@ -12,6 +12,11 @@
    ============================================================ */
 import './shared-state.js';
 import './late-bindings.js';
+/* Register the 2D project lifecycle before legacy WebGL initialization.
+   A device without WebGL must retain review, approval and file export. */
+import './core/plan-review-packet.mjs';
+import './ui/approved-viewer.mjs';
+import './ui/connected-workspace.mjs';
 import './core/viewer.js';
 import './core/standards.js';
 import './core/disciplines.js';
@@ -42,9 +47,3 @@ import './ui/workspace-viewport-selection-runtime.js';
 import './ui/residential-quality.js';
 /* Recover long generation through short authenticated job requests. */
 import './ui/generation-jobs.js';
-
-/* The authenticated workspace shares the single app entry. Its packet reader
-   and approved viewer are side-effect-free until the user opens a project. */
-import './core/plan-review-packet.mjs';
-import './ui/approved-viewer.mjs';
-import './ui/connected-workspace.mjs';

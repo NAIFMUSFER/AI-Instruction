@@ -32,7 +32,10 @@ export async function showApprovedGLTF(container, bytes, revisionId) {
   camera.position.copy(center).add(new THREE.Vector3(extent,extent*.8,extent));
   scene.add(new THREE.HemisphereLight(0xe4f3ff,0x34424b,2));
   const sun=new THREE.DirectionalLight(0xffffff,2.5);sun.position.copy(center).add(new THREE.Vector3(extent,extent*2,extent));scene.add(sun);
-  const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
+  let renderer;
+  try{renderer=new THREE.WebGLRenderer({antialias:true});}
+  catch(e){throw new Error('العرض ثلاثي الأبعاد غير متاح في هذا المتصفح. يمكنك متابعة المخطط ثنائي الأبعاد والحفظ والتصدير.');}
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.domElement.setAttribute('aria-label','النموذج ثلاثي الأبعاد للنسخة المعتمدة');container.replaceChildren(renderer.domElement);
   const controls=new OrbitControls(camera,renderer.domElement);controls.target.copy(center);controls.minDistance=extent*.05;controls.maxDistance=extent*8;controls.update();
   const render=()=>renderer.render(scene,camera);

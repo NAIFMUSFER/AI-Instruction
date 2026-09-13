@@ -16,9 +16,10 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
  try{
   let ready=false;for(let i=0;i<60;i++){try{if((await fetch('http://127.0.0.1:'+port+'/health')).ok){ready=true;break;}}catch(e){}await delay(250);}
   assert.ok(ready,'fixture backend did not start: '+backendLog);browser=await PW.launch();
-  for(const width of [393,1280]){
+  for(const {width,noWebGL} of [{width:393},{width:1280},{width:393,noWebGL:true}]){
    const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true}),page=await context.newPage();
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   if(noWebGL)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/i.test(type)?null:original.call(this,type,...args);};});
    await page.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname==='acs-engine.onrender.com'){
@@ -53,8 +54,15 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();
    await page.locator('#cwShow3D').waitFor({state:'visible'});assert.equal(await page.locator('#cwShow3D').isEnabled(),true);
    const downloadPromise=page.waitForEvent('download');await page.locator('[data-format=svg]').click();const download=await downloadPromise;assert.equal(download.suggestedFilename(),'acs-approved.svg');
-   await page.locator('#cwShow3D').click();await page.locator('#cwViewer canvas').waitFor({state:'visible',timeout:45000});
-   assert.ok((await page.locator('#cwViewer canvas').boundingBox()).width>100);
+   await page.locator('#cwShow3D').click();
+   if(noWebGL){
+    await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('العرض ثلاثي الأبعاد غير متاح'));
+    assert.equal(await page.locator('#cwViewer canvas').count(),0);
+    assert.equal(await page.locator('[data-format=svg]').isEnabled(),true);
+   }else{
+    await page.locator('#cwViewer canvas').waitFor({state:'visible',timeout:45000});
+    assert.ok((await page.locator('#cwViewer canvas').boundingBox()).width>100);
+   }
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
    const revisionsBeforeChat=await page.locator('#cwRevision option').count();
    await page.locator('[data-step="3"]').click();await page.locator('#cwChat').fill('غيّر عرض الفراغ B مع تثبيت الفراغ المقفل.');await page.locator('#cwChatSubmit').click();
@@ -64,7 +72,9 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    await page.locator('#cwCompare').click();await page.locator('#cwComparison').waitFor({state:'visible'});
    assert.ok(await page.locator('#cwComparisonRows tr').count()>2);
    await page.locator('#cwLogout').click();await page.locator('#lgEmail').waitFor({state:'visible'});
-   assert.deepEqual(errors,[]);console.log('PASS connected workspace '+width+': generation, reload, lock, approval, SVG, exact 3D, chat revision, logout');
+   if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
+   else assert.deepEqual(errors,[]);
+   console.log('PASS connected workspace '+width+(noWebGL?' without WebGL: 2D, save, approve, SVG, recover and logout remain available':': generation, reload, lock, approval, SVG, exact 3D, chat revision, logout'));
    await context.close();
   }
  }finally{if(browser)await browser.close();child.kill('SIGTERM');fs.rmSync(tmp,{recursive:true,force:true});}
