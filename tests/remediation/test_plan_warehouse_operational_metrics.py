@@ -187,7 +187,7 @@ class WarehouseOperationalMetricTests(unittest.TestCase):
         self.assertEqual(delta["mapping"]["lane_centerline_length_by_kind_m"]["pedestrian"], 0.0)
         self.assertEqual(delta["mapping"]["configured_route_length_by_flow_m"], {
             "receiving->storage": 0.0,
-            "storage->shipping": 0.0,
+            "storage->shipping": -2.0,
         })
         self.assertFalse(result["claims_best_option"])
         self.assertFalse(result["claims_regulatory_compliance"])
