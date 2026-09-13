@@ -73,6 +73,8 @@ const cases = [
     const p=buildBriefProgram(form('طلب بناء'));
     const restored=buildBriefProgram(form(p.brief,{savedRequirements:p.requirements}));
     evidence(restored);assert.equal(restored.requirements[0].evidence,p.requirements[0].evidence);
+    assert.equal(restored.brief,p.brief,'reopening must not append duplicate metadata that changes the confirmed program');
+    assert.deepEqual(restored.requirements,p.requirements,'a saved manual answer must not become a quoted description requirement');
     assert.throws(()=>buildBriefProgram(form('طلب بناء',{depth:'NaN'})),/موجبة/);
     assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows:[{metric:'dock_count',expected:' '}]})),/غير محددة/);
     const source=form('طلب بناء',{rows:[{metric:'room_count',role:'bedroom',expected:'2'}]});

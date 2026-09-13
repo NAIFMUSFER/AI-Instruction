@@ -112,7 +112,8 @@ export function buildBriefProgram(input) {
     if(!r)throw new Error('ورد متطلب '+requirementLabel(c)+' في الوصف. أضفه إلى البرنامج قبل التأكيد.');
     if(Math.abs(r.expected-c.expected)>1e-8)throw new Error('تعارض بين الوصف والحقول في '+requirementLabel(c)+'. صحّح الوصف أو القيمة قبل التوليد.');
   }
-  let brief=text+'\n\nنوع المشروع: '+(input.type==='warehouse'?'مستودع / صناعي':'سكني / عمارة / فيلا');
+  const typeLine='نوع المشروع: '+(input.type==='warehouse'?'مستودع / صناعي':'سكني / عمارة / فيلا');
+  let brief=text.split('\n').includes(typeLine)?text:text+'\n\n'+typeLine;
   const requirements=[];
   for(const [i,r] of values.entries()){
     const extracted=grouped.get(requirementKey(r));
@@ -120,7 +121,7 @@ export function buildBriefProgram(input) {
       &&p.source_span&&Number.isInteger(p.source_span.start)&&Number.isInteger(p.source_span.end)
       &&p.source_span.start>=0&&p.source_span.end>p.source_span.start&&p.source_span.end<=cp(text)
       &&Array.from(text).slice(p.source_span.start,p.source_span.end).join('')===p.evidence);
-    let source=extracted || prior;
+    let source=prior || extracted;
     if(!source){
       const evidence=requirementLabel(r)+(r.role?' ('+r.role+')':'')+': '+r.expected;
       const start=cp(brief)+1;brief+='\n'+evidence;
