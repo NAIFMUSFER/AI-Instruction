@@ -130,8 +130,23 @@ def _request(method: str, path: str, *, payload: dict | None = None,
 
 
 def _bearer(scope: dict) -> str:
-    headers = dict(scope.get("headers", []))
-    raw = headers.get(b"authorization", b"").decode("latin-1", "ignore")
+    raw_headers = scope.get("headers", [])
+    if not isinstance(raw_headers, (list, tuple)):
+        return ""
+    authorization: list[bytes] = []
+    for item in raw_headers:
+        if not isinstance(item, (list, tuple)) or len(item) != 2:
+            return ""
+        name, value = item
+        if not isinstance(name, (bytes, bytearray)) or not isinstance(value, (bytes, bytearray)):
+            return ""
+        if bytes(name).lower() == b"authorization":
+            authorization.append(bytes(value))
+            if len(authorization) > 1:
+                return ""
+    if len(authorization) != 1:
+        return ""
+    raw = authorization[0].decode("latin-1", "ignore")
     scheme, sep, token = raw.partition(" ")
     if sep != " " or scheme.lower() != "bearer":
         return ""
