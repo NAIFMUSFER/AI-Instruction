@@ -73,12 +73,19 @@ def _level_templates(model: dict) -> tuple[list[str], list[str]]:
     return templates, warnings
 
 
-def _rect_area(rect: Any) -> float | None:
+def _rect_tuple(rect: Any) -> tuple[float, float, float, float] | None:
     if (not isinstance(rect, list) or len(rect) != 4
             or not all(_finite(v) for v in rect)
             or rect[2] <= 0 or rect[3] <= 0):
         return None
-    area = rect[2] * rect[3]
+    return float(rect[0]), float(rect[1]), float(rect[2]), float(rect[3])
+
+
+def _rect_area(rect: Any) -> float | None:
+    normalized = _rect_tuple(rect)
+    if normalized is None:
+        return None
+    area = normalized[2] * normalized[3]
     return area if math.isfinite(area) else None
 
 
@@ -171,6 +178,13 @@ def _rect_overlap_area(a: tuple[float, float, float, float],
     w = max(0.0, min(ax + aw, bx + bw) - max(ax, bx))
     d = max(0.0, min(az + ad, bz + bd) - max(az, bz))
     return w * d
+
+
+def _element_id(item: Any) -> str | None:
+    if not isinstance(item, dict):
+        return None
+    value = item.get("id")
+    return value.strip() if isinstance(value, str) and value.strip() else None
 
 
 def _measure_configured_routes(model: dict) -> tuple[dict[str, float] | None,
@@ -279,6 +293,9 @@ def measure_plan(model: dict) -> dict:
     - `rack_overlap_area_m2` and `rack_lane_overlap_area_by_lane_kind_m2` measure
       only explicit room-relative rectangle intersections. They are geometric
       conflict indicators, not clearance, traffic-safety or code-compliance proof.
+    - `expansion_reserve_*` metrics use only rooms explicitly assigned canonical
+      role `expansion` and explicit zone/rack/lane rectangles. They do not predict
+      future demand, certify a reserve as sufficient, or infer clearance/safety.
     - `rack_group_count` counts declared rack groups, not pallet positions.
     - usable storage capacity and throughput stay unavailable unless a future
       canonical contract defines sufficient source data and calculation semantics.
@@ -333,6 +350,17 @@ def measure_plan(model: dict) -> dict:
     lane_overlap: defaultdict[str, float] = defaultdict(float)
     lane_overlap_complete = bool(templates)
 
+    expansion_reserve_declared = False
+    expansion_reserve_geometry_complete = bool(templates)
+    expansion_zone_overlap_complete = bool(templates)
+    expansion_rack_overlap_complete = bool(templates)
+    expansion_lane_overlap_complete = bool(templates)
+    expansion_reserve_area = 0.0
+    expansion_zone_overlap = 0.0
+    expansion_rack_overlap = 0.0
+    expansion_lane_overlap: defaultdict[str, float] = defaultdict(float)
+    expansion_intrusions: list[dict] = []
+
     for template in templates:
         floor = floors.get(template)
         rooms = floor.get("rooms") if isinstance(floor, dict) else None
@@ -345,7 +373,55 @@ def measure_plan(model: dict) -> dict:
             rack_levels_complete = rack_geometric_complete = rack_footprint_complete = False
             rack_overlap_complete = rack_lane_overlap_complete = False
             lane_area_complete = lane_centerline_complete = lane_overlap_complete = False
+            expansion_reserve_geometry_complete = False
+            expansion_zone_overlap_complete = False
+            expansion_rack_overlap_complete = False
+            expansion_lane_overlap_complete = False
             continue
+
+        reserve_rects: list[tuple[str | None, tuple[float, float, float, float]]] = []
+        for reserve_room in rooms:
+            if not isinstance(reserve_room, dict):
+                expansion_reserve_geometry_complete = False
+                expansion_zone_overlap_complete = False
+                continue
+            role = reserve_room.get("role")
+            normalized_role = role.strip().lower() if isinstance(role, str) and role.strip() else None
+            if normalized_role != "expansion":
+                continue
+            expansion_reserve_declared = True
+            reserve_rect = _rect_tuple(reserve_room.get("rect"))
+            if reserve_rect is None:
+                expansion_reserve_geometry_complete = False
+                expansion_zone_overlap_complete = False
+                continue
+            reserve_rects.append((_element_id(reserve_room), reserve_rect))
+            expansion_reserve_area += reserve_rect[2] * reserve_rect[3]
+
+        if reserve_rects:
+            for reserve_id, reserve_rect in reserve_rects:
+                for other_room in rooms:
+                    if not isinstance(other_room, dict):
+                        expansion_zone_overlap_complete = False
+                        continue
+                    role = other_room.get("role")
+                    normalized_role = role.strip().lower() if isinstance(role, str) and role.strip() else None
+                    if normalized_role == "expansion":
+                        continue
+                    other_rect = _rect_tuple(other_room.get("rect"))
+                    if other_rect is None:
+                        expansion_zone_overlap_complete = False
+                        continue
+                    overlap = _rect_overlap_area(reserve_rect, other_rect)
+                    if overlap > EPS:
+                        expansion_zone_overlap += overlap
+                        expansion_intrusions.append({
+                            "reserve_room_id": reserve_id,
+                            "element_kind": "zone",
+                            "element_id": _element_id(other_room),
+                            "overlap_area_m2": round(overlap, 6),
+                        })
+
         for room in rooms:
             if not isinstance(room, dict):
                 warnings.append("ROOM_NOT_MEASURABLE")
@@ -355,6 +431,9 @@ def measure_plan(model: dict) -> dict:
                 rack_geometric_complete = rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
                 lane_centerline_complete = lane_overlap_complete = False
+                if reserve_rects:
+                    expansion_rack_overlap_complete = False
+                    expansion_lane_overlap_complete = False
                 continue
             role = room.get("role")
             normalized_role = role.strip().lower() if isinstance(role, str) and role.strip() else None
@@ -411,6 +490,8 @@ def measure_plan(model: dict) -> dict:
                 rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
                 room_racks_complete = False
+                if reserve_rects:
+                    expansion_rack_overlap_complete = False
             else:
                 for rack in racks:
                     if not isinstance(rack, dict):
@@ -420,6 +501,8 @@ def measure_plan(model: dict) -> dict:
                         rack_footprint_complete = False
                         rack_overlap_complete = rack_lane_overlap_complete = False
                         room_racks_complete = False
+                        if reserve_rects:
+                            expansion_rack_overlap_complete = False
                         continue
                     rack_groups += 1
                     levels = rack.get("levels")
@@ -443,8 +526,20 @@ def measure_plan(model: dict) -> dict:
                     if rack_rect is None:
                         rack_overlap_complete = rack_lane_overlap_complete = False
                         room_racks_complete = False
+                        if reserve_rects:
+                            expansion_rack_overlap_complete = False
                     else:
                         normalized_racks.append(rack_rect)
+                        for reserve_id, reserve_rect in reserve_rects:
+                            overlap = _rect_overlap_area(rack_rect, reserve_rect)
+                            if overlap > EPS:
+                                expansion_rack_overlap += overlap
+                                expansion_intrusions.append({
+                                    "reserve_room_id": reserve_id,
+                                    "element_kind": "rack",
+                                    "element_id": _element_id(rack),
+                                    "overlap_area_m2": round(overlap, 6),
+                                })
                 if room_racks_complete:
                     for i in range(len(normalized_racks)):
                         for j in range(i + 1, len(normalized_racks)):
@@ -474,6 +569,8 @@ def measure_plan(model: dict) -> dict:
                 lane_overlap_complete = False
                 rack_lane_overlap_complete = False
                 room_lanes_complete = False
+                if reserve_rects:
+                    expansion_lane_overlap_complete = False
             else:
                 for lane in lanes:
                     area = _lane_area(lane)
@@ -493,8 +590,20 @@ def measure_plan(model: dict) -> dict:
                         lane_overlap_complete = False
                         rack_lane_overlap_complete = False
                         room_lanes_complete = False
+                        if reserve_rects:
+                            expansion_lane_overlap_complete = False
                     else:
                         normalized_lanes.append((kind, rect))
+                        for reserve_id, reserve_rect in reserve_rects:
+                            overlap = _rect_overlap_area(rect, reserve_rect)
+                            if overlap > EPS:
+                                expansion_lane_overlap[kind] += overlap
+                                expansion_intrusions.append({
+                                    "reserve_room_id": reserve_id,
+                                    "element_kind": f"lane:{kind}",
+                                    "element_id": _element_id(lane),
+                                    "overlap_area_m2": round(overlap, 6),
+                                })
                 if room_lanes_complete:
                     for i in range(len(normalized_lanes)):
                         kind_a, rect_a = normalized_lanes[i]
@@ -536,6 +645,7 @@ def measure_plan(model: dict) -> dict:
         "efficiency": "GFA/NFA are not established, so efficiency is not computed.",
     }
     configured_route_definitions: list[dict] = []
+    checks: dict[str, dict] = {}
 
     if typology == "warehouse":
         zone_ratios = (
@@ -544,6 +654,32 @@ def measure_plan(model: dict) -> dict:
         )
         route_by_id, route_by_flow, configured_route_definitions, route_error = (
             _measure_configured_routes(model))
+
+        if not expansion_reserve_declared:
+            expansion_area_metric: float | None = 0.0
+            expansion_zone_metric: float | None = 0.0
+            expansion_rack_metric: float | None = 0.0
+            expansion_lane_metric: dict[str, float] | None = {}
+            expansion_status = "NOT_APPLICABLE"
+        else:
+            expansion_area_metric = (round(expansion_reserve_area, 6)
+                                     if expansion_reserve_geometry_complete else None)
+            expansion_zone_metric = (round(expansion_zone_overlap, 6)
+                                     if expansion_zone_overlap_complete else None)
+            expansion_rack_metric = (round(expansion_rack_overlap, 6)
+                                     if expansion_rack_overlap_complete else None)
+            expansion_lane_metric = (
+                {k: round(v, 6) for k, v in sorted(expansion_lane_overlap.items())}
+                if expansion_lane_overlap_complete else None)
+            if not (expansion_reserve_geometry_complete and expansion_zone_overlap_complete
+                    and expansion_rack_overlap_complete and expansion_lane_overlap_complete):
+                expansion_status = "NOT_VERIFIED"
+            elif (expansion_zone_overlap > EPS or expansion_rack_overlap > EPS
+                  or any(v > EPS for v in expansion_lane_overlap.values())):
+                expansion_status = "FAIL"
+            else:
+                expansion_status = "PASS"
+
         metrics.update({
             "zone_area_by_role_m2": metrics["space_area_by_role_m2"],
             "zone_area_ratio_by_role": zone_ratios,
@@ -577,12 +713,30 @@ def measure_plan(model: dict) -> dict:
                 if lane_overlap_complete else None),
             "configured_route_length_by_id_m": route_by_id,
             "configured_route_length_by_flow_m": route_by_flow,
+            "expansion_reserve_area_m2": expansion_area_metric,
+            "expansion_reserve_zone_overlap_area_m2": expansion_zone_metric,
+            "expansion_reserve_rack_overlap_area_m2": expansion_rack_metric,
+            "expansion_reserve_lane_overlap_area_by_kind_m2": expansion_lane_metric,
             "storage_capacity_positions": None,
             "throughput_per_hour": None,
             "travel_distance_m": None,
             "pedestrian_vehicle_separation_compliance": None,
             "fire_life_safety_compliance": None,
         })
+        checks["expansion_reserve_preservation"] = {
+            "status": expansion_status,
+            "measurement_basis": "explicit_rectangles",
+            "canonical_role": "expansion",
+            "intrusions": sorted(
+                expansion_intrusions,
+                key=lambda row: (str(row.get("reserve_room_id")),
+                                 str(row.get("element_kind")),
+                                 str(row.get("element_id")),
+                                 row.get("overlap_area_m2", 0.0))),
+            "claims_reserve_sufficiency": False,
+            "claims_regulatory_compliance": False,
+            "claims_safety_compliance": False,
+        }
         unavailable.update({
             "storage_capacity_positions": (
                 "Geometric rack bay/level counts are not usable or load-rated storage capacity; "
@@ -594,6 +748,19 @@ def measure_plan(model: dict) -> dict:
             "pedestrian_vehicle_separation_compliance": "Lane overlap measurements alone cannot prove safety compliance.",
             "fire_life_safety_compliance": "No authoritative jurisdiction/rule evaluation is performed here.",
         })
+        if expansion_reserve_declared and not expansion_reserve_geometry_complete:
+            unavailable["expansion_reserve_area_m2"] = (
+                "Expansion reserve area needs finite positive rectangles for every canonical room "
+                "whose role is exactly 'expansion'.")
+        if expansion_reserve_declared and not expansion_zone_overlap_complete:
+            unavailable["expansion_reserve_zone_overlap_area_m2"] = (
+                "Expansion reserve zone-overlap measurement needs explicit finite room rectangles.")
+        if expansion_reserve_declared and not expansion_rack_overlap_complete:
+            unavailable["expansion_reserve_rack_overlap_area_m2"] = (
+                "Expansion reserve rack-overlap measurement needs explicit rack x/z/w/d geometry.")
+        if expansion_reserve_declared and not expansion_lane_overlap_complete:
+            unavailable["expansion_reserve_lane_overlap_area_by_kind_m2"] = (
+                "Expansion reserve lane-overlap measurement needs explicit lane kind/x/z/w/d geometry.")
         if route_error is not None:
             unavailable["configured_route_length_by_id_m"] = route_error
             unavailable["configured_route_length_by_flow_m"] = route_error
@@ -623,6 +790,7 @@ def measure_plan(model: dict) -> dict:
         "schema": SCHEMA,
         "typology": typology,
         "metrics": metrics,
+        "checks": checks,
         "configured_route_definitions": configured_route_definitions,
         "unavailable": unavailable,
         "warnings": warnings,
