@@ -88,6 +88,15 @@ const cases = [
     const kitchen=reordered.requirements.find(r=>r.role==='kitchen');
     assert.ok(kitchen&&!new Set(firstIds.values()).has(kitchen.id),'new requirement needs a fresh non-colliding identity');
 
+    const changed=buildBriefProgram(form(first.brief,{savedRequirements:first.requirements,rows:[
+      {metric:'room_count',role:'bedroom',expected:'3'},
+      initialRows[1],
+    ]}));
+    const oldBedroom=first.requirements.find(r=>r.metric==='room_count'&&r.role==='bedroom');
+    const changedBedroom=changed.requirements.find(r=>r.metric==='room_count'&&r.role==='bedroom');
+    assert.notEqual(changedBedroom.id,oldBedroom.id,'changed requirement value must receive a new provenance identity');
+    assert.ok(!new Set(first.requirements.map(r=>r.id)).has(changedBedroom.id),'fresh identity must not recycle a retired saved requirement id');
+
     const legacyBrief='طلب بناء\nالعرض: 20\nالعمق: 25\nعدد الأدوار: 3\nroom_count bedroom: 2';
     const legacySaved=[
       {id:'brief-site_width_m',metric:'site_width_m',expected:20,source:'requested',evidence:'العرض: 20',confirmed:true},
