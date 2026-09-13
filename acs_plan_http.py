@@ -8,8 +8,8 @@ session, and delegates persistence to the request-scoped ``SupabasePlanStore``.
 
 The Canonical ACS Model remains the source of truth. This boundary has no BIM,
 3D, CAD, export, compiler, or post-approval replanning route. Provider-backed
-``chat_edit`` is intentionally fail-closed here until it is executed through the
-existing isolated job boundary rather than on the request event loop.
+``chat_edit`` is executed only through the isolated proposal runner, followed by
+a fresh durable canonical reload and lock-aware admission in the trusted parent.
 """
 from __future__ import annotations
 
@@ -21,6 +21,7 @@ from typing import Any
 import acs_api_errors as E
 import acs_auth as AUTH
 import acs_plan_bridge as BRIDGE
+import acs_plan_chat_orchestration as CHAT
 import acs_plan_persisted_commands as PERSIST
 import acs_plan_session as SESSION
 from acs_plan_review import PlanError, canonical
@@ -66,10 +67,7 @@ def _error_status(code: str) -> int:
         "ACS_APPROVAL_EXISTS",
     }:
         return 409
-    if code in {
-        "STORE_UNAVAILABLE",
-        "PLAN_PROVIDER_COMMAND_REQUIRES_ISOLATED_JOB",
-    }:
+    if code in {"STORE_UNAVAILABLE"}:
         return 503
     if code in {"INPUT_LIMIT", "PLAN_COMMAND_BODY_TOO_LARGE"}:
         return 413
@@ -212,12 +210,7 @@ class PlanCommandMiddleware:
         try:
             command = await _read_json(receive)
             action = command.get("action")
-            if action == _PROVIDER_ACTION:
-                raise PlanError(
-                    "PLAN_PROVIDER_COMMAND_REQUIRES_ISOLATED_JOB",
-                    "Provider-backed Plan-first edits are not enabled until isolated job execution is wired",
-                )
-            if action not in _ALLOWED_NON_PROVIDER_ACTIONS:
+            if action not in _ALLOWED_NON_PROVIDER_ACTIONS and action != _PROVIDER_ACTION:
                 raise PlanError(
                     "PLAN_COMMAND_NOT_SUPPORTED",
                     "This command is not exposed by the authenticated HTTP boundary",
@@ -229,15 +222,31 @@ class PlanCommandMiddleware:
                 raise PlanError("AUTH_REQUIRED", "Authenticated PlanStore session is required")
 
             store = SESSION.authenticated_supabase_plan_store(scope)
-            result = await asyncio.to_thread(
-                PERSIST.execute_persisted_plan_command,
-                store,
-                project_id,
-                command,
-                actor_id=actor_id.strip(),
-                provider_model=None,
-                verifier=BRIDGE.existing_geometry_verifier,
-            )
+            if action == _PROVIDER_ACTION:
+                # The request thread retains identity/store authority. The nested
+                # generation runner serializes only canonical geometry + notes +
+                # provider model into its worker process. After the worker returns,
+                # CHAT reloads the durable head before lock-aware admission.
+                result = await asyncio.to_thread(
+                    CHAT.execute_isolated_persisted_chat_edit,
+                    store,
+                    project_id,
+                    command,
+                    actor_id=actor_id.strip(),
+                    provider_model=None,
+                    verifier=BRIDGE.existing_geometry_verifier,
+                    request_id=_request_id(scope),
+                )
+            else:
+                result = await asyncio.to_thread(
+                    PERSIST.execute_persisted_plan_command,
+                    store,
+                    project_id,
+                    command,
+                    actor_id=actor_id.strip(),
+                    provider_model=None,
+                    verifier=BRIDGE.existing_geometry_verifier,
+                )
         except PlanError as exc:
             return await _send_plan_error(scope, send, exc)
         except Exception:
