@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import {analyzeBrief, buildBriefProgram} from '../../public/app/core/brief-program.mjs';
+
+const form = (brief, extra={}) => ({brief, type:'residential', width:'20', depth:'25', levels:'3', rows:[], ...extra});
+const evidence = program => {
+  const points = Array.from(program.brief);
+  for (const r of program.requirements) {
+    assert.equal(points.slice(r.source_span.start,r.source_span.end).join(''),r.evidence);
+    assert.equal(r.confirmed,true);
+  }
+};
+const cases = [
+  ['Arabic quantities and original Unicode spans', () => {
+    const brief='🏡 فيلا. عرض الموقع ٢٠ متر؛ عمق الموقع ٢٥ متر؛ عدد الأدوار ٣؛ إجمالي ٤ غرف نوم.';
+    const a=analyzeBrief(brief);
+    assert.equal(a.candidates.find(r=>r.metric==='site_width_m').expected,20);
+    assert.equal(a.candidates.find(r=>r.role==='bedroom').expected,4);
+    for(const r of a.candidates)assert.equal(Array.from(brief).slice(r.source_span.start,r.source_span.end).join(''),r.evidence);
+    const p=buildBriefProgram(form(brief,{rows:[{metric:'room_count',role:'bedroom',expected:'4'}]}));
+    evidence(p);assert.equal(p.requirements.find(r=>r.role==='bedroom').evidence,'٤ غرف نوم');
+    assert.ok(p.brief.startsWith(brief));
+  }],
+  ['Explicit units convert to meters without inventing absent dimensions', () => {
+    const a=analyzeBrief('عرض الموقع ۲۵۰۰ سم؛ عمق الموقع 30000 mm؛ 2 floors.');
+    assert.equal(a.candidates.find(r=>r.metric==='site_width_m').expected,25);
+    assert.equal(a.candidates.find(r=>r.metric==='site_depth_m').expected,30);
+    assert.equal(a.candidates.find(r=>r.metric==='level_count').expected,2);
+    assert.equal(analyzeBrief('مستودع مساحته ٥٠٠٠ م²').candidates.length,0);
+    assert.equal(analyzeBrief('غرفة بعرض 4 متر وعمق 5 متر').candidates.length,0);
+    assert.equal(analyzeBrief('عرض الموقع 20 feet').candidates.length,0);
+  }],
+  ['Unlabelled dimension order remains an explicitly confirmed interpretation', () => {
+    const a=analyzeBrief('أبعاد الموقع ٢٠ × ٢٥ متر');
+    assert.equal(a.candidates.length,2);assert.ok(a.candidates.every(r=>r.source==='inferred'&&!r.confirmed));
+    const p=buildBriefProgram(form('أبعاد الموقع ٢٠ × ٢٥ متر'));
+    assert.equal(p.requirements[0].source,'inferred');evidence(p);
+  }],
+  ['Do not turn per-floor, conditional, negative, approximate or fractional counts into totals', () => {
+    for(const text of ['٣ غرف نوم في كل دور','٣ غرف نوم بالدور الأرضي','لا أريد ٣ غرف نوم','إذا أمكن ٣ غرف نوم','حوالي ٣ غرف نوم','3 bedrooms per floor','3.5 bedrooms','عدد الأدوار ٢ أو ٣','عدد الأدوار ٣-٤','3–4 bedrooms','1,000 bedrooms','-3 bedrooms','على الأقل ٣ غرف نوم','٣ غرف نوم على الأقل']) {
+      assert.equal(analyzeBrief(text).candidates.length,0,text);
+      assert.ok(analyzeBrief(text).questions.length,text);
+    }
+  }],
+  ['Conflicting description and inputs stop before generation', () => {
+    assert.throws(()=>buildBriefProgram(form('عرض الموقع ٢٢ متر')),/تعارض/);
+    assert.throws(()=>buildBriefProgram(form('عرض الموقع 20 متر؛ عرض الموقع 22 متر')),/تعارض/);
+    assert.throws(()=>buildBriefProgram(form('عدد الأدوار 3؛ 4 غرف نوم')),/غرف النوم/);
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows:[{metric:'room_count',role:'bedroom',expected:'1.5'}]})),/صحيح/);
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{width:''})),/عرض الموقع/);
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{width:'0'})),/موجبة/);
+  }],
+  ['Manual answers get exact separately labelled source spans', () => {
+    const p=buildBriefProgram(form('مستودع باستلام وشحن',{type:'warehouse',rows:[{metric:'dock_count',role:'',expected:'0'}]}));
+    evidence(p);const dock=p.requirements.find(r=>r.metric==='dock_count');
+    assert.equal(dock.expected,0);assert.equal(dock.source_id,'brief:form');
+    assert.ok(dock.evidence.includes('الأرصفة'));
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows:[{metric:'room_count',role:'',expected:'2'}]})),/استخدام/);
+  }],
+  ['Exact dock counts differ from minimum groups and repeated facts are not added', () => {
+    const a=analyzeBrief('عدد الأرصفة ٤؛ ٤ أرصفة؛ على الأقل ٣ مجموعات رفوف');
+    assert.equal(a.candidates.filter(r=>r.metric==='dock_count').length,1);
+    assert.equal(a.candidates.find(r=>r.metric==='min_rack_group_count').expected,3);
+    assert.equal(analyzeBrief('أربعة أرصفة').candidates.length,0);
+    assert.equal(analyzeBrief('٤ رفوف').candidates.length,0);
+  }],
+  ['No silent merging of conflicting rows, unsupported selectors or oversized programs', () => {
+    const rows=[{metric:'room_count',role:'bedroom',expected:2},{metric:'room_count',role:'bedroom',expected:3}];
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows})),/تعارض/);
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows:[{metric:'unknown',expected:2}]})),/متطلب/);
+    assert.throws(()=>buildBriefProgram(form('x'.repeat(60001))),/الحد/);
+  }],
+  ['Reopening retains the original evidence and never upgrades unknown input to a measured value', () => {
+    const p=buildBriefProgram(form('طلب بناء'));
+    const restored=buildBriefProgram(form(p.brief,{savedRequirements:p.requirements}));
+    evidence(restored);assert.equal(restored.requirements[0].evidence,p.requirements[0].evidence);
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{depth:'NaN'})),/موجبة/);
+    assert.throws(()=>buildBriefProgram(form('طلب بناء',{rows:[{metric:'dock_count',expected:' '}]})),/غير محددة/);
+    const source=form('طلب بناء',{rows:[{metric:'room_count',role:'bedroom',expected:'2'}]});
+    const snapshot=JSON.stringify(source);buildBriefProgram(source);assert.equal(JSON.stringify(source),snapshot);
+  }],
+];
+for(const [name,test] of cases){test();console.log('PASS '+name);}
+console.log('BRIEF PROGRAM: '+cases.length+' passed');

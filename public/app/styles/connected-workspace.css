@@ -26,6 +26,15 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace input[type=checkbox] { width:20px; height:20px; accent-color:#51cdef; vertical-align:middle; margin-inline-end:8px; }
 #designWorkspace .cw-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 #designWorkspace .cw-check { padding:14px 0; }
+#designWorkspace .cw-brief-review { margin:16px 0 24px; padding:16px; border:1px solid #355167; border-radius:12px; background:#0b1b2c; }
+#designWorkspace #cwReadBrief { margin-top:10px; }
+#designWorkspace .cw-brief-candidates { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); gap:12px; }
+#designWorkspace .cw-brief-candidate { min-width:0; padding:14px; border:1px solid #2e5067; border-radius:10px; background:#14283b; overflow-wrap:anywhere; }
+#designWorkspace .cw-brief-candidate strong { display:block; margin-bottom:8px; }
+#designWorkspace .cw-brief-candidate blockquote { margin:12px 0; padding-inline-start:12px; border-inline-start:3px solid #65c9ea; white-space:pre-wrap; }
+#designWorkspace .cw-brief-source { border-bottom:1px solid #30485d; padding:12px 0; overflow-wrap:anywhere; }
+#designWorkspace #cwBriefQuestions { padding-inline-start:22px; color:#ffdd9e; }
+#designWorkspace #cwBriefQuestions li { margin:8px 0; overflow-wrap:anywhere; }
 #designWorkspace .cw-options { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:20px; }
 #designWorkspace .cw-option-code { display:block; font-size:34px; font-weight:800; color:#66d1f7; }
 #designWorkspace .cw-status { min-height:32px; padding:8px 0; color:#bfe9fb; }

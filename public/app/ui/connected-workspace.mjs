@@ -1,12 +1,13 @@
 import {parseReviewFile} from '../core/plan-review-packet.mjs';
 import {showApprovedGLTF} from './approved-viewer.mjs';
+import {createBriefEditor} from './brief-review.mjs';
 
 const $ = id => document.getElementById(id);
 const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'الحركة بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
 const metricNames = {site_area_m2:'مساحة الموقع (م²)',level_count:'الأدوار',space_instance_count:'الفراغات',space_rect_area_m2:'مساحة حدود الفراغات (م²)',space_count_by_role:'عدد الفراغات حسب الاستخدام',space_area_by_role_m2:'المساحة حسب الاستخدام',zone_area_by_role_m2:'مساحات التشغيل (م²)',dock_count:'الأرصفة',rack_group_count:'مجموعات الرفوف',storage_capacity_positions:'مواضع التخزين',travel_distance_m:'مسافة الحركة (م)',throughput_per_hour:'معدل التشغيل في الساعة',rack_modeled_bay_count:'خلايا الرفوف المقاسة',rack_geometric_position_count:'المواضع الهندسية',configured_route_length_m:'أطوال المسارات (م)'};
 const issueNames = {PROGRAM_NOT_CONFIRMED:'لم يؤكد برنامج المتطلبات',REQUIREMENT_MISMATCH:'المخطط لا يحقق متطلبًا مؤكدًا',REQUIREMENT_NOT_SPECIFIED:'يوجد متطلب لم تحدد قيمته',INFERENCE_NOT_CONFIRMED:'متطلب مقترح يحتاج التأكيد',PLAN_ZONE_UNRESOLVED:'منطقة تحتاج استكمال هندستها',VERIFICATION_UNAVAILABLE:'تعذّر إكمال التحقق',ACS_GEOMETRY_FINDING:'ملاحظة في الأبعاد أو الفتحات تحتاج المراجعة',WAREHOUSE_EXPANSION_RESERVE_INTRUSION:'التخطيط يشغل جزءًا من مساحة التوسّع المعلنة',WAREHOUSE_EXPANSION_RESERVE_NOT_VERIFIED:'تحتاج مساحة التوسّع المعلنة إلى هندسة قابلة للتحقق'};
 const value = v => v == null ? 'غير متحقق' : typeof v === 'object' ? JSON.stringify(v) : String(v);
-let root, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerDispose = null;
+let root, briefEditor, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerDispose = null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
@@ -33,49 +34,8 @@ function step(n) {
   root.querySelectorAll('[data-step]').forEach(b=>{if(Number(b.dataset.step)===n)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
   if(n!==4&&viewerDispose){viewerDispose();viewerDispose=null;$('cwViewer').hidden=true;}
 }
-function storeDraft() {
-  const data={brief:$('cwBrief').value,type:$('cwType').value,w:$('cwWidth').value,d:$('cwDepth').value,levels:$('cwLevels').value,rows:requirementRows()};
-  try{localStorage.setItem(draftKey(),JSON.stringify(data));}catch(e){}
-  $('cwConfirmed').checked=false;
-}
-function requirementRows() { return [...$('cwRequirements').children].map(row=>({metric:row.querySelector('select').value,role:row.querySelector('[data-role]').value,expected:row.querySelector('[data-value]').value})); }
-function addRequirement(data={}) {
-  const row=el('tr',null,$('cwRequirements'));
-  const cell=el('td',null,row), select=el('select',null,cell);select.setAttribute('aria-label','نوع المتطلب');
-  for(const [k,label] of Object.entries({room_count:'عدد فراغات الاستخدام',min_space_area_by_role_m2:'أقل مساحة للاستخدام (م²)',dock_count:'عدد الأرصفة',min_dock_count:'أقل عدد أرصفة',min_rack_group_count:'أقل عدد مجموعات رفوف'})){const o=el('option',label,select);o.value=k;}
-  select.value=data.metric||'room_count';
-  const role=el('input',null,el('td',null,row));role.dataset.role='';role.placeholder='مثل: bedroom / storage';role.setAttribute('aria-label','رمز الاستخدام');role.value=data.role||'';role.maxLength=80;
-  const expected=el('input',null,el('td',null,row));expected.dataset.value='';expected.type='number';expected.min='0';expected.step='any';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
-  const remove=el('button','حذف',el('td',null,row));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');remove.addEventListener('click',()=>{row.remove();storeDraft();});
-}
-function briefProgram() {
-  const fields=[['site_width_m','العرض',$('cwWidth').value],['site_depth_m','العمق',$('cwDepth').value],['level_count','عدد الأدوار',$('cwLevels').value]];
-  let brief=$('cwBrief').value.trim();
-  if(!brief)throw new Error('اكتب وصف المشروع أولًا.');
-  brief+='\nنوع المشروع: '+$('cwType').selectedOptions[0].textContent;
-  const requirements=[];
-  for(const [metric,label,raw] of fields){
-    const expected=raw===''?null:Number(raw);
-    if(expected===null||!Number.isFinite(expected)||expected<=0||(metric==='level_count'&&!Number.isInteger(expected)))throw new Error('أدخل عرض الموقع وعمقه وعدد الأدوار بقيم موجبة.');
-    const evidence=label+': '+expected;brief+='\n'+evidence;
-    requirements.push({id:'brief-'+metric,metric,expected,source:'requested',evidence,confirmed:true});
-  }
-  for(const [i,row] of requirementRows().entries()){
-    const expected=row.expected===''?null:Number(row.expected);
-    if(expected===null||!Number.isFinite(expected)||expected<0)throw new Error('أكمل قيم المتطلبات الإضافية أو احذف الصف غير المطلوب.');
-    const requirement={id:'program-'+i,metric:row.metric,expected,source:'requested',confirmed:true};
-    if(['room_count','min_space_area_by_role_m2'].includes(row.metric)){
-      if(!row.role.trim())throw new Error('حدد استخدام الفراغ للمتطلب الإضافي.');requirement.role=row.role.trim();
-    }
-    const evidence=row.metric+' '+row.role.trim()+': '+expected;brief+='\n'+evidence;requirement.evidence=evidence;requirements.push(requirement);
-  }
-  return {brief,requirements};
-}
-function fillBrief(data) {
-  let saved=null;try{saved=JSON.parse(localStorage.getItem(draftKey())||'null');}catch(e){}
-  if(saved){$('cwBrief').value=saved.brief||'';$('cwType').value=saved.type||'residential';$('cwWidth').value=saved.w||'';$('cwDepth').value=saved.d||'';$('cwLevels').value=saved.levels||'';for(const r of saved.rows||[])addRequirement(r);}
-  else if(data?.brief){$('cwBrief').value=data.brief;for(const r of data.requirements||[]){const id={site_width_m:'cwWidth',site_depth_m:'cwDepth',level_count:'cwLevels'}[r.metric];if(id)$(id).value=r.expected??'';else addRequirement({metric:r.metric,role:r.role,expected:r.expected});}if(packet?.scorecard?.typology==='warehouse')$('cwType').value='warehouse';}
-}
+function briefProgram() { return briefEditor.program(); }
+function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology); }
 function syncApproval() {
   if(!root)return;
   const head=state?.revision_id&&state.revision_id===state.head;
@@ -228,9 +188,8 @@ function mount(){
   root.querySelectorAll('[data-option]').forEach(b=>b.addEventListener('click',()=>run(()=>generation(b.dataset.option))));
   root.querySelectorAll('[data-format]').forEach(b=>b.addEventListener('click',()=>run(()=>exportFile(b.dataset.format))));
   $('cwShow3D').addEventListener('click',()=>run(()=>exportFile('gltf',true)));
-  $('cwBriefForm').addEventListener('input',e=>{if(e.target.id!=='cwConfirmed')storeDraft();});
+  briefEditor=createBriefEditor(root,{storageKey:draftKey,onError:safeError});
   $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{briefProgram();if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');status('اختر بديلًا واحدًا وحد الاستدعاءات المناسب.');step(2);}catch(err){safeError(err);}});
-  $('cwAddRequirement').addEventListener('click',()=>{addRequirement();storeDraft();});
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('تم فتح آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
   $('cwDismissJob').addEventListener('click',()=>{pendingJob=null;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});

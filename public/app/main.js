@@ -16,6 +16,8 @@ import './late-bindings.js';
    A device without WebGL must retain review, approval and file export. */
 import './core/plan-review-packet.mjs';
 import './ui/approved-viewer.mjs';
+import './core/brief-program.mjs';
+import './ui/brief-review.mjs';
 import './ui/connected-workspace.mjs';
 import './core/viewer.js';
 import './core/standards.js';
