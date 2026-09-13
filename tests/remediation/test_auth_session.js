@@ -111,6 +111,14 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     h.ctx.window.ACS.authSession=session({user:{id:'user-b'}});assert.notEqual(h.auth.storageScope(),first);
     h.auth.clearSession();assert.equal(h.auth.storageScope(),null);
   });
+  await test('revocation after a temporary outage returns the retry screen to sign-in',async()=>{
+    let revoked=false;
+    const h=harness(()=>revoked?problem('refresh_token_not_found',400):problem('AUTH_UPSTREAM_UNAVAILABLE'),session({expires_at:1}));
+    h.init();await settle();assert.equal(h.el('acsAuthCredentials').hidden,true);
+    revoked=true;h.el('acsAuthForm').emit('submit');await settle();
+    assert.equal(h.auth.loadSession(),null);assert.equal(h.el('acsAuthCredentials').hidden,false);
+    assert.equal(h.el('acsAuthTitle').textContent,'تسجيل الدخول');assert.equal(h.el('lgGo').disabled,false);
+  });
   await test('changing account in another tab closes the previous workspace',async()=>{
     const h=harness(()=>{},null);h.init();h.ctx.window.ACS.authSession=session();
     h.map.set(KEY,JSON.stringify(session({user:{id:'user-b'}})));h.listeners.storage({key:KEY});

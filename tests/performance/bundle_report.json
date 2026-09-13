@@ -34,7 +34,7 @@
     "note": "the generated markers survived the split intact: the JS pairs moved into public/app/generated/*.js, the CSS pairs into public/app/styles/app.css, and the DOM pairs stayed in the shell, where markup belongs."
   },
   "javascript": {
-    "boot_bytes": 40826,
+    "boot_bytes": 40864,
     "boot_script_count": 6,
     "boot_scripts": [
       {
@@ -54,7 +54,7 @@
         "path": "public/app/boot/debug-toggle.js"
       },
       {
-        "bytes": 17927,
+        "bytes": 17965,
         "path": "public/app/boot/engine-guard.js"
       },
       {
@@ -135,8 +135,8 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 32,
-    "first_party_total_bytes": 1988431,
-    "initial_javascript_bytes": 1522562,
+    "first_party_total_bytes": 1988469,
+    "initial_javascript_bytes": 1522600,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
@@ -197,7 +197,7 @@
         "gzip_bytes": 64081,
         "loaded": "eager",
         "path": "public/app/core/viewer.js",
-        "pct_of_first_party_js": 10.0
+        "pct_of_first_party_js": 9.99
       },
       {
         "bytes": 166057,
@@ -304,9 +304,9 @@
         "pct_of_first_party_js": 0.92
       },
       {
-        "bytes": 17927,
+        "bytes": 17965,
         "group": "boot",
-        "gzip_bytes": 5568,
+        "gzip_bytes": 5572,
         "loaded": "boot-classic",
         "path": "public/app/boot/engine-guard.js",
         "pct_of_first_party_js": 0.9
@@ -519,7 +519,7 @@
     "sha256": "f9558617bd3384a29d0f58d86ea195ccfa4fcaaa070b3b370ce777bd8c5f67f9",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 50772 byte shell and every byte of application JavaScript (1988431 bytes) lives in 32 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 50772 byte shell and every byte of application JavaScript (1988469 bytes) lives in 32 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "empty": false,
     "file_count": 558,

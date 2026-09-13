@@ -152,11 +152,11 @@
     }catch(e){if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");setStatus(e.message||"تعذّر تسجيل الدخول.",true);}finally{setBusy(false);}
   }
   async function restore(){
-    if(!loadSession())return false;
+    if(!loadSession()){setMode("signin");return false;}
     setBusy(true);setStatus("جارٍ استعادة جلستك…",false);
     try{
       var session=await freshSession();
-      if(!session){setStatus("انتهت الجلسة. سجّل الدخول مجددًا.",false);return false;}
+      if(!session){setMode("signin");setStatus("انتهت الجلسة. سجّل الدخول مجددًا.",false);return false;}
       await finishSession(session,"");return true;
     }catch(e){
       if(e.status===401||e.status===403){clearSession();setMode("signin");}
