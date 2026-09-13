@@ -47,6 +47,7 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       assert.equal(await page.locator('#lgProject').isVisible(),false);
       assert.equal(await page.locator('#camBar').isVisible(),false);
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+      assert.ok((await page.locator('#login .card').boundingBox()).width<=448,'shared card styles must not stretch the sign-in form');
       await page.locator('#lgEmail').fill('fixture@example.test');
       await page.locator('#lgPassword').fill('fixture-password');
       await page.locator('#acsPasswordToggle').click();
