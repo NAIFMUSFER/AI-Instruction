@@ -208,6 +208,13 @@ def _signup(body: dict) -> tuple[int, dict]:
         "password": password,
         "data": data,
     })
+    # GoTrue REST returns a bare User for pending confirmation or an obfuscated
+    # repeated signup. It is a receipt, never an authenticated session. Preserve
+    # that distinction in the browser contract without creating tokens/projects.
+    if (200 <= status < 300 and isinstance(payload, dict)
+            and isinstance(payload.get("id"), str) and payload["id"]
+            and "access_token" not in payload and "refresh_token" not in payload):
+        return status, {"user": payload, "session": None}
     return _safe_auth_error(status, payload)
 
 
