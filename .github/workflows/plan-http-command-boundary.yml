@@ -4,12 +4,14 @@ on:
   pull_request:
     paths:
       - 'acs_plan_http.py'
+      - 'acs_auth_gateway.py'
       - 'acs_plan_session.py'
       - 'acs_plan_persisted_commands.py'
       - 'acs_plan_bridge.py'
       - 'acs_understand_api.py'
       - 'Dockerfile'
       - 'tests/remediation/test_plan_http_command_boundary.py'
+      - 'tests/remediation/test_auth_gateway.py'
       - '.github/workflows/plan-http-command-boundary.yml'
 
 permissions:
@@ -25,11 +27,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Compile the HTTP trust boundary and regression
+      - name: Compile the HTTP trust boundary and regressions
         run: |
           python -m py_compile \
+            acs_auth_gateway.py \
             acs_plan_http.py \
+            tests/remediation/test_auth_gateway.py \
             tests/remediation/test_plan_http_command_boundary.py
+      - name: Verify production auth gateway
+        run: PYTHONPATH=. python tests/remediation/test_auth_gateway.py
       - name: Verify authenticated durable command routing
         run: PYTHONPATH=. python tests/remediation/test_plan_http_command_boundary.py
       - name: Verify production app registration is explicit

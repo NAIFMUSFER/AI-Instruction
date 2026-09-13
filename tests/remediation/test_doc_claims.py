@@ -48,6 +48,12 @@ class Measurements(unittest.TestCase):
         self.assertIsNone(count)
         self.assertIn('exited 1', error)
 
+    def test_partial_live_summary_cannot_supply_a_documented_count(self):
+        count, error = self.measure_script(
+            "print('PANEL ENTRY: 14 passed, 0 failed  (الطبقة الحيّة: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED)')\n")
+        self.assertIsNone(count)
+        self.assertIn('SKIP:', error)
+
     def test_unparseable_success_is_not_a_measurement(self):
         count, error = self.measure_script("print('started')\n")
         self.assertIsNone(count)
