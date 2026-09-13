@@ -1,23 +1,30 @@
 /* ============================================================
    public/app/boot/engine-guard.js — تهيئة window.ACS وحارس تعذّر تحميل المحرّك
-   مُستخرَج من public/index.html بـ tools/frontend_shell.js (F-09/F-11).
-   كلاسيكي عمداً: يعمل قبل الوحدات ولا يعتمد على تحميلها.
+   Production entry is authenticated by /app/boot/auth-client.js. The historic
+   name-only entry survives only on localhost for deterministic browser tests.
    ============================================================ */
   window.ACS = { ready:false, pending:null };
   (function(){
     function byId(i){return document.getElementById(i);}
-    function enter(){
-      var nm = (byId('lgName').value||'عميل').trim();
-      try{ localStorage.setItem('acs_user', nm); }catch(e){}
-      /* الإخفاء الابتدائي صار صنفاً (style-src 'self' يمنع سمة style):
-         الإظهار يزيل الصنف، ولا يكفي إسناد style.display لأن قاعدة المعرّف
-         #left{display:flex} أقوى من صنف الإخفاء. */
+    function enter(identity){
+      identity=identity||{};
+      var nm=String(identity.name||'عميل').trim()||'عميل';
+      if(identity.mode==='local'){
+        try{ localStorage.setItem('acs_user', nm); }catch(e){}
+      }
+      if(identity.session) window.ACS.authSession=identity.session;
+      if(identity.project){
+        window.ACS.project=identity.project;
+        window.ACS.projectId=identity.project.id||null;
+      }
       byId('login').classList.add('acs-hidden');
       byId('login').style.display='none';
       byId('left').classList.remove('acs-hidden');
       byId('left').style.display='flex';
       byId('who').textContent=nm;
       document.body.classList.add('acs-entered');
+      if(window.ACS_AUTH&&window.ACS_AUTH.addLogout&&identity.mode==='supabase')
+        window.ACS_AUTH.addLogout();
       if(window.innerWidth<=820 && window.ACS.setProjectPanelOpen)
         window.ACS.setProjectPanelOpen(true);
       if(window.ACS.ready && window.ACS.showExample) window.ACS.showExample();
@@ -73,21 +80,38 @@
       });
       toolsOpen(false);projectOpen(false);
     }
-    function init(){
+    function fallbackLocalOnly(){
       var b=byId('lgGo'); if(!b) return;
-      initMobileNavigation();
-      b.addEventListener('click', enter);
-      b.addEventListener('touchend', function(e){ e.preventDefault(); enter(); });
-      ['lgName','lgEmail','lgProject'].forEach(function(id){
-        var el=byId(id); if(el) el.addEventListener('keydown',function(e){ if(e.key==='Enter') enter(); });
+      var local=location.hostname==='127.0.0.1'||location.hostname==='localhost'||location.hostname==='::1';
+      if(!local){
+        b.disabled=true;
+        var hint=b.parentElement&&b.parentElement.querySelector('.hint');
+        if(hint) hint.textContent='تعذّر تحميل خدمة تسجيل الدخول. أعد تحميل الصفحة.';
+        return;
+      }
+      b.addEventListener('click',function(){
+        enter({mode:'local',name:(byId('lgName').value||'عميل').trim()});
       });
-      try{ var u=localStorage.getItem('acs_user'); if(u) byId('lgName').value=u; }catch(e){}
+    }
+    function loadAuth(){
+      if(window.ACS_AUTH&&window.ACS_AUTH.init){ window.ACS_AUTH.init(enter); return; }
+      var s=document.createElement('script');
+      s.src='/app/boot/auth-client.js';
+      s.async=false;
+      s.addEventListener('load',function(){
+        if(window.ACS_AUTH&&window.ACS_AUTH.init) window.ACS_AUTH.init(enter);
+        else fallbackLocalOnly();
+      });
+      s.addEventListener('error',fallbackLocalOnly);
+      document.head.appendChild(s);
+    }
+    function init(){
+      initMobileNavigation();
+      loadAuth();
       /* زرّ إعادة التحميل في تحذير المحرّك: كان onclick="location.reload()"
-         في العلامة، وهو ميّت تحت script-src بلا 'unsafe-inline' — أي أن المخرج
-         الوحيد المعروض للمستخدم حين يتعذّر المحرّك كان لا يعمل. */
+         في العلامة، وهو ميّت تحت script-src بلا 'unsafe-inline'. */
       var rl=byId('engineWarnReload');
       if(rl) rl.addEventListener('click', function(){ location.reload(); });
-      // تحذير إن لم يُحمَّل محرّك العرض خلال 12 ثانية
       setTimeout(function(){
         if(!window.ACS.ready){
           var w=byId('engineWarn');
