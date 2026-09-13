@@ -1,0 +1,36 @@
+name: Plan-first warehouse expansion reserves
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_scorecard.py'
+      - 'acs_plan_options.py'
+      - 'tests/remediation/test_plan_warehouse_expansion_reserves.py'
+      - '.github/workflows/plan-warehouse-expansion-reserves.yml'
+permissions:
+  contents: read
+concurrency:
+  group: plan-warehouse-expansion-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - name: Compile deterministic reserve measurement modules
+        run: python -m py_compile acs_plan_scorecard.py acs_plan_options.py tests/remediation/test_plan_warehouse_expansion_reserves.py
+      - name: Warehouse expansion reserve regressions
+        run: python -S tests/remediation/test_plan_warehouse_expansion_reserves.py
+      - name: Existing warehouse and option regressions
+        run: |
+          python -S tests/remediation/test_plan_warehouse_operational_metrics.py
+          python -S tests/remediation/test_plan_warehouse_zone_allocation_constraints.py
+          python -S tests/remediation/test_plan_scorecard.py
+          python -S tests/remediation/test_plan_options.py
+      - name: No generated diff
+        run: git diff --exit-code
