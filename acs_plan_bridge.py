@@ -9,6 +9,37 @@ import json
 from acs_plan_review import PlanError, PlanWorkspace, canonical, _number
 
 
+# These top-level Building fields describe facts/authority that ACS derives or
+# records outside the model-proposal provider. A provider may preserve an
+# already-present legacy value byte-for-byte, but it must never introduce,
+# delete, or alter one while proposing geometry. Review/scorecard code remains
+# the authority for measured metrics; approval/baseline authority remains in the
+# authenticated canonical workspace.
+_SERVER_DERIVED_BUILDING_FIELDS = frozenset({
+    'scorecard', 'metrics', 'validation', 'review',
+    'regulatory_compliance', 'structural_safety',
+    'construction_approved', 'engineer_approved',
+    'approval', 'approval_receipt', 'baseline', 'authority',
+})
+
+
+def _reject_provider_authority_changes(before: dict, candidate: dict) -> None:
+    """Fail closed if provider output changes server-derived Building authority."""
+    for key in _SERVER_DERIVED_BUILDING_FIELDS:
+        before_has = key in before
+        candidate_has = key in candidate
+        if before_has != candidate_has:
+            raise PlanError(
+                'PROVIDER_AUTHORITY_FIELD',
+                'Provider candidate changed a server-derived review/approval field',
+            )
+        if before_has and canonical(before[key]) != canonical(candidate[key]):
+            raise PlanError(
+                'PROVIDER_AUTHORITY_FIELD',
+                'Provider candidate changed a server-derived review/approval field',
+            )
+
+
 def generate_candidate(description: str, *, model=None, btype=None,
                        request_id=None) -> dict:
     """Run the existing bounded PLAN stage only, never details or 3D assembly."""
@@ -85,6 +116,12 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
     ask ``PlanLockWorkspace`` to enforce inherited room/semantic locks before an
     immutable draft revision is created.
 
+    Provider output also cannot manufacture measured scorecards, validation,
+    compliance, approval, baseline, or other server-derived authority inside the
+    Canonical Building. Those facts are preserved from the current canonical
+    revision only when already present and unchanged; trusted ACS review and
+    approval boundaries remain their source of truth.
+
     Approval is never copied to the new revision, an existing Frozen Baseline is
     never moved, and no CAD/BIM/3D/compiler path is invoked here.
     """
@@ -92,6 +129,7 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
     if not isinstance(candidate, dict):
         raise PlanError('INVALID_EDIT', 'Provider candidate must be a building object')
     detached_candidate = json.loads(canonical(candidate))
+    _reject_provider_authority_changes(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,
