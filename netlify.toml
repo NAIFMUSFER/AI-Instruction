@@ -47,6 +47,14 @@
 
 
 # ── منع فهرسة الاستوديو نفسه ───────────────────────────────────────────────
+# Firebase diagnostic route only. Keep the studio's original CSP unchanged.
+[[headers]]
+  for = '/firebase-check/*'
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+    Cache-Control = "no-store"
+    Content-Security-Policy = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' https://www.gstatic.com/firebasejs/12.19.0/ https://www.gstatic.com/recaptcha/ https://www.google.com/recaptcha/; style-src 'self' 'unsafe-inline'; frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://naif-c8b45.firebaseapp.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google.com/recaptcha/; img-src 'self' data: https://www.gstatic.com; upgrade-insecure-requests"
+
 # `/` و`/index.html` هما تطبيق الاستوديو (لا صفحة تسويق): يفتح على بطاقة دخول
 # ثم يعرض بيانات المشروع — الاسم والبريد واسم المشروع وأسماء المباني ونماذجها.
 # أي فهرسة لهذا المسار تعني تسريب بيانات مشاريع خاصّة إلى نتائج البحث ونسخها
