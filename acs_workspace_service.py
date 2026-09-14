@@ -43,6 +43,8 @@ GEOMETRY_MESSAGES = {
 
 
 def geometry_failure_message(code):
+    if code == "ACS_PROVIDER_BUDGET_EXHAUSTED":
+        return "بلغ المقترح حد الاستدعاءات الذي وافقت عليه قبل اكتمال المخطط. راجع نطاق الطلب وحد الاستدعاءات قبل بدء محاولة جديدة."
     if code == "INVALID_GEOMETRY":
         return "لم يجتز المخطط فحص الهندسة. تفاصيل هذه المحاولة القديمة غير محفوظة."
     if isinstance(code, str) and code.startswith("PLAN_GEOMETRY_"):

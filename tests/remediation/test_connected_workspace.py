@@ -189,6 +189,27 @@ class WorkspaceLifecycle(unittest.TestCase):
             self.assertEqual(budget['used'],2)
         consume()  # no change to legacy calls outside the explicit worker budget
 
+    def test_exhausted_budget_is_terminal_before_unresolved_chunk_fallback(self):
+        import acs_understand as U
+        import acs_api_errors as E
+        import acs_generation_job as J
+        results=[];stages=[]
+        chunk={'index':0,'count':1,'chunk_count':2,'template':'ground','budget':100}
+        with limited(1) as budget:
+            consume()
+            with patch.object(U,'_plan_spatial_context',return_value={}), patch.object(U,'_plan_chunk',side_effect=lambda *a,**kw: consume()) as provider:
+                with self.assertRaises(E.AcsApiError) as caught:
+                    U._plan_chunk_split('synthetic',chunk,{},None,'residential',results,stages)
+            self.assertEqual(budget['used'],1)
+        self.assertEqual(caught.exception.code,E.ACS_PROVIDER_BUDGET_EXHAUSTED)
+        self.assertFalse(caught.exception.retryable)
+        self.assertEqual(provider.call_count,1)
+        self.assertEqual(results,[])
+        with self.assertRaises(E.AcsApiError) as transported:
+            J._reraise_classified(J._classified_payload(caught.exception))
+        self.assertEqual(transported.exception.code,E.ACS_PROVIDER_BUDGET_EXHAUSTED)
+        self.assertIn('حد الاستدعاءات',S.geometry_failure_message(transported.exception.code))
+
     def test_declared_opening_dimensions_are_accepted_but_conflicts_are_not(self):
         from acs_plan_bridge import existing_geometry_verifier
         building=model();room=building['floors']['ground']['rooms'][0];room.pop('walls')
