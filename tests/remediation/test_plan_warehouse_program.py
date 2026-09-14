@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_review as P
 from test_plan_scorecard import warehouse_model
 
-BRIEF = "Warehouse requires storage, docks, racks, stations and forklift lanes."
+BRIEF = "Warehouse requires storage, docks, racks, stations, forklift lanes and an expansion reserve."
 
 
 def verified(_model):
@@ -127,6 +127,39 @@ class WarehouseProgramTests(unittest.TestCase):
         not_applicable = review([
             requirement("inbound-route", "forklift", "max_configured_route_length_m",
                         15.0, route_id="inbound_main")
+        ], model=residential)
+        self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
+        self.assertFalse(not_applicable["can_approve"])
+
+    def test_expansion_reserve_minimum_uses_only_explicit_canonical_geometry(self):
+        model = warehouse_model()
+        model["floors"]["ground"]["rooms"].append({
+            "id": "future_expansion",
+            "role": "expansion",
+            "rect": [0.0, 10.0, 10.0, 12.0],
+        })
+        good = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 120.0)
+        ], model=model)
+        self.assertTrue(good["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(good))
+
+        too_large = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 121.0)
+        ], model=model)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
+        self.assertFalse(too_large["can_approve"])
+
+        absent = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 1.0)
+        ])
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(absent))
+        self.assertNotIn("REQUIREMENT_NOT_MEASURABLE", self.codes(absent))
+
+        residential = copy.deepcopy(model)
+        residential["meta"]["type"] = "residential"
+        not_applicable = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 120.0)
         ], model=residential)
         self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
         self.assertFalse(not_applicable["can_approve"])
