@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1561055,
+    "core_initial_bytes": 1561110,
     "core_initial_module_count": 26,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 13,
@@ -167,8 +167,8 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 38,
-    "first_party_total_bytes": 2079384,
-    "initial_javascript_bytes": 1613515,
+    "first_party_total_bytes": 2079439,
+    "initial_javascript_bytes": 1613570,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
@@ -304,9 +304,9 @@
         "pct_of_first_party_js": 2.72
       },
       {
-        "bytes": 51553,
+        "bytes": 51608,
         "group": "trust",
-        "gzip_bytes": 16742,
+        "gzip_bytes": 16760,
         "loaded": "eager",
         "path": "public/app/trust/core.js",
         "pct_of_first_party_js": 2.48
@@ -599,7 +599,7 @@
     "sha256": "6aceb13f8f90d6d664c57b9f031dd370ef2b90d93b2d22a86822237a3298be45",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2079384 bytes) lives in 38 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2079439 bytes) lives in 38 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "empty": false,
     "file_count": 558,
