@@ -12,9 +12,10 @@ import acs_plan_http as HTTP
 import acs_plan_session as SESSION
 import acs_rate_limit as RL
 import acs_workspace_service as SERVICE
+import acs_plan_sources as SOURCES
 from acs_plan_review import PlanError, digest
 
-ROUTE = re.compile(r"^/v1/projects/([0-9a-f-]+)/workspace$")
+ROUTE = re.compile(r"^/v1/projects/([0-9a-f-]+)/workspace(?P<source>/plan-source)?$")
 WORKER_ID = str(uuid.uuid4())
 ACTIVE_JOBS = set()
 
@@ -85,6 +86,8 @@ class WorkspaceMiddleware:
         before = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
         if before.head != command.get("expected_head"):
             raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التوليد.")
+        if command.get("source_id"):
+            await asyncio.to_thread(SOURCES.source, store, project_id, command["source_id"])
         if len(self.tasks) >= 8:
             raise PlanError("STORE_UNAVAILABLE", "التوليد مشغول حاليًا. حاول لاحقًا.")
         # Reuse the deployment's shared admission limiter. Job reattachment above
@@ -126,11 +129,31 @@ class WorkspaceMiddleware:
             return None
         try:
             project_id = _id(matched.group(1))
-            command = await HTTP._read_json(receive)
             actor_id = (scope.get("state") or {}).get("authenticated_user_id")
             store = SESSION.authenticated_supabase_plan_store(scope)
+            source_route = bool(matched.group("source"))
+            if source_route:
+                # Membership is checked before reading a potentially large file.
+                await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+            command = await HTTP._read_json(receive, max_body_bytes=SOURCES.MAX_BODY if source_route else HTTP.MAX_BODY_BYTES,
+                                            file_fields=("data_base64", "preview_base64") if source_route else ())
             action = command.get("action")
-            if action in {"generate", "chat_edit"}:
+            if source_route:
+                if action == "upload":
+                    import acs_cpu_pool as CPU
+                    checked = await CPU.run("validate_plan_source", args=(command,))
+                    result = {"ok": True, "source": await asyncio.to_thread(SOURCES.save_source, store, project_id, actor_id, checked)}
+                elif action == "list":
+                    SERVICE.checked_command(command, set())
+                    result = {"ok": True, "sources": await asyncio.to_thread(SOURCES.list_sources, store, project_id)}
+                elif action == "download":
+                    import base64
+                    SERVICE.checked_command(command, {"source_id"})
+                    row, raw = await asyncio.to_thread(SOURCES.read_source, store, project_id, command.get("source_id"))
+                    result = {"ok": True, "name": row["name"], "media_type": row["media_type"], "data_base64": base64.b64encode(raw).decode("ascii")}
+                else:
+                    raise PlanError("PLAN_COMMAND_NOT_SUPPORTED", "الأمر غير مدعوم لملفات المخطط.")
+            elif action in {"generate", "chat_edit"}:
                 result = await self._start(scope, store, project_id, actor_id, command)
             elif action == "state":
                 SERVICE.checked_command(command, {"revision_id"})

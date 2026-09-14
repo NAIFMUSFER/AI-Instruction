@@ -129,7 +129,7 @@ def _project_from_path(path: Any) -> tuple[bool, str | None]:
     return True, project_id
 
 
-async def _read_json(receive) -> dict:
+async def _read_json(receive, *, max_body_bytes=MAX_BODY_BYTES, file_fields=()) -> dict:
     chunks: list[bytes] = []
     size = 0
     while True:
@@ -144,7 +144,7 @@ async def _read_json(receive) -> dict:
         if not isinstance(chunk, (bytes, bytearray)):
             raise PlanError("INVALID_PLAN_COMMAND", "Request body is malformed")
         size += len(chunk)
-        if size > MAX_BODY_BYTES:
+        if size > max_body_bytes:
             raise PlanError("PLAN_COMMAND_BODY_TOO_LARGE", "Plan-first command body exceeds the bounded request limit")
         if chunk:
             chunks.append(bytes(chunk))
@@ -157,7 +157,11 @@ async def _read_json(receive) -> dict:
         raise PlanError("INVALID_PLAN_COMMAND", "Plan-first command body must be valid UTF-8 JSON") from None
     if not isinstance(value, dict):
         raise PlanError("INVALID_PLAN_COMMAND", "Plan-first command body must be one JSON object")
-    canonical(value)
+    # Only the dedicated authenticated file route names opaque base64 fields.
+    # Geometry/command limits remain unchanged for the surrounding document.
+    if any(k in value and not isinstance(value[k], str) for k in file_fields):
+        raise PlanError("INVALID_PLAN_COMMAND", "File data must be a base64 string")
+    canonical({k: v for k, v in value.items() if k not in file_fields})
     return value
 
 
