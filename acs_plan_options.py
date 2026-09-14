@@ -4,13 +4,15 @@ This module compares canonical design options without ranking them or inventing 
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
 option. It also names which comparison dimensions are actually measurable versus
-unavailable so a null delta cannot be mistaken for equivalence. Explicit rack
-footprints, declared rack heights, geometric rack bay counts, rack conflicts, zone
-allocation ratios, expansion-reserve rectangles, oriented lane geometry, explicit
-configured route polylines and deterministic validation-status transitions may be
-compared; regulatory/structural compliance, usable/load-rated storage capacity,
-throughput and inferred routing remain outside this contract unless a future
-authoritative engine supplies them.
+unavailable so a null delta cannot be mistaken for equivalence. Site and level
+constraint comparability is tri-state: missing explicit geometry/configuration is
+reported as not verified rather than being treated as equal merely because both
+sides are absent. Explicit rack footprints, declared rack heights, geometric rack
+bay counts, rack conflicts, zone allocation ratios, expansion-reserve rectangles,
+oriented lane geometry, explicit configured route polylines and deterministic
+validation-status transitions may be compared; regulatory/structural compliance,
+usable/load-rated storage capacity, throughput and inferred routing remain outside
+this contract unless a future authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -67,6 +69,48 @@ def _option_id(value: Any) -> bool:
 def _finite_number(value: Any) -> bool:
     # bool is deliberately excluded even though it is an int subclass.
     return type(value) in (int, float) and value == value and value not in (float("inf"), float("-inf"))
+
+
+def _site_constraint_signature(site: Any) -> str | None:
+    """Return an explicit site signature only when basic site geometry is known.
+
+    The full canonical site object is retained in the signature so additional
+    explicit site constraints participate in equality, but two missing/malformed
+    site objects never become evidence of equivalence.
+    """
+    if not isinstance(site, dict):
+        return None
+    width, depth = site.get("w"), site.get("d")
+    if not (_finite_number(width) and width > 0 and _finite_number(depth) and depth > 0):
+        return None
+    return canonical(site)
+
+
+def _level_configuration_signature(levels: Any) -> str | None:
+    """Return an order-insensitive explicit level configuration signature.
+
+    Level list order is presentation-only because identity is carried by the
+    explicit integer index. Missing/duplicate identities or missing templates make
+    comparability unavailable rather than falsely equal.
+    """
+    if not isinstance(levels, list) or not levels:
+        return None
+    normalized: list[dict] = []
+    seen: set[int] = set()
+    for level in levels:
+        if not isinstance(level, dict):
+            return None
+        index = level.get("index")
+        template = level.get("template")
+        if (type(index) is not int or index in seen
+                or not isinstance(template, str) or not template.strip()):
+            return None
+        seen.add(index)
+        row = dict(level)
+        row["template"] = template.strip()
+        normalized.append(row)
+    normalized.sort(key=lambda row: (row["index"], row["template"]))
+    return canonical(normalized)
 
 
 def _delta(reference: Any, value: Any) -> float | int | None:
@@ -185,7 +229,8 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
             "revision_id": revision_id,
             "model_hash": digest(model),
             "scorecard": scorecard,
-            "site": model.get("site"),
+            "site_constraint_signature": _site_constraint_signature(model.get("site")),
+            "level_configuration_signature": _level_configuration_signature(model.get("levels")),
         })
 
     typologies = {item["scorecard"]["typology"] for item in measured}
@@ -218,16 +263,34 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
             },
         })
 
-    same_site = all(canonical(item["site"]) == canonical(reference["site"]) for item in measured[1:])
+    site_signatures = [item["site_constraint_signature"] for item in measured]
+    same_site = (None if any(value is None for value in site_signatures)
+                 else all(value == site_signatures[0] for value in site_signatures[1:]))
+
     level_counts = [item["scorecard"]["metrics"].get("level_count") for item in measured]
-    same_level_count = all(v == level_counts[0] for v in level_counts[1:])
+    same_level_count = (None if any(value is None for value in level_counts)
+                        else all(value == level_counts[0] for value in level_counts[1:]))
+
+    level_configurations = [item["level_configuration_signature"] for item in measured]
+    same_level_configuration = (
+        None if any(value is None for value in level_configurations)
+        else all(value == level_configurations[0] for value in level_configurations[1:]))
+
     disclosures = []
     if declared_program_receipt is None:
         disclosures.append("PROGRAM_EQUIVALENCE_NOT_VERIFIED")
-    if not same_site:
+    if same_site is None:
+        disclosures.append("SITE_CONSTRAINT_NOT_VERIFIED")
+    elif not same_site:
         disclosures.append("SITE_CONSTRAINT_DIFFERS")
-    if not same_level_count:
+    if same_level_count is None:
+        disclosures.append("LEVEL_COUNT_NOT_VERIFIED")
+    elif not same_level_count:
         disclosures.append("LEVEL_COUNT_DIFFERS")
+    if same_level_configuration is None:
+        disclosures.append("LEVEL_CONFIGURATION_NOT_VERIFIED")
+    elif not same_level_configuration:
+        disclosures.append("LEVEL_CONFIGURATION_DIFFERS")
 
     return {
         "schema": SCHEMA,
@@ -237,6 +300,7 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
         "program_receipt_authenticated": False,
         "same_site_geometry": same_site,
         "same_level_count": same_level_count,
+        "same_level_configuration": same_level_configuration,
         "options": rows,
         "disclosures": disclosures,
         "claims_best_option": False,
