@@ -15,7 +15,7 @@ def consume():
         return
     if budget["used"] >= budget["limit"]:
         import acs_api_errors as E
-        raise E.AcsApiError(E.ACS_RATE_LIMITED, "بلغ المقترح حد الاستدعاءات الذي وافقت عليه. لم يبدأ استدعاء إضافي.", retryable=False)
+        raise E.AcsApiError(E.ACS_PROVIDER_BUDGET_EXHAUSTED, retryable=False)
     budget["used"] += 1
 
 
