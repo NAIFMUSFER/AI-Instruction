@@ -1,9 +1,11 @@
 """Plan upload contracts using small synthetic files; no provider or live users."""
 import base64
 import asyncio
+import contextlib
 import copy
 import io
 import json
+import os
 from pathlib import Path
 import sys
 import unittest
@@ -71,6 +73,7 @@ class UploadTests(unittest.TestCase):
     def test_source_command_requires_explicit_mode(self):
         with self.assertRaises(PlanError):W.generation_command(dict(command(),source_id=SOURCE))
         with self.assertRaises(PlanError):W.generation_command(dict(command(),source_mode='preserve'))
+        with self.assertRaises(PlanError):W.generation_command(dict(command(),system_override='client policy'))
         self.assertEqual(W.generation_command(dict(command(),source_id=SOURCE,source_mode='preserve'))['source_id'],SOURCE)
 
     def test_vision_uses_actual_image_and_does_not_relayout(self):
@@ -82,8 +85,51 @@ class UploadTests(unittest.TestCase):
                 {'image':base64.b64encode(checked['preview']).decode(),'media_type':checked['row']['preview_media_type'],'mode':'preserve'})
         self.assertEqual(result['provider_calls'],1);repair.assert_not_called()
         self.assertEqual(seen[0]['content'][0]['type'],'image')
-        self.assertIn('لا تغيّر',seen[0]['content'][1]['text'])
+        self.assertIn('لا تغيّر',seen[0]['system_override'])
         self.assertFalse(seen[0]['truncate'])
+
+    def test_uploaded_plan_instructions_reach_system_in_actual_http_request(self):
+        import anthropic
+        import httpx
+        import acs_understand as U
+        from test_thinking_wire import response_message, response_stream
+
+        checked=S.validate_upload(upload())
+        brief='مخطط مرجعي للاختبار بحجم 20 في 20 متر'
+        for mode,policy in [('preserve','لا تغيّر مواقع الفراغات'),
+                            ('revise','اقترح تعديل التوزيع')]:
+            with self.subTest(mode=mode):
+                sent=[]
+                def handle(request):
+                    sent.append(json.loads(request.content))
+                    return httpx.Response(200,headers={'content-type':'text/event-stream'},
+                        text=response_stream(response_message(json.dumps(model()))))
+                with patch.dict(os.environ,{
+                    'ACS_LLM_PROVIDER':'anthropic',
+                    'ACS_LLM_API_KEY':'local-transport-test-key',
+                    'ACS_LLM_MODEL':'claude-sonnet-5',
+                    'ACS_LLM_BASE_URL':'https://api.deepseek.com/anthropic',
+                },clear=True), anthropic.Anthropic(api_key='local-transport-test-key',
+                    max_retries=0,base_url='https://api.deepseek.com/anthropic',
+                    http_client=httpx.Client(transport=httpx.MockTransport(handle))) as client, \
+                    patch.object(U,'_build_client',return_value=client), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                    result=S.candidate(brief,command()['requirements'],'A',1,
+                        {'image':base64.b64encode(checked['preview']).decode(),
+                         'media_type':checked['row']['preview_media_type'],'mode':mode})
+                self.assertEqual(result['provider_calls'],1)
+                self.assertEqual(len(sent),1)
+                body=sent[0]
+                self.assertIn('أخرج حدود الغرف فقط',body['system'])
+                self.assertIn('لا تختلق أثاثًا أو تجهيزات أو أبوابًا',body['system'])
+                self.assertNotIn('أضِف نقاط الكهرباء',body['system'])
+                self.assertNotIn('استنتج أبعاد كل غرفة',body['system'])
+                self.assertNotIn(brief,body['system'])
+                self.assertIn(policy,body['system'])
+                self.assertIn(brief,body['messages'][0]['content'][1]['text'])
+                self.assertEqual(body['messages'][0]['content'][0]['type'],'image')
+                self.assertEqual(body['model'],'claude-sonnet-5')
+                self.assertEqual(body['thinking'],{'type':'disabled'})
 
     def test_stored_hash_and_project_binding(self):
         row=dict(S.validate_upload(upload())['row'],project_id=PROJECT,created_by=ACTOR)
