@@ -13,6 +13,8 @@ import acs_plan_session as SESSION
 import acs_rate_limit as RL
 import acs_workspace_service as SERVICE
 import acs_plan_sources as SOURCES
+from acs_logging import LOG
+from acs_workspace_progress import PHASES
 from acs_plan_review import PlanError, digest
 
 ROUTE = re.compile(r"^/v1/projects/([0-9a-f-]+)/workspace(?P<source>/plan-source)?$")
@@ -48,6 +50,9 @@ def _job_view(row):
         "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
         "error_code": row.get("error_code"),
         "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state == "FAILED" else None,
+        "phase": row.get("phase"), "progress": row.get("progress"),
+        "provider_calls": row.get("provider_calls", 0),
+        "can_resume": bool(row.get("checkpoint")) and state in {"FAILED", "INTERRUPTED"},
         "storage": "supabase", "automatic_resubmission": False}}
 
 
@@ -60,12 +65,28 @@ class WorkspaceMiddleware:
         payload = {"state": "FAILED", "error_code": "GENERATION_FAILED"}
         try:
             execute = SERVICE.chat_and_save if command["action"] == "chat_edit" else SERVICE.generate_and_save
-            rid = await asyncio.to_thread(execute, store, project_id, actor_id, command)
+            def progress(event):
+                if not isinstance(event, dict) or event.get("phase") not in PHASES:
+                    return
+                update = {"phase":event["phase"], "progress":{k:v for k,v in event.items()
+                          if k in {"completed", "total"} and type(v) is int and v >= 0}}
+                if type(event.get("provider_calls")) is int:
+                    update["provider_calls"] = event["provider_calls"]
+                if isinstance(event.get("checkpoint"), dict):
+                    update["checkpoint"] = event["checkpoint"]
+                store._request("PATCH", _job_query(project_id, command["job_id"]), update)
+            controls = {"on_progress":progress} if command["action"] == "generate" else {}
+            rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, **controls)
             payload = {"state": "SUCCEEDED", "revision_id": rid, "error_code": None}
+        except TimeoutError:
+            payload["error_code"] = E.ACS_TIMEOUT
         except (PlanError, E.AcsApiError) as exc:
             payload["error_code"] = str(exc.code)[:80]
-        except Exception:
-            pass  # Never put provider, bearer or database exception details in jobs.
+        except Exception as exc:
+            from acs_generation_job import JobRejected, JobError
+            payload["error_code"] = "GENERATION_BUSY" if isinstance(exc, JobRejected) else "GENERATION_WORKER_FAILED" if isinstance(exc, JobError) else "GENERATION_FAILED"
+            LOG.error("workspace_worker_failed", request_id=command["job_id"], error_class=type(exc).__name__, error_code=payload["error_code"])
+        LOG.info("workspace_job_finished", request_id=command["job_id"], state=payload["state"], error_code=payload.get("error_code"))
         payload["finished_at"] = datetime.now(timezone.utc).isoformat()
         try:
             await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), payload)
@@ -99,7 +120,13 @@ class WorkspaceMiddleware:
             raise E.AcsApiError(E.ACS_RATE_LIMITED, "تجاوزت حد التوليد. حاول لاحقًا.", retryable=True, retry_after=decision.get("retry_after", 60))
         row = {"id": job_id, "project_id": project_id, "created_by": actor_id,
                "input_hash": fingerprint, "expected_head": command.get("expected_head"),
-               "worker_id": WORKER_ID, "state": "RUNNING"}
+               "worker_id": WORKER_ID, "state": "RUNNING",
+               "resume_command": command, "phase":"UNDERSTANDING"}
+        if command.get("resume_job_id"):
+            source = await asyncio.to_thread(_read_job, store, project_id, _id(command["resume_job_id"]))
+            if not source or not source.get("checkpoint") or _job_view(source)["job"]["state"] not in {"FAILED", "INTERRUPTED"}:
+                raise PlanError("INVALID_RESUME", "لا توجد مرحلة محفوظة قابلة للاستئناف.")
+            row.update(checkpoint=source["checkpoint"], provider_calls=source.get("provider_calls",0), phase=source.get("phase"))
         inserted = await asyncio.to_thread(store._request, "POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
                                            prefer="resolution=ignore-duplicates,return=representation")
         if not isinstance(inserted, list):
@@ -155,9 +182,21 @@ class WorkspaceMiddleware:
                     raise PlanError("PLAN_COMMAND_NOT_SUPPORTED", "الأمر غير مدعوم لملفات المخطط.")
             elif action in {"generate", "chat_edit"}:
                 result = await self._start(scope, store, project_id, actor_id, command)
+            elif action == "resume":
+                SERVICE.checked_command(command, {"job_id", "resume_job_id", "max_provider_calls"})
+                old = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("resume_job_id")))
+                if not old or not isinstance(old.get("resume_command"), dict) or old["resume_command"].get("action") != "generate":
+                    raise PlanError("INVALID_RESUME", "هذه المهمة القديمة لا تحتوي بيانات استئناف. ابدأ طلبًا جديدًا من وصفك المحفوظ.")
+                resumed = dict(old["resume_command"], job_id=_id(command.get("job_id")), resume_job_id=old["id"], max_provider_calls=command.get("max_provider_calls"))
+                result = await self._start(scope, store, project_id, actor_id, resumed)
             elif action == "state":
                 SERVICE.checked_command(command, {"revision_id"})
                 result = await asyncio.to_thread(SERVICE.view, store, project_id, actor_id, command.get("revision_id"))
+            elif action == "research":
+                SERVICE.checked_command(command, {"city", "building_type"})
+                await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
+                from acs_design_research import research
+                result = await asyncio.to_thread(research, command.get("city", ""), command.get("building_type", "residential"))
             elif action == "job":
                 SERVICE.checked_command(command, {"job_id"})
                 row = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("job_id")))
@@ -182,4 +221,4 @@ class WorkspaceMiddleware:
             return await HTTP._send_json(scope, send, exc.status, exc.envelope(HTTP._request_id(scope)))
         except Exception:
             return await HTTP._send_json(scope, send, 503, {"ok": False, "error": {"code": "WORKSPACE_UNAVAILABLE", "message": "تعذّر فتح مساحة المشروع. حاول مجددًا؛ نسخك المحفوظة لم تُحذف."}})
-        return await HTTP._send_json(scope, send, 202 if action in {"generate", "chat_edit"} else 200, result)
+        return await HTTP._send_json(scope, send, 202 if action in {"generate", "chat_edit", "resume"} else 200, result)

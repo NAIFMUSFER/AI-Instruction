@@ -32,6 +32,7 @@ COPY acs_plan_review.py acs_plan_bridge.py acs_plan_commands.py acs_plan_persist
 # used by the browser reviewer and connected project workspace.
 COPY tools/acs_plan_review_packet.py tools/acs_plan_review_packet.py
 COPY acs_workspace_http.py acs_workspace_service.py acs_provider_budget.py acs_plan_overlap_repair.py acs_plan_sources.py ./
+COPY acs_workspace_progress.py acs_residential_generation.py acs_design_research.py ./
 # Approved artifacts are derived on demand from an authenticated frozen revision.
 COPY acs_compiler.py acs_pbr.py acs_pbr.json acs_bim.py acs_bim.json ./
 COPY tools/acs_plan_handoff.py tools/acs_plan_cad_export.py tools/acs_plan_pdf_export.py tools/acs_plan_ifc_export.py tools/

@@ -4,11 +4,12 @@
 export const metricLabels = Object.freeze({
   site_width_m:'عرض الموقع (م)', site_depth_m:'عمق الموقع (م)', level_count:'عدد الأدوار',
   room_count:'عدد فراغات الاستخدام', min_space_area_by_role_m2:'أقل مساحة للاستخدام (م²)',
+  unit_count:'إجمالي الشقق', unit_count_per_level:'الشقق في كل دور', room_count_per_unit:'عدد الفراغات داخل كل شقة',
   dock_count:'عدد الأرصفة', min_dock_count:'أقل عدد أرصفة', min_rack_group_count:'أقل عدد مجموعات رفوف',
 });
-const roles = {bedroom:'غرف النوم',office:'المكاتب',kitchen:'المطابخ'};
+const roles = {bedroom:'غرف النوم',office:'المكاتب',kitchen:'المطابخ',living:'الصالات',bathroom:'دورات المياه',majlis:'المجالس',stairs:'الدرج',elevator:'المصاعد'};
 export const requirementKey = r => JSON.stringify([r.metric, r.role || '']);
-export const requirementLabel = r => (r.metric==='room_count' && roles[r.role]) || metricLabels[r.metric] || r.metric;
+export const requirementLabel = r => (r.metric==='room_count_per_unit' ? (roles[r.role]||r.role)+' في كل شقة' : r.metric==='room_count' && roles[r.role]) || metricLabels[r.metric] || r.metric;
 const normal = s => s.replace(/[٠-٩۰-۹أإآ]/g,c=>{
   const n=c.charCodeAt(0);
   return n>=0x6f0&&n<=0x6f9?String(n-0x6f0):n>=0x660&&n<=0x669?String(n-0x660):'ا';
@@ -80,9 +81,9 @@ export function analyzeBrief(brief) {
         add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
         add('site_depth_m',match.groups.d,match.groups.du,match,chunk.index,'inferred');
       }
-      for(const match of text.matchAll(/^\s*(?:دورين|دوران|طابقين|طابقان)\s*[.،,]?\s*$/gu))add('level_count',2,null,match,chunk.index);
+      for(const match of text.matchAll(/(?<![\p{L}])(?:دورين|دوران|طابقين|طابقان)(?![\p{L}])/gu))add('level_count',2,null,match,chunk.index);
     }
-    const pair=`(?:ابعاد\\s+${site}|${site}\\s+dimensions)\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
+    const pair=`(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
     for(const match of text.matchAll(new RegExp(pair,'giu'))){
       add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
       add('site_depth_m',match.groups.d,match.groups.u,match,chunk.index,'inferred');
@@ -112,7 +113,7 @@ export function buildBriefProgram(input) {
     r.expected=Number(r.expected);
     if(!Number.isFinite(r.expected)||r.expected<0||(['site_width_m','site_depth_m','level_count'].includes(r.metric)&&r.expected<=0))throw new Error('أدخل أبعادًا وأعداد أدوار موجبة، وقيم متطلبات غير سالبة.');
     if(r.metric!=='min_space_area_by_role_m2'&&!r.metric.endsWith('_m')&&!Number.isInteger(r.expected))throw new Error('أدخل عددًا صحيحًا في '+requirementLabel(r)+'.');
-    if(['room_count','min_space_area_by_role_m2'].includes(r.metric)){
+    if(['room_count','room_count_per_unit','min_space_area_by_role_m2'].includes(r.metric)){
       r.role=r.role?.trim();if(!r.role||r.role.length>80)throw new Error('حدد استخدام الفراغ للمتطلب.');
     }else delete r.role;
     const key=requirementKey(r);

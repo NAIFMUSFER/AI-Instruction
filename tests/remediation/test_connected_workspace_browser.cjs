@@ -73,6 +73,21 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal(await page.locator('#cwConfirmed').isChecked(),false,'reopening must not restore confirmation');
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false,'brief evidence fits mobile width');
    if(!noWebGL){
+    if(width===1280){
+     await page.locator('#cwUnits').fill('2');
+     await page.locator('#cwUnitsScope').selectOption('total');
+     await page.locator('#cwConfirmed').check();
+     await page.locator('#cwBriefForm button[type=submit]').click();
+     await page.locator('[data-option="A"]').waitFor({state:'visible'});
+     assert.ok((await page.locator('[data-residential-detail]').first().textContent()).includes('2 شقق'));
+     assert.ok((await page.locator('.cw-options').textContent()).includes('خصوصية الضيوف'));
+     assert.equal(await page.locator('[data-option="A"]').isEnabled(),true);
+     await page.locator('[data-step="1"]').click();
+     await page.locator('#cwUnits').fill('50');await page.locator('#cwConfirmed').check();
+     await page.locator('#cwBriefForm button[type=submit]').click();
+     assert.equal(await page.locator('[data-option="A"]').isDisabled(),true,'oversized apartment programs must not start paid generation');
+     await page.locator('[data-step="1"]').click();await page.locator('#cwUnits').fill('2');
+    }
     const inputFile=width===393?path.join(ROOT,'tests/phase7/outputs/warehouse_buffer_depth.png'):pdfFixture;
     await page.locator('#cwStartMode').selectOption('upload');
     await page.locator('#cwPlanFile').setInputFiles(inputFile);

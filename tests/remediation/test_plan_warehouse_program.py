@@ -17,7 +17,10 @@ import acs_plan_review as P
 from test_plan_scorecard import warehouse_model
 from test_plan_warehouse_operational_metrics import warehouse as operational_warehouse
 
-BRIEF = "Warehouse requires storage, docks, racks, stations, forklift lanes, an expansion reserve, MEP zones and fire-safety zones."
+BRIEF = (
+    "Warehouse requires receiving, shipping, staging, storage, docks, racks, stations, "
+    "forklift lanes, equipment zones, an expansion reserve, MEP zones and fire-safety zones."
+)
 
 
 def verified(_model):
@@ -54,6 +57,56 @@ class WarehouseProgramTests(unittest.TestCase):
                                         450.0, role="storage")])
         self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
         self.assertFalse(too_large["can_approve"])
+
+    def test_operational_zone_minimums_use_explicit_receiving_shipping_staging_and_equipment_geometry(self):
+        model = warehouse_model()
+        model["floors"]["ground"]["rooms"].extend([
+            {"id": "staging", "role": "staging", "rect": [0.0, 10.0, 10.0, 5.0]},
+            {"id": "equipment", "role": "equipment", "rect": [30.0, 10.0, 5.0, 4.0]},
+        ])
+        good = review([
+            requirement("receiving-area", "receiving", "min_zone_area_m2", 100.0,
+                        role="receiving"),
+            requirement("shipping-area", "shipping", "min_zone_area_m2", 100.0,
+                        role="shipping"),
+            requirement("staging-area", "staging", "min_zone_area_m2", 50.0,
+                        role="staging"),
+            requirement("equipment-area", "equipment zones", "min_zone_area_m2", 20.0,
+                        role="equipment"),
+        ], model=model)
+        self.assertTrue(good["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(good))
+
+        too_large = review([
+            requirement("staging-area", "staging", "min_zone_area_m2", 51.0,
+                        role="staging")
+        ], model=model)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
+        self.assertFalse(too_large["can_approve"])
+
+        incomplete = copy.deepcopy(model)
+        del incomplete["floors"]["ground"]["rooms"][-1]["rect"]
+        unknown = review([
+            requirement("equipment-area", "equipment zones", "min_zone_area_m2", 20.0,
+                        role="equipment")
+        ], model=incomplete)
+        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown))
+        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown))
+
+    def test_dock_minimum_by_operational_zone_uses_explicit_dock_ownership_only(self):
+        receiving = review([
+            requirement("receiving-docks", "docks", "min_dock_count_by_zone_role", 3,
+                        role="receiving")
+        ])
+        self.assertTrue(receiving["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(receiving))
+
+        shipping = review([
+            requirement("shipping-docks", "docks", "min_dock_count_by_zone_role", 1,
+                        role="shipping")
+        ])
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(shipping))
+        self.assertFalse(shipping["can_approve"])
 
     def test_mep_and_fire_safety_zone_minimums_use_only_explicit_declared_geometry(self):
         model = warehouse_model()

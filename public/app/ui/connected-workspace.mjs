@@ -2,6 +2,7 @@ import {parseReviewFile} from '../core/plan-review-packet.mjs';
 import {showApprovedGLTF} from './approved-viewer.mjs';
 import {createBriefEditor} from './brief-review.mjs';
 import {createPlanUpload} from './plan-upload.mjs';
+import {createResidentialOptions} from './residential-options.mjs';
 
 const $ = id => document.getElementById(id);
 const scopeNames = {rectangular_geometry:'الأبعاد والتداخلات',program:'المتطلبات المقاسة',topology:'الترابط والفتحات',vertical_circulation:'الحركة بين الأدوار',warehouse_expansion_reserve:'حماية مساحة التوسّع المعلنة',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية'};
@@ -22,8 +23,8 @@ function projectCopy() {
   $('cwTypeHelp').textContent=residential?'اذكر عدد الشقق والغرف، وما إذا كنت تفضّل مجلسًا منفصلًا. أضف جهة الشارع والمداخل إن كانت معروفة. يمكنك تعديل هذه التفاصيل أثناء المراجعة.':'حدد وحدات التخزين والرفوف والمعدات وارتفاعاتها والأرصفة والممرات ومناطق التشغيل. البيانات غير المحددة تبقى غير متحققة.';
   $('cwChat').placeholder=residential?'مثال: افصل مجلس الضيوف عن الصالة، وأكمل اتصال الدرج بالدور العلوي، مع الحفاظ على الأقفال الحالية.':'مثال: انقل منطقة التجهيز بجوار الشحن، مع الحفاظ على الأقفال الحالية.';
 }
-let root, briefEditor, planUpload, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerDispose = null;
-let progressState=null,progressTimer=null;
+let root, briefEditor, planUpload, residentialOptions, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerDispose = null;
+let progressState=null,progressTimer=null,starting=false;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
@@ -38,7 +39,7 @@ function progressTick(){
 }
 function progressPhase(phase,confirmed=false){
   if(!progressState)return;
-  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
+  const labels={SUBMITTING:'جارٍ إرسال الطلب…',CHECKING:'جارٍ التحقق من حالة المهمة…',QUEUED:'المهمة في قائمة الانتظار',RUNNING:'الخادم يعالج المخطط',UNDERSTANDING:'فهم برنامج المشروع',LAYOUT:'توزيع الغرف على الأدوار',ROOM_DETAILS:'تفصيل الأبواب والنوافذ',REVIEW:'مراجعة المخطط',SAVING:'حفظ النسخة',UNKNOWN:'تعذّر التحقق من الحالة. اضغط متابعة المهمة عند عودة الاتصال.'};
   const text=labels[phase]||labels.CHECKING;
   if($('cwJobPhase').textContent!==text)$('cwJobPhase').textContent=text;
   $('cwJobProgress').dataset.phase=phase;
@@ -59,7 +60,7 @@ function safeError(e) {
   const friendly={APPROVAL_REQUIRED:'اعتمد النسخة المختارة قبل التحويل والتصدير.',DOWNSTREAM_GEOMETRY_NOT_SPECIFIED:'تحتاج عناصر النسخة إلى أبعاد إضافية قبل عرض 3D. اطلب استكمالها في المحادثة ثم راجع النسخة الجديدة.',DOWNSTREAM_GEOMETRY_INVALID:'توجد أبعاد غير صالحة للتحويل إلى 3D. راجع العناصر وعدّلها في نسخة جديدة.',STALE_REVISION:'وصل تعديل أحدث لهذا المشروع. افتح آخر نسخة ثم أعد العملية.',LOCK_VIOLATION:'هذا التعديل يمس عنصرًا مقفلًا. عدّل الطلب أو ألغِ قفله أولًا.'};
   status(friendly[e?.code]||e?.message||'تعذّر إكمال العملية. حاول مجددًا.',true);
 }
-function setBusy(on) { busy=on;root.setAttribute('aria-busy',String(on));root.querySelectorAll('[data-mutate]').forEach(b=>{b.disabled=on||!!pendingJob;});syncApproval(); }
+function setBusy(on) { busy=on;root.setAttribute('aria-busy',String(on));root.querySelectorAll('[data-mutate]').forEach(b=>{b.disabled=on||!!pendingJob||b.dataset.unavailable==='true';});syncApproval(); }
 async function api(body, commands=false) {
   const session=await window.ACS_AUTH.freshSession();
   if(!session)throw new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.');
@@ -82,7 +83,7 @@ function step(n) {
   if(n!==4&&viewerDispose){viewerDispose();viewerDispose=null;$('cwViewer').hidden=true;}
 }
 function briefProgram() { return briefEditor.program(); }
-function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);projectCopy(); }
+function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);residentialOptions?.fill();projectCopy(); }
 function syncApproval() {
   if(!root)return;
   const head=state?.revision_id&&state.revision_id===state.head;
@@ -125,7 +126,12 @@ async function renderState(data, {keepStep=false}={}) {
     $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',floorLabel(p.level_index),$('cwLevel'));o.value=String(i);});
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,value(v)]));
     table($('cwChecks'),Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]));
-    $('cwIssues').replaceChildren();for(const issue of data.review_findings||packet.review.issues)el('li',(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+issue.requirement_id:'')+(issue.message?' — '+issue.message:''),$('cwIssues'));
+    $('cwIssues').replaceChildren();for(const issue of data.review_findings||packet.review.issues){
+      const text=(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+issue.requirement_id:'')+(issue.message?' — '+issue.message:'');
+      const li=el('li',text,$('cwIssues')),fix=el('button','تجهيز طلب المعالجة',li);fix.type='button';
+      fix.addEventListener('click',()=>{const match=issue.message?.match(/\[([^/\]]+)\/([^\]]+)\]/);const ref=Array.isArray(issue.room_ref)?issue.room_ref:match?.slice(1);if(ref){const index=packet.projections.findIndex(p=>p.primitives.some(r=>r.source.template===ref[0]&&r.source.room_id===ref[1]));if(index>=0){$('cwLevel').value=String(index);draw();selectRoom(packet.projections[index].primitives.find(r=>r.source.template===ref[0]&&r.source.room_id===ref[1]));}}
+        $('cwChat').value='عالج الملاحظة التالية مع الحفاظ على المتطلبات المؤكدة والأقفال وعدم حذف الغرف: '+text; $('cwChat').focus();$('cwChatForm').scrollIntoView({block:'center',behavior:'smooth'});});
+    }
     if(!packet.review.issues.length)el('li','لا توجد ملاحظات في الفحوصات المنفذة.', $('cwIssues'));
     $('cwApprovalNote').textContent=data.authority?.can_approve_concept?'الفحوصات التخطيطية جاهزة للمراجعة والاعتماد المبدئي.':'عالِج الفحوصات غير المكتملة أو المتطلبات المخالفة قبل الاعتماد.';
     $('cwRequirementEvidence').textContent=JSON.stringify(data.requirements||packet.requirements,null,2);
@@ -160,7 +166,11 @@ function draw() {
     g.addEventListener('click',()=>selectRoom(item));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectRoom(item);}});
     const b=el('button',label+' · '+item.space_rect_area_m2+' م²',$('cwSpaces'));b.type='button';b.addEventListener('click',()=>selectRoom(item));
   }
-  $('cwExtent').textContent='الموقع '+p.site.w+' × '+p.site.d+' م · '+floorLabel(p.level_index);
+  for(const opening of state?.openings||[]){
+    if(opening.level_index!==p.level_index||!Array.isArray(opening.line)||opening.line.length!==4||!opening.line.every(Number.isFinite))continue;
+    const [x1,y1,x2,y2]=opening.line;svg('line',{x1,y1,x2,y2,stroke:opening.kind==='doors'?'#b75f12':'#117bc0','stroke-width':.14},$('cwPlan'));
+  }
+  $('cwExtent').textContent='الأبواب بالبرتقالي والنوافذ بالأزرق عند وجودها في النسخة. الموقع '+p.site.w+' × '+p.site.d+' م · '+floorLabel(p.level_index);
   $('cwSelection').hidden=true;
 }
 function selectRoom(item) {
@@ -176,8 +186,9 @@ async function refresh(rid, keepStep=false) { await renderState(await api({actio
 async function generation(option) {
   if(pendingJob)throw new Error('توجد مهمة معلّقة. استعد حالتها أولًا.');
   if(!$('cwConfirmed').checked)throw new Error('راجع برنامج المشروع وأكد المتطلبات أولًا.');
-  const program=briefProgram();
-  const body={action:'generate',job_id:crypto.randomUUID(),...program,...planUpload.command(),option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
+  const source=planUpload.command();
+  const program=source.source_id?briefProgram():residentialOptions.program(briefProgram(),option);
+  const body={action:'generate',job_id:crypto.randomUUID(),...program,...source,option,confirmed:true,expected_head:state?.head||null,max_provider_calls:Number($('cwBudget').value)};
   beginJob(body.job_id);
   setBusy(true);$('cwRecoverJob').hidden=false;status('جارٍ إرسال البديل '+option+' وحفظ رقم المهمة…');
   try{const result=await api(body);await handleJob(result.job);}
@@ -204,11 +215,11 @@ async function handleJob(job) {
   }
   if(['FAILED','INTERRUPTED'].includes(job.state)){
     stopProgress();
-    clearTimeout(pollTimer);$('cwDismissJob').hidden=false;
+    clearTimeout(pollTimer);$('cwDismissJob').hidden=false;$('cwResumeJob').hidden=!job.can_resume;
     const reason=typeof job.error_message==='string'&&job.error_message.length<=500?job.error_message:'تعذّر إكمال التوليد ('+(job.error_code||'GENERATION_FAILED')+').';
     status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. تحقق من آخر النسخ المحفوظة؛ لن يُعاد التوليد تلقائيًا.':reason+' لم تُحفظ نسخة جديدة. نسخك السابقة محفوظة؛ لن يُعاد التوليد تلقائيًا.',true);return;
   }
-  progressPhase(job.state,true);status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
+  progressPhase(job.phase||job.state,true);if(job.progress?.total)$('cwJobHeartbeat').textContent+=' اكتملت '+job.progress.completed+' من '+job.progress.total+' مجموعات في هذه المرحلة.';status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
   clearTimeout(pollTimer);pollTimer=setTimeout(()=>poll().catch(e=>{status('انقطع الاتصال. اضغط متابعة المهمة عند عودة الشبكة.',true);}),4000);
 }
 async function poll(){if(!pendingJob)return;try{await handleJob((await api({action:'job',job_id:pendingJob})).job);}catch(e){progressPhase('UNKNOWN');if(e.code==='REVISION_NOT_FOUND')$('cwDismissJob').hidden=false;throw e;}}
@@ -242,7 +253,7 @@ function mount(){
   <div class="cw-toolbar"><div id="cwStatus" class="cw-status" role="status" aria-live="polite"></div><button id="cwReload" type="button">تحديث المشروع</button><button id="cwRecoverJob" type="button" hidden>متابعة المهمة</button><button id="cwDismissJob" type="button" hidden>إنهاء المتابعة والسماح بطلب جديد</button></div>
   <section id="cwJobProgress" class="cw-card cw-job-progress" aria-label="متابعة إعداد المخطط" hidden><strong id="cwJobPhase" role="status" aria-live="polite"></strong><progress id="cwJobActivity" aria-label="جارٍ تنفيذ المهمة"></progress><output id="cwJobElapsed" aria-live="off"></output><p id="cwJobHeartbeat" class="cw-muted" aria-live="off"></p><p class="cw-muted">يمكنك العودة لاحقًا ومتابعة المهمة نفسها. يظهر المخطط بعد اكتماله وحفظه.</p></section>
   <section data-step-panel="1" class="cw-grid"><form id="cwBriefForm" class="cw-card"><h2>متطلبات المشروع</h2><label for="cwType">نوع المشروع</label><select id="cwType"><option value="residential">سكني / عمارة / فيلا</option><option value="warehouse">مستودع / صناعي</option></select><label for="cwBrief">صف المشروع والاستخدامات والعلاقات المطلوبة</label><textarea id="cwBrief" rows="6" maxlength="58000" placeholder="الموقع، الفراغات المطلوبة، المداخل، الحركة، والقيود التي يجب الحفاظ عليها…"></textarea><div class="cw-fields"><div><label for="cwWidth">عرض الموقع (م)</label><input id="cwWidth" type="number" min="0.1" step="any" placeholder="غير محدد"></div><div><label for="cwDepth">عمق الموقع (م)</label><input id="cwDepth" type="number" min="0.1" step="any" placeholder="غير محدد"></div><div><label for="cwLevels">عدد الأدوار</label><input id="cwLevels" type="number" min="1" step="1" placeholder="غير محدد"></div></div><h3>برنامج الفراغات والمتطلبات المقاسة</h3><p class="cw-muted">أضف عدد الفراغات أو المساحات أو الأرصفة المطلوب التحقق منها. اكتب بقية القيود في الوصف لمراجعتها مع المخطط.</p><div class="cw-table-wrap"><table><thead><tr><th>المتطلب</th><th>الاستخدام</th><th>القيمة</th><th></th></tr></thead><tbody id="cwRequirements"></tbody></table></div><button id="cwAddRequirement" type="button">+ إضافة متطلب</button><label class="cw-check"><input id="cwConfirmed" type="checkbox">راجعت الوصف والأبعاد وبرنامج المتطلبات وأؤكد استخدامها في المقترح.</label><button type="submit" class="cw-primary">متابعة إلى البدائل ←</button></form><aside class="cw-card"><h2>ماذا سنحفظ؟</h2><p>وصفك ومتطلباتك مع كل نسخة، ثم تعديلات المخطط والأقفال وقرار الاعتماد.</p><p class="cw-muted">الحفظ السحابي يتم بعد اكتمال كل عملية. الكتابة التي لم ترسلها بعد تُستعاد على هذا الجهاز.</p><h3 id="cwTypeHelpTitle">للمستودعات</h3><p id="cwTypeHelp" class="cw-muted">حدد وحدات التخزين والرفوف والمعدات وارتفاعاتها والأرصفة والممرات ومناطق التشغيل. البيانات غير المحددة تبقى غير متحققة.</p><a href="/plan-review/" target="_blank" rel="noopener">فتح ملف مراجعة محلي</a></aside></section>
-  <section data-step-panel="2" hidden><div class="cw-card"><h2>اختر هدف المقترح</h2><p class="cw-muted">كل زر يولد بديلًا واحدًا ويحفظه كمسودة جديدة. النسخة المعتمدة السابقة تبقى محفوظة. الأهداف التالية ليست ترتيبًا للجودة أو شهادة مطابقة.</p><details id="cwGenerationSettings"><summary>إعدادات التوليد المتقدمة</summary><label for="cwBudget">أقصى عدد استدعاءات المزود لهذا المقترح</label><select id="cwBudget"><option value="3">حتى 3 استدعاءات</option><option value="6" selected>حتى 6 استدعاءات</option><option value="12">حتى 12 استدعاء</option></select><p class="cw-muted">قد يُقسّم المخطط إلى مراحل ضمن هذا السقف. لا يبدأ توليد بديل آخر تلقائيًا، ولا توجد تكلفة مالية ثابتة يمكن تأكيدها قبل رد المزود.</p></details></div><div class="cw-options"><article class="cw-card"><span class="cw-option-code">A</span><h2>استثمار المساحة</h2><p>تركيز على توزيع البرنامج المطلوب ضمن الأبعاد والقيود.</p><button data-option="A" data-mutate class="cw-primary">توليد البديل A</button></article><article class="cw-card"><span class="cw-option-code">B</span><h2>وضوح الحركة</h2><p>تركيز على العلاقات بين الفراغات وقرب الأنشطة المرتبطة.</p><button data-option="B" data-mutate class="cw-primary">توليد البديل B</button></article><article class="cw-card"><span class="cw-option-code">C</span><h2>المرونة والفصل</h2><p>تركيز على فصل الاستخدامات ومرونة التوسع المطلوبة.</p><button data-option="C" data-mutate class="cw-primary">توليد البديل C</button></article></div></section>
+  <section data-step-panel="2" hidden><div class="cw-card"><h2>اختر برنامج المخطط</h2><p class="cw-muted">راجع غرف كل خيار والمساحة المقترحة، ثم اختره لإنشاء مسودة. تستطيع تعديل احتياجاتك من خطوة المتطلبات.</p><details id="cwGenerationSettings"><summary>إعدادات التوليد المتقدمة</summary><label for="cwBudget">أقصى عدد استدعاءات المزود لهذا المقترح</label><select id="cwBudget"><option value="3">حتى 3 استدعاءات</option><option value="6" selected>حتى 6 استدعاءات</option><option value="12">حتى 12 استدعاء</option></select><p class="cw-muted">قد يُقسّم المخطط إلى مراحل ضمن هذا السقف. لا يبدأ توليد بديل آخر تلقائيًا، ولا توجد تكلفة مالية ثابتة يمكن تأكيدها قبل رد المزود.</p></details></div><div class="cw-options"><article class="cw-card"><span class="cw-option-code">A</span><h2>استثمار المساحة</h2><p>تركيز على توزيع البرنامج المطلوب ضمن الأبعاد والقيود.</p><button data-option="A" data-mutate class="cw-primary">توليد البديل A</button></article><article class="cw-card"><span class="cw-option-code">B</span><h2>وضوح الحركة</h2><p>تركيز على العلاقات بين الفراغات وقرب الأنشطة المرتبطة.</p><button data-option="B" data-mutate class="cw-primary">توليد البديل B</button></article><article class="cw-card"><span class="cw-option-code">C</span><h2>المرونة والفصل</h2><p>تركيز على فصل الاستخدامات ومرونة التوسع المطلوبة.</p><button data-option="C" data-mutate class="cw-primary">توليد البديل C</button></article></div></section>
   <section data-step-panel="3" hidden><div id="cwReviewEmpty" class="cw-card"><h2>لا توجد مسودة محفوظة بعد</h2><p>أكد متطلباتك ثم ولّد مقترحًا لبدء المراجعة.</p></div><div id="cwReviewContent" hidden><div class="cw-toolbar"><label for="cwRevision">النسخة المحفوظة</label><select id="cwRevision"></select><label for="cwLevel">الدور</label><select id="cwLevel"></select><button id="cwRestore" data-mutate>استعادة كمسودة جديدة</button><button id="cwCompare">عرض المقارنة</button></div><div class="cw-review"><div class="cw-card"><div class="cw-drawing"><svg id="cwPlan" role="group" aria-label="المخطط القابل للاختيار"></svg><p id="cwExtent"></p></div><p class="cw-muted">حدود الفراغات وأبعادها بالمتر. ملفات CAD الحالية تمثل حدود الفراغات؛ ليست مخططات تنفيذية كاملة.</p></div><aside class="cw-card"><h2>الفراغات</h2><form id="cwSelection" hidden><h3 id="cwSelectedName"></h3><div class="cw-fields"><div><label for="cwX">X (م)</label><input id="cwX" type="number" step="any"></div><div><label for="cwZ">Z (م)</label><input id="cwZ" type="number" step="any"></div></div><div class="cw-fields"><div><label for="cwW">العرض (م)</label><input id="cwW" type="number" step="any" min=".01"></div><div><label for="cwD">العمق (م)</label><input id="cwD" type="number" step="any" min=".01"></div></div><div class="cw-actions"><button id="cwSaveGeometry" type="submit" data-mutate>حفظ التعديل</button><button id="cwLock" type="button" data-mutate>قفل الفراغ</button></div></form><div id="cwSpaces" class="cw-space-list"></div></aside></div><div class="cw-results"><section class="cw-card"><h2>قياسات المخطط</h2><div class="cw-table-wrap"><table><tbody id="cwMetrics"></tbody></table></div></section><section class="cw-card"><h2>نتائج المراجعة</h2><div class="cw-table-wrap"><table><tbody id="cwChecks"></tbody></table></div><ul id="cwIssues"></ul><p class="cw-muted">تخص الفحوصات نطاقها المعلن. المتطلبات النصية غير المقاسة تحتاج مراجعة المختص.</p></section></div><section class="cw-card"><h2>تعديل بالمحادثة</h2><form id="cwChatForm"><label for="cwChat">ما الذي تريد تغييره؟</label><textarea id="cwChat" rows="3" maxlength="6000" placeholder="مثال: انقل منطقة التجهيز بجوار الشحن، مع الحفاظ على الأقفال الحالية."></textarea><p class="cw-muted">يولد طلب التعديل مقترحًا واحدًا بحد أقصى 3 استدعاءات. الأقفال محفوظة، وكل تعديل يصبح مسودة جديدة.</p><button id="cwChatSubmit" type="submit" data-mutate>إرسال التعديل وحفظ المقترح</button></form><details><summary>مصادر المتطلبات وتفاصيل المقارنة</summary><pre id="cwRequirementEvidence"></pre><pre id="cwDiff"></pre></details><h2>اعتماد النسخة</h2><p id="cwApprovalNote"></p><label class="cw-check"><input id="cwApproveConfirm" type="checkbox">راجعت هذه النسخة وأعتمدها تخطيطيًا فقط. هذا لا يُعد اعتمادًا إنشائيًا أو تصريحًا للتنفيذ.</label><button id="cwApprove" class="cw-primary" data-mutate disabled>اعتماد النسخة المختارة</button></section></div></section>
   <section data-step-panel="4" hidden class="cw-card"><h2>النسخة المعتمدة والتسليم</h2><p id="cwExportNote"></p><div class="cw-actions"><button id="cwShow3D" class="cw-primary" disabled>عرض النسخة المعتمدة في 3D</button><button data-format="gltf" disabled>تنزيل 3D</button><button data-format="svg" disabled>SVG</button><button data-format="dxf" disabled>DXF</button><button data-format="pdf" disabled>PDF</button><button data-format="ifc" disabled>IFC4</button><button data-format="review">ملف مراجعة</button></div><p class="cw-muted">DXF وSVG وPDF تعرض حدود الفراغات. IFC4 يصدر الفراغات. بيانات المصدر والنسخة وحدود التصدير مرفقة بكل ملف. قد يتوقف 3D إذا كانت أبعاد عناصره غير مكتملة.</p><div id="cwViewer" hidden aria-label="عارض النسخة المعتمدة"></div></section>
   <footer>ACS · المخطط ونسخه محفوظة في مشروعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></footer>`;
@@ -262,14 +273,17 @@ function mount(){
   root.querySelectorAll('[data-format]').forEach(b=>b.addEventListener('click',()=>run(()=>exportFile(b.dataset.format))));
   $('cwShow3D').addEventListener('click',()=>run(()=>exportFile('gltf',true)));
   briefEditor=createBriefEditor(root,{storageKey:draftKey,onError:safeError});
+  residentialOptions=createResidentialOptions(root,{storageKey:()=>draftKey()+':residential',api,onError:safeError});
+  const resumeButton=el('button','استئناف المراحل المحفوظة',$('cwRecoverJob').parentElement);resumeButton.id='cwResumeJob';resumeButton.type='button';resumeButton.hidden=true;
+  resumeButton.addEventListener('click',()=>run(async()=>{const oldId=pendingJob;if(!oldId)return;const nextId=crypto.randomUUID();beginJob(nextId);resumeButton.hidden=true;$('cwDismissJob').hidden=true;try{await handleJob((await api({action:'resume',job_id:nextId,resume_job_id:oldId,max_provider_calls:Number($('cwBudget').value)})).job);}catch(e){beginJob(oldId,{startedAt:Date.now()});resumeButton.hidden=false;throw e;}}));
   planUpload=createPlanUpload(root,{storageKey:()=> 'acs_plan_source:'+window.ACS_AUTH.storageScope(),onError:safeError});
   const sourceGenerate=el('button','قراءة المخطط وحفظ مسودة',null,'cw-primary');sourceGenerate.id='cwGenerateSource';sourceGenerate.type='button';sourceGenerate.dataset.mutate='';sourceGenerate.hidden=true;
   root.querySelector('[data-step-panel="2"] .cw-card').append(sourceGenerate);
   sourceGenerate.addEventListener('click',()=>run(()=>generation('A')));
-  $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;sourceGenerate.textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2);}catch(err){safeError(err);}});
+  $('cwBriefForm').addEventListener('submit',e=>{e.preventDefault();try{const confirmedProgram=briefProgram();const uploaded=!!planUpload.command().source_id;if(!$('cwConfirmed').checked)throw new Error('أكد المتطلبات قبل المتابعة.');if(!uploaded)residentialOptions.prepare(confirmedProgram);root.querySelector('.cw-options').hidden=uploaded;sourceGenerate.hidden=!uploaded;sourceGenerate.textContent=$('cwSourceMode').value==='revise'?'اقتراح التعديل وحفظ مسودة':'قراءة المخطط وحفظ مسودة';status(uploaded?'ملفك محفوظ. ابدأ قراءة المخطط عندما تكون جاهزًا.':'اختر هدفًا للمخطط لبدء مقترح واحد. ستراجعه قبل الاعتماد.');step(2);}catch(err){safeError(err);}});
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('تم فتح آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
-  $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
+  $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
   $('cwRevision').addEventListener('change',()=>run(()=>refresh($('cwRevision').value,true)));
   $('cwLevel').addEventListener('change',draw);
   $('cwType').addEventListener('change',projectCopy);
@@ -295,11 +309,12 @@ function mount(){
   $('cwNewProjectForm').addEventListener('submit',e=>{e.preventDefault();run(async()=>{const s=await window.ACS_AUTH.freshSession();const data=await window.ACS_AUTH.acsFetchJSON('/v1/auth/projects',{action:'create',name:$('cwProjectName').value},s.access_token);localStorage.setItem('acs_project_v1',JSON.stringify(data.projects[0]));location.reload();});});
 }
 async function start(){
-  if(!window.ACS?.projectId||!window.ACS?.authSession)return;
-  mount();projectId=window.ACS.projectId;root.hidden=false;document.body.classList.add('acs-connected');
+  if(starting||!window.ACS?.projectId||!window.ACS?.authSession)return;
+  starting=true;projectId=window.ACS.projectId;mount();root.style.visibility='hidden';root.hidden=false;document.body.classList.add('acs-connected');
   status('جارٍ فتح مشروعك ونسخه المحفوظة…');
   try{const data=await api({action:'state'});await renderState(data);fillBrief(data);await projectList();status('مشروعك جاهز. كل تعديل محفوظ يظهر في قائمة النسخ.');}
   catch(e){safeError(e);fillBrief(null);}
+  finally{root.style.visibility='visible';starting=false;}
   try{await planUpload.restore();}catch(e){safeError(e);}
   stopProgress();pendingJob=null;
   try{const saved=JSON.parse(localStorage.getItem(jobKey())||'null');if(typeof saved?.jobId==='string'&&saved.jobId)beginJob(saved.jobId,saved);}catch(e){}

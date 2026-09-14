@@ -31,7 +31,10 @@ export function createBriefEditor(root,{storageKey,onError}) {
     for(const [key,label] of Object.entries(metricLabels)){if(fields[key])continue;const o=el('option',label,select);o.value=key;}
     if(data.metric&&!Object.hasOwn(metricLabels,data.metric)){const o=el('option',data.metric+' · متطلب محفوظ',select);o.value=data.metric;}
     select.value=data.metric||'room_count';
-    const role=el('input',null,el('td',null,row));role.dataset.role='';role.placeholder='مثل: bedroom / storage';role.setAttribute('aria-label','رمز الاستخدام');role.value=data.role||'';role.maxLength=80;
+    const role=el('select',null,el('td',null,row));role.dataset.role='';role.setAttribute('aria-label','استخدام الفراغ');
+    const uses={bedroom:'غرفة نوم',living:'صالة',kitchen:'مطبخ',bathroom:'دورة مياه',majlis:'مجلس',corridor:'ممر',stairs:'درج',elevator:'مصعد',office:'مكتب',storage:'تخزين',staging:'تجهيز',receiving:'استلام',shipping:'شحن'};
+    if(data.role&&!Object.hasOwn(uses,data.role))uses[data.role]=data.role;
+    for(const [id,label] of Object.entries(uses)){const o=el('option',label,role);o.value=id;}role.value=data.role||'bedroom';
     const expected=el('input',null,el('td',null,row));expected.dataset.value='';expected.type='number';expected.min='0';expected.step='any';expected.setAttribute('aria-label','القيمة المطلوبة');expected.value=data.expected??'';
     const remove=el('button','حذف',el('td',null,row));remove.type='button';remove.setAttribute('aria-label','حذف المتطلب');
     remove.addEventListener('click',()=>{row.remove();draft();showQuestions();});

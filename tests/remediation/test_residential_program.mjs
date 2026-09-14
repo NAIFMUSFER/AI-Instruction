@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';
+import {readResidential,residentialOptions} from '../../public/app/core/residential-program.mjs';
+assert.deepEqual(readResidential('عمارة من دورين بإجمالي ٤ شقق'),{units:4,scope:'total',unitEvidence:'4 شقق',levels:2});
+assert.equal(readResidential('عمارة ٣ أدوار، ٤ شقق في كل دور').scope,'per_level');
+const total=residentialOptions({units:4,levels:2,width:20,depth:25});
+assert.deepEqual(total[0].distribution,[2,2]);assert.equal(total[1].bedrooms,3);assert.equal(total[2].majlis,1);
+assert.equal(residentialOptions({units:4,scope:'per_level',levels:3,width:20,depth:25})[0].total,12);
+assert.equal(residentialOptions({units:4,levels:2,width:5,depth:5})[0].feasible,false);
+assert.ok(residentialOptions({units:4,levels:2,width:20,depth:25,bedrooms:4,bathrooms:3,guests:'none'}).every(x=>x.bedrooms===4&&x.bathrooms===3&&x.majlis===0));
+assert.throws(()=>residentialOptions({units:0,levels:2,width:20,depth:25}));
+assert.throws(()=>residentialOptions({units:4,levels:2,width:20,depth:25,bedrooms:2.5}));
+console.log('PASS residential totals, floor distribution, explicit requirements and area rejection');

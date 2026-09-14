@@ -36,6 +36,8 @@ jobs:
           node tests/remediation/test_auth_session.js 2>&1 | tee logs/auth-session.log
           python3 tests/remediation/test_auth_gateway.py 2>&1 | tee logs/auth-gateway.log
           python3 tests/remediation/test_connected_workspace.py 2>&1 | tee logs/connected-workspace.log
+          python3 tests/remediation/test_workspace_recovery.py 2>&1 | tee logs/workspace-recovery.log
+          node tests/remediation/test_residential_program.mjs 2>&1 | tee logs/residential-program.log
           python3 tests/remediation/test_plan_source_upload.py 2>&1 | tee logs/plan-source-upload.log
           node tests/remediation/test_brief_program.mjs 2>&1 | tee logs/brief-program.log
       - name: Short-request recovery in Chromium and WebKit
