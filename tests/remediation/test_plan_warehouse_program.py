@@ -17,7 +17,7 @@ import acs_plan_review as P
 from test_plan_scorecard import warehouse_model
 from test_plan_warehouse_operational_metrics import warehouse as operational_warehouse
 
-BRIEF = "Warehouse requires storage, docks, racks, stations, forklift lanes and an expansion reserve."
+BRIEF = "Warehouse requires storage, docks, racks, stations, forklift lanes, an expansion reserve, MEP zones and fire-safety zones."
 
 
 def verified(_model):
@@ -54,6 +54,44 @@ class WarehouseProgramTests(unittest.TestCase):
                                         450.0, role="storage")])
         self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
         self.assertFalse(too_large["can_approve"])
+
+    def test_mep_and_fire_safety_zone_minimums_use_only_explicit_declared_geometry(self):
+        model = warehouse_model()
+        model["floors"]["ground"]["rooms"].extend([
+            {"id": "mep_service", "role": "mep", "rect": [30.0, 10.0, 5.0, 4.0]},
+            {"id": "fire_safety_zone", "role": "fire_safety", "rect": [35.0, 10.0, 5.0, 4.0]},
+        ])
+        good = review([
+            requirement("mep-zone", "MEP zones", "min_zone_area_m2", 20.0, role="mep"),
+            requirement("fire-zone", "fire-safety zones", "min_zone_area_m2", 20.0,
+                        role="fire_safety"),
+        ], model=model)
+        self.assertTrue(good["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(good))
+
+        too_large = review([
+            requirement("fire-zone", "fire-safety zones", "min_zone_area_m2", 21.0,
+                        role="fire_safety")
+        ], model=model)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
+        self.assertFalse(too_large["can_approve"])
+
+        incomplete = copy.deepcopy(model)
+        del incomplete["floors"]["ground"]["rooms"][-1]["rect"]
+        unknown = review([
+            requirement("fire-zone", "fire-safety zones", "min_zone_area_m2", 20.0,
+                        role="fire_safety")
+        ], model=incomplete)
+        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown))
+        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown))
+
+        residential = copy.deepcopy(model)
+        residential["meta"]["type"] = "residential"
+        not_applicable = review([
+            requirement("mep-zone", "MEP zones", "min_zone_area_m2", 20.0, role="mep")
+        ], model=residential)
+        self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
+        self.assertFalse(not_applicable["can_approve"])
 
     def test_dock_count_supports_total_edge_and_minimum_constraints(self):
         total = review([requirement("dock-total", "docks", "dock_count", 3)])
