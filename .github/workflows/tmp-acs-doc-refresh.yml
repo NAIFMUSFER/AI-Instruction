@@ -1,0 +1,32 @@
+name: Temporary ACS measured-doc refresh
+on:
+  push:
+    branches:
+      - feature/async-exact-comparison-v2
+permissions:
+  contents: read
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: |
+          npm ci
+          npx playwright install --with-deps chromium
+          python3 tools/bundle_report.py
+          bash tools/netlify-build.sh
+          python -m pip install -r requirements.txt -r requirements-dev.txt
+          python3 tools/check_doc_claims.py --fix
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acs-measured-doc-refresh
+          path: |
+            KNOWN-ISSUES.md
+            tests/performance/bundle_report.json
+          if-no-files-found: error
