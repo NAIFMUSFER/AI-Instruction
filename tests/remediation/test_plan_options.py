@@ -110,6 +110,40 @@ class PlanOptionTests(unittest.TestCase):
         self.assertFalse(result["claims_regulatory_compliance"])
         self.assertFalse(result["claims_structural_safety"])
 
+    def test_warehouse_options_compare_explicit_mep_and_fire_zone_allocation_without_compliance_claims(self):
+        option_a = warehouse()
+        option_b = warehouse()
+        option_a["floors"]["ground"]["rooms"].extend([
+            {"id": "mep", "role": "mep", "rect": [0.0, 10.0, 5.0, 4.0]},
+            {"id": "fire", "role": "fire_safety", "rect": [5.0, 10.0, 5.0, 4.0]},
+        ])
+        option_b["floors"]["ground"]["rooms"].extend([
+            {"id": "mep", "role": "mep", "rect": [0.0, 10.0, 6.0, 4.0]},
+            {"id": "fire", "role": "fire_safety", "rect": [6.0, 10.0, 4.0, 4.0]},
+        ])
+
+        result = O.compare_options([
+            {"id": "A", "model": option_a},
+            {"id": "B", "model": option_b},
+        ], declared_program_receipt="program:warehouse:mep-fire-options")
+        delta = result["options"][1]["delta_from_reference"]
+
+        self.assertEqual(delta["mapping"]["zone_area_by_role_m2"]["mep"], 4.0)
+        self.assertEqual(delta["mapping"]["zone_area_by_role_m2"]["fire_safety"], -4.0)
+        self.assertAlmostEqual(delta["mapping"]["zone_area_ratio_by_role"]["mep"],
+                               0.00625, places=6)
+        self.assertAlmostEqual(delta["mapping"]["zone_area_ratio_by_role"]["fire_safety"],
+                               -0.00625, places=6)
+        self.assertIn("zone_area_by_role_m2",
+                      delta["availability"]["mapping_comparable"])
+        self.assertIn("zone_area_ratio_by_role",
+                      delta["availability"]["mapping_comparable"])
+        for row in result["options"]:
+            self.assertIsNone(row["scorecard"]["metrics"]["fire_life_safety_compliance"])
+        self.assertFalse(result["claims_best_option"])
+        self.assertFalse(result["claims_regulatory_compliance"])
+        self.assertFalse(result["claims_structural_safety"])
+
     def test_missing_rack_height_makes_height_delta_unknown_not_zero(self):
         incomplete = warehouse()
         del incomplete["floors"]["ground"]["rooms"][1]["racks"][0]["h"]
