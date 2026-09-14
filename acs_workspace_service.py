@@ -26,6 +26,7 @@ OPTIONS = {
 
 # Persist only trusted validator categories, never provider text or geometry.
 GEOMETRY_MESSAGES = {
+    "AREA_EXCEEDS_SITE": "مجموع مساحات الفراغات التي ولّدها النظام أكبر من مساحة الموقع. لا يكفي تغيير مواقعها؛ يلزم مراجعة أحجام الفراغات والتوزيع.",
     "SITE_NOT_SPECIFIED": "أبعاد الموقع في المخطط الناتج غير محددة أو غير صالحة.",
     "DIMENSION_NOT_SPECIFIED": "بعض ارتفاعات المبنى أو سماكات الجدران في المخطط الناتج غير محددة أو غير صالحة.",
     "LEVELS_NOT_SPECIFIED": "المخطط الناتج لا يحدد الأدوار.",

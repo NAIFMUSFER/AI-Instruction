@@ -55,7 +55,64 @@ class Runner:
 
 
 class WorkspaceLifecycle(unittest.TestCase):
-    def test_overlap_repair_is_position_only_bounded_and_validated(self):
+    def test_local_placement_preserves_sizes_data_and_spends_no_provider_calls(self):
+        from acs_plan_overlap_repair import repair_overlap
+        import acs_understand as U
+        original = model('warehouse')
+        rooms = original['floors']['ground']['rooms']
+        for r in rooms: r['points'] = []
+        rooms[1]['rect'][:2] = [2, 0]
+        before = copy.deepcopy(original)
+        with limited(1) as budget, patch.object(U, 'call_llm') as provider:
+            consume()
+            fixed = repair_overlap(original, 'مستودع', budget)
+            again = repair_overlap(original, 'مستودع', budget)
+            provider.assert_not_called()
+            self.assertEqual(budget['used'], 1)
+        self.assertEqual(fixed, again)
+        self.assertEqual(S._geometry(fixed)[0], [])
+        for old, new in zip(rooms, fixed['floors']['ground']['rooms']):
+            self.assertEqual(old['rect'][2:], new['rect'][2:])
+            new['rect'][:2] = old['rect'][:2]
+        self.assertEqual(fixed, original)
+        self.assertEqual(original, before)
+
+    def test_local_placement_rejects_oversubscribed_generated_area(self):
+        from acs_plan_overlap_repair import repair_overlap
+        import acs_understand as U
+        original = model('warehouse')
+        for r in original['floors']['ground']['rooms']:
+            r['points'] = []
+            r['rect'] = [0, 0, 20, 20]
+        with limited(6) as budget, patch.object(U, 'call_llm') as provider:
+            with self.assertRaises(PlanError) as caught:
+                repair_overlap(original, 'مستودع', budget)
+            self.assertEqual(caught.exception.code, 'PLAN_GEOMETRY_AREA_EXCEEDS_SITE')
+            self.assertIn('ولّدها النظام', S.geometry_failure_message(caught.exception.code))
+            provider.assert_not_called()
+
+    def test_local_placement_handles_24_zones_and_respects_scope(self):
+        from acs_plan_overlap_repair import repair_overlap, place_nonoverlapping
+        import acs_understand as U
+        original = model('warehouse')
+        original['site'] = {'w':100,'d':150}
+        original['floors']['ground']['rooms'] = [
+            {'id':str(i),'role':'storage','rect':[0,0,20,20],'walls':'none'} for i in range(24)]
+        with limited(6) as budget, patch.object(U,'call_llm') as provider:
+            fixed = repair_overlap(original, 'مستودع', budget)
+            provider.assert_not_called()
+        self.assertEqual(len(fixed['floors']['ground']['rooms']),24)
+        self.assertEqual(S._geometry(fixed)[0],[])
+        original['levels'].append({'index':1,'template':'ground'})
+        self.assertIsNone(place_nonoverlapping(original))
+        original['levels'].pop()
+        original['floors']['ground']['rooms'][0]['points'] = [{'x':1,'z':1}]
+        with limited(6) as budget, patch.object(U,'call_llm') as provider:
+            self.assertEqual(repair_overlap(original,'مستودع',budget),original)
+            provider.assert_not_called()
+
+    @patch("acs_plan_overlap_repair.place_nonoverlapping", return_value=None)
+    def test_overlap_repair_is_position_only_bounded_and_validated(self, placement):
         from acs_plan_overlap_repair import repair_overlap
         import acs_understand as U
         original = model('warehouse')
