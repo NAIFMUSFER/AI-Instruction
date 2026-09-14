@@ -899,8 +899,15 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         tel["provider_model"] = model
         tel["provider_base_host"] = cfg.base_host
 
+        # DeepSeek also accepts Anthropic's model aliases through its official
+        # endpoint. Identify the actual SDK destination (including the legacy
+        # ANTHROPIC_BASE_URL), not only the configured API-format/provider name.
+        # This changes a request control, never the endpoint, key or model.
+        wire_base = getattr(client, "base_url", None) or cfg.base_url or ""
+        deepseek_wire = (cfg.provider == "deepseek" or
+                         PROV.base_host(str(wire_base)) == "api.deepseek.com")
         supports_thinking = _sdk_supports(client, "thinking")
-        supports_thinking_body = (cfg.provider == "deepseek"
+        supports_thinking_body = (deepseek_wire
                                   and _sdk_supports(client, "extra_body"))
 
         def _build_kw(mt, thinking):
@@ -919,7 +926,7 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
             kw = dict(model=model, max_tokens=mt, system=sys_p, messages=msgs)
             if thinking is not None and supports_thinking:
                 kw["thinking"] = thinking
-            elif thinking is not None and cfg.provider == "deepseek":
+            elif thinking is not None and deepseek_wire:
                 if not supports_thinking_body:
                     raise E.AcsApiError(
                         E.ACS_INTEGRATION_ERROR,
