@@ -15,11 +15,11 @@
     "target": "The deployed index.html is an index SHELL — markup, <link rel=stylesheet>, five classic boot scripts and <script type=module src=/app/main.js> — and every line of application logic lives in cacheable files under public/app/."
   },
   "connected_workspace": {
-    "additional_css_bytes": 7946,
+    "additional_css_bytes": 8276,
     "assets": [
       {
-        "bytes": 40497,
-        "gzip_bytes": 12337,
+        "bytes": 43804,
+        "gzip_bytes": 13193,
         "loaded": "initial-module",
         "path": "public/app/ui/connected-workspace.mjs"
       },
@@ -36,13 +36,13 @@
         "path": "public/app/ui/approved-viewer.mjs"
       },
       {
-        "bytes": 7946,
-        "gzip_bytes": 2230,
+        "bytes": 8276,
+        "gzip_bytes": 2306,
         "loaded": "initial-css",
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 50570,
+    "initial_javascript_bytes": 53877,
     "lazy_javascript_bytes": 0,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1578255,
+    "core_initial_bytes": 1581562,
     "core_initial_module_count": 27,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 14,
@@ -172,17 +172,17 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 39,
-    "first_party_total_bytes": 2096584,
-    "initial_javascript_bytes": 1630715,
+    "first_party_total_bytes": 2099891,
+    "initial_javascript_bytes": 1634022,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
       "gzip_bytes": 48735,
       "loaded": "eager",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 10.91
+      "pct_of_first_party_js": 10.89
     },
-    "largest_module_pct_of_first_party_js": 10.91,
+    "largest_module_pct_of_first_party_js": 10.89,
     "lazy_bytes": 465869,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
@@ -210,7 +210,7 @@
         "gzip_bytes": 48735,
         "loaded": "eager",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 10.91
+        "pct_of_first_party_js": 10.89
       },
       {
         "bytes": 205018,
@@ -218,7 +218,7 @@
         "gzip_bytes": 56862,
         "loaded": "eager",
         "path": "public/app/core/disciplines.js",
-        "pct_of_first_party_js": 9.78
+        "pct_of_first_party_js": 9.76
       },
       {
         "bytes": 204058,
@@ -226,7 +226,7 @@
         "gzip_bytes": 62327,
         "loaded": "eager",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 9.73
+        "pct_of_first_party_js": 9.72
       },
       {
         "bytes": 198744,
@@ -234,7 +234,7 @@
         "gzip_bytes": 64081,
         "loaded": "eager",
         "path": "public/app/core/viewer.js",
-        "pct_of_first_party_js": 9.48
+        "pct_of_first_party_js": 9.46
       },
       {
         "bytes": 166057,
@@ -242,7 +242,7 @@
         "gzip_bytes": 50111,
         "loaded": "eager",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 7.92
+        "pct_of_first_party_js": 7.91
       },
       {
         "bytes": 122705,
@@ -250,7 +250,7 @@
         "gzip_bytes": 30357,
         "loaded": "eager",
         "path": "public/app/generated/authoring.js",
-        "pct_of_first_party_js": 5.85
+        "pct_of_first_party_js": 5.84
       },
       {
         "bytes": 115993,
@@ -258,7 +258,7 @@
         "gzip_bytes": 33152,
         "loaded": "lazy",
         "path": "public/app/generated/docs.js",
-        "pct_of_first_party_js": 5.53
+        "pct_of_first_party_js": 5.52
       },
       {
         "bytes": 104379,
@@ -266,7 +266,7 @@
         "gzip_bytes": 30687,
         "loaded": "lazy",
         "path": "public/app/generated/workspace-ui.js",
-        "pct_of_first_party_js": 4.98
+        "pct_of_first_party_js": 4.97
       },
       {
         "bytes": 99740,
@@ -274,7 +274,7 @@
         "gzip_bytes": 29046,
         "loaded": "lazy",
         "path": "public/app/generated/render-engine.js",
-        "pct_of_first_party_js": 4.76
+        "pct_of_first_party_js": 4.75
       },
       {
         "bytes": 75987,
@@ -325,20 +325,20 @@
         "pct_of_first_party_js": 2.26
       },
       {
+        "bytes": 43804,
+        "group": "ui",
+        "gzip_bytes": 13193,
+        "loaded": "eager",
+        "path": "public/app/ui/connected-workspace.mjs",
+        "pct_of_first_party_js": 2.09
+      },
+      {
         "bytes": 42333,
         "group": "trust",
         "gzip_bytes": 13716,
         "loaded": "eager",
         "path": "public/app/trust/wiring.js",
         "pct_of_first_party_js": 2.02
-      },
-      {
-        "bytes": 40497,
-        "group": "ui",
-        "gzip_bytes": 12337,
-        "loaded": "eager",
-        "path": "public/app/ui/connected-workspace.mjs",
-        "pct_of_first_party_js": 1.93
       },
       {
         "bytes": 29561,
@@ -612,7 +612,7 @@
     "sha256": "6aceb13f8f90d6d664c57b9f031dd370ef2b90d93b2d22a86822237a3298be45",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2096584 bytes) lives in 39 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2099891 bytes) lives in 39 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "empty": false,
     "file_count": 558,
