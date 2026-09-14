@@ -124,6 +124,8 @@ class Recovery(unittest.TestCase):
         self.assertEqual(result['pending'],result['zones'])
         self.assertIsNone(manifest('ارتفاع الدور 4 متر',rows))
         self.assertIsNone(manifest('بدون مصعد',rows))
+        self.assertIsNone(manifest('no elevator',rows))
+        self.assertIsNone(manifest('مصعد غير مطلوب',rows))
         self.assertIsNone(manifest('توزيع الشقق من الأرضي إلى الأعلى: 3، 1.',rows))
         changed=copy.deepcopy(rows);changed[-1]['expected']=1
         self.assertIsNone(manifest('عمارة',changed))
@@ -142,5 +144,52 @@ class Recovery(unittest.TestCase):
         error=E.classify_upstream(httpx.RemoteProtocolError('incomplete chunked read'))
         self.assertEqual(error.code,E.ACS_UPSTREAM_CONNECTION)
         self.assertIn('انقطع اتصال',S.geometry_failure_message(error.code))
+
+    def test_residential_subtypes_run_manifest_geometry_and_openings(self):
+        from acs_residential_manifest import manifest
+        from acs_residential_generation import PLANNING_SYSTEM
+        from acs_workspace_progress import planning_system
+        from acs_provider_budget import consume
+        from acs_plan_review import _program
+        specs=[('site_width_m',None,20),('site_depth_m',None,25),
+               ('level_count',None,2),('unit_count',None,4)]
+        for role,count in [('bedroom',2),('living',1),('kitchen',1),('bathroom',2),('majlis',0)]:
+            specs.extend([('room_count',role,count*4),('room_count_per_unit',role,count)])
+        rows=[{'id':str(i),'metric':metric,'role':role,'expected':n,
+               'confirmed':True,'source':'inferred'} for i,(metric,role,n) in enumerate(specs)]
+        for label,kind in [('عمارة سكنية','apartment'),('فيلا','villa'),('سكني','residential')]:
+            with self.subTest(kind=kind):
+                brief=label+' بدرج ومصعد'
+                self.assertEqual(U.detect_type(brief),kind)
+                zones=manifest(brief,rows)['zones']
+                rooms=[{**z,'name':'فراغ '+str(i),'rect':[(i%5)*4,(i//5)*4,4,4],
+                        'walls':['N','S','E','W']} for i,z in enumerate(zones)]
+                stages=[];events=[]
+                def provider(text,**kw):
+                    stage=kw['stage'];stages.append(stage);consume()
+                    if stage=='plan_chunk':
+                        self.assertEqual(planning_system(stage),PLANNING_SYSTEM)
+                        return json.dumps({'rooms':rooms})
+                    self.assertEqual(stage,'detail','The confirmed apartment manifest must skip outline')
+                    return json.dumps({'rooms':[{'id':r['id'],
+                        'doors':[{'id':'d_'+r['id'],'edge':'N','offset':2,'width':.9,'height':2.1}],
+                        'windows':[],'points':[{'id':'p_'+r['id'],'type':'light','x':2,'z':2}]} for r in rooms]})
+                with channel(events.append),patch.object(U,'call_llm',side_effect=provider):
+                    result=S.generate_plan_candidate(brief,rows,'A',6,used_calls=1)
+                self.assertEqual(stages,['plan_chunk','detail'])
+                self.assertEqual(result['provider_calls'],3)
+                self.assertEqual(_program(result['building'],brief,rows),[])
+                self.assertEqual(len(result['building']['floors']['residential_2']['rooms']),17)
+                self.assertTrue(all(r['doors'] for r in result['building']['floors']['residential_2']['rooms']))
+                self.assertTrue(any(e.get('checkpoint',{}).get('kind')=='details' for e in events))
+
+    def test_warehouse_does_not_enter_the_residential_pipeline(self):
+        from acs_workspace_progress import planning_system
+        def plan(*args,**kwargs):
+            self.assertIsNone(planning_system('plan_chunk'))
+            return model('warehouse')
+        with patch.object(U,'_plan_bounded',side_effect=plan),patch('acs_residential_generation.detail') as detail:
+            S.generate_plan_candidate('مستودع',[], 'A',3)
+        detail.assert_not_called()
 
 if __name__=='__main__':unittest.main()

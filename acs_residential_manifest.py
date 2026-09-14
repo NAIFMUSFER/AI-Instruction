@@ -40,7 +40,9 @@ def manifest(brief, requirements):
     if any(metric == 'room_count' and role not in ROLES for metric,role in by_key):
         return None
     # A negated/conditional elevator request needs interpretation, not a guess.
-    if re.search(r'(?:بدون|بلا|لا|ليس|اذا|ان|او).{0,20}(?:مصعد|elevator|lift)', normalized, re.I):
+    negative = r'(?<!\w)(?:بدون|بلا|لا|ليس|اذا|ان|او|غير|اختياري|no|not|without|if|unless|optional)(?!\w)'
+    core = r'(?:مصعد|\belevator\b|\blift\b)'
+    if re.search(negative+r'.{0,20}'+core+'|'+core+r'.{0,20}'+negative, normalized, re.I):
         return None
     elevator = bool(re.search(r'مصعد|\belevator\b|\blift\b', normalized, re.I))
     distribution = [units//levels + (i < units % levels) for i in range(levels)]

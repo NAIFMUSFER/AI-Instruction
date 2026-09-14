@@ -194,7 +194,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     from acs_provider_budget import limited
     from acs_workspace_progress import resuming, emit, planning_policy
     import acs_understand as U
-    residential = U.detect_type(brief) == "residential"
+    residential = U._is_residential(U.detect_type(brief))
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
     if residential:

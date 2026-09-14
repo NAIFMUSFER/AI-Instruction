@@ -11,7 +11,7 @@ const issueNames = {PROGRAM_NOT_CONFIRMED:'لم يؤكد برنامج المتط
 Object.assign(metricNames,{efficiency:'كفاءة المساحة',gross_floor_area_m2:'إجمالي مساحة الأرضيات (م²)',net_floor_area_m2:'صافي مساحة الأرضيات (م²)',unclassified_space_area_m2:'مساحة الفراغات غير المصنفة (م²)',unclassified_space_count:'عدد الفراغات غير المصنفة'});
 const value = v => v == null ? 'غير متحقق' : typeof v === 'object'
   ? (Array.isArray(v) ? v.map(value) : Object.entries(v).map(([k,n])=>(metricNames[k]||k)+': '+value(n))).join('\n') || 'لا توجد بيانات'
-  : String(v);
+  : typeof v === 'number' && Number.isFinite(v) ? String(Number(v.toPrecision(12))) : String(v);
 const floorLabel = index => index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور '+index;
 function roomLabel(label) {
   const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه'};
@@ -127,7 +127,8 @@ async function renderState(data, {keepStep=false}={}) {
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,value(v)]));
     table($('cwChecks'),Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]));
     $('cwIssues').replaceChildren();for(const issue of data.review_findings||packet.review.issues){
-      const text=(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+issue.requirement_id:'')+(issue.message?' — '+issue.message:'');
+      const requirement=data.requirements?.find(r=>r.id===issue.requirement_id);
+      const text=(issueNames[issue.code]||issue.code)+(issue.requirement_id?' · '+(requirement?.evidence||issue.requirement_id):'')+(issue.message?' — '+issue.message:'');
       const li=el('li',text,$('cwIssues')),fix=el('button','تجهيز طلب المعالجة',li);fix.type='button';
       fix.addEventListener('click',()=>{const match=issue.message?.match(/\[([^/\]]+)\/([^\]]+)\]/);const ref=Array.isArray(issue.room_ref)?issue.room_ref:match?.slice(1);if(ref){const index=packet.projections.findIndex(p=>p.primitives.some(r=>r.source.template===ref[0]&&r.source.room_id===ref[1]));if(index>=0){$('cwLevel').value=String(index);draw();selectRoom(packet.projections[index].primitives.find(r=>r.source.template===ref[0]&&r.source.room_id===ref[1]));}}
         $('cwChat').value='عالج الملاحظة التالية مع الحفاظ على المتطلبات المؤكدة والأقفال وعدم حذف الغرف: '+text; $('cwChat').focus();$('cwChatForm').scrollIntoView({block:'center',behavior:'smooth'});});
@@ -164,7 +165,7 @@ function draw() {
     svg('rect',{x,y:z,width:w,height:d},g);
     const size=Math.max(.16,Math.min(w,d)*.105);svg('text',{x:x+w/2,y:z+d/2,'font-size':size},g,label.slice(0,40));svg('text',{x:x+w/2,y:z+d/2+size*1.6,'font-size':size*.8},g,w+' × '+d+' م');
     g.addEventListener('click',()=>selectRoom(item));g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();selectRoom(item);}});
-    const b=el('button',label+' · '+item.space_rect_area_m2+' م²',$('cwSpaces'));b.type='button';b.addEventListener('click',()=>selectRoom(item));
+    const b=el('button',label+' · '+value(item.space_rect_area_m2)+' م²',$('cwSpaces'));b.type='button';b.addEventListener('click',()=>selectRoom(item));
   }
   for(const opening of state?.openings||[]){
     if(opening.level_index!==p.level_index||!Array.isArray(opening.line)||opening.line.length!==4||!opening.line.every(Number.isFinite))continue;
