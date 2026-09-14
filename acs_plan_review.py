@@ -356,7 +356,8 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                       "max_dock_count_by_zone_role", "min_rack_group_count",
                       "min_station_count", "min_lane_area_m2", "min_lane_centerline_length_m",
                       "max_lane_centerline_length_m", "max_lane_overlap_area_m2",
-                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2"}:
+                      "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2",
+                      "max_configured_route_length_m"}:
             if warehouse_metrics is None:
                 issue("REQUIREMENT_METRIC_NOT_APPLICABLE", rid)
                 continue
@@ -418,6 +419,18 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 actual = warehouse_metrics.get("station_count")
                 valid_expected = type(expected) is int and expected >= 0
                 minimum = True
+            elif kind == "max_configured_route_length_m":
+                route_id = r.get("route_id")
+                if not _id(route_id):
+                    issue("INVALID_REQUIREMENT_SELECTOR", rid)
+                    continue
+                by_id = warehouse_metrics.get("configured_route_length_by_id_m")
+                # A named route is never inferred or treated as measured zero. The
+                # scorecard fails the full configured-route set closed when any
+                # route geometry is malformed, so missing/partial data remains unknown.
+                actual = by_id.get(route_id.strip()) if isinstance(by_id, dict) else None
+                valid_expected = _number(expected) and expected >= 0
+                maximum = True
             elif kind == "max_lane_overlap_area_m2":
                 kind_a, kind_b = r.get("kind_a"), r.get("kind_b")
                 if (not _id(kind_a) or not _id(kind_b)
