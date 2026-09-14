@@ -99,6 +99,7 @@ class ThinkingWire(unittest.TestCase):
         self.assertEqual(url.host, "api.deepseek.com")
         self.assertEqual(url.path, "/anthropic/v1/messages")
         self.assertEqual(body.get("thinking"), {"type": "disabled"})
+        self.assertEqual(body["system"], U.system_prompt(U.detect_type("one room")))
         self.assertNotIn("extra_body", body)
         self.assertTrue(telemetry["thinking_sent"])
 
@@ -107,6 +108,7 @@ class ThinkingWire(unittest.TestCase):
             "type": "base64", "media_type": "image/png", "data": "dGVzdA=="}}]
         _, telemetry = self.call(stage="vision", content=content)
         self.assertEqual(self.sent[0][1]["messages"][0]["content"], content)
+        self.assertEqual(self.sent[0][1]["system"], U.vision_prompt("residential"))
         self.assertEqual(self.sent[0][1].get("thinking"), {"type": "disabled"})
         self.assertTrue(telemetry["thinking_sent"])
 

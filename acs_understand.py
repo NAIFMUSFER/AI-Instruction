@@ -585,7 +585,8 @@ def _emit_generation_telemetry(tel, stage, model=None, strategy=None,
 
 def call_llm(description, model=None, max_tokens=None, truncate=True, content=None,
              btype=None, user_msg=None, stage="single", telemetry=None,
-             request_id=None, strategy=None, chunk_index=None, chunk_count=None):
+             request_id=None, strategy=None, chunk_index=None, chunk_count=None,
+             *, system_override=None):
     """نداء النموذج + حدث تليمتري واحد له مهما كانت النتيجة (F-13).
 
     التوقيع الأصلي محفوظ حرفياً؛ `request_id` و`strategy` وسيطان اختياريان
@@ -599,7 +600,9 @@ def call_llm(description, model=None, max_tokens=None, truncate=True, content=No
     try:
         text = _call_llm_impl(description, model=model, max_tokens=max_tokens,
                               truncate=truncate, content=content, btype=btype,
-                              user_msg=user_msg, stage=stage, telemetry=tel)
+                              user_msg=user_msg, stage=stage, telemetry=tel,
+                              **({"system_override": system_override}
+                                 if system_override is not None else {}))
     except E.AcsApiError as err:
         up = err.upstream if isinstance(getattr(err, "upstream", None), dict) else {}
         _emit_generation_telemetry(tel, stage, model=model, strategy=strategy,
@@ -847,7 +850,7 @@ def _build_client(cfg, timeout_s):
 
 def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                    content=None, btype=None, user_msg=None, stage="single",
-                   telemetry=None):
+                   telemetry=None, *, system_override=None):
     """content اختياري: قائمة بلوكات (نص/صور) للرؤية. وإلا يُرسل description كنص.
 
     `telemetry` قاموس اختياري يُملأ بالقياسات الآمنة (لا نصّ الزائر ولا مفتاح):
@@ -883,6 +886,14 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
                        + REQUIREMENTS_RULE + "\nطلب العميل:\n\n")
         msgs = [{"role": "user", "content": (default_msg if user_msg is None else user_msg) + desc}]
         sys_p = system_prompt(btype or detect_type(desc))
+
+    # Internal, server-authored policy only; never populated from request fields.
+    # Source-plan transcription must not inherit the legacy vision instructions
+    # to infer measurements and add furnishings/MEP elements.
+    if system_override is not None:
+        if not isinstance(system_override, str) or not system_override.strip():
+            raise E.AcsApiError(E.ACS_INTEGRATION_ERROR)
+        sys_p = system_override
 
     def _attempt(cfg):
         """نداءٌ كاملٌ على مزوّدٍ واحد محلول. يعيد النصّ أو يرفع AcsApiError.
