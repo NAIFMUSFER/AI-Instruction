@@ -104,6 +104,12 @@ def _view_result(workspace: PlanLockWorkspace, action: str, revision_id: str,
         result["semantic_diff"] = _semantic_diff(
             workspace, reference_revision_id, revision_id,
         )
+        # Reuse the existing deterministic scorecard/options comparison so a
+        # mutation response exposes measured impact without another provider call
+        # or any new ranking/compliance authority.
+        result["revision_comparison"] = workspace.compare_revisions(
+            reference_revision_id, revision_id,
+        )
     return result
 
 

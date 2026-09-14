@@ -79,6 +79,16 @@ class SemanticDiffCommandTests(unittest.TestCase):
         self.assertFalse(any(row.get("element_id") == "lift_1" for row in diff["changes"]))
         self.assertEqual(ws.get(out["head"]).semantic_lock_count, 1)
 
+        impact = out["revision_comparison"]
+        self.assertEqual(impact["reference_revision_id"], locked_head)
+        self.assertEqual(impact["target_revision_id"], out["head"])
+        self.assertTrue(impact["same_program_content"])
+        target = impact["measured"]["options"][1]["delta_from_reference"]
+        self.assertEqual(target["scalar"]["space_rect_area_m2"], -24.0)
+        self.assertEqual(target["mapping"]["space_area_by_role_m2"]["living"], -24.0)
+        self.assertFalse(impact["claims_best_option"])
+        self.assertFalse(impact["claims_regulatory_compliance"])
+
     def test_warehouse_chat_edit_reports_staging_geometry_not_locked_rack_or_dock(self):
         ws = PlanLockWorkspace(verifier=verifier)
         first = ws.propose(warehouse(), brief="site width 30 warehouse",
@@ -109,6 +119,19 @@ class SemanticDiffCommandTests(unittest.TestCase):
         self.assertFalse(any(row.get("element_id") in {"rack_a", "dock_n1"}
                              for row in diff["changes"]))
         self.assertEqual(ws.get(out["head"]).semantic_lock_count, 2)
+
+        impact = out["revision_comparison"]
+        self.assertEqual(impact["reference_revision_id"], head)
+        self.assertEqual(impact["target_revision_id"], out["head"])
+        self.assertTrue(impact["same_program_content"])
+        target = impact["measured"]["options"][1]["delta_from_reference"]
+        self.assertEqual(target["scalar"]["space_rect_area_m2"], 0.0)
+        self.assertEqual(target["mapping"]["zone_area_by_role_m2"]["staging"], 20.0)
+        self.assertEqual(target["mapping"]["zone_area_by_role_m2"]["shipping"], -20.0)
+        self.assertTrue(impact["measured"]["same_site_geometry"])
+        self.assertTrue(impact["measured"]["same_level_configuration"])
+        self.assertFalse(impact["claims_best_option"])
+        self.assertFalse(impact["claims_regulatory_compliance"])
 
 
 if __name__ == "__main__":
