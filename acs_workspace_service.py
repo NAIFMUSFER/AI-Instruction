@@ -47,6 +47,7 @@ def geometry_failure_message(code):
     messages = {
         "ACS_TIMEOUT":"انتهت مهلة المعالجة. يمكنك استئناف المراحل المحفوظة دون إعادة ما اكتمل.",
         "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد. استأنف من آخر مرحلة محفوظة.",
+        "ACS_UPSTREAM_CONNECTION":"انقطع اتصال خدمة التوليد قبل اكتمال الرد. استأنف المهمة من البرنامج والمراحل المحفوظة.",
         "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. استأنف المراحل المحفوظة.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
@@ -199,6 +200,9 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     if residential:
         from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail
         prompt += "\n" + ROOM_PROGRAM
+        if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
+            from acs_residential_manifest import manifest
+            resume = manifest(brief, requirements)
     with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(PLANNING_SYSTEM if residential else None):
         detailed = isinstance(resume,dict) and resume.get("kind") == "details"
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}

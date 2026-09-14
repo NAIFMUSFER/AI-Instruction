@@ -103,4 +103,44 @@ class Recovery(unittest.TestCase):
             with self.assertRaises(E.AcsApiError):consume()
         self.assertEqual(budget['used'],3)
 
+    def test_confirmed_apartment_program_compiles_without_a_provider(self):
+        from acs_residential_manifest import manifest
+        rows=[]
+        def add(metric,expected,role=None):
+            rows.append({'metric':metric,'expected':expected,'role':role,'confirmed':True,'source':'requested'})
+        for metric,expected in [('site_width_m',20),('site_depth_m',25),('level_count',2),('unit_count',4)]:add(metric,expected)
+        for role,count in [('bedroom',2),('living',1),('kitchen',1),('bathroom',2),('majlis',0)]:
+            add('room_count_per_unit',count,role);add('room_count',count*4,role)
+        with patch.object(U,'call_llm') as provider:
+            result=manifest('عمارة بدرج ومصعد',rows)
+        provider.assert_not_called()
+        self.assertEqual(result['envelope']['site'],{'w':20,'d':25})
+        self.assertEqual(len(result['envelope']['levels']),2)
+        self.assertEqual(len(set(l['template'] for l in result['envelope']['levels'])),1)
+        self.assertEqual(sum(z['role']=='bedroom' for z in result['zones'])*2,8)
+        self.assertEqual(sum(z['role']=='stairs' for z in result['zones']),1)
+        self.assertEqual(sum(z['role']=='elevator' for z in result['zones']),1)
+        self.assertEqual(len({z['id'] for z in result['zones']}),len(result['zones']))
+        self.assertEqual(result['pending'],result['zones'])
+        self.assertIsNone(manifest('ارتفاع الدور 4 متر',rows))
+        self.assertIsNone(manifest('بدون مصعد',rows))
+        self.assertIsNone(manifest('توزيع الشقق من الأرضي إلى الأعلى: 3، 1.',rows))
+        changed=copy.deepcopy(rows);changed[-1]['expected']=1
+        self.assertIsNone(manifest('عمارة',changed))
+
+    def test_failed_first_stage_keeps_a_bounded_resume_path(self):
+        row={'id':'x','state':'FAILED','provider_calls':1,'resume_command':command()}
+        view=H._job_view(row)['job']
+        self.assertTrue(view['can_resume']);self.assertEqual(view['provider_calls'],1)
+        self.assertFalse(H._job_view(dict(row,state='SUCCEEDED'))['job']['can_resume'])
+        self.assertFalse(H._job_view(dict(row,resume_command=None))['job']['can_resume'])
+        self.assertFalse(H._job_view(dict(row,resume_command=dict(command(),source_id='source')))['job']['can_resume'])
+
+    def test_incomplete_upstream_stream_is_a_connection_error(self):
+        import httpx
+        import acs_api_errors as E
+        error=E.classify_upstream(httpx.RemoteProtocolError('incomplete chunked read'))
+        self.assertEqual(error.code,E.ACS_UPSTREAM_CONNECTION)
+        self.assertIn('انقطع اتصال',S.geometry_failure_message(error.code))
+
 if __name__=='__main__':unittest.main()

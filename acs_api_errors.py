@@ -344,6 +344,7 @@ _BY_CLASS = (
     ("RateLimitError",        ACS_UPSTREAM_RATE_LIMIT),
     ("APITimeoutError",       ACS_UPSTREAM_TIMEOUT),
     ("APIConnectionError",    ACS_UPSTREAM_CONNECTION),
+    ("RemoteProtocolError",   ACS_UPSTREAM_CONNECTION),
     ("BadRequestError",       ACS_UPSTREAM_BAD_REQUEST),
     ("InternalServerError",   ACS_UPSTREAM_UNAVAILABLE),
     ("APIStatusError",        ACS_UPSTREAM_UNKNOWN),

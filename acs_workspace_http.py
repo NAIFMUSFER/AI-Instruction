@@ -46,13 +46,15 @@ def _job_view(row):
     state = row.get("state")
     if state == "RUNNING" and (row.get("worker_id") != WORKER_ID or row.get("id") not in ACTIVE_JOBS):
         state = "INTERRUPTED"
+    original = row.get("resume_command") or {}
+    can_restart = isinstance(original,dict) and original.get('action') == 'generate' and not original.get('source_id')
     return {"ok": True, "job": {"id": row["id"], "state": state,
         "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
         "error_code": row.get("error_code"),
         "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state == "FAILED" else None,
         "phase": row.get("phase"), "progress": row.get("progress"),
         "provider_calls": row.get("provider_calls", 0),
-        "can_resume": bool(row.get("checkpoint")) and state in {"FAILED", "INTERRUPTED"},
+        "can_resume": bool(row.get("checkpoint") or can_restart) and state in {"FAILED", "INTERRUPTED"},
         "storage": "supabase", "automatic_resubmission": False}}
 
 
@@ -124,9 +126,9 @@ class WorkspaceMiddleware:
                "resume_command": command, "phase":"UNDERSTANDING"}
         if command.get("resume_job_id"):
             source = await asyncio.to_thread(_read_job, store, project_id, _id(command["resume_job_id"]))
-            if not source or not source.get("checkpoint") or _job_view(source)["job"]["state"] not in {"FAILED", "INTERRUPTED"}:
+            if not source or not _job_view(source)["job"]["can_resume"]:
                 raise PlanError("INVALID_RESUME", "لا توجد مرحلة محفوظة قابلة للاستئناف.")
-            row.update(checkpoint=source["checkpoint"], provider_calls=source.get("provider_calls",0), phase=source.get("phase"))
+            row.update(checkpoint=source.get("checkpoint") or {"kind":"start"}, provider_calls=source.get("provider_calls",0), phase=source.get("phase"))
         inserted = await asyncio.to_thread(store._request, "POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
                                            prefer="resolution=ignore-duplicates,return=representation")
         if not isinstance(inserted, list):
