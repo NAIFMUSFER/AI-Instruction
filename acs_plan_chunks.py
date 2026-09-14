@@ -547,6 +547,9 @@ def validate_chunk(chunk, payload):
             brief = brief[:BRIEF_MAX_CHARS]
         out = {"id": rid, "rect": [round(v, 4) for v in vals],
                "role": str(r.get("role") or "")[:40]}
+        for key in ("name", "unit_id", "core_id"):
+            if isinstance(r.get(key), str) and r[key].strip() and len(r[key]) <= 160:
+                out[key] = r[key]
         # Omission is not an instruction to remove walls. Keep the compiler's
         # existing residential/industrial defaults, and explicit open zones.
         if "walls" in r:

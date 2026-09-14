@@ -322,6 +322,20 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
         elif kind == "level_count":
             actual = len(levels)
             valid_expected = type(expected) is int and expected > 0
+        elif kind in {"unit_count", "unit_count_per_level"}:
+            per_level = [len({room.get("unit_id") for room in model["floors"][level["template"]]["rooms"]
+                              if _id(room.get("unit_id"))}) for level in levels]
+            actual = sum(per_level) if kind == "unit_count" else (per_level[0] if per_level and len(set(per_level)) == 1 else None)
+            valid_expected = type(expected) is int and expected > 0
+        elif kind == "room_count_per_unit":
+            role = r.get("role")
+            unit_counts = []
+            for level in levels:
+                level_rooms = model["floors"][level["template"]]["rooms"]
+                units = {room.get("unit_id") for room in level_rooms if _id(room.get("unit_id"))}
+                unit_counts.extend(sum(room.get("unit_id") == unit and room.get("role") == role for room in level_rooms) for unit in units)
+            actual = unit_counts[0] if unit_counts and len(set(unit_counts)) == 1 else None
+            valid_expected = type(expected) is int and expected >= 0 and _id(role)
         elif kind == "room_count":
             template, role = r.get("template"), r.get("role")
             valid_selector = ((template is None or (_id(template) and template in model["floors"]))

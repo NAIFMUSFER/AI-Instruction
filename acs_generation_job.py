@@ -17,6 +17,7 @@
 import importlib
 import multiprocessing
 import os
+import re
 import threading
 import time
 import uuid
@@ -89,6 +90,9 @@ def _classified_payload(exc):
     توجيه، ولا رد مزوّد خام، ولا مفتاح.
     """
     try:
+        from acs_plan_review import PlanError
+        if isinstance(exc, PlanError) and isinstance(exc.code, str) and re.fullmatch(r"[A-Z][A-Z0-9_]{0,79}", exc.code):
+            return {"plan_code": exc.code}
         import acs_api_errors as _E
         if isinstance(exc, _E.AcsApiError):
             up = exc.upstream if isinstance(exc.upstream, dict) else None
@@ -124,6 +128,10 @@ def _reraise_classified(classified):
     """
     if not isinstance(classified, dict):
         return
+    plan_code = classified.get("plan_code")
+    if isinstance(plan_code, str) and re.fullmatch(r"[A-Z][A-Z0-9_]{0,79}", plan_code):
+        from acs_plan_review import PlanError
+        raise PlanError(plan_code, "تعذّر إكمال مرحلة المخطط؛ راجع تفاصيل المهمة.")
     code = classified.get("acs_code")
     try:
         import acs_api_errors as _E
@@ -171,7 +179,9 @@ def _child(target, kwargs, conn):                               # pragma: no cov
         mod_name, fn_name = target.split(":", 1)
         mod = importlib.import_module(mod_name)
         fn = getattr(mod, fn_name)
-        value = fn(**(kwargs or {}))
+        from acs_workspace_progress import channel
+        with channel(lambda event: conn.send(("progress", event))):
+            value = fn(**(kwargs or {}))
         conn.send(("ok", value))
     except BaseException as exc:                                # noqa: BLE001
         try:
@@ -299,7 +309,7 @@ class JobRunner(object):
 
     # ------------------------------------------------------------ تشغيل ----
     def run(self, target, kwargs=None, timeout_s=None, request_id=None,
-            on_event=None):
+            on_event=None, on_progress=None):
         """ينفّذ target ("module:function") ويعيد النتيجة أو يرفع JobError.
 
         عند المهلة: تُنهى العملية، يتحرّر المقعد، ويُرفَع TimeoutError."""
@@ -317,7 +327,7 @@ class JobRunner(object):
             self._in_flight[job.id] = job
             self._stats["submitted"] += 1
         try:
-            return self._execute(job, kwargs or {}, on_event)
+            return self._execute(job, kwargs or {}, on_event, on_progress)
         finally:
             with self._lock:
                 self._in_flight.pop(job.id, None)
@@ -326,9 +336,9 @@ class JobRunner(object):
             except ValueError:                                  # pragma: no cover
                 pass
 
-    def _execute(self, job, kwargs, on_event):
+    def _execute(self, job, kwargs, on_event, on_progress=None):
         if self.executor == EXECUTOR_THREAD:
-            return self._execute_thread(job, kwargs, on_event)
+            return self._execute_thread(job, kwargs, on_event, on_progress)
         parent, child = self._ctx.Pipe(duplex=False)
         proc = self._ctx.Process(target=_child, args=(job.target, kwargs, child),
                                  daemon=True)
@@ -343,11 +353,18 @@ class JobRunner(object):
         # فتضيع المهلة ولا يراها المستدعي. لذلك تُرفَع بعد الخروج من المحاولة.
         timed_out = False
         try:
-            if parent.poll(job.timeout_s):
+            deadline = time.monotonic() + job.timeout_s
+            while True:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0 or not parent.poll(remaining):
+                    timed_out = True
+                    job.cancel(STATE_TIMED_OUT)
+                    break
                 kind, payload = parent.recv()
-            else:
-                timed_out = True
-                job.cancel(STATE_TIMED_OUT)     # إنهاء فوريّ لا انتظار
+                if kind != "progress":
+                    break
+                if on_progress:
+                    on_progress(payload)
         except (EOFError, OSError) as exc:
             if timed_out:                       # لا نُخفي المهلة خلف خطأ أنبوب
                 raise
@@ -412,7 +429,7 @@ class JobRunner(object):
         _reraise_classified(classified)     # F-34: التصنيف يعبر حدّ العملية
         raise JobError(job.error, job.error_class)
 
-    def _execute_thread(self, job, kwargs, on_event):
+    def _execute_thread(self, job, kwargs, on_event, on_progress=None):
         """مسار احتياطي للتطوير فقط — لا يضمن الإلغاء، ويقول ذلك."""
         box = {}
 
@@ -420,7 +437,9 @@ class JobRunner(object):
             try:
                 mod_name, fn_name = job.target.split(":", 1)
                 fn = getattr(importlib.import_module(mod_name), fn_name)
-                box["ok"] = fn(**kwargs)
+                from acs_workspace_progress import channel
+                with channel(on_progress):
+                    box["ok"] = fn(**kwargs)
             except BaseException as exc:                        # noqa: BLE001
                 box["err"] = (type(exc).__name__, str(exc)[:2000],
                               _classified_payload(exc))

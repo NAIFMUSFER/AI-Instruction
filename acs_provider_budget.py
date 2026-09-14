@@ -17,13 +17,17 @@ def consume():
         import acs_api_errors as E
         raise E.AcsApiError(E.ACS_PROVIDER_BUDGET_EXHAUSTED, retryable=False)
     budget["used"] += 1
+    from acs_workspace_progress import spent
+    spent(budget["used"])
 
 
 @contextmanager
-def limited(limit):
+def limited(limit, used=0):
     if type(limit) is not int or not 1 <= limit <= 12:
         raise ValueError("Invalid proposal request budget")
-    budget = {"limit": limit, "used": 0}
+    if type(used) is not int or not 0 <= used <= limit:
+        raise ValueError("Invalid consumed request budget")
+    budget = {"limit": limit, "used": used}
     token = _budget.set(budget)
     try:
         yield budget

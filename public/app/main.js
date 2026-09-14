@@ -17,6 +17,8 @@ import './late-bindings.js';
 import './core/plan-review-packet.mjs';
 import './ui/approved-viewer.mjs';
 import './core/brief-program.mjs';
+import './core/residential-program.mjs';
+import './ui/residential-options.mjs';
 import './ui/brief-review.mjs';
 import './ui/plan-upload.mjs';
 import './ui/connected-workspace.mjs';

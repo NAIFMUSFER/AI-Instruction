@@ -890,6 +890,9 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
     # Internal, server-authored policy only; never populated from request fields.
     # Source-plan transcription must not inherit the legacy vision instructions
     # to infer measurements and add furnishings/MEP elements.
+    if system_override is None:
+        from acs_workspace_progress import planning_system
+        system_override = planning_system(stage)
     if system_override is not None:
         if not isinstance(system_override, str) or not system_override.strip():
             raise E.AcsApiError(E.ACS_INTEGRATION_ERROR)
@@ -1503,7 +1506,8 @@ PLAN_CHUNK_MSG = (
     "هذا بيان معتمد لمبنى، ومطلوب منك الآن **هندسة المناطق المذكورة أدناه فقط**.\n"
     "أعِد JSON بهذا الشكل حصراً: {\"rooms\":[ {\"id\",\"rect\":[x,y,w,d],"
     "\"role\",\"walls\",\"wall_h\"?,\"brief\"} ]}\n"
-    "احتفظ بنفس id بالضبط لكل منطقة مطلوبة، ولا تُخرج منطقة غير مذكورة.\n"
+    "احتفظ بنفس id بالضبط لكل منطقة مطلوبة، ولا تُخرج منطقة غير مذكورة. "
+    "أضف name بالعربية وunit_id لكل غرفة داخل شقة وcore_id للنواة الرأسية إن وجدت.\n"
     "الحقل brief سطر واحد لا يتجاوز %d حرفاً: ينقل أعداد العميل وأسماءه لهذا "
     "الحيّز وحده (مثال: «١٢ محطة تغليف، ٦ مستويات رفّ»). لا تُعِد كتابة الطلب "
     "فيه، ولا تكتب تفاصيل داخلية (لا racks ولا points ولا furniture) — تلك "
@@ -1563,7 +1567,7 @@ def _plan_spatial_context(envelope, zones_by_id, results, template):
                 continue  # same first-result authority as merge_plan
             seen.add(rid)
             item = {k: room[k] for k in
-                    ("id", "rect", "role", "walls", "wall_h") if k in room}
+                    ("id", "rect", "role", "walls", "wall_h", "unit_id", "core_id") if k in room}
             item["template"] = (zones_by_id.get(rid) or {}).get(
                 "template", chunk.get("template"))
             planned.append(item)
@@ -1702,10 +1706,17 @@ def _plan_bounded(description, model=None, btype="residential", stages=None,
     للتليمتري وللتقرير — لكن التنفيذ لا يلتزم بتقدير كذّبه القياس.
     """
     stages = stages if stages is not None else []
+    from acs_workspace_progress import saved, emit
+    checkpoint = saved()
+    reusable = isinstance(checkpoint, dict) and checkpoint.get("kind") == "outline"
     otel = {}
     try:
-        zones, envelope, issues = _outline(description, model=model, btype=btype,
-                                           telemetry=otel, request_id=request_id)
+        if reusable:
+            zones, envelope, issues = checkpoint["zones"], checkpoint["envelope"], checkpoint["issues"]
+        else:
+            emit("UNDERSTANDING")
+            zones, envelope, issues = _outline(description, model=model, btype=btype,
+                                               telemetry=otel, request_id=request_id)
         stages.append(_safe_stage(otel, len(zones), PC.STAGE_OUTLINE))
     except E.AcsApiError as err:
         stages.append(_safe_stage(otel, 0, PC.STAGE_OUTLINE, 0, err.code))
@@ -1723,11 +1734,16 @@ def _plan_bounded(description, model=None, btype="residential", stages=None,
           % (len(zones), chunking["chunk_count"], chunking["chunk_size"],
              chunking["budget"]))
 
-    results = []
-    pending = PC.group_by_template(zones)
-    rate = None
-    index = 0
+    results = checkpoint["results"] if reusable else []
+    pending = checkpoint["pending"] if reusable else PC.group_by_template(zones)
+    rate = checkpoint["rate"] if reusable else None
+    index = checkpoint["index"] if reusable else 0
     capped = 0
+    def save_layout():
+        emit("LAYOUT", {"kind":"outline", "zones":zones, "envelope":envelope,
+             "issues":issues, "results":results, "pending":pending, "rate":rate, "index":index},
+             completed=len(zones)-len(pending), total=len(zones))
+    save_layout()
     while pending:
         if index >= PC.MAX_PLAN_CHUNKS:
             # لا قصّ صامت: ما بقي يُعلَن عدداً، ومناطقه تُحَلّ حتميّاً في الدمج.
@@ -1748,6 +1764,7 @@ def _plan_bounded(description, model=None, btype="residential", stages=None,
             description, dict(chunk, chunk_count=projected),
             zones_by_id, model, btype, results, stages,
             request_id=request_id, depth=0, rate=rate, envelope=envelope)
+        save_layout()
 
     building, merge_issues = PC.merge_plan(zones, results, envelope)
     building.setdefault("meta", {})["acs_plan_report"] = PC.plan_report(

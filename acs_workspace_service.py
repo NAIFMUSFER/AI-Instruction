@@ -44,6 +44,20 @@ GEOMETRY_MESSAGES = {
 
 
 def geometry_failure_message(code):
+    messages = {
+        "ACS_TIMEOUT":"انتهت مهلة المعالجة. يمكنك استئناف المراحل المحفوظة دون إعادة ما اكتمل.",
+        "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد. استأنف من آخر مرحلة محفوظة.",
+        "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. استأنف المراحل المحفوظة.",
+        "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
+        "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
+        "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
+        "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
+        "PLAN_LAYOUT_INCOMPLETE":"لم يكتمل توزيع الغرف بعد محاولة التصحيح. راجع البرنامج والمساحة، أو استأنف ضمن حد الاستدعاءات المتبقي.",
+    }
+    if code in messages:
+        return messages[code]
+    if code in {"ACS_NOT_CONFIGURED","ACS_UPSTREAM_RATE_LIMIT","ACS_UPSTREAM_UNAVAILABLE","ACS_UPSTREAM_AUTH"}:
+        return "خدمة التوليد غير متاحة حاليًا. احتُفظ بالمراحل التي اكتملت؛ حاول لاحقًا."
     if code == "ACS_PROVIDER_BUDGET_EXHAUSTED":
         return "بلغ المقترح حد الاستدعاءات الذي وافقت عليه قبل اكتمال المخطط. راجع نطاق الطلب وحد الاستدعاءات قبل بدء محاولة جديدة."
     if code == "INVALID_GEOMETRY":
@@ -71,17 +85,34 @@ def view(store, project_id, actor_id, revision_id=None):
         return {"schema": SCHEMA, "ok": True, "head": None, "baseline": None, "history": [], "revision_id": None}
     result = _view_result(ws, "state", rid)
     revision = ws.get(rid)
+    openings = []
+    for level in revision.model["levels"]:
+        for room in revision.model["floors"][level["template"]]["rooms"]:
+            for kind in ("doors", "windows"):
+                for opening in room.get(kind, []) or []:
+                    edge, offset = opening.get("edge"), opening.get("offset")
+                    width = opening.get("width", opening.get("w"))
+                    if edge not in {"N", "S", "E", "W"} or any(type(v) not in (int,float) or not math.isfinite(v) for v in (offset,width)) or width <= 0:
+                        continue
+                    x,z,w,d = room["rect"]
+                    if edge in {"N", "S"}:
+                        line = [x+offset-width/2,z+(d if edge=="S" else 0),x+offset+width/2,z+(d if edge=="S" else 0)]
+                    else:
+                        line = [x+(w if edge=="E" else 0),z+offset-width/2,x+(w if edge=="E" else 0),z+offset+width/2]
+                    openings.append({"level_index":level["index"],"template":level["template"],"room_id":room["id"],"kind":kind,"line":line})
     result.update({"schema": SCHEMA, "ok": True, "brief": revision.brief,
+                   "openings":openings,
                    "requirements": json.loads(revision.requirements_json),
                    "review_findings": [{"code": issue.get("code"),
                        "message": str(issue.get("message") or "")[:1000],
-                       "requirement_id": issue.get("requirement_id")}
+                       "requirement_id": issue.get("requirement_id"),
+                       "room_ref": issue.get("room_ref") or issue.get("room")}
                        for issue in ws.review(rid).get("issues", [])[:512]]})
     return result
 
 
 def generation_command(command):
-    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode"})
+    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode", "resume_job_id"})
     if "source_id" in out:
         from acs_plan_sources import identity
         identity(out["source_id"])
@@ -156,23 +187,36 @@ def chat_and_save(store, project_id, actor_id, command):
     return result["revision_id"]
 
 
-def generate_plan_candidate(brief, requirements, option, max_provider_calls):
+def generate_plan_candidate(brief, requirements, option, max_provider_calls, resume=None, used_calls=0):
     """Isolated worker: has no actor, bearer, project, store or approval input."""
     from acs_plan_bridge import generate_candidate, _reject_provider_authority_changes
     from acs_provider_budget import limited
+    from acs_workspace_progress import resuming, emit, planning_policy
+    import acs_understand as U
+    residential = U.detect_type(brief) == "residential"
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
-    with limited(max_provider_calls) as budget:
-        result = generate_candidate(prompt)
+    if residential:
+        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail
+        prompt += "\n" + ROOM_PROGRAM
+    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(PLANNING_SYSTEM if residential else None):
+        detailed = isinstance(resume,dict) and resume.get("kind") == "details"
+        saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
+        result = {"building":resume["building"]} if saved_layout else generate_candidate(prompt)
         _reject_provider_authority_changes({}, result["building"])
         from acs_plan_overlap_repair import repair_overlap
         result["building"] = repair_overlap(result["building"], prompt, budget)
+        if residential:
+            if not detailed:
+                result["building"] = prepare_layout(result["building"], brief, requirements, budget)
+            result["building"] = detail(result["building"], brief, budget, resume.get("done") if detailed else None)
+        emit("REVIEW",provider_calls=budget["used"])
     candidate = result["building"]
     _reject_provider_authority_changes({}, candidate)
     return {"building": candidate, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
 
 
-def generate_and_save(store, project_id, actor_id, command, *, runner=None):
+def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_progress=None):
     command = generation_command(command)
     expected = command.get("expected_head")
     before = workspace(store, project_id, actor_id)
@@ -195,7 +239,18 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None):
         source_receipt["mode"] = command["source_mode"]
         source_receipt["measurement_status"] = "needs_review"
         target = "acs_plan_sources:candidate"
-    result = runner.run(target, kwargs, request_id=command["job_id"])
+    if command.get("resume_job_id"):
+        from acs_workspace_http import _read_job, _id
+        prior = _read_job(store, project_id, _id(command["resume_job_id"]))
+        original = prior.get("resume_command") if prior else None
+        bound_keys = ("brief", "requirements", "option", "expected_head", "source_id", "source_mode")
+        if not original or any(canonical(original.get(k)) != canonical(command.get(k)) for k in bound_keys):
+            raise PlanError("INVALID_RESUME", "تغيّر وصف المهمة أو مرجعها. ابدأ طلبًا جديدًا.")
+        kwargs.update(resume=prior.get("checkpoint"), used_calls=prior.get("provider_calls",0))
+        if kwargs["used_calls"] >= command["max_provider_calls"]:
+            raise PlanError("ACS_PROVIDER_BUDGET_EXHAUSTED", geometry_failure_message("ACS_PROVIDER_BUDGET_EXHAUSTED"))
+    controls = {"on_progress":on_progress} if on_progress else {}
+    result = runner.run(target, kwargs, request_id=command["job_id"], **controls)
     if not isinstance(result, dict) or not isinstance(result.get("building"), dict):
         raise PlanError("INVALID_PLAN", "لم يعد المزود بمخطط صالح.")
     from acs_plan_bridge import _reject_provider_authority_changes
@@ -207,6 +262,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None):
     ws = workspace(store, project_id, actor_id)
     if ws.head != expected:
         raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
+    if on_progress:
+        on_progress({"phase":"REVIEW"})
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
                           expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
     issues, _ = _geometry(revision.model)
@@ -217,6 +274,8 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None):
         code = "PLAN_GEOMETRY_" + reason if reason in GEOMETRY_MESSAGES else "INVALID_GEOMETRY"
         raise PlanError(code, geometry_failure_message(code))
     _view_result(ws, "generate", revision.id)  # projection admission before write
+    if on_progress:
+        on_progress({"phase":"SAVING"})
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
     return revision.id
 
