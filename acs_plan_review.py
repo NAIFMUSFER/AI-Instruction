@@ -354,7 +354,8 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
         elif kind in {"min_zone_area_m2", "min_zone_area_ratio", "max_zone_area_ratio",
                       "dock_count", "min_dock_count", "min_dock_count_by_zone_role",
                       "max_dock_count_by_zone_role", "min_rack_group_count",
-                      "min_station_count", "min_lane_area_m2", "min_lane_centerline_length_m",
+                      "min_rack_geometric_bay_level_positions", "min_station_count",
+                      "min_lane_area_m2", "min_lane_centerline_length_m",
                       "max_lane_centerline_length_m", "max_lane_overlap_area_m2",
                       "max_rack_lane_overlap_area_m2", "max_rack_overlap_area_m2",
                       "max_configured_route_length_m", "min_expansion_reserve_area_m2"}:
@@ -413,6 +414,12 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
                 maximum = kind == "max_dock_count_by_zone_role"
             elif kind == "min_rack_group_count":
                 actual = warehouse_metrics.get("rack_group_count")
+                valid_expected = type(expected) is int and expected >= 0
+                minimum = True
+            elif kind == "min_rack_geometric_bay_level_positions":
+                # This is a geometric planning count only: explicit rack run/bay/row
+                # and declared level geometry. It is not usable or load-rated capacity.
+                actual = warehouse_metrics.get("rack_geometric_bay_level_positions")
                 valid_expected = type(expected) is int and expected >= 0
                 minimum = True
             elif kind == "min_station_count":
