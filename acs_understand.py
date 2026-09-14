@@ -1557,7 +1557,7 @@ def _plan_spatial_context(envelope, zones_by_id, results, template):
                ("site", "levels", "floor_height", "wall_h", "wall_t")
                if k in (envelope or {})}
     context["target_template"] = template
-    context["zones"] = [{k: z[k] for k in ("id", "template", "role") if k in z}
+    context["zones"] = [{k: z[k] for k in ("id", "template", "role", "unit_id", "core_id") if k in z}
                         for z in zones_by_id.values()]
     planned, seen = [], set()
     for chunk, rooms, _ in results or []:
@@ -1579,7 +1579,8 @@ def _plan_chunk(description, chunk, zones_by_id, model=None, btype=None,
                 telemetry=None, request_id=None, spatial_context=None):
     """شريحة واحدة من الخطّة — مخرجها محدود سلفاً بحجم الشريحة (F-36)."""
     ask = [{"id": z, "role": (zones_by_id.get(z) or {}).get("role", ""),
-            "template": chunk.get("template")}
+            "template": chunk.get("template"),
+            **{k:zones_by_id[z][k] for k in ('unit_id','core_id') if k in zones_by_id.get(z,{})}}
            for z in chunk["zone_ids"]]
     body = (PLAN_CHUNK_MSG
             + "المناطق المطلوب هندستها الآن (%d منطقة):\n" % len(ask)
