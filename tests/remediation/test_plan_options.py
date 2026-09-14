@@ -184,6 +184,65 @@ class PlanOptionTests(unittest.TestCase):
         self.assertIn("LEVEL_COUNT_DIFFERS", result["disclosures"])
         self.assertFalse(result["program_receipt_authenticated"])
 
+    def test_unknown_site_and_levels_are_not_reported_as_same_constraints(self):
+        a, b = warehouse(), warehouse()
+        a.pop("site")
+        b.pop("site")
+        a["levels"] = []
+        b["levels"] = []
+        result = O.compare_options([
+            {"id": "A", "model": a},
+            {"id": "B", "model": b},
+        ], declared_program_receipt="program:unknown-constraints")
+        self.assertIsNone(result["same_site_geometry"])
+        self.assertIsNone(result["same_level_count"])
+        self.assertIsNone(result["same_level_configuration"])
+        self.assertIn("SITE_CONSTRAINT_NOT_VERIFIED", result["disclosures"])
+        self.assertIn("LEVEL_COUNT_NOT_VERIFIED", result["disclosures"])
+        self.assertIn("LEVEL_CONFIGURATION_NOT_VERIFIED", result["disclosures"])
+        self.assertNotIn("SITE_CONSTRAINT_DIFFERS", result["disclosures"])
+        self.assertNotIn("LEVEL_COUNT_DIFFERS", result["disclosures"])
+
+    def test_same_level_count_with_different_configuration_is_disclosed(self):
+        a, b = warehouse(), warehouse()
+        a["floors"]["upper"] = copy.deepcopy(a["floors"]["ground"])
+        b["floors"]["upper"] = copy.deepcopy(b["floors"]["ground"])
+        a["levels"] = [
+            {"index": 0, "template": "ground"},
+            {"index": 1, "template": "upper"},
+        ]
+        b["levels"] = [
+            {"index": 0, "template": "ground"},
+            {"index": 1, "template": "ground"},
+        ]
+        result = O.compare_options([
+            {"id": "A", "model": a},
+            {"id": "B", "model": b},
+        ], declared_program_receipt="program:level-configuration")
+        self.assertTrue(result["same_level_count"])
+        self.assertFalse(result["same_level_configuration"])
+        self.assertIn("LEVEL_CONFIGURATION_DIFFERS", result["disclosures"])
+
+    def test_level_configuration_comparison_ignores_list_order_but_not_identity(self):
+        a, b = warehouse(), warehouse()
+        a["floors"]["upper"] = copy.deepcopy(a["floors"]["ground"])
+        b["floors"]["upper"] = copy.deepcopy(b["floors"]["ground"])
+        a["levels"] = [
+            {"index": 0, "template": "ground"},
+            {"index": 1, "template": "upper"},
+        ]
+        b["levels"] = [
+            {"index": 1, "template": "upper"},
+            {"index": 0, "template": "ground"},
+        ]
+        result = O.compare_options([
+            {"id": "A", "model": a},
+            {"id": "B", "model": b},
+        ], declared_program_receipt="program:level-order")
+        self.assertTrue(result["same_level_count"])
+        self.assertTrue(result["same_level_configuration"])
+        self.assertNotIn("LEVEL_CONFIGURATION_DIFFERS", result["disclosures"])
+
     def test_input_models_are_not_mutated(self):
         a, b = warehouse(), warehouse(storage_width=19.0)
         before_a, before_b = copy.deepcopy(a), copy.deepcopy(b)
