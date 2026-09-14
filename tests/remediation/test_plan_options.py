@@ -68,6 +68,48 @@ class PlanOptionTests(unittest.TestCase):
         self.assertEqual(b["mapping"]["zone_area_by_role_m2"]["storage"], 40.0)
         self.assertEqual(b["mapping"]["dock_count_by_edge"]["N"], 1)
 
+    def test_warehouse_options_compare_explicit_route_zone_and_geometric_position_deltas(self):
+        option_a = warehouse(storage_width=18.0, rack_levels=4)
+        option_b = warehouse(storage_width=20.0, rack_levels=5)
+        for model in (option_a, option_b):
+            model["floors"]["ground"]["rooms"][1]["racks"][0]["bay"] = 2.0
+        option_a["routes"] = [{
+            "id": "receiving-to-storage",
+            "kind": "material_flow",
+            "from_role": "receiving",
+            "to_role": "storage",
+            "points": [[0.0, 0.0], [10.0, 0.0], [10.0, 10.0]],
+        }]
+        option_b["routes"] = [{
+            "id": "receiving-to-storage",
+            "kind": "material_flow",
+            "from_role": "receiving",
+            "to_role": "storage",
+            "points": [[0.0, 0.0], [8.0, 0.0], [8.0, 6.0]],
+        }]
+
+        result = O.compare_options([
+            {"id": "A", "model": option_a},
+            {"id": "B", "model": option_b},
+        ], declared_program_receipt="program:warehouse:operational-options")
+        delta = result["options"][1]["delta_from_reference"]
+
+        self.assertEqual(delta["scalar"]["rack_geometric_bay_level_positions"], 18)
+        self.assertEqual(delta["mapping"]["configured_route_length_by_id_m"]
+                         ["receiving-to-storage"], -6.0)
+        self.assertAlmostEqual(delta["mapping"]["zone_area_ratio_by_role"]["storage"],
+                               0.02381, places=6)
+        self.assertIn("configured_route_length_by_id_m",
+                      delta["availability"]["mapping_comparable"])
+        self.assertIn("rack_geometric_bay_level_positions",
+                      delta["availability"]["scalar_comparable"])
+        for row in result["options"]:
+            self.assertIsNone(row["scorecard"]["metrics"]["storage_capacity_positions"])
+            self.assertIsNone(row["scorecard"]["metrics"]["throughput_per_hour"])
+        self.assertFalse(result["claims_best_option"])
+        self.assertFalse(result["claims_regulatory_compliance"])
+        self.assertFalse(result["claims_structural_safety"])
+
     def test_missing_rack_height_makes_height_delta_unknown_not_zero(self):
         incomplete = warehouse()
         del incomplete["floors"]["ground"]["rooms"][1]["racks"][0]["h"]
