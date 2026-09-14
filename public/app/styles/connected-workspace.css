@@ -2,6 +2,9 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace { position:fixed; inset:0; z-index:100; overflow:auto; background:#081322; color:#edf3fe; font:16px/1.65 system-ui,sans-serif; padding:24px max(20px,calc((100vw - 1220px)/2)); box-sizing:border-box; text-align:start; }
 #designWorkspace[hidden], #designWorkspace [hidden] { display:none!important; }
 #designWorkspace * { box-sizing:border-box; }
+#designWorkspace a { color:#8dddff; text-underline-offset:.2em; }
+#designWorkspace a:visited { color:#cdbaff; }
+#designWorkspace a:focus-visible,#designWorkspace summary:focus-visible { outline:3px solid #79d7ff; outline-offset:3px; }
 #designWorkspace button,#designWorkspace input,#designWorkspace textarea,#designWorkspace select { font:inherit; }
 #designWorkspace button { cursor:pointer; min-height:44px; padding:9px 16px; border:1px solid #30475f; border-radius:10px; background:#14283c; color:#e7f4ff; white-space:normal; }
 #designWorkspace button:disabled { cursor:default; opacity:.45; }
@@ -47,6 +50,7 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace table { width:100%; border-collapse:collapse; font-size:14px; }
 #designWorkspace th,#designWorkspace td { text-align:start; padding:10px; border-bottom:1px solid #2b4258; overflow-wrap:anywhere; }
 #designWorkspace th { color:#a8bfd1; }
+#designWorkspace #cwMetrics td,#designWorkspace #cwComparisonRows td { white-space:pre-line; }
 #designWorkspace .cw-review { display:grid; grid-template-columns:minmax(0,1fr) 285px; gap:18px; }
 #designWorkspace .cw-drawing { background:#e9eef3; color:#162739; border-radius:12px; padding:14px; }
 #designWorkspace #cwPlan { display:block; width:100%; height:460px; touch-action:manipulation; }
