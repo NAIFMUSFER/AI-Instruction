@@ -44,7 +44,8 @@ def _job_view(row):
     if state == "RUNNING" and (row.get("worker_id") != WORKER_ID or row.get("id") not in ACTIVE_JOBS):
         state = "INTERRUPTED"
     return {"ok": True, "job": {"id": row["id"], "state": state,
-        "revision_id": row.get("revision_id"), "error_code": row.get("error_code"),
+        "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
+        "error_code": row.get("error_code"),
         "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state == "FAILED" else None,
         "storage": "supabase", "automatic_resubmission": False}}
 
