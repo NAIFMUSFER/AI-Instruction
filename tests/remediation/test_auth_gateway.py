@@ -259,6 +259,20 @@ class AuthGatewayTests(unittest.TestCase):
         self.assertEqual(G._safe_auth_error(400, {'error_code': 'invalid_credentials'})[1]['error']['message'],
                          'البريد الإلكتروني أو كلمة المرور غير صحيحة.')
 
+    def test_project_permission_failure_is_not_reported_as_failed_google_login(self):
+        for responses in (
+            [(200, {'id': 'u'}), (403, {'message': 'private SQL detail'})],
+            [(200, {'id': 'u'}), (200, []), (403, {'code': '42501', 'message': 'private SQL detail'})],
+        ):
+            with self.subTest(responses=responses), patch.object(G, '_request', side_effect=responses):
+                status, payload = G._bootstrap_project('real-token', {'name': 'First'})
+            self.assertEqual(status, 403)
+            self.assertEqual(payload['error']['code'], 'PROJECT_ACCESS_FAILED')
+            self.assertIn('صلاحيات المشروع', payload['error']['message'])
+            self.assertNotIn('private', str(payload))
+        self.assertEqual(G._safe_project_error(401)[1]['error']['code'], 'AUTH_REQUIRED')
+        self.assertIn('انتظر', G._safe_project_error(429)[1]['error']['message'])
+
     def test_unexpected_transport_failure_keeps_json_error_contract(self):
         messages = []
         async def receive():

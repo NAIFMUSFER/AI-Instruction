@@ -349,6 +349,17 @@ def _signout(token: str) -> tuple[int, dict]:
     return 200, {"ok": True}
 
 
+def _safe_project_error(status: int) -> tuple[int, dict]:
+    if status == 401:
+        return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "انتهت جلسة الدخول. سجّل الدخول مجددًا."}}
+    message = "تعذّر فتح المشروع أو إنشاؤه. حاول مجددًا؛ لا تحتاج إلى تغيير إعدادات تسجيل الدخول."
+    if status == 403:
+        message = "تعذّر فتح المشروع أو إنشاؤه بسبب صلاحيات المشروع. تواصل مع دعم الموقع."
+    elif status == 429:
+        message = "طلبات مشاريع كثيرة خلال وقت قصير. انتظر قليلًا ثم حاول مجددًا."
+    return status, {"ok": False, "error": {"code": "PROJECT_ACCESS_FAILED", "message": message}}
+
+
 def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
     if not token:
         return 401, {"ok": False, "error": {"code": "AUTH_REQUIRED", "message": "يلزم تسجيل الدخول."}}
@@ -366,7 +377,7 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
         q += "&id=eq." + selected
     p_status, projects = _request("GET", q, token=token)
     if p_status >= 400:
-        return _safe_auth_error(p_status, projects)
+        return _safe_project_error(p_status)
     if not isinstance(projects, list):
         return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
     if isinstance(projects, list) and projects:
@@ -382,7 +393,7 @@ def _bootstrap_project(token: str, body: dict) -> tuple[int, dict]:
         prefer="return=representation",
     )
     if c_status >= 400:
-        return _safe_auth_error(c_status, created)
+        return _safe_project_error(c_status)
     row = created[0] if isinstance(created, list) and created else created
     if not isinstance(row, dict) or not isinstance(row.get("id"), str) or not row["id"]:
         return _safe_auth_error(502, {"error": "AUTH_UPSTREAM_INVALID_RESPONSE"})
