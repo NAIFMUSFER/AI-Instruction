@@ -12,7 +12,7 @@ import acs_plan_options as O
 from acs_plan_review import PlanError
 
 
-def warehouse(storage_width=20.0, dock_count=2, rack_levels=4):
+def warehouse(storage_width=20.0, dock_count=2, rack_levels=4, rack_height=8.0):
     return {
         "meta": {"type": "warehouse", "name": "Option"},
         "site": {"w": 40.0, "d": 25.0},
@@ -26,7 +26,7 @@ def warehouse(storage_width=20.0, dock_count=2, rack_levels=4):
              "lanes": [{"kind": "forklift", "x": 0.0, "z": 0.0, "w": 3.0, "d": 10.0}]},
             {"id": "storage", "role": "storage", "rect": [10.0, 0.0, storage_width, 20.0],
              "racks": [{"kind": "pallet", "x": 1.0, "z": 1.0, "w": 8.0, "d": 18.0,
-                        "dir": "z", "rows": 2, "levels": rack_levels, "h": 8.0}]},
+                        "dir": "z", "rows": 2, "levels": rack_levels, "h": rack_height}]},
             {"id": "shipping", "role": "shipping", "rect": [30.0, 0.0, 10.0, 10.0]},
         ]}},
     }
@@ -51,8 +51,10 @@ def residential():
 class PlanOptionTests(unittest.TestCase):
     def test_measured_warehouse_deltas_use_first_option_as_reference(self):
         result = O.compare_options([
-            {"id": "A", "model": warehouse(storage_width=18.0, dock_count=2, rack_levels=4)},
-            {"id": "B", "model": warehouse(storage_width=20.0, dock_count=3, rack_levels=5)},
+            {"id": "A", "model": warehouse(storage_width=18.0, dock_count=2,
+                                              rack_levels=4, rack_height=8.0)},
+            {"id": "B", "model": warehouse(storage_width=20.0, dock_count=3,
+                                              rack_levels=5, rack_height=7.0)},
         ], declared_program_receipt="program:sha256:abc")
         self.assertEqual(result["schema"], "acs.plan-options/1.0")
         self.assertEqual(result["reference_option_id"], "A")
@@ -62,8 +64,22 @@ class PlanOptionTests(unittest.TestCase):
         self.assertEqual(b["scalar"]["space_rect_area_m2"], 40.0)
         self.assertEqual(b["scalar"]["dock_count"], 1)
         self.assertEqual(b["scalar"]["rack_declared_level_sum"], 1)
+        self.assertEqual(b["scalar"]["rack_declared_height_max_m"], -1.0)
         self.assertEqual(b["mapping"]["zone_area_by_role_m2"]["storage"], 40.0)
         self.assertEqual(b["mapping"]["dock_count_by_edge"]["N"], 1)
+
+    def test_missing_rack_height_makes_height_delta_unknown_not_zero(self):
+        incomplete = warehouse()
+        del incomplete["floors"]["ground"]["rooms"][1]["racks"][0]["h"]
+        result = O.compare_options([
+            {"id": "A", "model": warehouse(rack_height=8.0)},
+            {"id": "B", "model": incomplete},
+        ])
+        self.assertIsNone(
+            result["options"][1]["delta_from_reference"]["scalar"]
+            ["rack_declared_height_max_m"])
+        self.assertFalse(result["claims_regulatory_compliance"])
+        self.assertFalse(result["claims_structural_safety"])
 
     def test_check_status_transitions_are_exposed_without_quality_ranking(self):
         result = O.compare_options([

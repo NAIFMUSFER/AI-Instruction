@@ -73,6 +73,7 @@ class ScorecardTests(unittest.TestCase):
         self.assertEqual(m["dock_count_by_edge"], {"N": 2, "W": 1})
         self.assertEqual(m["rack_group_count"], 2)
         self.assertEqual(m["rack_declared_level_sum"], 9)
+        self.assertEqual(m["rack_declared_height_max_m"], 8.0)
         self.assertEqual(m["station_count"], 3)
         self.assertEqual(m["lane_area_by_kind_m2"], {"forklift": 30.0, "pedestrian": 10.0})
         self.assertIsNone(m["storage_capacity_positions"])
@@ -90,6 +91,7 @@ class ScorecardTests(unittest.TestCase):
         self.assertEqual(m["dock_count"], 6)
         self.assertEqual(m["rack_group_count"], 4)
         self.assertEqual(m["rack_declared_level_sum"], 18)
+        self.assertEqual(m["rack_declared_height_max_m"], 8.0)
         self.assertEqual(m["station_count"], 6)
         self.assertEqual(m["zone_area_by_role_m2"]["storage"], 800.0)
         self.assertEqual(m["lane_area_by_kind_m2"]["forklift"], 60.0)
@@ -101,6 +103,16 @@ class ScorecardTests(unittest.TestCase):
         self.assertEqual(m["rack_group_count"], 2)
         self.assertIsNone(m["rack_declared_level_sum"])
         self.assertIsNone(m["storage_capacity_positions"])
+
+    def test_declared_rack_height_requires_every_rack_height_and_is_not_clearance(self):
+        model = warehouse_model()
+        del model["floors"]["ground"]["rooms"][1]["racks"][1]["h"]
+        result = S.measure_plan(model)
+        self.assertIsNone(result["metrics"]["rack_declared_height_max_m"])
+        self.assertIn("rack_declared_height_max_m", result["unavailable"])
+        self.assertIn("does not infer clear height", result["unavailable"]["rack_declared_height_max_m"])
+        self.assertFalse(result["claims_regulatory_compliance"])
+        self.assertFalse(result["claims_structural_safety"])
 
     def test_invalid_dock_count_discloses_unknown_instead_of_coercing(self):
         model = warehouse_model()
@@ -138,6 +150,7 @@ class ScorecardTests(unittest.TestCase):
         result = S.measure_plan(model)
         self.assertEqual(result["typology"], "residential")
         self.assertNotIn("dock_count", result["metrics"])
+        self.assertNotIn("rack_declared_height_max_m", result["metrics"])
         self.assertNotIn("storage_capacity_positions", result["metrics"])
         self.assertIsNone(result["metrics"]["gross_floor_area_m2"])
         self.assertIsNone(result["metrics"]["efficiency"])
