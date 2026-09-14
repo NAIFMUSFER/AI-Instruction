@@ -66,6 +66,22 @@ export function analyzeBrief(brief) {
         add(minimum?'min_dock_count':metric,match.groups.n,match.groups.u,match,chunk.index,'requested',role);
       }
     }
+    // Standalone project-dimension lines, never a room's dimensions or a
+    // unitless number. An unlabelled pair still needs explicit order review.
+    if(!bounded.test(text)){
+      for(const [metric,label] of [['site_width_m','عرض'],['site_depth_m','عمق']]){
+        for(const pattern of [
+          `^\\s*(?:ال)?${label}\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})\\s*[.،,]?\\s*$`,
+          `^\\s*(?<n>${N})\\s*(?<u>${U})\\s+(?:ال)?${label}\\s*[.،,]?\\s*$`,
+        ])for(const match of text.matchAll(new RegExp(pattern,'giu')))add(metric,match.groups.n,match.groups.u,match,chunk.index);
+      }
+      const compact=`^\\s*(?<n>${N})\\s*(?<u>${U})\\s*(?:×|x|في)\\s*(?<d>${N})\\s*(?<du>${U})\\s*[.،,]?\\s*$`;
+      for(const match of text.matchAll(new RegExp(compact,'giu'))){
+        add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
+        add('site_depth_m',match.groups.d,match.groups.du,match,chunk.index,'inferred');
+      }
+      for(const match of text.matchAll(/^\s*(?:دورين|دوران|طابقين|طابقان)\s*[.،,]?\s*$/gu))add('level_count',2,null,match,chunk.index);
+    }
     const pair=`(?:ابعاد\\s+${site}|${site}\\s+dimensions)\\s*[:=]?\\s*(?<n>${N})\\s*[×x]\\s*(?<d>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`;
     for(const match of text.matchAll(new RegExp(pair,'giu'))){
       add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
