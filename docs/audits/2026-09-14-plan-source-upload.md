@@ -16,6 +16,7 @@ The parent process attaches the source ID, original and preview hashes, selected
 ## Evidence and limits
 
 - Eight synthetic upload/vision/provenance tests pass, along with the existing 17 connected-workspace and seven HTTP command-boundary tests. Deployment content closure passes (711 checks).
+- The private-storage migration was applied on 2026-09-14. A transactional probe using only generated synthetic users/projects passed owner insert/read, viewer read-only, outsider denial, and immutable-original checks, then rolled back all fixture rows. The project advisor reported no storage/table warning; its existing leaked-password-protection setting is outside this change.
 - The real browser fixture now exercises image and selected PDF-page uploads, no-provider upload, original download, refresh recovery, saved source generation and the existing review/export lifecycle. Generation and storage are controlled fixtures; the browser and HTTP application are real.
 - Local Chromium cannot start because the workspace blocks its process-singleton socket. GitHub Actions must pass the browser fixture before release; this is not a successful local browser result.
 - The PDF page preview is rendered by the client and its bytes are validated and stored. This does not attest pixel equivalence to the original PDF, dimensional accuracy, architectural compliance or completeness. Only the chosen page is interpreted. DWG/DXF and multi-page merging are not supported here.

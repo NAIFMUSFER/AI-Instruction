@@ -2,7 +2,7 @@
 // Actual shipped UI + actual workspace routes, with a controlled CI-only identity
 // and provider. The backend lifecycle is also tested independently in Python.
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path'),os=require('node:os');
-const {spawn}=require('node:child_process');
+const {spawn,execFileSync}=require('node:child_process');
 const PW=require('../../tools/pw_chromium.js');
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
@@ -14,6 +14,16 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
  let backendLog='';child.stderr.on('data',b=>{backendLog+=b;});
  let browser;
  try{
+  const pdfFixture=path.join(tmp,'two-page-plan.pdf');
+  execFileSync(process.env.PYTHON||'python',['-c',`import sys
+from pypdf import PdfWriter
+from pypdf.generic import DecodedStreamObject, NameObject
+w=PdfWriter()
+for x in (20,100):
+ p=w.add_blank_page(width=300,height=300)
+ s=DecodedStreamObject(); s.set_data(('0 0 0 RG %s 20 80 100 re S' % x).encode())
+ p[NameObject('/Contents')]=w._add_object(s)
+w.write(sys.argv[1])`,pdfFixture]);
   let ready=false;for(let i=0;i<60;i++){try{if((await fetch('http://127.0.0.1:'+port+'/health')).ok){ready=true;break;}}catch(e){}await delay(250);}
   assert.ok(ready,'fixture backend did not start: '+backendLog);browser=await PW.launch();
   for(const {width,noWebGL} of [{width:393},{width:1280},{width:393,noWebGL:true}]){
@@ -60,11 +70,11 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    assert.equal(await page.locator('#cwConfirmed').isChecked(),false,'reopening must not restore confirmation');
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false,'brief evidence fits mobile width');
    if(!noWebGL){
-    const inputFile=width===393?'tests/phase7/outputs/warehouse_buffer_depth.png':'tests/phase9/outputs/clinic_sheets.pdf';
+    const inputFile=width===393?path.join(ROOT,'tests/phase7/outputs/warehouse_buffer_depth.png'):pdfFixture;
     await page.locator('#cwStartMode').selectOption('upload');
-    await page.locator('#cwPlanFile').setInputFiles(path.join(ROOT,inputFile));
+    await page.locator('#cwPlanFile').setInputFiles(inputFile);
     await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);
-    if(width===1280){await page.locator('#cwPdfPage').selectOption('2');await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);}
+    if(width===1280){assert.equal(await page.locator('#cwPdfPage option').count(),2);const firstPreview=await page.locator('#cwSourcePreview').getAttribute('src');await page.locator('#cwPdfPage').selectOption('2');await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);assert.notEqual(await page.locator('#cwSourcePreview').getAttribute('src'),firstPreview,'page selection changes the preview');}
     const beforeUpload=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
     await page.locator('#cwSaveSource').click();
     await page.waitForFunction(()=>document.querySelector('#cwSourceStatus').textContent.includes('حُفظ الأصل'));
@@ -73,7 +83,7 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
     await page.reload();await page.waitForFunction(()=>document.querySelector('#cwSavedSource')?.value);
     assert.equal(await page.locator('#cwSavedSource').inputValue(),sourceId,'stored source is available after reload');
     const originalPromise=page.waitForEvent('download');await page.locator('#cwDownloadSource').click();
-    const original=await originalPromise;assert.deepEqual(fs.readFileSync(await original.path()),fs.readFileSync(path.join(ROOT,inputFile)),'original bytes survive cloud-source roundtrip');
+    const original=await originalPromise;assert.deepEqual(fs.readFileSync(await original.path()),fs.readFileSync(inputFile),'original bytes survive cloud-source roundtrip');
     assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false,'upload fits mobile');
    }
    await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();

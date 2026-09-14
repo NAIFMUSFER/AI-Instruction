@@ -416,9 +416,9 @@ def main():
         except KeyError:
             bad = True
         chk("اسم هدف من خارج القائمة المعلنة يُرفض", bad)
-        chk("والقائمة المعلنة محصورة في وحدتين معروفتين لا اسم يصل من الشبكة",
+        chk("والقائمة المعلنة محصورة في ثلاث وحدات معروفة لا اسم يصل من الشبكة",
             set(m for m, _ in CPU.TARGETS.values())
-            == {"acs_upload_security", "acs_engineering_authority"},
+            == {"acs_upload_security", "acs_engineering_authority", "acs_plan_sources"},
             json.dumps(sorted(CPU.TARGETS)))
 
         print("\n== ح · لا مدقّق متزامن باقٍ في أي معالج ==")

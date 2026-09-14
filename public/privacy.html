@@ -54,8 +54,8 @@
     <li><strong>حفظ نسخ المشروع.</strong> مساحة التصميم المتصلة تحفظ وصف المشروع ومتطلباته والمخططات والأقفال والاعتمادات في Supabase عند اكتمال التوليد أو التعديل أو الاعتماد. يمكنك إعادة فتحها من الحساب نفسه وعلى جهاز آخر. النسخ المحلية القديمة في الاستوديو تظل نسخة على جهازك ولا تتحول تلقائيًا إلى نسخ سحابية.</li>
     <li><strong>متابعة التوليد.</strong> تُحفظ سجلات مهام مساحة التصميم في قاعدة البيانات. إذا توقف الخادم أثناء طلب غير مكتمل، تُعرض المهمة كمقاطعة ولا يُعاد طلب المزود تلقائيًا؛ أي نسخة اكتمل حفظها تبقى محفوظة. مسارات التوليد القديمة تحتفظ بالنتيجة في الذاكرة لمدة 30 دقيقة فقط.</li>
     <li><strong>ملفات التسليم.</strong> تُشتق من النسخة المعتمدة، وتُجهز في ملفات مؤقتة على الخادم ثم تُحذف بعد إتمام الطلب. تُنزّل الملفات وبيان مصدرها إلى جهازك.</li>
-    <li><strong>الملفّات المرفوعة لا تُكتب على قرص الخادم.</strong> تُقرأ في الذاكرة
-        وتُفحص ثم تُرسل إلى المزوّد، ولا يُنشئ الخادم ملفّاً مؤقتاً منها.</li>
+    <li><strong>المخططات الأصلية المرفوعة.</strong> عند اختيار «حفظ المخطط في المشروع»، يُحفظ الأصل ومعاينة الصفحة المختارة في تخزين Supabase الخاص، ويمكن لأعضاء المشروع المخولين قراءتهما. الرفع وحده لا يرسل الملف إلى مزوّد التوليد؛ تُرسل المعاينة عند بدء قراءة المخطط أو طلب تعديله. الملف الأصلي ثابت، ولا تتوفر حاليًا أداة لحذفه من الواجهة.</li>
+    <li><strong>المعالجة على خادم ACS.</strong> تُقرأ الملفات وتُفحص في الذاكرة، دون إنشاء نسخة مؤقتة على قرص خادم ACS؛ يظل التخزين الخاص بالمشروع المذكور أعلاه منفصلًا عن هذه المعالجة.</li>
   </ul>
 </section>
 
@@ -128,8 +128,8 @@
     <li>The connected workspace saves durable plan revisions, briefs, requirements, locks and approvals in Supabase when generation, edits or approval complete. These versions can be reopened by the same account on another device. Older local studio backups are not automatically uploaded.</li>
     <li>Connected workspace job receipts are durable. Work interrupted by a server restart is reported without automatic provider resubmission; completed saved revisions remain available. Legacy generation results remain in server memory for 30 minutes, can be lost when the server restarts, and are not a permanent archive.</li>
     <li>Approved artifacts are generated in temporary server files, removed after delivery, and downloaded with a provenance manifest to your device.</li>
-    <li>Uploaded files are not written to the server's disk; they are read in
-        memory, validated, and forwarded to the provider.</li>
+    <li>Choosing “Save drawing in project” stores the original and selected-page preview in private Supabase Storage, readable by authorized project members. Upload alone does not send the file to the generation provider; the preview is sent when you explicitly start reading or revising the drawing. Originals are immutable and the interface currently has no deletion control.</li>
+    <li>ACS reads and validates uploaded files in memory without creating temporary copies on the ACS server disk. This processing is separate from the private project storage above.</li>
   </ul>
 
   <h3>What is NOT stored</h3>
