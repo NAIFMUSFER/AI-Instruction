@@ -16,7 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_review as P
 from test_plan_scorecard import warehouse_model
 
-BRIEF = "Warehouse requires storage, docks, racks, stations and forklift lanes."
+BRIEF = "Warehouse requires storage, docks, racks, stations, forklift lanes and an expansion reserve."
 
 
 def verified(_model):
