@@ -6,6 +6,11 @@ position as engineering identity. Rooms require stable explicit IDs. Nested plan
 elements use their explicit IDs when available; if a changed collection contains
 unidentified items, the collection is reported as identity-unresolved rather than
 matched heuristically.
+
+Requirement impact is deliberately narrower than the semantic change set: only
+explicit canonical ``requirement_ids`` attached to a changed room/element are
+surfaced. The diff never infers impact from wording, roles, geometry or metrics and
+therefore never claims that the reported requirement list is complete.
 """
 from __future__ import annotations
 
@@ -18,6 +23,7 @@ from acs_plan_semantic_locks import _ELEMENT_COLLECTIONS
 SCHEMA = "acs.plan-semantic-diff/1.0"
 MAX_CHANGES = 512
 MAX_VISIBLE_VALUE_CHARS = 2048
+MAX_REQUIREMENT_ID_CHARS = 160
 _VISIBLE_FIELDS = frozenset({
     "rect", "x", "z", "w", "d", "h", "levels", "edge", "dir", "kind",
     "role", "name", "type", "template", "floor_height", "wall_h", "wall_t",
@@ -26,6 +32,11 @@ _VISIBLE_FIELDS = frozenset({
 
 def _stable_id(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip()) and len(value) <= 120
+
+
+def _requirement_id(value: Any) -> bool:
+    return (isinstance(value, str) and bool(value.strip())
+            and len(value) <= MAX_REQUIREMENT_ID_CHARS)
 
 
 def _detached(value: Any) -> Any:
@@ -53,6 +64,32 @@ def _visible_values(source: dict, fields: list[str]) -> dict:
     return out
 
 
+def _explicit_requirement_ids(entity: dict | None) -> list[str]:
+    """Return validated explicit provenance links attached to one canonical entity.
+
+    Canonical revision admission already validates these links. This additional
+    guard keeps the standalone diff fail-closed instead of silently dropping a
+    malformed provenance field and then presenting an incomplete list as evidence.
+    Missing ``requirement_ids`` is valid and means no explicit entity link exists.
+    """
+    if entity is None or "requirement_ids" not in entity:
+        return []
+    raw = entity.get("requirement_ids")
+    if (not isinstance(raw, list)
+            or any(not _requirement_id(value) for value in raw)):
+        raise PlanError(
+            "INVALID_DIFF_PROVENANCE",
+            "Semantic diff requires stable explicit requirement_ids when supplied",
+        )
+    normalized = [value.strip() for value in raw]
+    if len(normalized) != len(set(normalized)):
+        raise PlanError(
+            "INVALID_DIFF_PROVENANCE",
+            "Semantic diff requirement_ids must be unique",
+        )
+    return sorted(normalized)
+
+
 def _record(*, kind: str, change: str, before: dict | None = None,
             after: dict | None = None, changed_fields: list[str] | None = None,
             **identity) -> dict:
@@ -70,6 +107,9 @@ def _record(*, kind: str, change: str, before: dict | None = None,
             row["before_values"] = before_values
         if after_values:
             row["after_values"] = after_values
+    row["linked_requirement_ids"] = sorted(set(
+        _explicit_requirement_ids(before) + _explicit_requirement_ids(after)
+    ))
     return row
 
 
@@ -138,6 +178,7 @@ def _diff_collection(changes: list[dict], before_room: dict, after_room: dict,
             "identity": "UNRESOLVED",
             "before_hash": digest(before_items),
             "after_hash": digest(after_items),
+            "linked_requirement_ids": [],
         })
         return
     for element_id in sorted(set(before_index) | set(after_index)):
@@ -237,12 +278,20 @@ def diff_models(before_model: dict, after_model: dict) -> dict:
                     template=template, room_id=room_id, collection=collection,
                 )
 
+    linked_requirement_ids = sorted({
+        requirement_id
+        for change in changes
+        for requirement_id in change.get("linked_requirement_ids", [])
+    })
     return {
         "schema": SCHEMA,
         "before_model_hash": digest(before),
         "after_model_hash": digest(after),
         "change_count": len(changes),
         "changes": changes,
+        "linked_requirement_ids": linked_requirement_ids,
+        "requirement_impact_basis": "explicit_entity_links_only",
+        "claims_complete_requirement_impact": False,
         "claims_best_option": False,
         "claims_regulatory_compliance": False,
         "claims_structural_safety": False,
