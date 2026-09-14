@@ -126,6 +126,7 @@ class Recovery(unittest.TestCase):
         self.assertIsNone(manifest('بدون مصعد',rows))
         self.assertIsNone(manifest('no elevator',rows))
         self.assertIsNone(manifest('مصعد غير مطلوب',rows))
+        self.assertIsNone(manifest('لكل شقة غرفة غسيل وشرفة',rows))
         self.assertIsNone(manifest('توزيع الشقق من الأرضي إلى الأعلى: 3، 1.',rows))
         changed=copy.deepcopy(rows);changed[-1]['expected']=1
         self.assertIsNone(manifest('عمارة',changed))

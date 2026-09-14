@@ -37,6 +37,10 @@ def manifest(brief, requirements):
     normalized = brief.replace('أ','ا').replace('إ','ا').replace('آ','ا')
     if re.search(r'ارتفاع|قبو|ميزانين|سطح|طابق تجاري|دور تجاري|height|basement|mezzanine', normalized, re.I):
         return None
+    # Extra spaces mentioned only in prose still need the full outline. A
+    # confirmed basic apartment card must not silently remove those requests.
+    if re.search(r'بلكون|شرف[ةه]|غسيل|خادم|مكتب|مخزن|مستودع|مسبح|كراج|مواقف|غرف[ةه]?\s+(?:طعام|ملابس|عباد)|balcon|laundry|maid|office|storage|pool|garage|parking|dining|closet', normalized, re.I):
+        return None
     if any(metric == 'room_count' and role not in ROLES for metric,role in by_key):
         return None
     # A negated/conditional elevator request needs interpretation, not a guess.
