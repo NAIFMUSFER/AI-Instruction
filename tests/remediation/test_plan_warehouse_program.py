@@ -108,6 +108,42 @@ class WarehouseProgramTests(unittest.TestCase):
         self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
         self.assertFalse(not_applicable["can_approve"])
 
+    def test_pedestrian_vehicle_lane_overlap_requirement_uses_only_explicit_lane_geometry(self):
+        separated = operational_warehouse()
+        good = review([
+            requirement("pedestrian-vehicle-separation", "forklift", "max_lane_overlap_area_m2",
+                        0.0, kind_a="forklift", kind_b="pedestrian")
+        ], model=separated)
+        self.assertTrue(good["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(good))
+
+        overlapping = operational_warehouse()
+        overlapping["floors"]["ground"]["rooms"][0]["lanes"][1]["x"] = 10.0
+        conflict = review([
+            requirement("pedestrian-vehicle-separation", "forklift", "max_lane_overlap_area_m2",
+                        0.0, kind_a="forklift", kind_b="pedestrian")
+        ], model=overlapping)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(conflict))
+        self.assertFalse(conflict["can_approve"])
+
+        incomplete = operational_warehouse()
+        del incomplete["floors"]["ground"]["rooms"][0]["lanes"][1]["w"]
+        unknown = review([
+            requirement("pedestrian-vehicle-separation", "forklift", "max_lane_overlap_area_m2",
+                        0.0, kind_a="forklift", kind_b="pedestrian")
+        ], model=incomplete)
+        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown))
+        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown))
+
+        residential = operational_warehouse()
+        residential["meta"]["type"] = "residential"
+        not_applicable = review([
+            requirement("pedestrian-vehicle-separation", "forklift", "max_lane_overlap_area_m2",
+                        0.0, kind_a="forklift", kind_b="pedestrian")
+        ], model=residential)
+        self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
+        self.assertFalse(not_applicable["can_approve"])
+
     def test_configured_route_maximum_uses_only_explicit_polyline(self):
         model = warehouse_model()
         model["routes"] = [{
