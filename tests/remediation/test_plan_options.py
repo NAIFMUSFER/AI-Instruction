@@ -81,6 +81,22 @@ class PlanOptionTests(unittest.TestCase):
         self.assertFalse(result["claims_regulatory_compliance"])
         self.assertFalse(result["claims_structural_safety"])
 
+    def test_comparison_availability_names_measured_and_unknown_dimensions(self):
+        incomplete = warehouse()
+        del incomplete["floors"]["ground"]["rooms"][1]["racks"][0]["h"]
+        result = O.compare_options([
+            {"id": "A", "model": warehouse(rack_height=8.0)},
+            {"id": "B", "model": incomplete},
+        ], declared_program_receipt="program:warehouse:availability")
+        availability = result["options"][1]["delta_from_reference"]["availability"]
+        self.assertIn("dock_count", availability["scalar_comparable"])
+        self.assertIn("rack_declared_height_max_m", availability["scalar_unavailable"])
+        self.assertIn("zone_area_by_role_m2", availability["mapping_comparable"])
+        self.assertNotIn("rack_declared_height_max_m", availability["scalar_comparable"])
+        self.assertTrue(availability["checks_comparable"])
+        self.assertNotIn("score", availability)
+        self.assertFalse(result["claims_best_option"])
+
     def test_check_status_transitions_are_exposed_without_quality_ranking(self):
         result = O.compare_options([
             {"id": "A", "model": warehouse_with_expansion(intruding=False)},
