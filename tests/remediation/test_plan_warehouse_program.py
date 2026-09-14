@@ -100,6 +100,19 @@ class WarehouseProgramTests(unittest.TestCase):
         self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_short))
         self.assertFalse(too_short["can_approve"])
 
+        missing_selector = review([
+            requirement("inbound-route", "forklift", "max_configured_route_length_m", 15.0)
+        ], model=model)
+        self.assertIn("INVALID_REQUIREMENT_SELECTOR", self.codes(missing_selector))
+        self.assertFalse(missing_selector["can_approve"])
+
+        unknown_route = review([
+            requirement("inbound-route", "forklift", "max_configured_route_length_m",
+                        15.0, route_id="not_configured")
+        ], model=model)
+        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown_route))
+        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown_route))
+
         invalid = copy.deepcopy(model)
         invalid["routes"][0]["points"] = [[2.0, 2.0]]
         unknown = review([
@@ -108,6 +121,15 @@ class WarehouseProgramTests(unittest.TestCase):
         ], model=invalid)
         self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown))
         self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown))
+
+        residential = copy.deepcopy(model)
+        residential["meta"]["type"] = "residential"
+        not_applicable = review([
+            requirement("inbound-route", "forklift", "max_configured_route_length_m",
+                        15.0, route_id="inbound_main")
+        ], model=residential)
+        self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
+        self.assertFalse(not_applicable["can_approve"])
 
     def test_incomplete_dock_data_is_unknown_not_zero_or_partial(self):
         model = warehouse_model()
