@@ -55,6 +55,51 @@ class Runner:
 
 
 class WorkspaceLifecycle(unittest.TestCase):
+    def test_overlap_repair_is_position_only_bounded_and_validated(self):
+        from acs_plan_overlap_repair import repair_overlap
+        import acs_understand as U
+        original = model('warehouse')
+        for r in original['floors']['ground']['rooms']:
+            r['points'] = []
+        original['floors']['ground']['rooms'][1]['rect'][:2] = [2, 0]
+        saved = copy.deepcopy(original)
+        good = {'positions': [{'template':'ground','id':'a','x':0,'z':0},
+                              {'template':'ground','id':'b','x':10,'z':0}]}
+        def call(reply):
+            def run(*args, **kwargs):
+                consume()
+                return json.dumps(reply)
+            return run
+        with limited(2) as budget, patch.object(U, 'call_llm', side_effect=call(good)) as provider:
+            consume()  # initial planning already spent one approved call
+            fixed = repair_overlap(original, 'مستودع صناعي', budget)
+            self.assertEqual(budget['used'], 2)
+            self.assertEqual(provider.call_count, 1)
+            self.assertEqual(S._geometry(fixed)[0], [])
+            restored = copy.deepcopy(fixed)
+            restored['floors']['ground']['rooms'][1]['rect'][:2] = [2, 0]
+            self.assertEqual(restored, original)
+        self.assertEqual(original, saved)
+        with limited(1) as budget, patch.object(U, 'call_llm') as provider:
+            consume()
+            self.assertEqual(repair_overlap(original, 'مستودع', budget), original)
+            provider.assert_not_called()
+        for bad in [ {'positions':good['positions'][:1]},
+                     {'positions':good['positions']+[good['positions'][0]]},
+                     {'positions':[dict(good['positions'][0], id='foreign'),good['positions'][1]]},
+                     {'positions':[dict(good['positions'][0], width=1),good['positions'][1]]} ]:
+            with limited(2) as budget, patch.object(U, 'call_llm', side_effect=call(bad)):
+                with self.assertRaises(PlanError): repair_overlap(original, 'مستودع', budget)
+        for x in [2, 50]:
+            invalid = copy.deepcopy(good); invalid['positions'][1]['x'] = x
+            with limited(2) as budget, patch.object(U, 'call_llm', side_effect=call(invalid)) as provider:
+                self.assertEqual(repair_overlap(original, 'مستودع', budget), original)
+                self.assertEqual(provider.call_count, 1)
+        for candidate in [model('warehouse'), dict(original, site={'w':1,'d':1})]:
+            with limited(2) as budget, patch.object(U, 'call_llm') as provider:
+                self.assertEqual(repair_overlap(candidate, 'مستودع', budget), candidate)
+                provider.assert_not_called()
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.db = SQLitePlanStore(Path(self.temp.name) / 'plans.sqlite3')
