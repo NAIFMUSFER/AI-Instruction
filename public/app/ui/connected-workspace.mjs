@@ -140,8 +140,19 @@ async function generation(option) {
 async function handleJob(job) {
   if(!job||job.id!==pendingJob)throw new Error('لم تصل حالة المهمة المطلوبة.');
   if(job.state==='SUCCEEDED'){
+    const referenceRevision=typeof job.reference_revision_id==='string'&&job.reference_revision_id?job.reference_revision_id:null;
     clearTimeout(pollTimer);pendingJob=null;try{localStorage.removeItem(jobKey());}catch(e){}
-    $('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;await refresh(job.revision_id);status('تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.');setBusy(false);return;
+    $('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;await refresh(job.revision_id);
+    let comparisonShown=false;
+    if(referenceRevision&&referenceRevision!==job.revision_id){
+      try{
+        const data=await api({action:'compare',reference_revision_id:referenceRevision,target_revision_id:job.revision_id},true);
+        showComparison(data);
+        if([...$('cwCompareRevision').options].some(o=>o.value===referenceRevision))$('cwCompareRevision').value=referenceRevision;
+        comparisonShown=true;
+      }catch(e){}
+    }
+    status(comparisonShown?'تم حفظ المخطط سحابيًا وعرض أثره المقاس من نسخة المصدر الدقيقة. راجعه قبل الاعتماد.':'تم حفظ المخطط سحابيًا. راجعه قبل الاعتماد.');setBusy(false);return;
   }
   if(['FAILED','INTERRUPTED'].includes(job.state)){
     clearTimeout(pollTimer);$('cwDismissJob').hidden=false;

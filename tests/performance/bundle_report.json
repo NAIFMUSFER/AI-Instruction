@@ -18,8 +18,8 @@
     "additional_css_bytes": 7698,
     "assets": [
       {
-        "bytes": 36760,
-        "gzip_bytes": 11304,
+        "bytes": 37516,
+        "gzip_bytes": 11481,
         "loaded": "initial-module",
         "path": "public/app/ui/connected-workspace.mjs"
       },
@@ -42,7 +42,7 @@
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 46833,
+    "initial_javascript_bytes": 47589,
     "lazy_javascript_bytes": 0,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 1573375,
+    "core_initial_bytes": 1574131,
     "core_initial_module_count": 27,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The five boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 14,
@@ -172,8 +172,8 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 39,
-    "first_party_total_bytes": 2091704,
-    "initial_javascript_bytes": 1625835,
+    "first_party_total_bytes": 2092460,
+    "initial_javascript_bytes": 1626591,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
@@ -226,7 +226,7 @@
         "gzip_bytes": 62327,
         "loaded": "eager",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 9.76
+        "pct_of_first_party_js": 9.75
       },
       {
         "bytes": 198744,
@@ -250,7 +250,7 @@
         "gzip_bytes": 30357,
         "loaded": "eager",
         "path": "public/app/generated/authoring.js",
-        "pct_of_first_party_js": 5.87
+        "pct_of_first_party_js": 5.86
       },
       {
         "bytes": 115993,
@@ -258,7 +258,7 @@
         "gzip_bytes": 33152,
         "loaded": "lazy",
         "path": "public/app/generated/docs.js",
-        "pct_of_first_party_js": 5.55
+        "pct_of_first_party_js": 5.54
       },
       {
         "bytes": 104379,
@@ -333,12 +333,12 @@
         "pct_of_first_party_js": 2.02
       },
       {
-        "bytes": 36760,
+        "bytes": 37516,
         "group": "ui",
-        "gzip_bytes": 11304,
+        "gzip_bytes": 11481,
         "loaded": "eager",
         "path": "public/app/ui/connected-workspace.mjs",
-        "pct_of_first_party_js": 1.76
+        "pct_of_first_party_js": 1.79
       },
       {
         "bytes": 29561,
@@ -612,7 +612,7 @@
     "sha256": "6aceb13f8f90d6d664c57b9f031dd370ef2b90d93b2d22a86822237a3298be45",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2091704 bytes) lives in 39 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2092460 bytes) lives in 39 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "empty": false,
     "file_count": 558,
