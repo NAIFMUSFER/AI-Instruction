@@ -1,20 +1,78 @@
 """One bounded position-only proposal for rejected, detail-free plan drafts."""
 import json
+import math
 from acs_plan_review import _structure, _geometry, canonical, _number, PlanError
+
+
+
+def place_nonoverlapping(building):
+    """Bounded greedy placement; failure is not proof that no packing exists.
+
+    Single-level, detail-free drafts only. No rotation, resize, room deletion,
+    or changes to site dimensions. Canonical admission remains mandatory.
+    """
+    if len(building['levels']) != 1 or len(building['floors']) != 1:
+        return None
+    template, floor = next(iter(building['floors'].items()))
+    rooms = floor['rooms']
+    w, d = building['site']['w'], building['site']['d']
+    if math.fsum(r['rect'][2] * r['rect'][3] for r in rooms) > w*d + 1e-8*max(1, w*d):
+        raise PlanError('PLAN_GEOMETRY_AREA_EXCEEDS_SITE',
+                        'Generated room areas exceed the site area; positions alone cannot fit them')
+    if len(rooms) > 64:
+        return None
+    orders = [rooms, sorted(rooms, key=lambda r: (-r['rect'][2]*r['rect'][3], r['id'])),
+              sorted(rooms, key=lambda r: (-r['rect'][3], -r['rect'][2], r['id']))]
+    checks = 0
+    for order in orders:
+        placed = {}
+        for room in order:
+            x0, z0, rw, rd = room['rect']
+            xs, zs = {0, x0, w-rw}, {0, z0, d-rd}
+            for x, z, pw, pd in placed.values():
+                xs.update((x+pw, x-rw)); zs.update((z+pd, z-rd))
+            candidates = sorted(((x,z) for x in xs for z in zs
+                                 if 0 <= x <= w-rw and 0 <= z <= d-rd),
+                                key=lambda p: (abs(p[0]-x0)+abs(p[1]-z0), p[1], p[0]))
+            for x,z in candidates:
+                blocked = False
+                for ox,oz,ow,od in placed.values():
+                    checks += 1
+                    if checks > 100000:
+                        return None
+                    if min(x+rw,ox+ow) > max(x,ox) and min(z+rd,oz+od) > max(z,oz):
+                        blocked = True
+                        break
+                if not blocked:
+                    placed[room['id']] = [x,z,rw,rd]
+                    break
+            else:
+                break
+        if len(placed) != len(rooms):
+            continue
+        candidate = json.loads(canonical(building))
+        for room in candidate['floors'][template]['rooms']:
+            room['rect'] = placed[room['id']]
+        if not _geometry(candidate)[0]:
+            return candidate
+    return None
 
 
 def repair_overlap(building, brief, budget):
     _structure(building)
     issues, _ = _geometry(building)
-    if not issues or any(i['code'] != 'ROOM_OVERLAP' for i in issues):
-        return building
-    if budget['used'] >= budget['limit']:
+    if not issues or any(i['code'] not in {'ROOM_OVERLAP', 'ADDITIONAL_ISSUES_OMITTED'} for i in issues):
         return building
     rooms = [(t, r) for t, f in building['floors'].items() for r in f['rooms']]
     # Moving detailed geometry needs a different, explicit edit contract.
     allowed = {'id', 'name', 'role', 'rect', 'brief', 'walls', 'wall_h', 'acs_unresolved',
                'doors', 'windows', 'points'}
     if any(set(r) - allowed or any(r.get(k) for k in ('doors', 'windows', 'points')) for _, r in rooms):
+        return building
+    positioned = place_nonoverlapping(building)
+    if positioned is not None:
+        return positioned
+    if budget['used'] >= budget['limit']:
         return building
     import acs_understand as U
     context = {'site': building['site'], 'levels': building['levels'],
