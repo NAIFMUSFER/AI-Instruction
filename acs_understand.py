@@ -1621,6 +1621,10 @@ def _plan_chunk_split(description, chunk, zones_by_id, model, btype, results,
     except E.AcsApiError as err:
         stages.append(_safe_stage(ctel, chunk["count"], PC.STAGE_PLAN_CHUNK,
                                   chunk["index"], err.code))
+        if err.code == E.ACS_PROVIDER_BUDGET_EXHAUSTED:
+            # The consented request budget is terminal. Do not turn remaining
+            # chunks into unresolved rectangles and mask this as bad geometry.
+            raise
         hit_ceiling = (err.code in E.CEILING_CODES
                        and ctel.get("stop_reason") == "max_tokens")
         if hit_ceiling:

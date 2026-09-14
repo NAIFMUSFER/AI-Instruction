@@ -139,7 +139,8 @@ async function handleJob(job) {
   }
   if(['FAILED','INTERRUPTED'].includes(job.state)){
     clearTimeout(pollTimer);$('cwDismissJob').hidden=false;
-    status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. تحقق من آخر النسخ المحفوظة؛ لن يُعاد التوليد تلقائيًا.':'تعذّر إكمال التوليد ('+(job.error_code||'GENERATION_FAILED')+'). نسخك السابقة محفوظة.',true);return;
+    const reason=typeof job.error_message==='string'&&job.error_message.length<=500?job.error_message:'تعذّر إكمال التوليد ('+(job.error_code||'GENERATION_FAILED')+').';
+    status(job.state==='INTERRUPTED'?'توقف الخادم أثناء المهمة. تحقق من آخر النسخ المحفوظة؛ لن يُعاد التوليد تلقائيًا.':reason+' لم تُحفظ نسخة جديدة. نسخك السابقة محفوظة؛ لن يُعاد التوليد تلقائيًا.',true);return;
   }
   status('جارٍ إعداد المخطط. يمكنك مغادرة الصفحة والعودة لمتابعة المهمة نفسها.');
   clearTimeout(pollTimer);pollTimer=setTimeout(()=>poll().catch(e=>{status('انقطع الاتصال. اضغط متابعة المهمة عند عودة الشبكة.',true);}),4000);
