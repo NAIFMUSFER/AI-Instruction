@@ -92,13 +92,16 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    }
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
    const revisionsBeforeChat=await page.locator('#cwRevision option').count();
+   const chatReferenceRevision=await page.locator('#cwRevision').inputValue();
    await page.locator('[data-step="3"]').click();await page.locator('#cwChat').fill('غيّر عرض الفراغ B مع تثبيت الفراغ المقفل.');await page.locator('#cwChatSubmit').click();
    assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'pending generation disables nested lock writes');
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('تم حفظ المخطط'),{},{timeout:45000});
    assert.equal(await page.locator('#cwRevision option').count(),revisionsBeforeChat+1,'one chat edit must append one revision; approval itself preserves the selected version');
    assert.ok((await page.locator('#cwRevision option').allTextContents()).some(t=>t.includes('معتمدة')),'the previous approval remains in history');
-   await page.locator('#cwCompare').click();await page.locator('#cwComparison').waitFor({state:'visible'});
+   await page.locator('#cwComparison').waitFor({state:'visible'});
+   assert.equal(await page.locator('#cwCompareRevision').inputValue(),chatReferenceRevision,'the async receipt must select the exact source revision, not an inferred neighbor');
    assert.ok(await page.locator('#cwComparisonRows tr').count()>2);
+   await page.locator('#cwCompare').click();await page.locator('#cwComparison').waitFor({state:'visible'});
    const firstRevision=await page.locator('#cwRevision option').first().getAttribute('value');
    await page.locator('#cwRevision').selectOption(firstRevision);
    await page.waitForFunction(()=>document.querySelector('#cwSemanticLockStatus')?.textContent.includes('تاريخية'));
