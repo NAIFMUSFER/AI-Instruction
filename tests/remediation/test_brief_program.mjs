@@ -10,6 +10,20 @@ const evidence = program => {
   }
 };
 const cases = [
+  ['Standalone Arabic dimensions and dual floors keep exact reviewable evidence', () => {
+    const brief='🏡 عمارة سكنية\n٢٠ متر في ٢٥ متر\nدورين';
+    const a=analyzeBrief(brief);
+    assert.deepEqual(a.candidates.map(r=>[r.metric,r.expected]),[['site_width_m',20],['site_depth_m',25],['level_count',2]]);
+    assert.ok(a.candidates.slice(0,2).every(r=>r.source==='inferred'&&!r.confirmed));
+    const p=buildBriefProgram(form(brief,{levels:'2'}));evidence(p);
+    assert.equal(p.requirements[2].evidence,'دورين');
+    for(const text of ['عرض 100 متر\n150 متر عمق','100 متر عرض\nعمق 150 متر']){
+      assert.deepEqual(analyzeBrief(text).candidates.map(r=>[r.metric,r.expected]),[['site_width_m',100],['site_depth_m',150]]);
+    }
+    assert.deepEqual(analyzeBrief('۲۰۰۰ سم في ۲۵ متر').candidates.map(r=>r.expected),[20,25]);
+    for(const text of ['غرفة 20 متر في 25 متر','غرفة عرض 4 متر','100 عرض\n150 عمق','دورين أو ثلاثة','لا أريد دورين','20 متر في 25 متر تقريبًا'])assert.equal(analyzeBrief(text).candidates.length,0,text);
+    assert.throws(()=>buildBriefProgram(form(brief,{levels:'3'})),/تعارض/);
+  }],
   ['Arabic quantities and original Unicode spans', () => {
     const brief='🏡 فيلا. عرض الموقع ٢٠ متر؛ عمق الموقع ٢٥ متر؛ عدد الأدوار ٣؛ إجمالي ٤ غرف نوم.';
     const a=analyzeBrief(brief);

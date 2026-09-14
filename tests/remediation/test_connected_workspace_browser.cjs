@@ -28,11 +28,13 @@ w.write(sys.argv[1])`,pdfFixture]);
   assert.ok(ready,'fixture backend did not start: '+backendLog);browser=await PW.launch();
   for(const {width,noWebGL} of [{width:393},{width:1280},{width:393,noWebGL:true}]){
    const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true}),page=await context.newPage();
+   let blockJobPoll=false;
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    if(noWebGL)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/i.test(type)?null:original.call(this,type,...args);};});
    await page.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname==='acs-engine.onrender.com'){
+      if(blockJobPoll&&url.pathname.endsWith('/workspace')&&req.method()==='POST'&&req.postDataJSON()?.action==='job')return route.abort('failed');
       const response=await route.fetch({url:'http://127.0.0.1:'+port+url.pathname+url.search});return route.fulfill({response});
     }
     if(url.hostname!=='acs-ui.test')return route.abort();
@@ -49,7 +51,8 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal(await page.locator('#cwProject option:checked').textContent(),'مشروع قبول '+width);
    await page.locator('#cwBrief').waitFor({state:'visible'});
    await page.locator('#cwType').selectOption(width===393?'warehouse':'residential');
-   const description=(width===393?'🏭 مستودع تجريبي':'🏡 مشروع سكني تجريبي')+'؛ عرض الموقع ٢٠ متر؛ عمق الموقع ٢٠ متر؛ عدد الأدوار ١';
+   const dimensionEvidence=width===393?'٢٠ متر في ٢٠ متر':'عرض الموقع ٢٠ متر';
+   const description=width===393?'🏭 مستودع تجريبي\n٢٠ متر في ٢٠ متر\nعدد الأدوار ١':'🏡 مشروع سكني تجريبي؛ عرض الموقع ٢٠ متر؛ عمق الموقع ٢٠ متر؛ عدد الأدوار ١';
    await page.locator('#cwBrief').fill(description);
    const beforeRead=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
    await page.locator('#cwReadBrief').click();
@@ -88,10 +91,22 @@ w.write(sys.argv[1])`,pdfFixture]);
    }
    await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();
    const before=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
+   assert.equal(await page.locator('#cwJobProgress').isVisible(),false,'idle projects show no running activity');
    await page.locator(noWebGL?'[data-option=A]':'#cwGenerateSource').click();await page.locator('#cwRecoverJob').waitFor({state:'visible'});
-   await page.reload();await page.locator('#cwReviewContent').waitFor({state:'visible',timeout:45000});
+   await page.locator('#cwJobProgress').waitFor({state:'visible'});
+   assert.equal(await page.locator('#cwJobActivity').getAttribute('value'),null,'activity has no invented completion percentage');
+   await page.waitForFunction(()=>Number(document.querySelector('#cwJobElapsed').dataset.seconds)>=1);
+   const startedAt=await page.locator('#cwJobProgress').getAttribute('data-started-at');
+   blockJobPoll=true;await page.reload();
+   await page.waitForFunction(()=>document.querySelector('#cwJobProgress')?.dataset.phase==='UNKNOWN');
+   assert.equal(await page.locator('#cwJobProgress').getAttribute('data-started-at'),startedAt,'elapsed time keeps the original submission time after reload');
+   assert.equal(await page.locator('#cwJobActivity').isVisible(),false,'a failed status fetch must stop claiming current activity');
+   assert.ok((await page.locator('#cwJobPhase').textContent()).includes('تعذّر التحقق'));
+   blockJobPoll=false;await page.locator('#cwRecoverJob').click();
+   await page.locator('#cwReviewContent').waitFor({state:'visible',timeout:45000});
+   await page.waitForFunction(()=>document.querySelector('#cwJobProgress').hidden);
    const program=JSON.parse(await page.locator('#cwRequirementEvidence').textContent());
-   assert.equal(program.find(r=>r.metric==='site_width_m').evidence,'عرض الموقع ٢٠ متر');
+   assert.equal(program.find(r=>r.metric==='site_width_m').evidence,dimensionEvidence);
    assert.ok(program.every(r=>r.source_span&&r.confirmed));
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
