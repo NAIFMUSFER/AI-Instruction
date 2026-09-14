@@ -220,6 +220,19 @@ class WorkspaceLifecycle(unittest.TestCase):
 
 
 class JobsHTTP(unittest.IsolatedAsyncioTestCase):
+    async def test_job_receipt_exposes_persisted_reference_without_internal_job_fields(self):
+        reference = '44444444-4444-4444-8444-444444444444'
+        target = '55555555-5555-4555-8555-555555555555'
+        receipt = H._job_view({'id': JOB, 'state': 'SUCCEEDED', 'revision_id': target,
+                               'expected_head': reference, 'input_hash': 'private-fingerprint'})['job']
+        self.assertEqual(receipt['revision_id'], target)
+        self.assertEqual(receipt['reference_revision_id'], reference)
+        self.assertNotIn('expected_head', receipt)
+        self.assertNotIn('input_hash', receipt)
+        empty = H._job_view({'id': JOB, 'state': 'SUCCEEDED', 'revision_id': target,
+                             'expected_head': None})['job']
+        self.assertIsNone(empty['reference_revision_id'])
+
     async def test_geometry_reason_survives_receipt_reload_without_raw_provider_details(self):
         row={'id':JOB,'state':'RUNNING'}
         class Store:
