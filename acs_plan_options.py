@@ -3,12 +3,14 @@
 This module compares canonical design options without ranking them or inventing an
 AI quality score. It reuses the deterministic plan scorecard and publishes only
 measured deltas whose source data is available in both the reference and target
-option. Explicit rack footprints, declared rack heights, geometric rack bay counts,
-rack conflicts, zone allocation ratios, expansion-reserve rectangles, oriented lane
-geometry, explicit configured route polylines and deterministic validation-status
-transitions may be compared; regulatory/structural compliance, usable/load-rated
-storage capacity, throughput and inferred routing remain outside this contract unless
-a future authoritative engine supplies them.
+option. It also names which comparison dimensions are actually measurable versus
+unavailable so a null delta cannot be mistaken for equivalence. Explicit rack
+footprints, declared rack heights, geometric rack bay counts, rack conflicts, zone
+allocation ratios, expansion-reserve rectangles, oriented lane geometry, explicit
+configured route polylines and deterministic validation-status transitions may be
+compared; regulatory/structural compliance, usable/load-rated storage capacity,
+throughput and inferred routing remain outside this contract unless a future
+authoritative engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -119,6 +121,23 @@ def _check_status_changes(reference: Any, value: Any) -> dict[str, dict[str, str
     return out
 
 
+def _comparison_availability(scalar: dict[str, float | int | None],
+                             mappings: dict[str, dict[str, float | int] | None],
+                             *, checks_comparable: bool) -> dict:
+    """Name comparable dimensions without synthesizing a coverage/quality score."""
+    return {
+        "scalar_comparable": [key for key in _SCALAR_METRICS
+                              if key in scalar and scalar[key] is not None],
+        "scalar_unavailable": [key for key in _SCALAR_METRICS
+                               if key in scalar and scalar[key] is None],
+        "mapping_comparable": [key for key in _MAP_METRICS
+                               if key in mappings and mappings[key] is not None],
+        "mapping_unavailable": [key for key in _MAP_METRICS
+                                if key in mappings and mappings[key] is None],
+        "checks_comparable": checks_comparable,
+    }
+
+
 def compare_options(options: list[dict], *, declared_program_receipt: str | None = None) -> dict:
     """Compare 2..8 alternatives against the first option as the reference.
 
@@ -184,6 +203,8 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
         mappings = {key: _map_delta(ref_metrics.get(key), metrics.get(key))
                     for key in _MAP_METRICS if key in ref_metrics or key in metrics}
         check_changes = _check_status_changes(ref_checks, item["scorecard"].get("checks"))
+        availability = _comparison_availability(
+            scalar, mappings, checks_comparable=check_changes is not None)
         rows.append({
             "option_id": item["option_id"],
             "revision_id": item["revision_id"],
@@ -193,6 +214,7 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
                 "scalar": scalar,
                 "mapping": mappings,
                 "checks": check_changes,
+                "availability": availability,
             },
         })
 
