@@ -15,6 +15,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import acs_plan_review as P
 from test_plan_scorecard import warehouse_model
+from test_plan_warehouse_operational_metrics import warehouse as operational_warehouse
 
 BRIEF = "Warehouse requires storage, docks, racks, stations, forklift lanes and an expansion reserve."
 
@@ -76,6 +77,36 @@ class WarehouseProgramTests(unittest.TestCase):
         bad = review([requirement("forklift", "forklift", "min_lane_area_m2", 35.0,
                                   kind="forklift")])
         self.assertIn("REQUIREMENT_MISMATCH", self.codes(bad))
+
+    def test_geometric_rack_positions_requirement_uses_only_explicit_bay_level_geometry(self):
+        model = operational_warehouse()
+        good = review([
+            requirement("rack-positions", "racks", "min_rack_geometric_bay_level_positions", 98)
+        ], model=model)
+        self.assertTrue(good["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(good))
+
+        too_large = review([
+            requirement("rack-positions", "racks", "min_rack_geometric_bay_level_positions", 99)
+        ], model=model)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
+        self.assertFalse(too_large["can_approve"])
+
+        incomplete = operational_warehouse()
+        del incomplete["floors"]["ground"]["rooms"][1]["racks"][0]["bay"]
+        unknown = review([
+            requirement("rack-positions", "racks", "min_rack_geometric_bay_level_positions", 98)
+        ], model=incomplete)
+        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown))
+        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown))
+
+        residential = operational_warehouse()
+        residential["meta"]["type"] = "residential"
+        not_applicable = review([
+            requirement("rack-positions", "racks", "min_rack_geometric_bay_level_positions", 98)
+        ], model=residential)
+        self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
+        self.assertFalse(not_applicable["can_approve"])
 
     def test_configured_route_maximum_uses_only_explicit_polyline(self):
         model = warehouse_model()
