@@ -77,6 +77,38 @@ class WarehouseProgramTests(unittest.TestCase):
                                   kind="forklift")])
         self.assertIn("REQUIREMENT_MISMATCH", self.codes(bad))
 
+    def test_configured_route_maximum_uses_only_explicit_polyline(self):
+        model = warehouse_model()
+        model["routes"] = [{
+            "id": "inbound_main",
+            "kind": "forklift",
+            "from_role": "receiving",
+            "to_role": "storage",
+            "points": [[2.0, 2.0], [12.0, 2.0], [12.0, 7.0]],
+        }]
+        within = review([
+            requirement("inbound-route", "forklift", "max_configured_route_length_m",
+                        15.0, route_id="inbound_main")
+        ], model=model)
+        self.assertTrue(within["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(within))
+
+        too_short = review([
+            requirement("inbound-route", "forklift", "max_configured_route_length_m",
+                        14.0, route_id="inbound_main")
+        ], model=model)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_short))
+        self.assertFalse(too_short["can_approve"])
+
+        invalid = copy.deepcopy(model)
+        invalid["routes"][0]["points"] = [[2.0, 2.0]]
+        unknown = review([
+            requirement("inbound-route", "forklift", "max_configured_route_length_m",
+                        15.0, route_id="inbound_main")
+        ], model=invalid)
+        self.assertIn("REQUIREMENT_NOT_MEASURABLE", self.codes(unknown))
+        self.assertNotIn("REQUIREMENT_MISMATCH", self.codes(unknown))
+
     def test_incomplete_dock_data_is_unknown_not_zero_or_partial(self):
         model = warehouse_model()
         model["floors"]["ground"]["rooms"][0]["docks"][0]["count"] = "2"
