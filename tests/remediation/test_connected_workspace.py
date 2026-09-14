@@ -111,6 +111,26 @@ class WorkspaceLifecycle(unittest.TestCase):
         self.assertEqual(caught.exception.code,'STALE_REVISION')
         self.assertEqual(len(S.view(self.store,PROJECT,ACTOR)['history']),2)
 
+    def test_invalid_generated_geometry_names_reason_without_saving_or_retrying(self):
+        first = self.generate()
+        cases = []
+        overlap = model();overlap['floors']['ground']['rooms'][1]['rect']=[1,1,8,8]
+        cases.append((overlap,'ROOM_OVERLAP'))
+        outside = model();outside['floors']['ground']['rooms'][1]['rect']=[19,0,8,8]
+        cases.append((outside,'OUTSIDE_SITE'))
+        unresolved = model();unresolved['floors']['ground']['rooms'][0]['acs_unresolved']=True
+        cases.append((unresolved,'UNRESOLVED_SPACE'))
+        for building, reason in cases:
+            with self.subTest(reason=reason):
+                runner=Runner(building)
+                with self.assertRaises(PlanError) as caught:
+                    S.generate_and_save(self.store,PROJECT,ACTOR,dict(command(),expected_head=first),runner=runner)
+                self.assertEqual(caught.exception.code,'PLAN_GEOMETRY_'+reason)
+                self.assertEqual(len(runner.calls),1)
+                reopened=S.view(self.store,PROJECT,ACTOR)
+                self.assertEqual(reopened['head'],first)
+                self.assertEqual(len(reopened['history']),1)
+
     def test_browser_program_unicode_evidence_survives_cloud_reload_and_review(self):
         # Real shipped producer + real Python consumer: JS offsets must count
         # Unicode code points, including emoji, rather than UTF-16 code units.
@@ -179,6 +199,23 @@ class WorkspaceLifecycle(unittest.TestCase):
 
 
 class JobsHTTP(unittest.IsolatedAsyncioTestCase):
+    async def test_geometry_reason_survives_receipt_reload_without_raw_provider_details(self):
+        row={'id':JOB,'state':'RUNNING'}
+        class Store:
+            def _request(self,method,path,payload=None,**kwargs):
+                self_case.assertEqual(method,'PATCH');row.update(payload)
+        self_case=self
+        middleware=H.WorkspaceMiddleware(None)
+        with patch.object(H.SERVICE,'generate_and_save',side_effect=PlanError('PLAN_GEOMETRY_ROOM_OVERLAP','private provider content')):
+            await middleware._finish(Store(),PROJECT,ACTOR,command())
+        receipt=H._job_view(json.loads(json.dumps(row)))['job']
+        self.assertEqual(receipt['state'],'FAILED')
+        self.assertIn('متداخلة',receipt['error_message'])
+        self.assertNotIn('private',json.dumps(row))
+        self.assertNotIn('private',json.dumps(receipt))
+        self.assertIsNone(H._job_view({'id':JOB,'state':'FAILED','error_code':'unknown'})['job']['error_message'])
+        self.assertIn('غير محفوظة',H._job_view({'id':JOB,'state':'FAILED','error_code':'INVALID_GEOMETRY'})['job']['error_message'])
+
     async def test_auth_runs_before_body_and_duplicate_job_only_starts_once(self):
         jobs={};started=[];gate=asyncio.Event()
         class Store:

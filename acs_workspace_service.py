@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 import tempfile
 
-from acs_plan_review import PlanError, canonical, digest
+from acs_plan_review import PlanError, canonical, digest, _geometry
 from acs_plan_store_reload import load_workspace
 from acs_plan_commands import _command, _view_result
 from acs_plan_bridge import existing_geometry_verifier
@@ -23,6 +23,31 @@ OPTIONS = {
     "B": "اقتراح يركز على وضوح الحركة وقرب الأنشطة المرتبطة، بلا ادعاء قياس الإنتاجية.",
     "C": "اقتراح يركز على فصل الاستخدامات ومرونة التوسع ضمن القيود المؤكدة.",
 }
+
+# Persist only trusted validator categories, never provider text or geometry.
+GEOMETRY_MESSAGES = {
+    "SITE_NOT_SPECIFIED": "أبعاد الموقع في المخطط الناتج غير محددة أو غير صالحة.",
+    "DIMENSION_NOT_SPECIFIED": "بعض ارتفاعات المبنى أو سماكات الجدران في المخطط الناتج غير محددة أو غير صالحة.",
+    "LEVELS_NOT_SPECIFIED": "المخطط الناتج لا يحدد الأدوار.",
+    "INVALID_LEVEL": "تعريف الأدوار أو ربطها بالمخططات غير صالح.",
+    "UNREFERENCED_TEMPLATE": "يوجد مخطط دور غير مرتبط بأدوار المبنى.",
+    "EMPTY_TEMPLATE": "أحد مخططات الأدوار لا يحتوي فراغات.",
+    "INVALID_RECT": "أبعاد أحد الفراغات في المخطط الناتج غير صالحة.",
+    "OUTSIDE_SITE": "يوجد فراغ خارج حدود الأرض في المخطط الناتج.",
+    "UNRESOLVED_SPACE": "لم يكتمل تخطيط بعض الفراغات؛ لم تُعتمد الأبعاد البديلة.",
+    "UNSUPPORTED_NON_RECTANGULAR_SPACE": "يحتوي المخطط فراغًا غير مستطيل لا يدعمه مسار العرض الحالي.",
+    "ROOM_OVERLAP": "توجد غرف أو فراغات متداخلة في المخطط الناتج.",
+    "NON_FINITE_MEASUREMENT": "تعذّر حساب قياسات صالحة للمخطط الناتج.",
+    "EMPTY_MODEL": "المخطط الناتج لا يحتوي مخططات أدوار.",
+}
+
+
+def geometry_failure_message(code):
+    if code == "INVALID_GEOMETRY":
+        return "لم يجتز المخطط فحص الهندسة. تفاصيل هذه المحاولة القديمة غير محفوظة."
+    if isinstance(code, str) and code.startswith("PLAN_GEOMETRY_"):
+        return GEOMETRY_MESSAGES.get(code[len("PLAN_GEOMETRY_"):])
+    return None
 
 
 def checked_command(command, allowed):
@@ -155,6 +180,13 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None):
         raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
                           expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
+    issues, _ = _geometry(revision.model)
+    if issues:
+        # First category in the canonical validator's deterministic order.
+        # The remaining projection checks stay authoritative and unchanged.
+        reason = issues[0].get("code")
+        code = "PLAN_GEOMETRY_" + reason if reason in GEOMETRY_MESSAGES else "INVALID_GEOMETRY"
+        raise PlanError(code, geometry_failure_message(code))
     _view_result(ws, "generate", revision.id)  # projection admission before write
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
     return revision.id

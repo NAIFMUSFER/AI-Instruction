@@ -45,6 +45,7 @@ def _job_view(row):
         state = "INTERRUPTED"
     return {"ok": True, "job": {"id": row["id"], "state": state,
         "revision_id": row.get("revision_id"), "error_code": row.get("error_code"),
+        "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state == "FAILED" else None,
         "storage": "supabase", "automatic_resubmission": False}}
 
 
