@@ -156,6 +156,9 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls):
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
     with limited(max_provider_calls) as budget:
         result = generate_candidate(prompt)
+        _reject_provider_authority_changes({}, result["building"])
+        from acs_plan_overlap_repair import repair_overlap
+        result["building"] = repair_overlap(result["building"], prompt, budget)
     candidate = result["building"]
     _reject_provider_authority_changes({}, candidate)
     return {"building": candidate, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
