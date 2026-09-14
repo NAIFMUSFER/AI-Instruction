@@ -131,6 +131,39 @@ class WarehouseProgramTests(unittest.TestCase):
         self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
         self.assertFalse(not_applicable["can_approve"])
 
+    def test_expansion_reserve_minimum_uses_only_explicit_canonical_geometry(self):
+        model = warehouse_model()
+        model["floors"]["ground"]["rooms"].append({
+            "id": "future_expansion",
+            "role": "expansion",
+            "rect": [0.0, 10.0, 10.0, 12.0],
+        })
+        good = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 120.0)
+        ], model=model)
+        self.assertTrue(good["can_approve"])
+        self.assertNotIn("REQUIREMENT_METRIC_NOT_SUPPORTED", self.codes(good))
+
+        too_large = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 121.0)
+        ], model=model)
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(too_large))
+        self.assertFalse(too_large["can_approve"])
+
+        absent = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 1.0)
+        ])
+        self.assertIn("REQUIREMENT_MISMATCH", self.codes(absent))
+        self.assertNotIn("REQUIREMENT_NOT_MEASURABLE", self.codes(absent))
+
+        residential = copy.deepcopy(model)
+        residential["meta"]["type"] = "residential"
+        not_applicable = review([
+            requirement("expansion-area", "expansion", "min_expansion_reserve_area_m2", 120.0)
+        ], model=residential)
+        self.assertIn("REQUIREMENT_METRIC_NOT_APPLICABLE", self.codes(not_applicable))
+        self.assertFalse(not_applicable["can_approve"])
+
     def test_incomplete_dock_data_is_unknown_not_zero_or_partial(self):
         model = warehouse_model()
         model["floors"]["ground"]["rooms"][0]["docks"][0]["count"] = "2"
