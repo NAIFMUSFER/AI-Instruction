@@ -190,7 +190,7 @@ function ensurePanel() {
   title.textContent = 'أقفال العناصر الدقيقة';
   const help = document.createElement('p');
   help.className = 'cw-muted';
-  help.textContent = 'اختر رفًا أو رصيفًا أو ممرًا أو عنصرًا محفوظًا في المخطط لحمايته من التغيير في المقترحات التالية.';
+  help.textContent = 'اختر عنصرًا محفوظًا في المخطط لحمايته من التغيير في المقترحات التالية.';
   const label = document.createElement('label');
   label.htmlFor = 'cwSemanticLockTarget';
   label.textContent = 'العنصر في المخطط';
