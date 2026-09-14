@@ -22,6 +22,7 @@ import acs_auth_gateway as G
 import acs_plan_http as P
 import acs_workspace_http as H
 import acs_workspace_service as S
+import acs_plan_sources as SOURCES
 import acs_plan_session as SESSION
 import acs_generation_job as JOBS
 from acs_plan_store import SQLitePlanStore
@@ -35,11 +36,20 @@ def application(database):
     except Exception:pass
     counts={'generation':0,'chat':0}
     projects=[{'id':PROJECT,'name':'مشروع التحقق','owner_id':ACTOR}]
-    with sqlite3.connect(database) as con:con.execute('create table if not exists ci_jobs(id text primary key, document text)')
+    with sqlite3.connect(database) as con:
+        con.execute('create table if not exists ci_jobs(id text primary key, document text)')
+        con.execute('create table if not exists ci_sources(id text primary key, document text)')
+        con.execute('create table if not exists ci_source_objects(key text primary key, data blob)')
 
     class Store(SQLitePlanStoreAdapter):
         def _request(self,method,path,payload=None,**kwargs):
             with sqlite3.connect(database) as con:
+                if path.startswith(SOURCES.TABLE):
+                    if method=='POST':
+                        con.execute('insert or ignore into ci_sources values(?,?)',(payload['id'],json.dumps(payload)));return None
+                    query=urllib.parse.parse_qs(urllib.parse.urlsplit(path).query)
+                    documents=[json.loads(row[0]) for row in con.execute('select document from ci_sources')]
+                    return [d for d in documents if d['project_id']==query['project_id'][0][3:] and ('id' not in query or d['id']==query['id'][0][3:])]
                 if method=='POST':
                     cur=con.execute('insert or ignore into ci_jobs values(?,?)',(payload['id'],json.dumps(payload)))
                     return [copy.deepcopy(payload)] if cur.rowcount else []
@@ -54,7 +64,7 @@ def application(database):
 
     class FixtureRunner:
         def run(self,target,kwargs,**controls):
-            if target.endswith('generate_plan_candidate'):
+            if target.endswith('generate_plan_candidate') or target=='acs_plan_sources:candidate':
                 counts['generation']+=1;time.sleep(1.2)
                 return {'building':model('warehouse' if 'مستودع' in kwargs['brief'] else 'residential'),'provider_calls':1}
             if target.endswith('budgeted_chat_candidate'):
@@ -87,6 +97,15 @@ def application(database):
         raise AssertionError(path)
 
     AUTH.authorize_asgi=authorize
+    def source_object(store,method,project_id,source_id,part,raw=None,media=None):
+        db.project_state(project_id,actor_id=ACTOR)
+        key='/'.join([project_id,source_id,part])
+        with sqlite3.connect(database) as con:
+            if method=='POST':con.execute('insert or ignore into ci_source_objects values(?,?)',(key,raw));return b''
+            row=con.execute('select data from ci_source_objects where key=?',(key,)).fetchone()
+            if not row:raise ValueError('Fixture source unavailable')
+            return row[0]
+    SOURCES.object_request=source_object
     SESSION.authenticated_supabase_plan_store=lambda scope:Store(db)
     G._request=gateway
     JOBS.default_runner=lambda:FixtureRunner()

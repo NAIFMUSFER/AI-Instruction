@@ -18,6 +18,7 @@ import './core/plan-review-packet.mjs';
 import './ui/approved-viewer.mjs';
 import './core/brief-program.mjs';
 import './ui/brief-review.mjs';
+import './ui/plan-upload.mjs';
 import './ui/connected-workspace.mjs';
 /* Expose server-held stable nested locks (racks/docks/lanes/cores/etc.) through
    the same single entry; lock authority remains in the canonical command path. */

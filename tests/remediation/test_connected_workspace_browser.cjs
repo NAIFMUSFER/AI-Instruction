@@ -59,9 +59,26 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
    assert.equal(await page.locator('#cwBrief').inputValue(),description,'unsubmitted brief survives reload');
    assert.equal(await page.locator('#cwConfirmed').isChecked(),false,'reopening must not restore confirmation');
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false,'brief evidence fits mobile width');
+   if(!noWebGL){
+    const inputFile=width===393?'tests/phase7/outputs/warehouse_buffer_depth.png':'tests/phase9/outputs/clinic_sheets.pdf';
+    await page.locator('#cwStartMode').selectOption('upload');
+    await page.locator('#cwPlanFile').setInputFiles(path.join(ROOT,inputFile));
+    await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);
+    if(width===1280){await page.locator('#cwPdfPage').selectOption('2');await page.waitForFunction(()=>!document.querySelector('#cwSaveSource').disabled);}
+    const beforeUpload=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
+    await page.locator('#cwSaveSource').click();
+    await page.waitForFunction(()=>document.querySelector('#cwSourceStatus').textContent.includes('حُفظ الأصل'));
+    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,beforeUpload,'uploading does not call the provider');
+    const sourceId=await page.locator('#cwSavedSource').inputValue();assert.ok(sourceId);
+    await page.reload();await page.waitForFunction(()=>document.querySelector('#cwSavedSource')?.value);
+    assert.equal(await page.locator('#cwSavedSource').inputValue(),sourceId,'stored source is available after reload');
+    const originalPromise=page.waitForEvent('download');await page.locator('#cwDownloadSource').click();
+    const original=await originalPromise;assert.deepEqual(fs.readFileSync(await original.path()),fs.readFileSync(path.join(ROOT,inputFile)),'original bytes survive cloud-source roundtrip');
+    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false,'upload fits mobile');
+   }
    await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();
    const before=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
-   await page.locator('[data-option=A]').click();await page.locator('#cwRecoverJob').waitFor({state:'visible'});
+   await page.locator(noWebGL?'[data-option=A]':'#cwGenerateSource').click();await page.locator('#cwRecoverJob').waitFor({state:'visible'});
    await page.reload();await page.locator('#cwReviewContent').waitFor({state:'visible',timeout:45000});
    const program=JSON.parse(await page.locator('#cwRequirementEvidence').textContent());
    assert.equal(program.find(r=>r.metric==='site_width_m').evidence,'عرض الموقع ٢٠ متر');

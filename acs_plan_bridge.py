@@ -25,6 +25,10 @@ _SERVER_DERIVED_BUILDING_FIELDS = frozenset({
 
 def _reject_provider_authority_changes(before: dict, candidate: dict) -> None:
     """Fail closed if provider output changes server-derived Building authority."""
+    before_meta = before.get('meta') if isinstance(before.get('meta'), dict) else {}
+    after_meta = candidate.get('meta') if isinstance(candidate.get('meta'), dict) else {}
+    if canonical(before_meta.get('acs_plan_source')) != canonical(after_meta.get('acs_plan_source')):
+        raise PlanError('PROVIDER_AUTHORITY_FIELD', 'Provider changed the stored plan-source receipt')
     for key in _SERVER_DERIVED_BUILDING_FIELDS:
         before_has = key in before
         candidate_has = key in candidate

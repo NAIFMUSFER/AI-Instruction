@@ -81,7 +81,14 @@ def view(store, project_id, actor_id, revision_id=None):
 
 
 def generation_command(command):
-    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls"})
+    out = checked_command(command, {"job_id", "brief", "requirements", "expected_head", "option", "confirmed", "max_provider_calls", "source_id", "source_mode"})
+    if "source_id" in out:
+        from acs_plan_sources import identity
+        identity(out["source_id"])
+        if out.get("source_mode") not in {"preserve", "revise"}:
+            raise PlanError("INVALID_PLAN_SOURCE", "اختر الحفاظ على توزيع المخطط أو طلب تعديله.")
+    elif "source_mode" in out:
+        raise PlanError("INVALID_PLAN_SOURCE", "اختر ملف مخطط محفوظًا أولًا.")
     if out.get("confirmed") is not True:
         raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "راجع المتطلبات وأكدها قبل التوليد.")
     brief, requirements = out.get("brief"), out.get("requirements")
@@ -174,11 +181,27 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None):
     if runner is None:
         from acs_generation_job import default_runner
         runner = default_runner()
-    result = runner.run("acs_workspace_service:generate_plan_candidate", {
+    kwargs = {
         k: command[k] for k in ("brief", "requirements", "option", "max_provider_calls")
-    }, request_id=command["job_id"])
+    }
+    source_receipt = None
+    target = "acs_workspace_service:generate_plan_candidate"
+    if command.get("source_id"):
+        from acs_plan_sources import read_source
+        row, image = read_source(store, project_id, command["source_id"], "preview")
+        kwargs["plan_source"] = {"image": base64.b64encode(image).decode("ascii"),
+            "media_type": row["preview_media_type"], "mode": command["source_mode"]}
+        source_receipt = {k: row[k] for k in ("id", "sha256", "page", "page_count", "preview_sha256")}
+        source_receipt["mode"] = command["source_mode"]
+        source_receipt["measurement_status"] = "needs_review"
+        target = "acs_plan_sources:candidate"
+    result = runner.run(target, kwargs, request_id=command["job_id"])
     if not isinstance(result, dict) or not isinstance(result.get("building"), dict):
         raise PlanError("INVALID_PLAN", "لم يعد المزود بمخطط صالح.")
+    from acs_plan_bridge import _reject_provider_authority_changes
+    _reject_provider_authority_changes({}, result["building"])
+    if source_receipt:
+        result["building"].setdefault("meta", {})["acs_plan_source"] = source_receipt
     # Re-read after provider work, then append with compare-and-swap. Existing
     # locks apply to every new option, and an approved baseline remains unchanged.
     ws = workspace(store, project_id, actor_id)
