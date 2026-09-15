@@ -1,0 +1,1 @@
+This branch is RED-only evidence. Do not merge it. The behavioral regression is `test_warehouse_vertical_stage_gap.py`; implementation must be a separate small auditable slice after the stage contract is reviewed. The earlier function-name contract file on this branch is superseded by the behavioral regression and must be removed before any PR is opened.
