@@ -30,6 +30,7 @@ on:
       - 'tests/remediation/test_plan_warehouse_program.py'
       - 'tests/remediation/test_plan_warehouse_lane_conflicts.py'
       - 'tests/remediation/test_plan_warehouse_docks_by_zone.py'
+      - 'tests/remediation/test_plan_warehouse_column_locks.py'
       - 'tests/remediation/test_plan_revision_compare_restore.py'
       - 'tests/remediation/test_plan_ifc_export.py'
       - 'tests/remediation/test_plan_commands.py'
@@ -116,6 +117,11 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_warehouse_docks_by_zone.py 2>&1 | tee logs/plan-warehouse-docks.log
+      - name: Warehouse explicit structural-column lock regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_warehouse_column_locks.py 2>&1 | tee logs/plan-warehouse-column-locks.log
       - name: Revision compare and historical restore regressions (stdlib-only)
         run: |
           set -o pipefail
@@ -166,6 +172,7 @@ jobs:
           python tests/remediation/test_plan_options.py 2>&1 | tee logs/plan-options.log
           python tests/remediation/test_plan_warehouse_lane_conflicts.py 2>&1 | tee logs/plan-warehouse-lane-conflicts-full.log
           python tests/remediation/test_plan_warehouse_docks_by_zone.py 2>&1 | tee logs/plan-warehouse-docks-full.log
+          python tests/remediation/test_plan_warehouse_column_locks.py 2>&1 | tee logs/plan-warehouse-column-locks-full.log
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
           python tests/remediation/test_plan_store.py 2>&1 | tee logs/plan-store.log
