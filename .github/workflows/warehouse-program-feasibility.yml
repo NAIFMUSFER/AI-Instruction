@@ -5,7 +5,10 @@ on:
   pull_request:
     paths:
       - warehouse_program_feasibility.py
+      - acs_workspace_service.py
+      - public/app/core/brief-program.mjs
       - tests/remediation/test_warehouse_program_feasibility.py
+      - tests/remediation/test_warehouse_building_target.mjs
 jobs:
   regression:
     runs-on: ubuntu-24.04
@@ -14,4 +17,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - run: PYTHONPATH=. python tests/remediation/test_warehouse_program_feasibility.py
+      - run: node tests/remediation/test_warehouse_building_target.mjs
