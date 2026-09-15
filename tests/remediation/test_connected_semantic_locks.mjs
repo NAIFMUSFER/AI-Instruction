@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 const {
   buildSemanticLockCommand,
   collectSemanticLockTargets,
+  lockScopesForTarget,
   selectorKey,
   toggleSemanticSelector,
   semanticWorkspaceChanged,
@@ -38,7 +39,7 @@ function packet() {
       // Repeated template on another level must not create a second semantic selector.
       {level_index:1, source_map:map.map(row => ({source:{...row.source, level_index:1}}))},
     ],
-    locks:{semantic:[{kind:'site'}, rack]},
+    locks:{semantic:[{kind:'site'}, {...rack, properties:['x','z']}]},
   };
 }
 
@@ -75,6 +76,31 @@ test('UI selector bounds exactly match the server 120-character stable-id contra
   }), []);
 });
 
+test('selective property selectors remain distinct and normalize property order', () => {
+  const position = {...rack, properties:['z','x']};
+  const dimensions = {...rack, properties:['w','d']};
+  assert.notEqual(selectorKey(position), selectorKey(dimensions));
+  assert.equal(selectorKey(position), selectorKey({...rack, properties:['x','z']}));
+  assert.equal(selectorKey(dimensions), selectorKey({...rack, properties:['d','w']}));
+  assert.equal(selectorKey({...rack, properties:[]}), '');
+  assert.equal(selectorKey({...rack, properties:['__unknown__']}), '');
+});
+
+test('connected UI exposes only conservative measured property scopes by collection', () => {
+  assert.deepEqual(lockScopesForTarget(rack).map(scope => [scope.id, scope.properties]), [
+    ['whole', null], ['position', ['x','z']], ['dimensions', ['d','w']],
+  ]);
+  assert.deepEqual(lockScopesForTarget(dock).map(scope => [scope.id, scope.properties]), [
+    ['whole', null], ['position', ['edge','offset']],
+  ]);
+  assert.deepEqual(lockScopesForTarget(lane).map(scope => [scope.id, scope.properties]), [
+    ['whole', null], ['position', ['x','z']], ['dimensions', ['d','w']],
+  ]);
+  assert.deepEqual(lockScopesForTarget(lift).map(scope => [scope.id, scope.properties]), [
+    ['whole', null], ['position', ['x','z']],
+  ]);
+});
+
 test('toggling one nested lock preserves every unrelated server-held selector', () => {
   const current = [{kind:'site'}, {kind:'room', template:'ground', room_id:'office'}, rack, dock];
   const afterAdd = toggleSemanticSelector(current, lane, true);
@@ -86,6 +112,26 @@ test('toggling one nested lock preserves every unrelated server-held selector', 
   assert.equal(afterRemove.some(row => selectorKey(row) === selectorKey(dock)), true);
   assert.equal(afterRemove.some(row => selectorKey(row) === selectorKey({kind:'site'})), true);
   assert.equal(afterRemove.some(row => selectorKey(row) === selectorKey({kind:'room', template:'ground', room_id:'office'})), true);
+});
+
+test('selective scopes coexist, whole-element scope subsumes them, and narrowing is explicit', () => {
+  const position = {...rack, properties:['x','z']};
+  const dimensions = {...rack, properties:['w','d']};
+  let selectors = toggleSemanticSelector([dock], position, true);
+  selectors = toggleSemanticSelector(selectors, dimensions, true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(position)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dimensions)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dock)), true);
+
+  selectors = toggleSemanticSelector(selectors, rack, true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(rack)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(position)), false);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dimensions)), false);
+
+  selectors = toggleSemanticSelector(selectors, position, true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(rack)), false);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(position)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dock)), true);
 });
 
 test('lock command is stale-head-bound and contains no client authority fields', () => {
@@ -104,4 +150,18 @@ test('lock command is stale-head-bound and contains no client authority fields',
   for (const forbidden of ['actor_id','actor_label','project_id','model','building','semantic_lock_manifest']) {
     assert.equal(Object.hasOwn(command, forbidden), false, forbidden);
   }
+});
+
+test('selective lock command preserves the exact server-supported property scope', () => {
+  const position = {...dock, properties:['offset','edge']};
+  const command = buildSemanticLockCommand({
+    currentSelectors: [{kind:'site'}, {...rack, properties:['x','z']}],
+    target: position,
+    locked: true,
+    expectedHead: 'rev-head-8',
+  });
+  const saved = command.selectors.find(row => selectorKey(row) === selectorKey(position));
+  assert.deepEqual(saved, {...dock, properties:['edge','offset']});
+  assert.equal(command.selectors.some(row => selectorKey(row) === selectorKey({...rack, properties:['x','z']})), true);
+  assert.match(command.note, /properties edge,offset/);
 });
