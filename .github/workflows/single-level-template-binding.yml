@@ -17,4 +17,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: python tests/remediation/test_single_level_template_binding.py
+      - run: PYTHONPATH=. python tests/remediation/test_single_level_template_binding.py
