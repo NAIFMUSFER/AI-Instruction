@@ -195,6 +195,10 @@ def existing_geometry_verifier(building: dict) -> dict:
             return opening.get('edge') in ('N', 'S', 'E', 'W') and _number(opening.get('offset'))
         return all(explicit(o) for o in room['doors'] + room['windows'])
     topology_known = all(openings_explicit(r) for r in rooms)
+    from acs_residential_access import issues as residential_access_issues, opening_collisions
+    if topology_known:
+        findings += [item['message'] for item in residential_access_issues(building)]
+        findings += [item['message'] for item in opening_collisions(building)]
     vertical_known = len(levels) == 1
     core_issue = False
     if len(levels) > 1:

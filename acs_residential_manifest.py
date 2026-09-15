@@ -70,6 +70,8 @@ def manifest(brief, requirements):
                     zones.append({'id':template+'_'+unit_id+'_'+role+'_'+str(i+1),
                                   'role':role,'template':template,'unit_id':unit_id})
         zones.append({'id':template+'_lobby','role':'entrance','template':template})
+        if count > 1:
+            zones.append({'id':template+'_shared_corridor','role':'corridor','template':template})
         if levels > 1:
             zones.append({'id':template+'_stairs','role':'stairs','template':template,'core_id':'stairs_core'})
         if elevator:
@@ -79,7 +81,7 @@ def manifest(brief, requirements):
     envelope = {'site':{'w':width,'d':depth},'floor_height':3.2,'wall_h':3.0,'wall_t':0.2,
         'levels':[{'index':i,'template':templates[n]} for i,n in enumerate(distribution)],
         'meta':{'assumptions':['ارتفاع الدور 3.2 م، وارتفاع الجدار 3 م وسماكته 0.2 م قيم أولية للمراجعة.',
-                              'توزيع متماثل للشقق ذات برنامج الغرف نفسه، مع ممر داخلي لكل شقة ومدخل مشترك.'],
+                              'توزيع متماثل للشقق ذات برنامج الغرف نفسه، مع ممر داخلي لكل شقة ومدخل وممر مشتركين.'],
                 'acs_manifest_source':'confirmed_apartment_program'}}
     return {'kind':'outline','zones':zones,'envelope':envelope,'issues':[],
             'results':[],'pending':PC.group_by_template(zones),'rate':None,'index':0}
