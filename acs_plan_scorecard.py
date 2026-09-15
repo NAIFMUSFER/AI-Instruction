@@ -197,6 +197,51 @@ def _element_id(item: Any) -> str | None:
     return value.strip() if isinstance(value, str) and value.strip() else None
 
 
+def _dock_slot_site_positions(room: Any, dock: Any) -> list[tuple[str, float, float]] | None:
+    """Return explicit dock-slot centers in canonical site x/z coordinates.
+
+    The measurement mirrors the canonical dock placement contract: ``offset`` is
+    measured from the owning room corner along ``edge`` and repeated by explicit
+    ``pitch``. No compiler defaults, dock width, apron, queuing or clearance rules
+    are inferred. Stable room/dock ids are required so option deltas cannot silently
+    compare unrelated dock groups. Any incomplete or out-of-room placement fails
+    this mapping closed.
+    """
+    if not isinstance(room, dict) or not isinstance(dock, dict):
+        return None
+    room_id = _element_id(room)
+    dock_id = _element_id(dock)
+    owner_rect = _rect_tuple(room.get("rect"))
+    edge = dock.get("edge")
+    offset = dock.get("offset")
+    pitch = dock.get("pitch")
+    count = dock.get("count")
+    if (room_id is None or dock_id is None or owner_rect is None
+            or edge not in {"N", "S", "E", "W"}
+            or not _finite(offset) or offset < 0
+            or not _positive(pitch)
+            or type(count) is not int or not 1 <= count <= 24):
+        return None
+
+    rx, rz, rw, rd = owner_rect
+    span = rw if edge in {"N", "S"} else rd
+    out: list[tuple[str, float, float]] = []
+    for index in range(count):
+        along = float(offset) + float(pitch) * index
+        if along < -EPS or along > span + EPS:
+            return None
+        if edge == "N":
+            x, z = rx + along, rz
+        elif edge == "S":
+            x, z = rx + along, rz + rd
+        elif edge == "W":
+            x, z = rx, rz + along
+        else:
+            x, z = rx + rw, rz + along
+        out.append((f"{room_id}/{dock_id}#{index + 1}", round(x, 6), round(z, 6)))
+    return out
+
+
 def _measure_configured_routes(model: dict) -> tuple[dict[str, float] | None,
                                                        dict[str, float] | None,
                                                        list[dict], str | None]:
@@ -285,6 +330,10 @@ def measure_plan(model: dict) -> dict:
       in the denominator. It is not utilization, efficiency or an AI quality score.
     - `dock_count_by_zone_role` groups explicit dock counts by the canonical role
       of their owning warehouse zone. It is allocation only, not capacity or throughput.
+    - `dock_site_x_by_slot_m` and `dock_site_z_by_slot_m` expose only explicit
+      dock-slot center coordinates derived from room rectangles and canonical
+      id/edge/offset/pitch/count data. They do not establish apron geometry,
+      queuing capacity, vehicle clearance, traffic safety or code compliance.
     - `lane_area_by_kind_m2` is painted/declared lane rectangle area, not a
       clearance or safety-compliance result.
     - `lane_centerline_length_by_kind_m` measures only the longitudinal dimension
@@ -343,6 +392,9 @@ def measure_plan(model: dict) -> dict:
     dock_by_edge: defaultdict[str, int] = defaultdict(int)
     dock_by_zone_role: defaultdict[str, int] = defaultdict(int)
     dock_zone_role_complete = bool(templates)
+    dock_site_x_by_slot: dict[str, float] = {}
+    dock_site_z_by_slot: dict[str, float] = {}
+    dock_site_position_complete = bool(templates)
     rack_groups = 0
     rack_groups_known = bool(templates)
     rack_declared_levels = 0
@@ -389,6 +441,7 @@ def measure_plan(model: dict) -> dict:
             space_count_known = False
             dock_count_known = rack_groups_known = station_count_known = False
             dock_zone_role_complete = False
+            dock_site_position_complete = False
             rack_levels_complete = rack_height_complete = False
             rack_geometric_complete = rack_footprint_complete = False
             rack_overlap_complete = rack_lane_overlap_complete = False
@@ -450,6 +503,7 @@ def measure_plan(model: dict) -> dict:
                 space_area_known = False
                 space_count_known = False
                 dock_zone_role_complete = False
+                dock_site_position_complete = False
                 rack_height_complete = False
                 rack_geometric_complete = rack_footprint_complete = False
                 rack_overlap_complete = rack_lane_overlap_complete = False
@@ -481,17 +535,20 @@ def measure_plan(model: dict) -> dict:
             if not isinstance(docks, list):
                 dock_count_known = False
                 dock_zone_role_complete = False
+                dock_site_position_complete = False
             else:
                 for dock in docks:
                     if not isinstance(dock, dict):
                         dock_count_known = False
                         dock_zone_role_complete = False
+                        dock_site_position_complete = False
                         continue
                     count = _count(dock.get("count"))
                     edge = str(dock.get("edge") or "").upper()
                     if count is None:
                         dock_count_known = False
                         dock_zone_role_complete = False
+                        dock_site_position_complete = False
                         continue
                     dock_count += count
                     if normalized_role:
@@ -503,6 +560,19 @@ def measure_plan(model: dict) -> dict:
                         dock_by_edge[edge] += count
                     elif count:
                         warnings.append("DOCK_EDGE_NOT_CLASSIFIED")
+
+                    if count:
+                        positions = _dock_slot_site_positions(room, dock)
+                        if positions is None:
+                            dock_site_position_complete = False
+                        else:
+                            for slot_id, site_x, site_z in positions:
+                                if (slot_id in dock_site_x_by_slot
+                                        or slot_id in dock_site_z_by_slot):
+                                    dock_site_position_complete = False
+                                    continue
+                                dock_site_x_by_slot[slot_id] = site_x
+                                dock_site_z_by_slot[slot_id] = site_z
 
             racks = room.get("racks") or []
             normalized_racks: list[tuple[float, float, float, float]] = []
@@ -736,6 +806,12 @@ def measure_plan(model: dict) -> dict:
             "dock_count_by_zone_role": (
                 dict(sorted(dock_by_zone_role.items()))
                 if dock_count_known and dock_zone_role_complete else None),
+            "dock_site_x_by_slot_m": (
+                dict(sorted(dock_site_x_by_slot.items()))
+                if dock_site_position_complete else None),
+            "dock_site_z_by_slot_m": (
+                dict(sorted(dock_site_z_by_slot.items()))
+                if dock_site_position_complete else None),
             "rack_group_count": rack_groups if rack_groups_known else None,
             "rack_declared_level_sum": rack_declared_levels if rack_levels_complete else None,
             "rack_declared_height_max_m": (
@@ -834,6 +910,13 @@ def measure_plan(model: dict) -> dict:
             unavailable["dock_count_by_zone_role"] = (
                 "Dock allocation by owning zone role needs valid explicit counts and a canonical "
                 "owning zone role for every non-zero dock count.")
+        if not dock_site_position_complete:
+            position_message = (
+                "Dock slot positions need an explicit owning-room rectangle and stable room/dock ids, "
+                "plus explicit edge, non-negative offset, positive pitch and count (1..24) for every "
+                "non-zero dock group; positions outside the owning edge fail closed.")
+            unavailable["dock_site_x_by_slot_m"] = position_message
+            unavailable["dock_site_z_by_slot_m"] = position_message
         if zone_ratios is None:
             unavailable["zone_area_ratio_by_role"] = (
                 "Zone allocation ratios need complete positive measured canonical room-rectangle area.")
