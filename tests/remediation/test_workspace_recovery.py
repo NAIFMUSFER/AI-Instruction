@@ -15,6 +15,61 @@ from acs_generation_job import _classified_payload, _reraise_classified
 from acs_plan_review import PlanError
 from test_connected_workspace import command, model, PROJECT, ACTOR
 
+def connected_apartments(zones):
+    """Two private units around a common corridor and a north-facing lobby."""
+    rooms=[]
+    positions={}
+    for zone in zones:
+        r={**zone,'name':zone['role'],'walls':['N','S','E','W'],
+           'doors':[],'windows':[],'points':[]}
+        unit=r.get('unit_id')
+        if unit:
+            side=1 if unit.endswith('_1') else 2
+            if r['role']=='corridor':
+                r['rect']=[6 if side==1 else 12,4,2,21]
+            else:
+                i=positions.get(unit,0);positions[unit]=i+1
+                r['rect']=[0 if side==1 else 14,4+i*3.5,6,3.5]
+        else:
+            r['rect']={'entrance':[4,0,12,4],'corridor':[8,4,4,21],
+                       'stairs':[0,0,4,4],'elevator':[16,0,4,4]}[r['role']]
+        r['points']=[{'id':'light_'+r['id'],'type':'light','x':r['rect'][2]/2,'z':r['rect'][3]/2}]
+        rooms.append(r)
+    def door(room,side,offset):
+        room['doors'].append({'id':room['id']+'_door_'+str(len(room['doors'])),
+                            'edge':side,'offset':offset,'width':.9,'height':2.1})
+    common=next(r for r in rooms if not r.get('unit_id') and r['role']=='corridor')
+    lobby=next(r for r in rooms if r['role']=='entrance')
+    for unit in ('apartment_1','apartment_2'):
+        own=[r for r in rooms if r.get('unit_id')==unit]
+        corridor=next(r for r in own if r['role']=='corridor')
+        left=unit.endswith('_1')
+        for r in own:
+            if r==corridor:continue
+            door(r,'E' if left else 'W',1.75)
+            door(corridor,'W' if left else 'E',r['rect'][1]-4+1.75)
+        door(corridor,'E' if left else 'W',10.5)
+        door(common,'W' if left else 'E',10.5)
+    door(common,'N',2);door(lobby,'S',6);door(lobby,'N',6)
+    door(lobby,'W',2);door(lobby,'E',2)
+    for role,side in [('stairs','E'),('elevator','W')]:
+        door(next(r for r in rooms if r['role']==role),side,2)
+    return rooms
+
+
+def apartment_fixture():
+    from acs_residential_manifest import manifest
+    specs=[('site_width_m',None,20),('site_depth_m',None,25),
+           ('level_count',None,2),('unit_count',None,4)]
+    for role,count in [('bedroom',2),('living',1),('kitchen',1),('bathroom',2),('majlis',0)]:
+        specs.extend([('room_count',role,count*4),('room_count_per_unit',role,count)])
+    rows=[{'id':str(i),'metric':metric,'role':role,'expected':n,
+           'confirmed':True,'source':'inferred'} for i,(metric,role,n) in enumerate(specs)]
+    cp=manifest('عمارة بدرج ومصعد',rows)
+    b=copy.deepcopy(cp['envelope'])
+    b['floors']={'residential_2':{'rooms':connected_apartments(cp['zones'])}}
+    return b,rows
+
 class Store:
     def __init__(self):self.updates=[]
     def _request(self,method,path,payload=None,**kwargs):self.updates.append(copy.deepcopy(payload));return []
@@ -163,26 +218,110 @@ class Recovery(unittest.TestCase):
                 brief=label+' بدرج ومصعد'
                 self.assertEqual(U.detect_type(brief),kind)
                 zones=manifest(brief,rows)['zones']
-                rooms=[{**z,'name':'فراغ '+str(i),'rect':[(i%5)*4,(i//5)*4,4,4],
-                        'walls':['N','S','E','W']} for i,z in enumerate(zones)]
+                rooms=connected_apartments(zones)
                 stages=[];events=[]
                 def provider(text,**kw):
                     stage=kw['stage'];stages.append(stage);consume()
                     if stage=='plan_chunk':
                         self.assertEqual(planning_system(stage),PLANNING_SYSTEM)
-                        return json.dumps({'rooms':rooms})
+                        return json.dumps({'rooms':[{k:v for k,v in r.items() if k not in ('doors','windows','points')} for r in rooms]})
                     self.assertEqual(stage,'detail','The confirmed apartment manifest must skip outline')
-                    return json.dumps({'rooms':[{'id':r['id'],
-                        'doors':[{'id':'d_'+r['id'],'edge':'N','offset':2,'width':.9,'height':2.1}],
-                        'windows':[],'points':[{'id':'p_'+r['id'],'type':'light','x':2,'z':2}]} for r in rooms]})
+                    return json.dumps({'rooms':[{k:r[k] for k in ('id','doors','windows','points')} for r in rooms]})
                 with channel(events.append),patch.object(U,'call_llm',side_effect=provider):
                     result=S.generate_plan_candidate(brief,rows,'A',6,used_calls=1)
                 self.assertEqual(stages,['plan_chunk','detail'])
                 self.assertEqual(result['provider_calls'],3)
                 self.assertEqual(_program(result['building'],brief,rows),[])
-                self.assertEqual(len(result['building']['floors']['residential_2']['rooms']),17)
+                self.assertEqual(len(result['building']['floors']['residential_2']['rooms']),18)
                 self.assertTrue(all(r['doors'] for r in result['building']['floors']['residential_2']['rooms']))
                 self.assertTrue(any(e.get('checkpoint',{}).get('kind')=='details' for e in events))
+
+    def test_private_unit_access_requires_connected_geometry_and_paired_doors(self):
+        from acs_residential_access import issues
+        from acs_plan_bridge import existing_geometry_verifier
+        b,_=apartment_fixture()
+        self.assertEqual(issues(b,False),[])
+        self.assertEqual(issues(b),[])
+        self.assertEqual(existing_geometry_verifier(b)['scopes']['topology'],'PASS')
+        broken=copy.deepcopy(b)
+        next(r for r in broken['floors']['residential_2']['rooms'] if r['role']=='stairs')['rect'][2]=3.8
+        self.assertTrue(issues(broken,False))
+        broken=copy.deepcopy(b)
+        bedroom=broken['floors']['residential_2']['rooms'][0]
+        bedroom['doors'][0]['offset']+=1
+        self.assertEqual(issues(broken,False),[])
+        self.assertTrue(any(i['room_ref'][1]==bedroom['id'] for i in issues(broken)))
+        self.assertEqual(existing_geometry_verifier(broken)['scopes']['topology'],'FAIL')
+        # A door on every room is insufficient if one apartment cannot enter.
+        broken=copy.deepcopy(b)
+        corridor=next(r for r in broken['floors']['residential_2']['rooms'] if r.get('unit_id')=='apartment_1' and r['role']=='corridor')
+        corridor['doors']=[d for d in corridor['doors'] if d['edge']!='E']
+        self.assertTrue(issues(broken))
+
+    def test_common_access_cannot_cross_another_apartment(self):
+        from acs_residential_access import issues
+        b,_=apartment_fixture()
+        common=next(r for r in b['floors']['residential_2']['rooms'] if r['role']=='corridor' and not r.get('unit_id'))
+        common['unit_id']='apartment_1'
+        self.assertTrue(any('apartment_2' in i['room_ref'][1] for i in issues(b)))
+
+    def test_disconnected_layout_is_repaired_before_openings(self):
+        from acs_residential_generation import prepare_layout
+        from acs_residential_access import issues
+        from acs_provider_budget import limited,consume
+        good,rows=apartment_fixture();bad=copy.deepcopy(good)
+        next(r for r in bad['floors']['residential_2']['rooms'] if r['role']=='stairs')['rect'][2]=3.8
+        before=copy.deepcopy(bad)
+        def provider(text,**kw):
+            consume();self.assertEqual(kw['stage'],'repair')
+            self.assertTrue(any(i['code']=='RESIDENTIAL_ACCESS_DISCONNECTED' for i in json.loads(text)['findings']))
+            return json.dumps({'floors':good['floors']})
+        with limited(6) as budget,patch.object(U,'call_llm',side_effect=provider) as call:
+            result=prepare_layout(bad,'عمارة',rows,budget)
+        self.assertEqual(issues(result,False),[]);self.assertEqual(call.call_count,1)
+        self.assertEqual(bad,before);self.assertEqual(result['site'],before['site'])
+        self.assertEqual(result['levels'],before['levels'])
+
+    def test_valid_completed_apartments_resume_without_provider_calls(self):
+        from acs_residential_generation import detail
+        b,_=apartment_fixture();before=copy.deepcopy(b)
+        with patch.object(U,'call_llm') as provider:
+            result=detail(b,'عمارة',{'used':3,'limit':6},['residential_2:0'])
+        provider.assert_not_called();self.assertEqual(result,before)
+
+    def test_opening_correction_is_bounded_preserves_geometry_and_counts_calls(self):
+        from acs_residential_generation import detail
+        from acs_residential_access import detail_issues
+        from acs_provider_budget import limited,consume
+        b,_=apartment_fixture();good=copy.deepcopy(b)
+        rooms=b['floors']['residential_2']['rooms']
+        rooms[0]['windows']=[{'id':'internal','edge':'E','offset':1.75,'width':.6,'height':.6,'sill':1}]
+        bad=copy.deepcopy(b)
+        self.assertTrue(detail_issues(b))
+        def provider(text,**kw):
+            consume()
+            value=good if 'findings_to_correct' in json.loads(text) else bad
+            return json.dumps({'rooms':[{k:r[k] for k in ('id','doors','windows','points')} for r in value['floors']['residential_2']['rooms']]})
+        with limited(6) as budget,patch.object(U,'call_llm',side_effect=provider) as call:
+            result=detail(b,'عمارة',budget)
+        self.assertEqual(budget['used'],2);self.assertEqual(call.call_count,2)
+        self.assertEqual(result,good);self.assertEqual(detail_issues(result),[])
+        def never_fix(text,**kw):
+            consume()
+            return json.dumps({'rooms':[{k:r[k] for k in ('id','doors','windows','points')} for r in bad['floors']['residential_2']['rooms']]})
+        with limited(6) as budget,patch.object(U,'call_llm',side_effect=never_fix) as call:
+            with self.assertRaises(PlanError) as caught:detail(copy.deepcopy(bad),'عمارة',budget)
+        self.assertEqual(caught.exception.code,'PLAN_DETAIL_INCOMPLETE')
+        self.assertEqual(call.call_count,2)
+
+    def test_cross_kind_opening_overlap_respects_vertical_separation(self):
+        from acs_residential_access import opening_collisions
+        b,_=apartment_fixture()
+        r=b['floors']['residential_2']['rooms'][0]
+        r['windows']=[{'id':'w','edge':'E','offset':1.75,'width':.6,'height':.6,'sill':1.5}]
+        self.assertTrue(opening_collisions(b))
+        r['windows'][0]['sill']=2.2
+        self.assertEqual(opening_collisions(b),[])
 
     def test_warehouse_does_not_enter_the_residential_pipeline(self):
         from acs_workspace_progress import planning_system

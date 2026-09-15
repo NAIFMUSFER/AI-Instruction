@@ -208,12 +208,14 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
         result = {"building":resume["building"]} if saved_layout else generate_candidate(prompt)
         _reject_provider_authority_changes({}, result["building"])
-        from acs_plan_overlap_repair import repair_overlap
-        result["building"] = repair_overlap(result["building"], prompt, budget)
         if residential:
-            if not detailed:
-                result["building"] = prepare_layout(result["building"], brief, requirements, budget)
-            result["building"] = detail(result["building"], brief, budget, resume.get("done") if detailed else None)
+            before_layout = canonical(result["building"])
+            result["building"] = prepare_layout(result["building"], brief, requirements, budget)
+            reuse_details = detailed and canonical(result["building"]) == before_layout
+            result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
+        else:
+            from acs_plan_overlap_repair import repair_overlap
+            result["building"] = repair_overlap(result["building"], prompt, budget)
         emit("REVIEW",provider_calls=budget["used"])
     candidate = result["building"]
     _reject_provider_authority_changes({}, candidate)

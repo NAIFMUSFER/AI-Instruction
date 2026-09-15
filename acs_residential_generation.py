@@ -24,7 +24,12 @@ confirmed room and floor count. Use shared floor templates only for genuinely
 identical floors. Keep stairs and requested elevator cores aligned vertically
 and connect every apartment entrance to circulation. Keep proposed rectangles
 inside the site, non-overlapping, with shared edges for circulation. Do not
-invent a plot's regulatory setbacks or claim compliance. Emit no furniture,
+leave gaps between rooms intended to connect: snap their shared edges exactly.
+Reserve a continuous COMMON corridor connecting the lobby, every apartment's
+internal corridor, the stairs and elevator. Each apartment's rooms must be
+reachable through that apartment only, without crossing another apartment.
+Plan the circulation backbone first and fit occupied rooms around it.
+Do not invent a plot's regulatory setbacks or claim compliance. Emit no furniture,
 electrical points or openings during outline and plan_chunk; a separate stage
 will add openings. Do not embed the full brief repeatedly in room entries.
 Do not output validation, authority, approval, baseline or measured metrics.
@@ -39,6 +44,13 @@ points are local room coordinates. Do not return or alter room rect, role, unit_
 site, floors, levels, approvals or requirements. Only return requested room IDs.
 Doors must connect adjacent accessible spaces (paired openings align) or actual
 external entrances. Windows must be on exterior boundaries, never internal walls.
+For every apartment, connect its corridor to the COMMON corridor, then connect
+every room inside that unit. Connect the common corridor to the entrance and
+each vertical core. Put matching doors on BOTH sides of each shared wall, with
+the same GLOBAL center (local offsets can differ). Include an external entrance
+door at the requested street frontage where the existing geometry permits it.
+Never place a window on top of a door. A room with no external wall may have no
+window; do not invent an internal window to satisfy an assumed daylight rule.
 Keep openings within their wall spans and do not overlap openings. Provide one
 light point per enclosed occupied room. These are editable concept proposals.
 Do not claim daylight compliance, engineering approval, structure or fire design.
@@ -76,6 +88,9 @@ def prepare_layout(building, brief, requirements, budget):
     def findings(value):
         _structure(value)
         issues, _ = _geometry(value)
+        if not issues:
+            from acs_residential_access import issues as access_issues
+            issues += access_issues(value, doors=False)
         try:
             check_rooms(value)
         except PlanError as exc:
@@ -97,7 +112,9 @@ Keep exactly the existing template keys. Do not return site, levels or any
 other top-level field. Keep valid room identities where possible; replace
 apartment shells by the confirmed room program. Correct all supplied findings,
 including room totals and per-unit counts. No overlapping envelope rectangles.
-Keep every floor's core rectangle and core_id identical. No openings yet.'''
+Keep every floor's core rectangle and core_id identical. Add common circulation
+if missing and resize/reposition rooms as needed to make a continuous path.
+Shared walls must touch exactly; a gap is not a corridor. No openings yet.'''
     response=U.extract_json(U.call_llm(canonical(context),btype='residential',user_msg='',
                      system_override=system,max_tokens=9000,stage='repair'))
     if not isinstance(response,dict) or set(response)!={'floors'} or not isinstance(response['floors'],dict) or set(response['floors'])!=set(building['floors']):
@@ -121,14 +138,13 @@ def detail(building, brief, budget, done=None):
     def checkpoint():
         emit('ROOM_DETAILS',{'kind':'details','building':building,'done':sorted(done)},
              completed=len(done),total=len(groups),provider_calls=budget['used'])
-    checkpoint()
-    for template, offset, rooms in groups:
+    def propose(template, offset, rooms, findings=None):
         key=template+':'+str(offset)
-        if key in done:
-            continue
         context={'site':building['site'],'target_template':template,
                  'all_rooms':building['floors'][template]['rooms'],
                  'requested_ids':[r['id'] for r in rooms], 'brief':brief}
+        if findings:
+            context['findings_to_correct']=findings
         raw=U.call_llm(canonical(context),btype='residential',user_msg='',
                       system_override=OPENINGS_SYSTEM,max_tokens=7000,stage='detail')
         value=U.extract_json(raw)
@@ -142,8 +158,37 @@ def detail(building, brief, budget, done=None):
             row=by_id[room['id']]
             if set(row)-{'id','doors','windows','points'} or any(not isinstance(row.get(k),list) for k in ('doors','windows','points')):
                 raise PlanError('PLAN_DETAIL_INCOMPLETE','أعاد تفصيل الغرف بيانات غير مكتملة.')
+            from acs_plan_review import _number
+            for kind in ('doors','windows'):
+                for opening in row[kind]:
+                    if (not isinstance(opening,dict) or opening.get('edge') not in ('N','S','E','W')
+                            or any(not _number(opening.get(k)) for k in ('offset','width','height'))
+                            or opening['width'] <= 0 or opening['height'] <= 0
+                            or (kind=='windows' and not _number(opening.get('sill')))):
+                        raise PlanError('PLAN_DETAIL_INCOMPLETE','أعد الفتحات بأبعاد ومواقع صريحة.')
+            if any(not isinstance(p,dict) or any(not _number(p.get(k)) for k in ('x','z')) for p in row['points']):
+                raise PlanError('PLAN_DETAIL_INCOMPLETE','أعد نقاط الإنارة بمواقع صريحة.')
         for room in rooms:
             room.update({k:by_id[room['id']][k] for k in ('doors','windows','points')})
         done.add(key)
         checkpoint()
+    checkpoint()
+    for template, offset, rooms in groups:
+        if template+':'+str(offset) not in done:
+            propose(template, offset, rooms)
+    # One bounded corrective pass. Completed geometry and unaffected groups
+    # remain available if the provider fails or the original budget runs out.
+    from acs_residential_access import scoped, detail_issues
+    if scoped(building):
+        findings=detail_issues(building)
+        affected={i['room_ref'][0] for i in findings if i.get('room_ref')}
+        if any(not i.get('room_ref') for i in findings):
+            affected=set()  # Legacy findings may span any template.
+        for template, offset, rooms in groups:
+            if findings and (not affected or template in affected):
+                if budget['used'] >= budget['limit']:
+                    raise PlanError('ACS_PROVIDER_BUDGET_EXHAUSTED','لم يكتمل تصحيح الفتحات ضمن الحد المختار.')
+                propose(template, offset, rooms, findings)
+        if detail_issues(building):
+            raise PlanError('PLAN_DETAIL_INCOMPLETE','لم تجتز الفتحات ومسارات الدخول الفحص بعد محاولة التصحيح.')
     return building

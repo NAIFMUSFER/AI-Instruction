@@ -236,6 +236,7 @@ def validate_building(b):
 
             # تفتيت الأحياز الكبيرة العامة (apt_a ...) — سكني فقط
             if (not industrial) and not strict and area > SPLIT_AREA \
+                    and r.get('role') not in {'bedroom','living','kitchen','bathroom','majlis','corridor','entrance','lobby','stairs','elevator'} \
                     and any(g in low for g in GENERIC_IDS):
                 issues.append(
                     "[%s/%s] حيّز عام مساحته %.0f م² — قسّمه إلى غرف مسمّاة منفصلة "
