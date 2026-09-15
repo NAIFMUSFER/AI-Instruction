@@ -54,6 +54,7 @@ def geometry_failure_message(code):
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
         "PLAN_LAYOUT_INCOMPLETE":"لم يكتمل توزيع الغرف بعد محاولة التصحيح. راجع البرنامج والمساحة، أو استأنف ضمن حد الاستدعاءات المتبقي.",
+        "PLAN_SOURCE_GEOMETRY_INCOMPLETE":"تعذّر استخراج حدود الغرف دون تداخل بعد مراجعة الصورة. راجع وضوح الصفحة والأبعاد المرجعية ثم أعد القراءة؛ الملف الأصلي محفوظ ولم يُعد ترتيب غرفه تلقائيًا.",
     }
     if code in messages:
         return messages[code]
@@ -86,6 +87,9 @@ def view(store, project_id, actor_id, revision_id=None):
         return {"schema": SCHEMA, "ok": True, "head": None, "baseline": None, "history": [], "revision_id": None}
     result = _view_result(ws, "state", rid)
     revision = ws.get(rid)
+    meta = revision.model.get('meta')
+    assumptions = meta.get('assumptions', []) if isinstance(meta,dict) else []
+    assumptions = [v[:1000] for v in assumptions if isinstance(v,str)][:64] if isinstance(assumptions,list) else []
     openings = []
     for level in revision.model["levels"]:
         for room in revision.model["floors"][level["template"]]["rooms"]:
@@ -103,6 +107,7 @@ def view(store, project_id, actor_id, revision_id=None):
                     openings.append({"level_index":level["index"],"template":level["template"],"room_id":room["id"],"kind":kind,"line":line})
     result.update({"schema": SCHEMA, "ok": True, "brief": revision.brief,
                    "openings":openings,
+                   "planning_assumptions":assumptions,
                    "requirements": json.loads(revision.requirements_json),
                    "review_findings": [{"code": issue.get("code"),
                        "message": str(issue.get("message") or "")[:1000],
@@ -209,10 +214,22 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         result = {"building":resume["building"]} if saved_layout else generate_candidate(prompt)
         _reject_provider_authority_changes({}, result["building"])
         if residential:
-            before_layout = canonical(result["building"])
-            result["building"] = prepare_layout(result["building"], brief, requirements, budget)
-            reuse_details = detailed and canonical(result["building"]) == before_layout
-            result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
+            try:
+                before_layout = canonical(result["building"])
+                result["building"] = prepare_layout(result["building"], brief, requirements, budget)
+                reuse_details = detailed and canonical(result["building"]) == before_layout
+                result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
+            except PlanError as exc:
+                if exc.code not in {"PLAN_LAYOUT_INCOMPLETE", "PLAN_DETAIL_INCOMPLETE"}:
+                    raise
+                from acs_residential_layout import propose
+                fallback = propose(brief, requirements)
+                if fallback is None:
+                    raise
+                result["building"] = fallback
+                done = [t+':'+str(i) for t,f in fallback['floors'].items() for i in range(0,len(f['rooms']),24)]
+                emit('ROOM_DETAILS',{'kind':'details','building':fallback,'done':done},
+                     completed=len(done),total=len(done),provider_calls=budget['used'])
         else:
             from acs_plan_overlap_repair import repair_overlap
             result["building"] = repair_overlap(result["building"], prompt, budget)

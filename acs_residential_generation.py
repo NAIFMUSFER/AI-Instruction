@@ -107,7 +107,7 @@ def prepare_layout(building, brief, requirements, budget):
         raise PlanError('ACS_PROVIDER_BUDGET_EXHAUSTED','لم يكتمل تصحيح توزيع الغرف ضمن الحد المختار.')
     context={'building':building,'requirements':requirements,'findings':issues,'brief':brief}
     system=PLANNING_SYSTEM+'''\nCorrect this incomplete unapproved layout. Return ONLY
-{"floors":{"existing_template":{"rooms":[{"id":"stable id","name":"Arabic name","role":"bedroom|living|kitchen|bathroom|majlis|corridor|stairs|elevator","unit_id":"apartment id when applicable","core_id":"shared core id when applicable","rect":[0,0,3,4],"walls":["N","S","E","W"]}]}}}.
+{"floors":{"existing_template":{"rooms":[{"id":"stable id","name":"Arabic name","role":"bedroom|living|kitchen|bathroom|majlis|corridor|entrance|lobby|stairs|elevator","unit_id":"apartment id when applicable","core_id":"shared core id when applicable","rect":[0,0,3,4],"walls":["N","S","E","W"]}]}}}.
 Keep exactly the existing template keys. Do not return site, levels or any
 other top-level field. Keep valid room identities where possible; replace
 apartment shells by the confirmed room program. Correct all supplied findings,
@@ -164,7 +164,9 @@ def detail(building, brief, budget, done=None):
                     if (not isinstance(opening,dict) or opening.get('edge') not in ('N','S','E','W')
                             or any(not _number(opening.get(k)) for k in ('offset','width','height'))
                             or opening['width'] <= 0 or opening['height'] <= 0
-                            or (kind=='windows' and not _number(opening.get('sill')))):
+                            or opening['offset'] < 0
+                            or (kind=='doors' and (not isinstance(opening.get('material'),str) or not opening['material'].strip()))
+                            or (kind=='windows' and (not _number(opening.get('sill')) or opening['sill'] < 0))):
                         raise PlanError('PLAN_DETAIL_INCOMPLETE','أعد الفتحات بأبعاد ومواقع صريحة.')
             if any(not isinstance(p,dict) or any(not _number(p.get(k)) for k in ('x','z')) for p in row['points']):
                 raise PlanError('PLAN_DETAIL_INCOMPLETE','أعد نقاط الإنارة بمواقع صريحة.')

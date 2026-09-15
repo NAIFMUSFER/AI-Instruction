@@ -37,7 +37,7 @@ def connected_apartments(zones):
         rooms.append(r)
     def door(room,side,offset):
         room['doors'].append({'id':room['id']+'_door_'+str(len(room['doors'])),
-                            'edge':side,'offset':offset,'width':.9,'height':2.1})
+                            'edge':side,'offset':offset,'width':.9,'height':2.1,'material':'wood'})
     common=next(r for r in rooms if not r.get('unit_id') and r['role']=='corridor')
     lobby=next(r for r in rooms if r['role']=='entrance')
     for unit in ('apartment_1','apartment_2'):

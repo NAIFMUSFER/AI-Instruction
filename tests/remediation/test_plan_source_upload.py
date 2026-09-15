@@ -131,6 +131,36 @@ class UploadTests(unittest.TestCase):
                 self.assertEqual(body['model'],'claude-sonnet-5')
                 self.assertEqual(body['thinking'],{'type':'disabled'})
 
+    def test_overlapping_source_is_re_read_against_same_image_once(self):
+        import acs_understand as U
+        from acs_workspace_progress import channel
+        good=model();bad=copy.deepcopy(good)
+        bad['floors']['ground']['rooms'][1]['rect']=[2,0,8,8]
+        sent=[];events=[]
+        def provider(*args,**kwargs):
+            consume();sent.append(kwargs)
+            return json.dumps(bad if len(sent)==1 else good)
+        with channel(events.append),patch.object(U,'call_llm',side_effect=provider),patch('acs_residential_layout.propose') as fallback:
+            result=S.candidate('مخطط مرفوع',[], 'A',3,{'image':base64.b64encode(picture()).decode(),'media_type':'image/png','mode':'preserve'})
+        fallback.assert_not_called()
+        self.assertEqual(len(sent),2);self.assertEqual(result['provider_calls'],2)
+        self.assertEqual(result['building'],good)
+        self.assertEqual(sent[0]['content'][0],sent[1]['content'][0])
+        self.assertIn('ROOM_OVERLAP',sent[1]['content'][1]['text'])
+        self.assertIn('ولا تغيّر مواقع الفراغات',sent[1]['system_override'])
+        self.assertEqual(events[-1]['provider_calls'],2)
+
+    def test_source_reading_does_not_retry_indefinitely_or_relocate_rooms(self):
+        import acs_understand as U
+        bad=model();bad['floors']['ground']['rooms'][1]['rect']=[2,0,8,8]
+        def provider(*args,**kwargs):consume();return json.dumps(bad)
+        for limit,expected in [(1,1),(6,2)]:
+            with patch.object(U,'call_llm',side_effect=provider) as call:
+                with self.assertRaises(PlanError) as caught:
+                    S.candidate('مخطط مرفوع',[],'A',limit,{'image':base64.b64encode(picture()).decode(),'media_type':'image/png','mode':'preserve'})
+            self.assertEqual(caught.exception.code,'PLAN_SOURCE_GEOMETRY_INCOMPLETE')
+            self.assertEqual(call.call_count,expected)
+
     def test_stored_hash_and_project_binding(self):
         row=dict(S.validate_upload(upload())['row'],project_id=PROJECT,created_by=ACTOR)
         class Store:
