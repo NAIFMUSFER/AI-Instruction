@@ -21,6 +21,7 @@ test('native revision and busy transitions refresh locks without observing the l
 const rack = {kind:'element', template:'ground', room_id:'storage', collection:'racks', element_id:'rack_a'};
 const dock = {kind:'element', template:'ground', room_id:'receiving', collection:'docks', element_id:'dock_n1'};
 const lane = {kind:'element', template:'ground', room_id:'storage', collection:'lanes', element_id:'aisle_main'};
+const station = {kind:'element', template:'ground', room_id:'staging', collection:'stations', element_id:'station_1'};
 const lift = {kind:'element', template:'ground', room_id:'core', collection:'objects', element_id:'lift_1'};
 
 function packet() {
@@ -89,12 +90,17 @@ test('selective property selectors remain distinct and normalize property order'
 test('connected UI exposes only conservative measured property scopes by collection', () => {
   assert.deepEqual(lockScopesForTarget(rack).map(scope => [scope.id, scope.properties]), [
     ['whole', null], ['position', ['x','z']], ['dimensions', ['d','w']],
+    ['orientation', ['dir']], ['type', ['kind']],
   ]);
   assert.deepEqual(lockScopesForTarget(dock).map(scope => [scope.id, scope.properties]), [
     ['whole', null], ['position', ['edge','offset']],
   ]);
   assert.deepEqual(lockScopesForTarget(lane).map(scope => [scope.id, scope.properties]), [
     ['whole', null], ['position', ['x','z']], ['dimensions', ['d','w']],
+    ['orientation', ['dir']], ['type', ['kind']],
+  ]);
+  assert.deepEqual(lockScopesForTarget(station).map(scope => [scope.id, scope.properties]), [
+    ['whole', null], ['position', ['x','z']], ['orientation', ['dir']], ['type', ['kind']],
   ]);
   assert.deepEqual(lockScopesForTarget(lift).map(scope => [scope.id, scope.properties]), [
     ['whole', null], ['position', ['x','z']],
@@ -117,20 +123,28 @@ test('toggling one nested lock preserves every unrelated server-held selector', 
 test('selective scopes coexist, whole-element scope subsumes them, and narrowing is explicit', () => {
   const position = {...rack, properties:['x','z']};
   const dimensions = {...rack, properties:['w','d']};
+  const orientation = {...rack, properties:['dir']};
+  const type = {...rack, properties:['kind']};
   let selectors = toggleSemanticSelector([dock], position, true);
   selectors = toggleSemanticSelector(selectors, dimensions, true);
+  selectors = toggleSemanticSelector(selectors, orientation, true);
+  selectors = toggleSemanticSelector(selectors, type, true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(position)), true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dimensions)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(orientation)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(type)), true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dock)), true);
 
   selectors = toggleSemanticSelector(selectors, rack, true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(rack)), true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(position)), false);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dimensions)), false);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(orientation)), false);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(type)), false);
 
-  selectors = toggleSemanticSelector(selectors, position, true);
+  selectors = toggleSemanticSelector(selectors, orientation, true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(rack)), false);
-  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(position)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(orientation)), true);
   assert.equal(selectors.some(row => selectorKey(row) === selectorKey(dock)), true);
 });
 
@@ -164,4 +178,23 @@ test('selective lock command preserves the exact server-supported property scope
   assert.deepEqual(saved, {...dock, properties:['edge','offset']});
   assert.equal(command.selectors.some(row => selectorKey(row) === selectorKey({...rack, properties:['x','z']})), true);
   assert.match(command.note, /properties edge,offset/);
+});
+
+test('warehouse orientation and type lock commands remain exact and independent', () => {
+  const orientation = {...rack, properties:['dir']};
+  const type = {...rack, properties:['kind']};
+  let selectors = toggleSemanticSelector([{kind:'site'}], orientation, true);
+  selectors = toggleSemanticSelector(selectors, type, true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(orientation)), true);
+  assert.equal(selectors.some(row => selectorKey(row) === selectorKey(type)), true);
+
+  const command = buildSemanticLockCommand({
+    currentSelectors: selectors,
+    target: orientation,
+    locked: false,
+    expectedHead: 'rev-head-9',
+  });
+  assert.equal(command.selectors.some(row => selectorKey(row) === selectorKey(orientation)), false);
+  assert.equal(command.selectors.some(row => selectorKey(row) === selectorKey(type)), true);
+  assert.match(command.note, /properties dir/);
 });

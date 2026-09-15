@@ -21,13 +21,21 @@ const PROPERTY_SCOPE_PRESETS = {
   racks: [
     {id: 'position', label: 'الموضع فقط (X/Z)', properties: ['x', 'z']},
     {id: 'dimensions', label: 'الأبعاد فقط (W/D)', properties: ['w', 'd']},
+    {id: 'orientation', label: 'الاتجاه فقط (X/Z)', properties: ['dir']},
+    {id: 'type', label: 'نوع التخزين فقط', properties: ['kind']},
   ],
   docks: [{id: 'position', label: 'الموضع فقط (الحافة/الإزاحة)', properties: ['edge', 'offset']}],
   lanes: [
     {id: 'position', label: 'الموضع فقط (X/Z)', properties: ['x', 'z']},
     {id: 'dimensions', label: 'الأبعاد فقط (W/D)', properties: ['w', 'd']},
+    {id: 'orientation', label: 'الاتجاه فقط (X/Z)', properties: ['dir']},
+    {id: 'type', label: 'نوع الممر فقط', properties: ['kind']},
   ],
-  stations: [{id: 'position', label: 'الموضع فقط (X/Z)', properties: ['x', 'z']}],
+  stations: [
+    {id: 'position', label: 'الموضع فقط (X/Z)', properties: ['x', 'z']},
+    {id: 'orientation', label: 'الاتجاه فقط (X/Z)', properties: ['dir']},
+    {id: 'type', label: 'نوع المحطة فقط', properties: ['kind']},
+  ],
   doors: [{id: 'position', label: 'الموضع فقط (الحافة/الإزاحة)', properties: ['edge', 'offset']}],
   windows: [{id: 'position', label: 'الموضع فقط (الحافة/الإزاحة)', properties: ['edge', 'offset']}],
   objects: [{id: 'position', label: 'الموضع فقط (X/Z)', properties: ['x', 'z']}],
@@ -337,7 +345,7 @@ function ensurePanel() {
   title.textContent = 'أقفال العناصر الدقيقة';
   const help = document.createElement('p');
   help.className = 'cw-muted';
-  help.textContent = 'اختر عنصرًا محفوظًا في المخطط ثم حدّد ما تريد تثبيته: العنصر كاملًا، موضعه، أو أبعاده عندما يدعم نوع العنصر ذلك.';
+  help.textContent = 'اختر عنصرًا محفوظًا في المخطط ثم حدّد ما تريد تثبيته: العنصر كاملًا، موضعه، أبعاده، اتجاهه أو نوعه عندما يدعم العنصر ذلك.';
   const label = document.createElement('label');
   label.htmlFor = 'cwSemanticLockTarget';
   label.textContent = 'العنصر في المخطط';
