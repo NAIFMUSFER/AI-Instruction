@@ -38,7 +38,9 @@ def warehouse():
              "rect": [5.0, 0.0, 15.0, 30.0],
              "racks": [{"id": "rack_a", "kind": "pallet", "x": 1.0, "z": 1.0,
                          "w": 12.0, "d": 28.0, "dir": "z", "rows": 2,
-                         "levels": 4, "h": 8.0}]},
+                         "levels": 4, "h": 8.0}],
+             "lanes": [{"id": "aisle_main", "kind": "forklift", "x": 0.0, "z": 0.0,
+                         "w": 3.0, "d": 30.0, "dir": "z"}]},
             {"id": "staging", "role": "staging", "walls": "none",
              "rect": [20.0, 0.0, 10.0, 15.0]},
             {"id": "shipping", "role": "shipping", "walls": "none",
@@ -107,23 +109,55 @@ class PlanLockBindingTests(unittest.TestCase):
             expected_head=locked.id, note="change locked rack"))
         self.assertEqual(len(ws.history()), count)
 
-    def test_expand_staging_preserves_locked_dock_and_rack_and_rebinds_manifest(self):
+    def test_locked_warehouse_aisle_rejects_geometry_change(self):
+        ws, first = self.initial()
+        locked = ws.replace_semantic_locks(
+            [element("lanes", "aisle_main", "storage")],
+            expected_head=first.id, note="lock main warehouse aisle")
+        changed = copy.deepcopy(locked.model)
+        changed["floors"]["ground"]["rooms"][1]["lanes"][0]["w"] = 3.5
+        count = len(ws.history())
+        self.assertCode("LOCK_VIOLATION", lambda: ws.propose(
+            changed, brief=locked.brief, requirements=reqs(),
+            expected_head=locked.id, note="widen locked aisle"))
+        self.assertEqual(len(ws.history()), count)
+
+    def test_expand_staging_preserves_locked_dock_rack_and_aisle_and_rebinds_manifest(self):
         ws, first = self.initial()
         locked = ws.replace_semantic_locks(
             [element("racks", "rack_a", "storage"),
-             element("docks", "dock_n1", "receiving")],
-            expected_head=first.id, note="lock dock and rack")
+             element("docks", "dock_n1", "receiving"),
+             element("lanes", "aisle_main", "storage")],
+            expected_head=first.id, note="lock dock rack and aisle")
         changed = copy.deepcopy(locked.model)
         rooms = changed["floors"]["ground"]["rooms"]
         rooms[2]["rect"] = [20.0, 0.0, 10.0, 17.0]
         rooms[3]["rect"] = [20.0, 17.0, 10.0, 13.0]
         revised = ws.propose(changed, brief=locked.brief, requirements=reqs(),
                              expected_head=locked.id, note="expand staging by two metres")
-        self.assertEqual(revised.semantic_lock_count, 2)
+        self.assertEqual(revised.semantic_lock_count, 3)
         self.assertEqual(revised.semantic_lock_manifest["source_model_hash"], revised.model_hash)
         self.assertNotEqual(locked.model_hash, revised.model_hash)
         self.assertNotEqual(locked.semantic_lock_manifest_hash,
                             revised.semantic_lock_manifest_hash)
+
+    def test_locked_storage_zone_allows_unlocked_staging_change_but_blocks_zone_change(self):
+        ws, first = self.initial()
+        locked = ws.set_room_lock(("ground", "storage"), locked=True,
+                                  expected_head=first.id)
+        changed = copy.deepcopy(locked.model)
+        rooms = changed["floors"]["ground"]["rooms"]
+        rooms[2]["rect"] = [20.0, 0.0, 10.0, 17.0]
+        rooms[3]["rect"] = [20.0, 17.0, 10.0, 13.0]
+        revised = ws.propose(changed, brief=locked.brief, requirements=reqs(),
+                             expected_head=locked.id,
+                             note="expand unlocked staging beside locked storage")
+        self.assertIn(("ground", "storage"), revised.locked_rooms)
+        blocked = copy.deepcopy(revised.model)
+        blocked["floors"]["ground"]["rooms"][1]["rect"][2] = 14.0
+        self.assertCode("LOCK_VIOLATION", lambda: ws.propose(
+            blocked, brief=revised.brief, requirements=reqs(),
+            expected_head=revised.id, note="change locked storage zone"))
 
     def test_lock_context_prevents_moving_locked_dock_room(self):
         ws, first = self.initial()
