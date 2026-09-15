@@ -1,0 +1,11 @@
+name: Temporary branch workflow smoke
+on:
+  push:
+    branches:
+      - acs-v2/warehouse-protected-zones-20260915
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo branch-workflow-ok
