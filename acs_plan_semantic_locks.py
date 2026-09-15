@@ -5,6 +5,12 @@ explicitly identified nested plan elements such as warehouse racks, docks, lanes
 and stations. It deliberately refuses positional/index identities: an engineer
 lock must survive array reordering and therefore needs an explicit stable `id`.
 
+Nested element selectors may optionally lock a bounded set of explicit top-level
+properties (for example position, dimensions, orientation or type) instead of the
+entire element. Property locks remain exact and deterministic: unknown/missing
+properties fail closed, and placement-sensitive properties remain bound to their
+canonical parent context so an indirect parent transform cannot move them.
+
 The manifest is deterministic and provider-free. It is not authentication or
 persistence; a trusted host must associate the manifest with the engineer/project
 and an approved revision before exposing it across devices.
@@ -18,9 +24,21 @@ from acs_plan_review import PlanError, canonical, digest
 
 SCHEMA = "acs.plan-semantic-locks/1.0"
 MAX_LOCKS = 256
+MAX_PROPERTIES_PER_LOCK = 24
 _ELEMENT_COLLECTIONS = frozenset({
     "racks", "docks", "lanes", "stations", "doors", "windows",
     "objects", "points", "furniture",
+})
+_ELEMENT_LOCKABLE_PROPERTIES = frozenset({
+    "kind", "type",
+    "x", "y", "z", "position", "rect",
+    "w", "d", "h", "width", "depth", "height",
+    "dir", "edge", "axis", "rotation", "angle",
+    "offset", "pitch", "count", "rows", "levels",
+    "radius", "diameter",
+})
+_PLACEMENT_PROPERTIES = frozenset({
+    "x", "y", "z", "position", "rect", "edge", "axis", "offset",
 })
 
 
@@ -71,8 +89,23 @@ def _template_context(model: dict, template: str) -> dict:
 
 def _room_context(room: dict) -> dict:
     # Nested collections may change independently. The room's own geometry/role/
-    # walls remain context because changing them moves or reinterprets a rack/dock.
+    # walls remain context because changing them can move/reinterpret a rack/dock.
     return {k: v for k, v in room.items() if k not in _ELEMENT_COLLECTIONS}
+
+
+def _normalize_properties(raw: Any) -> list[str] | None:
+    if raw is None:
+        return None
+    if not isinstance(raw, list) or not raw or len(raw) > MAX_PROPERTIES_PER_LOCK:
+        raise PlanError("INVALID_LOCK_SELECTOR", "Element lock properties must be a non-empty bounded array")
+    normalized = []
+    for value in raw:
+        if not isinstance(value, str) or value not in _ELEMENT_LOCKABLE_PROPERTIES:
+            raise PlanError("INVALID_LOCK_SELECTOR", "Element lock property is not supported")
+        normalized.append(value)
+    if len(set(normalized)) != len(normalized):
+        raise PlanError("INVALID_LOCK_SELECTOR", "Element lock properties must be unique")
+    return sorted(normalized)
 
 
 def _normalize_selector(raw: dict) -> dict:
@@ -80,8 +113,12 @@ def _normalize_selector(raw: dict) -> dict:
         raise PlanError("INVALID_LOCK_SELECTOR", "Semantic lock selector must be an object")
     kind = raw.get("kind")
     if kind == "site":
+        if raw.get("properties") is not None:
+            raise PlanError("INVALID_LOCK_SELECTOR", "Property locks are currently supported for nested elements only")
         return {"kind": "site"}
     if kind == "room":
+        if raw.get("properties") is not None:
+            raise PlanError("INVALID_LOCK_SELECTOR", "Property locks are currently supported for nested elements only")
         template, room_id = raw.get("template"), raw.get("room_id")
         if not (_stable_id(template) and _stable_id(room_id)):
             raise PlanError("INVALID_LOCK_SELECTOR", "Room lock requires template and room_id")
@@ -93,9 +130,36 @@ def _normalize_selector(raw: dict) -> dict:
                 and isinstance(collection, str) and collection in _ELEMENT_COLLECTIONS
                 and _stable_id(element_id)):
             raise PlanError("INVALID_LOCK_SELECTOR", "Element lock requires stable template/room/collection/id")
-        return {"kind": "element", "template": template.strip(), "room_id": room_id.strip(),
-                "collection": collection, "element_id": element_id.strip()}
+        selector = {"kind": "element", "template": template.strip(), "room_id": room_id.strip(),
+                    "collection": collection, "element_id": element_id.strip()}
+        properties = _normalize_properties(raw.get("properties"))
+        if properties is not None:
+            selector["properties"] = properties
+        return selector
     raise PlanError("INVALID_LOCK_SELECTOR", "Lock kind must be site, room or element")
+
+
+def _selected_element_value(item: dict, selector: dict) -> dict:
+    properties = selector.get("properties")
+    if properties is None:
+        return item
+    missing = [key for key in properties if key not in item]
+    if missing:
+        raise PlanError("LOCK_TARGET_NOT_FOUND", "A selected lock property is not present on the element")
+    return {key: item[key] for key in properties}
+
+
+def _element_context(model: dict, room: dict, selector: dict) -> dict:
+    properties = selector.get("properties")
+    # Whole-element locks retain the original conservative placement binding.
+    # Property locks only inherit parent placement context when a selected field
+    # controls absolute/local placement. This lets, for example, a width-only lock
+    # permit an engineer to move the element while still preventing width changes.
+    if properties is not None and not (set(properties) & _PLACEMENT_PROPERTIES):
+        return {}
+    return {"global": _global_context(model),
+            "template": _template_context(model, selector["template"]),
+            "room": _room_context(room)}
 
 
 def _resolve(model: dict, selector: dict) -> tuple[Any, Any]:
@@ -113,10 +177,7 @@ def _resolve(model: dict, selector: dict) -> tuple[Any, Any]:
     room = _room(model, selector["template"], selector["room_id"])
     item = _element(model, selector["template"], selector["room_id"],
                     selector["collection"], selector["element_id"])
-    context = {"global": _global_context(model),
-               "template": _template_context(model, selector["template"]),
-               "room": _room_context(room)}
-    return item, context
+    return _selected_element_value(item, selector), _element_context(model, room, selector)
 
 
 def build_lock_manifest(model: dict, selectors: list[dict]) -> dict:
@@ -143,7 +204,7 @@ def build_lock_manifest(model: dict, selectors: list[dict]) -> dict:
 
 
 def verify_lock_manifest(source_model: dict, candidate_model: dict, manifest: dict) -> dict:
-    """Fail closed if any locked target or its placement context changed."""
+    """Fail closed if any locked target/property or required placement context changed."""
     if not isinstance(manifest, dict) or manifest.get("schema") != SCHEMA:
         raise PlanError("INVALID_LOCK_MANIFEST", "Unknown semantic lock manifest")
     if not isinstance(source_model, dict) or not isinstance(candidate_model, dict):
@@ -172,11 +233,11 @@ def verify_lock_manifest(source_model: dict, candidate_model: dict, manifest: di
         try:
             candidate_value, candidate_context = _resolve(candidate, selector)
         except PlanError as exc:
-            raise PlanError("LOCK_VIOLATION", "A locked plan element was removed") from exc
+            raise PlanError("LOCK_VIOLATION", "A locked plan element/property was removed") from exc
         if record.get("value_hash") != digest(source_value) or record.get("context_hash") != digest(source_context):
             raise PlanError("LOCK_MANIFEST_TAMPERED", "Semantic lock snapshot does not match its source")
         if digest(candidate_value) != record["value_hash"]:
-            raise PlanError("LOCK_VIOLATION", "A locked plan element changed")
+            raise PlanError("LOCK_VIOLATION", "A locked plan element/property changed")
         if digest(candidate_context) != record["context_hash"]:
             raise PlanError("LOCK_CONTEXT_CHANGED", "Placement context of a locked plan element changed")
     return {"ok": True, "manifest_hash": manifest["manifest_hash"], "lock_count": len(locks)}

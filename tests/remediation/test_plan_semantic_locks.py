@@ -42,9 +42,12 @@ def model():
     }
 
 
-def selector(collection, element_id, room_id="storage"):
-    return {"kind": "element", "template": "ground", "room_id": room_id,
-            "collection": collection, "element_id": element_id}
+def selector(collection, element_id, room_id="storage", properties=None):
+    out = {"kind": "element", "template": "ground", "room_id": room_id,
+           "collection": collection, "element_id": element_id}
+    if properties is not None:
+        out["properties"] = list(properties)
+    return out
 
 
 class SemanticLockTests(unittest.TestCase):
@@ -72,6 +75,53 @@ class SemanticLockTests(unittest.TestCase):
         candidate["floors"]["ground"]["rooms"][1]["racks"][0]["levels"] = 5
         self.assertCode("LOCK_VIOLATION",
                         lambda: L.verify_lock_manifest(source, candidate, manifest))
+
+    def test_property_lock_rejects_selected_position_but_allows_unlocked_levels(self):
+        source = model()
+        manifest = L.build_lock_manifest(source, [
+            selector("racks", "rack_a", properties=["z", "x"])])
+        self.assertEqual(manifest["locks"][0]["selector"]["properties"], ["x", "z"])
+
+        candidate = copy.deepcopy(source)
+        candidate["floors"]["ground"]["rooms"][1]["racks"][0]["levels"] = 6
+        self.assertTrue(L.verify_lock_manifest(source, candidate, manifest)["ok"])
+
+        candidate = copy.deepcopy(source)
+        candidate["floors"]["ground"]["rooms"][1]["racks"][0]["x"] = 1.5
+        self.assertCode("LOCK_VIOLATION",
+                        lambda: L.verify_lock_manifest(source, candidate, manifest))
+
+    def test_dimension_only_property_lock_can_move_but_cannot_resize_element(self):
+        source = model()
+        manifest = L.build_lock_manifest(source, [
+            selector("lanes", "aisle_main", properties=["w", "d"])])
+
+        candidate = copy.deepcopy(source)
+        candidate["floors"]["ground"]["rooms"][1]["lanes"][0]["x"] = 9.0
+        self.assertTrue(L.verify_lock_manifest(source, candidate, manifest)["ok"])
+
+        candidate = copy.deepcopy(source)
+        candidate["floors"]["ground"]["rooms"][1]["lanes"][0]["w"] = 3.2
+        self.assertCode("LOCK_VIOLATION",
+                        lambda: L.verify_lock_manifest(source, candidate, manifest))
+
+    def test_position_property_lock_still_rejects_indirect_parent_move(self):
+        source = model()
+        manifest = L.build_lock_manifest(source, [
+            selector("racks", "rack_a", properties=["x", "z"])])
+        candidate = copy.deepcopy(source)
+        candidate["floors"]["ground"]["rooms"][1]["rect"][0] = 11.0
+        self.assertCode("LOCK_CONTEXT_CHANGED",
+                        lambda: L.verify_lock_manifest(source, candidate, manifest))
+
+    def test_property_selector_fails_closed_for_unsupported_or_missing_fields(self):
+        source = model()
+        self.assertCode("INVALID_LOCK_SELECTOR", lambda: L.build_lock_manifest(
+            source, [selector("racks", "rack_a", properties=["__unknown__"])]))
+        self.assertCode("LOCK_TARGET_NOT_FOUND", lambda: L.build_lock_manifest(
+            source, [selector("racks", "rack_a", properties=["y"])]))
+        self.assertCode("INVALID_LOCK_SELECTOR", lambda: L.build_lock_manifest(
+            source, [{"kind": "site", "properties": ["width"]}]))
 
     def test_locked_dock_removal_is_rejected(self):
         source = model()
@@ -142,6 +192,17 @@ class SemanticLockTests(unittest.TestCase):
         self.assertCode("DUPLICATE_LOCK",
                         lambda: L.build_lock_manifest(source, [ref, copy.deepcopy(ref)]))
 
+    def test_same_element_can_have_distinct_property_lock_sets(self):
+        source = model()
+        manifest = L.build_lock_manifest(source, [
+            selector("racks", "rack_a", properties=["x", "z"]),
+            selector("racks", "rack_a", properties=["w", "d"]),
+        ])
+        self.assertEqual(manifest["locks"][0]["selector"]["element_id"], "rack_a")
+        self.assertEqual(manifest["locks"][1]["selector"]["element_id"], "rack_a")
+        self.assertNotEqual(manifest["locks"][0]["selector"]["properties"],
+                            manifest["locks"][1]["selector"]["properties"])
+
     def test_chat_edit_enforces_semantic_manifest_before_revision_admission(self):
         source = model()
         ws = PlanWorkspace(lambda _: {"scopes": {"topology": "PASS", "vertical_circulation": "PASS"},
@@ -157,6 +218,36 @@ class SemanticLockTests(unittest.TestCase):
                 ws, [{"text": "وسع staging فقط"}], expected_head=rev.id,
                 semantic_lock_manifest=manifest))
         self.assertEqual(len(ws.history()), 1)
+
+    def test_chat_edit_respects_selective_position_lock_without_freezing_other_fields(self):
+        source = model()
+        ws = PlanWorkspace(lambda _: {"scopes": {"topology": "PASS", "vertical_circulation": "PASS"},
+                                      "issues": []})
+        rev = ws.propose(source, brief="warehouse", requirements=[], expected_head=None,
+                         note="initial")
+        manifest = L.build_lock_manifest(rev.model, [
+            selector("racks", "rack_a", properties=["x", "z"])])
+
+        changed = copy.deepcopy(source)
+        changed["floors"]["ground"]["rooms"][1]["racks"][0]["levels"] = 5
+        fake = SimpleNamespace(apply_notes=lambda *_args, **_kwargs: changed)
+        with patch.dict(sys.modules, {"acs_understand": fake}):
+            admitted = B.propose_chat_edit(
+                ws, [{"text": "زد مستويات الرف ولا تحركه"}], expected_head=rev.id,
+                semantic_lock_manifest=manifest)
+        self.assertEqual(admitted.number, 2)
+        self.assertEqual(admitted.model["floors"]["ground"]["rooms"][1]["racks"][0]["levels"], 5)
+
+        moved = copy.deepcopy(admitted.model)
+        moved["floors"]["ground"]["rooms"][1]["racks"][0]["x"] = 2.0
+        second_manifest = L.build_lock_manifest(admitted.model, [
+            selector("racks", "rack_a", properties=["x", "z"])])
+        fake = SimpleNamespace(apply_notes=lambda *_args, **_kwargs: moved)
+        with patch.dict(sys.modules, {"acs_understand": fake}):
+            self.assertCode("LOCK_VIOLATION", lambda: B.propose_chat_edit(
+                ws, [{"text": "حرك الرف"}], expected_head=admitted.id,
+                semantic_lock_manifest=second_manifest))
+        self.assertEqual(len(ws.history()), 2)
 
     def test_chat_edit_can_change_unlocked_element_with_manifest(self):
         source = model()
