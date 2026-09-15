@@ -1,0 +1,27 @@
+name: ACS warehouse vertical stage gate
+
+on:
+  pull_request:
+    paths:
+      - 'acs_plan_stage_gate.py'
+      - 'tests/remediation/test_warehouse_vertical_stage_gate.py'
+      - 'acs_workspace_service.py'
+      - 'acs_plan_projection.py'
+      - 'tools/acs_plan_review_packet.py'
+      - '.github/workflows/acs-warehouse-vertical-stage-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  vertical-stage-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run warehouse vertical stage regressions
+        run: python3 tests/remediation/test_warehouse_vertical_stage_gate.py
