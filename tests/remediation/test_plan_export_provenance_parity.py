@@ -152,65 +152,76 @@ class WarehouseExportProvenanceParityTests(unittest.TestCase):
         ws, approved = approved_workspace()
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
+            paths = {
+                "svg": root / "plan.svg",
+                "dxf": root / "plan.dxf",
+                "pdf": root / "plan.pdf",
+                "ifc": root / "plan.ifc",
+                "gltf": root / "plan.gltf",
+            }
             receipts = {
-                "svg": CAD.export_approved_cad(ws, approved.id, 0, root / "plan.svg"),
-                "dxf": CAD.export_approved_cad(ws, approved.id, 0, root / "plan.dxf"),
-                "pdf": PDF.export_approved_pdf(ws, approved.id, root / "plan.pdf"),
-                "ifc": IFC.export_approved_ifc(ws, approved.id, root / "plan.ifc"),
+                "svg": CAD.export_approved_cad(ws, approved.id, 0, paths["svg"]),
+                "dxf": CAD.export_approved_cad(ws, approved.id, 0, paths["dxf"]),
+                "pdf": PDF.export_approved_pdf(ws, approved.id, paths["pdf"]),
+                "ifc": IFC.export_approved_ifc(ws, approved.id, paths["ifc"]),
                 "gltf": HANDOFF.compile_approved_baseline(
-                    ws, approved.id, root / "plan.gltf", compiler=fake_gltf_compiler
+                    ws, approved.id, paths["gltf"], compiler=fake_gltf_compiler
                 ),
             }
 
-        reference = receipts["svg"]
-        common_keys = (
-            "revision_id",
-            "model_hash",
-            "requirements_hash",
-            "provenance_hash",
-            "source_map_hash",
-            "source_map",
-            "semantic_lock_manifest_hash",
-            "semantic_lock_count",
-        )
-        for fmt, receipt in receipts.items():
-            with self.subTest(format=fmt):
-                for key in common_keys:
-                    self.assertEqual(receipt[key], reference[key], key)
-                self.assertEqual(receipt["revision_id"], approved.id)
-                self.assertEqual(receipt["model_hash"], approved.model_hash)
-                self.assertEqual(receipt["provider_calls"], 0)
-                self.assertEqual(receipt["regulatory_compliance"], "NOT_VERIFIED")
-                self.assertEqual(receipt["structural_safety"], "NOT_VERIFIED")
+            self.assertTrue(CAD.verify_cad_export(paths["svg"])["ok"])
+            self.assertTrue(CAD.verify_cad_export(paths["dxf"])["ok"])
+            self.assertTrue(PDF.verify_pdf_export(paths["pdf"])["ok"])
+            self.assertTrue(IFC.verify_ifc_export(paths["ifc"])["ok"])
+            self.assertTrue(HANDOFF.verify_compiled_artifact(paths["gltf"])["ok"])
 
-        self.assertEqual(reference["semantic_lock_count"], 3)
-        by_identity = {
-            (
-                row["source"].get("kind"),
-                row["source"].get("collection"),
-                row["source"].get("element_id"),
-            ): row
-            for row in reference["source_map"]
-        }
-        expected = [
-            ("space", None, None),
-            ("element", "racks", "rack_a"),
-            ("element", "docks", "dock_n1"),
-            ("element", "lanes", "aisle_main"),
-        ]
-        for identity in expected:
-            self.assertIn(identity, by_identity)
-            row = by_identity[identity]
-            self.assertTrue(row["source_id"].startswith("plan_"))
-            self.assertEqual(row["requirement_refs"], [{
-                "requirement_id": "site-width",
-                "source": "requested",
-                "source_id": "brief:user:site-width",
-                "source_span": program()[0]["source_span"],
-            }])
-            self.assertNotIn("evidence", row["requirement_refs"][0])
+            reference = receipts["svg"]
+            common_keys = (
+                "revision_id",
+                "model_hash",
+                "requirements_hash",
+                "provenance_hash",
+                "source_map_hash",
+                "source_map",
+                "semantic_lock_manifest_hash",
+                "semantic_lock_count",
+            )
+            for fmt, receipt in receipts.items():
+                with self.subTest(format=fmt):
+                    for key in common_keys:
+                        self.assertEqual(receipt[key], reference[key], key)
+                    self.assertEqual(receipt["revision_id"], approved.id)
+                    self.assertEqual(receipt["model_hash"], approved.model_hash)
+                    self.assertEqual(receipt["provider_calls"], 0)
+                    self.assertEqual(receipt["regulatory_compliance"], "NOT_VERIFIED")
+                    self.assertEqual(receipt["structural_safety"], "NOT_VERIFIED")
 
-        self.assertTrue(CAD.verify_cad_export(Path(td) / "plan.svg")["ok"] if False else True)
+            self.assertEqual(reference["semantic_lock_count"], 3)
+            by_identity = {
+                (
+                    row["source"].get("kind"),
+                    row["source"].get("collection"),
+                    row["source"].get("element_id"),
+                ): row
+                for row in reference["source_map"]
+            }
+            expected = [
+                ("space", None, None),
+                ("element", "racks", "rack_a"),
+                ("element", "docks", "dock_n1"),
+                ("element", "lanes", "aisle_main"),
+            ]
+            for identity in expected:
+                self.assertIn(identity, by_identity)
+                row = by_identity[identity]
+                self.assertTrue(row["source_id"].startswith("plan_"))
+                self.assertEqual(row["requirement_refs"], [{
+                    "requirement_id": "site-width",
+                    "source": "requested",
+                    "source_id": "brief:user:site-width",
+                    "source_span": program()[0]["source_span"],
+                }])
+                self.assertNotIn("evidence", row["requirement_refs"][0])
 
 
 if __name__ == "__main__":
