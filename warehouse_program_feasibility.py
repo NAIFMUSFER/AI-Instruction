@@ -33,6 +33,24 @@ def classify_warehouse_program(program):
             "hard_indoor_area_m2": hard_indoor, "invalid_indices": invalid}
 
 
+def generated_indoor_area(building):
+    """Measure canonical floor rectangles only; site/outdoor objects are excluded."""
+    try:
+        floors=building['floors']
+        if not isinstance(floors,dict): return None
+        total=0.0
+        for floor in floors.values():
+            for room in floor['rooms']:
+                rect=room['rect']
+                if not isinstance(rect,list) or len(rect)!=4: return None
+                w,d=_area(rect[2]),_area(rect[3])
+                if w is None or d is None:return None
+                total += w*d
+        return total
+    except (KeyError,TypeError):
+        return None
+
+
 def warehouse_program_feasibility(*, site_area_m2, building_target_m2, program):
     site = _area(site_area_m2)
     target = _area(building_target_m2)

@@ -199,9 +199,19 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     from acs_provider_budget import limited
     from acs_workspace_progress import resuming, emit, planning_policy
     import acs_understand as U
-    residential = U._is_residential(U.detect_type(brief))
+    detected = U.detect_type(brief)
+    residential = U._is_residential(detected)
+    warehouse = detected == 'warehouse'
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
+    if warehouse:
+        targets=[r.get('expected') for r in requirements if isinstance(r,dict) and r.get('metric')=='building_target_area_m2']
+        target=targets[0] if len(targets)==1 and type(targets[0]) in (int,float) else None
+        if target is not None:
+            prompt += ("\nقيد برنامج المستودع المؤكد: مساحة المبنى الداخلية المستهدفة = "+str(target)+" م². "
+                       "هذه ليست مساحة الأرض. اجعل مجموع مساحات فراغات floors الداخلية لا يتجاوز هذه الميزانية. "
+                       "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
+                       "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
     if residential:
         from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail
         prompt += "\n" + ROOM_PROGRAM
@@ -231,6 +241,12 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 emit('ROOM_DETAILS',{'kind':'details','building':fallback,'done':done},
                      completed=len(done),total=len(done),provider_calls=budget['used'])
         else:
+            if warehouse and target is not None:
+                from warehouse_program_feasibility import generated_indoor_area
+                generated=generated_indoor_area(result['building'])
+                if generated is not None and generated > target + 1e-8*max(1,target):
+                    raise PlanError('WAREHOUSE_PROGRAM_EXCEEDS_BUILDING_TARGET',
+                                    'Generated indoor warehouse program exceeds the confirmed building target')
             from acs_plan_overlap_repair import repair_overlap
             result["building"] = repair_overlap(result["building"], prompt, budget)
         emit("REVIEW",provider_calls=budget["used"])
