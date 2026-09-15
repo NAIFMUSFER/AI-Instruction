@@ -129,8 +129,9 @@ w.write(sys.argv[1])`,pdfFixture]);
    // follow the newly generated revision without asking the owner to reload.
    await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length>=2);
    await page.locator('#cwSemanticLockTarget').selectOption(JSON.stringify(['element','ground','a','points','light-a']));
+   await page.locator('#cwSemanticLockScope').selectOption('position');
    await page.locator('#cwSemanticLockToggle').click();
-   await page.waitForFunction(()=>document.querySelector('#cwSemanticLockToggle')?.textContent==='إلغاء قفل العنصر'&&!document.querySelector('#cwSemanticLockToggle').disabled);
+   await page.waitForFunction(()=>document.querySelector('#cwSemanticLockScope option:checked')?.textContent.includes('🔒')&&document.querySelector('#cwSemanticLockToggle')?.textContent==='إلغاء هذا القفل'&&!document.querySelector('#cwSemanticLockToggle').disabled);
    assert.equal(await page.locator('#cwApprove').isEnabled(),false);
    await page.locator('#cwSpaces button').first().click();await page.locator('#cwLock').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('القفل'));
