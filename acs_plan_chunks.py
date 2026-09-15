@@ -617,11 +617,26 @@ def merge_plan(outline_zones, chunk_results, envelope):
             resolved[rid] = r
 
     site = (envelope or {}).get("site") or {}
+    # A single explicit level is authoritative for floor-template identity.
+    # Outline zones may use the provider/default template token (often ``t``);
+    # binding that token to the sole declared level does not change geometry or
+    # room identity. Multi-level mismatches remain ambiguous and fail closed.
+    declared_levels = (envelope or {}).get("levels") if isinstance(envelope, dict) else None
+    sole_template = None
+    if (isinstance(declared_levels, list) and len(declared_levels) == 1
+            and isinstance(declared_levels[0], dict)
+            and isinstance(declared_levels[0].get("template"), str)
+            and declared_levels[0]["template"].strip()):
+        sole_template = declared_levels[0]["template"]
+    rebound_from = set()
     by_template = {}
     unresolved = []
     for i, z in enumerate(outline_zones):
         zid = z["id"]
-        tmpl = z.get("template") or "t"
+        source_tmpl = z.get("template") or "t"
+        tmpl = sole_template or source_tmpl
+        if sole_template and source_tmpl != sole_template:
+            rebound_from.add(source_tmpl)
         room = resolved.get(zid)
         if room is None:
             unresolved.append(zid)
@@ -632,6 +647,9 @@ def merge_plan(outline_zones, chunk_results, envelope):
     if unresolved:
         issues.append({"code": "PLAN_ZONE_UNRESOLVED",
                        "count": len(unresolved), "ids": unresolved[:32]})
+    if rebound_from:
+        issues.append({"code": "PLAN_SINGLE_LEVEL_TEMPLATE_REBOUND",
+                       "from": sorted(rebound_from), "to": sole_template})
 
     building = {}
     for key in ("site", "floor_height", "wall_h", "wall_t", "levels", "meta"):
@@ -642,12 +660,9 @@ def merge_plan(outline_zones, chunk_results, envelope):
     building.setdefault("floor_height", 3.2)
     building.setdefault("wall_h", 3.0)
     building.setdefault("wall_t", 0.2)
-    # ترتيب القوالب من البيان لا من قاموس: نفس المدخل ⇒ نفس المخرج دائماً.
-    tmpl_order = []
-    for z in outline_zones:
-        t = z.get("template") or "t"
-        if t not in tmpl_order:
-            tmpl_order.append(t)
+    # ``by_template`` is populated in outline order, so key order remains
+    # deterministic while reflecting the single-level binding above.
+    tmpl_order = list(by_template)
     building["floors"] = {t: {"rooms": by_template.get(t, [])}
                           for t in tmpl_order}
     if not building.get("levels"):
