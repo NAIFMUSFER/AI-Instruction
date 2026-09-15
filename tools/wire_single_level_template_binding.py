@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-shot exact patch for #157; fail closed on source drift."""
+"""One-shot exact patch for #157; fail closed on source drift. Triggered after workflow installation."""
 from pathlib import Path
 
 p = Path("acs_plan_chunks.py")
