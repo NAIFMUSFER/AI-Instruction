@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from acs_plan_review import PlanError, _geometry
-from acs_plan_stage_gate import (draft_geometry_admission,
+from warehouse_vertical_stage_gate import (draft_geometry_admission,
     require_warehouse_vertical_for_downstream, warehouse_vertical_stage_gate)
 
 
