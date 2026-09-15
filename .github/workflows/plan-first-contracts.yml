@@ -33,6 +33,7 @@ on:
       - 'tests/remediation/test_plan_warehouse_column_locks.py'
       - 'tests/remediation/test_plan_export_provenance_parity.py'
       - 'tests/remediation/test_plan_revision_compare_restore.py'
+      - 'tests/remediation/test_plan_residential_revision_compare_restore.py'
       - 'tests/remediation/test_plan_ifc_export.py'
       - 'tests/remediation/test_plan_commands.py'
       - 'tests/remediation/test_plan_persisted_commands.py'
@@ -128,6 +129,11 @@ jobs:
           set -o pipefail
           mkdir -p logs
           python -S tests/remediation/test_plan_revision_compare_restore.py 2>&1 | tee logs/plan-revision-compare-restore.log
+      - name: Residential revision compare and historical restore regressions (stdlib-only)
+        run: |
+          set -o pipefail
+          mkdir -p logs
+          python -S tests/remediation/test_plan_residential_revision_compare_restore.py 2>&1 | tee logs/plan-residential-revision-compare-restore.log
       - name: Approved-baseline IFC export regressions (stdlib-only)
         run: |
           set -o pipefail
@@ -175,6 +181,7 @@ jobs:
           python tests/remediation/test_plan_warehouse_docks_by_zone.py 2>&1 | tee logs/plan-warehouse-docks-full.log
           python tests/remediation/test_plan_warehouse_column_locks.py 2>&1 | tee logs/plan-warehouse-column-locks-full.log
           python tests/remediation/test_plan_export_provenance_parity.py 2>&1 | tee logs/plan-export-provenance-parity.log
+          python tests/remediation/test_plan_residential_revision_compare_restore.py 2>&1 | tee logs/plan-residential-revision-compare-restore-full.log
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
           python tests/remediation/test_plan_store.py 2>&1 | tee logs/plan-store.log
