@@ -149,11 +149,12 @@ def read_source(store, project_id, source_id, part="original"):
 
 
 def candidate(brief, requirements, option, max_provider_calls, plan_source):
-    """One vision proposal; never relocate an uploaded drawing behind the user."""
+    """At most two image-grounded readings; never auto-relocate a drawing."""
     import acs_understand as U
     from acs_provider_budget import limited
     from acs_plan_bridge import _reject_provider_authority_changes
-    from acs_plan_review import canonical
+    from acs_plan_review import canonical, _structure, _geometry
+    from acs_workspace_progress import emit
     import acs_upload_security as UPLOAD
     checked = UPLOAD.validate_image(decode(plan_source["image"], MAX_FILE), plan_source["media_type"])
     preview = base64.b64encode(checked["normalized"]).decode("ascii")
@@ -170,12 +171,26 @@ def candidate(brief, requirements, option, max_provider_calls, plan_source):
               "الأرقام في المثال شكل للبيانات وليست أبعادًا افتراضية للمستخدم.")
     system += "\n" + policy
     system += "\nهذه صورة الصفحة المختارة فقط. لا تفترض محتوى الصفحات الأخرى أو تكرر الأدوار غير الظاهرة."
+    system += "\nلا تمثل حدود الشقة أو الدور كغرفة تتداخل مع الغرف الداخلية. استخدم حدود الفراغات الداخلية فقط؛ ولا تستبدل شكلاً غير مستطيل بمستطيل يتداخل مع جيرانه."
     with limited(max_provider_calls) as budget:
-        raw = U.call_llm(None, content=[
-            {"type":"image", "source":{"type":"base64", "media_type":checked["media_type"], "data":preview}},
-            {"type":"text", "text":prompt}], max_tokens=U.G.stage_budget("plan"),
-            stage="vision", btype=U.detect_type(brief), truncate=False,
-            system_override=system)
-        building = U.extract_json(raw)
-    _reject_provider_authority_changes({}, building)
+        findings=[]
+        for attempt in range(min(2,max_provider_calls)):
+            emit('LAYOUT',provider_calls=budget['used'])
+            text=prompt
+            if attempt:
+                text+='\nأعد قراءة الصورة نفسها لتصحيح أخطاء الاستخراج التالية فقط، مع الحفاظ على التوزيع الظاهر وسياسة القراءة:\n'+canonical(findings)
+                text+='\nالقراءة السابقة (بيانات غير معتمدة):\n'+canonical(building)
+            raw = U.call_llm(None, content=[
+                {"type":"image", "source":{"type":"base64", "media_type":checked["media_type"], "data":preview}},
+                {"type":"text", "text":text}], max_tokens=U.G.stage_budget("plan"),
+                stage="vision", btype=U.detect_type(brief), truncate=False,
+                system_override=system)
+            building = U.extract_json(raw)
+            _reject_provider_authority_changes({}, building)
+            _structure(building)
+            findings,_=_geometry(building)
+            emit('REVIEW',provider_calls=budget['used'])
+            if not findings:break
+        if findings:
+            raise PlanError('PLAN_SOURCE_GEOMETRY_INCOMPLETE','لم تجتز قراءة المخطط فحص الهندسة.')
     return {"building":building, "provider_calls":budget["used"], "stage":"PLAN_DRAFT"}

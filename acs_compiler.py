@@ -743,7 +743,11 @@ def build_room(bld, room, fkey, base_y, defaults):
     # نمط الجدار: مناطق المستودع مفتوحة (دهان أرضي) لا جدران كاملة
     ADMIN_ROLES = ("office", "admin", "it", "staff", "maintenance", "meeting")
     _ind = bool(defaults.get("industrial"))
-    walls_mode = room.get("walls") or (
+    declared_walls = room.get("walls")
+    wall_edges = tuple(declared_walls) if isinstance(declared_walls, list) else ('N','S','E','W')
+    if any(e not in ('N','S','E','W') for e in wall_edges) or len(set(wall_edges)) != len(wall_edges):
+        raise ValueError('Invalid explicit room wall edges')
+    walls_mode = "full" if isinstance(declared_walls,list) else declared_walls or (
         "none" if (_ind and room.get("role") and room["role"] not in ADMIN_ROLES) else "full")
     WH = {"none": 0.0, "line": 0.0, "low": 1.10, "rail": 1.10, "half": 1.80,
           "glass": H, "full": H}
@@ -751,7 +755,7 @@ def build_room(bld, room, fkey, base_y, defaults):
 
     if walls_mode in ("none", "line"):
         zc = zone_col or "#2563eb"
-        for e in ('N', 'S', 'E', 'W'):
+        for e in wall_edges:
             axis, fixed, u0, u1 = edge_geom(e, rect)
             if axis == 'x':
                 bld.add_box((u0 + u1) / 2, base_y + 0.006, fixed, u1 - u0, 0.012, 0.15,
@@ -762,7 +766,7 @@ def build_room(bld, room, fkey, base_y, defaults):
         bld.add_box(x + w / 2, base_y + 0.01, z + d / 2, min(w * 0.5, 6), 0.014, min(d * 0.22, 2.2),
                     tinted("paint_zone", zc), "FLOOR|%s|%s|label" % (fkey, name))
     else:
-        for e in ('N', 'S', 'E', 'W'):
+        for e in wall_edges:
             axis, fixed, u0, u1 = edge_geom(e, rect)
             wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
                                per_edge[e], "WALL", fkey, name, "w"+e, wall_mat)
