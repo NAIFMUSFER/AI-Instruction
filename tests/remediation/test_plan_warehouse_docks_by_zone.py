@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Warehouse dock allocation regressions for ACS Design Pipeline v2.
+"""Warehouse dock allocation/position regressions for ACS Design Pipeline v2.
 
 These contracts count only explicitly declared dock quantities grouped by the
-canonical role of their owning warehouse zone. They do not infer dock capacity,
+canonical role of their owning warehouse zone. Position contracts use only
+explicit room rectangles plus dock id/edge/offset/pitch/count and report site
+coordinates for each modeled dock slot. They do not infer dock capacity,
 throughput, queuing, apron geometry, traffic safety, or regulatory compliance.
 
 Red proof retained in GitHub history: test-only head bbcb3f56 made dedicated
@@ -27,6 +29,18 @@ def with_shipping_docks(model: dict, count: int = 3) -> dict:
     shipping["docks"] = [
         {"id": "dock_s", "edge": "S", "offset": 2.0, "count": count},
     ]
+    return model
+
+
+def with_positioned_receiving_docks(model: dict, *, edge: str = "N", offset: float = 2.0) -> dict:
+    receiving = model["floors"]["ground"]["rooms"][0]
+    receiving["docks"] = [{
+        "id": "dock_n",
+        "edge": edge,
+        "offset": offset,
+        "pitch": 4.0,
+        "count": 2,
+    }]
     return model
 
 
@@ -81,11 +95,58 @@ class WarehouseDockByZoneTests(unittest.TestCase):
         self.assertFalse(result["claims_best_option"])
         self.assertFalse(result["claims_regulatory_compliance"])
 
+    def test_explicit_dock_slot_locations_are_measured_in_site_coordinates(self):
+        result = S.measure_plan(with_positioned_receiving_docks(warehouse()))
+        metrics = result["metrics"]
+        self.assertEqual(metrics["dock_site_x_by_slot_m"], {
+            "receiving/dock_n#1": 2.0,
+            "receiving/dock_n#2": 6.0,
+        })
+        self.assertEqual(metrics["dock_site_z_by_slot_m"], {
+            "receiving/dock_n#1": 0.0,
+            "receiving/dock_n#2": 0.0,
+        })
+        self.assertFalse(result["claims_regulatory_compliance"])
+        self.assertFalse(result["claims_structural_safety"])
+
+    def test_incomplete_dock_placement_fails_slot_locations_closed(self):
+        model = with_positioned_receiving_docks(warehouse())
+        del model["floors"]["ground"]["rooms"][0]["docks"][0]["pitch"]
+        result = S.measure_plan(model)
+        self.assertIsNone(result["metrics"]["dock_site_x_by_slot_m"])
+        self.assertIsNone(result["metrics"]["dock_site_z_by_slot_m"])
+        self.assertIn("dock_site_x_by_slot_m", result["unavailable"])
+        self.assertIn("dock_site_z_by_slot_m", result["unavailable"])
+
+    def test_design_options_compare_explicit_dock_location_deltas_without_ranking(self):
+        a = with_positioned_receiving_docks(warehouse(), edge="N", offset=2.0)
+        b = with_positioned_receiving_docks(warehouse(), edge="S", offset=3.0)
+        result = O.compare_options([
+            {"id": "A", "model": a},
+            {"id": "B", "model": b},
+        ], declared_program_receipt="program:warehouse:dock-location")
+        delta = result["options"][1]["delta_from_reference"]
+        self.assertEqual(delta["mapping"]["dock_site_x_by_slot_m"], {
+            "receiving/dock_n#1": 1.0,
+            "receiving/dock_n#2": 1.0,
+        })
+        self.assertEqual(delta["mapping"]["dock_site_z_by_slot_m"], {
+            "receiving/dock_n#1": 12.0,
+            "receiving/dock_n#2": 12.0,
+        })
+        self.assertIn("dock_site_x_by_slot_m", delta["availability"]["mapping_comparable"])
+        self.assertIn("dock_site_z_by_slot_m", delta["availability"]["mapping_comparable"])
+        self.assertFalse(result["claims_best_option"])
+        self.assertFalse(result["claims_regulatory_compliance"])
+        self.assertFalse(result["claims_structural_safety"])
+
     def test_residential_does_not_gain_warehouse_dock_allocation_metric(self):
         model = with_shipping_docks(warehouse())
         model["meta"]["type"] = "residential"
         metrics = S.measure_plan(model)["metrics"]
         self.assertNotIn("dock_count_by_zone_role", metrics)
+        self.assertNotIn("dock_site_x_by_slot_m", metrics)
+        self.assertNotIn("dock_site_z_by_slot_m", metrics)
 
     def test_measurement_does_not_mutate_canonical_model(self):
         model = with_shipping_docks(warehouse())

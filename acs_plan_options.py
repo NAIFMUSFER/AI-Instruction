@@ -8,11 +8,12 @@ unavailable so a null delta cannot be mistaken for equivalence. Site and level
 constraint comparability is tri-state: missing explicit geometry/configuration is
 reported as not verified rather than being treated as equal merely because both
 sides are absent. Explicit rack footprints, declared rack heights, geometric rack
-bay counts, rack conflicts, zone allocation ratios, expansion-reserve rectangles,
-oriented lane geometry, explicit configured route polylines and deterministic
-validation-status transitions may be compared; regulatory/structural compliance,
-usable/load-rated storage capacity, throughput and inferred routing remain outside
-this contract unless a future authoritative engine supplies them.
+bay counts, rack conflicts, zone allocation ratios, explicit dock-slot locations,
+expansion-reserve rectangles, oriented lane geometry, explicit configured route
+polylines and deterministic validation-status transitions may be compared;
+regulatory/structural compliance, usable/load-rated storage capacity, throughput
+and inferred routing remain outside this contract unless a future authoritative
+engine supplies them.
 
 The comparison is headless and inert: no provider, network, compiler, renderer or
 production route is imported or invoked here.
@@ -52,6 +53,8 @@ _MAP_METRICS = (
     "zone_area_ratio_by_role",
     "dock_count_by_edge",
     "dock_count_by_zone_role",
+    "dock_site_x_by_slot_m",
+    "dock_site_z_by_slot_m",
     "lane_area_by_kind_m2",
     "lane_centerline_length_by_kind_m",
     "lane_overlap_area_by_kind_pair_m2",
