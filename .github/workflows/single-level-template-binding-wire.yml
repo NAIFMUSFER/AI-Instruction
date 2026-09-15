@@ -1,0 +1,27 @@
+name: ACS single-level template binding wire
+on:
+  push:
+    branches: [acs-v2/single-level-template-binding-20260915]
+    paths: [tools/wire_single_level_template_binding.py]
+permissions:
+  contents: write
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: acs-v2/single-level-template-binding-20260915
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python tools/wire_single_level_template_binding.py
+      - run: python tests/remediation/test_single_level_template_binding.py
+      - name: Commit exact patch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add acs_plan_chunks.py
+          git commit -m 'fix(acs-v2): bind single-level zones to declared floor template'
+          git push origin HEAD:acs-v2/single-level-template-binding-20260915
