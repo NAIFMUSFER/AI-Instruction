@@ -1,0 +1,37 @@
+name: ACS temporary connected-browser regression update
+
+on:
+  push:
+    branches:
+      - acs-v2/connected-property-lock-ui-20260915
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Make connected browser acceptance exercise a selective position lock
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('tests/remediation/test_connected_workspace_browser.cjs')
+          text = path.read_text(encoding='utf-8')
+          old = """   await page.locator('#cwSemanticLockTarget').selectOption(JSON.stringify(['element','ground','a','points','light-a']));\n   await page.locator('#cwSemanticLockToggle').click();\n   await page.waitForFunction(()=>document.querySelector('#cwSemanticLockToggle')?.textContent==='إلغاء قفل العنصر'&&!document.querySelector('#cwSemanticLockToggle').disabled);\n"""
+          new = """   await page.locator('#cwSemanticLockTarget').selectOption(JSON.stringify(['element','ground','a','points','light-a']));\n   await page.locator('#cwSemanticLockScope').selectOption('position');\n   await page.locator('#cwSemanticLockToggle').click();\n   await page.waitForFunction(()=>document.querySelector('#cwSemanticLockScope option:checked')?.textContent.includes('🔒')&&document.querySelector('#cwSemanticLockToggle')?.textContent==='إلغاء هذا القفل'&&!document.querySelector('#cwSemanticLockToggle').disabled);\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'expected exactly one legacy nested-lock browser block, found {text.count(old)}')
+          path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+          git diff --check
+      - name: Commit browser regression only
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/remediation/test_connected_workspace_browser.cjs
+          git commit -m 'test: exercise selective lock scope in connected browser'
+          git push origin HEAD:${GITHUB_REF_NAME}
