@@ -17,7 +17,7 @@ jobs:
         with:
           python-version: '3.11'
       - run: python tools/wire_single_level_template_binding.py
-      - run: python tests/remediation/test_single_level_template_binding.py
+      - run: PYTHONPATH=. python tests/remediation/test_single_level_template_binding.py
       - name: Commit exact patch
         run: |
           git config user.name 'github-actions[bot]'
