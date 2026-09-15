@@ -31,6 +31,7 @@ on:
       - 'tests/remediation/test_plan_warehouse_lane_conflicts.py'
       - 'tests/remediation/test_plan_warehouse_docks_by_zone.py'
       - 'tests/remediation/test_plan_warehouse_column_locks.py'
+      - 'tests/remediation/test_plan_export_provenance_parity.py'
       - 'tests/remediation/test_plan_revision_compare_restore.py'
       - 'tests/remediation/test_plan_ifc_export.py'
       - 'tests/remediation/test_plan_commands.py'
@@ -173,6 +174,7 @@ jobs:
           python tests/remediation/test_plan_warehouse_lane_conflicts.py 2>&1 | tee logs/plan-warehouse-lane-conflicts-full.log
           python tests/remediation/test_plan_warehouse_docks_by_zone.py 2>&1 | tee logs/plan-warehouse-docks-full.log
           python tests/remediation/test_plan_warehouse_column_locks.py 2>&1 | tee logs/plan-warehouse-column-locks-full.log
+          python tests/remediation/test_plan_export_provenance_parity.py 2>&1 | tee logs/plan-export-provenance-parity.log
           python tests/remediation/test_plan_semantic_locks.py 2>&1 | tee logs/plan-semantic-locks.log
           python tests/remediation/test_plan_lock_binding.py 2>&1 | tee logs/plan-lock-binding.log
           python tests/remediation/test_plan_store.py 2>&1 | tee logs/plan-store.log
