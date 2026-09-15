@@ -3,6 +3,7 @@
 // All external source offsets are Unicode code points, matching Python slicing.
 export const metricLabels = Object.freeze({
   site_width_m:'عرض الموقع (م)', site_depth_m:'عمق الموقع (م)', level_count:'عدد الأدوار',
+  building_target_area_m2:'مساحة المبنى المستهدفة (م²)',
   room_count:'عدد فراغات الاستخدام', min_space_area_by_role_m2:'أقل مساحة للاستخدام (م²)',
   unit_count:'إجمالي الشقق', unit_count_per_level:'الشقق في كل دور', room_count_per_unit:'عدد الفراغات داخل كل شقة',
   dock_count:'عدد الأرصفة', min_dock_count:'أقل عدد أرصفة', min_rack_group_count:'أقل عدد مجموعات رفوف',
@@ -27,7 +28,8 @@ export function analyzeBrief(brief) {
   const candidates=[],questions=[],seen=new Set();
   const chunks=brief.matchAll(/[^\n؛;!?؟]+/gu);
   const add=(metric,n,unit,match,base,source='requested',role)=>{
-    const expected=Number(n)*(unit?factor(unit):1);
+    const numeric=typeof n==='string'?n.replace(/[,٬]/g,''):n;
+    const expected=Number(numeric)*(unit?factor(unit):1);
     if(!Number.isFinite(expected)||expected<0||(['level_count','room_count','dock_count','min_dock_count','min_rack_group_count'].includes(metric)&&!Number.isInteger(expected))){
       questions.push('ورد عدد غير صحيح: «'+match[0]+'». حدّد عددًا صحيحًا.');return;
     }
@@ -39,7 +41,11 @@ export function analyzeBrief(brief) {
   };
   for(const chunk of chunks){
     const text=normal(chunk[0]);
-    if(ambiguous.test(text)){
+    // Building target area is a planning budget, not site area. Approximate
+    // wording is intentionally reviewable/inferred rather than silently hard.
+    const areaPattern=/(?:مساحة\s+(?:المبنى|مبنى(?:\s+المستودع)?)(?:\s+(?:المستهدفة|المغلقة))?|building\s+(?:target\s+)?area)\s*(?:تقارب|قرابة|حوالي|≈|~)?\s*[:=]?\s*(?<n>[0-9]+(?:[,٬][0-9]{3})*(?:\.[0-9]+)?)\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/giu;
+    for(const match of text.matchAll(areaPattern))add('building_target_area_m2',match.groups.n,null,match,chunk.index,'inferred');
+    if(ambiguous.test(text)&&!areaPattern.test(text)){
       if(/[0-9]/.test(text))questions.push('راجع الشرط أو نطاق العدد في: «'+chunk[0].trim().slice(0,200)+'». أضف القيم الإجمالية المؤكدة في الحقول.');
       continue;
     }
@@ -112,7 +118,7 @@ export function buildBriefProgram(input) {
     if(!['number','string'].includes(typeof r.expected))throw new Error('أدخل قيمة رقمية في '+requirementLabel(r)+'.');
     r.expected=Number(r.expected);
     if(!Number.isFinite(r.expected)||r.expected<0||(['site_width_m','site_depth_m','level_count'].includes(r.metric)&&r.expected<=0))throw new Error('أدخل أبعادًا وأعداد أدوار موجبة، وقيم متطلبات غير سالبة.');
-    if(r.metric!=='min_space_area_by_role_m2'&&!r.metric.endsWith('_m')&&!Number.isInteger(r.expected))throw new Error('أدخل عددًا صحيحًا في '+requirementLabel(r)+'.');
+    if(!['min_space_area_by_role_m2','building_target_area_m2'].includes(r.metric)&&!r.metric.endsWith('_m')&&!Number.isInteger(r.expected))throw new Error('أدخل عددًا صحيحًا في '+requirementLabel(r)+'.');
     if(['room_count','room_count_per_unit','min_space_area_by_role_m2'].includes(r.metric)){
       r.role=r.role?.trim();if(!r.role||r.role.length>80)throw new Error('حدد استخدام الفراغ للمتطلب.');
     }else delete r.role;
