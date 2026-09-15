@@ -1,0 +1,17 @@
+name: ACS warehouse program feasibility
+on:
+  push:
+    branches: [acs-v2/warehouse-program-feasibility-20260915]
+  pull_request:
+    paths:
+      - warehouse_program_feasibility.py
+      - tests/remediation/test_warehouse_program_feasibility.py
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: PYTHONPATH=. python tests/remediation/test_warehouse_program_feasibility.py
