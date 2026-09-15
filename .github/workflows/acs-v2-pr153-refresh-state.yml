@@ -1,0 +1,46 @@
+name: ACS v2 PR153 refresh measured source state
+
+on:
+  push:
+    branches:
+      - acs-v2/orientation-type-lock-ui-20260915
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.repository == 'NAIFMUSFER/AI-Instruction'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: acs-v2/orientation-type-lock-ui-20260915
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Measure current first-party source bundle
+        run: python3 tools/bundle_report.py
+      - name: Regenerate only the measured CURRENT-STATE block
+        run: |
+          python3 - <<'PY'
+          import tools.check_doc_claims as c
+          ok, msg = c.check_state(fix=True)
+          print(msg)
+          raise SystemExit(0 if ok else 1)
+          PY
+      - name: Keep generated evidence but not environment-dependent report/helper
+        run: |
+          git fetch origin main
+          git checkout origin/main -- tests/performance/bundle_report.json
+          rm .github/workflows/acs-v2-pr153-refresh-state.yml
+          git add KNOWN-ISSUES.md tests/performance/bundle_report.json .github/workflows/acs-v2-pr153-refresh-state.yml
+          if git diff --cached --quiet; then
+            echo 'Measured state already current.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore(acs-v2): refresh PR153 measured frontend state'
+          git push origin HEAD:acs-v2/orientation-type-lock-ui-20260915
