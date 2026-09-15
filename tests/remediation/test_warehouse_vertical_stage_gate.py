@@ -5,7 +5,8 @@ import sys
 import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from acs_plan_review import PlanError, _geometry
+from acs_plan_review import PlanError, PlanWorkspace, _geometry
+from acs_plan_projection import project
 from warehouse_vertical_stage_gate import (draft_geometry_admission,
     require_warehouse_vertical_for_downstream, warehouse_vertical_stage_gate)
 
@@ -52,6 +53,25 @@ class WarehouseVerticalStageGateTests(unittest.TestCase):
         building.update(floor_height=8.0,wall_h=8.0,wall_t=0.2)
         for stage in ("APPROVAL","BIM_3D"):
             require_warehouse_vertical_for_downstream(building,stage)
+
+    def test_read_only_2d_survives_only_deferred_vertical_unknowns(self):
+        building=model()
+        ws=PlanWorkspace(lambda _m:{"scopes":{"topology":"PASS","vertical_circulation":"PASS"},"issues":[]})
+        rev=ws.propose(building,brief="warehouse 50x100",requirements=[],expected_head=None,note="draft")
+        drawing=project(rev,0)
+        self.assertEqual(len(drawing["primitives"]),2)
+        self.assertFalse(ws.review(rev.id)["can_approve"])
+        with self.assertRaises(PlanError) as caught:
+            ws.approve(rev.id,expected_head=rev.id,actor_label="engineer",confirmed=True,acknowledge_concept_only=True)
+        self.assertEqual(caught.exception.code,"DOWNSTREAM_GEOMETRY_NOT_SPECIFIED")
+
+    def test_read_only_2d_still_rejects_horizontal_failure(self):
+        building=model(); building["floors"]["ground"]["rooms"][0]["rect"]=[30,10,30,50]
+        ws=PlanWorkspace()
+        rev=ws.propose(building,brief="warehouse 50x100",requirements=[],expected_head=None,note="bad horizontal")
+        with self.assertRaises(PlanError) as caught:
+            project(rev,0)
+        self.assertEqual(caught.exception.code,"INVALID_GEOMETRY")
 
     def test_non_finite_values_never_count_as_resolved(self):
         building=model(); building.update(floor_height=float("nan"),wall_h=float("inf"),wall_t=-1)
