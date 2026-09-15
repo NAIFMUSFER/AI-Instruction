@@ -1,0 +1,20 @@
+name: ACS single-level template binding
+
+on:
+  push:
+    branches:
+      - acs-v2/single-level-template-binding-20260915
+  pull_request:
+    paths:
+      - acs_plan_chunks.py
+      - tests/remediation/test_single_level_template_binding.py
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python tests/remediation/test_single_level_template_binding.py
