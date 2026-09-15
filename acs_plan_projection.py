@@ -187,8 +187,13 @@ def project(revision: Revision, level_index: int) -> dict:
         raise PlanError('INVALID_LEVEL', 'An explicit integer level index is required')
     model = revision.model
     issues, _ = _geometry(model)
-    if issues:
-        raise PlanError('INVALID_GEOMETRY', 'Resolve geometry issues before CAD export')
+    # This projector is also the read-only 2D review surface. Warehouse drafts
+    # may defer only unresolved floor/wall vertical values; horizontal geometry
+    # still fails closed. Approved CAD remains protected by workspace.handoff().
+    from warehouse_vertical_stage_gate import draft_geometry_admission
+    admission = draft_geometry_admission(model, issues)
+    if admission['blocking']:
+        raise PlanError('INVALID_GEOMETRY', 'Resolve blocking geometry issues before 2D projection')
     level = next((v for v in model['levels'] if v['index'] == level_index), None)
     if level is None:
         raise PlanError('LEVEL_NOT_FOUND', 'Requested level is absent')

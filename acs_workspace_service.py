@@ -290,13 +290,17 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
                           expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
     issues, _ = _geometry(revision.model)
-    if issues:
-        # First category in the canonical validator's deterministic order.
-        # The remaining projection checks stay authoritative and unchanged.
-        reason = issues[0].get("code")
+    # Warehouse Design Options are allowed to reach read-only 2D review while
+    # vertical engineering facts remain explicitly unknown. Only those three
+    # unknowns are deferred; every horizontal/canonical defect remains blocking.
+    from warehouse_vertical_stage_gate import draft_geometry_admission
+    admission = draft_geometry_admission(revision.model, issues)
+    if admission["blocking"]:
+        # First blocking category in the canonical validator's deterministic order.
+        reason = admission["blocking"][0].get("code")
         code = "PLAN_GEOMETRY_" + reason if reason in GEOMETRY_MESSAGES else "INVALID_GEOMETRY"
         raise PlanError(code, geometry_failure_message(code))
-    _view_result(ws, "generate", revision.id)  # projection admission before write
+    _view_result(ws, "generate", revision.id)  # stage-aware 2D projection admission before write
     if on_progress:
         on_progress({"phase":"SAVING"})
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)

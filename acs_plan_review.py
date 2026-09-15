@@ -706,6 +706,10 @@ class PlanWorkspace:
                 raise PlanError("STALE_REVISION", "Approval must refer to the currently reviewed revision")
             if confirmed is not True or acknowledge_concept_only is not True or not _id(actor_label):
                 raise PlanError("EXPLICIT_APPROVAL_REQUIRED", "Explicit conceptual-design approval is required")
+            # #155: a reviewable warehouse draft is not an approvable warehouse.
+            # Do not infer clear height or wall engineering at the approval boundary.
+            from warehouse_vertical_stage_gate import require_warehouse_vertical_for_downstream
+            require_warehouse_vertical_for_downstream(self.get(revision_id).model, "APPROVAL")
             if not self.review(revision_id)["can_approve"]:
                 raise PlanError("PLAN_NOT_READY", "Resolve failed or unverified plan checks first")
             if expected_head != self._head:
@@ -722,6 +726,10 @@ class PlanWorkspace:
         """Exact approved Building, without another LLM or silent plan repair."""
         with self._mutex:
             rev = self.get(revision_id)
+            # Defence in depth for old/imported receipts: BIM/3D can never inherit
+            # a warehouse baseline whose vertical engineering facts are unresolved.
+            from warehouse_vertical_stage_gate import require_warehouse_vertical_for_downstream
+            require_warehouse_vertical_for_downstream(rev.model, "BIM_3D")
             approval = self._approvals.get(revision_id)
             if approval is None:
                 raise PlanError("APPROVAL_REQUIRED", "Drafts cannot enter the approved 3D path")
