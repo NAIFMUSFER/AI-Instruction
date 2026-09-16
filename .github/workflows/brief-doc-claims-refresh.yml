@@ -15,6 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: '22'}
       - run: npm ci
+      - name: Install Chromium required by measured browser suites
+        run: npx playwright install --with-deps chromium
       - name: Measure source bundle before provenance stamping
         run: python3 tools/bundle_report.py
       - name: Install pinned dependencies used by measured suites
