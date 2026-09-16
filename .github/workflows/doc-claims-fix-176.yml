@@ -1,0 +1,27 @@
+name: Fix measured doc claims for PR176
+on:
+  push:
+    branches: [acs-v2/typology-isolation-20260916-fix]
+    paths: [tools/doc-claims-fix-176.trigger]
+permissions: {contents: write}
+jobs:
+  fix:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: acs-v2/typology-isolation-20260916-fix, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - run: python3 tools/bundle_report.py
+      - run: python3 tools/check_doc_claims.py --fix
+      - run: python3 tools/check_doc_claims.py
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add KNOWN-ISSUES.md tests/performance/bundle_report.json
+          git diff --cached --quiet && { echo 'nothing to update'; exit 0; }
+          git commit -m 'docs: refresh measured current-state claims for PR176'
+          git push origin HEAD:acs-v2/typology-isolation-20260916-fix
