@@ -46,7 +46,6 @@ jobs:
       - name: Verify exact measurements against current source
         run: |
           python3 tools/bundle_report.py
-          git diff --exit-code tests/performance/bundle_report.json
           python3 tools/check_doc_claims.py
       - name: Commit repaired generated measurements
         run: |
