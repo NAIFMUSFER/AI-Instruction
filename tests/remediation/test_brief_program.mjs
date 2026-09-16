@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {analyzeBrief, buildBriefProgram} from '../../public/app/core/brief-program.mjs';
+import {analyzeBrief, buildBriefProgram, warehouseRequirementsPreflight} from '../../public/app/core/brief-program.mjs';
 
 const form = (brief, extra={}) => ({brief, type:'residential', width:'20', depth:'25', levels:'3', rows:[], ...extra});
 const evidence = program => {
@@ -61,6 +61,23 @@ const cases = [
     assert.equal(a.questions.length,0,'5,000 m² is a measured area with a thousands separator, not a range');
     assert.equal(a.candidates.length,0,'unsupported area wording must remain prose rather than become an invented hard requirement');
     assert.ok(analyzeBrief('1,000 bedrooms').questions.length,'non-area grouped counts remain reviewable instead of silently becoming totals');
+  }],
+  ['Warehouse site/building envelope stops in requirements before design options', () => {
+    const reqs=(target=5000,levels=1)=>[
+      {metric:'site_width_m',expected:50},{metric:'site_depth_m',expected:100},
+      {metric:'level_count',expected:levels},{metric:'building_target_area_m2',expected:target},
+    ];
+    const blocked=warehouseRequirementsPreflight(reqs());
+    assert.equal(blocked.status,'BUILDABLE_ENVELOPE_NOT_VERIFIED');
+    assert.equal(blocked.site_area_m2,5000);assert.equal(blocked.unallocated_site_area_m2,0);assert.equal(blocked.may_generate_layout,false);
+    assert.equal(warehouseRequirementsPreflight(reqs(2000)).status,'FEASIBLE_FOR_LAYOUT_PREFLIGHT');
+    assert.equal(warehouseRequirementsPreflight(reqs(5000,2)).may_generate_layout,true);
+    assert.equal(warehouseRequirementsPreflight(reqs(10001,2)).status,'BUILDING_TARGET_EXCEEDS_THEORETICAL_FLOOR_AREA');
+    assert.equal(warehouseRequirementsPreflight(reqs().slice(0,3)).status,'NOT_EVALUATED');
+    const warehouse=form('مستودع لوجستي',{type:'warehouse',width:'50',depth:'100',levels:'1',rows:[{metric:'building_target_area_m2',expected:'5000'}]});
+    assert.throws(()=>buildBriefProgram(warehouse),/تستهلك كامل مساحة الموقع/);
+    assert.doesNotThrow(()=>buildBriefProgram(form('مستودع لوجستي',{type:'warehouse',width:'50',depth:'100',levels:'1',rows:[{metric:'building_target_area_m2',expected:'2000'}]})));
+    assert.doesNotThrow(()=>buildBriefProgram(form('مشروع سكني',{type:'residential',width:'50',depth:'100',levels:'1',rows:[{metric:'building_target_area_m2',expected:'5000'}]})));
   }],
   ['Conflicting description and inputs stop before generation', () => {
     assert.throws(()=>buildBriefProgram(form('عرض الموقع ٢٢ متر')),/تعارض/);
