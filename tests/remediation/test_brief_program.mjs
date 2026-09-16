@@ -55,6 +55,13 @@ const cases = [
       assert.ok(analyzeBrief(text).questions.length,text);
     }
   }],
+  ['Thousands-grouped measured areas do not create fake ambiguity questions', () => {
+    const text='أريد مستودعًا بمساحة بناء إجمالية تقارب 5,000 م²، ثم Zoning Plan يوزع المساحة الإجمالية 5,000 م²، ولا تفترض أن مساحة الأرض نفسها 5,000 م².';
+    const a=analyzeBrief(text);
+    assert.equal(a.questions.length,0,'5,000 m² is a measured area with a thousands separator, not a range');
+    assert.equal(a.candidates.length,0,'unsupported area wording must remain prose rather than become an invented hard requirement');
+    assert.ok(analyzeBrief('1,000 bedrooms').questions.length,'non-area grouped counts remain reviewable instead of silently becoming totals');
+  }],
   ['Conflicting description and inputs stop before generation', () => {
     assert.throws(()=>buildBriefProgram(form('عرض الموقع ٢٢ متر')),/تعارض/);
     assert.throws(()=>buildBriefProgram(form('عرض الموقع 20 متر؛ عرض الموقع 22 متر')),/تعارض/);
