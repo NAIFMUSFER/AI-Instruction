@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# trigger after workflow installation
 from pathlib import Path
 
 def patch(path,old,new):
