@@ -1,0 +1,31 @@
+name: Regenerate PR179 measured current state
+on:
+  push:
+    branches: [acs-v2/warehouse-preflight-ui]
+    paths: [.github/workflows/patch-pr179-doc-state.yml]
+permissions: {contents: write}
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: acs-v2/warehouse-preflight-ui, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - name: Regenerate measured current-state block
+        shell: bash
+        run: |
+          python3 tools/bundle_report.py
+          python3 tools/check_doc_claims.py --fix
+          python3 tools/check_doc_claims.py
+      - name: Commit only measured documentation
+        shell: bash
+        run: |
+          git config user.name 'NAIFMUSFER'
+          git config user.email 'whili9070@gmail.com'
+          git add KNOWN-ISSUES.md
+          git diff --cached --quiet && exit 0
+          git commit -m 'docs: refresh measured current state after warehouse preflight UI'
+          git push origin HEAD:acs-v2/warehouse-preflight-ui
