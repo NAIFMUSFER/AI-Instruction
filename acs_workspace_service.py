@@ -243,10 +243,13 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         else:
             if warehouse and target is not None:
                 from warehouse_program_feasibility import generated_indoor_area
+                from warehouse_soft_area_fit import fit_soft_area
                 generated=generated_indoor_area(result['building'])
                 if generated is not None and generated > target + 1e-8*max(1,target):
-                    raise PlanError('WAREHOUSE_PROGRAM_EXCEEDS_BUILDING_TARGET',
-                                    'Generated indoor warehouse program exceeds the confirmed building target')
+                    # Provider room rectangles are proposals, not hard requirements.
+                    # Fit only their soft area budget deterministically; confirmed
+                    # role minima remain hard and fail structured when infeasible.
+                    result['building'] = fit_soft_area(result['building'], requirements, target)
             from acs_plan_overlap_repair import repair_overlap
             result["building"] = repair_overlap(result["building"], prompt, budget)
         emit("REVIEW",provider_calls=budget["used"])

@@ -35,6 +35,7 @@ COPY acs_workspace_http.py acs_workspace_service.py acs_provider_budget.py acs_p
 # #155 stage-aware warehouse draft admission; contains policy only, no defaults.
 COPY warehouse_vertical_stage_gate.py ./
 COPY warehouse_program_feasibility.py ./
+COPY warehouse_soft_area_fit.py ./
 COPY acs_workspace_progress.py acs_residential_generation.py acs_design_research.py ./
 COPY acs_residential_manifest.py acs_residential_access.py acs_residential_layout.py ./
 # Approved artifacts are derived on demand from an authenticated frozen revision.
