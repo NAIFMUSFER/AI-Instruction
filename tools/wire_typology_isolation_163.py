@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# trigger after workflow installation
 from pathlib import Path
 p=Path('public/app/ui/connected-workspace.mjs')
 s=p.read_text(encoding='utf-8')
