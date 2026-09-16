@@ -14,6 +14,43 @@ def _area(value):
     return value if type(value) in (int, float) and math.isfinite(value) and value >= 0 else None
 
 
+def _confirmed(requirements, metric):
+    values=[r.get("expected") for r in requirements if isinstance(r,dict) and r.get("metric")==metric]
+    if len(values)!=1 or type(values[0]) not in (int,float) or not math.isfinite(values[0]):
+        return None
+    return values[0]
+
+
+def warehouse_requirements_preflight(requirements):
+    """Check only arithmetic facts known before any provider/layout call.
+
+    A one-level building target that consumes the entire explicit site cannot be
+    treated as a verified buildable envelope. We do not invent a setback or a
+    replacement area; the engineer must provide a smaller building target or a
+    larger site/buildable envelope. Multi-level projects are not rejected by
+    this one-level footprint rule because their footprint is not derivable from
+    total floor area alone.
+    """
+    reqs=requirements if isinstance(requirements,list) else []
+    w=_confirmed(reqs,"site_width_m"); d=_confirmed(reqs,"site_depth_m")
+    levels=_confirmed(reqs,"level_count"); target=_confirmed(reqs,"building_target_area_m2")
+    if any(v is None for v in (w,d,levels,target)):
+        return {"status":"NOT_EVALUATED","may_generate_layout":True}
+    site=w*d
+    if target > site*levels:
+        return {"status":"BUILDING_TARGET_EXCEEDS_THEORETICAL_FLOOR_AREA",
+                "site_area_m2":site,"building_target_m2":target,"level_count":levels,
+                "may_generate_layout":False}
+    if levels == 1 and target >= site:
+        return {"status":"BUILDABLE_ENVELOPE_NOT_VERIFIED",
+                "site_area_m2":site,"building_target_m2":target,"level_count":levels,
+                "unallocated_site_area_m2":max(0.0,site-target),"may_generate_layout":False}
+    return {"status":"FEASIBLE_FOR_LAYOUT_PREFLIGHT","site_area_m2":site,
+            "building_target_m2":target,"level_count":levels,
+            "unallocated_site_area_m2":site-target/levels if levels else None,
+            "may_generate_layout":True}
+
+
 def classify_warehouse_program(program):
     indoor = outdoor = hard_indoor = 0.0
     invalid = []
@@ -66,12 +103,9 @@ def warehouse_program_feasibility(*, site_area_m2, building_target_m2, program):
     if classified["invalid_indices"]:
         return {**base, "status":"PROGRAM_NOT_VERIFIED", "indoor_budget_m2":None,
                 "adjustment_required":False, "may_generate_layout":False}
-    # Site area alone is not permission to build over the whole plot.
     if target is None or target <= 0:
         return {**base, "status":"BUILDABLE_ENVELOPE_NOT_VERIFIED", "indoor_budget_m2":None,
                 "adjustment_required":False, "may_generate_layout":False}
-    # An explicit building target cannot exceed an explicit site, but no setback
-    # or regulatory deduction is inferred here.
     if site is not None and target > site:
         return {**base, "status":"BUILDING_TARGET_EXCEEDS_SITE", "indoor_budget_m2":target,
                 "adjustment_required":False, "may_generate_layout":False}
