@@ -1,0 +1,22 @@
+name: ACS typology isolation wire
+on:
+  push:
+    branches: [acs-v2/typology-isolation-20260916-fix]
+    paths: [tools/wire_typology_isolation_163.py]
+permissions: {contents: write}
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: acs-v2/typology-isolation-20260916-fix, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python tools/wire_typology_isolation_163.py
+      - run: PYTHONPATH=. python tests/remediation/test_connected_typology_isolation.py
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/app/ui/connected-workspace.mjs
+          git commit -m 'fix(acs-v2): isolate warehouse from residential option builder'
+          git push origin HEAD:acs-v2/typology-isolation-20260916-fix
