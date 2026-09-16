@@ -11,6 +11,22 @@ export const metricLabels = Object.freeze({
 const roles = {bedroom:'غرف النوم',office:'المكاتب',kitchen:'المطابخ',living:'الصالات',bathroom:'دورات المياه',majlis:'المجالس',stairs:'الدرج',elevator:'المصاعد'};
 export const requirementKey = r => JSON.stringify([r.metric, r.role || '']);
 export const requirementLabel = r => (r.metric==='room_count_per_unit' ? (roles[r.role]||r.role)+' في كل شقة' : r.metric==='room_count' && roles[r.role]) || metricLabels[r.metric] || r.metric;
+export function warehouseRequirementsPreflight(requirements) {
+  const reqs=Array.isArray(requirements)?requirements:[];
+  const confirmed=metric=>{
+    const values=reqs.filter(r=>r&&typeof r==='object'&&r.metric===metric).map(r=>r.expected);
+    if(values.length!==1)return null;
+    const value=values[0];
+    return typeof value==='number'&&Number.isFinite(value)?value:null;
+  };
+  const w=confirmed('site_width_m'),d=confirmed('site_depth_m'),levels=confirmed('level_count'),target=confirmed('building_target_area_m2');
+  if([w,d,levels,target].some(v=>v===null))return {status:'NOT_EVALUATED',may_generate_layout:true};
+  const site=w*d;
+  if(target>site*levels)return {status:'BUILDING_TARGET_EXCEEDS_THEORETICAL_FLOOR_AREA',site_area_m2:site,building_target_m2:target,level_count:levels,may_generate_layout:false};
+  if(levels===1&&target>=site)return {status:'BUILDABLE_ENVELOPE_NOT_VERIFIED',site_area_m2:site,building_target_m2:target,level_count:levels,unallocated_site_area_m2:Math.max(0,site-target),may_generate_layout:false};
+  return {status:'FEASIBLE_FOR_LAYOUT_PREFLIGHT',site_area_m2:site,building_target_m2:target,level_count:levels,unallocated_site_area_m2:levels?site-target/levels:null,may_generate_layout:true};
+}
+
 const normal = s => s.replace(/[٠-٩۰-۹أإآ]/g,c=>{
   const n=c.charCodeAt(0);
   return n>=0x6f0&&n<=0x6f9?String(n-0x6f0):n>=0x660&&n<=0x669?String(n-0x660):'ا';
@@ -131,6 +147,13 @@ export function buildBriefProgram(input) {
     const key=requirementKey(r);
     if(known.has(key))throw new Error('تعارض أو تكرار في '+requirementLabel(r)+'. اجمعه في متطلب واحد.');
     known.set(key,r);
+  }
+  if(input.type==='warehouse'){
+    const preflight=warehouseRequirementsPreflight(values);
+    if(!preflight.may_generate_layout){
+      if(preflight.status==='BUILDABLE_ENVELOPE_NOT_VERIFIED')throw new Error('مساحة المبنى المستهدفة تستهلك كامل مساحة الموقع في مشروع من دور واحد. أدخل مساحة مبنى أصغر أو موقعًا أكبر؛ لن يخترع ACS ارتدادات أو أبعادًا تنظيمية.');
+      if(preflight.status==='BUILDING_TARGET_EXCEEDS_THEORETICAL_FLOOR_AREA')throw new Error('مساحة المبنى المستهدفة أكبر من المساحة النظرية المتاحة عبر عدد الأدوار المؤكد. عدّل مساحة المبنى أو أبعاد الموقع أو عدد الأدوار قبل الانتقال إلى البدائل.');
+    }
   }
   const grouped=new Map();
   for(const c of analysis.candidates){
