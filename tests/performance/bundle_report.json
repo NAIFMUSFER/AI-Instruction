@@ -66,7 +66,7 @@
     "note": "the generated markers survived the split intact: the JS pairs moved into public/app/generated/*.js, the CSS pairs into public/app/styles/app.css, and the DOM pairs stayed in the shell, where markup belongs."
   },
   "javascript": {
-    "boot_bytes": 52468,
+    "boot_bytes": 52460,
     "boot_script_count": 6,
     "boot_scripts": [
       {
@@ -78,7 +78,7 @@
         "path": "public/app/boot/api-base.js"
       },
       {
-        "bytes": 5437,
+        "bytes": 5429,
         "path": "public/app/boot/build-info.js"
       },
       {
@@ -172,8 +172,8 @@
     ],
     "first_party_dynamic_import_count": 6,
     "first_party_module_count": 41,
-    "first_party_total_bytes": 2127369,
-    "initial_javascript_bytes": 1661500,
+    "first_party_total_bytes": 2127361,
+    "initial_javascript_bytes": 1661492,
     "largest_module": {
       "bytes": 228701,
       "group": "core",
@@ -453,9 +453,9 @@
         "pct_of_first_party_js": 0.28
       },
       {
-        "bytes": 5437,
+        "bytes": 5429,
         "group": "boot",
-        "gzip_bytes": 2388,
+        "gzip_bytes": 2336,
         "loaded": "boot-classic",
         "path": "public/app/boot/build-info.js",
         "pct_of_first_party_js": 0.26
@@ -628,7 +628,7 @@
     "sha256": "6aceb13f8f90d6d664c57b9f031dd370ef2b90d93b2d22a86822237a3298be45",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2127369 bytes) lives in 41 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 52406 byte shell and the application JavaScript (2127361 bytes) lives in 41 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,
