@@ -45,7 +45,13 @@ export function analyzeBrief(brief) {
     // wording is intentionally reviewable/inferred rather than silently hard.
     const areaPattern=/(?:مساحة\s+(?:المبنى|مبنى(?:\s+المستودع)?)(?:\s+(?:المستهدفة|المغلقة))?|building\s+(?:target\s+)?area)\s*(?:تقارب|قرابة|حوالي|≈|~)?\s*[:=]?\s*(?<n>[0-9]+(?:[,٬][0-9]{3})*(?:\.[0-9]+)?)\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/giu;
     for(const match of text.matchAll(areaPattern))add('building_target_area_m2',match.groups.n,null,match,chunk.index,'inferred');
-    if(ambiguous.test(text)&&!areaPattern.test(text)){
+    // A comma-grouped measured area such as 5,000 m² is an ordinary
+    // thousands separator, not a numeric range/decimal ambiguity. It may stay
+    // in the brief without creating a noisy pre-generation question. We do
+    // not promote it to a hard requirement unless a supported area phrase
+    // matched above; confirmed form values remain the source of truth.
+    const groupedMeasuredArea=/[0-9]+(?:[,٬][0-9]{3})+\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/iu;
+    if(ambiguous.test(text)&&!areaPattern.test(text)&&!groupedMeasuredArea.test(text)){
       if(/[0-9]/.test(text))questions.push('راجع الشرط أو نطاق العدد في: «'+chunk[0].trim().slice(0,200)+'». أضف القيم الإجمالية المؤكدة في الحقول.');
       continue;
     }
