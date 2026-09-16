@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# one-shot exact patch; trigger after workflow installation
 from pathlib import Path
 
 core = Path('public/app/core/brief-program.mjs')
