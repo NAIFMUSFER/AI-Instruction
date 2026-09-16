@@ -1,0 +1,14 @@
+name: ACS warehouse soft area fit
+on:
+  push:
+    branches: [acs-v2/warehouse-soft-area-fit-20260916]
+  pull_request:
+    paths: [warehouse_soft_area_fit.py, acs_workspace_service.py, Dockerfile, tests/remediation/test_warehouse_soft_area_fit.py]
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: PYTHONPATH=. python tests/remediation/test_warehouse_soft_area_fit.py
