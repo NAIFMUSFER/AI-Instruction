@@ -41,7 +41,7 @@ jobs:
           t.write_text(q,encoding='utf-8')
           PY
           node tests/remediation/test_brief_program.mjs
-          python3 tests/remediation/test_warehouse_program_feasibility.py
+          PYTHONPATH=. python3 tests/remediation/test_warehouse_program_feasibility.py
       - name: Commit product change
         shell: bash
         run: |
