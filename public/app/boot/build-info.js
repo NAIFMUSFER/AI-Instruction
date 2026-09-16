@@ -12,9 +12,9 @@
 (function(){
   "use strict";
   var RAW = {
-    git_sha:          "__ACS_GIT_SHA__",
-    built_at:         "__ACS_BUILT_AT__",
-    frontend_version: "__ACS_FRONTEND_VERSION__"
+    git_sha:          "6eff40a1f0a7d6225d5e5ba454f81cefd7d915c5",
+    built_at:         "2026-09-16T13:31:20Z",
+    frontend_version: "1.3"
   };
   /* الرمز النائب يُبنى تركيباً حتى لا يطابق نفسه نصّاً في هذا الملفّ */
   function unsubstituted(v, name){
