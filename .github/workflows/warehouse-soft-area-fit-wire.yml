@@ -1,0 +1,23 @@
+name: ACS warehouse soft area fit wire
+on:
+  push:
+    branches: [acs-v2/warehouse-soft-area-fit-20260916]
+    paths: [tools/wire_warehouse_soft_area_fit.py]
+permissions: {contents: write}
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: acs-v2/warehouse-soft-area-fit-20260916, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python tools/wire_warehouse_soft_area_fit.py
+      - run: PYTHONPATH=. python tests/remediation/test_warehouse_soft_area_fit.py
+      - run: python -m py_compile warehouse_soft_area_fit.py acs_workspace_service.py
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add acs_workspace_service.py Dockerfile
+          git commit -m 'fix(acs-v2): fit warehouse soft geometry before overlap repair'
+          git push origin HEAD:acs-v2/warehouse-soft-area-fit-20260916
