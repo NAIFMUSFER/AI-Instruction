@@ -202,6 +202,21 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     detected = U.detect_type(brief)
     residential = U._is_residential(detected)
     warehouse = detected == 'warehouse'
+    if warehouse:
+        from warehouse_program_feasibility import warehouse_requirements_preflight
+        preflight = warehouse_requirements_preflight(requirements)
+        if not preflight.get('may_generate_layout', True):
+            if preflight.get('status') == 'BUILDABLE_ENVELOPE_NOT_VERIFIED':
+                raise PlanError(
+                    'WAREHOUSE_BUILDABLE_ENVELOPE_NOT_VERIFIED',
+                    'مساحة المبنى المستهدفة تستهلك كامل مساحة الموقع في مشروع من دور واحد. '
+                    'لا يمكن اعتبار كامل الأرض غلافًا بنائيًا متحققًا أو ترك ساحات التشغيل الخارجية دون مساحة. '
+                    'أدخل مساحة مبنى أصغر أو موقعًا أكبر؛ لن يخترع ACS ارتدادات أو أبعادًا تنظيمية.'
+                )
+            raise PlanError(
+                'WAREHOUSE_BUILDING_TARGET_INFEASIBLE',
+                'مساحة المبنى المستهدفة لا يمكن احتواؤها حسابيًا ضمن أبعاد الموقع وعدد الأدوار المؤكدة.'
+            )
     prompt = brief + "\n\nمتطلبات أكدها المستخدم:\n" + canonical(requirements)
     prompt += "\nهدف المقترح " + option + ": " + OPTIONS[option]
     if warehouse:
