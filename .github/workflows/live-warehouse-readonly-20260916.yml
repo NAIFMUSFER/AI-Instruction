@@ -1,0 +1,69 @@
+name: Live warehouse fixes read-only verification
+
+on:
+  push:
+    branches: [audit/live-warehouse-readonly-20260916]
+    paths: [.github/workflows/live-warehouse-readonly-20260916.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  live-readonly:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch deployed frontend artifacts and backend health
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsSLo /tmp/live-index.html https://sprightly-selkie-d906c3.netlify.app/
+          curl -fsSLo /tmp/brief-program.mjs https://sprightly-selkie-d906c3.netlify.app/app/core/brief-program.mjs
+          curl -fsSLo /tmp/connected-workspace.mjs https://sprightly-selkie-d906c3.netlify.app/app/ui/connected-workspace.mjs
+          curl -fsSLo /tmp/health.json https://acs-engine.onrender.com/health
+          test -s /tmp/live-index.html
+          cmp public/app/core/brief-program.mjs /tmp/brief-program.mjs
+          cmp public/app/ui/connected-workspace.mjs /tmp/connected-workspace.mjs
+          node -e "const h=require('/tmp/health.json'); if(h.ok!==true||h.key!==true) throw new Error('live backend health/key boolean failed'); console.log(JSON.stringify({ok:h.ok,key:h.key,model:h.model||null}))"
+      - name: Prove live 5,000 m2 brief parsing and warehouse typology isolation
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          const {analyzeBrief}=await import('file:///tmp/brief-program.mjs');
+          const text='أريد مستودعًا بمساحة بناء إجمالية تقارب 5,000 م²، ثم Zoning Plan يوزع المساحة الإجمالية 5,000 م²، ولا تفترض أن مساحة الأرض نفسها 5,000 م².';
+          const a=analyzeBrief(text);
+          assert.equal(a.questions.length,0,'live 5,000 m² must not create fake ambiguity questions');
+          assert.equal(a.candidates.length,0,'unsupported area wording must remain prose, not invented hard requirements');
+          assert.ok(analyzeBrief('1,000 bedrooms').questions.length,'non-area grouped counts must remain reviewable');
+          console.log('LIVE_BRIEF_5000_PASS');
+          NODE
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path('/tmp/connected-workspace.mjs').read_text(encoding='utf-8')
+          expected="const program=source.source_id?briefProgram():($('cwType').value==='residential'?residentialOptions.program(briefProgram(),option):briefProgram());"
+          assert expected in src, 'live workspace must route residential options only for residential typology'
+          assert "const program=source.source_id?briefProgram():residentialOptions.program(briefProgram(),option);" not in src
+          assert "للمستودعات" in src
+          print('LIVE_WAREHOUSE_ISOLATION_PASS')
+          PY
+      - name: Verify production CORS is allowlisted read-only
+        shell: bash
+        run: |
+          set -euo pipefail
+          allowed=$(curl -fsSI -X OPTIONS https://acs-engine.onrender.com/v1/understand -H 'Origin: https://sprightly-selkie-d906c3.netlify.app' -H 'Access-Control-Request-Method: POST' | tr -d '\r' | grep -i '^access-control-allow-origin:' || true)
+          evil=$(curl -fsSI -X OPTIONS https://acs-engine.onrender.com/v1/understand -H 'Origin: https://evil.example.com' -H 'Access-Control-Request-Method: POST' | tr -d '\r' | grep -i '^access-control-allow-origin:' || true)
+          echo "$allowed"
+          test "$allowed" = 'access-control-allow-origin: https://sprightly-selkie-d906c3.netlify.app'
+          test -z "$evil"
+      - name: Real Chromium boot of current production without generation
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npx playwright install --with-deps chromium
+          node tests/deploy/verify_page_boot.js https://sprightly-selkie-d906c3.netlify.app/
