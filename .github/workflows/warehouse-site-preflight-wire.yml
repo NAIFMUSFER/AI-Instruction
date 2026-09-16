@@ -1,0 +1,23 @@
+name: ACS warehouse site preflight wire
+on:
+  push:
+    branches: [acs-v2/warehouse-site-envelope-preflight-20260916]
+    paths: [tools/wire_warehouse_site_preflight.py]
+permissions: {contents: write}
+jobs:
+  wire:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: acs-v2/warehouse-site-envelope-preflight-20260916, fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.11'}
+      - run: python tools/wire_warehouse_site_preflight.py
+      - run: PYTHONPATH=. python tests/remediation/test_warehouse_program_feasibility.py
+      - run: python -m py_compile warehouse_program_feasibility.py acs_workspace_service.py
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add acs_workspace_service.py
+          git commit -m 'fix(acs-v2): preflight warehouse buildable envelope before provider'
+          git push origin HEAD:acs-v2/warehouse-site-envelope-preflight-20260916
