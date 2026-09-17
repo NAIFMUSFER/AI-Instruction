@@ -1,0 +1,69 @@
+name: Wire measured warehouse scorecard disclosures into connected UI
+on:
+  push:
+    branches: [acs-v2/warehouse-scorecard-ui-disclosures]
+    paths: [.github/workflows/patch-warehouse-scorecard-ui.yml]
+permissions: {contents: write}
+jobs:
+  patch:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: {ref: acs-v2/warehouse-scorecard-ui-disclosures, fetch-depth: 0}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Apply scorecard UI disclosure patch and focused regression
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('public/app/ui/connected-workspace.mjs')
+          s=p.read_text(encoding='utf-8')
+          old="const metricNames = {site_area_m2:'مساحة الموقع (م²)',level_count:'الأدوار',space_instance_count:'الفراغات',space_rect_area_m2:'مساحة حدود الفراغات (م²)',space_count_by_role:'عدد الفراغات حسب الاستخدام',space_area_by_role_m2:'المساحة حسب الاستخدام (م²)',zone_area_by_role_m2:'مساحات التشغيل (م²)',dock_count:'الأرصفة',rack_group_count:'مجموعات الرفوف',storage_capacity_positions:'مواضع التخزين',travel_distance_m:'مسافة الحركة (م)',throughput_per_hour:'معدل التشغيل في الساعة',rack_modeled_bay_count:'خلايا الرفوف المقاسة',rack_geometric_position_count:'المواضع الهندسية',configured_route_length_m:'أطوال المسارات (م)'};"
+          assert s.count(old)==1
+          new="const metricNames = {site_area_m2:'مساحة الموقع (م²)',level_count:'الأدوار',space_instance_count:'الفراغات',space_rect_area_m2:'مساحة حدود الفراغات (م²)',space_count_by_role:'عدد الفراغات حسب الاستخدام',space_area_by_role_m2:'المساحة حسب الاستخدام (م²)',zone_area_by_role_m2:'مساحات التشغيل (م²)',zone_area_ratio_by_role:'نسب توزيع مناطق التشغيل',unclassified_zone_area_m2:'مساحة مناطق التشغيل غير المصنفة (م²)',dock_count:'الأرصفة',dock_count_by_edge:'الأرصفة حسب الواجهة',dock_count_by_zone_role:'الأرصفة حسب منطقة التشغيل',dock_site_x_by_slot_m:'مواضع الأرصفة X (م)',dock_site_z_by_slot_m:'مواضع الأرصفة Z (م)',rack_group_count:'مجموعات الرفوف',rack_declared_level_sum:'مجموع مستويات الرفوف المعلنة',rack_declared_height_max_m:'أقصى ارتفاع رف معلن (م)',rack_geometric_bay_count:'عدد خلايا الرفوف الهندسية',rack_geometric_bay_level_positions:'المواضع الهندسية للرفوف عبر المستويات',rack_declared_footprint_area_m2:'مساحة بصمة الرفوف المعلنة (م²)',rack_overlap_area_m2:'مساحة تداخل الرفوف (م²)',rack_lane_overlap_area_by_lane_kind_m2:'تداخل الرفوف مع الممرات حسب النوع (م²)',station_count:'محطات العمل',lane_area_by_kind_m2:'مساحات الممرات حسب النوع (م²)',lane_centerline_length_by_kind_m:'أطوال محاور الممرات حسب النوع (م)',lane_overlap_area_by_kind_pair_m2:'تداخل أنواع الممرات (م²)',configured_route_length_by_id_m:'أطوال المسارات المعلنة حسب المعرّف (م)',configured_route_length_by_flow_m:'أطوال المسارات المعلنة حسب التدفق (م)',expansion_reserve_area_m2:'مساحة التوسع المحجوزة (م²)',expansion_reserve_zone_overlap_area_m2:'تداخل مناطق التشغيل مع مساحة التوسع (م²)',expansion_reserve_rack_overlap_area_m2:'تداخل الرفوف مع مساحة التوسع (م²)',expansion_reserve_lane_overlap_area_by_kind_m2:'تداخل الممرات مع مساحة التوسع حسب النوع (م²)',storage_capacity_positions:'السعة التخزينية التشغيلية المتحققة (مواضع)',travel_distance_m:'مسافة الحركة المجمعة (م)',throughput_per_hour:'معدل التشغيل في الساعة',pedestrian_vehicle_separation_compliance:'التحقق من فصل المشاة والمركبات',fire_life_safety_compliance:'التحقق من الحريق وسلامة الأرواح'};"
+          s=s.replace(old,new,1)
+          old_value="const value = v => v == null ? 'غير متحقق' : typeof v === 'object'\n  ? (Array.isArray(v) ? v.map(value) : Object.entries(v).map(([k,n])=>(metricNames[k]||roomLabel(k))+': '+value(n))).join('\\n') || 'لا توجد بيانات'\n  : typeof v === 'number' && Number.isFinite(v) ? String(Number(v.toPrecision(12))) : String(v);"
+          assert s.count(old_value)==1
+          new_value=old_value+"\nconst metricValue = (key, v) => {\n  if(v != null)return value(v);\n  const reason=packet?.scorecard?.unavailable?.[key];\n  return typeof reason==='string'&&reason.trim() ? 'غير متاح / غير قابل للقياس — '+reason : value(v);\n};"
+          s=s.replace(old_value,new_value,1)
+          old_render="draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,value(v)]));"
+          assert s.count(old_render)==1
+          s=s.replace(old_render,"draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,metricValue(k,v)]));",1)
+          p.write_text(s,encoding='utf-8')
+
+          t=Path('tests/remediation/test_plan_review_scorecard_disclosures.cjs')
+          q=t.read_text(encoding='utf-8')
+          anchor="console.log(`PLAN REVIEW SCORECARD DISCLOSURES: ${requiredMetricKeys.length + 3} assertions passed.`);"
+          assert q.count(anchor)==1
+          addition="""\n\nconst connectedFile = path.resolve(__dirname, '../../public/app/ui/connected-workspace.mjs');\nconst connected = fs.readFileSync(connectedFile, 'utf8');\nconst connectedWarehouseMetricKeys = [\n  'zone_area_ratio_by_role','dock_count_by_zone_role','dock_site_x_by_slot_m','dock_site_z_by_slot_m',\n  'rack_declared_height_max_m','rack_geometric_bay_count','rack_geometric_bay_level_positions',\n  'rack_declared_footprint_area_m2','rack_overlap_area_m2','rack_lane_overlap_area_by_lane_kind_m2',\n  'lane_centerline_length_by_kind_m','lane_overlap_area_by_kind_pair_m2',\n  'configured_route_length_by_id_m','configured_route_length_by_flow_m',\n  'expansion_reserve_area_m2','expansion_reserve_zone_overlap_area_m2',\n  'expansion_reserve_rack_overlap_area_m2','expansion_reserve_lane_overlap_area_by_kind_m2',\n  'storage_capacity_positions','throughput_per_hour','travel_distance_m',\n  'pedestrian_vehicle_separation_compliance','fire_life_safety_compliance',\n];\nfor (const key of connectedWarehouseMetricKeys) {\n  assert.match(connected, new RegExp(`(?:^|[,\\\\n])\\\\s*${key}:`), `connected workspace missing Arabic scorecard label for ${key}`);\n}\nassert.match(connected, /packet\\?\\.scorecard\\?\\.unavailable/, 'connected workspace must surface deterministic unavailable reasons');\nassert.match(connected, /metricValue\\(k,v\\)/, 'connected scorecard rendering must use unavailable-aware values');\nassert.doesNotMatch(connected, /rack_modeled_bay_count:/, 'obsolete rack_modeled_bay_count label must not remain');\nassert.doesNotMatch(connected, /rack_geometric_position_count:/, 'obsolete rack_geometric_position_count label must not remain');\nassert.doesNotMatch(connected, /configured_route_length_m:/, 'obsolete configured_route_length_m label must not remain');\nconsole.log(`CONNECTED SCORECARD DISCLOSURES: ${connectedWarehouseMetricKeys.length + 5} assertions passed.`);\n"""
+          q=q.replace(anchor,anchor+addition,1)
+          t.write_text(q,encoding='utf-8')
+
+          b=Path('tests/remediation/test_connected_workspace_browser.cjs')
+          r=b.read_text(encoding='utf-8')
+          anchor2="   await page.locator('#cwReviewContent').waitFor({state:'visible',timeout:45000});\n"
+          assert r.count(anchor2)==1
+          browser_assert=anchor2+"   if(width===393){const metricText=await page.locator('#cwMetrics').textContent();assert.ok(metricText.includes('المواضع الهندسية للرفوف عبر المستويات'));assert.ok(metricText.includes('غير متاح / غير قابل للقياس'));assert.ok(metricText.includes('not usable or load-rated storage capacity'));}\n"
+          r=r.replace(anchor2,browser_assert,1)
+          b.write_text(r,encoding='utf-8')
+
+          w=Path('.github/workflows/plan-review-scorecard-disclosures.yml')
+          z=w.read_text(encoding='utf-8')
+          path_anchor="      - 'public/plan-review/review.mjs'\n"
+          assert z.count(path_anchor)==1
+          z=z.replace(path_anchor,path_anchor+"      - 'public/app/ui/connected-workspace.mjs'\n",1)
+          w.write_text(z,encoding='utf-8')
+          PY
+          node --check public/app/ui/connected-workspace.mjs
+          node --check tests/remediation/test_connected_workspace_browser.cjs
+          node tests/remediation/test_plan_review_scorecard_disclosures.cjs
+      - name: Commit product change
+        shell: bash
+        run: |
+          git config user.name 'NAIFMUSFER'
+          git config user.email 'whili9070@gmail.com'
+          git add public/app/ui/connected-workspace.mjs tests/remediation/test_plan_review_scorecard_disclosures.cjs tests/remediation/test_connected_workspace_browser.cjs .github/workflows/plan-review-scorecard-disclosures.yml
+          git diff --cached --quiet && exit 0
+          git commit -m 'fix(acs-v2): disclose measured warehouse scorecard in workspace'
+          git push origin HEAD:acs-v2/warehouse-scorecard-ui-disclosures
