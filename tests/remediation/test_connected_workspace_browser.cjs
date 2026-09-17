@@ -119,6 +119,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.ok((await page.locator('#cwJobPhase').textContent()).includes('تعذّر التحقق'));
    blockJobPoll=false;await page.locator('#cwRecoverJob').click();
    await page.locator('#cwReviewContent').waitFor({state:'visible',timeout:45000});
+   if(width===393){const metricText=await page.locator('#cwMetrics').textContent();assert.ok(metricText.includes('المواضع الهندسية للرفوف عبر المستويات'));assert.ok(metricText.includes('غير متاح / غير قابل للقياس'));assert.ok(metricText.includes('not usable or load-rated storage capacity'));}
    await page.waitForFunction(()=>document.querySelector('#cwJobProgress').hidden);
    const program=JSON.parse(await page.locator('#cwRequirementEvidence').textContent());
    assert.equal(program.find(r=>r.metric==='site_width_m').evidence,dimensionEvidence);
