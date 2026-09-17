@@ -292,6 +292,23 @@ def _require_explicit_warehouse_rack_geometry(building: dict) -> None:
                         "DOWNSTREAM_GEOMETRY_INVALID",
                         f"Approved rack extent would be clamped by the 3D compiler at {where}",
                     )
+                # Mirror the renderer's explicit rack placement limits so an
+                # approved Frozen Baseline can never render fewer rows/bays.
+                run = rack["w"] if rack["dir"] == "x" else rack["d"]
+                across = rack["d"] if rack["dir"] == "x" else rack["w"]
+                row_pitch = rack["depth"] + rack["aisle"]
+                last_row_origin = (rows - 1) * row_pitch
+                if last_row_origin > across - 0.05:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved rack rows would be truncated by the 3D compiler at {where}",
+                    )
+                derived_bays = math.floor(run / rack["bay"])
+                if not 1 <= derived_bays <= 60:
+                    raise PlanError(
+                        "DOWNSTREAM_GEOMETRY_INVALID",
+                        f"Approved rack bay geometry would be clamped by the 3D compiler at {where}",
+                    )
 
 
 def _require_explicit_warehouse_lane_geometry(building: dict) -> None:

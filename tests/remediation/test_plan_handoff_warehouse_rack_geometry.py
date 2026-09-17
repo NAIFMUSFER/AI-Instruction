@@ -159,6 +159,16 @@ class ApprovedWarehouseRackGeometryTests(unittest.TestCase):
                 model["floors"]["ground"]["rooms"][0]["racks"][0][key] = value
                 self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
 
+    def test_renderer_row_break_and_derived_bay_clamp_are_rejected(self):
+        model = warehouse_model()
+        model["floors"]["ground"]["rooms"][0]["racks"][0]["rows"] = 3
+        self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
+        for bay in (20.0, 0.2):
+            with self.subTest(bay=bay):
+                model = warehouse_model()
+                model["floors"]["ground"]["rooms"][0]["racks"][0]["bay"] = bay
+                self.assertFailsBeforeCompiler(model, expected="DOWNSTREAM_GEOMETRY_INVALID")
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
