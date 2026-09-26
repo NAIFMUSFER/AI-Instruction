@@ -29,6 +29,7 @@ jobs:
           ACS_ENV: test
         run: |
           node tests/remediation/test_audit_frontend_guards.js
+          node tests/remediation/test_audit_frontend_brief.mjs
           node tests/remediation/test_audit_frontend_panels.js --mutations
           node tests/remediation/test_panel_entry.js
           node tests/remediation/test_accessibility.js

@@ -238,3 +238,123 @@ generator check on pull requests using the repository's pinned action revisions.
 
 No main push, merge, deployment, provider call or external message was performed
 by this stream. Production adoption remains reviewable through its branch/PR.
+
+## Authenticated follow-up: Arabic brief reading
+
+The coordinator's authenticated live run exposed a brief-reading gap on the
+unchanged production source. This stream reproduced it by importing the shipped
+`public/app/core/brief-program.mjs` into Node; the coordinator owns the live
+browser evidence. Reproduction and regression command:
+
+```sh
+node tests/remediation/test_audit_frontend_brief.mjs
+```
+
+| Input or control | Measured before this follow-up | Result after the change |
+|---|---|---|
+| `فيلا دورين على أرض ٢٠×٢٥، مجلس ومقلط ومطبخ وأربع غرف نوم ودرج داخلي` | Only the storey candidate; no bedroom candidate or unit question | Storeys and bedrooms become reviewable candidates; site values stay unassigned and a question asks for units and width/depth order |
+| Numeric variant ending `ومطبخ و٤ غرف نوم ودرج داخلي` | Bedroom count missing because the attached conjunction failed the numeric token boundary | The bedroom candidate preserves the original Arabic digits and attached conjunction as its quoted evidence |
+| `مستودع دور واحد على أرض ٤٠×٦٠ متر، منطقة تخزين رئيسية ومنطقة استلام ومنطقة شحن ومكتب ودورة مياه، مدخل منفصل للموظفين.` | Metric site dimensions found; single-storey phrase missing | Explicit single-storey candidate added, alongside the existing metric dimensions |
+| Labelled site pair with `متر`, `سم`, or `mm` | Unit conversion succeeds | Same conversion, inferred axis order, and no unnecessary unit question |
+
+These are different kinds of change. The attached-conjunction omission is a
+defect in already-supported numeric bedroom reading. Arabic bedroom words and
+`دور واحد` / `طابق واحد` are bounded vocabulary extensions: the previous local
+reader intentionally supported numeric quantities and dual-storey phrases, not
+general Arabic number words. The unit question improves disclosure of an existing
+policy; it does **not** treat unitless dimensions as meters. Confirmed manual site
+answers retain `brief:form` provenance rather than being represented as extracted
+metric evidence.
+
+The bounded word dictionary, exercised by the same command, recognizes the tested
+single-word bedroom counts from three through ten. It does not extend word parsing
+to docks or other room uses; the existing `أربعة أرصفة` control remains unsupported.
+Singular/dual bedroom word forms and arbitrary semantic prose remain outside this
+extension. The code preserves the brief rather than rewriting words to digits,
+so quoted evidence and Unicode code-point spans survive unchanged.
+
+Before product edits, the new test recorded **zero passing case groups and eight
+failing groups** with exit 1. Additional adversarial cases then exposed missing
+questions for unpunctuated site pairs, attached negation, compound numbers and
+independent conflicting counts; that red run recorded **four passing and four
+failing groups**. Both runs used the command above. The completed test records
+**21 passing groups, zero failures**, including **13 deliberate mutations** that
+the assertions reject. Mutations run through isolated data-URL imports, never by
+editing production source. They cover conjunction recognition, word values,
+missing-unit disclosure, fabricated dimensions, unnecessary unit questions,
+ambiguity disclosure, attached negation, bounds, compound prefixes/suffixes,
+independent contradictory counts, ranges, and Unicode evidence offsets.
+
+Sound controls run alongside rejected cases: explicit units, plain and attached
+numeric quantities, Arabic/Persian digits, the requested villa and warehouse,
+and bedroom counts followed by a geographic direction. Conditional, negated,
+approximate, per-storey, bounded, compound, fractional and range examples are
+not promoted to exact totals. Independent contradictory counts and conflicting
+explicit site dimensions still stop confirmation. This is measured coverage of
+the listed cases, not a claim of general Arabic understanding. No geometry or
+regulatory validation check was added, so the model-fixture sweep is not being
+presented as evidence for a text parser.
+
+Related regression commands:
+
+```sh
+node tests/remediation/test_brief_program.mjs
+node tests/remediation/test_module_graph.js
+node tests/remediation/test_panel_entry.js
+python3 tools/bundle_report.py
+python3 tools/check_doc_claims.py --fix
+```
+
+The original brief suite passes **13 case groups**, and the module graph passes
+**43 checks**. In the restored environment, the panel test reports **14 static
+passes**, with its live layer explicitly unavailable. The bundle-report command
+measured a **3,384-byte increase** over the restored PR head for this follow-up;
+the generated `ACS:CURRENT-STATE` block contains the source totals. The lazy set
+and evaluation order are unchanged. The documentation refresh updates that block;
+the overall documentation gate still refuses a full success because Chromium is
+absent, as it did in this follow-up's pre-edit baseline. The frontend audit workflow
+runs the new parser cases and mutations on pull requests.
+
+Patched DOM rendering in a live browser, production deployment, and a successful
+generated villa after this patch: **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**.
+The local evidence establishes the deterministic parser and confirmation behavior,
+not completion of the downstream generation or export workflow.
+
+The restored checkout started at PR head `7dfff96`. Before product edits,
+`npm install` and the pinned Python requirements were installed, then every exact
+Phase 0 command was rerun. Integration, index, API-origin, CSP, deployment and
+bundle checks exited zero; the bare CI invocation again exited 64 because it
+requires a runner. The full comparison replayed the command table in
+`BASELINE.md`, including its corrected-runner repeats, and the existing frontend
+audit tests. Commands used for the preserved follow-up logs:
+
+```sh
+PATH=/workspace/scratch/cc68e7a7ea83/acs-venv/bin:$PATH \
+ACS_ENV=test PYTHONPATH="$PWD" \
+TMPDIR=/workspace/scratch/cc68e7a7ea83/audit-evidence/frontend-brief/tmp \
+python3 /workspace/scratch/cc68e7a7ea83/audit-evidence/frontend-brief/replay.py full-before
+# Repeat the same command with full-after after the product changes.
+```
+
+The replay records **250 invocations and 31 nonzero exits** both before and after,
+with **no changed exit status**. Its scratch harness reads the literal target,
+expected exit and command from each table row, captures each command separately,
+and enforces the same 120-second timeout for the known hanging diagnostics suite;
+it adds the existing audit guard and panel tests. Relative to `BASELINE.md`, the
+only changes remain the earlier security-suite repairs and the previously added
+panel suite's explicit unavailable-browser result. The new brief suite is a
+separate passing invocation, shown above. Deployment verification again reports
+**733 passes, zero failures**. Generated test artifacts and the npm lock change
+are restored before commit; only the generated current-state documentation is
+retained.
+
+The coordinator also tested the live 3D action after successful apartment
+generation. Its browser log command
+`acsTab.dev.logs({levels:['error','warn'],limit:12})` reported
+`THREE.WebGLRenderer` failing to create a context, with `GL_VENDOR=Disabled`,
+`GL_RENDERER=Disabled`, and `BindToCurrentSequence` failure from the vendored
+Three.js runtime. This is evidence that the coordinator's cloud browser cannot
+create that WebGL context, not evidence of a renderer regression in this branch.
+The coordinator owns the visible-page evidence; this stream did not change
+browser flags or security settings. Successful live model rendering on the
+owner's GPU remains **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**.

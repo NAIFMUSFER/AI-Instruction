@@ -36,8 +36,22 @@ const N = '[0-9]+(?:\\.[0-9]+)?';
 const U = '(?:millimeters?|centimeters?|metres?|meters?|mm|cm|m|مليمتر|سنتيمتر|متر|سم|مم|م)';
 const site = '(?:الموقع|الارض|موقع|ارض|site|plot)';
 const factor = u => /^(?:mm|millimeter|مم|مليمتر)/i.test(u)?0.001:/^(?:cm|centimeter|سم|سنتيمتر)/i.test(u)?0.01:1;
-const ambiguous = /(?:\b(?:if|or|not|about|around|approximately|per|each)\b|(?:^|\s)(?:لا|ليس|بدون|اذا|ان|او)(?:\s|$)|تقريب|حوالي|لكل|كل\s+(?:دور|طابق|شقه|شقة)|[بل]الدور|[بل]الطابق|في\s+(?:الدور|الطابق)|[-−]\s*[0-9]|[0-9]\s*(?:[-–—/]|الى|to)\s*[0-9]|[0-9][,٬][0-9])/iu;
+const ambiguous = /(?:\b(?:if|or|not|about|around|approximately|per|each)\b|(?:^|\s)و?(?:لا|ليس|بدون|اذا|ان|او)(?:\s|$)|تقريب|حوالي|لكل|كل\s+(?:دور|طابق|شقه|شقة)|[بل]الدور|[بل]الطابق|في\s+(?:الدور|الطابق)|[-−]\s*[0-9]|[0-9]\s*(?:[-–—/]|الى|to)\s*[0-9]|[0-9][,٬][0-9])/iu;
 const bounded = /(?:على\s+(?:الاقل|الاكثر)|حد\s+(?:ادنى|اقصى)|at\s+(?:least|most)|minimum|maximum|less\s+than|more\s+than|[<>])/iu;
+// مفردات محدودة لغرف النوم؛ لا نبدّل الكلمات في الوصف حتى تبقى شواهده حرفية.
+const bedroomWords = Object.freeze({ثلاث:3,ثلاثة:3,اربع:4,اربعة:4,خمس:5,خمسة:5,ست:6,ستة:6,سبع:7,سبعة:7,ثمان:8,ثماني:8,ثمانية:8,تسع:9,تسعة:9,عشر:10,عشرة:10});
+const wordBedroom = `(?<![\\p{L}\\p{N}.])(?:و\\s*)?(?<word>${Object.keys(bedroomWords).join('|')})\\s+غرف\\s+نوم(?![\\p{L}\\p{N}])`;
+const oneLevel = /(?<![\p{L}\p{N}.])(?:و\s*)?(?:دور|طابق)\s+واحد(?![\p{L}\p{N}])/gu;
+// «ألف وأربع» و«أربع عشرة» و«دور واحد ونصف» ليست أعدادًا بسيطة مؤكدة.
+const numberWord = `(?:${Object.keys(bedroomWords).join('|')}|واحد|واحدة|احد|احدى|اثنان|اثنين|اثنتان|اثنتين|عشرون|عشرين|ثلاثون|ثلاثين|اربعون|اربعين|خمسون|خمسين|ستون|ستين|سبعون|سبعين|ثمانون|ثمانين|تسعون|تسعين|(?:ثلاث|اربع|خمس|ست|سبع|ثمان|تسع)\\s*م(?:ا)?ئة|مائة|مئة|مئتان|مئتين|مائتان|مائتين|الف|الفان|الفين|الاف|مليون|مليونان|مليونين|ملايين|مليار|مليارات|نصف|ربع|ثلث|${N})`;
+const compoundBefore = new RegExp(`(?:^|\\s)${numberWord}\\s*(?:(?:و|الى|حتى)\\s*)?$`,'u');
+const compoundAfter = new RegExp(`^\\s+(?:و\\s*)?${numberWord}(?![\\p{L}\\p{N}.])`,'u');
+const followingBedroom = new RegExp(`^\\s*${wordBedroom}`,'u');
+const wordRange = new RegExp(`(?:^|\\s)(?:الى|حتى)\\s+(?:و\\s*)?${numberWord}\\s+(?:غرف\\s+نوم|bedrooms?)(?![\\p{L}\\p{N}])`,'iu');
+const compoundWordCount = (text,match) => {
+  const after=text.slice(match.index+match[0].length);
+  return compoundBefore.test(text.slice(0,match.index)) || (compoundAfter.test(after)&&!followingBedroom.test(after));
+};
 
 export function analyzeBrief(brief) {
   if(typeof brief!=='string'||cp(brief)>60000)throw new Error('الوصف يتجاوز الحد المسموح.');
@@ -57,6 +71,10 @@ export function analyzeBrief(brief) {
   };
   for(const chunk of chunks){
     const text=normal(chunk[0]);
+    const wordCounts=[
+      ...Array.from(text.matchAll(new RegExp(wordBedroom,'gu')),match=>({metric:'room_count',role:'bedroom',n:bedroomWords[match.groups.word],match})),
+      ...Array.from(text.matchAll(oneLevel),match=>({metric:'level_count',n:1,match})),
+    ];
     // Building target area is a planning budget, not site area. Approximate
     // wording is intentionally reviewable/inferred rather than silently hard.
     const areaPattern=/(?:مساحة\s+(?:المبنى|مبنى(?:\s+المستودع)?)(?:\s+(?:المستهدفة|المغلقة))?|building\s+(?:target\s+)?area)\s*(?:تقارب|قرابة|حوالي|≈|~)?\s*[:=]?\s*(?<n>[0-9]+(?:[,٬][0-9]{3})*(?:\.[0-9]+)?)\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/giu;
@@ -67,8 +85,8 @@ export function analyzeBrief(brief) {
     // not promote it to a hard requirement unless a supported area phrase
     // matched above; confirmed form values remain the source of truth.
     const groupedMeasuredArea=/[0-9]+(?:[,٬][0-9]{3})+\s*(?:م(?:تر)?\s*(?:مربع|²)|m²|sqm)(?![\p{L}\p{N}])/iu;
-    if(ambiguous.test(text)&&!areaPattern.test(text)&&!groupedMeasuredArea.test(text)){
-      if(/[0-9]/.test(text))questions.push('راجع الشرط أو نطاق العدد في: «'+chunk[0].trim().slice(0,200)+'». أضف القيم الإجمالية المؤكدة في الحقول.');
+    if((ambiguous.test(text)&&!areaPattern.test(text)&&!groupedMeasuredArea.test(text))||(wordCounts.length&&wordRange.test(text))){
+      if(/[0-9]/.test(text)||wordCounts.length)questions.push('راجع الشرط أو نطاق العدد في: «'+chunk[0].trim().slice(0,200)+'». أضف القيم الإجمالية المؤكدة في الحقول.');
       continue;
     }
     const patterns=[
@@ -76,7 +94,7 @@ export function analyzeBrief(brief) {
       ['site_depth_m',`(?:عمق\\s+${site}|${site}\\s+(?:ب?عمق|depth))\\s*[:=]?\\s*(?<n>${N})\\s*(?<u>${U})(?![\\p{L}\\p{N}²])`],
       ['level_count',`عدد\\s+(?:الادوار|الطوابق)\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
       ['level_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s*(?:ادوار|طوابق|floors?|storeys?|stories)(?![\\p{L}\\p{N}])`],
-      ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:غرف(?:ة|ه)?\\s+نوم|bedrooms?)(?![\\p{L}\\p{N}])`,'bedroom'],
+      ['room_count',`(?<![\\p{L}\\p{N}.])(?:و\\s*)?(?<n>${N})\\s+(?:غرف(?:ة|ه)?\\s+نوم|bedrooms?)(?![\\p{L}\\p{N}])`,'bedroom'],
       ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مكاتب|offices?)(?![\\p{L}\\p{N}])`,'office'],
       ['room_count',`(?<![\\p{L}\\p{N}.])(?<n>${N})\\s+(?:مطابخ|kitchens?)(?![\\p{L}\\p{N}])`,'kitchen'],
       ['dock_count',`عدد\\s+الارصفه?\\s*[:=]?\\s*(?<n>${N})(?![0-9.])`],
@@ -94,6 +112,12 @@ export function analyzeBrief(brief) {
         }
         add(minimum?'min_dock_count':metric,match.groups.n,match.groups.u,match,chunk.index,'requested',role);
       }
+    }
+    for(const {metric,role,n,match} of wordCounts){
+      if(ambiguous.test(text)||bounded.test(text)||compoundWordCount(text,match)){
+        questions.push('راجع العدد المركّب أو الشرط في: «'+chunk[0].trim().slice(0,200)+'». أضف العدد الإجمالي المؤكد في الحقول.');continue;
+      }
+      add(metric,n,null,match,chunk.index,'requested',role);
     }
     // Standalone project-dimension lines, never a room's dimensions or a
     // unitless number. An unlabelled pair still needs explicit order review.
@@ -115,6 +139,12 @@ export function analyzeBrief(brief) {
     for(const match of text.matchAll(new RegExp(pair,'giu'))){
       add('site_width_m',match.groups.n,match.groups.u,match,chunk.index,'inferred');
       add('site_depth_m',match.groups.d,match.groups.u,match,chunk.index,'inferred');
+    }
+    // لا نفترض المتر لزوج بلا وحدة. تبقى الإجابة المؤكدة إدخالًا مستقلًا من المستخدم.
+    const unitlessPair=`(?<![\\p{L}\\p{N}])(?:ابعاد\\s+${site}|${site}\\s+dimensions|${site})\\s*[:=]?\\s*${N}\\s*[×x]\\s*${N}(?![\\p{L}\\p{N}.])(?!\\s*${U}(?![\\p{L}\\p{N}²]))`;
+    for(const match of text.matchAll(new RegExp(unitlessPair,'giu'))){
+      const quote=chunk[0].slice(match.index,match.index+match[0].length);
+      questions.push('أكّد وحدة أبعاد الموقع «'+quote+'» وترتيب العرض والعمق، ثم أدخل القيم بالمتر في الحقول.');
     }
   }
   if(candidates.length>100)throw new Error('الوصف يحتوي متطلبات أكثر من الحد المسموح. اختصره قبل المتابعة.');
