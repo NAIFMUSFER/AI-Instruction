@@ -358,3 +358,95 @@ create that WebGL context, not evidence of a renderer regression in this branch.
 The coordinator owns the visible-page evidence; this stream did not change
 browser flags or security settings. Successful live model rendering on the
 owner's GPU remains **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**.
+
+## Follow-up: core alignment is not physical traversal
+
+The coordinator reported a saved multilevel model with rooms labelled as stairs
+and a lift, but without the represented geometry needed to demonstrate movement
+between floors. The connected review nevertheless labelled its passing
+`vertical_circulation` scope as «الحركة بين الأدوار». This stream reproduced that
+presentation in the shipped renderer; the standalone review used the similarly
+broad «الحركة الرأسية». Engineering owns the model evidence and the additional
+review-coverage contract.
+
+Both review tables now label that existing scope «محاذاة النوى بين الأدوار».
+Its original status is retained. A separate row,
+«المشي/الانتقال الفعلي بين الأدوار», explicitly says «غير متحقق».
+`review.coverage.vertical_circulation.geometry === 'MISSING'` adds an explanation
+that stair/lift geometry is incomplete. Represented geometry (`PRESENT`),
+single-storey coverage (`NOT_APPLICABLE`), and older server packets without
+coverage receive the generic unverified-traversal explanation instead of a
+missing-geometry claim. An unsupported physical-traversal value cannot create a
+pass. The existing scope statuses, regulatory disclosures and conceptual-approval
+logic are preserved. Physical traversal remains unverified; this change corrects
+what the review tells the customer.
+
+Regression and guard-mutation command:
+
+```sh
+node tests/remediation/test_audit_frontend_vertical.cjs
+```
+
+The corrected test harness recorded **zero passing groups and 12 failures** on
+the unchanged UI source, then **24 passing groups and zero failures** after the
+change, including **12 rejected mutations** across the connected and standalone
+tables. An initial harness invocation failed to strip the standalone module's
+`export` keyword; that invocation error is not counted as a product defect. Both
+UI files were restored to the pre-change source and the corrected red test was
+run before applying the final fix.
+
+The harness executes the actual table-rendering functions with a minimal DOM;
+unrelated drawing and file parsing are replaced. It measures table text,
+revision replacement and input immutability, not browser layout or API validation.
+Controls cover legacy packets, passing/failed/unverified alignment, single-storey
+coverage without a false missing-stair warning, represented geometry, malformed
+coverage, unsupported traversal passes, unchanged regulatory rows and removal of
+stale missing-geometry evidence when revisions change. Mutations deliberately
+restore the broad label, remove the traversal row, manufacture a physical pass,
+suppress real missing-geometry evidence, manufacture missing geometry, or remove
+the old-server fallback; each is rejected against both renderers.
+
+`node tests/remediation/test_plan_review_scorecard_disclosures.cjs` still reports
+**19 standalone and 28 connected checks passing**. The new test is included in
+the existing frontend audit workflow. `python3 tools/bundle_report.py` and
+`python3 tools/check_doc_claims.py --fix` regenerate the measured current-state
+block; the latter's overall exit still discloses the absent browser environment.
+Generated outputs and lock changes are restored before commit.
+
+Full browser presentation and a physically walkable inter-storey route:
+**NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**. No browser flags or security
+settings were changed to hide the coordinator's disabled WebGL context.
+
+Engineering then supplied a **local review of the captured live multilevel
+model**, not a new production response. The presentation handshake used that
+review directly:
+
+```sh
+node tests/remediation/test_audit_frontend_vertical.cjs --review \
+  /workspace/scratch/cc68e7a7ea83/audit-evidence/engineering-live/multilevel-local-review.json
+```
+
+It recorded **26 passing groups, zero failures**, including the two real-review
+presentation cases added to the ordinary suite. Both renderers retain the
+passing alignment result and show unverified physical traversal with the missing
+geometry explanation. The supplied review retains `can_approve: true` and is
+unchanged by rendering. This measures the engineering-to-presentation contract
+locally; it is not a production browser result or an approval-button interaction.
+
+This follow-up began from the published parser tree `f2b51e8` and reran the exact
+Phase 0 commands before product edits. Source gates, deployment and bundle checks
+passed; the bare CI command again exited 64. The baseline-table replay, including
+the existing frontend audit tests, was run before and after with:
+
+```sh
+PATH=/workspace/scratch/cc68e7a7ea83/acs-venv/bin:$PATH \
+ACS_ENV=test PYTHONPATH="$PWD" \
+TMPDIR=/workspace/scratch/cc68e7a7ea83/audit-evidence/frontend-vertical/tmp \
+python3 /workspace/scratch/cc68e7a7ea83/audit-evidence/frontend-vertical/replay.py full-before
+# Repeat with full-after after the changes.
+```
+
+Both runs recorded **251 invocations, 31 nonzero exits**, with **no changed exit
+status**. The new disclosure suite is the separate passing invocation above.
+The existing environmental failures and incorrect original runner invocations
+remain explicitly recorded rather than being presented as product defects.
