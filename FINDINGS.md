@@ -228,6 +228,32 @@ C1/C2 reproduction uses the supported live browser: `customerTab.goto(...)`,
 the expectation/happened/cost records are in CUSTOMER-REVIEW.md. The deployment's
 commit was not identified from that UI; it is not equated with the source baseline.
 
+## Final branch-check record
+
+GitHub Actions was read at **2026-09-26 20:10 UTC** on the exact pull-request
+heads below. Every listed workflow completed with conclusion `success`. Here,
+`success` means the repository checks completed successfully; it does not turn
+the external-environment items above into verified outcomes, merge a branch, or
+identify a production deployment.
+
+| PR / exact head | Completed workflows on that head |
+|---|---|
+| [#182](https://github.com/NAIFMUSFER/AI-Instruction/pull/182) · `78374061fda33851cc6a7317bcd8c0053818047e` | CI #884; Async generation delivery #741; semantic locks #227; 2D review #605 |
+| [#183](https://github.com/NAIFMUSFER/AI-Instruction/pull/183) · `eba8b94ec74018f6843420abee81910361caef05` | backend audit contracts #1; CI #883; Async generation delivery #740; semantic locks #226; 2D review #604 |
+| [#184](https://github.com/NAIFMUSFER/AI-Instruction/pull/184) · `4980d58b6c2b4431617b64c12018083208d4ef45` | engineering opening geometry #2; CI #887; Async generation delivery #744; semantic locks #230; 2D review #608 |
+| [#185](https://github.com/NAIFMUSFER/AI-Instruction/pull/185) · `7dfff96bbcdc5a163fc4148826705ddeaad6ee19` | frontend audit contracts #1; CI #886; Google sign-in #12; Async generation delivery #743; semantic locks #229; 2D review #607 |
+| [#186](https://github.com/NAIFMUSFER/AI-Instruction/pull/186) · `404a37c2e509d450c94329bdb05c708ec9016555` | CI #888; Async generation delivery #745; semantic locks #231; 2D review #609 |
+
+The three long CI runs that were still active at the earlier checkpoint completed
+their Real Chromium jobs and required aggregate jobs successfully. No obsolete
+failed run is used for the engineering result; the row above is the corrected
+head `4980d58b...`.
+
+This table is a dated record of the immediately preceding report/source heads.
+The documentation-only commit that adds the table is later than `404a37c2...`;
+its own head checks remain visible on PR #186 and must not be inferred from this
+historical row. No application source changes in this documentation commit.
+
 ## Reviewable deliverables
 
 | Stream | Full report | Independent PR |
