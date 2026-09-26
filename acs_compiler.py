@@ -189,12 +189,47 @@ class Builder:
     """يجمّع أجزاء (صناديق) بمواد وأسماء، ثم يصدّرها glTF."""
     def __init__(self):
         self.parts = []   # (pos, nrm, idx, mat_name, node_name)
+        self._door_pairs = {}
+        self._opening_sources = {}
 
     def add_box(self, cx, cy, cz, ex, ey, ez, mat, name):
         if ex <= 0 or ey <= 0 or ez <= 0:
             return
         p, n, u, i = box(cx, cy, cz, ex, ey, ez)
         self.parts.append((p, n, u, i, mat, name))
+
+    def add_door_box(self, cx, cy, cz, ex, ey, ez, mat, name,
+                     fkey, room_id, edge, opening, opening_index):
+        """وجهان متقابلان لباب واحد؛ لا نحذف سجلاً من النموذج الأصلي.
+
+        التطابق هنا في المركز والأبعاد والدلالة الأصلية بلا تقريب إحداثيات.
+        لا نجمع ألواناً أو مواد أو اتجاهات فتح مختلفة، ولا سجلات الحافة نفسها.
+        تبقى هويتا المصدر في extras للجزء المشترك.
+        """
+        if ex <= 0 or ey <= 0 or ez <= 0:
+            return
+        p, n, u, i = box(cx, cy, cz, ex, ey, ez)
+        semantics = json.dumps({k: v for k, v in opening.items()
+                                if k not in ('id', 'edge', 'offset', 'width', 'height')},
+                               sort_keys=True, ensure_ascii=False)
+        key = (fkey, cx, cy, cz, ex, ey, ez, mat, semantics)
+        source = {'node_name': name, 'room_id': room_id,
+                  'opening_index': opening_index, 'edge': edge}
+        if 'id' in opening:
+            source['opening_id'] = opening['id']
+        opposite = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
+        candidates = self._door_pairs.setdefault(key, [])
+        for part_index in candidates:
+            sources = self._opening_sources[part_index]
+            first = sources[0]
+            if (len(sources) == 1 and first['room_id'] != room_id
+                    and first['edge'] == opposite.get(edge)):
+                sources.append(source)
+                return
+        part_index = len(self.parts)
+        self.parts.append((p, n, u, i, mat, name))
+        candidates.append(part_index)
+        self._opening_sources[part_index] = [source]
 
     # ---- تصدير glTF 2.0 (buffer مضمّن base64) ----
     def export_gltf(self, path):
@@ -227,7 +262,7 @@ class Builder:
             while len(buf) % 4 != 0:
                 buf.append(0)
 
-        for (pos, nrm, uv, idx, mat, name) in self.parts:
+        for part_index, (pos, nrm, uv, idx, mat, name) in enumerate(self.parts):
             # POSITION
             align(); off = len(buf); data = pos.tobytes(); buf += data
             bufferViews.append({"buffer": 0, "byteOffset": off, "byteLength": len(data), "target": 34962})
@@ -257,6 +292,9 @@ class Builder:
                                                           "TEXCOORD_0": acc_uv},
                                            "indices": acc_idx, "material": mat_index[mat]}]})
             nodes.append({"mesh": len(meshes)-1, "name": name})
+            sources = self._opening_sources.get(part_index, [])
+            if len(sources) > 1:
+                nodes[-1]['extras'] = {'acs_opening_sources': sources}
 
         b64 = base64.b64encode(bytes(buf)).decode("ascii")
         gltf = {
@@ -788,9 +826,11 @@ def build_room(bld, room, fkey, base_y, defaults):
         axis, fixed, _, _ = edge_geom(e, rect)
         cy = base_y + dh/2.0
         if axis == 'x':
-            bld.add_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+            bld.add_door_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i),
+                             fkey, name, e, dr, i)
         else:
-            bld.add_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+            bld.add_door_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i),
+                             fkey, name, e, dr, i)
 
     # زجاج النوافذ
     for i, wn in enumerate(windows):
