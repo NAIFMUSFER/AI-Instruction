@@ -29,6 +29,7 @@ jobs:
             tests/remediation/test_audit_backend_provider.py \
             tests/remediation/test_audit_backend_corpus.py \
             tests/remediation/test_audit_backend_warehouse_policy.py \
+            tests/remediation/test_audit_backend_residential_roles.py \
             tests/remediation/test_provider_integration.py \
             tests/remediation/test_provider_accounting.py \
             tests/remediation/test_provider_reject.py \
