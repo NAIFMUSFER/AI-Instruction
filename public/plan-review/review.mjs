@@ -35,7 +35,7 @@ const metricNames = {
   pedestrian_vehicle_separation_compliance:'التحقق من فصل المشاة والمركبات',
   fire_life_safety_compliance:'التحقق من متطلبات الحريق وسلامة الأرواح'
 };
-const scopeNames = {rectangular_geometry:'هندسة حدود الفراغات',program:'برنامج المتطلبات',topology:'الترابط',vertical_circulation:'الحركة الرأسية',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية',warehouse_expansion_reserve:'حماية مساحة التوسع المعلنة'};
+const scopeNames = {rectangular_geometry:'هندسة حدود الفراغات',program:'برنامج المتطلبات',topology:'الترابط',vertical_circulation:'محاذاة النوى بين الأدوار',regulatory_compliance:'الامتثال التنظيمي',structural_safety:'السلامة الإنشائية',warehouse_expansion_reserve:'حماية مساحة التوسع المعلنة'};
 const states = {PASS:'اجتاز وفق الملف',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'غير منطبق على هذه النسخة'};
 function node(tag, text, parent, cls) { const e=document.createElement(tag); if(text!==null)e.textContent=text; if(cls)e.className=cls;if(parent)parent.append(e);return e; }
 function svg(tag, attrs, parent, text) { const e=document.createElementNS(ns,tag);for(const [k,v]of Object.entries(attrs))e.setAttribute(k,String(v));if(text!==undefined)e.textContent=text;parent.append(e);return e; }
@@ -87,6 +87,9 @@ function showVersion() {
   for(const id of ['metrics','scopes','issues','locks','requirements','identity'])$(id).replaceChildren();
   for(const[k,v]of Object.entries(active.scorecard.metrics))pair($('metrics'),metricNames[k]||k,metricValue(k,v));
   for(const[k,v]of Object.entries(active.review.scopes))pair($('scopes'),scopeNames[k]||k,states[v]);
+  // لا تتحول محاذاة النوى أو هندستها الممثلة إلى ادعاء بأن الانتقال الفعلي متحقق.
+  const traversal='غير متحقق — '+(active.review.coverage?.vertical_circulation?.geometry==='MISSING'?'هندسة الدرج أو المصعد بين الأدوار غير مكتملة في النموذج.':'لم يُنفّذ فحص يثبت الانتقال الفعلي عبر الدرج أو المصعد بين الأدوار.');
+  pair($('scopes'),'المشي/الانتقال الفعلي بين الأدوار',traversal);
   if(!active.review.issues.length)node('li','لا توجد ملاحظات مسجلة في الملف. لا يُعد ذلك اعتمادًا.', $('issues'));
   for(const i of active.review.issues)node('li',`${i.code}${i.requirement_id?' · '+i.requirement_id:''}`,$('issues'));
   for(const r of active.locks.rooms)node('li',`فراغ: ${r.join(' / ')} (على مستوى القالب)`,$('locks'));
