@@ -28,6 +28,7 @@ jobs:
           bash tools/ci_run.sh --log logs/backend-audit.log --label backend-audit --runner python3 \
             tests/remediation/test_audit_backend_provider.py \
             tests/remediation/test_audit_backend_corpus.py \
+            tests/remediation/test_audit_backend_warehouse_policy.py \
             tests/remediation/test_provider_integration.py \
             tests/remediation/test_provider_accounting.py \
             tests/remediation/test_provider_reject.py \
