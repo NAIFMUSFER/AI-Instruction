@@ -1,21 +1,23 @@
 # ACS — consolidated audit and remediation
 
-Evidence recorded on 2026-09-26. This report combines the customer, engineering,
+Evidence recorded on 2026-09-26, with an authenticated follow-up on
+2026-09-27 (Asia/Riyadh). This report combines the customer, engineering,
 backend, frontend and architecture streams. The ordering is a judgment about
 customer impact, not a measured conversion or revenue forecast.
 
 ## What would most change whether an engineering office pays
 
-1. **A defensible building result.** Reproducible opening-validation misses and
-   false positives have fixes with failing-first tests. That does not establish
-   structural adequacy, physical stair traversal, complete accessible routes or
-   reliable import into Revit. Independent engineering acceptance remains a
-   prerequisite for selling a construction-ready result.
-2. **A demonstrable end-to-end customer journey.** The live cold visitor saw an
-   authentication screen with no visible brief input or example result. This
-   prevented evaluation of the Arabic villa, contradiction handling and exports.
-   Required authentication is an observed product choice, not a broken-login
-   finding. Whether a new customer can reach a useful building remains unverified.
+1. **Ordinary briefs must reach a useful draft.** After the user signed in,
+   the requested villa and a warehouse both stopped without a saved revision.
+   Apartment cases succeeded through an explicitly disclosed calculated fallback.
+   The warehouse planner's envelope instructions contradicted the canonical
+   geometry contract; the follow-up fixes that instruction rather than weakening
+   validation. Successful live generation after adopting the fixes is not established.
+2. **The engineering handoff must match its advertised scope.** Actual IFC
+   downloads contain spaces, while the multistorey model has named stair/lift
+   rooms without physical vertical geometry. A successful scoped review cannot
+   establish a walkable building, structural adequacy or Revit acceptance.
+   These are material product-contract gaps, not cosmetic folder-layout concerns.
 3. **An accountable operator for confidential drawings.** The public privacy
    disclosure sends provider/retention questions to an unnamed operator without
    a visible contact action. Identifying that operator and establishing the
@@ -30,16 +32,23 @@ is explicitly distinguished from passing local contracts below.
 
 | Priority | Finding and customer cost | Disposition | Evidence |
 |---|---|---|---|
+| High | Live warehouse generation was told to include an enclosing room, then rejected when that room overlapped its interior zones. The ordinary request produced no revision. | Dedicated connected-workspace warehouse planning policy proposed on the backend branch; strict geometry and true-capacity rejection retained. Live post-fix outcome unverified. | B5; scoped checkpoint reproduction and failing-first provider-message tests. |
+| High | The live multistorey draft contains aligned named stair/lift rooms but no physical vertical cores, while the UI reports a scoped interlevel pass. This cannot demonstrate a walkable building. | Engineering and frontend PRs separate core alignment from unverified physical traversal and disclose missing explicit core geometry. The actual geometry gap remains open. | E5, E7, F8; saved model, architecture compilation, coverage and UI contracts. |
+| High | The actual connected-workspace IFC download exports spaces only; it does not contain the architectural entities available in the separate legacy exporter. | Open product-contract gap, explicitly disclosed by the current UI and manifest. Revit acceptance remains unverified. | E5; actual downloaded artifact and manifest, independently parsed. |
+| High | Natural Arabic bedroom/single-storey phrases were dropped from confirmation; unitless site dimensions lacked a specific unit question. | Narrow parser repair and guarded vocabulary extension proposed on the frontend branch; original quotation provenance retained, ambiguous totals require review. | F7; exact live briefs, failing-first cases, positive controls and mutations. |
+| High | Explicit Arabic room roles bypassed some residential access/count checks and could make an existing stair core appear absent. | Exact recognized roles are normalized before and after layout repair, preserving Arabic names and unknown roles. This exposes real missing access; it is not a claim that the villa now completes. Completed details are reused after role-only conversion, but not after geometry changes. | B6; live checkpoint comparison, sound Arabic-role layout, count/access controls and resumed-details mutation tests. |
 | High | Invalid opening data could pass validation or raise inside the repair loop; overlapping doors/windows could go unreported. This can yield misleading geometry or abort generation. | Fixed in engineering PR: validate dimensions/edges before conversion, compare stated wall heights, preserve a shared collision ledger, and include single-room models. | E1–E3; engineering defect table. |
 | High | A window on a clear exterior part of a partly shared edge could be reported as internal; vertically separated windows could be reported as colliding. Unnecessary repair can damage sound input. | Fixed with aperture-specific neighbour checks and stated vertical intervals; unknown dimensions remain unknown. | E1–E3, positive controls and corpus comparison. |
-| High | The available output evidence does not establish full structural support, stair geometry, door swings/clearances or complete cross-level traversal. A clean validator result cannot stand for those judgments. | Open model/engineering acceptance boundary. No invented geometry or regulatory thresholds were added. | E4; coordinate review of villa, hotel, office, clinic and warehouse fixtures. Fresh live generation and Revit are unverified. |
+| High | The available output evidence does not establish full structural support, stair geometry, door swings/clearances or complete cross-level traversal. A clean validator result cannot stand for those judgments. | Open model/engineering acceptance boundary. No invented geometry or regulatory thresholds were added. | E4 fixture coordinate review, supplemented by E5 live revisions. Revit acceptance remains unverified. |
 | High | A failure after a provider stream started could silently submit a second request through the compatibility transport. The first error was masked and another request could incur cost. | Fixed in backend PR: fallback only for absence of the stream method; a started transport's failure propagates. | B1; injected stream creation/entry/decoding/exit failures and historical mutations. |
 | High | Repair usage was absent from the returned generation stage summary, including paid malformed repair replies. A missing-stream SDK could also consume budget before any request was sent. | Fixed repair telemetry and transport budget placement. The stage summary remains a bounded trace, not a complete billing ledger. | B1; no-repair, repeated-repair and malformed-repair controls. |
-| High | The public visitor cannot evaluate generation/export without authentication; the requested Arabic villa and hostile inputs were therefore never submitted. | Observed friction; authenticated acceptance remains blocked. No fake successful journey or account creation was substituted. | C1; CUSTOMER-REVIEW.md. |
+| High | Authentication prevented the initial cold-visitor evaluation. After the user signed in, the villa still failed; a deliberately impossible brief was explicitly rejected without identifying the conflicting constraint. | Historical login block cleared. Preserve the failed journeys and inadequate correction guidance as measured outcomes, without claiming silent acceptance of an incorrect model. | C1/C3; dated public and authenticated sections in CUSTOMER-REVIEW.md. |
 | High | Provider identity/retention and operator accountability cannot be settled from the public disclosure. It also discloses no interface deletion control for uploaded originals. | Operator decision and evidence required. Actual authenticated deletion behavior was not tested. | C2; visible Arabic/English privacy page. |
 | Medium | Advanced panels left keyboard focus on their opener or stranded it after closure; architectural controls lacked programmatic labels and meaningful icon names. | Fixed in frontend PR: synchronous entry focus, careful return focus, and generator-owned accessible markup. Panels remain nonmodal. | F1–F3; same-tick, no-model, delayed-load and intentionally moved-focus controls. |
 | Medium | Legacy generation has token/time/rate bounds but no monetary ceiling per request. Killing a local worker cannot recall an accepted upstream request. | Disclosed limitation. No unsupported dollar cap or pricing estimate supplied. | B3; provider budget, generation and API source inspection; synthetic failure suites. |
 | Medium | Deterministic Arabic coverage diagnostics omit several ordinary Saudi terms and associate `قبو` with parking. | Diagnostic vocabulary gap recorded. It does not prove the live language model fails these words. No blanket basement-to-parking semantic rule added. | E4; full vocabulary table in ENGINEERING-AUDIT.md. |
+| Medium | Reciprocal room-side door records produced coincident physical leaf meshes in the downloaded apartment glTF. | Engineering PR pairs exact reciprocal leaves while retaining both source identities. Slightly different source coordinates remain separate. No unmeasured flicker or frame-rate claim. | E5–E6; exact POSITION vertex-set comparison and conservative compiler tests. |
+| Medium | Apartment alternatives promised different bedroom counts despite the fixed program, and room dimensions exposed long decimal labels. | Measured customer friction; no false claim that the generated bedroom count changed. | C3; visible alternative and review labels. |
 | Medium | Old security assertions rejected workspace/render modules solely because they were already deferred instead of eagerly imported. | Fixed delivery guards require a unique declared loading path and loader. Existing escaping/malicious-input checks remain. | F4; sound eager/lazy cases and deliberate missing/duplicate ownership/loading. |
 | Evidence gap | Actual Intel GPU capacity, phone experience, real Three.js draw calls/texture memory and headset traversal were not measured on the requested devices. | No performance claim, GPU optimization or ray/path-tracing default change. | F5 and external-verification table. |
 | Deferred intentionally | Additional whole-module deferral, Redis installation and folder migration lack measured justification under their stated constraints. | Keep the loading graph, declared single-instance deployment and source layout. Supply a conditional feature proposal and reversible plan. | F6, B4 and A1; details below. |
@@ -47,6 +56,192 @@ is explicitly distinguished from passing local contracts below.
 ## Measurement record and regression comparison
 
 <!-- ACS:CURRENT-STATE:BEGIN — dated audit evidence, not rolling deployment claims -->
+
+### Authenticated follow-up, 27 September in Riyadh
+
+C3 uses the supported browser after the user's manual sign-in. The exact briefs,
+manual confirmations and visible messages are preserved in CUSTOMER-REVIEW.md.
+Reproduction commands are `acsTab.playwright.getByRole(...).fill(prompt)`,
+the observed requirement-reading/generation buttons, and
+`await acsTab.playwright.domSnapshot()` after each action. The recorded **5**
+generation cases produced **2** saved fallback revisions and **3** explicit
+rejections; this is not five completed models or a measured success-rate estimate.
+The villa's single advertised resume did not produce a revision and is counted
+with the original case. The case table records outcomes on the deployed system,
+not on the proposed branch fixes.
+
+| Live case | Confirmed input | Observed outcome |
+|---|---|---|
+| Requested Arabic villa | 20 × 25 m, 2 floors; original exact Arabic prompt | Layout failure, no revision; advertised resume gave the same visible outcome. |
+| Warehouse | 40 × 60 m, 1 floor; storage/receiving/shipping/office/toilet | Explicit generated-area rejection, no revision. Scoped checkpoint analysis found an enclosing zone counted with its contained functional zones. |
+| Impossible brief | 5 × 5 m site versus requested 20 × 20 m building and ten 20 m² bedrooms | Explicit layout rejection, no revision. No specific explanation of the contradictory constraint. |
+| Single-storey apartments | 24 × 30 m, 2 flats, 2 bedrooms and 1 bathroom per flat | V1 saved using a disclosed calculated fallback. Planning-only approval enabled SVG, DXF, glTF and IFC downloads. |
+| Multistorey apartments | 30 × 30 m, 3 floors, 2 flats per floor; bedrooms/bathroom as above | V1 saved using the same disclosed fallback. Core-space alignment did not establish physical stair/lift geometry. |
+
+Empty input was rejected with `اكتب وصف المشروع أولًا.` Mixed Arabic/English
+requirement reading returned the explicit `2 floors` and `4 bedrooms` candidates.
+A client-only long-input test constructed
+`['أرض','20×25','متر،','دورين،','4','غرف','نوم',...Array(4993).fill('مراجعة')].join(' ')`.
+`text.split(/\s+/).length` measured **5000** words and `text.length` measured
+**34982** characters. Reading returned width/depth/floor/bedroom candidates and
+no alert. No provider generation or performance claim is made for this input.
+
+E5 uses the successful apartment's downloaded artifacts and its authorized,
+read-only saved revision. The download control emitted a success status and
+files synchronized to disk even though this browser's download-event wait timed
+out. `find /workspace/scratch -maxdepth 1 -type f -mmin -20 -printf '%f %s bytes\n'`
+recorded **11639 B IFC**, **34200 B SVG**, **27798 B DXF**, and **480430 B glTF**.
+The independent artifact parsers and manifest/hash checks are recorded in
+ENGINEERING-AUDIT.md; no Revit session was run. The IFC has **18 IfcSpace** and
+no wall, door, window or slab entities. The downloaded glTF has **35** door meshes
+but **18** distinct sorted POSITION vertex sets: **17** coincident reciprocal pairs.
+These are artifact measurements, not a frame-rate or visual-flicker measurement.
+
+For the multistorey saved model,
+`acs_arch.compile_architecture(model, 'bld_0', None, 0)` returned empty cores,
+voids and issues. `acs_validate.validate_building(model)` returned no issues.
+The pre-fix compiler produced **3** floor slabs without physical stair/lift
+objects. The required distinction is core alignment versus physical traversal;
+missing geometry must not be filled with invented design values.
+
+The 3D control displayed an explicit unsupported-browser message. The supported
+`await acsTab.dev.logs({levels:['error','warn'],limit:12})` read showed
+`THREE.WebGLRenderer: Error creating WebGL context` with `GL_VENDOR = Disabled`
+and `GL_RENDERER = Disabled`. This is a measured cloud-environment limitation,
+not a demonstrated rendering failure on the owner's Intel GPU.
+
+Read-only Render `list_deploys` for the named ACS service identified backend
+deployment `dep-dalsqvbbc2fs738da120` at
+`adec616aa5191315991fb9439cee83efbb719b8f`. The frontend deployment commit was
+not identified. Scoped database reads were restricted to the newly created audit
+projects; no existing customer projects or production configuration were changed.
+
+The follow-up customer branch replay used the same baseline harness below and
+recorded **242 invocations / 30 nonzero exits**, before changes to this
+consolidation report. The fresh backend warehouse replay recorded **251 / 32**
+with no new failures; the fresh frontend parser before/after replays both recorded
+**250 / 31**, with unchanged exit statuses. The frontend's already documented
+missing-Chromium refusal remains explicit. Later follow-up commits require their
+own comparison and actual CI; the historical check table does not certify them.
+
+F7: `node tests/remediation/test_audit_frontend_brief.mjs` reports **21 passing
+assertions**, including **13 rejected mutations**; the existing
+`node tests/remediation/test_brief_program.mjs` reports **13 passing tests**.
+The exact villa gains a four-bedroom candidate while its unitless dimensions
+remain a clarification question. `python3 tools/bundle_report.py` measures an
+additional **3384 B** of source for the parser follow-up, with no speedup claim.
+B5: `ACS_ENV=test python3 tests/remediation/test_audit_backend_warehouse_policy.py`
+reports **6 passing tests** after **2 initial failures**; removal of the warehouse
+policy is rejected. Deployment verification after adding its explicit Docker COPY
+reports **736 passed / 0 failed**. These local proofs do not establish a new live
+provider outcome.
+
+B6: `ACS_ENV=test python3 tests/remediation/test_audit_backend_residential_roles.py`
+reports **14 passing tests**, including **4 rejected mutations** and a
+role-only/idempotence/geometry-preservation sweep of **165** existing models.
+Those existing models contain none of the new Arabic aliases; translated sound
+fixtures and the actual live checkpoint provide the positive language coverage.
+The compact checkpoint command in BACKEND-AUDIT.md reproduces a recognized core
+and **8** access findings that were previously bypassed. Adding the explicitly
+confirmed **4**-bedroom requirement catches **8** generated bedroom instances.
+The final backend replay records **252 invocations / 32 nonzero exits**, with
+no changed exit statuses or new failures. A completed Arabic-role resume retains
+its existing **3**-call budget usage with **0** new provider calls; a real layout
+change still invokes repair and details. The unavailable final provider repair
+response is not reconstructed or claimed as inspected.
+
+E6–E7: `python3 tests/remediation/test_audit_engineering_door_meshes.py`
+reports **12 passing tests**; the corresponding `--mutations` command rejects
+**11 mutations**. `python3 tests/remediation/test_audit_engineering_vertical_coverage.py`
+reports **15 passing tests**, with **10 mutations** rejected by its `--mutations`
+command. The door suite's `--corpus 4980d58` comparison inspects **165 models**:
+**162** compile, with the same **3** pre-existing compiler exceptions;
+**90** exact reciprocal meshes are removed across **83** models. Non-door
+geometry, retained door geometry/materials, input values and review scopes/issues
+remain unchanged. This is distinct from the exception-free validator sweep.
+Its `--evidence` command, documented in ENGINEERING-AUDIT.md, recompiles the
+captured apartment to **21** door meshes by removing **14** exact duplicates.
+The remaining **3** identical-vertex pairs have different double-precision source
+centres and are deliberately retained. The multilevel capture records **6**
+missing core-geometry entries; traversal remains `NOT_VERIFIED`. These are local
+recompilations, not replacement live downloads.
+The engineering follow-up replay records **249 invocations / 32 nonzero exits**,
+with no exit-status differences from its baseline; the new door/coverage suites
+are separately measured by the commands above.
+
+F8: `node tests/remediation/test_audit_frontend_vertical.cjs` reports **24 passing
+assertions**, including **12 rejected mutations**. Its optional `--review` path
+consumes the locally generated review of the captured multilevel model and passes
+**26 assertions** across the connected and standalone review surfaces. These
+tests exercise the actual render functions with a minimal DOM; they do not prove
+visual layout, WebGL or screen-reader behavior. Before/after replays both contain
+**251 invocations / 31 nonzero exits**, with unchanged exit statuses. The extra
+invocation relative to the parser replay is the already-added brief audit suite;
+the new vertical suite is measured separately.
+
+The detached combined checkout applies backend, engineering and frontend source
+changes to observed main. Running the four source gates, deploy verification,
+bundle report, all new backend/engineering suites, topology/corpus/regulatory
+contracts, plan-review/bridge/recovery contracts and frontend brief/module/guard
+suites records **25 successful commands**. The additional accessibility and
+documentation-claim commands retain their known missing-Chromium exits; their
+logs explicitly identify that unavailable environment. The same captured model
+passed the combined `PlanWorkspace.review` → frontend `--review` handshake.
+Command-by-command evidence is retained outside git; independent PR CI remains
+the browser verification source. This is compatibility evidence, not deployment.
+
+The combined commands were run with `ACS_ENV=test` and the audit virtual
+environment on `PATH`, in the detached combined checkout:
+
+```bash
+python3 tools/check_integration.py
+python3 tools/check_index_guard.py public/index.html
+python3 tools/check_api_base.py
+python3 tools/check_csp_hash.py
+python3 tests/deploy/verify_deploy.py
+python3 tools/bundle_report.py
+python3 tests/remediation/test_audit_backend_corpus.py
+python3 tests/remediation/test_audit_backend_provider.py
+python3 tests/remediation/test_audit_backend_residential_roles.py
+python3 tests/remediation/test_audit_backend_warehouse_policy.py
+python3 tests/remediation/test_audit_engineering_openings.py
+python3 tests/remediation/test_audit_engineering_door_meshes.py
+python3 tests/remediation/test_audit_engineering_vertical_coverage.py
+python3 tests/remediation/test_validate_topology.py
+python3 tests/remediation/test_validate_against_real_models.py
+python3 tests/remediation/test_rule_source_boundary.py
+python3 tests/remediation/test_plan_review.py
+python3 tests/remediation/test_plan_bridge.py
+python3 tests/remediation/test_plan_bridge_integration.py
+python3 tests/remediation/test_workspace_recovery.py
+node tests/remediation/test_audit_frontend_brief.mjs
+node tests/remediation/test_audit_frontend_vertical.cjs
+node tests/remediation/test_brief_program.mjs
+node tests/remediation/test_module_graph.js
+node tests/remediation/test_accessibility.js
+node tests/remediation/test_audit_frontend_guards.js
+python3 tools/check_doc_claims.py
+```
+
+### Follow-up source heads and check status
+
+Read-only GitHub `GET /repos/NAIFMUSFER/AI-Instruction/commits/{sha}/check-runs?per_page=100`
+identifies the exact source head being checked. At the follow-up publication
+checkpoint, backend and frontend contract/security/deploy jobs have passed;
+their long real-Chromium jobs are still running. The new engineering head has
+just been published and its CI is pending. Those pending results are not passes.
+
+| Source PR | Exact published head | Publication-checkpoint status |
+|---|---|---|
+| Backend #183 | `987e9a7c779af30cd64938f20ce1b0e45715f390` | Real Chromium pending; no failed completed check at lookup |
+| Engineering #184 | `7fd39d8721872d6589c7b9a69aaf64f26878068d` | New head; CI pending |
+| Frontend #185 | `d95c5713cd20c09de82f14ecf9045f50c700c91a` | Real Chromium pending; no failed completed check at lookup |
+
+The original architecture proposal is unchanged. The customer/consolidation
+publication contains documentation only and requires its own subsequent head
+checks. The historical success table below does not certify these follow-ups.
+
+### Original baseline and first remediation pass
 
 The requested commit `9e3e472d6de893c8cad8b72eb870bf5768f20147` was measured
 unchanged. The observed main head was
@@ -159,9 +354,11 @@ not a load-capacity test or a percentage of the starter plan allocation.
 **Geometry and authority.** `test_rule_source_boundary.py` continues to require
 `NOT_EVALUATED` for regulatory review. New findings compare represented geometry
 only. Missing wall/window heights, lift footprints, stair flights or load data
-are not manufactured. IFC serialization contains real space, wall, door and
-window entities and metre units; unsupported lift objects/property losses are
-disclosed. That is useful exchange evidence, but not independent Revit acceptance.
+are not manufactured. The earlier fixture-based legacy IFC serialization contains
+real space, wall, door and window entities and metre units; unsupported lift
+objects/property losses are disclosed. The actual connected-workspace download
+has a different, explicitly spaces-only scope. Neither evidence establishes
+independent Revit acceptance; the legacy census must not be attributed to the live download.
 
 **Provider and security.** B3 is reproduced by
 `rg -n 'limited|consume|max_retries|stages\[:|estimated_cost_usd|ACS_PRICE' acs_provider_budget.py acs_understand.py acs_understand_api.py`
@@ -211,24 +408,25 @@ They are not passing tests and are not newly proven product defects.
 
 | Required acceptance | Concrete missing environment/evidence |
 |---|---|
-| Arabic villa to a rendered building; impossible briefs; empty/long/mixed-language/words-as-numbers attacks | Authenticated live ACS session; the customer stream used only the public UI and did not read source or bypass login |
+| Successful live villa and warehouse after the proposed repairs; complete long/mixed-input generation | Authenticated attempts are now recorded, including explicit failures. Long/mixed-input tests covered requirement reading only; no post-deployment success is inferred. |
 | Cold/warm throttled 3G first paint, time to type, requests and transfer bytes; physical phone repeat | Supported browser throttling/cache/network measurement controls and a phone; no tool-call duration substituted |
-| Live panels and IFC/glTF/DXF/SVG opened in the customer's software | Authenticated generated model and external viewers |
-| Fresh building generations and independent Revit scale/storey/entity acceptance | Provider-backed live generation and Revit; repository fixtures/serialization were the available substitute and are labelled as such |
+| Full live panel walkthrough and files opened in the customer's software | Actual downloads were obtained and structurally parsed. The cloud browser cannot create a WebGL context; Revit and native customer viewers remain unavailable. |
+| Independently accepted generated buildings and Revit scale/storey/entity acceptance | Live fallback revisions supplement the earlier fixtures. Failed generation cases do not count as completed models; no Revit session is available. |
 | Owner's Intel GPU frame budget, real texture memory and draw calls; WebXR | Actual machine, real renderer measurement and headset |
 | Complete screen-reader/RTL accessibility acceptance | Real assistive technology and independent complete interaction review; local DOM/CSP/keyboard checks cover only their declared scope |
 | Actual provider outage, billed usage, retention and cancellation of upstream computation | Controlled provider environment, operator contract and billing records |
-| Live Supabase policies, production logs, native hostile DWG | Authorized external systems and the relevant native parser environment |
+| Live Supabase policy enforcement and native hostile DWG | Read-only, audit-project-scoped checkpoints and production logs were inspected; this does not exercise RLS isolation or a native hostile-CAD parser. |
 | Full structural design, physical stairs and resolved pedestrian/egress routes | Missing model contracts plus responsible engineering review; no code thresholds inferred |
 
 C1/C2 reproduction uses the supported live browser: `customerTab.goto(...)`,
 `customerTab.reload()` and `customerTab.playwright.domSnapshot()` on
 `https://sprightly-selkie-d906c3.netlify.app/`, followed by the visible
 `الخصوصية وحفظ البيانات` link and the new tab's DOM snapshot. Exact commands and
-the expectation/happened/cost records are in CUSTOMER-REVIEW.md. The deployment's
-commit was not identified from that UI; it is not equated with the source baseline.
+the expectation/happened/cost records are in CUSTOMER-REVIEW.md. The frontend's
+commit was not identified from that UI. The follow-up backend deployment commit
+was independently identified through the read-only Render deployment listing.
 
-## Final branch-check record
+## Original branch-check record
 
 GitHub Actions was read at **2026-09-26 20:10 UTC** on the exact pull-request
 heads below. Every listed workflow completed with conclusion `success`. Here,
