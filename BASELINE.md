@@ -260,12 +260,12 @@ All commands use `ACS_ENV=test`, `PYTHONPATH=<checkout>`, and the pinned virtual
 | tests/remediation/test_workspace_warehouse_exact_selection.mjs | 0 | `bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_workspace_warehouse_exact_selection.mjs` |
 | tests/security/test_security.py | 0 | `bash tools/ci_run.sh --label audit-baseline --runner python3 tests/security/test_security.py` |
 | 09-doc-claims | 1 | `python3 tools/check_doc_claims.py` |
-| tests/phase1/test_gate.js (corrected runner) | 1 | `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_gate.js` |
-| tests/phase1/test_p0.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_p0.js` |
-| tests/phase1/test_phase2.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_phase2.js` |
-| tests/phase1/test_prov.js (corrected runner) | 1 | `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_prov.js` |
-| tests/phase1/test_types.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_types.js` |
-| tests/phase1/test_xss.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_xss.js` |
+| tests/phase1/test_gate.js (corrected runner) | 1 | `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_gate.js` |
+| tests/phase1/test_p0.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_p0.js` |
+| tests/phase1/test_phase2.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_phase2.js` |
+| tests/phase1/test_prov.js (corrected runner) | 1 | `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_prov.js` |
+| tests/phase1/test_types.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_types.js` |
+| tests/phase1/test_xss.js (corrected runner) | 0 | `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_xss.js` |
 
 ## Verbatim failed command output
 
@@ -1639,7 +1639,7 @@ DOC CLAIMS FAILED: 1 suite(s) require an unavailable environment.
 
 ### tests/phase1/test_gate.js (corrected runner)
 
-Command: `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_gate.js`; exit 1
+Command: `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_gate.js`; exit 1
 
 ```text
 === tests/phase1/test_gate.js ===
@@ -1687,7 +1687,7 @@ tests/phase1/test_gate.js (exit 1)
 
 ### tests/phase1/test_prov.js (corrected runner)
 
-Command: `bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_prov.js`; exit 1
+Command: `bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_prov.js`; exit 1
 
 ```text
 === tests/phase1/test_prov.js ===
@@ -2430,3 +2430,5 @@ The audit harness is recorded in `docs/audit/2026-09-26/run_baseline.py`; it doe
 ## No-regression interpretation
 
 Before each PR run the exact structural gates, the affected suites, new red/green/mutation tests, and this complete sweep under the same dependency/environment setup. Any new failure absent from this record is a regression until proved otherwise. A separately provisioned browser run supplements this baseline; it does not erase it. External device, Revit, authenticated live generation, browser 3G profiling, and Intel GPU performance remain NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED.
+
+Recording correction: the phase1 corrected-runner commands above quote the runner as one shell argument. Their originally recorded exits and verbatim logs are unchanged. The actual baseline execution used a structured argv list.
