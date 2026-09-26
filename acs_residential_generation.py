@@ -1,4 +1,5 @@
 """Residential planning contracts and bounded interior-opening proposals."""
+import copy
 import json
 from acs_plan_review import PlanError, canonical, _structure, _geometry, _program
 from acs_workspace_progress import emit
@@ -56,6 +57,38 @@ light point per enclosed occupied room. These are editable concept proposals.
 Do not claim daylight compliance, engineering approval, structure or fire design.
 '''
 
+# مرادفات أدوار صريحة فقط؛ لا نستنتج الدور من اسم الغرفة أو نص الطلب.
+# جدول التغطية اللغوية في acs_generation يستعمل المطابقة الجزئية وbed/bath،
+# لذلك لا يصلح لتغيير دلالات النموذج الذي تفحصه عقود bedroom/bathroom.
+_ROLE_ALIASES = {
+    'غرفة نوم': 'bedroom', 'غرف نوم': 'bedroom',
+    'حمام': 'bathroom', 'دورة مياه': 'bathroom',
+    'صالة': 'living', 'غرفة معيشة': 'living', 'معيشة': 'living',
+    'مجلس': 'majlis', 'مطبخ': 'kitchen', 'ممر': 'corridor',
+    'مدخل': 'entrance', 'بهو': 'lobby', 'ردهة': 'lobby',
+    'درج': 'stairs', 'درج داخلي': 'stairs', 'سلم': 'stairs',
+    'سلم داخلي': 'stairs', 'مصعد': 'elevator',
+}
+
+
+def _canonical_room_roles(building):
+    """وحّد الأدوار المعروفة قبل الفحص دون تغيير الأصل أو الاسم أو الهندسة."""
+    if not isinstance(building, dict) or not isinstance(building.get('floors'), dict):
+        return building  # يظل رفض البنية المعيبة من اختصاص _structure.
+    result = None
+    for template, floor in building['floors'].items():
+        if not isinstance(floor, dict) or not isinstance(floor.get('rooms'), list):
+            continue
+        for index, room in enumerate(floor['rooms']):
+            role = room.get('role') if isinstance(room, dict) else None
+            replacement = _ROLE_ALIASES.get(role.strip()) if isinstance(role, str) else None
+            if replacement is not None:
+                if result is None:
+                    result = copy.deepcopy(building)
+                result['floors'][template]['rooms'][index]['role'] = replacement
+    return building if result is None else result
+
+
 def check_rooms(building):
     floors = building.get('floors', {})
     for template, floor in floors.items():
@@ -85,6 +118,7 @@ def check_rooms(building):
 def prepare_layout(building, brief, requirements, budget):
     """One bounded correction before openings; every result is checked again."""
     import acs_understand as U
+    building = _canonical_room_roles(building)
     def findings(value):
         _structure(value)
         issues, _ = _geometry(value)
@@ -121,6 +155,7 @@ Shared walls must touch exactly; a gap is not a corridor. No openings yet.'''
         raise PlanError('PLAN_LAYOUT_INCOMPLETE','لم يكتمل تصحيح توزيع الغرف.')
     candidate=json.loads(canonical(building))
     candidate['floors']=response['floors']
+    candidate = _canonical_room_roles(candidate)
     remaining=findings(candidate)
     if remaining:
         raise PlanError('PLAN_LAYOUT_INCOMPLETE','لم يجتز توزيع الغرف الفحص بعد محاولة التصحيح.')

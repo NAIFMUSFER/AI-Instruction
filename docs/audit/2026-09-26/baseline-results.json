@@ -1,0 +1,1490 @@
+[
+  {
+    "name": "02-integration",
+    "command": "python3 tools/check_integration.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "03-index",
+    "command": "python3 tools/check_index_guard.py public/index.html",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "04-api",
+    "command": "python3 tools/check_api_base.py",
+    "rc": 0,
+    "seconds": 2.423
+  },
+  {
+    "name": "05-csp",
+    "command": "python3 tools/check_csp_hash.py",
+    "rc": 0,
+    "seconds": 0.032
+  },
+  {
+    "name": "06-deploy",
+    "command": "python3 tests/deploy/verify_deploy.py",
+    "rc": 0,
+    "seconds": 5.033
+  },
+  {
+    "name": "07-ci-exact",
+    "command": "bash tools/ci_run.sh",
+    "rc": 64,
+    "seconds": 0.004
+  },
+  {
+    "name": "08-bundle",
+    "command": "python3 tools/bundle_report.py",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/deploy/test_viewport_pixels.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/deploy/test_viewport_pixels.js",
+    "rc": 1,
+    "seconds": 0.316
+  },
+  {
+    "name": "tests/phase1/test_gate.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase1/test_gate.js",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase1/test_p0.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase1/test_p0.js",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase1/test_phase2.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase1/test_phase2.js",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase1/test_prov.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase1/test_prov.js",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase1/test_types.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase1/test_types.js",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase1/test_xss.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase1/test_xss.js",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase2/test_arch.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_arch.js",
+    "rc": 0,
+    "seconds": 3.878
+  },
+  {
+    "name": "tests/phase2/test_coord.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_coord.js",
+    "rc": 0,
+    "seconds": 0.365
+  },
+  {
+    "name": "tests/phase2/test_dist.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_dist.js",
+    "rc": 0,
+    "seconds": 0.224
+  },
+  {
+    "name": "tests/phase2/test_eg.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_eg.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase2/test_fls.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_fls.js",
+    "rc": 0,
+    "seconds": 0.317
+  },
+  {
+    "name": "tests/phase2/test_ingest.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_ingest.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase2/test_mep.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_mep.js",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/phase2/test_nav.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_nav.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase2/test_occ.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_occ.js",
+    "rc": 0,
+    "seconds": 0.217
+  },
+  {
+    "name": "tests/phase2/test_rel.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_rel.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase2/test_render.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_render.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase2/test_rev.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_rev.js",
+    "rc": 0,
+    "seconds": 0.266
+  },
+  {
+    "name": "tests/phase2/test_rules.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_rules.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase2/test_struct.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase2/test_struct.js",
+    "rc": 0,
+    "seconds": 0.317
+  },
+  {
+    "name": "tests/phase3/test_dev_api.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase3/test_dev_api.js",
+    "rc": 0,
+    "seconds": 0.266
+  },
+  {
+    "name": "tests/phase3/test_visual.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase3/test_visual.js",
+    "rc": 0,
+    "seconds": 0.816
+  },
+  {
+    "name": "tests/phase3/test_visual_adversarial.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase3/test_visual_adversarial.js",
+    "rc": 0,
+    "seconds": 0.566
+  },
+  {
+    "name": "tests/phase4/test_adversarial.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_adversarial.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase4/test_browser_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase4/test_browser_parity.js",
+    "rc": 1,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/phase4/test_collision.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_collision.js",
+    "rc": 0,
+    "seconds": 0.266
+  },
+  {
+    "name": "tests/phase4/test_immutability.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_immutability.js",
+    "rc": 0,
+    "seconds": 0.468
+  },
+  {
+    "name": "tests/phase4/test_measurement.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_measurement.js",
+    "rc": 0,
+    "seconds": 0.267
+  },
+  {
+    "name": "tests/phase4/test_model_regression.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase4/test_model_regression.js",
+    "rc": 0,
+    "seconds": 0.668
+  },
+  {
+    "name": "tests/phase4/test_navigation.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_navigation.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase4/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase4/test_parity.js",
+    "rc": 0,
+    "seconds": 0.868
+  },
+  {
+    "name": "tests/phase4/test_portals.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_portals.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase4/test_runtime.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_runtime.js",
+    "rc": 0,
+    "seconds": 0.419
+  },
+  {
+    "name": "tests/phase4/test_selection.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_selection.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase4/test_visibility.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase4/test_visibility.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase5/test_adversarial.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_adversarial.js",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/phase5/test_ai_boundary.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_ai_boundary.js",
+    "rc": 0,
+    "seconds": 0.218
+  },
+  {
+    "name": "tests/phase5/test_authoring.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_authoring.js",
+    "rc": 0,
+    "seconds": 0.216
+  },
+  {
+    "name": "tests/phase5/test_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_browser.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase5/test_browser_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase5/test_browser_parity.js",
+    "rc": 1,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/phase5/test_commands.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_commands.js",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/phase5/test_immutability.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_immutability.js",
+    "rc": 0,
+    "seconds": 1.073
+  },
+  {
+    "name": "tests/phase5/test_integration.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_integration.js",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/phase5/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase5/test_parity.js",
+    "rc": 0,
+    "seconds": 0.92
+  },
+  {
+    "name": "tests/phase5/test_revision.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_revision.js",
+    "rc": 0,
+    "seconds": 0.27
+  },
+  {
+    "name": "tests/phase5/test_transaction.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase5/test_transaction.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase6/test_dom.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase6/test_dom.js",
+    "rc": 0,
+    "seconds": 0.216
+  },
+  {
+    "name": "tests/phase6/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase6/test_parity.js",
+    "rc": 0,
+    "seconds": 0.667
+  },
+  {
+    "name": "tests/phase6/test_responsive.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase6/test_responsive.js",
+    "rc": 1,
+    "seconds": 0.666
+  },
+  {
+    "name": "tests/phase6/test_security.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase6/test_security.js",
+    "rc": 1,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase6/test_workflow.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase6/test_workflow.js",
+    "rc": 0,
+    "seconds": 0.218
+  },
+  {
+    "name": "tests/phase6/test_workspace.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase6/test_workspace.js",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase7/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase7/test_parity.js",
+    "rc": 0,
+    "seconds": 1.673
+  },
+  {
+    "name": "tests/phase7/test_render.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase7/test_render.js",
+    "rc": 0,
+    "seconds": 0.415
+  },
+  {
+    "name": "tests/phase7/test_security.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase7/test_security.js",
+    "rc": 1,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/phase7/test_targets.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase7/test_targets.js",
+    "rc": 0,
+    "seconds": 0.367
+  },
+  {
+    "name": "tests/phase8/test_bim.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase8/test_bim.py",
+    "rc": 0,
+    "seconds": 2.671
+  },
+  {
+    "name": "tests/phase8/test_bim_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase8/test_bim_browser.js",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/phase8/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase8/test_parity.js",
+    "rc": 0,
+    "seconds": 0.615
+  },
+  {
+    "name": "tests/phase9/test_docs.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9/test_docs.py",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/phase9/test_docs_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase9/test_docs_browser.js",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase9/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase9/test_parity.js",
+    "rc": 0,
+    "seconds": 1.119
+  },
+  {
+    "name": "tests/phase9_1/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase9_1/test_parity.js",
+    "rc": 0,
+    "seconds": 0.367
+  },
+  {
+    "name": "tests/phase9_1/test_pbr.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_1/test_pbr.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/phase9_1/test_pbr_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase9_1/test_pbr_browser.js",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/phase9_2/test_alignment.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_2/test_alignment.py",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/phase9_2/test_archdetail.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_2/test_archdetail.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/phase9_2/test_archdetail_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/phase9_2/test_archdetail_browser.js",
+    "rc": 0,
+    "seconds": 0.216
+  },
+  {
+    "name": "tests/phase9_2/test_backend_contract.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_2/test_backend_contract.py",
+    "rc": 0,
+    "seconds": 1.521
+  },
+  {
+    "name": "tests/phase9_2/test_black_viewport.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_2/test_black_viewport.py",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/phase9_2/test_generation_budget.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_2/test_generation_budget.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/phase9_2/test_live_render.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/phase9_2/test_live_render.py",
+    "rc": 0,
+    "seconds": 0.164
+  },
+  {
+    "name": "tests/phase9_2/test_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/phase9_2/test_parity.js",
+    "rc": 0,
+    "seconds": 0.37
+  },
+  {
+    "name": "tests/remediation/test_accessibility.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_accessibility.js",
+    "rc": 1,
+    "seconds": 0.316
+  },
+  {
+    "name": "tests/remediation/test_alignment_diagnostics.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_alignment_diagnostics.js",
+    "rc": 0,
+    "seconds": 0.759
+  },
+  {
+    "name": "tests/remediation/test_api_wiring.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_api_wiring.py",
+    "rc": 0,
+    "seconds": 0.165
+  },
+  {
+    "name": "tests/remediation/test_apply_render_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_apply_render_browser.js",
+    "rc": 1,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/remediation/test_asgi_client_contract.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_asgi_client_contract.py",
+    "rc": 0,
+    "seconds": 0.515
+  },
+  {
+    "name": "tests/remediation/test_async_generation_jobs.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_async_generation_jobs.py",
+    "rc": 0,
+    "seconds": 0.515
+  },
+  {
+    "name": "tests/remediation/test_async_job_reference_receipt.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_async_job_reference_receipt.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_auth_gateway.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_auth_gateway.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_auth_session.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_auth_session.js",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_auth_shipped_page.cjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_auth_shipped_page.cjs",
+    "rc": 1,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/remediation/test_autofix_propose_boundary.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_autofix_propose_boundary.py",
+    "rc": 0,
+    "seconds": 0.415
+  },
+  {
+    "name": "tests/remediation/test_brief_program.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_brief_program.mjs",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_browser_acquisition.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_browser_acquisition.py",
+    "rc": 0,
+    "seconds": 1.367
+  },
+  {
+    "name": "tests/remediation/test_build_metadata.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_build_metadata.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_bundle_extractor.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_bundle_extractor.js",
+    "rc": 0,
+    "seconds": 8.287
+  },
+  {
+    "name": "tests/remediation/test_bundle_report.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_bundle_report.py",
+    "rc": 0,
+    "seconds": 0.666
+  },
+  {
+    "name": "tests/remediation/test_ci_dependencies.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_ci_dependencies.py",
+    "rc": 0,
+    "seconds": 5.73
+  },
+  {
+    "name": "tests/remediation/test_ci_gate.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_ci_gate.py",
+    "rc": 0,
+    "seconds": 0.365
+  },
+  {
+    "name": "tests/remediation/test_concurrency.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_concurrency.js",
+    "rc": 0,
+    "seconds": 0.268
+  },
+  {
+    "name": "tests/remediation/test_connected_semantic_locks.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_connected_semantic_locks.mjs",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_connected_typology_isolation.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_connected_typology_isolation.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_connected_workspace.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_connected_workspace.py",
+    "rc": 0,
+    "seconds": 0.619
+  },
+  {
+    "name": "tests/remediation/test_connected_workspace_browser.cjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_connected_workspace_browser.cjs",
+    "rc": 1,
+    "seconds": 0.867
+  },
+  {
+    "name": "tests/remediation/test_container_topology.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_container_topology.py",
+    "rc": 0,
+    "seconds": 0.032
+  },
+  {
+    "name": "tests/remediation/test_csp.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_csp.js",
+    "rc": 0,
+    "seconds": 0.266
+  },
+  {
+    "name": "tests/remediation/test_csp_style_architecture.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_csp_style_architecture.js",
+    "rc": 1,
+    "seconds": 0.615
+  },
+  {
+    "name": "tests/remediation/test_dependency_lock.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_dependency_lock.py",
+    "rc": 0,
+    "seconds": 0.122
+  },
+  {
+    "name": "tests/remediation/test_doc_claims.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_doc_claims.py",
+    "rc": 0,
+    "seconds": 0.265
+  },
+  {
+    "name": "tests/remediation/test_engineering_authority.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_engineering_authority.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_event_loop.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_event_loop.py",
+    "rc": 0,
+    "seconds": 25.044
+  },
+  {
+    "name": "tests/remediation/test_generation_cancel.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_generation_cancel.py",
+    "rc": 1,
+    "seconds": 1.769
+  },
+  {
+    "name": "tests/remediation/test_generation_jobs.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_generation_jobs.js",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_generation_jobs_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_generation_jobs_browser.js",
+    "rc": 1,
+    "seconds": 0.916
+  },
+  {
+    "name": "tests/remediation/test_generation_jobs_shipped_page.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_generation_jobs_shipped_page.js",
+    "rc": 1,
+    "seconds": 0.818
+  },
+  {
+    "name": "tests/remediation/test_generation_spatial_context.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_generation_spatial_context.py",
+    "rc": 0,
+    "seconds": 0.875
+  },
+  {
+    "name": "tests/remediation/test_gl_probe_contract.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_gl_probe_contract.mjs",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_image_build_metadata.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_image_build_metadata.py",
+    "rc": 0,
+    "seconds": 0.566
+  },
+  {
+    "name": "tests/remediation/test_inline_style_sources.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_inline_style_sources.py",
+    "rc": 0,
+    "seconds": 1.067
+  },
+  {
+    "name": "tests/remediation/test_job_boundary.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_job_boundary.py",
+    "rc": 0,
+    "seconds": 1.017
+  },
+  {
+    "name": "tests/remediation/test_live_generation_verdict.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_live_generation_verdict.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_logging.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_logging.py",
+    "rc": 0,
+    "seconds": 0.164
+  },
+  {
+    "name": "tests/remediation/test_mobile_project_layout.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_mobile_project_layout.js",
+    "rc": 1,
+    "seconds": 0.365
+  },
+  {
+    "name": "tests/remediation/test_model_apply.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_model_apply.js",
+    "rc": 0,
+    "seconds": 0.371
+  },
+  {
+    "name": "tests/remediation/test_model_diagnostics.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_model_diagnostics.py",
+    "rc": 0,
+    "seconds": 1.072
+  },
+  {
+    "name": "tests/remediation/test_model_review_ui.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_model_review_ui.js",
+    "rc": 0,
+    "seconds": 0.27
+  },
+  {
+    "name": "tests/remediation/test_module_graph.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_module_graph.js",
+    "rc": 0,
+    "seconds": 1.725
+  },
+  {
+    "name": "tests/remediation/test_multi_provider.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_multi_provider.py",
+    "rc": 0,
+    "seconds": 0.065
+  },
+  {
+    "name": "tests/remediation/test_opening_identity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_opening_identity.js",
+    "rc": 0,
+    "seconds": 0.218
+  },
+  {
+    "name": "tests/remediation/test_opening_identity.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_opening_identity.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_opening_identity_parity.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_opening_identity_parity.js",
+    "rc": 0,
+    "seconds": 0.365
+  },
+  {
+    "name": "tests/remediation/test_p0_hardening.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_p0_hardening.py",
+    "rc": 0,
+    "seconds": 0.716
+  },
+  {
+    "name": "tests/remediation/test_panel_entry.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_panel_entry.js",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/remediation/test_pdf_runtime.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_pdf_runtime.mjs",
+    "rc": 1,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_performance.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_performance.js",
+    "rc": 1,
+    "seconds": 0.415
+  },
+  {
+    "name": "tests/remediation/test_persistence.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_persistence.js",
+    "rc": 0,
+    "seconds": 0.217
+  },
+  {
+    "name": "tests/remediation/test_plan_bridge.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_bridge.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_bridge_integration.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_bridge_integration.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_cad_export.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_cad_export.py",
+    "rc": 0,
+    "seconds": 0.322
+  },
+  {
+    "name": "tests/remediation/test_plan_chat_candidate_admission.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_chat_candidate_admission.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_chat_isolated_worker.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_chat_isolated_worker.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_chat_preflight_authority.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_chat_preflight_authority.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_chat_stale_safe_orchestration.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_chat_stale_safe_orchestration.py",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/remediation/test_plan_chunking.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_chunking.py",
+    "rc": 0,
+    "seconds": 0.165
+  },
+  {
+    "name": "tests/remediation/test_plan_commands.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_commands.py",
+    "rc": 0,
+    "seconds": 0.165
+  },
+  {
+    "name": "tests/remediation/test_plan_element_provenance.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_element_provenance.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_export_provenance_parity.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_export_provenance_parity.py",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff.py",
+    "rc": 0,
+    "seconds": 0.221
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_derived_authority.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_derived_authority.py",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_large.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_large.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_lock_binding.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_lock_binding.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_nested_provenance.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_nested_provenance.py",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_object_geometry.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_object_geometry.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_room_presentation_geometry.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_room_presentation_geometry.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_warehouse_dock_geometry.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_warehouse_dock_geometry.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_warehouse_lane_geometry.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_warehouse_lane_geometry.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_warehouse_rack_geometry.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_warehouse_rack_geometry.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_handoff_warehouse_station_geometry.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_handoff_warehouse_station_geometry.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_http_command_boundary.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_http_command_boundary.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_ifc_derived_authority.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_ifc_derived_authority.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_ifc_export.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_ifc_export.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_lock_binding.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_lock_binding.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_options.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_options.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_pdf_export.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_pdf_export.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_persisted_commands.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_persisted_commands.py",
+    "rc": 0,
+    "seconds": 0.169
+  },
+  {
+    "name": "tests/remediation/test_plan_projection.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_projection.py",
+    "rc": 0,
+    "seconds": 0.317
+  },
+  {
+    "name": "tests/remediation/test_plan_provenance_admission.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_provenance_admission.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_requirement_evidence.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_requirement_evidence.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_residential_revision_compare_restore.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_residential_revision_compare_restore.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_residential_scorecard.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_residential_scorecard.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_review.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_review.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_review_packet.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_plan_review_packet.mjs",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_plan_review_packet.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_review_packet.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_review_scorecard_disclosures.cjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_plan_review_scorecard_disclosures.cjs",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_review_ui.cjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_plan_review_ui.cjs",
+    "rc": 1,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/remediation/test_plan_revision_compare_restore.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_revision_compare_restore.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_role_area_constraints.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_role_area_constraints.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_scorecard.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_scorecard.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_selective_lock_export_parity.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_selective_lock_export_parity.py",
+    "rc": 0,
+    "seconds": 0.369
+  },
+  {
+    "name": "tests/remediation/test_plan_semantic_diff.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_semantic_diff.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_semantic_diff_commands.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_semantic_diff_commands.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_semantic_locks.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_semantic_locks.py",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_plan_source_span_artifacts.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_source_span_artifacts.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_source_upload.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_source_upload.py",
+    "rc": 0,
+    "seconds": 0.415
+  },
+  {
+    "name": "tests/remediation/test_plan_store.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_store.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_store_authenticated_session.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_store_authenticated_session.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_store_port.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_store_port.py",
+    "rc": 0,
+    "seconds": 0.065
+  },
+  {
+    "name": "tests/remediation/test_plan_store_reload.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_store_reload.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_store_row_binding.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_store_row_binding.py",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/remediation/test_plan_svg_export.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_svg_export.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_typology_lifecycle.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_typology_lifecycle.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_column_locks.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_column_locks.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_dock_zone_constraints.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_dock_zone_constraints.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_docks_by_zone.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_docks_by_zone.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_expansion_reserves.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_expansion_reserves.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_lane_conflicts.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_lane_conflicts.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_lane_length_constraints.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_lane_length_constraints.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_operational_metrics.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_operational_metrics.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_program.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_program.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_rack_lane_conflicts.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_rack_lane_conflicts.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_zone_allocation_constraints.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_zone_allocation_constraints.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plan_warehouse_zone_allocation_ratios.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plan_warehouse_zone_allocation_ratios.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_plate_extent.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_plate_extent.py",
+    "rc": 0,
+    "seconds": 0.216
+  },
+  {
+    "name": "tests/remediation/test_privacy_boundary.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_privacy_boundary.py",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/remediation/test_production_auth_boundary.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_production_auth_boundary.py",
+    "rc": 0,
+    "seconds": 0.465
+  },
+  {
+    "name": "tests/remediation/test_production_error_ui.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_production_error_ui.js",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/remediation/test_provider_accounting.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_provider_accounting.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_provider_capability.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_provider_capability.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_provider_integration.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_provider_integration.py",
+    "rc": 0,
+    "seconds": 0.216
+  },
+  {
+    "name": "tests/remediation/test_provider_reject.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_provider_reject.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_rate_limit.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_rate_limit.py",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/remediation/test_residential_layout_fallback.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_residential_layout_fallback.py",
+    "rc": 0,
+    "seconds": 0.867
+  },
+  {
+    "name": "tests/remediation/test_residential_presentation.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_residential_presentation.js",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_residential_program.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_residential_program.mjs",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_residential_quality.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_residential_quality.py",
+    "rc": 0,
+    "seconds": 0.032
+  },
+  {
+    "name": "tests/remediation/test_rule_source_boundary.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_rule_source_boundary.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_scene_benchmark.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_scene_benchmark.js",
+    "rc": 1,
+    "seconds": 0.365
+  },
+  {
+    "name": "tests/remediation/test_scene_limits.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_scene_limits.js",
+    "rc": 0,
+    "seconds": 5.133
+  },
+  {
+    "name": "tests/remediation/test_single_level_template_binding.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_single_level_template_binding.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_supabase_auth_deployment_readiness.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_supabase_auth_deployment_readiness.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_supabase_auth_integration.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_supabase_auth_integration.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_supabase_plan_store_adapter.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_supabase_plan_store_adapter.py",
+    "rc": 0,
+    "seconds": 0.115
+  },
+  {
+    "name": "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_supabase_plan_store_rpc_schema.py",
+    "rc": 0,
+    "seconds": 0.032
+  },
+  {
+    "name": "tests/remediation/test_supabase_plan_store_schema.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_supabase_plan_store_schema.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_thinking_wire.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_thinking_wire.py",
+    "rc": 0,
+    "seconds": 0.315
+  },
+  {
+    "name": "tests/remediation/test_transport_browser.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_transport_browser.js",
+    "rc": 1,
+    "seconds": 0.366
+  },
+  {
+    "name": "tests/remediation/test_transport_errors.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_transport_errors.js",
+    "rc": 0,
+    "seconds": 0.164
+  },
+  {
+    "name": "tests/remediation/test_upload_security.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_upload_security.py",
+    "rc": 0,
+    "seconds": 5.127
+  },
+  {
+    "name": "tests/remediation/test_validate_against_real_models.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_validate_against_real_models.py",
+    "rc": 0,
+    "seconds": 0.164
+  },
+  {
+    "name": "tests/remediation/test_validate_topology.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_validate_topology.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_warehouse_building_target.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_warehouse_building_target.mjs",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_warehouse_program_feasibility.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_warehouse_program_feasibility.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_warehouse_render_identity.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_warehouse_render_identity.mjs",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_warehouse_soft_area_fit.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_warehouse_soft_area_fit.py",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/remediation/test_warehouse_vertical_stage_gate.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_warehouse_vertical_stage_gate.py",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_webgl_diagnostics.js",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner 'node tests/lib/run.js' tests/remediation/test_webgl_diagnostics.js",
+    "rc": 124,
+    "seconds": 120.001
+  },
+  {
+    "name": "tests/remediation/test_workspace_recovery.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/remediation/test_workspace_recovery.py",
+    "rc": 0,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/remediation/test_workspace_viewport_selection.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_workspace_viewport_selection.mjs",
+    "rc": 0,
+    "seconds": 0.114
+  },
+  {
+    "name": "tests/remediation/test_workspace_viewport_selection_browser.cjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_workspace_viewport_selection_browser.cjs",
+    "rc": 1,
+    "seconds": 0.368
+  },
+  {
+    "name": "tests/remediation/test_workspace_warehouse_exact_selection.mjs",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner node tests/remediation/test_workspace_warehouse_exact_selection.mjs",
+    "rc": 0,
+    "seconds": 0.064
+  },
+  {
+    "name": "tests/security/test_security.py",
+    "command": "bash tools/ci_run.sh --label audit-baseline --runner python3 tests/security/test_security.py",
+    "rc": 0,
+    "seconds": 0.515
+  },
+  {
+    "name": "09-doc-claims",
+    "command": "python3 tools/check_doc_claims.py",
+    "rc": 1,
+    "seconds": 3.936
+  },
+  {
+    "name": "tests/phase1/test_gate.js (corrected runner)",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_gate.js",
+    "rc": 1,
+    "seconds": 0.215
+  },
+  {
+    "name": "tests/phase1/test_p0.js (corrected runner)",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_p0.js",
+    "rc": 0,
+    "seconds": 0.217
+  },
+  {
+    "name": "tests/phase1/test_phase2.js (corrected runner)",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_phase2.js",
+    "rc": 0,
+    "seconds": 0.218
+  },
+  {
+    "name": "tests/phase1/test_prov.js (corrected runner)",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_prov.js",
+    "rc": 1,
+    "seconds": 0.218
+  },
+  {
+    "name": "tests/phase1/test_types.js (corrected runner)",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_types.js",
+    "rc": 0,
+    "seconds": 0.214
+  },
+  {
+    "name": "tests/phase1/test_xss.js (corrected runner)",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_xss.js",
+    "rc": 0,
+    "seconds": 0.164
+  }
+]

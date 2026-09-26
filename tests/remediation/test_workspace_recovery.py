@@ -326,7 +326,8 @@ class Recovery(unittest.TestCase):
     def test_warehouse_does_not_enter_the_residential_pipeline(self):
         from acs_workspace_progress import planning_system
         def plan(*args,**kwargs):
-            self.assertIsNone(planning_system('plan_chunk'))
+            from acs_warehouse_generation import PLANNING_SYSTEM
+            self.assertEqual(planning_system('plan_chunk'), PLANNING_SYSTEM)
             return model('warehouse')
         with patch.object(U,'_plan_bounded',side_effect=plan),patch('acs_residential_generation.detail') as detail:
             S.generate_plan_candidate('مستودع',[], 'A',3)

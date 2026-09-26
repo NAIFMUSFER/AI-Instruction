@@ -203,6 +203,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     residential = U._is_residential(detected)
     warehouse = detected == 'warehouse'
     if warehouse:
+        from acs_warehouse_generation import PLANNING_SYSTEM as WAREHOUSE_PLANNING_SYSTEM
         from warehouse_program_feasibility import warehouse_requirements_preflight
         preflight = warehouse_requirements_preflight(requirements)
         if not preflight.get('may_generate_layout', True):
@@ -228,19 +229,20 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                        "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
                        "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
     if residential:
-        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail
+        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail, _canonical_room_roles
         prompt += "\n" + ROOM_PROGRAM
         if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
             from acs_residential_manifest import manifest
             resume = manifest(brief, requirements)
-    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(PLANNING_SYSTEM if residential else None):
+    policy = PLANNING_SYSTEM if residential else WAREHOUSE_PLANNING_SYSTEM if warehouse else None
+    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(policy):
         detailed = isinstance(resume,dict) and resume.get("kind") == "details"
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
         result = {"building":resume["building"]} if saved_layout else generate_candidate(prompt)
         _reject_provider_authority_changes({}, result["building"])
         if residential:
             try:
-                before_layout = canonical(result["building"])
+                before_layout = canonical(_canonical_room_roles(result["building"]))
                 result["building"] = prepare_layout(result["building"], brief, requirements, budget)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
                 result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
