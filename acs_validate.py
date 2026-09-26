@@ -125,7 +125,35 @@ def _on_site_boundary(rect, W, D):
     return out
 
 
-def _edge_neighbours(rect, edge, others):
+def _opening_plan(o):
+    """أبعاد الفتحة على مسقط الجدار، أو None إن تعذّر فحصها هندسياً."""
+    edge = o.get("edge")
+    offset, width = o.get("offset", 0), o.get("width", 0.9)
+    if edge not in ("N", "S", "E", "W"):
+        return None
+    if not _finite(offset) or not _finite(width) or float(width) <= 0:
+        return None
+    return edge, float(offset), float(width)
+
+
+def _opening_vertical(o, kind):
+    """الارتفاع المصرّح به فقط؛ لا نخترع جلسة نافذة أو ارتفاع باب."""
+    h = o.get("height")
+    sill = 0 if kind == "doors" else o.get("sill")
+    if not _finite(h) or not _finite(sill) or float(h) <= 0 or float(sill) < 0:
+        return None
+    return float(sill), float(sill) + float(h)
+
+
+def _opening_vertical_overlap(a, b, same_kind):
+    # الفحص القديم من المسقط محفوظ لفتحتين من النوع نفسه عند غياب الارتفاع.
+    # بين باب ونافذة لا يكفي المسقط: قد تكون النافذة فوق الباب تماماً.
+    if a is None or b is None:
+        return same_kind
+    return a[0] < b[1] - GEOM_TOL and b[0] < a[1] - GEOM_TOL
+
+
+def _edge_neighbours(rect, edge, others, opening_span=None):
     """الغرف التي تلامس هذه الحافّة تحديداً — الحافّة المقصودة لا مقابلها.
 
     الاصطلاح ليس تخميناً: acs_bim.py سطر ٣٣٠ يعرّفه صراحةً
@@ -151,6 +179,15 @@ def _edge_neighbours(rect, edge, others):
             touch = abs(x + w - ox) <= GEOM_TOL
             ov = min(z + d, oz + od) - max(z, oz)
         if touch and ov > GEOM_TOL:
+            if opening_span is not None:
+                # الجار الجزئي لا يحوّل بقية الواجهة إلى جدار داخلي.
+                origin, other_origin, extent = ((x, ox, ow) if edge in ("N", "S")
+                                                else (z, oz, od))
+                lo, hi = opening_span
+                aperture_overlap = min(origin + hi, other_origin + extent) - max(
+                    origin + lo, other_origin)
+                if aperture_overlap <= GEOM_TOL:
+                    continue
             hits.append(rid)
     return hits
 
@@ -271,11 +308,32 @@ def validate_building(b):
             # الفتحات ضمن طول الحافة
             for kind in ("doors", "windows"):
                 for o in (r.get(kind) or []):
-                    e = o.get("edge"); off = float(o.get("offset", 0)); ow = float(o.get("width", 0.9))
+                    e = o.get("edge")
+                    if e not in ("N", "S", "E", "W"):
+                        issues.append("[%s/%s] حافّة غير صالحة للفتحة: %s — استخدم N أو S أو E أو W."
+                                      % (tmpl, rid, e))
+                        continue
+                    opening = _opening_plan(o)
+                    if opening is None:
+                        issues.append("[%s/%s] أبعاد فتحة غير صالحة — offset عدد حقيقي، وwidth عدد موجب."
+                                      % (tmpl, rid))
+                        continue
+                    e, off, ow = opening
                     span = w if e in ("N", "S") else d
                     if off - ow / 2 < -0.05 or off + ow / 2 > span + 0.05:
                         issues.append("[%s/%s] %s على الحافة %s خارج حدود الجدار (offset=%.2f عرض=%.2f, الطول=%.2f)."
                                       % (tmpl, rid, "باب" if kind == "doors" else "نافذة", e, off, ow, span))
+                    for field in (("height", "sill") if kind == "windows" else ("height",)):
+                        if field in o and (not _finite(o[field]) or
+                                           (float(o[field]) <= 0 if field == "height" else float(o[field]) < 0)):
+                            issues.append("[%s/%s] البعد الرأسي %s للفتحة غير صالح — "
+                                          "الارتفاع موجب والجلسة غير سالبة." % (tmpl, rid, field))
+                    vertical = _opening_vertical(o, kind)
+                    wall_h = r.get("wall_h") if r.get("wall_h") is not None else b.get("wall_h")
+                    if vertical is not None and _finite(wall_h) and vertical[1] > float(wall_h) + GEOM_TOL:
+                        issues.append("[%s/%s] الفتحة تتجاوز ارتفاع الجدار المصرّح به "
+                                      "(أعلى الفتحة %.2f م، الجدار %.2f م)."
+                                      % (tmpl, rid, vertical[1], float(wall_h)))
 
             rects.append((rid, (x, z, w, d)))
             tmpl_rects[tmpl].append((rid, (x, z, w, d)))
@@ -404,8 +462,8 @@ def validate_building(b):
 
     # ── (٤) الطوبولوجيا داخل كل قالب: أبواب · نوافذ · وصول ──────────────
     for tname, entries in tmpl_rects.items():
-        if len(entries) < 2:
-            continue        # قالب بحيّز واحد: لا طوبولوجيا تُفحَص
+        if not entries:
+            continue        # تصادم الفتحات ممكن حتى في قالب بحيّز واحد.
         rooms_of = tmpl_rooms.get(tname, {})
         index = dict(entries)
 
@@ -417,17 +475,18 @@ def validate_building(b):
                 continue
             boundary = _on_site_boundary(rect, W, D)
             others = [(o_id, o_rect) for o_id, o_rect in entries if o_id != rid]
+            spans = {}
             for kind in ("doors", "windows"):
-                spans = {}
                 for o in (r.get(kind) or []):
-                    e = o.get("edge")
-                    if e not in ("N", "S", "E", "W"):
+                    opening = _opening_plan(o)
+                    if opening is None:
                         continue
-                    off = float(o.get("offset", 0) or 0)
-                    ow_ = float(o.get("width", 0.9) or 0.9)
+                    e, off, ow_ = opening
                     lo, hi = off - ow_ / 2.0, off + ow_ / 2.0
-                    for plo, phi, pkind in spans.get(e, []):
-                        if lo < phi - GEOM_TOL and plo < hi - GEOM_TOL:
+                    vertical = _opening_vertical(o, kind)
+                    for plo, phi, pkind, pvertical in spans.get(e, []):
+                        if (lo < phi - GEOM_TOL and plo < hi - GEOM_TOL
+                                and _opening_vertical_overlap(vertical, pvertical, kind == pkind)):
                             issues.append(
                                 "[%s/%s] فتحتان متراكبتان على الحافّة %s "
                                 "(%s عند %.2f و%s عند %.2f) — باعِد بينهما."
@@ -437,11 +496,11 @@ def validate_building(b):
                                    (plo + phi) / 2.0))
                             reported_o += 1
                             break
-                    spans.setdefault(e, []).append((lo, hi, kind))
+                    spans.setdefault(e, []).append((lo, hi, kind, vertical))
 
                     if reported_o >= PER_CHECK_CAP:
                         continue
-                    nbrs = _edge_neighbours(rect, e, others)
+                    nbrs = _edge_neighbours(rect, e, others, (lo, hi))
                     # لا فحص «باب لا يفتح على شيء» هنا. كُتب ثم أُسقط بالقياس:
                     # على ١٦٥ نموذجاً حقيقياً أطلق ٣٣ بلاغاً، كلّها كاذبة. السبب
                     # افتراضٌ لا يصحّ في هذا النظام — أن كل فراغ ممثَّل كغرفة.
