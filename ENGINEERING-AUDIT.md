@@ -134,7 +134,7 @@ coordinates and counts in this section.
 
 | Model | Manual vertical/support review | Access and openings review | Original validator output |
 |---|---|---|---|
-| Villa | Stair object anchors align at world `(7, 8)` on both levels. Upper room rectangles lie over ground room rectangles. Neither observation proves a load path. | Corridor width is explicitly 2 m. Upper bathroom has a south-edge door facing unmodelled space; full cross-level access cannot be certified. Glazing follows the exterior edge portions inspected. | 12 issues: lighting omissions and the upper corridor's missing door. No F-51 topology diagnostic. |
+| Villa | Stair object anchors align at world `(7, 8)` on both levels. Upper room rectangles lie over ground room rectangles. Neither observation proves a load path. | Corridor width is explicitly 2 m. Upper bathroom has a south-edge door facing unmodelled space; full cross-level access is NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED. Glazing follows the exterior edge portions inspected. | 12 issues: lighting omissions and the upper corridor's missing door. No F-51 topology diagnostic. |
 | Hotel | Core rectangles and object anchors align; stair anchor `(13, 2)`, lift anchor `(11, 2)`. Lower room geometry is partial compared with the typical floor; unsupported-room inference is deliberately suppressed. | Typical corridor width is 2 m. Guest doors point toward it. Corridor lacks its own door records; lift count is present but individual lift footprints are not stated. | 7 issues: lighting omissions and the typical corridor's missing door. No F-51 topology diagnostic. |
 | Office | Core rectangles/anchors align at the same coordinates as the hotel. Lower room geometry is partial; structural support remains unresolved. | Typical corridor width is 2 m. Office/meeting doors face the corridor. No windows are declared, so exterior window placement cannot be judged for this fixture. | 7 issues: lighting omissions and the typical corridor's missing door. No F-51 topology diagnostic. |
 | Clinic | Single level: inter-storey continuity is inapplicable. | Reception opens west to the site boundary. The lab and pharmacy have no door records; the validator catches those omissions. The declared glazing was reviewed against each touched edge. | 7 issues: lighting omissions plus missing lab/pharmacy doors. No F-51 topology diagnostic. |
@@ -216,7 +216,7 @@ its dedicated CI workflow and this report. Generated browser files, shared
 CI, production settings and the regulatory boundary are untouched. No main
 push, merge or production deployment was performed.
 
-The post-change Phase 0/expanded-suite comparison used the same commands and
+The post-change code Phase 0/expanded-suite comparison used the same commands and
 environment as `BASELINE.md`, via `python3 ../run_baseline.py .
 ../audit-evidence/engineering` with a stream-specific `TMPDIR`. The corrected
 Phase 1 snippets were also replayed with `--runner 'node tests/lib/run.js'`.
@@ -225,6 +225,35 @@ the same 32 baseline nonzero exits, no new failing target and the added
 engineering suite passing. Integration, index guard, API origin, CSP hash and
 deploy verification all exited zero; the bare CI runner retained its baseline
 usage exit 64. The documentation-claim failure retained its baseline status.
+
+That sweep's privacy scan ran before this report was finalized, so its result
+did not cover the final report text. The final PR CI subsequently caught a
+new documentation regression: the villa row used a negation phrasing that
+the existing compliance-claim guard did not recognize. The
+[failing CI job](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/36265835407/job/108470203571)
+was reproduced locally with `python3 tests/remediation/test_privacy_boundary.py`
+(`PRIVACY BOUNDARY: 73 passed, 1 failed`). The row now states the existing
+`NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED` outcome directly. The guard
+was not changed or weakened. The earlier no-new-failure comparison therefore
+describes the code sweep, not the final report's initial CI result.
+
+After the wording correction, the privacy command reported
+`PRIVACY BOUNDARY: 74 passed, 0 failed`, and
+`python3 tests/remediation/test_doc_claims.py` reported `Ran 12 tests` and `OK`.
+The recorded baseline ran `python3 tools/bundle_report.py` before
+`python3 tools/check_doc_claims.py`: its current-state block matched, while
+Chromium and the live-panel measurement were unavailable. A later standalone
+gate rerun, after restoring the tracked generated bundle report, reported a
+stale-artifact mismatch. That was a missing measurement prerequisite in the
+rerun, not a current-state mismatch in the recorded baseline.
+
+The final follow-up regenerated the bundle report, then ran the documentation
+gate with the pinned Python environment and
+`ACS_CHROMIUM=/workspace/scratch/cc68e7a7ea83/browser-runtime/chromium`.
+The current-state block matched and all 10 documented claims were measured
+successfully; the gate exited zero. This later browser-enabled result is
+distinct from the original browser-unavailable baseline. The generated test
+artifact was restored afterward and was not committed.
 
 An initial replay exposed missing shell quotes in the baseline's displayed
 corrected-runner commands. Those invocation-error logs were retained
