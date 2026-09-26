@@ -121,9 +121,10 @@ repository permissions and does not deploy.
 ## Five building types: independent coordinate review
 
 Fresh live generation of five models: **NOT VERIFIED — EXTERNAL ENVIRONMENT
-REQUIRED**. No provider credentials or newly generated live models were
-available to this stream. Substituting existing fixtures is disclosed here;
-it does not satisfy a live-generation acceptance test.
+REQUIRED** at the initial audit. No provider credentials or newly generated
+live models were available to this stream then. Substituting existing fixtures
+is disclosed here; it does not satisfy a live-generation acceptance test.
+The dated authenticated follow-up below covers the later captured models.
 
 The audited models are `villa_glazed`, `hotel_glazed`, `office`, `clinic_glazed`
 and `warehouse_glazed` from the committed Phase 3/7 fixtures. They are actual
@@ -264,3 +265,175 @@ Environmental and invocation failures retain their baseline classification.
 A passing geometry suite is not a
 claim that the live frontend, provider, Revit, headset or rendered stair path
 has been verified.
+
+## Authenticated follow-up capture — 2026-09-26
+
+This section records later evidence, not a replacement for the original
+untouched baseline. The coordinator created isolated synthetic audit projects
+through the authenticated live UI. Only those projects were read. There were
+two successful saved live models in this engineering review: an apartment
+building on one level and an apartment building on three levels. Both disclosed
+the deterministic fallback after provider failure. These are not five successful
+live building types. The villa and warehouse attempts did not provide successful
+saved models; the backend report covers their incomplete checkpoints.
+
+The backend agent's scoped deployment lookup identified live Render commit
+`adec616aa5191315991fb9439cee83efbb719b8f`. Frontend build provenance is
+**NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**. The raw captures are excluded
+from git. Reproduce their counts, hashes, parser checks and local recompilation
+from the authorized evidence directory with:
+
+```bash
+python3 tests/remediation/test_audit_engineering_door_meshes.py --evidence /workspace/scratch/cc68e7a7ea83/audit-evidence/engineering-live
+```
+
+That command reads `apartment-revision.json`, `multilevel-revision.json`, the
+actual downloaded `apartment-approved.{ifc,gltf,dxf,svg}` and their separate
+`apartment-{ifc,gltf,dxf,svg}-manifest.json` files. It labels the downloaded glTF
+and local recompiled glTF separately. Missing captures are a missing prerequisite,
+not permission to substitute repository fixtures for live evidence.
+
+The apartment capture is revision `plan_b82ea4b815604e3b88d724400d3138e8` in
+synthetic project `297b015f-5177-4dd7-82cd-3cad31766ec4`. Its model hash is
+`2e732037bfe1a46c50bc9f992b5b661260dedc94db3e40ba5d3402c8e4e1a086`.
+The multilevel capture is revision `plan_8f9a7eda4c684a1c94c14ee3dc8cec10` in
+synthetic project `0708177d-9de0-4777-8518-353f460b053c`. The evidence command
+prints each model's levels, room counts, validator result and review coverage.
+
+| Captured output | Measured result | Engineering implication |
+|---|---|---|
+| One-level apartment | Site 24 × 30 m; 18 template rooms; validator issues `[]`. | Explicit room boundaries and openings can be inspected. Structural load paths, door swing/clearance and ventilation adequacy remain outside this result. |
+| Three-level apartment | Site 30 × 30 m; one 20-room template repeated at level indices 0, 1, 2; validator issues `[]`. Stair rectangle `[0,0,4,4]` and lift rectangle `[27,0,3,4]` repeat exactly. | Core room alignment is represented. No stair/lift objects are declared. `acs_arch.compile_architecture` returns zero cores, zero slab voids and no issues. Local compilation retains three full floor slabs and has no stair/lift object meshes. Physical movement between floors is NOT VERIFIED. |
+
+The second row is the most consequential new output miss. An aligned named
+room does not establish a flight, landing, headroom or opening in the slab.
+The source model and renderer cannot establish a walkable interlevel path from
+those room labels. No dimensions or regulatory error were manufactured to fill
+that gap. Structural support, egress distances against thresholds, and physical
+walkthrough remain **NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**.
+
+### E5 — actual live exports and their declared limits
+
+These are downloaded artifacts from the successful apartment project, not the
+older IFC fixture exports discussed above. The evidence command verifies all
+artifact byte counts and SHA-256 values against their own manifests and prints
+the common model/revision binding. Their declared approval scope is
+`CONCEPTUAL_DESIGN_ONLY`; regulatory and structural fields remain `NOT_VERIFIED`.
+
+| Download | Bytes | Local inspection from the evidence command |
+|---|---:|---|
+| IFC | 11,639 | STEP parser valid; metre length unit with factor 1; one storey at elevation 0; 18 named `IfcSpace` entities; zero wall, door, window and slab entities. Manifest explicitly says `SPACES_ONLY`. |
+| glTF | 480,430 | 237 nodes, 948 accessors, 216,144 buffer bytes. Finite coordinates, accessor ranges, declared bounds and triangle indices passed this local structural check. This is not an official Khronos validator run. |
+| DXF | 27,798 | ezdxf audit: zero errors/fixes; unit code 6 (metres); 18 polylines and 19 text entities. |
+| SVG | 34,200 | XML parses; 18 room groups, 19 rectangles including the site, and 36 text nodes. |
+
+The IFC acceptance requirement for real architectural wall/door/window entities
+is not met by this spaces-only live export. Its scope is disclosed. The DXF/SVG
+projection also explicitly excludes doors, windows, wall thickness, structural
+grid and MEP. Revit import, AutoCAD visual review and headset traversal are
+**NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED**. Successful local parsing is
+not substituted for any of those application checks.
+
+### E6 — reciprocal door records produced coincident glTF leaves
+
+The downloaded apartment glTF contains 35 door meshes but only 18 distinct
+POSITION vertex sets: 17 coincident pairs. Adjacent rooms each carry their own
+canonical opening record, which is valid topology input. The compiler emitted
+a complete leaf for both sides. This is an export defect, not a validator error
+and not a reason to delete either room's opening record.
+
+After failing tests were recorded, the compiler was changed to pair only
+opposite edges of different rooms on the same floor, with exactly matching
+world centres, dimensions, materials and remaining opening semantics. Each pair
+retains both source identities in glTF `extras.acs_opening_sources`. Opening
+IDs, canonical models and frozen-baseline source maps are unchanged. Same-face
+records, ambiguous room IDs, distinct centres/dimensions/materials, and different
+hinge/swing metadata remain separate. No coordinate rounding is used.
+
+The evidence command recompiles the captured apartment locally to 21 door
+meshes: 14 exact reciprocal duplicates are removed, with 28 source records in
+the exported aliases. Three identical-vertex pairs remain because their source
+centres differ in double precision. That conservative limitation is intentional.
+The locally recompiled three-level capture has 60 door meshes and no coincident
+door vertex excess; it still has no physical stair/lift geometry. No GPU timing,
+frame-rate improvement, or visible flicker claim was measured.
+
+### E7 — disclose physical traversal separately from core alignment
+
+The existing `vertical_circulation` scope and conceptual approval invariant are
+preserved. The bridge and canonical review now add local, model-derived coverage:
+`core_alignment`, `geometry_scope: EXPLICIT_CORE_OBJECTS`, `geometry`,
+`missing_geometry`, and `physical_traversal: NOT_VERIFIED`. Dimensioned core
+objects can establish geometry presence; they never establish physical traversal.
+Core objects located in other room roles are recognized. Unmatched objects or
+unknown core intent yield unknown coverage instead of a fabricated missing-core
+finding. Provider/verifier-supplied coverage cannot promote traversal status.
+
+For the captured multilevel model, the new local review records alignment PASS,
+geometry MISSING and missing stair/lift geometry on each level, while retaining
+the existing conceptual approval result. The frontend stream separately changes
+the scope label to core alignment and displays the unverified traversal status,
+including for old responses without this new field. This section does not claim
+that these PR changes are deployed.
+
+### Follow-up test and corpus evidence
+
+Before these source edits, `npm install` and the exact Phase 0 commands were
+rerun. Integration/index/API/CSP/deploy/bundle checks passed; the bare CI command
+again exited 64 for its missing runner. Replaying the 240 test-target commands
+printed in `BASELINE.md` produced the same exits as the original record, including
+30 nonzero test-target results. No product edit preceded that replay. The logs
+are in the external `engineering-live-baseline` evidence directory.
+
+```bash
+python3 tests/remediation/test_audit_engineering_door_meshes.py
+python3 tests/remediation/test_audit_engineering_door_meshes.py --mutations
+python3 tests/remediation/test_audit_engineering_vertical_coverage.py
+python3 tests/remediation/test_audit_engineering_vertical_coverage.py --mutations
+python3 tests/remediation/test_audit_engineering_door_meshes.py --corpus 4980d58
+```
+
+The door suite first recorded failing reciprocal-mesh/alias cases; the coverage
+suite first failed because the coverage field was absent. Follow-up negative
+tests caught premature float32-only pairing and an exception on a legacy level
+without `index`, and both were fixed before delivery. Sound object-based core
+controls also prevented a false missing-geometry disclosure. The resulting suites
+report 12 door tests and 15 coverage tests passing; all 11 door mutations and
+10 coverage mutations are killed. A forged traversal-PASS control also passes.
+
+The corpus command compares with the pre-follow-up PR head `4980d58`: 165 models,
+162 compiled, 90 reciprocal door meshes removed across 83 models; all non-door
+parts and all retained door geometry/materials are unchanged. Repeated compilation
+is deterministic and does not mutate caller input. Existing review scopes/issues
+are identical before and after. The three pre-existing compiler exceptions are
+preserved and reported, not hidden: `models.unstated` in `arch_scen.json` lacks
+`offset`; `live_large_generated.json` and its `_outlier` counterpart lack level
+`index`. These compiler exceptions are distinct from the validator sweep, which
+had no exceptions. No generated capture or test output is committed.
+
+The final replay used the same commands recorded in `BASELINE.md`, plus
+`npm install`, with the pinned virtualenv, `ACS_ENV=test` and an isolated
+`TMPDIR`. Its external `engineering-live-after/results.json` records 249
+invocations, 32 nonzero exits and no exit differences from the original
+baseline. This includes the known missing-browser/vendor failures, the
+WebGL timeout and the bare CI runner usage error; it is not an all-green
+claim. The comparison is reproducible with:
+
+```bash
+python3 - <<'PY'
+import json
+from pathlib import Path
+p = Path('/workspace/scratch/cc68e7a7ea83/audit-evidence/engineering-live-after/results.json')
+rows = json.loads(p.read_text())
+print(len(rows), sum(r['exit'] != 0 for r in rows))
+print([(r['target'], r['baseline_exit'], r['exit']) for r in rows
+       if r['baseline_exit'] != r['exit']])
+PY
+python3 tests/remediation/test_privacy_boundary.py
+python3 tests/remediation/test_doc_claims.py
+```
+
+The final report passed the privacy boundary (74 assertions) and documentation
+guard unit suite (12 tests). Those checks ran after this live evidence section
+was added; the generated bundle/performance outputs and lockfile were restored
+before commit.

@@ -20,6 +20,8 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
+      - name: Pinned compiler dependency
+        run: python -m pip install --require-hashes -r requirements-dev.txt
       - name: Geometry, corpus silence and regulatory boundary
         run: |
           set -euo pipefail
@@ -28,5 +30,12 @@ jobs:
           python tests/remediation/test_validate_topology.py
           python tests/remediation/test_validate_against_real_models.py
           python tests/remediation/test_rule_source_boundary.py
+          python tests/remediation/test_audit_engineering_door_meshes.py
+          python tests/remediation/test_audit_engineering_door_meshes.py --mutations
+          python tests/remediation/test_audit_engineering_vertical_coverage.py
+          python tests/remediation/test_audit_engineering_vertical_coverage.py --mutations
+          python tests/remediation/test_plan_review.py
+          python tests/remediation/test_plan_bridge.py
+          python tests/remediation/test_plan_bridge_integration.py
       - name: Working tree remains clean
         run: git diff --exit-code
