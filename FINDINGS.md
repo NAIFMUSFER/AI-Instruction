@@ -223,23 +223,28 @@ node tests/remediation/test_audit_frontend_guards.js
 python3 tools/check_doc_claims.py
 ```
 
-### Follow-up source heads and check status
+### Final follow-up source heads and check status
 
-Read-only GitHub `GET /repos/NAIFMUSFER/AI-Instruction/commits/{sha}/check-runs?per_page=100`
-identifies the exact source head being checked. At the follow-up publication
-checkpoint, backend and frontend contract/security/deploy jobs have passed;
-their long real-Chromium jobs are still running. The new engineering head has
-just been published and its CI is pending. Those pending results are not passes.
+Read-only GitHub workflow results were checked at **2026-09-26 22:31 UTC**
+against each exact published head. Every workflow on these heads completed with
+conclusion `success`, including each long Real Chromium job and the required CI
+aggregate. Here, success means repository checks only: it does not merge or
+deploy a branch and does not convert any external-environment item into a
+verified outcome.
 
-| Source PR | Exact published head | Publication-checkpoint status |
-|---|---|---|
-| Backend #183 | `987e9a7c779af30cd64938f20ce1b0e45715f390` | Real Chromium pending; no failed completed check at lookup |
-| Engineering #184 | `7fd39d8721872d6589c7b9a69aaf64f26878068d` | New head; CI pending |
-| Frontend #185 | `d95c5713cd20c09de82f14ecf9045f50c700c91a` | Real Chromium pending; no failed completed check at lookup |
+| PR / exact published head | Completed workflow evidence |
+|---|---|
+| Architecture [#182](https://github.com/NAIFMUSFER/AI-Instruction/pull/182) · `78374061fda33851cc6a7317bcd8c0053818047e` | CI #884; Async #741; semantic locks #227; 2D review #605 |
+| Backend [#183](https://github.com/NAIFMUSFER/AI-Instruction/pull/183) · `987e9a7c779af30cd64938f20ce1b0e45715f390` | CI #892; backend audit contracts #3; Async #749; semantic locks #235; 2D review #613 |
+| Engineering [#184](https://github.com/NAIFMUSFER/AI-Instruction/pull/184) · `7fd39d8721872d6589c7b9a69aaf64f26878068d` | CI #894; engineering opening geometry #3; Async #751; semantic locks #237; 2D review #615 |
+| Frontend [#185](https://github.com/NAIFMUSFER/AI-Instruction/pull/185) · `d95c5713cd20c09de82f14ecf9045f50c700c91a` | CI #893; frontend audit contracts #3; Google sign-in #14; Async #750; semantic locks #236; 2D review #614 |
+| Consolidation [#186](https://github.com/NAIFMUSFER/AI-Instruction/pull/186) · `cdb80125d54f09206ddb0edc4751426f037fb1ed` | CI #895; Async #752; semantic locks #238; 2D review #616 |
 
-The original architecture proposal is unchanged. The customer/consolidation
-publication contains documentation only and requires its own subsequent head
-checks. The historical success table below does not certify these follow-ups.
+No completed check on these exact heads failed. The three source fixes remain
+independent and unmerged. The architecture proposal is unchanged. The
+consolidation head contains reports and evidence only. The documentation-only
+commit that records this table is later than `cdb80125...`; its own checks are
+visible on PR #186 and must be evaluated independently.
 
 ### Original baseline and first remediation pass
 
