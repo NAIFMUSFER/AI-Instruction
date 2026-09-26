@@ -1453,37 +1453,37 @@
   },
   {
     "name": "tests/phase1/test_gate.js (corrected runner)",
-    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_gate.js",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_gate.js",
     "rc": 1,
     "seconds": 0.215
   },
   {
     "name": "tests/phase1/test_p0.js (corrected runner)",
-    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_p0.js",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_p0.js",
     "rc": 0,
     "seconds": 0.217
   },
   {
     "name": "tests/phase1/test_phase2.js (corrected runner)",
-    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_phase2.js",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_phase2.js",
     "rc": 0,
     "seconds": 0.218
   },
   {
     "name": "tests/phase1/test_prov.js (corrected runner)",
-    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_prov.js",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_prov.js",
     "rc": 1,
     "seconds": 0.218
   },
   {
     "name": "tests/phase1/test_types.js (corrected runner)",
-    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_types.js",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_types.js",
     "rc": 0,
     "seconds": 0.214
   },
   {
     "name": "tests/phase1/test_xss.js (corrected runner)",
-    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner node tests/lib/run.js tests/phase1/test_xss.js",
+    "command": "bash tools/ci_run.sh --label phase1-correct-runner --runner 'node tests/lib/run.js' tests/phase1/test_xss.js",
     "rc": 0,
     "seconds": 0.164
   }
