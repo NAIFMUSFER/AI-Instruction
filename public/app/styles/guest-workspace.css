@@ -19,3 +19,22 @@ body.acs-guest #left [hidden]{display:none!important}
  body.acs-guest #camBar{top:auto}
  body.acs-guest #left.open{z-index:35}
 }
+
+/* Classic read-only fallback stays usable if the complete module graph fails. */
+body.acs-guest-fallback-active>:not(#acsGuestFallback):not(script):not(link){visibility:hidden!important;pointer-events:none!important}
+body.acs-guest-fallback-active::after{display:none!important}
+#acsGuestFallback{position:fixed;inset:0;z-index:45;overflow:auto;background:#0b1727;color:#edf5ff;padding:24px 16px;font:16px/1.7 system-ui,sans-serif}
+#acsGuestFallback .guest-fallback-card{max-width:850px;margin:0 auto;padding:24px;border:1px solid #38506a;border-radius:18px;background:#12243a}
+#acsGuestFallback .guest-fallback-brand{color:#7addf8;font-weight:800;letter-spacing:3px}
+#acsGuestFallback h1{font-size:26px;margin:8px 0 12px}
+#acsGuestFallback p{margin:10px 0;color:#c8d9e9}
+#acsGuestFallbackStatus[role=alert]{padding:12px;border:1px solid #8e7250;border-radius:10px;color:#ffe2aa;background:#382b22}
+#acsGuestFallbackPlan{display:block;width:100%;height:340px;background:#ecf1f6;border-radius:12px;margin:18px 0}
+#acsGuestFallbackPlan rect{stroke:#3e5366;stroke-width:.08}
+#acsGuestFallbackPlan text{font:0.6px system-ui,sans-serif;fill:#183047;text-anchor:middle;dominant-baseline:middle}
+#acsGuestFallback .guest-fallback-actions{display:flex;flex-wrap:wrap;gap:8px}
+#acsGuestFallback button,#acsGuestFallback a{min-height:44px;padding:9px 14px;border:1px solid #5e7c96;border-radius:10px;color:#fff;background:#253f58;font:inherit;text-decoration:none;cursor:pointer}
+#acsGuestFallback a{background:#79d8f3;color:#102335;font-weight:700}
+#acsGuestFallback button:focus-visible,#acsGuestFallback a:focus-visible{outline:3px solid #fff;outline-offset:3px}
+#acsGuestFallback .guest-fallback-note{font-size:13px}
+@media(max-width:600px){#acsGuestFallback{padding:12px}#acsGuestFallback .guest-fallback-card{padding:16px}#acsGuestFallback h1{font-size:22px}#acsGuestFallbackPlan{height:260px}#acsGuestFallback .guest-fallback-actions>*{flex:1;white-space:nowrap;font-size:14px}}

@@ -727,8 +727,10 @@ remote = [u for u in srcs + all_links
           or (u.startswith('https://') and 'acs-engine.onrender.com' not in u)]
 chk('the page loads no remote script or stylesheet at runtime', remote == [],
     ', '.join(remote[:3]))
-chk('the shell declares scripts and exactly the studio and connected workspace stylesheets',
-    len(srcs) >= 2 and sorted(links) == ['/app/styles/app.css', '/app/styles/connected-workspace.css'],
+chk('the shell declares scripts and exactly the studio, connected workspace and guest stylesheets',
+    len(srcs) >= 2 and sorted(links) == [
+        '/app/styles/app.css', '/app/styles/connected-workspace.css',
+        '/app/styles/guest-workspace.css'],
     'scripts=%r css=%r' % (srcs, links))
 _ref_missing = []
 for u in srcs + links:

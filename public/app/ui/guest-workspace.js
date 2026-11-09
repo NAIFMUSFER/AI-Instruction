@@ -4,6 +4,7 @@ const $ = id => document.getElementById(id);
 
 async function openGuestWorkspace() {
   if (!A?.guest || $('acsGuestBanner')) return;
+  A.finishGuestBoot?.();
   document.body.classList.add('acs-guest');
   const banner = document.createElement('aside');
   banner.id = 'acsGuestBanner';
@@ -14,6 +15,8 @@ async function openGuestWorkspace() {
     + '<button id="guestCreate" type="button">إنشاء محلي</button>'
     + '<a href="/?signin=1" id="guestSignin">تسجيل الدخول للذكاء والحفظ السحابي</a></div>';
   document.body.append(banner);
+  A.guestRecoveryPending = true;
+  A.guestAutosaveReady = false;
   let interactionEpoch=0;
   const userIntent=event=>{
     if(event.target?.closest?.('#left,#acsGuestBanner'))interactionEpoch++;
@@ -45,8 +48,11 @@ async function openGuestWorkspace() {
   const firstNote = document.querySelector('#acsPanelMake > .note');
   if (firstNote) firstNote.textContent = 'جرّب نموذجًا جاهزًا أو اكتب وصفًا للتوليد المحلي التقريبي. استيراد JSON وDXF يبقى على جهازك.';
 
-  function sample(kind) {
-    interactionEpoch++;
+  function sample(kind, initial = false) {
+    if (!initial) {
+      interactionEpoch++;
+      if (!A.guestRecoveryPending) A.guestAutosaveReady = true;
+    }
     if (kind === 'warehouse') $('loadWarehouse').click();
     else A.showExample();
     if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);
@@ -66,30 +72,45 @@ async function openGuestWorkspace() {
   for (const [id, label] of [['loadExample','عمارة تجريبية جاهزة'],['loadWarehouse','مستودع تجريبي جاهز']]) {
     $(id).addEventListener('click', () => { notice(label + ' — لم يُولّد بالذكاء.'); $('status').textContent = label + ' — نموذج محلي.'; });
   }
-  local.addEventListener('click', () => notice('توليد محلي تقريبي من وصفك؛ راجع الأبعاد والعناصر. لا يستخدم الذكاء ولا يُرسل بيانات.'));
-  upload.addEventListener('change', () => notice('يُقرأ ملفك محليًا على هذا الجهاز فقط.'));
+  local.addEventListener('click', () => {
+    if (!A.guestRecoveryPending) A.guestAutosaveReady = true;
+    notice('توليد محلي تقريبي من وصفك؛ راجع الأبعاد والعناصر. لا يستخدم الذكاء ولا يُرسل بيانات.');
+  });
+  upload.addEventListener('change', () => {
+    if (!A.guestRecoveryPending) A.guestAutosaveReady = true;
+    notice('يُقرأ ملفك محليًا على هذا الجهاز فقط.');
+  });
   A.guestWorkspace = { contract: 'acs-local-guest/1', localOnly: true, storageScope: A_AUTH_SCOPE(), sample };
-  // One bounded recovery owner. A late read can never replace a subsequent
-  // sample, input, import or local-generation action from this visitor.
+  // Show a usable sample immediately, but never persist it while storage is
+  // still being read. A slow read remains authoritative until user interaction;
+  // the timer only explains the wait and never discards the saved project.
   let timer;
   try {
-    const recovered = await Promise.race([
-      A.persistence.recover(),
-      new Promise(resolve=>{timer=setTimeout(()=>resolve(null),1500);}),
-    ]);
-    if(interactionEpoch!==0)return;
+    const recovery = A.persistence.recover();
+    sample('residential', true);
+    notice('نموذج تجريبي مؤقت؛ جارٍ البحث عن عملك المحلي. الحفظ التلقائي متوقف حتى اكتمال الاستعادة.');
+    timer=setTimeout(()=>{
+      banner.dataset.recoveryStatus='slow';
+      if(interactionEpoch===0)notice('استعادة العمل المحلي تستغرق وقتًا أطول. يمكنك استعراض النموذج المؤقت؛ لم يُكتب فوق عملك المحفوظ.');
+    },1500);
+    const recovered = await recovery;
+    if(interactionEpoch!==0){A.guestAutosaveReady=true;return;}
     if (recovered?.ok && recovered.project?.model) {
       A.setModel(recovered.project.model);
+      A.guestAutosaveReady=true;
       notice('استُعيد آخر عمل للضيف من هذا الجهاز. لم يُفتح أي مشروع حساب خاص.');
       if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);
       return;
     }
-    sample('residential');
-    if(!recovered)notice('فُتح نموذج تجريبي؛ تعذّرت استعادة الحفظ المحلي في الوقت المحدد. يمكنك استعادة ملف JSON يدويًا.');
+    if(recovered?.code==='NO_RECORDS'){
+      A.guestAutosaveReady=true;
+      notice('عمارة تجريبية جاهزة — لم تُولّد بالذكاء. يمكنك التنقّل وتغيير العرض وحفظ نسخة محلية.');
+    }
+    else notice('تعذّرت استعادة الحفظ المحلي؛ النموذج المعروض تجريبي ولن يُحفظ تلقائيًا. يمكنك تنزيل JSON للاحتفاظ بتعديلاتك.');
   } catch (e) {
-    if(interactionEpoch===0){sample('residential');notice('التخزين المحلي غير متاح؛ يمكنك التجربة وتنزيل JSON للاحتفاظ بعملك.');}
+    if(interactionEpoch===0)notice('التخزين المحلي غير متاح؛ يمكنك التجربة وتنزيل JSON للاحتفاظ بعملك.');
   } finally {
-    clearTimeout(timer);banner.dataset.recovery='complete';
+    clearTimeout(timer);A.guestRecoveryPending=false;banner.dataset.recovery='complete';
     for(const event of ['click','input','change'])document.removeEventListener(event,userIntent,true);
   }
 }

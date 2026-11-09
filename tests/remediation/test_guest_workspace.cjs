@@ -8,6 +8,20 @@ const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const ORIGIN='https://acs-guest.test';
+async function guestSnapshot(page){
+ return page.evaluate(()=>new Promise((resolve,reject)=>{
+  const open=indexedDB.open('acs_guest_project_v1',2);
+  open.onerror=()=>reject(open.error);
+  open.onsuccess=()=>{
+   const db=open.result,tx=db.transaction(['records','meta'],'readonly');
+   let records=[],pointer=null;
+   tx.objectStore('records').getAll().onsuccess=e=>{records=e.target.result;};
+   tx.objectStore('meta').get('pointer').onsuccess=e=>{pointer=e.target.result;};
+   tx.oncomplete=()=>{db.close();resolve({pointer,records:records.sort((a,b)=>a.record_id.localeCompare(b.record_id))});};
+   tx.onerror=()=>{db.close();reject(tx.error);};
+  };
+ }));
+}
 async function runGuestWorkspaceTests(){
  const browser=await PW.launch();let passed=0;
  try{
@@ -28,6 +42,7 @@ async function runGuestWorkspaceTests(){
    });
    await page.goto(ORIGIN+'/');
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.ACS.exportModel());
+   await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
    assert.equal(await page.locator('#login').isVisible(),false);
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -48,7 +63,7 @@ async function runGuestWorkspaceTests(){
    await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===24);
    const saved=await page.evaluate(()=>window.ACS.persistence.save('GUEST_TEST'));
    assert.equal(saved.ok,true);
-   await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.ACS.exportModel()?.site.w===24);
+   await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.site.w===24);
    assert.match(await page.locator('#acsGuestStatus').textContent(),/استُعيد/);
    // Delay the real IndexedDB recovery result, then act before it completes.
    // This instruments only scheduling; the shipped page and saved data are real.
@@ -62,13 +77,37 @@ async function runGuestWorkspaceTests(){
       persistence=api;
       if(sessionStorage.getItem('acs_test_delay_guest_recovery')==='1'){
        const original=api.recover;
-       api.recover=()=>{const result=original();return new Promise(resolve=>{window.__releaseGuestRecovery=()=>result.then(resolve);});};
+       api.recover=()=>{
+        const result=original();result.then(()=>{window.__guestRecoveryReadDone=true;});
+        return new Promise(resolve=>{window.__releaseGuestRecovery=()=>result.then(resolve);});
+       };
       }
      }});
     }});
    });
-   await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__releaseGuestRecovery);
+   // Cross the UI's slow-read notice without releasing the genuine IndexedDB
+   // result. This used to discard recovery and autosave the temporary sample.
+   await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__guestRecoveryReadDone);
+   const beforeSlowRecovery=await guestSnapshot(page);
+   assert.ok(beforeSlowRecovery.records.some(record=>JSON.parse(record.payload).model.site.w===24));
+   await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recoveryStatus==='slow');
+   assert.equal(await page.locator('#acsGuestBanner').getAttribute('data-recovery'),'pending');
+   assert.notEqual(await page.evaluate(()=>window.ACS.exportModel().site.w),24,'a real temporary sample is visible while saved work is still loading');
+   assert.deepEqual(await page.evaluate(()=>window.ACS.persistence.save('AUTOSAVE')),{ok:false,code:'RECOVERY_PENDING'});
+   assert.deepEqual(await page.evaluate(()=>window.ACS.persistence.save('MANUAL')),{ok:false,code:'RECOVERY_PENDING'});
+   await page.evaluate(()=>{
+    Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});
+    document.dispatchEvent(new Event('visibilitychange'));
+    delete document.visibilityState;
+   });
+   assert.deepEqual(await guestSnapshot(page),beforeSlowRecovery,'pending recovery must preserve all saved records and the pointer');
+   await page.evaluate(()=>window.__releaseGuestRecovery());
+   await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.site.w===24);
+   assert.match(await page.locator('#acsGuestStatus').textContent(),/استُعيد/);
+   // A second slow read must not overwrite a new sample chosen by the visitor.
+   await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__guestRecoveryReadDone);
    await page.locator('#guestWarehouse').click();
+   await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
    await page.evaluate(()=>window.__releaseGuestRecovery());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
    assert.equal(await page.evaluate(()=>window.ACS.exportModel().site.w),120,'a late recovery must not replace the visitor sample choice');
@@ -102,7 +141,40 @@ async function runGuestWorkspaceTests(){
    assert.equal(await page.locator('#acsGuestBanner').count(),0);
    passed++;await context.close();
   }
-  console.log('GUEST WORKSPACE: '+passed+' production-origin desktop/mobile journeys passed');
+  // A real browser with WebGL deliberately unavailable must retain useful,
+  // honest 2D content and navigation independently of the failed ESM graph.
+  const noGl=await browser.newContext({viewport:{width:393,height:852}}),fallback=await noGl.newPage();
+  const fallbackCalls=[];
+  await fallback.addInitScript(()=>{
+   const original=HTMLCanvasElement.prototype.getContext;
+   HTMLCanvasElement.prototype.getContext=function(kind,...args){
+    if(['webgl','webgl2','experimental-webgl'].includes(kind))return null;
+    return original.call(this,kind,...args);
+   };
+  });
+  await fallback.route('**/*',async route=>{
+   const url=new URL(route.request().url());
+   if(url.origin!==ORIGIN){fallbackCalls.push(url.pathname);return route.abort();}
+   const file=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
+   if(!file.startsWith(PUB+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return route.fulfill({status:404,body:''});
+   return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(file)});
+  });
+  await fallback.goto(ORIGIN+'/');
+  await fallback.locator('#acsGuestFallback').waitFor({state:'visible'});
+  await fallback.waitForFunction(()=>document.getElementById('acsGuestFallback')?.dataset.engineState==='unavailable');
+  assert.equal(await fallback.locator('#acsGuestFallbackPlan rect').count(),4);
+  assert.equal(await fallback.locator('#genLLM').isEnabled(),false);
+  assert.equal(await fallback.locator('#impFile').isEnabled(),false);
+  assert.equal(await fallback.locator('#acsGuestFallback').getAttribute('data-engine-state'),'unavailable');
+  await fallback.locator('[data-guest-room]').first().click();
+  assert.match(await fallback.locator('#acsGuestFallbackRoom').textContent(),/42/);
+  assert.deepEqual(fallbackCalls,[]);
+  assert.equal(await fallback.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
+  await fallback.locator('#guestFallbackSignin').click();
+  await fallback.locator('#acsAuthGoogle').waitFor({state:'visible'});
+  assert.equal(new URL(fallback.url()).searchParams.get('signin'),'1');
+  await noGl.close();passed++;
+  console.log('GUEST WORKSPACE: '+passed+' production-origin desktop/mobile/no-WebGL journeys passed');
  }finally{await browser.close();}
 }
 module.exports={runGuestWorkspaceTests};

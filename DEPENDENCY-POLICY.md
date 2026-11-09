@@ -6,7 +6,8 @@ The production lock is `requirements.lock`; `requirements.txt` is its byte-ident
 copy because Docker copies this file alone. `requirements-dev.txt` is a separate,
 hashed lock and is excluded from the production image.
 
-Locks were resolved against the package index on 2026-09-05 using uv 0.11.33.
+The production lock was refreshed against the package index on 2026-11-09 using
+uv 0.13.5; the development lock remains from 2026-09-05 using uv 0.11.33.
 They include distribution SHA-256 hashes and conditional dependencies for supported
 platforms, including Linux and Windows. There are no unresolved dependency names.
 Actual Windows installation and execution must still be tested in Windows CI.
@@ -24,6 +25,11 @@ The Starlette, multipart and pypdf upgrades address advisories detected in the o
 constraints remain satisfied. The Anthropic/httpx pair and Uvicorn version are
 preserved. The ASGI compatibility test reads installed package metadata and executes
 `pip check` instead of permanently requiring the vulnerable FastAPI/Starlette pair.
+
+The 2026-11-09 security refresh pins certifi 2026.10.18, Pillow 13.0.0 and pypdf
+6.21.4 for the dependency-audit findings. All other locked package versions are
+preserved. Pillow 13 requires Python 3.11 or newer, matching Docker and CI. Its
+major-version image API changes require the upload and source-preview regressions.
 
 CI must fail on dependency drift, vulnerability findings, unavailable advisory
 services, install/hash failures or test failures. No `continue-on-error` or shell

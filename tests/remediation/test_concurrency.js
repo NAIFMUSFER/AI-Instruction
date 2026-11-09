@@ -236,8 +236,45 @@ console.log('\n== §8 — الصفحة المشحونة توصّل هذا فعل
       page.indexOf('T.concurrency.checkBaseRevision(cur, ACS_EDIT_BASE_REVISION||cur)')>=0);
   chk('a stale base revision shows the declared user state instead of committing',
       page.indexOf("showErrorState({class:'STALE_REVISION', operation:'COMMIT'});")>=0);
-  chk('multi-tab detection uses BroadcastChannel',
-      page.indexOf("new BroadcastChannel('acs_project_tabs')")>=0);
+  // Execute the shipped tab-channel wiring, rather than matching one spelling
+  // of its constructor. A shared channel would let guest and account tabs
+  // claim each other's workspace even though their storage is isolated.
+  (function(){
+    const wire=LOAD.wiringBlock(), start=wire.indexOf('const TAB_ID='),
+          end=wire.indexOf('/* ═══════════ 5', start);
+    if(start<0||end<start){
+      chk('the shipped tab-channel wiring is available for execution',false);return;
+    }
+    const peers=[];
+    class Channel {
+      constructor(name){this.name=name;peers.push(this);}
+      postMessage(message){
+        for(const peer of peers)
+          if(peer!==this&&peer.name===this.name&&peer.onmessage)
+            peer.onmessage({data:JSON.parse(JSON.stringify(message))});
+      }
+    }
+    const boot=new Function('T','window','BroadcastChannel','$',
+      wire.slice(start,end)+'\nreturn {send:tabSend,inspect:window.ACS.tabs};');
+    const tabs=[true,true,false,false].map(guest=>
+      boot(T,{ACS:{guest}},Channel,()=>null));
+    tabs.forEach(tab=>tab.send('HELLO'));
+    const states=tabs.map(tab=>tab.inspect());
+    chk('guest tabs use their own channel while authenticated tabs retain theirs',
+      peers.map(peer=>peer.name).join(',')===
+      'acs_guest_project_tabs,acs_guest_project_tabs,acs_project_tabs,acs_project_tabs');
+    chk('two guest tabs still detect each other through the shipped handlers',
+      states.slice(0,2).every(state=>state.owner.tabs===2));
+    chk('two authenticated tabs still detect each other through the shipped handlers',
+      states.slice(2).every(state=>state.owner.tabs===2));
+    const guestIds=new Set(states.slice(0,2).map(state=>state.self));
+    const accountIds=new Set(states.slice(2).map(state=>state.self));
+    chk('guest and authenticated heartbeats never enter each other\'s ownership state',
+      states.every((state,index)=>Object.keys(state.state.tabs).every(id=>
+        (index<2?guestIds:accountIds).has(id))));
+    chk('missing BroadcastChannel remains an explicit unavailable capability',
+      boot(T,{ACS:{guest:true}},undefined,()=>null).inspect().channel==='UNAVAILABLE');
+  })();
   chk('a heartbeat keeps tab liveness honest',
       page.indexOf("setInterval(()=>tabSend('HEARTBEAT'), 5000);")>=0);
   chk('the user is shown which tab owns the project',
