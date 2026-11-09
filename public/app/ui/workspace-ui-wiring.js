@@ -1307,6 +1307,13 @@ __ACS_SHARED.acsFetchJSON = async function acsFetchJSON(path, opts, timeoutMs){
   const out={status:'', http:0, request_id:'', url:url, path:path,
              ms:0, body:null, message:'', retryable:false, retry_after:0};
   const done=(o)=>{ o.ms=Date.now()-started; ACS_LAST_CALL=o; return o; };
+  // Local guest preview has no network generation, upload, or private API path.
+  if(window.ACS&&window.ACS.guest){
+    out.status=ACS_NET.HTTP_4XX;out.http=401;
+    out.message='سجّل الدخول لاستخدام الذكاء أو إرسال ملفات إلى الخادم. التجربة الحالية محلية.';
+    out.body={error:{code:'GUEST_SIGNIN_REQUIRED',message:out.message}};
+    return done(out);
+  }
   if(!window.ACS_API.base()){
     out.status=ACS_NET.NOT_CONFIGURED;
     out.message='عنوان محرّك الفهم غير مضبوط في هذه النسخة من الصفحة.';
@@ -1379,6 +1386,9 @@ function srvPill(cls,txt){
   p.className='srv'+(cls?' '+cls:''); p.innerHTML=txt;
 }
 async function checkServer(quiet){
+  if(window.ACS&&window.ACS.guest){
+    SRV_OK=false;srvPill('','تجربة محلية بدون تسجيل. الذكاء والحفظ السحابي يتطلبان تسجيل الدخول.');return false;
+  }
   const u=srvURL();
   if(!u){ SRV_OK=false;
     srvPill('bad','محرّك الفهم غير مضبوط — التوليد سيكون محلياً تقريبياً. '
@@ -2428,6 +2438,7 @@ document.getElementById('loadWarehouse').onclick=()=>{
 /* حفظ رابط الخادم بين الجلسات */
 (function(){
   const el=document.getElementById('llmURL');
+  if(window.ACS&&window.ACS.guest)return;
   try{ const s=localStorage.getItem('acs_llm'); if(s) el.value=s; }catch(e){}
   el.addEventListener('change',()=>{ try{ localStorage.setItem('acs_llm', el.value.trim()); }catch(e){}
     checkServer(); });
@@ -2559,6 +2570,9 @@ async function pdfPagesToBlobs(f, maxPages){
 }
 
 async function handleImport(f){
+  if(window.ACS&&window.ACS.guest&&!/\.(json|dxf)$/i.test(f.name)){
+    document.getElementById('impInfo').textContent='يمكن استيراد JSON وDXF محليًا. سجّل الدخول لقراءة الصور وPDF بالذكاء.';return;
+  }
   const info=document.getElementById('impInfo'), name=f.name.toLowerCase();
   const W=+document.getElementById('siteW').value||30,
         D=+document.getElementById('siteD').value||25,

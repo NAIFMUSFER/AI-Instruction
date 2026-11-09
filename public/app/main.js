@@ -55,3 +55,6 @@ import './ui/workspace-viewport-selection-runtime.js';
 import './ui/residential-quality.js';
 /* Recover long generation through short authenticated job requests. */
 import './ui/generation-jobs.js';
+
+/* Public local preview; never creates an authenticated identity. */
+import './ui/guest-workspace.js';

@@ -96,6 +96,12 @@ async function pReadAll(){
 /* الكتابة المعاملاتية: سجلّ جديد ⇒ قراءة تحقّق ⇒ قلب المؤشّر ⇒ تقليم.
    لا نكتب فوق السجلّ السليم الوحيد أبداً، ولا يتحرّك المؤشّر قبل التحقّق. */
 async function pSave(project, origin){
+  // A temporary guest sample must not replace a snapshot still being recovered.
+  // Fail closed before guest UI initialization as well as during a slow read.
+  if(window.ACS.guest && window.ACS.guestRecoveryPending!==false)
+    return {ok:false,code:'RECOVERY_PENDING'};
+  if(window.ACS.guest && origin==='AUTOSAVE' && !window.ACS.guestAutosaveReady)
+    return {ok:false,code:'RECOVERY_UNAVAILABLE'};
   const plan=P.planWrite(pState, project, {now:Date.now(), origin:origin||'AUTOSAVE',
     project_id:(project&&project.project_id)||'default'});
   if(!plan.ok){ pApply(P.applyWriteResult(pState,null,{ok:false})); return plan; }
@@ -469,7 +475,7 @@ window.ACS.concurrencyState=()=>JSON.parse(JSON.stringify(cState));
 const TAB_ID='tab_'+Math.random().toString(36).slice(2,8)+'_'+Date.now().toString(36);
 let tState=T.concurrency.tabsReduce({self_id:TAB_ID},{type:'SELF',tab_id:TAB_ID},Date.now());
 let bc=null;
-try{ if(typeof BroadcastChannel!=='undefined') bc=new BroadcastChannel('acs_project_tabs'); }
+try{ if(typeof BroadcastChannel!=='undefined') bc=new BroadcastChannel(window.ACS.guest?'acs_guest_project_tabs':'acs_project_tabs'); }
 catch(e){ bc=null; }
 function tabSend(type){
   const msg={type:type, tab_id:TAB_ID, project_id:'default', ts:Date.now()};
@@ -794,6 +800,7 @@ function wireAll(){
   let lastHash='';
   const tick=()=>{
     if(!storageScope())return;
+    if(window.ACS.guest && (window.ACS.guestRecoveryPending!==false || !window.ACS.guestAutosaveReady))return;
     let m=null;
     try{ m=(typeof lastBuilding!=='undefined')?lastBuilding:null; }catch(e){ m=null; }
     if(!m) return;
@@ -807,6 +814,8 @@ function wireAll(){
     if(document.visibilityState==='hidden') tick(); });
 
   function recoverCurrentProject(){
+  // Guest boot owns recovery, so a late second restore cannot overwrite edits.
+  if(window.ACS.guest)return;
   const scope=storageScope();
   if(!scope)return;
   vRender().catch(()=>{});

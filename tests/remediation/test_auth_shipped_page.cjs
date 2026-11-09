@@ -58,7 +58,7 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
         return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(f)]||'application/octet-stream',
           'content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(f)});
       });
-      await page.goto('https://acs-ui.test/');
+      await page.goto('https://acs-ui.test/?signin=1');
       await page.waitForFunction(()=>window.ACS&&window.ACS.ready&&window.ACS.persistence);
       assert.equal(await page.locator('#lgName').isVisible(),false);
       assert.equal(await page.locator('#lgProject').isVisible(),false);
@@ -96,7 +96,9 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       // Logout owns a full reload. Wait for that navigation before starting a new
       // auth flow so the stale logout handler cannot overtake the Google redirect.
       await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
-      await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#lgEmail')&&!document.querySelector('#acsAuthCredentials').hidden);
+      await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1'));
+      await page.goto('https://acs-ui.test/?signin=1');
+      await page.waitForFunction(()=>window.ACS&&window.ACS.ready);
       assert.equal(await page.locator('#camBar').isVisible(),false);
       // A real browser redirect round trip must preserve this tab's PKCE proof,
       // restore the same Supabase project, and keep auth codes out of the URL.
@@ -116,4 +118,5 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await context.close();
     }
   }finally{await browser.close();}
+  await require('./test_guest_workspace.cjs').runGuestWorkspaceTests();
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -23,6 +23,15 @@
   }else callbackHash=null;
   function byId(id){return document.getElementById(id);}
   function localHost(){return ["127.0.0.1","localhost","::1","[::1]"].indexOf(location.hostname)>=0;}
+  function hasStoredKey(key){
+    // Decide entry using key names only; an explicit guest never reads account credentials.
+    try{for(var i=0;i<localStorage.length;i++)if(localStorage.key(i)===key)return true;}catch(e){}
+    return false;
+  }
+  var entryQuery=new URLSearchParams(location.search||"");
+  var guestEntry=!googleCallback&&!callbackHash
+    &&entryQuery.get("signin")!=="1"
+    &&(entryQuery.get("guest")==="1"||(!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY)));
   function api(path){
     // Auth always uses the configured origin. A model-server override must not
     // redirect passwords or refresh credentials to a different origin.
@@ -60,6 +69,7 @@
     ["acsAuthRecover","acsAuthResend"].forEach(function(id){var b=byId(id);if(b)b.hidden=next!=="signin";});
   }
   async function acsFetchJSON(path,body,token,timeoutMs){
+    if(guestEntry)throw error("سجّل الدخول لاستخدام الذكاء والحفظ السحابي. التجربة الحالية محلية على جهازك.","GUEST_SIGNIN_REQUIRED",401);
     var url=api(path);if(!url)throw error("تعذّر الاتصال بخدمة الدخول.","AUTH_NOT_CONFIGURED",503);
     var headers={"content-type":"application/json","accept":"application/json"};
     if(token)headers.authorization="Bearer "+token;
@@ -79,6 +89,7 @@
     }finally{clearTimeout(timer);}
   }
   function loadSession(){
+    if(guestEntry)return null;
     if(memorySession)return memorySession;
     try{var s=JSON.parse(localStorage.getItem(SESSION_KEY)||"null");
       if(s&&typeof s.access_token==="string"&&s.access_token&&typeof s.refresh_token==="string"&&s.refresh_token&&s.user&&typeof s.user.id==="string"&&s.user.id)return s;
@@ -318,7 +329,9 @@
     });header.appendChild(b);
   }
   function authInit(callback){
-    onEntry=callback;setMode("signin");
+    onEntry=callback;
+    if(guestEntry){onEntry({mode:"guest",name:"ضيف · محلي"});return;}
+    setMode("signin");
     var form=byId("acsAuthForm");
     if(form)form.addEventListener("submit",function(e){e.preventDefault();submit();});
     else byId("lgGo").addEventListener("click",submit);
@@ -338,17 +351,56 @@
     acceptEmailCallback();
   }
   function storageScope(){
+    if(guestEntry)return "acs_guest_project_v1";
     if(localHost())return "acs_local_project";
     var a=window.ACS, uid=a&&a.authSession&&a.authSession.user&&a.authSession.user.id, pid=a&&a.projectId;
     return typeof uid==="string"&&uid&&typeof pid==="string"&&pid ? "acs_local_project:"+uid+":"+pid : null;
   }
   window.ACS_AUTH={contract:"acs-production-auth/1.2",init:authInit,loadSession:loadSession,freshSession:freshSession,storageScope:storageScope,acsFetchJSON:acsFetchJSON,
-    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost};
+    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost,isGuest:function(){return guestEntry;}};
 })();
 
-window.ACS = { ready:false, pending:null };
+window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_AUTH.isGuest()) };
 (function(){
   function byId(i){return document.getElementById(i);}
+  // This classic fallback survives a failed ESM/WebGL graph. It is an explicit
+  // read-only schematic, never a substitute for a user's saved project or 3D.
+  function guestFallback(){
+    if(!window.ACS.guest||window.ACS.guestWorkspaceReady||byId('acsGuestFallback'))return;
+    document.body.classList.add('acs-guest-fallback-active');
+    var controls=document.querySelectorAll('#left button,#left input,#left textarea,#left select,#camBar button');
+    for(var i=0;i<controls.length;i++)if(!controls[i].disabled){controls[i].disabled=true;controls[i].setAttribute('data-guest-boot-disabled','1');}
+    var panel=document.createElement('section');panel.id='acsGuestFallback';panel.setAttribute('aria-label','تجربة محلية ثنائية الأبعاد');
+    panel.innerHTML='<div class="guest-fallback-card"><span class="guest-fallback-brand">ACS</span><h1>تجربة بدون تسجيل</h1>'
+      +'<p id="acsGuestFallbackStatus" role="status">جارٍ تجهيز العرض ثلاثي الأبعاد. يمكنك استعراض المثال التوضيحي أدناه الآن.</p>'
+      +'<p>مخطط توضيحي ثابت للقراءة فقط، محلي على جهازك. ليس مشروعك المحفوظ ولا مخططًا تنفيذيًا.</p>'
+      +'<svg id="acsGuestFallbackPlan" viewBox="-1 -1 14 12" role="img" aria-label="مثال مبسط 12 في 10 أمتار، أربعة فراغات مستطيلة">'
+      +'<rect x="0" y="0" width="7" height="6" fill="#b4d9e5"/><rect x="7" y="0" width="5" height="6" fill="#c7dcbd"/>'
+      +'<rect x="0" y="6" width="7" height="4" fill="#e9d4af"/><rect x="7" y="6" width="5" height="4" fill="#c9c4df"/>'
+      +'<text x="3.5" y="3">فراغ ١</text><text x="9.5" y="3">فراغ ٢</text><text x="3.5" y="8">فراغ ٣</text><text x="9.5" y="8">فراغ ٤</text></svg>'
+      +'<div class="guest-fallback-actions"><button type="button" data-guest-room="فراغ ١: 7 × 6 م، المساحة 42 م²">فراغ ١</button>'
+      +'<button type="button" data-guest-room="فراغ ٢: 5 × 6 م، المساحة 30 م²">فراغ ٢</button>'
+      +'<button type="button" data-guest-room="فراغ ٣: 7 × 4 م، المساحة 28 م²">فراغ ٣</button>'
+      +'<button type="button" data-guest-room="فراغ ٤: 5 × 4 م، المساحة 20 م²">فراغ ٤</button></div>'
+      +'<p id="acsGuestFallbackRoom" role="status">اختر فراغًا لعرض أبعاده. الأبعاد هنا للمثال التوضيحي فقط.</p>'
+      +'<div class="guest-fallback-actions"><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
+      +'<button id="guestFallbackReload" type="button">إعادة محاولة العرض</button></div>'
+      +'<p class="guest-fallback-note">التوليد والتعديل والاستيراد غير متاحة في هذا العرض البديل. لا تُرسل بيانات إلى الخادم.</p></div>';
+    document.body.appendChild(panel);
+    panel.querySelectorAll('[data-guest-room]').forEach(function(button){button.addEventListener('click',function(){byId('acsGuestFallbackRoom').textContent=button.getAttribute('data-guest-room');});});
+    byId('guestFallbackReload').addEventListener('click',function(){location.reload();});
+    function failure(message){var status=byId('acsGuestFallbackStatus');if(status){status.textContent=message;status.setAttribute('role','alert');panel.setAttribute('data-engine-state','unavailable');}}
+    window.ACS.guestBootFailure=function(){failure('تعذّر تشغيل العرض ثلاثي الأبعاد في هذه الجلسة. المثال ثنائي الأبعاد متاح، ويمكنك تسجيل الدخول إلى مشروعاتك.');};
+    var errors=window.ACS_BOOT_ERRORS||[];
+    if(errors.some(function(e){return /WebGL|creating.*context/i.test(e.message||'');}))window.ACS.guestBootFailure();
+    window.addEventListener('error',function(e){if(/WebGL|creating.*context/i.test(e.message||''))window.ACS.guestBootFailure();});
+  }
+  window.ACS.finishGuestBoot=function(){
+    window.ACS.guestWorkspaceReady=true;
+    var panel=byId('acsGuestFallback');if(panel)panel.remove();
+    document.body.classList.remove('acs-guest-fallback-active');
+    document.querySelectorAll('[data-guest-boot-disabled]').forEach(function(control){control.disabled=false;control.removeAttribute('data-guest-boot-disabled');});
+  };
   function enter(identity){
     identity=identity||{};
     var nm=String(identity.name||'عميل').trim()||'عميل';
@@ -366,15 +418,16 @@ window.ACS = { ready:false, pending:null };
     byId('left').style.display='flex';
     byId('who').textContent=nm;
     document.body.classList.add('acs-entered');
+    if(identity.mode==='guest')guestFallback();
     if(window.ACS_AUTH&&window.ACS_AUTH.addLogout&&identity.mode==='supabase')
       window.ACS_AUTH.addLogout();
     if(window.innerWidth<=820 && window.ACS.setProjectPanelOpen)
-      window.ACS.setProjectPanelOpen(true);
+      window.ACS.setProjectPanelOpen(identity.mode!=='guest');
     if(identity.mode==='local'){
       if(window.ACS.ready && window.ACS.showExample) window.ACS.showExample();
       else window.ACS.pending='example';
     }
-    document.dispatchEvent(new CustomEvent('acs:authenticated',{detail:{mode:identity.mode}}));
+    document.dispatchEvent(new CustomEvent(identity.mode==='guest'?'acs:guest':'acs:authenticated',{detail:{mode:identity.mode}}));
   }
   function initMobileNavigation(){
     var panel=byId('left'), toggle=byId('panelToggle');
@@ -449,6 +502,7 @@ window.ACS = { ready:false, pending:null };
     if(rl) rl.addEventListener('click', function(){ location.reload(); });
     setTimeout(function(){
       if(!window.ACS.ready){
+        if(window.ACS.guest&&window.ACS.guestBootFailure){window.ACS.guestBootFailure();return;}
         var w=byId('engineWarn');
         if(w){ w.classList.remove('acs-hidden'); w.style.display='block'; }
       }

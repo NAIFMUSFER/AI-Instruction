@@ -36,7 +36,7 @@
      aria-atomic="true"></div>
 <div id="app" role="img" lang="ar" aria-label="لوحة عرض ثلاثي الأبعاد (WebGL) — لا يستطيع قارئ الشاشة تفسير بكسلاتها؛ البديل النصّي الكامل متاح عبر الزرّ «فتح البديل النصّي للعرض». 3D WebGL viewport — a screen reader cannot interpret its pixels; the full text alternative is available from the “Open the text alternative” button."></div>
 
-<div id="engineWarn" role="alert" aria-live="assertive">تعذّر تحميل محرّك العرض ثلاثي الأبعاد — قد يكون أحد مزوّدي المكتبات (CDN) غير متاح.
+<div id="engineWarn" role="alert" aria-live="assertive">تعذّر تشغيل العرض ثلاثي الأبعاد في هذه الجلسة — قد لا يتوفر WebGL أو لم يكتمل تحميل المحرّك.
   <button class="acs-u-01" id="engineWarnReload" type="button" aria-label="إعادة تحميل الصفحة — Reload the page" title="إعادة تحميل الصفحة / Reload the page">إعادة التحميل</button>
   <span class="acs-u-02">(المتصفحات القديمة جداً قد لا تدعم العرض ثلاثي الأبعاد.)</span></div>
 <button id="panelToggle" type="button" title="إظهار أو إخفاء لوحة المشروع / Show or hide the project panel" aria-label="إظهار أو إخفاء لوحة المشروع — Show or hide the project panel" aria-expanded="false" aria-controls="left"><span aria-hidden="true">☰</span><span class="mobile-label">المشروع</span></button>
@@ -69,6 +69,7 @@
       <button id="lgSignup" class="auth-secondary" type="button">إنشاء حساب جديد</button>
       <div class="auth-help"><button id="acsAuthRecover" class="auth-text-button" type="button">نسيت كلمة المرور؟</button><button id="acsAuthResend" class="auth-text-button" type="button">إعادة إرسال تأكيد البريد</button></div>
     </form>
+    <p class="hint"><a href="/?guest=1">جرّب الاستوديو بدون تسجيل</a></p>
     <p class="hint auth-privacy">مساحة خاصة لمشاريعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></p>
     <noscript><p role="alert">فعّل JavaScript لاستخدام تسجيل الدخول والاستوديو.</p></noscript>
   </div>
@@ -511,6 +512,7 @@
 <!-- الدخول والواجهة الأساسية: سكربت عادي يعمل دائماً حتى لو فشل تحميل محرّك 3D -->
 <script src="/app/boot/engine-guard.js"></script>
 <link rel="stylesheet" href="/app/styles/connected-workspace.css">
+<link rel="stylesheet" href="/app/styles/guest-workspace.css">
 
 <script type="module" src="/app/main.js"></script>
 <!-- ===== ACS WORKSPACE DOM (generated) ===== -->
