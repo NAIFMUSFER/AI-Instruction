@@ -14,6 +14,7 @@ const problem = (code, status=503) => response({error:{code,message:'message-'+c
 const settle = () => new Promise(resolve=>setImmediate(resolve));
 function harness(handler, initial=null, hostname='acs.example.test', hash='', options={}) {
   const map=new Map(initial?[[KEY,JSON.stringify(initial)]]:[]), calls=[], entered=[], nodes=new Map(), listeners={};
+  if(options.recovery)map.set("acs_password_recovery_v1",options.recovery);
   const tab=options.tab||new Map(), navigations=[];
   function element(id){
     if(nodes.has(id))return nodes.get(id);
@@ -26,11 +27,11 @@ function harness(handler, initial=null, hostname='acs.example.test', hash='', op
   }
   const document={readyState:'loading',getElementById:element,querySelector:()=>null,
     addEventListener(){},createElement:()=>element('new'),body:{classList:{remove(){}}}};
-  const location={hostname,origin:'https://'+hostname,hash,pathname:'/',search:options.search||'',reload(){h.reloads++;},assign(url){navigations.push(url);}};
+  const location={hostname,origin:'https://'+hostname,hash,pathname:'/',search:options.search===undefined?'?signin=1':options.search,reload(){h.reloads++;},assign(url){navigations.push(url);}};
   const ctx={document,location,history:{replaceState(a,b,url){const u=new URL(url,location.origin);location.hash=u.hash;location.search=u.search;}},console,setTimeout,clearTimeout,AbortController,URL,URLSearchParams,CustomEvent:class{},
     crypto:webcrypto,TextEncoder,btoa:s=>Buffer.from(s,'binary').toString('base64'),
     sessionStorage:{getItem:k=>tab.get(k)||null,setItem:(k,v)=>tab.set(k,v),removeItem:k=>tab.delete(k)},
-    localStorage:{getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)},
+    localStorage:{get length(){return map.size;},key:i=>Array.from(map.keys())[i]??null,getItem:k=>map.get(k)||null,setItem:(k,v)=>map.set(k,v),removeItem:k=>map.delete(k)},
     fetch:async(url,opts)=>{calls.push({url,opts});return handler(new URL(url).pathname,opts,calls);},
     window:{ACS_API:{configured:'https://api.example.test',url:p=>'https://override.example.test'+p},
       addEventListener:(k,fn)=>{listeners[k]=fn;}}};
@@ -51,6 +52,24 @@ function googleStart(opts,origin='https://acs.example.test/'){
 }
 async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
 (async()=>{
+  await test('fresh public entry is a guest with no auth network or identity',async()=>{
+    const h=harness(()=>{throw new Error('guest must not fetch');},null,'acs.example.test','',{search:''});
+    h.init();await settle();
+    assert.equal(h.entered[0].mode,'guest');assert.equal(h.auth.storageScope(),'acs_guest_project_v1');
+    assert.equal(h.auth.loadSession(),null);assert.equal(await h.auth.freshSession(),null);
+    await assert.rejects(h.auth.acsFetchJSON('/v1/auth/projects',{}),e=>e.code==='GUEST_SIGNIN_REQUIRED');
+    assert.equal(h.calls.length,0);assert.equal(h.ctx.window.ACS.authSession,undefined);
+  });
+  await test('explicit guest leaves stored account credentials untouched and unread',async()=>{
+    const h=harness(()=>{throw new Error('guest must not fetch');},session(),'acs.example.test','',{search:'?guest=1',recovery:'private-user'});
+    const before=h.map.get(KEY);let reads=0;h.ctx.localStorage.getItem=()=>{reads++;throw new Error('credential read');};
+    h.init();assert.equal(h.entered[0].mode,'guest');assert.equal(h.auth.loadSession(),null);assert.equal(await h.auth.freshSession(),null);
+    assert.equal(reads,0);assert.equal(h.map.get(KEY),before);assert.equal(h.calls.length,0);
+  });
+  await test('a stored session on the default public URL retains authenticated entry',async()=>{
+    const h=harness(()=>response({project:{id:'project-a'},user:{id:'user-a'}}),session(),'acs.example.test','',{search:''});
+    h.init();await settle();assert.equal(h.entered[0].mode,'supabase');assert.equal(h.calls.length,1);
+  });
   await test('Google uses a fresh PKCE proof and recovers from browser Back',async()=>{
     const h=harness((path,opts)=>{assert.equal(path,'/v1/auth/google/start');return googleStart(opts);});h.init();
     h.el('lgPassword').value='existing-password';

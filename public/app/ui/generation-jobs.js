@@ -30,6 +30,7 @@ function acsJobScopeMatches(row) {
   return !!scope&&row.scope===scope;
 }
 function acsJobRead() {
+  if(window.ACS&&window.ACS.guest)return null;
   let row = ACS_ASYNC_MEMORY;
   try { row = JSON.parse(window.sessionStorage.getItem(ACS_ASYNC_STORAGE)) || row; }
   catch (e) { /* storage unavailable: same-page recovery still works */ }
@@ -92,6 +93,7 @@ function acsJobLocalAuthBypass() {
   return !!(auth && typeof auth.isLocalTestHost === 'function' && auth.isLocalTestHost());
 }
 async function acsJobSubmissionHeaders(baseHeaders) {
+  if(window.ACS&&window.ACS.guest)return null;
   const headers = Object.assign({}, baseHeaders || {});
   Object.keys(headers).forEach(key => {
     if (String(key).toLowerCase() === 'authorization') delete headers[key];

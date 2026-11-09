@@ -23,6 +23,15 @@
   }else callbackHash=null;
   function byId(id){return document.getElementById(id);}
   function localHost(){return ["127.0.0.1","localhost","::1","[::1]"].indexOf(location.hostname)>=0;}
+  function hasStoredKey(key){
+    // Decide entry using key names only; an explicit guest never reads account credentials.
+    try{for(var i=0;i<localStorage.length;i++)if(localStorage.key(i)===key)return true;}catch(e){}
+    return false;
+  }
+  var entryQuery=new URLSearchParams(location.search||"");
+  var guestEntry=!googleCallback&&!callbackHash
+    &&entryQuery.get("signin")!=="1"
+    &&(entryQuery.get("guest")==="1"||(!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY)));
   function api(path){
     // Auth always uses the configured origin. A model-server override must not
     // redirect passwords or refresh credentials to a different origin.
@@ -60,6 +69,7 @@
     ["acsAuthRecover","acsAuthResend"].forEach(function(id){var b=byId(id);if(b)b.hidden=next!=="signin";});
   }
   async function acsFetchJSON(path,body,token,timeoutMs){
+    if(guestEntry)throw error("سجّل الدخول لاستخدام الذكاء والحفظ السحابي. التجربة الحالية محلية على جهازك.","GUEST_SIGNIN_REQUIRED",401);
     var url=api(path);if(!url)throw error("تعذّر الاتصال بخدمة الدخول.","AUTH_NOT_CONFIGURED",503);
     var headers={"content-type":"application/json","accept":"application/json"};
     if(token)headers.authorization="Bearer "+token;
@@ -79,6 +89,7 @@
     }finally{clearTimeout(timer);}
   }
   function loadSession(){
+    if(guestEntry)return null;
     if(memorySession)return memorySession;
     try{var s=JSON.parse(localStorage.getItem(SESSION_KEY)||"null");
       if(s&&typeof s.access_token==="string"&&s.access_token&&typeof s.refresh_token==="string"&&s.refresh_token&&s.user&&typeof s.user.id==="string"&&s.user.id)return s;
@@ -318,7 +329,9 @@
     });header.appendChild(b);
   }
   function authInit(callback){
-    onEntry=callback;setMode("signin");
+    onEntry=callback;
+    if(guestEntry){onEntry({mode:"guest",name:"ضيف · محلي"});return;}
+    setMode("signin");
     var form=byId("acsAuthForm");
     if(form)form.addEventListener("submit",function(e){e.preventDefault();submit();});
     else byId("lgGo").addEventListener("click",submit);
@@ -338,15 +351,16 @@
     acceptEmailCallback();
   }
   function storageScope(){
+    if(guestEntry)return "acs_guest_project_v1";
     if(localHost())return "acs_local_project";
     var a=window.ACS, uid=a&&a.authSession&&a.authSession.user&&a.authSession.user.id, pid=a&&a.projectId;
     return typeof uid==="string"&&uid&&typeof pid==="string"&&pid ? "acs_local_project:"+uid+":"+pid : null;
   }
   window.ACS_AUTH={contract:"acs-production-auth/1.2",init:authInit,loadSession:loadSession,freshSession:freshSession,storageScope:storageScope,acsFetchJSON:acsFetchJSON,
-    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost};
+    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost,isGuest:function(){return guestEntry;}};
 })();
 
-window.ACS = { ready:false, pending:null };
+window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_AUTH.isGuest()) };
 (function(){
   function byId(i){return document.getElementById(i);}
   function enter(identity){
@@ -369,12 +383,12 @@ window.ACS = { ready:false, pending:null };
     if(window.ACS_AUTH&&window.ACS_AUTH.addLogout&&identity.mode==='supabase')
       window.ACS_AUTH.addLogout();
     if(window.innerWidth<=820 && window.ACS.setProjectPanelOpen)
-      window.ACS.setProjectPanelOpen(true);
+      window.ACS.setProjectPanelOpen(identity.mode!=='guest');
     if(identity.mode==='local'){
       if(window.ACS.ready && window.ACS.showExample) window.ACS.showExample();
       else window.ACS.pending='example';
     }
-    document.dispatchEvent(new CustomEvent('acs:authenticated',{detail:{mode:identity.mode}}));
+    document.dispatchEvent(new CustomEvent(identity.mode==='guest'?'acs:guest':'acs:authenticated',{detail:{mode:identity.mode}}));
   }
   function initMobileNavigation(){
     var panel=byId('left'), toggle=byId('panelToggle');
