@@ -956,19 +956,17 @@ def _call_llm_impl(description, model=None, max_tokens=None, truncate=True,
         def _call(kw):
             """ينفّذ وسائط مبنيّة سلفاً. البثّ أوّلاً، وcreate لمكتبة بلا stream."""
             import acs_provider_budget as REQUEST_BUDGET
-            REQUEST_BUDGET.consume()
             try:
-                with client.messages.stream(**kw) as s:
-                    return s.get_final_message()
+                stream = client.messages.stream
             except AttributeError:
-                tel["transport"] = "create"      # F-50: أيّ مسار سلكه النداء
-                # F-32: الرجوع إلى create() مقصور على «مكتبة بلا stream()» وحدها.
-                # كان TypeError مشمولاً هنا أيضاً، فكان وسيطٌ لا تعرفه المكتبة
-                # يُعاد إرساله حرفياً إلى create() فيفشل الفشل نفسه — تكرارٌ مضمون
-                # الفشل يمحو أثر السبب. خطأ الوسائط ليس «مكتبة قديمة بلا بثّ»:
-                # يُترك ليصنَّف عطلاً محلياً في _classify_call_error.
+                # غياب الوسيلة وحده يجيز الرجوع؛ خطأ داخل بثّ بدأ فعلاً لا
+                # يجيز شراء ردّ جديد بصمت ولا إخفاء عطل القراءة.
+                tel["transport"] = "create"
                 REQUEST_BUDGET.consume()
                 return client.messages.create(**kw)
+            REQUEST_BUDGET.consume()
+            with stream(**kw) as s:
+                return s.get_final_message()
 
         # سلّم محاولات مقصور على حالة واحدة: رد **بلا نصّ إطلاقاً**، وسببها المعروف
         # أنّ "التفكير الموسّع" ابتلع الميزانية كلّها (stop=max_tokens مع out_chars=0).
@@ -1380,7 +1378,7 @@ def validate(building):
     return building
 
 def call_llm_repair(description, building, issues, model=None,
-                    request_id=None, strategy=None):
+                    request_id=None, strategy=None, telemetry=None):
     """يُعيد النموذج لإصلاح المخالفات المكتشفة (حلقة التحقّق والإصلاح)."""
     import acs_validate as V
     fix_prompt = (
@@ -1395,7 +1393,7 @@ def call_llm_repair(description, building, issues, model=None,
     bt = str((building.get("meta") or {}).get("type") or detect_type(description))
     return call_llm(fix_prompt, model=model, max_tokens=mt, truncate=False, btype=bt,
                     user_msg="", stage="repair", request_id=request_id,
-                    strategy=strategy)
+                    strategy=strategy, telemetry=telemetry)
 
 
 def apply_notes(building, notes, model=None):
@@ -2217,13 +2215,22 @@ def understand(description, model=None, repair_rounds=None, deep=None, strict=Fa
         if not issues:
             break
         print("[ACS-CHECK] إرسال %d مخالفة للإصلاح (جولة %d)…" % (len(issues), i + 1))
+        repair_tel = {}
+        repair_error = None
         try:
             fixed = validate(extract_json(call_llm_repair(
                 description, building, issues, model=model,
-                request_id=request_id, strategy=plan["strategy"])))
+                request_id=request_id, strategy=plan["strategy"],
+                telemetry=repair_tel)))
         except Exception as e:
+            repair_error = getattr(e, "code", None) or type(e).__name__
             print("[ACS-CHECK] فشل الإصلاح (%s) — نُبقي النموذج السابق." % str(e)[:200])
             break
+        finally:
+            # الردّ المرفوض أو غير القابل للتحليل استهلك نداءه أيضاً. يُقاس
+            # الإصلاح مع التوليد الأول، ولا تختفي كلفته من ملخّص المراحل.
+            stages.append(_safe_stage(repair_tel, plan["estimated_zones"],
+                                      "repair", error=repair_error))
         new_issues, new_stats = V.validate_building(fixed)
         print("[ACS-CHECK] جولة %d: %d مخالفة · %s" % (i + 1, len(new_issues), new_stats))
         if len(new_issues) <= len(issues):      # تحسّن أو تعادل → اعتمده
