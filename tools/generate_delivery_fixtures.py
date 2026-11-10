@@ -16,7 +16,9 @@ from acs_plan_projection import project
 
 def fixtures():
     door=lambda id,edge,offset:{'id':id,'edge':edge,'offset':offset,'width':1.2,'height':2.2,'material':'wood'}
-    villa={'meta':{'type':'residential','name':'Synthetic two-level villa'},'site':{'w':20,'d':20},'wall_h':3,'wall_t':.2,'floor_height':3.2,'levels':[{'index':0,'template':'home','elevation':0},{'index':1,'template':'home','elevation':4.2}], 'floors':{'home':{'rooms':[
+    # Explicit canonical wall top meets the next0.15m slab underside at4.05m.
+    # The old3m-wall/4.2m-level model stays an unchanged adversarial fixture.
+    villa={'meta':{'type':'residential','name':'Synthetic two-level villa'},'site':{'w':20,'d':20},'wall_h':4.05,'wall_t':.2,'floor_height':3.2,'levels':[{'index':0,'template':'home','elevation':0},{'index':1,'template':'home','elevation':4.2}], 'floors':{'home':{'rooms':[
        {'id':'living','name':'مجلس العائلة','role':'living','rect':[0,0,8,8],'walls':['N','S','W','E'],'doors':[door('entry','N',4),door('core_access','E',4)],'windows':[{'id':'west_window','edge':'W','offset':4,'width':2,'height':1.5,'sill':.9}],'objects':[{'id':'dining_table','kind':'table','x':4,'z':4,'y':0,'w':2,'d':1,'h':.8,'rot':45,'count':1,'pitch':1,'dir':'x'}]},
        {'id':'stairs','name':'نواة درج — المسار الرأسي غير متحقق','role':'stairs','core_id':'stair_core','rect':[8,0,4,8],'walls':['N','S','W','E'],'doors':[door('living_access','W',4)],'windows':[]} ]}}}
     warehouse={'meta':{'type':'warehouse','name':'Synthetic warehouse with open shared zone'},'site':{'w':30,'d':25},'wall_h':7.5,'wall_t':.2,'floor_height':8,'levels':[{'index':0,'template':'ground','elevation':0}],'floors':{'ground':{'rooms':[
@@ -28,9 +30,9 @@ def fixtures():
                 room['points']=[{'id':'ceiling_light','type':'light','x':room['rect'][2]/2,'z':room['rect'][3]/2}]
     return {'villa':villa,'warehouse':warehouse}
 
-def main(out):
+def main(out, models=None):
     out=Path(out);out.mkdir(parents=True,exist_ok=True);report=[]
-    for name,model in fixtures().items():
+    for name,model in (fixtures() if models is None else models).items():
         (out/(name+'.json')).write_text(json.dumps(model,ensure_ascii=False,indent=2)+'\n')
         area=sum(r['rect'][2]*r['rect'][3] for l in model['levels'] for r in model['floors'][l['template']]['rooms'])
         brief=f'Synthetic total canonical room area {area} square metres.'

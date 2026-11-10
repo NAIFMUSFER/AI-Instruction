@@ -1,0 +1,102 @@
+# Public, free post-deployment acceptance. This is not a paid/private journey
+# and is not a required branch check unless repository administration sets it.
+name: Published delivery verification
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: delivery-published-main
+  cancel-in-progress: true
+
+jobs:
+  published-public-journey:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      ACS_VERIFY_EXPECT_SHA: ${{ github.event.workflow_run.head_sha }}
+      ACS_VERIFY_FRONTEND: https://sprightly-selkie-d906c3.netlify.app
+      ACS_VERIFY_BACKEND: https://acs-engine.onrender.com
+      ACS_GUEST_OUTPUT: logs/published/public-guest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify checkout identity and bounded wait regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p logs/published
+          test "$(git rev-parse HEAD)" = "$ACS_VERIFY_EXPECT_SHA"
+          python tests/remediation/test_delivery_published.py 2>&1 | tee logs/published/wait-contracts.log
+      - name: Install locked Playwright and Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci 2>&1 | tee logs/published/npm-install.log
+          npx playwright install --with-deps chromium 2>&1 | tee logs/published/chromium-install.log
+      - name: Wait at most ten minutes for both published revisions
+        id: published
+        timeout-minutes: 11
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/deploy/wait_published_revision.py --seconds 600 2>&1 | tee logs/published/revision-wait.log
+      - name: Fresh desktop and mobile guest journey with exact revision evidence
+        if: ${{ !cancelled() && steps.published.outcome == 'success' }}
+        timeout-minutes: 8
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/production/run_all.sh 2>&1 | tee logs/published/public-journey.log
+      - name: Anonymous backend error contracts remain 401 without generation
+        if: ${{ !cancelled() && steps.published.outcome == 'success' }}
+        timeout-minutes: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          python tests/deploy/verify_backend_live.py "$ACS_VERIFY_BACKEND" 2>&1 | tee logs/published/backend-auth-boundary.log
+          backend_exit=${PIPESTATUS[0]}
+          set -e
+          ACS_BACKEND_EXIT="$backend_exit" python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+          text = Path('logs/published/backend-auth-boundary.log').read_text()
+          summaries = re.findall(r'^BACKEND LIVE: (\d+) passed, (\d+) failed', text, re.M)
+          denied = text.count('POST /v1/understand -> HTTP 401 ACS_AUTH_REQUIRED')
+          ok = (os.environ['ACS_BACKEND_EXIT'] == '0' and len(summaries) == 1
+                and int(summaries[0][0]) > 0 and int(summaries[0][1]) == 0 and denied == 2)
+          evidence = {'scope': 'free public backend and anonymous 401 contracts; paid generation excluded',
+              'process_exit': int(os.environ['ACS_BACKEND_EXIT']), 'verdict': 'PASS' if ok else 'FAIL',
+              'unauthenticated_401_checks': denied, 'summaries': summaries}
+          Path('logs/published/backend-verdict.json').write_text(json.dumps(evidence, indent=2) + '\n')
+          print('Published anonymous API:', evidence['verdict'])
+          raise SystemExit(0 if ok else 1)
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: published-delivery-${{ github.event.workflow_run.head_sha }}-${{ github.run_id }}
+          path: |
+            logs/published/
+            tests/production/outputs/
+          if-no-files-found: error
+          retention-days: 30

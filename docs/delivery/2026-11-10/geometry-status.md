@@ -6,7 +6,7 @@ Scope: geometry specialist selected source review on baseline `c37b5250dc4ff18ba
 
 ## Evidence and cause
 
-- The same 13 geometry regression tests on the exact starting commit fail: 10 assertion failures and 3 errors exposing missing admitted capabilities. Current implementation passes all 13. Logs: `evidence/geometry-baseline-regressions.log`, `evidence/geometry-final-regressions.log`.
+- The same 13 geometry regression tests on the exact starting commit fail: 10 assertion failures and 3 errors exposing missing admitted capabilities. Current implementation passes all13 original regressions plus2 fixture-specific assertions (15total). Logs: `evidence/geometry-baseline-regressions.log`, `evidence/geometry-final-regressions.log`.
 - Explicit canonical elevation now controls compiler geometry, including basement indexes; fallback signed index × floor height is used only when elevation is absent. Rotation transforms both local offsets and emitted box vertices/normals at 0°,45°,90°,180°; browser Three rotation sign follows the canonical X-to-Z convention.
 - Explicit `walls: none`, `line`, empty lists and partial cardinal-edge lists now remain open in legacy architecture/BIM paths. Per-room IFC height follows `wall_h`, legacy `height`, global fallback. Other unusual wall-height modes are not exhaustively validated here.
 - Physical stair identities include level/template/room/element scope; naming a room stairs still does not create treads, landings, openings or traversable stair geometry.
@@ -18,7 +18,7 @@ Scope: geometry specialist selected source review on baseline `c37b5250dc4ff18ba
 
 ## Independent serialized readers
 
-`tests/remediation/test_geometry_independent_readers.py` uses **IfcOpenShell 0.9.0.post1** for native STEP parsing, IFC schema validation and actual triangulated world bounds, and **ezdxf** for DXF parsing/audit. Both fixtures are approved through the production conceptual geometry verifier before export. Two independent-reader tests pass; required parser absence is a test failure, not a skip. IfcOpenShell is test-only and not added to production dependencies.
+`tests/remediation/test_geometry_independent_readers.py` uses **IfcOpenShell 0.9.0.post1** for native STEP parsing, IFC schema validation and actual triangulated world bounds, and **ezdxf** for DXF parsing/audit. Both fixtures are approved through the production conceptual geometry verifier before export. Two independent-reader tests cover all3 fixtures and one original-apartment negative-admission test passes; required parser absence is a test failure, not a skip. IfcOpenShell is test-only and not added to production dependencies.
 
 This independently discovered an additional real defect: rectangle profiles used 3D placement where IFC requires 2D placement, causing readers to shift rooms by half their width/depth. The old villa export has four schema errors and shifted geometry. The corrected villa/warehouse have zero schema errors and exact expected space bounds. See `fixtures/independent-reader-evidence.json`. The schema's legitimate `IFCAXIS2PLACEMENT2D` auxiliary entity is now explicitly declared, with unchanged prohibition on invented architectural objects.
 
@@ -28,10 +28,10 @@ All files and per-file SHA256 values are in `fixtures/manifest.json`. Revision I
 
 | Fixture | Canonical model SHA256 | Physical spaces | Room-area sum | glTF nodes / triangles / bytes |
 | --- | --- | ---: | ---: | ---: |
-| Villa, two floors at 0 and 4.2 m | `0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0` | 4 | 192 m² | 59 / 708 / 119594 |
+| Villa, two floors at 0 and 4.2 m | `2e363de60f5789596ea31c566aadd07458cdeb71b8cf45aa6bcb535056fd3593` | 4 | 192 m² | 59 / 708 / 119608 |
 | Warehouse, open internal operational boundary | `9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f` | 2 | 320 m² | 72 / 864 / 146125 |
 
-Saved fixture revisions: villa `plan_6b2182d616bb45ed878eb681d00d6e32`, warehouse `plan_6b5a39d1591247aba58fc43c7af99019`. The warehouse contains explicit racks, lane and loading doors. The villa has aligned core rooms with physical stair geometry explicitly `MISSING` and physical traversal `NOT_VERIFIED` in its receipt.
+Saved fixture revisions: villa `plan_2f9be76895a149dea97c0375a8cfd72e`, warehouse `plan_ea80f4b496ab4c7a86b1faa9ef40ee9a`. The warehouse contains explicit racks, lane and loading doors. The villa has aligned core rooms with physical stair geometry explicitly `MISSING` and physical traversal `NOT_VERIFIED` in its receipt.
 
 ## Capability matrix
 
@@ -47,8 +47,14 @@ Saved fixture revisions: villa `plan_6b2182d616bb45ed878eb681d00d6e32`, warehous
 
 ## Verification commands and limits
 
-New checks: `python3 tests/remediation/test_geometry_delivery.py` (13); `python3 tests/remediation/test_requirement_vocabulary.py` (4); `node tests/lib/run.js tests/remediation/test_geometry_delivery_browser.js` (passes); `PYTHONPATH=/tmp/acs-ifc-reader:. python3 tests/remediation/test_geometry_independent_readers.py` (2, local test-only installation path).
+New checks: `PYTHONPATH=. python3 tests/remediation/test_geometry_delivery.py` (15); `python3 tests/remediation/test_requirement_vocabulary.py` (4); `node tests/lib/run.js tests/remediation/test_geometry_delivery_browser.js` (passes); `PYTHONPATH=/tmp/acs-ifc-reader:. python3 tests/remediation/test_geometry_independent_readers.py` (3 tests:2 reader checks across3 fixtures plus1 negative admission check; local test-only installation path).
 
 Relevant existing checks passed: semantic diff8, locks18, options17, requirement evidence10, warehouse feasibility8, warehouse soft fit4, PBR Python156, BIM Python526, alignment92, architecture browser147, runtime49, collisions73, portals45, BIM browser4. Python/JS parity runtime17, BIM54 and PBR7 passed with generated source outputs. PR184 mutations were rerun at its isolated original head by the reconciliation specialist; regular suites above were also rerun on the integrated working tree.
 
 No native CAD/BIM application, structural solver, code-compliance verifier or physical mobile device was used. Fixture evidence does not prove live AI generation or production deployment. The root delivery report records final release status and blockers. Legacy `acs_visual.py` still has broader visual fallbacks outside the approved compiler fail-closed change; no blanket fail-closed claim is made.
+
+## Final fixture correction and apartment reader coverage
+
+The primary synthetic villa explicitly declares4.05m walls under its next floor at4.2m and0.15m slab. An emitted-geometry test checks that the wall top meets the slab underside. This is an authored canonical testinput, not a renderer fill or a fact inferred from a user brief. The original3m-wall model remains byte-for-byte unchanged at `tests/remediation/fixtures/geometry/villa_unequal_elevation.json` (canonical SHA256 `0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0`); its1.05m clear gap is asserted, proving the renderer does not invent fill. Physical stairs remain unsupported.
+
+An additional **test-only apartment floor**, outside the two visual fixtures, is exported in `fixtures/apartment/`. It is explicitly newly authored from the old two-unit/balcony footprints:0.2m walls, living/kitchen/bed/bath/corridor subdivision, reciprocal dimensioned doors, lighting and stable element IDs.12spaces /138.8m²; model hash `2ee11183e294615fd53bd6f4f782a91fb57191f36f0ee044f939f0124c499c1b`. Production conceptual verification and export admission both pass. IfcOpenShell checks schema and all12 meshed space bounds; ezdxf checks all12 closed boundary polylines to1e-6m numeric tolerance. There is no apartment screenshot or live-provider claim. The unchanged original apartment remains rejected for missing wall thickness; `apartment-admission.json` records that negative evidence.

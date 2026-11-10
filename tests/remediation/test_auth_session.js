@@ -52,6 +52,25 @@ function googleStart(opts,origin='https://acs.example.test/'){
 }
 async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
 (async()=>{
+  await test('local renderer watchdog never treats lightweight account entry as a WebGL failure',async()=>{
+    // Execute the shipped timeout body, so this guards its route ownership rather
+    // than setting legacy ACS.ready just to make the account path appear ready.
+    const start=source.lastIndexOf('    setTimeout(function(){');
+    const end=source.indexOf('    }, 12000);',start);
+    assert.ok(start>=0&&end>start);
+    for(const {guest,local,ready,warn,failure} of [
+      {guest:false,local:false,ready:false,warn:0,failure:0},
+      {guest:false,local:true,ready:false,warn:1,failure:0},
+      {guest:false,local:true,ready:true,warn:0,failure:0},
+      {guest:true,local:false,ready:false,warn:0,failure:1}
+    ]){
+      let warned=0,failed=0;
+      const ctx={window:{ACS:{guest,ready,guestBootFailure(){failed++;}},ACS_AUTH:{isLocalTestHost:()=>local}},
+        byId:()=>({classList:{remove(){warned++;}},style:{}}),setTimeout:fn=>fn()};
+      vm.runInNewContext(source.slice(start,end+'    }, 12000);'.length),ctx);
+      assert.equal(warned,warn);assert.equal(failed,failure);
+    }
+  });
   await test('fresh public entry is a guest with no auth network or identity',async()=>{
     const h=harness(()=>{throw new Error('guest must not fetch');},null,'acs.example.test','',{search:''});
     h.init();await settle();

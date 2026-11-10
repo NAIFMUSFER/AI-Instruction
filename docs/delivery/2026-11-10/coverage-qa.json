@@ -28,13 +28,14 @@
   {
     "path": "tests/production/verify_live.py",
     "depth": "selected",
-    "purpose": "HTTP/provenance monitor partial result handling",
+    "purpose": "HTTP/provenance monitor partial handling and actual served-module import-map validation; remaining checks selected reading",
     "risk": "medium",
     "findings": [
       "QA-01"
     ],
     "tests": [
-      "python3 tests/remediation/test_delivery_release_safety.py"
+      "python3 tests/remediation/test_delivery_release_safety.py",
+      "python tests/remediation/test_delivery_published.py: B6 baseline failed; fixed pass; missing prefix/vendor still fail"
     ],
     "generated_from": []
   },
@@ -336,6 +337,139 @@
     ],
     "tests": [
       "node tests/lib/run.js tests/remediation/test_delivery_pdf_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/deploy/verify_deploy.py",
+    "depth": "selected",
+    "purpose": "Reviewed executable-route, deployment packaging, generated-marker and mutated-tree guard checks; remaining sections selected",
+    "risk": "high",
+    "findings": [
+      "QA-05"
+    ],
+    "tests": [
+      "python tests/deploy/verify_deploy.py: 762 passed"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/plan-pdf-export.yml",
+    "depth": "deep",
+    "purpose": "Preserve stdlib-only import probe and install pinned dependencies before actual PDF exports",
+    "risk": "medium",
+    "findings": [
+      "QA-05",
+      "ENG-ARABIC-PDF"
+    ],
+    "tests": [
+      "Python -S import isolation probe",
+      "python tests/remediation/test_plan_pdf_export.py: 7 passed",
+      "YAML parser"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/check_doc_claims.py",
+    "depth": "selected",
+    "purpose": "Review measurement refusal and route-specific byte accounting; update current-state rendering",
+    "risk": "medium",
+    "findings": [
+      "QA-01"
+    ],
+    "tests": [
+      "python tests/remediation/test_doc_claims.py: 13 passed",
+      "check_doc_claims --fix: successful counts only; browser incomplete"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_doc_claims.py",
+    "depth": "deep",
+    "purpose": "Existing negative witnesses prove missing, failed and partial browser evidence cannot supply successful measurements",
+    "risk": "medium",
+    "findings": [
+      "QA-01"
+    ],
+    "tests": [
+      "python tests/remediation/test_doc_claims.py: 13 passed"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "KNOWN-ISSUES.md",
+    "depth": "selected",
+    "purpose": "Regenerate measured current-state block and two passing suite counts; historical narratives not fully reviewed",
+    "risk": "medium",
+    "findings": [
+      "QA-01"
+    ],
+    "tests": [
+      "tools/check_doc_claims.py --fix: browser measurements remain unavailable locally"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/performance/bundle_report.json",
+    "depth": "static",
+    "purpose": "Generated first-party route byte inventory, not runtime timings",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "python tools/bundle_report.py",
+      "python tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": [
+      "tools/bundle_report.py",
+      "public/app/**",
+      "public/index.html"
+    ]
+  },
+  {
+    "path": ".github/workflows/delivery-published.yml",
+    "depth": "deep",
+    "purpose": "Read-only workflow_run on successful same-repository main CI; exact revision gate, full production aggregator, anonymous 401 checks and always-upload evidence",
+    "risk": "high",
+    "findings": [
+      "QA-01",
+      "QA-03",
+      "QA-05"
+    ],
+    "tests": [
+      "python tests/remediation/test_delivery_published.py: 7 passed",
+      "Workflow YAML/shell/exact-SHA/no-paid semantic checks: PASS"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/deploy/wait_published_revision.py",
+    "depth": "deep",
+    "purpose": "Bounded public metadata polling with exact revision identity, sanitized observations and retained failure evidence",
+    "risk": "high",
+    "findings": [
+      "QA-01",
+      "QA-03",
+      "QA-05"
+    ],
+    "tests": [
+      "python tests/remediation/test_delivery_published.py: 7 passed",
+      "Workflow YAML/shell/exact-SHA/no-paid semantic checks: PASS"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_delivery_published.py",
+    "depth": "deep",
+    "purpose": "Executable timeout/missing/malformed/recovery identity and actual served-module import-map regressions",
+    "risk": "high",
+    "findings": [
+      "QA-01",
+      "QA-03",
+      "QA-05"
+    ],
+    "tests": [
+      "python tests/remediation/test_delivery_published.py: 7 passed",
+      "Workflow YAML/shell/exact-SHA/no-paid semantic checks: PASS"
     ],
     "generated_from": []
   }

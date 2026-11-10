@@ -193,17 +193,22 @@ def render_state():
     js = j['javascript']
     lazy = js.get('lazy_declared') or j.get('lazy_declared') or []
     total = js['first_party_total_bytes']
+    guest = js.get('guest_route_modules') or []
+    guest_bytes = js.get('guest_route_additional_bytes', 0)
+    panels = [name for name in lazy if name not in set(guest)]
     rows = [
         ('index shell (`public/index.html`)', '%s B' % _fmt(os.path.getsize(shell))),
         ('first-party JavaScript, all modules', '%s B in %d modules'
          % (_fmt(total), js['first_party_module_count'])),
-        ('evaluated on first load (core + boot)', '%s B'
+        ('account/sign-in entry (static modules + boot)', '%s B'
          % _fmt(js['initial_javascript_bytes'])),
         ('  of which core modules', '%s B in %d modules'
          % (_fmt(js['core_initial_bytes']), js['core_initial_module_count'])),
-        ('deferred until a panel is opened', '%s B in %d modules'
-         % (_fmt(js['lazy_bytes']), js['lazy_module_count'])),
-        ('share of first-party JS deferred', '%.1f %%'
+        ('additional when the local guest studio is entered', '%s B in %d modules'
+         % (_fmt(guest_bytes), len(guest))),
+        ('optional panels, after local studio entry', '%s B in %d modules'
+         % (_fmt(js['lazy_bytes'] - guest_bytes), len(panels))),
+        ('share of first-party JS deferred from account entry', '%.1f %%'
          % (100.0 * js['lazy_bytes'] / total if total else 0.0)),
         ('largest single module', '%s B of a %s B cap'
          % (_fmt(j['budget']['largest_module_bytes']),
@@ -222,8 +227,11 @@ def render_state():
            '| | |', '|---|---|']
     for k, v in rows:
         out.append('| %s | **%s** |' % (k, v))
-    out += ['', 'Deferred modules, in load order:', '']
-    for m in lazy:
+    out += ['', 'Local guest studio modules, in load order:', '']
+    for m in guest:
+        out.append('* `%s`' % m)
+    out += ['', 'Optional panel modules, in load order:', '']
+    for m in panels:
         out.append('* `%s`' % m)
     out += ['', STATE_END]
     return '\n'.join(out)
@@ -327,6 +335,10 @@ def main(argv):
             with open(path, 'w', encoding='utf-8') as fh:
                 fh.write(text)
             print('كُتبت %d قيمة في %s' % (len(rows), doc))
+        if broken or skipped or not state_ok:
+            print('DOC CLAIMS FAILED: valid counts were updated, but required '
+                  'verification is incomplete.')
+            return 1
         return 0
 
     if not state_ok:

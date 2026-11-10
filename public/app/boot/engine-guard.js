@@ -501,7 +501,10 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     var rl=byId('engineWarnReload');
     if(rl) rl.addEventListener('click', function(){ location.reload(); });
     setTimeout(function(){
-      if(!window.ACS.ready){
+      // Account entry and connected review intentionally do not mount the local
+      // WebGL engine. Its readiness watchdog belongs only to local studio routes.
+      var localEngine=window.ACS.guest||(window.ACS_AUTH&&window.ACS_AUTH.isLocalTestHost());
+      if(localEngine&&!window.ACS.ready){
         if(window.ACS.guest&&window.ACS.guestBootFailure){window.ACS.guestBootFailure();return;}
         var w=byId('engineWarn');
         if(w){ w.classList.remove('acs-hidden'); w.style.display='block'; }

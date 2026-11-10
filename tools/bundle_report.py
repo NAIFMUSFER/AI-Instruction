@@ -328,7 +328,7 @@ def build():
             "core_initial_note": (
                 "core = public/app/main.js plus everything it reaches through "
                 "static imports; all of it is parsed and evaluated on first "
-                "load. The five boot scripts are loaded on first paint too, "
+                "load. The declared boot scripts are loaded on first paint too, "
                 "but they are classic <script src> elements outside the module "
                 "graph, so they are counted separately."),
             "boot_bytes": boot_bytes,

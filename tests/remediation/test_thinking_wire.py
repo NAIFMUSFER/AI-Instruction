@@ -176,18 +176,28 @@ class ThinkingWire(unittest.TestCase):
         self.assertEqual(body.get("thinking"), {"type": "disabled"})
         self.assertTrue(telemetry["thinking_sent"])
 
-    def test_sdk_resolved_legacy_base_url_controls_thinking(self):
+    def test_legacy_base_url_resolves_before_budget_and_controls_wire(self):
         os.environ["ACS_LLM_PROVIDER"] = "anthropic"
         os.environ.pop("ACS_LLM_BASE_URL")
         os.environ["ANTHROPIC_BASE_URL"] = "https://api.deepseek.com/anthropic"
-        # cfg.base_url is None; the actual SDK destination still resolves here.
-        self.assertIsNone(U.PROV.primary().base_url)
+        # Admission/accounting must see the same legacy destination as the SDK.
+        cfg = U.PROV.primary()
+        self.assertEqual(cfg.base_url, "https://api.deepseek.com/anthropic")
+        identity = U.PROV.endpoint_identity(cfg)
+        self.assertEqual(identity["actual_provider"], "deepseek")
+        self.assertEqual(identity["endpoint_path"], "/anthropic")
+        self.assertEqual(identity["capability_profile"], "deepseek-accounting-v1")
+        self.assertFalse(U.PROV.capabilities(cfg)["output_tokens_are_content_proxy"])
+        self.assertEqual(U.PROV.capabilities(cfg)["content_token_multiplier"], 2.0)
         client = anthropic.Anthropic(
             api_key="local-transport-test-key", max_retries=0,
             http_client=httpx.Client(transport=httpx.MockTransport(self.http_handler)))
         self.addCleanup(client.close)
         _, telemetry = self.call(client=client)
-        self.assertEqual(self.sent[0][0].host, "api.deepseek.com")
+        self.assertEqual(len(self.sent), 1)
+        self.assertEqual(str(self.sent[0][0]), "https://api.deepseek.com/anthropic/v1/messages")
+        self.assertEqual(self.sent[0][1]["model"], cfg.model)
+        self.assertEqual(self.sent[0][1]["max_tokens"], 64)
         self.assertEqual(self.sent[0][1].get("thinking"), {"type": "disabled"})
         self.assertTrue(telemetry["thinking_sent"])
 

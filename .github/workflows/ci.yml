@@ -714,6 +714,7 @@ jobs:
             tests/remediation/test_delivery_paid_admission.py \
             tests/remediation/test_delivery_ingress.py \
             tests/remediation/test_delivery_release_safety.py \
+            tests/remediation/test_delivery_published.py \
             tests/remediation/test_delivery_provider_identity.py \
             tests/remediation/test_delivery_arabic_pdf.py \
             tests/remediation/test_audit_*.py \
@@ -744,6 +745,7 @@ jobs:
           set -euo pipefail
           bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
             tests/remediation/test_approved_revision_race.mjs \
+            tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_audit_frontend_brief.mjs \
             tests/remediation/test_audit_frontend_guards.js \
             tests/remediation/test_audit_frontend_panels.js \

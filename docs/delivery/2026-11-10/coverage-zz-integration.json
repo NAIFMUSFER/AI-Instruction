@@ -40,5 +40,38 @@
     "findings": [],
     "tests": [],
     "generated_from": []
+  },
+  {
+    "path": "public/app/boot/engine-guard.js",
+    "depth": "selected",
+    "purpose": "Route-specific readiness watchdog prevents a false account engine warning; local guest fallback stays independent.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_auth_session.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/approved-viewer.mjs",
+    "depth": "deep",
+    "purpose": "Exact approved artifact lifecycle, revision guard, aspect-aware framing and derived component grouping; software-renderer quality and bounded on-demand transitions.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_approved_viewer_framing.mjs",
+    "depth": "deep",
+    "purpose": "Independent projected-bounds and assembly-isolation regression; no rendered-pixel claim.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "node tests/remediation/test_approved_viewer_framing.mjs"
+    ],
+    "generated_from": []
   }
 ]

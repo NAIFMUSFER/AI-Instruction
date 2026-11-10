@@ -28,6 +28,24 @@ export function nodeIdentity(name){
   const parts=String(name||'').split('|'),match=/^F(-?\d+)$/.exec(parts[1]||'');
   return {name:String(name||''),kind:parts[0],level:match?Number(match[1]):null,room:parts[2]||null};
 }
+// One derived assembly may be serialized as many meshes. Group only the exact
+// compiler identity, preserving level and owner; this is not a new canonical ID.
+export function detailGroupKey(name){
+  const parts=String(name||'').split('|');
+  const rack=parts[0]==='FURN'&&/^(?:rack|goods|post|beam)(\d+)r(\d+)(?:L\d+(?:s\d+)?|p\d+)?$/.exec(parts[3]||'');
+  return rack?[...parts.slice(0,3),'rack'+rack[1]+'r'+rack[2]].join('|'):String(name||'');
+}
+export function frameBounds(box,direction,fov,aspect,margin=1.12,target=null){
+  const center=target?target.clone():box.getCenter(new THREE.Vector3()),forward=direction.clone().normalize();
+  const right=new THREE.Vector3(0,1,0).cross(forward).normalize(),up=forward.clone().cross(right).normalize();
+  const tanV=Math.tan(THREE.MathUtils.degToRad(fov/2)),tanH=tanV*Math.max(aspect,.1);
+  let distance=.1;
+  for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
+    const point=new THREE.Vector3(x,y,z).sub(center),depth=point.dot(forward);
+    distance=Math.max(distance,Math.abs(point.dot(right))*margin/tanH+depth,Math.abs(point.dot(up))*margin/tanV+depth);
+  }
+  return {position:center.clone().addScaledVector(forward,distance),target:center};
+}
 export function chooseQuality(sampleMs=0){
   // Conservative initial quality; only measured slow frames reduce it.
   return sampleMs>45?{name:'اقتصادي',pixelRatio:1,shadow:512}:{name:'متوازن',pixelRatio:1.5,shadow:1024};
@@ -50,13 +68,16 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   if(bounds.isEmpty()){releaseObject(gltf.scene);throw new Error('لم يتضمن الملف عناصر قابلة للعرض.');}
   const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3()),extent=Math.max(size.x,size.y,size.z,1);
   const camera=new THREE.PerspectiveCamera(43,1,Math.max(.015,extent/10000),extent*40);
-  const meshes=[],levels=new Map(),roomBounds=new Map();let triangles=0;
+  const meshes=[],levels=new Map(),roomBounds=new Map(),groups=new Map(),architecturalBounds=new THREE.Box3();let triangles=0;
   gltf.scene.traverse(object=>{
     if(!object.isMesh)return;
     const association=gltf.parser.associations.get(object);
     const name=original.nodes?.[association?.nodes]?.name||object.userData.name||object.name;
     const identity=nodeIdentity(name),box=new THREE.Box3().setFromObject(object);
-    object.userData.acsViewerIdentity=identity;object.castShadow=true;object.receiveShadow=true;meshes.push(object);
+    object.userData.acsViewerIdentity=identity;
+    const groupKey=detailGroupKey(name);if(!groups.has(groupKey))groups.set(groupKey,[]);groups.get(groupKey).push(object);
+    if(identity.kind!=='SITE')architecturalBounds.union(box);
+    object.castShadow=true;object.receiveShadow=true;meshes.push(object);
     triangles+=(object.geometry.index?.count||object.geometry.attributes.position?.count||0)/3;
     if(identity.level!==null){
       if(!levels.has(identity.level))levels.set(identity.level,new THREE.Box3());levels.get(identity.level).union(box);
@@ -73,17 +94,19 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   let renderer;
   try{renderer=new THREE.WebGLRenderer({antialias:true,alpha:false,preserveDrawingBuffer:false});}
   catch(error){releaseObject(scene);throw new Error('العرض ثلاثي الأبعاد غير متاح في هذا المتصفح. يمكنك متابعة المخطط ثنائي الأبعاد والحفظ والتصدير.');}
-  let quality=chooseQuality(),disposed=false,lost=false,frame=0,transition=null,selected=null,currentPreset='exterior';
+  const gl=renderer.getContext(),debug=gl.getExtension('WEBGL_debug_renderer_info');
+  const rendererName=String(debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):'unavailable'),software=/swiftshader|llvmpipe|software|microsoft basic render/i.test(rendererName);
+  let quality=chooseQuality(software?46:0),disposed=false,lost=false,frame=0,transition=null,selected=null,currentPreset='exterior';
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,quality.pixelRatio));
-  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
-  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;
+  renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.92;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.localClippingEnabled=true;
   const environmentScene=new RoomEnvironment(),pmrem=new THREE.PMREMGenerator(renderer),environment=pmrem.fromScene(environmentScene,.04);
   scene.environment=environment.texture;environmentScene.dispose();pmrem.dispose();
-  scene.add(new THREE.HemisphereLight(0xeaf4ff,0x85745f,1.6));
-  const sun=new THREE.DirectionalLight(0xfff2dc,3.2);sun.position.copy(center).add(new THREE.Vector3(extent*.7,extent*1.4,extent*.6));
+  scene.add(new THREE.HemisphereLight(0xeaf4ff,0x85745f,1.2));
+  const sun=new THREE.DirectionalLight(0xfff2dc,2.6);sun.position.copy(center).add(new THREE.Vector3(extent*.7,extent*1.4,extent*.6));
   sun.target.position.copy(center);sun.castShadow=true;sun.shadow.mapSize.set(quality.shadow,quality.shadow);sun.shadow.bias=-.00012;sun.shadow.normalBias=.035;
   Object.assign(sun.shadow.camera,{left:-extent*.7,right:extent*.7,top:extent*.7,bottom:-extent*.7,near:.1,far:extent*5});scene.add(sun,sun.target);
-  const fill=new THREE.DirectionalLight(0xcde3ff,1.2);fill.position.copy(center).add(new THREE.Vector3(-extent,extent*.3,-extent));scene.add(fill);
+  const fill=new THREE.DirectionalLight(0xcde3ff,.9);fill.position.copy(center).add(new THREE.Vector3(-extent,extent*.3,-extent));scene.add(fill);
   // Context plane is explicitly separate; it is not selectable/exported/quantified.
   const ground=new THREE.Mesh(new THREE.PlaneGeometry(extent*5,extent*5),new THREE.MeshStandardMaterial({color:0xc4cbc6,roughness:.96,metalness:0}));
   ground.rotation.x=-Math.PI/2;ground.position.set(center.x,bounds.min.y-.035,center.z);ground.receiveShadow=true;ground.userData.presentationOnly=true;scene.add(ground);
@@ -104,8 +127,10 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والإضاءة عرض فقط. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
   const evidence=element('output','',disclosure);evidence.dir='ltr';
   const controls=new OrbitControls(camera,canvas);controls.target.copy(center);controls.minDistance=.05;controls.maxDistance=extent*8;controls.enableDamping=false;controls.maxPolarAngle=Math.PI*.98;
-  let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false;
-  const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,renderCalls:0,activeAnimation:false,frameIntervalsMs:[]};
+  let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,updatingControls=false,framedBounds=null;
+  const updateControls=()=>{updatingControls=true;try{controls.update();}finally{updatingControls=false;}};
+  const controlsChanged=()=>{if(!updatingControls)render();};
+  const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
   const info=()=>{evidence.textContent=`revision=${revisionId}\nmodel=${marker.model_hash}\nmeshes=${meshes.length}; triangles=${triangles}; quality=${quality.name}\nrender CPU submission (ms)=${measuredMs===null?'not measured':measuredMs.toFixed(2)}; device/browser=${navigator.userAgent}\nviewport=${stage.clientWidth}x${stage.clientHeight}; DPR=${renderer.getPixelRatio()}`;};
   function render(){
@@ -123,14 +148,16 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     if(disposed||lost||document.hidden||!current()){stopMotion();return;}
     if(transition.previousFrame&&telemetry.frameIntervalsMs.length<600)telemetry.frameIntervalsMs.push(now-transition.previousFrame);transition.previousFrame=now;
     const t=Math.min(1,(now-transition.start)/450),ease=t*t*(3-2*t);
-    camera.position.lerpVectors(transition.fromPosition,transition.position,ease);controls.target.lerpVectors(transition.fromTarget,transition.target,ease);controls.update();render();
+    camera.position.lerpVectors(transition.fromPosition,transition.position,ease);controls.target.lerpVectors(transition.fromTarget,transition.target,ease);updateControls();render();
     if(t<1)frame=requestAnimationFrame(animate);else stopMotion();
   }
   function move(position,target,smooth=true){
-    stopMotion();if(!smooth||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches){camera.position.copy(position);controls.target.copy(target);controls.update();render();return;}
+    stopMotion();if(!smooth||globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches){camera.position.copy(position);controls.target.copy(target);updateControls();render();return;}
     transition={start:performance.now(),fromPosition:camera.position.clone(),fromTarget:controls.target.clone(),position,target};telemetry.activeAnimation=true;frame=requestAnimationFrame(animate);
   }
-  function chosenBounds(){return floors.value==='all'?bounds:levels.get(Number(floors.value))||bounds;}
+  function chosenBounds(){return floors.value==='all'?(architecturalBounds.isEmpty()?bounds:architecturalBounds):levels.get(Number(floors.value))||bounds;}
+  function detailMeshes(object){return groups.get(detailGroupKey(object.userData.acsViewerIdentity.name))||[object];}
+  function detailBounds(object){const box=new THREE.Box3();for(const mesh of detailMeshes(object))box.union(new THREE.Box3().setFromObject(mesh));return box;}
   function chosenRoom(){
     if(selected){const identity=selected.userData.acsViewerIdentity;const match=roomBounds.get(identity.level+'|'+identity.room);if(match)return match;}
     return [...roomBounds.values()].filter(row=>floors.value==='all'||row.identity.level===Number(floors.value)).sort((a,b)=>{const x=a.box.getSize(new THREE.Vector3()),y=b.box.getSize(new THREE.Vector3());return y.x*y.z-x.x*x.z;})[0];
@@ -139,36 +166,38 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     const floor=floors.value==='all'?null:Number(floors.value);
     for(const mesh of meshes){const id=mesh.userData.acsViewerIdentity;mesh.visible=floor===null||id.level===null||id.level===floor;}
     renderer.clippingPlanes=currentPreset==='cutaway'?[new THREE.Plane(new THREE.Vector3(0,-1,0),chosenBounds().min.y+Math.min(1.5,chosenBounds().getSize(new THREE.Vector3()).y*.65))]:[];
-    if(selectionBox)selectionBox.visible=selected?.visible!==false;
+    if(selectionBox)selectionBox.visible=selected?.visible!==false;renderer.shadowMap.needsUpdate=true;
   }
   function preset(name,smooth=true){
     currentPreset=name;setVisibility();for(const [key,button]of Object.entries(buttons))button.setAttribute('aria-pressed',String(key===name));
-    const box=chosenBounds(),c=box.getCenter(new THREE.Vector3()),s=box.getSize(new THREE.Vector3()),e=Math.max(s.x,s.y,s.z,1);
-    let target=c.clone(),position=c.clone().add(new THREE.Vector3(e*.95,e*.72,e*.95));
-    if(name==='aerial'||name==='cutaway')position=c.clone().add(new THREE.Vector3(e*.02,e*1.6,e*.02));
-    if(name==='street'){position.set(c.x+e*.75,box.min.y+1.65,box.max.z+e*.7);target.set(c.x,box.min.y+Math.min(2,s.y*.4),c.z);}
+    const box=chosenBounds().clone();
+    if(name==='cutaway')box.max.y=Math.min(box.max.y,box.min.y+1.5);
+    framedBounds=box.clone();
+    let framing=frameBounds(box,new THREE.Vector3(.95,.72,.95),camera.fov,camera.aspect),target=framing.target,position=framing.position;
+    if(name==='aerial'||name==='cutaway')({position,target}=frameBounds(box,new THREE.Vector3(0,1,.0001),camera.fov,camera.aspect));
+    if(name==='street'){target=box.getCenter(new THREE.Vector3());target.y=box.min.y+1.65;({position,target}=frameBounds(box,new THREE.Vector3(.8,0,.6),camera.fov,camera.aspect,1.12,target));}
     if(name==='interior'){
       const room=chosenRoom();if(!room){inspector.textContent='لم يُحدّد الملف فراغًا صالحًا لكاميرا داخلية. اختر عنصرًا أو استخدم القص.';return;}
-      const r=room.box,rs=r.getSize(new THREE.Vector3());target=r.getCenter(new THREE.Vector3());target.y=r.min.y+Math.min(1.6,Math.max(.2,rs.y*.6));
+      framedBounds=null;const r=room.box,rs=r.getSize(new THREE.Vector3());target=r.getCenter(new THREE.Vector3());target.y=r.min.y+Math.min(1.6,Math.max(.2,rs.y*.6));
       position=target.clone();position.x=r.min.x+rs.x*.24;position.z=r.min.z+rs.z*.24;target.x=r.max.x-rs.x*.2;target.z=r.max.z-rs.z*.2;
       inspector.textContent='كاميرا داخل '+room.identity.room+' · حركة حرة؛ اتصال الدرج والممرات غير متحقق هنا.';
     }
     if(name==='detail'){
-      const object=selected||meshes.find(mesh=>mesh.visible&&['DOOR','WINDOW','FURN'].includes(mesh.userData.acsViewerIdentity.kind))||meshes.find(mesh=>mesh.visible);
-      if(object){select(object);const detail=new THREE.Box3().setFromObject(object);target=detail.getCenter(new THREE.Vector3());const d=Math.max(detail.getSize(new THREE.Vector3()).length(),.6);position=target.clone().add(new THREE.Vector3(d*.8,d*.5,d));}
+      const object=selected||meshes.find(mesh=>mesh.visible&&['DOOR','WINDOW','FURN','OBJ'].includes(mesh.userData.acsViewerIdentity.kind))||meshes.find(mesh=>mesh.visible);
+      if(object){select(object);framedBounds=detailBounds(object);({position,target}=frameBounds(framedBounds,new THREE.Vector3(.8,.5,1),camera.fov,camera.aspect,1.2));}
     }
     move(position,target,smooth);
   }
   function select(object){
     if(selectionBox){scene.remove(selectionBox);selectionBox.geometry.dispose();selectionBox.material.dispose();selectionBox=null;}
     selected=object;if(!object){inspector.textContent='اختر عنصرًا لعرض هويته ودوره.';render();return;}
-    selectionBox=new THREE.BoxHelper(object,0x078bba);selectionBox.material.depthTest=false;selectionBox.renderOrder=10;scene.add(selectionBox);
+    telemetry.detailGroupSize=detailMeshes(object).length;selectionBox=new THREE.Box3Helper(detailBounds(object),0x078bba);selectionBox.material.depthTest=false;selectionBox.renderOrder=10;scene.add(selectionBox);
     const identity=object.userData.acsViewerIdentity;
     inspector.replaceChildren();const source=options.projections?.find(p=>p.level_index===identity.level)?.primitives?.find(p=>p.source?.room_id===identity.room);
     element('strong',(KIND_LABELS[identity.kind]||'عنصر')+' · '+(source?.label||identity.room||'الموقع'),inspector);
     if(source?.source_id)element('bdi','الفراغ المصدر: '+source.source_id,inspector);
     element('span',identity.level===null?'لا يحمل معرّف دور':identity.level===0?'الدور الأرضي':'الدور '+identity.level,inspector);
-    element('bdi',identity.name,inspector);element('small','معرّف ملف العرض · النسخة '+revisionId,inspector);render();
+    element('bdi',identity.name,inspector);if(telemetry.detailGroupSize>1)element('span','مجموعة عرض مترابطة · '+telemetry.detailGroupSize+' أجزاء من الملف',inspector);element('small','معرّف ملف العرض · النسخة '+revisionId,inspector);render();
   }
   const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down=null;
   const pointerDown=event=>{down={x:event.clientX,y:event.clientY};stopMotion();};
@@ -180,12 +209,12 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     if(event.key==='ArrowLeft')spherical.theta+=.12;if(event.key==='ArrowRight')spherical.theta-=.12;
     if(event.key==='ArrowUp')spherical.phi=Math.max(.03,spherical.phi-.1);if(event.key==='ArrowDown')spherical.phi=Math.min(Math.PI-.03,spherical.phi+.1);
     if(event.key==='+'||event.key==='=')spherical.radius=Math.max(.05,spherical.radius*.85);if(event.key==='-')spherical.radius=Math.min(extent*8,spherical.radius/ .85);
-    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));controls.update();render();
+    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));updateControls();render();
   };
   const resize=()=>{if(disposed||lost)return;const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
   const visibility=()=>{if(document.hidden)stopMotion();else resize();};
-  function applyQuality(low){quality=chooseQuality(low?46:0);telemetry.quality=quality.name;renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,quality.pixelRatio));sun.shadow.mapSize.set(quality.shadow,quality.shadow);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}qualityButton.textContent='الجودة: '+quality.name;resize();}
-  const observer=new ResizeObserver(resize);controls.addEventListener('change',render);
+  function applyQuality(low){quality=chooseQuality(low?46:0);telemetry.quality=quality.name;renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,quality.pixelRatio));sun.shadow.mapSize.set(quality.shadow,quality.shadow);renderer.shadowMap.needsUpdate=true;if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}qualityButton.textContent='الجودة: '+quality.name;resize();}
+  const observer=new ResizeObserver(resize);controls.addEventListener('change',controlsChanged);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('keydown',keydown);document.addEventListener('visibilitychange',visibility);
   for(const [name,button]of Object.entries(buttons))button.addEventListener('click',()=>preset(name));
   floors.addEventListener('change',()=>{select(null);preset(currentPreset);});reset.addEventListener('click',()=>{floors.value='all';select(null);preset('exterior');});qualityButton.addEventListener('click',()=>applyQuality(quality.pixelRatio>1));
@@ -197,9 +226,9 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const contextLost=event=>{event.preventDefault();lost=true;stopMotion();dispose();options.onFailure?.('فُقد سياق الرسوم. المخطط ثنائي الأبعاد متاح؛ استخدم إعادة محاولة 3D لاستعادة العرض.');};
   const contextRestored=()=>{lost=false;resize();};canvas.addEventListener('webglcontextlost',contextLost);canvas.addEventListener('webglcontextrestored',contextRestored);
   if(!current()){dispose();return()=>{};}
-  container.replaceChildren(shell);observer.observe(stage);preset('exterior',false);resize();
+  container.replaceChildren(shell);observer.observe(stage);resize();preset('exterior',false);
   // This is telemetry, not an FPS/GPU-completion benchmark. First software frames
   // can be slow; the user can choose economy without dropping canonical meshes.
-  telemetry.inspect=()=>({...telemetry,inspect:undefined,camera:camera.position.toArray(),target:controls.target.toArray(),visibleMeshCount:meshes.filter(mesh=>mesh.visible).length,view:currentPreset});
+  telemetry.inspect=()=>({...telemetry,inspect:undefined,camera:camera.position.toArray(),target:controls.target.toArray(),visibleMeshCount:meshes.filter(mesh=>mesh.visible).length,view:currentPreset,framedBounds:framedBounds?{min:framedBounds.min.toArray(),max:framedBounds.max.toArray()}:null,aspect:camera.aspect,fov:camera.fov});
   return dispose;
 }

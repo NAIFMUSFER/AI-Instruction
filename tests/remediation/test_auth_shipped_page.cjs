@@ -12,10 +12,11 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
   try{
     for(const width of [393,1280]){
       const context=await browser.newContext({viewport:{width,height:852}}), page=await context.newPage();
-      const errors=[], calls=[];let firstProject=null, failSignin=true, googleChallenge=null;
+      const errors=[], calls=[], localModules=[];let firstProject=null, failSignin=true, googleChallenge=null;
       page.on('pageerror',e=>errors.push(e.message));
       await page.route('**/*',async route=>{
         const req=route.request(),url=new URL(req.url());
+        if(['/app/render/scene.js','/app/ui/workspace-ui-wiring.js','/app/ui/guest-workspace.js'].includes(url.pathname))localModules.push(url.pathname);
         if(url.hostname==='auth.example.test'){
           assert.equal(url.pathname,'/auth/v1/authorize');
           assert.equal(url.searchParams.get('code_challenge'),googleChallenge);
@@ -59,7 +60,9 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
           'content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(f)});
       });
       await page.goto('https://acs-ui.test/?signin=1');
-      await page.waitForFunction(()=>window.ACS&&window.ACS.ready&&window.ACS.persistence);
+      await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
+      assert.equal(await page.evaluate(()=>!!window.ACS_AUTH&&!window.ACS.guest),true);
+      assert.equal(await page.locator('#app canvas').count(),0,'sign-in must allocate no hidden renderer');
       assert.equal(await page.locator('#lgName').isVisible(),false);
       assert.equal(await page.locator('#lgProject').isVisible(),false);
       assert.equal(await page.locator('#camBar').isVisible(),false);
@@ -88,7 +91,11 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await page.locator('#lgProject').fill('مشروع تحقق الواجهة');await page.locator('#lgGo').click();
       await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
-      assert.equal(await page.evaluate(()=>!!window.ACS.exportModel()),false,'production entry must not inject a demo');
+      await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
+      assert.equal(await page.evaluate(()=>window.ACS.exportModel?.()??null),null,'production entry must not inject a demo');
+      assert.equal(await page.evaluate(()=>typeof window.ACS.persistence),'undefined','private review must not mount guest/local persistence');
+      assert.equal(await page.locator('#app canvas').count(),0,'private entry must allocate no hidden renderer');
+      assert.deepEqual(localModules,[],'sign-in and private review must not import the local studio graph');
       const before=calls.filter(p=>p==='/v1/auth/signin').length;
       await page.reload();await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before,'reload reuses a verified session');
@@ -98,7 +105,8 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
       await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1'));
       await page.goto('https://acs-ui.test/?signin=1');
-      await page.waitForFunction(()=>window.ACS&&window.ACS.ready);
+      await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
+      assert.equal(await page.evaluate(()=>!!window.ACS_AUTH&&!window.ACS.guest),true);
       assert.equal(await page.locator('#camBar').isVisible(),false);
       // A real browser redirect round trip must preserve this tab's PKCE proof,
       // restore the same Supabase project, and keep auth codes out of the URL.

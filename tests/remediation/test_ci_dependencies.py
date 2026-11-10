@@ -48,6 +48,11 @@ DIST = {
     "multipart": "python-multipart",
     "brotli": "Brotli",
     "yaml": "PyYAML",
+    "arabic_reshaper": "arabic-reshaper",
+    "bidi": "python-bidi",
+    "fontTools": "fonttools",
+    "ezdxf": "ezdxf",
+    "ifcopenshell": "ifcopenshell",
 }
 
 # Dependencies intentionally supplied by another exact-pinned distribution.
@@ -56,7 +61,7 @@ PROVIDED_BY = {
 }
 
 STDLIB = set(sys.stdlib_module_names)
-_SKIP_DIRS = {"node_modules", ".git", "public", "__pycache__"}
+_SKIP_DIRS = {"node_modules", ".git", "public", "__pycache__", ".venv", "venv"}
 
 
 def local_modules():
@@ -222,6 +227,17 @@ def closure(target):
     return required, optional - required
 
 
+def inline_exact_pins(command):
+    """Count only explicit exact CLI pins, never unpinned or ranged installs."""
+    return {
+        name.lower().replace("_", "-")
+        for name, _version in re.findall(
+            r"(?:^|\s)([A-Za-z0-9][A-Za-z0-9._-]*)"
+            r"(?:\[[A-Za-z0-9_,.-]+\])?==([0-9][0-9A-Za-z.!+_-]*)"
+            r"(?=\s|$)", command)
+    }
+
+
 def ci_jobs():
     """Read Python targets and requirement files installed by each CI job."""
     ci = rd(CI)
@@ -233,10 +249,13 @@ def ci_jobs():
         name = m.group(1)
         targets = set(re.findall(r"(tests/[\w/]+\.py)", blk))
         installs = set()
+        inline_pins = set()
         for line in re.findall(r"pip install[^\n]*", blk):
             installs |= set(re.findall(r"-r\s+(\S+\.txt)", line))
+            inline_pins |= inline_exact_pins(line)
         if targets:
-            out[name] = {"targets": sorted(targets), "installs": sorted(installs)}
+            out[name] = {"targets": sorted(targets), "installs": sorted(installs),
+                         "inline_pins": sorted(inline_pins)}
     return out
 
 
@@ -255,6 +274,12 @@ def pinned_in(files):
 
 
 print("== أ · CI jobs install pinned dependency sets ==")
+chk("an exact inline independent-reader pin is recognized",
+    inline_exact_pins("pip install ifcopenshell==0.9.0.post1") == {"ifcopenshell"})
+chk("unpinned, ranged and wildcard inline installs cannot satisfy the audit",
+    not inline_exact_pins("pip install ifcopenshell ifcopenshell>=0.9 ifcopenshell==0.9.*"))
+chk("inline pin recognition does not infer an unrelated dependency",
+    "ifcopenshell" not in inline_exact_pins("pip install fonttools==4.65.0"))
 JOBS = ci_jobs()
 chk("ci.yml names at least two jobs that run Python targets", len(JOBS) >= 2,
     str(sorted(JOBS)))
@@ -294,7 +319,7 @@ unmapped = {}
 missing = []
 checked = 0
 for job_name, job in sorted(JOBS.items()):
-    have = pinned_in(job["installs"])
+    have = pinned_in(job["installs"]) | set(job["inline_pins"])
     for target in job["targets"]:
         req, _ = closure(os.path.join(ROOT, target))
         for mod in sorted(req):
@@ -318,7 +343,8 @@ for job_name, target, mod, dist in missing:
         "job '%s' installs %s for %s (imports %s)"
         % (job_name, dist, target, mod),
         False,
-        "not pinned in " + str(JOBS[job_name]["installs"]),
+        "not pinned in requirement files " + str(JOBS[job_name]["installs"])
+        + " or exact CLI installs " + str(JOBS[job_name]["inline_pins"]),
     )
 chk(
     "every required third-party import of every CI target is installed by its "
@@ -368,6 +394,13 @@ chk("numpy is exact-pinned in requirements.txt for the approved compiler",
 docker = rd(os.path.join(ROOT, "Dockerfile"))
 chk("Dockerfile explicitly packages the approved-artifact compiler",
     re.search(r"^COPY\s+acs_compiler\.py\s", docker, re.M) is not None)
+pdf_dependencies, _ = closure(os.path.join(ROOT, "acs_pdf_text.py"))
+chk("the Arabic PDF helper exposes every font and shaping dependency",
+    {"fontTools", "arabic_reshaper", "bidi"} <= pdf_dependencies,
+    str(sorted(pdf_dependencies)))
+for module in ("fontTools", "arabic_reshaper", "bidi"):
+    chk("Arabic PDF dependency %s is exact-pinned in production" % DIST[module],
+        DIST[module] in pinned_in(["requirements.txt"]))
 
 print("\n" + "─" * 62)
 print("CI DEPENDENCY CONTRACT: %d passed, %d failed" % (_p, _f))

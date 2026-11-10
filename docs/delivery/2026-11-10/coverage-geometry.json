@@ -976,5 +976,209 @@
     "generated_from": [
       "tools/generate_delivery_fixtures.py"
     ]
+  },
+  {
+    "path": "tests/remediation/fixtures/geometry/villa_unequal_elevation.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/manifest.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment.ifc",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment-F0.svg",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment-F0.svg.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment.gltf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment.ifc.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment-F0.dxf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment-F0.dxf",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment/apartment.gltf",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/apartment-admission.json",
+    "depth": "static",
+    "purpose": "Synthetic authored fixture/serialized artifact or unchanged negative admission evidence; no live AI claim.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ]
   }
 ]
