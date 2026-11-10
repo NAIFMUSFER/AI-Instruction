@@ -137,8 +137,15 @@ chk('لا وحدة مشحونة أخرى تستدعي WS.init أو panel.open �
    the actual shipped UI, Three.js and verified model pixels. Panel assertions
    below remain unchanged. */
 const THREE_DEPENDENT = new Set(['render/scene.js', 'generated/pbr-bridge.js',
-  'generated/arch-detail-bridge.js', 'trust/wiring.js', 'ui/generation-jobs.js']);
+  'generated/arch-detail-bridge.js', 'trust/wiring.js', 'ui/generation-jobs.js',
+  'ui/workspace-viewport-selection-runtime.js']);
 const GRAPH = ORDER.filter((f) => !THREE_DEPENDENT.has(f));
+// Preserve the production conditional route owner, but apply this fixture's
+// declared GPU exclusions to its dynamic imports as well as the static graph.
+// The real guest/connected browser suites exercise those unmodified GPU paths.
+const LOCAL_ENTRY = fs.readFileSync(path.join(APP,'ui/local-studio-entry.mjs'),'utf8');
+const PANEL_LOCAL_ENTRY = [...THREE_DEPENDENT].reduce((source,file)=>
+  source.replace("await import('../"+file+"');",'/* GPU path excluded in the panel DOM fixture. */'),LOCAL_ENTRY);
 
 /* كعب three.js — أدنى ما يجعل رسم الوحدات **يُقيَّم**.
    وحدات ES كلٌّ أو لا شيء: فشل جلب وحدة واحدة يمنع تنفيذ الرسم كلّه، و
@@ -273,6 +280,11 @@ async function live() {
         'Content-Length': body.length });
       return res.end(body);
     }
+    if (p === '/app/ui/local-studio-entry.mjs') {
+      const body=Buffer.from(PANEL_LOCAL_ENTRY,'utf8');
+      res.writeHead(200,{'Content-Type':MIME['.mjs'],'Content-Length':body.length});
+      return res.end(body);
+    }
     if (p === '/app/ui/workspace-ui-wiring.js') {
       const body = Buffer.from(WIRING_STUB, 'utf8');
       res.writeHead(200, { 'Content-Type': MIME['.js'],
@@ -283,6 +295,14 @@ async function live() {
       const body = Buffer.from(PAGE_SUFFIX, 'utf8');
       res.writeHead(200, { 'Content-Type': MIME['.js'],
         'Content-Length': body.length });
+      return res.end(body);
+    }
+    // Lazy architectural-detail loading also reaches its GPU bridge. Keep the
+    // same declared exclusion at the HTTP boundary; no fixture may accidentally
+    // initialize the real renderer through a transitive/dynamic dependency.
+    if (p.startsWith('/app/') && THREE_DEPENDENT.has(p.slice('/app/'.length))) {
+      const body=Buffer.from('export {}; // GPU execution excluded in panel DOM fixture.','utf8');
+      res.writeHead(200,{'Content-Type':MIME['.js'],'Content-Length':body.length});
       return res.end(body);
     }
     if (p.indexOf('/vendor/three@') === 0) {

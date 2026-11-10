@@ -186,7 +186,7 @@ unchanged. The pre-change baseline is archived at
 confinement is re-proved on every run by
 `tests/remediation/test_webgl_diagnostics.js` §11.
 
-**Regression:** tests/remediation/test_plate_extent.py (159 assertions) over
+**Regression:** tests/remediation/test_plate_extent.py (184 assertions) over
 six fixtures in `tests/remediation/fixtures/plate/`.
 
 </details>
@@ -530,7 +530,7 @@ rediscover it.
 
 **Proof, in three independent places.**
 
-* `tests/remediation/test_module_graph.js` — 43 assertions, up from 38. §1 now
+* `tests/remediation/test_module_graph.js` — 45 assertions, up from 38. §1 now
   requires every module to be *either* imported once by `main.js` *or* declared
   lazy, and the two sets to be disjoint. §3 adds the property that makes the
   deferral real: **no eager module may statically import a declared lazy
@@ -2170,15 +2170,37 @@ and is not expected to track the present.
 
 | | |
 |---|---|
-| index shell (`public/index.html`) | **52,580 B** |
-| first-party JavaScript, all modules | **2,146,652 B in 42 modules** |
-| evaluated on first load (core + boot) | **1,680,783 B** |
-|   of which core modules | **1,622,719 B in 30 modules** |
-| deferred until a panel is opened | **465,869 B in 6 modules** |
-| share of first-party JS deferred | **21.7 %** |
-| largest single module | **228,701 B of a 307,200 B cap** |
+| index shell (`public/index.html`) | **53,078 B** |
+| first-party JavaScript, all modules | **2,184,417 B in 44 modules** |
+| account/sign-in entry (static modules + boot) | **227,595 B** |
+|   of which core modules | **169,260 B in 14 modules** |
+| additional when the local guest studio is entered | **1,489,628 B in 18 modules** |
+| optional panels, after local studio entry | **467,194 B in 6 modules** |
+| share of first-party JS deferred from account entry | **89.6 %** |
+| largest single module | **229,116 B of a 307,200 B cap** |
 
-Deferred modules, in load order:
+Local guest studio modules, in load order:
+
+* `public/app/core/viewer.js`
+* `public/app/core/standards.js`
+* `public/app/core/disciplines.js`
+* `public/app/generated/runtime.js`
+* `public/app/generated/authoring.js`
+* `public/app/generated/pbr.js`
+* `public/app/render/scene.js`
+* `public/app/render/warehouse-canonical-identity.js`
+* `public/app/generated/pbr-bridge.js`
+* `public/app/ui/workspace-ui-wiring.js`
+* `public/app/trust/core.js`
+* `public/app/trust/wiring.js`
+* `public/app/ui/panels-entry.js`
+* `public/app/ui/workspace-viewport-selection.js`
+* `public/app/ui/workspace-viewport-selection-runtime.js`
+* `public/app/ui/residential-quality.js`
+* `public/app/ui/generation-jobs.js`
+* `public/app/ui/guest-workspace.js`
+
+Optional panel modules, in load order:
 
 * `public/app/generated/workspace-ui.js`
 * `public/app/generated/render-engine.js`

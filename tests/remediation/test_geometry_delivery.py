@@ -31,6 +31,25 @@ class GeometryDelivery(unittest.TestCase):
             for n in nodes:
                 a=g['accessors'][g['meshes'][n['mesh']]['primitives'][0]['attributes']['POSITION']]
                 self.assertAlmostEqual(a['max'][1],lv['elevation'],places=5)
+    def test_original_unequal_elevation_fixture_does_not_invent_fill(self):
+        from acs_plan_review import digest
+        b=json.loads((Path(__file__).parent/'fixtures/geometry/villa_unequal_elevation.json').read_text())
+        self.assertEqual(digest(b),'0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0')
+        c=C.Builder();C.build_level(c,b['levels'][0],b['floors']['home'],0,
+            {'site':b['site'],'wall_h':b['wall_h'],'wall_t':b['wall_t']},'F0')
+        wall_top=max(float(p[0][:,1].max()) for p in c.parts if p[5].startswith('WALL|F0|'))
+        self.assertAlmostEqual(wall_top,3,places=5)
+        self.assertAlmostEqual(b['levels'][1]['elevation']-.15-wall_top,1.05,places=5)
+    def test_primary_villa_wall_meets_declared_upper_slab(self):
+        from tools.generate_delivery_fixtures import fixtures
+        b=fixtures()['villa'];c=C.Builder()
+        defaults={'site':b['site'],'wall_h':b['wall_h'],'wall_t':b['wall_t']}
+        for level in b['levels']:
+            C.build_level(c,level,b['floors'][level['template']],level['elevation'],defaults,'F'+str(level['index']))
+        wall_top=max(float(p[0][:,1].max()) for p in c.parts if p[5].startswith('WALL|F0|'))
+        slab_bottom=min(float(p[0][:,1].min()) for p in c.parts if p[5].startswith('FLOOR|F1|slab'))
+        self.assertAlmostEqual(wall_top,slab_bottom,places=5)
+        self.assertAlmostEqual(wall_top,4.05,places=5)
     def test_rotation_vertices(self):
         for angle in (0,45,90,180):
             a=C.Builder(); C.build_object(a,{'w':2,'d':1,'h':1,'rot':angle},'box',10,20,0,'F0','a',0)

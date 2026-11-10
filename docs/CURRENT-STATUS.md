@@ -28,7 +28,7 @@ The current connected Supabase account exposes no ACS schema. The live Google-st
 
 ## Verification scope
 
-Deterministic approved villa and warehouse fixtures use the real geometry verifier. See [fixture manifest](delivery/2026-11-10/fixtures/manifest.json) for canonical hashes and serialized output relationships. Independent IfcOpenShell and ezdxf checks are separate from exporter-authored readers. Arabic PDF is parsed by pypdf and visually inspected with Poppler.
+Deterministic approved villa and warehouse fixtures use the real geometry verifier. See [fixture manifest](delivery/2026-11-10/fixtures/manifest.json) for canonical hashes and serialized output relationships. Independent IfcOpenShell and ezdxf checks are separate from exporter-authored readers. A separately authored synthetic apartment floor also passes canonical approval and independent IFC/DXF bounds checks; its source, explicit dimensions and limitations are recorded in the geometry status. The original incomplete apartment fixture still fails admission. Arabic PDF is parsed by pypdf and visually inspected with Poppler.
 
 Real PostgreSQL witnesses execute SQL, roles and grants against synthetic users/projects. They reproduce baseline missing-membership and direct-write defects before fixing them. This is not a substitute for deployed Supabase/PostgREST/JWT verification.
 
