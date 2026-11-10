@@ -67,9 +67,9 @@ class LiveGenerationVerdict(unittest.TestCase):
             elif path == '/health':
                 result, code = envelope('ACS_METHOD_NOT_ALLOWED'), 405
             elif path == '/v1/understand' and body == {}:
-                result, code = envelope('ACS_VALIDATION_FAILED'), 422
+                result, code = envelope('ACS_AUTH_REQUIRED'), 401
             else:
-                result, code = envelope('ACS_BAD_REQUEST'), 400
+                result, code = envelope('ACS_AUTH_REQUIRED'), 401
             return code, out_headers, json.dumps(result), None
 
         tls = MagicMock()
@@ -78,8 +78,6 @@ class LiveGenerationVerdict(unittest.TestCase):
         ssl_context = MagicMock()
         ssl_context.wrap_socket.return_value.__enter__.return_value = tls
         argv = ['verify_backend_live.py', 'https://backend.example']
-        if generation:
-            argv.append('--generation')
         output = io.StringIO()
         LIVE.p[:] = [0]
         LIVE.f[:] = [0]
@@ -93,8 +91,17 @@ class LiveGenerationVerdict(unittest.TestCase):
              patch.dict(LIVE.os.environ, {'ACS_FRONTEND_ORIGIN': origin}), \
              contextlib.redirect_stdout(output):
             rc = LIVE.main()
-        self.assertEqual(len(calls), 1 if generation else 0, 'no automatic resubmission')
+            if generation:
+                LIVE.skipped[:] = []
+                LIVE.validate_generation_response(status, response_text, error, hj=health)
+                rc = 1 if LIVE.f[0] else 0
+        self.assertEqual(len(calls), 0, 'the free monitor and offline validator never submit generation')
         return rc, output.getvalue(), LIVE.f[0], list(LIVE.skipped)
+
+    def test_legacy_generation_flag_cannot_submit_a_paid_request(self):
+        with patch.object(LIVE, 'request') as request, patch.object(sys, 'argv', ['verify_backend_live.py', '--generation']), contextlib.redirect_stdout(io.StringIO()):
+            self.assertEqual(LIVE.main(), 2)
+        request.assert_not_called()
 
     def test_free_mode_still_skips_generation(self):
         rc, output, failures, skipped = self.run_verifier(generation=False)

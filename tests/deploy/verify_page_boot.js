@@ -124,6 +124,7 @@ function notVerified(why) {
 }
 
 (async () => {
+  if (TARGET) { await require("./verify_public_guest.js").run(TARGET); return; }
   if (!TARGET) {
     const three = path.join(PUB, 'vendor', 'three@0.160.0', 'build',
       'three.module.js');

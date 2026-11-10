@@ -71,14 +71,11 @@ const ORDER = [];
   let m;
   while ((m = re.exec(MAIN))) ORDER.push(m[1]);
 }
-chk('public/app/main.js يستورد ui/panels-entry.js (استيراد ساكن، لا كسول)',
-  ORDER.indexOf('ui/panels-entry.js') >= 0, ORDER.join(', '));
-chk('المدخل يأتي بعد كل وحدة ينشر عليها اعتماده',
-  ORDER.indexOf('ui/panels-entry.js')
-    > Math.max(ORDER.indexOf('generated/workspace-ui.js'),
-      ORDER.indexOf('generated/render-engine.js'),
-      ORDER.indexOf('generated/pbr.js'),
-      ORDER.indexOf('ui/workspace-ui-wiring.js')));
+const LOCAL_ORDER=fs.readFileSync(path.join(ROOT,'tools','frontend_local.txt'),'utf8').split('\n').map(s=>s.trim()).filter(s=>s&&!s.startsWith('#'));
+chk('account entry only loads the local route owner; panels are local-only',
+  ORDER.includes('ui/local-studio-entry.mjs')&&!ORDER.includes('ui/panels-entry.js')&&LOCAL_ORDER.includes('ui/panels-entry.js'));
+chk('local panel entry follows its live renderer and PBR dependencies',
+  LOCAL_ORDER.indexOf('ui/panels-entry.js')>Math.max(LOCAL_ORDER.indexOf('generated/pbr.js'),LOCAL_ORDER.indexOf('ui/workspace-ui-wiring.js')));
 /* KI-12: الطبقات المؤجَّلة يجب ألّا تكون في ترتيب main.js إطلاقاً — لو عادت
    واحدة إليه بقيت اللوحة تعمل فيمرّ الانحدار صامتاً، ويضيع ربع ميغابايت من
    مسار الإقلاع بلا أن يفشل شيء. */

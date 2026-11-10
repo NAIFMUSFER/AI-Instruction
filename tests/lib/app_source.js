@@ -45,8 +45,11 @@ function lazyOrder() {
 
 /* ترتيب التقييم الكامل: المشحون أوّلاً بترتيب main.js، ثم المؤجَّل بترتيبه
    المُعلَن. أي حافّة استيراد صالحة تشير إلى الوراء في هذا الترتيب. */
+function localOrder() {
+  return fs.readFileSync(path.join(ROOT,'tools','frontend_local.txt'),'utf8').split('\n').map(s=>s.trim()).filter(s=>s&&!s.startsWith('#'));
+}
 function fullOrder() {
-  return order().concat(lazyOrder());
+  return order().concat(localOrder(),lazyOrder());
 }
 
 /* الطبقات النقيّة: لا DOM ولا Three ولا window — تعمل في Node كما كانت تعمل
@@ -134,7 +137,7 @@ function nodeBundle(files) {
   return parts.join('\n\n');
 }
 
-module.exports = { ROOT, PUB, APP, PURE, REGISTRIES, order, lazyOrder,
+module.exports = { localOrder, ROOT, PUB, APP, PURE, REGISTRIES, order, lazyOrder,
                    fullOrder, shell, modules,
                    appText, pageText, nodeBundle, registryPrelude,
                    stripModuleSyntax };

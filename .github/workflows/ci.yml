@@ -5,7 +5,8 @@
 #   • A pull request FAILS if any mandatory job fails. The `ci-required` job at
 #     the bottom is the single status check to mark "required" in branch
 #     protection: it re-reads the result of every other job and fails unless all
-#     of them succeeded, so a newly added job can never silently become optional.
+#     of them succeeded. Add every new mandatory job explicitly to `needs`;
+#     independent workflows are not automatically enforced by this aggregate.
 #   • Nothing here talks to the live deployment. Live production verification is
 #     a SEPARATE workflow (production-verify.yml), triggered manually or on a
 #     schedule, never from a PR.
@@ -645,6 +646,7 @@ jobs:
       - dependency-audit
       - build-frontend
       - docker-build
+      - delivery-critical
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -666,6 +668,104 @@ jobs:
           path: all-logs/
           retention-days: 30
 
+  # Always runs: security, migrations, generators and guest/auth paths must not
+  # become optional through path filters. This is a code gate, not a production
+  # deployment or real-provider acceptance claim.
+  delivery-critical:
+    name: Delivery critical journeys
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: .
+      PG_BINDIR: /usr/lib/postgresql/16/bin
+      ACS_VISUAL_OUTPUT: logs/approved-viewer
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the pinned backend dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install the independent IFC reader for test-only validation
+        run: pip install ifcopenshell==0.9.0.post1
+      - name: Require independent PDF extraction with Poppler
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends poppler-utils
+          fi
+          command -v pdftotext
+      - name: Build reviewed browser dependencies
+        run: |
+          bash tools/vendor.sh
+          npx playwright install --with-deps chromium
+      - name: Paid admission, geometry, exports and release negative witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/ci_run.sh --log logs/delivery-python.log --label "delivery critical Python" --runner python3 \
+            tests/remediation/test_delivery_paid_admission.py \
+            tests/remediation/test_delivery_ingress.py \
+            tests/remediation/test_delivery_release_safety.py \
+            tests/remediation/test_delivery_provider_identity.py \
+            tests/remediation/test_delivery_arabic_pdf.py \
+            tests/remediation/test_audit_*.py \
+            tests/remediation/test_connected_workspace.py \
+            tests/remediation/test_workspace_recovery.py \
+            tests/remediation/test_auth_gateway.py \
+            tests/remediation/test_production_auth_boundary.py \
+            tests/remediation/test_plan_http_command_boundary.py \
+            tests/remediation/test_plan_pdf_export.py \
+            tests/remediation/test_geometry_delivery.py \
+            tests/remediation/test_geometry_independent_readers.py \
+            tests/remediation/test_requirement_vocabulary.py \
+            tests/remediation/test_warehouse_soft_area_fit.py \
+            tests/remediation/test_live_generation_verdict.py
+      - name: Canonical generated sources agree with tracked outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/build_requirement_metrics.py
+          python tools/build_bim_browser.py
+          python tools/build_runtime_browser.py
+          python tools/build_pbr_browser.py
+          python tools/build_docs_browser.py
+          git diff --exit-code -- public/app/generated/requirement-metrics.mjs public/app/generated/bim.js public/app/generated/runtime.js public/app/generated/pbr.js public/app/generated/docs.js public/app/styles/app.css public/index.html
+      - name: Revision races and Arabic frontend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
+            tests/remediation/test_approved_revision_race.mjs \
+            tests/remediation/test_audit_frontend_brief.mjs \
+            tests/remediation/test_audit_frontend_guards.js \
+            tests/remediation/test_audit_frontend_panels.js \
+            tests/remediation/test_audit_frontend_vertical.cjs
+          node tests/lib/run.js tests/remediation/test_geometry_delivery_browser.js
+          node tests/lib/run.js tests/remediation/test_delivery_pdf_browser.js
+      - name: Real Chromium guest, private-workspace fixture and approved-artifact views
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/ci_run.sh --log logs/delivery-browser.log --label "delivery critical Chromium" --runner node \
+            tests/remediation/test_guest_workspace.cjs \
+            tests/remediation/test_connected_workspace_browser.cjs \
+            tests/remediation/test_approved_viewer_browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-delivery-critical
+          path: logs/
+          if-no-files-found: error
+          retention-days: 30
+
   # ---------------------------------------------------------------------------
   ci-required:
     name: CI required (mark THIS one as the required status check)
@@ -681,6 +781,7 @@ jobs:
       - dependency-audit
       - build-frontend
       - docker-build
+      - delivery-critical
     steps:
       - name: Fail unless every mandatory job succeeded
         shell: bash

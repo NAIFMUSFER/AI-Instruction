@@ -167,78 +167,30 @@ class PlanHttpCommandBoundaryTests(unittest.TestCase):
         self.assertNotIn(ACTOR_ID, json.dumps(body))
         self.assertNotIn(TOKEN, json.dumps(body))
 
-    def test_chat_edit_routes_to_isolated_stale_safe_orchestration(self):
-        calls = {}
+    def test_chat_edit_routes_to_shared_durable_admission(self):
+        from unittest.mock import patch, AsyncMock
+        import acs_workspace_http as WORK
         store = object()
-        verifier = object()
-
         async def authorize(scope, send):
             scope.setdefault("state", {})["authenticated_user_id"] = ACTOR_ID
             return True
-
-        def factory(scope):
-            calls["factory_actor"] = scope["state"]["authenticated_user_id"]
-            return store
-
-        def forbidden_persist(*args, **kwargs):
-            raise AssertionError("chat_edit must not use synchronous persisted command path")
-
-        def isolated(got_store, project_id, command, *, actor_id, provider_model=None,
-                     verifier=None, request_id=None, **kwargs):
-            calls.update({
-                "store": got_store,
-                "project_id": project_id,
-                "command": command,
-                "actor_id": actor_id,
-                "provider_model": provider_model,
-                "verifier": verifier,
-                "request_id": request_id,
-            })
-            return {
-                "schema": "acs.plan-command-result/1.0",
-                "action": "chat_edit",
-                "head": "r2",
-                "baseline": "r1",
-                "persistence": {
-                    "schema": "acs.plan-persisted-command-result/1.0",
-                    "head_revision_id": "r2",
-                    "baseline_revision_id": "r1",
-                    "revision_persisted": True,
-                    "approval_persisted": False,
-                },
-            }
-
         HTTP.AUTH.authorize_asgi = authorize
-        HTTP.SESSION.authenticated_supabase_plan_store = factory
-        HTTP.PERSIST.execute_persisted_plan_command = forbidden_persist
-        HTTP.CHAT.execute_isolated_persisted_chat_edit = isolated
-        HTTP.BRIDGE.existing_geometry_verifier = verifier
-
-        middleware = self._middleware([])
+        HTTP.SESSION.authenticated_supabase_plan_store = lambda scope: store
+        command = {"action": "chat_edit", "job_id":"33333333-3333-4333-8333-333333333333",
+                   "expected_head":"r1", "confirmed":True, "max_provider_calls":3,
+                   "notes":[{"text":"كبر المجلس مع قفل المصعد"}]}
         messages = []
-        command = {
-            "action": "chat_edit",
-            "expected_head": "r1",
-            "notes": [{"text": "كبر المجلس مع قفل المصعد"}],
-        }
-        asyncio.run(middleware(
-            _scope(f"/v1/projects/{PROJECT_ID}/plan/commands"),
-            _receive_for(command),
-            asyncio.run(_capture_send(messages)),
-        ))
+        with patch.object(WORK.WorkspaceMiddleware,"_start",new_callable=AsyncMock,
+                          return_value={"ok":True,"job":{"state":"RUNNING"}}) as admit:
+            asyncio.run(self._middleware([])(
+                _scope(f"/v1/projects/{PROJECT_ID}/plan/commands"),
+                _receive_for(command),asyncio.run(_capture_send(messages))))
+            self.assertEqual(admit.await_args.args[1:],(store,PROJECT_ID,ACTOR_ID,command))
         status, body = _json_response(messages)
-        self.assertEqual(status, 200)
-        self.assertTrue(body["ok"])
-        self.assertEqual(calls["store"], store)
-        self.assertEqual(calls["project_id"], PROJECT_ID)
-        self.assertEqual(calls["actor_id"], ACTOR_ID)
-        self.assertEqual(calls["command"], command)
-        self.assertIsNone(calls["provider_model"])
-        self.assertIs(calls["verifier"], verifier)
-        self.assertIsInstance(calls["request_id"], str)
-        self.assertTrue(calls["request_id"])
-        self.assertNotIn(ACTOR_ID, json.dumps(body))
-        self.assertNotIn(TOKEN, json.dumps(body))
+        self.assertEqual(status,202)
+        self.assertEqual(body["result"]["job"]["state"],"RUNNING")
+        self.assertNotIn(ACTOR_ID,json.dumps(body))
+        self.assertNotIn(TOKEN,json.dumps(body))
 
     def test_client_cannot_smuggle_project_authority_inside_command(self):
         async def authorize(scope, send):

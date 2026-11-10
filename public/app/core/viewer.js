@@ -712,7 +712,7 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
   const tag=`OBJ|${fkey}|${room}|${(o.name||kind)}${idx}`;
   const B=(dx,dy,dz,ex,ey,ez,mat,c)=>{
     const s=Math.sin(rot), co=Math.cos(rot);
-    addBox(g, cx+dx*co-dz*s, baseY+dy, cz+dx*s+dz*co, ex,ey,ez, mat, tag, true, c||col, rot);
+    addBox(g, cx+dx*co-dz*s, baseY+dy, cz+dx*s+dz*co, ex,ey,ez, mat, tag, true, c||col, -rot);
   };
   const M=OBJ_MAT[shape]||'furn';
   if(shape==='person'){
@@ -1151,7 +1151,7 @@ function slabStrips(x0,z0,W,D,holes){
 function acsRenderLevel(lvl, position){
   const raw=(lvl&&typeof lvl==='object')?lvl:{};
   const candidate=Number(raw.index);
-  const derived=!(isFinite(candidate)&&candidate>=0&&candidate===Math.floor(candidate));
+  const derived=!(typeof raw.index==='number'&&isFinite(candidate)&&candidate===Math.floor(candidate));
   return {raw:raw,index:derived?position:candidate,derived:derived};
 }
 
@@ -1199,7 +1199,7 @@ function compile(data){
   });
   _levels.forEach(_lv=>{
     const lvl=_lv.raw, li=_lv.index;
-    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=li*fh; const fkey='F'+li;
+    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=Number.isFinite(lvl.elevation)?lvl.elevation:li*fh; const fkey='F'+li;
     const holes=ARCH?ARCH.voids.filter(v=>v.level_index===li).map(v=>v.rect):[];
     /* PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان اللوح يُبنى على مستطيل
        الموقع كاملاً (المُدخَل السابق: صفر، صفر، عرض الموقع، عمق الموقع)
@@ -1214,7 +1214,7 @@ function compile(data){
        معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
     const _pp=__ACS_LATE.pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
     const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
-    slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes).forEach((s,k)=>
+    (_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes)).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
     acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,

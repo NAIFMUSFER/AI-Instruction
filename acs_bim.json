@@ -677,5 +677,12 @@
     "autonomous design",
     "AI-generated BIM engineering changes",
     "automatic approval of imported BIM data"
-  ]
+  ],
+  "serialization_geometry_contract": {
+    "rectangle_profile_position": "IFCAXIS2PLACEMENT2D",
+    "product_and_extrusion_position": "IFCAXIS2PLACEMENT3D",
+    "length_units": "METRE",
+    "world_axes": "X/Y plan; Z elevation",
+    "validation": "IfcOpenShell schema and meshed world bounds; no Revit acceptance claimed"
+  }
 }

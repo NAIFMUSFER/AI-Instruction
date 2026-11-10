@@ -634,7 +634,13 @@ function pqPlateRect(roomRects,siteRect){
     x0=Math.min(x0,_pqNum(r[0])); z0=Math.min(z0,_pqNum(r[1]));
     x1=Math.max(x1,_pqNum(r[0])+_pqNum(r[2]));
     z1=Math.max(z1,_pqNum(r[1])+_pqNum(r[3])); });
+  const xs=Array.from(new Set(rects.flatMap(r=>[r[0],r[0]+r[2]]))).sort((a,b)=>a-b),pieces=[];
+  for(let i=0;i<xs.length-1;i++){
+    const a=xs[i],b=xs[i+1],intervals=rects.filter(r=>r[0]<b&&r[0]+r[2]>a).map(r=>[r[1],r[1]+r[3]]).sort((a,b)=>a[0]-b[0]||a[1]-b[1]),merged=[];
+    intervals.forEach(v=>{const last=merged[merged.length-1];if(last&&v[0]<=last[1])last[1]=Math.max(last[1],v[1]);else merged.push(v.slice());});
+    merged.forEach(v=>pieces.push([a,v[0],b-a,v[1]-v[0]])); }
   return {valid:true,issues:[],source:'LEVEL_ROOM_UNION',
+    rectangles:pieces.map(r=>r.map(_pqQ)),area_m2:_pqQ(pieces.reduce((a,r)=>a+r[2]*r[3],0)),rect_basis:'BOUNDING_BOX_ONLY',
     rect:[_pqQ(x0),_pqQ(z0),_pqQ(x1-x0),_pqQ(z1-z0)],
     room_count:rects.length}; }
 

@@ -1,0 +1,163 @@
+[
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_delivery_provider_identity.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 4 tests in 0.004s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_audit_backend_provider.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 11 tests in 0.247s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_audit_backend_warehouse_policy.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 6 tests in 0.014s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_audit_backend_residential_roles.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 14 tests in 0.270s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_provider_capability.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "PROVIDER CAPABILITY / ROUTING / RESPONSE SEMANTICS: 92 passed, 0 failed"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_multi_provider.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "MULTI-PROVIDER: 111 passed, 0 failed"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_provider_accounting.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "PROVIDER ACCOUNTING: 51 passed, 0 failed"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_provider_integration.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "PROVIDER INTEGRATION: 56 passed, 0 failed"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_provider_reject.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "PROVIDER REJECTION DIAGNOSTICS: 57 passed, 0 failed"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_delivery_arabic_pdf.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 4 tests in 0.651s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_plan_pdf_export.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 7 tests in 1.007s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/phase9/test_docs.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "DOCUMENTATION: 421 passed, 0 failed"
+    ]
+  },
+  {
+    "command": [
+      "node",
+      "tests/lib/run.js",
+      "tests/remediation/test_delivery_pdf_browser.js"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Browser PDF capability: Unicode refused explicitly; ASCII works; input unchanged."
+    ]
+  },
+  {
+    "command": [
+      ".venv/bin/python",
+      "tests/remediation/test_audit_backend_corpus.py"
+    ],
+    "exit_code": 0,
+    "summary": [
+      "Ran 5 tests in 3.784s",
+      "OK"
+    ]
+  },
+  {
+    "command": [
+      "node",
+      "tests/phase9/test_parity.js"
+    ],
+    "environment": {
+      "PATH_prefix": "$PWD/.venv/bin"
+    },
+    "exit_code": 0,
+    "summary": [
+      "DOCS PARITY SUITE: 72 passed, 0 failed"
+    ]
+  }
+]

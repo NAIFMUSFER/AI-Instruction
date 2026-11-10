@@ -1,0 +1,12 @@
+.{"error_code": "PLAN_GEOMETRY_ROOM_OVERLAP", "event": "workspace_job_finished", "level": "info", "request_id": "33333333-3333-4333-8333-333333333333", "service": "ACS Understanding Engine", "state": "FAILED", "ts": "2026-11-10T16:34:14Z"}
+.............................[ACS-PLAN] بيان 1 منطقة → 1 شريحة × 60 منطقة مبدئياً (سقف الشريحة 16000 رمزاً؛ الحجم يُعاد اشتقاقه من القياس)
+{"error_code": "ACS_TIMEOUT", "event": "workspace_job_finished", "level": "info", "request_id": "33333333-3333-4333-8333-333333333333", "service": "ACS Understanding Engine", "state": "FAILED", "ts": "2026-11-10T16:34:23Z"}
+....[ACS-PLAN] بيان 18 منطقة → 1 شريحة × 60 منطقة مبدئياً (سقف الشريحة 16000 رمزاً؛ الحجم يُعاد اشتقاقه من القياس)
+[ACS-PLAN] بيان 18 منطقة → 1 شريحة × 60 منطقة مبدئياً (سقف الشريحة 16000 رمزاً؛ الحجم يُعاد اشتقاقه من القياس)
+[ACS-PLAN] بيان 18 منطقة → 1 شريحة × 60 منطقة مبدئياً (سقف الشريحة 16000 رمزاً؛ الحجم يُعاد اشتقاقه من القياس)
+{"error_code": "ACS_TIMEOUT", "event": "workspace_job_finished", "level": "info", "request_id": "33333333-3333-4333-8333-333333333333", "service": "ACS Understanding Engine", "state": "FAILED", "ts": "2026-11-10T16:34:23Z"}
+...................
+----------------------------------------------------------------------
+Ran 53 tests in 9.321s
+
+OK

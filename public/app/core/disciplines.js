@@ -44,7 +44,7 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
           detail:'a non-rectangular outline is present; it was NOT approximated as a rectangle'});
         out.issues.push({code:'SPACE_SHAPE_UNSUPPORTED', subject:sid}); } });
     const bbox=_aBbox(allRects);
-    const segs=_aWallSegments(rooms);
+    const segs=_aWallSegments(rooms,['warehouse','industrial','factory','logistics'].includes(String((building.meta||{}).type||'').toLowerCase()));
     const lvlWalls=[];
     segs.forEach((s,n)=>{
       let cls=_aClassifyExposure(s,rects,unsupported,bbox);

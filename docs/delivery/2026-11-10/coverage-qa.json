@@ -1,0 +1,342 @@
+[
+  {
+    "path": "tests/production/run_all.sh",
+    "depth": "deep",
+    "purpose": "Capture and preserve all verifier process exits",
+    "risk": "high",
+    "findings": [
+      "QA-01"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/production/validate_evidence.py",
+    "depth": "deep",
+    "purpose": "Validate completed evidence, groups, exact source identity and aggregate",
+    "risk": "high",
+    "findings": [
+      "QA-01"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/production/verify_live.py",
+    "depth": "selected",
+    "purpose": "HTTP/provenance monitor partial result handling",
+    "risk": "medium",
+    "findings": [
+      "QA-01"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/production/verify_live_browser.js",
+    "depth": "selected",
+    "purpose": "Production public guest default; retained opt-in legacy diagnostic flow",
+    "risk": "high",
+    "findings": [
+      "QA-01",
+      "QA-03"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/deploy/verify_page_boot.js",
+    "depth": "selected",
+    "purpose": "Dispatch deployed URL to real public guest monitor",
+    "risk": "high",
+    "findings": [
+      "QA-03"
+    ],
+    "tests": [
+      "node --check tests/deploy/verify_page_boot.js",
+      "Real Chromium attempted: process_singleton socket EPERM; no visual PASS claimed"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/deploy/verify_public_guest.js",
+    "depth": "deep",
+    "purpose": "Fresh guest desktop/mobile sample, local-save/reload/download/sign-in UI monitor",
+    "risk": "high",
+    "findings": [
+      "QA-03"
+    ],
+    "tests": [
+      "node --check tests/deploy/verify_public_guest.js",
+      "Real Chromium attempted: process_singleton socket EPERM; no visual PASS claimed"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/deploy/verify_backend_live.py",
+    "depth": "deep",
+    "purpose": "Free authentication-aware live backend monitor and response acceptance helper",
+    "risk": "high",
+    "findings": [
+      "QA-03"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_live_generation_verdict.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/package_release.sh",
+    "depth": "deep",
+    "purpose": "Package and recheck extracted reviewed artifacts",
+    "risk": "high",
+    "findings": [
+      "QA-02"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/release_manifest.py",
+    "depth": "deep",
+    "purpose": "Tracked-file allowlist and cryptographic release manifest",
+    "risk": "high",
+    "findings": [
+      "QA-02"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/vendor_manifest.py",
+    "depth": "deep",
+    "purpose": "Validate generated browser dependencies against integrity-installed sources",
+    "risk": "medium",
+    "findings": [
+      "QA-02"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/vendor.sh",
+    "depth": "selected",
+    "purpose": "Generate authenticated dependency byte inventory after locked vendor copy",
+    "risk": "medium",
+    "findings": [
+      "QA-02"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/netlify-build.sh",
+    "depth": "selected",
+    "purpose": "Same generated vendor inventory in hosted build",
+    "risk": "medium",
+    "findings": [
+      "QA-02"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_rate_limit.py",
+    "depth": "selected",
+    "purpose": "Deep review of diagnostic/exception boundaries; selected reading of limiter implementation",
+    "risk": "high",
+    "findings": [
+      "SEC-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py",
+      "python3 tests/remediation/test_rate_limit.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_logging.py",
+    "depth": "selected",
+    "purpose": "Reviewed structured logger usage and interaction; unchanged",
+    "risk": "medium",
+    "findings": [
+      "SEC-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "depth": "selected",
+    "purpose": "Always-running delivery gate explicitly required by CI aggregate",
+    "risk": "high",
+    "findings": [
+      "QA-05",
+      "QA-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_ci_gate.py",
+      "YAML parser",
+      "GitHub CI pending exact integration SHA"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/production-supabase-plan-store.yml",
+    "depth": "deep",
+    "purpose": "Trigger schema checks for every migration",
+    "risk": "high",
+    "findings": [
+      "QA-05"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_ci_gate.py",
+      "YAML parser",
+      "GitHub CI pending exact integration SHA"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/production-supabase-plan-store-adapter.yml",
+    "depth": "deep",
+    "purpose": "Trigger adapter checks for every migration",
+    "risk": "high",
+    "findings": [
+      "QA-05"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_ci_gate.py",
+      "YAML parser",
+      "GitHub CI pending exact integration SHA"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/production-verify.yml",
+    "depth": "deep",
+    "purpose": "Separate free public/unauthorized monitoring from unsupported legacy paid option",
+    "risk": "high",
+    "findings": [
+      "QA-03"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_ci_gate.py",
+      "YAML parser",
+      "GitHub CI pending exact integration SHA"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_delivery_release_safety.py",
+    "depth": "deep",
+    "purpose": "Executable crash, partial, manifest-sentinel and raw-log negative witnesses",
+    "risk": "high",
+    "findings": [
+      "QA-01",
+      "QA-02",
+      "SEC-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_live_generation_verdict.py",
+    "depth": "deep",
+    "purpose": "Keep response acceptance regressions and ensure no paid monitor requests",
+    "risk": "medium",
+    "findings": [
+      "QA-03"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_live_generation_verdict.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_ci_gate.py",
+    "depth": "selected",
+    "purpose": "Existing gate propagation and monitor target regressions; unchanged",
+    "risk": "medium",
+    "findings": [
+      "QA-05",
+      "QA-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_rate_limit.py",
+    "depth": "selected",
+    "purpose": "Existing limiter behavior regression; unchanged",
+    "risk": "medium",
+    "findings": [
+      "SEC-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py",
+      "python3 tests/remediation/test_rate_limit.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_logging.py",
+    "depth": "selected",
+    "purpose": "Existing structured diagnostic behavior regression; unchanged",
+    "risk": "medium",
+    "findings": [
+      "SEC-06"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_browser_acquisition.py",
+    "depth": "static",
+    "purpose": "Existing browser-selection suite executed; not full semantic review",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "python3 tests/remediation/test_delivery_release_safety.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_delivery_pdf_browser.js",
+    "depth": "selected",
+    "purpose": "Reviewed and executed generated browser Unicode-capability refusal; wired into CI",
+    "risk": "medium",
+    "findings": [
+      "ENG-ARABIC-PDF"
+    ],
+    "tests": [
+      "node tests/lib/run.js tests/remediation/test_delivery_pdf_browser.js"
+    ],
+    "generated_from": []
+  }
+]

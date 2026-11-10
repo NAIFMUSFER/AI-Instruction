@@ -451,7 +451,7 @@ chk('and it is exported, so the module graph can reach it', built.exported===tru
     built);
 chk('the shell reaches the trust core through the legacy studio module entry',
     AS.shell().indexOf('<script type="module" src="/app/main.js">')>=0
-    && AS.order().indexOf('trust/core.js')>=0, AS.order().join(','));
+    && AS.localOrder().indexOf('trust/core.js')>=0, AS.order().join(','));
 
 const rendered=await page.evaluate(()=>{
   /* نبني البديل النصّي بيدنا من نفس هيكل النموذج للتحقّق من العلامات المشحونة،

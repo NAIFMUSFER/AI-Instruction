@@ -1,0 +1,214 @@
+[
+  {
+    "fixture": "baseline-villa",
+    "reader": "IfcOpenShell 0.9.0.post1",
+    "schema": "IFC4",
+    "schema_errors": 4,
+    "errors": [
+      "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #35=IfcAxis2Placement3D(#34,#15,#16)\nNot valid\n",
+      "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #45=IfcAxis2Placement3D(#44,#15,#16)\nNot valid\n",
+      "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #35=IfcAxis2Placement3D(#34,#15,#16)\nNot valid\n",
+      "With attribute:\n    <attribute Position?: <entity IfcAxis2Placement2D>>\nValue:\n    #45=IfcAxis2Placement3D(#44,#15,#16)\nNot valid\n"
+    ],
+    "spaces": [
+      {
+        "id": "2n_7Z9HBhxX8j0AHIi05vc",
+        "room_id": "living",
+        "bounds_xyz": [
+          [
+            -4.0,
+            4.0
+          ],
+          [
+            -4.0,
+            4.0
+          ],
+          [
+            0.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "id": "2Vb4v1oWdIvrUNcHrtlj6W",
+        "room_id": "stairs",
+        "bounds_xyz": [
+          [
+            6.0,
+            10.0
+          ],
+          [
+            -4.0,
+            4.0
+          ],
+          [
+            0.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "id": "1omz9mXpenmRliuP6xtqt2",
+        "room_id": "living",
+        "bounds_xyz": [
+          [
+            -4.0,
+            4.0
+          ],
+          [
+            -4.0,
+            4.0
+          ],
+          [
+            4.2,
+            7.2
+          ]
+        ]
+      },
+      {
+        "id": "1PmTSZwiUOv1tZNFSbm7QZ",
+        "room_id": "stairs",
+        "bounds_xyz": [
+          [
+            6.0,
+            10.0
+          ],
+          [
+            -4.0,
+            4.0
+          ],
+          [
+            4.2,
+            7.2
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "fixture": "villa",
+    "reader": "IfcOpenShell 0.9.0.post1",
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "errors": [],
+    "spaces": [
+      {
+        "id": "0ED6$Em$_QgzyASIE6etxY",
+        "room_id": "living",
+        "bounds_xyz": [
+          [
+            0.0,
+            8.0
+          ],
+          [
+            0.0,
+            8.0
+          ],
+          [
+            0.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "id": "03zKBD71rq4TpD2cVbVAW9",
+        "room_id": "stairs",
+        "bounds_xyz": [
+          [
+            8.0,
+            12.0
+          ],
+          [
+            0.0,
+            8.0
+          ],
+          [
+            0.0,
+            3.0
+          ]
+        ]
+      },
+      {
+        "id": "2k6uLeas4tOLTC7zoHb3$Q",
+        "room_id": "living",
+        "bounds_xyz": [
+          [
+            0.0,
+            8.0
+          ],
+          [
+            0.0,
+            8.0
+          ],
+          [
+            4.2,
+            7.2
+          ]
+        ]
+      },
+      {
+        "id": "3QiM3o26RgUjED7QLHYY2i",
+        "room_id": "stairs",
+        "bounds_xyz": [
+          [
+            8.0,
+            12.0
+          ],
+          [
+            0.0,
+            8.0
+          ],
+          [
+            4.2,
+            7.2
+          ]
+        ]
+      }
+    ]
+  },
+  {
+    "fixture": "warehouse",
+    "reader": "IfcOpenShell 0.9.0.post1",
+    "schema": "IFC4",
+    "schema_errors": 0,
+    "errors": [],
+    "spaces": [
+      {
+        "id": "2o7mQatAj5GKud1rNoEFTy",
+        "room_id": "dispatch",
+        "bounds_xyz": [
+          [
+            14.0,
+            20.0
+          ],
+          [
+            0.0,
+            16.0
+          ],
+          [
+            0.0,
+            7.5
+          ]
+        ]
+      },
+      {
+        "id": "1Nv9DUdLMRS8h9Wpc58KOb",
+        "room_id": "storage",
+        "bounds_xyz": [
+          [
+            0.0,
+            14.0
+          ],
+          [
+            0.0,
+            16.0
+          ],
+          [
+            0.0,
+            7.5
+          ]
+        ]
+      }
+    ]
+  }
+]

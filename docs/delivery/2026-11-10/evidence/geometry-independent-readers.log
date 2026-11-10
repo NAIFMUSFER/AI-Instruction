@@ -1,0 +1,29 @@
+No stream support: No module named 'lark'
+..
+----------------------------------------------------------------------
+Ran 2 tests in 2.129s
+
+OK
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0
+[
+  {
+    "fixture": "villa",
+    "revision_id": "plan_310b646d34aa44c987084c9ad092c2c0",
+    "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+    "area_m2": 192,
+    "spaces": 4,
+    "nodes": 59,
+    "triangles": 708,
+    "gltf_bytes": 119594
+  },
+  {
+    "fixture": "warehouse",
+    "revision_id": "plan_16910a6c6d87406e9711a578bb5654b8",
+    "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+    "area_m2": 320,
+    "spaces": 2,
+    "nodes": 72,
+    "triangles": 864,
+    "gltf_bytes": 146125
+  }
+]

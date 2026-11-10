@@ -16,6 +16,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 import uuid
+import acs_request_admission as ADMISSION
+import acs_ingress as INGRESS
+import acs_api_errors as E
 from typing import Any
 
 _MAX_BODY = 32 * 1024
@@ -54,29 +57,12 @@ def matches(path: Any) -> bool:
     return isinstance(path, str) and path in _AUTH_PATHS
 
 
-async def _read_json(receive) -> dict:
-    chunks: list[bytes] = []
-    size = 0
-    while True:
-        msg = await receive()
-        if not isinstance(msg, dict):
-            raise ValueError("invalid request")
-        if msg.get("type") == "http.disconnect":
-            raise ValueError("disconnected")
-        if msg.get("type") != "http.request":
-            continue
-        body = msg.get("body", b"")
-        if not isinstance(body, (bytes, bytearray)):
-            raise ValueError("invalid body")
-        size += len(body)
-        if size > _MAX_BODY:
-            raise OverflowError("body too large")
-        if body:
-            chunks.append(bytes(body))
-        if not msg.get("more_body", False):
-            break
+async def _read_json(receive, scope=None) -> dict:
+    body = await INGRESS.bounded_body(scope or {}, receive, _MAX_BODY)
+    if body is None:
+        raise ValueError("disconnected")
     try:
-        value = json.loads(b"".join(chunks).decode("utf-8"))
+        value = json.loads(body.decode("utf-8"))
     except Exception as exc:
         raise ValueError("invalid json") from exc
     if not isinstance(value, dict):
@@ -436,31 +422,35 @@ async def maybe_handle(scope, receive, send) -> bool:
         await _send(send, 405, {"ok": False, "error": {"code": "METHOD_NOT_ALLOWED", "message": "POST فقط."}})
         return True
     try:
-        body = await _read_json(receive)
+        body = await _read_json(receive, scope)
         path = scope.get("path")
         token = _bearer(scope)
         if path == "/v1/auth/signup":
-            status, payload = await asyncio.to_thread(_signup, body)
+            status, payload = await ADMISSION.run(scope, _signup, body)
         elif path == "/v1/auth/signin":
-            status, payload = await asyncio.to_thread(_signin, body)
+            status, payload = await ADMISSION.run(scope, _signin, body)
         elif path == "/v1/auth/refresh":
-            status, payload = await asyncio.to_thread(_refresh, body)
+            status, payload = await ADMISSION.run(scope, _refresh, body)
         elif path == "/v1/auth/signout":
-            status, payload = await asyncio.to_thread(_signout, token)
+            status, payload = await ADMISSION.run(scope, _signout, token)
         elif path == "/v1/auth/recover":
-            status, payload = await asyncio.to_thread(_email_action, body)
+            status, payload = await ADMISSION.run(scope, _email_action, body)
         elif path == "/v1/auth/resend-confirmation":
-            status, payload = await asyncio.to_thread(_email_action, body, confirmation=True)
+            status, payload = await ADMISSION.run(scope, _email_action, body, confirmation=True)
         elif path == "/v1/auth/update-password":
-            status, payload = await asyncio.to_thread(_update_password, token, body)
+            status, payload = await ADMISSION.run(scope, _update_password, token, body)
         elif path == "/v1/auth/projects":
-            status, payload = await asyncio.to_thread(_projects, token, body)
+            status, payload = await ADMISSION.run(scope, _projects, token, body)
         elif path == "/v1/auth/google/start":
-            status, payload = await asyncio.to_thread(_google_start, body)
+            status, payload = await ADMISSION.run(scope, _google_start, body)
         elif path == "/v1/auth/google/exchange":
-            status, payload = await asyncio.to_thread(_google_exchange, body)
+            status, payload = await ADMISSION.run(scope, _google_exchange, body)
         else:
-            status, payload = await asyncio.to_thread(_bootstrap_project, token, body)
+            status, payload = await ADMISSION.run(scope, _bootstrap_project, token, body)
+    except E.AcsApiError as exc:
+        status, payload = exc.status, exc.envelope(E.new_request_id())
+    except ADMISSION.AdmissionRejected as exc:
+        status, payload = exc.status, {"ok": False, "error": {"code": exc.code, "message": "محاولات الدخول مشغولة مؤقتًا. حاول بعد قليل."}}
     except OverflowError:
         status, payload = 413, {"ok": False, "error": {"code": "INPUT_LIMIT", "message": "الطلب أكبر من الحد المسموح."}}
     except ValueError:

@@ -253,7 +253,7 @@ function bxBuildExchange(project,options){
       const rect=r.rect||[0,0,0,0];
       const x=_bxQ(_bxNum(rect[0])||0), z=_bxQ(_bxNum(rect[1])||0);
       const w=_bxQ(_bxNum(rect[2])||0), d=_bxQ(_bxNum(rect[3])||0);
-      const rh=_bxNum(r.height)||wallH;
+      const rh=_bxNum(r.wall_h)||_bxNum(r.height)||wallH;
       const sid=bid+'.flr_'+idx+'.'+lv.template+'.'+r.id;
       const aid=lv.template+'.'+r.id;
       if(includeSpaces&&['ALL','SPACES_ONLY','LEVELS'].indexOf(scope)>=0)
@@ -261,8 +261,13 @@ function bxBuildExchange(project,options){
           name:r.name||String(r.id),number:String(r.id),level_index:idx,
           elevation:elev,height:_bxQ(rh),footprint:[x,z,w,d],area_m2:_bxQ(w*d)});
       if(scope==='SPACES_ONLY') return;
+      const declared=r.walls, industrial=['warehouse','industrial','factory','logistics'].includes(String((model.meta||{}).type||'').toLowerCase());
+      const open=declared==='none'||declared==='line'||(!declared&&industrial&&r.role&&!['office','admin','it','staff','maintenance','meeting'].includes(r.role));
+      const edges=Array.isArray(declared)?declared:open?[]:['N','S','E','W'];
+      if(edges.some(e=>!['N','S','E','W'].includes(e))||new Set(edges).size!==edges.length)throw new Error('Invalid explicit room wall edges');
       [['N',x,z,x+w,z],['S',x,z+d,x+w,z+d],['W',x,z,x,z+d],['E',x+w,z,x+w,z+d]]
         .forEach(e=>{
+          if(!edges.includes(e[0]))return;
           ex.walls.push({canonical_id:bid+'.flr_'+idx+'.'+lv.template+'.'+r.id+
               '.wall_'+e[0],
             level_index:idx,elevation:elev,start:[_bxQ(e[1]),_bxQ(e[2])],
@@ -277,7 +282,7 @@ function bxBuildExchange(project,options){
         if(rec) ex.windows.push(rec); });
       (r.objects||[]).forEach((ob,j)=>{
         const kind=String(ob.kind||'');
-        const oid=bid+'.flr_'+idx+'.'+lv.template+'.obj_'+j;
+        const oid=bid+'.flr_'+idx+'.'+lv.template+'.'+r.id+'.obj_'+(ob.id||j);
         if(kind.toLowerCase()==='stairs'||kind.toLowerCase()==='stair')
           ex.stairs.push({canonical_id:oid,level_index:idx,elevation:elev,
             x:_bxQ(x+(_bxNum(ob.x)||0)),z:_bxQ(z+(_bxNum(ob.z)||0)),

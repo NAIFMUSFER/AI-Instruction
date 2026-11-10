@@ -17,6 +17,7 @@
 #   • المصرِّف حتمي: نفس النموذج ⇒ نفس المعرّفات والنتائج.
 # =============================================================================
 import json
+from acs_geometry_contract import wall_edges
 import os
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -117,7 +118,7 @@ def _rooms_of(building, tmpl, bid):
 
 
 # ------------------------------------------------------------- الجدران --
-def _wall_segments(rooms, wall_h_default, thickness):
+def _wall_segments(rooms, wall_h_default, thickness, industrial=False):
     """يبني مقاطع جدران أوّلية: كل حدّ مشترك يُقسَّم عند كل نقطة انكسار،
     فيُعرَّف الجدار المشترك مرّة واحدة ويشير إليه الفراغان."""
     groups = {}
@@ -126,7 +127,7 @@ def _wall_segments(rooms, wall_h_default, thickness):
         if rc is None or not _shape_supported(room):
             continue
         h = room.get("wall_h")
-        for e in ("N", "S", "E", "W"):
+        for e in wall_edges(room, industrial):
             axis, fixed, u0, u1, side = _edge_segment(e, rc)
             key = (axis, _q(fixed))
             groups.setdefault(key, []).append(
@@ -357,7 +358,7 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                 out["issues"].append({"code": "SPACE_SHAPE_UNSUPPORTED", "subject": sid})
         bbox = _bbox(all_rects)
 
-        segs = _wall_segments(rooms, wall_h_default, thickness)
+        segs = _wall_segments(rooms, wall_h_default, thickness, str((building.get("meta") or {}).get("type", "")).lower() in ("warehouse", "industrial", "factory", "logistics"))
         lvl_walls = []
         for n, s in enumerate(segs):
             exposure, status, basis = _classify_exposure(s, rects, unsupported, bbox)

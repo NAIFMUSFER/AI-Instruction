@@ -203,9 +203,12 @@ def compare_options(options: list[dict], *, declared_program_receipt: str | None
 
     seen: set[str] = set()
     measured: list[dict] = []
-    # Bound the aggregate request as well as each canonical model. This prevents
-    # option comparison from becoming a multiplier around the plan-review limits.
-    canonical(options)
+    # Count is bounded above; each model is independently bounded below. A pair
+    # of admitted revisions must not fail the single-model limit when compared.
+    for option in options:
+        if not isinstance(option, dict):
+            raise PlanError("INVALID_OPTION", "Every option must be an object")
+        canonical({k:v for k,v in option.items() if k != "model"})
 
     for raw in options:
         if not isinstance(raw, dict) or not _option_id(raw.get("id")):

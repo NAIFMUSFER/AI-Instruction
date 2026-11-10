@@ -1,0 +1,902 @@
+[
+  {
+    "fixture": "villa",
+    "synthetic": true,
+    "provider_calls": 0,
+    "revision_id": "plan_6b2182d616bb45ed878eb681d00d6e32",
+    "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+    "area_m2": 192,
+    "spaces": 4,
+    "nodes": 59,
+    "triangles": 708,
+    "gltf_bytes": 119594,
+    "review": {
+      "schema": "acs.plan-review/1.0",
+      "revision_id": "plan_6b2182d616bb45ed878eb681d00d6e32",
+      "content_hash": "d47671972cb4c75f5cad16929669f1632b17c17cf302bc832ab9b3074349b6a0",
+      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "can_approve": true,
+      "scopes": {
+        "rectangular_geometry": "PASS",
+        "program": "PASS",
+        "topology": "PASS",
+        "vertical_circulation": "PASS",
+        "regulatory_compliance": "NOT_VERIFIED",
+        "structural_safety": "NOT_VERIFIED"
+      },
+      "metrics": {
+        "level_count": 2,
+        "space_instance_count": 4,
+        "space_rect_area_m2": 192,
+        "gross_floor_area_m2": null,
+        "net_floor_area_m2": null,
+        "efficiency": null
+      },
+      "issues": [],
+      "construction_approved": false,
+      "coverage": {
+        "vertical_circulation": {
+          "core_alignment": "PASS",
+          "physical_traversal": "NOT_VERIFIED",
+          "geometry_scope": "EXPLICIT_CORE_OBJECTS",
+          "geometry": "MISSING",
+          "missing_geometry": [
+            {
+              "level_index": 0,
+              "room_id": "stairs",
+              "core_id": "stair_core",
+              "kind": "STAIR"
+            },
+            {
+              "level_index": 1,
+              "room_id": "stairs",
+              "core_id": "stair_core",
+              "kind": "STAIR"
+            }
+          ]
+        }
+      },
+      "semantic_lock_manifest_hash": null,
+      "semantic_lock_count": 0,
+      "bound_content_hash": "7a97e347df61262fa3226987f1ec4da59372830632018fed434109a2d53b6972"
+    },
+    "gltf": {
+      "approval_scope": "CONCEPTUAL_DESIGN_ONLY",
+      "artifact_bytes": 119594,
+      "artifact_sha256": "d598c9b43159a9b3933aeced69a8b11277b3e124eed8e6c23ff7eda510563ccd",
+      "bound_content_hash": "7a97e347df61262fa3226987f1ec4da59372830632018fed434109a2d53b6972",
+      "canonical_model_is_source_of_truth": true,
+      "compiler": "acs_compiler.compile_building",
+      "compiler_buffer_bytes": 53808,
+      "compiler_node_count": 59,
+      "content_hash": "d47671972cb4c75f5cad16929669f1632b17c17cf302bc832ab9b3074349b6a0",
+      "lock_binding_schema": "acs.plan-lock-binding/1.0",
+      "mode": "DETERMINISTIC_APPROVED_BASELINE_ONLY",
+      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "provenance_hash": "35bc82db1a21ad18ce93161f4de0298b816f3847f4cd30b65d6cc7a7d620db10",
+      "provenance_schema": "acs.plan-provenance/1.0",
+      "provider_calls": 0,
+      "regulatory_compliance": "NOT_VERIFIED",
+      "replanning_calls": 0,
+      "requirements_hash": "502f75041dce2c602032d0b038e456a0bbaca354f6cb9cd424c35c985b9edbbc",
+      "revision_id": "plan_6b2182d616bb45ed878eb681d00d6e32",
+      "schema": "acs.plan-3d-handoff/1.0",
+      "semantic_lock_count": 0,
+      "semantic_lock_manifest_hash": null,
+      "source_map": [
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_e06e62b1c86d5b51a8a9387a48dd995bf5f5f2f6abbd9e28581488b219277a0d"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "entry",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_d87ca09558f226aaab82adbd3dc5d3034066bf9e006babf35652e400a7d4868e"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "core_access",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_2dcd44319dbfa75fbd23611fa36b4289c6a3c84927a4ce2a6ee516fbb6095804"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "windows",
+            "element_id": "west_window",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_e7ee618fdb46b236e7cf9603fa0a682335d31a476df933f8017bbdc3e7fe292c"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "objects",
+            "element_id": "dining_table",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_ed9769e1bbca6a2b32fa2abe82639d9958bba2f1e1cf1f3493be39a04712793f"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_2df3118afa5c69be7376b053cd0a6d2266a350879f9ae48f62d02b4c280153ea"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_479f20ad010aa8012e643aa5904119f89a031e9284a2ea9ddc20173d317f7cc2"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "living_access",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_88dcc4d7e632a7b83e517fec71ccf32bb35e62cc33242563bc3c3ea85f4104c5"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_53cc33f08a20e01862cd7c88907bf7f5b7d71fe7ff36ec1602d9f9edd2ee2243"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_5b09282f3dea6f2c63bb22b68ecf4626512716beb7315f507a656b0370ff0a65"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "entry",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_0600bb5a5945d9d4e711c4e4ebd4addf78c04b5ecaeab2d8f6f9c2523d91b6a8"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "core_access",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_27006ac2ad0e4ca3e500d551d01570a42e27345d9a3434028c4d1fab0922a56f"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "windows",
+            "element_id": "west_window",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_e96644483dccc20b417531fcb8832faef1e086bc8e7dbc5825a106ebaa97449a"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "objects",
+            "element_id": "dining_table",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_9536f49497342e4cfc122b174c781f111b1a030408ebc3714989b4c39c3331b2"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_96996f82f19c8baffa0fff318310e9b1da2f872ac51e7e43ba23eaed880d740d"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 1,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_5359f85f0280e500036e8cc418942048eaf587b7157f9b8a39a800998eb8a725"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "living_access",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_d8161db4c95589fcd6d681ebffdf9b231701ef2da6b4654e1693753253cbd492"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_4a18fbc77e410dcb5e469ae63c7b3f5cbb3b79047464013cfa7e139d10a03fbc"
+        }
+      ],
+      "source_map_hash": "7b7db0d9b9e85463d93383159fd16aba8f2b67bcc7b37afd3c8227cda0bb034e",
+      "structural_safety": "NOT_VERIFIED",
+      "three_d_is_source_of_truth": false
+    },
+    "ifc": {
+      "approval_scope": "CONCEPTUAL_DESIGN_ONLY",
+      "artifact_bytes": 4080,
+      "artifact_sha256": "32c1e3d3ead5504eef8569098e17c00f0c0ac6f7087369256c6decf0d3697525",
+      "bound_content_hash": "7a97e347df61262fa3226987f1ec4da59372830632018fed434109a2d53b6972",
+      "canonical_model_is_source_of_truth": true,
+      "content_hash": "d47671972cb4c75f5cad16929669f1632b17c17cf302bc832ab9b3074349b6a0",
+      "ifc_is_source_of_truth": false,
+      "ifc_manifest": {
+        "body_hash": "a571200c28a19611952c411dad1d1b08141064043efbb3fee03ae20d4ba5b2b4",
+        "config_hash": "189184a153c20207",
+        "deterministic_fields": [
+          "global_ids",
+          "entity_order",
+          "hierarchy",
+          "relationships",
+          "geometry",
+          "properties",
+          "file_body"
+        ],
+        "door_count": 0,
+        "entity_count": 65,
+        "export_id": "bimexp_4a3400e56dcfb8d8",
+        "file_hash": "32c1e3d3ead5504eef8569098e17c00f0c0ac6f7087369256c6decf0d3697525",
+        "generated_at": null,
+        "generator_version": "acs-bim/1.0.0",
+        "level_count": 2,
+        "losses": [],
+        "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+        "non_deterministic_fields": [
+          "generated_at"
+        ],
+        "object_count": 4,
+        "revision_id": "plan_6b2182d616bb45ed878eb681d00d6e32",
+        "schema": "IFC4",
+        "slab_count": 0,
+        "space_count": 4,
+        "stair_count": 0,
+        "unsupported_count": 0,
+        "wall_count": 0,
+        "warnings": [],
+        "window_count": 0,
+        "writes_to_model": false
+      },
+      "ifc_manifest_hash": "c6c5b5996962279128423570d2aa28e24b735131fdd6673e5ee1b0f5e2f310e1",
+      "ifc_scope": "SPACES_ONLY",
+      "lock_binding_schema": "acs.plan-lock-binding/1.0",
+      "mode": "DETERMINISTIC_APPROVED_FROZEN_BASELINE_ONLY",
+      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "provenance_hash": "35bc82db1a21ad18ce93161f4de0298b816f3847f4cd30b65d6cc7a7d620db10",
+      "provenance_schema": "acs.plan-provenance/1.0",
+      "provider_calls": 0,
+      "regulatory_compliance": "NOT_VERIFIED",
+      "replanning_calls": 0,
+      "requirements_hash": "502f75041dce2c602032d0b038e456a0bbaca354f6cb9cd424c35c985b9edbbc",
+      "revision_id": "plan_6b2182d616bb45ed878eb681d00d6e32",
+      "schema": "acs.plan-ifc-export/1.1",
+      "semantic_lock_count": 0,
+      "semantic_lock_manifest_hash": null,
+      "source_map": [
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_e06e62b1c86d5b51a8a9387a48dd995bf5f5f2f6abbd9e28581488b219277a0d"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "entry",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_d87ca09558f226aaab82adbd3dc5d3034066bf9e006babf35652e400a7d4868e"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "core_access",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_2dcd44319dbfa75fbd23611fa36b4289c6a3c84927a4ce2a6ee516fbb6095804"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "windows",
+            "element_id": "west_window",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_e7ee618fdb46b236e7cf9603fa0a682335d31a476df933f8017bbdc3e7fe292c"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "objects",
+            "element_id": "dining_table",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_ed9769e1bbca6a2b32fa2abe82639d9958bba2f1e1cf1f3493be39a04712793f"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_2df3118afa5c69be7376b053cd0a6d2266a350879f9ae48f62d02b4c280153ea"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_479f20ad010aa8012e643aa5904119f89a031e9284a2ea9ddc20173d317f7cc2"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "living_access",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_88dcc4d7e632a7b83e517fec71ccf32bb35e62cc33242563bc3c3ea85f4104c5"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_53cc33f08a20e01862cd7c88907bf7f5b7d71fe7ff36ec1602d9f9edd2ee2243"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_5b09282f3dea6f2c63bb22b68ecf4626512716beb7315f507a656b0370ff0a65"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "entry",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_0600bb5a5945d9d4e711c4e4ebd4addf78c04b5ecaeab2d8f6f9c2523d91b6a8"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "core_access",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_27006ac2ad0e4ca3e500d551d01570a42e27345d9a3434028c4d1fab0922a56f"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "windows",
+            "element_id": "west_window",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_e96644483dccc20b417531fcb8832faef1e086bc8e7dbc5825a106ebaa97449a"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "objects",
+            "element_id": "dining_table",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_9536f49497342e4cfc122b174c781f111b1a030408ebc3714989b4c39c3331b2"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "living",
+            "template": "home"
+          },
+          "source_id": "plan_96996f82f19c8baffa0fff318310e9b1da2f872ac51e7e43ba23eaed880d740d"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 1,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_5359f85f0280e500036e8cc418942048eaf587b7157f9b8a39a800998eb8a725"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "doors",
+            "element_id": "living_access",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_d8161db4c95589fcd6d681ebffdf9b231701ef2da6b4654e1693753253cbd492"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 1,
+            "room_id": "stairs",
+            "template": "home"
+          },
+          "source_id": "plan_4a18fbc77e410dcb5e469ae63c7b3f5cbb3b79047464013cfa7e139d10a03fbc"
+        }
+      ],
+      "source_map_hash": "7b7db0d9b9e85463d93383159fd16aba8f2b67bcc7b37afd3c8227cda0bb034e",
+      "structural_safety": "NOT_VERIFIED"
+    },
+    "files": {
+      "villa-F0.dxf": "08e5a7c772e89322dbbdb45df7a7588456f806cbc02bb67471bf46e392880f69",
+      "villa-F0.dxf.baseline.json": "ffe5f67f05268242a492f705e607edc991798e0feb188124c54cf55cc5496ffa",
+      "villa-F0.svg": "30366004d18841082a3fefa4fd68f0ecb3e0450ff4046e8e6993eb8bb0c82a97",
+      "villa-F0.svg.baseline.json": "6142c5e7e8f8fad6992bb5549f16ca16fdd03b9aacae579ad4f9ed698f236ff2",
+      "villa-F1.dxf": "6d5c8cc9a2638fc2e8b8021a5c3c1046e09cf31f84307b1f95cc7e71feb1bd7d",
+      "villa-F1.dxf.baseline.json": "767425f66502f929e428b96586634a253d5d73affb7738e035d530b9a04441ea",
+      "villa-F1.svg": "ddda0193cf31e5c9a5db30421fea953c203fa4b8b55ea312057f7f4aca1e273d",
+      "villa-F1.svg.baseline.json": "28f90ccf7eb9ac64cc676f00789efde33dc558710c7165eba3a64030e874f9bf",
+      "villa.gltf": "d598c9b43159a9b3933aeced69a8b11277b3e124eed8e6c23ff7eda510563ccd",
+      "villa.gltf.baseline.json": "0e785e47936169f890d1cb710fb2a159fd480b53dacb8c1916ee6288bbf2cdfc",
+      "villa.ifc": "32c1e3d3ead5504eef8569098e17c00f0c0ac6f7087369256c6decf0d3697525",
+      "villa.ifc.baseline.json": "e1614ec635e9e69c38703b500c9613fcbbf06cfdd8595f8c10ceee8fe1a9cdc8",
+      "villa.json": "f5fad076eb04d6068660b635fc2e234d42042fc14c4f44f72d6006ab8336ae9f"
+    }
+  },
+  {
+    "fixture": "warehouse",
+    "synthetic": true,
+    "provider_calls": 0,
+    "revision_id": "plan_6b5a39d1591247aba58fc43c7af99019",
+    "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+    "area_m2": 320,
+    "spaces": 2,
+    "nodes": 72,
+    "triangles": 864,
+    "gltf_bytes": 146125,
+    "review": {
+      "schema": "acs.plan-review/1.0",
+      "revision_id": "plan_6b5a39d1591247aba58fc43c7af99019",
+      "content_hash": "c00244b48ef7b3409920f7ba925965723a28fe6f8d1d2f0261b84de2794100fc",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "can_approve": true,
+      "scopes": {
+        "rectangular_geometry": "PASS",
+        "program": "PASS",
+        "topology": "PASS",
+        "vertical_circulation": "PASS",
+        "regulatory_compliance": "NOT_VERIFIED",
+        "structural_safety": "NOT_VERIFIED",
+        "warehouse_expansion_reserve": "NOT_APPLICABLE"
+      },
+      "metrics": {
+        "level_count": 1,
+        "space_instance_count": 2,
+        "space_rect_area_m2": 320,
+        "gross_floor_area_m2": null,
+        "net_floor_area_m2": null,
+        "efficiency": null
+      },
+      "issues": [],
+      "construction_approved": false,
+      "coverage": {
+        "vertical_circulation": {
+          "core_alignment": "PASS",
+          "physical_traversal": "NOT_VERIFIED",
+          "geometry_scope": "EXPLICIT_CORE_OBJECTS",
+          "geometry": "NOT_APPLICABLE",
+          "missing_geometry": []
+        }
+      },
+      "semantic_lock_manifest_hash": null,
+      "semantic_lock_count": 0,
+      "bound_content_hash": "146425338f706c2728dd006692240cd9fbcf3204468abb48fbf513cddf325a36"
+    },
+    "gltf": {
+      "approval_scope": "CONCEPTUAL_DESIGN_ONLY",
+      "artifact_bytes": 146125,
+      "artifact_sha256": "1549fe7c9ad6f5ea74666706847eb51d4dd64646c3818506335ad1617cd665c9",
+      "bound_content_hash": "146425338f706c2728dd006692240cd9fbcf3204468abb48fbf513cddf325a36",
+      "canonical_model_is_source_of_truth": true,
+      "compiler": "acs_compiler.compile_building",
+      "compiler_buffer_bytes": 65664,
+      "compiler_node_count": 72,
+      "content_hash": "c00244b48ef7b3409920f7ba925965723a28fe6f8d1d2f0261b84de2794100fc",
+      "lock_binding_schema": "acs.plan-lock-binding/1.0",
+      "mode": "DETERMINISTIC_APPROVED_BASELINE_ONLY",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "provenance_hash": "5c5f20547ab8e027fe3714d0b1db0acbca73775862c60591f84f63eafecb3494",
+      "provenance_schema": "acs.plan-provenance/1.0",
+      "provider_calls": 0,
+      "regulatory_compliance": "NOT_VERIFIED",
+      "replanning_calls": 0,
+      "requirements_hash": "00e53b4fe1f5b8c83d4775a009830520a2f492ccbbe9d0e4f6e7c22b46260491",
+      "revision_id": "plan_6b5a39d1591247aba58fc43c7af99019",
+      "schema": "acs.plan-3d-handoff/1.0",
+      "semantic_lock_count": 0,
+      "semantic_lock_manifest_hash": null,
+      "source_map": [
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_d294499ce5b84a88d369db91ec343c7db81407e6918bfb16391725d9583250fe"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "racks",
+            "element_id": "rack_a",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_19176314f5ba6ceb6246dc31386dbe9d6e73a222feedcd4647d7d83fa13a2fc9"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "lanes",
+            "element_id": "main_lane",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_9da020eeb85ac782bf344fea869ee529834fec8021a022ca6d796f13a158b30e"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_4be322c42cfe985e7d09cb80e2bb0a2d6c428d1df2cf19a43031678a23b4be76"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "dispatch",
+            "template": "ground"
+          },
+          "source_id": "plan_a5432e7dbb6cf5d548c7330da694e286ed89c899ab0a66399e43d5185b32f9fb"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "docks",
+            "element_id": "dock_e",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "dispatch",
+            "template": "ground"
+          },
+          "source_id": "plan_c2d991485a5b11481c613b69cc016146d77add98ed00505c1678ebb1dbe5468c"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "dispatch",
+            "template": "ground"
+          },
+          "source_id": "plan_73a1586acfe71bb66e1dcce3943d0d1cc4a5a3408d62835c0da45fbabd025fcd"
+        }
+      ],
+      "source_map_hash": "0682f4fc4c07cb9fa2c3714d7e8b3b1d24aadd8298889f24113091059d75cd68",
+      "structural_safety": "NOT_VERIFIED",
+      "three_d_is_source_of_truth": false
+    },
+    "ifc": {
+      "approval_scope": "CONCEPTUAL_DESIGN_ONLY",
+      "artifact_bytes": 2817,
+      "artifact_sha256": "0547dd6bb47576ae86c43a7b12654abfe06904fdac0a964ed31c53bb485c7bcb",
+      "bound_content_hash": "146425338f706c2728dd006692240cd9fbcf3204468abb48fbf513cddf325a36",
+      "canonical_model_is_source_of_truth": true,
+      "content_hash": "c00244b48ef7b3409920f7ba925965723a28fe6f8d1d2f0261b84de2794100fc",
+      "ifc_is_source_of_truth": false,
+      "ifc_manifest": {
+        "body_hash": "089cc0340c591c1a45f9c4f08be0a19410664d14884490f553af769d3b57556f",
+        "config_hash": "189184a153c20207",
+        "deterministic_fields": [
+          "global_ids",
+          "entity_order",
+          "hierarchy",
+          "relationships",
+          "geometry",
+          "properties",
+          "file_body"
+        ],
+        "door_count": 0,
+        "entity_count": 48,
+        "export_id": "bimexp_df31408bd3a28cdd",
+        "file_hash": "0547dd6bb47576ae86c43a7b12654abfe06904fdac0a964ed31c53bb485c7bcb",
+        "generated_at": null,
+        "generator_version": "acs-bim/1.0.0",
+        "level_count": 1,
+        "losses": [],
+        "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+        "non_deterministic_fields": [
+          "generated_at"
+        ],
+        "object_count": 2,
+        "revision_id": "plan_6b5a39d1591247aba58fc43c7af99019",
+        "schema": "IFC4",
+        "slab_count": 0,
+        "space_count": 2,
+        "stair_count": 0,
+        "unsupported_count": 0,
+        "wall_count": 0,
+        "warnings": [],
+        "window_count": 0,
+        "writes_to_model": false
+      },
+      "ifc_manifest_hash": "e366b0faf61490581252a3f9a3eebaff77d203107c4a78b71bdff7b21fa3e29e",
+      "ifc_scope": "SPACES_ONLY",
+      "lock_binding_schema": "acs.plan-lock-binding/1.0",
+      "mode": "DETERMINISTIC_APPROVED_FROZEN_BASELINE_ONLY",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "provenance_hash": "5c5f20547ab8e027fe3714d0b1db0acbca73775862c60591f84f63eafecb3494",
+      "provenance_schema": "acs.plan-provenance/1.0",
+      "provider_calls": 0,
+      "regulatory_compliance": "NOT_VERIFIED",
+      "replanning_calls": 0,
+      "requirements_hash": "00e53b4fe1f5b8c83d4775a009830520a2f492ccbbe9d0e4f6e7c22b46260491",
+      "revision_id": "plan_6b5a39d1591247aba58fc43c7af99019",
+      "schema": "acs.plan-ifc-export/1.1",
+      "semantic_lock_count": 0,
+      "semantic_lock_manifest_hash": null,
+      "source_map": [
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_d294499ce5b84a88d369db91ec343c7db81407e6918bfb16391725d9583250fe"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "racks",
+            "element_id": "rack_a",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_19176314f5ba6ceb6246dc31386dbe9d6e73a222feedcd4647d7d83fa13a2fc9"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "lanes",
+            "element_id": "main_lane",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_9da020eeb85ac782bf344fea869ee529834fec8021a022ca6d796f13a158b30e"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "storage",
+            "template": "ground"
+          },
+          "source_id": "plan_4be322c42cfe985e7d09cb80e2bb0a2d6c428d1df2cf19a43031678a23b4be76"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "kind": "space",
+            "level_index": 0,
+            "room_id": "dispatch",
+            "template": "ground"
+          },
+          "source_id": "plan_a5432e7dbb6cf5d548c7330da694e286ed89c899ab0a66399e43d5185b32f9fb"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "docks",
+            "element_id": "dock_e",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "dispatch",
+            "template": "ground"
+          },
+          "source_id": "plan_c2d991485a5b11481c613b69cc016146d77add98ed00505c1678ebb1dbe5468c"
+        },
+        {
+          "requirement_refs": [],
+          "source": {
+            "collection": "points",
+            "element_id": "ceiling_light",
+            "kind": "element",
+            "level_index": 0,
+            "room_id": "dispatch",
+            "template": "ground"
+          },
+          "source_id": "plan_73a1586acfe71bb66e1dcce3943d0d1cc4a5a3408d62835c0da45fbabd025fcd"
+        }
+      ],
+      "source_map_hash": "0682f4fc4c07cb9fa2c3714d7e8b3b1d24aadd8298889f24113091059d75cd68",
+      "structural_safety": "NOT_VERIFIED"
+    },
+    "files": {
+      "warehouse-F0.dxf": "565a429572a1bf6e7a08bdeb5f1498da8356e6301ce60a8eaf83212edd1c31db",
+      "warehouse-F0.dxf.baseline.json": "20cdad1b484d5b7ad957d27b24f5fecd42d88373b3254fbe5b90d189b51556e4",
+      "warehouse-F0.svg": "f4fdd03b9dc146c5c531a197f73e1ea01e6e28773234168cc2be72e8c666e310",
+      "warehouse-F0.svg.baseline.json": "4563b59ee478394fd11144739a26328dd0d5dd80ebf3cf16e85ca18ef59e8f10",
+      "warehouse.gltf": "1549fe7c9ad6f5ea74666706847eb51d4dd64646c3818506335ad1617cd665c9",
+      "warehouse.gltf.baseline.json": "1e65ae97b73ba9c8527f732803597e41cb03960b3c100e1166d96c8ae0eb3406",
+      "warehouse.ifc": "0547dd6bb47576ae86c43a7b12654abfe06904fdac0a964ed31c53bb485c7bcb",
+      "warehouse.ifc.baseline.json": "faab2156ef22679d88b9fbfcc8ed47618af20f046c68bab5349e64364b4066cd",
+      "warehouse.json": "9c5bdf71572ec9a3e21e6029cf5ff930ff77e68bbcda0f28d3ed78ac14da7fe0"
+    }
+  }
+]

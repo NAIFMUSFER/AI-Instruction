@@ -38,11 +38,11 @@ const $ = (id) => (typeof document === 'undefined'
 
 /* اللوحات الخمس المولَّدة: كلٌّ منها يكشف كائن panel فيه init/open/close. */
 const GENERATED_PANELS = [
-  { button: 'acsOpenRender', ns: 'render', label: 'لوحة العرض' },
-  { button: 'acsOpenBim', ns: 'bim', label: 'تبادل BIM' },
-  { button: 'acsOpenDocs', ns: 'docs', label: 'التوثيق' },
-  { button: 'acsOpenPbr', ns: 'pbr', label: 'جودة العرض' },
-  { button: 'acsOpenDetail', ns: 'archdetail', label: 'التفصيل المعماري' },
+  { button: 'acsOpenRender', ns: 'render', panel: 'rvPanel', label: 'لوحة العرض' },
+  { button: 'acsOpenBim', ns: 'bim', panel: 'bxPanel', label: 'تبادل BIM' },
+  { button: 'acsOpenDocs', ns: 'docs', panel: 'dcPanel', label: 'التوثيق' },
+  { button: 'acsOpenPbr', ns: 'pbr', panel: 'pqPanel', label: 'جودة العرض' },
+  { button: 'acsOpenDetail', ns: 'archdetail', panel: 'adPanel', label: 'التفصيل المعماري' },
 ];
 
 function panelOf(ns) {
@@ -117,6 +117,47 @@ function announce(text) {
   if (status) status.textContent = text;
 }
 
+/* اللوحات غير مشروطة: ننقل التركيز عند الفتح، ولا نحبس Tab داخلها.
+   استعادة التركيز تتبع الإغلاق الحقيقي بالصنف، سواء من Escape أو زرّ اللوحة،
+   فلا نعدّل أي مولّد ولا نضيف طريق إغلاق موازياً. */
+const panelFocusState = new Map();
+
+function focusOpenedPanel(id) {
+  const element = $(id);
+  if (!element || !element.classList.contains('on')) return;
+  let state = panelFocusState.get(element);
+  if (!state) {
+    state = { opener: null, focusInside: false };
+    panelFocusState.set(element, state);
+    document.addEventListener('focusin', (ev) => {
+      state.focusInside = element.contains(ev.target);
+    });
+    if (typeof MutationObserver !== 'undefined') {
+      new MutationObserver(() => {
+        if (element.classList.contains('on') || !state.opener) return;
+        const active = document.activeElement;
+        // قد يعيد المتصفّح التركيز إلى body حين يُخفى زرّ الإغلاق نفسه.
+        // إن انتقل المستخدم إلى تحكّم آخر عمداً، فلا نخطف تركيزه منه.
+        if (state.focusInside && (element.contains(active) || active === document.body)
+            && state.opener.isConnected && !state.opener.disabled
+            && state.opener.getClientRects().length) {
+          state.opener.focus({ preventScroll: true });
+        }
+        state.opener = null;
+        state.focusInside = false;
+      }).observe(element, { attributes: true, attributeFilter: ['class'] });
+    }
+  }
+  if (!element.contains(document.activeElement)) state.opener = document.activeElement;
+  const controls = element.querySelectorAll('button:not([disabled]),a[href],'
+    + 'input:not([disabled]),select:not([disabled]),textarea:not([disabled]),'
+    + '[tabindex]:not([tabindex="-1"])');
+  const target = Array.from(controls).find(control => control.getClientRects().length
+    && getComputedStyle(control).visibility !== 'hidden') || element;
+  if (target === element && !element.hasAttribute('tabindex')) element.setAttribute('tabindex', '-1');
+  target.focus({ preventScroll: true });
+}
+
 /* ------------------------------------------------------- مساحة العمل - */
 let workspaceReady = false;
 
@@ -134,6 +175,7 @@ function openWorkspaceWith(project) {
       WS.attach(project);
     }
     WS.open();
+    focusOpenedPanel('acsWorkspace');
     announce('فُتحت مساحة العمل.');
     return true;
   } catch (e) {
@@ -193,6 +235,7 @@ function openLoaded(entry) {
       panel.attach(project);
     }
     panel.open();
+    focusOpenedPanel(entry.panel);
     announce('فُتحت «' + entry.label + '».');
     return true;
   } catch (e) {

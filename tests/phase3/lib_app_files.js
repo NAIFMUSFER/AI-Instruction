@@ -30,7 +30,8 @@ function lazyOrder() {
   return fs.readFileSync(path.join(ROOT, 'tools', 'frontend_lazy.txt'), 'utf8')
     .split(/\r?\n/).map(l => l.trim()).filter(l => l && l[0] !== '#');
 }
-function fullOrder() { return order().concat(lazyOrder()); }
+function localOrder() { return fs.readFileSync(path.join(ROOT,'tools','frontend_local.txt'),'utf8').split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&l[0]!=='#'); }
+function fullOrder() { return order().concat(localOrder(),lazyOrder()); }
 function mod(rel) { return fs.readFileSync(path.join(APPDIR, rel), 'utf8'); }
 
 function has(rel) { return fs.existsSync(path.join(APPDIR, rel)); }
@@ -74,5 +75,5 @@ function block(rel, open, close) {
   return t.slice(a, b + close.length);
 }
 
-module.exports = { ROOT, APPDIR, mainJs, order, lazyOrder, fullOrder, mod, has, appText, shell, css,
+module.exports = { ROOT, APPDIR, mainJs, order, localOrder, lazyOrder, fullOrder, mod, has, appText, shell, css,
                    moduleCarrying, countInApp, block };

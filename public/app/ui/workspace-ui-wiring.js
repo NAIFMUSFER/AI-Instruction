@@ -1178,7 +1178,7 @@ vrSetup();
 })();
 
 let last2=performance.now();
-renderer.setAnimationLoop(()=>{
+function acsLegacyFrame(){
   const now=performance.now(),dt=Math.min((now-last2)/1000,0.1); last2=now;
   if(renderer.xr.isPresenting){
     vrStep(dt);
@@ -1191,7 +1191,23 @@ renderer.setAnimationLoop(()=>{
     if(walkState.active) headLamp.position.copy(camera.position);
   }
   if(window.__ACS_PQ__&&window.__ACS_PQ__.composer&&!renderer.xr.isPresenting){window.__ACS_PQ__.composer.render();}else{renderer.render(scene,camera);}
-});
+}
+
+/* The local route owns this loop. CSS-hidden work and background tabs do not
+   keep submitting frames; private workspace entry does not import this route. */
+let acsLegacyActive=false;
+function syncLegacyRendering(){
+  const active=!document.hidden&&document.body.classList.contains('acs-entered')&&!document.body.classList.contains('acs-connected');
+  if(active===acsLegacyActive)return;
+  acsLegacyActive=active;renderer.setAnimationLoop(active?acsLegacyFrame:null);
+  window.ACS.legacyRenderActive=active;
+}
+const acsLegacyVisibility=new MutationObserver(syncLegacyRendering);
+acsLegacyVisibility.observe(document.body,{attributes:true,attributeFilter:['class']});
+document.addEventListener('visibilitychange',syncLegacyRendering);
+window.addEventListener('pagehide',()=>{renderer.setAnimationLoop(null);window.ACS.legacyRenderActive=false;});
+window.addEventListener('pageshow',()=>{acsLegacyActive=false;syncLegacyRendering();});
+syncLegacyRendering();
 
 /* ========================= الواجهة / التبويبات / الدخول ========================= */
 function showTab(t){

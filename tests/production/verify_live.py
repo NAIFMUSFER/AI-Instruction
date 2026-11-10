@@ -932,7 +932,7 @@ def main(argv=None):
     npass, nfail, nnv = R.count(PASS), R.count(FAIL), R.count(NV)
     if nfail:
         code = 1
-    elif npass == 0:
+    elif nnv or npass == 0:
         code = 2
     else:
         code = 0
@@ -951,7 +951,7 @@ def main(argv=None):
                    "total": len(R.rows)},
         "exit_code": code,
         "verdict": ("FAIL" if nfail else
-                    ("NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED" if npass == 0
+                    ("NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED" if nnv or npass == 0
                      else "PASS")),
         "observed": {"frontend_reachable": bool(state.get("frontend_reachable")),
                      "backend_reachable": bool(state.get("backend_reachable")),

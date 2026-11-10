@@ -1,0 +1,15 @@
+{
+  "date": "2026-11-10",
+  "packages": 35,
+  "vulnerabilities": 0,
+  "unrelated_versions_changed": false,
+  "added": [
+    "arabic-reshaper==3.1.0",
+    "python-bidi==0.6.12"
+  ],
+  "fonttools_promoted_to_direct": "4.65.0",
+  "hash_install": "passed",
+  "pip_check": "passed",
+  "dependency_contract_checks": 274,
+  "scope": "Current advisory lookup, not a guarantee of absence of vulnerabilities"
+}

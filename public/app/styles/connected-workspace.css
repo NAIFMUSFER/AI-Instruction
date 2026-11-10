@@ -85,3 +85,52 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 .cw-job-progress progress {width:100%;height:.65rem;accent-color:#75cfee}
 .cw-job-progress output {font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .cw-job-progress p {margin:0}
+/* The exact approved artifact is the focal surface; controls sit outside it. */
+#designWorkspace .cw-top{padding-bottom:12px}
+#designWorkspace .cw-steps{margin:14px 0}
+#designWorkspace .cw-review{grid-template-columns:minmax(0,1fr) 265px}
+#designWorkspace .cw-drawing{padding:10px}
+#designWorkspace .cw-position-details{margin:8px 0}
+#designWorkspace .cw-results details{margin:0}
+#designWorkspace #cwIssues{padding-inline-start:20px;margin:8px 0}
+#designWorkspace #cwIssues li{padding:10px 0;border-bottom:1px solid #30465b;overflow-wrap:anywhere}
+#designWorkspace #cwIssues li button{display:block;margin-top:8px}
+#designWorkspace #cwViewer{height:auto;min-height:420px;background:#dce5e9;isolation:isolate}
+#designWorkspace .av-shell{display:grid;grid-template-rows:minmax(400px,58vh) auto auto auto;color:#162b3b}
+#designWorkspace .av-stage{position:relative;min-height:0;overflow:hidden}
+#designWorkspace .av-stage canvas{display:block;width:100%;height:100%;touch-action:none;outline-offset:-4px}
+#designWorkspace .av-toolbar{display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:#0e2336;color:#e8f7ff;border-top:1px solid #496473}
+#designWorkspace .av-toolbar button{font-size:13px;min-height:44px;padding:7px 10px}
+#designWorkspace .av-toolbar button[aria-pressed=true]{background:#b9f0fc;color:#0b2637;border-color:#b9f0fc}
+#designWorkspace .av-toolbar label{display:flex;align-items:center;gap:8px;margin:0;font-size:13px}
+#designWorkspace .av-toolbar select{width:auto;min-width:130px;padding:6px 10px}
+#designWorkspace .av-badge{position:absolute;inset-block-start:12px;inset-inline-start:12px;max-width:calc(100% - 24px);padding:8px 12px;background:#f9fcf5e8;color:#18374a;border:1px solid #fff;border-radius:9px;pointer-events:none;font-size:12px;box-shadow:0 2px 10px #132c3e16}
+#designWorkspace .av-badge strong{display:block;font-size:13px}
+#designWorkspace .av-badge bdi{display:block;max-width:36ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#designWorkspace .av-inspector{position:absolute;inset-block-end:12px;inset-inline-start:12px;max-width:min(340px,calc(100% - 24px));padding:10px 12px;background:#102a3de8;color:#f6fcff;border-radius:9px;pointer-events:none;font-size:12px;overflow-wrap:anywhere}
+#designWorkspace .av-inspector strong,#designWorkspace .av-inspector span,#designWorkspace .av-inspector bdi,#designWorkspace .av-inspector small{display:block}
+#designWorkspace .av-help{margin:0;padding:9px 12px;font-size:12px;background:#edf3f4;color:#365362}
+#designWorkspace .av-evidence{margin:0;padding:8px 12px;background:#edf3f4;color:#365362;font-size:12px}
+#designWorkspace .av-evidence summary{color:#264d61}
+#designWorkspace .av-evidence output{display:block;white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 monospace}
+#designWorkspace .cw-viewer-fallback{padding:20px;color:#17384e}
+#designWorkspace .cw-viewer-fallback svg{display:block;width:100%;height:260px;background:#fff;margin-bottom:12px}
+#designWorkspace .cw-viewer-fallback button{margin:4px}
+@media(max-width:820px){
+ #designWorkspace{padding:12px}
+ #designWorkspace h1{font-size:25px}
+ #designWorkspace .cw-review{grid-template-columns:1fr}
+ #designWorkspace .cw-review>.cw-card:first-child{padding:7px}
+ #designWorkspace .cw-review>aside{padding:14px}
+ #designWorkspace #cwViewer{min-height:0;margin-top:12px}
+ #designWorkspace .av-shell{grid-template-rows:400px auto auto auto}
+ #designWorkspace .av-toolbar{gap:5px;padding:8px}
+ #designWorkspace .av-toolbar button{flex:1 0 28%;font-size:12px;padding:7px 4px}
+ #designWorkspace .av-inspector{font-size:11px;max-width:calc(100% - 24px)}
+ #designWorkspace .cw-card:has(>#cwViewer){padding:10px}
+ #designWorkspace #cwPlan{height:360px}
+}
+@media(prefers-reduced-motion:reduce){#designWorkspace *{scroll-behavior:auto!important}}
+#designWorkspace .cw-viewer-fallback .cw-room{fill:#b4d9e5;stroke:#446a7e;stroke-width:.08}
+#designWorkspace .cw-viewer-fallback text{fill:#183247;text-anchor:middle}
+#designWorkspace #cwEditApprovalNotice{margin-block:12px}

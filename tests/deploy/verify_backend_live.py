@@ -5,7 +5,7 @@
 
     python3 tests/deploy/verify_backend_live.py
     python3 tests/deploy/verify_backend_live.py https://acs-engine.onrender.com
-    python3 tests/deploy/verify_backend_live.py --generation      # توليد حقيقي
+    python3 tests/deploy/verify_backend_live.py --generation      # exits 2; use the scoped workspace harness
 
 بلا `--generation` لا يُنادى النموذج اللغوي إطلاقاً، فلا يُستهلك رصيد ولا حدّ
 معدّل: الفحوص الروتينية يجب أن تكون مجّانية وإلا امتنع الناس عن تشغيلها.
@@ -118,9 +118,110 @@ def as_json(text):
         return None, False
 
 
+def validate_generation_response(st, tx, err=None, dt=0, hj=None):
+    """Offline response acceptance shared with separately scoped generation probes.
+
+    This function never submits a request; HTTP 200 alone is not completion.
+    """
+    if err:
+        chk("the generation request completed", False, err)
+    else:
+        j, ok = as_json(tx)
+        chk("json.loads(response.text) succeeds for the generation response "
+            "(HTTP %s, %.1fs)" % (st, dt), ok, tx[:160])
+        # A correctly classified error proves the error contract, not a
+        # successful paid generation. Count the failed operation even when
+        # its envelope is valid, so the live workflow cannot go green.
+        generated = (ok and isinstance(j, dict) and st == 200
+                     and j.get("ok") is True)
+        chk("the generation succeeded with HTTP 200 and ok=true", generated,
+            "HTTP %s" % st)
+        if generated:
+            diag = j.get("model_validation") or {}
+            diag = diag if isinstance(diag, dict) else {}
+            scopes = diag.get("scopes") or {}
+            scopes = scopes if isinstance(scopes, dict) else {}
+            complete = (diag.get("status") == "COMPLETED"
+                        and all(isinstance(scopes.get(k), dict)
+                                and scopes[k].get("status") == "COMPLETED"
+                                and isinstance(scopes[k].get("findings"), list)
+                                for k in ("semantic", "architecture")))
+            chk("both model diagnostic scopes completed", complete)
+            chk("the generated model has no reported geometry findings",
+                complete and type(diag.get("issue_count")) is int
+                and diag["issue_count"] == 0
+                and all(not scopes[k]["findings"]
+                        for k in ("semantic", "architecture")),
+                "issue_count=%s" % diag.get("issue_count"))
+            b = j.get("building") or {}
+            chk("HTTP 200 carries a building object", bool(b))
+            chk("the building declares a site", isinstance(b.get("site"), dict))
+            chk("the building declares levels and floors",
+                bool(b.get("levels")) and bool(b.get("floors")))
+            rooms = sum(len(fl.get("rooms", []))
+                        for fl in (b.get("floors") or {}).values())
+            chk("levels >= 1", len(b.get("levels") or []) >= 1,
+                str(len(b.get("levels") or [])))
+            chk("rooms >= 2 (%d)" % rooms, rooms >= 2)
+            chk("every room carries a well-formed rect — nothing truncated "
+                "mid-object reached the compiler",
+                all(isinstance(r.get("rect"), list) and len(r["rect"]) == 4
+                    for fl in (b.get("floors") or {}).values()
+                    for r in fl.get("rooms", [])))
+            chk("one level was produced as requested",
+                len(b.get("levels") or []) == 1,
+                str(len(b.get("levels") or [])))
+            gen = j.get("generation") or {}
+            chk("the response declares which generation strategy ran",
+                bool(gen.get("strategy")), str(gen))
+            chk("no stage stopped at max_tokens",
+                "max_tokens" not in (gen.get("stop_reasons") or []),
+                str(gen.get("stop_reasons")))
+            # §2 — الالتقاط المطلوب حرفياً، بأرقام حقيقية من هذا النداء
+            print("\n  ── §2 capture ──")
+            print("  model            : %s" % (hj.get("model_configured")
+                                               if isinstance(hj, dict) else "?"))
+            print("  strategy         : %s (%s)" % (gen.get("strategy"),
+                                                    gen.get("size_class")))
+            print("  single/multi     : %s" % ("multi-stage"
+                  if gen.get("strategy") == "staged" else "single-stage"))
+            print("  deep mode used   : %s" % (j.get("mode") == "deep"))
+            print("  stages           : %s (escalations=%s)"
+                  % (gen.get("stages"), gen.get("escalations")))
+            print("  max out tokens   : %s" % gen.get("max_output_tokens"))
+            print("  output tokens    : %s" % gen.get("output_tokens_total"))
+            print("  input tokens     : %s" % gen.get("input_tokens_total"))
+            print("  stop reasons     : %s" % (gen.get("stop_reasons") or []))
+            print("  completion       : %d chars of building JSON"
+                  % len(json.dumps(b, ensure_ascii=False)))
+            print("  parse status     : json.loads(response.text) OK")
+            for sd in (gen.get("stage_detail") or []):
+                print("    stage=%-7s depth=%s stop=%-10s out=%-6s max=%-6s "
+                      "parsed=%s err=%s"
+                      % (sd.get("stage"), sd.get("depth"), sd.get("stop_reason"),
+                         sd.get("output_tokens"), sd.get("max_output_tokens"),
+                         sd.get("parsed"), sd.get("error")))
+            chk("the response reports coverage of the request",
+                isinstance(j.get("report"), dict))
+            print("  levels=%s rooms=%s mode=%s issues=%s"
+                  % (j.get("levels"), j.get("rooms"), j.get("mode"), j.get("issues")))
+        elif ok and isinstance(j, dict):
+            code = j.get("error", {}).get("code")
+            chk("a failed generation is still a classified envelope",
+                j.get("ok") is False and bool(code), tx[:160])
+            print("  generation did not succeed: HTTP %s %s — %s"
+                  % (st, code, j.get("error", {}).get("message", "")[:140]))
+            print("  request_id=%s" % j.get("error", {}).get("request_id"))
+
+
 def main():
     args = [a for a in sys.argv[1:]]
     do_gen = "--generation" in args
+    if do_gen:
+        print("NOT VERIFIED: legacy direct generation is unsupported by this free monitor. "
+              "Use a dedicated authenticated project-workspace journey with confirmed requirements, "
+              "expected revision, explicit budget and idempotency. No provider request was sent.")
+        return 2
     args = [a for a in args if not a.startswith("--")]
     base = (args[0] if args else configured_base()).rstrip("/")
     if not base:
@@ -221,8 +322,8 @@ def main():
     probes = [
         ("GET", "/definitely-not-a-route", None, 404, "ACS_NOT_FOUND"),
         ("POST", "/health", {}, 405, "ACS_METHOD_NOT_ALLOWED"),
-        ("POST", "/v1/understand", {}, 422, "ACS_VALIDATION_FAILED"),
-        ("POST", "/v1/understand", {"text": "   "}, 400, "ACS_BAD_REQUEST"),
+        ("POST", "/v1/understand", {}, 401, "ACS_AUTH_REQUIRED"),
+        ("POST", "/v1/understand", {"text": "   "}, 401, "ACS_AUTH_REQUIRED"),
     ]
     for method, path, body, want_status, want_code in probes:
         st, hd, tx, err = request(base, path, method=method, body=body)
@@ -286,108 +387,7 @@ def main():
     chk("an unlisted origin is not granted CORS", bad != "https://evil.example",
         str(bad))
 
-    # ── توليد حقيقي (اختياري) ───────────────────────────────────────────────
-    print("\n── real generation ──")
-    if not do_gen:
-        note("end-to-end generation", "not requested; pass --generation to spend "
-                                      "one real model call")
-    else:
-        print("  prompt: %s" % GEN_PROMPT)
-        t0 = time.time()
-        st, hd, tx, err = request(base, "/v1/understand", method="POST",
-                                  body={"text": GEN_PROMPT, "btype": "warehouse",
-                                        "site_w": 20, "site_d": 15, "floors": 1},
-                                  timeout=900)
-        dt = time.time() - t0
-        if err:
-            chk("the generation request completed", False, err)
-        else:
-            j, ok = as_json(tx)
-            chk("json.loads(response.text) succeeds for the generation response "
-                "(HTTP %s, %.1fs)" % (st, dt), ok, tx[:160])
-            # A correctly classified error proves the error contract, not a
-            # successful paid generation. Count the failed operation even when
-            # its envelope is valid, so the live workflow cannot go green.
-            generated = (ok and isinstance(j, dict) and st == 200
-                         and j.get("ok") is True)
-            chk("the generation succeeded with HTTP 200 and ok=true", generated,
-                "HTTP %s" % st)
-            if generated:
-                diag = j.get("model_validation") or {}
-                diag = diag if isinstance(diag, dict) else {}
-                scopes = diag.get("scopes") or {}
-                scopes = scopes if isinstance(scopes, dict) else {}
-                complete = (diag.get("status") == "COMPLETED"
-                            and all(isinstance(scopes.get(k), dict)
-                                    and scopes[k].get("status") == "COMPLETED"
-                                    and isinstance(scopes[k].get("findings"), list)
-                                    for k in ("semantic", "architecture")))
-                chk("both model diagnostic scopes completed", complete)
-                chk("the generated model has no reported geometry findings",
-                    complete and type(diag.get("issue_count")) is int
-                    and diag["issue_count"] == 0
-                    and all(not scopes[k]["findings"]
-                            for k in ("semantic", "architecture")),
-                    "issue_count=%s" % diag.get("issue_count"))
-                b = j.get("building") or {}
-                chk("HTTP 200 carries a building object", bool(b))
-                chk("the building declares a site", isinstance(b.get("site"), dict))
-                chk("the building declares levels and floors",
-                    bool(b.get("levels")) and bool(b.get("floors")))
-                rooms = sum(len(fl.get("rooms", []))
-                            for fl in (b.get("floors") or {}).values())
-                chk("levels >= 1", len(b.get("levels") or []) >= 1,
-                    str(len(b.get("levels") or [])))
-                chk("rooms >= 2 (%d)" % rooms, rooms >= 2)
-                chk("every room carries a well-formed rect — nothing truncated "
-                    "mid-object reached the compiler",
-                    all(isinstance(r.get("rect"), list) and len(r["rect"]) == 4
-                        for fl in (b.get("floors") or {}).values()
-                        for r in fl.get("rooms", [])))
-                chk("one level was produced as requested",
-                    len(b.get("levels") or []) == 1,
-                    str(len(b.get("levels") or [])))
-                gen = j.get("generation") or {}
-                chk("the response declares which generation strategy ran",
-                    bool(gen.get("strategy")), str(gen))
-                chk("no stage stopped at max_tokens",
-                    "max_tokens" not in (gen.get("stop_reasons") or []),
-                    str(gen.get("stop_reasons")))
-                # §2 — الالتقاط المطلوب حرفياً، بأرقام حقيقية من هذا النداء
-                print("\n  ── §2 capture ──")
-                print("  model            : %s" % (hj.get("model_configured")
-                                                   if isinstance(hj, dict) else "?"))
-                print("  strategy         : %s (%s)" % (gen.get("strategy"),
-                                                        gen.get("size_class")))
-                print("  single/multi     : %s" % ("multi-stage"
-                      if gen.get("strategy") == "staged" else "single-stage"))
-                print("  deep mode used   : %s" % (j.get("mode") == "deep"))
-                print("  stages           : %s (escalations=%s)"
-                      % (gen.get("stages"), gen.get("escalations")))
-                print("  max out tokens   : %s" % gen.get("max_output_tokens"))
-                print("  output tokens    : %s" % gen.get("output_tokens_total"))
-                print("  input tokens     : %s" % gen.get("input_tokens_total"))
-                print("  stop reasons     : %s" % (gen.get("stop_reasons") or []))
-                print("  completion       : %d chars of building JSON"
-                      % len(json.dumps(b, ensure_ascii=False)))
-                print("  parse status     : json.loads(response.text) OK")
-                for sd in (gen.get("stage_detail") or []):
-                    print("    stage=%-7s depth=%s stop=%-10s out=%-6s max=%-6s "
-                          "parsed=%s err=%s"
-                          % (sd.get("stage"), sd.get("depth"), sd.get("stop_reason"),
-                             sd.get("output_tokens"), sd.get("max_output_tokens"),
-                             sd.get("parsed"), sd.get("error")))
-                chk("the response reports coverage of the request",
-                    isinstance(j.get("report"), dict))
-                print("  levels=%s rooms=%s mode=%s issues=%s"
-                      % (j.get("levels"), j.get("rooms"), j.get("mode"), j.get("issues")))
-            elif ok and isinstance(j, dict):
-                code = j.get("error", {}).get("code")
-                chk("a failed generation is still a classified envelope",
-                    j.get("ok") is False and bool(code), tx[:160])
-                print("  generation did not succeed: HTTP %s %s — %s"
-                      % (st, code, j.get("error", {}).get("message", "")[:140]))
-                print("  request_id=%s" % j.get("error", {}).get("request_id"))
+    note("end-to-end generation", "separate authenticated project-workspace journey required; free monitoring sends no paid requests")
 
     print("\n" + "─" * 46)
     print("BACKEND LIVE: %d passed, %d failed%s"

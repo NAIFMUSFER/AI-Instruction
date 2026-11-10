@@ -20,6 +20,14 @@ from acs_plan_review import PlanError, digest
 ROUTE = re.compile(r"^/v1/projects/([0-9a-f-]+)/workspace(?P<source>/plan-source)?$")
 WORKER_ID = str(uuid.uuid4())
 ACTIVE_JOBS = set()
+PAID_TASKS = set()
+RESUMABLE_ERRORS = frozenset({"PLAN_DETAIL_INCOMPLETE", "PLAN_LAYOUT_INCOMPLETE",
+                              "ACS_PROVIDER_BUDGET_EXHAUSTED"})
+
+
+def _resumable_failure(code):
+    return isinstance(code, str) and (code in RESUMABLE_ERRORS or code.startswith("PLAN_GEOMETRY_"))
+
 
 
 def _id(value):
@@ -44,24 +52,22 @@ def _read_job(store, project_id, job_id):
 
 def _job_view(row):
     state = row.get("state")
-    if state == "RUNNING" and (row.get("worker_id") != WORKER_ID or row.get("id") not in ACTIVE_JOBS):
-        state = "INTERRUPTED"
     original = row.get("resume_command") or {}
     can_restart = isinstance(original,dict) and original.get('action') == 'generate' and not original.get('source_id')
     return {"ok": True, "job": {"id": row["id"], "state": state,
         "revision_id": row.get("revision_id"), "reference_revision_id": row.get("expected_head"),
         "error_code": row.get("error_code"),
-        "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state == "FAILED" else None,
+        "error_message": SERVICE.geometry_failure_message(row.get("error_code")) if state in {"FAILED", "INTERRUPTED", "CANCELLED"} else None,
         "phase": row.get("phase"), "progress": row.get("progress"),
         "provider_calls": row.get("provider_calls", 0),
-        "can_resume": bool(row.get("checkpoint") or can_restart) and state in {"FAILED", "INTERRUPTED"},
+        "can_resume": bool(row.get("checkpoint") or can_restart) and state == "FAILED" and _resumable_failure(row.get("error_code")) and not row.get("resumed_by"),
         "storage": "supabase", "automatic_resubmission": False}}
 
 
 class WorkspaceMiddleware:
     def __init__(self, app):
         self.app = app
-        self.tasks = set()
+        self.tasks = PAID_TASKS
 
     async def _finish(self, store, project_id, actor_id, command):
         payload = {"state": "FAILED", "error_code": "GENERATION_FAILED"}
@@ -115,9 +121,7 @@ class WorkspaceMiddleware:
             raise PlanError("STORE_UNAVAILABLE", "التوليد مشغول حاليًا. حاول لاحقًا.")
         # Reuse the deployment's shared admission limiter. Job reattachment above
         # consumes no generation quota and never creates another provider request.
-        headers = {k.decode("latin1"): v.decode("latin1") for k, v in scope.get("headers", [])}
-        peer = (scope.get("client") or ("unknown", 0))[0]
-        decision = RL.default_limiter().check(RL.client_identity(headers, peer), "edit" if command["action"] == "chat_edit" else "gen")
+        decision = RL.default_limiter().check("actor:" + actor_id, "edit" if command["action"] == "chat_edit" else "gen")
         if not decision.get("allowed"):
             raise E.AcsApiError(E.ACS_RATE_LIMITED, "تجاوزت حد التوليد. حاول لاحقًا.", retryable=True, retry_after=decision.get("retry_after", 60))
         row = {"id": job_id, "project_id": project_id, "created_by": actor_id,
@@ -185,7 +189,9 @@ class WorkspaceMiddleware:
             elif action in {"generate", "chat_edit"}:
                 result = await self._start(scope, store, project_id, actor_id, command)
             elif action == "resume":
-                SERVICE.checked_command(command, {"job_id", "resume_job_id", "max_provider_calls"})
+                SERVICE.checked_command(command, {"job_id", "resume_job_id", "max_provider_calls", "confirmed"})
+                if command.get("confirmed") is not True:
+                    raise PlanError("EXPLICIT_CONFIRMATION_REQUIRED", "أكد الاستئناف وحد الاستدعاءات قبل المتابعة.")
                 old = await asyncio.to_thread(_read_job, store, project_id, _id(command.get("resume_job_id")))
                 if not old or not isinstance(old.get("resume_command"), dict) or old["resume_command"].get("action") != "generate":
                     raise PlanError("INVALID_RESUME", "هذه المهمة القديمة لا تحتوي بيانات استئناف. ابدأ طلبًا جديدًا من وصفك المحفوظ.")

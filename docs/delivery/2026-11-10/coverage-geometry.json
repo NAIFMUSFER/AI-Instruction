@@ -1,0 +1,980 @@
+[
+  {
+    "path": "acs_geometry_contract.py",
+    "depth": "deep",
+    "purpose": "Signed elevations, explicit wall-edge semantics and exact rectangle union shared contract.",
+    "risk": "high",
+    "findings": [
+      "ENG-ELEVATION",
+      "ENG-WALL-NONE",
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_compiler.py",
+    "depth": "selected",
+    "purpose": "Compiled approved glTF: elevation, object transforms, slab union, architecture failure and reciprocal door source IDs. Other object builders selected only.",
+    "risk": "high",
+    "findings": [
+      "ENG-ELEVATION",
+      "ENG-ROTATION",
+      "ENG-AREA-UNION",
+      "ENG-OPENINGS",
+      "ENG-CRITICAL-FALLBACK"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/remediation/test_audit_engineering_door_meshes.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_arch.py",
+    "depth": "selected",
+    "purpose": "Explicit room wall semantics and associated walls; other architecture geometry and legacy slab approximation remain separately scoped.",
+    "risk": "high",
+    "findings": [
+      "ENG-WALL-NONE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase2/test_arch.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_bim.py",
+    "depth": "selected",
+    "purpose": "Wall modes, instance stair identity, per-room height, rectangle profile placement and independent space IFC serialization. Not a complete IFC deep review.",
+    "risk": "high",
+    "findings": [
+      "ENG-WALL-NONE",
+      "ENG-STAIR-ID",
+      "ENG-IFC-PROFILE-PLACEMENT"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase8/test_bim.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_bim.json",
+    "depth": "selected",
+    "purpose": "Declares correct IFC 2D rectangle profile placement and serialized geometry conventions.",
+    "risk": "medium",
+    "findings": [
+      "ENG-IFC-PROFILE-PLACEMENT"
+    ],
+    "tests": [
+      "tests/phase8/test_bim.py",
+      "tests/phase8/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_bim_browser.py",
+    "depth": "selected",
+    "purpose": "Mirrors Python wall semantics, stair identity and height precedence into browser BIM mapper.",
+    "risk": "high",
+    "findings": [
+      "ENG-WALL-NONE",
+      "ENG-STAIR-ID"
+    ],
+    "tests": [
+      "tests/phase8/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/bim.js",
+    "depth": "static",
+    "purpose": "Generated browser BIM mapper, parity verified; no claim of deep reading all generated lines.",
+    "risk": "high",
+    "findings": [
+      "ENG-WALL-NONE",
+      "ENG-STAIR-ID"
+    ],
+    "tests": [
+      "tests/phase8/test_parity.js"
+    ],
+    "generated_from": [
+      "tools/build_bim_browser.py",
+      "acs_bim.json"
+    ]
+  },
+  {
+    "path": "acs_pbr.py",
+    "depth": "selected",
+    "purpose": "Exact disjoint room rectangle union plus explicit bounding-box metadata; generated JS equivalent.",
+    "risk": "high",
+    "findings": [
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase9_1/test_pbr.py",
+      "tests/phase9_1/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_pbr_browser.py",
+    "depth": "selected",
+    "purpose": "Exact disjoint room rectangle union plus explicit bounding-box metadata; generated JS equivalent.",
+    "risk": "high",
+    "findings": [
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase9_1/test_pbr.py",
+      "tests/phase9_1/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/pbr.js",
+    "depth": "static",
+    "purpose": "Generated exact floorplate union; parity checked.",
+    "risk": "high",
+    "findings": [
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase9_1/test_parity.js"
+    ],
+    "generated_from": [
+      "tools/build_pbr_browser.py",
+      "acs_pbr.json"
+    ]
+  },
+  {
+    "path": "acs_runtime.py",
+    "depth": "selected",
+    "purpose": "Rotated portal probe coordinates and swept capsule clear aperture across host wall; other runtime behaviors selected only.",
+    "risk": "high",
+    "findings": [
+      "ENG-ROTATED-PORTAL",
+      "ENG-CAPSULE-CLEARANCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase4/test_parity.js",
+      "tests/phase4/test_portals.js",
+      "tests/phase4/test_collision.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_runtime_browser.py",
+    "depth": "selected",
+    "purpose": "Rotated portal probe coordinates and swept capsule clear aperture across host wall; other runtime behaviors selected only.",
+    "risk": "high",
+    "findings": [
+      "ENG-ROTATED-PORTAL",
+      "ENG-CAPSULE-CLEARANCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase4/test_parity.js",
+      "tests/phase4/test_portals.js",
+      "tests/phase4/test_collision.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/runtime.js",
+    "depth": "static",
+    "purpose": "Generated runtime portal and collision logic, CPU parity verified.",
+    "risk": "high",
+    "findings": [
+      "ENG-ROTATED-PORTAL",
+      "ENG-CAPSULE-CLEARANCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/phase4/test_parity.js"
+    ],
+    "generated_from": [
+      "tools/build_runtime_browser.py",
+      "acs_runtime.json"
+    ]
+  },
+  {
+    "path": "public/app/core/viewer.js",
+    "depth": "selected",
+    "purpose": "Local model renderer signed levels/elevations, canonical object rotation direction and exact floor union. No GPU benchmark from these CPU checks.",
+    "risk": "high",
+    "findings": [
+      "ENG-ELEVATION",
+      "ENG-ROTATION",
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/standards.js",
+    "depth": "selected",
+    "purpose": "Browser architectural wall segments honor explicit none/partial walls and warehouse mode.",
+    "risk": "medium",
+    "findings": [
+      "ENG-WALL-NONE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/disciplines.js",
+    "depth": "selected",
+    "purpose": "Browser architectural wall segments honor explicit none/partial walls and warehouse mode.",
+    "risk": "medium",
+    "findings": [
+      "ENG-WALL-NONE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "warehouse_program_feasibility.py",
+    "depth": "selected",
+    "purpose": "Area over physical level instances; soft fitting weights repeated templates without double scaling or unused templates.",
+    "risk": "high",
+    "findings": [
+      "ENG-AREA-INSTANCES"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_warehouse_program_feasibility.py",
+      "tests/remediation/test_warehouse_soft_area_fit.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "warehouse_soft_area_fit.py",
+    "depth": "selected",
+    "purpose": "Area over physical level instances; soft fitting weights repeated templates without double scaling or unused templates.",
+    "risk": "high",
+    "findings": [
+      "ENG-AREA-INSTANCES"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_warehouse_program_feasibility.py",
+      "tests/remediation/test_warehouse_soft_area_fit.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_semantic_diff.py",
+    "depth": "selected",
+    "purpose": "Stable IDs aligned to canonical160 character admission; unchanged diff/lock semantics regression checked.",
+    "risk": "high",
+    "findings": [
+      "ENG-ID-LIMIT"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_plan_semantic_diff.py",
+      "tests/remediation/test_plan_semantic_locks.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_semantic_locks.py",
+    "depth": "selected",
+    "purpose": "Stable IDs aligned to canonical160 character admission; unchanged diff/lock semantics regression checked.",
+    "risk": "high",
+    "findings": [
+      "ENG-ID-LIMIT"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_plan_semantic_diff.py",
+      "tests/remediation/test_plan_semantic_locks.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_options.py",
+    "depth": "selected",
+    "purpose": "Each bounded option model validated independently; metadata and option count retain bounded admission.",
+    "risk": "high",
+    "findings": [
+      "ENG-COMPARE-LIMIT"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_plan_options.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_review.py",
+    "depth": "selected",
+    "purpose": "Target area semantics/central vocabulary, finite level elevation and explicit vertical geometry coverage; approval remains conceptual.",
+    "risk": "high",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY",
+      "ENG-VERTICAL-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tests/remediation/test_audit_engineering_vertical_coverage.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_bridge.py",
+    "depth": "selected",
+    "purpose": "Preserves vertical geometry coverage in connected derived output handoff.",
+    "risk": "medium",
+    "findings": [
+      "ENG-VERTICAL-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_engineering_vertical_coverage.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_validate.py",
+    "depth": "selected",
+    "purpose": "Reconciled PR184 opening validity, bounds, mixed collisions and partial-neighbor aperture checks only.",
+    "risk": "high",
+    "findings": [
+      "ENG-OPENINGS"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_engineering_openings.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_requirement_metrics.json",
+    "depth": "deep",
+    "purpose": "Central supported requirement metrics, units and Arabic UI labels; deterministic browser projection.",
+    "risk": "high",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_requirement_metrics.py",
+    "depth": "deep",
+    "purpose": "Central supported requirement metrics, units and Arabic UI labels; deterministic browser projection.",
+    "risk": "high",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_requirement_metrics.py",
+    "depth": "deep",
+    "purpose": "Central supported requirement metrics, units and Arabic UI labels; deterministic browser projection.",
+    "risk": "high",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/requirement-metrics.mjs",
+    "depth": "static",
+    "purpose": "Generated browser registry projection, exact registry parity test.",
+    "risk": "medium",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py"
+    ],
+    "generated_from": [
+      "tools/build_requirement_metrics.py",
+      "acs_requirement_metrics.json"
+    ]
+  },
+  {
+    "path": "public/app/core/brief-program.mjs",
+    "depth": "selected",
+    "purpose": "Registry import and labels only; frontend specialist separately owns parser and broader entry changes.",
+    "risk": "medium",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tools/check_index_guard.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/main.js",
+    "depth": "selected",
+    "purpose": "Registry import and labels only; frontend specialist separately owns parser and broader entry changes.",
+    "risk": "medium",
+    "findings": [
+      "ENG-REQUIREMENT-VOCABULARY"
+    ],
+    "tests": [
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tools/check_index_guard.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_geometry_delivery.py",
+    "depth": "deep",
+    "purpose": "Synthetic deterministic fixtures and regression assertions including production conceptual verifier, independent IFC/DXF reader and declared limitations.",
+    "risk": "medium",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_geometry_delivery_browser.js",
+    "depth": "deep",
+    "purpose": "Synthetic deterministic fixtures and regression assertions including production conceptual verifier, independent IFC/DXF reader and declared limitations.",
+    "risk": "medium",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_requirement_vocabulary.py",
+    "depth": "deep",
+    "purpose": "Synthetic deterministic fixtures and regression assertions including production conceptual verifier, independent IFC/DXF reader and declared limitations.",
+    "risk": "medium",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_geometry_independent_readers.py",
+    "depth": "deep",
+    "purpose": "Synthetic deterministic fixtures and regression assertions including production conceptual verifier, independent IFC/DXF reader and declared limitations.",
+    "risk": "medium",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/generate_delivery_fixtures.py",
+    "depth": "deep",
+    "purpose": "Synthetic deterministic fixtures and regression assertions including production conceptual verifier, independent IFC/DXF reader and declared limitations.",
+    "risk": "medium",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_delivery.py",
+      "tests/remediation/test_geometry_delivery_browser.js",
+      "tests/remediation/test_requirement_vocabulary.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_engineering_door_meshes.py",
+    "depth": "selected",
+    "purpose": "Reconciled PR184 regression tests; original PR mutations reported by reconciliation agent, current regular suites rerun.",
+    "risk": "medium",
+    "findings": [
+      "ENG-OPENINGS",
+      "ENG-VERTICAL-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_engineering_door_meshes.py",
+      "tests/remediation/test_audit_engineering_openings.py",
+      "tests/remediation/test_audit_engineering_vertical_coverage.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_engineering_openings.py",
+    "depth": "selected",
+    "purpose": "Reconciled PR184 regression tests; original PR mutations reported by reconciliation agent, current regular suites rerun.",
+    "risk": "medium",
+    "findings": [
+      "ENG-OPENINGS",
+      "ENG-VERTICAL-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_engineering_door_meshes.py",
+      "tests/remediation/test_audit_engineering_openings.py",
+      "tests/remediation/test_audit_engineering_vertical_coverage.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_engineering_vertical_coverage.py",
+    "depth": "selected",
+    "purpose": "Reconciled PR184 regression tests; original PR mutations reported by reconciliation agent, current regular suites rerun.",
+    "risk": "medium",
+    "findings": [
+      "ENG-OPENINGS",
+      "ENG-VERTICAL-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_engineering_door_meshes.py",
+      "tests/remediation/test_audit_engineering_openings.py",
+      "tests/remediation/test_audit_engineering_vertical_coverage.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase8/test_bim.py",
+    "depth": "selected",
+    "purpose": "Legitimate IFC placement auxiliary whitelist and actual L-shaped emitted slab invariant replacing brittle implementation-string match.",
+    "risk": "medium",
+    "findings": [
+      "ENG-IFC-PROFILE-PLACEMENT",
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/phase8/test_bim.py",
+      "tests/phase9_2/test_alignment.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase9_2/test_alignment.py",
+    "depth": "selected",
+    "purpose": "Legitimate IFC placement auxiliary whitelist and actual L-shaped emitted slab invariant replacing brittle implementation-string match.",
+    "risk": "medium",
+    "findings": [
+      "ENG-IFC-PROFILE-PLACEMENT",
+      "ENG-AREA-UNION"
+    ],
+    "tests": [
+      "tests/phase8/test_bim.py",
+      "tests/phase9_2/test_alignment.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/independent-reader-evidence.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/manifest.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F0.dxf",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F0.dxf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F0.svg",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F0.svg.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F1.dxf",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F1.dxf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F1.svg",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa-F1.svg.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa.gltf",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa.gltf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa.ifc",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa.ifc.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/villa.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse-F0.dxf",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse-F0.dxf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse-F0.svg",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse-F0.svg.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse.gltf",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse.gltf.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse.ifc",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse.ifc.baseline.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  },
+  {
+    "path": "docs/delivery/2026-11-10/fixtures/warehouse.json",
+    "depth": "static",
+    "purpose": "Synthetic corpus export or exact revision/reader evidence; fixture not live AI quality proof.",
+    "risk": "low",
+    "findings": [
+      "ENG-DELIVERY-EVIDENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/generate_delivery_fixtures.py"
+    ]
+  }
+]

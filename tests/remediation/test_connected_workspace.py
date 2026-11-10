@@ -369,7 +369,7 @@ class JobsHTTP(unittest.IsolatedAsyncioTestCase):
             result=await call(command());await asyncio.sleep(0)
             duplicate=await call(command());await asyncio.sleep(0)
             self.assertEqual(result['job']['id'],duplicate['job']['id']);self.assertEqual(len(started),1)
-            self.assertEqual(H._job_view(dict(jobs[JOB],worker_id='old-process'))['job']['state'],'INTERRUPTED')
+            self.assertEqual(H._job_view(dict(jobs[JOB],worker_id='other-replica'))['job']['state'],'RUNNING')
             gate.set();await asyncio.gather(*middleware.tasks)
 
 
