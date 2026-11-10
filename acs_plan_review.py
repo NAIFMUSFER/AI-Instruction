@@ -90,6 +90,56 @@ def _id(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip()) and len(value) <= 160
 
 
+def vertical_geometry_coverage(model: dict, core_alignment: str) -> dict:
+    """تغطية معلنة، لا شرط اعتماد جديد ولا إثبات صلاحية الدرج للمشي.
+
+    PRESENT means dimensioned core objects were declared. It does not establish
+    flights, landings, headroom, slab openings or a continuous traversable path.
+    The architectural compiler's existing object classifier supplies the kind.
+    """
+    from acs_arch import _core_kind
+    coverage = {'core_alignment': core_alignment, 'physical_traversal': 'NOT_VERIFIED',
+                'geometry_scope': 'EXPLICIT_CORE_OBJECTS',
+                'geometry': 'NOT_VERIFIED', 'missing_geometry': []}
+    levels = model.get('levels')
+    valid_levels = isinstance(levels, list) and all(isinstance(level, dict)
+        and isinstance(level.get('template'), str) and level['template'] in model['floors']
+        for level in levels)
+    if not valid_levels:
+        return coverage
+    missing = []
+    unknown = not levels
+    def complete(obj):
+        return (isinstance(obj, dict) and _core_kind(obj) is not None
+                and all(_number(obj.get(k)) for k in ('x', 'y', 'z', 'w', 'd', 'h'))
+                and all(obj[k] > 0 for k in ('w', 'd', 'h')))
+    def objects_of(room):
+        objects = room.get('objects')
+        return objects if isinstance(objects, list) else []
+    for level in levels if len(levels) > 1 else []:
+        floor = model['floors'].get(level['template'], {})
+        cores = [r for r in floor.get('rooms', [])
+                 if r.get('role') in ('stair', 'stairs', 'elevator')]
+        floor_objects = [obj for r in floor.get('rooms', []) for obj in objects_of(r)
+                         if isinstance(obj, dict) and _core_kind(obj) is not None]
+        if not cores:
+            unknown = unknown or not any(complete(obj) for obj in floor_objects)
+        for room in cores:
+            kind = 'ELEVATOR_SHAFT' if room['role'] == 'elevator' else 'STAIR'
+            represented = any(complete(obj) and _core_kind(obj) == kind for obj in objects_of(room))
+            if not represented:
+                # عنصر في غرفة أخرى لا يثبت ارتباطه بهذه النواة ولا يثبت غيابه.
+                if any(complete(obj) and _core_kind(obj) == kind for obj in floor_objects):
+                    unknown = True
+                    continue
+                missing.append({'level_index': level.get('index'), 'room_id': room.get('id'),
+                                'core_id': room.get('core_id'), 'kind': kind})
+    coverage['geometry'] = ('NOT_APPLICABLE' if len(levels) == 1 else
+                            'MISSING' if missing else 'NOT_VERIFIED' if unknown else 'PRESENT')
+    coverage['missing_geometry'] = missing
+    return coverage
+
+
 def _room_index(model: dict) -> dict[tuple[str, str], dict]:
     out = {}
     for template, floor in (model.get("floors") or {}).items():
@@ -695,9 +745,13 @@ class PlanWorkspace:
                 issues.append({"code": "VERIFICATION_UNAVAILABLE", "severity": "error"})
         ready = not issues and all(scopes[k] == "PASS" for k in
                                     ("rectangular_geometry", "program", "topology", "vertical_circulation"))
+        # لا ننقل ادعاء مشي من المقترح أو المدقّق؛ هذه التغطية مشتقة من النموذج.
+        coverage = {'vertical_circulation': vertical_geometry_coverage(
+            rev.model, scopes['vertical_circulation'])}
         return {"schema": SCHEMA, "revision_id": rev.id, "content_hash": rev.content_hash,
                 "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
-                "metrics": metrics, "issues": issues, "construction_approved": False}
+                "metrics": metrics, "issues": issues, "construction_approved": False,
+                "coverage": coverage}
 
     def approve(self, revision_id: str, *, expected_head: str, actor_label: str,
                 confirmed: bool, acknowledge_concept_only: bool) -> Approval:
