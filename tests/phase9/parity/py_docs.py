@@ -125,8 +125,15 @@ for key in KEYS:
                          ('documentation_id', 'documentation_revision',
                           'model_hash', 'source_revision', 'drawing_index',
                           'legends', 'metadata')}
+    # Common browser/server PDF surface is ASCII vector streams. Unicode text
+    # uses a server-only embedded font and has independent parser/RTL tests;
+    # the local browser explicitly refuses it instead of writing question marks.
+    ascii_drawings = copy.deepcopy(drawings)
+    for drawing in ascii_drawings.values():
+        drawing['ops'] = [op for op in drawing['ops'] if op.get('op') != 'text'
+                          or all(32 <= ord(ch) <= 126 for ch in str(op.get('text', '')))]
     entry['pdf'] = ({k: v for k, v in
-                     D.sheet_pdf(sheets, drawings, AT).items()
+                     D.sheet_pdf(sheets, ascii_drawings, AT).items()
                      if k in ('page_count', 'media_boxes', 'content_streams',
                               'sheet_ids', 'semantic_hash',
                               'cad_interoperability_claimed')}

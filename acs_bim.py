@@ -15,6 +15,7 @@
 # =============================================================================
 import hashlib
 import json
+from acs_geometry_contract import wall_edges
 import math
 import os
 
@@ -237,6 +238,13 @@ class StepFile(object):
         xd = self.direction(_q(math.cos(a)), _q(math.sin(a)), 0.0)
         return self.add("IFCAXIS2PLACEMENT3D", "%s,%s,%s" % (p, zd, xd), True)
 
+    def axis2(self, x, y, rot_deg=0.0):
+        # IfcRectangleProfileDef.Position is specifically 2D; a 3D placement
+        # looks plausible in a text reader but independent meshers ignore it.
+        angle = math.radians(float(rot_deg or 0.0))
+        return self.add("IFCAXIS2PLACEMENT2D", "%s,%s" % (
+            self.point(x, y), self.direction(_q(math.cos(angle)), _q(math.sin(angle)))), True)
+
     def placement(self, parent, x, y, z, rot_deg=0.0):
         ax = self.axis(x, y, z, rot_deg)
         return self.add("IFCLOCALPLACEMENT", "%s,%s" % (parent or "$", ax))
@@ -311,7 +319,7 @@ def build_exchange(project, options=None):
         for r in rooms:
             rect = r.get("rect") or [0, 0, 0, 0]
             x, z, w, d = [_q(_num(v) or 0.0) for v in rect[:4]]
-            rh = _num(r.get("height")) or wall_h
+            rh = _num(r.get("wall_h")) or _num(r.get("height")) or wall_h
             # القالب قد يتكرّر عبر الأدوار، فمعرّف التبادل يحمل رقم الدور كي
             # يبقى فريداً؛ ومعرّف التأليف يبقى منفصلاً كما يعرفه محرّك التأليف
             sid = "%s.flr_%s.%s.%s" % (bid, idx, lv.get("template"), r.get("id"))
@@ -329,7 +337,10 @@ def build_exchange(project, options=None):
             # جدران الفراغ: أربعة محاور حقيقية من مستطيله
             edges = [("N", x, z, x + w, z), ("S", x, z + d, x + w, z + d),
                      ("W", x, z, x, z + d), ("E", x + w, z, x + w, z + d)]
+            enabled_edges = wall_edges(r, str((model.get("meta") or {}).get("type", "")).lower() in ("warehouse", "industrial", "factory", "logistics"))
             for edge, x1, z1, x2, z2 in edges:
+                if edge not in enabled_edges:
+                    continue
                 wid = "%s.flr_%s.%s.%s.wall_%s" % (bid, idx, lv.get("template"),
                                                   r.get("id"), edge)
                 ex["walls"].append({
@@ -349,7 +360,7 @@ def build_exchange(project, options=None):
                     ex["windows"].append(rec)
             for j, ob in enumerate(r.get("objects") or []):
                 kind = str(ob.get("kind") or "")
-                oid = "%s.flr_%s.%s.obj_%d" % (bid, idx, lv.get("template"), j)
+                oid = "%s.flr_%s.%s.%s.obj_%s" % (bid, idx, lv.get("template"), r.get("id"), ob.get("id") or j)
                 if kind.lower() in ("stairs", "stair"):
                     ex["stairs"].append({
                         "canonical_id": oid, "level_index": idx, "elevation": elev,
@@ -502,7 +513,7 @@ def serialise_ifc(exchange, generated_at=None):
         x, z, w, d = sp["footprint"]
         pl = f.placement(local(sp["level_index"]), x, z, 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(w / 2.0), _q(d / 2.0), 0.0), step_real(w),
+                     % (f.axis2(_q(w / 2.0), _q(d / 2.0)), step_real(w),
                         step_real(d)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -524,7 +535,7 @@ def serialise_ifc(exchange, generated_at=None):
         pl = f.placement(local(wl["level_index"]), x1, z1, 0.0, ang)
         thick = wl["thickness"] if wl["thickness_known"] else 0.2
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(length / 2.0), 0.0, 0.0), step_real(length),
+                     % (f.axis2(_q(length / 2.0), 0.0), step_real(length),
                         step_real(thick)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -558,7 +569,7 @@ def serialise_ifc(exchange, generated_at=None):
         x, z, w, d = sl["outline"]
         pl = f.placement(local(sl["level_index"]), x, z, 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(w / 2.0), _q(d / 2.0), 0.0), step_real(w),
+                     % (f.axis2(_q(w / 2.0), _q(d / 2.0)), step_real(w),
                         step_real(d)))
         th = sl["thickness"] if sl["thickness_known"] else 0.2
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
@@ -580,7 +591,7 @@ def serialise_ifc(exchange, generated_at=None):
                              op["rotation_deg"])
             oh = op["height"] if op["height_known"] else 2.1
             prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                         % (f.axis(0.0, 0.0, 0.0), step_real(op["width"]),
+                         % (f.axis2(0.0, 0.0), step_real(op["width"]),
                             step_real(0.3)))
             solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                           % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -609,7 +620,7 @@ def serialise_ifc(exchange, generated_at=None):
     for st in exchange["stairs"]:
         pl = f.placement(local(st["level_index"]), st["x"], st["z"], 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(0.0, 0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
+                     % (f.axis2(0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
                          step_real(3.0)))
@@ -1485,7 +1496,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
         e = ents[eid]
         t = e["type"]
         if t.startswith("IFCREL") or t in (
-                "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D",
+                "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D", "IFCAXIS2PLACEMENT2D",
                 "IFCLOCALPLACEMENT", "IFCEXTRUDEDAREASOLID", "IFCRECTANGLEPROFILEDEF",
                 "IFCSHAPEREPRESENTATION", "IFCPRODUCTDEFINITIONSHAPE", "IFCPOLYLINE",
                 "IFCSIUNIT", "IFCUNITASSIGNMENT", "IFCCONVERSIONBASEDUNIT",

@@ -1,0 +1,5 @@
+PASS: five 650 kB immutable revisions reopen; each response <700 kB
+PASS: metadata keyset pagination crosses 25-row boundary
+PASS: changed head, revoked membership, tampered model and stalled cursor fail closed
+PASS: exact backend capability scope, no downgrade, malformed receipt rejected before signing
+ACS paged history and validated writes: PASS

@@ -1,0 +1,317 @@
+[
+  {
+    "path": "supabase/migrations/20260912_acs_plan_store_v2.sql",
+    "depth": "deep",
+    "purpose": "Canonical receipt tables, role policies, SECURITY DEFINER and RPC grants",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260912_acs_plan_store_v2_harden_functions.sql",
+    "depth": "deep",
+    "purpose": "Canonical receipt tables, role policies, SECURITY DEFINER and RPC grants",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260913_acs_plan_store_rpc_v2.sql",
+    "depth": "deep",
+    "purpose": "Canonical receipt tables, role policies, SECURITY DEFINER and RPC grants",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260913_acs_plan_store_rpc_v2_lockdown.sql",
+    "depth": "deep",
+    "purpose": "Canonical receipt tables, role policies, SECURITY DEFINER and RPC grants",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260914035029_acs_project_owner_returning.sql",
+    "depth": "deep",
+    "purpose": "Canonical receipt tables, role policies, SECURITY DEFINER and RPC grants",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260913135600_acs_workspace_jobs.sql",
+    "depth": "selected",
+    "purpose": "Review role predicates and direct write grants; jobs fix delegated to job owner",
+    "risk": "high",
+    "findings": [
+      "SEC-02",
+      "JOB-LEASE"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260914210000_acs_workspace_checkpoints.sql",
+    "depth": "selected",
+    "purpose": "Review role predicates and direct write grants; jobs fix delegated to job owner",
+    "risk": "high",
+    "findings": [
+      "SEC-02",
+      "JOB-LEASE"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/20260914105346_acs_plan_sources.sql",
+    "depth": "selected",
+    "purpose": "Review role predicates and direct write grants; jobs fix delegated to job owner",
+    "risk": "high",
+    "findings": [
+      "SEC-02",
+      "JOB-LEASE"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/2026111001_acs_plan_boundary_and_history.sql",
+    "depth": "deep",
+    "purpose": "Fail closed authorization, paged immutable reads and validated backend write capability",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py",
+      "tests/remediation/test_plan_store_paged_history.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/2026111003_acs_validated_plan_writes.sql",
+    "depth": "deep",
+    "purpose": "Fail closed authorization, paged immutable reads and validated backend write capability",
+    "risk": "critical",
+    "findings": [
+      "SEC-01",
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py",
+      "tests/remediation/test_plan_store_paged_history.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "supabase/migrations/2026111002_acs_workspace_job_leases.sql",
+    "depth": "selected",
+    "purpose": "Shared signer interface, lease fence, syntax and role/capability review; job owner owns semantics",
+    "risk": "critical",
+    "findings": [
+      "JOB-LEASE"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_supabase_plan_store.py",
+    "depth": "deep",
+    "purpose": "Request scoped JWT adapter, bounded metadata/revision reads and authenticated signer",
+    "risk": "critical",
+    "findings": [
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_paged_history.py",
+      "tests/remediation/test_plan_store_postgres_boundary.py",
+      "tests/remediation/test_supabase_plan_store_adapter.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_store_reload.py",
+    "depth": "deep",
+    "purpose": "Full immutable chain/hash/provenance/lock recovery; generic contract unchanged",
+    "risk": "high",
+    "findings": [
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_paged_history.py",
+      "tests/remediation/test_plan_store_reload.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_store_port.py",
+    "depth": "deep",
+    "purpose": "Backend-neutral snapshot and local SQLite identity bridge",
+    "risk": "high",
+    "findings": [
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_port.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_store.py",
+    "depth": "selected",
+    "purpose": "Canonical receipt validation, hash/bound lock fields and limits",
+    "risk": "high",
+    "findings": [
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_paged_history.py",
+      "tests/remediation/test_plan_store.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_review.py",
+    "depth": "selected",
+    "purpose": "Admission size/history limits, canonical structure and locked room transitions",
+    "risk": "high",
+    "findings": [
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_paged_history.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_lock_binding.py",
+    "depth": "selected",
+    "purpose": "Semantic lock verification/propose/bound revision identity",
+    "risk": "high",
+    "findings": [
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_paged_history.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_session.py",
+    "depth": "deep",
+    "purpose": "Verified actor and real user JWT binding to request scoped store; unchanged",
+    "risk": "critical",
+    "findings": [
+      "SEC-02"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_authenticated_session.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_plan_store_postgres_boundary.py",
+    "depth": "deep",
+    "purpose": "Executable database/adapter regression or retained static contract inspected",
+    "risk": "high",
+    "findings": [
+      "SEC-01",
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_postgres_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_plan_store_paged_history.py",
+    "depth": "deep",
+    "purpose": "Executable database/adapter regression or retained static contract inspected",
+    "risk": "high",
+    "findings": [
+      "SEC-01",
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_paged_history.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_supabase_plan_store_adapter.py",
+    "depth": "deep",
+    "purpose": "Executable database/adapter regression or retained static contract inspected",
+    "risk": "high",
+    "findings": [
+      "SEC-01",
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_adapter.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+    "depth": "deep",
+    "purpose": "Executable database/adapter regression or retained static contract inspected",
+    "risk": "high",
+    "findings": [
+      "SEC-01",
+      "SEC-02",
+      "ARCH-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_rpc_schema.py"
+    ],
+    "generated_from": []
+  }
+]

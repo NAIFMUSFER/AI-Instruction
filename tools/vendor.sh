@@ -44,6 +44,7 @@ rm -rf "$VEN/three@$THREE/examples/jsm"
 cp -R node_modules/three/examples/jsm "$VEN/three@$THREE/examples/jsm"
 cp node_modules/pdfjs-dist/build/pdf.min.mjs "$VEN/pdfjs@$PDFJS/pdf.min.mjs"
 cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs"
+python3 tools/vendor_manifest.py
 
 # --- التحقّق: نفس قائمة netlify-build.sh حرفاً بحرف (١٧ ملفّاً) --------------
 echo "▶ verifying vendored files"

@@ -1,0 +1,8 @@
+HARNESS: verify_page_boot viewport-safety/1.0.0 (reports BOOT and VISUAL MODEL separately)
+[ACS-BROWSER] selected: /usr/bin/chromium  source: ACS_CHROMIUM
+[ACS-BROWSER] searched: ACS_CHROMIUM=/usr/bin/chromium
+
+harness error: browserType.launch: Target page, context or browser has been closed
+Browser logs:
+
+<launching> /usr/bin/chromium --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad

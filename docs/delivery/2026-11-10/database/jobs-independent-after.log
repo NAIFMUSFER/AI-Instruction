@@ -1,0 +1,2 @@
+ACS PostgreSQL boundary: PASS (53 assertions; real PostgreSQL, synthetic users/projects)
+ACS PostgreSQL job leases: PASS (37 real SQL assertions)

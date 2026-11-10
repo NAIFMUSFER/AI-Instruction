@@ -43,6 +43,7 @@ w.write(sys.argv[1])`,pdfFixture]);
     return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(f)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(f)});
    });
    await page.goto('https://acs-ui.test/?signin=1');
+   assert.equal(await page.locator('#app canvas').count(),0,'public sign-in allocates no hidden legacy renderer');
    await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
    await page.locator('#cwNewProject').click();await page.locator('#cwProjectName').fill('مشروع قبول '+width);
@@ -126,6 +127,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.ok(program.every(r=>r.source_span&&r.confirmed));
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
+   assert.equal(await page.locator('#app canvas').count(),0,'private 2D review allocates no hidden legacy renderer');
    // The nested-lock panel was mounted while this project was empty. It must
    // follow the newly generated revision without asking the owner to reload.
    await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length>=2);
@@ -152,7 +154,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
    const revisionsBeforeChat=await page.locator('#cwRevision option').count();
    const chatReferenceRevision=await page.locator('#cwRevision').inputValue();
-   await page.locator('[data-step="3"]').click();await page.locator('#cwChat').fill('غيّر عرض الفراغ B مع تثبيت الفراغ المقفل.');await page.locator('#cwChatSubmit').click();
+   await page.locator('[data-step="3"]').click();await page.locator('#cwEditApprovalConfirm').check();await page.locator('#cwChat').fill('غيّر عرض الفراغ B مع تثبيت الفراغ المقفل.');await page.locator('#cwChatSubmit').click();
    assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'pending generation disables nested lock writes');
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('تم حفظ المخطط'),{},{timeout:45000});
    assert.equal(await page.locator('#cwRevision option').count(),revisionsBeforeChat+1,'one chat edit must append one revision; approval itself preserves the selected version');

@@ -25,6 +25,7 @@ import urllib.parse
 import urllib.request
 
 import acs_api_errors as E
+import acs_request_admission as ADMISSION
 
 DIRECT_PROTECTED_PATHS = frozenset({
     "/v1/understand",
@@ -156,6 +157,9 @@ def health_status():
                      "disabled" if mode == "off" else "invalid"),
         "protected_routes": len(DIRECT_PROTECTED_PATHS),
         "cache_ttl_s": _cache_ttl_s(),
+        "preauth_admission": {"scope": "process", "max_outbound_concurrency": 16,
+                              "per_peer_per_minute": 120, "global_per_minute": 1200,
+                              "max_retained_peers": 4096},
     }
 
 
@@ -286,14 +290,14 @@ def _verify_oidc_userinfo(token):
     return subject.strip()
 
 
-async def _verify(token, mode):
+async def _verify(token, mode, scope=None):
     cached = _cached_subject(token)
     if cached:
         return cached
     if mode == "test":
         subject = _verify_test_token(token)
     elif mode == "oidc":
-        subject = await asyncio.to_thread(_verify_oidc_userinfo, token)
+        subject = await ADMISSION.run(scope or {}, _verify_oidc_userinfo, token)
     else:
         raise AuthUnavailable()
     _cache_subject(token, subject)
@@ -314,16 +318,19 @@ async def authorize_asgi(scope, send):
                           "خدمة التحقق من الهوية غير جاهزة حالياً.")
         return False
 
-    headers = dict(scope.get("headers", []))
-    raw = headers.get(b"authorization", b"").decode("latin-1", "ignore")
-    scheme, sep, token = raw.partition(" ")
-    token = token.strip()
-    if sep != " " or scheme.lower() != "bearer" or not token or len(token) > 8192:
+    # Reject ambiguous duplicate/case-variant bearer headers before verification.
+    from acs_auth_gateway import _bearer
+    token = _bearer(scope)
+    if not token:
         await _send_error(scope, send, 401, AUTH_ERROR_CODE,
                           "يلزم تسجيل الدخول لاستخدام هذه العملية.")
         return False
     try:
-        subject = await _verify(token, mode)
+        subject = await _verify(token, mode, scope)
+    except ADMISSION.AdmissionRejected as exc:
+        await _send_error(scope, send, exc.status, exc.code,
+                          "محاولات التحقق مشغولة مؤقتًا. حاول بعد قليل.")
+        return False
     except AuthRejected:
         await _send_error(scope, send, 401, AUTH_ERROR_CODE,
                           "يلزم تسجيل الدخول لاستخدام هذه العملية.")

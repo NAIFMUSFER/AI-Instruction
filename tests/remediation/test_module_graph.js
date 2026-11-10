@@ -38,6 +38,8 @@ const chk = (n, c, d) => { c ? (pass++, console.log('  ✓', n))
 
 const mods = APP.modules();
 const order = APP.order();          /* المشحون: ترتيب main.js */
+const local = APP.localOrder();
+const LOCAL = new Set(local);
 const lazy = APP.lazyOrder();       /* المؤجَّل: tools/frontend_lazy.txt */
 const fullOrder = APP.fullOrder();  /* ترتيب التقييم الكامل */
 const LAZY = new Set(lazy);
@@ -143,6 +145,12 @@ for (const f of Object.keys(mods)) {
   }
 }
 const firstParty = edges.filter(e => e[0] !== ENTRY);
+const localLeaks=edges.filter(([a,b])=>LOCAL.has(b)&&!LOCAL.has(a)&&!LAZY.has(a));
+chk('account entry cannot statically load any local GPU route module',localLeaks.length===0,JSON.stringify(localLeaks));
+const routeSource=mods['ui/local-studio-entry.mjs'];
+const routeImports=[...routeSource.matchAll(/import\('\.\.\/(.+?)'\)/g)].map(match=>match[1]);
+chk('local route declaration matches actual import calls in order',JSON.stringify(routeImports)===JSON.stringify(local));
+
 
 console.log('\n== §2 — THE FIRST-PARTY IMPORT GRAPH IS ACYCLIC ==');
 chk('every module parsed', Object.keys(astOf).length === Object.keys(mods).length,
@@ -370,7 +378,7 @@ console.log('\n== §5 — __ACS_LATE IS READ EARLY AND WRITTEN ONCE, BY ITS OWNE
       JSON.stringify(readers.map(f => f + '=' + reads[f].size)));
   const late = [];
   const orphan = [];
-  const eagerSet = new Set(order);
+  const eagerSet = new Set(order.concat(local));
   readers.forEach(f => reads[f].forEach(n => {
     if (!publishedBy[n]) { orphan.push(f + ' reads ' + n + ' — nobody publishes it');
       return; }

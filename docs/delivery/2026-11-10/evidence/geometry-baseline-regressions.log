@@ -1,0 +1,124 @@
+EFFFFFFFFFFEE
+======================================================================
+ERROR: test_accepted_id_diff (__main__.GeometryDelivery.test_accepted_id_diff)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 80, in test_accepted_id_diff
+    self.assertFalse(diff_models(b,copy.deepcopy(b))['changes'])
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-geometry-baseline/acs_plan_semantic_diff.py", line 254, in diff_models
+    before_rooms = _room_index(before_floor, template=template)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-geometry-baseline/acs_plan_semantic_diff.py", line 125, in _room_index
+    raise PlanError(
+acs_plan_review.PlanError: Plan diff requires stable explicit room ids
+
+======================================================================
+ERROR: test_two_valid_large_options (__main__.GeometryDelivery.test_two_valid_large_options)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 83, in test_two_valid_large_options
+    result=compare_options([{'id':'a','model':b},{'id':'b','model':copy.deepcopy(b)}])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-geometry-baseline/acs_plan_options.py", line 208, in compare_options
+    canonical(options)
+  File "/tmp/acs-geometry-baseline/acs_plan_review.py", line 70, in canonical
+    raise PlanError("INPUT_LIMIT", "JSON byte limit exceeded")
+acs_plan_review.PlanError: JSON byte limit exceeded
+
+======================================================================
+ERROR: test_union_slab_area (__main__.GeometryDelivery.test_union_slab_area)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 56, in test_union_slab_area
+    self.assertAlmostEqual(p['area_m2'],12); self.assertAlmostEqual(sum(r[2]*r[3] for r in p['rectangles']),12)
+                           ~^^^^^^^^^^^
+KeyError: 'area_m2'
+
+======================================================================
+FAIL: test_capsule_clearance (__main__.GeometryDelivery.test_capsule_clearance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 93, in test_capsule_clearance
+    self.assertEqual(R.move_query(rt,st,[-1,0,0],[1,0,0])['allowed'],allowed)
+AssertionError: True != False
+
+======================================================================
+FAIL: test_critical_architecture_failure_cannot_publish_gltf (__main__.GeometryDelivery.test_critical_architecture_failure_cannot_publish_gltf)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 75, in test_critical_architecture_failure_cannot_publish_gltf
+    with self.assertRaisesRegex(ValueError,'ARCHITECTURE_COMPILE_FAILED'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+======================================================================
+FAIL: test_explicit_elevations_and_basement (__main__.GeometryDelivery.test_explicit_elevations_and_basement)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 33, in test_explicit_elevations_and_basement
+    self.assertAlmostEqual(a['max'][1],lv['elevation'],places=5)
+AssertionError: -3.200000047683716 != -3.8 within 5 places (0.599999952316284 difference)
+
+======================================================================
+FAIL: test_open_and_partial_walls (__main__.GeometryDelivery.test_open_and_partial_walls)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 43, in test_open_and_partial_walls
+    self.assertEqual(len(A.compile_architecture(b)['walls']),count)
+AssertionError: 4 != 0
+
+======================================================================
+FAIL: test_repeated_instances_and_unused_templates (__main__.GeometryDelivery.test_repeated_instances_and_unused_templates)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 63, in test_repeated_instances_and_unused_templates
+    self.assertEqual(generated_indoor_area(b),75)
+AssertionError: 125.0 != 75
+
+======================================================================
+FAIL: test_rotated_portals (__main__.GeometryDelivery.test_rotated_portals)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 53, in test_rotated_portals
+    self.assertTrue(ps); self.assertTrue(all(p['connectivity_resolved'] for p in ps),angle)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False is not true : 90
+
+======================================================================
+FAIL: test_rotation_vertices (__main__.GeometryDelivery.test_rotation_vertices)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 38, in test_rotation_vertices
+    self.assertAlmostEqual(float(np.ptp(p[:,0])),2*abs(math.cos(r))+abs(math.sin(r)),places=5)
+AssertionError: 2.0 != 2.121320343559643 within 5 places (0.12132034355964283 difference)
+
+======================================================================
+FAIL: test_soft_fit_counts_repeated_physical_levels_once_per_instance (__main__.GeometryDelivery.test_soft_fit_counts_repeated_physical_levels_once_per_instance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 68, in test_soft_fit_counts_repeated_physical_levels_once_per_instance
+    self.assertAlmostEqual(generated_indoor_area(fitted),32,places=4)
+AssertionError: 25.0 != 32 within 4 places (7.0 difference)
+
+======================================================================
+FAIL: test_stair_identity_contains_room (__main__.GeometryDelivery.test_stair_identity_contains_room)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 47, in test_stair_identity_contains_room
+    ids=[s['canonical_id'] for s in exchange(b)['stairs']]; self.assertEqual(len(set(ids)),2)
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 1 != 2
+
+======================================================================
+FAIL: test_target_area_review (__main__.GeometryDelivery.test_target_area_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-geometry-baseline/tests/remediation/test_geometry_delivery.py", line 88, in test_target_area_review
+    self.assertNotIn('REQUIREMENT_METRIC_NOT_SUPPORTED',[i['code'] for i in ws.review(rev.id)['issues']])
+AssertionError: 'REQUIREMENT_METRIC_NOT_SUPPORTED' unexpectedly found in ['REQUIREMENT_METRIC_NOT_SUPPORTED']
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.130s
+
+FAILED (failures=10, errors=3)

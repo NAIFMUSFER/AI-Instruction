@@ -306,7 +306,9 @@ function compileRuntimeScene(visualScene,runtimeConfig){
     const g=d.geometry;
     const thinX=_rtNum(g.ex)<=_rtNum(g.ez);
     const probe=0.6, wx=_rtNum(g.cx), wz=_rtNum(g.cz);
-    const probes=thinX?[[wx-probe,wz],[wx+probe,wz]]:[[wx,wz-probe],[wx,wz+probe]];
+    const yaw=_rtNum(g.rot_y)||0, co=Math.cos(yaw), sn=Math.sin(yaw);
+    const nx=thinX?co:-sn, nz=thinX?sn:co;
+    const probes=[[wx-probe*nx,wz-probe*nz],[wx+probe*nx,wz+probe*nz]];
     const lvl=(d.level_index===undefined)?null:d.level_index;
     const found=[];
     probes.forEach(pp=>{
@@ -598,6 +600,20 @@ function findNearestValidSpawn(runtimeScene,position,capsule,levelIndex,maxRadiu
     {position:null,surface_id:null,moved:false,search_steps:steps}); }
 
 /* ---------------------------------------------------------- الحركة ---- */
+function _rtCapsuleFitsPortal(start,end,c,ap,wall){
+  const co=Math.cos(ap.yaw),sn=Math.sin(ap.yaw);
+  const local=p=>{const dx=p[0]-ap.cx,dz=p[2]-ap.cz;return [dx*co+dz*sn,p[1],-dx*sn+dz*co];};
+  const a=local(start),b=local(end),thin=ap.hx<=ap.hz,n=thin?0:2,tangent=thin?2:0;
+  const width=thin?ap.hz:ap.hx,r=c.radius_m,h=c.height_m;
+  if(width<r||2*ap.hy<h)return false;
+  const nx=thin?co:-sn,nz=thin?sn:co,thickness=_rtProj(wall,nx,nz)+r,dn=b[n]-a[n];
+  if(Math.abs(dn)<=1e-9)return false;
+  const times=[(-thickness-a[n])/dn,(thickness-a[n])/dn].sort((a,b)=>a-b);
+  const lo=Math.max(0,times[0]),hi=Math.min(1,times[1]);if(lo>hi)return false;
+  for(const t of [lo,hi]){const side=a[tangent]+t*(b[tangent]-a[tangent]),feet=a[1]+t*(b[1]-a[1]);
+    if(Math.abs(side)>width-r+1e-9||feet<ap.cy-ap.hy-1e-9||feet+h>ap.cy+ap.hy+1e-9)return false;}
+  return true;
+}
 function runtimeMoveQuery(runtimeScene,runtimeState,start,end){
   const issues=[];
   const capIn=(runtimeState||{}).player_capsule||_rtCopy(RT_CAPSULE_DEFAULTS);
@@ -635,9 +651,7 @@ function runtimeMoveQuery(runtimeScene,runtimeState,start,end){
       let passed=null;
       const ps=openWalls[ob.source_element_id];
       for(let j=0;j<ps.length;j++){
-        const ap=Object.assign({},ps[j].aperture);
-        ap.hx=ap.hx+c.radius_m; ap.hz=ap.hz+c.radius_m;
-        if(_rtObbOverlap(sweep,ap)){ passed=ps[j]; break; } }
+        if(_rtCapsuleFitsPortal(s,e,c,ps[j].aperture,ob.obb)){ passed=ps[j]; break; } }
       if(passed!==null) continue; }
     return _rtOk([],{allowed:false,blocked_by:ob.obstacle_id,blocked_kind:ob.kind,
       reason:'obstacle intersects the swept capsule',candidate_count:q.candidate_count,

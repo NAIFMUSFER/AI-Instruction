@@ -273,9 +273,9 @@ def main():
     chk("كل مفتاح قدرة له افتراضٌ مُعلَن في CAPABILITY_DEFAULTS",
         set(a_caps) == set(PROV.CAPABILITY_DEFAULTS)
         and set(d_caps) == set(PROV.CAPABILITY_DEFAULTS))
-    chk("الافتراض هو السلوك القائم: مزوّدٌ لا يعلن قدرةً يُعامَل معاملة الوكيل",
-        PROV.CAPABILITY_DEFAULTS["output_tokens_are_content_proxy"] is True
-        and PROV.CAPABILITY_DEFAULTS["content_token_multiplier"] == 1.0)
+    chk("القدرة غير المعروفة محافظة ولا تفترض أن رموز المخرج محتوى مرئي",
+        PROV.CAPABILITY_DEFAULTS["output_tokens_are_content_proxy"] is False
+        and PROV.CAPABILITY_DEFAULTS["content_token_multiplier"] == 2.0)
 
     os.environ["ACS_LLM_CONTENT_TOKEN_MULTIPLIER"] = "0.25"
     chk("مضاعِفٌ دون 1.0 يُرفَض: ادّعاءُ وفرٍ يرفع العتبة في اتّجاه الخطر",

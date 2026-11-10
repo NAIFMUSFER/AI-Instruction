@@ -1,0 +1,40 @@
+FFFF
+======================================================================
+FAIL: test_identity_verification_concurrency_is_bounded_before_thread_work (__main__.DeliveryAdmission.test_identity_verification_concurrency_is_bounded_before_thread_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_paid_admission.py", line 67, in test_identity_verification_concurrency_is_bounded_before_thread_work
+    self.assertIn(503,statuses)
+AssertionError: 503 not found in [401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401, 401]
+
+======================================================================
+FAIL: test_legacy_plan_chat_cannot_skip_confirmation_and_budget (__main__.DeliveryAdmission.test_legacy_plan_chat_cannot_skip_confirmation_and_budget)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_paid_admission.py", line 35, in test_legacy_plan_chat_cannot_skip_confirmation_and_budget
+    self.assertEqual(provider.call_count,0,'unauthorized paid orchestration reached')
+AssertionError: 1 != 0 : unauthorized paid orchestration reached
+
+======================================================================
+FAIL: test_polling_other_worker_does_not_abandon_healthy_job (__main__.DeliveryAdmission.test_polling_other_worker_does_not_abandon_healthy_job)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_paid_admission.py", line 42, in test_polling_other_worker_does_not_abandon_healthy_job
+    self.assertEqual(result['state'],'RUNNING')
+AssertionError: 'INTERRUPTED' != 'RUNNING'
+- INTERRUPTED
++ RUNNING
+
+
+======================================================================
+FAIL: test_uncertain_provider_outcome_cannot_resume_and_duplicate_paid_work (__main__.DeliveryAdmission.test_uncertain_provider_outcome_cannot_resume_and_duplicate_paid_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_paid_admission.py", line 47, in test_uncertain_provider_outcome_cannot_resume_and_duplicate_paid_work
+    self.assertFalse(WORK._job_view(row)['job']['can_resume'])
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.560s
+
+FAILED (failures=4)

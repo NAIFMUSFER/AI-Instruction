@@ -6,9 +6,9 @@ approval boundary. It does not call an LLM, CAD engine, BIM compiler, regulator,
 or geometry repair/replanning path. One page is emitted per canonical level.
 
 Only schematic space boundaries are drawn because those are the exact geometric
-primitives currently admitted by ``acs_plan_projection.project``. Room labels are
-kept in the hash-bound UTF-8 sidecar (the PDF uses an ASCII base font and numbered
-space callouts) so non-Latin labels are never silently corrupted or transliterated.
+primitives currently admitted by ``acs_plan_projection.project``. Room labels use
+an embedded Unicode font with Arabic shaping, bidirectional ordering and logical
+ActualText. Numbered callouts and the hash-bound UTF-8 sidecar preserve identity.
 
 The sidecar preserves revision/model hashes, semantic-lock binding and
 requirement/source provenance. It is traceability evidence, not construction,
@@ -99,7 +99,8 @@ def _num(value: float) -> str:
 
 
 def _page_stream(projection: dict, page_number: int, total_pages: int,
-                 *, revision_id: str, model_hash: str, provenance_hash: str) -> tuple[bytes, dict]:
+                 *, revision_id: str, model_hash: str, provenance_hash: str,
+                 unicode_font=None) -> tuple[bytes, dict]:
     site = projection.get("site")
     if not isinstance(site, dict):
         raise PlanError("INVALID_PDF_GEOMETRY", "Projected plan has no site geometry")
@@ -158,6 +159,14 @@ def _page_stream(projection: dict, page_number: int, total_pages: int,
             f"BT /F1 {_num(font_size)} Tf {_num(label_x - 13)} {_num(label_y)} Td (S{ordinal}) Tj ET",
             f"BT /F1 5.5 Tf {_num(label_x - 18)} {_num(label_y - 8)} Td ({_pdf_escape(area_text)}) Tj ET",
         ])
+        if unicode_font is not None and item.get('label'):
+            from acs_pdf_text import PdfTextError
+            try:
+                commands.append(unicode_font.command(item['label'], label_x,
+                    label_y + font_size + 3, font_size, center=True, max_width=max(1, pw - 5)))
+            except PdfTextError as exc:
+                raise PlanError('PDF_TEXT_UNSUPPORTED',
+                    'يحتوي اسم فراغ على محارف لا يدعمها خط PDF. استخدم أسماء عربية أو لاتينية؛ تبقى الأسماء الأصلية في ملف المراجعة.') from exc
         source_id = item.get("source_id")
         source = item.get("source") if isinstance(item.get("source"), dict) else {}
         if not isinstance(source_id, str) or not source_id:
@@ -202,7 +211,8 @@ def _page_stream(projection: dict, page_number: int, total_pages: int,
 
 
 def _build_pdf(page_streams: list[bytes], *, revision_id: str, model_hash: str,
-               requirements_hash: str, provenance_hash: str, page_manifest_hash: str) -> bytes:
+               requirements_hash: str, provenance_hash: str, page_manifest_hash: str,
+               unicode_font=None) -> bytes:
     """Build a small deterministic PDF 1.4 document using only the standard library."""
     if not page_streams:
         raise PlanError("INVALID_PDF_GEOMETRY", "PDF requires at least one canonical level")
@@ -210,6 +220,8 @@ def _build_pdf(page_streams: list[bytes], *, revision_id: str, model_hash: str,
     objects: list[bytes | None] = [None, None]  # catalog, pages tree
     font_id = len(objects) + 1
     objects.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    unicode_id = unicode_font.append_objects(objects) if unicode_font is not None else None
+    unicode_resource = f' /F2 {unicode_id} 0 R' if unicode_id is not None else ''
     page_ids: list[int] = []
     for stream in page_streams:
         content_id = len(objects) + 1
@@ -218,7 +230,7 @@ def _build_pdf(page_streams: list[bytes], *, revision_id: str, model_hash: str,
         page_ids.append(page_id)
         objects.append(
             f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {PAGE_W:.2f} {PAGE_H:.2f}] "
-            f"/Resources << /Font << /F1 {font_id} 0 R >> >> /Contents {content_id} 0 R >>".encode("ascii")
+            f"/Resources << /Font << /F1 {font_id} 0 R{unicode_resource} >> >> /Contents {content_id} 0 R >>".encode("ascii")
         )
 
     info_id = len(objects) + 1
@@ -312,6 +324,8 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
 
     streams: list[bytes] = []
     pages: list[dict] = []
+    from acs_pdf_text import PdfUnicodeFont
+    unicode_font = PdfUnicodeFont()
     for page_number, level_index in enumerate(level_indices, 1):
         projected = project(bound.revision, level_index)
         if (projected.get("revision_id") != revision_id
@@ -320,7 +334,8 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
             raise PlanError("BASELINE_CHANGED", "PDF projection detached from Frozen Baseline")
         stream, manifest = _page_stream(
             projected, page_number, len(level_indices), revision_id=revision_id,
-            model_hash=before_hash, provenance_hash=provenance["provenance_hash"])
+            model_hash=before_hash, provenance_hash=provenance["provenance_hash"],
+            unicode_font=unicode_font)
         streams.append(stream)
         pages.append(manifest)
 
@@ -331,7 +346,7 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
         streams, revision_id=revision_id, model_hash=before_hash,
         requirements_hash=provenance["requirements_hash"],
         provenance_hash=provenance["provenance_hash"],
-        page_manifest_hash=page_manifest_hash)
+        page_manifest_hash=page_manifest_hash, unicode_font=unicode_font)
     if not pdf.startswith(b"%PDF-1.4") or not pdf.rstrip().endswith(b"%%EOF"):
         raise PlanError("PDF_EXPORT_FAILED", "Generated PDF envelope is invalid")
 
@@ -339,6 +354,7 @@ def export_approved_pdf(workspace: PlanLockWorkspace, revision_id: str,
         "schema": SCHEMA,
         "mode": MODE,
         "pdf_scope": PDF_SCOPE,
+        "text_profile": "EMBEDDED_UNICODE_ARABIC_RTL_ACTUALTEXT",
         "revision_id": revision_id,
         "model_hash": before_hash,
         "content_hash": baseline.get("content_hash"),

@@ -19,6 +19,7 @@ import uuid
 from typing import Any
 
 import acs_api_errors as E
+import acs_ingress as INGRESS
 import acs_auth as AUTH
 import acs_auth_gateway as AUTH_GATEWAY
 import acs_plan_bridge as BRIDGE
@@ -53,10 +54,10 @@ def _request_id(scope: dict[str, Any]) -> str:
 
 
 def _error_status(code: str) -> int:
-    if code in {"AUTH_REQUIRED", "ACS_PROJECT_ACCESS_DENIED"}:
+    if code in {"AUTH_REQUIRED", "ACS_PROJECT_ACCESS_DENIED", "PROJECT_ACCESS_DENIED"}:
         return 403
     if code in {
-        "ACS_PROJECT_NOT_FOUND",
+        "ACS_PROJECT_NOT_FOUND", "PROJECT_NOT_FOUND",
         "REVISION_NOT_FOUND",
         "PLAN_PROJECT_ROUTE_NOT_FOUND",
     }:
@@ -65,11 +66,13 @@ def _error_status(code: str) -> int:
         "STALE_REVISION",
         "ACS_STALE_REVISION",
         "ACS_REVISION_EXISTS",
-        "ACS_APPROVAL_EXISTS",
+        "ACS_APPROVAL_EXISTS", "JOB_LEASE_LOST", "REVISION_EXISTS", "APPROVAL_EXISTS",
     }:
         return 409
-    if code in {"STORE_UNAVAILABLE"}:
+    if code in {"GENERATION_BUSY", "STORE_UNAVAILABLE"}:
         return 503
+    if code == "JOB_RATE_LIMITED":
+        return 429
     if code in {"INPUT_LIMIT", "PLAN_COMMAND_BODY_TOO_LARGE"}:
         return 413
     return 400
@@ -129,29 +132,17 @@ def _project_from_path(path: Any) -> tuple[bool, str | None]:
     return True, project_id
 
 
-async def _read_json(receive, *, max_body_bytes=MAX_BODY_BYTES, file_fields=()) -> dict:
-    chunks: list[bytes] = []
-    size = 0
-    while True:
-        message = await receive()
-        if not isinstance(message, dict):
-            raise PlanError("INVALID_PLAN_COMMAND", "Request body is unavailable")
-        if message.get("type") == "http.disconnect":
-            raise PlanError("INVALID_PLAN_COMMAND", "Request disconnected before command admission")
-        if message.get("type") != "http.request":
-            continue
-        chunk = message.get("body", b"")
-        if not isinstance(chunk, (bytes, bytearray)):
-            raise PlanError("INVALID_PLAN_COMMAND", "Request body is malformed")
-        size += len(chunk)
-        if size > max_body_bytes:
-            raise PlanError("PLAN_COMMAND_BODY_TOO_LARGE", "Plan-first command body exceeds the bounded request limit")
-        if chunk:
-            chunks.append(bytes(chunk))
-        if not message.get("more_body", False):
-            break
+async def _read_json(receive, *, max_body_bytes=MAX_BODY_BYTES, file_fields=(), scope=None) -> dict:
     try:
-        raw = b"".join(chunks).decode("utf-8")
+        body = await INGRESS.bounded_body(scope or {}, receive, max_body_bytes)
+    except E.AcsApiError as exc:
+        if exc.status == 413:
+            raise PlanError("PLAN_COMMAND_BODY_TOO_LARGE", "Plan-first command body exceeds the bounded request limit") from None
+        raise
+    if body is None:
+        raise PlanError("INVALID_PLAN_COMMAND", "Request disconnected before command admission")
+    try:
+        raw = body.decode("utf-8")
         value = json.loads(raw)
     except (UnicodeDecodeError, json.JSONDecodeError):
         raise PlanError("INVALID_PLAN_COMMAND", "Plan-first command body must be valid UTF-8 JSON") from None
@@ -220,7 +211,7 @@ class PlanCommandMiddleware:
             return None
 
         try:
-            command = await _read_json(receive)
+            command = await _read_json(receive, scope=scope)
             action = command.get("action")
             if action not in _ALLOWED_NON_PROVIDER_ACTIONS and action != _PROVIDER_ACTION:
                 raise PlanError(
@@ -235,20 +226,15 @@ class PlanCommandMiddleware:
 
             store = SESSION.authenticated_supabase_plan_store(scope)
             if action == _PROVIDER_ACTION:
-                # The request thread retains identity/store authority. The nested
-                # generation runner serializes only canonical geometry + notes +
-                # provider model into its worker process. After the worker returns,
-                # CHAT reloads the durable head before lock-aware admission.
-                result = await asyncio.to_thread(
-                    CHAT.execute_isolated_persisted_chat_edit,
-                    store,
-                    project_id,
-                    command,
-                    actor_id=actor_id.strip(),
-                    provider_model=None,
-                    verifier=BRIDGE.existing_geometry_verifier,
-                    request_id=_request_id(scope),
-                )
+                # The old command URL is an alias to the same durable admission
+                # boundary; it cannot bypass confirmation, budget or idempotency.
+                import acs_workspace_http as WORKSPACE
+                import acs_workspace_service as SERVICE
+                SERVICE.chat_command(command)
+                if not hasattr(self, "paid_workspace"):
+                    self.paid_workspace = WORKSPACE.WorkspaceMiddleware(None)
+                result = await self.paid_workspace._start(
+                    scope, store, project_id, actor_id.strip(), command)
             else:
                 result = await asyncio.to_thread(
                     PERSIST.execute_persisted_plan_command,
@@ -259,6 +245,8 @@ class PlanCommandMiddleware:
                     provider_model=None,
                     verifier=BRIDGE.existing_geometry_verifier,
                 )
+        except E.AcsApiError as exc:
+            return await _send_json(scope, send, exc.status, exc.envelope(_request_id(scope)))
         except PlanError as exc:
             return await _send_plan_error(scope, send, exc)
         except Exception:
@@ -285,7 +273,7 @@ class PlanCommandMiddleware:
         return await _send_json(
             scope,
             send,
-            200,
+            202 if action == _PROVIDER_ACTION else 200,
             {
                 "ok": True,
                 "result": result,

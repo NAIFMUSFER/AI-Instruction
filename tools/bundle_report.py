@@ -221,7 +221,8 @@ def build():
                   if k not in eager and not k.startswith("boot/"))
     # المُعلَن في tools/frontend_lazy.txt مقابل المقيس من الرسم. تطابقهما ليس
     # مفترضاً: إعلانٌ بلا تنفيذ، أو تأجيلٌ بلا إعلان، كلاهما يظهر هنا رقماً.
-    declared_lazy = A.lazy_order()
+    declared_local = A.local_order()
+    declared_lazy = A.lazy_order() + declared_local
     lazy_declared_matches = sorted(declared_lazy) == lazy
     dyn = dynamic_specifiers(modules)
     dyn_first_party = [d for d in dyn if d["first_party"]]
@@ -236,6 +237,7 @@ def build():
           "group": (k.split("/")[0] if "/" in k else "(root)"),
           "loaded": ("boot-classic" if k.startswith("boot/")
                      else "eager" if k in eager
+                     else "local-route" if k in declared_local
                      else "lazy" if k in declared_lazy else "unreferenced"),
           "pct_of_first_party_js": round(
               100.0 * sizes[k] / first_party_total, 2)}
@@ -320,11 +322,13 @@ def build():
             "first_party_total_bytes": first_party_total,
             "first_party_module_count": len(modules),
             "core_initial_bytes": core_bytes,
+            "guest_route_additional_bytes": sum(sizes[k] for k in declared_local if k not in eager),
+            "guest_route_modules": ["public/app/" + k for k in declared_local],
             "core_initial_module_count": len(eager),
             "core_initial_note": (
                 "core = public/app/main.js plus everything it reaches through "
                 "static imports; all of it is parsed and evaluated on first "
-                "load. The five boot scripts are loaded on first paint too, "
+                "load. The declared boot scripts are loaded on first paint too, "
                 "but they are classic <script src> elements outside the module "
                 "graph, so they are counted separately."),
             "boot_bytes": boot_bytes,
@@ -338,11 +342,11 @@ def build():
             "lazy_declared": ["public/app/" + k for k in declared_lazy],
             "lazy_declaration_matches_graph": lazy_declared_matches,
             "lazy_note": (
-                "Panel-level lazy loading of first-party code is IMPLEMENTED. "
+                "Guest-route and panel-level lazy loading of first-party code is IMPLEMENTED. "
                 "%d module(s) totalling %d B are reached by no static import "
-                "from main.js; each is declared in tools/frontend_lazy.txt and "
+                "from main.js; declared in tools/frontend_local.txt or frontend_lazy.txt and "
                 "fetched by exactly one dynamic import() in "
-                "public/app/ui/panels-entry.js when its panel is first opened. "
+                "the local route entry (guest/test only) or panel entry. "
                 "The measured set and the declared set %s. %d dynamic import() "
                 "call(s) exist in total, %d of them first-party; the rest "
                 "target vendored library specifiers (three/addons/*, "

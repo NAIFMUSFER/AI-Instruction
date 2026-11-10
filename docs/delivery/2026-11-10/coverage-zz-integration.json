@@ -1,0 +1,77 @@
+[
+  {
+    "path": "acs_workspace_http.py",
+    "depth": "selected",
+    "purpose": "Safe release retains legacy storage RPCs with shared in-process admission, actor quota and conservative uncertain-result handling. Durable leases are a separate pending increment.",
+    "risk": "high",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_connected_workspace.py",
+      "tests/remediation/test_delivery_paid_admission.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_supabase_plan_store.py",
+    "depth": "selected",
+    "purpose": "Legacy production adapter preserved for database compatibility. Signed writes and history paging remain in pending DB increment, not this file.",
+    "risk": "high",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_connected_workspace.py",
+      "tests/remediation/test_delivery_paid_admission.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "Dockerfile",
+    "depth": "selected",
+    "purpose": "Explicit runtime file packaging includes new geometry, metric registry, ingress and PDF/font assets; deploy needs existing environment.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "tools/delivery_coverage.py",
+    "depth": "selected",
+    "purpose": "Tracked-path inventory combines accurately scoped specialist records; static syntax checks do not establish semantic review.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/boot/engine-guard.js",
+    "depth": "selected",
+    "purpose": "Route-specific readiness watchdog prevents a false account engine warning; local guest fallback stays independent.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_auth_session.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/approved-viewer.mjs",
+    "depth": "deep",
+    "purpose": "Exact approved artifact lifecycle, revision guard, aspect-aware framing and derived component grouping; software-renderer quality and bounded on-demand transitions.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_approved_viewer_framing.mjs",
+    "depth": "deep",
+    "purpose": "Independent projected-bounds and assembly-isolation regression; no rendered-pixel claim.",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "node tests/remediation/test_approved_viewer_framing.mjs"
+    ],
+    "generated_from": []
+  }
+]

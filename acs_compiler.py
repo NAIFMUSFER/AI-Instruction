@@ -13,6 +13,8 @@
 # =============================================================================
 
 import json
+import math
+from acs_geometry_contract import level_elevation
 import re
 import sys
 import struct
@@ -189,12 +191,55 @@ class Builder:
     """يجمّع أجزاء (صناديق) بمواد وأسماء، ثم يصدّرها glTF."""
     def __init__(self):
         self.parts = []   # (pos, nrm, idx, mat_name, node_name)
+        self._door_pairs = {}
+        self._opening_sources = {}
 
-    def add_box(self, cx, cy, cz, ex, ey, ez, mat, name):
+    def add_box(self, cx, cy, cz, ex, ey, ez, mat, name, rotation=0.0):
         if ex <= 0 or ey <= 0 or ez <= 0:
             return
         p, n, u, i = box(cx, cy, cz, ex, ey, ez)
+        if rotation:
+            # Canonical positive degrees rotate X toward +Z, matching the viewer.
+            c, sn = math.cos(rotation), math.sin(rotation)
+            for vectors, origin in ((p, (cx, cz)), (n, (0.0, 0.0))):
+                x = vectors[:, 0].copy() - origin[0]
+                z = vectors[:, 2].copy() - origin[1]
+                vectors[:, 0] = x*c - z*sn + origin[0]
+                vectors[:, 2] = x*sn + z*c + origin[1]
         self.parts.append((p, n, u, i, mat, name))
+
+    def add_door_box(self, cx, cy, cz, ex, ey, ez, mat, name,
+                     fkey, room_id, edge, opening, opening_index):
+        """وجهان متقابلان لباب واحد؛ لا نحذف سجلاً من النموذج الأصلي.
+
+        التطابق هنا في المركز والأبعاد والدلالة الأصلية بلا تقريب إحداثيات.
+        لا نجمع ألواناً أو مواد أو اتجاهات فتح مختلفة، ولا سجلات الحافة نفسها.
+        تبقى هويتا المصدر في extras للجزء المشترك.
+        """
+        if ex <= 0 or ey <= 0 or ez <= 0:
+            return
+        p, n, u, i = box(cx, cy, cz, ex, ey, ez)
+        semantics = json.dumps({k: v for k, v in opening.items()
+                                if k not in ('id', 'edge', 'offset', 'width', 'height')},
+                               sort_keys=True, ensure_ascii=False)
+        key = (fkey, cx, cy, cz, ex, ey, ez, mat, semantics)
+        source = {'node_name': name, 'room_id': room_id,
+                  'opening_index': opening_index, 'edge': edge}
+        if 'id' in opening:
+            source['opening_id'] = opening['id']
+        opposite = {'N': 'S', 'S': 'N', 'E': 'W', 'W': 'E'}
+        candidates = self._door_pairs.setdefault(key, [])
+        for part_index in candidates:
+            sources = self._opening_sources[part_index]
+            first = sources[0]
+            if (len(sources) == 1 and first['room_id'] != room_id
+                    and first['edge'] == opposite.get(edge)):
+                sources.append(source)
+                return
+        part_index = len(self.parts)
+        self.parts.append((p, n, u, i, mat, name))
+        candidates.append(part_index)
+        self._opening_sources[part_index] = [source]
 
     # ---- تصدير glTF 2.0 (buffer مضمّن base64) ----
     def export_gltf(self, path):
@@ -227,7 +272,7 @@ class Builder:
             while len(buf) % 4 != 0:
                 buf.append(0)
 
-        for (pos, nrm, uv, idx, mat, name) in self.parts:
+        for part_index, (pos, nrm, uv, idx, mat, name) in enumerate(self.parts):
             # POSITION
             align(); off = len(buf); data = pos.tobytes(); buf += data
             bufferViews.append({"buffer": 0, "byteOffset": off, "byteLength": len(data), "target": 34962})
@@ -257,6 +302,9 @@ class Builder:
                                                           "TEXCOORD_0": acc_uv},
                                            "indices": acc_idx, "material": mat_index[mat]}]})
             nodes.append({"mesh": len(meshes)-1, "name": name})
+            sources = self._opening_sources.get(part_index, [])
+            if len(sources) > 1:
+                nodes[-1]['extras'] = {'acs_opening_sources': sources}
 
         b64 = base64.b64encode(bytes(buf)).decode("ascii")
         gltf = {
@@ -589,7 +637,7 @@ def obj_kind(o):
 
 def build_object(bld, o, kind, cx, cz, base_y, fkey, room, idx):
     """يبني عنصراً واحداً في موضعه (إحداثيات عالمية) — منقول من frontend buildObject.
-    بلا دوران (add_box محاذٍ للمحاور): الدوران تجميلي ولا يؤثّر على العدّ/الوجود."""
+    دوران موجب في مخطط X/Z مطابق للعارض؛ تُدار الأجزاء وناظماتها حول مركز العنصر."""
     dfl = OBJ_LIB.get(kind, (0.6, 0.6, 0.9, "box"))
     w = float(o.get("w") or dfl[0]); d = float(o.get("d") or dfl[1])
     h = float(o.get("h") or dfl[2]); shape = dfl[3]
@@ -597,8 +645,11 @@ def build_object(bld, o, kind, cx, cz, base_y, fkey, room, idx):
     tag = "OBJ|%s|%s|%s%d" % (fkey, room, (o.get("name") or kind), idx)
     Mbase = OBJ_MAT.get(shape, "furn")
 
+    rot = math.radians(float(o.get("rot") or 0.0))
     def B(dx, dy, dz, ex, ey, ez, mat, c=None):
-        bld.add_box(cx + dx, base_y + dy, cz + dz, ex, ey, ez, tinted(mat, c or col), tag)
+        co, sn = math.cos(rot), math.sin(rot)
+        bld.add_box(cx + dx*co - dz*sn, base_y + dy, cz + dx*sn + dz*co,
+                    ex, ey, ez, tinted(mat, c or col), tag, rotation=rot)
 
     if shape == "person":
         B(0, h*0.22, 0, w*0.28, h*0.44, d*0.7, "skin", col or "#c8a07a")
@@ -788,9 +839,11 @@ def build_room(bld, room, fkey, base_y, defaults):
         axis, fixed, _, _ = edge_geom(e, rect)
         cy = base_y + dh/2.0
         if axis == 'x':
-            bld.add_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+            bld.add_door_box(uc, cy, fixed, wdt, dh, 0.05, mat, "DOOR|%s|%s|%d" % (fkey, name, i),
+                             fkey, name, e, dr, i)
         else:
-            bld.add_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i))
+            bld.add_door_box(fixed, cy, uc, 0.05, dh, wdt, mat, "DOOR|%s|%s|%d" % (fkey, name, i),
+                             fkey, name, e, dr, i)
 
     # زجاج النوافذ
     for i, wn in enumerate(windows):
@@ -886,8 +939,9 @@ def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None):
                  float(site.get("d") or 0.0)]
     pp = PBR.plate_rect([r.get("rect") for r in rooms], site_rect)
     pr = pp["rect"] if (pp.get("valid") and pp.get("rect")) else site_rect
-    for k, s in enumerate(PBR.slab_strips(pr[0], pr[1], pr[2], pr[3],
-                                          holes or [])):
+    strips = [s for rect in (pp.get("rectangles") or [pr])
+              for s in PBR.slab_strips(*rect, holes or [])]
+    for k, s in enumerate(strips):
         bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
                     s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
     for room in rooms:
@@ -917,13 +971,13 @@ def compile_building(data, out_path):
     try:
         import acs_arch
         _arch = acs_arch.compile_architecture(data, "bld_0", None, 0)
-    except Exception:
-        _arch = None
+    except Exception as exc:
+        raise ValueError("ARCHITECTURE_COMPILE_FAILED") from exc
     for lvl in data.get("levels", []):
         idx = lvl["index"]
         tmpl = lvl["template"]
         fdef = floors.get(tmpl, {})
-        base_y = idx * fh
+        base_y = level_elevation(lvl, fh)
         fkey = "F%d" % idx
         holes = [v["rect"] for v in ((_arch or {}).get("voids") or [])
                  if v.get("level_index") == idx] if _arch else []

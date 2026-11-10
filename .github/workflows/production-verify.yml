@@ -12,10 +12,8 @@
 #     which is also exactly why a green PR check here would be a lie: it would
 #     mean "we did not look", rendered as a tick.
 #
-#   2. It costs money and it touches shared state. The generation path spends a
-#     real Anthropic call against the production key and consumes the
-#     deployment's own rate-limit budget (ACS_RL_GLOBAL_DAY = 400/day). A test
-#     that every pull request re-runs would drain a production safety valve.
+#   2. Free checks never call paid generation. Authenticated project generation
+#     is a separate explicitly scoped journey; the legacy flag fails incomplete.
 #
 #   3. It tests a DIFFERENT ARTEFACT than a PR does. A pull request proposes a
 #     change; production runs whatever was last deployed. A red result here
@@ -34,8 +32,8 @@ on:
     inputs:
       spend_a_generation:
         description: >-
-          Run the generation check too. This SPENDS ONE REAL MODEL CALL against
-          the production key and one slot of the daily global budget.
+          Legacy option: reports INCOMPLETE without sending a paid request.
+          Authenticated generation requires the dedicated scoped workspace journey.
         type: boolean
         default: false
   schedule:
@@ -78,7 +76,7 @@ jobs:
           mkdir -p logs
           python3 tests/deploy/verify_backend_live.py 2>&1 | tee logs/production-live-backend.log
 
-      - name: Generation check — SPENDS ONE REAL MODEL CALL
+      - name: Unsupported legacy generation request — no paid call
         # No API key is passed to this runner on purpose: the script talks to
         # the deployment over HTTP and the DEPLOYMENT holds the key (render.yaml
         # declares ANTHROPIC_API_KEY with sync:false, entered by hand in the
@@ -99,7 +97,7 @@ jobs:
           if-no-files-found: warn
 
   live-page-boot:
-    name: Live page boot (real Chromium against the deployed page)
+    name: Live public guest and sign-in UI (no account or paid call)
     runs-on: ubuntu-latest
     environment: production
     env:

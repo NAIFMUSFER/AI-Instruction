@@ -1,0 +1,23 @@
+/workspace/scratch/1843247fed6a/db-venv/lib/python3.12/site-packages/platformdirs/api.py:467: RuntimeDirWarning: XDG_RUNTIME_DIR /home/agent/.local/run has mode 0755, not 0700, falling back to /tmp/runtime-1000
+  return Path(self.user_runtime_dir)
+FAIL direct RPC validation regression
+
+PostgreSQL stand-alone backend 16.2
+backend> 	 1: set_config	(typeid = 25, len = -1, typmod = -1, byval = f)
+	----
+	 1: set_config = "22222222-2222-4222-8222-222222222222"	(typeid = 25, len = -1, typmod = -1, byval = f)
+	----
+backend> 2026-11-10 19:27:11.075 +03 [31] ERROR:  SECURITY_REGRESSION: malformed direct revision rejected
+2026-11-10 19:27:11.075 +03 [31] CONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE
+2026-11-10 19:27:11.075 +03 [31] STATEMENT:  set role authenticated; select set_config('request.jwt.claim.sub','22222222-2222-4222-8222-222222222222',false);
+	do $test$ declare denied boolean:=false; begin
+	      begin perform public.acs_save_plan_revision('55555555-5555-4555-8555-555555555555',null,'{"revision_id":"bad","number":1,"parent_id":null,"model_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","content_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","bound_content_hash":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa","created_at":"2026-11-10T00:00:00Z"}'::jsonb); exception when others then
+	        if sqlstate not in ('P0001','42501') then raise; end if;
+	        denied:=true;
+	      end;
+	      if not denied then raise exception 'SECURITY_REGRESSION: malformed direct revision rejected'; end if;
+	      raise notice 'PASS malformed direct revision rejected'; end $test$;
+	reset role;
+
+2026-11-10 19:27:11.075 +03 [31] LOG:  checkpoint starting: shutdown immediate
+2026-11-10 19:27:11.076 +03 [31] LOG:  checkpoint complete: wrote 19 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.001 s, sync=0.001 s, total=0.001 s; sync files=13, longest=0.001 s, average=0.000 s; distance=9 kB, estimate=9 kB; lsn=0/164CD88, redo lsn=0/164CD88

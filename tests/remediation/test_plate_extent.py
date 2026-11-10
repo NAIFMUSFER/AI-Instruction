@@ -81,11 +81,11 @@ class Cap(object):
     def __init__(self):
         self.boxes = []
 
-    def add_box(self, cx, cy, cz, ex, ey, ez, mat, name):
+    def add_box(self, cx, cy, cz, ex, ey, ez, mat, name, rotation=0.0):
         if ex <= 0 or ey <= 0 or ez <= 0:
             return
         self.boxes.append({'c': (cx, cy, cz), 'e': (ex, ey, ez),
-                           'mat': mat, 'name': name,
+                           'mat': mat, 'name': name, 'rotation': rotation,
                            'rect': (cx - ex / 2.0, cz - ez / 2.0, ex, ez)})
 
     def slabs(self, fkey=None):
@@ -111,13 +111,35 @@ def voids_of(m, idx):
             if v.get('level_index') == idx]
 
 
-def union_of(rooms):
+def bounds_of(rooms):
     rs = [r['rect'] for r in rooms]
     x0 = min(r[0] for r in rs)
     z0 = min(r[1] for r in rs)
     x1 = max(r[0] + r[2] for r in rs)
     z1 = max(r[1] + r[3] for r in rs)
     return [x0, z0, x1 - x0, z1 - z0]
+
+
+def exact_coverage(emitted, rooms, holes):
+    """Independent cell oracle: exactly one emitted layer on union minus voids."""
+    all_rects = emitted + rooms + holes
+    xs = sorted({r[0] for r in all_rects} | {r[0]+r[2] for r in all_rects})
+    zs = sorted({r[1] for r in all_rects} | {r[1]+r[3] for r in all_rects})
+    def contains(r, x, z):
+        return r[0] < x < r[0]+r[2] and r[1] < z < r[1]+r[3]
+    area = 0.0
+    correct = True
+    for x0,x1 in zip(xs,xs[1:]):
+        for z0,z1 in zip(zs,zs[1:]):
+            if x1-x0 < 1e-7 or z1-z0 < 1e-7:
+                continue
+            x,z = (x0+x1)/2, (z0+z1)/2
+            wanted = any(contains(r,x,z) for r in rooms) and not any(contains(h,x,z) for h in holes)
+            actual = sum(contains(r,x,z) for r in emitted)
+            correct = correct and actual == int(wanted)
+            if wanted:
+                area += (x1-x0)*(z1-z0)
+    return correct, area
 
 
 def emit_level(m, lvl):
@@ -127,7 +149,7 @@ def emit_level(m, lvl):
     holes = voids_of(m, lvl['index'])
     C.build_level(cap, lvl, fdef, lvl['index'] * m['floor_height'],
                   defaults_of(m), 'F%d' % lvl['index'], holes)
-    return cap, union_of(fdef['rooms']), holes
+    return cap, bounds_of(fdef['rooms']), holes
 
 
 print('\n== أ · THE POLICY IS DECLARED AND PROVENANCED, NOT SILENT ==')
@@ -166,9 +188,10 @@ print('\n== ب · THE SINGLE EXTENT CONTRACT ==')
 chk('rooms present ⇒ the extent is the level room union, declared as such',
     P.plate_rect([[20, 14, 12, 9], [34, 14, 8, 9]], [0, 0, 60, 40])['source']
     == 'LEVEL_ROOM_UNION')
-chk('the union is exact, not padded',
+chk('the bounding rectangle is unpadded and explicitly not the union geometry',
     P.plate_rect([[20, 14, 12, 9], [34, 14, 8, 9]],
-                 [0, 0, 60, 40])['rect'] == [20.0, 14.0, 22.0, 9.0])
+                 [0, 0, 60, 40])['rect'] == [20.0, 14.0, 22.0, 9.0]
+    and P.plate_rect([[20,14,12,9],[34,14,8,9]], None)['rect_basis'] == 'BOUNDING_BOX_ONLY')
 chk('no rooms ⇒ the site is used, and the fallback is DECLARED not silent',
     P.plate_rect([], [0, 0, 30, 24])['source'] == 'SITE_FALLBACK'
     and P.plate_rect([], [0, 0, 30, 24])['rect'] == [0.0, 0.0, 30.0, 24.0])
@@ -194,7 +217,7 @@ for _name in sorted(FIXTURES):
     _site = [0.0, 0.0, float(_m['site']['w']), float(_m['site']['d'])]
     _sa = _site[2] * _site[3]
     for _lvl in _m['levels']:
-        _u = union_of(_m['floors'][_lvl['template']]['rooms'])
+        _u = bounds_of(_m['floors'][_lvl['template']]['rooms'])
         _ua = _u[2] * _u[3]
         _new = P.plate_rect(
             [r['rect'] for r in _m['floors'][_lvl['template']]['rooms']],
@@ -209,7 +232,7 @@ for _name in sorted(FIXTURES):
             'this is the reported floating plate'
             % (_name, _lvl['index'], _sa / _ua), _sa / _ua > 1.5,
             'site=%s union=%s' % (_site, _u))
-        chk('%s L%d: the NEW rule equals the level room union exactly'
+        chk('%s L%d: the bounding metadata encloses all room rectangles exactly'
             % (_name, _lvl['index']),
             [round(v, 6) for v in _new] == [round(v, 6) for v in _u],
             '%s vs %s' % (_new, _u))
@@ -227,8 +250,14 @@ for _name in sorted(FIXTURES):
                or b['rect'][0] + b['rect'][2] > u[0] + u[2] + TOL
                or b['rect'][1] + b['rect'][3] > u[1] + u[3] + TOL]
         chk('%s L%d: NO slab geometry extends beyond the level room-footprint '
-            'union' % (_name, _lvl['index']), out == [],
+            'bounds' % (_name, _lvl['index']), out == [],
             json.dumps([b['rect'] for b in out]))
+        _rs = [r['rect'] for r in _m['floors'][_lvl['template']]['rooms']]
+        _exact, _expected_area = exact_coverage([list(b['rect']) for b in sl], _rs, holes)
+        chk('%s L%d: emitted slabs cover the exact room UNION minus voids without overlaps or filled recesses'
+            % (_name, _lvl['index']), _exact)
+        chk('%s L%d: emitted slab area agrees with independent cell integration'
+            % (_name, _lvl['index']), abs(sum(b['rect'][2]*b['rect'][3] for b in sl)-_expected_area) < TOL)
         chk('%s L%d: every slab keeps the declared 0.15 m thickness and sits '
             'at its own level elevation, applied exactly once'
             % (_name, _lvl['index']),
@@ -247,7 +276,7 @@ for _name in sorted(FIXTURES):
                 or max(b['rect'][3] for b in sl) < float(_m['site']['d']) - TOL)
 # مقاومة التفاهة: القاعدة القديمة كانت لتسقط في نفس الفحص أعلاه
 _vm = FIXTURES['villa_small_on_large_plot']
-_vu = union_of(_vm['floors']['g']['rooms'])
+_vu = bounds_of(_vm['floors']['g']['rooms'])
 _old_rect = (0.0, 0.0, float(_vm['site']['w']), float(_vm['site']['d']))
 chk('the check above is not vacuous: the OLD site-wide plate WOULD have '
     'failed it', _old_rect[2] > _vu[0] + _vu[2] + TOL
@@ -301,15 +330,17 @@ chk('no slab strip covers the centre of the void — the opening is really open'
             and b['rect'][1] < _hcz < b['rect'][1] + b['rect'][3]
             for b in sl))
 _area = sum(b['rect'][2] * b['rect'][3] for b in sl)
+_exact, _expected = exact_coverage([list(b['rect']) for b in sl], [r['rect'] for r in _sv['floors'][_lv1['template']]['rooms']], holes)
 chk('the slab area equals the footprint area MINUS the void area exactly '
     '(%.3f m²)' % _area,
-    abs(_area - (u[2] * u[3] - _h[2] * _h[3])) < 1e-6,
-    'strips=%.6f expected=%.6f' % (_area, u[2] * u[3] - _h[2] * _h[3]))
+    _exact and abs(_area - _expected) < 1e-6,
+    'strips=%.6f expected=%.6f' % (_area, _expected))
 _lv0 = [lv for lv in _sv['levels'] if lv['index'] == 0][0]
 cap0, u0, holes0 = emit_level(_sv, _lv0)
-chk('the ground level, which has no void, is still ONE whole plate',
-    len(cap0.slabs('F0')) == 1 and holes0 == [])
-_direct = P.slab_strips(u[0], u[1], u[2], u[3], holes)
+chk('the ground level covers its exact room union with no invented gap fill',
+    holes0 == [] and exact_coverage([list(b['rect']) for b in cap0.slabs('F0')], [r['rect'] for r in _sv['floors'][_lv0['template']]['rooms']], [])[0])
+_union = P.plate_rect([r['rect'] for r in _sv['floors'][_lv1['template']]['rooms']], None)['rectangles']
+_direct = [strip for rect in _union for strip in P.slab_strips(*rect, holes)]
 _emit = [[b['rect'][0], b['rect'][1], b['rect'][2], b['rect'][3]] for b in sl]
 # المقارنة على عدد الشرائح وترتيبها وقيمها ضمن 1e-9 — الفرق الوحيد الممكن هو
 # دورة مركز/امتداد داخل add_box، لا اختلاف منطق.
@@ -322,6 +353,9 @@ chk('a hole outside the plate changes nothing',
     P.slab_strips(0, 0, 10, 10, [[50, 50, 2, 2]]) == [[0.0, 0.0, 10.0, 10.0]])
 chk('no holes ⇒ exactly one strip covering the whole plate',
     P.slab_strips(2, 3, 10, 8, []) == [[2.0, 3.0, 10.0, 8.0]])
+
+chk('the independent oracle rejects a bounding box filling an L-shaped recess',
+    not exact_coverage([[0,0,4,4]], [[0,0,4,2],[0,2,2,2]], [])[0])
 
 print('\n== ز · THE QUANTITIES STAY CANONICAL ==')
 for _name in sorted(FIXTURES):
@@ -374,8 +408,7 @@ chk('the OLD site-wide plate line is gone from the Python compiler',
 chk('the OLD site-wide plate call is gone from the shipped page',
     'slabStrips(0,0,site.w,site.d,holes)' not in page)
 chk('the shipped page derives the plate from the same contract',
-    'pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d])' in page
-    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in page)
+    'pqPlateRect(' in page and 'slabStrips(' in page)
 chk('the page ships the policy object and its predecessor, so the browser can '
     'report the provenance too',
     'PQ_PLATE_POLICY' in page and 'PHASE10_FOOTPRINT_PLATE' in page

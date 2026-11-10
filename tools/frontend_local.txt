@@ -1,0 +1,20 @@
+# Local guest/test studio. Dynamically loaded by ui/local-studio-entry.mjs.
+# Static edges inside this route are allowed; eager account modules must not import it.
+core/viewer.js
+core/standards.js
+core/disciplines.js
+generated/runtime.js
+generated/authoring.js
+generated/pbr.js
+render/scene.js
+render/warehouse-canonical-identity.js
+generated/pbr-bridge.js
+ui/workspace-ui-wiring.js
+trust/core.js
+trust/wiring.js
+ui/panels-entry.js
+ui/workspace-viewport-selection.js
+ui/workspace-viewport-selection-runtime.js
+ui/residential-quality.js
+ui/generation-jobs.js
+ui/guest-workspace.js

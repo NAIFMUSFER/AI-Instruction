@@ -45,10 +45,11 @@ GEOMETRY_MESSAGES = {
 
 def geometry_failure_message(code):
     messages = {
-        "ACS_TIMEOUT":"انتهت مهلة المعالجة. يمكنك استئناف المراحل المحفوظة دون إعادة ما اكتمل.",
-        "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد. استأنف من آخر مرحلة محفوظة.",
-        "ACS_UPSTREAM_CONNECTION":"انقطع اتصال خدمة التوليد قبل اكتمال الرد. استأنف المهمة من البرنامج والمراحل المحفوظة.",
-        "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. استأنف المراحل المحفوظة.",
+        "ACS_TIMEOUT":"انتهت مهلة المعالجة وحالة الطلب لدى المزود غير مؤكدة. احتُفظ بالمراحل؛ لن يبدأ استدعاء مكرر تلقائيًا.",
+        "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد وحالة الطلب لدى المزود غير مؤكدة. لم يُعَد إرسال الطلب تلقائيًا.",
+        "ACS_UPSTREAM_CONNECTION":"انقطع اتصال خدمة التوليد وحالة الطلب غير مؤكدة. احتُفظ بالمراحل دون إعادة مدفوعة تلقائية.",
+        "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. حالة الطلب غير مؤكدة؛ لم يُعَد إرساله تلقائيًا.",
+        "PROVIDER_OUTCOME_UNKNOWN":"توقفت متابعة المهمة أو أُلغيت. لا يمكن الجزم بأن المزود لم ينفذها؛ لم تُعَد تلقائيًا، ولا تسمح هذه الحالة باستئناف مكرر.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
@@ -140,6 +141,9 @@ def generation_command(command):
     expected = out.get("expected_head")
     if expected is not None and (not isinstance(expected, str) or len(expected) > 160):
         raise PlanError("STALE_REVISION", "معرّف النسخة غير صالح.")
+    from acs_requirement_metrics import unsupported_metrics
+    if unsupported_metrics(requirements):
+        raise PlanError("REQUIREMENT_METRIC_NOT_SUPPORTED", "يوجد مقياس متطلب غير مدعوم. راجعه قبل بدء أي استدعاء مدفوع.")
     from acs_plan_projection import _requirements
     from types import SimpleNamespace
     _requirements(SimpleNamespace(requirements_json=canonical(requirements), brief=brief))
@@ -172,7 +176,7 @@ def budgeted_chat_candidate(building, notes, max_provider_calls):
         return generate_chat_candidate(building, notes)
 
 
-def chat_and_save(store, project_id, actor_id, command):
+def chat_and_save(store, project_id, actor_id, command, *, on_progress=None):
     command = chat_command(command)
     from acs_plan_chat_orchestration import execute_isolated_persisted_chat_edit
     from acs_generation_job import default_runner
@@ -180,6 +184,8 @@ def chat_and_save(store, project_id, actor_id, command):
 
     class BudgetRunner:
         def run(self, target, kwargs, **controls):
+            if on_progress:
+                controls["on_progress"] = on_progress
             return runner.run("acs_workspace_service:budgeted_chat_candidate", {
                 "building": kwargs["building"], "notes": kwargs["notes"],
                 "max_provider_calls": command["max_provider_calls"],
@@ -203,6 +209,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     residential = U._is_residential(detected)
     warehouse = detected == 'warehouse'
     if warehouse:
+        from acs_warehouse_generation import PLANNING_SYSTEM as WAREHOUSE_PLANNING_SYSTEM
         from warehouse_program_feasibility import warehouse_requirements_preflight
         preflight = warehouse_requirements_preflight(requirements)
         if not preflight.get('may_generate_layout', True):
@@ -228,19 +235,20 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                        "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
                        "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
     if residential:
-        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail
+        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail, _canonical_room_roles
         prompt += "\n" + ROOM_PROGRAM
         if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
             from acs_residential_manifest import manifest
             resume = manifest(brief, requirements)
-    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(PLANNING_SYSTEM if residential else None):
+    policy = PLANNING_SYSTEM if residential else WAREHOUSE_PLANNING_SYSTEM if warehouse else None
+    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(policy):
         detailed = isinstance(resume,dict) and resume.get("kind") == "details"
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
         result = {"building":resume["building"]} if saved_layout else generate_candidate(prompt)
         _reject_provider_authority_changes({}, result["building"])
         if residential:
             try:
-                before_layout = canonical(result["building"])
+                before_layout = canonical(_canonical_room_roles(result["building"]))
                 result["building"] = prepare_layout(result["building"], brief, requirements, budget)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
                 result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)

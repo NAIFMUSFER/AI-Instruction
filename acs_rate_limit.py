@@ -34,6 +34,7 @@ from __future__ import annotations
 import ipaddress
 import itertools
 import logging
+import uuid
 import math
 import os
 import threading
@@ -41,6 +42,12 @@ import time
 from collections import OrderedDict
 
 LOG = logging.getLogger("acs.rate_limit")
+
+def _safe_diagnostic(level, code, exc):
+    """Never interpolate exception text, request payloads or connection URLs."""
+    error_class = type(exc).__name__[:80]
+    LOG.log(level, "%s event_id=%s error_class=%s", code, uuid.uuid4().hex, error_class)
+
 
 CONTRACT_VERSION = "acs-rate-limit/1.0"
 
@@ -92,8 +99,7 @@ def env_int(name, default, env=None, minimum=None, maximum=None):
     try:
         val = int(raw, 10)
     except (TypeError, ValueError):
-        LOG.warning("%s=%r is not an integer; using default %r",
-                    name, raw, default)
+        LOG.warning("RATE_LIMIT_CONFIG_INVALID integer setting; using default")
         return default
     if minimum is not None and val < minimum:
         return minimum
@@ -509,11 +515,11 @@ class RedisBackend(RateLimitBackend):
         except RateLimitError:
             raise
         except Exception as exc:
-            raise BackendOperationError("redis hit failed: %s" % (exc,))
+            raise BackendOperationError("redis hit failed (%s)" % type(exc).__name__)
 
         if not isinstance(res, (list, tuple)) or len(res) < 3:
             raise BackendOperationError(
-                "redis returned an unexpected shape: %r" % (res,))
+                "redis returned an unexpected shape")
         allowed = bool(_as_int(res[0], 0))
         pttl_ms = _as_int(res[1], -1)
         count = _as_int(res[2], 0)
@@ -530,7 +536,7 @@ class RedisBackend(RateLimitBackend):
                 self.client.get(self.prefix + "__health__")
             return True
         except Exception as exc:
-            LOG.warning("rate limit: redis health probe failed: %s", exc)
+            _safe_diagnostic(logging.WARNING, "RATE_LIMIT_REDIS_HEALTH_FAILED", exc)
             return False
 
     def stats(self):
@@ -549,13 +555,13 @@ def redis_client_from_url(url):
             "ACS_RATE_LIMIT_BACKEND=redis but the 'redis' package is not "
             "installed (%s). Install it or unset ACS_RATE_LIMIT_BACKEND — "
             "this deployment will NOT silently fall back to a process-local "
-            "limiter." % (exc,))
+            "limiter." % type(exc).__name__)
     try:
         return _redis.Redis.from_url(url, socket_timeout=2.0,
                                      socket_connect_timeout=2.0)
     except Exception as exc:
         raise RateLimitBackendUnavailable(
-            "could not build a redis client from ACS_REDIS_URL: %s" % (exc,))
+            "could not build a redis client from ACS_REDIS_URL (%s)" % type(exc).__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -569,8 +575,7 @@ def backend_choice(env=None):
     if raw in ("memory", "local", "process"):
         return "memory", True
     if raw:
-        LOG.warning("ACS_RATE_LIMIT_BACKEND=%r is not recognised; "
-                    "treating it as unset (memory)", raw)
+        LOG.warning("RATE_LIMIT_CONFIG_INVALID backend; treating it as unset (memory)")
     return "memory", False
 
 
@@ -595,7 +600,7 @@ def make_backend(env=None, client=None):
             raise
         except Exception as exc:
             raise RateLimitBackendUnavailable(
-                "redis backend requested but unavailable: %s" % (exc,))
+                "redis backend requested but unavailable (%s)" % type(exc).__name__)
     if not explicit and env_str("ACS_ENV", "development", env).lower() \
             == "production":
         LOG.warning("ACS_ENV=production with no ACS_RATE_LIMIT_BACKEND: the "
@@ -894,8 +899,7 @@ class RateLimiter(object):
             # فئة العطل فقط. نصّ الاستثناء يحمل عادةً مضيفاً أو منفذاً أو
             # اعتماداً (رسائل redis-py تفعل ذلك حرفياً) فلا يُخزَّن للعرض.
             self._last_error = type(exc).__name__
-        LOG.error("rate limit backend failure (%s policy): %s",
-                  self.fail_policy, exc)
+        _safe_diagnostic(logging.ERROR, "RATE_LIMIT_BACKEND_FAILED", exc)
         if self.fail_policy == FAIL_OPEN:
             # يبقى الباب مفتوحاً والرصيد مكشوفاً — قرار واعٍ لا افتراضي.
             d = self._decision(True, scope=SCOPE_BACKEND)
@@ -1045,7 +1049,7 @@ def health_status(limiter=None, env=None):
     try:
         healthy = bool(backend.healthy())
     except Exception as exc:
-        LOG.warning("rate limit: health probe raised: %s", exc)
+        _safe_diagnostic(logging.WARNING, "RATE_LIMIT_HEALTH_FAILED", exc)
         healthy = False
     errors, last_error = lim.backend_errors()
     if errors:

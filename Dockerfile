@@ -8,6 +8,7 @@ COPY acs_understand.py acs_understand_api.py acs_validate.py acs_layout.py ./
 # وacs_plan_chunks عقد الخطّة المحدود (KI-24): يستورده acs_understand مباشرةً.
 COPY acs_api_errors.py acs_auth.py acs_auth_gateway.py acs_generation.py acs_plan_chunks.py acs_provider.py ./
 COPY acs_opening_identity.py ./
+COPY acs_request_admission.py acs_ingress.py acs_geometry_contract.py acs_requirement_metrics.py acs_requirement_metrics.json ./
 # Plan-first backend companions are packaged with an explicit authenticated HTTP
 # command boundary. Importing these modules needs no CAD/provider client.
 # The connected workspace derives artifacts from approved canonical revisions;
@@ -37,6 +38,8 @@ COPY warehouse_vertical_stage_gate.py ./
 COPY warehouse_program_feasibility.py ./
 COPY warehouse_soft_area_fit.py ./
 COPY acs_workspace_progress.py acs_residential_generation.py acs_design_research.py ./
+COPY acs_warehouse_generation.py acs_pdf_text.py ./
+COPY assets/fonts/ assets/fonts/
 COPY acs_residential_manifest.py acs_residential_access.py acs_residential_layout.py ./
 # Approved artifacts are derived on demand from an authenticated frozen revision.
 COPY acs_compiler.py acs_pbr.py acs_pbr.json acs_bim.py acs_bim.json ./

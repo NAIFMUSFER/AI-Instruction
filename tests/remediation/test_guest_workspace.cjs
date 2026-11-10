@@ -22,20 +22,32 @@ async function guestSnapshot(page){
   };
  }));
 }
+async function downloadedJSON(page,button){
+ const event=page.waitForEvent('download',{timeout:15000});
+ await page.locator(button).click();
+ const download=await event;
+ assert.match(download.suggestedFilename(),/\.json$/i);
+ assert.equal(await download.failure(),null);
+ const stream=await download.createReadStream();
+ assert.ok(stream,'download must contain a real readable file');
+ const parts=[];for await(const part of stream)parts.push(part);
+ return JSON.parse(Buffer.concat(parts).toString('utf8'));
+}
 async function runGuestWorkspaceTests(){
  const browser=await PW.launch();let passed=0;
  try{
   for(const width of [393,1280]){
    const context=await browser.newContext({viewport:{width,height:852},acceptDownloads:true});
+   context.setDefaultTimeout(15000);
    const page=await context.newPage(),calls=[],errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.addInitScript(()=>{
     window.__guestAuthEvents=0;
     document.addEventListener('acs:authenticated',()=>window.__guestAuthEvents++);
    });
-   await page.route('**/*',async route=>{
+   await context.route('**/*',async route=>{
     const url=new URL(route.request().url());
-    if(url.origin!==ORIGIN){calls.push(url.pathname);return route.abort();}
+    if(url.origin!==ORIGIN||/^\/(?:v1|auth|rest|functions)(?:\/|$)/.test(url.pathname)){calls.push(url.pathname);return route.abort();}
     const file=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!file.startsWith(PUB+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return route.fulfill({status:404,body:''});
     return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(file)});
@@ -65,6 +77,81 @@ async function runGuestWorkspaceTests(){
    assert.equal(saved.ok,true);
    await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.site.w===24);
    assert.match(await page.locator('#acsGuestStatus').textContent(),/استُعيد/);
+   // Local file inputs and downloads exercise the actual handlers and bytes.
+   // This fixture is synthetic; no real account files or credentials are read.
+   const originalModel=await page.evaluate(()=>window.ACS.exportModel());
+   const importedModel=JSON.parse(JSON.stringify(originalModel));
+   importedModel.site.w=23;importedModel.meta={...importedModel.meta,name:'guest-import-'+width};
+   await page.locator('#impFile').setInputFiles({name:'synthetic-building.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(importedModel))});
+   await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===23&&document.getElementById('impInfo').textContent.includes('JSON ✓'));
+   const importedVisible=await page.evaluate(()=>window.ACS.exportModel());
+   assert.deepEqual(importedVisible.floors,importedModel.floors);
+   assert.deepEqual(importedVisible.levels,importedModel.levels);
+   await page.locator('#guestCreate').click();
+   await page.locator('#acsTabShow').click();
+   const exported=await downloadedJSON(page,'#bJson');
+   assert.deepEqual(exported.site,importedVisible.site);
+   assert.deepEqual(exported.levels,importedVisible.levels);
+   assert.deepEqual(exported.floors,importedVisible.floors);
+   assert.equal(exported.meta.name,'guest-import-'+width);
+   // Input accept filters are not enforcement: intentionally submit a PDF.
+   await page.locator('#impFile').setInputFiles({name:'unsupported.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 synthetic unsupported guest fixture')});
+   await page.waitForFunction(()=>document.getElementById('impInfo').textContent.includes('سجّل الدخول'));
+   assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),importedVisible,'unsupported guest import must preserve the visible model');
+   assert.deepEqual(calls,[],'local import and download must not call private/provider services');
+   // Return to the saved24m fixture used by the delayed-recovery assertions.
+   await page.locator('#impFile').setInputFiles({name:'restored-local.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(originalModel))});
+   await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===24);
+   assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_IMPORT_TEST'))).ok,true);
+   if(width===1280){
+    // A second real tab shares only the guest draft namespace. Its visible
+    // sample choice must not overwrite the first tab's in-memory project.
+    const second=await context.newPage();second.on('pageerror',e=>errors.push(e.message));
+    await second.goto(ORIGIN+'/?guest=1');
+    await second.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete');
+    assert.equal(await second.evaluate(()=>window.ACS.exportModel().site.w),24);
+    await page.waitForFunction(()=>window.ACS.tabs().owner.tabs>=2);
+    await second.waitForFunction(()=>window.ACS.tabs().owner.tabs>=2);
+    assert.notEqual(await second.evaluate(()=>window.ACS.tabs().self),await page.evaluate(()=>window.ACS.tabs().self));
+    assert.equal(await second.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_guest_project_v1');
+    await second.locator('#guestWarehouse').click();
+    await second.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
+    assert.equal(await page.evaluate(()=>window.ACS.exportModel().site.w),24,'a sample selected in another guest tab must not replace this visible project');
+    assert.equal(await second.evaluate(()=>window.ACS.authSession),undefined);
+    assert.equal(await second.evaluate(()=>window.ACS.projectId),undefined);
+    await second.close();
+    // Restore the explicit current draft after closing the second tab; shared
+    // guest persistence is disclosed, not claimed to be a private per-tab DB.
+    assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_AFTER_TWO_TABS'))).ok,true);
+    const existing=await guestSnapshot(page);
+    const denied=await context.newPage();denied.on('pageerror',e=>errors.push(e.message));
+    await denied.addInitScript(()=>{
+     window.__guestDeniedStorageAttempts=0;
+     IDBFactory.prototype.open=function(){window.__guestDeniedStorageAttempts++;throw new DOMException('Synthetic storage denial','SecurityError');};
+    });
+    await denied.goto(ORIGIN+'/?guest=1');
+    await denied.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete');
+    assert.ok(await denied.evaluate(()=>window.__guestDeniedStorageAttempts>0));
+    assert.equal(await denied.locator('#login').isVisible(),false);
+    assert.ok(await denied.evaluate(()=>window.ACS.exportModel()?.floors));
+    assert.match(await denied.locator('#acsGuestStatus').textContent(),/تنزيل JSON/);
+    assert.equal(await denied.evaluate(()=>window.ACS.guestAutosaveReady),false);
+    await denied.locator('#guestCreate').click();await denied.locator('#acsTabShow').click();
+    await denied.locator('#acsSaveNow').click();
+    await denied.waitForFunction(()=>document.getElementById('acsSaveState').dataset.acsSave==='FAILED');
+    assert.notEqual(await denied.locator('#acsSaveState').getAttribute('data-acs-save'),'SAVED');
+    const deniedModel=await denied.evaluate(()=>window.ACS.exportModel());
+    const backup=await downloadedJSON(denied,'#acsExportBackup');
+    assert.equal(backup.contract,'acs-project-backup/1');
+    assert.equal(backup.storage,'LOCAL_FILE_DOWNLOAD');
+    assert.deepEqual(JSON.parse(backup.record.payload).model,deniedModel,'storage denial still allows an exact local backup download');
+    await denied.close();
+    const afterDenied=await guestSnapshot(page);
+    const originalRecord=existing.records.find(record=>record.record_id===existing.pointer);
+    assert.ok(originalRecord,'a real prior guest snapshot exists before denial');
+    assert.deepEqual(afterDenied.records.find(record=>record.record_id===existing.pointer),originalRecord,'failed recovery/save must preserve the original guest record');
+    assert.deepEqual(calls,[],'two tabs and denied storage must never invoke identity/private/provider requests');
+   }
    // Delay the real IndexedDB recovery result, then act before it completes.
    // This instruments only scheduling; the shipped page and saved data are real.
    await page.evaluate(()=>sessionStorage.setItem('acs_test_delay_guest_recovery','1'));
@@ -174,7 +261,7 @@ async function runGuestWorkspaceTests(){
   await fallback.locator('#acsAuthGoogle').waitFor({state:'visible'});
   assert.equal(new URL(fallback.url()).searchParams.get('signin'),'1');
   await noGl.close();passed++;
-  console.log('GUEST WORKSPACE: '+passed+' production-origin desktop/mobile/no-WebGL journeys passed');
+  console.log('GUEST WORKSPACE: '+passed+' production-origin journeys passed (desktop/mobile JSON import/download and unsupported files; two guest tabs; denied-storage backup; recovery; no-WebGL)');
  }finally{await browser.close();}
 }
 module.exports={runGuestWorkspaceTests};

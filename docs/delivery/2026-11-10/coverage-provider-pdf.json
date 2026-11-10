@@ -1,0 +1,353 @@
+[
+  {
+    "path": "acs_provider.py",
+    "depth": "deep",
+    "purpose": "Resolve provider config, endpoint identity and accounting capability profiles",
+    "risk": "high",
+    "findings": [
+      "SEC-08"
+    ],
+    "tests": [
+      "test_delivery_provider_identity.py",
+      "test_multi_provider.py",
+      "test_provider_capability.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_understand.py",
+    "depth": "selected",
+    "purpose": "Provider transport, repair accounting and uncertain-outcome retry boundary; other generation sections not deeply reviewed",
+    "risk": "high",
+    "findings": [
+      "PROVIDER-RETRY",
+      "PROVIDER-ACCOUNTING"
+    ],
+    "tests": [
+      "test_audit_backend_provider.py",
+      "test_provider_integration.py",
+      "test_provider_reject.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_residential_generation.py",
+    "depth": "deep",
+    "purpose": "Residential role normalization, layout checks and details reuse",
+    "risk": "high",
+    "findings": [
+      "AR-ROLE"
+    ],
+    "tests": [
+      "test_audit_backend_residential_roles.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_warehouse_generation.py",
+    "depth": "deep",
+    "purpose": "Disjoint warehouse functional-zone planning policy",
+    "risk": "high",
+    "findings": [
+      "WH-POLICY"
+    ],
+    "tests": [
+      "test_audit_backend_warehouse_policy.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_pdf_text.py",
+    "depth": "deep",
+    "purpose": "Embedded subset TrueType, Arabic shaping, bidi and searchable logical text",
+    "risk": "medium",
+    "findings": [
+      "PDF-AR"
+    ],
+    "tests": [
+      "test_delivery_arabic_pdf.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/acs_plan_pdf_export.py",
+    "depth": "deep",
+    "purpose": "Approved exact-revision PDF projection, rendering, atomic artifact and receipt verification",
+    "risk": "high",
+    "findings": [
+      "PDF-AR"
+    ],
+    "tests": [
+      "test_delivery_arabic_pdf.py",
+      "test_plan_pdf_export.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_docs.py",
+    "depth": "selected",
+    "purpose": "Legacy PDF serializer Unicode and visible text fill; non-PDF domain code not deeply reviewed",
+    "risk": "medium",
+    "findings": [
+      "PDF-AR",
+      "PDF-VISIBILITY"
+    ],
+    "tests": [
+      "test_delivery_arabic_pdf.py",
+      "tests/phase9/test_docs.py",
+      "tests/phase9/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_docs_browser.py",
+    "depth": "selected",
+    "purpose": "Browser PDF capability refusal and visible error; other generated documentation sections not deeply reviewed",
+    "risk": "medium",
+    "findings": [
+      "PDF-BROWSER-LIMIT",
+      "PDF-VISIBILITY"
+    ],
+    "tests": [
+      "test_delivery_pdf_browser.js",
+      "tests/phase9/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/docs.js",
+    "depth": "static",
+    "purpose": "Generated browser documentation engine; generator-owned PDF changes checked",
+    "risk": "medium",
+    "findings": [
+      "PDF-BROWSER-LIMIT",
+      "PDF-VISIBILITY"
+    ],
+    "tests": [
+      "test_delivery_pdf_browser.js",
+      "tests/phase9/test_parity.js"
+    ],
+    "generated_from": [
+      "tools/build_docs_browser.py",
+      "acs_docs.json"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_delivery_provider_identity.py",
+    "depth": "deep",
+    "purpose": "Focused synthetic regression and boundary evidence",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_delivery_provider_identity.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_backend_provider.py",
+    "depth": "deep",
+    "purpose": "Focused synthetic regression and boundary evidence",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_backend_provider.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_backend_warehouse_policy.py",
+    "depth": "deep",
+    "purpose": "Focused synthetic regression and boundary evidence",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_backend_warehouse_policy.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_backend_residential_roles.py",
+    "depth": "deep",
+    "purpose": "Focused synthetic regression and boundary evidence",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_backend_residential_roles.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_delivery_arabic_pdf.py",
+    "depth": "deep",
+    "purpose": "Focused synthetic regression and boundary evidence",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_delivery_arabic_pdf.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_delivery_pdf_browser.js",
+    "depth": "deep",
+    "purpose": "Focused synthetic regression and boundary evidence",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_delivery_pdf_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_provider_capability.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_provider_capability.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_multi_provider.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_multi_provider.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_provider_integration.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_provider_integration.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_provider_reject.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_provider_reject.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_provider_accounting.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_provider_accounting.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_plan_pdf_export.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_plan_pdf_export.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_backend_corpus.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_backend_corpus.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase9/test_docs.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase9/test_docs.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase9/test_parity.js",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase9/test_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase9/parity/py_docs.py",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase9/parity/py_docs.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase9/parity/js_docs_body.js",
+    "depth": "selected",
+    "purpose": "Relevant contract/regression suite; selected clauses read and suite executed where recorded",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase9/parity/js_docs_body.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "assets/fonts/DejaVuSans.ttf",
+    "depth": "static",
+    "purpose": "Unchanged licensed DejaVu Sans 2.37 font; glyph/font table parsed and embedded by tests",
+    "risk": "low",
+    "findings": [
+      "PDF-AR"
+    ],
+    "tests": [
+      "test_delivery_arabic_pdf.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "assets/fonts/LICENSE-DejaVu.txt",
+    "depth": "deep",
+    "purpose": "Font license, upstream origin and checksum",
+    "risk": "low",
+    "findings": [],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "assets/fonts/README.md",
+    "depth": "deep",
+    "purpose": "Font license, upstream origin and checksum",
+    "risk": "low",
+    "findings": [],
+    "tests": [],
+    "generated_from": []
+  }
+]
