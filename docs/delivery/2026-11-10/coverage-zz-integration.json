@@ -1,29 +1,5 @@
 [
   {
-    "path": "acs_workspace_http.py",
-    "depth": "selected",
-    "purpose": "Safe release retains legacy storage RPCs with shared in-process admission, actor quota and conservative uncertain-result handling. Durable leases are a separate pending increment.",
-    "risk": "high",
-    "findings": [],
-    "tests": [
-      "tests/remediation/test_connected_workspace.py",
-      "tests/remediation/test_delivery_paid_admission.py"
-    ],
-    "generated_from": []
-  },
-  {
-    "path": "acs_supabase_plan_store.py",
-    "depth": "selected",
-    "purpose": "Legacy production adapter preserved for database compatibility. Signed writes and history paging remain in pending DB increment, not this file.",
-    "risk": "high",
-    "findings": [],
-    "tests": [
-      "tests/remediation/test_connected_workspace.py",
-      "tests/remediation/test_delivery_paid_admission.py"
-    ],
-    "generated_from": []
-  },
-  {
     "path": "Dockerfile",
     "depth": "selected",
     "purpose": "Explicit runtime file packaging includes new geometry, metric registry, ingress and PDF/font assets; deploy needs existing environment.",

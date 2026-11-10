@@ -1,0 +1,4 @@
+/workspace/scratch/1843247fed6a/db-venv/lib/python3.12/site-packages/platformdirs/api.py:467: RuntimeDirWarning: XDG_RUNTIME_DIR /home/agent/.local/run has mode 0755, not 0700, falling back to /tmp/runtime-1000
+  return Path(self.user_runtime_dir)
+ACS PostgreSQL boundary: PASS (53 assertions; real PostgreSQL, synthetic users/projects)
+ACS PostgreSQL job leases: PASS (37 real SQL assertions)

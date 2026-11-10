@@ -73,6 +73,8 @@ def apartment_fixture():
 class Store:
     def __init__(self):self.updates=[]
     def _request(self,method,path,payload=None,**kwargs):self.updates.append(copy.deepcopy(payload));return []
+    def _signed_rpc(self,name,kind,project,expected,document):
+        self.updates.append(copy.deepcopy(document));return {'job':document}
 
 class Recovery(unittest.TestCase):
     def test_timeout_is_classified_and_does_not_report_success(self):

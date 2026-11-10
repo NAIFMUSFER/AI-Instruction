@@ -325,8 +325,8 @@ class JobsHTTP(unittest.IsolatedAsyncioTestCase):
     async def test_geometry_reason_survives_receipt_reload_without_raw_provider_details(self):
         row={'id':JOB,'state':'RUNNING'}
         class Store:
-            def _request(self,method,path,payload=None,**kwargs):
-                self_case.assertEqual(method,'PATCH');row.update(payload)
+            def _signed_rpc(self,name,kind,project,expected,document):
+                self_case.assertEqual(document['operation'],'finish');row.update(document);return {'job':row}
         self_case=self
         middleware=H.WorkspaceMiddleware(None)
         with patch.object(H.SERVICE,'generate_and_save',side_effect=PlanError('PLAN_GEOMETRY_ROOM_OVERLAP','private provider content')):
@@ -344,10 +344,15 @@ class JobsHTTP(unittest.IsolatedAsyncioTestCase):
         class Store:
             def _request(self, method,path,payload=None,**kwargs):
                 if method=='GET':return list(jobs.values())
-                if method=='POST':
-                    if payload['id'] in jobs:return []
-                    jobs[payload['id']]=dict(payload);return [dict(payload)]
-                if method=='PATCH':jobs[JOB].update(payload)
+                raise AssertionError('direct mutation bypass')
+            def _signed_rpc(self,name,kind,project,expected,document):
+                self_case.assertEqual(document['operation'],'reserve')
+                jid=document['job_id']
+                if jid in jobs:return {'created':False,'job':dict(jobs[jid])}
+                row={'id':jid,'input_hash':document['input_hash'],'state':'RUNNING','worker_id':document['worker_id']}
+                jobs[jid]=row
+                return {'created':True,'job':dict(row)}
+        self_case=self
         store=Store()
         async def execute(*args):
             started.append(1);await gate.wait();return 'plan_saved'

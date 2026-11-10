@@ -29,6 +29,12 @@ def _resumable_failure(code):
     return isinstance(code, str) and (code in RESUMABLE_ERRORS or code.startswith("PLAN_GEOMETRY_"))
 
 
+def _mutate_job(store, project_id, admitted_command, operation, **fields):
+    document = {"operation": operation, "job_id": admitted_command["job_id"], **fields}
+    return store._signed_rpc("acs_workspace_job_mutate", "workspace_job", project_id,
+                             admitted_command.get("expected_head"), document)
+
+
 
 def _id(value):
     try:
@@ -69,7 +75,16 @@ class WorkspaceMiddleware:
         self.app = app
         self.tasks = PAID_TASKS
 
-    async def _finish(self, store, project_id, actor_id, command):
+    async def _finish(self, store, project_id, actor_id, command, lease_token=None):
+        # Every canonical append receives the lease context. The SQL write
+        # boundary locks/checks it atomically with append, fencing late workers.
+        store._lease_context = {"job_id": command["job_id"], "lease_token": lease_token}
+        async def heartbeat():
+            while True:
+                await asyncio.sleep(20)
+                await asyncio.to_thread(_mutate_job, store, project_id, command,
+                                        "heartbeat", lease_token=lease_token)
+        pulse = asyncio.create_task(heartbeat())
         payload = {"state": "FAILED", "error_code": "GENERATION_FAILED"}
         try:
             execute = SERVICE.chat_and_save if command["action"] == "chat_edit" else SERVICE.generate_and_save
@@ -82,10 +97,14 @@ class WorkspaceMiddleware:
                     update["provider_calls"] = event["provider_calls"]
                 if isinstance(event.get("checkpoint"), dict):
                     update["checkpoint"] = event["checkpoint"]
-                store._request("PATCH", _job_query(project_id, command["job_id"]), update)
-            controls = {"on_progress":progress} if command["action"] == "generate" else {}
+                _mutate_job(store, project_id, command, "progress", lease_token=lease_token, **update)
+            controls = {"on_progress":progress}
             rid = await asyncio.to_thread(execute, store, project_id, actor_id, command, **controls)
             payload = {"state": "SUCCEEDED", "revision_id": rid, "error_code": None}
+        except asyncio.CancelledError:
+            pulse.cancel()
+            await asyncio.gather(pulse, return_exceptions=True)
+            raise
         except TimeoutError:
             payload["error_code"] = E.ACS_TIMEOUT
         except (PlanError, E.AcsApiError) as exc:
@@ -95,12 +114,16 @@ class WorkspaceMiddleware:
             payload["error_code"] = "GENERATION_BUSY" if isinstance(exc, JobRejected) else "GENERATION_WORKER_FAILED" if isinstance(exc, JobError) else "GENERATION_FAILED"
             LOG.error("workspace_worker_failed", request_id=command["job_id"], error_class=type(exc).__name__, error_code=payload["error_code"])
         LOG.info("workspace_job_finished", request_id=command["job_id"], state=payload["state"], error_code=payload.get("error_code"))
-        payload["finished_at"] = datetime.now(timezone.utc).isoformat()
+        pulse.cancel()
+        await asyncio.gather(pulse, return_exceptions=True)
         try:
-            await asyncio.to_thread(store._request, "PATCH", _job_query(project_id, command["job_id"]), payload)
+            await asyncio.to_thread(_mutate_job, store, project_id, command,
+                                    "finish", lease_token=lease_token, **payload)
         except Exception:
-            # The revision append is durable even if this delivery receipt fails.
-            # A later job read recovers by its immutable revision task marker.
+            # Canonical append and SUCCEEDED are one SQL transaction. A lost
+            # optional finish response cannot downgrade that durable success.
+            # Failed receipt writes remain RUNNING until server-clock expiry;
+            # they never enable an automatic or uncertain provider resubmission.
             pass
 
     async def _start(self, scope, store, project_id, actor_id, command):
@@ -124,25 +147,16 @@ class WorkspaceMiddleware:
         decision = RL.default_limiter().check("actor:" + actor_id, "edit" if command["action"] == "chat_edit" else "gen")
         if not decision.get("allowed"):
             raise E.AcsApiError(E.ACS_RATE_LIMITED, "تجاوزت حد التوليد. حاول لاحقًا.", retryable=True, retry_after=decision.get("retry_after", 60))
-        row = {"id": job_id, "project_id": project_id, "created_by": actor_id,
-               "input_hash": fingerprint, "expected_head": command.get("expected_head"),
-               "worker_id": WORKER_ID, "state": "RUNNING",
-               "resume_command": command, "phase":"UNDERSTANDING"}
-        if command.get("resume_job_id"):
-            source = await asyncio.to_thread(_read_job, store, project_id, _id(command["resume_job_id"]))
-            if not source or not _job_view(source)["job"]["can_resume"]:
-                raise PlanError("INVALID_RESUME", "لا توجد مرحلة محفوظة قابلة للاستئناف.")
-            row.update(checkpoint=source.get("checkpoint") or {"kind":"start"}, provider_calls=source.get("provider_calls",0), phase=source.get("phase"))
-        inserted = await asyncio.to_thread(store._request, "POST", "/rest/v1/acs_workspace_jobs?on_conflict=id", row,
-                                           prefer="resolution=ignore-duplicates,return=representation")
-        if not isinstance(inserted, list):
-            raise PlanError("STORE_UNAVAILABLE", "لم يصل تأكيد حفظ المهمة.")
-        if not inserted:
-            prior = await asyncio.to_thread(_read_job, store, project_id, job_id)
-            if not prior or prior.get("input_hash") != fingerprint:
-                raise PlanError("PROJECT_ACCESS_DENIED", "المهمة غير متاحة لهذا المشروع.")
-            return _job_view(prior)
-        task = asyncio.create_task(self._finish(store, project_id, actor_id, command))
+        lease_token = str(uuid.uuid4())
+        admitted = await asyncio.to_thread(_mutate_job, store, project_id, command, "reserve",
+                                          input_hash=fingerprint, command=command,
+                                          worker_id=WORKER_ID, lease_token=lease_token)
+        if not isinstance(admitted, dict) or not isinstance(admitted.get("job"), dict):
+            raise PlanError("STORE_UNAVAILABLE", "لم يصل تأكيد حفظ المهمة؛ لم يبدأ التوليد.")
+        row = admitted["job"]
+        if not admitted.get("created"):
+            return _job_view(row)
+        task = asyncio.create_task(self._finish(store, project_id, actor_id, command, lease_token))
         self.tasks.add(task)
         ACTIVE_JOBS.add(job_id)
         task.add_done_callback(self.tasks.discard)
@@ -169,7 +183,7 @@ class WorkspaceMiddleware:
                 # Membership is checked before reading a potentially large file.
                 await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
             command = await HTTP._read_json(receive, max_body_bytes=SOURCES.MAX_BODY if source_route else HTTP.MAX_BODY_BYTES,
-                                            file_fields=("data_base64", "preview_base64") if source_route else ())
+                                            file_fields=("data_base64", "preview_base64") if source_route else (), scope=scope)
             action = command.get("action")
             if source_route:
                 if action == "upload":
@@ -211,12 +225,14 @@ class WorkspaceMiddleware:
                 if not row:
                     raise PlanError("REVISION_NOT_FOUND", "المهمة غير متاحة لهذا الحساب والمشروع.")
                 if row["state"] == "RUNNING":
-                    ws = await asyncio.to_thread(SERVICE.workspace, store, project_id, actor_id)
-                    for revision in ws.history():
-                        if (revision.get("note") or "").endswith("task:" + row["id"]):
-                            row = dict(row, state="SUCCEEDED", revision_id=revision["revision_id"])
-                            break
+                    checked = await asyncio.to_thread(_mutate_job, store, project_id, command, "expire")
+                    row = checked["job"]
                 result = _job_view(row)
+            elif action == "cancel":
+                SERVICE.checked_command(command, {"job_id"})
+                _id(command.get("job_id"))
+                stopped = await asyncio.to_thread(_mutate_job, store, project_id, command, "cancel")
+                result = _job_view(stopped["job"])
             elif action == "edit_geometry":
                 result = await asyncio.to_thread(SERVICE.edit_geometry, store, project_id, actor_id, command)
             elif action == "artifact":
