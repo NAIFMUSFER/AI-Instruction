@@ -1,0 +1,54 @@
+== أ · المنفِّذ تحت الاختبار هو منفِّذ الإنتاج، لا بديلٌ أسهل ==
+  ✓ the default executor is the process executor
+  ✓ the worker is started with a method that does NOT inherit the parent's patched module objects — which is exactly why an in-process monkeypatch cannot reach it
+  ✓ health reports the process executor and a real capacity
+
+== ب · ACS_UPSTREAM_AUTH يعبر الحدّ بهويّته كاملة ==
+  ✓ an upstream auth failure raised INSIDE the worker arrives as AcsApiError, not as JobError
+  ✓ its code is ACS_UPSTREAM_AUTH
+  ✓ retryable survives the boundary as False
+  ✓ the upstream envelope survives and names the provider
+  ✓ and it maps to a real HTTP status
+
+== ج · ACS_UPSTREAM_TRAILING_JSON يعبر الحدّ ==
+  ✓ the two-object reply arrives as AcsApiError
+  ✓ its code is ACS_UPSTREAM_TRAILING_JSON
+  ✓ the raw decoder text 'Extra data' never reaches the caller
+
+== د · التوقّف يصير TimeoutError عند الحدّ، و504 عند الـAPI ==
+  ✓ a worker that stalls raises TimeoutError at the boundary
+  ✓ and it returns in about the declared limit, not after the stall (0.68s for a 20s stall at a 0.6s limit)
+  ✓ TimeoutError is NOT downgraded to JobError — it is an OSError subclass, which a broad `except (EOFError, OSError)` would have swallowed
+  ✓ the API maps that timeout to ACS_TIMEOUT
+  ✓ and ACS_TIMEOUT is HTTP 504, not 502
+
+== هـ · المجهول يبقى مجهولاً — لا ترقية ولا تصنيف مُختلَق ==
+  ✓ a genuinely unclassified RuntimeError does NOT arrive as AcsApiError
+  ✓ it arrives as JobError, carrying the original class name
+  ✓ and the API classifies it ACS_UPSTREAM_UNKNOWN — the fallback is intact
+
+== و · شاهد سالب: الحدّ لا يقبل رمزاً مُختلَقاً من الابنة ==
+  ✓ an unknown code in the wire payload is refused, not resurrected
+  ✓ but a declared code IS rebuilt — the guard is a whitelist, not a wall
+  ✓ the error table itself was not mutated by any of this
+
+== ح · موتُ العامل بلا إرسال: يُبلَّغ برمز خروجه، ويبقى مجهولاً ==
+  ✓ a worker that exits without sending is reported, not swallowed
+  ✓ the parent names the pipe symptom (EOFError) as the error class
+  ✓ and it carries the CHILD'S EXIT CODE, so a dead worker is distinguishable from a lost classification
+  ✓ a dead worker is NOT promoted to a typed upstream code
+  ✓ it classifies as ACS_UPSTREAM_UNKNOWN, like any unknown failure
+
+== ط · كل ملفّ يبلغ مُشغِّل الوظائف محروسٌ بـ__main__ ==
+  ✓ there are files that reach the job runner (9)
+  ✓ EVERY one of them guards __main__ — spawn re-executes the entry file, so an unguarded suite re-runs itself inside every worker
+
+== ز · لا تسريب: لا مفتاح ولا أثر استدعاء يعبر الحدّ إلى العميل ==
+  ✓ the worker's message reaches the parent (the failure is not silent)
+  ✓ no credential-shaped value survives into the parent's exception
+  ✓ no source-file traceback frame survives
+  ✓ nor into the client envelope
+  ✓ and the envelope still carries exactly the five declared fields
+
+──────────────────────────────────────────────────────────────
+JOB BOUNDARY: 34 passed, 0 failed

@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-10",
+  "base_commit": "a6da9d6d278b71082781ce8ef075bbb741ee77ff",
+  "scope": "pending database/job increment; not deployed",
+  "file_sha256": {
+    "acs_workspace_http.py": "bdcf0c9df9ed440159442b217ae22c4454fb89ca930e23093a8fceea426c1031",
+    "acs_generation_job.py": "5ec519f54a740f24a1a036a3f1350bba22c8ced3453bc60b886cb8de687eaff4",
+    "supabase/migrations/2026111002_acs_workspace_job_leases.sql": "146bc0588b94413b6081d797e3a08419431f77dd1bd3847f76f8e328cacd447b",
+    "tests/remediation/test_connected_workspace.py": "57cb5396e50fd301223ad25b5939130b18d5cb2ba9efe8289c170e5e7fa80408",
+    "tests/remediation/test_workspace_recovery.py": "d35f1b5d4113d0e5207107f5eb51226f8b429eb668640e2e9bb0f3642fcabda7",
+    "tests/remediation/test_delivery_progress_ack.py": "a3603cfb9158eef6df463764350481eccac7cbd4b19635ae9504751cc8409e89",
+    "tests/remediation/test_delivery_job_leases_postgres.py": "3458cbfff79bbd3a85e40f4d572d802e4a04bb381215dd1ea7427526f59fd1ac"
+  },
+  "tests": [
+    {
+      "command": "PYTHONPATH=. python tests/remediation/test_delivery_job_leases_postgres.py",
+      "result": "PASS",
+      "assertions": 90,
+      "details": "53 base database boundary + 37 job lease assertions; actual standalone PostgreSQL, synthetic identities"
+    },
+    {
+      "command": "PYTHONPATH=.:tests/remediation python tests/remediation/test_delivery_progress_ack.py",
+      "result": "PASS",
+      "tests": 3,
+      "details": "actual multiprocessing child/parent; no real provider call"
+    },
+    {
+      "command": "PYTHONPATH=. python tests/remediation/test_job_boundary.py",
+      "result": "PASS",
+      "assertions": 34
+    },
+    {
+      "command": "PYTHONPATH=.:tests/remediation python -m unittest test_connected_workspace test_workspace_recovery test_delivery_paid_admission test_plan_http_command_boundary -q",
+      "result": "PASS",
+      "tests": 54
+    }
+  ],
+  "limitations": [
+    "Production key/database/migration access not verified; do not activate this increment before atomic controlled migration and backend key provisioning.",
+    "True competing PostgreSQL connections/lock contention and deployed replica scheduling have not been exercised.",
+    "Heartbeat coroutine fails closed after a transient database failure; in-flight late output can be discarded.",
+    "No real paid provider call or live private-account journey was executed."
+  ]
+}

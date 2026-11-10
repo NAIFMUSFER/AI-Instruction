@@ -1,0 +1,81 @@
+test_plan_store.py exit=0
+
+test_approval_requires_current_persisted_head (__main__.PlanStoreTests.test_approval_requires_current_persisted_head) ... ok
+test_approval_tamper_is_detected_before_handoff (__main__.PlanStoreTests.test_approval_tamper_is_detected_before_handoff) ... ok
+test_approved_lock_bound_baseline_survives_reopen_exactly (__main__.PlanStoreTests.test_approved_lock_bound_baseline_survives_reopen_exactly) ... ok
+test_cross_project_membership_is_isolated (__main__.PlanStoreTests.test_cross_project_membership_is_isolated) ... ok
+test_editor_can_save_revision_but_cannot_admin_membership (__main__.PlanStoreTests.test_editor_can_save_revision_but_cannot_admin_membership) ... ok
+test_later_draft_does_not_replace_persisted_approved_baseline (__main__.PlanStoreTests.test_later_draft_does_not_replace_persisted_approved_baseline) ... ok
+test_memory_database_is_rejected_as_non_durable (__main__.PlanStoreTests.test_memory_database_is_rejected_as_non_durable) ... ok
+test_owner_role_cannot_be_replaced_via_delegation (__main__.PlanStoreTests.test_owner_role_cannot_be_replaced_via_delegation) ... ok
+test_revision_survives_store_reopen_with_exact_hashes (__main__.PlanStoreTests.test_revision_survives_store_reopen_with_exact_hashes) ... ok
+test_revision_tamper_is_detected_on_read (__main__.PlanStoreTests.test_revision_tamper_is_detected_on_read) ... ok
+test_stale_write_is_atomic_and_does_not_extend_persisted_history (__main__.PlanStoreTests.test_stale_write_is_atomic_and_does_not_extend_persisted_history) ... ok
+test_viewer_can_read_but_cannot_extend_history (__main__.PlanStoreTests.test_viewer_can_read_but_cannot_extend_history) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.291s
+
+OK
+
+test_plan_store_reload.py exit=0
+
+test_later_draft_after_reload_does_not_replace_frozen_baseline (__main__.PersistedWorkspaceReloadTests.test_later_draft_after_reload_does_not_replace_frozen_baseline) ... ok
+test_reload_fails_closed_on_tampered_persisted_lock_receipt (__main__.PersistedWorkspaceReloadTests.test_reload_fails_closed_on_tampered_persisted_lock_receipt) ... ok
+test_reloaded_warehouse_semantic_locks_still_block_anchor_mutation (__main__.PersistedWorkspaceReloadTests.test_reloaded_warehouse_semantic_locks_still_block_anchor_mutation) ... ok
+test_reloaded_workspace_can_extend_history_and_persist_new_draft (__main__.PersistedWorkspaceReloadTests.test_reloaded_workspace_can_extend_history_and_persist_new_draft) ... ok
+test_residential_elevator_lock_survives_reload (__main__.PersistedWorkspaceReloadTests.test_residential_elevator_lock_survives_reload) ... ok
+test_restart_reloads_exact_revision_ids_history_and_frozen_baseline (__main__.PersistedWorkspaceReloadTests.test_restart_reloads_exact_revision_ids_history_and_frozen_baseline) ... ok
+test_viewer_keeps_read_access_but_cannot_reload_writable_workspace (__main__.PersistedWorkspaceReloadTests.test_viewer_keeps_read_access_but_cannot_reload_writable_workspace) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.144s
+
+OK
+
+test_plan_store_port.py exit=0
+ACS backend-neutral plan-store port contract: PASS
+
+
+test_plan_store_row_binding.py exit=0
+
+test_approval_document_identity_must_match_requested_baseline (__main__.PlanStoreRowBindingTests.test_approval_document_identity_must_match_requested_baseline) ... ok
+test_approval_timestamp_must_match_persisted_receipt (__main__.PlanStoreRowBindingTests.test_approval_timestamp_must_match_persisted_receipt) ... ok
+test_approval_write_rejects_self_consistent_revision_row_substitution (__main__.PlanStoreRowBindingTests.test_approval_write_rejects_self_consistent_revision_row_substitution) ... ok
+test_child_write_validates_parent_receipt_before_extending_history (__main__.PlanStoreRowBindingTests.test_child_write_validates_parent_receipt_before_extending_history) ... ok
+test_handoff_checks_revision_metadata_not_only_json (__main__.PlanStoreRowBindingTests.test_handoff_checks_revision_metadata_not_only_json) ... ok
+test_malformed_parent_json_is_rejected_before_revision_write (__main__.PlanStoreRowBindingTests.test_malformed_parent_json_is_rejected_before_revision_write) ... ok
+test_malformed_revision_json_is_a_plan_error_during_approval (__main__.PlanStoreRowBindingTests.test_malformed_revision_json_is_a_plan_error_during_approval) ... ok
+test_matching_foreign_receipt_pair_cannot_relabel_frozen_baseline (__main__.PlanStoreRowBindingTests.test_matching_foreign_receipt_pair_cannot_relabel_frozen_baseline) ... ok
+test_outsider_is_rejected_before_corrupted_receipts_are_read (__main__.PlanStoreRowBindingTests.test_outsider_is_rejected_before_corrupted_receipts_are_read) ... ok
+test_pristine_receipts_and_frozen_baseline_survive_reopen (__main__.PlanStoreRowBindingTests.test_pristine_receipts_and_frozen_baseline_survive_reopen) ... ok
+test_revision_metadata_columns_are_bound_to_document (__main__.PlanStoreRowBindingTests.test_revision_metadata_columns_are_bound_to_document) ... ok
+test_valid_revision_cannot_be_substituted_into_another_row (__main__.PlanStoreRowBindingTests.test_valid_revision_cannot_be_substituted_into_another_row) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.257s
+
+OK
+
+test_plan_store_authenticated_session.py exit=0
+ACS authenticated PlanStore session boundary: PASS
+
+
+test_supabase_plan_store_schema.py exit=0
+ACS Supabase durable plan-store schema contract: PASS
+
+
+test_supabase_plan_store_rpc_schema.py exit=0
+ACS Supabase atomic plan-store RPC schema contract: PASS
+
+
+test_supabase_plan_store_adapter.py exit=0
+ACS Supabase PlanStore adapter contract: PASS
+
+
+test_plan_store_paged_history.py exit=0
+PASS: five 650 kB immutable revisions reopen; each response <700 kB
+PASS: metadata keyset pagination crosses 25-row boundary
+PASS: changed head, revoked membership, tampered model and stalled cursor fail closed
+PASS: exact backend capability scope, no downgrade, malformed receipt rejected before signing
+ACS paged history and validated writes: PASS

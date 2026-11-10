@@ -4,6 +4,13 @@ on:
   pull_request:
     paths:
       - 'acs_supabase_plan_store.py'
+      - 'acs_workspace_http.py'
+      - 'acs_generation_job.py'
+      - 'acs_plan_store_reload.py'
+      - 'tests/remediation/test_plan_store_postgres_boundary.py'
+      - 'tests/remediation/test_plan_store_paged_history.py'
+      - 'tests/remediation/test_delivery_job_leases_postgres.py'
+      - 'tests/remediation/test_delivery_progress_ack.py'
       - 'supabase/migrations/**'
       - 'tests/remediation/test_supabase_plan_store_adapter.py'
       - 'tests/remediation/test_supabase_plan_store_rpc_schema.py'
@@ -15,6 +22,10 @@ permissions:
 jobs:
   supabase-plan-store-adapter:
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      PYTHONPATH: .
+      PG_BINDIR: /usr/lib/postgresql/16/bin
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,5 +42,18 @@ jobs:
         run: PYTHONPATH=. python tests/remediation/test_supabase_plan_store_adapter.py
       - name: Verify atomic RPC schema
         run: PYTHONPATH=. python tests/remediation/test_supabase_plan_store_rpc_schema.py
+      - name: Execute PostgreSQL authorization, job leases and history regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -x "$PG_BINDIR/postgres" ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends postgresql-16
+          fi
+          test -x "$PG_BINDIR/postgres"
+          python tests/remediation/test_plan_store_postgres_boundary.py
+          python tests/remediation/test_plan_store_paged_history.py
+          python tests/remediation/test_delivery_job_leases_postgres.py
+          python tests/remediation/test_delivery_progress_ack.py
       - name: No generated diff
         run: git diff --exit-code

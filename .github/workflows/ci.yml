@@ -706,6 +706,20 @@ jobs:
         run: |
           bash tools/vendor.sh
           npx playwright install --with-deps chromium
+      - name: Require executable PostgreSQL migration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -x "$PG_BINDIR/postgres" ]; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends postgresql-16
+          fi
+          test -x "$PG_BINDIR/postgres"
+          mkdir -p logs
+          python tests/remediation/test_plan_store_postgres_boundary.py 2>&1 | tee logs/postgres-boundary.log
+          python tests/remediation/test_plan_store_paged_history.py 2>&1 | tee logs/paged-history.log
+          python tests/remediation/test_delivery_job_leases_postgres.py 2>&1 | tee logs/postgres-job-leases.log
+          python tests/remediation/test_delivery_progress_ack.py 2>&1 | tee logs/provider-progress-ack.log
       - name: Paid admission, geometry, exports and release negative witnesses
         shell: bash
         run: |
