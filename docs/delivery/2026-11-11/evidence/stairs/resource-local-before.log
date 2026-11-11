@@ -1,0 +1,22 @@
+node:assert:152
+  throw new AssertionError(obj);
+  ^
+
+AssertionError [ERR_ASSERTION]: Missing expected exception: 132 prospective flights are rejected before fresh sample publication
+    at Object.<anonymous> (<workspace>/stairs-v4/tests/remediation/test_stairs_local_integration.cjs:42:8)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: undefined,
+  expected: /STAIR_RESOURCE_LIMIT/,
+  operator: 'throws',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

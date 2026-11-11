@@ -1,0 +1,32 @@
+.F..E..F
+======================================================================
+ERROR: test_shipped_browser_python_boundary_parity (__main__.StairIfcBoundary.test_shipped_browser_python_boundary_parity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stair_ifc_boundary.py", line 152, in test_shipped_browser_python_boundary_parity
+    result = subprocess.run(['node', str(ROOT / 'tests/lib/run.js'),
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python-stdlib>/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['node', '<workspace>/stairs-v4/tests/lib/run.js', '<workspace>/stairs-v4/tests/remediation/stair_ifc_exchange_parity.js']' returned non-zero exit status 1.
+
+======================================================================
+FAIL: test_invalid_declared_forms_fail_closed (__main__.StairIfcBoundary.test_invalid_declared_forms_fail_closed) (options={'scope': 'SPACES_ONLY'}, form='u_return')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stair_ifc_boundary.py", line 103, in test_invalid_declared_forms_fail_closed
+    self.assertEqual(built['valid'], row['valid'])
+AssertionError: False != True
+
+======================================================================
+FAIL: test_spaces_only_excludes_legacy_opening_identity_scope (__main__.StairIfcBoundary.test_spaces_only_excludes_legacy_opening_identity_scope)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stair_ifc_boundary.py", line 142, in test_spaces_only_excludes_legacy_opening_identity_scope
+    self.assertTrue(spaces['valid'], spaces['issues'])
+AssertionError: False is not true : [{'code': 'BIM_EXPORT_VALIDATION_FAILED', 'severity': 'ERROR', 'entity_id': 'shared-door', 'message': 'duplicate opening identity', 'blocking': True}, {'code': 'BIM_EXPORT_VALIDATION_FAILED', 'severity': 'ERROR', 'entity_id': 'shared-window', 'message': 'duplicate opening identity', 'blocking': True}]
+
+----------------------------------------------------------------------
+Ran 8 tests in 4.896s
+
+FAILED (failures=2, errors=1)

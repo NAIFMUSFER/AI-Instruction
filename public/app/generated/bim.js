@@ -118,15 +118,24 @@ function _bxOpening(bid,lv,r,op,j,kind,x,z,w,d,elev){
 function bxBuildExchange(project,options){
   const o=options||{};
   const model=project.model, bid=project.building_id||'bld_0';
-  const identityIssues=auOpeningIdentityIssues(model,bid);
-  if(identityIssues.length) return {valid:false,issues:identityIssues.map(i=>
-    bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',i.subject,i.detail)),exchange:null};
   const scope=String(o.scope||'ALL').toUpperCase();
   if(ACS_BIM_SPEC.export_scope_options.indexOf(scope)<0)
     return {valid:false,issues:[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',null,
       'unknown export scope: '+o.scope)],exchange:null};
+  // Match Python: excluded openings cannot block a spaces-only artifact.
+  // Full exports keep the legacy global opening source identity guard.
+  if(scope!=='SPACES_ONLY'){
+    const identityIssues=auOpeningIdentityIssues(model,bid);
+    if(identityIssues.length) return {valid:false,issues:identityIssues.map(i=>
+      bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',i.subject,i.detail)),exchange:null};
+  }
   const includeSpaces=(o.include_spaces===undefined)?true:!!o.include_spaces;
   const wanted=(o.levels===undefined)?null:o.levels;
+  const coordinate=value=>{
+    if(scope!=='SPACES_ONLY')return _bxQ(value);
+    if(_bxNum(value)===null)throw new Error('Space coordinate is not finite');
+    return Number(value)+0;
+  };
   const wallH=_bxNum(model.wall_h)||3;
   const wallT=_bxNum(model.wall_t);
   const floorH=_bxNum(model.floor_height)||(wallH+0.2);
@@ -144,9 +153,10 @@ function bxBuildExchange(project,options){
   const byTemplate={};
   _bxRooms(model).forEach(pr=>{
     (byTemplate[pr[0]]=byTemplate[pr[0]]||[]).push(pr[1]); });
+  const exportIssues=[];
   levels.forEach(lv=>{
     const idx=lv.index;
-    const elev=_bxQ((lv.elevation!==null&&lv.elevation!==undefined)
+    const elev=coordinate((lv.elevation!==null&&lv.elevation!==undefined)
       ?_bxNum(lv.elevation):(Number(idx||0)*floorH));
     ex.levels.push({canonical_id:bid+'.flr_'+idx,
       name:lv.name||('Level '+idx),index:idx,elevation:elev,template:lv.template});
@@ -154,15 +164,15 @@ function bxBuildExchange(project,options){
       .sort((a,b)=>_scmp(String(a.id),String(b.id)));
     rooms.forEach(r=>{
       const rect=r.rect||[0,0,0,0];
-      const x=_bxQ(_bxNum(rect[0])||0), z=_bxQ(_bxNum(rect[1])||0);
-      const w=_bxQ(_bxNum(rect[2])||0), d=_bxQ(_bxNum(rect[3])||0);
+      const x=coordinate(_bxNum(rect[0])||0), z=coordinate(_bxNum(rect[1])||0);
+      const w=coordinate(_bxNum(rect[2])||0), d=coordinate(_bxNum(rect[3])||0);
       const rh=_bxNum(r.wall_h)||_bxNum(r.height)||wallH;
       const sid=bid+'.flr_'+idx+'.'+lv.template+'.'+r.id;
       const aid=lv.template+'.'+r.id;
       if(includeSpaces&&['ALL','SPACES_ONLY','LEVELS'].indexOf(scope)>=0)
         ex.spaces.push({canonical_id:sid,authoring_id:aid,
           name:r.name||String(r.id),number:String(r.id),level_index:idx,
-          elevation:elev,height:_bxQ(rh),footprint:[x,z,w,d],area_m2:_bxQ(w*d)});
+          elevation:elev,height:coordinate(rh),footprint:[x,z,w,d],area_m2:_bxQ(w*d)});
       if(scope==='SPACES_ONLY') return;
       const declared=r.walls, industrial=['warehouse','industrial','factory','logistics'].includes(String((model.meta||{}).type||'').toLowerCase());
       const open=declared==='none'||declared==='line'||(!declared&&industrial&&r.role&&!['office','admin','it','staff','maintenance','meeting'].includes(r.role));
@@ -186,11 +196,19 @@ function bxBuildExchange(project,options){
       (r.objects||[]).forEach((ob,j)=>{
         const kind=String(ob.kind||'');
         const oid=bid+'.flr_'+idx+'.'+lv.template+'.'+r.id+'.obj_'+(ob.id||j);
-        if(kind.toLowerCase()==='stairs'||kind.toLowerCase()==='stair')
+        if(kind.toLowerCase()==='stairs'||kind.toLowerCase()==='stair'){
+          // Match the Python boundary: no declared physical form can fall back
+          // to the legacy prism. Accumulate failures beyond nested forEach calls.
+          if(Object.prototype.hasOwnProperty.call(ob,'form')){
+            exportIssues.push(bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',oid,
+              'تصدير IFC الكامل لا يدعم هذا الدرج وفتحات البلاطات بعد. '+
+              'استخدم تصدير حدود الفراغات فقط (SPACES_ONLY).'));
+            return;
+          }
           ex.stairs.push({canonical_id:oid,level_index:idx,elevation:elev,
             x:_bxQ(x+(_bxNum(ob.x)||0)),z:_bxQ(z+(_bxNum(ob.z)||0)),
             w:_bxQ(_bxNum(ob.w)||1.2),d:_bxQ(_bxNum(ob.d)||2.4),space_id:sid});
-        else ex.unsupported.push({canonical_id:oid,kind:kind,space_id:sid,
+        }else ex.unsupported.push({canonical_id:oid,kind:kind,space_id:sid,
           reason:'no declared IFC mapping for this object kind'}); }); });
     if(scope!=='SPACES_ONLY'&&scope!=='ENVELOPE_ONLY'){
       const xs=[],zs=[];
@@ -203,6 +221,7 @@ function bxBuildExchange(project,options){
         ex.slabs.push({canonical_id:bid+'.flr_'+idx+'.slab',level_index:idx,
           elevation:elev,outline:[_bxQ(mnx),_bxQ(mnz),_bxQ(mxx-mnx),_bxQ(mxz-mnz)],
           thickness:null,thickness_known:false,predefined_type:'FLOOR'}); } } });
+  if(exportIssues.length) return {valid:false,issues:exportIssues,exchange:null};
   ex.unsupported.forEach(u=>{ ex.losses.push({entity_id:u.canonical_id,
     type:'UNSUPPORTED_ENTITY',severity:'WARNING',message:u.reason}); });
   if(wallT===null&&ex.walls.length)
@@ -545,12 +564,13 @@ function bxAudit(event,payload){
 /* ============================ لوحة التبادل داخل مساحة العمل (§38-§42) ==== */
 const BX = (function(){
   const S={project:null,staging:null,diff:null,proposals:null,report:null,
-           manifest:null,view:'SUMMARY'};
+           manifest:null,exportIssues:[],view:'SUMMARY'};
   const $=id=>(typeof document!=='undefined')?document.getElementById(id):null;
   const esc=s=>String(s===null||s===undefined?'':s).replace(/&/g,'&amp;')
     .replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
-  function attach(project){ S.project=project; return S; }
+  function attach(project){
+    S.project=project; S.manifest=null; S.exportIssues=[]; return S; }
   function state(){ return S; }
   function open(){ const p=$('bxPanel'); if(p) p.classList.add('on'); render();
     return true; }
@@ -559,17 +579,25 @@ const BX = (function(){
     S.staging=staging; S.diff=null; S.proposals=null; S.view='IMPORT'; render();
     return staging; }
   function exportBim(){
-    if(!S.project) return null;
+    S.manifest=null; S.exportIssues=[]; S.view='EXPORT';
+    if(!S.project){ render(); return null; }
     const before=S.project.model_hash;
-    const built=bxBuildExchange(S.project,{});
-    if(!built.valid){ S.view='EXPORT'; render(); return built; }
-    const issues=bxValidateExchange(built.exchange);
-    S.manifest=bxExportDescriptor(S.project,built.exchange,null,null);
-    S.manifest.warnings=issues.filter(i=>!i.blocking);
-    S.view='EXPORT'; render();
+    try{
+      const built=bxBuildExchange(S.project,{});
+      S.exportIssues=built.valid?bxValidateExchange(built.exchange):built.issues;
+      if(built.valid&&!S.exportIssues.some(i=>i.blocking)){
+        S.manifest=bxExportDescriptor(S.project,built.exchange,null,null);
+        S.manifest.warnings=S.exportIssues.filter(i=>!i.blocking);
+      }
+    }catch(error){
+      S.manifest=null;
+      S.exportIssues=[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',null,
+        'تعذّر تجهيز IFC بسبب بيانات غير مدعومة. راجع عناصر النموذج ثم أعد المحاولة.')];
+    }
+    render();
     if(S.project.model_hash!==before)
       throw new Error('an export changed the engineering model');
-    return {valid:!issues.some(i=>i.blocking),issues:issues,manifest:S.manifest}; }
+    return {valid:!!S.manifest,issues:S.exportIssues,manifest:S.manifest}; }
   function compare(){
     if(!S.project||!S.staging) return null;
     const before=S.project.model_hash;
@@ -641,6 +669,12 @@ const BX = (function(){
             '<span class="s">'+esc(e.support)+'</span></div>').join('')+
         '</div>'+
         '<div class="bx-note">'+esc(ACS_BIM_SPEC.staging_preview_note)+'</div></div>');
+    }
+    if(S.exportIssues.some(i=>i.blocking)){
+      p.push('<div class="bx-sec" data-bx-section="EXPORT_ERRORS" role="alert" dir="rtl">'+
+        '<h4>تعذّر تصدير IFC</h4>'+S.exportIssues.filter(i=>i.blocking).slice(0,32).map(i=>
+          '<div class="bx-item">'+row('العنصر',i.entity_id||'النموذج')+
+          '<div class="t">'+esc(i.message)+'</div>'+row('رمز المشكلة',i.code)+'</div>').join('')+'</div>');
     }
     if(S.manifest){
       const m=S.manifest;

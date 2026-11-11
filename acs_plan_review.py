@@ -108,6 +108,17 @@ def vertical_geometry_coverage(model: dict, core_alignment: str) -> dict:
         for level in levels)
     if not valid_levels:
         return coverage
+    levels=[level for level in levels if level.get('kind')!='roof']
+    from acs_stairs import has_u_stairs, stair_connections
+    connections=[]
+    if has_u_stairs(model):
+        try:
+            connections=stair_connections(model)
+        except ValueError as exc:
+            coverage['geometry']='MISSING'
+            coverage['missing_geometry']=[{'code':str(exc)}]
+            return coverage
+        coverage['geometry_scope']='EXPLICIT_U_FLIGHTS_AND_LANDINGS'
     missing = []
     unknown = not levels
     def complete(obj):
@@ -128,6 +139,9 @@ def vertical_geometry_coverage(model: dict, core_alignment: str) -> dict:
         for room in cores:
             kind = 'ELEVATOR_SHAFT' if room['role'] == 'elevator' else 'STAIR'
             represented = any(complete(obj) and _core_kind(obj) == kind for obj in objects_of(room))
+            if kind=='STAIR' and connections:
+                represented=represented or any(c['target_level_index']==level.get('index') and
+                    c['target_room_id']==room.get('id') and c['core_id']==room.get('core_id') for c in connections)
             if not represented:
                 # عنصر في غرفة أخرى لا يثبت ارتباطه بهذه النواة ولا يثبت غيابه.
                 if any(complete(obj) and _core_kind(obj) == kind for obj in floor_objects):
@@ -295,6 +309,14 @@ def _geometry(model: dict) -> tuple[list[dict], dict]:
         room_counts[template] = len(rooms)
     if not model["floors"]:
         issue("EMPTY_MODEL", "/floors")
+    from acs_stairs import _uses_stair_contract, stair_connections, template_scope_aliases, validate_stair_report
+    if not issues and _uses_stair_contract(model):
+        try:
+            template_scope_aliases(model)
+            stair_connections(model)
+            validate_stair_report(model)
+        except ValueError as exc:
+            issue(str(exc), '/floors')
     # A level explicitly declared ``kind: "roof"`` is a roof deck, never an occupied
     # storey (acs_arch reports it the same way). It stays in the model, the plans
     # and the 3D artifact, and is measured separately instead of inflating storey
@@ -342,13 +364,21 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
     warehouse_metrics = scorecard["metrics"] if scorecard["typology"] == "warehouse" else None
     # One pass per template/role, not requirements × levels × all room objects.
     counts = Counter()
+    from acs_stairs import template_scope_aliases
+    try:
+        aliases=template_scope_aliases(model)
+    except ValueError as exc:
+        issue(str(exc),None)
+        return issues
     for (template, _), room in rooms.items():
         n = instances[template]
         counts[(None, None)] += n
-        counts[(template, None)] += n
+        for selector in {template}|aliases.get(template,set()):
+            counts[(selector, None)] += n
         if _id(room.get("role")):
             counts[(None, room["role"])] += n
-            counts[(template, room["role"])] += n
+            for selector in {template}|aliases.get(template,set()):
+                counts[(selector, room['role'])] += n
     for r in requirements:
         rid = r.get("id") if isinstance(r, dict) else None
         if not isinstance(r, dict) or not _id(rid) or rid in seen:
@@ -425,6 +455,14 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             rect = room.get("rect") if room else None
             if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
                 actual = rect[2] * rect[3]
+                # An original template selector retains its physical variants;
+                # a later edit to one instance cannot evade the requirement.
+                for template, sources in aliases.items():
+                    if target[0] in sources:
+                        variant=rooms.get((template,target[1]));vrect=variant.get('rect') if variant else None
+                        if not isinstance(vrect,list) or len(vrect)!=4 or not all(_number(v) for v in vrect):
+                            actual=None;break
+                        actual=min(actual,vrect[2]*vrect[3])
             valid_expected = _number(expected) and expected > 0 and room is not None
             minimum = True
         elif kind in {"min_space_area_by_role_m2", "max_space_area_by_role_m2"}:

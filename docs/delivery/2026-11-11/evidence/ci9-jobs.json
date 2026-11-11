@@ -1,0 +1,1938 @@
+{
+  "schema_version": 1,
+  "observed_at_utc": "2026-11-11T16:39:43.659Z",
+  "repository": "NAIFMUSFER/AI-Instruction",
+  "pull_request": 191,
+  "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5",
+  "head_tree": "9b99a6771cf6a8a9783b80989310436cea110496",
+  "tested_merge_sha": "af3a66bd4c09155b90d42a49fdabea7e8c65f992",
+  "runs": [
+    {
+      "id": 43055456989,
+      "name": "Plan-first connected semantic locks",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 254,
+      "jobs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456989/jobs",
+      "logs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456989/logs",
+      "workflow_id": 357224310
+    },
+    {
+      "id": 43055456981,
+      "name": "Plan-first foundation contracts",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 413,
+      "jobs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456981/jobs",
+      "logs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456981/logs",
+      "workflow_id": 355457160
+    },
+    {
+      "id": 43055456970,
+      "name": "Plan-first 2D review UI",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 632,
+      "jobs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456970/jobs",
+      "logs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456970/logs",
+      "workflow_id": 355711466
+    },
+    {
+      "id": 43055456978,
+      "name": "Async generation delivery",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 769,
+      "jobs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456978/jobs",
+      "logs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456978/logs",
+      "workflow_id": 355350375
+    },
+    {
+      "id": 43055456959,
+      "name": "Google sign-in",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 27,
+      "jobs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456959/jobs",
+      "logs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456959/logs",
+      "workflow_id": 357347961
+    },
+    {
+      "id": 43055456986,
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "success",
+      "run_number": 912,
+      "jobs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/jobs",
+      "logs_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/logs",
+      "workflow_id": 334622227
+    }
+  ],
+  "jobs": [
+    {
+      "id": 130643582654,
+      "name": "Async delivery and mobile recovery",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456978,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify a reachable Ubuntu-signed HTTPS package mirror",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install locked dependencies and real browser engines",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Capability, replay and delivery contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Short-request recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Build the real shipped frontend",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Real production auth UI lifecycle on desktop and mobile",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete mobile UI to model recovery under production CSP",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Connected project lifecycle with durable revisions and approved artifacts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Existing lazy-panel integration remains intact",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        }
+      ],
+      "sanitized_log_sha256": "6e4f23a38550e59a233b7dea7b06fb7fa71b5128c0118c8fbdc0383fc21a8daf",
+      "sanitized_log_bytes": 564192,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456978/job/130643582654",
+      "observations": "Async Chromium/WebKit recovery keeps exactly one generation; auth 393/1280, guest three journeys, mobile one-POST/reload/pixels, connected 393/1280/no-WebGL and panel 37 all passed.",
+      "mirror_selection_evidence": [
+        "2026-11-11T16:09:36.3512985Z Verified Ubuntu mirror selected: https://mirrors.kernel.org/ubuntu/"
+      ]
+    },
+    {
+      "id": 130643583113,
+      "name": "auth",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456959,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Auth session and gateway contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Build shipped frontend",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify a reachable Ubuntu-signed HTTPS package mirror",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Install Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Google redirect and existing account UI on desktop and mobile",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Retain masked synthetic auth failure evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        }
+      ],
+      "sanitized_log_sha256": "c1c2ebfba6ab09a956fac232f1798827c756ce75d4abbeba3e914deb67dab174",
+      "sanitized_log_bytes": 443004,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456959/job/130643583113",
+      "observations": "Shipped auth 393/1280 and all three guest journeys passed; normal cleanup completed. Full-log duration 10m7.856s fits the bounded 15-minute job budget.",
+      "mirror_selection_evidence": [
+        "2026-11-11T16:09:45.1267757Z Verified Ubuntu mirror selected: https://mirrors.kernel.org/ubuntu/"
+      ]
+    },
+    {
+      "id": 130643582924,
+      "name": "contracts",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456981,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Import remains inert without third-party packages",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Persisted receipt row-binding regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Persisted workspace restart/reload regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Admission-time requirement provenance regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Brief source-span evidence regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Source-span artifact provenance regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Warehouse Program-of-Requirements metrics (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Warehouse explicit lane-conflict regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Warehouse explicit dock allocation/position regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Warehouse explicit structural-column lock regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Revision compare and historical restore regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Residential revision compare and historical restore regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Approved-baseline IFC export regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Authenticated-host Plan-first command regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Durable project Plan-first command regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Semantic revision diff regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Install existing locks and optional CAD test dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Revision, approval, CAD, scorecard, options, semantic-diff, semantic-lock, durable-store, 3D-handoff and real-validator contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45
+        }
+      ],
+      "sanitized_log_sha256": "f35e6ce8312fb0f4e4128b6541839c55608d78335684245a319c8b9fc86b708a",
+      "sanitized_log_bytes": 120541,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456981/job/130643582924",
+      "observations": "Foundation contract suites passed; complete step states and log hash retained.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583226,
+      "name": "Connected nested lock UI and authority boundary",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456989,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Connected nested-lock regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Existing server lock and command contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Single-entry and module-tree guard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "sanitized_log_sha256": "7817658d2cbd1737e49831792bd294e2c8458032f48721d93b63584f7474a77c",
+      "sanitized_log_bytes": 30898,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456989/job/130643583226",
+      "observations": "Nested semantic-lock UI and authority-boundary contracts passed.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643582906,
+      "name": "Read-only 2D packets and Chromium-WebKit UI",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456970,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Actual canonical packet and untrusted-file contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify a reachable Ubuntu-signed HTTPS package mirror",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Install repository-locked browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Real browser review, selection, privacy, layout and stale-import regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ],
+      "sanitized_log_sha256": "669fc13e2bb443830f6370cf95d6203c1ddf9c7ac3932ca8faf57d68ddddb9d3",
+      "sanitized_log_bytes": 164163,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456970/job/130643582906",
+      "observations": "Actual 2D UI: 138 assertions, Chromium and WebKit, viewport widths 320/393/800/1280. Synthetic inputs; no API upload or external request.",
+      "mirror_selection_evidence": [
+        "2026-11-11T16:09:36.5741979Z Verified Ubuntu mirror selected: https://mirrors.kernel.org/ubuntu/"
+      ]
+    },
+    {
+      "id": 130643583121,
+      "name": "4 · Security and configuration",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install the pinned dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "tests/security",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "sanitized_log_sha256": "5c420b11ac46aead617304e8a0199f2844f9c80fc9bd2b34f5cff5b48da36dbc",
+      "sanitized_log_bytes": 66823,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583121",
+      "observations": "Backend/configuration security: 377 assertions passed.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583697,
+      "name": "2 · JS ⇄ Python parity and browser-mirror suites",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Parity of every mirrored layer (Python vs the shipped JS)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "The JS mirrors themselves (run against the shipped page bundle)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Remediation contracts that need only Node (W0 — previously ungated)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "The bundle extractor needs no installed dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ],
+      "sanitized_log_sha256": "48c2b99b40b4bb2a5976e9522a828dbb82c2fdca68f2343138186a0619bdc604",
+      "sanitized_log_bytes": 344715,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583697",
+      "observations": "Parity 8, mirrored suites 17, Node remediation 7 and dependency-free 4 targets passed, including the strict import-wait regression. Scoped browser probes are not renderer acceptance.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583718,
+      "name": "8 · Frontend build gates (index guard · integration · API base)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Static gates that tools/netlify-build.sh runs after vendoring",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "sanitized_log_sha256": "e59bab8dde8b0f6c3c6bd2814a904398c16fd1f1040748441e12456275c5adb0",
+      "sanitized_log_bytes": 19507,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583718",
+      "observations": "Frontend/index/source build gates passed.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583794,
+      "name": "Delivery critical journeys",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install the pinned backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install the independent IFC reader for test-only validation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify a reachable Ubuntu-signed HTTPS package mirror",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Require independent PDF extraction with Poppler",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Build reviewed browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Paid admission, geometry, exports and release negative witnesses",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Canonical generated sources agree with tracked outputs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Revision races and Arabic frontend contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Real Chromium guest, private-workspace fixture and approved-artifact views",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29
+        }
+      ],
+      "sanitized_log_sha256": "2a914e5ca68cd8ab1401ac60bf782a75f399e675ffbf48b7e010ccc95ac0afaa",
+      "sanitized_log_bytes": 531575,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583794",
+      "observations": "Critical Python 27 targets, Node 14 targets and actual Chromium 3 targets passed: guest, connected workspace and two exact approved fixtures in 24 views.",
+      "mirror_selection_evidence": [
+        "2026-11-11T16:09:48.6892794Z Verified Ubuntu mirror selected: https://mirrors.kernel.org/ubuntu/"
+      ]
+    },
+    {
+      "id": 130643583839,
+      "name": "6 · Deployment closure (content, not the live site)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "tests/deploy/verify_deploy.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Fail if the working tree was modified by the regenerators",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "sanitized_log_sha256": "61d1ce5fd7cb18c4b648bf94c3f7c2618c690dd7ef2288541f58aba4f004c61b",
+      "sanitized_log_bytes": 105040,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583839",
+      "observations": "Deployment content closure: 767 assertions passed. This is not a live deployment check.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583879,
+      "name": "9 · Docker image builds",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "docker build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "The image boots and answers /health",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "sanitized_log_sha256": "a509a734a3cfdbe38a545ac211d907a10fb635bfd6a4d5dcd3feb435967b5f74",
+      "sanitized_log_bytes": 61867,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583879",
+      "observations": "Actual Docker image roof helper and provenance: 17 assertions passed.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583900,
+      "name": "7 · Dependency audit and lock contract",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install the pinned dependencies the remediation suites import",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Offline audit + lock contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "CVE scan (required — findings or unavailable advisories block release)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "sanitized_log_sha256": "4296ad29e4f7b02eec7e6ee958f8b2ef1b5781142c8620635398576281647454",
+      "sanitized_log_bytes": 516279,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583900",
+      "observations": "33 dependency/provider/remediation targets passed; actual Python/npm advisory scans reported no known findings at 16:11:07/09 UTC.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643583977,
+      "name": "3 · Real Chromium (Playwright — this job MAY use the network)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify a reachable Ubuntu-signed HTTPS package mirror",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install the locked Playwright and its browser binaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Measure the source bundle before build provenance stamping",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Vendor the frontend runtime libraries (three · shims · pdf.js)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Install pinned Python dependencies for documentation measurements",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Mobile project layout and measured documentation claims",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Browser suites against the shipped page",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25
+        }
+      ],
+      "sanitized_log_sha256": "04d590bcd4d3d06da2c31582a17389c4f9dfdb873350170d175fbb98e5cc0c1c",
+      "sanitized_log_bytes": 234661,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583977",
+      "observations": "Full Chromium: boot 33/33, visual 326/326 across four fixtures × 11 modes, DOM/ARIA 136/0, direct browser 12/12 and Node scene 3/3. All eight CSP attack classes blocked; zero boot CSP violations.",
+      "mirror_selection_evidence": [
+        "2026-11-11T16:09:36.5301592Z Verified Ubuntu mirror selected: https://mirrors.kernel.org/ubuntu/"
+      ]
+    },
+    {
+      "id": 130643583991,
+      "name": "5 · Accessibility (DOM contract of the shipped page)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "DOM/ARIA contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "sanitized_log_sha256": "7c1731e4536aedf39859d90da34e082ae7be0121c01e924d1c5d2794a4cc278e",
+      "sanitized_log_bytes": 15973,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643583991",
+      "observations": "DOM accessibility contract passed. Formal WCAG/assistive technology is outside this scoped job.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130643584026,
+      "name": "1 · Python contracts (py_compile + phase suites)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install the pinned backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run the Python contract suites",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "sanitized_log_sha256": "866770f004b7a958d9eeb1ac36d0e768387d628629285bd4189be5afb6c977c4",
+      "sanitized_log_bytes": 238957,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130643584026",
+      "observations": "14 Python targets passed, including 14 offline mirror-preparation regression tests.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130659713240,
+      "name": "10 · Collect every test log",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Index what was collected",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        }
+      ],
+      "sanitized_log_sha256": "2eec5f1c2df9b7863ebb15325d11b0c18f2796021697c79924cc1c5a92b18272",
+      "sanitized_log_bytes": 18874,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130659713240",
+      "observations": "Collected 46 evidence files; artifact 13872817172, 4,078,626 bytes, SHA256 f4cb9e0a0693fb9a9cd92cf4568b50d5c730398dcf1aec8f9eaea130bdc79f53.",
+      "mirror_selection_evidence": []
+    },
+    {
+      "id": 130659713305,
+      "name": "CI required (mark THIS one as the required status check)",
+      "status": "completed",
+      "conclusion": "success",
+      "run_id": 43055456986,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Fail unless every mandatory job succeeded",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        }
+      ],
+      "sanitized_log_sha256": "50738a15cc8f5ba326d34c2496ea50ceaeff405fdd0e0f7639df77698e46f928",
+      "sanitized_log_bytes": 5562,
+      "full_log_review_scope": "Full terminal log fetched and inspected for executed commands, results, errors, scope exclusions and artifact receipts",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43055456986/job/130659713305",
+      "observations": "Main aggregate confirmed all ten mandatory main-workflow jobs succeeded. Separate triggered workflows also succeeded; this does not establish branch-protection enforcement.",
+      "mirror_selection_evidence": []
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 13873835651,
+      "name": "log-chromium-browser",
+      "size_in_bytes": 26652,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13873835651",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13873835651/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:36:34Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:36:34Z",
+      "digest": "sha256:e4a546728bbfd69cf756e26bb506547b262fc705526c92fbfdf535fe11a93afe",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13872817172,
+      "name": "ci-logs-43055456986",
+      "size_in_bytes": 4078626,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13872817172",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13872817172/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:36:44Z",
+      "expires_at": "2026-12-11T16:36:43Z",
+      "updated_at": "2026-11-11T16:36:44Z",
+      "digest": "sha256:f4cb9e0a0693fb9a9cd92cf4568b50d5c730398dcf1aec8f9eaea130bdc79f53",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13872186153,
+      "name": "log-delivery-critical",
+      "size_in_bytes": 3864769,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13872186153",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13872186153/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:22:33Z",
+      "expires_at": "2026-12-11T16:22:32Z",
+      "updated_at": "2026-11-11T16:22:33Z",
+      "digest": "sha256:cebd060c482233da85197f31c6e190f33e2036104e76954b293bb83dbb534b4f",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13871352534,
+      "name": "log-python-contracts",
+      "size_in_bytes": 33497,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871352534",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871352534/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:09:46Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:09:46Z",
+      "digest": "sha256:472c2a883c20e1adf165ec16a92aaec407ab976f98928fc67113564e04036424",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13871347858,
+      "name": "log-js-parity",
+      "size_in_bytes": 56005,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871347858",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871347858/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:11:56Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:11:56Z",
+      "digest": "sha256:bf464760816161fc0fbef7bef3b554c3ff78f400bb49c8a586ab4ca553d7b86b",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13871212834,
+      "name": "log-dependency-audit",
+      "size_in_bytes": 67345,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871212834",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871212834/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:11:11Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:11:11Z",
+      "digest": "sha256:edff44a4445a9b200d518034f7d4f55ac58f55ee1ab8e6f0bf433ac66a87746a",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13871082796,
+      "name": "log-build-frontend",
+      "size_in_bytes": 690,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871082796",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13871082796/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:09:27Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:09:27Z",
+      "digest": "sha256:ff665f68e985ed0cd979deef6c80187c18fd5b3de0e4fe0c7833d12a8ff5d1d2",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13870977866,
+      "name": "log-security",
+      "size_in_bytes": 6945,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870977866",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870977866/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:09:37Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:09:37Z",
+      "digest": "sha256:3ad601328fd90107f71578d257eedbb4113e3c2df32cc56230a46492396f17e8",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13870303998,
+      "name": "log-docker-build",
+      "size_in_bytes": 8138,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870303998",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870303998/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:09:54Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:09:54Z",
+      "digest": "sha256:071b2a4e5a8d29654306a598243fc74659c6ebabc1b6b5f9e23f280525f4eff6",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13870188362,
+      "name": "log-deploy-verification",
+      "size_in_bytes": 11919,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870188362",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870188362/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:09:40Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:09:40Z",
+      "digest": "sha256:cfe6848eb739e9075e2571e33df8a378b19d030eb1cc1eae5ce94021ba189423",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    },
+    {
+      "id": 13870053371,
+      "name": "log-accessibility",
+      "size_in_bytes": 369,
+      "url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870053371",
+      "archive_download_url": "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/actions/artifacts/13870053371/zip",
+      "expired": false,
+      "created_at": "2026-11-11T16:09:30Z",
+      "expires_at": "2027-02-09T16:09:18Z",
+      "updated_at": "2026-11-11T16:09:30Z",
+      "digest": "sha256:2dabd6bc00bc842e2e518b14effb1ab36ec43393656c12a823c17418be3cadd7",
+      "workflow_run": {
+        "id": 43055456986,
+        "repository_id": 1326680753,
+        "head_repository_id": 1326680753,
+        "head_branch": "claude/acs-guest-roof-20261111",
+        "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5"
+      }
+    }
+  ],
+  "no_deployment": {
+    "id": "6af4932b97cf687ca08c80ec",
+    "head_sha": "064f4a96fdc1941f010b0f6ab814c765acd260c5",
+    "state": "error",
+    "reason": "Failed during stage checking build content for changes: Canceled build due to no content change",
+    "published_at": null,
+    "github_status": "Deploy Preview canceled",
+    "successful_deployment": false,
+    "verification": "Integration owner independently read get-deploy"
+  },
+  "automatic_retries": 0,
+  "counts": {
+    "success": 17
+  },
+  "complete": true,
+  "acceptance": "PASS: all six triggered workflows and all17 jobs on this head. This is the Step4a repository/fixture CI gate, not deployment or live-provider/production-database acceptance.",
+  "total_sanitized_log_bytes": 3482631,
+  "visual_artifact": {
+    "artifact_sha256": "cebd060c482233da85197f31c6e190f33e2036104e76954b293bb83dbb534b4f",
+    "zip_bytes": 3864769,
+    "files": 35,
+    "screenshots": 24,
+    "scope": "synthetic exact approved artifacts; not live AI or physical mobile acceptance",
+    "budgets": {
+      "first_view_ms": 3000,
+      "desktop_frame_p95_ms": 20,
+      "mobile_frame_p95_ms": 33,
+      "transition_timeout_ms": 2000,
+      "transition_stall_ms": 10000,
+      "idle_additional_render_calls": 0
+    },
+    "measurements": [
+      {
+        "fixture": "residential",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "revision": "plan_0f82467ebf5443ca84240739ca7a8c92",
+        "hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+        "first_view_ms": 1472.067473,
+        "max_preset_ms": 1348.3936679999997,
+        "frame_p95_ms": null,
+        "frame_sample_count": 1,
+        "targets_met": {
+          "first_view": true,
+          "transitions": true,
+          "frame_p95": false
+        },
+        "hardware": {
+          "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+          "cpuLogicalCores": 4,
+          "webglVendor": "Google Inc. (Google)",
+          "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "physicalDevice": "not available; desktop automation viewport"
+        },
+        "quality": "اقتصادي",
+        "animated": false,
+        "meshes": 67,
+        "triangles": 804,
+        "roof_source": "artifact"
+      },
+      {
+        "fixture": "warehouse",
+        "viewport": {
+          "width": 1440,
+          "height": 900
+        },
+        "revision": "plan_70fc356cbe134311af85a18763a3e22c",
+        "hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+        "first_view_ms": 1269.5550609999991,
+        "max_preset_ms": 1368.4531849999985,
+        "frame_p95_ms": null,
+        "frame_sample_count": 1,
+        "targets_met": {
+          "first_view": true,
+          "transitions": true,
+          "frame_p95": false
+        },
+        "hardware": {
+          "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+          "cpuLogicalCores": 4,
+          "webglVendor": "Google Inc. (Google)",
+          "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "physicalDevice": "not available; desktop automation viewport"
+        },
+        "quality": "اقتصادي",
+        "animated": false,
+        "meshes": 72,
+        "triangles": 864,
+        "roof_source": "assumed"
+      },
+      {
+        "fixture": "residential",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "revision": "plan_0f82467ebf5443ca84240739ca7a8c92",
+        "hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+        "first_view_ms": 1337.9515949999986,
+        "max_preset_ms": 690.0868869999977,
+        "frame_p95_ms": null,
+        "frame_sample_count": 1,
+        "targets_met": {
+          "first_view": true,
+          "transitions": true,
+          "frame_p95": false
+        },
+        "hardware": {
+          "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+          "cpuLogicalCores": 4,
+          "webglVendor": "Google Inc. (Google)",
+          "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "physicalDevice": "not available; desktop automation viewport"
+        },
+        "quality": "اقتصادي",
+        "animated": false,
+        "meshes": 67,
+        "triangles": 804,
+        "roof_source": "artifact"
+      },
+      {
+        "fixture": "warehouse",
+        "viewport": {
+          "width": 393,
+          "height": 852
+        },
+        "revision": "plan_70fc356cbe134311af85a18763a3e22c",
+        "hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+        "first_view_ms": 1316.767151,
+        "max_preset_ms": 518.4237449999928,
+        "frame_p95_ms": null,
+        "frame_sample_count": 1,
+        "targets_met": {
+          "first_view": true,
+          "transitions": true,
+          "frame_p95": false
+        },
+        "hardware": {
+          "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+          "cpuLogicalCores": 4,
+          "webglVendor": "Google Inc. (Google)",
+          "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "physicalDevice": "not available; desktop automation viewport"
+        },
+        "quality": "اقتصادي",
+        "animated": false,
+        "meshes": 72,
+        "triangles": 864,
+        "roof_source": "assumed"
+      }
+    ],
+    "id": 13872186153,
+    "downloaded_zip_digest_verified": true
+  },
+  "visual_review": {
+    "images_reviewed": 24,
+    "reviewer": "frontend specialist",
+    "independent_zip_digest_verified": true,
+    "scope": "All24 current-head screenshots inspected anew via four contact sheets plus actual metadata; source not edited",
+    "findings": [
+      "Geometry visible and useful in all six presets; warehouse aerial fully framed, interior racks and lane readable",
+      "Mobile revision badge obscures some upper roof/racks/detail geometry; bottom inspector masks lower door/dock; navigation note overlaps lower cutaway edge",
+      "Controls wrap; no visible horizontal overflow",
+      "Residential basic fixture contains empty stairs-labelled core and upper exterior door without access geometry; no physical circulation/completeness claim",
+      "Residential roof:8 canonical artifact meshes; warehouse roof:2 assumed presentation pieces,0 canonical roof meshes; disclosure options collapsed in screenshots",
+      "All four frame-p95 values null with one interval sample and frame targetfalse;20/33ms interaction targets unverified"
+    ],
+    "contacts_path": "/workspace/scratch/1843247fed6a/v4-ci9/contacts"
+  }
+}

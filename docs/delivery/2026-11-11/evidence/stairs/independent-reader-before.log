@@ -1,0 +1,122 @@
+test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) ...
+  test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='N') ... FAIL
+  test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='E') ... FAIL
+  test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='S') ... FAIL
+  test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='W') ... FAIL
+
+======================================================================
+FAIL: test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='N')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 142, in test_cardinal_rotations_exact_triangles_and_finish_openings
+    compile_building(model,path);self.assert_model(model,read_artifact(path))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 105, in assert_model
+    self.assertEqual(set(actual),set(expected),'all 16 treads and the mid landing must be serialized')
+AssertionError: Items in the second set but not the first:
+'f1_t01'
+'f1_t07'
+'f1_t02'
+'f2_t02'
+'f2_t06'
+'f2_t01'
+'f2_t03'
+'f2_t07'
+'mid_landing'
+'f1_t08'
+'f2_t05'
+'f1_t05'
+'f1_t04'
+'f2_t08'
+'f2_t04'
+'f1_t06'
+'f1_t03' : all 16 treads and the mid landing must be serialized
+
+======================================================================
+FAIL: test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='E')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 142, in test_cardinal_rotations_exact_triangles_and_finish_openings
+    compile_building(model,path);self.assert_model(model,read_artifact(path))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 105, in assert_model
+    self.assertEqual(set(actual),set(expected),'all 16 treads and the mid landing must be serialized')
+AssertionError: Items in the second set but not the first:
+'f1_t01'
+'f1_t07'
+'f1_t02'
+'f2_t02'
+'f2_t06'
+'f2_t01'
+'f2_t03'
+'f2_t07'
+'mid_landing'
+'f1_t08'
+'f2_t05'
+'f1_t05'
+'f1_t04'
+'f2_t08'
+'f2_t04'
+'f1_t06'
+'f1_t03' : all 16 treads and the mid landing must be serialized
+
+======================================================================
+FAIL: test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='S')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 142, in test_cardinal_rotations_exact_triangles_and_finish_openings
+    compile_building(model,path);self.assert_model(model,read_artifact(path))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 105, in assert_model
+    self.assertEqual(set(actual),set(expected),'all 16 treads and the mid landing must be serialized')
+AssertionError: Items in the second set but not the first:
+'f1_t01'
+'f1_t07'
+'f1_t02'
+'f2_t02'
+'f2_t06'
+'f2_t01'
+'f2_t03'
+'f2_t07'
+'mid_landing'
+'f1_t08'
+'f2_t05'
+'f1_t05'
+'f1_t04'
+'f2_t08'
+'f2_t04'
+'f1_t06'
+'f1_t03' : all 16 treads and the mid landing must be serialized
+
+======================================================================
+FAIL: test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) (edge='W')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 142, in test_cardinal_rotations_exact_triangles_and_finish_openings
+    compile_building(model,path);self.assert_model(model,read_artifact(path))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_independent_reader.py", line 105, in assert_model
+    self.assertEqual(set(actual),set(expected),'all 16 treads and the mid landing must be serialized')
+AssertionError: Items in the second set but not the first:
+'f1_t01'
+'f1_t07'
+'f1_t02'
+'f2_t02'
+'f2_t06'
+'f2_t01'
+'f2_t03'
+'f2_t07'
+'mid_landing'
+'f1_t08'
+'f2_t05'
+'f1_t05'
+'f1_t04'
+'f2_t08'
+'f2_t04'
+'f1_t06'
+'f1_t03' : all 16 treads and the mid landing must be serialized
+
+----------------------------------------------------------------------
+Ran 1 test in 0.594s
+
+FAILED (failures=4)

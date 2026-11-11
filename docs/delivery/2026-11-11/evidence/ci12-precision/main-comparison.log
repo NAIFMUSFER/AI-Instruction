@@ -1,0 +1,2 @@
+{"historical_exporter_commit": "c37b5250dc4ff18ba0606add993b5afe52beebaa", "historical_exporter_source_sha256": "1d15772ebc54b0b37e6c64a71521d1325e7874ddf6f475b74f5aff46d390967f", "canonical_z": 6.837209302325586, "serialized_z": 6.837208499999999, "error_m": -8.023255873013113e-07, "six_decimal_test_passes": false}
+Scope: executed historical main acs_bim.py with current stairs-v4 shared dependencies and current numeric test fixture/parser. This is a partial exporter-module comparison, not a full historical checkout, deployment or proof of every main runtime path.

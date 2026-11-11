@@ -15,6 +15,7 @@
 # =============================================================================
 import hashlib
 import json
+from decimal import Decimal
 from acs_geometry_contract import wall_edges
 import math
 import os
@@ -182,11 +183,18 @@ def step_string(v):
     return "'" + "".join(out) + "'"
 
 
-def step_real(v):
+def step_real(v, exact=False):
     """رقم STEP حقيقي: صيغة ثابتة بفاصلة عشرية دائماً، بلا أسّ ولا محلّية."""
     n = _num(v)
     if n is None:
         return "$"
+    if exact:
+        # Decimal expands the float's round-trip spelling without introducing
+        # another precision grid. STEP keeps its ordinary non-exponent syntax.
+        if n == 0:
+            return "0."
+        text = format(Decimal(repr(n)), "f")
+        return text.rstrip("0") if "." in text else text + "."
     r = round(n, 6) + 0.0
     if r == 0:
         return "0."
@@ -200,10 +208,14 @@ def step_real(v):
 class StepFile(object):
     """كاتب ملفّ STEP: يرقّم الكيانات ويمنع تكرار البدائيات الهندسية."""
 
-    def __init__(self):
+    def __init__(self, exact_numbers=False):
         self.lines = []
         self.n = 0
         self._cache = {}
+        self.exact_numbers = exact_numbers
+
+    def real(self, value):
+        return step_real(value, exact=self.exact_numbers)
 
     def add(self, type_name, args, dedup=False):
         if dedup:
@@ -220,16 +232,16 @@ class StepFile(object):
     def point(self, x, y, z=None):
         if z is None:
             return self.add("IFCCARTESIANPOINT", "(%s,%s)"
-                            % (step_real(x), step_real(y)), True)
+                            % (self.real(x), self.real(y)), True)
         return self.add("IFCCARTESIANPOINT", "(%s,%s,%s)"
-                        % (step_real(x), step_real(y), step_real(z)), True)
+                        % (self.real(x), self.real(y), self.real(z)), True)
 
     def direction(self, x, y, z=None):
         if z is None:
             return self.add("IFCDIRECTION", "(%s,%s)"
-                            % (step_real(x), step_real(y)), True)
+                            % (self.real(x), self.real(y)), True)
         return self.add("IFCDIRECTION", "(%s,%s,%s)"
-                        % (step_real(x), step_real(y), step_real(z)), True)
+                        % (self.real(x), self.real(y), self.real(z)), True)
 
     def axis(self, x, y, z, rot_deg=0.0):
         p = self.point(x, y, z)
@@ -268,10 +280,6 @@ def build_exchange(project, options=None):
     o = options or {}
     model = project["model"]
     bid = project.get("building_id") or "bld_0"
-    identity_issues = opening_identity_issues(model, bid)
-    if identity_issues:
-        return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
-                i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     mh = project.get("model_hash")
     include_spaces = o.get("include_spaces", True)
     scope = str(o.get("scope") or "ALL").upper()
@@ -279,7 +287,20 @@ def build_exchange(project, options=None):
         return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED",
                 "ERROR", None, "unknown export scope: %s" % o.get("scope"))],
                 "exchange": None}
+    # Physical template variants may retain the same canonical opening source
+    # IDs. A spaces-only artifact contains no openings, so this legacy global
+    # opening contract is outside its scope. Full exports retain the guard;
+    # space identities and all emitted geometry still pass validate_exchange.
+    if scope != "SPACES_ONLY":
+        identity_issues = opening_identity_issues(model, bid)
+        if identity_issues:
+            return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
+                    i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     wanted_levels = o.get("levels")
+    # Connected space exports retain canonical geometry. Rounding origin,
+    # extent and half-extent separately can move an edge by more than one grid
+    # interval. Legacy architectural exchange retains its existing formatting.
+    coordinate = (lambda value: float(value) + 0.0) if scope == "SPACES_ONLY" else _q
     wall_h = _num(model.get("wall_h")) or 3.0
     wall_t = _num(model.get("wall_t"))
     floor_h = _num(model.get("floor_height")) or (wall_h + 0.2)
@@ -305,10 +326,11 @@ def build_exchange(project, options=None):
     by_template = {}
     for tk, r in _rooms(model):
         by_template.setdefault(tk, []).append(r)
+    export_issues = []
 
     for lv in levels:
         idx = lv.get("index")
-        elev = _q((_num(lv.get("elevation")) if lv.get("elevation") is not None
+        elev = coordinate((_num(lv.get("elevation")) if lv.get("elevation") is not None
                    else float(idx or 0) * floor_h))
         ex["levels"].append({"canonical_id": "%s.flr_%s" % (bid, idx),
                              "name": lv.get("name") or ("Level %s" % idx),
@@ -318,7 +340,7 @@ def build_exchange(project, options=None):
                        key=lambda r: str(r.get("id")))
         for r in rooms:
             rect = r.get("rect") or [0, 0, 0, 0]
-            x, z, w, d = [_q(_num(v) or 0.0) for v in rect[:4]]
+            x, z, w, d = [coordinate(_num(v) or 0.0) for v in rect[:4]]
             rh = _num(r.get("wall_h")) or _num(r.get("height")) or wall_h
             # القالب قد يتكرّر عبر الأدوار، فمعرّف التبادل يحمل رقم الدور كي
             # يبقى فريداً؛ ومعرّف التأليف يبقى منفصلاً كما يعرفه محرّك التأليف
@@ -329,7 +351,7 @@ def build_exchange(project, options=None):
                     "canonical_id": sid, "authoring_id": aid,
                     "name": r.get("name") or str(r.get("id")),
                     "number": str(r.get("id")), "level_index": idx,
-                    "elevation": elev, "height": _q(rh),
+                    "elevation": elev, "height": coordinate(rh),
                     "footprint": [x, z, w, d],
                     "area_m2": _q(w * d)})
             if scope == "SPACES_ONLY":
@@ -362,6 +384,16 @@ def build_exchange(project, options=None):
                 kind = str(ob.get("kind") or "")
                 oid = "%s.flr_%s.%s.%s.obj_%s" % (bid, idx, lv.get("template"), r.get("id"), ob.get("id") or j)
                 if kind.lower() in ("stairs", "stair"):
+                    # This legacy serializer only has a bounding-prism mapping.
+                    # A declared physical form must never silently become that
+                    # prism, including malformed/null declarations. Space-only
+                    # scope has already bypassed objects; selected levels were
+                    # filtered above, so only exported physical instances block.
+                    if "form" in ob:
+                        export_issues.append(issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR", oid,
+                            "تصدير IFC الكامل لا يدعم هذا الدرج وفتحات البلاطات بعد. "
+                            "استخدم تصدير حدود الفراغات فقط (SPACES_ONLY)."))
+                        continue
                     ex["stairs"].append({
                         "canonical_id": oid, "level_index": idx, "elevation": elev,
                         "x": _q(x + (_num(ob.get("x")) or 0.0)),
@@ -388,6 +420,8 @@ def build_exchange(project, options=None):
                     "thickness": None, "thickness_known": False,
                     "predefined_type": "FLOOR"})
 
+    if export_issues:
+        return {"valid": False, "issues": export_issues, "exchange": None}
     for u in ex["unsupported"]:
         ex["losses"].append({"entity_id": u["canonical_id"],
                              "type": "UNSUPPORTED_ENTITY", "severity": "WARNING",
@@ -447,7 +481,7 @@ def _opening_record(bid, lv, r, op, j, kind, x, z, w, d, elev, rh):
 
 def serialise_ifc(exchange, generated_at=None):
     """يكتب ملفّ IFC4 حقيقياً بصيغة ISO-10303-21. الجسم حتمي بالكامل."""
-    f = StepFile()
+    f = StepFile(exact_numbers=(exchange.get("config") or {}).get("scope") == "SPACES_ONLY")
     mh = exchange.get("model_hash")
     sch = exchange["schema_version"]
     guid = lambda cid: ifc_guid({"m": mh, "id": cid, "s": sch})
@@ -497,7 +531,7 @@ def serialise_ifc(exchange, generated_at=None):
         pl = f.placement(bldg_pl, 0.0, 0.0, lv["elevation"])
         st = f.add("IFCBUILDINGSTOREY", "'%s',%s,%s,$,$,%s,$,$,.ELEMENT.,%s"
                    % (guid(lv["canonical_id"]), owner, step_string(lv["name"]), pl,
-                      step_real(lv["elevation"])))
+                      f.real(lv["elevation"])))
         storeys.append(st)
         storey_pl[lv["index"]] = pl
         contained[lv["index"]] = []
@@ -512,17 +546,18 @@ def serialise_ifc(exchange, generated_at=None):
     for sp in exchange["spaces"]:
         x, z, w, d = sp["footprint"]
         pl = f.placement(local(sp["level_index"]), x, z, 0.0)
+        half_w = w / 2.0 if f.exact_numbers else _q(w / 2.0)
+        half_d = d / 2.0 if f.exact_numbers else _q(d / 2.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis2(_q(w / 2.0), _q(d / 2.0)), step_real(w),
-                        step_real(d)))
+                     % (f.axis2(half_w, half_d), f.real(w), f.real(d)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
-                         step_real(sp["height"])))
+                         f.real(sp["height"])))
         shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SweptSolid',(%s)" % (ctx, solid))
         pds = f.add("IFCPRODUCTDEFINITIONSHAPE", "$,$,(%s)" % shp)
         ref = f.add("IFCSPACE", "'%s',%s,%s,$,$,%s,%s,%s,.ELEMENT.,.INTERNAL.,%s"
                     % (guid(sp["canonical_id"]), owner, step_string(sp["name"]), pl, pds,
-                       step_string(sp["number"]), step_real(sp["elevation"])))
+                       step_string(sp["number"]), f.real(sp["elevation"])))
         space_refs[sp["canonical_id"]] = ref
         contained.setdefault(sp["level_index"], []).append(ref)
 

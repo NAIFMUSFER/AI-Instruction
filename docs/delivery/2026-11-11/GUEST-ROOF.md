@@ -24,7 +24,7 @@ Raw helper numeric-string conversion is tested independently. Arabic/underscore 
 
 The guest browser extension exercises visible roof isolation/removal/restoration, actual saved payload/hash changes, local regeneration, exact reload, imports with automatic/authored/no roof, unsupported/malformed imports, two tabs, denied storage and delayed recovery of an older roofless draft. Every existing timeout and zero-auth/private-project/provider assertion remains. New tests require actual canonical geometry and visible floor/room counts, not merely a success label.
 
-Local parity and focused source integration have before/after witnesses. The restored local executor still aborts Chromium at `socket() EPERM` before opening a page. Therefore the changed guest browser journey and final acceptance require CI on the published increment; no after-change browser pass is claimed in this document yet. No physical phone, live AI output or physical stair traversal is established. The existing separate authoring panel is not represented as a newly integrated main-scene editor.
+Local parity and focused source integration have before/after witnesses. The restored local executor still aborts Chromium at `socket() EPERM` before opening a page. The published increment subsequently passed [CI9](CI9-JOBS.md) on `064f4a96fdc1941f010b0f6ab814c765acd260c5`: all six workflows and17 jobs succeeded, including the full changed guest suite in three independent jobs. This establishes the before/after browser requirement for Step4a; it does not claim local browser execution. No physical phone, live AI output or physical stair traversal is established. The existing separate authoring panel is not represented as a newly integrated main-scene editor.
 
 ## Import-wait regression
 

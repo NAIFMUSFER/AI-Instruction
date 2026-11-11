@@ -1,0 +1,31 @@
+Executed UTC: 2026-11-11T17:25:58.616098+00:00
+Base SHA: b88f560ca35f6ef6dc4acf6cb2d06af13676432e
+New regression only; production unchanged
+Command: <workspace>/stairs-v4/.venv/bin/python -m unittest discover -s tests/remediation -p test_stairs_validation_boundary.py -v
+test_direct_stair_api_keeps_its_existing_strict_contract (test_stairs_validation_boundary.StairValidationBoundary.test_direct_stair_api_keeps_its_existing_strict_contract) ... ok
+test_real_stair_connections_still_reject_stale_elevations (test_stairs_validation_boundary.StairValidationBoundary.test_real_stair_connections_still_reject_stale_elevations) ... ok
+test_stair_forms_inside_malformed_collections_remain_fail_closed (test_stairs_validation_boundary.StairValidationBoundary.test_stair_forms_inside_malformed_collections_remain_fail_closed) ... ok
+test_stair_report_scope_and_object_provenance_markers_remain_strict (test_stairs_validation_boundary.StairValidationBoundary.test_stair_report_scope_and_object_provenance_markers_remain_strict) ... ok
+test_unmarked_non_stair_collection_keeps_existing_provenance_boundary (test_stairs_validation_boundary.StairValidationBoundary.test_unmarked_non_stair_collection_keeps_existing_provenance_boundary) ... FAIL
+
+======================================================================
+FAIL: test_unmarked_non_stair_collection_keeps_existing_provenance_boundary (test_stairs_validation_boundary.StairValidationBoundary.test_unmarked_non_stair_collection_keeps_existing_provenance_boundary)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_validation_boundary.py", line 21, in test_unmarked_non_stair_collection_keeps_existing_provenance_boundary
+    self.assertEqual(_geometry(model)[0],[])
+AssertionError: Lists differ: [{'code': 'STAIR_MODEL_INVALID', 'path': '/floors', 'severity': 'error'}] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+{'code': 'STAIR_MODEL_INVALID', 'path': '/floors', 'severity': 'error'}
+
+- [{'code': 'STAIR_MODEL_INVALID', 'path': '/floors', 'severity': 'error'}]
++ []
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.002s
+
+FAILED (failures=1)
+
+Exit code: 1

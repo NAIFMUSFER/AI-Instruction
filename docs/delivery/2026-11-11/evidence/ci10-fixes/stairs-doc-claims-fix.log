@@ -1,0 +1,17 @@
+  ✓ أُعيد توليد كتلة الحالة الراهنة.
+
+فحص 10 ادّعاءً في التوثيق بتشغيل حزمها فعلاً…
+
+  ✓  tests/remediation/test_plan_chunking.py            72
+  ✓  tests/remediation/test_provider_integration.py     56
+  ?  tests/remediation/test_csp_style_architecture.js   64     suite exited 1:   ! تعذّر تشغيل Chromium: no Chromium binary is available in this sandbox — searched: playwright-managed: <playwright-cache>/chromium-1234/chrome-linux64/chrome | browser roots: <playwright-cache>, /opt/pw-browse
+  ✓  tests/remediation/test_plate_extent.py             184
+  ✓  tests/remediation/test_module_graph.js             45
+  ✓  tests/remediation/test_bundle_report.py            94
+  ~  tests/remediation/test_panel_entry.js              37     الحزمة أعلنت قياساً جزئياً بلا طبقتها الحيّة
+  ✓  tests/remediation/test_multi_provider.py           111
+  ✓  tests/remediation/test_validate_against_real_models.py 8
+  ✓  tests/remediation/test_validate_topology.py        28
+
+DOC CLAIMS FAILED: 1 suite(s) could not be measured successfully.
+DOC CLAIMS FAILED: 1 suite(s) require an unavailable environment.

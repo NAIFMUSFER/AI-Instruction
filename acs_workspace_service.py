@@ -52,6 +52,7 @@ def geometry_failure_message(code):
         "PROVIDER_OUTCOME_UNKNOWN":"توقفت متابعة المهمة أو أُلغيت. لا يمكن الجزم بأن المزود لم ينفذها؛ لم تُعَد تلقائيًا، ولا تسمح هذه الحالة باستئناف مكرر.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
         "ROOF_PREFERENCE_CONFLICT":"أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي. يمكنك إعادة تفعيل السطح صراحة من أدوات المخطط إذا أردت إضافته.",
+        "STAIR_RESOURCE_LIMIT":"تجاوز تفصيل الدرج الحد المدعوم لهذا الطلب. قلّل عدد الأدوار أو نوى الدرج ثم ابدأ طلبًا جديدًا؛ لم تُحفظ المحاولة ولم يُكرّر استدعاء المزود.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
@@ -282,6 +283,32 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     return {"building": candidate, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
 
 
+def _reject_fresh_stair_authority(model):
+    """A new provider proposal cannot impersonate trusted default authoring.
+
+    Inspect reserved fields independently of object kind/name aliases. Ordinary
+    authored geometry stays admissible; this guard never rewrites an object.
+    Only the fresh described-project branch calls it.
+    """
+    def reject():
+        raise PlanError("PROVIDER_AUTHORITY_FIELD", "نسب المقترح بيانات الدرج إلى النظام دون مصدر موثوق؛ لم تُحفظ المحاولة.")
+    meta = model.get("meta")
+    if isinstance(meta, dict) and "acs_stairs" in meta:
+        reject()
+    levels = model.get("levels")
+    for level in levels if isinstance(levels, list) else []:
+        if isinstance(level, dict) and {"stair_source_template", "stair_template_instance"}.intersection(level):
+            reject()
+    floors = model.get("floors")
+    for floor in floors.values() if isinstance(floors, dict) else []:
+        rooms = floor.get("rooms") if isinstance(floor, dict) else None
+        for room in rooms if isinstance(rooms, list) else []:
+            objects = room.get("objects") if isinstance(room, dict) else None
+            for obj in objects if isinstance(objects, list) else []:
+                if isinstance(obj, dict) and "stair_provenance" in obj:
+                    reject()
+
+
 def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_progress=None):
     command = generation_command(command)
     expected = command.get("expected_head")
@@ -330,6 +357,17 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
     if on_progress:
         on_progress({"phase":"REVIEW"})
+    # The deterministic stair default belongs only to a new described project.
+    # Imports, resumed work and every existing revision keep their authored
+    # objects and lock context. This runs after stale-head detection and before
+    # canonical proposal/approval; it makes no provider request.
+    if (expected is None and ws.head is None
+            and "source_id" not in command and "resume_job_id" not in command):
+        from acs_stairs import with_default_stairs
+        _reject_fresh_stair_authority(result["building"])
+        result["building"], _, stair_reason = with_default_stairs(result["building"])
+        if stair_reason == "STAIR_RESOURCE_LIMIT":
+            raise PlanError(stair_reason, geometry_failure_message(stair_reason))
     # Every generated building receives the same disclosed default roof: a flat
     # deck with a parapet, canonical model data recorded in meta.acs_roof as a
     # system default. It is added after the provider reply, so the provider never

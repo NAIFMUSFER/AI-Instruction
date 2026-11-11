@@ -193,6 +193,7 @@ class Builder:
         self.parts = []   # (pos, nrm, idx, mat_name, node_name)
         self._door_pairs = {}
         self._opening_sources = {}
+        self._stair_sources = {}
         self.level_metadata = []
 
     def add_box(self, cx, cy, cz, ex, ey, ez, mat, name, rotation=0.0):
@@ -306,6 +307,8 @@ class Builder:
             sources = self._opening_sources.get(part_index, [])
             if len(sources) > 1:
                 nodes[-1]['extras'] = {'acs_opening_sources': sources}
+            if part_index in self._stair_sources:
+                nodes[-1].setdefault('extras', {})['acs_stair'] = self._stair_sources[part_index]
 
         b64 = base64.b64encode(bytes(buf)).decode("ascii")
         gltf = {
@@ -674,11 +677,25 @@ def build_object(bld, o, kind, cx, cz, base_y, fkey, room, idx):
             for sz in (-1, 1):
                 B(sx*w*0.46, 0.33, sz*d*0.34, 0.22, 0.62, 0.62, "bumper")
     elif shape == "stairs":
-        n = max(4, round(h/0.17)); rise = h/n; run = d/n
-        for i in range(int(n)):
-            B(0, rise*(i+0.5), -d/2+run*(i+0.5), w, rise, run, "concrete_m")
-        for sx in (-1, 1):
-            B(sx*(w/2+0.03), h*0.55, 0, 0.06, 0.06, d, "frame")
+        if 'form' in o and o['form']!='u_return':
+            raise ValueError('STAIR_FORM_UNSUPPORTED')
+        if o.get('form') == 'u_return':
+            from acs_stairs import resolve_stair_geometry
+            geometry = resolve_stair_geometry(o)
+            for part in geometry['components']:
+                tag = 'OBJ|%s|%s|%s|%s' % (fkey,room,o['id'],part['id'])
+                before = len(bld.parts)
+                B(*part['center'], *part['size'], 'concrete_m')
+                bld._stair_sources[before] = {
+                    'source_level_index':o['stair']['source_level_index'],
+                    'target_level_index':o['stair']['target_level_index'],
+                    'room_id':room,'object_id':o['id'],'component_id':part['id'],'role':part['role']}
+        else:
+            n = max(4, round(h/0.17)); rise = h/n; run = d/n
+            for i in range(int(n)):
+                B(0, rise*(i+0.5), -d/2+run*(i+0.5), w, rise, run, "concrete_m")
+            for sx in (-1, 1):
+                B(sx*(w/2+0.03), h*0.55, 0, 0.06, 0.06, d, "frame")
     elif shape == "elevator":
         B(0, h*0.5, 0, w, h, d, "frame")
         B(0, h*0.45, -d/2, w*0.62, h*0.85, 0.06, "window")
@@ -825,11 +842,13 @@ def build_room(bld, room, fkey, base_y, defaults):
 
     # لوح أرضية/سقف ملوّن للغرفة (يُبنى فقط عند طلب لون)
     if hex_rgb(room.get("floor_color")):
-        bld.add_box(x + w/2.0, base_y + 0.012, z + d/2.0, max(w - t, 0.1), 0.024, max(d - t, 0.1),
-                    tinted("floor", room["floor_color"]), "FLOOR|%s|%s|plate" % (fkey, name))
+        for k,strip in enumerate(PBR.slab_strips(x+t/2,z+t/2,max(w-t,.1),max(d-t,.1),defaults.get('holes') or [])):
+            bld.add_box(strip[0]+strip[2]/2,base_y+.012,strip[1]+strip[3]/2,strip[2],.024,strip[3],
+                        tinted('floor',room['floor_color']), 'FLOOR|%s|%s|plate_%d'%(fkey,name,k))
     if hex_rgb(room.get("ceiling_color")):
-        bld.add_box(x + w/2.0, base_y + H - 0.03, z + d/2.0, max(w - t, 0.1), 0.05, max(d - t, 0.1),
-                    tinted("ceiling", room["ceiling_color"]), "FLOOR|%s|%s|ceil" % (fkey, name))
+        for k,strip in enumerate(PBR.slab_strips(x+t/2,z+t/2,max(w-t,.1),max(d-t,.1),defaults.get('ceiling_holes') or [])):
+            bld.add_box(strip[0]+strip[2]/2,base_y+H-.03,strip[1]+strip[3]/2,strip[2],.05,strip[3],
+                        tinted('ceiling',room['ceiling_color']), 'FLOOR|%s|%s|ceil_%d'%(fkey,name,k))
 
     # لوح باب/زجاج في كل فتحة باب
     for i, dr in enumerate(doors):
@@ -922,7 +941,7 @@ def build_site_plane(bld, defaults):
 # ---------------------------------------------------------------------------
 # بناء دور كامل (لوح أرضية + غرف)
 # ---------------------------------------------------------------------------
-def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None):
+def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None, ceiling_holes=None):
     """PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان لوح الدور يمتدّ على الموقع كلّه:
 
         bld.add_box(site["w"]/2.0, base_y - 0.075, site["d"]/2.0,
@@ -946,7 +965,7 @@ def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None):
         bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
                     s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
     for room in rooms:
-        build_room(bld, room, fkey, base_y, defaults)
+        build_room(bld, room, fkey, base_y, {**defaults,'holes':holes,'ceiling_holes':ceiling_holes})
 
 
 # تقرير تغطية العناصر لآخر عملية تجميع (يقرأه المُختبِر) — دلالات:
@@ -955,6 +974,9 @@ OBJECT_REPORT = {}
 
 def compile_building(data, out_path):
     global _OBJ_ACC, OBJECT_REPORT
+    from acs_stairs import has_stair_forms, stair_connections
+    if has_stair_forms(data):
+        stair_connections(data)  # Fail closed before rendering declared stair forms.
     _OBJ_ACC = {"requested": 0, "generated": 0, "generic_box": [], "unsupported": [], "by_kind": {}}
     bld = Builder()
     _bt = str((data.get("meta") or {}).get("type", "residential")).lower()
@@ -973,6 +995,8 @@ def compile_building(data, out_path):
         import acs_arch
         _arch = acs_arch.compile_architecture(data, "bld_0", None, 0)
     except Exception as exc:
+        if isinstance(exc, ValueError) and str(exc).startswith('STAIR_'):
+            raise
         raise ValueError("ARCHITECTURE_COMPILE_FAILED") from exc
     for lvl in data.get("levels", []):
         idx = lvl["index"]
@@ -984,7 +1008,8 @@ def compile_building(data, out_path):
         fkey = "F%d" % idx
         holes = [v["rect"] for v in ((_arch or {}).get("voids") or [])
                  if v.get("level_index") == idx] if _arch else []
-        build_level(bld, lvl, fdef, base_y, defaults, fkey, holes)
+        ceiling_holes = [c['opening'] for c in _arch.get('stair_connections',[]) if c['source_level_index']==idx]
+        build_level(bld, lvl, fdef, base_y, defaults, fkey, holes, ceiling_holes)
     n, size = bld.export_gltf(out_path)
     # دلالات التغطية: مرِّر excluded/added من meta كما هي (لا تُدمَج مع requested)
     meta = data.get("meta") or {}

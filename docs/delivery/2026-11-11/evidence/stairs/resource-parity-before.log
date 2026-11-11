@@ -1,0 +1,264 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: unicode-core exact Python/JS value, error, identity and rounding parity
++ actual - expected
+... Skipped lines
+
+  {
+    id: 'unicode-core',
+    mutated: false,
+    outcome: 'return',
+    value: [
+...
+                id: 's',
++               objects: [
++                 {
++                   count: 1,
++                   d: 3.8,
++                   dir: 'x',
++                   form: 'u_return',
++                   h: 3.2,
++                   id: 'stairs_نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نو_fa286fdc0b4e1fff0b51',
++                   kind: 'stairs',
++                   pitch: 1,
++                   rot: 0,
++                   stair: {
++                     entry_landing_m: 0.9,
++                     flight_width_m: 0.9,
++                     gap_m: 0.1,
++                     landing_thickness_m: 0.15,
++                     mid_landing_m: 0.9,
++                     risers_per_flight: 9,
++                     schema: 'acs.stair/1',
++                     source_elevation_m: 0,
++                     source_level_index: 0,
++                     target_elevation_m: 3.2,
++                     target_level_index: 1,
++                     tread_m: 0.25
++                   },
++                   stair_provenance: {
++                     core_id: 'نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠',
++                     source: 'system_default',
++                     source_room_id: 's'
++                   },
++                   w: 1.9,
++                   x: 2,
++                   y: 0,
++                   z: 2
++                 }
++               ],
+                rect: [
+                  0,
+                  0,
+                  4,
+                  4
+...
+          },
++         core__stairs_1: {
++           rooms: [
++             {
++               ceiling_color: '#ffffff',
++               core_id: 'نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠',
++               doors: [
++                 {
++                   edge: 'N',
++                   offset: 2,
++                   width: 1
++                 }
++               ],
++               floor_color: '#cccccc',
++               id: 's',
++               rect: [
++                 0,
++                 0,
++                 4,
++                 4
++               ],
++               role: 'stairs'
++             }
++           ]
++         }
+        },
+        levels: [
+          {
+            index: 0,
+            template: 'core'
+...
+            index: 1,
++           stair_source_template: 'core',
++           stair_template_instance: {
++             level_index: 1,
++             room_mapping: [
++               {
++                 id: 's',
++                 role: 'stairs'
++               }
++             ],
++             schema: 'acs.stair-template-instance/1',
++             source_template: 'core',
++             template: 'core__stairs_1'
++           },
++           template: 'core__stairs_1'
+-           template: 'core'
+          }
+        ],
+        meta: {
+          acs_stairs: {
++           generated_connections: 1,
+-           generated_connections: 0,
+            not_verified: [
+              'structure',
+              'guards',
+              'headroom',
+              'accessibility',
+...
+            source: 'system_default',
++           unsupported: []
+-           unsupported: [
+-             {
+-               code: 'STAIR_CORE_ID_NOT_SPECIFIED',
+-               core_id: 'نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠',
+-               room_id: 's'
+-             }
+-           ]
+          }
+        },
+        wall_h: 3,
+        wall_t: 0.2
+      },
+      {
++       generated_connections: 1,
+-       generated_connections: 0,
+        not_verified: [
+          'structure',
+          'guards',
+          'headroom',
+          'accessibility',
+...
+        source: 'system_default',
++       unsupported: []
+-       unsupported: [
+-         {
+-           code: 'STAIR_CORE_ID_NOT_SPECIFIED',
+-           core_id: 'نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠',
+-           room_id: 's'
+-         }
+-       ]
+      },
+      null
+    ]
+  }
+
+    at file://<workspace>/stairs-v4/tests/remediation/test_stairs_parity.mjs:77:9
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: {
+    id: 'unicode-core',
+    outcome: 'return',
+    value: [
+      {
+        wall_t: 0.2,
+        wall_h: 3,
+        floor_height: 3.2,
+        levels: [
+          { index: 0, template: 'core' },
+          {
+            index: 1,
+            template: 'core__stairs_1',
+            stair_source_template: 'core',
+            stair_template_instance: [Object]
+          }
+        ],
+        floors: {
+          core: { rooms: [Array] },
+          core__stairs_1: { rooms: [Array] }
+        },
+        meta: {
+          acs_stairs: {
+            schema: 'acs.stairs/1',
+            source: 'system_default',
+            generated_connections: 1,
+            unsupported: [],
+            physical_traversal: 'NOT_VERIFIED',
+            not_verified: [Array]
+          }
+        }
+      },
+      {
+        schema: 'acs.stairs/1',
+        source: 'system_default',
+        generated_connections: 1,
+        unsupported: [],
+        physical_traversal: 'NOT_VERIFIED',
+        not_verified: [
+          'structure',
+          'guards',
+          'headroom',
+          'accessibility',
+          'fire escape',
+          'code compliance'
+        ]
+      },
+      null
+    ],
+    mutated: false
+  },
+  expected: {
+    id: 'unicode-core',
+    outcome: 'return',
+    value: [
+      {
+        wall_t: 0.2,
+        wall_h: 3,
+        floor_height: 3.2,
+        levels: [
+          { index: 0, template: 'core' },
+          { index: 1, template: 'core' }
+        ],
+        floors: { core: { rooms: [Array] } },
+        meta: {
+          acs_stairs: {
+            schema: 'acs.stairs/1',
+            source: 'system_default',
+            generated_connections: 0,
+            unsupported: [Array],
+            physical_traversal: 'NOT_VERIFIED',
+            not_verified: [Array]
+          }
+        }
+      },
+      {
+        schema: 'acs.stairs/1',
+        source: 'system_default',
+        generated_connections: 0,
+        unsupported: [
+          {
+            core_id: 'نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠نواة🏠',
+            room_id: 's',
+            code: 'STAIR_CORE_ID_NOT_SPECIFIED'
+          }
+        ],
+        physical_traversal: 'NOT_VERIFIED',
+        not_verified: [
+          'structure',
+          'guards',
+          'headroom',
+          'accessibility',
+          'fire escape',
+          'code compliance'
+        ]
+      },
+      null
+    ],
+    mutated: false
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

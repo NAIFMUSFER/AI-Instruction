@@ -280,6 +280,8 @@ def _cores(building, bid, levels):
             if rc is None:
                 continue
             for j, obj in enumerate(room.get("objects") or []):
+                if obj.get('form') == 'u_return':
+                    continue  # Explicit source→target openings are resolved below.
                 kind = _core_kind(obj)
                 if kind is None:
                     continue
@@ -444,6 +446,18 @@ def compile_architecture(building, building_id="bld_0", position=None, rotation_
                      "thickness_m": {"value": None, "render_fallback": 0.05, "source": "unknown"}})
 
     out["cores"] = _cores(building, bid, levels)
+    from acs_stairs import has_u_stairs, stair_connections
+    connections = stair_connections(building) if has_u_stairs(building) else []
+    if connections:
+        out['stair_connections'] = connections
+    for connection in connections:
+        target = next(l for l in levels if l['index'] == connection['target_level_index'])
+        out['voids'].append({'id': '%s.stair_void_%s' % (target['id'], connection['source_object_id']),
+            'type':'FLOOR_OPENING','building_id':bid,'level_id':target['id'],
+            'level_index':target['index'],'core_id':connection['core_id'],'core_type':'STAIR',
+            'rect':connection['opening'],'source_level_index':connection['source_level_index'],
+            'source_object_id':connection['source_object_id'],'arrival_rect':connection['arrival'],
+            'footprint_source':'canonical_stair','note':'conceptual opening; structural framing and traversal not verified'})
     # فراغ في البلاطة عند كل مستوى تخترقه نواة — الدرج لا يمرّ عبر بلاطة صمّاء
     vn = 0
     for core in out["cores"]:

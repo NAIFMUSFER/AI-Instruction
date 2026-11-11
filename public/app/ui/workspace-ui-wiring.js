@@ -8,6 +8,7 @@ import { __ACS_LATE } from '../late-bindings.js';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
+import { hasUStairs, stairConnections, validateStairReport, withDefaultStairs } from '../core/stairs.mjs';
 import { autoRoofLevels, carryAutoRoof, isRoofLevel, removeAutoRoof, restoreDefaultRoof, roofDisclosure, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
 import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, applyVisualMode, checkCoordSnapshot, clearVisualMode, compileCoordination, compileVisualScene, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, detectTypeJS, isIndustrialProgram, renderer, scene, sky, statusEl, su, sun, visAiEnhancementRequest, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visValidateAsset, visValidateScene } from '../render/scene.js';
@@ -223,7 +224,8 @@ function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHT
      الترتيب عددي من acsFloorOrder؛ واسم السطح الآن من kind الصريح
      في النموذج، لا يُستنتج من أعلى رقم أو اسم قالب. */
   acsFloorOrder(floorsFound).forEach(f=>mk(f,floorLabel(f)));
-  buildLocalRoofControl(wrap);}
+  buildLocalRoofControl(wrap);
+  buildLocalStairsDisclosure(wrap);}
 /* Roof identity is explicit, including imported models: the highest floor is not evidence. */
 function floorLabel(fkey){
   const levels=Array.isArray(lastBuilding?.levels)?lastBuilding.levels.slice(0,SCENE_LIMITS.max_levels):[];
@@ -270,6 +272,8 @@ function localGenerationError(error){
   if(error.message==='ROOF_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: الحد المدعوم 64 مستوى شاملاً السطح؛ قلّل عدد الأدوار. بقي النموذج السابق كما هو.';
   if(error.message==='LOCAL_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: أدخل عدداً صحيحاً غير سالب؛ الحد المدعوم 64 مستوى شاملاً الأرضي والسطح. بقي النموذج السابق كما هو.';
   if(error.message==='LOCK_CONTEXT_CHANGED')return 'لا يمكن تعديل النموذج المحلي مع وجود نطاق مقفول.';
+  if(error.message==='STAIR_RESOURCE_LIMIT')return 'تعذّر إنشاء السلالم ضمن الحد المدعوم؛ قلّل عدد الأدوار أو النوى أو حجم وصف النموذج ثم أعد المحاولة. بقي النموذج السابق كما هو.';
+  if(String(error.message).startsWith('STAIR_'))return 'تعذّر عرض السلم: راجع أبعاد النواة وباب الدخول ومناسيب المستويات؛ لم نعدّل الهندسة أو نفترض وصلة بديلة. بقي النموذج السابق كما هو.';
   const roofMessages={
     ROOF_HEIGHT_NOT_SPECIFIED:'أكمل ارتفاع الدور والجدران في النموذج قبل إضافة السطح؛ لم نفترض ارتفاعاً بديلاً.',
     ROOF_HEIGHT_INVALID:'صحّح ارتفاع الدور والجدران إلى أرقام موجبة قبل إضافة السطح.',
@@ -304,6 +308,38 @@ function buildLocalRoofControl(wrap){
     wrap.appendChild(button);
   }
   wrap.appendChild(disclosure);
+}
+/* Physical stair disclosure is contextual and never authors imported geometry. */
+function localStairsText(building){
+  const report=building?.meta?.acs_stairs;
+  const caveat='لم تُتحقّق قابلية المشي أو الخلوص الرأسي أو الحواجز أو الإنشاءات أو الإتاحة أو مطابقة الأنظمة.';
+  const messages={
+    STAIR_CORE_NOT_DECLARED:'لا توجد نواة درج معلنة ومتطابقة بين المستويات؛ اسم الغرفة وحده لا ينشئ درجات.',
+    STAIR_CORE_ID_NOT_SPECIFIED:'أكمل هوية نواة الدرج لربط الغرف بين المستويات.',
+    STAIR_CORE_ALIGNMENT_CHANGED:'غرف النواة غير متطابقة بين المستويات؛ لم نغيّر مواضعها.',
+    STAIR_AUTHORED_GEOMETRY_PRESERVED:'احتفظنا بهندسة الدرج المؤلفة؛ لم نضف درجاً افتراضياً فوقها.',
+    STAIR_CORE_DIMENSION_NOT_SPECIFIED:'أكمل أبعاد النواة وسماكة الجدار قبل إنشاء الدرج.',
+    STAIR_CORE_TOO_SMALL:'مساحة النواة لا تتسع للسلم المدعوم؛ لم نوسّع الغرفة أو نصغّر الدرج.',
+    STAIR_ENTRY_UNSUPPORTED:'موضع باب النواة لا يطابق بسطة الدخول المدعومة؛ راجع الباب والمساحة.',
+    STAIR_INSTANCE_LIMIT_EXCEEDED:'تكرار قوالب الدرج يتجاوز حد الغرف المدعوم؛ لم ننسخ القوالب أو نضف درجات جزئية.',
+    STAIR_ENTRY_CHANGED:'تغيّر باب الدخول أو الوصول؛ راجع اتصاله بالبسطة قبل عرض الدرج.',
+    STAIR_DEFAULT_RISE_UNSUPPORTED:'فرق المنسوب خارج نطاق السلم الافتراضي المدعوم (2.4 إلى 3.6 م).'
+  };
+  if(report){
+    let connections;try{validateStairReport(building);connections=stairConnections(building);}
+    catch(error){return 'تقرير السلالم لا يطابق الهندسة المعلنة؛ لا نعتمد العدد أو حالة التحقق الواردة فيه. '+caveat;}
+    const count=connections.filter(connection=>connection.object.stair_provenance?.source==='system_default').length;
+    const prefix=count?`سلالم افتراضية ضمن النموذج: ${count} وصلة بين مستويات، بمسارين وبسطة وسطية ومناسيب معلنة. `:'لم يُنشأ درج افتراضي مادي. ';
+    const reasons=[...new Set(report.unsupported.map(item=>Object.hasOwn(messages,item?.code)?messages[item.code]:'توجد حالة درج غير مدعومة؛ راجع بيانات النواة.'))];
+    return prefix+reasons.join(' ')+(reasons.length?' ':'')+caveat;
+  }
+  if(hasUStairs(building))return 'هندسة سلالم معلنة في النموذج؛ تظهر كما هي دون توليد بديل. '+caveat;
+  if(localModelCounts(building).occupied_levels>1)return 'لم تُنشأ سلالم مادية تلقائياً لهذا النموذج. '+caveat;
+  return '';
+}
+function buildLocalStairsDisclosure(wrap){
+  const text=localStairsText(lastBuilding);if(!text)return;
+  const note=document.createElement('p');note.id='localStairsDisclosure';note.className='note';note.textContent=text;wrap.appendChild(note);
 }
 /* الطبقات */
 function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHTML='';
@@ -1317,6 +1353,13 @@ function pickedType(txt){
 }
 /* New local generation has explicit roof provenance. An import never enters this boundary. */
 function localGeneratedModel(building,{freshSample=false}={}){
+  // Only a fresh local creation may author default physical stairs. Existing
+  // drafts/imports/server results and same-project regeneration are not repaired.
+  if(freshSample||!lastBuilding){
+    const [withStairs,,reason]=withDefaultStairs(building);
+    if(reason&&reason!=='STAIR_NOT_APPLICABLE')throw new Error(reason);
+    building=withStairs;
+  }
   let next;
   if(!freshSample&&(roofRemovedByUser(lastBuilding)||autoRoofLevels(lastBuilding).length))next=carryAutoRoof(lastBuilding,building);
   else {
