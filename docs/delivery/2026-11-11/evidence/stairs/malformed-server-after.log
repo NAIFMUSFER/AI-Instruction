@@ -1,0 +1,6 @@
+test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing (__main__.WorkspaceLifecycle.test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+OK

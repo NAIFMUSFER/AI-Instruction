@@ -3,6 +3,7 @@ let loading=null;
 function loadLocalStudio(){
   if(loading)return loading;
   loading=(async()=>{
+    await import('../core/stairs.mjs');
     await import('../core/viewer.js');
     await import('../core/standards.js');
     await import('../core/roof.mjs');

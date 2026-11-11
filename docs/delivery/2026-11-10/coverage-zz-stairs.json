@@ -1,0 +1,845 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "purpose": "Selected added stairs regressions, actual Docker import probe and CI browser evidence target",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "Dockerfile",
+    "purpose": "Explicit runtime COPY includes acs_stairs.py",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_arch.py",
+    "purpose": "Selected explicit flight connections and target slab openings",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_bim.py",
+    "purpose": "Selected fail-closed architectural IFC export for explicit stair forms",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_compiler.py",
+    "purpose": "Selected stair components/IDs, openings and arrival-preserving floor/ceiling geometry",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_review.py",
+    "purpose": "Selected top occupied floor coverage and repeated-template requirement scopes",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_stairs.py",
+    "purpose": "Bounded pure canonical U-return default authoring, explicit components/connections and provenance validation",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_workspace_service.py",
+    "purpose": "Selected fresh-project-only default authoring, authority rejection and atomic resource errors",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/CURRENT-STATUS.md",
+    "purpose": "Dated delivery evidence or current scoped capability/status record",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-10/coverage-zz-stairs.json",
+    "purpose": "Scoped specialist review coverage; no whole-repository deep-review claim",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/CI9-JOBS.md",
+    "purpose": "Dated delivery evidence or current scoped capability/status record",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/GUEST-ROOF.md",
+    "purpose": "Dated delivery evidence or current scoped capability/status record",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/PHYSICAL-STAIRS.md",
+    "purpose": "Dated delivery evidence or current scoped capability/status record",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci9-jobs.json",
+    "purpose": "Dated delivery evidence or current scoped capability/status record",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/browser-geometry-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/browser-local-launch-failure.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/ci-gate-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/geometry-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/ifc-boundary-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/independent-reader-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/independent-reader-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/malformed-server-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/malformed-server-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/manifest.json",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/module-graph-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/packaging-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/packaging-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/provider-authority-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/provider-authority-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/resource-local-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/resource-local-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/resource-parity-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/resource-parity-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/resource-server-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/resource-server-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/roof-integration-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/server-before.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/server-focused-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/stairs/server-full-after.log",
+    "purpose": "Retained synthetic stair verification log or manifest; reviewed evidence, not execution of all repository code",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/disciplines.js",
+    "purpose": "Selected explicit physical stair connections and slab voids",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/stairs.mjs",
+    "purpose": "Pure JavaScript twin of canonical physical-stair authoring and geometry",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/standards.js",
+    "purpose": "Selected exclusion of explicit U stairs from legacy inferred core openings",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/viewer.js",
+    "purpose": "Selected local physical-stair compiler and immutable explicit-form validation",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/bim.js",
+    "purpose": "Regenerated IFC browser mirror; byte consistency checked against generator",
+    "depth": "static",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stair_ifc_boundary.py"
+    ],
+    "generated_from": [
+      "tools/build_bim_browser.py",
+      "acs_bim.py"
+    ]
+  },
+  {
+    "path": "public/app/ui/local-studio-entry.mjs",
+    "purpose": "Selected pure stair resolver import in lazy local entry",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/workspace-ui-wiring.js",
+    "purpose": "Selected fresh local authoring and contextual truthful stair disclosure",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/lib/app_source.js",
+    "purpose": "Selected existing harness change for stair imports or connected boundary regressions",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/performance/bundle_report.json",
+    "purpose": "Selected existing harness change for stair imports or connected boundary regressions",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase3/lib/extract_browser_bundle.js",
+    "purpose": "Selected existing harness change for stair imports or connected boundary regressions",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/stair_ifc_exchange_parity.js",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/stair_ifc_exchange_parity.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/stairs_delivery_fixture.py",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/stairs_delivery_fixture.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/stairs_gltf_reader.mjs",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/stairs_gltf_reader.mjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_connected_workspace.py",
+    "purpose": "Selected existing harness change for stair imports or connected boundary regressions",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_roof_integration.cjs",
+    "purpose": "Selected existing harness change for stair imports or connected boundary regressions",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stair_ifc_boundary.py",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stair_ifc_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stair_ifc_panel.js",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stair_ifc_panel.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_approved_browser.cjs",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_approved_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_browser_geometry.cjs",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_browser_geometry.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_geometry.py",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_independent_reader.py",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_local_integration.cjs",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_local_integration.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_parity.mjs",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_parity.mjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_runtime_packaging.py",
+    "purpose": "Authored stair regression/fixture; scoped executable checks, negative witnesses or exact-artifact browser assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_runtime_packaging.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/acs_plan_handoff.py",
+    "purpose": "Selected approved stair boundary; declared geometry must match canonical connections",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_bim_browser.py",
+    "purpose": "Selected generated IFC error-state reset and escaped Arabic guidance",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/frontend_local.txt",
+    "purpose": "Selected lazy local entry ownership for stairs module",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "STAIRS-4B"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_geometry.py",
+      "tests/remediation/test_stairs_parity.mjs",
+      "tests/remediation/test_stairs_independent_reader.py"
+    ],
+    "generated_from": []
+  }
+]

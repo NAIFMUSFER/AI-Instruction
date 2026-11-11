@@ -1,0 +1,45 @@
+'use strict';
+const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
+const APP=require('../lib/app_source.js'),SEG=require('../lib/js_segment.js');
+const source=APP.stripModuleSyntax(fs.readFileSync('public/app/ui/workspace-ui-wiring.js','utf8'),'wiring');
+const statements=SEG.topLevelStatements(source).map(row=>source.slice(row.start,row.end));
+function fn(name){const value=statements.find(text=>new RegExp('^function '+name+'\\(').test(SEG.head(text)));assert.ok(value,'actual shipped '+name);return value;}
+const ctx={structuredClone,lastBuilding:null,window:{ACS:{guest:true}},setModel:b=>{ctx.lastBuilding=b;return b;}};vm.createContext(ctx);
+const names=['localGeneratedModel','localModelCounts','assertLocalRoofMutable','applyLocalEdit','localGenerationError','localStairsText','buildLocalStairsDisclosure'];
+vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/viewer.js','core/standards.js','core/roof.mjs','core/disciplines.js'])+'\n'+names.map(fn).join('\n')+'\nObject.assign(globalThis,{'+names.join(',')+',stairConnections,hasUStairs,removeAutoRoof,roofRemovedByUser});',ctx);
+const bare={wall_t:.2,wall_h:3,floor_height:3.2,levels:[{index:0,template:'core'},{index:1,template:'core'}],floors:{core:{rooms:[{id:'stairroom',role:'stairs',core_id:'c',rect:[0,0,4,4],doors:[{edge:'N',offset:2,width:1}]}]}}};
+const original=JSON.stringify(bare),fresh=ctx.localGeneratedModel(bare,{freshSample:true});
+assert.equal(ctx.stairConnections(fresh).length,1,'fresh sample authors physical geometry before adding roof');
+assert.equal(fresh.levels.filter(l=>l.kind==='roof').length,1);assert.equal(JSON.stringify(bare),original,'fresh creation never mutates source fixture');
+assert.equal(fresh.meta.acs_stairs.physical_traversal,'NOT_VERIFIED');
+assert.match(ctx.localStairsText(fresh),/بسطة وسطية/);assert.match(ctx.localStairsText(fresh),/لم تُتحقّق قابلية المشي/);
+ctx.lastBuilding=null;assert.equal(ctx.stairConnections(ctx.localGeneratedModel(bare)).length,1,'first local creation authors default');
+ctx.lastBuilding=fresh;const regen=ctx.localGeneratedModel(bare);assert.equal(ctx.hasUStairs(regen),false,'existing same-project generation never adds or repairs implicit stairs');
+assert.match(ctx.localStairsText(regen),/لم تُنشأ سلالم مادية تلقائياً/);
+ctx.lastBuilding=ctx.removeAutoRoof(fresh);const afterRemoved=ctx.localGeneratedModel(bare);assert.equal(ctx.roofRemovedByUser(afterRemoved),true);assert.equal(ctx.hasUStairs(afterRemoved),false);
+const narrow=structuredClone(bare);narrow.floors.core.rooms[0].rect=[0,0,2,3];
+const omitted=ctx.localGeneratedModel(narrow,{freshSample:true});assert.equal(ctx.hasUStairs(omitted),false);assert.equal(omitted.floors.core.rooms[0].rect[2],2);assert.equal(omitted.floors.core.rooms[0].rect[3],3);assert.match(ctx.localStairsText(omitted),/لم نوسّع الغرفة أو نصغّر الدرج/);
+const undeclared=structuredClone(bare);delete undeclared.floors.core.rooms[0].role;const noCore=ctx.localGeneratedModel(undeclared,{freshSample:true});assert.equal(ctx.hasUStairs(noCore),false);assert.match(ctx.localStairsText(noCore),/اسم الغرفة وحده لا ينشئ درجات/);
+const locked=structuredClone(fresh);locked._authoring_locks={room:{locked:true}};ctx.lastBuilding=locked;assert.throws(()=>ctx.applyLocalEdit(bare,{generated:true}),/LOCK_CONTEXT_CHANGED/);assert.equal(ctx.lastBuilding,locked);
+const importedBefore=JSON.stringify(fresh);ctx.localStairsText(fresh);assert.equal(JSON.stringify(fresh),importedBefore,'disclosure is read-only for imported models');
+assert.doesNotMatch(fn('setModel'),/withDefaultStairs|localGeneratedModel/,'generic import/recovery/presentation setter never authors a flight');
+const children=[];ctx.document={createElement:()=>({})};ctx.lastBuilding=omitted;ctx.buildLocalStairsDisclosure({appendChild:node=>children.push(node)});assert.equal(children[0].id,'localStairsDisclosure');assert.match(children[0].textContent,/لم تُتحقّق/);
+for(const code of ['STAIR_CONNECTION_STALE','STAIR_ENTRY_CHANGED','STAIR_CORE_TOO_SMALL'])assert.match(ctx.localGenerationError(new Error(code)),/راجع.*بقي النموذج السابق/);
+const forged=structuredClone(bare);forged.meta={acs_stairs:{schema:'acs.stairs/1',source:'system_default',generated_connections:999,unsupported:[],physical_traversal:'VERIFIED'}};
+const forgedBefore=JSON.stringify(forged),forgedText=ctx.localStairsText(forged);
+assert.ok(!forgedText.includes('999'),'untrusted metadata cannot claim nonexistent physical flights');
+assert.match(forgedText,/لا يطابق|غير متحقق|لم تُتحقّق/);
+assert.equal(JSON.stringify(forged),forgedBefore,'report validation never rewrites the imported model');
+const malformedReasons=structuredClone(bare);malformedReasons.meta={acs_stairs:{schema:'acs.stairs/1',source:'system_default',generated_connections:0,unsupported:[null,7,{code:'toString'}],physical_traversal:'NOT_VERIFIED'}};
+const reasonsBefore=JSON.stringify(malformedReasons);assert.doesNotThrow(()=>ctx.localStairsText(malformedReasons),'untrusted omission entries do not crash the contextual inspector');assert.ok(!ctx.localStairsText(malformedReasons).includes('function '));assert.equal(JSON.stringify(malformedReasons),reasonsBefore);
+// The real fresh sample handler must reject a bounded-but-expansive request
+// before calling setModel. Existing project/model/selection remains unchanged.
+const costly=structuredClone(bare);costly.levels=Array.from({length:45},(_,index)=>({index,template:'core'}));
+costly.floors.core.rooms=Array.from({length:3},(_,i)=>({...structuredClone(bare.floors.core.rooms[0]),id:'core'+i,core_id:'c'+i,rect:[i*5,0,4,4]}));
+const sampleStatement=statements.find(text=>/document\.getElementById\('loadExample'\)\.onclick=/.test(text));assert.ok(sampleStatement,'actual fresh sample click handler exists');
+let published=0;const sampleButton={};ctx.document={getElementById:id=>id==='loadExample'?sampleButton:null};ctx.EXAMPLE=costly;ctx.lastBuilding=fresh;ctx.floorSel='F1';ctx.setModel=()=>{published++;};
+vm.runInContext(sampleStatement,ctx);
+assert.throws(()=>sampleButton.onclick(),/STAIR_RESOURCE_LIMIT/,'132 prospective flights are rejected before fresh sample publication');
+assert.equal(published,0);assert.equal(ctx.lastBuilding,fresh);assert.equal(ctx.floorSel,'F1');
+assert.match(ctx.localGenerationError(new Error('STAIR_RESOURCE_LIMIT')),/قلّل.*الأدوار.*النوى.*بقي النموذج السابق/);
+console.log('PASS physical stairs local boundary: fresh-only authoring, roof order, existing/import preservation, explicit omission, locks and Arabic disclosure');

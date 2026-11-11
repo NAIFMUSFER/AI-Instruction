@@ -305,6 +305,7 @@ def build_exchange(project, options=None):
     by_template = {}
     for tk, r in _rooms(model):
         by_template.setdefault(tk, []).append(r)
+    export_issues = []
 
     for lv in levels:
         idx = lv.get("index")
@@ -362,6 +363,16 @@ def build_exchange(project, options=None):
                 kind = str(ob.get("kind") or "")
                 oid = "%s.flr_%s.%s.%s.obj_%s" % (bid, idx, lv.get("template"), r.get("id"), ob.get("id") or j)
                 if kind.lower() in ("stairs", "stair"):
+                    # This legacy serializer only has a bounding-prism mapping.
+                    # A declared physical form must never silently become that
+                    # prism, including malformed/null declarations. Space-only
+                    # scope has already bypassed objects; selected levels were
+                    # filtered above, so only exported physical instances block.
+                    if "form" in ob:
+                        export_issues.append(issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR", oid,
+                            "تصدير IFC الكامل لا يدعم هذا الدرج وفتحات البلاطات بعد. "
+                            "استخدم تصدير حدود الفراغات فقط (SPACES_ONLY)."))
+                        continue
                     ex["stairs"].append({
                         "canonical_id": oid, "level_index": idx, "elevation": elev,
                         "x": _q(x + (_num(ob.get("x")) or 0.0)),
@@ -388,6 +399,8 @@ def build_exchange(project, options=None):
                     "thickness": None, "thickness_known": False,
                     "predefined_type": "FLOOR"})
 
+    if export_issues:
+        return {"valid": False, "issues": export_issues, "exchange": None}
     for u in ex["unsupported"]:
         ex["losses"].append({"entity_id": u["canonical_id"],
                              "type": "UNSUPPORTED_ENTITY", "severity": "WARNING",

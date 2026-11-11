@@ -1,0 +1,17 @@
+test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write (__main__.WorkspaceLifecycle.test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write) ... FAIL
+
+======================================================================
+FAIL: test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write (__main__.WorkspaceLifecycle.test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 337, in test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write
+    self.assertEqual(rejected.exception.code, 'STAIR_RESOURCE_LIMIT')
+AssertionError: 'REVIEW_VIEW_LIMIT' != 'STAIR_RESOURCE_LIMIT'
+- REVIEW_VIEW_LIMIT
++ STAIR_RESOURCE_LIMIT
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.833s
+
+FAILED (failures=1)

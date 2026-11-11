@@ -4,6 +4,7 @@
    لا تحرّره يدوياً إن كان مولَّداً — حرّر المولّد وأعِد التوليد.
    ============================================================ */
 import { __ACS_LATE } from '../late-bindings.js';
+import { hasUStairs, stairConnections } from './stairs.mjs';
 import { ARCH_COMPILER_VERSION, ARCH_DEFAULTS, ARCH_SCHEMA, _A_EPS, _aBbox, _aClassifyExposure, _aCores, _aHost, _aLevels, _aOpeningsOf, _aRect, _aRoomsOf, _aShapeSupported, _aVal, _aWallSegments, _aq, _pyT, _scmp } from './standards.js';
 import { _pyRound, buildRelationships, extractExits, findEgress } from './viewer.js';
 
@@ -114,7 +115,17 @@ function compileArchitecture(building,buildingId,position,rotationDeg){
             ?(lvl.elevation_m+Number(h)):null,
           thickness_m:{value:null,render_fallback:0.05,source:'unknown'}}); }); } });
   out.cores=_aCores(building,bid,levels);
-  /* فراغ في البلاطة عند كل مستوى تخترقه نواة — الدرج لا يمرّ عبر بلاطة صمّاء */
+  const connections=hasUStairs(building)?stairConnections(building):[];
+  if(connections.length)out.stair_connections=connections;
+  connections.forEach(connection=>{
+    const target=levels.find(level=>level.index===connection.target_level_index);
+    out.voids.push({id:target.id+'.stair_void_'+connection.source_object_id,type:'FLOOR_OPENING',
+      building_id:bid,level_id:target.id,level_index:target.index,core_id:connection.core_id,core_type:'STAIR',
+      rect:connection.opening,source_level_index:connection.source_level_index,
+      source_object_id:connection.source_object_id,arrival_rect:connection.arrival,
+      footprint_source:'canonical_stair',note:'conceptual opening; structural framing and traversal not verified'});
+  });
+  /* Legacy cores retain their existing declared/inferred geometry path. */
   let vn=0;
   out.cores.forEach(core=>{
     const served=core.served_levels;

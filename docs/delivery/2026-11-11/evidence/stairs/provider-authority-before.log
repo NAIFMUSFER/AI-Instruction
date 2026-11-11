@@ -1,0 +1,87 @@
+test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) ...
+  test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='forged-report') ... FAIL
+  test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='reserved-null-report') ... FAIL
+  test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='kind-object-provenance') ... FAIL
+  test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='name-object-provenance') ... FAIL
+  test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='stair_source_template') ... ERROR
+  test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='stair_template_instance') ... FAIL
+
+======================================================================
+ERROR: test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='stair_source_template')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 281, in test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage
+    S.generate_and_save(store, PROJECT, ACTOR, command(), runner=runner)
+  File "<workspace>/stairs-v4/acs_workspace_service.py", line 340, in generate_and_save
+    result["building"], _, _ = with_default_stairs(result["building"])
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python-stdlib>/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python-stdlib>/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<python-stdlib>/unittest/mock.py", line 1216, in _execute_mock_call
+    return self._mock_wraps(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/acs_stairs.py", line 349, in with_default_stairs
+    stair_connections(out)
+  File "<workspace>/stairs-v4/acs_stairs.py", line 124, in stair_connections
+    template_scope_aliases(model)
+  File "<workspace>/stairs-v4/acs_stairs.py", line 210, in template_scope_aliases
+    raise ValueError('STAIR_TEMPLATE_SCOPE_INVALID')
+ValueError: STAIR_TEMPLATE_SCOPE_INVALID
+
+======================================================================
+FAIL: test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='forged-report')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 282, in test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage
+    self.assertEqual(rejected.exception.code, 'PROVIDER_AUTHORITY_FIELD')
+AssertionError: 'INVALID_GEOMETRY' != 'PROVIDER_AUTHORITY_FIELD'
+- INVALID_GEOMETRY
++ PROVIDER_AUTHORITY_FIELD
+
+
+======================================================================
+FAIL: test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='reserved-null-report')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 282, in test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage
+    self.assertEqual(rejected.exception.code, 'PROVIDER_AUTHORITY_FIELD')
+AssertionError: 'INVALID_GEOMETRY' != 'PROVIDER_AUTHORITY_FIELD'
+- INVALID_GEOMETRY
++ PROVIDER_AUTHORITY_FIELD
+
+
+======================================================================
+FAIL: test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='kind-object-provenance')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 280, in test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage
+    with self.assertRaises(PlanError) as rejected:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PlanError not raised
+
+======================================================================
+FAIL: test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='name-object-provenance')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 280, in test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage
+    with self.assertRaises(PlanError) as rejected:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PlanError not raised
+
+======================================================================
+FAIL: test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage (__main__.WorkspaceLifecycle.test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage) (case='stair_template_instance')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 280, in test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage
+    with self.assertRaises(PlanError) as rejected:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PlanError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.055s
+
+FAILED (failures=5, errors=1)

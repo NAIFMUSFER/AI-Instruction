@@ -5593,6 +5593,9 @@ function _aCores(building,bid,levels){
       const rc=_aRect(room);
       if(rc===null) return;
       (_pyT(room.objects)?room.objects:[]).forEach((obj,j)=>{
+        // Explicit physical flights have exact landing-preserving openings.
+        // Never also infer a full-core hole from this same canonical object.
+        if(obj.form==='u_return')return;
         const kind=_aCoreKind(obj);
         if(kind===null) return;
         const stated=(obj.x!==null&&obj.x!==undefined&&obj.z!==null&&obj.z!==undefined);

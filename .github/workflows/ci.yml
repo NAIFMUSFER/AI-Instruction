@@ -589,7 +589,7 @@ jobs:
           from pathlib import Path
           # /health cannot exercise helpers imported only by later commands.
           # Use the actual image and a pure synthetic model; no provider/auth call.
-          import acs_roof
+          import acs_roof, acs_stairs
           model = {'site': {'w': 10, 'd': 8}, 'wall_h': 3, 'floor_height': 3.2,
                    'levels': [{'index': 0, 'template': 'ground'}],
                    'floors': {'ground': {'rooms': [{'id': 'hall', 'rect': [0, 0, 10, 8]}]}}}
@@ -597,6 +597,7 @@ jobs:
           roofed, roof_report, roof_reason = acs_roof.with_default_roof(model)
           removed = acs_roof.remove_auto_roof(roofed)
           restored = acs_roof.restore_default_roof(removed)
+          stair_candidate, stair_report, stair_reason = acs_stairs.with_default_stairs(model)
           artifact = json.loads(Path('/app/build_info.json').read_text())
           with urllib.request.urlopen('http://127.0.0.1:8000/version', timeout=10) as r:
               version = json.load(r)
@@ -621,6 +622,11 @@ jobs:
               ('image can remove and restore the default roof without a provider',
                len(removed['levels']) == 1 and acs_roof.roof_removed_by_user(removed)
                and len(restored['levels']) == 2 and not acs_roof.roof_removed_by_user(restored)),
+              ('deferred stair helper executes in the actual image without inventing a single-storey flight',
+               Path(acs_stairs.__file__).resolve() == Path('/app/acs_stairs.py')
+               and stair_reason == 'STAIR_NOT_APPLICABLE'
+               and stair_candidate == model and repr(model) == before
+               and stair_report['physical_traversal'] == 'NOT_VERIFIED'),
           ]
           checks += [(f'version {key} matches artifact', version[key] == artifact[key])
                      for key in ('git_sha', 'git_sha_short', 'built_at', 'git_branch', 'version')]
@@ -705,6 +711,7 @@ jobs:
       PYTHONPATH: .
       PG_BINDIR: /usr/lib/postgresql/16/bin
       ACS_VISUAL_OUTPUT: logs/approved-viewer
+      ACS_STAIRS_VISUAL_OUTPUT: logs/stairs
     steps:
       - uses: actions/checkout@v4
         with:
@@ -744,6 +751,10 @@ jobs:
             tests/remediation/test_delivery_release_safety.py \
             tests/remediation/test_delivery_published.py \
             tests/remediation/test_roof_runtime_packaging.py \
+            tests/remediation/test_stairs_runtime_packaging.py \
+            tests/remediation/test_stairs_geometry.py \
+            tests/remediation/test_stairs_independent_reader.py \
+            tests/remediation/test_stair_ifc_boundary.py \
             tests/remediation/test_delivery_provider_identity.py \
             tests/remediation/test_delivery_arabic_pdf.py \
             tests/remediation/test_audit_*.py \
@@ -780,6 +791,9 @@ jobs:
             tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_local_render_quality.mjs \
             tests/remediation/test_guest_roof_integration.cjs \
+            tests/remediation/test_stairs_parity.mjs \
+            tests/remediation/test_stairs_browser_geometry.cjs \
+            tests/remediation/test_stairs_local_integration.cjs \
             tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
@@ -798,7 +812,8 @@ jobs:
           bash tools/ci_run.sh --log logs/delivery-browser.log --label "delivery critical Chromium" --runner node \
             tests/remediation/test_guest_workspace.cjs \
             tests/remediation/test_connected_workspace_browser.cjs \
-            tests/remediation/test_approved_viewer_browser.cjs
+            tests/remediation/test_approved_viewer_browser.cjs \
+            tests/remediation/test_stairs_approved_browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

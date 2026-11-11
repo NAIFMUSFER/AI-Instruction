@@ -45,6 +45,25 @@ def command():
             'expected_head': None, 'option': 'A', 'confirmed': True, 'max_provider_calls': 3}
 
 
+def stair_core_model():
+    """Dimensioned synthetic core; a room name alone supplies no stair geometry."""
+    building = model()
+    building.update(floor_height=3.2, wall_h=3.0)
+    building['meta']['assumptions'] = ['Synthetic core dimensions; conceptual review only.']
+    building['floors']['ground']['rooms'].append({
+        'id': 'stair-core', 'name': 'الدرج', 'role': 'stairs', 'core_id': 'vertical-core',
+        'rect': [0, 10, 4, 4], 'walls': ['N', 'S', 'E', 'W'],
+        'doors': [{'id': 'stair-entry', 'edge': 'N', 'offset': 2, 'width': 1, 'height': 2.2}],
+        'windows': [], 'points': [{'id': 'stair-light', 'type': 'light', 'x': 2, 'z': 2}],
+    })
+    building['floors']['upper'] = copy.deepcopy(building['floors']['ground'])
+    building['levels'] = [
+        {'id': 'level-ground', 'index': 0, 'template': 'ground', 'elevation': 0},
+        {'id': 'level-upper', 'index': 1, 'template': 'upper', 'elevation': 3.2},
+    ]
+    return building
+
+
 class Runner:
     def __init__(self, building):
         self.building, self.calls = building, []
@@ -171,6 +190,270 @@ class WorkspaceLifecycle(unittest.TestCase):
         rid = S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
         self.assertEqual(set(runner.calls[0][1]), {'brief', 'requirements', 'option', 'max_provider_calls'})
         return rid
+
+    def test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work(self):
+        original = stair_core_model()
+        runner = Runner(original)
+        with patch('acs_understand.call_llm') as provider:
+            rid = S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
+            provider.assert_not_called()
+        self.assertEqual(len(runner.calls), 1)
+        self.assertEqual(runner.calls[0][0], 'acs_workspace_service:generate_plan_candidate')
+        self.assertEqual(original, stair_core_model(), 'admission must not mutate the provider fixture')
+        ws = S.workspace(self.store, PROJECT, ACTOR)
+        revision = ws.get(rid)
+        built = revision.model
+        stairs = [obj for floor in built['floors'].values() for room in floor['rooms']
+                  for obj in room.get('objects', []) if obj.get('kind') == 'stairs']
+        self.assertTrue(stairs, 'fresh generated core must contain explicit canonical stair geometry')
+        self.assertTrue(all(obj.get('form') == 'u_return' and obj.get('id') for obj in stairs))
+        self.assertTrue(all(all(type(obj.get(key)) in (int, float) for key in ('x', 'y', 'z', 'w', 'd', 'h')) for obj in stairs))
+        for template in ('ground', 'upper'):
+            for before, after in zip(original['floors'][template]['rooms'], built['floors'][template]['rooms']):
+                for key, value in before.items():
+                    self.assertEqual(after[key], value, 'default stairs preserve existing room facts: '+key)
+        self.assertEqual(json.loads(revision.requirements_json), command()['requirements'])
+        self.assertEqual(built['meta']['assumptions'], original['meta']['assumptions'])
+        self.assertTrue(built['meta'].get('acs_stairs'), 'default geometry has canonical provenance')
+        review = ws.review(rid)
+        self.assertEqual(review['coverage']['vertical_circulation']['physical_traversal'], 'NOT_VERIFIED')
+        self.assertTrue(review['can_approve'], review['issues'])
+        approved = execute_persisted_plan_command(self.store, PROJECT,
+            {'action': 'approve', 'expected_head': rid, 'confirmed': True, 'acknowledge_concept_only': True},
+            actor_id=ACTOR, verifier=S.existing_geometry_verifier)
+        self.assertEqual(approved['baseline'], rid)
+        reopened = S.workspace(SQLitePlanStoreAdapter(SQLitePlanStore(Path(self.temp.name)/'plans.sqlite3')), PROJECT, ACTOR)
+        handoff = reopened.handoff(rid)
+        self.assertEqual(handoff['building'], built)
+        self.assertEqual(handoff['baseline']['model_hash'], revision.model_hash)
+        self.assertEqual(reopened.get(rid).model_hash, revision.model_hash)
+        self.assertEqual(len(runner.calls), 1, 'save, review, approval and reopen never rerun generation')
+
+    def test_source_generation_never_applies_stair_defaults_or_rewrites_imported_objects(self):
+        source = '44444444-4444-4444-8444-444444444444'
+        row = {'id': source, 'sha256': 'a'*64, 'page': 1, 'page_count': 1,
+               'preview_sha256': 'b'*64, 'preview_media_type': 'image/png'}
+        for mode in ('preserve', 'revise'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as directory:
+                db = SQLitePlanStore(Path(directory)/'plans.sqlite3');db.create_project(PROJECT, owner_id=ACTOR)
+                store = SQLitePlanStoreAdapter(db)
+                original = stair_core_model()
+                original['floors']['ground']['rooms'][0]['objects'] = [
+                    {'id': 'authored-chair', 'kind': 'chair', 'x': 1, 'y': 0, 'z': 1, 'w': .5, 'd': .5, 'h': .8}]
+                runner = Runner(original)
+                with patch('acs_stairs.with_default_stairs') as helper, patch('acs_plan_sources.read_source', return_value=(row,b'synthetic-preview')):
+                    rid = S.generate_and_save(store, PROJECT, ACTOR,
+                        dict(command(), source_id=source, source_mode=mode), runner=runner)
+                    helper.assert_not_called()
+                saved = S.workspace(store, PROJECT, ACTOR).get(rid).model
+                for template in ('ground', 'upper'):
+                    self.assertEqual(saved['floors'][template], original['floors'][template])
+                self.assertNotIn('acs_stairs', saved['meta'])
+                self.assertEqual(saved['meta']['acs_plan_source']['mode'], mode)
+                self.assertEqual(len(runner.calls), 1)
+                self.assertEqual(runner.calls[0][0], 'acs_plan_sources:candidate')
+
+    def test_fresh_provider_cannot_claim_system_stair_report_provenance_or_lineage(self):
+        import acs_stairs
+        cases = []
+        forged = stair_core_model()
+        forged['meta']['acs_stairs'] = {'schema':'acs.stairs/1', 'source':'system_default',
+            'generated_connections':999, 'physical_traversal':'VERIFIED'}
+        cases.append(('forged-report', forged))
+        null_report = stair_core_model();null_report['meta']['acs_stairs'] = None
+        cases.append(('reserved-null-report', null_report))
+        for alias in ('kind', 'name'):
+            candidate = stair_core_model()
+            candidate['floors']['ground']['rooms'][-1]['objects'] = [
+                {'id':'provider-stair', alias:'stairs' if alias=='kind' else 'درج',
+                 'x':2,'y':0,'z':2,'w':1,'d':3,'h':3.2,
+                 'stair_provenance':{'source':'system_default','source_room_id':'stair-core'}}]
+            cases.append((alias+'-object-provenance', candidate))
+        for field in ('stair_source_template', 'stair_template_instance'):
+            candidate = stair_core_model();candidate['levels'][1][field] = 'ground'
+            cases.append((field, candidate))
+        for name, candidate in cases:
+            with self.subTest(case=name), tempfile.TemporaryDirectory() as directory:
+                db = SQLitePlanStore(Path(directory)/'plans.sqlite3');db.create_project(PROJECT, owner_id=ACTOR)
+                store = SQLitePlanStoreAdapter(db);runner = Runner(candidate)
+                with patch('acs_stairs.with_default_stairs', wraps=acs_stairs.with_default_stairs) as helper:
+                    with self.assertRaises(PlanError) as rejected:
+                        S.generate_and_save(store, PROJECT, ACTOR, command(), runner=runner)
+                    self.assertEqual(rejected.exception.code, 'PROVIDER_AUTHORITY_FIELD')
+                    helper.assert_not_called()
+                ws = S.workspace(store, PROJECT, ACTOR)
+                self.assertIsNone(ws.head);self.assertEqual(ws.history(), [])
+                self.assertEqual(len(runner.calls), 1, 'a rejected attribution never triggers a paid retry')
+
+    def test_fresh_authored_stair_objects_without_system_claims_are_preserved(self):
+        for alias in ('kind', 'name'):
+            with self.subTest(alias=alias), tempfile.TemporaryDirectory() as directory:
+                db = SQLitePlanStore(Path(directory)/'plans.sqlite3');db.create_project(PROJECT, owner_id=ACTOR)
+                store = SQLitePlanStoreAdapter(db)
+                candidate = stair_core_model()
+                authored = {'id':'authored-stair',alias:'stairs' if alias=='kind' else 'درج',
+                            'x':2,'y':0,'z':2,'w':1,'d':3,'h':3.2}
+                candidate['floors']['ground']['rooms'][-1]['objects'] = [authored]
+                runner = Runner(candidate)
+                rid = S.generate_and_save(store, PROJECT, ACTOR, command(), runner=runner)
+                ws = S.workspace(store, PROJECT, ACTOR)
+                built = ws.get(rid).model
+                self.assertEqual(built['floors']['ground']['rooms'][-1]['objects'], [authored])
+                self.assertFalse(built['floors']['upper']['rooms'][-1].get('objects'))
+                self.assertEqual(ws.review(rid)['coverage']['vertical_circulation']['physical_traversal'], 'NOT_VERIFIED')
+                self.assertEqual(len(runner.calls), 1)
+
+    def test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing(self):
+        malformed = stair_core_model();malformed['floors']['ground']['rooms'] = [None]
+        runner = Runner(malformed)
+        with self.assertRaises(PlanError) as rejected:
+            S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
+        self.assertEqual(rejected.exception.code, 'AMBIGUOUS_ROOM_ID')
+        ws = S.workspace(self.store, PROJECT, ACTOR)
+        self.assertIsNone(ws.head);self.assertEqual(ws.history(), [])
+        self.assertEqual(len(runner.calls), 1)
+
+    def test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write(self):
+        import acs_stairs
+        candidate = stair_core_model()
+        rooms = candidate['floors']['ground']['rooms']
+        core = rooms.pop()
+        for index in range(3):
+            room = copy.deepcopy(core)
+            room['id'] = 'stair-core-'+str(index);room['core_id'] = 'vertical-core-'+str(index)
+            room['rect'][0] = index*6
+            room['doors'][0]['id'] += '-'+str(index);room['points'][0]['id'] += '-'+str(index)
+            rooms.append(room)
+        del candidate['floors']['upper']
+        candidate['levels'] = [{'index':index, 'template':'ground', 'elevation':round(index*3.2,6)} for index in range(45)]
+        # Small provider payload, but 3 cores across 44 transitions would author
+        # 132 connections. The real helper must bound that work before cloning.
+        self.assertLess(len(S.canonical(candidate).encode('utf-8')), 10_000)
+        original = copy.deepcopy(candidate);runner = Runner(candidate)
+        with patch('acs_stairs.with_default_stairs', wraps=acs_stairs.with_default_stairs) as helper:
+            with self.assertRaises(PlanError) as rejected:
+                S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
+            helper.assert_called_once()
+        self.assertEqual(rejected.exception.code, 'STAIR_RESOURCE_LIMIT')
+        self.assertIn('قلّل', str(rejected.exception))
+        self.assertIn('الأدوار', str(rejected.exception))
+        self.assertIn('نوى', str(rejected.exception))
+        receipt = H._job_view({'id':JOB, 'state':'FAILED', 'error_code':rejected.exception.code})['job']
+        self.assertEqual(receipt['error_message'], str(rejected.exception), 'async polling retains the actionable Arabic error')
+        self.assertEqual(candidate, original)
+        ws = S.workspace(self.store, PROJECT, ACTOR)
+        self.assertIsNone(ws.head);self.assertIsNone(ws.baseline);self.assertEqual(ws.history(), [])
+        self.assertEqual(len(runner.calls), 1, 'resource admission must not retry the paid operation')
+
+    def test_existing_system_stair_objects_and_lineage_survive_nonfresh_paths(self):
+        original = stair_core_model()
+        original['levels'][1]['template'] = 'ground';del original['floors']['upper']
+        first = S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=Runner(original))
+        trusted = S.workspace(self.store, PROJECT, ACTOR).get(first).model
+        self.assertTrue(any('stair_source_template' in level for level in trusted['levels']))
+        runner = Runner(trusted)
+        with patch('acs_stairs.with_default_stairs') as helper:
+            rid = S.generate_and_save(self.store, PROJECT, ACTOR, dict(command(),expected_head=first), runner=runner)
+            helper.assert_not_called()
+        self.assertEqual(S.workspace(self.store, PROJECT, ACTOR).get(rid).model, trusted)
+        self.assertEqual(len(runner.calls), 1)
+        source = '44444444-4444-4444-8444-444444444444'
+        row = {'id':source,'sha256':'a'*64,'page':1,'page_count':1,
+               'preview_sha256':'b'*64,'preview_media_type':'image/png'}
+        with tempfile.TemporaryDirectory() as directory:
+            db = SQLitePlanStore(Path(directory)/'plans.sqlite3');db.create_project(PROJECT, owner_id=ACTOR)
+            store = SQLitePlanStoreAdapter(db);runner = Runner(trusted)
+            with patch('acs_stairs.with_default_stairs') as helper, patch('acs_plan_sources.read_source',return_value=(row,b'synthetic-preview')):
+                rid = S.generate_and_save(store, PROJECT, ACTOR, dict(command(),source_id=source,source_mode='preserve'),runner=runner)
+                helper.assert_not_called()
+            saved = S.workspace(store, PROJECT, ACTOR).get(rid).model
+            self.assertEqual(saved['floors'], trusted['floors'])
+            self.assertEqual(saved['levels'], trusted['levels'])
+            self.assertEqual(saved['meta']['acs_stairs'], trusted['meta']['acs_stairs'])
+            self.assertEqual(len(runner.calls), 1)
+
+    def test_regeneration_does_not_add_stairs_or_change_existing_room_and_semantic_locks(self):
+        import acs_roof
+        for scope in ('unlocked', 'room', 'semantic'):
+            with self.subTest(scope=scope), tempfile.TemporaryDirectory() as directory:
+                db = SQLitePlanStore(Path(directory)/'plans.sqlite3');db.create_project(PROJECT, owner_id=ACTOR)
+                store = SQLitePlanStoreAdapter(db)
+                original, _, _ = acs_roof.with_default_roof(stair_core_model())
+                ws = S.workspace(store, PROJECT, ACTOR)
+                seeded = ws.propose(original, brief=command()['brief'], requirements=command()['requirements'],
+                                    expected_head=None, note='Synthetic existing project without stair objects')
+                store.save_revision(PROJECT, actor_id=ACTOR, revision=seeded, expected_head=None)
+                def persisted(body):
+                    return execute_persisted_plan_command(store, PROJECT, body, actor_id=ACTOR, verifier=S.existing_geometry_verifier)
+                persisted({'action':'approve','expected_head':seeded.id,'confirmed':True,'acknowledge_concept_only':True})
+                head = seeded.id
+                if scope == 'room':
+                    head = persisted({'action':'set_room_lock','expected_head':head,'room_ref':['ground','stair-core'],'locked':True})['head']
+                elif scope == 'semantic':
+                    head = persisted({'action':'replace_semantic_locks','expected_head':head,
+                        'selectors':[{'kind':'element','template':'ground','room_id':'stair-core','collection':'points',
+                                      'element_id':'stair-light','properties':['x','z']}], 'note':'Synthetic core light lock'})['head']
+                before = S.workspace(store, PROJECT, ACTOR).get(head)
+                runner = Runner(before.model)
+                with patch('acs_stairs.with_default_stairs') as helper:
+                    rid = S.generate_and_save(store, PROJECT, ACTOR, dict(command(),expected_head=head), runner=runner)
+                    helper.assert_not_called()
+                after = S.workspace(store, PROJECT, ACTOR)
+                self.assertEqual(after.get(rid).model, before.model)
+                self.assertEqual(after.get(rid).locked_rooms, before.locked_rooms)
+                self.assertEqual(after.get(rid).semantic_lock_manifest, before.semantic_lock_manifest)
+                self.assertEqual(after.baseline, seeded.id)
+                self.assertEqual(after.get(head).model, before.model)
+                self.assertEqual(len(runner.calls), 1)
+                if scope != 'unlocked':
+                    changed = copy.deepcopy(before.model)
+                    core = changed['floors']['ground']['rooms'][-1]
+                    if scope == 'room':core['rect'][2] -= .1
+                    else:core['points'][0]['x'] += .1
+                    history = after.history()
+                    with patch('acs_stairs.with_default_stairs') as helper, self.assertRaises(PlanError) as blocked:
+                        S.generate_and_save(store, PROJECT, ACTOR, dict(command(),expected_head=rid), runner=Runner(changed))
+                    helper.assert_not_called()
+                    self.assertEqual(blocked.exception.code, 'LOCK_VIOLATION')
+                    self.assertEqual(S.workspace(store, PROJECT, ACTOR).history(), history)
+
+    def test_initial_generation_losing_head_race_never_applies_stair_defaults_or_appends(self):
+        winner = []
+        class RacingRunner(Runner):
+            def run(inner, target, kwargs, **controls):
+                ws = S.workspace(self.store, PROJECT, ACTOR)
+                revision = ws.propose(model(), brief=command()['brief'], requirements=command()['requirements'],
+                                      expected_head=None, note='Synthetic competing first revision')
+                self.store.save_revision(PROJECT, actor_id=ACTOR, revision=revision, expected_head=None)
+                winner.append(revision.id)
+                return super().run(target, kwargs, **controls)
+        runner = RacingRunner(stair_core_model())
+        with patch('acs_stairs.with_default_stairs') as helper, self.assertRaises(PlanError) as stale:
+            S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
+        helper.assert_not_called()
+        self.assertEqual(stale.exception.code, 'STALE_REVISION')
+        ws = S.workspace(self.store, PROJECT, ACTOR)
+        self.assertEqual(ws.head, winner[0]);self.assertEqual(len(ws.history()), 1)
+        self.assertEqual(ws.get(ws.head).model, model())
+        self.assertEqual(len(runner.calls), 1)
+
+    def test_resumed_initial_generation_keeps_checkpoint_objects_without_stair_defaults(self):
+        original = stair_core_model()
+        checkpoint = {'kind': 'outline', 'marker': 'synthetic-saved-checkpoint'}
+        prior = {'resume_command': command(), 'checkpoint': checkpoint, 'provider_calls': 1}
+        runner = Runner(original)
+        with patch('acs_stairs.with_default_stairs') as helper, patch.object(H, '_read_job', return_value=prior):
+            rid = S.generate_and_save(self.store, PROJECT, ACTOR,
+                dict(command(), resume_job_id='55555555-5555-4555-8555-555555555555'), runner=runner)
+            helper.assert_not_called()
+        self.assertEqual(len(runner.calls), 1)
+        self.assertEqual(runner.calls[0][1]['resume'], checkpoint)
+        self.assertEqual(runner.calls[0][1]['used_calls'], 1)
+        revision = S.workspace(self.store, PROJECT, ACTOR).get(rid)
+        for template in ('ground', 'upper'):
+            self.assertEqual(revision.model['floors'][template], original['floors'][template])
+        self.assertNotIn('acs_stairs', revision.model['meta'])
+        self.assertEqual(json.loads(revision.requirements_json), command()['requirements'])
 
     def test_residential_and_warehouse_save_review_lock_approve_export_reopen(self):
         for kind in ['residential', 'warehouse']:

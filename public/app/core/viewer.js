@@ -5,6 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { hasStairForms, resolveStairGeometry, stairConnections } from './stairs.mjs';
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -603,10 +604,13 @@ function buildRoom(group,room,fkey,baseY,def){
         wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
   }
   /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
-  if(fcol) addBox(group,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
-                  'floor',`FLOOR|${fkey}|${name}|plate`,false,fcol);
-  if(ccol) addBox(group,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
-                  'ceiling',`FLOOR|${fkey}|${name}|ceil`,false,ccol);
+  const finishW=Math.max(w-t,0.1),finishD=Math.max(d-t,0.1);
+  if(fcol)slabStrips(x+w/2-finishW/2,z+d/2-finishD/2,finishW,finishD,def.holes||[]).forEach((s,i)=>
+    addBox(group,s[0]+s[2]/2,baseY+0.012,s[1]+s[3]/2,s[2],0.024,s[3],
+      'floor',`FLOOR|${fkey}|${name}|plate${i||''}`,false,fcol));
+  if(ccol)slabStrips(x+w/2-finishW/2,z+d/2-finishD/2,finishW,finishD,def.ceilingHoles||[]).forEach((s,i)=>
+    addBox(group,s[0]+s[2]/2,baseY+H-0.03,s[1]+s[3]/2,s[2],0.05,s[3],
+      'ceiling',`FLOOR|${fkey}|${name}|ceil${i||''}`,false,ccol));
   acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
     const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
     const dcol=normHex(dr.color);
@@ -707,6 +711,7 @@ function objKind(o){
 function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
   const def=OBJ_LIB[kind]||[0.6,0.6,0.9,'box'];
   const w=+o.w||def[0], d=+o.d||def[1], h=+o.h||def[2], shape=def[3];
+  if(shape==='stairs'&&Object.hasOwn(o,'form')&&o.form!=='u_return')throw new Error('STAIR_FORM_UNSUPPORTED');
   const rot=(+o.rot||0)*Math.PI/180;
   const col=normHex(o.color)||null;
   const tag=`OBJ|${fkey}|${room}|${(o.name||kind)}${idx}`;
@@ -735,6 +740,13 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
     B(0,h*0.70,shape==='truck'?-d*0.34:0, w*0.9,h*0.36,shape==='truck'?d*0.24:d*0.55,'window');
     for(const sx of[-1,1]) for(const sz of[-1,1])
       B(sx*w*0.46,0.33,sz*d*0.34, 0.22,0.62,0.62,'bumper');
+  }else if(shape==='stairs'&&o.form==='u_return'){
+    const geometry=resolveStairGeometry(o),s=Math.sin(rot),co=Math.cos(rot);
+    for(const component of geometry.components){
+      const [dx,dy,dz]=component.center,[ex,ey,ez]=component.size;
+      addBox(g,cx+dx*co-dz*s,baseY+dy,cz+dx*s+dz*co,ex,ey,ez,'concrete_m',
+        `OBJ|${fkey}|${room}|${o.id}|${component.id}`,true,col,-rot);
+    }
   }else if(shape==='stairs'){
     /* KI-26/F-46: عدد الدرجات مشتقّ من ارتفاعٍ يذكره النموذج وبلا حدّ —
        ‎h=1e9‎ كانت تعني ستّة مليارات درجة، أي تجميد اللسان قبل أي حارس. */
@@ -801,8 +813,8 @@ function buildObjects(group, room, fkey, baseY){
     const n=acsCount(o.count,1,SCENE_LIMITS.max_object_count,'object.count');
     const pitch=+o.pitch||1.2, dir=(o.dir==='z')?'z':'x';
     for(let k=0;k<n;k++){
-      const ox=(+o.x||rw/2)+(dir==='x'?pitch*k:0);
-      const oz=(+o.z||rd/2)+(dir==='z'?pitch*k:0);
+      const ox=(o.form==='u_return'?o.x:(+o.x||rw/2))+(dir==='x'?pitch*k:0);
+      const oz=(o.form==='u_return'?o.z:(+o.z||rd/2))+(dir==='z'?pitch*k:0);
       if(ox>rw+2||oz>rd+2) break;
       buildObject(group,o,kind||'box',rx+ox,rz+oz,baseY+(+o.y||0),fkey,nm,i*1000+k);
     }
@@ -1156,6 +1168,9 @@ function acsRenderLevel(lvl, position){
 }
 
 function compile(data){
+  // Explicit flights are validated before allocating/replacing scene geometry.
+  // A stale connection must fail closed, not fall into ARCH's legacy fallback.
+  const physicalStairs=hasStairForms(data)?stairConnections(data):[];
   OBJ_UNKNOWN=[]; acsBuildDefectsReset();
   const grp=new THREE.Group(); grp.name='BUILDING';
   const site=data.site||{w:30,d:25};
@@ -1219,7 +1234,7 @@ function compile(data){
              `FLOOR|${fkey}|slab|${k}`,true));
     acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,
                'ROOMS_CAPPED','level.rooms')
-      .forEach(r=>buildRoom(grp,r,fkey,baseY,def));
+      .forEach(r=>buildRoom(grp,r,fkey,baseY,{...def,holes,ceilingHoles:physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening)}));
   });
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */

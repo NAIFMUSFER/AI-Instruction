@@ -150,6 +150,11 @@ def _require_traceable_approved_nested_elements(building: dict) -> None:
 
 def _require_explicit_object_geometry(building: dict) -> None:
     """Prevent approved 3D from inventing shared room.objects geometry."""
+    from acs_stairs import stair_connections
+    try:
+        stair_connections(building)
+    except ValueError as exc:
+        raise PlanError(str(exc), 'Approved stair connection does not match its canonical levels and geometry') from exc
     floors = building.get("floors")
     if not isinstance(floors, dict):
         return  # PlanWorkspace owns the top-level model contract.

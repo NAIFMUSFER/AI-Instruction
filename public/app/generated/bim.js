@@ -144,6 +144,7 @@ function bxBuildExchange(project,options){
   const byTemplate={};
   _bxRooms(model).forEach(pr=>{
     (byTemplate[pr[0]]=byTemplate[pr[0]]||[]).push(pr[1]); });
+  const exportIssues=[];
   levels.forEach(lv=>{
     const idx=lv.index;
     const elev=_bxQ((lv.elevation!==null&&lv.elevation!==undefined)
@@ -186,11 +187,19 @@ function bxBuildExchange(project,options){
       (r.objects||[]).forEach((ob,j)=>{
         const kind=String(ob.kind||'');
         const oid=bid+'.flr_'+idx+'.'+lv.template+'.'+r.id+'.obj_'+(ob.id||j);
-        if(kind.toLowerCase()==='stairs'||kind.toLowerCase()==='stair')
+        if(kind.toLowerCase()==='stairs'||kind.toLowerCase()==='stair'){
+          // Match the Python boundary: no declared physical form can fall back
+          // to the legacy prism. Accumulate failures beyond nested forEach calls.
+          if(Object.prototype.hasOwnProperty.call(ob,'form')){
+            exportIssues.push(bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',oid,
+              'تصدير IFC الكامل لا يدعم هذا الدرج وفتحات البلاطات بعد. '+
+              'استخدم تصدير حدود الفراغات فقط (SPACES_ONLY).'));
+            return;
+          }
           ex.stairs.push({canonical_id:oid,level_index:idx,elevation:elev,
             x:_bxQ(x+(_bxNum(ob.x)||0)),z:_bxQ(z+(_bxNum(ob.z)||0)),
             w:_bxQ(_bxNum(ob.w)||1.2),d:_bxQ(_bxNum(ob.d)||2.4),space_id:sid});
-        else ex.unsupported.push({canonical_id:oid,kind:kind,space_id:sid,
+        }else ex.unsupported.push({canonical_id:oid,kind:kind,space_id:sid,
           reason:'no declared IFC mapping for this object kind'}); }); });
     if(scope!=='SPACES_ONLY'&&scope!=='ENVELOPE_ONLY'){
       const xs=[],zs=[];
@@ -203,6 +212,7 @@ function bxBuildExchange(project,options){
         ex.slabs.push({canonical_id:bid+'.flr_'+idx+'.slab',level_index:idx,
           elevation:elev,outline:[_bxQ(mnx),_bxQ(mnz),_bxQ(mxx-mnx),_bxQ(mxz-mnz)],
           thickness:null,thickness_known:false,predefined_type:'FLOOR'}); } } });
+  if(exportIssues.length) return {valid:false,issues:exportIssues,exchange:null};
   ex.unsupported.forEach(u=>{ ex.losses.push({entity_id:u.canonical_id,
     type:'UNSUPPORTED_ENTITY',severity:'WARNING',message:u.reason}); });
   if(wallT===null&&ex.walls.length)
@@ -545,12 +555,13 @@ function bxAudit(event,payload){
 /* ============================ لوحة التبادل داخل مساحة العمل (§38-§42) ==== */
 const BX = (function(){
   const S={project:null,staging:null,diff:null,proposals:null,report:null,
-           manifest:null,view:'SUMMARY'};
+           manifest:null,exportIssues:[],view:'SUMMARY'};
   const $=id=>(typeof document!=='undefined')?document.getElementById(id):null;
   const esc=s=>String(s===null||s===undefined?'':s).replace(/&/g,'&amp;')
     .replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
     .replace(/'/g,'&#39;');
-  function attach(project){ S.project=project; return S; }
+  function attach(project){
+    S.project=project; S.manifest=null; S.exportIssues=[]; return S; }
   function state(){ return S; }
   function open(){ const p=$('bxPanel'); if(p) p.classList.add('on'); render();
     return true; }
@@ -559,17 +570,25 @@ const BX = (function(){
     S.staging=staging; S.diff=null; S.proposals=null; S.view='IMPORT'; render();
     return staging; }
   function exportBim(){
-    if(!S.project) return null;
+    S.manifest=null; S.exportIssues=[]; S.view='EXPORT';
+    if(!S.project){ render(); return null; }
     const before=S.project.model_hash;
-    const built=bxBuildExchange(S.project,{});
-    if(!built.valid){ S.view='EXPORT'; render(); return built; }
-    const issues=bxValidateExchange(built.exchange);
-    S.manifest=bxExportDescriptor(S.project,built.exchange,null,null);
-    S.manifest.warnings=issues.filter(i=>!i.blocking);
-    S.view='EXPORT'; render();
+    try{
+      const built=bxBuildExchange(S.project,{});
+      S.exportIssues=built.valid?bxValidateExchange(built.exchange):built.issues;
+      if(built.valid&&!S.exportIssues.some(i=>i.blocking)){
+        S.manifest=bxExportDescriptor(S.project,built.exchange,null,null);
+        S.manifest.warnings=S.exportIssues.filter(i=>!i.blocking);
+      }
+    }catch(error){
+      S.manifest=null;
+      S.exportIssues=[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',null,
+        'تعذّر تجهيز IFC بسبب بيانات غير مدعومة. راجع عناصر النموذج ثم أعد المحاولة.')];
+    }
+    render();
     if(S.project.model_hash!==before)
       throw new Error('an export changed the engineering model');
-    return {valid:!issues.some(i=>i.blocking),issues:issues,manifest:S.manifest}; }
+    return {valid:!!S.manifest,issues:S.exportIssues,manifest:S.manifest}; }
   function compare(){
     if(!S.project||!S.staging) return null;
     const before=S.project.model_hash;
@@ -641,6 +660,12 @@ const BX = (function(){
             '<span class="s">'+esc(e.support)+'</span></div>').join('')+
         '</div>'+
         '<div class="bx-note">'+esc(ACS_BIM_SPEC.staging_preview_note)+'</div></div>');
+    }
+    if(S.exportIssues.some(i=>i.blocking)){
+      p.push('<div class="bx-sec" data-bx-section="EXPORT_ERRORS" role="alert" dir="rtl">'+
+        '<h4>تعذّر تصدير IFC</h4>'+S.exportIssues.filter(i=>i.blocking).slice(0,32).map(i=>
+          '<div class="bx-item">'+row('العنصر',i.entity_id||'النموذج')+
+          '<div class="t">'+esc(i.message)+'</div>'+row('رمز المشكلة',i.code)+'</div>').join('')+'</div>');
     }
     if(S.manifest){
       const m=S.manifest;
