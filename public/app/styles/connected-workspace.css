@@ -137,3 +137,8 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 .av-labels{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .av-label{position:absolute;inset-block-start:0;left:0;max-width:16ch;padding:2px 7px;border-radius:999px;background:#0f2a3dd9;color:#f4fbff;font-size:11px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px #0b1f2c40;will-change:transform}
 .av-label[hidden]{display:none}
+.av-more{flex:1 0 100%;margin:0}
+.av-more summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-size:13px;color:#cfeaf6}
+.av-more-body{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding-block-start:4px}
+.av-more-body input[type=range]{width:150px;min-height:44px;accent-color:#b9f0fc}
+.av-toolbar button:disabled{opacity:.5}

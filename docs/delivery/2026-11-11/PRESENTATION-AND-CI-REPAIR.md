@@ -58,3 +58,22 @@ In every case the product behaviour introduced by #188 was the intended one and 
 - `tools/check_doc_claims.py` reports the status block as stale (module graph documented 43, actual 45).
 - GitHub CI results for PR #188/#189, the live Netlify/Render commit, the production database identity, and the Google sign-in 503 reported on 10 November were not checked in this increment.
 - Visual quality is still limited by what the compiler emits: no roof, no parapets, no window frames or sills, no stair geometry. Those need canonical/compiler work with parity tests, not viewer changes.
+
+## 4. Second increment, same day: dressing of approved openings, assumed roof, sun, tour
+
+Prompted by the owner's reference video (an interactive courtyard scene with detailed umbrellas, columns, paving, visitors, view modes and an automatic tour). That scene is a single hand-authored showcase; ACS renders whatever the canonical model contains. This increment closes part of the gap inside the viewer and states what it cannot close.
+
+Added to `approved-viewer.mjs`, all presentation-only, instanced, never selectable, counted or exported:
+- frames, mullions, transoms and sills around approved windows; frames, a rail and a handle on approved doors; frames and sectional ribs on large (dock) doors. Only flat, axis-aligned openings that exist in the artifact are dressed;
+- an **assumed** flat roof over the top floor plate, on by default, hidden in aerial and cutaway views, removable with one toggle, and described in the evidence panel as not part of the approved revision;
+- two translucent human scale figures beside the detected entrance; one room lamp used only by the interior view;
+- a sun control (06:00–18:00). The artifact declares no north, so the panel states that shadows are not a solar study;
+- an automatic tour through the six views that stops on any pointer, key or view choice;
+- secondary controls moved into a collapsed "خيارات العرض" group so the toolbar stays short on a phone.
+
+The browser test additionally asserts: dressing exists, the assumed roof is disclosed and never covers plan-like views, the roof toggle works, the sun control re-renders once, the tour ends on a view choice, and no toggle changes the approved mesh count.
+
+Measured in the same 1-core software-rendering sandbox: 21 to 23 of 24 transitions under 2 s across three runs; slowest 3.3 s.
+
+### Gap to the reference video that the viewer cannot close
+The reference shows authored components: parametric umbrellas, columns with capitals, patterned paving, railings, lamps, animated visitors, minarets and arcades. ACS has no equivalent elements in its canonical model or compiler. Reaching or exceeding that level for generated buildings requires new canonical element types with compiler geometry and Python/browser parity tests (roof and parapet, stairs with treads and landings, columns, railings, shading devices, site paving and landscape), plus a material library with world-scale texture coordinates. None of that is delivered here.
