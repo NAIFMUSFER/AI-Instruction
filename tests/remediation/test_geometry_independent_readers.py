@@ -7,6 +7,7 @@ The declared 2D CAD projection maps canonical Z to negative CAD Y.
 import json,tempfile,unittest,sys
 from pathlib import Path
 import ifcopenshell, ifcopenshell.geom, ifcopenshell.validate
+import ifcopenshell.util.element
 import ezdxf
 from tools.generate_delivery_fixtures import main as generate, fixtures
 
@@ -102,19 +103,46 @@ class IndependentGeometryReaders(unittest.TestCase):
         self.assertTrue(ws.review(rev.id)['can_approve'])
         ws.approve(rev.id,expected_head=rev.id,confirmed=True,acknowledge_concept_only=True,actor_label='synthetic-reader')
         out=self.root/'roof-reader';out.mkdir()
-        export_approved_ifc(ws,rev.id,out/'roof.ifc')
+        receipt=export_approved_ifc(ws,rev.id,out/'roof.ifc')
         export_approved_cad(ws,rev.id,roof['index'],out/'roof.dxf')
         export_approved_pdf(ws,rev.id,out/'roof.pdf')
         compile_approved_baseline(ws,rev.id,out/'roof.gltf')
         f=ifcopenshell.open(str(out/'roof.ifc'))
         logger=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(f,logger)
         self.assertEqual(logger.statements,[])
-        spaces=[s for s in f.by_type('IfcSpace') if s.LongName.startswith('declared_deck_')]
+        from test_stair_ifc_reader import physical_ifc_id
+        self.assertEqual(len(f.by_type('IfcBuildingStorey')),len(base['levels']))
+        self.assertEqual(len(f.by_type('IfcSpace')),sum(len(base['floors'][l['template']]['rooms']) for l in base['levels']))
+        self.assertEqual(len(f.by_type('IfcRoof')),0)
+        self.assertEqual(len(f.by_type('IfcElementQuantity')),0)
+        self.assertEqual(receipt['ifc_content_scope'],'SPACES_AND_UNOCCUPIED_ROOF_REFERENCES')
+        self.assertEqual(receipt['ifc_manifest']['level_count'],len(base['levels']))
+        self.assertEqual(receipt['ifc_manifest']['roof_level_count'],1)
+        self.assertEqual(receipt['ifc_manifest']['roof_reference_count'],len(rooms))
+        spaces=list(f.by_type('IfcSpatialZone'))
         self.assertEqual(len(spaces),len(rooms))
+        relations=f.by_type('IfcRelReferencedInSpatialStructure')
+        self.assertEqual(len(relations),1)
+        self.assertTrue(relations[0].RelatingStructure.is_a('IfcBuilding'))
+        self.assertEqual({s.GlobalId for s in relations[0].RelatedElements},{s.GlobalId for s in spaces})
+        contained={s.GlobalId for rel in f.by_type('IfcRelContainedInSpatialStructure') for s in rel.RelatedElements}
         settings=ifcopenshell.geom.settings();settings.set(settings.USE_WORLD_COORDS,True)
         for space in spaces:
             shape=ifcopenshell.geom.create_shape(settings,space);v=shape.geometry.verts
             room=next(r for r in rooms if r['id']==space.LongName);x,z,w,d=room['rect']
+            source='bld_0.flr_%s.%s.%s'%(roof['index'],roof['template'],room['id'])
+            self.assertEqual(space.GlobalId,physical_ifc_id(rev.model_hash,source))
+            self.assertNotIn(space.GlobalId,contained)
+            self.assertEqual(space.PredefinedType,'USERDEFINED')
+            self.assertEqual(space.ObjectType,'ACS_UNOCCUPIED_ROOF_REFERENCE')
+            props=ifcopenshell.util.element.get_psets(space)['ACS_RoofReference']
+            self.assertEqual(props['LevelKind'],'roof')
+            self.assertIs(props['IsOccupied'],False)
+            self.assertIs(props['CountsInFloorArea'],False)
+            self.assertEqual(props['ReferenceGeometry'],'EXTRUDED_REFERENCE_EXTENT')
+            self.assertIs(props['CanonicalHeightDeclared'],True)
+            self.assertEqual(props['CanonicalId'],source)
+            self.assertEqual(props['CanonicalLevelId'],'bld_0.flr_'+str(roof['index']))
             expected=((x,x+w),(z,z+d),(roof['elevation'],roof['elevation']+.9))
             for axis,(low,high) in enumerate(expected):
                 self.assertAlmostEqual(min(v[axis::3]),low,places=6)
@@ -131,6 +159,58 @@ class IndependentGeometryReaders(unittest.TestCase):
         projection=project(rev.revision,roof['index']);self.assertEqual(projection['level_kind'],'roof');self.assertFalse(projection['level_auto'])
         gltf=json.loads((out/'roof.gltf').read_text());metadata=gltf['scenes'][0]['extras']['acs_levels']
         self.assertEqual([l['index'] for l in metadata if l['kind']=='roof'],[roof['index']])
+        self.assertEqual(ws.get(rev.id).model_hash,rev.model_hash)
+
+    def test_zero_parapet_roof_preserves_a_planar_reference_without_invented_height(self):
+        import acs_roof
+        from acs_plan_lock_binding import PlanLockWorkspace
+        from acs_plan_bridge import existing_geometry_verifier
+        from acs_plan_review import canonical
+        from tools.acs_plan_ifc_export import export_approved_ifc
+        from test_stair_ifc_reader import physical_ifc_id
+        base=fixtures()['villa']; model,report=acs_roof.add_flat_roof_level(base,parapet_h=0)
+        roof=model['levels'][-1]; rooms=model['floors'][roof['template']]['rooms']
+        self.assertEqual(report['parapet_height_m'],0)
+        self.assertTrue(all('wall_h' not in r and r['walls']=='none' for r in rooms))
+        self.assertGreaterEqual(len(rooms),2)
+        # Exercise an explicitly declared zero beside the helper's legacy
+        # absent-height footprint. Both stay planar; only one declares height.
+        rooms[0]['wall_h']=0
+        before=canonical(model)
+        area=sum(r['rect'][2]*r['rect'][3] for l in base['levels'] for r in base['floors'][l['template']]['rooms'])
+        ws=PlanLockWorkspace(existing_geometry_verifier)
+        rev=ws.propose(model,brief=f'Synthetic area {area}',requirements=[{'id':'area','metric':'building_target_area_m2','expected':area,'source':'requested','evidence':str(area)}],expected_head=None,note='Zero-parapet reference acceptance')
+        self.assertTrue(ws.review(rev.id)['can_approve'])
+        ws.approve(rev.id,expected_head=rev.id,confirmed=True,acknowledge_concept_only=True,actor_label='synthetic-reader')
+        path=self.root/'zero-parapet.ifc'; receipt=export_approved_ifc(ws,rev.id,path)
+        parsed=ifcopenshell.open(str(path))
+        logger=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(parsed,logger)
+        self.assertEqual(logger.statements,[])
+        self.assertEqual(len(parsed.by_type('IfcBuildingStorey')),len(base['levels']))
+        zones=parsed.by_type('IfcSpatialZone');self.assertEqual(len(zones),len(rooms))
+        self.assertEqual(len(parsed.by_type('IfcFaceBasedSurfaceModel')),len(rooms))
+        self.assertEqual(receipt['ifc_manifest']['roof_reference_count'],len(rooms))
+        settings=ifcopenshell.geom.settings();settings.set(settings.USE_WORLD_COORDS,True)
+        for zone in zones:
+            room=next(r for r in rooms if r['id']==zone.LongName);x,z,w,d=room['rect']
+            self.assertEqual(zone.GlobalId,physical_ifc_id(rev.model_hash,'bld_0.flr_%s.%s.%s'%(roof['index'],roof['template'],room['id'])))
+            self.assertEqual(zone.Representation.Representations[0].RepresentationType,'SurfaceModel')
+            props=ifcopenshell.util.element.get_psets(zone)['ACS_RoofReference']
+            self.assertEqual(props['ReferenceGeometry'],'FOOTPRINT_SURFACE')
+            self.assertIs(props['CanonicalHeightDeclared'],'wall_h' in room)
+            self.assertIs(props['IsOccupied'],False)
+            self.assertIs(props['CountsInFloorArea'],False)
+            source='bld_0.flr_%s.%s.%s'%(roof['index'],roof['template'],room['id'])
+            metadata=next(r for r in receipt['roof_reference_metadata'] if r['canonical_id']==source)
+            self.assertEqual(metadata['reference_geometry'],'FOOTPRINT_SURFACE')
+            self.assertIs(metadata['canonical_height_declared'],'wall_h' in room)
+            self.assertEqual(receipt['roof_reference_height_policy'],'REFERENCE_EXTENT_ONLY_NOT_STRUCTURAL')
+            shape=ifcopenshell.geom.create_shape(settings,zone);vertices=shape.geometry.verts
+            self.assertTrue(vertices)
+            for axis,(low,high) in enumerate(((x,x+w),(z,z+d),(roof['elevation'],roof['elevation']))):
+                self.assertAlmostEqual(min(vertices[axis::3]),low,places=6)
+                self.assertAlmostEqual(max(vertices[axis::3]),high,places=6)
+        self.assertEqual(canonical(ws.get(rev.id).model),before)
         self.assertEqual(ws.get(rev.id).model_hash,rev.model_hash)
 
     def test_dxf_boundaries_match_declared_rectangles(self):

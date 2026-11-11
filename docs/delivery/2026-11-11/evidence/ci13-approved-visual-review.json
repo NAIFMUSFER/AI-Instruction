@@ -1,0 +1,2531 @@
+{
+  "schema": "acs.approved-viewer-visual-review/1",
+  "reviewed_at_utc": "2026-11-11T18:20:19.302897+00:00",
+  "reviewer": "frontend specialist agent",
+  "head_sha": "ad45ef1992c85a4aa5309cd1adc12c265d55fff1",
+  "artifact_id": 13879964172,
+  "artifact_zip_sha256": "a7e19a390c76130f3d401ed7b48d770aa72ac88e17f893053fa04cb0ee640f61",
+  "visual_evidence_sha256": "736975d6fefaa5df95f6477bce94299464715ac9d84d0b848199ea662eeafe62",
+  "scope": "Read-only review of all 24 EXISTING approved-viewer residential/warehouse CI13 images and actual metadata. The 14 new stair images are outside this review and assigned to integration owner. No source edits, provider calls, deployment checks or physical-device tests performed here.",
+  "summary_ar": "الهندسة ظاهرة في جميع الصور الأربع والعشرين والزوايا الست مفيدة. تبقى تداخلات البطاقات مع رفوف وأبواب وعتبات على الهاتف. العرض الأول وتبديل الزوايا ضمن الأهداف المقاسة؛ سلاسة الحركة غير متحققة.",
+  "budgets": {
+    "first_view_ms": 3000,
+    "desktop_frame_p95_ms": 20,
+    "mobile_frame_p95_ms": 33,
+    "transition_timeout_ms": 2000,
+    "transition_stall_ms": 10000,
+    "idle_additional_render_calls": 0
+  },
+  "measurements": [
+    {
+      "fixture": "residential",
+      "revision": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+      "model_hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1121.40257,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "maximum_preset_ms": 1041.2453679999999,
+      "mesh_count": 67,
+      "triangle_count": 804,
+      "quality": "اقتصادي",
+      "quality_reason": "reported software renderer; canonical geometry unchanged",
+      "animated_transitions": false,
+      "roof_source": "artifact",
+      "presentation_roof_pieces": 0
+    },
+    {
+      "fixture": "warehouse",
+      "revision": "plan_92afb79d958a4bb09e09e106fa1637f9",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1061.373184,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "maximum_preset_ms": 516.3881509999992,
+      "mesh_count": 72,
+      "triangle_count": 864,
+      "quality": "اقتصادي",
+      "quality_reason": "reported software renderer; canonical geometry unchanged",
+      "animated_transitions": false,
+      "roof_source": "assumed",
+      "presentation_roof_pieces": 2
+    },
+    {
+      "fixture": "residential",
+      "revision": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+      "model_hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1179.2457799999975,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "maximum_preset_ms": 520.4021360000042,
+      "mesh_count": 67,
+      "triangle_count": 804,
+      "quality": "اقتصادي",
+      "quality_reason": "reported software renderer; canonical geometry unchanged",
+      "animated_transitions": false,
+      "roof_source": "artifact",
+      "presentation_roof_pieces": 0
+    },
+    {
+      "fixture": "warehouse",
+      "revision": "plan_92afb79d958a4bb09e09e106fa1637f9",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1051.4322079999984,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "maximum_preset_ms": 221.44846599999437,
+      "mesh_count": 72,
+      "triangle_count": 864,
+      "quality": "اقتصادي",
+      "quality_reason": "reported software renderer; canonical geometry unchanged",
+      "animated_transitions": false,
+      "roof_source": "assumed",
+      "presentation_roof_pieces": 2
+    }
+  ],
+  "fixtures": [
+    {
+      "kind": "residential",
+      "revision": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+      "model_hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+      "artifact_file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential.gltf",
+      "artifact_sha256": "562d16ad199757632c915451a52f6ba305a65af21499c08b6bb125d6bacf82a4",
+      "artifact_bytes": 135634,
+      "receipt_sha256_match": true,
+      "provider_calls": 0,
+      "approval_scope": "CONCEPTUAL_DESIGN_ONLY",
+      "canonical_roof": {
+        "schema": "acs.roof/1",
+        "form": "flat",
+        "source": "system_default",
+        "level_index": 2,
+        "template": "roof",
+        "elevation_m": 8.4,
+        "parapet_height_m": 0.9,
+        "parapet_length_m": 40.0,
+        "deck_area_m2": 96.0,
+        "parapet_gaps": [],
+        "occupied_floor": false,
+        "not_verified": [
+          "structure",
+          "drainage",
+          "waterproofing",
+          "roof access",
+          "code compliance"
+        ]
+      }
+    },
+    {
+      "kind": "warehouse",
+      "revision": "plan_92afb79d958a4bb09e09e106fa1637f9",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "artifact_file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse.gltf",
+      "artifact_sha256": "8f64ecb865c64eeae2939f0ed9f4405b6823e39e824562b894693112de798024",
+      "artifact_bytes": 146213,
+      "receipt_sha256_match": true,
+      "provider_calls": 0,
+      "approval_scope": "CONCEPTUAL_DESIGN_ONLY",
+      "canonical_roof": null
+    }
+  ],
+  "performance_interpretation": "Observed first views 1.051432–1.179246 seconds meet the 3 second target; maximum observed preset 1.041245 seconds meets the hard 2 second transition gate on reported 4 logical cores. All use HeadlessChrome 151 Linux with ANGLE SwiftShader, economy quality and animatedTransitions=false. Each case has one frame sample and frame_p95_ms=null, with targets_met.frame_p95=false. Desktop 20 ms / mobile 33 ms smoothness is NOT VERIFIED, not PASS. CPU/render submission and still screenshots do not establish GPU frame completion or continuous interaction speed.",
+  "identity_interpretation": "All24 captured stats match their current fixture revision/model hash and mesh/triangle totals. Artifact file digests independently match fixture receipts. This is metadata/artifact consistency, not independent proof of every rendered surface or arbitrary AI quality.",
+  "roof_interpretation": "Residential uses the canonical artifact roof: 8 visible roof meshes in exterior/street/interior/detail and 0 in aerial/cutaway; presentation roofPieces=0. Warehouse uses 2 assumed presentation roof pieces and 0 canonical roof meshes; the assumed roof is hidden in aerial/cutaway. The disclosure section is collapsed in these captures, so the full provenance explanation is not visible in the screenshots alone.",
+  "limitations": [
+    "Screenshots capture the approved-viewer component, not the entire private-project journey: 1220x761 desktop and 369x822 mobile component images inside reported 1440x900 / 393x852 browser viewports.",
+    "Mobile overlays obscure portions of rear racks, roof/facade, selected door heads, thresholds and dock/cutaway edges. Controls wrap without visible horizontal overflow but use substantial height; render area is about 400 pixels tall.",
+    "The existing residential fixture still has an empty stairs-labelled room and upper exterior door without visible access structure; this fixture does not prove physical circulation. New stair captures are reviewed separately.",
+    "Room labels use fixture English names, and all-floor exterior labels do not identify each repeated level explicitly. Selected inspector IDs do contain the level.",
+    "Materials/furnishings/context remain simplified. No claim that the courtyard reference level of detail or photorealism has been attained.",
+    "These are deterministic synthetic approved fixtures with zero provider calls and conceptual approval, not evidence of fresh live AI output, structural adequacy, code compliance or permit readiness.",
+    "Still-image review does not re-execute keyboard/touch, revision race, context-loss or disposal assertions. Physical iPhone/mobile hardware was not available; desktop viewport emulation only.",
+    "No Step 4c material-library implementation is present or claimed. These economy captures do not validate future balanced-mode procedural materials."
+  ],
+  "contact_sheets": [
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/approved-contacts/residential-1440.jpg",
+      "sha256": "e65fccae1ac4dab2a31ad4debae9a34534a9ef851131e81bb35a9e8c4ac7396d"
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/approved-contacts/residential-393.jpg",
+      "sha256": "8fc636b5cc3d29e66d0480a6cb84563d9a327adbadf45678e53a80a5d0a1a73c"
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/approved-contacts/warehouse-1440.jpg",
+      "sha256": "0768135c8aaed40390acad9f7cea11b9de607da38bb398283f5e684360205cf3"
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/approved-contacts/warehouse-393.jpg",
+      "sha256": "e9f2c876c78e45a9899e9910425e881bc44fb4f9b49719b26ef876949b53d0ca"
+    }
+  ],
+  "views": [
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-1440-exterior.png",
+      "sha256": "a76111382b0ca6efc056b702fa9b5c0331981e706718692c4c11a6df4500fd20",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "exterior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Two occupied storeys, roof/parapet, facade doors and windows are visible. Labels float over the upper/roof surfaces; the stairs room label is not physical stair evidence.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "exterior",
+        "transition_ms": 1041.2453679999999,
+        "active_frame_intervals_ms": [
+          516.7000000000003
+        ],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 5,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            516.7000000000003
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            -8.553519173846844,
+            13.449097265458331,
+            -13.748194156152454
+          ],
+          "target": [
+            6.000000189989805,
+            4.575000092387199,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 67,
+          "view": "exterior",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              9.300000190734863,
+              8.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "residential-1440-exterior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-1440-aerial.png",
+      "sha256": "e2bccf119c7156d9500b9867ff9881b3a0eafdde45d535fbc3c11591e23b3939",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "aerial",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Roof-hidden plan shows two spaces, dividing wall, connecting doorway and table. The space labelled stairs is empty of visible treads in this existing fixture.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "aerial",
+        "transition_ms": 34.83555500000057,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 6,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            516.7000000000003
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            6.000000189989805,
+            21.222524842342697,
+            3.5005744474911276
+          ],
+          "target": [
+            6.000000189989805,
+            4.575000092387199,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 59,
+          "view": "aerial",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              9.300000190734863,
+              8.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "residential-1440-aerial.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-1440-street.png",
+      "sha256": "27376eb4fb3ab8a55b1bfdab41c86c835e5500775f6d9d221d31facd92a5d0f8",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "street",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Eye-level facade and roof edge are visible. The upper exterior door has no visible balcony or external access structure; no circulation safety is established.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "street",
+        "transition_ms": 36.739878999999746,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 7,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            516.7000000000003
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            -4.966374826192837,
+            1.4999999940395372,
+            -22.110416515206957
+          ],
+          "target": [
+            6.000000189989805,
+            1.4999999940395354,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 67,
+          "view": "street",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              9.300000190734863,
+              8.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "residential-1440-street.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-1440-interior.png",
+      "sha256": "8bc6472373f0a7d7f017e4d29561ca83a730431919fddbd24b74489504231ba4",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "interior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Walls, door, table and ceiling light are visible with useful exposure. The room is sparse and a ceiling highlight is pronounced.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "interior",
+        "transition_ms": 12.777117999999973,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 8,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            516.7000000000003
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            1.212000059783458,
+            1.6000000000000008,
+            1.2120000597834588
+          ],
+          "target": [
+            5.672800268113612,
+            1.45,
+            5.672800268113612
+          ],
+          "visibleMeshCount": 67,
+          "view": "interior",
+          "framedBounds": null,
+          "aspect": 2.3371647509578546,
+          "fov": 64
+        },
+        "screenshot": "residential-1440-interior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-1440-cutaway.png",
+      "sha256": "8e2295fa642cf01395606157545287e3e4eef04de3f9e26e6b10e61d0d0928d4",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "cutaway",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Floor plan, low walls, internal door and table remain readable. The stairs-labelled room has no physical stairs in this existing fixture.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "cutaway",
+        "transition_ms": 24.29467399999976,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 9,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            516.7000000000003
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            -1.3141292830102973,
+            16.853621045150874,
+            -6.0772448616992225
+          ],
+          "target": [
+            6.000000189989806,
+            0.5999999940395355,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 59,
+          "view": "cutaway",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              1.3499999940395355,
+              8.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "residential-1440-cutaway.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-1440-detail.png",
+      "sha256": "3549d5225d900777b2a96e333f8201660ed39e9b66f47a41e03c376d7386a4c6",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "detail",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Entrance door/frame and cyan selection outline are visible. Inspector identifies the ground-floor living-room door and the current revision.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "detail",
+        "transition_ms": 36.08021400000143,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 10,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            516.7000000000003
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 1,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            3.4471232744284546,
+            1.6528767494134027,
+            -3.4554795348221536
+          ],
+          "target": [
+            4,
+            1.100000023841858,
+            0
+          ],
+          "visibleMeshCount": 67,
+          "view": "detail",
+          "framedBounds": {
+            "min": [
+              3.4000000953674316,
+              0,
+              -0.02500000037252903
+            ],
+            "max": [
+              4.599999904632568,
+              2.200000047683716,
+              0.02500000037252903
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "residential-1440-detail.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-1440-exterior.png",
+      "sha256": "098a9e1a81be3e9e12f2fa2c0857e08f39b1dad1a0ce26f26b6c1eb2c13d40da",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "exterior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Full warehouse mass, two loading doors/docks and colored walls are visible under the assumed presentation roof.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "exterior",
+        "transition_ms": 516.3881509999992,
+        "active_frame_intervals_ms": [
+          450.00000000000045
+        ],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 5,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            450.00000000000045
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            36.329845853602336,
+            16.427422924193465,
+            -12.913973410575064
+          ],
+          "target": [
+            10.824999999254942,
+            3.6749999970197678,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "exterior",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              7.5,
+              16.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "warehouse-1440-exterior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-1440-aerial.png",
+      "sha256": "b04ee0e0d920bc1b3fabf9c66f2e5c138db3b259ca3ce31414dfb7f24d49965d",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "aerial",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Full footprint is framed, with open storage/dispatch zones, two rack rows, yellow lane and dock openings. No separating wall blocks the operational zones.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "aerial",
+        "transition_ms": 30.77136099999916,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 6,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            450.00000000000045
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": false,
+            "roofSource": "assumed",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            11.870740191941614,
+            38.53300641990365,
+            8.000000189989805
+          ],
+          "target": [
+            10.824999999254942,
+            3.6749999970197678,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "aerial",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              7.5,
+              16.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "warehouse-1440-aerial.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-1440-street.png",
+      "sha256": "3be123dd39440dac2087621e3599fdc6221d4ddacc001d958d5aa19141380fa5",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "street",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Eye-level facade shows both loading doors, dock surfaces and simple scale figures; generous ground and sky margins remain.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "street",
+        "transition_ms": 10.798161000002438,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 7,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            450.00000000000045
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            38.73243170937373,
+            1.4999999940395372,
+            -3.721121128260087
+          ],
+          "target": [
+            10.824999999254942,
+            1.4999999940395354,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "street",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              7.5,
+              16.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "warehouse-1440-street.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-1440-interior.png",
+      "sha256": "01ba6b05361b6d563ec9f23440f039a4f196bd2bfc7ff0fee3c560afca7d9668",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "interior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Rack members, box payloads, lane and blue wall are visible. Near racks fill the view and extend beyond the top/right frame.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "interior",
+        "transition_ms": 32.290234000000055,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 8,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            450.00000000000045
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            11.743999999761579,
+            1.5999999999999994,
+            2.492000059783459
+          ],
+          "target": [
+            4.073599998950958,
+            1.45,
+            11.304800268113613
+          ],
+          "visibleMeshCount": 72,
+          "view": "interior",
+          "framedBounds": null,
+          "aspect": 2.3371647509578546,
+          "fov": 64
+        },
+        "screenshot": "warehouse-1440-interior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-1440-cutaway.png",
+      "sha256": "011e3cf6faf694ea2f242775250b51789b993c8c306b0b0c67235d53f5a85280",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "cutaway",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Open plan, racks, lane and front docks can be understood together with the assumed roof hidden.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "cutaway",
+        "transition_ms": 17.86261000000013,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 9,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            450.00000000000045
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": false,
+            "roofSource": "assumed",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            30.34800623351336,
+            32.0887197267144,
+            -6.169923689713885
+          ],
+          "target": [
+            10.824999999254944,
+            0.5999999940395355,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "cutaway",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              1.3499999940395355,
+              16.100000381469727
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "warehouse-1440-cutaway.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-1440-detail.png",
+      "sha256": "12c84cecf9300d1a2ae337ffb8f62cff5d3965c66ff971da5224b22befe1ac26",
+      "png_dimensions": [
+        1220,
+        761
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "view": "detail",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Selected loading door/frame, adjacent door and dock are visible; cyan outline and inspector correspond to the selected ground-floor dispatch opening. This default detail is not a rack-group detail capture.",
+      "overlay_observation": "No major model obstruction observed at contact-sheet scale. The badge and bottom note/inspector remain within the render area; near-interior crops are intentional camera close views.",
+      "captured_metadata": {
+        "view": "detail",
+        "transition_ms": 27.73665699999765,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 10,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            450.00000000000045
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 1,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            26.649621566523674,
+            3.163939355276357,
+            2.9360606685655015
+          ],
+          "target": [
+            20,
+            2.0999999046325684,
+            4.0000001192092896
+          ],
+          "visibleMeshCount": 72,
+          "view": "detail",
+          "framedBounds": {
+            "min": [
+              19.950000762939453,
+              0,
+              2.200000047683716
+            ],
+            "max": [
+              20.049999237060547,
+              4.199999809265137,
+              5.800000190734863
+            ]
+          },
+          "aspect": 2.3371647509578546,
+          "fov": 43
+        },
+        "screenshot": "warehouse-1440-detail.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-393-exterior.png",
+      "sha256": "fbfe6dd9e60bd45f95342b0a030a6c087f3ee73091a018efa331cb0af5668078",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "exterior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Two occupied storeys, roof/parapet, facade doors and windows are visible. Labels float over the upper/roof surfaces; the stairs room label is not physical stair evidence.",
+      "overlay_observation": "Top badge clears most geometry; bottom selection prompt occupies foreground near entry and scale figures.",
+      "captured_metadata": {
+        "view": "exterior",
+        "transition_ms": 520.4021360000042,
+        "active_frame_intervals_ms": [
+          233.30000000000018
+        ],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 5,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            233.30000000000018
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            -8.72949794482524,
+            13.556401394103693,
+            -13.962802413443178
+          ],
+          "target": [
+            6.000000189989805,
+            4.575000092387199,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 67,
+          "view": "exterior",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              9.300000190734863,
+              8.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "residential-393-exterior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-393-aerial.png",
+      "sha256": "81e443fc59b13fbd50ddd968fcae9c296f55f12a80dabc5f00062f6dcae72f62",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "aerial",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Roof-hidden plan shows two spaces, dividing wall, connecting doorway and table. The space labelled stairs is empty of visible treads in this existing fixture.",
+      "overlay_observation": "Plan remains readable without major top-badge obstruction; bottom prompt occupies foreground grid.",
+      "captured_metadata": {
+        "view": "aerial",
+        "transition_ms": 22.73249300000316,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 6,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            233.30000000000018
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            6.000000189989805,
+            28.211316705729455,
+            3.2909106915895197
+          ],
+          "target": [
+            6.000000189989805,
+            4.575000092387199,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 59,
+          "view": "aerial",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              9.300000190734863,
+              8.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "residential-393-aerial.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-393-street.png",
+      "sha256": "129bda2c0f5e87fd35361a5b9448ca7c9fbc328bb98b4d0ea3896aa15216efec",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "street",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Eye-level facade and roof edge are visible. The upper exterior door has no visible balcony or external access structure; no circulation safety is established.",
+      "overlay_observation": "Top revision badge hides part of the roof edge and upper facade.",
+      "captured_metadata": {
+        "view": "street",
+        "transition_ms": 33.72655300000042,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 7,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            233.30000000000018
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            -4.966374826192837,
+            1.4999999940395372,
+            -22.110416515206957
+          ],
+          "target": [
+            6.000000189989805,
+            1.4999999940395354,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 67,
+          "view": "street",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              9.300000190734863,
+              8.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "residential-393-street.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-393-interior.png",
+      "sha256": "c22c9c7f047039bc666a7cd093a2414a5e4a464f9dfe6c459ee9610c6b620e5d",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "interior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Walls, door, table and ceiling light are visible with useful exposure. The room is sparse and a ceiling highlight is pronounced.",
+      "overlay_observation": "Top badge overlaps ceiling/upper wall; bottom navigation warning covers table-leg/floor area.",
+      "captured_metadata": {
+        "view": "interior",
+        "transition_ms": 32.47640899999533,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 8,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            233.30000000000018
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            1.212000059783458,
+            1.6000000000000008,
+            1.2120000597834588
+          ],
+          "target": [
+            5.672800268113612,
+            1.45,
+            5.672800268113612
+          ],
+          "visibleMeshCount": 67,
+          "view": "interior",
+          "framedBounds": null,
+          "aspect": 0.9225,
+          "fov": 64
+        },
+        "screenshot": "residential-393-interior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-393-cutaway.png",
+      "sha256": "592ddf3355218f03dd45e83eeeb03747bf34899c36ca5aae2d53954db379d056",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "cutaway",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Floor plan, low walls, internal door and table remain readable. The stairs-labelled room has no physical stairs in this existing fixture.",
+      "overlay_observation": "Bottom navigation warning covers the front/right cutaway edge; room labels remain visible.",
+      "captured_metadata": {
+        "view": "cutaway",
+        "transition_ms": 31.277151999995112,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 9,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            233.30000000000018
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            -2.3572303416717846,
+            19.17162339773196,
+            -7.514406320299493
+          ],
+          "target": [
+            6.000000189989806,
+            0.5999999940395355,
+            4.000000189989805
+          ],
+          "visibleMeshCount": 59,
+          "view": "cutaway",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              12.100000381469727,
+              1.3499999940395355,
+              8.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "residential-393-cutaway.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/residential-393-detail.png",
+      "sha256": "5294fd2d6ed85d6249c39d4ae7910e0edac915fcf93a34473dcb0b2323fd540d",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "residential",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "detail",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Entrance door/frame and cyan selection outline are visible. Inspector identifies the ground-floor living-room door and the current revision.",
+      "overlay_observation": "Top badge hides the door head and frame; bottom inspector hides lower door and threshold. Handle and central door panel remain visible.",
+      "captured_metadata": {
+        "view": "detail",
+        "transition_ms": 29.620340000001306,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_bcdfa9c584974d0f8629c1ef6cb0e463",
+          "modelHash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+          "meshCount": 67,
+          "triangleCount": 804,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 10,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            233.30000000000018
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 1,
+          "rackGroups": [],
+          "presentation": {
+            "detailInstances": 32,
+            "roofPieces": 0,
+            "assumedRoofShown": false,
+            "roofSource": "artifact",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 744,
+            "edgeLayers": 3,
+            "roomLabels": 4,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": true,
+            "entranceSide": "nz",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 8
+          },
+          "camera": [
+            3.4471232744284546,
+            1.6528767494134027,
+            -3.4554795348221536
+          ],
+          "target": [
+            4,
+            1.100000023841858,
+            0
+          ],
+          "visibleMeshCount": 67,
+          "view": "detail",
+          "framedBounds": {
+            "min": [
+              3.4000000953674316,
+              0,
+              -0.02500000037252903
+            ],
+            "max": [
+              4.599999904632568,
+              2.200000047683716,
+              0.02500000037252903
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "residential-393-detail.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-393-exterior.png",
+      "sha256": "1761ca8853842dd9e589369182c9b5b7cb0c86b877bb84c1cd93c41b802f4bf8",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "exterior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Full warehouse mass, two loading doors/docks and colored walls are visible under the assumed presentation roof.",
+      "overlay_observation": "Building remains visible; bottom selection prompt covers foreground grid.",
+      "captured_metadata": {
+        "view": "exterior",
+        "transition_ms": 221.44846599999437,
+        "active_frame_intervals_ms": [
+          166.5999999999999
+        ],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 5,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            166.5999999999999
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            43.370429966072265,
+            19.94771498042843,
+            -18.68725238280039
+          ],
+          "target": [
+            10.824999999254942,
+            3.6749999970197678,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "exterior",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              7.5,
+              16.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "warehouse-393-exterior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-393-aerial.png",
+      "sha256": "7d57a00be702385ed597b134af8701bee3db4f3c993283eae6b17719c56aca3f",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "aerial",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Full footprint is framed, with open storage/dispatch zones, two rack rows, yellow lane and dock openings. No separating wall blocks the operational zones.",
+      "overlay_observation": "Top revision badge obscures rear rack shelves and upper wall. Bottom prompt abuts/obscures the front-right footprint margin; the main operational layout remains readable.",
+      "captured_metadata": {
+        "view": "aerial",
+        "transition_ms": 28.90492699999595,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 6,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            166.5999999999999
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": false,
+            "roofSource": "assumed",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            11.870740191941614,
+            38.53300641990365,
+            8.000000189989805
+          ],
+          "target": [
+            10.824999999254942,
+            3.6749999970197678,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "aerial",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              7.5,
+              16.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "warehouse-393-aerial.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-393-street.png",
+      "sha256": "554044611a77f2c294eaac1a6e471fca90564d7b868137832b474287c21a3f01",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "street",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Eye-level facade shows both loading doors, dock surfaces and simple scale figures; generous ground and sky margins remain.",
+      "overlay_observation": "Building remains readable, with considerable ground/sky margins; controls occupy substantial component height.",
+      "captured_metadata": {
+        "view": "street",
+        "transition_ms": 30.68944800000463,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 7,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            166.5999999999999
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            50.46363650348881,
+            1.499999994039538,
+            -8.648227141788425
+          ],
+          "target": [
+            10.824999999254942,
+            1.4999999940395354,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "street",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              7.5,
+              16.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "warehouse-393-street.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-393-interior.png",
+      "sha256": "f70bed23f63d8b532a2579e1c3de996a5933384886337c31e6e75e3ef6128cfe",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "interior",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Rack members, box payloads, lane and blue wall are visible. Near racks fill the view and extend beyond the top/right frame.",
+      "overlay_observation": "Top badge hides portions of the upper rack shelf, and the bottom warning covers part of the lane/floor.",
+      "captured_metadata": {
+        "view": "interior",
+        "transition_ms": 35.20177899999544,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 8,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            166.5999999999999
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            11.743999999761579,
+            1.5999999999999994,
+            2.492000059783459
+          ],
+          "target": [
+            4.073599998950958,
+            1.45,
+            11.304800268113613
+          ],
+          "visibleMeshCount": 72,
+          "view": "interior",
+          "framedBounds": null,
+          "aspect": 0.9225,
+          "fov": 64
+        },
+        "screenshot": "warehouse-393-interior.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-393-cutaway.png",
+      "sha256": "100530135a88b3a4107d53f5cbece96ea8b52c2c83b08b8c54c43db03e54b680",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "cutaway",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Open plan, racks, lane and front docks can be understood together with the assumed roof hidden.",
+      "overlay_observation": "Bottom navigation warning obscures front dock/cutaway margins; storage and dispatch labels remain legible.",
+      "captured_metadata": {
+        "view": "cutaway",
+        "transition_ms": 27.586866999998165,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 9,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            166.5999999999999
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 0,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": false,
+            "roofSource": "assumed",
+            "roofShown": false,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            32.01913824920943,
+            34.78409394557904,
+            -7.38284208820297
+          ],
+          "target": [
+            10.824999999254944,
+            0.5999999940395355,
+            8.000000189989805
+          ],
+          "visibleMeshCount": 72,
+          "view": "cutaway",
+          "framedBounds": {
+            "min": [
+              -0.10000000149011612,
+              -0.15000000596046448,
+              -0.10000000149011612
+            ],
+            "max": [
+              21.75,
+              1.3499999940395355,
+              16.100000381469727
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "warehouse-393-cutaway.png"
+      }
+    },
+    {
+      "file": "/workspace/scratch/1843247fed6a/v4-ci13/critical-artifact/approved-viewer/warehouse-393-detail.png",
+      "sha256": "b9edc7113630f5611226db10fe47577d64e2df0a203337b7d0ba32fb8e4cb3cc",
+      "png_dimensions": [
+        369,
+        822
+      ],
+      "fixture": "warehouse",
+      "browser_viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "view": "detail",
+      "visually_inspected": true,
+      "method": "Actual CI13 image inspected in contact sheet; warehouse 393 aerial and residential 393 detail additionally viewed at original size.",
+      "geometry_visible": true,
+      "observation": "Selected loading door/frame, adjacent door and dock are visible; cyan outline and inspector correspond to the selected ground-floor dispatch opening. This default detail is not a rack-group detail capture.",
+      "overlay_observation": "Top badge covers the loading-door head/frame and bottom inspector covers the lower door/dock. Selected element remains identifiable but obstructed.",
+      "captured_metadata": {
+        "view": "detail",
+        "transition_ms": 25.287521999998717,
+        "active_frame_intervals_ms": [],
+        "stats": {
+          "revisionId": "plan_92afb79d958a4bb09e09e106fa1637f9",
+          "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+          "meshCount": 72,
+          "triangleCount": 864,
+          "quality": "اقتصادي",
+          "qualityReason": "reported software renderer; canonical geometry unchanged",
+          "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+          "renderCalls": 10,
+          "activeAnimation": false,
+          "frameIntervalsMs": [
+            166.5999999999999
+          ],
+          "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+          "detailGroupSize": 1,
+          "rackGroups": [
+            {
+              "name": "FURN|F0|storage|rack0r0",
+              "meshCount": 23,
+              "center": [
+                1.5500000417232513,
+                3,
+                8.00000011920929
+              ]
+            },
+            {
+              "name": "FURN|F0|storage|rack0r1",
+              "meshCount": 23,
+              "center": [
+                6.049999952316284,
+                3,
+                8.00000011920929
+              ]
+            }
+          ],
+          "presentation": {
+            "detailInstances": 18,
+            "roofPieces": 2,
+            "assumedRoofShown": true,
+            "roofSource": "assumed",
+            "roofShown": true,
+            "figures": 2,
+            "sunHour": 10,
+            "tour": false,
+            "edgeSegments": 828,
+            "edgeLayers": 1,
+            "roomLabels": 2,
+            "gridCellM": 1,
+            "clippingPlanes": 1,
+            "animatedTransitions": false,
+            "roofInArtifact": false,
+            "entranceSide": "px",
+            "entranceDetected": true,
+            "visibleRoofMeshCount": 0
+          },
+          "camera": [
+            26.649621566523674,
+            3.163939355276357,
+            2.9360606685655015
+          ],
+          "target": [
+            20,
+            2.0999999046325684,
+            4.0000001192092896
+          ],
+          "visibleMeshCount": 72,
+          "view": "detail",
+          "framedBounds": {
+            "min": [
+              19.950000762939453,
+              0,
+              2.200000047683716
+            ],
+            "max": [
+              20.049999237060547,
+              4.199999809265137,
+              5.800000190734863
+            ]
+          },
+          "aspect": 0.9225,
+          "fov": 43
+        },
+        "screenshot": "warehouse-393-detail.png"
+      }
+    }
+  ]
+}

@@ -6,7 +6,9 @@ is exported only after lock-bound conceptual approval.  A hash-bound sidecar
 carries revision, semantic-lock and requirement/source provenance alongside the
 IFC artifact.
 
-The current Plan-first IFC scope is deliberately ``SPACES_ONLY``.  The existing
+The compatibility scope name remains ``SPACES_ONLY``: occupied spaces plus
+explicitly unoccupied roof reference zones (IfcSpatialZone). Roof references
+are not storeys, spaces, physical roof solids or floor-area quantities. The existing
 general BIM exporter can serialize wider building semantics, but some of those
 paths use explicitly disclosed placeholder geometry when a property such as slab
 thickness is absent.  An approved Plan-first artifact must not turn such a
@@ -161,6 +163,10 @@ def export_approved_ifc(
         "schema": SCHEMA,
         "mode": MODE,
         "ifc_scope": IFC_SCOPE,
+        "ifc_content_scope": manifest["content_scope"],
+        "roof_reference_policy": manifest["roof_policy"],
+        "roof_reference_height_policy": manifest["roof_reference_height_policy"],
+        "roof_reference_metadata": json.loads(canonical(manifest["roof_reference_metadata"])),
         "revision_id": revision_id,
         "model_hash": before_hash,
         "content_hash": baseline.get("content_hash"),

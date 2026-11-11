@@ -212,6 +212,41 @@ function _bxOpening(bid,lv,r,op,j,kind,x,z,w,d,elev){
     space_id:bid+'.flr_'+idx+'.'+lv.template+'.'+r.id,
     authoring_space_id:lv.template+'.'+r.id}; }
 
+function _bxRoofNumber(value){
+  return typeof value==='number'&&Number.isFinite(value)?value+0:null;
+}
+function _bxRoofReferences(bid,level,rooms){
+  const lid=bid+'.flr_'+level.index,elevation=_bxRoofNumber(level.elevation);
+  if(elevation===null)return {roof:null,errors:[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',lid,
+    'منسوب مرجع السطح غير محدد. أدخل منسوبًا صريحًا قبل تصدير IFC؛ لن يُفترض ارتفاع.')]};
+  if(!rooms.length)return {roof:null,errors:[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',lid,
+    'مرجع السطح بلا حدود معلنة. أضف حدودًا صريحة قبل تصدير IFC.')]};
+  const references=[],errors=[];
+  rooms.forEach(room=>{
+    const sid=lid+'.'+level.template+'.'+room.id;
+    const rect=Array.isArray(room.rect)&&room.rect.length===4?room.rect.map(_bxRoofNumber):null;
+    let height=_bxRoofNumber(Object.prototype.hasOwnProperty.call(room,'wall_h')?room.wall_h:room.height);
+    const heightDeclared=height!==null;
+    if(!Object.prototype.hasOwnProperty.call(room,'wall_h')&&!Object.prototype.hasOwnProperty.call(room,'height')&&
+        room.walls==='none'&&room.roof_provenance&&room.roof_provenance.source==='system_default')height=0;
+    if(rect===null||rect.some(v=>v===null)||rect[2]<=0||rect[3]<=0||height===null||height<0||
+        ![rect[0]+rect[2],rect[1]+rect[3],elevation+height].every(Number.isFinite)){
+      errors.push(bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',sid,
+        'أبعاد مرجع السطح أو ارتفاعه غير محددة. أكمل القيم الصريحة قبل تصدير IFC؛ لن تُخمن أبعاد.'));
+      return;
+    }
+    references.push({canonical_id:sid,authoring_id:level.template+'.'+room.id,
+      canonical_level_id:lid,name:room.name||String(room.id),number:String(room.id),
+      level_index:level.index,elevation:elevation,height:height,footprint:rect,
+      reference_geometry:height===0?'FOOTPRINT_SURFACE':'EXTRUDED_REFERENCE_EXTENT',
+      canonical_height_declared:heightDeclared,
+      level_kind:'roof',occupied:false,counts_in_floor_area:false});
+  });
+  return {roof:{canonical_id:lid,index:level.index,name:level.name||('Level '+level.index),
+    template:level.template,elevation:elevation,kind:'roof',occupied:false,
+    counts_in_floor_area:false,references:references},errors:errors};
+}
+
 function bxBuildExchange(project,options){
   const o=options||{};
   const model=project.model, bid=project.building_id||'bld_0';
@@ -245,7 +280,7 @@ function bxBuildExchange(project,options){
     site:{canonical_id:'site',name:'Site',
       w:_bxNum(site.w),d:_bxNum(site.d)},
     building:{canonical_id:bid,name:name||bid},
-    levels:[],spaces:[],walls:[],slabs:[],doors:[],windows:[],stairs:[],
+    levels:[],spaces:[],roof_levels:[],roof_references:[],walls:[],slabs:[],doors:[],windows:[],stairs:[],
     unsupported:[],losses:[]};
   const byTemplate={};
   _bxRooms(model).forEach(pr=>{
@@ -253,12 +288,28 @@ function bxBuildExchange(project,options){
   const exportIssues=[];
   levels.forEach(lv=>{
     const idx=lv.index;
+    const rooms=(byTemplate[lv.template]||[]).slice()
+      .sort((a,b)=>_scmp(String(a.id),String(b.id)));
+    if(lv.kind==='roof'){
+      if(scope!=='SPACES_ONLY'||!includeSpaces){
+        exportIssues.push(bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',bid+'.flr_'+idx,
+          'تصدير السطح المعماري الكامل غير مدعوم. اختر SPACES_ONLY مع تضمين الفراغات '+
+          'لتصدير مرجع سطح غير مشغول؛ لن يُحسب دورًا أو مساحة مبنية.'));
+        return;
+      }
+      const result=_bxRoofReferences(bid,lv,rooms);
+      exportIssues.push(...result.errors);
+      if(result.roof){
+        ex.roof_references.push(...result.roof.references);
+        delete result.roof.references;
+        ex.roof_levels.push(result.roof);
+      }
+      return;
+    }
     const elev=coordinate((lv.elevation!==null&&lv.elevation!==undefined)
       ?_bxNum(lv.elevation):(Number(idx||0)*floorH));
     ex.levels.push({canonical_id:bid+'.flr_'+idx,
       name:lv.name||('Level '+idx),index:idx,elevation:elev,template:lv.template});
-    const rooms=(byTemplate[lv.template]||[]).slice()
-      .sort((a,b)=>_scmp(String(a.id),String(b.id)));
     rooms.forEach(r=>{
       const rect=r.rect||[0,0,0,0];
       const x=coordinate(_bxNum(rect[0])||0), z=coordinate(_bxNum(rect[1])||0);
@@ -330,7 +381,10 @@ function bxBuildExchange(project,options){
     levels:(wanted===null)?null:wanted.slice().sort((a,b)=>a-b),
     include_external_metadata:(o.include_external_metadata===undefined)
       ?true:!!o.include_external_metadata,
-    coordinate_policy:ACS_BIM_SPEC.coordinate_policy,schema:ex.schema_version};
+    coordinate_policy:ACS_BIM_SPEC.coordinate_policy,schema:ex.schema_version,
+    content_scope:scope==='SPACES_ONLY'?'SPACES_AND_UNOCCUPIED_ROOF_REFERENCES':scope,
+    roof_policy:'EXPLICIT_ROOF_AS_UNOCCUPIED_REFERENCE_ONLY',
+    roof_reference_height_policy:'REFERENCE_EXTENT_ONLY_NOT_STRUCTURAL'};
   ex.config_hash=_bxSha16(ex.config);
   ex.model_hash=(project.model_hash===undefined)?null:project.model_hash;
   ex.revision_id=(project.current_revision===undefined)?null:project.current_revision;
@@ -339,7 +393,7 @@ function bxBuildExchange(project,options){
 
 function bxValidateExchange(ex){
   const issues=[], seen={};
-  const groups=['levels','spaces','walls','slabs','doors','windows','stairs'];
+  const groups=['levels','spaces','roof_levels','roof_references','walls','slabs','doors','windows','stairs'];
   let total=0;
   groups.forEach(g=>{ (ex[g]||[]).forEach(it=>{
     total++;
@@ -358,7 +412,7 @@ function bxValidateExchange(ex){
   if(total>Number(BX_LIMITS.max_objects))
     issues.push(bxIssue('BIM_RESOURCE_LIMIT_EXCEEDED','ERROR',null,
       'object count exceeds the declared maximum'));
-  if((ex.levels||[]).length>Number(BX_LIMITS.max_levels))
+  if((ex.levels||[]).length+(ex.roof_levels||[]).length>Number(BX_LIMITS.max_levels))
     issues.push(bxIssue('BIM_RESOURCE_LIMIT_EXCEEDED','ERROR',null,
       'level count exceeds the declared maximum'));
   const wallIds={}; (ex.walls||[]).forEach(w=>{ wallIds[w.canonical_id]=true; });
@@ -379,8 +433,13 @@ function bxExportDescriptor(project,ex,serialised,generatedAt){
       s:ex.schema_version}),
     model_hash:ex.model_hash,revision_id:ex.revision_id,schema:ex.schema_version,
     object_count:(ex.walls.length+ex.slabs.length+ex.doors.length+ex.windows.length
-      +ex.stairs.length+ex.spaces.length),
+      +ex.stairs.length+ex.spaces.length+(ex.roof_references||[]).length),
     level_count:ex.levels.length,space_count:ex.spaces.length,
+    roof_level_count:(ex.roof_levels||[]).length,roof_reference_count:(ex.roof_references||[]).length,
+    content_scope:ex.config.content_scope,roof_policy:ex.config.roof_policy,
+    roof_reference_height_policy:ex.config.roof_reference_height_policy,
+    roof_reference_metadata:(ex.roof_references||[]).map(r=>Object.fromEntries(
+      ['canonical_id','canonical_level_id','reference_geometry','canonical_height_declared'].map(k=>[k,r[k]]))),
     wall_count:ex.walls.length,door_count:ex.doors.length,
     window_count:ex.windows.length,slab_count:ex.slabs.length,
     stair_count:ex.stairs.length,

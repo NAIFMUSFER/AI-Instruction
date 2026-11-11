@@ -1,0 +1,165 @@
+{
+  "scope": "Frozen uncommitted roof IFC semantic fix; no deploy, no provider calls; canonical model remains unchanged. Initial red suite had 3 test methods; final 4 methods add serialized repeated/negative bounds. Reader-before uses 2 historical production modules with current shared dependencies, not a historical full checkout. Nonroof comparator compares 27 actual IFC file byte strings, not whole export result/manifest identity.",
+  "temporary_reader_path": "/tmp/acs-roof-ifc-reader",
+  "reader_packages": {
+    "ifcopenshell": "0.9.0.post1",
+    "shapely": "2.2.0",
+    "lark": "1.3.1",
+    "numpy": "2.4.4",
+    "ezdxf": "1.4.4",
+    "pypdf": "6.21.4"
+  },
+  "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+  "shared_boundary_cases": 31,
+  "test_counts": {
+    "new_roof": 4,
+    "stair_reader": 1,
+    "geometry_independent_readers": 5,
+    "legacy_assertions": 526,
+    "stair_boundary": 8,
+    "connected_ifc": 7,
+    "connected_workspace": 34,
+    "precision": 2,
+    "residential_fallback": 7
+  },
+  "source_sha256": {
+    "acs_bim.py": "85fd70161c68e929db63a77628e6bacee6fcbdcbd005413fb156c14855a6cb8c",
+    "tools/build_bim_browser.py": "70b37f5777581741ec507985a43ef4119d73e9915fc6428058bca91764e1be90",
+    "public/app/generated/bim.js": "0edb92f38c669bdd133e821921217e2dc3104eb0dc17c98570904383ca47c311",
+    "tools/acs_plan_ifc_export.py": "3e19a2830e6bdc9975ca8d636306b5a46656af4d2abb9b3df3f4823be7e6cc9a",
+    "tests/remediation/test_roof_ifc_semantics.py": "4770c485f1b6beccfc90f6a0d6cab068a45d147489207dcc1bb698f9438fcda4",
+    "tests/remediation/roof_ifc_exchange_parity.js": "7392475c1e559af2bd52bfc16792aa9dfa93f9a9f7906d6ac002434bf9ef351d",
+    "tests/remediation/test_stair_ifc_reader.py": "9213859c31f7ece7bc5613d6a0bd4cf1f7e543f9ff69ec4c43a3187fbd4e9425",
+    "tests/remediation/test_geometry_independent_readers.py": "0ca2faf3e5460a47ce98c682a2d92fd05c2465005245cd5abbdebd07cb73016f"
+  },
+  "evidence": {
+    "before": {
+      "path": "acs-roof-ifc-before.log",
+      "original_path": "/tmp/acs-roof-ifc-before.log",
+      "original_sha256": "0332320b21ec58f98e4ca63dbe49bd73575a36f4da2076986e46528881cc9530",
+      "sha256": "0332320b21ec58f98e4ca63dbe49bd73575a36f4da2076986e46528881cc9530",
+      "normalization": "none",
+      "original_bytes": 44854,
+      "bytes": 44854
+    },
+    "after": {
+      "path": "acs-roof-ifc-after.log",
+      "original_path": "/tmp/acs-roof-ifc-after.log",
+      "original_sha256": "f652d5e6fd2e5df9a6afbc422e7427d99ec7db4024304c7aef33a30d442fcc35",
+      "sha256": "f652d5e6fd2e5df9a6afbc422e7427d99ec7db4024304c7aef33a30d442fcc35",
+      "normalization": "none",
+      "original_bytes": 102,
+      "bytes": 102
+    },
+    "reader-before": {
+      "path": "acs-roof-ifc-reader-before.log",
+      "original_path": "/tmp/acs-roof-ifc-reader-before.log",
+      "original_sha256": "d5c6f2d82f081c7ffd1a25c175a22dae851c604826756da44ae795c3c22e90b9",
+      "sha256": "d5c6f2d82f081c7ffd1a25c175a22dae851c604826756da44ae795c3c22e90b9",
+      "normalization": "none",
+      "original_bytes": 1269,
+      "bytes": 1269
+    },
+    "stair-reader": {
+      "path": "acs-roof-ifc-stair-reader.log",
+      "original_path": "/tmp/acs-roof-ifc-stair-reader.log",
+      "original_sha256": "060819efe4bc73c243d5a9f95e165676e732300a9203f7a54471866b04bacd75",
+      "sha256": "060819efe4bc73c243d5a9f95e165676e732300a9203f7a54471866b04bacd75",
+      "normalization": "none",
+      "original_bytes": 502,
+      "bytes": 502
+    },
+    "geometry-reader": {
+      "path": "acs-roof-ifc-geometry-reader.log",
+      "original_path": "/tmp/acs-roof-ifc-geometry-reader.log",
+      "original_sha256": "fbd1906e9b475a018c2654e5c3a4748e648c2d0563121c563839ac9058aa0d61",
+      "sha256": "fbd1906e9b475a018c2654e5c3a4748e648c2d0563121c563839ac9058aa0d61",
+      "normalization": "none",
+      "original_bytes": 1160,
+      "bytes": 1160
+    },
+    "nonroof-comparison": {
+      "path": "acs-roof-ifc-nonroof-comparison.log",
+      "original_path": "/tmp/acs-roof-ifc-nonroof-comparison.log",
+      "original_sha256": "6b3e80578f1c54a949ad701e28a65c03ba314384639bb3b84c269da3328ffc5c",
+      "sha256": "6b3e80578f1c54a949ad701e28a65c03ba314384639bb3b84c269da3328ffc5c",
+      "normalization": "none",
+      "original_bytes": 5226,
+      "bytes": 5226
+    },
+    "legacy": {
+      "path": "acs-roof-ifc-legacy.log",
+      "original_path": "/tmp/acs-roof-ifc-legacy.log",
+      "original_sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d",
+      "sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d",
+      "normalization": "none",
+      "original_bytes": 30444,
+      "bytes": 30444
+    },
+    "stair-boundary": {
+      "path": "acs-roof-ifc-stair-boundary.log",
+      "original_path": "/tmp/acs-roof-ifc-stair-boundary.log",
+      "original_sha256": "0607dc6a180a3d4b256a1aec3f5aedeb37072260d09b0089c6663131cf5cd1a4",
+      "sha256": "0607dc6a180a3d4b256a1aec3f5aedeb37072260d09b0089c6663131cf5cd1a4",
+      "normalization": "none",
+      "original_bytes": 106,
+      "bytes": 106
+    },
+    "connected": {
+      "path": "acs-roof-ifc-connected.log",
+      "original_path": "/tmp/acs-roof-ifc-connected.log",
+      "original_sha256": "bc13039a9d00701271b7f912a4ed12e448664964e7377dd4dd36f1c961531cd1",
+      "sha256": "bc13039a9d00701271b7f912a4ed12e448664964e7377dd4dd36f1c961531cd1",
+      "normalization": "none",
+      "original_bytes": 1224,
+      "bytes": 1224
+    },
+    "workspace": {
+      "path": "acs-roof-ifc-workspace.log",
+      "original_path": "/tmp/acs-roof-ifc-workspace.log",
+      "original_sha256": "1f92c22ca35bd21b75d5bcd0f7078aede8407cbef605926434e8ba29116b91bd",
+      "sha256": "1f92c22ca35bd21b75d5bcd0f7078aede8407cbef605926434e8ba29116b91bd",
+      "normalization": "none",
+      "original_bytes": 6226,
+      "bytes": 6226
+    },
+    "precision": {
+      "path": "acs-roof-ifc-precision.log",
+      "original_path": "/tmp/acs-roof-ifc-precision.log",
+      "original_sha256": "20e1f38a959c3ad8fac03671d7c55eccd9e71f7e7cd225e3b10babb3f5a32d23",
+      "sha256": "20e1f38a959c3ad8fac03671d7c55eccd9e71f7e7cd225e3b10babb3f5a32d23",
+      "normalization": "none",
+      "original_bytes": 100,
+      "bytes": 100
+    },
+    "fallback": {
+      "path": "acs-roof-ifc-fallback.log",
+      "original_path": "/tmp/acs-roof-ifc-fallback.log",
+      "original_sha256": "1e36cc4f4f9a65288eb583b2ab662c9a9deb92aa072c497f5174ab0f48b09701",
+      "sha256": "1e36cc4f4f9a65288eb583b2ab662c9a9deb92aa072c497f5174ab0f48b09701",
+      "normalization": "none",
+      "original_bytes": 172,
+      "bytes": 172
+    }
+  },
+  "commands": {
+    "normal_tests": "env -u PYTHONPATH .venv/bin/python TEST_PATH",
+    "independent_readers": "PYTHONPATH=/tmp/acs-roof-ifc-reader:. .venv/bin/python TEST_PATH"
+  },
+  "official_schema_sources": [
+    "https://standards.buildingsmart.org/IFC/RELEASE/IFC4/FINAL/HTML/schema/ifcproductextension/lexical/ifcspatialzone.htm",
+    "https://standards.buildingsmart.org/IFC/RELEASE/IFC4/FINAL/HTML/schema/ifcproductextension/lexical/ifcrelreferencedinspatialstructure.htm"
+  ],
+  "as_of": "2026-11-11",
+  "base_commit": "ad45ef1992c85a4aa5309cd1adc12c265d55fff1",
+  "status": {
+    "implementation": "LOCAL_TESTED_UNCOMMITTED",
+    "ci": "PENDING",
+    "deployment": "NOT_DEPLOYED",
+    "pr_number": null
+  },
+  "original_manifest_sha256": "5c0c3cdafe55ced2448e1697bd5b53ac809dfa30ea29e001703ea26b0d40be1d",
+  "log_copy_count": 12,
+  "reader_dependency_installation": "ifcopenshell, shapely and lark installed with --target /tmp/acs-roof-ifc-reader; repository pins and shared .venv unchanged; other listed packages came from the existing environment.",
+  "evidence_scope": "Synthetic deterministic local fixtures; no paid provider invocation, browser rendering, production deployment or full IFC architectural certification is established by these logs."
+}

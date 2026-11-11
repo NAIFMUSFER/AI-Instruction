@@ -2,7 +2,7 @@
 
 CI-only dependency: ifcopenshell==0.9.0.post1. Missing dependency is a hard
 import failure, never a skip or an internal-parser substitute. The IFC artifact
-contains spaces only; this test does not claim exported physical stair BIM.
+contains spaces and unoccupied roof reference zones; no physical stair/roof BIM.
 """
 from collections import Counter
 import hashlib
@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 
 import ifcopenshell
 import ifcopenshell.geom
+import ifcopenshell.util.element
 import ifcopenshell.util.placement
 import ifcopenshell.util.unit
 import ifcopenshell.validate
@@ -93,29 +94,43 @@ class ConnectedStairIfcReader(unittest.TestCase):
             self.assertEqual(logger.statements, [], str(logger.statements))
             self.assertEqual(ifcopenshell.util.unit.calculate_unit_scale(parsed), 1.0)
 
-            expected_storeys, expected_spaces = {}, {}
+            expected_storeys, expected_spaces, expected_roofs = {}, {}, {}
             for level in model['levels']:
                 elevation = level.get('elevation', level['index'] * model['floor_height'])
+                level_source = 'bld_0.flr_' + str(level['index'])
                 storey_id = physical_ifc_id(revision.model_hash, 'bld_0.flr_' + str(level['index']))
-                expected_storeys[storey_id] = elevation
+                is_roof = level.get('kind') == 'roof'
+                if not is_roof:
+                    expected_storeys[storey_id] = elevation
                 for room in model['floors'][level['template']]['rooms']:
                     source = 'bld_0.flr_%s.%s.%s' % (level['index'], level['template'], room['id'])
                     space_id = physical_ifc_id(revision.model_hash, source)
                     self.assertNotIn(space_id, expected_spaces)
+                    self.assertNotIn(space_id, expected_roofs)
                     x, z, width, depth = room['rect']
                     height = room.get('wall_h', room.get('height', model['wall_h']))
-                    expected_spaces[space_id] = (storey_id, room['id'],
-                        ((x, x + width), (z, z + depth), (elevation, elevation + height)))
+                    target = expected_roofs if is_roof else expected_spaces
+                    target[space_id] = (level_source if is_roof else storey_id, room['id'],
+                        ((x, x + width), (z, z + depth), (elevation, elevation + height)), source)
 
             storeys = parsed.by_type('IfcBuildingStorey')
             spaces = parsed.by_type('IfcSpace')
+            roof_references = parsed.by_type('IfcSpatialZone')
             self.assertEqual({s.GlobalId for s in storeys}, set(expected_storeys))
             self.assertEqual({s.GlobalId for s in spaces}, set(expected_spaces))
+            self.assertEqual({s.GlobalId for s in roof_references}, set(expected_roofs))
+            self.assertEqual(receipt['ifc_content_scope'], 'SPACES_AND_UNOCCUPIED_ROOF_REFERENCES')
+            manifest = receipt['ifc_manifest']
+            self.assertEqual(manifest['level_count'], len(expected_storeys))
+            self.assertEqual(manifest['space_count'], len(expected_spaces))
+            self.assertEqual(manifest['roof_level_count'], sum(l.get('kind') == 'roof' for l in model['levels']))
+            self.assertEqual(manifest['roof_reference_count'], len(expected_roofs))
             product_counts = Counter(product.is_a() for product in parsed.by_type('IfcProduct'))
             self.assertEqual(product_counts, Counter({'IfcSite': 1, 'IfcBuilding': 1,
-                'IfcBuildingStorey': len(expected_storeys), 'IfcSpace': len(expected_spaces)}))
+                'IfcBuildingStorey': len(expected_storeys), 'IfcSpace': len(expected_spaces),
+                'IfcSpatialZone': len(expected_roofs)}))
             for entity in ('IfcStair', 'IfcStairFlight', 'IfcDoor', 'IfcWindow',
-                           'IfcWall', 'IfcSlab', 'IfcOpeningElement'):
+                           'IfcWall', 'IfcSlab', 'IfcOpeningElement', 'IfcRoof', 'IfcElementQuantity'):
                 # The pinned reader can return a tuple. Require zero entities,
                 # independent of the concrete empty sequence representation.
                 self.assertEqual(len(parsed.by_type(entity)), 0,
@@ -128,6 +143,13 @@ class ConnectedStairIfcReader(unittest.TestCase):
                 for element in relation.RelatedElements:
                     self.assertNotIn(element.GlobalId, containers)
                     containers[element.GlobalId] = relation.RelatingStructure.GlobalId
+            references = {}
+            for relation in parsed.by_type('IfcRelReferencedInSpatialStructure'):
+                self.assertTrue(relation.RelatingStructure.is_a('IfcBuilding'))
+                for element in relation.RelatedElements:
+                    self.assertNotIn(element.GlobalId, references)
+                    references[element.GlobalId] = relation.RelatingStructure.GlobalId
+            self.assertEqual(set(references), set(expected_roofs))
             settings = ifcopenshell.geom.settings()
             settings.set(settings.USE_WORLD_COORDS, True)
             for storey in storeys:
@@ -135,10 +157,27 @@ class ConnectedStairIfcReader(unittest.TestCase):
                 self.assertAlmostEqual(storey.Elevation, elevation, places=6)
                 transform = ifcopenshell.util.placement.get_local_placement(storey.ObjectPlacement)
                 self.assertAlmostEqual(float(transform[2, 3]), elevation, places=6)
-            for space in spaces:
-                storey_id, room_id, bounds = expected_spaces[space.GlobalId]
+            for space in list(spaces) + list(roof_references):
+                is_roof = space.is_a('IfcSpatialZone')
+                storey_id, room_id, bounds, source = (expected_roofs if is_roof else expected_spaces)[space.GlobalId]
                 self.assertEqual(space.LongName, room_id)
-                self.assertEqual(containers[space.GlobalId], storey_id)
+                if is_roof:
+                    self.assertNotIn(space.GlobalId, containers)
+                    self.assertEqual(space.PredefinedType, 'USERDEFINED')
+                    self.assertEqual(space.ObjectType, 'ACS_UNOCCUPIED_ROOF_REFERENCE')
+                    props = ifcopenshell.util.element.get_psets(space)['ACS_RoofReference']
+                    self.assertEqual(props['LevelKind'], 'roof')
+                    self.assertIs(props['IsOccupied'], False)
+                    self.assertIs(props['CountsInFloorArea'], False)
+                    self.assertEqual(props['ReferenceGeometry'], 'EXTRUDED_REFERENCE_EXTENT')
+                    self.assertIs(props['CanonicalHeightDeclared'], True)
+                    self.assertEqual(props['CanonicalId'], source)
+                    self.assertEqual(props['CanonicalLevelId'], storey_id)
+                    metadata = next(r for r in receipt['roof_reference_metadata'] if r['canonical_id'] == source)
+                    self.assertEqual(metadata['reference_geometry'], props['ReferenceGeometry'])
+                    self.assertIs(metadata['canonical_height_declared'], True)
+                else:
+                    self.assertEqual(containers[space.GlobalId], storey_id)
                 shape = ifcopenshell.geom.create_shape(settings, space)
                 vertices = shape.geometry.verts
                 self.assertTrue(vertices)
@@ -154,6 +193,7 @@ class ConnectedStairIfcReader(unittest.TestCase):
                 'scope': receipt['ifc_scope'], 'schema': parsed.schema,
                 'reader': 'IfcOpenShell', 'reader_version': ifcopenshell.version,
                 'storeys': len(storeys), 'spaces': len(spaces),
+                'unoccupied_roof_references': len(roof_references),
                 'product_entities': dict(sorted(product_counts.items())),
                 'exported_stairs': 0, 'canonical_hash_unchanged': True}, sort_keys=True))
 
