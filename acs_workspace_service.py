@@ -53,6 +53,8 @@ def geometry_failure_message(code):
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
         "ROOF_PREFERENCE_CONFLICT":"أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي. يمكنك إعادة تفعيل السطح صراحة من أدوات المخطط إذا أردت إضافته.",
         "STAIR_RESOURCE_LIMIT":"تجاوز تفصيل الدرج الحد المدعوم لهذا الطلب. قلّل عدد الأدوار أو نوى الدرج ثم ابدأ طلبًا جديدًا؛ لم تُحفظ المحاولة ولم يُكرّر استدعاء المزود.",
+        "CONTEXT_DETAILS_RESOURCE_LIMIT":"تجاوزت التفاصيل الافتراضية الحد المدعوم لهذا الطلب. قلّل عدد المساحات أو العناصر ثم ابدأ طلبًا جديدًا؛ لم تُحفظ المحاولة ولم يُكرّر استدعاء المزود.",
+        "CONTEXT_DETAILS_PROVENANCE_INVALID":"تعذّر التحقق من مصدر التفاصيل الافتراضية؛ لم تُحفظ المحاولة. راجع بيانات المصدر قبل بدء طلب جديد.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
@@ -291,9 +293,9 @@ def _reject_fresh_stair_authority(model):
     Only the fresh described-project branch calls it.
     """
     def reject():
-        raise PlanError("PROVIDER_AUTHORITY_FIELD", "نسب المقترح بيانات الدرج إلى النظام دون مصدر موثوق؛ لم تُحفظ المحاولة.")
+        raise PlanError("PROVIDER_AUTHORITY_FIELD", "نسب المقترح تفاصيل افتراضية إلى النظام دون مصدر موثوق؛ لم تُحفظ المحاولة.")
     meta = model.get("meta")
-    if isinstance(meta, dict) and "acs_stairs" in meta:
+    if isinstance(meta, dict) and {"acs_stairs", "acs_context_details"}.intersection(meta):
         reject()
     levels = model.get("levels")
     for level in levels if isinstance(levels, list) else []:
@@ -305,7 +307,7 @@ def _reject_fresh_stair_authority(model):
         for room in rooms if isinstance(rooms, list) else []:
             objects = room.get("objects") if isinstance(room, dict) else None
             for obj in objects if isinstance(objects, list) else []:
-                if isinstance(obj, dict) and "stair_provenance" in obj:
+                if isinstance(obj, dict) and {"stair_provenance", "context_detail_provenance"}.intersection(obj):
                     reject()
 
 
@@ -361,8 +363,9 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     # Imports, resumed work and every existing revision keep their authored
     # objects and lock context. This runs after stale-head detection and before
     # canonical proposal/approval; it makes no provider request.
-    if (expected is None and ws.head is None
-            and "source_id" not in command and "resume_job_id" not in command):
+    fresh_describe = (expected is None and ws.head is None
+                     and "source_id" not in command and "resume_job_id" not in command)
+    if fresh_describe:
         from acs_stairs import with_default_stairs
         _reject_fresh_stair_authority(result["building"])
         result["building"], _, stair_reason = with_default_stairs(result["building"])
@@ -393,6 +396,11 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         pass
     else:
         result["building"], _, _ = acs_roof.with_default_roof(result["building"])
+    if fresh_describe:
+        from acs_context_details import with_context_details
+        result["building"], _, detail_reason = with_context_details(result["building"])
+        if detail_reason in {"CONTEXT_DETAILS_RESOURCE_LIMIT", "CONTEXT_DETAILS_PROVENANCE_INVALID"}:
+            raise PlanError(detail_reason, geometry_failure_message(detail_reason))
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
                           expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
     issues, _ = _geometry(revision.model)

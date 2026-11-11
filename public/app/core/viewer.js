@@ -763,7 +763,7 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
   }else if(shape==='railing'){
     B(0,h,0, w,0.06,0.06,'frame');
     /* KI-26/F-46: قوائم الدرابزين مشتقّة من عرضٍ يذكره النموذج وبلا حدّ */
-    const n=Math.max(2,acsFit(Math.round(w/1.1),
+    const n=Math.max(2,acsFit(_pyRound(w/1.1,0),
                               SCENE_LIMITS.max_object_parts,'railing.posts'));
     for(let i=0;i<=n;i++) B(-w/2+w*i/n,h*0.5,0, 0.05,h,0.05,'frame');
   }else if(shape==='tree'||shape==='palm'){
@@ -813,8 +813,8 @@ function buildObjects(group, room, fkey, baseY){
     const n=acsCount(o.count,1,SCENE_LIMITS.max_object_count,'object.count');
     const pitch=+o.pitch||1.2, dir=(o.dir==='z')?'z':'x';
     for(let k=0;k<n;k++){
-      const ox=(o.form==='u_return'?o.x:(+o.x||rw/2))+(dir==='x'?pitch*k:0);
-      const oz=(o.form==='u_return'?o.z:(+o.z||rd/2))+(dir==='z'?pitch*k:0);
+      const ox=(o.form==='u_return'?o.x:(o.x!=null?+o.x:rw/2))+(dir==='x'?pitch*k:0);
+      const oz=(o.form==='u_return'?o.z:(o.z!=null?+o.z:rd/2))+(dir==='z'?pitch*k:0);
       if(ox>rw+2||oz>rd+2) break;
       buildObject(group,o,kind||'box',rx+ox,rz+oz,baseY+(+o.y||0),fkey,nm,i*1000+k);
     }

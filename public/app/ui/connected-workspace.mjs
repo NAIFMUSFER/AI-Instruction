@@ -32,7 +32,7 @@ function projectCopy() {
   $('cwChat').placeholder=residential?'مثال: افصل مجلس الضيوف عن الصالة، وأكمل اتصال الدرج بالدور العلوي، مع الحفاظ على الأقفال الحالية.':'مثال: انقل منطقة التجهيز بجوار الشحن، مع الحفاظ على الأقفال الحالية.';
 }
 let root, briefEditor, planUpload, residentialOptions, projectId, state = null, packet = null, selected = null, busy = false, pendingJob = null, pollTimer = null, revisionEpoch = 0, viewerEpoch = 0, activeStep = 1, viewerDispose = null;
-let progressState=null,progressTimer=null,starting=false;
+let progressState=null,progressTimer=null,starting=false,objectSelection=null;
 const draftKey = () => 'acs_brief_draft:' + window.ACS_AUTH.storageScope();
 const jobKey = () => 'acs_plan_job:' + window.ACS_AUTH.storageScope();
 function el(tag, text, parent, cls) { const n=document.createElement(tag);if(text!==null)n.textContent=text;if(cls)n.className=cls;if(parent)parent.append(n);return n; }
@@ -83,6 +83,7 @@ async function api(body, commands=false) {
 async function run(fn) { if(busy)return;setBusy(true);try{await fn();}catch(e){safeError(e);}finally{setBusy(false);} }
 function clearViewer() {
   viewerEpoch++;
+  selectApprovedObject(null);
   if(viewerDispose){viewerDispose();viewerDispose=null;}
   const host=$('cwViewer');if(host){host.replaceChildren();host.hidden=true;delete host.dataset.revision;}
 }
@@ -101,6 +102,53 @@ function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);re
 // A selected option is not authoritative until its matching revision is loaded.
 function loadedRevisionSelected() { return !!state?.revision_id&&$('cwRevision')?.value===state.revision_id; }
 function headRevisionSelected() { return loadedRevisionSelected()&&state.revision_id===state.head; }
+function contextDefaultsText(summary,revision){
+  if(!revision||summary?.revision_id!==revision.id||summary.model_hash!==revision.model_hash||!Array.isArray(summary.items))return '';
+  const seen=new Set(),counts={column:0,railing:0,plant:0,planter:0};
+  for(const row of summary.items.slice(0,256)){
+    const p=row.context_detail_provenance,key=JSON.stringify([row.template,row.level_index,row.room_id,row.object_id]);
+    if(seen.has(key)||!Object.hasOwn(counts,row.kind)||row.count!==1||p?.schema!=='acs.context-detail/1'||p.source!=='system_default'||p.conceptual_only!==true||!['porch','balcony','courtyard'].includes(p.context))continue;
+    seen.add(key);counts[row.kind]++;
+  }
+  const count=Object.values(counts).reduce((sum,n)=>sum+n,0);if(!count)return '';
+  const labels={column:'أعمدة',railing:'درابزين',plant:'نباتات',planter:'أحواض نباتات'};
+  return 'عناصر افتراضية ضمن هندسة النسخة: '+Object.entries(counts).filter(([,n])=>n).map(([kind,n])=>n+' '+labels[kind]).join('،')+'. '+(summary.truncated?'القائمة جزئية؛ العدد ليس إجمالي المشروع. ':'')+'افتراضات تخطيطية؛ لا تثبت كفاية إنشائية أو حماية من السقوط أو خلوصًا آمنًا. الإزالة تنشئ مسودة جديدة وتخضع للأقفال.';
+}
+function objectRemovalTarget(){
+  const selection=objectSelection,summary=state?.object_actions,source=selection?.source;
+  if(!selection||selection.epoch!==revisionEpoch||selection.viewer_epoch!==viewerEpoch||!headRevisionSelected()||!packet)return null;
+  if(packet.revision.id!==state.revision_id||selection.revision_id!==state.revision_id||selection.model_hash!==packet.revision.model_hash||summary?.revision_id!==state.revision_id||summary.model_hash!==selection.model_hash)return null;
+  if(!selection.source_id||source?.kind!=='element'||source.collection!=='objects'||selection.repeat_index!==0||!Array.isArray(summary.items))return null;
+  const rows=summary.items.filter(row=>row.template===source.template&&row.room_id===source.room_id&&row.object_id===source.element_id&&row.level_index===source.level_index);
+  if(rows.length!==1)return null;
+  const row=rows[0];if(!row.supported||row.count!==1||!['column','railing','plant','planter'].includes(row.kind))return null;
+  return row;
+}
+function selectApprovedObject(selection){
+  objectSelection=selection?{...selection,source:{...selection.source},epoch:revisionEpoch,viewer_epoch:viewerEpoch}:null;
+  if($('cwObjectConfirm'))$('cwObjectConfirm').checked=false;
+  syncObjectSelection();
+}
+function syncObjectSelection(){
+  const panel=$('cwObjectSelection');if(!panel)return;
+  panel.hidden=!objectSelection;
+  const target=objectRemovalTarget(),requiresDraft=state?.object_actions?.requires_new_draft===true;
+  const names={column:'عمود',railing:'درابزين',plant:'نبات',planter:'حوض نباتات'};
+  $('cwObjectDescription').textContent=target?(names[target.kind]+' · '+target.object_id+' · إزالة العنصر من هندسة النسخة، وليست إخفاءً للعرض. يُعاد فحص الأقفال والصلاحيات في الخادم.'):'العنصر المحدد غير متاح للإزالة هنا؛ اختر عنصرًا مدعومًا من آخر نسخة وبمصدر موثّق. العناصر المكررة أو القوالب المشتركة تُعدّل من مخططها.';
+  $('cwObjectConfirmation').hidden=!target||!requiresDraft;
+  $('cwObjectRemove').hidden=!target;
+  $('cwObjectRemove').disabled=busy||!!pendingJob||!target||(requiresDraft&&!$('cwObjectConfirm').checked);
+}
+async function removeSelectedObject(){
+  const target=objectRemovalTarget();
+  if(!target||pendingJob)throw new Error('اختر عنصرًا موثّقًا ومدعومًا من آخر نسخة قبل إزالته.');
+  const confirm=state.object_actions.requires_new_draft===true;
+  if(confirm&&!$('cwObjectConfirm').checked)throw new Error('أكد إزالة العنصر وإنشاء مسودة جديدة؛ الاعتماد السابق يبقى محفوظًا.');
+  const data=await api({action:'remove_object',expected_head:state.head,room_ref:[target.template,target.room_id],object_id:target.object_id,confirm_new_draft:confirm},true);
+  await renderState(data);step(3);
+  const comparisonNote=data.revision_comparison_unavailable?.reason==='OPTION_TYPOLOGY_UNKNOWN'?' مقارنة مؤشرات البدائل غير متاحة لأن نوع المبنى غير محدد؛ فرق حذف العنصر محفوظ.':'';
+  status('أُزيل العنصر وحُفظت مسودة جديدة تحتاج المراجعة والاعتماد. النسخة المعتمدة السابقة محفوظة؛ لم يُستدعَ مزود ذكاء اصطناعي.'+comparisonNote);
+}
 function syncApproval() {
   if(!root)return;
   const loaded=loadedRevisionSelected(),head=headRevisionSelected();
@@ -116,6 +164,7 @@ function syncApproval() {
   $('cwSaveGeometry').disabled=busy||!!pendingJob||!selected||!head||roomLocked;
   $('cwLock').disabled=busy||!!pendingJob||!selected||!head;
   if($('cwRoof'))$('cwRoof').disabled=busy||!!pendingJob||!head||!packet||$('cwRoof').dataset.userAuthored==='true';
+  syncObjectSelection();
   planUpload?.sync();
 }
 async function renderState(data, {keepStep=false}={}) {
@@ -146,6 +195,8 @@ async function renderState(data, {keepStep=false}={}) {
   $('cwAssumptions').replaceChildren();
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
+  const details=contextDefaultsText(data.object_actions,packet?.revision);
+  if(details){el('li',details,$('cwAssumptions'));$('cwAssumptionsCard').hidden=false;}
   if(packet){
     $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});{const roof=$('cwRoof');if(roof){const roofs=packet.projections.filter(isRoofProjection),has=roofs.length>0,userAuthored=roofs.some(p=>p.level_auto!==true);roof.dataset.enabled=String(has);roof.dataset.userAuthored=String(userAuthored);roof.textContent=userAuthored?'سطح من النموذج · يُعدّل من مخططه':has?'إزالة السطح الافتراضي':'إضافة سطح افتراضي';}}
     for(const projection of packet.projections.filter(isRoofProjection)){
@@ -277,6 +328,7 @@ async function exportFile(format, display=false){
     const host=$('cwViewer');host.hidden=false;
     try{
       const dispose=await showApprovedGLTF(host,bytes,revisionId,{isCurrent:current,projections:packet.projections,receipt:data.receipt,
+        onSelectObject:selection=>{if(current())selectApprovedObject(selection);},
         onFailure:message=>{if(current()){status(message,true);host.hidden=false;showViewerFallback(host,message);}}});
       if(!current()){dispose?.();return;}
       viewerDispose=dispose;host.dataset.revision=revisionId;
@@ -316,6 +368,13 @@ function mount(){
   <section data-step-panel="4" hidden class="cw-card"><h2>النسخة المعتمدة والتسليم</h2><p id="cwExportNote"></p><div class="cw-actions"><button id="cwShow3D" class="cw-primary" disabled>عرض النسخة المعتمدة في 3D</button><button data-format="gltf" disabled>تنزيل 3D</button><button data-format="svg" disabled>SVG</button><button data-format="dxf" disabled>DXF</button><button data-format="pdf" disabled>PDF</button><button data-format="ifc" disabled>IFC4</button><button data-format="review">ملف مراجعة</button></div><p class="cw-muted">DXF وSVG وPDF تعرض حدود الفراغات. IFC4 يصدر الفراغات، والسطح غير المشغول كمنطقة مرجعية مستقلة؛ ليس دورًا ولا نموذجًا إنشائيًا للسطح. بيانات المصدر والنسخة وحدود التصدير مرفقة بكل ملف. قد يتوقف 3D إذا كانت أبعاد عناصره غير مكتملة.</p><div id="cwViewer" hidden aria-label="عارض النسخة المعتمدة"></div></section>
   <footer>ACS · المخطط ونسخه محفوظة في مشروعك. <a href="/privacy.html" target="_blank" rel="noopener">الخصوصية وحفظ البيانات</a></footer>`;
   root.querySelectorAll('[data-step]').forEach(b=>b.addEventListener('click',()=>step(Number(b.dataset.step))));
+  const objectPanel=el('section',null,null,'cw-card');objectPanel.id='cwObjectSelection';objectPanel.hidden=true;
+  el('p',null,objectPanel).id='cwObjectDescription';
+  const objectConfirmation=el('label',null,objectPanel,'cw-check');objectConfirmation.id='cwObjectConfirmation';
+  const objectConfirm=el('input',null,objectConfirmation);objectConfirm.type='checkbox';objectConfirm.id='cwObjectConfirm';
+  el('span','أؤكد إزالة العنصر وإنشاء مسودة جديدة تحتاج اعتمادًا جديدًا؛ النسخة المعتمدة السابقة محفوظة.',objectConfirmation);
+  const objectRemove=el('button','إزالة العنصر وحفظ مسودة',objectPanel);objectRemove.type='button';objectRemove.id='cwObjectRemove';objectRemove.dataset.mutate='';
+  objectConfirm.addEventListener('change',syncObjectSelection);objectRemove.addEventListener('click',()=>run(removeSelectedObject));$('cwViewer').after(objectPanel);
   const compareLabel=el('label','قارن مع نسخة محفوظة');compareLabel.htmlFor='cwCompareRevision';
   const compareSelect=el('select',null);compareSelect.id='cwCompareRevision';
   const compareControls=el('div',null,null,'cw-toolbar');compareControls.id='cwCompareControls';

@@ -1,0 +1,12 @@
+test_approval_is_persisted_as_frozen_lock_bound_baseline (__main__.PersistedPlanCommandTests.test_approval_is_persisted_as_frozen_lock_bound_baseline) ... ok
+test_client_cannot_select_project_or_workspace_authority (__main__.PersistedPlanCommandTests.test_client_cannot_select_project_or_workspace_authority) ... ok
+test_concurrent_winner_causes_stale_failure_without_lost_update (__main__.PersistedPlanCommandTests.test_concurrent_winner_causes_stale_failure_without_lost_update) ... ok
+test_lock_revision_is_persisted_and_restored_exactly (__main__.PersistedPlanCommandTests.test_lock_revision_is_persisted_and_restored_exactly) ... ok
+test_read_only_review_does_not_append_revision (__main__.PersistedPlanCommandTests.test_read_only_review_does_not_append_revision) ... ok
+test_viewer_never_receives_mutable_persisted_command_workspace (__main__.PersistedPlanCommandTests.test_viewer_never_receives_mutable_persisted_command_workspace) ... ok
+test_warehouse_chat_edit_persists_without_moving_locked_dock_or_rack (__main__.PersistedPlanCommandTests.test_warehouse_chat_edit_persists_without_moving_locked_dock_or_rack) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.091s
+
+OK

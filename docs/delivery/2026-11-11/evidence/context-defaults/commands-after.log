@@ -1,0 +1,13 @@
+test_authenticated_actor_is_required_before_any_action (__main__.PlanCommandTests.test_authenticated_actor_is_required_before_any_action) ... ok
+test_client_cannot_supply_authority_or_detached_lock_fields (__main__.PlanCommandTests.test_client_cannot_supply_authority_or_detached_lock_fields) ... ok
+test_compare_and_restore_are_revisioned_without_provider (__main__.PlanCommandTests.test_compare_and_restore_are_revisioned_without_provider) ... ok
+test_lock_violation_and_stale_head_never_extend_history (__main__.PlanCommandTests.test_lock_violation_and_stale_head_never_extend_history) ... ok
+test_residential_chat_edit_uses_server_held_elevator_lock_and_keeps_baseline (__main__.PlanCommandTests.test_residential_chat_edit_uses_server_held_elevator_lock_and_keeps_baseline) ... ok
+test_review_returns_read_only_packet_without_raw_brief (__main__.PlanCommandTests.test_review_returns_read_only_packet_without_raw_brief) ... ok
+test_unsupported_action_fails_closed (__main__.PlanCommandTests.test_unsupported_action_fails_closed) ... ok
+test_warehouse_chat_edit_preserves_server_held_dock_and_rack (__main__.PlanCommandTests.test_warehouse_chat_edit_preserves_server_held_dock_and_rack) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.064s
+
+OK

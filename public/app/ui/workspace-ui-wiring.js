@@ -9,6 +9,7 @@ import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedW
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
 import { hasUStairs, stairConnections, validateStairReport, withDefaultStairs } from '../core/stairs.mjs';
+import { listContextDetails, withContextDetails } from '../core/context-details.mjs';
 import { autoRoofLevels, carryAutoRoof, isRoofLevel, removeAutoRoof, restoreDefaultRoof, roofDisclosure, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
 import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, applyVisualMode, checkCoordSnapshot, clearVisualMode, compileCoordination, compileVisualScene, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, detectTypeJS, isIndustrialProgram, renderer, scene, sky, statusEl, su, sun, visAiEnhancementRequest, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visValidateAsset, visValidateScene } from '../render/scene.js';
@@ -225,7 +226,8 @@ function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHT
      في النموذج، لا يُستنتج من أعلى رقم أو اسم قالب. */
   acsFloorOrder(floorsFound).forEach(f=>mk(f,floorLabel(f)));
   buildLocalRoofControl(wrap);
-  buildLocalStairsDisclosure(wrap);}
+  buildLocalStairsDisclosure(wrap);
+  buildLocalContextDetailsDisclosure(wrap);}
 /* Roof identity is explicit, including imported models: the highest floor is not evidence. */
 function floorLabel(fkey){
   const levels=Array.isArray(lastBuilding?.levels)?lastBuilding.levels.slice(0,SCENE_LIMITS.max_levels):[];
@@ -273,6 +275,8 @@ function localGenerationError(error){
   if(error.message==='LOCAL_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: أدخل عدداً صحيحاً غير سالب؛ الحد المدعوم 64 مستوى شاملاً الأرضي والسطح. بقي النموذج السابق كما هو.';
   if(error.message==='LOCK_CONTEXT_CHANGED')return 'لا يمكن تعديل النموذج المحلي مع وجود نطاق مقفول.';
   if(error.message==='STAIR_RESOURCE_LIMIT')return 'تعذّر إنشاء السلالم ضمن الحد المدعوم؛ قلّل عدد الأدوار أو النوى أو حجم وصف النموذج ثم أعد المحاولة. بقي النموذج السابق كما هو.';
+  if(error.message==='CONTEXT_DETAILS_RESOURCE_LIMIT')return 'تعذّر إضافة التفاصيل ضمن الحد المدعوم؛ قلّل عدد الفراغات أو العناصر ثم أعد المحاولة. بقي النموذج السابق كما هو.';
+  if(error.message==='CONTEXT_DETAILS_PROVENANCE_INVALID')return 'مصدر التفاصيل الافتراضية غير صالح؛ راجع بيانات العناصر. بقي النموذج السابق كما هو.';
   if(String(error.message).startsWith('STAIR_'))return 'تعذّر عرض السلم: راجع أبعاد النواة وباب الدخول ومناسيب المستويات؛ لم نعدّل الهندسة أو نفترض وصلة بديلة. بقي النموذج السابق كما هو.';
   const roofMessages={
     ROOF_HEIGHT_NOT_SPECIFIED:'أكمل ارتفاع الدور والجدران في النموذج قبل إضافة السطح؛ لم نفترض ارتفاعاً بديلاً.',
@@ -340,6 +344,17 @@ function localStairsText(building){
 function buildLocalStairsDisclosure(wrap){
   const text=localStairsText(lastBuilding);if(!text)return;
   const note=document.createElement('p');note.id='localStairsDisclosure';note.className='note';note.textContent=text;wrap.appendChild(note);
+}
+function localContextDetailsText(building){
+  let rows;try{rows=listContextDetails(building);}catch(error){return 'تعذّر التحقق من مصدر تفاصيل النموذج؛ لا نعتمد أعدادًا من التقرير.';}
+  if(!rows.length)return '';
+  const counts={column:0,railing:0,plant:0,planter:0},labels={column:'أعمدة',railing:'درابزين',plant:'نباتات',planter:'أحواض نباتات'};
+  for(const row of rows)if(Object.hasOwn(counts,row.kind))counts[row.kind]++;
+  return 'عناصر افتراضية ضمن النموذج: '+Object.entries(counts).filter(([,n])=>n).map(([kind,n])=>n+' '+labels[kind]).join('،')+'. افتراضات تخطيطية؛ لا تثبت كفاية إنشائية أو حماية من السقوط أو خلوصًا آمنًا. الاستيراد والاستعادة لا يضيفان هذه العناصر تلقائيًا.';
+}
+function buildLocalContextDetailsDisclosure(wrap){
+  const text=localContextDetailsText(lastBuilding);if(!text)return;
+  const note=document.createElement('p');note.id='localContextDetailsDisclosure';note.className='note';note.textContent=text;wrap.appendChild(note);
 }
 /* الطبقات */
 function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHTML='';
@@ -1368,6 +1383,11 @@ function localGeneratedModel(building,{freshSample=false}={}){
   }
   if(next.meta?.acs_roof?.omitted)throw new Error(next.meta.acs_roof.omitted);
   if((next.levels||[]).length>SCENE_LIMITS.max_levels)throw new Error('ROOF_LEVEL_LIMIT_EXCEEDED');
+  if(freshSample||!lastBuilding){
+    const [detailed,,reason]=withContextDetails(next);
+    if(reason&&reason!=='CONTEXT_DETAILS_INPUT_UNSUPPORTED')throw new Error(reason);
+    next=detailed;
+  }
   return next;
 }
 /* المولّد المحلي الموحّد: يخدم «وصف نصّي» و«سريع» و«ملفات» بنفس القدرات */

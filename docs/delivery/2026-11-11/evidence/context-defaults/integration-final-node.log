@@ -1,0 +1,23 @@
+=== tests/remediation/test_context_details_browser_geometry.cjs ===
+PASS actual browser object compiler: ties-to-even railing and explicit zero coordinates
+PASS shipped JS context work bound: cached existing blockers and aggregate admission before repeated bounds allocation
+=== tests/remediation/test_context_object_selection.mjs ===
+PASS context selection: exact artifact digest, revision/source-map binding, explicit object tuples, repeat identity, ambiguity and immutable inputs
+=== tests/remediation/test_context_local_integration.cjs ===
+PASS local context boundary: actual fresh-only defaults, immutable source/imports, no name inference, model-derived disclosure, locks and explicit resource refusal
+=== tests/remediation/test_context_object_controls.mjs ===
+PASS contextual object controls: exact source summary, draft confirmation, stale revision/epoch/selection, unsupported scope and provider-free command
+=== tests/remediation/test_guest_roof_integration.cjs ===
+PASS guest roof integration: creation/removal/regeneration/edit/locks/counts/explicit labels/physical level limits/import preservation/44px/Arabic errors
+=== tests/remediation/test_stairs_local_integration.cjs ===
+PASS physical stairs local boundary: fresh-only authoring, roof order, existing/import preservation, explicit omission, locks and Arabic disclosure
+=== tests/remediation/test_connected_revision_controls.mjs ===
+PASS: ignored in-flight historical selection cannot enable or issue a head mutation
+PASS: busy selection is disabled, then the loaded head remains usable
+PASS: history stays readable and restorable only for the loaded selection
+PASS: authored roofs and pending jobs keep existing mutation restrictions
+=== tests/remediation/test_approved_viewer_framing.mjs ===
+APPROVED VIEWER FRAMING: 33 passed; aspect fit, useful scale, immutable bounds and derived assembly isolation.
+──────────────────────────────────────────────────────────────
+ci_run · context final focused Node: 8 passed, 0 failed, 8 total
+ci_run · context final focused Node: every target passed

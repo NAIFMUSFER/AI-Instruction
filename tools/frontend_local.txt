@@ -1,6 +1,7 @@
 # Local guest/test studio. Dynamically loaded by ui/local-studio-entry.mjs.
 # Static edges inside this route are allowed; eager account modules must not import it.
 core/stairs.mjs
+core/context-details.mjs
 core/viewer.js
 core/standards.js
 core/roof.mjs

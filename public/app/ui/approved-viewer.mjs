@@ -28,6 +28,39 @@ export function nodeIdentity(name){
   const parts=String(name||'').split('|'),match=/^F(-?\d+)$/.exec(parts[1]||'');
   return {name:String(name||''),kind:parts[0],level:match?Number(match[1]):null,room:parts[2]||null};
 }
+const objectSourceKeys=['collection','element_id','kind','level_index','room_id','template'];
+function objectSourceKey(source){
+  if(!source||typeof source!=='object'||Array.isArray(source)||Object.keys(source).sort().join('|')!==objectSourceKeys.join('|'))return null;
+  if(source.kind!=='element'||source.collection!=='objects'||!Number.isSafeInteger(source.level_index))return null;
+  if(!['template','room_id','element_id'].every(key=>typeof source[key]==='string'&&source[key].trim()&&[...source[key]].length<=160))return null;
+  return JSON.stringify([source.template,source.level_index,source.room_id,source.collection,source.element_id]);
+}
+// A displayed name is not mutation authority. The bytes and the receipt must
+// agree before explicit compiler source extras can identify a canonical object.
+export async function approvedObjectSources(bytes,marker,receipt,revisionId){
+  const empty=()=>new Map();
+  if(!receipt||marker?.revision_id!==revisionId||!Array.isArray(receipt.source_map)||receipt.source_map.length>50000||!globalThis.crypto?.subtle)return empty();
+  for(const key of ['revision_id','model_hash','content_hash','provenance_hash','source_map_hash'])if(!marker[key]||receipt[key]!==marker[key])return empty();
+  const digest=async value=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',value)),byte=>byte.toString(16).padStart(2,'0')).join('');
+  try{
+    if(await digest(bytes)!==receipt.artifact_sha256)return empty();
+    const canonical=JSON.stringify(receipt.source_map,(_,value)=>value&&typeof value==='object'&&!Array.isArray(value)?Object.fromEntries(Object.keys(value).sort().map(key=>[key,value[key]])):value);
+    if(await digest(new TextEncoder().encode(canonical))!==marker.source_map_hash)return empty();
+    const result=new Map(),ids=new Set();
+    for(const row of receipt.source_map){
+      if(typeof row?.source_id!=='string'||!row.source_id||ids.has(row.source_id))return empty();ids.add(row.source_id);
+      const key=objectSourceKey(row.source);if(!key)continue;
+      if(result.has(key))return empty();
+      result.set(key,{source_id:row.source_id,source:{...row.source}});
+    }
+    return result;
+  }catch(error){return empty();}
+}
+export function objectSourceFromExtras(extras,sources){
+  const key=objectSourceKey(extras?.acs_object_source),row=key&&sources.get(key),repeat=extras?.acs_object_repeat_index;
+  if(!row||!Number.isSafeInteger(repeat)||repeat<0)return null;
+  return {source_id:row.source_id,source:{...row.source},repeat_index:repeat};
+}
 // One derived assembly may be serialized as many meshes. Group only the exact
 // compiler identity, preserving level and owner; this is not a new canonical ID.
 export function detailGroupKey(name){
@@ -74,6 +107,8 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const current=options.isCurrent||(()=>true),buffer=embeddedGLB(bytes,revisionId);
   const original=JSON.parse(new TextDecoder().decode(bytes));
   const marker=original.extras.acs_plan_baseline;
+  const objectSources=await approvedObjectSources(bytes,marker,options.receipt,revisionId);
+  if(!current())return()=>{};
   const gltf=await new GLTFLoader().parseAsync(buffer,'');
   if(!current()){releaseObject(gltf.scene);return()=>{};}
   const scene=new THREE.Scene();scene.background=new THREE.Color('#dce5e9');scene.add(gltf.scene);
@@ -92,7 +127,10 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     const name=original.nodes?.[association?.nodes]?.name||object.userData.name||object.name;
     const identity=nodeIdentity(name),box=new THREE.Box3().setFromObject(object);
     object.userData.acsViewerIdentity=identity;
-    const groupKey=detailGroupKey(name);if(!groups.has(groupKey))groups.set(groupKey,[]);groups.get(groupKey).push(object);
+    const source=objectSourceFromExtras(original.nodes?.[association?.nodes]?.extras,objectSources);
+    object.userData.acsApprovedObjectSource=source;
+    const groupKey=source?'source|'+source.source_id+'|'+source.repeat_index:detailGroupKey(name);object.userData.acsDetailGroup=groupKey;
+    if(!groups.has(groupKey))groups.set(groupKey,[]);groups.get(groupKey).push(object);
     object.castShadow=true;object.receiveShadow=true;meshes.push(object);kinds.add(identity.kind);
     if(identity.kind!=='SITE')built.union(box);
     if(identity.kind==='WALL')envelope.union(box);
@@ -315,6 +353,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const controlsChanged=()=>{if(!updatingControls)render();};
   const storeyLevels=[...levels.keys()].filter(index=>!roofLevels.has(index)),topLevel=storeyLevels.length?Math.max(...storeyLevels):null;
   const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
+    objectGroups:[...groups.entries()].filter(([key])=>key.startsWith('source|')).slice(0,256).map(([,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return {...items[0].userData.acsApprovedObjectSource,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     rackGroups:[...groups.entries()].filter(([key,items])=>/^FURN\|F-?\d+\|[^|]+\|rack\d+r\d+$/.test(key)&&items.length>1).map(([name,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return{name,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     presentation:{detailInstances,roofPieces,assumedRoofShown:roofPieces>0,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofPieces>0||roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
@@ -346,7 +385,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     transition={start:performance.now(),fromPosition:camera.position.clone(),fromTarget:controls.target.clone(),position,target};telemetry.activeAnimation=true;frame=requestAnimationFrame(animate);
   }
   function chosenBounds(){return floors.value==='all'?built:levels.get(Number(floors.value))||built;}
-  function detailMeshes(object){return groups.get(detailGroupKey(object.userData.acsViewerIdentity.name))||[object];}
+  function detailMeshes(object){return groups.get(object.userData.acsDetailGroup)||[object];}
   function detailBounds(object){const box=new THREE.Box3();for(const mesh of detailMeshes(object))box.union(new THREE.Box3().setFromObject(mesh));return box;}
   function chosenRoom(){
     if(selected){const identity=selected.userData.acsViewerIdentity;const match=roomBounds.get(identity.level+'|'+identity.room);if(match)return match;}
@@ -409,7 +448,10 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   function onFront(mesh){const box=new THREE.Box3().setFromObject(mesh),probe=front.x?(front.x>0?envelope.max.x-box.max.x:box.min.x-envelope.min.x):(front.z>0?envelope.max.z-box.max.z:box.min.z-envelope.min.z);return Math.abs(probe)<.65;}
   function select(object,draw=true){
     if(selectionBox){scene.remove(selectionBox);selectionBox.geometry.dispose();selectionBox.material.dispose();selectionBox=null;}
-    selected=object;if(!object){inspector.textContent='اختر عنصرًا لعرض هويته ودوره.';if(draw)render();return;}
+    selected=object;
+    const bound=object?.userData.acsApprovedObjectSource;
+    if(current())options.onSelectObject?.(bound?{revision_id:revisionId,model_hash:marker.model_hash,...bound,source:{...bound.source}}:null);
+    if(!object){inspector.textContent='اختر عنصرًا لعرض هويته ودوره.';if(draw)render();return;}
     telemetry.detailGroupSize=detailMeshes(object).length;selectionBox=new THREE.Box3Helper(detailBounds(object),0x078bba);selectionBox.material.depthTest=false;selectionBox.material.toneMapped=true;selectionBox.material.transparent=true;selectionBox.userData.presentationOnly=true;selectionBox.renderOrder=10;scene.add(selectionBox);
     const identity=object.userData.acsViewerIdentity;
     inspector.replaceChildren();const source=options.projections?.find(p=>p.level_index===identity.level)?.primitives?.find(p=>p.source?.room_id===identity.room);
@@ -450,6 +492,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   labelButton.addEventListener('click',()=>{labelsOn=!labelsOn;labelButton.setAttribute('aria-pressed',String(labelsOn));render();});
   function dispose(){
     if(disposed)return;disposed=true;stopTour();stopMotion();observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);
+    if(current())options.onSelectObject?.(null);
     canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('keydown',keydown);canvas.removeEventListener('webglcontextlost',contextLost);canvas.removeEventListener('webglcontextrestored',contextRestored);
     releaseObject(scene);Object.values(detailMaterials).forEach(material=>material.dispose());unitBox.dispose();sky.dispose();scene.background=null;environment.dispose();sun.shadow.map?.dispose();renderer.renderLists.dispose();renderer.dispose();renderer.forceContextLoss();shell.remove();if(container.acsViewer===telemetry)delete container.acsViewer;
   }
