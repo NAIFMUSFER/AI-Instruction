@@ -171,6 +171,9 @@ jobs:
   chromium-browser:
     name: 3 · Real Chromium (Playwright — this job MAY use the network)
     runs-on: ubuntu-latest
+    # Previous PR188 full job took 8m13s; leave ample room for software GPU
+    # fixtures while ensuring a hung browser fails instead of running for hours.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -766,8 +769,10 @@ jobs:
           set -euo pipefail
           bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
             tests/remediation/test_approved_revision_race.mjs \
+            tests/remediation/test_connected_revision_controls.mjs \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \
+            tests/remediation/test_auth_fixture_waits.cjs \
             tests/remediation/test_audit_frontend_brief.mjs \
             tests/remediation/test_audit_frontend_guards.js \
             tests/remediation/test_audit_frontend_panels.js \

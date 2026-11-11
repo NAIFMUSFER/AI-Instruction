@@ -331,6 +331,41 @@ class RoofBoundaryRegressions(unittest.TestCase):
         self.assertTrue(any('بلا باب' in x for x in findings),findings)
         self.assertTrue(any('بلا إنارة' in x for x in findings),findings)
 
+    def test_apartment_access_excludes_only_explicit_unoccupied_roof_instances(self):
+        from acs_residential_access import issues, opening_collisions
+        from acs_residential_layout import propose
+        from test_residential_layout_fallback import program
+        base=propose('عمارة دورين، كل دور شقتين. جهة الشارع: جنوب',program())
+        self.assertEqual(issues(base),[])
+        roofed,report=acs_roof.add_flat_roof_level(base)
+        self.assertEqual(issues(roofed),[])
+        self.assertEqual(existing_geometry_verifier(roofed)['scopes'],
+                         {'topology':'PASS','vertical_circulation':'PASS'})
+        # An explicit upper roof with a lower index cannot replace the occupied
+        # ground storey's entrance roots; elevation and index need not be ordered.
+        reindexed=copy.deepcopy(roofed);reindexed['levels'][-1]['index']=-1
+        self.assertEqual(issues(reindexed),[])
+        # Template names and inherited roof room IDs confer no exemption.
+        occupied=copy.deepcopy(roofed);occupied['levels'][-1]['kind']='floor'
+        self.assertTrue(any(i['room_ref'][0]==report['template'] for i in issues(occupied)))
+        mixed=copy.deepcopy(roofed)
+        mixed['levels'].append({'index':report['level_index']+1,
+                                'template':report['template'],'kind':'floor'})
+        self.assertTrue(any(i['room_ref'][0]==report['template'] for i in issues(mixed)))
+        # A roof must not mask an actual apartment doorway disconnection.
+        broken=copy.deepcopy(roofed)
+        bedroom=next(r for r in broken['floors']['residential_2']['rooms']
+                     if r.get('role')=='bedroom')
+        bedroom['doors']=[]
+        self.assertTrue(any(i['room_ref']==['residential_2',bedroom['id']]
+                            for i in issues(broken)))
+        # Geometric collision checks still apply to declared roof apertures.
+        deck=roofed['floors'][report['template']]['rooms'][0]
+        deck['doors']=[{'edge':'N','offset':1,'w':1,'h':2}]
+        deck['windows']=[{'edge':'N','offset':1,'w':1,'h':1,'sill':.5}]
+        self.assertTrue(any(i['room_ref']==[report['template'],deck['id']]
+                            for i in opening_collisions(roofed)))
+
     def test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection(self):
         b,_=acs_roof.add_flat_roof_level(model([room('a',[0,0,5,5])]))
         r=b['floors']['roof']['rooms'][0]

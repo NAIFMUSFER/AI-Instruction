@@ -8,6 +8,91 @@ const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const ORIGIN='https://acs-guest.test';
+// Test-only timing probes retain the real handlers/rendering and every budget.
+// Evidence contains fixed event names, durations and synthetic site width only.
+const DIAG_PREFIX='[ACS-GUEST-DIAG] ';
+function instrumentGuestSource(file,body){
+ const relative=path.relative(PUB,file).split(path.sep).join('/');
+ const probes={
+  'app/ui/workspace-ui-wiring.js':[
+   ['function setModel(data){',"function setModel(data){window.__ACS_GUEST_DIAG__?.mark('model:start');"],
+   ['_next=compile(incoming);',"window.__ACS_GUEST_DIAG__?.mark('compile:start');_next=compile(incoming);window.__ACS_GUEST_DIAG__?.mark('compile:end');"],
+   ['model=_next; scene.add(model);',"model=_next; scene.add(model);window.__ACS_GUEST_DIAG__?.mark('model:committed');"],
+   ["  if(window.__ACS_PQ__&&window.__ACS_PQ__.composer&&!renderer.xr.isPresenting){window.__ACS_PQ__.composer.render();}else{renderer.render(scene,camera);}","  window.__ACS_GUEST_DIAG__?.mark('render:start');\n  if(window.__ACS_PQ__&&window.__ACS_PQ__.composer&&!renderer.xr.isPresenting){window.__ACS_PQ__.composer.render();}else{renderer.render(scene,camera);}\n  window.__ACS_GUEST_DIAG__?.mark('render:end');"]
+  ],
+  'app/generated/pbr-bridge.js':[
+   ['gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);',"window.__ACS_GUEST_DIAG__?.mark('pixels:start');gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,px);window.__ACS_GUEST_DIAG__?.mark('pixels:end');"]
+  ]
+ };
+ if(!probes[relative])return body;
+ let source=body.toString('utf8');
+ for(const [from,to] of probes[relative]){
+  assert.equal(source.split(from).length,2,'guest diagnostic anchor must match exactly once: '+relative);
+  source=source.replace(from,to);
+ }
+ return source;
+}
+async function guestDiagnostics(context,width){
+ const records=[],pages=[];let phase='created';
+ const record=(kind,data)=>{const row={at:new Date().toISOString(),width,phase,kind,...data};records.push(row);if(records.length>160)records.shift();console.log(DIAG_PREFIX+JSON.stringify(row));};
+ context.on('page',page=>{
+  const id=pages.length;pages.push(page);
+  page.on('console',message=>{const text=message.text();if(!text.startsWith(DIAG_PREFIX))return;
+   try{const data=JSON.parse(text.slice(DIAG_PREFIX.length));if(data?.contract==='guest-timing/1')record('page',{page:id,...data});}catch{}
+  });
+  page.on('crash',()=>record('crash',{page:id}));
+ });
+ await context.addInitScript(()=>{
+  const state={raf:0,longtasks:0,longtaskMaxMs:0,active:{},maxMs:{},calls:{},siteWidth:null},now=()=>Math.round(performance.now());
+  let logs=0,framesToLog=6,lastModel,longtaskReports=0,heartbeats=0,lastSlowRenderLog=-Infinity;
+  const snapshot=()=>JSON.parse(JSON.stringify(state));
+  const emit=(event,extra={})=>{if(logs++<120)console.log('[ACS-GUEST-DIAG] '+JSON.stringify({contract:'guest-timing/1',event,t:now(),...extra}));};
+  const mark=name=>{
+   const [part,edge]=name.split(':'),time=now();state.calls[name]=(state.calls[name]||0)+1;
+   if(edge==='start')state.active[part]=time;
+   let duration;
+   if((edge==='end'||name==='model:committed')&&state.active[part]!==undefined){duration=time-state.active[part];delete state.active[part];state.maxMs[part]=Math.max(state.maxMs[part]||0,duration);}
+   if(name==='model:start')framesToLog=6;
+   const slowRender=part==='render'&&duration>250&&time-lastSlowRenderLog>=5000;
+   if(slowRender)lastSlowRenderLog=time;
+   if(part!=='render'||framesToLog>0||slowRender)emit(name,duration===undefined?{}:{duration});
+   if(name==='render:end'&&framesToLog>0)framesToLog--;
+  };
+  window.__ACS_GUEST_DIAG__={mark,snapshot};
+  const ids=new Set(['guestWarehouse','loadWarehouse','guestExample','guestCreate','genText','guestSignin']);
+  for(const capture of [true,false])document.addEventListener('click',event=>{
+   const id=event.target?.closest?.('button,a')?.id;if(!ids.has(id))return;
+   framesToLog=6;emit(capture?'click:capture':'click:bubble',{target:id});
+  },capture);
+  try{new PerformanceObserver(list=>{for(const entry of list.getEntries()){
+   state.longtasks++;state.longtaskMaxMs=Math.max(state.longtaskMaxMs,Math.round(entry.duration));
+   if(entry.duration>250&&longtaskReports++<4)emit('longtask',{duration:Math.round(entry.duration)});
+  }}).observe({type:'longtask',buffered:true});}catch{}
+  function frame(){state.raf++;
+   let model;try{model=window.ACS?.exportModel?.();}catch{}
+   if(model&&model!==lastModel){lastModel=model;state.siteWidth=Number.isFinite(model.site?.w)?model.site.w:null;emit('model:observed',{siteWidth:state.siteWidth});}
+   requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);setInterval(()=>{if(heartbeats++<24)emit('heartbeat',snapshot());},5000);
+  emit('document:start');
+ });
+ return {
+  phase(name){phase=name;record('phase',{});},
+  async failure(error){
+   const snapshots=[];
+   for(const [id,page]of pages.entries()){
+    if(page.isClosed())continue;
+    let timer;
+    try{snapshots.push({page:id,value:await Promise.race([
+     page.evaluate(()=>window.__ACS_GUEST_DIAG__?.snapshot()||null),
+     new Promise(resolve=>{timer=setTimeout(()=>resolve({unavailable:'PAGE_UNRESPONSIVE'}),1000);})
+    ])});}catch{snapshots.push({page:id,value:{unavailable:'PAGE_CLOSED_OR_UNREACHABLE'}});}finally{clearTimeout(timer);}
+   }
+   const output=path.join(ROOT,'logs','guest-diagnostics');fs.mkdirSync(output,{recursive:true});
+   fs.writeFileSync(path.join(output,width+'.json'),JSON.stringify({contract:'guest-failure/1',width,phase,errorType:['TimeoutError','AssertionError','TypeError','Error'].includes(error?.name)?error.name:'Error',records,snapshots},null,2));
+  }
+ };
+}
 async function guestSnapshot(page){
  return page.evaluate(()=>new Promise((resolve,reject)=>{
   const open=indexedDB.open('acs_guest_project_v1',2);
@@ -52,11 +137,12 @@ async function downloadedJSON(page,button){
  return JSON.parse(Buffer.concat(parts).toString('utf8'));
 }
 async function runGuestWorkspaceTests(){
- const browser=await PW.launch();let passed=0;
+ const browser=await PW.launch();let passed=0;const diagnostics=[];
  try{
   for(const width of [393,1280]){
    const context=await browser.newContext({viewport:{width,height:852},acceptDownloads:true});
    context.setDefaultTimeout(15000);
+   const diagnostic=await guestDiagnostics(context,width);diagnostics.push(diagnostic);
    const page=await context.newPage(),calls=[],errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.addInitScript(()=>{
@@ -68,8 +154,9 @@ async function runGuestWorkspaceTests(){
     if(url.origin!==ORIGIN||/^\/(?:v1|auth|rest|functions)(?:\/|$)/.test(url.pathname)){calls.push(url.pathname);return route.abort();}
     const file=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
     if(!file.startsWith(PUB+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return route.fulfill({status:404,body:''});
-    return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(file)});
+    return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:instrumentGuestSource(file,fs.readFileSync(file))});
    });
+   diagnostic.phase('fresh-entry');
    await page.goto(ORIGIN+'/');
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.ACS.exportModel());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
@@ -83,9 +170,12 @@ async function runGuestWorkspaceTests(){
    if(width<=820)assert.equal(await page.locator('#panelToggle').getAttribute('aria-expanded'),'false');
    assert.equal(await page.locator('#genLLM').isEnabled(),false);
    assert.equal(await page.locator('#bNotesApply').isEnabled(),false);
+   diagnostic.phase('first-warehouse-click');
    await page.locator('#guestWarehouse').click();
+   diagnostic.phase('first-warehouse-click-returned');
    await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
    assert.match(await page.locator('#acsGuestStatus').textContent(),/تجريبي/);
+   diagnostic.phase('local-edit');
    await page.locator('#guestCreate').click();
    await page.locator('#descText').fill('غرفة معيشة 5×4 ومطبخ 4×3 وغرفة نوم 4×4');
    await page.locator('#siteW').fill('24');await page.locator('#siteD').fill('18');await page.locator('#nFloors').fill('1');
@@ -97,6 +187,7 @@ async function runGuestWorkspaceTests(){
    assert.match(await page.locator('#acsGuestStatus').textContent(),/استُعيد/);
    // Local file inputs and downloads exercise the actual handlers and bytes.
    // This fixture is synthetic; no real account files or credentials are read.
+   diagnostic.phase('local-import-download');
    const originalModel=await page.evaluate(()=>window.ACS.exportModel());
    const importedModel=JSON.parse(JSON.stringify(originalModel));
    importedModel.site.w=23;importedModel.meta={...importedModel.meta,name:'guest-import-'+width};
@@ -137,6 +228,7 @@ async function runGuestWorkspaceTests(){
    await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===24);
    assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_IMPORT_TEST'))).ok,true);
    if(width===1280){
+    diagnostic.phase('two-tabs-storage-denied');
     // A second real tab shares only the guest draft namespace. Its visible
     // sample choice must not overwrite the first tab's in-memory project.
     const second=await context.newPage();second.on('pageerror',e=>errors.push(e.message));
@@ -187,6 +279,7 @@ async function runGuestWorkspaceTests(){
    }
    // Delay the real IndexedDB recovery result, then act before it completes.
    // This instruments only scheduling; the shipped page and saved data are real.
+   diagnostic.phase('delayed-recovery');
    await page.evaluate(()=>sessionStorage.setItem('acs_test_delay_guest_recovery','1'));
    await page.addInitScript(()=>{
     let current;const seen=new WeakSet();
@@ -241,6 +334,7 @@ async function runGuestWorkspaceTests(){
    assert.deepEqual(calls,[],'guest must never request health/auth/private/provider services');
    assert.deepEqual(errors,[],'the actual shipped guest must boot without page errors');
    // A saved account is preserved but not read/used in explicit guest mode.
+   diagnostic.phase('explicit-guest-with-stored-account');
    const privateSession={access_token:'private-access',refresh_token:'private-refresh',expires_at:1,user:{id:'private-user'}};
    await page.evaluate(s=>{localStorage.setItem('acs_supabase_session_v1',JSON.stringify(s));localStorage.setItem('acs_project_v1',JSON.stringify({id:'private-project'}));localStorage.setItem('acs_password_recovery_v1','private-user');},privateSession);
    await page.addInitScript(()=>{
@@ -259,6 +353,7 @@ async function runGuestWorkspaceTests(){
    assert.equal(new URL(page.url()).searchParams.get('signin'),'1');
    assert.equal(await page.evaluate(()=>window.ACS.guest),false);
    assert.equal(await page.locator('#acsGuestBanner').count(),0);
+   diagnostic.phase('journey-passed');
    passed++;await context.close();
   }
   // A real browser with WebGL deliberately unavailable must retain useful,
@@ -295,6 +390,9 @@ async function runGuestWorkspaceTests(){
   assert.equal(new URL(fallback.url()).searchParams.get('signin'),'1');
   await noGl.close();passed++;
   console.log('GUEST WORKSPACE: '+passed+' production-origin journeys passed (desktop/mobile JSON import/download and unsupported files; two guest tabs; denied-storage backup; recovery; no-WebGL)');
+ }catch(error){
+  for(const diagnostic of diagnostics){try{await diagnostic.failure(error);}catch{console.error('[ACS-GUEST-DIAG] evidence write failed');}}
+  throw error;
  }finally{await browser.close();}
 }
 module.exports={runGuestWorkspaceTests};

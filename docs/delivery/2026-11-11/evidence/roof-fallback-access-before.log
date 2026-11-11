@@ -1,0 +1,19 @@
+F
+======================================================================
+FAIL: test_apartment_access_excludes_only_explicit_unoccupied_roof_instances (__main__.RoofBoundaryRegressions.test_apartment_access_excludes_only_explicit_unoccupied_roof_instances)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 341, in test_apartment_access_excludes_only_explicit_unoccupied_roof_instances
+    self.assertEqual(issues(roofed),[])
+AssertionError: Lists differ: [{'code': 'RESIDENTIAL_ACCESS_DISCONNECTED[6658 chars]or'}] != []
+
+First list contains 25 additional elements.
+First extra element 0:
+{'code': 'RESIDENTIAL_ACCESS_DISCONNECTED', 'room_ref': ['roof', 'roof_residential_2_apartment_1_bathroom_1'], 'message': '[roof/roof_residential_2_apartment_1_bathroom_1] اربط المدخل والممر المشترك والدرج والمصعد بمسار متصل وأبواب متقابلة متطابقة.', 'severity': 'error'}
+
+Diff is 7535 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 1 test in 0.114s
+
+FAILED (failures=1)

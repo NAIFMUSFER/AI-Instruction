@@ -33,12 +33,16 @@ w.write(sys.argv[1])`,pdfFixture]);
   assert.ok(ready,'fixture backend did not start: '+backendLog);browser=await PW.launch();
   for(const {width,noWebGL} of [{width:393},{width:1280},{width:393,noWebGL:true}]){
    const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true}),page=await context.newPage();
-   let blockJobPoll=false;
+   let blockJobPoll=false,comparisonPause=null,comparisonStarted=null;
+   const workspaceActions=[];
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    if(noWebGL)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/i.test(type)?null:original.call(this,type,...args);};});
    await page.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname==='acs-engine.onrender.com'){
+      const body=req.method()==='POST'&&/\/(?:workspace|plan\/commands)$/.test(url.pathname)?req.postDataJSON():null;
+      if(url.pathname.endsWith('/workspace'))workspaceActions.push(body?.action);
+      if(comparisonPause&&url.pathname.endsWith('/plan/commands')&&body?.action==='compare'){comparisonStarted?.();await comparisonPause;}
       if(blockJobPoll&&url.pathname.endsWith('/workspace')&&req.method()==='POST'&&req.postDataJSON()?.action==='job')return route.abort('failed');
       const response=await route.fetch({url:'http://127.0.0.1:'+port+url.pathname+url.search});return route.fulfill({response});
     }
@@ -197,12 +201,30 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('#cwComparison').waitFor({state:'visible'});
    assert.equal(await page.locator('#cwCompareRevision').inputValue(),chatReferenceRevision,'the async receipt must select the exact source revision, not an inferred neighbor');
    assert.ok(await page.locator('#cwComparisonRows tr').count()>2);
-   await page.locator('#cwCompare').click();await page.locator('#cwComparison').waitFor({state:'visible'});
+   // Hold the real comparison response: a visible existing comparison is not
+   // evidence that the latest request completed. Revision selection must stay
+   // disabled until the serialized request has settled, rather than be dropped.
+   let releaseComparison,comparisonTimer;comparisonPause=new Promise(resolve=>{releaseComparison=resolve;});
+   const comparisonEntered=new Promise(resolve=>{comparisonStarted=resolve;});
+   try{
+    await page.locator('#cwCompare').click();
+    await Promise.race([comparisonEntered,new Promise((resolve,reject)=>{comparisonTimer=setTimeout(()=>reject(new Error('comparison did not reach the controlled route')),10000);})]);
+    assert.equal(await page.locator('#cwRevision').isDisabled(),true,'comparison cannot silently drop a concurrent revision selection');
+   }finally{clearTimeout(comparisonTimer);releaseComparison();comparisonPause=null;comparisonStarted=null;}
+   await page.waitForFunction(()=>document.querySelector('#designWorkspace').getAttribute('aria-busy')==='false');
+   await page.locator('#cwComparison').waitFor({state:'visible'});
    const firstRevision=await page.locator('#cwRevision option').first().getAttribute('value');
    await page.locator('#cwRevision').selectOption(firstRevision);
    await page.waitForFunction(()=>document.querySelector('#cwSemanticLockStatus')?.textContent.includes('تاريخية'));
    assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'a historical revision must stay read only');
    assert.equal(await page.locator('#cwRoof').isDisabled(),true,'a historical revision cannot change the current roof');
+   await page.waitForFunction(()=>document.querySelector('#designWorkspace').getAttribute('aria-busy')==='false');
+   assert.equal(await page.locator('#cwRevision').inputValue(),firstRevision,'the selected historical revision must finish loading');
+   const beforeHistoricalClick=await workspaceState(page),roofRequests=workspaceActions.filter(action=>action==='set_roof').length;
+   await page.evaluate(()=>document.querySelector('#cwRoof').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+   await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('اختر آخر نسخة قبل تعديل السطح'));
+   assert.equal(workspaceActions.filter(action=>action==='set_roof').length,roofRequests,'a forced historical roof event sends no write request');
+   const afterHistoricalClick=await workspaceState(page);assert.equal(afterHistoricalClick.head,beforeHistoricalClick.head);assert.deepEqual(afterHistoricalClick.history,beforeHistoricalClick.history,'historical roof refusal preserves immutable history');
    await page.locator('#cwLogout').click();await page.locator('#lgEmail').waitFor({state:'visible'});
    if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
    else assert.deepEqual(errors,[]);

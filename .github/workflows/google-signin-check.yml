@@ -9,6 +9,7 @@ on:
       - 'tests/remediation/test_auth_gateway.py'
       - 'tests/remediation/test_auth_session.js'
       - 'tests/remediation/test_auth_shipped_page.cjs'
+      - 'tests/remediation/test_auth_fixture_waits.cjs'
       - '.github/workflows/google-signin-check.yml'
   workflow_dispatch:
 permissions:
@@ -31,6 +32,7 @@ jobs:
       - name: Auth session and gateway contracts
         run: |
           node tests/remediation/test_auth_session.js
+          node tests/remediation/test_auth_fixture_waits.cjs
           python3 tests/remediation/test_auth_gateway.py
       - name: Build shipped frontend
         run: bash tools/netlify-build.sh
@@ -38,3 +40,14 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Google redirect and existing account UI on desktop and mobile
         run: node tests/remediation/test_auth_shipped_page.cjs
+      - name: Retain masked synthetic auth failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: google-auth-failure-${{ github.run_id }}
+          path: |
+            logs/auth-failure-*.json
+            logs/auth-failure-*.png
+            logs/guest-diagnostics/*.json
+          if-no-files-found: ignore
+          retention-days: 14

@@ -105,7 +105,8 @@
       "ROOF-AUTHORED-INSTANCE",
       "ROOF-ID-BOUND",
       "ROOF-DISCLOSURE",
-      "ROOF-REMOVED-PREFERENCE"
+      "ROOF-REMOVED-PREFERENCE",
+      "ROOF-APARTMENT-ACCESS"
     ],
     "tests": [
       "tests/remediation/test_roof_level.py",
@@ -129,6 +130,34 @@
     "tests": [
       "tests/remediation/test_roof_level.py",
       "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_residential_access.py",
+    "depth": "deep",
+    "purpose": "Apartment circulation scope and explicit unoccupied roof-only templates; opening collisions retained",
+    "risk": "high",
+    "findings": [
+      "ROOF-APARTMENT-ACCESS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_residential_layout_fallback.py",
+      "tests/remediation/test_connected_workspace.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_residential_layout_fallback.py",
+    "depth": "selected",
+    "purpose": "Original computed apartment save/reopen/approve/export regression, run unchanged against main and candidate",
+    "risk": "medium",
+    "findings": [
+      "ROOF-APARTMENT-ACCESS"
+    ],
+    "tests": [
+      "tests/remediation/test_residential_layout_fallback.py"
     ],
     "generated_from": []
   }

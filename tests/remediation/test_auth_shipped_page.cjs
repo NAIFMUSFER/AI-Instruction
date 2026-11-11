@@ -8,7 +8,15 @@ const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.jo
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'fixture-user',email:'fixture@example.test'}});
 const sourcePath='/v1/projects/fixture-project/workspace/plan-source';
-const sourceResponse=page=>page.waitForResponse(response=>new URL(response.url()).pathname===sourcePath&&response.request().method()==='POST');
+function sourceResponse(page){
+  const pending=page.waitForResponse(response=>new URL(response.url()).pathname===sourcePath&&response.request().method()==='POST');
+  // Observe teardown rejection immediately: a failed navigation may prevent the
+  // caller from reaching its await. Return the original promise so a source
+  // request failure still fails privateWorkspaceReady instead of being swallowed.
+  pending.catch(()=>{});
+  return pending;
+}
+function workspaceEntered(){return !!document.body&&document.body.classList.contains('acs-entered');}
 async function privateWorkspaceReady(page,sourceRestore){
   const response=await sourceRestore;
   assert.equal(response.status(),200,'the authenticated source list must finish restoring');
@@ -22,7 +30,7 @@ async function privateWorkspaceReady(page,sourceRestore){
   assert.equal(await page.locator('#cwProject').inputValue(),'fixture-project');
   assert.equal(await page.locator('#cwBriefForm').isVisible(),true);
 }
-(async()=>{
+async function runAuthShippedPage(){
   const browser=await PW.launch();
   try{
     for(const width of [393,1280]){
@@ -114,7 +122,7 @@ async function privateWorkspaceReady(page,sourceRestore){
       assert.equal(await page.locator('#acsAuthCredentials').isVisible(),false);
       const firstSourceRestore=sourceResponse(page);
       await page.locator('#lgProject').fill('مشروع تحقق الواجهة');await page.locator('#lgGo').click();
-      await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      await page.waitForFunction(workspaceEntered);
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
       await privateWorkspaceReady(page,firstSourceRestore);
       assert.equal(await page.evaluate(()=>window.ACS.exportModel?.()??null),null,'production entry must not inject a demo');
@@ -123,7 +131,7 @@ async function privateWorkspaceReady(page,sourceRestore){
       assert.deepEqual(localModules,[],'sign-in and private review must not import the local studio graph');
       const before=calls.filter(p=>p==='/v1/auth/signin').length;
       const reloadSourceRestore=sourceResponse(page);
-      await page.reload();await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      await page.reload();await page.waitForFunction(workspaceEntered);
       await privateWorkspaceReady(page,reloadSourceRestore);
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before,'reload reuses a verified session');
       assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_local_project:fixture-user:fixture-project');
@@ -139,7 +147,7 @@ async function privateWorkspaceReady(page,sourceRestore){
       // restore the same Supabase project, and keep auth codes out of the URL.
       const googleSourceRestore=sourceResponse(page);
       await page.locator('#acsAuthGoogle').click();
-      await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      await page.waitForFunction(workspaceEntered);
       await privateWorkspaceReady(page,googleSourceRestore);
       assert.equal(page.url(),'https://acs-ui.test/');
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('acs_google_pkce_v1')),null);
@@ -158,7 +166,11 @@ async function privateWorkspaceReady(page,sourceRestore){
           const el=document.getElementById(id),rect=el?.getBoundingClientRect(),style=el&&getComputedStyle(el);
           return [id,{visible:!!rect&&rect.width>0&&rect.height>0&&style.visibility!=='hidden'&&style.display!=='none',text:el?.textContent?.slice(0,300)||''}];
         }))).catch(()=>({unavailable:true}));
-        const diagnostic={width,error_type:error.name,visible,endpoint_paths:[...new Set(calls)],local_modules:localModules};
+        const message=String(error.message||'').split('\n')[0]
+          .replace(/https?:\/\/[^\s]+/g,value=>{try{const url=new URL(value);return url.origin+url.pathname;}catch{return '[url]';}})
+          .replace(/(?:Bearer\s+|(?:access_token|refresh_token|code_verifier|password)\s*[:=]\s*)\S+/gi,'[redacted]')
+          .slice(0,500);
+        const diagnostic={width,error_type:error.name,error_message:message,visible,endpoint_paths:[...new Set(calls)],local_modules:localModules};
         fs.writeFileSync(path.join(ROOT,'logs','auth-failure-'+width+'.json'),JSON.stringify(diagnostic,null,2));
         await page.screenshot({path:path.join(ROOT,'logs','auth-failure-'+width+'.png'),mask:[page.locator('input')]}).catch(()=>{});
         console.error('AUTH FIXTURE DIAGNOSTIC',JSON.stringify(diagnostic));
@@ -167,4 +179,6 @@ async function privateWorkspaceReady(page,sourceRestore){
     }
   }finally{await browser.close();}
   await require('./test_guest_workspace.cjs').runGuestWorkspaceTests();
-})().catch(e=>{console.error(e);process.exitCode=1;});
+}
+module.exports={sourceResponse,workspaceEntered};
+if(require.main===module)runAuthShippedPage().catch(e=>{console.error(e);process.exitCode=1;});
