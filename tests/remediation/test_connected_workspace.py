@@ -260,6 +260,142 @@ class WorkspaceLifecycle(unittest.TestCase):
                     S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':locked['head'],'enabled':False})
                 self.assertEqual(refused.exception.code, 'LOCK_CONTEXT_CHANGED')
 
+    def test_removed_roof_preference_rejects_provider_roof_without_retry_or_write(self):
+        import acs_roof
+        class CountedRunner(Runner):
+            def run(self, target, kwargs, **controls):
+                with limited(kwargs['max_provider_calls']) as budget:
+                    consume()  # One synthetic paid operation, no external provider.
+                    result = super().run(target, kwargs, **controls)
+                    self.charged_calls = getattr(self, 'charged_calls', 0) + budget['used']
+                    return result
+        for kind in ('residential', 'warehouse'):
+            for provider_auto in (False, True):
+                with self.subTest(kind=kind, provider_auto=provider_auto), tempfile.TemporaryDirectory() as directory:
+                    db = SQLitePlanStore(Path(directory) / 'plans.sqlite3')
+                    db.create_project(PROJECT, owner_id=ACTOR)
+                    store = SQLitePlanStoreAdapter(db)
+                    first = S.generate_and_save(store, PROJECT, ACTOR, command(), runner=Runner(model(kind)))
+                    removed = S.set_roof(store, PROJECT, ACTOR,
+                        {'action':'set_roof', 'expected_head':first, 'enabled':False})['head']
+                    execute_persisted_plan_command(store, PROJECT,
+                        {'action':'approve', 'expected_head':removed, 'confirmed':True,
+                         'acknowledge_concept_only':True}, actor_id=ACTOR,
+                        verifier=S.existing_geometry_verifier)
+                    before = S.workspace(store, PROJECT, ACTOR)
+                    saved_model = copy.deepcopy(before.get(removed).model)
+                    history = before.history()
+                    candidate, _ = acs_roof.add_flat_roof_level(model(kind))
+                    next(level for level in candidate['levels'] if level.get('kind') == 'roof')['auto'] = provider_auto
+                    original_candidate = copy.deepcopy(candidate)
+                    runner = CountedRunner(candidate)
+                    with self.assertRaises(PlanError) as caught:
+                        S.generate_and_save(store, PROJECT, ACTOR,
+                            dict(command(), expected_head=removed), runner=runner)
+                    self.assertEqual(caught.exception.code, 'ROOF_PREFERENCE_CONFLICT')
+                    self.assertIn('إزالة السطح', str(caught.exception))
+                    self.assertEqual(len(runner.calls), 1, 'No second provider operation may repair this preference conflict')
+                    self.assertEqual(runner.charged_calls, 1)
+                    self.assertEqual(runner.calls[0][1]['max_provider_calls'], command()['max_provider_calls'])
+                    self.assertEqual(candidate, original_candidate)
+                    reopened = S.workspace(store, PROJECT, ACTOR)
+                    self.assertEqual(reopened.head, removed)
+                    self.assertEqual(reopened.baseline, removed)
+                    self.assertEqual(reopened.history(), history)
+                    self.assertEqual(reopened.get(removed).model, saved_model)
+                    self.assertIs(saved_model['meta']['acs_roof']['removed_by_user'], True)
+                    self.assertFalse(acs_roof.has_roof_level(saved_model))
+
+    def test_all_chat_admission_paths_surface_roof_conflict_as_plan_error(self):
+        import acs_roof
+        import acs_plan_bridge as bridge
+        import acs_understand as provider
+        first = self.generate()
+        removed = S.set_roof(self.store, PROJECT, ACTOR,
+                            {'action':'set_roof', 'expected_head':first, 'enabled':False})['head']
+        execute_persisted_plan_command(self.store, PROJECT,
+            {'action':'approve', 'expected_head':removed, 'confirmed':True,
+             'acknowledge_concept_only':True}, actor_id=ACTOR,
+            verifier=S.existing_geometry_verifier)
+        candidate, _ = acs_roof.add_flat_roof_level(model())
+        notes = [{'text':'عدّل ترتيب الفراغات دون إعادة السطح'}]
+        for entry in ('legacy', 'bound', 'provider_free'):
+            with self.subTest(entry=entry):
+                ws = S.workspace(self.store, PROJECT, ACTOR)
+                history, saved = ws.history(), ws.get(removed).model
+                def reply(*args, **kwargs):
+                    consume()
+                    return copy.deepcopy(candidate)
+                with limited(3) as budget, patch.object(provider, 'apply_notes', side_effect=reply) as call:
+                    with self.assertRaises(PlanError) as caught:
+                        if entry == 'legacy':
+                            bridge.propose_chat_edit(ws, notes, expected_head=removed)
+                        elif entry == 'bound':
+                            bridge.propose_bound_chat_edit(ws, notes, expected_head=removed)
+                        else:
+                            bridge.admit_bound_chat_edit_candidate(ws, notes,
+                                expected_head=removed, candidate=candidate)
+                    self.assertEqual(caught.exception.code, 'ROOF_PREFERENCE_CONFLICT')
+                    self.assertIn('إزالة السطح', str(caught.exception))
+                    self.assertEqual(call.call_count, 0 if entry == 'provider_free' else 1)
+                    self.assertEqual(budget['used'], 0 if entry == 'provider_free' else 1)
+                self.assertEqual(ws.head, removed)
+                self.assertEqual(ws.baseline, removed)
+                self.assertEqual(ws.history(), history)
+                self.assertEqual(ws.get(removed).model, saved)
+
+    def test_local_room_edit_keeps_roof_removal_without_provider_work(self):
+        import acs_roof
+        import acs_understand as provider
+        first = self.generate()
+        removed = S.set_roof(self.store, PROJECT, ACTOR,
+                            {'action':'set_roof', 'expected_head':first, 'enabled':False})['head']
+        with patch.object(provider, 'apply_notes') as call:
+            edited = S.edit_geometry(self.store, PROJECT, ACTOR,
+                {'action':'edit_geometry', 'expected_head':removed,
+                 'room_ref':['ground','b'], 'rect':[10,0,7,8]})['head']
+            call.assert_not_called()
+        saved = S.workspace(self.store, PROJECT, ACTOR).get(edited).model
+        self.assertTrue(acs_roof.roof_removed_by_user(saved))
+        self.assertFalse(acs_roof.has_roof_level(saved))
+        self.assertEqual(saved['floors']['ground']['rooms'][1]['rect'], [10,0,7,8])
+
+    def test_occupied_roof_like_template_keeps_the_removal_preference(self):
+        import acs_roof
+        first = self.generate()
+        removed = S.set_roof(self.store, PROJECT, ACTOR,
+                            {'action':'set_roof', 'expected_head':first, 'enabled':False})['head']
+        candidate = model()
+        candidate['levels'][0]['template'] = 'roof_office'
+        candidate['floors']['roof_office'] = candidate['floors'].pop('ground')
+        runner = Runner(candidate)
+        generated = S.generate_and_save(self.store, PROJECT, ACTOR,
+                                       dict(command(), expected_head=removed), runner=runner)
+        saved = S.workspace(self.store, PROJECT, ACTOR).get(generated).model
+        self.assertEqual(len(runner.calls), 1)
+        self.assertIs(saved['meta']['acs_roof']['removed_by_user'], True)
+        self.assertFalse(acs_roof.has_roof_level(saved))
+        self.assertEqual(saved['levels'], candidate['levels'])
+        self.assertEqual(saved['floors'], candidate['floors'])
+
+    def test_unchanged_authored_head_roof_is_not_stripped_or_reclassified(self):
+        import acs_roof
+        authored, _ = acs_roof.add_flat_roof_level(model())
+        roof = next(level for level in authored['levels'] if level.get('kind') == 'roof')
+        roof['auto'] = False
+        for room in authored['floors'][roof['template']]['rooms']:
+            room['auto'] = False
+        ws = S.workspace(self.store, PROJECT, ACTOR)
+        revision = ws.propose(authored, brief=command()['brief'], requirements=command()['requirements'],
+                              expected_head=None, note='Synthetic owner-authored roof')
+        self.store.save_revision(PROJECT, actor_id=ACTOR, revision=revision, expected_head=None)
+        runner = Runner(authored)
+        new_head = S.generate_and_save(self.store, PROJECT, ACTOR,
+                                      dict(command(), expected_head=revision.id), runner=runner)
+        self.assertEqual(len(runner.calls), 1)
+        self.assertEqual(S.workspace(self.store, PROJECT, ACTOR).get(new_head).model, authored)
+        self.assertEqual(S.workspace(self.store, PROJECT, ACTOR).get(revision.id).model, authored)
+
     def test_changed_head_during_generation_does_not_overwrite_winner(self):
         first = self.generate()
         next_command = dict(command(), expected_head=first)

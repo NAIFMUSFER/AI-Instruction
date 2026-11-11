@@ -18,9 +18,9 @@ const metricValue = (key, v) => {
   return typeof reason==='string'&&reason.trim() ? 'غير متاح / غير قابل للقياس — '+reason : value(v);
 };
 const floorLabel = index => index < 0 ? 'القبو '+Math.abs(index) : index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور '+index;
-// A canonical roof level (all spaces named roof_*) is a deck, not a storey: name it as such wherever a level is listed.
-const isRoofProjection = p => Array.isArray(p?.primitives) && p.primitives.length > 0 && p.primitives.every(r => String(r?.source?.room_id || '').startsWith('roof_'));
-const levelLabel = p => isRoofProjection(p) ? 'السطح · افتراضي غير مشغول' : floorLabel(p.level_index);
+// Canonical level kind is explicit; room names never determine roof authority.
+const isRoofProjection = p => p?.level_kind === 'roof';
+const levelLabel = p => isRoofProjection(p) ? (p.level_auto===true?'السطح · افتراضي غير مشغول':'السطح · غير مشغول') : floorLabel(p.level_index);
 function roomLabel(label) {
   const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه',corridor:'الممر',majlis:'المجلس'};
   return names[label] || (/^flat_\d+$/.test(label) ? 'شقة '+label.slice(5) : label);
@@ -112,6 +112,7 @@ function syncApproval() {
   const roomLocked=!!selected&&packet?.locks.rooms.some(r=>r[0]===selected.source.template&&r[1]===selected.source.room_id);
   $('cwSaveGeometry').disabled=busy||!!pendingJob||!selected||!head||roomLocked;
   $('cwLock').disabled=busy||!!pendingJob||!selected||!head;
+  if($('cwRoof'))$('cwRoof').disabled=busy||!!pendingJob||!head||!packet||$('cwRoof').dataset.userAuthored==='true';
   planUpload?.sync();
 }
 async function renderState(data, {keepStep=false}={}) {
@@ -143,7 +144,12 @@ async function renderState(data, {keepStep=false}={}) {
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
   if(packet){
-    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});{const roof=$('cwRoof');if(roof){const has=packet.projections.some(isRoofProjection);roof.dataset.enabled=String(has);roof.textContent=has?'إزالة السطح الافتراضي':'إضافة سطح افتراضي';}}
+    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});{const roof=$('cwRoof');if(roof){const roofs=packet.projections.filter(isRoofProjection),has=roofs.length>0,userAuthored=roofs.some(p=>p.level_auto!==true);roof.dataset.enabled=String(has);roof.dataset.userAuthored=String(userAuthored);roof.textContent=userAuthored?'سطح من النموذج · يُعدّل من مخططه':has?'إزالة السطح الافتراضي':'إضافة سطح افتراضي';}}
+    for(const projection of packet.projections.filter(isRoofProjection)){
+      for(const gap of projection.roof_disclosure?.parapet_gaps||[]){
+        el('li','حاجز السطح غير مكتمل عند '+gap.room_id+' · الحافة '+gap.edge+' · طول مفتوح '+value(gap.open_length_m)+' م. هذه الفتحة لم تُملأ بافتراض هندسي.', $('cwAssumptions'));$('cwAssumptionsCard').hidden=false;
+      }
+    }
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,metricValue(k,v)]));
     const checks=Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]);
     // محاذاة النوى ووجود عناصر درج أو مصعد لا يثبتان الانتقال الفعلي، حتى في ملف قديم بلا تغطية معلنة.
@@ -351,8 +357,8 @@ function mount(){
     try{await handleJob((await api(body)).job);}catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+err.message,true);}
   });});
   $('cwSelection').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const data=await api({action:'edit_geometry',expected_head:state.head,room_ref:[selected.source.template,selected.source.room_id],rect:['cwX','cwZ','cwW','cwD'].map(id=>Number($(id).value))});await renderState(data);status('حُفظ التعديل كنسخة جديدة.');});});
-  {const roof=el('button','إضافة سطح افتراضي',$('cwRestore').parentNode);roof.type='button';roof.id='cwRoof';roof.title='سطح مسطح بحاجز 0.9 م يتبع الدور الأخير. افتراض معلن وليس دورًا مشغولًا.';
-  roof.addEventListener('click',()=>run(async()=>{const enabled=roof.dataset.enabled!=='true';const data=await api({action:'set_roof',expected_head:state.head,enabled});await renderState(data);status(enabled?'أُضيف السطح الافتراضي كنسخة جديدة.':'أُزيل السطح الافتراضي كنسخة جديدة. لن يُضاف تلقائيًا في التوليد القادم.');}));}
+  {const roof=el('button','إضافة سطح افتراضي',$('cwRestore').parentNode);roof.type='button';roof.id='cwRoof';roof.setAttribute('data-mutate','');roof.title='سطح مسطح بحاجز 0.9 م يتبع الدور الأخير. افتراض معلن وليس دورًا مشغولًا.';
+  roof.addEventListener('click',()=>run(async()=>{if(!state?.head||state.revision_id!==state.head)throw new Error('اختر آخر نسخة قبل تعديل السطح.');if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const enabled=roof.dataset.enabled!=='true';const data=await api({action:'set_roof',expected_head:state.head,enabled});await renderState(data);status(enabled?'أُضيف السطح الافتراضي كنسخة جديدة.':'أُزيل السطح الافتراضي كنسخة جديدة. لن يُضاف تلقائيًا في التوليد القادم.');}));}
   $('cwRestore').addEventListener('click',()=>run(async()=>{await renderState(await api({action:'restore',expected_head:state.head,source_revision_id:state.revision_id,note:'استعادة نسخة محفوظة من واجهة المشروع'},true));status('تمت الاستعادة كمسودة جديدة؛ النسخ المعتمدة السابقة محفوظة.');}));
   $('cwCompare').addEventListener('click',()=>run(async()=>{const reference=$('cwCompareRevision').value;if(!reference||reference===state.revision_id)throw new Error('اختر نسخة مرجعية مختلفة للمقارنة.');const data=await api({action:'compare',reference_revision_id:reference,target_revision_id:state.revision_id},true);showComparison(data);status('المقارنة من النسختين المحفوظتين.');}));
   $('cwLogout').addEventListener('click',()=>{stopProgress();clearTimeout(pollTimer);revisionEpoch++;clearViewer();state=null;packet=null;root.hidden=true;document.body.classList.remove('acs-connected');$('acsLogout')?.click();});

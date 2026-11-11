@@ -78,6 +78,14 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
   await page.locator('[data-view="aerial"]').click();assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().presentation.tour),false,'choosing a view ends the tour');await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
   assert.equal((await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect())).meshCount,baseline.meshCount,'toggles never change approved meshes');
   if(fixture.kind==='residential'){
+   const floorSelector=page.locator('select[aria-label="الدور المعروض في 3D"]'),roofIndex=await floorSelector.locator('option').filter({hasText:/^السطح$/}).getAttribute('value');assert.ok(roofIndex,'canonical roof is explicitly selectable');
+   for(const name of ['aerial','cutaway']){
+    await page.locator('[data-view="'+name+'"]').click();await floorSelector.selectOption(roofIndex);await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
+    const selectedRoof=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.ok(selectedRoof.presentation.visibleRoofMeshCount>0,'selected roof has actual visible geometry in '+name);assert.equal(selectedRoof.presentation.roofShown,true);assert.equal(selectedRoof.modelHash,fixture.model_hash);assert.equal(selectedRoof.meshCount,baseline.meshCount);
+   }
+   await page.getByRole('button',{name:'إعادة الضبط',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);assert.equal(await floorSelector.inputValue(),'all');
+   await page.locator('[data-view="aerial"]').click();await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
+   const allFloors=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(allFloors.presentation.visibleRoofMeshCount,0,'default all-floor aerial view hides the roof again');assert.equal(allFloors.presentation.roofShown,false);assert.equal(allFloors.modelHash,fixture.model_hash);assert.equal(allFloors.meshCount,baseline.meshCount);
    await page.locator('select[aria-label="الدور المعروض في 3D"]').selectOption('1');const after=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.ok(after.visibleMeshCount<baseline.meshCount&&after.visibleMeshCount>0,'floor isolation preserves selected physical level');
   }
   await page.locator('#cwViewer canvas').focus();const cameraBefore=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().camera);await page.keyboard.press('ArrowLeft');assert.notDeepEqual(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().camera),cameraBefore);

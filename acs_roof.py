@@ -18,6 +18,8 @@ Nothing here is a structural, drainage, waterproofing or code-compliance design.
 The function is pure and deterministic and refuses to run twice.
 """
 import copy
+import hashlib
+import math
 
 EDGES = ("N", "S", "W", "E")
 ROOF_ROOM_PREFIX = "roof_"
@@ -26,12 +28,9 @@ _EPS = 1e-6
 
 
 def is_roof_level(level):
-    """Same reading as acs_arch: explicit kind, or a template named as a roof."""
-    kind = str((level or {}).get("kind") or "").lower()
-    if kind:
-        return kind == "roof"
-    return ("roof" in str((level or {}).get("template") or "").lower()
-            or "سطح" in str((level or {}).get("name") or ""))
+    """Only an explicit canonical kind declares an unoccupied roof deck."""
+    return isinstance(level, dict) and level.get("kind") == "roof"
+
 
 
 def has_roof_level(model):
@@ -46,7 +45,7 @@ def _rect(room):
         x, z, w, d = (float(v) for v in r)
     except (TypeError, ValueError):
         return None
-    return (x, z, w, d) if (w > 0 and d > 0) else None
+    return (x, z, w, d) if (all(math.isfinite(v) for v in (x,z,w,d)) and w > 0 and d > 0) else None
 
 
 def _edge_span(edge, rect):
@@ -75,10 +74,38 @@ def _shared_length(edge, rect, others):
     return total
 
 
+def _positive_height(value):
+    if value is None:
+        raise ValueError("ROOF_HEIGHT_NOT_SPECIFIED")
+    try:
+        valid = type(value) in (int, float) and math.isfinite(value) and value > 0
+    except OverflowError:
+        valid = False
+    if not valid:
+        raise ValueError("ROOF_HEIGHT_INVALID")
+    return float(value)
+
+
+def _level_index(level):
+    index = level.get("index")
+    if index is None:
+        raise ValueError("ROOF_LEVEL_ELEVATION_NOT_SPECIFIED")
+    if type(index) is not int:
+        raise ValueError("ROOF_LEVEL_ELEVATION_INVALID")
+    return index
+
+
 def _elevation(level, floor_height):
-    if level.get("elevation") is not None:
-        return float(level["elevation"])
-    return float(level.get("index", 0)) * float(floor_height)
+    index = _level_index(level)
+    try:
+        value = level["elevation"] if "elevation" in level else index * floor_height
+        if value is None:
+            raise ValueError("ROOF_LEVEL_ELEVATION_NOT_SPECIFIED")
+        if type(value) not in (int, float) or not math.isfinite(value):
+            raise ValueError("ROOF_LEVEL_ELEVATION_INVALID")
+        return float(value)
+    except OverflowError:
+        raise ValueError("ROOF_LEVEL_ELEVATION_INVALID") from None
 
 
 def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
@@ -102,15 +129,19 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
     occupied = [l for l in levels if isinstance(l, dict) and l.get("template") in floors]
     if not occupied:
         raise ValueError("ROOF_NO_OCCUPIED_LEVEL")
-    top = max(occupied, key=lambda l: int(l.get("index", 0)))
+    wall_h = _positive_height(out.get("wall_h"))
+    floor_height = _positive_height(out.get("floor_height"))
+    if any(not math.isfinite(_elevation(l, floor_height)) for l in occupied):
+        raise ValueError("ROOF_LEVEL_ELEVATION_INVALID")
+    top = max(occupied, key=lambda l: (_elevation(l, floor_height),
+                                       _level_index(l), str(l.get("template", ""))))
+    roof_index = max(_level_index(l) for l in levels if isinstance(l, dict)) + 1
     top_rooms = [(r, _rect(r)) for r in (floors[top["template"]].get("rooms") or [])]
     top_rooms = [(r, rc) for r, rc in top_rooms if rc is not None]
     if not top_rooms:
         raise ValueError("ROOF_TOP_LEVEL_HAS_NO_ROOMS")
 
-    wall_h = float(out.get("wall_h", 3.0))
-    floor_height = float(out.get("floor_height", wall_h + 0.2))
-    top_wall = max(float(r.get("wall_h", wall_h)) for r, _ in top_rooms)
+    top_wall = max(_positive_height(r.get("wall_h", wall_h)) for r, _ in top_rooms)
     # The roof slab follows the building's own storey convention when that clears
     # the top walls; otherwise it sits directly on them (slab is 0.15 m thick and
     # hangs below its level elevation, exactly like every floor slab).
@@ -127,7 +158,7 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
     used = set()
     for room, rc in top_rooms:
         others = [o for o in rects if o is not rc]
-        walls = []
+        walls, room_gaps = [], []
         for edge in EDGES:
             _, _, a0, a1 = _edge_span(edge, rc)
             length = a1 - a0
@@ -138,12 +169,17 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
             elif shared < length - _EPS:
                 # A whole-edge parapet would cross the neighbouring roof deck, so a
                 # partly shared edge is left open and reported, never guessed.
-                gaps.append({"room_id": room.get("id"), "edge": edge,
-                             "open_length_m": round(length - shared, 6)})
+                gap = {"edge": edge, "open_length_m": round(length - shared, 6)}
+                gaps.append({"room_id": room.get("id"), **gap})
+                room_gaps.append(gap)
         base = ROOF_ROOM_PREFIX + str(room.get("id") or "deck")
+        if len(base) > 160:
+            suffix = hashlib.sha256(base.encode("utf-8")).hexdigest()[:20]
+            base = base[:139] + "_" + suffix
         rid, k = base, 2
         while rid in used:
-            rid = "%s_%d" % (base, k)
+            suffix = "_%d" % k
+            rid = base[:160-len(suffix)] + suffix
             k += 1
         used.add(rid)
         roof_rooms.append({
@@ -152,17 +188,22 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
             "walls": walls if parapet_h > 0 else "none",
             "wall_h": parapet_h if parapet_h > 0 else None,
             "doors": [], "windows": [], "points": [],
+            # Geometry-dependent disclosure belongs inside floors: locks freeze
+            # level/meta context, but edits to unlocked rooms may change gaps.
+            "roof_provenance": {"source": "system_default",
+                                "source_room_id": room.get("id"),
+                                "parapet_gaps": room_gaps if parapet_h > 0 else []},
         })
         if parapet_h <= 0:
             roof_rooms[-1].pop("wall_h")
     floors[template] = {"rooms": roof_rooms}
-    levels.append({"index": int(top.get("index", 0)) + 1, "template": template,
+    levels.append({"index": roof_index, "template": template,
                    "kind": "roof", "auto": True, "name": "السطح",
                    "elevation": roof_elevation})
     out["levels"], out["floors"] = levels, floors
     report = {
         "schema": "acs.roof/1", "form": "flat", "source": "system_default",
-        "level_index": int(top.get("index", 0)) + 1, "template": template,
+        "level_index": roof_index, "template": template,
         "elevation_m": roof_elevation, "parapet_height_m": parapet_h,
         "parapet_length_m": round(parapet_m if parapet_h > 0 else 0.0, 6),
         "deck_area_m2": round(sum(rc[2] * rc[3] for rc in rects), 6),
@@ -232,6 +273,10 @@ def carry_auto_roof(before_model, candidate):
     user), the candidate is returned untouched: an edit never re-adds a roof the
     user took away, and never touches a roof the user authored.
     """
+    if roof_removed_by_user(before_model) and isinstance(candidate, dict):
+        if has_roof_level(candidate):
+            raise ValueError("ROOF_PREFERENCE_CONFLICT")
+        return mark_roof_removed(candidate)
     previous = _auto_roof_levels(before_model)
     if not previous or not isinstance(candidate, dict):
         return candidate
@@ -239,8 +284,7 @@ def carry_auto_roof(before_model, candidate):
     templates = {l.get("template") for l in previous}
     out = copy.deepcopy(candidate)
     out["levels"] = [l for l in (out.get("levels") or [])
-                     if not (isinstance(l, dict) and (l.get("template") in templates
-                             or (l.get("kind") == "roof" and l.get("auto") is True)))]
+                     if not (is_roof_level(l) and l.get("auto") is True)]
     floors = out.get("floors") if isinstance(out.get("floors"), dict) else {}
     still_used = {l.get("template") for l in out["levels"] if isinstance(l, dict)}
     for template in templates - still_used:
@@ -288,7 +332,7 @@ def remove_auto_roof(model):
     templates = {l.get("template") for l in previous}
     out = copy.deepcopy(model)
     out["levels"] = [l for l in out.get("levels") or []
-                     if not (isinstance(l, dict) and l.get("template") in templates)]
+                     if not (is_roof_level(l) and l.get("auto") is True)]
     still_used = {l.get("template") for l in out["levels"] if isinstance(l, dict)}
     for template in templates - still_used:
         out.get("floors", {}).pop(template, None)
@@ -306,3 +350,33 @@ def restore_default_roof(model, parapet_h=DEFAULT_PARAPET_H):
     if reason:
         raise ValueError(reason)
     return out
+
+
+def roof_disclosure(model, level):
+    """Revision-derived roof caveats; never mutable context outside floors."""
+    if not is_roof_level(level):
+        return None
+    rooms = ((model.get("floors") or {}).get(level.get("template")) or {}).get("rooms") or []
+    gaps, complete = [], bool(rooms)
+    for room in rooms:
+        provenance = room.get("roof_provenance") if isinstance(room, dict) else None
+        if not isinstance(provenance, dict) or provenance.get("source") != "system_default":
+            complete = False
+            continue
+        declared = provenance.get("parapet_gaps")
+        if not isinstance(declared, list):
+            complete = False
+            continue
+        for gap in declared:
+            length = gap.get("open_length_m") if isinstance(gap, dict) else None
+            if (not isinstance(gap, dict) or gap.get("edge") not in EDGES
+                    or type(length) not in (int, float) or not math.isfinite(length) or length <= 0):
+                complete = False
+                continue
+            gaps.append({"room_id": room.get("id"),
+                         "source_room_id": provenance.get("source_room_id"),
+                         "edge": gap["edge"], "open_length_m": length})
+    return {"source": "system_default" if level.get("auto") is True else "declared",
+            "parapet_gaps": gaps,
+            "gap_coverage": "DECLARED_AUTO_ROOF_EDGES" if complete else "NOT_VERIFIED",
+            "not_verified": ["structure", "drainage", "waterproofing", "roof access", "code compliance"]}

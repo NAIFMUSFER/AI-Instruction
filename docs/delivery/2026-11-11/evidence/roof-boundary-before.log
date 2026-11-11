@@ -1,0 +1,107 @@
+E.EFEFFFF............
+======================================================================
+ERROR: test_compiler_carries_exact_level_kind_in_scene_metadata (__main__.RoofBoundaryRegressions.test_compiler_carries_exact_level_kind_in_scene_metadata)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 294, in test_compiler_carries_exact_level_kind_in_scene_metadata
+    levels=g['scenes'][0]['extras']['acs_levels']
+           ~~~~~~~~~~~~~~^^^^^^^^^^
+KeyError: 'extras'
+
+======================================================================
+ERROR: test_long_admitted_ids_stay_bounded_unique_and_deterministic (__main__.RoofBoundaryRegressions.test_long_admitted_ids_stay_bounded_unique_and_deterministic)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 259, in test_long_admitted_ids_stay_bounded_unique_and_deterministic
+    _structure(b);roofed,_=acs_roof.add_flat_roof_level(b);_structure(roofed)
+                                                           ^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_plan_review.py", line 167, in _structure
+    raise PlanError("AMBIGUOUS_ROOM_ID", "Missing or duplicate room identity")
+acs_plan_review.PlanError: Missing or duplicate room identity
+
+======================================================================
+ERROR: test_partial_parapet_is_disclosed_in_revision_bound_projection (__main__.RoofBoundaryRegressions.test_partial_parapet_is_disclosed_in_revision_bound_projection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 271, in test_partial_parapet_is_disclosed_in_revision_bound_projection
+    self.assertEqual(p['level_kind'],'roof');self.assertTrue(p['level_auto'])
+                     ~^^^^^^^^^^^^^^
+KeyError: 'level_kind'
+
+======================================================================
+FAIL: test_names_do_not_change_explicit_level_kind (__main__.RoofBoundaryRegressions.test_names_do_not_change_explicit_level_kind)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 217, in test_names_do_not_change_explicit_level_kind
+    self.assertFalse(acs_roof.is_roof_level(level),level)
+AssertionError: True is not false : {'template': 'roof_office', 'name': 'مكتب السطح'}
+
+======================================================================
+FAIL: test_pdf_titles_use_explicit_projection_kind_not_room_prefix (__main__.RoofBoundaryRegressions.test_pdf_titles_use_explicit_projection_kind_not_room_prefix)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 284, in test_pdf_titles_use_explicit_projection_kind_not_room_prefix
+    self.assertEqual(_level_title(normal),'Level 1')
+AssertionError: 'Roof deck, unoccupied - Level 1' != 'Level 1'
+- Roof deck, unoccupied - Level 1
++ Level 1
+
+
+======================================================================
+FAIL: test_rebuild_keeps_authored_roof_sharing_old_template (__main__.RoofBoundaryRegressions.test_rebuild_keeps_authored_roof_sharing_old_template)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 252, in test_rebuild_keeps_authored_roof_sharing_old_template
+    self.assertEqual(after['levels'],candidate['levels'])
+AssertionError: Lists differ: [{'in[63 chars]nd': 'roof', 'auto': True, 'name': 'السطح', 'elevation': 3.2}] != [{'in[63 chars]nd': 'roof', 'auto': False, 'name': 'السطح', 'elevation': 3.2}]
+
+First differing element 1:
+{'ind[30 chars]ind': 'roof', 'auto': True, 'name': 'السطح', 'elevation': 3.2}
+{'ind[30 chars]ind': 'roof', 'auto': False, 'name': 'السطح', 'elevation': 3.2}
+
+  [{'index': 0, 'template': 'g'},
+-  {'auto': True,
+?           ^^^
+
++  {'auto': False,
+?           ^^^^
+
+    'elevation': 3.2,
+    'index': 1,
+    'kind': 'roof',
+    'name': 'السطح',
+    'template': 'roof'}]
+
+======================================================================
+FAIL: test_remove_keeps_authored_instances_sharing_roof_template (__main__.RoofBoundaryRegressions.test_remove_keeps_authored_instances_sharing_roof_template)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 244, in test_remove_keeps_authored_instances_sharing_roof_template
+    self.assertEqual(after['levels'],[before['levels'][0],authored])
+AssertionError: Lists differ: [{'in[20 chars] 'g'}] != [{'in[20 chars] 'g'}, {'index': 2, 'template': 'roof', 'kind'[22 chars]: 7}]
+
+Second list contains 1 additional elements.
+First extra element 1:
+{'index': 2, 'template': 'roof', 'kind': 'floor', 'elevation': 7}
+
+- [{'index': 0, 'template': 'g'}]
+?                               ^
+
++ [{'index': 0, 'template': 'g'},
+?                               ^
+
++  {'elevation': 7, 'index': 2, 'kind': 'floor', 'template': 'roof'}]
+
+======================================================================
+FAIL: test_top_is_canonical_elevation_and_roof_index_is_unique (__main__.RoofBoundaryRegressions.test_top_is_canonical_elevation_and_roof_index_is_unique)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 226, in test_top_is_canonical_elevation_and_roof_index_is_unique
+    self.assertEqual(report['elevation_m'],13.2)
+AssertionError: 3.2 != 13.2
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.201s
+
+FAILED (failures=5, errors=3)
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0

@@ -223,6 +223,15 @@ def validate_building(b):
     # يُجمع أثناء المرور لتُستعمل في الفحوص الرأسية والطوبولوجية بعده.
     tmpl_rects = {}          # قالب -> [(rid, rect)]
     tmpl_rooms = {}          # قالب -> {rid: room}
+    # Door/light needs describe occupied spaces. A shared template still needs
+    # them whenever any physical instance is occupied; names confer no new waiver.
+    level_instances = [level for level in (b.get("levels") or []) if isinstance(level, dict)]
+    roof_only_templates = {
+        level.get("template") for level in level_instances
+        if level.get("kind") == "roof"
+        and all(other.get("kind") == "roof" for other in level_instances
+                if other.get("template") == level.get("template"))
+    }
 
     for tmpl, fdef in (b.get("floors") or {}).items():
         rooms = fdef.get("rooms", []) or []
@@ -280,7 +289,7 @@ def validate_building(b):
                     "(مجلس، صالة، مطبخ، غرف نوم، حمامات، ممر) كلٌّ برُكنها وأبعادها."
                     % (tmpl, rid, area))
 
-            outdoor = _is_outdoor(rid)
+            outdoor = tmpl in roof_only_templates or _is_outdoor(rid)
 
             # باب لكل غرفة داخلية (عدا الأسوار والمواقف والمناطق المفتوحة)
             if not strict and not r.get("doors") and not outdoor and not openz \

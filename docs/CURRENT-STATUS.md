@@ -1,6 +1,8 @@
 # ACS current capability and delivery status
 
-Updated 10 November 2026. This is the current status document; historical phase/audit reports retain their original dates and do not establish current production readiness.
+Updated 11 November 2026 for the review-only presentation/roof branch. This is the current status document; historical phase/audit reports retain their original dates and do not establish current production readiness.
+
+The 11 November package is rebased onto PR188 `9556ca4d9d405ba7b733e650d95559e83c60177a`; it is not merged or deployed. Its application/rebase evidence and CI boundary are recorded in [integration status](delivery/2026-11-11/INTEGRATION-AND-CI.md). Naif explicitly requires separate review PRs, no main merge, no deployment and no production migration in this task.
 
 ## Release boundaries
 
@@ -24,6 +26,7 @@ The current connected Supabase account exposes no ACS schema. The live Google-st
 | Connected IFC4 | Space entities/boundaries, storeys, IDs, metres and source metadata; independent reader validates bounds | Spaces-only connected export, not complete architectural BIM or native Revit |
 | Legacy architectural IFC | Supported mapped elements; explicit open-wall semantics and distinct stair identities | Separate capability from connected IFC; no physical stair traversal/structural adequacy proof |
 | Runtime navigation | Consistent transformed footprints/portals and capsule clearance for supported door geometry | Vertical alignment is not walkability; no full physical circulation certification |
+| Canonical flat roof | Explicit unoccupied roof level, disclosed default0.9m parapet, separate area/storey treatment, revision-bound removal/restoration | Review branch only; missing vertical facts stay unknown, partially shared parapet gaps are disclosed; no drainage/structural/roof-access certification; guest roof integration is a subsequent gated increment |
 | Large history | Pending DB increment retrieves metadata pages and bounded individual revisions | 100-revision aggregate admission limit remains; not unlimited constant-memory history |
 
 ## Verification scope

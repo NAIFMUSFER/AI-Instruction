@@ -8,6 +8,11 @@ const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
+// Read the actual authorized workspace state, independently of visible button labels.
+async function workspaceState(page){return page.evaluate(async()=>{const session=await window.ACS_AUTH.freshSession();return window.ACS_AUTH.acsFetchJSON('/v1/projects/'+window.ACS.projectId+'/workspace',{action:'state'},session.access_token);});}
+const roofRows=view=>JSON.parse(view.review_packet.payload_json).projections.filter(p=>p.level_kind==='roof');
+const revisionState=(view,id=view.head)=>view.history.find(row=>row.revision_id===id)?.state;
+
 (async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'acs-ui-')),port=8891;
  const child=spawn(process.env.PYTHON||'python',['tests/remediation/connected_workspace_browser_server.py','--port',String(port),'--database',path.join(tmp,'plans.sqlite3')],{cwd:ROOT,stdio:['ignore','pipe','pipe']});
@@ -128,6 +133,30 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
    assert.equal(await page.locator('#app canvas').count(),0,'private 2D review allocates no hidden legacy renderer');
+   // Actual cwRoof journey: an approved automatic roof is removed as a new
+   // draft, survives reload and another controlled generation, then is restored.
+   const initialRoof=await workspaceState(page);assert.equal(roofRows(initialRoof).length,1);assert.equal(roofRows(initialRoof)[0].level_auto,true);
+   assert.equal(await page.locator('#cwRoof').textContent(),'إزالة السطح الافتراضي');
+   const roofProviderBefore=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
+   await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();await page.locator('#cwShow3D').waitFor({state:'visible'});
+   const approvedRoof=await workspaceState(page);assert.equal(revisionState(approvedRoof),'APPROVED');
+   await page.locator('[data-step="3"]').click();await page.locator('#cwRoof').click();
+   await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('أكد إنشاء مسودة'));
+   assert.equal((await workspaceState(page)).head,approvedRoof.head,'roof editing needs explicit approval-invalidation acknowledgement');
+   await page.locator('#cwEditApprovalConfirm').check();await page.locator('#cwRoof').click();
+   await page.waitForFunction(id=>document.querySelector('#cwRevision').value!==id&&document.querySelector('#cwRoof').dataset.enabled==='false',approvedRoof.head);
+   const removedRoof=await workspaceState(page);assert.notEqual(removedRoof.head,approvedRoof.head);assert.equal(removedRoof.history.length,approvedRoof.history.length+1);assert.notEqual(revisionState(removedRoof),'APPROVED');assert.equal(revisionState(removedRoof,approvedRoof.head),'APPROVED');assert.equal(roofRows(removedRoof).length,0);
+   assert.equal(await page.locator('#cwShow3D').isDisabled(),true,'the new roofless draft cannot borrow the old approval');
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore,'roof removal must not invoke the controlled provider');
+   await page.reload();await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
+   assert.equal((await workspaceState(page)).head,removedRoof.head);assert.equal(await page.locator('#cwRoof').textContent(),'إضافة سطح افتراضي');
+   await page.locator('[data-step="1"]').click();await page.locator('#cwStartMode').selectOption('describe');await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();await page.locator('[data-option="A"]').click();
+   await page.waitForFunction(id=>document.querySelector('#cwRevision').value!==id&&document.querySelector('#cwJobProgress').hidden,removedRoof.head,{timeout:45000});
+   const regeneratedBare=await workspaceState(page);assert.equal(roofRows(regeneratedBare).length,0,'a later generated revision respects the saved roof-removal preference');assert.notEqual(regeneratedBare.head,removedRoof.head);assert.equal(regeneratedBare.history.length,removedRoof.history.length+1);
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'the explicit regeneration invokes the controlled provider exactly once');
+   await page.locator('#cwRoof').click();await page.waitForFunction(()=>document.querySelector('#cwRoof').dataset.enabled==='true');
+   const restoredRoof=await workspaceState(page);assert.equal(roofRows(restoredRoof).length,1);assert.equal(roofRows(restoredRoof)[0].level_auto,true);assert.notEqual(restoredRoof.head,regeneratedBare.head);assert.equal(restoredRoof.history.length,regeneratedBare.history.length+1);assert.notEqual(revisionState(restoredRoof),'APPROVED');
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'restoring a roof must not invoke the controlled provider');
    // The nested-lock panel was mounted while this project was empty. It must
    // follow the newly generated revision without asking the owner to reload.
    await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length>=2);
@@ -139,6 +168,11 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('#cwSpaces button').first().click();await page.locator('#cwLock').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('القفل'));
    await page.locator('#cwSpaces button').first().click();assert.equal(await page.locator('#cwSaveGeometry').isEnabled(),false);
+   const lockedBeforeRoof=await workspaceState(page);await page.locator('#cwRoof').click();
+   await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('فكّ أقفال الفراغات'));
+   const lockedAfterRoof=await workspaceState(page);assert.equal(lockedAfterRoof.head,lockedBeforeRoof.head);assert.deepEqual(lockedAfterRoof.history,lockedBeforeRoof.history,'server refusal leaves immutable history unchanged');assert.equal(roofRows(lockedAfterRoof).length,1);
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'locked roof refusal never invokes a provider');
+
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();
    await page.locator('#cwShow3D').waitFor({state:'visible'});assert.equal(await page.locator('#cwShow3D').isEnabled(),true);
    const downloadPromise=page.waitForEvent('download');await page.locator('[data-format=svg]').click();const download=await downloadPromise;assert.equal(download.suggestedFilename(),'acs-approved.svg');
@@ -150,6 +184,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    }else{
     await page.locator('#cwViewer canvas').waitFor({state:'visible',timeout:45000});
     assert.ok((await page.locator('#cwViewer canvas').boundingBox()).width>100);
+    const names=await page.locator('#cwViewer .av-label').allTextContents();assert.ok(names.includes('A')&&names.includes('B'),'the connected viewer uses exact review-packet labels, not lowercase artifact room IDs');
    }
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
    const revisionsBeforeChat=await page.locator('#cwRevision option').count();
@@ -167,6 +202,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('#cwRevision').selectOption(firstRevision);
    await page.waitForFunction(()=>document.querySelector('#cwSemanticLockStatus')?.textContent.includes('تاريخية'));
    assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'a historical revision must stay read only');
+   assert.equal(await page.locator('#cwRoof').isDisabled(),true,'a historical revision cannot change the current roof');
    await page.locator('#cwLogout').click();await page.locator('#lgEmail').waitFor({state:'visible'});
    if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
    else assert.deepEqual(errors,[]);

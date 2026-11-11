@@ -210,5 +210,154 @@ class RoofLevel(unittest.TestCase):
         self.assertEqual(deck["rect"], [8, 0, 5, 8])
 
 
+class RoofBoundaryRegressions(unittest.TestCase):
+    def test_names_do_not_change_explicit_level_kind(self):
+        for level in ({'template':'roof_office','name':'مكتب السطح'},
+                      {'template':'g','kind':'ROOF'}, {'template':'roof','kind':'floor'}):
+            self.assertFalse(acs_roof.is_roof_level(level),level)
+        self.assertTrue(acs_roof.is_roof_level({'template':'ordinary','kind':'roof'}))
+        b=model([room('roof_living',[0,0,5,5])]);b['floors']['roof_office']=b['floors'].pop('g');b['levels'][0]['template']='roof_office'
+        self.assertIsNone(acs_roof.with_default_roof(b)[2])
+
+    def test_top_is_canonical_elevation_and_roof_index_is_unique(self):
+        b=model([room('high',[0,0,5,5])]);b['floors']['low']={'rooms':[room('low',[10,0,2,2])]}
+        b['levels']=[{'index':-1,'template':'g','elevation':10},{'index':0,'template':'low','elevation':0}]
+        roofed,report=acs_roof.add_flat_roof_level(b)
+        self.assertEqual(report['elevation_m'],13.2)
+        self.assertEqual(report['level_index'],1)
+        self.assertEqual(roofed['floors'][report['template']]['rooms'][0]['rect'],[0,0,5,5])
+        b['levels']=[{'index':-2,'template':'g','elevation':-8},{'index':-1,'template':'low','elevation':-3.8}]
+        self.assertEqual(acs_roof.add_flat_roof_level(b)[1]['elevation_m'],-.6)
+
+    def test_unknown_vertical_dimensions_remain_unknown_without_a_roof(self):
+        for field in ('wall_h','floor_height'):
+            b=model([room('a',[0,0,5,5])]);b[field]=None
+            out,report,reason=acs_roof.with_default_roof(b)
+            self.assertIs(out,b);self.assertIsNone(report)
+            self.assertEqual(reason,'ROOF_HEIGHT_NOT_SPECIFIED')
+            self.assertIsNone(out[field])
+
+    def test_nullable_or_invalid_room_height_cannot_invent_a_roof(self):
+        for height,reason in ((None,'ROOF_HEIGHT_NOT_SPECIFIED'),
+                              ('not-a-height','ROOF_HEIGHT_INVALID'),
+                              ({},'ROOF_HEIGHT_INVALID'),(-1,'ROOF_HEIGHT_INVALID'),
+                              (float('inf'),'ROOF_HEIGHT_INVALID')):
+            with self.subTest(height=height):
+                b=model([room('a',[0,0,5,5])]);b['floors']['g']['rooms'][0]['wall_h']=height
+                out,report,code=acs_roof.with_default_roof(b)
+                self.assertIs(out,b);self.assertIsNone(report);self.assertEqual(code,reason)
+                self.assertEqual(len(out['levels']),1)
+
+    def test_unknown_or_invalid_level_vertical_values_have_explicit_reasons(self):
+        for level in ({'index':None,'template':'g'},
+                      {'index':0,'template':'g','elevation':None},
+                      {'index':0,'template':'g','elevation':{}},
+                      {'index':None,'template':'g','elevation':4.2}):
+            with self.subTest(level=level):
+                b=model([room('a',[0,0,5,5])]);b['levels']=[level]
+                out,report,code=acs_roof.with_default_roof(b)
+                self.assertIs(out,b);self.assertIsNone(report)
+                self.assertIn(code,('ROOF_LEVEL_ELEVATION_NOT_SPECIFIED','ROOF_LEVEL_ELEVATION_INVALID'))
+                self.assertEqual(out['levels'],[level])
+
+    def test_chat_edit_cannot_restore_a_roof_removed_by_the_user(self):
+        b=model([room('a',[0,0,5,5])]);removed=acs_roof.mark_roof_removed(b)
+        candidate,_=acs_roof.add_flat_roof_level(b)
+        for automatic in (True,False):
+            candidate['levels'][-1]['auto']=automatic
+            with self.assertRaisesRegex(ValueError,'^ROOF_PREFERENCE_CONFLICT$'):
+                acs_roof.carry_auto_roof(removed,candidate)
+        edited=copy.deepcopy(b);edited['floors']['g']['rooms'][0]['rect']=[0,0,6,5]
+        result=acs_roof.carry_auto_roof(removed,edited)
+        self.assertTrue(acs_roof.roof_removed_by_user(result))
+        self.assertEqual(result['meta']['acs_roof'],removed['meta']['acs_roof'])
+        self.assertNotIn('acs_roof',edited['meta'])
+
+    def test_equal_elevation_tie_does_not_depend_on_array_order(self):
+        b=model([room('a',[0,0,5,5])]);b['floors']['upper']={'rooms':[room('b',[10,0,3,3])]}
+        b['levels']=[{'index':-2,'template':'g','elevation':0},{'index':7,'template':'upper','elevation':0}]
+        first=acs_roof.add_flat_roof_level(b)[1]
+        b['levels'].reverse();second=acs_roof.add_flat_roof_level(b)[1]
+        self.assertEqual(first,second);self.assertEqual(first['level_index'],8)
+
+    def test_remove_keeps_authored_instances_sharing_roof_template(self):
+        before,_,_=acs_roof.with_default_roof(model([room('a',[0,0,5,5])]))
+        authored={'index':2,'template':'roof','kind':'floor','elevation':7}
+        before['levels'].append(authored)
+        after=acs_roof.remove_auto_roof(before)
+        self.assertEqual(after['levels'],[before['levels'][0],authored])
+        self.assertEqual(after['floors']['roof'],before['floors']['roof'])
+
+    def test_rebuild_keeps_authored_roof_sharing_old_template(self):
+        before,_,_=acs_roof.with_default_roof(model([room('a',[0,0,5,5])]))
+        candidate=copy.deepcopy(before);candidate['levels'][-1]['auto']=False
+        candidate['floors']['roof']['rooms'][0]['name']='Authored roof'
+        after=acs_roof.carry_auto_roof(before,candidate)
+        self.assertEqual(after['levels'],candidate['levels'])
+        self.assertEqual(after['floors']['roof'],candidate['floors']['roof'])
+        self.assertFalse(acs_roof._auto_roof_levels(after))
+
+    def test_long_admitted_ids_stay_bounded_unique_and_deterministic(self):
+        from acs_plan_review import _structure
+        b=model([room('a'*160,[0,0,5,5]),room('a'*159+'b',[5,0,5,5])])
+        _structure(b);roofed,_=acs_roof.add_flat_roof_level(b);_structure(roofed)
+        ids=[r['id'] for r in roofed['floors']['roof']['rooms']]
+        self.assertEqual(len(set(ids)),2);self.assertTrue(all(len(r)<=160 for r in ids))
+        self.assertEqual(roofed,acs_roof.add_flat_roof_level(b)[0])
+
+    def test_partial_parapet_is_disclosed_in_revision_bound_projection(self):
+        from acs_plan_projection import project
+        b=model([room('bar',[0,0,4,2]),room('leg',[0,2,2,2])])
+        roofed,report,_=acs_roof.with_default_roof(b)
+        ws=PlanLockWorkspace(existing_geometry_verifier)
+        rev=ws.propose(roofed,brief='Synthetic gap',requirements=[],expected_head=None,note='regression')
+        p=project(rev.revision,report['level_index'])
+        self.assertEqual(p['level_kind'],'roof');self.assertTrue(p['level_auto'])
+        self.assertEqual(p['roof_disclosure']['parapet_gaps'],[{'room_id':'roof_bar','source_room_id':'bar','edge':'S','open_length_m':2.0}])
+        self.assertIn('roof access',p['roof_disclosure']['not_verified'])
+        changed=copy.deepcopy(roofed);changed['floors']['g']['rooms'][1]['rect']=[0,2,3,2]
+        updated=acs_roof.carry_auto_roof(roofed,changed)
+        self.assertEqual(updated['meta'],roofed['meta'])
+        self.assertEqual(updated['levels'],roofed['levels'])
+        self.assertEqual(updated['floors']['roof']['rooms'][0]['roof_provenance']['parapet_gaps'][0]['open_length_m'],1.0)
+
+    def test_only_explicit_roof_instances_waive_occupied_room_door_light_needs(self):
+        import acs_validate
+        b=model([room('deck',[0,0,5,5])]);b['levels'][0]['kind']='roof'
+        findings,_=acs_validate.validate_building(b)
+        self.assertFalse(any('بلا باب' in x or 'بلا إنارة' in x for x in findings),findings)
+        b['levels'].append({'index':1,'template':'g','kind':'floor'})
+        findings,_=acs_validate.validate_building(b)
+        self.assertTrue(any('بلا باب' in x for x in findings),findings)
+        self.assertTrue(any('بلا إنارة' in x for x in findings),findings)
+
+    def test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection(self):
+        b,_=acs_roof.add_flat_roof_level(model([room('a',[0,0,5,5])]))
+        r=b['floors']['roof']['rooms'][0]
+        for invalid in ('not-an-array',[None],[{'edge':'N','open_length_m':'invented'}]):
+            r['roof_provenance']['parapet_gaps']=invalid
+            result=acs_roof.roof_disclosure(b,b['levels'][-1])
+            self.assertEqual(result['gap_coverage'],'NOT_VERIFIED')
+            self.assertEqual(result['parapet_gaps'],[])
+
+    def test_pdf_titles_use_explicit_projection_kind_not_room_prefix(self):
+        from tools.acs_plan_pdf_export import _level_title
+        normal={'level_index':1,'level_kind':None,'primitives':[{'source':{'room_id':'roof_office'}}]}
+        roof={'level_index':2,'level_kind':'roof','primitives':[{'source':{'room_id':'deck'}}]}
+        self.assertEqual(_level_title(normal),'Level 1')
+        self.assertEqual(_level_title(roof),'Roof deck, unoccupied - Level 2')
+
+    def test_compiler_carries_exact_level_kind_in_scene_metadata(self):
+        import acs_compiler
+        b=model([room('roof_office',[0,0,5,5])]);b['levels'][0]['elevation']=-3.8
+        b['levels'].append({'index':7,'template':'g','elevation':4.2,'kind':'roof'})
+        with tempfile.TemporaryDirectory() as folder:
+            target=os.path.join(folder,'kind.gltf');acs_compiler.compile_building(b,target)
+            with open(target) as f:g=json.load(f)
+        levels=g['scenes'][0]['extras']['acs_levels']
+        self.assertEqual(levels,[{'index':0,'kind':None,'template':'g','elevation_m':-3.8},
+                                 {'index':7,'kind':'roof','template':'g','elevation_m':4.2}])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=1)

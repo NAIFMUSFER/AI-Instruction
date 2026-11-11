@@ -22,6 +22,24 @@ async function guestSnapshot(page){
   };
  }));
 }
+// Local JSON export adds only absent stable instance identifiers and explicit
+// fallback elevations. Predict that documented contract without calling exporter
+// code, retaining all supplied dimensions, room IDs, heights and object data.
+function normalizedLocalModel(model){
+ const result=JSON.parse(JSON.stringify(model));
+ const height=Number(result.floor_height||((Number(result.wall_h)||3)+.2));
+ for(const level of result.levels||[]){
+  const index=Number(level.index||0);
+  if(level.id==null)level.id='bld_0.flr_'+index;
+  if(level.elevation==null)level.elevation=Number((index*height).toFixed(3));
+ }
+ for(const [template,floor] of Object.entries(result.floors||{})){
+  (floor.rooms||[]).forEach((room,index)=>{
+   if(room.space_id==null)room.space_id='bld_0.'+template+'.'+(room.id||('sp_'+index));
+  });
+ }
+ return result;
+}
 async function downloadedJSON(page,button){
  const event=page.waitForEvent('download',{timeout:15000});
  await page.locator(button).click();
@@ -82,6 +100,9 @@ async function runGuestWorkspaceTests(){
    const originalModel=await page.evaluate(()=>window.ACS.exportModel());
    const importedModel=JSON.parse(JSON.stringify(originalModel));
    importedModel.site.w=23;importedModel.meta={...importedModel.meta,name:'guest-import-'+width};
+   importedModel.levels[0].id='explicit-guest-level';importedModel.levels[0].elevation=.45;
+   const firstTemplate=importedModel.levels[0].template;
+   importedModel.floors[firstTemplate].rooms[0].space_id='explicit-guest-space';
    await page.locator('#impFile').setInputFiles({name:'synthetic-building.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(importedModel))});
    await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===23&&document.getElementById('impInfo').textContent.includes('JSON ✓'));
    const importedVisible=await page.evaluate(()=>window.ACS.exportModel());
@@ -90,14 +111,26 @@ async function runGuestWorkspaceTests(){
    await page.locator('#guestCreate').click();
    await page.locator('#acsTabShow').click();
    const exported=await downloadedJSON(page,'#bJson');
-   assert.deepEqual(exported.site,importedVisible.site);
-   assert.deepEqual(exported.levels,importedVisible.levels);
-   assert.deepEqual(exported.floors,importedVisible.floors);
+   const normalized=normalizedLocalModel(importedVisible);
+   assert.deepEqual(exported.site,normalized.site);
+   assert.deepEqual(exported.levels,normalized.levels,'export may only add the declared missing level IDs/elevations');
+   assert.deepEqual(exported.floors,normalized.floors,'all room geometry, object data and explicit IDs must survive export');
+   assert.equal(exported.levels[0].id,'explicit-guest-level');
+   assert.equal(exported.levels[0].elevation,.45);
+   assert.equal(exported.floors[firstTemplate].rooms[0].space_id,'explicit-guest-space');
    assert.equal(exported.meta.name,'guest-import-'+width);
+   // Reimport the downloaded envelope, preserving the normalized canonical
+   // dimensions/identities rather than comparing with the pre-export raw form.
+   await page.locator('#impFile').setInputFiles({name:'download-roundtrip.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(exported))});
+   await page.waitForFunction(()=>window.ACS.exportModel()?.schema==='acs.project/1'&&document.getElementById('impInfo').textContent.includes('JSON ✓'));
+   const roundtrip=await page.evaluate(()=>window.ACS.exportModel());
+   assert.deepEqual(roundtrip.levels,normalized.levels);
+   assert.deepEqual(roundtrip.floors,normalized.floors);
+   assert.deepEqual(roundtrip.site,normalized.site);
    // Input accept filters are not enforcement: intentionally submit a PDF.
    await page.locator('#impFile').setInputFiles({name:'unsupported.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 synthetic unsupported guest fixture')});
    await page.waitForFunction(()=>document.getElementById('impInfo').textContent.includes('سجّل الدخول'));
-   assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),importedVisible,'unsupported guest import must preserve the visible model');
+   assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),roundtrip,'unsupported guest import must preserve the visible model');
    assert.deepEqual(calls,[],'local import and download must not call private/provider services');
    // Return to the saved24m fixture used by the delayed-recovery assertions.
    await page.locator('#impFile').setInputFiles({name:'restored-local.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(originalModel))});

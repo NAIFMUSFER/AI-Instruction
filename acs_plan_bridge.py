@@ -23,6 +23,20 @@ _SERVER_DERIVED_BUILDING_FIELDS = frozenset({
 })
 
 
+def carry_roof_for_admission(before: dict, candidate: dict) -> dict:
+    """Preserve the owner's roof choice and expose a known admission failure."""
+    import acs_roof
+    try:
+        return acs_roof.carry_auto_roof(before, candidate)
+    except ValueError as exc:
+        if str(exc) != 'ROOF_PREFERENCE_CONFLICT':
+            raise
+        raise PlanError(
+            'ROOF_PREFERENCE_CONFLICT',
+            'أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي.',
+        ) from None
+
+
 def _reject_provider_authority_changes(before: dict, candidate: dict) -> None:
     """Fail closed if provider output changes server-derived Building authority."""
     before_meta = before.get('meta') if isinstance(before.get('meta'), dict) else {}
@@ -86,8 +100,7 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     candidate = U.apply_notes(before.model, json.loads(canonical(notes)), model=model)
     # The automatic roof is rebuilt over the edited top storey before locks and
     # admission see the candidate; the provider is never trusted to maintain it.
-    import acs_roof
-    candidate = acs_roof.carry_auto_roof(before.model, candidate)
+    candidate = carry_roof_for_admission(before.model, candidate)
     if semantic_lock_manifest is not None:
         from acs_plan_semantic_locks import verify_lock_manifest
         verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
@@ -138,8 +151,7 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
         raise PlanError('INVALID_EDIT', 'Provider candidate must be a building object')
     detached_candidate = json.loads(canonical(candidate))
     _reject_provider_authority_changes(before.model, detached_candidate)
-    import acs_roof
-    detached_candidate = acs_roof.carry_auto_roof(before.model, detached_candidate)
+    detached_candidate = carry_roof_for_admission(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,

@@ -1,0 +1,140 @@
+EFEFFEFEE
+======================================================================
+ERROR: test_nullable_or_invalid_room_height_cannot_invent_a_roof (__main__.RoofBoundaryRegressions.test_nullable_or_invalid_room_height_cannot_invent_a_roof) (height=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 247, in test_nullable_or_invalid_room_height_cannot_invent_a_roof
+    out,report,code=acs_roof.with_default_roof(b)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 234, in with_default_roof
+    out, report = add_flat_roof_level(model, parapet_h)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 120, in add_flat_roof_level
+    top_wall = max(float(r.get("wall_h", wall_h)) for r, _ in top_rooms)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 120, in <genexpr>
+    top_wall = max(float(r.get("wall_h", wall_h)) for r, _ in top_rooms)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+======================================================================
+ERROR: test_nullable_or_invalid_room_height_cannot_invent_a_roof (__main__.RoofBoundaryRegressions.test_nullable_or_invalid_room_height_cannot_invent_a_roof) (height={})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 247, in test_nullable_or_invalid_room_height_cannot_invent_a_roof
+    out,report,code=acs_roof.with_default_roof(b)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 234, in with_default_roof
+    out, report = add_flat_roof_level(model, parapet_h)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 120, in add_flat_roof_level
+    top_wall = max(float(r.get("wall_h", wall_h)) for r, _ in top_rooms)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 120, in <genexpr>
+    top_wall = max(float(r.get("wall_h", wall_h)) for r, _ in top_rooms)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'dict'
+
+======================================================================
+ERROR: test_unknown_or_invalid_level_vertical_values_have_explicit_reasons (__main__.RoofBoundaryRegressions.test_unknown_or_invalid_level_vertical_values_have_explicit_reasons) (level={'index': None, 'template': 'g'})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 258, in test_unknown_or_invalid_level_vertical_values_have_explicit_reasons
+    out,report,code=acs_roof.with_default_roof(b)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 234, in with_default_roof
+    out, report = add_flat_roof_level(model, parapet_h)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 110, in add_flat_roof_level
+    if any(not math.isfinite(_elevation(l, floor_height)) for l in occupied):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 110, in <genexpr>
+    if any(not math.isfinite(_elevation(l, floor_height)) for l in occupied):
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 80, in _elevation
+    return float(level.get("index", 0)) * float(floor_height)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+======================================================================
+ERROR: test_unknown_or_invalid_level_vertical_values_have_explicit_reasons (__main__.RoofBoundaryRegressions.test_unknown_or_invalid_level_vertical_values_have_explicit_reasons) (level={'index': 0, 'template': 'g', 'elevation': {}})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 258, in test_unknown_or_invalid_level_vertical_values_have_explicit_reasons
+    out,report,code=acs_roof.with_default_roof(b)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 234, in with_default_roof
+    out, report = add_flat_roof_level(model, parapet_h)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 110, in add_flat_roof_level
+    if any(not math.isfinite(_elevation(l, floor_height)) for l in occupied):
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 110, in <genexpr>
+    if any(not math.isfinite(_elevation(l, floor_height)) for l in occupied):
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 79, in _elevation
+    return float(level["elevation"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'dict'
+
+======================================================================
+ERROR: test_unknown_or_invalid_level_vertical_values_have_explicit_reasons (__main__.RoofBoundaryRegressions.test_unknown_or_invalid_level_vertical_values_have_explicit_reasons) (level={'index': None, 'template': 'g', 'elevation': 4.2})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 258, in test_unknown_or_invalid_level_vertical_values_have_explicit_reasons
+    out,report,code=acs_roof.with_default_roof(b)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 234, in with_default_roof
+    out, report = add_flat_roof_level(model, parapet_h)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 112, in add_flat_roof_level
+    top = max(occupied, key=lambda l: (_elevation(l, floor_height),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 113, in <lambda>
+    int(l.get("index", 0)), str(l.get("template", ""))))
+    ^^^^^^^^^^^^^^^^^^^^^^
+TypeError: int() argument must be a string, a bytes-like object or a real number, not 'NoneType'
+
+======================================================================
+FAIL: test_nullable_or_invalid_room_height_cannot_invent_a_roof (__main__.RoofBoundaryRegressions.test_nullable_or_invalid_room_height_cannot_invent_a_roof) (height='not-a-height')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 248, in test_nullable_or_invalid_room_height_cannot_invent_a_roof
+    self.assertIs(out,b);self.assertIsNone(report);self.assertEqual(code,reason)
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "could not convert string to float: 'not-a-height'" != 'ROOF_HEIGHT_INVALID'
+- could not convert string to float: 'not-a-height'
++ ROOF_HEIGHT_INVALID
+
+
+======================================================================
+FAIL: test_nullable_or_invalid_room_height_cannot_invent_a_roof (__main__.RoofBoundaryRegressions.test_nullable_or_invalid_room_height_cannot_invent_a_roof) (height=-1)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 248, in test_nullable_or_invalid_room_height_cannot_invent_a_roof
+    self.assertIs(out,b);self.assertIsNone(report);self.assertEqual(code,reason)
+    ^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'meta': {'type': 'residential', 'acs_roof': {'schema': 'acs.roof/1', 'source': 'system_default', 'form': 'flat', 'parapet_height_m': 0.9, 'occupied_floor': False}}, 'site': {'w': 40, 'd': 40}, 'wall_h': 3, 'wall_t': 0.2, 'floor_height': 3.2, 'levels': [{'index': 0, 'template': 'g'}, {'index': 1, 'template': 'roof', 'kind': 'roof', 'auto': True, 'name': 'السطح', 'elevation': 3.2}], 'floors': {'g': {'rooms': [{'id': 'a', 'name': 'a', 'role': 'living', 'rect': [0, 0, 5, 5], 'walls': ['N', 'S', 'W', 'E'], 'doors': [], 'windows': [], 'points': [], 'wall_h': -1}]}, 'roof': {'rooms': [{'id': 'roof_a', 'name': 'سطح', 'role': 'roof_deck', 'auto': True, 'rect': [0.0, 0.0, 5.0, 5.0], 'walls': ['N', 'S', 'W', 'E'], 'wall_h': 0.9, 'doors': [], 'windows': [], 'points': [], 'roof_provenance': {'source': 'system_default', 'source_room_id': 'a', 'parapet_gaps': []}}]}}} is not {'meta': {'type': 'residential'}, 'site': {'w': 40, 'd': 40}, 'wall_h': 3, 'wall_t': 0.2, 'floor_height': 3.2, 'levels': [{'index': 0, 'template': 'g'}], 'floors': {'g': {'rooms': [{'id': 'a', 'name': 'a', 'role': 'living', 'rect': [0, 0, 5, 5], 'walls': ['N', 'S', 'W', 'E'], 'doors': [], 'windows': [], 'points': [], 'wall_h': -1}]}}}
+
+======================================================================
+FAIL: test_nullable_or_invalid_room_height_cannot_invent_a_roof (__main__.RoofBoundaryRegressions.test_nullable_or_invalid_room_height_cannot_invent_a_roof) (height=inf)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 248, in test_nullable_or_invalid_room_height_cannot_invent_a_roof
+    self.assertIs(out,b);self.assertIsNone(report);self.assertEqual(code,reason)
+    ^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'meta': {'type': 'residential', 'acs_roof': {'schema': 'acs.roof/1', 'source': 'system_default', 'form': 'flat', 'parapet_height_m': 0.9, 'occupied_floor': False}}, 'site': {'w': 40, 'd': 40}, 'wall_h': 3, 'wall_t': 0.2, 'floor_height': 3.2, 'levels': [{'index': 0, 'template': 'g'}, {'index': 1, 'template': 'roof', 'kind': 'roof', 'auto': True, 'name': 'السطح', 'elevation': inf}], 'floors': {'g': {'rooms': [{'id': 'a', 'name': 'a', 'role': 'living', 'rect': [0, 0, 5, 5], 'walls': ['N', 'S', 'W', 'E'], 'doors': [], 'windows': [], 'points': [], 'wall_h': inf}]}, 'roof': {'rooms': [{'id': 'roof_a', 'name': 'سطح', 'role': 'roof_deck', 'auto': True, 'rect': [0.0, 0.0, 5.0, 5.0], 'walls': ['N', 'S', 'W', 'E'], 'wall_h': 0.9, 'doors': [], 'windows': [], 'points': [], 'roof_provenance': {'source': 'system_default', 'source_room_id': 'a', 'parapet_gaps': []}}]}}} is not {'meta': {'type': 'residential'}, 'site': {'w': 40, 'd': 40}, 'wall_h': 3, 'wall_t': 0.2, 'floor_height': 3.2, 'levels': [{'index': 0, 'template': 'g'}], 'floors': {'g': {'rooms': [{'id': 'a', 'name': 'a', 'role': 'living', 'rect': [0, 0, 5, 5], 'walls': ['N', 'S', 'W', 'E'], 'doors': [], 'windows': [], 'points': [], 'wall_h': inf}]}}}
+
+======================================================================
+FAIL: test_unknown_or_invalid_level_vertical_values_have_explicit_reasons (__main__.RoofBoundaryRegressions.test_unknown_or_invalid_level_vertical_values_have_explicit_reasons) (level={'index': 0, 'template': 'g', 'elevation': None})
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 259, in test_unknown_or_invalid_level_vertical_values_have_explicit_reasons
+    self.assertIs(out,b);self.assertIsNone(report)
+    ^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'meta': {'type': 'residential', 'acs_roof': {'schema': 'acs.roof/1', 'source': 'system_default', 'form': 'flat', 'parapet_height_m': 0.9, 'occupied_floor': False}}, 'site': {'w': 40, 'd': 40}, 'wall_h': 3, 'wall_t': 0.2, 'floor_height': 3.2, 'levels': [{'index': 0, 'template': 'g', 'elevation': None}, {'index': 1, 'template': 'roof', 'kind': 'roof', 'auto': True, 'name': 'السطح', 'elevation': 3.2}], 'floors': {'g': {'rooms': [{'id': 'a', 'name': 'a', 'role': 'living', 'rect': [0, 0, 5, 5], 'walls': ['N', 'S', 'W', 'E'], 'doors': [], 'windows': [], 'points': []}]}, 'roof': {'rooms': [{'id': 'roof_a', 'name': 'سطح', 'role': 'roof_deck', 'auto': True, 'rect': [0.0, 0.0, 5.0, 5.0], 'walls': ['N', 'S', 'W', 'E'], 'wall_h': 0.9, 'doors': [], 'windows': [], 'points': [], 'roof_provenance': {'source': 'system_default', 'source_room_id': 'a', 'parapet_gaps': []}}]}}} is not {'meta': {'type': 'residential'}, 'site': {'w': 40, 'd': 40}, 'wall_h': 3, 'wall_t': 0.2, 'floor_height': 3.2, 'levels': [{'index': 0, 'template': 'g', 'elevation': None}], 'floors': {'g': {'rooms': [{'id': 'a', 'name': 'a', 'role': 'living', 'rect': [0, 0, 5, 5], 'walls': ['N', 'S', 'W', 'E'], 'doors': [], 'windows': [], 'points': []}]}}}
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.004s
+
+FAILED (failures=4, errors=5)

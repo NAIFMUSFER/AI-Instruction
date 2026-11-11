@@ -1,0 +1,135 @@
+[
+  {
+    "path": "acs_roof.py",
+    "depth": "deep",
+    "purpose": "Canonical roof selection, identity, removal, preference retention and revision-bound caveats",
+    "risk": "high",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_compiler.py",
+    "depth": "selected",
+    "purpose": "Add explicit level metadata to glTF scene extras; selected serialization path",
+    "risk": "high",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_projection.py",
+    "depth": "selected",
+    "purpose": "Bound projection fields level_kind, level_auto and roof_disclosure",
+    "risk": "high",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_validate.py",
+    "depth": "selected",
+    "purpose": "Explicit roof-only template occupancy waiver; shared occupied template still checked",
+    "risk": "high",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/acs_plan_pdf_export.py",
+    "depth": "selected",
+    "purpose": "Roof title derives from explicit kind, not room names",
+    "risk": "high",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_roof_level.py",
+    "depth": "deep",
+    "purpose": "Roof regressions and production approval/compiler assertions",
+    "risk": "medium",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_geometry_independent_readers.py",
+    "depth": "deep",
+    "purpose": "Independent serialized roof coordinates, IFC schema, DXF geometry and PDF text",
+    "risk": "medium",
+    "findings": [
+      "ROOF-KIND",
+      "ROOF-ELEVATION",
+      "ROOF-AUTHORED-INSTANCE",
+      "ROOF-ID-BOUND",
+      "ROOF-DISCLOSURE",
+      "ROOF-REMOVED-PREFERENCE"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_level.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  }
+]

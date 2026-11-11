@@ -123,6 +123,14 @@ function notVerified(why) {
   process.exit(2);
 }
 
+function localStudioReady(requiredPaths) {
+  if (!window.ACS || window.ACS.ready !== true
+      || typeof window.ACS.openWorkspace !== 'function') return false;
+  const completed = new Set(performance.getEntriesByType('resource')
+    .filter(entry => entry.responseEnd > 0).map(entry => new URL(entry.name).pathname));
+  return requiredPaths.every(path => completed.has(path));
+}
+
 (async () => {
   if (TARGET) { await require("./verify_public_guest.js").run(TARGET); return; }
   if (!TARGET) {
@@ -226,6 +234,7 @@ function notVerified(why) {
   boot('the production CSP raised NO violation during boot',
     shape.csp.length === 0, JSON.stringify(shape.csp));
   let ready = false;
+  const requiredLocalPaths = APPSRC.localOrder().map(path => '/app/' + path);
   try {
     /* A function predicate, not a string: Playwright re-evaluates a string
        predicate with eval inside the page while polling, and the production CSP
@@ -233,12 +242,17 @@ function notVerified(why) {
        static (the first check was already true). Since the local studio became
        a dynamic route the predicate has to poll, and the eval-based poll both
        raised a script-src violation and never observed readiness. */
-    await pg.waitForFunction(() => !!(window.ACS && window.ACS.ready === true),
-      null, { timeout: 60000, polling: 250 });
+    // ACS.ready is assigned before the route finishes its later dynamic imports.
+    // Wait for actual resource completion and the panel entry function as well.
+    await pg.waitForFunction(localStudioReady,
+      requiredLocalPaths, { timeout: 60000, polling: 250 });
     ready = true;
   } catch (e) { /* reported below */ }
   boot('the module graph executed to completion and THREE was imported '
     + '(window.ACS.ready)', ready);
+  boot('a missing local module cannot satisfy the readiness predicate',
+    ready && !await pg.evaluate(localStudioReady,
+      requiredLocalPaths.concat('/app/__missing_module_negative_witness__.js')));
   /* The local studio (tools/frontend_local.txt) is imported after `load` by
      ui/local-studio-entry.mjs, so "every eager module was fetched" is only
      meaningful once the graph reports ready. It is checked right after. */

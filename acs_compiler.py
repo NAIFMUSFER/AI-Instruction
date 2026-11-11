@@ -193,6 +193,7 @@ class Builder:
         self.parts = []   # (pos, nrm, idx, mat_name, node_name)
         self._door_pairs = {}
         self._opening_sources = {}
+        self.level_metadata = []
 
     def add_box(self, cx, cy, cz, ex, ey, ez, mat, name, rotation=0.0):
         if ex <= 0 or ey <= 0 or ez <= 0:
@@ -310,7 +311,7 @@ class Builder:
         gltf = {
             "asset": {"version": "2.0", "generator": "ACS Geometry Compiler 1.0"},
             "scene": 0,
-            "scenes": [{"nodes": list(range(len(nodes)))}],
+            "scenes": [{"nodes": list(range(len(nodes))), "extras": {"acs_levels": self.level_metadata}}],
             "nodes": nodes,
             "meshes": meshes,
             "materials": materials,
@@ -978,6 +979,8 @@ def compile_building(data, out_path):
         tmpl = lvl["template"]
         fdef = floors.get(tmpl, {})
         base_y = level_elevation(lvl, fh)
+        bld.level_metadata.append({"index": idx, "kind": lvl.get("kind"),
+                                   "template": tmpl, "elevation_m": base_y})
         fkey = "F%d" % idx
         holes = [v["rect"] for v in ((_arch or {}).get("voids") or [])
                  if v.get("level_index") == idx] if _arch else []

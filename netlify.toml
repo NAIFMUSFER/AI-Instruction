@@ -4,6 +4,8 @@
   # يجلب three@0.160.0 + الإضافات + PDF.js من package-lock.json إلى public/vendor أثناء البناء
   # (بيئة بناء Netlify متصلة بالإنترنت). set -e يجعل أي فشل يُفشل البناء فيبقى آخر نشر ناجح.
   command = "bash tools/netlify-build.sh"
+  # Naif's 11 November review branches are CI-only: no automatic preview deploy.
+  ignore = "node ./tools/review-only-build.cjs"
 
 [build.environment]
   NODE_VERSION = "22"

@@ -145,14 +145,10 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   // doors. Plus two clearly labelled assumptions: a flat roof over the top floor
   // plate and two human scale figures at the entrance. None of it is selectable,
   // counted, exported or added to the approved mesh list.
-  // A canonical roof level (acs_roof) arrives as an ordinary level whose rooms are
-  // all named roof_*. It is approved geometry: the viewer names it, can filter it
-  // out of plan-like views exactly like floor isolation, and adds no assumed roof.
-  const roofLevels=new Set();
-  for(const index of levels.keys()){
-    const rows=[...roomBounds.values()].filter(row=>row.identity.level===index);
-    if(rows.length&&rows.every(row=>String(row.identity.room).startsWith('roof_')))roofLevels.add(index);
-  }
+  // Only the compiler's explicit canonical level kind identifies a roof. Names
+  // such as roof_bedroom remain ordinary occupied spaces when no kind is declared.
+  const roofLevels=new Set((Array.isArray(original.scenes?.[original.scene??0]?.extras?.acs_levels)?original.scenes[original.scene??0].extras.acs_levels:[])
+    .filter(row=>Number.isSafeInteger(row?.index)&&row.kind==='roof'&&levels.has(row.index)).map(row=>row.index));
   const isRoofRow=row=>roofLevels.has(row.identity.level);
   const detailMaterials={
     frame:new THREE.MeshStandardMaterial({color:0x353c43,roughness:.36,metalness:.7}),
@@ -286,7 +282,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const disclosure=element('details',null,shell,'av-evidence');element('summary','النسخة وحدود العرض',disclosure);
   element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والسماء والإضاءة وشبكة القياس وخطوط الحواف وأسماء الفراغات عرض فقط ولا تدخل في التصدير أو الكميات. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
   element('p','إطارات النوافذ والأبواب ومقابضها مشتقة من فتحات موجودة في النسخة لتوضيحها فقط. شخصا المقياس بجانب المدخل ومصباح المشهد الداخلي وموضع الشمس عرض فقط؛ الملف لا يحدد اتجاه الشمال، فالظلال ليست دراسة شمسية.',disclosure);
-  if(roofLevels.size)element('p','السطح وحاجزه جزء من النسخة المعتمدة: دور سطح غير مشغول لا يُحسب دورًا ولا مساحة. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
+  if(roofLevels.size)element('p','دور السطح جزء من النسخة المعتمدة: غير مشغول ولا يدخل في قياس الأدوار أو مساحة الفراغات المشغولة. الحواجز الظاهرة هي الموجودة في الملف فقط. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
   else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إخفاؤها، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
   const evidence=element('output','',disclosure);evidence.dir='ltr';
   // Short room names anchored to the approved rooms. Names come from the review
@@ -363,7 +359,10 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     for(const [key,line]of edgeLines)line.visible=floor===null?(key==='all'||roofVisible||!roofLevels.has(Number(key))):(key==='all'||Number(key)===floor);
     const cut=chosenBounds();clipPlane.constant=currentPreset==='cutaway'?cut.min.y+Math.min(1.5,cut.getSize(new THREE.Vector3()).y*.65):clipOff;renderer.shadowMap.needsUpdate=true;
     for(const item of detailObjects)item.object.visible=(item.group==='roof'?roofVisible:detailOn)&&(floor===null||item.level===null||item.level===floor);
-    figures.visible=detailOn&&floor===null&&!['detail','interior'].includes(currentPreset);telemetry.presentation.assumedRoofShown=roofVisible&&roofPieces>0;telemetry.presentation.roofShown=roofVisible&&(roofPieces>0||roofLevels.size>0);
+    figures.visible=detailOn&&floor===null&&!['detail','interior'].includes(currentPreset);
+    telemetry.presentation.assumedRoofShown=detailObjects.some(item=>item.group==='roof'&&item.object.visible);
+    telemetry.presentation.visibleRoofMeshCount=meshes.filter(mesh=>mesh.visible&&roofLevels.has(mesh.userData.acsViewerIdentity.level)).length;
+    telemetry.presentation.roofShown=telemetry.presentation.assumedRoofShown||telemetry.presentation.visibleRoofMeshCount>0;
     if(selectionBox)selectionBox.visible=selected?.visible!==false;
   }
   function preset(name,smooth=true){

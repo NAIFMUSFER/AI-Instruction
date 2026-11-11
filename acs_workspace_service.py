@@ -15,7 +15,7 @@ import tempfile
 from acs_plan_review import PlanError, canonical, digest, _geometry
 from acs_plan_store_reload import load_workspace
 from acs_plan_commands import _command, _view_result
-from acs_plan_bridge import existing_geometry_verifier
+from acs_plan_bridge import carry_roof_for_admission, existing_geometry_verifier
 
 SCHEMA = "acs.connected-workspace/1.0"
 OPTIONS = {
@@ -51,6 +51,7 @@ def geometry_failure_message(code):
         "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. حالة الطلب غير مؤكدة؛ لم يُعَد إرساله تلقائيًا.",
         "PROVIDER_OUTCOME_UNKNOWN":"توقفت متابعة المهمة أو أُلغيت. لا يمكن الجزم بأن المزود لم ينفذها؛ لم تُعَد تلقائيًا، ولا تسمح هذه الحالة باستئناف مكرر.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
+        "ROOF_PREFERENCE_CONFLICT":"أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي. يمكنك إعادة تفعيل السطح صراحة من أدوات المخطط إذا أردت إضافته.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
@@ -343,9 +344,13 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     if _head_model is not None and acs_roof._auto_roof_levels(_head_model):
         result["building"] = acs_roof.carry_auto_roof(_head_model, result["building"])
     elif _head_model is not None and acs_roof.roof_removed_by_user(_head_model):
-        #   - the owner removed the roof -> keep it removed, and keep the record.
-        if not acs_roof.has_roof_level(result["building"]):
-            result["building"] = acs_roof.mark_roof_removed(result["building"])
+        # A provider proposal cannot override the owner's persisted preference.
+        # Reject the conflict before proposing/saving; stripping arbitrary roof
+        # geometry here could silently remove authored elements or references.
+        if acs_roof.has_roof_level(result["building"]):
+            raise PlanError("ROOF_PREFERENCE_CONFLICT",
+                            geometry_failure_message("ROOF_PREFERENCE_CONFLICT"))
+        result["building"] = acs_roof.mark_roof_removed(result["building"])
     elif _head is not None and _head.locked_rooms and not acs_roof.has_roof_level(_head_model):
         pass
     else:
@@ -432,7 +437,7 @@ def edit_geometry(store, project_id, actor_id, command):
     room["rect"] = rect
     # Keep the automatic roof over the edited top storey; a removed or
     # user-authored roof is never touched.
-    candidate = acs_roof.carry_auto_roof(before.model, candidate)
+    candidate = carry_roof_for_admission(before.model, candidate)
     revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
                           expected_head=expected, note="تعديل أبعاد وموضع " + ref[1])
     result = _view_result(ws, "edit_geometry", revision.id, reference_revision_id=expected)

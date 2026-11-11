@@ -2171,12 +2171,12 @@ and is not expected to track the present.
 | | |
 |---|---|
 | index shell (`public/index.html`) | **53,078 B** |
-| first-party JavaScript, all modules | **2,184,417 B in 44 modules** |
-| account/sign-in entry (static modules + boot) | **227,595 B** |
-|   of which core modules | **169,260 B in 14 modules** |
+| first-party JavaScript, all modules | **2,209,327 B in 44 modules** |
+| account/sign-in entry (static modules + boot) | **252,505 B** |
+|   of which core modules | **194,170 B in 14 modules** |
 | additional when the local guest studio is entered | **1,489,628 B in 18 modules** |
 | optional panels, after local studio entry | **467,194 B in 6 modules** |
-| share of first-party JS deferred from account entry | **89.6 %** |
+| share of first-party JS deferred from account entry | **88.6 %** |
 | largest single module | **229,116 B of a 307,200 B cap** |
 
 Local guest studio modules, in load order:

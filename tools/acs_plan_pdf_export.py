@@ -99,13 +99,9 @@ def _num(value: float) -> str:
 
 
 def _level_title(projection: dict) -> str:
-    """A canonical roof level (every space named roof_*) is a deck, not a storey;
-    the page says so instead of numbering it as one more occupied level."""
+    """Title follows the explicit canonical level kind in this bound projection."""
     index = _pdf_escape(projection.get("level_index"))
-    rows = projection.get("primitives") if isinstance(projection.get("primitives"), list) else []
-    ids = [str(((row or {}).get("source") or {}).get("room_id") or "") for row in rows
-           if isinstance(row, dict) and (row.get("source") or {}).get("room_id") is not None]
-    if ids and all(i.startswith("roof_") for i in ids):
+    if projection.get("level_kind") == "roof":
         return f"Roof deck, unoccupied - Level {index}"
     return f"Level {index}"
 
