@@ -5,6 +5,7 @@ function loadLocalStudio(){
   loading=(async()=>{
     await import('../core/viewer.js');
     await import('../core/standards.js');
+    await import('../core/roof.mjs');
     await import('../core/disciplines.js');
     await import('../generated/runtime.js');
     await import('../generated/authoring.js');

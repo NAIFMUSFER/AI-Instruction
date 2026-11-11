@@ -4,12 +4,18 @@ on:
     paths:
       - 'acs_auth_gateway.py'
       - 'public/index.html'
-      - 'public/app/boot/engine-guard.js'
-      - 'public/app/styles/app.css'
+      # Auth's shipped-page check also executes the real guest journey. Include
+      # its transitive browser modules, rather than only the original guard.
+      - 'public/app/**'
+      - 'tools/frontend_local.txt'
       - 'tests/remediation/test_auth_gateway.py'
       - 'tests/remediation/test_auth_session.js'
       - 'tests/remediation/test_auth_shipped_page.cjs'
       - 'tests/remediation/test_auth_fixture_waits.cjs'
+      - 'tests/remediation/test_guest_workspace.cjs'
+      - 'tests/remediation/test_guest_roof_parity.py'
+      - 'tests/remediation/guest_roof_parity.mjs'
+      - 'tests/remediation/test_guest_roof_integration.cjs'
       - '.github/workflows/google-signin-check.yml'
   workflow_dispatch:
 permissions:

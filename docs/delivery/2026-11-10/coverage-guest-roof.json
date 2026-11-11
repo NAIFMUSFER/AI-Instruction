@@ -1,0 +1,97 @@
+[
+  {
+    "path": "public/app/core/roof.mjs",
+    "purpose": "Synchronous local canonical flat-roof policy; Python twin verified by parity",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py",
+      "tests/remediation/test_guest_roof_integration.cjs",
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/viewer.js",
+    "purpose": "Selected local parser roof scaffolding, level limit and explicit floor labels",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py",
+      "tests/remediation/test_guest_roof_integration.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/workspace-ui-wiring.js",
+    "purpose": "Selected local creation/edit roof boundary, counts, imports, floor-selection atomicity and contextual control",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_integration.cjs",
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/guest_roof_parity.mjs",
+    "purpose": "Loads actual JS declarations for Python cross-runtime roof comparison",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_roof_parity.py",
+    "purpose": "Exact Python/JS roof data and counts parity on deterministic fixtures",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_roof_integration.cjs",
+    "purpose": "Actual shipped local model/roof handler source contracts and failure atomicity",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_integration.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_workspace.cjs",
+    "purpose": "Selected new roof browser lifecycle and retained guest isolation/recovery assertions; execution pending CI",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  }
+]

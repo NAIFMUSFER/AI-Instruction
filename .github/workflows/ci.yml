@@ -751,6 +751,7 @@ jobs:
             tests/remediation/test_geometry_independent_readers.py \
             tests/remediation/test_requirement_vocabulary.py \
             tests/remediation/test_roof_level.py \
+            tests/remediation/test_guest_roof_parity.py \
             tests/remediation/test_warehouse_soft_area_fit.py \
             tests/remediation/test_live_generation_verdict.py
       - name: Canonical generated sources agree with tracked outputs
@@ -772,6 +773,7 @@ jobs:
             tests/remediation/test_connected_revision_controls.mjs \
             tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_local_render_quality.mjs \
+            tests/remediation/test_guest_roof_integration.cjs \
             tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \
