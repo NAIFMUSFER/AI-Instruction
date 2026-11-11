@@ -71,4 +71,18 @@ vm.runInContext(fn('assertLocalRoofMutable')+'\n'+fn('changeLocalRoof')+';global
 assert.throws(()=>view.changeRoof('remove'),/compile refused/);
 assert.equal(view.floorSel,'F2','failed roof removal preserves selected roof');
 assert.equal(view.lastBuilding,fresh,'failed roof removal preserves canonical model');assert.equal(view.model,oldView,'failed roof removal preserves visible model');
+// A default edit must reject a failed roof derivation before invoking the setter.
+// Exercise the shipped edit handler, roof helper and setter together.
+view.carryAutoRoof=vm.runInContext('carryAutoRoof',context);
+vm.runInContext(fn('applyLocalEdit')+';globalThis.applyEdit=applyLocalEdit;',view);
+let editCompiles=0;view.compile=()=>{editCompiles++;return {traverse(){}};};
+view.lastBuilding=fresh;view.floorSel='F2';
+assert.throws(()=>view.applyEdit(unknownHeight),/ROOF_HEIGHT_NOT_SPECIFIED/);
+assert.equal(editCompiles,0,'invalid default edit never reaches compilation');
+assert.equal(view.lastBuilding,fresh);assert.equal(view.model,oldView);assert.equal(view.floorSel,'F2');
+// An explicit removal preference remains a valid roofless edit, not an omission failure.
+view.lastBuilding=context.removeAutoRoof(fresh);
+const allowed=view.applyEdit(bare);assert.equal(editCompiles,1);
+assert.ok(context.roofRemovedByUser(allowed));assert.ok(context.roofRemovedByUser(view.lastBuilding));
+assert.equal(view.lastBuilding.levels.some(level=>level.kind==='roof'),false);assert.equal(view.floorSel,'all');
 console.log('PASS guest roof integration: creation/removal/regeneration/edit/locks/counts/explicit labels/physical level limits/import preservation/44px/Arabic errors');

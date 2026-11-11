@@ -254,6 +254,7 @@ function assertLocalRoofMutable(building){
 function applyLocalEdit(candidate,{generated=false}={}){
   assertLocalRoofMutable(lastBuilding);
   const next=generated?localGeneratedModel(candidate):carryAutoRoof(lastBuilding,candidate);
+  if(next.meta?.acs_roof?.omitted)throw new Error(next.meta.acs_roof.omitted);
   if((next.levels||[]).length>SCENE_LIMITS.max_levels)throw new Error('ROOF_LEVEL_LIMIT_EXCEEDED');
   setModel(next);return next;
 }

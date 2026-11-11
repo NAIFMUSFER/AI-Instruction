@@ -267,8 +267,8 @@
     ],
     "first_party_dynamic_import_count": 25,
     "first_party_module_count": 45,
-    "first_party_total_bytes": 2229384,
-    "guest_route_additional_bytes": 1509459,
+    "first_party_total_bytes": 2229463,
+    "guest_route_additional_bytes": 1509538,
     "guest_route_modules": [
       "public/app/core/viewer.js",
       "public/app/core/standards.js",
@@ -300,7 +300,7 @@
       "pct_of_first_party_js": 10.28
     },
     "largest_module_pct_of_first_party_js": 10.28,
-    "lazy_bytes": 1976653,
+    "lazy_bytes": 1976732,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
       "public/app/generated/workspace-ui.js",
@@ -357,7 +357,7 @@
       "public/app/ui/workspace-viewport-selection-runtime.js",
       "public/app/ui/workspace-viewport-selection.js"
     ],
-    "lazy_note": "Guest-route and panel-level lazy loading of first-party code is IMPLEMENTED. 25 module(s) totalling 1976653 B are reached by no static import from main.js; declared in tools/frontend_local.txt or frontend_lazy.txt and fetched by exactly one dynamic import() in the local route entry (guest/test only) or panel entry. The measured set and the declared set agree. 33 dynamic import() call(s) exist in total, 25 of them first-party; the rest target vendored library specifiers (three/addons/*, /vendor/pdfjs@*).",
+    "lazy_note": "Guest-route and panel-level lazy loading of first-party code is IMPLEMENTED. 25 module(s) totalling 1976732 B are reached by no static import from main.js; declared in tools/frontend_local.txt or frontend_lazy.txt and fetched by exactly one dynamic import() in the local route entry (guest/test only) or panel entry. The measured set and the declared set agree. 33 dynamic import() call(s) exist in total, 25 of them first-party; the rest target vendored library specifiers (three/addons/*, /vendor/pdfjs@*).",
     "modules": [
       {
         "bytes": 229116,
@@ -368,12 +368,12 @@
         "pct_of_first_party_js": 10.28
       },
       {
-        "bytes": 212300,
+        "bytes": 212379,
         "group": "ui",
-        "gzip_bytes": 65364,
+        "gzip_bytes": 65391,
         "loaded": "local-route",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 9.52
+        "pct_of_first_party_js": 9.53
       },
       {
         "bytes": 205128,
@@ -815,7 +815,7 @@
     "sha256": "5f3011b744dcfeab691bca33a43b442ff4cf2d9c48643cae004d77efdb6e2de1",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 53078 byte shell and the application JavaScript (2229384 bytes) lives in 45 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 53078 byte shell and the application JavaScript (2229463 bytes) lives in 45 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "files": null,
     "present": false,

@@ -26,7 +26,8 @@
     "public/app/core/roof.mjs": "444a2a1a5c1c5d175f8f8ca49cf7b4f140ae6cceada010740060938b05d96f87",
     "public/app/core/viewer.js": "55783bba159e5fcb1e9b881f31f4b2910bdbef5b8a806388cb7a7b92c65bfea7",
     "public/app/core/standards.js": "c960b4945ac5b12bbc6d9472c2d622ccd9d5c64f9f7942f8538e400caf8502ee",
-    "public/app/ui/workspace-ui-wiring.js": "de4c36ea2cd2995017f3a4209afd1c4a8d7c84ea2b35a16a1f3f31f723874f00",
+    "public/app/ui/workspace-ui-wiring.js": "77b3bd55374e41987d2a5d45fade77510880d769cb02c362bb03df1af6254cfa",
     "acs_roof.py": "4376284cd2011d7c64fa4c608c239b21a25bdbba7a4c1018502e1d1e05bea54b"
-  }
+  },
+  "note": "Source hashes updated after the local-edit omission guard; the parity suite does not invoke that handler. Its focused integration regression passed separately."
 }
