@@ -1,0 +1,1024 @@
+{
+  "schema": "acs.ci13.stairs-visual-review/1",
+  "head_sha": "ad45ef1992c85a4aa5309cd1adc12c265d55fff1",
+  "artifact_id": 13879964172,
+  "artifact_sha256": "a7e19a390c76130f3d401ed7b48d770aa72ac88e17f893053fa04cb0ee640f61",
+  "scope": "14 actual CI screenshots inspected in desktop/mobile contact sheets; desktop interior and upper arrival also viewed full size. Synthetic exact approved artifact component, not live AI or full user journey.",
+  "revision": "plan_8b0d33f57ea6485d8be277878eb576bd",
+  "model_hash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+  "measurements": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "unavailable; desktop browser viewport emulation"
+      },
+      "quality": "اقتصادي",
+      "first_view_ms": 1122.232654,
+      "max_preset_ms": 782.0760140000002,
+      "frame_p95_ms": null,
+      "frame_samples": 1,
+      "targets_met": {
+        "first_view": true,
+        "presets": true,
+        "frame_p95": false
+      }
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "unavailable; desktop browser viewport emulation"
+      },
+      "quality": "اقتصادي",
+      "first_view_ms": 929.9732889999977,
+      "max_preset_ms": 490.32682099999874,
+      "frame_p95_ms": null,
+      "frame_samples": 1,
+      "targets_met": {
+        "first_view": true,
+        "presets": true,
+        "frame_p95": false
+      }
+    }
+  ],
+  "images": [
+    {
+      "file": "stairs/stairs-1440-exterior.png",
+      "sha256": "2645270338ade9857a639a8430291c9c9f3e74859f3daa27564b37917e82d072",
+      "bytes": 168869,
+      "review": "viewed",
+      "observation": "Isolated two-storey stair core is visible; upper exterior door is a fixture boundary, not evidence of whole-building access.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 7,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": true,
+          "roofSource": "assumed",
+          "roofShown": true,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -5.725018308257981,
+          7.735376889353073,
+          -7.420754023830247
+        ],
+        "target": [
+          1.9999999515712261,
+          3.024999901652336,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 47,
+        "view": "exterior",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            6.199999809265137,
+            4.099999904632568
+          ]
+        },
+        "aspect": 2.3371647509578546,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-1440-aerial.png",
+      "sha256": "41cc3b40099b78a6745e6b84d076c28d680da263294b066e19ab9f16dae1ed7c",
+      "bytes": 72489,
+      "review": "viewed",
+      "observation": "Both flight directions and middle landing are visible within the footprint; overhead enclosure is suppressed.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 10,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          1.9999999515712261,
+          9.058554562535349,
+          1.771326645237009
+        ],
+        "target": [
+          1.9999999515712261,
+          1.436111018061638,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 31,
+        "view": "aerial",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            3.0222220420837402,
+            4.099999904632568
+          ]
+        },
+        "aspect": 2.3371647509578546,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-1440-street.png",
+      "sha256": "15f59cd38745037fac9a1272214461dac86b6145ac57a0bd4a9aa5d14577abd8",
+      "bytes": 128245,
+      "review": "viewed",
+      "observation": "Ground entrance and scale figures are visible; unsupported upper external access is apparent.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 13,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": true,
+          "roofSource": "assumed",
+          "roofShown": true,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -4.239396747097407,
+          1.4999999940395363,
+          -12.85570647383028
+        ],
+        "target": [
+          1.9999999515712261,
+          1.4999999940395354,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 47,
+        "view": "street",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            6.199999809265137,
+            4.099999904632568
+          ]
+        },
+        "aspect": 2.3371647509578546,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-1440-interior.png",
+      "sha256": "1e4ef7c73ba9f5c2972e1aa30fa21847394b7a643f336b90fcf6f2d19ac38523",
+      "bytes": 186177,
+      "review": "viewed",
+      "observation": "Lower flight, landing and return flight are readable. No structural support, guards or walkability verification is shown.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 16,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          0.5719999834895129,
+          1.5999999999999996,
+          0.5719999834895133
+        ],
+        "target": [
+          2.8567999324202535,
+          1.4499999999999997,
+          2.8567999324202535
+        ],
+        "visibleMeshCount": 31,
+        "view": "interior",
+        "framedBounds": null,
+        "aspect": 2.3371647509578546,
+        "fov": 64
+      }
+    },
+    {
+      "file": "stairs/stairs-1440-cutaway.png",
+      "sha256": "0c16ee837470d4fd332da1da5c02b996a0934943c5433cecfbecb5fab4b7f0e6",
+      "bytes": 171795,
+      "review": "viewed",
+      "observation": "Shows one selected level, not a simultaneous section through both full flights and upper slab.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 19,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -1.2526236799318595,
+          7.828052508490836,
+          -2.481392607388579
+        ],
+        "target": [
+          1.9999999515712261,
+          0.5999999940395355,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 31,
+        "view": "cutaway",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            1.3499999940395355,
+            4.099999904632568
+          ]
+        },
+        "aspect": 2.3371647509578546,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-1440-detail.png",
+      "sha256": "7b333365805b308cb8eec3543e1a98a52a51e2d3af459da440b72e22b0c3e8f4",
+      "bytes": 64938,
+      "review": "viewed",
+      "observation": "Actual canonical tread is selected, but the camera frames that tread only, not the whole staircase.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 24,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 1,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          2.3814828272455117,
+          3.0518502120382407,
+          0.3842676702844493
+        ],
+        "target": [
+          2.5,
+          2.9333330392837524,
+          1.125
+        ],
+        "visibleMeshCount": 31,
+        "view": "detail",
+        "framedBounds": {
+          "min": [
+            2.049999952316284,
+            2.8444440364837646,
+            1
+          ],
+          "max": [
+            2.950000047683716,
+            3.0222220420837402,
+            1.25
+          ]
+        },
+        "aspect": 2.3371647509578546,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-1440-upper-arrival.png",
+      "sha256": "1231fcac46e313820365586de73de8ab885c94afa218f34f9e26b06913463ed0",
+      "bytes": 173701,
+      "review": "viewed",
+      "observation": "Upper slab opening and retained arrival strip are visible; the inspector highlights the source-bound upper door.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 27,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          766.6999999999998
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 1,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -1.2526236799318593,
+          11.028052466767583,
+          -2.481392607388579
+        ],
+        "target": [
+          1.999999951571226,
+          3.799999952316284,
+          1.999999951571226
+        ],
+        "visibleMeshCount": 17,
+        "view": "cutaway",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            3.049999952316284,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            4.549999952316284,
+            4.099999904632568
+          ]
+        },
+        "aspect": 2.3371647509578546,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-393-exterior.png",
+      "sha256": "670f3ca02f3de1b0d5d84ad267bfa35285a9b9b29c081f15cbe700e360db1833",
+      "bytes": 107284,
+      "review": "viewed",
+      "observation": "Isolated two-storey stair core is visible; upper exterior door is a fixture boundary, not evidence of whole-building access.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 7,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": true,
+          "roofSource": "assumed",
+          "roofShown": true,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -5.725018308257981,
+          7.735376889353073,
+          -7.420754023830247
+        ],
+        "target": [
+          1.9999999515712261,
+          3.024999901652336,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 47,
+        "view": "exterior",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            6.199999809265137,
+            4.099999904632568
+          ]
+        },
+        "aspect": 0.9225,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-393-aerial.png",
+      "sha256": "43a4e3d7b21f5c3cd764ececdae50dd21e6a6a36ed2024edc4a15aa45525a38a",
+      "bytes": 53358,
+      "review": "viewed",
+      "observation": "Both flight directions and middle landing are visible within the footprint; overhead enclosure is suppressed.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 10,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          1.9999999515712261,
+          9.55334852446286,
+          1.7564828263791832
+        ],
+        "target": [
+          1.9999999515712261,
+          1.436111018061638,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 31,
+        "view": "aerial",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            3.0222220420837402,
+            4.099999904632568
+          ]
+        },
+        "aspect": 0.9225,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-393-street.png",
+      "sha256": "3ec620136f9ef8ec6b118719970882b08e4a1b713d005b98c77ae84d98d1f132",
+      "bytes": 80429,
+      "review": "viewed",
+      "observation": "Ground entrance and scale figures are visible; unsupported upper external access is apparent.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 13,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": true,
+          "roofSource": "assumed",
+          "roofShown": true,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -4.239396747097407,
+          1.4999999940395363,
+          -12.85570647383028
+        ],
+        "target": [
+          1.9999999515712261,
+          1.4999999940395354,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 47,
+        "view": "street",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            6.199999809265137,
+            4.099999904632568
+          ]
+        },
+        "aspect": 0.9225,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-393-interior.png",
+      "sha256": "c20ab2d302fcdd3c6dcbb7525c77842b570432ec56f823ca2ae7edbd9fc8b581",
+      "bytes": 87076,
+      "review": "viewed",
+      "observation": "Lower flight, landing and return flight are readable. No structural support, guards or walkability verification is shown.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 16,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          0.5719999834895129,
+          1.5999999999999996,
+          0.5719999834895133
+        ],
+        "target": [
+          2.8567999324202535,
+          1.4499999999999997,
+          2.8567999324202535
+        ],
+        "visibleMeshCount": 31,
+        "view": "interior",
+        "framedBounds": null,
+        "aspect": 0.9225,
+        "fov": 64
+      }
+    },
+    {
+      "file": "stairs/stairs-393-cutaway.png",
+      "sha256": "1e041ae3867b33163e743174f2d9770df31a62de92d9c876c6f7082289a312dc",
+      "bytes": 96958,
+      "review": "viewed",
+      "observation": "Shows one selected level, not a simultaneous section through both full flights and upper slab.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 19,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 0,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -1.5432471773128542,
+          8.473882502670826,
+          -2.8818072037801716
+        ],
+        "target": [
+          1.9999999515712261,
+          0.5999999940395355,
+          1.9999999515712261
+        ],
+        "visibleMeshCount": 31,
+        "view": "cutaway",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            -0.15000000596046448,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            1.3499999940395355,
+            4.099999904632568
+          ]
+        },
+        "aspect": 0.9225,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-393-detail.png",
+      "sha256": "74e2ca33068b22d875df8e922347bac62eb4364146113f34d8a81a6bd7db3eaf",
+      "bytes": 53135,
+      "review": "viewed",
+      "observation": "Actual canonical tread is selected, but the camera frames that tread only, not the whole staircase.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 24,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 1,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          2.2490369788490336,
+          3.184296060434719,
+          -0.44351888219353897
+        ],
+        "target": [
+          2.5,
+          2.9333330392837524,
+          1.125
+        ],
+        "visibleMeshCount": 31,
+        "view": "detail",
+        "framedBounds": {
+          "min": [
+            2.049999952316284,
+            2.8444440364837646,
+            1
+          ],
+          "max": [
+            2.950000047683716,
+            3.0222220420837402,
+            1.25
+          ]
+        },
+        "aspect": 0.9225,
+        "fov": 43
+      }
+    },
+    {
+      "file": "stairs/stairs-393-upper-arrival.png",
+      "sha256": "e81305f84c0ea3158c23fb60ed62f4a6c47e0d336291a45621baa3b2cc63a765",
+      "bytes": 98131,
+      "review": "viewed",
+      "observation": "Upper slab opening and retained arrival strip are visible; the inspector highlights the source-bound upper door.",
+      "stats": {
+        "revisionId": "plan_8b0d33f57ea6485d8be277878eb576bd",
+        "modelHash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+        "meshCount": 47,
+        "triangleCount": 564,
+        "quality": "اقتصادي",
+        "qualityReason": "reported software renderer; canonical geometry unchanged",
+        "rendererName": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "renderCalls": 27,
+        "activeAnimation": false,
+        "frameIntervalsMs": [
+          400
+        ],
+        "frameIntervalScope": "consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps",
+        "detailGroupSize": 1,
+        "rackGroups": [],
+        "presentation": {
+          "detailInstances": 10,
+          "roofPieces": 4,
+          "assumedRoofShown": false,
+          "roofSource": "assumed",
+          "roofShown": false,
+          "figures": 2,
+          "sunHour": 10,
+          "tour": false,
+          "edgeSegments": 528,
+          "edgeLayers": 2,
+          "roomLabels": 2,
+          "gridCellM": 1,
+          "clippingPlanes": 1,
+          "animatedTransitions": false,
+          "roofInArtifact": false,
+          "entranceSide": "nz",
+          "entranceDetected": true,
+          "visibleRoofMeshCount": 0
+        },
+        "camera": [
+          -1.5432471773128544,
+          11.673882460947574,
+          -2.8818072037801716
+        ],
+        "target": [
+          1.999999951571226,
+          3.799999952316284,
+          1.999999951571226
+        ],
+        "visibleMeshCount": 17,
+        "view": "cutaway",
+        "framedBounds": {
+          "min": [
+            -0.10000000149011612,
+            3.049999952316284,
+            -0.10000000149011612
+          ],
+          "max": [
+            4.099999904632568,
+            4.549999952316284,
+            4.099999904632568
+          ]
+        },
+        "aspect": 0.9225,
+        "fov": 43
+      }
+    }
+  ],
+  "limitations": [
+    "no guard, headroom, structure, accessibility or code verification",
+    "cutaway is a horizontal view of one level, not a section through both complete flights and upper slab",
+    "detail selects one actual tread; stair assembly grouping is unsupported",
+    "mobile revision badge and inspector cover parts of geometry",
+    "physical device unavailable; viewport emulation on 4-core SwiftShader",
+    "frame p95 unavailable from a single sample; smoothness NOT_VERIFIED",
+    "stairs fixture is an isolated core; upper external door does not establish a safe external route"
+  ]
+}

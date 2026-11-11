@@ -1,0 +1,273 @@
+FFEEEEEFFFEFEFEFEFFFFFFFEEFEE
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY', 'levels': [-2]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY', 'levels': []}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'ALL', 'levels': [-2]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'LEVELS', 'levels': [-2]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'ENVELOPE_ONLY', 'levels': [-2]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 111, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['roof_references']), sum(l.get('kind') == 'roof' for l in levels))
+                         ~~^^^^^^^^^^^^^^^^^^^
+KeyError: 'roof_references'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 98, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    built = bim.build_exchange(p, case['options'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 333, in build_exchange
+    elev = coordinate((_num(lv.get("elevation")) if lv.get("elevation") is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 303, in <lambda>
+    coordinate = (lambda value: float(value) + 0.0) if scope == "SPACES_ONLY" else _q
+                                ^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 98, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    built = bim.build_exchange(p, case['options'])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 333, in build_exchange
+    elev = coordinate((_num(lv.get("elevation")) if lv.get("elevation") is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 303, in <lambda>
+    coordinate = (lambda value: float(value) + 0.0) if scope == "SPACES_ONLY" else _q
+                                ^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+======================================================================
+ERROR: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 113, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    run = subprocess.run(['node', str(ROOT / 'tests/lib/run.js'),
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['node', '/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/lib/run.js', '/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/roof_ifc_exchange_parity.js']' returned non-zero exit status 1.
+
+======================================================================
+ERROR: test_unknown_nonfinite_geometry_is_refused_instead_of_defaulted (__main__.RoofIfcSemantics.test_unknown_nonfinite_geometry_is_refused_instead_of_defaulted)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 122, in test_unknown_nonfinite_geometry_is_refused_instead_of_defaulted
+    result = bim.export_ifc(p, {'scope': 'SPACES_ONLY'})
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 698, in export_ifc
+    built = build_exchange(project, options)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 333, in build_exchange
+    elev = coordinate((_num(lv.get("elevation")) if lv.get("elevation") is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/acs_bim.py", line 303, in <lambda>
+    coordinate = (lambda value: float(value) + 0.0) if scope == "SPACES_ONLY" else _q
+                                ^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+======================================================================
+FAIL: test_roof_is_reference_zone_not_storey_space_or_floor_area (__main__.RoofIfcSemantics.test_roof_is_reference_zone_not_storey_space_or_floor_area)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 67, in test_roof_is_reference_zone_not_storey_space_or_floor_area
+    self.assertEqual(len(typed('IFCBUILDINGSTOREY')), 1)
+AssertionError: 3 != 1
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 110, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['levels']), sum(l.get('kind') != 'roof' for l in levels))
+AssertionError: 3 != 1
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY', 'levels': [1]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 110, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['levels']), sum(l.get('kind') != 'roof' for l in levels))
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY', 'levels': [7]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 110, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['levels']), sum(l.get('kind') != 'roof' for l in levels))
+AssertionError: 1 != 0
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY', 'levels': [1, 7]}, valid=True)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 110, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(len(ex['levels']), sum(l.get('kind') != 'roof' for l in levels))
+AssertionError: 2 != 0
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'ALL'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345679, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 0.9, 'footprint': [1.123457, 6.837209, 4.123457, 3.418605], 'area_m2': 14.096471}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 0.9, 'footprint': [1.123457, 6.837209, 4.123457, 3.418605], 'area_m2': 14.096471}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345679, 'height': 0.9, 'footprint': [1.123457, 6.837209, 4.123457, 3.418605], 'area_m2': 14.096471}], 'walls': [], 'slabs': [{'canonical_id': 'bld_0.flr_-2.slab', 'level_index': -2, 'elevation': -6.7, 'outline': [1.123457, 6.837209, 4.123457, 3.418605], 'thickness': None, 'thickness_known': False, 'predefined_type': 'FLOOR'}, {'canonical_id': 'bld_0.flr_1.slab', 'level_index': 1, 'elevation': 4.75, 'outline': [1.123457, 6.837209, 4.123457, 3.418605], 'thickness': None, 'thickness_known': False, 'predefined_type': 'FLOOR'}, {'canonical_id': 'bld_0.flr_7.slab', 'level_index': 7, 'elevation': 12.345679, 'outline': [1.123457, 6.837209, 4.123457, 3.418605], 'thickness': None, 'thickness_known': False, 'predefined_type': 'FLOOR'}], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [{'entity_id': 'bld_0.flr_-2.slab', 'type': 'PROPERTY_LOSS', 'severity': 'INFO', 'message': 'slab thickness is not stated in the model'}, {'entity_id': 'bld_0.flr_1.slab', 'type': 'PROPERTY_LOSS', 'severity': 'INFO', 'message': 'slab thickness is not stated in the model'}, {'entity_id': 'bld_0.flr_7.slab', 'type': 'PROPERTY_LOSS', 'severity': 'INFO', 'message': 'slab thickness is not stated in the model'}], 'config': {'scope': 'ALL', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '9cbdcbdef1f4af92', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'LEVELS'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345679, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 0.9, 'footprint': [1.123457, 6.837209, 4.123457, 3.418605], 'area_m2': 14.096471}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 0.9, 'footprint': [1.123457, 6.837209, 4.123457, 3.418605], 'area_m2': 14.096471}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345679, 'height': 0.9, 'footprint': [1.123457, 6.837209, 4.123457, 3.418605], 'area_m2': 14.096471}], 'walls': [], 'slabs': [{'canonical_id': 'bld_0.flr_-2.slab', 'level_index': -2, 'elevation': -6.7, 'outline': [1.123457, 6.837209, 4.123457, 3.418605], 'thickness': None, 'thickness_known': False, 'predefined_type': 'FLOOR'}, {'canonical_id': 'bld_0.flr_1.slab', 'level_index': 1, 'elevation': 4.75, 'outline': [1.123457, 6.837209, 4.123457, 3.418605], 'thickness': None, 'thickness_known': False, 'predefined_type': 'FLOOR'}, {'canonical_id': 'bld_0.flr_7.slab', 'level_index': 7, 'elevation': 12.345679, 'outline': [1.123457, 6.837209, 4.123457, 3.418605], 'thickness': None, 'thickness_known': False, 'predefined_type': 'FLOOR'}], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [{'entity_id': 'bld_0.flr_-2.slab', 'type': 'PROPERTY_LOSS', 'severity': 'INFO', 'message': 'slab thickness is not stated in the model'}, {'entity_id': 'bld_0.flr_1.slab', 'type': 'PROPERTY_LOSS', 'severity': 'INFO', 'message': 'slab thickness is not stated in the model'}, {'entity_id': 'bld_0.flr_7.slab', 'type': 'PROPERTY_LOSS', 'severity': 'INFO', 'message': 'slab thickness is not stated in the model'}], 'config': {'scope': 'LEVELS', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '3670075c7f96f122', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'ENVELOPE_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345679, 'template': 'shared'}], 'spaces': [], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'ENVELOPE_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '94a2e39efdfecdb7', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY', 'include_spaces': False}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': False, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '92a746d755d7e01f', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': -1.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': -1.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': -1.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 3.2, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 0.900000123, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 3.2, 'height': 0.900000123, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': 0.900000123, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+======================================================================
+FAIL: test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract (__main__.RoofIfcSemantics.test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract) (options={'scope': 'SPACES_ONLY'}, valid=False)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/roof-ifc-v4/tests/remediation/test_roof_ifc_semantics.py", line 99, in test_selected_scopes_unknown_values_and_exact_kind_share_python_js_contract
+    self.assertEqual(built['valid'], case['valid'], built)
+AssertionError: True != False : {'valid': True, 'issues': [], 'exchange': {'schema_version': 'IFC4', 'project': {'canonical_id': 'project', 'name': 'Project'}, 'site': {'canonical_id': 'site', 'name': 'Site', 'w': 20.0, 'd': 20.0}, 'building': {'canonical_id': 'bld_0', 'name': 'bld_0'}, 'levels': [{'canonical_id': 'bld_0.flr_-2', 'name': 'Level -2', 'index': -2, 'elevation': -6.7, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_1', 'name': 'Level 1', 'index': 1, 'elevation': 4.75, 'template': 'shared'}, {'canonical_id': 'bld_0.flr_7', 'name': 'Level 7', 'index': 7, 'elevation': 12.345678901, 'template': 'shared'}], 'spaces': [{'canonical_id': 'bld_0.flr_-2.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': -2, 'elevation': -6.7, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_1.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 1, 'elevation': 4.75, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}, {'canonical_id': 'bld_0.flr_7.shared.ordinary_id', 'authoring_id': 'shared.ordinary_id', 'name': 'مسطح مرجعي', 'number': 'ordinary_id', 'level_index': 7, 'elevation': 12.345678901, 'height': 3.0, 'footprint': [1.123456789, 6.837209302325586, 4.123456789, 3.4186046511627914], 'area_m2': 14.096469}], 'walls': [], 'slabs': [], 'doors': [], 'windows': [], 'stairs': [], 'unsupported': [], 'losses': [], 'config': {'scope': 'SPACES_ONLY', 'include_spaces': True, 'levels': None, 'include_external_metadata': True, 'coordinate_policy': 'RESOLVE_TO_PROJECT_WORLD', 'schema': 'IFC4'}, 'config_hash': '189184a153c20207', 'model_hash': '820debbef395624664f8da0785b6758db47778a1e10832ac0c68f516a501b979', 'revision_id': 'roof-r1', 'building_id': 'bld_0'}}
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.378s
+
+FAILED (failures=16, errors=13)

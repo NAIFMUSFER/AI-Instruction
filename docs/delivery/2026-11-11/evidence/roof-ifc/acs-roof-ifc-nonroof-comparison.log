@@ -1,0 +1,29 @@
+{"historical_exporter_commit": "ad45ef1992c85a4aa5309cd1adc12c265d55fff1", "historical_exporter_sha256": "fd853ededcea01d45c35bb54c77f377827d27b561c80b8be24998d1b581e933c", "current_exporter_sha256": "85fd70161c68e929db63a77628e6bacee6fcbdcbd005413fb156c14855a6cb8c", "scope": "Historical acs_bim.py with current shared dependencies; not a full historical checkout. IFC bytes compared; new manifest semantics intentionally differ."}
+{"fixture": "villa", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "a9751138b628829afb7fdb0fc0288a7daf68051625602f9ce4944a552bb56e8d"}
+{"fixture": "villa", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "69bcd8ba0bfe7cb4cf0ab1cd0c99d715ba4ffb15a2c1ab68834c5a13327dbfe0"}
+{"fixture": "villa", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "2fbb878b0c18a75755f0f573c50d93e46461e9ae5a40bce7fdf91b634ecb8745"}
+{"fixture": "hotel", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "c83f73e19f0f8aca0cf8e1e566ec390322a08d742ad3219d3dfee041fd025d3c"}
+{"fixture": "hotel", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "7ded824c26139ff1d0b74bf8b87f78eb5ff0ac97d5b4ec11140879824bae2f1b"}
+{"fixture": "hotel", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "85a3847a3833ae57f49347c40db983cb8feb154232c3534d42e571b34f8651b9"}
+{"fixture": "clinic", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "1faf5c6c543b40b7a2e9b523467c1875eaacfd6c0f7e05a25c1913b23ff2941e"}
+{"fixture": "clinic", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "4fdef0c2fc6cb0a76f097b52cdfe72203378ff69601e6f530ab2a06432ab83ad"}
+{"fixture": "clinic", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "1faf5c6c543b40b7a2e9b523467c1875eaacfd6c0f7e05a25c1913b23ff2941e"}
+{"fixture": "warehouse", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "90253ca492268e86c447bfe47956006b51e48040df0eeac5efce948ab50765a1"}
+{"fixture": "warehouse", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "e1cb8391e85ad4f78ecdb6fc8e26efdfe0e1b98a22da0f1bef43c5463bdecdaa"}
+{"fixture": "warehouse", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "90253ca492268e86c447bfe47956006b51e48040df0eeac5efce948ab50765a1"}
+{"fixture": "villa_glazed", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "44b7c2743c0afc77a1db21faca9262bd1a72eece9f0b6f30aa87ccb4fa13f77c"}
+{"fixture": "villa_glazed", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "e4c0924b2ed69f09667074d713c2409cff6aa5ad310fd4111d79ebe7e0426a98"}
+{"fixture": "villa_glazed", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "c68ecc7fcf74513f3c669ef4478e3a464714e27f2dd354434d22d9d072ab8671"}
+{"fixture": "hotel_glazed", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "aa5ffe8028d9f01c3cd3417ef58ce3c73339d3c64651889612a696b9d1781368"}
+{"fixture": "hotel_glazed", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "6978b56991d0f43d46e9238923e5a0fa7ab6de9c655e5e66c02d1fd8d67bf4aa"}
+{"fixture": "hotel_glazed", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "b445997784ddbbf3664121f4398333ad1d4b141ffa31dc36a8ddccfee67faae4"}
+{"fixture": "clinic_glazed", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "3ea576dfea34f4a94df0e3a20bd1bc5b2862628fde7ffd6f50a8ab74c1248586"}
+{"fixture": "clinic_glazed", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "18aa3396b5fa6d92e9162010b427e69c4c606799e3bc97aeb5f0a81b37f10e7a"}
+{"fixture": "clinic_glazed", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "3ea576dfea34f4a94df0e3a20bd1bc5b2862628fde7ffd6f50a8ab74c1248586"}
+{"fixture": "warehouse_glazed", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "be38d8e9759119002680d491a72bcd67191eb296ea9918dd1db2f8f53eba6038"}
+{"fixture": "warehouse_glazed", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "b13e418b9de2bd5e1d4cbf6ae244ca3c0e3ba0e14d0a088e3895510f0389cd34"}
+{"fixture": "warehouse_glazed", "options": {"scope": "LEVELS", "levels": [0]}, "ifc_bytes_identical": true, "sha256": "be38d8e9759119002680d491a72bcd67191eb296ea9918dd1db2f8f53eba6038"}
+{"fixture": "fractional_precision_fixture", "options": {"scope": "ALL"}, "ifc_bytes_identical": true, "sha256": "fb0cc7816a2d6c62396e9846bdadd9941d9fa8cf4c5294758533b2f5b5b57711"}
+{"fixture": "fractional_precision_fixture", "options": {"scope": "SPACES_ONLY"}, "ifc_bytes_identical": true, "sha256": "cb2bd16522e3077e329acea06204b7db96af1bf7b98856f62ecd7bb33ba64138"}
+{"fixture": "fractional_precision_fixture", "options": {"scope": "LEVELS", "levels": [-1]}, "ifc_bytes_identical": true, "sha256": "fb0cc7816a2d6c62396e9846bdadd9941d9fa8cf4c5294758533b2f5b5b57711"}
+PASS: 27 non-roof IFC files byte-identical across ALL/SPACES_ONLY/selected LEVELS; metadata deliberately adds the explicit roof policy.
