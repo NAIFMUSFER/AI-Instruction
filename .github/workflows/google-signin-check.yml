@@ -29,7 +29,9 @@ concurrency:
 jobs:
   auth:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The full three-journey guest suite passed after ~9m12s; setup+cleanup
+    # exceeded the former10m job envelope. Individual test budgets stay intact.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020

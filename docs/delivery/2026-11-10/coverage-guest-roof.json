@@ -83,7 +83,7 @@
   },
   {
     "path": "tests/remediation/test_guest_workspace.cjs",
-    "purpose": "Selected new roof browser lifecycle and retained guest isolation/recovery assertions; execution pending CI",
+    "purpose": "Selected canonical roof lifecycle and retained guest isolation/recovery assertions; executed successfully in CI8 critical and Async jobs",
     "depth": "selected",
     "risk": "high",
     "findings": [
@@ -130,6 +130,20 @@
     ],
     "tests": [
       "tests/remediation/test_ci_apt_mirror.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/google-signin-check.yml",
+    "purpose": "Selected guest import regression wiring, verified mirror setup and measured overall job budget; original individual test waits retained",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CI-JOB-BUDGET-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_gate.py",
+      "tests/remediation/test_auth_shipped_page.cjs"
     ],
     "generated_from": []
   }
