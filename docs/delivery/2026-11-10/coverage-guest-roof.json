@@ -106,5 +106,31 @@
       "tests/remediation/test_guest_import_wait.cjs"
     ],
     "generated_from": []
+  },
+  {
+    "path": "tools/ci_prepare_apt.py",
+    "purpose": "CI-only verified HTTPS Ubuntu mirror selection and atomic local configuration update",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "CI-APT-DNS-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_apt_mirror.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_ci_apt_mirror.py",
+    "purpose": "Offline mirror admission, metadata, failure nonmutation and privileged-operation boundary regressions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CI-APT-DNS-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_apt_mirror.py"
+    ],
+    "generated_from": []
   }
 ]

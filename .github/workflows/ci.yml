@@ -84,7 +84,8 @@ jobs:
                    tests/remediation/test_validate_topology.py \
                    tests/remediation/test_validate_against_real_models.py \
                    tests/remediation/test_autofix_propose_boundary.py \
-                   tests/remediation/test_doc_claims.py
+                   tests/remediation/test_doc_claims.py \
+                   tests/remediation/test_ci_apt_mirror.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -183,6 +184,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Install the locked Playwright and its browser binaries
         # `npm ci` installs package-lock.json exactly and fails on any drift
         # from package.json. The browser binaries are NOT in the repository —
@@ -716,6 +719,8 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Install the independent IFC reader for test-only validation
         run: pip install ifcopenshell==0.9.0.post1
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Require independent PDF extraction with Poppler
         shell: bash
         run: |
