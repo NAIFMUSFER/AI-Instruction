@@ -237,6 +237,28 @@ class WorkspaceLifecycle(unittest.TestCase):
                 again = S.generate_and_save(store, PROJECT, ACTOR, dict(command(), expected_head=edited['head']), runner=Runner(model(kind)))
                 regenerated = S.workspace(store, PROJECT, ACTOR).get(again).model
                 self.assertEqual(len([level for level in regenerated['levels'] if level.get('kind') == 'roof']), 1)
+                # The owner can remove the default roof; later generations respect that, and it can be restored.
+                with self.assertRaises(PlanError):
+                    S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':again,'enabled':True})
+                removed = S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':again,'enabled':False})
+                bare = S.workspace(store, PROJECT, ACTOR).get(removed['head']).model
+                self.assertFalse([level for level in bare['levels'] if level.get('kind') == 'roof'])
+                self.assertIs(bare['meta']['acs_roof']['removed_by_user'], True)
+                with self.assertRaises(PlanError):
+                    S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':removed['head'],'enabled':False})
+                third = S.generate_and_save(store, PROJECT, ACTOR, dict(command(), expected_head=removed['head']), runner=Runner(model(kind)))
+                kept = S.workspace(store, PROJECT, ACTOR).get(third).model
+                self.assertFalse([level for level in kept['levels'] if level.get('kind') == 'roof'])
+                self.assertIs(kept['meta']['acs_roof']['removed_by_user'], True)
+                restored = S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':third,'enabled':True})
+                back = S.workspace(store, PROJECT, ACTOR).get(restored['head']).model
+                self.assertEqual(len([level for level in back['levels'] if level.get('kind') == 'roof' and level.get('auto') is True]), 1)
+                self.assertEqual(back['meta']['acs_roof']['source'], 'system_default')
+                first_room = back['floors'][top['template']]['rooms'][0]
+                locked = execute_persisted_plan_command(store, PROJECT, {'action':'set_room_lock','expected_head':restored['head'],'room_ref':[top['template'], first_room['id']],'locked':True}, actor_id=ACTOR, verifier=S.existing_geometry_verifier)
+                with self.assertRaises(PlanError) as refused:
+                    S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':locked['head'],'enabled':False})
+                self.assertEqual(refused.exception.code, 'LOCK_CONTEXT_CHANGED')
 
     def test_changed_head_during_generation_does_not_overwrite_winner(self):
         first = self.generate()

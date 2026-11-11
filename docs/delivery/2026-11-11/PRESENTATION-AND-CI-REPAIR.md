@@ -114,3 +114,15 @@ Evidence: `test_connected_workspace.py` gained an end-to-end case for residentia
 - Existing projects whose head has locked rooms and no roof keep generating roofless options until their locks are released.
 - The exported roof-level files were only checked to be non-empty; their content was not inspected, and no live provider generation was run.
 - Automatic placement of stairs, columns, railings and landscape by the generator, and a material library, are not started.
+
+## 7. Fifth increment: roof control, export labelling, and a correction
+
+- **Remove or restore the default roof.** New workspace command `set_roof` (`acs_workspace_service.set_roof`, routed in `acs_workspace_http`) creates a new draft revision with the automatic roof removed or restored. No provider call. A removal is recorded in `meta.acs_roof.removed_by_user`, and later generations keep the roof removed and keep the record. A user-authored roof is never removed by this command. While any room is locked the change is refused with an explanation, because room locks freeze the level list. The 2D review has a matching button ("إضافة سطح افتراضي" / "إزالة السطح الافتراضي").
+- **Exports of the roof level were inspected with independent readers** on a generated and approved residential revision: SVG and DXF show the deck spaces labelled "سطح" with the standard not-for-construction note; IFC (IfcOpenShell) has a storey named "السطح" at the roof elevation containing the deck spaces; the PDF page was titled "Level 1" and now reads "Roof deck, unoccupied - Level 1". The connected IFC still exports the deck as `IfcSpace` objects, consistent with its declared spaces-only scope.
+- **Correction to section 6.** The guest/local studio is not without presentation: it runs the older renderer with its own PBR and automatic window detailing (`ui/residential-quality.js`). What it lacks is the canonical default roof and the approved-viewer presentation. It was deliberately left unchanged: its browser suite could not be completed in this sandbox, and changing the first screen every visitor sees without that evidence would be reckless.
+
+Evidence: the end-to-end case in `test_connected_workspace.py` now also covers removal, a later generation respecting it, restoration, and the locked-room refusal. All Python suites named in CI pass here except the sandbox-only `pip check` conflict; the approved-viewer browser test passes.
+
+### Considered and not started
+- **Default stair flights in stair cores.** The compiler has a straight-flight object, but a correct default needs U-shaped flights for ordinary core sizes, a landing, agreement with the slab voids, and a decision on how the top storey is reported by the existing vertical-coverage rule. Doing part of that would put wrong-looking stairs into every generated building.
+- Generator placement of columns, railings and landscape; a material library; the guest path; a live provider generation; a real phone or GPU; the browser suites for guest, connected workspace and accessibility; GitHub CI; deployment.

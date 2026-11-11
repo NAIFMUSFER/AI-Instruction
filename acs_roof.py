@@ -262,3 +262,47 @@ def carry_auto_roof(before_model, candidate):
 
 def is_auto_roof_template(model, template):
     return any(l.get("template") == template for l in _auto_roof_levels(model))
+
+
+def roof_removed_by_user(model):
+    meta = (model or {}).get("meta")
+    return isinstance(meta, dict) and isinstance(meta.get("acs_roof"), dict) \
+        and meta["acs_roof"].get("removed_by_user") is True
+
+
+def mark_roof_removed(model):
+    """Record the owner's choice so later generations do not add the roof back."""
+    out = copy.deepcopy(model)
+    meta = dict(out.get("meta")) if isinstance(out.get("meta"), dict) else {}
+    meta["acs_roof"] = {"schema": "acs.roof/1", "source": "user", "removed_by_user": True}
+    out["meta"] = meta
+    return out
+
+
+def remove_auto_roof(model):
+    """Return a copy without the automatic roof, marked as removed by the user.
+    Raises ValueError("ROOF_NOT_AUTOMATIC") when there is no automatic roof."""
+    previous = _auto_roof_levels(model)
+    if not previous:
+        raise ValueError("ROOF_NOT_AUTOMATIC")
+    templates = {l.get("template") for l in previous}
+    out = copy.deepcopy(model)
+    out["levels"] = [l for l in out.get("levels") or []
+                     if not (isinstance(l, dict) and l.get("template") in templates)]
+    still_used = {l.get("template") for l in out["levels"] if isinstance(l, dict)}
+    for template in templates - still_used:
+        out.get("floors", {}).pop(template, None)
+    return mark_roof_removed(out)
+
+
+def restore_default_roof(model, parapet_h=DEFAULT_PARAPET_H):
+    """Add the default roof back after a removal. Raises ValueError with a code."""
+    if has_roof_level(model):
+        raise ValueError("ROOF_LEVEL_EXISTS")
+    base = copy.deepcopy(model)
+    if isinstance(base.get("meta"), dict):
+        base["meta"] = {k: v for k, v in base["meta"].items() if k != "acs_roof"}
+    out, report, reason = with_default_roof(base, parapet_h)
+    if reason:
+        raise ValueError(reason)
+    return out

@@ -98,6 +98,18 @@ def _num(value: float) -> str:
     return f"{value:.4f}".rstrip("0").rstrip(".") or "0"
 
 
+def _level_title(projection: dict) -> str:
+    """A canonical roof level (every space named roof_*) is a deck, not a storey;
+    the page says so instead of numbering it as one more occupied level."""
+    index = _pdf_escape(projection.get("level_index"))
+    rows = projection.get("primitives") if isinstance(projection.get("primitives"), list) else []
+    ids = [str(((row or {}).get("source") or {}).get("room_id") or "") for row in rows
+           if isinstance(row, dict) and (row.get("source") or {}).get("room_id") is not None]
+    if ids and all(i.startswith("roof_") for i in ids):
+        return f"Roof deck, unoccupied - Level {index}"
+    return f"Level {index}"
+
+
 def _page_stream(projection: dict, page_number: int, total_pages: int,
                  *, revision_id: str, model_hash: str, provenance_hash: str,
                  unicode_font=None) -> tuple[bytes, dict]:
@@ -123,7 +135,7 @@ def _page_stream(projection: dict, page_number: int, total_pages: int,
         "0.8 w",
         "BT /F1 12 Tf",
         f"{_num(MARGIN)} {_num(PAGE_H - MARGIN + 8)} Td",
-        f"(ACS Frozen Baseline - Level {_pdf_escape(level_index)} - Page {page_number}/{total_pages}) Tj",
+        f"(ACS Frozen Baseline - {_level_title(projection)} - Page {page_number}/{total_pages}) Tj",
         "ET",
         "BT /F1 7 Tf",
         f"{_num(MARGIN)} {_num(PAGE_H - MARGIN - 7)} Td",

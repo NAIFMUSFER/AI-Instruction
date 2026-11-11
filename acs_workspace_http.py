@@ -219,6 +219,8 @@ class WorkspaceMiddleware:
                 result = _job_view(row)
             elif action == "edit_geometry":
                 result = await asyncio.to_thread(SERVICE.edit_geometry, store, project_id, actor_id, command)
+            elif action == "set_roof":
+                result = await asyncio.to_thread(SERVICE.set_roof, store, project_id, actor_id, command)
             elif action == "artifact":
                 result = await asyncio.to_thread(SERVICE.isolated_artifact, store, project_id, actor_id, command)
             else:

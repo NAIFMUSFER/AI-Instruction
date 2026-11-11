@@ -342,6 +342,10 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     _head_model = _head.model if _head is not None else None
     if _head_model is not None and acs_roof._auto_roof_levels(_head_model):
         result["building"] = acs_roof.carry_auto_roof(_head_model, result["building"])
+    elif _head_model is not None and acs_roof.roof_removed_by_user(_head_model):
+        #   - the owner removed the roof -> keep it removed, and keep the record.
+        if not acs_roof.has_roof_level(result["building"]):
+            result["building"] = acs_roof.mark_roof_removed(result["building"])
     elif _head is not None and _head.locked_rooms and not acs_roof.has_roof_level(_head_model):
         pass
     else:
@@ -364,6 +368,45 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         on_progress({"phase":"SAVING"})
     store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
     return revision.id
+
+
+def set_roof(store, project_id, actor_id, command):
+    """Remove or restore the automatic default roof as a new draft revision.
+
+    No provider call. A user-authored roof is never removed here. Room locks
+    freeze the level list, so the change is refused with an explanation while
+    any room is locked.
+    """
+    command = checked_command(command, {"expected_head", "enabled"})
+    ws = workspace(store, project_id, actor_id)
+    expected = command.get("expected_head")
+    if not expected or ws.head != expected:
+        raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التعديل.")
+    if type(command.get("enabled")) is not bool:
+        raise PlanError("INVALID_PLAN_COMMAND", "حدّد إضافة السطح أو إزالته.")
+    import acs_roof
+    before = ws.get(expected)
+    try:
+        if command["enabled"]:
+            candidate = acs_roof.restore_default_roof(before.model)
+            note = "إضافة السطح الافتراضي"
+        else:
+            candidate = acs_roof.remove_auto_roof(before.model)
+            note = "إزالة السطح الافتراضي"
+    except ValueError as exc:
+        messages = {"ROOF_LEVEL_EXISTS": "هذه النسخة فيها سطح بالفعل.",
+                    "ROOF_NOT_AUTOMATIC": "لا يوجد سطح تلقائي لإزالته. السطح الذي أضفته بنفسك يُعدَّل كأي دور."}
+        raise PlanError("INVALID_GEOMETRY", messages.get(str(exc), "تعذّرت إضافة السطح لهذه النسخة."))
+    try:
+        revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
+                              expected_head=expected, note=note)
+    except PlanError as exc:
+        if exc.code == "LOCK_CONTEXT_CHANGED":
+            raise PlanError("LOCK_CONTEXT_CHANGED", "فكّ أقفال الفراغات أولًا: إضافة السطح أو إزالته يغيّر أدوار المبنى.")
+        raise
+    result = _view_result(ws, "set_roof", revision.id, reference_revision_id=expected)
+    store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
+    return result
 
 
 def edit_geometry(store, project_id, actor_id, command):

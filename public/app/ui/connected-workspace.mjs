@@ -143,7 +143,7 @@ async function renderState(data, {keepStep=false}={}) {
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
   if(packet){
-    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});
+    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});{const roof=$('cwRoof');if(roof){const has=packet.projections.some(isRoofProjection);roof.dataset.enabled=String(has);roof.textContent=has?'إزالة السطح الافتراضي':'إضافة سطح افتراضي';}}
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,metricValue(k,v)]));
     const checks=Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]);
     // محاذاة النوى ووجود عناصر درج أو مصعد لا يثبتان الانتقال الفعلي، حتى في ملف قديم بلا تغطية معلنة.
@@ -351,6 +351,8 @@ function mount(){
     try{await handleJob((await api(body)).job);}catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+err.message,true);}
   });});
   $('cwSelection').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const data=await api({action:'edit_geometry',expected_head:state.head,room_ref:[selected.source.template,selected.source.room_id],rect:['cwX','cwZ','cwW','cwD'].map(id=>Number($(id).value))});await renderState(data);status('حُفظ التعديل كنسخة جديدة.');});});
+  {const roof=el('button','إضافة سطح افتراضي',$('cwRestore').parentNode);roof.type='button';roof.id='cwRoof';roof.title='سطح مسطح بحاجز 0.9 م يتبع الدور الأخير. افتراض معلن وليس دورًا مشغولًا.';
+  roof.addEventListener('click',()=>run(async()=>{const enabled=roof.dataset.enabled!=='true';const data=await api({action:'set_roof',expected_head:state.head,enabled});await renderState(data);status(enabled?'أُضيف السطح الافتراضي كنسخة جديدة.':'أُزيل السطح الافتراضي كنسخة جديدة. لن يُضاف تلقائيًا في التوليد القادم.');}));}
   $('cwRestore').addEventListener('click',()=>run(async()=>{await renderState(await api({action:'restore',expected_head:state.head,source_revision_id:state.revision_id,note:'استعادة نسخة محفوظة من واجهة المشروع'},true));status('تمت الاستعادة كمسودة جديدة؛ النسخ المعتمدة السابقة محفوظة.');}));
   $('cwCompare').addEventListener('click',()=>run(async()=>{const reference=$('cwCompareRevision').value;if(!reference||reference===state.revision_id)throw new Error('اختر نسخة مرجعية مختلفة للمقارنة.');const data=await api({action:'compare',reference_revision_id:reference,target_revision_id:state.revision_id},true);showComparison(data);status('المقارنة من النسختين المحفوظتين.');}));
   $('cwLogout').addEventListener('click',()=>{stopProgress();clearTimeout(pollTimer);revisionEpoch++;clearViewer();state=null;packet=null;root.hidden=true;document.body.classList.remove('acs-connected');$('acsLogout')?.click();});
