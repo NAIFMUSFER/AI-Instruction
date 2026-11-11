@@ -171,6 +171,17 @@
     "generated_from": []
   },
   {
+    "path": "docs/delivery/2026-11-11/CI11-READER-CORRECTION.md",
+    "purpose": "Scoped actual CI reader failure and strict cardinality correction; no local reader claim",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-CI11"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
     "path": "docs/delivery/2026-11-11/CI9-JOBS.md",
     "purpose": "Dated delivery evidence or current scoped capability/status record",
     "depth": "selected",

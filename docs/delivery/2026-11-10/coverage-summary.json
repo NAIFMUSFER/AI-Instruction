@@ -1,17 +1,17 @@
 {
   "schema": "acs.delivery.coverage/1",
   "base_commit": "c37b5250dc4ff18ba0606add993b5afe52beebaa",
-  "tracked_files": 1181,
+  "tracked_files": 1182,
   "depth": {
     "unreviewed": 526,
-    "selected": 154,
+    "selected": 155,
     "deep": 93,
     "static": 408
   },
   "classification": {
     "data": 41,
     "configuration": 55,
-    "document": 266,
+    "document": 267,
     "source": 186,
     "vendor": 3,
     "generated": 11,

@@ -116,7 +116,10 @@ class ConnectedStairIfcReader(unittest.TestCase):
                 'IfcBuildingStorey': len(expected_storeys), 'IfcSpace': len(expected_spaces)}))
             for entity in ('IfcStair', 'IfcStairFlight', 'IfcDoor', 'IfcWindow',
                            'IfcWall', 'IfcSlab', 'IfcOpeningElement'):
-                self.assertEqual(parsed.by_type(entity), [], entity + ' exceeds spaces-only scope')
+                # The pinned reader can return a tuple. Require zero entities,
+                # independent of the concrete empty sequence representation.
+                self.assertEqual(len(parsed.by_type(entity)), 0,
+                                 entity + ' exceeds spaces-only scope')
             root_ids = [entity.GlobalId for entity in parsed.by_type('IfcRoot')]
             self.assertEqual(len(root_ids), len(set(root_ids)))
 
