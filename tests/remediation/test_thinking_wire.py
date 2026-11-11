@@ -183,6 +183,7 @@ class ThinkingWire(unittest.TestCase):
         # Admission/accounting must see the same legacy destination as the SDK.
         cfg = U.PROV.primary()
         self.assertEqual(cfg.base_url, "https://api.deepseek.com/anthropic")
+        self.assertEqual(cfg.base_host, "api.deepseek.com")
         identity = U.PROV.endpoint_identity(cfg)
         self.assertEqual(identity["actual_provider"], "deepseek")
         self.assertEqual(identity["endpoint_path"], "/anthropic")

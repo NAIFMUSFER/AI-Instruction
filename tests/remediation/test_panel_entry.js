@@ -348,6 +348,12 @@ async function live() {
     });
   });
   await page.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'load' });
+  // The local studio is loaded by ui/local-studio-entry.mjs after `load`, so a
+  // fixed sleep raced its dynamic imports on slower hosts. Wait for the entry
+  // itself; a studio that never arrives still fails the checks below.
+  await page.waitForFunction(() => window.ACS
+    && typeof window.ACS.openWorkspace === 'function', null,
+    { timeout: 45000 }).catch(() => {});
   await page.waitForTimeout(1200);
 
   const result = await page.evaluate(async () => {

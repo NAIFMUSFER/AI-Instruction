@@ -225,6 +225,23 @@ function notVerified(why) {
     JSON.stringify([shape.inline_style_attrs, shape.inline_handlers]));
   boot('the production CSP raised NO violation during boot',
     shape.csp.length === 0, JSON.stringify(shape.csp));
+  let ready = false;
+  try {
+    /* A function predicate, not a string: Playwright re-evaluates a string
+       predicate with eval inside the page while polling, and the production CSP
+       served here forbids eval. That never showed while the whole graph was
+       static (the first check was already true). Since the local studio became
+       a dynamic route the predicate has to poll, and the eval-based poll both
+       raised a script-src violation and never observed readiness. */
+    await pg.waitForFunction(() => !!(window.ACS && window.ACS.ready === true),
+      null, { timeout: 60000, polling: 250 });
+    ready = true;
+  } catch (e) { /* reported below */ }
+  boot('the module graph executed to completion and THREE was imported '
+    + '(window.ACS.ready)', ready);
+  /* The local studio (tools/frontend_local.txt) is imported after `load` by
+     ui/local-studio-entry.mjs, so "every eager module was fetched" is only
+     meaningful once the graph reports ready. It is checked right after. */
   if (!TARGET) {
     const lazy = new Set(APPSRC.lazyOrder());
     const want = Object.keys(APPSRC.modules())
@@ -237,14 +254,6 @@ function notVerified(why) {
       lazy.size > 0 && [...lazy].every(k => !served.has('/app/' + k)));
   }
 
-  let ready = false;
-  try {
-    await pg.waitForFunction('window.ACS&&window.ACS.ready===true', null,
-      { timeout: 30000 });
-    ready = true;
-  } catch (e) { /* reported below */ }
-  boot('the module graph executed to completion and THREE was imported '
-    + '(window.ACS.ready)', ready);
   const api = await pg.evaluate(() => ({
     diag: typeof (window.ACS || {}).renderDiagnostics === 'function',
     diagDetail: typeof (window.ACS || {}).renderDiagnosticsDetail

@@ -1,0 +1,1073 @@
+{
+  "scope": "synthetic exact approved artifacts; not live AI or physical mobile acceptance",
+  "budgets": {
+    "first_view_ms": 3000,
+    "desktop_frame_p95_ms": 20,
+    "mobile_frame_p95_ms": 33,
+    "transition_timeout_ms": 2000,
+    "transition_stall_ms": 10000,
+    "idle_additional_render_calls": 0
+  },
+  "measurements": [
+    {
+      "frame_p95_ms": 733.3000000000002,
+      "targets_met": {
+        "first_view": true,
+        "transitions": false,
+        "frame_p95": false
+      },
+      "fixture": "residential",
+      "revision": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1489.532992,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1511.7737420000012,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 6,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -7.366305510947656,
+              11.675186304662981,
+              -12.300372616031492
+            ],
+            "target": [
+              6.000000189989805,
+              3.524999901652336,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "exterior"
+          },
+          "screenshot": "residential-1440-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 1400.8422719999999,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              6.000000189989805,
+              29.127462116778723,
+              3.231926323536089
+            ],
+            "target": [
+              6.000000189989805,
+              3.524999901652336,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "aerial"
+          },
+          "screenshot": "residential-1440-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 879.574756,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -3.918565203101399,
+              1.499999994039534,
+              -19.615631698322584
+            ],
+            "target": [
+              6.000000189989806,
+              2.2499999940395354,
+              4.000000189989806
+            ],
+            "visibleMeshCount": 59,
+            "view": "street"
+          },
+          "screenshot": "residential-1440-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 53.70647899999858,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.212000059783458,
+              1.6000000000000008,
+              1.2120000597834588
+            ],
+            "target": [
+              5.672800268113612,
+              1.45,
+              5.672800268113612
+            ],
+            "visibleMeshCount": 59,
+            "view": "interior"
+          },
+          "screenshot": "residential-1440-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 18.120623999999225,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -3.1498674604424135,
+              23.858039124835035,
+              -8.60648412838347
+            ],
+            "target": [
+              6.000000189989805,
+              3.524999901652336,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "cutaway"
+          },
+          "screenshot": "residential-1440-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 2961.7863340000004,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.983805797563576,
+              1.5840000343322749,
+              -4.775196795244163
+            ],
+            "target": [
+              4,
+              1.100000023841858,
+              0
+            ],
+            "visibleMeshCount": 59,
+            "view": "detail"
+          },
+          "screenshot": "residential-1440-detail.png"
+        }
+      ]
+    },
+    {
+      "frame_p95_ms": 733.3000000000002,
+      "targets_met": {
+        "first_view": true,
+        "transitions": false,
+        "frame_p95": false
+      },
+      "fixture": "warehouse",
+      "revision": "plan_e32377574cf2439c8bf1f034b751e9b5",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1288.5648140000012,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1474.476956999999,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 6,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              38.84959936877381,
+              17.68729968177921,
+              -14.980171293015676
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "exterior"
+          },
+          "screenshot": "warehouse-1440-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 1430.7970060000007,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              12.1455196370398,
+              47.692321256513935,
+              8.000000189989805
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "aerial"
+          },
+          "screenshot": "warehouse-1440-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 36.516272000000754,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              51.42644086222194,
+              1.499999994039534,
+              -9.05260497245634
+            ],
+            "target": [
+              10.824999999254942,
+              2.2499999940395354,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "street"
+          },
+          "screenshot": "warehouse-1440-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 22.106101999997918,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              11.743999999761579,
+              1.5999999999999994,
+              2.492000059783459
+            ],
+            "target": [
+              4.073599998950958,
+              1.45,
+              11.304800268113613
+            ],
+            "visibleMeshCount": 72,
+            "view": "interior"
+          },
+          "screenshot": "warehouse-1440-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 37.65555999999924,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              32.4988400202653,
+              38.632806482520344,
+              -7.731012728485455
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "cutaway"
+          },
+          "screenshot": "warehouse-1440-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 2612.2155609999973,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              733.3000000000002
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              29.116284179332123,
+              3.0239998626708995,
+              0.1509023546023931
+            ],
+            "target": [
+              20,
+              2.0999999046325684,
+              4.0000001192092896
+            ],
+            "visibleMeshCount": 72,
+            "view": "detail"
+          },
+          "screenshot": "warehouse-1440-detail.png"
+        }
+      ]
+    },
+    {
+      "frame_p95_ms": 666.6000000000004,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "fixture": "residential",
+      "revision": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1222.38796,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1320.6133310000005,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6000000000004
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -8.343498678906519,
+              12.27103579732083,
+              -13.492071601347178
+            ],
+            "target": [
+              6.000000189989805,
+              3.524999901652336,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "exterior"
+          },
+          "screenshot": "residential-393-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 575.5334520000033,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6000000000004
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              6.000000189989805,
+              30.99922472039715,
+              3.17577344542744
+            ],
+            "target": [
+              6.000000189989805,
+              3.524999901652336,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "aerial"
+          },
+          "screenshot": "residential-393-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 47.32383900000423,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6000000000004
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -4.64369857614719,
+              1.4999999940395363,
+              -21.34213972938399
+            ],
+            "target": [
+              6.000000189989806,
+              2.2499999940395354,
+              4.000000189989806
+            ],
+            "visibleMeshCount": 59,
+            "view": "street"
+          },
+          "screenshot": "residential-393-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 832.3932709999935,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6000000000004
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.212000059783458,
+              1.6000000000000008,
+              1.2120000597834588
+            ],
+            "target": [
+              5.672800268113612,
+              1.45,
+              5.672800268113612
+            ],
+            "visibleMeshCount": 59,
+            "view": "interior"
+          },
+          "screenshot": "residential-393-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 47.66657999999734,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6000000000004
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -3.818802344604391,
+              25.344561089639434,
+              -9.528127746562195
+            ],
+            "target": [
+              6.000000189989805,
+              3.524999901652336,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "cutaway"
+          },
+          "screenshot": "residential-393-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 945.5080820000003,
+          "stats": {
+            "revisionId": "plan_4b6b9487f75a45bfa3bc09b0ace2849d",
+            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+            "meshCount": 59,
+            "triangleCount": 708,
+            "quality": "متوازن",
+            "renderCalls": 18,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6000000000004
+            ],
+            "presentation": {
+              "edgeSegments": 648,
+              "edgeLayers": 2,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.983805797563576,
+              1.5840000343322749,
+              -4.775196795244163
+            ],
+            "target": [
+              4,
+              1.100000023841858,
+              0
+            ],
+            "visibleMeshCount": 59,
+            "view": "detail"
+          },
+          "screenshot": "residential-393-detail.png"
+        }
+      ]
+    },
+    {
+      "frame_p95_ms": 600,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "fixture": "warehouse",
+      "revision": "plan_e32377574cf2439c8bf1f034b751e9b5",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1249.3895330000014,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1209.3420199999964,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              600
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              40.89844125907695,
+              18.71172062693077,
+              -16.660221643064222
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "exterior"
+          },
+          "screenshot": "warehouse-393-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 28.238340000010794,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              600
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              12.242061104597914,
+              50.91037017511763,
+              8.000000189989805
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "aerial"
+          },
+          "screenshot": "warehouse-393-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 38.95734100000118,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              600
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              54.39475922245476,
+              1.4999999940395394,
+              -10.299298683754124
+            ],
+            "target": [
+              10.824999999254942,
+              2.2499999940395354,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "street"
+          },
+          "screenshot": "warehouse-393-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 43.80750799999805,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              600
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              11.743999999761579,
+              1.5999999999999994,
+              2.492000059783459
+            ],
+            "target": [
+              4.073599998950958,
+              1.45,
+              11.304800268113613
+            ],
+            "visibleMeshCount": 72,
+            "view": "interior"
+          },
+          "screenshot": "warehouse-393-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 28.72348200000124,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              600
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              34.083386181773434,
+              41.18852609785605,
+              -8.88108655538652
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "cutaway"
+          },
+          "screenshot": "warehouse-393-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 36.68193199999223,
+          "stats": {
+            "revisionId": "plan_e32377574cf2439c8bf1f034b751e9b5",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 18,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              600
+            ],
+            "presentation": {
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              29.116284179332123,
+              3.0239998626708995,
+              0.1509023546023931
+            ],
+            "target": [
+              20,
+              2.0999999046325684,
+              4.0000001192092896
+            ],
+            "visibleMeshCount": 72,
+            "view": "detail"
+          },
+          "screenshot": "warehouse-393-detail.png"
+        }
+      ]
+    }
+  ]
+}

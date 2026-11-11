@@ -134,3 +134,6 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace .cw-viewer-fallback .cw-room{fill:#b4d9e5;stroke:#446a7e;stroke-width:.08}
 #designWorkspace .cw-viewer-fallback text{fill:#183247;text-anchor:middle}
 #designWorkspace #cwEditApprovalNotice{margin-block:12px}
+.av-labels{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.av-label{position:absolute;inset-block-start:0;left:0;max-width:16ch;padding:2px 7px;border-radius:999px;background:#0f2a3dd9;color:#f4fbff;font-size:11px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;box-shadow:0 1px 4px #0b1f2c40;will-change:transform}
+.av-label[hidden]{display:none}
