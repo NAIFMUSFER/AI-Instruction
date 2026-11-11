@@ -16,8 +16,11 @@ const revisionState=(view,id=view.head)=>view.history.find(row=>row.revision_id=
 (async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'acs-ui-')),port=8891;
  const child=spawn(process.env.PYTHON||'python',['tests/remediation/connected_workspace_browser_server.py','--port',String(port),'--database',path.join(tmp,'plans.sqlite3')],{cwd:ROOT,stdio:['ignore','pipe','pipe']});
- let backendLog='';child.stderr.on('data',b=>{backendLog+=b;});
- let browser;
+ let backendLog='';const appendBackend=b=>{backendLog=(backendLog+String(b)).slice(-12000);};
+ child.stdout.on('data',appendBackend);child.stderr.on('data',appendBackend);
+ let browser,activePage,activeCase;
+ const networkEvents=[],pageErrors=[];
+ const recordNetwork=event=>{networkEvents.push(event);if(networkEvents.length>36)networkEvents.shift();};
  try{
   const pdfFixture=path.join(tmp,'two-page-plan.pdf');
   execFileSync(process.env.PYTHON||'python',['-c',`import sys
@@ -33,9 +36,10 @@ w.write(sys.argv[1])`,pdfFixture]);
   assert.ok(ready,'fixture backend did not start: '+backendLog);browser=await PW.launch();
   for(const {width,noWebGL} of [{width:393},{width:1280},{width:393,noWebGL:true}]){
    const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true}),page=await context.newPage();
+   activePage=page;activeCase={width,noWebGL:!!noWebGL};networkEvents.length=0;pageErrors.length=0;
    let blockJobPoll=false,comparisonPause=null,comparisonStarted=null;
    const workspaceActions=[];
-   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   const errors=[];page.on('pageerror',e=>{errors.push(e.message);pageErrors.push(e.message.slice(0,1000));if(pageErrors.length>12)pageErrors.shift();});
    if(noWebGL)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/i.test(type)?null:original.call(this,type,...args);};});
    await page.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
@@ -43,8 +47,14 @@ w.write(sys.argv[1])`,pdfFixture]);
       const body=req.method()==='POST'&&/\/(?:workspace|plan\/commands)$/.test(url.pathname)?req.postDataJSON():null;
       if(url.pathname.endsWith('/workspace'))workspaceActions.push(body?.action);
       if(comparisonPause&&url.pathname.endsWith('/plan/commands')&&body?.action==='compare'){comparisonStarted?.();await comparisonPause;}
-      if(blockJobPoll&&url.pathname.endsWith('/workspace')&&req.method()==='POST'&&req.postDataJSON()?.action==='job')return route.abort('failed');
-      const response=await route.fetch({url:'http://127.0.0.1:'+port+url.pathname+url.search});return route.fulfill({response});
+      if(blockJobPoll&&url.pathname.endsWith('/workspace')&&req.method()==='POST'&&req.postDataJSON()?.action==='job'){recordNetwork({action:body?.action,outcome:'intentional_poll_disconnect'});return route.abort('failed');}
+      const response=await route.fetch({url:'http://127.0.0.1:'+port+url.pathname+url.search});
+      if(body){
+       const receipt={action:body.action,status:response.status()};
+       try{const reply=await response.json();receipt.error_code=reply.error?.code;receipt.head=reply.head;receipt.revision_id=reply.revision_id;if(reply.job){receipt.job={};for(const key of ['id','state','phase','revision_id','error_code','can_resume'])receipt.job[key]=reply.job[key];}}catch(e){receipt.invalid_json=true;}
+       recordNetwork(receipt);
+      }
+      return route.fulfill({response});
     }
     if(url.hostname!=='acs-ui.test')return route.abort();
     const f=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
@@ -231,5 +241,33 @@ w.write(sys.argv[1])`,pdfFixture]);
    console.log('PASS connected workspace '+width+(noWebGL?' without WebGL: 2D, save, approve, SVG, recover and logout remain available':': generation, reload, lock, approval, SVG, exact 3D, chat revision, logout'));
    await context.close();
   }
+ }catch(error){
+  // Preserve the original assertion/timeout. Diagnostics are independently
+  // bounded and contain only this synthetic fixture's state, never auth data.
+  const evidence={case:activeCase,network:networkEvents,page_errors:pageErrors,
+   backend_process:{exit_code:child.exitCode,signal:child.signalCode},backend_log:backendLog};
+  if(activePage&&!activePage.isClosed()){
+   let timer;
+   try{evidence.ui=await Promise.race([activePage.evaluate(()=>({
+    status:document.querySelector('#cwStatus')?.textContent,
+    busy:document.querySelector('#designWorkspace')?.getAttribute('aria-busy'),
+    active_step:document.querySelector('[data-step][aria-current]')?.dataset.step,
+    review_hidden:document.querySelector('#cwReviewContent')?.hidden,
+    review_panel_hidden:document.querySelector('[data-step-panel="3"]')?.hidden,
+    revision:document.querySelector('#cwRevision')?.value,
+    job_phase:document.querySelector('#cwJobProgress')?.dataset.phase,
+    job_hidden:document.querySelector('#cwJobProgress')?.hidden,
+    recover_disabled:document.querySelector('#cwRecoverJob')?.disabled,
+    recover_hidden:document.querySelector('#cwRecoverJob')?.hidden
+   })),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('UI diagnostic timeout')),2000);})]);}
+   catch(e){evidence.ui_error=e.message;}finally{clearTimeout(timer);}
+  }
+  try{const response=await fetch('http://127.0.0.1:'+port+'/test-diagnostics',{signal:AbortSignal.timeout(2000)});evidence.backend=await response.json();}
+  catch(e){evidence.backend_error=e.message;}
+  const logDir=path.join(ROOT,'logs');fs.mkdirSync(logDir,{recursive:true});
+  fs.writeFileSync(path.join(logDir,'connected-workspace-failure.json'),JSON.stringify(evidence,null,2));
+  console.error('CONNECTED WORKSPACE FAILURE DIAGNOSTICS '+JSON.stringify(evidence));
+  if(activePage&&!activePage.isClosed())try{await activePage.screenshot({path:path.join(logDir,'connected-workspace-failure.png'),fullPage:true,timeout:5000});}catch(e){console.error('Connected failure screenshot unavailable: '+e.message);}
+  throw error;
  }finally{if(browser)await browser.close();child.kill('SIGTERM');fs.rmSync(tmp,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

@@ -1,0 +1,3935 @@
+{
+  "schema": "acs.ci-job-review/1",
+  "repository": "NAIFMUSFER/AI-Instruction",
+  "pull_request": 190,
+  "head_sha": "455c5a4f3b2701ffd10e99b6efbbeab8b34bba99",
+  "tested_merge_sha": "6f4af34edf0a604e115f1614a5bf8d76d8f60a07",
+  "reviewed_at": "2026-11-11T10:36:44.775Z",
+  "scope": "All31 PR-triggered workflow runs returned by the connector and all42 jobs returned by their latest-attempt job lists. Connector endpoints expose first pages only; no assertion about untriggered workflows.",
+  "review_method": "Every complete downloaded job log was scanned; all job/step outcomes and suite verdicts were reviewed, failures read with surrounding context. Package installation chatter was not a deep semantic source review.",
+  "full_logs_retained_outside_repository": true,
+  "overall": "NOT PASS: Google and Async failed, critical browser failed, main Chromium canceled after complete boot/visual PASS; aggregate correctly failed.",
+  "browser": {
+    "job_id": 130453948171,
+    "job_result": "cancelled",
+    "boot": {
+      "passed": 33,
+      "total": 33
+    },
+    "visual": {
+      "passed": 326,
+      "total": 326
+    },
+    "fixture_count": 4,
+    "modes_per_fixture": 11,
+    "boot_started_at": "2026-11-11T10:04:01Z",
+    "boot_finished_at": "2026-11-11T10:26:32Z",
+    "boot_elapsed_seconds": 1351,
+    "cancelled_during": "test_accessibility.js §10, after reduced-motion assertions; no complete accessibility verdict",
+    "not_executed_after_cancellation": [
+      "tests/remediation/csp_browser_probe.js",
+      "tests/remediation/test_model_apply.js",
+      "tests/remediation/test_scene_limits.js",
+      "tests/remediation/test_alignment_diagnostics.js"
+    ],
+    "artifact_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/artifacts/13846879310",
+    "note": "This was not a boot hang. Cancellation followed a new commit under existing CI concurrency. Complete corrected-run verification remains required."
+  },
+  "first_failures": [
+    {
+      "job_id": 130453946054,
+      "subject": "Google mobile redirect",
+      "observed": "Transient DOM absent; source-response waiter rejected during teardown and masked primary error. Null-body predicate and pending rejection reproduced locally; fixes have separate before/after evidence."
+    },
+    {
+      "job_id": 130453946214,
+      "subject": "Computed residential approval",
+      "observed": "test_residential_layout_fallback.py:97 can_approve_concept false,1/7failure; roof access-check regression corrected separately."
+    },
+    {
+      "job_id": 130453948342,
+      "subject": "Guest switch",
+      "observed": "test_guest_workspace.cjs:86 #guestWarehouse click timed out after passing actionability; diagnostics added, no click bypass or forced pass."
+    },
+    {
+      "job_id": 130453948342,
+      "subject": "Historical roof control",
+      "observed": "test_connected_workspace_browser.cjs:205 historical roof action remained enabled; race reproduced and corrected separately."
+    }
+  ],
+  "limitations": [
+    "No deployment or real account/provider calls in these CI checks.",
+    "Synthetic approved fixtures do not prove arbitrary live AI quality.",
+    "DOM accessibility success is not formal WCAG or assistive-technology certification.",
+    "Old console prose says pre-parse caps are unimplemented; dedicated current ingress regression7 passes against the new middleware.",
+    "Netlify preview cancellation is intentional no-deploy behavior and distinct from CI failures."
+  ],
+  "runs": [
+    {
+      "id": 43000139591,
+      "name": "Google sign-in",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139591"
+    },
+    {
+      "id": 43000139214,
+      "name": "Plan-first 2D review UI",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139214"
+    },
+    {
+      "id": 43000139644,
+      "name": "Async generation delivery",
+      "status": "completed",
+      "conclusion": "failure",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139644"
+    },
+    {
+      "id": 43000139834,
+      "name": "Plan-first generic role-area constraints",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139834"
+    },
+    {
+      "id": 43000139537,
+      "name": "Plan chat isolated provider worker",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139537"
+    },
+    {
+      "id": 43000139817,
+      "name": "Plan-first registered typology lifecycle",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139817"
+    },
+    {
+      "id": 43000139325,
+      "name": "Plan-first residential measured scorecard",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139325"
+    },
+    {
+      "id": 43000139741,
+      "name": "Plan-first warehouse dock-zone constraints",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139741"
+    },
+    {
+      "id": 43000139212,
+      "name": "Plan-first warehouse dock allocation by zone",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139212"
+    },
+    {
+      "id": 43000139613,
+      "name": "Plan-first frozen-baseline SVG export",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139613"
+    },
+    {
+      "id": 43000139219,
+      "name": "Plan-first semantic revision diff",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139219"
+    },
+    {
+      "id": 43000139609,
+      "name": "Plan-first explicit element provenance",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139609"
+    },
+    {
+      "id": 43000139776,
+      "name": "Plan chat stale-safe orchestration",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139776"
+    },
+    {
+      "id": 43000139257,
+      "name": "Plan-first frozen-baseline CAD export",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139257"
+    },
+    {
+      "id": 43000139883,
+      "name": "Plan-first warehouse rack/lane conflicts",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139883"
+    },
+    {
+      "id": 43000139585,
+      "name": "Plan-first frozen-baseline PDF export",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139585"
+    },
+    {
+      "id": 43000139449,
+      "name": "Plan-first foundation contracts",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139449"
+    },
+    {
+      "id": 43000139199,
+      "name": "Plan-first warehouse zone allocation ratios",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139199"
+    },
+    {
+      "id": 43000139208,
+      "name": "Plan-first warehouse operational metrics",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139208"
+    },
+    {
+      "id": 43000139589,
+      "name": "Authenticated PlanStore session boundary",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139589"
+    },
+    {
+      "id": 43000139583,
+      "name": "Plan-first warehouse zone allocation constraints",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139583"
+    },
+    {
+      "id": 43000139533,
+      "name": "ACS warehouse vertical stage gate",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139533"
+    },
+    {
+      "id": 43000139563,
+      "name": "Authenticated Plan-first HTTP command boundary",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139563"
+    },
+    {
+      "id": 43000139407,
+      "name": "Plan-first warehouse expansion reserves",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139407"
+    },
+    {
+      "id": 43000139624,
+      "name": "ACS warehouse program feasibility",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139624"
+    },
+    {
+      "id": 43000139529,
+      "name": "ACS warehouse soft area fit",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139529"
+    },
+    {
+      "id": 43000139221,
+      "name": "Plan-first connected semantic locks",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139221"
+    },
+    {
+      "id": 43000139441,
+      "name": "Plan-first approved nested 3D provenance",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139441"
+    },
+    {
+      "id": 43000139209,
+      "name": "Plan chat candidate admission",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139209"
+    },
+    {
+      "id": 43000139620,
+      "name": "Plan-first warehouse lane centerline constraints",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139620"
+    },
+    {
+      "id": 43000139669,
+      "name": "CI",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 130453946054,
+      "workflow": "Google sign-in",
+      "name": "auth",
+      "run_id": 43000139591,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139591",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139591/job/130453946054",
+      "status": "completed",
+      "conclusion": "failure",
+      "log_reviewed": true,
+      "full_log_characters": 49279,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Auth session and gateway contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Build shipped frontend",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Install Chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Google redirect and existing account UI on desktop and mobile",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "AUTH SESSION: 31 passed, 0 failed",
+        "Ran 26 tests in 0.024s",
+        "OK",
+        "found 0 vulnerabilities",
+        "##[error]Process completed with exit code 1."
+      ],
+      "sanitized_log_sha256": "ed24689c32be8e14f65ed43fae07abf35af15b568a67c6fdf1b3dbd8df61fadc"
+    },
+    {
+      "id": 130453945719,
+      "workflow": "Plan-first foundation contracts",
+      "name": "contracts",
+      "run_id": 43000139449,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139449",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139449/job/130453945719",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 119984,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Import remains inert without third-party packages",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Persisted receipt row-binding regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Persisted workspace restart/reload regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Admission-time requirement provenance regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Brief source-span evidence regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Source-span artifact provenance regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Warehouse Program-of-Requirements metrics (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Warehouse explicit lane-conflict regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Warehouse explicit dock allocation/position regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Warehouse explicit structural-column lock regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Revision compare and historical restore regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Residential revision compare and historical restore regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Approved-baseline IFC export regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Authenticated-host Plan-first command regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Durable project Plan-first command regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Semantic revision diff regressions (stdlib-only)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        },
+        {
+          "name": "Install existing locks and optional CAD test dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20
+        },
+        {
+          "name": "Revision, approval, CAD, scorecard, options, semantic-diff, semantic-lock, durable-store, 3D-handoff and real-validator contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 43
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 44
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 45
+        }
+      ],
+      "evidence_summary": [
+        "Ran 12 tests in 0.303s",
+        "OK",
+        "Ran 7 tests in 0.129s",
+        "OK",
+        "Ran 8 tests in 0.003s",
+        "OK",
+        "Ran 10 tests in 0.007s",
+        "OK",
+        "Ran 6 tests in 0.007s",
+        "OK",
+        "Ran 13 tests in 0.023s",
+        "OK",
+        "Ran 8 tests in 0.006s",
+        "OK",
+        "Ran 9 tests in 0.003s",
+        "OK",
+        "Ran 3 tests in 0.006s",
+        "OK",
+        "Ran 5 tests in 0.012s",
+        "OK",
+        "Ran 3 tests in 0.013s",
+        "OK",
+        "Ran 7 tests in 0.077s",
+        "OK",
+        "Ran 8 tests in 0.096s",
+        "OK",
+        "Ran 7 tests in 0.172s",
+        "OK",
+        "Ran 8 tests in 0.003s",
+        "OK",
+        "Ran 3 tests in 0.040s",
+        "OK",
+        "Ran 40 tests in 0.050s",
+        "OK",
+        "Ran 14 tests in 0.031s",
+        "OK",
+        "Ran 8 tests in 0.064s",
+        "OK",
+        "Ran 7 tests in 0.154s",
+        "OK",
+        "Ran 8 tests in 0.004s",
+        "OK",
+        "Ran 3 tests in 0.040s",
+        "OK",
+        "Ran 15 tests in 0.056s",
+        "OK",
+        "Ran 11 tests in 0.002s",
+        "OK",
+        "Ran 17 tests in 0.010s",
+        "OK",
+        "Ran 8 tests in 0.007s",
+        "OK",
+        "Ran 9 tests in 0.003s",
+        "OK",
+        "Ran 3 tests in 0.006s",
+        "OK",
+        "Ran 2 tests in 0.574s",
+        "OK",
+        "Ran 2 tests in 0.559s",
+        "OK",
+        "Ran 3 tests in 0.012s",
+        "OK",
+        "Ran 18 tests in 0.015s",
+        "OK",
+        "Ran 13 tests in 0.041s",
+        "OK",
+        "Ran 12 tests in 0.122s",
+        "OK",
+        "Ran 7 tests in 0.118s",
+        "OK",
+        "Ran 20 tests in 0.164s",
+        "OK",
+        "Ran 1 test in 0.018s",
+        "OK",
+        "Ran 3 tests in 0.024s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "6bf43fe01612b48317fc942279f7acd140855b57bb789671f137813b3cb32c63"
+    },
+    {
+      "id": 130453945157,
+      "workflow": "Plan-first 2D review UI",
+      "name": "Read-only 2D packets and Chromium-WebKit UI",
+      "run_id": 43000139214,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139214",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139214/job/130453945157",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 159900,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Actual canonical packet and untrusted-file contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install repository-locked browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Real browser review, selection, privacy, layout and stale-import regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "Ran 10 tests in 0.043s",
+        "OK",
+        "found 0 vulnerabilities"
+      ],
+      "sanitized_log_sha256": "fa01ea5273a2cfb749ae3fdfa11f387a03eef4d98b2c74c183f230acde371b48"
+    },
+    {
+      "id": 130453945361,
+      "workflow": "Plan-first warehouse zone allocation ratios",
+      "name": "contracts",
+      "run_id": 43000139199,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139199",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139199/job/130453945361",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18118,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile measured warehouse allocation contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit zone allocation ratio regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 7 tests in 0.002s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "21777754c4d32c004d68f31a55cb65e9695e5c72f7ea140c513a0812b5688e89"
+    },
+    {
+      "id": 130453947534,
+      "workflow": "Plan-first warehouse rack/lane conflicts",
+      "name": "contracts",
+      "run_id": 43000139883,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139883",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139883/job/130453947534",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18473,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile measured warehouse conflict contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit rack/lane overlap regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 9 tests in 0.010s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "a93da213f3148ef76a150432bdaffbd68132d8f001ec5295f5f304f3c3fa9972"
+    },
+    {
+      "id": 130453945006,
+      "workflow": "Plan-first warehouse operational metrics",
+      "name": "contracts",
+      "run_id": 43000139208,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139208",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139208/job/130453945006",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 24774,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile deterministic measurement modules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Warehouse operational measurement regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Existing scorecard and option regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "evidence_summary": [
+        "Ran 9 tests in 0.002s",
+        "OK",
+        "Ran 11 tests in 0.001s",
+        "OK",
+        "Ran 17 tests in 0.006s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "38dc73605d45f6f1396a8aae22b6c0085789c9d1e73c6c03cb935244ec80793d"
+    },
+    {
+      "id": 130453945431,
+      "workflow": "Authenticated PlanStore session boundary",
+      "name": "plan-store-authenticated-session",
+      "run_id": 43000139589,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139589",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139589/job/130453945431",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 17525,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile the trust bridge and regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify request-scoped authenticated PlanStore binding",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify import isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "evidence_summary": [],
+      "sanitized_log_sha256": "5ef3989ca81e3896f094f2cb2de89bf2f54445c35b060b323e4fc1b4e01f4e0b"
+    },
+    {
+      "id": 130453946214,
+      "workflow": "Async generation delivery",
+      "name": "Async delivery and mobile recovery",
+      "run_id": 43000139644,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139644",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139644/job/130453946214",
+      "status": "completed",
+      "conclusion": "failure",
+      "log_reviewed": true,
+      "full_log_characters": 170912,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install locked dependencies and real browser engines",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Capability, replay and delivery contracts",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 6
+        },
+        {
+          "name": "Short-request recovery in Chromium and WebKit",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 7
+        },
+        {
+          "name": "Build the real shipped frontend",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 8
+        },
+        {
+          "name": "Real production auth UI lifecycle on desktop and mobile",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 9
+        },
+        {
+          "name": "Complete mobile UI to model recovery under production CSP",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 10
+        },
+        {
+          "name": "Connected project lifecycle with durable revisions and approved artifacts",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 11
+        },
+        {
+          "name": "Existing lazy-panel integration remains intact",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 12
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        }
+      ],
+      "evidence_summary": [
+        "found 0 vulnerabilities",
+        "Ran 13 tests in 0.747s",
+        "OK",
+        "GENERATION JOB CLIENT: 13 passed, 0 failed",
+        "AUTH SESSION: 31 passed, 0 failed",
+        "Ran 26 tests in 0.015s",
+        "OK",
+        "Ran 23 tests in 2.193s",
+        "OK",
+        "Ran 20 tests in 0.120s",
+        "OK",
+        "Ran 7 tests in 0.335s",
+        "##[error]Process completed with exit code 1."
+      ],
+      "sanitized_log_sha256": "7cf1b73f65da1c3b6236488332f2ac624795c88de2a01034a7ddda5c427ac6d8"
+    },
+    {
+      "id": 130453946632,
+      "workflow": "Plan-first frozen-baseline PDF export",
+      "name": "pdf-contracts",
+      "run_id": 43000139585,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139585",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139585/job/130453946632",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 31140,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Standard-library import and compile gate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install the pinned PDF dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Frozen-baseline PDF regression suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Ensure tests did not mutate the repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "Ran 7 tests in 0.935s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "bb414ba797b65bd75083c6ab5cd922a011c646c3be9c1c2448b50e4ba966e341"
+    },
+    {
+      "id": 130453946069,
+      "workflow": "Plan-first warehouse zone allocation constraints",
+      "name": "contracts",
+      "run_id": 43000139583,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139583",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139583/job/130453946069",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18126,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile warehouse allocation Program contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit warehouse allocation constraint regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 8 tests in 0.015s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "51883b7288524aba6f494b1a57115e777194660ca3156f5476c4e0b1f594ef3e"
+    },
+    {
+      "id": 130453945111,
+      "workflow": "ACS warehouse vertical stage gate",
+      "name": "vertical-stage-contract",
+      "run_id": 43000139533,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139533",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139533/job/130453945111",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 14606,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run warehouse vertical stage regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ],
+      "evidence_summary": [
+        "Ran 7 tests in 0.012s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "5c27190d4f6d4d18a292c5e56b3b277125254c2e1fd92fb1fd8579db849d3eea"
+    },
+    {
+      "id": 130453945704,
+      "workflow": "Authenticated Plan-first HTTP command boundary",
+      "name": "plan-http-command-boundary",
+      "run_id": 43000139563,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139563",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139563/job/130453945704",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 26298,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile the HTTP trust boundary and regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify production auth gateway",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify authenticated durable command routing",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify production app registration is explicit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Verify import isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ],
+      "evidence_summary": [
+        "Ran 26 tests in 0.015s",
+        "OK",
+        "Ran 7 tests in 0.024s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "829e7499fbec81a0b453b237c2f89d2dda6f7500464318005e6057e096c84889"
+    },
+    {
+      "id": 130453945697,
+      "workflow": "Plan-first warehouse expansion reserves",
+      "name": "contracts",
+      "run_id": 43000139407,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139407",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139407/job/130453945697",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 29426,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile deterministic reserve measurement modules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Warehouse expansion reserve regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Existing warehouse and option regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "evidence_summary": [
+        "Ran 12 tests in 0.018s",
+        "OK",
+        "Ran 9 tests in 0.003s",
+        "OK",
+        "Ran 8 tests in 0.011s",
+        "OK",
+        "Ran 11 tests in 0.002s",
+        "OK",
+        "Ran 17 tests in 0.011s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "fe29b33caefb73a36673f807cc05e0823ed532e66761708485f9a6d6c4ed64a2"
+    },
+    {
+      "id": 130453945969,
+      "workflow": "ACS warehouse program feasibility",
+      "name": "regression",
+      "run_id": 43000139624,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139624",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139624/job/130453945969",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 16274,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run PYTHONPATH=. python tests/remediation/test_warehouse_program_feasibility.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run node tests/remediation/test_warehouse_building_target.mjs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 8 tests in 0.000s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "88964b794fa5c838f8faabb54c9653f3178f0bae7b124858080ccc9b0df21b4c"
+    },
+    {
+      "id": 130453945482,
+      "workflow": "ACS warehouse soft area fit",
+      "name": "regression",
+      "run_id": 43000139529,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139529",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139529/job/130453945482",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 13388,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run PYTHONPATH=. python tests/remediation/test_warehouse_soft_area_fit.py",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        }
+      ],
+      "evidence_summary": [
+        "Ran 4 tests in 0.001s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "aacfe7e1a0626a8ff101a8a289a0e11b4d1292989e81200c4210022aadf14a73"
+    },
+    {
+      "id": 130453945247,
+      "workflow": "Plan-first connected semantic locks",
+      "name": "Connected nested lock UI and authority boundary",
+      "run_id": 43000139221,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139221",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139221/job/130453945247",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 30883,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Connected nested-lock regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Existing server lock and command contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Single-entry and module-tree guard",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "Ran 13 tests in 0.040s",
+        "OK",
+        "Ran 8 tests in 0.052s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "a273d602600ad7e42371186387693972d40421493afa122185969b3a3f61a9ee"
+    },
+    {
+      "id": 130453945525,
+      "workflow": "Plan-first approved nested 3D provenance",
+      "name": "contracts",
+      "run_id": 43000139441,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139441",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139441/job/130453945525",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 17238,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile approved nested provenance contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit approved nested provenance regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 4 tests in 0.001s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "2c02ea05748bf683e484877279d22e3ab2367180065c551ea00221f840550274"
+    },
+    {
+      "id": 130453944862,
+      "workflow": "Plan chat candidate admission",
+      "name": "candidate-admission",
+      "run_id": 43000139209,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139209",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139209/job/130453944862",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 15170,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile boundary and regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Tests leave repository clean",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "evidence_summary": [
+        "Ran 4 tests in 0.016s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "360a3dff9d8318428f5839b3b1942669fc247f68efe4f0cc2243bf41fc50700f"
+    },
+    {
+      "id": 130453946342,
+      "workflow": "Plan-first generic role-area constraints",
+      "name": "contracts",
+      "run_id": 43000139834,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139834",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139834/job/130453946342",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18008,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile role-area Program contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Generic measured role-area constraint regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 8 tests in 0.014s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "4a53a99790a5261226487dd99426db55fd082a8ac487f079fcf704f5e7019e95"
+    },
+    {
+      "id": 130453947345,
+      "workflow": "Plan chat isolated provider worker",
+      "name": "isolated-plan-chat-worker",
+      "run_id": 43000139537,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139537",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139537/job/130453947345",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 15068,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile boundary and regression",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Tests leave repository clean",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "evidence_summary": [
+        "Ran 4 tests in 0.001s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "085bb28e081ff9c05560cae22b37178b698c74b4b17b561f09c5ec811795c9bc"
+    },
+    {
+      "id": 130453947078,
+      "workflow": "Plan-first registered typology lifecycle",
+      "name": "lifecycle",
+      "run_id": 43000139817,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139817",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139817/job/130453947078",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18075,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Every registered typology obeys approval-first Frozen Baseline handoff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "evidence_summary": [
+        "Ran 2 tests in 0.056s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "53c519c4b290811f3d09f8a3dfb53e5546e397182bd2ceeb527f4d4f5aa9f623"
+    },
+    {
+      "id": 130453945420,
+      "workflow": "Plan-first residential measured scorecard",
+      "name": "contracts",
+      "run_id": 43000139325,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139325",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139325/job/130453945420",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 17587,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile residential scorecard contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Residential measured scorecard regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 5 tests in 0.001s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "93b166d58fbd4d492d9b64e068eebf1660919c21bc1f0bb1d64fd2f5e6677f9d"
+    },
+    {
+      "id": 130453947050,
+      "workflow": "Plan-first warehouse dock-zone constraints",
+      "name": "contracts",
+      "run_id": 43000139741,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139741",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139741/job/130453947050",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18377,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile warehouse dock-zone Program contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit warehouse dock-zone constraint regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 9 tests in 0.018s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "91a50b4833203ae938125e4ce421d29d215353f9c9a2cc28e01890e8602f4375"
+    },
+    {
+      "id": 130453946417,
+      "workflow": "Plan-first warehouse dock allocation by zone",
+      "name": "contracts",
+      "run_id": 43000139212,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139212",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139212/job/130453946417",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18272,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile warehouse dock-allocation contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit warehouse dock-allocation regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 9 tests in 0.004s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "fa22507e1fcfb66bcd0b2bcd0b3ad8899bc5c510f2a44c47580b2a55219c5b59"
+    },
+    {
+      "id": 130453946229,
+      "workflow": "Plan-first frozen-baseline SVG export",
+      "name": "svg-contracts",
+      "run_id": 43000139613,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139613",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139613/job/130453946229",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 21072,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Standard-library import and compile gate",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Frozen-baseline SVG regression suite",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Ensure tests did not mutate the repository",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "evidence_summary": [
+        "Ran 6 tests in 0.199s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "1e951245729a983e5071ae14deb868ca9612deb3ed64770ce08935fd2b1ecd06"
+    },
+    {
+      "id": 130453946779,
+      "workflow": "Plan-first semantic revision diff",
+      "name": "contracts",
+      "run_id": 43000139219,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139219",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139219/job/130453946779",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 20754,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile deterministic semantic diff modules",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Semantic model diff regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Trusted command semantic diff regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Inert import boundary",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "Ran 8 tests in 0.004s",
+        "OK",
+        "Ran 3 tests in 0.057s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "40b4b10b858e02bc5b01eadbb2862fd5bb378754f08f1444fa370c6c4e44fe4d"
+    },
+    {
+      "id": 130453946260,
+      "workflow": "Plan-first explicit element provenance",
+      "name": "contracts",
+      "run_id": 43000139609,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139609",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139609/job/130453946260",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 17117,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile provenance contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit nested-element provenance regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 3 tests in 0.002s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "827b548df80f62bfe09d640c1442d6c7e6f021e94b4f90a0fb3c5620beaa0545"
+    },
+    {
+      "id": 130453946194,
+      "workflow": "Plan chat stale-safe orchestration",
+      "name": "stale-safe-chat-orchestration",
+      "run_id": 43000139776,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139776",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139776/job/130453946194",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 20100,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile trusted orchestration and regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Verify reload-before-admission and stale-head rejection",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Verify server authority is rejected before provider work",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Verify trusted boundary import isolation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Tests leave repository clean",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "Ran 4 tests in 0.158s",
+        "OK",
+        "Ran 2 tests in 0.019s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "bc53698689cc0996679b68d4317068ead7f2a519d8862358e4568c555b1ef135"
+    },
+    {
+      "id": 130453945255,
+      "workflow": "Plan-first frozen-baseline CAD export",
+      "name": "contracts",
+      "run_id": 43000139257,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139257",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139257/job/130453945255",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 31979,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile approval-bound CAD exporter",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install existing locks and optional CAD test dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Frozen-baseline CAD and projection regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "evidence_summary": [
+        "Ran 7 tests in 0.346s",
+        "OK",
+        "Ran 15 tests in 0.038s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "a85f33a661211d6b46307c5ebf0d62ca6f45e32edd9ea8de2e5bc4ca01a08f9f"
+    },
+    {
+      "id": 130453947629,
+      "workflow": "CI",
+      "name": "9 · Docker image builds",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453947629",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 59325,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "docker build",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "The image boots and answers /health",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "evidence_summary": [
+        "IMAGE PROVENANCE: 17 passed, 0 failed"
+      ],
+      "sanitized_log_sha256": "8faceedfd9e6dd09ee29537d2830e692d6d79ad935e53a43841682c84ed78623"
+    },
+    {
+      "id": 130453948111,
+      "workflow": "CI",
+      "name": "7 · Dependency audit and lock contract",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948111",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 478361,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install the pinned dependencies the remediation suites import",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Offline audit + lock contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "CVE scan (required — findings or unavailable advisories block release)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        }
+      ],
+      "evidence_summary": [
+        "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: artefact hashes, CVE status,",
+        "DEPENDENCY LOCK CONTRACT: 274 passed, 0 failed",
+        "PROVIDER INTEGRATION: 56 passed, 0 failed",
+        "Ran 12 tests in 0.179s",
+        "OK",
+        "PLAN CHUNKING: 72 passed, 0 failed",
+        "Ran 15 tests in 0.914s",
+        "OK",
+        "EVENT LOOP AND RATE-LIMIT DECISION: 63 passed, 0 failed",
+        "PROVIDER REJECTION DIAGNOSTICS: 57 passed, 0 failed",
+        "MULTI-PROVIDER: 111 passed, 0 failed",
+        "TEST SUMMARY: 200 passed, 0 failed",
+        "RATE LIMIT REGRESSION: 120 passed, 0 failed",
+        "NOT VERIFIED HERE: integration against a REAL Redis server — there is no network in this environment.",
+        "ENGINEERING AUTHORITY: 115 passed, 0 failed",
+        "Ran 11 tests in 0.482s",
+        "OK",
+        "Ran 17 tests in 0.013s",
+        "OK",
+        "Ran 9 tests in 0.002s",
+        "OK",
+        "GENERATION CANCEL: 159 passed, 0 failed",
+        "LOGGING: 82 passed, 0 failed",
+        "PRIVACY BOUNDARY: 74 passed, 0 failed",
+        "BUILD METADATA: 99 passed, 0 failed",
+        "IMAGE BUILD METADATA: 41 passed, 0 failed (subprocesses; Docker checked separately in CI)",
+        "PLATE EXTENT: 184 passed, 0 failed",
+        "BUNDLE REPORT: 94 passed, 0 failed",
+        "API WIRING: 73 passed, 0 failed",
+        "CI GATE: 78 passed, 0 failed",
+        "Ran 17 tests in 0.044s",
+        "OK",
+        "P0 HARDENING: 57 passed, 0 failed",
+        "PROVIDER ACCOUNTING: 51 passed, 0 failed",
+        "PROVIDER CAPABILITY / ROUTING / RESPONSE SEMANTICS: 92 passed, 0 failed",
+        "BROWSER ACQUISITION: 51 passed, 0 failed",
+        "ASGI CLIENT CONTRACT: 31 passed, 0 failed",
+        "CI DEPENDENCY CONTRACT: 27 passed, 0 failed",
+        "JOB BOUNDARY: 34 passed, 0 failed",
+        "CONTAINER TOPOLOGY: 26 passed, 0 failed",
+        "INLINE STYLE SOURCES: 27 passed, 0 failed",
+        "ci_run · dependency + provider + remediation contracts: 33 passed, 0 failed, 33 total",
+        "ci_run · dependency + provider + remediation contracts: every target passed",
+        "No known vulnerabilities found",
+        "found 0 vulnerabilities"
+      ],
+      "sanitized_log_sha256": "546abe038efc1cfd34a21f9aa1e8dfbc5cefb4450b633118dc8d2c1034fabf63"
+    },
+    {
+      "id": 130453948128,
+      "workflow": "CI",
+      "name": "8 · Frontend build gates (index guard · integration · API base)",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948128",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 19446,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Static gates that tools/netlify-build.sh runs after vendoring",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [],
+      "sanitized_log_sha256": "3a59d2a766bb21556ecfff87fd62564ed36883e023ee013b731b49a2c6b71f68"
+    },
+    {
+      "id": 130453948168,
+      "workflow": "CI",
+      "name": "6 · Deployment closure (content, not the live site)",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948168",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 103078,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "tests/deploy/verify_deploy.sh",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Fail if the working tree was modified by the regenerators",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 14
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 15
+        }
+      ],
+      "evidence_summary": [
+        "DEPLOY VERIFICATION: 765 passed, 0 failed"
+      ],
+      "sanitized_log_sha256": "4c2a8b2071b46b9dfcae792a2c47ac94394fc09a8d73163fad80d6dae6537b77"
+    },
+    {
+      "id": 130453948171,
+      "workflow": "CI",
+      "name": "3 · Real Chromium (Playwright — this job MAY use the network)",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948171",
+      "status": "completed",
+      "conclusion": "cancelled",
+      "log_reviewed": true,
+      "full_log_characters": 173779,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install the locked Playwright and its browser binaries",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Measure the source bundle before build provenance stamping",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Vendor the frontend runtime libraries (three · shims · pdf.js)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Install pinned Python dependencies for documentation measurements",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Mobile project layout and measured documentation claims",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Browser suites against the shipped page",
+          "status": "completed",
+          "conclusion": "cancelled",
+          "number": 10
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 20
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 21
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23
+        }
+      ],
+      "evidence_summary": [],
+      "sanitized_log_sha256": "422baa8f092507909ff7dcf9cbe11f1f94ded15cf66e7cae0588788d7f1f6bb2"
+    },
+    {
+      "id": 130453948240,
+      "workflow": "CI",
+      "name": "2 · JS ⇄ Python parity and browser-mirror suites",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948240",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 331419,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Parity of every mirrored layer (Python vs the shipped JS)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "The JS mirrors themselves (run against the shipped page bundle)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Remediation contracts that need only Node (W0 — previously ungated)",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "The bundle extractor needs no installed dependency",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19
+        }
+      ],
+      "evidence_summary": [
+        "PARITY: 17 passed, 0 failed",
+        "AUTHORING PARITY: 35 passed, 0 failed",
+        "WORKSPACE PARITY: 47 passed, 0 failed",
+        "RENDER PARITY: 49 passed, 0 failed",
+        "BIM PARITY SUITE: 54 passed, 0 failed",
+        "DOCS PARITY SUITE: 72 passed, 0 failed",
+        "PBR PARITY SUITE: 7 passed, 0 failed",
+        "AD PARITY SUITE: 7 passed, 0 failed",
+        "ci_run · parity suites: 8 passed, 0 failed, 8 total",
+        "ci_run · parity suites: every target passed",
+        "ARCHITECTURE: 147 passed, 0 failed",
+        "COORDINATION FOUNDATION: 131 passed, 0 failed",
+        "DISTANCE: 80 passed, 0 failed",
+        "EGRESS: 55 passed, 0 failed",
+        "FLS: 169 passed, 0 failed",
+        "INGEST: 188 passed, 0 failed",
+        "MEP: 183 passed, 0 failed",
+        "NAVIGATION: 43 passed, 0 failed",
+        "OCCUPANCY: 98 passed, 0 failed",
+        "RELATIONSHIPS: 48 passed, 0 failed",
+        "RENDER: 55 passed, 0 failed",
+        "REVISION: 99 passed, 0 failed",
+        "RULES: 129 passed, 0 failed",
+        "STRUCTURE: 177 passed, 0 failed",
+        "VISUAL FOUNDATION: 211 passed, 0 failed",
+        "VISUAL ADVERSARIAL: 115 passed, 0 failed",
+        "VISUAL DEV API: 33 passed, 0 failed",
+        "ci_run · js mirror suites: 17 passed, 0 failed, 17 total",
+        "ci_run · js mirror suites: every target passed",
+        "PRODUCTION ERROR UI: 277 passed, 0 failed",
+        "MODEL REVIEW UI: 11 passed, 0 failed",
+        "OPENING IDENTITY: 36 passed, 0 failed",
+        "CSP: 142 passed, 0 failed",
+        "WEBGL DIAGNOSTICS: 128 passed, 0 failed  (nine render states: NOT VERIFIED)",
+        "CONCURRENCY AND DOUBLE-ACTION SAFETY: 65 passed, 0 failed",
+        "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: that the LIVE backend honours the Idempotency-Key header and returns 409 on a stale base revision needs egress to the deployment (blocked here, 403). This suite proves the page-side contract.",
+        "F-15 LOCAL PERSISTENCE: 110 passed, 0 failed",
+        "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: real IndexedDB durability across a genuine browser reload (and a real device quota wall) needs a browser with storage; this suite proves the pure logic the IndexedDB wrapper depends on.",
+        "ci_run · remediation (node scope): 7 passed, 0 failed, 7 total",
+        "ci_run · remediation (node scope): every target passed",
+        "BUNDLE EXTRACTOR: 35 passed, 0 failed",
+        "TRANSPORT UNIT: 22 passed, 0 failed (Node, no browser or paid calls)",
+        "OPENING IDENTITY: 36 passed, 0 failed",
+        "OPENING IDENTITY PARITY: 1 passed, 0 failed (model, history, audit, architecture, tree, exchange, resolution)",
+        "ci_run · bundle extractor (no node_modules): 3 passed, 0 failed, 3 total",
+        "ci_run · bundle extractor (no node_modules): every target passed"
+      ],
+      "sanitized_log_sha256": "d34985872f05f3246c52662aff42cbd8669c2001f6fd1e3bed5f73ec1e633c51"
+    },
+    {
+      "id": 130453948273,
+      "workflow": "CI",
+      "name": "1 · Python contracts (py_compile + phase suites)",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948273",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 230877,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install the pinned backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run the Python contract suites",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "BIM EXCHANGE: 526 passed, 0 failed",
+        "DOCUMENTATION: 421 passed, 0 failed",
+        "PBR QUALITY: 156 passed, 0 failed",
+        "ALIGNMENT REGRESSION: 92 passed, 0 failed",
+        "ARCH DETAIL: 168 passed, 0 failed",
+        "BACKEND CONTRACT: 122 passed, 0 failed",
+        "BLACK VIEWPORT REGRESSION: 87 passed, 0 failed",
+        "GENERATION BUDGET: 74 passed, 0 failed",
+        "LIVE RENDER RECOVERY: 77 passed, 0 failed",
+        "Ran 28 tests in 0.016s",
+        "OK",
+        "Ran 8 tests in 0.001s",
+        "OK",
+        "Ran 8 tests in 0.001s",
+        "OK",
+        "Ran 13 tests in 0.173s",
+        "OK",
+        "ci_run · python contract suites: 13 passed, 0 failed, 13 total",
+        "ci_run · python contract suites: every target passed"
+      ],
+      "sanitized_log_sha256": "ff2316f7f71405883d1f6738e341f181a55cf2814300b327ded876c4b91644bb"
+    },
+    {
+      "id": 130453948310,
+      "workflow": "CI",
+      "name": "4 · Security and configuration",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948310",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 57425,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Install the pinned dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "tests/security",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "BACKEND/CONFIG SECURITY: 377 passed, 0 failed"
+      ],
+      "sanitized_log_sha256": "62ffcd372f3f5d90fdeabde0d8e7f7b20706030fd69fb6f3b01603276fd29bd1"
+    },
+    {
+      "id": 130453948342,
+      "workflow": "CI",
+      "name": "Delivery critical journeys",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948342",
+      "status": "completed",
+      "conclusion": "failure",
+      "log_reviewed": true,
+      "full_log_characters": 133550,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Install the pinned backend dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Install the independent IFC reader for test-only validation",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Require independent PDF extraction with Poppler",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7
+        },
+        {
+          "name": "Build reviewed browser dependencies",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8
+        },
+        {
+          "name": "Paid admission, geometry, exports and release negative witnesses",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Canonical generated sources agree with tracked outputs",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Revision races and Arabic frontend contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Real Chromium guest, private-workspace fixture and approved-artifact views",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 12
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 24
+        },
+        {
+          "name": "Post Run actions/setup-python@v5",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 25
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27
+        }
+      ],
+      "evidence_summary": [
+        "found 0 vulnerabilities",
+        "Ran 10 tests in 0.261s",
+        "OK",
+        "Ran 7 tests in 0.040s",
+        "OK",
+        "Ran 5 tests in 0.903s",
+        "OK",
+        "Ran 7 tests in 0.374s",
+        "OK",
+        "Ran 2 tests in 0.074s",
+        "OK",
+        "Ran 4 tests in 0.003s",
+        "OK",
+        "Ran 4 tests in 0.663s",
+        "OK",
+        "Ran 5 tests in 3.519s",
+        "OK",
+        "Ran 11 tests in 0.185s",
+        "OK",
+        "Ran 14 tests in 0.205s",
+        "OK",
+        "Ran 6 tests in 0.013s",
+        "OK",
+        "Ran 12 tests in 0.042s",
+        "OK",
+        "Ran 20 tests in 0.004s",
+        "OK",
+        "Ran 15 tests in 0.101s",
+        "OK",
+        "Ran 23 tests in 2.122s",
+        "OK",
+        "Ran 20 tests in 0.122s",
+        "OK",
+        "Ran 26 tests in 0.015s",
+        "OK",
+        "Ran 7 tests in 0.030s",
+        "OK",
+        "Ran 7 tests in 0.016s",
+        "OK",
+        "Ran 7 tests in 0.857s",
+        "OK",
+        "Ran 15 tests in 0.063s",
+        "OK",
+        "Ran 4 tests in 0.788s",
+        "OK",
+        "Ran 4 tests in 0.050s",
+        "OK",
+        "Ran 27 tests in 0.131s",
+        "OK",
+        "Ran 4 tests in 0.001s",
+        "OK",
+        "Ran 17 tests in 0.061s",
+        "OK",
+        "ci_run · delivery critical Python: 26 passed, 0 failed, 26 total",
+        "ci_run · delivery critical Python: every target passed",
+        "PASS: late R1 after R2",
+        "PASS: leaving 3D while artifact pending",
+        "PASS: download after revision change",
+        "PASS: sign out while pending",
+        "PASS: current revision mounts with captured R1 identity",
+        "PASS: late viewer construction is disposed and never retained",
+        "APPROVED VIEWER FRAMING: 33 passed; aspect fit, useful scale, immutable bounds and derived assembly isolation.",
+        "REVIEW ONLY BUILD: 15 passed; dated review branches skip deployment, existing branches retain build behavior.",
+        "AUDIT FRONTEND BRIEF: 21 passed, 0 failed",
+        "AUDIT FRONTEND GUARDS: 12 passed, 0 failed",
+        "AUDIT FRONTEND PANELS: 39 passed, 0 failed",
+        "AUDIT VERTICAL DISCLOSURES: 24 passed, 0 failed",
+        "ci_run · delivery critical Node: 7 passed, 0 failed, 7 total",
+        "ci_run · delivery critical Node: every target passed",
+        "PASS: two exact approved fixtures, six views each at desktop/mobile, identity, floor isolation, keyboard, idle rendering, context loss, disposal. Evidence: /home/runner/work/AI-Instruction/AI-Instruction/logs/approved-viewer",
+        "ci_run · delivery critical Chromium: 1 passed, 2 failed, 3 total",
+        "FAILED TARGETS:",
+        "##[error]2 target(s) in 'delivery critical Chromium' failed — this job cannot pass",
+        "##[error]Process completed with exit code 1."
+      ],
+      "sanitized_log_sha256": "61525abdb8c84885dd4ff73505026fbafbc12c8e9333a6ea2bb42299b41f872d"
+    },
+    {
+      "id": 130453948360,
+      "workflow": "CI",
+      "name": "5 · Accessibility (DOM contract of the shipped page)",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130453948360",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 15830,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "DOM/ARIA contract",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "Post Run actions/setup-node@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9
+        },
+        {
+          "name": "Post Run actions/checkout@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        }
+      ],
+      "evidence_summary": [
+        "WORKSPACE DOM: 1 passed, 0 failed",
+        "NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: formal WCAG"
+      ],
+      "sanitized_log_sha256": "d9491cc92aa446382701cfa1f94d5e35f9c6efb77641375da228daf48b2b5480"
+    },
+    {
+      "id": 130453946853,
+      "workflow": "Plan-first warehouse lane centerline constraints",
+      "name": "contracts",
+      "run_id": 43000139620,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139620",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139620/job/130453946853",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18178,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Compile warehouse lane-length Program contracts",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Explicit warehouse lane-length constraint regressions",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        },
+        {
+          "name": "No generated diff",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6
+        },
+        {
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11
+        },
+        {
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13
+        }
+      ],
+      "evidence_summary": [
+        "Ran 8 tests in 0.012s",
+        "OK"
+      ],
+      "sanitized_log_sha256": "44180453f8e6283c276aeb7968ecaa54fd0f4cc1bd80aefa1cdecc4a012ad0c6"
+    },
+    {
+      "id": 130469321195,
+      "workflow": "CI",
+      "name": "10 · Collect every test log",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130469321195",
+      "status": "completed",
+      "conclusion": "success",
+      "log_reviewed": true,
+      "full_log_characters": 18878,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Run actions/download-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2
+        },
+        {
+          "name": "Index what was collected",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        },
+        {
+          "name": "Run actions/upload-artifact@v4",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5
+        }
+      ],
+      "evidence_summary": [],
+      "sanitized_log_sha256": "eb9431767b49f14632be6b911333df78c14ea115ba1890a598e044b4e3614659"
+    },
+    {
+      "id": 130469321242,
+      "workflow": "CI",
+      "name": "CI required (mark THIS one as the required status check)",
+      "run_id": 43000139669,
+      "run_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/job/130469321242",
+      "status": "completed",
+      "conclusion": "failure",
+      "log_reviewed": true,
+      "full_log_characters": 5803,
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1
+        },
+        {
+          "name": "Fail unless every mandatory job succeeded",
+          "status": "completed",
+          "conclusion": "failure",
+          "number": 2
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3
+        }
+      ],
+      "evidence_summary": [],
+      "sanitized_log_sha256": "b8f51f574959ca6d1c125e39eb701c2059008201b3c7d5039d954f839055a3e8"
+    }
+  ]
+}

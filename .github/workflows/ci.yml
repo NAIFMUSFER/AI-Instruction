@@ -771,6 +771,8 @@ jobs:
             tests/remediation/test_approved_revision_race.mjs \
             tests/remediation/test_connected_revision_controls.mjs \
             tests/remediation/test_pbr_shadow_restore.cjs \
+            tests/remediation/test_local_render_quality.mjs \
+            tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \
             tests/remediation/test_auth_fixture_waits.cjs \

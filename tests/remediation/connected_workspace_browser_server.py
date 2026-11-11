@@ -112,6 +112,18 @@ def application(database):
     app=FastAPI()
     @app.get('/test-stats')
     def stats():return counts
+    @app.get('/test-diagnostics')
+    def diagnostics():
+        # This loopback-only synthetic server deliberately exposes no command,
+        # source bytes, credentials, or provider payload in failure diagnostics.
+        keys=('id','project_id','state','phase','revision_id','expected_head',
+              'error_code','provider_calls','finished_at')
+        with sqlite3.connect(database) as con:
+            documents=[json.loads(row[0]) for row in con.execute(
+                'select document from ci_jobs order by rowid desc limit 12')]
+        return {'counts':dict(counts),'active_jobs':sorted(H.ACTIVE_JOBS),
+                'pending_tasks':len(H.PAID_TASKS),
+                'jobs':[{key:doc.get(key) for key in keys} for doc in documents]}
     @app.get('/health')
     def health():return {'ok':True,'api_key_configured':True}
     app.add_middleware(P.PlanCommandMiddleware)

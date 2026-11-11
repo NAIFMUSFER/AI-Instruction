@@ -8,6 +8,18 @@ const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const ORIGIN='https://acs-guest.test';
+async function assertGuestQuality(page,width,stage){
+ const quality=await page.evaluate(()=>window.ACS.legacyRenderQuality());
+ assert.ok(quality.renderer===null||typeof quality.renderer==='string');
+ if(quality.renderer===null)assert.equal(quality.reason,'RENDERER_ID_UNAVAILABLE');
+ assert.ok(Number.isFinite(quality.pixel_ratio)&&quality.pixel_ratio>0);
+ if(/swiftshader|llvmpipe|softpipe|swrast|software rasterizer|microsoft basic render/i.test(quality.renderer||'')){
+  assert.equal(quality.profile,'SOFTWARE_CONSERVATIVE','actual software rendering selects the bounded production profile');
+  assert.ok(quality.pixel_ratio<=.75,'automatic sample/draft work must retain its software pixel budget');
+  assert.ok(Number.isFinite(quality.shadow_map_size)&&quality.shadow_map_size<=512,'automatic presentation must not restore expensive shadows');
+ }
+ console.log('GUEST RENDER QUALITY '+JSON.stringify({width,stage,...quality}));
+}
 // Test-only timing probes retain the real handlers/rendering and every budget.
 // Evidence contains fixed event names, durations and synthetic site width only.
 const DIAG_PREFIX='[ACS-GUEST-DIAG] ';
@@ -160,6 +172,7 @@ async function runGuestWorkspaceTests(){
    await page.goto(ORIGIN+'/');
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.ACS.exportModel());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
+   await assertGuestQuality(page,width,'fresh-entry');
    assert.equal(await page.locator('#login').isVisible(),false);
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -234,6 +247,7 @@ async function runGuestWorkspaceTests(){
     const second=await context.newPage();second.on('pageerror',e=>errors.push(e.message));
     await second.goto(ORIGIN+'/?guest=1');
     await second.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete');
+    await assertGuestQuality(second,width,'second-tab-recovered-draft');
     assert.equal(await second.evaluate(()=>window.ACS.exportModel().site.w),24);
     await page.waitForFunction(()=>window.ACS.tabs().owner.tabs>=2);
     await second.waitForFunction(()=>window.ACS.tabs().owner.tabs>=2);

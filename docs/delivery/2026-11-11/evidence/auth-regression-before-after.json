@@ -43,5 +43,14 @@
     ".github/workflows/google-signin-check.yml",
     ".github/workflows/async-generation-browser.yml",
     ".github/workflows/ci.yml"
-  ]
+  ],
+  "remote_browser_confirmation": {
+    "head_sha": "6c6214d433663763e7dee3e6722b149f5e847bda",
+    "auth_journey_result": "PASS at393 and1280 in both independent workflows: email entry, project onboarding, Google PKCE redirect, reload and logout",
+    "jobs": [
+      "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43004707927/job/130469185723",
+      "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43004707707/job/130469181813"
+    ],
+    "overall_job_result": "Both FAIL later in appended guest desktop journey; auth success is not a claim that the whole jobs passed."
+  }
 }
