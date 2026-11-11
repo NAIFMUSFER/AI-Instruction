@@ -5,7 +5,8 @@
     "depth": "selected",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -30,6 +31,18 @@
     "generated_from": []
   },
   {
+    "path": "KNOWN-ISSUES.md",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
     "path": "acs_arch.py",
     "purpose": "Selected explicit flight connections and target slab openings",
     "depth": "selected",
@@ -50,7 +63,8 @@
     "depth": "selected",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -80,7 +94,8 @@
     "depth": "selected",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -95,7 +110,8 @@
     "depth": "deep",
     "risk": "high",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -125,7 +141,8 @@
     "depth": "selected",
     "risk": "low",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [],
     "generated_from": []
@@ -137,6 +154,18 @@
     "risk": "low",
     "findings": [
       "STAIRS-4B"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/CI10-JOBS.md",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [],
     "generated_from": []
@@ -169,7 +198,260 @@
     "depth": "selected",
     "risk": "low",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-connected-ifc-after.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-connected-ifc-before.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-ifc-fix-evidence.json",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-ifc-scope-after.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-ifc-scope-before.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-ifc-scope-connected.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/acs-stair-ifc-scope-legacy.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-boundary-after.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-boundary-baseline-main.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-boundary-baseline-parent.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-boundary-before.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-boundary-new-regression-before.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-boundary-related-after.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/ci10-stairs-ci-gate-after.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/manifest.json",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/stairs-doc-claims-before.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/stairs-doc-claims-fix.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-fixes/stairs-doc-guard-final.log",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-jobs.json",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-netlify.json",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci10-stairs-visual-review.json",
+    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [],
     "generated_from": []
@@ -526,7 +808,8 @@
     "depth": "static",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stair_ifc_boundary.py"
@@ -587,7 +870,8 @@
     "depth": "selected",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -686,7 +970,8 @@
     "depth": "deep",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stair_ifc_boundary.py"
@@ -703,6 +988,20 @@
     ],
     "tests": [
       "tests/remediation/test_stair_ifc_panel.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stair_ifc_reader.py",
+    "purpose": "Required independent IFC reader or stair admission boundary regression",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [
+      "tests/remediation/test_stair_ifc_reader.py"
     ],
     "generated_from": []
   },
@@ -798,12 +1097,27 @@
     "generated_from": []
   },
   {
+    "path": "tests/remediation/test_stairs_validation_boundary.py",
+    "purpose": "Required independent IFC reader or stair admission boundary regression",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "STAIRS-4B",
+      "STAIRS-CI10"
+    ],
+    "tests": [
+      "tests/remediation/test_stairs_validation_boundary.py"
+    ],
+    "generated_from": []
+  },
+  {
     "path": "tools/acs_plan_handoff.py",
     "purpose": "Selected approved stair boundary; declared geometry must match canonical connections",
     "depth": "selected",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -818,7 +1132,8 @@
     "depth": "selected",
     "risk": "medium",
     "findings": [
-      "STAIRS-4B"
+      "STAIRS-4B",
+      "STAIRS-CI10"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",

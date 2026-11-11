@@ -268,10 +268,6 @@ def build_exchange(project, options=None):
     o = options or {}
     model = project["model"]
     bid = project.get("building_id") or "bld_0"
-    identity_issues = opening_identity_issues(model, bid)
-    if identity_issues:
-        return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
-                i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     mh = project.get("model_hash")
     include_spaces = o.get("include_spaces", True)
     scope = str(o.get("scope") or "ALL").upper()
@@ -279,6 +275,15 @@ def build_exchange(project, options=None):
         return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED",
                 "ERROR", None, "unknown export scope: %s" % o.get("scope"))],
                 "exchange": None}
+    # Physical template variants may retain the same canonical opening source
+    # IDs. A spaces-only artifact contains no openings, so this legacy global
+    # opening contract is outside its scope. Full exports retain the guard;
+    # space identities and all emitted geometry still pass validate_exchange.
+    if scope != "SPACES_ONLY":
+        identity_issues = opening_identity_issues(model, bid)
+        if identity_issues:
+            return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
+                    i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     wanted_levels = o.get("levels")
     wall_h = _num(model.get("wall_h")) or 3.0
     wall_t = _num(model.get("wall_t"))

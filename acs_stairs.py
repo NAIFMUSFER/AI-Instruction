@@ -249,6 +249,36 @@ def has_stair_forms(model):
     return False
 
 
+def _uses_stair_contract(model):
+    """Select stair-specific admission without replacing generic provenance.
+
+    A malformed non-stair collection still belongs to the established handoff
+    provenance boundary. Explicit stair declarations remain strict even inside
+    an incorrectly shaped collection; this detector never legitimizes it.
+    """
+    if not isinstance(model,dict):return False
+    meta=model.get('meta')
+    if isinstance(meta,dict) and 'acs_stairs' in meta:return True
+    levels=model.get('levels')
+    if isinstance(levels,list) and any(isinstance(level,dict) and
+        ('stair_source_template' in level or 'stair_template_instance' in level) for level in levels):
+        return True
+    floors=model.get('floors')
+    if not isinstance(floors,dict):return False
+    for floor in floors.values():
+        rooms=floor.get('rooms') if isinstance(floor,dict) else None
+        for room in rooms if isinstance(rooms,list) else []:
+            objects=room.get('objects') if isinstance(room,dict) else None
+            if isinstance(objects,list):candidates=objects
+            elif isinstance(objects,dict):candidates=[objects,*objects.values()]
+            else:continue
+            for obj in candidates:
+                if isinstance(obj,dict) and ('stair_provenance' in obj or obj.get('form')=='u_return' or
+                    (_stair_object(obj) and 'form' in obj)):
+                    return True
+    return False
+
+
 def template_scope_aliases(model):
     """Validate canonical instance scope, never accept a bare lineage label.
 

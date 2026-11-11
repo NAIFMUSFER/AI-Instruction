@@ -1,0 +1,208 @@
+{
+  "schema": "acs.ci-fix-evidence/1",
+  "failed_remote_head": "b88f560ca35f6ef6dc4acf6cb2d06af13676432e",
+  "packaged_at_utc": "2026-11-11T17:29:24.194608+00:00",
+  "scope": "Local diagnosis/fixes only. This does not change the failed CI10 head or establish any subsequent CI/browser acceptance.",
+  "notes": [
+    "Before logs distinguish regression reproduced on initial head, unchanged baseline comparators and a newly added failing regression.",
+    "After boundary log embeds changed source SHA256 hashes; full tree hash is not asserted.",
+    "Generic7/new5 recur inside stairs27 and allhandoff64; counts are not additive.",
+    "Document --fix regenerated the measured block, but full local documentation gate still failed because real browser suites were unavailable/partial.",
+    "Guard13 and CI gate78 are contract tests, not a remote CI or actual-browser result.",
+    "IFC local reproduction was on b88 working tree with concurrent geometry/review fixes. No clean-main/parent IFC comparator was run; the metadata states this explicitly.",
+    "New test_stair_ifc_reader.py was prepared for the later CI head; IfcOpenShell is unavailable locally, so its local execution is NOT RUN. Syntax-only checking is not a passing reader result."
+  ],
+  "records": [
+    {
+      "file": "ci10-stairs-boundary-before.log",
+      "source": "ci10-stairs-boundary-before.log",
+      "status": "REPRODUCED_HEAD_FAILURE",
+      "source_sha256": "a840a30bea8bf399e7d880d9425f77c84e31c38dd8d348588a74a22f2e035400",
+      "copied_sha256": "39cc5f6b45621a4973167b93215e5666ed5a956b26c33e53d83452f4c2c73c85",
+      "copied_bytes": 2706,
+      "source_mtime_utc": "2026-11-11T17:23:28.816952+00:00",
+      "log_execution_timestamp": "2026-11-11T17:23:28.817638+00:00",
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "ci10-stairs-boundary-baseline-main.log",
+      "source": "ci10-stairs-boundary-baseline-main.log",
+      "status": "BASELINE_PASS",
+      "source_sha256": "7190f407c3ef6250d3617b3dbb26f70b6659098828f592d0df45292618c85141",
+      "copied_sha256": "31723ad9bd530282610d3392bb2e8926e6a66f1163f10ca6ddcd99ec02857e06",
+      "copied_bytes": 1571,
+      "source_mtime_utc": "2026-11-11T17:23:47.680708+00:00",
+      "log_execution_timestamp": "2026-11-11T17:23:47.680502+00:00",
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "ci10-stairs-boundary-baseline-parent.log",
+      "source": "ci10-stairs-boundary-baseline-parent.log",
+      "status": "BASELINE_PASS",
+      "source_sha256": "04ee5e329902b398570ed27929754edac8cbb0188d00f6e87c0999e735b7e07a",
+      "copied_sha256": "2e2e227ced6e417bdeff730a5c816e5e8da2bbbd2718a2c1769a3367baa67bc7",
+      "copied_bytes": 1571,
+      "source_mtime_utc": "2026-11-11T17:23:48.133085+00:00",
+      "log_execution_timestamp": "2026-11-11T17:23:48.132635+00:00",
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "ci10-stairs-boundary-new-regression-before.log",
+      "source": "ci10-stairs-boundary-new-regression-before.log",
+      "status": "NEW_REGRESSION_FAIL_BEFORE_FIX",
+      "source_sha256": "ca80ffab0a4131f3b1057ce8a03feca7517513eb84900b5448daf201bd85bb1f",
+      "copied_sha256": "ec2bb939800d6904906c8d37a07d0e981fe3ac3c2ce2cb1ec4b37cd1e2c1b379",
+      "copied_bytes": 2288,
+      "source_mtime_utc": "2026-11-11T17:25:58.618402+00:00",
+      "log_execution_timestamp": "2026-11-11T17:25:58.616098+00:00",
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "ci10-stairs-boundary-after.log",
+      "source": "ci10-stairs-boundary-after.log",
+      "status": "LOCAL_FIX_PASS",
+      "source_sha256": "398e77a8b1278f4ab3963d2d148aa5943340920d5c88d28bc5d82ec9b1395535",
+      "copied_sha256": "0d68dabe1385a106f714ae8700cb6af7fb304ca17d864021ce80168b62111e28",
+      "copied_bytes": 8435,
+      "source_mtime_utc": "2026-11-11T17:26:33.704003+00:00",
+      "log_execution_timestamp": "2026-11-11T17:26:31.686238+00:00",
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "ci10-stairs-boundary-related-after.log",
+      "source": "ci10-stairs-boundary-related-after.log",
+      "status": "LOCAL_RELATED_SUITES_PASS",
+      "source_sha256": "5615cf520bd8b7a27f1defa7b7db0e19dc7cd0988f595b5570168ff8166d8c2a",
+      "copied_sha256": "16505da717db0a8a01d8ba649b6318b0959c68e3a22b4b171a2041007b7a9603",
+      "copied_bytes": 794,
+      "source_mtime_utc": "2026-11-11T17:27:25.251327+00:00",
+      "log_execution_timestamp": "2026-11-11T17:27:24.704726+00:00",
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "stairs-doc-claims-before.log",
+      "source": "stairs-doc-claims-before.log",
+      "status": "DOCUMENT_DRIFT_FAIL_AND_BROWSER_UNAVAILABLE",
+      "source_sha256": "51240af4f99d0da6a5458db45981fa8d44610c33aaf625b2b25f49b787e8247e",
+      "copied_sha256": "b6d5a6eb2d4772839cff28b4b5b6eec677f97360d086132deced607970e333cc",
+      "copied_bytes": 1350,
+      "source_mtime_utc": "2026-11-11T17:24:46.446544+00:00",
+      "log_execution_timestamp": null,
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "stairs-doc-claims-fix.log",
+      "source": "stairs-doc-claims-fix.log",
+      "status": "STATE_BLOCK_FIXED_FULL_GATE_NOT_VERIFIED",
+      "source_sha256": "9ced1e57c8dec6d381b051b1d2745e4008de7826885b3e417248ad8c9f386501",
+      "copied_sha256": "a7c6509ba423a78cc8a0bc614fd542aa7eb01f53381a159bfbea7a55d6636043",
+      "copied_bytes": 1227,
+      "source_mtime_utc": "2026-11-11T17:25:09.711021+00:00",
+      "log_execution_timestamp": null,
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "stairs-doc-guard-final.log",
+      "source": "stairs-doc-guard-final.log",
+      "status": "GUARD_UNIT_TESTS_PASS",
+      "source_sha256": "e69c5f183c71a277dc808da6831fd2cf0d970321488430945dd7c65f8a077281",
+      "copied_sha256": "e69c5f183c71a277dc808da6831fd2cf0d970321488430945dd7c65f8a077281",
+      "copied_bytes": 1758,
+      "source_mtime_utc": "2026-11-11T17:25:53.695926+00:00",
+      "log_execution_timestamp": null,
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "ci10-stairs-ci-gate-after.log",
+      "source": "ci10-stairs-ci-gate-after.log",
+      "status": "CI_CONTRACT_ASSERTIONS_PASS",
+      "source_sha256": "1ed70726a304748b9b8081df76741c4bc0456f0854de79630a7fb48374ac785f",
+      "copied_sha256": "1ed70726a304748b9b8081df76741c4bc0456f0854de79630a7fb48374ac785f",
+      "copied_bytes": 5802,
+      "source_mtime_utc": "2026-11-11T17:27:57.610504+00:00",
+      "log_execution_timestamp": null,
+      "transformation": "Workspace and browser-cache paths normalized, ANSI removed; token patterns redacted if present."
+    },
+    {
+      "file": "acs-stair-connected-ifc-before.log",
+      "source": "/tmp/acs-stair-connected-ifc-before.log",
+      "status": "LOCAL_FAIL_BEFORE_IFC_SCOPE_FIX",
+      "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+      "observed_exit_code": 1,
+      "source_sha256": "112fdb3fbf301b6eac3759b4f47b5dd93c22db2850d72064895e45ef9ab914d7",
+      "copied_sha256": "b68bc8fef30e222cb1c556599102dbfc101827939da441c36a370c724ddecafd",
+      "copied_bytes": 1333,
+      "source_mtime_utc": "2026-11-11T17:26:45.348997+00:00",
+      "transformation": "Workspace and Python runtime paths normalized; ANSI removed."
+    },
+    {
+      "file": "acs-stair-connected-ifc-after.log",
+      "source": "/tmp/acs-stair-connected-ifc-after.log",
+      "status": "LOCAL_IFC_FIX_PASS",
+      "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+      "observed_exit_code": 0,
+      "source_sha256": "325e4553f6e5698a696ee7a1138ee4ecfa1cef91a59c273bdb69b608bb4c7796",
+      "copied_sha256": "325e4553f6e5698a696ee7a1138ee4ecfa1cef91a59c273bdb69b608bb4c7796",
+      "copied_bytes": 172,
+      "source_mtime_utc": "2026-11-11T17:28:50.039597+00:00",
+      "transformation": "Workspace and Python runtime paths normalized; ANSI removed."
+    },
+    {
+      "file": "acs-stair-ifc-scope-before.log",
+      "source": "/tmp/acs-stair-ifc-scope-before.log",
+      "status": "LOCAL_FAIL_BEFORE_IFC_SCOPE_FIX",
+      "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+      "observed_exit_code": 1,
+      "source_sha256": "bcc0b4871b838950b47c085c8a9f1721e25d7c03ce706d70a3b492590d95a5f1",
+      "copied_sha256": "f63375802b767c3a67545fbbb25bebea25950f1f59460cf8217181292675e14b",
+      "copied_bytes": 2431,
+      "source_mtime_utc": "2026-11-11T17:28:20.978987+00:00",
+      "transformation": "Workspace and Python runtime paths normalized; ANSI removed."
+    },
+    {
+      "file": "acs-stair-ifc-scope-after.log",
+      "source": "/tmp/acs-stair-ifc-scope-after.log",
+      "status": "LOCAL_IFC_FIX_PASS",
+      "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+      "observed_exit_code": 0,
+      "source_sha256": "8f9c972f5cdd0246bea7c6b55f3e762897ca52bb1254effb6aec4b6025333230",
+      "copied_sha256": "8f9c972f5cdd0246bea7c6b55f3e762897ca52bb1254effb6aec4b6025333230",
+      "copied_bytes": 106,
+      "source_mtime_utc": "2026-11-11T17:28:53.079660+00:00",
+      "transformation": "Workspace and Python runtime paths normalized; ANSI removed."
+    },
+    {
+      "file": "acs-stair-ifc-scope-legacy.log",
+      "source": "/tmp/acs-stair-ifc-scope-legacy.log",
+      "status": "LOCAL_IFC_FIX_PASS",
+      "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+      "observed_exit_code": 0,
+      "source_sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d",
+      "copied_sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d",
+      "copied_bytes": 30444,
+      "source_mtime_utc": "2026-11-11T17:29:43.176703+00:00",
+      "transformation": "Workspace and Python runtime paths normalized; ANSI removed."
+    },
+    {
+      "file": "acs-stair-ifc-scope-connected.log",
+      "source": "/tmp/acs-stair-ifc-scope-connected.log",
+      "status": "LOCAL_IFC_FIX_PASS",
+      "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+      "observed_exit_code": 0,
+      "source_sha256": "82662d4911af58eac7494362fef465447fc1c31d0f25831fba722e4f7ab2827e",
+      "copied_sha256": "82662d4911af58eac7494362fef465447fc1c31d0f25831fba722e4f7ab2827e",
+      "copied_bytes": 1224,
+      "source_mtime_utc": "2026-11-11T17:29:39.908137+00:00",
+      "transformation": "Workspace and Python runtime paths normalized; ANSI removed."
+    },
+    {
+      "file": "acs-stair-ifc-fix-evidence.json",
+      "source": "/tmp/acs-stair-ifc-fix-evidence.json",
+      "status": "IFC_FIX_SOURCE_AND_COMMAND_METADATA",
+      "source_sha256": "ca3dad7bd52096aedb60e2026af25457cd2a32d4ba0292084d2083e1072278c0",
+      "copied_sha256": "ca3dad7bd52096aedb60e2026af25457cd2a32d4ba0292084d2083e1072278c0",
+      "copied_bytes": 2672,
+      "transformation": "Reviewed metadata copied exactly."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Bounded physical stairs — 11 November 2026
 
-This is Step4b, above PR191 head `064f4a96fdc1941f010b0f6ab814c765acd260c5`. The prerequisite [CI9](CI9-JOBS.md) passed all six triggered workflows and17 jobs. This stair increment is still under integration; its own browser/CI acceptance is pending. No merge, deployment, migration or paid provider request is included.
+This is Step4b, above PR191 head `064f4a96fdc1941f010b0f6ab814c765acd260c5`. The prerequisite [CI9](CI9-JOBS.md) passed all six triggered workflows and17 jobs. This stair increment is [PR192](https://github.com/NAIFMUSFER/AI-Instruction/pull/192); its own browser/CI acceptance is pending. [CI10](CI10-JOBS.md) initially found a non-stair validation-boundary regression, a connected spaces-only IFC scope leak and stale measured documentation. These are retained as failures, not relabeled as passing results. No merge, deployment, migration or paid provider request is included.
 
 ## Canonical geometry and supported boundary
 
@@ -52,3 +52,9 @@ The independent reader uses the pinned Three.js GLTFLoader to parse Python-produ
 The new real-browser suite is prepared for six presets at 1440×900 and 393×852 plus two upper-arrival views. [Actual local Chromium launch failed before page load](evidence/stairs/browser-local-launch-failure.log) with `socket() EPERM`; no screenshot, browser assertion or performance measurement was obtained. Browser acceptance remains **PENDING CI**. The suite uses the real approved artifact, selects an actual tread, checks revision/hash/mesh identity, and retains the hard 2-second preset limit on 4+ logical cores. The current cutaway isolates one level and cannot display both full flights and the upper slab simultaneously. Detail frames a selected component, not a grouped stair assembly.
 
 Physical traversal, guards, support, headroom, accessibility, escape capacity and code compliance remain **NOT_VERIFIED**. A shaped stair and opening do not establish any of these. No physical iPhone, paid/live AI generation or deployment is claimed.
+
+## CI10 corrections awaiting a new CI head
+
+Unmarked non-stair collections retain the existing provenance boundary; explicit stair forms/reports/scopes remain strict. The unchanged generic-object test passes on main, the parent and the corrected worktree; five new boundary tests protect the distinction. Spaces-only IFC excludes legacy opening validation because it emits no openings; full architectural IFC retains that validation and its explicit-stair refusal. The original fallback journey passes locally again. Browser output sources were regenerated, and the measured source-state documentation now agrees with the actual bundle. No test assertion or timeout was relaxed.
+
+A new mandatory IfcOpenShell case will independently parse the serialized spaces-only IFC from a generated/approved/reopened synthetic residential stair project, including identities, bounds, units and entity scope. This test is wired only into the existing CI job that installs the pinned reader. It has not run locally because IfcOpenShell is absent; syntax checking is not execution.

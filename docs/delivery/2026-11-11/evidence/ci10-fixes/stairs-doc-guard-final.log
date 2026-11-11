@@ -1,0 +1,18 @@
+test_failed_suite_cannot_supply_a_passing_count (__main__.Measurements.test_failed_suite_cannot_supply_a_passing_count) ... ok
+test_fixing_a_valid_count_cannot_hide_an_unavailable_measurement (__main__.Measurements.test_fixing_a_valid_count_cannot_hide_an_unavailable_measurement) ... ok
+test_missing_browser_cannot_be_misreported_as_count_drift (__main__.Measurements.test_missing_browser_cannot_be_misreported_as_count_drift) ... ok
+test_partial_live_summary_cannot_supply_a_documented_count (__main__.Measurements.test_partial_live_summary_cannot_supply_a_documented_count) ... ok
+test_script_summary_is_measured (__main__.Measurements.test_script_summary_is_measured) ... ok
+test_skipped_measurement_fails_the_gate (__main__.Measurements.test_skipped_measurement_fails_the_gate) ... ok
+test_unavailable_measurement_fails_the_gate (__main__.Measurements.test_unavailable_measurement_fails_the_gate) ... ok
+test_unittest_runs_without_pytest (__main__.Measurements.test_unittest_runs_without_pytest) ... ok
+test_unparseable_success_is_not_a_measurement (__main__.Measurements.test_unparseable_success_is_not_a_measurement) ... ok
+test_explicit_guard_failure_blocks_success (__main__.RunnerIntegration.test_explicit_guard_failure_blocks_success) ... ok
+test_explicit_guard_runs_once_after_successful_targets (__main__.RunnerIntegration.test_explicit_guard_runs_once_after_successful_targets) ... ok
+test_plain_runner_preserves_target_only_success (__main__.RunnerIntegration.test_plain_runner_preserves_target_only_success) ... ok
+test_target_failure_is_preserved_before_guard (__main__.RunnerIntegration.test_target_failure_is_preserved_before_guard) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.240s
+
+OK

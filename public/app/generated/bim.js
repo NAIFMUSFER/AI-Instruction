@@ -118,13 +118,17 @@ function _bxOpening(bid,lv,r,op,j,kind,x,z,w,d,elev){
 function bxBuildExchange(project,options){
   const o=options||{};
   const model=project.model, bid=project.building_id||'bld_0';
-  const identityIssues=auOpeningIdentityIssues(model,bid);
-  if(identityIssues.length) return {valid:false,issues:identityIssues.map(i=>
-    bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',i.subject,i.detail)),exchange:null};
   const scope=String(o.scope||'ALL').toUpperCase();
   if(ACS_BIM_SPEC.export_scope_options.indexOf(scope)<0)
     return {valid:false,issues:[bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',null,
       'unknown export scope: '+o.scope)],exchange:null};
+  // Match Python: excluded openings cannot block a spaces-only artifact.
+  // Full exports keep the legacy global opening source identity guard.
+  if(scope!=='SPACES_ONLY'){
+    const identityIssues=auOpeningIdentityIssues(model,bid);
+    if(identityIssues.length) return {valid:false,issues:identityIssues.map(i=>
+      bxIssue('BIM_EXPORT_VALIDATION_FAILED','ERROR',i.subject,i.detail)),exchange:null};
+  }
   const includeSpaces=(o.include_spaces===undefined)?true:!!o.include_spaces;
   const wanted=(o.levels===undefined)?null:o.levels;
   const wallH=_bxNum(model.wall_h)||3;

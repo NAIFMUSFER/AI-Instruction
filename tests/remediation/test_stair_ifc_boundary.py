@@ -38,6 +38,17 @@ def stair(proj):
     return proj['model']['floors']['core']['rooms'][0]['objects'][0]
 
 
+def repeated_opening_sources():
+    """Physical template variants retain canonical opening source identities."""
+    p = project()
+    room = p['model']['floors']['core']['rooms'][0]
+    room['doors'] = [{'id': 'shared-door', 'edge': 'N', 'offset': 2, 'width': 1, 'height': 2.1}]
+    room['windows'] = [{'id': 'shared-window', 'edge': 'S', 'offset': 2, 'width': 1, 'height': 1.2, 'sill': .9}]
+    p['model']['floors']['core_instance'] = copy.deepcopy(p['model']['floors']['core'])
+    p['model']['levels'][1]['template'] = 'core_instance'
+    return p
+
+
 def cases():
     rows = []
     for scope in ('ALL', 'LEVELS', 'ENVELOPE_ONLY'):
@@ -62,6 +73,8 @@ def cases():
     p = project()
     del stair(p)['form']
     rows.append({'project': p, 'options': {}, 'valid': True})
+    for scope, valid in [('SPACES_ONLY', True), ('ALL', False)]:
+        rows.append({'project': repeated_opening_sources(), 'options': {'scope': scope}, 'valid': valid})
     return rows
 
 
@@ -115,6 +128,24 @@ class StairIfcBoundary(unittest.TestCase):
         self.assertTrue(result['valid'], result['issues'])
         self.assertEqual(result['manifest']['stair_count'], 2)
         self.assertEqual(result['file'].count('=IFCSTAIR('), 2)
+
+    def test_spaces_only_excludes_legacy_opening_identity_scope(self):
+        p = repeated_opening_sources()
+        before = copy.deepcopy(p)
+        # These source IDs are distinct physical instances in the canonical
+        # model. Legacy full IFC's opening identity contract is still stricter.
+        full = bim.export_ifc(p, {'scope': 'ALL'})
+        self.assertFalse(full['valid'])
+        self.assertIsNone(full['file'])
+        self.assertTrue(any('opening identity' in i['message'] for i in full['issues']))
+        spaces = bim.export_ifc(p, {'scope': 'SPACES_ONLY'})
+        self.assertTrue(spaces['valid'], spaces['issues'])
+        self.assertEqual(spaces['manifest']['space_count'], 3)
+        for group in ('wall', 'slab', 'door', 'window', 'stair'):
+            self.assertEqual(spaces['manifest'][group + '_count'], 0)
+        for entity in ('IFCWALL', 'IFCSLAB', 'IFCDOOR', 'IFCWINDOW', 'IFCSTAIR'):
+            self.assertNotIn('=' + entity, spaces['file'])
+        self.assertEqual(p, before, 'scope selection must not rewrite source IDs or approved geometry')
 
     def test_shipped_browser_python_boundary_parity(self):
         rows = cases()

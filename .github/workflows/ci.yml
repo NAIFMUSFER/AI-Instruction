@@ -753,8 +753,10 @@ jobs:
             tests/remediation/test_roof_runtime_packaging.py \
             tests/remediation/test_stairs_runtime_packaging.py \
             tests/remediation/test_stairs_geometry.py \
+            tests/remediation/test_stairs_validation_boundary.py \
             tests/remediation/test_stairs_independent_reader.py \
             tests/remediation/test_stair_ifc_boundary.py \
+            tests/remediation/test_stair_ifc_reader.py \
             tests/remediation/test_delivery_provider_identity.py \
             tests/remediation/test_delivery_arabic_pdf.py \
             tests/remediation/test_audit_*.py \

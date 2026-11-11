@@ -309,8 +309,8 @@ def _geometry(model: dict) -> tuple[list[dict], dict]:
         room_counts[template] = len(rooms)
     if not model["floors"]:
         issue("EMPTY_MODEL", "/floors")
-    from acs_stairs import stair_connections, template_scope_aliases, validate_stair_report
-    if not issues:
+    from acs_stairs import _uses_stair_contract, stair_connections, template_scope_aliases, validate_stair_report
+    if not issues and _uses_stair_contract(model):
         try:
             template_scope_aliases(model)
             stair_connections(model)
