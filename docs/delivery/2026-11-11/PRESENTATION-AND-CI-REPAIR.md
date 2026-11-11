@@ -93,3 +93,24 @@ The assumed roof of section 4 is a viewer assumption. This increment adds the re
 - 2D/IFC/DXF/PDF outputs were not inspected for how they present the roof level (it will appear as one more level of spaces). `test_geometry_independent_readers.py` still passes on its unchanged fixtures.
 - Pitched roofs, roof access, drainage, structure and code compliance are out of scope.
 - Stairs with treads, columns, railings, trees and many furnishings already exist as compiler object kinds; what is missing is the generation path choosing and placing them, and world-scale material textures. Neither was started.
+
+## 6. Fourth increment: every generated building gets the same default roof
+
+Owner's requirement: whatever is generated from the user's input must receive the same treatment, not only the test fixtures. Section 5's "nothing calls it yet" is now closed for the connected (account) journey.
+
+- **Generation** (`acs_workspace_service.generate_and_save`): after the provider reply and the authority check, the option receives the default roof through `acs_roof.with_default_roof`. The provider never authors it and it costs no provider call. It is recorded in `meta.acs_roof` as `source: system_default`.
+  - current head already has the automatic roof: it is rebuilt over the new option;
+  - current head has locked rooms and no roof: the option is left alone, because room locks freeze `levels` and `meta` and a new level would be rejected (`LOCK_CONTEXT_CHANGED`, found by the existing lock tests);
+  - otherwise (first generation, or an unlocked project): the default roof is added.
+- **Edits** (`edit_geometry`, both chat-edit entry points in `acs_plan_bridge`): `carry_auto_roof` rebuilds the automatic roof over the edited top storey, including when a provider reply dropped it. A roof the user authored, and a project whose head has no automatic roof, are never touched. Editing the automatic roof's own rooms is refused with an explanation.
+- The disclosure record is deliberately constant across edits so that room locks stay valid.
+- The 2D review lists the level as "السطح · افتراضي غير مشغول" instead of numbering it as a storey.
+
+Evidence: `test_connected_workspace.py` gained an end-to-end case for residential and warehouse (generate, roof present and flagged, concept approvable, SVG/DXF/PDF/IFC exported for the roof level, glTF contains the parapet, top-storey edit moves the roof, roof-room edit refused, regeneration keeps exactly one roof). `test_roof_level.py` now has 12 tests including the locked-room case. All Python suites named in CI pass here except the sandbox-only `pip check` conflict.
+
+### Still not covered
+- The guest/local studio uses the legacy renderer and local approximate generation in the browser; it does not go through this service and gets neither the roof default nor the approved-viewer presentation.
+- There is no user-facing action to remove or restore the roof; the rules above already respect a removed roof once such an action exists.
+- Existing projects whose head has locked rooms and no roof keep generating roofless options until their locks are released.
+- The exported roof-level files were only checked to be non-empty; their content was not inspected, and no live provider generation was run.
+- Automatic placement of stairs, columns, railings and landscape by the generator, and a material library, are not started.

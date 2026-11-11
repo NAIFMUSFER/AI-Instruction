@@ -18,6 +18,9 @@ const metricValue = (key, v) => {
   return typeof reason==='string'&&reason.trim() ? 'غير متاح / غير قابل للقياس — '+reason : value(v);
 };
 const floorLabel = index => index < 0 ? 'القبو '+Math.abs(index) : index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور '+index;
+// A canonical roof level (all spaces named roof_*) is a deck, not a storey: name it as such wherever a level is listed.
+const isRoofProjection = p => Array.isArray(p?.primitives) && p.primitives.length > 0 && p.primitives.every(r => String(r?.source?.room_id || '').startsWith('roof_'));
+const levelLabel = p => isRoofProjection(p) ? 'السطح · افتراضي غير مشغول' : floorLabel(p.level_index);
 function roomLabel(label) {
   const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه',corridor:'الممر',majlis:'المجلس'};
   return names[label] || (/^flat_\d+$/.test(label) ? 'شقة '+label.slice(5) : label);
@@ -140,7 +143,7 @@ async function renderState(data, {keepStep=false}={}) {
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
   if(packet){
-    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',floorLabel(p.level_index),$('cwLevel'));o.value=String(i);});
+    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,metricValue(k,v)]));
     const checks=Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]);
     // محاذاة النوى ووجود عناصر درج أو مصعد لا يثبتان الانتقال الفعلي، حتى في ملف قديم بلا تغطية معلنة.
@@ -177,7 +180,7 @@ function draw() {
   if(!packet)return;
   const p=packet.projections[Number($('cwLevel').value)||0];$('cwPlan').replaceChildren();$('cwSpaces').replaceChildren();
   const pad=Math.max(p.site.w,p.site.d)*.035;$('cwPlan').setAttribute('viewBox',[-pad,-pad,p.site.w+2*pad,p.site.d+2*pad].join(' '));
-  svg('title',{},$('cwPlan'),'مخطط '+floorLabel(p.level_index));
+  svg('title',{},$('cwPlan'),'مخطط '+levelLabel(p));
   svg('rect',{x:0,y:0,width:p.site.w,height:p.site.d,fill:'#f7f9fb',stroke:'#668194','stroke-width':.06},$('cwPlan'));
   for(const item of p.primitives){
     const [x,z,w,d]=item.rect_xz_m;

@@ -201,6 +201,43 @@ class WorkspaceLifecycle(unittest.TestCase):
                 old=S.artifact(reloaded,PROJECT,ACTOR,{'action':'artifact','revision_id':head,'format':'svg','level_index':0})
                 self.assertEqual(old['receipt']['revision_id'],head)
 
+    def test_every_generated_building_gets_the_default_roof_and_it_follows_edits(self):
+        for kind in ['residential', 'warehouse']:
+            with self.subTest(kind=kind), tempfile.TemporaryDirectory() as directory:
+                db = SQLitePlanStore(Path(directory) / 'plans.sqlite3');db.create_project(PROJECT, owner_id=ACTOR)
+                store = SQLitePlanStoreAdapter(db)
+                rid = S.generate_and_save(store, PROJECT, ACTOR, command(), runner=Runner(model(kind)))
+                built = S.workspace(store, PROJECT, ACTOR).get(rid).model
+                roofs = [level for level in built['levels'] if level.get('kind') == 'roof']
+                self.assertEqual(len(roofs), 1)
+                self.assertIs(roofs[0].get('auto'), True)
+                self.assertEqual(built['meta']['acs_roof']['source'], 'system_default')
+                # The provider fixture declared no roof: it is a system default, not provider output.
+                self.assertFalse([level for level in model(kind)['levels'] if level.get('kind') == 'roof'])
+                self.assertTrue(S.view(store, PROJECT, ACTOR)['authority']['can_approve_concept'])
+                approved = execute_persisted_plan_command(store, PROJECT, {'action':'approve','expected_head':rid,'confirmed':True,'acknowledge_concept_only':True}, actor_id=ACTOR, verifier=S.existing_geometry_verifier)
+                self.assertEqual(approved['baseline'], rid)
+                for fmt in ['svg', 'dxf', 'pdf', 'ifc']:
+                    result = S.artifact(store, PROJECT, ACTOR, {'action':'artifact','revision_id':rid,'format':fmt,'level_index':roofs[0]['index']})
+                    self.assertTrue(base64.b64decode(result['data_base64']), fmt)
+                gltf = json.loads(base64.b64decode(S.artifact(store, PROJECT, ACTOR, {'action':'artifact','revision_id':rid,'format':'gltf'})['data_base64']))
+                key = 'F%d' % roofs[0]['index']
+                self.assertTrue([n for n in gltf['nodes'] if n.get('name', '').startswith('WALL|' + key + '|roof_')])
+                storeys = [level for level in built['levels'] if level.get('kind') != 'roof']
+                top = max(storeys, key=lambda level: level['index'])
+                target = built['floors'][top['template']]['rooms'][-1]
+                rect = [target['rect'][0], target['rect'][1], target['rect'][2] - 0.5, target['rect'][3]]
+                with self.assertRaises(PlanError):
+                    S.edit_geometry(store, PROJECT, ACTOR, {'action':'edit_geometry','expected_head':rid,'room_ref':[roofs[0]['template'], 'roof_' + target['id']],'rect':rect})
+                edited = S.edit_geometry(store, PROJECT, ACTOR, {'action':'edit_geometry','expected_head':rid,'room_ref':[top['template'], target['id']],'rect':rect})
+                after = S.workspace(store, PROJECT, ACTOR).get(edited['head']).model
+                deck = next(r for r in after['floors'][roofs[0]['template']]['rooms'] if r['id'] == 'roof_' + target['id'])
+                self.assertEqual(deck['rect'], rect)
+                self.assertEqual(len([level for level in after['levels'] if level.get('kind') == 'roof']), 1)
+                again = S.generate_and_save(store, PROJECT, ACTOR, dict(command(), expected_head=edited['head']), runner=Runner(model(kind)))
+                regenerated = S.workspace(store, PROJECT, ACTOR).get(again).model
+                self.assertEqual(len([level for level in regenerated['levels'] if level.get('kind') == 'roof']), 1)
+
     def test_changed_head_during_generation_does_not_overwrite_winner(self):
         first = self.generate()
         next_command = dict(command(), expected_head=first)

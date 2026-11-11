@@ -170,3 +170,95 @@ def add_flat_roof_level(model, parapet_h=DEFAULT_PARAPET_H):
         "not_verified": ["structure", "drainage", "waterproofing", "roof access", "code compliance"],
     }
     return out, report
+
+
+# ---------------------------------------------------------------------------
+# Generation and editing journey
+# ---------------------------------------------------------------------------
+def _auto_roof_levels(model):
+    return [l for l in ((model or {}).get("levels") or [])
+            if isinstance(l, dict) and l.get("kind") == "roof" and l.get("auto") is True]
+
+
+def _parapet_of(model):
+    for level in _auto_roof_levels(model):
+        for r in (((model.get("floors") or {}).get(level.get("template")) or {}).get("rooms") or []):
+            if isinstance(r, dict) and r.get("wall_h") is not None:
+                try:
+                    return float(r["wall_h"])
+                except (TypeError, ValueError):
+                    break
+            if isinstance(r, dict) and r.get("walls") == "none":
+                return 0.0
+    return DEFAULT_PARAPET_H
+
+
+def _disclosure(parapet_h):
+    # Deliberately constant across edits: room locks freeze everything outside
+    # ``floors`` (levels and meta included), so this record must not carry figures
+    # that move when an unlocked room on the top storey is edited.
+    return {"schema": "acs.roof/1", "source": "system_default", "form": "flat",
+            "parapet_height_m": float(parapet_h), "occupied_floor": False}
+
+
+def with_default_roof(model, parapet_h=DEFAULT_PARAPET_H):
+    """Every generated building gets the same disclosed default: a flat roof with
+    a parapet. Returns ``(model, report, reason)``.
+
+    The roof is recorded in ``meta.acs_roof`` as a system default, so the review
+    can show it as an assumption. A model that already declares a roof, or one a
+    roof cannot honestly be added to, is returned unchanged with the reason.
+    """
+    if not isinstance(model, dict):
+        return model, None, "ROOF_MODEL_INVALID"
+    if has_roof_level(model):
+        return model, None, "ROOF_LEVEL_EXISTS"
+    try:
+        out, report = add_flat_roof_level(model, parapet_h)
+    except ValueError as exc:
+        return model, None, str(exc)
+    meta = out.get("meta") if isinstance(out.get("meta"), dict) else {}
+    meta = dict(meta)
+    meta["acs_roof"] = _disclosure(report["parapet_height_m"])
+    out["meta"] = meta
+    return out, report, None
+
+
+def carry_auto_roof(before_model, candidate):
+    """After an edit, keep the automatic roof in step with the top storey.
+
+    Only a roof that the previous revision held as ``auto`` is rebuilt. If the
+    previous revision had no automatic roof (never added, or removed by the
+    user), the candidate is returned untouched: an edit never re-adds a roof the
+    user took away, and never touches a roof the user authored.
+    """
+    previous = _auto_roof_levels(before_model)
+    if not previous or not isinstance(candidate, dict):
+        return candidate
+    height = _parapet_of(before_model)
+    templates = {l.get("template") for l in previous}
+    out = copy.deepcopy(candidate)
+    out["levels"] = [l for l in (out.get("levels") or [])
+                     if not (isinstance(l, dict) and (l.get("template") in templates
+                             or (l.get("kind") == "roof" and l.get("auto") is True)))]
+    floors = out.get("floors") if isinstance(out.get("floors"), dict) else {}
+    still_used = {l.get("template") for l in out["levels"] if isinstance(l, dict)}
+    for template in templates - still_used:
+        floors.pop(template, None)
+    out["floors"] = floors
+    meta = dict(out.get("meta")) if isinstance(out.get("meta"), dict) else {}
+    meta.pop("acs_roof", None)
+    if not has_roof_level(out):
+        try:
+            out, report = add_flat_roof_level(out, height)
+            meta["acs_roof"] = _disclosure(height)
+        except ValueError as exc:
+            meta["acs_roof"] = {"schema": "acs.roof/1", "source": "system_default",
+                                "omitted": str(exc)}
+    if meta or isinstance(candidate.get("meta"), dict):
+        out["meta"] = meta
+    return out
+
+
+def is_auto_roof_template(model, template):
+    return any(l.get("template") == template for l in _auto_roof_levels(model))

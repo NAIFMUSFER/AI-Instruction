@@ -154,6 +154,61 @@ class RoofLevel(unittest.TestCase):
                 self.assertTrue(walls and all(n.split("|")[2].startswith("roof_") for n in walls))
                 self.assertFalse([n for n in roof_nodes if n.split("|")[0] in ("DOOR", "WINDOW")])
 
+    # ---- generation and editing journey -------------------------------------
+    def test_default_roof_is_added_once_and_disclosed_as_a_system_default(self):
+        src = model([room("a", [0, 0, 6, 5])])
+        out, report, reason = acs_roof.with_default_roof(src)
+        self.assertIsNone(reason)
+        self.assertEqual(out["meta"]["acs_roof"],
+                         {"schema": "acs.roof/1", "source": "system_default", "form": "flat",
+                          "parapet_height_m": 0.9, "occupied_floor": False})
+        again, report2, reason2 = acs_roof.with_default_roof(out)
+        self.assertIs(again, out)
+        self.assertEqual((report2, reason2), (None, "ROOF_LEVEL_EXISTS"))
+        self.assertEqual(acs_roof.with_default_roof(model([]))[2], "ROOF_TOP_LEVEL_HAS_NO_ROOMS")
+
+    def test_an_edit_keeps_the_automatic_roof_over_the_top_storey(self):
+        before, _, _ = acs_roof.with_default_roof(model([room("a", [0, 0, 6, 5])]))
+        edited = copy.deepcopy(before)
+        edited["floors"]["g"]["rooms"][0]["rect"] = [0, 0, 9, 5]
+        after = acs_roof.carry_auto_roof(before, edited)
+        self.assertEqual(after["floors"]["roof"]["rooms"][0]["rect"], [0, 0, 9, 5])
+        # Everything outside ``floors`` is unchanged, so room locks stay valid.
+        outside = lambda m: {k: v for k, v in m.items() if k != "floors"}
+        self.assertEqual(outside(after), outside(before))
+        # A provider reply that silently dropped the roof gets it back.
+        dropped = copy.deepcopy(edited)
+        dropped["levels"] = dropped["levels"][:1]
+        dropped["floors"].pop("roof")
+        self.assertEqual(acs_roof.carry_auto_roof(before, dropped), after)
+
+    def test_an_edit_never_re_adds_a_removed_roof_or_touches_an_authored_one(self):
+        plain = model([room("a", [0, 0, 6, 5])])
+        self.assertIs(acs_roof.carry_auto_roof(plain, plain), plain)
+        authored, _ = acs_roof.add_flat_roof_level(plain)
+        authored["levels"][-1].pop("auto")
+        edited = copy.deepcopy(authored)
+        edited["floors"]["g"]["rooms"][0]["rect"] = [0, 0, 9, 5]
+        self.assertIs(acs_roof.carry_auto_roof(authored, edited), edited)
+        self.assertTrue(acs_roof.is_auto_roof_template(acs_roof.with_default_roof(plain)[0], "roof"))
+        self.assertFalse(acs_roof.is_auto_roof_template(authored, "roof"))
+
+    def test_a_locked_room_does_not_block_an_edit_that_carries_the_roof(self):
+        villa = fixtures()["villa"]
+        roofed, _, _ = acs_roof.with_default_roof(villa)
+        ws = PlanLockWorkspace(existing_geometry_verifier)
+        first = ws.propose(roofed, brief="Synthetic lock regression.", requirements=[],
+                           expected_head=None, note="synthetic")
+        locked = ws.set_room_lock(("home", "living"), locked=True, expected_head=first.id)
+        candidate = locked.model
+        stairs = next(r for r in candidate["floors"]["home"]["rooms"] if r["id"] == "stairs")
+        stairs["rect"] = [8, 0, 5, 8]
+        candidate = acs_roof.carry_auto_roof(locked.model, candidate)
+        second = ws.propose(candidate, brief="Synthetic lock regression.", requirements=[],
+                            expected_head=locked.id, note="synthetic edit")
+        deck = next(r for r in second.model["floors"]["roof"]["rooms"] if r["id"] == "roof_stairs")
+        self.assertEqual(deck["rect"], [8, 0, 5, 8])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=1)

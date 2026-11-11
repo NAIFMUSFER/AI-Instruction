@@ -84,6 +84,10 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     before = workspace.get(expected_head)
     import acs_understand as U
     candidate = U.apply_notes(before.model, json.loads(canonical(notes)), model=model)
+    # The automatic roof is rebuilt over the edited top storey before locks and
+    # admission see the candidate; the provider is never trusted to maintain it.
+    import acs_roof
+    candidate = acs_roof.carry_auto_roof(before.model, candidate)
     if semantic_lock_manifest is not None:
         from acs_plan_semantic_locks import verify_lock_manifest
         verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
@@ -134,6 +138,8 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
         raise PlanError('INVALID_EDIT', 'Provider candidate must be a building object')
     detached_candidate = json.loads(canonical(candidate))
     _reject_provider_authority_changes(before.model, detached_candidate)
+    import acs_roof
+    detached_candidate = acs_roof.carry_auto_roof(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,
