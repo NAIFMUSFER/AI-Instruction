@@ -84,7 +84,8 @@ jobs:
                    tests/remediation/test_validate_topology.py \
                    tests/remediation/test_validate_against_real_models.py \
                    tests/remediation/test_autofix_propose_boundary.py \
-                   tests/remediation/test_doc_claims.py
+                   tests/remediation/test_doc_claims.py \
+                   tests/remediation/test_ci_apt_mirror.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -159,7 +160,8 @@ jobs:
                --label "bundle extractor (no node_modules)" --runner "node" \
                    tests/remediation/test_bundle_extractor.js \
                    tests/remediation/test_transport_errors.js \
-                   tests/remediation/test_opening_identity_parity.js
+                   tests/remediation/test_opening_identity_parity.js \
+                   tests/remediation/test_guest_import_wait.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -182,6 +184,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Install the locked Playwright and its browser binaries
         # `npm ci` installs package-lock.json exactly and fails on any drift
         # from package.json. The browser binaries are NOT in the repository —
@@ -715,6 +719,8 @@ jobs:
         run: pip install -r requirements.txt -r requirements-dev.txt
       - name: Install the independent IFC reader for test-only validation
         run: pip install ifcopenshell==0.9.0.post1
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Require independent PDF extraction with Poppler
         shell: bash
         run: |
@@ -751,6 +757,7 @@ jobs:
             tests/remediation/test_geometry_independent_readers.py \
             tests/remediation/test_requirement_vocabulary.py \
             tests/remediation/test_roof_level.py \
+            tests/remediation/test_guest_roof_parity.py \
             tests/remediation/test_warehouse_soft_area_fit.py \
             tests/remediation/test_live_generation_verdict.py
       - name: Canonical generated sources agree with tracked outputs
@@ -772,6 +779,8 @@ jobs:
             tests/remediation/test_connected_revision_controls.mjs \
             tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_local_render_quality.mjs \
+            tests/remediation/test_guest_roof_integration.cjs \
+            tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \

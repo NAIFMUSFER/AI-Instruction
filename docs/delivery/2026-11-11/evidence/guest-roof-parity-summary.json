@@ -1,0 +1,33 @@
+{
+  "observed_at": "2026-11-11T14:33:53.500781+00:00",
+  "baseline_sha": "3bc06725203533f59a7e4ec9358b0df4b5c9dff6",
+  "working_tree_test": true,
+  "command": "PYTHONPATH=. python3 tests/remediation/test_guest_roof_parity.py",
+  "result": "10 test methods passed; exact numeric values and Boolean types; original JSON input immutable",
+  "before": "Isolated baseline plus new tests:10 failures because shipped roof module absent. Added raw numeric conversion probes:5 subcase failures before JS helper repair.",
+  "scope": [
+    "actual Python helper versus actual JS declarations with real hash/numeric helpers",
+    "explicit kind; elevations; negative indices; shared authored templates; Unicode160-character identities and deterministic collision suffixes",
+    "partial parapet disclosure;zero/default parapet;unknown heights;removal/regeneration/restoration",
+    "actual source residential sample and warehouse generator;actual JS localModelCounts;Python occupied area/storey/room-instance counts",
+    "Arabic,astral decimal and underscore raw-helper conversion;Python canonical INVALID_RECT and local renderer rejection remain for string dimensions"
+  ],
+  "limitations": [
+    "Not a universal malformed-JSON schema test.",
+    "Source-loader parity is not native-browser import/render evidence.",
+    "No provider, deployment, physical stair access or engineering-compliance claim.",
+    "Exact numerical/data parity is tested; cross-runtime JSON wire formatting or private revision hash equivalence is not asserted."
+  ],
+  "python": "3.12.14",
+  "node": "v24.22.1",
+  "sha256": {
+    "tests/remediation/test_guest_roof_parity.py": "202a9cf5dd4885aeab73931e12cdbf831bc29f55c3818defcaacb370e6c1a7a5",
+    "tests/remediation/guest_roof_parity.mjs": "ace1dd6ae66c2ded7f9b751302388a33458b4291c3b1c3dbe7efb9ddd58cab49",
+    "public/app/core/roof.mjs": "444a2a1a5c1c5d175f8f8ca49cf7b4f140ae6cceada010740060938b05d96f87",
+    "public/app/core/viewer.js": "55783bba159e5fcb1e9b881f31f4b2910bdbef5b8a806388cb7a7b92c65bfea7",
+    "public/app/core/standards.js": "c960b4945ac5b12bbc6d9472c2d622ccd9d5c64f9f7942f8538e400caf8502ee",
+    "public/app/ui/workspace-ui-wiring.js": "77b3bd55374e41987d2a5d45fade77510880d769cb02c362bb03df1af6254cfa",
+    "acs_roof.py": "4376284cd2011d7c64fa4c608c239b21a25bdbba7a4c1018502e1d1e05bea54b"
+  },
+  "note": "Source hashes updated after the local-edit omission guard; the parity suite does not invoke that handler. Its focused integration regression passed separately."
+}

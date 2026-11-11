@@ -2,6 +2,7 @@
 # Static edges inside this route are allowed; eager account modules must not import it.
 core/viewer.js
 core/standards.js
+core/roof.mjs
 core/disciplines.js
 generated/runtime.js
 generated/authoring.js

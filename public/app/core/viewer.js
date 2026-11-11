@@ -1302,6 +1302,10 @@ function countNear(block,kw){
   return found?Math.max(total,1):0;
 }
 function parseDescription(text, siteW, siteD, nFloors){
+  // With an explicit removal preference the caller may use all 64 occupied levels.
+  // Otherwise localGeneratedModel reserves one physical level for the roof.
+  if(!Number.isInteger(nFloors)||nFloors<0||nFloors+1>SCENE_LIMITS.max_levels)
+    throw new Error('LOCAL_LEVEL_LIMIT_EXCEEDED');
   text=normDigits(text);
   const lines=text.split(/\n|،/).map(s=>s.trim()).filter(Boolean);
   const dim=/(\d+(?:\.\d+)?)\s*[×xX*]\s*(\d+(?:\.\d+)?)/;
@@ -1351,24 +1355,18 @@ function parseDescription(text, siteW, siteD, nFloors){
     if(/رشاش/.test(r.block))r.points.push({type:'sprinkler',x:r.w/2,z:r.d*0.7});
     delete r.block; delete r._pending; delete r.w; delete r.d; delete r.name;
   });
-  // مبنى: أرضي بسيط + أدوار نموذجية مكرّرة + سطح
+  // Occupied local geometry only. The local creation boundary adds the canonical roof.
+  // Synthetic tanks/solar/parapet scaffolding was removed here, never from imports.
   const levels=[{index:0,name:'الأرضي',template:'ground'}];
-  /* KI-26/F-46: الاسم من العقد الوحيد ‎acsFloorName‎ — الأدوار الوسطى لا
-     تُسمّى «السطح» مهما بلغ رقمها، والسطح هو الأعلى فعلاً وحده. */
-  const _tot=nFloors+2;
   for(let i=1;i<=nFloors;i++)
-    levels.push({index:i,name:acsFloorName('F'+i,_tot),template:'typical'});
-  levels.push({index:nFloors+1,name:acsFloorName('F'+(nFloors+1),_tot),template:'roof'});
+    levels.push({index:i,name:acsFloorName('F'+i),template:'typical'});
   const ground={rooms:[{id:'lobby',rect:[siteW/2-4,1,8,7],
     doors:[{edge:'N',offset:4,width:2.5,height:2.5,material:'glass'}],
     windows:[{edge:'N',offset:1.5,width:2,sill:1,height:1.6}],
     points:[{type:'light',x:4,z:3.5},{type:'camera',x:0.3,z:0.3},{type:'tv',x:7.7,z:3.5}],
     furniture:[{name:'reception',x:4,z:3.5,w:2.4,d:0.8,h:1.1,mat:'counter'}]}]};
-  const roof={rooms:[{id:'parapet',rect:[0.2,0.2,siteW-0.4,siteD-0.4],wall_h:1.4},
-    {id:'tanks',rect:[1,1,4,3],furniture:[{name:'tank',x:2,z:1.5,w:1.6,d:1.6,h:2,mat:'furn'}]},
-    {id:'solar',rect:[siteW-12,siteD-8,10,6],furniture:[{name:'panel',x:5,z:3,w:8,d:4,h:0.15,mat:'tv'}]}]};
   return {site:{w:siteW,d:siteD},floor_height:3.2,wall_h:3.0,wall_t:0.15,
-    levels, floors:{ground, typical:{rooms:clean}, roof}};
+    levels, floors:{ground, typical:{rooms:clean}}};
 }
 
 /* توليد قياسي سريع */

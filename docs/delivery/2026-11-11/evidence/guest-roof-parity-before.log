@@ -1,0 +1,273 @@
+Exact isolated baseline 3bc06725203533f59a7e4ec9358b0df4b5c9dff6 plus only the new regression files
+FFFFFFFFFF
+======================================================================
+FAIL: test_actual_residential_sample_and_warehouse_generator (__main__.GuestRoofParity.test_actual_residential_sample_and_warehouse_generator)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 266, in test_actual_residential_sample_and_warehouse_generator
+    samples=node({'samples':True});self.assertEqual(set(samples),{'residential','warehouse'})
+            ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_defined_python_number_coercions_remain_distinct_from_unknowns (__main__.GuestRoofParity.test_defined_python_number_coercions_remain_distinct_from_unknowns)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 176, in test_defined_python_number_coercions_remain_distinct_from_unknowns
+    results=self.compare(cases)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_elevation_indices_heights_and_template_ties (__main__.GuestRoofParity.test_elevation_indices_heights_and_template_ties)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 101, in test_elevation_indices_heights_and_template_ties
+    results=self.compare(cases)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_explicit_kind_and_authored_shared_template (__main__.GuestRoofParity.test_explicit_kind_and_authored_shared_template)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 122, in test_explicit_kind_and_authored_shared_template
+    results=self.compare(cases)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_invalid_models_and_unknown_dimensions_fail_without_invention (__main__.GuestRoofParity.test_invalid_models_and_unknown_dimensions_fail_without_invention)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 218, in test_invalid_models_and_unknown_dimensions_fail_without_invention
+    results=self.compare(cases)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_lifecycle_idempotence_removal_regeneration_and_restore (__main__.GuestRoofParity.test_lifecycle_idempotence_removal_regeneration_and_restore)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 242, in test_lifecycle_idempotence_removal_regeneration_and_restore
+    rows={r['id']:r for r in self.compare(cases)}
+                             ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_partial_gaps_parapet_heights_and_revision_caveats (__main__.GuestRoofParity.test_partial_gaps_parapet_heights_and_revision_caveats)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 162, in test_partial_gaps_parapet_heights_and_revision_caveats
+    results=self.compare(cases);report=results[2]['value'][1]
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_repeated_floor_metrics_exclude_the_explicit_roof (__main__.GuestRoofParity.test_repeated_floor_metrics_exclude_the_explicit_roof)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 256, in test_repeated_floor_metrics_exclude_the_explicit_roof
+    rows=self.compare([{'id':'repeated-floors','op':'default','args':[b]}])
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_six_decimal_rounding_and_unicode_template_ties (__main__.GuestRoofParity.test_six_decimal_rounding_and_unicode_template_ties)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 138, in test_six_decimal_rounding_and_unicode_template_ties
+    results=self.compare(cases)
+            ^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+======================================================================
+FAIL: test_unicode_bounded_ids_hash_and_collision_suffixes (__main__.GuestRoofParity.test_unicode_bounded_ids_hash_and_collision_suffixes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 144, in test_unicode_bounded_ids_hash_and_collision_suffixes
+    results=self.compare([{'id':'unicode-identities','op':'add','args':[b]}])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 78, in compare
+    results=node({'cases':cases});self.assertEqual(len(results),len(cases))
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/test_guest_roof_parity.py", line 54, in node
+    raise AssertionError('Shipped JS roof worker failed:\n'+result.stderr[-6000:])
+AssertionError: Shipped JS roof worker failed:
+/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134
+    if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+                        ^
+
+Error: module not found for node bundle: core/roof.mjs
+    at Object.nodeBundle (/tmp/acs-roof-no-js-baseline-wzkk33gp/tests/lib/app_source.js:134:25)
+    at file:///tmp/acs-roof-no-js-baseline-wzkk33gp/tests/remediation/guest_roof_parity.mjs:15:22
+    at ModuleJob.run (node:internal/modules/esm/module_job:561:25)
+    at async node:internal/modules/esm/loader:647:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5)
+
+Node.js v24.22.1
+
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.809s
+
+FAILED (failures=10)

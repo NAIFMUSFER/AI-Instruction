@@ -22,6 +22,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Install locked dependencies and real browser engines
         run: |
           python -m pip install -r requirements.txt -r requirements-dev.txt

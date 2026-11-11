@@ -7,7 +7,8 @@ import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
-import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
+import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
+import { autoRoofLevels, carryAutoRoof, isRoofLevel, removeAutoRoof, restoreDefaultRoof, roofDisclosure, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
 import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, applyVisualMode, checkCoordSnapshot, clearVisualMode, compileCoordination, compileVisualScene, coordClashById, coordDebugView, coordExportSnapshot, coordFilterClashes, coordReconcile, coordRuleInputs, coordSetStatus, detectTypeJS, isIndustrialProgram, renderer, scene, sky, statusEl, su, sun, visAiEnhancementRequest, visAssetLibrary, visCheckConsistency, visCheckRenderCurrency, visControlBuffers, visElevation, visExportScene, visFloorPlan, visFrameCamera, visGeometrySignature, visInstancingPlan, visLodPlan, visMaterial, visObjectById, visObjectsByLayer, visPresentationBlock, visRenderMetadata, visRuleInputs, visSection, visSetLayerVisible, visSnapshotRequest, visValidateAsset, visValidateScene } from '../render/scene.js';
 
@@ -104,6 +105,8 @@ function setModel(data){
     for(const k in _prevMats) matCache[k]=_prevMats[k];
     throw e;
   }
+  // Reset selection only after a new model compiled successfully; null is a presentation rebuild.
+  if(data) floorSel='all';
   if(data) lastBuilding=data;
   for(const k in _prevMats){ const m=_prevMats[k];
     if(m&&m.dispose){ try{ m.dispose(); }catch(e){} } }
@@ -167,16 +170,17 @@ function setModel(data){
     [0,0,Number((data.site||{}).w)||0,Number((data.site||{}).d)||0]);
   buildFloors(); buildLayers(); updateVis();
   let n=0; model.traverse(o=>{if(o.isMesh)n++});
-  const nz=Object.values(data.floors||{}).reduce((a,f)=>a+((f.rooms||[]).length),0);
+  const localCounts=localModelCounts(data),nz=localCounts.occupied_rooms;
+  const roofCountLabel=localCounts.roof_levels?` · ${localCounts.roof_levels} سطح غير مشغول`:'';
   /* KI-26/F-46 · «تم التوليد ✓» كانت تُكتب مهما سقط من النموذج. setModel هو
      المسار المشترك (خادم · مثال · مستودع محلي · استيراد)، فالصدق يبدأ هنا. */
   let _sum=null; try{ _sum=acsCompileSummary(); }catch(e){ _sum=null; }
   const _deg=!!(_sum&&_sum.degraded);
   statusEl.textContent=(_deg?'⚠ بُني ناقصاً  ':'تم التوليد ✓  ')
-    +`${n} عنصر · ${nz} منطقة/غرفة · ${Object.keys(registry).length} طبقة · ${floorsFound.size} دور`
+    +`${n} عنصر · ${nz} منطقة/غرفة · ${Object.keys(registry).length} طبقة · ${localCounts.occupied_levels} دور مشغول`+roofCountLabel
     +(_deg?(' — سقط: '+(_sum.degradation_reasons||[]).join(' · ')):'');
   const statEl=document.getElementById('statCount');
-  if(statEl) statEl.innerHTML=`<b>${n}</b> عنصر ثلاثي الأبعاد مبنيّ من <b>${nz}</b> منطقة في الوصف.`
+  if(statEl) statEl.innerHTML=`<b>${n}</b> عنصر ثلاثي الأبعاد مبنيّ من <b>${nz}</b> منطقة مشغولة في الأدوار.`+roofCountLabel
     +(n>6000?' <span class="acs-warn">— خفّض «مستوى التفصيل» إن تباطأت الحركة.</span>':'');
   if(window.ACS&&window.ACS.closePanel) window.ACS.closePanel();
   showTab('model'); document.querySelectorAll('.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.tab==='model'));
@@ -216,17 +220,90 @@ function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHT
      شريطاً لا يطابق مبناه، ويضغط «الدور ٢» فيقفز إلى العاشر بصرياً.
      والاسم كان ‎FLOOR_NAMES[f]||f‎ — جدولٌ يقف عند F6 (وF6 نفسه مسمّى
      «السطح» كذباً)، فما فوقه يُعرَض مفتاحاً خاماً «F7».
-     الآن: ترتيبٌ عدديّ من ‎acsFloorOrder‎، واسمٌ من ‎acsFloorName‎ يعرف عدد
-     الأدوار الكلّي فيسمّي السطحَ سطحاً حين يكون الأعلى فعلاً لا حين يكون ٦. */
-  acsFloorOrder(floorsFound).forEach(f=>mk(f,floorLabel(f)));}
-/* اسم الدور المعروض في كل موضع بالواجهة — مصدرٌ واحد لا خمسة.
-   ‎acsFloorName‎ يحتاج عدد الأدوار الكلّي ليقرّر أيّها السطح؛ يُشتقّ هنا من
-   أكبر رقم دورٍ موجود فعلاً في المشهد (لا من عدد المفاتيح: مبنًى مفاتيحه
-   F0 وF5 وحدهما ليس مبنى دورين). لا يعيد قيمةً فارغة أبداً. */
+     الترتيب عددي من acsFloorOrder؛ واسم السطح الآن من kind الصريح
+     في النموذج، لا يُستنتج من أعلى رقم أو اسم قالب. */
+  acsFloorOrder(floorsFound).forEach(f=>mk(f,floorLabel(f)));
+  buildLocalRoofControl(wrap);}
+/* Roof identity is explicit, including imported models: the highest floor is not evidence. */
 function floorLabel(fkey){
-  let top=-1;
-  floorsFound.forEach(k=>{ const i=acsFloorIndex(k); if(i!==null&&i>top) top=i; });
-  return acsFloorName(fkey, top+1);
+  const levels=Array.isArray(lastBuilding?.levels)?lastBuilding.levels.slice(0,SCENE_LIMITS.max_levels):[];
+  const level=levels.find((row,index)=>'F'+acsRenderLevel(row,index).index===fkey);
+  return isRoofLevel(level)?'السطح':acsFloorName(fkey);
+}
+function localModelCounts(building){
+  const counts={occupied_levels:0,occupied_rooms:0,roof_levels:0,roof_decks:0};
+  const levels=Array.isArray(building?.levels)?building.levels.slice(0,SCENE_LIMITS.max_levels):[];
+  for(const [index,row]of levels.entries()){
+    const level=acsRenderLevel(row,index).raw;
+    const rooms=building.floors?.[level.template]?.rooms||[];
+    if(isRoofLevel(level)){counts.roof_levels++;counts.roof_decks+=rooms.length;}
+    else {counts.occupied_levels++;counts.occupied_rooms+=rooms.length;}
+  }
+  return counts;
+}
+function localRoofState(){
+  const levels=(Array.isArray(lastBuilding?.levels)?lastBuilding.levels.slice(0,SCENE_LIMITS.max_levels):[]).filter(isRoofLevel);
+  return {automatic:levels.some(level=>level.auto===true),removed:roofRemovedByUser(lastBuilding),
+    present:levels.length>0,disclosures:levels.map(level=>roofDisclosure(lastBuilding,level))};
+}
+function assertLocalRoofMutable(building){
+  // The local panel cannot adjudicate a locked project. Fail closed; leave its model untouched.
+  if(building?._authoring_locks&&Object.keys(building._authoring_locks).length)
+    throw new Error('LOCK_CONTEXT_CHANGED');
+}
+function applyLocalEdit(candidate,{generated=false}={}){
+  assertLocalRoofMutable(lastBuilding);
+  const next=generated?localGeneratedModel(candidate):carryAutoRoof(lastBuilding,candidate);
+  if(next.meta?.acs_roof?.omitted)throw new Error(next.meta.acs_roof.omitted);
+  if((next.levels||[]).length>SCENE_LIMITS.max_levels)throw new Error('ROOF_LEVEL_LIMIT_EXCEEDED');
+  setModel(next);return next;
+}
+function changeLocalRoof(action){
+  assertLocalRoofMutable(lastBuilding);
+  const next=action==='remove'?removeAutoRoof(lastBuilding):restoreDefaultRoof(lastBuilding);
+  if((next.levels||[]).length>SCENE_LIMITS.max_levels)throw new Error('ROOF_LEVEL_LIMIT_EXCEEDED');
+  setModel(next);
+  if(window.ACS?.guest&&!window.ACS.guestRecoveryPending)window.ACS.guestAutosaveReady=true;
+  return next;
+}
+function localGenerationError(error){
+  if(error.message==='ROOF_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: الحد المدعوم 64 مستوى شاملاً السطح؛ قلّل عدد الأدوار. بقي النموذج السابق كما هو.';
+  if(error.message==='LOCAL_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: أدخل عدداً صحيحاً غير سالب؛ الحد المدعوم 64 مستوى شاملاً الأرضي والسطح. بقي النموذج السابق كما هو.';
+  if(error.message==='LOCK_CONTEXT_CHANGED')return 'لا يمكن تعديل النموذج المحلي مع وجود نطاق مقفول.';
+  const roofMessages={
+    ROOF_HEIGHT_NOT_SPECIFIED:'أكمل ارتفاع الدور والجدران في النموذج قبل إضافة السطح؛ لم نفترض ارتفاعاً بديلاً.',
+    ROOF_HEIGHT_INVALID:'صحّح ارتفاع الدور والجدران إلى أرقام موجبة قبل إضافة السطح.',
+    ROOF_LEVEL_ELEVATION_NOT_SPECIFIED:'أكمل رقم المستوى ومنسوبه المفقود قبل إضافة السطح.',
+    ROOF_LEVEL_ELEVATION_INVALID:'صحّح رقم المستوى إلى عدد صحيح ومنسوبه إلى رقم صالح قبل إضافة السطح.',
+    ROOF_TOP_LEVEL_HAS_NO_ROOMS:'أضف غرفاً أو مناطق ذات أبعاد صالحة إلى أعلى مستوى ليُبنى السطح على بصمتها.',
+    ROOF_NO_OCCUPIED_LEVEL:'أضف مستوى مشغولاً مرتبطاً بقالب غرف قبل إضافة السطح.',
+    ROOF_LEVEL_EXISTS:'يوجد سطح معلن بالفعل؛ راجعه بدلاً من إضافة سطح ثانٍ.',
+    ROOF_NOT_AUTOMATIC:'لا يوجد سطح افتراضي قابل للإزالة بهذه الأداة؛ السطح المؤلف يدوياً يبقى كما هو.',
+    ROOF_PREFERENCE_CONFLICT:'اختر استعادة السطح أولاً أو أزل السطح من التعديل؛ اختيارك الحالي هو إبقاء النموذج بلا سطح افتراضي.',
+    ROOF_PARAPET_HEIGHT_INVALID:'صحّح ارتفاع حاجز السطح إلى رقم بين 0 و2 متر.',
+    ROOF_MODEL_INVALID:'تعذّرت قراءة بيانات المبنى؛ راجع ملف النموذج قبل إضافة السطح.'
+  };
+  return roofMessages[error.message]||('تعذّر التعديل: '+error.message);
+}
+function buildLocalRoofControl(wrap){
+  const state=localRoofState();
+  if(!state.automatic&&!state.removed&&!state.present)return;
+  const disclosure=document.createElement('p');disclosure.id='localRoofDisclosure';disclosure.className='note';
+  const gaps=state.disclosures.reduce((sum,row)=>sum+row.parapet_gaps.length,0);
+  disclosure.textContent=state.removed?'أزلت السطح الافتراضي. يبقى هذا الاختيار في المسودة المحلية حتى تستعيده.':
+    (state.automatic?'سطح افتراضي مسطّح ضمن النموذج وغير محسوب دوراً مشغولاً؛ الحواجز حسب هندسته المعلنة. ':'سطح معلن في النموذج؛ لا يُحذف بهذه الأداة. ')
+    +(gaps?`توجد ${gaps} حواف جزئية بلا حاجز كامل. `:'')
+    +'لم تُتحقّق الإنشاءات أو التصريف أو العزل أو الوصول أو مطابقة الأنظمة.';
+  if(state.automatic||state.removed){
+    const button=document.createElement('button');button.type='button';button.id='localRoofToggle';button.className='btn ghost acs-u-15';
+    button.textContent=state.automatic?'إزالة السطح الافتراضي':'استعادة السطح الافتراضي';button.setAttribute('aria-describedby',disclosure.id);
+    button.onclick=()=>{try{
+      changeLocalRoof(state.automatic?'remove':'restore');
+      window.ACS?.setProjectPanelOpen?.(true);document.getElementById('localRoofToggle')?.focus();
+    }catch(error){statusEl.textContent=localGenerationError(error);}};
+    wrap.appendChild(button);
+  }
+  wrap.appendChild(disclosure);
 }
 /* الطبقات */
 function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHTML='';
@@ -1238,6 +1315,18 @@ function pickedType(txt){
   const sel=(document.getElementById('bType')||{}).value||'auto';
   return sel==='auto' ? detectTypeJS(txt||'') : sel;
 }
+/* New local generation has explicit roof provenance. An import never enters this boundary. */
+function localGeneratedModel(building,{freshSample=false}={}){
+  let next;
+  if(!freshSample&&(roofRemovedByUser(lastBuilding)||autoRoofLevels(lastBuilding).length))next=carryAutoRoof(lastBuilding,building);
+  else {
+    const result=withDefaultRoof(building);next=result[0];
+    if(result[2]&&result[2]!=='ROOF_LEVEL_EXISTS')throw new Error(result[2]);
+  }
+  if(next.meta?.acs_roof?.omitted)throw new Error(next.meta.acs_roof.omitted);
+  if((next.levels||[]).length>SCENE_LIMITS.max_levels)throw new Error('ROOF_LEVEL_LIMIT_EXCEEDED');
+  return next;
+}
 /* المولّد المحلي الموحّد: يخدم «وصف نصّي» و«سريع» و«ملفات» بنفس القدرات */
 function buildLocal(txt,W,D,nF){
   const t=pickedType(txt);
@@ -1293,7 +1382,7 @@ document.getElementById('genText').onclick=()=>{
   const W=+document.getElementById('siteW').value||30,D=+document.getElementById('siteD').value||25,
     nF=+document.getElementById('nFloors').value||3;
   statusEl.textContent='جارٍ التحليل والتوليد…';
-  setTimeout(()=>{try{setModel(buildLocal(txt,W,D,nF));}catch(e){statusEl.textContent='خطأ: '+e.message;console.error(e);}},30);
+  setTimeout(()=>{try{applyLocalEdit(buildLocal(txt,W,D,nF),{generated:true});}catch(e){statusEl.textContent=localGenerationError(e);console.error(e);}},30);
 };
 /* ===== الخادم المدمج: يعمل لكل زائر بلا كتابة أي رابط ===== */
 let SRV_OK=false;
@@ -1817,7 +1906,7 @@ async function acsGenerateFromServer(){
         nF=+document.getElementById('nFloors').value||3;
   const localOnDemand=()=>{
     statusEl.textContent='⚠ نموذج محلي تقريبي — ليس ناتج محرّك الفهم.';
-    try{ setModel(buildLocal(txt,W,D,nF)); }catch(e){ statusEl.textContent='خطأ: '+e.message; }
+    try{ applyLocalEdit(buildLocal(txt,W,D,nF),{generated:true}); }catch(e){ statusEl.textContent=localGenerationError(e); }
   };
   /* KI-25/F-45 · تذكرة الجيل تُسحب قبل النداء. أي نداء يبدأ بعدها يُبطلها،
      فردُّ النداء الأقدم يصل ويُهمَل بدل أن يكتب فوق نموذج أحدث منه. */
@@ -1915,10 +2004,10 @@ async function acsGenerateFromServer(){
   else _finish();
 }
 document.getElementById('genLLM').onclick=acsGenerateFromServer;
-document.getElementById('loadExample').onclick=()=>{setModel(EXAMPLE);};
+document.getElementById('loadExample').onclick=()=>{setModel(localGeneratedModel(EXAMPLE,{freshSample:true}));};
 document.getElementById('loadWarehouse').onclick=()=>{
   statusEl.textContent='بناء مستودع تجارة إلكترونية 120×80 م…';
-  setTimeout(()=>setModel(warehouseModel(120,80,{clear:12})),20);
+  setTimeout(()=>setModel(localGeneratedModel(warehouseModel(120,80,{clear:12}),{freshSample:true})),20);
 };
 
 /* لوحة الجوال: زر إظهار/إخفاء */
@@ -2464,15 +2553,17 @@ document.getElementById('loadWarehouse').onclick=()=>{
 
 /* جسر مع سكربت الدخول العادي: المحرّك جاهز الآن */
 window.ACS = window.ACS || {};
-window.ACS.showExample = ()=>setModel(EXAMPLE);
+window.ACS.showExample = ()=>setModel(localGeneratedModel(EXAMPLE,{freshSample:true}));
 window.ACS.setModel = setModel;
+window.ACS.applyLocalEdit=applyLocalEdit;
+window.ACS.localRoof={state:localRoofState,remove:()=>changeLocalRoof('remove'),restore:()=>changeLocalRoof('restore')};
 /* F-27: المبنى المعروض حالياً — قراءة فقط. lastBuilding كان محبوساً داخل هذه
    الوحدة، فلم يكن لأي مقطع آخر طريق إلى النموذج النشط، ولهذا لم تكن لوحات
    المراحل ٦…٩٫٢ قابلة للفتح أصلاً (لا مشروع تُبنى عليه). لا نسخة ثانية ولا
    حالة موازية: هذا هو نفس المرجع الذي يعرضه العارض. */
 window.ACS.exportModel = ()=>lastBuilding;
 window.ACS.ready = true;
-if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(EXAMPLE); }
+if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(localGeneratedModel(EXAMPLE,{freshSample:true})); }
 
 /* ========================= استيراد: JSON / DXF / صورة / PDF ========================= */
 function decorateRoom(r){const [x,z,w,d]=r.rect;
@@ -2705,6 +2796,8 @@ document.getElementById('trGen').onclick=()=>{
 };
 
 /* ========================= مثال عمارة الرياض (مضمّن) ========================= */
+// Synthetic example: prior default roof utilities were illustrations, not user requests.
+// A footprint-based canonical roof is now added by the sample boundary.
 const EXAMPLE = {
   "meta": { "name": "Riyadh Residential 30x25", "city": "Riyadh", "north": "-Z" },
   "site": { "w": 30.0, "d": 25.0 },
@@ -2717,8 +2810,7 @@ const EXAMPLE = {
     { "index": 1, "name": "الأول",   "template": "typical" },
     { "index": 2, "name": "الثاني",  "template": "typical" },
     { "index": 3, "name": "الثالث",  "template": "typical" },
-    { "index": 4, "name": "الرابع",  "template": "typical" },
-    { "index": 5, "name": "السطح",   "template": "roof" }
+    { "index": 4, "name": "الرابع",  "template": "typical" }
   ],
 
   "floors": {
@@ -2946,31 +3038,6 @@ const EXAMPLE = {
                       { "type": "outlet", "x": 1.5, "z": 4.5 }, { "type": "outlet", "x": 4.5, "z": 4.5 },
                       { "type": "camera", "x": 5.7, "z": 0.3 }, { "type": "ac", "x": 3, "z": 4.8 } ],
           "furniture": [ { "name": "kingbed", "x": 3, "z": 3.5, "w": 2.0, "d": 2.1, "h": 0.6, "mat": "furn_soft" } ] }
-      ]
-    },
-
-    "roof": {
-      "rooms": [
-        { "id": "parapet", "rect": [0.2, 0.2, 29.6, 24.6], "wall_h": 1.5 },
-        { "id": "elevator_room", "rect": [12.5, 9, 4.3, 3],
-          "doors": [ { "edge": "S", "offset": 2, "width": 0.9, "height": 2.1 } ],
-          "points": [ { "type": "light", "x": 2, "z": 1.5 } ] },
-        { "id": "ac_equipment", "rect": [1, 1, 5, 4],
-          "points": [ { "type": "ac", "x": 2.5, "z": 2, "height": 1.0 } ],
-          "furniture": [ { "name": "chiller", "x": 2.5, "z": 2, "w": 3.0, "d": 2.0, "h": 1.4, "mat": "counter" } ] },
-        { "id": "water_tanks", "rect": [24, 1, 5, 4],
-          "furniture": [ { "name": "tank", "x": 1.5, "z": 2, "w": 1.6, "d": 1.6, "h": 2.0, "mat": "furn" },
-                         { "name": "tank", "x": 3.5, "z": 2, "w": 1.6, "d": 1.6, "h": 2.0, "mat": "furn" } ] },
-        { "id": "solar", "rect": [8, 16, 14, 7],
-          "furniture": [
-            { "name": "panel", "x": 3, "z": 2, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" },
-            { "name": "panel", "x": 9, "z": 2, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" },
-            { "name": "panel", "x": 3, "z": 5, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" },
-            { "name": "panel", "x": 9, "z": 5, "w": 5.0, "d": 2.5, "h": 0.15, "mat": "tv" }
-          ] },
-        { "id": "seating", "rect": [1, 18, 5, 5],
-          "points": [ { "type": "camera", "x": 0.3, "z": 0.3 } ],
-          "furniture": [ { "name": "bench", "x": 2.5, "z": 1, "w": 2.5, "d": 0.6, "h": 0.45, "mat": "furn" } ] }
       ]
     }
   }

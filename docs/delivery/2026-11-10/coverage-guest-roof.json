@@ -1,0 +1,150 @@
+[
+  {
+    "path": "public/app/core/roof.mjs",
+    "purpose": "Synchronous local canonical flat-roof policy; Python twin verified by parity",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py",
+      "tests/remediation/test_guest_roof_integration.cjs",
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/viewer.js",
+    "purpose": "Selected local parser roof scaffolding, level limit and explicit floor labels",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py",
+      "tests/remediation/test_guest_roof_integration.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/workspace-ui-wiring.js",
+    "purpose": "Selected local creation/edit roof boundary, counts, imports, floor-selection atomicity and contextual control",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_integration.cjs",
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/guest_roof_parity.mjs",
+    "purpose": "Loads actual JS declarations for Python cross-runtime roof comparison",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_roof_parity.py",
+    "purpose": "Exact Python/JS roof data and counts parity on deterministic fixtures",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_parity.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_roof_integration.cjs",
+    "purpose": "Actual shipped local model/roof handler source contracts and failure atomicity",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_roof_integration.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_workspace.cjs",
+    "purpose": "Selected canonical roof lifecycle and retained guest isolation/recovery assertions; executed successfully in CI8 critical and Async jobs",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-ROOF-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_import_wait.cjs",
+    "purpose": "Actual async JSON import handler and browser wait identity regression",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-IMPORT-WAIT-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_import_wait.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/ci_prepare_apt.py",
+    "purpose": "CI-only verified HTTPS Ubuntu mirror selection and atomic local configuration update",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "CI-APT-DNS-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_apt_mirror.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_ci_apt_mirror.py",
+    "purpose": "Offline mirror admission, metadata, failure nonmutation and privileged-operation boundary regressions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CI-APT-DNS-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_apt_mirror.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": ".github/workflows/google-signin-check.yml",
+    "purpose": "Selected guest import regression wiring, verified mirror setup and measured overall job budget; original individual test waits retained",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CI-JOB-BUDGET-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_gate.py",
+      "tests/remediation/test_auth_shipped_page.cjs"
+    ],
+    "generated_from": []
+  }
+]
