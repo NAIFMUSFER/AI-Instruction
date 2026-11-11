@@ -1,0 +1,1430 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "Dockerfile",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "KNOWN-ISSUES.md",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_compiler.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_context_details.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_commands.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_plan_http.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_workspace_service.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/CURRENT-STATUS.md",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/CONTEXT-DEFAULTS.md",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/baseline-lock-command.txt",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/baseline-lock-probe.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/baseline-lock-result.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/browser-geometry-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/browser-geometry-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/browser-local-launch-failure.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/commands-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/comparison-disclosure-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/comparison-disclosure-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/connected-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/fixture-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/fixture-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/fixture-intermediate-fail.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-final-node-results.json",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-owned-source-snapshot.json",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_approved_viewer_framing_mjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_connected_revision_controls_mjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_context_local_integration_cjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_context_object_controls_mjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_context_object_selection_mjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_guest_roof_integration_cjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_module_graph_js.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/frontend-test_stairs_local_integration_cjs.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/handoff-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/helper-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/http-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/integration-final-node.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/integration-final-python.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/manifest.json",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/marker-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/packaging-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/packaging-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/persisted-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/python-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/remove-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/remove-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/service-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/service-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/source-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/stairs-browser-geometry-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/stairs-reader-after.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/unicode-helper-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/unicode-service-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/unknown-lock-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/unknown-removal-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/context-defaults/work-budget-before.log",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/context-details.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/viewer.js",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/approved-viewer.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/connected-workspace.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/local-studio-entry.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/workspace-ui-wiring.js",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/lib/app_source.js",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/performance/bundle_report.json",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase3/lib/extract_browser_bundle.js",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/context_details_fixture.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/context_details_runner.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/context_objects_browser_server.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_connected_revision_controls.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_details.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_details_browser_geometry.cjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_details_independent_reader.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_details_parity.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_details_service.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_local_integration.cjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_object_controls.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_object_selection.mjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_objects_browser.cjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_objects_fixture.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_context_runtime_packaging.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_roof_integration.cjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_remove_object_command.py",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stairs_local_integration.cjs",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/frontend_local.txt",
+    "purpose": "Bounded canonical context objects, source-bound selection/removal, existing malformed/unknown-type boundaries or scoped evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CONTEXT-4C",
+      "CONTEXT-UNKNOWN-TYPE",
+      "CONTEXT-WORK-BOUND"
+    ],
+    "tests": [
+      "tests/remediation/test_context_details_parity.py",
+      "tests/remediation/test_remove_object_command.py",
+      "tests/remediation/test_context_objects_browser.cjs"
+    ],
+    "generated_from": []
+  }
+]

@@ -44,6 +44,7 @@ const OUT = process.env.ACS_BUNDLE
    كلٌّ منها كانت مقطعاً في الصفحة الواحدة، وكلٌّ منها تُقيَّم في Node وحدها. */
 const FULL = [
   'core/stairs.mjs',
+  'core/context-details.mjs',
   'core/viewer.js',
   'core/standards.js',
   'core/disciplines.js',

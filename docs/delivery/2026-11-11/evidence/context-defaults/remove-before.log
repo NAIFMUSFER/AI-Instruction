@@ -1,0 +1,23 @@
+test_remove_is_exact_canonical_revision_with_diff_attribution_and_reopen (__main__.RemoveObjectCommands.test_remove_is_exact_canonical_revision_with_diff_attribution_and_reopen) ... ERROR
+
+======================================================================
+ERROR: test_remove_is_exact_canonical_revision_with_diff_attribution_and_reopen (__main__.RemoveObjectCommands.test_remove_is_exact_canonical_revision_with_diff_attribution_and_reopen)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_remove_object_command.py", line 74, in test_remove_is_exact_canonical_revision_with_diff_attribution_and_reopen
+    out = self.execute(self.body())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_remove_object_command.py", line 57, in execute
+    return execute_persisted_plan_command(self.store,PROJECT,body,actor_id=actor,verifier=S.existing_geometry_verifier)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_persisted_commands.py", line 111, in execute_persisted_plan_command
+    result = execute_plan_command(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_commands.py", line 256, in execute_plan_command
+    raise PlanError(
+acs_plan_review.PlanError: This command is not exposed by the writable Plan-first UI boundary
+
+----------------------------------------------------------------------
+Ran 1 test in 0.042s
+
+FAILED (errors=1)

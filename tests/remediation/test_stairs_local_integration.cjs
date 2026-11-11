@@ -4,9 +4,9 @@ const APP=require('../lib/app_source.js'),SEG=require('../lib/js_segment.js');
 const source=APP.stripModuleSyntax(fs.readFileSync('public/app/ui/workspace-ui-wiring.js','utf8'),'wiring');
 const statements=SEG.topLevelStatements(source).map(row=>source.slice(row.start,row.end));
 function fn(name){const value=statements.find(text=>new RegExp('^function '+name+'\\(').test(SEG.head(text)));assert.ok(value,'actual shipped '+name);return value;}
-const ctx={structuredClone,lastBuilding:null,window:{ACS:{guest:true}},setModel:b=>{ctx.lastBuilding=b;return b;}};vm.createContext(ctx);
+const ctx={structuredClone,TextEncoder,lastBuilding:null,window:{ACS:{guest:true}},setModel:b=>{ctx.lastBuilding=b;return b;}};vm.createContext(ctx);
 const names=['localGeneratedModel','localModelCounts','assertLocalRoofMutable','applyLocalEdit','localGenerationError','localStairsText','buildLocalStairsDisclosure'];
-vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/viewer.js','core/standards.js','core/roof.mjs','core/disciplines.js'])+'\n'+names.map(fn).join('\n')+'\nObject.assign(globalThis,{'+names.join(',')+',stairConnections,hasUStairs,removeAutoRoof,roofRemovedByUser});',ctx);
+vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/context-details.mjs','core/viewer.js','core/standards.js','core/roof.mjs','core/disciplines.js'])+'\n'+names.map(fn).join('\n')+'\nObject.assign(globalThis,{'+names.join(',')+',stairConnections,hasUStairs,removeAutoRoof,roofRemovedByUser});',ctx);
 const bare={wall_t:.2,wall_h:3,floor_height:3.2,levels:[{index:0,template:'core'},{index:1,template:'core'}],floors:{core:{rooms:[{id:'stairroom',role:'stairs',core_id:'c',rect:[0,0,4,4],doors:[{edge:'N',offset:2,width:1}]}]}}};
 const original=JSON.stringify(bare),fresh=ctx.localGeneratedModel(bare,{freshSample:true});
 assert.equal(ctx.stairConnections(fresh).length,1,'fresh sample authors physical geometry before adding roof');

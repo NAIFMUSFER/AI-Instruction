@@ -1,0 +1,4 @@
+{"sha": "c37b5250dc4ff18ba0606add993b5afe52beebaa", "service": "/workspace/scratch/1843247fed6a/main-lock-baseline-review/acs_workspace_service.py", "commands": "/workspace/scratch/1843247fed6a/main-lock-baseline-review/acs_plan_commands.py", "scope": "Full isolated main checkout; SQLite; synthetic identity; zero provider"}
+{"typed": true, "review_can_approve": true, "lock_result": "success", "revision_persisted": true, "locked_rooms": [["ground", "a"]], "provider_calls": 0}
+{"typed": false, "review_can_approve": true, "lock_result": "rejected", "code": "OPTION_TYPOLOGY_UNKNOWN", "history_unchanged": true, "head_unchanged": true, "provider_calls": 0}
+BASELINE DEFECT REPRODUCED: unknown typology blocks room-lock response despite canonical admission and conceptual approval; typed control succeeds.

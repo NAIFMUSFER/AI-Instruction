@@ -39,6 +39,7 @@ _ALLOWED_NON_PROVIDER_ACTIONS = frozenset({
     "compare",
     "restore",
     "approve",
+    "remove_object",
 })
 _PROVIDER_ACTION = "chat_edit"
 

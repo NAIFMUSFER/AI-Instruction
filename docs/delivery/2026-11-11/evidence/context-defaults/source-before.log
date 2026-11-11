@@ -1,0 +1,13 @@
+.F..
+======================================================================
+FAIL: test_compiler_retains_actual_source_for_every_object_part (__main__.ContextDetails.test_compiler_retains_actual_source_for_every_object_part)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_details.py", line 50, in test_compiler_retains_actual_source_for_every_object_part
+    self.assertTrue(all(node.get('extras',{}).get('acs_object_source')==expected for node in doc['nodes']))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.129s
+
+FAILED (failures=1)

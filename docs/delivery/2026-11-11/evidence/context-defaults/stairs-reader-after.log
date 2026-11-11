@@ -1,0 +1,12 @@
+....
+----------------------------------------------------------------------
+Ran 4 tests in 1.301s
+
+OK
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=4 generated=4 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0

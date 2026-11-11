@@ -1,0 +1,31 @@
+E
+======================================================================
+ERROR: test_unknown_typology_locks_and_restore_preserve_real_authority (__main__.RemoveObjectCommands.test_unknown_typology_locks_and_restore_preserve_real_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_remove_object_command.py", line 139, in test_unknown_typology_locks_and_restore_preserve_real_authority
+    locked=self.execute({'action':'set_room_lock','expected_head':original.id,'room_ref':['ground','a'],'locked':True})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_remove_object_command.py", line 58, in execute
+    return execute_persisted_plan_command(self.store,PROJECT,body,actor_id=actor,verifier=S.existing_geometry_verifier)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_persisted_commands.py", line 111, in execute_persisted_plan_command
+    result = execute_plan_command(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_commands.py", line 335, in execute_plan_command
+    return _view_result(
+           ^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_commands.py", line 223, in _view_result
+    result["revision_comparison"] = workspace.compare_revisions(
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_lock_binding.py", line 243, in compare_revisions
+    measured = compare_options([
+               ^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_options.py", line 229, in compare_options
+    raise PlanError("OPTION_TYPOLOGY_UNKNOWN", "Design options need an explicit canonical typology")
+acs_plan_review.PlanError: Design options need an explicit canonical typology
+
+----------------------------------------------------------------------
+Ran 1 test in 0.020s
+
+FAILED (errors=1)

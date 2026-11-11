@@ -194,6 +194,8 @@ class Builder:
         self._door_pairs = {}
         self._opening_sources = {}
         self._stair_sources = {}
+        self._object_sources = {}
+        self._object_context = None
         self.level_metadata = []
 
     def add_box(self, cx, cy, cz, ex, ey, ez, mat, name, rotation=0.0):
@@ -309,6 +311,10 @@ class Builder:
                 nodes[-1]['extras'] = {'acs_opening_sources': sources}
             if part_index in self._stair_sources:
                 nodes[-1].setdefault('extras', {})['acs_stair'] = self._stair_sources[part_index]
+            if part_index in self._object_sources:
+                source, repeat_index = self._object_sources[part_index]
+                nodes[-1].setdefault('extras', {})['acs_object_source'] = source
+                nodes[-1]['extras']['acs_object_repeat_index'] = repeat_index
 
         b64 = base64.b64encode(bytes(buf)).decode("ascii")
         gltf = {
@@ -774,8 +780,17 @@ def build_objects(bld, room, fkey, base_y, acc=None):
             oz = float(o.get("z") if o.get("z") is not None else rd/2) + (pitch*k if dirn == "z" else 0)
             if ox > rw+2 or oz > rd+2:
                 break
+            before = len(bld.parts)
             build_object(bld, o, kind or "box", rx+ox, rz+oz,
                          base_y+float(o.get("y") or 0), fkey, nm, i*1000+k)
+            # Assign from the canonical call context, never infer from a mesh
+            # name or position. All emitted components share one source tuple.
+            context = getattr(bld, '_object_context', None)
+            if context is not None and isinstance(o.get('id'), str) and o['id'].strip():
+                source = dict(context, kind='element', room_id=nm,
+                              collection='objects', element_id=o['id'])
+                for part_index in range(before, len(bld.parts)):
+                    bld._object_sources[part_index] = (source, k)
             if acc is not None:
                 acc["generated"] += 1
 
@@ -1005,6 +1020,7 @@ def compile_building(data, out_path):
         base_y = level_elevation(lvl, fh)
         bld.level_metadata.append({"index": idx, "kind": lvl.get("kind"),
                                    "template": tmpl, "elevation_m": base_y})
+        bld._object_context = {"template": tmpl, "level_index": idx}
         fkey = "F%d" % idx
         holes = [v["rect"] for v in ((_arch or {}).get("voids") or [])
                  if v.get("level_index") == idx] if _arch else []

@@ -22,7 +22,7 @@ function setup(){
   $('cwRevision').value='R2';$('cwApproveConfirm').checked=true;$('cwEditApprovalNotice').hidden=true;$('cwCompareRevision').value='R1';
   const context=vm.createContext({$,root:{setAttribute(){},querySelectorAll(selector){return selector==='[data-mutate]'?mutationIds.map($):[$('cwShow3D'),$('exportGLTF')];},querySelector(){return $('exportReview');}},
     state:{head:'R2',revision_id:'R2',authority:{can_approve_concept:true},history:[{revision_id:'R1',state:'APPROVED'},{revision_id:'R2',state:'DRAFT'}]},
-    packet:{locks:{rooms:[]}},selected:{source:{template:'floor',room_id:'room'}},busy:false,pendingJob:null,planUpload:{sync(){}},
+    packet:{locks:{rooms:[]}},selected:{source:{template:'floor',room_id:'room'}},objectSelection:null,busy:false,pendingJob:null,planUpload:{sync(){}},
     el:()=>$('cwRoof'),safeError:e=>errors.push(e.message),status(){},api:async body=>{requests.push(body);return {};},renderState:async()=>{}});
   vm.runInContext(controlSource,context);
   return {context,$,requests,errors};

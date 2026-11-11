@@ -589,7 +589,7 @@ jobs:
           from pathlib import Path
           # /health cannot exercise helpers imported only by later commands.
           # Use the actual image and a pure synthetic model; no provider/auth call.
-          import acs_roof, acs_stairs
+          import acs_roof, acs_stairs, acs_context_details
           model = {'site': {'w': 10, 'd': 8}, 'wall_h': 3, 'floor_height': 3.2,
                    'levels': [{'index': 0, 'template': 'ground'}],
                    'floors': {'ground': {'rooms': [{'id': 'hall', 'rect': [0, 0, 10, 8]}]}}}
@@ -598,6 +598,13 @@ jobs:
           removed = acs_roof.remove_auto_roof(roofed)
           restored = acs_roof.restore_default_roof(removed)
           stair_candidate, stair_report, stair_reason = acs_stairs.with_default_stairs(model)
+          import copy
+          porch = copy.deepcopy(model)
+          porch['wall_t'] = .2
+          porch['floors']['ground']['rooms'][0].update(role='porch', covered=True, walls='none')
+          porch_before = repr(porch)
+          detailed, detail_report, detail_reason = acs_context_details.with_context_details(porch)
+          detail_objects = detailed['floors']['ground']['rooms'][0].get('objects', [])
           artifact = json.loads(Path('/app/build_info.json').read_text())
           with urllib.request.urlopen('http://127.0.0.1:8000/version', timeout=10) as r:
               version = json.load(r)
@@ -632,6 +639,15 @@ jobs:
                      for key in ('git_sha', 'git_sha_short', 'built_at', 'git_branch', 'version')]
           checks += [(f'health {key} matches version', health[key] == version[key])
                      for key in ('git_sha_short', 'built_at', 'version')]
+          checks += [
+              ('deferred context helper executes from the actual image without a provider',
+               Path(acs_context_details.__file__).resolve() == Path('/app/acs_context_details.py')
+               and detail_reason is None and repr(porch) == porch_before
+               and len(detail_objects) > 0 and all(o['kind'] == 'column' for o in detail_objects)
+               and all(o['context_detail_provenance']['conceptual_only'] is True for o in detail_objects)
+               and detailed['meta']['acs_context_details']['source'] == 'system_default'
+               and len(acs_context_details.list_context_details(detailed)) == len(detail_objects)),
+          ]
           for name, ok in checks:
               print(('PASS ' if ok else 'FAIL ') + name)
           failures = sum(not ok for _, ok in checks)
@@ -712,6 +728,7 @@ jobs:
       PG_BINDIR: /usr/lib/postgresql/16/bin
       ACS_VISUAL_OUTPUT: logs/approved-viewer
       ACS_STAIRS_VISUAL_OUTPUT: logs/stairs
+      ACS_CONTEXT_OUTPUT: logs/context-objects
     steps:
       - uses: actions/checkout@v4
         with:
@@ -752,6 +769,13 @@ jobs:
             tests/remediation/test_delivery_published.py \
             tests/remediation/test_roof_runtime_packaging.py \
             tests/remediation/test_stairs_runtime_packaging.py \
+            tests/remediation/test_context_runtime_packaging.py \
+            tests/remediation/test_context_details.py \
+            tests/remediation/test_context_details_parity.py \
+            tests/remediation/test_context_details_independent_reader.py \
+            tests/remediation/test_context_details_service.py \
+            tests/remediation/test_context_objects_fixture.py \
+            tests/remediation/test_remove_object_command.py \
             tests/remediation/test_stairs_geometry.py \
             tests/remediation/test_stairs_validation_boundary.py \
             tests/remediation/test_stairs_independent_reader.py \
@@ -798,6 +822,10 @@ jobs:
             tests/remediation/test_stairs_parity.mjs \
             tests/remediation/test_stairs_browser_geometry.cjs \
             tests/remediation/test_stairs_local_integration.cjs \
+            tests/remediation/test_context_object_selection.mjs \
+            tests/remediation/test_context_details_browser_geometry.cjs \
+            tests/remediation/test_context_local_integration.cjs \
+            tests/remediation/test_context_object_controls.mjs \
             tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
@@ -817,7 +845,8 @@ jobs:
             tests/remediation/test_guest_workspace.cjs \
             tests/remediation/test_connected_workspace_browser.cjs \
             tests/remediation/test_approved_viewer_browser.cjs \
-            tests/remediation/test_stairs_approved_browser.cjs
+            tests/remediation/test_stairs_approved_browser.cjs \
+            tests/remediation/test_context_objects_browser.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
