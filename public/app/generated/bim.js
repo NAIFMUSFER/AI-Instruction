@@ -131,6 +131,11 @@ function bxBuildExchange(project,options){
   }
   const includeSpaces=(o.include_spaces===undefined)?true:!!o.include_spaces;
   const wanted=(o.levels===undefined)?null:o.levels;
+  const coordinate=value=>{
+    if(scope!=='SPACES_ONLY')return _bxQ(value);
+    if(_bxNum(value)===null)throw new Error('Space coordinate is not finite');
+    return Number(value)+0;
+  };
   const wallH=_bxNum(model.wall_h)||3;
   const wallT=_bxNum(model.wall_t);
   const floorH=_bxNum(model.floor_height)||(wallH+0.2);
@@ -151,7 +156,7 @@ function bxBuildExchange(project,options){
   const exportIssues=[];
   levels.forEach(lv=>{
     const idx=lv.index;
-    const elev=_bxQ((lv.elevation!==null&&lv.elevation!==undefined)
+    const elev=coordinate((lv.elevation!==null&&lv.elevation!==undefined)
       ?_bxNum(lv.elevation):(Number(idx||0)*floorH));
     ex.levels.push({canonical_id:bid+'.flr_'+idx,
       name:lv.name||('Level '+idx),index:idx,elevation:elev,template:lv.template});
@@ -159,15 +164,15 @@ function bxBuildExchange(project,options){
       .sort((a,b)=>_scmp(String(a.id),String(b.id)));
     rooms.forEach(r=>{
       const rect=r.rect||[0,0,0,0];
-      const x=_bxQ(_bxNum(rect[0])||0), z=_bxQ(_bxNum(rect[1])||0);
-      const w=_bxQ(_bxNum(rect[2])||0), d=_bxQ(_bxNum(rect[3])||0);
+      const x=coordinate(_bxNum(rect[0])||0), z=coordinate(_bxNum(rect[1])||0);
+      const w=coordinate(_bxNum(rect[2])||0), d=coordinate(_bxNum(rect[3])||0);
       const rh=_bxNum(r.wall_h)||_bxNum(r.height)||wallH;
       const sid=bid+'.flr_'+idx+'.'+lv.template+'.'+r.id;
       const aid=lv.template+'.'+r.id;
       if(includeSpaces&&['ALL','SPACES_ONLY','LEVELS'].indexOf(scope)>=0)
         ex.spaces.push({canonical_id:sid,authoring_id:aid,
           name:r.name||String(r.id),number:String(r.id),level_index:idx,
-          elevation:elev,height:_bxQ(rh),footprint:[x,z,w,d],area_m2:_bxQ(w*d)});
+          elevation:elev,height:coordinate(rh),footprint:[x,z,w,d],area_m2:_bxQ(w*d)});
       if(scope==='SPACES_ONLY') return;
       const declared=r.walls, industrial=['warehouse','industrial','factory','logistics'].includes(String((model.meta||{}).type||'').toLowerCase());
       const open=declared==='none'||declared==='line'||(!declared&&industrial&&r.role&&!['office','admin','it','staff','maintenance','meeting'].includes(r.role));

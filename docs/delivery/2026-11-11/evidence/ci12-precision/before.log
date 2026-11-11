@@ -1,0 +1,28 @@
+FF
+======================================================================
+FAIL: test_serialized_profile_preserves_canonical_bounds_without_cumulative_rounding (__main__.ExactSpaceGeometry.test_serialized_profile_preserves_canonical_bounds_without_cumulative_rounding)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/stairs-v4/tests/remediation/test_bim_space_precision.py", line 75, in test_serialized_profile_preserves_canonical_bounds_without_cumulative_rounding
+    self.assertAlmostEqual(value, canonical_value, places=6)
+AssertionError: 6.837208499999999 != 6.837209302325586 within 6 places (8.023255873013113e-07 difference)
+
+======================================================================
+FAIL: test_shared_exchange_keeps_exact_space_values_in_python_and_shipped_javascript (__main__.ExactSpaceGeometry.test_shared_exchange_keeps_exact_space_values_in_python_and_shipped_javascript)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/stairs-v4/tests/remediation/test_bim_space_precision.py", line 84, in test_shared_exchange_keeps_exact_space_values_in_python_and_shipped_javascript
+    self.assertEqual(exchange['spaces'][0]['footprint'], room['rect'])
+AssertionError: Lists differ: [0.123457, 6.837209, 1.234568, 3.418605] != [0.123456789012345, 6.837209302325586, 1.23456789012345, 3.4186046511627914]
+
+First differing element 0:
+0.123457
+0.123456789012345
+
+- [0.123457, 6.837209, 1.234568, 3.418605]
++ [0.123456789012345, 6.837209302325586, 1.23456789012345, 3.4186046511627914]
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.002s
+
+FAILED (failures=2)

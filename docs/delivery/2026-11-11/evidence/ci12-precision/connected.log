@@ -1,0 +1,13 @@
+test_artifact_tamper_is_detected (__main__.ApprovedIfcExportTests.test_artifact_tamper_is_detected) ... ok
+test_draft_fails_before_bim_exporter_import (__main__.ApprovedIfcExportTests.test_draft_fails_before_bim_exporter_import) ... ok
+test_exact_approved_residential_ifc_is_hash_bound_and_verifiable (__main__.ApprovedIfcExportTests.test_exact_approved_residential_ifc_is_hash_bound_and_verifiable) ... ok
+test_existing_output_is_not_overwritten_implicitly (__main__.ApprovedIfcExportTests.test_existing_output_is_not_overwritten_implicitly) ... ok
+test_new_draft_does_not_replace_exportable_frozen_baseline (__main__.ApprovedIfcExportTests.test_new_draft_does_not_replace_exportable_frozen_baseline) ... ok
+test_plan_ifc_stays_spaces_only_until_non_space_geometry_is_exact (__main__.ApprovedIfcExportTests.test_plan_ifc_stays_spaces_only_until_non_space_geometry_is_exact)
+Do not turn exporter placeholders into approved Plan-first geometry. ... ok
+test_warehouse_rack_dock_provenance_and_locks_reach_export_receipt (__main__.ApprovedIfcExportTests.test_warehouse_rack_dock_provenance_and_locks_reach_export_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.036s
+
+OK

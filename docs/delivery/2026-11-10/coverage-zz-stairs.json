@@ -1,12 +1,13 @@
 [
   {
     "path": ".github/workflows/ci.yml",
-    "purpose": "Selected added stairs regressions, actual Docker import probe and CI browser evidence target",
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence",
     "depth": "selected",
     "risk": "medium",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -32,12 +33,13 @@
   },
   {
     "path": "KNOWN-ISSUES.md",
-    "purpose": "Dated CI10 job/fix evidence; results are scoped to the recorded head",
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence",
     "depth": "selected",
     "risk": "low",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [],
     "generated_from": []
@@ -59,17 +61,20 @@
   },
   {
     "path": "acs_bim.py",
-    "purpose": "Selected fail-closed architectural IFC export for explicit stair forms",
+    "purpose": "Selected SPACES_ONLY exact coordinate/STEP serialization; legacy ALL formatting preserved",
     "depth": "selected",
     "risk": "medium",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
       "tests/remediation/test_stairs_parity.mjs",
-      "tests/remediation/test_stairs_independent_reader.py"
+      "tests/remediation/test_stairs_independent_reader.py",
+      "tests/remediation/test_bim_space_precision.py",
+      "tests/remediation/test_stair_ifc_reader.py"
     ],
     "generated_from": []
   },
@@ -137,12 +142,13 @@
   },
   {
     "path": "docs/CURRENT-STATUS.md",
-    "purpose": "Dated delivery evidence or current scoped capability/status record",
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence",
     "depth": "selected",
     "risk": "low",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [],
     "generated_from": []
@@ -171,12 +177,45 @@
     "generated_from": []
   },
   {
+    "path": "docs/delivery/2026-11-11/CI11-JOBS.md",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
     "path": "docs/delivery/2026-11-11/CI11-READER-CORRECTION.md",
     "purpose": "Scoped actual CI reader failure and strict cardinality correction; no local reader claim",
     "depth": "selected",
     "risk": "low",
     "findings": [
       "STAIRS-CI11"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/CI12-IFC-PRECISION.md",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/CI12-JOBS.md",
+    "purpose": "All CI12 jobs and complete-log hash inventory; failed head remains unaccepted",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
     ],
     "tests": [],
     "generated_from": []
@@ -466,6 +505,195 @@
     ],
     "tests": [],
     "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci11-jobs.json",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-jobs.json",
+    "purpose": "All CI12 jobs and complete-log hash inventory; failed head remains unaccepted",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-netlify.json",
+    "purpose": "Observed cancellation of review-only Netlify build; no published deployment",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "CI12-REVIEW-ONLY"
+    ],
+    "tests": [
+      "tests/remediation/test_review_only_build.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/after.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/baseline.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/before.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/boundary.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/bundle.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/ci-gate.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/comparison.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/connected.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/doc-contract.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/fallback.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/legacy.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/main-comparison.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/manifest.json",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci12-precision/measured-state.log",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence"
   },
   {
     "path": "docs/delivery/2026-11-11/evidence/ci9-jobs.json",
@@ -815,15 +1043,18 @@
   },
   {
     "path": "public/app/generated/bim.js",
-    "purpose": "Regenerated IFC browser mirror; byte consistency checked against generator",
+    "purpose": "Selected SPACES_ONLY exact coordinate/STEP serialization; legacy ALL formatting preserved",
     "depth": "static",
     "risk": "medium",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [
-      "tests/remediation/test_stair_ifc_boundary.py"
+      "tests/remediation/test_stair_ifc_boundary.py",
+      "tests/remediation/test_bim_space_precision.py",
+      "tests/remediation/test_stair_ifc_reader.py"
     ],
     "generated_from": [
       "tools/build_bim_browser.py",
@@ -877,12 +1108,13 @@
   },
   {
     "path": "tests/performance/bundle_report.json",
-    "purpose": "Selected existing harness change for stair imports or connected boundary regressions",
+    "purpose": "Selected CI12 precision correction, unchanged six-place reader gate and scoped before/after evidence",
     "depth": "selected",
     "risk": "medium",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
@@ -905,6 +1137,17 @@
       "tests/remediation/test_stairs_independent_reader.py"
     ],
     "generated_from": []
+  },
+  {
+    "path": "tests/remediation/bim_space_precision_parity.js",
+    "depth": "deep",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Fractional serialized bounds and Python/shipped JavaScript exact-space exchange regression"
   },
   {
     "path": "tests/remediation/stair_ifc_exchange_parity.js",
@@ -944,6 +1187,17 @@
       "tests/remediation/stairs_gltf_reader.mjs"
     ],
     "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_bim_space_precision.py",
+    "depth": "deep",
+    "risk": "low",
+    "findings": [
+      "IFC-CI12-PRECISION"
+    ],
+    "tests": [],
+    "generated_from": [],
+    "purpose": "Fractional serialized bounds and Python/shipped JavaScript exact-space exchange regression"
   },
   {
     "path": "tests/remediation/test_connected_workspace.py",
@@ -1139,17 +1393,20 @@
   },
   {
     "path": "tools/build_bim_browser.py",
-    "purpose": "Selected generated IFC error-state reset and escaped Arabic guidance",
+    "purpose": "Selected SPACES_ONLY exact coordinate/STEP serialization; legacy ALL formatting preserved",
     "depth": "selected",
     "risk": "medium",
     "findings": [
       "STAIRS-4B",
-      "STAIRS-CI10"
+      "STAIRS-CI10",
+      "IFC-CI12-PRECISION"
     ],
     "tests": [
       "tests/remediation/test_stairs_geometry.py",
       "tests/remediation/test_stairs_parity.mjs",
-      "tests/remediation/test_stairs_independent_reader.py"
+      "tests/remediation/test_stairs_independent_reader.py",
+      "tests/remediation/test_bim_space_precision.py",
+      "tests/remediation/test_stair_ifc_reader.py"
     ],
     "generated_from": []
   },
