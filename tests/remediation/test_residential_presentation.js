@@ -16,7 +16,13 @@ async function flush() {
 }
 
 (async () => {
-  const {pqConfig}=await import(path.join(ROOT,'public/app/generated/pbr.js'));
+  // Use the repository's pure-source loader: this companion gate also runs
+  // without npm dependencies. Evaluate the real shipped config and its real
+  // numeric/hash helpers, without importing the browser's Three.js entry.
+  const APP=require(path.join(ROOT,'tests/lib/app_source.js'));
+  const {pqConfig}=vm.runInNewContext(APP.nodeBundle([
+    'core/viewer.js','core/standards.js','generated/pbr.js',
+  ])+'\n;({pqConfig});',{}, {filename:'residential-pbr-contract.js'});
   let current = null;
   let pbrApply = 0, detailApply = 0, ensure = 0, camera = null;
   let pbrRestore = 0, adRestore = 0;

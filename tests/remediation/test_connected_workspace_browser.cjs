@@ -12,6 +12,13 @@ const delay=ms=>new Promise(r=>setTimeout(r,ms));
 async function workspaceState(page){return page.evaluate(async()=>{const session=await window.ACS_AUTH.freshSession();return window.ACS_AUTH.acsFetchJSON('/v1/projects/'+window.ACS.projectId+'/workspace',{action:'state'},session.access_token);});}
 const roofRows=view=>JSON.parse(view.review_packet.payload_json).projections.filter(p=>p.level_kind==='roof');
 const revisionState=(view,id=view.head)=>view.history.find(row=>row.revision_id===id)?.state;
+function assertConceptApproval(view,stage){
+ const blockers=(view.review_findings||[]).slice(0,16).map(issue=>{
+  const requirement=view.requirements?.find(row=>row.id===issue.requirement_id);
+  return {code:issue.code,requirement_id:issue.requirement_id,metric:requirement?.metric,expected:requirement?.expected};
+ });
+ assert.equal(view.authority?.can_approve_concept,true,stage+' must satisfy the actual canonical review: '+JSON.stringify(blockers));
+}
 
 (async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'acs-ui-')),port=8891;
@@ -149,7 +156,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal(await page.locator('#app canvas').count(),0,'private 2D review allocates no hidden legacy renderer');
    // Actual cwRoof journey: an approved automatic roof is removed as a new
    // draft, survives reload and another controlled generation, then is restored.
-   const initialRoof=await workspaceState(page);assert.equal(roofRows(initialRoof).length,1);assert.equal(roofRows(initialRoof)[0].level_auto,true);
+   const initialRoof=await workspaceState(page);assert.equal(roofRows(initialRoof).length,1);assert.equal(roofRows(initialRoof)[0].level_auto,true);assertConceptApproval(initialRoof,'Initial source/sample fixture');
    assert.equal(await page.locator('#cwRoof').textContent(),'إزالة السطح الافتراضي');
    const roofProviderBefore=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();await page.locator('#cwShow3D').waitFor({state:'visible'});
@@ -167,6 +174,8 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('[data-step="1"]').click();await page.locator('#cwStartMode').selectOption('describe');await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();await page.locator('[data-option="A"]').click();
    await page.waitForFunction(id=>document.querySelector('#cwRevision').value!==id&&document.querySelector('#cwJobProgress').hidden,removedRoof.head,{timeout:45000});
    const regeneratedBare=await workspaceState(page);assert.equal(roofRows(regeneratedBare).length,0,'a later generated revision respects the saved roof-removal preference');assert.notEqual(regeneratedBare.head,removedRoof.head);assert.equal(regeneratedBare.history.length,removedRoof.history.length+1);
+   if(width===1280)assert.equal(regeneratedBare.requirements.find(row=>row.metric==='unit_count')?.expected,2,'desktop regeneration must retain the selected two-apartment program');
+   assertConceptApproval(regeneratedBare,'Regenerated residential/warehouse fixture');
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'the explicit regeneration invokes the controlled provider exactly once');
    await page.locator('#cwRoof').click();await page.waitForFunction(()=>document.querySelector('#cwRoof').dataset.enabled==='true');
    const restoredRoof=await workspaceState(page);assert.equal(roofRows(restoredRoof).length,1);assert.equal(roofRows(restoredRoof)[0].level_auto,true);assert.notEqual(restoredRoof.head,regeneratedBare.head);assert.equal(restoredRoof.history.length,regeneratedBare.history.length+1);assert.notEqual(revisionState(restoredRoof),'APPROVED');
@@ -185,6 +194,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    const lockedBeforeRoof=await workspaceState(page);await page.locator('#cwRoof').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('فكّ أقفال الفراغات'));
    const lockedAfterRoof=await workspaceState(page);assert.equal(lockedAfterRoof.head,lockedBeforeRoof.head);assert.deepEqual(lockedAfterRoof.history,lockedBeforeRoof.history,'server refusal leaves immutable history unchanged');assert.equal(roofRows(lockedAfterRoof).length,1);
+   assertConceptApproval(lockedAfterRoof,'Locked fixture after rejected roof removal');
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'locked roof refusal never invokes a provider');
 
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();

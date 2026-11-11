@@ -260,6 +260,73 @@ class WorkspaceLifecycle(unittest.TestCase):
                     S.set_roof(store, PROJECT, ACTOR, {'action':'set_roof','expected_head':locked['head'],'enabled':False})
                 self.assertEqual(refused.exception.code, 'LOCK_CONTEXT_CHANGED')
 
+    def test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks(self):
+        # The real desktop browser keeps a two-unit choice when switching from
+        # source reading (base requirements) to a selected residential option.
+        from connected_workspace_browser_server import FixtureRunner
+        import acs_roof
+        brief='🏡 مشروع سكني تجريبي؛ عرض الموقع ٢٠ متر؛ عمق الموقع ٢٠ متر؛ عدد الأدوار ١'
+        requirements=[]
+        def add(metric, expected, role=None):
+            nonlocal brief
+            evidence=metric+(' '+role if role else '')+': '+str(expected)
+            start=len(brief)+1;brief+='\n'+evidence
+            requirements.append({'id':'r'+str(len(requirements)), 'metric':metric,
+                'expected':expected, **({'role':role} if role else {}),
+                'source':'inferred', 'source_id':'brief:selected-option',
+                'evidence':evidence, 'source_span':{'start':start,'end':len(brief)}, 'confirmed':True})
+        for metric, number in [('site_width_m',20),('site_depth_m',20),('level_count',1)]:add(metric,number)
+        source='44444444-4444-4444-8444-444444444444'
+        source_command=dict(command(),brief=brief,requirements=copy.deepcopy(requirements),source_id=source,source_mode='preserve')
+        counts={'generation':0,'chat':0};runner=FixtureRunner(counts,delay_seconds=0)
+        row={'id':source,'sha256':'a'*64,'page':2,'page_count':2,'preview_sha256':'b'*64,'preview_media_type':'image/png'}
+        with patch('acs_plan_sources.read_source',return_value=(row,b'synthetic-preview')):
+            first=S.generate_and_save(self.store,PROJECT,ACTOR,source_command,runner=runner)
+        self.assertTrue(S.view(self.store,PROJECT,ACTOR)['authority']['can_approve_concept'])
+        def persisted(body):
+            return execute_persisted_plan_command(self.store,PROJECT,body,actor_id=ACTOR,verifier=S.existing_geometry_verifier)
+        persisted({'action':'approve','expected_head':first,'confirmed':True,'acknowledge_concept_only':True})
+        removed=S.set_roof(self.store,PROJECT,ACTOR,{'action':'set_roof','expected_head':first,'enabled':False})['head']
+        add('unit_count',2)
+        for role, number in [('bedroom',2),('living',1),('kitchen',1),('bathroom',2),('majlis',0)]:
+            add('room_count',number*2,role);add('room_count_per_unit',number,role)
+        next_command=dict(command(),brief=brief,requirements=requirements,expected_head=removed)
+        generated=S.generate_and_save(self.store,PROJECT,ACTOR,next_command,runner=runner)
+        view=S.view(self.store,PROJECT,ACTOR)
+        self.assertTrue(view['authority']['can_approve_concept'],view['review_findings'])
+        self.assertEqual(len(view['requirements']),14)
+        built=S.workspace(self.store,PROJECT,ACTOR).get(generated).model
+        self.assertTrue(acs_roof.roof_removed_by_user(built));self.assertFalse(acs_roof.has_roof_level(built))
+        rooms={r['id']:r for r in built['floors']['ground']['rooms']}
+        self.assertEqual({r.get('unit_id') for r in rooms.values() if r.get('unit_id')},{'apartment_1','apartment_2'})
+        self.assertEqual(rooms['a']['points'][0]['id'],'light-a')
+        self.assertEqual(rooms['b']['points'][0]['id'],'light-b')
+        restored=S.set_roof(self.store,PROJECT,ACTOR,{'action':'set_roof','expected_head':generated,'enabled':True})['head']
+        locked=persisted({'action':'replace_semantic_locks','expected_head':restored,
+            'selectors':[{'kind':'element','template':'ground','room_id':'a','collection':'points',
+                          'element_id':'light-a','properties':['x','z']}], 'note':'Synthetic light position lock'})['head']
+        locked=persisted({'action':'set_room_lock','expected_head':locked,'room_ref':['ground','a'],'locked':True})['head']
+        history=S.workspace(self.store,PROJECT,ACTOR).history()
+        with self.assertRaises(PlanError) as refused:
+            S.set_roof(self.store,PROJECT,ACTOR,{'action':'set_roof','expected_head':locked,'enabled':False})
+        self.assertEqual(refused.exception.code,'LOCK_CONTEXT_CHANGED')
+        self.assertEqual(S.workspace(self.store,PROJECT,ACTOR).history(),history)
+        self.assertTrue(S.view(self.store,PROJECT,ACTOR)['authority']['can_approve_concept'])
+        persisted({'action':'approve','expected_head':locked,'confirmed':True,'acknowledge_concept_only':True})
+        artifact=S.artifact(self.store,PROJECT,ACTOR,{'action':'artifact','revision_id':locked,'format':'gltf'})
+        self.assertTrue(base64.b64decode(artifact['data_base64']))
+        with patch('acs_generation_job.default_runner',return_value=runner):
+            edited=S.chat_and_save(self.store,PROJECT,ACTOR,{'action':'chat_edit','job_id':JOB,
+                'expected_head':locked,'notes':[{'text':'غيّر عرض الفراغ B مع تثبيت الفراغ المقفل.'}],
+                'confirmed':True,'max_provider_calls':3})
+        after=S.workspace(self.store,PROJECT,ACTOR)
+        changed={r['id']:r for r in after.get(edited).model['floors']['ground']['rooms']}
+        self.assertEqual(changed['b']['rect'][2],6)
+        self.assertEqual(changed['a'],rooms['a'])
+        self.assertEqual(after.baseline,locked)
+        self.assertTrue(S.view(self.store,PROJECT,ACTOR)['authority']['can_approve_concept'])
+        self.assertEqual(counts,{'generation':2,'chat':1})
+
     def test_removed_roof_preference_rejects_provider_roof_without_retry_or_write(self):
         import acs_roof
         class CountedRunner(Runner):

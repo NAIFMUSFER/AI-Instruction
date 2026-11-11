@@ -1,0 +1,14 @@
+test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks (test_connected_workspace.WorkspaceLifecycle.test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks) ... FAIL
+
+======================================================================
+FAIL: test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks (test_connected_workspace.WorkspaceLifecycle.test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_connected_workspace.py", line 296, in test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks
+    self.assertTrue(view['authority']['can_approve_concept'],view['review_findings'])
+AssertionError: False is not true : [{'code': 'REQUIREMENT_MISMATCH', 'message': '', 'requirement_id': 'r3', 'room_ref': None}, {'code': 'REQUIREMENT_MISMATCH', 'message': '', 'requirement_id': 'r4', 'room_ref': None}, {'code': 'REQUIREMENT_NOT_MEASURABLE', 'message': '', 'requirement_id': 'r5', 'room_ref': None}, {'code': 'REQUIREMENT_MISMATCH', 'message': '', 'requirement_id': 'r6', 'room_ref': None}, {'code': 'REQUIREMENT_NOT_MEASURABLE', 'message': '', 'requirement_id': 'r7', 'room_ref': None}, {'code': 'REQUIREMENT_MISMATCH', 'message': '', 'requirement_id': 'r8', 'room_ref': None}, {'code': 'REQUIREMENT_NOT_MEASURABLE', 'message': '', 'requirement_id': 'r9', 'room_ref': None}, {'code': 'REQUIREMENT_MISMATCH', 'message': '', 'requirement_id': 'r10', 'room_ref': None}, {'code': 'REQUIREMENT_NOT_MEASURABLE', 'message': '', 'requirement_id': 'r11', 'room_ref': None}, {'code': 'REQUIREMENT_NOT_MEASURABLE', 'message': '', 'requirement_id': 'r13', 'room_ref': None}]
+
+----------------------------------------------------------------------
+Ran 1 test in 0.456s
+
+FAILED (failures=1)

@@ -30,6 +30,55 @@ from acs_plan_store_port import SQLitePlanStoreAdapter
 from test_connected_workspace import PROJECT, ACTOR, model
 
 
+def fixture_building(brief, requirements):
+    kind='warehouse' if 'مستودع' in brief else 'residential'
+    if kind!='residential' or not any(r.get('metric')=='unit_count' for r in requirements):
+        return model(kind)
+    quantities={r['metric']:r['expected'] for r in requirements if not r.get('role')}
+    if any(quantities.get(key)!=number for key,number in (
+            ('site_width_m',20),('site_depth_m',20),('level_count',1),('unit_count',2))):
+        raise AssertionError('Unsupported synthetic residential fixture program')
+    # A deterministic, explicitly synthetic two-apartment case. The fixture's
+    # east-facing entrance makes B wider than 6 m, so the later width edit keeps
+    # valid reciprocal openings and access. It is not evidence of live AI output.
+    from acs_residential_layout import propose
+    building=propose(brief+'\nجهة الشارع: شرق',requirements)
+    if building is None:
+        raise AssertionError('Synthetic two-unit fixture cannot satisfy this program')
+    template=building['levels'][0]['template']
+    rooms=building['floors'].pop(template)['rooms']
+    a=next(room for room in rooms if not room.get('unit_id') and room['role']=='corridor')
+    b=next(room for room in rooms if room.get('unit_id')=='apartment_1' and room['role']=='living')
+    for room,identity in ((a,'a'),(b,'b')):
+        room['id']=identity;room['name']=identity.upper();room['points'][0]['id']='light-'+identity
+    building['floors']['ground']={'rooms':[a,b]+[room for room in rooms if room is not a and room is not b]}
+    for level in building['levels']:level['template']='ground'
+    building['meta'].update(type='residential',name='Synthetic two-apartment browser fixture',
+                            acs_layout_method='ci_two_unit_geometry_fixture_v1')
+    building['meta']['assumptions']=[
+        'نموذج اصطناعي لاختبار برنامج شقتين؛ ليس ناتجًا عن استدعاء مزود حي.',
+        'المدخل الشرقي اختيار ثابت لهذا الاختبار، وليس جهة شارع أكدها المستخدم.',
+        *[item for item in building['meta']['assumptions'] if not item.startswith('توزيع بديل محسوب بعد تعذر')]]
+    return building
+
+
+class FixtureRunner:
+    def __init__(self, counts, *, delay_seconds=1.2):
+        self.counts, self.delay_seconds = counts, delay_seconds
+
+    def run(self,target,kwargs,**controls):
+        if target.endswith('generate_plan_candidate') or target=='acs_plan_sources:candidate':
+            self.counts['generation']+=1;time.sleep(self.delay_seconds)
+            return {'building':fixture_building(kwargs['brief'],kwargs['requirements']),'provider_calls':1}
+        if target.endswith('budgeted_chat_candidate'):
+            self.counts['chat']+=1
+            candidate=copy.deepcopy(kwargs['building'])
+            next(room for room in candidate['floors']['ground']['rooms'] if room['id']=='b')['rect'][2]=6
+            return candidate
+        if target.endswith('artifact_from_snapshot'):return S.artifact_from_snapshot(**kwargs)
+        raise AssertionError(target)
+
+
 def application(database):
     db=SQLitePlanStore(database)
     try:db.create_project(PROJECT,owner_id=ACTOR)
@@ -61,18 +110,6 @@ def application(database):
                 if method=='PATCH':
                     data.update(payload);con.execute('update ci_jobs set document=? where id=?',(json.dumps(data),job_id))
                 return [data]
-
-    class FixtureRunner:
-        def run(self,target,kwargs,**controls):
-            if target.endswith('generate_plan_candidate') or target=='acs_plan_sources:candidate':
-                counts['generation']+=1;time.sleep(1.2)
-                return {'building':model('warehouse' if 'مستودع' in kwargs['brief'] else 'residential'),'provider_calls':1}
-            if target.endswith('budgeted_chat_candidate'):
-                counts['chat']+=1
-                candidate=copy.deepcopy(kwargs['building']);candidate['floors']['ground']['rooms'][1]['rect'][2]=6
-                return candidate
-            if target.endswith('artifact_from_snapshot'):return S.artifact_from_snapshot(**kwargs)
-            raise AssertionError(target)
 
     async def authorize(scope,send):
         headers=dict(scope.get('headers',[]))
@@ -108,7 +145,7 @@ def application(database):
     SOURCES.object_request=source_object
     SESSION.authenticated_supabase_plan_store=lambda scope:Store(db)
     G._request=gateway
-    JOBS.default_runner=lambda:FixtureRunner()
+    JOBS.default_runner=lambda:FixtureRunner(counts)
     app=FastAPI()
     @app.get('/test-stats')
     def stats():return counts
