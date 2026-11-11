@@ -34,11 +34,14 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
   assert.equal(baseline.modelHash,fixture.model_hash);
   // Presentation layer: derived from the exact meshes, never added to them.
   assert.ok(baseline.presentation.edgeSegments>0&&baseline.presentation.roomLabels>0&&[1,5].includes(baseline.presentation.gridCellM));
-  assert.equal(baseline.presentation.roofInArtifact,false);assert.ok((await page.locator('.av-evidence').textContent()).includes('لا يحتوي سقفًا'),'a missing roof is disclosed, not invented');
   assert.equal(baseline.presentation.entranceDetected,true,'hero and street cameras face a real exterior door');
   // Dressing exists only for approved openings; the assumed roof and scale figures are disclosed as assumptions.
-  assert.ok(baseline.presentation.detailInstances>0&&baseline.presentation.roofPieces>0&&baseline.presentation.figures===2);
-  assert.ok((await page.locator('.av-evidence').textContent()).includes('سقف افتراضي')&&(await page.locator('.av-evidence').textContent()).includes('ليست دراسة شمسية'));
+  assert.ok(baseline.presentation.detailInstances>0&&baseline.presentation.figures===2);
+  const evidenceText=await page.locator('.av-evidence').textContent(),canonicalRoof=!!fixture.canonical_roof;assert.ok(evidenceText.includes('ليست دراسة شمسية'));
+  // Canonical roof level: approved geometry, no assumed roof. No roof in the artifact: a disclosed, removable assumption.
+  assert.equal(baseline.presentation.roofSource,canonicalRoof?'artifact':'assumed');assert.equal(baseline.presentation.roofInArtifact,canonicalRoof);
+  assert.equal(baseline.presentation.roofPieces>0,!canonicalRoof);assert.ok(evidenceText.includes(canonicalRoof?'جزء من النسخة المعتمدة':'سقف افتراضي'));assert.equal(evidenceText.includes('لا يحتوي سقفًا'),!canonicalRoof);
+  if(canonicalRoof)assert.ok(await page.locator('select[aria-label="الدور المعروض في 3D"] option',{hasText:'السطح'}).count()===1,'the roof level is named, not numbered as a storey');
   const hardware=await page.evaluate(()=>{const gl=document.querySelector('#cwViewer canvas').getContext('webgl2');const ext=gl.getExtension('WEBGL_debug_renderer_info');return{browser:navigator.userAgent,cpuLogicalCores:navigator.hardwareConcurrency,webglVendor:ext?gl.getParameter(ext.UNMASKED_VENDOR_WEBGL):'unavailable',webglRenderer:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):'unavailable',physicalDevice:'not available; desktop automation viewport'}});
   const views=[];
   for(const name of ['exterior','aerial','street','interior','cutaway','detail']){
@@ -50,7 +53,7 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
    assert.ok(transitionMs<(hardware.cpuLogicalCores>=4?meta.budgets.transition_timeout_ms:meta.budgets.transition_stall_ms),'view transition '+name+' took '+Math.round(transitionMs)+' ms');
    const stats=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(stats.view,name);assert.equal(stats.modelHash,fixture.model_hash);assert.equal(stats.meshCount,baseline.meshCount);assert.equal(stats.triangleCount,baseline.triangleCount,'presentation never changes approved triangles');assert.equal(stats.presentation.clippingPlanes,1,'cutaway never changes the compiled clipping-plane count');
    const shownLabels=await page.locator('.av-label:not([hidden])').count();if(['aerial','cutaway'].includes(name))assert.ok(shownLabels>0,'room names are visible in plan-like views');if(['street','interior','detail'].includes(name))assert.equal(shownLabels,0,'room names do not float over eye-level views');
-   assert.equal(stats.presentation.assumedRoofShown,!['aerial','cutaway'].includes(name),'the assumed roof never covers plan-like views');
+   assert.equal(stats.presentation.roofShown,!['aerial','cutaway'].includes(name),'no roof, approved or assumed, covers plan-like views');
    const fits=await page.evaluate(async()=>{const stats=document.querySelector('#cwViewer').acsViewer.inspect();if(!stats.framedBounds)return true;const THREE=await import('three');const camera=new THREE.PerspectiveCamera(stats.fov,stats.aspect,.001,10000);camera.position.fromArray(stats.camera);camera.lookAt(new THREE.Vector3().fromArray(stats.target));camera.updateMatrixWorld();return [0,1].every(i=>[0,1].every(j=>[0,1].every(k=>{const p=new THREE.Vector3(stats.framedBounds[i?'max':'min'][0],stats.framedBounds[j?'max':'min'][1],stats.framedBounds[k?'max':'min'][2]).project(camera);return Math.abs(p.x)<=.94&&Math.abs(p.y)<=.94;})));});
    assert.equal(fits,true,name+' bounds must fit the actual aspect ratio');
    const screenshot=fixture.kind+'-'+viewport.width+'-'+name+'.png';await page.locator('#cwViewer').screenshot({path:path.join(output,screenshot)});assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.frameIntervalsMs.length),stats.frameIntervalsMs.length,'idle screenshot time is excluded from active transition timing');
@@ -67,7 +70,7 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
   }
   // Assumed roof can be removed; sun control re-renders once; the tour stops on any view choice.
   await page.locator('[data-view="exterior"]').click();await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
-  const roofToggle=page.getByRole('button',{name:'سقف افتراضي'});await roofToggle.click();assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().presentation.assumedRoofShown),false);await roofToggle.click();
+  const roofToggle=page.getByRole('button',{name:fixture.canonical_roof?'السطح':'سقف افتراضي',exact:true});await roofToggle.click();assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().presentation.roofShown),false);await roofToggle.click();
   const beforeSun=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls);await page.locator('.av-more-body input[type=range]').fill('16');
   assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().presentation.sunHour),16);assert.ok(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls)>beforeSun);
   await page.locator('.av-more-body input[type=range]').fill('10');

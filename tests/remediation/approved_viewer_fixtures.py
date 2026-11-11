@@ -14,12 +14,18 @@ from tools.generate_delivery_fixtures import fixtures
 from acs_plan_lock_binding import PlanLockWorkspace
 from acs_plan_bridge import existing_geometry_verifier
 from tools.acs_plan_handoff import compile_approved_baseline, verify_compiled_artifact
+from acs_roof import add_flat_roof_level
 
 out = Path(sys.argv[1]); out.mkdir(parents=True, exist_ok=True)
 records = []
 for name, model in fixtures().items():
     kind='residential' if name=='villa' else name
     area=sum(room['rect'][2]*room['rect'][3] for level in model['levels'] for room in model['floors'][level['template']]['rooms'])
+    # The villa carries a canonical roof level (approved geometry); the warehouse has
+    # none, so the viewer's disclosed assumed-roof path stays covered as well.
+    roof = None
+    if name == 'villa':
+        model, roof = add_flat_roof_level(model)
     ws = PlanLockWorkspace(existing_geometry_verifier)
     rev = ws.propose(model, brief=f'Synthetic total canonical room area {area} square metres.',
                      requirements=[{'id':'area','metric':'building_target_area_m2','expected':area,'source':'requested','evidence':str(area)}],
@@ -32,6 +38,6 @@ for name, model in fixtures().items():
     assert verify_compiled_artifact(file)['ok']
     (out / (kind + '.canonical.json')).write_text(json.dumps(model, ensure_ascii=False), encoding='utf-8')
     records.append({'kind': kind, 'revision': rev.id, 'model_hash': rev.model_hash, 'receipt': receipt,
-                    'gltf': file.name, 'claim': 'deterministic synthetic artifact; no provider call'})
+                    'gltf': file.name, 'canonical_roof': roof, 'claim': 'deterministic synthetic artifact; no provider call'})
 (out / 'fixtures.json').write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding='utf-8')
 print(json.dumps([{'kind': row['kind'], 'revision': row['revision'], 'hash': row['model_hash']} for row in records]))

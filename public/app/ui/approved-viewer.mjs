@@ -145,6 +145,15 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   // doors. Plus two clearly labelled assumptions: a flat roof over the top floor
   // plate and two human scale figures at the entrance. None of it is selectable,
   // counted, exported or added to the approved mesh list.
+  // A canonical roof level (acs_roof) arrives as an ordinary level whose rooms are
+  // all named roof_*. It is approved geometry: the viewer names it, can filter it
+  // out of plan-like views exactly like floor isolation, and adds no assumed roof.
+  const roofLevels=new Set();
+  for(const index of levels.keys()){
+    const rows=[...roomBounds.values()].filter(row=>row.identity.level===index);
+    if(rows.length&&rows.every(row=>String(row.identity.room).startsWith('roof_')))roofLevels.add(index);
+  }
+  const isRoofRow=row=>roofLevels.has(row.identity.level);
   const detailMaterials={
     frame:new THREE.MeshStandardMaterial({color:0x353c43,roughness:.36,metalness:.7}),
     timber:new THREE.MeshStandardMaterial({color:0x4b3019,roughness:.58,metalness:0}),
@@ -181,7 +190,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     }
   }
   const roofLevel=levels.size?Math.max(...levels.keys()):null;
-  if(roofLevel!==null&&!kinds.has('ROOF')){
+  if(roofLevel!==null&&!kinds.has('ROOF')&&!roofLevels.size){
     const top=levels.get(roofLevel).max.y;
     for(const mesh of meshes){
       const identity=mesh.userData.acsViewerIdentity;if(identity.kind!=='FLOOR'||identity.level!==roofLevel||!identity.name.includes('|slab|'))continue;
@@ -261,7 +270,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const buttons={};for(const [name,label]of Object.entries(VIEW_LABELS)){const button=element('button',label,toolbar);button.type='button';button.dataset.view=name;buttons[name]=button;}
   const floorLabel=element('label','الدور المعروض',toolbar);const floors=element('select',null,floorLabel);floors.setAttribute('aria-label','الدور المعروض في 3D');
   const all=element('option','جميع الأدوار',floors);all.value='all';
-  [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',index<0?'القبو '+Math.abs(index):index===0?'الأرضي':'الدور '+index,floors);option.value=String(index);});
+  [...levels.keys()].sort((a,b)=>a-b).forEach(index=>{const option=element('option',roofLevels.has(index)?'السطح':index<0?'القبو '+Math.abs(index):index===0?'الأرضي':'الدور '+index,floors);option.value=String(index);});
   floors.disabled=!levels.size;
   const reset=element('button','إعادة الضبط',toolbar);reset.type='button';
   const tourButton=element('button','جولة تلقائية',toolbar);tourButton.type='button';tourButton.setAttribute('aria-pressed','false');
@@ -269,7 +278,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const qualityButton=element('button','الجودة: '+quality.name,moreBody);qualityButton.type='button';
   const labelButton=element('button','أسماء الفراغات',moreBody);labelButton.type='button';labelButton.setAttribute('aria-pressed','true');
   const detailButton=element('button','تفاصيل الفتحات',moreBody);detailButton.type='button';detailButton.setAttribute('aria-pressed','true');
-  const roofButton=element('button','سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofPieces>0));roofButton.disabled=!roofPieces;
+  const roofButton=element('button',roofLevels.size?'السطح':'سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofPieces>0||roofLevels.size>0));roofButton.disabled=!roofPieces&&!roofLevels.size;
   const sunLabel=element('label','الشمس',moreBody),sunRange=element('input',null,sunLabel);sunRange.type='range';sunRange.min='6';sunRange.max='18';sunRange.step='0.5';sunRange.value=String(sunHour);sunRange.setAttribute('aria-label','موضع الشمس للعرض، من الصباح إلى المساء');
   const badge=element('div',null,stage,'av-badge');element('strong','نسخة معتمدة · عرض مشتق',badge);element('bdi',revisionId,badge);badge.title='بصمة النموذج: '+marker.model_hash;
   const inspector=element('div','اختر عنصرًا لعرض هويته ودوره.',stage,'av-inspector');inspector.setAttribute('role','status');inspector.setAttribute('aria-live','polite');
@@ -277,14 +286,15 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const disclosure=element('details',null,shell,'av-evidence');element('summary','النسخة وحدود العرض',disclosure);
   element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والسماء والإضاءة وشبكة القياس وخطوط الحواف وأسماء الفراغات عرض فقط ولا تدخل في التصدير أو الكميات. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
   element('p','إطارات النوافذ والأبواب ومقابضها مشتقة من فتحات موجودة في النسخة لتوضيحها فقط. شخصا المقياس بجانب المدخل ومصباح المشهد الداخلي وموضع الشمس عرض فقط؛ الملف لا يحدد اتجاه الشمال، فالظلال ليست دراسة شمسية.',disclosure);
-  if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إخفاؤها، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
+  if(roofLevels.size)element('p','السطح وحاجزه جزء من النسخة المعتمدة: دور سطح غير مشغول لا يُحسب دورًا ولا مساحة. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
+  else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إخفاؤها، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
   const evidence=element('output','',disclosure);evidence.dir='ltr';
   // Short room names anchored to the approved rooms. Names come from the review
   // packet when supplied, otherwise from the artifact's own room identifiers.
   const labelLayer=element('div',null,stage,'av-labels');labelLayer.setAttribute('aria-hidden','true');
   const labels=[],projected=new THREE.Vector3();let labelsOn=true;
   for(const row of roomBounds.values()){
-    if(labels.length>=80)break;
+    if(labels.length>=80)break;if(isRoofRow(row))continue;
     const source=options.projections?.find(p=>p.level_index===row.identity.level)?.primitives?.find(p=>p.source?.room_id===row.identity.room);
     const node=element('span',source?.label||row.identity.room,labelLayer,'av-label');node.dir='auto';node.hidden=true;
     labels.push({node,row,center:row.box.getCenter(new THREE.Vector3())});
@@ -304,13 +314,13 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     }
   }
   const controls=new OrbitControls(camera,canvas);controls.target.copy(center);controls.minDistance=.05;controls.maxDistance=extent*8;controls.enableDamping=false;controls.maxPolarAngle=Math.PI*.98;
-  let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,slowDevice=false,detailOn=true,roofOn=roofPieces>0,tour=0,tourIndex=0,updatingControls=false,framedBounds=null;
+  let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,slowDevice=false,detailOn=true,roofOn=roofPieces>0||roofLevels.size>0,tour=0,tourIndex=0,updatingControls=false,framedBounds=null;
   const updateControls=()=>{updatingControls=true;try{controls.update();}finally{updatingControls=false;}};
   const controlsChanged=()=>{if(!updatingControls)render();};
-  const topLevel=levels.size?Math.max(...levels.keys()):null;
+  const storeyLevels=[...levels.keys()].filter(index=>!roofLevels.has(index)),topLevel=storeyLevels.length?Math.max(...storeyLevels):null;
   const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
     rackGroups:[...groups.entries()].filter(([key,items])=>/^FURN\|F-?\d+\|[^|]+\|rack\d+r\d+$/.test(key)&&items.length>1).map(([name,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return{name,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
-    presentation:{detailInstances,roofPieces,assumedRoofShown:roofPieces>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF'),entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
+    presentation:{detailInstances,roofPieces,assumedRoofShown:roofPieces>0,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofPieces>0||roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
   const info=()=>{evidence.textContent=`revision=${revisionId}\nmodel=${marker.model_hash}\nmeshes=${meshes.length}; triangles=${triangles}; quality=${quality.name}\nrender CPU submission (ms)=${measuredMs===null?'not measured':measuredMs.toFixed(2)}; device/browser=${navigator.userAgent}\nviewport=${stage.clientWidth}x${stage.clientHeight}; DPR=${renderer.getPixelRatio()}`;};
   function render(){
@@ -344,16 +354,16 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   function detailBounds(object){const box=new THREE.Box3();for(const mesh of detailMeshes(object))box.union(new THREE.Box3().setFromObject(mesh));return box;}
   function chosenRoom(){
     if(selected){const identity=selected.userData.acsViewerIdentity;const match=roomBounds.get(identity.level+'|'+identity.room);if(match)return match;}
-    return [...roomBounds.values()].filter(row=>floors.value==='all'||row.identity.level===Number(floors.value)).sort((a,b)=>{const x=a.box.getSize(new THREE.Vector3()),y=b.box.getSize(new THREE.Vector3());return y.x*y.z-x.x*x.z;})[0];
+    return [...roomBounds.values()].filter(row=>floors.value==='all'?!isRoofRow(row):row.identity.level===Number(floors.value)).sort((a,b)=>{const x=a.box.getSize(new THREE.Vector3()),y=b.box.getSize(new THREE.Vector3());return y.x*y.z-x.x*x.z;})[0];
   }
   function setVisibility(){
     const floor=floors.value==='all'?null:Number(floors.value);
-    for(const mesh of meshes){const id=mesh.userData.acsViewerIdentity;mesh.visible=floor===null||id.level===null||id.level===floor;}
-    for(const [key,line]of edgeLines)line.visible=floor===null||key==='all'||Number(key)===floor;
-    const cut=chosenBounds();clipPlane.constant=currentPreset==='cutaway'?cut.min.y+Math.min(1.5,cut.getSize(new THREE.Vector3()).y*.65):clipOff;renderer.shadowMap.needsUpdate=true;
     const roofVisible=roofOn&&!['aerial','cutaway'].includes(currentPreset);
+    for(const mesh of meshes){const id=mesh.userData.acsViewerIdentity;mesh.visible=floor===null?(roofVisible||!roofLevels.has(id.level)):(id.level===null||id.level===floor);}
+    for(const [key,line]of edgeLines)line.visible=floor===null?(key==='all'||roofVisible||!roofLevels.has(Number(key))):(key==='all'||Number(key)===floor);
+    const cut=chosenBounds();clipPlane.constant=currentPreset==='cutaway'?cut.min.y+Math.min(1.5,cut.getSize(new THREE.Vector3()).y*.65):clipOff;renderer.shadowMap.needsUpdate=true;
     for(const item of detailObjects)item.object.visible=(item.group==='roof'?roofVisible:detailOn)&&(floor===null||item.level===null||item.level===floor);
-    figures.visible=detailOn&&floor===null&&!['detail','interior'].includes(currentPreset);telemetry.presentation.assumedRoofShown=roofVisible;
+    figures.visible=detailOn&&floor===null&&!['detail','interior'].includes(currentPreset);telemetry.presentation.assumedRoofShown=roofVisible&&roofPieces>0;telemetry.presentation.roofShown=roofVisible&&(roofPieces>0||roofLevels.size>0);
     if(selectionBox)selectionBox.visible=selected?.visible!==false;
   }
   function preset(name,smooth=true){

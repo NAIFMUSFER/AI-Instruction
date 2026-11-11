@@ -65,6 +65,10 @@ def _level_templates(model: dict) -> tuple[list[str], list[str]]:
             warnings.append("DUPLICATE_LEVEL_INDEX")
             continue
         seen_indices.add(level["index"])
+        if level.get("kind") == "roof":
+            # An explicitly declared roof level is a deck, not an occupied storey:
+            # it is excluded from every programme measurement (see acs_plan_review).
+            continue
         template = level.get("template")
         if not isinstance(template, str) or template not in floors:
             warnings.append("LEVEL_TEMPLATE_NOT_MEASURABLE")

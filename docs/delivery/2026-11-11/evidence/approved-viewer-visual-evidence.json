@@ -10,15 +10,15 @@
   },
   "measurements": [
     {
-      "frame_p95_ms": 850,
+      "frame_p95_ms": 816.6999999999998,
       "targets_met": {
         "first_view": true,
         "transitions": false,
         "frame_p95": false
       },
       "fixture": "residential",
-      "revision": "plan_29967d03387a4b73821b27c3ae3b9323",
-      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "revision": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+      "model_hash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
       "viewport": {
         "width": 1440,
         "height": 900
@@ -30,93 +30,97 @@
         "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
         "physicalDevice": "not available; desktop automation viewport"
       },
-      "first_view_ms": 1550.463607,
+      "first_view_ms": 1419.9582100000002,
       "views": [
         {
           "view": "exterior",
-          "transition_ms": 1775.2931989999997,
+          "transition_ms": 1749.2756160000008,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 6,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              850
+              816.6999999999998
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
-              -7.366305510947656,
-              11.675186304662981,
-              -12.300372616031492
+              -7.7896356724157165,
+              12.483314642634472,
+              -12.816628910504736
             ],
             "target": [
               6.000000189989805,
-              3.524999901652336,
+              4.075000092387199,
               4.000000189989805
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "exterior"
           },
           "screenshot": "residential-1440-exterior.png"
         },
         {
           "view": "aerial",
-          "transition_ms": 1452.153801999999,
+          "transition_ms": 1382.6339709999993,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 8,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              850
+              816.6999999999998
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
+              "roofPieces": 0,
               "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
               6.000000189989805,
-              29.127462116778723,
-              3.231926323536089
+              30.488329177238803,
+              3.2076003174442373
             ],
             "target": [
               6.000000189989805,
-              3.524999901652336,
+              4.075000092387199,
               4.000000189989805
             ],
             "visibleMeshCount": 59,
@@ -126,78 +130,82 @@
         },
         {
           "view": "street",
-          "transition_ms": 996.2980800000005,
+          "transition_ms": 987.9542120000006,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 10,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              850
+              816.6999999999998
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
-              -3.918565203101399,
-              1.499999994039534,
-              -19.615631698322584
+              -4.232700461065337,
+              1.4999999940395325,
+              -20.363572788712915
             ],
             "target": [
               6.000000189989806,
               2.2499999940395354,
               4.000000189989806
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "street"
           },
           "screenshot": "residential-1440-street.png"
         },
         {
           "view": "interior",
-          "transition_ms": 3093.602181,
+          "transition_ms": 54.41378099999929,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 12,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              850
+              816.6999999999998
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
@@ -211,50 +219,52 @@
               1.45,
               5.672800268113612
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "interior"
           },
           "screenshot": "residential-1440-interior.png"
         },
         {
           "view": "cutaway",
-          "transition_ms": 34.988092000001416,
+          "transition_ms": 39.80183600000055,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 14,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              850
+              816.6999999999998
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
+              "roofPieces": 0,
               "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
-              -3.1498674604424135,
-              23.858039124835035,
-              -8.60648412838347
+              -3.439656953256211,
+              25.052015966267234,
+              -9.005749651815814
             ],
             "target": [
               6.000000189989805,
-              3.524999901652336,
+              4.075000092387199,
               4.000000189989805
             ],
             "visibleMeshCount": 59,
@@ -264,32 +274,34 @@
         },
         {
           "view": "detail",
-          "transition_ms": 3307.5950150000026,
+          "transition_ms": 3134.732457000002,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 16,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              850
+              816.6999999999998
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
@@ -303,7 +315,7 @@
               1.100000023841858,
               0
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "detail"
           },
           "screenshot": "residential-1440-detail.png"
@@ -311,14 +323,14 @@
       ]
     },
     {
-      "frame_p95_ms": 800,
+      "frame_p95_ms": 866.6000000000004,
       "targets_met": {
         "first_view": true,
-        "transitions": false,
+        "transitions": true,
         "frame_p95": false
       },
       "fixture": "warehouse",
-      "revision": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+      "revision": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
       "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
       "viewport": {
         "width": 1440,
@@ -331,13 +343,13 @@
         "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
         "physicalDevice": "not available; desktop automation viewport"
       },
-      "first_view_ms": 1485.0120610000013,
+      "first_view_ms": 1457.9088730000003,
       "views": [
         {
           "view": "exterior",
-          "transition_ms": 1675.6506230000014,
+          "transition_ms": 1693.366879000001,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -345,12 +357,14 @@
             "renderCalls": 6,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              800
+              866.6000000000004
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -381,9 +395,9 @@
         },
         {
           "view": "aerial",
-          "transition_ms": 1359.4318070000008,
+          "transition_ms": 1401.0631009999997,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -391,12 +405,14 @@
             "renderCalls": 8,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              800
+              866.6000000000004
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -427,9 +443,9 @@
         },
         {
           "view": "street",
-          "transition_ms": 25.927423000001,
+          "transition_ms": 899.346123000003,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -437,12 +453,14 @@
             "renderCalls": 10,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              800
+              866.6000000000004
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -473,9 +491,9 @@
         },
         {
           "view": "interior",
-          "transition_ms": 3311.5913809999984,
+          "transition_ms": 27.23358300000109,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -483,12 +501,14 @@
             "renderCalls": 12,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              800
+              866.6000000000004
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -519,9 +539,9 @@
         },
         {
           "view": "cutaway",
-          "transition_ms": 39.29351299999689,
+          "transition_ms": 39.3405569999959,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -529,12 +549,14 @@
             "renderCalls": 14,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              800
+              866.6000000000004
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -565,9 +587,9 @@
         },
         {
           "view": "detail",
-          "transition_ms": 47.975140000002284,
+          "transition_ms": 17.806220999998914,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -575,12 +597,14 @@
             "renderCalls": 16,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              800
+              866.6000000000004
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -612,15 +636,15 @@
       ]
     },
     {
-      "frame_p95_ms": 750,
+      "frame_p95_ms": 850,
       "targets_met": {
         "first_view": true,
         "transitions": true,
         "frame_p95": false
       },
       "fixture": "residential",
-      "revision": "plan_29967d03387a4b73821b27c3ae3b9323",
-      "model_hash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
+      "revision": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+      "model_hash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
       "viewport": {
         "width": 393,
         "height": 852
@@ -632,93 +656,97 @@
         "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
         "physicalDevice": "not available; desktop automation viewport"
       },
-      "first_view_ms": 1268.0318160000024,
+      "first_view_ms": 1493.8582960000058,
       "views": [
         {
           "view": "exterior",
-          "transition_ms": 1455.9136169999983,
+          "transition_ms": 1651.8516030000028,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 8,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              750
+              850
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
-              -8.343498678906519,
-              12.27103579732083,
-              -13.492071601347178
+              -8.797777956071414,
+              13.09803554730258,
+              -14.046070719840952
             ],
             "target": [
               6.000000189989805,
-              3.524999901652336,
+              4.075000092387199,
               4.000000189989805
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "exterior"
           },
           "screenshot": "residential-393-exterior.png"
         },
         {
           "view": "aerial",
-          "transition_ms": 34.58753200000501,
+          "transition_ms": 62.55722099999548,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 10,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              750
+              850
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
+              "roofPieces": 0,
               "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
               6.000000189989805,
-              30.99922472039715,
-              3.17577344542744
+              32.4193731995939,
+              3.149668996773583
             ],
             "target": [
               6.000000189989805,
-              3.524999901652336,
+              4.075000092387199,
               4.000000189989805
             ],
             "visibleMeshCount": 59,
@@ -728,78 +756,82 @@
         },
         {
           "view": "street",
-          "transition_ms": 46.57949899999949,
+          "transition_ms": 48.58000300001004,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 12,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              750
+              850
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
-              -4.64369857614719,
-              1.4999999940395363,
-              -21.34213972938399
+              -4.980799852902382,
+              1.4999999940395337,
+              -22.144761816896352
             ],
             "target": [
               6.000000189989806,
               2.2499999940395354,
               4.000000189989806
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "street"
           },
           "screenshot": "residential-393-street.png"
         },
         {
           "view": "interior",
-          "transition_ms": 39.343788999991375,
+          "transition_ms": 963.3011410000036,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 14,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              750
+              850
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
@@ -813,50 +845,52 @@
               1.45,
               5.672800268113612
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "interior"
           },
           "screenshot": "residential-393-interior.png"
         },
         {
           "view": "cutaway",
-          "transition_ms": 36.01212400000077,
+          "transition_ms": 36.77978599999915,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 16,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              750
+              850
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
+              "roofPieces": 0,
               "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
             "camera": [
-              -3.818802344604391,
-              25.344561089639434,
-              -9.528127746562195
+              -4.129777969088371,
+              26.585618223672025,
+              -9.956583051406788
             ],
             "target": [
               6.000000189989805,
-              3.524999901652336,
+              4.075000092387199,
               4.000000189989805
             ],
             "visibleMeshCount": 59,
@@ -866,32 +900,34 @@
         },
         {
           "view": "detail",
-          "transition_ms": 42.78174599999329,
+          "transition_ms": 947.2887290000072,
           "stats": {
-            "revisionId": "plan_29967d03387a4b73821b27c3ae3b9323",
-            "modelHash": "0783c360f208c143ee97d6bdbbd37a26a32362631af325c852782fea555499a0",
-            "meshCount": 59,
-            "triangleCount": 708,
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
             "quality": "متوازن",
             "renderCalls": 18,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              750
+              850
             ],
             "presentation": {
               "detailInstances": 32,
-              "roofPieces": 2,
-              "assumedRoofShown": true,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
-              "edgeSegments": 648,
-              "edgeLayers": 2,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
               "roomLabels": 4,
               "gridCellM": 1,
               "clippingPlanes": 1,
               "animatedTransitions": false,
-              "roofInArtifact": false,
+              "roofInArtifact": true,
               "entranceSide": "nz",
               "entranceDetected": true
             },
@@ -905,7 +941,7 @@
               1.100000023841858,
               0
             ],
-            "visibleMeshCount": 59,
+            "visibleMeshCount": 67,
             "view": "detail"
           },
           "screenshot": "residential-393-detail.png"
@@ -913,14 +949,14 @@
       ]
     },
     {
-      "frame_p95_ms": 683.2999999999993,
+      "frame_p95_ms": 666.6999999999998,
       "targets_met": {
         "first_view": true,
         "transitions": true,
         "frame_p95": false
       },
       "fixture": "warehouse",
-      "revision": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+      "revision": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
       "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
       "viewport": {
         "width": 393,
@@ -933,13 +969,13 @@
         "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
         "physicalDevice": "not available; desktop automation viewport"
       },
-      "first_view_ms": 1394.6794980000122,
+      "first_view_ms": 1416.4515989999927,
       "views": [
         {
           "view": "exterior",
-          "transition_ms": 1391.546715999997,
+          "transition_ms": 1319.167465999999,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -947,12 +983,14 @@
             "renderCalls": 8,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              683.2999999999993
+              666.6999999999998
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -983,9 +1021,9 @@
         },
         {
           "view": "aerial",
-          "transition_ms": 33.94539900000382,
+          "transition_ms": 35.56949799999711,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -993,12 +1031,14 @@
             "renderCalls": 10,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              683.2999999999993
+              666.6999999999998
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -1029,9 +1069,9 @@
         },
         {
           "view": "street",
-          "transition_ms": 497.7761679999967,
+          "transition_ms": 44.82985700000427,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -1039,12 +1079,14 @@
             "renderCalls": 12,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              683.2999999999993
+              666.6999999999998
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -1075,9 +1117,9 @@
         },
         {
           "view": "interior",
-          "transition_ms": 39.03401300001133,
+          "transition_ms": 40.39598300000944,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -1085,12 +1127,14 @@
             "renderCalls": 14,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              683.2999999999993
+              666.6999999999998
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -1121,9 +1165,9 @@
         },
         {
           "view": "cutaway",
-          "transition_ms": 667.8003339999996,
+          "transition_ms": 33.06875799999398,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -1131,12 +1175,14 @@
             "renderCalls": 16,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              683.2999999999993
+              666.6999999999998
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
               "figures": 2,
               "sunHour": 10,
               "tour": false,
@@ -1167,9 +1213,9 @@
         },
         {
           "view": "detail",
-          "transition_ms": 37.41213100000459,
+          "transition_ms": 38.12897299999895,
           "stats": {
-            "revisionId": "plan_58eaa7f1bc0a46dfa62a985381384f3c",
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
             "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
             "meshCount": 72,
             "triangleCount": 864,
@@ -1177,12 +1223,14 @@
             "renderCalls": 18,
             "activeAnimation": false,
             "frameIntervalsMs": [
-              683.2999999999993
+              666.6999999999998
             ],
             "presentation": {
               "detailInstances": 18,
               "roofPieces": 2,
               "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
               "figures": 2,
               "sunHour": 10,
               "tour": false,

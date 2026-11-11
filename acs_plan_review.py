@@ -295,13 +295,25 @@ def _geometry(model: dict) -> tuple[list[dict], dict]:
         room_counts[template] = len(rooms)
     if not model["floors"]:
         issue("EMPTY_MODEL", "/floors")
-    total_area = sum(areas[l["template"]] for l in levels) if levels_valid and not issues else None
+    # A level explicitly declared ``kind: "roof"`` is a roof deck, never an occupied
+    # storey (acs_arch reports it the same way). It stays in the model, the plans
+    # and the 3D artifact, and is measured separately instead of inflating storey
+    # count, space count or room area. Only the explicit kind is honoured here;
+    # a template that merely has "roof" in its name keeps its previous treatment.
+    roof_levels = [l for l in levels if l.get("kind") == "roof"] if levels_valid else []
+    occupied_levels = [l for l in levels if l.get("kind") != "roof"] if levels_valid else []
+    if levels_valid and roof_levels and not occupied_levels:
+        issue("NO_OCCUPIED_LEVEL", "/levels")
+    total_area = sum(areas[l["template"]] for l in occupied_levels) if levels_valid and not issues else None
     if total_area is not None and not _number(total_area):
         issue("NON_FINITE_MEASUREMENT", "/levels")
         total_area = None
     metrics = {
-        "level_count": len(levels) if levels_valid else None,
-        "space_instance_count": sum(room_counts[l["template"]] for l in levels) if levels_valid else None,
+        "level_count": len(occupied_levels) if levels_valid else None,
+        "space_instance_count": sum(room_counts[l["template"]] for l in occupied_levels) if levels_valid else None,
+        "roof_level_count": len(roof_levels) if levels_valid else None,
+        "roof_deck_rect_area_m2": (sum(areas[l["template"]] for l in roof_levels)
+                                   if levels_valid and not issues else None),
         # This is NOT GFA/NFA: it is the sum of non-overlapping canonical rect areas.
         "space_rect_area_m2": total_area,
         "gross_floor_area_m2": None, "net_floor_area_m2": None, "efficiency": None,
@@ -319,6 +331,9 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
     seen = set()
     rooms = _room_index(model)
     levels = model.get("levels") if isinstance(model.get("levels"), list) else []
+    # Programme requirements (storeys, units, rooms per level) describe occupied
+    # storeys; an explicit roof level is not one of them.
+    levels = [lv for lv in levels if not (isinstance(lv, dict) and lv.get("kind") == "roof")]
     instances = Counter(lv.get("template") for lv in levels
                         if isinstance(lv, dict) and isinstance(lv.get("template"), str))
     # The scorecard is deterministic and reads only canonical geometry/explicit

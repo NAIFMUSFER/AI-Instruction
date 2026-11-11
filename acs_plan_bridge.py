@@ -200,11 +200,15 @@ def existing_geometry_verifier(building: dict) -> dict:
     if topology_known:
         findings += [item['message'] for item in residential_access_issues(building)]
         findings += [item['message'] for item in opening_collisions(building)]
-    vertical_known = len(levels) == 1
+    # Vertical circulation is verified between occupied storeys. An explicit roof
+    # level is an unoccupied deck: it needs no stair core to be a valid concept,
+    # and nothing here claims that the roof is accessible.
+    storeys = [level for level in levels if level.get('kind') != 'roof']
+    vertical_known = len(storeys) == 1
     core_issue = False
-    if len(levels) > 1:
+    if len(storeys) > 1:
         stacks = []
-        for level in levels:
+        for level in storeys:
             cores = [r for r in floors[level['template']]['rooms']
                      if r.get('role') in ('stair', 'stairs', 'elevator')]
             ids = [r.get('core_id') for r in cores]

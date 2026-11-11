@@ -77,3 +77,19 @@ Measured in the same 1-core software-rendering sandbox: 21 to 23 of 24 transitio
 
 ### Gap to the reference video that the viewer cannot close
 The reference shows authored components: parametric umbrellas, columns with capitals, patterned paving, railings, lamps, animated visitors, minarets and arcades. ACS has no equivalent elements in its canonical model or compiler. Reaching or exceeding that level for generated buildings requires new canonical element types with compiler geometry and Python/browser parity tests (roof and parapet, stairs with treads and landings, columns, railings, shading devices, site paving and landscape), plus a material library with world-scale texture coordinates. None of that is delivered here.
+
+## 5. Third increment: a canonical roof level with parapets
+
+The assumed roof of section 4 is a viewer assumption. This increment adds the real thing as model data.
+
+- `acs_roof.add_flat_roof_level(model, parapet_h=0.9)` appends one level with `kind: "roof"` and `auto: true`. Its rooms mirror the rectangles of the top occupied level (an L-shaped building keeps its recess open) and use the existing per-room `wall_h` to raise a parapet on exterior edges only. A partly shared edge is left open and reported in `parapet_gaps`, never guessed. The function is pure, deterministic and refuses to run twice.
+- No compiler change was needed: both compilers already build per-room wall heights, and `acs_arch` already reports such a level as a ROOF with `occupied_floor: False` and source `system_default`.
+- Review integration, because the first probe was rejected: the roof deck was being counted as a storey and as room area, and the roof level was required to carry a stair core. Now an explicit `kind: "roof"` level is excluded from storey count, space count and room area in `acs_plan_review` and `acs_plan_scorecard`, is reported separately (`roof_level_count`, `roof_deck_rect_area_m2`), and vertical circulation in `acs_plan_bridge` is verified between occupied storeys only. Only the explicit kind is honoured; a template that merely has "roof" in its name keeps its previous treatment.
+- The approved viewer recognises a roof level (all rooms named `roof_*`), names it "السطح" in the floor selector, hides it in aerial and cutaway views like any view filter, and adds no assumed roof when one exists.
+- `tests/remediation/test_roof_level.py` (8 tests, added to the delivery-critical CI list) covers the helper, the architecture report, identical programme measurements with and without the roof, approval, and the compiled artifact. The viewer fixtures now use a villa with a canonical roof and a warehouse without one, so both paths are exercised in a real browser.
+
+### Not done
+- **Nothing calls `add_flat_roof_level` in the generation or editing journey yet.** A generated or imported building still has no roof level unless the model already declares one; the viewer then shows the disclosed assumed roof. Wiring it in needs a disclosed default at generation plus a user-facing add/remove action, with provenance in the review packet.
+- 2D/IFC/DXF/PDF outputs were not inspected for how they present the roof level (it will appear as one more level of spaces). `test_geometry_independent_readers.py` still passes on its unchanged fixtures.
+- Pitched roofs, roof access, drainage, structure and code compliance are out of scope.
+- Stairs with treads, columns, railings, trees and many furnishings already exist as compiler object kinds; what is missing is the generation path choosing and placing them, and world-scale material textures. Neither was started.

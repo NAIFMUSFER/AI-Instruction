@@ -727,6 +727,7 @@ jobs:
             tests/remediation/test_geometry_delivery.py \
             tests/remediation/test_geometry_independent_readers.py \
             tests/remediation/test_requirement_vocabulary.py \
+            tests/remediation/test_roof_level.py \
             tests/remediation/test_warehouse_soft_area_fit.py \
             tests/remediation/test_live_generation_verdict.py
       - name: Canonical generated sources agree with tracked outputs
