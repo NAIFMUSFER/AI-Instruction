@@ -82,6 +82,57 @@ class IndependentGeometryReaders(unittest.TestCase):
                 bounds=[[round(min(v[i::3]),6),round(max(v[i::3]),6)] for i in range(3)]
                 actual.append((s.LongName,bounds))
             self.assertEqual(sorted(actual),sorted(expected))
+    def test_explicit_roof_with_non_prefixed_ids_in_ifc_dxf_pdf_and_gltf(self):
+        import acs_roof
+        from acs_plan_lock_binding import PlanLockWorkspace
+        from acs_plan_bridge import existing_geometry_verifier
+        from acs_plan_projection import project
+        from tools.acs_plan_handoff import compile_approved_baseline
+        from tools.acs_plan_ifc_export import export_approved_ifc
+        from tools.acs_plan_cad_export import export_approved_cad
+        from tools.acs_plan_pdf_export import export_approved_pdf
+        from pypdf import PdfReader
+        base=fixtures()['villa'];model,report=acs_roof.add_flat_roof_level(base)
+        roof=model['levels'][-1];roof.pop('auto')
+        rooms=model['floors'][roof['template']]['rooms']
+        for i,room in enumerate(rooms):room['id']='declared_deck_'+str(i)
+        area=sum(r['rect'][2]*r['rect'][3] for l in base['levels'] for r in base['floors'][l['template']]['rooms'])
+        ws=PlanLockWorkspace(existing_geometry_verifier)
+        rev=ws.propose(model,brief=f'Synthetic area {area}',requirements=[{'id':'area','metric':'building_target_area_m2','expected':area,'source':'requested','evidence':str(area)}],expected_head=None,note='Explicit roof export acceptance')
+        self.assertTrue(ws.review(rev.id)['can_approve'])
+        ws.approve(rev.id,expected_head=rev.id,confirmed=True,acknowledge_concept_only=True,actor_label='synthetic-reader')
+        out=self.root/'roof-reader';out.mkdir()
+        export_approved_ifc(ws,rev.id,out/'roof.ifc')
+        export_approved_cad(ws,rev.id,roof['index'],out/'roof.dxf')
+        export_approved_pdf(ws,rev.id,out/'roof.pdf')
+        compile_approved_baseline(ws,rev.id,out/'roof.gltf')
+        f=ifcopenshell.open(str(out/'roof.ifc'))
+        logger=ifcopenshell.validate.json_logger();ifcopenshell.validate.validate(f,logger)
+        self.assertEqual(logger.statements,[])
+        spaces=[s for s in f.by_type('IfcSpace') if s.LongName.startswith('declared_deck_')]
+        self.assertEqual(len(spaces),len(rooms))
+        settings=ifcopenshell.geom.settings();settings.set(settings.USE_WORLD_COORDS,True)
+        for space in spaces:
+            shape=ifcopenshell.geom.create_shape(settings,space);v=shape.geometry.verts
+            room=next(r for r in rooms if r['id']==space.LongName);x,z,w,d=room['rect']
+            expected=((x,x+w),(z,z+d),(roof['elevation'],roof['elevation']+.9))
+            for axis,(low,high) in enumerate(expected):
+                self.assertAlmostEqual(min(v[axis::3]),low,places=6)
+                self.assertAlmostEqual(max(v[axis::3]),high,places=6)
+        cad=ezdxf.readfile(out/'roof.dxf');self.assertEqual(cad.audit().errors,[])
+        polygons=list(cad.modelspace().query('LWPOLYLINE'));self.assertEqual(len(polygons),len(rooms))
+        for poly,room in zip(polygons,rooms):
+            xy=list(poly.get_points('xy'));xs=[p[0] for p in xy];ys=[p[1] for p in xy]
+            self.assertTrue(poly.closed);x,z,w,d=room['rect']
+            for actual,expected in zip((min(xs),max(xs),min(ys),max(ys)),(x,x+w,-z-d,-z)):
+                self.assertAlmostEqual(actual,expected,places=6)
+        text='\n'.join(page.extract_text() or '' for page in PdfReader(out/'roof.pdf').pages)
+        self.assertIn('Roof deck, unoccupied - Level '+str(roof['index']),text)
+        projection=project(rev.revision,roof['index']);self.assertEqual(projection['level_kind'],'roof');self.assertFalse(projection['level_auto'])
+        gltf=json.loads((out/'roof.gltf').read_text());metadata=gltf['scenes'][0]['extras']['acs_levels']
+        self.assertEqual([l['index'] for l in metadata if l['kind']=='roof'],[roof['index']])
+        self.assertEqual(ws.get(rev.id).model_hash,rev.model_hash)
+
     def test_dxf_boundaries_match_declared_rectangles(self):
         for name,model in self.models.items():
             for l in model['levels']:

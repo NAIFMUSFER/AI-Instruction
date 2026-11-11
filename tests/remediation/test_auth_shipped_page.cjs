@@ -7,13 +7,37 @@ const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh',expires_at:Math.floor(Date.now()/1000)+3600,user:{id:'fixture-user',email:'fixture@example.test'}});
-(async()=>{
+const sourcePath='/v1/projects/fixture-project/workspace/plan-source';
+function sourceResponse(page){
+  const pending=page.waitForResponse(response=>new URL(response.url()).pathname===sourcePath&&response.request().method()==='POST');
+  // Observe teardown rejection immediately: a failed navigation may prevent the
+  // caller from reaching its await. Return the original promise so a source
+  // request failure still fails privateWorkspaceReady instead of being swallowed.
+  pending.catch(()=>{});
+  return pending;
+}
+function workspaceEntered(){return !!document.body&&document.body.classList.contains('acs-entered');}
+async function privateWorkspaceReady(page,sourceRestore){
+  const response=await sourceRestore;
+  assert.equal(response.status(),200,'the authenticated source list must finish restoring');
+  assert.deepEqual((await response.json()).sources,[]);
+  await page.locator('#designWorkspace').waitFor({state:'visible'});
+  await page.waitForFunction(()=>{
+    const status=document.querySelector('#cwStatus');
+    return status&&(status.textContent.includes('مشروعك جاهز')||status.getAttribute('role')==='alert');
+  });
+  assert.match(await page.locator('#cwStatus').textContent(),/مشروعك جاهز/,'private workspace must finish successfully');
+  assert.equal(await page.locator('#cwProject').inputValue(),'fixture-project');
+  assert.equal(await page.locator('#cwBriefForm').isVisible(),true);
+}
+async function runAuthShippedPage(){
   const browser=await PW.launch();
   try{
     for(const width of [393,1280]){
       const context=await browser.newContext({viewport:{width,height:852}}), page=await context.newPage();
       const errors=[], calls=[], localModules=[];let firstProject=null, failSignin=true, googleChallenge=null;
       page.on('pageerror',e=>errors.push(e.message));
+      try{
       await page.route('**/*',async route=>{
         const req=route.request(),url=new URL(req.url());
         if(['/app/render/scene.js','/app/ui/workspace-ui-wiring.js','/app/ui/guest-workspace.js'].includes(url.pathname))localModules.push(url.pathname);
@@ -49,7 +73,15 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
             else {firstProject=firstProject||{id:'fixture-project',name:input.name};body={project:firstProject,user:{id:'fixture-user'}};}
           }else if(url.pathname==='/v1/auth/signout')body={ok:true};
           else if(url.pathname==='/v1/auth/projects')body={ok:true,projects:firstProject?[firstProject]:[]};
-          else if(url.pathname==='/v1/projects/fixture-project/workspace')body={ok:true,head:null,baseline:null,history:[],revision_id:null};
+          else if(url.pathname==='/v1/projects/fixture-project/workspace'){
+            assert.equal(req.headers().authorization,'Bearer fixture-access');
+            assert.deepEqual(req.postDataJSON(),{action:'state'});
+            body={ok:true,head:null,baseline:null,history:[],revision_id:null};
+          }else if(url.pathname===sourcePath){
+            assert.equal(req.headers().authorization,'Bearer fixture-access');
+            assert.deepEqual(req.postDataJSON(),{action:'list'},'sign-in must only read existing sources');
+            body={ok:true,sources:[]};
+          }
           else return route.abort();
           return route.fulfill({status,headers,body:JSON.stringify(body)});
         }
@@ -88,16 +120,19 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       await page.locator('#acsAuthProjectField').waitFor({state:'visible'});
       assert.equal(await page.locator('#lgPassword').inputValue(),'');
       assert.equal(await page.locator('#acsAuthCredentials').isVisible(),false);
+      const firstSourceRestore=sourceResponse(page);
       await page.locator('#lgProject').fill('مشروع تحقق الواجهة');await page.locator('#lgGo').click();
-      await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      await page.waitForFunction(workspaceEntered);
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
-      await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
+      await privateWorkspaceReady(page,firstSourceRestore);
       assert.equal(await page.evaluate(()=>window.ACS.exportModel?.()??null),null,'production entry must not inject a demo');
       assert.equal(await page.evaluate(()=>typeof window.ACS.persistence),'undefined','private review must not mount guest/local persistence');
       assert.equal(await page.locator('#app canvas').count(),0,'private entry must allocate no hidden renderer');
       assert.deepEqual(localModules,[],'sign-in and private review must not import the local studio graph');
       const before=calls.filter(p=>p==='/v1/auth/signin').length;
-      await page.reload();await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      const reloadSourceRestore=sourceResponse(page);
+      await page.reload();await page.waitForFunction(workspaceEntered);
+      await privateWorkspaceReady(page,reloadSourceRestore);
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before,'reload reuses a verified session');
       assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_local_project:fixture-user:fixture-project');
       // Logout owns a full reload. Wait for that navigation before starting a new
@@ -110,8 +145,10 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       assert.equal(await page.locator('#camBar').isVisible(),false);
       // A real browser redirect round trip must preserve this tab's PKCE proof,
       // restore the same Supabase project, and keep auth codes out of the URL.
+      const googleSourceRestore=sourceResponse(page);
       await page.locator('#acsAuthGoogle').click();
-      await page.waitForFunction(()=>document.body.classList.contains('acs-entered'));
+      await page.waitForFunction(workspaceEntered);
+      await privateWorkspaceReady(page,googleSourceRestore);
       assert.equal(page.url(),'https://acs-ui.test/');
       assert.equal(await page.evaluate(()=>sessionStorage.getItem('acs_google_pkce_v1')),null);
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
@@ -123,8 +160,25 @@ const session=()=>({access_token:'fixture-access',refresh_token:'fixture-refresh
       fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
       await page.screenshot({path:path.join(ROOT,'logs','auth-'+width+'.png')});
       console.log('PASS shipped auth '+width+': email entry, project onboarding, Google PKCE redirect, reload and logout');
-      await context.close();
+      }catch(error){
+        fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
+        const visible=await page.evaluate(()=>Object.fromEntries(['acsAuthStatus','cwStatus'].map(id=>{
+          const el=document.getElementById(id),rect=el?.getBoundingClientRect(),style=el&&getComputedStyle(el);
+          return [id,{visible:!!rect&&rect.width>0&&rect.height>0&&style.visibility!=='hidden'&&style.display!=='none',text:el?.textContent?.slice(0,300)||''}];
+        }))).catch(()=>({unavailable:true}));
+        const message=String(error.message||'').split('\n')[0]
+          .replace(/https?:\/\/[^\s]+/g,value=>{try{const url=new URL(value);return url.origin+url.pathname;}catch{return '[url]';}})
+          .replace(/(?:Bearer\s+|(?:access_token|refresh_token|code_verifier|password)\s*[:=]\s*)\S+/gi,'[redacted]')
+          .slice(0,500);
+        const diagnostic={width,error_type:error.name,error_message:message,visible,endpoint_paths:[...new Set(calls)],local_modules:localModules};
+        fs.writeFileSync(path.join(ROOT,'logs','auth-failure-'+width+'.json'),JSON.stringify(diagnostic,null,2));
+        await page.screenshot({path:path.join(ROOT,'logs','auth-failure-'+width+'.png'),mask:[page.locator('input')]}).catch(()=>{});
+        console.error('AUTH FIXTURE DIAGNOSTIC',JSON.stringify(diagnostic));
+        throw error;
+      }finally{await context.close();}
     }
   }finally{await browser.close();}
   await require('./test_guest_workspace.cjs').runGuestWorkspaceTests();
-})().catch(e=>{console.error(e);process.exitCode=1;});
+}
+module.exports={sourceResponse,workspaceEntered};
+if(require.main===module)runAuthShippedPage().catch(e=>{console.error(e);process.exitCode=1;});

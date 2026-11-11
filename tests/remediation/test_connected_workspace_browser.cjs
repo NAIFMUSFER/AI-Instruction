@@ -8,11 +8,26 @@ const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
+// Read the actual authorized workspace state, independently of visible button labels.
+async function workspaceState(page){return page.evaluate(async()=>{const session=await window.ACS_AUTH.freshSession();return window.ACS_AUTH.acsFetchJSON('/v1/projects/'+window.ACS.projectId+'/workspace',{action:'state'},session.access_token);});}
+const roofRows=view=>JSON.parse(view.review_packet.payload_json).projections.filter(p=>p.level_kind==='roof');
+const revisionState=(view,id=view.head)=>view.history.find(row=>row.revision_id===id)?.state;
+function assertConceptApproval(view,stage){
+ const blockers=(view.review_findings||[]).slice(0,16).map(issue=>{
+  const requirement=view.requirements?.find(row=>row.id===issue.requirement_id);
+  return {code:issue.code,requirement_id:issue.requirement_id,metric:requirement?.metric,expected:requirement?.expected};
+ });
+ assert.equal(view.authority?.can_approve_concept,true,stage+' must satisfy the actual canonical review: '+JSON.stringify(blockers));
+}
+
 (async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'acs-ui-')),port=8891;
  const child=spawn(process.env.PYTHON||'python',['tests/remediation/connected_workspace_browser_server.py','--port',String(port),'--database',path.join(tmp,'plans.sqlite3')],{cwd:ROOT,stdio:['ignore','pipe','pipe']});
- let backendLog='';child.stderr.on('data',b=>{backendLog+=b;});
- let browser;
+ let backendLog='';const appendBackend=b=>{backendLog=(backendLog+String(b)).slice(-12000);};
+ child.stdout.on('data',appendBackend);child.stderr.on('data',appendBackend);
+ let browser,activePage,activeCase;
+ const networkEvents=[],pageErrors=[];
+ const recordNetwork=event=>{networkEvents.push(event);if(networkEvents.length>36)networkEvents.shift();};
  try{
   const pdfFixture=path.join(tmp,'two-page-plan.pdf');
   execFileSync(process.env.PYTHON||'python',['-c',`import sys
@@ -28,14 +43,25 @@ w.write(sys.argv[1])`,pdfFixture]);
   assert.ok(ready,'fixture backend did not start: '+backendLog);browser=await PW.launch();
   for(const {width,noWebGL} of [{width:393},{width:1280},{width:393,noWebGL:true}]){
    const context=await browser.newContext({viewport:{width,height:900},acceptDownloads:true}),page=await context.newPage();
-   let blockJobPoll=false;
-   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   activePage=page;activeCase={width,noWebGL:!!noWebGL};networkEvents.length=0;pageErrors.length=0;
+   let blockJobPoll=false,comparisonPause=null,comparisonStarted=null;
+   const workspaceActions=[];
+   const errors=[];page.on('pageerror',e=>{errors.push(e.message);pageErrors.push(e.message.slice(0,1000));if(pageErrors.length>12)pageErrors.shift();});
    if(noWebGL)await page.addInitScript(()=>{const original=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(type,...args){return /webgl/i.test(type)?null:original.call(this,type,...args);};});
    await page.route('**/*',async route=>{
     const req=route.request(),url=new URL(req.url());
     if(url.hostname==='acs-engine.onrender.com'){
-      if(blockJobPoll&&url.pathname.endsWith('/workspace')&&req.method()==='POST'&&req.postDataJSON()?.action==='job')return route.abort('failed');
-      const response=await route.fetch({url:'http://127.0.0.1:'+port+url.pathname+url.search});return route.fulfill({response});
+      const body=req.method()==='POST'&&/\/(?:workspace|plan\/commands)$/.test(url.pathname)?req.postDataJSON():null;
+      if(url.pathname.endsWith('/workspace'))workspaceActions.push(body?.action);
+      if(comparisonPause&&url.pathname.endsWith('/plan/commands')&&body?.action==='compare'){comparisonStarted?.();await comparisonPause;}
+      if(blockJobPoll&&url.pathname.endsWith('/workspace')&&req.method()==='POST'&&req.postDataJSON()?.action==='job'){recordNetwork({action:body?.action,outcome:'intentional_poll_disconnect'});return route.abort('failed');}
+      const response=await route.fetch({url:'http://127.0.0.1:'+port+url.pathname+url.search});
+      if(body){
+       const receipt={action:body.action,status:response.status()};
+       try{const reply=await response.json();receipt.error_code=reply.error?.code;receipt.head=reply.head;receipt.revision_id=reply.revision_id;if(reply.job){receipt.job={};for(const key of ['id','state','phase','revision_id','error_code','can_resume'])receipt.job[key]=reply.job[key];}}catch(e){receipt.invalid_json=true;}
+       recordNetwork(receipt);
+      }
+      return route.fulfill({response});
     }
     if(url.hostname!=='acs-ui.test')return route.abort();
     const f=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
@@ -128,6 +154,32 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,before+1,'reload must not submit a second paid job');
    assert.ok(await page.locator('#cwPlan g[role=button]').count());
    assert.equal(await page.locator('#app canvas').count(),0,'private 2D review allocates no hidden legacy renderer');
+   // Actual cwRoof journey: an approved automatic roof is removed as a new
+   // draft, survives reload and another controlled generation, then is restored.
+   const initialRoof=await workspaceState(page);assert.equal(roofRows(initialRoof).length,1);assert.equal(roofRows(initialRoof)[0].level_auto,true);assertConceptApproval(initialRoof,'Initial source/sample fixture');
+   assert.equal(await page.locator('#cwRoof').textContent(),'إزالة السطح الافتراضي');
+   const roofProviderBefore=(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
+   await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();await page.locator('#cwShow3D').waitFor({state:'visible'});
+   const approvedRoof=await workspaceState(page);assert.equal(revisionState(approvedRoof),'APPROVED');
+   await page.locator('[data-step="3"]').click();await page.locator('#cwRoof').click();
+   await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('أكد إنشاء مسودة'));
+   assert.equal((await workspaceState(page)).head,approvedRoof.head,'roof editing needs explicit approval-invalidation acknowledgement');
+   await page.locator('#cwEditApprovalConfirm').check();await page.locator('#cwRoof').click();
+   await page.waitForFunction(id=>document.querySelector('#cwRevision').value!==id&&document.querySelector('#cwRoof').dataset.enabled==='false',approvedRoof.head);
+   const removedRoof=await workspaceState(page);assert.notEqual(removedRoof.head,approvedRoof.head);assert.equal(removedRoof.history.length,approvedRoof.history.length+1);assert.notEqual(revisionState(removedRoof),'APPROVED');assert.equal(revisionState(removedRoof,approvedRoof.head),'APPROVED');assert.equal(roofRows(removedRoof).length,0);
+   assert.equal(await page.locator('#cwShow3D').isDisabled(),true,'the new roofless draft cannot borrow the old approval');
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore,'roof removal must not invoke the controlled provider');
+   await page.reload();await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
+   assert.equal((await workspaceState(page)).head,removedRoof.head);assert.equal(await page.locator('#cwRoof').textContent(),'إضافة سطح افتراضي');
+   await page.locator('[data-step="1"]').click();await page.locator('#cwStartMode').selectOption('describe');await page.locator('#cwConfirmed').check();await page.locator('#cwBriefForm button[type=submit]').click();await page.locator('[data-option="A"]').click();
+   await page.waitForFunction(id=>document.querySelector('#cwRevision').value!==id&&document.querySelector('#cwJobProgress').hidden,removedRoof.head,{timeout:45000});
+   const regeneratedBare=await workspaceState(page);assert.equal(roofRows(regeneratedBare).length,0,'a later generated revision respects the saved roof-removal preference');assert.notEqual(regeneratedBare.head,removedRoof.head);assert.equal(regeneratedBare.history.length,removedRoof.history.length+1);
+   if(width===1280)assert.equal(regeneratedBare.requirements.find(row=>row.metric==='unit_count')?.expected,2,'desktop regeneration must retain the selected two-apartment program');
+   assertConceptApproval(regeneratedBare,'Regenerated residential/warehouse fixture');
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'the explicit regeneration invokes the controlled provider exactly once');
+   await page.locator('#cwRoof').click();await page.waitForFunction(()=>document.querySelector('#cwRoof').dataset.enabled==='true');
+   const restoredRoof=await workspaceState(page);assert.equal(roofRows(restoredRoof).length,1);assert.equal(roofRows(restoredRoof)[0].level_auto,true);assert.notEqual(restoredRoof.head,regeneratedBare.head);assert.equal(restoredRoof.history.length,regeneratedBare.history.length+1);assert.notEqual(revisionState(restoredRoof),'APPROVED');
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'restoring a roof must not invoke the controlled provider');
    // The nested-lock panel was mounted while this project was empty. It must
    // follow the newly generated revision without asking the owner to reload.
    await page.waitForFunction(()=>document.querySelectorAll('#cwSemanticLockTarget option').length>=2);
@@ -139,6 +191,12 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('#cwSpaces button').first().click();await page.locator('#cwLock').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('القفل'));
    await page.locator('#cwSpaces button').first().click();assert.equal(await page.locator('#cwSaveGeometry').isEnabled(),false);
+   const lockedBeforeRoof=await workspaceState(page);await page.locator('#cwRoof').click();
+   await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('فكّ أقفال الفراغات'));
+   const lockedAfterRoof=await workspaceState(page);assert.equal(lockedAfterRoof.head,lockedBeforeRoof.head);assert.deepEqual(lockedAfterRoof.history,lockedBeforeRoof.history,'server refusal leaves immutable history unchanged');assert.equal(roofRows(lockedAfterRoof).length,1);
+   assertConceptApproval(lockedAfterRoof,'Locked fixture after rejected roof removal');
+   assert.equal((await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation,roofProviderBefore+1,'locked roof refusal never invokes a provider');
+
    await page.locator('#cwApproveConfirm').check();await page.locator('#cwApprove').click();
    await page.locator('#cwShow3D').waitFor({state:'visible'});assert.equal(await page.locator('#cwShow3D').isEnabled(),true);
    const downloadPromise=page.waitForEvent('download');await page.locator('[data-format=svg]').click();const download=await downloadPromise;assert.equal(download.suggestedFilename(),'acs-approved.svg');
@@ -150,6 +208,7 @@ w.write(sys.argv[1])`,pdfFixture]);
    }else{
     await page.locator('#cwViewer canvas').waitFor({state:'visible',timeout:45000});
     assert.ok((await page.locator('#cwViewer canvas').boundingBox()).width>100);
+    const names=await page.locator('#cwViewer .av-label').allTextContents();assert.ok(names.includes('A')&&names.includes('B'),'the connected viewer uses exact review-packet labels, not lowercase artifact room IDs');
    }
    assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
    const revisionsBeforeChat=await page.locator('#cwRevision option').count();
@@ -162,16 +221,63 @@ w.write(sys.argv[1])`,pdfFixture]);
    await page.locator('#cwComparison').waitFor({state:'visible'});
    assert.equal(await page.locator('#cwCompareRevision').inputValue(),chatReferenceRevision,'the async receipt must select the exact source revision, not an inferred neighbor');
    assert.ok(await page.locator('#cwComparisonRows tr').count()>2);
-   await page.locator('#cwCompare').click();await page.locator('#cwComparison').waitFor({state:'visible'});
+   // Hold the real comparison response: a visible existing comparison is not
+   // evidence that the latest request completed. Revision selection must stay
+   // disabled until the serialized request has settled, rather than be dropped.
+   let releaseComparison,comparisonTimer;comparisonPause=new Promise(resolve=>{releaseComparison=resolve;});
+   const comparisonEntered=new Promise(resolve=>{comparisonStarted=resolve;});
+   try{
+    await page.locator('#cwCompare').click();
+    await Promise.race([comparisonEntered,new Promise((resolve,reject)=>{comparisonTimer=setTimeout(()=>reject(new Error('comparison did not reach the controlled route')),10000);})]);
+    assert.equal(await page.locator('#cwRevision').isDisabled(),true,'comparison cannot silently drop a concurrent revision selection');
+   }finally{clearTimeout(comparisonTimer);releaseComparison();comparisonPause=null;comparisonStarted=null;}
+   await page.waitForFunction(()=>document.querySelector('#designWorkspace').getAttribute('aria-busy')==='false');
+   await page.locator('#cwComparison').waitFor({state:'visible'});
    const firstRevision=await page.locator('#cwRevision option').first().getAttribute('value');
    await page.locator('#cwRevision').selectOption(firstRevision);
    await page.waitForFunction(()=>document.querySelector('#cwSemanticLockStatus')?.textContent.includes('تاريخية'));
    assert.equal(await page.locator('#cwSemanticLockToggle').isDisabled(),true,'a historical revision must stay read only');
+   assert.equal(await page.locator('#cwRoof').isDisabled(),true,'a historical revision cannot change the current roof');
+   await page.waitForFunction(()=>document.querySelector('#designWorkspace').getAttribute('aria-busy')==='false');
+   assert.equal(await page.locator('#cwRevision').inputValue(),firstRevision,'the selected historical revision must finish loading');
+   const beforeHistoricalClick=await workspaceState(page),roofRequests=workspaceActions.filter(action=>action==='set_roof').length;
+   await page.evaluate(()=>document.querySelector('#cwRoof').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+   await page.waitForFunction(()=>document.querySelector('#cwStatus').textContent.includes('اختر آخر نسخة قبل تعديل السطح'));
+   assert.equal(workspaceActions.filter(action=>action==='set_roof').length,roofRequests,'a forced historical roof event sends no write request');
+   const afterHistoricalClick=await workspaceState(page);assert.equal(afterHistoricalClick.head,beforeHistoricalClick.head);assert.deepEqual(afterHistoricalClick.history,beforeHistoricalClick.history,'historical roof refusal preserves immutable history');
    await page.locator('#cwLogout').click();await page.locator('#lgEmail').waitFor({state:'visible'});
    if(noWebGL)assert.ok(errors.every(e=>/WebGL context/.test(e)),JSON.stringify(errors));
    else assert.deepEqual(errors,[]);
    console.log('PASS connected workspace '+width+(noWebGL?' without WebGL: 2D, save, approve, SVG, recover and logout remain available':': generation, reload, lock, approval, SVG, exact 3D, chat revision, logout'));
    await context.close();
   }
+ }catch(error){
+  // Preserve the original assertion/timeout. Diagnostics are independently
+  // bounded and contain only this synthetic fixture's state, never auth data.
+  const evidence={case:activeCase,network:networkEvents,page_errors:pageErrors,
+   backend_process:{exit_code:child.exitCode,signal:child.signalCode},backend_log:backendLog};
+  if(activePage&&!activePage.isClosed()){
+   let timer;
+   try{evidence.ui=await Promise.race([activePage.evaluate(()=>({
+    status:document.querySelector('#cwStatus')?.textContent,
+    busy:document.querySelector('#designWorkspace')?.getAttribute('aria-busy'),
+    active_step:document.querySelector('[data-step][aria-current]')?.dataset.step,
+    review_hidden:document.querySelector('#cwReviewContent')?.hidden,
+    review_panel_hidden:document.querySelector('[data-step-panel="3"]')?.hidden,
+    revision:document.querySelector('#cwRevision')?.value,
+    job_phase:document.querySelector('#cwJobProgress')?.dataset.phase,
+    job_hidden:document.querySelector('#cwJobProgress')?.hidden,
+    recover_disabled:document.querySelector('#cwRecoverJob')?.disabled,
+    recover_hidden:document.querySelector('#cwRecoverJob')?.hidden
+   })),new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error('UI diagnostic timeout')),2000);})]);}
+   catch(e){evidence.ui_error=e.message;}finally{clearTimeout(timer);}
+  }
+  try{const response=await fetch('http://127.0.0.1:'+port+'/test-diagnostics',{signal:AbortSignal.timeout(2000)});evidence.backend=await response.json();}
+  catch(e){evidence.backend_error=e.message;}
+  const logDir=path.join(ROOT,'logs');fs.mkdirSync(logDir,{recursive:true});
+  fs.writeFileSync(path.join(logDir,'connected-workspace-failure.json'),JSON.stringify(evidence,null,2));
+  console.error('CONNECTED WORKSPACE FAILURE DIAGNOSTICS '+JSON.stringify(evidence));
+  if(activePage&&!activePage.isClosed())try{await activePage.screenshot({path:path.join(logDir,'connected-workspace-failure.png'),fullPage:true,timeout:5000});}catch(e){console.error('Connected failure screenshot unavailable: '+e.message);}
+  throw error;
  }finally{if(browser)await browser.close();child.kill('SIGTERM');fs.rmSync(tmp,{recursive:true,force:true});}
 })().catch(e=>{console.error(e);process.exitCode=1;});

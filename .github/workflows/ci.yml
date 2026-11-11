@@ -171,6 +171,9 @@ jobs:
   chromium-browser:
     name: 3 · Real Chromium (Playwright — this job MAY use the network)
     runs-on: ubuntu-latest
+    # Previous PR188 full job took 8m13s; leave ample room for software GPU
+    # fixtures while ensuring a hung browser fails instead of running for hours.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -580,6 +583,16 @@ jobs:
           import json, os, urllib.request
           from datetime import datetime
           from pathlib import Path
+          # /health cannot exercise helpers imported only by later commands.
+          # Use the actual image and a pure synthetic model; no provider/auth call.
+          import acs_roof
+          model = {'site': {'w': 10, 'd': 8}, 'wall_h': 3, 'floor_height': 3.2,
+                   'levels': [{'index': 0, 'template': 'ground'}],
+                   'floors': {'ground': {'rooms': [{'id': 'hall', 'rect': [0, 0, 10, 8]}]}}}
+          before = repr(model)
+          roofed, roof_report, roof_reason = acs_roof.with_default_roof(model)
+          removed = acs_roof.remove_auto_roof(roofed)
+          restored = acs_roof.restore_default_roof(removed)
           artifact = json.loads(Path('/app/build_info.json').read_text())
           with urllib.request.urlopen('http://127.0.0.1:8000/version', timeout=10) as r:
               version = json.load(r)
@@ -595,6 +608,15 @@ jobs:
               ('stale timestamp cannot override the image', version['built_at'] != os.environ['ACS_BUILT_AT']),
               ('version validates embedded identity', version['provenance_verified'] is True),
               ('health validates embedded identity', health['provenance_verified'] is True),
+              ('deferred roof helper is loaded from the actual image',
+               Path(acs_roof.__file__).resolve() == Path('/app/acs_roof.py')),
+              ('image can add the disclosed roof without changing the input',
+               roof_reason is None and repr(model) == before and len(roofed['levels']) == 2
+               and roofed['meta']['acs_roof']['source'] == 'system_default'
+               and roof_report['occupied_floor'] is False and roof_report['deck_area_m2'] == 80),
+              ('image can remove and restore the default roof without a provider',
+               len(removed['levels']) == 1 and acs_roof.roof_removed_by_user(removed)
+               and len(restored['levels']) == 2 and not acs_roof.roof_removed_by_user(restored)),
           ]
           checks += [(f'version {key} matches artifact', version[key] == artifact[key])
                      for key in ('git_sha', 'git_sha_short', 'built_at', 'git_branch', 'version')]
@@ -715,6 +737,7 @@ jobs:
             tests/remediation/test_delivery_ingress.py \
             tests/remediation/test_delivery_release_safety.py \
             tests/remediation/test_delivery_published.py \
+            tests/remediation/test_roof_runtime_packaging.py \
             tests/remediation/test_delivery_provider_identity.py \
             tests/remediation/test_delivery_arabic_pdf.py \
             tests/remediation/test_audit_*.py \
@@ -727,6 +750,7 @@ jobs:
             tests/remediation/test_geometry_delivery.py \
             tests/remediation/test_geometry_independent_readers.py \
             tests/remediation/test_requirement_vocabulary.py \
+            tests/remediation/test_roof_level.py \
             tests/remediation/test_warehouse_soft_area_fit.py \
             tests/remediation/test_live_generation_verdict.py
       - name: Canonical generated sources agree with tracked outputs
@@ -738,14 +762,20 @@ jobs:
           python tools/build_runtime_browser.py
           python tools/build_pbr_browser.py
           python tools/build_docs_browser.py
-          git diff --exit-code -- public/app/generated/requirement-metrics.mjs public/app/generated/bim.js public/app/generated/runtime.js public/app/generated/pbr.js public/app/generated/docs.js public/app/styles/app.css public/index.html
+          git diff --exit-code -- public/app/generated/requirement-metrics.mjs public/app/generated/bim.js public/app/generated/runtime.js public/app/generated/pbr.js public/app/generated/pbr-bridge.js public/app/generated/docs.js public/app/styles/app.css public/index.html
       - name: Revision races and Arabic frontend contracts
         shell: bash
         run: |
           set -euo pipefail
           bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
             tests/remediation/test_approved_revision_race.mjs \
+            tests/remediation/test_connected_revision_controls.mjs \
+            tests/remediation/test_pbr_shadow_restore.cjs \
+            tests/remediation/test_local_render_quality.mjs \
+            tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
+            tests/remediation/test_review_only_build.cjs \
+            tests/remediation/test_auth_fixture_waits.cjs \
             tests/remediation/test_audit_frontend_brief.mjs \
             tests/remediation/test_audit_frontend_guards.js \
             tests/remediation/test_audit_frontend_panels.js \

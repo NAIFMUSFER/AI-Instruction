@@ -23,6 +23,20 @@ _SERVER_DERIVED_BUILDING_FIELDS = frozenset({
 })
 
 
+def carry_roof_for_admission(before: dict, candidate: dict) -> dict:
+    """Preserve the owner's roof choice and expose a known admission failure."""
+    import acs_roof
+    try:
+        return acs_roof.carry_auto_roof(before, candidate)
+    except ValueError as exc:
+        if str(exc) != 'ROOF_PREFERENCE_CONFLICT':
+            raise
+        raise PlanError(
+            'ROOF_PREFERENCE_CONFLICT',
+            'أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي.',
+        ) from None
+
+
 def _reject_provider_authority_changes(before: dict, candidate: dict) -> None:
     """Fail closed if provider output changes server-derived Building authority."""
     before_meta = before.get('meta') if isinstance(before.get('meta'), dict) else {}
@@ -84,6 +98,9 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     before = workspace.get(expected_head)
     import acs_understand as U
     candidate = U.apply_notes(before.model, json.loads(canonical(notes)), model=model)
+    # The automatic roof is rebuilt over the edited top storey before locks and
+    # admission see the candidate; the provider is never trusted to maintain it.
+    candidate = carry_roof_for_admission(before.model, candidate)
     if semantic_lock_manifest is not None:
         from acs_plan_semantic_locks import verify_lock_manifest
         verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
@@ -134,6 +151,7 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
         raise PlanError('INVALID_EDIT', 'Provider candidate must be a building object')
     detached_candidate = json.loads(canonical(candidate))
     _reject_provider_authority_changes(before.model, detached_candidate)
+    detached_candidate = carry_roof_for_admission(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,
@@ -200,11 +218,15 @@ def existing_geometry_verifier(building: dict) -> dict:
     if topology_known:
         findings += [item['message'] for item in residential_access_issues(building)]
         findings += [item['message'] for item in opening_collisions(building)]
-    vertical_known = len(levels) == 1
+    # Vertical circulation is verified between occupied storeys. An explicit roof
+    # level is an unoccupied deck: it needs no stair core to be a valid concept,
+    # and nothing here claims that the roof is accessible.
+    storeys = [level for level in levels if level.get('kind') != 'roof']
+    vertical_known = len(storeys) == 1
     core_issue = False
-    if len(levels) > 1:
+    if len(storeys) > 1:
         stacks = []
-        for level in levels:
+        for level in storeys:
             cores = [r for r in floors[level['template']]['rooms']
                      if r.get('role') in ('stair', 'stairs', 'elevator')]
             ids = [r.get('core_id') for r in cores]

@@ -15,7 +15,7 @@ import tempfile
 from acs_plan_review import PlanError, canonical, digest, _geometry
 from acs_plan_store_reload import load_workspace
 from acs_plan_commands import _command, _view_result
-from acs_plan_bridge import existing_geometry_verifier
+from acs_plan_bridge import carry_roof_for_admission, existing_geometry_verifier
 
 SCHEMA = "acs.connected-workspace/1.0"
 OPTIONS = {
@@ -51,6 +51,7 @@ def geometry_failure_message(code):
         "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. حالة الطلب غير مؤكدة؛ لم يُعَد إرساله تلقائيًا.",
         "PROVIDER_OUTCOME_UNKNOWN":"توقفت متابعة المهمة أو أُلغيت. لا يمكن الجزم بأن المزود لم ينفذها؛ لم تُعَد تلقائيًا، ولا تسمح هذه الحالة باستئناف مكرر.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
+        "ROOF_PREFERENCE_CONFLICT":"أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي. يمكنك إعادة تفعيل السطح صراحة من أدوات المخطط إذا أردت إضافته.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
@@ -329,6 +330,31 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
     if on_progress:
         on_progress({"phase":"REVIEW"})
+    # Every generated building receives the same disclosed default roof: a flat
+    # deck with a parapet, canonical model data recorded in meta.acs_roof as a
+    # system default. It is added after the provider reply, so the provider never
+    # authors it and it costs no provider call.
+    #   - current head already has the automatic roof -> rebuild it over the new option;
+    #   - current head has locked rooms and no roof    -> leave the option as it is,
+    #     because room locks freeze levels/meta and a new level would be rejected;
+    #   - otherwise (first generation, or an unlocked project) -> add the default.
+    import acs_roof
+    _head = ws.get(expected) if expected else None
+    _head_model = _head.model if _head is not None else None
+    if _head_model is not None and acs_roof._auto_roof_levels(_head_model):
+        result["building"] = acs_roof.carry_auto_roof(_head_model, result["building"])
+    elif _head_model is not None and acs_roof.roof_removed_by_user(_head_model):
+        # A provider proposal cannot override the owner's persisted preference.
+        # Reject the conflict before proposing/saving; stripping arbitrary roof
+        # geometry here could silently remove authored elements or references.
+        if acs_roof.has_roof_level(result["building"]):
+            raise PlanError("ROOF_PREFERENCE_CONFLICT",
+                            geometry_failure_message("ROOF_PREFERENCE_CONFLICT"))
+        result["building"] = acs_roof.mark_roof_removed(result["building"])
+    elif _head is not None and _head.locked_rooms and not acs_roof.has_roof_level(_head_model):
+        pass
+    else:
+        result["building"], _, _ = acs_roof.with_default_roof(result["building"])
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
                           expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
     issues, _ = _geometry(revision.model)
@@ -349,6 +375,45 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     return revision.id
 
 
+def set_roof(store, project_id, actor_id, command):
+    """Remove or restore the automatic default roof as a new draft revision.
+
+    No provider call. A user-authored roof is never removed here. Room locks
+    freeze the level list, so the change is refused with an explanation while
+    any room is locked.
+    """
+    command = checked_command(command, {"expected_head", "enabled"})
+    ws = workspace(store, project_id, actor_id)
+    expected = command.get("expected_head")
+    if not expected or ws.head != expected:
+        raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التعديل.")
+    if type(command.get("enabled")) is not bool:
+        raise PlanError("INVALID_PLAN_COMMAND", "حدّد إضافة السطح أو إزالته.")
+    import acs_roof
+    before = ws.get(expected)
+    try:
+        if command["enabled"]:
+            candidate = acs_roof.restore_default_roof(before.model)
+            note = "إضافة السطح الافتراضي"
+        else:
+            candidate = acs_roof.remove_auto_roof(before.model)
+            note = "إزالة السطح الافتراضي"
+    except ValueError as exc:
+        messages = {"ROOF_LEVEL_EXISTS": "هذه النسخة فيها سطح بالفعل.",
+                    "ROOF_NOT_AUTOMATIC": "لا يوجد سطح تلقائي لإزالته. السطح الذي أضفته بنفسك يُعدَّل كأي دور."}
+        raise PlanError("INVALID_GEOMETRY", messages.get(str(exc), "تعذّرت إضافة السطح لهذه النسخة."))
+    try:
+        revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
+                              expected_head=expected, note=note)
+    except PlanError as exc:
+        if exc.code == "LOCK_CONTEXT_CHANGED":
+            raise PlanError("LOCK_CONTEXT_CHANGED", "فكّ أقفال الفراغات أولًا: إضافة السطح أو إزالته يغيّر أدوار المبنى.")
+        raise
+    result = _view_result(ws, "set_roof", revision.id, reference_revision_id=expected)
+    store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
+    return result
+
+
 def edit_geometry(store, project_id, actor_id, command):
     command = checked_command(command, {"expected_head", "room_ref", "rect"})
     ws = workspace(store, project_id, actor_id)
@@ -366,7 +431,13 @@ def edit_geometry(store, project_id, actor_id, command):
     room = next((r for r in floor["rooms"] if r["id"] == ref[1]), None) if floor else None
     if room is None:
         raise PlanError("ROOM_NOT_FOUND", "الفراغ غير موجود في هذه النسخة.")
+    import acs_roof
+    if acs_roof.is_auto_roof_template(candidate, ref[0]):
+        raise PlanError("INVALID_GEOMETRY", "السطح يتبع الدور الأخير تلقائيًا. عدّل فراغات الدور الأخير وسيتبعه السطح.")
     room["rect"] = rect
+    # Keep the automatic roof over the edited top storey; a removed or
+    # user-authored roof is never touched.
+    candidate = carry_roof_for_admission(before.model, candidate)
     revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
                           expected_head=expected, note="تعديل أبعاد وموضع " + ref[1])
     result = _view_result(ws, "edit_geometry", revision.id, reference_revision_id=expected)

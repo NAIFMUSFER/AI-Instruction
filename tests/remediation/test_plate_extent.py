@@ -26,6 +26,7 @@
   ز) القانونية: مستطيلات الغرف ومساحاتها والنموذج كلّه متطابق قبل وبعد.
   ح) تكافؤ بايثون/جافاسكربت: نصّ الصفحة يستدعي العقد نفسه، ولا يبقى النصّ القديم.
 """
+import math
 import copy
 import glob
 import json
@@ -84,6 +85,12 @@ class Cap(object):
     def add_box(self, cx, cy, cz, ex, ey, ez, mat, name, rotation=0.0):
         if ex <= 0 or ey <= 0 or ez <= 0:
             return
+        if rotation:
+            # Builder.add_box now accepts a plan rotation (radians). The plate
+            # checks reason about plan extents, so record the rotated box by
+            # its axis-aligned plan footprint instead of rejecting the call.
+            co, sn = abs(math.cos(rotation)), abs(math.sin(rotation))
+            ex, ez = ex * co + ez * sn, ex * sn + ez * co
         self.boxes.append({'c': (cx, cy, cz), 'e': (ex, ey, ez),
                            'mat': mat, 'name': name, 'rotation': rotation,
                            'rect': (cx - ex / 2.0, cz - ez / 2.0, ex, ez)})
@@ -121,7 +128,12 @@ def bounds_of(rooms):
 
 
 def exact_coverage(emitted, rooms, holes):
-    """Independent cell oracle: exactly one emitted layer on union minus voids."""
+    """Independent cell oracle: exactly one emitted layer on union minus voids.
+
+    This retains the patch's independently integrated/disjoint union intent and
+    also checks every cell, catching equal-area displacement or overlap hidden
+    by aggregate-area comparisons. It does not reuse the production union.
+    """
     all_rects = emitted + rooms + holes
     xs = sorted({r[0] for r in all_rects} | {r[0]+r[2] for r in all_rects})
     zs = sorted({r[1] for r in all_rects} | {r[1]+r[3] for r in all_rects})

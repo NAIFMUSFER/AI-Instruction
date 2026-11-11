@@ -1,10 +1,12 @@
 # ACS current capability and delivery status
 
-Updated 10 November 2026. This is the current status document; historical phase/audit reports retain their original dates and do not establish current production readiness.
+Updated 11 November 2026 for the review-only presentation/roof branch. This is the current status document; historical phase/audit reports retain their original dates and do not establish current production readiness.
+
+The 11 November package is rebased onto PR188 `9556ca4d9d405ba7b733e650d95559e83c60177a` in [PR190](https://github.com/NAIFMUSFER/AI-Instruction/pull/190); it is not merged or deployed. CI has not passed overall. On submitted head `10bfd0ad4c0f7dbbd1ee0cf34ea83c5b415085f4`, actual auth and complete guest journeys passed at393 and1280 pixels, including two-tab recovery, denied storage and the no-WebGL alternative. Connected mobile passed; desktop reached a correctly blocked approval because its synthetic provider did not satisfy the newly requested two-unit program. The dependency gate also exposed a test-loader dependency absent in that job. Corrections require a new CI result; the earlier initial-review timeout did not recur, but its cause was not established. Application/rebase evidence and individual CI outcomes are recorded in [integration status](delivery/2026-11-11/INTEGRATION-AND-CI.md). Naif explicitly requires separate review PRs, no main merge, no deployment and no production migration in this task. Guest roofs, physical stairs and generator/material increments have not started because successful package CI is their prerequisite.
 
 ## Release boundaries
 
-The starting production frontend/backend commit was `c37b5250dc4ff18ba0606add993b5afe52beebaa`. The delivery is split deliberately:
+The prior10 November review recorded production frontend/backend commit `c37b5250dc4ff18ba0606add993b5afe52beebaa`; this is dated evidence, not a new production verification. The delivery is split deliberately:
 
 1. **Independent application release:** guest preservation, exact approved viewer and Arabic UX, geometry/export fixes, shared paid-command admission, bounded identity/body handling, honest provider identity and release verification. Candidate validation is underway; this paragraph is not a claim of deployment.
 2. **Database activation increment:** fail-closed membership, backend-validated canonical write capabilities, paged revision transport and atomic durable job leases. Implemented and tested with real local PostgreSQL; **not production deployed**. Activation requires access to the actual ACS database and secure backend signer provisioning. See [database rollout](delivery/2026-11-10/database/STATUS.md). Do not deploy its adapter/jobs against an unmigrated database or re-enable unsafe RPCs as a fallback.
@@ -24,6 +26,7 @@ The current connected Supabase account exposes no ACS schema. The live Google-st
 | Connected IFC4 | Space entities/boundaries, storeys, IDs, metres and source metadata; independent reader validates bounds | Spaces-only connected export, not complete architectural BIM or native Revit |
 | Legacy architectural IFC | Supported mapped elements; explicit open-wall semantics and distinct stair identities | Separate capability from connected IFC; no physical stair traversal/structural adequacy proof |
 | Runtime navigation | Consistent transformed footprints/portals and capsule clearance for supported door geometry | Vertical alignment is not walkability; no full physical circulation certification |
+| Canonical flat roof | Explicit unoccupied roof level, disclosed default0.9m parapet, separate area/storey treatment, revision-bound removal/restoration | Review branch only; missing vertical facts stay unknown, partially shared parapet gaps are disclosed; no drainage/structural/roof-access certification; guest roof integration is a subsequent gated increment |
 | Large history | Pending DB increment retrieves metadata pages and bounded individual revisions | 100-revision aggregate admission limit remains; not unlimited constant-memory history |
 
 ## Verification scope
@@ -32,7 +35,7 @@ Deterministic approved villa and warehouse fixtures use the real geometry verifi
 
 Real PostgreSQL witnesses execute SQL, roles and grants against synthetic users/projects. They reproduce baseline missing-membership and direct-write defects before fixing them. This is not a substitute for deployed Supabase/PostgREST/JWT verification.
 
-The local executor cannot launch Chromium because socket creation is denied. The cloud browser verified the explicitly labeled no-WebGL guest fallback only. CI runs the real guest/private-fixture journeys and captures six views per fixture at 1440×900 and 393×852. Those captures are desktop browser emulation, not physical iPhone acceptance. Initial performance targets are ≤3 seconds from available artifact bytes to first view, and transition-frame p95 ≤20 ms desktop / ≤33 ms mobile viewport. Measured results must name browser and reported rendering hardware; missing results or missed targets are not PASS.
+The local executor cannot launch Chromium because socket creation is denied. The prior cloud browser review verified the explicitly labeled no-WebGL guest fallback only. The first PR190 CI run produced24 approved-viewer captures at1440×900 and393×852, all visually inspected. HeadlessChrome151/SwiftShader on4 logical cores passed the3-second first-view and2-second transition gates. Adaptive immediate transitions yielded insufficient active-frame samples: smooth-frame p95 remains **NOT VERIFIED**. The guest/private browser aggregate is still failing. Those captures are desktop browser emulation, not physical iPhone acceptance. Initial performance targets are ≤3 seconds from available artifact bytes to first view, and transition-frame p95 ≤20ms desktop / ≤33ms mobile viewport. Missing results or missed targets are not PASS.
 
 The production verification runner now treats crashes, missing/malformed evidence and NOT VERIFIED as non-success. The aggregate CI is configured to include the new delivery checks, but branch protection was observed disabled. Requiring the aggregate status remains an administration proposal until the repository's actual protection settings are changed and verified.
 

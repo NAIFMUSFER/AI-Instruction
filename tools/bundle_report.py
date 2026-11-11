@@ -398,7 +398,7 @@ def build():
         "budget": {
             "target": (
                 "The deployed index.html is an index SHELL — markup, "
-                "<link rel=stylesheet>, five classic boot scripts and "
+                "<link rel=stylesheet>, classic boot scripts and "
                 "<script type=module src=/app/main.js> — and every line of "
                 "application logic lives in cacheable files under public/app/."),
             "index_shell_budget_bytes": SHELL_BUDGET_BYTES,

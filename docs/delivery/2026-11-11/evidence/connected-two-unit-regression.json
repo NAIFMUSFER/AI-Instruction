@@ -1,0 +1,51 @@
+{
+  "finding": "CI3 desktop connected browser approval is correctly disabled because its synthetic provider ignored the two-unit program after source-to-description regeneration.",
+  "ci_job_ids": [
+    "130478066827",
+    "130477858002"
+  ],
+  "before": {
+    "test": "test_connected_workspace.WorkspaceLifecycle.test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks",
+    "result": "FAIL",
+    "cause": "can_approve_concept=False with 10 requirement failures; existing FixtureRunner always returned two rooms without unit IDs",
+    "blockers": {
+      "REQUIREMENT_MISMATCH": 5,
+      "REQUIREMENT_NOT_MEASURABLE": 5
+    },
+    "log": "connected-two-unit-before.log"
+  },
+  "change": {
+    "scope": "Test fixture and assertions only; production authority unchanged",
+    "files": [
+      "tests/remediation/connected_workspace_browser_server.py",
+      "tests/remediation/test_connected_workspace_browser.cjs",
+      "tests/remediation/test_connected_workspace.py"
+    ],
+    "fixture": "Explicit synthetic bounded 20x20 m, one occupied level, two apartments. Existing geometry builder authors east-facing geometry and reciprocal portals. Ground/a,b and light-a/light-b remain stable. B width is 6.3030303030303045 m before controlled chat, 6 m after.",
+    "browser_assertions": "Existing waits/clicks/roof/locks/history checks retained; added immediate canonical authority and selected unit_count=2 checks with bounded issue codes."
+  },
+  "after": {
+    "focused": "1 passed",
+    "integration": "63 passed in 4.226s",
+    "command": "PYTHONPATH=.:tests/remediation .venv/bin/python -m unittest test_connected_workspace test_plan_source_upload test_roof_level -v",
+    "checks": [
+      "source revision approval",
+      "roof removal",
+      "two-unit requirements retained",
+      "roof restoration",
+      "room and semantic point locks",
+      "rejected locked roof removal preserves history",
+      "approved glTF export",
+      "chat B width6 with locked A preserved",
+      "approved baseline unchanged",
+      "2 synthetic generation operations and 1 synthetic chat operation"
+    ],
+    "syntax": "Node check and Python compile passed",
+    "diff_check": "passed"
+  },
+  "limitations": [
+    "No paid provider invoked; fixtures do not prove live AI quality.",
+    "Local Chromium remains blocked by socket EPERM; corrected full browser journey awaits CI.",
+    "No commit, push, migration, or deployment performed by this agent."
+  ]
+}

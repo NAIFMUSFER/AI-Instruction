@@ -16,6 +16,13 @@ async function flush() {
 }
 
 (async () => {
+  // Use the repository's pure-source loader: this companion gate also runs
+  // without npm dependencies. Evaluate the real shipped config and its real
+  // numeric/hash helpers, without importing the browser's Three.js entry.
+  const APP=require(path.join(ROOT,'tests/lib/app_source.js'));
+  const {pqConfig}=vm.runInNewContext(APP.nodeBundle([
+    'core/viewer.js','core/standards.js','generated/pbr.js',
+  ])+'\n;({pqConfig});',{}, {filename:'residential-pbr-contract.js'});
   let current = null;
   let pbrApply = 0, detailApply = 0, ensure = 0, camera = null;
   let pbrRestore = 0, adRestore = 0;
@@ -27,9 +34,9 @@ async function flush() {
     exportModel() { return current; },
     pbr: { config(...args) {
       pbrCalls.push(args);
-      return {valid:true, config:{writes_to_model:false}};
+      return pqConfig(...args);
     }},
-    pbrCaps() { return {webgl2:true}; },
+    pbrCaps() { return {webgl2:true,max_texture_size:8192,device_pixel_ratio:2}; },
     pbrBounds() { return {cx:0,cy:1,cz:0,radius:10,min_y:0}; },
     pbrApply() { pbrApply++; return {applied:true}; },
     pbrCameraPreset(name) { camera = name; return {applied:true}; },
@@ -79,11 +86,28 @@ async function flush() {
   chk('leaving residential mode restores only the presentation that this policy owned',
       pbrRestore >= 1 && adRestore >= 1);
 
+  const typedDraft=structuredClone(generatedVilla),canonicalBefore=JSON.stringify(typedDraft);
+  const beforeSoftware={pbr:pbrApply,detail:detailApply,ensure,config:pbrCalls.length};
+  ACS.legacyRenderQuality=()=>({profile:'SOFTWARE_CONSERVATIVE',reason:'SOFTWARE_RENDERER_REPORTED',pixel_ratio:.75,shadow_map_size:512});
+  context.window.ACS.setModel(typedDraft);await flush();
+  chk('software recovery does not automatically call PBR or its quality compiler',pbrApply===beforeSoftware.pbr&&pbrCalls.length===beforeSoftware.config);
+  chk('software recovery does not load or apply automatic architectural detail',detailApply===beforeSoftware.detail&&ensure===beforeSoftware.ensure);
+  chk('software recovery leaves the exact canonical model unchanged',JSON.stringify(typedDraft)===canonicalBefore&&current===typedDraft);
+  const softwareState=ACS.residentialQuality.state();
+  chk('automatic decline explicitly explains the software budget',softwareState.applied===false&&softwareState.reason==='software_renderer_budget'&&softwareState.pbr===false&&softwareState.architectural_detail===false);
+  const explicit=pqConfig('ULTRA','CLEAR_NOON','REALISTIC','SKY',null,null,ACS.pbrCaps(),ACS.pbrBounds());
+  chk('explicit ULTRA is still valid through the actual capability validator',explicit.valid&&explicit.config.quality.requested==='ULTRA');
+  ACS.pbrApply(explicit.config);chk('manual PBR remains callable on software rendering',pbrApply===beforeSoftware.pbr+1);
+  delete ACS.legacyRenderQuality;
+
   context.window.innerWidth = 390;
   context.window.ACS.setModel({meta:{type:'apartment'}});
   await flush();
-  chk('mobile residential presentation uses MEDIUM PBR quality',
-      pbrCalls[pbrCalls.length - 1][0] === 'MEDIUM');
+  chk('mobile residential presentation uses supported BALANCED PBR quality',
+      pbrCalls[pbrCalls.length - 1][0] === 'BALANCED');
+  const mobileConfig=pqConfig(...pbrCalls[pbrCalls.length-1]);
+  chk('actual shipped PBR capability validator accepts the mobile request',mobileConfig.valid&&mobileConfig.config.quality.requested==='BALANCED');
+  chk('actual shipped PBR capability validator rejects the old MEDIUM enum',pqConfig('MEDIUM').valid===false);
   chk('mobile flag is passed to architectural detail so its declared fallback applies',
       adCalls[adCalls.length - 1][7] === true);
 

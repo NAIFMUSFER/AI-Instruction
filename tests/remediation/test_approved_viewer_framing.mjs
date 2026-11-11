@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
 import * as THREE from 'three';
 import {frameBounds,detailGroupKey} from '../../public/app/ui/approved-viewer.mjs';
 let checks=0;
@@ -23,4 +25,22 @@ for(const other of ['FURN|F1|storage|rack0r0L0','FURN|F0|dispatch|rack0r0L0','FU
  assert.notEqual(detailGroupKey(other),detailGroupKey('FURN|F0|storage|rack0r0L0'),'derived grouping may not cross level, room, rack or row');checks++;
 }
 assert.equal(detailGroupKey('OBJ|F-1|living|table0'),'OBJ|F-1|living|table0');checks++;
+// Execute the shipped classifiers: naming a normal room roof_* must not hide
+// an occupied storey or promote it to a canonical roof. Metadata wins by kind.
+const viewerSource=fs.readFileSync('public/app/ui/approved-viewer.mjs','utf8');
+const roofCode=viewerSource.slice(viewerSource.indexOf('  const roofLevels='),viewerSource.indexOf('  const isRoofRow='));
+const connectedSource=fs.readFileSync('public/app/ui/connected-workspace.mjs','utf8');
+const projectionCode=connectedSource.match(/^const isRoofProjection = (.*);$/m)[1];
+for(const [kind,room,expected]of [[null,'roof_bedroom',false],['occupied','roof_living',false],['roof','terrace',true]]){
+ const rows=new Map([['3|'+room,{identity:{level:3,room}}]]),context=vm.createContext({levels:new Map([[3,{}]]),roomBounds:rows,original:{scene:0,scenes:[{extras:{acs_levels:[{index:3,kind,template:'upper',elevation_m:7.5}]}}]}});
+ vm.runInContext(roofCode+'globalThis.detected=roofLevels.has(3);',context);assert.equal(context.detected,expected,'artifact roof recognition must use explicit canonical kind, not room prefix');checks++;
+ const classify=vm.runInNewContext('('+projectionCode+')');assert.equal(classify({level_kind:kind,primitives:[{source:{room_id:room}}]}),expected,'review roof recognition must use explicit level_kind');checks++;
+}
+// A selected canonical roof remains visible even in plan-like views; the
+// disclosure must describe actual meshes, not only the default all-floor filter.
+const visibilityCode=viewerSource.slice(viewerSource.indexOf('  function setVisibility(){'),viewerSource.indexOf('  function preset('));
+for(const [floor,view,expected]of [['2','aerial',true],['2','cutaway',true],['all','aerial',false]]){
+ const roofMesh={userData:{acsViewerIdentity:{level:2}},visible:false},context=vm.createContext({floors:{value:floor},roofOn:true,currentPreset:view,roofLevels:new Set([2]),meshes:[roofMesh],edgeLines:new Map(),clipPlane:{constant:0},clipOff:1000,chosenBounds:()=>({min:{y:8.4},getSize:()=>({y:.9})}),THREE:{Vector3:class{}},renderer:{shadowMap:{}},detailObjects:[],detailOn:true,figures:{},telemetry:{presentation:{}},roofPieces:0,selectionBox:null,selected:null});
+ vm.runInContext(visibilityCode+'setVisibility();',context);assert.equal(roofMesh.visible,expected,'explicit roof selection overrides the all-floor default filter');assert.equal(context.telemetry.presentation.roofShown,expected,'roof disclosure agrees with actual canonical visibility');checks++;
+}
 console.log(`APPROVED VIEWER FRAMING: ${checks} passed; aspect fit, useful scale, immutable bounds and derived assembly isolation.`);

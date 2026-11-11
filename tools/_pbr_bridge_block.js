@@ -45,8 +45,13 @@ function _pqSaveOriginals(){
   if(window.__ACS_PQ__.saved) return;
   const saved={mats:{},exposure:renderer.toneMappingExposure,
     pixelRatio:renderer.getPixelRatio(),
-    shadow:{enabled:renderer.shadowMap.enabled,
-      mapSize:sun.shadow.mapSize.x,bias:sun.shadow.bias},
+    shadow:{enabled:renderer.shadowMap.enabled,castShadow:sun.castShadow,
+      mapSize:[sun.shadow.mapSize.x,sun.shadow.mapSize.y],
+      bias:sun.shadow.bias,normalBias:sun.shadow.normalBias,
+      radius:sun.shadow.radius,camera:{left:sun.shadow.camera.left,
+        right:sun.shadow.camera.right,top:sun.shadow.camera.top,
+        bottom:sun.shadow.camera.bottom,near:sun.shadow.camera.near,
+        far:sun.shadow.camera.far}},
     sunIntensity:sun.intensity,sunColor:sun.color.getHex(),
     environment:scene.environment,background:scene.background};
   for(const key in matCache){
@@ -56,6 +61,12 @@ function _pqSaveOriginals(){
       emissiveIntensity:m.emissiveIntensity};
   }
   window.__ACS_PQ__.saved=saved; }
+function _pqDisposeShadowTargets(){
+  // Three allocates a shadow target when map is null; changing mapSize alone
+  // does not resize an existing target. VSM may own a second blur target.
+  const targets=new Set([sun.shadow.map,sun.shadow.mapPass]);
+  targets.forEach(target=>{ if(target&&target.dispose) target.dispose(); });
+  sun.shadow.map=null; sun.shadow.mapPass=null; }
 function _pqRestore(){
   const s=window.__ACS_PQ__.saved;
   if(!s) return {restored:false};
@@ -73,6 +84,15 @@ function _pqRestore(){
   renderer.toneMappingExposure=s.exposure;
   renderer.setPixelRatio(s.pixelRatio);
   renderer.shadowMap.enabled=s.shadow.enabled;
+  sun.castShadow=s.shadow.castShadow;
+  const resized=sun.shadow.mapSize.x!==s.shadow.mapSize[0]
+    ||sun.shadow.mapSize.y!==s.shadow.mapSize[1];
+  sun.shadow.mapSize.set(s.shadow.mapSize[0],s.shadow.mapSize[1]);
+  sun.shadow.bias=s.shadow.bias; sun.shadow.normalBias=s.shadow.normalBias;
+  sun.shadow.radius=s.shadow.radius;
+  Object.assign(sun.shadow.camera,s.shadow.camera);
+  sun.shadow.camera.updateProjectionMatrix();
+  if(resized) _pqDisposeShadowTargets();
   sun.intensity=s.sunIntensity; sun.color.setHex(s.sunColor);
   scene.environment=s.environment; scene.background=s.background;
   window.__ACS_PQ__.fills.forEach(f=>{ scene.remove(f); });
@@ -81,6 +101,9 @@ function _pqRestore(){
     window.__ACS_PQ__.context=null; }
   if(window.__ACS_PQ__.composer){ window.__ACS_PQ__.composer=null; }
   window.__ACS_PQ__.applied=null;
+  // A later model/apply owns a new baseline, including its shadow frustum and
+  // materials. Retaining this snapshot would restore the first model forever.
+  window.__ACS_PQ__.saved=null;
   return {restored:true}; }
 window.ACS.pbrRestore=_pqRestore;
 window.ACS.pbrApply=function(cfg){
@@ -112,7 +135,7 @@ window.ACS.pbrApply=function(cfg){
       sun.shadow.camera.top=c.top; sun.shadow.camera.bottom=c.bottom;
       sun.shadow.camera.near=c.near; sun.shadow.camera.far=c.far;
       sun.shadow.camera.updateProjectionMatrix();
-      if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; }
+      _pqDisposeShadowTargets();
       report.changed.push('shadows'); }
     /* 2. الشمس والملء — أضواء عرضية فقط، لا صلة بتجهيزات MEP */
     const L=cfg.lighting;

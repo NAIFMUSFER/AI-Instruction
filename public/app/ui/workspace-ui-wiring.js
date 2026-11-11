@@ -3100,6 +3100,16 @@ function _acsPixelProbe(){
       +'GET_IMAGE_DATA_FAILED:'+String(e&&e.message||e).slice(0,60); }
   return out; }
 
+// Cheap optional telemetry: no pixel readback and no change to the fixed
+// renderDiagnostics contract. Effective settings may differ after explicit PBR.
+window.ACS.legacyRenderQuality=function(){
+  const initial=renderer.acsInitialQuality||{};
+  return {profile:initial.profile||null,reason:initial.reason||null,renderer:initial.renderer||null,
+    initial_pixel_ratio:initial.pixel_ratio??null,initial_shadow_map_size:initial.shadow_map_size??null,
+    pixel_ratio:renderer.getPixelRatio(),shadow_map_size:sun.shadow.mapSize.x,
+    shadows_enabled:!!renderer.shadowMap.enabled&&!!sun.castShadow};
+};
+
 window.ACS.renderDiagnostics=function(){
   const D={}; ACS_DIAG_KEYS.forEach(k=>{ D[k]=null; });
   D.build_sha=_acsBuildSha();

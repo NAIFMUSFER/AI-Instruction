@@ -1,0 +1,81 @@
+Isolated main c37b5250dc4ff18ba0606add993b5afe52beebaa
+Exit 1
+node:assert:152
+  throw new AssertionError(obj);
+  ^
+
+AssertionError [ERR_ASSERTION]: every mutated shadow setting must return to the captured baseline
++ actual - expected
+
+  {
++   bias: -0.002,
+-   bias: -0.0007,
+    camera: {
++     bottom: -500,
++     far: 3000,
++     left: -500,
++     near: 1,
++     right: 500,
++     top: 500
+-     bottom: -13,
+-     far: 450,
+-     left: -17,
+-     near: 0.7,
+-     right: 23,
+-     top: 31
+    },
++   castShadow: true,
+-   castShadow: false,
+    enabled: false,
++   normalBias: 0.09,
++   radius: 4,
+-   normalBias: 0.03,
+-   radius: 2,
+    size: [
++     8192,
++     8192
+-     1024,
+-     2048
+    ]
+  }
+
+    at Object.<anonymous> (/tmp/acs-shadow-main-h_meaiww/tests/remediation/test_pbr_shadow_restore.cjs:32:9)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: {
+    enabled: false,
+    castShadow: true,
+    size: [ 8192, 8192 ],
+    bias: -0.002,
+    normalBias: 0.09,
+    radius: 4,
+    camera: {
+      left: -500,
+      right: 500,
+      top: 500,
+      bottom: -500,
+      near: 1,
+      far: 3000
+    }
+  },
+  expected: {
+    enabled: false,
+    castShadow: false,
+    size: [ 1024, 2048 ],
+    bias: -0.0007,
+    normalBias: 0.03,
+    radius: 2,
+    camera: { left: -17, right: 23, top: 31, bottom: -13, near: 0.7, far: 450 }
+  },
+  operator: 'deepStrictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1

@@ -1,0 +1,4 @@
+Working tree after capability-aware initial presentation budget; exit0
+PASS: software startup reduces pixel/shadow work without changing viewport layout
+PASS: hardware defaults, constrained/unknown capability reports and finite DPR remain explicit
+PASS: actual quality telemetry is read-only and explicit PBR settings remain authoritative

@@ -760,12 +760,24 @@ chk('وacsFloorIndex يميّز المفتاح القياسي من غيره',
 console.log('\n== ز · SMALL و MEDIUM و LARGE: نفس العدد بالضبط ==');
 /* الأرقام مرصودة قبل F-46 على نفس النماذج. أي حركة فيها تعني أن حدّاً جديداً
    لمس مبنًى قائماً — وهو ما يمنعه العقد صراحةً. */
-[['SMALL', smallModel(), 14], ['MEDIUM', mediumModel(), 891],
- ['LARGE', prodModel(true), 2001], ['LARGE بلا index', prodModel(false), 2001]
-].forEach(([label, m, want]) => {
+/* 2026-11-10: the floor plate became the exact union of room rectangles, emitted
+   as disjoint pieces, so a level now has several slab meshes where it had one.
+   The guard is kept at full strength by counting the two parts separately:
+   everything that is NOT a slab must match the pre-F-46 figure exactly (13, 888,
+   1998 — the old totals minus their 1 or 3 slabs), and the slab pieces are pinned
+   to what the union contract yields for these fixed models. */
+const slabsOf = (R) => R.names.filter(n => n.indexOf('|slab|') >= 0).length;
+[['SMALL', smallModel(), 13, 2], ['MEDIUM', mediumModel(), 888, 24],
+ ['LARGE', prodModel(true), 1998, 54], ['LARGE بلا index', prodModel(false), 1998, 54]
+].forEach(([label, m, wantRest, wantSlabs]) => {
   const R = build(m);
-  chk((label + ' → ' + want + ' شبكة كما قبل الحدود').padEnd(46),
-      R.err === null && R.meshes === want, R.meshes + ' / ' + want);
+  const want = wantRest + wantSlabs;
+  chk((label + ' → ' + wantRest + ' شبكة غير البلاطات كما قبل الحدود').padEnd(46),
+      R.err === null && R.meshes - slabsOf(R) === wantRest,
+      (R.meshes - slabsOf(R)) + ' / ' + wantRest);
+  chk((''.padEnd(46) + ' → و' + wantSlabs + ' قطعة بلاطة من اتحاد الغرف'),
+      R.err === null && slabsOf(R) === wantSlabs && R.meshes === want,
+      slabsOf(R) + ' / ' + wantSlabs);
   chk((''.padEnd(46) + ' → ولا تدهور ولا قصّ'),
       R.err === null && R.summary.degraded === false
       && R.summary.capped_expansions === 0 && R.summary.suppressed_meshes === 0,
@@ -776,9 +788,10 @@ console.log('\n== ز · SMALL و MEDIUM و LARGE: نفس العدد بالضبط
 });
 (() => {
   const R = build(warehouseModel(120, 80, { clear: 12 }));
-  chk('ومستودع ١٢٠×٨٠ المشحون: ٣٨٠٢ شبكة بلا تدهور',
-      R.err === null && R.meshes === 3802 && R.summary.degraded === false,
-      R.meshes + ' degraded=' + (R.summary || {}).degraded);
+  chk('ومستودع ١٢٠×٨٠ المشحون: ٣٨٠١ شبكة غير البلاطات + ٢٢ قطعة بلاطة بلا تدهور',
+      R.err === null && R.meshes - slabsOf(R) === 3801 && slabsOf(R) === 22
+      && R.summary.degraded === false,
+      R.meshes + ' slabs=' + slabsOf(R) + ' degraded=' + (R.summary || {}).degraded);
 })();
 (() => {
   const savedDetail = __ACS_SHARED.DETAIL;
@@ -786,8 +799,9 @@ console.log('\n== ز · SMALL و MEDIUM و LARGE: نفس العدد بالضبط
   const R = build(prodModel(false));
   __ACS_SHARED.DETAIL = savedDetail;
   chk('ومسار الجوال (DETAIL=0.5) يبقى كما كان بلا تدهور',
-      R.err === null && R.meshes === 2001 && R.summary.degraded === false,
-      R.meshes + ' degraded=' + (R.summary || {}).degraded);
+      R.err === null && R.meshes - slabsOf(R) === 1998 && slabsOf(R) === 54
+      && R.summary.degraded === false,
+      R.meshes + ' slabs=' + slabsOf(R) + ' degraded=' + (R.summary || {}).degraded);
 })();
 chk('وسجلّ العيوب واحد لا اثنان — لا آليّة موازية أُنشئت',
     typeof acsBuildDefectsReset === 'function'

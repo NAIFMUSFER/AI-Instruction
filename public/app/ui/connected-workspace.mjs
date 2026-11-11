@@ -18,6 +18,9 @@ const metricValue = (key, v) => {
   return typeof reason==='string'&&reason.trim() ? 'غير متاح / غير قابل للقياس — '+reason : value(v);
 };
 const floorLabel = index => index < 0 ? 'القبو '+Math.abs(index) : index === 0 ? 'الدور الأرضي' : index === 1 ? 'الدور الأول' : 'الدور '+index;
+// Canonical level kind is explicit; room names never determine roof authority.
+const isRoofProjection = p => p?.level_kind === 'roof';
+const levelLabel = p => isRoofProjection(p) ? (p.level_auto===true?'السطح · افتراضي غير مشغول':'السطح · غير مشغول') : floorLabel(p.level_index);
 function roomLabel(label) {
   const names={entrance:'مدخل المبنى',stairs:'الدرج',stair:'الدرج',elevator:'المصعد',living:'الصالة',kitchen:'المطبخ',bedroom:'غرفة النوم',bathroom:'دورة المياه',corridor:'الممر',majlis:'المجلس'};
   return names[label] || (/^flat_\d+$/.test(label) ? 'شقة '+label.slice(5) : label);
@@ -65,7 +68,7 @@ function safeError(e) {
   const friendly={APPROVAL_REQUIRED:'اعتمد النسخة المختارة قبل التحويل والتصدير.',DOWNSTREAM_GEOMETRY_NOT_SPECIFIED:'تحتاج عناصر النسخة إلى أبعاد إضافية قبل عرض 3D. اطلب استكمالها في المحادثة ثم راجع النسخة الجديدة.',DOWNSTREAM_GEOMETRY_INVALID:'توجد أبعاد غير صالحة للتحويل إلى 3D. راجع العناصر وعدّلها في نسخة جديدة.',STALE_REVISION:'وصل تعديل أحدث لهذا المشروع. افتح آخر نسخة ثم أعد العملية.',LOCK_VIOLATION:'هذا التعديل يمس عنصرًا مقفلًا. عدّل الطلب أو ألغِ قفله أولًا.'};
   status(friendly[e?.code]||e?.message||'تعذّر إكمال العملية. حاول مجددًا.',true);
 }
-function setBusy(on) { busy=on;root.setAttribute('aria-busy',String(on));root.querySelectorAll('[data-mutate]').forEach(b=>{b.disabled=on||!!pendingJob||b.dataset.unavailable==='true';});syncApproval(); }
+function setBusy(on) { busy=on;root.setAttribute('aria-busy',String(on));$('cwRevision').disabled=on;root.querySelectorAll('[data-mutate]').forEach(b=>{b.disabled=on||!!pendingJob||b.dataset.unavailable==='true';});syncApproval(); }
 async function api(body, commands=false) {
   const session=await window.ACS_AUTH.freshSession();
   if(!session)throw new Error('انتهت جلسة الدخول. أعد تحميل الصفحة لتسجيل الدخول؛ نسخك محفوظة.');
@@ -95,20 +98,24 @@ function step(n) {
 }
 function briefProgram() { return briefEditor.program(); }
 function fillBrief(data) { briefEditor.fill(data,packet?.scorecard?.typology);residentialOptions?.fill();projectCopy(); }
+// A selected option is not authoritative until its matching revision is loaded.
+function loadedRevisionSelected() { return !!state?.revision_id&&$('cwRevision')?.value===state.revision_id; }
+function headRevisionSelected() { return loadedRevisionSelected()&&state.revision_id===state.head; }
 function syncApproval() {
   if(!root)return;
-  const head=state?.revision_id&&state.revision_id===state.head;
+  const loaded=loadedRevisionSelected(),head=headRevisionSelected();
   $('cwApprove').disabled=busy||!!pendingJob||!head||state?.authority?.can_approve_concept!==true||!$('cwApproveConfirm').checked;
-  const approved=!!state?.history?.some(v=>v.revision_id===state.revision_id&&v.state==='APPROVED');
+  const approved=loaded&&!!state?.history?.some(v=>v.revision_id===state.revision_id&&v.state==='APPROVED');
   root.querySelectorAll('[data-format]:not([data-format=review]),#cwShow3D').forEach(b=>{b.disabled=busy||!approved;});
-  root.querySelector('[data-format=review]').disabled=busy||!packet;
+  root.querySelector('[data-format=review]').disabled=busy||!loaded||!packet;
   $('cwChatSubmit').disabled=busy||!!pendingJob||!head;
-  $('cwRestore').disabled=busy||!!pendingJob||!state?.revision_id||head;
-  $('cwCompare').disabled=busy||!packet||!$('cwCompareRevision').value||$('cwCompareRevision').value===state?.revision_id;
+  $('cwRestore').disabled=busy||!!pendingJob||!loaded||head;
+  $('cwCompare').disabled=busy||!loaded||!packet||!$('cwCompareRevision').value||$('cwCompareRevision').value===state?.revision_id;
   $('cwResumeReview').hidden=!packet||approved;
   const roomLocked=!!selected&&packet?.locks.rooms.some(r=>r[0]===selected.source.template&&r[1]===selected.source.room_id);
   $('cwSaveGeometry').disabled=busy||!!pendingJob||!selected||!head||roomLocked;
   $('cwLock').disabled=busy||!!pendingJob||!selected||!head;
+  if($('cwRoof'))$('cwRoof').disabled=busy||!!pendingJob||!head||!packet||$('cwRoof').dataset.userAuthored==='true';
   planUpload?.sync();
 }
 async function renderState(data, {keepStep=false}={}) {
@@ -140,7 +147,12 @@ async function renderState(data, {keepStep=false}={}) {
   for(const item of data.planning_assumptions||[])el('li',item,$('cwAssumptions'));
   $('cwAssumptionsCard').hidden=!data.planning_assumptions?.length;
   if(packet){
-    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',floorLabel(p.level_index),$('cwLevel'));o.value=String(i);});
+    $('cwLevel').replaceChildren();packet.projections.forEach((p,i)=>{const o=el('option',levelLabel(p),$('cwLevel'));o.value=String(i);});{const roof=$('cwRoof');if(roof){const roofs=packet.projections.filter(isRoofProjection),has=roofs.length>0,userAuthored=roofs.some(p=>p.level_auto!==true);roof.dataset.enabled=String(has);roof.dataset.userAuthored=String(userAuthored);roof.textContent=userAuthored?'سطح من النموذج · يُعدّل من مخططه':has?'إزالة السطح الافتراضي':'إضافة سطح افتراضي';}}
+    for(const projection of packet.projections.filter(isRoofProjection)){
+      for(const gap of projection.roof_disclosure?.parapet_gaps||[]){
+        el('li','حاجز السطح غير مكتمل عند '+gap.room_id+' · الحافة '+gap.edge+' · طول مفتوح '+value(gap.open_length_m)+' م. هذه الفتحة لم تُملأ بافتراض هندسي.', $('cwAssumptions'));$('cwAssumptionsCard').hidden=false;
+      }
+    }
     draw();table($('cwMetrics'),Object.entries(packet.scorecard.metrics).map(([k,v])=>[metricNames[k]||k,metricValue(k,v)]));
     const checks=Object.entries(packet.review.scopes).map(([k,v])=>[scopeNames[k]||k,{PASS:'اجتاز ضمن نطاق الفحص',FAIL:'يحتاج معالجة',NOT_VERIFIED:'غير متحقق',NOT_APPLICABLE:'لا ينطبق على هذا المشروع'}[v]||v]);
     // محاذاة النوى ووجود عناصر درج أو مصعد لا يثبتان الانتقال الفعلي، حتى في ملف قديم بلا تغطية معلنة.
@@ -177,7 +189,7 @@ function draw() {
   if(!packet)return;
   const p=packet.projections[Number($('cwLevel').value)||0];$('cwPlan').replaceChildren();$('cwSpaces').replaceChildren();
   const pad=Math.max(p.site.w,p.site.d)*.035;$('cwPlan').setAttribute('viewBox',[-pad,-pad,p.site.w+2*pad,p.site.d+2*pad].join(' '));
-  svg('title',{},$('cwPlan'),'مخطط '+floorLabel(p.level_index));
+  svg('title',{},$('cwPlan'),'مخطط '+levelLabel(p));
   svg('rect',{x:0,y:0,width:p.site.w,height:p.site.d,fill:'#f7f9fb',stroke:'#668194','stroke-width':.06},$('cwPlan'));
   for(const item of p.primitives){
     const [x,z,w,d]=item.rect_xz_m;
@@ -200,8 +212,7 @@ function selectRoom(item) {
   ['cwX','cwZ','cwW','cwD'].forEach((id,i)=>{$(id).value=item.rect_xz_m[i];});
   const locked=packet.locks.rooms.some(r=>r[0]===item.source.template&&r[1]===item.source.room_id);
   $('cwLock').textContent=locked?'إلغاء قفل الفراغ':'قفل الفراغ';$('cwLock').dataset.locked=String(locked);
-  $('cwSaveGeometry').disabled=locked||state.revision_id!==state.head||busy||!!pendingJob;
-  $('cwLock').disabled=state.revision_id!==state.head||busy||!!pendingJob;
+  syncApproval();
   root.querySelectorAll('[data-room]').forEach(n=>n.setAttribute('aria-pressed',String(n.dataset.room===item.source_id)));
 }
 async function refresh(rid, keepStep=false) {
@@ -331,7 +342,7 @@ function mount(){
   $('cwReload').addEventListener('click',()=>run(async()=>{await refresh();status('تم فتح آخر نسخة محفوظة.');}));
   $('cwRecoverJob').addEventListener('click',()=>run(poll));
   $('cwDismissJob').addEventListener('click',()=>{stopProgress();pendingJob=null;$('cwResumeJob').hidden=true;clearTimeout(pollTimer);try{localStorage.removeItem(jobKey());}catch(e){}$('cwRecoverJob').hidden=true;$('cwDismissJob').hidden=true;setBusy(false);status('انتهت المتابعة. تحقق من آخر نسخة قبل بدء مقترح جديد.');});
-  $('cwRevision').addEventListener('change',()=>run(()=>refresh($('cwRevision').value,true)));
+  $('cwRevision').addEventListener('change',()=>{syncApproval();run(()=>refresh($('cwRevision').value,true));});
   $('cwLevel').addEventListener('change',draw);
   $('cwType').addEventListener('change',projectCopy);
   $('cwApproveConfirm').addEventListener('change',syncApproval);
@@ -348,6 +359,8 @@ function mount(){
     try{await handleJob((await api(body)).job);}catch(err){progressPhase('UNKNOWN');status('لم يصل تأكيد طلب التعديل. تابع المهمة قبل إرسال طلب آخر. '+err.message,true);}
   });});
   $('cwSelection').addEventListener('submit',e=>{e.preventDefault();run(async()=>{if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const data=await api({action:'edit_geometry',expected_head:state.head,room_ref:[selected.source.template,selected.source.room_id],rect:['cwX','cwZ','cwW','cwD'].map(id=>Number($(id).value))});await renderState(data);status('حُفظ التعديل كنسخة جديدة.');});});
+  {const roof=el('button','إضافة سطح افتراضي',$('cwRestore').parentNode);roof.type='button';roof.id='cwRoof';roof.setAttribute('data-mutate','');roof.title='سطح مسطح بحاجز 0.9 م يتبع الدور الأخير. افتراض معلن وليس دورًا مشغولًا.';
+  roof.addEventListener('click',()=>run(async()=>{if(!headRevisionSelected())throw new Error('اختر آخر نسخة قبل تعديل السطح.');if(!$('cwEditApprovalNotice').hidden&&!$('cwEditApprovalConfirm').checked)throw new Error('أكد إنشاء مسودة جديدة قبل تعديل النسخة المعتمدة.');const enabled=roof.dataset.enabled!=='true';const data=await api({action:'set_roof',expected_head:state.head,enabled});await renderState(data);status(enabled?'أُضيف السطح الافتراضي كنسخة جديدة.':'أُزيل السطح الافتراضي كنسخة جديدة. لن يُضاف تلقائيًا في التوليد القادم.');}));}
   $('cwRestore').addEventListener('click',()=>run(async()=>{await renderState(await api({action:'restore',expected_head:state.head,source_revision_id:state.revision_id,note:'استعادة نسخة محفوظة من واجهة المشروع'},true));status('تمت الاستعادة كمسودة جديدة؛ النسخ المعتمدة السابقة محفوظة.');}));
   $('cwCompare').addEventListener('click',()=>run(async()=>{const reference=$('cwCompareRevision').value;if(!reference||reference===state.revision_id)throw new Error('اختر نسخة مرجعية مختلفة للمقارنة.');const data=await api({action:'compare',reference_revision_id:reference,target_revision_id:state.revision_id},true);showComparison(data);status('المقارنة من النسختين المحفوظتين.');}));
   $('cwLogout').addEventListener('click',()=>{stopProgress();clearTimeout(pollTimer);revisionEpoch++;clearViewer();state=null;packet=null;root.hidden=true;document.body.classList.remove('acs-connected');$('acsLogout')?.click();});

@@ -48,6 +48,9 @@ DIST = {
     "multipart": "python-multipart",
     "brotli": "Brotli",
     "yaml": "PyYAML",
+    # Arabic searchable PDF (shaping, bidi, embedded font) and independent
+    # export readers arrived with the 2026-11-10 delivery. They were imported by
+    # CI targets without being declared here, which failed this contract.
     "arabic_reshaper": "arabic-reshaper",
     "bidi": "python-bidi",
     "fontTools": "fonttools",

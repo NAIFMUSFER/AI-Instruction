@@ -1,0 +1,20 @@
+Baseline source HEAD 9c296b055f1eff96117abe94236430b12d08552e
+Expected regression failure: exit 1
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: cwRoof must fail closed when visible selection differs from loaded head
+
+false !== true
+
+    at file:///workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_connected_revision_controls.mjs:40:90 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.22.1
