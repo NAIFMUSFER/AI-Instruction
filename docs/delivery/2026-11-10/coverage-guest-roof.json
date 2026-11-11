@@ -93,5 +93,18 @@
       "tests/remediation/test_guest_workspace.cjs"
     ],
     "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_guest_import_wait.cjs",
+    "purpose": "Actual async JSON import handler and browser wait identity regression",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-IMPORT-WAIT-4A"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_import_wait.cjs"
+    ],
+    "generated_from": []
   }
 ]

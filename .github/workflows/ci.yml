@@ -159,7 +159,8 @@ jobs:
                --label "bundle extractor (no node_modules)" --runner "node" \
                    tests/remediation/test_bundle_extractor.js \
                    tests/remediation/test_transport_errors.js \
-                   tests/remediation/test_opening_identity_parity.js
+                   tests/remediation/test_opening_identity_parity.js \
+                   tests/remediation/test_guest_import_wait.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -774,6 +775,7 @@ jobs:
             tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_local_render_quality.mjs \
             tests/remediation/test_guest_roof_integration.cjs \
+            tests/remediation/test_guest_import_wait.cjs \
             tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \

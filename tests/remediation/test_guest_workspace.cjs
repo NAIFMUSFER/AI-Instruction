@@ -57,6 +57,12 @@ async function assertOccupiedCounts(page,model){
  assert.equal(Number(values[1]),rooms,'visible occupied-room count excludes every roof deck instance');
  assert.ok((await page.locator('#statCount').textContent()).includes(roofLevels(model).length+' سطح غير مشغول'),'the added roof is disclosed separately from occupied rooms');
 }
+function recoveryImportReady(expectedName){
+ // The preceding authored fixture is also 24 m wide. Wait for this file's
+ // unique identity before saving; its asynchronous read may still be pending.
+ const model=window.ACS.exportModel();
+ return model?.site.w===24&&model.meta?.name===expectedName;
+}
 async function assertGuestQuality(page,width,stage){
  const quality=await page.evaluate(()=>window.ACS.legacyRenderQuality());
  assert.ok(quality.renderer===null||typeof quality.renderer==='string');
@@ -394,7 +400,7 @@ async function runGuestWorkspaceTests(){
    // a newly roofed sample must not silently augment the recovered snapshot.
    const recoveryModel=occupiedModel(originalModel);recoveryModel.meta.name='legacy-recovery-'+width;
    await page.locator('#impFile').setInputFiles({name:'restored-local.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(recoveryModel))});
-   await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===24);
+   await page.waitForFunction(recoveryImportReady,recoveryModel.meta.name);
    assert.equal((await page.evaluate(()=>window.ACS.persistence.save('GUEST_IMPORT_TEST'))).ok,true);
    if(width===1280){
     diagnostic.phase('two-tabs-storage-denied');

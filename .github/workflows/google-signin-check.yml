@@ -16,6 +16,7 @@ on:
       - 'tests/remediation/test_guest_roof_parity.py'
       - 'tests/remediation/guest_roof_parity.mjs'
       - 'tests/remediation/test_guest_roof_integration.cjs'
+      - 'tests/remediation/test_guest_import_wait.cjs'
       - '.github/workflows/google-signin-check.yml'
   workflow_dispatch:
 permissions:
@@ -39,6 +40,7 @@ jobs:
         run: |
           node tests/remediation/test_auth_session.js
           node tests/remediation/test_auth_fixture_waits.cjs
+          node tests/remediation/test_guest_import_wait.cjs
           python3 tests/remediation/test_auth_gateway.py
       - name: Build shipped frontend
         run: bash tools/netlify-build.sh

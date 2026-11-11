@@ -26,6 +26,10 @@ The guest browser extension exercises visible roof isolation/removal/restoration
 
 Local parity and focused source integration have before/after witnesses. The restored local executor still aborts Chromium at `socket() EPERM` before opening a page. Therefore the changed guest browser journey and final acceptance require CI on the published increment; no after-change browser pass is claimed in this document yet. No physical phone, live AI output or physical stair traversal is established. The existing separate authoring panel is not represented as a newly integrated main-scene editor.
 
+## Import-wait regression
+
+The recovery-seed import followed another24m-wide fixture. Its old width-only wait could finish before the asynchronous file read committed the new model. The browser wait now requires the unique recovery-model identity as well as the same width, with its timeout and every existing assertion retained. `test_guest_import_wait.cjs` executes the actual import handler with a deliberately pending `file.text()` and the actual browser predicate: it fails for the old predicate and passes after the identity guard. This is source/async-boundary evidence, not a native-browser pass.
+
 ## Recovery note
 
 The first uncommitted attempt was lost when the executor returned an older filesystem snapshot. PR190 and its acceptance evidence remained intact on GitHub. This increment was reconstructed above that exact remote head and re-tested; earlier local results were not silently carried forward as verification of reconstructed files.
