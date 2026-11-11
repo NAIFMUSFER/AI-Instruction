@@ -762,7 +762,7 @@ jobs:
           python tools/build_runtime_browser.py
           python tools/build_pbr_browser.py
           python tools/build_docs_browser.py
-          git diff --exit-code -- public/app/generated/requirement-metrics.mjs public/app/generated/bim.js public/app/generated/runtime.js public/app/generated/pbr.js public/app/generated/docs.js public/app/styles/app.css public/index.html
+          git diff --exit-code -- public/app/generated/requirement-metrics.mjs public/app/generated/bim.js public/app/generated/runtime.js public/app/generated/pbr.js public/app/generated/pbr-bridge.js public/app/generated/docs.js public/app/styles/app.css public/index.html
       - name: Revision races and Arabic frontend contracts
         shell: bash
         run: |
@@ -770,6 +770,7 @@ jobs:
           bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
             tests/remediation/test_approved_revision_race.mjs \
             tests/remediation/test_connected_revision_controls.mjs \
+            tests/remediation/test_pbr_shadow_restore.cjs \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \
             tests/remediation/test_auth_fixture_waits.cjs \

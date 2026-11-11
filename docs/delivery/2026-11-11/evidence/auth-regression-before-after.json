@@ -1,0 +1,47 @@
+{
+  "head_under_test": "455c5a4f3b2701ffd10e99b6efbbeab8b34bba99",
+  "github_job": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139591/job/130453946054",
+  "observed_failure": "Google mobile393 redirect reached /v1/auth/google/start but not exchange; transient DOM nodes absent. Pending source-response promise rejected on context close and masked primary error.",
+  "root_cause_status": "Null-body readiness crash and pending-promise masking reproduced locally against the actual fixture helpers; next remote browser run needed to confirm complete Google journey.",
+  "before": [
+    {
+      "command": "node tests/remediation/test_auth_fixture_waits.cjs",
+      "result": "exit1 TypeError Cannot read properties of null (reading classList)"
+    },
+    {
+      "command": "node tests/remediation/test_auth_fixture_waits.cjs after null-body-only fix",
+      "result": "exit1 synthetic pending context-close promise terminated child process"
+    }
+  ],
+  "after": [
+    {
+      "command": "node tests/remediation/test_auth_fixture_waits.cjs",
+      "result": "PASS null-body false, non-entered false, exact acs-entered true, pending rejection handled, awaited rejection preserved"
+    },
+    {
+      "command": "node tests/remediation/test_auth_session.js",
+      "result": "31 passed, 0 failed"
+    },
+    {
+      "command": "python tests/remediation/test_ci_dependencies.py",
+      "result": "27 passed, 0 failed"
+    },
+    {
+      "command": "node --check tests/remediation/test_auth_shipped_page.cjs",
+      "result": "exit0"
+    },
+    {
+      "command": "yaml.safe_load edited ci.yml/google-signin-check.yml/async-generation-browser.yml",
+      "result": "all3 parse"
+    }
+  ],
+  "product_auth_assertions_removed": 0,
+  "browser_after_status": "NOT VERIFIED locally; Chromium sandbox socket EPERM retained from prior actual launch attempt",
+  "files": [
+    "tests/remediation/test_auth_shipped_page.cjs",
+    "tests/remediation/test_auth_fixture_waits.cjs",
+    ".github/workflows/google-signin-check.yml",
+    ".github/workflows/async-generation-browser.yml",
+    ".github/workflows/ci.yml"
+  ]
+}
