@@ -34,7 +34,8 @@ SUCCESS = {'ok': True, 'building': {'site': {'w': 20, 'd': 15},
 
 class LiveGenerationVerdict(unittest.TestCase):
     def run_verifier(self, status=200, payload=None, text=None, error=None,
-                     generation=True):
+                     generation=True, anonymous_status=401,
+                     anonymous_code='ACS_AUTH_REQUIRED'):
         calls = []
         response_text = json.dumps(SUCCESS if payload is None else payload) \
             if text is None else text
@@ -66,8 +67,8 @@ class LiveGenerationVerdict(unittest.TestCase):
                 result, code = envelope('ACS_NOT_FOUND'), 404
             elif path == '/health':
                 result, code = envelope('ACS_METHOD_NOT_ALLOWED'), 405
-            elif path == '/v1/understand' and body == {}:
-                result, code = envelope('ACS_VALIDATION_FAILED'), 422
+            elif path == '/v1/understand':
+                result, code = envelope(anonymous_code), anonymous_status
             else:
                 result, code = envelope('ACS_BAD_REQUEST'), 400
             return code, out_headers, json.dumps(result), None
@@ -104,6 +105,20 @@ class LiveGenerationVerdict(unittest.TestCase):
     def test_successful_generation_passes(self):
         rc, output, failures, skipped = self.run_verifier()
         self.assertEqual((rc, failures, skipped), (0, 0, []), output)
+
+    def test_anonymous_validation_response_fails_auth_boundary(self):
+        rc, output, failures, _ = self.run_verifier(
+            generation=False, anonymous_status=422,
+            anonymous_code='ACS_VALIDATION_FAILED')
+        self.assertEqual(rc, 1, output)
+        self.assertEqual(failures, 2, output)
+
+    def test_anonymous_server_error_is_not_an_auth_success(self):
+        rc, output, failures, _ = self.run_verifier(
+            generation=False, anonymous_status=500,
+            anonymous_code='ACS_INTERNAL')
+        self.assertEqual(rc, 1, output)
+        self.assertEqual(failures, 2, output)
 
     def assert_generation_fails(self, **kwargs):
         rc, output, failures, _ = self.run_verifier(**kwargs)

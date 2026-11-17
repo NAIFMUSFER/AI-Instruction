@@ -192,6 +192,8 @@ function notVerified(why) {
       for (const s of document.styleSheets) {
         try { n += s.cssRules.length; } catch (e) { } } return n; })(),
     inline_style_attrs: document.querySelectorAll('[style]').length,
+    inline_style_elements: Array.from(document.querySelectorAll('[style]'))
+      .map(el => el.tagName + '#' + el.id + ':' + el.getAttribute('style')),
     inline_handlers: Array.from(document.querySelectorAll('*'))
       .filter(el => Array.from(el.attributes)
         .some(a => /^on[a-z]+$/.test(a.name))).length,
@@ -221,7 +223,8 @@ function notVerified(why) {
   boot('no element carries a style= attribute and none carries an inline '
     + 'event handler — the strict CSP would silently kill both',
     shape.inline_style_attrs === 0 && shape.inline_handlers === 0,
-    JSON.stringify([shape.inline_style_attrs, shape.inline_handlers]));
+    JSON.stringify({ styles: shape.inline_style_elements,
+      handlers: shape.inline_handlers }));
   boot('the production CSP raised NO violation during boot',
     shape.csp.length === 0, JSON.stringify(shape.csp));
   if (!TARGET) {
@@ -275,19 +278,10 @@ function notVerified(why) {
     summarise(); return;
   }
 
-  /* §6 — نموذج قانوني محدّد يُحمَّل فعلاً؛ لا يصحّ الفحص على ورشة فارغة */
-  console.log('\n== EMPTY WORKSPACE IS NOT A PASS (§6) ==');
-  const emptyDiag = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
-  visual('an empty workspace reports NO canonical geometry instead of '
-    + 'sky-sized bounds (the old false pass)',
-    emptyDiag.model_bounds === null && emptyDiag.canonical_meshes === 0,
-    JSON.stringify({ bounds: emptyDiag.model_bounds,
-      canonical: emptyDiag.canonical_meshes }));
-
   // Rendering fixtures requires entry into the studio. Exercise the shipped
-  // loopback-only entry on our own server, after measuring the empty scene.
+  // loopback-only entry when the page has not already opened a guest workspace.
   // A public production boot does not establish an authenticated user session.
-  if (!TARGET) {
+  if (!TARGET && !await pg.evaluate(() => document.body.classList.contains('acs-entered'))) {
     await pg.locator('#lgGo').click();
     await pg.waitForFunction(() => document.body.classList.contains('acs-entered'));
   } else if (!await pg.evaluate(() => document.body.classList.contains('acs-entered'))) {
@@ -297,6 +291,23 @@ function notVerified(why) {
     process.exitCode = 2;
     return;
   }
+
+  // Public guest entry now loads a sample immediately and may recover a local
+  // project asynchronously. Do not mistake that real geometry for an empty
+  // scene failure, or race recovery against the fixtures. Explicitly load a
+  // zero-level model through the same public bridge used for every fixture.
+  await pg.waitForFunction(() => window.ACS.guestRecoveryPending !== true,
+    null, { timeout: 30000 });
+  console.log('\n== EMPTY WORKSPACE IS NOT A PASS (§6) ==');
+  await pg.evaluate(() => window.ACS.setModel({
+    site: { w: 30, d: 25 }, levels: [], floors: {}
+  }));
+  const emptyDiag = await pg.evaluate('window.ACS.renderDiagnosticsDetail()');
+  visual('an empty workspace reports NO canonical geometry instead of '
+    + 'sky-sized bounds (the old false pass)',
+    emptyDiag.model_bounds === null && emptyDiag.canonical_meshes === 0,
+    JSON.stringify({ bounds: emptyDiag.model_bounds,
+      canonical: emptyDiag.canonical_meshes }));
 
   const FIX = fixtures();
   let panelsLoaded = false;
