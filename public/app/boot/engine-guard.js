@@ -322,7 +322,7 @@
       var s=loadSession();clearSession();
       // Hide the current project immediately, even when the network is offline.
       document.body.classList.remove("acs-entered");
-      byId("login").classList.remove("acs-hidden");byId("login").style.display="flex";
+      byId("login").classList.remove("acs-hidden");
       setStatus("جارٍ تسجيل الخروج…",false);
       try{if(s)await acsFetchJSON("/v1/auth/signout",{},s.access_token);}catch(e){}
       location.reload();
@@ -413,9 +413,7 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
       window.ACS.projectId=identity.project.id||null;
     }
     byId('login').classList.add('acs-hidden');
-    byId('login').style.display='none';
     byId('left').classList.remove('acs-hidden');
-    byId('left').style.display='flex';
     byId('who').textContent=nm;
     document.body.classList.add('acs-entered');
     if(identity.mode==='guest')guestFallback();
@@ -504,7 +502,7 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
       if(!window.ACS.ready){
         if(window.ACS.guest&&window.ACS.guestBootFailure){window.ACS.guestBootFailure();return;}
         var w=byId('engineWarn');
-        if(w){ w.classList.remove('acs-hidden'); w.style.display='block'; }
+        if(w){ w.classList.remove('acs-hidden'); }
       }
     }, 12000);
   }

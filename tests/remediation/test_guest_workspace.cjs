@@ -27,6 +27,7 @@ async function runGuestWorkspaceTests(){
  try{
   for(const width of [393,1280]){
    const context=await browser.newContext({viewport:{width,height:852},acceptDownloads:true});
+   context.setDefaultTimeout(30000);
    const page=await context.newPage(),calls=[],errors=[];
    page.on('pageerror',e=>errors.push(e.message));
    await page.addInitScript(()=>{
@@ -43,6 +44,7 @@ async function runGuestWorkspaceTests(){
    await page.goto(ORIGIN+'/');
    await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.ACS.exportModel());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
+   console.log('GUEST '+width+': initial recovery complete');
    assert.equal(await page.locator('#login').isVisible(),false);
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -64,6 +66,7 @@ async function runGuestWorkspaceTests(){
    const saved=await page.evaluate(()=>window.ACS.persistence.save('GUEST_TEST'));
    assert.equal(saved.ok,true);
    await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.site.w===24);
+   console.log('GUEST '+width+': edited project restored');
    assert.match(await page.locator('#acsGuestStatus').textContent(),/استُعيد/);
    // Delay the real IndexedDB recovery result, then act before it completes.
    // This instruments only scheduling; the shipped page and saved data are real.
@@ -88,6 +91,7 @@ async function runGuestWorkspaceTests(){
    // Cross the UI's slow-read notice without releasing the genuine IndexedDB
    // result. This used to discard recovery and autosave the temporary sample.
    await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__guestRecoveryReadDone);
+   console.log('GUEST '+width+': delayed recovery read complete');
    const beforeSlowRecovery=await guestSnapshot(page);
    assert.ok(beforeSlowRecovery.records.some(record=>JSON.parse(record.payload).model.site.w===24));
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recoveryStatus==='slow');
@@ -103,6 +107,7 @@ async function runGuestWorkspaceTests(){
    assert.deepEqual(await guestSnapshot(page),beforeSlowRecovery,'pending recovery must preserve all saved records and the pointer');
    await page.evaluate(()=>window.__releaseGuestRecovery());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete'&&window.ACS.exportModel()?.site.w===24);
+   console.log('GUEST '+width+': delayed recovery applied');
    assert.match(await page.locator('#acsGuestStatus').textContent(),/استُعيد/);
    // A second slow read must not overwrite a new sample chosen by the visitor.
    await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__guestRecoveryReadDone);
@@ -144,6 +149,7 @@ async function runGuestWorkspaceTests(){
   // A real browser with WebGL deliberately unavailable must retain useful,
   // honest 2D content and navigation independently of the failed ESM graph.
   const noGl=await browser.newContext({viewport:{width:393,height:852}}),fallback=await noGl.newPage();
+  noGl.setDefaultTimeout(30000);
   const fallbackCalls=[];
   await fallback.addInitScript(()=>{
    const original=HTMLCanvasElement.prototype.getContext;

@@ -1195,12 +1195,11 @@ renderer.setAnimationLoop(()=>{
 
 /* ========================= الواجهة / التبويبات / الدخول ========================= */
 function showTab(t){
-  /* الإخفاء الابتدائي صنفٌ الآن لا سمة style (style-src 'self')، وإسناد
-     style.display='' لا يمحو قاعدة صنف — فالتبديل يجري على الصنف أيضاً. */
+  // The stylesheet owns panel layout; toggling the class is sufficient and
+  // avoids reintroducing inline attributes when the guest sample boots.
   document.querySelectorAll('[data-panel]').forEach(p=>{
     const on = p.dataset.panel===t;
     p.classList.toggle('acs-hidden', !on);
-    p.style.display = on ? '' : 'none';
   });
   const bd=document.querySelector('.body'); if(bd) bd.scrollTop=0;
 }

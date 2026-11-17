@@ -221,8 +221,12 @@ def main():
     probes = [
         ("GET", "/definitely-not-a-route", None, 404, "ACS_NOT_FOUND"),
         ("POST", "/health", {}, 405, "ACS_METHOD_NOT_ALLOWED"),
-        ("POST", "/v1/understand", {}, 422, "ACS_VALIDATION_FAILED"),
-        ("POST", "/v1/understand", {"text": "   "}, 400, "ACS_BAD_REQUEST"),
+        # Production authenticates before parsing generation requests. These
+        # probes carry no credentials; accepting a validation response here
+        # would hide a regression in that boundary. Authenticated validation
+        # remains covered by the API integration suites.
+        ("POST", "/v1/understand", {}, 401, "ACS_AUTH_REQUIRED"),
+        ("POST", "/v1/understand", {"text": "   "}, 401, "ACS_AUTH_REQUIRED"),
     ]
     for method, path, body, want_status, want_code in probes:
         st, hd, tx, err = request(base, path, method=method, body=body)
