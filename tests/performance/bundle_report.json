@@ -30,8 +30,8 @@
         "path": "public/app/core/plan-review-packet.mjs"
       },
       {
-        "bytes": 58911,
-        "gzip_bytes": 18845,
+        "bytes": 62703,
+        "gzip_bytes": 20039,
         "loaded": "initial-module",
         "path": "public/app/ui/approved-viewer.mjs"
       },
@@ -42,7 +42,7 @@
         "path": "public/app/styles/connected-workspace.css"
       }
     ],
-    "initial_javascript_bytes": 129042,
+    "initial_javascript_bytes": 132834,
     "lazy_javascript_bytes": 0,
     "note": "Additional to the historical javascript/css sections; dependencies already counted in vendor are not counted again."
   },
@@ -94,7 +94,7 @@
         "path": "public/app/boot/style-bridge.js"
       }
     ],
-    "core_initial_bytes": 214063,
+    "core_initial_bytes": 217855,
     "core_initial_module_count": 14,
     "core_initial_note": "core = public/app/main.js plus everything it reaches through static imports; all of it is parsed and evaluated on first load. The declared boot scripts are loaded on first paint too, but they are classic <script src> elements outside the module graph, so they are counted separately.",
     "dynamic_import_count": 35,
@@ -277,7 +277,7 @@
     ],
     "first_party_dynamic_import_count": 27,
     "first_party_module_count": 47,
-    "first_party_total_bytes": 2308490,
+    "first_party_total_bytes": 2312282,
     "guest_route_additional_bytes": 1558788,
     "guest_route_modules": [
       "public/app/core/stairs.mjs",
@@ -302,16 +302,16 @@
       "public/app/ui/generation-jobs.js",
       "public/app/ui/guest-workspace.js"
     ],
-    "initial_javascript_bytes": 276642,
+    "initial_javascript_bytes": 280434,
     "largest_module": {
       "bytes": 229312,
       "group": "core",
       "gzip_bytes": 49020,
       "loaded": "local-route",
       "path": "public/app/core/standards.js",
-      "pct_of_first_party_js": 9.93
+      "pct_of_first_party_js": 9.92
     },
-    "largest_module_pct_of_first_party_js": 9.93,
+    "largest_module_pct_of_first_party_js": 9.92,
     "lazy_bytes": 2031848,
     "lazy_declaration_matches_graph": true,
     "lazy_declared": [
@@ -381,7 +381,7 @@
         "gzip_bytes": 49020,
         "loaded": "local-route",
         "path": "public/app/core/standards.js",
-        "pct_of_first_party_js": 9.93
+        "pct_of_first_party_js": 9.92
       },
       {
         "bytes": 218612,
@@ -389,7 +389,7 @@
         "gzip_bytes": 67367,
         "loaded": "local-route",
         "path": "public/app/ui/workspace-ui-wiring.js",
-        "pct_of_first_party_js": 9.47
+        "pct_of_first_party_js": 9.45
       },
       {
         "bytes": 205871,
@@ -397,7 +397,7 @@
         "gzip_bytes": 57130,
         "loaded": "local-route",
         "path": "public/app/core/disciplines.js",
-        "pct_of_first_party_js": 8.92
+        "pct_of_first_party_js": 8.9
       },
       {
         "bytes": 199861,
@@ -405,7 +405,7 @@
         "gzip_bytes": 64650,
         "loaded": "local-route",
         "path": "public/app/core/viewer.js",
-        "pct_of_first_party_js": 8.66
+        "pct_of_first_party_js": 8.64
       },
       {
         "bytes": 167195,
@@ -413,7 +413,7 @@
         "gzip_bytes": 50619,
         "loaded": "local-route",
         "path": "public/app/render/scene.js",
-        "pct_of_first_party_js": 7.24
+        "pct_of_first_party_js": 7.23
       },
       {
         "bytes": 122705,
@@ -421,7 +421,7 @@
         "gzip_bytes": 30357,
         "loaded": "local-route",
         "path": "public/app/generated/authoring.js",
-        "pct_of_first_party_js": 5.32
+        "pct_of_first_party_js": 5.31
       },
       {
         "bytes": 116415,
@@ -429,7 +429,7 @@
         "gzip_bytes": 33335,
         "loaded": "lazy",
         "path": "public/app/generated/docs.js",
-        "pct_of_first_party_js": 5.04
+        "pct_of_first_party_js": 5.03
       },
       {
         "bytes": 104379,
@@ -437,7 +437,7 @@
         "gzip_bytes": 30687,
         "loaded": "lazy",
         "path": "public/app/generated/workspace-ui.js",
-        "pct_of_first_party_js": 4.52
+        "pct_of_first_party_js": 4.51
       },
       {
         "bytes": 99740,
@@ -445,7 +445,7 @@
         "gzip_bytes": 29046,
         "loaded": "lazy",
         "path": "public/app/generated/render-engine.js",
-        "pct_of_first_party_js": 4.32
+        "pct_of_first_party_js": 4.31
       },
       {
         "bytes": 76870,
@@ -453,7 +453,7 @@
         "gzip_bytes": 21294,
         "loaded": "local-route",
         "path": "public/app/generated/runtime.js",
-        "pct_of_first_party_js": 3.33
+        "pct_of_first_party_js": 3.32
       },
       {
         "bytes": 74657,
@@ -477,7 +477,7 @@
         "gzip_bytes": 19079,
         "loaded": "eager",
         "path": "public/app/ui/connected-workspace.mjs",
-        "pct_of_first_party_js": 2.78
+        "pct_of_first_party_js": 2.77
       },
       {
         "bytes": 63378,
@@ -485,15 +485,15 @@
         "gzip_bytes": 19987,
         "loaded": "lazy",
         "path": "public/app/generated/bim.js",
-        "pct_of_first_party_js": 2.75
+        "pct_of_first_party_js": 2.74
       },
       {
-        "bytes": 58911,
+        "bytes": 62703,
         "group": "ui",
-        "gzip_bytes": 18845,
+        "gzip_bytes": 20039,
         "loaded": "eager",
         "path": "public/app/ui/approved-viewer.mjs",
-        "pct_of_first_party_js": 2.55
+        "pct_of_first_party_js": 2.71
       },
       {
         "bytes": 51608,
@@ -501,7 +501,7 @@
         "gzip_bytes": 16760,
         "loaded": "local-route",
         "path": "public/app/trust/core.js",
-        "pct_of_first_party_js": 2.24
+        "pct_of_first_party_js": 2.23
       },
       {
         "bytes": 48682,
@@ -621,7 +621,7 @@
         "gzip_bytes": 3820,
         "loaded": "boot-classic",
         "path": "public/app/boot/style-bridge.js",
-        "pct_of_first_party_js": 0.41
+        "pct_of_first_party_js": 0.4
       },
       {
         "bytes": 8641,
@@ -669,7 +669,7 @@
         "gzip_bytes": 2336,
         "loaded": "boot-classic",
         "path": "public/app/boot/build-info.js",
-        "pct_of_first_party_js": 0.24
+        "pct_of_first_party_js": 0.23
       },
       {
         "bytes": 5037,
@@ -847,7 +847,7 @@
     "sha256": "5f3011b744dcfeab691bca33a43b442ff4cf2d9c48643cae004d77efdb6e2de1",
     "style_element_count": 0
   },
-  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 53078 byte shell and the application JavaScript (2308490 bytes) lives in 47 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
+  "status": "F-09 IMPLEMENTED — MEASUREMENT ONLY. public/index.html is a 53078 byte shell and the application JavaScript (2312282 bytes) lives in 47 files under public/app/. This file records where the bytes are; it does NOT prove the application still runs. Runtime behaviour is the browser tests' job, not this tool's.",
   "vendor": {
     "empty": false,
     "file_count": 559,

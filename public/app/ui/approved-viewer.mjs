@@ -87,6 +87,69 @@ export function chooseQuality(sampleMs=0){
   // Conservative initial quality; only measured slow frames reduce it.
   return sampleMs>45?{name:'اقتصادي',pixelRatio:1,shadow:512}:{name:'متوازن',pixelRatio:1.5,shadow:1024};
 }
+// A burst of input owns one display-frame callback. Once input finishes, only
+// a reduced-quality preview needs one more draw at the settled quality.
+function cameraFrameQueue(canDraw,needsPreview,paint){
+  let frame=0,timer=0;
+  function cancel(){
+    cancelAnimationFrame(frame);clearTimeout(timer);frame=0;timer=0;
+  }
+  function request(){
+    clearTimeout(timer);timer=0;
+    if(frame||!canDraw())return;
+    frame=requestAnimationFrame(()=>{
+      frame=0;
+      if(!canDraw())return;
+      const preview=needsPreview();
+      paint(preview);
+      if(preview)timer=setTimeout(()=>{
+        timer=0;
+        if(canDraw())paint(false);
+      },240);
+    });
+  }
+  return {request,cancel};
+}
+// Keep every canonical mesh, index, material color, and alpha mask during
+// movement. Cache vertex-lit materials only for the duration of this mount.
+function orbitPreview(meshes,optional){
+  const materials=new Map();
+  function lightweight(source){
+    if(!source.isMeshStandardMaterial)return source;
+    if(!materials.has(source)){
+      const material=new THREE.MeshLambertMaterial({
+        color:source.color,emissive:source.emissive,emissiveIntensity:source.emissiveIntensity,
+        map:source.userData.acsAssumedFinish?null:source.map,alphaMap:source.alphaMap,
+        alphaTest:source.alphaTest,transparent:source.transparent,opacity:source.opacity,
+        side:source.side,depthWrite:source.depthWrite,vertexColors:source.vertexColors,
+        clippingPlanes:source.clippingPlanes,
+      });
+      materials.set(source,material);
+    }
+    return materials.get(source);
+  }
+  return {
+    draw(renderer,scene,camera){
+      const hidden=optional.filter(object=>object.visible),restored=[];
+      const shadows=renderer.shadowMap.enabled;
+      try{
+        renderer.shadowMap.enabled=false;
+        for(const object of hidden)object.visible=false;
+        for(const mesh of meshes){
+          if(!mesh.visible)continue;
+          const source=mesh.material;restored.push([mesh,source]);
+          mesh.material=Array.isArray(source)?source.map(lightweight):lightweight(source);
+        }
+        renderer.render(scene,camera);
+      }finally{
+        for(const [mesh,source] of restored)mesh.material=source;
+        for(const object of hidden)object.visible=true;
+        renderer.shadowMap.enabled=shadows;
+      }
+    },
+    dispose(){materials.forEach(material=>material.dispose());materials.clear();}
+  };
+}
 function releaseObject(root){
   const geometry=new Set(),materials=new Set(),textures=new Set();
   root.traverse(object=>{if(object.geometry)geometry.add(object.geometry);for(const material of object.material?(Array.isArray(object.material)?object.material:[object.material]):[]){materials.add(material);for(const value of Object.values(material))if(value?.isTexture)textures.add(value);}});
@@ -170,7 +233,7 @@ function presentationFinish(meshes,styleFor){
           if(!variants.has(key)){
             const material=part.material.clone();
             material.clippingPlanes=part.material.clippingPlanes;
-            material.map=textures.get(style);
+            material.map=textures.get(style);material.userData.acsAssumedFinish=true;
             if(style!=='tile'){
               const industrial=style==='industrial_cladding';
               material.color.set(industrial?0x98a5a9:0xe1d2b7);
@@ -457,6 +520,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   if(walls.available)element('p','«تشطيب معماري افتراضي» يطبّق لياسة أو كسوة صناعية على الجدران التي لم تُحدّد خامتها. تبقى ألوان الجدران المطلوبة وعلامات الحركة كما هي. اختر «ألوان الملف المصدر» لمراجعة ترميز المناطق الأصلي.',disclosure);
   if(roofLevels.size)element('p','دور السطح جزء من النسخة المعتمدة: غير مشغول ولا يدخل في قياس الأدوار أو مساحة الفراغات المشغولة. الحواجز الظاهرة هي الموجودة في الملف فقط. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
   else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إظهارها من خيارات العرض، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
+  element('p','على الأجهزة البطيئة تنخفض دقة الصورة مؤقتًا وتُخفّف الظلال والتشطيبات أثناء تحريك الكاميرا. يعود العرض التفصيلي بعد التوقف.',disclosure);
   const evidence=element('output','',disclosure);evidence.dir='ltr';
   // Short room names anchored to the approved rooms. Names come from the review
   // packet when supplied, otherwise from the artifact's own room identifiers.
@@ -485,17 +549,30 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const controls=new OrbitControls(camera,canvas);controls.target.copy(center);controls.minDistance=.05;controls.maxDistance=extent*8;controls.enableDamping=false;controls.maxPolarAngle=Math.PI*.98;
   let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,slowDevice=false,detailOn=true,roofOn=roofLevels.size>0,tour=0,tourIndex=0,updatingControls=false,framedBounds=null;
   const updateControls=()=>{updatingControls=true;try{controls.update();}finally{updatingControls=false;}};
-  const controlsChanged=()=>{if(!updatingControls)render();};
+  const controlsChanged=()=>{if(!updatingControls)motion.request();};
   const storeyLevels=[...levels.keys()].filter(index=>!roofLevels.has(index)),topLevel=storeyLevels.length?Math.max(...storeyLevels):null;
-  const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
+  const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,previewFrames:0,settledFrames:0,lastFrame:null,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
     objectGroups:[...groups.entries()].filter(([key])=>key.startsWith('source|')).slice(0,256).map(([,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return {...items[0].userData.acsApprovedObjectSource,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     rackGroups:[...groups.entries()].filter(([key,items])=>/^FURN\|F-?\d+\|[^|]+\|rack\d+r\d+$/.test(key)&&items.length>1).map(([name,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return{name,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     presentation:{wallFinish:wallMode.value,eligibleWalls:walls.count,floorFinishShown:false,detailInstances,roofPieces,assumedRoofShown:false,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
   const info=()=>{evidence.textContent=`revision=${revisionId}\nmodel=${marker.model_hash}\nmeshes=${meshes.length}; triangles=${triangles}; quality=${quality.name}\nrender CPU submission (ms)=${measuredMs===null?'not measured':measuredMs.toFixed(2)}; device/browser=${navigator.userAgent}\nviewport=${stage.clientWidth}x${stage.clientHeight}; DPR=${renderer.getPixelRatio()}`;};
-  function render(){
-    if(disposed||lost||document.hidden||!current()||!container.isConnected||!stage.clientWidth||!stage.clientHeight)return;
-    const start=performance.now();renderer.render(scene,camera);const ms=performance.now()-start;telemetry.renderCalls++;placeLabels();
+  const preview=orbitPreview([...meshes,ground],[figures,gridMinor,...edgeLines.values(),...detailObjects.filter(item=>item.group!=='roof').map(item=>item.object)]);
+  const canDraw=()=>!disposed&&!lost&&!document.hidden&&current()&&container.isConnected&&stage.clientWidth>0&&stage.clientHeight>0;
+  const motion=cameraFrameQueue(canDraw,()=>software||slowDevice||measuredMs>45,paint);
+  function render(){motion.cancel();paint(false);}
+  function paint(moving){
+    if(!canDraw())return;
+    const fullRatio=Math.min(globalThis.devicePixelRatio||1,quality.pixelRatio);
+    const ratio=moving?Math.min(fullRatio,.65,Math.sqrt(60000/(stage.clientWidth*stage.clientHeight))):fullRatio;
+    if(renderer.getPixelRatio()!==ratio)renderer.setPixelRatio(ratio);
+    labelLayer.hidden=moving;
+    const start=performance.now();
+    if(moving)preview.draw(renderer,scene,camera);else renderer.render(scene,camera);
+    const ms=performance.now()-start;telemetry.renderCalls++;
+    telemetry.lastFrame={mode:moving?'motion-preview':'settled',pixelRatio:ratio,width:canvas.width,height:canvas.height,drawCalls:renderer.info.render.calls};
+    if(moving){telemetry.previewFrames++;return;}
+    telemetry.settledFrames++;placeLabels();
     if(samples.length<12){samples.push(ms);measuredMs=samples.reduce((a,b)=>a+b,0)/samples.length;}
     info();
     if(!autoAdjusted&&samples.length===12){
@@ -612,10 +689,10 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     if(event.key==='ArrowLeft')spherical.theta+=.12;if(event.key==='ArrowRight')spherical.theta-=.12;
     if(event.key==='ArrowUp')spherical.phi=Math.max(.03,spherical.phi-.1);if(event.key==='ArrowDown')spherical.phi=Math.min(Math.PI-.03,spherical.phi+.1);
     if(event.key==='+'||event.key==='=')spherical.radius=Math.max(.05,spherical.radius*.85);if(event.key==='-')spherical.radius=Math.min(extent*8,spherical.radius/ .85);
-    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));updateControls();render();
+    camera.position.copy(controls.target).add(new THREE.Vector3().setFromSpherical(spherical));updateControls();motion.request();
   };
   const resize=()=>{if(disposed||lost)return;const w=stage.clientWidth,h=stage.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false);render();};
-  const visibility=()=>{if(document.hidden){stopTour();stopMotion();}else resize();};
+  const visibility=()=>{if(document.hidden){stopTour();stopMotion();motion.cancel();}else resize();};
   function applyQuality(low){quality=chooseQuality(low?46:0);telemetry.quality=quality.name;renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio||1,quality.pixelRatio));sun.shadow.mapSize.set(quality.shadow,quality.shadow);if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}renderer.shadowMap.needsUpdate=true;qualityButton.textContent='الجودة: '+quality.name;resize();}
   const observer=new ResizeObserver(resize);controls.addEventListener('change',controlsChanged);
   canvas.addEventListener('pointerdown',pointerDown);canvas.addEventListener('pointerup',pointerUp);canvas.addEventListener('keydown',keydown);document.addEventListener('visibilitychange',visibility);
@@ -624,7 +701,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   detailButton.addEventListener('click',()=>{detailOn=!detailOn;detailButton.setAttribute('aria-pressed',String(detailOn));setVisibility();render();});
   roofButton.addEventListener('click',()=>{roofOn=!roofOn;roofButton.setAttribute('aria-pressed',String(roofOn));setVisibility();render();});
   sunRange.addEventListener('input',()=>{applySun(sunRange.value);telemetry.presentation.sunHour=sunHour;renderer.shadowMap.needsUpdate=true;render();});
-  floors.addEventListener('change',()=>{select(null);preset(currentPreset);});reset.addEventListener('click',()=>{stopTour();floors.value='all';select(null);preset('exterior');});qualityButton.addEventListener('click',()=>applyQuality(quality.pixelRatio>1));
+  floors.addEventListener('change',()=>{select(null,false);preset(currentPreset);});reset.addEventListener('click',()=>{stopTour();floors.value='all';select(null,false);preset('exterior');});qualityButton.addEventListener('click',()=>applyQuality(quality.pixelRatio>1));
   wallMode.addEventListener('change',()=>{
     const assumed=wallMode.value==='assumed';
     walls.set(assumed);finishNote.textContent=assumed?'تشطيب جدران افتراضي':'ألوان الملف المصدر';
@@ -636,7 +713,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   });
   labelButton.addEventListener('click',()=>{labelsOn=!labelsOn;labelButton.setAttribute('aria-pressed',String(labelsOn));render();});
   function dispose(){
-    if(disposed)return;disposed=true;stopTour();stopMotion();observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);
+    if(disposed)return;disposed=true;stopTour();stopMotion();motion.cancel();preview.dispose();observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);
     if(current())options.onSelectObject?.(null);
     canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('keydown',keydown);canvas.removeEventListener('webglcontextlost',contextLost);canvas.removeEventListener('webglcontextrestored',contextRestored);
     walls.dispose();finish.dispose();releaseObject(scene);Object.values(detailMaterials).forEach(material=>material.dispose());unitBox.dispose();sky.dispose();scene.background=null;environment.dispose();sun.shadow.map?.dispose();renderer.renderLists.dispose();renderer.dispose();renderer.forceContextLoss();shell.remove();if(container.acsViewer===telemetry)delete container.acsViewer;
