@@ -96,6 +96,23 @@ class DeliveryAdmission(unittest.TestCase):
                 limiter.return_value.check.assert_called_once_with('actor:'+ACTOR,'edit')
         asyncio.run(exercise())
 
+    def test_quota_store_outage_is_unavailable_and_starts_no_paid_job(self):
+        from types import SimpleNamespace
+        from acs_plan_review import PlanError
+        command = {'action': 'chat_edit', 'job_id': JOB, 'expected_head': None}
+        async def exercise():
+            middleware = WORK.WorkspaceMiddleware(None)
+            with patch.object(WORK.SERVICE, 'job_command', return_value=command), \
+                 patch.object(WORK, '_read_job', return_value=None), \
+                 patch.object(WORK.SERVICE, 'workspace', return_value=SimpleNamespace(head=None)), \
+                 patch.object(WORK.RL, 'default_limiter') as limiter:
+                for allowed in (False, True):
+                    limiter.return_value.check.return_value = {'allowed': allowed, 'degraded': True}
+                    with self.assertRaises(PlanError) as ctx:
+                        await middleware._start({}, object(), PROJECT, ACTOR, command)
+                    self.assertEqual(PLAN._error_status(ctx.exception.code), 503)
+        asyncio.run(exercise())
+
     def test_different_invalid_tokens_share_cheap_peer_quota(self):
         from acs_request_admission import AdmissionGate, AdmissionRejected
         gate=AdmissionGate(concurrency=1,per_minute=2,global_per_minute=20,max_peers=2)

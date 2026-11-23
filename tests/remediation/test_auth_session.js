@@ -293,6 +293,17 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     const h=harness(()=>{},null);h.init();h.ctx.window.ACS.authSession=session();
     h.map.set(KEY,JSON.stringify(session({user:{id:'user-b'}})));h.listeners.storage({key:KEY});
     assert.equal(h.reloads,1);
+    assert.equal(h.el('designWorkspace').hidden,true,'old geometry must disappear before navigation finishes');
+    assert.equal(h.ctx.window.ACS.projectId,null);
+    assert.equal(h.ctx.window.ACS.authSession,undefined);
+    assert.equal(JSON.parse(h.map.get(KEY)).user.id,'user-b','handoff preserves the other account');
+  });
+  await test('clearing storage in another tab immediately closes the old project',async()=>{
+    const h=harness(()=>{},null);h.init();
+    h.ctx.window.ACS.authSession=session();h.ctx.window.ACS.projectId='old-project';
+    h.map.clear();h.listeners.storage({key:null});
+    assert.equal(h.el('designWorkspace').hidden,true);
+    assert.equal(h.ctx.window.ACS.projectId,null);assert.equal(h.reloads,1);
   });
   console.log('AUTH SESSION: '+passed+' passed, 0 failed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

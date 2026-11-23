@@ -1,56 +1,41 @@
-# ACS current capability and delivery status
+# ACS | حالة الاستوديو المعماري
 
-Updated 11 November 2026 for the review-only presentation/roof branch. This is the current status document; historical phase/audit reports retain their original dates and do not establish current production readiness.
+تحديث 23 نوفمبر 2026. يخص هذا السجل تطبيق ACS في مستودع AI-Instruction. تحفظ تقارير [10 نوفمبر](delivery/2026-11-10/STARTING-STATE.md) و[11 نوفمبر](delivery/2026-11-11/INTEGRATION-AND-CI.md) نتائج إصداراتها المؤرخة.
 
-The 11 November package is rebased onto PR188 `9556ca4d9d405ba7b733e650d95559e83c60177a` in [PR190](https://github.com/NAIFMUSFER/AI-Instruction/pull/190). Its exact submitted head `3bc06725203533f59a7e4ec9358b0df4b5c9dff6` passed all31 triggered workflows and all42 GitHub Actions jobs; every full job log was reviewed. [CI4 results](delivery/2026-11-11/CI4-JOBS.md) include guest/auth, connected desktop/mobile roof actions and approval, full boot/visual, DOM/ARIA accessibility, approved-artifact views, actual advisory scanning and Docker. The PR remains open and is not merged or deployed. Intentional Netlify preview cancellation enforces the no-deploy instruction and is not called a passing test.
+## المصدر والنشر
 
-The guest/local roof increment is [PR191](https://github.com/NAIFMUSFER/AI-Instruction/pull/191), targeting PR190, at `064f4a96fdc1941f010b0f6ab814c765acd260c5` (tree `9b99a6771cf6a8a9783b80989310436cea110496`). [CI9](delivery/2026-11-11/CI9-JOBS.md) passed all six triggered workflows and all17 jobs; every full log was reviewed. Actual guest journeys passed in three independent jobs before and after this increment. They cover roof selection/remove/restore/save/reload, imports, delayed recovery, two tabs, denied storage and zero auth/private/provider requests. Full boot33/33, visual326/326, browser DOM/ARIA136/0 and all24 approved views passed. The Google whole-job budget is15 minutes based on measured10m7.856s execution; individual waits, assertions and the hard2s viewer gate are unchanged. Earlier canceled/failed runs remain recorded as failures in their dated reports.
+عند بدء التحقق، أشار الفرع الافتراضي `main`، ونشر Netlify `6afc22fa8b2c06eee49ddb68`، ونشر Render `dep-dbu25uh42hec73dvi1ig` إلى `629952f10763a8826f3a014895f2e1d209440996`. أعاد مسار Render ‏`/version` هوية البناء نفسها. أحصينا 893 مسارًا متتبعًا في تلك النسخة. بدأ العمل بنسخة مستنسخة جديدة. لا يتضمن المستودع ملف AGENTS.md متتبعًا. استُخدمت تعليمات المشروع وتهيئة CI وبناء النشر. فُتح الموقع من متصفح ضيف وشوهد البديل ثنائي الأبعاد وتفاصيل فراغ 7 × 6 م دون تسجيل.
 
-[PR192](https://github.com/NAIFMUSFER/AI-Instruction/pull/192), stacked on PR191, implements bounded physical U-return stairs and consistent slab openings. Head `ad45ef1992c85a4aa5309cd1adc12c265d55fff1` passed all30 workflows and all41 jobs in [CI13](delivery/2026-11-11/CI13-JOBS.md); every complete log and all38 current screenshots were reviewed. The independent IFC reader passed unchanged six-place bounds assertions after the cumulative-rounding correction. Earlier failed/canceled runs remain in their dated reports. Canonical objects remain authoritative; traversal, structural adequacy, physical-phone performance and smooth-frame p95 remain NOT_VERIFIED.
+رُوجعت حزمة التدقيق وملف delivery-status وصور مرجع الساحة والفيديو. دُمج ‎#187 ثم ‎#195 في main قبل هذه الدورة. روجعت فروق ‎#182–186 انتقائيًا. الاقتراح المعماري والتدقيق الشامل مستندات مرجعية. استُبقيت حلول ‎#183 للمزوّد، و‎#184 للفتحات، و‎#185 لإمكانية الوصول واختباراتها. استُخدم تاريخ ACS حتى `20043388302cf80bffd51af25079dd93ae2a16a6` للتوفيق مع نسخة الإنتاج. [تفصيل الطلبات والملفات](delivery/2026-11-10/PR-RECONCILIATION.md)
 
-A subsequent semantic review found that the original IFC mapping exported an explicit roof as a building storey and internal space, despite the owner’s decision that it is neither an occupied storey nor part of floor area. The separate [roof classification correction](delivery/2026-11-11/ROOF-IFC-SEMANTICS.md) maps those deck envelopes to clearly identified unoccupied reference zones, retaining their exact geometry and source identities. It is [PR193](https://github.com/NAIFMUSFER/AI-Instruction/pull/193), head `c579d33ae71e0350bf5fb402333fe4361d07c02b`; its own CI acceptance is pending, and CI13 does not prove that later change. The [context-object increment](delivery/2026-11-11/CONTEXT-DEFAULTS.md), now stacked on that exact roof fix, authors at most12 disclosed canonical objects in explicit supported contexts and provides revision-bound removal with approval confirmation and locks. Local focused validation passed53 Python methods across seven targets and eight Node targets; its actual browser and Docker gates remain pending. Unsupported contexts stay unchanged; no guest first-screen layout change. The material library is not yet implemented. No main merge, deployment, production migration or paid provider call is authorized in this task. Package application/rebase evidence remains in [integration status](delivery/2026-11-11/INTEGRATION-AND-CI.md).
+يتابع [طلب إصدار التطبيق ‎#196](https://github.com/NAIFMUSFER/AI-Instruction/pull/196) البناء المجمع. تُظهر صفحة الطلب نتائج الاختبارات المتجددة. تتبع هوية نشر الإنتاج من سجل Netlify وRender وملف هوية البناء. أظهر استعلام GitHub عند البداية أن main بلا حماية أو قواعد نشطة. السياسة المقترحة هي اشتراط طلب دمج حديث ونجاح فحص `CI required (mark THIS one as the required status check)` الذي يجمع بوابات التسليم. يتطلب تفعيل السياسة مسار إدارة المستودع.
 
-## Release boundaries
+## رحلة المستخدم وأدلتها
 
-The prior10 November review recorded production frontend/backend commit `c37b5250dc4ff18ba0606add993b5afe52beebaa`; this is dated evidence, not a new production verification. The delivery is split deliberately:
-
-1. **Independent application release:** guest preservation, exact approved viewer and Arabic UX, geometry/export fixes, shared paid-command admission, bounded identity/body handling, honest provider identity and release verification. Candidate validation is underway; this paragraph is not a claim of deployment.
-2. **Database activation increment:** fail-closed membership, backend-validated canonical write capabilities, paged revision transport and atomic durable job leases. Implemented and tested with real local PostgreSQL; **not production deployed**. Activation requires access to the actual ACS database and secure backend signer provisioning. See [database rollout](delivery/2026-11-10/database/STATUS.md). Do not deploy its adapter/jobs against an unmigrated database or re-enable unsafe RPCs as a fallback.
-
-The current connected Supabase account exposes no ACS schema. The live Google-start gateway returned `503 AUTH_UPSTREAM_UNAVAILABLE`. Two real private users, live cloud save/generation, production SQL grants/migrations and live provider results are therefore **not verified** in this delivery. No real-user project was read or changed, and no paid generation was made.
-
-## What each output actually contains
-
-| Output or feature | Supported evidence | Explicit limits |
+| الخطوة | الوحدات المنفذة | الدليل وحدوده |
 |---|---|---|
-| Guest local workspace | Residential/warehouse examples, local draft, supported local import/download, separated account namespace | Examples and deterministic local approximations are not fresh AI output; browser storage can fail |
-| Connected canonical model | Versioned model, requirements, provenance, locks, conceptual approval and derived artifact hashes | Conceptual planning; no structural design or permit certification |
-| Interactive approved 3D | Exact glTF source, six camera presets, level isolation, selection, source/revision labels, materials/shadows, keyboard/touch controls | Camera movement does not prove collision-free travel; unsupported stairs/lifts remain disclosed; decorative context does not change counts/hashes |
-| glTF/GLB presentation | Compiler meshes, metres, floor/room identity, explicit elevations and supported object rotations | No arbitrary IFC/Revit import fidelity claim; no replacement generated image |
-| Connected SVG/DXF | Canonical projected space boundaries, metres and source identity | Not full construction drawings; DXF is not native DWG |
-| Connected PDF | Space drawings with embedded licensed font, shaped/searchable Arabic, mixed labels and source metadata | Conceptual space drawing, not a construction set |
-| Connected IFC4 | Ordinary space boundaries/storeys plus explicit unoccupied roof reference zones, preserved IDs/metres/source metadata; independently parsed bounds | Roof zones are reference envelopes, not physical roof BIM or floor area; legacy API scope name SPACES_ONLY retained; latest classification correction requires its own CI |
-| Legacy architectural IFC | Supported mapped elements; explicit open-wall semantics and distinct stair identities | Explicit stair forms and explicit roof levels are rejected for full architectural export because their complete architectural mapping is unsupported; space/reference export remains available; no traversal/structural adequacy proof |
-| Runtime navigation | Consistent transformed footprints/portals and capsule clearance for supported door geometry | Vertical alignment is not walkability; no full physical circulation certification |
-| Canonical context defaults | Explicit covered-porch columns, open-balcony rails and outdoor potted plants; Python/JS parity64 cases; source-bound selection/removal | Local code/fixture verification only pending CI;≤12 new objects, unique physical templates; no structural or guard adequacy claim; unsupported or conflicting contexts omitted |
-| Canonical flat roof | Explicit unoccupied roof level, disclosed default0.9m parapet, separate area/storey treatment, revision-bound removal/restoration | Review branch only; missing vertical facts stay unknown, partially shared parapet gaps are disclosed; no drainage/structural/roof-access certification; guest/local integration passed CI9 on the review branch |
-| Large history | Pending DB increment retrieves metadata pages and bounded individual revisions | 100-revision aggregate admission limit remains; not unlimited constant-memory history |
+| الضيف | engine-guard.js → local-entry → guest-workspace.js → trust/wiring.js | نموذجان محليان، استيراد JSON وDXF، حفظ على الجهاز وتنزيل. يحجب فشل قراءة المسودة الكتابة اللاحقة. في غياب WebGL تُشتق الخريطة من أبعاد مثالي الفيلا والمستودع، تدعم اختيار الطابق والفراغ وتنزيل SVG. |
+| تسجيل الدخول والمشروع الخاص | engine-guard.js → acs_auth_gateway.py → acs_identity.py / acs_workspace_http.py | يتحقق الخادم من الهوية. تبقى المسودة المحلية منفصلة. اختبار الحسابات الحقيقية يحتاج جلسات مخصصة للخدمة. |
+| الوصف أو الاستيراد → متطلبات مؤكدة | connected-workspace.mjs، brief-program.mjs، acs_workspace_service.py، acs_requirement_metrics.json | توحّد المعرّفات والوحدات. يسبق تأكيد المتطلبات استهلاك الطلبات المدفوعة. |
+| مهمة توليد → مراجعة → تعديل وأقفال | acs_workspace_http.py → acs_workspace_service.py → acs_plan_store.py / acs_supabase_plan_store.py → acs_plan_review.py | يتحقق القبول من هوية المراجع وحدود الاستهلاك. نتائج الاختبارات المحلية تستخدم مزودًا اصطناعيًا. تجهيز حيازة العامل الدائمة منفصل عن نشر التطبيق. |
+| اعتماد مفاهيمي → عرض وتصدير | tools/acs_plan_handoff.py → acs_compiler.py / أدوات التصدير → connected-workspace.mjs → approved-viewer.mjs | ترتبط الهندسة والانتقاء والتنزيل بالإصدار وبصمته. تتحقق اختبارات تأخر الاستجابة وتبديل المرجع من إلغاء العرض القديم. ستة مناظير وإضاءة ومواد قابلة للضبط. |
+| الحفظ وإعادة الفتح | acs_supabase_plan_store.py → acs_plan_store_reload.py | استرجاع البيانات الوصفية على صفحات والنماذج على حدة، مع حدود الحجم والتحقق من العضوية. يبقى تفعيل ترحيلات قاعدة الإنتاج مرتبطًا بإدارة مشروع ACS ومفتاح توقيع الخادم. |
 
-## Verification scope
+## المخرجات والحدود الهندسية
 
-Deterministic approved villa and warehouse fixtures use the real geometry verifier. See [fixture manifest](delivery/2026-11-10/fixtures/manifest.json) for canonical hashes and serialized output relationships. Independent IfcOpenShell and ezdxf checks are separate from exporter-authored readers. A separately authored synthetic apartment floor also passes canonical approval and independent IFC/DXF bounds checks; its source, explicit dimensions and limitations are recorded in the geometry status. The original incomplete apartment fixture still fails admission. Arabic PDF is parsed by pypdf and visually inspected with Poppler.
+| المخرَج | ما يحتويه | ما تحقق منه |
+|---|---|---|
+| SVG وDXF | حدود الفراغات بالمتر، مرجع الطابق والإصدار | قارئ ezdxf مستقل واختبار الأبعاد للفيلا والشقق والمستودع. DXF صيغة التبادل المدعومة. |
+| PDF | مخطط مساحات، نص عربي مشكول اتجاهيًا وقابل للبحث، وحدات وهوية المصدر | جرى تصيير صفحتين وفحص النص المختلط بصريًا. [ملف عربي](delivery/2026-11-23/geometry/approved-arabic.pdf) |
+| glTF/GLB والعارض | هندسة تفاعلية مرتبطة بالمرجع، فتحات وأجسام مدعومة وتحويلات بالمتر | تحققت اختبارات الهندسة وقارئ glTF من النطاقات والهوية. المواد وإكسسوارات العرض المفترضة مفصولة عن الهندسة المعتمدة. |
+| IFC4 المتصل | مساحات وطوابق وحدود مرجعية للسطح غير المشغول | تحققت IfcOpenShell من التصنيفات والأبعاد. تمثيل الدرج الفيزيائي محدود، ولا يوجد اعتماد Revit أو ضمان لمسار حركة رأسي. |
+| المقاييس | مساحة الغرف عبر الطوابق المشغولة وتكراراتها، واستثناء السطح غير المشغول | تحقّقنا من المساحة الدقيقة لحالات مستودع قابلة للاعتماد ومن رفض المراجع الغامضة. تظل البيانات غير المعلومة ظاهرة. [نتائج الهندسة](delivery/2026-11-23/geometry/results.json) |
 
-Real PostgreSQL witnesses execute SQL, roles and grants against synthetic users/projects. They reproduce baseline missing-membership and direct-write defects before fixing them. This is not a substitute for deployed Supabase/PostgREST/JWT verification.
+المخرجات مخصصة للتخطيط المفاهيمي. تقييم الكود الإنشائي، التصاريح، وملفات Revit وDWG الأصلية خارج الأدلة الحالية.
 
-The local executor cannot launch Chromium because socket creation is denied. The prior cloud browser review verified the explicitly labeled no-WebGL guest fallback only. The first PR190 CI run produced24 approved-viewer captures at1440×900 and393×852, all visually inspected. HeadlessChrome151/SwiftShader on4 logical cores passed the3-second first-view and2-second transition gates. Adaptive immediate transitions yielded insufficient active-frame samples: smooth-frame p95 remains **NOT VERIFIED**. The complete guest/private browser aggregate passed on PR190 head `3bc06725203533f59a7e4ec9358b0df4b5c9dff6`; subsequent changes need their own CI evidence. Those captures are desktop browser emulation, not physical iPhone acceptance. Initial performance targets are ≤3 seconds from available artifact bytes to first view, and transition-frame p95 ≤20ms desktop / ≤33ms mobile viewport. Missing results or missed targets are not PASS.
+## حدود التحقق
 
-The production verification runner now treats crashes, missing/malformed evidence and NOT VERIFIED as non-success. The aggregate CI is configured to include the new delivery checks, but branch protection was observed disabled. Requiring the aggregate status remains an administration proposal until the repository's actual protection settings are changed and verified.
-
-## Traceability
-
-- [Starting state and runtime journey](delivery/2026-11-10/STARTING-STATE.md)
-- [Actual pending-PR reconciliation](delivery/2026-11-10/PR-RECONCILIATION.md)
-- [File-level coverage](delivery/2026-11-10/file-coverage.csv): current review depth, owner, classification, risk, findings, tests and generator relationships. Static parsing is never counted as deep semantic review.
-- Specialist scoped status and before/after evidence live under `docs/delivery/2026-11-10/`.
-
-Remaining delivery blockers: actual production database access and signer setup; real authenticated end-to-end cloud generation and reopen; physical iPhone/Safari testing; target-tool interoperability beyond the independent readers stated above.
+* فُحصت قاعدة PostgreSQL 16.2 محليًا ببيانات اصطناعية. يمنع حساب Supabase المتصل الوصول الإداري إلى قاعدة ACS. حالة ترحيل الإنتاج وتفعيل التوقيع، وتسجيل دخول مستخدمين تجريبيين حقيقيين، وحالَتا التوليد المدفوع السكني والمستودع غير مثبتة.
+* اختبارات الصحة العامة تصف الإعدادات المتاحة. بروتوكول Anthropic المتوافق على خادم DeepSeek يقبل أسماء Claude، ولا يكشف نجاح طلب فعلي أو تكلفة عملية معينة.
+* أهداف الاختبار المكتبي المحلي هي ظهور مخطط مفيد خلال ثانيتين والعرض ثلاثي الأبعاد خلال خمس، و30 إطارًا/ثانية أثناء الحركة حيث تسمح العتاد، وإيقاف الإطار المستمر عند السكون. القياسات في تقارير المتصفح مرتبطة بالإصدار والعتاد والدقة. واجه Chromium المحلي رفض إنشاء مقبس نظام التشغيل؛ يقوم GitHub Actions بتشغيل الاختبارات الرسومية. يُعرض التحقق من الجوال بمحاكاة 393×852 منفصلًا عن قياس iPhone فعلي.
+* [سجل التغطية](delivery/2026-11-23/file-coverage.csv) يسجل كل مسار متتبَّع مع العمق والمخاطر وفحوصه وعلاقة المولّد. العمود المخصص لمراجعة سابقة يتطلب تطابق بصمة الملف. لا يرفع الفحص الساكن عمق المراجعة الدلالية.

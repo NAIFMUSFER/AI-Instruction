@@ -18,6 +18,8 @@ DENIED_SUFFIXES = {'.pem','.key','.p12','.pfx','.sqlite','.sqlite3','.db','.log'
 
 
 def admitted(name):
+    if name == '.env.example':
+        return True
     p=PurePosixPath(name)
     if p.is_absolute() or '..' in p.parts or not p.parts:return False
     if any(part.lower() in DENIED_PARTS or part.lower().startswith('.env') for part in p.parts):return False
@@ -51,7 +53,13 @@ def package(root, output):
             file=root/name
             if file.is_symlink():raise ValueError('RELEASE_SYMLINK_REJECTED: '+name)
             if not file.is_file():raise ValueError('RELEASE_TRACKED_FILE_MISSING: '+name)
-            data=file.read_bytes();archive.writestr(name,data)
+            # This public template is also required by the extracted source gate.
+            # Local edits to it may contain filled credentials. Read its commit object.
+            if name == '.env.example':
+                data = subprocess.check_output(['git', '-C', str(root), 'show', 'HEAD:.env.example'])
+            else:
+                data = file.read_bytes()
+            archive.writestr(name, data)
             records.append({'path':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
         archive.writestr('RELEASE-MANIFEST.json',json.dumps({'schema':'acs-release-manifest/1.0','source':'git tracked release inputs + explicit vendor manifest','files':records},indent=2)+'\n')
     return records

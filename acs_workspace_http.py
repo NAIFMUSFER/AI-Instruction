@@ -121,7 +121,10 @@ class WorkspaceMiddleware:
             raise PlanError("STORE_UNAVAILABLE", "التوليد مشغول حاليًا. حاول لاحقًا.")
         # Reuse the deployment's shared admission limiter. Job reattachment above
         # consumes no generation quota and never creates another provider request.
-        decision = RL.default_limiter().check("actor:" + actor_id, "edit" if command["action"] == "chat_edit" else "gen")
+        decision = await asyncio.to_thread(RL.default_limiter().check, "actor:" + actor_id,
+                                           "edit" if command["action"] == "chat_edit" else "gen")
+        if decision.get("degraded"):
+            raise PlanError("STORE_UNAVAILABLE", "تعذّر التحقق من حصة التوليد. حاول لاحقًا.")
         if not decision.get("allowed"):
             raise E.AcsApiError(E.ACS_RATE_LIMITED, "تجاوزت حد التوليد. حاول لاحقًا.", retryable=True, retry_after=decision.get("retry_after", 60))
         row = {"id": job_id, "project_id": project_id, "created_by": actor_id,

@@ -1,0 +1,97 @@
+{
+  "date_riyadh": "2026-11-23",
+  "scope": "Executed locally on synthetic models; conceptual approval and export. No paid request.",
+  "current_main_at_start": "629952f10763a8826f3a014895f2e1d209440996",
+  "candidate_lineage": "20043388302cf80bffd51af25079dd93ae2a16a6 with current working changes. Repository commit and deployment evidence are recorded by the integration owner.",
+  "readers": {
+    "IFC schema and triangulated world coordinates": "IfcOpenShell 0.9.0.post1",
+    "DXF bounds/audit": "ezdxf 1.4.4",
+    "PDF extract": "pypdf 6.21.4 and Poppler",
+    "glTF source identities, rotated coordinates, repeated and stair meshes": "Three.js GLTFLoader"
+  },
+  "baseline_runs": {
+    "629952f geometry suite": "15 cases, 10 assertion failures, 3 errors. Includes compiler elevation, rotation, open zones, stair IDs, portals, slab union, repeated instances, target area and diff.",
+    "629952f opening checks": "20 tests with 22 failing subcases and 4 errors.",
+    "629952f PDF": "4 tests, 2 failures and 1 error.",
+    "2004338 warehouse fit": "Six red subcases across two runs: targets 63, 63.12345678 and 79.9999995 rejected at approval; occupied 160 m² reported as 240 m² including roof; two partial/duplicate-level cases. A separate storage role minimum of 63.12345625 m² also failed after fitting because role areas were rounded before review.",
+    "2004338 geometry-only builder": "test_plate_extent.py crashed when build_objects indexed the private glTF parts table on a box-only builder.",
+    "2004338 guest basement index": "acsFloorIndex(\"F-2\") returned null in the shipped viewer; signed numeric ordering and Arabic basement label failed."
+  },
+  "passing_python_tests": {
+    "tests/remediation/test_audit_engineering_door_meshes.py": 12,
+    "tests/remediation/test_audit_engineering_openings.py": 20,
+    "tests/remediation/test_audit_engineering_vertical_coverage.py": 15,
+    "tests/remediation/test_delivery_arabic_pdf.py": 4,
+    "tests/remediation/test_context_details.py": 15,
+    "tests/remediation/test_geometry_independent_readers.py": 5,
+    "tests/remediation/test_plan_options.py": 17,
+    "tests/remediation/test_plan_projection.py": 15,
+    "tests/remediation/test_plan_semantic_diff.py": 8,
+    "tests/remediation/test_roof_ifc_semantics.py": 4,
+    "tests/remediation/test_stair_ifc_reader.py": 1,
+    "tests/remediation/test_stairs_validation_boundary.py": 5,
+    "tests/remediation/test_workspace_recovery.py": 20,
+    "tests/remediation/test_context_details_independent_reader.py": 3,
+    "tests/remediation/test_stairs_geometry.py": 16,
+    "tests/remediation/test_stairs_independent_reader.py": 4,
+    "tests/remediation/test_geometry_delivery.py": 15,
+    "tests/remediation/test_plan_residential_scorecard.py": 5,
+    "tests/remediation/test_plan_scorecard.py": 11,
+    "tests/remediation/test_requirement_vocabulary.py": 4,
+    "tests/remediation/test_warehouse_program_feasibility.py": 8,
+    "tests/remediation/test_warehouse_soft_area_fit.py": 8,
+    "tests/remediation/test_plan_role_area_constraints.py": 8,
+    "tests/remediation/test_plan_warehouse_program.py": 13
+  },
+  "other_passing": {
+    "plate_extent": "184 checks passed, none failed",
+    "browser_geometry": "signed basement labels, ordering, 12 m² L-shaped slab and capsule clearance in the shipped JS functions",
+    "scene_limits": "175 checks passed, none failed (CPU)",
+    "opening_validator_mutations_on_9556ca4": 14,
+    "reciprocal_door_mutations_on_9556ca4": 11,
+    "vertical_disclosure_mutations_on_9556ca4": 10
+  },
+  "independently_parsed_fixtures": [
+    {
+      "fixture": "villa",
+      "revision_id": "plan_7169a18fc52848c39dba3b87720d53dd",
+      "model_hash": "2e363de60f5789596ea31c566aadd07458cdeb71b8cf45aa6bcb535056fd3593",
+      "area_m2": 192,
+      "spaces": 4,
+      "nodes": 59,
+      "triangles": 708,
+      "gltf_bytes": 121574
+    },
+    {
+      "fixture": "warehouse",
+      "revision_id": "plan_4a5950f43788415b9718c851be205244",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "area_m2": 320,
+      "spaces": 2,
+      "nodes": 72,
+      "triangles": 864,
+      "gltf_bytes": 146213
+    },
+    {
+      "fixture": "apartment",
+      "revision_id": "plan_de61a134224e4b82b74fbbefa3184965",
+      "model_hash": "2ee11183e294615fd53bd6f4f782a91fb57191f36f0ee044f939f0124c499c1b",
+      "area_m2": 138.8,
+      "spaces": 12,
+      "nodes": 155,
+      "triangles": 1860,
+      "gltf_bytes": 315086
+    }
+  ],
+  "arabic_pdf": {
+    "file": "approved-arabic.pdf",
+    "sidecar": "approved-arabic.pdf.baseline.json",
+    "visual_check": "Two A4 pages rasterized at 125 DPI. Arabic joins and mixed-direction identifiers inspected visually for مجلس الضيوف A-12 and غرفة نوم ٢. Both room labels are readable."
+  },
+  "limits": [
+    "The corpus consists of deterministic local fixtures. It does not establish production AI output.",
+    "Connected IFC represents spaces and explicit unoccupied roof references. DXF, SVG and PDF are conceptual space plans. No native Revit, AutoCAD, DWG or construction acceptance test was performed.",
+    "A declared U-return stair has tested meshes and aligned slab openings. Stair walkability, structural adequacy and regulatory compliance remain unverified.",
+    "Area target is the sum of declared room rectangles on occupied physical storeys. Gross, net and legal buildable area require additional information."
+  ]
+}

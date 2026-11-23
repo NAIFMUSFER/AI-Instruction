@@ -42,3 +42,36 @@ def rectangle_union(rects):
             else: merged.append([lo,hi])
         strips.extend([[x0,z0,x1-x0,z1-z0] for z0,z1 in merged])
     return strips
+
+
+def occupied_template_instances(model: dict) -> tuple[list[str], list[str]]:
+    """Return valid template instances and disclosure warnings.
+
+    Repeated templates are repeated intentionally because measured areas/counts are
+    building-instance metrics, not template-library metrics.
+    """
+    floors = model.get("floors") if isinstance(model.get("floors"), dict) else {}
+    levels = model.get("levels")
+    warnings: list[str] = []
+    if not isinstance(levels, list) or not levels:
+        return [], ["LEVELS_NOT_MEASURABLE"]
+    templates: list[str] = []
+    seen_indices: set[int] = set()
+    for level in levels:
+        if not isinstance(level, dict) or type(level.get("index")) is not int:
+            warnings.append("INVALID_LEVEL_IDENTITY")
+            continue
+        if level["index"] in seen_indices:
+            warnings.append("DUPLICATE_LEVEL_INDEX")
+            continue
+        seen_indices.add(level["index"])
+        if level.get("kind") == "roof":
+            # An explicitly declared roof level is a deck, not an occupied storey:
+            # it is excluded from every programme measurement (see acs_plan_review).
+            continue
+        template = level.get("template")
+        if not isinstance(template, str) or template not in floors:
+            warnings.append("LEVEL_TEMPLATE_NOT_MEASURABLE")
+            continue
+        templates.append(template)
+    return templates, warnings

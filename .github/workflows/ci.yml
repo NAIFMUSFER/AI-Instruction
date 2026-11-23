@@ -755,6 +755,7 @@ jobs:
           fi
           command -v pdftotext
       - name: Build reviewed browser dependencies
+        id: delivery_browser
         run: |
           bash tools/vendor.sh
           npx playwright install --with-deps chromium
@@ -766,6 +767,7 @@ jobs:
             tests/remediation/test_delivery_paid_admission.py \
             tests/remediation/test_delivery_ingress.py \
             tests/remediation/test_delivery_release_safety.py \
+            tests/remediation/test_rls_history_transport.py \
             tests/remediation/test_delivery_published.py \
             tests/remediation/test_roof_runtime_packaging.py \
             tests/remediation/test_stairs_runtime_packaging.py \
@@ -803,6 +805,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          python tools/build_guest_schematics.py --check
           python tools/build_requirement_metrics.py
           python tools/build_bim_browser.py
           python tools/build_runtime_browser.py
@@ -827,6 +830,7 @@ jobs:
             tests/remediation/test_context_local_integration.cjs \
             tests/remediation/test_context_object_controls.mjs \
             tests/remediation/test_guest_import_wait.cjs \
+            tests/remediation/test_guest_recovery_writes.cjs \
             tests/remediation/test_residential_presentation.js \
             tests/remediation/test_approved_viewer_framing.mjs \
             tests/remediation/test_review_only_build.cjs \
@@ -838,6 +842,7 @@ jobs:
           node tests/lib/run.js tests/remediation/test_geometry_delivery_browser.js
           node tests/lib/run.js tests/remediation/test_delivery_pdf_browser.js
       - name: Real Chromium guest, private-workspace fixture and approved-artifact views
+        if: ${{ !cancelled() && steps.delivery_browser.outcome == 'success' }}
         shell: bash
         run: |
           set -euo pipefail

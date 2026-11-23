@@ -49,14 +49,14 @@ except PlanError as exc:
     assert exc.code == "PROJECT_ACCESS_DENIED"
 assert len(calls) == 1
 
-responses.append((200, {
-    "schema": "acs.plan-store/1.0", "project_id": PROJECT, "role": "owner",
+responses.append((200, [{
+    "id": PROJECT, "memberships": [{"user_id": ACTOR, "role": "owner"}],
     "head_revision_id": None, "baseline_revision_id": None, "revisions": [],
-}))
+}]))
 state = store.project_state(PROJECT, actor_id=ACTOR)
 assert state["role"] == "owner"
 req = calls[-1]
-assert req["url"].endswith("/rest/v1/rpc/acs_plan_project_state")
+assert req["method"] == "GET" and "/rest/v1/acs_projects?" in req["url"]
 assert req["headers"]["Authorization"] == "Bearer user-access-token"
 assert req["headers"]["apikey"] == "sb_publishable_test"
 # The transport body is bytes by contract, so inspect only the serializable
@@ -64,7 +64,7 @@ assert req["headers"]["apikey"] == "sb_publishable_test"
 wire = json.dumps({
     "url": req["url"],
     "headers": req["headers"],
-    "body": req["body"].decode("utf-8"),
+    "body": req["body"],
 }, separators=(",", ":"))
 assert "service_role" not in wire.lower()
 

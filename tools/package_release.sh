@@ -30,16 +30,18 @@ python3 tools/check_index_guard.py public/index.html
 python3 tools/check_api_base.py "$ROOT"
 
 echo "▶ 2/7 creating archive"
-rm -f "$OUTZIP" "$OUTZIP.sha256"
-python3 tools/release_manifest.py --root "$ROOT" --output "$OUTZIP"
-( cd "$(dirname "$OUTZIP")" && sha256sum "$(basename "$OUTZIP")" \
-    > "$(basename "$OUTZIP").sha256" )
-cat "$OUTZIP.sha256"
+OUTDIR=$(dirname "$OUTZIP")
+mkdir -p "$OUTDIR"
+WORK=$(mktemp -d "$OUTDIR/.acs-package.XXXXXXXX")
+trap 'rm -rf "$WORK"' EXIT
+ARCHIVE="$WORK/$(basename "$OUTZIP")"
+python3 tools/release_manifest.py --root "$ROOT" --output "$ARCHIVE"
+( cd "$WORK" && sha256sum "$(basename "$ARCHIVE")" > "$(basename "$ARCHIVE").sha256" )
 
-EXTRACT=$(mktemp -d)
-trap 'rm -rf "$EXTRACT"' EXIT
+EXTRACT="$WORK/extracted"
+mkdir "$EXTRACT"
 echo "▶ 3/7 extracting to a fresh directory: $EXTRACT"
-unzip -q "$OUTZIP" -d "$EXTRACT"
+unzip -q "$ARCHIVE" -d "$EXTRACT"
 
 echo "▶ 4/7 extracted page is non-empty and byte-identical to the source"
 [ -s "$EXTRACT/public/index.html" ] || {
@@ -67,6 +69,8 @@ else
 fi
 
 echo ""
+mv -f "$ARCHIVE" "$OUTZIP"
+mv -f "$ARCHIVE.sha256" "$OUTZIP.sha256"
 echo "✓ PACKAGE INTEGRITY GATE PASSED"
 echo "  archive : $OUTZIP"
 echo "  files   : $(unzip -l "$OUTZIP" | tail -1 | awk '{print $2}')"

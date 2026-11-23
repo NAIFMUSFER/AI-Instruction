@@ -100,7 +100,7 @@ CAPABILITY_DEFAULTS = {
 # Explicit routing/accounting profiles, not a conclusion inferred from an SDK
 # or from a Claude-compatible request alias. Unknown routes stay conservative.
 # DeepSeek model aliases: https://api-docs.deepseek.com/guides/anthropic_api/
-# Reviewed 2026-11-10. This is configuration evidence, never a live-call receipt.
+# Reviewed 2026-11-23. This is configuration evidence, never a live-call receipt.
 _PROFILE_MODELS = {
     'anthropic': frozenset(PROVIDER_SPEC['anthropic']['models']),
     'deepseek': frozenset((*PROVIDER_SPEC['deepseek']['models'], 'deepseek-flash')),
@@ -111,19 +111,28 @@ def endpoint_identity(cfg):
     host = cfg.base_host or ('api.anthropic.com' if not cfg.base_url else None)
     provider = {'api.anthropic.com': 'anthropic', 'api.deepseek.com': 'deepseek'}.get(host, 'unknown')
     try:
-        path = urlsplit(cfg.base_url or 'https://api.anthropic.com').path or '/'
+        url = urlsplit(cfg.base_url or 'https://api.anthropic.com')
+        path = url.path or '/'
+        known_origin = (url.scheme == 'https' and url.port in (None, 443)
+                        and url.hostname == host and url.username is None and url.password is None
+                        and not url.query and not url.fragment)
     except ValueError:
-        path = None
-    # Expose only known route paths; arbitrary paths can themselves contain keys.
+        path, known_origin = None, False
+    # Unknown paths can contain credentials. Never expose those as telemetry.
     safe_path = path if path in ('/', '/v1', '/v1/', '/anthropic', '/anthropic/') else None
+    valid_route = known_origin and (
+        (provider == 'anthropic' and path in ('/', '/v1', '/v1/'))
+        or (provider == 'deepseek' and path in ('/anthropic', '/anthropic/')))
     requested = cfg.model
     resolved = requested
     basis = 'CONFIGURED_MODEL'
-    if provider == 'deepseek' and isinstance(requested, str) and requested.startswith('claude'):
-        resolved = 'deepseek-v4-pro' if requested.startswith('claude-opus') else 'deepseek-flash'
-        basis = 'DOCUMENTED_ALIAS_MAPPING'
-    valid_route = (provider == 'anthropic' and path in ('/', '/v1', '/v1/')) or (
-        provider == 'deepseek' and path in ('/anthropic', '/anthropic/'))
+    if valid_route and provider == 'deepseek' and isinstance(requested, str):
+        if requested.startswith('claude'):
+            resolved = 'deepseek-v4-pro' if requested.startswith('claude-opus') else 'deepseek-flash'
+        elif requested in ('deepseek-v4-flash', 'deepseek-v4-flash-vision-exp'):
+            resolved = 'deepseek-flash'
+        if resolved != requested:
+            basis = 'DOCUMENTED_ALIAS_MAPPING'
     profile = (provider + '-accounting-v1' if valid_route and resolved in _PROFILE_MODELS.get(provider, ())
                else 'unknown-conservative')
     return {'api_protocol': 'anthropic-messages', 'actual_provider': provider,
@@ -355,8 +364,10 @@ def documented_max_output(cfg=None):
     لا تنافسه: تُستشار حين يغيب وحده، فلا يُخترع رقم ولا يُرفع سقف قائم.
     """
     cfg = cfg or primary()
-    return (PROVIDER_SPEC.get(cfg.provider or "") or {}).get(
-        "documented_max_output")
+    identity = endpoint_identity(cfg)
+    if identity["capability_profile"] == "unknown-conservative":
+        return None
+    return PROVIDER_SPEC[identity["actual_provider"]]["documented_max_output"]
 
 
 def capabilities(cfg=None):

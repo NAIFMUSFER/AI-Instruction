@@ -2,6 +2,7 @@
 """Inventory every tracked path without overstating semantic review coverage."""
 from __future__ import annotations
 
+import argparse
 import ast
 import csv
 import hashlib
@@ -43,10 +44,19 @@ def classify(path):
 
 
 def main():
-    OUT.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--current', action='store_true',
+                        help='write the 23 November code inventory with separate prior-review evidence')
+    current = parser.parse_args().current
+    output = ROOT / 'docs/delivery/2026-11-23' if current else OUT
+    output.mkdir(parents=True, exist_ok=True)
+    prior = {}
+    if current:
+        with (OUT / 'file-coverage.csv').open(encoding='utf-8') as handle:
+            prior = {row['path']: row for row in csv.DictReader(handle)}
     files = subprocess.check_output(['git', 'ls-files', '-z'], cwd=ROOT).decode().split('\0')
     reviews = {}
-    for report in sorted(OUT.glob('coverage-*.json')):
+    for report in sorted(output.glob('coverage-*.json')):
         if report.name == 'coverage-summary.json':
             continue
         data = json.loads(report.read_text())
@@ -97,26 +107,37 @@ def main():
             'sha256': hashlib.sha256(raw).hexdigest(),
             'bytes': len(raw),
         })
-    target = OUT / 'file-coverage.csv'
+        if current:
+            row = rows[-1]
+            historic = prior.get(path, {})
+            identical = row['sha256'] == historic.get('sha256')
+            row['prior_review_identical_content'] = historic.get('inspection_depth', '') if identical else ''
+            if identical and not semantic:
+                for field in ('purpose', 'owner', 'risk', 'finding_ids', 'relevant_tests', 'generated_from'):
+                    if historic.get(field):
+                        row[field] = historic[field]
+            if path == 'public/app/boot/engine-guard.js':
+                row['generated_from'] = 'Embedded public schematics only: tools/build_guest_schematics.py;docs/delivery/2026-11-10/fixtures/{villa,warehouse,manifest}.json'
+    target = output / 'file-coverage.csv'
     # Self and aggregate metadata are included with no circular content hash.
     for row in rows:
-        if row['path'] in {str(target.relative_to(ROOT)), str((OUT/'coverage-summary.json').relative_to(ROOT))}:
+        if row['path'] in {str(target.relative_to(ROOT)), str((output/'coverage-summary.json').relative_to(ROOT))}:
             row['sha256'] = 'self-referential inventory; not content-hashed'
             row['bytes'] = ''
-    with target.open('w', newline='', encoding='utf-8') as output:
-        writer = csv.DictWriter(output, fieldnames=list(rows[0]), lineterminator="\n")
+    with target.open('w', newline='', encoding='utf-8') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
     summary = {
         'schema': 'acs.delivery.coverage/1',
-        'base_commit': 'c37b5250dc4ff18ba0606add993b5afe52beebaa',
+        'base_commit': ('629952f10763a8826f3a014895f2e1d209440996' if current else 'c37b5250dc4ff18ba0606add993b5afe52beebaa'),
         'tracked_files': len(rows),
         'depth': dict(Counter(row['inspection_depth'] for row in rows)),
         'classification': dict(Counter(row['classification'] for row in rows)),
         'scope': 'Current delivery review only. Previous dated audit coverage is not silently promoted to current deep review.',
         'warning': 'Inventory and parsing do not establish semantic correctness. Unreviewed and static paths remain explicitly identified.',
     }
-    (OUT/'coverage-summary.json').write_text(json.dumps(summary, indent=2)+'\n')
+    (output/'coverage-summary.json').write_text(json.dumps(summary, indent=2)+'\n')
     print(json.dumps(summary))
 
 

@@ -44,6 +44,10 @@ class ReleaseSafety(unittest.TestCase):
                     data['checks'][0]['status'] = 'NOT VERIFIED'; data['counts']['pass'] -= 1; data['counts']['not_verified'] += 1
                 if mode == 'missing_group':
                     data['checks'].pop(); data['counts']['pass'] -= 1; data['counts']['total'] -= 1
+                if mode == 'different_frontend_commit':
+                    data['observed']['frontend_sha'] = 'b' * 40
+                if mode == 'different_frontend_origin':
+                    data['frontend'] = 'https://an-unrelated.example'
                 body = json.dumps(data)
                 if browser:
                     source = "const fs=require('fs');fs.mkdirSync(__dirname+'/outputs',{recursive:true});"
@@ -74,6 +78,13 @@ class ReleaseSafety(unittest.TestCase):
                 self.assertNotEqual(rc, 0, log)
                 self.assertNotEqual(summary.get('verdict'), 'PASS', log)
 
+    def test_passing_layers_must_measure_the_same_deployed_frontend(self):
+        for mode in ('different_frontend_commit', 'different_frontend_origin'):
+            with self.subTest(mode=mode):
+                code, summary, log = self.run_gate(mode)
+                self.assertEqual(code, 1, log)
+                self.assertEqual(summary['verdict'], 'FAIL')
+
     def test_http_crash_never_passes(self):
         rc, summary, log = self.run_gate(http_behavior='crash')
         self.assertNotEqual(rc, 0, log); self.assertNotEqual(summary.get('verdict'), 'PASS')
@@ -97,6 +108,24 @@ class ReleaseSafety(unittest.TestCase):
                 self.assertFalse(any('.git/' in n or n.startswith('.env') or 'credentials' in n or n.endswith(('.pem','.sqlite','.log')) or 'outputs/' in n for n in names),names)
                 manifest=json.loads(z.read('RELEASE-MANIFEST.json'))
                 self.assertTrue(manifest['files']);self.assertTrue(all('sha256' in row for row in manifest['files']))
+
+    def test_release_includes_only_the_committed_environment_example(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / 'repo'
+            root.mkdir()
+            subprocess.run(['git', 'init', '-q', str(root)], check=True)
+            example = root / '.env.example'
+            example.write_text('ANTHROPIC_API_KEY=\n')
+            subprocess.run(['git', '-C', str(root), 'add', '.env.example'], check=True)
+            subprocess.run(['git', '-C', str(root), '-c', 'user.name=Fixture',
+                            '-c', 'user.email=fixture@example.invalid',
+                            'commit', '-qm', 'Synthetic public template'], check=True)
+            example.write_text('ANTHROPIC_API_KEY=SYNTHETIC_LOCAL_ONLY\n')
+            archive = Path(temp) / 'source.zip'
+            subprocess.run([sys.executable, str(ROOT / 'tools/release_manifest.py'),
+                            '--root', str(root), '--output', str(archive)], check=True)
+            with zipfile.ZipFile(archive) as zipped:
+                self.assertEqual(zipped.read('.env.example'), b'ANTHROPIC_API_KEY=\n')
 
     def test_raw_diagnostics_never_reach_logs(self):
         sentinel='SYNTHETIC_PAYLOAD redis://user:SYNTHETIC_PASSWORD@secret.invalid Bearer SYNTHETIC_TOKEN'

@@ -33,12 +33,12 @@ async function privateWorkspaceReady(page,sourceRestore){
 async function runAuthShippedPage(){
   const browser=await PW.launch();
   try{
-    for(const width of [393,1280]){
-      const context=await browser.newContext({viewport:{width,height:852}}), page=await context.newPage();
+    for(const width of [393,1440]){
+      const context=await browser.newContext({viewport:{width,height:width===393?852:900}}), page=await context.newPage();
       const errors=[], calls=[], localModules=[];let firstProject=null, failSignin=true, googleChallenge=null;
       page.on('pageerror',e=>errors.push(e.message));
       try{
-      await page.route('**/*',async route=>{
+      await context.route('**/*',async route=>{
         const req=route.request(),url=new URL(req.url());
         if(['/app/render/scene.js','/app/ui/workspace-ui-wiring.js','/app/ui/guest-workspace.js'].includes(url.pathname))localModules.push(url.pathname);
         if(url.hostname==='auth.example.test'){
@@ -71,6 +71,10 @@ async function runAuthShippedPage(){
             const input=req.postDataJSON();
             if(!firstProject&&!input.name){status=400;body={error:{code:'PROJECT_NAME_REQUIRED',message:'اسم المشروع مطلوب.'}};}
             else {firstProject=firstProject||{id:'fixture-project',name:input.name};body={project:firstProject,user:{id:'fixture-user'}};}
+          }else if(url.pathname==='/v1/auth/update-password'){
+            assert.equal(req.headers().authorization,'Bearer fixture-access');
+            assert.equal(req.postDataJSON().password,'fixture-new-password');
+            body={ok:true};
           }else if(url.pathname==='/v1/auth/signout')body={ok:true};
           else if(url.pathname==='/v1/auth/projects')body={ok:true,projects:firstProject?[firstProject]:[]};
           else if(url.pathname==='/v1/projects/fixture-project/workspace'){
@@ -154,12 +158,32 @@ async function runAuthShippedPage(){
       assert.equal(await page.evaluate(()=>window.ACS.projectId),'fixture-project');
       assert.equal(calls.filter(p=>p==='/v1/auth/google/exchange').length,1);
       assert.equal(calls.filter(p=>p==='/v1/auth/signin').length,before);
-      await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),page.locator('#cwLogout').click()]);
-      await page.waitForFunction(()=>!localStorage.getItem('acs_supabase_session_v1')&&document.querySelector('#acsAuthGoogle')&&!document.querySelector('#acsAuthGoogle').disabled);
+      const second=await context.newPage();
+      const secondSource=sourceResponse(second);
+      await second.goto('https://acs-ui.test/?signin=1');
+      await privateWorkspaceReady(second,secondSource);
+      await Promise.all([page.waitForNavigation({waitUntil:'domcontentloaded'}),second.waitForNavigation({waitUntil:'domcontentloaded'}),second.locator('#cwLogout').click()]);
+      assert.equal(await page.locator('#designWorkspace').isVisible(),false,'signing out in the other tab closes the old project');
+      assert.equal(await page.evaluate(()=>localStorage.getItem('acs_supabase_session_v1')),null);
+      await second.close();
+      const privateReads=calls.filter(p=>p.includes('project')).length;
+      await page.goto('https://acs-ui.test/?signin=1#type=recovery&refresh_token=fixture-email-refresh');
+      await page.locator('#lgPasswordConfirm').waitFor({state:'visible'});
+      assert.equal(new URL(page.url()).hash,'','the recovery fragment is cleared immediately');
+      assert.equal(await page.locator('#designWorkspace').isVisible(),false);
+      await page.reload();
+      await page.locator('#lgPasswordConfirm').waitFor({state:'visible'});
+      await page.locator('#lgPassword').fill('fixture-new-password');
+      await page.locator('#lgPasswordConfirm').fill('fixture-new-password');
+      await page.locator('#lgGo').click();
+      await page.waitForFunction(()=>document.querySelector('#acsAuthStatus').textContent.includes('تم تغيير كلمة المرور'));
+      assert.equal(calls.filter(p=>p==='/v1/auth/update-password').length,1);
+      assert.equal(calls.filter(p=>p.includes('project')).length,privateReads,'recovery never opens a project');
+      assert.equal(await page.evaluate(()=>localStorage.getItem('acs_supabase_session_v1')),null);
       assert.deepEqual(errors,[]);
       fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
       await page.screenshot({path:path.join(ROOT,'logs','auth-'+width+'.png')});
-      console.log('PASS shipped auth '+width+': email entry, project onboarding, Google PKCE redirect, reload and logout');
+      console.log('PASS shipped auth '+width+': email entry, project onboarding, Google PKCE redirect, reload, cross-tab logout and password recovery');
       }catch(error){
         fs.mkdirSync(path.join(ROOT,'logs'),{recursive:true});
         const visible=await page.evaluate(()=>Object.fromEntries(['acsAuthStatus','cwStatus'].map(id=>{

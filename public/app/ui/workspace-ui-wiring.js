@@ -109,7 +109,10 @@ function setModel(data){
   }
   // Reset selection only after a new model compiled successfully; null is a presentation rebuild.
   if(data) floorSel='all';
-  if(data) lastBuilding=data;
+  if(data){
+    lastBuilding=data;
+    window.ACS?.guestWorkspace?.modelChanged?.();
+  }
   for(const k in _prevMats){ const m=_prevMats[k];
     if(m&&m.dispose){ try{ m.dispose(); }catch(e){} } }
   if(model){                                        // حرّر ذاكرة الرسوميات بعد نجاح البناء
@@ -267,7 +270,6 @@ function changeLocalRoof(action){
   const next=action==='remove'?removeAutoRoof(lastBuilding):restoreDefaultRoof(lastBuilding);
   if((next.levels||[]).length>SCENE_LIMITS.max_levels)throw new Error('ROOF_LEVEL_LIMIT_EXCEEDED');
   setModel(next);
-  if(window.ACS?.guest&&!window.ACS.guestRecoveryPending)window.ACS.guestAutosaveReady=true;
   return next;
 }
 function localGenerationError(error){
@@ -2069,7 +2071,7 @@ document.getElementById('genLLM').onclick=acsGenerateFromServer;
 document.getElementById('loadExample').onclick=()=>{setModel(localGeneratedModel(EXAMPLE,{freshSample:true}));};
 document.getElementById('loadWarehouse').onclick=()=>{
   statusEl.textContent='بناء مستودع تجارة إلكترونية 120×80 م…';
-  setTimeout(()=>setModel(localGeneratedModel(warehouseModel(120,80,{clear:12}),{freshSample:true})),20);
+  setModel(localGeneratedModel(warehouseModel(120,80,{clear:12}),{freshSample:true}));
 };
 
 /* لوحة الجوال: زر إظهار/إخفاء */

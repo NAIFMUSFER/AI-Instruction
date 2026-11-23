@@ -9,6 +9,13 @@ PARTS = [('verify_live.json', {'A', 'B', 'G'}),
          ('verify_live_browser.json', {'C', 'D', 'E', 'F', 'G(browser)'})]
 
 
+def observed_frontend_sha(observed):
+    if not isinstance(observed, dict):
+        return None
+    build = observed.get('build_info')
+    return observed.get('frontend_sha') or (build.get('git_sha') if isinstance(build, dict) else None)
+
+
 def inspect(path, process_exit, required):
     try:
         data = json.loads(path.read_text(encoding='utf-8'))
@@ -39,8 +46,10 @@ def inspect(path, process_exit, required):
         verdict = 'FAIL' if process_exit == 1 or counts['fail'] else 'INCOMPLETE' if process_exit == 2 or counts['not_verified'] else 'PASS'
         if verdict == 'PASS':
             observed = data.get('observed') or {}
-            frontend_sha = observed.get('frontend_sha') or (observed.get('build_info') or {}).get('git_sha')
-            shas = [frontend_sha] + ([observed.get('backend_sha')] if 'A' in required else [])
+            frontend_sha = observed_frontend_sha(observed)
+            shas = [frontend_sha]
+            if 'A' in required:
+                shas.append(observed.get('backend_sha') if isinstance(observed, dict) else None)
             if not all(isinstance(sha, str) and re.fullmatch(r'[a-f0-9]{40}', sha) for sha in shas):
                 raise ValueError('EVIDENCE_PROVENANCE_MISSING')
             expected = data.get('expect_sha')
@@ -67,6 +76,13 @@ def main(argv):
         results.append(code); combined['parts'][name] = part
         for key, value in (part.get('counts') or {}).items():combined['counts'][key] += value
     code = 1 if 1 in results else 2 if 2 in results else 0
+    if code == 0:
+        http, browser = (combined['parts'][name] for name, _ in PARTS)
+        same_target = http['frontend'].rstrip('/') == browser['frontend'].rstrip('/')
+        same_commit = observed_frontend_sha(http['observed']) == observed_frontend_sha(browser['observed'])
+        if not (same_target and same_commit):
+            combined['error'] = 'EVIDENCE_FRONTEND_TARGET_MISMATCH'
+            code = 1
     combined['verdict'] = {0: 'PASS', 1: 'FAIL', 2: 'INCOMPLETE'}[code]
     combined['exit_code'] = code
     (Path(out)/'summary.json').write_text(json.dumps(combined,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')

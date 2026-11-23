@@ -31,4 +31,66 @@ class Fit(unittest.TestCase):
  def test_no_target_is_byte_equivalent_object(self):
     b=model(); self.assertIs(fit_soft_area(b,[],None),b)
 
+class OccupiedAreaContract(unittest.TestCase):
+    @staticmethod
+    def warehouse():
+        candidate = model()
+        room = candidate["floors"]["ground"]["rooms"][0]
+        room.update(rect=[0, 0, 10, 8], walls="none",
+                    points=[{"id": "L", "type": "light", "x": 2, "z": 2}])
+        candidate["floors"]["ground"]["rooms"] = [room]
+        return candidate
+
+    def test_fitted_dimensions_satisfy_confirmed_area_in_approval(self):
+        from acs_plan_bridge import existing_geometry_verifier
+        from acs_plan_review import PlanWorkspace
+        for target in (63, 63.12345678, 79.9999995):
+            with self.subTest(target=target):
+                evidence = str(target)
+                requirements = [{"id": "area", "metric": "building_target_area_m2",
+                                 "expected": target, "source": "requested", "evidence": evidence}]
+                fitted = fit_soft_area(self.warehouse(), requirements, target)
+                workspace = PlanWorkspace(existing_geometry_verifier)
+                revision = workspace.propose(fitted, brief=evidence, requirements=requirements,
+                                             expected_head=None, note="synthetic fitted warehouse")
+                review = workspace.review(revision.id)
+                self.assertTrue(review["can_approve"], review["issues"])
+                workspace.approve(revision.id, expected_head=revision.id, confirmed=True,
+                                  acknowledge_concept_only=True, actor_label="synthetic reviewer")
+
+    def test_role_minimum_uses_the_same_precision_as_the_building_target(self):
+        from acs_plan_review import _program
+        target = 63.12345625
+        evidence = str(target)
+        rows = [
+            {"id": "area", "metric": "building_target_area_m2", "expected": target,
+             "source": "requested", "evidence": evidence},
+            {"id": "storage", "metric": "min_space_area_by_role_m2", "role": "storage",
+             "expected": target, "source": "requested", "evidence": evidence},
+        ]
+        fitted = fit_soft_area(self.warehouse(), rows, target)
+        self.assertEqual(_program(fitted, evidence, rows), [])
+
+    def test_explicit_roof_does_not_reduce_occupied_area_budget(self):
+        candidate = self.warehouse()
+        candidate["levels"].extend([
+            {"index": 1, "template": "ground", "elevation": 8},
+            {"index": 2, "template": "deck", "kind": "roof", "elevation": 16},
+        ])
+        candidate["floors"]["deck"] = {"rooms": [{"id": "deck", "rect": [0, 0, 10, 8]}]}
+        self.assertEqual(generated_indoor_area(candidate), 160)
+        self.assertIs(fit_soft_area(candidate, [], 160), candidate)
+        fitted = fit_soft_area(candidate, [], 120)
+        self.assertAlmostEqual(generated_indoor_area(fitted), 120, places=8)
+        self.assertEqual(fitted["floors"]["deck"], candidate["floors"]["deck"])
+
+    def test_partial_or_invalid_levels_cannot_establish_total_area(self):
+        from acs_plan_scorecard import measure_plan
+        for extra in ({"index": 1, "template": "missing"}, {"index": 0, "template": "ground"}):
+            with self.subTest(level=extra):
+                candidate = self.warehouse()
+                candidate["levels"].append(extra)
+                self.assertIsNone(generated_indoor_area(candidate))
+                self.assertIsNone(measure_plan(candidate)["metrics"]["space_rect_area_m2"])
+
 if __name__=='__main__': unittest.main()

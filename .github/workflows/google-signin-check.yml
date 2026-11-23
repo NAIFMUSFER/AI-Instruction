@@ -8,6 +8,8 @@ on:
       # its transitive browser modules, rather than only the original guard.
       - 'public/app/**'
       - 'tools/frontend_local.txt'
+      - 'tools/build_guest_schematics.py'
+      - 'docs/delivery/2026-11-10/fixtures/**'
       - 'tools/ci_prepare_apt.py'
       - 'tests/remediation/test_ci_apt_mirror.py'
       - 'tests/remediation/test_auth_gateway.py'
@@ -19,6 +21,7 @@ on:
       - 'tests/remediation/guest_roof_parity.mjs'
       - 'tests/remediation/test_guest_roof_integration.cjs'
       - 'tests/remediation/test_guest_import_wait.cjs'
+      - 'tests/remediation/test_guest_recovery_writes.cjs'
       - '.github/workflows/google-signin-check.yml'
   workflow_dispatch:
 permissions:
@@ -42,9 +45,11 @@ jobs:
           python-version: '3.11'
       - name: Auth session and gateway contracts
         run: |
+          python tools/build_guest_schematics.py --check
           node tests/remediation/test_auth_session.js
           node tests/remediation/test_auth_fixture_waits.cjs
           node tests/remediation/test_guest_import_wait.cjs
+          node tests/remediation/test_guest_recovery_writes.cjs
           python3 tests/remediation/test_auth_gateway.py
       - name: Build shipped frontend
         run: bash tools/netlify-build.sh

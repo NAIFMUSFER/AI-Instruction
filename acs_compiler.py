@@ -211,6 +211,7 @@ class Builder:
                 vectors[:, 0] = x*c - z*sn + origin[0]
                 vectors[:, 2] = x*sn + z*c + origin[1]
         self.parts.append((p, n, u, i, mat, name))
+        return len(self.parts) - 1
 
     def add_door_box(self, cx, cy, cz, ex, ey, ez, mat, name,
                      fkey, room_id, edge, opening, opening_index):
@@ -658,8 +659,8 @@ def build_object(bld, o, kind, cx, cz, base_y, fkey, room, idx):
     rot = math.radians(float(o.get("rot") or 0.0))
     def B(dx, dy, dz, ex, ey, ez, mat, c=None):
         co, sn = math.cos(rot), math.sin(rot)
-        bld.add_box(cx + dx*co - dz*sn, base_y + dy, cz + dx*sn + dz*co,
-                    ex, ey, ez, tinted(mat, c or col), tag, rotation=rot)
+        return bld.add_box(cx + dx*co - dz*sn, base_y + dy, cz + dx*sn + dz*co,
+                           ex, ey, ez, tinted(mat, c or col), tag, rotation=rot)
 
     if shape == "person":
         B(0, h*0.22, 0, w*0.28, h*0.44, d*0.7, "skin", col or "#c8a07a")
@@ -690,12 +691,13 @@ def build_object(bld, o, kind, cx, cz, base_y, fkey, room, idx):
             geometry = resolve_stair_geometry(o)
             for part in geometry['components']:
                 tag = 'OBJ|%s|%s|%s|%s' % (fkey,room,o['id'],part['id'])
-                before = len(bld.parts)
-                B(*part['center'], *part['size'], 'concrete_m')
-                bld._stair_sources[before] = {
-                    'source_level_index':o['stair']['source_level_index'],
-                    'target_level_index':o['stair']['target_level_index'],
-                    'room_id':room,'object_id':o['id'],'component_id':part['id'],'role':part['role']}
+                part_index = B(*part['center'], *part['size'], 'concrete_m')
+                sources = getattr(bld, '_stair_sources', None)
+                if sources is not None and part_index is not None:
+                    sources[part_index] = {
+                        'source_level_index':o['stair']['source_level_index'],
+                        'target_level_index':o['stair']['target_level_index'],
+                        'room_id':room,'object_id':o['id'],'component_id':part['id'],'role':part['role']}
         else:
             n = max(4, round(h/0.17)); rise = h/n; run = d/n
             for i in range(int(n)):
@@ -780,13 +782,14 @@ def build_objects(bld, room, fkey, base_y, acc=None):
             oz = float(o.get("z") if o.get("z") is not None else rd/2) + (pitch*k if dirn == "z" else 0)
             if ox > rw+2 or oz > rd+2:
                 break
-            before = len(bld.parts)
+            context = getattr(bld, '_object_context', None)
+            track_source = context is not None and isinstance(o.get('id'), str) and o['id'].strip()
+            before = len(bld.parts) if track_source else None
             build_object(bld, o, kind or "box", rx+ox, rz+oz,
                          base_y+float(o.get("y") or 0), fkey, nm, i*1000+k)
             # Assign from the canonical call context, never infer from a mesh
             # name or position. All emitted components share one source tuple.
-            context = getattr(bld, '_object_context', None)
-            if context is not None and isinstance(o.get('id'), str) and o['id'].strip():
+            if before is not None:
                 source = dict(context, kind='element', room_id=nm,
                               collection='objects', element_id=o['id'])
                 for part_index in range(before, len(bld.parts)):

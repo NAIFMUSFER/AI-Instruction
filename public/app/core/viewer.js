@@ -138,10 +138,10 @@ const FLOOR_NAMES={F0:'الأرضي',F1:'الأول',F2:'الثاني',F3:'ال�
   F5:'الخامس',F6:'السادس',F7:'السابع',F8:'الثامن',F9:'التاسع',F10:'العاشر'};
 /* رقم الدور من مفتاحه: 'F12' → 12، وما ليس بهذا الشكل → null (لا NaN صامتة) */
 function acsFloorIndex(fkey){
-  const m=/^F(\d+)$/.exec(String(fkey==null?'':fkey).trim());
+  const m=/^F(-?\d+)$/.exec(String(fkey==null?'':fkey).trim());
   if(!m) return null;
   const n=Number(m[1]);
-  return (isFinite(n)&&n>=0)?n:null;
+  return Number.isSafeInteger(n)?n:null;
 }
 /* اسم دورٍ حتميّ لأي رقم. `total` عدد الأدوار الكلّي إن عُرِف — وبه وحده
    يصير الأعلى «السطح». بلا `total` لا يُدّعى سطحٌ أبداً: الادّعاء بلا قياس
@@ -153,6 +153,7 @@ function acsFloorName(fkey, total){
   const t=Number(total);
   const known=(isFinite(t)&&t>=1)?Math.floor(t):null;
   if(known!==null&&known>1&&i===known-1) return 'السطح';
+  if(i<0) return 'القبو '+Math.abs(i);
   if(i===0) return 'الأرضي';
   return FLOOR_NAMES['F'+i]||('الدور '+i);
 }

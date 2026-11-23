@@ -5,9 +5,9 @@ import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 
 // Convert the compiler's self-contained glTF buffer into GLB in memory. The
 // loader receives no external URI and therefore needs no additional CSP origin.
-export function embeddedGLB(bytes, revisionId) {
-  const document=JSON.parse(new TextDecoder().decode(bytes));
-  if(document.extras?.acs_plan_baseline?.revision_id!==revisionId)throw new Error('ملف 3D لا يطابق النسخة المختارة.');
+function glbFromDocument(document, revisionId, receipt) {
+  const marker=document.extras?.acs_plan_baseline;
+  if(marker?.revision_id!==revisionId || (receipt && ['revision_id','model_hash','content_hash','source_map_hash','provenance_hash'].some(key=>marker[key]!==receipt[key])))throw new Error('ملف 3D لا يطابق النسخة المختارة.');
   if(document.buffers?.length!==1||document.images?.length||document.extensionsRequired?.length)throw new Error('تركيب ملف 3D غير مدعوم في العارض.');
   const buffer=document.buffers[0], prefix='data:application/octet-stream;base64,';
   if(typeof buffer.uri!=='string'||!buffer.uri.startsWith(prefix))throw new Error('ملف 3D يجب أن يحتوي بياناته كاملة.');
@@ -20,6 +20,10 @@ export function embeddedGLB(bytes, revisionId) {
   view.setUint32(12,jsonSize,true);view.setUint32(16,0x4e4f534a,true);out.fill(32,20,20+jsonSize);out.set(json,20);
   view.setUint32(20+jsonSize,binSize,true);view.setUint32(24+jsonSize,0x004e4942,true);out.set(raw,28+jsonSize);
   return out.buffer;
+}
+
+export function embeddedGLB(bytes, revisionId, receipt=null) {
+  return glbFromDocument(JSON.parse(new TextDecoder().decode(bytes)), revisionId, receipt);
 }
 
 const VIEW_LABELS={exterior:'منظور خارجي',aerial:'من الأعلى',street:'مستوى الشارع',interior:'داخل الفراغ',cutaway:'قص الدور',detail:'تفصيل قريب'};
@@ -96,6 +100,72 @@ function skyTexture(){
   context.fillStyle=gradient;context.fillRect(0,0,4,256);
   const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;return texture;
 }
+const finishTileMetres = .6;
+export function floorFinishUVs(geometry, worldMatrix) {
+  const positions=geometry.getAttribute('position');
+  const uv=new THREE.Float32BufferAttribute(new Float32Array(positions.count*2),2);
+  const point=new THREE.Vector3();
+  for(let i=0;i<positions.count;i++){
+    point.fromBufferAttribute(positions,i).applyMatrix4(worldMatrix);
+    uv.setXY(i,point.x/finishTileMetres,point.z/finishTileMetres);
+  }
+  return uv;
+}
+// Small neutral colour map. The metre scale is shared across disjoint slab
+// pieces. A finish selection changes presentation attributes only.
+function floorFinishTexture(){
+  const size=64, pixels=new Uint8Array(size*size*4);
+  for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+    const seam=x===0||y===0, grain=((x*73+y*151+x*y*17)%13);
+    const tone=seam?181:238+grain;
+    pixels.set([tone,tone,tone,255],(y*size+x)*4);
+  }
+  const texture=new THREE.DataTexture(pixels,size,size);
+  texture.colorSpace=THREE.SRGBColorSpace;
+  texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.magFilter=THREE.LinearFilter;
+  texture.minFilter=THREE.LinearMipmapLinearFilter;
+  texture.generateMipmaps=true;
+  texture.needsUpdate=true;
+  return texture;
+}
+function floorFinish(meshes){
+  const slabs=meshes.filter(mesh=>{
+    const id=mesh.userData.acsViewerIdentity;
+    return id.kind==='FLOOR' && id.name.includes('|slab|') && mesh.material.isMeshStandardMaterial && !mesh.material.map;
+  });
+  const variants=new Map(),parts=[];
+  let texture=null;
+  return {
+    available:slabs.length>0,
+    set(on){
+      if(on&&!texture){
+        texture=floorFinishTexture();
+        for(const mesh of slabs){
+          const original=mesh.material,geometry=mesh.geometry;
+          if(!variants.has(original)){
+            const material=original.clone();
+            material.map=texture;
+            variants.set(original,material);
+          }
+          const tiled=geometry.clone();
+          tiled.setAttribute('uv',floorFinishUVs(geometry,mesh.matrixWorld));
+          parts.push({mesh,original,geometry,tiled});
+        }
+      }
+      for(const part of parts){
+        part.mesh.geometry=on?part.tiled:part.geometry;
+        part.mesh.material=on?variants.get(part.original):part.original;
+      }
+    },
+    dispose(){
+      this.set(false);
+      parts.forEach(part=>part.tiled.dispose());
+      variants.forEach(material=>material.dispose());
+      texture?.dispose();
+    }
+  };
+}
 function lineSet(values,color,opacity){
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(values,3));
   const line=new THREE.LineSegments(geometry,new THREE.LineBasicMaterial({color,transparent:true,opacity,depthWrite:false}));
@@ -104,8 +174,9 @@ function lineSet(values,color,opacity){
 function element(tag,text,host,className){const node=document.createElement(tag);if(text!=null)node.textContent=text;if(className)node.className=className;if(host)host.append(node);return node;}
 
 export async function showApprovedGLTF(container, bytes, revisionId, options={}) {
-  const current=options.isCurrent||(()=>true),buffer=embeddedGLB(bytes,revisionId);
+  const current=options.isCurrent||(()=>true);
   const original=JSON.parse(new TextDecoder().decode(bytes));
+  const buffer=glbFromDocument(original,revisionId,options.receipt);
   const marker=original.extras.acs_plan_baseline;
   const objectSources=await approvedObjectSources(bytes,marker,options.receipt,revisionId);
   if(!current())return()=>{};
@@ -309,19 +380,24 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const reset=element('button','إعادة الضبط',toolbar);reset.type='button';
   const tourButton=element('button','جولة تلقائية',toolbar);tourButton.type='button';tourButton.setAttribute('aria-pressed','false');
   const more=element('details',null,toolbar,'av-more');element('summary','خيارات العرض',more);const moreBody=element('div',null,more,'av-more-body');
+  const finish=floorFinish(meshes);
+  const finishButton=element('button','تشطيب أرضية افتراضي · بلاط ٦٠ سم',moreBody);
+  finishButton.type='button';finishButton.hidden=!finish.available;finishButton.setAttribute('aria-pressed','false');
   const qualityButton=element('button','الجودة: '+quality.name,moreBody);qualityButton.type='button';
   const labelButton=element('button','أسماء الفراغات',moreBody);labelButton.type='button';labelButton.setAttribute('aria-pressed','true');
   const detailButton=element('button','تفاصيل الفتحات',moreBody);detailButton.type='button';detailButton.setAttribute('aria-pressed','true');
-  const roofButton=element('button',roofLevels.size?'السطح':'سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofPieces>0||roofLevels.size>0));roofButton.disabled=!roofPieces&&!roofLevels.size;
+  const roofButton=element('button',roofLevels.size?'السطح':'سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofLevels.size>0));roofButton.disabled=!roofPieces&&!roofLevels.size;
   const sunLabel=element('label','الشمس',moreBody),sunRange=element('input',null,sunLabel);sunRange.type='range';sunRange.min='6';sunRange.max='18';sunRange.step='0.5';sunRange.value=String(sunHour);sunRange.setAttribute('aria-label','موضع الشمس للعرض، من الصباح إلى المساء');
   const badge=element('div',null,stage,'av-badge');element('strong','نسخة معتمدة · عرض مشتق',badge);element('bdi',revisionId,badge);badge.title='بصمة النموذج: '+marker.model_hash;
+  const roofNote=element('span','السقف غير موجود في الملف المعتمد',badge,'av-roof-note');
+  roofNote.hidden=Boolean(roofLevels.size||kinds.has('ROOF'));
   const inspector=element('div','اختر عنصرًا لعرض هويته ودوره.',stage,'av-inspector');inspector.setAttribute('role','status');inspector.setAttribute('aria-live','polite');
   const hint=element('p','اسحب للدوران · إصبعان للتحريك والتقريب · الأسهم للدوران · +/− للتقريب. مربع الشبكة = '+gridCell+' م. الكاميرا حرة وليست إثباتًا لقابلية المشي.',shell,'av-help');
   const disclosure=element('details',null,shell,'av-evidence');element('summary','النسخة وحدود العرض',disclosure);
   element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والسماء والإضاءة وشبكة القياس وخطوط الحواف وأسماء الفراغات عرض فقط ولا تدخل في التصدير أو الكميات. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
   element('p','إطارات النوافذ والأبواب ومقابضها مشتقة من فتحات موجودة في النسخة لتوضيحها فقط. شخصا المقياس بجانب المدخل ومصباح المشهد الداخلي وموضع الشمس عرض فقط؛ الملف لا يحدد اتجاه الشمال، فالظلال ليست دراسة شمسية.',disclosure);
   if(roofLevels.size)element('p','دور السطح جزء من النسخة المعتمدة: غير مشغول ولا يدخل في قياس الأدوار أو مساحة الفراغات المشغولة. الحواجز الظاهرة هي الموجودة في الملف فقط. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
-  else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إخفاؤها، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
+  else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إظهارها من خيارات العرض، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
   const evidence=element('output','',disclosure);evidence.dir='ltr';
   // Short room names anchored to the approved rooms. Names come from the review
   // packet when supplied, otherwise from the artifact's own room identifiers.
@@ -348,14 +424,14 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     }
   }
   const controls=new OrbitControls(camera,canvas);controls.target.copy(center);controls.minDistance=.05;controls.maxDistance=extent*8;controls.enableDamping=false;controls.maxPolarAngle=Math.PI*.98;
-  let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,slowDevice=false,detailOn=true,roofOn=roofPieces>0||roofLevels.size>0,tour=0,tourIndex=0,updatingControls=false,framedBounds=null;
+  let selectionBox=null,samples=[],measuredMs=null,autoAdjusted=false,slowDevice=false,detailOn=true,roofOn=roofLevels.size>0,tour=0,tourIndex=0,updatingControls=false,framedBounds=null;
   const updateControls=()=>{updatingControls=true;try{controls.update();}finally{updatingControls=false;}};
   const controlsChanged=()=>{if(!updatingControls)render();};
   const storeyLevels=[...levels.keys()].filter(index=>!roofLevels.has(index)),topLevel=storeyLevels.length?Math.max(...storeyLevels):null;
   const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
     objectGroups:[...groups.entries()].filter(([key])=>key.startsWith('source|')).slice(0,256).map(([,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return {...items[0].userData.acsApprovedObjectSource,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     rackGroups:[...groups.entries()].filter(([key,items])=>/^FURN\|F-?\d+\|[^|]+\|rack\d+r\d+$/.test(key)&&items.length>1).map(([name,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return{name,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
-    presentation:{detailInstances,roofPieces,assumedRoofShown:roofPieces>0,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofPieces>0||roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
+    presentation:{floorFinishShown:false,detailInstances,roofPieces,assumedRoofShown:false,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
   const info=()=>{evidence.textContent=`revision=${revisionId}\nmodel=${marker.model_hash}\nmeshes=${meshes.length}; triangles=${triangles}; quality=${quality.name}\nrender CPU submission (ms)=${measuredMs===null?'not measured':measuredMs.toFixed(2)}; device/browser=${navigator.userAgent}\nviewport=${stage.clientWidth}x${stage.clientHeight}; DPR=${renderer.getPixelRatio()}`;};
   function render(){
@@ -402,6 +478,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     telemetry.presentation.assumedRoofShown=detailObjects.some(item=>item.group==='roof'&&item.object.visible);
     telemetry.presentation.visibleRoofMeshCount=meshes.filter(mesh=>mesh.visible&&roofLevels.has(mesh.userData.acsViewerIdentity.level)).length;
     telemetry.presentation.roofShown=telemetry.presentation.assumedRoofShown||telemetry.presentation.visibleRoofMeshCount>0;
+    if(!roofNote.hidden)roofNote.textContent=telemetry.presentation.assumedRoofShown?'سقف افتراضي للعرض فقط':'السقف غير موجود في الملف المعتمد';
     if(selectionBox)selectionBox.visible=selected?.visible!==false;
   }
   function preset(name,smooth=true){
@@ -489,12 +566,16 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   roofButton.addEventListener('click',()=>{roofOn=!roofOn;roofButton.setAttribute('aria-pressed',String(roofOn));setVisibility();render();});
   sunRange.addEventListener('input',()=>{applySun(sunRange.value);telemetry.presentation.sunHour=sunHour;renderer.shadowMap.needsUpdate=true;render();});
   floors.addEventListener('change',()=>{select(null);preset(currentPreset);});reset.addEventListener('click',()=>{stopTour();floors.value='all';select(null);preset('exterior');});qualityButton.addEventListener('click',()=>applyQuality(quality.pixelRatio>1));
+  finishButton.addEventListener('click',()=>{
+    const on=finishButton.getAttribute('aria-pressed')!=='true';
+    finish.set(on);finishButton.setAttribute('aria-pressed',String(on));telemetry.presentation.floorFinishShown=on;render();
+  });
   labelButton.addEventListener('click',()=>{labelsOn=!labelsOn;labelButton.setAttribute('aria-pressed',String(labelsOn));render();});
   function dispose(){
     if(disposed)return;disposed=true;stopTour();stopMotion();observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);
     if(current())options.onSelectObject?.(null);
     canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('keydown',keydown);canvas.removeEventListener('webglcontextlost',contextLost);canvas.removeEventListener('webglcontextrestored',contextRestored);
-    releaseObject(scene);Object.values(detailMaterials).forEach(material=>material.dispose());unitBox.dispose();sky.dispose();scene.background=null;environment.dispose();sun.shadow.map?.dispose();renderer.renderLists.dispose();renderer.dispose();renderer.forceContextLoss();shell.remove();if(container.acsViewer===telemetry)delete container.acsViewer;
+    finish.dispose();releaseObject(scene);Object.values(detailMaterials).forEach(material=>material.dispose());unitBox.dispose();sky.dispose();scene.background=null;environment.dispose();sun.shadow.map?.dispose();renderer.renderLists.dispose();renderer.dispose();renderer.forceContextLoss();shell.remove();if(container.acsViewer===telemetry)delete container.acsViewer;
   }
   const contextLost=event=>{event.preventDefault();lost=true;stopMotion();dispose();options.onFailure?.('فُقد سياق الرسوم. المخطط ثنائي الأبعاد متاح؛ استخدم إعادة محاولة 3D لاستعادة العرض.');};
   const contextRestored=()=>{lost=false;resize();};canvas.addEventListener('webglcontextlost',contextLost);canvas.addEventListener('webglcontextrestored',contextRestored);

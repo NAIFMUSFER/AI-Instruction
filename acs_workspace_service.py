@@ -12,7 +12,7 @@ import math
 from pathlib import Path
 import tempfile
 
-from acs_plan_review import PlanError, canonical, digest, _geometry
+from acs_plan_review import EPS, PlanError, canonical, digest, _geometry
 from acs_plan_store_reload import load_workspace
 from acs_plan_commands import _command, _view_result
 from acs_plan_bridge import carry_roof_for_admission, existing_geometry_verifier
@@ -235,7 +235,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         target=targets[0] if len(targets)==1 and type(targets[0]) in (int,float) else None
         if target is not None:
             prompt += ("\nقيد برنامج المستودع المؤكد: مساحة المبنى الداخلية المستهدفة = "+str(target)+" م². "
-                       "هذه ليست مساحة الأرض. اجعل مجموع مساحات فراغات floors الداخلية لا يتجاوز هذه الميزانية. "
+                       "اجعل مجموع مساحات مستطيلات الفراغات في جميع الأدوار المشغولة مساويًا للمساحة المستهدفة. احسب كل دور متكرر واستبعد السطح غير المشغول. "
                        "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
                        "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
     if residential:
@@ -272,7 +272,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 from warehouse_program_feasibility import generated_indoor_area
                 from warehouse_soft_area_fit import fit_soft_area
                 generated=generated_indoor_area(result['building'])
-                if generated is not None and generated > target + 1e-8*max(1,target):
+                if generated is not None and generated > target + EPS:
                     # Provider room rectangles are proposals, not hard requirements.
                     # Fit only their soft area budget deterministically; confirmed
                     # role minima remain hard and fail structured when infeasible.
