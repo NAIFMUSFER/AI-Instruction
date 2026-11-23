@@ -132,6 +132,13 @@ function nodeBundle(files) {
   for (const f of list) {
     if (REGISTRIES.indexOf(f) >= 0) continue;
     if (!mods[f]) throw new Error('module not found for node bundle: ' + f);
+    if(f==='core/viewer.js'&&!list.includes('core/local-apartment.mjs')){
+      // Browser ESM resolves this import even when an older geometry test asks
+      // for viewer.js explicitly. Keep the apartment parser's private names
+      // module-local in the otherwise flattened test bundle.
+      const dependency='core/local-apartment.mjs';
+      parts.push('const apartmentDoorPairs=(()=>{\n'+stripModuleSyntax(mods[dependency],dependency)+'\nreturn apartmentDoorPairs;})();');
+    }
     parts.push('/* ==== ' + f + ' ==== */\n' + stripModuleSyntax(mods[f], f));
   }
   return parts.join('\n\n');

@@ -129,7 +129,8 @@ async function runtime(page){
         }
       }
     }
-    const revision=window.ACS.modelRevision('building','bld_0',null);
+    const {modelRevision}=await import('/app/core/standards.js');
+    const revision=modelRevision(window.ACS.exportModel(),'building','bld_0',null);
     const rendered=renderer.info.render;
     return {state,revision:{id:revision.revision_id,hash:revision.model_hash},
       triangles:rendered.triangles,drawCalls:rendered.calls,eye:camera.position.toArray(),floors:[...floors],kinds,wallBounds,doorPairs,visibleRackSections,ndc,quality:window.ACS.legacyRenderQuality()};

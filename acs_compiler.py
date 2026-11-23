@@ -849,7 +849,7 @@ def _declared_door_pairs(rooms, floor_key):
     for pair_id, claims in groups.items():
         if len(claims) != 2:
             continue
-        claims.sort(key=lambda c: c[0]['id'])
+        claims.sort(key=lambda c: c[0]['id'].encode('utf-16-be', 'surrogatepass'))
         (ra, a, _), (rb, b, _) = claims
         if (ra['id'] == rb['id'] or ra['id'] in duplicates or rb['id'] in duplicates
                 or a['acs_door_pair'].get('peer_room_id') != rb['id']
@@ -1069,7 +1069,8 @@ def build_level(bld, level, floor_def, base_y, defaults, fkey, holes=None, ceili
         bld.add_box(s[0] + s[2] / 2.0, base_y - 0.075, s[1] + s[3] / 2.0,
                     s[2], 0.15, s[3], "floor", "FLOOR|%s|slab|%d" % (fkey, k))
     room_defaults = {**defaults, 'holes': holes, 'ceiling_holes': ceiling_holes,
-                     'declared_door_pairs': _declared_door_pairs(rooms, fkey)}
+                     'declared_door_pairs': (_declared_door_pairs(rooms, fkey)
+                                             if defaults.get('apartment_pair_schema') else {})}
     for room in rooms:
         build_room(bld, room, fkey, base_y, room_defaults)
 
@@ -1085,12 +1086,15 @@ def compile_building(data, out_path):
         stair_connections(data)  # Fail closed before rendering declared stair forms.
     _OBJ_ACC = {"requested": 0, "generated": 0, "generic_box": [], "unsupported": [], "by_kind": {}}
     bld = Builder()
-    _bt = str((data.get("meta") or {}).get("type", "residential")).lower()
+    meta = data.get("meta") or {}
+    _bt = str(meta.get("type", "residential")).lower()
+    apartment = meta.get("acs_apartment")
     defaults = {
         "site": data.get("site", {"w": 30.0, "d": 25.0}),
         "wall_h": data.get("wall_h", 3.0),
         "wall_t": data.get("wall_t", 0.15),
         "industrial": _bt in ("warehouse", "industrial", "factory", "logistics"),
+        "apartment_pair_schema": isinstance(apartment, dict) and apartment.get("schema") == "acs.local-apartment/1",
     }
     floors = data.get("floors", {})
     fh = data.get("floor_height", defaults["wall_h"] + 0.2)

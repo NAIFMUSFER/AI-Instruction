@@ -70,6 +70,8 @@ class SharedDoorMeshes(unittest.TestCase):
         for room, peer in ((a, b), (b, a)):
             room['doors'][0]['acs_door_pair'] = {'id': 'leaf', 'peer_room_id': peer['id']}
         b['doors'][0]['offset'] += .001
+        self.assertEqual(len(doors(render(base))), 2, 'unmarked imports keep exact legacy semantics')
+        base['meta'] = {'acs_apartment': {'schema': 'acs.local-apartment/1'}}
         leaf, = doors(render(base))
         self.assertEqual(leaf['extras']['acs_door_pair_id'], 'leaf')
         self.assertEqual([ref['opening_id'] for ref in leaf['extras']['acs_opening_sources']],
