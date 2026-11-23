@@ -5,7 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
-import { apartmentJoinery, disposeGuestJoinery, fitGuestCamera, guestPaving, keepGuestAboveGrade, visibleInGuestCut } from '../render/guest-presentation.mjs';
+import { apartmentJoinery, disposeGuestJoinery, fitGuestCamera, guestFocus, guestPaving, keepGuestAboveGrade, visibleInGuestCut } from '../render/guest-presentation.mjs';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
@@ -85,11 +85,11 @@ function ensureGround(cx,cz,size,siteRect){
 let model=null,registry={},floorsFound=new Set(),floorSel='all',doorMeshes=[],doorTexture=null,bounds={c:new THREE.Vector3(),r:60};
 function tagOf(o){let p=o;while(p){if(p.name&&p.name.indexOf('|')>=0)return p.name;p=p.parent;}return null;}
 
-let guestJoinery=null,guestCameraMode='exterior';
+let guestJoinery=null,guestCameraMode='exterior',guestFocusTarget=null;
 let lastBuilding=null;
 function guestIsWarehouse(){return String(lastBuilding?.meta?.type).toLowerCase()==='warehouse';}
 function guestViewState(){
-  return {mode:guestCameraMode,floorKey:floorSel==='all'?null:floorSel,
+  return {mode:guestCameraMode,floorKey:floorSel==='all'?null:floorSel,focusSource:guestFocusTarget?.source??null,
     orbitMaxPolar:orbit.maxPolarAngle,cameraY:camera.position.y,targetY:orbit.target.y,groundY:ground?.position.y??0};
 }
 function guestViewport(){
@@ -114,10 +114,18 @@ function guestFrame(){
       box.union(part);
     }
   }
-  if(!box.isEmpty())fitGuestCamera(box,guestCameraMode,camera,orbit,guestViewport(),ground?.position.y??0);
+  if(box.isEmpty())return;
+  fitGuestCamera(guestFocusTarget?.box||box,guestCameraMode,camera,orbit,guestViewport(),ground?.position.y??0);
+  if(guestFocusTarget?.position){
+    camera.position.copy(guestFocusTarget.position);orbit.target.copy(guestFocusTarget.target);orbit.update();
+  }
 }
 function guestView(name,floorKey){
-  if(!window.ACS?.guest||!model||!['exterior','street','aerial','cutaway'].includes(name))return false;
+  if(!window.ACS?.guest||!model||!['exterior','street','aerial','cutaway','detail','interior'].includes(name))return false;
+  const close=name==='detail'||name==='interior';
+  const focus=close?guestFocus(model,lastBuilding,name,guestIsWarehouse()):null;
+  if(close&&!focus)return false;
+  guestFocusTarget=focus;
   if(walkState.active)stopWalk();
   fly.on=false; mode='orbit'; markView('orbit');
   if(name==='cutaway'){
@@ -2148,7 +2156,11 @@ async function acsGenerateFromServer(){
   else _finish();
 }
 document.getElementById('genLLM').onclick=acsGenerateFromServer;
-document.getElementById('loadExample').onclick=()=>{setModel(localGeneratedModel(window.ACS.guest?apartmentSample():EXAMPLE,{freshSample:true}));};
+function showResidentialExample(){
+  const example=window.ACS.guest?apartmentSample():EXAMPLE;
+  return setModel(localGeneratedModel(example,{freshSample:true}));
+}
+document.getElementById('loadExample').onclick=showResidentialExample;
 document.getElementById('loadWarehouse').onclick=()=>{
   statusEl.textContent='بناء مستودع تجارة إلكترونية 120×80 م…';
   setModel(localGeneratedModel(warehouseModel(120,80,{clear:12}),{freshSample:true}));
@@ -2697,7 +2709,7 @@ document.getElementById('loadWarehouse').onclick=()=>{
 
 /* جسر مع سكربت الدخول العادي: المحرّك جاهز الآن */
 window.ACS = window.ACS || {};
-window.ACS.showExample = ()=>setModel(localGeneratedModel(window.ACS.guest?apartmentSample():EXAMPLE,{freshSample:true}));
+window.ACS.showExample = showResidentialExample;
 window.ACS.setModel = setModel;
 window.ACS.guestView=guestView;
 window.ACS.guestViewState=guestViewState;
@@ -2709,7 +2721,7 @@ window.ACS.localRoof={state:localRoofState,remove:()=>changeLocalRoof('remove'),
    حالة موازية: هذا هو نفس المرجع الذي يعرضه العارض. */
 window.ACS.exportModel = ()=>lastBuilding;
 window.ACS.ready = true;
-if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(localGeneratedModel(window.ACS.guest?apartmentSample():EXAMPLE,{freshSample:true})); }
+if(window.ACS.pending==='example'){ window.ACS.pending=null; showResidentialExample(); }
 
 /* ========================= استيراد: JSON / DXF / صورة / PDF ========================= */
 function decorateRoom(r){const [x,z,w,d]=r.rect;

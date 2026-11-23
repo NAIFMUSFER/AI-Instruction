@@ -1,4 +1,7 @@
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {apartmentSample} from '../../public/app/core/local-apartment.mjs';
+import {resolveStairGeometry,stairConnections} from '../../public/app/core/stairs.mjs';
 import {renderGuestFloorSVG} from '../../public/app/ui/guest-floor-plan.mjs';
 
 const level={index:2,template:'same',name:'الدور الثاني'};
@@ -25,3 +28,24 @@ assert.ok(local.includes('fill="#d0ae6d"'));
 assert.equal(JSON.stringify([packet,model]),before);
 assert.throws(()=>renderGuestFloorSVG({...packet,spaces:[]},model), /فراغات/);
 console.log('PASS guest physical floor instance, footprint, source names, apertures, unit labels, safe SVG and source preservation');
+
+// Check real downloadable sheets against independently authored physical instances.
+const apartment = apartmentSample();
+for(const floor of apartment.levels) {
+  const sheet=readFileSync(new URL(`../../public/guest-plans/apartment-floor-${floor.index}.svg`,import.meta.url),'utf8');
+  assert.ok(sheet.includes('data-width-m="20" data-depth-m="25"'));
+  assert.ok(sheet.includes(`data-level-index="${floor.index}"`));
+  const rooms=apartment.floors[floor.template].rooms;
+  assert.equal((sheet.match(/data-room-key=/g)||[]).length,rooms.length);
+  for (const unit of ['east','west']) {
+    assert.equal((sheet.match(new RegExp(`data-unit="${unit}"`,'g'))||[]).length,rooms.filter(r=>r.unit_id===unit).length);
+  }
+  for(const stair of stairConnections(apartment)) {
+    if(stair.source_level_index===floor.index){
+      assert.ok(sheet.includes(`data-stair-object="${stair.object.id}"`));
+      assert.equal((sheet.match(/data-stair-part=/g)||[]).length,resolveStairGeometry(stair.object).components.length);
+    }
+    if(stair.target_level_index===floor.index) assert.ok(sheet.includes(`data-stair-opening="${stair.object.id}"`));
+  }
+}
+console.log('PASS named apartment fallback, physical level/room/unit counts and source stair components');

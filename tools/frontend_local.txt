@@ -12,6 +12,7 @@ generated/authoring.js
 generated/pbr.js
 render/scene.js
 render/warehouse-canonical-identity.js
+render/guest-presentation.mjs
 generated/pbr-bridge.js
 ui/workspace-ui-wiring.js
 trust/core.js
@@ -21,4 +22,5 @@ ui/workspace-viewport-selection.js
 ui/workspace-viewport-selection-runtime.js
 ui/residential-quality.js
 ui/generation-jobs.js
+ui/guest-floor-plan.mjs
 ui/guest-workspace.js

@@ -122,31 +122,42 @@ async function runtime(page){
         }
       }
     }
-    return {state,floors:[...floors],kinds,wallBounds,visibleRackSections,ndc,quality:window.ACS.legacyRenderQuality()};
+    return {state,eye:camera.position.toArray(),floors:[...floors],kinds,wallBounds,visibleRackSections,ndc,quality:window.ACS.legacyRenderQuality()};
   });
 }
-async function capture(page,report,label,expected){
-  await page.waitForFunction(mode=>window.ACS?.guestViewState?.().mode===mode,expected);
+async function capture(page,report,label,expected,close=false){
+  if(expected)await page.waitForFunction(mode=>window.ACS?.guestViewState?.().mode===mode,expected);
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const scene=await runtime(page);
   const file=report.width+'-'+label+'.png';
   await page.screenshot({path:path.join(out,file),animations:'disabled'});
+  const view={label,file,scene};report.views.push(view);
   assert.ok(scene.state.cameraY>scene.state.groundY,'camera below ground');
   assert.ok(scene.state.orbitMaxPolar<=Math.PI/2+1e-5,'orbit can turn under the ground');
-  assert.ok(scene.ndc.every(v=>Number.isFinite(v) && Math.abs(v)<1.03),label+' cut off: '+scene.ndc);
+  if(!close)assert.ok(scene.ndc.every(v=>Number.isFinite(v) && Math.abs(v)<1.03),label+' cut off: '+scene.ndc);
   if(expected==='cutaway'){
     assert.deepEqual(scene.floors,[scene.state.floorKey],'visible built walls and glazing match selected floor');
     assert.ok(scene.kinds.WALL>0,'cutaway contains walls');
   }
   const pixels=await analysePageViewport(page,'#app canvas');
   assert.equal(pixels.verdict,'VISIBLE_CONTENT');
-  report.views.push({label,file,scene,pixels:{verdict:pixels.verdict,colours:pixels.distinct_colours}});
+  view.pixels={verdict:pixels.verdict,colours:pixels.distinct_colours,mean:pixels.luminance_mean,variance:pixels.luminance_variance};
   return scene;
 }
 async function cameraControl(page,view){
   const control=page.locator('#camBar [data-view="'+view+'"]');
   if(!(await control.isVisible()))await page.locator('#mobileToolsToggle').click();
   await control.click();
+}
+async function detailAndInterior(page,report,prefix){
+  await menu(page,'guestDetail');await capture(page,report,prefix+'-detail','detail',true);
+  await menu(page,'guestInterior');const inside=await capture(page,report,prefix+'-interior','interior',true);
+  const floor=await page.evaluate(()=>{const model=window.ACS.exportModel();return model.floors[model.levels.find(level=>level.index===0).template].rooms;});
+  const rooms=floor.filter(room=>contains(room.rect,[inside.eye[0],inside.eye[2]])).map(room=>room.id);
+  assert.ok(rooms.length>0,'the interior preset must place the eye inside a real ground-floor room');
+  report.views.at(-1).sourceRooms=rooms;
+  await page.locator('#guestViewToggle').click();
+  assert.equal((await runtime(page)).state.mode,'exterior');
 }
 async function modelGLB(page,report){
   await menu(page,'guestFloors');await page.locator('#acsTabShow').click();
@@ -186,6 +197,9 @@ async function checkedViewport(browser,width){
     assert.ok(warehouse.visibleRackSections>0,'visible racks must expose the purpose of the cutaway');
     phase='warehouse_exterior';await page.locator('#guestViewToggle').click();
     await capture(page,report,'warehouse-exterior','exterior');
+    await cameraControl(page,'bird');await capture(page,report,'warehouse-aerial','aerial');
+    await cameraControl(page,'arch');await capture(page,report,'warehouse-eye-level','street');
+    await detailAndInterior(page,report,'warehouse');
     phase='complete_arabic_brief';await page.locator('#guestCreate').click();
     await page.locator('#descText').fill(brief);await page.locator('#genText').click();
     await page.waitForFunction(()=>window.ACS.exportModel()?.meta?.acs_apartment?.units_total===6,null,{timeout:45000});
@@ -214,6 +228,7 @@ async function checkedViewport(browser,width){
     }
     await cameraControl(page,'arch');await capture(page,report,'apartment-eye-level','street');
     await cameraControl(page,'bird');await capture(page,report,'apartment-aerial','aerial');
+    await detailAndInterior(page,report,'apartment');
     phase='housing_cutaway';await page.locator('#guestViewToggle').click();
     await capture(page,report,'apartment-cutaway','cutaway');
     phase='apartment_plan';await page.locator('#guestPlan').click();

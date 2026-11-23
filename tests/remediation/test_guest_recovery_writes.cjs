@@ -4,7 +4,8 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync('public/app/ui/guest-workspace.js', 'utf8');
+const { stripModuleSyntax } = require('../lib/app_source.js');
+const source = stripModuleSyntax(fs.readFileSync('public/app/ui/guest-workspace.js', 'utf8'), 'guest-workspace');
 
 async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
   const nodes = new Map(), events = new Map();

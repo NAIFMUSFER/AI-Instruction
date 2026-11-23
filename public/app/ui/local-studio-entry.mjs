@@ -4,6 +4,7 @@ function loadLocalStudio(){
   if(loading)return loading;
   loading=(async()=>{
     await import('../core/stairs.mjs');
+    await import('../core/local-apartment.mjs');
     await import('../core/context-details.mjs');
     await import('../core/viewer.js');
     await import('../core/standards.js');
@@ -14,6 +15,7 @@ function loadLocalStudio(){
     await import('../generated/pbr.js');
     await import('../render/scene.js');
     await import('../render/warehouse-canonical-identity.js');
+    await import('../render/guest-presentation.mjs');
     await import('../generated/pbr-bridge.js');
     await import('../ui/workspace-ui-wiring.js');
     await import('../trust/core.js');
@@ -23,6 +25,7 @@ function loadLocalStudio(){
     await import('../ui/workspace-viewport-selection-runtime.js');
     await import('../ui/residential-quality.js');
     await import('../ui/generation-jobs.js');
+    await import('../ui/guest-floor-plan.mjs');
     await import('../ui/guest-workspace.js');
   })().catch(error=>{
     window.ACS?.guestBootFailure?.();

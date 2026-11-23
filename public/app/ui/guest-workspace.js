@@ -1,4 +1,6 @@
 /* Public, local-only workspace. No auth identity, provider call or cloud upload. */
+import { openGuestFloorPlan } from './guest-floor-plan.mjs';
+
 const A = window.ACS;
 const $ = id => document.getElementById(id);
 
@@ -26,6 +28,10 @@ async function openGuestWorkspace() {
           <div class="guest-menu-grid" role="group" aria-label="اختيار نموذج تجريبي">
             <button id="guestExample" type="button">عمارة تجريبية</button>
             <button id="guestWarehouse" type="button">مستودع تجريبي</button>
+          </div>
+          <div class="guest-menu-grid" role="group" aria-label="مشاهد المبنى">
+            <button id="guestInterior" type="button">من الداخل</button>
+            <button id="guestDetail" type="button">تفاصيل المدخل</button>
           </div>
           <button id="guestFloors" type="button">اختيار الطوابق والطبقات</button>
           <button id="guestExport" type="button">تنزيل النموذج بصيغة JSON</button>
@@ -66,13 +72,24 @@ async function openGuestWorkspace() {
   };
   function syncViewButton(state = A.guestViewState?.()) {
     viewToggle.hidden = typeof A.guestView !== 'function';
-    viewToggle.textContent = state?.mode === 'cutaway' ? 'الواجهة' : 'كشف الدور';
+    const returnToExterior = ['cutaway','interior','detail'].includes(state?.mode);
+    viewToggle.textContent = returnToExterior ? 'الواجهة' : 'كشف الدور';
   }
   viewToggle.addEventListener('click', () => {
-    const next = A.guestViewState?.()?.mode === 'cutaway' ? 'exterior' : 'cutaway';
-    A.guestView?.(next);
-    syncViewButton();
+    const mode = A.guestViewState?.()?.mode;
+    chooseView(['cutaway','interior','detail'].includes(mode) ? 'exterior' : 'cutaway');
   });
+  function chooseView(mode) {
+    if (A.guestView?.(mode) === false) {
+      feedbackMessage('لا يحتوي هذا النموذج على عناصر كافية لهذا المنظر. يمكنك فتح مخطط الدور.');
+    } else if (A.guestRecoveryReadable) {
+      feedbackMessage('');
+    }
+    syncViewButton();
+  }
+  for (const [id, mode] of [['guestInterior','interior'], ['guestDetail','detail']]) {
+    $(id).addEventListener('click', () => { closeOptions(true); chooseView(mode); });
+  }
   syncViewButton();
   window.addEventListener('acs:guest-view', event => syncViewButton(event.detail));
   function facts() {
@@ -99,10 +116,9 @@ async function openGuestWorkspace() {
     openPanel('acsTabModel');
     $('floors').querySelector('button')?.focus();
   });
-  $('guestPlan').addEventListener('click', async () => {
+  $('guestPlan').addEventListener('click', () => {
     closeOptions();
     try {
-      const { openGuestFloorPlan } = await import('./guest-floor-plan.mjs');
       const floorKey = A.guestViewState?.()?.floorKey;
       const selected = /^F(-?\d+)$/.exec(floorKey || '');
       openGuestFloorPlan(A, selected ? Number(selected[1]) : 0);
@@ -152,7 +168,25 @@ async function openGuestWorkspace() {
     button.title = 'تتوفر خدمة الذكاء في مساحة الحساب.';
   }
   $('genLLM').hidden = true;
-  $('descText').placeholder = 'عمارة سكنية بعرض ٢٠ م وعمق ٢٥ م، أرضي وأول وثانٍ. شقتان في كل دور، وفي كل شقة ثلاث غرف نوم وصالة ومطبخ وحمّامان.';
+  $('descText').placeholder = 'عمارة سكنية بعرض ٢٠ م وعمق ٢٥ م، أرضي وأول وثانٍ. شقتان في كل دور، وفي كل شقة ثلاث غرف نوم وصالة ومطبخ وحمام عائلي وحمام خاص ودورة مياه للضيوف.';
+  const widthLabel = document.querySelector('label[for="siteW"]');
+  const depthLabel = document.querySelector('label[for="siteD"]');
+  if (widthLabel) widthLabel.textContent = 'عرض المبنى (م)';
+  if (depthLabel) depthLabel.textContent = 'عمق المبنى (م)';
+  function suggestFormDimensions(model) {
+    const values = {
+      siteW: model?.site?.w,
+      siteD: model?.site?.d,
+      nFloors: model?.levels?.filter(level => level.kind !== 'roof').length,
+    };
+    for (const [id, value] of Object.entries(values)) {
+      const input = $(id);
+      if (Number.isFinite(value) && value > 0 && input.value === input.defaultValue) {
+        input.defaultValue = String(value);
+        input.value = String(value);
+      }
+    }
+  }
   const local = $('genText');
   local.textContent = 'إنشاء التصميم على جهازي';
   local.classList.remove('acs-u-05');
@@ -215,6 +249,7 @@ async function openGuestWorkspace() {
     const recovery = A.persistence.recover();
     restoring = true;
     try { sample('residential', true); } finally { restoring = false; }
+    suggestFormDimensions(A.exportModel?.());
     saveStatus.textContent = 'جارٍ استعادة المسودة…';
     timer=setTimeout(()=>{
       banner.dataset.recoveryStatus='slow';
@@ -235,6 +270,7 @@ async function openGuestWorkspace() {
     if (recoveredModel) {
       restoring = true;
       try { A.setModel(recoveredModel); } finally { restoring = false; }
+      suggestFormDimensions(recoveredModel);
       saveStatus.textContent = 'استُعيد من هذا الجهاز';
       notice('استُعيد المشروع المحلي'); facts(); syncViewButton();
       if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);

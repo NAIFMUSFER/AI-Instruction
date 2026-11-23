@@ -33,7 +33,7 @@ def classify(path):
         return 'vendor'
     if path.startswith('tests/'):
         return 'test-artifact' if '/outputs/' in path else 'test'
-    if '/generated/' in path:
+    if '/generated/' in path or path.startswith('public/guest-plans/'):
         return 'generated'
     if path.endswith(('.md', '.csv', '.log')) or path.startswith('docs/'):
         return 'document'
@@ -119,6 +119,8 @@ def main():
                         row[field] = historic[field]
             if path in {'public/index.html', 'public/app/styles/app.css'}:
                 row['generated_from'] = 'Marked sections: tools/build_archdetail_browser.py;tools/build_render_browser.py;tools/build_workspace_ui.py'
+            if path.startswith('public/guest-plans/'):
+                row['generated_from'] = 'tools/build_guest_apartment_plans.py;public/app/core/local-apartment.mjs;acs_arch.py;acs_visual.py;public/app/ui/guest-floor-plan.mjs'
             if path == 'public/app/boot/engine-guard.js':
                 row['generated_from'] = 'Embedded public schematics only: tools/build_guest_schematics.py;docs/delivery/2026-11-10/fixtures/{villa,warehouse,manifest}.json'
     target = output / 'file-coverage.csv'

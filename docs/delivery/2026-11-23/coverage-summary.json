@@ -1,21 +1,21 @@
 {
   "schema": "acs.delivery.coverage/1",
   "base_commit": "629952f10763a8826f3a014895f2e1d209440996",
-  "tracked_files": 1308,
+  "tracked_files": 1324,
   "depth": {
     "unreviewed": 721,
-    "selected": 41,
+    "selected": 56,
     "deep": 29,
-    "static": 517
+    "static": 518
   },
   "classification": {
     "data": 41,
-    "configuration": 55,
-    "document": 367,
-    "source": 189,
+    "configuration": 56,
+    "document": 368,
+    "source": 195,
     "vendor": 3,
-    "generated": 11,
-    "test": 489,
+    "generated": 14,
+    "test": 494,
     "test-artifact": 153
   },
   "scope": "Current delivery review only. Previous dated audit coverage is not silently promoted to current deep review.",

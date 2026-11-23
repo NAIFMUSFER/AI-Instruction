@@ -1,5 +1,7 @@
 // The drawing consumes the existing architectural projection for a single physical
 // level. Colours, index labels and scale annotations belong only to the drawing.
+import { hasUStairs, resolveStairGeometry, stairConnections } from '../core/stairs.mjs';
+
 const units = {
   east: { name: 'الشقة الشرقية', fill: '#e5efeb' },
   west: { name: 'الشقة الغربية', fill: '#f4e8d9' },
@@ -49,6 +51,28 @@ function axisBounds(spaces) {
 }
 const segmentIsFinite = s => [s.x1,s.z1,s.x2,s.z2].every(Number.isFinite);
 
+function stairDrawing(model, packet, spaces, x, y, scale) {
+  if (!hasUStairs(model)) return '';
+  const drawing = [];
+  for (const connection of stairConnections(model)) {
+    const obj = connection.object;
+    // Draw the incoming aperture before any ascending treads at this level.
+    if (connection.target_level_index === packet.level_index) {
+      const [ox,oz,ow,od] = connection.opening;
+      drawing.unshift(`<rect data-stair-opening="${esc(obj.id)}" x="${q(x(ox))}" y="${q(y(oz))}" width="${q(ow*scale)}" height="${q(od*scale)}" pointer-events="none" fill="#d1dcda" stroke="#637773" stroke-width="1.4" stroke-dasharray="4 3"/>`);
+    }
+    if (connection.source_level_index !== packet.level_index) continue;
+    const space=spaces.find(s=>s.name===connection.room_id);
+    if (!space) continue;
+    const treads = resolveStairGeometry(obj).components.map(part => {
+      const [dx,,dz]=part.center, [w,,d]=part.size;
+      return `<rect data-stair-part="${esc(part.id)}" x="${q((dx-w/2)*scale)}" y="${q((dz-d/2)*scale)}" width="${q(w*scale)}" height="${q(d*scale)}" fill="#e4ded3" stroke="#64706c" stroke-width="1.1"/>`;
+    });
+    drawing.push(`<g data-stair-object="${esc(obj.id)}" pointer-events="none" transform="translate(${q(x(space.x+obj.x))} ${q(y(space.z+obj.z))}) rotate(${q(obj.rot)})"><title>درجات وبسطة الدرج</title>${treads.join('')}</g>`);
+  }
+  return drawing.join('');
+}
+
 export function renderGuestFloorSVG(packet, model, {schedule = true, landscape = false, selected = ''} = {}) {
   const {level,spaces,hasUnits} = floorData(packet,model);
   if (!spaces.length) throw new Error('لا توجد فراغات مستطيلة قابلة للرسم في هذا الطابق.');
@@ -77,6 +101,7 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
     const glazed=o.type==='WINDOW';
     openingLines.push(`<g data-opening-id="${esc(o.id)}" data-opening-type="${esc(o.type)}"><title>${glazed?'نافذة':'باب'} · ${esc(fmt(o.width_m))} م</title>${line(x1,y1,x2,y2,'#fffdf8',wallWidth(w)+1)}${line(x1,y1,x2,y2,glazed?'#357887':'#93611c',glazed?2.4:1.4,glazed?'':'stroke-dasharray="3 3"')}</g>`);
   }
+  const stairs=stairDrawing(model,packet,spaces,x,y,scale);
   const dim='#637373';
   let measures=line(left,top-20,left+dw,top-20,dim,1)+line(left,top-25,left,top-12,dim,1)+line(left+dw,top-25,left+dw,top-12,dim,1);
   measures+=label(left+dw/2,top-27,`${fmt(b.width)} م`,16);
@@ -119,7 +144,7 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   const indexTransform = spread ? ` transform="translate(680 ${q(offsetY)})"` : '';
   const header = schedule ? label(spread?1345:665,40,title,24,{anchor:'start',weight:700}) : '';
   const caption = schedule ? label(spread?1345:665,64,'تصميم مفاهيمي • مخطط الفراغات',14,{anchor:'start',color:'#526a6c'}) : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sheetWidth} ${q(sheetHeight)}" width="${sheetWidth}" height="${q(sheetHeight)}" data-level-index="${esc(packet.level_index)}" data-width-m="${q(b.width)}" data-depth-m="${q(b.depth)}" role="img" aria-labelledby="acsPlanTitle" font-family="Arial, 'DejaVu Sans', sans-serif"><title id="acsPlanTitle">${esc(title)} · مخطط الفراغات</title><rect width="${sheetWidth}" height="${q(sheetHeight)}" fill="#fffdf8"/>${header}${caption}<g data-layout="drawing">${groups.join('')}${wallLines.join('')}${openingLines.join('')}${labels.join('')}${measures}</g><g data-layout="schedule"${indexTransform}>${index}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sheetWidth} ${q(sheetHeight)}" width="${sheetWidth}" height="${q(sheetHeight)}" data-level-index="${esc(packet.level_index)}" data-width-m="${q(b.width)}" data-depth-m="${q(b.depth)}" role="img" aria-labelledby="acsPlanTitle" font-family="Arial, 'DejaVu Sans', sans-serif"><title id="acsPlanTitle">${esc(title)} · مخطط الفراغات</title><rect width="${sheetWidth}" height="${q(sheetHeight)}" fill="#fffdf8"/>${header}${caption}<g data-layout="drawing">${groups.join('')}${stairs}${wallLines.join('')}${openingLines.join('')}${labels.join('')}${measures}</g><g data-layout="schedule"${indexTransform}>${index}</g></svg>`;
 
 }
 
@@ -155,13 +180,22 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
   zoom.setAttribute('aria-pressed','false');footer.append(zoom,download);
   dialog.append(header,controls,viewport,details,footer);document.body.append(dialog);
   let packet, info;
+  function sameModel() {
+    if (acs.exportModel()===model) return true;
+    viewport.replaceChildren();
+    details.textContent='تغيّر النموذج. أغلق المخطط وافتحه لعرض النسخة الحالية.';
+    download.disabled=true;
+    return false;
+  }
   function draw(){
+    if (!sameModel()) return;
     const id=roomChoice.value,r=info.spaces.find(item=>item.id===id);
     viewport.innerHTML=renderGuestFloorSVG(packet,model,{schedule:false,selected:id});
     details.textContent=r?`${info.hasUnits?units[r.unit].name+' · ':''}${r.displayName} · ${roomMeasure(r)} · ${fmt(r.area_m2)} م²`
       :'اختر فراغًا لعرض أبعاده ومساحته. الخط الأزرق نافذة والمتقطع باب.';
   }
   function changeFloor(){
+    if (!sameModel()) return;
     try {
       packet=acs.floorPlan2D(Number(floor.value),'TECHNICAL');info=floorData(packet,model);
       roomChoice.replaceChildren(element('option','كل الفراغات'));roomChoice.firstChild.value='';
@@ -179,6 +213,7 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
     const enlarged=viewport.classList.toggle('guest-plan-enlarged');zoom.setAttribute('aria-pressed',String(enlarged));zoom.textContent=enlarged?'ملاءمة المخطط':'تكبير المخطط';
   });
   download.addEventListener('click',()=>{
+    if (!sameModel()) return;
     const url=URL.createObjectURL(new Blob([renderGuestFloorSVG(packet,model)],{type:'image/svg+xml;charset=utf-8'}));
     const a=element('a');a.href=url;a.download=`apartment-floor-${packet.level_index}.svg`;dialog.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });

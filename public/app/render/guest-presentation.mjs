@@ -110,7 +110,7 @@ export function fitGuestCamera(box,mode,camera,orbit,viewport,groundY){
   camera.setViewOffset(width,height,right/2,(bottom-top)/2,width,height);
   const effective=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*availableH/height));
   const direction=mode==='cutaway'?new THREE.Vector3(-.62,1.1,-1):
-    mode==='aerial'?new THREE.Vector3(.48,1.65,-1):new THREE.Vector3(.56,.48,-1);
+    mode==='detail'?new THREE.Vector3(.18,.12,-1):mode==='aerial'?new THREE.Vector3(.48,1.65,-1):new THREE.Vector3(.56,.48,-1);
   const target=box.getCenter(new THREE.Vector3());
   if(mode==='street'){
     target.y=groundY+1.7;
@@ -132,4 +132,45 @@ export function fitGuestCamera(box,mode,camera,orbit,viewport,groundY){
 export function keepGuestAboveGrade(camera,orbit,groundY){
   const lift=Math.max(0,groundY+.08-orbit.target.y,groundY+.16-camera.position.y);
   if(lift){orbit.target.y+=lift;camera.position.y+=lift;}
+}
+
+// Supported close views use the authored door, living room or two real rack
+// rows. A broken/missing anchor leaves the previous camera untouched.
+export function guestFocus(model,building,kind,warehouse){
+  const level=building?.levels?.find(l=>l?.index===0)||building?.levels?.find(l=>l?.index>=0);
+  if(!level)return null;
+  const rooms=building.floors?.[level.template]?.rooms||[];
+  const floor='F'+level.index;
+  const base=Number.isFinite(level.elevation)?level.elevation:level.index*(Number(building.floor_height)||3.2);
+  const meshes=model.children.filter(o=>o.isMesh&&o.name.split('|')[1]===floor);
+  if(kind==='detail'){
+    const door=warehouse?meshes.find(o=>/^DOOR\|[^|]+\|inbound_docks\|dock/.test(o.name)):
+      meshes.filter(o=>o.name.startsWith('DOOR|'+floor+'|lobby|')&&o.material.transparent).sort((a,b)=>a.position.z-b.position.z)[0];
+    if(!door)return null;
+    const box=new THREE.Box3().setFromObject(door),mid=box.getCenter(new THREE.Vector3());
+    const extent=box.getSize(new THREE.Vector3());
+    const w=Math.max(extent.x*1.1,1.8),h=extent.y;
+    return {source:door.name,box:new THREE.Box3(new THREE.Vector3(mid.x-w,base,mid.z-.4),new THREE.Vector3(mid.x+w,base+h+.55,mid.z+.7))};
+  }
+  const eye=base+1.65;
+  if(warehouse){
+    const first=meshes.find(o=>/^FURN\|[^|]+\|[^|]+\|rack\d+r0L0$/.test(o.name));
+    const next=first&&meshes.find(o=>o.name===first.name.replace('r0L0','r1L0'));
+    if(!next)return null;
+    const box=new THREE.Box3().setFromObject(first),size=box.getSize(new THREE.Vector3());
+    const along=size.x>=size.z?'x':'z',across=along==='x'?'z':'x';
+    if(Math.abs(first.position[across]-next.position[across])-size[across]<.6)return null;
+    const position=box.getCenter(new THREE.Vector3());
+    position[across]=(first.position[across]+next.position[across])/2;
+    position[along]=box.min[along]+size[along]*.10;position.y=eye;
+    const target=position.clone();target[along]+=Math.min(12,size[along]*.73);
+    target[across]+=(first.position[across]-position[across])*.48;target.y-=.1;
+    return {source:first.name,position,target};
+  }
+  const room=rooms.find(r=>r?.role==='living'&&Array.isArray(r.rect));
+  if(!room)return null;
+  const [x,z,w,d]=room.rect;
+  if(![x,z,w,d].every(Number.isFinite)||w<2||d<2)return null;
+  return {source:floor+'|'+room.id,position:new THREE.Vector3(x+w*.83,eye,z+d*.87),
+    target:new THREE.Vector3(x+w*.30,base+1.06,z+d*.22)};
 }

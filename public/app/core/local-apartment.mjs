@@ -202,16 +202,18 @@ const decimal='(\\d+(?:\\.\\d+)?)';
 function dimensions(text) {
   // Only the building introduction supplies exterior dimensions. Room goals
   // and numbered programme headings in subsequent paragraphs are unrelated.
-  const first=text.split(/\n\s*\n|(?:مجلس|غرفه نوم|صاله عائليه|مطبخ)/)[0].slice(0,650);
+  const intro=text.split(/\n\s*\n|(?:مجلس|غرفه نوم|صاله عائليه|مطبخ)/)[0].slice(0,650);
+  const lot=/(?:قطعه\s+(?:ال)?ارض|(?:على|ابعاد|مساحه)\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?ارض\s+(?=\d|بمقاس|بابعاد|مساحتها|مقاسها))/.test(intro);
+  const buildingTerms=/(?:ابعاد|مسطح|بصمه|عرض)\s+(?:المبنى|العماره)/.exec(intro);
+  if(lot && !buildingTerms) unsupported('ذكرت أبعاد الأرض. حدّد عرض المبنى وعمقه بعد الارتدادات لاستخدام مخطط الشقق المحلي.');
+  const first=buildingTerms?intro.slice(buildingTerms.index):intro;
   const pair = first.match(new RegExp(decimal+'\\s*(?:متر|م)?\\s*(?:[×x*]|في|بـ?)\\s*'+decimal+'(?:\\s*(?:متر|م))?'));
   const frontage = first.match(new RegExp(decimal+'\\s*(?:مترا?|م)?\\s*(?:على\\s+)?واجهه'));
   const depth = first.match(new RegExp(decimal+'\\s*(?:مترا?|م)?\\s*عمق'));
   const dw=first.match(new RegExp('(?:عرض(?:ها|ه)?|واجهه(?:\\s+المبنى)?)\\s*[:=]?\\s*'+decimal));
   const dd=first.match(new RegExp('عمق(?:ها|ه)?\\s*[:=]?\\s*'+decimal));
-  const matched=pair||((frontage||dw)&&(depth||dd));
-  if(matched && /(?:قطعه(?:\s+الارض)?|(?:مساحه|ابعاد|على)\s+(?:قطعه\s+)?(?:ال)?ارض|الارض\s+(?:ب?مقاس|بابعاد|\d))/.test(first) && !/(?:ابعاد|مسطح|بصمه|عرض)\s+(?:المبنى|العماره)/.test(first))
-    unsupported('ذكرت أبعاد الأرض. حدّد عرض المبنى وعمقه بعد الارتدادات لاستخدام مخطط الشقق المحلي.');
-  return pair?[+pair[1],+pair[2]]:matched?[+(frontage||dw)[1],+(depth||dd)[1]]:null;
+  if(pair) return [+pair[1],+pair[2]];
+  return [(frontage||dw)?.[1],(depth||dd)?.[1]].map(v=>v===undefined?undefined:Number(v));
 }
 
 export function apartmentFromBrief(text,{width=20,depth=25,levels=3}={}) {
@@ -219,7 +221,7 @@ export function apartmentFromBrief(text,{width=20,depth=25,levels=3}={}) {
   if(!/(?:عماره|عمار[هة]|مبنى\s+سكني|بنايه\s+سكنيه|apartment\s+building|residential\s+building)/.test(t.slice(0,260))) return null;
   if(/^(?:صمم\s+|انشئ\s+|ابن\s+)?(?:مستودع|مصنع|فيلا|مدرسه)/.test(t.trim())) return null;
   const explicitSize=dimensions(t);
-  if(explicitSize) [width,depth]=explicitSize;
+  width=explicitSize[0]??width; depth=explicitSize[1]??depth;
   const statedFloors=t.match(new RegExp(count+'\\s*(?:ادوار|طوابق|floors|storeys)'));
   if(statedFloors) levels=asCount(statedFloors[1]);
   else if(/(?:دور\s+|طابق\s+)?ارضي[^.\n]{0,70}(?:اول)[^.\n]{0,40}(?:ثان)/.test(t)) levels=3;
@@ -229,6 +231,10 @@ export function apartmentFromBrief(text,{width=20,depth=25,levels=3}={}) {
   const total=t.match(new RegExp('(?:ب?اجمالي|مجموع(?:ها)?)\\s*'+count+'\\s*شقق?'));
   if((perFloor&&asCount(perFloor[1])!==2)||(total&&asCount(total[1])!==2*levels)||/(?:شقه\s+(?:واحده\s+)?(?:بكل|لكل|في كل)\s+دور|كل دور\s+شقه\s+واحده)/.test(t))
     unsupported('يدعم هذا المخطط المحلي شقتين في كل دور. راجع عدد الشقق والأدوار قبل الإنشاء.');
+  const bedroomCount=t.match(new RegExp(count+'\\s*غرف(?:ه)?\\s*نوم(?:\\s+(?:في|ب|لكل)\\s*(?:كل\\s+)?شقه)')) ||
+    t.match(new RegExp('(?:في كل شقه|لكل شقه|تتكون كل شقه من)\\s*'+count+'\\s*غرف(?:ه)?\\s*نوم'));
+  if(bedroomCount && asCount(bedroomCount[1])!==3)
+    unsupported('يدعم هذا التوزيع ثلاث غرف نوم في كل شقة. يلزم توزيع آخر لعدد غرف النوم المطلوب.');
   if(/قبو|بدروم/.test(t.replace(/(?:لا\s+(?:يوجد|اريد|يتضمن|يشمل)?\s*|بلا\s*|بدون\s*|من دون\s*)(?:اي\s*)?(?:قبو|بدروم)/g,'')))
     unsupported('يتضمن وصفك قبواً. يدعم مخطط الشقق المحلي الأدوار فوق الأرض فقط.');
   if(/(?:واجهه(?:\s+الشارع)?|شارع)\s+(?:ال)?(?:جنوبي|غربي|شرقي)/.test(t))
