@@ -867,6 +867,38 @@ class WorkspaceLifecycle(unittest.TestCase):
 
 
 class JobsHTTP(unittest.IsolatedAsyncioTestCase):
+    async def test_browser_fixture_admits_replays_and_reopens_controlled_job(self):
+        from contextlib import ExitStack
+        import httpx
+        import connected_workspace_browser_server as fixture
+
+        # application() replaces dependencies for the loopback browser server.
+        # Restore them here because this direct HTTP witness shares its process.
+        with tempfile.TemporaryDirectory() as folder, ExitStack() as stack:
+            for module, name in ((fixture.AUTH, "authorize_asgi"), (fixture.G, "_request"),
+                                 (fixture.SESSION, "authenticated_supabase_plan_store"),
+                                 (fixture.SOURCES, "object_request"), (fixture.JOBS, "default_runner")):
+                stack.enter_context(patch.object(module, name, getattr(module, name)))
+            app = fixture.application(str(Path(folder) / "browser.sqlite"))
+            headers = {"authorization": "Bearer fixture-access"}
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                         base_url="http://test", headers=headers) as client:
+                path = f"/v1/projects/{PROJECT}/workspace"
+                payload = dict(command(), brief="مستودع بعرض 20 متر")
+                first = await client.post(path, json=payload)
+                self.assertEqual(first.status_code, 202, first.text)
+                self.assertEqual(first.json()["job"]["state"], "RUNNING")
+                replay = await client.post(path, json=payload)
+                self.assertEqual(replay.json()["job"]["id"], payload["job_id"])
+                await asyncio.gather(*list(H.PAID_TASKS))
+                completed = await client.post(path, json={"action": "job", "job_id": payload["job_id"]})
+                self.assertEqual(completed.status_code, 200)
+                job = completed.json()["job"]
+                self.assertEqual(job["state"], "SUCCEEDED", job)
+                self.assertEqual((await client.get("/test-stats")).json()["generation"], 1)
+                state = await client.post(path, json={"action": "state"})
+                self.assertEqual(state.json()["head"], job["revision_id"])
+
     async def test_geometry_reason_survives_receipt_reload_without_raw_provider_details(self):
         row={'id':JOB,'state':'RUNNING'}
         class Store:
