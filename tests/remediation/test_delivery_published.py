@@ -3,6 +3,7 @@ import importlib.util
 import contextlib
 import io
 import json
+import re
 from pathlib import Path
 import tempfile
 import unittest
@@ -45,6 +46,44 @@ class ServedModuleImportTests(unittest.TestCase):
     def test_missing_imported_vendor_file_fails(self):
         self.assertEqual(self.verdict(missing_vendor=True), 'FAIL')
 
+
+
+class PublishedWorkflowTests(unittest.TestCase):
+    workflow = (ROOT / ".github/workflows/delivery-published.yml").read_text()
+
+    def test_monitor_changes_trigger_both_fast_lanes(self):
+        triggers = self.workflow.split("permissions:", 1)[0]
+        for event in ("pull_request", "push"):
+            match = re.search(r"^  " + event + r":\n((?:    .*\n)+)", triggers, re.MULTILINE)
+            self.assertIsNotNone(match, event)
+            self.assertIn("branches: [main]", match[1])
+            self.assertIn("tests/deploy/verify_public_guest.js", match[1])
+            self.assertIn("tests/remediation/test_public_guest_monitor.cjs", match[1])
+            self.assertIn("tests/production/**", match[1])
+        self.assertIn("workflows: [CI]", triggers)
+        self.assertNotIn("pull_request_target", self.workflow)
+        self.assertIn("node tests/remediation/test_public_guest_monitor.cjs", self.workflow)
+
+    def test_base_and_candidate_identity_are_separate(self):
+        self.assertIn("ACS_VERIFY_EXPECT_SHA: ${{ github.event.pull_request.base.sha || github.event.workflow_run.head_sha || github.sha }}", self.workflow)
+        self.assertIn("ACS_VERIFIER_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha || github.sha }}", self.workflow)
+        self.assertIn("ref: ${{ env.ACS_VERIFIER_SHA }}", self.workflow)
+        self.assertIn('test "$(git rev-parse HEAD)" = "$ACS_VERIFIER_SHA"', self.workflow)
+        self.assertIn("github.event.pull_request.head.repo.full_name == github.repository", self.workflow)
+        self.assertIn("github.event.workflow_run.head_repository.full_name == github.repository", self.workflow)
+        self.assertIn("github.event.workflow_run.conclusion == 'success'", self.workflow)
+        self.assertIn("contents: read", self.workflow)
+        self.assertIn("persist-credentials: false", self.workflow)
+
+    def test_receipts_have_distinct_labels_and_fixed_destinations(self):
+        for label in ("monitor-on-base", "early-production", "post-ci-production"):
+            self.assertIn(label, self.workflow)
+        self.assertIn("name: ${{ env.ACS_RELEASE_SCOPE }}-${{ env.ACS_VERIFY_EXPECT_SHA }}-${{ github.run_id }}", self.workflow)
+        self.assertIn("ACS_VERIFY_FRONTEND: https://sprightly-selkie-d906c3.netlify.app", self.workflow)
+        self.assertIn("ACS_VERIFY_BACKEND: https://acs-engine.onrender.com", self.workflow)
+        self.assertIn("public-journey-scope.json", self.workflow)
+        self.assertNotIn("workflow_dispatch", self.workflow)
+        self.assertNotIn("continue-on-error", self.workflow)
 
 class PublishedRevisionTests(unittest.TestCase):
     def test_stamped_identity_and_verified_backend_required(self):
