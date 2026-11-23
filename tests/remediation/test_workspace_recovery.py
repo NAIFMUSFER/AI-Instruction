@@ -4,6 +4,7 @@ import copy
 import json
 from pathlib import Path
 import sys
+import threading
 import unittest
 from unittest.mock import patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
@@ -73,6 +74,8 @@ def apartment_fixture():
 class Store:
     def __init__(self):self.updates=[]
     def _request(self,method,path,payload=None,**kwargs):self.updates.append(copy.deepcopy(payload));return []
+    def _signed_rpc(self,name,kind,project,expected,document):
+        self.updates.append(copy.deepcopy(document));return {'job':document}
 
 class Recovery(unittest.TestCase):
     def test_timeout_is_classified_and_does_not_report_success(self):
@@ -93,6 +96,34 @@ class Recovery(unittest.TestCase):
         self.assertEqual(store.updates[0]['provider_calls'],1)
         self.assertNotIn('checkpoint',store.updates[-1])
         self.assertTrue(H._job_view({'id':'x','state':'FAILED','error_code':'PLAN_DETAIL_INCOMPLETE','checkpoint':{'kind':'outline'}})['job']['can_resume'])
+
+    def test_transient_heartbeat_outage_recovers_on_same_job(self):
+        recovered = threading.Event()
+        attempts = []
+        store = Store()
+        real_sleep = asyncio.sleep
+
+        async def quick_tick(_):
+            await real_sleep(.005)
+
+        def mutate(store, project_id, command, operation, **fields):
+            if operation == "heartbeat":
+                attempts.append(fields["lease_token"])
+                if len(attempts) == 1:
+                    raise PlanError("STORE_UNAVAILABLE", "Synthetic temporary outage")
+                recovered.set()
+            return {}
+
+        def run_once(*args, **kwargs):
+            recovered.wait(.3)
+            return "revision"
+
+        with patch.object(H.asyncio, "sleep", quick_tick), patch.object(H, "_mutate_job", side_effect=mutate), \
+             patch.object(S, "generate_and_save", side_effect=run_once) as generate:
+            asyncio.run(H.WorkspaceMiddleware(None)._finish(store, PROJECT, ACTOR, command(), "lease"))
+        self.assertTrue(recovered.is_set())
+        self.assertEqual(set(attempts), {"lease"})
+        generate.assert_called_once()
 
     def test_outline_and_completed_geometry_are_not_called_again(self):
         zones=[{'id':'a','role':'living','template':'ground'}]
