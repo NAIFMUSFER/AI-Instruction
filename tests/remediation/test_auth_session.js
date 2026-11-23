@@ -20,8 +20,8 @@ function harness(handler, initial=null, hostname='acs.example.test', hash='', op
     if(nodes.has(id))return nodes.get(id);
     const events={}, classes=new Set();
     const e={id, value:'',type:id==='lgPassword'?'password':'',validity:{valid:true},hidden:false,
-      style:{},textContent:'',attrs:{},classList:{toggle(k,v){if(v)classes.add(k);else classes.delete(k);},add:k=>classes.add(k),remove:k=>classes.delete(k)},
-      setAttribute(k,v){this.attrs[k]=v;},addEventListener(k,fn){events[k]=fn;},
+      style:{},textContent:'',attrs:{},classList:{toggle(k,v){if(v)classes.add(k);else classes.delete(k);},add:k=>classes.add(k),remove:k=>classes.delete(k),contains:k=>classes.has(k)},
+      setAttribute(k,v){this.attrs[k]=v;},getAttribute(k){return this.attrs[k];},addEventListener(k,fn){events[k]=fn;},
       focus(){},appendChild(){},emit(k){return events[k]&&events[k]({preventDefault(){}});}};
     nodes.set(id,e);return e;
   }
@@ -96,6 +96,41 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
       assert.equal(h.ctx.location.hash,'');assert.equal(h.ctx.location.search,'?guest=1');
     }
   });
+  await test('the explicit apartment guest route cannot use the general draft or private session',async()=>{
+    for(const [search,scope] of [
+      ['?guest=1&example=apartment-20x25','acs_guest_apartment_20x25_v1'],
+      ['?guest=1&example=from-private-project','acs_guest_project_v1'],
+      ['?example=apartment-20x25&guest=1&example=other','acs_guest_project_v1']
+    ]){
+      const h=harness(()=>{throw Error('unexpected network');},session(),'acs.example.test','',{search});
+      h.ctx.localStorage.getItem=()=>{throw Error('unrelated storage read');};
+      h.init();assert.equal(h.auth.storageScope(),scope);assert.equal(h.entered[0].mode,'guest');
+      assert.equal(h.calls.length,0);assert.equal(h.auth.loadSession(),null);
+    }
+    const signed=harness(()=>response({project:{id:'private-a'},user:{id:'user-a'}}),session(),'acs.example.test','',
+      {search:'?signin=1&example=apartment-20x25'});
+    signed.init();await settle();assert.equal(signed.entered[0].mode,'supabase');
+    assert.equal(signed.el('acsAuthGuestLink').getAttribute('href'),'/?guest=1&example=apartment-20x25');
+  });
+  await test('Google service outage prominently offers local work and stays retryable',async()=>{
+    let failed=true;
+    const h=harness((path,opts)=>failed?problem('AUTH_UPSTREAM_UNAVAILABLE'):googleStart(opts));h.init();
+    await h.el('acsAuthGoogle').emit('click');
+    assert.equal(h.el('login').classList.contains('auth-outage'),true);
+    assert.equal(h.el('acsAuthGuestLink').textContent,'فتح الاستوديو على هذا الجهاز');
+    assert.equal(h.el('acsAuthStatus').attrs.role,'alert');assert.equal(h.calls.length,1);assert.equal(h.entered.length,0);
+    assert.equal(h.el('acsAuthGoogle').disabled,false);assert.equal(h.tab.has(GOOGLE),false);
+    failed=false;await h.el('acsAuthGoogle').emit('click');
+    assert.equal(h.el('login').classList.contains('auth-outage'),false);assert.equal(h.navigations.length,1);
+  });
+  await test('network abort remains retryable and never resembles a browser storage error',async()=>{
+    const h=harness(()=>{throw Object.assign(new Error('fixture offline'),{name:'AbortError',code:20});});
+    h.init();await h.el('acsAuthGoogle').emit('click');
+    assert.equal(h.el('login').classList.contains('auth-outage'),true);
+    assert.match(h.el('acsAuthStatus').textContent,/تعذّر الاتصال/);
+    assert.ok(!h.el('acsAuthStatus').textContent.includes('تخزين'));
+    assert.equal(h.tab.has(GOOGLE),false);assert.equal(h.navigations.length,0);
+  });
   await test('a stored session on the default public URL retains authenticated entry',async()=>{
     const h=harness(()=>response({project:{id:'project-a'},user:{id:'user-a'}}),session(),'acs.example.test','',{search:''});
     h.init();await settle();assert.equal(h.entered[0].mode,'supabase');assert.equal(h.calls.length,1);
@@ -117,6 +152,7 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
       const h=harness(handler);h.init();await h.el('acsAuthGoogle').emit('click');
       assert.equal(h.navigations.length,0);assert.equal(h.tab.has(GOOGLE),false);
       assert.equal(h.el('lgGo').disabled,false);assert.equal(h.el('acsAuthStatus').attrs.role,'alert');
+      assert.equal(h.el('login').classList.contains('auth-outage'),false);
     }
   });
   await test('Google callback removes the code and reuses the existing project and Supabase user',async()=>{
@@ -283,7 +319,8 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
   await test('restore distinguishes an upstream outage from missing first project',async()=>{
     const h=harness(()=>problem('AUTH_UPSTREAM_UNAVAILABLE'),session());h.init();await settle();
     assert.equal(h.entered.length,0);assert.equal(h.el('acsAuthProjectField').hidden,true);
-    assert.equal(h.el('acsAuthStatus').textContent,'message-AUTH_UPSTREAM_UNAVAILABLE');assert.ok(h.auth.loadSession());
+    assert.match(h.el('acsAuthStatus').textContent,/غير متاحة مؤقتًا/);assert.ok(h.auth.loadSession());
+    assert.equal(h.el('login').classList.contains('auth-outage'),true);
   });
   await test('local backup namespaces follow authenticated account and project',async()=>{
     const h=harness(()=>{});assert.equal(h.auth.storageScope(),null);

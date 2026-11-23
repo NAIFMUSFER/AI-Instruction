@@ -37,7 +37,7 @@ const reasonsBefore=JSON.stringify(malformedReasons);assert.doesNotThrow(()=>ctx
 const costly=structuredClone(bare);costly.levels=Array.from({length:45},(_,index)=>({index,template:'core'}));
 costly.floors.core.rooms=Array.from({length:3},(_,i)=>({...structuredClone(bare.floors.core.rooms[0]),id:'core'+i,core_id:'c'+i,rect:[i*5,0,4,4]}));
 const sampleStatement=statements.find(text=>/document\.getElementById\('loadExample'\)\.onclick=/.test(text));assert.ok(sampleStatement,'actual fresh sample click handler exists');
-let published=0;const sampleButton={};ctx.document={getElementById:id=>id==='loadExample'?sampleButton:null};ctx.EXAMPLE=costly;ctx.lastBuilding=fresh;ctx.floorSel='F1';ctx.setModel=()=>{published++;};
+let published=0;const sampleButton={};ctx.document={getElementById:id=>id==='loadExample'?sampleButton:null};ctx.EXAMPLE=costly;ctx.apartmentSample=()=>costly;ctx.lastBuilding=fresh;ctx.floorSel='F1';ctx.setModel=()=>{published++;};
 vm.runInContext(sampleStatement,ctx);
 assert.throws(()=>sampleButton.onclick(),/STAIR_RESOURCE_LIMIT/,'132 prospective flights are rejected before fresh sample publication');
 assert.equal(published,0);assert.equal(ctx.lastBuilding,fresh);assert.equal(ctx.floorSel,'F1');

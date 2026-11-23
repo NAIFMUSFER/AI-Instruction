@@ -24,8 +24,16 @@
     background:radial-gradient(ellipse at 75% 15%,#16416770,transparent 65%),linear-gradient(145deg,#091321,#12243b)}
   #login .card{flex:0 1 448px;max-width:448px;width:100%;padding:32px;box-shadow:0 24px 80px #0005;background:#112137f5}
   #login [hidden]{display:none!important}
-  #login .auth-brand{color:#6bd3ff;font-size:23px;font-weight:850;letter-spacing:2px;direction:ltr;text-align:right;margin-bottom:30px}
-  #login .auth-brand span{font-size:10px;color:var(--muted);letter-spacing:2px;margin-left:10px}
+  #login .auth-brand{display:flex;align-items:center;gap:9px;margin-bottom:14px;color:#bbcad9;font-size:14px;font-weight:600}
+  #login .auth-brand b{color:#6bd3ff;font-size:18px;font-weight:800;letter-spacing:1px}
+  #login .card{cursor:default;text-align:start}
+  #login .auth-access{margin:0 0 14px}
+  #login #acsAuthGuestLink{display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-weight:650;font-size:14px;color:#9fdcff}
+  #login #acsAuthGuestLink:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+  #login.auth-outage .auth-access{padding:14px;background:#203448;border:1px solid #52758b;border-radius:12px}
+  #login.auth-outage #acsAuthStatus{margin:0 0 10px;padding:0;color:#ecf4fa;background:transparent;line-height:1.6}
+  #login.auth-outage #acsAuthGuestLink{width:100%;padding:8px 14px;background:#92d7eb;color:#102733;border-radius:8px;text-decoration:none}
+  #login.auth-outage #lgGo{color:#c4e5f5;background:#253c50;border:1px solid #66869c}
   #login h1{font-size:22px;line-height:1.4}
   #login h2{font-size:18px;color:var(--txt);border:0;margin:22px 0 14px;padding:0}
   #login .tag{font-size:14px;line-height:1.7}
@@ -37,6 +45,7 @@
   #login .auth-secondary{background:transparent;color:#a5ddf7;border:1px solid #86b4dd4d;margin-top:10px;min-height:46px}
   #login .auth-google{display:flex;align-items:center;justify-content:center;gap:12px;background:#fff;color:#1f1f1f;border:1px solid #747775;border-radius:6px;min-height:48px;margin-top:0;font-size:16px}
   #login .auth-google svg{flex-shrink:0}
+  #login .auth-google span{color:inherit;font-size:inherit}
   #login .auth-google:hover{background:#f2f2f2}
   #login .auth-google:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
   #login .auth-divider{display:flex;align-items:center;gap:12px;margin:20px 0 8px;color:var(--muted);font-size:12px}
@@ -49,7 +58,7 @@
   #login button:disabled{opacity:.6;cursor:wait}
   body:not(.acs-entered)>:not(#login):not(script):not(link):not(#acsLiveRegion){visibility:hidden}
   body:not(.acs-entered)>.acs-skip{display:none}
-  @media(max-width:480px){#login{padding:18px 12px}#login .card{padding:25px 21px;border-radius:16px}#login .auth-brand{margin-bottom:22px}}
+  @media(max-width:480px){#login{padding:18px 12px}#login .card{padding:25px 21px;border-radius:16px}#login .auth-brand{margin-bottom:10px}}
   /* ---- الواجهة ---- */
   #left{position:fixed;top:0;right:0;height:100%;width:360px;background:var(--panel);
     backdrop-filter:blur(10px);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:10}

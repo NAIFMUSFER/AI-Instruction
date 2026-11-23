@@ -8,14 +8,35 @@ async function openGuestWorkspace() {
   document.body.classList.add('acs-guest');
   const banner = document.createElement('aside');
   banner.id = 'acsGuestBanner';
-  banner.setAttribute('aria-label', 'تجربة الاستوديو بدون تسجيل');
-  banner.innerHTML = '<div><strong>جرّب الاستوديو بدون تسجيل</strong><p id="acsGuestStatus" role="status">نماذج تجريبية وتعديلات محلية على هذا الجهاز. ليست مخططات تنفيذية.</p></div>'
-    + '<div class="guest-save"><span id="guestSaveStatus" role="status">غير محفوظ على هذا الجهاز</span>'
-    + '<button id="guestDownload" type="button" hidden>تنزيل JSON</button></div>'
-    + '<div class="guest-actions"><button id="guestExample" type="button">عمارة تجريبية</button>'
-    + '<button id="guestWarehouse" type="button">مستودع تجريبي</button>'
-    + '<button id="guestCreate" type="button">إنشاء محلي</button>'
-    + '<a href="/?signin=1" id="guestSignin">تسجيل الدخول للذكاء والحفظ السحابي</a></div>';
+  banner.setAttribute('aria-label', 'أدوات المشروع المحلي');
+  banner.innerHTML = `
+    <div class="guest-identity">
+      <strong id="acsGuestStatus" role="status">مشروع تجريبي</strong>
+      <span id="guestSaveStatus" role="status">غير محفوظ على هذا الجهاز</span>
+    </div>
+    <div class="guest-controls">
+      <button id="guestCreate" type="button">صف مبناك</button>
+      <button id="guestPlan" type="button" aria-haspopup="dialog">المخطط</button>
+      <button id="guestViewToggle" type="button">كشف الدور</button>
+      <details id="guestOptions">
+        <summary id="guestTools" aria-label="خيارات المشروع المحلي"><span aria-hidden="true">•••</span></summary>
+        <div class="guest-menu">
+          <p id="guestFacts" hidden></p>
+          <p id="guestStorageNote" hidden>تُحفظ تغييرات هذا المثال في مسودة مستقلة على جهازك.</p>
+          <div class="guest-menu-grid" role="group" aria-label="اختيار نموذج تجريبي">
+            <button id="guestExample" type="button">عمارة تجريبية</button>
+            <button id="guestWarehouse" type="button">مستودع تجريبي</button>
+          </div>
+          <button id="guestFloors" type="button">اختيار الطوابق والطبقات</button>
+          <button id="guestExport" type="button">تنزيل النموذج بصيغة JSON</button>
+          <a id="guestSignin" href="/?signin=1">تسجيل الدخول للحفظ السحابي</a>
+        </div>
+      </details>
+    </div>
+    <div class="guest-warning" id="guestWarning" hidden>
+      <span id="guestFeedback" role="status"></span>
+    </div>
+    <button id="guestDownload" type="button" hidden>تنزيل JSON</button>`;
   document.body.append(banner);
   A.guestRecoveryPending = true;
   A.guestAutosaveReady = false;
@@ -25,13 +46,86 @@ async function openGuestWorkspace() {
   let restoring = false;
   const saveStatus = $('guestSaveStatus');
   const download = $('guestDownload');
+  const options = $('guestOptions');
+  const tools = $('guestTools');
+  const viewToggle = $('guestViewToggle');
+  const warning = $('guestWarning');
+  const feedback = $('guestFeedback');
+  const feedbackMessage = text => {
+    feedback.textContent = text;
+    warning.hidden = !text;
+  };
+  const closeOptions = (returnFocus = false) => {
+    options.open = false;
+    if (returnFocus) tools.focus();
+  };
+  const openPanel = tab => {
+    closeOptions();
+    A.setProjectPanelOpen?.(true);
+    $(tab).click();
+  };
+  function syncViewButton(state = A.guestViewState?.()) {
+    viewToggle.hidden = typeof A.guestView !== 'function';
+    viewToggle.textContent = state?.mode === 'cutaway' ? 'الواجهة' : 'كشف الدور';
+  }
+  viewToggle.addEventListener('click', () => {
+    const next = A.guestViewState?.()?.mode === 'cutaway' ? 'exterior' : 'cutaway';
+    A.guestView?.(next);
+    syncViewButton();
+  });
+  syncViewButton();
+  window.addEventListener('acs:guest-view', event => syncViewButton(event.detail));
+  function facts() {
+    const apartment = A.exportModel?.()?.meta?.acs_apartment;
+    const region = $('guestFacts');
+    region.hidden = !apartment;
+    region.textContent = apartment
+      ? `المبنى ${apartment.width_m} × ${apartment.depth_m} م · ${apartment.occupied_levels} أدوار · ${apartment.units_total} شقق`
+      : '';
+  }
+  const exampleDraft = A_AUTH_SCOPE() === 'acs_guest_apartment_20x25_v1';
+  $('guestStorageNote').hidden = !exampleDraft;
+  if (exampleDraft) $('guestSignin').href = '/?signin=1&example=apartment-20x25';
+  document.addEventListener('click', event => {
+    if (options.open && !options.contains(event.target)) closeOptions();
+  });
+  options.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && options.open) {
+      event.preventDefault(); event.stopPropagation(); closeOptions(true);
+    }
+  });
+  options.addEventListener('toggle', () => { if (options.open) facts(); });
+  $('guestFloors').addEventListener('click', () => {
+    openPanel('acsTabModel');
+    $('floors').querySelector('button')?.focus();
+  });
+  $('guestPlan').addEventListener('click', async () => {
+    closeOptions();
+    try {
+      const { openGuestFloorPlan } = await import('./guest-floor-plan.mjs');
+      const floorKey = A.guestViewState?.()?.floorKey;
+      const selected = /^F(-?\d+)$/.exec(floorKey || '');
+      openGuestFloorPlan(A, selected ? Number(selected[1]) : 0);
+    } catch {
+      feedbackMessage('تعذّر فتح المخطط. يمكنك اختيار الطابق من خيارات المشروع.');
+    }
+  });
+  $('guestExport').addEventListener('click', () => {
+    $('bJson').click();
+    closeOptions(true);
+  });
   download.addEventListener('click', () => $('bJson').click());
   const markUnsaved = () => { saveStatus.textContent = 'غير محفوظ على هذا الجهاز'; };
   function modelChanged() {
+    // Recovery can replace the temporary sample while its floor sheet is open.
+    const plan = $('guestPlanDialog');
+    if (plan?.open) plan.close();
     if (restoring) return;
     interactionEpoch++;
     changedModel = true;
+    notice('مسودة محلية');
     if (A.guestRecoveryReadable) {
+      feedbackMessage('');
       A.guestAutosaveReady = true;
       markUnsaved();
     }
@@ -39,9 +133,10 @@ async function openGuestWorkspace() {
   function failedRecovery() {
     A.guestRecoveryReadable = false;
     A.guestAutosaveReady = false;
+    if (!changedModel) notice('عمارة تجريبية');
     saveStatus.textContent = 'غير محفوظ · تعذّرت قراءة التخزين المحلي';
     download.hidden = false;
-    notice('تعذّرت استعادة الحفظ المحلي. يمكنك تنزيل JSON للاحتفاظ بعملك.');
+    feedbackMessage('تعذّرت استعادة المسودة. نزّل النموذج للاحتفاظ به.');
   }
   const userIntent=event=>{
     if(event.target?.closest?.('#acsPanelMake input,#acsPanelMake textarea,#acsPanelMake select'))interactionEpoch++;
@@ -54,11 +149,12 @@ async function openGuestWorkspace() {
     if (!button) continue;
     button.disabled = true;
     button.setAttribute('aria-disabled', 'true');
-    button.title = 'تسجيل الدخول مطلوب لاستخدام الذكاء. استخدم التوليد المحلي أو النماذج التجريبية.';
+    button.title = 'تتوفر خدمة الذكاء في مساحة الحساب.';
   }
-  $('genLLM').textContent = 'الذكاء — سجّل الدخول من الشريط العلوي';
+  $('genLLM').hidden = true;
+  $('descText').placeholder = 'عمارة سكنية بعرض ٢٠ م وعمق ٢٥ م، أرضي وأول وثانٍ. شقتان في كل دور، وفي كل شقة ثلاث غرف نوم وصالة ومطبخ وحمّامان.';
   const local = $('genText');
-  local.textContent = 'توليد محلي تقريبي — بدون ذكاء';
+  local.textContent = 'إنشاء التصميم على جهازي';
   local.classList.remove('acs-u-05');
   local.classList.add('btn', 'g');
   $('genLLM').before(local);
@@ -69,36 +165,46 @@ async function openGuestWorkspace() {
   const serverSettings = $('llmURL')?.closest('.fld');
   if (serverSettings) serverSettings.hidden = true;
   const sub = document.querySelector('#left header .sub');
-  if (sub) sub.textContent = 'نماذج تجريبية أو توليد محلي تقريبي. تبقى ملفاتك على هذا الجهاز.';
+  if (sub) sub.textContent = 'وصف المبنى وملفات المشروع على جهازك';
   const firstNote = document.querySelector('#acsPanelMake > .note');
-  if (firstNote) firstNote.textContent = 'جرّب نموذجًا جاهزًا أو اكتب وصفًا للتوليد المحلي التقريبي. استيراد JSON وDXF يبقى على جهازك.';
+  if (firstNote) firstNote.textContent = 'يحوّل المصمم المحلي الأبعاد والفراغات المدعومة إلى مخطط أولي. يبقى الوصف وملفات JSON وDXF على جهازك.';
 
   function sample(kind, initial = false) {
     if (!initial) modelChanged();
     if (kind === 'warehouse') $('loadWarehouse').click();
     else A.showExample();
     if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);
-    const text = kind === 'warehouse' ? 'مستودع تجريبي جاهز — لم يُولّد بالذكاء.' : 'عمارة تجريبية جاهزة — لم تُولّد بالذكاء.';
-    notice(text + ' يمكنك التنقّل وتغيير العرض وحفظ نسخة محلية.');
+    const text = kind === 'warehouse' ? 'مستودع تجريبي' : 'عمارة تجريبية';
+    notice(text); facts(); syncViewButton();
     $('status').textContent = text;
     if (A.residentialQuality) A.residentialQuality.apply(A.exportModel()).catch(() => {});
   }
-  $('guestExample').addEventListener('click', () => sample('residential'));
-  $('guestWarehouse').addEventListener('click', () => sample('warehouse'));
-  $('guestCreate').addEventListener('click', () => {
-    document.querySelector('[data-tab="make"]').click();
-    A.setProjectPanelOpen?.(true);
-    $('descText').focus();
-    notice('اكتب وصفًا واضغط التوليد المحلي التقريبي. لن يُرسل الوصف إلى أي خادم.');
-  });
-  for (const [id, label] of [['loadExample','عمارة تجريبية جاهزة'],['loadWarehouse','مستودع تجريبي جاهز']]) {
-    $(id).addEventListener('click', () => { notice(label + ' — لم يُولّد بالذكاء.'); $('status').textContent = label + ' — نموذج محلي.'; });
+  for (const [id, kind] of [['guestExample','residential'],['guestWarehouse','warehouse']]) {
+    $(id).addEventListener('click', () => {
+      closeOptions(true);
+      sample(kind);
+    });
   }
-  local.addEventListener('click', () => {
-    notice('توليد محلي تقريبي من وصفك؛ راجع الأبعاد والعناصر. لا يستخدم الذكاء ولا يُرسل بيانات.');
+  $('guestCreate').addEventListener('click', () => {
+    openPanel('acsTabMake');
+    $('descText').focus();
   });
-  upload.addEventListener('change', () => {
-    notice('يُقرأ ملفك محليًا على هذا الجهاز فقط.');
+  for (const [id, label] of [['loadExample','عمارة تجريبية'],['loadWarehouse','مستودع تجريبي']]) {
+    $(id).addEventListener('click', () => { notice(label); $('status').textContent = label; facts(); });
+  }
+  window.addEventListener('acs:local-generation', event => {
+    const result = event.detail;
+    if (!result?.ok) {
+      feedbackMessage(result?.message || 'تعذّر إنشاء التصميم. راجع وصف المبنى.');
+      return;
+    }
+    if (A.guestRecoveryReadable) feedbackMessage('');
+    notice('تصميم محلي أولي');
+    facts(); syncViewButton();
+    if (innerWidth <= 820) {
+      A.setProjectPanelOpen?.(false);
+      $('guestPlan').focus();
+    }
   });
   A.guestWorkspace = { contract: 'acs-local-guest/1', localOnly: true, storageScope: A_AUTH_SCOPE(), sample, modelChanged };
   // Show a usable sample immediately, but never persist it while storage is
@@ -109,10 +215,10 @@ async function openGuestWorkspace() {
     const recovery = A.persistence.recover();
     restoring = true;
     try { sample('residential', true); } finally { restoring = false; }
-    notice('نموذج تجريبي مؤقت؛ جارٍ البحث عن عملك المحلي. الحفظ التلقائي متوقف حتى اكتمال الاستعادة.');
+    saveStatus.textContent = 'جارٍ استعادة المسودة…';
     timer=setTimeout(()=>{
       banner.dataset.recoveryStatus='slow';
-      if(interactionEpoch===0)notice('استعادة العمل المحلي تستغرق وقتًا أطول. يمكنك استعراض النموذج المؤقت؛ لم يُكتب فوق عملك المحفوظ.');
+      if(interactionEpoch===0)saveStatus.textContent='استعادة المسودة مستمرة…';
     },1500);
     const recovered = await recovery;
     const recoveredModel = recovered?.ok && recovered.project?.model;
@@ -130,11 +236,11 @@ async function openGuestWorkspace() {
       restoring = true;
       try { A.setModel(recoveredModel); } finally { restoring = false; }
       saveStatus.textContent = 'استُعيد من هذا الجهاز';
-      notice('استُعيد آخر عمل للضيف من هذا الجهاز. لم يُفتح أي مشروع حساب خاص.');
+      notice('استُعيد المشروع المحلي'); facts(); syncViewButton();
       if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);
     } else {
       markUnsaved();
-      notice('عمارة تجريبية جاهزة — لم تُولّد بالذكاء. يمكنك التنقّل وتغيير العرض وحفظ نسخة محلية.');
+      notice('عمارة تجريبية');
     }
     A.guestAutosaveReady = true;
   } catch {

@@ -1,0 +1,28 @@
+#guestPlanDialog {
+  width: min(46rem, calc(100% - 16px));
+  max-width: calc(100% - 16px);
+  max-height: 91dvh;
+  padding: 14px;
+  box-sizing: border-box;
+  border: 1px solid #879b99;
+  border-radius: 14px;
+  color: #213c40;
+  background: #fffdf8;
+  font: 15px/1.5 system-ui, sans-serif;
+}
+#guestPlanDialog::backdrop { background: rgb(13 27 35 / 70%); }
+#guestPlanDialog[open] { display: flex; flex-direction: column; gap: 8px; }
+#guestPlanDialog header, #guestPlanDialog footer, .guest-plan-fields { display: flex; align-items: center; gap: 8px; }
+#guestPlanDialog header { justify-content: space-between; }
+#guestPlanDialog h2 { margin: 0; font-size: 1.12rem; }
+#guestPlanDialog button, #guestPlanDialog select { min-height: 44px; border: 1px solid #a0b1ab; border-radius: 7px; color: #1e383a; background: #fffdf8; font: inherit; }
+#guestPlanDialog button { min-width: 44px; padding: 4px 12px; cursor: pointer; }
+#guestPlanDialog label { display: flex; flex-direction: column; flex: 1; min-width: 0; font-size: .85rem; }
+#guestPlanDialog select { width: 100%; }
+#guestPlanViewport { overflow: auto; overscroll-behavior: contain; border-block: 1px solid #c7d2cc; min-height: 120px; direction: ltr; }
+#guestPlanViewport svg { display: block; width: 100%; max-height: 57dvh; height: auto; }
+#guestPlanViewport.guest-plan-enlarged svg { width: max(135%, 750px); max-height: none; }
+#guestPlanViewport [data-room-key] { cursor: pointer; }
+#guestPlanDetails { margin: 0; min-height: 1.5em; }
+#guestPlanDialog :focus-visible { outline: 3px solid #12667c; outline-offset: 1px; }
+#guestPlanDialog #guestPlanDownload { background: #204a4c; color: white; }

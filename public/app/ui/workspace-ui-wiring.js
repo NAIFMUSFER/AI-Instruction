@@ -5,10 +5,12 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { apartmentJoinery, disposeGuestJoinery, fitGuestCamera, guestPaving, keepGuestAboveGrade, visibleInGuestCut } from '../render/guest-presentation.mjs';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
 import { hasUStairs, stairConnections, validateStairReport, withDefaultStairs } from '../core/stairs.mjs';
+import { apartmentFromBrief, apartmentSample } from '../core/local-apartment.mjs';
 import { listContextDetails, withContextDetails } from '../core/context-details.mjs';
 import { autoRoofLevels, carryAutoRoof, isRoofLevel, removeAutoRoof, restoreDefaultRoof, roofDisclosure, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
@@ -61,7 +63,10 @@ let ground=null;
    عليه، ويعيش في المشهد لا في مجموعة BUILDING، فهو مستثنى بنيوياً من الحدود
    القانونية ومن التصدير ومن الكميات. ألواح أدوار المبنى فوقه لم تعد تمتدّ على
    الموقع بل على بصمة غرف كل دور. */
-function ensureGround(cx,cz,size,siteRect){ if(ground)scene.remove(ground);
+function ensureGround(cx,cz,size,siteRect){
+  if(ground){
+    scene.remove(ground);ground.geometry.dispose();ground.material.map?.dispose();ground.material.dispose();
+  }
   const sr=(Array.isArray(siteRect)&&siteRect.length===4
     &&siteRect.every(v=>Number.isFinite(Number(v)))
     &&Number(siteRect[2])>0&&Number(siteRect[3])>0)
@@ -69,7 +74,7 @@ function ensureGround(cx,cz,size,siteRect){ if(ground)scene.remove(ground);
   const sz=sr?Math.max(Number(size)||0,sr[2],sr[3]):size;
   const gx=sr?(sr[0]+sr[2]/2):cx, gz=sr?(sr[1]+sr[3]/2):cz;
   const g=new THREE.Mesh(new THREE.PlaneGeometry(sz,sz),
-    new THREE.MeshStandardMaterial({color:0x2b2f36,roughness:0.95,metalness:0}));
+    new THREE.MeshStandardMaterial(window.ACS?.guest?{map:guestPaving(sz),roughness:.93,metalness:0}:{color:0x2b2f36,roughness:0.95,metalness:0}));
   g.rotation.x=-Math.PI/2; g.position.set(gx,-0.1,gz); g.receiveShadow=true;
   g.name='GROUND_PLANE'; g.userData.presentation_context=true;
   g.userData.acs_site_plane={site_rect:sr,covers_site:!!sr,size_m:sz,
@@ -80,7 +85,52 @@ function ensureGround(cx,cz,size,siteRect){ if(ground)scene.remove(ground);
 let model=null,registry={},floorsFound=new Set(),floorSel='all',doorMeshes=[],doorTexture=null,bounds={c:new THREE.Vector3(),r:60};
 function tagOf(o){let p=o;while(p){if(p.name&&p.name.indexOf('|')>=0)return p.name;p=p.parent;}return null;}
 
+let guestJoinery=null,guestCameraMode='exterior';
 let lastBuilding=null;
+function guestIsWarehouse(){return String(lastBuilding?.meta?.type).toLowerCase()==='warehouse';}
+function guestViewState(){
+  return {mode:guestCameraMode,floorKey:floorSel==='all'?null:floorSel,
+    orbitMaxPolar:orbit.maxPolarAngle,cameraY:camera.position.y,targetY:orbit.target.y,groundY:ground?.position.y??0};
+}
+function guestViewport(){
+  const width=renderer.domElement.clientWidth||innerWidth,height=renderer.domElement.clientHeight||innerHeight;
+  const panel=document.getElementById('left')?.getBoundingClientRect();
+  const banner=document.getElementById('acsGuestBanner')?.getBoundingClientRect();
+  const dock=document.getElementById('panelToggle')?.getBoundingClientRect();
+  return {width,height,right:width>820&&panel?.width?Math.max(0,width-panel.left):0,
+    top:Math.min(banner?.bottom||0,height*.24),bottom:width<=820&&dock?.height?Math.max(0,height-dock.top+8):0};
+}
+function guestFrame(){
+  const box=new THREE.Box3(),part=new THREE.Box3();
+  model.updateMatrixWorld(true);
+  for(const layer of Object.values(registry)){
+    if(!layer.visible)continue;
+    for(const mesh of layer.meshes){
+      if(!mesh.visible)continue;
+      part.setFromObject(mesh);
+      if(!Number.isFinite(part.min.x+part.min.y+part.min.z+part.max.x+part.max.y+part.max.z))continue;
+      // A rejected bounds outlier must not regain control via a preset.
+      if(part.distanceToPoint(bounds.c)>bounds.r*1.5)continue;
+      box.union(part);
+    }
+  }
+  if(!box.isEmpty())fitGuestCamera(box,guestCameraMode,camera,orbit,guestViewport(),ground?.position.y??0);
+}
+function guestView(name,floorKey){
+  if(!window.ACS?.guest||!model||!['exterior','street','aerial','cutaway'].includes(name))return false;
+  if(walkState.active)stopWalk();
+  fly.on=false; mode='orbit'; markView('orbit');
+  if(name==='cutaway'){
+    const available=acsFloorOrder(floorsFound);
+    floorSel=available.includes(floorKey)?floorKey:available.includes('F0')?'F0':available[0]||'all';
+  }else floorSel='all';
+  guestCameraMode=name;
+  for(const button of document.querySelectorAll('#floors [data-floor]')){
+    button.classList.toggle('active',button.dataset.floor===floorSel);
+  }
+  updateVis();guestFrame();
+  window.dispatchEvent(new CustomEvent('acs:guest-view',{detail:guestViewState()}));return true;
+}
 function setModel(data){
   // المرحلة 2: يقبل مشروعاً أو مبنى — يعرض المبنى النشط بلا أي تغيير في العارض
   if(isProjectModel(data)){ const ab=activeBuilding(data); if(ab) data=ab; }
@@ -174,6 +224,11 @@ function setModel(data){
   ensureGround(bounds.c.x,bounds.c.z,bounds.r*10,
     [0,0,Number((data.site||{}).w)||0,Number((data.site||{}).d)||0]);
   buildFloors(); buildLayers(); updateVis();
+  if(window.ACS?.guest){
+    sun.position.copy(su.sunPosition.value).multiplyScalar(Math.max(bounds.r*3,8)).add(bounds.c);
+    disposeGuestJoinery(guestJoinery);guestJoinery=apartmentJoinery(model,data);scene.add(guestJoinery);
+    guestView(guestIsWarehouse()?'cutaway':'exterior');
+  }
   let n=0; model.traverse(o=>{if(o.isMesh)n++});
   const localCounts=localModelCounts(data),nz=localCounts.occupied_rooms;
   const roofCountLabel=localCounts.roof_levels?` · ${localCounts.roof_levels} سطح غير مشغول`:'';
@@ -215,8 +270,9 @@ function setModel(data){
 /* الأدوار */
 function buildFloors(){const wrap=document.getElementById('floors');wrap.innerHTML='';
   const mk=(k,l)=>{const b=document.createElement('button');b.className='ghost';b.textContent=l;
-    if(k==='all')b.classList.add('active');
-    b.onclick=()=>{floorSel=k;[...wrap.children].forEach(c=>c.classList.remove('active'));b.classList.add('active');updateVis();};
+    b.dataset.floor=k;
+    if(k===floorSel)b.classList.add('active');
+    b.onclick=()=>{if(window.ACS?.guest){guestView(k==='all'?'exterior':'cutaway',k);return;}floorSel=k;[...wrap.children].forEach(c=>c.classList.remove('active'));b.classList.add('active');updateVis();};
     wrap.appendChild(b);};
   mk('all','الكل');
   /* ═══ KI-26/F-46 · ترتيب الأدوار طبيعيّ لا معجميّ ═══════════════════════
@@ -273,6 +329,7 @@ function changeLocalRoof(action){
   return next;
 }
 function localGenerationError(error){
+  if(error.code==='LOCAL_APARTMENT_UNSUPPORTED')return error.message;
   if(error.message==='ROOF_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: الحد المدعوم 64 مستوى شاملاً السطح؛ قلّل عدد الأدوار. بقي النموذج السابق كما هو.';
   if(error.message==='LOCAL_LEVEL_LIMIT_EXCEEDED')return 'تعذّر التوليد: أدخل عدداً صحيحاً غير سالب؛ الحد المدعوم 64 مستوى شاملاً الأرضي والسطح. بقي النموذج السابق كما هو.';
   if(error.message==='LOCK_CONTEXT_CHANGED')return 'لا يمكن تعديل النموذج المحلي مع وجود نطاق مقفول.';
@@ -370,7 +427,12 @@ function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHT
     const ct=document.createElement('span');ct.className='ct';ct.textContent=r.meshes.length;
     row.append(cb,col,nm,ct);wrap.appendChild(row);});}
 function updateVis(){for(const l in registry){const r=registry[l];
-  r.meshes.forEach(m=>{m.visible=r.visible&&(floorSel==='all'||m.userData.floor===floorSel);});}}
+  const cut=window.ACS?.guest&&guestCameraMode==='cutaway',warehouse=cut&&guestIsWarehouse();
+  r.meshes.forEach(m=>{m.visible=r.visible&&(floorSel==='all'||m.userData.floor===floorSel)&&(!cut||visibleInGuestCut(m.name,warehouse));});}
+  if(guestJoinery)for(const mesh of guestJoinery.children){
+    mesh.visible=registry[mesh.userData.sourceLayer]?.visible===true&&(floorSel==='all'||mesh.userData.floor===floorSel);
+  }
+}
 
 /* صورة الباب */
 const applyAllBtn=document.getElementById('applyAll');
@@ -960,11 +1022,14 @@ function viewPose(m){
   if(m==='top')   return [new THREE.Vector3(c.x, c.y+r*2.6, c.z+0.01), c.clone()];
   if(m==='bird')  return [new THREE.Vector3(c.x-r*1.15, c.y+r*1.55, c.z+r*1.15), c.clone()];
   if(m==='arch')  // كاميرا معمارية: أفقية بارتفاع النظر، بلا ميل رأسي (خطوط رأسية مستقيمة)
-    return [new THREE.Vector3(c.x, c.y-r*0.30, c.z+r*2.5),
-            new THREE.Vector3(c.x, c.y-r*0.30, c.z)];
+    return [new THREE.Vector3(c.x, Math.max((ground?.position.y??0)+1.65,c.y-r*0.30), c.z+r*2.5),
+            new THREE.Vector3(c.x, Math.max((ground?.position.y??0)+1.65,c.y-r*0.30), c.z)];
   return [new THREE.Vector3(c.x+r*1.45, c.y+r*0.80, c.z+r*1.45), c.clone()];
 }
 function setMode(m){
+  if(window.ACS?.guest&&model&&['arch','bird','orbit'].includes(m)){
+    guestView({arch:'street',bird:'aerial',orbit:'exterior'}[m]);markView(m);return;
+  }
   if(m==='walk'){ mode=m; startWalk(); markView(m); return; }
   if(walkState.active) stopWalk();
   mode=m; markView(m);
@@ -1107,7 +1172,7 @@ addEventListener('drop',e=>{e.preventDefault();drop.style.display='none';
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
   /* updateStyle=false: الأبعاد من ورقة الأنماط (#app > canvas)، فلا يكتب
      three.js سمة style على الكانفس. */
-  renderer.setSize(innerWidth,innerHeight,false);});
+  renderer.setSize(innerWidth,innerHeight,false);if(window.ACS?.guest&&model&&!walkState.active)guestFrame();});
 let last=performance.now();
 /* ==================================================================
    الواقع الافتراضي — Meta Quest 3 وغيرها عبر WebXR
@@ -1317,6 +1382,7 @@ function acsLegacyFrame(){
     if(walkState.active)walkStep(dt);
     else if(flyStep()){ /* انتقال ناعم جارٍ */ }
     else{ if(mode==='tour')tourStep(); orbit.update(); }
+    if(window.ACS?.guest&&!walkState.active)keepGuestAboveGrade(camera,orbit,ground?.position.y??0);
     headLamp.intensity = walkState.active ? 55 : 0;
     if(walkState.active) headLamp.position.copy(camera.position);
   }
@@ -1395,6 +1461,14 @@ function localGeneratedModel(building,{freshSample=false}={}){
 function buildLocal(txt,W,D,nF){
   const t=pickedType(txt);
   __ACS_SHARED.LAST_REQUEST_TEXT = txt||'';            // للتحقّق من ادّعاءات التقرير مقابل طلب العميل
+  const selectedProgram=document.getElementById('bType')?.value||'auto';
+  if(selectedProgram==='auto'||selectedProgram==='residential'){
+    const apartment=apartmentFromBrief(txt,{width:W,depth:D,levels:nF});
+    if(apartment){
+      showCoverage([],[],apartment.meta.acs_apartment.assumptions.join(' '));
+      return apartment;
+    }
+  }
   const oi=objectsFromText(txt);          // بشر/روبوتات/رافعات… من طلب العميل — لا تُسقَط
   if(isIndustrialProgram(t)){            // مسار البرنامج الصناعي (مستودع/مصنع/…) — واحد من عدّة برامج
     const T=normDigits(txt||'');
@@ -1446,7 +1520,13 @@ document.getElementById('genText').onclick=()=>{
   const W=+document.getElementById('siteW').value||30,D=+document.getElementById('siteD').value||25,
     nF=+document.getElementById('nFloors').value||3;
   statusEl.textContent='جارٍ التحليل والتوليد…';
-  setTimeout(()=>{try{applyLocalEdit(buildLocal(txt,W,D,nF),{generated:true});}catch(e){statusEl.textContent=localGenerationError(e);console.error(e);}},30);
+  try {
+    const building=applyLocalEdit(buildLocal(txt,W,D,nF),{generated:true});
+    window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:true,building}}));
+  } catch(error) {
+    statusEl.textContent=localGenerationError(error);
+    window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:false,message:statusEl.textContent}}));
+  }
 };
 /* ===== الخادم المدمج: يعمل لكل زائر بلا كتابة أي رابط ===== */
 let SRV_OK=false;
@@ -2068,7 +2148,7 @@ async function acsGenerateFromServer(){
   else _finish();
 }
 document.getElementById('genLLM').onclick=acsGenerateFromServer;
-document.getElementById('loadExample').onclick=()=>{setModel(localGeneratedModel(EXAMPLE,{freshSample:true}));};
+document.getElementById('loadExample').onclick=()=>{setModel(localGeneratedModel(window.ACS.guest?apartmentSample():EXAMPLE,{freshSample:true}));};
 document.getElementById('loadWarehouse').onclick=()=>{
   statusEl.textContent='بناء مستودع تجارة إلكترونية 120×80 م…';
   setModel(localGeneratedModel(warehouseModel(120,80,{clear:12}),{freshSample:true}));
@@ -2617,8 +2697,10 @@ document.getElementById('loadWarehouse').onclick=()=>{
 
 /* جسر مع سكربت الدخول العادي: المحرّك جاهز الآن */
 window.ACS = window.ACS || {};
-window.ACS.showExample = ()=>setModel(localGeneratedModel(EXAMPLE,{freshSample:true}));
+window.ACS.showExample = ()=>setModel(localGeneratedModel(window.ACS.guest?apartmentSample():EXAMPLE,{freshSample:true}));
 window.ACS.setModel = setModel;
+window.ACS.guestView=guestView;
+window.ACS.guestViewState=guestViewState;
 window.ACS.applyLocalEdit=applyLocalEdit;
 window.ACS.localRoof={state:localRoofState,remove:()=>changeLocalRoof('remove'),restore:()=>changeLocalRoof('restore')};
 /* F-27: المبنى المعروض حالياً — قراءة فقط. lastBuilding كان محبوساً داخل هذه
@@ -2627,7 +2709,7 @@ window.ACS.localRoof={state:localRoofState,remove:()=>changeLocalRoof('remove'),
    حالة موازية: هذا هو نفس المرجع الذي يعرضه العارض. */
 window.ACS.exportModel = ()=>lastBuilding;
 window.ACS.ready = true;
-if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(localGeneratedModel(EXAMPLE,{freshSample:true})); }
+if(window.ACS.pending==='example'){ window.ACS.pending=null; setModel(localGeneratedModel(window.ACS.guest?apartmentSample():EXAMPLE,{freshSample:true})); }
 
 /* ========================= استيراد: JSON / DXF / صورة / PDF ========================= */
 function decorateRoom(r){const [x,z,w,d]=r.rect;

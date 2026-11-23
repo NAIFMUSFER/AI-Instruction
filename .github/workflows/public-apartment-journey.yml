@@ -1,0 +1,70 @@
+name: Public apartment and warehouse walkthrough
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'tests/remediation/test_public_apartment_journey.cjs'
+      - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
+      - 'tests/remediation/test_guest_cutaway.mjs'
+      - 'tests/remediation/test_guest_floor_plan.mjs'
+      - 'tools/build_guest_apartment_plans.py'
+      - '.github/workflows/public-apartment-journey.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'public/**'
+      - 'tests/remediation/test_public_apartment_journey.cjs'
+      - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
+      - 'tests/remediation/test_guest_cutaway.mjs'
+      - 'tests/remediation/test_guest_floor_plan.mjs'
+      - 'tools/build_guest_apartment_plans.py'
+      - '.github/workflows/public-apartment-journey.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-apartment-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guest-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ACS_VERIFY_EXPECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      ACS_APARTMENT_EVIDENCE: logs/public-apartment
+      ACS_APARTMENT_LIVE: ${{ github.event_name == 'push' && '1' || '0' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.ACS_VERIFY_EXPECT_SHA }}
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install pinned browser libraries and Chromium
+        run: |
+          bash tools/netlify-build.sh
+          python3 tools/ci_prepare_apt.py
+          npx playwright install --with-deps chromium
+      - name: Verify derived floor plans and source identity
+        run: |
+          node tests/remediation/test_guest_cutaway.mjs
+          node tests/remediation/test_guest_floor_plan.mjs
+          python3 tools/build_guest_apartment_plans.py --check
+      - name: Verify both production revision stamps before the published run
+        if: github.event_name == 'push'
+        run: |
+          python3 tests/deploy/wait_published_revision.py --expect-sha "$ACS_VERIFY_EXPECT_SHA" --seconds 600 --output logs/public-apartment/published-revision.json
+      - name: Open the studio and generate the residential brief on both viewports
+        run: node tests/remediation/test_public_apartment_journey.cjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: public-apartment-${{ env.ACS_VERIFY_EXPECT_SHA }}-${{ github.run_attempt }}
+          path: logs/public-apartment/
+          if-no-files-found: error
+          retention-days: 30

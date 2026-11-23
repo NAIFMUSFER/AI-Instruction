@@ -6,8 +6,8 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync('public/app/ui/guest-workspace.js', 'utf8');
 
-async function guest(recovery, interact) {
-  const nodes = new Map();
+async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
+  const nodes = new Map(), events = new Map();
   let boot, release;
   function element(id) {
     if (nodes.has(id)) return nodes.get(id);
@@ -34,12 +34,12 @@ async function guest(recovery, interact) {
     guest: true, showExample() {}, setModel() {},
     persistence: { recover: () => new Promise(resolve => { release = resolve; }) },
   };
-  vm.runInNewContext(source, { document, window: { ACS, ACS_AUTH: { storageScope: () => 'guest' } }, innerWidth: 1440, setTimeout, clearTimeout });
+  vm.runInNewContext(source, { document, window: { addEventListener: (name, callback) => events.set(name, callback), ACS, ACS_AUTH: { storageScope: () => scope } }, innerWidth: 1440, setTimeout, clearTimeout });
   const ready = boot();
   if (interact) ACS.guestWorkspace.sample('warehouse');
   release(recovery);
   await ready;
-  return { ACS, element };
+  return { ACS, element, emit: (name, detail) => events.get(name)?.({ detail }) };
 }
 
 // A committed selection must match the sample that the guest labels as ready.
@@ -74,6 +74,17 @@ function verifyWarehouseSelection() {
     element('genText').click();
     assert.equal(ACS.guestAutosaveReady, false, 'a subsequent edit cannot rearm autosave');
   }
+  // A click or rejected build must not relabel the existing sample as generated.
+  const studio = await guest({ ok: false, code: 'NO_RECORDS' }, false, 'acs_guest_apartment_20x25_v1');
+  assert.equal(studio.element('guestSignin').href, '/?signin=1&example=apartment-20x25');
+  assert.equal(studio.element('guestStorageNote').hidden, false);
+  studio.element('genText').click();
+  studio.emit('acs:local-generation', { ok: false, message: 'لم يكتمل الوصف' });
+  assert.equal(studio.element('acsGuestStatus').textContent, 'عمارة تجريبية');
+  assert.equal(studio.element('guestFeedback').textContent, 'لم يكتمل الوصف');
+  studio.emit('acs:local-generation', { ok: true });
+  assert.equal(studio.element('acsGuestStatus').textContent, 'تصميم محلي أولي');
+  assert.equal(studio.element('guestFeedback').textContent, '');
   for (const result of [{ ok: false, code: 'NO_RECORDS' }, { ok: true, project: { model: { site: {} } } }]) {
     const { ACS } = await guest(result, true);
     assert.equal(ACS.guestAutosaveReady, true, 'successful storage resolution admits local saves');

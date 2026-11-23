@@ -53,6 +53,11 @@ async function acsApplyResidentialQuality(building, token) {
 
   const A = (typeof window !== 'undefined' && window.ACS) ? window.ACS : {};
   const mobile = (typeof window !== 'undefined' && window.innerWidth <= 820);
+  if(A.guest&&building?.meta?.acs_apartment?.schema==='acs.local-apartment/1'){
+    ACS_RQ_LAST={applied:true,type,reason:'authored_guest_joinery',pbr:false,
+      architectural_detail:true,mobile,issues:[]};
+    return ACS_RQ_LAST;
+  }
   // Recovered typed drafts must not undo the measured initial software budget.
   // This policy owns automatic enhancements only; manual PBR/detail stay usable.
   let softwareBudget=false;
@@ -84,7 +89,7 @@ async function acsApplyResidentialQuality(building, token) {
       if (pbr && pbr.valid && ownToken === ACS_RQ_SEQ) {
         const result = A.pbrApply(pbr.config);
         pbrApplied = !!(result && result.applied);
-        if (pbrApplied && typeof A.pbrCameraPreset === 'function') {
+        if (pbrApplied && !A.guest && typeof A.pbrCameraPreset === 'function') {
           A.pbrCameraPreset('EXTERIOR_HERO');
         }
       }

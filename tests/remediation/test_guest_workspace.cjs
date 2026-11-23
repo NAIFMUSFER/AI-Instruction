@@ -6,7 +6,7 @@ const fs=require('node:fs'),path=require('node:path');
 const PW=require('../../tools/pw_chromium.js');
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
-const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
+const MIME={'.svg':'image/svg+xml','.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};
 const ORIGIN='https://acs-guest.test';
 const roofLevels=model=>(model.levels||[]).filter(level=>level.kind==='roof');
 function assertDefaultRoof(model,stage){
@@ -192,6 +192,12 @@ function normalizedLocalModel(model){
  }
  return result;
 }
+async function chooseGuestOption(page, id) {
+ const options = page.locator('#guestOptions');
+ if (!await options.evaluate(element => element.open)) await page.locator('#guestTools').click();
+ await page.locator('#' + id).click();
+}
+
 async function downloadedJSON(page,button){
  const event=page.waitForEvent('download',{timeout:15000});
  await page.locator(button).click();
@@ -233,6 +239,18 @@ async function runGuestWorkspaceTests(){
    console.log('GUEST '+width+': initial recovery complete');
    assert.equal(await page.locator('#login').isVisible(),false);
    assert.equal(await page.locator('#acsGuestBanner').isVisible(),true);
+   assert.equal(await page.locator('#guestSignin').isVisible(),false,'the cloud sign-in action is secondary');
+   for (const id of ['guestCreate','guestPlan','guestViewToggle','guestTools']) {
+    const box = await page.locator('#'+id).boundingBox();
+    assert.ok(box && box.width>=44 && box.height>=44,'44 CSS-pixel guest action '+id);
+   }
+   if(width===393) assert.ok((await page.locator('#acsGuestBanner').boundingBox()).height<=80,'keep the building visible at phone width');
+   await page.locator('#guestTools').focus(); await page.keyboard.press('Enter');
+   await page.locator('#guestSignin').waitFor({state:'visible'});
+   await page.locator('#guestWarehouse').focus(); await page.keyboard.press('Escape');
+   assert.equal(await page.evaluate(()=>document.activeElement.id),'guestTools');
+   assert.equal(await page.locator('#guestSignin').isVisible(),false);
+
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
    assert.equal(await page.evaluate(()=>window.__guestAuthEvents),0);
    assert.equal(await page.evaluate(()=>window.ACS.authSession),undefined);
@@ -242,7 +260,7 @@ async function runGuestWorkspaceTests(){
    assert.equal(await page.locator('#genLLM').isEnabled(),false);
    assert.equal(await page.locator('#bNotesApply').isEnabled(),false);
    diagnostic.phase('first-warehouse-click');
-   await page.locator('#guestWarehouse').click();
+   await chooseGuestOption(page, 'guestWarehouse');
    diagnostic.phase('first-warehouse-click-returned');
    await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
    const warehouseSample=await page.evaluate(()=>window.ACS.exportModel());
@@ -418,7 +436,7 @@ async function runGuestWorkspaceTests(){
     await second.waitForFunction(()=>window.ACS.tabs().owner.tabs>=2);
     assert.notEqual(await second.evaluate(()=>window.ACS.tabs().self),await page.evaluate(()=>window.ACS.tabs().self));
     assert.equal(await second.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_guest_project_v1');
-    await second.locator('#guestWarehouse').click();
+    await chooseGuestOption(second, 'guestWarehouse');
     await second.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
     assertDefaultRoof(await second.evaluate(()=>window.ACS.exportModel()),'second tab warehouse sample');
     assert.equal(await page.evaluate(()=>window.ACS.exportModel().site.w),24,'a sample selected in another guest tab must not replace this visible project');
@@ -440,7 +458,9 @@ async function runGuestWorkspaceTests(){
     assert.equal(await denied.locator('#login').isVisible(),false);
     assert.ok(await denied.evaluate(()=>window.ACS.exportModel()?.floors));
     assertDefaultRoof(await denied.evaluate(()=>window.ACS.exportModel()),'storage-denied temporary sample');
-    assert.match(await denied.locator('#acsGuestStatus').textContent(),/تنزيل JSON/);
+    assert.match(await denied.locator('#guestFeedback').textContent(), /تعذّرت/);
+    assert.equal(await denied.locator('#guestDownload').isVisible(), true);
+    assert.match(await denied.locator('#guestDownload').textContent(), /تنزيل JSON/);
     assert.equal(await denied.evaluate(()=>window.ACS.guestAutosaveReady),false);
     await denied.locator('#guestCreate').click();await denied.locator('#acsTabShow').click();
     await denied.locator('#acsSaveNow').click();
@@ -505,7 +525,7 @@ async function runGuestWorkspaceTests(){
    assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),recoveryModel,'late recovery without interaction preserves the exact roofless draft');
    // A second slow read must not overwrite a new sample chosen by the visitor.
    await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__guestRecoveryReadDone);
-   await page.locator('#guestWarehouse').click();
+   await chooseGuestOption(page, 'guestWarehouse');
    await page.waitForFunction(()=>window.ACS.exportModel()?.site.w===120);
    await page.evaluate(()=>window.__releaseGuestRecovery());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
@@ -527,11 +547,11 @@ async function runGuestWorkspaceTests(){
    await page.evaluate(()=>sessionStorage.setItem('acs_test_fail_guest_read','1'));
    await page.reload();await page.waitForFunction(()=>window.ACS?.guestWorkspace&&window.__guestRecoveryReadDone);
    const beforeFailedRead=await guestSnapshot(page);
-   await page.locator('#guestWarehouse').click();
+   await chooseGuestOption(page, 'guestWarehouse');
    await page.evaluate(()=>window.__releaseGuestRecovery());
    await page.waitForFunction(()=>document.getElementById('acsGuestBanner').dataset.recovery==='complete');
    assert.equal(await page.evaluate(()=>window.ACS.guestAutosaveReady),false,'a failed read must keep writes disabled even after an interaction');
-   await page.locator('#guestExample').click();
+   await chooseGuestOption(page, 'guestExample');
    assert.deepEqual(await page.evaluate(()=>window.ACS.persistence.save('AUTOSAVE')),{ok:false,code:'RECOVERY_UNAVAILABLE'});
    assert.deepEqual(await page.evaluate(()=>window.ACS.persistence.save('MANUAL')),{ok:false,code:'RECOVERY_UNAVAILABLE'});
    assert.deepEqual(await guestSnapshot(page),beforeFailedRead,'failed recovery must preserve every record and pointer');
@@ -564,7 +584,7 @@ async function runGuestWorkspaceTests(){
    const preserved=await page.evaluate(()=>JSON.parse(localStorage.getItem('acs_supabase_session_v1')));
    assert.deepEqual(preserved,privateSession);
    await page.evaluate(()=>{localStorage.removeItem('acs_supabase_session_v1');localStorage.removeItem('acs_project_v1');localStorage.removeItem('acs_password_recovery_v1');});
-   await page.locator('#guestSignin').click();await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
+   await chooseGuestOption(page, 'guestSignin');await page.locator('#acsAuthGoogle').waitFor({state:'visible'});
    assert.equal(new URL(page.url()).searchParams.get('signin'),'1');
    assert.equal(await page.evaluate(()=>window.ACS.guest),false);
    assert.equal(await page.locator('#acsGuestBanner').count(),0);
@@ -593,6 +613,14 @@ async function runGuestWorkspaceTests(){
   await fallback.goto(ORIGIN+'/');
   await fallback.locator('#acsGuestFallback').waitFor({state:'visible'});
   await fallback.waitForFunction(()=>document.getElementById('acsGuestFallback')?.dataset.engineState==='unavailable');
+  assert.equal(await fallback.locator('#guestFallbackFloor option').count(),3);
+  await fallback.waitForFunction(()=>document.getElementById('guestApartmentDrawing')?.naturalWidth>0);
+  await fallback.locator('#guestFallbackFloor').selectOption('2');
+  assert.equal(await fallback.locator('#guestFullSheet').getAttribute('href'),'/guest-plans/apartment-floor-2.svg');
+  const [apartmentPlan]=await Promise.all([fallback.waitForEvent('download'),fallback.locator('#guestSheetDownload').click()]);
+  assert.equal(apartmentPlan.suggestedFilename(),'apartment-floor-2.svg');
+  assert.equal(await apartmentPlan.failure(),null);
+  await fallback.locator('[data-plan="villa"]').click();
   assert.equal(await fallback.locator('#acsGuestFallbackPlan rect').count(),2);
   assert.equal(await fallback.locator('#genLLM').isEnabled(),false);
   assert.equal(await fallback.locator('#impFile').isEnabled(),false);
