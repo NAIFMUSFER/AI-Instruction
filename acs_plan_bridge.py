@@ -6,7 +6,7 @@ must NOT be called automatically merely because this module is imported.
 """
 from __future__ import annotations
 import json
-from acs_plan_review import PlanError, PlanWorkspace, canonical, _number
+from acs_plan_review import PlanError, PlanWorkspace, canonical, _number, vertical_geometry_coverage
 
 
 # These top-level Building fields describe facts/authority that ACS derives or
@@ -169,8 +169,9 @@ def existing_geometry_verifier(building: dict) -> dict:
     """Conservative bridge to ACS's existing validator, not code certification.
 
     Explicit door arrays or open-space intent are required for each space.
-    Multi-floor core checks additionally require explicit role/core_id and an
-    identical core rectangle on every level. Missing intent stays NOT_VERIFIED.
+    Multi-floor core alignment additionally requires explicit role/core_id and
+    an identical core rectangle on every level. Physical traversal is separately
+    NOT_VERIFIED even when dimensioned core objects are present.
     All existing validator findings block conceptual approval in this first pass;
     no substring-based filtering suppresses an inconvenient finding.
     """
@@ -218,7 +219,9 @@ def existing_geometry_verifier(building: dict) -> dict:
               for x in findings]
     if core_issue:
         issues.append({'code': 'VERTICAL_CORE_MISMATCH', 'severity': 'error'})
+    vertical_state = ('FAIL' if core_issue or findings else 'PASS') if vertical_known else 'NOT_VERIFIED'
     return {'scopes': {
         'topology': ('FAIL' if findings else 'PASS') if topology_known else 'NOT_VERIFIED',
-        'vertical_circulation': ('FAIL' if core_issue or findings else 'PASS') if vertical_known else 'NOT_VERIFIED'},
-        'issues': issues}
+        'vertical_circulation': vertical_state},
+        'issues': issues,
+        'coverage': {'vertical_circulation': vertical_geometry_coverage(building, vertical_state)}}
