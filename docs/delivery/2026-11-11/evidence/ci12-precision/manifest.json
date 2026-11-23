@@ -1,0 +1,106 @@
+{
+  "schema": "acs.ci12.precision-evidence/1",
+  "reviewed_head": "76a90b920d84c9cef8785f3de63f82eaa508154a",
+  "scope": "Local uncommitted SPACES_ONLY precision fix. Internal numeric parser and shared Python/JS parity; independent IfcOpenShell not installed locally and remains for required CI. Reader places=6 is untouched.",
+  "source_sha256": {
+    "acs_bim.py": "fd853ededcea01d45c35bb54c77f377827d27b561c80b8be24998d1b581e933c",
+    "tools/build_bim_browser.py": "d090312e6f50529e83221b6e0a5389337f872609f3c11b511d6f522d7fc06eb5",
+    "public/app/generated/bim.js": "0fa8af3843b2c4b31c2fdedbfc0e0c544698a3cfb7cd312d710a408f4157a63a",
+    "tests/remediation/test_bim_space_precision.py": "ee5b69d8bb736097408e4bc767cbff0ad8d58576cd32b1b8465fa665120971a1",
+    "tests/remediation/bim_space_precision_parity.js": "1006c2c2ad0b3c3b52e57d9dedd2b343a44618920c1baeb704b54879bccc1a9f"
+  },
+  "files": [
+    {
+      "path": "baseline.log",
+      "sha256": "69d54d71acb122fc4c1240b6f1bf4b79ce2da0fdd5e2211579fa3eaf52065fce",
+      "bytes": 482,
+      "original_sha256": "69d54d71acb122fc4c1240b6f1bf4b79ce2da0fdd5e2211579fa3eaf52065fce",
+      "transformation": "none"
+    },
+    {
+      "path": "main-comparison.log",
+      "sha256": "a711d15efb73e498e7122406c855431b751c6806840d70efe8987635e5e96e73",
+      "bytes": 571,
+      "original_sha256": "a711d15efb73e498e7122406c855431b751c6806840d70efe8987635e5e96e73",
+      "transformation": "none"
+    },
+    {
+      "path": "before.log",
+      "sha256": "751e2e94669cc5b537dc8667f46225f5baf9c38f6eada7c2191e2e3703528608",
+      "bytes": 1806,
+      "original_sha256": "751e2e94669cc5b537dc8667f46225f5baf9c38f6eada7c2191e2e3703528608",
+      "transformation": "none"
+    },
+    {
+      "path": "after.log",
+      "sha256": "fd058b707ae3d991a566b26823d70c8bfd34206c4867cd098b70f236c58932f6",
+      "bytes": 100,
+      "original_sha256": "fd058b707ae3d991a566b26823d70c8bfd34206c4867cd098b70f236c58932f6",
+      "transformation": "none"
+    },
+    {
+      "path": "comparison.log",
+      "sha256": "c485cec86ca0d38447f9243a3c5cb566f2c2375b72efc6eb5d183c53828ce6eb",
+      "bytes": 2141,
+      "original_sha256": "c485cec86ca0d38447f9243a3c5cb566f2c2375b72efc6eb5d183c53828ce6eb",
+      "transformation": "none"
+    },
+    {
+      "path": "boundary.log",
+      "sha256": "2c933b2b8d3f747a07243b70bc57903e3a7da93a42a327de9a5f1c0b5559896e",
+      "bytes": 106,
+      "original_sha256": "2c933b2b8d3f747a07243b70bc57903e3a7da93a42a327de9a5f1c0b5559896e",
+      "transformation": "none"
+    },
+    {
+      "path": "fallback.log",
+      "sha256": "fe36347635ca8f7c7333c2ad267e52b0c802bac0d5272a80be8b87c213e48cf9",
+      "bytes": 172,
+      "original_sha256": "fe36347635ca8f7c7333c2ad267e52b0c802bac0d5272a80be8b87c213e48cf9",
+      "transformation": "none"
+    },
+    {
+      "path": "legacy.log",
+      "sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d",
+      "bytes": 30444,
+      "original_sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d",
+      "transformation": "none"
+    },
+    {
+      "path": "connected.log",
+      "sha256": "7310c6cd5f2011bed016fb81bd0975c2451553c4a8cf48179f41f88dfdc24b03",
+      "bytes": 1224,
+      "original_sha256": "7310c6cd5f2011bed016fb81bd0975c2451553c4a8cf48179f41f88dfdc24b03",
+      "transformation": "none"
+    },
+    {
+      "path": "bundle.log",
+      "sha256": "1325b6a06ed054b144a090119d5f0eb8144bedb530bfb755cd6bceb821c1f336",
+      "bytes": 8354,
+      "original_sha256": "1325b6a06ed054b144a090119d5f0eb8144bedb530bfb755cd6bceb821c1f336",
+      "transformation": "none"
+    },
+    {
+      "path": "doc-contract.log",
+      "sha256": "8921349bf705aa1bf0cc1db18f8fceac12bd4c92fc801829930050e97a6e86ff",
+      "bytes": 1758,
+      "original_sha256": "8921349bf705aa1bf0cc1db18f8fceac12bd4c92fc801829930050e97a6e86ff",
+      "transformation": "none"
+    },
+    {
+      "path": "ci-gate.log",
+      "sha256": "1ed70726a304748b9b8081df76741c4bc0456f0854de79630a7fb48374ac785f",
+      "bytes": 5802,
+      "original_sha256": "1ed70726a304748b9b8081df76741c4bc0456f0854de79630a7fb48374ac785f",
+      "transformation": "none"
+    },
+    {
+      "path": "measured-state.log",
+      "sha256": "20feffdd9c3dba22fdc6c27374cf0c67edb9235d56f9036a98e6b561bb95e06e",
+      "bytes": 62,
+      "original_sha256": "20feffdd9c3dba22fdc6c27374cf0c67edb9235d56f9036a98e6b561bb95e06e",
+      "transformation": "none"
+    }
+  ],
+  "independent_reader_unchanged": true
+}

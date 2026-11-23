@@ -12,10 +12,10 @@ import math
 from pathlib import Path
 import tempfile
 
-from acs_plan_review import PlanError, canonical, digest, _geometry
+from acs_plan_review import EPS, PlanError, canonical, digest, _geometry
 from acs_plan_store_reload import load_workspace
 from acs_plan_commands import _command, _view_result
-from acs_plan_bridge import existing_geometry_verifier
+from acs_plan_bridge import carry_roof_for_admission, existing_geometry_verifier
 
 SCHEMA = "acs.connected-workspace/1.0"
 OPTIONS = {
@@ -45,11 +45,16 @@ GEOMETRY_MESSAGES = {
 
 def geometry_failure_message(code):
     messages = {
-        "ACS_TIMEOUT":"انتهت مهلة المعالجة. يمكنك استئناف المراحل المحفوظة دون إعادة ما اكتمل.",
-        "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد. استأنف من آخر مرحلة محفوظة.",
-        "ACS_UPSTREAM_CONNECTION":"انقطع اتصال خدمة التوليد قبل اكتمال الرد. استأنف المهمة من البرنامج والمراحل المحفوظة.",
-        "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. استأنف المراحل المحفوظة.",
+        "ACS_TIMEOUT":"انتهت مهلة المعالجة وحالة الطلب لدى المزود غير مؤكدة. احتُفظ بالمراحل؛ لن يبدأ استدعاء مكرر تلقائيًا.",
+        "ACS_UPSTREAM_TIMEOUT":"تأخر رد خدمة التوليد وحالة الطلب لدى المزود غير مؤكدة. لم يُعَد إرسال الطلب تلقائيًا.",
+        "ACS_UPSTREAM_CONNECTION":"انقطع اتصال خدمة التوليد وحالة الطلب غير مؤكدة. احتُفظ بالمراحل دون إعادة مدفوعة تلقائية.",
+        "GENERATION_WORKER_FAILED":"توقف عامل التوليد قبل تسليم النتيجة. حالة الطلب غير مؤكدة؛ لم يُعَد إرساله تلقائيًا.",
+        "PROVIDER_OUTCOME_UNKNOWN":"توقفت متابعة المهمة أو أُلغيت. لا يمكن الجزم بأن المزود لم ينفذها؛ لم تُعَد تلقائيًا، ولا تسمح هذه الحالة باستئناف مكرر.",
         "GENERATION_BUSY":"كل مسارات التوليد مشغولة حاليًا. حاول بعد قليل.",
+        "ROOF_PREFERENCE_CONFLICT":"أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي. يمكنك إعادة تفعيل السطح صراحة من أدوات المخطط إذا أردت إضافته.",
+        "STAIR_RESOURCE_LIMIT":"تجاوز تفصيل الدرج الحد المدعوم لهذا الطلب. قلّل عدد الأدوار أو نوى الدرج ثم ابدأ طلبًا جديدًا؛ لم تُحفظ المحاولة ولم يُكرّر استدعاء المزود.",
+        "CONTEXT_DETAILS_RESOURCE_LIMIT":"تجاوزت التفاصيل الافتراضية الحد المدعوم لهذا الطلب. قلّل عدد المساحات أو العناصر ثم ابدأ طلبًا جديدًا؛ لم تُحفظ المحاولة ولم يُكرّر استدعاء المزود.",
+        "CONTEXT_DETAILS_PROVENANCE_INVALID":"تعذّر التحقق من مصدر التفاصيل الافتراضية؛ لم تُحفظ المحاولة. راجع بيانات المصدر قبل بدء طلب جديد.",
         "RESIDENTIAL_SHELL_ONLY":"المقترح لم يفصل الشقق إلى غرف داخلية. أعد المحاولة مع برنامج الغرف المختار.",
         "RESIDENTIAL_CORE_MISSING":"لم يكتمل اتصال الدرج بين الأدوار في المقترح.",
         "PLAN_DETAIL_INCOMPLETE":"لم يكتمل تفصيل الفتحات. استأنف من آخر مجموعة محفوظة.",
@@ -140,6 +145,9 @@ def generation_command(command):
     expected = out.get("expected_head")
     if expected is not None and (not isinstance(expected, str) or len(expected) > 160):
         raise PlanError("STALE_REVISION", "معرّف النسخة غير صالح.")
+    from acs_requirement_metrics import unsupported_metrics
+    if unsupported_metrics(requirements):
+        raise PlanError("REQUIREMENT_METRIC_NOT_SUPPORTED", "يوجد مقياس متطلب غير مدعوم. راجعه قبل بدء أي استدعاء مدفوع.")
     from acs_plan_projection import _requirements
     from types import SimpleNamespace
     _requirements(SimpleNamespace(requirements_json=canonical(requirements), brief=brief))
@@ -172,7 +180,7 @@ def budgeted_chat_candidate(building, notes, max_provider_calls):
         return generate_chat_candidate(building, notes)
 
 
-def chat_and_save(store, project_id, actor_id, command):
+def chat_and_save(store, project_id, actor_id, command, *, on_progress=None):
     command = chat_command(command)
     from acs_plan_chat_orchestration import execute_isolated_persisted_chat_edit
     from acs_generation_job import default_runner
@@ -180,6 +188,8 @@ def chat_and_save(store, project_id, actor_id, command):
 
     class BudgetRunner:
         def run(self, target, kwargs, **controls):
+            if on_progress:
+                controls["on_progress"] = on_progress
             return runner.run("acs_workspace_service:budgeted_chat_candidate", {
                 "building": kwargs["building"], "notes": kwargs["notes"],
                 "max_provider_calls": command["max_provider_calls"],
@@ -203,6 +213,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     residential = U._is_residential(detected)
     warehouse = detected == 'warehouse'
     if warehouse:
+        from acs_warehouse_generation import PLANNING_SYSTEM as WAREHOUSE_PLANNING_SYSTEM
         from warehouse_program_feasibility import warehouse_requirements_preflight
         preflight = warehouse_requirements_preflight(requirements)
         if not preflight.get('may_generate_layout', True):
@@ -224,23 +235,24 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
         target=targets[0] if len(targets)==1 and type(targets[0]) in (int,float) else None
         if target is not None:
             prompt += ("\nقيد برنامج المستودع المؤكد: مساحة المبنى الداخلية المستهدفة = "+str(target)+" م². "
-                       "هذه ليست مساحة الأرض. اجعل مجموع مساحات فراغات floors الداخلية لا يتجاوز هذه الميزانية. "
+                       "اجعل مجموع مساحات مستطيلات الفراغات في جميع الأدوار المشغولة مساويًا للمساحة المستهدفة. احسب كل دور متكرر واستبعد السطح غير المشغول. "
                        "ساحات الشاحنات والمواقف والدوران الخارجي والتوسع المستقبلي عناصر موقع خارجية وليست غرفًا داخلية. "
                        "لا تخترع setbacks أو أبعاد حريق أو اشتراطات غير معطاة.")
     if residential:
-        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail
+        from acs_residential_generation import ROOM_PROGRAM, PLANNING_SYSTEM, prepare_layout, detail, _canonical_room_roles
         prompt += "\n" + ROOM_PROGRAM
         if resume is None or (isinstance(resume,dict) and resume.get('kind') == 'start'):
             from acs_residential_manifest import manifest
             resume = manifest(brief, requirements)
-    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(PLANNING_SYSTEM if residential else None):
+    policy = PLANNING_SYSTEM if residential else WAREHOUSE_PLANNING_SYSTEM if warehouse else None
+    with limited(max_provider_calls, used_calls) as budget, resuming(resume), planning_policy(policy):
         detailed = isinstance(resume,dict) and resume.get("kind") == "details"
         saved_layout = isinstance(resume,dict) and resume.get("kind") in {"details","layout"}
         result = {"building":resume["building"]} if saved_layout else generate_candidate(prompt)
         _reject_provider_authority_changes({}, result["building"])
         if residential:
             try:
-                before_layout = canonical(result["building"])
+                before_layout = canonical(_canonical_room_roles(result["building"]))
                 result["building"] = prepare_layout(result["building"], brief, requirements, budget)
                 reuse_details = detailed and canonical(result["building"]) == before_layout
                 result["building"] = detail(result["building"], brief, budget, resume.get("done") if reuse_details else None)
@@ -260,7 +272,7 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
                 from warehouse_program_feasibility import generated_indoor_area
                 from warehouse_soft_area_fit import fit_soft_area
                 generated=generated_indoor_area(result['building'])
-                if generated is not None and generated > target + 1e-8*max(1,target):
+                if generated is not None and generated > target + EPS:
                     # Provider room rectangles are proposals, not hard requirements.
                     # Fit only their soft area budget deterministically; confirmed
                     # role minima remain hard and fail structured when infeasible.
@@ -271,6 +283,32 @@ def generate_plan_candidate(brief, requirements, option, max_provider_calls, res
     candidate = result["building"]
     _reject_provider_authority_changes({}, candidate)
     return {"building": candidate, "provider_calls": budget["used"], "stage": "PLAN_DRAFT"}
+
+
+def _reject_fresh_stair_authority(model):
+    """A new provider proposal cannot impersonate trusted default authoring.
+
+    Inspect reserved fields independently of object kind/name aliases. Ordinary
+    authored geometry stays admissible; this guard never rewrites an object.
+    Only the fresh described-project branch calls it.
+    """
+    def reject():
+        raise PlanError("PROVIDER_AUTHORITY_FIELD", "نسب المقترح تفاصيل افتراضية إلى النظام دون مصدر موثوق؛ لم تُحفظ المحاولة.")
+    meta = model.get("meta")
+    if isinstance(meta, dict) and {"acs_stairs", "acs_context_details"}.intersection(meta):
+        reject()
+    levels = model.get("levels")
+    for level in levels if isinstance(levels, list) else []:
+        if isinstance(level, dict) and {"stair_source_template", "stair_template_instance"}.intersection(level):
+            reject()
+    floors = model.get("floors")
+    for floor in floors.values() if isinstance(floors, dict) else []:
+        rooms = floor.get("rooms") if isinstance(floor, dict) else None
+        for room in rooms if isinstance(rooms, list) else []:
+            objects = room.get("objects") if isinstance(room, dict) else None
+            for obj in objects if isinstance(objects, list) else []:
+                if isinstance(obj, dict) and {"stair_provenance", "context_detail_provenance"}.intersection(obj):
+                    reject()
 
 
 def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_progress=None):
@@ -321,6 +359,48 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
         raise PlanError("STALE_REVISION", "تغيّرت النسخة أثناء التوليد؛ لم تُستبدل النسخة الأحدث.")
     if on_progress:
         on_progress({"phase":"REVIEW"})
+    # The deterministic stair default belongs only to a new described project.
+    # Imports, resumed work and every existing revision keep their authored
+    # objects and lock context. This runs after stale-head detection and before
+    # canonical proposal/approval; it makes no provider request.
+    fresh_describe = (expected is None and ws.head is None
+                     and "source_id" not in command and "resume_job_id" not in command)
+    if fresh_describe:
+        from acs_stairs import with_default_stairs
+        _reject_fresh_stair_authority(result["building"])
+        result["building"], _, stair_reason = with_default_stairs(result["building"])
+        if stair_reason == "STAIR_RESOURCE_LIMIT":
+            raise PlanError(stair_reason, geometry_failure_message(stair_reason))
+    # Every generated building receives the same disclosed default roof: a flat
+    # deck with a parapet, canonical model data recorded in meta.acs_roof as a
+    # system default. It is added after the provider reply, so the provider never
+    # authors it and it costs no provider call.
+    #   - current head already has the automatic roof -> rebuild it over the new option;
+    #   - current head has locked rooms and no roof    -> leave the option as it is,
+    #     because room locks freeze levels/meta and a new level would be rejected;
+    #   - otherwise (first generation, or an unlocked project) -> add the default.
+    import acs_roof
+    _head = ws.get(expected) if expected else None
+    _head_model = _head.model if _head is not None else None
+    if _head_model is not None and acs_roof._auto_roof_levels(_head_model):
+        result["building"] = acs_roof.carry_auto_roof(_head_model, result["building"])
+    elif _head_model is not None and acs_roof.roof_removed_by_user(_head_model):
+        # A provider proposal cannot override the owner's persisted preference.
+        # Reject the conflict before proposing/saving; stripping arbitrary roof
+        # geometry here could silently remove authored elements or references.
+        if acs_roof.has_roof_level(result["building"]):
+            raise PlanError("ROOF_PREFERENCE_CONFLICT",
+                            geometry_failure_message("ROOF_PREFERENCE_CONFLICT"))
+        result["building"] = acs_roof.mark_roof_removed(result["building"])
+    elif _head is not None and _head.locked_rooms and not acs_roof.has_roof_level(_head_model):
+        pass
+    else:
+        result["building"], _, _ = acs_roof.with_default_roof(result["building"])
+    if fresh_describe:
+        from acs_context_details import with_context_details
+        result["building"], _, detail_reason = with_context_details(result["building"])
+        if detail_reason in {"CONTEXT_DETAILS_RESOURCE_LIMIT", "CONTEXT_DETAILS_PROVENANCE_INVALID"}:
+            raise PlanError(detail_reason, geometry_failure_message(detail_reason))
     revision = ws.propose(result["building"], brief=command["brief"], requirements=command["requirements"],
                           expected_head=expected, note="البديل " + command["option"] + " · task:" + command["job_id"])
     issues, _ = _geometry(revision.model)
@@ -341,6 +421,45 @@ def generate_and_save(store, project_id, actor_id, command, *, runner=None, on_p
     return revision.id
 
 
+def set_roof(store, project_id, actor_id, command):
+    """Remove or restore the automatic default roof as a new draft revision.
+
+    No provider call. A user-authored roof is never removed here. Room locks
+    freeze the level list, so the change is refused with an explanation while
+    any room is locked.
+    """
+    command = checked_command(command, {"expected_head", "enabled"})
+    ws = workspace(store, project_id, actor_id)
+    expected = command.get("expected_head")
+    if not expected or ws.head != expected:
+        raise PlanError("STALE_REVISION", "افتح آخر نسخة قبل التعديل.")
+    if type(command.get("enabled")) is not bool:
+        raise PlanError("INVALID_PLAN_COMMAND", "حدّد إضافة السطح أو إزالته.")
+    import acs_roof
+    before = ws.get(expected)
+    try:
+        if command["enabled"]:
+            candidate = acs_roof.restore_default_roof(before.model)
+            note = "إضافة السطح الافتراضي"
+        else:
+            candidate = acs_roof.remove_auto_roof(before.model)
+            note = "إزالة السطح الافتراضي"
+    except ValueError as exc:
+        messages = {"ROOF_LEVEL_EXISTS": "هذه النسخة فيها سطح بالفعل.",
+                    "ROOF_NOT_AUTOMATIC": "لا يوجد سطح تلقائي لإزالته. السطح الذي أضفته بنفسك يُعدَّل كأي دور."}
+        raise PlanError("INVALID_GEOMETRY", messages.get(str(exc), "تعذّرت إضافة السطح لهذه النسخة."))
+    try:
+        revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
+                              expected_head=expected, note=note)
+    except PlanError as exc:
+        if exc.code == "LOCK_CONTEXT_CHANGED":
+            raise PlanError("LOCK_CONTEXT_CHANGED", "فكّ أقفال الفراغات أولًا: إضافة السطح أو إزالته يغيّر أدوار المبنى.")
+        raise
+    result = _view_result(ws, "set_roof", revision.id, reference_revision_id=expected)
+    store.save_revision(project_id, actor_id=actor_id, revision=revision, expected_head=expected)
+    return result
+
+
 def edit_geometry(store, project_id, actor_id, command):
     command = checked_command(command, {"expected_head", "room_ref", "rect"})
     ws = workspace(store, project_id, actor_id)
@@ -358,7 +477,13 @@ def edit_geometry(store, project_id, actor_id, command):
     room = next((r for r in floor["rooms"] if r["id"] == ref[1]), None) if floor else None
     if room is None:
         raise PlanError("ROOM_NOT_FOUND", "الفراغ غير موجود في هذه النسخة.")
+    import acs_roof
+    if acs_roof.is_auto_roof_template(candidate, ref[0]):
+        raise PlanError("INVALID_GEOMETRY", "السطح يتبع الدور الأخير تلقائيًا. عدّل فراغات الدور الأخير وسيتبعه السطح.")
     room["rect"] = rect
+    # Keep the automatic roof over the edited top storey; a removed or
+    # user-authored roof is never touched.
+    candidate = carry_roof_for_admission(before.model, candidate)
     revision = ws.propose(candidate, brief=before.brief, requirements=json.loads(before.requirements_json),
                           expected_head=expected, note="تعديل أبعاد وموضع " + ref[1])
     result = _view_result(ws, "edit_geometry", revision.id, reference_revision_id=expected)

@@ -1,0 +1,71 @@
+== أ · لا نداء مباشر لـ chromium.launch في الشجرة كلّها ==
+  ✓ there are JavaScript files to check at all
+  ✓ the scan covers .mjs and .cjs too, not only .js — a .mjs verification script is how a direct chromium.launch survived the first scan
+  ✓ the scan reaches beyond tests/remediation — the narrow scan is what let the baked path survive
+  ✓ NO file calls chromium.launch() directly — every launch goes through tools/pw_chromium.js
+  ✓ NO file bakes a /opt browser path of its own
+  ✓ NO file outside the resolver even names the image's browser root — acquisition decisions live in one place
+
+== ب · المجموعات التي تطلق متصفّحاً تمرّ من المُحدّد ==
+  ✓ tests/remediation/csp_browser_probe.js requires tools/pw_chromium.js
+  ✓ tests/remediation/test_accessibility.js requires tools/pw_chromium.js
+  ✓ tests/remediation/test_apply_render_browser.js requires tools/pw_chromium.js
+  ✓ tests/remediation/test_csp_style_architecture.js requires tools/pw_chromium.js
+  ✓ tests/remediation/test_panel_entry.js requires tools/pw_chromium.js
+  ✓ tests/remediation/test_scene_benchmark.js requires tools/pw_chromium.js
+  ✓ tests/remediation/test_webgl_diagnostics.js requires tools/pw_chromium.js
+  ✓ tests/deploy/test_viewport_pixels.js requires tools/pw_chromium.js
+  ✓ tests/deploy/verify_page_boot.js requires tools/pw_chromium.js
+  ✓ tests/phase3/lib/run_browser.js requires tools/pw_chromium.js
+  ✓ tests/production/verify_live_browser.js requires tools/pw_chromium.js
+  ✓ tests/performance/run_perf.js requires tools/pw_chromium.js
+  ✓ tests/phase4/test_browser_parity.js requires tools/pw_chromium.js
+  ✓ tests/phase5/test_browser_parity.js requires tools/pw_chromium.js
+  ✓ tests/phase6/test_responsive.js requires tools/pw_chromium.js
+  ✓ tests/phase6/walkthrough.js requires tools/pw_chromium.js
+  ✓ tests/phase9_1/capture_reference.js requires tools/pw_chromium.js
+  ✓ tests/phase9_2/capture_reference_92.js requires tools/pw_chromium.js
+  ✓ tools/verify-offline.mjs requires tools/pw_chromium.js
+
+== ج · المُحدّد نفسه ==
+  ✓ tools/pw_chromium.js exists
+  ✓ it exports executable() and launch()
+  ✓ it honours an environment override before scanning
+  ✓ it scans PLAYWRIGHT_BROWSERS_PATH and /opt/pw-browsers
+  ✓ it REFUSES to fabricate a browser — it throws when none exists
+  ✓ resolve() has a body to inspect
+  ✓ Playwright's own managed executable is consulted BEFORE the root scan — this is what makes the browser `playwright install` downloaded in CI the one that actually gets used
+  ✓ and an explicit operator override precedes both
+  ✓ the image root appears as a search ROOT, never as an executable path
+  ✓ a full chromium build outranks a headless shell — the shell cannot carry the WebGL measurements these suites make
+
+== د · المُحدّد يرفض حيّاً: لا اختلاق عند الغياب ==
+  ✓ launch() resolves through the same seam it is measured with — the refusal path tested below is the production one
+  ✓ the injection seam can only REMOVE sources, never add one
+  ✓ with no root to scan the resolver returns NO path — it does not invent one
+  ✓ and launch() throws instead of quietly launching something else
+  ✓ the refusal names what was searched, so a CI log says WHY
+
+== د٢ · الرفض يبقى رفضَ اكتساب حتى بلا حزمة playwright ==
+  ✓ the isolated copy is the same resolver, byte for byte
+  ✓ the isolation is real: playwright genuinely cannot be resolved there — this is CI job 7's condition, which runs no `npm ci`
+  ✓ and launch() still refuses as an ACQUISITION failure, not as a missing module — the message names the browser, not the package
+  ✓ and it still names what was searched, including that playwright itself could not be loaded
+
+== د٣ · تجاوزٌ صريح لا يُنفَّذ لا يُتجاوَز بصمت ==
+  · override witness NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED: no valid browser on this machine, so a refusal here would prove nothing.
+
+== د٤ · السجلّ يقول أيّ ثنائيّة اختيرت ومن أين ==
+  ✓ the resolver announces the selection: path, source and searched locations
+  ✓ and it announces on stderr, so byte-compared stdout of the parity suites is not disturbed
+  · live launch announcement NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (no browser here): NOLAUNCH no Chromium binary is available in this sandbox — searched: playwright-managed: /home/agent/.cache/ms-playwright/chromium-1234/chrome-linux64/chrome | browser roots: /home/agent/.cache/ms-playwright, /opt/pw-browsers
+
+== هـ · شاهد سالب: المُجرِّد لا يُخفي نداءً حقيقياً ==
+  ✓ a REAL direct call is still caught after comment stripping
+  ✓ a call named ONLY inside comments is not counted as one
+  ✓ stripping keeps the code around a comment intact
+  ✓ the baked-path detector still fires on the exact line CI reported
+  ✓ the image-root detector fires even without executablePath:
+
+──────────────────────────────────────────────────────────────
+BROWSER ACQUISITION: 51 passed, 0 failed

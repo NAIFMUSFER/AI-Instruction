@@ -1,0 +1,72 @@
+test_auth_runs_before_body_and_duplicate_job_only_starts_once (test_connected_workspace.JobsHTTP.test_auth_runs_before_body_and_duplicate_job_only_starts_once) ... ok
+test_geometry_reason_survives_receipt_reload_without_raw_provider_details (test_connected_workspace.JobsHTTP.test_geometry_reason_survives_receipt_reload_without_raw_provider_details) ... {"error_code": "PLAN_GEOMETRY_ROOM_OVERLAP", "event": "workspace_job_finished", "level": "info", "request_id": "33333333-3333-4333-8333-333333333333", "service": "ACS Understanding Engine", "state": "FAILED", "ts": "2026-11-11T11:13:39Z"}
+ok
+test_all_chat_admission_paths_surface_roof_conflict_as_plan_error (test_connected_workspace.WorkspaceLifecycle.test_all_chat_admission_paths_surface_roof_conflict_as_plan_error) ... ok
+test_artifact_validation_survives_worker_boundary (test_connected_workspace.WorkspaceLifecycle.test_artifact_validation_survives_worker_boundary) ... ok
+test_browser_program_unicode_evidence_survives_cloud_reload_and_review (test_connected_workspace.WorkspaceLifecycle.test_browser_program_unicode_evidence_survives_cloud_reload_and_review) ... ok
+test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks (test_connected_workspace.WorkspaceLifecycle.test_browser_source_then_two_unit_option_remains_approvable_through_roof_and_locks) ... ok
+test_changed_head_during_generation_does_not_overwrite_winner (test_connected_workspace.WorkspaceLifecycle.test_changed_head_during_generation_does_not_overwrite_winner) ... ok
+test_client_model_and_approval_fields_are_rejected_before_worker (test_connected_workspace.WorkspaceLifecycle.test_client_model_and_approval_fields_are_rejected_before_worker) ... ok
+test_declared_opening_dimensions_are_accepted_but_conflicts_are_not (test_connected_workspace.WorkspaceLifecycle.test_declared_opening_dimensions_are_accepted_but_conflicts_are_not) ... ok
+test_every_generated_building_gets_the_default_roof_and_it_follows_edits (test_connected_workspace.WorkspaceLifecycle.test_every_generated_building_gets_the_default_roof_and_it_follows_edits) ... ok
+test_exhausted_budget_is_terminal_before_unresolved_chunk_fallback (test_connected_workspace.WorkspaceLifecycle.test_exhausted_budget_is_terminal_before_unresolved_chunk_fallback) ... ok
+test_invalid_generated_geometry_names_reason_without_saving_or_retrying (test_connected_workspace.WorkspaceLifecycle.test_invalid_generated_geometry_names_reason_without_saving_or_retrying) ... ok
+test_local_placement_handles_24_zones_and_respects_scope (test_connected_workspace.WorkspaceLifecycle.test_local_placement_handles_24_zones_and_respects_scope) ... ok
+test_local_placement_preserves_sizes_data_and_spends_no_provider_calls (test_connected_workspace.WorkspaceLifecycle.test_local_placement_preserves_sizes_data_and_spends_no_provider_calls) ... ok
+test_local_placement_rejects_oversubscribed_generated_area (test_connected_workspace.WorkspaceLifecycle.test_local_placement_rejects_oversubscribed_generated_area) ... ok
+test_local_room_edit_keeps_roof_removal_without_provider_work (test_connected_workspace.WorkspaceLifecycle.test_local_room_edit_keeps_roof_removal_without_provider_work) ... ok
+test_occupied_roof_like_template_keeps_the_removal_preference (test_connected_workspace.WorkspaceLifecycle.test_occupied_roof_like_template_keeps_the_removal_preference) ... ok
+test_other_actor_cannot_read_or_export (test_connected_workspace.WorkspaceLifecycle.test_other_actor_cannot_read_or_export) ... ok
+test_overlap_repair_is_position_only_bounded_and_validated (test_connected_workspace.WorkspaceLifecycle.test_overlap_repair_is_position_only_bounded_and_validated) ... ok
+test_provider_budget_stops_before_an_additional_request (test_connected_workspace.WorkspaceLifecycle.test_provider_budget_stops_before_an_additional_request) ... ok
+test_removed_roof_preference_rejects_provider_roof_without_retry_or_write (test_connected_workspace.WorkspaceLifecycle.test_removed_roof_preference_rejects_provider_roof_without_retry_or_write) ... ok
+test_residential_and_warehouse_save_review_lock_approve_export_reopen (test_connected_workspace.WorkspaceLifecycle.test_residential_and_warehouse_save_review_lock_approve_export_reopen) ... ok
+test_stale_source_span_is_rejected_before_provider_execution (test_connected_workspace.WorkspaceLifecycle.test_stale_source_span_is_rejected_before_provider_execution) ... ok
+test_unchanged_authored_head_roof_is_not_stripped_or_reclassified (test_connected_workspace.WorkspaceLifecycle.test_unchanged_authored_head_roof_is_not_stripped_or_reclassified) ... ok
+test_source_receipt_is_bound_to_saved_revision (test_plan_source_upload.SourceLifecycle.test_source_receipt_is_bound_to_saved_revision) ... ok
+test_large_file_route_preserves_narrow_command_limit (test_plan_source_upload.UploadTests.test_large_file_route_preserves_narrow_command_limit) ... ok
+test_original_preserved_and_metadata_checked (test_plan_source_upload.UploadTests.test_original_preserved_and_metadata_checked) ... ok
+test_overlapping_source_is_re_read_against_same_image_once (test_plan_source_upload.UploadTests.test_overlapping_source_is_re_read_against_same_image_once) ... ok
+test_pdf_page_is_explicit_and_bounded (test_plan_source_upload.UploadTests.test_pdf_page_is_explicit_and_bounded) ... ok
+test_provider_cannot_change_source_receipt (test_plan_source_upload.UploadTests.test_provider_cannot_change_source_receipt) ... ok
+test_source_command_requires_explicit_mode (test_plan_source_upload.UploadTests.test_source_command_requires_explicit_mode) ... ok
+test_source_reading_does_not_retry_indefinitely_or_relocate_rooms (test_plan_source_upload.UploadTests.test_source_reading_does_not_retry_indefinitely_or_relocate_rooms) ... ok
+test_stored_hash_and_project_binding (test_plan_source_upload.UploadTests.test_stored_hash_and_project_binding) ... ok
+test_uploaded_plan_instructions_reach_system_in_actual_http_request (test_plan_source_upload.UploadTests.test_uploaded_plan_instructions_reach_system_in_actual_http_request) ... {"chars_per_output_token": 124.8333, "content_block_types": "text:1", "content_blocks": 1, "duration_ms": 11, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 3, "level": "info", "max_output_tokens": 16000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 749, "output_tokens": 6, "provider": "anthropic", "provider_base_host": "api.deepseek.com", "provider_model": "claude-sonnet-5", "requested_max_tokens": 16000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "vision", "stop_reason": "end_turn", "success": true, "text_block_chars": "749", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-11-11T11:13:43Z"}
+{"chars_per_output_token": 124.8333, "content_block_types": "text:1", "content_blocks": 1, "duration_ms": 4, "event": "llm_generation", "fallback_attempted": false, "input_tokens": 3, "level": "info", "max_output_tokens": 16000, "model": "claude-sonnet-5", "nontext_blocks": 0, "output_chars": 749, "output_tokens": 6, "provider": "anthropic", "provider_base_host": "api.deepseek.com", "provider_model": "claude-sonnet-5", "requested_max_tokens": 16000, "response_semantic": "ok", "retries": 0, "sdk_version": "0.40.0", "service": "ACS Understanding Engine", "stages": "vision", "stop_reason": "end_turn", "success": true, "text_block_chars": "749", "text_blocks": 1, "thinking_sent": true, "transport": "stream", "truncated": false, "ts": "2026-11-11T11:13:43Z"}
+ok
+test_vision_uses_actual_image_and_does_not_relayout (test_plan_source_upload.UploadTests.test_vision_uses_actual_image_and_does_not_relayout) ... ok
+test_apartment_access_excludes_only_explicit_unoccupied_roof_instances (test_roof_level.RoofBoundaryRegressions.test_apartment_access_excludes_only_explicit_unoccupied_roof_instances) ... ok
+test_chat_edit_cannot_restore_a_roof_removed_by_the_user (test_roof_level.RoofBoundaryRegressions.test_chat_edit_cannot_restore_a_roof_removed_by_the_user) ... ok
+test_compiler_carries_exact_level_kind_in_scene_metadata (test_roof_level.RoofBoundaryRegressions.test_compiler_carries_exact_level_kind_in_scene_metadata) ... ok
+test_equal_elevation_tie_does_not_depend_on_array_order (test_roof_level.RoofBoundaryRegressions.test_equal_elevation_tie_does_not_depend_on_array_order) ... ok
+test_long_admitted_ids_stay_bounded_unique_and_deterministic (test_roof_level.RoofBoundaryRegressions.test_long_admitted_ids_stay_bounded_unique_and_deterministic) ... ok
+test_names_do_not_change_explicit_level_kind (test_roof_level.RoofBoundaryRegressions.test_names_do_not_change_explicit_level_kind) ... ok
+test_nullable_or_invalid_room_height_cannot_invent_a_roof (test_roof_level.RoofBoundaryRegressions.test_nullable_or_invalid_room_height_cannot_invent_a_roof) ... ok
+test_only_explicit_roof_instances_waive_occupied_room_door_light_needs (test_roof_level.RoofBoundaryRegressions.test_only_explicit_roof_instances_waive_occupied_room_door_light_needs) ... ok
+test_partial_parapet_is_disclosed_in_revision_bound_projection (test_roof_level.RoofBoundaryRegressions.test_partial_parapet_is_disclosed_in_revision_bound_projection) ... ok
+test_pdf_titles_use_explicit_projection_kind_not_room_prefix (test_roof_level.RoofBoundaryRegressions.test_pdf_titles_use_explicit_projection_kind_not_room_prefix) ... ok
+test_rebuild_keeps_authored_roof_sharing_old_template (test_roof_level.RoofBoundaryRegressions.test_rebuild_keeps_authored_roof_sharing_old_template) ... ok
+test_remove_keeps_authored_instances_sharing_roof_template (test_roof_level.RoofBoundaryRegressions.test_remove_keeps_authored_instances_sharing_roof_template) ... ok
+test_top_is_canonical_elevation_and_roof_index_is_unique (test_roof_level.RoofBoundaryRegressions.test_top_is_canonical_elevation_and_roof_index_is_unique) ... ok
+test_unknown_or_invalid_level_vertical_values_have_explicit_reasons (test_roof_level.RoofBoundaryRegressions.test_unknown_or_invalid_level_vertical_values_have_explicit_reasons) ... ok
+test_unknown_vertical_dimensions_remain_unknown_without_a_roof (test_roof_level.RoofBoundaryRegressions.test_unknown_vertical_dimensions_remain_unknown_without_a_roof) ... ok
+test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection (test_roof_level.RoofBoundaryRegressions.test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection) ... ok
+test_a_locked_room_does_not_block_an_edit_that_carries_the_roof (test_roof_level.RoofLevel.test_a_locked_room_does_not_block_an_edit_that_carries_the_roof) ... ok
+test_an_edit_keeps_the_automatic_roof_over_the_top_storey (test_roof_level.RoofLevel.test_an_edit_keeps_the_automatic_roof_over_the_top_storey) ... ok
+test_an_edit_never_re_adds_a_removed_roof_or_touches_an_authored_one (test_roof_level.RoofLevel.test_an_edit_never_re_adds_a_removed_roof_or_touches_an_authored_one) ... ok
+test_architecture_reports_a_default_unoccupied_roof (test_roof_level.RoofLevel.test_architecture_reports_a_default_unoccupied_roof) ... ok
+test_default_roof_is_added_once_and_disclosed_as_a_system_default (test_roof_level.RoofLevel.test_default_roof_is_added_once_and_disclosed_as_a_system_default) ... ok
+test_elevation_follows_the_storey_convention_or_sits_on_the_walls (test_roof_level.RoofLevel.test_elevation_follows_the_storey_convention_or_sits_on_the_walls) ... ok
+test_l_shape_keeps_its_recess_open_and_reports_the_partial_edge (test_roof_level.RoofLevel.test_l_shape_keeps_its_recess_open_and_reports_the_partial_edge) ... ok
+test_refusals_are_explicit (test_roof_level.RoofLevel.test_refusals_are_explicit) ... ok
+test_review_measures_the_roof_separately_and_approves_the_compiled_artifact (test_roof_level.RoofLevel.test_review_measures_the_roof_separately_and_approves_the_compiled_artifact) ... ok
+test_shared_edges_carry_no_parapet (test_roof_level.RoofLevel.test_shared_edges_carry_no_parapet) ... ok
+test_single_room_gets_a_full_parapet_and_the_input_is_untouched (test_roof_level.RoofLevel.test_single_room_gets_a_full_parapet_and_the_input_is_untouched) ... ok
+test_zero_parapet_is_an_open_deck (test_roof_level.RoofLevel.test_zero_parapet_is_an_open_deck) ... ok
+
+----------------------------------------------------------------------
+Ran 63 tests in 4.226s
+
+OK
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0

@@ -1,0 +1,17 @@
+E.
+======================================================================
+ERROR: test_embedded_arabic_logical_text_and_unchanged_model (__main__.ArabicPdf.test_embedded_arabic_logical_text_and_unchanged_model)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_arabic_pdf.py", line 32, in test_embedded_arabic_logical_text_and_unchanged_model
+    font = reader.pages[0]['/Resources']['/Font']['/F2'].get_object()
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/workspace/scratch/1843247fed6a/repo/.venv/lib/python3.12/site-packages/pypdf/generic/_data_structures.py", line 540, in __getitem__
+    return cast(PdfObject, dict.__getitem__(self, key).get_object())
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: '/F2'
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.045s
+
+FAILED (errors=1)

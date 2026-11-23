@@ -1,0 +1,21 @@
+# Roof revalidation — 2026-11-11
+
+Reviewed and repaired package-v4 roof boundaries after integration onto the newer delivery baseline. No live provider or deployment was involved.
+
+The first21-test run had5 assertion failures and3 missing-capability errors. Three additional negative probes separately reproduced unknown-height exceptions, removed-roof preference override and occupied-room requirements wrongly applied to explicitly unoccupied roofs. A malformed imported roof-caveat probe also reproduced a projection exception; invalid caveats now remain NOT_VERIFIED. Nullable/invalid room heights and unknown level values were separately reproduced and now return stable reasons without inventing dimensions or raising raw TypeError. Final focused suite:27passed. Evidence logs are under `evidence/roof-*`.
+
+Changes: only exact `kind: roof` declares a roof; canonical elevation selects the top occupied level (index/template break ties deterministically); the new index remains unique; deleting/rebuilding automatic roofs preserves authored instances and templates; derived room IDs remain at most160 characters; unknown vertical dimensions stay unknown; removed-roof choices survive edits and conflicting candidates are rejected. Partial-parapet gaps live in canonical roof-room provenance and the revision-bound projection, while stable level/meta context preserves ordinary room-lock semantics.
+
+The compiler now carries `scenes[0].extras.acs_levels` with index, exact kind, template and resolved elevation. The plan projection carries `level_kind`, `level_auto` and `roof_disclosure`. PDF titles use explicit kind. No room-name heuristic is used in these new classification paths. The legacy validator's other outdoor-name heuristics were not broadly redesigned; the added roof-only waiver is based solely on explicit level kinds and does not apply to a template also used by occupied floors.
+
+Independent reader suite:4passed, including actual production-verifier approval of an authored roof whose room IDs have no roof prefix. IfcOpenShell0.9.0.post1 validates IFC schema and every roof-space world bound; ezdxf validates closed boundaries and coordinates; pypdf extracts the explicit unoccupied-roof title; compiled glTF carries the exact kind and the selected revision remains unchanged. IFC remains spaces-only, so these checks do not prove parapet solids in IFC. No structural adequacy, drainage, waterproofing, access or compliance claim is made.
+
+Additional existing suites passed: projection15, base geometry15, opening validation20, approved handoff, PDF and CAD exports. Tests run locally with the production dependency environment plus a temporary test-only IfcOpenShell install; browser/required-check/deployment results belong to the integration owner.
+
+## CI follow-up: apartment access scope
+
+CI run43000139644 / job130453946214 reproduced a new package regression: `test_computed_plan_saves_reopens_and_exports_through_normal_approval` could no longer approve the calculated apartment layout. The same7-test suite passes against an isolated archive of tracked main `c37b5250dc4ff18ba0606add993b5afe52beebaa`. Current code before this repair failed1of7: the residential access checker interpreted25 generated unoccupied roof rectangles as common occupied rooms without entrances. The dedicated new regression also failed before the production change.
+
+`acs_residential_access.issues` now excludes templates used exclusively by explicit `kind: roof` levels from the apartment circulation check and from ground entrance selection. It continues checking shared roof/occupied templates, names do not grant an exemption, broken bedroom access still fails, and roof aperture collision checks remain active. This establishes no roof access or physical traversal claim.
+
+After the repair: roof28tests pass; the original fallback7tests pass including normal persisted approval and actual SVG/PDF/DXF/IFC/glTF output; connected workspace23tests pass; residential quality32assertions pass. These are local synthetic tests without live provider calls. CI/deployment verification is separate. Evidence: `roof-fallback-{before,access-before,main-baseline,after}.log`, `roof-access-after.log`, `roof-connected-after.log`, and `roof-residential-quality-after.log`.

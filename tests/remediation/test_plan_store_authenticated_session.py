@@ -54,14 +54,13 @@ expect_error("AUTH_REQUIRED", {
 })
 
 calls = []
-responses = [(200, {
-    "schema": "acs.plan-store/1.0",
-    "project_id": "33333333-3333-4333-8333-333333333333",
-    "role": "owner",
+responses = [(200, [{
+    "id": "33333333-3333-4333-8333-333333333333",
+    "memberships": [{"user_id": ACTOR, "role": "owner"}],
     "head_revision_id": None,
     "baseline_revision_id": None,
     "revisions": [],
-})]
+}])]
 
 
 def transport(**kwargs):
@@ -91,13 +90,14 @@ PROJECT = "33333333-3333-4333-8333-333333333333"
 state = store.project_state(PROJECT, actor_id=ACTOR)
 assert state["role"] == "owner"
 req = calls[-1]
-assert req["url"] == URL + "/rest/v1/rpc/acs_plan_project_state"
+assert req["url"].startswith(URL + "/rest/v1/acs_projects?")
+assert req["method"] == "GET" and req["body"] is None
 assert req["headers"]["Authorization"] == "Bearer " + TOKEN
 assert req["headers"]["apikey"] == KEY
 wire = json.dumps({
     "url": req["url"],
     "headers": req["headers"],
-    "body": req["body"].decode(),
+    "body": req["body"],
 }, separators=(",", ":"))
 assert "service_role" not in wire.lower()
 assert ATTACKER not in wire

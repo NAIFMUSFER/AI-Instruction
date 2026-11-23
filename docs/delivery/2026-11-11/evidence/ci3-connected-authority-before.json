@@ -1,0 +1,608 @@
+{
+  "scope": "Synthetic canonical service reproduction; actual JS base/options, same browser fixture model, no provider/auth/source transport",
+  "expected_option": {
+    "id": "A",
+    "title": "صالة أوسع",
+    "bedrooms": 2,
+    "majlis": 0,
+    "why": "يعطي مساحة أكبر لاجتماع الأسرة.",
+    "tradeoff": "عدد غرف نوم أقل من خيار الأسرة الكبيرة.",
+    "bathrooms": 2,
+    "total": 2,
+    "distribution": [
+      2
+    ],
+    "scope": "total",
+    "units": 2,
+    "areas": {
+      "bedroom": 12,
+      "living": 24,
+      "kitchen": 10,
+      "bathroom": 4.5,
+      "majlis": 18,
+      "circulation": 10
+    },
+    "recommended": true,
+    "estimatedUnitArea": 89,
+    "requiredFloorArea": 202,
+    "feasible": true,
+    "feasibilityNote": "تقدير مساحة أولي يشمل حركة داخلية و15٪ للجدران و25 م² للنواة المشتركة؛ لا يشمل الارتدادات والمواقف. يفحص التوزيع والفتحات بعد التوليد."
+  },
+  "requirements": [
+    {
+      "id": "brief-0",
+      "metric": "site_width_m",
+      "expected": 20,
+      "source": "requested",
+      "source_id": "brief:text",
+      "evidence": "عرض الموقع ٢٠ متر",
+      "source_span": {
+        "start": 21,
+        "end": 38
+      },
+      "confirmed": true
+    },
+    {
+      "id": "brief-1",
+      "metric": "site_depth_m",
+      "expected": 20,
+      "source": "requested",
+      "source_id": "brief:text",
+      "evidence": "عمق الموقع ٢٠ متر",
+      "source_span": {
+        "start": 40,
+        "end": 57
+      },
+      "confirmed": true
+    },
+    {
+      "id": "brief-2",
+      "metric": "level_count",
+      "expected": 1,
+      "source": "requested",
+      "source_id": "brief:text",
+      "evidence": "عدد الأدوار ١",
+      "source_span": {
+        "start": 59,
+        "end": 72
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-unit_count-all",
+      "metric": "unit_count",
+      "expected": 2,
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "إجمالي الشقق: 2",
+      "source_span": {
+        "start": 107,
+        "end": 122
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count-bedroom",
+      "metric": "room_count",
+      "expected": 4,
+      "role": "bedroom",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "إجمالي غرف النوم: 4",
+      "source_span": {
+        "start": 123,
+        "end": 142
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count_per_unit-bedroom",
+      "metric": "room_count_per_unit",
+      "expected": 2,
+      "role": "bedroom",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "غرف النوم في كل شقة: 2",
+      "source_span": {
+        "start": 143,
+        "end": 165
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count-living",
+      "metric": "room_count",
+      "expected": 2,
+      "role": "living",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "إجمالي الصالات: 2",
+      "source_span": {
+        "start": 166,
+        "end": 183
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count_per_unit-living",
+      "metric": "room_count_per_unit",
+      "expected": 1,
+      "role": "living",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "الصالات في كل شقة: 1",
+      "source_span": {
+        "start": 184,
+        "end": 204
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count-kitchen",
+      "metric": "room_count",
+      "expected": 2,
+      "role": "kitchen",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "إجمالي المطابخ: 2",
+      "source_span": {
+        "start": 205,
+        "end": 222
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count_per_unit-kitchen",
+      "metric": "room_count_per_unit",
+      "expected": 1,
+      "role": "kitchen",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "المطابخ في كل شقة: 1",
+      "source_span": {
+        "start": 223,
+        "end": 243
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count-bathroom",
+      "metric": "room_count",
+      "expected": 4,
+      "role": "bathroom",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "إجمالي دورات المياه: 4",
+      "source_span": {
+        "start": 244,
+        "end": 266
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count_per_unit-bathroom",
+      "metric": "room_count_per_unit",
+      "expected": 2,
+      "role": "bathroom",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "دورات المياه في كل شقة: 2",
+      "source_span": {
+        "start": 267,
+        "end": 292
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count-majlis",
+      "metric": "room_count",
+      "expected": 0,
+      "role": "majlis",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "إجمالي المجالس: 0",
+      "source_span": {
+        "start": 293,
+        "end": 310
+      },
+      "confirmed": true
+    },
+    {
+      "id": "option-A-room_count_per_unit-majlis",
+      "metric": "room_count_per_unit",
+      "expected": 0,
+      "role": "majlis",
+      "source": "inferred",
+      "source_id": "brief:selected-option",
+      "evidence": "المجالس في كل شقة: 0",
+      "source_span": {
+        "start": 311,
+        "end": 331
+      },
+      "confirmed": true
+    }
+  ],
+  "states": [
+    {
+      "step": "initial controlled model, source-flow base requirements",
+      "can_approve_concept": true,
+      "requirements_count": 3,
+      "issues": [],
+      "model_unit_ids": [],
+      "roof_count": 1,
+      "revision": "plan_16b90189fe2f44f688279751462dc73d"
+    },
+    {
+      "step": "initial approved",
+      "can_approve_concept": true,
+      "requirements_count": 3,
+      "issues": [],
+      "model_unit_ids": [],
+      "roof_count": 1,
+      "revision": "plan_16b90189fe2f44f688279751462dc73d"
+    },
+    {
+      "step": "remove automatic roof",
+      "can_approve_concept": true,
+      "requirements_count": 3,
+      "issues": [],
+      "model_unit_ids": [],
+      "roof_count": 0,
+      "revision": "plan_178cb9e903044883816ad27c08a3ccbd"
+    },
+    {
+      "step": "describe regenerate with actual option-A requirements",
+      "can_approve_concept": false,
+      "requirements_count": 14,
+      "issues": [
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-unit_count-all",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-majlis",
+          "room_ref": null
+        }
+      ],
+      "model_unit_ids": [],
+      "roof_count": 0,
+      "revision": "plan_239a55eefdf3430bb52652a97f38fa91"
+    },
+    {
+      "step": "restore automatic roof",
+      "can_approve_concept": false,
+      "requirements_count": 14,
+      "issues": [
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-unit_count-all",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-majlis",
+          "room_ref": null
+        }
+      ],
+      "model_unit_ids": [],
+      "roof_count": 1,
+      "revision": "plan_1e8d2240cd07488f87e504b0935c168c"
+    },
+    {
+      "step": "lock light-a x,z",
+      "can_approve_concept": false,
+      "requirements_count": 14,
+      "issues": [
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-unit_count-all",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-majlis",
+          "room_ref": null
+        }
+      ],
+      "model_unit_ids": [],
+      "roof_count": 1,
+      "revision": "plan_25ffb8f7b8b04c36b1932465575208e7"
+    },
+    {
+      "step": "lock room a",
+      "can_approve_concept": false,
+      "requirements_count": 14,
+      "issues": [
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-unit_count-all",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-majlis",
+          "room_ref": null
+        }
+      ],
+      "model_unit_ids": [],
+      "roof_count": 1,
+      "revision": "plan_344990b8ba5d47b4a0052e5d7311b25d"
+    },
+    {
+      "step": "attempt roof removal with room lock",
+      "error_code": "LOCK_CONTEXT_CHANGED"
+    },
+    {
+      "step": "after expected locked roof rejection",
+      "can_approve_concept": false,
+      "requirements_count": 14,
+      "issues": [
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-unit_count-all",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bedroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-living",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-kitchen",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_MISMATCH",
+          "message": "",
+          "requirement_id": "option-A-room_count-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-bathroom",
+          "room_ref": null
+        },
+        {
+          "code": "REQUIREMENT_NOT_MEASURABLE",
+          "message": "",
+          "requirement_id": "option-A-room_count_per_unit-majlis",
+          "room_ref": null
+        }
+      ],
+      "model_unit_ids": [],
+      "roof_count": 1,
+      "revision": "plan_344990b8ba5d47b4a0052e5d7311b25d"
+    }
+  ]
+}

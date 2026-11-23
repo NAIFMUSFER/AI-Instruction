@@ -1,0 +1,10 @@
+test_complete_evidence_passes (__main__.ReleaseSafety.test_complete_evidence_passes) ... ok
+test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) ... ok
+test_http_crash_never_passes (__main__.ReleaseSafety.test_http_crash_never_passes) ... ok
+test_raw_diagnostics_never_reach_logs (__main__.ReleaseSafety.test_raw_diagnostics_never_reach_logs) ... ok
+test_release_manifest_excludes_synthetic_secrets (__main__.ReleaseSafety.test_release_manifest_excludes_synthetic_secrets) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 2.802s
+
+OK

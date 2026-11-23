@@ -1,0 +1,79 @@
+Executed UTC: 2026-11-11T17:26:31.686238+00:00
+Base SHA: b88f560ca35f6ef6dc4acf6cb2d06af13676432e plus working-tree fix
+acs_stairs.py sha256 456fec4c59579a94f8c2eb6fd59cb3e23c5f835fb80714d7b7b381d736f2ee52
+acs_plan_review.py sha256 24e64bd6ca46a62e81fd06f2d97906f6f132a3e003cd5c8090bff56501d2a71d
+tools/acs_plan_handoff.py sha256 94051ca4a3d5bf002445576c9a3c7140c91de225f770470902826acf7833154a
+tests/remediation/test_stairs_validation_boundary.py sha256 1489610276960b01db09f39de187fa6b543e5e8d6d3f48aa09b37a2d7a0791ef
+
+Command: <workspace>/stairs-v4/.venv/bin/python -m unittest discover -s tests/remediation -p test_plan_handoff_object_geometry.py -v
+test_complete_explicit_object_geometry_passes_unchanged (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_complete_explicit_object_geometry_passes_unchanged) ... ok
+test_invalid_direction_and_count_fail_before_3d (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_invalid_direction_and_count_fail_before_3d) ... ok
+test_malformed_object_collection_remains_provenance_error (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_malformed_object_collection_remains_provenance_error) ... ok
+test_nonfinite_geometry_is_already_rejected_before_approval (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_nonfinite_geometry_is_already_rejected_before_approval) ... ok
+test_nonpositive_geometry_fails_before_3d (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_nonpositive_geometry_fails_before_3d) ... ok
+test_panel_vertical_position_must_be_explicit (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_panel_vertical_position_must_be_explicit) ... ok
+test_shared_compiler_defaults_fail_before_3d (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_shared_compiler_defaults_fail_before_3d) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.023s
+
+OK
+
+Exit code: 0
+
+Command: <workspace>/stairs-v4/.venv/bin/python -m unittest discover -s tests/remediation -p test_stairs_validation_boundary.py -v
+test_direct_stair_api_keeps_its_existing_strict_contract (test_stairs_validation_boundary.StairValidationBoundary.test_direct_stair_api_keeps_its_existing_strict_contract) ... ok
+test_real_stair_connections_still_reject_stale_elevations (test_stairs_validation_boundary.StairValidationBoundary.test_real_stair_connections_still_reject_stale_elevations) ... ok
+test_stair_forms_inside_malformed_collections_remain_fail_closed (test_stairs_validation_boundary.StairValidationBoundary.test_stair_forms_inside_malformed_collections_remain_fail_closed) ... ok
+test_stair_report_scope_and_object_provenance_markers_remain_strict (test_stairs_validation_boundary.StairValidationBoundary.test_stair_report_scope_and_object_provenance_markers_remain_strict) ... ok
+test_unmarked_non_stair_collection_keeps_existing_provenance_boundary (test_stairs_validation_boundary.StairValidationBoundary.test_unmarked_non_stair_collection_keeps_existing_provenance_boundary) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+OK
+
+Exit code: 0
+
+Command: <workspace>/stairs-v4/.venv/bin/python -m unittest discover -s tests/remediation -p test_stairs_*.py -v
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+[ACS] objects: requested=4 generated=4 generic_box=0 unsupported=0
+[ACS] objects: requested=1 generated=1 generic_box=0 unsupported=0
+test_actual_compiler_uses_u_components_and_physical_target_opening (test_stairs_geometry.PhysicalStairs.test_actual_compiler_uses_u_components_and_physical_target_opening) ... ok
+test_coverage_accepts_incoming_arrival_and_ignores_roof (test_stairs_geometry.PhysicalStairs.test_coverage_accepts_incoming_arrival_and_ignores_roof) ... ok
+test_declared_unsupported_form_never_falls_back_to_straight (test_stairs_geometry.PhysicalStairs.test_declared_unsupported_form_never_falls_back_to_straight) ... ok
+test_existing_nested_identity_and_authored_alias_are_preserved (test_stairs_geometry.PhysicalStairs.test_existing_nested_identity_and_authored_alias_are_preserved) ... ok
+test_invalid_report_roof_connection_and_huge_numbers_fail_closed (test_stairs_geometry.PhysicalStairs.test_invalid_report_roof_connection_and_huge_numbers_fail_closed) ... ok
+test_malformed_generation_shape_is_preserved_with_controlled_reason (test_stairs_geometry.PhysicalStairs.test_malformed_generation_shape_is_preserved_with_controlled_reason) ... ok
+test_narrow_or_unstated_core_is_not_resized (test_stairs_geometry.PhysicalStairs.test_narrow_or_unstated_core_is_not_resized) ... ok
+test_order_is_elevation_roof_excluded_and_unknowns_preserved (test_stairs_geometry.PhysicalStairs.test_order_is_elevation_roof_excluded_and_unknowns_preserved) ... ok
+test_prospective_resources_reject_before_core_search_or_deepcopy (test_stairs_geometry.PhysicalStairs.test_prospective_resources_reject_before_core_search_or_deepcopy) ... ok
+test_requirement_scope_covers_all_physical_variants_and_rejects_forgery (test_stairs_geometry.PhysicalStairs.test_requirement_scope_covers_all_physical_variants_and_rejects_forgery) ... ok
+test_resource_threshold_is_identical_for_integer_and_float_lexemes (test_stairs_geometry.PhysicalStairs.test_resource_threshold_is_identical_for_integer_and_float_lexemes) ... ok
+test_roof_shared_template_never_receives_stairs (test_stairs_geometry.PhysicalStairs.test_roof_shared_template_never_receives_stairs) ... ok
+test_rotation_opening_and_arrival_preserved (test_stairs_geometry.PhysicalStairs.test_rotation_opening_and_arrival_preserved) ... ok
+test_stale_connection_fails_without_repair (test_stairs_geometry.PhysicalStairs.test_stale_connection_fails_without_repair) ... ok
+test_stale_dimensions_and_moved_arrival_door_fail_at_review_and_handoff (test_stairs_geometry.PhysicalStairs.test_stale_dimensions_and_moved_arrival_door_fail_at_review_and_handoff) ... ok
+test_two_flights_midlanding_and_no_outbound_top (test_stairs_geometry.PhysicalStairs.test_two_flights_midlanding_and_no_outbound_top) ... ok
+test_approved_artifact_hash_and_stairs_same_revision (test_stairs_independent_reader.SerializedStairs.test_approved_artifact_hash_and_stairs_same_revision) ... ok
+test_cardinal_rotations_exact_triangles_and_finish_openings (test_stairs_independent_reader.SerializedStairs.test_cardinal_rotations_exact_triangles_and_finish_openings) ... ok
+test_negative_nonuniform_repeated_instances_and_two_cores (test_stairs_independent_reader.SerializedStairs.test_negative_nonuniform_repeated_instances_and_two_cores) ... ok
+test_reader_detects_serialized_blocked_hole_and_missing_arrival (test_stairs_independent_reader.SerializedStairs.test_reader_detects_serialized_blocked_hole_and_missing_arrival) ... ok
+test_checkout_cannot_hide_an_omitted_helper (test_stairs_runtime_packaging.StairRuntimePackagingTests.test_checkout_cannot_hide_an_omitted_helper) ... ok
+test_release_copy_set_executes_policy (test_stairs_runtime_packaging.StairRuntimePackagingTests.test_release_copy_set_executes_policy) ... ok
+test_direct_stair_api_keeps_its_existing_strict_contract (test_stairs_validation_boundary.StairValidationBoundary.test_direct_stair_api_keeps_its_existing_strict_contract) ... ok
+test_real_stair_connections_still_reject_stale_elevations (test_stairs_validation_boundary.StairValidationBoundary.test_real_stair_connections_still_reject_stale_elevations) ... ok
+test_stair_forms_inside_malformed_collections_remain_fail_closed (test_stairs_validation_boundary.StairValidationBoundary.test_stair_forms_inside_malformed_collections_remain_fail_closed) ... ok
+test_stair_report_scope_and_object_provenance_markers_remain_strict (test_stairs_validation_boundary.StairValidationBoundary.test_stair_report_scope_and_object_provenance_markers_remain_strict) ... ok
+test_unmarked_non_stair_collection_keeps_existing_provenance_boundary (test_stairs_validation_boundary.StairValidationBoundary.test_unmarked_non_stair_collection_keeps_existing_provenance_boundary) ... ok
+
+----------------------------------------------------------------------
+Ran 27 tests in 1.500s
+
+OK
+
+Exit code: 0

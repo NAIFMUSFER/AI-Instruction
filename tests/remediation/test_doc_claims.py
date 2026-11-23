@@ -75,6 +75,22 @@ class Measurements(unittest.TestCase):
                 contextlib.redirect_stdout(io.StringIO()):
             self.assertEqual(claims.main([]), 1)
 
+    def test_fixing_a_valid_count_cannot_hide_an_unavailable_measurement(self):
+        for unavailable in ('failed browser', 'SKIP: browser'):
+            with self.subTest(unavailable=unavailable), tempfile.TemporaryDirectory() as tmp:
+                doc = Path(tmp, 'KNOWN-ISSUES.md')
+                doc.write_text('tests/suite.py (3 assertions)\n')
+                with mock.patch.object(claims, 'ROOT', tmp), \
+                        mock.patch.object(claims, 'discover', return_value=[
+                            ('KNOWN-ISSUES.md', 'tests/suite.py', 3, (0, 1)),
+                            ('KNOWN-ISSUES.md', 'tests/browser.js', 2, (1, 2))]), \
+                        mock.patch.object(claims, 'check_state', return_value=(True, 'ok')), \
+                        mock.patch.object(claims, 'measure', side_effect=[
+                            (4, None), (None, unavailable)]), \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(claims.main(['--fix']), 1)
+                self.assertIn('(4 assertions)', doc.read_text())
+
 
 class RunnerIntegration(unittest.TestCase):
     def invoke(self, check, target_exit=0, guard_exit=0):

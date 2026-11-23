@@ -29,9 +29,9 @@
     return false;
   }
   var entryQuery=new URLSearchParams(location.search||"");
-  var guestEntry=!googleCallback&&!callbackHash
-    &&entryQuery.get("signin")!=="1"
-    &&(entryQuery.get("guest")==="1"||(!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY)));
+  var guestEntry=entryQuery.get("guest")==="1"
+    ||(!googleCallback&&!callbackHash&&entryQuery.get("signin")!=="1"
+      &&!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY));
   function api(path){
     // Auth always uses the configured origin. A model-server override must not
     // redirect passwords or refresh credentials to a different origin.
@@ -107,10 +107,20 @@
     try{localStorage.setItem(SESSION_KEY,JSON.stringify(slim));}catch(e){}
     return slim;
   }
-  function clearSession(){
-    sessionEpoch++;memorySession=null;restoredSession=null;
-    forgetGoogle();
+  function closePrivateProject(){
+    restoredSession=null;
     if(window.ACS){delete window.ACS.authSession;delete window.ACS.project;window.ACS.projectId=null;}
+    var workspace=byId("designWorkspace");
+    if(workspace)workspace.hidden=true;
+    document.body.classList.remove("acs-connected","acs-entered");
+    var login=byId("login");
+    if(login)login.classList.remove("acs-hidden");
+  }
+  function clearSession(){
+    if(guestEntry)return;
+    sessionEpoch++;memorySession=null;
+    forgetGoogle();
+    closePrivateProject();
     try{localStorage.removeItem(SESSION_KEY);localStorage.removeItem(PROJECT_KEY);localStorage.removeItem(RECOVERY_KEY);localStorage.removeItem("acs_user");}catch(e){}
   }
   async function freshSession(){
@@ -343,10 +353,13 @@
     [["acsAuthRecover","recover"],["acsAuthResend","confirm"]].forEach(function(pair){var b=byId(pair[0]);if(b)b.addEventListener("click",function(){if(busy)return;clearPassword();setMode(pair[1]);setStatus("استخدم البريد نفسه الذي أنشأت به حسابك.",false);byId("lgEmail").focus();});});
     var toggle=byId("acsPasswordToggle");if(toggle)toggle.addEventListener("click",function(){var pw=byId("lgPassword"),show=pw.type==="password";pw.type=show?"text":"password";toggle.textContent=show?"إخفاء":"إظهار";toggle.setAttribute("aria-label",show?"إخفاء كلمة المرور":"إظهار كلمة المرور");toggle.setAttribute("aria-pressed",String(show));});
     window.addEventListener("storage",function(e){
-      if(e.key!==SESSION_KEY)return;
+      if(e.key!==SESSION_KEY && e.key!==null)return;
       sessionEpoch++;memorySession=null;
       var next=loadSession(),active=window.ACS&&window.ACS.authSession;
-      if(active&&(!next||next.user.id!==active.user.id))location.reload();
+      if(active&&(!next||next.user.id!==active.user.id)){
+        closePrivateProject();
+        location.reload();
+      }
     });
     acceptEmailCallback();
   }
@@ -365,6 +378,9 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
   function byId(i){return document.getElementById(i);}
   // This classic fallback survives a failed ESM/WebGL graph. It is an explicit
   // read-only schematic, never a substitute for a user's saved project or 3D.
+  /* BEGIN GENERATED GUEST PLANS */
+  var guestPlans = {"villa":{"revision":"plan_2f9be76895a149dea97c0375a8cfd72e","hash":"2e363de60f5789596ea31c566aadd07458cdeb71b8cf45aa6bcb535056fd3593","levels":[{"index":0,"template":"home","elevation":0},{"index":1,"template":"home","elevation":4.2}],"rooms":{"home":[{"rect":[0,0,8,8],"name":"مجلس العائلة","id":"living"},{"rect":[8,0,4,8],"name":"نواة درج — المسار الرأسي غير متحقق","id":"stairs"}]}},"warehouse":{"revision":"plan_ea80f4b496ab4c7a86b1faa9ef40ee9a","hash":"9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f","levels":[{"index":0,"template":"ground","elevation":0}],"rooms":{"ground":[{"rect":[0,0,14,16],"name":"التخزين","id":"storage"},{"rect":[14,0,6,16],"name":"الشحن","id":"dispatch"}]}}};
+  /* END GENERATED GUEST PLANS */
   function guestFallback(){
     if(!window.ACS.guest||window.ACS.guestWorkspaceReady||byId('acsGuestFallback'))return;
     document.body.classList.add('acs-guest-fallback-active');
@@ -373,21 +389,75 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     var panel=document.createElement('section');panel.id='acsGuestFallback';panel.setAttribute('aria-label','تجربة محلية ثنائية الأبعاد');
     panel.innerHTML='<div class="guest-fallback-card"><span class="guest-fallback-brand">ACS</span><h1>تجربة بدون تسجيل</h1>'
       +'<p id="acsGuestFallbackStatus" role="status">جارٍ تجهيز العرض ثلاثي الأبعاد. يمكنك استعراض المثال التوضيحي أدناه الآن.</p>'
-      +'<p>مخطط توضيحي ثابت للقراءة فقط، محلي على جهازك. ليس مشروعك المحفوظ ولا مخططًا تنفيذيًا.</p>'
-      +'<svg id="acsGuestFallbackPlan" viewBox="-1 -1 14 12" role="img" aria-label="مثال مبسط 12 في 10 أمتار، أربعة فراغات مستطيلة">'
-      +'<rect x="0" y="0" width="7" height="6" fill="#b4d9e5"/><rect x="7" y="0" width="5" height="6" fill="#c7dcbd"/>'
-      +'<rect x="0" y="6" width="7" height="4" fill="#e9d4af"/><rect x="7" y="6" width="5" height="4" fill="#c9c4df"/>'
-      +'<text x="3.5" y="3">فراغ ١</text><text x="9.5" y="3">فراغ ٢</text><text x="3.5" y="8">فراغ ٣</text><text x="9.5" y="8">فراغ ٤</text></svg>'
-      +'<div class="guest-fallback-actions"><button type="button" data-guest-room="فراغ ١: 7 × 6 م، المساحة 42 م²">فراغ ١</button>'
-      +'<button type="button" data-guest-room="فراغ ٢: 5 × 6 م، المساحة 30 م²">فراغ ٢</button>'
-      +'<button type="button" data-guest-room="فراغ ٣: 7 × 4 م، المساحة 28 م²">فراغ ٣</button>'
-      +'<button type="button" data-guest-room="فراغ ٤: 5 × 4 م، المساحة 20 م²">فراغ ٤</button></div>'
-      +'<p id="acsGuestFallbackRoom" role="status">اختر فراغًا لعرض أبعاده. الأبعاد هنا للمثال التوضيحي فقط.</p>'
+      +'<div class="guest-fallback-actions" aria-label="أمثلة محلية"><button type="button" data-plan="villa">فيلا سكنية</button><button type="button" data-plan="warehouse">مستودع</button><label for="guestFallbackFloor">الطابق</label><select id="guestFallbackFloor"></select></div>'
+      +'<p>مثال محلي جاهز للقراءة. يعرض حدود الفراغات بالمتر. لا يتغيّر مشروعك المحفوظ عند استعراضه.</p>'
+      +'<svg id="acsGuestFallbackPlan" xmlns="http://www.w3.org/2000/svg" role="img"></svg>'
+      +'<div id="guestFallbackRooms" class="guest-fallback-actions" aria-label="تفاصيل الفراغات"></div>'
+      +'<p id="acsGuestFallbackRoom" role="status"></p>'
+      +'<button id="guestPlanDownload" type="button">تنزيل مخطط هذا الطابق (SVG)</button>'
       +'<div class="guest-fallback-actions"><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
       +'<button id="guestFallbackReload" type="button">إعادة محاولة العرض</button></div>'
       +'<p class="guest-fallback-note">التوليد والتعديل والاستيراد غير متاحة في هذا العرض البديل. لا تُرسل بيانات إلى الخادم.</p></div>';
     document.body.appendChild(panel);
-    panel.querySelectorAll('[data-guest-room]').forEach(function(button){button.addEventListener('click',function(){byId('acsGuestFallbackRoom').textContent=button.getAttribute('data-guest-room');});});
+    var active = 'villa';
+    var floor = byId('guestFallbackFloor');
+    var svg = byId('acsGuestFallbackPlan');
+    var ns = 'http://www.w3.org/2000/svg';
+    function renderPlan(){
+      var sample = guestPlans[active];
+      var level = sample.levels[floor.selectedIndex];
+      var rooms = sample.rooms[level.template];
+      var buttons = byId('guestFallbackRooms');
+      var x0 = Math.min.apply(null,rooms.map(function(r){return r.rect[0];}));
+      var z0 = Math.min.apply(null,rooms.map(function(r){return r.rect[1];}));
+      var x1 = Math.max.apply(null,rooms.map(function(r){return r.rect[0]+r.rect[2];}));
+      var z1 = Math.max.apply(null,rooms.map(function(r){return r.rect[1]+r.rect[3];}));
+      var name = active==='villa'?'فيلا سكنية':'مستودع';
+      svg.replaceChildren(); buttons.replaceChildren();
+      svg.setAttribute('viewBox',[x0-1,z0-1,x1-x0+2,z1-z0+2].join(' '));
+      svg.setAttribute('aria-label',name+' – حدود الفراغات بالمتر – '+floor.options[floor.selectedIndex].text);
+      var meta=document.createElementNS(ns,'metadata');
+      meta.textContent=JSON.stringify({revision_id:sample.revision,model_hash:sample.hash,level:level.index,units:'m',scope:'SPACE_BOUNDARIES_ONLY'});
+      svg.append(meta);
+      rooms.forEach(function(room,index){
+        var box=room.rect;
+        var rect=document.createElementNS(ns,'rect');
+        ['x','y','width','height'].forEach(function(k,i){rect.setAttribute(k,box[i]);});
+        rect.setAttribute('data-source-id',room.id);
+        rect.setAttribute('fill',index%2?'#ded1b4':'#acd1d8');
+        rect.setAttribute('stroke','#345269'); rect.setAttribute('stroke-width','0.08');
+        var label=document.createElementNS(ns,'text');
+        label.setAttribute('x',box[0]+box[2]/2); label.setAttribute('y',box[1]+box[3]/2);
+        label.setAttribute('font-size','0.65'); label.setAttribute('text-anchor','middle');
+        label.setAttribute('dominant-baseline','middle'); label.setAttribute('fill','#183047');
+        label.textContent=room.name.split(' — ')[0];
+        var detail=room.name+' · '+box[2]+' × '+box[3]+' م · '+(box[2]*box[3])+' م²';
+        var button=document.createElement('button');
+        button.type='button'; button.textContent=label.textContent; button.dataset.guestRoom=room.id;
+        function select(){byId('acsGuestFallbackRoom').textContent=detail;}
+        button.addEventListener('click',select); rect.addEventListener('click',select);
+        label.addEventListener('click',select); buttons.append(button); svg.append(rect,label);
+      });
+      byId('acsGuestFallbackRoom').textContent='اختر فراغًا من المخطط أو من أسماء الفراغات لعرض أبعاده.';
+    }
+    function setPlan(key){
+      active=key; floor.replaceChildren();
+      guestPlans[key].levels.forEach(function(level){
+        var option=document.createElement('option'); option.value=level.index;
+        option.textContent=level.index===0?'الأرضي':'الطابق '+level.index;
+        floor.append(option);
+      });
+      panel.querySelectorAll('[data-plan]').forEach(function(button){button.setAttribute('aria-pressed',String(button.dataset.plan===key));});
+      renderPlan();
+    }
+    panel.querySelectorAll('[data-plan]').forEach(function(button){button.addEventListener('click',function(){setPlan(button.dataset.plan);});});
+    floor.addEventListener('change',renderPlan);
+    byId('guestPlanDownload').addEventListener('click',function(){
+      var url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml;charset=utf-8'}));
+      var link=document.createElement('a'); link.href=url; link.download='acs-'+active+'-F'+floor.value+'.svg';
+      panel.append(link); link.click(); link.remove(); setTimeout(function(){URL.revokeObjectURL(url);},1000);
+    });
+    setPlan(active);
     byId('guestFallbackReload').addEventListener('click',function(){location.reload();});
     function failure(message){var status=byId('acsGuestFallbackStatus');if(status){status.textContent=message;status.setAttribute('role','alert');panel.setAttribute('data-engine-state','unavailable');}}
     window.ACS.guestBootFailure=function(){failure('تعذّر تشغيل العرض ثلاثي الأبعاد في هذه الجلسة. المثال ثنائي الأبعاد متاح، ويمكنك تسجيل الدخول إلى مشروعاتك.');};
@@ -499,7 +569,10 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     var rl=byId('engineWarnReload');
     if(rl) rl.addEventListener('click', function(){ location.reload(); });
     setTimeout(function(){
-      if(!window.ACS.ready){
+      // Account entry and connected review intentionally do not mount the local
+      // WebGL engine. Its readiness watchdog belongs only to local studio routes.
+      var localEngine=window.ACS.guest||(window.ACS_AUTH&&window.ACS_AUTH.isLocalTestHost());
+      if(localEngine&&!window.ACS.ready){
         if(window.ACS.guest&&window.ACS.guestBootFailure){window.ACS.guestBootFailure();return;}
         var w=byId('engineWarn');
         if(w){ w.classList.remove('acs-hidden'); }

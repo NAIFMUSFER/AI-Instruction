@@ -1,0 +1,10 @@
+test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work (__main__.WorkspaceLifecycle.test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work) ... ok
+test_source_generation_never_applies_stair_defaults_or_rewrites_imported_objects (__main__.WorkspaceLifecycle.test_source_generation_never_applies_stair_defaults_or_rewrites_imported_objects) ... ok
+test_regeneration_does_not_add_stairs_or_change_existing_room_and_semantic_locks (__main__.WorkspaceLifecycle.test_regeneration_does_not_add_stairs_or_change_existing_room_and_semantic_locks) ... ok
+test_initial_generation_losing_head_race_never_applies_stair_defaults_or_appends (__main__.WorkspaceLifecycle.test_initial_generation_losing_head_race_never_applies_stair_defaults_or_appends) ... ok
+test_resumed_initial_generation_keeps_checkpoint_objects_without_stair_defaults (__main__.WorkspaceLifecycle.test_resumed_initial_generation_keeps_checkpoint_objects_without_stair_defaults) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.279s
+
+OK

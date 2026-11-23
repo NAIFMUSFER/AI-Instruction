@@ -1,0 +1,17 @@
+E
+======================================================================
+ERROR: test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection (__main__.RoofBoundaryRegressions.test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 316, in test_unvalidated_roof_caveats_remain_unknown_instead_of_crashing_projection
+    result=acs_roof.roof_disclosure(b,b['levels'][-1])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 343, in roof_disclosure
+    gaps.append({"room_id": room.get("id"),
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: 'str' object is not a mapping
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)

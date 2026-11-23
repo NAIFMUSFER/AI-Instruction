@@ -853,23 +853,23 @@ CSS = r"""
 """
 
 DOM = r"""
-<div id="adPanel" data-ad="panel">
+<div id="adPanel" data-ad="panel" role="dialog" aria-modal="false" aria-labelledby="adTitle">
   <div class="ad-h"><span id="adTitle"></span>
-    <button class="acs-u-28" id="adClose">×</button></div>
-  <label id="adDetailLbl"></label><select id="adDetail"></select>
-  <label id="adFacadeLbl"></label><select id="adFacade"></select>
-  <label id="adContextLbl"></label><select id="adContext"></select>
-  <label id="adStagingLbl"></label><select id="adStaging"></select>
-  <label id="adCameraLbl"></label><select id="adCamera"></select>
+    <button class="acs-u-28" id="adClose" aria-label="إغلاق التفصيل المعماري / Close architectural detail">×</button></div>
+  <label id="adDetailLbl" for="adDetail"></label><select id="adDetail"></select>
+  <label id="adFacadeLbl" for="adFacade"></label><select id="adFacade"></select>
+  <label id="adContextLbl" for="adContext"></label><select id="adContext"></select>
+  <label id="adStagingLbl" for="adStaging"></label><select id="adStaging"></select>
+  <label id="adCameraLbl" for="adCamera"></label><select id="adCamera"></select>
   <label><input type="checkbox" id="adDiagnostic">
     <span id="adDiagLbl"></span></label>
-  <div class="ad-row"><button id="adApplyBtn">✓</button>
+  <div class="ad-row"><button id="adApplyBtn" aria-label="تطبيق العرض المعماري / Apply architectural presentation">✓</button>
     <span id="adStatus" data-ad-status="NOT_APPLIED">—</span></div>
   <div class="ad-row"><span id="adCompareLbl"></span></div>
   <div class="ad-row">
-    <button id="adCompareE" data-ad-compare="ENGINEERING">E</button>
-    <button id="adCompareP" data-ad-compare="PBR">P</button>
-    <button id="adCompareA" data-ad-compare="ARCHITECTURAL">A</button></div>
+    <button id="adCompareE" data-ad-compare="ENGINEERING" aria-label="عرض هندسي / Engineering view">E</button>
+    <button id="adCompareP" data-ad-compare="PBR" aria-label="عرض الخامات والإضاءة / PBR view">P</button>
+    <button id="adCompareA" data-ad-compare="ARCHITECTURAL" aria-label="عرض التفاصيل المعمارية / Architectural view">A</button></div>
   <div id="adDiagOut"></div>
   <div class="ad-note" id="adReadonly"></div>
 </div>

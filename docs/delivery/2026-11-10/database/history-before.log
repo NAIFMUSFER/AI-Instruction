@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+  File "<frozen runpy>", line 287, in run_path
+  File "<frozen runpy>", line 98, in _run_module_code
+  File "<frozen runpy>", line 88, in _run_code
+  File "tests/remediation/test_plan_store_paged_history.py", line 94, in <module>
+    restored=load_workspace(store(db),PROJECT,actor_id=ACTOR)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/repo/acs_plan_store_reload.py", line 63, in load_workspace
+    snapshot = backend.workspace_snapshot(project_id, actor_id=actor_id)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/db-evidence/legacy_adapter.py", line 218, in workspace_snapshot
+    snapshot = self._rpc("acs_plan_workspace_snapshot", {"p_project": project_id})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/db-evidence/legacy_adapter.py", line 170, in _rpc
+    result = self._request("POST", "/rest/v1/rpc/" + name, payload)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/db-evidence/legacy_adapter.py", line 147, in _request
+    raise PlanError("STORE_UNAVAILABLE", "Supabase response exceeded the bounded store contract")
+acs_plan_review.PlanError: Supabase response exceeded the bounded store contract

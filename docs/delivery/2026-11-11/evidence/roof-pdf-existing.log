@@ -1,0 +1,12 @@
+test_artifact_and_receipt_tamper_are_detected (__main__.ApprovedPdfExportTests.test_artifact_and_receipt_tamper_are_detected) ... ok
+test_draft_cannot_reach_pdf_projection (__main__.ApprovedPdfExportTests.test_draft_cannot_reach_pdf_projection) ... ok
+test_existing_output_is_not_overwritten_implicitly (__main__.ApprovedPdfExportTests.test_existing_output_is_not_overwritten_implicitly) ... ok
+test_later_unapproved_draft_cannot_replace_exportable_frozen_baseline (__main__.ApprovedPdfExportTests.test_later_unapproved_draft_cannot_replace_exportable_frozen_baseline) ... ok
+test_receipt_json_is_canonical_and_contains_no_compliance_claim (__main__.ApprovedPdfExportTests.test_receipt_json_is_canonical_and_contains_no_compliance_claim) ... ok
+test_residential_multilevel_pdf_is_exact_hash_bound_and_verifiable (__main__.ApprovedPdfExportTests.test_residential_multilevel_pdf_is_exact_hash_bound_and_verifiable) ... ok
+test_warehouse_rack_dock_locks_and_requirement_sources_survive_pdf_receipt (__main__.ApprovedPdfExportTests.test_warehouse_rack_dock_locks_and_requirement_sources_survive_pdf_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.803s
+
+OK

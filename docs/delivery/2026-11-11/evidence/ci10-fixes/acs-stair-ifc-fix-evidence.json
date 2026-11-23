@@ -1,0 +1,50 @@
+{
+  "checked_out_head": "b88f560ca35f6ef6dc4acf6cb2d06af13676432e",
+  "scope": "Local working-tree reproduction and fix; concurrent geometry/review fixes present. Not a clean-head or deployed acceptance claim.",
+  "parent_comparator_run": false,
+  "source_hashes_at_fix_freeze": {
+    "acs_bim.py": "c4e4a00d141df47abe7ca43d232cca4e5f83bd4a1154da70feecda8a4ff6c45b",
+    "tools/build_bim_browser.py": "20a68aded427d13eec7aff57c624dbd718b699a62e1672ee7b6f244c3292a72d",
+    "public/app/generated/bim.js": "c3fef8d24843252dc3ec84c3a3082b6c25507a1d87c569db2f8901064c44db33",
+    "tests/remediation/test_stair_ifc_boundary.py": "ceeb2f5d37a325c155036e4874a158f955645ea61c5f1582d6a5f769e60e6a60"
+  },
+  "committed_head_source_hashes": {
+    "acs_bim.py": "fe8b14e307f034cfd1d93fcbbbce4da8433b899f51e0c4bdffcc2f68d038d4bb",
+    "tools/build_bim_browser.py": "93f2c6c5b3dbf972e447272daa928a4f94f56331da5869013b11b8df2f744aac",
+    "public/app/generated/bim.js": "7810f48fa24427bdbe106786a9aa333d2ea3760b81009337c5322ac60bcfe6e1",
+    "tests/remediation/test_stair_ifc_boundary.py": "2f5d9d575f53622997bd9373a59a0d45b12679528f618e3a8f73ab65e14b43cc"
+  },
+  "commands": {
+    "original": "env -u PYTHONPATH .venv/bin/python tests/remediation/test_residential_layout_fallback.py",
+    "scoped": "env -u PYTHONPATH .venv/bin/python tests/remediation/test_stair_ifc_boundary.py",
+    "legacy": "env -u PYTHONPATH .venv/bin/python tests/phase8/test_bim.py",
+    "connected": "env -u PYTHONPATH .venv/bin/python tests/remediation/test_plan_ifc_export.py"
+  },
+  "logs": {
+    "/tmp/acs-stair-connected-ifc-before.log": {
+      "exit_code": 1,
+      "sha256": "112fdb3fbf301b6eac3759b4f47b5dd93c22db2850d72064895e45ef9ab914d7"
+    },
+    "/tmp/acs-stair-connected-ifc-after.log": {
+      "exit_code": 0,
+      "sha256": "325e4553f6e5698a696ee7a1138ee4ecfa1cef91a59c273bdb69b608bb4c7796"
+    },
+    "/tmp/acs-stair-ifc-scope-before.log": {
+      "exit_code": 1,
+      "sha256": "bcc0b4871b838950b47c085c8a9f1721e25d7c03ce706d70a3b492590d95a5f1"
+    },
+    "/tmp/acs-stair-ifc-scope-after.log": {
+      "exit_code": 0,
+      "sha256": "8f9c972f5cdd0246bea7c6b55f3e762897ca52bb1254effb6aec4b6025333230"
+    },
+    "/tmp/acs-stair-ifc-scope-legacy.log": {
+      "exit_code": 0,
+      "sha256": "2af45bd7bfc1e464e8ebf3125a343365e796e53cbd54b687dd166f5f447f1f5d"
+    },
+    "/tmp/acs-stair-ifc-scope-connected.log": {
+      "exit_code": 0,
+      "sha256": "82662d4911af58eac7494362fef465447fc1c31d0f25831fba722e4f7ab2827e"
+    }
+  },
+  "change": "Skip legacy global opening identity validation only for SPACES_ONLY; retain full-export guards. No canonical source IDs or geometry rewritten."
+}

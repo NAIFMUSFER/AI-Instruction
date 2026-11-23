@@ -2,11 +2,13 @@
 #acsGuestBanner{position:fixed;z-index:25;top:12px;left:12px;right:380px;padding:12px 16px;border:1px solid #45647c;border-radius:14px;background:#0b1c2bef;color:#eff7ff;box-shadow:0 6px 24px #0003;font:14px/1.55 system-ui,sans-serif;backdrop-filter:blur(10px)}
 #acsGuestBanner strong{font-size:16px}
 #acsGuestBanner p{margin:4px 0 8px;color:#c2d7e5}
+#acsGuestBanner .guest-save{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#c2d7e5;margin-bottom:6px}
+#acsGuestBanner [hidden]{display:none!important}
 #acsGuestBanner .guest-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 #acsGuestBanner button,#acsGuestBanner a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border:1px solid #48637a;border-radius:10px;background:#1d354b;color:#fff;font:inherit;text-decoration:none;cursor:pointer}
 #acsGuestBanner a{background:#73d6f4;color:#072432;font-weight:700}
 #acsGuestBanner button:focus-visible,#acsGuestBanner a:focus-visible{outline:3px solid #fff;outline-offset:3px}
-body.acs-guest #camBar{top:170px}
+body.acs-guest #camBar{top:196px}
 body.acs-guest #genLLM:disabled,body.acs-guest #bNotesApply:disabled{opacity:.55;cursor:not-allowed}
 body.acs-guest #left [hidden]{display:none!important}
 @media(max-width:820px){
@@ -15,7 +17,7 @@ body.acs-guest #left [hidden]{display:none!important}
  #acsGuestBanner p{font-size:11px;line-height:1.5;margin-bottom:6px}
  #acsGuestBanner .guest-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
  #acsGuestBanner button{padding:6px 3px;font-size:11px;min-width:0}
- #acsGuestBanner a{grid-column:1/-1;min-height:40px;padding:5px;font-size:12px}
+ #acsGuestBanner a{grid-column:1/-1;min-height:44px;padding:5px;font-size:12px}
  body.acs-guest #camBar{top:auto}
  body.acs-guest #left.open{z-index:35}
 }
@@ -38,3 +40,6 @@ body.acs-guest-fallback-active::after{display:none!important}
 #acsGuestFallback button:focus-visible,#acsGuestFallback a:focus-visible{outline:3px solid #fff;outline-offset:3px}
 #acsGuestFallback .guest-fallback-note{font-size:13px}
 @media(max-width:600px){#acsGuestFallback{padding:12px}#acsGuestFallback .guest-fallback-card{padding:16px}#acsGuestFallback h1{font-size:22px}#acsGuestFallbackPlan{height:260px}#acsGuestFallback .guest-fallback-actions>*{flex:1;white-space:nowrap;font-size:14px}}
+#acsGuestFallback select{min-height:44px;border:1px solid #5e7c96;border-radius:8px;background:#253f58;color:#fff;padding:6px 14px;font:inherit}
+#acsGuestFallback [aria-pressed=true]{border-color:#79d8f3;background:#284e64}
+#acsGuestFallback .guest-fallback-actions{align-items:center;margin-block:8px}

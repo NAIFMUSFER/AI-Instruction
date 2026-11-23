@@ -1422,7 +1422,8 @@ function _dcPdfTextSafe(s){
   const t=String(s);
   for(let i=0;i<t.length;i++){
     const o=t.charCodeAt(i);
-    out+=(o>=32&&o<=126)?t.charAt(i):'?'; }
+    if(o<32||o>126) throw new Error('PDF_UNICODE_REQUIRES_SERVER: تصدير PDF العربي متاح من المشروع المعتمد في مساحة العمل. استخدم SVG أو JSON للعمل المحلي.');
+    out+=t.charAt(i); }
   return out; }
 
 function dcSheetPdfStreams(sheets,drawings){
@@ -1433,7 +1434,7 @@ function dcSheetPdfStreams(sheets,drawings){
     const ops=[];
     ops.push('q');
     ops.push('1 1 1 rg 0 0 '+_dcFmt(wPt)+' '+_dcFmt(hPt)+' re f');
-    ops.push('0 0 0 RG');
+    ops.push('0 0 0 RG 0 0 0 rg');
     sh.viewports.forEach(vp=>{
       const d=drawings[vp.view_id];
       if(!d) return;
@@ -1878,7 +1879,10 @@ const DC = (function(){
         viewports:S.views.slice(0,1).map(v=>({view_id:v.view.view_id,
           x:10,y:10,width:240,height:160}))}); }catch(x){} };
     const rg=$('dcRegenerate'); if(rg) rg.onclick=()=>{ try{ regenerate(); }catch(x){} };
-    const ex=$('dcExport'); if(ex) ex.onclick=()=>{ try{ exportAll(); }catch(x){} };
+    const ex=$('dcExport'); if(ex) ex.onclick=()=>{ try{ exportAll(); }catch(x){
+      const host=$('dcBody'); if(host){ const note=document.createElement('p');
+        note.setAttribute('role','alert');note.textContent=String(x.message||'تعذر التصدير.');host.prepend(note); }
+    } };
     return true; }
   if(typeof document!=='undefined'&&document.addEventListener)
     document.addEventListener('DOMContentLoaded',init);

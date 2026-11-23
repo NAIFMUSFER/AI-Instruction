@@ -12,6 +12,8 @@ import math
 from collections import defaultdict
 from typing import Any
 
+from acs_geometry_contract import occupied_template_instances
+
 SCHEMA = "acs.plan-scorecard/1.0"
 EPS = 1e-9
 _INDUSTRIAL = {"warehouse", "industrial", "factory", "logistics", "مستودع"}
@@ -42,35 +44,6 @@ def _typology(model: dict) -> str:
     if raw:
         return raw
     return "unknown"
-
-
-def _level_templates(model: dict) -> tuple[list[str], list[str]]:
-    """Return valid template instances and disclosure warnings.
-
-    Repeated templates are repeated intentionally because measured areas/counts are
-    building-instance metrics, not template-library metrics.
-    """
-    floors = model.get("floors") if isinstance(model.get("floors"), dict) else {}
-    levels = model.get("levels")
-    warnings: list[str] = []
-    if not isinstance(levels, list) or not levels:
-        return [], ["LEVELS_NOT_MEASURABLE"]
-    templates: list[str] = []
-    seen_indices: set[int] = set()
-    for level in levels:
-        if not isinstance(level, dict) or type(level.get("index")) is not int:
-            warnings.append("INVALID_LEVEL_IDENTITY")
-            continue
-        if level["index"] in seen_indices:
-            warnings.append("DUPLICATE_LEVEL_INDEX")
-            continue
-        seen_indices.add(level["index"])
-        template = level.get("template")
-        if not isinstance(template, str) or template not in floors:
-            warnings.append("LEVEL_TEMPLATE_NOT_MEASURABLE")
-            continue
-        templates.append(template)
-    return templates, warnings
 
 
 def _rect_tuple(rect: Any) -> tuple[float, float, float, float] | None:
@@ -369,7 +342,8 @@ def measure_plan(model: dict) -> dict:
 
     typology = _typology(model)
     floors = model.get("floors") if isinstance(model.get("floors"), dict) else {}
-    templates, warnings = _level_templates(model)
+    templates, warnings = occupied_template_instances(model)
+    complete_levels = bool(templates) and not warnings
 
     site = model.get("site") if isinstance(model.get("site"), dict) else {}
     sw, sd = site.get("w"), site.get("d")
@@ -380,7 +354,7 @@ def measure_plan(model: dict) -> dict:
         warnings.append("SITE_AREA_NOT_MEASURABLE")
 
     space_area = 0.0
-    space_area_known = bool(templates)
+    space_area_known = complete_levels
     space_count_known = bool(templates)
     zone_area: defaultdict[str, float] = defaultdict(float)
     unclassified_zone_area = 0.0
@@ -735,10 +709,10 @@ def measure_plan(model: dict) -> dict:
     metrics: dict[str, Any] = {
         "site_area_m2": round(site_area, 6) if site_area is not None else None,
         "level_count": len(templates) if templates else None,
-        "space_rect_area_m2": round(space_area, 6) if space_area_known else None,
+        # Requirement equality is evaluated on canonical dimensions before display rounding.
+        "space_rect_area_m2": space_area if space_area_known and math.isfinite(space_area) else None,
         "space_area_by_role_m2": (
-            {k: round(v, 6) for k, v in sorted(zone_area.items())}
-            if space_area_known else None),
+            dict(sorted(zone_area.items())) if space_area_known else None),
         "unclassified_space_area_m2": (
             round(unclassified_zone_area, 6) if space_area_known else None),
         "space_count_by_role": (

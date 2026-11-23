@@ -1,0 +1,13 @@
+.F.....
+======================================================================
+FAIL: test_computed_plan_saves_reopens_and_exports_through_normal_approval (__main__.LayoutFallback.test_computed_plan_saves_reopens_and_exports_through_normal_approval)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_residential_layout_fallback.py", line 97, in test_computed_plan_saves_reopens_and_exports_through_normal_approval
+    self.assertTrue(view['authority']['can_approve_concept'])
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.324s
+
+FAILED (failures=1)

@@ -1,0 +1,344 @@
+[
+  {
+    "path": "acs_auth.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Verified bearer admission and bounded external identity verification",
+    "risk": "high",
+    "findings": [
+      "SEC-03",
+      "PREAUTH-BOUND"
+    ],
+    "tests": [
+      "test_delivery_paid_admission.py",
+      "test_production_auth_boundary.py",
+      "test_supabase_auth_integration.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_auth_gateway.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Gateway parsing and outbound auth handlers; bounded scheduling",
+    "risk": "high",
+    "findings": [
+      "PREAUTH-BOUND",
+      "BODY-CAP"
+    ],
+    "tests": [
+      "test_auth_gateway.py",
+      "test_delivery_paid_admission.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_request_admission.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "New process-local outbound gate and streaming pre-parser input bounds",
+    "risk": "high",
+    "findings": [
+      "PREAUTH-BOUND",
+      "BODY-CAP"
+    ],
+    "tests": [
+      "test_delivery_paid_admission.py",
+      "test_delivery_ingress.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_ingress.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "New process-local outbound gate and streaming pre-parser input bounds",
+    "risk": "high",
+    "findings": [
+      "PREAUTH-BOUND",
+      "BODY-CAP"
+    ],
+    "tests": [
+      "test_delivery_paid_admission.py",
+      "test_delivery_ingress.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_async_jobs.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Retire production unscoped submissions; preserve authenticated denial and receipt reads; cap direct/async streaming input",
+    "risk": "high",
+    "findings": [
+      "PAID-ADMISSION",
+      "BODY-CAP"
+    ],
+    "tests": [
+      "test_delivery_ingress.py",
+      "test_async_generation_jobs.py",
+      "test_production_auth_boundary.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_plan_http.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Make historical chat URL use identical durable workspace admission; preserve free command authorization",
+    "risk": "high",
+    "findings": [
+      "PAID-ADMISSION"
+    ],
+    "tests": [
+      "test_plan_http_command_boundary.py",
+      "test_delivery_paid_admission.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_workspace_service.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Provider entry, explicit budgets, progress relay, safe uncertain-outcome messages, pre-paid metric guard and reconciled PR183 generation policy",
+    "risk": "high",
+    "findings": [
+      "PAID-ADMISSION",
+      "REQUIREMENT-VOCABULARY",
+      "PR183"
+    ],
+    "tests": [
+      "test_connected_workspace.py",
+      "test_workspace_recovery.py",
+      "test_delivery_paid_admission.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_workspace_http.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Shared admission pool, actor quotas, no process-ID abandonment; full pending branch adds signed leases and fenced progress",
+    "risk": "high",
+    "findings": [
+      "PAID-ADMISSION",
+      "JOB-OWNERSHIP",
+      "OUTCOME-UNKNOWN"
+    ],
+    "tests": [
+      "test_delivery_paid_admission.py",
+      "test_connected_workspace.py",
+      "test_workspace_recovery.py",
+      "test_delivery_job_leases_postgres.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "pending database increment"
+  },
+  {
+    "path": "acs_generation_job.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Parent/child execution and progress boundaries, duplex acknowledgment before a paid call advances",
+    "risk": "high",
+    "findings": [
+      "DURABLE-PROGRESS-ACK"
+    ],
+    "tests": [
+      "test_delivery_progress_ack.py",
+      "test_job_boundary.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "pending database increment"
+  },
+  {
+    "path": "supabase/migrations/2026111002_acs_workspace_job_leases.sql",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Server-signed job reservation, leases, role locks, durable quota and one-resume CAS",
+    "risk": "high",
+    "findings": [
+      "JOB-OWNERSHIP",
+      "PAID-ADMISSION",
+      "OUTCOME-UNKNOWN"
+    ],
+    "tests": [
+      "test_delivery_job_leases_postgres.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "pending database increment"
+  },
+  {
+    "path": "tests/remediation/test_delivery_paid_admission.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "No-provider security regression witnesses",
+    "risk": "medium",
+    "findings": [
+      "PAID-ADMISSION",
+      "PREAUTH-BOUND",
+      "BODY-CAP",
+      "OUTCOME-UNKNOWN"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "tests/remediation/test_delivery_ingress.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "No-provider security regression witnesses",
+    "risk": "medium",
+    "findings": [
+      "PAID-ADMISSION",
+      "PREAUTH-BOUND",
+      "BODY-CAP",
+      "OUTCOME-UNKNOWN"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "tests/remediation/test_delivery_progress_ack.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Real subprocess accounting and executable PostgreSQL lease/fencing regressions",
+    "risk": "medium",
+    "findings": [
+      "DURABLE-PROGRESS-ACK",
+      "JOB-OWNERSHIP"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "pending database increment"
+  },
+  {
+    "path": "tests/remediation/test_delivery_job_leases_postgres.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Real subprocess accounting and executable PostgreSQL lease/fencing regressions",
+    "risk": "medium",
+    "findings": [
+      "DURABLE-PROGRESS-ACK",
+      "JOB-OWNERSHIP"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "pending database increment"
+  },
+  {
+    "path": "tests/remediation/test_plan_http_command_boundary.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Update existing acceptance assertions to shared admission, explicit resumability, and signed job writes",
+    "risk": "medium",
+    "findings": [
+      "PAID-ADMISSION",
+      "JOB-OWNERSHIP"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "tests/remediation/test_workspace_recovery.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Update existing acceptance assertions to shared admission, explicit resumability, and signed job writes",
+    "risk": "medium",
+    "findings": [
+      "PAID-ADMISSION",
+      "JOB-OWNERSHIP"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "tests/remediation/test_connected_workspace.py",
+    "owner": "paid_jobs",
+    "depth": "selected",
+    "purpose": "Update existing acceptance assertions to shared admission, explicit resumability, and signed job writes",
+    "risk": "medium",
+    "findings": [
+      "PAID-ADMISSION",
+      "JOB-OWNERSHIP"
+    ],
+    "tests": [
+      "self"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_provider_budget.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Inspected provider budget event ordering and actor-bound store construction; no edits",
+    "risk": "high",
+    "findings": [
+      "DURABLE-PROGRESS-ACK",
+      "PAID-ADMISSION"
+    ],
+    "tests": [
+      "test_delivery_progress_ack.py",
+      "test_workspace_recovery.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_workspace_progress.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Inspected provider budget event ordering and actor-bound store construction; no edits",
+    "risk": "high",
+    "findings": [
+      "DURABLE-PROGRESS-ACK",
+      "PAID-ADMISSION"
+    ],
+    "tests": [
+      "test_delivery_progress_ack.py",
+      "test_workspace_recovery.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  },
+  {
+    "path": "acs_plan_session.py",
+    "owner": "paid_jobs",
+    "depth": "deep",
+    "purpose": "Inspected provider budget event ordering and actor-bound store construction; no edits",
+    "risk": "high",
+    "findings": [
+      "DURABLE-PROGRESS-ACK",
+      "PAID-ADMISSION"
+    ],
+    "tests": [
+      "test_delivery_progress_ack.py",
+      "test_workspace_recovery.py"
+    ],
+    "generated_from": [],
+    "deployment_scope": "safe source increment"
+  }
+]

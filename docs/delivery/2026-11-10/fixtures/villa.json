@@ -1,0 +1,137 @@
+{
+  "meta": {
+    "type": "residential",
+    "name": "Synthetic two-level villa"
+  },
+  "site": {
+    "w": 20,
+    "d": 20
+  },
+  "wall_h": 4.05,
+  "wall_t": 0.2,
+  "floor_height": 3.2,
+  "levels": [
+    {
+      "index": 0,
+      "template": "home",
+      "elevation": 0
+    },
+    {
+      "index": 1,
+      "template": "home",
+      "elevation": 4.2
+    }
+  ],
+  "floors": {
+    "home": {
+      "rooms": [
+        {
+          "id": "living",
+          "name": "مجلس العائلة",
+          "role": "living",
+          "rect": [
+            0,
+            0,
+            8,
+            8
+          ],
+          "walls": [
+            "N",
+            "S",
+            "W",
+            "E"
+          ],
+          "doors": [
+            {
+              "id": "entry",
+              "edge": "N",
+              "offset": 4,
+              "width": 1.2,
+              "height": 2.2,
+              "material": "wood"
+            },
+            {
+              "id": "core_access",
+              "edge": "E",
+              "offset": 4,
+              "width": 1.2,
+              "height": 2.2,
+              "material": "wood"
+            }
+          ],
+          "windows": [
+            {
+              "id": "west_window",
+              "edge": "W",
+              "offset": 4,
+              "width": 2,
+              "height": 1.5,
+              "sill": 0.9
+            }
+          ],
+          "objects": [
+            {
+              "id": "dining_table",
+              "kind": "table",
+              "x": 4,
+              "z": 4,
+              "y": 0,
+              "w": 2,
+              "d": 1,
+              "h": 0.8,
+              "rot": 45,
+              "count": 1,
+              "pitch": 1,
+              "dir": "x"
+            }
+          ],
+          "points": [
+            {
+              "id": "ceiling_light",
+              "type": "light",
+              "x": 4.0,
+              "z": 4.0
+            }
+          ]
+        },
+        {
+          "id": "stairs",
+          "name": "نواة درج — المسار الرأسي غير متحقق",
+          "role": "stairs",
+          "core_id": "stair_core",
+          "rect": [
+            8,
+            0,
+            4,
+            8
+          ],
+          "walls": [
+            "N",
+            "S",
+            "W",
+            "E"
+          ],
+          "doors": [
+            {
+              "id": "living_access",
+              "edge": "W",
+              "offset": 4,
+              "width": 1.2,
+              "height": 2.2,
+              "material": "wood"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "ceiling_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 4.0
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

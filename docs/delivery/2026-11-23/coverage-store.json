@@ -1,0 +1,229 @@
+[
+  {
+    "path": "acs_supabase_plan_store.py",
+    "purpose": "Actor-bound PostgREST transport, paged role-filtered project metadata and single immutable revision receipts",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-HISTORY",
+      "DB-MEMBERSHIP",
+      "DB-DIRECT-WRITE"
+    ],
+    "tests": [
+      "tests/remediation/test_rls_history_transport.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "acs_plan_store_reload.py",
+    "purpose": "Reconstruct canonical revisions and locked approvals from an integrity-checked history",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "DB-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_reload.py",
+      "tests/remediation/test_rls_history_transport.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "acs_plan_session.py",
+    "purpose": "Construct request-scoped store from verified subject and its bearer",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-MEMBERSHIP"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_authenticated_session.py"
+    ]
+  },
+  {
+    "path": "acs_plan_store_port.py",
+    "purpose": "Read/write store protocol and SQLite snapshot adapter",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "DB-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_port.py"
+    ]
+  },
+  {
+    "path": "acs_plan_store.py",
+    "purpose": "Revision/approval receipt validation and SQLite storage",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "DB-DIRECT-WRITE",
+      "DB-HISTORY"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_adapter.py",
+      "tests/remediation/test_plan_store_reload.py"
+    ]
+  },
+  {
+    "path": "acs_plan_semantic_diff.py",
+    "purpose": "Stable room and element identity in revision comparisons",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "DB-DIFF-ID"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_semantic_diff.py"
+    ]
+  },
+  {
+    "path": "acs_plan_options.py",
+    "purpose": "Per-option canonical-size admission and scorecard comparison",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "DB-DIFF-LIMIT"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_revision_compare_restore.py"
+    ]
+  },
+  {
+    "path": "supabase/migrations/20260912_acs_plan_store_v2.sql",
+    "purpose": "Private project tables, ownership/RLS and immutable receipts",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-MEMBERSHIP",
+      "DB-DIRECT-WRITE"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "supabase/migrations/20260912_acs_plan_store_v2_harden_functions.sql",
+    "purpose": "Move checked helpers to private schema and narrow privileges",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-MEMBERSHIP",
+      "DB-DIRECT-WRITE"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "supabase/migrations/20260913_acs_plan_store_rpc_v2.sql",
+    "purpose": "Original definer helpers, membership, canonical RPCs and grants",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-MEMBERSHIP",
+      "DB-DIRECT-WRITE"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "supabase/migrations/20260913_acs_plan_store_rpc_v2_lockdown.sql",
+    "purpose": "Revoke legacy direct inserts on immutable revision/approval tables",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-MEMBERSHIP",
+      "DB-DIRECT-WRITE"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "supabase/migrations/20260914035029_acs_project_owner_returning.sql",
+    "purpose": "Permit owner read on project creation before membership trigger",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "DB-MEMBERSHIP",
+      "DB-DIRECT-WRITE"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_rpc_schema.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_rls_history_transport.py",
+    "purpose": "Regression for 3 MB aggregate overrun, pagination, changed approval, corrupt receipt and lost membership",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "DB-HISTORY",
+      "DB-MEMBERSHIP"
+    ],
+    "tests": [
+      "tests/remediation/test_rls_history_transport.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_rls_history_postgrest.py",
+    "purpose": "Fresh real PostgREST and PostgreSQL fixtures for approved recovery and role isolation",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "DB-HISTORY",
+      "DB-MEMBERSHIP"
+    ],
+    "tests": [
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_supabase_plan_store_adapter.py",
+    "purpose": "Verified subject, receipt and transport contract",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "DB-HISTORY",
+      "DB-MEMBERSHIP"
+    ],
+    "tests": [
+      "tests/remediation/test_supabase_plan_store_adapter.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_plan_store_authenticated_session.py",
+    "purpose": "Session-derived API actor and token checks",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "DB-HISTORY",
+      "DB-MEMBERSHIP"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_store_authenticated_session.py"
+    ]
+  },
+  {
+    "path": ".github/workflows/production-supabase-plan-store-adapter.yml",
+    "purpose": "Pull-request checks for schema, adapter and real PostgREST recovery",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "DB-HISTORY",
+      "DB-MEMBERSHIP"
+    ],
+    "tests": [
+      "tests/remediation/test_rls_history_transport.py",
+      "tests/remediation/test_rls_history_postgrest.py"
+    ]
+  }
+]

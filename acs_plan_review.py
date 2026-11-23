@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 from acs_plan_scorecard import measure_plan
+from acs_requirement_metrics import METRICS
 
 SCHEMA = "acs.plan-review/1.0"
 MAX_BYTES = 900_000
@@ -88,6 +89,70 @@ def _number(value: Any) -> bool:
 
 def _id(value: Any) -> bool:
     return isinstance(value, str) and bool(value.strip()) and len(value) <= 160
+
+
+def vertical_geometry_coverage(model: dict, core_alignment: str) -> dict:
+    """تغطية معلنة، لا شرط اعتماد جديد ولا إثبات صلاحية الدرج للمشي.
+
+    PRESENT means dimensioned core objects were declared. It does not establish
+    flights, landings, headroom, slab openings or a continuous traversable path.
+    The architectural compiler's existing object classifier supplies the kind.
+    """
+    from acs_arch import _core_kind
+    coverage = {'core_alignment': core_alignment, 'physical_traversal': 'NOT_VERIFIED',
+                'geometry_scope': 'EXPLICIT_CORE_OBJECTS',
+                'geometry': 'NOT_VERIFIED', 'missing_geometry': []}
+    levels = model.get('levels')
+    valid_levels = isinstance(levels, list) and all(isinstance(level, dict)
+        and isinstance(level.get('template'), str) and level['template'] in model['floors']
+        for level in levels)
+    if not valid_levels:
+        return coverage
+    levels=[level for level in levels if level.get('kind')!='roof']
+    from acs_stairs import has_u_stairs, stair_connections
+    connections=[]
+    if has_u_stairs(model):
+        try:
+            connections=stair_connections(model)
+        except ValueError as exc:
+            coverage['geometry']='MISSING'
+            coverage['missing_geometry']=[{'code':str(exc)}]
+            return coverage
+        coverage['geometry_scope']='EXPLICIT_U_FLIGHTS_AND_LANDINGS'
+    missing = []
+    unknown = not levels
+    def complete(obj):
+        return (isinstance(obj, dict) and _core_kind(obj) is not None
+                and all(_number(obj.get(k)) for k in ('x', 'y', 'z', 'w', 'd', 'h'))
+                and all(obj[k] > 0 for k in ('w', 'd', 'h')))
+    def objects_of(room):
+        objects = room.get('objects')
+        return objects if isinstance(objects, list) else []
+    for level in levels if len(levels) > 1 else []:
+        floor = model['floors'].get(level['template'], {})
+        cores = [r for r in floor.get('rooms', [])
+                 if r.get('role') in ('stair', 'stairs', 'elevator')]
+        floor_objects = [obj for r in floor.get('rooms', []) for obj in objects_of(r)
+                         if isinstance(obj, dict) and _core_kind(obj) is not None]
+        if not cores:
+            unknown = unknown or not any(complete(obj) for obj in floor_objects)
+        for room in cores:
+            kind = 'ELEVATOR_SHAFT' if room['role'] == 'elevator' else 'STAIR'
+            represented = any(complete(obj) and _core_kind(obj) == kind for obj in objects_of(room))
+            if kind=='STAIR' and connections:
+                represented=represented or any(c['target_level_index']==level.get('index') and
+                    c['target_room_id']==room.get('id') and c['core_id']==room.get('core_id') for c in connections)
+            if not represented:
+                # عنصر في غرفة أخرى لا يثبت ارتباطه بهذه النواة ولا يثبت غيابه.
+                if any(complete(obj) and _core_kind(obj) == kind for obj in floor_objects):
+                    unknown = True
+                    continue
+                missing.append({'level_index': level.get('index'), 'room_id': room.get('id'),
+                                'core_id': room.get('core_id'), 'kind': kind})
+    coverage['geometry'] = ('NOT_APPLICABLE' if len(levels) == 1 else
+                            'MISSING' if missing else 'NOT_VERIFIED' if unknown else 'PRESENT')
+    coverage['missing_geometry'] = missing
+    return coverage
 
 
 def _room_index(model: dict) -> dict[tuple[str, str], dict]:
@@ -202,6 +267,9 @@ def _geometry(model: dict) -> tuple[list[dict], dict]:
             issue("INVALID_LEVEL", "/levels")
             levels_valid = False
             continue
+        if "elevation" in level and not _number(level["elevation"]):
+            issue("INVALID_LEVEL_ELEVATION", "/levels")
+            levels_valid = False
         seen.add(level["index"])
         used.add(level["template"])
     areas, room_counts = {}, {}
@@ -241,13 +309,33 @@ def _geometry(model: dict) -> tuple[list[dict], dict]:
         room_counts[template] = len(rooms)
     if not model["floors"]:
         issue("EMPTY_MODEL", "/floors")
-    total_area = sum(areas[l["template"]] for l in levels) if levels_valid and not issues else None
+    from acs_stairs import _uses_stair_contract, stair_connections, template_scope_aliases, validate_stair_report
+    if not issues and _uses_stair_contract(model):
+        try:
+            template_scope_aliases(model)
+            stair_connections(model)
+            validate_stair_report(model)
+        except ValueError as exc:
+            issue(str(exc), '/floors')
+    # A level explicitly declared ``kind: "roof"`` is a roof deck, never an occupied
+    # storey (acs_arch reports it the same way). It stays in the model, the plans
+    # and the 3D artifact, and is measured separately instead of inflating storey
+    # count, space count or room area. Only the explicit kind is honoured here;
+    # a template that merely has "roof" in its name keeps its previous treatment.
+    roof_levels = [l for l in levels if l.get("kind") == "roof"] if levels_valid else []
+    occupied_levels = [l for l in levels if l.get("kind") != "roof"] if levels_valid else []
+    if levels_valid and roof_levels and not occupied_levels:
+        issue("NO_OCCUPIED_LEVEL", "/levels")
+    total_area = sum(areas[l["template"]] for l in occupied_levels) if levels_valid and not issues else None
     if total_area is not None and not _number(total_area):
         issue("NON_FINITE_MEASUREMENT", "/levels")
         total_area = None
     metrics = {
-        "level_count": len(levels) if levels_valid else None,
-        "space_instance_count": sum(room_counts[l["template"]] for l in levels) if levels_valid else None,
+        "level_count": len(occupied_levels) if levels_valid else None,
+        "space_instance_count": sum(room_counts[l["template"]] for l in occupied_levels) if levels_valid else None,
+        "roof_level_count": len(roof_levels) if levels_valid else None,
+        "roof_deck_rect_area_m2": (sum(areas[l["template"]] for l in roof_levels)
+                                   if levels_valid and not issues else None),
         # This is NOT GFA/NFA: it is the sum of non-overlapping canonical rect areas.
         "space_rect_area_m2": total_area,
         "gross_floor_area_m2": None, "net_floor_area_m2": None, "efficiency": None,
@@ -265,6 +353,9 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
     seen = set()
     rooms = _room_index(model)
     levels = model.get("levels") if isinstance(model.get("levels"), list) else []
+    # Programme requirements (storeys, units, rooms per level) describe occupied
+    # storeys; an explicit roof level is not one of them.
+    levels = [lv for lv in levels if not (isinstance(lv, dict) and lv.get("kind") == "roof")]
     instances = Counter(lv.get("template") for lv in levels
                         if isinstance(lv, dict) and isinstance(lv.get("template"), str))
     # The scorecard is deterministic and reads only canonical geometry/explicit
@@ -273,13 +364,21 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
     warehouse_metrics = scorecard["metrics"] if scorecard["typology"] == "warehouse" else None
     # One pass per template/role, not requirements × levels × all room objects.
     counts = Counter()
+    from acs_stairs import template_scope_aliases
+    try:
+        aliases=template_scope_aliases(model)
+    except ValueError as exc:
+        issue(str(exc),None)
+        return issues
     for (template, _), room in rooms.items():
         n = instances[template]
         counts[(None, None)] += n
-        counts[(template, None)] += n
+        for selector in {template}|aliases.get(template,set()):
+            counts[(selector, None)] += n
         if _id(room.get("role")):
             counts[(None, room["role"])] += n
-            counts[(template, room["role"])] += n
+            for selector in {template}|aliases.get(template,set()):
+                counts[(selector, room['role'])] += n
     for r in requirements:
         rid = r.get("id") if isinstance(r, dict) else None
         if not isinstance(r, dict) or not _id(rid) or rid in seen:
@@ -312,12 +411,20 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             issue("REQUIREMENT_NOT_SPECIFIED", rid)
             continue
         kind = r.get("metric")
+        if kind not in METRICS:
+            issue("REQUIREMENT_METRIC_NOT_SUPPORTED", rid)
+            continue
         actual = _MISSING
         minimum = False
         maximum = False
         if kind in ("site_width_m", "site_depth_m"):
             site = model.get("site") or {}
             actual = site.get("w" if kind == "site_width_m" else "d") if isinstance(site, dict) else None
+            valid_expected = _number(expected) and expected > 0
+        elif kind == "building_target_area_m2":
+            # Explicit total canonical room-rectangle area across physical levels;
+            # this is not gross floor area or a buildable footprint claim.
+            actual = scorecard.get("metrics", {}).get("space_rect_area_m2")
             valid_expected = _number(expected) and expected > 0
         elif kind == "level_count":
             actual = len(levels)
@@ -348,6 +455,14 @@ def _program(model: dict, text: str, requirements: list[dict]) -> list[dict]:
             rect = room.get("rect") if room else None
             if isinstance(rect, list) and len(rect) == 4 and all(_number(v) for v in rect):
                 actual = rect[2] * rect[3]
+                # An original template selector retains its physical variants;
+                # a later edit to one instance cannot evade the requirement.
+                for template, sources in aliases.items():
+                    if target[0] in sources:
+                        variant=rooms.get((template,target[1]));vrect=variant.get('rect') if variant else None
+                        if not isinstance(vrect,list) or len(vrect)!=4 or not all(_number(v) for v in vrect):
+                            actual=None;break
+                        actual=min(actual,vrect[2]*vrect[3])
             valid_expected = _number(expected) and expected > 0 and room is not None
             minimum = True
         elif kind in {"min_space_area_by_role_m2", "max_space_area_by_role_m2"}:
@@ -695,9 +810,13 @@ class PlanWorkspace:
                 issues.append({"code": "VERIFICATION_UNAVAILABLE", "severity": "error"})
         ready = not issues and all(scopes[k] == "PASS" for k in
                                     ("rectangular_geometry", "program", "topology", "vertical_circulation"))
+        # لا ننقل ادعاء مشي من المقترح أو المدقّق؛ هذه التغطية مشتقة من النموذج.
+        coverage = {'vertical_circulation': vertical_geometry_coverage(
+            rev.model, scopes['vertical_circulation'])}
         return {"schema": SCHEMA, "revision_id": rev.id, "content_hash": rev.content_hash,
                 "model_hash": rev.model_hash, "can_approve": ready, "scopes": scopes,
-                "metrics": metrics, "issues": issues, "construction_approved": False}
+                "metrics": metrics, "issues": issues, "construction_approved": False,
+                "coverage": coverage}
 
     def approve(self, revision_id: str, *, expected_head: str, actor_label: str,
                 confirmed: bool, acknowledge_concept_only: bool) -> Approval:

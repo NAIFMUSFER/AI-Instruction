@@ -1,0 +1,32 @@
+Executed UTC: 2026-11-11T17:23:28.817638+00:00
+SHA: b88f560ca35f6ef6dc4acf6cb2d06af13676432e
+Command: <workspace>/stairs-v4/.venv/bin/python -m unittest discover -s tests/remediation -p test_plan_handoff_object_geometry.py -v
+test_complete_explicit_object_geometry_passes_unchanged (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_complete_explicit_object_geometry_passes_unchanged) ... ok
+test_invalid_direction_and_count_fail_before_3d (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_invalid_direction_and_count_fail_before_3d) ... ok
+test_malformed_object_collection_remains_provenance_error (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_malformed_object_collection_remains_provenance_error) ... ERROR
+test_nonfinite_geometry_is_already_rejected_before_approval (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_nonfinite_geometry_is_already_rejected_before_approval) ... ok
+test_nonpositive_geometry_fails_before_3d (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_nonpositive_geometry_fails_before_3d) ... ok
+test_panel_vertical_position_must_be_explicit (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_panel_vertical_position_must_be_explicit) ... ok
+test_shared_compiler_defaults_fail_before_3d (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_shared_compiler_defaults_fail_before_3d) ... ok
+
+======================================================================
+ERROR: test_malformed_object_collection_remains_provenance_error (test_plan_handoff_object_geometry.ApprovedObjectGeometryTests.test_malformed_object_collection_remains_provenance_error)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_plan_handoff_object_geometry.py", line 176, in test_malformed_object_collection_remains_provenance_error
+    self.assertFailsBeforeCompiler(model, expected="INVALID_PROVENANCE")
+  File "<workspace>/stairs-v4/tests/remediation/test_plan_handoff_object_geometry.py", line 110, in assertFailsBeforeCompiler
+    ws, rev = workspace(model)
+              ^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/tests/remediation/test_plan_handoff_object_geometry.py", line 73, in workspace
+    ws.approve(
+  File "<workspace>/stairs-v4/acs_plan_review.py", line 833, in approve
+    raise PlanError("PLAN_NOT_READY", "Resolve failed or unverified plan checks first")
+acs_plan_review.PlanError: Resolve failed or unverified plan checks first
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.018s
+
+FAILED (errors=1)
+
+Exit code: 1

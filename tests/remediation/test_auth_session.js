@@ -52,6 +52,25 @@ function googleStart(opts,origin='https://acs.example.test/'){
 }
 async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
 (async()=>{
+  await test('local renderer watchdog never treats lightweight account entry as a WebGL failure',async()=>{
+    // Execute the shipped timeout body, so this guards its route ownership rather
+    // than setting legacy ACS.ready just to make the account path appear ready.
+    const start=source.lastIndexOf('    setTimeout(function(){');
+    const end=source.indexOf('    }, 12000);',start);
+    assert.ok(start>=0&&end>start);
+    for(const {guest,local,ready,warn,failure} of [
+      {guest:false,local:false,ready:false,warn:0,failure:0},
+      {guest:false,local:true,ready:false,warn:1,failure:0},
+      {guest:false,local:true,ready:true,warn:0,failure:0},
+      {guest:true,local:false,ready:false,warn:0,failure:1}
+    ]){
+      let warned=0,failed=0;
+      const ctx={window:{ACS:{guest,ready,guestBootFailure(){failed++;}},ACS_AUTH:{isLocalTestHost:()=>local}},
+        byId:()=>({classList:{remove(){warned++;}},style:{}}),setTimeout:fn=>fn()};
+      vm.runInNewContext(source.slice(start,end+'    }, 12000);'.length),ctx);
+      assert.equal(warned,warn);assert.equal(failed,failure);
+    }
+  });
   await test('fresh public entry is a guest with no auth network or identity',async()=>{
     const h=harness(()=>{throw new Error('guest must not fetch');},null,'acs.example.test','',{search:''});
     h.init();await settle();
@@ -65,6 +84,17 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     const before=h.map.get(KEY);let reads=0;h.ctx.localStorage.getItem=()=>{reads++;throw new Error('credential read');};
     h.init();assert.equal(h.entered[0].mode,'guest');assert.equal(h.auth.loadSession(),null);assert.equal(await h.auth.freshSession(),null);
     assert.equal(reads,0);assert.equal(h.map.get(KEY),before);assert.equal(h.calls.length,0);
+  });
+  await test('explicit guest strips stale callback parameters without entering account recovery',async()=>{
+    for(const [query,fragment] of [['?guest=1&code='+CODE,''],['?guest=1','#type=recovery&refresh_token=fixture-refresh']]){
+      const h=harness(()=>{throw Error('guest callback must not fetch');},session(),'acs.example.test',fragment,{search:query});
+      const saved=h.map.get(KEY);
+      let reads=0;h.ctx.localStorage.getItem=()=>{reads++;return null;};
+      h.init();await settle();
+      assert.equal(h.entered[0]?.mode,'guest');assert.equal(h.calls.length,0);
+      assert.equal(h.map.get(KEY),saved);assert.equal(reads,0);
+      assert.equal(h.ctx.location.hash,'');assert.equal(h.ctx.location.search,'?guest=1');
+    }
   });
   await test('a stored session on the default public URL retains authenticated entry',async()=>{
     const h=harness(()=>response({project:{id:'project-a'},user:{id:'user-a'}}),session(),'acs.example.test','',{search:''});
@@ -274,6 +304,17 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     const h=harness(()=>{},null);h.init();h.ctx.window.ACS.authSession=session();
     h.map.set(KEY,JSON.stringify(session({user:{id:'user-b'}})));h.listeners.storage({key:KEY});
     assert.equal(h.reloads,1);
+    assert.equal(h.el('designWorkspace').hidden,true,'old geometry must disappear before navigation finishes');
+    assert.equal(h.ctx.window.ACS.projectId,null);
+    assert.equal(h.ctx.window.ACS.authSession,undefined);
+    assert.equal(JSON.parse(h.map.get(KEY)).user.id,'user-b','handoff preserves the other account');
+  });
+  await test('clearing storage in another tab immediately closes the old project',async()=>{
+    const h=harness(()=>{},null);h.init();
+    h.ctx.window.ACS.authSession=session();h.ctx.window.ACS.projectId='old-project';
+    h.map.clear();h.listeners.storage({key:null});
+    assert.equal(h.el('designWorkspace').hidden,true);
+    assert.equal(h.ctx.window.ACS.projectId,null);assert.equal(h.reloads,1);
   });
   console.log('AUTH SESSION: '+passed+' passed, 0 failed');
 })().catch(e=>{console.error(e);process.exitCode=1;});

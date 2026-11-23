@@ -1924,6 +1924,13 @@ def _pdf_text_safe(s):
 def sheet_pdf(sheets, drawings, generated_at=None, producer=None):
     """يكتب PDF حقيقياً: ترويسة، فهرس، شجرة صفحات، صفحة لكل لوحة بـ MediaBox
     صريح، تدفّقات محتوى غير مضغوطة من عمليات متّجهة، ثمّ xref ومقطورة."""
+    text_values = [str(op.get('text', '')) for d in drawings.values()
+                   for op in d.get('ops', []) if op.get('op') == 'text']
+    text_values += [str(v) for s in sheets for v in (s.get('title_block') or {}).values()]
+    unicode_font = None
+    if any(any(ord(ch) > 126 for ch in value) for value in text_values):
+        from acs_pdf_text import PdfUnicodeFont
+        unicode_font = PdfUnicodeFont()
     pages = []
     for sh in sheets:
         w_mm, h_mm = sh["paper_mm"]
@@ -1931,7 +1938,7 @@ def sheet_pdf(sheets, drawings, generated_at=None, producer=None):
         ops = []
         ops.append("q")
         ops.append("1 1 1 rg 0 0 %s %s re f" % (_fmt(w_pt), _fmt(h_pt)))
-        ops.append("0 0 0 RG")
+        ops.append("0 0 0 RG 0 0 0 rg")
         for vp in sh["viewports"]:
             d = drawings.get(vp["view_id"])
             if not d:
@@ -1959,7 +1966,11 @@ def sheet_pdf(sheets, drawings, generated_at=None, producer=None):
                                   _fmt(d["paper_mm"][1] - op["y"] - op["h"]),
                                   _fmt(op["w"]), _fmt(op["h"])))
                 elif op["op"] == "text":
-                    ops.append("BT /F1 %s Tf %s %s Td (%s) Tj ET"
+                    if unicode_font is not None:
+                        ops.append(unicode_font.command(op['text'], op['x'],
+                            d['paper_mm'][1] - op['y'], op['size']))
+                    else:
+                        ops.append("BT /F1 %s Tf %s %s Td (%s) Tj ET"
                                % (_fmt(op["size"]), _fmt(op["x"]),
                                   _fmt(d["paper_mm"][1] - op["y"]),
                                   _pdf_escape(_pdf_text_safe(op["text"]))))
@@ -1971,7 +1982,11 @@ def sheet_pdf(sheets, drawings, generated_at=None, producer=None):
         y = 10.0
         for key in ("sheet_number", "sheet_title", "revision", "scale", "status"):
             val = tb.get(key)
-            ops.append("BT /F1 7 Tf %s %s Td (%s) Tj ET"
+            if unicode_font is not None:
+                ops.append(unicode_font.command('%s: %s' % (key,
+                    val if val is not None else SPEC['unknown_display']), 10.0, y, 7))
+            else:
+                ops.append("BT /F1 7 Tf %s %s Td (%s) Tj ET"
                        % (_fmt(10.0), _fmt(y),
                           _pdf_escape(_pdf_text_safe(
                               "%s: %s" % (key, val if val is not None
@@ -1988,17 +2003,22 @@ def sheet_pdf(sheets, drawings, generated_at=None, producer=None):
     objs = []
     n_pages = len(pages)
     font_obj = 3 + 2 * n_pages
+    unicode_resource = ' /F2 %d 0 R' % (font_obj + 1) if unicode_font is not None else ''
     kids = " ".join("%d 0 R" % (3 + 2 * i) for i in range(n_pages))
     objs.append("<< /Type /Catalog /Pages 2 0 R >>")
     objs.append("<< /Type /Pages /Kids [%s] /Count %d >>" % (kids, n_pages))
     for i, p in enumerate(pages):
         objs.append("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %s %s] "
-                    "/Resources << /Font << /F1 %d 0 R >> >> /Contents %d 0 R >>"
-                    % (_fmt(p["w_pt"]), _fmt(p["h_pt"]), font_obj, 4 + 2 * i))
+                    "/Resources << /Font << /F1 %d 0 R%s >> >> /Contents %d 0 R >>"
+                    % (_fmt(p["w_pt"]), _fmt(p["h_pt"]), font_obj, unicode_resource, 4 + 2 * i))
         objs.append("<< /Length %d >>\nstream\n%s\nendstream"
                     % (len(p["stream"].encode("latin-1", "replace")), p["stream"]))
     objs.append("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica "
                 "/Encoding /WinAnsiEncoding >>")
+    if unicode_font is not None:
+        encoded = [obj.encode('latin-1') for obj in objs]
+        unicode_font.append_objects(encoded)
+        objs = [obj.decode('latin-1') for obj in encoded]
 
     out = "%PDF-" + SPEC["pdf_version"] + "\n%\xe2\xe3\xcf\xd3\n"
     offsets = []

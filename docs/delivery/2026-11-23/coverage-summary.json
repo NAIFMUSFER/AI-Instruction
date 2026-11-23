@@ -1,0 +1,23 @@
+{
+  "schema": "acs.delivery.coverage/1",
+  "base_commit": "629952f10763a8826f3a014895f2e1d209440996",
+  "tracked_files": 1306,
+  "depth": {
+    "unreviewed": 723,
+    "selected": 41,
+    "deep": 25,
+    "static": 517
+  },
+  "classification": {
+    "data": 41,
+    "configuration": 55,
+    "document": 366,
+    "source": 189,
+    "vendor": 3,
+    "generated": 11,
+    "test": 488,
+    "test-artifact": 153
+  },
+  "scope": "Current delivery review only. Previous dated audit coverage is not silently promoted to current deep review.",
+  "warning": "Inventory and parsing do not establish semantic correctness. Unreviewed and static paths remain explicitly identified."
+}

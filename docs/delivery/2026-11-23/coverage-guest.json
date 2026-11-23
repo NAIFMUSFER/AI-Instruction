@@ -1,0 +1,222 @@
+[
+  {
+    "path": "public/app/ui/guest-workspace.js",
+    "purpose": "Guest sample selection, local-only disclosure, recovery and local write readiness",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "GUEST-RECOVERY",
+      "GUEST-STATUS"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_workspace.cjs",
+      "tests/remediation/test_guest_recovery_writes.cjs"
+    ]
+  },
+  {
+    "path": "public/app/boot/engine-guard.js",
+    "purpose": "Account, recovery, explicit guest entry and cross-tab session handoff",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-AUTH"
+    ],
+    "tests": [
+      "tests/remediation/test_auth_session.js",
+      "tests/remediation/test_auth_shipped_page.cjs"
+    ]
+  },
+  {
+    "path": "public/app/trust/wiring.js",
+    "purpose": "Browser IndexedDB read, write gate, autosave, truthful guest status and scope",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-RECOVERY",
+      "GUEST-STATUS"
+    ],
+    "tests": [
+      "tests/remediation/test_persistence.js",
+      "tests/remediation/test_concurrency.js",
+      "tests/remediation/test_guest_workspace.cjs"
+    ]
+  },
+  {
+    "path": "public/app/ui/workspace-ui-wiring.js",
+    "purpose": "Local model commit, sample actions, import guard, roof editing and model export",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-RECOVERY",
+      "GUEST-WAREHOUSE"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_recovery_writes.cjs",
+      "tests/remediation/test_guest_roof_integration.cjs",
+      "tests/remediation/test_guest_workspace.cjs"
+    ]
+  },
+  {
+    "path": "public/app/core/viewer.js",
+    "purpose": "Warehouse model factory, envelope role and operational zones",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-WAREHOUSE"
+    ],
+    "tests": [
+      "tests/remediation/test_context_local_integration.cjs",
+      "tests/remediation/test_scene_limits.js"
+    ]
+  },
+  {
+    "path": "public/app/core/context-details.mjs",
+    "purpose": "Optional fresh context authoring and its shape and resource checks",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-WAREHOUSE"
+    ],
+    "tests": [
+      "tests/remediation/test_context_local_integration.cjs"
+    ]
+  },
+  {
+    "path": "public/app/styles/guest-workspace.css",
+    "purpose": "Guest banner, local status, touch controls and fallback layout",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-STATUS"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_workspace.cjs"
+    ]
+  },
+  {
+    "path": "public/app/ui/panels-entry.js",
+    "purpose": "Panel focus movement and return, compared with pull request 185",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "PR-185"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_frontend_panels.js"
+    ]
+  },
+  {
+    "path": "tools/build_archdetail_browser.py",
+    "purpose": "Source of generated architecture panel labels and dialog semantics, compared with pull request 185",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "PR-185"
+    ],
+    "tests": [
+      "tests/remediation/test_audit_frontend_panels.js"
+    ]
+  },
+  {
+    "path": ".github/workflows/google-signin-check.yml",
+    "purpose": "Guest/auth logic, browser CI triggers and evidence",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-CI"
+    ],
+    "tests": [
+      "tests/remediation/test_auth_session.js",
+      "tests/remediation/test_guest_recovery_writes.cjs",
+      "tests/remediation/test_auth_shipped_page.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_guest_workspace.cjs",
+    "purpose": "Public shipped guest acceptance, two viewports, local imports/downloads, two tabs, storage failure and fallbacks",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-CI",
+      "GUEST-RECOVERY"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_workspace.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_guest_recovery_writes.cjs",
+    "purpose": "Executable regression for read failures, changed selections and warehouse readiness",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "GUEST-RECOVERY",
+      "GUEST-WAREHOUSE"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_recovery_writes.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_auth_session.js",
+    "purpose": "Synthetic auth controller assertions, explicit guest credentials and account changes",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-AUTH"
+    ],
+    "tests": [
+      "tests/remediation/test_auth_session.js"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_auth_shipped_page.cjs",
+    "purpose": "Shipped browser flow for sign-in, Google, password update and two-tab logout",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-AUTH",
+      "GUEST-CI"
+    ],
+    "tests": [
+      "tests/remediation/test_auth_shipped_page.cjs",
+      "tests/remediation/test_auth_fixture_waits.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_context_local_integration.cjs",
+    "purpose": "Real local warehouse and fresh context authoring regression",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-WAREHOUSE"
+    ],
+    "tests": [
+      "tests/remediation/test_context_local_integration.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_connected_workspace.py",
+    "purpose": "Synthetic service and durable store lifecycle for both typologies",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-CI"
+    ],
+    "tests": [
+      "tests/remediation/test_connected_workspace.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_connected_workspace_browser.cjs",
+    "purpose": "Shipped authenticated connected-workspace browser flows with controlled provider",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "GUEST-CI"
+    ],
+    "tests": [
+      "tests/remediation/test_connected_workspace_browser.cjs"
+    ]
+  }
+]

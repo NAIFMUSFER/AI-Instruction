@@ -1,0 +1,23 @@
+/workspace/scratch/1843247fed6a/db-venv/lib/python3.12/site-packages/platformdirs/api.py:467: RuntimeDirWarning: XDG_RUNTIME_DIR /home/agent/.local/run has mode 0755, not 0700, falling back to /tmp/runtime-1000
+  return Path(self.user_runtime_dir)
+FAIL membership regression
+
+PostgreSQL stand-alone backend 16.2
+backend> 	 1: set_config	(typeid = 25, len = -1, typmod = -1, byval = f)
+	----
+	 1: set_config = "44444444-4444-4444-8444-444444444444"	(typeid = 25, len = -1, typmod = -1, byval = f)
+	----
+backend> 2026-11-10 19:24:33.669 +03 [30] ERROR:  SECURITY_REGRESSION: nonmember read denied
+2026-11-10 19:24:33.669 +03 [30] CONTEXT:  PL/pgSQL function inline_code_block line 6 at RAISE
+2026-11-10 19:24:33.669 +03 [30] STATEMENT:  set role authenticated; select set_config('request.jwt.claim.sub','44444444-4444-4444-8444-444444444444',false);
+	do $test$ declare denied boolean:=false; begin
+	      begin perform public.acs_plan_project_state('55555555-5555-4555-8555-555555555555'); exception when others then
+	        if sqlstate not in ('P0001','42501') then raise; end if;
+	        denied:=true;
+	      end;
+	      if not denied then raise exception 'SECURITY_REGRESSION: nonmember read denied'; end if;
+	      raise notice 'PASS nonmember read denied'; end $test$;
+	reset role;
+
+2026-11-10 19:24:33.669 +03 [30] LOG:  checkpoint starting: shutdown immediate
+2026-11-10 19:24:33.673 +03 [30] LOG:  checkpoint complete: wrote 9 buffers (0.1%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.003 s, sync=0.001 s, total=0.004 s; sync files=6, longest=0.001 s, average=0.001 s; distance=7 kB, estimate=7 kB; lsn=0/164C5F8, redo lsn=0/164C5F8

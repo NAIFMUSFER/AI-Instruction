@@ -38,7 +38,7 @@ console.log('\n== §11/§22 — THE SHIPPED APPLICATION CODE ITSELF ==');
       APPSRC.countInApp(BRIDGE)===1, APPSRC.countInApp(BRIDGE));
   chk('the bridge lives in the generated module that main.js imports',
       APPSRC.moduleCarrying(BRIDGE)==='generated/pbr-bridge.js'
-      &&APPSRC.order().indexOf('generated/pbr-bridge.js')>=0);
+      &&APPSRC.localOrder().indexOf('generated/pbr-bridge.js')>=0);
   chk('the render loop dispatcher is present exactly once with a fallback',
       page.split('window.__ACS_PQ__&&window.__ACS_PQ__.composer').length===2
       &&page.indexOf('else{renderer.render(scene,camera);}')>=0);

@@ -1,0 +1,9 @@
+git worktree add --detach /workspace/scratch/1843247fed6a/main-lock-baseline-review c37b5250dc4ff18ba0606add993b5afe52beebaa
+
+Working directory: /workspace/scratch/1843247fed6a/main-lock-baseline-review
+/workspace/scratch/1843247fed6a/object-defaults-v4/.venv/bin/python /workspace/scratch/1843247fed6a/main-lock-baseline-evidence/probe_main_lock.py /workspace/scratch/1843247fed6a/main-lock-baseline-review > /workspace/scratch/1843247fed6a/main-lock-baseline-evidence/result.log 2>&1
+
+Exit code: 0 (expected defect reproduced, typed control passed)
+Exact checkout: c37b5250dc4ff18ba0606add993b5afe52beebaa
+Full main checkout, not a module transplant. Existing declared Python dependencies shared from task environment. SQLite store and synthetic actor; real command/proposal/review/approval/CAS paths. Provider function patched to fail if called; zero calls. No deployment or live database verification.
+git status --porcelain after probe: empty

@@ -5460,13 +5460,17 @@ function _aRoomsOf(building,tmpl,bid){
   return rooms; }
 /* ------------------------------------------------------------ الجدران --- */
 /* كل حدّ مشترك يُقسَّم عند كل نقطة انكسار، فيُعرَّف الجدار المشترك مرّة واحدة */
-function _aWallSegments(rooms){
+function _aWallSegments(rooms,industrial){
   const groups=new Map();
   rooms.forEach(tr=>{ const sid=tr[0], room=tr[1];
     const rc=_aRect(room);
     if(rc===null||!_aShapeSupported(room)) return;
     const h=(room.wall_h===undefined)?null:room.wall_h;
-    ['N','S','E','W'].forEach(e=>{
+    const declared=room.walls;
+    const open=declared==='none'||declared==='line'||(!declared&&industrial&&room.role&&!['office','admin','it','staff','maintenance','meeting'].includes(room.role));
+    const edges=Array.isArray(declared)?declared:open?[]:['N','S','E','W'];
+    if(edges.some(e=>!['N','S','E','W'].includes(e))||new Set(edges).size!==edges.length)throw new Error('Invalid explicit room wall edges');
+    edges.forEach(e=>{
       const seg=_aEdgeSegment(e,rc);
       const key=seg[0]+'|'+_aq(seg[1]);
       if(!groups.has(key)) groups.set(key,{axis:seg[0],fixed:_aq(seg[1]),items:[]});
@@ -5589,6 +5593,9 @@ function _aCores(building,bid,levels){
       const rc=_aRect(room);
       if(rc===null) return;
       (_pyT(room.objects)?room.objects:[]).forEach((obj,j)=>{
+        // Explicit physical flights have exact landing-preserving openings.
+        // Never also infer a full-core hole from this same canonical object.
+        if(obj.form==='u_return')return;
         const kind=_aCoreKind(obj);
         if(kind===null) return;
         const stated=(obj.x!==null&&obj.x!==undefined&&obj.z!==null&&obj.z!==undefined);

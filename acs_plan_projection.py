@@ -217,8 +217,11 @@ def project(revision: Revision, level_index: int) -> dict:
             'cad_polygon_xy_m': [[x, -z], [x + w, -z], [x + w, -(z + d)], [x, -(z + d)]],
             'label': _text(room.get('name') or room['id']),
             'space_rect_area_m2': w * d})
+    from acs_roof import roof_disclosure
     return {'scope': SCOPE, 'units': 'm', 'revision_id': revision.id,
             'model_hash': revision.model_hash, 'level_index': level_index,
+            'level_kind': level.get('kind'), 'level_auto': level.get('auto') is True,
+            'roof_disclosure': roof_disclosure(model, level),
             'site': model['site'], 'primitives': primitives,
             'provenance_schema': provenance['schema'],
             'requirements_hash': provenance['requirements_hash'],

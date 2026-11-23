@@ -1,0 +1,79 @@
+{
+  "scope": "safe-release working tree; not a final committed or deployed SHA claim",
+  "base_sha": "bcd7837aa6d156cd94ed2ccfdee82da73bf15367",
+  "date": "2026-11-10",
+  "before": [
+    {
+      "witness": "GitHub Actions log 129978279222",
+      "finding": "deployment verifier retained eager-only and bounding-rectangle assumptions; 9 stale assertions failed"
+    },
+    {
+      "witness": "GitHub Actions log 129978279546",
+      "finding": "measured current-state byte block and module count stale; panel fixture failed 11 browser assertions"
+    },
+    {
+      "witness": "test_fixing_a_valid_count_cannot_hide_an_unavailable_measurement",
+      "finding": "--fix returned 0 when fixing one valid count despite a separate failed or partial browser measurement",
+      "reproduced_failed_subcases": 2
+    }
+  ],
+  "after": [
+    {
+      "command": "python tests/deploy/verify_deploy.py",
+      "passed": 762,
+      "failed": 0,
+      "scope": "offline deployment structure, mutated-tree build guard and executable geometry witness"
+    },
+    {
+      "command": "python tests/remediation/test_doc_claims.py",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "command": "python tests/remediation/test_plan_pdf_export.py",
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "command": "python tests/remediation/test_bundle_report.py",
+      "passed": 94,
+      "failed": 0
+    },
+    {
+      "command": "node tests/remediation/test_approved_viewer_framing.mjs",
+      "passed": 24,
+      "failed": 0,
+      "scope": "math/assembly regression, not rendered pixel acceptance"
+    },
+    {
+      "command": "python -S import isolation probe for tools.acs_plan_pdf_export",
+      "result": "PASS"
+    },
+    {
+      "command": "YAML parse of all workflows and explicit safe DB/progress test exclusion",
+      "result": "PASS"
+    },
+    {
+      "command": "python tests/remediation/test_ci_dependencies.py",
+      "passed": 27,
+      "failed": 0
+    },
+    {
+      "command": "python tools/bundle_report.py; check_doc_claims.check_state()",
+      "result": "PASS",
+      "scope": "byte inventory after frontend source freeze; not runtime performance"
+    },
+    {
+      "command": "python tools/check_doc_claims.py --fix",
+      "exit_code": 1,
+      "result": "NOT VERIFIED: required Chromium unavailable; passing counts match; current-state block regenerated"
+    }
+  ],
+  "limitations": [
+    "Local required Chromium measurements remain NOT VERIFIED; complete doc guard must pass in browser-capable CI.",
+    "Counts from failed or partial browser execution are not used to update documented full counts.",
+    "Static executable import reachability is not proof of runtime success or rendering quality.",
+    "Database migrations and durable leases remain in the separate database-dependent increment.",
+    "Final source-byte inventory regenerated after frontend source freeze. Exact-head CI, browser captures and deployment evidence remain the integration owner’s final check."
+  ]
+}

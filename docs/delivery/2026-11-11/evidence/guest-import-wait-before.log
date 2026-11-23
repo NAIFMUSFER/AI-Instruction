@@ -1,0 +1,20 @@
+AssertionError [ERR_ASSERTION]: pending import must not be marked ready merely because the previous model also has width24
+
+true !== false
+
+    at tests/remediation/test_guest_import_wait.cjs:23:9
+    at Object.<anonymous> (tests/remediation/test_guest_import_wait.cjs:29:3)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: true,
+  expected: false,
+  operator: 'strictEqual',
+  diff: 'simple'
+}

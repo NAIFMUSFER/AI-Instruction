@@ -1,0 +1,337 @@
+{
+  "scope": "synthetic exact approved artifacts; not live AI or physical mobile acceptance",
+  "submitted_head": "455c5a4f3b2701ffd10e99b6efbbeab8b34bba99",
+  "tested_merge_sha": "6f4af34edf0a604e115f1614a5bf8d76d8f60a07",
+  "artifact": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43000139669/artifacts/13845598539",
+  "budgets": {
+    "first_view_ms": 3000,
+    "desktop_frame_p95_ms": 20,
+    "mobile_frame_p95_ms": 33,
+    "transition_timeout_ms": 2000,
+    "transition_stall_ms": 10000,
+    "idle_additional_render_calls": 0
+  },
+  "visual_review": "All24 fixed-view captures inspected. Synthetic fixture geometry is visible; interiors/details readable and mobile controls wrap. No physical stairs/traversal or live AI claim.",
+  "measurements": [
+    {
+      "fixture": "residential",
+      "revision": "plan_dc8a5208cb7e4c83820e18c566e00e82",
+      "model_hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1403.0858489999998,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1348.3609940000006,
+          "screenshot": "residential-1440-exterior.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 40.520064999999704,
+          "screenshot": "residential-1440-aerial.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "street",
+          "transition_ms": 47.56306199999926,
+          "screenshot": "residential-1440-street.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 39.43234900000061,
+          "screenshot": "residential-1440-interior.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 30.50767899999846,
+          "screenshot": "residential-1440-cutaway.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 43.893309999999474,
+          "screenshot": "residential-1440-detail.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        }
+      ]
+    },
+    {
+      "fixture": "warehouse",
+      "revision": "plan_60c683ef87b54d3ea8f7ca54bfec9fde",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1352.3324979999998,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1308.6416830000016,
+          "screenshot": "warehouse-1440-exterior.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 38.06590700000379,
+          "screenshot": "warehouse-1440-aerial.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "street",
+          "transition_ms": 36.466050000002724,
+          "screenshot": "warehouse-1440-street.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 39.3810300000041,
+          "screenshot": "warehouse-1440-interior.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 24.20780299999751,
+          "screenshot": "warehouse-1440-cutaway.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 35.53779400000349,
+          "screenshot": "warehouse-1440-detail.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        }
+      ]
+    },
+    {
+      "fixture": "residential",
+      "revision": "plan_dc8a5208cb7e4c83820e18c566e00e82",
+      "model_hash": "da43aade128c38b5bc6d67cb246d74009b5d4118f608a84a26272ee5a6e24c62",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1426.4554299999945,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 671.6581250000017,
+          "screenshot": "residential-393-exterior.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 20.931831000001694,
+          "screenshot": "residential-393-aerial.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "street",
+          "transition_ms": 30.961387999996077,
+          "screenshot": "residential-393-street.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 28.77169799999683,
+          "screenshot": "residential-393-interior.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 44.891937000000325,
+          "screenshot": "residential-393-cutaway.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 26.74416100000235,
+          "screenshot": "residential-393-detail.png",
+          "mesh_count": 67,
+          "triangle_count": 804,
+          "quality": "اقتصادي",
+          "roof_source": "artifact"
+        }
+      ]
+    },
+    {
+      "fixture": "warehouse",
+      "revision": "plan_60c683ef87b54d3ea8f7ca54bfec9fde",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1218.1527360000036,
+      "frame_p95_ms": null,
+      "frame_sample_count": 1,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 513.636909000008,
+          "screenshot": "warehouse-393-exterior.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 25.691158999994514,
+          "screenshot": "warehouse-393-aerial.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "street",
+          "transition_ms": 27.638862000007066,
+          "screenshot": "warehouse-393-street.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 31.912131000004592,
+          "screenshot": "warehouse-393-interior.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 23.319800000012037,
+          "screenshot": "warehouse-393-cutaway.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 20.64754200000607,
+          "screenshot": "warehouse-393-detail.png",
+          "mesh_count": 72,
+          "triangle_count": 864,
+          "quality": "اقتصادي",
+          "roof_source": "assumed"
+        }
+      ]
+    }
+  ]
+}

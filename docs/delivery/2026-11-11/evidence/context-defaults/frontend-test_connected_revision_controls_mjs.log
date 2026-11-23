@@ -1,0 +1,4 @@
+PASS: ignored in-flight historical selection cannot enable or issue a head mutation
+PASS: busy selection is disabled, then the loaded head remains usable
+PASS: history stays readable and restorable only for the loaded selection
+PASS: authored roofs and pending jobs keep existing mutation restrictions

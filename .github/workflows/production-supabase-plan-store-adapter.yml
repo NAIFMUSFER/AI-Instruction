@@ -4,8 +4,12 @@ on:
   pull_request:
     paths:
       - 'acs_supabase_plan_store.py'
-      - 'supabase/migrations/20260913_acs_plan_store_rpc_v2.sql'
-      - 'supabase/migrations/20260913_acs_plan_store_rpc_v2_lockdown.sql'
+      - 'acs_plan_store_reload.py'
+      - 'acs_plan_session.py'
+      - 'tests/remediation/test_rls_history_transport.py'
+      - 'tests/remediation/test_rls_history_postgrest.py'
+      - 'tests/remediation/test_plan_store_authenticated_session.py'
+      - 'supabase/migrations/**'
       - 'tests/remediation/test_supabase_plan_store_adapter.py'
       - 'tests/remediation/test_supabase_plan_store_rpc_schema.py'
       - '.github/workflows/production-supabase-plan-store-adapter.yml'
@@ -29,8 +33,44 @@ jobs:
             tests/remediation/test_supabase_plan_store_adapter.py \
             tests/remediation/test_supabase_plan_store_rpc_schema.py
       - name: Verify authenticated Supabase adapter
-        run: PYTHONPATH=. python tests/remediation/test_supabase_plan_store_adapter.py
+        env:
+          PYTHONPATH: .
+        run: |
+          python tests/remediation/test_supabase_plan_store_adapter.py
+          python tests/remediation/test_rls_history_transport.py
+          python tests/remediation/test_plan_store_authenticated_session.py
       - name: Verify atomic RPC schema
         run: PYTHONPATH=. python tests/remediation/test_supabase_plan_store_rpc_schema.py
       - name: No generated diff
         run: git diff --exit-code
+
+
+  postgrest-history:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      PYTHONPATH: .
+      PGPASSWORD: local-postgres-test-only
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: local-postgres-test-only
+          POSTGRES_DB: acs_history_fixture
+        ports:
+          - 127.0.0.1:55329:5432
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 3s --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Prepare isolated users, roles and immutable receipts
+        run: python tests/remediation/test_rls_history_postgrest.py prepare
+      - name: Start PostgREST on loopback
+        run: |
+          docker run -d --name acs-history-rest --network host \
+            -e PGRST_DB_URI=postgres://acs_history_api:isolated-api-role@127.0.0.1:55329/acs_history_fixture \
+            -e PGRST_DB_ANON_ROLE=anon -e PGRST_SERVER_HOST=127.0.0.1 -e PGRST_SERVER_PORT=55330 \
+            -e PGRST_JWT_SECRET=isolated-postgrest-test-issuer-no-production-use postgrest/postgrest:v12.2.12
+      - name: Verify real relational reads, approval recovery and role enforcement
+        run: python tests/remediation/test_rls_history_postgrest.py verify

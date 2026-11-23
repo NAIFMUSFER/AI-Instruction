@@ -18,7 +18,7 @@ import urllib.request
 import uuid
 from typing import Any, Callable
 
-from acs_plan_review import PlanError
+from acs_plan_review import MAX_REVISIONS, PlanError
 from acs_plan_store import (
     approval_document,
     revision_document,
@@ -200,33 +200,108 @@ class SupabasePlanStore:
             "baseline_revision_id": row.get("baseline_revision_id"),
         }
 
+    def _project_read(self, project_id: str, *, after: int | None = None) -> dict:
+        # The inner membership is filtered by the verified subject. All reads
+        # use the user's token and the existing table SELECT policies.
+        fields = "id,head_revision_id,baseline_revision_id,memberships:acs_project_members!inner(user_id,role)"
+        query = {"id": "eq." + project_id, "memberships.user_id": "eq." + self._actor_id}
+        if after is not None:
+            fields += (",revisions:acs_plan_revisions!acs_plan_revisions_project_id_fkey("
+                       "revision_id,number:revision_number,parent_id:parent_revision_id,"
+                       "created_by,created_at,content_hash,bound_content_hash)")
+            query.update({"revisions.order": "revision_number.asc", "revisions.limit": "25",
+                          "revisions.revision_number": f"gt.{after}"})
+        query["select"] = fields
+        rows = self._request("GET", "/rest/v1/acs_projects?" + urllib.parse.urlencode(query))
+        if rows == []:
+            raise PlanError("PROJECT_ACCESS_DENIED", "Authenticated actor lacks project access")
+        if (not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict)
+                or rows[0].get("id") != project_id):
+            raise PlanError("STORED_PROJECT_TAMPERED", "Invalid project read receipt")
+        memberships = rows[0].get("memberships")
+        if (not isinstance(memberships, list) or len(memberships) != 1
+                or not isinstance(memberships[0], dict) or memberships[0].get("user_id") != self._actor_id
+                or memberships[0].get("role") not in {"owner", "editor", "viewer"}):
+            raise PlanError("PROJECT_ACCESS_DENIED", "Authenticated actor lacks project access")
+        return rows[0]
+
     def project_state(self, project_id: str, *, actor_id: str) -> dict:
         self._assert_actor(actor_id)
         project_id = _uuid(project_id, "project_id")
-        state = self._rpc("acs_plan_project_state", {"p_project": project_id})
-        if state.get("schema") != SCHEMA or _uuid(state.get("project_id"), "project_id") != project_id:
-            raise PlanError("STORED_PROJECT_TAMPERED", "Supabase project-state receipt is inconsistent")
-        if state.get("role") not in {"owner", "editor", "viewer"}:
-            raise PlanError("STORED_PROJECT_TAMPERED", "Supabase project role is malformed")
-        if not isinstance(state.get("revisions"), list):
-            raise PlanError("STORED_PROJECT_TAMPERED", "Supabase revision summary is malformed")
-        return state
+        history = []
+        while True:
+            row = self._project_read(project_id, after=len(history))
+            authority = (row.get("head_revision_id"), row.get("baseline_revision_id"),
+                         row["memberships"][0]["role"])
+            if not history:
+                head, baseline, role = authority
+            elif authority != (head, baseline, role):
+                raise PlanError("STALE_REVISION", "Project changed during recovery")
+            page = row.get("revisions")
+            if not isinstance(page, list) or len(page) > 25:
+                raise PlanError("STORED_PROJECT_TAMPERED", "Invalid revision metadata page")
+            for item in page:
+                parent_id = history[-1]["revision_id"] if history else None
+                if (not isinstance(item, dict) or type(item.get("number")) is not int
+                        or item["number"] != len(history) + 1 or item.get("parent_id") != parent_id
+                        or not isinstance(item.get("revision_id"), str) or not item["revision_id"]):
+                    raise PlanError("INVALID_REVISION_CHAIN", "Revision metadata chain is inconsistent")
+                history.append(item)
+            if len(history) > MAX_REVISIONS:
+                raise PlanError("HISTORY_LIMIT", "Persisted history exceeds its admitted revision limit")
+            if len(page) < 25:
+                break
+        if head != (history[-1]["revision_id"] if history else None):
+            raise PlanError("STORED_PROJECT_TAMPERED", "Project head disagrees with revision metadata")
+        return {"schema": SCHEMA, "project_id": project_id, "role": role,
+                "head_revision_id": head, "baseline_revision_id": baseline, "revisions": history}
 
     def workspace_snapshot(self, project_id: str, *, actor_id: str) -> dict:
-        self._assert_actor(actor_id)
-        project_id = _uuid(project_id, "project_id")
-        snapshot = self._rpc("acs_plan_workspace_snapshot", {"p_project": project_id})
-        if snapshot.get("schema") != SNAPSHOT_SCHEMA or _uuid(snapshot.get("project_id"), "project_id") != project_id:
-            raise PlanError("STORED_PROJECT_TAMPERED", "Supabase workspace snapshot identity is inconsistent")
-        revisions = snapshot.get("revisions")
-        approvals = snapshot.get("approvals")
-        if not isinstance(revisions, list) or not isinstance(approvals, list):
-            raise PlanError("STORED_PROJECT_TAMPERED", "Supabase workspace snapshot is malformed")
-        for doc in revisions:
+        state = self.project_state(project_id, actor_id=actor_id)
+        project_id = state["project_id"]
+        if state["role"] not in {"editor", "owner"}:
+            raise PlanError("PROJECT_ACCESS_DENIED", "Writable recovery requires editor membership")
+        revisions, approvals = [], []
+        for item in state["revisions"]:
+            query = urllib.parse.urlencode({
+                "select": "project_id,revision_json,approval:acs_plan_approvals(approval_json)",
+                "project_id": "eq." + project_id, "revision_number": "eq." + str(item["number"]),
+                "limit": "1",
+            })
+            rows = self._request("GET", "/rest/v1/acs_plan_revisions?" + query)
+            if rows == []:
+                raise PlanError("PROJECT_ACCESS_DENIED", "Revision is no longer available to this actor")
+            if (not isinstance(rows, list) or len(rows) != 1 or not isinstance(rows[0], dict)
+                    or rows[0].get("project_id") != project_id or "approval" not in rows[0]):
+                raise PlanError("STORED_PROJECT_TAMPERED", "Invalid revision response")
+            doc = rows[0].get("revision_json")
             _validate_revision_document(doc)
-        for doc in approvals:
-            _validate_approval_shape(doc)
-        return snapshot
+            for key in ("revision_id", "number", "parent_id", "content_hash", "bound_content_hash"):
+                if doc[key] != item.get(key):
+                    raise PlanError("STORED_REVISION_TAMPERED", "Revision differs from its metadata")
+            revisions.append(doc)
+            # PostgREST represents a unique foreign key as a to-one relationship.
+            # Also accept a zero/one-item list on servers using to-many inference.
+            approval = rows[0]["approval"]
+            if isinstance(approval, list) and len(approval) <= 1:
+                approval = approval[0] if approval else None
+            if approval is not None:
+                if not isinstance(approval, dict):
+                    raise PlanError("STORED_APPROVAL_TAMPERED", "Invalid approval response")
+                receipt = approval.get("approval_json")
+                _validate_approval_shape(receipt)
+                if receipt["revision_id"] != doc["revision_id"]:
+                    raise PlanError("STORED_APPROVAL_TAMPERED", "Approval revision identity changed")
+                approvals.append(receipt)
+        if revisions:
+            final = self._project_read(project_id)
+            if final["memberships"][0]["role"] not in {"editor", "owner"}:
+                raise PlanError("PROJECT_ACCESS_DENIED", "Writable membership changed during recovery")
+            if any(final.get(key) != state[key] for key in ("head_revision_id", "baseline_revision_id")):
+                raise PlanError("STALE_REVISION", "Project changed during recovery")
+        return {"schema": SNAPSHOT_SCHEMA, "project_id": project_id, "revisions": revisions,
+                "approvals": approvals, "head_revision_id": state["head_revision_id"],
+                "baseline_revision_id": state["baseline_revision_id"]}
 
     def save_revision(self, project_id: str, *, actor_id: str,
                       revision: Any, expected_head: str | None) -> dict:

@@ -1,0 +1,23 @@
+test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing (__main__.WorkspaceLifecycle.test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing) ... ERROR
+
+======================================================================
+ERROR: test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing (__main__.WorkspaceLifecycle.test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 310, in test_fresh_malformed_rooms_keep_canonical_admission_error_without_writing
+    S.generate_and_save(self.store, PROJECT, ACTOR, command(), runner=runner)
+  File "<workspace>/stairs-v4/acs_workspace_service.py", line 367, in generate_and_save
+    result["building"], _, _ = with_default_stairs(result["building"])
+                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/acs_stairs.py", line 256, in with_default_stairs
+    first_cores=_cores(model,levels[0][0]); plans=[]
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/acs_stairs.py", line 182, in _cores
+    return [r for r in rooms if r.get('role') in ('stair','stairs')]
+                                ^^^^^
+AttributeError: 'NoneType' object has no attribute 'get'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+FAILED (errors=1)

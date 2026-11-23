@@ -81,7 +81,7 @@ chk('the block carries real code, not a stub', BLOCK.length > 4000,
       owners.join(', '));
   chk('that module is imported by public/app/main.js in the boot order — an '
       + 'orphaned file would ship but never run',
-      owners.length === 1 && AS.order().indexOf(owners[0]) >= 0,
+      owners.length === 1 && AS.localOrder().indexOf(owners[0]) >= 0,
       owners[0] + ' order=' + JSON.stringify(AS.order()));
   chk('the shell carries no copy of it: the page is a shell, the code is a '
       + 'module', SHELL.indexOf(MARK_A) < 0);

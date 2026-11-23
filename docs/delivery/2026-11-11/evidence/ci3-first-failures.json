@@ -1,0 +1,58 @@
+{
+  "head_sha": "10bfd0ad4c0f7dbbd1ee0cf34ea83c5b415085f4",
+  "observed_at": "2026-11-11T11:03Z",
+  "final": false,
+  "scope": "39 completed jobs have full logs downloaded and reviewed. Main Chromium130478067090 is still running; aggregate and collector not yet final.",
+  "outcome_counts": {
+    "success": 36,
+    "failure": 3,
+    "running": 1
+  },
+  "failures": [
+    {
+      "job": 130478066436,
+      "run": 43007301903,
+      "error": "Offline test_generation_spatial_context.py companion failed because actual PBR module import traversed into Three.js in a deliberately dependency-free job.",
+      "exception": "ERR_MODULE_NOT_FOUND: Cannot find package 'three' imported from public/app/core/viewer.js",
+      "target_result": "32 passed,1 failed",
+      "advisory_scan": "SKIPPED after offline gate failure; not a CVE finding and not a successful scan.",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43007301903/job/130478066436"
+    },
+    {
+      "job": 130478066827,
+      "run": 43007301903,
+      "error": "Connected desktop1280 approval button remains disabled at test_connected_workspace_browser.cjs:190:85;30-second click timeout after expected set_roof rejection400 LOCK_CONTEXT_CHANGED.",
+      "preceding": "Guest all3 journeys PASS; connected393 complete lifecycle PASS; initial desktop generation/recovery and roof mutations completed.",
+      "diagnostics": {
+        "busy": false,
+        "review_visible": true,
+        "page_errors": [],
+        "active_backend_jobs": 0,
+        "pending_tasks": 0
+      },
+      "approved_viewer": "PASS two exact synthetic fixtures × six views × desktop/mobile, identity, floor isolation, keyboard, idle rendering, context loss, disposal.",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43007301903/job/130478066827"
+    },
+    {
+      "job": 130477858002,
+      "run": 43007301912,
+      "error": "Same connected desktop1280 disabled approval button at line190:85.",
+      "preceding": "Actual shipped auth393+1280,all3 guest journeys and full mobile recovery completed successfully; connected393 lifecycle PASS.",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43007301912/job/130477858002"
+    }
+  ],
+  "successes": [
+    {
+      "job": 130477859008,
+      "run": 43007302095,
+      "result": "Google auth + all3 guest journeys PASS, including desktop second tab, local import/download, storage denial, recovery and no-WebGL.",
+      "job_url": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43007302095/job/130477859008"
+    }
+  ],
+  "limitations": [
+    "No overall CI3 success; main browser remains active.",
+    "These are synthetic controlled-provider local-browser tests, not deployment or live AI evidence.",
+    "Dependency-only loader correction is separate later work and requires a new complete run."
+  ],
+  "tested_merge_sha": "e15226386ba5b53deadaedcdce4d69a65a272701"
+}

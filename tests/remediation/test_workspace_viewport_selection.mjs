@@ -15,6 +15,8 @@ const wiring = read('public/app/ui/workspace-ui-wiring.js');
 const workspace = read('public/app/generated/workspace-ui.js');
 const scene = read('public/app/render/scene.js');
 const main = read('public/app/main.js');
+const localEntry = read('public/app/ui/local-studio-entry.mjs');
+const localOrder = read('tools/frontend_local.txt').split(/\r?\n/).map(s=>s.trim()).filter(s=>s&&!s.startsWith('#'));
 ok('existing workspace exposes canonical selection and inspector',
   workspace.includes('select:select') && workspace.includes('wsInspectorModel'));
 ok('existing renderer already owns reversible dollhouse/cutaway behavior',
@@ -31,9 +33,15 @@ try {
   process.exit();
 }
 
-ok('main entry graph declares both side-effect-free selection logic and runtime wiring',
-  main.includes("import './ui/workspace-viewport-selection.js';")
-  && main.includes("import './ui/workspace-viewport-selection-runtime.js';"));
+ok('main routes selection through the conditional local studio entry',
+  main.includes("import './ui/local-studio-entry.mjs';")
+  && !main.includes("import './ui/workspace-viewport-selection.js';")
+  && !main.includes("import './ui/workspace-viewport-selection-runtime.js';"));
+ok('local entry imports declared selection logic before its runtime wiring',
+  localOrder.includes('ui/workspace-viewport-selection.js')
+  && localOrder.indexOf('ui/workspace-viewport-selection-runtime.js') > localOrder.indexOf('ui/workspace-viewport-selection.js')
+  && localEntry.includes("await import('../ui/workspace-viewport-selection.js');")
+  && localEntry.indexOf("await import('../ui/workspace-viewport-selection-runtime.js');") > localEntry.indexOf("await import('../ui/workspace-viewport-selection.js');"));
 
 const building = {
   meta:{name:'Selection fixture'},

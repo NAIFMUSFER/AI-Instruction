@@ -6,7 +6,7 @@ must NOT be called automatically merely because this module is imported.
 """
 from __future__ import annotations
 import json
-from acs_plan_review import PlanError, PlanWorkspace, canonical, _number
+from acs_plan_review import PlanError, PlanWorkspace, canonical, _number, vertical_geometry_coverage
 
 
 # These top-level Building fields describe facts/authority that ACS derives or
@@ -21,6 +21,20 @@ _SERVER_DERIVED_BUILDING_FIELDS = frozenset({
     'construction_approved', 'engineer_approved',
     'approval', 'approval_receipt', 'baseline', 'authority',
 })
+
+
+def carry_roof_for_admission(before: dict, candidate: dict) -> dict:
+    """Preserve the owner's roof choice and expose a known admission failure."""
+    import acs_roof
+    try:
+        return acs_roof.carry_auto_roof(before, candidate)
+    except ValueError as exc:
+        if str(exc) != 'ROOF_PREFERENCE_CONFLICT':
+            raise
+        raise PlanError(
+            'ROOF_PREFERENCE_CONFLICT',
+            'أعاد المقترح سطحًا رغم اختيارك إزالة السطح. لم تُحفظ المحاولة وبقيت نسختك السابقة كما هي.',
+        ) from None
 
 
 def _reject_provider_authority_changes(before: dict, candidate: dict) -> None:
@@ -84,6 +98,9 @@ def propose_chat_edit(workspace: PlanWorkspace, notes: list[dict], *,
     before = workspace.get(expected_head)
     import acs_understand as U
     candidate = U.apply_notes(before.model, json.loads(canonical(notes)), model=model)
+    # The automatic roof is rebuilt over the edited top storey before locks and
+    # admission see the candidate; the provider is never trusted to maintain it.
+    candidate = carry_roof_for_admission(before.model, candidate)
     if semantic_lock_manifest is not None:
         from acs_plan_semantic_locks import verify_lock_manifest
         verify_lock_manifest(before.model, candidate, semantic_lock_manifest)
@@ -134,6 +151,7 @@ def admit_bound_chat_edit_candidate(workspace, notes: list[dict], *,
         raise PlanError('INVALID_EDIT', 'Provider candidate must be a building object')
     detached_candidate = json.loads(canonical(candidate))
     _reject_provider_authority_changes(before.model, detached_candidate)
+    detached_candidate = carry_roof_for_admission(before.model, detached_candidate)
     return workspace.propose(
         detached_candidate,
         brief=before.brief,
@@ -169,8 +187,9 @@ def existing_geometry_verifier(building: dict) -> dict:
     """Conservative bridge to ACS's existing validator, not code certification.
 
     Explicit door arrays or open-space intent are required for each space.
-    Multi-floor core checks additionally require explicit role/core_id and an
-    identical core rectangle on every level. Missing intent stays NOT_VERIFIED.
+    Multi-floor core alignment additionally requires explicit role/core_id and
+    an identical core rectangle on every level. Physical traversal is separately
+    NOT_VERIFIED even when dimensioned core objects are present.
     All existing validator findings block conceptual approval in this first pass;
     no substring-based filtering suppresses an inconvenient finding.
     """
@@ -199,11 +218,15 @@ def existing_geometry_verifier(building: dict) -> dict:
     if topology_known:
         findings += [item['message'] for item in residential_access_issues(building)]
         findings += [item['message'] for item in opening_collisions(building)]
-    vertical_known = len(levels) == 1
+    # Vertical circulation is verified between occupied storeys. An explicit roof
+    # level is an unoccupied deck: it needs no stair core to be a valid concept,
+    # and nothing here claims that the roof is accessible.
+    storeys = [level for level in levels if level.get('kind') != 'roof']
+    vertical_known = len(storeys) == 1
     core_issue = False
-    if len(levels) > 1:
+    if len(storeys) > 1:
         stacks = []
-        for level in levels:
+        for level in storeys:
             cores = [r for r in floors[level['template']]['rooms']
                      if r.get('role') in ('stair', 'stairs', 'elevator')]
             ids = [r.get('core_id') for r in cores]
@@ -218,7 +241,9 @@ def existing_geometry_verifier(building: dict) -> dict:
               for x in findings]
     if core_issue:
         issues.append({'code': 'VERTICAL_CORE_MISMATCH', 'severity': 'error'})
+    vertical_state = ('FAIL' if core_issue or findings else 'PASS') if vertical_known else 'NOT_VERIFIED'
     return {'scopes': {
         'topology': ('FAIL' if findings else 'PASS') if topology_known else 'NOT_VERIFIED',
-        'vertical_circulation': ('FAIL' if core_issue or findings else 'PASS') if vertical_known else 'NOT_VERIFIED'},
-        'issues': issues}
+        'vertical_circulation': vertical_state},
+        'issues': issues,
+        'coverage': {'vertical_circulation': vertical_geometry_coverage(building, vertical_state)}}

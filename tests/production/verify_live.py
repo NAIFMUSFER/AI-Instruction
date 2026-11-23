@@ -677,30 +677,46 @@ def group_b(R, frontend, backend, timeout, state):
     R.ok("B", "B5", "no unexpected 404 among the critical assets",
          not bad_status, "; ".join(bad_status) or "0 of %d assets 404ed" % fetched)
 
-    # B6 يُقاس على الصفحة المخدومة نفسها لا على نسخة المستودع. صفحة بلا خريطة
-    # استيراد وبلا أي specifier ليست «نجاحاً» — هي صفحة أخرى. لذلك يُشترط وجود
-    # الاثنين فعلاً قبل أي حكم، وإلّا فهو FAIL مرصود لا PASS فارغ.
+    # F-09 moved executable imports from the shell into served ES modules.
+    # Resolve those actual bytes through the served map, never the repo's map.
+    # Every resolved vendor target must already have been fetched successfully.
+    served_source = root.text + "\n" + "\n".join(fetched_text.values())
     served_specs = sorted(set(
-        re.findall(r"three/addons/[A-Za-z0-9/_.\-]+\.js", root.text)))
-    served_map = re.search(r'<script type="importmap">', root.text) is not None
+        re.findall(r"(?:\bfrom\s*|\bimport\s*(?:\(\s*)?)['\"]"
+                   r"(three(?:/[^'\"]+)?)['\"]", served_source)))
+    served_map = {}
+    map_block = re.search(r'<script type="importmap">(.*?)</script>', root.text, re.S)
+    if map_block:
+        try:
+            value = json.loads(map_block.group(1))
+            served_map = value.get("imports", {}) if isinstance(value, dict) else {}
+            if not isinstance(served_map, dict):
+                served_map = {}
+        except (ValueError, TypeError):
+            pass
     unresolved = []
     if not served_map:
-        unresolved.append("the served page declares no <script type=\"importmap\">")
+        unresolved.append("the served page declares no valid import map")
     if not served_specs:
-        unresolved.append("the served page imports no three/addons module — this "
-                          "is not the ACS studio page")
+        unresolved.append("the served application imports no Three.js module")
     for spec in served_specs:
-        prefix = imap.get("three/addons/")
-        if not prefix:
-            unresolved.append("%s (no import-map prefix)" % spec)
+        target = served_map.get(spec)
+        if target is None:
+            prefixes = [key for key in served_map if key.endswith("/") and spec.startswith(key)]
+            if prefixes:
+                prefix = max(prefixes, key=len)
+                mapped = served_map[prefix]
+                target = mapped + spec[len(prefix):] if isinstance(mapped, str) and mapped.endswith("/") else None
+        if not isinstance(target, str) or not target.startswith("/vendor/"):
+            unresolved.append("%s (no valid local import-map target)" % spec)
             continue
-        target = prefix + spec[len("three/addons/"):]
         if target not in assets:
             unresolved.append("%s → %s (never fetched)" % (spec, target))
-        elif ("%s → HTTP" % target) in " ".join(bad_status):
-            unresolved.append("%s → %s (did not return 200)" % (spec, target))
+        elif any(row.startswith(target + " →") for row in bad_status + empty):
+            unresolved.append("%s → %s (not served 200 and non-empty)" % (spec, target))
     R.ok("B", "B6", "the served page declares an import map and every "
-                    "three/addons specifier in it resolves to a module that was "
+                    "Three.js import in the served application resolves to a module "
+                    "that was "
                     "fetched 200 (%d specifier(s))" % len(served_specs),
          not unresolved, "; ".join(unresolved) or
          "%d import specifiers resolved through the import map and served"
@@ -932,7 +948,7 @@ def main(argv=None):
     npass, nfail, nnv = R.count(PASS), R.count(FAIL), R.count(NV)
     if nfail:
         code = 1
-    elif npass == 0:
+    elif nnv or npass == 0:
         code = 2
     else:
         code = 0
@@ -951,7 +967,7 @@ def main(argv=None):
                    "total": len(R.rows)},
         "exit_code": code,
         "verdict": ("FAIL" if nfail else
-                    ("NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED" if npass == 0
+                    ("NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED" if nnv or npass == 0
                      else "PASS")),
         "observed": {"frontend_reachable": bool(state.get("frontend_reachable")),
                      "backend_reachable": bool(state.get("backend_reachable")),

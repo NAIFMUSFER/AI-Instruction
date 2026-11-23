@@ -1,0 +1,33 @@
+PASS rule explicitly distinguishes plot boundary from building footprint
+PASS rule preserves requested outdoor programme
+PASS rule refuses invented regulatory geometry
+PASS old fill-the-entire-floor instruction is gone
+PASS base residential knowledge now names site as the plot boundary
+PASS residential receives residential massing rule
+PASS villa receives residential massing rule
+PASS apartment receives residential massing rule
+PASS warehouse does not receive residential massing rule
+PASS factory does not receive residential massing rule
+PASS industrial does not receive residential massing rule
+PASS logistics does not receive residential massing rule
+PASS office generic non-residential prompt is not reclassified as housing
+PASS hotel generic non-residential prompt is not reclassified as housing
+PASS hospital generic non-residential prompt is not reclassified as housing
+PASS school generic non-residential prompt is not reclassified as housing
+PASS retail generic non-residential prompt is not reclassified as housing
+PASS program classifier recognizes every residential program used by the rule
+PASS program classifier excludes warehouse
+PASS residential rule forbids unrequested upper-floor cantilevers
+PASS staged residential generation has a pre-detail plan quality gate
+PASS large unrequested upper-floor excursion is detected
+PASS explicit cantilever intent suppresses the added massing complaint
+PASS actual geometry validator detects the overlapping room fixture
+PASS residential: actual overlap findings reach the residential repair gate
+PASS villa: actual overlap findings reach the residential repair gate
+PASS apartment: actual overlap findings reach the residential repair gate
+PASS quality review does not mutate the input model
+PASS touching room edges do not become false overlap findings
+PASS warehouse remains outside the residential repair policy
+PASS intentional envelope containment is not flagged as a room overlap
+PASS rooms on separate floor templates are not compared as same-floor overlaps
+RESIDENTIAL QUALITY CONTRACT: 32 passed, 0 failed

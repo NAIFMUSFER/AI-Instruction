@@ -1,0 +1,14 @@
+F
+======================================================================
+FAIL: test_chat_edit_cannot_restore_a_roof_removed_by_the_user (__main__.RoofBoundaryRegressions.test_chat_edit_cannot_restore_a_roof_removed_by_the_user)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 245, in test_chat_edit_cannot_restore_a_roof_removed_by_the_user
+    with self.assertRaisesRegex(ValueError,'^ROOF_PREFERENCE_CONFLICT$'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: ValueError not raised
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

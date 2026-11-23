@@ -1,0 +1,67 @@
+[
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_context_object_selection.mjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_context_object_selection_mjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_context_object_controls.mjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_context_object_controls_mjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_context_local_integration.cjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_context_local_integration_cjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_guest_roof_integration.cjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_guest_roof_integration_cjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_stairs_local_integration.cjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_stairs_local_integration_cjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_connected_revision_controls.mjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_connected_revision_controls_mjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/remediation/test_approved_viewer_framing.mjs"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_approved_viewer_framing_mjs-final.log"
+  },
+  {
+    "command": [
+      "node",
+      "tests/lib/run.js",
+      "tests/remediation/test_module_graph.js"
+    ],
+    "exit_code": 0,
+    "log": "/workspace/scratch/1843247fed6a/context-frontend-evidence/test_module_graph_js-final.log"
+  }
+]

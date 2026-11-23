@@ -1,0 +1,1 @@
+PASS local context boundary: actual fresh-only defaults, immutable source/imports, no name inference, model-derived disclosure, locks and explicit resource refusal

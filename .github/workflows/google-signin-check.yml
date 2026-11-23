@@ -4,11 +4,24 @@ on:
     paths:
       - 'acs_auth_gateway.py'
       - 'public/index.html'
-      - 'public/app/boot/engine-guard.js'
-      - 'public/app/styles/app.css'
+      # Auth's shipped-page check also executes the real guest journey. Include
+      # its transitive browser modules, rather than only the original guard.
+      - 'public/app/**'
+      - 'tools/frontend_local.txt'
+      - 'tools/build_guest_schematics.py'
+      - 'docs/delivery/2026-11-10/fixtures/**'
+      - 'tools/ci_prepare_apt.py'
+      - 'tests/remediation/test_ci_apt_mirror.py'
       - 'tests/remediation/test_auth_gateway.py'
       - 'tests/remediation/test_auth_session.js'
       - 'tests/remediation/test_auth_shipped_page.cjs'
+      - 'tests/remediation/test_auth_fixture_waits.cjs'
+      - 'tests/remediation/test_guest_workspace.cjs'
+      - 'tests/remediation/test_guest_roof_parity.py'
+      - 'tests/remediation/guest_roof_parity.mjs'
+      - 'tests/remediation/test_guest_roof_integration.cjs'
+      - 'tests/remediation/test_guest_import_wait.cjs'
+      - 'tests/remediation/test_guest_recovery_writes.cjs'
       - '.github/workflows/google-signin-check.yml'
   workflow_dispatch:
 permissions:
@@ -19,7 +32,9 @@ concurrency:
 jobs:
   auth:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # The full three-journey guest suite passed after ~9m12s; setup+cleanup
+    # exceeded the former10m job envelope. Individual test budgets stay intact.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
@@ -30,11 +45,28 @@ jobs:
           python-version: '3.11'
       - name: Auth session and gateway contracts
         run: |
+          python tools/build_guest_schematics.py --check
           node tests/remediation/test_auth_session.js
+          node tests/remediation/test_auth_fixture_waits.cjs
+          node tests/remediation/test_guest_import_wait.cjs
+          node tests/remediation/test_guest_recovery_writes.cjs
           python3 tests/remediation/test_auth_gateway.py
       - name: Build shipped frontend
         run: bash tools/netlify-build.sh
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Google redirect and existing account UI on desktop and mobile
         run: node tests/remediation/test_auth_shipped_page.cjs
+      - name: Retain masked synthetic auth failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: google-auth-failure-${{ github.run_id }}
+          path: |
+            logs/auth-failure-*.json
+            logs/auth-failure-*.png
+            logs/guest-diagnostics/*.json
+          if-no-files-found: ignore
+          retention-days: 14

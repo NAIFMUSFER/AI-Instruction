@@ -90,7 +90,12 @@ KEYS.forEach(function(key){
     model_hash:doc.model_hash,source_revision:doc.source_revision,
     drawing_index:doc.drawing_index,legends:doc.legends,metadata:doc.metadata};
   if(sheets.length){
-    const pdf=dcSheetPdfStreams(sheets,drawings);
+    // Match only the explicitly shared ASCII PDF surface. Full Unicode draw
+    // operations/SVG still compare above; server RTL/font tests are independent.
+    const asciiDrawings=C(drawings);
+    Object.values(asciiDrawings).forEach(d=>{d.ops=d.ops.filter(op=>
+      op.op!=='text'||Array.from(String(op.text||'')).every(c=>c.codePointAt(0)>=32&&c.codePointAt(0)<=126));});
+    const pdf=dcSheetPdfStreams(sheets,asciiDrawings);
     entry.pdf={page_count:pdf.page_count,media_boxes:pdf.media_boxes,
       content_streams:pdf.content_streams,sheet_ids:pdf.sheet_ids,
       semantic_hash:pdf.semantic_hash,

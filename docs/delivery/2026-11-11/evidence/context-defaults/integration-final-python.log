@@ -1,0 +1,51 @@
+=== tests/remediation/test_context_details.py ===
+...............
+----------------------------------------------------------------------
+Ran 15 tests in 0.125s
+
+OK
+=== tests/remediation/test_context_details_parity.py ===
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.181s
+
+OK
+Exact Python/native ESM parity: 64 cases
+=== tests/remediation/test_context_details_independent_reader.py ===
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.919s
+
+OK
+[ACS] objects: requested=5 generated=5 generic_box=0 unsupported=0
+[ACS] objects: requested=5 generated=5 generic_box=0 unsupported=0
+=== tests/remediation/test_context_details_service.py ===
+..........
+----------------------------------------------------------------------
+Ran 10 tests in 0.275s
+
+OK
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0
+=== tests/remediation/test_remove_object_command.py ===
+.....................
+----------------------------------------------------------------------
+Ran 21 tests in 0.963s
+
+OK
+=== tests/remediation/test_context_objects_fixture.py ===
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.107s
+
+OK
+=== tests/remediation/test_context_runtime_packaging.py ===
+test_checkout_cannot_hide_an_omitted_helper (__main__.ContextRuntimePackaging.test_checkout_cannot_hide_an_omitted_helper) ... ok
+test_release_copy_set_executes_authoring_and_disclosure (__main__.ContextRuntimePackaging.test_release_copy_set_executes_authoring_and_disclosure) ... ok
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.079s
+
+OK
+──────────────────────────────────────────────────────────────
+ci_run · context final focused Python: 7 passed, 0 failed, 7 total
+ci_run · context final focused Python: every target passed

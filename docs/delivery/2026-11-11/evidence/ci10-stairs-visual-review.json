@@ -1,0 +1,61 @@
+{
+  "head": "b88f560ca35f6ef6dc4acf6cb2d06af13676432e",
+  "artifact_id": 13877017147,
+  "artifact_sha256": "57b064214b9ad18a99a8d7d5d800a347dd02acb12902ffe359cdc4af74cbb5aa",
+  "reviewed_original_images": 14,
+  "method": "All fourteen original captures reviewed through two contact sheets; native mobile interior and desktop upper-arrival additionally inspected",
+  "observations": [
+    "Tread sequence and return flight are visible in interior/aerial views; lower-level cutaway shows the first flight",
+    "Upper-floor view visibly retains the arrival strip around the stair opening",
+    "Selected detail frames one canonical tread with its component identity; it does not show a complete stair assembly",
+    "Exterior is an isolated synthetic core, including an upper external doorway; it is not proof of a complete building access route",
+    "Mobile revision badge and lower inspector obscure some geometry; controls take substantial vertical space",
+    "No guards or structural stair support is demonstrated; floating tread solids do not prove buildability"
+  ],
+  "measurements": [
+    {
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "first_view_ms": 1097.530385,
+      "max_preset_ms": 800.71652,
+      "frame_p95_ms": null,
+      "frame_samples": 1,
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "unavailable; desktop browser viewport emulation"
+      },
+      "quality": "\u0627\u0642\u062a\u0635\u0627\u062f\u064a",
+      "model_hash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+      "revision": "plan_fca0d48758924e09aa4acbd3c5f877b7"
+    },
+    {
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "first_view_ms": 1102.706889000001,
+      "max_preset_ms": 607.749151,
+      "frame_p95_ms": null,
+      "frame_samples": 1,
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/151.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 4,
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "unavailable; desktop browser viewport emulation"
+      },
+      "quality": "\u0627\u0642\u062a\u0635\u0627\u062f\u064a",
+      "model_hash": "0b709c11674f14ff3e93f451927c062a74aedf49f93eb1b38963b9e913960331",
+      "revision": "plan_fca0d48758924e09aa4acbd3c5f877b7"
+    }
+  ],
+  "limits": [
+    "Fixed synthetic fixture, not arbitrary AI generation",
+    "Desktop emulation, not physical iPhone",
+    "Four logical cores, SwiftShader economy immediate transitions; smooth frame performance NOT_VERIFIED",
+    "CI10 overall failed; passing this visual suite is not overall acceptance"
+  ]
+}

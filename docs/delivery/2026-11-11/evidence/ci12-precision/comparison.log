@@ -1,0 +1,12 @@
+{"source": "before_76a90b920d84c9cef8785f3de63f82eaa508154a", "canonical_z": 6.837209302325586, "serialized_z": 6.837208499999999, "error_m": -8.023255873013113e-07, "canonical_hash": "76f5f87836eac940f32ac73e6426b722cd3ab42ae5ffe2b0ded2d6b0f1ed95f9"}
+{"source": "after_working_tree", "canonical_z": 6.837209302325586, "serialized_z": 6.837209302325586, "error_m": 0.0, "canonical_hash": "76f5f87836eac940f32ac73e6426b722cd3ab42ae5ffe2b0ded2d6b0f1ed95f9"}
+{"fixture": "villa", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "719c7f18c428c18a58d4f5754aac88a60849bb0bffe98e5996c2e67d51a5210f"}
+{"fixture": "hotel", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "2b01b04c3a9bab2be9b416bd2f7e258a768cfa58624ca31602a17353925c1118"}
+{"fixture": "clinic", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "c0065ab885721e349bc867e7d0d2b90b0125a136a2ca4e413f861e389c3d9a98"}
+{"fixture": "warehouse", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "698b5851c6ac7084365b13b64ea2bca098afa3f1193aa8d9025cd0e59e67b115"}
+{"fixture": "villa_glazed", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "d9c6988646d9810ec8e144cc362cf3f8ccdbc8e62856b2984f86b60b3e11589c"}
+{"fixture": "hotel_glazed", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "23e4594a278cf1e9e368b163db53abef6a7c97fff90e39acecc79209bec93f79"}
+{"fixture": "clinic_glazed", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "f513665251f50b6e63db52a30a9f9d30629d9e0fab2b21ab32300a601405d989"}
+{"fixture": "warehouse_glazed", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "86277f356b3c78da7ed6fc477fd1132fa5a3d1de6a9148ef21ef15902a9665cb"}
+{"fixture": "fractional_precision_fixture", "scope": "ALL", "full_export_result_byte_identical": true, "artifact_sha256": "fb0cc7816a2d6c62396e9846bdadd9941d9fa8cf4c5294758533b2f5b5b57711"}
+PASS: nine representative legacy ALL results unchanged; same current shared dependencies used for both exporter modules.

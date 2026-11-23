@@ -1,0 +1,13 @@
+F
+======================================================================
+FAIL: test_only_explicit_roof_instances_waive_occupied_room_door_light_needs (__main__.RoofBoundaryRegressions.test_only_explicit_roof_instances_waive_occupied_room_door_light_needs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 305, in test_only_explicit_roof_instances_waive_occupied_room_door_light_needs
+    self.assertFalse(any('بلا باب' in x or 'بلا إنارة' in x for x in findings),findings)
+AssertionError: True is not false : ['[g/deck] بلا باب — أضِف باباً على حافة مناسبة.', '[g/deck] بلا إنارة — أضِف light أو spot.']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

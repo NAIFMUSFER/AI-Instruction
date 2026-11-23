@@ -29,6 +29,8 @@ jobs:
           python -S tests/remediation/test_plan_review_packet.py 2>&1 | tee logs/review-packet-python.log
           node --test tests/remediation/test_plan_review_packet.mjs 2>&1 | tee logs/review-packet-node.log
           python tests/remediation/test_plan_review_packet.py --fixtures logs/review-fixtures
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Install repository-locked browser dependencies
         run: |
           npm ci

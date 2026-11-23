@@ -3,7 +3,7 @@ name: Production Supabase durable plan store
 on:
   pull_request:
     paths:
-      - 'supabase/migrations/20260912_acs_plan_store_v2.sql'
+      - 'supabase/migrations/**'
       - 'tests/remediation/test_supabase_plan_store_schema.py'
       - '.github/workflows/production-supabase-plan-store.yml'
 

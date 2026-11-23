@@ -1,0 +1,14 @@
+test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work (__main__.WorkspaceLifecycle.test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work) ... FAIL
+
+======================================================================
+FAIL: test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work (__main__.WorkspaceLifecycle.test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_connected_workspace.py", line 208, in test_fresh_generation_stairs_are_canonical_before_approval_without_extra_provider_work
+    self.assertTrue(stairs, 'fresh generated core must contain explicit canonical stair geometry')
+AssertionError: [] is not true : fresh generated core must contain explicit canonical stair geometry
+
+----------------------------------------------------------------------
+Ran 1 test in 0.053s
+
+FAILED (failures=1)

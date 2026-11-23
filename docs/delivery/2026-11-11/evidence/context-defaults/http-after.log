@@ -1,0 +1,12 @@
+test_authenticated_non_provider_command_binds_verified_actor_and_path_project (__main__.PlanHttpCommandBoundaryTests.test_authenticated_non_provider_command_binds_verified_actor_and_path_project) ... ok
+test_authentication_happens_before_body_read (__main__.PlanHttpCommandBoundaryTests.test_authentication_happens_before_body_read) ... ok
+test_body_limit_fails_before_store_construction (__main__.PlanHttpCommandBoundaryTests.test_body_limit_fails_before_store_construction) ... ok
+test_chat_edit_routes_to_shared_durable_admission (__main__.PlanHttpCommandBoundaryTests.test_chat_edit_routes_to_shared_durable_admission) ... ok
+test_client_cannot_smuggle_project_authority_inside_command (__main__.PlanHttpCommandBoundaryTests.test_client_cannot_smuggle_project_authority_inside_command) ... ok
+test_route_requires_canonical_uuid_project_identity (__main__.PlanHttpCommandBoundaryTests.test_route_requires_canonical_uuid_project_identity) ... ok
+test_unrelated_route_passes_through_without_auth_or_body_read (__main__.PlanHttpCommandBoundaryTests.test_unrelated_route_passes_through_without_auth_or_body_read) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.053s
+
+OK

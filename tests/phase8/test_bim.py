@@ -119,7 +119,7 @@ for k in TARGETS + GLAZED:
     chk('%s: no object is invented beyond the declared mapping' % k,
         all(t.upper() in [x['entity'].upper() for x in B.SPEC['entity_support']]
             or t.startswith('IFCREL') or t in (
-                'IFCCARTESIANPOINT', 'IFCDIRECTION', 'IFCAXIS2PLACEMENT3D',
+                'IFCCARTESIANPOINT', 'IFCDIRECTION', 'IFCAXIS2PLACEMENT3D', 'IFCAXIS2PLACEMENT2D',
                 'IFCLOCALPLACEMENT', 'IFCEXTRUDEDAREASOLID', 'IFCRECTANGLEPROFILEDEF',
                 'IFCSHAPEREPRESENTATION', 'IFCPRODUCTDEFINITIONSHAPE', 'IFCPOLYLINE',
                 'IFCSIUNIT', 'IFCUNITASSIGNMENT', 'IFCCONVERSIONBASEDUNIT',

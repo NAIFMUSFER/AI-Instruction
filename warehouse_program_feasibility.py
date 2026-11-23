@@ -7,6 +7,8 @@ makes feasibility explicit before expensive/detail generation.
 from __future__ import annotations
 import math
 
+from acs_geometry_contract import occupied_template_instances
+
 _VALID_SCOPES = frozenset({"indoor", "outdoor"})
 
 
@@ -71,21 +73,26 @@ def classify_warehouse_program(program):
 
 
 def generated_indoor_area(building):
-    """Measure canonical floor rectangles only; site/outdoor objects are excluded."""
-    try:
-        floors=building['floors']
-        if not isinstance(floors,dict): return None
-        total=0.0
-        for floor in floors.values():
-            for room in floor['rooms']:
-                rect=room['rect']
-                if not isinstance(rect,list) or len(rect)!=4: return None
-                w,d=_area(rect[2]),_area(rect[3])
-                if w is None or d is None:return None
-                total += w*d
-        return total
-    except (KeyError,TypeError):
+    """Sum occupied canonical room rectangles over all physical level instances."""
+    if not isinstance(building, dict):
         return None
+    templates, warnings = occupied_template_instances(building)
+    if warnings or not templates:
+        return None
+    total = 0.0
+    for template in templates:
+        floor = building["floors"][template]
+        rooms = floor.get("rooms") if isinstance(floor, dict) else None
+        if not isinstance(rooms, list):
+            return None
+        for room in rooms:
+            rect = room.get("rect") if isinstance(room, dict) else None
+            if (not isinstance(rect, list) or len(rect) != 4
+                    or not all(type(v) in (int, float) and math.isfinite(v) for v in rect)
+                    or rect[2] <= 0 or rect[3] <= 0):
+                return None
+            total += rect[2] * rect[3]
+    return total if math.isfinite(total) else None
 
 
 def warehouse_program_feasibility(*, site_area_m2, building_target_m2, program):

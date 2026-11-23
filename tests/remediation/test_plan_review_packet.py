@@ -50,6 +50,19 @@ class ReviewPacketTests(unittest.TestCase):
         self.assertTrue(p['read_only'])
         self.assertNotIn('can_approve', p['review'])
 
+    def test_multilevel_core_without_geometry_remains_visible_in_shipped_packet(self):
+        ws, first = workspace('residential')
+        model = copy.deepcopy(first.model)
+        model['levels'].append({'index': 1, 'template': 'ground', 'elevation_m': 4.5})
+        draft = ws.propose(model, brief=first.brief, requirements=json.loads(first.requirements_json),
+                           expected_head=first.id, note='synthetic repeated core')
+        source = ws.review(draft.id)['coverage']['vertical_circulation']
+        self.assertEqual(source['geometry'], 'MISSING')
+        delivered = payload(build_review_packet(ws, draft.id))['review']['coverage']['vertical_circulation']
+        self.assertEqual(delivered['geometry'], source['geometry'])
+        self.assertEqual(delivered['physical_traversal'], 'NOT_VERIFIED')
+        self.assertNotIn('missing_geometry', delivered)
+
     def test_receipt_hash_uses_exact_utf8_payload_bytes(self):
         ws, r = workspace(); packet=build_review_packet(ws,r.id)
         self.assertEqual(hashlib.sha256(packet['payload_json'].encode()).hexdigest(),packet['payload_sha256'])

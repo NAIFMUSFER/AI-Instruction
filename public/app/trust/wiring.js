@@ -85,11 +85,12 @@ function req(r){ return new Promise((res,rej)=>{
 async function pReadAll(){
   const db=await idbOpen();
   let recs=[], ptr=null;
-  await idbTx(db,[ST_REC,ST_META],'readonly',tx=>{
-    tx.objectStore(ST_REC).getAll().onsuccess=e=>{ recs=e.target.result||[]; };
-    tx.objectStore(ST_META).get(PTR_KEY).onsuccess=e=>{ ptr=e.target.result||null; };
-  });
-  db.close();
+  try {
+    await idbTx(db,[ST_REC,ST_META],'readonly',tx=>{
+      tx.objectStore(ST_REC).getAll().onsuccess=e=>{ recs=e.target.result||[]; };
+      tx.objectStore(ST_META).get(PTR_KEY).onsuccess=e=>{ ptr=e.target.result||null; };
+    });
+  } finally { db.close(); }
   return {records:recs, pointer:ptr};
 }
 
@@ -100,7 +101,7 @@ async function pSave(project, origin){
   // Fail closed before guest UI initialization as well as during a slow read.
   if(window.ACS.guest && window.ACS.guestRecoveryPending!==false)
     return {ok:false,code:'RECOVERY_PENDING'};
-  if(window.ACS.guest && origin==='AUTOSAVE' && !window.ACS.guestAutosaveReady)
+  if(window.ACS.guest && (!window.ACS.guestRecoveryReadable || (origin==='AUTOSAVE' && !window.ACS.guestAutosaveReady)))
     return {ok:false,code:'RECOVERY_UNAVAILABLE'};
   const plan=P.planWrite(pState, project, {now:Date.now(), origin:origin||'AUTOSAVE',
     project_id:(project&&project.project_id)||'default'});
@@ -130,6 +131,7 @@ async function pSave(project, origin){
         plan.plan.prune.forEach(id=>s.delete(id)); });
     db.close();
     pApply(P.applyWriteResult(pState, plan.plan, {ok:true}));
+    if(window.ACS.guest && project.model !== lastBuilding) pSetStatus('IDLE');
     return {ok:true, code:'SAVED', record_id:plan.plan.new_record_id};
   }catch(e){
     if(db) try{ db.close(); }catch(_e){}
@@ -146,8 +148,14 @@ function pApply(r){
 }
 function pSetStatus(key){
   pStatusKey=key;
-  const el=$('acsSaveState'); if(!el) return;
   const L=P.statusLabel(key);
+  const guestLabel=$('guestSaveStatus');
+  if(guestLabel && !window.ACS.guestRecoveryPending && window.ACS.guestRecoveryReadable){
+    guestLabel.textContent=L.ar;
+    const download=$('guestDownload');
+    if(download) download.hidden=key!=='FAILED' && key!=='QUOTA';
+  }
+  const el=$('acsSaveState'); if(!el) return;
   el.setAttribute('data-acs-save', L.key);
   el.setAttribute('data-tone', L.tone);
   el.innerHTML='<span class="ar" lang="ar">'+escT(L.ar)+'</span>'

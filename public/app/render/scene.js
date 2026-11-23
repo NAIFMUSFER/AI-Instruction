@@ -2981,8 +2981,24 @@ const app=document.getElementById('app'), statusEl=document.getElementById('stat
    العنصر يجعل المحرّك لا يلمس تنسيقه إطلاقاً، ويأتي display والأبعاد من
    القاعدة `#app > canvas` في app.css. */
 const canvas=document.createElement('canvas');
+// Initial presentation budget only. Explicit PBR quality requests retain their
+// own settings; canonical geometry, cameras and the CSS viewport are unchanged.
+function acsInitialRenderQuality(gl,ratio){
+  let name=null;
+  try{const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    if(ext)name=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)||null;
+  }catch(e){}
+  if(!name){try{name=gl.getParameter(gl.RENDERER)||null;}catch(e){}}
+  name=name?String(name):null;
+  const software=/swiftshader|llvmpipe|softpipe|swrast|software rasterizer|microsoft basic render/i.test(name||'');
+  const dpr=Number.isFinite(ratio)&&ratio>0?ratio:1;
+  return Object.freeze({profile:software?'SOFTWARE_CONSERVATIVE':'DEFAULT',
+    reason:software?'SOFTWARE_RENDERER_REPORTED':name?'NO_SOFTWARE_RENDERER_INDICATOR':'RENDERER_ID_UNAVAILABLE',
+    renderer:name,pixel_ratio:Math.min(dpr,software?.75:2),shadow_map_size:software?512:2048});
+}
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.acsInitialQuality=acsInitialRenderQuality(renderer.getContext(),typeof devicePixelRatio==='number'?devicePixelRatio:1);
+renderer.setPixelRatio(renderer.acsInitialQuality.pixel_ratio);
 /* updateStyle=false: بقيمته الضمنية true يكتب three.js أبعاد الكانفس في سمة
    style. الأبعاد من #app > canvas في app.css؛ مخزن الرسم يضبطه setSize كما كان. */
 renderer.setSize(innerWidth,innerHeight,false);
@@ -3020,7 +3036,7 @@ scene.add(sky);
 const su=sky.material.uniforms; su.turbidity.value=6; su.rayleigh.value=2.2;
 su.mieCoefficient.value=0.005; su.mieDirectionalG.value=0.8;
 const sun=new THREE.DirectionalLight(0xffffff,2.6); sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048); sun.shadow.bias=-0.0004;
+sun.shadow.mapSize.set(renderer.acsInitialQuality.shadow_map_size,renderer.acsInitialQuality.shadow_map_size); sun.shadow.bias=-0.0004;
 scene.add(sun); scene.add(new THREE.HemisphereLight(0xdfeaff,0x30343d,0.6));
 /* ============ تطبيق وضع العرض البصري على المشهد نفسه ============
    لا يغيّر هندسة النموذج ولا يعيد بناءها: يبدّل المواد والرؤية والقصّ فقط،

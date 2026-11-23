@@ -62,6 +62,13 @@ def build_review_packet(workspace, revision_id: str) -> dict:
         'locks': {'rooms': [list(r) for r in rev.locked_rooms], 'semantic': selectors},
         'projections': projections,
     }
+    vertical = (report.get('coverage') or {}).get('vertical_circulation') or {}
+    geometry = vertical.get('geometry')
+    if geometry in ('PRESENT', 'MISSING', 'NOT_APPLICABLE', 'NOT_VERIFIED'):
+        # The reader needs the reported geometry status, never assessor notes or
+        # the private fault records. Alignment and traversal have separate scopes.
+        payload['review']['coverage'] = {'vertical_circulation': {
+            'geometry': geometry, 'physical_traversal': 'NOT_VERIFIED'}}
     now = workspace.get(revision_id)
     if getattr(now, 'bound_content_hash', now.content_hash) != receipt:
         raise PlanError('REVIEW_REVISION_CHANGED', 'Selected revision changed during projection')
