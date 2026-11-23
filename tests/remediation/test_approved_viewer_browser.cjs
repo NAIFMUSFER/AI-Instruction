@@ -31,7 +31,7 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
   assert.equal(await page.locator('#cwViewer').getAttribute('data-revision'),fixture.revision);
   assert.equal(await page.evaluate(()=>document.querySelector('#designWorkspace').scrollWidth>innerWidth),false);
   const baseline=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.ok(baseline.meshCount>0&&baseline.triangleCount>0);
-  assert.equal(baseline.modelHash,fixture.model_hash);
+  assert.equal(baseline.modelHash,fixture.model_hash);assert.equal(baseline.lastFrame.mode,'settled');
   // Presentation layer: derived from the exact meshes, never added to them.
   assert.ok(baseline.presentation.edgeSegments>0&&baseline.presentation.roomLabels>0&&[1,5].includes(baseline.presentation.gridCellM));
   assert.equal(baseline.presentation.entranceDetected,true,'hero and street cameras face a real exterior door');
@@ -51,7 +51,7 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
    // The 2 s budget is enforced on the CI runner class (4+ logical cores). A weaker
    // host still fails on a stall, and its measurement is recorded as a missed target.
    assert.ok(transitionMs<(hardware.cpuLogicalCores>=4?meta.budgets.transition_timeout_ms:meta.budgets.transition_stall_ms),'view transition '+name+' took '+Math.round(transitionMs)+' ms');
-   const stats=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(stats.view,name);assert.equal(stats.modelHash,fixture.model_hash);assert.equal(stats.meshCount,baseline.meshCount);assert.equal(stats.triangleCount,baseline.triangleCount,'presentation never changes approved triangles');assert.equal(stats.presentation.clippingPlanes,1,'cutaway never changes the compiled clipping-plane count');
+   const stats=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(stats.lastFrame.mode,'settled');assert.equal(stats.view,name);assert.equal(stats.modelHash,fixture.model_hash);assert.equal(stats.meshCount,baseline.meshCount);assert.equal(stats.triangleCount,baseline.triangleCount,'presentation never changes approved triangles');assert.equal(stats.presentation.clippingPlanes,1,'cutaway never changes the compiled clipping-plane count');
    const shownLabels=await page.locator('.av-label:not([hidden])').count();if(['aerial','cutaway'].includes(name))assert.ok(shownLabels>0,'room names are visible in plan-like views');if(['street','interior','detail'].includes(name))assert.equal(shownLabels,0,'room names do not float over eye-level views');
    assert.equal(stats.presentation.roofShown,canonicalRoof&&!['aerial','cutaway'].includes(name),'initial view only shows roofs present in the artifact');
    const fits=await page.evaluate(async()=>{const stats=document.querySelector('#cwViewer').acsViewer.inspect();if(!stats.framedBounds)return true;const THREE=await import('three');const camera=new THREE.PerspectiveCamera(stats.fov,stats.aspect,.001,10000);camera.position.fromArray(stats.camera);camera.lookAt(new THREE.Vector3().fromArray(stats.target));camera.updateMatrixWorld();return [0,1].every(i=>[0,1].every(j=>[0,1].every(k=>{const p=new THREE.Vector3(stats.framedBounds[i?'max':'min'][0],stats.framedBounds[j?'max':'min'][1],stats.framedBounds[k?'max':'min'][2]).project(camera);return Math.abs(p.x)<=.94&&Math.abs(p.y)<=.94;})));});
@@ -109,26 +109,42 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
   await page.locator('#cwViewer canvas').focus();
   const orbit=await page.evaluate(async()=>{
     const host=document.querySelector('#cwViewer'),viewer=host.acsViewer,canvas=host.querySelector('canvas');
-    const orbitSamples=[],start=performance.now(),timeout=20000;
+    const intervals=[],renders=[],start=performance.now();
     return new Promise((resolve,reject)=>{
-      let previous=null,frame;
-      const watchdog=setTimeout(()=>{cancelAnimationFrame(frame);reject(new Error('interactive orbit did not complete in 20 seconds'));},timeout);
+      let previous=null,pending=null,frame;
+      const watchdog=setTimeout(()=>{cancelAnimationFrame(frame);reject(new Error('interactive orbit did not complete in 20 seconds'));},20000);
       function step(timestamp){
-        const before=viewer.inspect().camera,calls=viewer.renderCalls;
-        canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));
-        const after=viewer.inspect().camera;
-        if(viewer.renderCalls<=calls||before.every((value,i)=>Math.abs(value-after[i])<1e-9)){
-          clearTimeout(watchdog);reject(new Error('orbit sample did not move and render the camera'));return;
+        if(pending){
+          const current=viewer.inspect();
+          // This callback follows the application's queued frame for the same input.
+          if(viewer.renderCalls!==pending.calls+1||pending.camera.every((v,i)=>Math.abs(v-current.camera[i])<1e-9)){
+            clearTimeout(watchdog);reject(new Error('orbit input did not change the camera and produce exactly one draw'));return;
+          }
+          renders.push({...current.lastFrame});
+          if(previous!==null)intervals.push(timestamp-previous);
+          previous=timestamp;
+          if(intervals.length===24){
+            clearTimeout(watchdog);resolve({intervals_ms:intervals,frames:renders,elapsed_ms:performance.now()-start,last_render_calls:viewer.renderCalls,input:'ArrowLeft via focused production canvas on consecutive rendered animation frames'});return;
+          }
         }
-        if(previous!==null)orbitSamples.push(timestamp-previous);
-        previous=timestamp;
-        if(orbitSamples.length<24){frame=requestAnimationFrame(step);return;}
-        clearTimeout(watchdog);resolve({intervals_ms:orbitSamples,elapsed_ms:performance.now()-start,input:'ArrowLeft via focused production canvas on consecutive animation frames'});
+        pending={calls:viewer.renderCalls,camera:viewer.inspect().camera};
+        canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));
+        frame=requestAnimationFrame(step);
       }
       frame=requestAnimationFrame(step);
     });
   });
-  const calls=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls);await page.waitForTimeout(250);assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls),calls,'no idle render loop');
+  const reduced=orbit.frames.some(f=>f.mode==='motion-preview');
+  if(/swiftshader|llvmpipe|software|microsoft basic render/i.test(hardware.webglRenderer)){
+    assert.ok(orbit.frames.every(f=>f.mode==='motion-preview'&&f.width*f.height<baseline.lastFrame.width*baseline.lastFrame.height));
+  }
+  await page.waitForFunction(()=>document.querySelector('#cwViewer').acsViewer.lastFrame.mode==='settled');
+  const settled=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());
+  assert.equal(settled.modelHash,baseline.modelHash);assert.equal(settled.triangleCount,baseline.triangleCount);assert.equal(settled.meshCount,baseline.meshCount);
+  assert.equal(settled.lastFrame.width,baseline.lastFrame.width);assert.equal(settled.lastFrame.height,baseline.lastFrame.height);
+  assert.equal(settled.renderCalls,orbit.last_render_calls+(reduced?1:0),'restore settled quality once after preview input');
+  orbit.settled_frame=settled.lastFrame;orbit.restore_draws=settled.renderCalls-orbit.last_render_calls;
+  const calls=settled.renderCalls;await page.waitForTimeout(300);assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls),calls,'no idle render loop after restoration');
   await page.evaluate(()=>document.querySelector('#cwViewer canvas').dispatchEvent(new Event('webglcontextlost',{cancelable:true})));
   assert.equal(await page.locator('#cwViewer canvas').count(),0);assert.ok((await page.evaluate(()=>window.contextLostMessage)).includes('فُقد'));
   await page.evaluate(()=>window.fixtureDispose());assert.equal(await page.locator('#cwViewer canvas').count(),0,'idempotent teardown');

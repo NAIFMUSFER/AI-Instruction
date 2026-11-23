@@ -86,6 +86,46 @@ const viewerSource=fs.readFileSync('public/app/ui/approved-viewer.mjs','utf8');
  finish.set(false);assert.equal(implicit.geometry,geometry);assert.equal(implicit.material,material);checks++;
  finish.dispose();geometry.dispose();material.dispose();
 }
+// Demand scheduling must not redraw every pointer event or leave work queued
+// after a switch, lost context, or hide. Use deterministic frame/timer clocks.
+{
+ const code=viewerSource.slice(viewerSource.indexOf('function cameraFrameQueue'),viewerSource.indexOf('function orbitPreview'));
+ const frames=new Map(),timers=new Map(),painted=[];let id=0,visible=true,slow=true;
+ const make=vm.runInNewContext(code+'\ncameraFrameQueue',{
+   requestAnimationFrame:fn=>{frames.set(++id,fn);return id;},cancelAnimationFrame:key=>frames.delete(key),
+   setTimeout:fn=>{timers.set(++id,fn);return id;},clearTimeout:key=>timers.delete(key)
+ });
+ const queue=make(()=>visible,()=>slow,preview=>painted.push(preview));
+ const run=map=>{const callbacks=[...map.values()];map.clear();callbacks.forEach(fn=>fn());};
+ queue.request();queue.request();assert.equal(frames.size,1);run(frames);assert.deepEqual(painted,[true]);checks++;
+ queue.request();assert.equal(timers.size,0);run(frames);run(timers);assert.deepEqual(painted,[true,true,false]);checks++;
+ run(timers);run(frames);assert.equal(painted.length,3);checks++;
+ queue.request();visible=false;run(frames);assert.equal(painted.length,3);checks++;
+ visible=true;queue.request();run(frames);visible=false;run(timers);assert.equal(painted.length,4);checks++;
+ visible=true;queue.request();queue.cancel();assert.equal(frames.size,0);assert.equal(timers.size,0);checks++;
+ slow=false;queue.request();run(frames);assert.equal(timers.size,0);assert.equal(painted.at(-1),false);checks++;
+}
+{
+ const code=viewerSource.slice(viewerSource.indexOf('function orbitPreview'),viewerSource.indexOf('function releaseObject'));
+ const make=vm.runInNewContext(code+'\norbitPreview',{THREE});
+ const geometry=new THREE.BoxGeometry(),source=new THREE.MeshStandardMaterial({color:0x447799,transparent:true,opacity:.7});
+ source.clippingPlanes=[new THREE.Plane()];source.alphaTest=.2;
+ const mesh=new THREE.Mesh(geometry,source),identity=mesh.uuid,detail=new THREE.Object3D();
+ const preview=make([mesh],[detail]);let simplified,draws=0;
+ const renderer={shadowMap:{enabled:true},render(){
+   draws++;assert.equal(mesh.uuid,identity);assert.equal(mesh.geometry,geometry);assert.equal(mesh.visible,true);
+   assert.equal(mesh.material.isMeshLambertMaterial,true);assert.ok(mesh.material.color.equals(source.color));
+   assert.equal(mesh.material.opacity,source.opacity);assert.equal(mesh.material.alphaTest,source.alphaTest);assert.equal(mesh.material.clippingPlanes,source.clippingPlanes);
+   assert.equal(detail.visible,false);assert.equal(this.shadowMap.enabled,false);
+   if(simplified)assert.equal(mesh.material,simplified);simplified=mesh.material;
+ }};
+ preview.draw(renderer);preview.draw(renderer);assert.equal(draws,2);assert.equal(mesh.material,source);
+ assert.equal(detail.visible,true);assert.equal(renderer.shadowMap.enabled,true);checks+=5;
+ renderer.render=()=>{throw new Error('synthetic context failure');};
+ assert.throws(()=>preview.draw(renderer));assert.equal(mesh.material,source);assert.equal(detail.visible,true);checks++;
+ let freed=false;simplified.addEventListener('dispose',()=>{freed=true;});preview.dispose();assert.ok(freed);checks++;
+ geometry.dispose();source.dispose();
+}
 const roofCode=viewerSource.slice(viewerSource.indexOf('  const roofLevels='),viewerSource.indexOf('  const isRoofRow='));
 const connectedSource=fs.readFileSync('public/app/ui/connected-workspace.mjs','utf8');
 const projectionCode=connectedSource.match(/^const isRoofProjection = (.*);$/m)[1];
