@@ -29,9 +29,9 @@
     return false;
   }
   var entryQuery=new URLSearchParams(location.search||"");
-  var guestEntry=!googleCallback&&!callbackHash
-    &&entryQuery.get("signin")!=="1"
-    &&(entryQuery.get("guest")==="1"||(!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY)));
+  var guestEntry=entryQuery.get("guest")==="1"
+    ||(!googleCallback&&!callbackHash&&entryQuery.get("signin")!=="1"
+      &&!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY));
   function api(path){
     // Auth always uses the configured origin. A model-server override must not
     // redirect passwords or refresh credentials to a different origin.

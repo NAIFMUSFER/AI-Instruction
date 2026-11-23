@@ -1398,8 +1398,13 @@ function warehouseModel(W,D,opt){
   const H=Math.max(6,Math.min(+opt.clear||12,16));      // ارتفاع صافٍ
   const OPT_DOCK=+opt.docks||0, OPT_PACK=+opt.pack||0, OPT_AISLE=+opt.aisle||0;
   const R=[], P=(t,x,z,h)=>{const o={type:t,x:+x.toFixed(2),z:+z.toFixed(2)};if(h!=null)o.height=h;return o;};
-  const Z=(id,rect,role,extra)=>{const r=Object.assign({id,rect:rect.map(v=>+v.toFixed(2)),
-    role:role||undefined,walls:'none'},extra||{}); R.push(r); return r;};
+  const Z=(id,rect,role,extra)=>{
+    const room={id,rect:rect.map(v=>+v.toFixed(2)),walls:'none'};
+    if(role)room.role=role;
+    Object.assign(room,extra);
+    R.push(room);
+    return room;
+  };
   const fx=f=>W*f, fz=f=>D*f;
   // حزم أفقية (نِسَب مأخوذة من تخطيط 120×80 المرجعي)
   const b={in0:0, in1:fz(0.1125), un1:fz(0.1875), st1:fz(0.275),
