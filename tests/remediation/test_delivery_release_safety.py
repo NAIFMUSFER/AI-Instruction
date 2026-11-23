@@ -1,5 +1,6 @@
 """Executable negative witnesses for release evidence, packaging, and diagnostics."""
 import io
+import importlib.util
 import json
 import logging
 import os
@@ -84,6 +85,19 @@ class ReleaseSafety(unittest.TestCase):
                 code, summary, log = self.run_gate(mode)
                 self.assertEqual(code, 1, log)
                 self.assertEqual(summary['verdict'], 'FAIL')
+
+    def test_runtime_cdn_check_ignores_diagnostic_prose_but_detects_resource_loads(self):
+        spec = importlib.util.spec_from_file_location('live_http_monitor', ROOT / 'tests/production/verify_live.py')
+        monitor = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(monitor)
+        diagnostic = "console.warn('Migrate lighting using https://discourse.threejs.org/t/updates-to-lighting/');"
+        self.assertEqual(monitor.cdn_resource_hosts(diagnostic), [])
+        for source in ('import { Box } from "https://threejs.org/build/module.js";',
+                       'import("//cdn.jsdelivr.net/npm/example/index.js")',
+                       'fetch("https://unpkg.com/example/index.js")',
+                       'background: url(https://fonts.gstatic.com/example.woff2)'):
+            with self.subTest(source=source):
+                self.assertTrue(monitor.cdn_resource_hosts(source))
 
     def test_http_crash_never_passes(self):
         rc, summary, log = self.run_gate(http_behavior='crash')

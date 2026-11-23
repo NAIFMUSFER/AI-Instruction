@@ -31,6 +31,29 @@ class GeometryDelivery(unittest.TestCase):
             for n in nodes:
                 a=g['accessors'][g['meshes'][n['mesh']]['primitives'][0]['attributes']['POSITION']]
                 self.assertAlmostEqual(a['max'][1],lv['elevation'],places=5)
+    def test_explicit_wall_color_wins_over_an_identical_role_tint(self):
+        b=model()
+        room=b['floors']['f']['rooms'][0]
+        room.update(walls='full',role='storage')
+        def compiled():
+            with tempfile.TemporaryDirectory() as tmp:
+                path=Path(tmp)/'style.gltf'
+                C.compile_building(b,path)
+                return json.loads(path.read_text())
+        coded=compiled()
+        room['wall_color']=C.ROLE_COLOR['storage']
+        explicit=compiled()
+        # Even identical source RGB must not conceal that the color was requested.
+        for field in ['materials','meshes','buffers','bufferViews','accessors','scenes']:
+            self.assertEqual(coded[field],explicit[field])
+        self.assertEqual(len(coded['nodes']),len(explicit['nodes']))
+        for source,chosen in zip(coded['nodes'],explicit['nodes']):
+            self.assertEqual(source['name'],chosen['name'])
+            self.assertEqual(source['mesh'],chosen['mesh'])
+            hint=source.get('extras',{}).get('acs_optional_wall_finish')
+            self.assertEqual(hint,'industrial_cladding' if source['name'].startswith('WALL|') else None)
+            self.assertNotIn('acs_optional_wall_finish',chosen.get('extras',{}))
+
     def test_original_unequal_elevation_fixture_does_not_invent_fill(self):
         from acs_plan_review import digest
         b=json.loads((Path(__file__).parent/'fixtures/geometry/villa_unequal_elevation.json').read_text())

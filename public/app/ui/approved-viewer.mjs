@@ -111,13 +111,37 @@ export function floorFinishUVs(geometry, worldMatrix) {
   }
   return uv;
 }
-// Small neutral colour map. The metre scale is shared across disjoint slab
-// pieces. A finish selection changes presentation attributes only.
-function floorFinishTexture(){
-  const size=64, pixels=new Uint8Array(size*size*4);
+// A one-metre period on the wall face, aligned across adjacent wall segments.
+// Opposite normals share the same horizontal axis, including on rotated buildings.
+function wallFinishUVs(geometry,worldMatrix){
+  const positions=geometry.getAttribute('position'),normals=geometry.getAttribute('normal');
+  const uv=new THREE.Float32BufferAttribute(new Float32Array(positions.count*2),2);
+  const point=new THREE.Vector3(),normal=new THREE.Vector3(),transform=new THREE.Matrix3().getNormalMatrix(worldMatrix);
+  for(let i=0;i<positions.count;i++){
+    point.fromBufferAttribute(positions,i).applyMatrix4(worldMatrix);
+    normal.fromBufferAttribute(normals,i).applyNormalMatrix(transform);
+    if(Math.abs(normal.y)>.9){uv.setXY(i,point.x,point.z);continue;}
+    const sign=(Math.abs(normal.z)>Math.abs(normal.x)?normal.z:normal.x)<0?-1:1;
+    const length=Math.hypot(normal.x,normal.z);
+    uv.setXY(i,sign*(point.x*normal.z-point.z*normal.x)/length,point.y);
+  }
+  return uv;
+}
+function finishTexture(style){
+  const size=style==='tile'?64:128,pixels=new Uint8Array(size*size*4);
   for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-    const seam=x===0||y===0, grain=((x*73+y*151+x*y*17)%13);
-    const tone=seam?181:238+grain;
+    const u=x/size*2*Math.PI,v=y/size*2*Math.PI;
+    const grain=((x*73+y*151+x*y*17)%13);
+    let tone;
+    if(style==='tile')tone=x===0||y===0?181:238+grain;
+    else if(style==='industrial_cladding'){
+      // Eight shallow vertical flutes per metre, with a fine sheet joint.
+      const wave=Math.cos(8*u);
+      tone=(x===0?179:223+15*wave-11*Math.max(0,wave)**3)+grain*.36;
+    }else{
+      // Broad limewash mottling and a fine mineral grain, both seamless.
+      tone=225+6*Math.cos(u+Math.sin(v))+5*Math.cos(3*v-u)+3*Math.cos(5*u+2*v)+grain*.8;
+    }
     pixels.set([tone,tone,tone,255],(y*size+x)*4);
   }
   const texture=new THREE.DataTexture(pixels,size,size);
@@ -129,42 +153,69 @@ function floorFinishTexture(){
   texture.needsUpdate=true;
   return texture;
 }
-function floorFinish(meshes){
-  const slabs=meshes.filter(mesh=>{
-    const id=mesh.userData.acsViewerIdentity;
-    return id.kind==='FLOOR' && id.name.includes('|slab|') && mesh.material.isMeshStandardMaterial && !mesh.material.map;
-  });
-  const variants=new Map(),parts=[];
-  let texture=null;
+// Materials and UVs are viewer-owned. Share vertex/index buffers with the
+// approved geometry, and restore its exact original material and UVs on demand.
+function presentationFinish(meshes,styleFor){
+  const parts=meshes.map(mesh=>({mesh,style:styleFor(mesh)})).filter(({style})=>style);
+  const textures=new Map(),variants=new Map();
   return {
-    available:slabs.length>0,
+    available:parts.length>0,count:parts.length,
     set(on){
-      if(on&&!texture){
-        texture=floorFinishTexture();
-        for(const mesh of slabs){
-          const original=mesh.material,geometry=mesh.geometry;
-          if(!variants.has(original)){
-            const material=original.clone();
-            material.map=texture;
-            variants.set(original,material);
-          }
-          const tiled=geometry.clone();
-          tiled.setAttribute('uv',floorFinishUVs(geometry,mesh.matrixWorld));
-          parts.push({mesh,original,geometry,tiled});
-        }
-      }
       for(const part of parts){
-        part.mesh.geometry=on?part.tiled:part.geometry;
-        part.mesh.material=on?variants.get(part.original):part.original;
+        const {mesh,style}=part;
+        if(on&&!part.variant){
+          part.material=mesh.material;part.geometry=mesh.geometry;
+          if(!textures.has(style))textures.set(style,finishTexture(style));
+          const key=style+'|'+part.material.uuid;
+          if(!variants.has(key)){
+            const material=part.material.clone();
+            material.clippingPlanes=part.material.clippingPlanes;
+            material.map=textures.get(style);
+            if(style!=='tile'){
+              const industrial=style==='industrial_cladding';
+              material.color.set(industrial?0x98a5a9:0xe1d2b7);
+              material.bumpMap=material.map;
+              material.bumpScale=industrial ? .016 : .003;
+              material.roughness=industrial ? .62 : .94;
+              material.metalness=industrial ? .35 : 0;
+            }
+            variants.set(key,material);
+          }
+          part.variant=variants.get(key);
+          part.surface=new THREE.BufferGeometry();
+          for(const [name,attribute] of Object.entries(part.geometry.attributes))part.surface.setAttribute(name,attribute);
+          part.surface.setIndex(part.geometry.index);
+          part.surface.setAttribute('uv',(style==='tile'?floorFinishUVs:wallFinishUVs)(part.geometry,mesh.matrixWorld));
+        }
+        if(part.variant){
+          mesh.geometry=on?part.surface:part.geometry;
+          mesh.material=on?part.variant:part.material;
+        }
       }
     },
     dispose(){
       this.set(false);
-      parts.forEach(part=>part.tiled.dispose());
-      variants.forEach(material=>material.dispose());
-      texture?.dispose();
+      for(const part of parts)if(part.surface){
+        // Do not dispose shared canonical vertex/index buffers.
+        for(const name of Object.keys(part.surface.attributes))if(name!=='uv')part.surface.deleteAttribute(name);
+        part.surface.setIndex(null);part.surface.dispose();
+      }
+      variants.forEach(material=>material.dispose());textures.forEach(texture=>texture.dispose());
     }
   };
+}
+function floorFinish(meshes){
+  return presentationFinish(meshes,mesh=>{
+    const id=mesh.userData.acsViewerIdentity;
+    return id.kind==='FLOOR'&&id.name.includes('|slab|')&&mesh.material.isMeshStandardMaterial&&!mesh.material.map?'tile':null;
+  });
+}
+function architecturalFinish(meshes){
+  return presentationFinish(meshes,mesh=>{
+    const style=mesh.userData.acsOptionalWallFinish;
+    return mesh.userData.acsViewerIdentity.kind==='WALL'&&['industrial_cladding','plaster'].includes(style)&&
+      mesh.material.isMeshStandardMaterial&&!mesh.material.transparent&&!mesh.material.map&&mesh.geometry.hasAttribute('normal')?style:null;
+  });
 }
 function lineSet(values,color,opacity){
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(values,3));
@@ -198,6 +249,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     const name=original.nodes?.[association?.nodes]?.name||object.userData.name||object.name;
     const identity=nodeIdentity(name),box=new THREE.Box3().setFromObject(object);
     object.userData.acsViewerIdentity=identity;
+    object.userData.acsOptionalWallFinish=original.nodes?.[association?.nodes]?.extras?.acs_optional_wall_finish;
     const source=objectSourceFromExtras(original.nodes?.[association?.nodes]?.extras,objectSources);
     object.userData.acsApprovedObjectSource=source;
     const groupKey=source?'source|'+source.source_id+'|'+source.repeat_index:detailGroupKey(name);object.userData.acsDetailGroup=groupKey;
@@ -380,7 +432,12 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const reset=element('button','إعادة الضبط',toolbar);reset.type='button';
   const tourButton=element('button','جولة تلقائية',toolbar);tourButton.type='button';tourButton.setAttribute('aria-pressed','false');
   const more=element('details',null,toolbar,'av-more');element('summary','خيارات العرض',more);const moreBody=element('div',null,more,'av-more-body');
-  const finish=floorFinish(meshes);
+  const finish=floorFinish(meshes),walls=architecturalFinish(meshes);
+  const wallLabel=element('label','ألوان الجدران',moreBody),wallMode=element('select',null,wallLabel);
+  wallMode.setAttribute('aria-label','ألوان الجدران');
+  const sourceOption=element('option','ألوان الملف المصدر',wallMode);sourceOption.value='source';
+  if(walls.available){const choice=element('option','تشطيب معماري افتراضي',wallMode);choice.value='assumed';wallMode.value='assumed';walls.set(true);}
+  else wallLabel.hidden=true;
   const finishButton=element('button','تشطيب أرضية افتراضي · بلاط ٦٠ سم',moreBody);
   finishButton.type='button';finishButton.hidden=!finish.available;finishButton.setAttribute('aria-pressed','false');
   const qualityButton=element('button','الجودة: '+quality.name,moreBody);qualityButton.type='button';
@@ -389,6 +446,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const roofButton=element('button',roofLevels.size?'السطح':'سقف افتراضي',moreBody);roofButton.type='button';roofButton.setAttribute('aria-pressed',String(roofLevels.size>0));roofButton.disabled=!roofPieces&&!roofLevels.size;
   const sunLabel=element('label','الشمس',moreBody),sunRange=element('input',null,sunLabel);sunRange.type='range';sunRange.min='6';sunRange.max='18';sunRange.step='0.5';sunRange.value=String(sunHour);sunRange.setAttribute('aria-label','موضع الشمس للعرض، من الصباح إلى المساء');
   const badge=element('div',null,stage,'av-badge');element('strong','نسخة معتمدة · عرض مشتق',badge);element('bdi',revisionId,badge);badge.title='بصمة النموذج: '+marker.model_hash;
+  const finishNote=element('span',walls.available?'تشطيب جدران افتراضي':'ألوان الملف المصدر',badge);
   const roofNote=element('span','السقف غير موجود في الملف المعتمد',badge,'av-roof-note');
   roofNote.hidden=Boolean(roofLevels.size||kinds.has('ROOF'));
   const inspector=element('div','اختر عنصرًا لعرض هويته ودوره.',stage,'av-inspector');inspector.setAttribute('role','status');inspector.setAttribute('aria-live','polite');
@@ -396,6 +454,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const disclosure=element('details',null,shell,'av-evidence');element('summary','النسخة وحدود العرض',disclosure);
   element('p','الهندسة والأبعاد من الملف المعتمد. أرضية السياق والسماء والإضاءة وشبكة القياس وخطوط الحواف وأسماء الفراغات عرض فقط ولا تدخل في التصدير أو الكميات. الخامات الظاهرة لا تؤكد تشطيبًا هندسيًا. القص يخفي أجزاء للعرض ولا يعدّل النسخة.',disclosure);
   element('p','إطارات النوافذ والأبواب ومقابضها مشتقة من فتحات موجودة في النسخة لتوضيحها فقط. شخصا المقياس بجانب المدخل ومصباح المشهد الداخلي وموضع الشمس عرض فقط؛ الملف لا يحدد اتجاه الشمال، فالظلال ليست دراسة شمسية.',disclosure);
+  if(walls.available)element('p','«تشطيب معماري افتراضي» يطبّق لياسة أو كسوة صناعية على الجدران التي لم تُحدّد خامتها. تبقى ألوان الجدران المطلوبة وعلامات الحركة كما هي. اختر «ألوان الملف المصدر» لمراجعة ترميز المناطق الأصلي.',disclosure);
   if(roofLevels.size)element('p','دور السطح جزء من النسخة المعتمدة: غير مشغول ولا يدخل في قياس الأدوار أو مساحة الفراغات المشغولة. الحواجز الظاهرة هي الموجودة في الملف فقط. يُخفى في المنظر العلوي والقص ليظهر المخطط، ويمكن إخفاؤه من «السطح». لا يثبت ذلك إنشاءً أو تصريفًا أو عزلًا أو وصولًا للسطح.',disclosure);
   else if(!kinds.has('ROOF'))element('p','هذا الملف لا يحتوي سقفًا علويًا. «سقف افتراضي» بلاطة مسطحة للعرض فقط فوق بلاطة الدور الأخير، يمكن إظهارها من خيارات العرض، ولا تدخل في النسخة أو التصدير أو الكميات.',disclosure);
   const evidence=element('output','',disclosure);evidence.dir='ltr';
@@ -431,7 +490,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   const telemetry={revisionId,modelHash:marker.model_hash,meshCount:meshes.length,triangleCount:triangles,quality:quality.name,qualityReason:software?'reported software renderer; canonical geometry unchanged':'conservative initial quality; optional measured adjustment',rendererName,renderCalls:0,activeAnimation:false,frameIntervalsMs:[],frameIntervalScope:'consecutive requestAnimationFrame callbacks within one active preset transition; excludes idle/screenshot gaps',detailGroupSize:0,
     objectGroups:[...groups.entries()].filter(([key])=>key.startsWith('source|')).slice(0,256).map(([,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return {...items[0].userData.acsApprovedObjectSource,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
     rackGroups:[...groups.entries()].filter(([key,items])=>/^FURN\|F-?\d+\|[^|]+\|rack\d+r\d+$/.test(key)&&items.length>1).map(([name,items])=>{const box=new THREE.Box3();for(const mesh of items)box.union(new THREE.Box3().setFromObject(mesh));return{name,meshCount:items.length,center:box.getCenter(new THREE.Vector3()).toArray()};}),
-    presentation:{floorFinishShown:false,detailInstances,roofPieces,assumedRoofShown:false,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
+    presentation:{wallFinish:wallMode.value,eligibleWalls:walls.count,floorFinishShown:false,detailInstances,roofPieces,assumedRoofShown:false,roofSource:roofLevels.size?'artifact':roofPieces?'assumed':'none',roofShown:roofLevels.size>0,figures:figures.children.length/2,sunHour,tour:false,edgeSegments,edgeLayers:edgeLines.size,roomLabels:labels.length,gridCellM:gridCell,clippingPlanes:1,animatedTransitions:true,roofInArtifact:kinds.has('ROOF')||roofLevels.size>0,entranceSide:frontKey,entranceDetected:facadeKey[1]>0}};
   container.acsViewer=telemetry;container.dataset.revision=revisionId;
   const info=()=>{evidence.textContent=`revision=${revisionId}\nmodel=${marker.model_hash}\nmeshes=${meshes.length}; triangles=${triangles}; quality=${quality.name}\nrender CPU submission (ms)=${measuredMs===null?'not measured':measuredMs.toFixed(2)}; device/browser=${navigator.userAgent}\nviewport=${stage.clientWidth}x${stage.clientHeight}; DPR=${renderer.getPixelRatio()}`;};
   function render(){
@@ -566,6 +625,11 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
   roofButton.addEventListener('click',()=>{roofOn=!roofOn;roofButton.setAttribute('aria-pressed',String(roofOn));setVisibility();render();});
   sunRange.addEventListener('input',()=>{applySun(sunRange.value);telemetry.presentation.sunHour=sunHour;renderer.shadowMap.needsUpdate=true;render();});
   floors.addEventListener('change',()=>{select(null);preset(currentPreset);});reset.addEventListener('click',()=>{stopTour();floors.value='all';select(null);preset('exterior');});qualityButton.addEventListener('click',()=>applyQuality(quality.pixelRatio>1));
+  wallMode.addEventListener('change',()=>{
+    const assumed=wallMode.value==='assumed';
+    walls.set(assumed);finishNote.textContent=assumed?'تشطيب جدران افتراضي':'ألوان الملف المصدر';
+    telemetry.presentation.wallFinish=wallMode.value;render();
+  });
   finishButton.addEventListener('click',()=>{
     const on=finishButton.getAttribute('aria-pressed')!=='true';
     finish.set(on);finishButton.setAttribute('aria-pressed',String(on));telemetry.presentation.floorFinishShown=on;render();
@@ -575,7 +639,7 @@ export async function showApprovedGLTF(container, bytes, revisionId, options={})
     if(disposed)return;disposed=true;stopTour();stopMotion();observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);
     if(current())options.onSelectObject?.(null);
     canvas.removeEventListener('pointerdown',pointerDown);canvas.removeEventListener('pointerup',pointerUp);canvas.removeEventListener('keydown',keydown);canvas.removeEventListener('webglcontextlost',contextLost);canvas.removeEventListener('webglcontextrestored',contextRestored);
-    finish.dispose();releaseObject(scene);Object.values(detailMaterials).forEach(material=>material.dispose());unitBox.dispose();sky.dispose();scene.background=null;environment.dispose();sun.shadow.map?.dispose();renderer.renderLists.dispose();renderer.dispose();renderer.forceContextLoss();shell.remove();if(container.acsViewer===telemetry)delete container.acsViewer;
+    walls.dispose();finish.dispose();releaseObject(scene);Object.values(detailMaterials).forEach(material=>material.dispose());unitBox.dispose();sky.dispose();scene.background=null;environment.dispose();sun.shadow.map?.dispose();renderer.renderLists.dispose();renderer.dispose();renderer.forceContextLoss();shell.remove();if(container.acsViewer===telemetry)delete container.acsViewer;
   }
   const contextLost=event=>{event.preventDefault();lost=true;stopMotion();dispose();options.onFailure?.('فُقد سياق الرسوم. المخطط ثنائي الأبعاد متاح؛ استخدم إعادة محاولة 3D لاستعادة العرض.');};
   const contextRestored=()=>{lost=false;resize();};canvas.addEventListener('webglcontextlost',contextLost);canvas.addEventListener('webglcontextrestored',contextRestored);

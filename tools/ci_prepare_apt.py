@@ -170,7 +170,7 @@ def prepare(os_release: str, sources: str, original: str, architecture: str, key
         fallbacks = ''.join(line for line in original.splitlines(keepends=True)
                             if line.split('\t', 1)[0].strip().rstrip('/') + '/' != candidate)
         return candidate, candidate + '\tpriority:0\n' + fallbacks
-    raise PreparationError('APT_NO_VERIFIED_MIRROR')
+    raise MirrorUnavailable('APT_NO_VERIFIED_MIRROR')
 
 
 def install_mirror_list(original: str, replacement: str, *, run=subprocess.run) -> None:
@@ -208,6 +208,12 @@ def main() -> int:
             raise PreparationError('APT_SOURCES_CHANGED')
         install_mirror_list(original, replacement)
         print('Verified Ubuntu mirror selected: ' + selected)
+        return 0
+    except MirrorUnavailable:
+        # Only DNS, connection and timeout failures reach this branch after both
+        # candidates were tried. The stock runner sources already require the
+        # Ubuntu archive keyring. The following real package install must succeed.
+        print('Preferred Ubuntu mirrors unreachable. Keeping the runner’s signed APT sources.')
         return 0
     except PreparationError as exc:
         if str(exc) == 'APT_UNSUPPORTED_MIRROR_LAYOUT':

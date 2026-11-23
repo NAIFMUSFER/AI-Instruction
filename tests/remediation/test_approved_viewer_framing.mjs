@@ -49,6 +49,43 @@ assert.equal(detailGroupKey('OBJ|F-1|living|table0'),'OBJ|F-1|living|table0');ch
 // Execute the shipped classifiers: naming a normal room roof_* must not hide
 // an occupied storey or promote it to a canonical roof. Metadata wins by kind.
 const viewerSource=fs.readFileSync('public/app/ui/approved-viewer.mjs','utf8');
+// A presentation material must follow the live plane when the selected cut changes.
+{
+ const code=viewerSource.slice(viewerSource.indexOf('const finishTileMetres'),viewerSource.indexOf('function lineSet')).replace('export function floorFinishUVs','function floorFinishUVs');
+ const make=vm.runInNewContext(code+'\nfloorFinish',{THREE,Float32Array,Uint8Array});
+ const plane=new THREE.Plane(new THREE.Vector3(0,-1,0),1000),original=new THREE.MeshStandardMaterial();
+ original.clippingPlanes=[plane];
+ const slab=new THREE.Mesh(new THREE.BoxGeometry(1,.12,1),original),geometry=slab.geometry;
+ slab.userData.acsViewerIdentity={kind:'FLOOR',name:'FLOOR|F0|slab|0'};
+ const finish=make([slab]);
+ finish.set(true);plane.constant=.7;assert.equal(slab.material.clippingPlanes[0].constant,.7);checks++;
+ finish.set(false);assert.equal(slab.material,original);assert.equal(slab.geometry,geometry);checks++;
+ finish.set(true);plane.constant=1000;assert.equal(slab.material.clippingPlanes[0].constant,1000);checks++;
+ finish.dispose();geometry.dispose();original.dispose();
+}
+{
+ const code=viewerSource.slice(viewerSource.indexOf('const finishTileMetres'),viewerSource.indexOf('function lineSet')).replace('export function floorFinishUVs','function floorFinishUVs');
+ const make=vm.runInNewContext(code+'\narchitecturalFinish',{THREE,Float32Array,Uint8Array});
+ const material=new THREE.MeshStandardMaterial({color:'#2563eb'}),geometry=new THREE.BoxGeometry(2,1,1);
+ const plane=new THREE.Plane();material.clippingPlanes=[plane];
+ const example=(kind,style)=>{
+  const mesh=new THREE.Mesh(geometry,material);
+  mesh.userData.acsViewerIdentity={name:kind+'|F0|bay|wN',kind};
+  mesh.userData.acsOptionalWallFinish=style;
+  mesh.rotation.y=Math.PI/4;mesh.updateMatrixWorld();return mesh;
+ };
+ const implicit=example('WALL','industrial_cladding'),explicit=example('WALL',null),lane=example('SAFETY','industrial_cladding');
+ const identity=implicit.userData.acsViewerIdentity,finish=make([implicit,explicit,lane]);
+ assert.equal(finish.count,1);finish.set(true);
+ assert.equal(implicit.userData.acsViewerIdentity,identity);assert.equal(implicit.geometry.attributes.position,geometry.attributes.position);
+ assert.equal(implicit.geometry.index,geometry.index);assert.equal(implicit.material.clippingPlanes[0],plane);
+ assert.equal(explicit.material,material);assert.equal(lane.material,material);checks+=6;
+ const source=geometry.getAttribute('position'),uv=implicit.geometry.getAttribute('uv');
+ const width=Math.abs(source.getZ(1)-source.getZ(0)),mapped=Math.abs(uv.getX(1)-uv.getX(0));
+ assert.ok(width>0&&Math.abs(width-mapped)<1e-5,'wall grain repeats by the metre after rotation');checks++;
+ finish.set(false);assert.equal(implicit.geometry,geometry);assert.equal(implicit.material,material);checks++;
+ finish.dispose();geometry.dispose();material.dispose();
+}
 const roofCode=viewerSource.slice(viewerSource.indexOf('  const roofLevels='),viewerSource.indexOf('  const isRoofRow='));
 const connectedSource=fs.readFileSync('public/app/ui/connected-workspace.mjs','utf8');
 const projectionCode=connectedSource.match(/^const isRoofProjection = (.*);$/m)[1];

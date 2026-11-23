@@ -195,6 +195,7 @@ class Builder:
         self._opening_sources = {}
         self._stair_sources = {}
         self._object_sources = {}
+        self._presentation_wall_finishes = {}
         self._object_context = None
         self.level_metadata = []
 
@@ -310,6 +311,8 @@ class Builder:
             sources = self._opening_sources.get(part_index, [])
             if len(sources) > 1:
                 nodes[-1]['extras'] = {'acs_opening_sources': sources}
+            if part_index in self._presentation_wall_finishes:
+                nodes[-1].setdefault('extras', {})['acs_optional_wall_finish'] = self._presentation_wall_finishes[part_index]
             if part_index in self._stair_sources:
                 nodes[-1].setdefault('extras', {})['acs_stair'] = self._stair_sources[part_index]
             if part_index in self._object_sources:
@@ -853,10 +856,21 @@ def build_room(bld, room, fkey, base_y, defaults):
         bld.add_box(x + w / 2, base_y + 0.01, z + d / 2, min(w * 0.5, 6), 0.014, min(d * 0.22, 2.2),
                     tinted("paint_zone", zc), "FLOOR|%s|%s|label" % (fkey, name))
     else:
+        finish_hints = getattr(bld, '_presentation_wall_finishes', None)
+        wall_start = len(bld.parts) if finish_hints is not None else None
         for e in wall_edges:
             axis, fixed, u0, u1 = edge_geom(e, rect)
             wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
                                per_edge[e], "WALL", fkey, name, "w"+e, wall_mat)
+
+        # Source role tints and explicit wall colors can share one glTF material.
+        # Only mark default opaque walls. This hint authorizes a viewer assumption,
+        # and never overrides a specified color, finish or canonical wall material.
+        if (wall_start is not None and walls_mode == 'full' and
+                not any(room.get(key) for key in ('wall_color', 'wall_material', 'wall_finish', 'material', 'finish'))):
+            style = 'industrial_cladding' if _ind else 'plaster'
+            for index in range(wall_start, len(bld.parts)):
+                finish_hints[index] = style
 
     # لوح أرضية/سقف ملوّن للغرفة (يُبنى فقط عند طلب لون)
     if hex_rgb(room.get("floor_color")):

@@ -61,6 +61,14 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
   }
   await page.locator('[data-view="aerial"]').click();await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
   await page.locator('.av-more summary').click();
+  const wallMode=page.getByRole('combobox',{name:'ألوان الجدران'});assert.equal(await wallMode.inputValue(),'assumed');
+  assert.ok(baseline.presentation.eligibleWalls>0);
+  for(const mode of ['source','assumed']){
+   await wallMode.selectOption(mode);const changed=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());
+   assert.equal(changed.presentation.wallFinish,mode);assert.equal(changed.modelHash,fixture.model_hash);
+   assert.equal(changed.meshCount,baseline.meshCount);assert.equal(changed.triangleCount,baseline.triangleCount);
+   assert.deepEqual(changed.objectGroups,baseline.objectGroups);assert.deepEqual(changed.rackGroups,baseline.rackGroups);
+  }
   const labelToggle=page.getByRole('button',{name:'أسماء الفراغات'});await labelToggle.click();assert.equal(await page.locator('.av-label:not([hidden])').count(),0);assert.equal(await labelToggle.getAttribute('aria-pressed'),'false');await labelToggle.click();assert.ok(await page.locator('.av-label:not([hidden])').count()>0);
   if(fixture.kind==='warehouse'){
    const rack=baseline.rackGroups.find(group=>group.meshCount>3);assert.ok(rack,'fixture contains a complete derived rack assembly');
@@ -93,12 +101,38 @@ const html=`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"
    const allFloors=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.equal(allFloors.presentation.visibleRoofMeshCount,0,'default all-floor aerial view hides the roof again');assert.equal(allFloors.presentation.roofShown,false);assert.equal(allFloors.modelHash,fixture.model_hash);assert.equal(allFloors.meshCount,baseline.meshCount);
    await page.locator('select[aria-label="الدور المعروض في 3D"]').selectOption('1');const after=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect());assert.ok(after.visibleMeshCount<baseline.meshCount&&after.visibleMeshCount>0,'floor isolation preserves selected physical level');
   }
-  await page.locator('#cwViewer canvas').focus();const cameraBefore=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().camera);await page.keyboard.press('ArrowLeft');assert.notDeepEqual(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.inspect().camera),cameraBefore);
+  // Measure continuous input through the shipping keyboard/orbit handler. Every
+  // timestamp is an actual RAF callback with a changed camera and rendered frame.
+  // Stop on a stalled browser. Missed frame budgets remain visible in the report.
+  await page.locator('[data-view="exterior"]').click();
+  await page.waitForFunction(()=>!document.querySelector('#cwViewer').acsViewer.activeAnimation);
+  await page.locator('#cwViewer canvas').focus();
+  const orbit=await page.evaluate(async()=>{
+    const host=document.querySelector('#cwViewer'),viewer=host.acsViewer,canvas=host.querySelector('canvas');
+    const orbitSamples=[],start=performance.now(),timeout=20000;
+    return new Promise((resolve,reject)=>{
+      let previous=null,frame;
+      const watchdog=setTimeout(()=>{cancelAnimationFrame(frame);reject(new Error('interactive orbit did not complete in 20 seconds'));},timeout);
+      function step(timestamp){
+        const before=viewer.inspect().camera,calls=viewer.renderCalls;
+        canvas.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowLeft',bubbles:true,cancelable:true}));
+        const after=viewer.inspect().camera;
+        if(viewer.renderCalls<=calls||before.every((value,i)=>Math.abs(value-after[i])<1e-9)){
+          clearTimeout(watchdog);reject(new Error('orbit sample did not move and render the camera'));return;
+        }
+        if(previous!==null)orbitSamples.push(timestamp-previous);
+        previous=timestamp;
+        if(orbitSamples.length<24){frame=requestAnimationFrame(step);return;}
+        clearTimeout(watchdog);resolve({intervals_ms:orbitSamples,elapsed_ms:performance.now()-start,input:'ArrowLeft via focused production canvas on consecutive animation frames'});
+      }
+      frame=requestAnimationFrame(step);
+    });
+  });
   const calls=await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls);await page.waitForTimeout(250);assert.equal(await page.evaluate(()=>document.querySelector('#cwViewer').acsViewer.renderCalls),calls,'no idle render loop');
   await page.evaluate(()=>document.querySelector('#cwViewer canvas').dispatchEvent(new Event('webglcontextlost',{cancelable:true})));
   assert.equal(await page.locator('#cwViewer canvas').count(),0);assert.ok((await page.evaluate(()=>window.contextLostMessage)).includes('فُقد'));
   await page.evaluate(()=>window.fixtureDispose());assert.equal(await page.locator('#cwViewer canvas').count(),0,'idempotent teardown');
-  assert.deepEqual(errors,[]);const frameTimes=views.at(-1).stats.frameIntervalsMs.slice().sort((a,b)=>a-b),frameP95=frameTimes.length>=2?frameTimes[Math.ceil(frameTimes.length*.95)-1]:null;meta.measurements.push({frame_p95_ms:frameP95,frame_sample_count:frameTimes.length,frame_scope:'active preset transition callbacks only; no idle/screenshot gaps; CPU-submission timing is separate',targets_met:{first_view:firstMs<=meta.budgets.first_view_ms,transitions:views.every(view=>view.transition_ms<=meta.budgets.transition_timeout_ms),frame_p95:frameP95!==null&&frameP95<=(viewport.width<500?meta.budgets.mobile_frame_p95_ms:meta.budgets.desktop_frame_p95_ms)},fixture:fixture.kind,revision:fixture.revision,model_hash:fixture.model_hash,viewport,hardware,first_view_ms:firstMs,views});await context.close();
+  assert.deepEqual(errors,[]);const frameTimes=orbit.intervals_ms.slice().sort((a,b)=>a-b),frameP95=frameTimes[Math.ceil(frameTimes.length*.95)-1];assert.equal(frameTimes.length,24);assert.ok(frameP95>0);meta.measurements.push({frame_p95_ms:frameP95,frame_sample_count:frameTimes.length,frame_scope:'consecutive rendered interactive orbit frames; excludes idle/screenshot gaps and preset transitions; excludes scan-out measurement',interactive_orbit:orbit,transition_frame_intervals_ms:views.flatMap(view=>view.active_frame_intervals_ms),idle_additional_render_calls:0,targets_met:{first_view:firstMs<=meta.budgets.first_view_ms,transitions:views.every(view=>view.transition_ms<=meta.budgets.transition_timeout_ms),frame_p95:frameP95<=(viewport.width<500?meta.budgets.mobile_frame_p95_ms:meta.budgets.desktop_frame_p95_ms),navigation_30fps:frameP95<=1000/30},fixture:fixture.kind,revision:fixture.revision,model_hash:fixture.model_hash,viewport,hardware,first_view_ms:firstMs,views});await context.close();
  }
  fs.writeFileSync(path.join(output,'visual-evidence.json'),JSON.stringify(meta,null,2));console.log('PASS: two exact approved fixtures, six views each at desktop/mobile, identity, floor isolation, keyboard, idle rendering, context loss, disposal. Evidence: '+output);
 }catch(error){fs.writeFileSync(path.join(output,'failure.json'),JSON.stringify({error:error.message,completed_measurements:meta.measurements.length,scope:meta.scope},null,2));throw error;}finally{if(browser)await browser.close();}})().catch(error=>{console.error(error);process.exitCode=1;});
