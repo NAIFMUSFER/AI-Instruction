@@ -211,6 +211,28 @@ class AptMirrorTests(unittest.TestCase):
                         apt.install_mirror_list(ORIGINAL, result)
                 self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
 
+    def test_new_runner_mirror_layout_keeps_the_stock_signed_apt_configuration(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            mirrors, source, keyring = (root / name for name in ('mirrors', 'ubuntu.sources', 'archive.gpg'))
+            stock = ORIGINAL + 'https://other-mirror.example/ubuntu/\tpriority:4\n'
+            mirrors.write_text(stock)
+            source.write_text(sources('noble').replace(str(apt.MIRRORS), str(mirrors)))
+            keyring.write_bytes(b'synthetic fixture')
+            source.write_text(source.read_text().replace(str(apt.KEYRING), str(keyring)))
+            os_release = root / 'os-release'
+            os_release.write_text('ID=ubuntu\nVERSION_CODENAME=noble\n')
+            with patch.dict(apt.os.environ, {'GITHUB_ACTIONS': 'true'}), \
+                 patch.object(apt.os, 'geteuid', return_value=1000), \
+                 patch.object(apt, 'MIRRORS', mirrors), patch.object(apt, 'SOURCES', source), \
+                 patch.object(apt, 'KEYRING', keyring), \
+                 patch.object(apt, 'OS_RELEASE', os_release), \
+                 patch.object(apt.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, 'amd64', '')), \
+                 patch.object(apt, 'install_mirror_list') as install:
+                self.assertEqual(apt.main(), 0)
+                install.assert_not_called()
+            self.assertEqual(mirrors.read_text(), stock)
+
     def test_install_is_backup_then_local_atomic_replace_only(self):
         with tempfile.TemporaryDirectory() as directory:
             mirror = Path(directory) / 'apt-mirrors.txt'

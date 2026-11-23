@@ -1,0 +1,270 @@
+[
+  {
+    "path": "tests/production/run_all.sh",
+    "purpose": "Capture HTTP and browser process exit statuses and combine release evidence",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-VERDICT"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_release_safety.py"
+    ]
+  },
+  {
+    "path": "tests/production/validate_evidence.py",
+    "purpose": "Verify release receipt schemas, required check groups, verdicts and common frontend identity",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-VERDICT"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_release_safety.py"
+    ]
+  },
+  {
+    "path": "tests/production/verify_live.py",
+    "purpose": "Free live HTTP health, assets, policies and deployment identity checks",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "REL-VERDICT"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_published.py"
+    ]
+  },
+  {
+    "path": "tests/production/verify_live_browser.js",
+    "purpose": "Route published guest/browser evidence and non-production legacy fixtures",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "REL-VERDICT"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_published.py"
+    ]
+  },
+  {
+    "path": "tests/deploy/verify_backend_live.py",
+    "purpose": "Check public HTTP and unauthenticated envelopes and validate captured generation receipts",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "REL-AUTH"
+    ],
+    "tests": [
+      "tests/remediation/test_live_generation_verdict.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_live_generation_verdict.py",
+    "purpose": "Separate unauthenticated 401 contracts from offline provider-completion receipts",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "REL-AUTH"
+    ],
+    "tests": [
+      "tests/remediation/test_live_generation_verdict.py"
+    ]
+  },
+  {
+    "path": "tools/package_release.sh",
+    "purpose": "Create archive and hash in temporary directory and publish them only after extraction and checks",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-ARCHIVE"
+    ],
+    "tests": [
+      "sh tools/package_release.sh /tmp/acs-release.zip"
+    ]
+  },
+  {
+    "path": "tools/release_manifest.py",
+    "purpose": "Select tracked release inputs and verified build assets and hash packaged bytes",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-ARCHIVE"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_release_safety.py"
+    ]
+  },
+  {
+    "path": "tools/vendor_manifest.py",
+    "purpose": "Verify copied vendor bytes against integrity-installed npm package trees",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-ARCHIVE"
+    ],
+    "tests": [
+      "bash tools/vendor.sh"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_delivery_release_safety.py",
+    "purpose": "Synthetic regression tests for process crashes, receipt consistency, package inputs and diagnostic redaction",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-VERDICT",
+      "REL-ARCHIVE"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_release_safety.py"
+    ]
+  },
+  {
+    "path": "tools/ci_prepare_apt.py",
+    "purpose": "Manage optional preference for known Ubuntu runner mirror layouts before standard package installation",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "REL-APT"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_apt_mirror.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_ci_apt_mirror.py",
+    "purpose": "Verify signed mirror metadata, default-layout preservation and local replacement controls",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "REL-APT"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_apt_mirror.py"
+    ]
+  },
+  {
+    "path": ".github/workflows/ci.yml",
+    "purpose": "Run required source/fixture checks and collect artifacts across jobs",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "REL-CI"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_dependencies.py"
+    ]
+  },
+  {
+    "path": ".github/workflows/production-verify.yml",
+    "purpose": "Scheduled and manually invoked public deployment monitors",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "REL-AUTH"
+    ],
+    "tests": [
+      "tests/remediation/test_ci_gate.py"
+    ]
+  },
+  {
+    "path": "tools/bundle_report.py",
+    "purpose": "Measure JS inclusion, deferred routes, shell bytes and gzip sizes",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "REL-BUNDLE"
+    ],
+    "tests": [
+      "tests/remediation/test_bundle_report.py"
+    ]
+  },
+  {
+    "path": "tools/check_doc_claims.py",
+    "purpose": "Compare documented counts and measured source-state block with source behavior",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "REL-BUNDLE"
+    ],
+    "tests": [
+      "tests/remediation/test_doc_claims.py"
+    ]
+  },
+  {
+    "path": "tests/performance/bundle_report.json",
+    "purpose": "Generated measurements of the current unbuilt source tree",
+    "depth": "static",
+    "risk": "medium",
+    "findings": [
+      "REL-BUNDLE"
+    ],
+    "tests": [
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": [
+      "tools/bundle_report.py",
+      "public/index.html",
+      "public/app/**"
+    ]
+  },
+  {
+    "path": "requirements.in",
+    "purpose": "Reviewed direct runtime pins and lock recipe",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "REL-DEPENDENCIES"
+    ],
+    "tests": [
+      "tests/remediation/test_dependency_lock.py",
+      "pip-audit -r requirements.txt"
+    ]
+  },
+  {
+    "path": "requirements.lock",
+    "purpose": "Universal hashed Python 3.11+ transitive lock",
+    "depth": "static",
+    "risk": "high",
+    "findings": [
+      "REL-DEPENDENCIES"
+    ],
+    "tests": [
+      "tests/remediation/test_dependency_lock.py",
+      "pip-audit -r requirements.txt"
+    ],
+    "generated_from": [
+      "requirements.in"
+    ]
+  },
+  {
+    "path": "requirements.txt",
+    "purpose": "Hashed installation copy of the universal lock",
+    "depth": "static",
+    "risk": "high",
+    "findings": [
+      "REL-DEPENDENCIES"
+    ],
+    "tests": [
+      "tests/remediation/test_dependency_lock.py",
+      "pip-audit -r requirements.txt"
+    ],
+    "generated_from": [
+      "requirements.lock"
+    ]
+  },
+  {
+    "path": "package-lock.json",
+    "purpose": "npm dependency integrity and installation lock",
+    "depth": "static",
+    "risk": "high",
+    "findings": [
+      "REL-DEPENDENCIES"
+    ],
+    "tests": [
+      "npm ci",
+      "npm audit"
+    ]
+  }
+]

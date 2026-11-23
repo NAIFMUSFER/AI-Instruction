@@ -14,6 +14,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / 'docs/delivery/2026-11-10'
 GENERATORS = {
+    'workspace-ui.js': ['tools/build_workspace_ui.py'],
     'bim.js': ['tools/build_bim_browser.py', 'acs_bim.py'],
     'docs.js': ['tools/build_docs_browser.py', 'acs_docs.py'],
     'runtime.js': ['tools/build_runtime_browser.py', 'acs_runtime.py'],
@@ -116,6 +117,8 @@ def main():
                 for field in ('purpose', 'owner', 'risk', 'finding_ids', 'relevant_tests', 'generated_from'):
                     if historic.get(field):
                         row[field] = historic[field]
+            if path in {'public/index.html', 'public/app/styles/app.css'}:
+                row['generated_from'] = 'Marked sections: tools/build_archdetail_browser.py;tools/build_render_browser.py;tools/build_workspace_ui.py'
             if path == 'public/app/boot/engine-guard.js':
                 row['generated_from'] = 'Embedded public schematics only: tools/build_guest_schematics.py;docs/delivery/2026-11-10/fixtures/{villa,warehouse,manifest}.json'
     target = output / 'file-coverage.csv'

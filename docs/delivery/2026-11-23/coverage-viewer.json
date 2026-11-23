@@ -1,0 +1,108 @@
+[
+  {
+    "path": "public/app/ui/approved-viewer.mjs",
+    "purpose": "Exact approved glTF to GLB, camera presets and picking, floor isolation, display-only finishes, initialization and disposal",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "VIEWER-BIND",
+      "VIEWER-FINISH"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_viewer_framing.mjs",
+      "tests/remediation/test_context_object_selection.mjs",
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ]
+  },
+  {
+    "path": "public/app/ui/connected-workspace.mjs",
+    "purpose": "Private review and delivery, selection invalidation, receipt/hash verification, issue disclosure and fallback",
+    "depth": "selected",
+    "risk": "high",
+    "findings": [
+      "VIEWER-BIND",
+      "VIEWER-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_revision_race.mjs",
+      "tests/remediation/test_audit_frontend_vertical.cjs",
+      "tests/remediation/test_connected_revision_controls.mjs",
+      "tests/remediation/test_connected_workspace_browser.cjs"
+    ]
+  },
+  {
+    "path": "public/app/styles/connected-workspace.css",
+    "purpose": "Approved viewport and mobile toolbar, evidence panel and visible assumed-roof warning",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "VIEWER-FINISH"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_approved_revision_race.mjs",
+    "purpose": "Executes shipped async export boundary under delayed state/loader changes, incorrect receipts and active floor selections",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "VIEWER-BIND"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_revision_race.mjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_approved_viewer_framing.mjs",
+    "purpose": "Finite camera, object assembly, floor scale, identity and selected roof framing assertions",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "VIEWER-BIND",
+      "VIEWER-FINISH"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_viewer_framing.mjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_approved_viewer_browser.cjs",
+    "purpose": "Synthetic exact-artifact Chromium matrix, actual snapshots, performance timing, idle/disposal and context loss",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "VIEWER-FINISH"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ]
+  },
+  {
+    "path": "tools/acs_plan_review_packet.py",
+    "purpose": "Bound selected revision projection, hash and packet size caps, public review fields and circulation geometry status",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "VIEWER-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_review_packet.py",
+      "tests/remediation/test_plan_review_packet.mjs",
+      "tests/remediation/test_audit_frontend_vertical.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_plan_review_packet.py",
+    "purpose": "Exercises actual export projection and exclusion of private fields, geometry authorization, history and circulation status",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "VIEWER-COVERAGE"
+    ],
+    "tests": [
+      "tests/remediation/test_plan_review_packet.py"
+    ]
+  }
+]

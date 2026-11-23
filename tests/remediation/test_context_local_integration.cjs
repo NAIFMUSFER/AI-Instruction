@@ -7,6 +7,14 @@ const fn=name=>{const text=rows.find(row=>new RegExp('^function '+name+'\\(').te
 assert.ok(fn('localGeneratedModel').includes('withContextDetails'),'fresh local generation must invoke the actual canonical context helper');
 const ctx={structuredClone,TextEncoder,lastBuilding:null,window:{ACS:{guest:true}},setModel:next=>{ctx.lastBuilding=next;}};vm.createContext(ctx);
 vm.runInContext(APP.nodeBundle(['core/stairs.mjs','core/context-details.mjs','core/viewer.js','core/standards.js','core/roof.mjs','core/disciplines.js'])+'\n'+['localGeneratedModel','localModelCounts','assertLocalRoofMutable','applyLocalEdit','localGenerationError','localContextDetailsText','buildLocalContextDetailsDisclosure'].map(fn).join('\n')+'\nObject.assign(globalThis,{localGeneratedModel,applyLocalEdit,localContextDetailsText,buildLocalContextDetailsDisclosure,localGenerationError,listContextDetails});',ctx);
+// Exercise the same complete constructors as the public warehouse button.
+const warehouse=vm.runInContext('warehouseModel(120,80,{clear:12})',ctx);
+const completeWarehouse=ctx.localGeneratedModel(warehouse,{freshSample:true});
+assert.equal(completeWarehouse.site.w,120);
+assert.deepEqual(JSON.parse(JSON.stringify(completeWarehouse.floors.ops.rooms)),JSON.parse(JSON.stringify(warehouse.floors.ops.rooms)),'all warehouse zones, lanes, docks and racks survive local authoring');
+assert.ok(Array.from(completeWarehouse.levels).some(level=>level.kind==='roof'));
+const envelope=warehouse.floors.ops.rooms.find(room=>room.id==='envelope');
+assert.ok(envelope&&!Object.hasOwn(envelope,'role'),'an unspecified envelope role is absent in both memory and JSON');
 const bare={site:{w:12,d:12},wall_t:.2,wall_h:3,floor_height:3.2,levels:[{index:0,template:'ground'}],floors:{ground:{rooms:[{id:'porch',role:'porch',covered:true,rect:[0,0,6,4],walls:['N'],doors:[],windows:[],objects:[]}]}}};
 const original=JSON.stringify(bare),fresh=ctx.localGeneratedModel(bare,{freshSample:true});
 assert.ok(ctx.listContextDetails(fresh).length>0,'actual helper produces bounded canonical objects in explicit covered porch');assert.equal(JSON.stringify(bare),original);

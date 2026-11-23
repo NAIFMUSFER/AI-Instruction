@@ -18,6 +18,7 @@ import sys
 import tempfile
 from urllib.parse import urlsplit
 
+OS_RELEASE = Path('/etc/os-release')
 MIRRORS = Path('/etc/apt/apt-mirrors.txt')
 SOURCES = Path('/etc/apt/sources.list.d/ubuntu.sources')
 KEYRING = Path('/usr/share/keyrings/ubuntu-archive-keyring.gpg')
@@ -201,7 +202,7 @@ def main() -> int:
         sources, original = SOURCES.read_text(), MIRRORS.read_text()
         architecture = subprocess.run(['dpkg', '--print-architecture'], capture_output=True,
                                       text=True, timeout=5, check=True).stdout.strip()
-        selected, replacement = prepare(Path('/etc/os-release').read_text(), sources, original,
+        selected, replacement = prepare(OS_RELEASE.read_text(), sources, original,
                                         architecture, KEYRING)
         if SOURCES.read_text() != sources:
             raise PreparationError('APT_SOURCES_CHANGED')
@@ -209,6 +210,11 @@ def main() -> int:
         print('Verified Ubuntu mirror selected: ' + selected)
         return 0
     except PreparationError as exc:
+        if str(exc) == 'APT_UNSUPPORTED_MIRROR_LAYOUT':
+            # The optional preference applies only to the exact legacy mirror file.
+            # apt still verifies package signatures and integrity on the stock runner.
+            print('Runner mirror list differs. Using its existing signed APT source configuration.')
+            return 0
         print(str(exc), file=sys.stderr)
     except (OSError, UnicodeError, ValueError, subprocess.SubprocessError):
         print('APT_PREPARATION_FAILED', file=sys.stderr)

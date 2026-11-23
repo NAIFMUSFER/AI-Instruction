@@ -85,6 +85,17 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     h.init();assert.equal(h.entered[0].mode,'guest');assert.equal(h.auth.loadSession(),null);assert.equal(await h.auth.freshSession(),null);
     assert.equal(reads,0);assert.equal(h.map.get(KEY),before);assert.equal(h.calls.length,0);
   });
+  await test('explicit guest strips stale callback parameters without entering account recovery',async()=>{
+    for(const [query,fragment] of [['?guest=1&code='+CODE,''],['?guest=1','#type=recovery&refresh_token=fixture-refresh']]){
+      const h=harness(()=>{throw Error('guest callback must not fetch');},session(),'acs.example.test',fragment,{search:query});
+      const saved=h.map.get(KEY);
+      let reads=0;h.ctx.localStorage.getItem=()=>{reads++;return null;};
+      h.init();await settle();
+      assert.equal(h.entered[0]?.mode,'guest');assert.equal(h.calls.length,0);
+      assert.equal(h.map.get(KEY),saved);assert.equal(reads,0);
+      assert.equal(h.ctx.location.hash,'');assert.equal(h.ctx.location.search,'?guest=1');
+    }
+  });
   await test('a stored session on the default public URL retains authenticated entry',async()=>{
     const h=harness(()=>response({project:{id:'project-a'},user:{id:'user-a'}}),session(),'acs.example.test','',{search:''});
     h.init();await settle();assert.equal(h.entered[0].mode,'supabase');assert.equal(h.calls.length,1);

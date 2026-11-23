@@ -1,0 +1,64 @@
+{
+  "checked_on_utc": "2026-11-23",
+  "scope": "Production starting point and pre-release verification. Final head and release evidence are recorded separately.",
+  "default_branch": "main",
+  "checkout": "629952f10763a8826f3a014895f2e1d209440996",
+  "tracked_paths": 893,
+  "netlify": {
+    "site": "sprightly-selkie-d906c3",
+    "deploy": "6afc22fa8b2c06eee49ddb68",
+    "state": "ready",
+    "context": "production",
+    "published_utc": "2026-11-17T09:49:11.757Z",
+    "commit": "629952f10763a8826f3a014895f2e1d209440996",
+    "url": "https://app.netlify.com/projects/sprightly-selkie-d906c3/deploys/6afc22fa8b2c06eee49ddb68"
+  },
+  "render": {
+    "service": "acs-engine",
+    "deploy": "dep-dbu25uh42hec73dvi1ig",
+    "state": "live",
+    "finished_utc": "2026-11-17T09:49:07.929824Z",
+    "commit": "629952f10763a8826f3a014895f2e1d209440996",
+    "url": "https://dashboard.render.com/web/srv-d9qtsv3m8hqs73967680/deploys/dep-dbu25uh42hec73dvi1ig"
+  },
+  "main_protection": {
+    "protected": false,
+    "active_rules": [],
+    "observations": [
+      "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/branches/main",
+      "https://api.github.com/repos/NAIFMUSFER/AI-Instruction/rules/branches/main"
+    ],
+    "proposed_required_check": "CI required (mark THIS one as the required status check)",
+    "administration_write_performed": false
+  },
+  "ci_at_start": {
+    "main": {
+      "commit": "629952f10763a8826f3a014895f2e1d209440996",
+      "aggregate": "failure",
+      "failure": "Local page navigation timed out before the accessibility fixture on the CI runner. The separate public guest and backend monitors subsequently passed.",
+      "job": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/44058986765/job/133955587541"
+    },
+    "unreleased_acs_branch": {
+      "commit": "20043388302cf80bffd51af25079dd93ae2a16a6",
+      "aggregate": "failure",
+      "run": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/43084630040",
+      "observations": [
+        "test_plate_extent.py uses a capture builder with no glTF parts collection",
+        "Partial connected-review data was missing revision model hash in test_audit_frontend_vertical.cjs",
+        "Mobile guest sample switch timed out after returning from the click"
+      ]
+    }
+  },
+  "dependency_check": {
+    "environment": "CPython 3.11.18, hashed runtime manifest, npm ci",
+    "manifests_equal": true,
+    "pypi_pinned_versions_queried": 36,
+    "pip_audit_known_findings": 0,
+    "npm_audit_findings": 0,
+    "decoding": [
+      "PNG 12 x 16 RGB round-trip with an inspected pixel",
+      "PDF 195 x 278 point page reopened using strict pypdf",
+      "tests/remediation/test_plan_source_upload.py"
+    ]
+  }
+}
