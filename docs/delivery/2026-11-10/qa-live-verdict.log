@@ -1,0 +1,22 @@
+test_boolean_counter_is_not_zero_findings (__main__.LiveGenerationVerdict.test_boolean_counter_is_not_zero_findings) ... ok
+test_empty_building_is_not_success (__main__.LiveGenerationVerdict.test_empty_building_is_not_success) ... ok
+test_failed_diagnostic_scope_is_not_acceptance (__main__.LiveGenerationVerdict.test_failed_diagnostic_scope_is_not_acceptance) ... ok
+test_free_mode_still_skips_generation (__main__.LiveGenerationVerdict.test_free_mode_still_skips_generation) ... ok
+test_http_200_with_false_ok_is_not_success (__main__.LiveGenerationVerdict.test_http_200_with_false_ok_is_not_success) ... ok
+test_http_200_without_ok_is_not_success (__main__.LiveGenerationVerdict.test_http_200_without_ok_is_not_success) ... ok
+test_invalid_json_is_not_success (__main__.LiveGenerationVerdict.test_invalid_json_is_not_success) ... ok
+test_legacy_generation_flag_cannot_submit_a_paid_request (__main__.LiveGenerationVerdict.test_legacy_generation_flag_cannot_submit_a_paid_request) ... ok
+test_malformed_diagnostics_fail_with_a_verdict (__main__.LiveGenerationVerdict.test_malformed_diagnostics_fail_with_a_verdict) ... ok
+test_missing_diagnostics_is_not_acceptance (__main__.LiveGenerationVerdict.test_missing_diagnostics_is_not_acceptance) ... ok
+test_network_failure_is_not_success (__main__.LiveGenerationVerdict.test_network_failure_is_not_success) ... ok
+test_provider_failure_is_not_success (__main__.LiveGenerationVerdict.test_provider_failure_is_not_success) ... ok
+test_rate_limited_generation_is_not_success (__main__.LiveGenerationVerdict.test_rate_limited_generation_is_not_success) ... ok
+test_reported_geometry_findings_fail_acceptance (__main__.LiveGenerationVerdict.test_reported_geometry_findings_fail_acceptance) ... ok
+test_successful_generation_passes (__main__.LiveGenerationVerdict.test_successful_generation_passes) ... ok
+test_unavailable_backend_is_not_success (__main__.LiveGenerationVerdict.test_unavailable_backend_is_not_success) ... ok
+test_zero_counter_cannot_hide_nonempty_findings (__main__.LiveGenerationVerdict.test_zero_counter_cannot_hide_nonempty_findings) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.062s
+
+OK

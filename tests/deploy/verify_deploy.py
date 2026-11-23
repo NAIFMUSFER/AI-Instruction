@@ -130,7 +130,7 @@ def _edit_engine(root, needle, what):
     text = open(target, encoding='utf-8').read()
     assert needle in text, (target, needle)
     with open(target, 'w', encoding='utf-8') as output:
-        output.write(text.replace(needle, '/* removed by self-test */', 1))
+        output.write(text.replace(needle, '/* removed by self-test */'))
 
 
 _base_rc, _base_out = _guard_run(None)
@@ -181,6 +181,12 @@ _refused('a second shell module entry is refused',
 _refused('a missing imported .mjs module is refused',
          lambda r: os.remove(os.path.join(r, 'public', 'app', 'ui',
                                          'connected-workspace.mjs')))
+_refused('a missing local studio route owner is refused',
+         lambda r: os.remove(os.path.join(r, 'public', 'app', 'ui',
+                                         'local-studio-entry.mjs')))
+_refused('a local-only declaration without its executable import is refused',
+         lambda r: _edit(r, "await import('../core/viewer.js');", "await Promise.resolve();"))
+
 # كل خيط محرّك معلَن، وكل زوج علامات معلَن — لا ثلاثة منها فقط كما كان.
 for _needle, _what in IG.ENGINE_NEEDLES:
     _refused('missing %s is refused (declared engine needle)' % _what,
@@ -322,8 +328,26 @@ chk('marker definitions were found in the injectors', len(MARKERS) >= 10,
 # وما يُقيَّم عند فتح لوحته. الاثنان يُقيَّمان فعلاً؛ الفرق هو **متى**. وحدة
 # ليست في أيّهما لا تُقيَّم أبداً، وذلك ما يبقى هذا الفحص يصطاده.
 _EAGER = set(AS.order())
+_LOCAL = set(AS.local_order())
 _LAZY = set(AS.lazy_order())
-_IMPORTED = _EAGER | _LAZY
+
+def _frontend_reachable():
+    # Traverse literal static and dynamic edges from the actual shell entry.
+    # A manifest declaration alone never makes a file executable/reachable.
+    seen, pending = set(), ['main.js']
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
+        for spec in re.findall(r"(?:import\s*\(\s*|(?:import|from)\s*)['\"]([^'\"]+)['\"]", modules.get(name, '')):
+            if spec.startswith('.'):
+                target = os.path.normpath(os.path.join(os.path.dirname(name), spec)).replace(os.sep, '/')
+                pending.append(target)
+    return seen
+
+_EXECUTABLE = _frontend_reachable()
+_IMPORTED = (_EAGER | _LOCAL | _LAZY) & _EXECUTABLE
 _carrier = {}                     # علامة → الملفّات المنشورة التي تحملها
 _frontend_files = dict(modules)
 _frontend_files['index.html(shell)'] = shell
@@ -336,13 +360,13 @@ for tool, m in MARKERS:
     label = m[:58] + ('…' if len(m) > 58 else '')
     chk('the published frontend carries exactly one %s' % label,
         total == 1, '%d occurrence(s), from %s' % (total, tool))
-    chk('and it is in a file the browser actually evaluates: %s' % label,
+    chk('and its file is reachable through a declared browser route: %s' % label,
         len(hits) == 1
         and (hits[0] in _IMPORTED or hits[0] in ('index.html(shell)',
                                                  'styles/app.css')
              or hits[0].startswith('boot/')),
-        '%s (main.js imports %d module(s); %d more are declared lazy)'
-        % (hits, len(_EAGER), len(_LAZY)))
+        '%s (main.js imports %d; local route %d; optional panels %d; literal executable reachability checked)'
+        % (hits, len(_EAGER), len(_LOCAL), len(_LAZY)))
 
 print('\n== 5 · THE MIRRORED SPECIFICATIONS HAVE NOT DRIFTED FROM THE FILES ==')
 SPEC_VARS = [
@@ -762,26 +786,24 @@ chk('and every boot script that ships is actually referenced by the shell — '
 
 # ── رسم الاستيراد مغلق: لا وحدة يتيمة ولا استيراد مفقود ─────────────────
 # KI-12: الرسم ما زال مغلقاً، لكنّ له مدخلين معلنَين لا مدخلاً واحداً:
-# main.js للمشحون، وui/panels-entry.js للمؤجَّل المُعلَن في
-# tools/frontend_lazy.txt. وحدة خارج المجموعتين يتيمة كما كانت.
-_IMPORTED = list(AS.order()) + list(AS.lazy_order())
+# main.js للمسار المشترك، وui/local-studio-entry.mjs لمسار الضيف،
+# وui/panels-entry.js للوحات الاختيارية. إعلان الملفّ وحده لا يثبت وصول المتصفّح إليه.
+_IMPORTED = list(AS.order()) + list(AS.local_order()) + list(AS.lazy_order())
 _EXEMPT = {'main.js', 'shared-state.js'}
 _expected = sorted(k for k in modules
                    if k not in _EXEMPT and not k.startswith('boot/')
                    and not k.startswith('styles/'))
-_orphans = [k for k in _expected if k not in _IMPORTED]
+_orphans = [k for k in _expected if k not in _IMPORTED or k not in _EXECUTABLE]
 _missing_imports = [k for k in _IMPORTED if k not in modules]
-chk('every shipped module is reached by one of the two declared entries — '
-    'main.js eagerly, or ui/panels-entry.js lazily — no orphan file is '
-    'published',
+chk('every shipped module is declared and executable from main.js, the conditional local studio, or optional panels — no orphan file is published',
     _orphans == [], ', '.join(_orphans))
-chk('and every module main.js imports really exists — no missing import',
+chk('and every declared eager/local/panel import exists — no missing import',
     _missing_imports == [], ', '.join(_missing_imports))
 chk('the import list has no duplicate: a module evaluated twice is a second '
     'copy of its state',
     len(_IMPORTED) == len(set(_IMPORTED)),
     str(sorted(x for x in set(_IMPORTED) if _IMPORTED.count(x) > 1)))
-note('main.js imports %d module(s) in the original evaluation order; '
+note('the declared eager/local/panel routes reach %d module(s); '
      'shared-state.js carries the %d bindings written across module boundaries'
      % (len(_IMPORTED),
         len(re.findall(r'^\s+\w+:', modules.get('shared-state.js', ''), re.M))))
@@ -1089,11 +1111,16 @@ chk('the shipped compiler derives its rack block from the contract',
 chk('the level plate is derived from the room footprint through the single '
     'shared extent contract, and the site-wide plate is gone from the compiler',
     'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in app
-    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in app
+    and '(_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes))' in app
     and 'slabStrips(0,0,site.w,site.d,holes)' not in app
     and 'PHASE10_FOOTPRINT_PLATE' in app
     and 'plate_overhang' in app
     and 'change_requires_approval:true' in app)
+_plate_witness = subprocess.run(
+    ['node', 'tests/lib/run.js', 'tests/remediation/test_geometry_delivery_browser.js'],
+    cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+chk('the shipped plate contract executes exact L-shaped union area and preserves signed elevations',
+    _plate_witness.returncode == 0, _plate_witness.stdout[-600:])
 chk('the plate policy change is provenanced, not silent: the new name, the '
     'previous name, what pinned it and why it changed all ship',
     _PQ_MOD.PLATE_POLICY['policy'] == 'PHASE10_FOOTPRINT_PLATE'

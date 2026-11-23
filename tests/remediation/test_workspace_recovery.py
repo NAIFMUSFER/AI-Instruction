@@ -92,7 +92,7 @@ class Recovery(unittest.TestCase):
         self.assertEqual(store.updates[0]['checkpoint'],{'kind':'outline'})
         self.assertEqual(store.updates[0]['provider_calls'],1)
         self.assertNotIn('checkpoint',store.updates[-1])
-        self.assertTrue(H._job_view({'id':'x','state':'FAILED','checkpoint':{'kind':'outline'}})['job']['can_resume'])
+        self.assertTrue(H._job_view({'id':'x','state':'FAILED','error_code':'PLAN_DETAIL_INCOMPLETE','checkpoint':{'kind':'outline'}})['job']['can_resume'])
 
     def test_outline_and_completed_geometry_are_not_called_again(self):
         zones=[{'id':'a','role':'living','template':'ground'}]
@@ -187,7 +187,7 @@ class Recovery(unittest.TestCase):
         self.assertIsNone(manifest('عمارة',changed))
 
     def test_failed_first_stage_keeps_a_bounded_resume_path(self):
-        row={'id':'x','state':'FAILED','provider_calls':1,'resume_command':command()}
+        row={'id':'x','state':'FAILED','error_code':'PLAN_LAYOUT_INCOMPLETE','provider_calls':1,'resume_command':command()}
         view=H._job_view(row)['job']
         self.assertTrue(view['can_resume']);self.assertEqual(view['provider_calls'],1)
         self.assertFalse(H._job_view(dict(row,state='SUCCEEDED'))['job']['can_resume'])
@@ -326,7 +326,8 @@ class Recovery(unittest.TestCase):
     def test_warehouse_does_not_enter_the_residential_pipeline(self):
         from acs_workspace_progress import planning_system
         def plan(*args,**kwargs):
-            self.assertIsNone(planning_system('plan_chunk'))
+            from acs_warehouse_generation import PLANNING_SYSTEM
+            self.assertEqual(planning_system('plan_chunk'),PLANNING_SYSTEM)
             return model('warehouse')
         with patch.object(U,'_plan_bounded',side_effect=plan),patch('acs_residential_generation.detail') as detail:
             S.generate_plan_candidate('مستودع',[], 'A',3)

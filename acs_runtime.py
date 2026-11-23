@@ -373,10 +373,9 @@ def compile_runtime_scene(visual_scene, runtime_config=None):
         # الفتحة رقيقة على محور واحد: ذلك المحور هو ناظم الجدار
         probe = 0.6
         wx, wz = _num(g.get("cx")), _num(g.get("cz"))
-        if thin_x:
-            probes = [(wx - probe, wz), (wx + probe, wz)]
-        else:
-            probes = [(wx, wz - probe), (wx, wz + probe)]
+        yaw = _num(g.get("rot_y")) or 0.0
+        nx, nz = (math.cos(yaw), math.sin(yaw)) if thin_x else (-math.sin(yaw), math.cos(yaw))
+        probes = [(wx - probe*nx, wz - probe*nz), (wx + probe*nx, wz + probe*nz)]
         lvl = d.get("level_index")
         found = []
         for (px, pz) in probes:
@@ -831,10 +830,7 @@ def move_query(runtime_scene, runtime_state, start, end):
         if ob["kind"] == "WALL" and ob["source_element_id"] in open_walls:
             passed = None
             for p in open_walls[ob["source_element_id"]]:
-                ap = dict(p["aperture"])
-                ap["hx"] = ap["hx"] + c["radius_m"]
-                ap["hz"] = ap["hz"] + c["radius_m"]
-                if _obb_overlap(sweep, ap):
+                if _capsule_fits_portal(s, e, c, p["aperture"], ob["obb"]):
                     passed = p
                     break
             if passed is not None:
@@ -850,6 +846,42 @@ def move_query(runtime_scene, runtime_state, start, end):
                        candidate_count=q["candidate_count"], mode=mode)
     return _ok([], allowed=True, blocked_by=None, reason="clear",
                candidate_count=q["candidate_count"], mode=mode)
+
+
+def _capsule_fits_portal(start, end, capsule, aperture, wall):
+    """Require full capsule clearance throughout its intersection with the wall.
+
+    Work in aperture-local axes; intersection with an expanded aperture is not
+    clearance. This is geometric navigation only, never accessibility compliance.
+    """
+    ca, sn = math.cos(aperture["yaw"]), math.sin(aperture["yaw"])
+    def local(p):
+        dx, dz = p[0]-aperture["cx"], p[2]-aperture["cz"]
+        return [dx*ca+dz*sn, p[1], -dx*sn+dz*ca]
+    a, b = local(start), local(end)
+    thin_x = aperture["hx"] <= aperture["hz"]
+    normal, tangent = (0, 2) if thin_x else (2, 0)
+    width = aperture["hz"] if thin_x else aperture["hx"]
+    r, h = capsule["radius_m"], capsule["height_m"]
+    if width < r or 2*aperture["hy"] < h:
+        return False
+    # Project the host wall thickness into the same normal axis.
+    nx, nz = (ca, sn) if thin_x else (-sn, ca)
+    thickness = _proj(wall, nx, nz) + r
+    dn = b[normal] - a[normal]
+    if abs(dn) <= _EPS:
+        return False
+    times = sorted(((-thickness-a[normal])/dn, (thickness-a[normal])/dn))
+    lo, hi = max(0.0, times[0]), min(1.0, times[1])
+    if lo > hi:
+        return False
+    for t in (lo, hi):
+        side = a[tangent] + t*(b[tangent]-a[tangent])
+        feet = a[1] + t*(b[1]-a[1])
+        if (abs(side) > width-r+_EPS or feet < aperture["cy"]-aperture["hy"]-_EPS
+                or feet+h > aperture["cy"]+aperture["hy"]+_EPS):
+            return False
+    return True
 
 
 def _sweep_box(s, e, c):

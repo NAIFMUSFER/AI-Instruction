@@ -53,6 +53,15 @@ async function acsApplyResidentialQuality(building, token) {
 
   const A = (typeof window !== 'undefined' && window.ACS) ? window.ACS : {};
   const mobile = (typeof window !== 'undefined' && window.innerWidth <= 820);
+  // Recovered typed drafts must not undo the measured initial software budget.
+  // This policy owns automatic enhancements only; manual PBR/detail stay usable.
+  let softwareBudget=false;
+  try { softwareBudget=A.legacyRenderQuality?.().profile==='SOFTWARE_CONSERVATIVE'; } catch(e) {}
+  if(softwareBudget){
+    ACS_RQ_LAST={applied:false,type,reason:'software_renderer_budget',pbr:false,
+      architectural_detail:false,mobile,issues:[]};
+    return ACS_RQ_LAST;
+  }
   let pbrApplied = false;
   let detailApplied = false;
   const issues = [];
@@ -63,7 +72,7 @@ async function acsApplyResidentialQuality(building, token) {
         && typeof A.pbrCaps === 'function'
         && typeof A.pbrBounds === 'function') {
       const pbr = A.pbr.config(
-        mobile ? 'MEDIUM' : 'HIGH',
+        mobile ? 'BALANCED' : 'HIGH',
         'CLEAR_NOON',
         'REALISTIC',
         'SKY',

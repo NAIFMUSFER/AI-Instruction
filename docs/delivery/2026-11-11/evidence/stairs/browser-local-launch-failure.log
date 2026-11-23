@@ -1,0 +1,4 @@
+browserType.launch: Target page, context or browser has been closed
+[pid=44][err] [44:44:1111/194956.266822:FATAL:chrome/browser/process_singleton_posix.cc:297] Check failed: . socket() failed: Operation not permitted (1)
+[pid=44][err] [1111/194956.267001:ERROR:third_party/crashpad/crashpad/util/linux/scoped_ptrace_attach.cc:27] ptrace: Operation not permitted (1)
+  - [pid=44] <process did exit: exitCode=null, signal=SIGABRT>

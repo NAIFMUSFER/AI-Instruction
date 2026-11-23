@@ -15,6 +15,8 @@
 # =============================================================================
 import hashlib
 import json
+from decimal import Decimal
+from acs_geometry_contract import wall_edges
 import math
 import os
 
@@ -181,11 +183,18 @@ def step_string(v):
     return "'" + "".join(out) + "'"
 
 
-def step_real(v):
+def step_real(v, exact=False):
     """رقم STEP حقيقي: صيغة ثابتة بفاصلة عشرية دائماً، بلا أسّ ولا محلّية."""
     n = _num(v)
     if n is None:
         return "$"
+    if exact:
+        # Decimal expands the float's round-trip spelling without introducing
+        # another precision grid. STEP keeps its ordinary non-exponent syntax.
+        if n == 0:
+            return "0."
+        text = format(Decimal(repr(n)), "f")
+        return text.rstrip("0") if "." in text else text + "."
     r = round(n, 6) + 0.0
     if r == 0:
         return "0."
@@ -199,10 +208,14 @@ def step_real(v):
 class StepFile(object):
     """كاتب ملفّ STEP: يرقّم الكيانات ويمنع تكرار البدائيات الهندسية."""
 
-    def __init__(self):
+    def __init__(self, exact_numbers=False):
         self.lines = []
         self.n = 0
         self._cache = {}
+        self.exact_numbers = exact_numbers
+
+    def real(self, value):
+        return step_real(value, exact=self.exact_numbers)
 
     def add(self, type_name, args, dedup=False):
         if dedup:
@@ -219,16 +232,16 @@ class StepFile(object):
     def point(self, x, y, z=None):
         if z is None:
             return self.add("IFCCARTESIANPOINT", "(%s,%s)"
-                            % (step_real(x), step_real(y)), True)
+                            % (self.real(x), self.real(y)), True)
         return self.add("IFCCARTESIANPOINT", "(%s,%s,%s)"
-                        % (step_real(x), step_real(y), step_real(z)), True)
+                        % (self.real(x), self.real(y), self.real(z)), True)
 
     def direction(self, x, y, z=None):
         if z is None:
             return self.add("IFCDIRECTION", "(%s,%s)"
-                            % (step_real(x), step_real(y)), True)
+                            % (self.real(x), self.real(y)), True)
         return self.add("IFCDIRECTION", "(%s,%s,%s)"
-                        % (step_real(x), step_real(y), step_real(z)), True)
+                        % (self.real(x), self.real(y), self.real(z)), True)
 
     def axis(self, x, y, z, rot_deg=0.0):
         p = self.point(x, y, z)
@@ -236,6 +249,13 @@ class StepFile(object):
         a = math.radians(float(rot_deg or 0.0))
         xd = self.direction(_q(math.cos(a)), _q(math.sin(a)), 0.0)
         return self.add("IFCAXIS2PLACEMENT3D", "%s,%s,%s" % (p, zd, xd), True)
+
+    def axis2(self, x, y, rot_deg=0.0):
+        # IfcRectangleProfileDef.Position is specifically 2D; a 3D placement
+        # looks plausible in a text reader but independent meshers ignore it.
+        angle = math.radians(float(rot_deg or 0.0))
+        return self.add("IFCAXIS2PLACEMENT2D", "%s,%s" % (
+            self.point(x, y), self.direction(_q(math.cos(angle)), _q(math.sin(angle)))), True)
 
     def placement(self, parent, x, y, z, rot_deg=0.0):
         ax = self.axis(x, y, z, rot_deg)
@@ -255,15 +275,69 @@ def _levels(model):
                   key=lambda l: (l.get("index") is None, l.get("index")))
 
 
+def _roof_number(value):
+    """A reference extent must come from a finite canonical number, not a default."""
+    if type(value) not in (int, float):
+        return None
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
+    return number + 0.0 if math.isfinite(number) else None
+
+
+def _roof_references(bid, level, rooms):
+    """Roof decks are non-occupied references, never storeys or physical roofs."""
+    lid = "%s.flr_%s" % (bid, level.get("index"))
+    elevation = _roof_number(level.get("elevation"))
+    if elevation is None:
+        return None, [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR", lid,
+            "منسوب مرجع السطح غير محدد. أدخل منسوبًا صريحًا قبل تصدير IFC؛ لن يُفترض ارتفاع.")]
+    if not rooms:
+        return None, [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR", lid,
+            "مرجع السطح بلا حدود معلنة. أضف حدودًا صريحة قبل تصدير IFC.")]
+    references, errors = [], []
+    for room in rooms:
+        sid = "%s.%s.%s" % (lid, level.get("template"), room.get("id"))
+        rect = room.get("rect")
+        rect = [_roof_number(v) for v in rect] if isinstance(rect, list) and len(rect) == 4 else None
+        # Do not substitute the building's occupied-room height for an unknown
+        # roof reference height (including a roof without a stated parapet).
+        height = _roof_number(room.get("wall_h") if "wall_h" in room else room.get("height"))
+        height_declared = height is not None
+        # The canonical roof helper represents its zero-parapet deck with no
+        # height key and explicit walls:none. Honour that specific generated
+        # contract as a planar reference; explicit null remains unknown.
+        provenance = room.get("roof_provenance")
+        if "wall_h" not in room and "height" not in room and room.get("walls") == "none" \
+                and isinstance(provenance, dict) and provenance.get("source") == "system_default":
+            height = 0.0
+        if rect is None or any(v is None for v in rect) or rect[2] <= 0 or rect[3] <= 0 \
+                or height is None or height < 0 \
+                or not all(math.isfinite(v) for v in (rect[0] + rect[2], rect[1] + rect[3], elevation + height)):
+            errors.append(issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR", sid,
+                "أبعاد مرجع السطح أو ارتفاعه غير محددة. أكمل القيم الصريحة قبل تصدير IFC؛ لن تُخمن أبعاد."))
+            continue
+        references.append({"canonical_id": sid,
+            "authoring_id": "%s.%s" % (level.get("template"), room.get("id")),
+            "canonical_level_id": lid, "name": room.get("name") or str(room.get("id")),
+            "number": str(room.get("id")), "level_index": level.get("index"),
+            "elevation": elevation, "height": height, "footprint": rect,
+            "reference_geometry": "FOOTPRINT_SURFACE" if height == 0 else "EXTRUDED_REFERENCE_EXTENT",
+            "canonical_height_declared": height_declared,
+            "level_kind": "roof", "occupied": False, "counts_in_floor_area": False})
+    return {"canonical_id": lid, "index": level.get("index"),
+            "name": level.get("name") or ("Level %s" % level.get("index")),
+            "template": level.get("template"), "elevation": elevation,
+            "kind": "roof", "occupied": False, "counts_in_floor_area": False,
+            "references": references}, errors
+
+
 def build_exchange(project, options=None):
     """يبني نموذج التبادل الوسيط من النموذج القانوني. لا يمسّ النموذج."""
     o = options or {}
     model = project["model"]
     bid = project.get("building_id") or "bld_0"
-    identity_issues = opening_identity_issues(model, bid)
-    if identity_issues:
-        return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
-                i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     mh = project.get("model_hash")
     include_spaces = o.get("include_spaces", True)
     scope = str(o.get("scope") or "ALL").upper()
@@ -271,7 +345,20 @@ def build_exchange(project, options=None):
         return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED",
                 "ERROR", None, "unknown export scope: %s" % o.get("scope"))],
                 "exchange": None}
+    # Physical template variants may retain the same canonical opening source
+    # IDs. A spaces-only artifact contains no openings, so this legacy global
+    # opening contract is outside its scope. Full exports retain the guard;
+    # space identities and all emitted geometry still pass validate_exchange.
+    if scope != "SPACES_ONLY":
+        identity_issues = opening_identity_issues(model, bid)
+        if identity_issues:
+            return {"valid": False, "issues": [issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
+                    i["subject"], i["detail"]) for i in identity_issues], "exchange": None}
     wanted_levels = o.get("levels")
+    # Connected space exports retain canonical geometry. Rounding origin,
+    # extent and half-extent separately can move an edge by more than one grid
+    # interval. Legacy architectural exchange retains its existing formatting.
+    coordinate = (lambda value: float(value) + 0.0) if scope == "SPACES_ONLY" else _q
     wall_h = _num(model.get("wall_h")) or 3.0
     wall_t = _num(model.get("wall_t"))
     floor_h = _num(model.get("floor_height")) or (wall_h + 0.2)
@@ -289,7 +376,8 @@ def build_exchange(project, options=None):
                  "w": _num(site.get("w")), "d": _num(site.get("d"))},
         "building": {"canonical_id": bid, "name": (model.get("meta") or {}).get("name")
                      or bid},
-        "levels": [], "spaces": [], "walls": [], "slabs": [], "doors": [],
+        "levels": [], "spaces": [], "roof_levels": [], "roof_references": [],
+        "walls": [], "slabs": [], "doors": [],
         "windows": [], "stairs": [],
         "unsupported": [], "losses": [],
     }
@@ -297,10 +385,26 @@ def build_exchange(project, options=None):
     by_template = {}
     for tk, r in _rooms(model):
         by_template.setdefault(tk, []).append(r)
+    export_issues = []
 
     for lv in levels:
         idx = lv.get("index")
-        elev = _q((_num(lv.get("elevation")) if lv.get("elevation") is not None
+        rooms = sorted(by_template.get(lv.get("template")) or [],
+                       key=lambda r: str(r.get("id")))
+        if lv.get("kind") == "roof":
+            if scope != "SPACES_ONLY" or not include_spaces:
+                export_issues.append(issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR",
+                    "%s.flr_%s" % (bid, idx),
+                    "تصدير السطح المعماري الكامل غير مدعوم. اختر SPACES_ONLY مع تضمين الفراغات "
+                    "لتصدير مرجع سطح غير مشغول؛ لن يُحسب دورًا أو مساحة مبنية."))
+                continue
+            roof, errors = _roof_references(bid, lv, rooms)
+            export_issues.extend(errors)
+            if roof is not None:
+                ex["roof_references"].extend(roof.pop("references"))
+                ex["roof_levels"].append(roof)
+            continue
+        elev = coordinate((_num(lv.get("elevation")) if lv.get("elevation") is not None
                    else float(idx or 0) * floor_h))
         ex["levels"].append({"canonical_id": "%s.flr_%s" % (bid, idx),
                              "name": lv.get("name") or ("Level %s" % idx),
@@ -310,8 +414,8 @@ def build_exchange(project, options=None):
                        key=lambda r: str(r.get("id")))
         for r in rooms:
             rect = r.get("rect") or [0, 0, 0, 0]
-            x, z, w, d = [_q(_num(v) or 0.0) for v in rect[:4]]
-            rh = _num(r.get("height")) or wall_h
+            x, z, w, d = [coordinate(_num(v) or 0.0) for v in rect[:4]]
+            rh = _num(r.get("wall_h")) or _num(r.get("height")) or wall_h
             # القالب قد يتكرّر عبر الأدوار، فمعرّف التبادل يحمل رقم الدور كي
             # يبقى فريداً؛ ومعرّف التأليف يبقى منفصلاً كما يعرفه محرّك التأليف
             sid = "%s.flr_%s.%s.%s" % (bid, idx, lv.get("template"), r.get("id"))
@@ -321,7 +425,7 @@ def build_exchange(project, options=None):
                     "canonical_id": sid, "authoring_id": aid,
                     "name": r.get("name") or str(r.get("id")),
                     "number": str(r.get("id")), "level_index": idx,
-                    "elevation": elev, "height": _q(rh),
+                    "elevation": elev, "height": coordinate(rh),
                     "footprint": [x, z, w, d],
                     "area_m2": _q(w * d)})
             if scope == "SPACES_ONLY":
@@ -329,7 +433,10 @@ def build_exchange(project, options=None):
             # جدران الفراغ: أربعة محاور حقيقية من مستطيله
             edges = [("N", x, z, x + w, z), ("S", x, z + d, x + w, z + d),
                      ("W", x, z, x, z + d), ("E", x + w, z, x + w, z + d)]
+            enabled_edges = wall_edges(r, str((model.get("meta") or {}).get("type", "")).lower() in ("warehouse", "industrial", "factory", "logistics"))
             for edge, x1, z1, x2, z2 in edges:
+                if edge not in enabled_edges:
+                    continue
                 wid = "%s.flr_%s.%s.%s.wall_%s" % (bid, idx, lv.get("template"),
                                                   r.get("id"), edge)
                 ex["walls"].append({
@@ -349,8 +456,18 @@ def build_exchange(project, options=None):
                     ex["windows"].append(rec)
             for j, ob in enumerate(r.get("objects") or []):
                 kind = str(ob.get("kind") or "")
-                oid = "%s.flr_%s.%s.obj_%d" % (bid, idx, lv.get("template"), j)
+                oid = "%s.flr_%s.%s.%s.obj_%s" % (bid, idx, lv.get("template"), r.get("id"), ob.get("id") or j)
                 if kind.lower() in ("stairs", "stair"):
+                    # This legacy serializer only has a bounding-prism mapping.
+                    # A declared physical form must never silently become that
+                    # prism, including malformed/null declarations. Space-only
+                    # scope has already bypassed objects; selected levels were
+                    # filtered above, so only exported physical instances block.
+                    if "form" in ob:
+                        export_issues.append(issue("BIM_EXPORT_VALIDATION_FAILED", "ERROR", oid,
+                            "تصدير IFC الكامل لا يدعم هذا الدرج وفتحات البلاطات بعد. "
+                            "استخدم تصدير حدود الفراغات فقط (SPACES_ONLY)."))
+                        continue
                     ex["stairs"].append({
                         "canonical_id": oid, "level_index": idx, "elevation": elev,
                         "x": _q(x + (_num(ob.get("x")) or 0.0)),
@@ -377,6 +494,8 @@ def build_exchange(project, options=None):
                     "thickness": None, "thickness_known": False,
                     "predefined_type": "FLOOR"})
 
+    if export_issues:
+        return {"valid": False, "issues": export_issues, "exchange": None}
     for u in ex["unsupported"]:
         ex["losses"].append({"entity_id": u["canonical_id"],
                              "type": "UNSUPPORTED_ENTITY", "severity": "WARNING",
@@ -391,11 +510,15 @@ def build_exchange(project, options=None):
                              "severity": "INFO",
                              "message": "slab thickness is not stated in the model"})
     ex["config"] = {"scope": scope, "include_spaces": bool(include_spaces),
-                    "levels": sorted(wanted_levels) if wanted_levels else None,
+                    "levels": sorted(wanted_levels) if wanted_levels is not None else None,
                     "include_external_metadata":
                         bool(o.get("include_external_metadata", True)),
                     "coordinate_policy": SPEC["coordinate_policy"],
-                    "schema": ex["schema_version"]}
+                    "schema": ex["schema_version"],
+                    "content_scope": ("SPACES_AND_UNOCCUPIED_ROOF_REFERENCES"
+                                      if scope == "SPACES_ONLY" else scope),
+                    "roof_policy": "EXPLICIT_ROOF_AS_UNOCCUPIED_REFERENCE_ONLY",
+                    "roof_reference_height_policy": "REFERENCE_EXTENT_ONLY_NOT_STRUCTURAL"}
     ex["config_hash"] = _sha16(ex["config"])
     ex["model_hash"] = mh
     ex["revision_id"] = project.get("current_revision")
@@ -436,7 +559,7 @@ def _opening_record(bid, lv, r, op, j, kind, x, z, w, d, elev, rh):
 
 def serialise_ifc(exchange, generated_at=None):
     """يكتب ملفّ IFC4 حقيقياً بصيغة ISO-10303-21. الجسم حتمي بالكامل."""
-    f = StepFile()
+    f = StepFile(exact_numbers=(exchange.get("config") or {}).get("scope") == "SPACES_ONLY")
     mh = exchange.get("model_hash")
     sch = exchange["schema_version"]
     guid = lambda cid: ifc_guid({"m": mh, "id": cid, "s": sch})
@@ -486,7 +609,7 @@ def serialise_ifc(exchange, generated_at=None):
         pl = f.placement(bldg_pl, 0.0, 0.0, lv["elevation"])
         st = f.add("IFCBUILDINGSTOREY", "'%s',%s,%s,$,$,%s,$,$,.ELEMENT.,%s"
                    % (guid(lv["canonical_id"]), owner, step_string(lv["name"]), pl,
-                      step_real(lv["elevation"])))
+                      f.real(lv["elevation"])))
         storeys.append(st)
         storey_pl[lv["index"]] = pl
         contained[lv["index"]] = []
@@ -501,19 +624,67 @@ def serialise_ifc(exchange, generated_at=None):
     for sp in exchange["spaces"]:
         x, z, w, d = sp["footprint"]
         pl = f.placement(local(sp["level_index"]), x, z, 0.0)
+        half_w = w / 2.0 if f.exact_numbers else _q(w / 2.0)
+        half_d = d / 2.0 if f.exact_numbers else _q(d / 2.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(w / 2.0), _q(d / 2.0), 0.0), step_real(w),
-                        step_real(d)))
+                     % (f.axis2(half_w, half_d), f.real(w), f.real(d)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
-                         step_real(sp["height"])))
+                         f.real(sp["height"])))
         shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SweptSolid',(%s)" % (ctx, solid))
         pds = f.add("IFCPRODUCTDEFINITIONSHAPE", "$,$,(%s)" % shp)
         ref = f.add("IFCSPACE", "'%s',%s,%s,$,$,%s,%s,%s,.ELEMENT.,.INTERNAL.,%s"
                     % (guid(sp["canonical_id"]), owner, step_string(sp["name"]), pl, pds,
-                       step_string(sp["number"]), step_real(sp["elevation"])))
+                       step_string(sp["number"]), f.real(sp["elevation"])))
         space_refs[sp["canonical_id"]] = ref
         contained.setdefault(sp["level_index"], []).append(ref)
+
+    # IFC4 IfcSpatialZone has an independent placement/shape and is not a
+    # storey/space. Referencing it from the building is non-hierarchical; it
+    # must not enter the occupied storey containment/aggregation below.
+    roof_refs = []
+    for roof in exchange.get("roof_references") or []:
+        cid = roof["canonical_id"]
+        x, z, w, d = roof["footprint"]
+        pl = f.placement(bldg_pl, x, z, roof["elevation"])
+        if roof["height"] == 0:
+            loop = f.add("IFCPOLYLOOP", "(%s)" % ",".join(
+                f.point(px, py, 0.0) for px, py in ((0.0, 0.0), (w, 0.0), (w, d), (0.0, d))))
+            bound = f.add("IFCFACEOUTERBOUND", "%s,.T." % loop)
+            face = f.add("IFCFACE", "(%s)" % bound)
+            faces = f.add("IFCCONNECTEDFACESET", "(%s)" % face)
+            surface = f.add("IFCFACEBASEDSURFACEMODEL", "(%s)" % faces)
+            shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SurfaceModel',(%s)" % (ctx, surface))
+        else:
+            prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
+                         % (f.axis2(w / 2.0, d / 2.0), f.real(w), f.real(d)))
+            solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
+                          % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
+                             f.real(roof["height"])))
+            shp = f.add("IFCSHAPEREPRESENTATION", "%s,'Body','SweptSolid',(%s)" % (ctx, solid))
+        pds = f.add("IFCPRODUCTDEFINITIONSHAPE", "$,$,(%s)" % shp)
+        ref = f.add("IFCSPATIALZONE", "'%s',%s,%s,%s,%s,%s,%s,%s,.USERDEFINED."
+                    % (guid(cid), owner, step_string(roof["name"]),
+                       step_string("Unoccupied reference extent; not a physical roof or floor-area quantity."),
+                       step_string("ACS_UNOCCUPIED_ROOF_REFERENCE"), pl, pds,
+                       step_string(roof["number"])))
+        roof_refs.append(ref)
+        properties = []
+        for name, value in (("LevelKind", "IFCLABEL('roof')"),
+                            ("IsOccupied", "IFCBOOLEAN(.F.)"),
+                            ("CountsInFloorArea", "IFCBOOLEAN(.F.)"),
+                            ("ReferenceGeometry", "IFCLABEL(%s)" % step_string(roof["reference_geometry"])),
+                            ("CanonicalHeightDeclared", "IFCBOOLEAN(%s)" % (".T." if roof["canonical_height_declared"] else ".F.")),
+                            ("CanonicalId", "IFCIDENTIFIER(%s)" % step_string(cid)),
+                            ("CanonicalLevelId", "IFCIDENTIFIER(%s)" % step_string(roof["canonical_level_id"]))):
+            properties.append(f.add("IFCPROPERTYSINGLEVALUE", "%s,$,%s,$" % (step_string(name), value)))
+        pset = f.add("IFCPROPERTYSET", "'%s',%s,'ACS_RoofReference',$,(%s)"
+                     % (guid(cid + ":roof-reference-properties"), owner, ",".join(properties)))
+        f.add("IFCRELDEFINESBYPROPERTIES", "'%s',%s,$,$,(%s),%s"
+              % (guid(cid + ":roof-reference-properties-link"), owner, ref, pset))
+    if roof_refs:
+        f.add("IFCRELREFERENCEDINSPATIALSTRUCTURE", "'%s',%s,'Unoccupied roof references',$,(%s),%s"
+              % (guid("roof-references:building"), owner, ",".join(roof_refs), bldg))
 
     wall_refs = {}
     for wl in exchange["walls"]:
@@ -524,7 +695,7 @@ def serialise_ifc(exchange, generated_at=None):
         pl = f.placement(local(wl["level_index"]), x1, z1, 0.0, ang)
         thick = wl["thickness"] if wl["thickness_known"] else 0.2
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(length / 2.0), 0.0, 0.0), step_real(length),
+                     % (f.axis2(_q(length / 2.0), 0.0), step_real(length),
                         step_real(thick)))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -558,7 +729,7 @@ def serialise_ifc(exchange, generated_at=None):
         x, z, w, d = sl["outline"]
         pl = f.placement(local(sl["level_index"]), x, z, 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(_q(w / 2.0), _q(d / 2.0), 0.0), step_real(w),
+                     % (f.axis2(_q(w / 2.0), _q(d / 2.0)), step_real(w),
                         step_real(d)))
         th = sl["thickness"] if sl["thickness_known"] else 0.2
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
@@ -580,7 +751,7 @@ def serialise_ifc(exchange, generated_at=None):
                              op["rotation_deg"])
             oh = op["height"] if op["height_known"] else 2.1
             prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                         % (f.axis(0.0, 0.0, 0.0), step_real(op["width"]),
+                         % (f.axis2(0.0, 0.0), step_real(op["width"]),
                             step_real(0.3)))
             solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                           % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
@@ -609,7 +780,7 @@ def serialise_ifc(exchange, generated_at=None):
     for st in exchange["stairs"]:
         pl = f.placement(local(st["level_index"]), st["x"], st["z"], 0.0)
         prof = f.add("IFCRECTANGLEPROFILEDEF", ".AREA.,$,%s,%s,%s"
-                     % (f.axis(0.0, 0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
+                     % (f.axis2(0.0, 0.0), step_real(st["w"]), step_real(st["d"])))
         solid = f.add("IFCEXTRUDEDAREASOLID", "%s,%s,%s,%s"
                       % (prof, f.axis(0.0, 0.0, 0.0), f.direction(0.0, 0.0, 1.0),
                          step_real(3.0)))
@@ -664,8 +835,16 @@ def export_ifc(project, options=None, generated_at=None):
         "model_hash": ex["model_hash"], "revision_id": ex["revision_id"],
         "schema": ex["schema_version"],
         "object_count": (len(ex["walls"]) + len(ex["slabs"]) + len(ex["doors"])
-                         + len(ex["windows"]) + len(ex["stairs"]) + len(ex["spaces"])),
+                         + len(ex["windows"]) + len(ex["stairs"]) + len(ex["spaces"])
+                         + len(ex["roof_references"])),
         "level_count": len(ex["levels"]), "space_count": len(ex["spaces"]),
+        "roof_level_count": len(ex["roof_levels"]),
+        "roof_reference_count": len(ex["roof_references"]),
+        "content_scope": ex["config"]["content_scope"],
+        "roof_policy": ex["config"]["roof_policy"],
+        "roof_reference_height_policy": ex["config"]["roof_reference_height_policy"],
+        "roof_reference_metadata": [{k: r[k] for k in ("canonical_id", "canonical_level_id",
+            "reference_geometry", "canonical_height_declared")} for r in ex["roof_references"]],
         "wall_count": len(ex["walls"]), "door_count": len(ex["doors"]),
         "window_count": len(ex["windows"]), "slab_count": len(ex["slabs"]),
         "stair_count": len(ex["stairs"]),
@@ -690,7 +869,8 @@ def validate_exchange(ex):
     """تحقّق ما قبل التسلسل: معرّفات ومحتويات وحدود."""
     issues = []
     seen = {}
-    groups = ("levels", "spaces", "walls", "slabs", "doors", "windows", "stairs")
+    groups = ("levels", "spaces", "roof_levels", "roof_references",
+              "walls", "slabs", "doors", "windows", "stairs")
     total = 0
     for g in groups:
         for it in ex.get(g) or []:
@@ -710,7 +890,7 @@ def validate_exchange(ex):
     if total > int(LIMITS["max_objects"]):
         issues.append(issue("BIM_RESOURCE_LIMIT_EXCEEDED", "ERROR", None,
                             "object count exceeds the declared maximum"))
-    if len(ex.get("levels") or []) > int(LIMITS["max_levels"]):
+    if len(ex.get("levels") or []) + len(ex.get("roof_levels") or []) > int(LIMITS["max_levels"]):
         issues.append(issue("BIM_RESOURCE_LIMIT_EXCEEDED", "ERROR", None,
                             "level count exceeds the declared maximum"))
     wall_ids = set(w["canonical_id"] for w in ex.get("walls") or [])
@@ -1485,7 +1665,7 @@ def stage_import(text, file_name=None, options=None, import_id=None, imported_at
         e = ents[eid]
         t = e["type"]
         if t.startswith("IFCREL") or t in (
-                "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D",
+                "IFCCARTESIANPOINT", "IFCDIRECTION", "IFCAXIS2PLACEMENT3D", "IFCAXIS2PLACEMENT2D",
                 "IFCLOCALPLACEMENT", "IFCEXTRUDEDAREASOLID", "IFCRECTANGLEPROFILEDEF",
                 "IFCSHAPEREPRESENTATION", "IFCPRODUCTDEFINITIONSHAPE", "IFCPOLYLINE",
                 "IFCSIUNIT", "IFCUNITASSIGNMENT", "IFCCONVERSIONBASEDUNIT",

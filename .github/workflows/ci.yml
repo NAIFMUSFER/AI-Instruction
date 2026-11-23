@@ -5,7 +5,8 @@
 #   • A pull request FAILS if any mandatory job fails. The `ci-required` job at
 #     the bottom is the single status check to mark "required" in branch
 #     protection: it re-reads the result of every other job and fails unless all
-#     of them succeeded, so a newly added job can never silently become optional.
+#     of them succeeded. Add every new mandatory job explicitly to `needs`;
+#     independent workflows are not automatically enforced by this aggregate.
 #   • Nothing here talks to the live deployment. Live production verification is
 #     a SEPARATE workflow (production-verify.yml), triggered manually or on a
 #     schedule, never from a PR.
@@ -83,7 +84,8 @@ jobs:
                    tests/remediation/test_validate_topology.py \
                    tests/remediation/test_validate_against_real_models.py \
                    tests/remediation/test_autofix_propose_boundary.py \
-                   tests/remediation/test_doc_claims.py
+                   tests/remediation/test_doc_claims.py \
+                   tests/remediation/test_ci_apt_mirror.py
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -158,7 +160,8 @@ jobs:
                --label "bundle extractor (no node_modules)" --runner "node" \
                    tests/remediation/test_bundle_extractor.js \
                    tests/remediation/test_transport_errors.js \
-                   tests/remediation/test_opening_identity_parity.js
+                   tests/remediation/test_opening_identity_parity.js \
+                   tests/remediation/test_guest_import_wait.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -170,6 +173,9 @@ jobs:
   chromium-browser:
     name: 3 · Real Chromium (Playwright — this job MAY use the network)
     runs-on: ubuntu-latest
+    # Previous PR188 full job took 8m13s; leave ample room for software GPU
+    # fixtures while ensuring a hung browser fails instead of running for hours.
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -178,6 +184,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
       - name: Install the locked Playwright and its browser binaries
         # `npm ci` installs package-lock.json exactly and fails on any drift
         # from package.json. The browser binaries are NOT in the repository —
@@ -579,6 +587,24 @@ jobs:
           import json, os, urllib.request
           from datetime import datetime
           from pathlib import Path
+          # /health cannot exercise helpers imported only by later commands.
+          # Use the actual image and a pure synthetic model; no provider/auth call.
+          import acs_roof, acs_stairs, acs_context_details
+          model = {'site': {'w': 10, 'd': 8}, 'wall_h': 3, 'floor_height': 3.2,
+                   'levels': [{'index': 0, 'template': 'ground'}],
+                   'floors': {'ground': {'rooms': [{'id': 'hall', 'rect': [0, 0, 10, 8]}]}}}
+          before = repr(model)
+          roofed, roof_report, roof_reason = acs_roof.with_default_roof(model)
+          removed = acs_roof.remove_auto_roof(roofed)
+          restored = acs_roof.restore_default_roof(removed)
+          stair_candidate, stair_report, stair_reason = acs_stairs.with_default_stairs(model)
+          import copy
+          porch = copy.deepcopy(model)
+          porch['wall_t'] = .2
+          porch['floors']['ground']['rooms'][0].update(role='porch', covered=True, walls='none')
+          porch_before = repr(porch)
+          detailed, detail_report, detail_reason = acs_context_details.with_context_details(porch)
+          detail_objects = detailed['floors']['ground']['rooms'][0].get('objects', [])
           artifact = json.loads(Path('/app/build_info.json').read_text())
           with urllib.request.urlopen('http://127.0.0.1:8000/version', timeout=10) as r:
               version = json.load(r)
@@ -594,11 +620,34 @@ jobs:
               ('stale timestamp cannot override the image', version['built_at'] != os.environ['ACS_BUILT_AT']),
               ('version validates embedded identity', version['provenance_verified'] is True),
               ('health validates embedded identity', health['provenance_verified'] is True),
+              ('deferred roof helper is loaded from the actual image',
+               Path(acs_roof.__file__).resolve() == Path('/app/acs_roof.py')),
+              ('image can add the disclosed roof without changing the input',
+               roof_reason is None and repr(model) == before and len(roofed['levels']) == 2
+               and roofed['meta']['acs_roof']['source'] == 'system_default'
+               and roof_report['occupied_floor'] is False and roof_report['deck_area_m2'] == 80),
+              ('image can remove and restore the default roof without a provider',
+               len(removed['levels']) == 1 and acs_roof.roof_removed_by_user(removed)
+               and len(restored['levels']) == 2 and not acs_roof.roof_removed_by_user(restored)),
+              ('deferred stair helper executes in the actual image without inventing a single-storey flight',
+               Path(acs_stairs.__file__).resolve() == Path('/app/acs_stairs.py')
+               and stair_reason == 'STAIR_NOT_APPLICABLE'
+               and stair_candidate == model and repr(model) == before
+               and stair_report['physical_traversal'] == 'NOT_VERIFIED'),
           ]
           checks += [(f'version {key} matches artifact', version[key] == artifact[key])
                      for key in ('git_sha', 'git_sha_short', 'built_at', 'git_branch', 'version')]
           checks += [(f'health {key} matches version', health[key] == version[key])
                      for key in ('git_sha_short', 'built_at', 'version')]
+          checks += [
+              ('deferred context helper executes from the actual image without a provider',
+               Path(acs_context_details.__file__).resolve() == Path('/app/acs_context_details.py')
+               and detail_reason is None and repr(porch) == porch_before
+               and len(detail_objects) > 0 and all(o['kind'] == 'column' for o in detail_objects)
+               and all(o['context_detail_provenance']['conceptual_only'] is True for o in detail_objects)
+               and detailed['meta']['acs_context_details']['source'] == 'system_default'
+               and len(acs_context_details.list_context_details(detailed)) == len(detail_objects)),
+          ]
           for name, ok in checks:
               print(('PASS ' if ok else 'FAIL ') + name)
           failures = sum(not ok for _, ok in checks)
@@ -645,6 +694,7 @@ jobs:
       - dependency-audit
       - build-frontend
       - docker-build
+      - delivery-critical
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -666,6 +716,145 @@ jobs:
           path: all-logs/
           retention-days: 30
 
+  # Always runs: security, migrations, generators and guest/auth paths must not
+  # become optional through path filters. This is a code gate, not a production
+  # deployment or real-provider acceptance claim.
+  delivery-critical:
+    name: Delivery critical journeys
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      PYTHONPATH: .
+      PG_BINDIR: /usr/lib/postgresql/16/bin
+      ACS_VISUAL_OUTPUT: logs/approved-viewer
+      ACS_STAIRS_VISUAL_OUTPUT: logs/stairs
+      ACS_CONTEXT_OUTPUT: logs/context-objects
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the pinned backend dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+      - name: Install the independent IFC reader for test-only validation
+        run: pip install ifcopenshell==0.9.0.post1
+      - name: Verify a reachable Ubuntu-signed HTTPS package mirror
+        run: python tools/ci_prepare_apt.py
+      - name: Require independent PDF extraction with Poppler
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v pdftotext >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends poppler-utils
+          fi
+          command -v pdftotext
+      - name: Build reviewed browser dependencies
+        run: |
+          bash tools/vendor.sh
+          npx playwright install --with-deps chromium
+      - name: Paid admission, geometry, exports and release negative witnesses
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/ci_run.sh --log logs/delivery-python.log --label "delivery critical Python" --runner python3 \
+            tests/remediation/test_delivery_paid_admission.py \
+            tests/remediation/test_delivery_ingress.py \
+            tests/remediation/test_delivery_release_safety.py \
+            tests/remediation/test_delivery_published.py \
+            tests/remediation/test_roof_runtime_packaging.py \
+            tests/remediation/test_stairs_runtime_packaging.py \
+            tests/remediation/test_context_runtime_packaging.py \
+            tests/remediation/test_context_details.py \
+            tests/remediation/test_context_details_parity.py \
+            tests/remediation/test_context_details_independent_reader.py \
+            tests/remediation/test_context_details_service.py \
+            tests/remediation/test_context_objects_fixture.py \
+            tests/remediation/test_remove_object_command.py \
+            tests/remediation/test_stairs_geometry.py \
+            tests/remediation/test_stairs_validation_boundary.py \
+            tests/remediation/test_stairs_independent_reader.py \
+            tests/remediation/test_stair_ifc_boundary.py \
+            tests/remediation/test_bim_space_precision.py \
+            tests/remediation/test_roof_ifc_semantics.py \
+            tests/remediation/test_stair_ifc_reader.py \
+            tests/remediation/test_delivery_provider_identity.py \
+            tests/remediation/test_delivery_arabic_pdf.py \
+            tests/remediation/test_audit_*.py \
+            tests/remediation/test_connected_workspace.py \
+            tests/remediation/test_workspace_recovery.py \
+            tests/remediation/test_auth_gateway.py \
+            tests/remediation/test_production_auth_boundary.py \
+            tests/remediation/test_plan_http_command_boundary.py \
+            tests/remediation/test_plan_pdf_export.py \
+            tests/remediation/test_geometry_delivery.py \
+            tests/remediation/test_geometry_independent_readers.py \
+            tests/remediation/test_requirement_vocabulary.py \
+            tests/remediation/test_roof_level.py \
+            tests/remediation/test_guest_roof_parity.py \
+            tests/remediation/test_warehouse_soft_area_fit.py \
+            tests/remediation/test_live_generation_verdict.py
+      - name: Canonical generated sources agree with tracked outputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/build_requirement_metrics.py
+          python tools/build_bim_browser.py
+          python tools/build_runtime_browser.py
+          python tools/build_pbr_browser.py
+          python tools/build_docs_browser.py
+          git diff --exit-code -- public/app/generated/requirement-metrics.mjs public/app/generated/bim.js public/app/generated/runtime.js public/app/generated/pbr.js public/app/generated/pbr-bridge.js public/app/generated/docs.js public/app/styles/app.css public/index.html
+      - name: Revision races and Arabic frontend contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/ci_run.sh --log logs/delivery-node.log --label "delivery critical Node" --runner node \
+            tests/remediation/test_approved_revision_race.mjs \
+            tests/remediation/test_connected_revision_controls.mjs \
+            tests/remediation/test_pbr_shadow_restore.cjs \
+            tests/remediation/test_local_render_quality.mjs \
+            tests/remediation/test_guest_roof_integration.cjs \
+            tests/remediation/test_stairs_parity.mjs \
+            tests/remediation/test_stairs_browser_geometry.cjs \
+            tests/remediation/test_stairs_local_integration.cjs \
+            tests/remediation/test_context_object_selection.mjs \
+            tests/remediation/test_context_details_browser_geometry.cjs \
+            tests/remediation/test_context_local_integration.cjs \
+            tests/remediation/test_context_object_controls.mjs \
+            tests/remediation/test_guest_import_wait.cjs \
+            tests/remediation/test_residential_presentation.js \
+            tests/remediation/test_approved_viewer_framing.mjs \
+            tests/remediation/test_review_only_build.cjs \
+            tests/remediation/test_auth_fixture_waits.cjs \
+            tests/remediation/test_audit_frontend_brief.mjs \
+            tests/remediation/test_audit_frontend_guards.js \
+            tests/remediation/test_audit_frontend_panels.js \
+            tests/remediation/test_audit_frontend_vertical.cjs
+          node tests/lib/run.js tests/remediation/test_geometry_delivery_browser.js
+          node tests/lib/run.js tests/remediation/test_delivery_pdf_browser.js
+      - name: Real Chromium guest, private-workspace fixture and approved-artifact views
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/ci_run.sh --log logs/delivery-browser.log --label "delivery critical Chromium" --runner node \
+            tests/remediation/test_guest_workspace.cjs \
+            tests/remediation/test_connected_workspace_browser.cjs \
+            tests/remediation/test_approved_viewer_browser.cjs \
+            tests/remediation/test_stairs_approved_browser.cjs \
+            tests/remediation/test_context_objects_browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: log-delivery-critical
+          path: logs/
+          if-no-files-found: error
+          retention-days: 30
+
   # ---------------------------------------------------------------------------
   ci-required:
     name: CI required (mark THIS one as the required status check)
@@ -681,6 +870,7 @@ jobs:
       - dependency-audit
       - build-frontend
       - docker-build
+      - delivery-critical
     steps:
       - name: Fail unless every mandatory job succeeded
         shell: bash

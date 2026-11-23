@@ -1,0 +1,35 @@
+# Database boundary increment — 2026-11-10
+
+Status: implemented and locally verified, **not deployed to production**. The connected database accounts available to this delivery session did not expose the ACS schema. Root release owner is keeping these DB-dependent changes separate from the independently deployable release. No production database was changed, no real account data was read, and no paid provider was called by these tests.
+
+## Confirmed defects and fixes
+
+- `SEC-01`: real PostgreSQL baseline migrations allowed a non-member to call the project-state RPC. New migration `2026111001_acs_plan_boundary_and_history.sql` explicitly rejects absent/unauthorized membership before accessing project existence, and retains legitimate owner/editor/viewer reads. Private ownership predicates cannot inspect another actor's ownership. All definers retain explicit search paths.
+- `SEC-02`: a legitimate editor directly submitted a malformed revision receipt through the old authenticated wrapper. The baseline PostgreSQL test failed its denial assertion. Migration `2026111003_acs_validated_plan_writes.sql` revokes authenticated execution of old public **and private** write entrypoints and direct receipt-table writes. The replacement requires the actual user JWT, current project membership and a short-lived purpose/actor/project/head/document-bound backend validation capability. Existing Python canonical hash/schema/provenance/lock validation runs before signing. Database attribution still comes from `auth.uid()`, and approval scope remains conceptual only.
+- `ARCH-HISTORY`: five individually valid ~650 kB model revisions produced a >3 MB monolithic response and broke recovery in the baseline adapter. The adapter now reads at most 25 metadata rows per page and one immutable revision document per request, checks exact metadata/hash identity, and rejects head/baseline changes during recovery. The aggregate workspace is still bounded by the existing 100-revision admission limit; this is not an unlimited lazy-history implementation or a claim of constant total memory.
+
+The backend capability uses standard RFC 2104 HMAC-SHA256. SQL computes it using PostgreSQL's built-in SHA256 and fixed 64-byte ipad/opad blocks; Python `hmac` is the independent oracle for short, long, empty and UTF-8 vectors. Comparison processes all 32 digest bytes before returning. The dedicated random key confers only validated write capability, never user identity, and is neither a service-role key nor a fabricated JWT. Expiry is at most 120 seconds on the database boundary (the adapter issues 60 seconds). Revision replay fails the expected-head CAS; approval replay fails immutable uniqueness. Jobs use the same signed-purpose helper with separately tested lease transitions. A lease-bound canonical append and durable SUCCEEDED state now commit in one transaction; cancellation or a lost delivery response cannot downgrade an already persisted result. The write also binds the job expected head and immutable task marker.
+
+## Local evidence
+
+- PostgreSQL **16.2**, standalone backend (`postgres --single -j`) in an isolated synthetic cluster. Sandbox disallows sockets; standalone mode executes the actual SQL engine and roles without a network service. `auth.uid()` and Supabase storage scaffolding are synthetic equivalents; real Supabase/PostgREST/JWT gateway integration is **not verified** by this harness.
+- `test_plan_store_postgres_boundary.py --baseline`: expected failure, non-member read accepted.
+- `test_plan_store_postgres_boundary.py --baseline-direct`: expected failure, malformed direct editor write accepted.
+- Current `test_plan_store_postgres_boundary.py`: **53 assertions pass**, actual migration execution, anonymous/non-member/removed member denials, legitimate role reads and owner/editor writes, private helper/wrapper revocation, secret nonreadability, forged capability, expiry, actor/project/purpose boundaries, exact approval hash/scope and immutable head/history.
+- `test_plan_store_paged_history.py` with baseline adapter: expected failure at the transport response cap.
+- Current paging test: five ~650 kB revisions reopen with each response <700 kB; 26 revisions cross the 25-row page boundary; changed head, revoked membership, tampered model and nonadvancing cursor fail closed. Missing signer sends zero network writes; tampered receipt hashes fail before signing.
+
+The SQL harness explicitly rejects PostgreSQL ERROR/FATAL/PANIC even when standalone PostgreSQL exits zero. Missing binaries produce NOT VERIFIED with exit code 2, not PASS. To run on Ubuntu CI: `PG_BINDIR=/usr/lib/postgresql/16/bin PYTHONPATH=. python tests/remediation/test_plan_store_postgres_boundary.py`. An optional installed `pgserver` package supplies binaries locally; it is not a production dependency.
+
+## Coordinated rollout and rollback
+
+Do not deploy the changed adapter/jobs against the legacy database. Do not re-enable direct authenticated canonical writes as a fallback.
+
+1. Identify the actual ACS project and inspect live migration/function/grant state using authorized administration. Verify backups and that its PostgreSQL version supports built-in `sha256(bytea)`.
+2. Drain paid jobs and temporarily pause new cloud writes. Guest/local work can remain available. Provision a fresh random 32-byte key encoded as 64 lowercase hex characters in **backend-only** `ACS_PLAN_WRITE_SECRET`; do not print it or put it in repository files/client config.
+3. Apply migrations 01, 02 (job-owner increment), 03 in the approved release transaction, provisioning the matching value into `acs_private.acs_backend_write_keys(name='v1',secret=...)` through secret-safe administration. No authenticated/public table grant exposes this key. Transactionality must encompass final activation. The activation migrations require a provisioned key before revoking the legacy paths; absence stops activation. Migration files contain no nested commits, so the approved release runner can apply them within one transaction.
+4. Deploy the matching adapter/jobs build. Missing key, missing migration, invalid capability and inaccessible project all fail closed. During maintenance there is no automatic downgrade to the legacy RPCs.
+5. Execute synthetic Supabase integration tests through real JWT/PostgREST: all roles and cross-project attempts, valid save/approval/reopen, key non-exposure, page transport, job fencing. Verify migration versions, function bodies and grants separately from source. Record both backend SHA and database migration IDs.
+6. If activation verification fails, keep cloud writes paused/read-only and restore the last **secure compatible** app/database pair. Never roll back by granting old authenticated write RPCs. Historical receipts remain immutable; no destructive downgrade or history rewrite is proposed.
+
+Blocked prerequisites: actual ACS database access/identity and backend secret provisioning; production application of migrations; real two-user JWT and provider-backed cloud journeys. These remain release blockers for this increment, not completed work.

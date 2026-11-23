@@ -1,0 +1,496 @@
+[
+  {
+    "path": "public/app/ui/approved-viewer.mjs",
+    "depth": "deep",
+    "purpose": "Exact revision-tagged GLB conversion and presentation, presets, picking, floors, telemetry, lifecycle",
+    "risk": "high",
+    "findings": [
+      "F-FE-01",
+      "F-FE-02",
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/connected-workspace.mjs",
+    "depth": "deep",
+    "purpose": "Private project journey, revision-bound artifact/export, 2D fallback, Arabic stage UI",
+    "risk": "high",
+    "findings": [
+      "F-FE-01",
+      "F-FE-02"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_revision_race.mjs",
+      "tests/remediation/test_connected_workspace_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/main.js",
+    "depth": "deep",
+    "purpose": "Eager account graph and optional local route entry",
+    "risk": "high",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/local-studio-entry.mjs",
+    "depth": "deep",
+    "purpose": "Guest-only ordered legacy boot owner",
+    "risk": "high",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/workspace-ui-wiring.js",
+    "depth": "selected",
+    "purpose": "Legacy local UI; selected render-loop ownership, ready/public binding sections",
+    "risk": "high",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": [
+      "tools/frontend_split.js (one-time extraction; hand-written section)"
+    ]
+  },
+  {
+    "path": "public/app/render/scene.js",
+    "depth": "selected",
+    "purpose": "Legacy eager context/environment initialization inspected to isolate route",
+    "risk": "high",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_connected_workspace_browser.cjs"
+    ],
+    "generated_from": [
+      "tools/build_visual_browser.py (generated sub-block only)"
+    ]
+  },
+  {
+    "path": "public/app/ui/guest-workspace.js",
+    "depth": "deep",
+    "purpose": "Guest initial sample/recovery/namespace and no paid action logic retained",
+    "risk": "high",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_guest_workspace.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/boot/engine-guard.js",
+    "depth": "selected",
+    "purpose": "Auth/guest decision, callbacks, stored session clearing and boot event inspected",
+    "risk": "high",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_auth_session.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/styles/connected-workspace.css",
+    "depth": "deep",
+    "purpose": "Arabic responsive viewport, contextual inspector, touch and focus controls",
+    "risk": "medium",
+    "findings": [
+      "F-FE-01"
+    ],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs",
+      "tests/remediation/test_connected_workspace_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/core/brief-program.mjs",
+    "depth": "selected",
+    "purpose": "PR185 exact Arabic quantity/source spans; shared registry integration by geometry owner",
+    "risk": "high",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_brief.mjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/ui/panels-entry.js",
+    "depth": "selected",
+    "purpose": "PR185 focus open/return targeted change retained",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_panels.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/index.html",
+    "depth": "selected",
+    "purpose": "PR185 generated dialog labels/accessibility; guest entry preserved",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_panels.js",
+      "tools/check_index_guard.py"
+    ],
+    "generated_from": [
+      "tools/build_archdetail_browser.py (ARCH DETAIL block only)"
+    ]
+  },
+  {
+    "path": "tools/build_archdetail_browser.py",
+    "depth": "selected",
+    "purpose": "PR185 generated dialog role and labels",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_panels.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/plan-review/review.mjs",
+    "depth": "selected",
+    "purpose": "Truthful vertical alignment and physical traversal disclosure",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_vertical.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/app_source.py",
+    "depth": "selected",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/lib/app_source.js",
+    "depth": "selected",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase3/lib_app_files.js",
+    "depth": "selected",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase3/lib/build_browser_page.js",
+    "depth": "selected",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/check_index_guard.py",
+    "depth": "selected",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/bundle_report.py",
+    "depth": "selected",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/frontend_local.txt",
+    "depth": "deep",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/frontend_lazy.txt",
+    "depth": "deep",
+    "purpose": "Route/source ownership and coverage tooling",
+    "risk": "medium",
+    "findings": [
+      "F-FE-03"
+    ],
+    "tests": [
+      "tests/remediation/test_module_graph.js",
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_approved_revision_race.mjs",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_approved_revision_race.mjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_approved_viewer_browser.cjs",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_approved_viewer_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/approved_viewer_fixtures.py",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/approved_viewer_fixtures.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_frontend_brief.mjs",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_brief.mjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_frontend_vertical.cjs",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_vertical.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_frontend_guards.js",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_guards.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_audit_frontend_panels.js",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_audit_frontend_panels.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_module_graph.js",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_module_graph.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_bundle_report.py",
+    "depth": "deep",
+    "purpose": "Regression harness / evidence validation",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_connected_workspace_browser.cjs",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_connected_workspace_browser.cjs"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_panel_entry.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_panel_entry.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_webgl_diagnostics.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_webgl_diagnostics.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_accessibility.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_accessibility.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase5/test_immutability.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase5/test_immutability.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase6/test_security.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase6/test_security.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase7/test_security.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase7/test_security.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/phase9_1/test_pbr_browser.js",
+    "depth": "selected",
+    "purpose": "Update route/approval-specific assertions, retain existing behavior assertions",
+    "risk": "medium",
+    "findings": [],
+    "tests": [
+      "tests/phase9_1/test_pbr_browser.js"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/performance/bundle_report.json",
+    "depth": "static",
+    "purpose": "Generated source-byte inventory; not rendering performance",
+    "risk": "low",
+    "findings": [],
+    "tests": [
+      "tests/remediation/test_bundle_report.py"
+    ],
+    "generated_from": [
+      "tools/bundle_report.py"
+    ]
+  }
+]

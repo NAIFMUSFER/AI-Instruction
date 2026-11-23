@@ -36,34 +36,39 @@ const run=(model)=>{ boxes.length=0; const g=compile(C(model));
   return {group:g, boxes:boxes.slice()}; };
 const slabs=(bx,fkey)=>bx.filter(b=>b.name.indexOf('FLOOR|'+fkey+'|slab|')===0);
 
+// Independent partition oracle: cells cover exactly room union minus voids.
+// Includes emitted edges so a gap, recess fill or duplicate layer is detectable.
+function plateEvidence(drawn,rooms,holes){
+  const all=drawn.concat(rooms,holes), xs=[...new Set(all.flatMap(r=>[r[0],r[0]+r[2]]))].sort((a,b)=>a-b),
+    zs=[...new Set(all.flatMap(r=>[r[1],r[1]+r[3]]))].sort((a,b)=>a-b);
+  const inside=(r,x,z)=>r[0]<x&&x<r[0]+r[2]&&r[1]<z&&z<r[1]+r[3];
+  let exact=true,area=0;
+  for(let i=1;i<xs.length;i++) for(let j=1;j<zs.length;j++){
+    const w=xs[i]-xs[i-1],d=zs[j]-zs[j-1]; if(w<1e-7||d<1e-7) continue;
+    const x=(xs[i]+xs[i-1])/2,z=(zs[j]+zs[j-1])/2;
+    const want=rooms.some(r=>inside(r,x,z))&&!holes.some(r=>inside(r,x,z));
+    const count=drawn.filter(r=>inside(r,x,z)).length;
+    exact=exact&&count===Number(want); if(want)area+=w*d;
+  }
+  return {exact,area};
+}
+const boxRects=bs=>bs.map(b=>[b.position.x-b.g.p[0]/2,b.position.z-b.g.p[2]/2,b.g.p[0],b.g.p[2]]);
+const roomRects=(m,idx)=>m.floors[m.levels.find(l=>l.index===idx).template].rooms.map(r=>r.rect);
+
 console.log('\n== §16 — SLAB IS CUT AT VERTICAL CORES ==');
 { const r=run(FX.villa);
   const arch=compileArchitecture(C(FX.villa),'bld_0');
   const voids=arch.voids.filter(v=>v.level_index===1);
   chk('the villa model does have a stair void on level 1', voids.length===1, voids.length);
   const s0=slabs(r.boxes,'F0'), s1=slabs(r.boxes,'F1');
-  chk('a level with no void still renders a single slab box', s0.length===1, s0.length);
+  chk('a level with no void exactly covers its room union without gap fill',
+      s0.length>0&&plateEvidence(boxRects(s0),roomRects(FX.villa,0),[]).exact);
   chk('the level the stair passes through renders several slab strips instead of one',
       s1.length>1, s1.length);
   const site=FX.villa.site;
   const area=s1.reduce((s,b)=>s+b.g.p[0]*b.g.p[2],0);
-  /* ── F-07 / KI-3 — PHASE1_SITE_WIDE_PLATE ← PHASE10_FOOTPRINT_PLATE ──────
-     كان لوح كل دور يُبنى على مستطيل الموقع كلّه، فكان المتوقَّع هنا
-     site.w*site.d − hole = 30×24 − 1.2×4.2 = 720 − 5.04 = 714.96. صار امتداد
-     اللوح اتحادَ بصمات غرف الدور نفسه (عقد pqPlateRect وحده)، والموقع مستوى
-     عرضٍ منفصل. المتوقَّع الجديد يُشتقّ من التجهيزة لا يُكتب رقماً:
-
-       غرف الدور 1: [6,0,2,10] [0,0,6,5] [8,0,6,5] [8,5,6,5] [0,5,3,3]
-       اتحاد بصماتها = [0,0,14,10]                    → 14 × 10 = 140
-       فراغ الدرج    = [6.4,5.9,1.2,4.2] يمتدّ إلى z=10.1 أي 0.1 م خارج اللوح
-                       (بصمة النواة احتياط عرض حول موضع مستنتَج)، فما يُقصّ
-                       من اللوح هو تقاطعه معه = [6.4,5.9,1.2,4.1] → 4.92
-       المتوقَّع = 140 − 4.92 = 135.08
-
-     التوكيدة لم تُضعَّف بل شُدّت: يُتحقَّق أوّلاً أن امتداد اللوح المرسوم هو
-     اتحاد بصمات الدور بعينه (لا المساحة وحدها)، ثم أن المجموع مطابق تماماً،
-     ثم أن الامتداد لم يعد امتداد الموقع — فلا يعود PHASE1_SITE_WIDE_PLATE
-     خِلسةً ويمرّ. */
+  // Bounding extents alone are insufficient: the villa has21m² of recesses.
+  // The expected floorplate is room union minus intersecting core voids.
   const lvl1=(FX.villa.levels||[]).filter(l=>l.index===1)[0];
   const rects=((FX.villa.floors||{})[lvl1.template]||{}).rooms.map(r=>r.rect);
   const px0=Math.min.apply(null,rects.map(r=>r[0]));
@@ -79,12 +84,12 @@ console.log('\n== §16 — SLAB IS CUT AT VERTICAL CORES ==');
       Math.abs(drawn.x0-px0)<1e-6&&Math.abs(drawn.z0-pz0)<1e-6
       &&Math.abs(drawn.x1-px1)<1e-6&&Math.abs(drawn.z1-pz1)<1e-6,
       JSON.stringify(drawn)+' vs ['+[px0,pz0,px1,pz1].join(',')+']');
-  /* الفراغ يُقصّ على حدود اللوح: ما خرج عنه لم يكن مرسوماً أصلاً */
-  const hole=voids.reduce((s,v)=>s+span(v.rect[0],v.rect[0]+v.rect[2],px0,px1)
-                                  *span(v.rect[1],v.rect[1]+v.rect[3],pz0,pz1),0);
-  const expected=(px1-px0)*(pz1-pz0)-hole;
-  chk('the rendered strips total exactly the plate area minus the void area',
-      Math.abs(area-expected)<1e-6, area+' vs '+expected);
+  const proof=plateEvidence(boxRects(s1),rects,voids.map(v=>v.rect));
+  chk('every emitted slab cell matches the room union minus voids without overlap', proof.exact);
+  chk('the rendered strips total exactly the union area minus intersecting void area',
+      Math.abs(area-proof.area)<1e-6, area+' vs '+proof.area);
+  chk('the independent oracle rejects bounding-box recess fill',
+      !plateEvidence([[0,0,4,4]],[[0,0,4,2],[0,2,2,2]],[]).exact);
   chk('F-07: and that total is no longer the old site-wide plate figure',
       Math.abs(area-(site.w*site.d
         -voids.reduce((s,v)=>s+v.rect[2]*v.rect[3],0)))>1e-6,
@@ -102,13 +107,14 @@ console.log('\n== §16 — SLAB IS CUT AT VERTICAL CORES ==');
       r.boxes.filter(b=>/\|slab\|/.test(b.name)).every(b=>/^FLOOR\|F\d+\|slab\|\d+$/.test(b.name))); }
 
 console.log('\n== §17 — NO PHASE 1 RENDER REGRESSION ==');
-{ const before=(m)=>{ /* السلوك القديم: لوح واحد بمقاس الموقع لكل مستوى */
-    return (m.levels||[]).length; };
-  ['clinic','warehouse'].forEach(n=>{ const r=run(FX[n]);
+{ ['clinic','warehouse'].forEach(n=>{ const r=run(FX[n]);
     const a=compileArchitecture(C(FX[n]),'bld_0');
-    chk(n+': no vertical core ⇒ exactly one slab per level, as before',
+    chk(n+': no vertical core ⇒ complete room union on each level, no extra slab in gaps',
         a.voids.length===0&&
-        (FX[n].levels||[]).every(l=>slabs(r.boxes,'F'+l.index).length===1)); });
+        (FX[n].levels||[]).every(l=>{
+          const bs=slabs(r.boxes,'F'+l.index);
+          return bs.length>0&&plateEvidence(boxRects(bs),roomRects(FX[n],l.index),[]).exact;
+        })); });
   const r=run(FX.hotel);
   chk('hotel: rooms and walls are still built on every level',
       r.boxes.some(b=>/^WALL\|F0\|/.test(b.name))&&r.boxes.some(b=>/^WALL\|F1\|/.test(b.name)));
@@ -231,3 +237,5 @@ console.log('\n== §21 — FLS DEBUG LAYERS IN THE RENDERER ==');
       Object.keys(FLS_LAYER_COLOR).every(k=>FLS_RENDER_LAYERS.indexOf(k)>=0)); }
 
 console.log(`\nRENDER: ${pass} passed, ${fail} failed`);
+
+process.exitCode=fail?1:0;

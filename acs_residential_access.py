@@ -56,7 +56,15 @@ def reachable(roots,allowed,graph):
 def issues(building,doors=True):
     if not scoped(building):return []
     out=[]
+    # A declared roof deck is unoccupied; this check proves apartment/common
+    # circulation only, not roof access. Keep checking templates also used by
+    # any occupied instance. Names and room IDs never grant this exemption.
+    levels=building['levels']
+    occupied_levels=[l for l in levels if l.get('kind')!='roof']
+    occupied_templates={l['template'] for l in occupied_levels}
+    roof_only_templates={l['template'] for l in levels if l.get('kind')=='roof'}-occupied_templates
     for template,floor in building['floors'].items():
+        if template in roof_only_templates:continue
         rooms=floor['rooms'];by_id={r['id']:r for r in rooms};graph=defaultdict(set)
         def issue(rid,text):
             out.append({'code':'RESIDENTIAL_ACCESS_DISCONNECTED','room_ref':[template,rid],
@@ -65,8 +73,8 @@ def issues(building,doors=True):
             for b in rooms[i+1:]:
                 if shared(a,b,doors):graph[a['id']].add(b['id']);graph[b['id']].add(a['id'])
         common={r['id'] for r in rooms if not r.get('unit_id')}
-        ground=min((l['index'] for l in building['levels']),default=0)
-        at_ground=any(l['index']==ground and l['template']==template for l in building['levels'])
+        ground=min((l['index'] for l in occupied_levels),default=0)
+        at_ground=any(l['index']==ground and l['template']==template for l in occupied_levels)
         roots={r['id'] for r in rooms if r['id'] in common and r.get('role') in ({'entrance','lobby'} if at_ground else {'stairs','stair'})}
         if doors and at_ground:
             # A declared entrance needs an opening onto unoccupied exterior.

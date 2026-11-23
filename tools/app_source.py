@@ -46,9 +46,15 @@ def lazy_order():
             if ln.strip() and not ln.strip().startswith("#")]
 
 
+def local_order():
+    """The local-only route, never eagerly imported by account entry."""
+    txt = _read(os.path.join(HERE, "frontend_local.txt"))
+    return [ln.strip() for ln in txt.split("\n") if ln.strip() and not ln.strip().startswith("#")]
+
+
 def full_order():
     """ترتيب التقييم الكامل: المشحون بترتيب main.js ثم المؤجَّل بترتيبه."""
-    return order() + lazy_order()
+    return order() + local_order() + lazy_order()
 
 
 def modules():

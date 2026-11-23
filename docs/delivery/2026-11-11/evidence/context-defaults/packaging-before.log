@@ -1,0 +1,18 @@
+test_checkout_cannot_hide_an_omitted_helper (__main__.ContextRuntimePackaging.test_checkout_cannot_hide_an_omitted_helper) ... ok
+test_release_copy_set_executes_authoring_and_disclosure (__main__.ContextRuntimePackaging.test_release_copy_set_executes_authoring_and_disclosure) ... FAIL
+
+======================================================================
+FAIL: test_release_copy_set_executes_authoring_and_disclosure (__main__.ContextRuntimePackaging.test_release_copy_set_executes_authoring_and_disclosure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_runtime_packaging.py", line 55, in test_release_copy_set_executes_authoring_and_disclosure
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 5, in <module>
+ModuleNotFoundError: No module named 'acs_context_details'
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.087s
+
+FAILED (failures=1)

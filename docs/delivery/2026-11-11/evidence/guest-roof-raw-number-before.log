@@ -1,0 +1,98 @@
+FFFFF
+======================================================================
+FAIL: test_defined_python_number_coercions_remain_distinct_from_unknowns (__main__.GuestRoofParity.test_defined_python_number_coercions_remain_distinct_from_unknowns) (case='raw-float-rect-0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 84, in compare
+    self.equal_json(actual,expected,case['id'])
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 69, in equal_json
+    for key,value in expected.items():self.equal_json(actual[key],value,path+'.'+key)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 66, in equal_json
+    for i,(a,b) in enumerate(zip(actual,expected)):self.equal_json(a,b,path+'.'+str(i))
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 69, in equal_json
+    for key,value in expected.items():self.equal_json(actual[key],value,path+'.'+key)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 68, in equal_json
+    self.assertIsInstance(actual,dict,path);self.assertEqual(set(actual),set(expected),path)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'acs_roof' : raw-float-rect-0.value.0.meta
+
+======================================================================
+FAIL: test_defined_python_number_coercions_remain_distinct_from_unknowns (__main__.GuestRoofParity.test_defined_python_number_coercions_remain_distinct_from_unknowns) (case='raw-float-rect-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 84, in compare
+    self.equal_json(actual,expected,case['id'])
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 69, in equal_json
+    for key,value in expected.items():self.equal_json(actual[key],value,path+'.'+key)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 66, in equal_json
+    for i,(a,b) in enumerate(zip(actual,expected)):self.equal_json(a,b,path+'.'+str(i))
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 69, in equal_json
+    for key,value in expected.items():self.equal_json(actual[key],value,path+'.'+key)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 68, in equal_json
+    self.assertIsInstance(actual,dict,path);self.assertEqual(set(actual),set(expected),path)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'acs_roof' : raw-float-rect-1.value.0.meta
+
+======================================================================
+FAIL: test_defined_python_number_coercions_remain_distinct_from_unknowns (__main__.GuestRoofParity.test_defined_python_number_coercions_remain_distinct_from_unknowns) (case='raw-float-rect-2')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 84, in compare
+    self.equal_json(actual,expected,case['id'])
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 69, in equal_json
+    for key,value in expected.items():self.equal_json(actual[key],value,path+'.'+key)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 66, in equal_json
+    for i,(a,b) in enumerate(zip(actual,expected)):self.equal_json(a,b,path+'.'+str(i))
+                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 69, in equal_json
+    for key,value in expected.items():self.equal_json(actual[key],value,path+'.'+key)
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 68, in equal_json
+    self.assertIsInstance(actual,dict,path);self.assertEqual(set(actual),set(expected),path)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the second set but not the first:
+'acs_roof' : raw-float-rect-2.value.0.meta
+
+======================================================================
+FAIL: test_defined_python_number_coercions_remain_distinct_from_unknowns (__main__.GuestRoofParity.test_defined_python_number_coercions_remain_distinct_from_unknowns) (case='raw-float-parapet-0')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 84, in compare
+    self.equal_json(actual,expected,case['id'])
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 68, in equal_json
+    self.assertIsInstance(actual,dict,path);self.assertEqual(set(actual),set(expected),path)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the first set but not the second:
+'error'
+Items in the second set but not the first:
+'value'
+'same_input' : raw-float-parapet-0
+
+======================================================================
+FAIL: test_defined_python_number_coercions_remain_distinct_from_unknowns (__main__.GuestRoofParity.test_defined_python_number_coercions_remain_distinct_from_unknowns) (case='raw-float-parapet-1')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 84, in compare
+    self.equal_json(actual,expected,case['id'])
+  File "/workspace/scratch/1843247fed6a/guest-roof-v4/tests/remediation/test_guest_roof_parity.py", line 68, in equal_json
+    self.assertIsInstance(actual,dict,path);self.assertEqual(set(actual),set(expected),path)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Items in the first set but not the second:
+'error'
+Items in the second set but not the first:
+'value'
+'same_input' : raw-float-parapet-1
+
+----------------------------------------------------------------------
+Ran 1 test in 1.526s
+
+FAILED (failures=5)

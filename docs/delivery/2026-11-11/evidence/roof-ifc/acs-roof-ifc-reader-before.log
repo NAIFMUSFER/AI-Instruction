@@ -1,0 +1,17 @@
+{"baseline_commit": "ad45ef1992c85a4aa5309cd1adc12c265d55fff1", "scope": "Current independent reader assertions run against historical acs_bim.py + tools/acs_plan_ifc_export.py loaded in memory; other shared dependencies remain current and unchanged by this slice. No historical full checkout or deployment claim."}
+{"path": "acs_bim.py", "sha256": "fd853ededcea01d45c35bb54c77f377827d27b561c80b8be24998d1b581e933c"}
+{"path": "tools/acs_plan_ifc_export.py", "sha256": "82b9c43201ead8be934a87ad885c553cb81c6ca6db44dac9d616f04e404f0be9"}
+F
+======================================================================
+FAIL: test_approved_fallback_exports_exact_physical_spaces_only (__main__.ConnectedStairIfcReader.test_approved_fallback_exports_exact_physical_spaces_only)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "tests/remediation/test_stair_ifc_reader.py", line 119, in test_approved_fallback_exports_exact_physical_spaces_only
+    self.assertEqual({s.GlobalId for s in storeys}, set(expected_storeys))
+AssertionError: Items in the first set but not the second:
+'18pr545WBG6iuQGUJP2fZP'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.327s
+
+FAILED (failures=1)

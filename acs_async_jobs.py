@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 import acs_api_errors as E
 import acs_auth as AUTH
 import acs_rate_limit as RL
+import acs_ingress as INGRESS
 
 CONTRACT = 'acs.async-generation/1.0'
 SUBMIT_PATHS = {
@@ -175,6 +176,9 @@ STORE = JobStore(capacity=min(8, _positive('ACS_ASYNC_JOB_CAPACITY', 8)))
 def health_status():
     out = STORE.health()
     out['authentication'] = AUTH.health_status()
+    out['legacy_submission_enabled'] = os.environ.get('ACS_ENV','').strip().lower() != 'production'
+    out['production_submission_route'] = '/v1/projects/{project_id}/workspace'
+    out['automatic_resubmission'] = False
     return out
 
 
@@ -244,10 +248,21 @@ class AsyncGenerationMiddleware:
         if path in AUTH.DIRECT_PROTECTED_PATHS or path in SUBMIT_PATHS:
             if not await AUTH.authorize_asgi(scope, send):
                 return
-        # Direct cost-bearing routes are not async-job routes; after admission
-        # they pass through untouched to the original handlers.
+        # Production has one paid boundary: actor/project/revision-scoped durable
+        # jobs. Old unscoped paid submission URLs remain explicit compatibility
+        # errors; result retrieval remains available and never resubmits work.
+        if path in AUTH.DIRECT_PROTECTED_PATHS or path in SUBMIT_PATHS:
+            if os.environ.get('ACS_ENV', '').strip().lower() == 'production':
+                return await AUTH._send_error(scope, send, 409, 'PAID_WORKSPACE_REQUIRED',
+                    'افتح مساحة مشروعك، راجع المتطلبات وحد الاستدعاءات ثم أكد التوليد. مسار التوليد القديم لم يعد يبدأ طلبات مدفوعة.')
         if path in AUTH.DIRECT_PROTECTED_PATHS:
-            return await self.app(scope, receive, send)
+            try:
+                body = await INGRESS.bounded_body(scope, receive, self.max_input)
+                if body is None:
+                    return
+                return await self.app(scope, INGRESS.replay(body, receive), send)
+            except E.AcsApiError as exc:
+                return await self._error(send, exc)
         if path not in SUBMIT_PATHS and match is None:
             return await self.app(scope, receive, send)
         try:
@@ -268,17 +283,9 @@ class AsyncGenerationMiddleware:
             if method != 'POST':
                 raise E.AcsApiError(E.ACS_METHOD_NOT_ALLOWED)
             job_id, token = self._credentials(headers)
-            body = bytearray()
-            while True:
-                message = await receive()
-                if message['type'] == 'http.disconnect':
-                    return  # No complete input: no job and no provider call.
-                body.extend(message.get('body', b''))
-                if len(body) > self.max_input:
-                    raise E.AcsApiError(E.ACS_PAYLOAD_TOO_LARGE)
-                if not message.get('more_body', False):
-                    break
-            body = bytes(body)
+            body = await INGRESS.bounded_body(scope, receive, self.max_input)
+            if body is None:
+                return  # Disconnect before complete input: no job/provider work.
             # Bind endpoint, content type and EXACT body. Replays with a changed
             # request fail closed, including mismatched multipart boundaries.
             fingerprint = hashlib.sha256(SUBMIT_PATHS[path].encode('ascii')+b'\0'

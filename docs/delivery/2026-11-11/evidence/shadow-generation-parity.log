@@ -1,0 +1,13 @@
+pbr quality:
+  unchanged public/app/styles/app.css  block=1824 bytes  file=62752 bytes
+  unchanged public/index.html  block=629 bytes  file=53078 bytes
+  unchanged public/app/generated/pbr.js  block=72946 bytes  file=74657 bytes
+  unchanged public/app/generated/pbr-bridge.js  block=47353 bytes  file=48682 bytes
+  present   composer switch in the render loop (hand-written module, not generated here)
+All four output SHA-256 values unchanged.
+{
+  "public/app/generated/pbr-bridge.js": "8043561adbd4279b27d046a65c697c76fbd7a5af840535df1a02fdde13b298e0",
+  "public/app/generated/pbr.js": "fb2747ce7eef0d5a1ab92dc11c6938612016d2d65a16ca8fb0275d0f07b6af18",
+  "public/app/styles/app.css": "91ac66a4943b7ccdab24bea5701eac222bfd2262b41a1772236342c05f8a8b00",
+  "public/index.html": "5f3011b744dcfeab691bca33a43b442ff4cf2d9c48643cae004d77efdb6e2de1"
+}

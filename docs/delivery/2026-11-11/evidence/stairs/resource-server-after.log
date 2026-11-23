@@ -1,0 +1,6 @@
+test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write (__main__.WorkspaceLifecycle.test_fresh_stair_resource_limit_rejects_compact_model_without_retry_or_write) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+OK

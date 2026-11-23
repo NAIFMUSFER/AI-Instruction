@@ -33,6 +33,7 @@ ANTHROPIC_API_KEY القديم. ولا يُقبل أبداً كمفتاح deepse
 
 import os
 import re
+from urllib.parse import urlsplit
 
 CONTRACT_VERSION = "acs.provider/1.0.0"
 
@@ -90,12 +91,45 @@ PROVIDER_SPEC = {
     },
 }
 
-# قيم القدرة حين لا يعلنها المزوّد. الافتراض هو السلوك القائم: أي مزوّد جديد
-# يُعامَل معاملة anthropic حتى يُقاس ويُعلَن خلافُ ذلك — فلا يتغيّر سلوكٌ بصمت.
+# القدرات غير المعروفة محافظة؛ لا يصبح تنسيق Anthropic إثباتاً لهوية المزوّد.
 CAPABILITY_DEFAULTS = {
-    "output_tokens_are_content_proxy": True,
-    "content_token_multiplier": 1.0,
+    "output_tokens_are_content_proxy": False,
+    "content_token_multiplier": 2.0,
 }
+
+# Explicit routing/accounting profiles, not a conclusion inferred from an SDK
+# or from a Claude-compatible request alias. Unknown routes stay conservative.
+# DeepSeek model aliases: https://api-docs.deepseek.com/guides/anthropic_api/
+# Reviewed 2026-11-10. This is configuration evidence, never a live-call receipt.
+_PROFILE_MODELS = {
+    'anthropic': frozenset(PROVIDER_SPEC['anthropic']['models']),
+    'deepseek': frozenset((*PROVIDER_SPEC['deepseek']['models'], 'deepseek-flash')),
+}
+
+
+def endpoint_identity(cfg):
+    host = cfg.base_host or ('api.anthropic.com' if not cfg.base_url else None)
+    provider = {'api.anthropic.com': 'anthropic', 'api.deepseek.com': 'deepseek'}.get(host, 'unknown')
+    try:
+        path = urlsplit(cfg.base_url or 'https://api.anthropic.com').path or '/'
+    except ValueError:
+        path = None
+    # Expose only known route paths; arbitrary paths can themselves contain keys.
+    safe_path = path if path in ('/', '/v1', '/v1/', '/anthropic', '/anthropic/') else None
+    requested = cfg.model
+    resolved = requested
+    basis = 'CONFIGURED_MODEL'
+    if provider == 'deepseek' and isinstance(requested, str) and requested.startswith('claude'):
+        resolved = 'deepseek-v4-pro' if requested.startswith('claude-opus') else 'deepseek-flash'
+        basis = 'DOCUMENTED_ALIAS_MAPPING'
+    valid_route = (provider == 'anthropic' and path in ('/', '/v1', '/v1/')) or (
+        provider == 'deepseek' and path in ('/anthropic', '/anthropic/'))
+    profile = (provider + '-accounting-v1' if valid_route and resolved in _PROFILE_MODELS.get(provider, ())
+               else 'unknown-conservative')
+    return {'api_protocol': 'anthropic-messages', 'actual_provider': provider,
+            'requested_model': requested, 'resolved_model': resolved,
+            'endpoint_path': safe_path, 'model_identity_basis': basis,
+            'capability_profile': profile, 'provider_call_verified': False}
 
 #: حدود المضاعِف. أقلّ من 1.0 يعني ادّعاء أن المزوّد أوفر من المقدّر — وهو رفعٌ
 #: للعتبة في اتّجاه الخطر، فيُمنع. والأعلى حارسٌ ضدّ ضبطٍ خاطئ يشلّ التوجيه.
@@ -192,7 +226,7 @@ class ProviderConfig(object):
                 "base_host": self.base_host,
                 "transport": self.transport,
                 "state": self.state,
-                "missing": list(self.missing)}
+                "missing": list(self.missing), **endpoint_identity(self)}
 
     def __repr__(self):                                        # pragma: no cover
         return "<ProviderConfig %s provider=%s model=%s host=%s state=%s>" % (
@@ -212,6 +246,10 @@ def _resolve(role, prefix, legacy_key_allowed):
     spec = PROVIDER_SPEC[name]
 
     base_url = _env(prefix + "BASE_URL") or spec["base_url"]
+    # Resolve the SDK's ambient legacy endpoint before capability/budget routing.
+    # A configured endpoint always wins; we neither change nor infer credentials.
+    if not base_url and name == 'anthropic':
+        base_url = _env('ANTHROPIC_BASE_URL') or None
     model = _env(prefix + "MODEL") or spec["models"][0]
 
     transport = _env("ACS_LLM_TRANSPORT").lower() or "stream"
@@ -335,7 +373,9 @@ def capabilities(cfg=None):
     إلى CAPABILITY_DEFAULTS. لا يرفع هذا أبداً.
     """
     cfg = cfg or primary()
-    spec_caps = (PROVIDER_SPEC.get(cfg.provider or "") or {}).get("capabilities")
+    identity = endpoint_identity(cfg)
+    spec_caps = ((PROVIDER_SPEC.get(identity['actual_provider']) or {}).get('capabilities')
+                 if identity['capability_profile'] != 'unknown-conservative' else None)
     out = dict(CAPABILITY_DEFAULTS)
     if isinstance(spec_caps, dict):
         out.update(spec_caps)
@@ -377,6 +417,7 @@ def health_status():
     """حالة المزوّد لـ/health — أسماء وحالات فقط. لا مفتاح ولا عنوان كامل."""
     p = primary()
     f = fallback()
+    identity = endpoint_identity(p)
     return {"contract": CONTRACT_VERSION,
             "llm_provider": p.provider,
             "llm_model": p.model,
@@ -393,7 +434,10 @@ def health_status():
             # W2-B: القدرة المُعلَنة تظهر في /health لأن التوجيه والتقطيع
             # يقرآنها. مشغّلٌ يرى تصعيداً غير متوقّع يحتاج أن يعرف بأي محاسبة
             # يعمل النظام الآن — بلا قراءة شفرة ولا تخمين.
-            "capabilities": capabilities(p)}
+            "capabilities": capabilities(p),
+            **{'llm_' + key: value for key, value in identity.items()
+               if key != 'provider_call_verified'},
+            'provider_call_verified': False}
 
 
 def spec():

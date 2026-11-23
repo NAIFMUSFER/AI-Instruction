@@ -76,7 +76,10 @@ def generated_indoor_area(building):
         floors=building['floors']
         if not isinstance(floors,dict): return None
         total=0.0
-        for floor in floors.values():
+        levels=building.get('levels')
+        if not isinstance(levels,list) or not levels: return None
+        for level in levels:
+            floor=floors[level['template']]
             for room in floor['rooms']:
                 rect=room['rect']
                 if not isinstance(rect,list) or len(rect)!=4: return None

@@ -1,0 +1,28 @@
+Isolated tracked tree /workspace/scratch/1843247fed6a/acs-ci3-no-node-deps-xcyb2nvj; only test loader changed
+No node_modules or public/vendor; exit 0
+PASS public setModel keeps its synchronous return contract
+PASS villa automatically receives the shipped PBR presentation
+PASS desktop residential quality asks for HIGH PBR quality
+PASS PBR uses the declared realistic/noon/sky path
+PASS residential presentation uses the hero exterior camera
+PASS architectural detail is loaded through the existing lazy owner
+PASS architectural detail is applied after PBR
+PASS detail request is HIGH + REALISTIC without inventing user facade intent
+PASS warehouse never receives residential PBR automatically
+PASS warehouse never loads residential architectural detail automatically
+PASS leaving residential mode restores only the presentation that this policy owned
+PASS software recovery does not automatically call PBR or its quality compiler
+PASS software recovery does not load or apply automatic architectural detail
+PASS software recovery leaves the exact canonical model unchanged
+PASS automatic decline explicitly explains the software budget
+PASS explicit ULTRA is still valid through the actual capability validator
+PASS manual PBR remains callable on software rendering
+PASS mobile residential presentation uses supported BALANCED PBR quality
+PASS actual shipped PBR capability validator accepts the mobile request
+PASS actual shipped PBR capability validator rejects the old MEDIUM enum
+PASS mobile flag is passed to architectural detail so its declared fallback applies
+PASS server-generation path is observed even though it uses module-local setModel
+PASS the enhancer never mutates the generated canonical object
+PASS diagnostic state reports presentation only after a residential model
+PASS classifier is narrow: office is not silently treated as residential
+RESIDENTIAL PRESENTATION: 25 passed, 0 failed

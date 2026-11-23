@@ -1,0 +1,4 @@
+{"source": "pre_stairs_module_064f4a96fdc1941f010b0f6ab814c765acd260c5", "canonical_z": 6.837209302325586, "serialized_z": 6.837208499999999, "error_m": -8.023255873013113e-07}
+{"source": "current_76a90b9", "canonical_z": 6.837209302325586, "serialized_z": 6.837208499999999, "error_m": -8.023255873013113e-07}
+Comparator executes historical acs_bim.py with current local shared dependencies; not a full historical checkout or deployment.
+Legacy full IFC unchanged before fix: True

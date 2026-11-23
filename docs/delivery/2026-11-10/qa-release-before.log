@@ -1,0 +1,352 @@
+test_complete_evidence_passes (__main__.ReleaseSafety.test_complete_evidence_passes) ... ok
+test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) ...
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='crash') ... FAIL
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='signal') ... FAIL
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='missing') ... FAIL
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='malformed') ... FAIL
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='not_verified') ... FAIL
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='partial') ... FAIL
+  test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='missing_group') ... FAIL
+test_http_crash_never_passes (__main__.ReleaseSafety.test_http_crash_never_passes) ... FAIL
+test_raw_diagnostics_never_reach_logs (__main__.ReleaseSafety.test_raw_diagnostics_never_reach_logs) ... FAIL
+test_release_manifest_excludes_synthetic_secrets (__main__.ReleaseSafety.test_release_manifest_excludes_synthetic_secrets) ... FAIL
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='crash')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : guments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+/tmp/tmp7i8l6ygu/tests/production/verify_live_browser.js:1
+const fs=require('fs');fs.mkdirSync(__dirname+'/outputs',{recursive:true});throw new Error('SYNTHETIC_CRASH');process.exit(0);
+                                                                           ^
+
+Error: SYNTHETIC_CRASH
+    at Object.<anonymous> (/tmp/tmp7i8l6ygu/tests/production/verify_live_browser.js:1:82)
+    at Module._compile (node:internal/modules/cjs/loader:1929:14)
+    at Object..js (node:internal/modules/cjs/loader:2060:10)
+    at Module.load (node:internal/modules/cjs/loader:1651:32)
+    at Module._load (node:internal/modules/cjs/loader:1443:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19)
+    at Module.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:154:5)
+    at node:internal/main/run_main_module:33:47
+
+Node.js v24.22.1
+verify_live_browser.js exit code: 2
+browser layer: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 3 PASS · 0 FAIL · 0 NOT VERIFIED (of 3 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmp7i8l6ygu/tests/production/outputs
+
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='signal')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmpnejdtchy
+  started    : 2026-11-10T16:22:35Z
+  outputs    : /tmp/tmpnejdtchy/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 2
+browser layer: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 3 PASS · 0 FAIL · 0 NOT VERIFIED (of 3 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmpnejdtchy/tests/production/outputs
+
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='missing')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmpnhsovtf_
+  started    : 2026-11-10T16:22:36Z
+  outputs    : /tmp/tmpnhsovtf_/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 2
+browser layer: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 3 PASS · 0 FAIL · 0 NOT VERIFIED (of 3 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmpnhsovtf_/tests/production/outputs
+
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='malformed')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmpd5gn8imt
+  started    : 2026-11-10T16:22:36Z
+  outputs    : /tmp/tmpd5gn8imt/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 2
+browser layer: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 3 PASS · 0 FAIL · 0 NOT VERIFIED (of 3 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmpd5gn8imt/tests/production/outputs
+
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='not_verified')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmpr5t5a0qr
+  started    : 2026-11-10T16:22:37Z
+  outputs    : /tmp/tmpr5t5a0qr/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 2
+browser layer: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 3 PASS · 0 FAIL · 5 NOT VERIFIED (of 8 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmpr5t5a0qr/tests/production/outputs
+
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='partial')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmpg8n4lpdi
+  started    : 2026-11-10T16:22:37Z
+  outputs    : /tmp/tmpg8n4lpdi/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 0
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 7 PASS · 0 FAIL · 1 NOT VERIFIED (of 8 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmpg8n4lpdi/tests/production/outputs
+
+
+======================================================================
+FAIL: test_crash_missing_partial_or_not_verified_never_pass (__main__.ReleaseSafety.test_crash_missing_partial_or_not_verified_never_pass) (mode='missing_group')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 74, in test_crash_missing_partial_or_not_verified_never_pass
+    self.assertNotEqual(rc, 0, log)
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmpx6513uvz
+  started    : 2026-11-10T16:22:38Z
+  outputs    : /tmp/tmpx6513uvz/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+verify_live.py exit code: 0
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 0
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 7 PASS · 0 FAIL · 0 NOT VERIFIED (of 7 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmpx6513uvz/tests/production/outputs
+
+
+======================================================================
+FAIL: test_http_crash_never_passes (__main__.ReleaseSafety.test_http_crash_never_passes)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 79, in test_http_crash_never_passes
+    self.assertNotEqual(rc, 0, log); self.assertNotEqual(summary.get('verdict'), 'PASS')
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 == 0 : ACS PRODUCTION VERIFICATION SUITE
+  repository : /tmp/tmp1znwzslj
+  started    : 2026-11-10T16:22:38Z
+  outputs    : /tmp/tmp1znwzslj/tests/production/outputs
+  arguments  :
+
+=== 0 · the deployment targets the repository actually declares ===
+netlify.toml           publish            = '<absent>'
+netlify.toml           connect-src        = '<absent>'
+render.yaml            ACS_ALLOWED_ORIGINS= '<absent>'
+acs_understand_api.py  _DEFAULT_ORIGIN    = '<absent>'
+public/index.html      CONFIGURED_BASE    = '<absent>'
+render.yaml            healthCheckPath    = '<absent>'
+
+NOTE: the block above is STATIC inspection of the repository. It states which deployment this suite is aimed at. It is never a runtime PASS.
+
+=== 1 · HTTP layer — groups A (HTTP), B (frontend assets), G (provenance) ===
+Traceback (most recent call last):
+  File "/tmp/tmp1znwzslj/tests/production/verify_live.py", line 6, in <module>
+    raise RuntimeError('SYNTHETIC_CRASH')
+RuntimeError: SYNTHETIC_CRASH
+verify_live.py exit code: 2
+HTTP layer: NOT VERIFIED — EXTERNAL ENVIRONMENT REQUIRED (exit 2, not a test failure)
+
+=== 2 · real Chromium — groups C (boot), D (workflow), E (responsive), F (Arabic), G (build info) ===
+verify_live_browser.js exit code: 0
+
+=== 3 · combined machine-readable summary ===
+TOTAL: 5 PASS · 0 FAIL · 0 NOT VERIFIED (of 5 checks)
+combined verdict: PASS
+
+==============================================
+PRODUCTION VERIFICATION: no observed failure
+logs: /tmp/tmp1znwzslj/tests/production/outputs
+
+
+======================================================================
+FAIL: test_raw_diagnostics_never_reach_logs (__main__.ReleaseSafety.test_raw_diagnostics_never_reach_logs)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 115, in test_raw_diagnostics_never_reach_logs
+    self.assertNotIn('SYNTHETIC_',capture.getvalue());self.assertIn('RuntimeError',capture.getvalue())
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'SYNTHETIC_' unexpectedly found in "rate limit backend failure (closed policy): SYNTHETIC_PAYLOAD redis://user:SYNTHETIC_PASSWORD@secret.invalid Bearer SYNTHETIC_TOKEN\nrate limit: health probe raised: SYNTHETIC_PAYLOAD redis://user:SYNTHETIC_PASSWORD@secret.invalid Bearer SYNTHETIC_TOKEN\nrate limit: redis health probe failed: SYNTHETIC_PAYLOAD redis://user:SYNTHETIC_PASSWORD@secret.invalid Bearer SYNTHETIC_TOKEN\nTEST='SYNTHETIC_PAYLOAD redis://user:SYNTHETIC_PASSWORD@secret.invalid Bearer SYNTHETIC_TOKEN' is not an integer; using default 1\nACS_RATE_LIMIT_BACKEND='synthetic_payload redis://user:synthetic_password@secret.invalid bearer synthetic_token' is not recognised; treating it as unset (memory)\n"
+
+======================================================================
+FAIL: test_release_manifest_excludes_synthetic_secrets (__main__.ReleaseSafety.test_release_manifest_excludes_synthetic_secrets)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_release_safety.py", line 83, in test_release_manifest_excludes_synthetic_secrets
+    self.assertTrue(helper.exists(), 'release archive must have a tracked-file manifest implementation')
+AssertionError: False is not true : release archive must have a tracked-file manifest implementation
+
+----------------------------------------------------------------------
+Ran 5 tests in 6.314s
+
+FAILED (failures=10)

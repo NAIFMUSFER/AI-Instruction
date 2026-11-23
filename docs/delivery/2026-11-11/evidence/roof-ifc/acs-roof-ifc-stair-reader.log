@@ -1,0 +1,6 @@
+.
+----------------------------------------------------------------------
+Ran 1 test in 0.453s
+
+OK
+{"canonical_hash_unchanged": true, "exported_stairs": 0, "fixture": "computed residential fallback with canonical U stairs", "product_entities": {"IfcBuilding": 1, "IfcBuildingStorey": 2, "IfcSite": 1, "IfcSpace": 50, "IfcSpatialZone": 25}, "reader": "IfcOpenShell", "reader_version": "0.9.0.post1", "schema": "IFC4", "scope": "SPACES_ONLY", "spaces": 50, "storeys": 2, "unoccupied_roof_references": 25}

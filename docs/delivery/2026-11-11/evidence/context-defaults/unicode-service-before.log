@@ -1,0 +1,22 @@
+E
+======================================================================
+ERROR: test_malformed_unicode_retains_canonical_error_without_saving_or_retry (__main__.ContextDetailsService.test_malformed_unicode_retains_canonical_error_without_saving_or_retry)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_details_service.py", line 158, in test_malformed_unicode_retains_canonical_error_without_saving_or_retry
+    S.generate_and_save(self.store,PROJECT,ACTOR,command(),runner=runner)
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_workspace_service.py", line 401, in generate_and_save
+    result["building"], _, detail_reason = with_context_details(result["building"])
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_context_details.py", line 176, in with_context_details
+    if len(model['levels'])>64 or not _bounded(model):return model,None,'CONTEXT_DETAILS_RESOURCE_LIMIT'
+                                      ^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_context_details.py", line 49, in _bounded
+    elif isinstance(value,str):size+=len(value.encode('utf8'))*6+2
+                                         ^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'utf-8' codec can't encode character '\ud800' in position 0: surrogates not allowed
+
+----------------------------------------------------------------------
+Ran 1 test in 0.009s
+
+FAILED (errors=1)

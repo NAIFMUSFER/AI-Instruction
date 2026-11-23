@@ -333,7 +333,18 @@ def check_app_tree(app_dir, modules, load_order):
                          'module must be declared in one place'
                          % (LAZY_ENTRY, name))
 
-    exempt = declared | (lazy_declared & lazy_loaded)
+    local_declared = set(A.local_order())
+    local_entry = 'ui/local-studio-entry.mjs'
+    local_loaded = set(os.path.normpath(os.path.join('ui', spec)).replace(os.sep, '/')
+                       for spec in re.findall(DYNAMIC_IMPORT_RE, modules.get(local_entry, '')) if spec.startswith('.'))
+    if local_declared != local_loaded:
+        fails.append('local studio route manifest and executable imports disagree: %s' % sorted(local_declared ^ local_loaded))
+    for name in declared:
+        for spec in re.findall(r"(?:import|from)\s*['\"]([^'\"]+)['\"]", modules.get(name, '')):
+            target = os.path.normpath(os.path.join(os.path.dirname(name), spec)).replace(os.sep, '/')
+            if target in local_declared:
+                fails.append('eager account module %s imports local-only %s' % (name, target))
+    exempt = declared | (lazy_declared & lazy_loaded) | (local_declared & local_loaded)
     for orphan in sorted(expected - exempt):
         fails.append('public/app/%s exists but public/app/main.js never '
                      'imports it — a module nothing loads is dead weight that '

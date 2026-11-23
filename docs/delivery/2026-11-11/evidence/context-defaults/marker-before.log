@@ -1,0 +1,13 @@
+.....F......
+======================================================================
+FAIL: test_fixed_marker_and_bounded_disclosure_do_not_trust_counts (__main__.ContextDetails.test_fixed_marker_and_bounded_disclosure_do_not_trust_counts)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_details.py", line 97, in test_fixed_marker_and_bounded_disclosure_do_not_trust_counts
+    self.assertEqual(with_context_details(nonboolean)[2],'CONTEXT_DETAILS_PROVENANCE_INVALID')
+AssertionError: None != 'CONTEXT_DETAILS_PROVENANCE_INVALID'
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.126s
+
+FAILED (failures=1)

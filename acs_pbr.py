@@ -10,6 +10,7 @@
 هنا تدخل بصمة النموذج، ولا خامة عرضية تصير خاصّية هندسية.
 """
 import json
+from acs_geometry_contract import rectangle_union
 import math
 import os
 
@@ -734,7 +735,11 @@ def plate_rect(room_rects, site_rect):
     z0 = min(_num(r[1]) for r in rects)
     x1 = max(_num(r[0]) + _num(r[2]) for r in rects)
     z1 = max(_num(r[1]) + _num(r[3]) for r in rects)
+    pieces = rectangle_union(rects)
     return {"valid": True, "issues": [], "source": "LEVEL_ROOM_UNION",
+            "rectangles": [[_q(v) for v in r] for r in pieces],
+            "area_m2": _q(sum(r[2]*r[3] for r in pieces)),
+            "rect_basis": "BOUNDING_BOX_ONLY",
             "rect": [_q(x0), _q(z0), _q(x1 - x0), _q(z1 - z0)],
             "room_count": len(rects)}
 

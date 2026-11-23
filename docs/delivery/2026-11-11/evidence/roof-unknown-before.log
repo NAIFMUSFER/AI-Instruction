@@ -1,0 +1,20 @@
+E
+======================================================================
+ERROR: test_unknown_vertical_dimensions_remain_unknown_without_a_roof (__main__.RoofBoundaryRegressions.test_unknown_vertical_dimensions_remain_unknown_without_a_roof)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/presentation-v4/tests/remediation/test_roof_level.py", line 235, in test_unknown_vertical_dimensions_remain_unknown_without_a_roof
+    out,report,reason=acs_roof.with_default_roof(b)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 232, in with_default_roof
+    out, report = add_flat_roof_level(model, parapet_h)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/presentation-v4/acs_roof.py", line 104, in add_flat_roof_level
+    wall_h = float(out.get("wall_h", 3.0))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: float() argument must be a string or a real number, not 'NoneType'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)

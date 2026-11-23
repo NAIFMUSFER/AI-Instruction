@@ -43,7 +43,7 @@ _PLACEMENT_PROPERTIES = frozenset({
 
 
 def _stable_id(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip()) and len(value) <= 120
+    return isinstance(value, str) and bool(value.strip()) and len(value) <= 160
 
 
 def _floor(model: dict, template: str) -> dict:

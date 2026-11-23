@@ -1,0 +1,40 @@
+EEE.F
+======================================================================
+ERROR: test_arbitrary_host_or_model_is_not_given_measured_capabilities (__main__.ProviderIdentity.test_arbitrary_host_or_model_is_not_given_measured_capabilities) (host='https://gateway.example.test/proxy')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_provider_identity.py", line 39, in test_arbitrary_host_or_model_is_not_given_measured_capabilities
+    self.assertEqual(h['llm_capability_profile'], 'unknown-conservative')
+                     ~^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'llm_capability_profile'
+
+======================================================================
+ERROR: test_arbitrary_host_or_model_is_not_given_measured_capabilities (__main__.ProviderIdentity.test_arbitrary_host_or_model_is_not_given_measured_capabilities) (host='https://api.anthropic.com')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_provider_identity.py", line 39, in test_arbitrary_host_or_model_is_not_given_measured_capabilities
+    self.assertEqual(h['llm_capability_profile'], 'unknown-conservative')
+                     ~^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'llm_capability_profile'
+
+======================================================================
+ERROR: test_compatibility_alias_does_not_claim_anthropic_model (__main__.ProviderIdentity.test_compatibility_alias_does_not_claim_anthropic_model)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_provider_identity.py", line 18, in test_compatibility_alias_does_not_claim_anthropic_model
+    self.assertEqual(h['llm_api_protocol'], 'anthropic-messages')
+                     ~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'llm_api_protocol'
+
+======================================================================
+FAIL: test_sdk_legacy_endpoint_is_resolved_before_routing (__main__.ProviderIdentity.test_sdk_legacy_endpoint_is_resolved_before_routing)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/repo/tests/remediation/test_delivery_provider_identity.py", line 31, in test_sdk_legacy_endpoint_is_resolved_before_routing
+    self.assertEqual(cfg.base_url, 'https://api.deepseek.com/anthropic')
+AssertionError: None != 'https://api.deepseek.com/anthropic'
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.005s
+
+FAILED (failures=1, errors=3)

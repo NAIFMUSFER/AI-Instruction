@@ -178,7 +178,7 @@ console.log('\n== §3 — NO GENERIC WRITE ESCAPE HATCH EXISTS ==');
       APPSRC.countInApp(AU_OPEN)+'/'+APPSRC.countInApp(AU_END));
   chk('it lives in public/app/'+AU_MOD+', and public/app/main.js imports it',
       APPSRC.moduleCarrying(AU_OPEN)===AU_MOD
-      &&APPSRC.order().indexOf(AU_MOD)>=0);
+      &&APPSRC.localOrder().indexOf(AU_MOD)>=0);
   chk('the developer API exposes no generic write entry point', (function(){
     const block=APPSRC.block(AU_MOD,AU_OPEN,AU_END);
     const at=block.indexOf('window.ACS');

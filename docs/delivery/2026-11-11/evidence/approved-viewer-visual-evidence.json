@@ -1,0 +1,1265 @@
+{
+  "scope": "synthetic exact approved artifacts; not live AI or physical mobile acceptance",
+  "budgets": {
+    "first_view_ms": 3000,
+    "desktop_frame_p95_ms": 20,
+    "mobile_frame_p95_ms": 33,
+    "transition_timeout_ms": 2000,
+    "transition_stall_ms": 10000,
+    "idle_additional_render_calls": 0
+  },
+  "measurements": [
+    {
+      "frame_p95_ms": 816.6999999999998,
+      "targets_met": {
+        "first_view": true,
+        "transitions": false,
+        "frame_p95": false
+      },
+      "fixture": "residential",
+      "revision": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+      "model_hash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1419.9582100000002,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1749.2756160000008,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 6,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              816.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -7.7896356724157165,
+              12.483314642634472,
+              -12.816628910504736
+            ],
+            "target": [
+              6.000000189989805,
+              4.075000092387199,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 67,
+            "view": "exterior"
+          },
+          "screenshot": "residential-1440-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 1382.6339709999993,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              816.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              6.000000189989805,
+              30.488329177238803,
+              3.2076003174442373
+            ],
+            "target": [
+              6.000000189989805,
+              4.075000092387199,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "aerial"
+          },
+          "screenshot": "residential-1440-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 987.9542120000006,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              816.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -4.232700461065337,
+              1.4999999940395325,
+              -20.363572788712915
+            ],
+            "target": [
+              6.000000189989806,
+              2.2499999940395354,
+              4.000000189989806
+            ],
+            "visibleMeshCount": 67,
+            "view": "street"
+          },
+          "screenshot": "residential-1440-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 54.41378099999929,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              816.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.212000059783458,
+              1.6000000000000008,
+              1.2120000597834588
+            ],
+            "target": [
+              5.672800268113612,
+              1.45,
+              5.672800268113612
+            ],
+            "visibleMeshCount": 67,
+            "view": "interior"
+          },
+          "screenshot": "residential-1440-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 39.80183600000055,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              816.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -3.439656953256211,
+              25.052015966267234,
+              -9.005749651815814
+            ],
+            "target": [
+              6.000000189989805,
+              4.075000092387199,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "cutaway"
+          },
+          "screenshot": "residential-1440-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 3134.732457000002,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              816.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.983805797563576,
+              1.5840000343322749,
+              -4.775196795244163
+            ],
+            "target": [
+              4,
+              1.100000023841858,
+              0
+            ],
+            "visibleMeshCount": 67,
+            "view": "detail"
+          },
+          "screenshot": "residential-1440-detail.png"
+        }
+      ]
+    },
+    {
+      "frame_p95_ms": 866.6000000000004,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "fixture": "warehouse",
+      "revision": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1457.9088730000003,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1693.366879000001,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 6,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              866.6000000000004
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              38.84959936877381,
+              17.68729968177921,
+              -14.980171293015676
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "exterior"
+          },
+          "screenshot": "warehouse-1440-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 1401.0631009999997,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              866.6000000000004
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              12.1455196370398,
+              47.692321256513935,
+              8.000000189989805
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "aerial"
+          },
+          "screenshot": "warehouse-1440-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 899.346123000003,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              866.6000000000004
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              51.42644086222194,
+              1.499999994039534,
+              -9.05260497245634
+            ],
+            "target": [
+              10.824999999254942,
+              2.2499999940395354,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "street"
+          },
+          "screenshot": "warehouse-1440-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 27.23358300000109,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              866.6000000000004
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              11.743999999761579,
+              1.5999999999999994,
+              2.492000059783459
+            ],
+            "target": [
+              4.073599998950958,
+              1.45,
+              11.304800268113613
+            ],
+            "visibleMeshCount": 72,
+            "view": "interior"
+          },
+          "screenshot": "warehouse-1440-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 39.3405569999959,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              866.6000000000004
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              32.4988400202653,
+              38.632806482520344,
+              -7.731012728485455
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "cutaway"
+          },
+          "screenshot": "warehouse-1440-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 17.806220999998914,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              866.6000000000004
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              29.116284179332123,
+              3.0239998626708995,
+              0.1509023546023931
+            ],
+            "target": [
+              20,
+              2.0999999046325684,
+              4.0000001192092896
+            ],
+            "visibleMeshCount": 72,
+            "view": "detail"
+          },
+          "screenshot": "warehouse-1440-detail.png"
+        }
+      ]
+    },
+    {
+      "frame_p95_ms": 850,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "fixture": "residential",
+      "revision": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+      "model_hash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1493.8582960000058,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1651.8516030000028,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              850
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -8.797777956071414,
+              13.09803554730258,
+              -14.046070719840952
+            ],
+            "target": [
+              6.000000189989805,
+              4.075000092387199,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 67,
+            "view": "exterior"
+          },
+          "screenshot": "residential-393-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 62.55722099999548,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              850
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              6.000000189989805,
+              32.4193731995939,
+              3.149668996773583
+            ],
+            "target": [
+              6.000000189989805,
+              4.075000092387199,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "aerial"
+          },
+          "screenshot": "residential-393-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 48.58000300001004,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              850
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -4.980799852902382,
+              1.4999999940395337,
+              -22.144761816896352
+            ],
+            "target": [
+              6.000000189989806,
+              2.2499999940395354,
+              4.000000189989806
+            ],
+            "visibleMeshCount": 67,
+            "view": "street"
+          },
+          "screenshot": "residential-393-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 963.3011410000036,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              850
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.212000059783458,
+              1.6000000000000008,
+              1.2120000597834588
+            ],
+            "target": [
+              5.672800268113612,
+              1.45,
+              5.672800268113612
+            ],
+            "visibleMeshCount": 67,
+            "view": "interior"
+          },
+          "screenshot": "residential-393-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 36.77978599999915,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              850
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              -4.129777969088371,
+              26.585618223672025,
+              -9.956583051406788
+            ],
+            "target": [
+              6.000000189989805,
+              4.075000092387199,
+              4.000000189989805
+            ],
+            "visibleMeshCount": 59,
+            "view": "cutaway"
+          },
+          "screenshot": "residential-393-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 947.2887290000072,
+          "stats": {
+            "revisionId": "plan_b76d8424edfc496cb6c9ea2763e6214b",
+            "modelHash": "93c18d501df1a271008c86e964e4a0672bea835d845f0556dd65dcfdafae3ed8",
+            "meshCount": 67,
+            "triangleCount": 804,
+            "quality": "متوازن",
+            "renderCalls": 18,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              850
+            ],
+            "presentation": {
+              "detailInstances": 32,
+              "roofPieces": 0,
+              "assumedRoofShown": false,
+              "roofSource": "artifact",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 744,
+              "edgeLayers": 3,
+              "roomLabels": 4,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": true,
+              "entranceSide": "nz",
+              "entranceDetected": true
+            },
+            "camera": [
+              1.983805797563576,
+              1.5840000343322749,
+              -4.775196795244163
+            ],
+            "target": [
+              4,
+              1.100000023841858,
+              0
+            ],
+            "visibleMeshCount": 67,
+            "view": "detail"
+          },
+          "screenshot": "residential-393-detail.png"
+        }
+      ]
+    },
+    {
+      "frame_p95_ms": 666.6999999999998,
+      "targets_met": {
+        "first_view": true,
+        "transitions": true,
+        "frame_p95": false
+      },
+      "fixture": "warehouse",
+      "revision": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+      "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "hardware": {
+        "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+        "cpuLogicalCores": 1,
+        "webglVendor": "Google Inc. (Google)",
+        "webglRenderer": "ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device (Subzero) (0x0000C0DE)), SwiftShader driver)",
+        "physicalDevice": "not available; desktop automation viewport"
+      },
+      "first_view_ms": 1416.4515989999927,
+      "views": [
+        {
+          "view": "exterior",
+          "transition_ms": 1319.167465999999,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 8,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              40.89844125907695,
+              18.71172062693077,
+              -16.660221643064222
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "exterior"
+          },
+          "screenshot": "warehouse-393-exterior.png"
+        },
+        {
+          "view": "aerial",
+          "transition_ms": 35.56949799999711,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 10,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              12.242061104597914,
+              50.91037017511763,
+              8.000000189989805
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "aerial"
+          },
+          "screenshot": "warehouse-393-aerial.png"
+        },
+        {
+          "view": "street",
+          "transition_ms": 44.82985700000427,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 12,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              54.39475922245476,
+              1.4999999940395394,
+              -10.299298683754124
+            ],
+            "target": [
+              10.824999999254942,
+              2.2499999940395354,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "street"
+          },
+          "screenshot": "warehouse-393-street.png"
+        },
+        {
+          "view": "interior",
+          "transition_ms": 40.39598300000944,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 14,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              11.743999999761579,
+              1.5999999999999994,
+              2.492000059783459
+            ],
+            "target": [
+              4.073599998950958,
+              1.45,
+              11.304800268113613
+            ],
+            "visibleMeshCount": 72,
+            "view": "interior"
+          },
+          "screenshot": "warehouse-393-interior.png"
+        },
+        {
+          "view": "cutaway",
+          "transition_ms": 33.06875799999398,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 16,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": false,
+              "roofSource": "assumed",
+              "roofShown": false,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              34.083386181773434,
+              41.18852609785605,
+              -8.88108655538652
+            ],
+            "target": [
+              10.824999999254942,
+              3.6749999970197678,
+              8.000000189989805
+            ],
+            "visibleMeshCount": 72,
+            "view": "cutaway"
+          },
+          "screenshot": "warehouse-393-cutaway.png"
+        },
+        {
+          "view": "detail",
+          "transition_ms": 38.12897299999895,
+          "stats": {
+            "revisionId": "plan_c047ed72cd6d4b67b4a7fd01377cdf2a",
+            "modelHash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+            "meshCount": 72,
+            "triangleCount": 864,
+            "quality": "متوازن",
+            "renderCalls": 18,
+            "activeAnimation": false,
+            "frameIntervalsMs": [
+              666.6999999999998
+            ],
+            "presentation": {
+              "detailInstances": 18,
+              "roofPieces": 2,
+              "assumedRoofShown": true,
+              "roofSource": "assumed",
+              "roofShown": true,
+              "figures": 2,
+              "sunHour": 10,
+              "tour": false,
+              "edgeSegments": 828,
+              "edgeLayers": 1,
+              "roomLabels": 2,
+              "gridCellM": 1,
+              "clippingPlanes": 1,
+              "animatedTransitions": false,
+              "roofInArtifact": false,
+              "entranceSide": "px",
+              "entranceDetected": true
+            },
+            "camera": [
+              29.116284179332123,
+              3.0239998626708995,
+              0.1509023546023931
+            ],
+            "target": [
+              20,
+              2.0999999046325684,
+              4.0000001192092896
+            ],
+            "visibleMeshCount": 72,
+            "view": "detail"
+          },
+          "screenshot": "warehouse-393-detail.png"
+        }
+      ]
+    }
+  ]
+}

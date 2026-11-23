@@ -1,0 +1,50 @@
+{
+  "fixture": "existing apartment_model unchanged",
+  "model_hash": "8c25e5deace3d56d754141cdceb7e970fb1af6aadfefb5783dd444aba0c6ec51",
+  "source": "tests/phase9_2/lib_ad_fixtures.py:apartment_model",
+  "provider_calls": 0,
+  "review": {
+    "schema": "acs.plan-review/1.0",
+    "revision_id": "plan_9cd28540750e478fb1dd530dbbf98295",
+    "content_hash": "121ef46fc29d73470483e75af715b63bfae037847be82d90977bb8187fd7db82",
+    "model_hash": "8c25e5deace3d56d754141cdceb7e970fb1af6aadfefb5783dd444aba0c6ec51",
+    "can_approve": false,
+    "scopes": {
+      "rectangular_geometry": "FAIL",
+      "program": "PASS",
+      "topology": "NOT_VERIFIED",
+      "vertical_circulation": "NOT_VERIFIED",
+      "regulatory_compliance": "NOT_VERIFIED",
+      "structural_safety": "NOT_VERIFIED"
+    },
+    "metrics": {
+      "level_count": 2,
+      "space_instance_count": 8,
+      "space_rect_area_m2": null,
+      "gross_floor_area_m2": null,
+      "net_floor_area_m2": null,
+      "efficiency": null
+    },
+    "issues": [
+      {
+        "code": "DIMENSION_NOT_SPECIFIED",
+        "path": "/wall_t",
+        "severity": "error"
+      }
+    ],
+    "construction_approved": false,
+    "coverage": {
+      "vertical_circulation": {
+        "core_alignment": "NOT_VERIFIED",
+        "physical_traversal": "NOT_VERIFIED",
+        "geometry_scope": "EXPLICIT_CORE_OBJECTS",
+        "geometry": "NOT_VERIFIED",
+        "missing_geometry": []
+      }
+    },
+    "semantic_lock_manifest_hash": null,
+    "semantic_lock_count": 0,
+    "bound_content_hash": "dc002864f35ab493a9bf35b4d24e19e11f3a51fff3ea98195a7ca462f2c80084"
+  },
+  "independent_exports": "NOT_VERIFIED: real approval boundary rejects this unchanged fixture"
+}

@@ -1,0 +1,12 @@
+test_approved_dxf_roundtrips_without_dwg_or_autocad_claim (__main__.ApprovedCadExportTests.test_approved_dxf_roundtrips_without_dwg_or_autocad_claim) ... ok
+test_approved_svg_is_hash_bound_and_keeps_canonical_authority (__main__.ApprovedCadExportTests.test_approved_svg_is_hash_bound_and_keeps_canonical_authority) ... ok
+test_artifact_tamper_and_bad_extension_fail_closed (__main__.ApprovedCadExportTests.test_artifact_tamper_and_bad_extension_fail_closed) ... ok
+test_draft_fails_before_optional_dxf_dependency_is_reached (__main__.ApprovedCadExportTests.test_draft_fails_before_optional_dxf_dependency_is_reached) ... ok
+test_existing_output_and_non_integer_level_are_rejected (__main__.ApprovedCadExportTests.test_existing_output_and_non_integer_level_are_rejected) ... ok
+test_new_draft_cannot_replace_exportable_frozen_baseline (__main__.ApprovedCadExportTests.test_new_draft_cannot_replace_exportable_frozen_baseline) ... ok
+test_warehouse_rack_dock_provenance_and_locks_reach_cad_receipt (__main__.ApprovedCadExportTests.test_warehouse_rack_dock_provenance_and_locks_reach_cad_receipt) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.318s
+
+OK

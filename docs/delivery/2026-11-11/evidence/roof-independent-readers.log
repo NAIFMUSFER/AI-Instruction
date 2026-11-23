@@ -1,0 +1,41 @@
+No stream support: No module named 'lark'
+....
+----------------------------------------------------------------------
+Ran 4 tests in 0.687s
+
+OK
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0
+[
+  {
+    "fixture": "villa",
+    "revision_id": "plan_31e8c4c9f53442d4a8a91f7e99dc432c",
+    "model_hash": "2e363de60f5789596ea31c566aadd07458cdeb71b8cf45aa6bcb535056fd3593",
+    "area_m2": 192,
+    "spaces": 4,
+    "nodes": 59,
+    "triangles": 708,
+    "gltf_bytes": 119754
+  },
+  {
+    "fixture": "warehouse",
+    "revision_id": "plan_70d69e1570e5489ea0c854bdde73ef40",
+    "model_hash": "9ebd2862038c49fae1f455cbc057bf75df58fe4c95a862906e2d193e3c7ecd9f",
+    "area_m2": 320,
+    "spaces": 2,
+    "nodes": 72,
+    "triangles": 864,
+    "gltf_bytes": 146213
+  },
+  {
+    "fixture": "apartment",
+    "revision_id": "plan_12aee0122a3c46879ea4ae863ab9bde4",
+    "model_hash": "2ee11183e294615fd53bd6f4f782a91fb57191f36f0ee044f939f0124c499c1b",
+    "area_m2": 138.8,
+    "spaces": 12,
+    "nodes": 155,
+    "triangles": 1860,
+    "gltf_bytes": 312938
+  }
+]
+[ACS] objects: requested=2 generated=2 generic_box=0 unsupported=0

@@ -290,8 +290,8 @@ chk('lazy first-party JS is reported as the real number (%d bytes, %d modules)'
 # KI-12: التأجيل صار حقيقياً. الشاهد المستقلّ يقرأ الإعلان من ملفّه ويقارنه
 # بما حسبه من الرسم بنفسه — لا يأخذ أياً منهما من الأداة.
 IND_DECLARED_LAZY = sorted(
-    ln.strip() for ln in io.open(
-        os.path.join(ROOT, 'tools', 'frontend_lazy.txt'), encoding='utf-8')
+    ln.strip() for manifest in ('frontend_lazy.txt','frontend_local.txt') for ln in io.open(
+        os.path.join(ROOT, 'tools', manifest), encoding='utf-8')
     if ln.strip() and not ln.strip().startswith('#'))
 chk('the declared lazy set and the set measured from the import graph are the '
     'same — a declaration without deferral, or deferral without a declaration, '
@@ -320,7 +320,7 @@ chk('every dynamic import() found is accounted for, and the first-party ones '
     and J['first_party_dynamic_import_count']
     == len([d for d in J['dynamic_imports'] if d['first_party']])
     and J['first_party_dynamic_import_count'] >= len(IND_DECLARED_LAZY)
-    and all(d['in_module'] == 'public/app/ui/panels-entry.js'
+    and all(d['in_module'] in ('public/app/ui/panels-entry.js','public/app/ui/local-studio-entry.mjs')
             for d in J['dynamic_imports'] if d['first_party']),
     str(J['first_party_dynamic_import_count']))
 

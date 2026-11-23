@@ -5,6 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { hasStairForms, resolveStairGeometry, stairConnections } from './stairs.mjs';
 
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
@@ -603,10 +604,13 @@ function buildRoom(group,room,fkey,baseY,def){
         wcol||(room.role?ROLE_COLOR[room.role]:null), wallsMode==='glass');}
   }
   /* أرضية الغرفة: تُبنى فقط عند طلب لون/تشطيب خاص بها (فوق بلاطة الدور) */
-  if(fcol) addBox(group,x+w/2,baseY+0.012,z+d/2,Math.max(w-t,0.1),0.024,Math.max(d-t,0.1),
-                  'floor',`FLOOR|${fkey}|${name}|plate`,false,fcol);
-  if(ccol) addBox(group,x+w/2,baseY+H-0.03,z+d/2,Math.max(w-t,0.1),0.05,Math.max(d-t,0.1),
-                  'ceiling',`FLOOR|${fkey}|${name}|ceil`,false,ccol);
+  const finishW=Math.max(w-t,0.1),finishD=Math.max(d-t,0.1);
+  if(fcol)slabStrips(x+w/2-finishW/2,z+d/2-finishD/2,finishW,finishD,def.holes||[]).forEach((s,i)=>
+    addBox(group,s[0]+s[2]/2,baseY+0.012,s[1]+s[3]/2,s[2],0.024,s[3],
+      'floor',`FLOOR|${fkey}|${name}|plate${i||''}`,false,fcol));
+  if(ccol)slabStrips(x+w/2-finishW/2,z+d/2-finishD/2,finishW,finishD,def.ceilingHoles||[]).forEach((s,i)=>
+    addBox(group,s[0]+s[2]/2,baseY+H-0.03,s[1]+s[3]/2,s[2],0.05,s[3],
+      'ceiling',`FLOOR|${fkey}|${name}|ceil${i||''}`,false,ccol));
   acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
     const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
     const dcol=normHex(dr.color);
@@ -707,12 +711,13 @@ function objKind(o){
 function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
   const def=OBJ_LIB[kind]||[0.6,0.6,0.9,'box'];
   const w=+o.w||def[0], d=+o.d||def[1], h=+o.h||def[2], shape=def[3];
+  if(shape==='stairs'&&Object.hasOwn(o,'form')&&o.form!=='u_return')throw new Error('STAIR_FORM_UNSUPPORTED');
   const rot=(+o.rot||0)*Math.PI/180;
   const col=normHex(o.color)||null;
   const tag=`OBJ|${fkey}|${room}|${(o.name||kind)}${idx}`;
   const B=(dx,dy,dz,ex,ey,ez,mat,c)=>{
     const s=Math.sin(rot), co=Math.cos(rot);
-    addBox(g, cx+dx*co-dz*s, baseY+dy, cz+dx*s+dz*co, ex,ey,ez, mat, tag, true, c||col, rot);
+    addBox(g, cx+dx*co-dz*s, baseY+dy, cz+dx*s+dz*co, ex,ey,ez, mat, tag, true, c||col, -rot);
   };
   const M=OBJ_MAT[shape]||'furn';
   if(shape==='person'){
@@ -735,6 +740,13 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
     B(0,h*0.70,shape==='truck'?-d*0.34:0, w*0.9,h*0.36,shape==='truck'?d*0.24:d*0.55,'window');
     for(const sx of[-1,1]) for(const sz of[-1,1])
       B(sx*w*0.46,0.33,sz*d*0.34, 0.22,0.62,0.62,'bumper');
+  }else if(shape==='stairs'&&o.form==='u_return'){
+    const geometry=resolveStairGeometry(o),s=Math.sin(rot),co=Math.cos(rot);
+    for(const component of geometry.components){
+      const [dx,dy,dz]=component.center,[ex,ey,ez]=component.size;
+      addBox(g,cx+dx*co-dz*s,baseY+dy,cz+dx*s+dz*co,ex,ey,ez,'concrete_m',
+        `OBJ|${fkey}|${room}|${o.id}|${component.id}`,true,col,-rot);
+    }
   }else if(shape==='stairs'){
     /* KI-26/F-46: عدد الدرجات مشتقّ من ارتفاعٍ يذكره النموذج وبلا حدّ —
        ‎h=1e9‎ كانت تعني ستّة مليارات درجة، أي تجميد اللسان قبل أي حارس. */
@@ -751,7 +763,7 @@ function buildObject(g, o, kind, cx, cz, baseY, fkey, room, idx){
   }else if(shape==='railing'){
     B(0,h,0, w,0.06,0.06,'frame');
     /* KI-26/F-46: قوائم الدرابزين مشتقّة من عرضٍ يذكره النموذج وبلا حدّ */
-    const n=Math.max(2,acsFit(Math.round(w/1.1),
+    const n=Math.max(2,acsFit(_pyRound(w/1.1,0),
                               SCENE_LIMITS.max_object_parts,'railing.posts'));
     for(let i=0;i<=n;i++) B(-w/2+w*i/n,h*0.5,0, 0.05,h,0.05,'frame');
   }else if(shape==='tree'||shape==='palm'){
@@ -801,8 +813,8 @@ function buildObjects(group, room, fkey, baseY){
     const n=acsCount(o.count,1,SCENE_LIMITS.max_object_count,'object.count');
     const pitch=+o.pitch||1.2, dir=(o.dir==='z')?'z':'x';
     for(let k=0;k<n;k++){
-      const ox=(+o.x||rw/2)+(dir==='x'?pitch*k:0);
-      const oz=(+o.z||rd/2)+(dir==='z'?pitch*k:0);
+      const ox=(o.form==='u_return'?o.x:(o.x!=null?+o.x:rw/2))+(dir==='x'?pitch*k:0);
+      const oz=(o.form==='u_return'?o.z:(o.z!=null?+o.z:rd/2))+(dir==='z'?pitch*k:0);
       if(ox>rw+2||oz>rd+2) break;
       buildObject(group,o,kind||'box',rx+ox,rz+oz,baseY+(+o.y||0),fkey,nm,i*1000+k);
     }
@@ -1151,11 +1163,14 @@ function slabStrips(x0,z0,W,D,holes){
 function acsRenderLevel(lvl, position){
   const raw=(lvl&&typeof lvl==='object')?lvl:{};
   const candidate=Number(raw.index);
-  const derived=!(isFinite(candidate)&&candidate>=0&&candidate===Math.floor(candidate));
+  const derived=!(typeof raw.index==='number'&&isFinite(candidate)&&candidate===Math.floor(candidate));
   return {raw:raw,index:derived?position:candidate,derived:derived};
 }
 
 function compile(data){
+  // Explicit flights are validated before allocating/replacing scene geometry.
+  // A stale connection must fail closed, not fall into ARCH's legacy fallback.
+  const physicalStairs=hasStairForms(data)?stairConnections(data):[];
   OBJ_UNKNOWN=[]; acsBuildDefectsReset();
   const grp=new THREE.Group(); grp.name='BUILDING';
   const site=data.site||{w:30,d:25};
@@ -1199,7 +1214,7 @@ function compile(data){
   });
   _levels.forEach(_lv=>{
     const lvl=_lv.raw, li=_lv.index;
-    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=li*fh; const fkey='F'+li;
+    const fdef=(data.floors||{})[lvl.template]||{}; const baseY=Number.isFinite(lvl.elevation)?lvl.elevation:li*fh; const fkey='F'+li;
     const holes=ARCH?ARCH.voids.filter(v=>v.level_index===li).map(v=>v.rect):[];
     /* PHASE10_FOOTPRINT_PLATE (KI-3 / F-07) — كان اللوح يُبنى على مستطيل
        الموقع كاملاً (المُدخَل السابق: صفر، صفر، عرض الموقع، عمق الموقع)
@@ -1214,12 +1229,12 @@ function compile(data){
        معلَنة في acs_pbr.PLATE_POLICY / PQ_PLATE_POLICY. */
     const _pp=__ACS_LATE.pqPlateRect((fdef.rooms||[]).map(r=>r.rect),[0,0,site.w,site.d]);
     const _pr=(_pp&&_pp.valid&&Array.isArray(_pp.rect))?_pp.rect:[0,0,site.w,site.d];
-    slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes).forEach((s,k)=>
+    (_pp.rectangles||[_pr]).flatMap(r=>slabStrips(r[0],r[1],r[2],r[3],holes)).forEach((s,k)=>
       addBox(grp,s[0]+s[2]/2,baseY-0.075,s[1]+s[3]/2,s[2],0.15,s[3],'floor',
              `FLOOR|${fkey}|slab|${k}`,true));
     acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,
                'ROOMS_CAPPED','level.rooms')
-      .forEach(r=>buildRoom(grp,r,fkey,baseY,def));
+      .forEach(r=>buildRoom(grp,r,fkey,baseY,{...def,holes,ceilingHoles:physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening)}));
   });
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */
@@ -1302,6 +1317,10 @@ function countNear(block,kw){
   return found?Math.max(total,1):0;
 }
 function parseDescription(text, siteW, siteD, nFloors){
+  // With an explicit removal preference the caller may use all 64 occupied levels.
+  // Otherwise localGeneratedModel reserves one physical level for the roof.
+  if(!Number.isInteger(nFloors)||nFloors<0||nFloors+1>SCENE_LIMITS.max_levels)
+    throw new Error('LOCAL_LEVEL_LIMIT_EXCEEDED');
   text=normDigits(text);
   const lines=text.split(/\n|،/).map(s=>s.trim()).filter(Boolean);
   const dim=/(\d+(?:\.\d+)?)\s*[×xX*]\s*(\d+(?:\.\d+)?)/;
@@ -1351,24 +1370,18 @@ function parseDescription(text, siteW, siteD, nFloors){
     if(/رشاش/.test(r.block))r.points.push({type:'sprinkler',x:r.w/2,z:r.d*0.7});
     delete r.block; delete r._pending; delete r.w; delete r.d; delete r.name;
   });
-  // مبنى: أرضي بسيط + أدوار نموذجية مكرّرة + سطح
+  // Occupied local geometry only. The local creation boundary adds the canonical roof.
+  // Synthetic tanks/solar/parapet scaffolding was removed here, never from imports.
   const levels=[{index:0,name:'الأرضي',template:'ground'}];
-  /* KI-26/F-46: الاسم من العقد الوحيد ‎acsFloorName‎ — الأدوار الوسطى لا
-     تُسمّى «السطح» مهما بلغ رقمها، والسطح هو الأعلى فعلاً وحده. */
-  const _tot=nFloors+2;
   for(let i=1;i<=nFloors;i++)
-    levels.push({index:i,name:acsFloorName('F'+i,_tot),template:'typical'});
-  levels.push({index:nFloors+1,name:acsFloorName('F'+(nFloors+1),_tot),template:'roof'});
+    levels.push({index:i,name:acsFloorName('F'+i),template:'typical'});
   const ground={rooms:[{id:'lobby',rect:[siteW/2-4,1,8,7],
     doors:[{edge:'N',offset:4,width:2.5,height:2.5,material:'glass'}],
     windows:[{edge:'N',offset:1.5,width:2,sill:1,height:1.6}],
     points:[{type:'light',x:4,z:3.5},{type:'camera',x:0.3,z:0.3},{type:'tv',x:7.7,z:3.5}],
     furniture:[{name:'reception',x:4,z:3.5,w:2.4,d:0.8,h:1.1,mat:'counter'}]}]};
-  const roof={rooms:[{id:'parapet',rect:[0.2,0.2,siteW-0.4,siteD-0.4],wall_h:1.4},
-    {id:'tanks',rect:[1,1,4,3],furniture:[{name:'tank',x:2,z:1.5,w:1.6,d:1.6,h:2,mat:'furn'}]},
-    {id:'solar',rect:[siteW-12,siteD-8,10,6],furniture:[{name:'panel',x:5,z:3,w:8,d:4,h:0.15,mat:'tv'}]}]};
   return {site:{w:siteW,d:siteD},floor_height:3.2,wall_h:3.0,wall_t:0.15,
-    levels, floors:{ground, typical:{rooms:clean}, roof}};
+    levels, floors:{ground, typical:{rooms:clean}}};
 }
 
 /* توليد قياسي سريع */

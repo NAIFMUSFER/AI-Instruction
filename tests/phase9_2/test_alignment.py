@@ -352,11 +352,21 @@ chk('the old unclamped rack extent is gone from the compiler',
 # (PHASE1_SITE_WIDE_PLATE). استُبدلت بتوكيدة أشدّ: اللوح على مقاس الموقع مُزال
 # من المصرِّف نصّاً، والامتداد يأتي من عقد الامتداد الوحيد، والسياسة الجديدة
 # معلَنة باسمها واسم سابقتها وسببها فلا يكون التغيير صامتاً.
-chk('the site-wide plate is APPLIED-AND-GONE: the compiler no longer builds a '
-    'plate on the site rectangle',
-    'slabStrips(0,0,site.w,site.d,holes)' not in page
-    and 'slabStrips(_pr[0],_pr[1],_pr[2],_pr[3],holes)' in page
-    and 'PHASE10_FOOTPRINT_PLATE' in page)
+# Inspect emitted geometry, not a formatting-dependent implementation string.
+import acs_compiler as C
+_plate_builder = C.Builder()
+C.build_level(_plate_builder, {'index': 0, 'template': 'l'}, {'rooms': [
+    {'id': 'a', 'rect': [0, 0, 4, 2], 'walls': 'none'},
+    {'id': 'b', 'rect': [0, 2, 2, 2], 'walls': 'none'}]}, 0,
+    {'site': {'w': 30, 'd': 24}, 'wall_h': 3, 'wall_t': .2}, 'F0')
+_plate_parts = [part[0] for part in _plate_builder.parts
+                if part[5].startswith('FLOOR|F0|slab|')]
+_plate_area = sum(float((v[:, 0].max()-v[:, 0].min()) *
+                       (v[:, 2].max()-v[:, 2].min())) for v in _plate_parts)
+_courtyard_filled = any(v[:, 0].min() < 3 < v[:, 0].max() and
+                        v[:, 2].min() < 3 < v[:, 2].max() for v in _plate_parts)
+chk('the site-wide plate is gone: emitted L-plan slab covers 12 m2 and leaves its recess empty',
+    abs(_plate_area - 12) < 1e-6 and not _courtyard_filled)
 chk('the plate extent is computed by the shared contract, not by a second '
     'extent calculator',
     'pqPlateRect((fdef.rooms||[]).map(r=>r.rect)' in page

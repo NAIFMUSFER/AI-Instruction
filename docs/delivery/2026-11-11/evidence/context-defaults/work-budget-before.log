@@ -1,0 +1,62 @@
+.F..F..........
+======================================================================
+FAIL: test_aggregate_part_limit_is_checked_before_bounds_allocation (__main__.ContextDetails.test_aggregate_part_limit_is_checked_before_bounds_allocation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_details.py", line 148, in test_aggregate_part_limit_is_checked_before_bounds_allocation
+    out,report,reason=with_context_details(m)
+                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_context_details.py", line 228, in with_context_details
+    blockers.extend(_footprints(obj,other))
+                    ^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_context_details.py", line 93, in _footprints
+    return [[p['min'][0]+room['rect'][0],p['min'][2]+room['rect'][1],p['max'][0]-p['min'][0],p['max'][2]-p['min'][2]] for p in get_actual_bounds(obj)['parts']]
+                                                                                                                               ^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 1139, in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 1143, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/unittest/mock.py", line 1198, in _execute_mock_call
+    raise effect
+AssertionError: expanded before admission
+
+======================================================================
+FAIL: test_existing_parts_are_expanded_once_per_level_even_when_all_contexts_blocked (__main__.ContextDetails.test_existing_parts_are_expanded_once_per_level_even_when_all_contexts_blocked)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_details.py", line 140, in test_existing_parts_are_expanded_once_per_level_even_when_all_contexts_blocked
+    self.assertEqual(sorted(calls),['blocker0','blocker1','blocker2','blocker3'])
+AssertionError: Lists differ: ['blocker0', 'blocker0', 'blocker0', 'blocker0', 'blocker1', '[125 chars]er3'] != ['blocker0', 'blocker1', 'blocker2', 'blocker3']
+
+First differing element 1:
+'blocker0'
+'blocker1'
+
+First list contains 12 additional elements.
+First extra element 4:
+'blocker1'
+
++ ['blocker0', 'blocker1', 'blocker2', 'blocker3']
+- ['blocker0',
+-  'blocker0',
+-  'blocker0',
+-  'blocker0',
+-  'blocker1',
+-  'blocker1',
+-  'blocker1',
+-  'blocker1',
+-  'blocker2',
+-  'blocker2',
+-  'blocker2',
+-  'blocker2',
+-  'blocker3',
+-  'blocker3',
+-  'blocker3',
+-  'blocker3']
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.133s
+
+FAILED (failures=2)

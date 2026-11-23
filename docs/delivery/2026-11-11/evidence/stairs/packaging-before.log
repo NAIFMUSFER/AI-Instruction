@@ -1,0 +1,18 @@
+test_checkout_cannot_hide_an_omitted_helper (__main__.StairRuntimePackagingTests.test_checkout_cannot_hide_an_omitted_helper) ... ok
+test_release_copy_set_executes_policy (__main__.StairRuntimePackagingTests.test_release_copy_set_executes_policy) ... FAIL
+
+======================================================================
+FAIL: test_release_copy_set_executes_policy (__main__.StairRuntimePackagingTests.test_release_copy_set_executes_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_stairs_runtime_packaging.py", line 54, in test_release_copy_set_executes_policy
+    self.assertEqual(result.returncode, 0, result.stderr)
+AssertionError: 1 != 0 : Traceback (most recent call last):
+  File "<string>", line 4, in <module>
+ModuleNotFoundError: No module named 'acs_stairs'
+
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.046s
+
+FAILED (failures=1)

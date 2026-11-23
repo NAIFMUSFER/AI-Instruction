@@ -156,7 +156,7 @@ function untranslated(text) {
 /* ── منفذ الخروج الموحَّد ────────────────────────────────────────────────── */
 function finish(extra) {
   const nPass = count('PASS'), nFail = count('FAIL'), nNv = count('NOT VERIFIED');
-  const code = nFail ? 1 : (nPass === 0 ? 2 : 0);
+  const code = nFail ? 1 : (nNv || nPass === 0 ? 2 : 0);
   const summary = Object.assign({
     schema: 'acs-production-verification/1.0.0',
     tool: 'tests/production/verify_live_browser.js',
@@ -166,7 +166,7 @@ function finish(extra) {
     groups: ['C', 'D', 'E', 'F', 'G(browser)'],
     counts: { pass: nPass, fail: nFail, not_verified: nNv, total: ROWS.length },
     exit_code: code,
-    verdict: nFail ? 'FAIL' : (nPass === 0 ? NV_SUFFIX : 'PASS'),
+    verdict: nFail ? 'FAIL' : (nNv || nPass === 0 ? NV_SUFFIX : 'PASS'),
     checks: ROWS
   }, extra || {});
   let wrote;
@@ -432,6 +432,25 @@ function reportCSP(cspViolations) {
 
 /* ── التشغيل ─────────────────────────────────────────────────────────────── */
 (async () => {
+  // The live default is the public customer journey. The retained synthetic
+  // legacy fixture diagnostics require an explicit separate opt-in scope.
+  if (process.env.ACS_VERIFY_LEGACY_FIXTURES !== '1') {
+    try {
+      const evidence=await require('../deploy/verify_public_guest.js').run(FRONTEND,{expectSha:EXPECT_SHA});
+      ok('C','C1','fresh guest renders residential and warehouse geometry with visible pixels',true);
+      ok('D','D1','guest sample switch, isolated local save/reload, download, contextual sign-in UI',true);
+      ok('E','E1','393x852 and 1440x900 layouts without overflow and 44px primary controls',true);
+      ok('F','F1','Arabic RTL labels and keyboard-focusable guest controls',true);
+      ok('G','G5','exact frontend build SHA observed and compared when requested',true);
+      finish({scope:'public guest and sign-in UI; private-account and paid journeys are separate',
+        observed:{build_info:evidence.runs[0].build},guest_evidence:evidence});
+    } catch (error) {
+      ok('C','C1','public guest browser verification completed',false,error.name);
+      for(const group of ['D','E','F','G'])nv(group,group+'1','public guest verification','browser journey did not complete');
+      finish({scope:'public guest',harness_error:error.name});
+    }
+    return;
+  }
   console.log('ACS PRODUCTION VERIFICATION — real Chromium layer');
   console.log('  frontend : ' + FRONTEND);
   console.log('  started  : ' + new Date().toISOString());

@@ -1,0 +1,34 @@
+E
+======================================================================
+ERROR: test_actual_seed_remove_reopen_approve_and_lock (__main__.ContextBrowserFixture.test_actual_seed_remove_reopen_approve_and_lock)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_objects_fixture.py", line 26, in test_actual_seed_remove_reopen_approve_and_lock
+    removed=command(remove(column,r1));r2=removed['head'];self.assertNotEqual(r1,r2)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/tests/remediation/test_context_objects_fixture.py", line 22, in command
+    def command(body):return execute_persisted_plan_command(store(),PROJECT,body,actor_id=ACTOR,verifier=S.existing_geometry_verifier)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_persisted_commands.py", line 111, in execute_persisted_plan_command
+    result = execute_plan_command(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_commands.py", line 282, in execute_plan_command
+    return _remove_object(workspace, command)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_commands.py", line 132, in _remove_object
+    return _view_result(workspace, "remove_object", revision.id, reference_revision_id=expected)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_commands.py", line 222, in _view_result
+    result["revision_comparison"] = workspace.compare_revisions(
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_lock_binding.py", line 243, in compare_revisions
+    measured = compare_options([
+               ^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/1843247fed6a/object-defaults-v4/acs_plan_options.py", line 229, in compare_options
+    raise PlanError("OPTION_TYPOLOGY_UNKNOWN", "Design options need an explicit canonical typology")
+acs_plan_review.PlanError: Design options need an explicit canonical typology
+
+----------------------------------------------------------------------
+Ran 1 test in 0.035s
+
+FAILED (errors=1)

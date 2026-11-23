@@ -1,0 +1,485 @@
+[
+  {
+    "path": ".github/workflows/ci.yml",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "KNOWN-ISSUES.md",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "acs_bim.py",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/CURRENT-STATUS.md",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/CI13-JOBS.md",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/ROOF-IFC-SEMANTICS.md",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci13-approved-visual-review.json",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci13-jobs.json",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci13-netlify.json",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/ci13-stairs-visual-review.json",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-after.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-before.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-connected.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-fallback.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-geometry-reader.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-legacy.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-nonroof-comparison.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-precision.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-reader-before.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-stair-boundary.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-stair-reader.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/acs-roof-ifc-workspace.log",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "docs/delivery/2026-11-11/evidence/roof-ifc/manifest.json",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "public/app/generated/bim.js",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "static",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": [
+      "tools/build_bim_browser.py",
+      "acs_bim.py"
+    ]
+  },
+  {
+    "path": "public/app/ui/connected-workspace.mjs",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/performance/bundle_report.json",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "low",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/roof_ifc_exchange_parity.js",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_geometry_independent_readers.py",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_roof_ifc_semantics.py",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tests/remediation/test_stair_ifc_reader.py",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/acs_plan_ifc_export.py",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  },
+  {
+    "path": "tools/build_bim_browser.py",
+    "purpose": "Scoped roof IFC semantic correction, canonical reference preservation or recorded CI13/local evidence",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "ROOF-IFC-SEMANTICS"
+    ],
+    "tests": [
+      "tests/remediation/test_roof_ifc_semantics.py",
+      "tests/remediation/test_stair_ifc_reader.py",
+      "tests/remediation/test_geometry_independent_readers.py"
+    ],
+    "generated_from": []
+  }
+]

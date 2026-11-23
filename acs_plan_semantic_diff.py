@@ -31,7 +31,7 @@ _VISIBLE_FIELDS = frozenset({
 
 
 def _stable_id(value: Any) -> bool:
-    return isinstance(value, str) and bool(value.strip()) and len(value) <= 120
+    return isinstance(value, str) and bool(value.strip()) and len(value) <= 160
 
 
 def _requirement_id(value: Any) -> bool:

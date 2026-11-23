@@ -1,0 +1,1 @@
+PASS context selection: exact artifact digest, revision/source-map binding, explicit object tuples, repeat identity, ambiguity and immutable inputs

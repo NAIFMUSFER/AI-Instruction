@@ -1,0 +1,186 @@
+{
+  "schema": "acs.requirement-metrics/1.0",
+  "metrics": {
+    "site_width_m": {
+      "unit": "m",
+      "operator": "equal",
+      "label_ar": "عرض الموقع (م)",
+      "brief_supported": true
+    },
+    "site_depth_m": {
+      "unit": "m",
+      "operator": "equal",
+      "label_ar": "عمق الموقع (م)",
+      "brief_supported": true
+    },
+    "level_count": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "عدد الأدوار",
+      "brief_supported": true
+    },
+    "building_target_area_m2": {
+      "unit": "m2",
+      "operator": "equal",
+      "label_ar": "مجموع مساحات فراغات المبنى المستهدف (م²)",
+      "brief_supported": true,
+      "measurement": "space_rect_area_m2",
+      "scope": "SUM_OF_CANONICAL_ROOM_RECTANGLES_ACROSS_PHYSICAL_LEVEL_INSTANCES",
+      "not_measured": [
+        "gross_floor_area",
+        "net_floor_area",
+        "buildable_footprint"
+      ]
+    },
+    "unit_count": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "إجمالي الشقق",
+      "brief_supported": true
+    },
+    "unit_count_per_level": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "الشقق في كل دور",
+      "brief_supported": true
+    },
+    "room_count": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "عدد فراغات الاستخدام",
+      "brief_supported": true
+    },
+    "room_count_per_unit": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "عدد الفراغات داخل كل شقة",
+      "brief_supported": true
+    },
+    "min_room_area_m2": {
+      "unit": "m2",
+      "operator": "minimum",
+      "label_ar": "min_room_area_m2",
+      "brief_supported": false
+    },
+    "min_space_area_by_role_m2": {
+      "unit": "m2",
+      "operator": "minimum",
+      "label_ar": "أقل مساحة للاستخدام (م²)",
+      "brief_supported": true
+    },
+    "max_space_area_by_role_m2": {
+      "unit": "m2",
+      "operator": "maximum",
+      "label_ar": "max_space_area_by_role_m2",
+      "brief_supported": false
+    },
+    "min_zone_area_m2": {
+      "unit": "m2",
+      "operator": "minimum",
+      "label_ar": "min_zone_area_m2",
+      "brief_supported": false
+    },
+    "min_zone_area_ratio": {
+      "unit": "ratio",
+      "operator": "minimum",
+      "label_ar": "min_zone_area_ratio",
+      "brief_supported": false
+    },
+    "max_zone_area_ratio": {
+      "unit": "ratio",
+      "operator": "maximum",
+      "label_ar": "max_zone_area_ratio",
+      "brief_supported": false
+    },
+    "dock_count": {
+      "unit": "count",
+      "operator": "equal",
+      "label_ar": "عدد الأرصفة",
+      "brief_supported": true
+    },
+    "min_dock_count": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "أقل عدد أرصفة",
+      "brief_supported": true
+    },
+    "min_dock_count_by_zone_role": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "min_dock_count_by_zone_role",
+      "brief_supported": false
+    },
+    "max_dock_count_by_zone_role": {
+      "unit": "count",
+      "operator": "maximum",
+      "label_ar": "max_dock_count_by_zone_role",
+      "brief_supported": false
+    },
+    "min_rack_group_count": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "أقل عدد مجموعات رفوف",
+      "brief_supported": true
+    },
+    "min_rack_geometric_bay_level_positions": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "min_rack_geometric_bay_level_positions",
+      "brief_supported": false
+    },
+    "min_station_count": {
+      "unit": "count",
+      "operator": "minimum",
+      "label_ar": "min_station_count",
+      "brief_supported": false
+    },
+    "min_lane_area_m2": {
+      "unit": "m2",
+      "operator": "minimum",
+      "label_ar": "min_lane_area_m2",
+      "brief_supported": false
+    },
+    "min_lane_centerline_length_m": {
+      "unit": "m",
+      "operator": "minimum",
+      "label_ar": "min_lane_centerline_length_m",
+      "brief_supported": false
+    },
+    "max_lane_centerline_length_m": {
+      "unit": "m",
+      "operator": "maximum",
+      "label_ar": "max_lane_centerline_length_m",
+      "brief_supported": false
+    },
+    "max_lane_overlap_area_m2": {
+      "unit": "m2",
+      "operator": "maximum",
+      "label_ar": "max_lane_overlap_area_m2",
+      "brief_supported": false
+    },
+    "max_rack_lane_overlap_area_m2": {
+      "unit": "m2",
+      "operator": "maximum",
+      "label_ar": "max_rack_lane_overlap_area_m2",
+      "brief_supported": false
+    },
+    "max_rack_overlap_area_m2": {
+      "unit": "m2",
+      "operator": "maximum",
+      "label_ar": "max_rack_overlap_area_m2",
+      "brief_supported": false
+    },
+    "max_configured_route_length_m": {
+      "unit": "m",
+      "operator": "maximum",
+      "label_ar": "max_configured_route_length_m",
+      "brief_supported": false
+    },
+    "min_expansion_reserve_area_m2": {
+      "unit": "m2",
+      "operator": "minimum",
+      "label_ar": "min_expansion_reserve_area_m2",
+      "brief_supported": false
+    }
+  }
+}

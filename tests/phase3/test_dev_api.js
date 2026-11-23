@@ -1,6 +1,6 @@
 /* يتحقّق من ربط واجهة العرض البصري بتشغيل الكتلة الحقيقية نفسها من وحدة التطبيق.
    بعد F-09 لم تعد الكتلة داخل public/index.html بل داخل وحدة ES مستوردة من
-   public/app/main.js، فالفحص صار أدقّ: الوحدة موجودة، ومستوردة فعلاً، والكتلة
+   المدخل المحلي المشروط، فالفحص صار أدقّ: الوحدة موجودة، وموصولة فعلاً، والكتلة
    فيها وحدها لا في أي وحدة أخرى. */
 const fs=require('fs'), path=require('path');
 const HERE=__dirname, ROOT=path.resolve(HERE,'..','..');
@@ -11,19 +11,20 @@ const lastBuilding=JSON.parse(JSON.stringify(SC.models.villa_full));
 const registry={};
 const OPEN='/* ---- عرض بصري وتقديم', CLOSE='/* ---- تنسيق بين التخصّصات';
 const MOD='ui/workspace-ui-wiring.js';
-const main=fs.readFileSync(path.join(ROOT,'public','app','main.js'),'utf8');
-const IMPORTS=main.split('\n').map(l=>(/^import '\.\/(.+?)';$/.exec(l)||[])[1])
-                   .filter(Boolean);
+const APPSRC=require(path.join(HERE,'lib_app_files.js'));
+const IMPORTS=APPSRC.order(), LOCAL=APPSRC.localOrder();
+const localEntry=APPSRC.mod('ui/local-studio-entry.mjs');
 const src=fs.readFileSync(path.join(ROOT,'public','app',MOD),'utf8');
 const a=src.indexOf(OPEN);
 const b=src.indexOf(CLOSE, a);
 const block=src.slice(a,b);
 chk('the visual dev API block exists in public/app/'+MOD, a>=0&&b>a&&block.length>2500,
     block.length);
-chk('public/app/main.js imports the module that carries it',
-    IMPORTS.indexOf(MOD)>=0, IMPORTS.join(','));
+chk('the visual API is reachable only through the conditional local studio entry',
+    IMPORTS.includes('ui/local-studio-entry.mjs') && !IMPORTS.includes(MOD)
+    && LOCAL.includes(MOD) && localEntry.includes("await import('../"+MOD+"');"), IMPORTS.join(','));
 chk('the block is defined in exactly one application module',
-    IMPORTS.filter(f=>fs.readFileSync(path.join(ROOT,'public','app',f),'utf8')
+    APPSRC.fullOrder().filter(f=>fs.readFileSync(path.join(ROOT,'public','app',f),'utf8')
                         .indexOf(OPEN)>=0).length===1);
 /* مضيف محايد يعمل في Node وفي المتصفّح معاً: لا اعتماد على global ولا على
    كائن window الحقيقي للصفحة */

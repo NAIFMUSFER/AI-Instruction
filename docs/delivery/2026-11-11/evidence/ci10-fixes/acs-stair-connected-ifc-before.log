@@ -1,0 +1,19 @@
+.E.....
+======================================================================
+ERROR: test_computed_plan_saves_reopens_and_exports_through_normal_approval (__main__.LayoutFallback.test_computed_plan_saves_reopens_and_exports_through_normal_approval)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "<workspace>/stairs-v4/tests/remediation/test_residential_layout_fallback.py", line 107, in test_computed_plan_saves_reopens_and_exports_through_normal_approval
+    result=S.artifact(fixture.store,PROJECT,ACTOR,{'action':'artifact','revision_id':rid,'format':fmt,'level_index':0})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/acs_workspace_service.py", line 509, in artifact
+    receipt = export_approved_ifc(ws, rid, path)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<workspace>/stairs-v4/tools/acs_plan_ifc_export.py", line 149, in export_approved_ifc
+    raise PlanError("IFC_EXPORT_FAILED", "Existing ACS BIM exporter rejected the approved baseline")
+acs_plan_review.PlanError: Existing ACS BIM exporter rejected the approved baseline
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.279s
+
+FAILED (errors=1)

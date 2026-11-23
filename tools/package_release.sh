@@ -31,8 +31,7 @@ python3 tools/check_api_base.py "$ROOT"
 
 echo "▶ 2/7 creating archive"
 rm -f "$OUTZIP" "$OUTZIP.sha256"
-zip -qr "$OUTZIP" . -x "*/__pycache__/*" -x "__pycache__/*" -x "*.pyc" \
-  -x "node_modules/*" -x "*/node_modules/*"
+python3 tools/release_manifest.py --root "$ROOT" --output "$OUTZIP"
 ( cd "$(dirname "$OUTZIP")" && sha256sum "$(basename "$OUTZIP")" \
     > "$(basename "$OUTZIP").sha256" )
 cat "$OUTZIP.sha256"
@@ -59,7 +58,7 @@ echo "▶ 5/7 structural guard on the extracted copy"
 echo "▶ 6/7 full deploy verification from the extracted copy"
 ( cd "$EXTRACT" && sh tests/deploy/verify_deploy.sh )
 
-if [ "$2" = "--browser" ]; then
+if [ "${2:-}" = "--browser" ]; then
   echo "▶ 7/7 real-Chromium panel suite from the extracted copy"
   ( cd "$EXTRACT" && node tests/phase3/lib/run_browser.js \
       "$EXTRACT/tests/phase9_2/test_archdetail_browser.js" )

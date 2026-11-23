@@ -1,0 +1,562 @@
+{
+  "meta": {
+    "type": "residential",
+    "name": "Synthetic apartment floor — explicitly authored test variant"
+  },
+  "site": {
+    "w": 34.0,
+    "d": 26.0
+  },
+  "floor_height": 3.2,
+  "wall_h": 3.05,
+  "levels": [
+    {
+      "index": 0,
+      "template": "t",
+      "elevation": 0
+    }
+  ],
+  "floors": {
+    "t": {
+      "rooms": [
+        {
+          "id": "unit0_living",
+          "name": "living",
+          "role": "living",
+          "rect": [
+            0,
+            0,
+            4,
+            5
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_living_doors_0"
+            },
+            {
+              "edge": "E",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_living_doors_1"
+            },
+            {
+              "edge": "E",
+              "offset": 4,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_living_doors_2"
+            },
+            {
+              "edge": "S",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_living_doors_3"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 2.5
+            }
+          ]
+        },
+        {
+          "id": "unit0_kitchen",
+          "name": "kitchen",
+          "role": "kitchen",
+          "rect": [
+            4,
+            0,
+            3,
+            3
+          ],
+          "doors": [
+            {
+              "edge": "W",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_kitchen_doors_0"
+            },
+            {
+              "edge": "S",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_kitchen_doors_1"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 1.5,
+              "z": 1.5
+            }
+          ]
+        },
+        {
+          "id": "unit0_bath",
+          "name": "bath",
+          "role": "bathroom",
+          "rect": [
+            4,
+            3,
+            3,
+            2
+          ],
+          "doors": [
+            {
+              "edge": "W",
+              "offset": 1,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_bath_doors_0"
+            },
+            {
+              "edge": "N",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_bath_doors_1"
+            },
+            {
+              "edge": "S",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_bath_doors_2"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 1.5,
+              "z": 1.0
+            }
+          ]
+        },
+        {
+          "id": "unit0_bed",
+          "name": "bed",
+          "role": "bedroom",
+          "rect": [
+            0,
+            5,
+            4,
+            4
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_bed_doors_0"
+            },
+            {
+              "edge": "E",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_bed_doors_1"
+            },
+            {
+              "edge": "S",
+              "offset": 3.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_bed_doors_2"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 2.0
+            }
+          ]
+        },
+        {
+          "id": "unit0_hall",
+          "name": "hall",
+          "role": "corridor",
+          "rect": [
+            4,
+            5,
+            3,
+            4
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_hall_doors_0"
+            },
+            {
+              "edge": "W",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit0_hall_doors_1"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 1.5,
+              "z": 2.0
+            }
+          ]
+        },
+        {
+          "id": "bal0",
+          "name": "Balcony 0",
+          "role": "balcony",
+          "rect": [
+            1.5,
+            9.0,
+            4.0,
+            1.6
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "bal0_doors_0"
+            }
+          ],
+          "objects": [
+            {
+              "kind": "railing",
+              "x": 2.0,
+              "z": 1.5,
+              "w": 4.0,
+              "d": 0.06,
+              "h": 1.1,
+              "id": "bal0_objects_0",
+              "y": 0,
+              "count": 1,
+              "pitch": 1,
+              "dir": "x",
+              "rot": 0
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 0.8
+            }
+          ]
+        },
+        {
+          "id": "unit1_living",
+          "name": "living",
+          "role": "living",
+          "rect": [
+            7,
+            0,
+            4,
+            5
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_living_doors_0"
+            },
+            {
+              "edge": "E",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_living_doors_1"
+            },
+            {
+              "edge": "E",
+              "offset": 4,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_living_doors_2"
+            },
+            {
+              "edge": "S",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_living_doors_3"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 2.5
+            }
+          ]
+        },
+        {
+          "id": "unit1_kitchen",
+          "name": "kitchen",
+          "role": "kitchen",
+          "rect": [
+            11,
+            0,
+            3,
+            3
+          ],
+          "doors": [
+            {
+              "edge": "W",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_kitchen_doors_0"
+            },
+            {
+              "edge": "S",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_kitchen_doors_1"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 1.5,
+              "z": 1.5
+            }
+          ]
+        },
+        {
+          "id": "unit1_bath",
+          "name": "bath",
+          "role": "bathroom",
+          "rect": [
+            11,
+            3,
+            3,
+            2
+          ],
+          "doors": [
+            {
+              "edge": "W",
+              "offset": 1,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_bath_doors_0"
+            },
+            {
+              "edge": "N",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_bath_doors_1"
+            },
+            {
+              "edge": "S",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_bath_doors_2"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 1.5,
+              "z": 1.0
+            }
+          ]
+        },
+        {
+          "id": "unit1_bed",
+          "name": "bed",
+          "role": "bedroom",
+          "rect": [
+            7,
+            5,
+            4,
+            4
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_bed_doors_0"
+            },
+            {
+              "edge": "E",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_bed_doors_1"
+            },
+            {
+              "edge": "S",
+              "offset": 3.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_bed_doors_2"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 2.0
+            }
+          ]
+        },
+        {
+          "id": "unit1_hall",
+          "name": "hall",
+          "role": "corridor",
+          "rect": [
+            11,
+            5,
+            3,
+            4
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 1.5,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_hall_doors_0"
+            },
+            {
+              "edge": "W",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "unit1_hall_doors_1"
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 1.5,
+              "z": 2.0
+            }
+          ]
+        },
+        {
+          "id": "bal1",
+          "name": "Balcony 1",
+          "role": "balcony",
+          "rect": [
+            8.5,
+            9.0,
+            4.0,
+            1.6
+          ],
+          "doors": [
+            {
+              "edge": "N",
+              "offset": 2,
+              "width": 1,
+              "height": 2.1,
+              "material": "wood",
+              "id": "bal1_doors_0"
+            }
+          ],
+          "objects": [
+            {
+              "kind": "railing",
+              "x": 2.0,
+              "z": 1.5,
+              "w": 4.0,
+              "d": 0.06,
+              "h": 1.1,
+              "id": "bal1_objects_0",
+              "y": 0,
+              "count": 1,
+              "pitch": 1,
+              "dir": "x",
+              "rot": 0
+            }
+          ],
+          "windows": [],
+          "points": [
+            {
+              "id": "fixture_light",
+              "type": "light",
+              "x": 2.0,
+              "z": 0.8
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "wall_t": 0.2
+}

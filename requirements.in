@@ -16,3 +16,8 @@ ezdxf==1.4.4
 
 # Pin the transitive CA bundle at the audited security fix.
 certifi==2026.10.18
+
+# Searchable Arabic PDF text: shaping, bidi, and embedded TrueType font.
+fonttools==4.65.0
+arabic-reshaper==3.1.0
+python-bidi==0.6.12
