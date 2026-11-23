@@ -51,6 +51,26 @@ function axisBounds(spaces) {
 }
 const segmentIsFinite = s => [s.x1,s.z1,s.x2,s.z2].every(Number.isFinite);
 
+// The plan projector returns centre lines. Each supported wall is a rectangular
+// strip whose half-thickness extends normal to its axis (not along its length).
+function wallFaceBounds(grid, walls) {
+  let x0=grid.x0, z0=grid.z0;
+  let x1=x0+grid.width, z1=z0+grid.depth;
+  for (const wall of walls) {
+    const dx=wall.x2-wall.x1, dz=wall.z2-wall.z1;
+    const length=Math.hypot(dx,dz);
+    if (!length) continue;
+    const halfWidth=wall.thickness_m/2;
+    const offsetX=Math.abs(dz/length)*halfWidth;
+    const offsetZ=Math.abs(dx/length)*halfWidth;
+    x0=Math.min(x0,wall.x1-offsetX,wall.x2-offsetX);
+    x1=Math.max(x1,wall.x1+offsetX,wall.x2+offsetX);
+    z0=Math.min(z0,wall.z1-offsetZ,wall.z2-offsetZ);
+    z1=Math.max(z1,wall.z1+offsetZ,wall.z2+offsetZ);
+  }
+  return {x0,z0,width:x1-x0,depth:z1-z0};
+}
+
 function stairDrawing(model, packet, spaces, x, y, scale) {
   if (!hasUStairs(model)) return '';
   const drawing = [];
@@ -76,7 +96,13 @@ function stairDrawing(model, packet, spaces, x, y, scale) {
 export function renderGuestFloorSVG(packet, model, {schedule = true, landscape = false, selected = ''} = {}) {
   const {level,spaces,hasUnits} = floorData(packet,model);
   if (!spaces.length) throw new Error('لا توجد فراغات مستطيلة قابلة للرسم في هذا الطابق.');
-  const b = axisBounds(spaces), scale = Math.min(590/b.width, 790/b.depth);
+  const walls = packet.walls.filter(segmentIsFinite);
+  const grid = axisBounds(spaces);
+  const onWallAxes = model.meta?.acs_apartment?.wall_reference === 'room_wall_centrelines';
+  const hasExteriorDimensions = onWallAxes && walls.length > 0 && walls.every(w =>
+    Number.isFinite(w.thickness_m) && w.thickness_m > 0 && w.thickness_source !== 'unknown');
+  const b = hasExteriorDimensions ? wallFaceBounds(grid, walls) : grid;
+  const scale = Math.min(590/b.width, 790/b.depth);
   const dw = b.width*scale, dh = b.depth*scale;
   const left=(720-dw)/2, top=schedule?106:64, bottom=top+dh;
   const x = value => left+(value-b.x0)*scale, y = value => top+(value-b.z0)*scale;
@@ -89,7 +115,6 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
     groups.push(`<g data-room-key="${esc(room.id)}" data-unit="${esc(room.unit)}"><title>${esc(display)} · ${esc(roomMeasure(room))}</title><rect x="${q(x(room.x))}" y="${q(y(room.z))}" width="${q(rw)}" height="${q(rh)}" fill="${room.id===selected?'#d0ae6d':hasUnits?units[room.unit].fill:'#e7eeeb'}"/></g>`);
     labels.push(`<g pointer-events="none">${label(cx,cy+(showName?-2:5),String(number),font,{weight:700})}${showName?label(cx,cy+14,display,12):''}</g>`);
   });
-  const walls = packet.walls.filter(segmentIsFinite);
   const wallsById = new Map(walls.map(w => [w.id,w]));
   const wallWidth = w => Number.isFinite(w.thickness_m)&&w.thickness_m>0?Math.max(1,w.thickness_m*scale):2;
   const wallLines = walls.map(w => line(x(w.x1),y(w.z1),x(w.x2),y(w.z2),'#2d3838',wallWidth(w),`data-wall-id="${esc(w.id)}"`));
@@ -116,6 +141,8 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   const bar=(barLimit/barPower>=5?5:barLimit/barPower>=2?2:1)*barPower;
   const scaleY=bottom+29;
   measures+=line(left,scaleY,left+bar*scale,scaleY,'#294449',3)+line(left,scaleY-5,left,scaleY+3,'#294449',2)+line(left+bar*scale,scaleY-5,left+bar*scale,scaleY+3,'#294449',2)+label(left+bar*scale/2,scaleY+19,`${fmt(bar)} م`,13);
+  const dimensionNote = hasExteriorDimensions ? 'القياس العام بين الوجوه الخارجية للجدران' : 'القياس العام بين حدود شبكة الفراغات';
+  measures+=label(660,scaleY+15,dimensionNote,13,{anchor:'start',color:dim});
   const drawEnd=bottom+63;
   let end=drawEnd, index='';
   if(schedule){
@@ -133,7 +160,11 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
       });
       end+=Math.ceil(list.length/2)*39+9;
     }
-    end+=24;index+=label(360,end,'الأبعاد عرض × عمق بالمتر، والمساحات بالمتر المربع.',14);
+    if (hasExteriorDimensions) {
+      end+=23;index+=label(360,end,`مساحة المستطيل المحيط بالجدران ${fmt(b.width*b.depth)} م²`,14);
+      end+=19;index+=label(360,end,`امتداد محاور الجدران ${fmt(grid.width)} × ${fmt(grid.depth)} م`,14);
+    }
+    end+=22;index+=label(360,end,onWallAxes?'أبعاد الغرف ومساحاتها محسوبة على محاور الجدران، قبل خصم سماكاتها.':'أبعاد الفراغات ومساحاتها محسوبة من حدودها في النموذج.',14);
     end+=20;index+=label(360,end,'الخط المتقطع باب، والخط الأزرق نافذة.',14);end+=22;
   }
   const spread = landscape && schedule;
@@ -144,7 +175,7 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   const indexTransform = spread ? ` transform="translate(680 ${q(offsetY)})"` : '';
   const header = schedule ? label(spread?1345:665,40,title,24,{anchor:'start',weight:700}) : '';
   const caption = schedule ? label(spread?1345:665,64,'تصميم مفاهيمي • مخطط الفراغات',14,{anchor:'start',color:'#526a6c'}) : '';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sheetWidth} ${q(sheetHeight)}" width="${sheetWidth}" height="${q(sheetHeight)}" data-level-index="${esc(packet.level_index)}" data-width-m="${q(b.width)}" data-depth-m="${q(b.depth)}" role="img" aria-labelledby="acsPlanTitle" font-family="Arial, 'DejaVu Sans', sans-serif"><title id="acsPlanTitle">${esc(title)} · مخطط الفراغات</title><rect width="${sheetWidth}" height="${q(sheetHeight)}" fill="#fffdf8"/>${header}${caption}<g data-layout="drawing">${groups.join('')}${stairs}${wallLines.join('')}${openingLines.join('')}${labels.join('')}${measures}</g><g data-layout="schedule"${indexTransform}>${index}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${sheetWidth} ${q(sheetHeight)}" width="${sheetWidth}" height="${q(sheetHeight)}" data-level-index="${esc(packet.level_index)}" data-width-m="${q(b.width)}" data-depth-m="${q(b.depth)}" data-grid-width-m="${q(grid.width)}" data-grid-depth-m="${q(grid.depth)}" data-dimension-basis="${hasExteriorDimensions?'outer_wall_faces':'room_grid'}" role="img" aria-labelledby="acsPlanTitle" font-family="Arial, 'DejaVu Sans', sans-serif"><title id="acsPlanTitle">${esc(title)} · مخطط الفراغات</title><rect width="${sheetWidth}" height="${q(sheetHeight)}" fill="#fffdf8"/>${header}${caption}<g data-layout="drawing">${groups.join('')}${stairs}${wallLines.join('')}${openingLines.join('')}${labels.join('')}${measures}</g><g data-layout="schedule"${indexTransform}>${index}</g></svg>`;
 
 }
 
@@ -191,7 +222,8 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
     if (!sameModel()) return;
     const id=roomChoice.value,r=info.spaces.find(item=>item.id===id);
     viewport.innerHTML=renderGuestFloorSVG(packet,model,{schedule:false,selected:id});
-    details.textContent=r?`${info.hasUnits?units[r.unit].name+' · ':''}${r.displayName} · ${roomMeasure(r)} · ${fmt(r.area_m2)} م²`
+    const gridLabel=model.meta?.acs_apartment?.wall_reference==='room_wall_centrelines'?' على محاور الجدران':' على شبكة الفراغات';
+    details.textContent=r?`${info.hasUnits?units[r.unit].name+' · ':''}${r.displayName} · ${roomMeasure(r)} · ${fmt(r.area_m2)} م²${gridLabel}`
       :'اختر فراغًا لعرض أبعاده ومساحته. الخط الأزرق نافذة والمتقطع باب.';
   }
   function changeFloor(){

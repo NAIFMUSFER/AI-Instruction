@@ -27,6 +27,20 @@ assert.ok(!local.includes('شمال'),'no invented north for unreferenced import
 assert.ok(local.includes('fill="#d0ae6d"'));
 assert.equal(JSON.stringify([packet,model]),before);
 assert.throws(()=>renderGuestFloorSVG({...packet,spaces:[]},model), /فراغات/);
+// The outer-face dimension must come from the physical wall faces, even if a
+// caller changes the description or the site dimensions without moving walls.
+const perimeterModel = {...model,meta:{acs_apartment:{wall_reference:'room_wall_centrelines',width_m:20,depth_m:25}}};
+const perimeter = {level_index:2,spaces:[{...packet.spaces[0],x:2.09,z:4.09,w:9.82,d:11.82}],walls:[
+  {id:'north',x1:2.09,z1:4.09,x2:11.91,z2:4.09,thickness_m:.18},
+  {id:'south',x1:2.09,z1:15.91,x2:11.91,z2:15.91,thickness_m:.18},
+  {id:'west',x1:2.09,z1:4.09,x2:2.09,z2:15.91,thickness_m:.18},
+  {id:'east',x1:11.91,z1:4.09,x2:11.91,z2:15.91,thickness_m:.18},
+],openings:[]};
+const outside = renderGuestFloorSVG(perimeter,perimeterModel);
+assert.ok(outside.includes('data-width-m="10" data-depth-m="12"'), 'exterior dimension endpoints must measure both wall faces');
+assert.ok(outside.includes('data-grid-width-m="9.82" data-grid-depth-m="11.82"'));
+assert.ok(outside.includes('data-dimension-basis="outer_wall_faces"'));
+assert.ok(outside.includes('محاور الجدران'));
 console.log('PASS guest physical floor instance, footprint, source names, apertures, unit labels, safe SVG and source preservation');
 
 // Check real downloadable sheets against independently authored physical instances.
@@ -34,7 +48,18 @@ const apartment = apartmentSample();
 for(const floor of apartment.levels) {
   const sheet=readFileSync(new URL(`../../public/guest-plans/apartment-floor-${floor.index}.svg`,import.meta.url),'utf8');
   assert.ok(sheet.includes('data-width-m="20" data-depth-m="25"'));
+  assert.ok(sheet.includes('data-grid-width-m="19.82" data-grid-depth-m="24.82"'));
+  assert.ok(sheet.includes('data-dimension-basis="outer_wall_faces"'));
+  assert.ok(sheet.includes('المستطيل المحيط بالجدران 500 م²'));
   assert.ok(sheet.includes(`data-level-index="${floor.index}"`));
+  const preview=readFileSync(new URL(`../../public/guest-plans/apartment-floor-${floor.index}-preview.svg`,import.meta.url),'utf8');
+  const attrValues=(svg,key)=>[...svg.matchAll(new RegExp(` ${key}="([^"]*)"`,'g'))].map(match=>match[1]);
+  for (const attr of ['data-room-key','data-wall-id','data-opening-id','data-stair-object','data-stair-part']) {
+    assert.deepEqual(attrValues(preview,attr),attrValues(sheet,attr));
+  }
+  const viewBoxHeights=[preview,sheet].map(svg=>Number(attrValues(svg,'viewBox')[0].split(' ')[3]));
+  assert.ok(viewBoxHeights[0]<viewBoxHeights[1]/2,'inline drawing must omit the extra height of the room schedule');
+  assert.ok(!preview.includes('الشقة الشرقية') && sheet.includes('الشقة الشرقية'));
   const rooms=apartment.floors[floor.template].rooms;
   assert.equal((sheet.match(/data-room-key=/g)||[]).length,rooms.length);
   for (const unit of ['east','west']) {

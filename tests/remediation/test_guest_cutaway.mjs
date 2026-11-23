@@ -62,7 +62,7 @@ for(const name of ['WALL|F0|envelope|wSs0','WALL|F0|admin|wNs2','FURN|F0|storage
 const model=new THREE.Group();
 const pane=new THREE.Mesh(new THREE.BoxGeometry(2,1.3,.05),new THREE.MeshStandardMaterial());
 pane.name='WINDOW|F1|west_bed|0';pane.position.set(3,5,0);model.add(pane);
-const authored={site:{w:20,d:25},meta:{acs_apartment:{schema:'acs.local-apartment/1'}}};
+const authored={wall_t:.18,site:{w:20,d:25},meta:{acs_apartment:{schema:'acs.local-apartment/1'}}};
 model.updateMatrixWorld(true);
 const baseline=JSON.stringify(model.toJSON());
 const trim=apartmentJoinery(model,authored);
@@ -73,3 +73,101 @@ assert.equal(JSON.stringify(model.toJSON()),baseline,'the presentation is never 
 let disposed=0;trim.children[0].geometry.addEventListener('dispose',()=>disposed++);
 disposeGuestJoinery(trim);assert.equal(disposed,1);
 console.log('PASS shell dock apertures, 16 fits above grade, 7 cutaway predicates, source-isolated disposable joinery');
+const {guestFocus}=await import('../../public/app/render/guest-presentation.mjs');
+const a={levels:[{index:0,template:'ground',elevation:.4}],floors:{ground:{rooms:[{id:'family',role:'living',rect:[3,2,6,5]}]}}};
+const inventory=new THREE.Group(),glass=new THREE.MeshStandardMaterial({transparent:true});
+const bay=(name,x,y,z,w,h,d,mat=glass)=>{
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat);mesh.name=name;
+  mesh.position.set(x,y,z);inventory.add(mesh);return mesh;
+};
+bay('DOOR|F0|lobby|3',10,1.6,1.35,1.8,2.4,.05);
+bay('DOOR|F0|inbound_docks|dock0_0',4,2.1,0,3,4.2,.1);
+bay('FURN|F0|storage|rack0r0L0',14,.52,12,20,.05,1);
+bay('FURN|F0|storage|rack0r1L0',14,.52,16,20,.05,1);
+inventory.updateMatrixWorld(true);
+const homeEye=guestFocus(inventory,a,'interior',false);
+assert.ok(homeEye.position.x>3&&homeEye.position.x<9&&homeEye.position.z>2&&homeEye.position.z<7);
+assert.equal(homeEye.position.y,2.05);assert.equal(homeEye.source,'F0|family');
+const aisle=guestFocus(inventory,a,'interior',true);
+assert.equal(aisle.position.z,14);assert.ok(aisle.position.x<aisle.target.x);
+for(const warehouse of [false,true]){
+  const focus=guestFocus(inventory,a,'detail',warehouse);
+  assert.ok(focus.source.startsWith('DOOR|F0|'));assert.equal(focus.box.isEmpty(),false);
+}
+assert.equal(guestFocus(new THREE.Group(),a,'detail',false),null);
+console.log('PASS actual entrance, dock, living room and rack aisle close views, explicit missing anchor');
+
+// A 20 m gross facade has its hosted pane 90 mm inside the outer face.
+pane.position.z=.09;model.updateMatrixWorld(true);
+const measuredTrim=apartmentJoinery(model,authored);
+assert.equal(measuredTrim.children.length,2,'both bronze frame and stone sill must follow measured exterior axes');
+const sill=measuredTrim.children.find(o=>o.name.endsWith('|stone'));
+const sillMatrix=new THREE.Matrix4();sill.getMatrixAt(0,sillMatrix);
+assert.ok(Math.abs(new THREE.Vector3().setFromMatrixPosition(sillMatrix).z-(.09-.075))<1e-6);
+pane.position.z=1.35;model.updateMatrixWorld(true);
+const recessed=apartmentJoinery(model,authored);
+assert.equal(recessed.children.length,1,'a recessed interior pane must not acquire an exterior projecting hood');
+disposeGuestJoinery(measuredTrim);disposeGuestJoinery(recessed);
+console.log('PASS hosted trim follows exterior wall centre on gross footprint and leaves recessed opening clear');
+
+// Execute the shipped browser buildRoom/wallOpenings, then read the emitted
+// wall solids with Three. Gross dimensions must include the exterior skin.
+const {apartmentSample,apartmentDoorPairs}=await import('../../public/app/core/local-apartment.mjs');
+const sample=apartmentSample(),rendered=new THREE.Group(),wallBounds=new THREE.Box3();
+const openingMath=src.slice(src.indexOf('function normEdge('),src.indexOf('/* KI-25/F-42',src.indexOf('function wallOpenings(')));
+const actualRoom=vm.runInNewContext(openingMath+'\n'+build+'\nbuildRoom',{
+  ...context,buildObjects(){},slabStrips(){return [];},
+  addBox:(group,x,y,z,w,h,d,mat,name)=>{
+    if(!/^(WALL|WINDOW|DOOR)\|/.test(name))return;
+    const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshStandardMaterial({transparent:mat==='window'||mat==='door_glass'}));
+    m.name=name;m.position.set(x,y,z);group.add(m);
+    if(name.startsWith('WALL|'))wallBounds.union(new THREE.Box3().setFromObject(m));
+    return m;
+  }
+});
+for(const level of sample.levels){
+  const rooms=sample.floors[level.template].rooms,doorPairs=apartmentDoorPairs(rooms);
+  for(const r of rooms)
+    actualRoom(rendered,r,'F'+level.index,level.elevation,{wall_t:sample.wall_t,wall_h:sample.wall_h,doorPairs});
+  const leaves=rendered.children.filter(m=>m.name.startsWith('DOOR|F'+level.index+'|'));
+  assert.equal(leaves.length,doorPairs.size/2);
+  assert.ok(leaves.every(m=>m.userData.acs_door_pair?.hosts?.length===2));
+}
+assert.equal(rendered.children.filter(m=>m.name.startsWith('DOOR|')).length,107);
+const footprint=wallBounds.getSize(new THREE.Vector3());
+assert.ok(Math.abs(footprint.x-20)<1e-5&&Math.abs(footprint.z-25)<1e-5);
+assert.ok(Math.abs(wallBounds.min.x)+Math.abs(wallBounds.min.z)<1e-5);
+for(const mode of ['interior','detail'])assert.ok(guestFocus(rendered,sample,mode,false)?.source);
+const authoredTrim=apartmentJoinery(rendered,sample);
+assert.ok(authoredTrim.children.filter(o=>o.name.endsWith('|stone')).length>=3,'all three original storeys have hosted sill/cornice detail');
+console.log('PASS actual browser-built wall faces span '+footprint.x.toFixed(3)+' m × '+footprint.z.toFixed(3)+' m and all occupied floors retain hosted trim');
+const pairA={id:'a',rect:[0,0,3,4],walls:'full',doors:[{id:'a_to_b',edge:'E',offset:2,width:1,height:2.2}]};
+const pairB={id:'b',rect:[3,0,3,4],walls:'full',doors:[{id:'b_to_a',edge:'W',offset:2,width:1,height:2.2}]};
+const hosts=[{room_id:'a',door_id:'a_to_b',door_index:0},{room_id:'b',door_id:'b_to_a',door_index:0}];
+const registered=new Map([[pairA.doors[0],{pair_id:'door|a|b',primary:true,hosts}],[pairB.doors[0],{pair_id:'door|a|b',primary:false,hosts}]]);
+function leaves(doorPairs){
+  const g=new THREE.Group();
+  for(const r of [pairB,pairA])actualRoom(g,r,'F0',0,{wall_t:.18,wall_h:3.18,doorPairs});
+  return g;
+}
+const pairModel=leaves(registered);
+const pairLeaves=pairModel.children.filter(o=>o.name.startsWith('DOOR|'));
+assert.equal(pairLeaves.length,1,'one physical leaf must serve two registered co-planar openings');
+assert.deepEqual(pairLeaves[0].userData.acs_door_pair.hosts,hosts);
+assert.equal(pairLeaves[0].userData.acs_door_pair.floor_key,'F0');
+assert.equal(leaves(null).children.filter(o=>o.name.startsWith('DOOR|')).length,2,'unrelated or historical inputs retain both leaves');
+for(const name of ['a','b']){
+  const wall=pairModel.children.filter(o=>o.name.match(new RegExp('^WALL\\|F0\\|'+name+'\\|w[EW]')));
+  assert.ok(wall.length>0&&wall.every(o=>!new THREE.Box3().setFromObject(o).containsPoint(new THREE.Vector3(3,1,2))));
+}
+console.log('PASS one reciprocal leaf, two hosted apertures, both source references and legacy inputs');
+// Self-finish of the single displayed leaf updates both registered sources
+// so the next build can still validate their fit/material compatibility.
+const wiring=fs.readFileSync('public/app/ui/workspace-ui-wiring.js','utf8');
+const finishBlock=wiring.slice(wiring.indexOf('function applyFinish('),wiring.indexOf('/* ===',wiring.indexOf('function applyFinish(')));
+const roomSet={rooms:[pairA,pairB]};
+const change=vm.runInNewContext(finishBlock+'\napplyFinish',{
+  normHex:c=>c,getMat:()=>({}),roomOfTag:()=>({room:pairA,rid:'a',fkey:'F0'}),isolateTemplate:()=>roomSet});
+change(pairLeaves[0].name,'self','#906c46',pairLeaves[0]);
+assert.equal(pairA.doors[0].color,'#906c46');assert.equal(pairB.doors[0].color,'#906c46');
+console.log('PASS selected physical leaf finish persists on both matched canonical host records');

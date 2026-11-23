@@ -187,5 +187,44 @@
     "tests": [
       "tests/remediation/test_public_apartment_journey.cjs"
     ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-0-preview.svg",
+    "purpose": "Generated readable, schedule-free plan for a no-WebGL device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-1-preview.svg",
+    "purpose": "Generated readable, schedule-free plan for a no-WebGL device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-floor-2-preview.svg",
+    "purpose": "Generated readable, schedule-free plan for a no-WebGL device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-DRAWING"
+    ],
+    "tests": [
+      "tools/build_guest_apartment_plans.py",
+      "tests/remediation/test_guest_floor_plan.mjs"
+    ]
   }
 ]

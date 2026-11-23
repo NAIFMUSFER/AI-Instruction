@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { apartmentFromBrief, apartmentSample } from '../../public/app/core/local-apartment.mjs';
+import { apartmentDoorPairs, apartmentFromBrief, apartmentSample } from '../../public/app/core/local-apartment.mjs';
 import { stairConnections, validateStairReport } from '../../public/app/core/stairs.mjs';
 
 const fixture=readFileSync(new URL('../fixtures/briefs/riyadh-apartment-ar.txt',import.meta.url),'utf8');
@@ -26,7 +26,18 @@ function validate(model,w,d,n) {
   for(const level of model.levels) {
     const rooms=model.floors[level.template].rooms;
     assert.equal(new Set(rooms.map(r=>r.id)).size,rooms.length);
-    assert.ok(near(rooms.reduce((a,r)=>a+r.rect[2]*r.rect[3],0),w*d),'physical footprint is tiled exactly');
+    const half=model.wall_t/2;
+    const opaque=rooms.filter(r=>r.walls===undefined || r.walls==='full');
+    const outsideFaces=[
+      Math.min(...opaque.map(r=>r.rect[0]))-half,
+      Math.min(...opaque.map(r=>r.rect[1]))-half,
+      Math.max(...opaque.map(r=>r.rect[0]+r.rect[2]))+half,
+      Math.max(...opaque.map(r=>r.rect[1]+r.rect[3]))+half
+    ];
+    assert.ok(outsideFaces.every((v,i)=>near(v,[0,0,w,d][i])),'exterior wall faces must meet the brief: '+outsideFaces);
+    assert.equal(model.meta.acs_apartment.wall_reference,'room_wall_centrelines');
+    assert.equal(model.meta.acs_apartment.outer_face_offset_m,half);
+    assert.ok(near(rooms.reduce((a,r)=>a+r.rect[2]*r.rect[3],0),(w-2*half)*(d-2*half)),'room axes tile the full plan within the exterior walls');
     for(const r of rooms) {
       const [x,z,rw,rd]=r.rect;
       assert.ok(x>=0&&z>=0&&rw>0&&rd>0&&x+rw<=w+.002&&z+rd<=d+.002);
@@ -50,6 +61,15 @@ function validate(model,w,d,n) {
         assert.ok(win.offset+win.width/2<=r.rect[['N','S'].includes(win.edge)?2:3]-.07);
         assert.ok(win.sill+win.height<=model.wall_h);
       }
+    }
+    const leafClaims=apartmentDoorPairs(rooms);
+    const allDoors=rooms.flatMap(r=>r.doors);
+    assert.equal(leafClaims.size,allDoors.length,'every physical door retains both host references');
+    assert.equal([...leafClaims.values()].filter(v=>v.primary).length*2,allDoors.length);
+    for(const door of allDoors){
+      const pair=leafClaims.get(door);
+      assert.ok(pair.hosts.some(s=>s.door_id===door.id));
+      assert.equal(pair.hosts.length,2);
     }
     const shared=rooms.filter(r=>!r.unit_id);
     assert.ok(shared.some(r=>r.id==='lobby')&&shared.some(r=>r.role==='stairs')&&shared.some(r=>r.role==='elevator'));
@@ -105,5 +125,16 @@ for(const txt of [
   'عمارة سكنية 3 أدوار، منسوب الأول +3.20 م والثاني +7.50 م','عمارة سكنية على شارع غربي',
 ]) assert.throws(()=>apartmentFromBrief(txt),e=>e.code==='LOCAL_APARTMENT_UNSUPPORTED'&&/[ء-ي]/.test(e.message),txt);
 for(const txt of ['مستودع 120×80','فيلا من دورين','مدرسة من 3 أدوار']) assert.equal(apartmentFromBrief(txt),null);
+const exampleClaims=[
+  {id:'left',rect:[0,0,4,4],doors:[{id:'left-door',edge:'E',offset:2.0,width:.9,height:2.1,material:'wood',acs_door_pair:{id:'pair',peer_room_id:'right'}}]},
+  {id:'right',rect:[4,0,4,4],doors:[{id:'right-door',edge:'W',offset:2.001,width:.9,height:2.1,material:'wood',acs_door_pair:{id:'pair',peer_room_id:'left'}}]}
+];
+assert.equal(apartmentDoorPairs(exampleClaims).get(exampleClaims[0].doors[0]).primary,true);
+for(const mutate of [r=>r[1].doors[0].offset=2.01,r=>r[1].doors[0].acs_door_pair.peer_room_id='other',
+  r=>r[1].doors[0].height=2.3,r=>r[1].doors[0].swing='out',r=>r[1].rect[0]=4.05,
+  r=>r[0].doors.push({...r[0].doors[0],id:'third'}),r=>delete r[1].doors[0].acs_door_pair]){
+  const edited=structuredClone(exampleClaims);mutate(edited);
+  assert.equal(apartmentDoorPairs(edited).size,0,'invalid imported claim cannot suppress a leaf');
+}
 assert.equal(JSON.stringify(sample),original,'other local creations leave existing drafts untouched');
 console.log('PASS local apartment: original Arabic brief, independent dimensions, occupancy, true paired apertures, connected rooms, distinct units, stairs, street frontage and bounded errors');

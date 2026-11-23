@@ -5,6 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
+import { apartmentDoorPairs } from './local-apartment.mjs';
 import { hasStairForms, resolveStairGeometry, stairConnections } from './stairs.mjs';
 
 import * as THREE from 'three';
@@ -613,11 +614,18 @@ function buildRoom(group,room,fkey,baseY,def){
   if(ccol)slabStrips(x+w/2-finishW/2,z+d/2-finishD/2,finishW,finishD,def.ceilingHoles||[]).forEach((s,i)=>
     addBox(group,s[0]+s[2]/2,baseY+H-0.03,s[1]+s[3]/2,s[2],0.05,s[3],
       'ceiling',`FLOOR|${fkey}|${name}|ceil${i||''}`,false,ccol));
-  acsList(room,'doors').forEach((dr,i)=>{const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
+  acsList(room,'doors').forEach((dr,i)=>{
+    // Both hosts always cut their wall above. Only a validated explicit pair
+    // shares a physical leaf; anonymous/imported co-planar leaves stay separate.
+    const pair=def.doorPairs?.get(dr);
+    if(pair&&!pair.primary)return;
+    const uc=openU(dr.edge,rect,dr.offset),wd=dr.width||0.9,dh=dr.height||2.1;
     const mat=dr.material==='glass'?'door_glass':'door';const[axis,fixed]=edgeGeom(dr.edge,rect);const cy=baseY+dh/2;
-    const dcol=normHex(dr.color);
-    if(axis==='x')addBox(group,uc,cy,fixed,wd,dh,0.06,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);
-    else addBox(group,fixed,cy,uc,0.06,dh,wd,mat,`DOOR|${fkey}|${name}|${i}`,true,dcol);});
+    const dcol=normHex(dr.color),tag=`DOOR|${fkey}|${name}|${i}`;
+    const mesh=axis==='x'?addBox(group,uc,cy,fixed,wd,dh,0.06,mat,tag,true,dcol):
+      addBox(group,fixed,cy,uc,0.06,dh,wd,mat,tag,true,dcol);
+    if(mesh&&pair)mesh.userData.acs_door_pair={pair_id:pair.pair_id,floor_key:fkey,hosts:pair.hosts};
+  });
   acsList(room,'windows').forEach((wn,i)=>{const uc=openU(wn.edge,rect,wn.offset),wd=wn.width||1.2,s=wn.sill==null?0.9:wn.sill,h=wn.height||1.6;
     const[axis,fixed]=edgeGeom(wn.edge,rect);const cy=baseY+s+h/2;
     if(axis==='x')addBox(group,uc,cy,fixed,wd,h,0.05,'window',`WINDOW|${fkey}|${name}|${i}`,false);
@@ -1258,8 +1266,9 @@ function compile(data){
              `FLOOR|${fkey}|slab|${k}`,true));
     const rooms=acsCapList(fdef.rooms,SCENE_LIMITS.max_rooms_per_level,'ROOMS_CAPPED','level.rooms');
     const ceilingHoles=physicalStairs.filter(c=>c.source_level_index===li).map(c=>c.opening);
+    const doorPairs=data.meta?.acs_apartment?.schema==='acs.local-apartment/1'?apartmentDoorPairs(rooms):null;
     const host=industrial?rooms.find(r=>r?.id==='envelope'):null;
-    rooms.forEach(r=>buildRoom(grp,r,fkey,baseY,{...def,holes,ceilingHoles,hostedDocks:host&&r===host?hostedDockCuts(host,rooms):null}));
+    rooms.forEach(r=>buildRoom(grp,r,fkey,baseY,{...def,holes,ceilingHoles,doorPairs,hostedDocks:host&&r===host?hostedDockCuts(host,rooms):null}));
   });
   /* طبقة العرض الإنشائي — منفصلة ومخفيّة افتراضياً. أبعادها قد تكون احتياط عرض،
      ولذلك يحمل كل جسم مصدر هندسته صراحةً في userData ولا يُصدَّر كحقيقة إنشائية. */

@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
+const os = require('node:os');
 const PW = require('../../tools/pw_chromium.js');
 const {analysePageViewport} = require('../deploy/lib_viewport_pixels.js');
 
@@ -16,7 +17,7 @@ const origin = live ? 'https://sprightly-selkie-d906c3.netlify.app' : 'https://a
 const brief = fs.readFileSync(path.join(root, 'tests/fixtures/briefs/riyadh-apartment-ar.txt'), 'utf8');
 const csp = /Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(root, 'netlify.toml'), 'utf8'))[1];
 const sha256 = body => crypto.createHash('sha256').update(body).digest('hex');
-const near = (a,b) => Math.abs(a-b) <= .015;
+const near = (a,b) => Math.abs(a-b) <= .01;
 
 function doorExit(rect, door){
   const [x,z,w,d] = rect;
@@ -52,7 +53,7 @@ function inspectApartment(model){
         }
       }
     }
-    assert.ok(span.every((v,i)=>near(v,[0,0,20,25][i])), 'occupied floor spans the promised building envelope');
+    assert.ok(span.every((v,i)=>near(v,[.09,.09,19.91,24.91][i])), 'exterior wall centerlines should enclose the footprint once wall thickness is included');
     const units={};
     for(const side of ['east','west']){
       const enclosures=rooms.filter(r=>r.unit_id===side);
@@ -64,7 +65,7 @@ function inspectApartment(model){
       assert.ok(enclosures.some(r=>/majlis/.test(r.role+' '+r.id)), 'guest room for '+side);
       units[side]={rooms:enclosures.length,bedrooms:bedrooms.length};
     }
-    const north=rooms.flatMap(r=>(r.windows||[]).filter(a=>a.edge==='N' && near(r.rect[1],0)));
+    const north=rooms.flatMap(r=>(r.windows||[]).filter(a=>a.edge==='N' && near(r.rect[1],.09)));
     assert.ok(north.length>=2,'street elevation must contain windows from actual rooms');
     return {level:level.index,elevation:level.elevation,units,streetWindows:north.length};
   });
@@ -94,14 +95,20 @@ async function ready(page){
 async function runtime(page){
   return page.evaluate(async()=>{
     const {registry,camera}=await import('/app/ui/workspace-ui-wiring.js');
+    const {renderer}=await import('/app/render/scene.js');
     const {Vector3}=await import('three');
     const state=window.ACS.guestViewState();
     camera.updateMatrixWorld();
     const floors=new Set(), kinds={}, wallBounds={}, ndc=[Infinity,Infinity,-Infinity,-Infinity];
     let visibleRackSections=0;
+    const doorPairs=[];
     for(const [kind,layer] of Object.entries(registry)){
       const visible=layer.meshes.filter(m=>m.visible);
       kinds[kind]=visible.length;
+      if(kind==='DOOR')for(const mesh of visible){
+        const pair=mesh.userData.acs_door_pair;
+        if(pair)doorPairs.push({id:pair.floor_key+'|'+pair.pair_id,hosts:pair.hosts.length});
+      }
       if(kind==='FURN')visibleRackSections=visible.filter(mesh=>/\|rack\d/.test(mesh.name)).length;
       if(!['WALL','WINDOW','DOOR','FLOOR'].includes(kind))continue;
       for(const mesh of visible){
@@ -122,7 +129,10 @@ async function runtime(page){
         }
       }
     }
-    return {state,eye:camera.position.toArray(),floors:[...floors],kinds,wallBounds,visibleRackSections,ndc,quality:window.ACS.legacyRenderQuality()};
+    const revision=window.ACS.modelRevision('building','bld_0',null);
+    const rendered=renderer.info.render;
+    return {state,revision:{id:revision.revision_id,hash:revision.model_hash},
+      triangles:rendered.triangles,drawCalls:rendered.calls,eye:camera.position.toArray(),floors:[...floors],kinds,wallBounds,doorPairs,visibleRackSections,ndc,quality:window.ACS.legacyRenderQuality()};
   });
 }
 async function capture(page,report,label,expected,close=false){
@@ -150,14 +160,52 @@ async function cameraControl(page,view){
   await control.click();
 }
 async function detailAndInterior(page,report,prefix){
-  await menu(page,'guestDetail');await capture(page,report,prefix+'-detail','detail',true);
+  await menu(page,'guestDetail');const close=await capture(page,report,prefix+'-detail','detail',true);
+  assert.match(close.state.focusSource,/^DOOR\|F0\|/,'detail must target an actual entrance mesh');
   await menu(page,'guestInterior');const inside=await capture(page,report,prefix+'-interior','interior',true);
   const floor=await page.evaluate(()=>{const model=window.ACS.exportModel();return model.floors[model.levels.find(level=>level.index===0).template].rooms;});
   const rooms=floor.filter(room=>contains(room.rect,[inside.eye[0],inside.eye[2]])).map(room=>room.id);
   assert.ok(rooms.length>0,'the interior preset must place the eye inside a real ground-floor room');
+  assert.ok(rooms.some(room=>inside.state.focusSource.split('|').includes(room)), 'interior focus and camera room must agree');
   report.views.at(-1).sourceRooms=rooms;
   await page.locator('#guestViewToggle').click();
   assert.equal((await runtime(page)).state.mode,'exterior');
+}
+function assertWallEnvelope(bounds,level){
+  assert.ok(bounds,'missing walls on physical floor '+level);
+  const [x,y,z,maxX,,maxZ]=bounds;
+  assert.ok(near(x,0)&&near(z,0)&&near(maxX,20)&&near(maxZ,25),
+    'outside wall faces differ from 20 x 25 m footprint on level '+level+': '+bounds.join(','));
+  assert.ok(near(y,level*3.4),'wall elevation on level '+level+': '+y);
+}
+function readGLBWalls(asset,bytes,bin){
+  // Read actual POSITION data independently from the browser scene and GLB writer.
+  const {Matrix4,Vector3,Quaternion}=require('three');
+  const floors={};
+  function visit(index,parent){
+    const node=asset.nodes[index],local=new Matrix4();
+    if(node.matrix)local.fromArray(node.matrix);
+    else local.compose(new Vector3(...(node.translation||[0,0,0])),new Quaternion(...(node.rotation||[0,0,0,1])),new Vector3(...(node.scale||[1,1,1])));
+    const world=parent.clone().multiply(local);
+    const name=/^WALL\|(F[012])\|/.exec(node.name||'');
+    if(name && node.mesh!=null){
+      const bounds=floors[name[1]]||=[Infinity,Infinity,Infinity,-Infinity,-Infinity,-Infinity];
+      for(const primitive of asset.meshes[node.mesh].primitives){
+        const acc=asset.accessors[primitive.attributes.POSITION],view=asset.bufferViews[acc.bufferView];
+        assert.ok(acc.componentType===5126&&acc.type==='VEC3'&&view.buffer===0&&!acc.sparse,'unexpected GLB coordinate layout');
+        for(let i=0;i<acc.count;i++){
+          const at=bin+(view.byteOffset||0)+(acc.byteOffset||0)+i*(view.byteStride||12);
+          const vertex=new Vector3(bytes.readFloatLE(at),bytes.readFloatLE(at+4),bytes.readFloatLE(at+8)).applyMatrix4(world);
+          for(const [axis,value] of vertex.toArray().entries()){
+            bounds[axis]=Math.min(bounds[axis],value);bounds[axis+3]=Math.max(bounds[axis+3],value);
+          }
+        }
+      }
+    }
+    for(const child of node.children||[])visit(child,world);
+  }
+  for(const node of asset.scenes[asset.scene||0].nodes)visit(node,new Matrix4());
+  return floors;
 }
 async function modelGLB(page,report){
   await menu(page,'guestFloors');await page.locator('#acsTabShow').click();
@@ -167,11 +215,14 @@ async function modelGLB(page,report){
   assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
   assert.equal(bytes.toString('utf8',16,20),'JSON');
   const asset=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
+  const binHeader=20+bytes.readUInt32LE(12);assert.equal(bytes.toString('ascii',binHeader+4,binHeader+8),'BIN\0');
+  const wallBounds=readGLBWalls(asset,bytes,binHeader+8);
+  for(const level of [0,1,2])assertWallEnvelope(wallBounds['F'+level],level);
   const names=asset.nodes.map(node=>node.name||'');
   for(const floor of ['F0','F1','F2']){
     for(const kind of ['WALL','WINDOW','DOOR'])assert.ok(names.some(n=>n.startsWith(kind+'|'+floor+'|')),kind+' missing on '+floor+' in GLB');
   }
-  report.glb={sha256:sha256(bytes),bytes:bytes.length,meshes:asset.meshes.length};
+  report.glb={sha256:sha256(bytes),bytes:bytes.length,meshes:asset.meshes.length,wallBounds};
 }
 async function checkedViewport(browser,width){
   const height=width===393?852:900, denied=[], errors=[];
@@ -220,11 +271,19 @@ async function checkedViewport(browser,width){
     phase='housing_exterior';const exterior=await capture(page,report,'apartment-exterior','exterior');
     assert.ok(exterior.kinds.WINDOW>=6 && exterior.kinds.DOOR>=6,'real building window/door meshes required');
     assert.ok(exterior.floors.includes('F2'),'whole occupied building visible');
+    const sourcePairs=new Set();
+    for(const level of model.levels){
+      for(const room of model.floors[level.template].rooms){
+        for(const door of room.doors||[]){
+          if(door.acs_door_pair)sourcePairs.add('F'+level.index+'|'+door.acs_door_pair.id);
+        }
+      }
+    }
+    assert.deepEqual(exterior.doorPairs.map(p=>p.id).sort(),[...sourcePairs].sort(),'each pair of canonical hosts has one physical door mesh');
+    assert.ok(exterior.doorPairs.every(p=>p.hosts===2),'both room hosts are preserved');
+
     for(const level of report.model.levels){
-      const [x,y,z,maxX,,maxZ]=exterior.wallBounds['F'+level.level];
-      assert.ok(Math.abs(x)<.25&&Math.abs(z)<.25&&Math.abs(maxX-20)<.25&&Math.abs(maxZ-25)<.25,
-        'rendered walls cross their floor envelope or occupy a shifted stack on level '+level.level);
-      assert.ok(Math.abs(y-level.elevation)<.25,'rendered level elevation mismatch on '+level.level);
+      assertWallEnvelope(exterior.wallBounds['F'+level.level],level.level);
     }
     await cameraControl(page,'arch');await capture(page,report,'apartment-eye-level','street');
     await cameraControl(page,'bird');await capture(page,report,'apartment-aerial','aerial');
@@ -263,7 +322,7 @@ async function main(){
   try{
     const runs=[];
     for(const width of [393,1440])runs.push(await checkedViewport(b,width));
-    fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({scope:live?'published':'candidate assets',browser:b.version(),syntheticBrief:true,briefHash:sha256(brief),runs},null,2));
+    fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({scope:live?'published':'candidate assets',browser:b.version(),host:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,logicalCpuCount:os.availableParallelism(),physicalPhone:false},syntheticBrief:true,briefHash:sha256(brief),runs},null,2));
     const failures=runs.filter(run=>run.result!=='PASS');
     if(failures.length)throw Error(failures.map(run=>run.width+' '+run.phase+' '+run.diagnostic).join('\n'));
     console.log('PASS public apartment: actual Arabic brief, six physical units, contained upper doors, visible facade openings, camera above ground, floor SVG, warehouse cutaway, zero private/provider requests');

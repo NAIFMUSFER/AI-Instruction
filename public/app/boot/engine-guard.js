@@ -405,18 +405,18 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     var controls=document.querySelectorAll('#left button,#left input,#left textarea,#left select,#camBar button');
     for(var i=0;i<controls.length;i++)if(!controls[i].disabled){controls[i].disabled=true;controls[i].setAttribute('data-guest-boot-disabled','1');}
     var panel=document.createElement('section');panel.id='acsGuestFallback';panel.setAttribute('aria-label','تجربة محلية ثنائية الأبعاد');
-    panel.innerHTML='<div class="guest-fallback-card"><h1>مخطط المبنى</h1>'
+    panel.innerHTML='<div class="guest-fallback-card"><div class="guest-fallback-controls"><h1>مخطط المبنى</h1>'
       +'<p id="acsGuestFallbackStatus" role="status">جارٍ تجهيز العرض ثلاثي الأبعاد. يمكنك استعراض المثال التوضيحي أدناه الآن.</p>'
-      +'<div class="guest-fallback-actions" aria-label="أمثلة محلية"><button type="button" data-plan="apartment">عمارة 20 × 25 م</button><button type="button" data-plan="villa">فيلا</button><button type="button" data-plan="warehouse">مستودع</button><label for="guestFallbackFloor">الطابق</label><select id="guestFallbackFloor"></select></div>'
-      +'<section id="guestApartmentSheet"><p>٣ أدوار، شقتان في كل دور. اختر الدور لاستعراض توزيعه.</p>'
-      +'<a id="guestFullSheet" target="_blank" rel="noopener" aria-label="فتح المخطط بالحجم الكامل في علامة تبويب جديدة"><img id="guestApartmentDrawing" loading="lazy" decoding="async" alt=""></a>'
-      +'<div class="guest-fallback-actions"><a id="guestSheetDownload" download>تنزيل مخطط الدور</a></div></section>'
+      +'<div class="guest-fallback-actions" aria-label="أمثلة محلية"><button type="button" data-plan="apartment">عمارة 20 × 25 م</button><button type="button" data-plan="villa">فيلا</button><button type="button" data-plan="warehouse">مستودع</button><label for="guestFallbackFloor">الطابق</label><select id="guestFallbackFloor"></select></div></div>'
+      +'<section id="guestApartmentSheet"><p>٣ أدوار · شقتان في كل دور</p>'
+      +'<div id="guestInlinePlan" tabindex="0" role="region" aria-label="معاينة مخطط الدور"><img id="guestApartmentDrawing" decoding="async" alt=""></div>'
+      +'<div class="guest-fallback-actions"><button type="button" id="guestSheetZoom" aria-pressed="false" aria-controls="guestInlinePlan">تكبير المخطط</button><a id="guestFullSheet" target="_blank" rel="noopener" aria-label="فتح المخطط الكامل وجدول الغرف في علامة تبويب جديدة">المخطط وجدول الغرف</a><a id="guestSheetDownload" download>تنزيل المخطط</a></div></section>'
       +'<div id="guestReferenceSheet">'
       +'<svg id="acsGuestFallbackPlan" xmlns="http://www.w3.org/2000/svg" role="img"></svg>'
       +'<div id="guestFallbackRooms" class="guest-fallback-actions" aria-label="تفاصيل الفراغات"></div>'
       +'<p id="acsGuestFallbackRoom" role="status"></p>'
       +'<button id="guestPlanDownload" type="button">تنزيل مخطط هذا الطابق (SVG)</button></div>'
-      +'<div class="guest-fallback-actions"><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
+      +'<div class="guest-fallback-actions guest-fallback-account"><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
       +'<button id="guestFallbackReload" type="button">إعادة محاولة العرض</button></div>'
       +'<p class="guest-fallback-note">التوليد والتعديل والاستيراد غير متاحة في هذا العرض البديل. لا تُرسل بيانات إلى الخادم.</p></div>';
     document.body.appendChild(panel);
@@ -424,6 +424,16 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     var floor = byId('guestFallbackFloor');
     var svg = byId('acsGuestFallbackPlan');
     var ns = 'http://www.w3.org/2000/svg';
+    function setPlanZoom(enlarged) {
+      var preview = byId('guestInlinePlan'), control = byId('guestSheetZoom');
+      preview.classList.toggle('expanded-plan', enlarged);
+      control.setAttribute('aria-pressed', String(enlarged));
+      control.textContent = enlarged ? 'عرض المخطط كاملًا' : 'تكبير المخطط';
+      if (enlarged) preview.focus({preventScroll:true});
+    }
+    byId('guestSheetZoom').addEventListener('click', function() {
+      setPlanZoom(this.getAttribute('aria-pressed') !== 'true');
+    });
     function renderPlan(){
       var apartment = active === 'apartment';
       byId('guestApartmentSheet').hidden = !apartment;
@@ -433,7 +443,8 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
         var path = '/guest-plans/' + filename;
         var image = byId('guestApartmentDrawing');
         image.alt = 'توزيع الشقتين في ' + floor.options[floor.selectedIndex].text + ' ضمن عمارة 20 × 25 مترًا';
-        image.src = path;
+        image.src = '/guest-plans/apartment-floor-' + floor.value + '-preview.svg';
+        setPlanZoom(false);
         byId('guestFullSheet').href = path;
         byId('guestSheetDownload').href = path;
         byId('guestSheetDownload').download = filename;
@@ -477,10 +488,10 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
     }
     function setPlan(key){
       active=key; floor.replaceChildren();
-      var levels = key === 'apartment' ? [{index:0},{index:1},{index:2}] : guestPlans[key].levels;
+      var levels = key === 'apartment' ? [{index:0,name:'الأرضي'},{index:1,name:'الأول'},{index:2,name:'الثاني'}] : guestPlans[key].levels;
       levels.forEach(function(level){
         var option=document.createElement('option'); option.value=level.index;
-        option.textContent=level.index===0?'الأرضي':'الطابق '+level.index;
+        option.textContent=level.name || (level.index===0?'الأرضي':'الطابق '+level.index);
         floor.append(option);
       });
       panel.querySelectorAll('[data-plan]').forEach(function(button){button.setAttribute('aria-pressed',String(button.dataset.plan===key));});

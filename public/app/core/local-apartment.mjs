@@ -4,6 +4,7 @@
 import { withDefaultStairs } from './stairs.mjs';
 
 const round = value => Math.round(value * 1000) / 1000;
+const wallThickness=0.18;
 const levelsAr = ['الأرضي', 'الأول', 'الثاني', 'الثالث', 'الرابع', 'الخامس'];
 const opposite = { N: 'S', S: 'N', E: 'W', W: 'E' };
 
@@ -34,10 +35,56 @@ function connect(a,b,desired = 0.95, material = 'wood') {
   if (width < 0.75) throw new Error('LOCAL_APARTMENT_DOOR_TOO_NARROW');
   const center = (start+end)/2;
   const door = (room, other, side, origin) => ({
-    id: room.id+'_to_'+other.id, edge: side, offset: round(center-origin), width, height: 2.18, material
+    id: room.id+'_to_'+other.id, edge: side, offset: round(center-origin), width, height: 2.18, material,
+    acs_door_pair:{id:'door|'+[room.id,other.id].sort().join('|'),peer_room_id:other.id}
   });
   a.doors.push(door(a,b,edge,fromA));
   b.doors.push(door(b,a,opposite[edge],fromB));
+}
+
+// A pair owns a single physical leaf. Both cuts and both original IDs stay on
+// their host walls. Validate at projection time, including for edited/imported JSON.
+const leafKeys = new Set(['id','edge','offset','width','height','material','color','acs_door_pair']);
+function doorPairPoint(room,door) {
+  if(!Array.isArray(room.rect)||room.rect.length!==4||!room.rect.every(Number.isFinite)||
+     !Object.hasOwn(opposite,door.edge)||!Number.isFinite(door.width)||!Number.isFinite(door.height)||
+     !Number.isFinite(door.offset)||door.width<=0||door.height<=0||
+     Object.keys(door).some(key=>!leafKeys.has(key))) return null;
+  const [x,z,w,d]=room.rect, side=door.edge==='E'||door.edge==='W', span=side?d:w;
+  if(w<=0||d<=0||door.offset<door.width/2||door.offset+door.width/2>span) return null;
+  return side?[x+(door.edge==='E'?w:0),z+door.offset]:[x+door.offset,z+(door.edge==='S'?d:0)];
+}
+
+export function apartmentDoorPairs(rooms) {
+  const groups=new Map(), ids=new Set(), duplicates=new Set(), result=new Map();
+  for(const room of rooms) {
+    if(!room||typeof room.id!=='string') continue;
+    if(ids.has(room.id)) duplicates.add(room.id);
+    ids.add(room.id);
+    if(!Array.isArray(room.doors)) continue;
+    room.doors.forEach((door,index)=>{
+      const id=door?.acs_door_pair?.id;
+      if(typeof id!=='string'||!id||id.length>160) return;
+      if(!groups.has(id)) groups.set(id,[]);
+      groups.get(id).push({room,door,index});
+    });
+  }
+  for(const [pair_id,claims] of groups) {
+    if(claims.length!==2) continue;
+    claims.sort((a,b)=>a.room.id<b.room.id?-1:a.room.id>b.room.id?1:0);
+    const [a,b]=claims;
+    if(a.room.id===b.room.id||duplicates.has(a.room.id)||duplicates.has(b.room.id)||
+       a.door.acs_door_pair.peer_room_id!==b.room.id||b.door.acs_door_pair.peer_room_id!==a.room.id||
+       typeof a.door.id!=='string'||typeof b.door.id!=='string'||!a.door.id||!b.door.id||a.door.id===b.door.id||
+       opposite[a.door.edge]!==b.door.edge||
+       ['width','height','material','color'].some(k=>a.door[k]!==b.door[k])) continue;
+    const p=doorPairPoint(a.room,a.door), q=doorPairPoint(b.room,b.door);
+    // The local model records offsets to the nearest millimetre.
+    if(!p||!q||p.some((v,i)=>Math.abs(v-q[i])>0.00101)) continue;
+    const hosts=claims.map(c=>({room_id:c.room.id,door_id:c.door.id,door_index:c.index}));
+    for(const claim of claims) result.set(claim.door,{primary:claim===a,pair_id,hosts});
+  }
+  return result;
 }
 
 function windowAt(room,edge,fraction,width,sill=0.76,height=1.78) {
@@ -76,8 +123,11 @@ function furnish(r) {
 }
 
 function floorPlan(width,depth,index,storeyHeight) {
-  const sx=width/20, sz=depth/25;
-  const rect=(x,z,w,d) => [round(x*sx),round(z*sz), round((x+w)*sx)-round(x*sx), round((z+d)*sz)-round(z*sz)].map(round);
+  // The compiler centres walls on room boundaries. Specify the external
+  // envelope first, then locate the wall axes one half-thickness inside it.
+  const axisX=x=>round(wallThickness/2+x*(width-wallThickness)/20);
+  const axisZ=z=>round(wallThickness/2+z*(depth-wallThickness)/25);
+  const rect=(x,z,w,d)=>[axisX(x),axisZ(z),round(axisX(x+w)-axisX(x)),round(axisZ(z+d)-axisZ(z))];
   const entranceDepth=index?0:1.35;
   const lobby=rectangle('lobby',index?'بسطة وبهو مشترك':'بهو المدخل','lobby',rect(8,entranceDepth,4,7.2-entranceDepth));
   const stair=rectangle('stair','الدرج المشترك','stairs',rect(8,7.2,2.4,4.8));
@@ -173,8 +223,9 @@ function design(width,depth,levels,height,source) {
   const title='عمارة سكنية '+width+' × '+depth+' م';
   const model={
     meta:{name:title,type:'residential',north:'-Z',acs_apartment:{schema:'acs.local-apartment/1',source,width_m:width,depth_m:depth,
-      occupied_levels:levels,units_per_floor:2,units_total:2*levels,bedrooms_per_unit:3,street_edge:'N',assumptions:[...assumptions]}},
-    site:{w:width,d:depth},floor_height:height,wall_h:round(height-0.18),wall_t:0.18,levels:[],floors:{}
+      occupied_levels:levels,units_per_floor:2,units_total:2*levels,bedrooms_per_unit:3,street_edge:'N',
+      wall_reference:'room_wall_centrelines',outer_face_offset_m:wallThickness/2,assumptions:[...assumptions]}},
+    site:{w:width,d:depth},floor_height:height,wall_h:round(height-0.18),wall_t:wallThickness,levels:[],floors:{}
   };
   for(let i=0;i<levels;i++) {
     const template='level_'+i;

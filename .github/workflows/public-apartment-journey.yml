@@ -5,6 +5,10 @@ on:
     branches: [main]
     paths:
       - 'public/**'
+      - 'acs_compiler.py'
+      - 'acs_arch.py'
+      - 'acs_visual.py'
+      - 'tests/remediation/test_audit_engineering_door_meshes.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
       - 'tests/remediation/test_local_apartment.mjs'
@@ -16,6 +20,10 @@ on:
     branches: [main]
     paths:
       - 'public/**'
+      - 'acs_compiler.py'
+      - 'acs_arch.py'
+      - 'acs_visual.py'
+      - 'tests/remediation/test_audit_engineering_door_meshes.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
       - 'tests/remediation/test_local_apartment.mjs'
@@ -54,6 +62,7 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Verify derived floor plans and source identity
         run: |
+          PYTHONPATH=. python3 tests/remediation/test_audit_engineering_door_meshes.py
           node tests/remediation/test_local_apartment.mjs
           node tests/remediation/test_guest_cutaway.mjs
           node tests/remediation/test_guest_floor_plan.mjs

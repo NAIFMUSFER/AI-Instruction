@@ -12,6 +12,9 @@ export function apartmentJoinery(model,building){
   const buckets=new Map();
   const origin=new THREE.Vector3(),size=new THREE.Vector3(),pose=new THREE.Matrix4(),identity=new THREE.Quaternion();
   const width=Number(building.site?.w),depth=Number(building.site?.d);
+  // Both early drafts (axis at gross boundary) and measured new apartments
+  // (exterior face at gross boundary) are valid local presentation anchors.
+  const perimeterTolerance=.012+Math.min(.25,Math.max(0,Number(building.wall_t)||.15)/2);
   model.updateMatrixWorld(true);
   model.traverse(node=>{
     if(!node.isMesh)return;
@@ -26,7 +29,7 @@ export function apartmentJoinery(model,building){
     const far=alongX?depth:width;
     // Recessed glazed openings get joinery on the pane. Only perimeter
     // windows and street entrances receive projecting exterior profiles.
-    const side=Math.abs(fixed)<.06?-1:Math.abs(fixed-far)<.06?1:0;
+    const side=Math.abs(fixed)<=perimeterTolerance?-1:Math.abs(fixed-far)<=perimeterTolerance?1:0;
     function piece(finish,along,y,normal,w,h,d){
       const key=[floor,layer,finish].join('|');
       if(!buckets.has(key))buckets.set(key,[]);
@@ -145,7 +148,9 @@ export function guestFocus(model,building,kind,warehouse){
   const meshes=model.children.filter(o=>o.isMesh&&o.name.split('|')[1]===floor);
   if(kind==='detail'){
     const door=warehouse?meshes.find(o=>/^DOOR\|[^|]+\|inbound_docks\|dock/.test(o.name)):
-      meshes.filter(o=>o.name.startsWith('DOOR|'+floor+'|lobby|')&&o.material.transparent).sort((a,b)=>a.position.z-b.position.z)[0];
+      meshes.filter(o=>o.name.startsWith('DOOR|')&&o.material.transparent&&
+        (o.name.startsWith('DOOR|'+floor+'|lobby|')||o.userData.acs_door_pair?.hosts?.some(h=>h.room_id==='lobby')))
+        .sort((a,b)=>a.position.z-b.position.z)[0];
     if(!door)return null;
     const box=new THREE.Box3().setFromObject(door),mid=box.getCenter(new THREE.Vector3());
     const extent=box.getSize(new THREE.Vector3());

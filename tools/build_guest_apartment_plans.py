@@ -18,7 +18,7 @@ def node(script, payload=None):
     ).stdout
 
 
-def generate(landscape=False):
+def generate(landscape=False, previews=False):
     model = json.loads(node("""
         import {apartmentSample} from './public/app/core/local-apartment.mjs';
         console.log(JSON.stringify(apartmentSample()));
@@ -28,13 +28,17 @@ def generate(landscape=False):
     for level in model["levels"]:
         index = level["index"]
         packet = floor_plan(arch, index)
-        svg = node("""
+        rendered = json.loads(node("""
             import {readFileSync} from 'node:fs';
             import {renderGuestFloorSVG} from './public/app/ui/guest-floor-plan.mjs';
-            const {packet, model, landscape} = JSON.parse(readFileSync(0, 'utf8'));
-            console.log(renderGuestFloorSVG(packet, model, {landscape}));
-        """, json.dumps({"packet": packet, "model": model, "landscape": landscape}, ensure_ascii=False))
-        drawings[f"apartment-floor-{index}.svg"] = svg
+            const {packet, model, landscape, previews} = JSON.parse(readFileSync(0, 'utf8'));
+            const sheet = renderGuestFloorSVG(packet, model, {landscape});
+            const preview = previews ? renderGuestFloorSVG(packet, model, {schedule:false}) : null;
+            console.log(JSON.stringify({sheet, preview}));
+        """, json.dumps({"packet": packet, "model": model, "landscape": landscape, "previews": previews}, ensure_ascii=False)))
+        drawings[f"apartment-floor-{index}.svg"] = rendered["sheet"] + "\n"
+        if previews:
+            drawings[f"apartment-floor-{index}-preview.svg"] = rendered["preview"] + "\n"
     return drawings
 
 
@@ -43,7 +47,7 @@ if __name__ == "__main__":
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     target = ROOT / "public/guest-plans"
-    drawings = generate()
+    drawings = generate(previews=True)
     if args.check:
         if set(drawings) != {p.name for p in target.glob("apartment-floor-*.svg")}:
             raise SystemExit("Wrong set of public apartment floor drawings")
@@ -54,5 +58,7 @@ if __name__ == "__main__":
         target.mkdir(parents=True, exist_ok=True)
         for name, svg in drawings.items():
             (target / name).write_text(svg, encoding="utf-8")
-    print(f"Verified {len(drawings)} exact apartment floor plans" if args.check else
-          f"Generated {len(drawings)} exact apartment floor plans")
+    sheets = sum(not name.endswith("-preview.svg") for name in drawings)
+    previews = len(drawings) - sheets
+    action = "Verified" if args.check else "Generated"
+    print(f"{action} {sheets} apartment floor sheets and {previews} inline previews")

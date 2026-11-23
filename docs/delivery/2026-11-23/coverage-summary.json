@@ -1,10 +1,10 @@
 {
   "schema": "acs.delivery.coverage/1",
   "base_commit": "629952f10763a8826f3a014895f2e1d209440996",
-  "tracked_files": 1324,
+  "tracked_files": 1327,
   "depth": {
     "unreviewed": 721,
-    "selected": 56,
+    "selected": 59,
     "deep": 29,
     "static": 518
   },
@@ -14,7 +14,7 @@
     "document": 368,
     "source": 195,
     "vendor": 3,
-    "generated": 14,
+    "generated": 17,
     "test": 494,
     "test-artifact": 153
   },

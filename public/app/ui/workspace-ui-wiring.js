@@ -188,7 +188,9 @@ function setModel(data){
     const layer=(parts[0]==='MEP')?('MEP_'+parts[1])
                :((parts[0]==='FLS'&&fl)?fl.layer:parts[0]);
     const st=o.userData&&o.userData.struct, mp=o.userData&&o.userData.mep;
+    const doorPair=o.userData?.acs_door_pair;
     o.userData={layer,floor,tag};
+    if(doorPair)o.userData.acs_door_pair=doorPair;
     if(st) o.userData.struct=st; if(mp) o.userData.mep=mp; if(fl) o.userData.fls=fl;
     const debugLayer=(layer==='STRUCT'||layer.indexOf('MEP_')===0||layer.indexOf('FLS_')===0);
     if(!debugLayer) floorsFound.add(floor);   // الطبقات الهندسية ليست أدواراً
@@ -714,7 +716,17 @@ function applyFinish(tag, surface, hex, mesh){
     mesh.material=getMat(base,hex); mesh.material.needsUpdate=true;
     const rr=roomOfTag(tag), t=String(tag||'').split('|');
     if(rr && t[0]==='DOOR'){ const i=parseInt(t[3],10);
-      if(rr.room.doors&&rr.room.doors[i]) rr.room.doors[i].color=hex; }
+      if(rr.room.doors&&rr.room.doors[i])rr.room.doors[i].color=hex;
+      const hosts=mesh.userData.acs_door_pair?.hosts;
+      if(hosts){
+        const template=isolateTemplate(rr.fkey);
+        for(const host of hosts){
+          const owner=template?.rooms?.find(r=>r.id===host.room_id);
+          const door=owner?.doors?.[host.door_index];
+          if(door?.id===host.door_id)door.color=hex;
+        }
+      }
+    }
     return 'طُبّق اللون على العنصر المحدّد ✓';
   }
   const rr=roomOfTag(tag);
