@@ -90,6 +90,17 @@ CDN_HOSTS = (
 
 _LOOPBACK = ("127.0.0.1", "localhost", "::1", "0.0.0.0")
 
+_RESOURCE_HOST = re.compile(
+    r"""(?:\b(?:from|import)\s*|\b(?:fetch|import|importScripts|url|URL|Worker|SharedWorker|WebSocket|EventSource)\s*\(\s*|\.(?:src|href)\s*=\s*)"""
+    r"""["'`]?(?:https?:)?//([A-Za-z0-9.-]+)""", re.IGNORECASE)
+
+
+def cdn_resource_hosts(source):
+    """Find explicit external loads. The browser monitor also checks actual requests."""
+    hosts = {match.lower() for match in _RESOURCE_HOST.findall(source)}
+    return sorted(host for host in hosts
+                  if any(host == cdn or host.endswith("." + cdn) for cdn in CDN_HOSTS))
+
 
 # ══════════════════════════════════════════════════════════════════════════
 # سجلّ النتائج
@@ -616,9 +627,8 @@ def group_b(R, frontend, backend, timeout, state):
             continue
         if len(ar.raw) < 64:
             empty.append("%s → %d bytes" % (path, len(ar.raw)))
-        for host in CDN_HOSTS:
-            if host in ar.text:
-                cdn_hits.append("%s references %s" % (path, host))
+        for host in cdn_resource_hosts(ar.text):
+            cdn_hits.append("%s loads a resource from %s" % (path, host))
         if path.startswith("/app/"):
             fetched_text[path] = ar.text
         if path.endswith("three.module.js"):
@@ -639,7 +649,7 @@ def group_b(R, frontend, backend, timeout, state):
     R.ok("B", "B3", "no runtime CDN reference is served (page or vendored modules)",
          not page_cdn and not cdn_hits,
          "; ".join(["index.html references " + h for h in page_cdn] + cdn_hits)
-         or "no CDN host found in the page or in %d vendored module(s)" % fetched)
+         or "no explicit CDN resource load found in the page or %d served assets" % fetched)
 
     csp = root.header("content-security-policy")
     csp_problems = []

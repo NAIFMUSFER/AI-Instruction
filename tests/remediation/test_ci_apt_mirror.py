@@ -211,11 +211,10 @@ class AptMirrorTests(unittest.TestCase):
                         apt.install_mirror_list(ORIGINAL, result)
                 self.assertEqual(before, {p.name: p.read_bytes() for p in root.iterdir()})
 
-    def test_new_runner_mirror_layout_keeps_the_stock_signed_apt_configuration(self):
+    def run_with_stock_sources(self, stock, probe_error):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             mirrors, source, keyring = (root / name for name in ('mirrors', 'ubuntu.sources', 'archive.gpg'))
-            stock = ORIGINAL + 'https://other-mirror.example/ubuntu/\tpriority:4\n'
             mirrors.write_text(stock)
             source.write_text(sources('noble').replace(str(apt.MIRRORS), str(mirrors)))
             keyring.write_bytes(b'synthetic fixture')
@@ -227,11 +226,26 @@ class AptMirrorTests(unittest.TestCase):
                  patch.object(apt, 'MIRRORS', mirrors), patch.object(apt, 'SOURCES', source), \
                  patch.object(apt, 'KEYRING', keyring), \
                  patch.object(apt, 'OS_RELEASE', os_release), \
+                 patch.object(apt, 'verify_candidate', side_effect=probe_error) as probe, \
                  patch.object(apt.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, 'amd64', '')), \
                  patch.object(apt, 'install_mirror_list') as install:
-                self.assertEqual(apt.main(), 0)
+                result = apt.main()
                 install.assert_not_called()
             self.assertEqual(mirrors.read_text(), stock)
+            return result, probe.call_count
+
+    def test_new_runner_layout_keeps_stock_configuration_without_network_probes(self):
+        stock = ORIGINAL + 'https://other-mirror.example/ubuntu/\tpriority:4\n'
+        self.assertEqual(self.run_with_stock_sources(stock, AssertionError('unexpected network probe')), (0, 0))
+
+    def test_both_optional_mirrors_unreachable_leaves_stock_configuration_for_signed_apt(self):
+        outage = apt.MirrorUnavailable('APT_MIRROR_NETWORK_UNAVAILABLE')
+        self.assertEqual(self.run_with_stock_sources(ORIGINAL, outage), (0, len(apt.CANDIDATES)))
+
+    def test_tls_or_signature_failure_still_stops_preparation(self):
+        for code in ('APT_MIRROR_HTTPS_FAILED', 'APT_RELEASE_SIGNATURE_FAILED', 'APT_RELEASE_IDENTITY_MISMATCH'):
+            with self.subTest(code=code):
+                self.assertEqual(self.run_with_stock_sources(ORIGINAL, apt.PreparationError(code)), (1, 1))
 
     def test_install_is_backup_then_local_atomic_replace_only(self):
         with tempfile.TemporaryDirectory() as directory:

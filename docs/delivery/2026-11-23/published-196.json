@@ -1,0 +1,51 @@
+{
+  "schema": "acs-published-revision-wait/1.0",
+  "expected_sha": "8a979ebdadf6f0612cb16976f3c0b28f9a713a2f",
+  "frontend": "https://sprightly-selkie-d906c3.netlify.app",
+  "backend": "https://acs-engine.onrender.com",
+  "verdict": "PASS",
+  "attempts": [
+    {
+      "elapsed_seconds": 0.0,
+      "observed": {
+        "frontend": {
+          "status": "MATCH",
+          "git_sha": "8a979ebdadf6f0612cb16976f3c0b28f9a713a2f"
+        },
+        "backend": {
+          "status": "MATCH",
+          "git_sha": "8a979ebdadf6f0612cb16976f3c0b28f9a713a2f"
+        }
+      }
+    }
+  ],
+  "reviewed_head": "0e6ab14b381837ada915584bd975006b2fad166c",
+  "tested_and_published_tree": "a28215b446bb9d85fd0678c8c9b137e86a31a89c",
+  "checks": {
+    "success": 60,
+    "neutral": 2,
+    "failed": 0
+  },
+  "netlify_deploy": "6b0492c655a9aa72c36784fa",
+  "netlify_published_utc": "2026-11-23T19:24:19.154Z",
+  "render_deploy": "dep-dc295hjrjlhs738ggsfg",
+  "render_live_utc": "2026-11-23T19:24:34.362707Z",
+  "browser": {
+    "production_manual": "fresh guest; 2D WebGL fallback; selected warehouse storage 14x16 m, 224 m2",
+    "ci_artifact": "https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45244673084/artifacts/14855015459",
+    "original_zip_sha256": "0f7739c9abb2e13a3e25e561c75d52c7259c299e3c59893e5daa4a6b0583537f",
+    "fixture_views": 24,
+    "gpu": "SwiftShader, Chromium 151, 4 logical CPUs",
+    "desktop_first_frame_ms": {
+      "residential": 1548,
+      "warehouse": 1344
+    },
+    "emulated_mobile_first_frame_ms": {
+      "residential": 1483,
+      "warehouse": 1228
+    },
+    "old_frame_p95_ms": null
+  },
+  "production_database": "permission denied; not inspected or activated",
+  "live_paid_calls": 0
+}
