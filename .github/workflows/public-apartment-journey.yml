@@ -36,16 +36,21 @@ permissions:
   contents: read
 
 concurrency:
-  group: public-apartment-${{ github.event.pull_request.number || github.ref }}
+  group: public-apartment-matrix-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   guest-model:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 32
+    strategy:
+      fail-fast: false
+      matrix:
+        width: [393, 1440]
     env:
       ACS_VERIFY_EXPECT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       ACS_APARTMENT_EVIDENCE: logs/public-apartment
+      ACS_APARTMENT_VIEWPORT: ${{ matrix.width }}
       ACS_APARTMENT_LIVE: ${{ github.event_name == 'push' && '1' || '0' }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -71,12 +76,13 @@ jobs:
         if: github.event_name == 'push'
         run: |
           python3 tests/deploy/wait_published_revision.py --expect-sha "$ACS_VERIFY_EXPECT_SHA" --seconds 600 --output logs/public-apartment/published-revision.json
-      - name: Open the studio and generate the residential brief on both viewports
+      - name: Open the studio and generate the residential brief
+        timeout-minutes: 19
         run: node tests/remediation/test_public_apartment_journey.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: public-apartment-${{ env.ACS_VERIFY_EXPECT_SHA }}-${{ github.run_attempt }}
+          name: public-apartment-${{ matrix.width }}-${{ env.ACS_VERIFY_EXPECT_SHA }}-${{ github.run_attempt }}
           path: logs/public-apartment/
           if-no-files-found: error
           retention-days: 30

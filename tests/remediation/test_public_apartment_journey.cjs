@@ -141,7 +141,9 @@ async function capture(page,report,label,expected,close=false){
   await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
   const scene=await runtime(page);
   const file=report.width+'-'+label+'.png';
+  console.log(report.width+' capturing '+label);
   await page.screenshot({path:path.join(out,file),animations:'disabled'});
+  console.log(report.width+' wrote '+file);
   const view={label,file,scene};report.views.push(view);
   assert.ok(scene.state.cameraY>scene.state.groundY,'camera below ground');
   assert.ok(scene.state.orbitMaxPolar<=Math.PI/2+1e-5,'orbit can turn under the ground');
@@ -153,6 +155,7 @@ async function capture(page,report,label,expected,close=false){
   const pixels=await analysePageViewport(page,'#app canvas');
   assert.equal(pixels.verdict,'VISIBLE_CONTENT');
   view.pixels={verdict:pixels.verdict,colours:pixels.distinct_colours,mean:pixels.luminance_mean,variance:pixels.luminance_variance};
+  fs.writeFileSync(path.join(out,report.width+'-journey.json'),JSON.stringify(report,null,2));
   return scene;
 }
 async function cameraControl(page,view){
@@ -229,8 +232,14 @@ async function checkedViewport(browser,width){
   const height=width===393?852:900, denied=[], errors=[];
   const ctx=await browser.newContext({viewport:{width,height},serviceWorkers:'block',acceptDownloads:true});
   ctx.setDefaultTimeout(45000);
-  const report={width,height,views:[]};
-  let page,phase='open_public_entry';
+  const report={width,height,views:[],result:'INCOMPLETE'};
+  let page,phase;
+  function step(name){
+    phase=name;report.phase=name;
+    console.log(width+' '+name);
+    fs.writeFileSync(path.join(out,width+'-journey.json'),JSON.stringify(report,null,2));
+  }
+  step('open_public_entry');
   try{
     await serve(ctx,denied);page=await ctx.newPage();
     page.on('pageerror',e=>errors.push(e.name));
@@ -243,22 +252,22 @@ async function checkedViewport(browser,width){
     if(width===393)assert.ok(banner.height<=92,'phone guest controls still dominate the model: '+banner.height);
     assert.ok(!(await page.locator('#guestSignin').isVisible()),'login CTA must not dominate the fresh entry');
     await capture(page,report,'fresh-entry','exterior');
-    phase='warehouse_cutaway';await menu(page,'guestWarehouse');
+    step('warehouse_cutaway');await menu(page,'guestWarehouse');
     await page.waitForFunction(()=>window.ACS.exportModel().site.w===120);
     const warehouse=await capture(page,report,'warehouse-workfloor','cutaway');
     assert.ok(warehouse.visibleRackSections>0,'visible racks must expose the purpose of the cutaway');
-    phase='warehouse_exterior';await page.locator('#guestViewToggle').click();
+    step('warehouse_exterior');await page.locator('#guestViewToggle').click();
     await capture(page,report,'warehouse-exterior','exterior');
     await cameraControl(page,'bird');await capture(page,report,'warehouse-aerial','aerial');
     await cameraControl(page,'arch');await capture(page,report,'warehouse-eye-level','street');
     await detailAndInterior(page,report,'warehouse');
-    phase='complete_arabic_brief';await page.locator('#guestCreate').click();
+    step('complete_arabic_brief');await page.locator('#guestCreate').click();
     await page.locator('#descText').fill(brief);await page.locator('#genText').click();
     await page.waitForFunction(()=>window.ACS.exportModel()?.meta?.acs_apartment?.units_total===6,null,{timeout:45000});
     if(width===393&&await page.locator('#projectPanelClose').isVisible())await page.locator('#projectPanelClose').click();
     const model=await page.evaluate(()=>window.ACS.exportModel());
     report.model=inspectApartment(model);report.modelHash=sha256(JSON.stringify(model));
-    phase='actual_model_download';
+    step('actual_model_download');
     const [modelDownload]=await Promise.all([page.waitForEvent('download'),menu(page,'guestExport')]);
     assert.equal(await modelDownload.failure(),null);
     const jsonFile=path.join(out,width+'-apartment.json');
@@ -269,7 +278,7 @@ async function checkedViewport(browser,width){
       assert.deepEqual(exported.floors[k].rooms.map(r=>r.rect),model.floors[k].rooms.map(r=>r.rect));
     }
     report.downloadHash=sha256(fs.readFileSync(jsonFile));
-    phase='housing_exterior';const exterior=await capture(page,report,'apartment-exterior','exterior');
+    step('housing_exterior');const exterior=await capture(page,report,'apartment-exterior','exterior');
     assert.ok(exterior.kinds.WINDOW>=6 && exterior.kinds.DOOR>=6,'real building window/door meshes required');
     assert.ok(exterior.floors.includes('F2'),'whole occupied building visible');
     const sourcePairs=new Set();
@@ -289,9 +298,9 @@ async function checkedViewport(browser,width){
     await cameraControl(page,'arch');await capture(page,report,'apartment-eye-level','street');
     await cameraControl(page,'bird');await capture(page,report,'apartment-aerial','aerial');
     await detailAndInterior(page,report,'apartment');
-    phase='housing_cutaway';await page.locator('#guestViewToggle').click();
+    step('housing_cutaway');await page.locator('#guestViewToggle').click();
     await capture(page,report,'apartment-cutaway','cutaway');
-    phase='apartment_plan';await page.locator('#guestPlan').click();
+    step('apartment_plan');await page.locator('#guestPlan').click();
     const dlg=page.locator('#guestPlanDialog');
     await dlg.waitFor({state:'visible'});await page.locator('#guestPlanFloor').selectOption('1');
     const diagram=page.locator('#guestPlanViewport svg');assert.equal(await diagram.getAttribute('data-level-index'),'1');
@@ -304,8 +313,8 @@ async function checkedViewport(browser,width){
     const svg=fs.readFileSync(svgFile,'utf8');assert.ok(svg.includes('<svg')&&svg.includes('data-room-key'));
     await page.locator('#guestPlanClose').click();await dlg.waitFor({state:'hidden'});
     assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),model,'presentation state modified the selected model');
-    if(width===1440){phase='download_glb';await modelGLB(page,report);}
-    phase='separate_example';await page.goto(origin+'/?guest=1&example=apartment-20x25');await ready(page);
+    if(width===1440){step('download_glb');await modelGLB(page,report);}
+    step('separate_example');await page.goto(origin+'/?guest=1&example=apartment-20x25');await ready(page);
     assert.equal(await page.evaluate(()=>window.ACS_AUTH.storageScope()),'acs_guest_apartment_20x25_v1');
     inspectApartment(await page.evaluate(()=>window.ACS.exportModel()));
     assert.deepEqual(denied,[]);assert.deepEqual(errors,[]);
@@ -319,10 +328,13 @@ async function checkedViewport(browser,width){
 }
 async function main(){
   fs.mkdirSync(out,{recursive:true});
+  const configured=process.env.ACS_APARTMENT_VIEWPORT;
+  if(configured!==undefined && !['393','1440'].includes(configured))throw Error('ACS_APARTMENT_VIEWPORT must be 393 or 1440');
+  const widths=configured===undefined?[393,1440]:[Number(configured)];
   const b=await PW.launch();
   try{
     const runs=[];
-    for(const width of [393,1440])runs.push(await checkedViewport(b,width));
+    for(const width of widths)runs.push(await checkedViewport(b,width));
     fs.writeFileSync(path.join(out,'result.json'),JSON.stringify({scope:live?'published':'candidate assets',browser:b.version(),host:{os:os.platform(),release:os.release(),cpu:os.cpus()[0]?.model,logicalCpuCount:os.availableParallelism(),physicalPhone:false},syntheticBrief:true,briefHash:sha256(brief),runs},null,2));
     const failures=runs.filter(run=>run.result!=='PASS');
     if(failures.length)throw Error(failures.map(run=>run.width+' '+run.phase+' '+run.diagnostic).join('\n'));
