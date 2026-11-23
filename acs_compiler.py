@@ -856,7 +856,8 @@ def build_room(bld, room, fkey, base_y, defaults):
         bld.add_box(x + w / 2, base_y + 0.01, z + d / 2, min(w * 0.5, 6), 0.014, min(d * 0.22, 2.2),
                     tinted("paint_zone", zc), "FLOOR|%s|%s|label" % (fkey, name))
     else:
-        wall_start = len(bld.parts)
+        finish_hints = getattr(bld, '_presentation_wall_finishes', None)
+        wall_start = len(bld.parts) if finish_hints is not None else None
         for e in wall_edges:
             axis, fixed, u0, u1 = edge_geom(e, rect)
             wall_with_openings(bld, axis, fixed, u0, u1, base_y, hW, t,
@@ -865,11 +866,11 @@ def build_room(bld, room, fkey, base_y, defaults):
         # Source role tints and explicit wall colors can share one glTF material.
         # Only mark default opaque walls. This hint authorizes a viewer assumption,
         # and never overrides a specified color, finish or canonical wall material.
-        if (walls_mode == 'full' and
+        if (wall_start is not None and walls_mode == 'full' and
                 not any(room.get(key) for key in ('wall_color', 'wall_material', 'wall_finish', 'material', 'finish'))):
             style = 'industrial_cladding' if _ind else 'plaster'
             for index in range(wall_start, len(bld.parts)):
-                bld._presentation_wall_finishes[index] = style
+                finish_hints[index] = style
 
     # لوح أرضية/سقف ملوّن للغرفة (يُبنى فقط عند طلب لون)
     if hex_rgb(room.get("floor_color")):
