@@ -445,9 +445,11 @@ function reportCSP(cspViolations) {
       finish({scope:'public guest and sign-in UI; private-account and paid journeys are separate',
         observed:{build_info:evidence.runs[0].build},guest_evidence:evidence});
     } catch (error) {
-      ok('C','C1','public guest browser verification completed',false,error.name);
+      const progress=error.guestProgress;
+      const failure=progress?.active?progress.error+' at '+progress.active.stage+' ('+progress.active.width+'px)':error.name;
+      ok('C','C1','public guest browser verification completed',false,failure);
       for(const group of ['D','E','F','G'])nv(group,group+'1','public guest verification','browser journey did not complete');
-      finish({scope:'public guest',harness_error:error.name});
+      finish({scope:'public guest',harness_error:failure,guest_progress:progress});
     }
     return;
   }

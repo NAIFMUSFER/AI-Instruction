@@ -266,5 +266,53 @@
       "npm ci",
       "npm audit"
     ]
+  },
+  {
+    "path": ".github/workflows/delivery-published.yml",
+    "purpose": "Run candidate-monitor, early production and post-CI guest checks against distinct verified revisions",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-PUBLIC-GUEST"
+    ],
+    "tests": [
+      "tests/remediation/test_delivery_published.py"
+    ]
+  },
+  {
+    "path": "tests/deploy/verify_public_guest.js",
+    "purpose": "Exercise ordinary public guest controls and publish staged live browser evidence",
+    "depth": "deep",
+    "risk": "high",
+    "findings": [
+      "REL-PUBLIC-GUEST"
+    ],
+    "tests": [
+      "tests/remediation/test_public_guest_monitor.cjs"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_delivery_published.py",
+    "purpose": "Exercise revision matching and the trusted production verification workflow event contracts",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "REL-PUBLIC-GUEST"
+    ],
+    "tests": [
+      "python3 tests/remediation/test_delivery_published.py"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_public_guest_monitor.cjs",
+    "purpose": "Exercise the public mobile sheet controls, JSON export and safe stage reporting",
+    "depth": "deep",
+    "risk": "medium",
+    "findings": [
+      "REL-PUBLIC-GUEST"
+    ],
+    "tests": [
+      "node tests/remediation/test_public_guest_monitor.cjs"
+    ]
   }
 ]
