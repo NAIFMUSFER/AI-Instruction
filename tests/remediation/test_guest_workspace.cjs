@@ -3,6 +3,7 @@
 // CSP. Every backend request is intercepted and counted; no real user/provider.
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path');
+const http=require('node:http');
 const PW=require('../../tools/pw_chromium.js');
 const ROOT=path.resolve(__dirname,'../..'),PUB=path.join(ROOT,'public');
 const CSP=/Content-Security-Policy\s*=\s*"([^"]+)"/.exec(fs.readFileSync(path.join(ROOT,'netlify.toml'),'utf8'))[1];
@@ -211,6 +212,7 @@ async function downloadedJSON(page,button){
 }
 async function runGuestWorkspaceTests(){
  const browser=await PW.launch();let passed=0;const diagnostics=[];
+ let fallbackServer;
  try{
   for(const width of [393,1440]){
    const context=await browser.newContext({viewport:{width,height:width===393?852:900},acceptDownloads:true});
@@ -593,7 +595,26 @@ async function runGuestWorkspaceTests(){
   }
   // A real browser with WebGL deliberately unavailable must retain useful,
   // honest 2D content and navigation independently of the failed ESM graph.
-  const noGl=await browser.newContext({viewport:{width:393,height:852}}),fallback=await noGl.newPage();
+  // Chromium may re-request a native file download outside page.route().
+  // Give that network request the same real asset as the document and image.
+  fallbackServer=http.createServer((request,response)=>{
+   const pathname=new URL(request.url,'http://localhost').pathname;
+   const file=path.resolve(PUB,'.'+(pathname==='/'?'/index.html':pathname));
+   if(!file.startsWith(PUB+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile()){
+    response.writeHead(404);return response.end();
+   }
+   const body=fs.readFileSync(file);
+   response.writeHead(200,{
+    'content-type':MIME[path.extname(file)]||'application/octet-stream',
+    'content-length':body.length,'content-security-policy':CSP,'x-content-type-options':'nosniff',
+   });
+   response.end(body);
+  });
+  await new Promise((resolve,reject)=>fallbackServer.once('error',reject).listen(0,'127.0.0.1',resolve));
+  // *.localhost resolves to loopback in Chromium while exercising the normal
+  // public entry rather than ACS's explicit localhost development mode.
+  const fallbackOrigin='http://acs-guest.localhost:'+fallbackServer.address().port;
+  const noGl=await browser.newContext({viewport:{width:393,height:852},acceptDownloads:true}),fallback=await noGl.newPage();
   noGl.setDefaultTimeout(30000);
   const fallbackCalls=[];
   await fallback.addInitScript(()=>{
@@ -603,14 +624,11 @@ async function runGuestWorkspaceTests(){
     return original.call(this,kind,...args);
    };
   });
-  await fallback.route('**/*',async route=>{
-   const url=new URL(route.request().url());
-   if(url.origin!==ORIGIN){fallbackCalls.push(url.pathname);return route.abort();}
-   const file=path.resolve(PUB,'.'+(url.pathname==='/'?'/index.html':url.pathname));
-   if(!file.startsWith(PUB+path.sep)||!fs.existsSync(file)||!fs.statSync(file).isFile())return route.fulfill({status:404,body:''});
-   return route.fulfill({status:200,headers:{'content-type':MIME[path.extname(file)]||'application/octet-stream','content-security-policy':CSP,'x-content-type-options':'nosniff'},body:fs.readFileSync(file)});
+  await noGl.route(url=>url.origin!==fallbackOrigin,route=>{
+   fallbackCalls.push(new URL(route.request().url()).pathname);
+   return route.abort();
   });
-  await fallback.goto(ORIGIN+'/');
+  await fallback.goto(fallbackOrigin+'/');
   await fallback.locator('#acsGuestFallback').waitFor({state:'visible'});
   await fallback.waitForFunction(()=>document.getElementById('acsGuestFallback')?.dataset.engineState==='unavailable');
   assert.deepEqual(await fallback.locator('#guestFallbackFloor option').allTextContents(),['الأرضي','الأول','الثاني']);
@@ -633,6 +651,7 @@ async function runGuestWorkspaceTests(){
   const [apartmentPlan]=await Promise.all([fallback.waitForEvent('download'),fallback.locator('#guestSheetDownload').click()]);
   assert.equal(apartmentPlan.suggestedFilename(),'apartment-floor-2.svg');
   assert.equal(await apartmentPlan.failure(),null);
+  assert.deepEqual(fs.readFileSync(await apartmentPlan.path()),fs.readFileSync(path.join(PUB,'guest-plans/apartment-floor-2.svg')));
   await fallback.locator('[data-plan="villa"]').click();
   assert.equal(await fallback.locator('#acsGuestFallbackPlan rect').count(),2);
   assert.equal(await fallback.locator('#genLLM').isEnabled(),false);
@@ -657,7 +676,10 @@ async function runGuestWorkspaceTests(){
  }catch(error){
   for(const diagnostic of diagnostics){try{await diagnostic.failure(error);}catch{console.error('[ACS-GUEST-DIAG] evidence write failed');}}
   throw error;
- }finally{await browser.close();}
+ }finally{
+  await browser.close();
+  if(fallbackServer?.listening)await new Promise(resolve=>fallbackServer.close(resolve));
+ }
 }
 module.exports={runGuestWorkspaceTests};
 if(require.main===module)runGuestWorkspaceTests().catch(e=>{console.error(e);process.exitCode=1;});
