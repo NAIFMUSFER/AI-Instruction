@@ -10,6 +10,10 @@ import json
 from pathlib import Path, PurePosixPath
 import subprocess
 import zipfile
+if __package__:
+    from .build_guest_apartment_usdz import PAYLOAD, PUBLIC, verified_payload
+else:
+    from build_guest_apartment_usdz import PAYLOAD, PUBLIC, verified_payload
 
 ALLOWED_DIRS = {'public', 'tools', 'tests', 'supabase', 'docs', '.github', 'assets'}
 ALLOWED_ROOT_SUFFIXES = {'.py','.js','.mjs','.json','.toml','.txt','.lock','.in','.md','.yaml','.yml','.sh'}
@@ -18,7 +22,7 @@ DENIED_SUFFIXES = {'.pem','.key','.p12','.pfx','.sqlite','.sqlite3','.db','.log'
 
 
 def admitted(name):
-    if name == '.env.example':
+    if name in {'.env.example', PAYLOAD}:
         return True
     p=PurePosixPath(name)
     if p.is_absolute() or '..' in p.parts or not p.parts:return False
@@ -45,23 +49,28 @@ def package(root, output):
                 if not isinstance(row,dict) or hashlib.sha256((root/name).read_bytes()).hexdigest()!=row.get('sha256'):raise ValueError('RELEASE_VENDOR_HASH_MISMATCH')
                 names.append(name)
     if manifest_path.exists():names.append('public/vendor/manifest.json')
-    names=sorted(set(names))
+    derived = {}
+    if PAYLOAD in names:
+        derived[PUBLIC] = verified_payload(root)
+    names=sorted(set(names).union(derived))
     records=[]
     output.parent.mkdir(parents=True,exist_ok=True)
     with zipfile.ZipFile(output,'w',compression=zipfile.ZIP_DEFLATED) as archive:
         for name in names:
             file=root/name
             if file.is_symlink():raise ValueError('RELEASE_SYMLINK_REJECTED: '+name)
-            if not file.is_file():raise ValueError('RELEASE_TRACKED_FILE_MISSING: '+name)
+            if name not in derived and not file.is_file():raise ValueError('RELEASE_TRACKED_FILE_MISSING: '+name)
             # This public template is also required by the extracted source gate.
             # Local edits to it may contain filled credentials. Read its commit object.
             if name == '.env.example':
                 data = subprocess.check_output(['git', '-C', str(root), 'show', 'HEAD:.env.example'])
+            elif name in derived:
+                data = derived[name]
             else:
                 data = file.read_bytes()
             archive.writestr(name, data)
             records.append({'path':name,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest()})
-        archive.writestr('RELEASE-MANIFEST.json',json.dumps({'schema':'acs-release-manifest/1.0','source':'git tracked release inputs + explicit vendor manifest','files':records},indent=2)+'\n')
+        archive.writestr('RELEASE-MANIFEST.json',json.dumps({'schema':'acs-release-manifest/1.0','source':'git tracked release inputs + explicit vendor manifest + verified apartment Quick Look asset','files':records},indent=2)+'\n')
     return records
 
 

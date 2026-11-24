@@ -37,6 +37,7 @@ async function openGuestWorkspace() {
             <button id="guestDetail" type="button">تفاصيل المدخل</button>
           </div>
           <button id="guestFloors" type="button">اختيار الطوابق والطبقات</button>
+          <a id="guestNativeSample" class="guest-native-sample" rel="ar" href="/guest-plans/apartment-20x25.usdz" aria-label="فتح مجسّم المثال على الآيفون" hidden><img src="/guest-plans/apartment-20x25-preview.jpg" width="62" height="44" alt=""></a>
           <button id="guestExport" type="button">تنزيل النموذج بصيغة JSON</button>
           <a id="guestSignin" href="/?signin=1">تسجيل الدخول للحفظ السحابي</a>
         </div>
@@ -107,6 +108,20 @@ async function openGuestWorkspace() {
   }
   syncViewButton();
   window.addEventListener('acs:guest-view', event => syncViewButton(event.detail));
+  const nativeSample = $('guestNativeSample');
+  let referenceSample = '';
+  function matchesNativeSample() {
+    const model = A.exportModel?.();
+    return Boolean(referenceSample && model?.meta?.acs_apartment?.source === 'synthetic_sample'
+      && JSON.stringify(model) === referenceSample);
+  }
+  nativeSample.addEventListener('click', event => {
+    if (!matchesNativeSample()) {
+      event.preventDefault();
+      nativeSample.hidden = true;
+      feedbackMessage('تخص المعاينة الأصلية العمارة التجريبية. يمكنك استكشاف هذه النسخة في الاستوديو.');
+    }
+  });
   function facts() {
     const model = A.exportModel?.();
     const apartment = model?.meta?.acs_apartment;
@@ -131,7 +146,11 @@ async function openGuestWorkspace() {
       event.preventDefault(); event.stopPropagation(); closeOptions(true);
     }
   });
-  options.addEventListener('toggle', () => { if (options.open) facts(); });
+  options.addEventListener('toggle', () => {
+    if (!options.open) return;
+    facts();
+    nativeSample.hidden = !matchesNativeSample();
+  });
   $('guestFloors').addEventListener('click', () => {
     openPanel('acsTabModel');
     $('floors').querySelector('button')?.focus();
@@ -156,6 +175,7 @@ async function openGuestWorkspace() {
     // Recovery can replace the temporary sample while its floor sheet is open.
     const plan = $('guestPlanDialog');
     if (plan?.open) plan.close();
+    nativeSample.hidden = true;
     facts();
     if (restoring) return;
     interactionEpoch++;
@@ -299,7 +319,9 @@ async function openGuestWorkspace() {
       restoring = true;
       try { sample('residential', true); } finally { restoring = false; }
     }
-    suggestFormDimensions(A.exportModel?.());
+    const freshExample = A.exportModel?.();
+    if (freshExample?.meta?.acs_apartment?.source === 'synthetic_sample') referenceSample = JSON.stringify(freshExample);
+    suggestFormDimensions(freshExample);
     saveStatus.textContent = 'جارٍ استعادة المسودة…';
     timer=setTimeout(()=>{
       banner.dataset.recoveryStatus='slow';

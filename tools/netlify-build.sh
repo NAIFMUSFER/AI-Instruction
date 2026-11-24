@@ -31,6 +31,7 @@ cp -R node_modules/three/examples/jsm "$VEN/three@$THREE/examples/jsm"
 cp node_modules/pdfjs-dist/build/pdf.min.mjs "$VEN/pdfjs@$PDFJS/pdf.min.mjs"
 cp node_modules/pdfjs-dist/build/pdf.worker.min.mjs "$VEN/pdfjs@$PDFJS/pdf.worker.min.mjs"
 python3 tools/vendor_manifest.py
+python3 tools/build_guest_apartment_usdz.py --install
 
 # --- التحقّق: كل ملف حرِج موجود وغير فارغ، وثلاثي الأبعاد بالنسخة الصحيحة ---
 # 17 ملفّاً: 15 من three (البناء + 14 إضافة) + ملفّا pdf.js. كانت 18 قبل حذف

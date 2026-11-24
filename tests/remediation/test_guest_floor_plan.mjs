@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import APP from '../lib/app_source.js';
-import {apartmentFromBrief,apartmentFromRevision,apartmentDoorPairs,apartmentSample} from '../../public/app/core/local-apartment.mjs';
+import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+import {apartmentFromBrief,apartmentFromRevision,apartmentSample} from '../../public/app/core/local-apartment.mjs';
 import {resolveStairGeometry,stairConnections} from '../../public/app/core/stairs.mjs';
 import {renderGuestFloorSVG} from '../../public/app/ui/guest-floor-plan.mjs';
 
 const level={index:2,template:'same',name:'الدور الثاني'};
-const model={levels:[level],meta:{acs_apartment:{street_edge:'N'}}, floors:{same:{rooms:[
+const model={levels:[level],meta:{north:'-Z',acs_apartment:{street_edge:'N'}}, floors:{same:{rooms:[
   {id:'a',unit_id:'east',name:'مجلس & ضيافة'},
   {id:'b',unit_id:'west',name:'<script><&"\''},
 ]}}};
@@ -27,6 +30,19 @@ const local=renderGuestFloorSVG(packet,{...model,meta:{}},{schedule:false,select
 assert.ok(!local.includes('شمال'),'no invented north for unreferenced imports');
 assert.ok(local.includes('fill="#d0ae6d"'));
 assert.equal(JSON.stringify([packet,model]),before);
+const turned = structuredClone(model);
+turned.meta.acs_apartment.street_edge = 'W';
+turned.meta.acs_apartment.unit_labels = {east:'الشقة الشمالية',west:'الشقة الجنوبية'};
+const turnedSVG = renderGuestFloorSVG(packet,turned);
+assert.ok(turnedSVG.includes('الشقة الشمالية') && turnedSVG.includes('الشقة الجنوبية'));
+assert.ok(turnedSVG.includes('data-unit="east"') && turnedSVG.includes('data-unit="west"'), 'drawing labels must not rename stable unit identities');
+assert.ok(turnedSVG.includes('شمال'), 'declared north remains visible when the entrance moves west');
+assert.ok(!turnedSVG.includes('الشقة الشرقية') && !turnedSVG.includes('الشقة الغربية'));
+turned.meta.acs_apartment.unit_labels.east = '<script>alert(1)</script>';
+assert.ok(renderGuestFloorSVG(packet,turned).includes('&lt;script&gt;alert(1)&lt;/script&gt;'));
+assert.ok(!renderGuestFloorSVG(packet,turned).includes('<script>'));
+delete turned.meta.north;
+assert.ok(!renderGuestFloorSVG(packet,turned).includes('>شمال<'), 'street direction alone does not establish plan north');
 assert.throws(()=>renderGuestFloorSVG({...packet,spaces:[]},model), /فراغات/);
 // The outer-face dimension must come from the physical wall faces, even if a
 // caller changes the description or the site dimensions without moving walls.
@@ -76,41 +92,60 @@ for(const floor of apartment.levels) {
 }
 console.log('PASS named apartment fallback, physical level/room/unit counts and source stair components');
 
-// Check the occupied/void partition, and the actual adjoining surfaces around
-// the common entrance. Metadata and a label on an otherwise solid floor fail.
-const closed=apartmentFromBrief('أبغى عمارة عرض المبنى ٢٤ متر وعمقه ٢٨ متر، أربعة أدوار شاملة الأرضي، شقتين في كل دور');
-const withCourt=apartmentFromRevision('خلّ وسط العمارة فناء مفتوح للسماء وحافظ على عدد الشقق',closed);
-const rotated=apartmentFromRevision('خل المدخل شرقي',withCourt);
-const {compileArchitecture,projectArchitecturalLevel}=new Function(APP.nodeBundle()+';return {compileArchitecture,projectArchitecturalLevel};')();
-for(const building of [withCourt,rotated]) {
-  const source=JSON.stringify(building);
-  const architecture=compileArchitecture(building);
-  const firstCourt=building.floors[building.levels[0].template].courtyards[0];
-  for(const level of building.levels) {
-    const floor=building.floors[level.template], rooms=floor.rooms;
-    const {rect}=floor.courtyards[0], [x,z,w,d]=rect;
-    assert.deepEqual(rect,firstCourt.rect,'every floor must leave the same unoccupied opening');
-    assert.ok(x<12 && x+w>12 && z<14 && z+d>14,'court is within the middle of the building');
-    const occupied=rooms.reduce((sum,room)=>{
-      const [u,v,rw,rd]=room.rect;
-      assert.ok(Math.min(u+rw,x+w)-Math.max(x,u)<0.002 || Math.min(v+rd,z+d)-Math.max(v,z)<0.002,room.id+' overlaps the court');
-      return sum+rw*rd;
-    },0);
-    assert.ok(Math.abs(occupied+w*d-(24-building.wall_t)*(28-building.wall_t))<0.002);
-    const pairs=apartmentDoorPairs(rooms);
-    for(const [a,b] of [['stair','lobby'],['east_foyer','lobby'],['west_foyer','lobby'],['court_passage','lobby'],['lift','court_passage']]) {
-      const door=rooms.find(r=>r.id===a).doors.find(dr=>dr.acs_door_pair?.peer_room_id===b);
-      assert.ok(pairs.has(door),'missing shared access '+a+' → '+b);
-    }
-    const passage=rooms.find(r=>r.id==='court_passage');
-    assert.equal(passage.doors.some(dr=>dr.id==='court_ground_door'),level.index===0,'court exit is on the ground only');
-    const sheet=renderGuestFloorSVG(projectArchitecturalLevel(architecture,level.index),building);
-    assert.ok(sheet.includes('data-courtyard-id="central_courtyard"') && sheet.includes('مفتوح للسماء'));
-    assert.ok(sheet.includes('data-width-m="24" data-depth-m="28"') && sheet.includes('ممر الفناء المشترك'));
-    if (building===rotated) assert.ok(sheet.includes('شمال') && sheet.includes('الشقة الشمالية'));
+// Run the JSON download and floor projection on the same live model reference,
+// using the shipped compiler and export functions from the headless test bundle.
+const root=fileURLToPath(new URL('../../',import.meta.url));
+const work=mkdtempSync(join(tmpdir(),'acs-guest-export-'));
+try {
+  const bundleFile=join(work,'browser-bundle.js');
+  execFileSync(process.execPath,['tests/phase3/lib/extract_browser_bundle.js'],{
+    cwd:root,env:{...process.env,ACS_BUNDLE:bundleFile},stdio:'pipe'
+  });
+  const api=new Function(readFileSync(bundleFile,'utf8')+
+    '\nreturn {projectEnvelope,compileArchitecture,visFloorPlan};')();
+  const brief=readFileSync(new URL('../fixtures/briefs/riyadh-apartment-ar.txt',import.meta.url),'utf8');
+  const selected=apartmentFromBrief(brief);
+  function sheetFor(building){
+    const arch=api.compileArchitecture(building,'bld_0',null,0);
+    return renderGuestFloorSVG(api.visFloorPlan(arch,1,'TECHNICAL','bld_0'),building);
   }
-  assert.equal(stairConnections(building).length,3,'four levels must have three real stair connections');
-  assert.equal(JSON.stringify(building),source,'compiling, selecting and projecting every floor must preserve the active revision byte for byte');
-}
-assert.ok(closed.levels.every(level=>!closed.floors[level.template].courtyards),'revision must preserve the previous model');
-console.log('PASS aligned open court and independent common routes to both apartments, lift and ground garden');
+  for(const authored of [false,true]){
+    if(authored)selected.floors.level_1.rooms[0].space_id='authored-lobby';
+    const serialized=JSON.stringify(selected);
+    const initialSheet=sheetFor(selected);
+    assert.equal(JSON.stringify(selected),serialized,'drawing a floor changed the selected model');
+    const envelope=JSON.parse(JSON.stringify(api.projectEnvelope(selected)));
+    assert.ok(JSON.stringify(selected)===serialized,'downloading JSON added export identifiers to the selected apartment');
+    assert.ok(envelope.levels.every(l=>l.id));
+    const room=envelope.floors.level_1.rooms[0];
+    assert.equal(room.space_id,authored?'authored-lobby':'bld_0.level_1.'+room.id);
+    assert.ok(envelope.relationships.length>0,'the exported model retains its relationship identifiers');
+    assert.equal(sheetFor(envelope),initialSheet,'exported room, opening and stair identifiers differ from the live drawing');
+    assert.equal(sheetFor(selected),initialSheet);
+  }
+  const initial=apartmentFromBrief('عمارة سكنية عرض المبنى ٢٤ متر وعمقه ٢٨ متر، أربعة أدوار شاملة الأرضي، شقتين في كل دور');
+  const withCourt=apartmentFromRevision('خل وسط العمارة فناء مفتوح للسماء وحافظ على عدد الشقق',initial);
+  const turnedCourt=apartmentFromRevision('خل المدخل شرقي',withCourt);
+  for(const building of [withCourt,turnedCourt]){
+    const serialized=JSON.stringify(building);
+    for(const level of building.levels){
+      const arch=api.compileArchitecture(building,'bld_0',null,0);
+      const actual=api.visFloorPlan(arch,level.index,'TECHNICAL','bld_0');
+      const drawing=renderGuestFloorSVG(actual,building);
+      const court=building.floors[level.template].courtyards[0];
+      const [,,cw,cd]=court.clear_rect;
+      assert.ok(drawing.includes('data-courtyard-id="central_courtyard"'));
+      assert.ok(drawing.includes(`data-courtyard-width-m="${cw}" data-courtyard-depth-m="${cd}"`));
+      assert.ok(drawing.includes('مفتوح للسماء') && drawing.includes('بين وجوه الجدران'));
+      assert.ok(drawing.includes('>شمال<'), 'orientation uses the fixed coordinate system after a facade change');
+      const forged=structuredClone(building);
+      const sourceFloor=forged.floors[level.template];
+      sourceFloor.courtyards[0].rect=[...sourceFloor.rooms[0].rect];
+      sourceFloor.courtyards[0].clear_rect=[...sourceFloor.rooms[0].rect];
+      assert.ok(!renderGuestFloorSVG(actual,forged).includes('data-courtyard-id='), 'an occupied room cannot acquire a courtyard label from metadata');
+    }
+    assert.equal(JSON.stringify(building),serialized, 'every-floor courtyard drawing must preserve source geometry');
+  }
+  assert.ok(initial.levels.every(level=>!initial.floors[level.template].courtyards), 'a courtyard revision preserves the prior project');
+} finally { rmSync(work,{recursive:true,force:true}); }
+console.log('PASS apartment JSON and every-floor courtyard plans preserve source, authored IDs, measured clear openings and actual orientation');

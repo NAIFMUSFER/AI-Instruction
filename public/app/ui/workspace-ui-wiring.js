@@ -5,7 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
-import { apartmentJoinery, disposeGuestJoinery, fitGuestCamera, guestFocus, guestPaving, keepGuestAboveGrade, visibleInGuestCut } from '../render/guest-presentation.mjs';
+import { apartmentJoinery, disposeGuestJoinery, fitGuestCamera, guestFocus, guestFrameScheduler, guestPaving, keepGuestAboveGrade, visibleInGuestCut, warehouseDockFinish } from '../render/guest-presentation.mjs';
 import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedWallBetween, archSummary, compileArchitecture, compileFls, compileMep, compileStructure, flsAudit, flsEgressFacts, flsElementById, flsRenderItems, flsRuleInputs, flsSummary, mepElementById, mepInterferences, mepRenderItems, mepRuleInputs, mepSummary, mepSystemById, structElementById, structGridToWorld, structRenderItems, structRuleInputs, structSummary, suggestStructuralGrid } from '../core/disciplines.js';
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
@@ -18,9 +18,11 @@ import { VIS_CAMERA_PRESETS, VIS_MATERIALS, VIS_MODES, VIS_STATE, VIS_THEMES, ap
 
 
 
-function setSun(elev,azi){const phi=THREE.MathUtils.degToRad(90-elev),th=THREE.MathUtils.degToRad(azi);
+function setSun(elev,azi){globalThis.window?.ACS?.requestGuestRender?.();
+  const phi=THREE.MathUtils.degToRad(90-elev),th=THREE.MathUtils.degToRad(azi);
   const v=new THREE.Vector3().setFromSphericalCoords(1,phi,th); su.sunPosition.value.copy(v);
-  sun.position.copy(v).multiplyScalar(120);}
+  sun.position.copy(v).multiplyScalar(sun.userData?.guestDistance??120);
+  if(sun.userData?.guestDistance)sun.position.add(sun.target.position);}
 setSun(52,135);
 
 const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.05,6000);
@@ -85,7 +87,7 @@ function ensureGround(cx,cz,size,siteRect){
 let model=null,registry={},floorsFound=new Set(),floorSel='all',doorMeshes=[],doorTexture=null,bounds={c:new THREE.Vector3(),r:60};
 function tagOf(o){let p=o;while(p){if(p.name&&p.name.indexOf('|')>=0)return p.name;p=p.parent;}return null;}
 
-let guestJoinery=null,guestCameraMode='exterior',guestFocusTarget=null;
+let guestBounce=null,guestJoinery=null,guestCameraMode='exterior',guestFocusTarget=null;
 let lastBuilding=null;
 function guestIsWarehouse(){return String(lastBuilding?.meta?.type).toLowerCase()==='warehouse';}
 function guestViewState(){
@@ -231,12 +233,19 @@ function setModel(data){
   const sc=sun.shadow.camera; const R=bounds.r*1.3;
   sc.left=-R;sc.right=R;sc.top=R;sc.bottom=-R;sc.near=1;sc.far=bounds.r*6; sc.updateProjectionMatrix();
   sun.target.position.copy(bounds.c); scene.add(sun.target);
-  ensureGround(bounds.c.x,bounds.c.z,bounds.r*10,
+  const groundSize=window.ACS?.guest?Math.max(600,bounds.r*44):bounds.r*10;
+  ensureGround(bounds.c.x,bounds.c.z,groundSize,
     [0,0,Number((data.site||{}).w)||0,Number((data.site||{}).d)||0]);
   buildFloors(); buildLayers(); updateVis();
   if(window.ACS?.guest){
-    sun.position.copy(su.sunPosition.value).multiplyScalar(Math.max(bounds.r*3,8)).add(bounds.c);
-    disposeGuestJoinery(guestJoinery);guestJoinery=apartmentJoinery(model,data);scene.add(guestJoinery);
+    sun.userData.guestDistance=Math.max(bounds.r*3,8);
+    sun.position.copy(su.sunPosition.value).multiplyScalar(sun.userData.guestDistance).add(bounds.c);
+    if(!guestBounce){
+      guestBounce=new THREE.HemisphereLight(0xf2f7ff,0xead5bf,1.05);
+      guestBounce.name='PQ_GUEST_BOUNCE';guestBounce.userData.presentation_context=true;scene.add(guestBounce);
+    }
+    disposeGuestJoinery(guestJoinery);
+    guestJoinery=guestIsWarehouse()?warehouseDockFinish(model,data):apartmentJoinery(model,data);scene.add(guestJoinery);
     guestView(guestIsWarehouse()?'cutaway':'exterior');
   }
   let n=0; model.traverse(o=>{if(o.isMesh)n++});
@@ -259,6 +268,7 @@ function setModel(data){
   if(typeof acsRecoverBlackViewport==='function'){
     if(window.__ACS_RR__) window.__ACS_RR__.cycles=0;
     requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      if(window.ACS?.guest&&window.ACS.guestRenderStats?.()?.owner==='hidden')return;
       try{
         const rec=acsRecoverBlackViewport();
         if(rec&&rec.plan&&rec.plan.needed){
@@ -436,7 +446,8 @@ function buildLayers(){const wrap=document.getElementById('layers');wrap.innerHT
     const nm=document.createElement('span');nm.className='nm';nm.textContent=LAYER_NAMES[l]||l;
     const ct=document.createElement('span');ct.className='ct';ct.textContent=r.meshes.length;
     row.append(cb,col,nm,ct);wrap.appendChild(row);});}
-function updateVis(){for(const l in registry){const r=registry[l];
+function updateVis(){globalThis.window?.ACS?.requestGuestRender?.();
+  for(const l in registry){const r=registry[l];
   const cut=window.ACS?.guest&&guestCameraMode==='cutaway',warehouse=cut&&guestIsWarehouse();
   r.meshes.forEach(m=>{m.visible=r.visible&&(floorSel==='all'||m.userData.floor===floorSel)&&(!cut||visibleInGuestCut(m.name,warehouse));});}
   if(guestJoinery)for(const mesh of guestJoinery.children){
@@ -451,6 +462,7 @@ const texRepeatEl=document.getElementById('texRepeat');
 const photoApplied=[];                       // لتراجع التطبيق
 function useDoorImage(file){const url=URL.createObjectURL(file);
   new THREE.TextureLoader().load(url,tex=>{
+    globalThis.window?.ACS?.requestGuestRender?.();
     tex.colorSpace=THREE.SRGBColorSpace; tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.anisotropy=8;
     doorTexture=tex; applyAllBtn.disabled=false;
     document.getElementById('doorbox').classList.add('hot');
@@ -709,6 +721,7 @@ function meshesOfRoom(fkey,rid,layers){
 }
 /* التطبيق الفوري: يغيّر المشهد الآن ويحفظ اللون في النموذج ليبقى بعد إعادة البناء */
 function applyFinish(tag, surface, hex, mesh){
+  globalThis.window?.ACS?.requestGuestRender?.();
   hex=normHex(hex); if(!hex) return 'لون غير صالح.';
   if(surface==='self'){
     if(!mesh) return 'لم يُحدَّد عنصر.';
@@ -1009,6 +1022,7 @@ let mode='orbit',tourT=0,real=false;
 const fly={on:false,t0:0,ms:1100,p0:new THREE.Vector3(),p1:new THREE.Vector3(),
            t0v:new THREE.Vector3(),t1v:new THREE.Vector3()};
 function flyTo(pos,target,ms){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(renderer.xr.isPresenting||walkState.active){ camera.position.copy(pos);
     orbit.target.copy(target); orbit.update(); return; }
   fly.p0.copy(camera.position); fly.p1.copy(pos);
@@ -1047,6 +1061,7 @@ function viewPose(m){
   return [new THREE.Vector3(c.x+r*1.45, c.y+r*0.80, c.z+r*1.45), c.clone()];
 }
 function setMode(m){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(window.ACS?.guest&&model&&['arch','bird','top','orbit'].includes(m)){
     guestView({arch:'street',bird:'aerial',top:'top',orbit:'exterior'}[m]);markView(m);return;
   }
@@ -1096,6 +1111,7 @@ const headLamp=new THREE.PointLight(0xfff2d8,0,26,2); scene.add(headLamp);
 
 const walkHUD=document.getElementById('walkHUD');
 function startWalk(){
+  globalThis.window?.ACS?.requestGuestRender?.();
   walkState.active=true; walkHUD.classList.add('on');
   orbit.enabled=false;
   const c=bounds.c;
@@ -1189,7 +1205,7 @@ drop.addEventListener('dragleave',()=>drop.style.display='none');
 addEventListener('drop',e=>{e.preventDefault();drop.style.display='none';
   const f=e.dataTransfer.files[0];if(f&&/^image\//.test(f.type))useDoorImage(f);});
 
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+addEventListener('resize',()=>{globalThis.window?.ACS?.requestGuestRender?.();camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
   /* updateStyle=false: الأبعاد من ورقة الأنماط (#app > canvas)، فلا يكتب
      three.js سمة style على الكانفس. */
   renderer.setSize(innerWidth,innerHeight,false);if(window.ACS?.guest&&model&&!walkState.active)guestFrame();});
@@ -1411,18 +1427,48 @@ function acsLegacyFrame(){
 
 /* The local route owns this loop. CSS-hidden work and background tabs do not
    keep submitting frames; private workspace entry does not import this route. */
-let acsLegacyActive=false;
+let acsRenderOwner='hidden',guestSuspended=false,guestContextLost=false,guestDraws=0;
+const guestFrames=guestFrameScheduler({
+  available:()=>acsRenderOwner==='guest',
+  moving:()=>walkState.active||fly.on||mode==='tour'||orbit.autoRotate,
+  paint:()=>{acsLegacyFrame();guestDraws++;},
+  schedule:fn=>requestAnimationFrame(fn),cancel:id=>cancelAnimationFrame(id)
+});
+window.ACS.requestGuestRender=guestFrames.request;
+window.ACS.guestRenderStats=()=>({owner:acsRenderOwner,pending:guestFrames.pending(),
+  draws:guestDraws,rendererFrames:renderer.info?.render?.frame??null});
 function syncLegacyRendering(){
-  const active=!document.hidden&&document.body.classList.contains('acs-entered')&&!document.body.classList.contains('acs-connected');
-  if(active===acsLegacyActive)return;
-  acsLegacyActive=active;renderer.setAnimationLoop(active?acsLegacyFrame:null);
+  const guestCovered=window.ACS.guest&&(document.body.classList.contains('acs-guest-fallback-active')||document.querySelector('#guestPlanDialog[open]'));
+  const active=!guestCovered&&!guestSuspended&&!guestContextLost&&!document.hidden&&document.body.classList.contains('acs-entered')&&!document.body.classList.contains('acs-connected');
+  const owner=!active?'hidden':window.ACS.guest?(renderer.xr.isPresenting?'guest-xr':'guest'):'legacy';
+  if(owner===acsRenderOwner)return;
+  guestFrames.stop();acsRenderOwner=owner;
+  renderer.setAnimationLoop(owner==='legacy'||owner==='guest-xr'?acsLegacyFrame:null);
   window.ACS.legacyRenderActive=active;
+  if(owner==='guest')guestFrames.request();
 }
 const acsLegacyVisibility=new MutationObserver(syncLegacyRendering);
 acsLegacyVisibility.observe(document.body,{attributes:true,attributeFilter:['class']});
+const guestDialogVisibility=new MutationObserver(syncLegacyRendering);
+guestDialogVisibility.observe(document.body,{subtree:true,attributes:true,attributeFilter:['open']});
 document.addEventListener('visibilitychange',syncLegacyRendering);
-window.addEventListener('pagehide',()=>{renderer.setAnimationLoop(null);window.ACS.legacyRenderActive=false;});
-window.addEventListener('pageshow',()=>{acsLegacyActive=false;syncLegacyRendering();});
+window.addEventListener('pagehide',()=>{guestSuspended=true;syncLegacyRendering();});
+window.addEventListener('pageshow',()=>{guestSuspended=false;syncLegacyRendering();});
+renderer.domElement.addEventListener('webglcontextlost',()=>{guestContextLost=true;syncLegacyRendering();});
+renderer.domElement.addEventListener('webglcontextrestored',()=>{guestContextLost=false;syncLegacyRendering();});
+renderer.xr.addEventListener('sessionstart',syncLegacyRendering);
+renderer.xr.addEventListener('sessionend',syncLegacyRendering);
+orbit.addEventListener?.('change',guestFrames.request);
+for(const event of ['input','change','click','pointerdown','pointerup','keydown','keyup']){
+  document.addEventListener(event,guestFrames.request,{capture:true,passive:true});
+}
+// Late image/texture loads arrive after their initiating control event.
+if(THREE.DefaultLoadingManager){
+  const previous=THREE.DefaultLoadingManager.onProgress;
+  THREE.DefaultLoadingManager.onProgress=function(...args){
+    try{return previous?.apply(this,args);}finally{guestFrames.request();}
+  };
+}
 syncLegacyRendering();
 
 /* ========================= الواجهة / التبويبات / الدخول ========================= */
@@ -2490,7 +2536,7 @@ document.getElementById('loadWarehouse').onclick=()=>{
   /* إظهار/إخفاء الطبقة الإنشائية — حالة عرض بحتة لا تدخل بصمة المراجعة */
   window.ACS.structuralLayerVisible=(on)=>{ const r=registry&&registry.STRUCT;
     if(!r) return false;
-    if(on!==undefined){ r.visible=!!on; r.meshes.forEach(m=>{m.visible=!!on;}); }
+    if(on!==undefined){ globalThis.window?.ACS?.requestGuestRender?.(); r.visible=!!on; r.meshes.forEach(m=>{m.visible=!!on;}); }
     return !!r.visible; };
   /* أنظمة الكهروميكانيك — للمطوّر فقط (Console). تمثيل فقط: لا تصميم ولا حساب
      أحمال/تدفّق/ضغط ولا تحجيم ولا كفاية خدمة ولا مطابقة كود. */
@@ -2521,7 +2567,7 @@ document.getElementById('loadWarehouse').onclick=()=>{
   window.ACS.mepLayerVisible=(disc,on)=>{ const key='MEP_'+String(disc||'').toUpperCase();
     const r=registry&&registry[key];
     if(!r) return false;
-    if(on!==undefined){ r.visible=!!on; r.meshes.forEach(x=>{x.visible=!!on;}); }
+    if(on!==undefined){ globalThis.window?.ACS?.requestGuestRender?.(); r.visible=!!on; r.meshes.forEach(x=>{x.visible=!!on;}); }
     return !!r.visible; };
   /* الحريق وسلامة الأرواح — للمطوّر فقط (Console). تمثيل وطوبولوجيا فقط:
      لا تصميم ولا محاكاة ولا تغطية ولا هيدروليك ولا مطابقة كود، والغياب ليس مخالفة. */
@@ -2554,7 +2600,7 @@ document.getElementById('loadWarehouse').onclick=()=>{
   window.ACS.flsLayerVisible=(layer,on)=>{ const key=String(layer||'').toUpperCase();
     const r=registry&&registry[key.indexOf('FLS_')===0?key:('FLS_'+key)];
     if(!r) return false;
-    if(on!==undefined){ r.visible=!!on; r.meshes.forEach(x=>{x.visible=!!on;}); }
+    if(on!==undefined){ globalThis.window?.ACS?.requestGuestRender?.(); r.visible=!!on; r.meshes.forEach(x=>{x.visible=!!on;}); }
     return !!r.visible; };
   /* ---- عرض بصري وتقديم: تصوير يحفظ الهندسة. لا تعديل هندسي إطلاقاً ---- */
   let _visCache=null, _visKey=null;
@@ -2712,6 +2758,7 @@ document.getElementById('loadWarehouse').onclick=()=>{
   window.ACS.clearClashHighlight=()=>{ _coordClearOverlay(); return true; };
   const _coordOverlay={active:null,targets:[],marker:null};
   function _coordClearOverlay(){
+    globalThis.window?.ACS?.requestGuestRender?.();
     _coordOverlay.targets.forEach(t=>{ t.mesh.visible=t.visible; });
     _coordOverlay.targets=[];
     if(_coordOverlay.marker&&window.__ACS_DEL_MARKER__) window.__ACS_DEL_MARKER__(_coordOverlay.marker);

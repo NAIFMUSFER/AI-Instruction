@@ -429,6 +429,7 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
       +'<div class="guest-fallback-actions" aria-label="أمثلة محلية"><button type="button" data-plan="apartment">عمارة 20 × 25 م</button><button type="button" data-plan="villa">فيلا</button><button type="button" data-plan="warehouse">مستودع</button><label for="guestFallbackFloor">الطابق</label><select id="guestFallbackFloor"></select></div></div>'
       +'<section id="guestApartmentSheet"><p>٣ أدوار · شقتان في كل دور</p>'
       +'<div id="guestInlinePlan" tabindex="0" role="region" aria-label="معاينة مخطط الدور"><img id="guestApartmentDrawing" decoding="async" alt=""></div>'
+      +'<a id="guestFallbackNative" class="guest-native-sample" rel="ar" href="/guest-plans/apartment-20x25.usdz" aria-label="فتح مجسّم المثال على الآيفون"><img src="/guest-plans/apartment-20x25-preview.jpg" width="62" height="44" alt=""></a>'
       +'<div class="guest-fallback-actions"><button type="button" id="guestSheetZoom" aria-pressed="false" aria-controls="guestInlinePlan">تكبير المخطط</button><a id="guestFullSheet" target="_blank" rel="noopener" aria-label="فتح المخطط الكامل وجدول الغرف في علامة تبويب جديدة">المخطط وجدول الغرف</a><a id="guestSheetDownload" download>تنزيل المخطط</a></div></section>'
       +'<div id="guestReferenceSheet">'
       +'<svg id="acsGuestFallbackPlan" xmlns="http://www.w3.org/2000/svg" role="img"></svg>'

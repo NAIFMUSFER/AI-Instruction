@@ -17,7 +17,8 @@ async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
       dataset: {}, classList: { add() {}, remove() {} },
       setAttribute() {}, closest() { return null; }, before() {}, focus() {},
       addEventListener(name, fn) { listeners[name] = fn; },
-      click() { listeners.click?.(); },
+      dispatch(name, event) { listeners[name]?.(event); },
+      click() { this.dispatch('click'); },
     };
     nodes.set(id, node);
     return node;
@@ -31,8 +32,12 @@ async function guest(recovery, interact, scope = 'acs_guest_project_v1') {
     addEventListener(name, fn) { if (name === 'DOMContentLoaded') boot = fn; },
     removeEventListener() {},
   };
+  let model = null;
   const ACS = {
-    guest: true, showExample() {}, setModel() {},
+    guest: true,
+    exportModel: () => model,
+    showExample() { this.setModel({ meta: { acs_apartment: { source: 'synthetic_sample' } }, site: { w: 20, d: 25 } }); },
+    setModel(value) { model = value; this.guestWorkspace?.modelChanged(); },
     persistence: { recover: () => new Promise(resolve => { release = resolve; }) },
   };
   vm.runInNewContext(source, { document, window: { addEventListener: (name, callback) => events.set(name, callback), ACS, ACS_AUTH: { storageScope: () => scope } }, innerWidth: 1440, setTimeout, clearTimeout });
@@ -79,6 +84,24 @@ function verifyWarehouseSelection() {
   const studio = await guest({ ok: false, code: 'NO_RECORDS' }, false, 'acs_guest_apartment_20x25_v1');
   assert.equal(studio.element('guestSignin').href, '/?signin=1&example=apartment-20x25');
   assert.equal(studio.element('guestStorageNote').hidden, false);
+  // Native Quick Look always serves a fixed file. A copied marker or retained link
+  // cannot authorize a changed room/width, even between opening the menu and tapping.
+  const options = studio.element('guestOptions'), preview = studio.element('guestNativeSample');
+  options.open = true; options.dispatch('toggle');
+  assert.equal(preview.hidden, false);
+  let prevented = false;
+  preview.dispatch('click', { preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, false);
+  studio.ACS.exportModel().site.w = 22;
+  preview.dispatch('click', { preventDefault: () => { prevented = true; } });
+  assert.equal(prevented, true);
+  assert.equal(preview.hidden, true);
+  options.dispatch('toggle'); assert.equal(preview.hidden, true);
+  studio.ACS.guestWorkspace.sample('residential'); options.dispatch('toggle'); assert.equal(preview.hidden, false);
+  const altered = structuredClone(studio.ACS.exportModel());
+  altered.site.d = 28;
+  studio.ACS.setModel(altered); options.dispatch('toggle'); assert.equal(preview.hidden, true);
+  studio.ACS.guestWorkspace.sample('residential');
   studio.element('genText').click();
   studio.emit('acs:local-generation', { ok: false, message: 'لم يكتمل الوصف' });
   assert.equal(studio.element('acsGuestStatus').textContent, 'عمارة تجريبية');

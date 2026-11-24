@@ -2957,6 +2957,7 @@ const scene=new THREE.Scene();
 /* علامة تصحيح لتقاطع تعارض — كائن مؤقّت في المشهد فقط. لا تدخل النموذج،
    ولا تُخبز في أي تصدير GLB، ولا تُحتسب في أي بصمة مراجعة. */
 window.__ACS_ADD_MARKER__=(m)=>{
+  globalThis.window?.ACS?.requestGuestRender?.();
   try{
     const g=new THREE.Mesh(new THREE.BoxGeometry(Math.max(m.ex,0.02),Math.max(m.ey,0.02),
       Math.max(m.ez,0.02)),
@@ -2969,7 +2970,8 @@ window.__ACS_ADD_MARKER__=(m)=>{
     scene.add(g);
     return g;
   }catch(e){ return null; } };
-window.__ACS_DEL_MARKER__=(g)=>{ try{ if(g&&g.parent) g.parent.remove(g);
+window.__ACS_DEL_MARKER__=(g)=>{
+  globalThis.window?.ACS?.requestGuestRender?.(); try{ if(g&&g.parent) g.parent.remove(g);
   if(g&&g.geometry) g.geometry.dispose(); if(g&&g.material) g.material.dispose(); }catch(e){} };
 const pmrem=new THREE.PMREMGenerator(renderer);
 scene.environment=pmrem.fromScene(new RoomEnvironment(),0.04).texture;
@@ -2993,6 +2995,7 @@ function _visColorOf(o){
   const m=VIS_MATERIALS[o.material];
   return m?m.base_color:'#cccccc'; }
 function _visRestore(){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(VIS_ORIGINAL){ VIS_ORIGINAL.forEach(e=>{
     try{ e.mesh.material=e.material; e.mesh.visible=e.visible; }catch(err){} });
     VIS_ORIGINAL=null; }
@@ -3003,6 +3006,7 @@ function _visRestore(){
   try{ renderer.clippingPlanes=[]; }catch(err){}
   VIS_STATE=null; }
 function applyVisualMode(mode,opts){
+  globalThis.window?.ACS?.requestGuestRender?.();
   if(!__ACS_LATE.lastBuilding||!__ACS_LATE.model) return null;
   _visRestore();
   opts=Object.assign({},opts||{},{mode:mode});

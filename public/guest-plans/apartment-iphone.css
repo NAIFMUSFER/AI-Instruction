@@ -1,0 +1,15 @@
+:root { color-scheme: light; background: #f5f3ed; color: #21352d; font-family: system-ui, sans-serif; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+main { max-width: 640px; margin: 0 auto; padding: clamp(20px,5vw,44px) 16px max(28px,env(safe-area-inset-bottom)); }
+header { position: relative; padding-inline-end: 56px; }
+.brand { position: absolute; inset-inline-end: 0; inset-block-start: .4rem; font-weight: 760; letter-spacing: .09em; color: #426653; }
+h1 { margin: 0; font-size: clamp(27px,5vw,40px); }
+header p { margin: .2em 0 1em; color: #495c52; }
+.quick-look { display: block; overflow: hidden; border-radius: 16px; background: #234e40; text-decoration: none; color: white; }
+.quick-look img { display: block; width: 100%; height: auto; }
+.quick-look::after { content: attr(aria-label); min-height: 48px; display: grid; place-items: center; padding: 8px 14px; font-weight: 700; }
+.note { margin: 15px 0; color: #495c52; font-size: 15px; line-height: 1.75; }
+nav { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+nav a { display: inline-flex; align-items: center; min-height: 44px; color: #234e40; text-underline-offset: 4px; }
+a:focus-visible { outline: 3px solid #16688c; outline-offset: 3px; }

@@ -160,3 +160,11 @@ body.acs-guest-fallback-active::after{display:none!important}
   #guestApartmentDrawing{max-height:none}
 }
 #acsGuestFallback #guestFallbackSignin{background:transparent;color:#cbd9e8;font-weight:400}
+
+#acsGuestBanner .guest-native-sample, #acsGuestFallback .guest-native-sample {
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px;
+  padding: 3px 5px 3px 12px; color: #183d30; background: #e5ebe1;
+  border-radius: 8px; text-decoration: none; font-weight: 650;
+}
+.guest-native-sample::after { content: attr(aria-label); }
+.guest-native-sample img { display: block; width: 62px; height: 44px; object-fit: cover; border-radius: 5px; }

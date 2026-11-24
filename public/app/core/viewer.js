@@ -5,7 +5,7 @@
    ============================================================ */
 import { __ACS_SHARED } from '../shared-state.js';
 import { __ACS_LATE } from '../late-bindings.js';
-import { apartmentDoorPairs } from './local-apartment.mjs';
+import { apartmentDoorPairs } from './apartment-door-pairs.mjs';
 import { hasStairForms, resolveStairGeometry, stairConnections } from './stairs.mjs';
 
 import * as THREE from 'three';
@@ -2142,11 +2142,11 @@ function activeBuilding(data){
   return a?a.building:null;
 }
 /* غلاف تصدير: هرمية المشروع + حقول المرحلة 1 في مكانها (توافق كامل للخلف) */
-function projectEnvelope(b){
-  // Project conversion enriches rooms and levels with stable IDs. Apply those
-  // defaults to the serialized snapshot without editing the open guest model.
-  if(isBuildingModel(b)) b=JSON.parse(JSON.stringify(b));
-  const pr=toProject(b); if(!pr) return b;
+function projectEnvelope(selected){
+  if(!isBuildingModel(selected)&&!isProjectModel(selected))return selected;
+  // toProject fills legacy identifiers in place. Enrich the download's copy.
+  const b=typeof structuredClone==='function'?structuredClone(selected):JSON.parse(JSON.stringify(selected));
+  const pr=toProject(b);
   const bt=String((b.meta||{}).type||'residential').toLowerCase();
   const env=Object.assign({}, b);                       // كل حقول المرحلة 1 كما هي
   env.schema=ACS_PROJECT_SCHEMA;

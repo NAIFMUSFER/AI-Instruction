@@ -204,6 +204,7 @@ export function installWorkspaceViewportSelection(deps={}) {
   const previousSelectHook = window.__ACS_ON_SELECT;
 
   function clearHighlight() {
+    window.ACS?.requestGuestRender?.();
     for (const h of helpers) {
       try { scene.remove(h); } catch (e) {}
       try { if (h.geometry && h.geometry.dispose) h.geometry.dispose(); } catch (e) {}

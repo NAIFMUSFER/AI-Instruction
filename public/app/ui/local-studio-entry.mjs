@@ -4,11 +4,12 @@ function loadLocalStudio(){
   if(loading)return loading;
   loading=(async()=>{
     await import('../core/stairs.mjs');
+    await import('../core/apartment-door-pairs.mjs');
     await import('../core/context-details.mjs');
-    await import('../core/local-apartment.mjs');
     await import('../core/viewer.js');
     await import('../core/standards.js');
     await import('../core/roof.mjs');
+    await import('../core/local-apartment.mjs');
     await import('../core/disciplines.js');
     await import('../generated/runtime.js');
     await import('../generated/authoring.js');

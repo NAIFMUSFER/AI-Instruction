@@ -10,7 +10,9 @@ const units = {
 const apartmentNames = {N:'الشقة الشمالية',E:'الشقة الشرقية',S:'الشقة الجنوبية',W:'الشقة الغربية'};
 function unitName(model,unit) {
   const edge=model.meta?.acs_apartment?.unit_edges?.[unit];
-  return apartmentNames[edge] || units[unit].name;
+  const name=model.meta?.acs_apartment?.unit_labels?.[unit];
+  const authoredName=typeof name==='string' && name.trim() && name.length<=80 ? name.trim() : null;
+  return apartmentNames[edge] || authoredName || units[unit].name;
 }
 const arabic = /[\u0600-\u06ff]/;
 const metric = new Intl.NumberFormat('ar-SA-u-nu-latn', { maximumFractionDigits: 2 });
@@ -20,6 +22,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' }[c]
 ));
 const roomMeasure = r => `${fmt(r.w)} × ${fmt(r.d)} م`;
+const validRect = rect => Array.isArray(rect) && rect.length===4 && rect.every(Number.isFinite) && rect[2]>0 && rect[3]>0;
 function levelLabel(level) {
   if (level?.name && /^(الأرضي|الأول|الثاني|الثالث|الرابع|الخامس)$/.test(level.name)) return `الدور ${level.name}`;
   return level?.name || ({0:'الدور الأرضي',1:'الدور الأول',2:'الدور الثاني'}[level?.index] ?? `الدور ${fmt(level?.index ?? 0)}`);
@@ -40,7 +43,18 @@ function floorData(packet, model) {
       return { ...room, displayName: String(source.name || room.name || room.space_id), unit };
     })
     .sort((a,b) => a.z - b.z || a.x - b.x || a.displayName.localeCompare(b.displayName, 'ar'));
-  return {level,spaces,hasUnits,courtyards};
+  const bounds=axisBounds(spaces);
+  const emptyCourtyards=courtyards.filter(court=>{
+    const [x,z,w,d]=court.rect;
+    return x>=bounds.x0-0.001 && z>=bounds.z0-0.001 && x+w<=bounds.x0+bounds.width+0.001 && z+d<=bounds.z0+bounds.depth+0.001 &&
+      spaces.every(room=>Math.min(x+w,room.x+room.w)-Math.max(x,room.x)<=0.001 ||
+        Math.min(z+d,room.z+room.d)-Math.max(z,room.z)<=0.001);
+  }).map(court=>{
+    const [x,z,w,d]=court.rect, clear=court.clear_rect;
+    const inside=validRect(clear) && clear[0]>=x && clear[1]>=z && clear[0]+clear[2]<=x+w+0.001 && clear[1]+clear[3]<=z+d+0.001;
+    return {...court,drawRect:inside?clear:court.rect,clearDimensions:inside};
+  });
+  return {level,spaces,hasUnits,courtyards:emptyCourtyards};
 }
 function line(x1, y1, x2, y2, color, width, attrs = '') {
   return `<line x1="${q(x1)}" y1="${q(y1)}" x2="${q(x2)}" y2="${q(y2)}" stroke="${color}" stroke-width="${q(width)}" ${attrs}/>`;
@@ -116,10 +130,10 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   const x = value => left+(value-b.x0)*scale, y = value => top+(value-b.z0)*scale;
   const groups=[],labels=[];
   for(const court of courtyards) {
-    const [cx,cz,cw,cd]=court.rect;
+    const [cx,cz,cw,cd]=court.drawRect;
     const title=court.name || 'فناء مفتوح للسماء';
     const center=x(cx+cw/2), middle=y(cz+cd/2);
-    groups.push(`<g data-courtyard-id="${esc(court.id)}"><title>${esc(title)}</title><rect x="${q(x(cx))}" y="${q(y(cz))}" width="${q(cw*scale)}" height="${q(cd*scale)}" fill="#eff3e4"/></g>`);
+    groups.push(`<g data-courtyard-id="${esc(court.id)}" data-courtyard-width-m="${q(cw)}" data-courtyard-depth-m="${q(cd)}"><title>${esc(title)}</title><rect x="${q(x(cx))}" y="${q(y(cz))}" width="${q(cw*scale)}" height="${q(cd*scale)}" fill="#eff3e4"/></g>`);
     labels.push(label(center,middle-3,'فناء',14,{color:'#41624c',weight:700})+
       label(center,middle+12,'مفتوح للسماء',11,{color:'#41624c'}));
   }
@@ -149,7 +163,7 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   measures+=line(left-14,top,left-14,bottom,dim,1)+line(left-19,top,left-8,top,dim,1)+line(left-19,bottom,left-8,bottom,dim,1);
   measures+=`<g transform="translate(${q(left-25)} ${q(top+dh/2)}) rotate(-90)">${label(0,0,`${fmt(b.depth)} م`,16)}</g>`;
   // North is drawn only when explicitly declared for this local-coordinate plan.
-  if(model.meta?.north==='-Z' || model.meta?.acs_apartment?.street_edge==='N'){
+  if(model.meta?.north==='-Z'){
     measures+=`<path d="M 682 ${top+24} v -32 l -5 8 m 5 -8 l 5 8" stroke="#264447" stroke-width="2" fill="none"/>`+label(682,top+44,'شمال',14);
   }
   const barLimit=Math.min(b.width/3,b.depth/3);
@@ -181,8 +195,8 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
       end+=19;index+=label(360,end,`امتداد محاور الجدران ${fmt(grid.width)} × ${fmt(grid.depth)} م`,14);
     }
     for(const court of courtyards) {
-      const [,,w,d]=court.rect;
-      end+=22;index+=label(360,end,`${court.name || 'فناء مفتوح للسماء'} · ${fmt(w)} × ${fmt(d)} م على محاور الجدران`,14);
+      const [,,w,d]=court.drawRect;
+      end+=22;index+=label(360,end,`${court.name || 'فناء مفتوح للسماء'} · ${fmt(w)} × ${fmt(d)} م ${court.clearDimensions?'بين وجوه الجدران':'على محاور الجدران'}`,14);
     }
     end+=22;index+=label(360,end,onWallAxes?'أبعاد الغرف ومساحاتها محسوبة على محاور الجدران، قبل خصم سماكاتها.':'أبعاد الفراغات ومساحاتها محسوبة من حدودها في النموذج.',14);
     end+=20;index+=label(360,end,'الخط المتقطع باب، والخط الأزرق نافذة.',14);end+=22;

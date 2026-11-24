@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const PW = require('../../tools/pw_chromium.js');
-const { serve, menu, runtime, cameraControl, modelGLB, origin } = require('./test_public_apartment_journey.cjs');
+const { serve, menu, runtime, cameraControl, modelGLB, origin, sourceSHA, sourceTreeDirty } = require('./test_public_apartment_journey.cjs');
 
 const output = path.resolve(process.env.ACS_APARTMENT_EVIDENCE || 'logs/public-apartment', 'variations');
 const cases = [
@@ -35,11 +35,21 @@ function overlap(a,b){
   return Math.max(0,Math.min(a[0]+a[2],b[0]+b[2])-Math.max(a[0],b[0]))
     * Math.max(0,Math.min(a[1]+a[3],b[1]+b[3])-Math.max(a[1],b[1]));
 }
+function reachable(adj,start,allowed){
+  const visited=new Set(),pending=[start];
+  while(pending.length){
+    const id=pending.pop();
+    if(visited.has(id)||!allowed.has(id))continue;
+    visited.add(id);
+    for(const next of adj.get(id)||[])if(allowed.has(next))pending.push(next);
+  }
+  return visited;
+}
 function inspect(model,c){
   const levels=model.levels.filter(level=>level.kind!=='roof');
   assert.equal(levels.length,c.floors,'occupied levels');
   const expectedEdges=[0,0,c.width,c.depth], floorResults=[];
-  let voidRect, entrance;
+  let voidRect, footprintVoid, entrance;
   for(const [i,level] of levels.entries()){
     const floor=model.floors[level.template], {rooms}=floor;
     const xs=rooms.flatMap(r=>[r.rect[0],r.rect[0]+r.rect[2]]);
@@ -50,12 +60,16 @@ function inspect(model,c){
     const courts=floor.courtyards||[];
     assert.equal(courts.length,c.courtyard?1:0,'open courtyards on storey '+i);
     if(c.courtyard){
-      const rect=courts[0].rect;
+      const rect=courts[0].clear_rect,footprint=courts[0].rect;
+      assert.equal(courts[0].open_to_sky,true);
+      assert.ok(Array.isArray(rect)&&rect.length===4,'courtyard must declare its actual clear opening');
       assert.ok(rect.every(Number.isFinite)&&rect[2]>1&&rect[3]>1);
       assert.ok(rect[0]>0 && rect[1]>0 && rect[0]+rect[2]<c.width && rect[1]+rect[3]<c.depth,'courtyard inside perimeter');
       assert.ok(rooms.every(r=>overlap(r.rect,rect)<.01),'occupied floor intersects the opening');
       if(voidRect)assert.deepEqual(rect,voidRect,'courtyard must align vertically');
-      voidRect=rect;
+      if(footprintVoid)assert.deepEqual(footprint,footprintVoid,'reserved courtyard footprint must align vertically');
+      assert.deepEqual(model.meta.acs_apartment.courtyard.rect_m,rect,'floor opening and declared clear dimensions must agree');
+      voidRect=rect;footprintVoid=footprint;
     }
     const doors = rooms.flatMap(room=>(room.doors||[]).map(door=>({room,door,point:opening(room,door)})));
     const adj = new Map(rooms.map(r=>[r.id,new Set()]));
@@ -66,25 +80,31 @@ function inspect(model,c){
       if(peer){
         adj.get(room.id).add(peer.room.id);
       }else{
-        assert.ok(i===0&&c.courtyard&&room.role==='corridor'&&!room.unit_id,'unpaired door on storey '+i+': '+room.id+'/'+door.id);
-        const [cx,cz,cw,cd]=voidRect;
+        assert.ok(i===0&&c.courtyard&&room.id==='courtyard_gallery_north'&&door.id==='court_ground_door'&&room.role==='corridor'&&!room.unit_id,'unpaired door on storey '+i+': '+room.id+'/'+door.id);
+        const [cx,cz,cw,cd]=footprintVoid;
         const dx={E:.02,W:-.02}[door.edge]||0, dz={S:.02,N:-.02}[door.edge]||0;
         assert.ok(point[0]+dx>cx && point[0]+dx<cx+cw && point[1]+dz>cz && point[1]+dz<cz+cd,'ground exit opens into courtyard');
+        const step=h+.02,[clearX,clearZ,clearW,clearD]=voidRect;
+        const px=point[0]+({E:step,W:-step}[door.edge]||0),pz=point[1]+({S:step,N:-step}[door.edge]||0);
+        assert.ok(px>clearX&&px<clearX+clearW&&pz>clearZ&&pz<clearZ+clearD,'garden door must reach actual clear space beyond its wall thickness');
         exteriorCourtDoors++;
       }
     }
     assert.equal(exteriorCourtDoors,i===0&&c.courtyard?1:0);
     const stair=rooms.find(r=>r.role==='stairs'), lobby=rooms.find(r=>r.role==='lobby');
-    assert.ok(stair&&lobby&&adj.get(stair.id).has(lobby.id),'stair opens onto landing');
+    assert.ok(stair&&lobby,'common stair and lobby must exist on every occupied floor');
+    const shared=new Set(rooms.filter(room=>!room.unit_id).map(room=>room.id));
+    const commonAccess=reachable(adj,lobby.id,shared);
+    assert.equal(commonAccess.size,shared.size,'all shared rooms must be connected without crossing a private apartment');
+    assert.ok(commonAccess.has(stair.id),'stair landing must be reachable through shared circulation');
     if(i<levels.length-1)assert.ok(stair.objects?.some(o=>o.form==='u_return' && o.stair.target_level_index===levels[i+1].index),'stair flight reaches the next floor');
     const entries=rooms.filter(r=>r.role==='entry');
     assert.equal(entries.length,2,'apartment entrances per floor');
     assert.equal(new Set(entries.map(r=>r.unit_id)).size,2);
     for(const entry of entries){
-      assert.ok(adj.get(lobby.id).has(entry.id),'apartment accessible from common landing');
+      assert.ok([...adj.get(entry.id)].some(id=>commonAccess.has(id)),'each apartment entrance must be accessible from the common landing through shared circulation');
       const unit=rooms.filter(r=>r.unit_id===entry.unit_id);
-      const allowed=new Set(unit.map(r=>r.id)), visited=new Set([entry.id]), queue=[entry.id];
-      while(queue.length)for(const next of adj.get(queue.pop()))if(allowed.has(next)&&!visited.has(next)){visited.add(next);queue.push(next);}
+      const allowed=new Set(unit.map(r=>r.id)),visited=reachable(adj,entry.id,allowed);
       assert.equal(visited.size,unit.length,'rooms must be accessible within '+entry.unit_id);
       assert.equal(unit.filter(r=>r.role==='bedroom'&&r.windows?.length).length,3,'daylit bedrooms');
     }
@@ -165,12 +185,12 @@ async function plan(page,c,dir){
   await page.locator('#guestPlanClose').click();await dialog.waitFor({state:'hidden'});
 }
 async function run(browser,width){
-  const dir=path.join(output,String(width));fs.mkdirSync(dir,{recursive:true});
+  const dir=path.join(output,String(width)+'-'+sourceSHA.slice(0,12));fs.mkdirSync(dir,{recursive:true});
   const height=width===393?852:900, denied=[], errors=[];
   const ctx=await browser.newContext({viewport:{width,height},hasTouch:width===393,isMobile:width===393,
     deviceScaleFactor:1,serviceWorkers:'block',acceptDownloads:true});
   ctx.setDefaultTimeout(45000);
-  const report={viewport:{width,height},browser:browser.version(),origin,cases:[],result:'INCOMPLETE'};
+  const report={sourceSHA,sourceTreeDirty,viewport:{width,height},browser:browser.version(),origin,cases:[],result:'INCOMPLETE'};
   let page,dirNow=dir,previous;
   try{
     await serve(ctx,denied);
@@ -197,7 +217,7 @@ async function run(browser,width){
       else if(previous)assert.notEqual(project,previous.project,'new independent guest project');
       const build=await page.evaluate(()=>window.ACS_BUILD_INFO?.git_sha||null);
       if(process.env.ACS_APARTMENT_LIVE==='1')assert.equal(build,process.env.ACS_VERIFY_EXPECT_SHA);
-      const row={name:c.name,request:c.text,project,build};report.cases.push(row);
+      const row={name:c.name,request:c.text,project,build,sourceSHA};report.cases.push(row);
       await submit(page,c);
       const bytes=await download(page,()=>menu(page,'guestExport'),dirNow,'model.json');
       const model=JSON.parse(bytes), active=await page.evaluate(()=>window.ACS.exportModel());
@@ -244,8 +264,8 @@ async function run(browser,width){
         await shot(page,dirNow,'interior.png');
       }
       await plan(page,c,dirNow);
-      if(width===1440)await modelGLB(page,row,{directory:dirNow,filename:'building.glb',width:c.width,depth:c.depth,floors:c.floors});
-      assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),active,'opening plan did not alter model');
+      if(width===1440)await modelGLB(page,row,{directory:dirNow,filename:'building.glb',width:c.width,depth:c.depth,floors:c.floors,courtyardRect:row.voidRect});
+      assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),active,'plan and GLB export did not alter the selected source model');
       if(c.edit)assert.notEqual(row.modelHash,previous.modelHash,'an edit changed exported design');
       previous=row;
       write(dirNow,'measurements.json',row);

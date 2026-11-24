@@ -226,5 +226,126 @@
       "tools/build_guest_apartment_plans.py",
       "tests/remediation/test_guest_floor_plan.mjs"
     ]
+  },
+  {
+    "path": "assets/guest/apartment-20x25.usdz.gz",
+    "purpose": "Verified compressed USDZ and technical receipt for the public sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ],
+    "generated_from": [
+      "public/app/core/local-apartment.mjs",
+      "acs_compiler.py",
+      "tools/guest_apartment_usdz.mjs",
+      "tools/build_guest_apartment_usdz.py"
+    ]
+  },
+  {
+    "path": "assets/guest/apartment-20x25.usdz.json",
+    "purpose": "Verified compressed USDZ and technical receipt for the public sample.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ],
+    "generated_from": [
+      "public/app/core/local-apartment.mjs",
+      "acs_compiler.py",
+      "tools/guest_apartment_usdz.mjs",
+      "tools/build_guest_apartment_usdz.py"
+    ]
+  },
+  {
+    "path": "tools/guest_apartment_usdz.mjs",
+    "purpose": "Build the Apple viewer asset from public model geometry and verify package contents.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "tools/build_guest_apartment_usdz.py",
+    "purpose": "Build the Apple viewer asset from public model geometry and verify package contents.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-iphone.html",
+    "purpose": "Open the public apartment in native AR Quick Look on a supported device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-iphone.css",
+    "purpose": "Open the public apartment in native AR Quick Look on a supported device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "tests/remediation/test_guest_quicklook.py",
+    "purpose": "Open the public apartment in native AR Quick Look on a supported device.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ]
+  },
+  {
+    "path": "public/guest-plans/apartment-20x25-preview.jpg",
+    "purpose": "Offline camera view rendered from the public sample GLB.",
+    "depth": "selected",
+    "risk": "medium",
+    "findings": [
+      "GUEST-QUICK-LOOK"
+    ],
+    "tests": [
+      "tests/remediation/test_guest_quicklook.py",
+      "tools/build_guest_apartment_usdz.py --check"
+    ],
+    "generated_from": [
+      "public/app/core/local-apartment.mjs",
+      "acs_compiler.py",
+      "Blender Cycles (offline still)"
+    ]
   }
 ]

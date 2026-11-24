@@ -183,6 +183,38 @@ change(pairLeaves[0].name,'self','#906c46',pairLeaves[0]);
 assert.equal(pairA.doors[0].color,'#906c46');assert.equal(pairB.doors[0].color,'#906c46');
 console.log('PASS selected physical leaf finish persists on both matched canonical host records');
 
+const {guestFrameScheduler}=await import('../../public/app/render/guest-presentation.mjs');
+assert.equal(typeof guestFrameScheduler,'function','a static public model must stop submitting frames');
+{
+ let available=true,moving=false,drawn=0,sequence=0,damping=0;
+ const callbacks=new Map();
+ const q=guestFrameScheduler({available:()=>available,moving:()=>moving,
+   paint(){drawn++;if(damping-->0)q.request();},
+   schedule:cb=>{callbacks.set(++sequence,cb);return sequence;},cancel:id=>callbacks.delete(id)});
+ function next(){const callbacksThisTick=[...callbacks.values()];callbacks.clear();for(const cb of callbacksThisTick)cb();}
+ q.request();q.request();next();for(let i=0;i<12;i++)next();
+ assert.equal(drawn,1,'static scene must remain idle');
+ damping=2;q.request();next();next();next();next();assert.equal(drawn,4,'Orbit damping draws until the last change');
+ moving=true;q.request();next();next();moving=false;next();next();assert.equal(drawn,7,'walk and tour continue until they stop');
+ q.request();available=false;q.stop();next();q.request();next();assert.equal(drawn,7,'hidden or lost context cannot redraw or retain work');
+ available=true;q.request();next();assert.equal(drawn,8);assert.equal(q.pending(),false);
+}
+console.log('PASS guest frame ownership, idle, damping, animation and visibility recovery');
+const {warehouseDockFinish}=await import('../../public/app/render/guest-presentation.mjs');
+const shutters=warehouseDockFinish(inventory,{site:{w:40,d:30}});
+assert.equal(shutters.children.length,3,'one batched sheet, seams and guide profile for actual dock gate');
+assert.ok(shutters.children.every(o=>o.userData.sourceLayer==='DOOR'&&o.userData.floor==='F0'));
+assert.equal(shutters.children.find(o=>o.name.endsWith('|shutter')).count,1);
+assert.equal(warehouseDockFinish(new THREE.Group(),{site:{}}).children.length,0);
+const phone=new THREE.PerspectiveCamera(52,393/852,.01,400),controller={target:new THREE.Vector3(),update(){}};
+const viewport={width:393,height:852,right:0,top:79,bottom:76},roomBounds=new THREE.Box3(new THREE.Vector3(0,0,0),new THREE.Vector3(4,3,7));
+fitGuestCamera(roomBounds,'interior',phone,controller,viewport,-.1);
+const hfov=2*THREE.MathUtils.radToDeg(Math.atan(Math.tan(THREE.MathUtils.degToRad(phone.fov/2))*393/852));
+assert.ok(hfov>=48.9,'portrait indoor field must show a meaningful room width');
+fitGuestCamera(roomBounds,'exterior',phone,controller,viewport,-.1);assert.equal(phone.fov,52);
+disposeGuestJoinery(shutters);
+console.log('PASS measured portrait interior lens and non-exported, gate-hosted shutter finish');
+
 // With no GPU, a real court changes pixels in the central roof field. The
 // preserved facade and the surrounding site keep the same color and position.
 const {drawGuestSoftwareView}=await import('../../public/app/render/guest-software-view.mjs');

@@ -2171,22 +2171,23 @@ and is not expected to track the present.
 | | |
 |---|---|
 | index shell (`public/index.html`) | **52,876 B** |
-| first-party JavaScript, all modules | **2,415,583 B in 54 modules** |
-| account/sign-in entry (static modules + boot) | **286,027 B** |
-|   of which core modules | **218,438 B in 15 modules** |
-| additional when the local guest studio is entered | **1,656,496 B in 27 modules** |
-| optional panels, after local studio entry | **473,060 B in 6 modules** |
-| share of first-party JS deferred from account entry | **88.2 %** |
+| first-party JavaScript, all modules | **2,440,519 B in 55 modules** |
+| account/sign-in entry (static modules + boot) | **286,349 B** |
+|   of which core modules | **218,492 B in 15 modules** |
+| additional when the local guest studio is entered | **1,681,010 B in 28 modules** |
+| optional panels, after local studio entry | **473,160 B in 6 modules** |
+| share of first-party JS deferred from account entry | **88.3 %** |
 | largest single module | **229,312 B of a 307,200 B cap** |
 
 Local guest studio modules, in load order:
 
 * `public/app/core/stairs.mjs`
+* `public/app/core/apartment-door-pairs.mjs`
 * `public/app/core/context-details.mjs`
-* `public/app/core/local-apartment.mjs`
 * `public/app/core/viewer.js`
 * `public/app/core/standards.js`
 * `public/app/core/roof.mjs`
+* `public/app/core/local-apartment.mjs`
 * `public/app/core/disciplines.js`
 * `public/app/generated/runtime.js`
 * `public/app/generated/authoring.js`

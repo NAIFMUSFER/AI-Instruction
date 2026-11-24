@@ -68,6 +68,7 @@ function _pqDisposeShadowTargets(){
   targets.forEach(target=>{ if(target&&target.dispose) target.dispose(); });
   sun.shadow.map=null; sun.shadow.mapPass=null; }
 function _pqRestore(){
+  globalThis.window?.ACS?.requestGuestRender?.();
   const s=window.__ACS_PQ__.saved;
   if(!s) return {restored:false};
   for(const key in s.mats){
@@ -107,6 +108,7 @@ function _pqRestore(){
   return {restored:true}; }
 window.ACS.pbrRestore=_pqRestore;
 window.ACS.pbrApply=function(cfg){
+  globalThis.window?.ACS?.requestGuestRender?.();
   const report={applied:false,issues:[],changed:[],fallbacks:[],
     model_untouched:true,visual_only:true};
   try{
@@ -251,6 +253,7 @@ window.ACS.pbrApply=function(cfg){
           composer.addPass(new mods[2].OutputPass());
           composer.setSize(innerWidth,innerHeight);
           window.__ACS_PQ__.composer=composer;
+          globalThis.window?.ACS?.requestGuestRender?.();
           /* الحلقة تستعمل المؤلِّف؛ فلا بدّ من ملاءمة مقاسه عند كل تحجيم،
              وإلا رُسم بمقاس قديم (إطار فارغ/مشوّه) */
           if(!window.__ACS_PQ__._resizeHooked){

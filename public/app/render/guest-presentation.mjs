@@ -51,16 +51,55 @@ export function apartmentJoinery(model,building){
       piece('stone',0,h/2+.055,.10,span+.32,.11,.38);
     }
   });
+  return finishInstances(group,buckets,{
+    bronze:{color:0x584736,metalness:.35,roughness:.44},
+    stone:{color:0xd6c4ab,roughness:.84}
+  });
+}
+
+// An authored dock gate owns the roll-up face. Sheet ribs and guides attach
+// to its actual exposed plane, never to an arbitrary position on the shell.
+export function warehouseDockFinish(model,building){
+  const group=new THREE.Group();group.name='PQ_GUEST_DOCK_FINISH';
+  group.userData.presentation_context=true;
+  const buckets=new Map(),box=new THREE.Box3(),center=new THREE.Vector3(),size=new THREE.Vector3();
+  model.updateMatrixWorld(true);
+  for(const gate of model.children){
+    const [layer,floor,,part='']=gate.name.split('|');
+    if(!gate.isMesh||layer!=='DOOR'||!/^dock\d+_\d+$/.test(part))continue;
+    box.setFromObject(gate);box.getCenter(center);box.getSize(size);
+    const alongX=size.x>size.z,span=alongX?size.x:size.z;
+    const fixed=alongX?center.z:center.x,far=alongX?building.site?.d:building.site?.w;
+    const sign=Math.abs(fixed)<.02?-1:Math.abs(fixed-far)<.02?1:0;
+    if(!sign||span<.4||size.y<.5)continue;
+    function piece(finish,along,y,normal,w,h,d){
+      const key=[floor,layer,finish].join('|');
+      if(!buckets.has(key))buckets.set(key,[]);
+      const m=new THREE.Matrix4().makeScale(alongX?w:d,h,alongX?d:w);
+      const pos=center.clone();pos[alongX?'x':'z']+=along;pos.y+=y;pos[alongX?'z':'x']+=sign*normal;
+      buckets.get(key).push(m.setPosition(pos));
+    }
+    const face=(alongX?size.z:size.x)/2;
+    piece('shutter',0,0,face+.012,span-.09,size.y-.07,.018);
+    const rows=Math.min(16,Math.max(2,Math.round(size.y/.38)));
+    for(let i=1;i<rows;i++)piece('seam',0,-size.y/2+size.y*i/rows,face+.029,span-.10,.026,.025);
+    for(const side of [-1,1])piece('guide',side*(span-.075)/2,0,face+.037,.075,size.y,.09);
+    piece('guide',0,size.y/2+.03,face+.04,span+.08,.08,.12);
+  }
+  return finishInstances(group,buckets,{
+    shutter:{color:0x92a3a5,roughness:.64,metalness:.08},
+    seam:{color:0x63767b,roughness:.71,metalness:.10},
+    guide:{color:0x3f5255,roughness:.64,metalness:.12}
+  });
+}
+function finishInstances(group,buckets,palette){
   if(!buckets.size)return group;
-  const geometry=new THREE.BoxGeometry(1,1,1);
-  const finishes={
-    bronze:new THREE.MeshStandardMaterial({color:0x584736,metalness:.35,roughness:.44}),
-    stone:new THREE.MeshStandardMaterial({color:0xd6c4ab,roughness:.84})
-  };
+  const geometry=new THREE.BoxGeometry(1,1,1),finishes={};
+  for(const [key,values] of Object.entries(palette))finishes[key]=new THREE.MeshStandardMaterial(values);
   for(const [key,matrices] of buckets){
     const [floor,layer,finish]=key.split('|');
     const mesh=new THREE.InstancedMesh(geometry,finishes[finish],matrices.length);
-    mesh.name='PQ_ASSUMED_JOINERY_'+key;
+    mesh.name=group.name+'_'+key;
     Object.assign(mesh.userData,{presentation_context:true,floor,sourceLayer:layer});
     matrices.forEach((m,i)=>mesh.setMatrixAt(i,m));mesh.computeBoundingSphere();
     mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);
@@ -90,7 +129,7 @@ export function guestPaving(size){
     const joint=y%32===0||(x+(Math.floor(y/32)%2)*32)%64===0;
     const grain=(Math.imul(x+1,73856093)^Math.imul(y+1,19349663))>>>28;
     const tone=joint?-24:(grain-7)*.62;
-    data[i]=191+tone;data[i+1]=184+tone;data[i+2]=169+tone;data[i+3]=255;
+    data[i]=157+tone;data[i+1]=151+tone;data[i+2]=136+tone;data[i+3]=255;
   }
   const tex=new THREE.DataTexture(data,n,n,THREE.RGBAFormat);
   tex.colorSpace=THREE.SRGBColorSpace;tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
@@ -109,6 +148,15 @@ export function visibleInGuestCut(name,warehouse){
 export function fitGuestCamera(box,mode,camera,orbit,viewport,groundY,streetEdge='N'){
   const {width,height,right,top,bottom}=viewport;
   const availableW=Math.max(width*.28,width-right),availableH=Math.max(height*.4,height-top-bottom);
+  // Keep a useful horizontal field of view inside a real room on portrait
+  // phones. Exterior presets restore the lens used before entering the room.
+  if(mode==='interior'){
+    camera.userData.guestBaseFov??=camera.fov;
+    const interiorFov=2*Math.atan(Math.tan(THREE.MathUtils.degToRad(49/2))*height/availableW);
+    camera.fov=Math.max(camera.userData.guestBaseFov,Math.min(100,THREE.MathUtils.radToDeg(interiorFov)));
+  }else if(camera.userData.guestBaseFov!==undefined){
+    camera.fov=camera.userData.guestBaseFov;delete camera.userData.guestBaseFov;
+  }
   // Same optical centre and physical FOV in the unobstructed screen region.
   camera.setViewOffset(width,height,right/2,(bottom-top)/2,width,height);
   const effective=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*availableH/height));
@@ -182,6 +230,23 @@ export function guestFocus(model,building,kind,warehouse){
   if(!room)return null;
   const [x,z,w,d]=room.rect;
   if(![x,z,w,d].every(Number.isFinite)||w<2||d<2)return null;
-  return {source:floor+'|'+room.id,position:new THREE.Vector3(x+w*.83,eye,z+d*.87),
-    target:new THREE.Vector3(x+w*.30,base+1.06,z+d*.22)};
+  return {source:floor+'|'+room.id,position:new THREE.Vector3(x+w*.89,eye,z+d*.91),
+    target:new THREE.Vector3(x+w*.39,base+1.02,z+d*.31)};
+}
+
+// At most one requested frame. A changing orbit schedules its next step through
+// its normal change event. Walk, tour and camera flights opt into animation.
+export function guestFrameScheduler({available,moving,paint,schedule,cancel}){
+  let frame=null;
+  function request(){
+    if(frame!==null||!available())return;
+    frame=schedule(()=>{
+      frame=null;
+      if(!available())return;
+      paint();
+      if(moving())request();
+    });
+  }
+  function stop(){if(frame!==null)cancel(frame);frame=null;}
+  return {request,stop,pending:()=>frame!==null};
 }
