@@ -96,6 +96,17 @@ failing negative witness. These are CPU controls/timing checks; the unchanged
 browser idle and actual-frame assertions must pass on the final candidate.
 [Follow-up matrix](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45317262495)
 
+Candidate `4d3067b07dd48fc121353fed6341cb0e273af522` passed all eight
+matrix jobs with exact rendered/source identity, real orbit and cutaway frames
+followed by idle, and no page errors or forbidden requests. Visual review then
+identified an actionable palette retaining a mesh from the previous example.
+The final correction retires that palette only after successful model
+compilation, including presentation rebuilds. Failed compilation preserves
+the previous model and selection. The transaction checks pass; a real-browser
+negative guard now opens a current mesh palette before switching examples and
+requires it to be hidden and empty afterward. Final acceptance must run again
+on the corrected source. [Eight-case candidate](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45319140599)
+
 ## External services
 
 At 05:23 Riyadh time, the public version and health probes succeeded, Google

@@ -167,7 +167,12 @@ function setModel(data){
     for(const k in _prevMats) matCache[k]=_prevMats[k];
     throw e;
   }
-  // Reset selection only after a new model compiled successfully; null is a presentation rebuild.
+  // Every successful rebuild retires the old meshes, including presentation
+  // rebuilds. Remove palette handlers that still capture those mesh identities.
+  // Query locally: initial model application can precede infoEl's declaration.
+  const retiredInfo=document.getElementById('info');
+  if(retiredInfo){retiredInfo.replaceChildren();retiredInfo.style.display='none';}
+  // Reset the floor filter only for a new model; null is a presentation rebuild.
   if(data) floorSel='all';
   if(data){
     lastBuilding=data;

@@ -525,8 +525,31 @@ async function checkedViewport(browser,width,spec){
     const fresh=await capture(page,report,'fresh-entry','exterior');
     if(spec.baseline){
       await inspectOrbit(page,report);
+      // Open a real mesh's palette before replacing its model. A stale palette
+      // retains live color handlers even after its captured mesh is detached.
+      const selected=await page.evaluate(async()=>{
+        const {model,camera}=await import('/app/ui/workspace-ui-wiring.js');
+        const {Raycaster,Vector2}=await import('three'),ray=new Raycaster();
+        for(const ry of [.5,.4,.6,.3,.7])for(const rx of [.35,.45,.55,.25,.65]){
+          const x=Math.round(innerWidth*rx),y=Math.round(innerHeight*ry);
+          if(!document.elementFromPoint(x,y)?.matches('#app canvas'))continue;
+          ray.setFromCamera(new Vector2(x/innerWidth*2-1,-y/innerHeight*2+1),camera);
+          const hit=ray.intersectObject(model,true).find(hit=>hit.object.visible);
+          const tag=hit?.object.userData.tag||'';
+          if(/^(WALL|FLOOR|DOOR|WINDOW)\|/.test(tag))return {x,y,tag};
+        }
+        return null;
+      });
+      assert.ok(selected,'a visible current-model mesh must be available for selection');
+      await page.mouse.click(selected.x,selected.y);
+      const info=page.locator('#info');await info.waitFor({state:'visible'});
+      assert.ok(await info.locator('.qc input[type="color"]').isVisible(),'the selected mesh must expose actual color actions');
+      report.selectionRetirement={selected,text:await info.textContent()};
+      assert.ok(report.selectionRetirement.text.includes(selected.tag.split('|')[2]),'palette must identify the mesh actually clicked');
       step('warehouse_cutaway');await menu(page,'guestWarehouse');
       await page.waitForFunction(()=>window.ACS.exportModel().site.w===120);
+      report.selectionRetirement.after=await info.evaluate(el=>({hidden:getComputedStyle(el).display==='none',children:el.childElementCount,text:el.textContent}));
+      assert.deepEqual(report.selectionRetirement.after,{hidden:true,children:0,text:''},'replacing the model must retire its old palette and captured color actions');
       const warehouse=await capture(page,report,'warehouse-workfloor','cutaway');
       assert.ok(warehouse.visibleRackSections>0,'visible racks must expose the purpose of the cutaway');
       const beforeToggle=await idleFrames(page);
