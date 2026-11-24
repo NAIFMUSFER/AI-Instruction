@@ -1410,7 +1410,10 @@ vrSetup();
 
 let last2=performance.now();
 function acsLegacyFrame(){
-  const now=performance.now(),dt=Math.min((now-last2)/1000,0.1); last2=now;
+  const now=performance.now(),elapsed=(now-last2)/1000,dt=Math.min(elapsed,0.1); last2=now;
+  // OrbitControls r160 damps per update. Use elapsed time for guest inertia so a
+  // software GPU also stops drawing when a gesture has visibly settled.
+  if(window.ACS?.guest)orbit.dampingFactor=1-Math.exp(-Math.min(elapsed,.35)/.12);
   if(renderer.xr.isPresenting){
     vrStep(dt);
     headLamp.position.copy(camWorld());
@@ -1458,6 +1461,9 @@ renderer.domElement.addEventListener('webglcontextlost',()=>{guestContextLost=tr
 renderer.domElement.addEventListener('webglcontextrestored',()=>{guestContextLost=false;syncLegacyRendering();});
 renderer.xr.addEventListener('sessionstart',syncLegacyRendering);
 renderer.xr.addEventListener('sessionend',syncLegacyRendering);
+orbit.addEventListener?.('start',()=>{
+  if(window.ACS?.guest){last2=performance.now();orbit.dampingFactor=.12;}
+});
 orbit.addEventListener?.('change',guestFrames.request);
 for(const event of ['input','change','click','pointerdown','pointerup','keydown','keyup']){
   document.addEventListener(event,guestFrames.request,{capture:true,passive:true});
