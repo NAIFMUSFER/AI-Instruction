@@ -1,4 +1,17 @@
 import {analyzeBrief,buildBriefProgram,metricLabels,requirementKey,requirementLabel} from '../core/brief-program.mjs';
+import {readResidential} from '../core/residential-program.mjs';
+
+const briefStarters = {
+  residential: [
+    {id:'apartments', label:'عمارة بشقتين في كل دور', text:'أبغى عمارة سكنية في الرياض. عرض الأرض ٢٠ متر وعمق الأرض ٢٥ متر. عدد الأدوار ٣ شاملة الأرضي.\nأبغى شقتين في كل دور، ومدخل كل شقة من بسطة الدرج المشترك. خلّ غرف النوم بعيدة عن مدخل الضيوف.'},
+    {id:'villa', label:'فيلا عائلية', text:'أبغى فيلا عائلية في جدة. عرض الأرض ١٨ متر وعمق الأرض ٢٨ متر. عدد الأدوار ٢ شاملة الأرضي.\nأبغى مجلس الضيوف قريب من المدخل، وصالة الأسرة تطل على الحديقة. خلّ غرف النوم في الدور العلوي والمطبخ قريب من غرفة الطعام.'},
+    {id:'courtyard', label:'عمارة بفناء داخلي', text:'أبغى عمارة سكنية حول فناء مفتوح للسماء في الرياض. عرض الأرض ٢٤ متر وعمق الأرض ٢٨ متر. عدد الأدوار ٤ شاملة الأرضي.\nفي كل دور شقتان. أبغى المدخل من الشمال، وممر يربط الدرج بأبواب الشقق حول الفناء.'},
+  ],
+  warehouse: [
+    {id:'distribution', label:'مستودع توزيع', text:'أبغى مستودع توزيع في الدمام. عرض الأرض ٦٠ متر وعمق الأرض ٨٠ متر. المستودع من دور واحد.\nخلّ الاستلام في الواجهة الشرقية والشحن في الغربية، ومنطقة التجهيز قريبة من الشحن. أبغى مسار مشاة منفصل عن حركة الرافعات.'},
+    {id:'storage', label:'مستودع قطع غيار', text:'أبغى مستودع قطع غيار في الرياض. عرض الأرض ٤٠ متر وعمق الأرض ٦٠ متر. المستودع من دور واحد.\nأحتاج رصيف استلام، ورفوفًا للقطع الصغيرة، ومنطقة فحص للمواد المرتجعة. خلّ مكتب الصرف قريب من مدخل العملاء.'},
+  ],
+};
 
 // Owns the existing requirements form only. No network, model or approval access.
 export function createBriefEditor(root,{storageKey,onError}) {
@@ -6,6 +19,74 @@ export function createBriefEditor(root,{storageKey,onError}) {
   const fields={site_width_m:'cwWidth',site_depth_m:'cwDepth',level_count:'cwLevels'};
   let analysis=null,savedRequirements=[];
   function el(tag,text,parent,cls){const node=document.createElement(tag);if(text!=null)node.textContent=text;if(cls)node.className=cls;if(parent)parent.append(node);return node;}
+  const brief=$('cwBrief');
+  const starterGroup=el('fieldset',null,null,'cw-brief-starters');
+  starterGroup.id='cwBriefStarters';
+  el('legend','اختر وصفًا وعدّله',starterGroup);
+  const starterButtons=el('div',null,starterGroup,'cw-starter-buttons');
+  const replacement=el('div',null,starterGroup,'cw-starter-preview');
+  replacement.hidden=true;
+  const previewText=el('p',null,replacement);
+  const replace=el('button','استبدال الوصف بهذا النص',replacement);
+  const keep=el('button','الاحتفاظ بوصفي',replacement);
+  replace.type=keep.type='button';
+  replace.id='cwReplaceBrief';keep.id='cwKeepBrief';
+  root.querySelector('label[for="cwBrief"]').before(starterGroup);
+
+  const starterFieldIds=[...Object.values(fields),'cwUnits','cwUnitsScope'];
+  let linkedFields=new Set(), pendingStarter=null;
+  function closeStarterPreview(){
+    replacement.hidden=true;pendingStarter=null;
+  }
+  function applyStarter(starter){
+    closeStarterPreview();
+    // Only follow blank fields and fields already supplied by a starter.
+    // Values typed by the user keep their authority during a template switch.
+    for(const id of Object.values(fields))if(!$(id).value)linkedFields.add(id);
+    if($('cwType').value==='residential'&&!$('cwUnits').value){
+      linkedFields.add('cwUnits');linkedFields.add('cwUnitsScope');
+    }
+    brief.value=starter.text;
+    brief.dispatchEvent(new Event('input',{bubbles:true}));
+    brief.focus();
+  }
+  function showStarters(){
+    closeStarterPreview();
+    starterButtons.replaceChildren();
+    for(const starter of briefStarters[$('cwType').value]||[]){
+      const button=el('button',starter.label,starterButtons);
+      button.type='button';button.dataset.briefStarter=starter.id;
+      button.addEventListener('click',()=>{
+        if(!brief.value.trim()||brief.value===starter.text){applyStarter(starter);return;}
+        pendingStarter=starter;previewText.textContent=starter.text;
+        replacement.hidden=false;replace.focus();
+      });
+    }
+    const custom=el('button','اكتب وصفك بنفسك',starterButtons);
+    custom.type='button';custom.dataset.briefStarter='custom';
+    custom.addEventListener('click',()=>{closeStarterPreview();brief.focus();});
+  }
+  replace.addEventListener('click',()=>{if(pendingStarter)applyStarter(pendingStarter);});
+  keep.addEventListener('click',()=>{closeStarterPreview();brief.focus();});
+  $('cwType').addEventListener('change',showStarters);
+  showStarters();
+
+  function syncStarterFields(){
+    if(!linkedFields.size)return;
+    const {candidates}=analyzeBrief(brief.value);
+    for(const [metric,id] of Object.entries(fields)){
+      if(!linkedFields.has(id))continue;
+      const values=candidates.filter(c=>c.metric===metric&&c.source==='requested');
+      $(id).value=values.length===1?values[0].expected:'';
+    }
+    if($('cwType').value==='residential'){
+      const parsed=readResidential(brief.value);
+      if(linkedFields.has('cwUnits'))$('cwUnits').value=parsed.units??'';
+      if(linkedFields.has('cwUnitsScope'))$('cwUnitsScope').value=parsed.scope||'total';
+      // The residential editor owns its draft and the live unit-count summary.
+      $('cwUnits').dispatchEvent(new Event('change',{bubbles:true}));
+    }
+  }
   const read=el('button','قراءة المتطلبات من الوصف');read.type='button';read.id='cwReadBrief';
   const panel=el('section',null,null,'cw-brief-review');panel.id='cwBriefReview';
   el('h3','مراجعة الوصف',panel);
@@ -22,7 +103,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
   function input(){return {brief:$('cwBrief').value,type:$('cwType').value,width:$('cwWidth').value,depth:$('cwDepth').value,levels:$('cwLevels').value,rows:rows(),savedRequirements};}
   function draft(){
     const data=input();
-    try{localStorage.setItem(storageKey(),JSON.stringify({brief:data.brief,type:data.type,w:data.width,d:data.depth,levels:data.levels,rows:data.rows,savedRequirements}));}catch(e){}
+    try{localStorage.setItem(storageKey(),JSON.stringify({brief:data.brief,type:data.type,w:data.width,d:data.depth,levels:data.levels,rows:data.rows,savedRequirements,starterFields:[...linkedFields]}));}catch(e){}
     $('cwConfirmed').checked=false;
   }
   function add(data={}){
@@ -83,17 +164,22 @@ export function createBriefEditor(root,{storageKey,onError}) {
   $('cwAddRequirement').addEventListener('click',()=>{add();draft();showQuestions();});
   $('cwBriefForm').addEventListener('input',e=>{
     if(e.target.id==='cwConfirmed')return;
-    draft();
     if(e.target.id==='cwBrief'){
+      closeStarterPreview();syncStarterFields();
       analysis=null;savedRequirements=[];cards.replaceChildren();sources.replaceChildren();questions.replaceChildren();
       notice.textContent='تغيّر الوصف. اقرأ المتطلبات مجددًا أو راجع الأبعاد والأعداد في الحقول.';
       questionTitle.hidden=questions.hidden=true;
-    }else showQuestions();
+    }else{
+      linkedFields.delete(e.target.id);
+      showQuestions();
+    }
+    draft();
   });
   return {
     program(){try{return buildBriefProgram(input());}catch(e){showQuestions();throw e;}},
     fill(data,typology){
       let saved=null;try{saved=JSON.parse(localStorage.getItem(storageKey())||'null');}catch(e){}
+      linkedFields=new Set(starterFieldIds.filter(id=>Array.isArray(saved?.starterFields)&&saved.starterFields.includes(id)));
       $('cwRequirements').replaceChildren();
       if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
         $('cwBrief').value=typeof saved.brief==='string'?saved.brief:'';$('cwType').value=saved.type||'residential';
@@ -106,7 +192,7 @@ export function createBriefEditor(root,{storageKey,onError}) {
         if(typology==='warehouse')$('cwType').value='warehouse';
       }
       // Restoring a local draft or cloud revision is not a fresh confirmation.
-      $('cwConfirmed').checked=false;showQuestions();
+      showStarters();$('cwConfirmed').checked=false;showQuestions();
     },
   };
 }

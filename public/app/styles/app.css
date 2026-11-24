@@ -28,12 +28,11 @@
   #login .auth-brand b{color:#6bd3ff;font-size:18px;font-weight:800;letter-spacing:1px}
   #login .card{cursor:default;text-align:start}
   #login .auth-access{margin:0 0 14px}
+  #login .auth-guest-option{text-align:center;margin-top:8px}
   #login #acsAuthGuestLink{display:inline-flex;align-items:center;justify-content:center;min-height:44px;font-weight:650;font-size:14px;color:#9fdcff}
   #login #acsAuthGuestLink:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
   #login.auth-outage .auth-access{padding:14px;background:#203448;border:1px solid #52758b;border-radius:12px}
-  #login.auth-outage #acsAuthStatus{margin:0 0 10px;padding:0;color:#ecf4fa;background:transparent;line-height:1.6}
-  #login.auth-outage #acsAuthGuestLink{width:100%;padding:8px 14px;background:#92d7eb;color:#102733;border-radius:8px;text-decoration:none}
-  #login.auth-outage #lgGo{color:#c4e5f5;background:#253c50;border:1px solid #66869c}
+  #login.auth-outage #acsAuthStatus{margin:0;padding:0;color:#ecf4fa;background:transparent;line-height:1.6}
   #login h1{font-size:22px;line-height:1.4}
   #login h2{font-size:18px;color:var(--txt);border:0;margin:22px 0 14px;padding:0}
   #login .tag{font-size:14px;line-height:1.7}

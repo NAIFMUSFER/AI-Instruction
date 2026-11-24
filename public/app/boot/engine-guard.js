@@ -49,18 +49,18 @@
     return a && typeof a.configured==="string" ? a.configured.replace(/\/+$/,"")+path : "";
   }
   function error(message,code,status){var e=new Error(message);e.code=code;e.status=status||0;return e;}
-  function setStatus(text,bad,unavailable){
-    var status=byId("acsAuthStatus"),login=byId("login"),guest=byId("acsAuthGuestLink");
+  function setStatus(text,bad,unavailable,retryGoogle){
+    var status=byId("acsAuthStatus"),login=byId("login"),googleLabel=byId("acsAuthGoogleLabel");
     if(status){status.setAttribute("role",bad?"alert":"status");status.textContent=text||"";status.classList.toggle("bad",!!bad);}
     if(login)login.classList.toggle("auth-outage",!!unavailable);
-    if(guest)guest.textContent=unavailable?"فتح الاستوديو على هذا الجهاز":"متابعة بدون حساب";
-    if(unavailable&&guest&&guest.parentElement)guest.parentElement.scrollIntoView({block:"nearest"});
+    if(googleLabel)googleLabel.textContent=retryGoogle?"إعادة المحاولة باستخدام Google":"المتابعة باستخدام Google";
   }
-  function showAuthError(failure,fallback){
+  function showAuthError(failure,fallback,retryGoogle){
     var unavailable=failure.code==="AUTH_UPSTREAM_UNAVAILABLE"||failure.code==="AUTH_NETWORK"||failure.code==="AUTH_NOT_CONFIGURED";
-    var message=unavailable?"خدمة الحسابات غير متاحة مؤقتًا. يمكنك فتح مساحة العمل المحلية أو إعادة محاولة الدخول.":failure.message||fallback;
-    if(failure.code==="AUTH_NETWORK")message="تعذّر الاتصال بخدمة الحسابات. يمكنك فتح الاستوديو على جهازك أو المحاولة مجددًا.";
-    setStatus(message,true,unavailable);
+    var message=unavailable?"خدمة الحسابات غير متاحة مؤقتًا. حاول مجددًا بعد قليل.":failure.message||fallback;
+    if(unavailable&&retryGoogle)message="تعذّر الاتصال بخدمة الحسابات لإكمال الدخول باستخدام Google. أعد المحاولة بعد قليل.";
+    if(failure.code==="AUTH_NETWORK")message="تعذّر الاتصال بخدمة الحسابات. تحقّق من اتصالك ثم أعد المحاولة.";
+    setStatus(message,true,unavailable,retryGoogle);
   }
   function setBusy(value){
     busy=!!value;
@@ -215,7 +215,7 @@
       pending.redirect_to=callback.href;sessionStorage.setItem(GOOGLE_KEY,JSON.stringify(pending));
       location.assign(dest.href);googleNavigation=true;
     }catch(e){
-      forgetGoogle();showAuthError(typeof e.code==="string"?e:{},"تعذّر بدء الدخول باستخدام Google. اسمح بتخزين بيانات الموقع وحاول مجددًا.");
+      forgetGoogle();showAuthError(typeof e.code==="string"?e:{},"تعذّر بدء الدخول باستخدام Google. اسمح بتخزين بيانات الموقع وحاول مجددًا.",true);
     }finally{if(!googleNavigation)setBusy(false);}
   }
   function acceptGoogleCallback(){
@@ -228,12 +228,12 @@
     if(!incoming)return false;
     callbackHash=null;clearPassword();setMode("signin");
     var current=loadSession(), age=pending&&Date.now()-Number(pending.created_at);
-    if(incoming.failed){setStatus("لم يكتمل الدخول باستخدام Google. يمكنك المحاولة مرة أخرى.",true);return true;}
+    if(incoming.failed){setStatus("لم يكتمل الدخول باستخدام Google. يمكنك المحاولة مرة أخرى.",true,false,true);return true;}
     if(!pending||!Number.isFinite(age)||age<0||age>GOOGLE_MAX_AGE||
       typeof pending.verifier!=="string"||!/^[a-f0-9]{64}$/.test(pending.verifier)||
       pending.redirect_to!==location.origin+location.pathname||pending.user_id!==(current?current.user.id:null)||
       typeof incoming.code!=="string"||!/^[a-f0-9-]{36}$/i.test(incoming.code)){
-      setStatus("انتهت محاولة الدخول أو فُتحت في تبويب آخر. اضغط المتابعة باستخدام Google من جديد.",true);return true;
+      setStatus("انتهت محاولة الدخول أو فُتحت في تبويب آخر. أعد المحاولة باستخدام Google.",true,false,true);return true;
     }
     setBusy(true);setStatus("جارٍ إكمال الدخول باستخدام Google…",false);
     var epoch=++sessionEpoch;
@@ -246,7 +246,7 @@
       await finishSession(session,"");
     }catch(e){
       if(loadSession()&&(e.status===0||e.status>=500))setMode("resume");
-      showAuthError(e,"تعذّر إكمال الدخول باستخدام Google. ابدأ المحاولة من جديد.");
+      showAuthError(e,"تعذّر إكمال الدخول باستخدام Google. ابدأ المحاولة من جديد.",mode==="signin");
     }finally{setBusy(false);}
     return true;
     })();

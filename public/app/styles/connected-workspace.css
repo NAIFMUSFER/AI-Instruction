@@ -34,6 +34,12 @@ body.acs-connected > :not(#designWorkspace):not(#login):not(script):not(link):no
 #designWorkspace .cw-fields { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
 #designWorkspace .cw-check { padding:14px 0; }
 #designWorkspace .cw-brief-review { margin:16px 0 24px; padding:16px; border:1px solid #355167; border-radius:12px; background:#0b1b2c; }
+#designWorkspace .cw-brief-starters { min-width:0; margin:16px 0; padding:0; border:0; }
+#designWorkspace .cw-brief-starters legend { padding:0 0 6px; font-weight:600; }
+#designWorkspace .cw-starter-buttons { display:flex; flex-wrap:wrap; gap:6px; }
+#designWorkspace .cw-starter-preview { margin-top:10px; padding:12px; border-inline-start:3px solid #65c9ea; background:#0b1b2c; }
+#designWorkspace .cw-starter-preview p { margin-top:0; white-space:pre-line; }
+#designWorkspace .cw-starter-preview button { margin-inline-end:6px; }
 #designWorkspace #cwReadBrief { margin-top:10px; }
 #designWorkspace .cw-brief-candidates { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr)); gap:12px; }
 #designWorkspace .cw-brief-candidate { min-width:0; padding:14px; border:1px solid #2e5067; border-radius:10px; background:#14283b; overflow-wrap:anywhere; }

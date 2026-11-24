@@ -112,16 +112,18 @@ async function test(name,fn){await fn();passed++;console.log('PASS '+name);}
     signed.init();await settle();assert.equal(signed.entered[0].mode,'supabase');
     assert.equal(signed.el('acsAuthGuestLink').getAttribute('href'),'/?guest=1&example=apartment-20x25');
   });
-  await test('Google service outage prominently offers local work and stays retryable',async()=>{
+  await test('Google service outage keeps the account flow and offers a fresh Google retry',async()=>{
     let failed=true;
     const h=harness((path,opts)=>failed?problem('AUTH_UPSTREAM_UNAVAILABLE'):googleStart(opts));h.init();
     await h.el('acsAuthGoogle').emit('click');
     assert.equal(h.el('login').classList.contains('auth-outage'),true);
-    assert.equal(h.el('acsAuthGuestLink').textContent,'فتح الاستوديو على هذا الجهاز');
+    assert.equal(h.el('acsAuthGoogleLabel').textContent,'إعادة المحاولة باستخدام Google');
+    assert.match(h.el('acsAuthStatus').textContent,/الاتصال بخدمة الحسابات.*Google/);
     assert.equal(h.el('acsAuthStatus').attrs.role,'alert');assert.equal(h.calls.length,1);assert.equal(h.entered.length,0);
     assert.equal(h.el('acsAuthGoogle').disabled,false);assert.equal(h.tab.has(GOOGLE),false);
     failed=false;await h.el('acsAuthGoogle').emit('click');
     assert.equal(h.el('login').classList.contains('auth-outage'),false);assert.equal(h.navigations.length,1);
+    assert.notEqual(JSON.parse(h.calls[0].opts.body).code_challenge,JSON.parse(h.calls[1].opts.body).code_challenge);
   });
   await test('network abort remains retryable and never resembles a browser storage error',async()=>{
     const h=harness(()=>{throw Object.assign(new Error('fixture offline'),{name:'AbortError',code:20});});
