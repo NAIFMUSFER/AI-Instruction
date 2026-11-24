@@ -542,6 +542,10 @@ async function checkedViewport(browser,width,spec){
       });
       assert.ok(selected,'a visible current-model mesh must be available for selection');
       await page.mouse.click(selected.x,selected.y);
+      const inspector=page.locator('#acsWorkspace');
+      await inspector.waitFor({state:'visible'});
+      await page.locator('#guestReturnToModel').click();
+      await inspector.waitFor({state:'hidden'});
       const info=page.locator('#info');await info.waitFor({state:'visible'});
       assert.ok(await info.locator('.qc input[type="color"]').isVisible(),'the selected mesh must expose actual color actions');
       report.selectionRetirement={selected,text:await info.textContent()};

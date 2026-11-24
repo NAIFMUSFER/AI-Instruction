@@ -59,6 +59,21 @@ async function openGuestWorkspace() {
       </form>
     </dialog>`;
   document.body.append(banner);
+  // Mesh selection opens the canonical inspector on top of the guest scene.
+  // Its close API preserves selection so the visitor can return to the model.
+  const inspectorToolbar = document.querySelector('#acsWorkspace .ws-top');
+  if (inspectorToolbar) {
+    const back = document.createElement('button');
+    back.id = 'guestReturnToModel';
+    back.type = 'button';
+    back.className = 'ws-btn';
+    back.textContent = 'العودة إلى المجسّم';
+    back.addEventListener('click', () => {
+      A.workspace.close();
+      $('guestTools').focus();
+    });
+    inspectorToolbar.prepend(back);
+  }
   A.guestRecoveryPending = true;
   A.guestAutosaveReady = false;
   A.guestRecoveryReadable = false;
