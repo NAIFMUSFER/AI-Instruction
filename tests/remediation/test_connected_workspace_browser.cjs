@@ -33,6 +33,7 @@ async function verifyPromptStarters(page,port,width){
  const brief=page.locator('#cwBrief'),start=id=>page.locator('[data-brief-starter="'+id+'"]');
  const generationCount=async()=>(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
  const initialCount=await generationCount();
+ assert.equal(await brief.inputValue(),'','a new account project starts without another project’s draft');
  await start('apartments').click();
  assert.equal(await page.locator('#cwWidth').inputValue(),'20');
  assert.equal(await page.locator('#cwLevels').inputValue(),'3');
@@ -51,6 +52,10 @@ async function verifyPromptStarters(page,port,width){
  await page.locator('#cwReplaceBrief').click();
  assert.notEqual(await brief.inputValue(),apartmentEdit);
  assert.equal(await page.locator('#cwDepth').inputValue(),'28');
+ await page.locator('#cwDepth').fill('30');
+ await brief.fill((await brief.inputValue()).replace('عمق الأرض ٢٨ متر','عمق الأرض ٣١ متر'));
+ assert.equal(await page.locator('#cwDepth').inputValue(),'30','manually entered values must not be overwritten by later edits');
+ await page.locator('#cwDepth').fill('');
  await page.locator('#cwType').selectOption('warehouse');
  await start(width===393?'distribution':'storage').click();
  await page.locator('#cwReplaceBrief').click();
