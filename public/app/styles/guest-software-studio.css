@@ -1,0 +1,40 @@
+body.acs-guest-software> :not(#guestSoftwareStudio):not(#guestPlanDialog):not(script):not(link) { display:none!important; }
+body.acs-guest-software::after { display:none!important; }
+#guestSoftwareStudio { position:fixed; inset:0; z-index:100; overflow:auto; padding:0 clamp(16px,4vw,70px) 32px; background:#eeeae1; color:#21362e; font:16px/1.6 system-ui,sans-serif; color-scheme:light; }
+#guestSoftwareStudio [hidden] { display:none!important; }
+#guestSoftwareStudio header,#guestSoftwareStudio .gs-heading,#guestSoftwareStudio header>div,#guestSoftwareStudio .gs-tools { display:flex; align-items:center; gap:12px; }
+#guestSoftwareStudio header,#guestSoftwareStudio .gs-heading { justify-content:space-between; }
+#guestSoftwareStudio header { max-width:1120px; margin:auto; padding:15px 0; border-bottom:1px solid #b6bdb0; }
+#guestSoftwareStudio header b { direction:ltr; font-size:clamp(15px,2vw,21px); }
+#guestSoftwareStudio header span { font-size:.81rem; color:#4b6254; }
+#guestSoftwareStudio a { color:#255541; text-underline-offset:4px; }
+#guestSoftwareStudio section,#guestSoftwareStudio #guestSaveStatus { max-width:1120px; margin-inline:auto; }
+#guestSoftwareStudio #guestSoftwarePrompt { max-width:650px; margin-top:min(11vh,110px); padding:clamp(20px,4vw,46px); background:#faf9f4; border:1px solid #c4c8ba; border-radius:16px; }
+#guestSoftwareStudio h1,#guestSoftwareStudio h2,#guestSoftwareStudio p { margin:0; }
+#guestSoftwareStudio h1 { font-size:clamp(22px,3vw,36px); }
+#guestSoftwareStudio h2 { font-size:1.4rem; }
+#guestSoftwareStudio form { display:grid; gap:12px; }
+#guestSoftwareStudio label { font-weight:600; }
+#guestSoftwareStudio textarea { box-sizing:border-box; width:100%; min-height:6rem; padding:12px; border:1px solid #8f9b8f; border-radius:8px; background:white; color:#182f29; font:inherit; resize:vertical; }
+#guestSoftwareStudio button,#guestSoftwareStudio select { min-height:44px; padding:7px 13px; border:1px solid #a5afa4; border-radius:8px; background:#fffdf6; font:inherit; color:#244038; cursor:pointer; }
+#guestSoftwareStudio :is(#guestSoftwareSubmit,#guestRevise,#guestApplyRevision) { background:#255241; border-color:#255241; color:#fff; font-weight:700; }
+#guestSoftwareStudio :focus-visible { outline:3px solid #367da1; outline-offset:2px; }
+#guestSoftwareStudio #guestSoftwareResult { margin-top:20px; }
+#guestSoftwareStudio #guestSoftwareViewport { margin-block:14px; overflow:hidden; border:1px solid #bec6b9; border-radius:12px; background:#faf7ef; }
+#guestSoftwareCanvas { display:block; width:100%; height:clamp(295px,58vh,650px); }
+#guestSoftwareStudio .gs-tools { flex-wrap:wrap; }
+#guestSoftwareStudio .gs-tools label { display:flex; align-items:center; gap:5px; }
+#guestSoftwareStudio #guestSaveStatus { margin-top:12px; color:#4a5a52; font-size:.89rem; }
+#guestSoftwareStudio:has(#guestSoftwarePrompt:not([hidden])) #guestSaveStatus { max-width:650px; }
+#guestSoftwareStudio dialog { box-sizing:border-box; width:min(27rem,calc(100% - 24px)); padding:22px; background:#faf9f4; color:#21362e; border:1px solid #879b91; border-radius:12px; }
+#guestSoftwareStudio dialog::backdrop { background:rgb(13 27 35 / 65%); }
+#guestSoftwareStudio [role=alert] { color:#853d26; }
+@media(max-width:640px){
+  #guestSoftwareStudio { padding-inline:14px; }
+  #guestSoftwareStudio header,#guestSoftwareStudio header>div { gap:6px; }
+  #guestSoftwareStudio header span,#guestSoftwareStudio header a { font-size:.77rem; }
+  #guestSoftwareStudio .gs-tools { gap:7px; }
+  #guestSoftwareStudio .gs-tools label { flex:auto; }
+  #guestSoftwareStudio .gs-tools select { flex:auto; }
+  #guestSoftwareCanvas { height:clamp(275px,48svh,480px); }
+}

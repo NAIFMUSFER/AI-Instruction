@@ -2171,19 +2171,19 @@ and is not expected to track the present.
 | | |
 |---|---|
 | index shell (`public/index.html`) | **52,876 B** |
-| first-party JavaScript, all modules | **2,374,672 B in 51 modules** |
-| account/sign-in entry (static modules + boot) | **284,308 B** |
-|   of which core modules | **218,153 B in 15 modules** |
-| additional when the local guest studio is entered | **1,617,304 B in 24 modules** |
+| first-party JavaScript, all modules | **2,415,583 B in 54 modules** |
+| account/sign-in entry (static modules + boot) | **286,027 B** |
+|   of which core modules | **218,438 B in 15 modules** |
+| additional when the local guest studio is entered | **1,656,496 B in 27 modules** |
 | optional panels, after local studio entry | **473,060 B in 6 modules** |
-| share of first-party JS deferred from account entry | **88.0 %** |
+| share of first-party JS deferred from account entry | **88.2 %** |
 | largest single module | **229,312 B of a 307,200 B cap** |
 
 Local guest studio modules, in load order:
 
 * `public/app/core/stairs.mjs`
-* `public/app/core/local-apartment.mjs`
 * `public/app/core/context-details.mjs`
+* `public/app/core/local-apartment.mjs`
 * `public/app/core/viewer.js`
 * `public/app/core/standards.js`
 * `public/app/core/roof.mjs`
@@ -2205,6 +2205,9 @@ Local guest studio modules, in load order:
 * `public/app/ui/generation-jobs.js`
 * `public/app/ui/guest-floor-plan.mjs`
 * `public/app/ui/guest-workspace.js`
+* `public/app/trust/guest-draft-store.mjs`
+* `public/app/render/guest-software-view.mjs`
+* `public/app/ui/guest-software-studio.mjs`
 
 Optional panel modules, in load order:
 

@@ -435,7 +435,7 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
       +'<div id="guestFallbackRooms" class="guest-fallback-actions" aria-label="تفاصيل الفراغات"></div>'
       +'<p id="acsGuestFallbackRoom" role="status"></p>'
       +'<button id="guestPlanDownload" type="button">تنزيل مخطط هذا الطابق (SVG)</button></div>'
-      +'<div class="guest-fallback-actions guest-fallback-account"><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
+      +'<div class="guest-fallback-actions guest-fallback-account"><a href="/?guest=1&amp;new=1">ابدأ تصميم مبناك</a><a id="guestFallbackSignin" href="/?signin=1">تسجيل الدخول إلى مشاريعي</a>'
       +'<button id="guestFallbackReload" type="button">إعادة محاولة العرض</button></div>'
       +'<p class="guest-fallback-note">التوليد والتعديل والاستيراد غير متاحة في هذا العرض البديل. لا تُرسل بيانات إلى الخادم.</p></div>';
     document.body.appendChild(panel);

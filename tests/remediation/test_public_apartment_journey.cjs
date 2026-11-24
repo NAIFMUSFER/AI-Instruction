@@ -175,11 +175,11 @@ async function detailAndInterior(page,report,prefix){
   await page.locator('#guestViewToggle').click();
   assert.equal((await runtime(page)).state.mode,'exterior');
 }
-function assertWallEnvelope(bounds,level){
+function assertWallEnvelope(bounds,level,width=20,depth=25){
   assert.ok(bounds,'missing walls on physical floor '+level);
   const [x,y,z,maxX,,maxZ]=bounds;
-  assert.ok(near(x,0)&&near(z,0)&&near(maxX,20)&&near(maxZ,25),
-    'outside wall faces differ from 20 x 25 m footprint on level '+level+': '+bounds.join(','));
+  assert.ok(near(x,0)&&near(z,0)&&near(maxX,width)&&near(maxZ,depth),
+    'outside wall faces differ from '+width+' x '+depth+' m footprint on level '+level+': '+bounds.join(','));
   assert.ok(near(y,level*3.4),'wall elevation on level '+level+': '+y);
 }
 function readGLBWalls(asset,bytes,bin){
@@ -191,7 +191,7 @@ function readGLBWalls(asset,bytes,bin){
     if(node.matrix)local.fromArray(node.matrix);
     else local.compose(new Vector3(...(node.translation||[0,0,0])),new Quaternion(...(node.rotation||[0,0,0,1])),new Vector3(...(node.scale||[1,1,1])));
     const world=parent.clone().multiply(local);
-    const name=/^WALL\|(F[012])\|/.exec(node.name||'');
+    const name=/^WALL\|(F\d+)\|/.exec(node.name||'');
     if(name && node.mesh!=null){
       const bounds=floors[name[1]]||=[Infinity,Infinity,Infinity,-Infinity,-Infinity,-Infinity];
       for(const primitive of asset.meshes[node.mesh].primitives){
@@ -211,19 +211,20 @@ function readGLBWalls(asset,bytes,bin){
   for(const node of asset.scenes[asset.scene||0].nodes)visit(node,new Matrix4());
   return floors;
 }
-async function modelGLB(page,report){
+async function modelGLB(page,report,{directory=out,filename='apartment.glb',width=20,depth=25,floors=3}={}){
   await menu(page,'guestFloors');await page.locator('#acsTabShow').click();
   const [download]=await Promise.all([page.waitForEvent('download'),page.locator('#bGlb').click()]);
-  const file=path.join(out,'apartment.glb');await download.saveAs(file);
+  const file=path.join(directory,filename);await download.saveAs(file);
   const bytes=fs.readFileSync(file);assert.equal(bytes.toString('utf8',0,4),'glTF');
   assert.equal(bytes.readUInt32LE(4),2);assert.equal(bytes.readUInt32LE(8),bytes.length);
   assert.equal(bytes.toString('utf8',16,20),'JSON');
   const asset=JSON.parse(bytes.toString('utf8',20,20+bytes.readUInt32LE(12)));
   const binHeader=20+bytes.readUInt32LE(12);assert.equal(bytes.toString('ascii',binHeader+4,binHeader+8),'BIN\0');
   const wallBounds=readGLBWalls(asset,bytes,binHeader+8);
-  for(const level of [0,1,2])assertWallEnvelope(wallBounds['F'+level],level);
+  for(let level=0;level<floors;level++)assertWallEnvelope(wallBounds['F'+level],level,width,depth);
   const names=asset.nodes.map(node=>node.name||'');
-  for(const floor of ['F0','F1','F2']){
+  for(let level=0;level<floors;level++){
+    const floor='F'+level;
     for(const kind of ['WALL','WINDOW','DOOR'])assert.ok(names.some(n=>n.startsWith(kind+'|'+floor+'|')),kind+' missing on '+floor+' in GLB');
   }
   report.glb={sha256:sha256(bytes),bytes:bytes.length,meshes:asset.meshes.length,wallBounds};
@@ -342,4 +343,4 @@ async function main(){
   }finally{await b.close();}
 }
 if(require.main===module)main().catch(e=>{console.error(e.message);process.exitCode=1;});
-module.exports={inspectApartment, serve, menu, runtime, cameraControl, origin};
+module.exports={inspectApartment, serve, menu, runtime, cameraControl, modelGLB, origin};

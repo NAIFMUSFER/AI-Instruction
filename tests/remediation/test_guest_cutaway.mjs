@@ -182,3 +182,30 @@ const change=vm.runInNewContext(finishBlock+'\napplyFinish',{
 change(pairLeaves[0].name,'self','#906c46',pairLeaves[0]);
 assert.equal(pairA.doors[0].color,'#906c46');assert.equal(pairB.doors[0].color,'#906c46');
 console.log('PASS selected physical leaf finish persists on both matched canonical host records');
+
+// With no GPU, a real court changes pixels in the central roof field. The
+// preserved facade and the surrounding site keep the same color and position.
+const {drawGuestSoftwareView}=await import('../../public/app/render/guest-software-view.mjs');
+const {apartmentFromRevision}=await import('../../public/app/core/local-apartment.mjs');
+const {withDefaultRoof}=await import('../../public/app/core/roof.mjs');
+const images=[];
+const context2d={
+  createImageData:(w,h)=>({data:new Uint8ClampedArray(w*h*4)}),
+  putImageData:image=>images.push(image.data)
+};
+const canvas2d={clientWidth:300,clientHeight:200,getContext(type){assert.equal(type,'2d');return context2d;}};
+const court=apartmentFromRevision('خلّ وسط العمارة فناء مفتوح للسماء وحافظ على عدد الشقق',sample);
+for(const project of [sample,court]){
+  const renderedRoof=drawGuestSoftwareView(canvas2d,withDefaultRoof(project)[0],{view:'top'});
+  assert.ok(renderedRoof.meshCount>100);
+}
+let changedRoofPixels=0,changedOutside=0;
+for(let y=0;y<200;y++)for(let x=0;x<300;x++){
+  const offset=4*(300*y+x);
+  if(Math.abs(images[0][offset]-images[1][offset])<3)continue;
+  if(x>100&&x<200&&y>50&&y<150)changedRoofPixels++;
+  else changedOutside++;
+}
+assert.ok(changedRoofPixels>200);
+assert.ok(changedOutside<10);
+console.log('PASS CPU-only 3D renderer distinguishes the physical sky court at the center of the same roof');

@@ -309,12 +309,18 @@ const numberWord={'واحد':1,'واحده':1,'اثنان':2,'اثنين':2,'ث�
 const count='(\\d+|'+Object.keys(numberWord).sort((a,b)=>b.length-a.length).join('|')+')';
 const asCount = value=>Number.isNaN(Number(value))?numberWord[value]:Number(value);
 const decimal='(\\d+(?:\\.\\d+)?)';
+function singleRequestedValue(values,label) {
+  const unique=[...new Set(values)];
+  if(unique.length>1) unsupported('ورد في وصفك أكثر من رقم يحدد '+label+' ('+unique.join(' و')+'). اختر رقماً واحداً لهذا الشرط ثم أعد التوليد.');
+  return unique[0];
+}
+
 function dimensions(text) {
   // Only the building introduction supplies exterior dimensions. Room goals
   // and numbered programme headings in subsequent paragraphs are unrelated.
   const intro=text.split(/\n\s*\n|(?:مجلس|غرفه نوم|صاله عائليه|مطبخ)/)[0].slice(0,650);
   const lot=/(?:قطعه\s+(?:ال)?ارض|(?:على|ابعاد|مساحه)\s+(?:ال)?ارض|(?:^|[\s،.,])(?:ال)?ارض\s+(?=\d|بمقاس|بابعاد|مساحتها|مقاسها))/.test(intro);
-  const buildingTerms=/(?:ابعاد|مسطح|بصمه|عرض)\s+(?:المبنى|العماره)/.exec(intro);
+  const buildingTerms=/(?:ابعاد|مقاس|مسطح|بصمه|عرض|عمق|طول)\s+(?:المبنى|العماره|البنايه)/.exec(intro);
   if(lot && !buildingTerms) unsupported('ذكرت أبعاد الأرض. حدّد عرض المبنى وعمقه بعد الارتدادات لاستخدام مخطط الشقق المحلي.');
   const first=buildingTerms?intro.slice(buildingTerms.index):intro;
   const pair = first.match(new RegExp(decimal+'\\s*(?:متر|م)?\\s*(?:[×x*]|في|بـ?)\\s*'+decimal+'(?:\\s*(?:متر|م))?'));
@@ -322,8 +328,32 @@ function dimensions(text) {
   const depth = first.match(new RegExp(decimal+'\\s*(?:مترا?|م)?\\s*عمق'));
   const qualified='(?:ها|ه|\\s+(?:المبنى|العماره|البنايه))?\\s*[:=]?\\s*';
   const dw=first.match(new RegExp('(?:عرض|واجهه)'+qualified+decimal));
-  const dd=first.match(new RegExp('عمق'+qualified+decimal));
-  return [(dw||frontage)?.[1]??pair?.[1],(dd||depth)?.[1]??pair?.[2]].map(v=>v===undefined?undefined:Number(v));
+  const dd=first.match(new RegExp('(?:عمق|طول)'+qualified+decimal));
+  const building='\\s+(?:المبنى|العماره|البنايه)(?:\\s+الخارجيه?)?\\s*[:=]?\\s*';
+  const namedValues=axis=>[...text.matchAll(new RegExp(axis+building+decimal,'g'))].map(m=>Number(m[1]));
+  const namedSizes=[...text.matchAll(new RegExp('(?:ابعاد|مقاس|بصمه)'+building+decimal+'\\s*(?:مترا?|م)?\\s*(?:[×x*]|في)\\s*'+decimal,'g'))];
+  const labelW=singleRequestedValue([...namedValues('عرض'),...namedSizes.map(m=>Number(m[1]))],'عرض المبنى');
+  const labelD=singleRequestedValue([...namedValues('(?:عمق|طول)'),...namedSizes.map(m=>Number(m[2]))],'عمق المبنى');
+  return [labelW??(dw||frontage)?.[1]??pair?.[1],labelD??(dd||depth)?.[1]??pair?.[2]].map(v=>v===undefined?undefined:Number(v));
+}
+
+function occupiedFloorCount(text) {
+  const counts=[];
+  const intro=text.split(/\n\s*\n/)[0];
+  const numberPhrase=new RegExp(count+'\\s*(?:ادوار|طوابق|floors|storeys)|(?:دورين|دوران|طابقين|طابقان)(?![ء-ي])|(?:دور|طابق)\\s+واحد','g');
+  for(const match of text.matchAll(numberPhrase)) {
+    const before=text.slice(0,match.index), after=text.slice(match.index+match[0].length);
+    // "في الدورين الأول والثاني" describes access to balconies, not the
+    // occupied floor count. A fresh clause or "من دورين" declares a count.
+    if(!match[1]&&(match.index>=intro.length || /(?:ال|(?:كل|مخطط|توزيع|عزل|اختيار)\s+)$/.test(before))) continue;
+    const countValue=match[1]?asCount(match[1]):match[0].endsWith('واحد')?1:2;
+    const addsGround=/(?:^|[\s،.,])(?:ال)?ارضي\s*[,،]?\s*(?:و\s*(?:(?:فوقه|فوقها)\s*)?|زائد\s*|بالاضافه\s+الى\s*)$/.test(before) ||
+      /^(?:\s+(?:علويه?|اضافيه?))?\s+فوق(?:ه|ها|(?:\s+(?:(?:الدور|الطابق)\s+)?الارضي))/.test(after);
+    const inclusive=/^\s+(?:تشمل|تتضمن|شامله?|بما\s+فيها?)(?:\s+(?:الدور|الطابق))?\s+الارضي/.test(after);
+    if(addsGround&&inclusive) unsupported('ذكرت الأرضي منفصلاً ثم شملته في العدد. حدّد إجمالي الأدوار شاملاً الأرضي، أو اذكر الأدوار التي تعلوه.');
+    counts.push(countValue+(addsGround?1:0));
+  }
+  return singleRequestedValue(counts,'إجمالي الأدوار شاملة الأرضي');
 }
 
 const directions={شمال:'N',شرق:'E',جنوب:'S',غرب:'W'};
@@ -373,11 +403,9 @@ export function apartmentFromBrief(text,defaults={}) {
 function buildRequestedApartment(t,{width=20,depth=25,levels=3,height=3.4},options) {
   const explicitSize=dimensions(t);
   width=explicitSize[0]??width; depth=explicitSize[1]??depth;
-  const statedFloors=t.match(new RegExp(count+'\\s*(?:ادوار|طوابق|floors|storeys)'));
-  if(statedFloors) levels=asCount(statedFloors[1]);
+  const statedFloors=occupiedFloorCount(t);
+  if(statedFloors!==undefined) levels=statedFloors;
   else if(/(?:دور\s+|طابق\s+)?ارضي[^.\n]{0,70}(?:اول)[^.\n]{0,40}(?:ثان)/.test(t)) levels=3;
-  else if(/(?:دوران|دورين|طابقين|طابقان)(?:\s|[.،,]|$)/.test(t.slice(0,240))) levels=2;
-  else if(/(?:دور|طابق)\s+واحد/.test(t.slice(0,240))) levels=1;
   const perFloor=t.match(new RegExp(count+'\\s*شقق?\\s*(?:في|ب|لكل)\\s*(?:كل\\s+)?(?:دور|طابق)')) || t.match(new RegExp('(?:في|ب)\\s*كل\\s*(?:دور|طابق)\\s*'+count+'\\s*شقق?'));
   const total=t.match(new RegExp('(?:ب?اجمالي|مجموع(?:ها)?)\\s*'+count+'\\s*شقق?'));
   if((perFloor&&asCount(perFloor[1])!==2)||(total&&asCount(total[1])!==2*levels)||/(?:شقه\s+(?:واحده\s+)?(?:بكل|لكل|في كل)\s+دور|كل دور\s+شقه\s+واحده)/.test(t))

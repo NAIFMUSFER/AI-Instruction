@@ -11,6 +11,7 @@ on:
       - 'tests/remediation/test_audit_engineering_door_meshes.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/remediation/test_guest_brief_variations.cjs'
+      - 'tests/remediation/test_guest_software_studio.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
       - 'tests/remediation/test_local_apartment.mjs'
@@ -28,6 +29,7 @@ on:
       - 'tests/remediation/test_audit_engineering_door_meshes.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
       - 'tests/remediation/test_guest_brief_variations.cjs'
+      - 'tests/remediation/test_guest_software_studio.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
       - 'tests/remediation/test_local_apartment.mjs'
@@ -87,12 +89,17 @@ jobs:
         if: github.event_name == 'push'
         run: |
           python3 tests/deploy/wait_published_revision.py --expect-sha "$ACS_VERIFY_EXPECT_SHA" --seconds 600 --output logs/public-apartment/published-revision.json
-      - name: Open the studio and generate the residential brief
-        timeout-minutes: 19
-        run: node tests/remediation/test_public_apartment_journey.cjs
       - name: Compare dimensions, courtyard and entrance changes from the guest studio
+        id: variations
         timeout-minutes: 20
         run: node tests/remediation/test_guest_brief_variations.cjs
+      - name: Edit and reopen the same guest apartment without WebGL
+        if: ${{ !cancelled() && (steps.variations.outcome == 'success' || steps.variations.outcome == 'failure') }}
+        run: node tests/remediation/test_guest_software_studio.cjs
+      - name: Open the studio and generate the residential brief
+        if: ${{ !cancelled() && (steps.variations.outcome == 'success' || steps.variations.outcome == 'failure') }}
+        timeout-minutes: 19
+        run: node tests/remediation/test_public_apartment_journey.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

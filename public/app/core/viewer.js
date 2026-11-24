@@ -2143,6 +2143,9 @@ function activeBuilding(data){
 }
 /* غلاف تصدير: هرمية المشروع + حقول المرحلة 1 في مكانها (توافق كامل للخلف) */
 function projectEnvelope(b){
+  // Project conversion enriches rooms and levels with stable IDs. Apply those
+  // defaults to the serialized snapshot without editing the open guest model.
+  if(isBuildingModel(b)) b=JSON.parse(JSON.stringify(b));
   const pr=toProject(b); if(!pr) return b;
   const bt=String((b.meta||{}).type||'residential').toLowerCase();
   const env=Object.assign({}, b);                       // كل حقول المرحلة 1 كما هي

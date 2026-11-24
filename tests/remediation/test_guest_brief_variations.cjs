@@ -6,7 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const PW = require('../../tools/pw_chromium.js');
-const { serve, menu, runtime, cameraControl, origin } = require('./test_public_apartment_journey.cjs');
+const { serve, menu, runtime, cameraControl, modelGLB, origin } = require('./test_public_apartment_journey.cjs');
 
 const output = path.resolve(process.env.ACS_APARTMENT_EVIDENCE || 'logs/public-apartment', 'variations');
 const cases = [
@@ -201,7 +201,11 @@ async function run(browser,width){
       await submit(page,c);
       const bytes=await download(page,()=>menu(page,'guestExport'),dirNow,'model.json');
       const model=JSON.parse(bytes), active=await page.evaluate(()=>window.ACS.exportModel());
-      assert.deepEqual(model.floors,active.floors,'download belongs to the active floor model');
+      const expectedFloors=structuredClone(active.floors);
+      for(const [template,floor] of Object.entries(expectedFloors)){
+        floor.rooms.forEach((room,index)=>{room.space_id??='bld_0.'+template+'.'+(room.id||('sp_'+index));});
+      }
+      assert.deepEqual(model.floors,expectedFloors,'download retains all selected floor geometry, including its derived export IDs');
       Object.assign(row,inspect(model,c));
       row.modelHash=digest(bytes);
       await camera(page,'bird');await shot(page,dirNow,'aerial.png');
@@ -239,6 +243,7 @@ async function run(browser,width){
         await shot(page,dirNow,'interior.png');
       }
       await plan(page,c,dirNow);
+      if(width===1440)await modelGLB(page,row,{directory:dirNow,filename:'building.glb',width:c.width,depth:c.depth,floors:c.floors});
       assert.deepEqual(await page.evaluate(()=>window.ACS.exportModel()),active,'opening plan did not alter model');
       if(c.edit)assert.notEqual(row.modelHash,previous.modelHash,'an edit changed exported design');
       previous=row;

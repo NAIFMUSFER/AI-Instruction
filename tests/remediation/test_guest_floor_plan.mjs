@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import APP from '../lib/app_source.js';
 import {apartmentFromBrief,apartmentFromRevision,apartmentDoorPairs,apartmentSample} from '../../public/app/core/local-apartment.mjs';
 import {resolveStairGeometry,stairConnections} from '../../public/app/core/stairs.mjs';
 import {renderGuestFloorSVG} from '../../public/app/ui/guest-floor-plan.mjs';
@@ -80,7 +81,9 @@ console.log('PASS named apartment fallback, physical level/room/unit counts and 
 const closed=apartmentFromBrief('أبغى عمارة عرض المبنى ٢٤ متر وعمقه ٢٨ متر، أربعة أدوار شاملة الأرضي، شقتين في كل دور');
 const withCourt=apartmentFromRevision('خلّ وسط العمارة فناء مفتوح للسماء وحافظ على عدد الشقق',closed);
 const rotated=apartmentFromRevision('خل المدخل شرقي',withCourt);
+const {compileArchitecture,projectArchitecturalLevel}=new Function(APP.nodeBundle()+';return {compileArchitecture,projectArchitecturalLevel};')();
 for(const building of [withCourt,rotated]) {
+  const architecture=compileArchitecture(building);
   const firstCourt=building.floors[building.levels[0].template].courtyards[0];
   for(const level of building.levels) {
     const floor=building.floors[level.template], rooms=floor.rooms;
@@ -100,9 +103,10 @@ for(const building of [withCourt,rotated]) {
     }
     const passage=rooms.find(r=>r.id==='court_passage');
     assert.equal(passage.doors.some(dr=>dr.id==='court_ground_door'),level.index===0,'court exit is on the ground only');
-    const sheet=renderGuestFloorSVG({...packet,level_index:level.index},building);
+    const sheet=renderGuestFloorSVG(projectArchitecturalLevel(architecture,level.index),building);
     assert.ok(sheet.includes('data-courtyard-id="central_courtyard"') && sheet.includes('مفتوح للسماء'));
-    if (building===rotated) assert.ok(sheet.includes('شمال'));
+    assert.ok(sheet.includes('data-width-m="24" data-depth-m="28"') && sheet.includes('ممر الفناء المشترك'));
+    if (building===rotated) assert.ok(sheet.includes('شمال') && sheet.includes('الشقة الشمالية'));
   }
   assert.equal(stairConnections(building).length,3,'four levels must have three real stair connections');
 }

@@ -292,6 +292,7 @@ async function openGuestWorkspace() {
     const recovery = A.persistence.recover();
     if (namedDraft) {
       notice('مشروع محلي');
+      suggestFormDimensions({site:{w:20,d:25}});
       facts();
       openPanel('acsTabMake');
     } else {

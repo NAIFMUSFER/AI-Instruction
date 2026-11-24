@@ -4,8 +4,8 @@ function loadLocalStudio(){
   if(loading)return loading;
   loading=(async()=>{
     await import('../core/stairs.mjs');
-    await import('../core/local-apartment.mjs');
     await import('../core/context-details.mjs');
+    await import('../core/local-apartment.mjs');
     await import('../core/viewer.js');
     await import('../core/standards.js');
     await import('../core/roof.mjs');
@@ -27,7 +27,13 @@ function loadLocalStudio(){
     await import('../ui/generation-jobs.js');
     await import('../ui/guest-floor-plan.mjs');
     await import('../ui/guest-workspace.js');
-  })().catch(error=>{
+  })().catch(async error=>{
+    if(window.ACS_AUTH?.guestProjectId){
+      await import('../trust/guest-draft-store.mjs');
+      await import('../render/guest-software-view.mjs');
+      const software = await import('../ui/guest-software-studio.mjs');
+      return software.openGuestSoftwareStudio();
+    }
     window.ACS?.guestBootFailure?.();
     const status=document.getElementById('status');if(status)status.textContent='تعذّر تشغيل المشهد المحلي. أعد المحاولة أو استخدم المخطط البديل.';
     throw error;
