@@ -20,6 +20,66 @@ function assertConceptApproval(view,stage){
  assert.equal(view.authority?.can_approve_concept,true,stage+' must satisfy the actual canonical review: '+JSON.stringify(blockers));
 }
 
+async function newProject(page,name){
+ await page.locator('#cwNewProject').click();
+ await page.locator('#cwProjectName').fill(name);
+ await Promise.all([page.waitForEvent('framenavigated',frame=>frame===page.mainFrame()),page.locator('#cwNewProjectForm button[type=submit]').click()]);
+ await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
+ assert.equal(await page.locator('#cwProject option:checked').textContent(),name);
+}
+
+async function verifyPromptStarters(page,port,width){
+ await newProject(page,'تجربة وصف قابل للتعديل '+width);
+ const brief=page.locator('#cwBrief'),start=id=>page.locator('[data-brief-starter="'+id+'"]');
+ const generationCount=async()=>(await (await fetch('http://127.0.0.1:'+port+'/test-stats')).json()).generation;
+ const initialCount=await generationCount();
+ assert.equal(await brief.inputValue(),'','a new account project starts without another project’s draft');
+ await start('apartments').click();
+ assert.equal(await page.locator('#cwWidth').inputValue(),'20');
+ assert.equal(await page.locator('#cwLevels').inputValue(),'3');
+ assert.equal(await page.locator('#cwUnits').inputValue(),'2');
+ assert.equal(await page.locator('#cwUnitsScope').inputValue(),'per_level');
+ const apartmentEdit=(await brief.inputValue()).replace('عرض الأرض ٢٠ متر','عرض الأرض ٢٢ متر')+'\nأبغى مجلسًا قريبًا من المدخل.';
+ await brief.fill(apartmentEdit);
+ assert.equal(await page.locator('#cwWidth').inputValue(),'22','edited template dimensions should follow my words');
+ await start('courtyard').click();
+ await page.locator('#cwKeepBrief').click();
+ assert.equal(await brief.inputValue(),apartmentEdit,'keeping my edits must preserve the draft');
+ await start('custom').click();
+ assert.equal(await brief.inputValue(),apartmentEdit);
+ assert.ok(await brief.evaluate(el=>el===document.activeElement),'custom writing must focus my text');
+ await start('courtyard').click();
+ await page.locator('#cwReplaceBrief').click();
+ assert.notEqual(await brief.inputValue(),apartmentEdit);
+ assert.equal(await page.locator('#cwDepth').inputValue(),'28');
+ await page.locator('#cwDepth').fill('30');
+ await brief.fill((await brief.inputValue()).replace('عمق الأرض ٢٨ متر','عمق الأرض ٣١ متر'));
+ assert.equal(await page.locator('#cwDepth').inputValue(),'30','manually entered values must not be overwritten by later edits');
+ await page.locator('#cwDepth').fill('');
+ await page.locator('#cwType').selectOption('warehouse');
+ await start(width===393?'distribution':'storage').click();
+ await page.locator('#cwReplaceBrief').click();
+ const edited=await brief.inputValue()+'\nأبغى فصل مسار دخول الموظفين عن باب التحميل.';
+ await brief.fill(edited);
+ await page.reload();
+ await brief.waitFor({state:'visible'});
+ assert.equal(await brief.inputValue(),edited,'the chosen and edited prompt must survive a reload');
+ assert.equal(await page.locator('#cwConfirmed').isChecked(),false);
+ assert.equal(await generationCount(),initialCount,'choosing, editing and restoring a prompt must not generate');
+ await page.locator('#cwConfirmed').check();
+ await page.locator('#cwBriefForm button[type=submit]').click();
+ const response=page.waitForResponse(r=>r.url().endsWith('/workspace')&&r.request().method()==='POST'&&r.request().postDataJSON()?.action==='generate');
+ await page.locator('[data-option="A"]').click();
+ const admitted=await response;
+ assert.ok(admitted.ok(),'the account generation request must be admitted');
+ const submitted=admitted.request().postDataJSON().brief;
+ assert.equal(submitted.split('\n\nنوع المشروع:')[0],edited,'generation must submit the exact edited text');
+ await page.locator('#cwReviewContent').waitFor({state:'visible',timeout:45000});
+ assert.equal((await workspaceState(page)).brief,submitted,'the real workspace route must save the exact admitted brief');
+ assert.equal(await generationCount(),initialCount+1,'explicit generation invokes the controlled provider once');
+ console.log('PASS signed-in editable prompt choices at '+width+'px: edited text saved by the workspace, one controlled provider call');
+}
+
 (async()=>{
  const tmp=fs.mkdtempSync(path.join(os.tmpdir(),'acs-ui-')),port=8891;
  const child=spawn(process.env.PYTHON||'python',['tests/remediation/connected_workspace_browser_server.py','--port',String(port),'--database',path.join(tmp,'plans.sqlite3')],{cwd:ROOT,stdio:['ignore','pipe','pipe']});
@@ -72,10 +132,8 @@ w.write(sys.argv[1])`,pdfFixture]);
    assert.equal(await page.locator('#app canvas').count(),0,'public sign-in allocates no hidden legacy renderer');
    await page.locator('#lgEmail').fill('fixture@example.test');await page.locator('#lgPassword').fill('fixture-password');await page.locator('#lgGo').click();
    await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
-   await page.locator('#cwNewProject').click();await page.locator('#cwProjectName').fill('مشروع قبول '+width);
-   await Promise.all([page.waitForEvent('framenavigated',frame=>frame===page.mainFrame()),page.locator('#cwNewProjectForm button[type=submit]').click()]);
-   await page.waitForFunction(()=>document.querySelector('#cwStatus')?.textContent.includes('مشروعك جاهز'));
-   assert.equal(await page.locator('#cwProject option:checked').textContent(),'مشروع قبول '+width);
+   if(!noWebGL)await verifyPromptStarters(page,port,width);
+   await newProject(page,'مشروع قبول '+width);
    await page.locator('#cwBrief').waitFor({state:'visible'});
    await page.locator('#cwType').selectOption(width===393?'warehouse':'residential');
    const dimensionEvidence=width===393?'٢٠ متر في ٢٠ متر':'عرض الموقع ٢٠ متر';

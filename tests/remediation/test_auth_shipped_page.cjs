@@ -35,7 +35,7 @@ async function runAuthShippedPage(){
   try{
     for(const width of [393,1440]){
       const context=await browser.newContext({viewport:{width,height:width===393?852:900}}), page=await context.newPage();
-      const errors=[], calls=[], localModules=[];let firstProject=null, failSignin=true, googleChallenge=null;
+      const errors=[], calls=[], localModules=[];let firstProject=null, failSignin=true, failGoogle=true, googleChallenge=null;
       page.on('pageerror',e=>errors.push(e.message));
       try{
       await context.route('**/*',async route=>{
@@ -44,7 +44,8 @@ async function runAuthShippedPage(){
         if(url.hostname==='auth.example.test'){
           assert.equal(url.pathname,'/auth/v1/authorize');
           assert.equal(url.searchParams.get('code_challenge'),googleChallenge);
-          return route.fulfill({status:302,headers:{location:'https://acs-ui.test/?code=11111111-1111-4111-8111-111111111111'}});
+          // The test provider completes consent in the same tab, as a user would.
+          return route.fulfill({contentType:'text/html',body:'<a href="https://acs-ui.test/?code=11111111-1111-4111-8111-111111111111">Continue with test account</a>'});
         }
         if(url.hostname==='acs-engine.onrender.com'){
           const headers={'content-type':'application/json','access-control-allow-origin':'https://acs-ui.test',
@@ -58,6 +59,7 @@ async function runAuthShippedPage(){
             assert.equal(input.code_verifier,undefined);
             body={redirect_to:'https://acs-ui.test/',url:'https://auth.example.test/auth/v1/authorize?'+new URLSearchParams({
               provider:'google',redirect_to:'https://acs-ui.test/',code_challenge:googleChallenge,code_challenge_method:'s256'})};
+            if(failGoogle){status=503;body={error:{code:'AUTH_UPSTREAM_UNAVAILABLE'}};}
           }else if(url.pathname==='/v1/auth/google/exchange'){
             const input=req.postDataJSON();assert.equal(input.auth_code,'11111111-1111-4111-8111-111111111111');
             assert.equal(require('node:crypto').createHash('sha256').update(input.code_verifier).digest('base64url'),googleChallenge);
@@ -121,11 +123,11 @@ async function runAuthShippedPage(){
       await page.waitForFunction(()=>document.querySelector('#acsAuthStatus').textContent.includes('مؤقتًا'));
       assert.equal(await page.locator('#lgGo').isEnabled(),true);
       const fallback=page.locator('#acsAuthGuestLink');
-      assert.equal(await fallback.textContent(),'فتح الاستوديو على هذا الجهاز');
+      assert.equal(await fallback.textContent(),'متابعة بدون حساب');
       assert.equal(await fallback.getAttribute('href'),'/?guest=1');
       const fallbackBox=await fallback.boundingBox(), googleBox=await page.locator('#acsAuthGoogle').boundingBox();
-      assert.ok(fallbackBox&&fallbackBox.height>=44&&fallbackBox.y>=0&&fallbackBox.y+fallbackBox.height<=googleBox.y,
-        'local recovery must fit above sign-in as a full touch target');
+      assert.ok(fallbackBox&&fallbackBox.height>=44&&fallbackBox.y>googleBox.y+googleBox.height,
+        'optional local entry remains reachable below primary account actions');
       const googleLabel=page.locator('#acsAuthGoogle span').last();
       assert.equal(await googleLabel.evaluate(el=>getComputedStyle(el).color),
         await page.locator('#acsAuthGoogle').evaluate(el=>getComputedStyle(el).color));
@@ -160,8 +162,21 @@ async function runAuthShippedPage(){
       assert.equal(await page.locator('#camBar').isVisible(),false);
       // A real browser redirect round trip must preserve this tab's PKCE proof,
       // restore the same Supabase project, and keep auth codes out of the URL.
+      await page.getByRole('button',{name:'المتابعة باستخدام Google'}).click();
+      const retry=page.getByRole('button',{name:'إعادة المحاولة باستخدام Google'});
+      await retry.waitFor({state:'visible'});
+      assert.equal(await retry.isEnabled(),true);
+      assert.match(await page.locator('#acsAuthStatus').innerText(),/الاتصال بخدمة الحسابات.*Google/);
+      assert.equal(page.url(),'https://acs-ui.test/?signin=1');
+      assert.equal(await page.evaluate(()=>sessionStorage.getItem('acs_google_pkce_v1')),null);
+      failGoogle=false;
       const googleSourceRestore=sourceResponse(page);
-      await page.locator('#acsAuthGoogle').click();
+      await retry.click();
+      const consent=page.getByRole('link',{name:'Continue with test account'});
+      await consent.waitFor({state:'visible'});
+      assert.equal(new URL(page.url()).origin,'https://auth.example.test');
+      assert.equal(calls.filter(p=>p==='/v1/auth/google/start').length,2);
+      await consent.click();
       await page.waitForFunction(workspaceEntered);
       await privateWorkspaceReady(page,googleSourceRestore);
       assert.equal(page.url(),'https://acs-ui.test/');
