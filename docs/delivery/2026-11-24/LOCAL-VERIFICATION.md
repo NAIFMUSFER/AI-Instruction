@@ -82,6 +82,20 @@ sizes, including the original failing real-response fallback downloads.
 This is synthetic authentication evidence; the production upstream status
 below remains a separate finding. [Candidate auth](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45314948359/job/138179532803)
 
+The follow-up candidate, `2b8ddc371d6f2a8f82b9e16d43ae88e305acf58e`,
+confirmed exact rendered/source identity in all eight retained reports. Six
+non-baseline jobs passed. Both baseline jobs completed revisions and software
+recovery, then exposed a real slow-renderer problem: OrbitControls' per-frame
+damping was still scheduling frames 25 seconds after a drag. The concurrent
+`cba3dd77` correction changes guest damping to elapsed time; the integrated
+follow-up also restores the incoming damping factor when guest ownership ends.
+The actual pinned controls and shipped frame/scheduler logic now settle mouse
+and touch gestures at both widths in about 0.9 seconds at 60 fps, 2 seconds at
+400 ms/frame and 4 seconds at 800 ms/frame. The previous policy remains a
+failing negative witness. These are CPU controls/timing checks; the unchanged
+browser idle and actual-frame assertions must pass on the final candidate.
+[Follow-up matrix](https://github.com/NAIFMUSFER/AI-Instruction/actions/runs/45317262495)
+
 ## External services
 
 At 05:23 Riyadh time, the public version and health probes succeeded, Google

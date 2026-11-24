@@ -26,6 +26,7 @@ const dock=(x,z,ds)=>({rect:[x,z,20,12],docks:[{}],dockIntervals:ds});
 const result=cuts(shell,[shell,dock(10,8,[[15,3,0,4]]),dock(10,18,[[19,2,0,3]]),dock(130,8,[[135,3,0,4]])]);
 assert.deepEqual(JSON.parse(JSON.stringify(result.N)),[[15,3,0,4]],'only a dock co-planar with and inside the host edge cuts its wall');
 import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
 import {fitGuestCamera,keepGuestAboveGrade,visibleInGuestCut,apartmentJoinery,disposeGuestJoinery} from '../../public/app/render/guest-presentation.mjs';
 const samples=[
   {name:'apartment',bounds:[-.1,-.15,-.1,20.1,11.2,25.1]},
@@ -200,6 +201,114 @@ assert.equal(typeof guestFrameScheduler,'function','a static public model must s
  available=true;q.request();next();assert.equal(drawn,8);assert.equal(q.pending(),false);
 }
 console.log('PASS guest frame ownership, idle, damping, animation and visibility recovery');
+
+// Exercise the actual frame handler, ownership transitions, scheduler and
+// pinned OrbitControls. The negative witness restores fixed per-frame damping;
+// the corrected path must settle by elapsed time at both fast and slow rates.
+const frameSource=wiring.slice(wiring.indexOf('let last2=performance.now();'),wiring.indexOf('const acsLegacyVisibility='));
+const controlSource=wiring.slice(wiring.indexOf("orbit.addEventListener?.('start'"),wiring.indexOf("for(const event of ['input'"));
+assert.ok(frameSource.startsWith('let last2=performance.now();')&&controlSource.includes("'change'"));
+function orbitIdleFixture(width,pointerType,frameMs,oldDamping=false){
+  const height=width===393?852:900,listeners=new Map(),callbacks=new Map(),classes=new Set(['acs-entered']);
+  let sequence=0,clock=0,rendered=0;
+  const element={style:{},clientWidth:width,clientHeight:height,
+    setPointerCapture(){},releasePointerCapture(){},
+    getBoundingClientRect:()=>({left:0,top:0,width,height}),
+    addEventListener(type,fn){if(!listeners.has(type))listeners.set(type,new Set());listeners.get(type).add(fn);},
+    removeEventListener(type,fn){listeners.get(type)?.delete(fn);}};
+  const camera=new THREE.PerspectiveCamera(52,width/height,.05,6000);
+  camera.position.set(46.1662,36.4746,-52.0825);
+  const orbit=new OrbitControls(camera,element);orbit.enableDamping=true;orbit.dampingFactor=.17;
+  orbit.target.set(10,5.475,12.5);orbit.update();
+  const state={orbit,camera,guestFrameScheduler,keepGuestAboveGrade,
+    performance:{now:()=>clock},window:{ACS:{guest:true}},
+    document:{hidden:false,querySelector:()=>null,body:{classList:{contains:name=>classes.has(name)}}},
+    renderer:{xr:{isPresenting:false},info:{render:{frame:0}},setAnimationLoop(fn){this.loop=fn;},
+      render(){rendered++;this.info.render.frame++;}},
+    scene:{},ground:{position:{y:-.1}},headLamp:{position:new THREE.Vector3()},
+    walkState:{active:false},fly:{on:false},mode:'orbit',flyStep:()=>false,
+    vrStep(){},walkStep(){},tourStep(){},camWorld:()=>camera.position,
+    requestAnimationFrame:fn=>{callbacks.set(++sequence,{fn,at:clock+frameMs});return sequence;},
+    cancelAnimationFrame:id=>callbacks.delete(id)};
+  const controls=vm.runInNewContext(frameSource+'\n'+controlSource+'\n({sync:syncLegacyRendering,frame:acsLegacyFrame})',state);
+  const stats=state.window.ACS.guestRenderStats;
+  function advance(ms){
+    const end=clock+ms;
+    while(callbacks.size){
+      const at=Math.min(...[...callbacks.values()].map(row=>row.at));
+      if(at>end)break;
+      clock=at;const tick=[...callbacks].filter(([,row])=>row.at===at);
+      for(const [id,row] of tick){callbacks.delete(id);row.fn();}
+    }
+    clock=end;
+  }
+  function event(type,x,y,extra={}){
+    const e={pointerType,pointerId:1,button:0,clientX:x,clientY:y,pageX:x,pageY:y,preventDefault(){},...extra};
+    [...listeners.get(type)||[]].forEach(fn=>fn(e));
+  }
+  controls.sync();advance(frameMs);assert.equal(stats().pending,false,'initial view must settle');
+  if(oldDamping){
+    // Recreate the old public policy using the real controls: their factor
+    // cannot adapt to elapsed time and remains at its previous default .05.
+    Object.defineProperty(orbit,'dampingFactor',{configurable:true,get:()=>.05,set(){}});
+  }
+  const before=camera.position.clone(),beforeStats=stats(),x=Math.round(width*.35),y=Math.round(height*.52);
+  event('pointerdown',x,y);
+  for(let i=1;i<=5;i++){advance(16);event('pointermove',x+28*i/5,y-10*i/5);}
+  event('pointerup',x+28,y-10);
+  const released=clock;
+  if(oldDamping){
+    advance(64*frameMs);
+    assert.equal(stats().pending,true,'fixed damping must reproduce the still-running slow-frame tail');
+  }else{
+    while(stats().pending&&clock-released<6000)advance(frameMs);
+    assert.equal(stats().pending,false,'elapsed-time guest inertia must settle within six seconds even on a slow renderer');
+  }
+  assert.ok(camera.position.distanceTo(before)>.1,'actual pointer gesture must move the camera');
+  assert.ok(stats().draws>beforeStats.draws&&stats().rendererFrames>beforeStats.rendererFrames,'actual frame handler must draw the gesture');
+  const outcome={width,pointerType,frameMs,elapsedMs:clock-released,frames:stats().draws-beforeStats.draws,position:camera.position.toArray()};
+  if(!oldDamping){
+    assert.equal(orbit.enableDamping,true,'elapsed-time policy retains smooth guest inertia');
+    const radius=camera.position.distanceTo(orbit.target),wheelFrames=rendered;
+    event('wheel',x,y,{deltaY:-120});advance(frameMs);
+    assert.ok(camera.position.distanceTo(orbit.target)<radius,'wheel zoom must still move the actual camera');
+    assert.ok(rendered>wheelFrames,'wheel zoom must receive its actual redraw');
+    const settled=stats();advance(6000);
+    assert.deepEqual(stats(),settled,'settled controls must submit no more frames');
+    // A connected/hidden route restores the original factor even while the
+    // guest flag still exists; a stray control event must not overwrite it.
+    classes.add('acs-connected');controls.sync();
+    assert.equal(orbit.dampingFactor,.17,'connected ownership must restore the original factor');
+    event('pointerdown',x,y);event('pointerup',x,y);
+    assert.equal(orbit.dampingFactor,.17,'inactive guest input cannot overwrite the restored factor');
+    classes.delete('acs-connected');state.window.ACS.guest=false;controls.sync();
+    assert.equal(orbit.enableDamping,true);
+    assert.equal(orbit.dampingFactor,.17,'legacy ownership must retain its configured damping');
+    assert.equal(state.renderer.loop,controls.frame,'legacy frame ownership remains intact');
+    clock+=frameMs;controls.frame();assert.equal(orbit.dampingFactor,.17,'legacy frames cannot reuse a guest factor');
+    orbit.dampingFactor=.23;state.window.ACS.guest=true;controls.sync();advance(frameMs);
+    state.window.ACS.guest=false;controls.sync();
+    assert.equal(orbit.dampingFactor,.23,'a later guest visit must restore the latest legacy preference');
+  }
+  state.window.ACS.guest=false;controls.sync();orbit.dispose();
+  return outcome;
+}
+const previousControlWindow=globalThis.window,settling=[];
+try{
+  // The real controls read browser DPR when normalizing a wheel delta.
+  globalThis.window={devicePixelRatio:1};
+  for(const width of [393,1440])for(const pointerType of ['mouse','touch']){
+    orbitIdleFixture(width,pointerType,400,true);
+    const rates=[1000/60,400,800].map(ms=>orbitIdleFixture(width,pointerType,ms));
+    const reference=new THREE.Vector3(...rates[0].position);
+    assert.ok(rates.every(row=>new THREE.Vector3(...row.position).distanceTo(reference)<.03),'fast and slow frame rates must converge to the same user-requested view');
+    settling.push(...rates.map(({position,...row})=>row));
+  }
+}finally{
+  if(previousControlWindow===undefined)delete globalThis.window;
+  else globalThis.window=previousControlWindow;
+}
+console.log('PASS real pinned orbit controls: elapsed-time settling, fixed-frame negative witness, gestures, idle and original legacy damping restored '+JSON.stringify(settling));
 const {warehouseDockFinish}=await import('../../public/app/render/guest-presentation.mjs');
 const shutters=warehouseDockFinish(inventory,{site:{w:40,d:30}});
 assert.equal(shutters.children.length,3,'one batched sheet, seams and guide profile for actual dock gate');

@@ -1413,7 +1413,7 @@ function acsLegacyFrame(){
   const now=performance.now(),elapsed=(now-last2)/1000,dt=Math.min(elapsed,0.1); last2=now;
   // OrbitControls r160 damps per update. Use elapsed time for guest inertia so a
   // software GPU also stops drawing when a gesture has visibly settled.
-  if(window.ACS?.guest)orbit.dampingFactor=1-Math.exp(-Math.min(elapsed,.35)/.12);
+  if(acsRenderOwner==='guest'||acsRenderOwner==='guest-xr')orbit.dampingFactor=1-Math.exp(-Math.min(elapsed,.35)/.12);
   if(renderer.xr.isPresenting){
     vrStep(dt);
     headLamp.position.copy(camWorld());
@@ -1430,7 +1430,7 @@ function acsLegacyFrame(){
 
 /* The local route owns this loop. CSS-hidden work and background tabs do not
    keep submitting frames; private workspace entry does not import this route. */
-let acsRenderOwner='hidden',guestSuspended=false,guestContextLost=false,guestDraws=0;
+let acsRenderOwner='hidden',guestSuspended=false,guestContextLost=false,guestDraws=0,guestOrbitDamping=null;
 const guestFrames=guestFrameScheduler({
   available:()=>acsRenderOwner==='guest',
   moving:()=>walkState.active||fly.on||mode==='tour'||orbit.autoRotate,
@@ -1444,6 +1444,10 @@ function syncLegacyRendering(){
   const guestCovered=window.ACS.guest&&(document.body.classList.contains('acs-guest-fallback-active')||document.querySelector('#guestPlanDialog[open]'));
   const active=!guestCovered&&!guestSuspended&&!guestContextLost&&!document.hidden&&document.body.classList.contains('acs-entered')&&!document.body.classList.contains('acs-connected');
   const owner=!active?'hidden':window.ACS.guest?(renderer.xr.isPresenting?'guest-xr':'guest'):'legacy';
+  const guestOwner=owner==='guest'||owner==='guest-xr';
+  // Guest frame timing temporarily owns the factor, not the legacy preference.
+  if(guestOwner&&guestOrbitDamping===null)guestOrbitDamping=orbit.dampingFactor;
+  if(!guestOwner&&guestOrbitDamping!==null){orbit.dampingFactor=guestOrbitDamping;guestOrbitDamping=null;}
   if(owner===acsRenderOwner)return;
   guestFrames.stop();acsRenderOwner=owner;
   renderer.setAnimationLoop(owner==='legacy'||owner==='guest-xr'?acsLegacyFrame:null);
@@ -1462,7 +1466,7 @@ renderer.domElement.addEventListener('webglcontextrestored',()=>{guestContextLos
 renderer.xr.addEventListener('sessionstart',syncLegacyRendering);
 renderer.xr.addEventListener('sessionend',syncLegacyRendering);
 orbit.addEventListener?.('start',()=>{
-  if(window.ACS?.guest){last2=performance.now();orbit.dampingFactor=.12;}
+  if(acsRenderOwner==='guest'||acsRenderOwner==='guest-xr'){last2=performance.now();orbit.dampingFactor=.12;}
 });
 orbit.addEventListener?.('change',guestFrames.request);
 for(const event of ['input','change','click','pointerdown','pointerup','keydown','keyup']){
