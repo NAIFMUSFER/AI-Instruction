@@ -106,19 +106,22 @@ export function visibleInGuestCut(name,warehouse){
   return !(warehouse&&layer==='WALL'&&room==='envelope'&&/^w[NW]s\d+$/.test(part));
 }
 
-export function fitGuestCamera(box,mode,camera,orbit,viewport,groundY){
+export function fitGuestCamera(box,mode,camera,orbit,viewport,groundY,streetEdge='N'){
   const {width,height,right,top,bottom}=viewport;
   const availableW=Math.max(width*.28,width-right),availableH=Math.max(height*.4,height-top-bottom);
   // Same optical centre and physical FOV in the unobstructed screen region.
   camera.setViewOffset(width,height,right/2,(bottom-top)/2,width,height);
   const effective=THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(camera.fov/2))*availableH/height));
-  const direction=mode==='cutaway'?new THREE.Vector3(-.62,1.1,-1):
+  const direction=mode==='top'?new THREE.Vector3(0,1,.0001):mode==='cutaway'?new THREE.Vector3(-.62,1.1,-1):
     mode==='detail'?new THREE.Vector3(.18,.12,-1):mode==='aerial'?new THREE.Vector3(.48,1.65,-1):new THREE.Vector3(.56,.48,-1);
   const target=box.getCenter(new THREE.Vector3());
   if(mode==='street'){
     target.y=groundY+1.7;
     direction.set(.24,0,-1);
   }
+  // Show the requested facade and keep north at the top in the overhead view.
+  const turn={N:0,E:-Math.PI/2,S:Math.PI,W:Math.PI/2}[streetEdge]||0;
+  if(mode!=='top'&&turn)direction.applyAxisAngle(new THREE.Vector3(0,1,0),turn);
   const frame=frameBounds(box,direction,effective,availableW/availableH,1.1,target);
   const radius=box.getBoundingSphere(new THREE.Sphere()).radius;
   const distance=frame.position.distanceTo(frame.target);
@@ -154,8 +157,11 @@ export function guestFocus(model,building,kind,warehouse){
     if(!door)return null;
     const box=new THREE.Box3().setFromObject(door),mid=box.getCenter(new THREE.Vector3());
     const extent=box.getSize(new THREE.Vector3());
-    const w=Math.max(extent.x*1.1,1.8),h=extent.y;
-    return {source:door.name,box:new THREE.Box3(new THREE.Vector3(mid.x-w,base,mid.z-.4),new THREE.Vector3(mid.x+w,base+h+.55,mid.z+.7))};
+    const alongX=extent.x>=extent.z,span=Math.max(extent.x,extent.z,1.8)*1.1;
+    const dx=alongX?span:.55,dz=alongX?.55:span;
+    return {source:door.name,box:new THREE.Box3(
+      new THREE.Vector3(mid.x-dx,base,mid.z-dz),
+      new THREE.Vector3(mid.x+dx,base+extent.y+.55,mid.z+dz))};
   }
   const eye=base+1.65;
   if(warehouse){

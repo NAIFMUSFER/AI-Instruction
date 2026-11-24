@@ -342,4 +342,4 @@ async function main(){
   }finally{await b.close();}
 }
 if(require.main===module)main().catch(e=>{console.error(e.message);process.exitCode=1;});
-module.exports={inspectApartment};
+module.exports={inspectApartment, serve, menu, runtime, cameraControl, origin};

@@ -10,6 +10,7 @@ on:
       - 'acs_visual.py'
       - 'tests/remediation/test_audit_engineering_door_meshes.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
+      - 'tests/remediation/test_guest_brief_variations.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
       - 'tests/remediation/test_local_apartment.mjs'
@@ -26,6 +27,7 @@ on:
       - 'acs_visual.py'
       - 'tests/remediation/test_audit_engineering_door_meshes.py'
       - 'tests/remediation/test_public_apartment_journey.cjs'
+      - 'tests/remediation/test_guest_brief_variations.cjs'
       - 'requirements.txt'
       - 'tests/fixtures/briefs/riyadh-apartment-ar.txt'
       - 'tests/remediation/test_local_apartment.mjs'
@@ -44,7 +46,7 @@ concurrency:
 jobs:
   guest-model:
     runs-on: ubuntu-latest
-    timeout-minutes: 32
+    timeout-minutes: 55
     strategy:
       fail-fast: false
       matrix:
@@ -88,6 +90,9 @@ jobs:
       - name: Open the studio and generate the residential brief
         timeout-minutes: 19
         run: node tests/remediation/test_public_apartment_journey.cjs
+      - name: Compare dimensions, courtyard and entrance changes from the guest studio
+        timeout-minutes: 20
+        run: node tests/remediation/test_guest_brief_variations.cjs
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:

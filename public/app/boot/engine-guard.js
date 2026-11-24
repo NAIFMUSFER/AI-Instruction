@@ -33,6 +33,15 @@
   var guestEntry=entryQuery.get("guest")==="1"
     ||(!googleCallback&&!callbackHash&&entryQuery.get("signin")!=="1"
       &&!localHost()&&!hasStoredKey(SESSION_KEY)&&!hasStoredKey(RECOVERY_KEY));
+  var guestProjectId=null;
+  if(guestEntry && entryQuery.get("guest")==="1" && !apartmentExample){
+    if(entryQuery.get("new")==="1"){
+      guestProjectId=crypto.randomUUID();
+      history.replaceState(null,"",location.pathname+"?guest=1&project="+guestProjectId);
+    }else if(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/.test(entryQuery.get("project"))){
+      guestProjectId=entryQuery.get("project");
+    }
+  }
   function api(path){
     // Auth always uses the configured origin. A model-server override must not
     // redirect passwords or refresh credentials to a different origin.
@@ -380,6 +389,7 @@
   }
   function storageScope(){
     if(guestEntry){
+      if(guestProjectId)return "acs_guest_draft_"+guestProjectId;
       if(apartmentExample&&entryQuery.get("guest")==="1")return "acs_guest_apartment_20x25_v1";
       return "acs_guest_project_v1";
     }
@@ -388,7 +398,7 @@
     return typeof uid==="string"&&uid&&typeof pid==="string"&&pid ? "acs_local_project:"+uid+":"+pid : null;
   }
   window.ACS_AUTH={contract:"acs-production-auth/1.2",init:authInit,loadSession:loadSession,freshSession:freshSession,storageScope:storageScope,acsFetchJSON:acsFetchJSON,
-    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost,isGuest:function(){return guestEntry;}};
+    bootstrapProject:bootstrapProject,addLogout:addLogout,clearSession:clearSession,isLocalTestHost:localHost,isGuest:function(){return guestEntry;},guestProjectId:guestProjectId};
 })();
 
 window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_AUTH.isGuest()) };
@@ -402,6 +412,15 @@ window.ACS = { ready:false, pending:null, guest:!!(window.ACS_AUTH&&window.ACS_A
   function guestFallback(){
     if(!window.ACS.guest||window.ACS.guestWorkspaceReady||byId('acsGuestFallback'))return;
     document.body.classList.add('acs-guest-fallback-active');
+    if(window.ACS_AUTH.guestProjectId){
+      var loading=document.createElement('section');loading.id='acsGuestFallback';
+      loading.innerHTML='<div class="guest-fallback-card"><div><h1>مشروعك المحلي</h1><p id="acsGuestFallbackStatus" role="status">جارٍ فتح مساحة التصميم…</p><button type="button" id="guestFallbackReload">إعادة المحاولة</button></div></div>';
+      document.body.appendChild(loading);
+      byId('guestFallbackReload').onclick=function(){location.reload();};
+      window.ACS.guestBootFailure=function(){byId('acsGuestFallbackStatus').textContent='تعذّر تشغيل الاستوديو. جرّب متصفحًا يدعم العرض ثلاثي الأبعاد.';};
+      if((window.ACS_BOOT_ERRORS||[]).length)window.ACS.guestBootFailure();
+      return;
+    }
     var controls=document.querySelectorAll('#left button,#left input,#left textarea,#left select,#camBar button');
     for(var i=0;i<controls.length;i++)if(!controls[i].disabled){controls[i].disabled=true;controls[i].setAttribute('data-guest-boot-disabled','1');}
     var panel=document.createElement('section');panel.id='acsGuestFallback';panel.setAttribute('aria-label','تجربة محلية ثنائية الأبعاد');

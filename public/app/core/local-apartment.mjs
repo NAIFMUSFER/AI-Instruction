@@ -2,6 +2,7 @@
 // The apartment wing is mirrored about the common entrance. All floor/room
 // instances, apertures, furniture and stairs are part of the exported model.
 import { withDefaultStairs } from './stairs.mjs';
+import { withContextDetails } from './context-details.mjs';
 
 const round = value => Math.round(value * 1000) / 1000;
 const wallThickness=0.18;
@@ -122,20 +123,41 @@ function furnish(r) {
   }
 }
 
-function floorPlan(width,depth,index,storeyHeight) {
+function floorPlan(width,depth,index,storeyHeight,{courtyard=false}={}) {
   // The compiler centres walls on room boundaries. Specify the external
   // envelope first, then locate the wall axes one half-thickness inside it.
   const axisX=x=>round(wallThickness/2+x*(width-wallThickness)/20);
-  const axisZ=z=>round(wallThickness/2+z*(depth-wallThickness)/25);
+  // In a narrow building turned to the side, reserve enough length for the
+  // fixed stair flights and landings, distributing the rest to the two wings.
+  const clearDepth=depth-wallThickness;
+  const coreDepth=Math.max(4,4.8*clearDepth/25), wingScale=(clearDepth-coreDepth)/(25-4.8);
+  const axisZ=z=>{
+    const inCore=Math.max(0,Math.min(z-7.2,4.8));
+    return round(wallThickness/2+(z-inCore)*wingScale+inCore*coreDepth/4.8);
+  };
   const rect=(x,z,w,d)=>[axisX(x),axisZ(z),round(axisX(x+w)-axisX(x)),round(axisZ(z+d)-axisZ(z))];
   const entranceDepth=index?0:1.35;
   const lobby=rectangle('lobby',index?'بسطة وبهو مشترك':'بهو المدخل','lobby',rect(8,entranceDepth,4,7.2-entranceDepth));
   const stair=rectangle('stair','الدرج المشترك','stairs',rect(8,7.2,2.4,4.8));
-  const lift=rectangle('lift','حيّز المصعد المقترح','elevator',rect(10.4,7.2,1.6,4.8));
+  // With a court, the lift moves one bay east to give the shared lobby a
+  // route to the garden without passing through either private apartment.
+  const lift=rectangle('lift','حيّز المصعد المقترح','elevator',courtyard?rect(12,9.5,1.8,2.5):rect(10.4,7.2,1.6,4.8));
   stair.core_id='central'; lift.core_id='lift';
   lobby.wall_color='#bfab90'; lobby.floor_color='#b6a286';
   const rooms=[lobby,stair,lift];
-  connect(lobby,stair,1.0); connect(lobby,lift,0.90,'metal');
+  connect(lobby,stair,1.0);
+  if(courtyard) {
+    const passage=rectangle('court_passage','ممر الفناء المشترك','corridor',rect(10.4,7.2,1.6,4.8));
+    rooms.push(passage);
+    connect(lobby,passage,1.16); connect(passage,lift,0.90,'metal');
+    if(index===0) {
+      passage.doors.push({id:'court_ground_door',edge:'S',offset:round(passage.rect[2]/2),width:1.05,height:2.18,material:'glass'});
+    } else {
+      windowAt(passage,'S',0.5,1.05,0.95,1.32);
+    }
+  } else {
+    connect(lobby,lift,0.90,'metal');
+  }
   if(index===0) {
     const porch=rectangle('entrance_porch','رواق المدخل','porch',rect(8,0,4,entranceDepth));
     porch.walls=[]; porch.floor_color='#9c8265'; rooms.push(porch);
@@ -183,9 +205,16 @@ function floorPlan(width,depth,index,storeyHeight) {
     add('kitchen','مطبخ','kitchen',0,10.8,4.4,4);
     add('hall','ممر النوم','corridor',4.4,7.2,1.8,12.8);
     add('guest_wc','دورة مياه الضيوف','bathroom',6.2,7.2,1.8,2.3);
-    add('laundry','غرفة غسيل','laundry',6.2,9.5,1.8,2.5);
-    add('store','مخزن','storage',6.2,12,3.8,2);
-    add('bath','حمام مشترك','bathroom',6.2,14,3.8,3);
+    const relocatedLaundry=courtyard && unit==='east';
+    const serviceWidth=courtyard?1.8:3.8;
+    add('laundry','غرفة غسيل','laundry',6.2,relocatedLaundry?12:9.5,1.8,relocatedLaundry?1.5:2.5);
+    const storeStart=relocatedLaundry?13.5:12, bathStart=relocatedLaundry?15:14;
+    add('store','مخزن','storage',6.2,storeStart,serviceWidth,bathStart-storeStart);
+    add('bath','حمام مشترك','bathroom',6.2,bathStart,serviceWidth,17-bathStart);
+    if(courtyard) {
+      windowAt(r.bath,opposite[side],0.5,0.9,1.55,0.65);
+      windowAt(r.store,opposite[side],0.5,0.75,1.32,0.8);
+    }
     add('wardrobe','غرفة ملابس','closet',6.2,17,1.9,3);
     add('ensuite','حمام الجناح','bathroom',8.1,17,1.9,3);
     add('bed1','غرفة نوم ١','bedroom',0,14.8,4.4,3.7);
@@ -204,7 +233,8 @@ function floorPlan(width,depth,index,storeyHeight) {
     windowAt(r.bed2,'S',0.5,2.6); windowAt(r.master,'S',0.53,3.12);
     if(!index && unit==='west') furnish(r);
   }
-  return {rooms};
+  if(!courtyard) return {rooms};
+  return {rooms,courtyards:[{id:'central_courtyard',name:'فناء مفتوح للسماء',rect:rect(8,12,4,5)}]};
 }
 
 const assumptions = [
@@ -213,7 +243,30 @@ const assumptions = [
   'الأثاث والتشطيبات اقتراحات للمقياس. مجاري الخدمات والمواقف والارتدادات والتحقق الإنشائي والتنظيمي تحتاج إلى مراجعة مستقلة.'
 ];
 
-function design(width,depth,levels,height,source) {
+const compass = ['N','E','S','W'];
+
+// Rotate the actual plan in the fixed north-up coordinate system, including
+// room-local aperture offsets, furniture and voids. Stairs are fitted later
+// against the transformed door and landing, using their normal authoring path.
+function turnFloor(floor, depth) {
+  const turnRect = ([x,z,w,d]) => [round(depth-z-d),x,d,w];
+  for (const room of floor.rooms) {
+    const roomDepth = room.rect[3];
+    for (const opening of [...room.doors, ...room.windows]) {
+      if (opening.edge === 'E' || opening.edge === 'W') opening.offset = round(roomDepth-opening.offset);
+      opening.edge = compass[(compass.indexOf(opening.edge)+1)%4];
+    }
+    for (const object of room.objects || []) {
+      [object.x,object.z] = [round(roomDepth-object.z),object.x];
+      object.rot = ((object.rot || 0)+90)%360;
+    }
+    if (Array.isArray(room.walls)) room.walls = room.walls.map(edge => compass[(compass.indexOf(edge)+1)%4]);
+    room.rect = turnRect(room.rect);
+  }
+  for (const court of floor.courtyards || []) court.rect = turnRect(court.rect);
+}
+
+function design(width,depth,levels,height,source,{entrance='N',courtyard=false}={}) {
   if(!Number.isFinite(width)||width<18||width>32||!Number.isFinite(depth)||depth<22||depth>36)
     unsupported('أدخل أبعاد المبنى الخارجية. يدعم هذا التوزيع واجهة بين 18 و32 م وعمقاً بين 22 و36 م.');
   if(!Number.isInteger(levels)||levels<1||levels>6)
@@ -221,16 +274,22 @@ function design(width,depth,levels,height,source) {
   if(!Number.isFinite(height)||height<2.8||height>3.6)
     unsupported('يدعم الدرج المحلي ارتفاع دور موحّداً بين 2.8 و3.6 م.');
   const title='عمارة سكنية '+width+' × '+depth+' م';
+  const turns=compass.indexOf(entrance);
   const model={
     meta:{name:title,type:'residential',north:'-Z',acs_apartment:{schema:'acs.local-apartment/1',source,width_m:width,depth_m:depth,
-      occupied_levels:levels,units_per_floor:2,units_total:2*levels,bedrooms_per_unit:3,street_edge:'N',
+      occupied_levels:levels,units_per_floor:2,units_total:2*levels,bedrooms_per_unit:3,street_edge:entrance,
+      courtyard,unit_edges:{west:compass[(3+turns)%4],east:compass[(1+turns)%4]},
       wall_reference:'room_wall_centrelines',outer_face_offset_m:wallThickness/2,assumptions:[...assumptions]}},
     site:{w:width,d:depth},floor_height:height,wall_h:round(height-0.18),wall_t:wallThickness,levels:[],floors:{}
   };
   for(let i=0;i<levels;i++) {
     const template='level_'+i;
     model.levels.push({index:i,name:levelsAr[i],elevation:round(i*height),template});
-    model.floors[template]=floorPlan(width,depth,i,height);
+    const startWidth=turns%2 ? depth : width;
+    const startDepth=turns%2 ? width : depth;
+    const floor=floorPlan(startWidth,startDepth,i,height,{courtyard});
+    for(let turn=0;turn<turns;turn++) turnFloor(floor,turn%2 ? startWidth : startDepth);
+    model.floors[template]=floor;
   }
   if(levels===1) return model;
   const [result,report,reason]=withDefaultStairs(model);
@@ -261,16 +320,57 @@ function dimensions(text) {
   const pair = first.match(new RegExp(decimal+'\\s*(?:متر|م)?\\s*(?:[×x*]|في|بـ?)\\s*'+decimal+'(?:\\s*(?:متر|م))?'));
   const frontage = first.match(new RegExp(decimal+'\\s*(?:مترا?|م)?\\s*(?:على\\s+)?واجهه'));
   const depth = first.match(new RegExp(decimal+'\\s*(?:مترا?|م)?\\s*عمق'));
-  const dw=first.match(new RegExp('(?:عرض(?:ها|ه)?|واجهه(?:\\s+المبنى)?)\\s*[:=]?\\s*'+decimal));
-  const dd=first.match(new RegExp('عمق(?:ها|ه)?\\s*[:=]?\\s*'+decimal));
-  if(pair) return [+pair[1],+pair[2]];
-  return [(frontage||dw)?.[1],(depth||dd)?.[1]].map(v=>v===undefined?undefined:Number(v));
+  const qualified='(?:ها|ه|\\s+(?:المبنى|العماره|البنايه))?\\s*[:=]?\\s*';
+  const dw=first.match(new RegExp('(?:عرض|واجهه)'+qualified+decimal));
+  const dd=first.match(new RegExp('عمق'+qualified+decimal));
+  return [(dw||frontage)?.[1]??pair?.[1],(dd||depth)?.[1]??pair?.[2]].map(v=>v===undefined?undefined:Number(v));
 }
 
-export function apartmentFromBrief(text,{width=20,depth=25,levels=3}={}) {
+const directions={شمال:'N',شرق:'E',جنوب:'S',غرب:'W'};
+const directionWord='(شمال|شرق|جنوب|غرب)(?:ي(?:ه)?|ا)?';
+const orientationPrefix='(?:(?:ال|لل|ب)?(?:مبنى|عماره|بنايه|شارع|رئيسي|واحد|مدخل|واجهه|جهه|ناحيه|طرف|منتصف|وسط)|يكون|تكون|من|في|على|الي|الى|نحو|باتجاه|بالاتجاه|علي)\\s*';
+function entranceDirection(text) {
+  const edges=new Set();
+  // In a relocation the trailing direction is the goal, the first is the origin.
+  const target=text.replace(new RegExp('من\\s+(?:جهه\\s+)?(?:ال)?'+directionWord+'\\s+(?:الي|الى|لـ?)\\s*','g'),'الى ');
+  const pattern=new RegExp('(?:مدخل|دخول|واجهه|شارع)(?:ها|ه)?\\s*(?:'+orientationPrefix+'){0,10}(?:ال|لل|ب)?'+directionWord,'g');
+  for(const match of target.matchAll(pattern)) {
+    edges.add(directions[match[1]]);
+    const alternative=target.slice(match.index+match[0].length).match(new RegExp('^\\s*(?:او|و|/)\\s*(?:ال)?'+directionWord));
+    if(alternative) edges.add(directions[alternative[1]]);
+  }
+  if(edges.size>1) unsupported('ذكرت أكثر من جهة للمدخل أو واجهة الشارع. حدّد جهة واحدة للمدخل الرئيسي، أو احتفظ بالتوزيع الحالي.');
+  if(edges.size && /(?:شمال|جنوب)(?:ي(?:ه)?)?\s+(?:ال)?(?:شرق|غرب)/.test(target))
+    unsupported('يدعم هذا المخطط مدخلاً على إحدى الواجهات الأربع. اختر الشمال أو الشرق أو الجنوب أو الغرب.');
+  return [...edges][0];
+}
+
+function courtyardChoice(text) {
+  const noun='(?:فناء|حوش|باحه)';
+  if(!new RegExp(noun).test(text)) return undefined;
+  const removed=new RegExp('(?:بدون|بلا|من دون|احذف|ازل|الغ|شيل|ما ابي|لا اريد)\\s*(?:ال)?'+noun);
+  if(removed.test(text)) {
+    if(new RegExp(noun).test(text.replace(removed,''))) unsupported('ورد طلب بإزالة الفناء والإبقاء عليه في الوصف نفسه. اختر إضافة الفناء أو حذفه.');
+    return false;
+  }
+  const courtScope=text.match(/(?:فناء|باحه|حوش)[^،,.!\n]{0,70}/)?.[0]||'';
+  if(/مسقوف|مغط[ىي]|جانبي|امامي|خلفي|ب(?:ابعاد|مقاس|مساحه)|\d+\s*(?:[×x*]|في|متر)/.test(courtScope))
+    unsupported('يدعم هذا التوزيع فناءً في الوسط مفتوحاً للسماء، بأبعاد تتناسب مع مساحة المبنى. اختر هذا الفناء أو احتفظ بالتوزيع الحالي.');
+  if(/(?:حافظ|احتفظ|نفس|دون تغيير|بدون تغيير)[^،,.!\n]{0,14}(?:مساحات|ابعاد|مساحه)\s+(?:(?:جميع|كل)\s+)?(?:الغرف|غرف|الشقتين|الشقق)/.test(text))
+    unsupported('يأخذ الفناء مساحة من غرف الخدمات داخل المحيط الحالي. اختر السماح بتغيير مساحاتها مع حفظ عدد الشقق، أو احتفظ بالمخطط الحالي.');
+  return true;
+}
+
+export function apartmentFromBrief(text,defaults={}) {
   const t=normalize(text);
   if(!/(?:عماره|عمار[هة]|مبنى\s+سكني|بنايه\s+سكنيه|apartment\s+building|residential\s+building)/.test(t.slice(0,260))) return null;
   if(/^(?:صمم\s+|انشئ\s+|ابن\s+)?(?:مستودع|مصنع|فيلا|مدرسه)/.test(t.trim())) return null;
+  const model=buildRequestedApartment(t,defaults,{entrance:entranceDirection(t),courtyard:courtyardChoice(t)});
+  model.meta.acs_apartment.brief=String(text);
+  return model;
+}
+
+function buildRequestedApartment(t,{width=20,depth=25,levels=3,height=3.4},options) {
   const explicitSize=dimensions(t);
   width=explicitSize[0]??width; depth=explicitSize[1]??depth;
   const statedFloors=t.match(new RegExp(count+'\\s*(?:ادوار|طوابق|floors|storeys)'));
@@ -288,9 +388,6 @@ export function apartmentFromBrief(text,{width=20,depth=25,levels=3}={}) {
     unsupported('يدعم هذا التوزيع ثلاث غرف نوم في كل شقة. يلزم توزيع آخر لعدد غرف النوم المطلوب.');
   if(/قبو|بدروم/.test(t.replace(/(?:لا\s+(?:يوجد|اريد|يتضمن|يشمل)?\s*|بلا\s*|بدون\s*|من دون\s*)(?:اي\s*)?(?:قبو|بدروم)/g,'')))
     unsupported('يتضمن وصفك قبواً. يدعم مخطط الشقق المحلي الأدوار فوق الأرض فقط.');
-  if(/(?:واجهه(?:\s+الشارع)?|شارع)\s+(?:ال)?(?:جنوبي|غربي|شرقي)/.test(t))
-    unsupported('مدخل مخطط الشقق المحلي على الواجهة الشمالية. يتطلب اتجاه الشارع المطلوب توزيعاً آخر.');
-  let height=3.4;
   const storey=t.match(new RegExp('ارتفاع\\s+(?:(?:كل|بين)\\s+)?(?:ال)?(?:دور|طابق)(?:\\s+الواحد)?\\s*[:=]?\\s*'+decimal));
   if(storey) height=+storey[1];
   // Respect the declared first-floor datum and flag inconsistent level series.
@@ -299,5 +396,39 @@ export function apartmentFromBrief(text,{width=20,depth=25,levels=3}={}) {
   if(first && !storey) height=+first[1];
   if((ground&&+ground[1]!==0)||(first&&Math.abs(+first[1]-height)>0.01)||(second&&Math.abs(+second[1]-2*height)>0.01)||(roof&&Math.abs(+roof[1]-levels*height)>0.01))
     unsupported('المناسيب المحددة غير منتظمة. يدعم مخطط الشقق المحلي ارتفاعاً موحّداً يبدأ من منسوب أرضي 0.00 م.');
-  return design(width,depth,levels,height,'local_brief');
+  return design(width,depth,levels,height,'local_brief',options);
+}
+
+export function apartmentFromRevision(text,currentModel) {
+  const prior=currentModel?.meta?.acs_apartment;
+  if(prior?.schema!=='acs.local-apartment/1') unsupported('أنشئ أولاً عمارة سكنية محلية حتى تتمكن من تعديل مخططها.');
+  const t=normalize(text), courtyard=courtyardChoice(t), entrance=entranceDirection(t);
+  if(courtyard===undefined && entrance===undefined)
+    unsupported('يمكنك تعديل الفناء أو تحديد جهة المدخل الرئيسي. اختر التعديل المطلوب أو اكتب وصفاً جديداً للمبنى.');
+  const existing={width:prior.width_m,depth:prior.depth_m,levels:prior.occupied_levels,height:currentModel.floor_height};
+  const options={courtyard:courtyard??Boolean(prior.courtyard),entrance:entrance??prior.street_edge};
+  let model=buildRequestedApartment(t,existing,options);
+  if(model.site.w!==existing.width || model.site.d!==existing.depth || model.levels.length!==existing.levels || model.floor_height!==existing.height)
+    unsupported('تعديل المدخل والفناء يحافظ على أبعاد المبنى والأدوار والشقق. اختر هذا التعديل أو أنشئ وصفاً جديداً بالمقاسات والعدد الجديدين.');
+  // Parameter revisions can regenerate the authored apartment. If rooms or
+  // stairs were edited manually, a fresh layout would discard those changes.
+  let baseline=design(existing.width,existing.depth,existing.levels,existing.height,prior.source,
+    {courtyard:Boolean(prior.courtyard),entrance:prior.street_edge});
+  if(currentModel.meta.acs_context_details){
+    baseline=withContextDetails(baseline)[0];
+    model=withContextDetails(model)[0];
+  }
+  const occupied=currentModel.levels.filter(level=>level.kind!=='roof');
+  const matches=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+  if(!matches(occupied,baseline.levels) || !matches(currentModel.site,baseline.site) ||
+    currentModel.wall_t!==baseline.wall_t || currentModel.wall_h!==baseline.wall_h ||
+    occupied.some(level=>!matches(currentModel.floors[level.template],baseline.floors[level.template])) ||
+    currentModel.levels.some(level=>level.kind==='roof'&&!level.auto))
+    unsupported('يتضمن مشروعك تعديلات يدوية على الهندسة. احتفظ بها في المشروع الحالي، أو نزّل نسخته ثم ابدأ وصفاً جديداً للتوزيع المطلوب.');
+  model.meta={...currentModel.meta,...model.meta};
+  // The caller reapplies the actual roof preference to this newly built shell.
+  delete model.meta.acs_roof;
+  if(prior.brief) model.meta.acs_apartment.brief=prior.brief;
+  model.meta.acs_apartment.last_revision=String(text);
+  return model;
 }

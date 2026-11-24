@@ -10,7 +10,7 @@ import { _sMaterialName, archDoorConnectsConfirmed, archElementById, archSharedW
 import { activeOccupancyPacks, addOccupancyClassification, aggregateRuleResults, allRules, assessCandidate, auditOccupancy, canonicalBuilding, canonicalProject, checkResultIntegrity, declareOccupancy, evaluateProject, evaluateRule, evaluateRuleSet, exportOccupancy, exportSnapshot, fragmentsOf, ingCandidate, ingRulePack, ingestAuditExport, ingestStoreIssues, modelHash, modelRevision, occClassification, occPack, occPacks, occupancyIndex, occupancyIssues, regulatoryRuleCount, resolveActiveRules, resolveOccupancy, resolveSubject, revisionDiff, ruleDefinitionHash, ruleIssues, ruleMatches, ruleSetById, ruleSets, ruleSources, snapshotResult, staleResults, suggestOccupancyFromProgram, validateRule, verifyCandidate, verifyOccupancy, verifyOccupancyPack, verifyPack } from '../core/standards.js';
 import { ACS_PROJECT_CODE_CONTEXT, ARButton, SCENE_LIMITS, acsBuildDefect, acsBuildDefects, acsCompileSummary, acsFloorIndex, acsFloorName, acsFloorOrder, acsRenderLevel, GLTFExporter, LAYER_NAMES, LAYER_ORDER, OrbitControls, THREE, VRButton, activeBuilding, addBox, attachObjects, auditEgress, buildNavGraph, buildRelationships, classifyReport, compile, detectMeta, distanceSummary, egressSummary, extractExits, findEgress, findPath, getMat, isProjectModel, knownSpaces, matCache, measurePath, navIssues, normDigits, normHex, objCoverage, objectsFromText, parseDescription, pathSummary, projectEnvelope, relationshipSummary, stampMeta, stripBidi, toProject, validateExits, validateMeasurement, validateRelationships, warehouseFromText, warehouseModel } from '../core/viewer.js';
 import { hasUStairs, stairConnections, validateStairReport, withDefaultStairs } from '../core/stairs.mjs';
-import { apartmentFromBrief, apartmentSample } from '../core/local-apartment.mjs';
+import { apartmentFromBrief, apartmentFromRevision, apartmentSample } from '../core/local-apartment.mjs';
 import { listContextDetails, withContextDetails } from '../core/context-details.mjs';
 import { autoRoofLevels, carryAutoRoof, isRoofLevel, removeAutoRoof, restoreDefaultRoof, roofDisclosure, roofRemovedByUser, withDefaultRoof } from '../core/roof.mjs';
 import { acsReconcileCamera, acsRecoverBlackViewport } from '../generated/pbr-bridge.js';
@@ -115,13 +115,13 @@ function guestFrame(){
     }
   }
   if(box.isEmpty())return;
-  fitGuestCamera(guestFocusTarget?.box||box,guestCameraMode,camera,orbit,guestViewport(),ground?.position.y??0);
+  fitGuestCamera(guestFocusTarget?.box||box,guestCameraMode,camera,orbit,guestViewport(),ground?.position.y??0,lastBuilding?.meta?.acs_apartment?.street_edge);
   if(guestFocusTarget?.position){
     camera.position.copy(guestFocusTarget.position);orbit.target.copy(guestFocusTarget.target);orbit.update();
   }
 }
 function guestView(name,floorKey){
-  if(!window.ACS?.guest||!model||!['exterior','street','aerial','cutaway','detail','interior'].includes(name))return false;
+  if(!window.ACS?.guest||!model||!['exterior','street','aerial','top','cutaway','detail','interior'].includes(name))return false;
   const close=name==='detail'||name==='interior';
   const focus=close?guestFocus(model,lastBuilding,name,guestIsWarehouse()):null;
   if(close&&!focus)return false;
@@ -1047,8 +1047,8 @@ function viewPose(m){
   return [new THREE.Vector3(c.x+r*1.45, c.y+r*0.80, c.z+r*1.45), c.clone()];
 }
 function setMode(m){
-  if(window.ACS?.guest&&model&&['arch','bird','orbit'].includes(m)){
-    guestView({arch:'street',bird:'aerial',orbit:'exterior'}[m]);markView(m);return;
+  if(window.ACS?.guest&&model&&['arch','bird','top','orbit'].includes(m)){
+    guestView({arch:'street',bird:'aerial',top:'top',orbit:'exterior'}[m]);markView(m);return;
   }
   if(m==='walk'){ mode=m; startWalk(); markView(m); return; }
   if(walkState.active) stopWalk();
@@ -1547,6 +1547,20 @@ document.getElementById('genText').onclick=()=>{
     statusEl.textContent=localGenerationError(error);
     window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:{ok:false,message:statusEl.textContent}}));
   }
+};
+if(window.ACS.guest)window.ACS.reviseGuestApartment=text=>{
+  let result;
+  try{
+    const candidate=apartmentFromRevision(text,lastBuilding);
+    const building=applyLocalEdit(candidate,{generated:true});
+    showCoverage([],[],building.meta.acs_apartment.assumptions.join(' '));
+    result={ok:true,building};
+  }catch(error){
+    statusEl.textContent=localGenerationError(error);
+    result={ok:false,message:statusEl.textContent};
+  }
+  window.dispatchEvent(new CustomEvent('acs:local-generation',{detail:result}));
+  return result;
 };
 /* ===== الخادم المدمج: يعمل لكل زائر بلا كتابة أي رابط ===== */
 let SRV_OK=false;

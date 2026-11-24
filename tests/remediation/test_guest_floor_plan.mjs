@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {apartmentSample} from '../../public/app/core/local-apartment.mjs';
+import {apartmentFromBrief,apartmentFromRevision,apartmentDoorPairs,apartmentSample} from '../../public/app/core/local-apartment.mjs';
 import {resolveStairGeometry,stairConnections} from '../../public/app/core/stairs.mjs';
 import {renderGuestFloorSVG} from '../../public/app/ui/guest-floor-plan.mjs';
 
@@ -74,3 +74,37 @@ for(const floor of apartment.levels) {
   }
 }
 console.log('PASS named apartment fallback, physical level/room/unit counts and source stair components');
+
+// Check the occupied/void partition, and the actual adjoining surfaces around
+// the common entrance. Metadata and a label on an otherwise solid floor fail.
+const closed=apartmentFromBrief('أبغى عمارة عرض المبنى ٢٤ متر وعمقه ٢٨ متر، أربعة أدوار شاملة الأرضي، شقتين في كل دور');
+const withCourt=apartmentFromRevision('خلّ وسط العمارة فناء مفتوح للسماء وحافظ على عدد الشقق',closed);
+const rotated=apartmentFromRevision('خل المدخل شرقي',withCourt);
+for(const building of [withCourt,rotated]) {
+  const firstCourt=building.floors[building.levels[0].template].courtyards[0];
+  for(const level of building.levels) {
+    const floor=building.floors[level.template], rooms=floor.rooms;
+    const {rect}=floor.courtyards[0], [x,z,w,d]=rect;
+    assert.deepEqual(rect,firstCourt.rect,'every floor must leave the same unoccupied opening');
+    assert.ok(x<12 && x+w>12 && z<14 && z+d>14,'court is within the middle of the building');
+    const occupied=rooms.reduce((sum,room)=>{
+      const [u,v,rw,rd]=room.rect;
+      assert.ok(Math.min(u+rw,x+w)-Math.max(x,u)<0.002 || Math.min(v+rd,z+d)-Math.max(v,z)<0.002,room.id+' overlaps the court');
+      return sum+rw*rd;
+    },0);
+    assert.ok(Math.abs(occupied+w*d-(24-building.wall_t)*(28-building.wall_t))<0.002);
+    const pairs=apartmentDoorPairs(rooms);
+    for(const [a,b] of [['stair','lobby'],['east_foyer','lobby'],['west_foyer','lobby'],['court_passage','lobby'],['lift','court_passage']]) {
+      const door=rooms.find(r=>r.id===a).doors.find(dr=>dr.acs_door_pair?.peer_room_id===b);
+      assert.ok(pairs.has(door),'missing shared access '+a+' → '+b);
+    }
+    const passage=rooms.find(r=>r.id==='court_passage');
+    assert.equal(passage.doors.some(dr=>dr.id==='court_ground_door'),level.index===0,'court exit is on the ground only');
+    const sheet=renderGuestFloorSVG({...packet,level_index:level.index},building);
+    assert.ok(sheet.includes('data-courtyard-id="central_courtyard"') && sheet.includes('مفتوح للسماء'));
+    if (building===rotated) assert.ok(sheet.includes('شمال'));
+  }
+  assert.equal(stairConnections(building).length,3,'four levels must have three real stair connections');
+}
+assert.ok(closed.levels.every(level=>!closed.floors[level.template].courtyards),'revision must preserve the previous model');
+console.log('PASS aligned open court and independent common routes to both apartments, lift and ground garden');

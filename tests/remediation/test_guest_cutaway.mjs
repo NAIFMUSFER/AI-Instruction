@@ -34,11 +34,14 @@ const samples=[
 for(const {bounds} of samples){
   const box=new THREE.Box3(new THREE.Vector3(...bounds.slice(0,3)),new THREE.Vector3(...bounds.slice(3)));
   for(const viewport of [{width:393,height:852,right:0,top:87,bottom:76},{width:1440,height:900,right:360,top:70,bottom:0}]){
-    for(const preset of ['street','exterior','cutaway','aerial']){
+    for(const preset of ['street','exterior','cutaway','aerial','top']){
       const camera=new THREE.PerspectiveCamera(52,viewport.width/viewport.height,.05,2000);
       const orbit={target:new THREE.Vector3(),update(){camera.lookAt(this.target);camera.updateMatrixWorld();}};
       fitGuestCamera(box,preset,camera,orbit,viewport,-.1);
       assert.ok(camera.position.y>1.5&&orbit.maxPolarAngle<Math.PI/2);
+      if(preset==='top'){
+        assert.ok(camera.position.clone().sub(orbit.target).normalize().y>.99999);
+      }
       const pixels=[];
       for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z]){
         const point=new THREE.Vector3(x,y,z).project(camera);
@@ -52,6 +55,14 @@ for(const {bounds} of samples){
       assert.ok(camera.position.y>-.1&&orbit.target.y>-.1);
     }
   }
+}
+// A guest requesting an east-facing entrance should approach it from the east.
+const streetBox=new THREE.Box3(new THREE.Vector3(0,0,0),new THREE.Vector3(24,14,28));
+for(const [edge,axis,sign] of [['N','z',-1],['E','x',1],['S','z',1],['W','x',-1]]){
+  const camera=new THREE.PerspectiveCamera(52,1,.05,1000);
+  const orbit={target:new THREE.Vector3(),update(){}};
+  fitGuestCamera(streetBox,'street',camera,orbit,{width:900,height:900,right:0,top:0,bottom:0},0,edge);
+  assert.ok(camera.position.clone().sub(orbit.target).normalize()[axis]*sign>.95);
 }
 for(const name of ['WALL|F0|envelope|wNs0','WALL|F0|envelope|wWs2','FLOOR|F0|office|ceil2']){
   assert.equal(visibleInGuestCut(name,true),false);
@@ -72,7 +83,7 @@ assert.equal(apartmentJoinery(model,{}).children.length,0);
 assert.equal(JSON.stringify(model.toJSON()),baseline,'the presentation is never added to or saved in BUILDING');
 let disposed=0;trim.children[0].geometry.addEventListener('dispose',()=>disposed++);
 disposeGuestJoinery(trim);assert.equal(disposed,1);
-console.log('PASS shell dock apertures, 16 fits above grade, 7 cutaway predicates, source-isolated disposable joinery');
+console.log('PASS shell dock apertures, 20 fits above grade, all four facade directions, cutaway predicates and disposable joinery');
 const {guestFocus}=await import('../../public/app/render/guest-presentation.mjs');
 const a={levels:[{index:0,template:'ground',elevation:.4}],floors:{ground:{rooms:[{id:'family',role:'living',rect:[3,2,6,5]}]}}};
 const inventory=new THREE.Group(),glass=new THREE.MeshStandardMaterial({transparent:true});

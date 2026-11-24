@@ -7,6 +7,11 @@ const units = {
   west: { name: 'الشقة الغربية', fill: '#f4e8d9' },
   shared: { name: 'المساحات المشتركة', fill: '#e8ebee' },
 };
+const apartmentNames = {N:'الشقة الشمالية',E:'الشقة الشرقية',S:'الشقة الجنوبية',W:'الشقة الغربية'};
+function unitName(model,unit) {
+  const edge=model.meta?.acs_apartment?.unit_edges?.[unit];
+  return apartmentNames[edge] || units[unit].name;
+}
 const arabic = /[\u0600-\u06ff]/;
 const metric = new Intl.NumberFormat('ar-SA-u-nu-latn', { maximumFractionDigits: 2 });
 const fmt = value => metric.format(value);
@@ -21,7 +26,10 @@ function levelLabel(level) {
 }
 function floorData(packet, model) {
   const level = (model.levels || []).find(item => item.index === packet.level_index);
-  const rooms = (model.floors?.[level?.template]?.rooms || []);
+  const floor = model.floors?.[level?.template];
+  const rooms = floor?.rooms || [];
+  const courtyards = (Array.isArray(floor?.courtyards) ? floor.courtyards : []).filter(court =>
+    Array.isArray(court?.rect) && court.rect.length===4 && court.rect.every(Number.isFinite) && court.rect[2]>0 && court.rect[3]>0);
   const byId = new Map(rooms.map(item => [String(item.id), item]));
   const hasUnits = rooms.some(room => room.unit_id === 'east' || room.unit_id === 'west');
   const spaces = (packet.spaces || [])
@@ -32,7 +40,7 @@ function floorData(packet, model) {
       return { ...room, displayName: String(source.name || room.name || room.space_id), unit };
     })
     .sort((a,b) => a.z - b.z || a.x - b.x || a.displayName.localeCompare(b.displayName, 'ar'));
-  return {level,spaces,hasUnits};
+  return {level,spaces,hasUnits,courtyards};
 }
 function line(x1, y1, x2, y2, color, width, attrs = '') {
   return `<line x1="${q(x1)}" y1="${q(y1)}" x2="${q(x2)}" y2="${q(y2)}" stroke="${color}" stroke-width="${q(width)}" ${attrs}/>`;
@@ -94,7 +102,7 @@ function stairDrawing(model, packet, spaces, x, y, scale) {
 }
 
 export function renderGuestFloorSVG(packet, model, {schedule = true, landscape = false, selected = ''} = {}) {
-  const {level,spaces,hasUnits} = floorData(packet,model);
+  const {level,spaces,hasUnits,courtyards} = floorData(packet,model);
   if (!spaces.length) throw new Error('لا توجد فراغات مستطيلة قابلة للرسم في هذا الطابق.');
   const walls = packet.walls.filter(segmentIsFinite);
   const grid = axisBounds(spaces);
@@ -107,6 +115,14 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   const left=(720-dw)/2, top=schedule?106:64, bottom=top+dh;
   const x = value => left+(value-b.x0)*scale, y = value => top+(value-b.z0)*scale;
   const groups=[],labels=[];
+  for(const court of courtyards) {
+    const [cx,cz,cw,cd]=court.rect;
+    const title=court.name || 'فناء مفتوح للسماء';
+    const center=x(cx+cw/2), middle=y(cz+cd/2);
+    groups.push(`<g data-courtyard-id="${esc(court.id)}"><title>${esc(title)}</title><rect x="${q(x(cx))}" y="${q(y(cz))}" width="${q(cw*scale)}" height="${q(cd*scale)}" fill="#eff3e4"/></g>`);
+    labels.push(label(center,middle-3,'فناء',14,{color:'#41624c',weight:700})+
+      label(center,middle+12,'مفتوح للسماء',11,{color:'#41624c'}));
+  }
   spaces.forEach((room,index) => {
     const number=index+1, rw=room.w*scale, rh=room.d*scale;
     const cx=x(room.x+room.w/2), cy=y(room.z+room.d/2);
@@ -133,7 +149,7 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
   measures+=line(left-14,top,left-14,bottom,dim,1)+line(left-19,top,left-8,top,dim,1)+line(left-19,bottom,left-8,bottom,dim,1);
   measures+=`<g transform="translate(${q(left-25)} ${q(top+dh/2)}) rotate(-90)">${label(0,0,`${fmt(b.depth)} م`,16)}</g>`;
   // North is drawn only when explicitly declared for this local-coordinate plan.
-  if(model.meta?.acs_apartment?.street_edge==='N'){
+  if(model.meta?.north==='-Z' || model.meta?.acs_apartment?.street_edge==='N'){
     measures+=`<path d="M 682 ${top+24} v -32 l -5 8 m 5 -8 l 5 8" stroke="#264447" stroke-width="2" fill="none"/>`+label(682,top+44,'شمال',14);
   }
   const barLimit=Math.min(b.width/3,b.depth/3);
@@ -150,7 +166,7 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
     for(const unit of ['east','west','shared']){
       const list=sorted.filter(([,r])=>r.unit===unit);
       if(!list.length)continue;
-      end+=25;index+=label(665,end,hasUnits?units[unit].name:'الفراغات',18,{anchor:'start',weight:700});
+      end+=25;index+=label(665,end,hasUnits?unitName(model,unit):'الفراغات',18,{anchor:'start',weight:700});
       end+=8;index+=line(55,end,665,end,'#b4c0bb',1);
       list.forEach(([i,r],n)=>{
         const col=n%2, row=Math.floor(n/2), lx=col===0?665:342, ly=end+25+row*39;
@@ -163,6 +179,10 @@ export function renderGuestFloorSVG(packet, model, {schedule = true, landscape =
     if (hasExteriorDimensions) {
       end+=23;index+=label(360,end,`مساحة المستطيل المحيط بالجدران ${fmt(b.width*b.depth)} م²`,14);
       end+=19;index+=label(360,end,`امتداد محاور الجدران ${fmt(grid.width)} × ${fmt(grid.depth)} م`,14);
+    }
+    for(const court of courtyards) {
+      const [,,w,d]=court.rect;
+      end+=22;index+=label(360,end,`${court.name || 'فناء مفتوح للسماء'} · ${fmt(w)} × ${fmt(d)} م على محاور الجدران`,14);
     }
     end+=22;index+=label(360,end,onWallAxes?'أبعاد الغرف ومساحاتها محسوبة على محاور الجدران، قبل خصم سماكاتها.':'أبعاد الفراغات ومساحاتها محسوبة من حدودها في النموذج.',14);
     end+=20;index+=label(360,end,'الخط المتقطع باب، والخط الأزرق نافذة.',14);end+=22;
@@ -223,7 +243,7 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
     const id=roomChoice.value,r=info.spaces.find(item=>item.id===id);
     viewport.innerHTML=renderGuestFloorSVG(packet,model,{schedule:false,selected:id});
     const gridLabel=model.meta?.acs_apartment?.wall_reference==='room_wall_centrelines'?' على محاور الجدران':' على شبكة الفراغات';
-    details.textContent=r?`${info.hasUnits?units[r.unit].name+' · ':''}${r.displayName} · ${roomMeasure(r)} · ${fmt(r.area_m2)} م²${gridLabel}`
+    details.textContent=r?`${info.hasUnits?unitName(model,r.unit)+' · ':''}${r.displayName} · ${roomMeasure(r)} · ${fmt(r.area_m2)} م²${gridLabel}`
       :'اختر فراغًا لعرض أبعاده ومساحته. الخط الأزرق نافذة والمتقطع باب.';
   }
   function changeFloor(){
@@ -231,7 +251,7 @@ export function openGuestFloorPlan(acs, initialLevel=0) {
     try {
       packet=acs.floorPlan2D(Number(floor.value),'TECHNICAL');info=floorData(packet,model);
       roomChoice.replaceChildren(element('option','كل الفراغات'));roomChoice.firstChild.value='';
-      info.spaces.forEach((r,i)=>{const opt=element('option',`${i+1}. ${r.displayName}${info.hasUnits?' · '+units[r.unit].name:''}`);opt.value=r.id;roomChoice.append(opt);});
+      info.spaces.forEach((r,i)=>{const opt=element('option',`${i+1}. ${r.displayName}${info.hasUnits?' · '+unitName(model,r.unit):''}`);opt.value=r.id;roomChoice.append(opt);});
       draw();download.disabled=false;
     } catch {
       viewport.replaceChildren();

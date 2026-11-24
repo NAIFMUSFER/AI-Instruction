@@ -18,6 +18,7 @@ async function openGuestWorkspace() {
     </div>
     <div class="guest-controls">
       <button id="guestCreate" type="button">صف مبناك</button>
+      <button id="guestRevise" type="button" aria-haspopup="dialog" hidden>تعديل التصميم</button>
       <button id="guestPlan" type="button" aria-haspopup="dialog">المخطط</button>
       <button id="guestViewToggle" type="button">كشف الدور</button>
       <details id="guestOptions">
@@ -25,6 +26,8 @@ async function openGuestWorkspace() {
         <div class="guest-menu">
           <p id="guestFacts" hidden></p>
           <p id="guestStorageNote" hidden>تُحفظ تغييرات هذا المثال في مسودة مستقلة على جهازك.</p>
+          <a id="guestNew" href="/?guest=1&amp;new=1" target="_blank" rel="noopener">مشروع جديد في علامة تبويب أخرى</a>
+          <button id="guestReviseExisting" type="button" aria-haspopup="dialog" hidden>تعديل التصميم الحالي</button>
           <div class="guest-menu-grid" role="group" aria-label="اختيار نموذج تجريبي">
             <button id="guestExample" type="button">عمارة تجريبية</button>
             <button id="guestWarehouse" type="button">مستودع تجريبي</button>
@@ -42,7 +45,18 @@ async function openGuestWorkspace() {
     <div class="guest-warning" id="guestWarning" hidden>
       <span id="guestFeedback" role="status"></span>
     </div>
-    <button id="guestDownload" type="button" hidden>تنزيل JSON</button>`;
+    <button id="guestDownload" type="button" hidden>تنزيل JSON</button>
+    <dialog id="guestRevisionDialog" dir="rtl" aria-labelledby="guestRevisionTitle">
+      <form id="guestRevisionForm">
+        <h2 id="guestRevisionTitle">تعديل التصميم</h2>
+        <p id="guestRevisionFacts"></p>
+        <label for="guestRevisionText">وش تبي تغيّر في العمارة؟</label>
+        <textarea id="guestRevisionText" rows="3" required placeholder="مثلاً: خلّ المدخل من الجنوب"></textarea>
+        <p id="guestRevisionError" role="alert" hidden></p>
+        <div><button id="guestApplyRevision" type="submit">تطبيق التعديل</button>
+        <button id="guestCancelRevision" type="button">الاحتفاظ بالتصميم الحالي</button></div>
+      </form>
+    </dialog>`;
   document.body.append(banner);
   A.guestRecoveryPending = true;
   A.guestAutosaveReady = false;
@@ -50,6 +64,7 @@ async function openGuestWorkspace() {
   let interactionEpoch = 0;
   let changedModel = false;
   let restoring = false;
+  const namedDraft = Boolean(window.ACS_AUTH.guestProjectId);
   const saveStatus = $('guestSaveStatus');
   const download = $('guestDownload');
   const options = $('guestOptions');
@@ -71,7 +86,7 @@ async function openGuestWorkspace() {
     $(tab).click();
   };
   function syncViewButton(state = A.guestViewState?.()) {
-    viewToggle.hidden = typeof A.guestView !== 'function';
+    viewToggle.hidden = typeof A.guestView !== 'function' || !A.exportModel?.();
     const returnToExterior = ['cutaway','interior','detail'].includes(state?.mode);
     viewToggle.textContent = returnToExterior ? 'الواجهة' : 'كشف الدور';
   }
@@ -93,12 +108,17 @@ async function openGuestWorkspace() {
   syncViewButton();
   window.addEventListener('acs:guest-view', event => syncViewButton(event.detail));
   function facts() {
-    const apartment = A.exportModel?.()?.meta?.acs_apartment;
+    const model = A.exportModel?.();
+    const apartment = model?.meta?.acs_apartment;
     const region = $('guestFacts');
     region.hidden = !apartment;
     region.textContent = apartment
       ? `المبنى ${apartment.width_m} × ${apartment.depth_m} م · ${apartment.occupied_levels} أدوار · ${apartment.units_total} شقق`
       : '';
+    $('guestCreate').hidden = namedDraft && Boolean(apartment);
+    $('guestRevise').hidden = !namedDraft || !apartment;
+    $('guestReviseExisting').hidden = namedDraft || !apartment;
+    for (const id of ['guestPlan','guestExport','guestInterior','guestDetail','guestFloors']) $(id).hidden = !model;
   }
   const exampleDraft = A_AUTH_SCOPE() === 'acs_guest_apartment_20x25_v1';
   $('guestStorageNote').hidden = !exampleDraft;
@@ -136,6 +156,7 @@ async function openGuestWorkspace() {
     // Recovery can replace the temporary sample while its floor sheet is open.
     const plan = $('guestPlanDialog');
     if (plan?.open) plan.close();
+    facts();
     if (restoring) return;
     interactionEpoch++;
     changedModel = true;
@@ -149,10 +170,10 @@ async function openGuestWorkspace() {
   function failedRecovery() {
     A.guestRecoveryReadable = false;
     A.guestAutosaveReady = false;
-    if (!changedModel) notice('عمارة تجريبية');
+    if (!changedModel) notice(namedDraft ? 'مشروع محلي' : 'عمارة تجريبية');
     saveStatus.textContent = 'غير محفوظ · تعذّرت قراءة التخزين المحلي';
-    download.hidden = false;
-    feedbackMessage('تعذّرت استعادة المسودة. نزّل النموذج للاحتفاظ به.');
+    download.hidden = !A.exportModel?.();
+    feedbackMessage(download.hidden ? 'تعذّرت قراءة التخزين. يمكنك التصميم وتنزيل النتيجة.' : 'تعذّرت استعادة المسودة. نزّل النموذج للاحتفاظ به.');
   }
   const userIntent=event=>{
     if(event.target?.closest?.('#acsPanelMake input,#acsPanelMake textarea,#acsPanelMake select'))interactionEpoch++;
@@ -223,6 +244,30 @@ async function openGuestWorkspace() {
     openPanel('acsTabMake');
     $('descText').focus();
   });
+  const revisionDialog = $('guestRevisionDialog');
+  const revisionText = $('guestRevisionText');
+  const revisionError = $('guestRevisionError');
+  for (const id of ['guestRevise','guestReviseExisting']) $(id).addEventListener('click', () => {
+    closeOptions();
+    facts();
+    $('guestRevisionFacts').textContent = $('guestFacts').textContent;
+    revisionText.value = '';
+    revisionError.hidden = true;
+    revisionDialog.showModal();
+    revisionText.focus();
+  });
+  $('guestCancelRevision').addEventListener('click', () => revisionDialog.close());
+  $('guestRevisionForm').addEventListener('submit', event => {
+    event.preventDefault();
+    if (!revisionText.value.trim()) { revisionText.focus(); return; }
+    const result = A.reviseGuestApartment(revisionText.value.trim());
+    if (result.ok) revisionDialog.close();
+    else {
+      revisionError.textContent = result.message;
+      revisionError.hidden = false;
+      revisionText.focus();
+    }
+  });
   for (const [id, label] of [['loadExample','عمارة تجريبية'],['loadWarehouse','مستودع تجريبي']]) {
     $(id).addEventListener('click', () => { notice(label); $('status').textContent = label; facts(); });
   }
@@ -241,14 +286,18 @@ async function openGuestWorkspace() {
     }
   });
   A.guestWorkspace = { contract: 'acs-local-guest/1', localOnly: true, storageScope: A_AUTH_SCOPE(), sample, modelChanged };
-  // Show a usable sample immediately, but never persist it while storage is
-  // still being read. A slow read remains authoritative until user interaction;
-  // the timer only explains the wait and never discards the saved project.
+  // Named drafts start empty. Legacy and example links keep their preview.
   let timer;
   try {
     const recovery = A.persistence.recover();
-    restoring = true;
-    try { sample('residential', true); } finally { restoring = false; }
+    if (namedDraft) {
+      notice('مشروع محلي');
+      facts();
+      openPanel('acsTabMake');
+    } else {
+      restoring = true;
+      try { sample('residential', true); } finally { restoring = false; }
+    }
     suggestFormDimensions(A.exportModel?.());
     saveStatus.textContent = 'جارٍ استعادة المسودة…';
     timer=setTimeout(()=>{
@@ -276,7 +325,7 @@ async function openGuestWorkspace() {
       if (A.setProjectPanelOpen && innerWidth <= 820) A.setProjectPanelOpen(false);
     } else {
       markUnsaved();
-      notice('عمارة تجريبية');
+      notice(namedDraft ? 'مشروع جديد' : 'عمارة تجريبية');
     }
     A.guestAutosaveReady = true;
   } catch {

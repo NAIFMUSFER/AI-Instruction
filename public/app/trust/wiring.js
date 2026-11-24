@@ -483,7 +483,10 @@ window.ACS.concurrencyState=()=>JSON.parse(JSON.stringify(cState));
 const TAB_ID='tab_'+Math.random().toString(36).slice(2,8)+'_'+Date.now().toString(36);
 let tState=T.concurrency.tabsReduce({self_id:TAB_ID},{type:'SELF',tab_id:TAB_ID},Date.now());
 let bc=null;
-try{ if(typeof BroadcastChannel!=='undefined') bc=new BroadcastChannel(window.ACS.guest?'acs_guest_project_tabs':'acs_project_tabs'); }
+try{ if(typeof BroadcastChannel!=='undefined'){
+  const guestChannel=window.ACS_AUTH?.guestProjectId?'acs_guest_tabs_'+window.ACS_AUTH.guestProjectId:'acs_guest_project_tabs';
+  bc=new BroadcastChannel(window.ACS.guest?guestChannel:'acs_project_tabs');
+} }
 catch(e){ bc=null; }
 function tabSend(type){
   const msg={type:type, tab_id:TAB_ID, project_id:'default', ts:Date.now()};

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { apartmentDoorPairs, apartmentFromBrief, apartmentSample } from '../../public/app/core/local-apartment.mjs';
+import { apartmentDoorPairs, apartmentFromBrief, apartmentFromRevision, apartmentSample } from '../../public/app/core/local-apartment.mjs';
 import { stairConnections, validateStairReport } from '../../public/app/core/stairs.mjs';
 
 const fixture=readFileSync(new URL('../fixtures/briefs/riyadh-apartment-ar.txt',import.meta.url),'utf8');
@@ -114,6 +114,9 @@ for(const m of [sample,exact]) validate(m,20,25,3);
 const variants=[
   ['عماره سكنيه من ٣ ادوار ٢٠ في ٢٥',20,25,3],
   ['عمارة سكنية بعرض ٢٠ م وعمق ٢٥ م، أرضي وأول وثانٍ.',20,25,3],
+  ['أبغى عمارة سكنية، عرض المبنى ٢٠ متر وعمقه ٢٥ متر، ثلاثة أدوار شاملة الأرضي، وفي كل دور شقتين',20,25,3],
+  ['أبغى عمارة عرض المبنى ٢٤ متر وعمقه ٢٨ متر، أربعة أدوار شاملة الأرضي، شقتين في كل دور',24,28,4],
+  ['عمارة سكنية على شارع غربي',30,30,4],
   ['مبنى سكني على قطعة أرض 26×30 م. أبعاد المبنى 18×22 م. دورين، شقتان في كل دور',18,22,2],
   ['عمارة سكنية ٣٢×٣٦ م، ستة أدوار، شقتين في كل دور',32,36,6],
   ['عمارة سكنية 23×27.5 م، دور واحد',23,27.5,1]
@@ -122,9 +125,34 @@ for(const [txt,w,d,n] of variants) validate(apartmentFromBrief(txt,{width:30,dep
 for(const txt of [
   'عمارة سكنية على أرض ٢٠×٢٥ م','عمارة سكنية 10×16','عمارة سكنية ثمانية أدوار','عمارة سكنية 3 شقق في كل دور',
   'عمارة سكنية لها قبو','عمارة سكنية لكل شقة أربع غرف نوم','عمارة سكنية ٣ أدوار بإجمالي ١٠ شقق',
-  'عمارة سكنية 3 أدوار، منسوب الأول +3.20 م والثاني +7.50 م','عمارة سكنية على شارع غربي',
+  'عمارة سكنية 3 أدوار، منسوب الأول +3.20 م والثاني +7.50 م','عمارة على شارع غربي والمدخل من الشمال',
 ]) assert.throws(()=>apartmentFromBrief(txt),e=>e.code==='LOCAL_APARTMENT_UNSUPPORTED'&&/[ء-ي]/.test(e.message),txt);
 for(const txt of ['مستودع 120×80','فيلا من دورين','مدرسة من 3 أدوار']) assert.equal(apartmentFromBrief(txt),null);
+// Revisions retain actual dimensions and occupancy across the four facades.
+// The check follows the porch, paired doors and stair openings after rotation.
+const design=apartmentFromBrief(variants[3][0]);
+const originalDesign=JSON.stringify(design);
+for(const [direction,edge] of Object.entries({الشمال:'N',الشرق:'E',الجنوب:'S',الغرب:'W'})){
+  const revision=apartmentFromRevision('خل المدخل من '+direction,design);
+  validate(revision,24,28,4);
+  const ground=revision.floors[revision.levels[0].template].rooms;
+  const porch=ground.find(r=>r.id==='entrance_porch').rect, lobby=ground.find(r=>r.id==='lobby');
+  assert.equal(lobby.doors.find(d=>d.id.endsWith('_to_entrance_porch')).edge,edge);
+  const distances={N:porch[1],E:24-porch[0]-porch[2],S:28-porch[1]-porch[3],W:porch[0]};
+  assert.ok(near(distances[edge],revision.wall_t/2));
+}
+const court=apartmentFromRevision('خلّ وسط العمارة فناء مفتوح للسماء وحافظ على عدد الشقق',design);
+assert.equal(court.meta.acs_apartment.units_total,8);
+for(const l of court.levels) assert.ok(court.floors[l.template].courtyards[0].rect.every(Number.isFinite));
+const back=apartmentFromRevision('شيل الفناء',court);
+assert.deepEqual(back.floors,design.floors);
+assert.equal(JSON.stringify(design),originalDesign);
+for(const request of ['أضف فناء مسقوف','فناء وحافظ على أبعاد جميع الغرف','خل المدخل شمالي أو جنوبي','فناء وأبغى خمسة أدوار','انقل السلم']){
+  assert.throws(()=>apartmentFromRevision(request,design),e=>e.code==='LOCAL_APARTMENT_UNSUPPORTED',request);
+}
+const edited=structuredClone(design);
+edited.floors[edited.levels[0].template].rooms[0].wall_color='#666666';
+assert.throws(()=>apartmentFromRevision('خلّ المدخل من الجنوب',edited),e=>e.code==='LOCAL_APARTMENT_UNSUPPORTED');
 const exampleClaims=[
   {id:'left',rect:[0,0,4,4],doors:[{id:'left-door',edge:'E',offset:2.0,width:.9,height:2.1,material:'wood',acs_door_pair:{id:'pair',peer_room_id:'right'}}]},
   {id:'right',rect:[4,0,4,4],doors:[{id:'right-door',edge:'W',offset:2.001,width:.9,height:2.1,material:'wood',acs_door_pair:{id:'pair',peer_room_id:'left'}}]}
